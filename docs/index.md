@@ -12,6 +12,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   files over archives, archive load order, lazy open.
 * [ESM/ESP plugin container](/formats/esm.md) - record/GRUP/field framing,
   zlib-compressed records, lazy traversal.
+* [FormID + TES4 header](/formats/formid.md) - plugin header fields, master
+  lists, raw FormID -> (plugin, objectID) resolution.
 
 ## Engine
 

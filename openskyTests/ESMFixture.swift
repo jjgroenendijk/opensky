@@ -83,13 +83,38 @@ enum ESMFixture {
         return group(label: label, groupType: groupType, contents: contents)
     }
 
-    /// Minimal TES4 header record with an HEDR field (version 1.71).
-    static func tes4(flags: UInt32 = 1) -> Data {
+    /// TES4 header record: HEDR (version 1.71) plus optional author,
+    /// description, and MAST/DATA master pairs.
+    static func tes4(
+        flags: UInt32 = 1,
+        author: String? = nil,
+        description: String? = nil,
+        masters: [String] = []
+    ) -> Data {
         var hedr = Data()
         hedr.appendUInt32(Float(1.71).bitPattern)
         hedr.appendUInt32(0) // record count
         hedr.appendUInt32(0x800) // next object ID
-        return record("TES4", flags: flags, data: field("HEDR", hedr))
+        var fields = field("HEDR", hedr)
+        if let author {
+            fields += field("CNAM", zstring(author))
+        }
+        if let description {
+            fields += field("SNAM", zstring(description))
+        }
+        for master in masters {
+            fields += field("MAST", zstring(master))
+            var data = Data()
+            data.appendUInt32(0) // DATA: uint64, always 0
+            data.appendUInt32(0)
+            fields += field("DATA", data)
+        }
+        return record("TES4", flags: flags, data: fields)
+    }
+
+    /// Null-terminated windows-1252 string (ASCII subset used in fixtures).
+    static func zstring(_ string: String) -> Data {
+        Data(string.utf8) + Data([0])
     }
 
     /// Full RFC 1950 zlib stream: 2-byte header, deflate payload, adler32.

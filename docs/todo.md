@@ -69,8 +69,9 @@ exterior cell's STAT refs with FormIDs, positions, rotations, model paths.
       header stripped), field iterator with XXXX size extension, lazy payload parsing.
       Verified against vanilla Skyrim.esm (870k records, 44k compressed, all fields
       parse). Doc: [ESM container](/formats/esm.md).
-* [ ] FormID + master resolution: TES4 header (HEDR, MAST/DATA), load order maps FormID
-      top byte -> master index. Model in Swift as (plugin, localID) pair.
+* [x] FormID + master resolution (`Formats/ESM/PluginHeader.swift`, `FormID.swift`):
+      TES4 header decode (HEDR, CNAM/SNAM, MAST), FormID top byte -> master index,
+      `ResolvedFormID` = (plugin, objectID). Doc: [FormID](/formats/formid.md).
 * [ ] Localized strings: TES4 flag 0x80 -> lstrings live in
       `Strings/<plugin>_<lang>.strings|.dlstrings|.ilstrings` (in BSA). Needed for names;
       parse the three table formats. Ref UESP "String Table File Format".
