@@ -51,3 +51,6 @@ logs/*
 *.btt
 /GameData/
 /game-data/
+
+# Profiling artifacts from running debug builds
+*.profraw

@@ -9,6 +9,11 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [BSA Archive](/formats/bsa.md) - Skyrim SE v105 archive layout, LZ4 frames,
   how OpenSky parses and extracts.
 
+## Engine
+
+* [Game data locator](/engine/game-data-locator.md) - how the Skyrim SE install is
+  found and validated at launch; override settings.
+
 ## Rendering
 
 <!-- Metal 4 renderer notes -->

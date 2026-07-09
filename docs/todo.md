@@ -18,9 +18,8 @@ Fresh session picks up here. Steps:
 1. Read AGENTS.md fully — it is the contract. Then this file, then `docs/log.md`.
 2. `make bootstrap` once per checkout (tools, hooks, Metal Toolchain). `make check` +
    `make test` must be green before and after work.
-3. Check PR state (`gh pr list`). Stack as of writing: PR #1 `chore/dev-tooling` -> `main`
-   (tooling), PR #2 `feat/bsa-parser` -> `chore/dev-tooling` (BSA parser). After #1 merges,
-   retarget #2 to `main`. New work branches from tip of the stack until merged, then `main`.
+3. Check PR state (`gh pr list`). As of 2026-07-09: PRs #1-#3 (tooling, BSA parser, game
+   data locator) merged to `main`. New work branches from up-to-date `main`.
 4. Pick topmost unchecked item below. One branch per item (`feat/...`), atomic commits,
    Conventional Commit bodies (Context/Change/Rationale/Impact/Tests), PR via `gh`.
    Commit/PR only when user asks. No AI trailers.
@@ -56,10 +55,9 @@ Goal: locate install, open archives + plugins, walk records. Acceptance: app (or
 probe) lists all worldspaces in `Skyrim.esm`, counts cells per worldspace, dumps one
 exterior cell's STAT refs with FormIDs, positions, rotations, model paths.
 
-* [ ] Game data locator: probe default Steam path
-      (`~/Library/Application Support/Steam/steamapps/common/Skyrim Special Edition/`),
-      configurable override (UserDefaults + `OPENSKY_DATA_ROOT` env for tests/CLI).
-      Missing/invalid -> fail loud (alert + log), never fall back. Small, do first.
+* [x] Game data locator: env `OPENSKY_DATA_ROOT` -> defaults `OpenSkyDataRoot` ->
+      default Steam path. Fail-loud alert + os_log, no silent fallback. Doc:
+      [game data locator](/engine/game-data-locator.md).
 * [x] BSA v105 archive parser. Done, see above.
 * [ ] VFS / resource manager: one lookup layer over data root. Loose files under `Data/`
       override BSA contents; case-insensitive keys; archive open order (vanilla masters'
