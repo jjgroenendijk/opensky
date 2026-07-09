@@ -59,11 +59,10 @@ exterior cell's STAT refs with FormIDs, positions, rotations, model paths.
       default Steam path. Fail-loud alert + os_log, no silent fallback. Doc:
       [game data locator](/engine/game-data-locator.md).
 * [x] BSA v105 archive parser. Done, see above.
-* [ ] VFS / resource manager: one lookup layer over data root. Loose files under `Data/`
+* [x] VFS / resource manager: one lookup layer over data root. Loose files under `Data/`
       override BSA contents; case-insensitive keys; archive open order (vanilla masters'
       BSAs first, per Skyrim.ini `sResourceArchiveList`/`sResourceArchiveList2`, then
-      plugin-named archives). Lazy archive open. Doc in `docs/formats/vfs.md` (own rules,
-      cite UESP archive-load notes).
+      plugin-named archives). Lazy archive open. Doc: [VFS](/formats/vfs.md).
 * [ ] ESM/ESP container walk: record header (24 bytes SSE: type, dataSize, flags, FormID,
       timestamp/VC, version, unknown), GRUP traversal (top groups, worldspace/cell/children
       group types 0-10), zlib-decompressed records (flag 0x40000: uint32 decompSize +

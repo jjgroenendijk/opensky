@@ -14,6 +14,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Located install, nil when locating failed. Consumers (VFS, loaders) read this.
     private(set) var gameDataRoot: GameDataRoot?
 
+    /// Resource lookup over the located install; nil when locating failed.
+    private(set) var virtualFileSystem: VirtualFileSystem?
+
     func applicationDidFinishLaunching(_: Notification) {
         NSApplication.shared.mainMenu = Self.makeMainMenu()
 
@@ -51,6 +54,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let path = root.dataURL.path(percentEncoded: false)
             Self.logger.info(
                 "Game data located (\(source, privacy: .public)): \(path, privacy: .public)"
+            )
+
+            let vfs = VirtualFileSystem(root: root)
+            virtualFileSystem = vfs
+            Self.logger.info(
+                "VFS ready: \(vfs.archiveCount, privacy: .public) archives in load order"
             )
         } catch {
             let message = error.localizedDescription
