@@ -4,6 +4,11 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-09
 
+* **ESM/ESP container walk**: `Formats/ESM/` — TES4 + top-group index over a
+  memory-mapped plugin, lazy GRUP/record traversal, zlib record decompression
+  (`Formats/Zlib.swift` over Apple Compression), field iterator with XXXX size
+  extension, shared `FourCC` type code. Doc: [ESM container](/formats/esm.md).
+  Verified against vanilla Skyrim.esm (870 k records, all payloads parse).
 * **VFS / resource manager**: `GameData/VirtualFileSystem.swift` +
   `ArchiveLoadOrder.swift` — one lookup layer over the data root. Loose files
   override archives, later archives override earlier, case/separator-

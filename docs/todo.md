@@ -18,8 +18,8 @@ Fresh session picks up here. Steps:
 1. Read AGENTS.md fully — it is the contract. Then this file, then `docs/log.md`.
 2. `make bootstrap` once per checkout (tools, hooks, Metal Toolchain). `make check` +
    `make test` must be green before and after work.
-3. Check PR state (`gh pr list`). As of 2026-07-09: PRs #1-#3 (tooling, BSA parser, game
-   data locator) merged to `main`. New work branches from up-to-date `main`.
+3. Check PR state (`gh pr list`). As of 2026-07-09: PRs #1-#4 (tooling, BSA parser, game
+   data locator, VFS) merged to `main`. New work branches from up-to-date `main`.
 4. Pick topmost unchecked item below. One branch per item (`feat/...`), atomic commits,
    Conventional Commit bodies (Context/Change/Rationale/Impact/Tests), PR via `gh`.
    Commit/PR only when user asks. No AI trailers.
@@ -63,13 +63,11 @@ exterior cell's STAT refs with FormIDs, positions, rotations, model paths.
       override BSA contents; case-insensitive keys; archive open order (vanilla masters'
       BSAs first, per Skyrim.ini `sResourceArchiveList`/`sResourceArchiveList2`, then
       plugin-named archives). Lazy archive open. Doc: [VFS](/formats/vfs.md).
-* [ ] ESM/ESP container walk: record header (24 bytes SSE: type, dataSize, flags, FormID,
-      timestamp/VC, version, unknown), GRUP traversal (top groups, worldspace/cell/children
-      group types 0-10), zlib-decompressed records (flag 0x40000: uint32 decompSize +
-      zlib stream — Apple Compression `COMPRESSION_ZLIB` handles raw deflate; check
-      header bytes), subrecord iterator (type + uint16 size, XXXX size extension).
-      Lazy: index offsets, parse fields on demand. Ref: UESP "Mod File Format" + xEdit
-      definitions. Doc `docs/formats/esm.md`.
+* [x] ESM/ESP container walk (`Formats/ESM/`): 24-byte record headers, GRUP traversal
+      (group types 0-9), zlib-decompressed records via Apple Compression (2-byte zlib
+      header stripped), field iterator with XXXX size extension, lazy payload parsing.
+      Verified against vanilla Skyrim.esm (870k records, 44k compressed, all fields
+      parse). Doc: [ESM container](/formats/esm.md).
 * [ ] FormID + master resolution: TES4 header (HEDR, MAST/DATA), load order maps FormID
       top byte -> master index. Model in Swift as (plugin, localID) pair.
 * [ ] Localized strings: TES4 flag 0x80 -> lstrings live in
