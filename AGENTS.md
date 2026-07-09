@@ -66,11 +66,15 @@ project, and hidden dotfiles. Everything else lives in a purpose-named directory
 
 ```text
 Makefile                Automation hub. `make help` lists targets.
-opensky.xcodeproj/      Xcode project
+opensky.xcodeproj/      Xcode project (format 26.3, macOS-only, shared scheme)
 opensky/                Product code — app + engine (Swift, Metal)
-  Renderer.swift        Metal render loop
+  OpenSkyApp.swift      @main entry — programmatic AppKit, no storyboard
+  AppDelegate.swift     Window + menu construction
+  GameViewController.swift  Hosts MTKView, wires renderer
+  Renderer.swift        Metal 4 render loop
+  MatrixMath.swift      Projection/rotation/translation helpers
   Shaders.metal
-  ShaderTypes.h         Shared Swift<->Metal struct defs
+  ShaderTypes.h         Shared Swift<->Metal struct defs (bridging header)
   Assets.xcassets/      App chrome only — never game content
 openskyTests/           Unit tests
 openskyUITests/         UI tests

@@ -14,4 +14,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 ## Decisions
 
-<!-- Architecture decisions and trade-offs -->
+* [Native macOS app skeleton](/decisions/native-macos-app.md) - macOS-only target,
+  programmatic AppKit, Metal 4 pipeline, ad-hoc signing, no sandbox.
+
+## Meta
+
+* [Roadmap](/todo.md) - mission roadmap, milestones, open questions.
