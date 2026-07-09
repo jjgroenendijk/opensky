@@ -122,15 +122,11 @@ nonisolated struct StringTable {
         return try Self.decode(bytes, id: id)
     }
 
-    /// The format carries no encoding marker and the wild mixes UTF-8 with
-    /// legacy codepages. Lenient policy: bytes that form valid UTF-8 are
-    /// UTF-8 (accidental valid UTF-8 is rare), everything else decodes as
-    /// windows-1252 like the rest of the engine's strings.
+    /// Engine-wide lenient policy (GameText): UTF-8 when valid, else cp1252.
     private static func decode(_ bytes: Data, id: UInt32) throws -> String {
-        if let utf8 = String(data: bytes, encoding: .utf8) { return utf8 }
-        guard let cp1252 = String(data: bytes, encoding: .windowsCP1252) else {
+        guard let text = GameText.decode(bytes) else {
             throw StringTableError.malformed("string \(id) is not decodable text")
         }
-        return cp1252
+        return text
     }
 }

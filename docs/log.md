@@ -4,6 +4,14 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-09
 
+* **Record decoders + lstring wiring**: `Formats/ESM/Records/` — `Worldspace`
+  (WRLD), `Cell` (CELL, both DATA sizes, 8/12-byte XCLC), `PlacedReference`
+  (REFR pos/rot/scale), `StaticObject` (STAT MODL), `LString` +
+  `GameData/LocalizedStrings.swift` (table lookup through the VFS, lazy per
+  kind, language pick). Shared lenient decode moved to `Formats/GameText.swift`.
+  Doc: [records](/formats/records.md). Milestone 1 acceptance met — probe
+  listed 37 worldspaces (names via string tables), counted cells (16 978
+  exterior), dumped WhiterunExterior01's 100 STAT refs with model paths.
 * **Localized string tables**: `Formats/Strings/StringTable.swift` —
   `.strings`/`.dlstrings`/`.ilstrings` reader (header + directory, zstring
   vs length-prefixed framing, lenient UTF-8 -> windows-1252 decode).
