@@ -26,6 +26,8 @@
 --redundanttype inferred
 --voidtype void
 --extensionacl on-declarations
+# isolation (nonisolated) before final: must agree with SwiftLint modifier_order
+--modifier-order override,nonisolated,acl,setterACL,dynamic,mutators,lazy,final,required,convenience,typeMethods,owned
 
 # Ordering / hygiene
 --organizetypes class,struct,enum,extension

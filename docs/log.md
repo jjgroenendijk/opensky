@@ -4,6 +4,12 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-09
 
+* **VFS / resource manager**: `GameData/VirtualFileSystem.swift` +
+  `ArchiveLoadOrder.swift` — one lookup layer over the data root. Loose files
+  override archives, later archives override earlier, case/separator-
+  insensitive keys, lazy archive open, malformed archives logged + skipped.
+  Load order: ini resource lists (Skyrim.ini -> Skyrim_Default.ini -> built-in
+  vanilla) then plugin-named archives. Doc: [VFS](/formats/vfs.md).
 * **Game data locator**: `GameData/GameDataLocator.swift` — env var ->
   UserDefaults -> default Steam path, fail-loud alert + os_log on missing/invalid,
   no silent fallback. Doc: [game data locator](/engine/game-data-locator.md).

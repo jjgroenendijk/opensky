@@ -8,6 +8,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 * [BSA Archive](/formats/bsa.md) - Skyrim SE v105 archive layout, LZ4 frames,
   how OpenSky parses and extracts.
+* [Virtual file system](/formats/vfs.md) - resource path resolution: loose
+  files over archives, archive load order, lazy open.
 
 ## Engine
 
