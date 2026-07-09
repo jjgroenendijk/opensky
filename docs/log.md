@@ -4,6 +4,12 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-09
 
+* **Localized string tables**: `Formats/Strings/StringTable.swift` —
+  `.strings`/`.dlstrings`/`.ilstrings` reader (header + directory, zstring
+  vs length-prefixed framing, lenient UTF-8 -> windows-1252 decode).
+  `BinaryReader.readZStringData` added for caller-chosen encodings. Doc:
+  [string tables](/formats/strings.md). Verified against all 273 vanilla
+  table files (10 languages, 834 865 strings, 0 failures).
 * **FormID + master resolution**: `Formats/ESM/PluginHeader.swift` (TES4
   HEDR/CNAM/SNAM/MAST decode) + `FormID.swift` (`FormID`, `ResolvedFormID`,
   `FormIDResolver` — top byte -> master index, out-of-range clamped to the

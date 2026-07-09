@@ -72,9 +72,11 @@ exterior cell's STAT refs with FormIDs, positions, rotations, model paths.
 * [x] FormID + master resolution (`Formats/ESM/PluginHeader.swift`, `FormID.swift`):
       TES4 header decode (HEDR, CNAM/SNAM, MAST), FormID top byte -> master index,
       `ResolvedFormID` = (plugin, objectID). Doc: [FormID](/formats/formid.md).
-* [ ] Localized strings: TES4 flag 0x80 -> lstrings live in
-      `Strings/<plugin>_<lang>.strings|.dlstrings|.ilstrings` (in BSA). Needed for names;
-      parse the three table formats. Ref UESP "String Table File Format".
+* [x] Localized strings (`Formats/Strings/StringTable.swift`): three table formats
+      (zstring vs length-prefixed framing), lenient UTF-8 -> cp1252 decode, verified
+      against all 273 vanilla tables. Doc: [string tables](/formats/strings.md).
+      Lookup wiring (record lstring field -> table via VFS, language pick) still open —
+      fold into record decoders below.
 * [ ] First record decoders: TES4, WRLD, CELL (+ XCLC grid), REFR (NAME base, DATA
       pos/rot, XSCL scale), STAT (MODL model path), LAND deferred to milestone 3.
 

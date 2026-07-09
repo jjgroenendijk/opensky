@@ -73,8 +73,9 @@ nonisolated struct BinaryReader {
         return T(littleEndian: value)
     }
 
-    /// Zero-terminated string ("zstring"). Cursor ends past the terminator.
-    mutating func readZString(encoding: String.Encoding = .windowsCP1252) throws -> String {
+    /// Raw bytes of a zero-terminated string, terminator excluded. Cursor ends
+    /// past the terminator. For callers that pick the text encoding themselves.
+    mutating func readZStringData() throws -> Data {
         let start = offset
         var end = offset
         while true {
@@ -86,6 +87,13 @@ nonisolated struct BinaryReader {
         }
         let bytes = try read(count: end - start)
         skip(1) // terminator
+        return bytes
+    }
+
+    /// Zero-terminated string ("zstring"). Cursor ends past the terminator.
+    mutating func readZString(encoding: String.Encoding = .windowsCP1252) throws -> String {
+        let start = offset
+        let bytes = try readZStringData()
         guard let string = String(data: bytes, encoding: encoding) else {
             throw BinaryReaderError.invalidString(offset: start)
         }
