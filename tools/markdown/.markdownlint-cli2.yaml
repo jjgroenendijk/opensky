@@ -1,0 +1,23 @@
+# OpenSky markdownlint-cli2 config — Markdown lint + autofix (AGENTS.md "Code quality").
+# Run: `make md-lint` / `make format` (autofix). Pre-commit hook enforces it.
+config:
+  default: true          # strict: all default rules on
+  MD013:                 # line length
+    line_length: 100
+    code_blocks: false   # code/tree blocks exempt (unbreakable)
+    tables: false
+  MD024:
+    siblings_only: true  # allow same heading text under different parents
+  MD025:
+    front_matter_title: ""  # OKF frontmatter `title` coexists with a body H1
+  MD033: false           # allow inline HTML (autolinks like <https://...>)
+  MD041: false           # first line need not be H1 (OKF frontmatter precedes it)
+globs:
+  - "**/*.md"
+ignores:
+  - node_modules
+  - .build
+  - build
+  - DerivedData
+  - "**/._*"        # macOS AppleDouble junk on this volume
+  - "._*"

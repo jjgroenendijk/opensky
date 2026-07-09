@@ -1,0 +1,3 @@
+#!/bin/sh
+# Tiny wrapper -> runs .githooks/commit-msg/*.sh in order (AGENTS.md "Git workflow").
+exec "$(git rev-parse --show-toplevel)/.githooks/run-hook.sh" commit-msg "$@"
