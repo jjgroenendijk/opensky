@@ -27,9 +27,10 @@ geometry first -> grow toward playable engine.
       (`~/Library/Application Support/Steam/...`; this machine:
       `/Volumes/data/steam/steamapps/common/Skyrim Special Edition/`).
       Fail loud when missing. Never bundle data.
-* [ ] BSA v105 (SSE) archive parser: header, folder/file records, name hashes,
-      LZ4 decompression, lazy reads. Ref: UESP BSA format page. Doc in
-      `docs/formats/bsa.md`. Synthetic-fixture tests only.
+* [x] BSA v105 (SSE) archive parser: header, folder/file records, LZ4
+      decompression, lazy reads. Ref: UESP BSA format page. Documented in
+      `docs/formats/bsa.md`. Name-hash computation deferred (lookups keyed
+      by name tables; vanilla always ships them).
 * [ ] ESM/ESP record scaffolding: TES4 header, group/record/subrecord walk,
       lazy field parse. Ref: UESP Mod File Format + xEdit definitions.
       Doc in `docs/formats/esm.md`.

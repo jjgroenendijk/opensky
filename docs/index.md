@@ -6,7 +6,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 ## Formats
 
-<!-- Reversed file formats: add `* [Title](/formats/<name>.md) - one-line summary` -->
+* [BSA Archive](/formats/bsa.md) - Skyrim SE v105 archive layout, LZ4 frames,
+  how OpenSky parses and extracts.
 
 ## Rendering
 
