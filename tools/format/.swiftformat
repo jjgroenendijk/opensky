@@ -18,7 +18,8 @@
 
 # Style
 --self remove
---importgrouping testable-bottom
+# alphabetized (not testable-bottom): must agree with SwiftLint sorted_imports
+--importgrouping alphabetized
 --marktypes never
 --semicolons never
 --stripunusedargs closure-only

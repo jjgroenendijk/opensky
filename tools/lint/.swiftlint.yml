@@ -1,11 +1,9 @@
 # OpenSky SwiftLint config — strict linting mandatory (AGENTS.md "Code quality").
 # The pre-commit hook runs `swiftlint --strict`, so warnings block commits too.
 
-included:
-  - opensky
-  - openskyTests
-  - openskyUITests
-
+# No `included:` here — SwiftLint resolves config paths relative to this file's
+# directory (tools/lint/), not the repo root. Callers pass paths explicitly
+# (Makefile SWIFT_PATHS, pre-commit hook passes staged files).
 excluded:
   - .build
   - build

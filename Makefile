@@ -42,7 +42,7 @@ swift-format: ## Autoformat Swift
 	@swiftformat --config $(SWIFTFORMAT_CFG) $(SWIFT_PATHS)
 
 swift-lint: ## Strict Swift lint (warnings fail)
-	@swiftlint lint --strict --quiet --config $(SWIFTLINT_CFG)
+	@swiftlint lint --strict --quiet --config $(SWIFTLINT_CFG) $(SWIFT_PATHS)
 
 md-format: ## Autofix Markdown
 	@markdownlint-cli2 --fix --config $(MD_CFG) "$(MD_GLOB)" || true

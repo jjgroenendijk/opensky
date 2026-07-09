@@ -23,6 +23,14 @@ done
 
 if ! command -v xcodebuild >/dev/null 2>&1; then
   echo "  [WARN] xcodebuild not found — install Xcode from the App Store." >&2
+else
+  # Metal shader compilation needs the Metal Toolchain component (Xcode 26+).
+  if xcodebuild -showComponent MetalToolchain 2>/dev/null | grep -q 'Status: installed'; then
+    echo "  [ OK ] Metal Toolchain"
+  else
+    echo "  [INFO] downloading Metal Toolchain (one-time, large)"
+    xcodebuild -downloadComponent MetalToolchain
+  fi
 fi
 
 echo "[INFO] Wiring git hooks (.githooks/hooks)..."
