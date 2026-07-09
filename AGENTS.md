@@ -250,7 +250,8 @@ adding attribution.
   before PR/merge.
 - Every commit keeps the repo green. Failing commits forbidden on shared branches;
   intermediate failing steps stay local and are squashed before PR.
-- Commit/PR only when the user asks.
+- Finished work always lands: when an item is done + green, commit it and open a PR
+  without waiting to be asked. Never leave completed work sitting in the working tree.
 
 Shared git hooks live in tracked `.githooks/`, not private `.git/hooks`. Configure each
 checkout with `git config core.hooksPath .githooks/hooks` (done by `make bootstrap`).

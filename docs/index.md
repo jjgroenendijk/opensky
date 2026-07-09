@@ -10,6 +10,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   how OpenSky parses and extracts.
 * [Virtual file system](/formats/vfs.md) - resource path resolution: loose
   files over archives, archive load order, lazy open.
+* [ESM/ESP plugin container](/formats/esm.md) - record/GRUP/field framing,
+  zlib-compressed records, lazy traversal.
 
 ## Engine
 

@@ -78,6 +78,10 @@ struct BSAFixture {
 }
 
 extension Data {
+    mutating func appendUInt16(_ value: UInt16) {
+        Swift.withUnsafeBytes(of: value.littleEndian) { append(contentsOf: $0) }
+    }
+
     mutating func appendUInt32(_ value: UInt32) {
         Swift.withUnsafeBytes(of: value.littleEndian) { append(contentsOf: $0) }
     }
