@@ -1,0 +1,53 @@
+# ── Build products & Xcode cruft ──────────────────────────────────────────────
+build/
+DerivedData/
+.build/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# ── SwiftPM ───────────────────────────────────────────────────────────────────
+.swiftpm/
+Packages/
+Package.resolved
+
+# ── Tooling / OS ──────────────────────────────────────────────────────────────
+.DS_Store
+._*
+*.swp
+.netrc
+node_modules/
+
+# ── Logs (AGENTS.md "Code scripts": all logs go to logs/) ─────────────────────
+logs/*
+!logs/.gitkeep
+
+# ── Legal boundary (AGENTS.md §2): NEVER commit extracted game content ─────────
+# Belt-and-braces: even if someone drags these into the tree, git ignores them.
+*.bsa
+*.ba2
+*.esm
+*.esp
+*.esl
+*.nif
+*.dds
+*.hkx
+*.hkc
+*.pex
+*.psc
+*.bik
+*.fuz
+*.xwm
+*.lip
+*.tri
+*.btr
+*.bto
+*.btt
+/GameData/
+/game-data/
