@@ -42,6 +42,12 @@ opt_in_rules:
   - vertical_whitespace_closing_braces
   - yoda_condition
 
+# "Master" is the TES4 domain term (MAST field, master list — UESP "Skyrim
+# Mod:Mod File Format"); renaming would break spec traceability. Allowed for
+# that vocabulary only, not as a general opt-out.
+inclusive_language:
+  override_allowed_terms: [master, masters]
+
 # Legal & IP / reverse-engineering: no force-unwrap/cast on data from external files.
 force_cast: error
 force_try: error

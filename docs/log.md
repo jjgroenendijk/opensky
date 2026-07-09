@@ -4,6 +4,12 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-09
 
+* **FormID + master resolution**: `Formats/ESM/PluginHeader.swift` (TES4
+  HEDR/CNAM/SNAM/MAST decode) + `FormID.swift` (`FormID`, `ResolvedFormID`,
+  `FormIDResolver` — top byte -> master index, out-of-range clamped to the
+  plugin, null -> nil). Doc: [FormID](/formats/formid.md). Verified against
+  all five vanilla masters. Lint config: `inclusive_language` now allows
+  "master" — TES4 domain term (MAST), spec traceability.
 * **ESM/ESP container walk**: `Formats/ESM/` — TES4 + top-group index over a
   memory-mapped plugin, lazy GRUP/record traversal, zlib record decompression
   (`Formats/Zlib.swift` over Apple Compression), field iterator with XXXX size

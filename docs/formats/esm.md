@@ -32,7 +32,7 @@ groups after their records.
 | 0x00   | char4  | type      | e.g. `WRLD`; `GRUP` means group, below |
 | 0x04   | uint32 | dataSize  | data only, header NOT included         |
 | 0x08   | uint32 | flags     | bitfield, below                        |
-| 0x0C   | uint32 | formID    | see FormID page (todo)                 |
+| 0x0C   | uint32 | formID    | see [FormID](/formats/formid.md)       |
 | 0x10   | uint16 | timestamp | SSE packs 0bYYYYYYYMMMMDDDDD           |
 | 0x12   | uint16 | vcInfo    | CK version-control user ids            |
 | 0x14   | uint16 | version   | form version: 43 = LE, 44 = SSE        |
@@ -103,7 +103,6 @@ least that, so traversal always terminates.
 
 ## Not implemented (yet)
 
-* FormID master resolution (TES4 MAST/DATA) — next roadmap item.
 * Localized string lookup (TES4 flag 0x80 -> lstring tables).
 * Per-record-type decoders (WRLD, CELL, REFR, STAT, ...).
 
