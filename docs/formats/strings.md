@@ -49,8 +49,11 @@ Directory offsets are relative to the data block start. Entry framing:
   rare), else windows-1252 — consistent with BSA/ESM string handling. See
   open question in [roadmap](/todo.md).
 
-Lookup wiring (record field -> table by content type, VFS path resolution,
-language selection) is not built yet; this page covers the container format.
+Lookup wiring lives in `GameData/LocalizedStrings.swift`: resolves an
+`LString` (see [records](/formats/records.md)) against
+`strings\<plugin stem>_<language>.<ext>` through the VFS, one lazy table per
+kind, missing table -> nil lookups + one os_log error. Language defaults to
+"english" until a setting exists.
 
 ## Verification
 

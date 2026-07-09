@@ -15,7 +15,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [FormID + TES4 header](/formats/formid.md) - plugin header fields, master
   lists, raw FormID -> (plugin, objectID) resolution.
 * [Localized string tables](/formats/strings.md) - .strings/.dlstrings/
-  .ilstrings layout, lenient encoding policy.
+  .ilstrings layout, lenient encoding policy, lstring lookup wiring.
+* [Record decoders](/formats/records.md) - WRLD/CELL/REFR/STAT field layouts
+  and their engine types.
 
 ## Engine
 
