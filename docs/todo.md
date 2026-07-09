@@ -22,7 +22,8 @@ Fresh session picks up here. Steps:
    data locator, VFS) merged to `main`. New work branches from up-to-date `main`.
 4. Pick topmost unchecked item below. One branch per item (`feat/...`), atomic commits,
    Conventional Commit bodies (Context/Change/Rationale/Impact/Tests), PR via `gh`.
-   Commit/PR only when user asks. No AI trailers.
+   Item done + green -> always commit and open the PR; never leave finished work
+   uncommitted. No AI trailers.
 5. Format work discipline: cite open spec (UESP, xEdit, NifTools) in code + doc, synthetic
    in-code test fixtures only, write `docs/formats/<name>.md`, update `docs/log.md` +
    `docs/index.md` in same commit. Never commit game data — no exceptions.
