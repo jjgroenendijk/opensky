@@ -1,13 +1,6 @@
-//
-//  ShaderTypes.h
-//  opensky
-//
-//  Created by Jaap-Jan Groenendijk on 09/07/2026.
-//
+// Types and enum constants shared between Metal shaders and Swift.
+// Memory layout is explicit + simd-aligned (AGENTS.md "Coding conventions").
 
-//
-//  Header containing types and enum constants shared between Metal shaders and Swift/ObjC source
-//
 #ifndef ShaderTypes_h
 #define ShaderTypes_h
 
@@ -23,20 +16,14 @@ typedef NSInteger EnumBackingType;
 
 typedef NS_ENUM(EnumBackingType, BufferIndex)
 {
-    BufferIndexMeshPositions = 0,
-    BufferIndexMeshGenerics  = 1,
-    BufferIndexUniforms      = 2
+    BufferIndexVertices = 0,
+    BufferIndexUniforms = 1,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)
 {
-    VertexAttributePosition  = 0,
-    VertexAttributeTexcoord  = 1,
-};
-
-typedef NS_ENUM(EnumBackingType, TextureIndex)
-{
-    TextureIndexColor    = 0,
+    VertexAttributePosition = 0,
+    VertexAttributeColor = 1,
 };
 
 typedef struct
@@ -45,5 +32,12 @@ typedef struct
     matrix_float4x4 modelViewMatrix;
 } Uniforms;
 
-#endif /* ShaderTypes_h */
+// vector_float3 is 16-byte aligned, so color sits at offset 16 and the
+// struct stride is 32. The vertex descriptor in Renderer.swift must match.
+typedef struct
+{
+    vector_float3 position;
+    vector_float4 color;
+} TriangleVertex;
 
+#endif /* ShaderTypes_h */

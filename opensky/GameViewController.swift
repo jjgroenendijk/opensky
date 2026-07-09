@@ -1,56 +1,46 @@
-//
-//  GameViewController.swift
-//  opensky
-//
-//  Created by Jaap-Jan Groenendijk on 09/07/2026.
-//
+// Hosts the MTKView and wires it to the renderer. Fails soft with an on-screen
+// message when the GPU lacks Metal 4 — the engine requires it (AGENTS.md
+// "Environment & tech stack"); a missing GPU feature must not crash the app.
 
-import UIKit
+import AppKit
 import MetalKit
 
-// Our iOS specific view controller
-class GameViewController: UIViewController {
+final class GameViewController: NSViewController {
+    private var renderer: Renderer?
 
-    var renderer: Renderer!
-    var mtkView: MTKView!
+    override func loadView() {
+        view = MTKView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        guard let mtkView = view as? MTKView else {
-            print("View of Gameview controller is not an MTKView")
+        guard let mtkView = view as? MTKView else { return }
+
+        guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4) else {
+            show(message: "OpenSky requires a GPU with Metal 4 support.")
             return
         }
+        mtkView.device = device
 
-        // Select the device to render with.  We choose the default device
-        guard let defaultDevice = MTLCreateSystemDefaultDevice() else {
-            print("Metal is not supported")
-            return
+        do {
+            let newRenderer = try Renderer(view: mtkView)
+            newRenderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
+            mtkView.delegate = newRenderer
+            renderer = newRenderer
+        } catch {
+            show(message: "Renderer setup failed: \(error)")
         }
-        
-#if targetEnvironment(simulator)
-        print("Metal 4 is not supported on simulator")
-        return
-#else
-        // Check for Metal 4 support
-        if !defaultDevice.supportsFamily(.metal4) {
-            print("Metal 4 is not supported")
-            return
-        }
-        
-        mtkView.device = defaultDevice
-        mtkView.backgroundColor = UIColor.black
+    }
 
-        guard let newRenderer = Renderer(metalKitView: mtkView) else {
-            print("Renderer cannot be initialized")
-            return
-        }
-
-        renderer = newRenderer
-
-        renderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
-
-        mtkView.delegate = renderer
-#endif
+    private func show(message: String) {
+        let label = NSTextField(labelWithString: message)
+        label.textColor = .white
+        label.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(label)
+        NSLayoutConstraint.activate([
+            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
     }
 }

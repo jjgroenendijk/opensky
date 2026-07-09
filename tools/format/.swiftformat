@@ -1,0 +1,40 @@
+# OpenSky SwiftFormat config — autoformatting mandatory (AGENTS.md "Code quality").
+# Run: `make format` (pre-commit hook does it automatically).
+
+--swiftversion 6.0
+
+# Layout
+--indent 4
+--tabwidth 4
+--maxwidth 100
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--wrapconditions before-first
+--closingparen balanced
+--commas inline
+--trimwhitespace always
+--emptybraces no-space
+
+# Style
+--self remove
+# alphabetized (not testable-bottom): must agree with SwiftLint sorted_imports
+--importgrouping alphabetized
+--marktypes never
+--semicolons never
+--stripunusedargs closure-only
+--redundanttype inferred
+--voidtype void
+--extensionacl on-declarations
+
+# Ordering / hygiene
+--organizetypes class,struct,enum,extension
+--enable isEmpty
+--enable blankLinesBetweenScopes
+--enable redundantSelf
+--enable trailingCommas
+--enable sortImports
+--enable wrapMultilineStatementBraces
+
+# Exclusions
+--exclude .build,build,DerivedData,Pods,**/*.generated.swift

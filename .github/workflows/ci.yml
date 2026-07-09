@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Format & lint
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: brew install swiftformat swiftlint markdownlint-cli2 shellcheck
+      - name: Format check
+        run: make format-check
+      - name: Lint (strict)
+        run: make lint
+
+  build-test:
+    name: Build & test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Xcode version
+        id: xcode
+        # Project needs Xcode 26+ (macOS 26 SDK, Metal 4, project format 26.3).
+        # Hosted runners may lag; skip the build explicitly instead of failing
+        # on an unbuildable toolchain. Local pre-push runs the same build/test.
+        run: |
+          major=$(xcodebuild -version | awk '/^Xcode/{print int($2)}')
+          echo "major=$major" >> "$GITHUB_OUTPUT"
+          if [ "$major" -lt 26 ]; then
+            echo "::warning::Xcode $major < 26 on runner; build/test skipped." \
+              "Local pre-push hook and a future macos-26 runner cover this gate."
+          fi
+      - name: Install Metal Toolchain
+        if: ${{ steps.xcode.outputs.major >= 26 }}
+        run: xcodebuild -downloadComponent MetalToolchain
+      - name: Build & test
+        if: ${{ steps.xcode.outputs.major >= 26 }}
+        run: make test

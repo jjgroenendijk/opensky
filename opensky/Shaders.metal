@@ -1,16 +1,9 @@
-//
-//  Shaders.metal
-//  opensky
-//
-//  Created by Jaap-Jan Groenendijk on 09/07/2026.
-//
-
-// File for Metal kernel and shader functions
+// Placeholder triangle shaders. Vertex layout comes from ShaderTypes.h and
+// the MTLVertexDescriptor built in Renderer.swift.
 
 #include <metal_stdlib>
 #include <simd/simd.h>
 
-// Including header shared between this Metal shader code and Swift/C code executing Metal API commands
 #import "ShaderTypes.h"
 
 using namespace metal;
@@ -18,36 +11,25 @@ using namespace metal;
 typedef struct
 {
     float3 position [[attribute(VertexAttributePosition)]];
-    float2 texCoord [[attribute(VertexAttributeTexcoord)]];
-} Vertex;
+    float4 color [[attribute(VertexAttributeColor)]];
+} VertexIn;
 
 typedef struct
 {
     float4 position [[position]];
-    float2 texCoord;
-} ColorInOut;
+    float4 color;
+} VertexOut;
 
-vertex ColorInOut vertexShader(Vertex in [[stage_in]],
-                               constant Uniforms & uniforms [[ buffer(BufferIndexUniforms) ]])
+vertex VertexOut vertexShader(VertexIn in [[stage_in]],
+                              constant Uniforms &uniforms [[buffer(BufferIndexUniforms)]])
 {
-    ColorInOut out;
-
-    float4 position = float4(in.position, 1.0);
-    out.position = uniforms.projectionMatrix * uniforms.modelViewMatrix * position;
-    out.texCoord = in.texCoord;
-
+    VertexOut out;
+    out.position = uniforms.projectionMatrix * uniforms.modelViewMatrix * float4(in.position, 1.0);
+    out.color = in.color;
     return out;
 }
 
-fragment float4 fragmentShader(ColorInOut in [[stage_in]],
-                               constant Uniforms & uniforms [[ buffer(BufferIndexUniforms) ]],
-                               texture2d<half> colorMap     [[ texture(TextureIndexColor) ]])
+fragment float4 fragmentShader(VertexOut in [[stage_in]])
 {
-    constexpr sampler colorSampler(mip_filter::linear,
-                                   mag_filter::linear,
-                                   min_filter::linear);
-
-    half4 colorSample   = colorMap.sample(colorSampler, in.texCoord.xy);
-
-    return float4(colorSample);
+    return in.color;
 }
