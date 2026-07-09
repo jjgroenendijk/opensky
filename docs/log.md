@@ -4,6 +4,10 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-09
 
+* **Game data locator**: `GameData/GameDataLocator.swift` — env var ->
+  UserDefaults -> default Steam path, fail-loud alert + os_log on missing/invalid,
+  no silent fallback. Doc: [game data locator](/engine/game-data-locator.md).
+  Verified against real install (`/Volumes/data/steam/...`) via unified log.
 * **Roadmap**: expanded [todo](/todo.md) into full milestone plan (M1 game data ->
   M4 playable) + agent handoff instructions (branch/PR state, machine quirks,
   format-work discipline).
