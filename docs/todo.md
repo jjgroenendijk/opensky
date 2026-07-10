@@ -59,25 +59,13 @@ milestone leaves this file; history lives in `docs/log.md` + git.
 Goal: recognizable, textured static geometry of one exterior cell on screen, free-fly
 camera, sustained >30 fps on M1. Screenshot lands in `docs/`.
 
-Sequencing: 2.1 blocks all NIF + renderer work. 2.2 -> 2.3 -> 2.4 build on each other;
-2.5 (DDS) independent, can run parallel to NIF; 2.6 needs 2.1 only; 2.7 needs 2.2-2.6;
-2.8 needs 2.6 only (fly around any scene, even untextured). One branch/PR per numbered
-item. Every format item: cite spec, synthetic in-code test fixtures, write/grow
+Sequencing: coordinate conventions fixed in `docs/decisions/coordinates.md` (2.1, done)
+bind all NIF + renderer work. 2.2 -> 2.3 -> 2.4 build on each other; 2.5 (DDS)
+independent, can run parallel to NIF; 2.6 unblocked now; 2.7 needs 2.2-2.6; 2.8 needs
+2.6 only (fly around any scene, even untextured). One branch/PR per numbered item.
+Every format item: cite spec, synthetic in-code test fixtures, write/grow
 `docs/formats/<name>.md`, verify against real install via throwaway probes (never
 committed).
-
-### 2.1 Coordinates + units decision (blocker)
-
-* [ ] `docs/decisions/coordinates.md`: Skyrim world = Z-up right-handed, 1 unit ~1.428 cm
-      (~70 units/m); Metal NDC = y-up, z [0,1]. Suggested decision: keep Skyrim axes +
-      units untouched in world space; view/projection does the Z-up -> Metal conversion.
-      No per-asset mesh rewrite. Decision must also fix: simd column-major `M * v`
-      convention, triangle winding + cull mode after the basis change, near/far planes at
-      Skyrim scale (exterior cell = 4096 units square -> far covers several cells), REFR
-      euler rotation order + sign (verify against observed refs in a known cell, not from
-      memory).
-* [ ] MatrixMath growth + unit tests: lookAt, Skyrim -> Metal basis change, TRS compose
-      from REFR data (position, euler rotation, uniform scale). Round-trip tests.
 
 ### 2.2 NIF parser — container
 

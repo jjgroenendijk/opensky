@@ -4,6 +4,19 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-10
 
+* **MatrixMath growth** (2.1): `zUpToYUp` basis change, `rotationX/Y/Z`,
+  `scale(uniform:)`, `lookAt` (RH, works straight off Z-up world vectors),
+  `placement(position:rotation:scale:)` = `T * Rz(-z) * Ry(-y) * Rx(-x) * S` for
+  REFR data. Unit tests: axis mapping, det +1, eye/target properties, yaw sign,
+  TRS round-trip. Item 2.1 complete -> left [todo](/todo.md).
+* **Coordinates + units decision** (2.1):
+  [decision doc](/decisions/coordinates.md) — world space stays Skyrim Z-up RH at
+  native units, view/projection convert to Metal NDC; fixes column-major `M * v`,
+  clockwise front + back cull (provisional, verify at 2.6), near 10 / far 65 536
+  units, REFR euler = `Rz(−z)·Ry(−y)·Rx(−x)` (sign/order flagged for 2.7 visual
+  check). Backed by probe over vanilla `Skyrim.esm`: 236 187 temporary refs in
+  6 372 Tamriel exterior cells — all positions inside their 4096-unit grid square,
+  all rotations within ±2π (radians).
 * **Milestone structure in todo**: [todo](/todo.md) — added "Milestones at a glance"
   overview (M1 done -> M4, one goal + one gate each), gave milestone 3 a goal line,
   numbered items 3.1-3.6 and an acceptance gate 3.7 (mirrors M2's shape), marked M4 as
