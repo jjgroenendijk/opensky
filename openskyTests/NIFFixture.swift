@@ -1,9 +1,11 @@
 // Synthetic NIF byte builder shared by NIF parser tests. Fixtures are built
 // in code — never extracted game files (AGENTS.md "Legal & IP boundary").
-// Layouts follow NifTools nif.xml (Header, BSStreamHeader, Footer); see
+// Layouts follow NifTools nif.xml (Header, BSStreamHeader, Footer,
+// NiObjectNET, NiAVObject, NiNode, BSTriShape, BSVertexDataSSE); see
 // docs/formats/nif.md.
 
 import Foundation
+import simd
 
 enum NIFFixture {
     static let versionLine = "Gamebryo File Format, Version 20.2.0.7"
@@ -93,6 +95,99 @@ enum NIFFixture {
         for group in groups {
             out.appendUInt32(group)
         }
+        return out
+    }
+
+    /// NiObjectNET + NiAVObject prefix bytes shared by node + shape payload
+    /// builders (Skyrim stream: uint32 flags, no property list). Rotation is
+    /// nine floats in file order m11 m21 m31 | m12 m22 m32 | m13 m23 m33
+    /// (nif.xml Matrix33, column-major).
+    static func avObjectPrefix(
+        nameIndex: UInt32 = 0xFFFF_FFFF,
+        extraDataRefs: [Int32] = [],
+        controllerRef: Int32 = -1,
+        flags: UInt32 = 0xE,
+        translation: SIMD3<Float> = .zero,
+        rotationColumns: [Float] = [1, 0, 0, 0, 1, 0, 0, 0, 1],
+        scale: Float = 1,
+        collisionRef: Int32 = -1
+    ) -> Data {
+        var out = Data()
+        out.appendUInt32(nameIndex)
+        out.appendUInt32(UInt32(extraDataRefs.count))
+        for ref in extraDataRefs {
+            out.appendUInt32(UInt32(bitPattern: ref))
+        }
+        out.appendUInt32(UInt32(bitPattern: controllerRef))
+        out.appendUInt32(flags)
+        out.appendFloat32(translation.x)
+        out.appendFloat32(translation.y)
+        out.appendFloat32(translation.z)
+        for element in rotationColumns {
+            out.appendFloat32(element)
+        }
+        out.appendFloat32(scale)
+        out.appendUInt32(UInt32(bitPattern: collisionRef))
+        return out
+    }
+
+    /// NiNode payload: AV-object prefix, children refs, effects refs.
+    static func niNode(
+        prefix: Data = avObjectPrefix(),
+        children: [Int32] = [],
+        effects: [Int32] = []
+    ) -> Data {
+        var out = prefix
+        out.appendUInt32(UInt32(children.count))
+        for child in children {
+            out.appendUInt32(UInt32(bitPattern: child))
+        }
+        out.appendUInt32(UInt32(effects.count))
+        for effect in effects {
+            out.appendUInt32(UInt32(bitPattern: effect))
+        }
+        return out
+    }
+
+    /// BSTriShape payload (SSE stream layout). `vertexRecords` are raw
+    /// per-vertex bytes so tests state the interleaved layout explicitly;
+    /// the BSVertexDesc is assembled from `attributes` + `strideDwords`.
+    static func bsTriShape(
+        prefix: Data = avObjectPrefix(),
+        center: SIMD3<Float> = .zero,
+        radius: Float = 0,
+        skinRef: Int32 = -1,
+        shaderPropertyRef: Int32 = -1,
+        alphaPropertyRef: Int32 = -1,
+        attributes: UInt16,
+        strideDwords: Int,
+        vertexRecords: [Data] = [],
+        triangles: [UInt16] = [],
+        dataSizeOverride: Int? = nil,
+        particleData: Data = Data()
+    ) -> Data {
+        var out = prefix
+        out.appendFloat32(center.x)
+        out.appendFloat32(center.y)
+        out.appendFloat32(center.z)
+        out.appendFloat32(radius)
+        out.appendUInt32(UInt32(bitPattern: skinRef))
+        out.appendUInt32(UInt32(bitPattern: shaderPropertyRef))
+        out.appendUInt32(UInt32(bitPattern: alphaPropertyRef))
+        out.appendUInt64(UInt64(strideDwords & 0xF) | UInt64(attributes) << 44)
+        out.appendUInt16(UInt16(triangles.count / 3))
+        out.appendUInt16(UInt16(vertexRecords.count))
+        let dataSize = dataSizeOverride
+            ?? vertexRecords.reduce(0) { $0 + $1.count } + triangles.count * 2
+        out.appendUInt32(UInt32(dataSize))
+        for record in vertexRecords {
+            out.append(record)
+        }
+        for index in triangles {
+            out.appendUInt16(index)
+        }
+        out.appendUInt32(UInt32(particleData.count))
+        out.append(particleData)
         return out
     }
 

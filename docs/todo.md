@@ -60,31 +60,17 @@ Goal: recognizable, textured static geometry of one exterior cell on screen, fre
 camera, sustained >30 fps on M1. Screenshot lands in `docs/`.
 
 Sequencing: coordinate conventions fixed in `docs/decisions/coordinates.md` (2.1, done)
-bind all NIF + renderer work; NIF container walk done (2.2,
-`docs/formats/nif.md` — block-type histogram there is the 2.3/2.4 coverage
-list). 2.3 -> 2.4 build on it; 2.5 (DDS) independent, can run parallel to NIF;
-2.6 unblocked now; 2.7 needs 2.3-2.6; 2.8 needs 2.6 only (fly around any
+bind all NIF + renderer work; NIF container walk (2.2) + scene graph/geometry
+(2.3) done — `docs/formats/nif.md` holds layouts, `NIFFile.model()` yields
+engine meshes. 2.4 builds on it; 2.5 (DDS) independent, can run parallel to
+NIF; 2.6 unblocked now; 2.7 needs 2.4-2.6; 2.8 needs 2.6 only (fly around any
 scene, even untextured). One branch/PR per numbered item. Every format item:
 cite spec, synthetic in-code test fixtures, write/grow `docs/formats/<name>.md`,
 verify against real install via throwaway probes (never committed).
 
-### 2.3 NIF parser — scene graph + geometry
-
-Refs: NifTools `nif.xml`, NifSkope source docs, UESP. SSE meshes: version 20.2.0.7,
-user version 12, BS stream 100. Doc `docs/formats/nif.md` grows over 2.3-2.4.
-
-* [ ] NiNode: name, flags, transform (translation, 3x3 rotation, uniform scale), children
-      refs. Accumulate parent chain to per-shape world transform.
-* [ ] BSTriShape: bounding sphere, VertexDesc 64-bit bitfield -> attribute presence +
-      stride; positions (half or full float per full-precision flag), UVs (half float),
-      normals/tangents (byte-packed), vertex colors; uint16 triangle list.
-* [ ] Flatten to engine types decoupled from disk layout: `Mesh` = vertex/index arrays +
-      per-shape transform + material slot ref. Skip skinning/animation/collision blocks.
-* [ ] Unit tests: synthetic single-BSTriShape file; half-float + packed-normal decode.
-* [ ] Probe: dump shape/vertex/triangle counts + AABBs for the target cell's models;
-      sanity-check sizes against cell dimensions.
-
 ### 2.4 NIF parser — materials subset
+
+Refs: NifTools `nif.xml`, NifSkope source docs, UESP. Doc `docs/formats/nif.md`.
 
 * [ ] BSLightingShaderProperty: shader type, shader flags 1/2, UV offset/scale, alpha,
       glossiness, specular color/strength — parse what the shader needs, skip the rest.

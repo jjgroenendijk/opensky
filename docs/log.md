@@ -4,6 +4,36 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-10
 
+* **NIF geometry probe acceptance** (2.3): typed decode sweep over the
+  geometry BSAs (Meshes0/1, _ResourcePack) — 22 196 `.nif` through
+  `NIFFile.model()`, zero errors; 51 671 meshes, 23.5 M verts, 23.3 M tris,
+  5 751 skinned/empty shapes skipped. Candidate-static AABBs plausible vs
+  the 4096-unit cell (farmhouse01 1409 x 705 x 744). Numbers folded into
+  [NIF mesh](/formats/nif.md). Item 2.3 complete -> left [todo](/todo.md).
+* **NiNode scene-graph decode** (2.3): `Formats/NIF/NIFObject.swift` — shared
+  NiObjectNET + NiAVObject prefix (name via string table, flags, T/R/S,
+  collision ref; Skyrim streams 83/100 only) with `localTransform` = T·R·S;
+  `NIFNode.swift` — children refs, one layout for NiNode + append-only
+  subclasses (BSFadeNode…), selector nodes excluded.
+  `BinaryReader.readFloat32`. Ref: NifTools `nif.xml`. Doc:
+  [NIF mesh](/formats/nif.md) scene-graph + NiNode sections.
+* **BSTriShape geometry decode** (2.3): `Formats/NIF/NIFTriShape.swift` —
+  bounding sphere, skin/shader/alpha refs, BSVertexDesc bitfield -> attribute
+  flags + stride cross-check, interleaved BSVertexDataSSE records (full-float
+  positions — SSE never packs them half, unlike FO4; half UVs, normbyte
+  normals/tangents, split bitangent reassembled, colors; skinning/eye bytes
+  skipped), validated uint16 triangle list, SSE particle trailer ignored.
+  Stride/data-size mismatch -> `malformed`. Ref: NifTools `nif.xml`
+  (BSVertexDataSSE, BSVertexDesc); normbyte remap per NifSkope/nifly. Doc:
+  [NIF mesh](/formats/nif.md) BSTriShape section.
+* **NIF scene flatten -> engine meshes** (2.3): `Geometry/Mesh.swift` — engine
+  `Mesh`/`Model`/`MaterialSlot` types decoupled from disk layout;
+  `Formats/NIF/NIFModel.swift` — `NIFFile.model()` walks footer roots,
+  composes `parent * local` transforms, decodes BSTriShape leaves, dedups
+  material slots by (shader, alpha) ref pair, skips skinned/empty shapes
+  (counted), throws `malformed` on bad refs/cycles/depth > 64. New
+  `opensky/Geometry/` dir noted in AGENTS.md layout. Doc:
+  [NIF mesh](/formats/nif.md) "Scene graph -> engine mesh".
 * **NIF container probe acceptance** (2.2): walked every `.nif` in the local
   install — 22 806 files across 8 BSAs, all parsed, zero throws. All version
   20.2.0.7 / user 12; BS stream 100 except one 83. 143 distinct block types;
