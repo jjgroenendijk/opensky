@@ -120,6 +120,15 @@ nonisolated enum MatrixMath {
             * Self.scale(uniform: scale)
     }
 
+    /// Normal-transform matrix: inverse-transpose of `matrix`, correct for
+    /// world-space normals under non-uniform scale. Multiply with w = 0
+    /// vectors and take xyz. Singular input (zero scale — pathological
+    /// external data) falls back to identity instead of producing NaNs.
+    static func normalMatrix(_ matrix: float4x4) -> float4x4 {
+        guard abs(matrix.determinant) > .ulpOfOne else { return matrix_identity_float4x4 }
+        return matrix.inverse.transpose
+    }
+
     /// Right-handed perspective projection mapping z to Metal's [0, 1] range.
     static func perspective(
         fovYRadians: Float,

@@ -30,8 +30,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 ## Rendering
 
-* [Metal 4 renderer skeleton](/rendering/metal4-renderer.md) - command flow, frame
-  pacing, uniform ring buffer, argument tables, MatrixMath conventions.
+* [Metal 4 static-mesh renderer](/rendering/metal4-renderer.md) - static-mesh render
+  path: pipeline variants, uniform rings, argument tables, counter-heap frame
+  stats, offscreen render, scene types.
 
 ## Decisions
 

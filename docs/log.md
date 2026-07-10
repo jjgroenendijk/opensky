@@ -4,6 +4,31 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-10
 
+* **Winding decision corrected by observation** (2.6): demo ground plane
+  (only single-sided flat mesh) culled away under the provisional
+  `.clockwise` front — closed boxes masked it by showing interior faces.
+  Front = counter-clockwise seen from outside (right-hand-rule outward
+  normals), cull back; matches OpenMW's GL rendering of the same content.
+  [Coordinates](/decisions/coordinates.md) winding section rewritten,
+  no longer provisional; re-verify against vanilla NIFs at 2.7.
+* **Static-mesh render path** (2.6): triangle placeholder replaced.
+  Opaque + alpha-test pipeline variants (function constant, one fragment
+  fn); `FrameUniforms`/`DrawUniforms` 256-byte-aligned rings (per-draw
+  ring = slots x drawCount); binds via one `MTL4ArgumentTable` (state
+  captured per draw); trilinear+aniso repeat sampler; depth32Float +
+  less/write; per-draw cull-none for double-sided. `FrameStats` logs
+  per-120-frame window (frame interval/fps, CPU encode, GPU ms via
+  `MTL4CounterHeap` timestamps + `sampleTimestamps` correlation) — the
+  2.9 fps gate measure. `Renderer.renderOffscreen` renders one frame
+  synchronously into an owned target: deterministic pixel tests + PNG,
+  future 2.9 screenshot. Windowless `MTKView.currentDrawable` crashes in
+  `waitForDrawable` -> never test through drawables (`docs/testing.md`).
+  Scene types: `StaticVertexLayout` (48-byte interleave + descriptor),
+  `RenderMesh`/`RenderModel`/`RenderScene` (opaque-first draw lists,
+  residency dedup), `DemoScene` (synthetic proving scene, throwaway at
+  2.7). Doc: [Metal 4 static-mesh renderer](/rendering/metal4-renderer.md).
+  Item 2.6 complete -> left [todo](/todo.md).
+
 * **DDS probe acceptance** (2.5): swept all 32 920 `.dds` in the local
   install's BSAs — 22 636 BCn parsed clean (BC3 18 074 / BC1 4 417 /
   BC2 145; vanilla has zero DX10/BC7 files), 10 284 rejected with typed

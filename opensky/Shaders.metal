@@ -1,5 +1,5 @@
-// Placeholder triangle shaders. Vertex layout comes from ShaderTypes.h and
-// the MTLVertexDescriptor built in Renderer.swift.
+// Static-mesh shaders. Vertex layout comes from ShaderTypes.h attribute
+// enums and StaticVertexLayout.vertexDescriptor() (Rendering/RenderMesh.swift).
 
 #include <metal_stdlib>
 #include <simd/simd.h>
@@ -8,28 +8,57 @@
 
 using namespace metal;
 
+// Static-mesh path (docs/todo.md 2.6): diffuse * (directional sun + ambient),
+// vertex color as tint (Skyrim bakes AO there). Alpha-test pipeline variant
+// selected via function constant so opaque draws pay nothing for it.
+
+constant bool alphaTestEnabled [[function_constant(FunctionConstantAlphaTest)]];
+
 typedef struct
 {
     float3 position [[attribute(VertexAttributePosition)]];
+    float3 normal [[attribute(VertexAttributeNormal)]];
+    float2 texcoord [[attribute(VertexAttributeTexcoord)]];
     float4 color [[attribute(VertexAttributeColor)]];
-} VertexIn;
+} StaticVertexIn;
 
 typedef struct
 {
     float4 position [[position]];
+    float3 normal;
+    float2 texcoord;
     float4 color;
-} VertexOut;
+} StaticVertexOut;
 
-vertex VertexOut vertexShader(VertexIn in [[stage_in]],
-                              constant Uniforms &uniforms [[buffer(BufferIndexUniforms)]])
+vertex StaticVertexOut staticMeshVertex(
+    StaticVertexIn in [[stage_in]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
+    constant DrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]])
 {
-    VertexOut out;
-    out.position = uniforms.projectionMatrix * uniforms.modelViewMatrix * float4(in.position, 1.0);
+    StaticVertexOut out;
+    float4 world = draw.modelMatrix * float4(in.position, 1.0);
+    out.position = frame.viewProjectionMatrix * world;
+    out.normal = (draw.normalMatrix * float4(in.normal, 0.0)).xyz;
+    out.texcoord = in.texcoord * draw.uvScale + draw.uvOffset;
     out.color = in.color;
     return out;
 }
 
-fragment float4 fragmentShader(VertexOut in [[stage_in]])
+fragment float4 staticMeshFragment(
+    StaticVertexOut in [[stage_in]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
+    constant DrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]],
+    texture2d<float> diffuseMap [[texture(TextureIndexDiffuse)]],
+    sampler trilinear [[sampler(SamplerIndexTrilinear)]])
 {
-    return in.color;
+    float4 diffuse = diffuseMap.sample(trilinear, in.texcoord);
+    float alpha = diffuse.a * in.color.a * draw.materialAlpha;
+    if (alphaTestEnabled && alpha < draw.alphaThreshold) {
+        discard_fragment();
+    }
+    float3 normal = normalize(in.normal);
+    float lambert = saturate(dot(normal, -frame.sunDirection));
+    float3 lit = diffuse.rgb * in.color.rgb
+        * (frame.sunColor * lambert + frame.ambientColor);
+    return float4(lit, alpha);
 }

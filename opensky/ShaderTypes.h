@@ -17,27 +17,57 @@ typedef NSInteger EnumBackingType;
 typedef NS_ENUM(EnumBackingType, BufferIndex)
 {
     BufferIndexVertices = 0,
-    BufferIndexUniforms = 1,
+    BufferIndexFrameUniforms = 1,
+    BufferIndexDrawUniforms = 2,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)
 {
     VertexAttributePosition = 0,
     VertexAttributeColor = 1,
+    VertexAttributeNormal = 2,
+    VertexAttributeTexcoord = 3,
 };
 
-typedef struct
+typedef NS_ENUM(EnumBackingType, TextureIndex)
 {
-    matrix_float4x4 projectionMatrix;
-    matrix_float4x4 modelViewMatrix;
-} Uniforms;
+    TextureIndexDiffuse = 0,
+};
 
-// vector_float3 is 16-byte aligned, so color sits at offset 16 and the
-// struct stride is 32. The vertex descriptor in Renderer.swift must match.
+typedef NS_ENUM(EnumBackingType, SamplerIndex)
+{
+    SamplerIndexTrilinear = 0,
+};
+
+typedef NS_ENUM(EnumBackingType, FunctionConstantIndex)
+{
+    FunctionConstantAlphaTest = 0,
+};
+
+// Static-mesh path (docs/todo.md 2.6). World space is Skyrim Z-up
+// right-handed at native units (docs/decisions/coordinates.md); view +
+// projection fold into viewProjectionMatrix.
 typedef struct
 {
-    vector_float3 position;
-    vector_float4 color;
-} TriangleVertex;
+    matrix_float4x4 viewProjectionMatrix;
+    vector_float3 cameraPosition;
+    /// Unit vector, direction the sunlight travels (sun -> scene).
+    vector_float3 sunDirection;
+    vector_float3 sunColor;
+    vector_float3 ambientColor;
+} FrameUniforms;
+
+typedef struct
+{
+    matrix_float4x4 modelMatrix;
+    /// Inverse-transpose of modelMatrix: transforms normals to world space.
+    matrix_float4x4 normalMatrix;
+    vector_float2 uvOffset;
+    vector_float2 uvScale;
+    /// Material opacity multiplier (NIF BSLightingShaderProperty alpha).
+    float materialAlpha;
+    /// Alpha-test cutoff in [0, 1]; used only by the alpha-test variant.
+    float alphaThreshold;
+} DrawUniforms;
 
 #endif /* ShaderTypes_h */

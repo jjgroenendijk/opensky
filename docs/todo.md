@@ -30,8 +30,9 @@ Fresh session picks up here. Steps:
    in-code test fixtures only, write `docs/formats/<name>.md`, update `docs/log.md` +
    `docs/index.md` in same commit. Never commit game data — no exceptions.
 6. Rendering work: verify visually, not just green build. Screen Recording TCC missing on
-   this machine -> use XCUITest screenshot (write to `FileManager.temporaryDirectory`,
-   NSLog the path) or ask user to look.
+   this machine -> use `Renderer.renderOffscreen` (see `RendererOffscreenTests`: pixel
+   asserts + temp PNG, path printed) or ask user to look. UI-test automation mode also
+   flaky here; unit-target offscreen render is the reliable path.
 7. Game data (read-only, never copied into repo/build):
    `/Volumes/data/steam/steamapps/common/Skyrim Special Edition/`. Verify parsers against
    real files via throwaway runtime probes; probes never land in commits.
@@ -63,27 +64,16 @@ Sequencing: coordinate conventions fixed in `docs/decisions/coordinates.md` (2.1
 bind all NIF + renderer work; NIF parsing done (2.2-2.4) — `docs/formats/nif.md`
 holds layouts, `NIFFile.model()` yields engine meshes with resolved materials
 (normalized texture VFS keys); DDS done (2.5) — `docs/formats/dds.md`,
-`TextureLoader` turns VFS bytes into MTLTextures with placeholder fallback.
-2.6 unblocked; 2.7 needs 2.6; 2.8 needs 2.6 only (fly around any scene, even
-untextured). One branch/PR per numbered item. Every format item: cite spec,
-synthetic in-code test fixtures, write/grow `docs/formats/<name>.md`, verify
-against real install via throwaway probes (never committed).
-
-### 2.6 Renderer growth
-
-* [ ] Depth: `depth32Float` attachment + depth-stencil state; cull mode per 2.1 winding
-      decision.
-* [ ] Static-mesh pipeline replacing the triangle demo: vertex descriptor matching 2.3
-      engine layout; `ShaderTypes.h` uniforms — per-frame (viewProjection, camera
-      position, sun direction + color, ambient), per-draw (model matrix).
-* [ ] Per-draw uniforms: extend the existing 256-byte-aligned ring buffer scheme to N
-      draws per frame slot; residency set updated as buffers/textures are created.
-* [ ] Textures: binds via MTL4ArgumentTable, mipmapped sampler (trilinear + anisotropy).
-* [ ] Shader: diffuse map * (directional sun + ambient) first; alpha-test pipeline
-      variant for foliage. Normal mapping is a stretch goal once tangents verified.
-* [ ] Frame stats: CPU/GPU frame ms logged (os_signpost or command-buffer timestamps) —
-      this is how the >30 fps acceptance gets measured, not by eye.
-* [ ] Remove triangle path once mesh path proven (no dead code rule).
+`TextureLoader` turns VFS bytes into MTLTextures with placeholder fallback;
+renderer done (2.6) — `docs/rendering/metal4-renderer.md`, static-mesh path
+draws `RenderScene` values (currently the synthetic `DemoScene`, which 2.7
+replaces with real cell content — feed instances through
+`RenderModel`/`RenderScene` + a `TextureProvider` over VFS). 2.7 + 2.8
+unblocked (2.8: fly around any scene, even untextured). Winding decision was
+corrected by 2.6 observation — re-verify against vanilla NIFs at 2.7
+(coordinates.md). One branch/PR per numbered item. Every format item: cite
+spec, synthetic in-code test fixtures, write/grow `docs/formats/<name>.md`,
+verify against real install via throwaway probes (never committed).
 
 ### 2.7 Cell scene build
 
