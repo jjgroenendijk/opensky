@@ -41,6 +41,19 @@ Machine quirks: repo on case-insensitive external APFS volume (case-only rename 
 (`xcodebuild -downloadComponent MetalToolchain`, bootstrap handles it). GitHub
 `macos-latest` currently has Xcode 26 — CI gate self-skips below 26.
 
+## Milestones at a glance
+
+Each milestone = one goal, one measurable acceptance gate (its last numbered item). Done
+milestone leaves this file; history lives in `docs/log.md` + git.
+
+* M1 — data foundation. Done 2026-07-10 (PRs #1-#8): BSA VFS, ESM/plugin record decoders.
+* M2 — static world geometry (active): one textured exterior cell on screen, free-fly
+  camera, >30 fps sustained on Apple M1. Gate: 2.9.
+* M3 — world streaming + environment: roam exterior worldspace seamlessly — terrain,
+  cell streaming, distant LOD, sky/water, interiors via doors. Gate: 3.7.
+* M4 — toward playable (direction only): collision, animation, scripting, audio, UI.
+  Re-scope after M3; no gate yet.
+
 ## Milestone 2 — static world geometry (mission first target)
 
 Goal: recognizable, textured static geometry of one exterior cell on screen, free-fly
@@ -164,16 +177,49 @@ Ref: Microsoft DDS programming guide (`DDS_HEADER`, `DDS_HEADER_DXT10`). Doc
 
 ## Milestone 3 — world streaming + environment
 
-* [ ] Terrain: LAND records (33x33 height grid per cell, VNML normals, texture layers
-      BTXT/ATXT/VTXT), stitch neighbor cells, blend layers in shader.
-* [ ] Cell streaming: load grid around camera (uGridsToLoad-style 5x5), async load,
-      unload behind.
-* [ ] Distant LOD: BTO/BTR terrain+object LOD meshes, LOD textures.
+Goal: roam the Tamriel exterior worldspace seamlessly — terrain under every object, cells
+stream in/out around the camera, distant LOD past the loaded grid, sky + water, interiors
+reachable through doors. Item ordering + sub-tasks re-checked against what M2 actually
+built before starting (2.9). One branch/PR per numbered item; format items follow the same
+spec/fixture/doc discipline as M2.
+
+### 3.1 Terrain
+
+* [ ] LAND records: 33x33 height grid per cell, VNML normals, texture layers
+      BTXT/ATXT/VTXT; stitch neighbor cells, blend layers in shader.
+
+### 3.2 Cell streaming
+
+* [ ] Load grid around camera (uGridsToLoad-style 5x5), async load, unload behind.
+
+### 3.3 Distant LOD
+
+* [ ] BTO/BTR terrain+object LOD meshes, LOD textures.
+
+### 3.4 Sky + water
+
 * [ ] Sky dome, day/night gradient; water plane w/ simple shader.
+
+### 3.5 Interiors
+
 * [ ] Interior cells + door teleport (REFR XTEL).
-* [ ] Lighting pass: cell lighting templates, point lights (LIGH), image-based tweaks.
+
+### 3.6 Lighting pass
+
+* [ ] Cell lighting templates, point lights (LIGH), image-based tweaks.
+
+### 3.7 Milestone acceptance
+
+* [ ] Free-fly from the M2 target cell across the streamed grid: terrain + objects appear
+      without visible pop-in gaps, LOD beyond the grid, enter one interior through a door
+      and return. No crash on any vanilla cell touched; >30 fps sustained (frame stats,
+      not eyeballed).
+* [ ] Screenshot under `docs/`; `docs/log.md` + this file updated; M4 re-scoped into
+      numbered items with a gate.
 
 ## Milestone 4+ — toward playable (far out)
+
+Direction only — re-scope into numbered gated items at 3.7. Candidate order:
 
 * Collision + character controller (walk on terrain first; HKX collision reversing later).
 * Animation: HKX (Havok) reversing — hardest format; consider skeleton-only first.

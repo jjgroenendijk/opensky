@@ -4,6 +4,10 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-10
 
+* **Milestone structure in todo**: [todo](/todo.md) — added "Milestones at a glance"
+  overview (M1 done -> M4, one goal + one gate each), gave milestone 3 a goal line,
+  numbered items 3.1-3.6 and an acceptance gate 3.7 (mirrors M2's shape), marked M4 as
+  direction-only pending re-scope at 3.7. Item content unchanged.
 * **Headless unit-test host + testing doc**: `OpenSkyApp.main()` skips
   `AppDelegate` (window/renderer/probe) when `XCTestConfigurationFilePath` is
   set, activation policy `.prohibited` -> `make test` runs with no visible
