@@ -45,19 +45,24 @@ UESP Skyrim Mod:Mod File Format/REFR (DATA = 6 floats, radians).
 
 ## Triangle winding + cull mode
 
-Decision: `frontFacingWinding = .clockwise` (Metal default), `cullMode = .back`.
+Decision: `frontFacingWinding = .counterClockwise`, `cullMode = .back`. Observed, no
+longer provisional.
 
-Reasoning: NIF meshes authored for D3D/Gamebryo — front faces clockwise in D3D window
-coords (D3D default rasterizer state: `FrontCounterClockwise = FALSE`). Metal rasterizes
-in the same y-down window coords (top-left origin). Our view is a proper rotation
-(det +1) and the projection preserves screen orientation for points in front of the
-camera, so disk winding survives to the rasterizer: front stays clockwise.
-Cross-check: OpenMW + NifSkope render the same Gamebryo content in OpenGL (y-up window
-coords) with CCW front faces — consistent, y-flip swaps apparent winding.
+Authoring rule (world space): a face is front when its vertices wind counter-clockwise
+seen from outside — right-hand-rule triangle normal points outward. Matches Gamebryo/NIF
+content (OpenMW renders the same meshes in OpenGL with CCW front) and OpenSky demo
+geometry.
 
-[WARNING] Provisional until observed: verify at first real asymmetric mesh render (2.6)
-before building more on it. Wrong guess shows as inside-out geometry -> flip winding,
-not cull mode.
+Observed 2026-07-10 (2.6 demo scene, single-sided ground plane): under our
+proper-rotation view + RH Metal projection, CCW-from-outside geometry reaches Metal's
+rasterizer classified counter-clockwise — with the earlier provisional `.clockwise`
+front the plane culled away entirely (interior faces of closed boxes masked the bug;
+a single-sided quad exposed it). The original D3D-window-coords reasoning was off by
+exactly one y-flip: Metal evaluates winding in NDC orientation (y-up), not framebuffer
+y-down.
+
+Re-verify against real NIF content at 2.7 cell render; wrong for vanilla meshes would
+show as inside-out buildings -> flip winding again, never cull mode.
 
 ## Near/far planes at Skyrim scale
 

@@ -1,63 +1,106 @@
 ---
 type: Subsystem
-title: Metal 4 renderer skeleton
-description: Current render loop - Metal 4 command flow, frame pacing, uniform
-  ring buffer, argument tables, residency, MatrixMath conventions.
+title: Metal 4 static-mesh renderer
+description: Static-mesh render path - pipeline variants, uniform rings, argument-table
+  binds, counter-heap frame stats, offscreen render, scene types.
 tags: [rendering, metal, engine]
 timestamp: 2026-07-10T00:00:00Z
 ---
 
-# Metal 4 renderer skeleton
+# Metal 4 static-mesh renderer
 
-State after milestone 1: `Renderer.swift` draws a rotating vertex-colored triangle to prove
-the full Metal 4 pipeline end to end. Placeholder scene, real command flow — milestone 2.6
-replaces the triangle with the static-mesh path but keeps these mechanisms. Command flow
-adapted from Apple's Xcode Metal 4 game template (structure, not copied game code).
+State after milestone 2.6: `Renderer.swift` draws a `RenderScene` (engine meshes +
+materials) through opaque and alpha-test pipeline variants. Scene content = synthetic
+`DemoScene` until cell scene build (todo 2.7) feeds real world geometry through the same
+path. Command flow adapted from Apple's Xcode Metal 4 game template (structure, not
+copied game code).
 
-## Command flow (per frame, `draw(in:)`)
+## Scene types (`opensky/Rendering/`)
 
-1. `MTLSharedEvent.wait` until GPU finished the frame that last used this slot
-   (`frameIndex - maxFramesInFlight`) -> CPU never overwrites in-flight data.
-2. Reset that slot's `MTL4CommandAllocator`; `beginCommandBuffer(allocator:)` on the single
-   reused `MTL4CommandBuffer`.
-3. Write uniforms into the slot's ring-buffer slice; encode one render pass.
-4. `useResidencySet(metalLayer.residencySet)` -> `endCommandBuffer` ->
-   `waitForDrawable` -> `commit` -> `signalDrawable` -> `signalEvent(frameIndex)` ->
-   `present`.
+* `StaticVertexLayout` — single source of truth for the interleaved vertex layout:
+  float3 position (0), float3 normal (12), float2 texcoord (24), float4 color (32),
+  stride 48, tightly packed. Owns the `MTLVertexDescriptor` + `interleave(Mesh)`.
+  Missing attribute arrays -> neutral defaults (+Z normal, origin UV, white color).
+* `RenderMesh` — one engine `Mesh` uploaded: vertex + uint16 index buffer, local
+  transform, material slot. Rejects empty meshes/out-of-range indices (typed errors,
+  mod-quirk rule).
+* `RenderModel` — one engine `Model`: `RenderMesh`es + `RenderMaterial`s (diffuse
+  `MTLTexture` resolved through a caller-supplied `TextureProvider` closure — demo scene
+  feeds procedural textures, 2.7 feeds VFS + `TextureLoader`).
+* `RenderScene` — (model, instance transform) pairs flattened to `DrawItem` lists:
+  `modelMatrix = instance * meshLocal`, `normalMatrix` = inverse-transpose
+  (`MatrixMath.normalMatrix`), opaque items grouped before alpha-tested so the pipeline
+  switches once. `residencyAllocations` = deduped buffers + textures for the residency
+  set. Alpha blending (`Material.alphaBlend`) renders opaque for now — out of 2.6 scope.
+* `DemoScene` — synthetic proving scene (checker ground, three crates, alpha-test cutout
+  panel, camera + sun constants), built entirely in code (legal rule). Throwaway once
+  2.7 lands.
 
-## Mechanisms milestone 2.6 grows
+## Pipelines + shaders
 
-* Frame pacing: `maxFramesInFlight = 3`, one `MTL4CommandAllocator` per slot, one
-  `MTLSharedEvent` (`endFrameEvent`) signaled with the frame index at submit.
-* Uniform ring buffer: one shared-storage `MTLBuffer`, `maxFramesInFlight` slots of
-  `alignedUniformsSize = (MemoryLayout<Uniforms>.size + 0xFF) & -0x100`. 256-byte
-  alignment satisfies Metal's buffer-offset requirement. Per-draw uniforms (2.6) extend
-  this scheme to N draws per slot.
-* Binding: `MTL4ArgumentTable` instead of encoder set-buffer calls —
-  `argumentTable.setAddress(buffer.gpuAddress + offset, index:)`, table bound once per
-  encoder via `setArgumentTable`. Indices come from `BufferIndex` in `ShaderTypes.h`
-  (shared Swift <-> MSL).
-* Residency: app-owned `MTLResidencySet` holds vertex + uniform buffers, committed once,
-  attached to the queue via `addResidencySet`. New buffers/textures must be added +
-  re-committed as they are created (2.6). Layer's drawable residency set attached per
-  command buffer.
-* Pipeline build: `MTL4Compiler.makeRenderPipelineState` from
-  `MTL4RenderPipelineDescriptor` + `MTL4LibraryFunctionDescriptor` (no
-  `MTLRenderPipelineDescriptor` function objects). Color `bgra8Unorm_srgb`, no depth yet —
-  2.6 adds `depth32Float`.
-* No-Metal-4 GPU (`.metal4` family unsupported) -> on-screen message, no crash
-  (`GameViewController`).
+* Two `MTL4RenderPipelineState` variants from one fragment function
+  (`staticMeshFragment`), selected via function constant `FunctionConstantAlphaTest`
+  (`MTL4SpecializedFunctionDescriptor` + `MTLFunctionConstantValues`): opaque pays
+  nothing for discard; alpha-test discards below `DrawUniforms.alphaThreshold`.
+* Shading: diffuse map * (directional sun lambert + ambient), vertex color as baked
+  tint (Skyrim bakes AO there), material alpha multiplied through. Normal mapping
+  deferred (stretch goal) — no tangent attributes yet.
+* Depth: `depth32Float` MTKView attachment, write-through less-compare
+  `MTLDepthStencilState`. Metal 4 binds depth format at pass time, not in the pipeline
+  descriptor. Near 10 / far 65 536 per [coordinates](/decisions/coordinates.md).
+* Winding: front = counter-clockwise seen from outside, cull back, per-draw cull-none
+  for double-sided materials. Verified on the demo ground plane; decision doc updated.
+
+## Uniforms + binding
+
+* `FrameUniforms` (viewProjection, camera position, sun direction/color, ambient) — one
+  256-byte-aligned slot per in-flight frame.
+* `DrawUniforms` (model + normal matrix, UV offset/scale, material alpha, alpha
+  threshold) — ring of `maxFramesInFlight x scene.drawCount` 256-byte-aligned entries,
+  written per draw each frame. Scene is fixed in 2.6; growth lands with 2.7 streaming.
+* All binds through one `MTL4ArgumentTable` (3 buffers, 1 texture, 1 sampler); table
+  state is captured per draw, so per-draw `setAddress`/`setTexture` between
+  `drawIndexedPrimitives` calls is the binding model. Sampler: trilinear mipmapped,
+  anisotropy 8, repeat, `supportArgumentBuffers`.
+* Residency: app-owned `MTLResidencySet` holds uniform rings + every scene allocation
+  (`RenderScene.residencyAllocations`), committed at scene build, attached to the queue.
+  Offscreen targets are added/removed around each `renderOffscreen` call.
+
+## Frame pacing + stats
+
+* Pacing unchanged from the skeleton: `maxFramesInFlight = 3`, allocator per slot, one
+  reused `MTL4CommandBuffer`, `MTLSharedEvent` signaled with the frame index.
+* GPU time: `MTL4CounterHeap` (timestamp type, 2 entries per slot),
+  `commandBuffer.writeTimestamp` at frame start/end, resolved on the CPU when the slot's
+  shared-event wait proves the frame finished. Tick -> ns via
+  `MTLDevice.sampleTimestamps` correlation pairs per stats window (`FrameStats`).
+* `FrameStats` logs one line per 120-frame window (subsystem `nl.jjgroenendijk.opensky`,
+  category `FrameStats`): avg/max frame interval + fps, avg CPU encode, avg GPU ms;
+  os_signpost interval per frame for Instruments. This is the measurable basis for the
+  2.9 >30 fps gate.
+
+## Offscreen render
+
+`Renderer.renderOffscreen(width:height:)` renders one frame into an owned color+depth
+target and blocks on the shared event until the GPU finishes — no drawable, no
+compositor. Used by `RendererOffscreenTests` (deterministic pixel assertions + temp PNG
+for human review; Screen Recording TCC is unavailable on dev machines) and intended for
+the 2.9 committed screenshot (engine output, not window capture). Windowless
+`MTKView.currentDrawable` rendering crashes in `waitForDrawable` — never test through
+drawables.
 
 ## MatrixMath conventions
 
-`MatrixMath.swift`, unit-tested (`openskyTests`). Column-major `float4x4`, `M * v`,
-right-handed, camera looks down -z, projection maps z to Metal's [0, 1]. Helpers:
-`radians(fromDegrees:)`, `rotation(radians:axis:)` (Rodrigues), `translation(_:)`,
-`perspective(fovYRadians:aspectRatio:nearZ:farZ:)`. Skyrim Z-up basis change + lookAt +
-TRS compose land with milestone 2.1 (see [todo](/todo.md)).
+`MatrixMath.swift`, unit-tested. Column-major `float4x4`, `M * v`, right-handed, camera
+looks down -z, projection maps z to Metal [0, 1]. `lookAt` builds the view straight from
+Z-up world vectors; `placement` composes REFR transforms; `normalMatrix` =
+inverse-transpose with identity fallback on singular input. Full conventions:
+[coordinates](/decisions/coordinates.md).
 
 ## Verification
 
-Rotating triangle visually confirmed on M1, 2026-07-09, via XCUITest screenshot probe
-(Screen Recording TCC unavailable on dev machine). Rendering acceptance stays visual +
-frame stats — green build alone proves nothing on screen.
+Demo scene visually confirmed on M1, 2026-07-10, via offscreen render PNG: textured
+ground + crates, alpha-test holes show geometry behind them, per-face lighting. The
+ground plane (only single-sided flat mesh) caught the inverted provisional winding —
+closed boxes masked it. Rendering acceptance stays visual + frame stats; a green build
+proves nothing on screen.

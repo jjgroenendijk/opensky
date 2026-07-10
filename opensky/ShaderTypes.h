@@ -17,9 +17,8 @@ typedef NSInteger EnumBackingType;
 typedef NS_ENUM(EnumBackingType, BufferIndex)
 {
     BufferIndexVertices = 0,
-    BufferIndexUniforms = 1,
-    BufferIndexFrameUniforms = 2,
-    BufferIndexDrawUniforms = 3,
+    BufferIndexFrameUniforms = 1,
+    BufferIndexDrawUniforms = 2,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)
@@ -44,12 +43,6 @@ typedef NS_ENUM(EnumBackingType, FunctionConstantIndex)
 {
     FunctionConstantAlphaTest = 0,
 };
-
-typedef struct
-{
-    matrix_float4x4 projectionMatrix;
-    matrix_float4x4 modelViewMatrix;
-} Uniforms;
 
 // Static-mesh path (docs/todo.md 2.6). World space is Skyrim Z-up
 // right-handed at native units (docs/decisions/coordinates.md); view +
@@ -76,13 +69,5 @@ typedef struct
     /// Alpha-test cutoff in [0, 1]; used only by the alpha-test variant.
     float alphaThreshold;
 } DrawUniforms;
-
-// vector_float3 is 16-byte aligned, so color sits at offset 16 and the
-// struct stride is 32. The vertex descriptor in Renderer.swift must match.
-typedef struct
-{
-    vector_float3 position;
-    vector_float4 color;
-} TriangleVertex;
 
 #endif /* ShaderTypes_h */

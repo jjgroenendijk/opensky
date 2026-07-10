@@ -1,5 +1,5 @@
-// Triangle placeholder + static-mesh shaders. Vertex layouts come from
-// ShaderTypes.h enums and the MTLVertexDescriptors built in Renderer.swift.
+// Static-mesh shaders. Vertex layout comes from ShaderTypes.h attribute
+// enums and StaticVertexLayout.vertexDescriptor() (Rendering/RenderMesh.swift).
 
 #include <metal_stdlib>
 #include <simd/simd.h>
@@ -7,32 +7,6 @@
 #import "ShaderTypes.h"
 
 using namespace metal;
-
-typedef struct
-{
-    float3 position [[attribute(VertexAttributePosition)]];
-    float4 color [[attribute(VertexAttributeColor)]];
-} VertexIn;
-
-typedef struct
-{
-    float4 position [[position]];
-    float4 color;
-} VertexOut;
-
-vertex VertexOut vertexShader(VertexIn in [[stage_in]],
-                              constant Uniforms &uniforms [[buffer(BufferIndexUniforms)]])
-{
-    VertexOut out;
-    out.position = uniforms.projectionMatrix * uniforms.modelViewMatrix * float4(in.position, 1.0);
-    out.color = in.color;
-    return out;
-}
-
-fragment float4 fragmentShader(VertexOut in [[stage_in]])
-{
-    return in.color;
-}
 
 // Static-mesh path (docs/todo.md 2.6): diffuse * (directional sun + ambient),
 // vertex color as tint (Skyrim bakes AO there). Alpha-test pipeline variant

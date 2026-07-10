@@ -52,3 +52,8 @@ those belongs in the UI target or needs its own explicit setup.
   synthetic files the test generates. Never checked-in game assets.
 * Rendering checks prefer deterministic assertions (buffer contents, transform
   math) + manual visual confirmation of the real frame.
+* Full-path render checks go through `Renderer.renderOffscreen`
+  (`RendererOffscreenTests`): synchronous frame into an owned texture, pixel
+  assertions, temp PNG logged for human review. Never render through
+  `MTKView.currentDrawable` in tests — windowless drawables crash in
+  `waitForDrawable` (see [renderer](/rendering/metal4-renderer.md)).
