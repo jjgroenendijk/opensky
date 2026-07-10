@@ -191,6 +191,91 @@ enum NIFFixture {
         return out
     }
 
+    /// NiObjectNET-only prefix (property blocks): name, extra refs, controller.
+    static func objectNETPrefix(
+        nameIndex: UInt32 = 0xFFFF_FFFF,
+        extraDataRefs: [Int32] = [],
+        controllerRef: Int32 = -1
+    ) -> Data {
+        var out = Data()
+        out.appendUInt32(nameIndex)
+        out.appendUInt32(UInt32(extraDataRefs.count))
+        for ref in extraDataRefs {
+            out.appendUInt32(UInt32(bitPattern: ref))
+        }
+        out.appendUInt32(UInt32(bitPattern: controllerRef))
+        return out
+    }
+
+    /// BSLightingShaderProperty payload, Skyrim stream layout. `tail` stands
+    /// in for lighting effects + the shader-type-conditional fields the
+    /// decoder never reads.
+    static func bsLightingShaderProperty(
+        shaderType: UInt32 = 0,
+        nameIndex: UInt32 = 0xFFFF_FFFF,
+        shaderFlags1: UInt32 = 0x8240_0301,
+        shaderFlags2: UInt32 = 0x8021,
+        uvOffset: SIMD2<Float> = .zero,
+        uvScale: SIMD2<Float> = SIMD2(1, 1),
+        textureSetRef: Int32 = -1,
+        emissiveColor: SIMD3<Float> = .zero,
+        emissiveMultiple: Float = 1,
+        clampMode: UInt32 = 3,
+        alpha: Float = 1,
+        refractionStrength: Float = 0,
+        glossiness: Float = 80,
+        specularColor: SIMD3<Float> = SIMD3(1, 1, 1),
+        specularStrength: Float = 1,
+        tail: Data = Data(count: 8)
+    ) -> Data {
+        var out = Data()
+        out.appendUInt32(shaderType)
+        out.append(objectNETPrefix(nameIndex: nameIndex))
+        out.appendUInt32(shaderFlags1)
+        out.appendUInt32(shaderFlags2)
+        out.appendFloat32(uvOffset.x)
+        out.appendFloat32(uvOffset.y)
+        out.appendFloat32(uvScale.x)
+        out.appendFloat32(uvScale.y)
+        out.appendUInt32(UInt32(bitPattern: textureSetRef))
+        out.appendFloat32(emissiveColor.x)
+        out.appendFloat32(emissiveColor.y)
+        out.appendFloat32(emissiveColor.z)
+        out.appendFloat32(emissiveMultiple)
+        out.appendUInt32(clampMode)
+        out.appendFloat32(alpha)
+        out.appendFloat32(refractionStrength)
+        out.appendFloat32(glossiness)
+        out.appendFloat32(specularColor.x)
+        out.appendFloat32(specularColor.y)
+        out.appendFloat32(specularColor.z)
+        out.appendFloat32(specularStrength)
+        out.append(tail)
+        return out
+    }
+
+    /// BSShaderTextureSet payload: uint32 count + SizedString paths.
+    static func bsShaderTextureSet(paths: [String]) -> Data {
+        var out = Data()
+        out.appendUInt32(UInt32(paths.count))
+        for path in paths {
+            out.append(sizedString(path))
+        }
+        return out
+    }
+
+    /// NiAlphaProperty payload: NiObjectNET prefix + flags + threshold.
+    static func niAlphaProperty(
+        nameIndex: UInt32 = 0xFFFF_FFFF,
+        flags: UInt16,
+        threshold: UInt8
+    ) -> Data {
+        var out = objectNETPrefix(nameIndex: nameIndex)
+        out.appendUInt16(flags)
+        out.append(threshold)
+        return out
+    }
+
     /// Full file: header, block payloads back to back, footer roots.
     static func file(
         blocks: [Block],

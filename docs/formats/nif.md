@@ -185,6 +185,59 @@ reassembled at decode. normbyte remap: `(byte / 255) * 2 - 1`
 (NifSkope/nifly). Triangle indices are validated `< vertex count`. Impl:
 `NIFTriShape.swift`.
 
+## Materials subset
+
+Property blocks referenced from BSTriShape (shader/alpha refs). They start
+with the NiObjectNET run only (name, extra refs, controller) — no NiAVObject
+fields.
+
+### BSLightingShaderProperty
+
+Skyrim layout (BS 83/100) only; FO4+ rearranges fields. Quirk: the uint32
+shader type precedes the NiObjectNET name for this one block type (nif.xml
+declares it in NiObjectNET with `onlyT=BSLightingShaderProperty`). After the
+NiObjectNET run — parenthesized fields are read past, not kept:
+
+| type     | field                | notes                             |
+| -------- | -------------------- | --------------------------------- |
+| uint32   | shader flags 1       | SkyrimShaderPropertyFlags1, raw   |
+| uint32   | shader flags 2       | bit 4 = double-sided -> cull none |
+| float x2 | UV offset            |                                   |
+| float x2 | UV scale             |                                   |
+| int32    | texture set ref      | BSShaderTextureSet block          |
+| float x4 | (emissive color+mul) |                                   |
+| uint32   | (clamp mode)         |                                   |
+| float    | alpha                | 1 = opaque                        |
+| float    | (refraction)         |                                   |
+| float    | glossiness           | specular power                    |
+| float x3 | specular color       |                                   |
+| float    | specular strength    |                                   |
+
+The tail after specular strength (lighting effects 1/2 + shader-type
+conditional fields: env map scale, skin tint, parallax, eye data…) holds
+nothing the M2 shader needs, so it stays unread; the size-sliced block
+payload bounds it. Impl: `NIFShaderProperty.swift`.
+
+### BSShaderTextureSet
+
+uint32 count + SizedString per slot. Slot 0 diffuse, slot 1 normal/gloss;
+2 glow/skin, 3 height, 4 environment, 5 env mask, 6 subsurface, 7 backlight
+— recorded, unused for now. Paths decode lossily (exporter garbage rule)
+and vary wildly in vanilla: mixed case, `\` or `/`, `textures\` prefix
+present or missing, occasionally a leading `data\`.
+`NIFShaderTextureSet.vfsKey(for:)` canonicalizes: lowercase, `\` -> `/`,
+strip leading `/` + `data/`, ensure `textures/` prefix, empty -> nil. Impl:
+`NIFTextureSet.swift`.
+
+### NiAlphaProperty
+
+NiObjectNET run, then uint16 AlphaFlags + uint8 threshold (nif.xml
+AlphaFlags): bit 0 blend enable, bits 1-4 source blend mode, bits 5-8
+destination blend mode (AlphaFunction enums), bit 9 test enable, bits 10-12
+test function (4 = greater, the default), bit 13 no sorter. Threshold 0-255,
+compared against sampled alpha (foliage cutouts = test enable + threshold).
+Impl: `NIFAlphaProperty.swift`.
+
 ## Scene graph -> engine mesh
 
 `NIFFile.model()` (`NIFModel.swift`) flattens the block tree into engine
@@ -193,8 +246,12 @@ types (`Geometry/Mesh.swift`) decoupled from disk layout:
 - Walk starts at footer roots; `NIFNode.traversedTypes` recurse, composing
   `parent * local` (T·R·S) down the chain; `BSTriShape` leaves become `Mesh`
   values carrying the accumulated model-space transform.
-- Material identity dedups into `MaterialSlot` (shader + alpha property
-  block refs — 2.4 parses them); shapes sharing both share a slot.
+- Material identity dedups by (shader, alpha) property block ref pair;
+  each unique pair resolves once into an engine `Material`
+  (`Geometry/Material.swift`): texture set -> normalized VFS keys, UV
+  transform, alpha/glossiness/specular, double-sided bit, alpha blend/test
+  from NiAlphaProperty. Non-lighting shaders (effect/water/sky) ->
+  `Material.fallback`, untextured but drawn.
 - Skipped: skinned shapes (skin ref set), empty shapes (counted in
   `Model.skippedShapeCount`); all non-drawable leaf types (collision,
   controllers, `BSDynamicTriShape`) end the subtree silently.
@@ -239,3 +296,15 @@ meshes, 23 516 212 vertices, 23 304 125 triangles, 50 407 material slots;
 `farmhouse01.nif` 1409 x 705 x 744 units (~20 x 10 x 11 m),
 `road3way01.nif` 1190 x 1024 x 53, `rockl01.nif` 333 x 426 x 289 —
 building-sized statics, fractions of a cell, plausible throughout.
+
+Materials sweep (probe, 2026-07-10, item 2.4), same file set: 50 407
+resolved materials — 1 356 fallback (effect/water/sky shaders), 9 096 with
+alpha test, 5 329 with blend, 1 362 double-sided. 45 645 carry a diffuse
+key; 45 447 (99.6%) resolve against the texture BSAs' entry tables. Two
+vanilla quirks surfaced: exporter-absolute paths
+(`textures/skyrimhd/build/pc/data/textures/…`, handled by the
+last-`textures/` truncation in `vfsKey`) and 198 genuinely absent textures
+(`textures/err` markers, orphaned fx paths) — those fall to the 2.5
+placeholder rule. `farmhouse01.nif` resolves all 8 slots to existing
+diffuse+normal pairs; its thatch roof is double-sided with alpha test 0.5,
+matching in-game foliage-style rendering expectations.

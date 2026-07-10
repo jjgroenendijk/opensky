@@ -19,11 +19,38 @@ nonisolated extension BinaryReader {
     }
 }
 
-nonisolated struct NIFObjectPrefix {
+/// NiObjectNET field run: name, extra data refs (skipped), controller ref
+/// (skipped). Property blocks (BSLightingShaderProperty, NiAlphaProperty)
+/// start here directly; scene-graph objects continue with NiAVObject fields
+/// (NIFObjectPrefix).
+nonisolated struct NIFObjectNET {
     /// Resolved from the header string table. nil when unnamed (index -1) or
     /// the index is junk — lenient because vanilla string tables carry
     /// exporter garbage (docs/formats/nif.md) and a bad name must not reject
     /// the mesh.
+    let name: String?
+
+    init(reader: inout BinaryReader, header: NIFHeader) throws {
+        let nameIndex = try reader.readUInt32()
+        if nameIndex != .max, Int(nameIndex) < header.strings.count {
+            name = header.strings[Int(nameIndex)]
+        } else {
+            name = nil
+        }
+
+        let extraDataCount = try Int(reader.readUInt32())
+        guard extraDataCount * 4 <= reader.bytesRemaining else {
+            throw NIFError.malformed(
+                "extra data count \(extraDataCount) exceeds block size"
+            )
+        }
+        reader.skip(extraDataCount * 4) // NiExtraData refs, unused
+        reader.skip(4) // NiTimeController ref, unused (animation skipped)
+    }
+}
+
+nonisolated struct NIFObjectPrefix {
+    /// See NIFObjectNET.name.
     let name: String?
     let flags: UInt32
     let translation: SIMD3<Float>
@@ -53,21 +80,7 @@ nonisolated struct NIFObjectPrefix {
             )
         }
 
-        let nameIndex = try reader.readUInt32()
-        if nameIndex != .max, Int(nameIndex) < header.strings.count {
-            name = header.strings[Int(nameIndex)]
-        } else {
-            name = nil
-        }
-
-        let extraDataCount = try Int(reader.readUInt32())
-        guard extraDataCount * 4 <= reader.bytesRemaining else {
-            throw NIFError.malformed(
-                "extra data count \(extraDataCount) exceeds block size"
-            )
-        }
-        reader.skip(extraDataCount * 4) // NiExtraData refs, unused
-        reader.skip(4) // NiTimeController ref, unused (animation skipped)
+        name = try NIFObjectNET(reader: &reader, header: header).name
 
         flags = try reader.readUInt32()
         translation = try reader.readVector3()
