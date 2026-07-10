@@ -4,6 +4,14 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-10
 
+* **DDS -> MTLTexture upload** (2.5): `Rendering/TextureLoader.swift` (new
+  `opensky/Rendering/` dir, noted in AGENTS.md layout) — BCn
+  `MTLPixelFormat` per usage (`TextureUsage.color` -> sRGB view, `.data` ->
+  linear; BC4/5 have no sRGB variants), full mip chain via
+  `MTLTexture.replace`, `.shared` storage (unified memory). Failure path:
+  parse/upload error or missing file -> log + shared 1x1 placeholder
+  (mid-gray color / flat normal), never crash. GPU tests gated on
+  `supportsBCTextureCompression` (paravirtual CI GPUs lack it).
 * **DDS container parser** (2.5): `Formats/DDS/DDSFile.swift` — magic +
   DDS_HEADER + optional DDS_HEADER_DXT10; FourCC DXT1/3/5, ATI1/2, BC4U/5U +
   DXGI UNORM/`_SRGB` codes -> BC1-BC5/BC7; tightly packed mip chain sliced by
