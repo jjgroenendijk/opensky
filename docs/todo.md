@@ -62,26 +62,12 @@ camera, sustained >30 fps on M1. Screenshot lands in `docs/`.
 Sequencing: coordinate conventions fixed in `docs/decisions/coordinates.md` (2.1, done)
 bind all NIF + renderer work; NIF parsing done (2.2-2.4) — `docs/formats/nif.md`
 holds layouts, `NIFFile.model()` yields engine meshes with resolved materials
-(normalized texture VFS keys). 2.5 (DDS) independent; 2.6 unblocked; 2.7 needs
-2.5-2.6; 2.8 needs 2.6 only (fly around any scene, even untextured). One
-branch/PR per numbered item. Every format item: cite spec, synthetic in-code
-test fixtures, write/grow `docs/formats/<name>.md`, verify against real
-install via throwaway probes (never committed).
-
-### 2.5 DDS -> MTLTexture
-
-Ref: Microsoft DDS programming guide (`DDS_HEADER`, `DDS_HEADER_DXT10`). Doc
-`docs/formats/dds.md`.
-
-* [ ] Parser: header + optional DX10 extension; FourCC DXT1/DXT3/DXT5 + DXGI formats ->
-      BC1/2/3/4/5/7; mip chain offsets via 4x4-block size math; cubemaps/volumes -> typed
-      error for now.
-* [ ] Upload: BCn `MTLPixelFormat` (native on Apple Silicon), full mip chain. sRGB for
-      diffuse, linear for normal maps — caller decides per usage.
-* [ ] Fallback: missing/unsupported texture -> 1x1 placeholder + log, never crash.
-* [ ] Unit tests: synthetic DDS bytes per supported format.
-* [ ] Probe: parse headers of every `.dds` in vanilla texture BSAs; full decode of the
-      target cell's texture set.
+(normalized texture VFS keys); DDS done (2.5) — `docs/formats/dds.md`,
+`TextureLoader` turns VFS bytes into MTLTextures with placeholder fallback.
+2.6 unblocked; 2.7 needs 2.6; 2.8 needs 2.6 only (fly around any scene, even
+untextured). One branch/PR per numbered item. Every format item: cite spec,
+synthetic in-code test fixtures, write/grow `docs/formats/<name>.md`, verify
+against real install via throwaway probes (never committed).
 
 ### 2.6 Renderer growth
 

@@ -53,7 +53,7 @@ nonisolated struct DDSFile {
         // DDS_HEADER_DXT10
         static let dimensionTexture2D: UInt32 = 3 // D3D10_RESOURCE_DIMENSION
         static let miscTextureCube: UInt32 = 0x4 // D3D10_RESOURCE_MISC
-        /// Sanity bound; largest vanilla SSE textures are 4096.
+        /// Sanity bound; largest vanilla SSE textures are 8192 (2.5 probe).
         static let maxDimension = 16384
     }
 

@@ -76,6 +76,22 @@ blocks-wide x block size — the `MTLTexture.replace` stride. Claimed mip count 
 the full chain (`floor(log2(max(w,h))) + 1`) or a chain running past EOF ->
 `malformed`; trailing extra bytes tolerated.
 
+## Observed in vanilla SSE (2.5 probe)
+
+Sweep of every `.dds` in the local install's BSAs (Textures0-8, Interface,
+_ResourcePack, CC Fish/AdvDSGS/Curios): 32 920 files.
+
+* BCn, parsed clean: 22 636 — BC3 18 074, BC1 4 417, BC2 145. Zero DX10
+  headers -> zero BC7, zero declared-sRGB; vanilla is legacy-FourCC only
+  (DX10/BC7 path still needed: standard for mods).
+* Unsupported by design: 10 225 uncompressed RGB (DDPF_RGB — face `_msn`
+  normal maps, tint masks, interface art), 58 cubemaps, 1 volume. All ->
+  typed error -> placeholder. Uncompressed support deferred until character
+  rendering needs it; exterior statics are fully BCn.
+* 150 single-mip files; max dimension 8192 (not 4096).
+* Farmhouse texture set (candidate 2.7 cell area): 64 files, full decode +
+  `MTLTexture` upload, zero failures.
+
 ## Color space
 
 `declaresSRGB` (DX10 `_SRGB` code) is advisory only. The renderer picks color space
