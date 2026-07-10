@@ -41,10 +41,6 @@ Machine quirks: repo on case-insensitive external APFS volume (case-only rename 
 (`xcodebuild -downloadComponent MetalToolchain`, bootstrap handles it). GitHub
 `macos-latest` currently has Xcode 26 — CI gate self-skips below 26.
 
-Milestone 1 (read game data: locator, BSA, VFS, ESM walk, FormID, strings, record
-decoders) complete + acceptance met 2026-07-10 — history in [log](/log.md), knowledge in
-`docs/formats/` + `docs/engine/` + `docs/decisions/`.
-
 ## Milestone 2 — static world geometry (mission first target)
 
 Goal: recognizable, textured static geometry of one exterior cell on screen, free-fly
@@ -197,6 +193,4 @@ Ref: Microsoft DDS programming guide (`DDS_HEADER`, `DDS_HEADER_DXT10`). Doc
 
 * String encoding in BSA/ESM: windows-1252 vs UTF-8 (mods vary). Current: cp1252 in BSA.
   Decide lenient decode strategy engine-wide.
-* Which exterior cell as first render target — closed by milestone item 2.7 (probe-driven
-  pick, recorded in `docs/decisions/first-render-cell.md`).
 * Plugin load order source: hardcode vanilla masters first; `plugins.txt` support later?

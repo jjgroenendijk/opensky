@@ -26,7 +26,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 ## Rendering
 
-<!-- Metal 4 renderer notes -->
+* [Metal 4 renderer skeleton](/rendering/metal4-renderer.md) - command flow, frame
+  pacing, uniform ring buffer, argument tables, MatrixMath conventions.
 
 ## Decisions
 

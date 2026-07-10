@@ -10,6 +10,11 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   window. UI smoke test guards the normal launch path. Split earlier same day:
   `make test` = unit only, `make test-ui` = XCUITest suite, CI runs both.
   Doc: [testing setup](/testing.md).
+* **Renderer skeleton doc**: audit of done-item wiki coverage found one gap — Metal 4
+  render loop knowledge lived only in code. Added
+  [Metal 4 renderer skeleton](/rendering/metal4-renderer.md) (command flow, frame pacing,
+  256-byte uniform ring buffer, argument tables, residency, MatrixMath conventions);
+  filled the empty Rendering section in [index](/index.md).
 * **Todo hygiene rule**: AGENTS.md — done item leaves `docs/todo.md` in the same commit,
   knowledge folds into the wiki + this log; todo holds open work only. Applied to
   [todo](/todo.md): dropped "Done" + completed milestone 1 sections (history lives here,
