@@ -15,6 +15,7 @@ nonisolated enum RendererError: Error {
     case sharedEventUnavailable
     case bufferAllocationFailed
     case defaultLibraryMissing
+    case depthStateAllocationFailed
 }
 
 final class Renderer: NSObject {
@@ -36,6 +37,7 @@ final class Renderer: NSObject {
     private let commandAllocators: [MTL4CommandAllocator]
     private let argumentTable: MTL4ArgumentTable
     private let pipelineState: MTLRenderPipelineState
+    private let depthState: MTLDepthStencilState
     private let vertexBuffer: MTLBuffer
     private let uniformBuffer: MTLBuffer
     private let residencySet: MTLResidencySet
@@ -81,8 +83,10 @@ final class Renderer: NSObject {
         uniformBuffer = try Self.makeUniformBuffer(device: device)
 
         view.colorPixelFormat = .bgra8Unorm_srgb
+        view.depthStencilPixelFormat = .depth32Float
         view.sampleCount = 1
         pipelineState = try Self.makePipelineState(device: device, view: view)
+        depthState = try Self.makeDepthState(device: device)
 
         residencySet = try Self.makeResidencySet(
             device: device,
@@ -159,6 +163,20 @@ final class Renderer: NSObject {
         return try compiler.makeRenderPipelineState(descriptor: descriptor)
     }
 
+    /// Standard opaque depth: write-through, closer fragment wins. Metal 4
+    /// binds depth attachment format at pass time (MTKView `depth32Float`),
+    /// not in the pipeline descriptor.
+    private static func makeDepthState(device: MTLDevice) throws -> MTLDepthStencilState {
+        let descriptor = MTLDepthStencilDescriptor()
+        descriptor.label = "OpaqueDepth"
+        descriptor.depthCompareFunction = .less
+        descriptor.isDepthWriteEnabled = true
+        guard let state = device.makeDepthStencilState(descriptor: descriptor) else {
+            throw RendererError.depthStateAllocationFailed
+        }
+        return state
+    }
+
     private static func makeResidencySet(
         device: MTLDevice,
         buffers: [MTLBuffer]
@@ -223,6 +241,11 @@ extension Renderer: MTKViewDelegate {
         else { return }
         encoder.label = "Primary Render Encoder"
         encoder.setRenderPipelineState(pipelineState)
+        encoder.setDepthStencilState(depthState)
+        // Winding + cull per docs/decisions/coordinates.md: NIF content is
+        // D3D-authored, front faces stay clockwise in Metal window coords.
+        encoder.setFrontFacing(.clockwise)
+        encoder.setCullMode(.back)
         encoder.setArgumentTable(argumentTable, stages: [.vertex])
         argumentTable.setAddress(vertexBuffer.gpuAddress, index: BufferIndex.vertices.rawValue)
         argumentTable.setAddress(
