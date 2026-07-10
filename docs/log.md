@@ -4,6 +4,12 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-10
 
+* **NIF geometry probe acceptance** (2.3): typed decode sweep over the
+  geometry BSAs (Meshes0/1, _ResourcePack) — 22 196 `.nif` through
+  `NIFFile.model()`, zero errors; 51 671 meshes, 23.5 M verts, 23.3 M tris,
+  5 751 skinned/empty shapes skipped. Candidate-static AABBs plausible vs
+  the 4096-unit cell (farmhouse01 1409 x 705 x 744). Numbers folded into
+  [NIF mesh](/formats/nif.md). Item 2.3 complete -> left [todo](/todo.md).
 * **NiNode scene-graph decode** (2.3): `Formats/NIF/NIFObject.swift` — shared
   NiObjectNET + NiAVObject prefix (name via string table, flags, T/R/S,
   collision ref; Skyrim streams 83/100 only) with `localTransform` = T·R·S;

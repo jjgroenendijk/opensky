@@ -230,3 +230,12 @@ Statics for M2 need: NiNode (+ BSFadeNode as root), BSTriShape,
 BSLightingShaderProperty, BSShaderTextureSet, NiAlphaProperty. Everything
 Havok (`bhk*`), particle (`*PSys*`), controller/interpolator (animation) and
 skinning gets walked over by size.
+
+Typed decode sweep (probe, 2026-07-10, item 2.3): every `.nif` in the
+geometry BSAs (Meshes0/1, _ResourcePack — 22 196 files) through
+`NIFFile.model()`: all decode, zero unsupported/malformed. 51 671 drawable
+meshes, 23 516 212 vertices, 23 304 125 triangles, 50 407 material slots;
+5 751 shapes skipped (skinned/empty). AABB sanity vs the 4096-unit cell:
+`farmhouse01.nif` 1409 x 705 x 744 units (~20 x 10 x 11 m),
+`road3way01.nif` 1190 x 1024 x 53, `rockl01.nif` 333 x 426 x 289 —
+building-sized statics, fractions of a cell, plausible throughout.
