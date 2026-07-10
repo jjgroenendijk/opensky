@@ -12,6 +12,15 @@ struct BinaryReaderTests {
         #expect(reader.bytesRemaining == 0)
     }
 
+    @Test func readsFloat32() throws {
+        var data = Data()
+        data.appendFloat32(1.5)
+        data.appendFloat32(-0.25)
+        var reader = BinaryReader(data)
+        #expect(try reader.readFloat32() == 1.5)
+        #expect(try reader.readFloat32() == -0.25)
+    }
+
     @Test func readPastEndThrows() {
         var reader = BinaryReader(Data([0x01]))
         #expect(throws: BinaryReaderError.outOfBounds(offset: 0, count: 4, available: 1)) {

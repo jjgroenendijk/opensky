@@ -4,6 +4,13 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-10
 
+* **NiNode scene-graph decode** (2.3): `Formats/NIF/NIFObject.swift` — shared
+  NiObjectNET + NiAVObject prefix (name via string table, flags, T/R/S,
+  collision ref; Skyrim streams 83/100 only) with `localTransform` = T·R·S;
+  `NIFNode.swift` — children refs, one layout for NiNode + append-only
+  subclasses (BSFadeNode…), selector nodes excluded.
+  `BinaryReader.readFloat32`. Ref: NifTools `nif.xml`. Doc:
+  [NIF mesh](/formats/nif.md) scene-graph + NiNode sections.
 * **NIF container probe acceptance** (2.2): walked every `.nif` in the local
   install — 22 806 files across 8 BSAs, all parsed, zero throws. All version
   20.2.0.7 / user 12; BS stream 100 except one 83. 143 distinct block types;

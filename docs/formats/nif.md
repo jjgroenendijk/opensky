@@ -96,6 +96,48 @@ After the last block (nif.xml `Footer`):
 Root refs are stored, not validated — ref resolution belongs to the
 scene-graph layer (2.3).
 
+## Scene graph — shared AV-object prefix
+
+Typed block decode starts at 20.2.0.7 with a Skyrim BS stream (83/100) —
+other streams shift fields and are rejected (`NIFError.unsupported`). Every
+scene-graph object (NiNode lineage, BSTriShape) opens with the same
+NiObjectNET + NiAVObject field run (nif.xml; conditions resolved for
+BS 83/100: uint32 flags since BS > 26, no property list since BS > 34):
+
+| type           | field         | notes                                     |
+| -------------- | ------------- | ----------------------------------------- |
+| uint32         | name          | header string table index; -1 = none      |
+| uint32         | extra count   | NiExtraData refs follow                   |
+| int32 x count  | extra refs    | skipped (M2)                              |
+| int32          | controller    | animation, skipped (M2)                   |
+| uint32         | flags         |                                           |
+| float x 3      | translation   |                                           |
+| float x 9      | rotation      | Matrix33, column-major: m11 m21 m31 m12 … |
+| float          | scale         | uniform only                              |
+| int32          | collision ref | bhk object, recorded not followed (M2)    |
+
+Junk name index -> nil, lenient (same exporter-garbage rationale as header
+strings). Local transform composes `T * R * S`, column vectors — matches
+`docs/decisions/coordinates.md`. Impl: `NIFObject.swift`.
+
+## NiNode
+
+After the prefix (nif.xml NiNode):
+
+| type           | field       | notes                          |
+| -------------- | ----------- | ------------------------------ |
+| uint32         | child count |                                |
+| int32 x count  | children    | block refs, -1 = empty slot    |
+| uint32         | effect count| BS < FO4 only                  |
+| int32 x count  | effects     | skipped                        |
+
+`NIFNode.traversedTypes` lists the subclasses decoded with this one layout —
+BSFadeNode, BSLeafAnimNode, BSTreeNode, BSOrderedNode, BSMultiBoundNode all
+inherit NiNode in nif.xml and only append tail fields, which the size-sliced
+block payload bounds away. Selector nodes (NiSwitchNode, NiLODNode) are
+excluded on purpose: they draw one child, not all; traversing them would
+stack LOD alternatives. Impl: `NIFNode.swift`.
+
 ## Observed in vanilla (probe, 2026-07-10)
 
 Container walk over the local install: 22 806 `.nif` across 8 BSAs

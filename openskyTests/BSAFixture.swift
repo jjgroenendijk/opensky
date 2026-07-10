@@ -89,4 +89,12 @@ extension Data {
     mutating func appendUInt64(_ value: UInt64) {
         Swift.withUnsafeBytes(of: value.littleEndian) { append(contentsOf: $0) }
     }
+
+    mutating func appendFloat32(_ value: Float) {
+        appendUInt32(value.bitPattern)
+    }
+
+    mutating func appendFloat16(_ value: Float) {
+        appendUInt16(Float16(value).bitPattern)
+    }
 }

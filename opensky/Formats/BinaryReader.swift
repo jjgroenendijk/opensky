@@ -66,6 +66,11 @@ nonisolated struct BinaryReader {
         try readInteger()
     }
 
+    /// IEEE 754 single-precision float, little-endian bit pattern.
+    mutating func readFloat32() throws -> Float {
+        try Float(bitPattern: readUInt32())
+    }
+
     private mutating func readInteger<T: FixedWidthInteger>() throws -> T {
         let bytes = try read(count: MemoryLayout<T>.size)
         var value: T = 0
