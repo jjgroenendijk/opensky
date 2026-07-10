@@ -60,27 +60,18 @@ Goal: recognizable, textured static geometry of one exterior cell on screen, fre
 camera, sustained >30 fps on M1. Screenshot lands in `docs/`.
 
 Sequencing: coordinate conventions fixed in `docs/decisions/coordinates.md` (2.1, done)
-bind all NIF + renderer work. 2.2 -> 2.3 -> 2.4 build on each other; 2.5 (DDS)
-independent, can run parallel to NIF; 2.6 unblocked now; 2.7 needs 2.2-2.6; 2.8 needs
-2.6 only (fly around any scene, even untextured). One branch/PR per numbered item.
-Every format item: cite spec, synthetic in-code test fixtures, write/grow
-`docs/formats/<name>.md`, verify against real install via throwaway probes (never
-committed).
-
-### 2.2 NIF parser — container
-
-Refs: NifTools `nif.xml`, NifSkope source docs, UESP. SSE meshes: version 20.2.0.7,
-user version 12, BS stream 100. Doc `docs/formats/nif.md` grows over 2.2-2.4.
-
-* [ ] Header: version line, version, endianness, user version, block count, block type
-      table, per-block type index + size array, string table, groups.
-* [ ] Block walk with typed skip: unknown/unneeded block type -> skip via recorded block
-      size, keep walking. Malformed input -> typed throw, never crash caller.
-* [ ] Unit tests: synthetic NIF bytes built in code (header + minimal block table).
-* [ ] Probe acceptance: walk block tables of every `.nif` in vanilla meshes BSAs without
-      a throw; log histogram of block types (tells us what 2.3/2.4 must cover).
+bind all NIF + renderer work; NIF container walk done (2.2,
+`docs/formats/nif.md` — block-type histogram there is the 2.3/2.4 coverage
+list). 2.3 -> 2.4 build on it; 2.5 (DDS) independent, can run parallel to NIF;
+2.6 unblocked now; 2.7 needs 2.3-2.6; 2.8 needs 2.6 only (fly around any
+scene, even untextured). One branch/PR per numbered item. Every format item:
+cite spec, synthetic in-code test fixtures, write/grow `docs/formats/<name>.md`,
+verify against real install via throwaway probes (never committed).
 
 ### 2.3 NIF parser — scene graph + geometry
+
+Refs: NifTools `nif.xml`, NifSkope source docs, UESP. SSE meshes: version 20.2.0.7,
+user version 12, BS stream 100. Doc `docs/formats/nif.md` grows over 2.3-2.4.
 
 * [ ] NiNode: name, flags, transform (translation, 3x3 rotation, uniform scale), children
       refs. Accumulate parent chain to per-shape world transform.

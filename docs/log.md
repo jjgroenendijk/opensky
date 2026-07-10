@@ -4,6 +4,26 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-10
 
+* **NIF container probe acceptance** (2.2): walked every `.nif` in the local
+  install — 22 806 files across 8 BSAs, all parsed, zero throws. All version
+  20.2.0.7 / user 12; BS stream 100 except one 83. 143 distinct block types;
+  histogram + M2 coverage list folded into [NIF mesh](/formats/nif.md).
+  Item 2.2 complete -> left [todo](/todo.md).
+* **Lossy text decode for NIF strings** (2.2): probe over vanilla meshes hit
+  exporter garbage in one string table (bytes undefined in cp1252) ->
+  `GameText.decodeLossy` (UTF-8 -> cp1252 -> ISO 8859-1, never nil), used for
+  NIF header strings so a junk name cannot reject a mesh. Note in
+  [NIF mesh](/formats/nif.md).
+* **NIF block walk** (2.2): `Formats/NIF/NIFFile.swift` — slices every block
+  payload by the header size array (unknown types skipped by construction),
+  reads footer roots, `blockTypeCounts()` histogram for probes. Oversized
+  block / truncated footer -> `NIFError.malformed`. Doc:
+  [NIF mesh](/formats/nif.md) block walk + footer sections.
+* **NIF header parser** (2.2): `Formats/NIF/NIFHeader.swift` — version line,
+  version (20.2.0.7 only), endian byte, user version, BSStreamHeader (83/100),
+  block type table, per-block type index (PhysX bit masked) + size array,
+  string table, groups. Typed `NIFError`. Ref: NifTools `nif.xml`. Doc:
+  [NIF mesh](/formats/nif.md).
 * **MatrixMath growth** (2.1): `zUpToYUp` basis change, `rotationX/Y/Z`,
   `scale(uniform:)`, `lookAt` (RH, works straight off Z-up world vectors),
   `placement(position:rotation:scale:)` = `T * Rz(-z) * Ry(-y) * Rx(-x) * S` for

@@ -18,6 +18,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   .ilstrings layout, lenient encoding policy, lstring lookup wiring.
 * [Record decoders](/formats/records.md) - WRLD/CELL/REFR/STAT field layouts
   and their engine types.
+* [NIF mesh](/formats/nif.md) - Gamebryo 20.2.0.7 container: header, block
+  table, block walk.
 
 ## Engine
 
