@@ -4,6 +4,13 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-10
 
+* **DDS container parser** (2.5): `Formats/DDS/DDSFile.swift` — magic +
+  DDS_HEADER + optional DDS_HEADER_DXT10; FourCC DXT1/3/5, ATI1/2, BC4U/5U +
+  DXGI UNORM/`_SRGB` codes -> BC1-BC5/BC7; tightly packed mip chain sliced by
+  4x4-block math, `bytesPerRow` for `MTLTexture.replace`; cubemap/volume/
+  array/uncompressed -> typed `unsupported`, truncated chain -> `malformed`.
+  Ref: Microsoft DDS programming guide. Doc:
+  [DDS texture container](/formats/dds.md).
 * **NIF materials probe acceptance** (2.4): resolved materials for all
   22 196 geometry-BSA `.nif` (zero failures): 50 407 materials, 1 356
   fallback, 9 096 alpha-test, 5 329 blend, 1 362 double-sided; 99.6% of
