@@ -53,8 +53,10 @@ nonisolated final class FrameStats {
 
     /// Call after commit. `gpuTicks` is the resolved counter-heap pair of an
     /// earlier completed frame (nil while the pipeline fills or when the
-    /// heap is unavailable).
-    func endFrame(cpuStartNS: UInt64, gpuTicks: (start: UInt64, end: UInt64)?) {
+    /// heap is unavailable). Returns the logged summary line when this frame
+    /// closed a stats window — surfaced so tests can verify the instrument.
+    @discardableResult
+    func endFrame(cpuStartNS: UInt64, gpuTicks: (start: UInt64, end: UInt64)?) -> String? {
         if let state = signpostState {
             Self.signposter.endInterval("frame", state)
             signpostState = nil
@@ -74,11 +76,12 @@ nonisolated final class FrameStats {
         }
         frameCount += 1
         if frameCount >= Self.windowSize {
-            flush()
+            return flush()
         }
+        return nil
     }
 
-    private func flush() {
+    private func flush() -> String? {
         let next = Self.sample(device: device)
         defer {
             correlation = next
@@ -92,7 +95,7 @@ nonisolated final class FrameStats {
         }
 
         let encodeMS = Double(encodeTotalNS) / Double(frameCount) / 1e6
-        guard intervalCount > 0 else { return }
+        guard intervalCount > 0 else { return nil }
         let intervalMS = Double(intervalTotalNS) / Double(intervalCount) / 1e6
         let maxMS = Double(intervalMaxNS) / 1e6
         let fps = intervalMS > 0 ? 1000 / intervalMS : 0
@@ -105,17 +108,15 @@ nonisolated final class FrameStats {
             gpuText = String(format: "%.2f", gpuMS)
         }
 
+        let summary = String(
+            format: "frame avg %.2f ms (%.0f fps, max %.2f ms) | "
+                + "cpu encode avg %.2f ms | gpu avg %@ ms",
+            intervalMS, fps, maxMS, encodeMS, gpuText
+        )
         // .notice persists to the log store (`log show`); .info is
         // memory-only and invisible after the fact — this line is the 2.9
         // fps measurement, it must be retrievable.
-        Self.logger.notice(
-            """
-            frame avg \(String(format: "%.2f", intervalMS), privacy: .public) ms \
-            (\(String(format: "%.0f", fps), privacy: .public) fps, \
-            max \(String(format: "%.2f", maxMS), privacy: .public) ms) | \
-            cpu encode avg \(String(format: "%.2f", encodeMS), privacy: .public) ms | \
-            gpu avg \(gpuText, privacy: .public) ms
-            """
-        )
+        Self.logger.notice("\(summary, privacy: .public)")
+        return summary
     }
 }
