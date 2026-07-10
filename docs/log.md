@@ -10,6 +10,10 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   window. UI smoke test guards the normal launch path. Split earlier same day:
   `make test` = unit only, `make test-ui` = XCUITest suite, CI runs both.
   Doc: [testing setup](/testing.md).
+* **Todo hygiene rule**: AGENTS.md — done item leaves `docs/todo.md` in the same commit,
+  knowledge folds into the wiki + this log; todo holds open work only. Applied to
+  [todo](/todo.md): dropped "Done" + completed milestone 1 sections (history lives here,
+  layouts in `docs/formats/`).
 * **Milestone 2 detailed plan**: expanded [todo](/todo.md) milestone 2 into
   sequenced sub-items 2.1-2.9 (coordinates decision -> NIF container/geometry/
   materials -> DDS -> renderer -> cell scene -> camera -> acceptance) with

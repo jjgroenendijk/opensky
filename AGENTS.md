@@ -128,6 +128,11 @@ The wiki holds reverse-engineered format knowledge, subsystem design, and decisi
 survive across sessions. Part of done: a change that adds/alters a subsystem, parser, or
 non-obvious decision updates `docs/` in the same commit.
 
+`docs/todo.md` is the roadmap/task list — open work only. Item done -> same commit: delete
+it from `docs/todo.md`, fold what was learned into the wiki (`docs/formats/`,
+`docs/decisions/`, ...), record it in `docs/log.md`. No "Done" sections, no lingering
+checked boxes — history lives in `log.md` + git, not the todo.
+
 OKF rules:
 
 - `docs/` is the bundle root — plain tree of `.md` files. Subdir structure is free; group by
