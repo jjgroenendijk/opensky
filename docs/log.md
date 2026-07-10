@@ -4,6 +4,16 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-10
 
+* **NIF material block decoders** (2.4): `Formats/NIF/NIFShaderProperty.swift`
+  — BSLightingShaderProperty (Skyrim layout: shader type before the
+  NiObjectNET name, flags 1/2, UV offset/scale, texture set ref, alpha,
+  glossiness, specular; type-conditional tail unread);
+  `NIFTextureSet.swift` — BSShaderTextureSet slots + `vfsKey(for:)` path
+  normalization (lowercase, `\` -> `/`, strip `data/`, ensure `textures/`);
+  `NIFAlphaProperty.swift` — AlphaFlags blend/test bits + threshold.
+  `NIFObjectNET` split out of the AV prefix (property blocks lack NiAVObject
+  fields). Ref: NifTools `nif.xml`. Doc: [NIF mesh](/formats/nif.md)
+  materials subset.
 * **NIF geometry probe acceptance** (2.3): typed decode sweep over the
   geometry BSAs (Meshes0/1, _ResourcePack) — 22 196 `.nif` through
   `NIFFile.model()`, zero errors; 51 671 meshes, 23.5 M verts, 23.3 M tris,

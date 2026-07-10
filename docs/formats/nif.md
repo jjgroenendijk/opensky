@@ -185,6 +185,59 @@ reassembled at decode. normbyte remap: `(byte / 255) * 2 - 1`
 (NifSkope/nifly). Triangle indices are validated `< vertex count`. Impl:
 `NIFTriShape.swift`.
 
+## Materials subset
+
+Property blocks referenced from BSTriShape (shader/alpha refs). They start
+with the NiObjectNET run only (name, extra refs, controller) — no NiAVObject
+fields.
+
+### BSLightingShaderProperty
+
+Skyrim layout (BS 83/100) only; FO4+ rearranges fields. Quirk: the uint32
+shader type precedes the NiObjectNET name for this one block type (nif.xml
+declares it in NiObjectNET with `onlyT=BSLightingShaderProperty`). After the
+NiObjectNET run — parenthesized fields are read past, not kept:
+
+| type     | field                | notes                             |
+| -------- | -------------------- | --------------------------------- |
+| uint32   | shader flags 1       | SkyrimShaderPropertyFlags1, raw   |
+| uint32   | shader flags 2       | bit 4 = double-sided -> cull none |
+| float x2 | UV offset            |                                   |
+| float x2 | UV scale             |                                   |
+| int32    | texture set ref      | BSShaderTextureSet block          |
+| float x4 | (emissive color+mul) |                                   |
+| uint32   | (clamp mode)         |                                   |
+| float    | alpha                | 1 = opaque                        |
+| float    | (refraction)         |                                   |
+| float    | glossiness           | specular power                    |
+| float x3 | specular color       |                                   |
+| float    | specular strength    |                                   |
+
+The tail after specular strength (lighting effects 1/2 + shader-type
+conditional fields: env map scale, skin tint, parallax, eye data…) holds
+nothing the M2 shader needs, so it stays unread; the size-sliced block
+payload bounds it. Impl: `NIFShaderProperty.swift`.
+
+### BSShaderTextureSet
+
+uint32 count + SizedString per slot. Slot 0 diffuse, slot 1 normal/gloss;
+2 glow/skin, 3 height, 4 environment, 5 env mask, 6 subsurface, 7 backlight
+— recorded, unused for now. Paths decode lossily (exporter garbage rule)
+and vary wildly in vanilla: mixed case, `\` or `/`, `textures\` prefix
+present or missing, occasionally a leading `data\`.
+`NIFShaderTextureSet.vfsKey(for:)` canonicalizes: lowercase, `\` -> `/`,
+strip leading `/` + `data/`, ensure `textures/` prefix, empty -> nil. Impl:
+`NIFTextureSet.swift`.
+
+### NiAlphaProperty
+
+NiObjectNET run, then uint16 AlphaFlags + uint8 threshold (nif.xml
+AlphaFlags): bit 0 blend enable, bits 1-4 source blend mode, bits 5-8
+destination blend mode (AlphaFunction enums), bit 9 test enable, bits 10-12
+test function (4 = greater, the default), bit 13 no sorter. Threshold 0-255,
+compared against sampled alpha (foliage cutouts = test enable + threshold).
+Impl: `NIFAlphaProperty.swift`.
+
 ## Scene graph -> engine mesh
 
 `NIFFile.model()` (`NIFModel.swift`) flattens the block tree into engine
