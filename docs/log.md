@@ -4,6 +4,11 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-10
 
+* **MatrixMath growth** (2.1): `zUpToYUp` basis change, `rotationX/Y/Z`,
+  `scale(uniform:)`, `lookAt` (RH, works straight off Z-up world vectors),
+  `placement(position:rotation:scale:)` = `T * Rz(-z) * Ry(-y) * Rx(-x) * S` for
+  REFR data. Unit tests: axis mapping, det +1, eye/target properties, yaw sign,
+  TRS round-trip. Item 2.1 complete -> left [todo](/todo.md).
 * **Coordinates + units decision** (2.1):
   [decision doc](/decisions/coordinates.md) — world space stays Skyrim Z-up RH at
   native units, view/projection convert to Metal NDC; fixes column-major `M * v`,

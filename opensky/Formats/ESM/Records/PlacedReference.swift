@@ -12,7 +12,7 @@ import simd
 
 nonisolated struct PlacedReference {
     /// DATA field: 24 bytes, positions in game units, rotations in radians
-    /// (Skyrim world axes — see docs/decisions on coordinates, milestone 2).
+    /// (Skyrim world axes — see docs/decisions/coordinates.md).
     struct Placement: Equatable {
         let position: SIMD3<Float>
         let rotation: SIMD3<Float>
