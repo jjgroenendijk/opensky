@@ -1,0 +1,124 @@
+// RenderScene draw-list construction tests: opaque/alpha-test grouping,
+// matrix composition, residency dedup. All need a Metal device for buffer
+// and texture allocation — skipped on CI without one.
+
+import Foundation
+import Metal
+@testable import opensky
+import simd
+import Testing
+
+struct RenderSceneTests {
+    private static let device = MTLCreateSystemDefaultDevice()
+
+    private static var hasDevice: Bool {
+        device != nil
+    }
+
+    private static func texture(device: MTLDevice) throws -> MTLTexture {
+        let descriptor = MTLTextureDescriptor()
+        descriptor.width = 1
+        descriptor.height = 1
+        descriptor.pixelFormat = .rgba8Unorm
+        descriptor.usage = .shaderRead
+        return try #require(device.makeTexture(descriptor: descriptor))
+    }
+
+    private static func mesh(slot: Int, transform: float4x4 = matrix_identity_float4x4) -> Mesh {
+        Mesh(
+            name: nil,
+            transform: transform,
+            positions: [SIMD3(0, 0, 0), SIMD3(1, 0, 0), SIMD3(0, 1, 0)],
+            normals: [],
+            tangents: [],
+            bitangents: [],
+            uvs: [],
+            colors: [],
+            indices: [0, 1, 2],
+            materialSlot: slot
+        )
+    }
+
+    private static func material(alphaTest: Float? = nil) -> Material {
+        Material(
+            diffuseTexture: nil,
+            normalTexture: nil,
+            uvOffset: .zero,
+            uvScale: SIMD2(1, 1),
+            alpha: 1,
+            glossiness: 80,
+            specularColor: SIMD3(1, 1, 1),
+            specularStrength: 1,
+            doubleSided: false,
+            alphaBlend: false,
+            alphaTestThreshold: alphaTest
+        )
+    }
+
+    private static func renderModel(device: MTLDevice) throws -> RenderModel {
+        let shared = try texture(device: device)
+        let model = Model(
+            meshes: [mesh(slot: 1), mesh(slot: 0)],
+            materials: [material(alphaTest: 0.5), material()],
+            skippedShapeCount: 0
+        )
+        return try RenderModel(device: device, model: model) { _, _ in shared }
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func groupsOpaqueBeforeAlphaTested() throws {
+        let device = try #require(Self.device)
+        let model = try Self.renderModel(device: device)
+        let scene = RenderScene(instances: [(model, matrix_identity_float4x4)])
+
+        #expect(scene.drawCount == 2)
+        #expect(scene.opaque.count == 1)
+        #expect(scene.alphaTested.count == 1)
+        #expect(scene.opaque[0].material.alphaTestThreshold == nil)
+        #expect(scene.alphaTested[0].material.alphaTestThreshold == 0.5)
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func composesInstanceAndLocalTransforms() throws {
+        let device = try #require(Self.device)
+        let local = MatrixMath.translation(SIMD3(0, 0, 5))
+        let model = Model(
+            meshes: [Self.mesh(slot: 0, transform: local)],
+            materials: [Self.material()],
+            skippedShapeCount: 0
+        )
+        let shared = try Self.texture(device: device)
+        let render = try RenderModel(device: device, model: model) { _, _ in shared }
+        let instance = MatrixMath.translation(SIMD3(100, 0, 0))
+        let scene = RenderScene(instances: [(render, instance)])
+
+        let expected = instance * local
+        #expect(scene.opaque[0].modelMatrix == expected)
+        #expect(scene.opaque[0].normalMatrix == MatrixMath.normalMatrix(expected))
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func skipsMeshWithBadMaterialSlot() throws {
+        let device = try #require(Self.device)
+        let model = Model(
+            meshes: [Self.mesh(slot: 3)],
+            materials: [Self.material()],
+            skippedShapeCount: 0
+        )
+        let shared = try Self.texture(device: device)
+        let render = try RenderModel(device: device, model: model) { _, _ in shared }
+        let scene = RenderScene(instances: [(render, matrix_identity_float4x4)])
+        #expect(scene.drawCount == 0)
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func deduplicatesResidencyAllocations() throws {
+        let device = try #require(Self.device)
+        let model = try Self.renderModel(device: device)
+        // Two instances of one model: buffers + shared texture counted once.
+        let scene = RenderScene(instances: [
+            (model, matrix_identity_float4x4),
+            (model, MatrixMath.translation(SIMD3(10, 0, 0)))
+        ])
+
+        #expect(scene.drawCount == 4)
+        // 2 meshes x (vertex + index buffer) + 1 shared texture = 5.
+        #expect(scene.residencyAllocations.count == 5)
+    }
+}
