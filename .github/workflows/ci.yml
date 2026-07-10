@@ -43,6 +43,9 @@ jobs:
       - name: Install Metal Toolchain
         if: ${{ steps.xcode.outputs.major >= 26 }}
         run: xcodebuild -downloadComponent MetalToolchain
-      - name: Build & test
+      - name: Build & test (unit)
         if: ${{ steps.xcode.outputs.major >= 26 }}
         run: make test
+      - name: UI tests
+        if: ${{ steps.xcode.outputs.major >= 26 }}
+        run: make test-ui

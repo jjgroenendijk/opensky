@@ -100,7 +100,8 @@ Update this section when structure changes materially.
 Drive everything through `make` so results are reproducible. `make help` lists targets.
 
 - `make build` — build the app (Debug)
-- `make test` — build + run the test suite
+- `make test` — build + run unit tests (skips UI tests)
+- `make test-ui` — run UI tests (launches app, drives via automation; CI runs both)
 - `make check` — format-check + lint, no build (fast gate)
 - `make format` / `make lint` — autoformat / strict lint
 
