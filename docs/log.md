@@ -2,6 +2,13 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-07-10
+
+* **Milestone 2 detailed plan**: expanded [todo](/todo.md) milestone 2 into
+  sequenced sub-items 2.1-2.9 (coordinates decision -> NIF container/geometry/
+  materials -> DDS -> renderer -> cell scene -> camera -> acceptance) with
+  per-item acceptance criteria, spec refs, probe strategy, dependency order.
+
 ## 2026-07-09
 
 * **Record decoders + lstring wiring**: `Formats/ESM/Records/` — `Worldspace`
