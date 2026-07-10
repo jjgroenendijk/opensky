@@ -4,6 +4,15 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-10
 
+* **NIF materials probe acceptance** (2.4): resolved materials for all
+  22 196 geometry-BSA `.nif` (zero failures): 50 407 materials, 1 356
+  fallback, 9 096 alpha-test, 5 329 blend, 1 362 double-sided; 99.6% of
+  diffuse keys resolve in the texture BSAs after teaching `vfsKey` the
+  engine's last-`textures/` truncation (vanilla ships exporter-absolute
+  paths); 198 remaining misses are genuinely absent vanilla textures ->
+  2.5 placeholder rule. `Model.materials` now carries resolved engine
+  `Material` values (`Geometry/Material.swift`); `MaterialSlot` block refs
+  replaced. Item 2.4 complete -> left [todo](/todo.md).
 * **NIF material block decoders** (2.4): `Formats/NIF/NIFShaderProperty.swift`
   — BSLightingShaderProperty (Skyrim layout: shader type before the
   NiObjectNET name, flags 1/2, UV offset/scale, texture set ref, alpha,

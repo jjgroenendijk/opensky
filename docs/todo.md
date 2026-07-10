@@ -60,25 +60,13 @@ Goal: recognizable, textured static geometry of one exterior cell on screen, fre
 camera, sustained >30 fps on M1. Screenshot lands in `docs/`.
 
 Sequencing: coordinate conventions fixed in `docs/decisions/coordinates.md` (2.1, done)
-bind all NIF + renderer work; NIF container walk (2.2) + scene graph/geometry
-(2.3) done — `docs/formats/nif.md` holds layouts, `NIFFile.model()` yields
-engine meshes. 2.4 builds on it; 2.5 (DDS) independent, can run parallel to
-NIF; 2.6 unblocked now; 2.7 needs 2.4-2.6; 2.8 needs 2.6 only (fly around any
-scene, even untextured). One branch/PR per numbered item. Every format item:
-cite spec, synthetic in-code test fixtures, write/grow `docs/formats/<name>.md`,
-verify against real install via throwaway probes (never committed).
-
-### 2.4 NIF parser — materials subset
-
-Refs: NifTools `nif.xml`, NifSkope source docs, UESP. Doc `docs/formats/nif.md`.
-
-* [ ] BSLightingShaderProperty: shader type, shader flags 1/2, UV offset/scale, alpha,
-      glossiness, specular color/strength — parse what the shader needs, skip the rest.
-* [ ] BSShaderTextureSet: path slots (slot 0 diffuse, slot 1 normal; others recorded,
-      unused for now).
-* [ ] NiAlphaProperty: flags -> blend/test bits + threshold (foliage needs alpha test).
-* [ ] Texture path normalization to VFS keys: lowercase, `\` -> `/`, ensure `textures/`
-      prefix (real files vary).
+bind all NIF + renderer work; NIF parsing done (2.2-2.4) — `docs/formats/nif.md`
+holds layouts, `NIFFile.model()` yields engine meshes with resolved materials
+(normalized texture VFS keys). 2.5 (DDS) independent; 2.6 unblocked; 2.7 needs
+2.5-2.6; 2.8 needs 2.6 only (fly around any scene, even untextured). One
+branch/PR per numbered item. Every format item: cite spec, synthetic in-code
+test fixtures, write/grow `docs/formats/<name>.md`, verify against real
+install via throwaway probes (never committed).
 
 ### 2.5 DDS -> MTLTexture
 

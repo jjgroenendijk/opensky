@@ -296,3 +296,15 @@ meshes, 23 516 212 vertices, 23 304 125 triangles, 50 407 material slots;
 `farmhouse01.nif` 1409 x 705 x 744 units (~20 x 10 x 11 m),
 `road3way01.nif` 1190 x 1024 x 53, `rockl01.nif` 333 x 426 x 289 —
 building-sized statics, fractions of a cell, plausible throughout.
+
+Materials sweep (probe, 2026-07-10, item 2.4), same file set: 50 407
+resolved materials — 1 356 fallback (effect/water/sky shaders), 9 096 with
+alpha test, 5 329 with blend, 1 362 double-sided. 45 645 carry a diffuse
+key; 45 447 (99.6%) resolve against the texture BSAs' entry tables. Two
+vanilla quirks surfaced: exporter-absolute paths
+(`textures/skyrimhd/build/pc/data/textures/…`, handled by the
+last-`textures/` truncation in `vfsKey`) and 198 genuinely absent textures
+(`textures/err` markers, orphaned fx paths) — those fall to the 2.5
+placeholder rule. `farmhouse01.nif` resolves all 8 slots to existing
+diffuse+normal pairs; its thatch roof is double-sided with alpha test 0.5,
+matching in-game foliage-style rendering expectations.
