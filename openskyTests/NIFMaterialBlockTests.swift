@@ -94,6 +94,18 @@ struct NIFMaterialBlockTests {
         #expect(NIFShaderTextureSet.vfsKey(for: "  ") == nil)
     }
 
+    @Test func truncatesExporterAbsolutePathsAtLastTexturesComponent() {
+        // Observed in vanilla (probe 2026-07-10): shipping meshes carry
+        // exporter-absolute paths; the game resolves them from the last
+        // `textures/` component.
+        #expect(NIFShaderTextureSet.vfsKey(
+            for: "Textures\\SkyrimHD\\build\\PC\\data\\textures\\clutter\\carrot.dds"
+        ) == "textures/clutter/carrot.dds")
+        // Component boundary required: no mid-word truncation.
+        #expect(NIFShaderTextureSet.vfsKey(for: "mytextures\\foo.dds")
+            == "textures/mytextures/foo.dds")
+    }
+
     @Test func oversizedTextureCountIsMalformed() throws {
         var payload = Data()
         payload.appendUInt32(0xFFFF)

@@ -43,7 +43,13 @@ nonisolated struct NIFShaderTextureSet {
     }
 
     /// Normalizes a stored texture path to a VFS key: lowercase, `\` -> `/`,
-    /// leading `data/` stripped, `textures/` prefix ensured. Empty -> nil.
+    /// everything before the last `textures/` component dropped, `textures/`
+    /// prefix ensured. Empty -> nil.
+    ///
+    /// The truncation mirrors observed engine behavior (and NifSkope's
+    /// resolver): vanilla meshes ship exporter-absolute paths like
+    /// `textures/skyrimhd/build/pc/data/textures/clutter/…/carrot.dds`, and
+    /// the game still finds `textures/clutter/…/carrot.dds`.
     static func vfsKey(for raw: String) -> String? {
         var path = raw.lowercased()
             .replacingOccurrences(of: "\\", with: "/")
@@ -54,10 +60,28 @@ nonisolated struct NIFShaderTextureSet {
         if path.hasPrefix("data/") {
             path.removeFirst("data/".count)
         }
+        if let start = lastTexturesComponent(in: path) {
+            path.removeSubrange(path.startIndex ..< start)
+        }
         guard !path.isEmpty else { return nil }
         if !path.hasPrefix("textures/") {
             path = "textures/" + path
         }
         return path
+    }
+
+    /// Start of the last `textures/` path component, if any — component
+    /// boundary required so `mytextures/foo.dds` is not truncated mid-word.
+    private static func lastTexturesComponent(in path: String) -> String.Index? {
+        var searchRange = path.startIndex ..< path.endIndex
+        var found: String.Index?
+        while let range = path.range(of: "textures/", range: searchRange) {
+            let atStart = range.lowerBound == path.startIndex
+            if atStart || path[path.index(before: range.lowerBound)] == "/" {
+                found = range.lowerBound
+            }
+            searchRange = range.upperBound ..< path.endIndex
+        }
+        return found
     }
 }
