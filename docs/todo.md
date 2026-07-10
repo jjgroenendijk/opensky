@@ -24,7 +24,8 @@ Fresh session picks up here. Steps:
 4. Pick topmost unchecked item below. One branch per item (`feat/...`), atomic commits,
    Conventional Commit bodies (Context/Change/Rationale/Impact/Tests), PR via `gh`.
    Item done + green -> always commit and open the PR; never leave finished work
-   uncommitted. No AI trailers.
+   uncommitted. No AI trailers. Done item leaves this file in the same commit — knowledge
+   folds into wiki + `docs/log.md` (AGENTS.md rule).
 5. Format work discipline: cite open spec (UESP, xEdit, NifTools) in code + doc, synthetic
    in-code test fixtures only, write `docs/formats/<name>.md`, update `docs/log.md` +
    `docs/index.md` in same commit. Never commit game data — no exceptions.
@@ -39,50 +40,6 @@ Machine quirks: repo on case-insensitive external APFS volume (case-only rename 
 `git mv`; AppleDouble `._*` files ignored). Xcode 26 ships without Metal Toolchain
 (`xcodebuild -downloadComponent MetalToolchain`, bootstrap handles it). GitHub
 `macos-latest` currently has Xcode 26 — CI gate self-skips below 26.
-
-## Done
-
-* Dev tooling: Makefile hub, git hooks, SwiftFormat/SwiftLint/markdownlint/shellcheck,
-  CI. `make check` green. (PR #1)
-* Xcode project: native macOS-only (was iOS template), project format Xcode 26.3
-  (objectVersion 100), programmatic AppKit app, shared scheme, ad-hoc signing. (PR #1)
-* Metal 4 skeleton: MTL4CommandQueue/CommandBuffer/ArgumentTable/ResidencySet pipeline,
-  rotating triangle renders on M1 (visually confirmed 2026-07-09). MatrixMath unit-tested.
-* BSA v105 parser (`Formats/BSA/`) + clean-room LZ4 frame decoder + BinaryReader.
-  Verified against vanilla SSE archives. Doc: [BSA](/formats/bsa.md). (PR #2)
-
-## Milestone 1 — read game data
-
-Goal: locate install, open archives + plugins, walk records. Acceptance: app (or test
-probe) lists all worldspaces in `Skyrim.esm`, counts cells per worldspace, dumps one
-exterior cell's STAT refs with FormIDs, positions, rotations, model paths.
-
-* [x] Game data locator: env `OPENSKY_DATA_ROOT` -> defaults `OpenSkyDataRoot` ->
-      default Steam path. Fail-loud alert + os_log, no silent fallback. Doc:
-      [game data locator](/engine/game-data-locator.md).
-* [x] BSA v105 archive parser. Done, see above.
-* [x] VFS / resource manager: one lookup layer over data root. Loose files under `Data/`
-      override BSA contents; case-insensitive keys; archive open order (vanilla masters'
-      BSAs first, per Skyrim.ini `sResourceArchiveList`/`sResourceArchiveList2`, then
-      plugin-named archives). Lazy archive open. Doc: [VFS](/formats/vfs.md).
-* [x] ESM/ESP container walk (`Formats/ESM/`): 24-byte record headers, GRUP traversal
-      (group types 0-9), zlib-decompressed records via Apple Compression (2-byte zlib
-      header stripped), field iterator with XXXX size extension, lazy payload parsing.
-      Verified against vanilla Skyrim.esm (870k records, 44k compressed, all fields
-      parse). Doc: [ESM container](/formats/esm.md).
-* [x] FormID + master resolution (`Formats/ESM/PluginHeader.swift`, `FormID.swift`):
-      TES4 header decode (HEDR, CNAM/SNAM, MAST), FormID top byte -> master index,
-      `ResolvedFormID` = (plugin, objectID). Doc: [FormID](/formats/formid.md).
-* [x] Localized strings (`Formats/Strings/StringTable.swift`): three table formats
-      (zstring vs length-prefixed framing), lenient UTF-8 -> cp1252 decode, verified
-      against all 273 vanilla tables. Doc: [string tables](/formats/strings.md).
-* [x] First record decoders (`Formats/ESM/Records/`): WRLD, CELL (+ XCLC grid, both
-      DATA sizes), REFR (NAME base, DATA pos/rot, XSCL scale), STAT (MODL model path);
-      LAND deferred to milestone 3. `LString` + `GameData/LocalizedStrings.swift` wire
-      lstring -> table via VFS (language pick, default english). Doc:
-      [records](/formats/records.md). Milestone acceptance verified by probe:
-      37 worldspaces listed w/ localized names, cells counted per worldspace,
-      WhiterunExterior01 STAT refs dumped w/ FormIDs, pos/rot, model paths.
 
 ## Milestone 2 — static world geometry (mission first target)
 
@@ -236,6 +193,4 @@ Ref: Microsoft DDS programming guide (`DDS_HEADER`, `DDS_HEADER_DXT10`). Doc
 
 * String encoding in BSA/ESM: windows-1252 vs UTF-8 (mods vary). Current: cp1252 in BSA.
   Decide lenient decode strategy engine-wide.
-* Which exterior cell as first render target — closed by milestone item 2.7 (probe-driven
-  pick, recorded in `docs/decisions/first-render-cell.md`).
 * Plugin load order source: hardcode vanilla masters first; `plugins.txt` support later?
