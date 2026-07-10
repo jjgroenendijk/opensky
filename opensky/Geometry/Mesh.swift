@@ -22,23 +22,16 @@ nonisolated struct Mesh {
     let colors: [SIMD4<Float>]
     /// Flat triangle list, three indices per triangle, all < positions.count.
     let indices: [UInt16]
-    /// Index into the owning `Model.materialSlots`.
+    /// Index into the owning `Model.materials`.
     let materialSlot: Int
 }
 
-/// Material identity of a mesh. For now (todo 2.3) it records which NIF
-/// shader/alpha property blocks the shape referenced; 2.4 resolves these
-/// into parsed material data. Hashable so shapes sharing properties share
-/// one slot.
-nonisolated struct MaterialSlot: Hashable {
-    let shaderPropertyBlock: Int?
-    let alphaPropertyBlock: Int?
-}
-
-/// One loaded asset: every drawable mesh plus the material slots they index.
+/// One loaded asset: every drawable mesh plus the materials they index.
+/// Shapes referencing the same shader/alpha property blocks share one
+/// material slot (instancing-ready, todo 2.7).
 nonisolated struct Model {
     let meshes: [Mesh]
-    let materialSlots: [MaterialSlot]
+    let materials: [Material]
     /// Shapes dropped during flatten (skinned or empty) — surfaced so scene
     /// build (todo 2.7) can report skips instead of silently thinning
     /// geometry.

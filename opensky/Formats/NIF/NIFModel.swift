@@ -32,16 +32,22 @@ extension NIFFile {
         }
         return Model(
             meshes: flattener.meshes,
-            materialSlots: flattener.materialSlots,
+            materials: flattener.materials,
             skippedShapeCount: flattener.skippedShapeCount
         )
     }
 
     private struct Flattener {
+        /// Dedup key: which shader/alpha property blocks a shape referenced.
+        struct SlotKey: Hashable {
+            let shaderPropertyBlock: Int?
+            let alphaPropertyBlock: Int?
+        }
+
         let file: NIFFile
         var meshes: [Mesh] = []
-        var materialSlots: [MaterialSlot] = []
-        var slotIndexes: [MaterialSlot: Int] = [:]
+        var materials: [Material] = []
+        var slotIndexes: [SlotKey: Int] = [:]
         var skippedShapeCount = 0
         /// Recursion stack for cycle detection. A set, not a visited list:
         /// legitimate graphs may reuse a subtree under two parents.
@@ -88,19 +94,19 @@ extension NIFFile {
                 skippedShapeCount += 1 // skinned or empty: not M2 statics
                 return
             }
-            let slot = MaterialSlot(
+            let key = SlotKey(
                 shaderPropertyBlock: shape.shaderPropertyRef >= 0
                     ? Int(shape.shaderPropertyRef) : nil,
                 alphaPropertyBlock: shape.alphaPropertyRef >= 0
                     ? Int(shape.alphaPropertyRef) : nil
             )
             let slotIndex: Int
-            if let existing = slotIndexes[slot] {
+            if let existing = slotIndexes[key] {
                 slotIndex = existing
             } else {
-                materialSlots.append(slot)
-                slotIndex = materialSlots.count - 1
-                slotIndexes[slot] = slotIndex
+                try materials.append(resolveMaterial(key: key))
+                slotIndex = materials.count - 1
+                slotIndexes[key] = slotIndex
             }
             meshes.append(Mesh(
                 name: shape.object.name,
@@ -114,6 +120,71 @@ extension NIFFile {
                 indices: shape.indices,
                 materialSlot: slotIndex
             ))
+        }
+
+        /// Resolves a shape's property refs into an engine Material.
+        /// A ref to a non-lighting shader (effect/water/sky) or no ref at
+        /// all falls back to `Material.fallback` — legitimate content, out
+        /// of M2 scope. Out-of-range refs are malformed, same as the walk.
+        private func resolveMaterial(key: SlotKey) throws -> Material {
+            var shader: NIFLightingShaderProperty?
+            var textures: NIFShaderTextureSet?
+            var alpha: NIFAlphaProperty?
+
+            if let index = key.shaderPropertyBlock {
+                let block = try block(at: index)
+                if block.typeName == "BSLightingShaderProperty" {
+                    let property = try NIFLightingShaderProperty(
+                        data: block.data,
+                        header: file.header
+                    )
+                    shader = property
+                    if property.textureSetRef >= 0 {
+                        let setBlock = try self.block(at: Int(property.textureSetRef))
+                        if setBlock.typeName == "BSShaderTextureSet" {
+                            textures = try NIFShaderTextureSet(
+                                data: setBlock.data,
+                                header: file.header
+                            )
+                        }
+                    }
+                }
+            }
+            if let index = key.alphaPropertyBlock {
+                let block = try block(at: index)
+                if block.typeName == "NiAlphaProperty" {
+                    alpha = try NIFAlphaProperty(
+                        data: block.data,
+                        header: file.header
+                    )
+                }
+            }
+
+            let fallback = Material.fallback
+            return Material(
+                diffuseTexture: textures?.diffusePath,
+                normalTexture: textures?.normalPath,
+                uvOffset: shader?.uvOffset ?? fallback.uvOffset,
+                uvScale: shader?.uvScale ?? fallback.uvScale,
+                alpha: shader?.alpha ?? fallback.alpha,
+                glossiness: shader?.glossiness ?? fallback.glossiness,
+                specularColor: shader?.specularColor ?? fallback.specularColor,
+                specularStrength: shader?.specularStrength
+                    ?? fallback.specularStrength,
+                doubleSided: shader?.isDoubleSided ?? false,
+                alphaBlend: alpha?.blendEnabled ?? false,
+                alphaTestThreshold: (alpha?.testEnabled ?? false)
+                    ? alpha?.testThreshold : nil
+            )
+        }
+
+        private func block(at index: Int) throws -> NIFFile.Block {
+            guard index < file.blocks.count else {
+                throw NIFError.malformed(
+                    "block ref \(index) out of range (\(file.blocks.count) blocks)"
+                )
+            }
+            return file.blocks[index]
         }
     }
 }

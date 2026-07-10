@@ -79,17 +79,90 @@ struct NIFModelTests {
             .init("NiNode", NIFFixture.niNode(children: [1, 2, 3])),
             .init("BSTriShape", shape(shaderPropertyRef: 4, alphaPropertyRef: 5)),
             .init("BSTriShape", shape(shaderPropertyRef: 4, alphaPropertyRef: 5)),
-            .init("BSTriShape", shape(shaderPropertyRef: 6))
+            .init("BSTriShape", shape(shaderPropertyRef: 6)),
+            .init(
+                "BSLightingShaderProperty",
+                NIFFixture.bsLightingShaderProperty(glossiness: 32)
+            ),
+            .init("NiAlphaProperty", NIFFixture.niAlphaProperty(flags: 4844, threshold: 128)),
+            .init(
+                "BSLightingShaderProperty",
+                NIFFixture.bsLightingShaderProperty(glossiness: 64)
+            )
         ]))
         let model = try file.model()
         #expect(model.meshes.count == 3)
-        #expect(model.materialSlots.count == 2)
+        #expect(model.materials.count == 2)
         #expect(model.meshes[0].materialSlot == model.meshes[1].materialSlot)
         #expect(model.meshes[2].materialSlot != model.meshes[0].materialSlot)
-        #expect(model.materialSlots[0]
-            == MaterialSlot(shaderPropertyBlock: 4, alphaPropertyBlock: 5))
-        #expect(model.materialSlots[1]
-            == MaterialSlot(shaderPropertyBlock: 6, alphaPropertyBlock: nil))
+        #expect(model.materials[model.meshes[0].materialSlot].glossiness == 32)
+        #expect(model.materials[model.meshes[2].materialSlot].glossiness == 64)
+    }
+
+    @Test func resolvesMaterialFromPropertyBlocks() throws {
+        let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("BSTriShape", shape(shaderPropertyRef: 1, alphaPropertyRef: 3)),
+            .init(
+                "BSLightingShaderProperty",
+                NIFFixture.bsLightingShaderProperty(
+                    shaderFlags2: 0x8031, // double-sided bit set
+                    uvScale: SIMD2(2, 2),
+                    textureSetRef: 2,
+                    alpha: 0.5,
+                    glossiness: 100,
+                    specularStrength: 3
+                )
+            ),
+            .init("BSShaderTextureSet", NIFFixture.bsShaderTextureSet(paths: [
+                "Textures\\Plants\\Leaf01.dds", "plants\\leaf01_n.dds"
+            ])),
+            .init(
+                "NiAlphaProperty",
+                NIFFixture.niAlphaProperty(flags: 0x200 | 4 << 10, threshold: 64)
+            )
+        ]))
+        let model = try file.model()
+        #expect(model.materials.count == 1)
+        let material = model.materials[0]
+        #expect(material.diffuseTexture == "textures/plants/leaf01.dds")
+        #expect(material.normalTexture == "textures/plants/leaf01_n.dds")
+        #expect(material.uvScale == SIMD2(2, 2))
+        #expect(material.alpha == 0.5)
+        #expect(material.glossiness == 100)
+        #expect(material.specularStrength == 3)
+        #expect(material.doubleSided)
+        #expect(!material.alphaBlend)
+        let threshold = try #require(material.alphaTestThreshold)
+        #expect(abs(threshold - 64.0 / 255) < 1e-6)
+    }
+
+    @Test func nonLightingShaderFallsBack() throws {
+        // Effect shaders are legitimate content out of M2 scope — fallback
+        // material, no throw.
+        let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("BSTriShape", shape(shaderPropertyRef: 1)),
+            .init("BSEffectShaderProperty", Data(count: 32))
+        ]))
+        let model = try file.model()
+        #expect(model.materials == [.fallback])
+    }
+
+    @Test func shapeWithoutPropertiesGetsFallbackMaterial() throws {
+        let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("BSTriShape", shape())
+        ]))
+        let model = try file.model()
+        #expect(model.materials == [.fallback])
+        #expect(model.meshes[0].materialSlot == 0)
+    }
+
+    @Test func outOfRangeShaderRefIsMalformed() throws {
+        let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("BSTriShape", shape(shaderPropertyRef: 9))
+        ]))
+        #expect(throws: NIFError.self) {
+            try file.model()
+        }
     }
 
     @Test func skipsSkinnedShapesAndCountsThem() throws {
@@ -157,6 +230,6 @@ struct NIFModelTests {
         ))
         let model = try file.model()
         #expect(model.meshes.isEmpty)
-        #expect(model.materialSlots.isEmpty)
+        #expect(model.materials.isEmpty)
     }
 }

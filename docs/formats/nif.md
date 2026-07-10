@@ -246,8 +246,12 @@ types (`Geometry/Mesh.swift`) decoupled from disk layout:
 - Walk starts at footer roots; `NIFNode.traversedTypes` recurse, composing
   `parent * local` (T·R·S) down the chain; `BSTriShape` leaves become `Mesh`
   values carrying the accumulated model-space transform.
-- Material identity dedups into `MaterialSlot` (shader + alpha property
-  block refs — 2.4 parses them); shapes sharing both share a slot.
+- Material identity dedups by (shader, alpha) property block ref pair;
+  each unique pair resolves once into an engine `Material`
+  (`Geometry/Material.swift`): texture set -> normalized VFS keys, UV
+  transform, alpha/glossiness/specular, double-sided bit, alpha blend/test
+  from NiAlphaProperty. Non-lighting shaders (effect/water/sky) ->
+  `Material.fallback`, untextured but drawn.
 - Skipped: skinned shapes (skin ref set), empty shapes (counted in
   `Model.skippedShapeCount`); all non-drawable leaf types (collision,
   controllers, `BSDynamicTriShape`) end the subtree silently.
