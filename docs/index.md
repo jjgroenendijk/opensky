@@ -20,6 +20,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   and their engine types.
 * [NIF mesh](/formats/nif.md) - Gamebryo 20.2.0.7 container: header, block
   table, block walk.
+* [DDS texture container](/formats/dds.md) - DDS_HEADER/DXT10 layout, BCn
+  formats, mip chain math, color-space policy.
 
 ## Engine
 

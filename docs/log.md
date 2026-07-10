@@ -4,6 +4,30 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-10
 
+* **DDS probe acceptance** (2.5): swept all 32 920 `.dds` in the local
+  install's BSAs — 22 636 BCn parsed clean (BC3 18 074 / BC1 4 417 /
+  BC2 145; vanilla has zero DX10/BC7 files), 10 284 rejected with typed
+  errors as designed (10 225 uncompressed RGB face/tint/UI art, 58
+  cubemaps, 1 volume -> placeholder path). Max dim 8192 -> fixed stale
+  4096 comment. Farmhouse set (candidate 2.7 area): 64/64 full decode +
+  GPU upload. Numbers folded into
+  [DDS texture container](/formats/dds.md). Item 2.5 complete -> left
+  [todo](/todo.md).
+* **DDS -> MTLTexture upload** (2.5): `Rendering/TextureLoader.swift` (new
+  `opensky/Rendering/` dir, noted in AGENTS.md layout) — BCn
+  `MTLPixelFormat` per usage (`TextureUsage.color` -> sRGB view, `.data` ->
+  linear; BC4/5 have no sRGB variants), full mip chain via
+  `MTLTexture.replace`, `.shared` storage (unified memory). Failure path:
+  parse/upload error or missing file -> log + shared 1x1 placeholder
+  (mid-gray color / flat normal), never crash. GPU tests gated on
+  `supportsBCTextureCompression` (paravirtual CI GPUs lack it).
+* **DDS container parser** (2.5): `Formats/DDS/DDSFile.swift` — magic +
+  DDS_HEADER + optional DDS_HEADER_DXT10; FourCC DXT1/3/5, ATI1/2, BC4U/5U +
+  DXGI UNORM/`_SRGB` codes -> BC1-BC5/BC7; tightly packed mip chain sliced by
+  4x4-block math, `bytesPerRow` for `MTLTexture.replace`; cubemap/volume/
+  array/uncompressed -> typed `unsupported`, truncated chain -> `malformed`.
+  Ref: Microsoft DDS programming guide. Doc:
+  [DDS texture container](/formats/dds.md).
 * **NIF materials probe acceptance** (2.4): resolved materials for all
   22 196 geometry-BSA `.nif` (zero failures): 50 407 materials, 1 356
   fallback, 9 096 alpha-test, 5 329 blend, 1 362 double-sided; 99.6% of
