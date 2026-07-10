@@ -4,6 +4,11 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-10
 
+* **NIF header parser** (2.2): `Formats/NIF/NIFHeader.swift` — version line,
+  version (20.2.0.7 only), endian byte, user version, BSStreamHeader (83/100),
+  block type table, per-block type index (PhysX bit masked) + size array,
+  string table, groups. Typed `NIFError`. Ref: NifTools `nif.xml`. Doc:
+  [NIF mesh](/formats/nif.md).
 * **MatrixMath growth** (2.1): `zUpToYUp` basis change, `rotationX/Y/Z`,
   `scale(uniform:)`, `lookAt` (RH, works straight off Z-up world vectors),
   `placement(position:rotation:scale:)` = `T * Rz(-z) * Ry(-y) * Rx(-x) * S` for
