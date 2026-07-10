@@ -11,6 +11,15 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   subclasses (BSFadeNode…), selector nodes excluded.
   `BinaryReader.readFloat32`. Ref: NifTools `nif.xml`. Doc:
   [NIF mesh](/formats/nif.md) scene-graph + NiNode sections.
+* **BSTriShape geometry decode** (2.3): `Formats/NIF/NIFTriShape.swift` —
+  bounding sphere, skin/shader/alpha refs, BSVertexDesc bitfield -> attribute
+  flags + stride cross-check, interleaved BSVertexDataSSE records (full-float
+  positions — SSE never packs them half, unlike FO4; half UVs, normbyte
+  normals/tangents, split bitangent reassembled, colors; skinning/eye bytes
+  skipped), validated uint16 triangle list, SSE particle trailer ignored.
+  Stride/data-size mismatch -> `malformed`. Ref: NifTools `nif.xml`
+  (BSVertexDataSSE, BSVertexDesc); normbyte remap per NifSkope/nifly. Doc:
+  [NIF mesh](/formats/nif.md) BSTriShape section.
 * **NIF container probe acceptance** (2.2): walked every `.nif` in the local
   install — 22 806 files across 8 BSAs, all parsed, zero throws. All version
   20.2.0.7 / user 12; BS stream 100 except one 83. 143 distinct block types;

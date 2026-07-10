@@ -149,6 +149,48 @@ enum NIFFixture {
         return out
     }
 
+    /// BSTriShape payload (SSE stream layout). `vertexRecords` are raw
+    /// per-vertex bytes so tests state the interleaved layout explicitly;
+    /// the BSVertexDesc is assembled from `attributes` + `strideDwords`.
+    static func bsTriShape(
+        prefix: Data = avObjectPrefix(),
+        center: SIMD3<Float> = .zero,
+        radius: Float = 0,
+        skinRef: Int32 = -1,
+        shaderPropertyRef: Int32 = -1,
+        alphaPropertyRef: Int32 = -1,
+        attributes: UInt16,
+        strideDwords: Int,
+        vertexRecords: [Data] = [],
+        triangles: [UInt16] = [],
+        dataSizeOverride: Int? = nil,
+        particleData: Data = Data()
+    ) -> Data {
+        var out = prefix
+        out.appendFloat32(center.x)
+        out.appendFloat32(center.y)
+        out.appendFloat32(center.z)
+        out.appendFloat32(radius)
+        out.appendUInt32(UInt32(bitPattern: skinRef))
+        out.appendUInt32(UInt32(bitPattern: shaderPropertyRef))
+        out.appendUInt32(UInt32(bitPattern: alphaPropertyRef))
+        out.appendUInt64(UInt64(strideDwords & 0xF) | UInt64(attributes) << 44)
+        out.appendUInt16(UInt16(triangles.count / 3))
+        out.appendUInt16(UInt16(vertexRecords.count))
+        let dataSize = dataSizeOverride
+            ?? vertexRecords.reduce(0) { $0 + $1.count } + triangles.count * 2
+        out.appendUInt32(UInt32(dataSize))
+        for record in vertexRecords {
+            out.append(record)
+        }
+        for index in triangles {
+            out.appendUInt16(index)
+        }
+        out.appendUInt32(UInt32(particleData.count))
+        out.append(particleData)
+        return out
+    }
+
     /// Full file: header, block payloads back to back, footer roots.
     static func file(
         blocks: [Block],
