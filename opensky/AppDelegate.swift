@@ -36,12 +36,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         NSApplication.shared.activate()
 
-        // Unit-test host runs this lifecycle too; skip the probe there so tests
-        // never depend on machine state or block on the alert. UI-tested app
-        // instances lack this variable and still exercise the probe.
-        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
-            locateGameData()
-        }
+        // Unit-test host never reaches here (OpenSkyApp.main skips the
+        // delegate under XCTest), so the probe runs unconditionally.
+        locateGameData()
     }
 
     /// Fail-loud game data probe (AGENTS.md "Loading game data"): missing or
