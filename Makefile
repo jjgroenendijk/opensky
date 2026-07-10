@@ -14,7 +14,7 @@ MD_GLOB         := **/*.md
 
 .DEFAULT_GOAL := help
 .PHONY: help bootstrap hooks format format-check lint check \
-        swift-format swift-lint md-format md-lint sh-lint build test clean
+        swift-format swift-lint md-format md-lint sh-lint build test test-ui clean
 
 help: ## List available targets
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -56,8 +56,13 @@ sh-lint: ## Shellcheck the hook + tooling scripts
 build: ## Build the app ($(CONFIG))
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration $(CONFIG) build
 
-test: ## Build + run the test suite
-	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' test
+test: ## Build + run unit tests (no UI tests)
+	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
+		-skip-testing:openskyUITests test
+
+test-ui: ## Build + run UI tests (launches the app, drives it via automation)
+	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
+		-only-testing:openskyUITests test
 
 clean: ## Remove build artifacts
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) clean
