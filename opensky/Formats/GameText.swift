@@ -12,4 +12,13 @@ nonisolated enum GameText {
         if let utf8 = String(data: bytes, encoding: .utf8) { return utf8 }
         return String(data: bytes, encoding: .windowsCP1252)
     }
+
+    /// Never nil: bytes undefined in windows-1252 fall back to ISO 8859-1,
+    /// which maps every byte. For name-ish strings where garbage input must
+    /// not reject the whole asset — vanilla NIF string tables carry exporter
+    /// junk (uninitialized memory, e.g. 0x90 bytes).
+    static func decodeLossy(_ bytes: Data) -> String {
+        if let text = decode(bytes) { return text }
+        return String(data: bytes, encoding: .isoLatin1) ?? ""
+    }
 }

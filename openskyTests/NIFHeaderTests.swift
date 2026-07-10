@@ -88,6 +88,27 @@ struct NIFHeaderTests {
         }
     }
 
+    @Test func decodesGarbageStringTableEntryLossily() throws {
+        // Vanilla meshes carry exporter junk in the string table (observed:
+        // uninitialized memory with 0x90, undefined in cp1252). Must not
+        // reject the file.
+        var data = Data(NIFFixture.versionLine.utf8)
+        data.append(0x0A)
+        data.appendUInt32(NIFFixture.version)
+        data.append(1)
+        data.appendUInt32(0) // user version 0 -> no BS stream
+        data.appendUInt32(0) // block count
+        data.appendUInt16(0) // block type count
+        data.appendUInt32(1) // string count
+        data.appendUInt32(4) // max string length
+        data.append(NIFFixture.sizedString(raw: Data([0x0C, 0x90, 0x29, 0x7B])))
+        data.appendUInt32(0) // group count
+        var reader = BinaryReader(data)
+        let header = try NIFHeader(reader: &reader)
+        #expect(header.strings.count == 1)
+        #expect(!header.strings[0].isEmpty)
+    }
+
     @Test func throwsOnTruncatedHeader() throws {
         let data = NIFFixture.header(blocks: [.init("NiNode", Data(count: 16))])
         #expect(throws: (any Error).self) { try parse(data.prefix(data.count - 6)) }

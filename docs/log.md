@@ -4,6 +4,11 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-10
 
+* **Lossy text decode for NIF strings** (2.2): probe over vanilla meshes hit
+  exporter garbage in one string table (bytes undefined in cp1252) ->
+  `GameText.decodeLossy` (UTF-8 -> cp1252 -> ISO 8859-1, never nil), used for
+  NIF header strings so a junk name cannot reject a mesh. Note in
+  [NIF mesh](/formats/nif.md).
 * **NIF block walk** (2.2): `Formats/NIF/NIFFile.swift` — slices every block
   payload by the header size array (unknown types skipped by construction),
   reads footer roots, `blockTypeCounts()` histogram for probes. Oversized

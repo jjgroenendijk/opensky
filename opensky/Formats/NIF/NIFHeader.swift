@@ -122,10 +122,7 @@ nonisolated struct NIFHeader {
         for _ in 0 ..< 128 {
             let byte = try reader.readUInt8()
             if byte == 0x0A {
-                guard let line = GameText.decode(bytes) else {
-                    throw NIFError.malformed("undecodable header version line")
-                }
-                return line
+                return GameText.decodeLossy(bytes)
             }
             bytes.append(byte)
         }
@@ -159,14 +156,12 @@ nonisolated struct NIFHeader {
         try reader.readBZString()
     }
 
-    /// SizedString: uint32 length, then bytes, no terminator.
+    /// SizedString: uint32 length, then bytes, no terminator. Lossy decode:
+    /// vanilla string tables carry exporter garbage (uninitialized memory),
+    /// and a junk name must not reject the whole mesh.
     private static func readSizedString(_ reader: inout BinaryReader) throws -> String {
-        let start = reader.offset
         let length = try Int(reader.readUInt32())
         let bytes = try reader.read(count: length)
-        guard let string = GameText.decode(bytes) else {
-            throw NIFError.malformed("undecodable string at offset \(start)")
-        }
-        return string
+        return GameText.decodeLossy(bytes)
     }
 }

@@ -30,6 +30,12 @@ Doc grows with milestone 2: container (this page), scene graph + geometry
 | ExportString | uint8 length incl. trailing null, then bytes + null         |
 | SizedString  | uint32 length, then bytes, no terminator                    |
 
+Header strings decode lossily (`GameText.decodeLossy`: UTF-8 -> cp1252 ->
+ISO 8859-1). Vanilla string tables carry exporter garbage — uninitialized
+memory with bytes undefined in cp1252 (observed:
+`meshes/dungeons/dwemer/animated/astrolabe/lexiconstand/dwelexiconstandrunes01.nif`,
+string `0c 90 29 7b ...`) — and a junk name must not reject the mesh.
+
 ## Header — variable size at offset 0
 
 Field order per nif.xml `Header`, restricted to what exists at 20.2.0.7

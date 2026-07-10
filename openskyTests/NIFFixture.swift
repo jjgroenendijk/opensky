@@ -25,9 +25,14 @@ enum NIFFixture {
 
     /// uint32 length + bytes, no terminator (nif.xml SizedString).
     static func sizedString(_ string: String) -> Data {
+        sizedString(raw: Data(string.utf8))
+    }
+
+    /// SizedString from raw bytes — for garbage-byte decode tests.
+    static func sizedString(raw bytes: Data) -> Data {
         var out = Data()
-        out.appendUInt32(UInt32(string.utf8.count))
-        out.append(Data(string.utf8))
+        out.appendUInt32(UInt32(bytes.count))
+        out.append(bytes)
         return out
     }
 
