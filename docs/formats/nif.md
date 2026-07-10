@@ -95,3 +95,32 @@ After the last block (nif.xml `Footer`):
 
 Root refs are stored, not validated — ref resolution belongs to the
 scene-graph layer (2.3).
+
+## Observed in vanilla (probe, 2026-07-10)
+
+Container walk over the local install: 22 806 `.nif` across 8 BSAs
+(Meshes0/1, Animations, _ResourcePack, cc*) — all parsed, zero throws. All
+are version 20.2.0.7, user version 12; BS stream 100 except a single 83
+(LE-era leftover). 143 distinct block types.
+
+Top types, the coverage list for 2.3/2.4 (counts = block instances across
+all files):
+
+| count   | type                       | layer                        |
+| ------- | -------------------------- | ---------------------------- |
+| 102 444 | NiNode                     | scene graph (2.3)            |
+| 74 955  | BSLightingShaderProperty   | materials (2.4)              |
+| 64 157  | BSShaderTextureSet         | materials (2.4)              |
+| 61 617  | BSTriShape                 | geometry (2.3)               |
+| 38 253  | NiFloatInterpolator        | animation — skipped          |
+| 36 640  | NiAlphaProperty            | materials (2.4)              |
+| 35 335  | NiFloatData                | animation — skipped          |
+| 27 805  | NiSkinData/NiSkinPartition | skinning — skipped for M2    |
+| 21 675  | BSDynamicTriShape          | skinned geometry — skipped   |
+| 18 839  | BSFadeNode                 | NiNode subclass, same layout |
+| 13 736  | bhkCollisionObject         | collision — skipped for M2   |
+
+Statics for M2 need: NiNode (+ BSFadeNode as root), BSTriShape,
+BSLightingShaderProperty, BSShaderTextureSet, NiAlphaProperty. Everything
+Havok (`bhk*`), particle (`*PSys*`), controller/interpolator (animation) and
+skinning gets walked over by size.
