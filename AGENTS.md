@@ -72,6 +72,7 @@ opensky/                Product code — app + engine (Swift, Metal)
   AppDelegate.swift     Window + menu construction
   GameViewController.swift  Hosts MTKView, wires renderer
   Formats/              File-format parsers (BinaryReader, LZ4, BSA/, ...)
+  Geometry/             Engine mesh/model types, decoupled from disk formats
   Renderer.swift        Metal 4 render loop
   MatrixMath.swift      Projection/rotation/translation helpers
   Shaders.metal

@@ -185,6 +185,23 @@ reassembled at decode. normbyte remap: `(byte / 255) * 2 - 1`
 (NifSkope/nifly). Triangle indices are validated `< vertex count`. Impl:
 `NIFTriShape.swift`.
 
+## Scene graph -> engine mesh
+
+`NIFFile.model()` (`NIFModel.swift`) flattens the block tree into engine
+types (`Geometry/Mesh.swift`) decoupled from disk layout:
+
+- Walk starts at footer roots; `NIFNode.traversedTypes` recurse, composing
+  `parent * local` (T·R·S) down the chain; `BSTriShape` leaves become `Mesh`
+  values carrying the accumulated model-space transform.
+- Material identity dedups into `MaterialSlot` (shader + alpha property
+  block refs — 2.4 parses them); shapes sharing both share a slot.
+- Skipped: skinned shapes (skin ref set), empty shapes (counted in
+  `Model.skippedShapeCount`); all non-drawable leaf types (collision,
+  controllers, `BSDynamicTriShape`) end the subtree silently.
+- Defense: out-of-range ref, ref cycle (recursion-stack set, so legitimate
+  subtree reuse under two parents still works), depth > 64 -> `malformed`;
+  caller skips the asset.
+
 ## Observed in vanilla (probe, 2026-07-10)
 
 Container walk over the local install: 22 806 `.nif` across 8 BSAs

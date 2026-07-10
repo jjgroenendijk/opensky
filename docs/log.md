@@ -20,6 +20,14 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   Stride/data-size mismatch -> `malformed`. Ref: NifTools `nif.xml`
   (BSVertexDataSSE, BSVertexDesc); normbyte remap per NifSkope/nifly. Doc:
   [NIF mesh](/formats/nif.md) BSTriShape section.
+* **NIF scene flatten -> engine meshes** (2.3): `Geometry/Mesh.swift` — engine
+  `Mesh`/`Model`/`MaterialSlot` types decoupled from disk layout;
+  `Formats/NIF/NIFModel.swift` — `NIFFile.model()` walks footer roots,
+  composes `parent * local` transforms, decodes BSTriShape leaves, dedups
+  material slots by (shader, alpha) ref pair, skips skinned/empty shapes
+  (counted), throws `malformed` on bad refs/cycles/depth > 64. New
+  `opensky/Geometry/` dir noted in AGENTS.md layout. Doc:
+  [NIF mesh](/formats/nif.md) "Scene graph -> engine mesh".
 * **NIF container probe acceptance** (2.2): walked every `.nif` in the local
   install — 22 806 files across 8 BSAs, all parsed, zero throws. All version
   20.2.0.7 / user 12; BS stream 100 except one 83. 143 distinct block types;
