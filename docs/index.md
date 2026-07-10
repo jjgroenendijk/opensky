@@ -35,4 +35,6 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 ## Meta
 
+* [Testing setup](/testing.md) - test targets, make entrypoints, headless
+  unit-test host, fixture policy.
 * [Roadmap](/todo.md) - mission roadmap, milestones, open questions.

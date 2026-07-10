@@ -4,6 +4,12 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-10
 
+* **Headless unit-test host + testing doc**: `OpenSkyApp.main()` skips
+  `AppDelegate` (window/renderer/probe) when `XCTestConfigurationFilePath` is
+  set, activation policy `.prohibited` -> `make test` runs with no visible
+  window. UI smoke test guards the normal launch path. Split earlier same day:
+  `make test` = unit only, `make test-ui` = XCUITest suite, CI runs both.
+  Doc: [testing setup](/testing.md).
 * **Milestone 2 detailed plan**: expanded [todo](/todo.md) milestone 2 into
   sequenced sub-items 2.1-2.9 (coordinates decision -> NIF container/geometry/
   materials -> DDS -> renderer -> cell scene -> camera -> acceptance) with
