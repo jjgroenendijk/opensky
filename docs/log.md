@@ -4,6 +4,11 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-10
 
+* **NIF block walk** (2.2): `Formats/NIF/NIFFile.swift` — slices every block
+  payload by the header size array (unknown types skipped by construction),
+  reads footer roots, `blockTypeCounts()` histogram for probes. Oversized
+  block / truncated footer -> `NIFError.malformed`. Doc:
+  [NIF mesh](/formats/nif.md) block walk + footer sections.
 * **NIF header parser** (2.2): `Formats/NIF/NIFHeader.swift` — version line,
   version (20.2.0.7 only), endian byte, user version, BSStreamHeader (83/100),
   block type table, per-block type index (PhysX bit masked) + size array,

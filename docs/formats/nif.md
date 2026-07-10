@@ -67,3 +67,25 @@ fields and are rejected):
 Block sizes exist since 20.2.0.5 — they are what make a container-level walk
 possible without decoding every block type. `NIFHeader.blockDataOffset`
 records where block payloads start.
+
+## Block walk
+
+Block payloads follow the header back to back, in table order, with no
+per-block framing — block N's bytes span exactly `blockSizes[N]`. `NIFFile`
+slices every payload by that size and pairs it with its type name; nothing is
+decoded at this layer, so unknown/unneeded types (collision, controllers,
+PhysX) are skipped by construction. A block promising more bytes than remain
+-> `NIFError.malformed`, walk aborts (caller skips the asset, engine keeps
+running).
+
+## Footer
+
+After the last block (nif.xml `Footer`):
+
+| type           | field      | notes                             |
+| -------------- | ---------- | --------------------------------- |
+| uint32         | root count |                                   |
+| int32 x count  | roots      | block indices; -1 = null ref      |
+
+Root refs are stored, not validated — ref resolution belongs to the
+scene-graph layer (2.3).
