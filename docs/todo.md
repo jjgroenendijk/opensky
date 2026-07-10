@@ -68,16 +68,9 @@ committed).
 
 ### 2.1 Coordinates + units decision (blocker)
 
-* [ ] `docs/decisions/coordinates.md`: Skyrim world = Z-up right-handed, 1 unit ~1.428 cm
-      (~70 units/m); Metal NDC = y-up, z [0,1]. Suggested decision: keep Skyrim axes +
-      units untouched in world space; view/projection does the Z-up -> Metal conversion.
-      No per-asset mesh rewrite. Decision must also fix: simd column-major `M * v`
-      convention, triangle winding + cull mode after the basis change, near/far planes at
-      Skyrim scale (exterior cell = 4096 units square -> far covers several cells), REFR
-      euler rotation order + sign (verify against observed refs in a known cell, not from
-      memory).
 * [ ] MatrixMath growth + unit tests: lookAt, Skyrim -> Metal basis change, TRS compose
       from REFR data (position, euler rotation, uniform scale). Round-trip tests.
+      Conventions fixed in `docs/decisions/coordinates.md`.
 
 ### 2.2 NIF parser — container
 
