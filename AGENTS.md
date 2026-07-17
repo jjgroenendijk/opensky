@@ -87,6 +87,7 @@ tools/                  Repository tooling only (no product code)
   lint/.swiftlint.yml   SwiftLint config
   markdown/             markdownlint config
   bootstrap.sh          One-shot dev setup
+  probe.sh              Env-gated CLI smoke probe (make probe)
 .githooks/              Tracked git hooks (see Git workflow)
 .github/workflows/      CI
 docs/                   OKF knowledge wiki (see Documentation wiki)
@@ -104,6 +105,7 @@ Drive everything through `make` so results are reproducible. `make help` lists t
 
 - `make build` — build the app (Debug)
 - `make cli` — build the `openskycli` dev tool (Debug)
+- `make probe` — CLI smoke checks against the local install (self-skips when absent)
 - `make test` — build + run unit tests (skips UI tests)
 - `make test-ui` — run UI tests (launches app, drives via automation; CI runs both)
 - `make check` — format-check + lint, no build (fast gate)

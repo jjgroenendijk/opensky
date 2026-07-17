@@ -15,7 +15,7 @@ MD_GLOB         := **/*.md
 
 .DEFAULT_GOAL := help
 .PHONY: help bootstrap hooks format format-check lint check swift-format \
-        swift-lint md-format md-lint sh-lint build cli test test-ui clean
+        swift-lint md-format md-lint sh-lint build cli probe test test-ui clean
 
 help: ## List available targets
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -59,6 +59,9 @@ build: ## Build the app ($(CONFIG))
 
 cli: ## Build the openskycli dev tool ($(CONFIG))
 	@xcodebuild -project $(PROJECT) -scheme $(CLI_SCHEME) -configuration $(CONFIG) build
+
+probe: ## CLI smoke checks against the local install (skips if absent)
+	@./tools/probe.sh
 
 test: ## Build + run unit tests (no UI tests)
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \

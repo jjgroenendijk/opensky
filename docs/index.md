@@ -47,6 +47,11 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [First render cell](/decisions/first-render-cell.md) - WhiterunExterior06 at Tamriel
   (6,-2) as the 2.7/2.9 target; probe ranking, MODL `meshes\` prefix rule.
 
+## Tools
+
+* [CLI dev tool](/tools/cli.md) - openskycli target sharing the engine sources:
+  vfs/record/cell/nif/dds/render subcommands, env-gated make probe harness.
+
 ## Meta
 
 * [Testing setup](/testing.md) - test targets, make entrypoints, headless

@@ -4,6 +4,20 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-17
 
+* **CLI dev tool** (2.9, complete): new `openskycli` command-line target
+  sharing the engine sources via a synchronized-group exception set
+  (app-only files excluded); entry code in `openskycli/`. Subcommands:
+  `vfs ls`/`vfs cat` (new `VirtualFileSystem.archiveEntries()`, tested),
+  `record` (FormID/EDID lookup + decoded dump), `cell` (Metal-free
+  exterior-cell summary), `nif`/`dds` (parser-eye asset inspection),
+  `render` (offscreen cell -> PNG via `Renderer.renderOffscreen`).
+  `make cli` builds; env-gated `make probe` (`tools/probe.sh`) smoke-runs
+  all commands against the local install, self-skips without game data,
+  logs to `logs/`. Verified on the real install: cell/record match the
+  first-render-cell decision (16 refs, 15 STAT), render PNG shows the
+  Whiterun walls (4.3% non-background). stdlib arg parsing —
+  swift-argument-parser rejected while the surface stays small. Doc:
+  [CLI dev tool](/tools/cli.md). Item 2.9 left [todo](/todo.md).
 * **Item 2.8 complete — free-fly camera**: fly the rendered cell with
   WASDQE + mouse-look. New `FreeFlyCamera` (pure pose -> view matrix +
   per-frame integration; yaw about +Z, pitch clamped +/-89 deg) and

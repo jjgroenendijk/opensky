@@ -73,17 +73,13 @@ when data absent; winding + REFR euler verified against vanilla content
 (coordinates.md, no longer provisional); free-fly camera done (2.8) —
 `docs/engine/free-fly-camera.md`, WASDQE + mouse-look flies the real
 cell (`FreeFlyCamera` pose -> view matrix, `CameraInputState` +
-`GameMetalView` capture). 2.9 next: CLI tool. One branch/PR per numbered
-item. Every format item: cite spec, synthetic in-code test fixtures,
-write/grow `docs/formats/<name>.md`, verify against real install via
-throwaway probes (never committed).
-
-### 2.9 CLI tool
-
-* [ ] Second product target sharing the engine code — launch the game world from the
-      terminal + dev entrypoints (asset dump/inspect, offscreen render to file,
-      cell/record probes). Replaces throwaway probe scripts for repeatable dev checks;
-      folds in the env-gated probe-harness idea (`make`-driven, skips when data absent).
+`GameMetalView` capture); CLI dev tool done (2.9) —
+`docs/tools/cli.md`, `make cli` builds `openskycli`, env-gated
+`make probe` smoke-checks against the local install. 2.10 next: asset
+preview GUI. One branch/PR per numbered item. Every format item: cite
+spec, synthetic in-code test fixtures, write/grow
+`docs/formats/<name>.md`, verify against real install via repeatable
+`openskycli` probes (extracted data never committed).
 
 ### 2.10 Asset preview GUI
 
