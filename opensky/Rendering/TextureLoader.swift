@@ -120,7 +120,9 @@ nonisolated final class TextureLoader {
 
     private func placeholder(usage: TextureUsage) -> MTLTexture {
         let slot = usage == .color ? 0 : 1
-        if let texture = placeholders[slot] { return texture }
+        if let texture = placeholders[slot] {
+            return texture
+        }
         let texture = makePlaceholder(usage: usage)
         placeholders[slot] = texture
         return texture

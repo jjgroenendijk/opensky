@@ -67,7 +67,9 @@ nonisolated final class VirtualFileSystem: Sendable {
     /// True when the path resolves to a loose file or an archive entry.
     func exists(_ path: String) -> Bool {
         guard let normalized = try? Self.normalize(path) else { return false }
-        if looseFileURL(for: normalized) != nil { return true }
+        if looseFileURL(for: normalized) != nil {
+            return true
+        }
         return archiveEntry(for: normalized) != nil
     }
 
@@ -156,8 +158,12 @@ nonisolated final class VirtualFileSystem: Sendable {
     private func openedArchive(at index: Int) -> BSAArchive? {
         cache.withLock { cache in
             let slot = cache.archives[index]
-            if let archive = slot.archive { return archive }
-            if slot.failedToOpen { return nil }
+            if let archive = slot.archive {
+                return archive
+            }
+            if slot.failedToOpen {
+                return nil
+            }
             do {
                 let archive = try BSAArchive(url: slot.url)
                 cache.archives[index].archive = archive

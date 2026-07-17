@@ -162,7 +162,9 @@ extension CellSceneBuilder {
             case let .group(sub)
                 where sub.kind == .exteriorCellBlock || sub.kind == .exteriorCellSubBlock:
                 let found = findCell(in: sub, gridX: gridX, gridY: gridY, localized: localized)
-                if let found { return found }
+                if let found {
+                    return found
+                }
             default:
                 break
             }
@@ -179,7 +181,9 @@ extension CellSceneBuilder {
     ) -> ESMGroup? {
         let rest = children[(index + 1)...]
         for case let .group(group) in rest where group.kind == .cellChildren {
-            if group.parentFormID == cellFormID { return group }
+            if group.parentFormID == cellFormID {
+                return group
+            }
         }
         return nil
     }
@@ -286,7 +290,9 @@ extension CellSceneBuilder {
     /// FormIDResolver arrives with load-order support). Malformed STATs are
     /// skipped — refs pointing at them fall into the non-STAT bucket.
     private func statIndexBuildingIfNeeded() -> [UInt32: StaticObject] {
-        if let statIndex { return statIndex }
+        if let statIndex {
+            return statIndex
+        }
         var index: [UInt32: StaticObject] = [:]
         if let top = file.topGroup(of: "STAT"), let children = try? top.children() {
             for case let .record(record) in children where record.type == "STAT" {

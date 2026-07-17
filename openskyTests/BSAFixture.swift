@@ -62,7 +62,9 @@ struct BSAFixture {
             blocks.append(0)
             for file in folderFiles {
                 var size = UInt32(file.stored.count)
-                if file.toggleCompression { size |= 0x4000_0000 }
+                if file.toggleCompression {
+                    size |= 0x4000_0000
+                }
                 blocks.appendUInt64(0) // name hash
                 blocks.appendUInt32(size)
                 blocks.appendUInt32(UInt32(dataOffset))

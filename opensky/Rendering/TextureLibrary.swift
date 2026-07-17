@@ -56,7 +56,9 @@ nonisolated final class TextureLibrary {
         // then throws and the miss branch logs + placeholders it once.
         let normalized = (try? VirtualFileSystem.normalize(key)) ?? key
         let cacheKey = CacheKey(path: normalized, usage: usage)
-        if let hit = cache[cacheKey] { return hit }
+        if let hit = cache[cacheKey] {
+            return hit
+        }
 
         let texture: MTLTexture
         if let data = try? fileSystem.contents(forPath: normalized) {
@@ -84,7 +86,9 @@ nonisolated final class TextureLibrary {
         label: String
     ) -> MTLTexture {
         let cacheKey = CacheKey(path: path, usage: usage)
-        if let hit = cache[cacheKey] { return hit }
+        if let hit = cache[cacheKey] {
+            return hit
+        }
         let texture = loader.missingTexture(usage: usage, label: label)
         cache[cacheKey] = texture
         return texture

@@ -87,7 +87,9 @@ nonisolated struct BinaryReader {
             guard end < data.count else {
                 throw BinaryReaderError.unterminatedString(offset: start)
             }
-            if data[data.startIndex + end] == 0 { break }
+            if data[data.startIndex + end] == 0 {
+                break
+            }
             end += 1
         }
         let bytes = try read(count: end - start)

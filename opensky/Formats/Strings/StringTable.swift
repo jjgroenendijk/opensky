@@ -87,7 +87,9 @@ nonisolated struct StringTable {
             guard Int(offset) < dataSize else {
                 throw StringTableError.entryOutOfRange(id: id)
             }
-            if offsets[id] == nil { offsets[id] = offset }
+            if offsets[id] == nil {
+                offsets[id] = offset
+            }
         }
 
         dataBlock = data.subdata(
@@ -111,7 +113,9 @@ nonisolated struct StringTable {
                 throw StringTableError.entryOutOfRange(id: id)
             }
             // Length counts the null terminator; tolerate files without one.
-            if framed.last == 0 { framed = framed.dropLast() }
+            if framed.last == 0 {
+                framed = framed.dropLast()
+            }
             bytes = framed
         } else {
             guard let zstring = try? reader.readZStringData() else {

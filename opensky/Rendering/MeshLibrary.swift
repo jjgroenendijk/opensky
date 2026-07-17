@@ -108,7 +108,9 @@ nonisolated final class MeshLibrary {
     /// RenderModel instance (shared across every placing ref).
     func model(path: String) throws -> RenderModel {
         let key = try meshKey(for: path)
-        if let hit = cache[key] { return hit }
+        if let hit = cache[key] {
+            return hit
+        }
 
         guard let data = try? fileSystem.contents(forPath: key) else {
             throw MeshLibraryError.fileNotFound(path: key)

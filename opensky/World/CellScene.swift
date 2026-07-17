@@ -51,10 +51,18 @@ nonisolated struct CellLoadSummary: Equatable {
     /// lists only non-zero skip reasons and disappears when nothing skipped.
     var summaryLine: String {
         var reasons: [String] = []
-        if nonSTATSkipCount > 0 { reasons.append("\(nonSTATSkipCount) non-STAT") }
-        if markerSkipCount > 0 { reasons.append("\(markerSkipCount) marker") }
-        if modelFailureSkipCount > 0 { reasons.append("\(modelFailureSkipCount) load-failed") }
-        if malformedRefSkipCount > 0 { reasons.append("\(malformedRefSkipCount) malformed") }
+        if nonSTATSkipCount > 0 {
+            reasons.append("\(nonSTATSkipCount) non-STAT")
+        }
+        if markerSkipCount > 0 {
+            reasons.append("\(markerSkipCount) marker")
+        }
+        if modelFailureSkipCount > 0 {
+            reasons.append("\(modelFailureSkipCount) load-failed")
+        }
+        if malformedRefSkipCount > 0 {
+            reasons.append("\(malformedRefSkipCount) malformed")
+        }
         let skipped = reasons.isEmpty
             ? "\(skippedRefCount) skipped"
             : "\(skippedRefCount) skipped (\(reasons.joined(separator: ", ")))"

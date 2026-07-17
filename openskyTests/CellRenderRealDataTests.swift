@@ -102,7 +102,9 @@ struct CellRenderRealDataTests {
         var lit = 0
         for pixel in stride(from: 0, to: pixels.count, by: 4) {
             let dark = pixels[pixel] <= 8 && pixels[pixel + 1] <= 8 && pixels[pixel + 2] <= 8
-            if !dark { lit += 1 }
+            if !dark {
+                lit += 1
+            }
         }
         return Double(lit) / Double(pixels.count / 4)
     }
