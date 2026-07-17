@@ -29,6 +29,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   found and validated at launch; override settings.
 * [Cell scene build](/engine/cell-scene.md) - exterior cell -> draw list: WRLD walk,
   STAT resolution, skip taxonomy, grouping, world bounds.
+* [Free-fly camera](/engine/free-fly-camera.md) - WASDQE + mouse-look input capture,
+  yaw/pitch pose -> view matrix, movement speeds tuned to Skyrim scale.
 
 ## Rendering
 

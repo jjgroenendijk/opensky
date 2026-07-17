@@ -70,17 +70,13 @@ draws injected `RenderScene` values; cell scene done (2.7) —
 `docs/engine/cell-scene.md`, app renders `WhiterunExterior06`
 (`docs/decisions/first-render-cell.md`) at launch, `DemoScene` fallback
 when data absent; winding + REFR euler verified against vanilla content
-(coordinates.md, no longer provisional). 2.8 next: fly around the real
-cell. One branch/PR per numbered item. Every format item: cite spec,
-synthetic in-code test fixtures, write/grow `docs/formats/<name>.md`,
-verify against real install via throwaway probes (never committed).
-
-### 2.8 Free-fly camera
-
-* [ ] Input: WASD + QE vertical, mouse look via NSEvent deltas (cursor capture, Esc
-      releases), Shift speed boost. GameController support later.
-* [ ] Camera state -> view matrix per 2.1 conventions; clamp pitch; move speeds tuned to
-      Skyrim scale (cell = 4096 units — crossing one should take seconds, not minutes).
+(coordinates.md, no longer provisional); free-fly camera done (2.8) —
+`docs/engine/free-fly-camera.md`, WASDQE + mouse-look flies the real
+cell (`FreeFlyCamera` pose -> view matrix, `CameraInputState` +
+`GameMetalView` capture). 2.9 next: CLI tool. One branch/PR per numbered
+item. Every format item: cite spec, synthetic in-code test fixtures,
+write/grow `docs/formats/<name>.md`, verify against real install via
+throwaway probes (never committed).
 
 ### 2.9 CLI tool
 

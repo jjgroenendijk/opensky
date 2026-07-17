@@ -4,6 +4,21 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-17
 
+* **Item 2.8 complete — free-fly camera**: fly the rendered cell with
+  WASDQE + mouse-look. New `FreeFlyCamera` (pure pose -> view matrix +
+  per-frame integration; yaw about +Z, pitch clamped +/-89 deg) and
+  `CameraInputState` (logical pressed-key/pointer/boost state) — both
+  AppKit-free, unit-tested (`FreeFlyCameraTests`, `CameraInputStateTests`):
+  orientation vs conventions, pitch clamp, movement direction relative to
+  yaw, boost, seed reproduces the 2.7 framing view. Input capture in new
+  `GameMetalView` (MTKView subclass): NSEvent key/pointer -> state, click
+  grabs pointer (`NSCursor.hide` + `CGAssociateMouseAndMouseCursorPosition`),
+  Esc/focus-loss releases. `Renderer` holds a live camera seeded from the
+  injected `SceneCamera`, advances it each frame with real clamped `dt`;
+  nil input (offscreen/tests) -> static seeded pose, so offscreen tests
+  unchanged. Speeds: base 1800 units/s (~2.3 s per 4096-unit cell), Shift
+  x3.5. Doc: [free-fly camera](/engine/free-fly-camera.md). Item 2.8 left
+  [todo](/todo.md).
 * **Item 2.7 complete + coordinate decisions final**: real-data render of
   `WhiterunExterior06` verified visually (offscreen PNG) — 16 refs, 15
   drawn, 1 non-STAT skip, 0 missing textures; wall runs join correctly,

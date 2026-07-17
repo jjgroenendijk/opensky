@@ -8,6 +8,7 @@
 
 import Metal
 import MetalKit
+import QuartzCore
 import simd
 
 nonisolated enum RendererError: Error {
@@ -50,7 +51,16 @@ final class Renderer: NSObject {
     private let depthState: MTLDepthStencilState
     private let sampler: MTLSamplerState
     private let scene: RenderScene
+    /// Injected framing camera — source of the sun/ambient light and the
+    /// free-fly camera's starting pose.
     private let camera: SceneCamera
+    /// Live view pose, seeded from `camera`, advanced each frame from `input`.
+    private var freeFlyCamera: FreeFlyCamera
+    /// Free-fly input, drained once per `draw(in:)`; nil (offscreen/tests) ->
+    /// the camera stays on its seeded pose.
+    private let input: CameraInputState?
+    /// CACurrentMediaTime of the previous `draw(in:)`, for real delta time.
+    private var lastUpdateTime: CFTimeInterval?
     private let frameUniformBuffer: MTLBuffer
     /// Per-draw ring: maxFramesInFlight slots x scene.drawCount aligned
     /// entries. The scene is fixed for 2.6; cell streaming (2.7+) grows it.
@@ -65,9 +75,16 @@ final class Renderer: NSObject {
     private var frameIndex: Int
     private var projectionMatrix = matrix_identity_float4x4
 
-    /// `scene` nil -> synthetic DemoScene; `camera` nil -> its demo camera.
-    /// The app passes a built cell scene + `SceneCamera.framing(bounds:)`.
-    init(view: MTKView, scene: RenderScene? = nil, camera: SceneCamera? = nil) throws {
+    /// `scene` nil -> synthetic DemoScene; `camera` nil -> its demo camera;
+    /// `input` nil -> static seeded pose (offscreen/tests). The app passes a
+    /// built cell scene + `SceneCamera.framing(bounds:)` + a shared
+    /// `CameraInputState` for free-fly (todo 2.8).
+    init(
+        view: MTKView,
+        scene: RenderScene? = nil,
+        camera: SceneCamera? = nil,
+        input: CameraInputState? = nil
+    ) throws {
         guard let device = view.device else { throw RendererError.deviceUnavailable }
         self.device = device
 
@@ -112,7 +129,10 @@ final class Renderer: NSObject {
         sampler = try Self.makeSampler(device: device)
 
         self.scene = try scene ?? DemoScene.build(device: device)
-        self.camera = camera ?? .demo
+        let resolvedCamera = camera ?? .demo
+        self.camera = resolvedCamera
+        freeFlyCamera = FreeFlyCamera(framing: resolvedCamera)
+        self.input = input
         frameUniformBuffer = try Self.makeUniformBuffer(
             device: device,
             length: Self.alignedFrameUniformsSize * Self.maxFramesInFlight,
@@ -132,30 +152,33 @@ final class Renderer: NSObject {
         )
         commandQueue.addResidencySet(residencySet)
 
-        let heapDescriptor = MTL4CounterHeapDescriptor()
-        heapDescriptor.type = .timestamp
-        heapDescriptor.count = 2 * Self.maxFramesInFlight
-        timestampHeap = try? device.makeCounterHeap(descriptor: heapDescriptor)
+        timestampHeap = Self.makeTimestampHeap(device: device)
         frameStats = FrameStats(device: device)
 
         super.init()
     }
 
+    /// Two timestamp entries (frame start/end) per in-flight slot; nil when the
+    /// device cannot allocate one — stats then report CPU time only.
+    private static func makeTimestampHeap(device: MTLDevice) -> MTL4CounterHeap? {
+        let heapDescriptor = MTL4CounterHeapDescriptor()
+        heapDescriptor.type = .timestamp
+        heapDescriptor.count = 2 * maxFramesInFlight
+        return try? device.makeCounterHeap(descriptor: heapDescriptor)
+    }
+
     // MARK: - Per-frame uniforms
 
     /// Writes this frame's uniforms into its 256-byte-aligned slot and
-    /// returns the byte offset of that slot. Camera + sun come from the
-    /// injected SceneCamera; the free-fly camera (todo 2.8) replaces it.
+    /// returns the byte offset of that slot. View comes from the live free-fly
+    /// camera (pose seeded from the injected SceneCamera); sun/ambient from the
+    /// injected SceneCamera.
     private func updateFrameUniforms(slot: Int, projection: float4x4) -> Int {
         let offset = Self.alignedFrameUniformsSize * slot
-        let viewMatrix = MatrixMath.lookAt(
-            eye: camera.eye,
-            target: camera.target,
-            up: SIMD3<Float>(0, 0, 1)
-        )
+        let viewMatrix = freeFlyCamera.viewMatrix()
         var uniforms = FrameUniforms(
             viewProjectionMatrix: projection * viewMatrix,
-            cameraPosition: camera.eye,
+            cameraPosition: freeFlyCamera.position,
             sunDirection: camera.sunDirection,
             sunColor: camera.sunColor,
             ambientColor: camera.ambientColor
@@ -163,6 +186,17 @@ final class Renderer: NSObject {
         frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)
         return offset
+    }
+
+    /// Advances the free-fly camera by one frame of input using real elapsed
+    /// time. First frame (or no input) makes no move. dt is clamped so a stall
+    /// (breakpoint, window occluded) cannot teleport the camera.
+    private func advanceCamera() {
+        guard let input else { return }
+        let now = CACurrentMediaTime()
+        let dt = lastUpdateTime.map { Float(min(now - $0, 0.1)) } ?? 0
+        lastUpdateTime = now
+        freeFlyCamera.update(input.makeInput(dt: dt))
     }
 
     /// Writes one draw's uniforms into the ring and returns its byte offset.
@@ -387,6 +421,8 @@ extension Renderer: MTKViewDelegate {
         else { return }
 
         let cpuStart = frameStats.beginFrame()
+
+        advanceCamera()
 
         // Block until the GPU finishes the frame that used this slot.
         endFrameEvent.wait(
