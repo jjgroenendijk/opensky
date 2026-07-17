@@ -103,6 +103,24 @@ struct VirtualFileSystemTests {
         #expect(try vfs.contents(forPath: "sounds\\hit.wav") == Data("thud".utf8))
     }
 
+    @Test func archiveEntriesReportsWinningArchivePerPath() throws {
+        let base = try writeArchive(named: "base.bsa", files: [
+            .init(folder: "textures", name: "a.dds", stored: Data("base".utf8)),
+            .init(folder: "meshes", name: "m.nif", stored: Data("mesh".utf8))
+        ])
+        let patch = try writeArchive(named: "patch.bsa", files: [
+            .init(folder: "textures", name: "a.dds", stored: Data("patch".utf8))
+        ])
+        let vfs = VirtualFileSystem(dataURL: dataURL, archiveURLs: [base, patch])
+
+        // Sorted by path; the shared path is attributed to the later-opened
+        // (higher-priority) archive, matching contents(forPath:).
+        #expect(vfs.archiveEntries() == [
+            VFSEntry(path: "meshes\\m.nif", archive: "base.bsa"),
+            VFSEntry(path: "textures\\a.dds", archive: "patch.bsa")
+        ])
+    }
+
     @Test func normalizeCanonicalizesSeparatorsAndCase() throws {
         #expect(try VirtualFileSystem.normalize("Meshes//Clutter\\CUP.nif")
             == "meshes\\clutter\\cup.nif")

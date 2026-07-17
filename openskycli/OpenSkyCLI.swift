@@ -19,7 +19,19 @@ enum OpenSkyCLI {
     usage: openskycli [--data-root <path>] <command> [options]
 
     commands:
+      vfs ls [pattern]            List archive entries (fnmatch wildcards or
+                                  substring); prints "path<TAB>archive"
+      vfs cat <key> --out <file>  Extract one resource to a file
+      record <formid-or-editorid> Dump one Skyrim.esm record (decoded + fields)
+      cell [--worldspace <edid>] [--x <n>] [--y <n>] [--refs]
+                                  Summarize an exterior cell's references
+      nif <key>                   Inspect a mesh: container stats, model summary
+      dds <key>                   Inspect a texture: header + mip chain
+      render --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
+             [--size WxH]         Offscreen-render a cell to a PNG
       help                        Show this text
+
+    defaults: cell/render target the first-render cell (Tamriel (6,-2)).
 
     options:
       --data-root <path>          Skyrim SE install (or Data/) folder. Default:
@@ -45,12 +57,38 @@ enum OpenSkyCLI {
     }
 
     private static func run(arguments: [String]) throws {
-        guard let command = arguments.first else {
+        var scanner = ArgumentScanner(arguments)
+        let dataRoot = try scanner.option("--data-root")
+        guard let command = scanner.next() else {
             throw CLIError.usage("no command given")
         }
         switch command {
         case "help", "--help", "-h":
             print(usage)
+        case "vfs":
+            try VFSCommand.run(context: .resolve(dataRootOverride: dataRoot), scanner: &scanner)
+        case "record":
+            try RecordCommand.run(
+                context: .resolve(dataRootOverride: dataRoot),
+                scanner: &scanner
+            )
+        case "cell":
+            try CellCommand.run(context: .resolve(dataRootOverride: dataRoot), scanner: &scanner)
+        case "nif":
+            try AssetCommand.runNIF(
+                context: .resolve(dataRootOverride: dataRoot),
+                scanner: &scanner
+            )
+        case "dds":
+            try AssetCommand.runDDS(
+                context: .resolve(dataRootOverride: dataRoot),
+                scanner: &scanner
+            )
+        case "render":
+            try RenderCommand.run(
+                context: .resolve(dataRootOverride: dataRoot),
+                scanner: &scanner
+            )
         default:
             throw CLIError.usage("unknown command: \(command)")
         }
