@@ -4,6 +4,15 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-17
 
+* **Scene + camera injection** (2.7 app wiring, part 1): `Renderer` init
+  is now `init(view:scene:camera:)` — optional prepared `RenderScene` +
+  `SceneCamera`; nil -> DemoScene + `.demo` camera, so existing tests/CI
+  run unchanged. `updateFrameUniforms` reads the stored camera, per-draw
+  ring sized off the injected scene. New `SceneCamera`
+  (`opensky/Rendering/`): `.demo` constants + `framing(bounds:)` — frames
+  a Z-up AABB from south-west/above at `radius / sin(fovY/2) * 1.1`,
+  min 64 units; unit-tested. Doc:
+  [Metal 4 renderer](/rendering/metal4-renderer.md).
 * **Cell scene build** (2.7): new `opensky/World/` — `CellSceneBuilder`
   walks WRLD top group -> world children -> exterior blocks (labels
   ignored, XCLC decoded) -> CELL + children -> persistent/temporary REFR
