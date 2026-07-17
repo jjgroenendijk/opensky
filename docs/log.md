@@ -2,6 +2,16 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-07-17
+
+* **First-render-cell decision** (2.7): probe over Tamriel grid box
+  [-2,10]x[-9,3] (170 cells, 9 720 STATs) -> target = `WhiterunExterior06`
+  at (6,-2): 16 refs, 94% STAT, 8 distinct models, all VFS-resolvable,
+  recognizable Whiterun walls. Farm cells rejected (127-153 refs, 28-34
+  models). Probe fact binding scene build: STAT MODL paths carry no
+  `meshes\` prefix, VFS keys do -> prepend before lookup. Doc:
+  [first render cell](/decisions/first-render-cell.md).
+
 ## 2026-07-10
 
 * **Winding decision corrected by observation** (2.6): demo ground plane
