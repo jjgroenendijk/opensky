@@ -4,6 +4,12 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-17
 
+* **Item 2.7 complete + coordinate decisions final**: real-data render of
+  `WhiterunExterior06` verified visually (offscreen PNG) — 16 refs, 15
+  drawn, 1 non-STAT skip, 0 missing textures; wall runs join correctly,
+  nothing inside-out -> winding + REFR euler sign/order in
+  [coordinates](/decisions/coordinates.md) upgraded from provisional to
+  final. Item 2.7 left [todo](/todo.md).
 * **Cell render at launch** (2.7 app wiring, part 2): AppDelegate locates
   game data before window content, wires a scene factory into
   `GameViewController` (runs on the view's Metal device): VFS ->

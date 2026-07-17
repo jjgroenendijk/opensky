@@ -66,28 +66,14 @@ holds layouts, `NIFFile.model()` yields engine meshes with resolved materials
 (normalized texture VFS keys); DDS done (2.5) — `docs/formats/dds.md`,
 `TextureLoader` turns VFS bytes into MTLTextures with placeholder fallback;
 renderer done (2.6) — `docs/rendering/metal4-renderer.md`, static-mesh path
-draws `RenderScene` values (currently the synthetic `DemoScene`, which 2.7
-replaces with real cell content — feed instances through
-`RenderModel`/`RenderScene` + a `TextureProvider` over VFS). 2.7 + 2.8
-unblocked (2.8: fly around any scene, even untextured). Winding decision was
-corrected by 2.6 observation — re-verify against vanilla NIFs at 2.7
-(coordinates.md). One branch/PR per numbered item. Every format item: cite
-spec, synthetic in-code test fixtures, write/grow `docs/formats/<name>.md`,
+draws injected `RenderScene` values; cell scene done (2.7) —
+`docs/engine/cell-scene.md`, app renders `WhiterunExterior06`
+(`docs/decisions/first-render-cell.md`) at launch, `DemoScene` fallback
+when data absent; winding + REFR euler verified against vanilla content
+(coordinates.md, no longer provisional). 2.8 next: fly around the real
+cell. One branch/PR per numbered item. Every format item: cite spec,
+synthetic in-code test fixtures, write/grow `docs/formats/<name>.md`,
 verify against real install via throwaway probes (never committed).
-
-### 2.7 Cell scene build
-
-* [ ] Close the target-cell open question by probe: small exterior cell, mostly STAT
-      refs, few distinct models (candidate area: Whiterun plains farm/road cells). Record
-      choice + criteria in `docs/decisions/first-render-cell.md`.
-* [ ] Asset caches: `MeshLibrary` + `TextureLibrary` keyed by normalized VFS path — load
-      once, share across refs.
-* [ ] Scene build: cell REFR list -> STAT via FormID resolver -> MODL path -> NIF + DDS
-      through VFS -> instance transform (REFR position/rotation + XSCL) -> draw list
-      grouped by mesh (instancing-ready).
-* [ ] Robustness: missing/malformed asset -> log + skip + count; one summary line after
-      load (N refs, M drawn, K skipped). Never crash on bad data (mod-quirk rule).
-* [ ] Draw opaque first; alpha-test pass second if the chosen cell has foliage.
 
 ### 2.8 Free-fly camera
 

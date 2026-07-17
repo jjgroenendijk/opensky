@@ -61,8 +61,9 @@ a single-sided quad exposed it). The original D3D-window-coords reasoning was of
 exactly one y-flip: Metal evaluates winding in NDC orientation (y-up), not framebuffer
 y-down.
 
-Re-verify against real NIF content at 2.7 cell render; wrong for vanilla meshes would
-show as inside-out buildings -> flip winding again, never cull mode.
+Verified against vanilla content 2026-07-17 (2.7, `WhiterunExterior06` offscreen
+render): wall segments, towers and building LODs all render solid from outside —
+nothing inside-out. Decision final.
 
 ## Near/far planes at Skyrim scale
 
@@ -100,9 +101,8 @@ Angles negated: Bethesda angles turn clockwise viewed from the positive axis end
 consensus — xEdit displays REFR angles as clockwise degrees; OpenMW (GPL clean-room
 engine for the same Gamebryo lineage) applies negated eulers in this order.
 
-[WARNING] Sign + order not provable from numbers alone (probe sees value ranges, not
-orientation on screen). Verify visually in 2.7 against a known asymmetric ref (Whiterun
-farm buildings) before trusting; wrong sign shows as mirrored yaw, wrong order as
-tilted geometry on slopes.
+Verified visually 2026-07-17 (2.7, `WhiterunExterior06` offscreen render): city-wall
+segments placed at differing yaws join into one continuous curved run — wrong sign
+would mirror/scatter the joints, wrong order would tilt segments. Decision final.
 
 `MatrixMath.placement(position:rotation:scale:)` implements exactly this compose.
