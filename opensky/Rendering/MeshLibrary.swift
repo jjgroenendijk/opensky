@@ -10,6 +10,65 @@
 
 import Foundation
 import Metal
+import simd
+
+/// Axis-aligned bounds in model space, captured from CPU-side vertex data at
+/// load time (vertices live only on the GPU afterwards). Scene build (todo
+/// 2.7) pushes the 8 corners through each instance transform to accumulate a
+/// world AABB for camera placement.
+nonisolated struct ModelBounds: Equatable {
+    let min: SIMD3<Float>
+    let max: SIMD3<Float>
+
+    /// The 8 corner points, for pushing through an affine transform.
+    var corners: [SIMD3<Float>] {
+        [min.x, max.x].flatMap { x in
+            [min.y, max.y].flatMap { y in
+                [min.z, max.z].map { z in SIMD3(x, y, z) }
+            }
+        }
+    }
+
+    func union(_ other: ModelBounds) -> ModelBounds {
+        ModelBounds(min: simd_min(min, other.min), max: simd_max(max, other.max))
+    }
+
+    /// Nil for an empty point set.
+    static func containing(_ points: [SIMD3<Float>]) -> ModelBounds? {
+        guard let first = points.first else { return nil }
+        var lower = first
+        var upper = first
+        for point in points.dropFirst() {
+            lower = simd_min(lower, point)
+            upper = simd_max(upper, point)
+        }
+        return ModelBounds(min: lower, max: upper)
+    }
+
+    /// Union of each mesh's local vertex AABB pushed through its
+    /// mesh -> model transform. Nil when no mesh carries positions.
+    static func containing(model: Model) -> ModelBounds? {
+        var result: ModelBounds?
+        for mesh in model.meshes {
+            guard let local = containing(mesh.positions) else { continue }
+            let inModelSpace = local.transformed(by: mesh.transform)
+            result = result.map { $0.union(inModelSpace) } ?? inModelSpace
+        }
+        return result
+    }
+
+    /// AABB of this box under an affine transform: all 8 corners pushed
+    /// through, re-boxed. Conservative under rotation — exact enough for
+    /// camera framing.
+    func transformed(by matrix: float4x4) -> ModelBounds {
+        let moved = corners.map { corner in
+            let out = matrix * SIMD4(corner, 1)
+            return SIMD3(out.x, out.y, out.z)
+        }
+        // corners is never empty, so containing cannot return nil.
+        return Self.containing(moved) ?? self
+    }
+}
 
 nonisolated enum MeshLibraryError: Error, Equatable {
     /// VFS could not resolve the mesh path (missing loose file + archive entry).
@@ -29,6 +88,9 @@ nonisolated final class MeshLibrary {
     /// Per-path count of shapes the flattener dropped (skinned or empty), so
     /// scene build can report skips without re-parsing.
     private var skippedShapes: [String: Int] = [:]
+    /// Model-space AABB per loaded path — captured at parse time because the
+    /// vertex data is gone from the CPU after upload (see ModelBounds).
+    private var modelBounds: [String: ModelBounds] = [:]
 
     /// Distinct mesh paths successfully parsed + uploaded.
     private(set) var loadedCount = 0
@@ -71,6 +133,7 @@ nonisolated final class MeshLibrary {
         }
         cache[key] = render
         skippedShapes[key] = model.skippedShapeCount
+        modelBounds[key] = ModelBounds.containing(model: model)
         loadedCount += 1
         return render
     }
@@ -85,6 +148,13 @@ nonisolated final class MeshLibrary {
     /// Total shapes dropped across every loaded model.
     var totalSkippedShapeCount: Int {
         skippedShapes.values.reduce(0, +)
+    }
+
+    /// Model-space bounds for an already-loaded path (nil if the path never
+    /// loaded or the model carried no vertex positions).
+    func bounds(forPath path: String) -> ModelBounds? {
+        guard let key = try? meshKey(for: path) else { return nil }
+        return modelBounds[key]
     }
 
     /// Normalizes a MODL-style path and prepends the "meshes\\" root when the

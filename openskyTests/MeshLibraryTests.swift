@@ -145,6 +145,17 @@ struct MeshLibraryTests {
         #expect(library.totalSkippedShapeCount == 1)
     }
 
+    @Test(.enabled(if: Self.hasDevice)) func recordsModelBoundsAtLoad() throws {
+        let device = try #require(Self.device)
+        try writeLooseFile("meshes/clutter/cup.nif", staticNIF())
+        let library = library(device: device)
+        #expect(library.bounds(forPath: "clutter\\cup.nif") == nil) // not loaded yet
+        _ = try library.model(path: "clutter\\cup.nif")
+        // shape() places all three vertices at (1, 2, 3) -> point bounds.
+        #expect(library.bounds(forPath: "clutter\\cup.nif")
+            == ModelBounds(min: SIMD3(1, 2, 3), max: SIMD3(1, 2, 3)))
+    }
+
     @Test(.enabled(if: Self.hasDevice)) func invalidPathThrowsNotFound() throws {
         let device = try #require(Self.device)
         let library = library(device: device)

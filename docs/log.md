@@ -4,6 +4,18 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-17
 
+* **Cell scene build** (2.7): new `opensky/World/` — `CellSceneBuilder`
+  walks WRLD top group -> world children -> exterior blocks (labels
+  ignored, XCLC decoded) -> CELL + children -> persistent/temporary REFR
+  records; STAT index (lazy, raw FormIDs, single plugin); instances via
+  `MatrixMath.placement`, sorted by (mesh path, FormID) -> adjacent per
+  model (instancing-ready) -> opaque-first `RenderScene`. Robustness:
+  per-ref/asset failures log + skip + count (malformed / non-STAT /
+  marker / load-failed buckets), only worldspace/cell absence throws;
+  `CellLoadSummary.summaryLine` one-liner after load. `MeshLibrary` now
+  records a model-space `ModelBounds` AABB at parse time ->
+  `CellScene.bounds` world AABB for camera framing. Doc:
+  [cell scene build](/engine/cell-scene.md).
 * **First-render-cell decision** (2.7): probe over Tamriel grid box
   [-2,10]x[-9,3] (170 cells, 9 720 STATs) -> target = `WhiterunExterior06`
   at (6,-2): 16 refs, 94% STAT, 8 distinct models, all VFS-resolvable,

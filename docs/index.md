@@ -27,6 +27,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 * [Game data locator](/engine/game-data-locator.md) - how the Skyrim SE install is
   found and validated at launch; override settings.
+* [Cell scene build](/engine/cell-scene.md) - exterior cell -> draw list: WRLD walk,
+  STAT resolution, skip taxonomy, grouping, world bounds.
 
 ## Rendering
 
