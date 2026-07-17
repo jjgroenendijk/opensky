@@ -9,7 +9,9 @@ import Foundation
 nonisolated enum GameText {
     /// Nil only for byte sequences no supported codepage can represent.
     static func decode(_ bytes: Data) -> String? {
-        if let utf8 = String(data: bytes, encoding: .utf8) { return utf8 }
+        if let utf8 = String(data: bytes, encoding: .utf8) {
+            return utf8
+        }
         return String(data: bytes, encoding: .windowsCP1252)
     }
 
@@ -18,7 +20,9 @@ nonisolated enum GameText {
     /// not reject the whole asset — vanilla NIF string tables carry exporter
     /// junk (uninitialized memory, e.g. 0x90 bytes).
     static func decodeLossy(_ bytes: Data) -> String {
-        if let text = decode(bytes) { return text }
+        if let text = decode(bytes) {
+            return text
+        }
         return String(data: bytes, encoding: .isoLatin1) ?? ""
     }
 }

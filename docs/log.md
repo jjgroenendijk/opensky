@@ -2,6 +2,54 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-07-17
+
+* **Item 2.7 complete + coordinate decisions final**: real-data render of
+  `WhiterunExterior06` verified visually (offscreen PNG) — 16 refs, 15
+  drawn, 1 non-STAT skip, 0 missing textures; wall runs join correctly,
+  nothing inside-out -> winding + REFR euler sign/order in
+  [coordinates](/decisions/coordinates.md) upgraded from provisional to
+  final. Item 2.7 left [todo](/todo.md).
+* **Cell render at launch** (2.7 app wiring, part 2): AppDelegate locates
+  game data before window content, wires a scene factory into
+  `GameViewController` (runs on the view's Metal device): VFS ->
+  `ESMFile` -> `TextureLibrary` -> `MeshLibrary` -> `CellSceneBuilder` ->
+  `SceneCamera.framing(bounds:)` -> injected `Renderer`. Target constants
+  centralized in `opensky/FirstRenderCell.swift` (Tamriel (6,-2)). Any
+  factory failure -> `[ERROR]` log + DemoScene fallback, never crash;
+  build synchronous at startup (fine for one small cell). New env-gated
+  `CellRenderRealDataTests`: real-install build + offscreen render +
+  `logs/cell-whiterunexterior06.png`, auto-skips without
+  `OPENSKY_DATA_ROOT`. Doc: [cell scene build](/engine/cell-scene.md).
+* **Scene + camera injection** (2.7 app wiring, part 1): `Renderer` init
+  is now `init(view:scene:camera:)` — optional prepared `RenderScene` +
+  `SceneCamera`; nil -> DemoScene + `.demo` camera, so existing tests/CI
+  run unchanged. `updateFrameUniforms` reads the stored camera, per-draw
+  ring sized off the injected scene. New `SceneCamera`
+  (`opensky/Rendering/`): `.demo` constants + `framing(bounds:)` — frames
+  a Z-up AABB from south-west/above at `radius / sin(fovY/2) * 1.1`,
+  min 64 units; unit-tested. Doc:
+  [Metal 4 renderer](/rendering/metal4-renderer.md).
+* **Cell scene build** (2.7): new `opensky/World/` — `CellSceneBuilder`
+  walks WRLD top group -> world children -> exterior blocks (labels
+  ignored, XCLC decoded) -> CELL + children -> persistent/temporary REFR
+  records; STAT index (lazy, raw FormIDs, single plugin); instances via
+  `MatrixMath.placement`, sorted by (mesh path, FormID) -> adjacent per
+  model (instancing-ready) -> opaque-first `RenderScene`. Robustness:
+  per-ref/asset failures log + skip + count (malformed / non-STAT /
+  marker / load-failed buckets), only worldspace/cell absence throws;
+  `CellLoadSummary.summaryLine` one-liner after load. `MeshLibrary` now
+  records a model-space `ModelBounds` AABB at parse time ->
+  `CellScene.bounds` world AABB for camera framing. Doc:
+  [cell scene build](/engine/cell-scene.md).
+* **First-render-cell decision** (2.7): probe over Tamriel grid box
+  [-2,10]x[-9,3] (170 cells, 9 720 STATs) -> target = `WhiterunExterior06`
+  at (6,-2): 16 refs, 94% STAT, 8 distinct models, all VFS-resolvable,
+  recognizable Whiterun walls. Farm cells rejected (127-153 refs, 28-34
+  models). Probe fact binding scene build: STAT MODL paths carry no
+  `meshes\` prefix, VFS keys do -> prepend before lookup. Doc:
+  [first render cell](/decisions/first-render-cell.md).
+
 ## 2026-07-10
 
 * **Winding decision corrected by observation** (2.6): demo ground plane

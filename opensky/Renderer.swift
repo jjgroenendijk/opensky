@@ -2,8 +2,9 @@
 // variants, per-frame and per-draw uniform rings, textures + sampler bound
 // through the MTL4ArgumentTable, GPU frame timing via counter-heap
 // timestamps. Command flow adapted from Apple's Xcode Metal 4 game template.
-// Scene content is the synthetic DemoScene until cell scene build (todo
-// 2.7) feeds real world geometry through the same path.
+// Scene + camera are injected at init (todo 2.7 app wiring): the app hands a
+// built cell scene with a framing SceneCamera; nil falls back to the
+// synthetic DemoScene + its demo camera (tests, missing game data).
 
 import Metal
 import MetalKit
@@ -49,6 +50,7 @@ final class Renderer: NSObject {
     private let depthState: MTLDepthStencilState
     private let sampler: MTLSamplerState
     private let scene: RenderScene
+    private let camera: SceneCamera
     private let frameUniformBuffer: MTLBuffer
     /// Per-draw ring: maxFramesInFlight slots x scene.drawCount aligned
     /// entries. The scene is fixed for 2.6; cell streaming (2.7+) grows it.
@@ -63,7 +65,9 @@ final class Renderer: NSObject {
     private var frameIndex: Int
     private var projectionMatrix = matrix_identity_float4x4
 
-    init(view: MTKView) throws {
+    /// `scene` nil -> synthetic DemoScene; `camera` nil -> its demo camera.
+    /// The app passes a built cell scene + `SceneCamera.framing(bounds:)`.
+    init(view: MTKView, scene: RenderScene? = nil, camera: SceneCamera? = nil) throws {
         guard let device = view.device else { throw RendererError.deviceUnavailable }
         self.device = device
 
@@ -107,7 +111,8 @@ final class Renderer: NSObject {
         depthState = try Self.makeDepthState(device: device)
         sampler = try Self.makeSampler(device: device)
 
-        scene = try DemoScene.build(device: device)
+        self.scene = try scene ?? DemoScene.build(device: device)
+        self.camera = camera ?? .demo
         frameUniformBuffer = try Self.makeUniformBuffer(
             device: device,
             length: Self.alignedFrameUniformsSize * Self.maxFramesInFlight,
@@ -116,13 +121,14 @@ final class Renderer: NSObject {
         drawUniformBuffer = try Self.makeUniformBuffer(
             device: device,
             length: Self.alignedDrawUniformsSize
-                * max(scene.drawCount, 1) * Self.maxFramesInFlight,
+                * max(self.scene.drawCount, 1) * Self.maxFramesInFlight,
             label: "DrawUniforms"
         )
 
         residencySet = try Self.makeResidencySet(
             device: device,
-            allocations: [frameUniformBuffer, drawUniformBuffer] + scene.residencyAllocations
+            allocations: [frameUniformBuffer, drawUniformBuffer]
+                + self.scene.residencyAllocations
         )
         commandQueue.addResidencySet(residencySet)
 
@@ -139,20 +145,20 @@ final class Renderer: NSObject {
 
     /// Writes this frame's uniforms into its 256-byte-aligned slot and
     /// returns the byte offset of that slot. Camera + sun come from the
-    /// demo scene; the free-fly camera (todo 2.8) replaces the former.
+    /// injected SceneCamera; the free-fly camera (todo 2.8) replaces it.
     private func updateFrameUniforms(slot: Int, projection: float4x4) -> Int {
         let offset = Self.alignedFrameUniformsSize * slot
         let viewMatrix = MatrixMath.lookAt(
-            eye: DemoScene.cameraEye,
-            target: DemoScene.cameraTarget,
+            eye: camera.eye,
+            target: camera.target,
             up: SIMD3<Float>(0, 0, 1)
         )
         var uniforms = FrameUniforms(
             viewProjectionMatrix: projection * viewMatrix,
-            cameraPosition: DemoScene.cameraEye,
-            sunDirection: DemoScene.sunDirection,
-            sunColor: DemoScene.sunColor,
-            ambientColor: DemoScene.ambientColor
+            cameraPosition: camera.eye,
+            sunDirection: camera.sunDirection,
+            sunColor: camera.sunColor,
+            ambientColor: camera.ambientColor
         )
         frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)

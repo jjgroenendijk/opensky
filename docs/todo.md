@@ -49,7 +49,7 @@ milestone leaves this file; history lives in `docs/log.md` + git.
 
 * M1 — data foundation. Done 2026-07-10 (PRs #1-#8): BSA VFS, ESM/plugin record decoders.
 * M2 — static world geometry (active): one textured exterior cell on screen, free-fly
-  camera, >30 fps sustained on Apple M1. Gate: 2.9.
+  camera, >30 fps sustained on Apple M1; CLI + asset-preview GUI dev tools. Gate: 2.11.
 * M3 — world streaming + environment: roam exterior worldspace seamlessly — terrain,
   cell streaming, distant LOD, sky/water, interiors via doors. Gate: 3.7.
 * M4 — toward playable (direction only): collision, animation, scripting, audio, UI.
@@ -66,28 +66,14 @@ holds layouts, `NIFFile.model()` yields engine meshes with resolved materials
 (normalized texture VFS keys); DDS done (2.5) — `docs/formats/dds.md`,
 `TextureLoader` turns VFS bytes into MTLTextures with placeholder fallback;
 renderer done (2.6) — `docs/rendering/metal4-renderer.md`, static-mesh path
-draws `RenderScene` values (currently the synthetic `DemoScene`, which 2.7
-replaces with real cell content — feed instances through
-`RenderModel`/`RenderScene` + a `TextureProvider` over VFS). 2.7 + 2.8
-unblocked (2.8: fly around any scene, even untextured). Winding decision was
-corrected by 2.6 observation — re-verify against vanilla NIFs at 2.7
-(coordinates.md). One branch/PR per numbered item. Every format item: cite
-spec, synthetic in-code test fixtures, write/grow `docs/formats/<name>.md`,
+draws injected `RenderScene` values; cell scene done (2.7) —
+`docs/engine/cell-scene.md`, app renders `WhiterunExterior06`
+(`docs/decisions/first-render-cell.md`) at launch, `DemoScene` fallback
+when data absent; winding + REFR euler verified against vanilla content
+(coordinates.md, no longer provisional). 2.8 next: fly around the real
+cell. One branch/PR per numbered item. Every format item: cite spec,
+synthetic in-code test fixtures, write/grow `docs/formats/<name>.md`,
 verify against real install via throwaway probes (never committed).
-
-### 2.7 Cell scene build
-
-* [ ] Close the target-cell open question by probe: small exterior cell, mostly STAT
-      refs, few distinct models (candidate area: Whiterun plains farm/road cells). Record
-      choice + criteria in `docs/decisions/first-render-cell.md`.
-* [ ] Asset caches: `MeshLibrary` + `TextureLibrary` keyed by normalized VFS path — load
-      once, share across refs.
-* [ ] Scene build: cell REFR list -> STAT via FormID resolver -> MODL path -> NIF + DDS
-      through VFS -> instance transform (REFR position/rotation + XSCL) -> draw list
-      grouped by mesh (instancing-ready).
-* [ ] Robustness: missing/malformed asset -> log + skip + count; one summary line after
-      load (N refs, M drawn, K skipped). Never crash on bad data (mod-quirk rule).
-* [ ] Draw opaque first; alpha-test pass second if the chosen cell has foliage.
 
 ### 2.8 Free-fly camera
 
@@ -96,10 +82,24 @@ verify against real install via throwaway probes (never committed).
 * [ ] Camera state -> view matrix per 2.1 conventions; clamp pitch; move speeds tuned to
       Skyrim scale (cell = 4096 units — crossing one should take seconds, not minutes).
 
-### 2.9 Milestone acceptance
+### 2.9 CLI tool
+
+* [ ] Second product target sharing the engine code — launch the game world from the
+      terminal + dev entrypoints (asset dump/inspect, offscreen render to file,
+      cell/record probes). Replaces throwaway probe scripts for repeatable dev checks;
+      folds in the env-gated probe-harness idea (`make`-driven, skips when data absent).
+
+### 2.10 Asset preview GUI
+
+* [ ] Simple app to browse the VFS and preview assets (NIF meshes, DDS textures,
+      records) from the local install. Later grows into the world viewer/test harness
+      (open a cell, fly, inspect) — M2 scope is browse + single-asset preview only.
+
+### 2.11 Milestone acceptance
 
 * [ ] Target cell renders textured + recognizable; free-fly through it; sustained
-      >30 fps on M1 measured via 2.6 frame stats (not eyeballed).
+      >30 fps on M1 measured via 2.6 frame stats (not eyeballed). CLI + preview GUI
+      build, launch, and cover their 2.9/2.10 scopes.
 * [ ] Screenshot of rendered frame committed under `docs/` (engine output, not extracted
       game data); `docs/log.md` + this file updated; milestone 3 items re-checked against
       what 2.x actually built.
@@ -109,7 +109,8 @@ verify against real install via throwaway probes (never committed).
 Goal: roam the Tamriel exterior worldspace seamlessly — terrain under every object, cells
 stream in/out around the camera, distant LOD past the loaded grid, sky + water, interiors
 reachable through doors. Item ordering + sub-tasks re-checked against what M2 actually
-built before starting (2.9). One branch/PR per numbered item; format items follow the same
+built before starting (2.11). One branch/PR per numbered item; format items follow the
+same
 spec/fixture/doc discipline as M2.
 
 ### 3.1 Terrain
@@ -161,8 +162,6 @@ Direction only — re-scope into numbered gated items at 3.7. Candidate order:
 * [ ] Decide `.metal` formatter/linter (clang-format?) — AGENTS.md wants both for every
       language; document exception if none fits.
 * [ ] Commit-msg hook checks subject only; body sections enforced by review.
-* [ ] Test probe harness: repeatable `make`-driven way to run read-only checks against the
-      local install (env-gated, skipped when data absent) instead of throwaway probes.
 
 ## Open questions
 

@@ -208,13 +208,27 @@ nonisolated struct NIFTriShape {
     /// or unused W as its fourth component).
     private static func stride(for attributes: VertexAttributes) -> Int {
         var stride = 0
-        if attributes.contains(.vertex) { stride += 16 }
-        if attributes.contains(.uvs) { stride += 4 }
-        if attributes.contains(.normals) { stride += 4 }
-        if attributes.contains([.normals, .tangents]) { stride += 4 }
-        if attributes.contains(.vertexColors) { stride += 4 }
-        if attributes.contains(.skinned) { stride += 12 }
-        if attributes.contains(.eyeData) { stride += 4 }
+        if attributes.contains(.vertex) {
+            stride += 16
+        }
+        if attributes.contains(.uvs) {
+            stride += 4
+        }
+        if attributes.contains(.normals) {
+            stride += 4
+        }
+        if attributes.contains([.normals, .tangents]) {
+            stride += 4
+        }
+        if attributes.contains(.vertexColors) {
+            stride += 4
+        }
+        if attributes.contains(.skinned) {
+            stride += 12
+        }
+        if attributes.contains(.eyeData) {
+            stride += 4
+        }
         return stride
     }
 

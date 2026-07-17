@@ -32,7 +32,9 @@ nonisolated enum LZ4 {
         output.reserveCapacity(min(sizeLimit, 1 << 24))
         while true {
             guard let blockSize = try? reader.readUInt32() else { throw LZ4Error.truncatedFrame }
-            if blockSize == 0 { break } // EndMark
+            if blockSize == 0 {
+                break
+            } // EndMark
             let length = Int(blockSize & 0x7FFF_FFFF)
             guard let block = try? reader.read(count: length) else {
                 throw LZ4Error.truncatedBlock
@@ -45,7 +47,9 @@ nonisolated enum LZ4 {
             } else {
                 try decompressBlock(block, into: &output, sizeLimit: sizeLimit)
             }
-            if hasBlockChecksums { reader.skip(4) } // xxh32 — not verified
+            if hasBlockChecksums {
+                reader.skip(4)
+            } // xxh32 — not verified
         }
         return Data(output)
     }
@@ -60,8 +64,12 @@ nonisolated enum LZ4 {
         reader.skip(1) // BD (block max size) — irrelevant when decoding to one buffer
         let version = (flg >> 6) & 0b11
         guard version == 1 else { throw LZ4Error.unsupportedVersion(version) }
-        if flg & 0b0000_1000 != 0 { reader.skip(8) } // content size
-        if flg & 0b0000_0001 != 0 { reader.skip(4) } // dictionary ID
+        if flg & 0b0000_1000 != 0 {
+            reader.skip(8)
+        } // content size
+        if flg & 0b0000_0001 != 0 {
+            reader.skip(4)
+        } // dictionary ID
         reader.skip(1) // header checksum (HC) — not verified; content validated downstream
         return flg & 0b0001_0000 != 0
     }
@@ -91,7 +99,9 @@ nonisolated enum LZ4 {
             output.append(contentsOf: input[pos ..< pos + literalLength])
             pos += literalLength
 
-            if pos == input.count { break } // last sequence: literals only
+            if pos == input.count {
+                break
+            } // last sequence: literals only
 
             guard pos + 2 <= input.count else { throw LZ4Error.truncatedBlock }
             let matchOffset = Int(input[pos]) | (Int(input[pos + 1]) << 8)
@@ -124,7 +134,9 @@ nonisolated enum LZ4 {
             let byte = input[pos]
             pos += 1
             total += Int(byte)
-            if byte != 255 { return total }
+            if byte != 255 {
+                return total
+            }
         }
     }
 }

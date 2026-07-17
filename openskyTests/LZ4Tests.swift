@@ -17,7 +17,9 @@ struct LZ4Tests {
         out.append(contentsOf: [0x40, 0x40, 0x00]) // FLG v01, BD 64K, HC (unchecked)
         for (block, uncompressed) in blocks {
             var size = UInt32(block.count)
-            if uncompressed { size |= 0x8000_0000 }
+            if uncompressed {
+                size |= 0x8000_0000
+            }
             withUnsafeBytes(of: size.littleEndian) { out.append(contentsOf: $0) }
             out.append(block)
         }

@@ -27,6 +27,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 * [Game data locator](/engine/game-data-locator.md) - how the Skyrim SE install is
   found and validated at launch; override settings.
+* [Cell scene build](/engine/cell-scene.md) - exterior cell -> draw list: WRLD walk,
+  STAT resolution, skip taxonomy, grouping, world bounds.
 
 ## Rendering
 
@@ -40,6 +42,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   programmatic AppKit, Metal 4 pipeline, ad-hoc signing, no sandbox.
 * [Coordinates + units](/decisions/coordinates.md) - Skyrim Z-up world kept verbatim,
   view/projection convert to Metal; matrix convention, winding, near/far, REFR euler.
+* [First render cell](/decisions/first-render-cell.md) - WhiterunExterior06 at Tamriel
+  (6,-2) as the 2.7/2.9 target; probe ranking, MODL `meshes\` prefix rule.
 
 ## Meta
 

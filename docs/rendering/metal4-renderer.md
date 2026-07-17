@@ -9,11 +9,13 @@ timestamp: 2026-07-10T00:00:00Z
 
 # Metal 4 static-mesh renderer
 
-State after milestone 2.6: `Renderer.swift` draws a `RenderScene` (engine meshes +
-materials) through opaque and alpha-test pipeline variants. Scene content = synthetic
-`DemoScene` until cell scene build (todo 2.7) feeds real world geometry through the same
-path. Command flow adapted from Apple's Xcode Metal 4 game template (structure, not
-copied game code).
+State after milestone 2.7 app wiring: `Renderer.swift` draws a `RenderScene` (engine
+meshes + materials) through opaque and alpha-test pipeline variants. Scene source =
+injection: `Renderer(view:scene:camera:)` takes a prepared `RenderScene` + `SceneCamera`
+(the app hands in the built cell scene with `SceneCamera.framing(bounds:)`); nil scene
+falls back to the synthetic `DemoScene` with its `.demo` camera (tests, missing game
+data). Per-draw uniform ring is sized off the injected scene's `drawCount`. Command flow
+adapted from Apple's Xcode Metal 4 game template (structure, not copied game code).
 
 ## Scene types (`opensky/Rendering/`)
 
@@ -32,9 +34,15 @@ copied game code).
   (`MatrixMath.normalMatrix`), opaque items grouped before alpha-tested so the pipeline
   switches once. `residencyAllocations` = deduped buffers + textures for the residency
   set. Alpha blending (`Material.alphaBlend`) renders opaque for now — out of 2.6 scope.
+* `SceneCamera` — eye/target + sun/ambient consumed by `FrameUniforms`. `.demo` mirrors
+  the DemoScene constants; `framing(bounds:)` frames a Z-up world AABB: target = box
+  center, eye south-west of and above it along a fixed direction at distance
+  `radius / sin(fovY / 2) * 1.1` (enclosing sphere fits the 65° vertical fov), minimum
+  64 units for degenerate bounds. Unit-tested (`SceneCameraTests`). Replaced by the
+  free-fly camera at 2.8.
 * `DemoScene` — synthetic proving scene (checker ground, three crates, alpha-test cutout
-  panel, camera + sun constants), built entirely in code (legal rule). Throwaway once
-  2.7 lands.
+  panel, camera + sun constants), built entirely in code (legal rule). Stays as the
+  no-game-data fallback scene.
 
 ## Pipelines + shaders
 

@@ -276,8 +276,12 @@ nonisolated enum DemoScene {
         try texture(device: device, size: 64, label: "demo/crate") { x, y in
             let border = x < 6 || x > 57 || y < 6 || y > 57
             let brace = abs(x - y) < 4
-            if border { return SIMD4(96, 64, 32, 255) }
-            if brace { return SIMD4(128, 90, 48, 255) }
+            if border {
+                return SIMD4(96, 64, 32, 255)
+            }
+            if brace {
+                return SIMD4(128, 90, 48, 255)
+            }
             return SIMD4(180, 130, 70, 255)
         }
     }
