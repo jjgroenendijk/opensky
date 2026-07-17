@@ -25,14 +25,36 @@
 
 /* Begin PBXFileReference section */
 		5A3BAE013000109100177F95 /* opensky.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = opensky.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5AC1000130001093001700A2 /* openskycli */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = openskycli; sourceTree = BUILT_PRODUCTS_DIR; };
 		5A3BAE193000109300177F95 /* openskyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = openskyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5A3BAE233000109300177F95 /* openskyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = openskyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		5AC1000130001093001700A6 /* Exceptions for "opensky" folder in "openskycli" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AppDelegate.swift,
+				Assets.xcassets,
+				GameViewController.swift,
+				OpenSkyApp.swift,
+			);
+			target = 5AC1000130001093001700A1 /* openskycli */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		5A3BAE033000109100177F95 /* opensky */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				5AC1000130001093001700A6 /* Exceptions for "opensky" folder in "openskycli" target */,
+			);
 			path = opensky;
+			sourceTree = "<group>";
+		};
+		5AC1000130001093001700A5 /* openskycli */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = openskycli;
 			sourceTree = "<group>";
 		};
 		5A3BAE1C3000109300177F95 /* openskyTests */ = {
@@ -63,6 +85,11 @@
 			files = (
 			);
 		};
+		5AC1000130001093001700A4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -70,6 +97,7 @@
 			isa = PBXGroup;
 			children = (
 				5A3BAE033000109100177F95 /* opensky */,
+				5AC1000130001093001700A5 /* openskycli */,
 				5A3BAE1C3000109300177F95 /* openskyTests */,
 				5A3BAE263000109300177F95 /* openskyUITests */,
 				5A3BAE023000109100177F95 /* Products */,
@@ -80,6 +108,7 @@
 			isa = PBXGroup;
 			children = (
 				5A3BAE013000109100177F95 /* opensky.app */,
+				5AC1000130001093001700A2 /* openskycli */,
 				5A3BAE193000109300177F95 /* openskyTests.xctest */,
 				5A3BAE233000109300177F95 /* openskyUITests.xctest */,
 			);
@@ -149,6 +178,24 @@
 			productReference = 5A3BAE233000109300177F95 /* openskyUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		5AC1000130001093001700A1 /* openskycli */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5AC1000130001093001700A9 /* Build configuration list for PBXNativeTarget "openskycli" */;
+			buildPhases = (
+				5AC1000130001093001700A3 /* Sources */,
+				5AC1000130001093001700A4 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				5A3BAE033000109100177F95 /* opensky */,
+				5AC1000130001093001700A5 /* openskycli */,
+			);
+			name = openskycli;
+			productName = openskycli;
+			productReference = 5AC1000130001093001700A2 /* openskycli */;
+			productType = "com.apple.product-type.tool";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -170,6 +217,9 @@
 						CreatedOnToolsVersion = 26.6;
 						TestTargetID = 5A3BAE003000109100177F95;
 					};
+					5AC1000130001093001700A1 = {
+						CreatedOnToolsVersion = 26.6;
+					};
 				};
 			};
 			buildConfigurationList = 5A3BADFC3000109100177F95 /* Build configuration list for PBXProject "opensky" */;
@@ -187,6 +237,7 @@
 			projectRoot = "";
 			targets = (
 				5A3BAE003000109100177F95 /* opensky */,
+				5AC1000130001093001700A1 /* openskycli */,
 				5A3BAE183000109300177F95 /* openskyTests */,
 				5A3BAE223000109300177F95 /* openskyUITests */,
 			);
@@ -223,6 +274,11 @@
 			);
 		};
 		5A3BAE1F3000109300177F95 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		5AC1000130001093001700A3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
 			);
@@ -500,6 +556,40 @@
 			};
 			name = Release;
 		};
+		5AC1000130001093001700A7 /* Debug configuration for PBXNativeTarget "openskycli" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_OBJC_BRIDGING_HEADER = "opensky/ShaderTypes.h";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		5AC1000130001093001700A8 /* Release configuration for PBXNativeTarget "openskycli" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_OBJC_BRIDGING_HEADER = "opensky/ShaderTypes.h";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -532,6 +622,14 @@
 			buildConfigurations = (
 				5A3BAE353000109300177F95 /* Debug configuration for PBXNativeTarget "openskyUITests" */,
 				5A3BAE363000109300177F95 /* Release configuration for PBXNativeTarget "openskyUITests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		5AC1000130001093001700A9 /* Build configuration list for PBXNativeTarget "openskycli" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5AC1000130001093001700A7 /* Debug configuration for PBXNativeTarget "openskycli" */,
+				5AC1000130001093001700A8 /* Release configuration for PBXNativeTarget "openskycli" */,
 			);
 			defaultConfigurationName = Release;
 		};

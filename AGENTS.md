@@ -79,6 +79,7 @@ opensky/                Product code — app + engine (Swift, Metal)
   Shaders.metal
   ShaderTypes.h         Shared Swift<->Metal struct defs (bridging header)
   Assets.xcassets/      App chrome only — never game content
+openskycli/             CLI dev tool target (openskycli) — shares engine code under opensky/
 openskyTests/           Unit tests
 openskyUITests/         UI tests
 tools/                  Repository tooling only (no product code)
@@ -102,6 +103,7 @@ Update this section when structure changes materially.
 Drive everything through `make` so results are reproducible. `make help` lists targets.
 
 - `make build` — build the app (Debug)
+- `make cli` — build the `openskycli` dev tool (Debug)
 - `make test` — build + run unit tests (skips UI tests)
 - `make test-ui` — run UI tests (launches app, drives via automation; CI runs both)
 - `make check` — format-check + lint, no build (fast gate)
