@@ -158,6 +158,12 @@ Direction only — re-scope into numbered gated items at 3.7. Candidate order:
 
 ## Tooling / meta
 
+* [ ] CLI tool: second product target sharing the engine code — launch the game world
+      from the terminal + dev entrypoints (asset dump/inspect, offscreen render to file,
+      cell/record probes). Replaces throwaway probe scripts for repeatable dev checks.
+* [ ] Asset preview GUI: simple app to browse the VFS and preview assets (NIF meshes,
+      DDS textures, records) from the local install; later grows into the world
+      viewer/test harness (open a cell, fly, inspect).
 * [ ] Decide `.metal` formatter/linter (clang-format?) — AGENTS.md wants both for every
       language; document exception if none fits.
 * [ ] Commit-msg hook checks subject only; body sections enforced by review.
