@@ -4,6 +4,17 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-17
 
+* **Cell render at launch** (2.7 app wiring, part 2): AppDelegate locates
+  game data before window content, wires a scene factory into
+  `GameViewController` (runs on the view's Metal device): VFS ->
+  `ESMFile` -> `TextureLibrary` -> `MeshLibrary` -> `CellSceneBuilder` ->
+  `SceneCamera.framing(bounds:)` -> injected `Renderer`. Target constants
+  centralized in `opensky/FirstRenderCell.swift` (Tamriel (6,-2)). Any
+  factory failure -> `[ERROR]` log + DemoScene fallback, never crash;
+  build synchronous at startup (fine for one small cell). New env-gated
+  `CellRenderRealDataTests`: real-install build + offscreen render +
+  `logs/cell-whiterunexterior06.png`, auto-skips without
+  `OPENSKY_DATA_ROOT`. Doc: [cell scene build](/engine/cell-scene.md).
 * **Scene + camera injection** (2.7 app wiring, part 1): `Renderer` init
   is now `init(view:scene:camera:)` — optional prepared `RenderScene` +
   `SceneCamera`; nil -> DemoScene + `.demo` camera, so existing tests/CI

@@ -6,6 +6,13 @@ import AppKit
 import MetalKit
 
 final class GameViewController: NSViewController {
+    /// Builds the launch scene on the view's Metal device. Set by the
+    /// AppDelegate before the window content loads; nil factory or nil
+    /// result -> renderer falls back to the synthetic DemoScene. The
+    /// factory runs here (not in the AppDelegate) because GPU resources
+    /// must be created on the device the view renders with.
+    var sceneFactory: ((MTLDevice) -> (scene: RenderScene, camera: SceneCamera)?)?
+
     private var renderer: Renderer?
 
     override func loadView() {
@@ -23,8 +30,16 @@ final class GameViewController: NSViewController {
         }
         mtkView.device = device
 
+        // Synchronous cell scene build at startup — acceptable for 2.7's
+        // single small cell; streaming moves this off the launch path later.
+        let content = sceneFactory?(device)
+
         do {
-            let newRenderer = try Renderer(view: mtkView)
+            let newRenderer = try Renderer(
+                view: mtkView,
+                scene: content?.scene,
+                camera: content?.camera
+            )
             newRenderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
             mtkView.delegate = newRenderer
             renderer = newRenderer

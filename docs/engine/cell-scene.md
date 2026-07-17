@@ -84,6 +84,28 @@ order is deterministic across runs. That is the precondition for switching the p
 loop to `drawIndexedPrimitives(instanceCount:)` later without reshuffling. `RenderScene`
 itself splits opaque before alpha-tested draws (todo 2.7 opaque-first).
 
+## App wiring (launch path)
+
+`AppDelegate` locates game data before the window content exists, then hands
+`GameViewController` a scene factory closure `(MTLDevice) -> (RenderScene, SceneCamera)?`.
+The factory runs in `viewDidLoad` on the view's Metal device (GPU resources must live on
+the rendering device) and chains VFS -> `ESMFile` (`Data/Skyrim.esm`) -> `TextureLibrary`
+-> `MeshLibrary` -> `CellSceneBuilder.buildScene` -> `SceneCamera.framing(bounds:)` ->
+`Renderer(view:scene:camera:)`. Target cell constants live in one place:
+`opensky/FirstRenderCell.swift` (`Tamriel`, (6,-2) — [decision](/decisions/first-render-cell.md)).
+
+Robustness: missing data already fail-louds via the locator alert; past that gate, any
+factory failure (esm read/parse throw, build throw, nil bounds) logs `[ERROR]` and returns
+nil -> renderer falls back to `DemoScene`, never crashes. The build is synchronous at
+startup — acceptable for 2.7's single small cell; streaming moves it off the launch path
+later.
+
+Integration test: `CellRenderRealDataTests` (env-gated, auto-skips unless
+`OPENSKY_DATA_ROOT` is set and resolves + Metal 4 present — CI has no game data) builds
+the real cell, asserts the summary loosely against the decision-doc counts, renders
+offscreen 1280x720 with the framing camera, asserts a non-background pixel fraction, and
+writes `logs/cell-whiterunexterior06.png` (path printed in the test log).
+
 ## Transform + bounds
 
 Per instance: `MatrixMath.placement(position:rotation:scale:)` over REFR DATA + XSCL
