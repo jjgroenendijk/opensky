@@ -37,7 +37,7 @@ milestone leaves this file; history lives in `docs/log.md` + git.
 * M1 — data foundation. Done 2026-07-10 (PRs #1-#8): BSA VFS, ESM/plugin record decoders.
 * M2 — static world geometry. Done 2026-07-18 (PRs #9-#21): textured
   `WhiterunExterior06` on screen, free-fly camera, bench-gated fps (avg 0.39 ms/frame @
-  720p on M1, Debug), `openskycli` + `openskypreview` dev tools.
+  720p on M1, Debug), `openskycli` + main-app asset browser dev tools.
 * M3 — world streaming + environment (active): roam exterior worldspace seamlessly —
   terrain, cell streaming, distant LOD, sky/water, interiors via doors. Gate: 3.8.
 * M4 — toward playable (direction only): collision, animation, scripting, audio, UI.
@@ -55,39 +55,16 @@ Sequencing: 3.1 terrain landed first — everything sits on it, and LAND lived i
 cell temporary-children groups `CellSceneBuilder` already walked
 (`docs/engine/cell-scene.md`) -> decoder slotted into the existing walk. 3.2 streaming now
 turns that per-cell unit into a grid + carries the perf work multi-cell rendering needs.
-3.3 folds the `openskypreview` dev tool into the main app (independent of streaming — land
-anytime). 3.4 LOD needs the grid boundary (rings start where loaded cells end). 3.5
-sky/water + 3.6 interiors independent of 3.2/3.4 -> parallelizable branches; 3.7 lighting
-last (interiors are where it shows). Verification path: `openskycli render`/`bench` + the
-main-app asset browser, screenshot pattern as in `docs/img/`. Watch item: 3.5 sky turns the
-black background in screenshots into a real frame.
+3.4 LOD needs the grid boundary (rings start where loaded cells end). 3.5 sky/water + 3.6
+interiors independent of 3.2/3.4 -> parallelizable branches; 3.7 lighting last (interiors
+are where it shows). Verification path: `openskycli render`/`bench` + main-app asset
+browser, screenshot pattern as in `docs/img/`. Watch item: 3.5 sky turns black background
+in screenshots into a real frame.
 
 Format facts below pre-verified 2026-07-18 against UESP mod-file-format pages + xEdit
 `dev-4.1.6` source (`wbDefinitionsTES5.pas`, `wbDefinitionsCommon.pas`, `wbLOD.pas`) +
 DynDOLOD docs / xLODGen LODGen source. Re-confirm against real install by probe during
 impl; chase flagged UNCONFIRMED points especially.
-
-### 3.3 Merge asset preview into main app
-
-Fold `openskypreview` into the main app -> one product, not two. Motivated by the main app
-shipping with no menu/data-root picker (only Quit) while the picker lives in the separate
-preview tool. Dev-tooling consolidation, off the streaming critical path — land anytime.
-
-* [ ] Single window, mode toggle: `World | Asset Browser` segmented control swaps content in
-      place; browser always available; launch shows the World render. Move window wiring
-      (`PreviewViewController`/`PreviewDetailBuilder`) from `openskypreview/` into
-      `opensky/`; browse/preview logic already AppKit-free under `opensky/Preview/` — reuse
-      as-is (previews keep rendering through the engine path, no second pipeline).
-* [ ] Main app gains Settings + data-root picker: port `PreviewSettingsWindowController`,
-      add Settings (Cmd+,) to the main menu, missing install -> in-window message not crash,
-      Settings change re-resolves `GameDataLocator` + reloads without relaunch. Closes the
-      current gap (main app cannot fix a wrong/absent data root).
-* [ ] Delete the `openskypreview` target: remove from the Xcode project, drop `make
-      preview`, delete `openskypreview/` + its `AGENTS.md`/`CLAUDE.md`. Update root
-      `AGENTS.md` layout, `docs/tools/preview-gui.md`, and M3 verification refs
-      (`openskypreview` -> main-app browser).
-* [ ] Verify: build + run the main app, both modes render (World view + asset preview);
-      `opensky/Preview/` unit + env-gated real-data tests still green; screenshot both modes.
 
 ### 3.4 Distant LOD
 

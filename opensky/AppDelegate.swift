@@ -1,6 +1,6 @@
 // App lifecycle: builds the main window and menu in code (no storyboard).
-// Game data is located before the window content exists so the cell scene
-// factory can be wired into GameViewController ahead of its view loading.
+// Game data is located before window content exists so both World and Asset
+// Browser receive one resolved root. Settings can repeat that wiring live.
 
 import AppKit
 import Metal
@@ -13,6 +13,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     )
 
     private var windowController: NSWindowController?
+    private var mainViewController: MainViewController?
+    private var settingsController: SettingsWindowController?
+    private var gameDataErrorMessage: String?
 
     /// Located install, nil when locating failed. Consumers (VFS, loaders) read this.
     private(set) var gameDataRoot: GameDataRoot?
@@ -21,16 +24,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private(set) var virtualFileSystem: VirtualFileSystem?
 
     func applicationDidFinishLaunching(_: Notification) {
-        NSApplication.shared.mainMenu = Self.makeMainMenu()
+        NSApplication.shared.mainMenu = makeMainMenu()
 
         // Unit-test host never reaches here (OpenSkyApp.main skips the
         // delegate under XCTest), so the probe runs unconditionally.
-        // Located before window content: the scene factory must be in
-        // place when GameViewController's view loads.
-        locateGameData()
+        // Located before window content: both mode controllers need state
+        // before either view loads.
+        resolveGameData()
 
-        let gameViewController = GameViewController()
-        gameViewController.cellProviderFactory = makeCellProviderFactory()
+        let mainViewController = MainViewController(
+            worldViewController: makeWorldViewController(),
+            browserViewController: makeBrowserViewController()
+        )
+        self.mainViewController = mainViewController
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1280, height: 720),
@@ -39,7 +45,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             defer: false
         )
         window.title = "OpenSky"
-        window.contentViewController = gameViewController
+        window.contentViewController = mainViewController
         window.center()
 
         let controller = NSWindowController(window: window)
@@ -56,8 +62,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// a scene build. Only the cheap setup runs on the view's device (asset
     /// libraries bind GPU resources there). Any failure past the located-data
     /// gate (missing esm, ESM parse throw) logs [ERROR] and returns nil so the
-    /// controller falls back to DemoScene -- the missing-data alert already
-    /// covered the configuration case, so this path never crashes or re-alerts.
+    /// controller falls back to DemoScene. Locator failures never reach this
+    /// closure: World shows the in-window configuration message instead.
     private func makeCellProviderFactory() -> ((MTLDevice) -> (any CellSceneProvider)?)? {
         guard let root = gameDataRoot, let vfs = virtualFileSystem else { return nil }
         let esmURL = root.dataURL.appending(path: "Skyrim.esm")
@@ -84,9 +90,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    private func makeWorldViewController() -> GameViewController {
+        let controller = GameViewController()
+        controller.cellProviderFactory = makeCellProviderFactory()
+        controller.startupErrorMessage = gameDataErrorMessage
+        return controller
+    }
+
+    private func makeBrowserViewController() -> PreviewViewController {
+        let controller = PreviewViewController()
+        controller.gameDataRoot = gameDataRoot
+        controller.startupErrorMessage = gameDataErrorMessage
+        return controller
+    }
+
     /// Fail-loud game data probe (AGENTS.md "Loading game data"): missing or
-    /// invalid install -> log + alert. No bundled fallback exists by design.
-    private func locateGameData() {
+    /// invalid install -> log + in-window message. No bundled fallback exists.
+    private func resolveGameData() {
+        gameDataRoot = nil
+        virtualFileSystem = nil
+        gameDataErrorMessage = nil
         do {
             let root = try GameDataLocator.locate()
             gameDataRoot = root
@@ -104,12 +127,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } catch {
             let message = error.localizedDescription
             Self.logger.error("Game data missing: \(message, privacy: .public)")
-
-            let alert = NSAlert()
-            alert.alertStyle = .critical
-            alert.messageText = "Skyrim Special Edition data not found"
-            alert.informativeText = message
-            alert.runModal()
+            gameDataErrorMessage = message
         }
     }
 
@@ -117,18 +135,64 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         true
     }
 
-    private static func makeMainMenu() -> NSMenu {
+    private func makeMainMenu() -> NSMenu {
         let mainMenu = NSMenu()
         let appMenuItem = NSMenuItem()
         mainMenu.addItem(appMenuItem)
 
         let appMenu = NSMenu()
+        let settingsItem = NSMenuItem(
+            title: "Settings…",
+            action: #selector(openSettings),
+            keyEquivalent: ","
+        )
+        settingsItem.target = self
+        appMenu.addItem(settingsItem)
+        appMenu.addItem(.separator())
         appMenu.addItem(
             withTitle: "Quit OpenSky",
             action: #selector(NSApplication.terminate(_:)),
             keyEquivalent: "q"
         )
         appMenuItem.submenu = appMenu
+
+        let editMenuItem = NSMenuItem()
+        mainMenu.addItem(editMenuItem)
+        let editMenu = NSMenu(title: "Edit")
+        editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(
+            withTitle: "Copy",
+            action: #selector(NSText.copy(_:)),
+            keyEquivalent: "c"
+        )
+        editMenu.addItem(
+            withTitle: "Paste",
+            action: #selector(NSText.paste(_:)),
+            keyEquivalent: "v"
+        )
+        editMenu.addItem(
+            withTitle: "Select All",
+            action: #selector(NSText.selectAll(_:)),
+            keyEquivalent: "a"
+        )
+        editMenuItem.submenu = editMenu
         return mainMenu
+    }
+
+    @objc private func openSettings() {
+        let controller = settingsController ?? SettingsWindowController()
+        settingsController = controller
+        controller.onDataRootChanged = { [weak self] in self?.reloadDataRoot() }
+        controller.showWindow(nil)
+        controller.window?.makeKeyAndOrderFront(nil)
+    }
+
+    private func reloadDataRoot() {
+        resolveGameData()
+        mainViewController?.reload(
+            worldViewController: makeWorldViewController(),
+            browserRoot: gameDataRoot,
+            errorMessage: gameDataErrorMessage
+        )
     }
 }

@@ -176,6 +176,6 @@ final class PreviewDetailBuilder {
             let renderer = try? Renderer(view: view, scene: scene, camera: camera),
             let texture = try? renderer.renderOffscreen(width: width, height: height)
         else { return nil }
-        return PreviewFrameImage.cgImage(from: texture)
+        return FrameScreenshot.image(from: texture)
     }
 }

@@ -2,7 +2,7 @@
 // external input, never committed — AGENTS.md Legal & IP): catalog load (VFS
 // enumeration + full record walk), a DDS textured-quad preview and a NIF
 // single-model preview through Renderer.renderOffscreen — the exact images
-// the preview GUI shows. PNGs land in logs/ for human review. Skips without
+// main-app Asset Browser shows. PNGs land in logs/ for human review. Skips without
 // OPENSKY_DATA_ROOT or a Metal 4 GPU (CI has neither game data nor one).
 
 import CoreGraphics
@@ -166,7 +166,7 @@ struct PreviewRealDataTests {
         view.enableSetNeedsDisplay = false
         let renderer = try Renderer(view: view, scene: scene, camera: camera)
         let texture = try renderer.renderOffscreen(width: width, height: height)
-        return try #require(PreviewFrameImage.cgImage(from: texture))
+        return try #require(FrameScreenshot.image(from: texture))
     }
 
     /// Fraction of pixels above the black clear color's noise floor.

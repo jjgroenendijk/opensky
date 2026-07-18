@@ -1,4 +1,6 @@
-// Smoke tests: app launches, shows its main window, and renders frames.
+// Smoke tests: app launches, shows its main window, and both unified modes
+// remain reachable. Real-data screenshots are env-gated; host copies runner
+// temp output into gitignored logs/ for inspection.
 //
 // Launches with OPENSKY_DATA_ROOT pointing at a synthetic install (empty
 // Skyrim.esm marker) so the game-data probe succeeds deterministically on
@@ -28,10 +30,51 @@ final class OpenSkyUITests: XCTestCase {
         return app
     }
 
+    /// Launches against explicit external data. Caller gates the path; no
+    /// default-root fallback keeps CI deterministic.
+    @MainActor
+    private func launchApp(dataRoot: String) -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchEnvironment["OPENSKY_DATA_ROOT"] = dataRoot
+        app.launch()
+        XCTAssertTrue(app.windows.firstMatch.waitForExistence(timeout: 10))
+        return app
+    }
+
     @MainActor
     func testAppLaunchesAndShowsWindow() throws {
         let app = try launchApp()
         XCTAssertEqual(app.dialogs.count, 0, "No game-data alert expected with valid root")
+        XCTAssertEqual(app.radioButtons["World"].value as? Int, 1)
+        XCTAssertEqual(app.radioButtons["Asset Browser"].value as? Int, 0)
+        XCTAssertTrue(app.buttons["ScreenshotButton"].isEnabled)
+    }
+
+    @MainActor
+    func testModeSwitcherShowsAssetBrowser() throws {
+        let app = try launchApp()
+        app.radioButtons["Asset Browser"].click()
+        XCTAssertTrue(app.popUpButtons["AssetCategory"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.searchFields["AssetFilter"].exists)
+        XCTAssertTrue(app.tables["AssetTable"].exists)
+        XCTAssertFalse(app.buttons["ScreenshotButton"].isEnabled)
+    }
+
+    @MainActor
+    func testMissingDataStaysInWindowAndSettingsOpens() {
+        let app = XCUIApplication()
+        app.launchEnvironment["OPENSKY_DATA_ROOT"] = "/invalid/opensky-uitest-root"
+        app.launch()
+        XCTAssertTrue(app.windows.firstMatch.waitForExistence(timeout: 10))
+        XCTAssertEqual(app.dialogs.count, 0)
+        XCTAssertTrue(
+            app.staticTexts.containing(
+                NSPredicate(format: "value CONTAINS 'not a Skyrim SE install'")
+            ).firstMatch.exists
+        )
+
+        app.typeKey(",", modifierFlags: .command)
+        XCTAssertTrue(app.windows["Settings"].waitForExistence(timeout: 5))
     }
 
     /// Captures the rendered frame to a temp PNG and logs the path — the
@@ -48,6 +91,41 @@ final class OpenSkyUITests: XCTestCase {
             .appending(path: "opensky-frame-\(UUID().uuidString).png")
         try screenshot.pngRepresentation.write(to: url)
         NSLog("rendered frame screenshot: \(url.path)")
+        XCTAssertGreaterThan(screenshot.pngRepresentation.count, 0)
+    }
+
+    /// Milestone 3.3 visual proof over user's read-only install. Set
+    /// OPENSKY_DATA_ROOT for the UI-test runner; CI skips without it.
+    @MainActor
+    func testCapturesWorldAndAssetBrowserWithRealData() throws {
+        let environment = ProcessInfo.processInfo.environment
+        guard let root = environment["OPENSKY_DATA_ROOT"], !root.isEmpty else {
+            throw XCTSkip("OPENSKY_DATA_ROOT not set for UI-test runner")
+        }
+        let app = launchApp(dataRoot: root)
+        let window = app.windows.firstMatch
+        let worldFrame = window.frame
+
+        Thread.sleep(forTimeInterval: 5)
+        try write(window.screenshot(), name: "app-world.png")
+
+        app.radioButtons["Asset Browser"].click()
+        let table = app.tables["AssetTable"]
+        XCTAssertTrue(table.waitForExistence(timeout: 5))
+        XCTAssertTrue(table.tableRows.firstMatch.waitForExistence(timeout: 30))
+        table.tableRows.firstMatch.click()
+        Thread.sleep(forTimeInterval: 3)
+        XCTAssertEqual(window.frame.width, worldFrame.width, accuracy: 1)
+        XCTAssertEqual(window.frame.height, worldFrame.height, accuracy: 1)
+        try write(window.screenshot(), name: "app-asset-browser.png")
+    }
+
+    private func write(_ screenshot: XCUIScreenshot, name: String) throws {
+        // UI-test runner is containerized and cannot write into repo logs/.
+        // Host verification copies these logged temp paths after the run.
+        let url = FileManager.default.temporaryDirectory.appending(path: name)
+        try screenshot.pngRepresentation.write(to: url)
+        NSLog("mode screenshot: \(url.path)")
         XCTAssertGreaterThan(screenshot.pngRepresentation.count, 0)
     }
 }

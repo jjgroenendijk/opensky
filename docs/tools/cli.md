@@ -2,7 +2,7 @@
 type: Tool
 title: CLI dev tool (openskycli)
 description: Terminal dev entrypoints over the engine - VFS list/extract, record and cell
-  probes, NIF/DDS inspection, offscreen cell render to PNG, env-gated probe harness.
+  probes, NIF/DDS inspection, World screenshot to PNG, env-gated probe harness.
 tags: [tool, cli, dev, probe, rendering]
 timestamp: 2026-07-18T00:00:00Z
 ---
@@ -35,8 +35,8 @@ outgrows it.
 `--data-root <path>` (install root or `Data/` itself) or the
 [game data locator](/engine/game-data-locator.md) chain: `OPENSKY_DATA_ROOT` env var ->
 `OpenSkyDataRoot` user default -> Steam default path. Missing/invalid -> locator's
-typed error, exit 1. Install is read-only external input; `vfs cat`/`render` write only
-where `--out` points (AGENTS.md Legal & IP).
+typed error, exit 1. Install is read-only external input; `vfs cat`/`screenshot` write
+only where `--out` points (AGENTS.md Legal & IP).
 
 ## Subcommands
 
@@ -48,11 +48,11 @@ where `--out` points (AGENTS.md Legal & IP).
 | `cell [--worldspace <edid>] [--x n] [--y n] [--refs]` | exterior-cell summary without Metal: ref count, base-type histogram, other cell records; `--refs` lists placements |
 | `nif <key>` | container stats + flattened model summary (meshes, verts/tris, bounds, materials with texture paths) |
 | `dds <key>` | header + mip chain (size, BCn format, sRGB declaration) |
-| `render --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f] [--neighbors]` | cell scene build -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load summary + draw stats (draw calls vs groups/instances/culled — instancing + culling evidence) + non-background pixel fraction; `--zoom` (0.1-10) moves the eye toward the framed center — whole-cell framing is conservative, sparse cells render small without it; `--neighbors` builds the target cell plus its 8 grid neighbors (one shared `MeshLibrary`/`TextureLibrary`/`CellSceneBuilder`, so residency dedups across cells) and renders one frame framed to the union of all built bounds — a missing or malformed neighbor slot warns to stderr and is skipped, not fatal |
+| `screenshot --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f] [--neighbors]` | cell scene build -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load summary + draw stats (draw calls vs groups/instances/culled — instancing + culling evidence) + non-background pixel fraction; `--zoom` (0.1-10) moves the eye toward the framed center — whole-cell framing is conservative, sparse cells render small without it; `--neighbors` builds the target cell plus its 8 grid neighbors (one shared `MeshLibrary`/`TextureLibrary`/`CellSceneBuilder`, so residency dedups across cells) and renders one frame framed to the union of all built bounds — a missing or malformed neighbor slot warns to stderr and is skipped, not fatal; `render` remains a compatibility alias with identical options/output |
 | `bench [--worldspace/--x/--y] [--size WxH] [--frames n] [--budget-ms f]` | sustained offscreen render (default 360 frames @ 1280x720) through `Renderer.renderOffscreenSustained` — FrameStats windows + per-frame wall times; prints avg/p95/max + fps, exit 1 when avg or p95 misses the budget (default 33.33 ms = 30 fps, todo 2.11 gate) |
 | `bench --fly-path [--worldspace/--x/--y] [--size WxH] [--budget-ms f] [--max-frames n] [--footprint-cap-mb f]` | scripted launch-center -> east -> north cell flight through live `CellStreamer`; waits for each 5x5 grid, reuses one render-target pair at 100 Hz, requires physical-footprint plateau/cap, unload, exact 35-cell build union with no duplicates, zero failed builds, avg/p95 frame budget |
 
-`cell`/`render` default to the first-render cell
+`cell`/`screenshot`/`render` default to the first-render cell
 ([decision](/decisions/first-render-cell.md), constants in
 `opensky/FirstRenderCell.swift`). Exit codes: 0 ok, 1 failure, 2 usage.
 
@@ -65,14 +65,16 @@ Implementation notes:
   ~6 s worst case on Skyrim.esm, fine for a dev tool.
 * `record` prints the shared `RecordTextDump` string; walk helpers live in
   `opensky/Formats/ESM/ESMWalk.swift` (shared with the
-  [preview GUI](/tools/preview-gui.md) since 2.10).
+  [main-app asset browser](/tools/preview-gui.md) since 2.10).
 * `cell` mirrors the [cell scene build](/engine/cell-scene.md) WRLD walk read-only
   (XCLC grid match, labels ignored) and resolves base types via a headers-only
   FormID -> record-type index.
-* `render` follows the app launch chain (VFS -> ESM -> libraries ->
+* `screenshot` follows the app launch chain (VFS -> ESM -> libraries ->
   `CellSceneBuilder` -> `SceneCamera.framing`) on a headless `MTKView`; the offscreen
-  path never touches a drawable.
-* `render --neighbors` composes 9 `CellScene` builds with `RenderScene(merging:)` (a
+  path never touches a drawable. `render` dispatches the same implementation as a
+  compatibility alias. App + CLI both use shared `FrameScreenshot` BGRA readback/PNG
+  encoder; no separate screenshot pipeline.
+* `screenshot --neighbors` composes 9 `CellScene` builds with `RenderScene(merging:)` (a
   flat concat of each scene's opaque/alpha-tested/terrain draw lists — draw items
   already carry absolute world matrices, so no re-transform) and unions the 9 bounds
   boxes before framing. Dumb composition on purpose: this is the 3.1 verify render, not
@@ -90,7 +92,7 @@ Implementation notes:
 default `/Volumes/data/steam/steamapps/common/Skyrim Special Edition`, override via
 `OPENSKY_DATA_ROOT`. Install absent -> `[INFO]` + exit 0 (CI safe). Checks: `vfs ls`
 finds meshes; `record 0x3C` decodes Tamriel (UESP "Skyrim Mod:FormIDs"); `cell`
-summary; `nif`/`dds` inspect the first listed assets; `render` writes
-`logs/probe-render.png`; `bench` runs the sustained fps gate (360 frames @
+summary; `nif`/`dds` inspect the first listed assets; `screenshot` writes
+`logs/probe-screenshot.png`; `bench` runs the sustained fps gate (360 frames @
 720p, fails over 33.33 ms avg/p95); `bench --fly-path` runs the M3.2 cross-cell gate at
 640x360. Full output -> `logs/probe.log`.

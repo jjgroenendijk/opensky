@@ -54,9 +54,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 ## Tools
 
 * [CLI dev tool](/tools/cli.md) - openskycli target sharing the engine sources:
-  vfs/record/cell/nif/dds/render subcommands, env-gated make probe harness.
-* [Asset preview GUI](/tools/preview-gui.md) - openskypreview target: VFS +
-  record browser with offscreen-rendered NIF/DDS previews.
+  vfs/record/cell/nif/dds/screenshot commands, env-gated make probe harness.
+* [Main-app asset browser](/tools/preview-gui.md) - unified World/browser window: VFS +
+  record browsing, World PNG capture, offscreen-rendered NIF/DDS previews.
 
 ## Meta
 

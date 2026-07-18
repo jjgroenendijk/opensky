@@ -2,7 +2,7 @@
 // group (record headers only — payloads decode only when a caller asks) plus
 // lookups by FormID / editor ID and a FormID -> record-type index. Malformed
 // subtrees are pruned with a log, never fatal (AGENTS.md mod-quirk rule).
-// Shared by the CLI (record/cell commands) and the preview GUI catalog.
+// Shared by CLI record/cell commands and main-app Asset Browser catalog.
 
 import Foundation
 import OSLog

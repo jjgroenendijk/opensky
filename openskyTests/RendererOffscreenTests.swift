@@ -4,14 +4,11 @@
 // renderer changes stay visually verifiable without Screen Recording TCC.
 // Skips when the machine lacks a Metal 4 GPU (paravirtual CI).
 
-import CoreGraphics
 import Foundation
-import ImageIO
 import Metal
 import MetalKit
 @testable import opensky
 import Testing
-import UniformTypeIdentifiers
 
 struct RendererOffscreenTests {
     private static let device: MTLDevice? = {
@@ -69,34 +66,27 @@ struct RendererOffscreenTests {
             && pixels[center + 2] == 0
         #expect(!centerIsClearColor, "frame center is background — no geometry drawn")
 
-        try writePNG(pixels: pixels, width: width, height: height)
-    }
-
-    /// Dumps the BGRA frame to a temp PNG and logs the path for human review.
-    private func writePNG(pixels: [UInt8], width: Int, height: Int) throws {
-        var data = pixels
-        let colorSpace = try #require(CGColorSpace(name: CGColorSpace.sRGB))
-        let context = try #require(CGContext(
-            data: &data,
-            width: width,
-            height: height,
-            bitsPerComponent: 8,
-            bytesPerRow: width * 4,
-            space: colorSpace,
-            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue
-                | CGBitmapInfo.byteOrder32Little.rawValue
-        ))
-        let image = try #require(context.makeImage())
         let url = FileManager.default.temporaryDirectory
             .appending(path: "opensky-offscreen-\(UUID().uuidString).png")
-        let destination = try #require(CGImageDestinationCreateWithURL(
-            url as CFURL,
-            UTType.png.identifier as CFString,
-            1,
-            nil
-        ))
-        CGImageDestinationAddImage(destination, image, nil)
-        #expect(CGImageDestinationFinalize(destination))
+        try FrameScreenshot.write(texture: texture, to: url)
+        let data = try Data(contentsOf: url)
+        #expect(data.starts(with: [0x89, 0x50, 0x4E, 0x47]))
         print("[INFO] offscreen frame: \(url.path)")
+    }
+
+    @Test(.enabled(if: Self.hasMetal4Device))
+    @MainActor
+    func appWorldWritesScreenshot() throws {
+        let controller = GameViewController()
+        _ = controller.view // load renderer through production app wiring
+        let url = FileManager.default.temporaryDirectory
+            .appending(path: "opensky-app-\(UUID().uuidString).png")
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        try controller.writeScreenshot(to: url)
+
+        let data = try Data(contentsOf: url)
+        #expect(data.starts(with: [0x89, 0x50, 0x4E, 0x47]))
+        #expect(data.count > 1024)
     }
 }

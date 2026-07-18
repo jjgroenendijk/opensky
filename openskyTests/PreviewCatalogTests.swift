@@ -1,4 +1,4 @@
-// Browse-model tests for the asset preview GUI: category grouping, record
+// Browse-model tests for main-app Asset Browser: category grouping, record
 // rows, filtering. Synthetic entries + in-code plugin fixture only
 // (AGENTS.md "Legal & IP boundary").
 

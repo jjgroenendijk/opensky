@@ -61,11 +61,11 @@ dds_key="$("$cli" --data-root "$data_root" vfs ls 'textures\*.dds' 2>/dev/null \
   | head -1 | cut -f1)"
 run "dds inspect ($dds_key)" dds "$dds_key"
 
-# Offscreen render of the first-render cell -> logs/probe-render.png.
-png="$log_dir/probe-render.png"
-run "offscreen render" render --out "$png"
-[ -s "$png" ] || fail "render wrote no PNG"
-echo "[ OK ] render output: $png"
+# Offscreen screenshot of the first-render cell -> logs/probe-screenshot.png.
+png="$log_dir/probe-screenshot.png"
+run "offscreen screenshot" screenshot --out "$png"
+[ -s "$png" ] || fail "screenshot wrote no PNG"
+echo "[ OK ] screenshot output: $png"
 
 # Sustained fps gate (todo 2.11): 360 frames at 720p via frame stats; the
 # command exits 1 when avg/p95 frame time misses the 33.3 ms (30 fps) budget.

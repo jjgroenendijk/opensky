@@ -26,7 +26,6 @@
 /* Begin PBXFileReference section */
 		5A3BAE013000109100177F95 /* opensky.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = opensky.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5AC1000130001093001700A2 /* openskycli */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = openskycli; sourceTree = BUILT_PRODUCTS_DIR; };
-		5AC2000230001093001700B2 /* openskypreview.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = openskypreview.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5A3BAE193000109300177F95 /* openskyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = openskyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5A3BAE233000109300177F95 /* openskyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = openskyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -38,20 +37,13 @@
 				AppDelegate.swift,
 				Assets.xcassets,
 				GameViewController.swift,
+				MainViewController.swift,
 				OpenSkyApp.swift,
+				PreviewDetailBuilder.swift,
+				PreviewViewController.swift,
+				SettingsWindowController.swift,
 			);
 			target = 5AC1000130001093001700A1 /* openskycli */;
-		};
-		5AC2000230001093001700B6 /* Exceptions for "opensky" folder in "openskypreview" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				AppDelegate.swift,
-				Assets.xcassets,
-				GameMetalView.swift,
-				GameViewController.swift,
-				OpenSkyApp.swift,
-			);
-			target = 5AC2000230001093001700B1 /* openskypreview */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -60,7 +52,6 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				5AC1000130001093001700A6 /* Exceptions for "opensky" folder in "openskycli" target */,
-				5AC2000230001093001700B6 /* Exceptions for "opensky" folder in "openskypreview" target */,
 			);
 			path = opensky;
 			sourceTree = "<group>";
@@ -68,11 +59,6 @@
 		5AC1000130001093001700A5 /* openskycli */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = openskycli;
-			sourceTree = "<group>";
-		};
-		5AC2000230001093001700B5 /* openskypreview */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = openskypreview;
 			sourceTree = "<group>";
 		};
 		5A3BAE1C3000109300177F95 /* openskyTests */ = {
@@ -108,11 +94,6 @@
 			files = (
 			);
 		};
-		5AC2000230001093001700B4 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			files = (
-			);
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -121,7 +102,6 @@
 			children = (
 				5A3BAE033000109100177F95 /* opensky */,
 				5AC1000130001093001700A5 /* openskycli */,
-				5AC2000230001093001700B5 /* openskypreview */,
 				5A3BAE1C3000109300177F95 /* openskyTests */,
 				5A3BAE263000109300177F95 /* openskyUITests */,
 				5A3BAE023000109100177F95 /* Products */,
@@ -133,7 +113,6 @@
 			children = (
 				5A3BAE013000109100177F95 /* opensky.app */,
 				5AC1000130001093001700A2 /* openskycli */,
-				5AC2000230001093001700B2 /* openskypreview.app */,
 				5A3BAE193000109300177F95 /* openskyTests.xctest */,
 				5A3BAE233000109300177F95 /* openskyUITests.xctest */,
 			);
@@ -221,25 +200,6 @@
 			productReference = 5AC1000130001093001700A2 /* openskycli */;
 			productType = "com.apple.product-type.tool";
 		};
-		5AC2000230001093001700B1 /* openskypreview */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 5AC2000230001093001700B9 /* Build configuration list for PBXNativeTarget "openskypreview" */;
-			buildPhases = (
-				5AC2000230001093001700B3 /* Sources */,
-				5AC2000230001093001700B4 /* Frameworks */,
-				5AC2000230001093001700BA /* Resources */,
-			);
-			buildRules = (
-			);
-			fileSystemSynchronizedGroups = (
-				5A3BAE033000109100177F95 /* opensky */,
-				5AC2000230001093001700B5 /* openskypreview */,
-			);
-			name = openskypreview;
-			productName = openskypreview;
-			productReference = 5AC2000230001093001700B2 /* openskypreview.app */;
-			productType = "com.apple.product-type.application";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -264,9 +224,6 @@
 					5AC1000130001093001700A1 = {
 						CreatedOnToolsVersion = 26.6;
 					};
-					5AC2000230001093001700B1 = {
-						CreatedOnToolsVersion = 26.6;
-					};
 				};
 			};
 			buildConfigurationList = 5A3BADFC3000109100177F95 /* Build configuration list for PBXProject "opensky" */;
@@ -285,7 +242,6 @@
 			targets = (
 				5A3BAE003000109100177F95 /* opensky */,
 				5AC1000130001093001700A1 /* openskycli */,
-				5AC2000230001093001700B1 /* openskypreview */,
 				5A3BAE183000109300177F95 /* openskyTests */,
 				5A3BAE223000109300177F95 /* openskyUITests */,
 			);
@@ -304,11 +260,6 @@
 			);
 		};
 		5A3BAE213000109300177F95 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			files = (
-			);
-		};
-		5AC2000230001093001700BA /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -332,11 +283,6 @@
 			);
 		};
 		5AC1000130001093001700A3 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			files = (
-			);
-		};
-		5AC2000230001093001700B3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
 			);
@@ -648,58 +594,6 @@
 			};
 			name = Release;
 		};
-		5AC2000230001093001700B7 /* Debug configuration for PBXNativeTarget "openskypreview" */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = nl.jjgroenendijk.openskypreview;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = macosx;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "opensky/ShaderTypes.h";
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Debug;
-		};
-		5AC2000230001093001700B8 /* Release configuration for PBXNativeTarget "openskypreview" */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = nl.jjgroenendijk.openskypreview;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = macosx;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "opensky/ShaderTypes.h";
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -740,14 +634,6 @@
 			buildConfigurations = (
 				5AC1000130001093001700A7 /* Debug configuration for PBXNativeTarget "openskycli" */,
 				5AC1000130001093001700A8 /* Release configuration for PBXNativeTarget "openskycli" */,
-			);
-			defaultConfigurationName = Release;
-		};
-		5AC2000230001093001700B9 /* Build configuration list for PBXNativeTarget "openskypreview" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				5AC2000230001093001700B7 /* Debug configuration for PBXNativeTarget "openskypreview" */,
-				5AC2000230001093001700B8 /* Release configuration for PBXNativeTarget "openskypreview" */,
 			);
 			defaultConfigurationName = Release;
 		};

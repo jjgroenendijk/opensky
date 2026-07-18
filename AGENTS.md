@@ -80,7 +80,6 @@ opensky.xcodeproj/      Xcode project (macOS-only, shared scheme)
 opensky/                Product code — app + engine (Formats/, Geometry/, Rendering/,
                         World/, Renderer.swift, Shaders.metal, ShaderTypes.h)
 openskycli/             CLI dev tool target — rules in openskycli/AGENTS.md
-openskypreview/         Asset preview GUI target — rules in openskypreview/AGENTS.md
 .AGENTS/skills/         Agent skills; .claude/skills symlinks here
 openskyTests/           Unit tests        openskyUITests/  UI tests
 tools/                  Repo tooling only (format/lint/markdown configs, scripts)
@@ -99,7 +98,7 @@ Drive everything through `make`; `make help` lists all targets. Key ones:
 
 - `make fix` — autoformat + strict lint, one shot (use before committing)
 - `make check` — format-check + lint, no writes (CI gate)
-- `make build` / `make cli` / `make preview` — build app / CLI tool / preview GUI (Debug)
+- `make build` / `make cli` — build main app (incl. asset browser) / CLI tool (Debug)
 - `make test` — unit tests; `make test-one T=Class[/test]` — single class/method;
   `make test-report` — failures from the newest result bundle; `make test-ui` — UI tests
 - `make run-cli ARGS="..."` — build + run openskycli; `make app-path` / `make cli-path`

@@ -6,7 +6,8 @@ rules. Full tool reference: `docs/tools/cli.md`.
 ## What it is
 
 Terminal probes over the engine against a real install: `vfs ls|cat`, `record`, `cell`,
-`nif`, `dds`, `render --out [--zoom]`, `bench` (sustained-fps gate). Runs the same
+`nif`, `dds`, `screenshot --out [--zoom]` (`render` alias), `bench` (sustained-fps
+gate). Runs the same
 engine code the app runs — a CLI failure reproduces the renderer's behavior.
 Data root resolution: `--data-root` flag ->
 `OPENSKY_DATA_ROOT` env -> `OpenSkyDataRoot` user default -> Steam path. Exit codes:

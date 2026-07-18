@@ -4,10 +4,9 @@
 PROJECT        := opensky.xcodeproj
 SCHEME         := opensky
 CLI_SCHEME     := openskycli
-PREVIEW_SCHEME := openskypreview
 CONFIG         ?= Debug
 DESTINATION    ?= platform=macOS
-SWIFT_PATHS    := opensky openskycli openskypreview openskyTests openskyUITests
+SWIFT_PATHS    := opensky openskycli openskyTests openskyUITests
 
 SWIFTFORMAT_CFG := tools/format/.swiftformat
 SWIFTLINT_CFG   := tools/lint/.swiftlint.yml
@@ -16,7 +15,7 @@ MD_GLOB         := **/*.md
 
 .DEFAULT_GOAL := help
 .PHONY: help bootstrap hooks format format-check lint check fix swift-format \
-        swift-lint md-format md-lint sh-lint build cli preview probe test test-ui \
+        swift-lint md-format md-lint sh-lint build cli probe test test-ui \
         test-one test-report app-path cli-path run-cli install clean
 
 help: ## List available targets
@@ -63,9 +62,6 @@ build: ## Build the app ($(CONFIG))
 
 cli: ## Build the openskycli dev tool ($(CONFIG))
 	@xcodebuild -project $(PROJECT) -scheme $(CLI_SCHEME) -configuration $(CONFIG) build
-
-preview: ## Build the openskypreview asset browser ($(CONFIG))
-	@xcodebuild -project $(PROJECT) -scheme $(PREVIEW_SCHEME) -configuration $(CONFIG) build
 
 probe: ## CLI smoke checks against the local install (skips if absent)
 	@./tools/probe.sh
