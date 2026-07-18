@@ -46,6 +46,7 @@ only where `--out` points (AGENTS.md Legal & IP).
 | `vfs cat <key> --out <file>` | extract one resource (loose files win, as in the engine) |
 | `record <formid-or-editorid>` | dump one Skyrim.esm record: header, decoded view (WRLD/CELL/STAT/REFR), field list capped at 64 with a per-type tail summary |
 | `cell [--worldspace <edid>] [--x n] [--y n] [--refs]` | exterior-cell summary without Metal: ref count, base-type histogram, other cell records; `--refs` lists placements |
+| `interior --out <file> [--worldspace/--x/--y] [--radius n]` | scan exterior doors near target for exterior -> interior -> paired exterior round trip, render exact XTEL arrival pose to PNG; default radius 16 |
 | `nif <key>` | container stats + named node/shape rows + flattened model summary (meshes, verts/tris, bounds, materials with texture paths) |
 | `dds <key>` | header + mip chain (size, BCn format, sRGB declaration) |
 | `lod [--worldspace edid]` | parse lodsettings + sweep every worldspace BTR/BTO through LOD block decoders + scene flattener; any failed container exits 1 |
@@ -70,6 +71,10 @@ Implementation notes:
 * `cell` mirrors the [cell scene build](/engine/cell-scene.md) WRLD walk read-only
   (XCLC grid match, labels ignored) and resolves base types via a headers-only
   FormID -> record-type index.
+* `interior` is M3.6 repeatable acceptance probe. It uses production builder transition
+  resolution for both directions; destination must be interior, reverse destination must
+  equal source exterior door. One WRLD walk gathers doors without loading assets;
+  `--radius` bounds selection to 0-64 cells.
 * `screenshot` follows the app launch chain (VFS -> ESM -> libraries ->
   `CellSceneBuilder` -> `SceneCamera.framing`) on a headless `MTKView`; the offscreen
   path never touches a drawable. `render` dispatches the same implementation as a
@@ -97,6 +102,7 @@ default `/Volumes/data/steam/steamapps/common/Skyrim Special Edition`, override 
 `OPENSKY_DATA_ROOT`. Install absent -> `[INFO]` + exit 0 (CI safe). Checks: `vfs ls`
 finds meshes; `record 0x3C` decodes Tamriel (UESP "Skyrim Mod:FormIDs"); `cell`
 summary; `nif`/`dds` inspect the first listed assets; `screenshot` writes
-`logs/probe-screenshot.png`; `bench` runs the sustained fps gate (360 frames @
+`logs/probe-screenshot.png`; `interior` verifies one door round trip + writes
+`logs/probe-interior.png`; `bench` runs the sustained fps gate (360 frames @
 720p, fails over 33.33 ms avg/p95); `bench --fly-path` runs the M3.2 cross-cell gate at
 640x360. Full output -> `logs/probe.log`.

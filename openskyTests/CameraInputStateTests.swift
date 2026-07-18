@@ -75,4 +75,13 @@ struct CameraInputStateTests {
     func dtPassesThrough() {
         #expect(CameraInputState().makeInput(dt: 0.016).dt == 0.016)
     }
+
+    @Test
+    func activationLatchesUntilConsumed() {
+        let state = CameraInputState()
+        state.requestActivation()
+        _ = state.makeInput(dt: 0.016)
+        #expect(state.consumeActivation())
+        #expect(!state.consumeActivation())
+    }
 }

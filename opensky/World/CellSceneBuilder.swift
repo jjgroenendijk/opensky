@@ -1,4 +1,4 @@
-// Cell scene build (todo 2.7 scene build, widened to MSTT/TREE/FURN/ACTI/CONT
+// Cell scene build (todo 2.7 scene build, widened to MSTT/TREE/FURN/ACTI/CONT/DOOR
 // bases in 3.2): walk one plugin's WRLD tree to an exterior cell, resolve
 // each REFR's base object, load its NIF via MeshLibrary, and emit an
 // instancing-ready RenderScene. Structural failures (worldspace or cell
@@ -21,6 +21,10 @@ nonisolated enum CellSceneError: Error, Equatable {
     case worldspaceNotFound(editorID: String)
     /// The worldspace holds no CELL at the requested grid slot.
     case cellNotFound(worldspaceEditorID: String, gridX: Int32, gridY: Int32)
+    case interiorCellNotFound(formID: FormID)
+    case doorReferenceNotFound(formID: FormID)
+    case doorHasNoTeleport(formID: FormID)
+    case teleportDestinationNotFound(formID: FormID)
 }
 
 /// Per-build skip accounting; folded into CellLoadSummary at the end.
@@ -33,7 +37,7 @@ nonisolated struct BuildCounts {
 }
 
 /// One base record resolved to its drawable model path, regardless of
-/// whether it came from the STAT or ModelBase (MSTT/TREE/FURN/ACTI/CONT)
+/// whether it came from the STAT or ModelBase (MSTT/TREE/FURN/ACTI/CONT/DOOR)
 /// index — resolveInstances treats both the same past this point.
 nonisolated private struct ResolvedBase {
     let formID: FormID
@@ -88,9 +92,12 @@ nonisolated final class CellSceneBuilder {
     private let distantLODBuilder: DistantLODBuilder?
     /// FormID -> STAT over the STAT top group, built on first use.
     private var statIndex: [UInt32: StaticObject]?
-    /// FormID -> ModelBase over the MSTT/TREE/FURN/ACTI/CONT top groups,
+    /// FormID -> ModelBase over MSTT/TREE/FURN/ACTI/CONT/DOOR top groups,
     /// built on first use. Checked when a ref's base is not a STAT.
     private var modelBaseIndex: [UInt32: ModelBase]?
+    /// XTEL refs stored in each WRLD persistent CELL, keyed by WRLD FormID.
+    /// Physical placement decides which streamed exterior scene owns them.
+    var exteriorPersistentTeleportRefs: [UInt32: [PlacedReference]] = [:]
     /// Water/environment indexes + reusable plane mesh. Build-queue confined
     /// like the existing record indexes and asset libraries.
     var worldspaceIndex: [UInt32: Worldspace]?
@@ -149,8 +156,17 @@ nonisolated final class CellSceneBuilder {
             )
         }
         var counts = BuildCounts()
-        let refs = collectReferences(in: found.children, counts: &counts)
+        let localRefs = collectReferences(in: found.children, counts: &counts)
+        let coordinate = CellCoordinate(x: gridX, y: gridY)
+        let refs = exteriorReferences(
+            local: localRefs,
+            world: world.children,
+            coordinate: coordinate,
+            localized: localized
+        )
+        counts.totalRefs = refs.count + counts.malformedRefs
         let instances = resolveInstances(refs: refs, counts: &counts)
+        let doors = resolveDoors(refs: refs)
         let terrain = buildTerrain(found: found, worldspace: world.worldspace)
         let water = buildWater(found: found, worldspace: world.worldspace)
         let sky = world.worldspace?.flags.contains(.noSky) == false
@@ -159,7 +175,13 @@ nonisolated final class CellSceneBuilder {
             found: found,
             grid: (x: gridX, y: gridY),
             instances: instances,
-            geometry: CellGeometryBuild(terrain: terrain, water: water, sky: sky),
+            geometry: CellGeometryBuild(
+                location: .exterior(coordinate),
+                doors: doors,
+                terrain: terrain,
+                water: water,
+                sky: sky
+            ),
             counts: counts
         )
         // Record the mesh + texture keys this cell touched so streaming unload
@@ -177,7 +199,7 @@ extension CellSceneBuilder {
     /// labeled by the owning record's FormID. EDID match is exact (editor IDs
     /// are stable identifiers). A malformed WRLD is skipped — another
     /// worldspace may still match.
-    nonisolated private func worldChildrenGroup(
+    nonisolated func worldChildrenGroup(
         editorID: String,
         localized: Bool
     ) throws -> FoundWorld {
@@ -210,7 +232,7 @@ extension CellSceneBuilder {
     /// Depth-first over exterior block/sub-block groups. Match is by decoded
     /// XCLC grid, never by block labels (unreliable in CK-ignored groups —
     /// see ESMGroup).
-    nonisolated private func findCell(
+    nonisolated func findCell(
         in group: ESMGroup,
         gridX: Int32,
         gridY: Int32,
@@ -251,7 +273,7 @@ extension CellSceneBuilder {
 
     /// The cell-children group for a CELL record sits after it among the same
     /// siblings, labeled with the cell's FormID.
-    nonisolated private func cellChildrenGroup(
+    nonisolated func cellChildrenGroup(
         following index: Int,
         in children: [ESMGroup.Child],
         cellFormID: UInt32
@@ -270,7 +292,7 @@ extension CellSceneBuilder {
     /// ACHR, PGRE, ...) are not static placements — ignored deliberately and
     /// not counted (skip taxonomy, docs/engine/cell-scene.md). Deleted REFRs
     /// place nothing -> also ignored. A REFR that fails to decode is malformed.
-    nonisolated private func collectReferences(
+    nonisolated func collectReferences(
         in cellChildren: ESMGroup?,
         counts: inout BuildCounts
     ) -> [PlacedReference] {
@@ -302,12 +324,12 @@ extension CellSceneBuilder {
     }
 
     /// Resolves refs to placed instances. Skip buckets: base FormID resolves
-    /// to neither the STAT nor the ModelBase (MSTT/TREE/FURN/ACTI/CONT)
+    /// to neither the STAT nor the ModelBase (MSTT/TREE/FURN/ACTI/CONT/DOOR)
     /// index -> unsupported base; a resolved base without MODL -> marker;
     /// mesh load error -> model failure. Output is sorted by (normalized
     /// mesh path, FormID) so instances sharing a RenderModel are adjacent
     /// (instancing-ready) and the order is deterministic across runs.
-    nonisolated private func resolveInstances(
+    nonisolated func resolveInstances(
         refs: [PlacedReference],
         counts: inout BuildCounts
     ) -> [ResolvedInstance] {
@@ -371,6 +393,23 @@ extension CellSceneBuilder {
         return instances.sorted { ($0.sortKey, $0.formID) < ($1.sortKey, $1.formID) }
     }
 
+    /// Keeps only REFRs whose base resolves to DOOR and whose XTEL decoded.
+    /// A non-teleport door still renders but has no activation target.
+    nonisolated func resolveDoors(refs: [PlacedReference]) -> [PlacedDoor] {
+        let modelBaseIndex = modelBaseIndexBuildingIfNeeded()
+        return refs.compactMap { ref in
+            guard
+                modelBaseIndex[ref.base.rawValue]?.recordType == "DOOR",
+                let destination = ref.teleportDestination
+            else { return nil }
+            return PlacedDoor(
+                reference: ref.formID,
+                position: ref.placement.position,
+                destination: destination
+            )
+        }
+    }
+
     /// FormID -> StaticObject over the STAT top group. Raw FormIDs suffice
     /// for now: scene build reads a single plugin, so REFR base IDs and STAT
     /// record IDs share one FormID space (cross-plugin resolution via
@@ -395,7 +434,7 @@ extension CellSceneBuilder {
         return index
     }
 
-    /// FormID -> ModelBase over the MSTT/TREE/FURN/ACTI/CONT top groups
+    /// FormID -> ModelBase over MSTT/TREE/FURN/ACTI/CONT/DOOR top groups
     /// (milestone 3.2 "widen base coverage"), built on first use and cached
     /// like statIndex. One top group per record type — unlike STAT there is
     /// no single shared group. Malformed records are skipped with a log,

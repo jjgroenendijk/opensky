@@ -1,5 +1,5 @@
 // CellSceneBuilder tests over synthetic fixtures only: ESMFixture plugin
-// bytes (WRLD tree + STAT/MSTT/TREE/FURN/ACTI/CONT top groups) + NIFFixture
+// bytes (WRLD/CELL trees + model-base top groups) + NIFFixture
 // meshes in a temp-dir VFS. Never extracted game files (AGENTS.md Legal & IP
 // boundary). Needs a Metal device (RenderModel upload), gated like
 // MeshLibraryTests.
@@ -9,6 +9,12 @@ import Metal
 @testable import opensky
 import simd
 import Testing
+
+struct TeleportFixture {
+    let door: UInt32
+    let position: SIMD3<Float>
+    let rotation: SIMD3<Float>
+}
 
 struct CellSceneBuilderTests {
     static let device = MTLCreateSystemDefaultDevice()
@@ -235,7 +241,7 @@ struct CellSceneBuilderTests {
 extension CellSceneBuilderTests {
     // MARK: - NIF fixtures
 
-    private func writeLooseFile(_ relativePath: String, _ contents: Data) throws {
+    func writeLooseFile(_ relativePath: String, _ contents: Data) throws {
         let url = dataURL.appending(path: relativePath)
         try FileManager.default.createDirectory(
             at: url.deletingLastPathComponent(),
@@ -273,7 +279,7 @@ extension CellSceneBuilderTests {
         ])
     }
 
-    private func unitNIF() -> Data {
+    func unitNIF() -> Data {
         staticNIF(positions: [SIMD3(0, 0, 0), SIMD3(1, 0, 0), SIMD3(0, 1, 1)])
     }
 
@@ -288,7 +294,7 @@ extension CellSceneBuilderTests {
     }
 
     /// One MSTT/TREE/FURN/ACTI/CONT record, same EDID/MODL shape as STAT.
-    private func modelBaseRecord(type: String, formID: UInt32, modelPath: String?) -> Data {
+    func modelBaseRecord(type: String, formID: UInt32, modelPath: String?) -> Data {
         var fields = Data()
         if let modelPath {
             fields += ESMFixture.field("MODL", ESMFixture.zstring(modelPath))
@@ -296,13 +302,14 @@ extension CellSceneBuilderTests {
         return ESMFixture.record(type, formID: formID, data: fields)
     }
 
-    private func refrRecord(
+    func refrRecord(
         formID: UInt32,
         base: UInt32,
         position: SIMD3<Float> = .zero,
         rotation: SIMD3<Float> = .zero,
         scale: Float? = nil,
-        includePlacement: Bool = true
+        includePlacement: Bool = true,
+        teleport: TeleportFixture? = nil
     ) -> Data {
         var name = Data()
         name.appendUInt32(base)
@@ -322,7 +329,48 @@ extension CellSceneBuilderTests {
             xscl.appendFloat32(scale)
             fields += ESMFixture.field("XSCL", xscl)
         }
+        if let teleport {
+            var xtel = Data()
+            xtel.appendUInt32(teleport.door)
+            for value in [
+                teleport.position.x, teleport.position.y, teleport.position.z,
+                teleport.rotation.x, teleport.rotation.y, teleport.rotation.z
+            ] {
+                xtel.appendFloat32(value)
+            }
+            xtel.appendUInt32(0)
+            fields += ESMFixture.field("XTEL", xtel)
+        }
         return ESMFixture.record("REFR", formID: formID, data: fields)
+    }
+
+    func interiorCellGroup(
+        formID: UInt32,
+        refs: Data,
+        blockLabel: UInt32? = nil,
+        subBlockLabel: UInt32? = nil
+    ) -> Data {
+        var flags = Data()
+        flags.appendUInt16(Cell.Flags.interior.rawValue)
+        let cell = ESMFixture.record(
+            "CELL",
+            formID: formID,
+            data: ESMFixture.field("EDID", ESMFixture.zstring("TestInterior"))
+                + ESMFixture.field("DATA", flags)
+        )
+        let temporary = ESMFixture.childGroup(parent: formID, groupType: 9, contents: refs)
+        let children = ESMFixture.childGroup(
+            parent: formID, groupType: 6, contents: temporary
+        )
+        let objectID = FormID(formID).objectID
+        var subLabel = Data()
+        subLabel.appendUInt32(subBlockLabel ?? ((objectID / 10) % 10))
+        let sub = ESMFixture.group(
+            label: subLabel, groupType: 3, contents: cell + children
+        )
+        var block = Data()
+        block.appendUInt32(blockLabel ?? (objectID % 10))
+        return ESMFixture.group(label: block, groupType: 2, contents: sub)
     }
 
     /// TES4 + WRLD tree (world children -> block -> sub-block -> CELL +
@@ -347,7 +395,9 @@ extension CellSceneBuilderTests {
         parentWorld: UInt32? = nil,
         parentFlags: UInt16 = 0,
         extraWorldRecords: Data = Data(),
-        waterRecords: Data = Data()
+        extraWorldChildren: Data = Data(),
+        waterRecords: Data = Data(),
+        interiorRecords: Data = Data()
     ) -> Data {
         let cellFormID: UInt32 = 0x2B
         let worldFormID: UInt32 = 0x1A
@@ -381,7 +431,7 @@ extension CellSceneBuilderTests {
             groupType: 4, contents: subBlock
         )
         let worldChildren = ESMFixture.childGroup(
-            parent: worldFormID, groupType: 1, contents: block
+            parent: worldFormID, groupType: 1, contents: extraWorldChildren + block
         )
         let wrld = worldRecord(
             formID: worldFormID,
@@ -403,9 +453,12 @@ extension CellSceneBuilderTests {
             + ESMFixture.topGroup("STAT", contents: statRecords)
             + modelBaseGroups
             + ESMFixture.topGroup("WATR", contents: waterRecords)
+            + (interiorRecords.isEmpty
+                ? Data()
+                : ESMFixture.topGroup("CELL", contents: interiorRecords))
     }
 
-    private func makeBuilder(pluginData: Data, device: MTLDevice) throws -> CellSceneBuilder {
+    func makeBuilder(pluginData: Data, device: MTLDevice) throws -> CellSceneBuilder {
         let vfs = VirtualFileSystem(dataURL: dataURL, archiveURLs: [])
         let textures = TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)

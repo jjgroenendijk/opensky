@@ -27,6 +27,8 @@ layer so the math stays AppKit-free + unit-tested:
 - Look: mouse deltas (`NSEvent.deltaX/deltaY`) while captured. Pointer right -> turn right,
   pointer up -> look up. `deltaY` is positive pointer-down (top-left origin) -> negated.
 - Boost: Shift (`flagsChanged`) multiplies speed while held.
+- Activate: F latches one request; streamer consumes it to use nearest teleport door
+  within 192 units. See [interior door transitions](/engine/interiors.md).
 - Capture: click in the view grabs the pointer (`NSCursor.hide` +
   `CGAssociateMouseAndMouseCursorPosition(0)` -> raw deltas, cursor frozen in window). Esc
   or first-responder loss releases + `CameraInputState.releaseAll()` so no key sticks.

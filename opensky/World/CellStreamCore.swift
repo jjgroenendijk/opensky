@@ -59,6 +59,16 @@ nonisolated struct CellStreamCore {
         resident.union(inFlight).union(void).union(failed)
     }
 
+    /// Seeds one synchronously-built destination exterior cell after a door
+    /// transition. Existing bookkeeping remains valid while streaming was
+    /// suspended; destination becomes resident before next grid diff.
+    mutating func seedResident(_ coordinate: CellCoordinate) {
+        inFlight.remove(coordinate)
+        void.remove(coordinate)
+        failed.remove(coordinate)
+        resident.insert(coordinate)
+    }
+
     /// Folds one grid diff into the bookkeeping. `loads` (already excluding
     /// accounted cells, by construction of `accountedCells`) become fresh
     /// in-flight requests. `unloads` forget the slot from every set -- a

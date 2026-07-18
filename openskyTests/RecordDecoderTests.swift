@@ -251,10 +251,10 @@ struct RecordDecoderTests {
         #expect(stat.modelPath == nil)
     }
 
-    // MARK: - ModelBase (MSTT/TREE/FURN/ACTI/CONT)
+    // MARK: - ModelBase (MSTT/TREE/FURN/ACTI/CONT/DOOR)
 
     @Test func decodesModelBaseForEachSupportedType() throws {
-        for type in ["MSTT", "TREE", "FURN", "ACTI", "CONT"] {
+        for type in ["MSTT", "TREE", "FURN", "ACTI", "CONT", "DOOR"] {
             let fields = ESMFixture.field("EDID", ESMFixture.zstring("Some\(type)"))
                 + ESMFixture.field("MODL", ESMFixture.zstring("Meshes\\\(type)\\thing.nif"))
             let base = try ModelBase(
@@ -278,6 +278,43 @@ struct RecordDecoderTests {
         let statBytes = ESMFixture.record("STAT", data: Data())
         #expect(throws: (any Error).self) {
             _ = try ModelBase(record: record(statBytes))
+        }
+    }
+}
+
+extension RecordDecoderTests {
+    @Test func decodesDoorTeleportDestination() throws {
+        var name = Data()
+        name.appendUInt32(0x10)
+        var xtel = Data()
+        xtel.appendUInt32(0x000A_BCDE)
+        for value: Float in [10, 20, 30, 0.25, -0.5, 1.5] {
+            xtel.appendFloat32(value)
+        }
+        xtel.appendUInt32(0x1)
+        let fields = ESMFixture.field("NAME", name)
+            + ESMFixture.field("DATA", Data(count: 24))
+            + ESMFixture.field("XTEL", xtel)
+        let refr = try PlacedReference(
+            record: record(ESMFixture.record("REFR", formID: 0x20, data: fields))
+        )
+        let destination = try #require(refr.teleportDestination)
+        #expect(destination.door == FormID(0x000A_BCDE))
+        #expect(destination.placement.position == SIMD3(10, 20, 30))
+        #expect(destination.placement.rotation == SIMD3(0.25, -0.5, 1.5))
+        #expect(destination.flags == .noAlarm)
+    }
+
+    @Test func rejectsTruncatedDoorTeleportDestination() throws {
+        var name = Data()
+        name.appendUInt32(0x10)
+        let fields = ESMFixture.field("NAME", name)
+            + ESMFixture.field("DATA", Data(count: 24))
+            + ESMFixture.field("XTEL", Data(count: 31))
+        #expect(throws: (any Error).self) {
+            _ = try PlacedReference(
+                record: record(ESMFixture.record("REFR", formID: 0x20, data: fields))
+            )
         }
     }
 }

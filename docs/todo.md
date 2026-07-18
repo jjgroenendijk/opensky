@@ -55,8 +55,8 @@ Sequencing: 3.1 terrain landed first — everything sits on it, and LAND lived i
 cell temporary-children groups `CellSceneBuilder` already walked
 (`docs/engine/cell-scene.md`) -> decoder slotted into the existing walk. 3.2 streaming now
 turns that per-cell unit into a grid + carries the perf work multi-cell rendering needs.
-LOD rings now start at loaded-grid boundary. 3.6 interiors follows; 3.7 lighting lands
-last because interiors are where it shows. Verification path: `openskycli render`/`bench`
+LOD rings now start at loaded-grid boundary. 3.6 interiors landed; 3.7 lighting lands last
+because interiors are where it shows. Verification path: `openskycli render`/`bench`
 plus main-app asset
 browser, screenshot pattern as in `docs/img/`.
 
@@ -64,21 +64,6 @@ Format facts below pre-verified 2026-07-18 against UESP mod-file-format pages + 
 `dev-4.1.6` source (`wbDefinitionsTES5.pas`, `wbDefinitionsCommon.pas`, `wbLOD.pas`) +
 DynDOLOD docs / xLODGen LODGen source. Re-confirm against real install by probe during
 impl; chase flagged UNCONFIRMED points especially.
-
-### 3.6 Interiors
-
-* [ ] Interior CELL walk: CELL top group -> block (type 2) / sub-block (type 3) by
-      FormID last decimal digits (block = objectID mod 10, sub-block = div 10 mod 10;
-      labels untrusted, same rule as exterior walk). Reuse `CellSceneBuilder` children
-      walk; CELL DATA 0x1 = interior, no terrain/sky. Ref: UESP CELL + xEdit
-      `wbImplementation.pas`.
-* [ ] Doors: DOOR bases (MODL) drawn like STAT; REFR XTEL decode — 32 B = destination
-      door REFR formid + pos xyz + rot xyz + flags. Ref: UESP REFR/DOOR.
-* [ ] Teleport: door activation (proximity + key first, raycast later) -> resolve dest
-      REFR -> load its cell (interior or exterior) -> camera at XTEL pos/rot; exterior
-      streaming suspends while inside.
-* [ ] Verify: enter a Whiterun-area interior through its door, look around, return to
-      the exterior grid (probe picks the door pair).
 
 ### 3.7 Lighting pass
 

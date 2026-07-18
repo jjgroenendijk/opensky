@@ -105,8 +105,11 @@ final class GameViewController: NSViewController {
                 }
             }
         )
-        renderer.onFrame = { [weak controller] position in
-            controller?.update(cameraPosition: position)
+        renderer.onFrame = { [weak controller, weak cameraInput] position in
+            controller?.update(
+                cameraPosition: position,
+                activate: cameraInput?.consumeActivation() ?? false
+            )
         }
         streamer = controller
     }

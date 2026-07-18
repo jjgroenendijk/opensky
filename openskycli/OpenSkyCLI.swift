@@ -25,6 +25,9 @@ enum OpenSkyCLI {
       record <formid-or-editorid> Dump one Skyrim.esm record (decoded + fields)
       cell [--worldspace <edid>] [--x <n>] [--y <n>] [--refs]
                                   Summarize an exterior cell's references
+      interior --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
+               [--radius <n>]    Find a nearby exterior door, enter its interior,
+                                  render the arrival pose, verify the return door
       nif <key>                   Inspect a mesh: container stats, model summary
       dds <key>                   Inspect a texture: header + mip chain
       lod [--worldspace <edid>]   Parse settings + sweep all .btr/.bto files
@@ -79,18 +82,12 @@ enum OpenSkyCLI {
         guard let command = scanner.next() else {
             throw CLIError.usage("no command given")
         }
+        if try runWorldCommand(command, dataRoot: dataRoot, scanner: &scanner) {
+            return
+        }
         switch command {
         case "help", "--help", "-h":
             print(usage)
-        case "vfs":
-            try VFSCommand.run(context: .resolve(dataRootOverride: dataRoot), scanner: &scanner)
-        case "record":
-            try RecordCommand.run(
-                context: .resolve(dataRootOverride: dataRoot),
-                scanner: &scanner
-            )
-        case "cell":
-            try CellCommand.run(context: .resolve(dataRootOverride: dataRoot), scanner: &scanner)
         case "nif":
             try AssetCommand.runNIF(
                 context: .resolve(dataRootOverride: dataRoot),
@@ -124,6 +121,34 @@ enum OpenSkyCLI {
         default:
             throw CLIError.usage("unknown command: \(command)")
         }
+    }
+
+    private static func runWorldCommand(
+        _ command: String,
+        dataRoot: String?,
+        scanner: inout ArgumentScanner
+    ) throws -> Bool {
+        switch command {
+        case "vfs":
+            try VFSCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
+        case "record":
+            try RecordCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
+        case "cell":
+            try CellCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
+        case "interior":
+            try InteriorCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
+        default:
+            return false
+        }
+        return true
     }
 }
 

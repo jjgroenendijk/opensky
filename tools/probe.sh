@@ -67,6 +67,13 @@ run "offscreen screenshot" screenshot --out "$png"
 [ -s "$png" ] || fail "screenshot wrote no PNG"
 echo "[ OK ] screenshot output: $png"
 
+# M3.6 interior gate: find one teleport door near Whiterun, follow XTEL in,
+# render exact arrival pose, follow paired door back to exterior.
+interior_png="$log_dir/probe-interior.png"
+run "interior door round trip" interior --out "$interior_png"
+[ -s "$interior_png" ] || fail "interior probe wrote no PNG"
+echo "[ OK ] interior output: $interior_png"
+
 # Sustained fps gate (todo 2.11): 360 frames at 720p via frame stats; the
 # command exits 1 when avg/p95 frame time misses the 33.3 ms (30 fps) budget.
 run "sustained bench (360 frames @ 1280x720)" bench

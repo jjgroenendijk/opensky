@@ -15,7 +15,8 @@ build an exterior cell scene (milestone 2, widened in 3.2). TES4 decode lives in
 
 Reference: UESP "Skyrim Mod:Mod File Format" per-record pages
 (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format>, subpages `/WRLD`,
-`/CELL`, `/REFR`, `/STAT`, `/MSTT`, `/TREE`, `/FURN`, `/ACTI`, `/CONT`). Water-specific
+`/CELL`, `/REFR`, `/STAT`, `/MSTT`, `/TREE`, `/FURN`, `/ACTI`, `/CONT`, `/DOOR`).
+Water-specific
 fields + WATR layout: [exterior water records](/formats/water.md). Impl:
 `opensky/Formats/ESM/Records/`.
 
@@ -82,6 +83,14 @@ high bits carry CK noise, kept verbatim.
 Lighting (XCLL) + remaining formID links stay skipped. XCLW sentinel policy, WRLD
 inheritance, and WATR colors: [exterior water records](/formats/water.md).
 
+Interior CELLs live below CELL top group -> block group type 2 -> sub-block group type 3.
+xEdit `UpdateInteriorCellGroup` derives labels from low-24-bit object ID written in
+decimal: block = ones digit, sub-block = tens digit. Example object ID 80074 -> block 4,
+sub-block 7. OpenSky tries those groups first, then all legal type-2/type-3 siblings:
+labels are an optimization hint, never identity. CELL FormID + DATA 0x01 establish
+identity/interior status. Refs: UESP CELL page + xEdit `wbImplementation.pas`
+(`dev-4.1.6`).
+
 ## REFR -> PlacedReference
 
 | field | type     | decoded                                    |
@@ -89,10 +98,14 @@ inheritance, and WATR colors: [exterior water records](/formats/water.md).
 | NAME  | formID   | `base` — the base object placed (required) |
 | DATA  | float[6] | `placement` (required)                     |
 | XSCL  | float    | `scale`, defaults 1.0 when absent          |
+| XTEL  | 32 bytes | optional teleport destination              |
 
 DATA: x/y/z position in game units, then x/y/z rotation in radians. Missing
-NAME or DATA throws — a reference without them cannot be placed. Activation,
-ownership, teleport (XTEL, milestone 3) fields skipped.
+NAME or DATA throws — a reference without them cannot be placed. XTEL is exact-size:
+destination door REFR FormID (uint32), destination position float3, rotation float3 in
+radians, flags uint32. Flag 0x01 = no alarm. Any other size throws malformed instead of
+silently shifting fields. Ownership + remaining activation fields stay skipped. Refs:
+UESP REFR page; xEdit `wbDefinitionsTES5.pas` XTEL `wbStruct`.
 
 ## STAT -> StaticObject
 
@@ -105,12 +118,12 @@ MODL is a mesh path relative to `Data/` (`meshes\...`), resolved through the
 [VFS](/formats/vfs.md). MODT hashes, DNAM (max angle + material), MNAM LOD
 models skipped until the NIF/LOD work needs them.
 
-## MSTT/TREE/FURN/ACTI/CONT -> ModelBase
+## MSTT/TREE/FURN/ACTI/CONT/DOOR -> ModelBase
 
-Milestone 3.2 "widen base coverage": four more placeable base types beyond STAT, decoded
-by one shared `ModelBase` (`opensky/Formats/ESM/Records/ModelBase.swift`) instead of five
-near-identical structs — all four carry EDID + MODL in the same position STAT does, and
-scene build only needs the model path for now (animation/interaction stay out of scope).
+One shared `ModelBase` (`opensky/Formats/ESM/Records/ModelBase.swift`) decodes six
+placeable base types beyond STAT. All carry EDID + MODL in the same position STAT does;
+scene build needs model path only. M3.6 adds DOOR draw coverage; teleport data belongs to
+placed REFR XTEL, not DOOR.
 
 | field | type    | decoded                      |
 | ----- | ------- | ---------------------------- |
@@ -124,11 +137,12 @@ Per-type reference, all UESP "Skyrim Mod:Mod File Format":
 * FURN (furniture) — <https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/FURN>
 * ACTI (activator) — <https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/ACTI>
 * CONT (container) — <https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CONT>
+* DOOR (door) — <https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DOOR>
 
-Type-specific fields skipped for all four: FURN furniture-marker/animation fields, CONT
+Type-specific fields skipped: FURN furniture-marker/animation fields, CONT
 inventory (CNTO) + open/close sound, ACTI interaction (VNAM/activate text, sound), TREE
-billboard/leaf-curve fields (CVPA/BSNM/...). `ModelBase.recordType` retains which of the
-five the record was so callers can tell them apart without redecoding.
+billboard/leaf-curve fields (CVPA/BSNM/...), DOOR sounds/flags. `ModelBase.recordType`
+retains source record type so callers can distinguish them without redecoding.
 
 ## Verification
 

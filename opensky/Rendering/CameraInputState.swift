@@ -17,6 +17,7 @@ final class CameraInputState {
     private var boost = false
     private var pendingLookRight: Float = 0
     private var pendingLookUp: Float = 0
+    private var activationRequested = false
 
     func press(_ key: MoveKey) {
         pressed.insert(key)
@@ -37,6 +38,16 @@ final class CameraInputState {
         pendingLookUp += up
     }
 
+    /// Latches one interaction key-down until world controller consumes it.
+    func requestActivation() {
+        activationRequested = true
+    }
+
+    func consumeActivation() -> Bool {
+        defer { activationRequested = false }
+        return activationRequested
+    }
+
     /// Clears all held state — call on capture loss / focus loss so keys do not
     /// stick after the window stops receiving key-up events.
     func releaseAll() {
@@ -44,6 +55,7 @@ final class CameraInputState {
         boost = false
         pendingLookRight = 0
         pendingLookUp = 0
+        activationRequested = false
     }
 
     /// Snapshots the frame's input and drains accumulated pointer deltas.

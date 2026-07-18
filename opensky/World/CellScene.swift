@@ -14,6 +14,21 @@ nonisolated struct CellAssets: Equatable {
     var textureKeys: Set<String> = []
 }
 
+/// Stable identity of one built cell. Exterior cells drive grid streaming;
+/// interior cells are addressed by CELL FormID because they have no XCLC.
+nonisolated enum CellSceneLocation: Equatable {
+    case exterior(CellCoordinate)
+    case interior(FormID)
+}
+
+/// Teleport-capable DOOR placement retained beside render data so main-thread
+/// interaction can select a nearby door without touching plugin bytes.
+nonisolated struct PlacedDoor: Equatable {
+    let reference: FormID
+    let position: SIMD3<Float>
+    let destination: PlacedReference.TeleportDestination
+}
+
 /// One built exterior cell, ready to render.
 nonisolated struct CellScene {
     let renderScene: RenderScene
@@ -21,8 +36,26 @@ nonisolated struct CellScene {
     /// World-space AABB over every drawn instance — nil when nothing drew.
     /// Downstream camera placement frames this box.
     let bounds: (min: SIMD3<Float>, max: SIMD3<Float>)?
+    let location: CellSceneLocation?
+    let doors: [PlacedDoor]
     /// Mesh + texture cache keys this cell uses, for unload eviction.
     var assets = CellAssets()
+
+    init(
+        renderScene: RenderScene,
+        summary: CellLoadSummary,
+        bounds: (min: SIMD3<Float>, max: SIMD3<Float>)?,
+        location: CellSceneLocation? = nil,
+        doors: [PlacedDoor] = [],
+        assets: CellAssets = CellAssets()
+    ) {
+        self.renderScene = renderScene
+        self.summary = summary
+        self.bounds = bounds
+        self.location = location
+        self.doors = doors
+        self.assets = assets
+    }
 }
 
 /// Load accounting for one cell build. Per-ref failures never abort the build
@@ -38,8 +71,8 @@ nonisolated struct CellLoadSummary: Equatable {
     let totalRefCount: Int
     let drawnRefCount: Int
     /// REFR whose base FormID resolves to neither the STAT nor the
-    /// ModelBase (MSTT/TREE/FURN/ACTI/CONT) index — an unsupported base
-    /// type (DOOR, NPC_, ACHR, ...) or a malformed base record.
+    /// ModelBase (MSTT/TREE/FURN/ACTI/CONT/DOOR) index — an unsupported
+    /// base type (NPC_, ACHR, ...) or a malformed base record.
     let unsupportedBaseSkipCount: Int
     /// Resolved base carries no MODL — editor marker, nothing to draw.
     let markerSkipCount: Int

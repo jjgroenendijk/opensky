@@ -4,6 +4,19 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* M3.6 interiors complete -- CELL top-group type-2/type-3 walk uses FormID decimal
+  ones/tens label hints with full fallback; interior scenes reuse ref/base build without
+  terrain/sky. DOOR joins ModelBase MODL coverage; REFR XTEL strict-decodes exact 32-byte
+  destination pose/flags. WRLD persistent `(0,0)` XTEL refs map into physical streamed
+  cells by position. F activates nearest door within 192 units; serial transition resolves
+  destination CELL, swaps exact XTEL camera pose, suspends exterior grid/LOD inside,
+  resumes + seeds destination exterior on return. `openskycli interior` acceptance found
+  Chillfurrow Farm 0001633D `(7,-3)` -> interior CELL 00016204/door 000163A8 -> same
+  exterior door; rendered 1280x720 textured interior frame. Synthetic decoder/builder/
+  streamer/input tests cover malformed XTEL, untrusted labels, persistent ownership,
+  proximity, suspension, exact pose, return. Docs: [records](/formats/records.md),
+  [interiors](/engine/interiors.md), [streaming](/engine/cell-streaming.md),
+  [CLI](/tools/cli.md).
 * M3.5 sky + water complete -- exterior scenes now carry one procedural fullscreen sky
   marker unless WRLD says no-sky; hardcoded day/night/twilight gradient + sun disc driven
   by renderer time-of-day (`openskycli screenshot --time-of-day`, default 13:00). CELL

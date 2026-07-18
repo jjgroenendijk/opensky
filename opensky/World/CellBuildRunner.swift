@@ -24,6 +24,9 @@ nonisolated protocol CellSceneProvider {
         center: CellCoordinate,
         hiddenCells: Set<CellCoordinate>
     ) throws -> DistantLODScene?
+
+    /// Resolves + builds the destination of one placed teleport door.
+    func buildDoorTransition(from sourceDoor: FormID) throws -> DoorTransition
 }
 
 nonisolated extension CellSceneProvider {
@@ -32,6 +35,10 @@ nonisolated extension CellSceneProvider {
         hiddenCells _: Set<CellCoordinate>
     ) throws -> DistantLODScene? {
         nil
+    }
+
+    func buildDoorTransition(from sourceDoor: FormID) throws -> DoorTransition {
+        throw CellSceneError.doorReferenceNotFound(formID: sourceDoor)
     }
 }
 
@@ -69,6 +76,13 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider {
             hiddenCells: hiddenCells
         )
     }
+
+    func buildDoorTransition(from sourceDoor: FormID) throws -> DoorTransition {
+        try builder.buildDoorTransition(
+            from: sourceDoor,
+            worldspaceEditorID: worldspaceEditorID
+        )
+    }
 }
 
 /// One finished build handed back to the main-thread streamer.
@@ -80,6 +94,11 @@ nonisolated struct CellBuildResult {
 nonisolated struct DistantLODBuildResult {
     let center: CellCoordinate
     let result: Result<DistantLODScene?, any Error>
+}
+
+nonisolated struct DoorTransitionBuildResult {
+    let sourceDoor: FormID
+    let result: Result<DoorTransition, any Error>
 }
 
 /// Runs cell builds off the main thread and buffers the results for a
@@ -94,11 +113,18 @@ nonisolated protocol CellBuildRunning: AnyObject {
     func enqueueEviction(droppingMeshKeys: Set<String>, droppingTextureKeys: Set<String>)
     func enqueueDistantLOD(center: CellCoordinate, hiddenCells: Set<CellCoordinate>)
     func drainCompletedDistantLOD() -> [DistantLODBuildResult]
+    func enqueueDoorTransition(from sourceDoor: FormID)
+    func drainCompletedDoorTransitions() -> [DoorTransitionBuildResult]
 }
 
 nonisolated extension CellBuildRunning {
     func enqueueDistantLOD(center _: CellCoordinate, hiddenCells _: Set<CellCoordinate>) {}
     func drainCompletedDistantLOD() -> [DistantLODBuildResult] {
+        []
+    }
+
+    func enqueueDoorTransition(from _: FormID) {}
+    func drainCompletedDoorTransitions() -> [DoorTransitionBuildResult] {
         []
     }
 }
@@ -123,6 +149,8 @@ nonisolated final class SerialCellBuildRunner: CellBuildRunning, @unchecked Send
     private var pending: Set<CellCoordinate> = []
     private var pendingLOD: Set<CellCoordinate> = []
     private var completedLOD: [DistantLODBuildResult] = []
+    private var pendingDoorTransitions: Set<FormID> = []
+    private var completedDoorTransitions: [DoorTransitionBuildResult] = []
 
     init(provider: any CellSceneProvider, label: String = "nl.jjgroenendijk.opensky.cellbuild") {
         self.provider = provider
@@ -189,6 +217,33 @@ nonisolated final class SerialCellBuildRunner: CellBuildRunning, @unchecked Send
         completedLOD.removeAll(keepingCapacity: true)
         for entry in out {
             pendingLOD.remove(entry.center)
+        }
+        return out
+    }
+
+    func enqueueDoorTransition(from sourceDoor: FormID) {
+        lock.lock()
+        let isNew = pendingDoorTransitions.insert(sourceDoor).inserted
+        lock.unlock()
+        guard isNew else { return }
+        queue.async { [self] in
+            let result = Result { try provider.buildDoorTransition(from: sourceDoor) }
+            lock.lock()
+            completedDoorTransitions.append(DoorTransitionBuildResult(
+                sourceDoor: sourceDoor,
+                result: result
+            ))
+            lock.unlock()
+        }
+    }
+
+    func drainCompletedDoorTransitions() -> [DoorTransitionBuildResult] {
+        lock.lock()
+        defer { lock.unlock() }
+        let out = completedDoorTransitions
+        completedDoorTransitions.removeAll(keepingCapacity: true)
+        for entry in out {
+            pendingDoorTransitions.remove(entry.sourceDoor)
         }
         return out
     }
