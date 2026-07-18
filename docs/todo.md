@@ -64,45 +64,134 @@ reachable through doors. One branch/PR per numbered item; format items follow th
 spec/fixture/doc discipline as M2 (cite spec, synthetic in-code fixtures,
 `docs/formats/<name>.md`, verify via repeatable `openskycli` probes).
 
-Items re-checked 2026-07-18 against what M2 built (2.11 gate). M2 pieces M3 leans on:
-`CellSceneBuilder` (`docs/engine/cell-scene.md`) is the per-cell unit 3.2 streams;
-`ESMWalk` headers-only scans suit 3.1 LAND record discovery; verification path is
-`openskycli render`/`bench` + `openskypreview`, screenshot pattern as in `docs/img/`.
-Ordering unchanged — terrain first (everything sits on it), streaming second, rest
-after. Watch item: sky/water (3.4) is also what turns the current black background in
-screenshots into a real frame.
+Sequencing: 3.1 terrain first — everything sits on it, and LAND lives in the same cell
+temporary-children groups `CellSceneBuilder` already walks
+(`docs/engine/cell-scene.md`) -> decoder slots into the existing walk. 3.2 streaming
+turns that per-cell unit into a grid + carries the perf work multi-cell rendering needs.
+3.3 LOD needs the grid boundary (rings start where loaded cells end). 3.4 sky/water +
+3.5 interiors independent of 3.2/3.3 -> parallelizable branches; 3.6 lighting last
+(interiors are where it shows). Verification path: `openskycli render`/`bench` +
+`openskypreview`, screenshot pattern as in `docs/img/`. Watch item: 3.4 sky turns the
+black background in screenshots into a real frame.
+
+Format facts below pre-verified 2026-07-18 against UESP mod-file-format pages + xEdit
+`dev-4.1.6` source (`wbDefinitionsTES5.pas`, `wbDefinitionsCommon.pas`, `wbLOD.pas`) +
+DynDOLOD docs / xLODGen LODGen source. Re-confirm against real install by probe during
+impl; chase flagged UNCONFIRMED points especially.
 
 ### 3.1 Terrain
 
-* [ ] LAND records: 33x33 height grid per cell, VNML normals, texture layers
-      BTXT/ATXT/VTXT; stitch neighbor cells, blend layers in shader.
+* [ ] LAND + LTEX decoders -> `docs/formats/land.md`. LAND sits in cell
+      temporary-children groups (type 9), usually zlib-compressed (record flag bit 18).
+      Subrecords: DATA flags; VHGT 1096 B = float anchor + 33x33 int8 deltas (col 0
+      carries row-to-row, cols 1-32 accumulate west->east, result x8 game units);
+      VNML/VCLR 3267 B = 33x33x3 bytes; layers BTXT/ATXT 8 B (LTEX formid, quadrant 0-3,
+      layer no) + VTXT 8-B entries (position 0-288 on 17x17 quadrant grid, float
+      opacity). LTEX TNAM -> TXST (TX00 diffuse, TX01 normal). Ref: UESP LAND/LTEX/TXST
+      + xEdit `wbDefinitionsCommon.pas`. Synthetic fixtures; probe sweep every Tamriel
+      LAND (count, height range, layer histogram, VTXT bounds).
+* [ ] Terrain mesh build: heights -> 33x33 vertex grid, 128 units/quad over the 4096
+      cell footprint, normals from VNML, placement from XCLC grid. Neighbor stitch:
+      south row / west col duplicate neighbor edges per spec — verify by probe. LAND-less
+      cell -> flat plane at WRLD DNAM default land height (Tamriel -27000; engine
+      fallback UNCONFIRMED — probe). Respect XCLC force-hide-quad flags.
+* [ ] Terrain render: splat pipeline — base + ATXT layers per quadrant blended by VTXT
+      alpha (format allows 8 + base; live engine limit community-reported ~6 — probe
+      vanilla max), decide texture binding strategy (array vs per-quadrant draws),
+      record in rendering doc.
+* [ ] Verify: `openskycli render` of target cell + 8 neighbors — terrain under the M2
+      walls, no seams at cell borders; screenshot.
 
 ### 3.2 Cell streaming
 
-* [ ] Load grid around camera (uGridsToLoad-style 5x5), async load, unload behind.
+* [ ] Grid manager: camera position -> cell coords -> desired 5x5 grid (uGridsToLoad
+      default), diff -> load/unload sets, hysteresis so border crossing does not thrash.
+* [ ] Async build: cell build off main queue (concurrency audit of `CellSceneBuilder` +
+      `MeshLibrary`/`TextureLibrary` sharing), scene handoff on main, per-frame
+      integration budget. Launch path goes async too — no startup block (2.7 note).
+* [ ] Scene structure: per-cell scene units composing one multi-cell draw pass; unload
+      drops instances, libraries stay shared (eviction deferred — measure memory first).
+* [ ] Perf for many cells: instanced draws (2.7 grouping is instancing-ready), frustum
+      culling vs per-model world AABBs.
+* [ ] Widen base coverage so the streamed world is not sparse: MSTT/TREE/FURN/ACTI/CONT
+      bases drawn as static models (skip taxonomy shrinks; animation/interaction stay
+      out of M3).
+* [ ] Verify: scripted camera-path bench (extend `openskycli bench` with a fly-path
+      across cells) — hitch budget during loads, memory plateaus, no crash.
 
 ### 3.3 Distant LOD
 
-* [ ] BTO/BTR terrain+object LOD meshes, LOD textures.
+* [ ] `lodsettings/<worldspace>.lod` parse: 16 B = SW origin cell (int16 x2), stride,
+      min/max LOD level. Ref: UESP "LOD Settings File Format" + xEdit `wbLOD.pas`.
+      Doc: `docs/formats/lod.md` (covers all of 3.3).
+* [ ] Terrain LOD: `meshes/terrain/<ws>/<ws>.<level>.<x>.<y>.btr` — NIF container
+      (existing parser) + new blocks BSMultiBoundNode/BSMultiBound/BSMultiBoundAABB;
+      level N covers NxN cells, name coords = SW cell, grid anchored at lodsettings
+      origin; textures `textures/terrain/<ws>/<ws>.<level>.<x>.<y>.dds` + `_n`. Water
+      LOD shapes (node "WATER") skipped until 3.4 lands.
+* [ ] Object LOD: `.../objects/<ws>.<level>.<x>.<y>.bto` — BSSubIndexTriShape (new
+      block), vanilla atlas `textures/terrain/<ws>/objects/<ws>.objects.dds`; levels
+      4/8/16. Caveat: .btr/.bto layout derived from xLODGen generator source, not a
+      Bethesda spec -> defensive parse + probe sweep over every vanilla Tamriel
+      .btr/.bto before trusting.
+* [ ] Ring selection: level-4 blocks outside the loaded 5x5, coarser levels farther,
+      hide blocks under loaded cells; plain distance constants first (ini
+      `fBlockLevel*Distance` fidelity later). Tree LOD (.btt/.lst billboards, non-NIF,
+      layout in `wbLOD.pas`) — include if cheap, else defer with a todo note.
+* [ ] Verify: horizon filled past the grid from the target cell, no double-draw where
+      full cells are loaded; screenshot.
 
 ### 3.4 Sky + water
 
-* [ ] Sky dome, day/night gradient; water plane w/ simple shader.
+* [ ] Sky: procedural dome or fullscreen gradient + sun disc, time-of-day parameter.
+      Hardcoded plausible colors first; later sample default climate WTHR NAM0 entries
+      (0 sky-upper, 7 sky-lower, 8 horizon — UESP WTHR/CLMT). Weather system itself out
+      of M3 scope.
+* [ ] Water: height from CELL XCLW (sentinel 0x7F7FFFFF = no water; CK-bug values
+      0x4F7FFFC9/0xCF000000 treated same) else WRLD DNAM default (Tamriel -14000, PNAM
+      parent inheritance); flat plane per cell, simple animated shader; colors
+      (shallow/deep/reflection) from WATR DNAM (228/232 B SSE variants — parse only
+      those fields) via CELL XCWT else WRLD NAM2. First alpha-BLEND pipeline variant
+      (renderer has opaque + alpha-test only). Ref: UESP CELL/WRLD/WATR.
+* [ ] Verify: screenshot with horizon sky at the target cell; water visible at a
+      river/lake cell (probe picks one nearby).
 
 ### 3.5 Interiors
 
-* [ ] Interior cells + door teleport (REFR XTEL).
+* [ ] Interior CELL walk: CELL top group -> block (type 2) / sub-block (type 3) by
+      FormID last decimal digits (block = objectID mod 10, sub-block = div 10 mod 10;
+      labels untrusted, same rule as exterior walk). Reuse `CellSceneBuilder` children
+      walk; CELL DATA 0x1 = interior, no terrain/sky. Ref: UESP CELL + xEdit
+      `wbImplementation.pas`.
+* [ ] Doors: DOOR bases (MODL) drawn like STAT; REFR XTEL decode — 32 B = destination
+      door REFR formid + pos xyz + rot xyz + flags. Ref: UESP REFR/DOOR.
+* [ ] Teleport: door activation (proximity + key first, raycast later) -> resolve dest
+      REFR -> load its cell (interior or exterior) -> camera at XTEL pos/rot; exterior
+      streaming suspends while inside.
+* [ ] Verify: enter a Whiterun-area interior through its door, look around, return to
+      the exterior grid (probe picks the door pair).
 
 ### 3.6 Lighting pass
 
-* [ ] Cell lighting templates, point lights (LIGH), image-based tweaks.
+* [ ] Cell light values: XCLL (92 B layout; truncated variants exist — fields optional
+      from the directional-ambient block on) + LTMP -> LGTM template (DATA + DALC),
+      XCLL inherit flags pick per-field source. XCLL directional-rotation units
+      UNCONFIRMED — probe. Ref: UESP CELL/LGTM.
+* [ ] LIGH decoder: DATA 48 B — time, radius, color, flags (no type flag = omni point),
+      falloff exponent; FNAM fade; REFR overrides XRDS radius, XEMI emit. Negative/spot
+      lights skipped for now. Ref: UESP LIGH + xEdit flag list.
+* [ ] Forward pass: ambient + directional from cell values, N nearest point lights per
+      draw, fog from XCLL near/far/color.
+* [ ] Verify: interior screenshot lit vs unlit comparison; exterior look unchanged
+      (sun/sky driven).
 
 ### 3.7 Milestone acceptance
 
-* [ ] Free-fly from the M2 target cell across the streamed grid: terrain + objects appear
-      without visible pop-in gaps, LOD beyond the grid, enter one interior through a door
-      and return. No crash on any vanilla cell touched; >30 fps sustained measured via
-      `openskycli bench` (not eyeballed).
+* [ ] Free-fly from the M2 target cell across the streamed grid under sky: terrain +
+      objects stream without visible pop-in gaps, water renders where cells have it,
+      LOD beyond the grid, enter one interior through a door and return. No crash on
+      any vanilla cell touched; >30 fps sustained measured via `openskycli bench` (not
+      eyeballed).
 * [ ] Screenshot under `docs/`; `docs/log.md` + this file updated; M4 re-scoped into
       numbered items with a gate.
 
