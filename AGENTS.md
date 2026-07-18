@@ -116,9 +116,14 @@ Drive everything through `make` so results are reproducible. `make help` lists t
 - `make install` — Release build -> `/Applications/opensky.app` (user's progress-check copy;
   refresh after landing rendering work)
 - `make test` — build + run unit tests (skips UI tests)
+- `make test-one T=Class[/test]` — run a single test class or method
+- `make test-report` — summary of the newest test result bundle
 - `make test-ui` — run UI tests (launches app, drives via automation; CI runs both)
 - `make check` — format-check + lint, no build (fast gate)
+- `make fix` — autoformat, then strict lint (one-shot dev gate)
 - `make format` / `make lint` — autoformat / strict lint
+- `make run-cli ARGS="..."` — build + run `openskycli`
+- `make app-path` / `make cli-path` — print built-product paths
 
 A change to product code is not done until it builds and tests pass. Prefer driving the
 actual app to confirm rendering/behavior — a green build does not prove a triangle appeared.
