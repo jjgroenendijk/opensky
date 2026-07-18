@@ -48,7 +48,7 @@ where `--out` points (AGENTS.md Legal & IP).
 | `cell [--worldspace <edid>] [--x n] [--y n] [--refs]` | exterior-cell summary without Metal: ref count, base-type histogram, other cell records; `--refs` lists placements |
 | `nif <key>` | container stats + flattened model summary (meshes, verts/tris, bounds, materials with texture paths) |
 | `dds <key>` | header + mip chain (size, BCn format, sRGB declaration) |
-| `render --out <file> [--worldspace/--x/--y] [--size WxH]` | cell scene build -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load summary + non-background pixel fraction |
+| `render --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f]` | cell scene build -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load summary + non-background pixel fraction; `--zoom` (0.1-10) moves the eye toward the framed center — whole-cell framing is conservative, sparse cells render small without it |
 | `bench [--worldspace/--x/--y] [--size WxH] [--frames n] [--budget-ms f]` | sustained offscreen render (default 360 frames @ 1280x720) through `Renderer.renderOffscreenSustained` — FrameStats windows + per-frame wall times; prints avg/p95/max + fps, exit 1 when avg or p95 misses the budget (default 33.33 ms = 30 fps, todo 2.11 gate) |
 
 `cell`/`render` default to the first-render cell

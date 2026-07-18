@@ -28,7 +28,9 @@ enum OpenSkyCLI {
       nif <key>                   Inspect a mesh: container stats, model summary
       dds <key>                   Inspect a texture: header + mip chain
       render --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
-             [--size WxH]         Offscreen-render a cell to a PNG
+             [--size WxH] [--zoom <f>]
+                                  Offscreen-render a cell to a PNG; zoom
+                                  moves the eye toward the framed center
       bench [--worldspace <edid>] [--x <n>] [--y <n>] [--size WxH]
             [--frames <n>] [--budget-ms <f>]
                                   Sustained offscreen render; report frame

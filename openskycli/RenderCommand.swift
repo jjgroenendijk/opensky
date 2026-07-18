@@ -19,6 +19,7 @@ enum RenderCommand {
         let gridY = try int32(scanner.option("--y"), name: "--y") ?? FirstRenderCell.gridY
         let output = try scanner.requiredOption("--out")
         let size = try parseSize(scanner.option("--size"))
+        let zoom = try parseZoom(scanner.option("--zoom"))
         try scanner.finish()
 
         guard
@@ -43,7 +44,7 @@ enum RenderCommand {
         let texture = try renderOffscreen(
             device: device,
             scene: cellScene.renderScene,
-            camera: SceneCamera.framing(bounds: bounds),
+            camera: zoomed(SceneCamera.framing(bounds: bounds), zoom: zoom),
             size: size
         )
         let pixels = readPixels(texture: texture)
@@ -76,6 +77,29 @@ enum RenderCommand {
             throw CLIError.usage("--size expects WxH (each 1-8192), got \(value)")
         }
         return (width, height)
+    }
+
+    /// The whole-cell framing camera is conservative (enclosing sphere +
+    /// margin) -> sparse cells render small. `--zoom` moves the eye toward
+    /// the target by that factor for a filled milestone shot; bounded so the
+    /// eye cannot land on the target or behind the near plane content.
+    private static func parseZoom(_ value: String?) throws -> Float {
+        guard let value else { return 1 }
+        guard let zoom = Float(value), (0.1 ... 10).contains(zoom) else {
+            throw CLIError.usage("--zoom expects a number in 0.1-10, got \(value)")
+        }
+        return zoom
+    }
+
+    private static func zoomed(_ camera: SceneCamera, zoom: Float) -> SceneCamera {
+        guard zoom != 1 else { return camera }
+        return SceneCamera(
+            eye: camera.target + (camera.eye - camera.target) / zoom,
+            target: camera.target,
+            sunDirection: camera.sunDirection,
+            sunColor: camera.sunColor,
+            ambientColor: camera.ambientColor
+        )
     }
 
     static func buildScene(
