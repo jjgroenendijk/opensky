@@ -4,7 +4,20 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
-* **Preview settings menu + data root picker**: `openskypreview` gains a real
+* **Agent workflow efficiency — skills split + dev-loop make targets**: transcript
+  mining of 35 sessions (3.7k shell commands) drove two changes. (1) Makefile gains
+  the observed repeated loops as targets: `fix` (format then strict lint, one shot),
+  `test-one T=Class[/test]` (replaces hand-typed `xcodebuild -only-testing`
+  invocations), `test-report` (newest `.xcresult` summary via `xcresulttool`),
+  `app-path`/`cli-path` (built-product paths via `-showBuildSettings`, replaces
+  DerivedData globbing), `run-cli ARGS=...` (build + exec `openskycli`). (2) Root
+  AGENTS.md slimmed to always-relevant rules (295 -> 197 lines); conditional
+  workflows moved to skills under `.AGENTS/skills/`: new `format-parser`
+  (reverse-engineering discipline), `docs-wiki` (OKF rules), `probe` (env-gated
+  real-data scratch-test template modeled on `CellRenderRealDataTests`, MainActor
+  rules, offscreen render verification paths) joining existing `commit`.
+  `docs/todo.md` handoff section cut to pointers; stale PR-state snapshot removed
+  (live state comes from `gh pr list`). `openskypreview` gains a real
   main menu (Settings… Cmd+, / Edit / Quit) and a Settings window that shows
   the resolved game data root + source and lets the user pick the install
   folder via `NSOpenPanel` — validated + persisted through new

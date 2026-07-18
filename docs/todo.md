@@ -13,34 +13,21 @@ geometry first -> grow toward playable engine.
 
 ## How to continue (agent handoff)
 
-Fresh session picks up here. Steps:
+Fresh session picks up here:
 
-1. Read AGENTS.md fully — it is the contract. Then this file, then `docs/log.md`.
-2. `make bootstrap` once per checkout (tools, hooks, Metal Toolchain). `make check` +
-   `make test` must be green before and after work.
-3. Check PR state (`gh pr list`). As of 2026-07-18: PRs #1-#21 merged to `main` —
-   milestone 1 (data foundation) + milestone 2 (static world geometry, camera, dev
-   tools) complete. New work branches from up-to-date `main`.
-4. Pick topmost unchecked item below. One branch per item (`feat/...`), atomic commits,
-   Conventional Commit bodies (Context/Change/Rationale/Impact/Tests), PR via `gh`.
-   Item done + green -> always commit and open the PR; never leave finished work
-   uncommitted. No AI trailers. Done item leaves this file in the same commit — knowledge
-   folds into wiki + `docs/log.md` (AGENTS.md rule).
-5. Format work discipline: cite open spec (UESP, xEdit, NifTools) in code + doc, synthetic
-   in-code test fixtures only, write `docs/formats/<name>.md`, update `docs/log.md` +
-   `docs/index.md` in same commit. Never commit game data — no exceptions.
-6. Rendering work: verify visually, not just green build. Screen Recording TCC missing on
-   this machine -> use `Renderer.renderOffscreen` (see `RendererOffscreenTests`: pixel
-   asserts + temp PNG, path printed) or ask user to look. UI-test automation mode also
-   flaky here; unit-target offscreen render is the reliable path.
-7. Game data (read-only, never copied into repo/build):
-   `/Volumes/data/steam/steamapps/common/Skyrim Special Edition/`. Verify parsers against
-   real files via throwaway runtime probes; probes never land in commits.
+1. Read AGENTS.md (the contract; lists the skills), then this file, then the newest
+   2-3 entries of `docs/log.md`.
+2. `make bootstrap` once per checkout. Live branch/PR state: `gh pr list` + `git log`
+   — never trust a snapshot written into a doc.
+3. Pick topmost unchecked item below, one branch per item. Workflows live in skills:
+   `commit` (branch/commit/PR/merge), `format-parser` (format work), `probe`
+   (real-data checks + render verification), `docs-wiki` (doc upkeep).
+4. Game data root (read-only, never copied into repo/build):
+   `/Volumes/data/steam/steamapps/common/Skyrim Special Edition/`.
 
 Machine quirks: repo on case-insensitive external APFS volume (case-only rename needs
 `git mv`; AppleDouble `._*` files ignored). Xcode 26 ships without Metal Toolchain
-(`xcodebuild -downloadComponent MetalToolchain`, bootstrap handles it). GitHub
-`macos-latest` currently has Xcode 26 — CI gate self-skips below 26.
+(bootstrap handles the download). CI gate self-skips below Xcode 26.
 
 ## Milestones at a glance
 
