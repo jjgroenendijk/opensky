@@ -25,6 +25,7 @@ final class GameMetalView: MTKView {
         static let keyD: UInt16 = 2
         static let keyQ: UInt16 = 12
         static let keyE: UInt16 = 14
+        static let keyF: UInt16 = 3
         static let escape: UInt16 = 53
     }
 
@@ -47,6 +48,10 @@ final class GameMetalView: MTKView {
         }
         if event.keyCode == KeyCode.escape {
             releaseCapture()
+            return
+        }
+        if event.keyCode == KeyCode.keyF {
+            input?.requestActivation()
             return
         }
         guard let key = Self.moveKey(for: event.keyCode) else {

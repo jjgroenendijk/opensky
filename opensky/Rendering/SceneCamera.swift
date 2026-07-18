@@ -53,4 +53,25 @@ nonisolated struct SceneCamera {
             ambientColor: DemoScene.ambientColor
         )
     }
+
+    /// Places free-fly camera at XTEL arrival position + orientation. Skyrim
+    /// rotation X is pitch, Z is heading in same Z-up basis used by REFR
+    /// transforms; Y roll is intentionally ignored by upright free-fly view.
+    static func teleport(placement: PlacedReference.Placement) -> SceneCamera {
+        let yaw = placement.rotation.z
+        let pitch = placement.rotation.x
+        let cosPitch = cosf(pitch)
+        let forward = SIMD3<Float>(
+            cosPitch * cosf(yaw),
+            cosPitch * sinf(yaw),
+            sinf(pitch)
+        )
+        return SceneCamera(
+            eye: placement.position,
+            target: placement.position + forward,
+            sunDirection: demo.sunDirection,
+            sunColor: demo.sunColor,
+            ambientColor: demo.ambientColor
+        )
+    }
 }

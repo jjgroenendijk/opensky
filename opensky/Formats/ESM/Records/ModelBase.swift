@@ -1,10 +1,9 @@
-// MSTT/TREE/FURN/ACTI/CONT records decoded into engine types: same
+// MSTT/TREE/FURN/ACTI/CONT/DOOR records decoded into engine types: same
 // EDID + MODL shape as STAT (StaticObject.swift) — a model path a placed
 // reference resolves to. One shared decoder rather than five near-identical
-// structs; type-specific fields (FURN furniture markers, CONT inventory,
-// ACTI interaction) stay unread until a milestone needs them (animation +
-// interaction are out of scope for M3.2 "widen base coverage" — model path
-// only).
+// structs; type-specific fields stay unread until a milestone needs them.
+// DOOR joins for M3.6: its MODL renders through the same static-model path;
+// teleport data lives on placed REFR XTEL, not the base.
 //
 // Reference: UESP "Skyrim Mod:Mod File Format" per-record pages, all
 // documenting EDID (zstring editor ID) + MODL (zstring model path) in the
@@ -14,6 +13,7 @@
 //   /FURN  https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/FURN
 //   /ACTI  https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/ACTI
 //   /CONT  https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CONT
+//   /DOOR  https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DOOR
 // Layout documented in docs/formats/records.md.
 
 import Foundation
@@ -21,7 +21,9 @@ import Foundation
 nonisolated struct ModelBase {
     /// Record types this decoder accepts — all carry EDID + MODL where STAT
     /// does. CellSceneBuilder indexes each of these top groups separately.
-    static let supportedTypes: Set<FourCC> = ["MSTT", "TREE", "FURN", "ACTI", "CONT"]
+    static let supportedTypes: Set<FourCC> = [
+        "MSTT", "TREE", "FURN", "ACTI", "CONT", "DOOR"
+    ]
 
     let formID: FormID
     let recordType: FourCC
@@ -33,7 +35,7 @@ nonisolated struct ModelBase {
     init(record: ESMRecord) throws {
         guard Self.supportedTypes.contains(record.type) else {
             throw ESMError.malformed(
-                "expected MSTT/TREE/FURN/ACTI/CONT record, got \(record.type)"
+                "expected MSTT/TREE/FURN/ACTI/CONT/DOOR record, got \(record.type)"
             )
         }
         formID = FormID(record.formID)

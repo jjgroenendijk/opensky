@@ -41,6 +41,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   async scene replacement, asset lifetime, real-render evidence.
 * [Sky + water environment](/engine/sky-water.md) - procedural time-of-day sky, per-cell
   water resolution/build, animated alpha-blend render path.
+* [Interior door transitions](/engine/interiors.md) - interior CELL build, DOOR/XTEL
+  resolution, proximity activation, camera teleport, suspended exterior streaming.
 * [Free-fly camera](/engine/free-fly-camera.md) - WASDQE + mouse-look input capture,
   yaw/pitch pose -> view matrix, movement speeds tuned to Skyrim scale.
 

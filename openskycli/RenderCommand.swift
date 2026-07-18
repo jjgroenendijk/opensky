@@ -242,7 +242,7 @@ enum RenderCommand {
 
     /// Headless MTKView (never shown, no window) carries the pixel-format
     /// config Renderer reads; renderOffscreen never touches its drawable.
-    private static func renderOffscreen(
+    static func renderOffscreen(
         device: MTLDevice,
         scene: RenderScene,
         camera: SceneCamera,

@@ -16,16 +16,18 @@ final class CellStreamer {
     /// arrives; later changes pass nil so they never yank the free-fly view.
     typealias SceneSink = (RenderScene, SceneCamera?) -> Void
 
-    private static let logger = Logger(
+    static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "CellStream"
     )
 
     private var grid: CellGridManager
-    private var composition = CellSceneComposition()
-    private var core = CellStreamCore()
-    private let runner: any CellBuildRunning
-    private let sink: SceneSink
+    var composition = CellSceneComposition()
+    var core = CellStreamCore()
+    let runner: any CellBuildRunning
+    let sink: SceneSink
+    /// Proximity-only interaction for M3.6; raycast selection lands later.
+    static let doorActivationRadius: Float = 192
 
     /// Desired requests not yet submitted. Only one build reaches the runner
     /// at a time, so recentering can discard obsolete backlog before it does
@@ -40,6 +42,8 @@ final class CellStreamer {
     /// recompose passes a nil camera so the free-fly view is left alone.
     private var hasSeededCamera = false
     private var requestedLODCenter: CellCoordinate?
+    var interiorScene: CellScene?
+    var transitionInFlight: FormID?
 
     /// - Parameters:
     ///   - center: grid center at launch (streaming starts on FirstRenderCell).
@@ -65,13 +69,24 @@ final class CellStreamer {
     /// camera (dispatching newly-needed cells, dropping cells that left the
     /// grid), integrates at most one drawable build (a swap is a full
     /// recompose), and sinks the recomposed scene when anything changed.
-    func update(cameraPosition: SIMD3<Float>) {
+    func update(cameraPosition: SIMD3<Float>, activate: Bool = false) {
         let completed = runner.drainCompleted()
         if !completed.isEmpty {
             pending.append(contentsOf: completed)
             activeBuild = nil
         }
         let completedLOD = runner.drainCompletedDistantLOD()
+        if finishDoorTransition(runner.drainCompletedDoorTransitions()) {
+            return
+        }
+        let isInside = updateInteriorIfNeeded(
+            cameraPosition: cameraPosition,
+            activate: activate,
+            completedLOD: completedLOD
+        )
+        if isInside {
+            return
+        }
 
         var sceneChanged = false
         // Renderer starts on its demo pose. Keep the configured launch grid
@@ -102,6 +117,13 @@ final class CellStreamer {
         }
         if sceneChanged {
             recomposeAndSink()
+        }
+        if activate {
+            requestDoorTransition(
+                composition.nearestDoor(
+                    to: cameraPosition, within: Self.doorActivationRadius
+                )
+            )
         }
         dispatchNextBuild()
         requestDistantLODIfNeeded()
@@ -135,8 +157,12 @@ final class CellStreamer {
 
     /// Schedules only keys no resident cell owns. With one submitted build,
     /// this eviction enters the serial runner before the next build starts.
-    private func evictUnused(_ candidates: CellAssets) {
-        let resident = composition.residentAssets()
+    func evictUnused(_ candidates: CellAssets) {
+        var resident = composition.residentAssets()
+        if let interiorScene {
+            resident.meshKeys.formUnion(interiorScene.assets.meshKeys)
+            resident.textureKeys.formUnion(interiorScene.assets.textureKeys)
+        }
         runner.enqueueEviction(
             droppingMeshKeys: candidates.meshKeys.subtracting(resident.meshKeys),
             droppingTextureKeys: candidates.textureKeys.subtracting(resident.textureKeys)
@@ -144,7 +170,13 @@ final class CellStreamer {
     }
 
     private func dispatchNextBuild() {
-        guard activeBuild == nil, pending.isEmpty, !requests.isEmpty else { return }
+        guard
+            transitionInFlight == nil,
+            interiorScene == nil,
+            activeBuild == nil,
+            pending.isEmpty,
+            !requests.isEmpty
+        else { return }
         let coordinate = requests.removeFirst()
         activeBuild = coordinate
         runner.enqueue(coordinate)
@@ -158,7 +190,7 @@ final class CellStreamer {
     /// per-frame budget of one recompose. Returns whether a cell was
     /// integrated (composition changed). Remaining successes wait for the
     /// next frame.
-    private func integrateOneBuild() -> Bool {
+    func integrateOneBuild() -> Bool {
         while !pending.isEmpty {
             let entry = pending.removeFirst()
             requests.removeAll { $0 == entry.coordinate }
@@ -289,7 +321,9 @@ final class CellStreamer {
         let deltaY = Int(lhs.y) - Int(rhs.y)
         return deltaX * deltaX + deltaY * deltaY
     }
+}
 
+extension CellStreamer {
     // MARK: - Inspection (streaming verification + tests)
 
     /// Grid slots that reached a terminal state: resident + void + failed.
@@ -337,5 +371,9 @@ final class CellStreamer {
 
     var distantLODBlockCount: Int {
         composition.distantLOD?.blockCount ?? 0
+    }
+
+    var isInterior: Bool {
+        interiorScene != nil
     }
 }

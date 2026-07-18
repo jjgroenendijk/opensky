@@ -20,6 +20,9 @@ M3.5 extends output with exterior sky + water: WRLD DATA controls sky presence; 
 XCLW/XCWT resolve against WRLD/parent defaults into one flat water plane. Full rules:
 [sky + water environment](/engine/sky-water.md).
 
+M3.6 adds CELL top-group interior build + DOOR/XTEL transitions. Full flow:
+[interior door transitions](/engine/interiors.md).
+
 ## Walk order
 
 Group nesting per UESP "Skyrim Mod:Mod File Format" — Groups:
@@ -37,17 +40,21 @@ Group nesting per UESP "Skyrim Mod:Mod File Format" — Groups:
 4. Inside: persistent (type 8) + temporary (type 9) children groups both traversed ->
    REFR records.
 
+WRLD persistent teleport doors are special: storage CELL `(0,0)` does not own their
+physical placement. Cached XTEL refs merge into scene selected by REFR position ->
+4096-unit grid coordinate. See [interior door transitions](/engine/interiors.md).
+
 Traversal is lazy throughout: group headers only, record payloads decode on demand,
-non-CELL/WRLD/REFR/STAT/MSTT/TREE/FURN/ACTI/CONT records are never decoded.
+non-CELL/WRLD/REFR/STAT/MSTT/TREE/FURN/ACTI/CONT/DOOR records are never decoded.
 
 ## Base resolution
 
 Milestone 3.2 "widen base coverage": a ref's base FormID is resolved against two lazy,
-cached indices, STAT first, then `ModelBase` (MSTT/TREE/FURN/ACTI/CONT —
+cached indices, STAT first, then `ModelBase` (MSTT/TREE/FURN/ACTI/CONT/DOOR —
 [record decoders](/formats/records.md)):
 
 * FormID -> `StaticObject` over the single STAT top group.
-* FormID -> `ModelBase` over five top groups, one per record type (unlike STAT there is
+* FormID -> `ModelBase` over six top groups, one per record type (unlike STAT there is
   no single shared group for these).
 
 Both cached across builds on first use. Raw FormIDs suffice while scene build reads a
@@ -68,7 +75,7 @@ mod-quirk rule):
 | bucket | trigger |
 | --- | --- |
 | malformed | REFR record fails to decode (missing NAME/DATA) |
-| unsupported-base | base FormID in neither the STAT nor ModelBase index (DOOR, NPC_, ACHR, IDLM, MISC, FLOR, SOUN, ... bases, or a malformed base record) |
+| unsupported-base | base FormID in neither STAT nor ModelBase index (NPC_, ACHR, IDLM, MISC, FLOR, SOUN, ... bases, or malformed base record) |
 | marker | resolved base has no MODL (editor marker) |
 | load-failed | `MeshLibraryError`: file not found, parse failed, empty model |
 

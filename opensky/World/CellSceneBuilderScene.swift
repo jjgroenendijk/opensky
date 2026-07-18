@@ -5,6 +5,8 @@
 import OSLog
 
 nonisolated struct CellGeometryBuild {
+    let location: CellSceneLocation
+    let doors: [PlacedDoor]
     let terrain: TerrainBuild?
     let water: WaterBuild?
     let sky: SkyParameters?
@@ -56,7 +58,9 @@ extension CellSceneBuilder {
         return CellScene(
             renderScene: renderScene,
             summary: summary,
-            bounds: bounds.map { (min: $0.min, max: $0.max) }
+            bounds: bounds.map { (min: $0.min, max: $0.max) },
+            location: geometry.location,
+            doors: geometry.doors
         )
     }
 

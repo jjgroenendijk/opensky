@@ -23,8 +23,9 @@ nonisolated struct CellSceneComposition {
         Set(cells.keys)
     }
 
-    mutating func setCell(_ scene: CellScene, at coordinate: CellCoordinate) {
-        cells[coordinate] = scene
+    @discardableResult
+    mutating func setCell(_ scene: CellScene, at coordinate: CellCoordinate) -> CellScene? {
+        cells.updateValue(scene, forKey: coordinate)
     }
 
     @discardableResult
@@ -70,6 +71,19 @@ nonisolated struct CellSceneComposition {
             textureKeys.formUnion(distantLOD.assets.textureKeys)
         }
         return CellAssets(meshKeys: meshKeys, textureKeys: textureKeys)
+    }
+
+    /// Closest teleport door across resident exterior cells, bounded by the
+    /// interaction radius. Metadata is tiny + immutable; scan cost is small
+    /// beside one frame's draw work.
+    func nearestDoor(to position: SIMD3<Float>, within radius: Float) -> PlacedDoor? {
+        cells.values
+            .flatMap(\.doors)
+            .filter { simd_distance($0.position, position) <= radius }
+            .min { lhs, rhs in
+                simd_distance_squared(lhs.position, position)
+                    < simd_distance_squared(rhs.position, position)
+            }
     }
 
     /// Union AABB over the resident cells' bounds — camera framing for a

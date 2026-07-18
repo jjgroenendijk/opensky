@@ -11,11 +11,13 @@ import Testing
 
 /// Test build runner: the test stages completions and controls their order,
 /// standing in for the serial DispatchQueue without any async timing.
-nonisolated private final class ManualCellBuildRunner: CellBuildRunning {
+nonisolated final class ManualCellBuildRunner: CellBuildRunning {
     private(set) var enqueued: [CellCoordinate] = []
     private(set) var evictedMeshKeys: [Set<String>] = []
     private(set) var evictedTextureKeys: [Set<String>] = []
+    private(set) var enqueuedDoorTransitions: [FormID] = []
     private var ready: [CellBuildResult] = []
+    private var readyDoorTransitions: [DoorTransitionBuildResult] = []
 
     func enqueue(_ coordinate: CellCoordinate) {
         enqueued.append(coordinate)
@@ -38,22 +40,43 @@ nonisolated private final class ManualCellBuildRunner: CellBuildRunning {
         evictedMeshKeys.append(meshKeys)
         evictedTextureKeys.append(textureKeys)
     }
+
+    func enqueueDoorTransition(from sourceDoor: FormID) {
+        enqueuedDoorTransitions.append(sourceDoor)
+    }
+
+    func completeDoorTransition(
+        from sourceDoor: FormID,
+        with result: Result<DoorTransition, any Error>
+    ) {
+        readyDoorTransitions.append(DoorTransitionBuildResult(
+            sourceDoor: sourceDoor, result: result
+        ))
+    }
+
+    func drainCompletedDoorTransitions() -> [DoorTransitionBuildResult] {
+        let out = readyDoorTransitions
+        readyDoorTransitions.removeAll(keepingCapacity: true)
+        return out
+    }
 }
 
 private enum FakeBuildError: Error { case broken }
 
 @MainActor
 struct CellStreamerTests {
-    private static func coordinate(_ x: Int32, _ y: Int32) -> CellCoordinate {
+    static func coordinate(_ x: Int32, _ y: Int32) -> CellCoordinate {
         CellCoordinate(x: x, y: y)
     }
 
     /// Synthetic built cell: empty draw list, optional bounds (so the first
     /// integrated cell can frame a camera) and asset keys (for eviction tests).
-    private static func cellScene(
+    static func cellScene(
         bounds: (min: SIMD3<Float>, max: SIMD3<Float>)? = (SIMD3(0, 0, 0), SIMD3(10, 10, 10)),
         meshKeys: Set<String> = [],
-        textureKeys: Set<String> = []
+        textureKeys: Set<String> = [],
+        location: CellSceneLocation? = nil,
+        doors: [PlacedDoor] = []
     ) -> CellScene {
         CellScene(
             renderScene: RenderScene(instances: []),
@@ -65,14 +88,32 @@ struct CellStreamerTests {
                 modelCount: 0, textureCount: 0, missingTextureCount: 0
             ),
             bounds: bounds,
+            location: location,
+            doors: doors,
             assets: CellAssets(meshKeys: meshKeys, textureKeys: textureKeys)
         )
     }
 
-    /// World center of cell (0,0); keeps the grid centered without recentering.
-    private static let center = CellGridManager.cellCenter(of: coordinate(0, 0))
+    static func door(
+        reference: UInt32,
+        destination: UInt32,
+        position: SIMD3<Float>
+    ) -> PlacedDoor {
+        PlacedDoor(
+            reference: FormID(reference),
+            position: position,
+            destination: PlacedReference.TeleportDestination(
+                door: FormID(destination),
+                placement: PlacedReference.Placement(position: position, rotation: .zero),
+                flags: []
+            )
+        )
+    }
 
-    private static func makeStreamer(
+    /// World center of cell (0,0); keeps the grid centered without recentering.
+    static let center = CellGridManager.cellCenter(of: coordinate(0, 0))
+
+    static func makeStreamer(
         runner: ManualCellBuildRunner,
         radius: Int32 = 1,
         sink: @escaping CellStreamer.SceneSink = { _, _ in }
@@ -328,7 +369,9 @@ struct CellStreamerTests {
         #expect(streamer.residentCellCount == 9)
         #expect(runner.evictedMeshKeys.isEmpty)
     }
+}
 
+extension CellStreamerTests {
     // MARK: - Camera reseed
 
     @Test

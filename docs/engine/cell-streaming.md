@@ -120,7 +120,7 @@ to that cell.
 (`CellStreamCore`), and a build runner. One main-thread entry point:
 
 ```swift
-func update(cameraPosition: SIMD3<Float>)
+func update(cameraPosition: SIMD3<Float>, activate: Bool = false)
 ```
 
 driven once per frame (`Renderer.onFrame`, below). Per call it: (1) collects finished
@@ -247,6 +247,17 @@ M3.4 adds one optional [distant LOD scene](/engine/distant-lod.md) to compositio
 runner/provider queue builds it only after desired 5x5 is fully accounted, so 100+ first-load
 LOD assets cannot starve near cells. Center changes replace stale ring scene; resident asset
 union includes LOD keys before any cell/LOD eviction.
+
+### Interior suspension
+
+M3.6 routes F activation through same serial runner. Nearest XTEL-capable DOOR within 192
+units queues one transition; pending-source dedupe prevents key repeat. Exterior scene stays
+live during build. Interior success swaps renderer to one non-grid scene and freezes grid
+diffs, build dispatch, LOD, unload. Exterior composition remains retained as return cache.
+Returning through an interior door seeds/replaces destination exterior cell, teleports
+camera to XTEL pose, clears interior scene, resumes normal grid settlement. Asset eviction
+uses active interior keys while inside, exterior union after return. Full flow:
+[interior door transitions](/engine/interiors.md).
 
 ## Memory safety + observed plateau
 
