@@ -75,17 +75,13 @@ when data absent; winding + REFR euler verified against vanilla content
 cell (`FreeFlyCamera` pose -> view matrix, `CameraInputState` +
 `GameMetalView` capture); CLI dev tool done (2.9) —
 `docs/tools/cli.md`, `make cli` builds `openskycli`, env-gated
-`make probe` smoke-checks against the local install. 2.10 next: asset
-preview GUI. One branch/PR per numbered item. Every format item: cite
-spec, synthetic in-code test fixtures, write/grow
-`docs/formats/<name>.md`, verify against real install via repeatable
-`openskycli` probes (extracted data never committed).
-
-### 2.10 Asset preview GUI
-
-* [ ] Simple app to browse the VFS and preview assets (NIF meshes, DDS textures,
-      records) from the local install. Later grows into the world viewer/test harness
-      (open a cell, fly, inspect) — M2 scope is browse + single-asset preview only.
+`make probe` smoke-checks against the local install; asset preview
+GUI done (2.10) — `docs/tools/preview-gui.md`, `make preview` builds
+`openskypreview` (VFS + record browse, offscreen NIF/DDS previews).
+2.11 next: milestone acceptance. One branch/PR per numbered item.
+Every format item: cite spec, synthetic in-code test fixtures,
+write/grow `docs/formats/<name>.md`, verify against real install via
+repeatable `openskycli` probes (extracted data never committed).
 
 ### 2.11 Milestone acceptance
 

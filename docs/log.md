@@ -2,6 +2,26 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-07-18
+
+* **Asset preview GUI** (2.10, complete): new `openskypreview` app target
+  (same synchronized-group sharing as the CLI; `make preview` builds).
+  Programmatic AppKit browser: category popup (meshes/textures/records/
+  all) with filter and lazy table over `PreviewCatalog` (archive entries
+  via `VirtualFileSystem.archiveEntries()` + headers-only `ESMWalk` over
+  every Skyrim.esm record); catalog load + record filtering off-main. Detail
+  pane: NIF -> single-model offscreen render via MeshLibrary + framing
+  camera; DDS -> `TexturePreviewScene` textured quad with black sun +
+  white ambient (fragment output = sampled texel); record ->
+  `RecordTextDump` (shared impl — CLI `record` prints the same string;
+  `ESMWalk` moved to `opensky/Formats/ESM/`). Missing install ->
+  in-window message, app still launches. Unit tests: catalog grouping +
+  filter, dump format, quad math; env-gated `PreviewRealDataTests`
+  verified against the real install (172,750 entries, 869,687 records,
+  `logs/preview-dds.png` + `logs/preview-nif.png`). Doc:
+  [asset preview GUI](/tools/preview-gui.md). Item 2.10 left
+  [todo](/todo.md).
+
 ## 2026-07-17
 
 * **CLI dev tool** (2.9, complete): new `openskycli` command-line target
