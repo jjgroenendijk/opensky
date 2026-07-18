@@ -1,11 +1,13 @@
 # OpenSky — automation hub. If it can be scripted, it lives here (AGENTS.md).
 # `make help` lists targets. Single automation entrypoint at the repo root.
 
-PROJECT       := opensky.xcodeproj
-SCHEME        := opensky
-CONFIG        ?= Debug
-DESTINATION   ?= platform=macOS
-SWIFT_PATHS   := opensky openskyTests openskyUITests
+PROJECT        := opensky.xcodeproj
+SCHEME         := opensky
+CLI_SCHEME     := openskycli
+PREVIEW_SCHEME := openskypreview
+CONFIG         ?= Debug
+DESTINATION    ?= platform=macOS
+SWIFT_PATHS    := opensky openskycli openskypreview openskyTests openskyUITests
 
 SWIFTFORMAT_CFG := tools/format/.swiftformat
 SWIFTLINT_CFG   := tools/lint/.swiftlint.yml
@@ -13,8 +15,8 @@ MD_CFG          := tools/markdown/.markdownlint-cli2.yaml
 MD_GLOB         := **/*.md
 
 .DEFAULT_GOAL := help
-.PHONY: help bootstrap hooks format format-check lint check \
-        swift-format swift-lint md-format md-lint sh-lint build test test-ui clean
+.PHONY: help bootstrap hooks format format-check lint check swift-format \
+        swift-lint md-format md-lint sh-lint build cli preview probe test test-ui clean
 
 help: ## List available targets
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -55,6 +57,15 @@ sh-lint: ## Shellcheck the hook + tooling scripts
 
 build: ## Build the app ($(CONFIG))
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration $(CONFIG) build
+
+cli: ## Build the openskycli dev tool ($(CONFIG))
+	@xcodebuild -project $(PROJECT) -scheme $(CLI_SCHEME) -configuration $(CONFIG) build
+
+preview: ## Build the openskypreview asset browser ($(CONFIG))
+	@xcodebuild -project $(PROJECT) -scheme $(PREVIEW_SCHEME) -configuration $(CONFIG) build
+
+probe: ## CLI smoke checks against the local install (skips if absent)
+	@./tools/probe.sh
 
 test: ## Build + run unit tests (no UI tests)
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \

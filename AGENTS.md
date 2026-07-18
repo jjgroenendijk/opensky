@@ -79,6 +79,9 @@ opensky/                Product code — app + engine (Swift, Metal)
   Shaders.metal
   ShaderTypes.h         Shared Swift<->Metal struct defs (bridging header)
   Assets.xcassets/      App chrome only — never game content
+openskycli/             CLI dev tool target — rules in openskycli/AGENTS.md
+openskypreview/         Asset preview GUI target — rules in openskypreview/AGENTS.md
+.AGENTS/skills/         Agent skills (commit workflow, ...); .claude/skills symlinks here
 openskyTests/           Unit tests
 openskyUITests/         UI tests
 tools/                  Repository tooling only (no product code)
@@ -86,6 +89,7 @@ tools/                  Repository tooling only (no product code)
   lint/.swiftlint.yml   SwiftLint config
   markdown/             markdownlint config
   bootstrap.sh          One-shot dev setup
+  probe.sh              Env-gated CLI smoke probe (make probe)
 .githooks/              Tracked git hooks (see Git workflow)
 .github/workflows/      CI
 docs/                   OKF knowledge wiki (see Documentation wiki)
@@ -97,11 +101,18 @@ subfolders by domain as they grow (e.g. `Formats/`, `Rendering/`, `World/`, `Scr
 Keep format parsers separate from rendering. Tooling/automation files live under `tools/`.
 Update this section when structure changes materially.
 
+Nested rules: tool targets carry their own `AGENTS.md` (with `CLAUDE.md` symlinked next
+to it) for target-specific rules — root file stays the global contract. Directory
+outgrows this file -> same pattern. Working in a directory -> read its `AGENTS.md` too.
+
 ## Build, run, test
 
 Drive everything through `make` so results are reproducible. `make help` lists targets.
 
 - `make build` — build the app (Debug)
+- `make cli` — build the `openskycli` dev tool (Debug)
+- `make preview` — build the `openskypreview` asset browser (Debug)
+- `make probe` — CLI smoke checks against the local install (self-skips when absent)
 - `make test` — build + run unit tests (skips UI tests)
 - `make test-ui` — run UI tests (launches app, drives via automation; CI runs both)
 - `make check` — format-check + lint, no build (fast gate)
@@ -219,59 +230,29 @@ remembering it.
 - Run tests before every commit (minimum: fast/targeted for the changed area). Every commit
   keeps the repo green: build passes, tests pass.
 
-## Git commits
+## Git commits + workflow
 
-Conventional Commits: `type(scope?): subject`.
+Full commit/PR procedure lives in the `commit` skill
+(`.AGENTS/skills/commit/SKILL.md`, surfaced via `.claude/skills`) — load it before
+committing or landing work. Non-negotiables, enforced by hooks + CI:
 
-- Allowed types: `feat, fix, docs, refactor, test, perf, build, ci, chore, style, revert`.
-- Subject: imperative mood ("add", "fix"), ~50 chars, no trailing period.
-- Body: blank line after subject, wrap ~72 chars, explain what/why (not how). Required for
-  non-trivial changes.
-- Breaking change: `type(scope)!: subject` OR a `BREAKING CHANGE: ...` footer with migration
-  steps.
-- Link issues via footer: `Fixes #123` / `Refs #123`. No issue -> body states the why.
+- Conventional Commits `type(scope?): subject`; non-trivial bodies carry
+  Context/Change/Rationale/Impact/Tests sections (~72-char wrap).
+- One logical change per commit; every commit green (check, build, tests). "WIP"/vague
+  messages forbidden; checkpoints stay local, rebased/squashed before PR.
+- NO AI trailers — `Co-authored-by:`, `Generated-by:`, `AI-Generated-by:`,
+  `Assisted-by:`, `Model:` forbidden; overrides any default habit. Allowed: `Fixes`,
+  `Refs`, `BREAKING CHANGE`, human `Signed-off-by:`.
+- `main` protected: branch from up-to-date `main` -> atomic commits -> `gh` PR (cite
+  format specs) -> merge after review + green CI. Finished + green work always lands
+  without waiting to be asked.
 
-One logical change per commit. Do not mix unrelated changes, refactor with behavior change,
-or formatting with functional change. Each commit is independently checkable and green.
-
-Required body sections for non-trivial commits:
-
-- Context: what problem/need triggered this
-- Change: high-level summary of what changed
-- Rationale: why this approach; trade-offs; alternatives rejected
-- Impact/Risk: behavior changes, migrations, compatibility, performance
-- Tests: exact command(s) run (e.g. `Tests: make test`)
-
-MUST NOT add AI author/co-author trailers. Forbidden: `Co-authored-by:`, `Generated-by:`,
-`AI-Generated-by:`, `Assisted-by:`, `Model:`. Allowed trailers: `Fixes #...`, `Refs #...`,
-`BREAKING CHANGE: ...`, `Signed-off-by:` (human only). This overrides any default habit of
-adding attribution.
-
-## Git workflow
-
-- `main` is protected. Never commit or push directly to it. Work lands on `main` only via a
-  reviewed PR.
-- Flow: branch from up-to-date `main` (`feat/bsa-parser`, `fix/load-order`) -> atomic commits
-  -> `gh` PR describing what/why (cite format specs) -> merge after review + green CI.
-- Commit in small increments, no meaningless micro-commits. "WIP"/vague messages forbidden.
-  Checkpoints stay local or on a scratch branch until green + reviewable. Rebase/squash
-  before PR/merge.
-- Every commit keeps the repo green. Failing commits forbidden on shared branches;
-  intermediate failing steps stay local and are squashed before PR.
-- Finished work always lands: when an item is done + green, commit it and open a PR
-  without waiting to be asked. Never leave completed work sitting in the working tree.
-
-Shared git hooks live in tracked `.githooks/`, not private `.git/hooks`. Configure each
-checkout with `git config core.hooksPath .githooks/hooks` (done by `make bootstrap`).
-
-- Entrypoints in `.githooks/hooks/<hook>` are tiny wrappers only: run every executable in the
-  matching `.githooks/<hook>/` dir in sorted order, forward args, stop on first failure.
-- Real checks are numbered scripts: `10-*.sh`, `20-*.sh`, ... POSIX `sh`, executable.
-- pre-commit: fast staged/targeted checks (protected-branch guard, game-content guard,
-  format, lint).
-- commit-msg: Conventional-Commit validation.
-- pre-push: slower full checks (protected-branch guard, build/test). CI is the final backstop.
-- `--no-verify` is reserved for genuine bootstrap/emergency only — never routine.
+Shared hooks: tracked `.githooks/`, wired via `git config core.hooksPath
+.githooks/hooks` (`make bootstrap`). Entrypoints `.githooks/hooks/<hook>` are thin
+wrappers running numbered scripts from `.githooks/<hook>/` in order (`10-*.sh`, POSIX
+`sh`, stop on first failure). pre-commit: guards/format/lint. commit-msg:
+Conventional-Commit check. pre-push: build+test; CI is the final backstop.
+`--no-verify` -> bootstrap/emergency only, never routine.
 
 ## Tooling & automation
 

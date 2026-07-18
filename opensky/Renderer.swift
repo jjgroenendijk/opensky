@@ -8,6 +8,7 @@
 
 import Metal
 import MetalKit
+import QuartzCore
 import simd
 
 nonisolated enum RendererError: Error {
@@ -26,7 +27,10 @@ nonisolated enum RendererError: Error {
 }
 
 final class Renderer: NSObject {
-    private static let maxFramesInFlight = 3
+    /// Members below default to internal (not private) where
+    /// RendererOffscreen.swift / RendererSetup.swift extend the loop
+    /// cross-file; the module boundary still hides them from callers.
+    static let maxFramesInFlight = 3
 
     /// Uniform slots are 256-byte aligned so every ring offset satisfies
     /// Metal's buffer-offset alignment requirement.
@@ -37,37 +41,53 @@ final class Renderer: NSObject {
 
     /// Near/far at Skyrim scale per docs/decisions/coordinates.md: near 10
     /// units (~14 cm; below ~1 unit destroys depth precision), far 16 cells.
-    private static let nearPlane: Float = 10
-    private static let farPlane: Float = 65536
+    static let nearPlane: Float = 10
+    static let farPlane: Float = 65536
 
-    private let device: MTLDevice
-    private let commandQueue: MTL4CommandQueue
-    private let commandBuffer: MTL4CommandBuffer
-    private let commandAllocators: [MTL4CommandAllocator]
+    let device: MTLDevice
+    let commandQueue: MTL4CommandQueue
+    let commandBuffer: MTL4CommandBuffer
+    let commandAllocators: [MTL4CommandAllocator]
     private let argumentTable: MTL4ArgumentTable
     private let opaquePipeline: MTLRenderPipelineState
     private let alphaTestPipeline: MTLRenderPipelineState
     private let depthState: MTLDepthStencilState
     private let sampler: MTLSamplerState
     private let scene: RenderScene
+    /// Injected framing camera — source of the sun/ambient light and the
+    /// free-fly camera's starting pose.
     private let camera: SceneCamera
+    /// Live view pose, seeded from `camera`, advanced each frame from `input`.
+    private var freeFlyCamera: FreeFlyCamera
+    /// Free-fly input, drained once per `draw(in:)`; nil (offscreen/tests) ->
+    /// the camera stays on its seeded pose.
+    private let input: CameraInputState?
+    /// CACurrentMediaTime of the previous `draw(in:)`, for real delta time.
+    private var lastUpdateTime: CFTimeInterval?
     private let frameUniformBuffer: MTLBuffer
     /// Per-draw ring: maxFramesInFlight slots x scene.drawCount aligned
     /// entries. The scene is fixed for 2.6; cell streaming (2.7+) grows it.
     private let drawUniformBuffer: MTLBuffer
-    private let residencySet: MTLResidencySet
-    private let endFrameEvent: MTLSharedEvent
+    let residencySet: MTLResidencySet
+    let endFrameEvent: MTLSharedEvent
     /// Two timestamp entries (frame start/end) per in-flight slot; nil when
     /// the device cannot allocate one — stats then report CPU only.
-    private let timestampHeap: MTL4CounterHeap?
-    private let frameStats: FrameStats
+    let timestampHeap: MTL4CounterHeap?
+    let frameStats: FrameStats
 
-    private var frameIndex: Int
+    var frameIndex: Int
     private var projectionMatrix = matrix_identity_float4x4
 
-    /// `scene` nil -> synthetic DemoScene; `camera` nil -> its demo camera.
-    /// The app passes a built cell scene + `SceneCamera.framing(bounds:)`.
-    init(view: MTKView, scene: RenderScene? = nil, camera: SceneCamera? = nil) throws {
+    /// `scene` nil -> synthetic DemoScene; `camera` nil -> its demo camera;
+    /// `input` nil -> static seeded pose (offscreen/tests). The app passes a
+    /// built cell scene + `SceneCamera.framing(bounds:)` + a shared
+    /// `CameraInputState` for free-fly (todo 2.8).
+    init(
+        view: MTKView,
+        scene: RenderScene? = nil,
+        camera: SceneCamera? = nil,
+        input: CameraInputState? = nil
+    ) throws {
         guard let device = view.device else { throw RendererError.deviceUnavailable }
         self.device = device
 
@@ -112,7 +132,10 @@ final class Renderer: NSObject {
         sampler = try Self.makeSampler(device: device)
 
         self.scene = try scene ?? DemoScene.build(device: device)
-        self.camera = camera ?? .demo
+        let resolvedCamera = camera ?? .demo
+        self.camera = resolvedCamera
+        freeFlyCamera = FreeFlyCamera(framing: resolvedCamera)
+        self.input = input
         frameUniformBuffer = try Self.makeUniformBuffer(
             device: device,
             length: Self.alignedFrameUniformsSize * Self.maxFramesInFlight,
@@ -132,30 +155,33 @@ final class Renderer: NSObject {
         )
         commandQueue.addResidencySet(residencySet)
 
-        let heapDescriptor = MTL4CounterHeapDescriptor()
-        heapDescriptor.type = .timestamp
-        heapDescriptor.count = 2 * Self.maxFramesInFlight
-        timestampHeap = try? device.makeCounterHeap(descriptor: heapDescriptor)
+        timestampHeap = Self.makeTimestampHeap(device: device)
         frameStats = FrameStats(device: device)
 
         super.init()
     }
 
+    /// Two timestamp entries (frame start/end) per in-flight slot; nil when the
+    /// device cannot allocate one — stats then report CPU time only.
+    private static func makeTimestampHeap(device: MTLDevice) -> MTL4CounterHeap? {
+        let heapDescriptor = MTL4CounterHeapDescriptor()
+        heapDescriptor.type = .timestamp
+        heapDescriptor.count = 2 * maxFramesInFlight
+        return try? device.makeCounterHeap(descriptor: heapDescriptor)
+    }
+
     // MARK: - Per-frame uniforms
 
     /// Writes this frame's uniforms into its 256-byte-aligned slot and
-    /// returns the byte offset of that slot. Camera + sun come from the
-    /// injected SceneCamera; the free-fly camera (todo 2.8) replaces it.
+    /// returns the byte offset of that slot. View comes from the live free-fly
+    /// camera (pose seeded from the injected SceneCamera); sun/ambient from the
+    /// injected SceneCamera.
     private func updateFrameUniforms(slot: Int, projection: float4x4) -> Int {
         let offset = Self.alignedFrameUniformsSize * slot
-        let viewMatrix = MatrixMath.lookAt(
-            eye: camera.eye,
-            target: camera.target,
-            up: SIMD3<Float>(0, 0, 1)
-        )
+        let viewMatrix = freeFlyCamera.viewMatrix()
         var uniforms = FrameUniforms(
             viewProjectionMatrix: projection * viewMatrix,
-            cameraPosition: camera.eye,
+            cameraPosition: freeFlyCamera.position,
             sunDirection: camera.sunDirection,
             sunColor: camera.sunColor,
             ambientColor: camera.ambientColor
@@ -163,6 +189,17 @@ final class Renderer: NSObject {
         frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)
         return offset
+    }
+
+    /// Advances the free-fly camera by one frame of input using real elapsed
+    /// time. First frame (or no input) makes no move. dt is clamped so a stall
+    /// (breakpoint, window occluded) cannot teleport the camera.
+    private func advanceCamera() {
+        guard let input else { return }
+        let now = CACurrentMediaTime()
+        let dt = lastUpdateTime.map { Float(min(now - $0, 0.1)) } ?? 0
+        lastUpdateTime = now
+        freeFlyCamera.update(input.makeInput(dt: dt))
     }
 
     /// Writes one draw's uniforms into the ring and returns its byte offset.
@@ -223,7 +260,7 @@ final class Renderer: NSObject {
 
     /// Encodes the whole scene as one render pass into the open command
     /// buffer. Returns false when the encoder cannot be created.
-    private func encodeScenePass(
+    func encodeScenePass(
         descriptor: MTL4RenderPassDescriptor,
         slot: Int,
         projection: float4x4
@@ -264,12 +301,12 @@ final class Renderer: NSObject {
         return true
     }
 
-    /// Resolves the timestamp pair the slot's previous frame wrote; safe
-    /// because the shared-event wait guarantees that frame finished.
-    private func resolveTimestamps(slot: Int) -> (start: UInt64, end: UInt64)? {
+    /// Reads a slot's timestamp pair straight from the counter heap. Only
+    /// valid when the caller proved (shared-event wait) that the frame which
+    /// wrote the slot finished.
+    func readTimestampPair(slot: Int) -> (start: UInt64, end: UInt64)? {
         guard
             let heap = timestampHeap,
-            frameIndex >= 2 * Self.maxFramesInFlight,
             let data = try? heap.resolveCounterRange(slot * 2 ..< slot * 2 + 2),
             data.count >= 2 * MemoryLayout<MTL4TimestampHeapEntry>.stride
         else { return nil }
@@ -278,93 +315,13 @@ final class Renderer: NSObject {
         }
         return (entries[0].timestamp, entries[1].timestamp)
     }
-}
 
-// MARK: - Offscreen render
-
-extension Renderer {
-    /// Color (shared, CPU-readable) + depth (private) render targets for
-    /// one offscreen frame.
-    private func makeOffscreenTargets(
-        width: Int,
-        height: Int
-    ) throws -> (color: MTLTexture, depth: MTLTexture) {
-        let colorDescriptor = MTLTextureDescriptor.texture2DDescriptor(
-            pixelFormat: .bgra8Unorm_srgb,
-            width: width,
-            height: height,
-            mipmapped: false
-        )
-        colorDescriptor.usage = .renderTarget
-        colorDescriptor.storageMode = .shared // CPU readback
-        let depthDescriptor = MTLTextureDescriptor.texture2DDescriptor(
-            pixelFormat: .depth32Float,
-            width: width,
-            height: height,
-            mipmapped: false
-        )
-        depthDescriptor.usage = .renderTarget
-        depthDescriptor.storageMode = .private
-        guard
-            let color = device.makeTexture(descriptor: colorDescriptor),
-            let depth = device.makeTexture(descriptor: depthDescriptor)
-        else { throw RendererError.textureAllocationFailed }
-        color.label = "OffscreenColor"
-        depth.label = "OffscreenDepth"
-        return (color, depth)
-    }
-
-    /// Renders one frame into an offscreen texture and blocks until the GPU
-    /// finishes it — deterministic render tests and engine-output
-    /// screenshots (todo 2.9) without drawable/compositor involvement.
-    func renderOffscreen(width: Int, height: Int) throws -> MTLTexture {
-        let (color, depth) = try makeOffscreenTargets(width: width, height: height)
-
-        residencySet.addAllocations([color, depth])
-        residencySet.commit()
-        defer {
-            residencySet.removeAllocations([color, depth])
-            residencySet.commit()
-        }
-
-        let descriptor = MTL4RenderPassDescriptor()
-        descriptor.colorAttachments[0].texture = color
-        descriptor.colorAttachments[0].loadAction = .clear
-        descriptor.colorAttachments[0].storeAction = .store
-        descriptor.colorAttachments[0].clearColor = MTLClearColor(
-            red: 0, green: 0, blue: 0, alpha: 1
-        )
-        descriptor.depthAttachment.texture = depth
-        descriptor.depthAttachment.loadAction = .clear
-        descriptor.depthAttachment.storeAction = .dontCare
-        descriptor.depthAttachment.clearDepth = 1
-
-        // Drain every in-flight frame, then run one frame synchronously
-        // through the normal slot/event bookkeeping.
-        endFrameEvent.wait(untilSignaledValue: UInt64(frameIndex - 1), timeoutMS: 2000)
-        let slot = frameIndex % Self.maxFramesInFlight
-        let allocator = commandAllocators[slot]
-        allocator.reset()
-        commandBuffer.beginCommandBuffer(allocator: allocator)
-        let projection = MatrixMath.perspective(
-            fovYRadians: MatrixMath.radians(fromDegrees: 65),
-            aspectRatio: Float(width) / Float(height),
-            nearZ: Self.nearPlane,
-            farZ: Self.farPlane
-        )
-        let encoded = encodeScenePass(descriptor: descriptor, slot: slot, projection: projection)
-        commandBuffer.endCommandBuffer()
-        guard encoded else { throw RendererError.encoderUnavailable }
-
-        commandQueue.commit([commandBuffer])
-        commandQueue.signalEvent(endFrameEvent, value: UInt64(frameIndex))
-        let finished = endFrameEvent.wait(
-            untilSignaledValue: UInt64(frameIndex),
-            timeoutMS: 5000
-        )
-        frameIndex += 1
-        guard finished else { throw RendererError.gpuTimeout }
-        return color
+    /// Resolves the timestamp pair the slot's previous frame wrote; safe
+    /// because the shared-event wait guarantees that frame finished. The
+    /// depth guard skips the first ring lap, before any slot was written.
+    private func resolveTimestamps(slot: Int) -> (start: UInt64, end: UInt64)? {
+        guard frameIndex >= 2 * Self.maxFramesInFlight else { return nil }
+        return readTimestampPair(slot: slot)
     }
 }
 
@@ -387,6 +344,8 @@ extension Renderer: MTKViewDelegate {
         else { return }
 
         let cpuStart = frameStats.beginFrame()
+
+        advanceCamera()
 
         // Block until the GPU finishes the frame that used this slot.
         endFrameEvent.wait(

@@ -93,7 +93,7 @@ nonisolated struct PluginHeader {
     }
 }
 
-extension ESMFile {
+nonisolated extension ESMFile {
     /// Decodes the TES4 record. Cheap (one small record) but not cached —
     /// callers keep the result.
     func pluginHeader() throws -> PluginHeader {

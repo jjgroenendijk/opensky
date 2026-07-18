@@ -29,6 +29,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   found and validated at launch; override settings.
 * [Cell scene build](/engine/cell-scene.md) - exterior cell -> draw list: WRLD walk,
   STAT resolution, skip taxonomy, grouping, world bounds.
+* [Free-fly camera](/engine/free-fly-camera.md) - WASDQE + mouse-look input capture,
+  yaw/pitch pose -> view matrix, movement speeds tuned to Skyrim scale.
 
 ## Rendering
 
@@ -44,6 +46,13 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   view/projection convert to Metal; matrix convention, winding, near/far, REFR euler.
 * [First render cell](/decisions/first-render-cell.md) - WhiterunExterior06 at Tamriel
   (6,-2) as the 2.7/2.9 target; probe ranking, MODL `meshes\` prefix rule.
+
+## Tools
+
+* [CLI dev tool](/tools/cli.md) - openskycli target sharing the engine sources:
+  vfs/record/cell/nif/dds/render subcommands, env-gated make probe harness.
+* [Asset preview GUI](/tools/preview-gui.md) - openskypreview target: VFS +
+  record browser with offscreen-rendered NIF/DDS previews.
 
 ## Meta
 

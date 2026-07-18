@@ -54,3 +54,7 @@ logs/*
 
 # Profiling artifacts from running debug builds
 *.profraw
+
+# ── Agent harness state (.claude): only the skills symlink is tracked ─────────
+.claude/*
+!.claude/skills

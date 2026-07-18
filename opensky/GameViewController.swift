@@ -14,9 +14,14 @@ final class GameViewController: NSViewController {
     var sceneFactory: ((MTLDevice) -> (scene: RenderScene, camera: SceneCamera)?)?
 
     private var renderer: Renderer?
+    /// Free-fly input shared with the renderer; the view writes it from
+    /// NSEvents, the renderer drains it each frame (todo 2.8).
+    private let cameraInput = CameraInputState()
 
     override func loadView() {
-        view = MTKView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))
+        let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))
+        gameView.input = cameraInput
+        view = gameView
     }
 
     override func viewDidLoad() {
@@ -38,7 +43,8 @@ final class GameViewController: NSViewController {
             let newRenderer = try Renderer(
                 view: mtkView,
                 scene: content?.scene,
-                camera: content?.camera
+                camera: content?.camera,
+                input: cameraInput
             )
             newRenderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
             mtkView.delegate = newRenderer

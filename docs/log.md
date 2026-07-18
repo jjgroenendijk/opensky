@@ -2,8 +2,78 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-07-18
+
+* **Milestone 2 accepted** (2.11, complete — M2 left [todo](/todo.md)):
+  target cell textured + recognizable, free-fly verified (2.7/2.8), fps
+  gate measured not eyeballed via new `openskycli bench` — offscreen path
+  split into `RendererOffscreen.swift`, every frame FrameStats-instrumented,
+  `renderOffscreenSustained` returns per-frame wall times. Apple M1,
+  Debug, real install, `WhiterunExterior06`, 360 frames: avg 0.39 ms
+  (2557 fps) p95 0.43 ms @ 1280x720; avg 0.54 ms (1846 fps) @ 1920x1080 —
+  far above the 30 fps bar. `bench` wired into `make probe`; `render`
+  gained `--zoom` (framing camera alone leaves ~4% of pixels covered).
+  Screenshot (engine output only) committed:
+  [m2-whiterun-exterior.png](/img/m2-whiterun-exterior.png), referenced
+  with numbers from [renderer doc](/rendering/metal4-renderer.md). M3
+  items re-checked against M2 (notes in todo): ordering unchanged,
+  `CellSceneBuilder` is the streaming unit, bench/preview are the M3
+  verification path.
+* **Agent rules restructure**: root AGENTS.md slimmed — tool-target rules
+  moved next to the code (`openskycli/AGENTS.md`,
+  `openskypreview/AGENTS.md`, each with `CLAUDE.md` symlink), commit/PR
+  procedure moved to a skill (`.AGENTS/skills/commit/SKILL.md`,
+  `.claude/skills` symlinks to it; `.claude/*` harness state now
+  gitignored). Root keeps the global contract + non-negotiables.
+* **Asset preview GUI** (2.10, complete): new `openskypreview` app target
+  (same synchronized-group sharing as the CLI; `make preview` builds).
+  Programmatic AppKit browser: category popup (meshes/textures/records/
+  all) with filter and lazy table over `PreviewCatalog` (archive entries
+  via `VirtualFileSystem.archiveEntries()` + headers-only `ESMWalk` over
+  every Skyrim.esm record); catalog load + record filtering off-main. Detail
+  pane: NIF -> single-model offscreen render via MeshLibrary + framing
+  camera; DDS -> `TexturePreviewScene` textured quad with black sun +
+  white ambient (fragment output = sampled texel); record ->
+  `RecordTextDump` (shared impl — CLI `record` prints the same string;
+  `ESMWalk` moved to `opensky/Formats/ESM/`). Missing install ->
+  in-window message, app still launches. Unit tests: catalog grouping +
+  filter, dump format, quad math; env-gated `PreviewRealDataTests`
+  verified against the real install (172,750 entries, 869,687 records,
+  `logs/preview-dds.png` + `logs/preview-nif.png`). Doc:
+  [asset preview GUI](/tools/preview-gui.md). Item 2.10 left
+  [todo](/todo.md).
+
 ## 2026-07-17
 
+* **CLI dev tool** (2.9, complete): new `openskycli` command-line target
+  sharing the engine sources via a synchronized-group exception set
+  (app-only files excluded); entry code in `openskycli/`. Subcommands:
+  `vfs ls`/`vfs cat` (new `VirtualFileSystem.archiveEntries()`, tested),
+  `record` (FormID/EDID lookup + decoded dump), `cell` (Metal-free
+  exterior-cell summary), `nif`/`dds` (parser-eye asset inspection),
+  `render` (offscreen cell -> PNG via `Renderer.renderOffscreen`).
+  `make cli` builds; env-gated `make probe` (`tools/probe.sh`) smoke-runs
+  all commands against the local install, self-skips without game data,
+  logs to `logs/`. Verified on the real install: cell/record match the
+  first-render-cell decision (16 refs, 15 STAT), render PNG shows the
+  Whiterun walls (4.3% non-background). stdlib arg parsing —
+  swift-argument-parser rejected while the surface stays small. Doc:
+  [CLI dev tool](/tools/cli.md). Item 2.9 left [todo](/todo.md).
+* **Item 2.8 complete — free-fly camera**: fly the rendered cell with
+  WASDQE + mouse-look. New `FreeFlyCamera` (pure pose -> view matrix +
+  per-frame integration; yaw about +Z, pitch clamped +/-89 deg) and
+  `CameraInputState` (logical pressed-key/pointer/boost state) — both
+  AppKit-free, unit-tested (`FreeFlyCameraTests`, `CameraInputStateTests`):
+  orientation vs conventions, pitch clamp, movement direction relative to
+  yaw, boost, seed reproduces the 2.7 framing view. Input capture in new
+  `GameMetalView` (MTKView subclass): NSEvent key/pointer -> state, click
+  grabs pointer (`NSCursor.hide` + `CGAssociateMouseAndMouseCursorPosition`),
+  Esc/focus-loss releases. `Renderer` holds a live camera seeded from the
+  injected `SceneCamera`, advances it each frame with real clamped `dt`;
+  nil input (offscreen/tests) -> static seeded pose, so offscreen tests
+  unchanged. Speeds: base 1800 units/s (~2.3 s per 4096-unit cell), Shift
+  x3.5. Doc: [free-fly camera](/engine/free-fly-camera.md). Item 2.8 left
+  [todo](/todo.md).
 * **Item 2.7 complete + coordinate decisions final**: real-data render of
   `WhiterunExterior06` verified visually (offscreen PNG) — 16 refs, 15
   drawn, 1 non-STAT skip, 0 missing textures; wall runs join correctly,

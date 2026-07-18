@@ -23,7 +23,7 @@ extension FourCC: ExpressibleByStringLiteral {
     }
 }
 
-extension FourCC: CustomStringConvertible {
+nonisolated extension FourCC: CustomStringConvertible {
     var description: String {
         let bytes = withUnsafeBytes(of: rawValue.littleEndian) { Array($0) }
         guard

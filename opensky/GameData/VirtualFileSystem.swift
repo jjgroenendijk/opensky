@@ -18,6 +18,14 @@ nonisolated enum VFSError: Error, Equatable {
     case fileNotFound(path: String)
 }
 
+/// One archive-provided resource path, as reported by enumeration.
+nonisolated struct VFSEntry: Equatable {
+    /// Canonical VFS key (lowercase, backslash separators).
+    let path: String
+    /// File name of the archive whose copy wins the lookup.
+    let archive: String
+}
+
 nonisolated final class VirtualFileSystem: Sendable {
     private static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
@@ -83,6 +91,25 @@ nonisolated final class VirtualFileSystem: Sendable {
             return try archive.contents(of: entry)
         }
         throw VFSError.fileNotFound(path: normalized)
+    }
+
+    /// Every path any archive provides, one entry per path attributed to the
+    /// archive that wins the lookup, sorted by path for stable output. Loose
+    /// files are not enumerated — walking all of Data/ costs more than a
+    /// lookup layer should; `exists`/`contents` still prefer them. Opens
+    /// (tables of) every archive; unreadable ones are skipped as usual.
+    func archiveEntries() -> [VFSEntry] {
+        var seen: Set<String> = []
+        var result: [VFSEntry] = []
+        // Slot 0 is the highest-priority archive, so first insert wins.
+        for index in 0 ..< archiveCount {
+            guard let archive = openedArchive(at: index) else { continue }
+            let name = cache.withLock { $0.archives[index].url.lastPathComponent }
+            for entry in archive.entries where seen.insert(entry.path).inserted {
+                result.append(VFSEntry(path: entry.path, archive: name))
+            }
+        }
+        return result.sorted { $0.path < $1.path }
     }
 
     /// Canonical key: lowercase, backslash separators, no redundant

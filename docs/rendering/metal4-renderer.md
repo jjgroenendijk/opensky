@@ -4,7 +4,7 @@ title: Metal 4 static-mesh renderer
 description: Static-mesh render path - pipeline variants, uniform rings, argument-table
   binds, counter-heap frame stats, offscreen render, scene types.
 tags: [rendering, metal, engine]
-timestamp: 2026-07-10T00:00:00Z
+timestamp: 2026-07-18T00:00:00Z
 ---
 
 # Metal 4 static-mesh renderer
@@ -87,15 +87,26 @@ adapted from Apple's Xcode Metal 4 game template (structure, not copied game cod
   os_signpost interval per frame for Instruments. This is the measurable basis for the
   2.9 >30 fps gate.
 
-## Offscreen render
+## Offscreen render + sustained bench
 
+Offscreen path lives in `Rendering/RendererOffscreen.swift` (split from
+`Renderer.swift` for file-length limits, `RendererSetup.swift` precedent).
 `Renderer.renderOffscreen(width:height:)` renders one frame into an owned color+depth
 target and blocks on the shared event until the GPU finishes — no drawable, no
 compositor. Used by `RendererOffscreenTests` (deterministic pixel assertions + temp PNG
-for human review; Screen Recording TCC is unavailable on dev machines) and intended for
-the 2.9 committed screenshot (engine output, not window capture). Windowless
+for human review; Screen Recording TCC is unavailable on dev machines) and the committed
+milestone screenshot (engine output, not window capture). Windowless
 `MTKView.currentDrawable` rendering crashes in `waitForDrawable` — never test through
 drawables.
+
+`renderOffscreenSustained(width:height:frames:)` loops that frame body against one
+reused target, every frame instrumented: FrameStats begin/end + counter-heap timestamp
+writes, pair resolved right after the synchronous wait. Returns `OffscreenBenchResult`
+(per-frame wall ms — avg / nearest-rank percentile, unit-tested — plus flushed
+FrameStats window lines). Synchronous frames include the full CPU-GPU round trip a
+pipelined loop overlaps -> numbers are a conservative upper bound. Consumed by
+`openskycli bench`, the todo 2.11 ">30 fps sustained, measured" gate
+([CLI](/tools/cli.md)).
 
 ## MatrixMath conventions
 
@@ -112,3 +123,15 @@ ground + crates, alpha-test holes show geometry behind them, per-face lighting. 
 ground plane (only single-sided flat mesh) caught the inverted provisional winding —
 closed boxes masked it. Rendering acceptance stays visual + frame stats; a green build
 proves nothing on screen.
+
+Milestone 2 shot — WhiterunExterior06 (Tamriel 6,-2) rendered by our engine from the
+user's own install (`openskycli render --size 1920x1080 --zoom 1.8`, 2026-07-18, M1):
+city wall segments with gate arch, Jorrvaskr roof, thatched houses. 15/16 refs drawn.
+Black background = no sky rendering yet (later milestone). Engine output, not extracted
+game data.
+
+![WhiterunExterior06 rendered offscreen by OpenSky](/img/m2-whiterun-exterior.png)
+
+Same run's fps gate (todo 2.11), measured via `openskycli bench` on Apple M1, real
+install: 360 frames @ 1280x720 avg 0.39 ms (2557 fps), p95 0.43 ms; @ 1920x1080 avg
+0.54 ms (1846 fps), p95 0.61 ms — >30 fps sustained with wide margin (budget 33.33 ms).

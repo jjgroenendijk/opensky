@@ -14,7 +14,7 @@
 import Foundation
 import simd
 
-extension NIFFile {
+nonisolated extension NIFFile {
     /// Max parent-chain depth. Vanilla statics nest a handful of levels;
     /// anything deeper is malformed or hostile, not a real asset.
     private static let maxSceneGraphDepth = 64
