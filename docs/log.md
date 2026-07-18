@@ -4,6 +4,28 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* **Terrain splat pipeline** (M3.1): third render pipeline (`TerrainSplat`,
+  `terrainVertex`/`terrainFragment`) blends each quadrant's BTXT base with up
+  to 8 ATXT layer diffuses by per-vertex VTXT opacities in one draw. Binding
+  decision: per-quadrant multi-texture argument-table binds (base at
+  `TextureIndexDiffuse`, `array<texture2d, 8>` at `TextureIndexTerrainLayer0`;
+  `texture2d_array` rejected — layer diffuses vary in size/format; per-layer
+  draws rejected — blend pipeline + N draws/quadrant). Weights = second vertex
+  stream (`BufferIndexTerrainWeights`, two float4 lanes) — static 48-byte
+  layout untouched. `TerrainMeshBuilder` now emits `Patch` values (mesh + base
+  FormID + layers, VTXT baked dense: position 0-288 = 17x17 row-major, UESP
+  LAND); `CellSceneBuilder` resolves base + layer LTEX->TXST diffuses, drops
+  broken layer chains (counted, `terrainLayerSkipCount`), packs weights, emits
+  `RenderScene.terrain` items. Blend = ordered `mix(albedo, layer, opacity)`;
+  exact vanilla curve UNCONFIRMED. Cap `TerrainConstantMaxLayers = 8` (format
+  max; vanilla ~6/quadrant). Lighting identical to static path; TX01 normal
+  maps deferred. Docs: [metal4-renderer](/rendering/metal4-renderer.md) splat
+  section + [terrain](/engine/terrain.md) rewrite. Tests: weight bake/pack +
+  layer routing (`TerrainMeshBuilderTests`), resolution + blend order + drop
+  accounting (`CellSceneTerrainTests`), GPU pixel-level blend proof
+  (`TerrainSplatRenderTests`), terrain residency (`RenderSceneTests`). Visual:
+  WhiterunExterior06 render — 4 quads, 14 layers, dirt/grass/rock/snow
+  transitions under the M2 walls.
 * **Terrain mesh build** (M3.1): new `opensky/World/TerrainMeshBuilder.swift`
   turns a decoded LAND into engine `Mesh`/`Model` values — 33x33 vertex grid,
   128-unit quads over the 4096 cell, heights passthrough (VHGT already *8),

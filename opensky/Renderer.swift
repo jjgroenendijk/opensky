@@ -33,11 +33,13 @@ final class Renderer: NSObject {
     static let maxFramesInFlight = 3
 
     /// Uniform slots are 256-byte aligned so every ring offset satisfies
-    /// Metal's buffer-offset alignment requirement.
+    /// Metal's buffer-offset alignment requirement. The per-draw ring is
+    /// shared by static and terrain draws, so its slot fits either struct.
     private static let alignedFrameUniformsSize =
         (MemoryLayout<FrameUniforms>.size + 0xFF) & -0x100
     private static let alignedDrawUniformsSize =
-        (MemoryLayout<DrawUniforms>.size + 0xFF) & -0x100
+        (max(MemoryLayout<DrawUniforms>.size, MemoryLayout<TerrainDrawUniforms>.size)
+                + 0xFF) & -0x100
 
     /// Near/far at Skyrim scale per docs/decisions/coordinates.md: near 10
     /// units (~14 cm; below ~1 unit destroys depth precision), far 16 cells.
@@ -51,6 +53,7 @@ final class Renderer: NSObject {
     private let argumentTable: MTL4ArgumentTable
     private let opaquePipeline: MTLRenderPipelineState
     private let alphaTestPipeline: MTLRenderPipelineState
+    private let terrainPipeline: MTLRenderPipelineState
     private let depthState: MTLDepthStencilState
     private let sampler: MTLSamplerState
     private let scene: RenderScene
@@ -108,11 +111,7 @@ final class Renderer: NSObject {
             return allocator
         }
 
-        let tableDescriptor = MTL4ArgumentTableDescriptor()
-        tableDescriptor.maxBufferBindCount = 3
-        tableDescriptor.maxTextureBindCount = 1
-        tableDescriptor.maxSamplerStateBindCount = 1
-        argumentTable = try device.makeArgumentTable(descriptor: tableDescriptor)
+        argumentTable = try Self.makeArgumentTable(device: device)
 
         guard let event = device.makeSharedEvent() else {
             throw RendererError.sharedEventUnavailable
@@ -128,6 +127,7 @@ final class Renderer: NSObject {
         let pipelines = try Self.makePipelines(device: device, view: view)
         opaquePipeline = pipelines.opaque
         alphaTestPipeline = pipelines.alphaTest
+        terrainPipeline = pipelines.terrain
         depthState = try Self.makeDepthState(device: device)
         sampler = try Self.makeSampler(device: device)
 
@@ -218,8 +218,32 @@ final class Renderer: NSObject {
         return offset
     }
 
-    // MARK: - Draw
+    /// Terrain variant of updateDrawUniforms: same ring, same aligned slots
+    /// (slot size covers both structs), TerrainDrawUniforms layout.
+    private func updateTerrainDrawUniforms(
+        slot: Int,
+        draw: Int,
+        item: TerrainDrawItem
+    ) -> Int {
+        let offset = Self.alignedDrawUniformsSize * (slot * scene.drawCount + draw)
+        var uniforms = TerrainDrawUniforms(
+            modelMatrix: item.modelMatrix,
+            normalMatrix: item.normalMatrix,
+            uvOffset: item.material.uvOffset,
+            uvScale: item.material.uvScale,
+            layerCount: UInt32(min(item.layerTextures.count, TerrainConstant.maxLayers.rawValue))
+        )
+        drawUniformBuffer.contents().advanced(by: offset)
+            .copyMemory(from: &uniforms, byteCount: MemoryLayout<TerrainDrawUniforms>.size)
+        return offset
+    }
+}
 
+// MARK: - Draw encode + scene pass
+
+/// Same-file extension (private member access) keeping the encode path out
+/// of the class body (type-length limits, RendererSetup.swift precedent).
+extension Renderer {
     private func encode(
         items: [DrawItem],
         pipeline: MTLRenderPipelineState,
@@ -248,6 +272,61 @@ final class Renderer: NSObject {
                 index: TextureIndex.diffuse.rawValue
             )
             encoder.setCullMode(item.material.doubleSided ? .none : .back)
+            encoder.drawIndexedPrimitives(
+                primitiveType: .triangle,
+                indexCount: item.mesh.indexCount,
+                indexType: .uint16,
+                indexBuffer: item.mesh.indexBuffer.gpuAddress,
+                indexBufferLength: item.mesh.indexBuffer.length
+            )
+        }
+    }
+
+    /// Encodes the terrain splat draws: per-quadrant pipeline with the base
+    /// diffuse at TextureIndexDiffuse and the ATXT layer array at
+    /// TextureIndexTerrainLayer0+. Unused layer slots rebind the base diffuse
+    /// so every declared texture argument is valid; the shader never samples
+    /// past TerrainDrawUniforms.layerCount.
+    private func encodeTerrain(
+        items: [TerrainDrawItem],
+        encoder: MTL4RenderCommandEncoder,
+        slot: Int,
+        drawOffset: Int
+    ) {
+        guard !items.isEmpty else { return }
+        encoder.setRenderPipelineState(terrainPipeline)
+        for (index, item) in items.enumerated() {
+            let uniformOffset = updateTerrainDrawUniforms(
+                slot: slot,
+                draw: drawOffset + index,
+                item: item
+            )
+            argumentTable.setAddress(
+                item.mesh.vertexBuffer.gpuAddress,
+                index: BufferIndex.vertices.rawValue
+            )
+            argumentTable.setAddress(
+                item.weightsBuffer.gpuAddress,
+                index: BufferIndex.terrainWeights.rawValue
+            )
+            argumentTable.setAddress(
+                drawUniformBuffer.gpuAddress + UInt64(uniformOffset),
+                index: BufferIndex.drawUniforms.rawValue
+            )
+            argumentTable.setTexture(
+                item.material.diffuse.gpuResourceID,
+                index: TextureIndex.diffuse.rawValue
+            )
+            for layerSlot in 0 ..< TerrainConstant.maxLayers.rawValue {
+                let texture = layerSlot < item.layerTextures.count
+                    ? item.layerTextures[layerSlot]
+                    : item.material.diffuse
+                argumentTable.setTexture(
+                    texture.gpuResourceID,
+                    index: TextureIndex.terrainLayer0.rawValue + layerSlot
+                )
+            }
+            encoder.setCullMode(.back)
             encoder.drawIndexedPrimitives(
                 primitiveType: .triangle,
                 indexCount: item.mesh.indexCount,
@@ -290,12 +369,18 @@ final class Renderer: NSObject {
             slot: slot,
             drawOffset: 0
         )
+        encodeTerrain(
+            items: scene.terrain,
+            encoder: encoder,
+            slot: slot,
+            drawOffset: scene.opaque.count
+        )
         encode(
             items: scene.alphaTested,
             pipeline: alphaTestPipeline,
             encoder: encoder,
             slot: slot,
-            drawOffset: scene.opaque.count
+            drawOffset: scene.opaque.count + scene.terrain.count
         )
         encoder.endEncoding()
         return true

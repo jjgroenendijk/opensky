@@ -32,17 +32,23 @@ struct CellSceneTerrainTests {
             ltex: ltexRecord(formID: 0x300, textureSet: 0x400),
             txst: txstRecord(formID: 0x400, diffuse: "Landscape\\Dirt02.dds")
         ))
-        // Four painted quadrants -> four terrain sub-meshes, all opaque.
+        // Four painted quadrants -> four terrain splat items, no layers.
         #expect(scene.summary.terrainQuadrantCount == 4)
-        #expect(scene.renderScene.opaque.count == 4)
+        #expect(scene.renderScene.terrain.count == 4)
+        #expect(scene.renderScene.opaque.isEmpty)
         #expect(scene.renderScene.alphaTested.isEmpty)
+        // Key-path/closure forms trip SwiftFormat<->macro interplay; compare
+        // flattened layer counts instead.
+        #expect(scene.renderScene.terrain.flatMap(\.layerTextures).isEmpty)
         // Diffuse resolved via BTXT -> LTEX -> TXST and found in the VFS.
         #expect(scene.summary.textureCount == 1)
         #expect(scene.summary.missingTextureCount == 0)
         // Cell (6,-2) south-west corner sits at world (6*4096, -2*4096, 0);
         // the first quadrant's origin vertex lands there.
-        let origin = scene.renderScene.opaque[0].modelMatrix * SIMD4<Float>(0, 0, 0, 1)
+        let origin = scene.renderScene.terrain[0].modelMatrix * SIMD4<Float>(0, 0, 0, 1)
         #expect(SIMD3(origin.x, origin.y, origin.z) == SIMD3<Float>(24576, -8192, 0))
+        // Weight stream covers the 17x17 quadrant grid, two float4 per vertex.
+        #expect(scene.renderScene.terrain[0].weightsBuffer.length == 17 * 17 * 2 * 16)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func hidesQuadrantsPerXCLCFlags() throws {
@@ -51,7 +57,55 @@ struct CellSceneTerrainTests {
             land: landFields(baseQuadrants: [0, 1, 2, 3], ltexFormID: 0), quadFlags: 0x2 | 0x8
         ))
         #expect(scene.summary.terrainQuadrantCount == 2)
-        #expect(scene.renderScene.opaque.count == 2)
+        #expect(scene.renderScene.terrain.count == 2)
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func resolvesATXTLayersInBlendOrder() throws {
+        // Quadrant 0 carries two layers, written to disk in reverse layer
+        // order; each resolves through its own LTEX -> TXST chain to a
+        // distinct diffuse. Blend order = layer number (UESP LAND). Valid DDS
+        // bytes so each upload keeps its path label (junk falls back to the
+        // shared unlabeled placeholder).
+        let dds = DDSFixture.file(format: .bc1, width: 4, height: 4, mipCount: 1)
+        try writeLooseFile("textures/landscape/dirt02.dds", dds)
+        try writeLooseFile("textures/landscape/grass01.dds", dds)
+        try writeLooseFile("textures/landscape/rock01.dds", dds)
+        let scene = try build(pluginData: pluginWithLand(
+            land: landFields(baseQuadrants: [0], ltexFormID: 0x300, layers: [
+                .init(quadrant: 0, layer: 1, ltexFormID: 0x302),
+                .init(quadrant: 0, layer: 0, ltexFormID: 0x301)
+            ]),
+            ltex: ltexRecord(formID: 0x300, textureSet: 0x400)
+                + ltexRecord(formID: 0x301, textureSet: 0x401)
+                + ltexRecord(formID: 0x302, textureSet: 0x402),
+            txst: txstRecord(formID: 0x400, diffuse: "Landscape\\Dirt02.dds")
+                + txstRecord(formID: 0x401, diffuse: "Landscape\\Grass01.dds")
+                + txstRecord(formID: 0x402, diffuse: "Landscape\\Rock01.dds")
+        ))
+        #expect(scene.summary.terrainLayerCount == 2)
+        #expect(scene.summary.terrainLayerSkipCount == 0)
+        #expect(scene.summary.missingTextureCount == 0)
+        let quadrant0 = try #require(scene.renderScene.terrain.first)
+        // Layer number 0 (grass) blends before layer number 1 (rock).
+        #expect(quadrant0.layerTextures.map(\.label) == [
+            "textures\\landscape\\grass01.dds", "textures\\landscape\\rock01.dds"
+        ])
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func dropsLayerWithBrokenLTEXChain() throws {
+        // The layer's LTEX FormID resolves to no record -> layer dropped +
+        // counted, terrain still draws with the base alone.
+        let scene = try build(pluginData: pluginWithLand(
+            land: landFields(baseQuadrants: [0], ltexFormID: 0, layers: [
+                .init(quadrant: 0, layer: 0, ltexFormID: 0x999)
+            ])
+        ))
+        #expect(scene.summary.terrainQuadrantCount == 4)
+        #expect(scene.summary.terrainLayerCount == 0)
+        #expect(scene.summary.terrainLayerSkipCount == 1)
+        // Key-path/closure forms trip SwiftFormat<->macro interplay; compare
+        // flattened layer counts instead.
+        #expect(scene.renderScene.terrain.flatMap(\.layerTextures).isEmpty)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func fallbackPlaneAtDNAMWhenNoLAND() throws {
@@ -81,10 +135,22 @@ extension CellSceneTerrainTests {
         try contents.write(to: url)
     }
 
-    /// LAND field payload: flat VHGT (heights all 0) + one BTXT per quadrant
-    /// pointing at `ltexFormID`. `pluginWithLand` wraps it in a compressed
-    /// record, matching real LAND on disk (zlib, flag bit 18).
-    private func landFields(baseQuadrants: [UInt8], ltexFormID: UInt32) -> Data {
+    /// One synthetic ATXT+VTXT layer for `landFields`.
+    private struct LayerFixture {
+        let quadrant: UInt8
+        let layer: Int16
+        let ltexFormID: UInt32
+    }
+
+    /// LAND field payload: flat VHGT (heights all 0), one BTXT per quadrant
+    /// pointing at `ltexFormID`, plus one ATXT+VTXT pair per layer spec (VTXT
+    /// paints vertex 0 at opacity 1). `pluginWithLand` wraps it in a
+    /// compressed record, matching real LAND on disk (zlib, flag bit 18).
+    private func landFields(
+        baseQuadrants: [UInt8],
+        ltexFormID: UInt32,
+        layers: [LayerFixture] = []
+    ) -> Data {
         var vhgt = Data()
         vhgt.appendFloat32(0) // anchor
         vhgt.append(contentsOf: [UInt8](repeating: 0, count: 33 * 33))
@@ -97,6 +163,19 @@ extension CellSceneTerrainTests {
             btxt.append(0)
             btxt.appendUInt16(0)
             fields += ESMFixture.field("BTXT", btxt)
+        }
+        for layer in layers {
+            var atxt = Data()
+            atxt.appendUInt32(layer.ltexFormID)
+            atxt.append(layer.quadrant)
+            atxt.append(0)
+            atxt.appendUInt16(UInt16(bitPattern: layer.layer))
+            fields += ESMFixture.field("ATXT", atxt)
+            var vtxt = Data()
+            vtxt.appendUInt16(0) // position: quadrant SW vertex
+            vtxt.appendUInt16(0)
+            vtxt.appendFloat32(1)
+            fields += ESMFixture.field("VTXT", vtxt)
         }
         return fields
     }

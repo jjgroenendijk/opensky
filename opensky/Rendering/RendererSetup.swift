@@ -9,7 +9,25 @@ import simd
 
 // MARK: - Setup factories
 
+/// The scene pass's pipeline states, built together from one library.
+nonisolated struct RenderPipelines {
+    let opaque: MTLRenderPipelineState
+    let alphaTest: MTLRenderPipelineState
+    let terrain: MTLRenderPipelineState
+}
+
 extension Renderer {
+    /// Argument table sized for the whole scene pass. Buffers: vertices,
+    /// frame + draw uniforms, terrain weights. Textures: base diffuse + the
+    /// terrain layer array.
+    static func makeArgumentTable(device: MTLDevice) throws -> MTL4ArgumentTable {
+        let descriptor = MTL4ArgumentTableDescriptor()
+        descriptor.maxBufferBindCount = 4
+        descriptor.maxTextureBindCount = 1 + TerrainConstant.maxLayers.rawValue
+        descriptor.maxSamplerStateBindCount = 1
+        return try device.makeArgumentTable(descriptor: descriptor)
+    }
+
     static func makeUniformBuffer(
         device: MTLDevice,
         length: Int,
@@ -24,7 +42,7 @@ extension Renderer {
     static func makePipelines(
         device: MTLDevice,
         view: MTKView
-    ) throws -> (opaque: MTLRenderPipelineState, alphaTest: MTLRenderPipelineState) {
+    ) throws -> RenderPipelines {
         guard let library = device.makeDefaultLibrary() else {
             throw RendererError.defaultLibraryMissing
         }
@@ -59,7 +77,32 @@ extension Renderer {
             return try compiler.makeRenderPipelineState(descriptor: descriptor)
         }
 
-        return try (opaque: makeVariant(alphaTest: false), alphaTest: makeVariant(alphaTest: true))
+        /// Terrain splat pipeline: own vertex/fragment pair (extra weight
+        /// stream + layer texture array), no function constants.
+        func makeTerrain() throws -> MTLRenderPipelineState {
+            let vertexFunction = MTL4LibraryFunctionDescriptor()
+            vertexFunction.library = library
+            vertexFunction.name = "terrainVertex"
+
+            let fragmentFunction = MTL4LibraryFunctionDescriptor()
+            fragmentFunction.library = library
+            fragmentFunction.name = "terrainFragment"
+
+            let descriptor = MTL4RenderPipelineDescriptor()
+            descriptor.label = "TerrainSplat"
+            descriptor.rasterSampleCount = view.sampleCount
+            descriptor.vertexFunctionDescriptor = vertexFunction
+            descriptor.fragmentFunctionDescriptor = fragmentFunction
+            descriptor.vertexDescriptor = TerrainVertexLayout.vertexDescriptor()
+            descriptor.colorAttachments[0].pixelFormat = view.colorPixelFormat
+            return try compiler.makeRenderPipelineState(descriptor: descriptor)
+        }
+
+        return try RenderPipelines(
+            opaque: makeVariant(alphaTest: false),
+            alphaTest: makeVariant(alphaTest: true),
+            terrain: makeTerrain()
+        )
     }
 
     /// Standard opaque depth: write-through, closer fragment wins. Metal 4

@@ -108,6 +108,31 @@ struct RenderSceneTests {
         #expect(scene.drawCount == 0)
     }
 
+    @Test(.enabled(if: Self.hasDevice)) func terrainItemsCountedAndResident() throws {
+        let device = try #require(Self.device)
+        let mesh = try RenderMesh(device: device, mesh: Self.mesh(slot: 0))
+        let weights = try #require(device.makeBuffer(
+            length: 3 * 2 * MemoryLayout<SIMD4<Float>>.stride,
+            options: .storageModeShared
+        ))
+        let base = try Self.texture(device: device)
+        let layers = try [Self.texture(device: device), Self.texture(device: device)]
+        let material = RenderMaterial(material: Self.material()) { _, _ in base }
+        let item = TerrainDrawItem(
+            mesh: mesh,
+            weightsBuffer: weights,
+            material: material,
+            layerTextures: layers,
+            modelMatrix: matrix_identity_float4x4,
+            normalMatrix: matrix_identity_float4x4
+        )
+        let scene = RenderScene(instances: [], terrain: [item])
+        #expect(scene.drawCount == 1)
+        #expect(scene.terrain[0].layerTextures.count == 2)
+        // vertex + index + weights buffers, base diffuse, 2 layer textures.
+        #expect(scene.residencyAllocations.count == 6)
+    }
+
     @Test(.enabled(if: Self.hasDevice)) func deduplicatesResidencyAllocations() throws {
         let device = try #require(Self.device)
         let model = try Self.renderModel(device: device)

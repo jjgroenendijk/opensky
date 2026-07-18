@@ -60,14 +60,35 @@ nonisolated struct DrawItem {
     let normalMatrix: float4x4
 }
 
+/// One terrain quadrant draw for the splat pipeline: quadrant mesh, its
+/// per-vertex splat-weight stream (TerrainVertexLayout), the BTXT base
+/// material, and the ATXT layer diffuses in blend order. Terrain always
+/// draws opaque (docs/rendering/metal4-renderer.md, terrain splat section).
+nonisolated struct TerrainDrawItem {
+    let mesh: RenderMesh
+    /// Two float4 weight lanes per vertex, vertex-count sized.
+    let weightsBuffer: MTLBuffer
+    /// Base diffuse + UV params; alpha fields unused (terrain is opaque).
+    let material: RenderMaterial
+    /// ATXT layer diffuses, <= TerrainConstant.maxLayers, blend order.
+    let layerTextures: [MTLTexture]
+    let modelMatrix: float4x4
+    let normalMatrix: float4x4
+}
+
 /// Flattened draw lists for one frame's scene. Instances are (model,
 /// instance transform) pairs; each mesh becomes one DrawItem with
-/// modelMatrix = instance * meshLocal.
+/// modelMatrix = instance * meshLocal. Terrain items carry their own layer
+/// textures + weight streams and draw through the terrain splat pipeline.
 nonisolated struct RenderScene {
     let opaque: [DrawItem]
     let alphaTested: [DrawItem]
+    let terrain: [TerrainDrawItem]
 
-    init(instances: [(model: RenderModel, transform: float4x4)]) {
+    init(
+        instances: [(model: RenderModel, transform: float4x4)],
+        terrain: [TerrainDrawItem] = []
+    ) {
         var opaque: [DrawItem] = []
         var alphaTested: [DrawItem] = []
         for (model, transform) in instances {
@@ -92,10 +113,11 @@ nonisolated struct RenderScene {
         }
         self.opaque = opaque
         self.alphaTested = alphaTested
+        self.terrain = terrain
     }
 
     var drawCount: Int {
-        opaque.count + alphaTested.count
+        opaque.count + alphaTested.count + terrain.count
     }
 
     /// Every GPU allocation the scene touches, deduplicated — feeds the
@@ -103,13 +125,20 @@ nonisolated struct RenderScene {
     var residencyAllocations: [MTLAllocation] {
         var seen = Set<ObjectIdentifier>()
         var allocations: [MTLAllocation] = []
-        for item in opaque + alphaTested {
-            let resources: [MTLAllocation] = [
-                item.mesh.vertexBuffer, item.mesh.indexBuffer, item.material.diffuse
-            ]
+        func add(_ resources: [MTLAllocation]) {
             allocations.append(contentsOf: resources.filter {
                 seen.insert(ObjectIdentifier($0)).inserted
             })
+        }
+        for item in opaque + alphaTested {
+            add([item.mesh.vertexBuffer, item.mesh.indexBuffer, item.material.diffuse])
+        }
+        for item in terrain {
+            add([
+                item.mesh.vertexBuffer, item.mesh.indexBuffer,
+                item.weightsBuffer, item.material.diffuse
+            ])
+            add(item.layerTextures)
         }
         return allocations
     }

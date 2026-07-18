@@ -81,10 +81,6 @@ impl; chase flagged UNCONFIRMED points especially.
 
 ### 3.1 Terrain
 
-* [ ] Terrain render: splat pipeline — base + ATXT layers per quadrant blended by VTXT
-      alpha (format allows 8 + base; live engine limit community-reported ~6 — probe
-      vanilla max), decide texture binding strategy (array vs per-quadrant draws),
-      record in rendering doc.
 * [ ] Verify: `openskycli render` of target cell + 8 neighbors — terrain under the M2
       walls, no seams at cell borders; screenshot.
 

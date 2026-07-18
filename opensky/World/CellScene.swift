@@ -43,6 +43,11 @@ nonisolated struct CellLoadSummary: Equatable {
     /// Terrain sub-meshes drawn for the cell: one per painted, non-hidden
     /// quadrant (0-4), or the single fallback-plane mesh, else 0 (no terrain).
     var terrainQuadrantCount = 0
+    /// ATXT splat layers drawn across all terrain quadrants.
+    var terrainLayerCount = 0
+    /// Splat layers dropped: unresolvable LTEX/TXST chain or over the
+    /// 8-layer format cap (TerrainConstant.maxLayers).
+    var terrainLayerSkipCount = 0
 
     var skippedRefCount: Int {
         nonSTATSkipCount + markerSkipCount + modelFailureSkipCount + malformedRefSkipCount
@@ -71,7 +76,11 @@ nonisolated struct CellLoadSummary: Equatable {
             : "\(skippedRefCount) skipped (\(reasons.joined(separator: ", ")))"
         // Terrain clause appended only when present, so a cell without terrain
         // logs the same line as before terrain build existed.
-        let terrain = terrainQuadrantCount > 0 ? ", \(terrainQuadrantCount) terrain quads" : ""
+        var terrain = terrainQuadrantCount > 0 ? ", \(terrainQuadrantCount) terrain quads" : ""
+        if terrainLayerCount > 0 || terrainLayerSkipCount > 0 {
+            let dropped = terrainLayerSkipCount > 0 ? ", \(terrainLayerSkipCount) dropped" : ""
+            terrain += " (\(terrainLayerCount) splat layers\(dropped))"
+        }
         return "[INFO] \(cellName) (\(gridX),\(gridY)): \(totalRefCount) refs, "
             + "\(drawnRefCount) drawn, \(skipped), \(modelCount) models, "
             + "\(textureCount) textures (\(missingTextureCount) missing)\(terrain)"

@@ -140,12 +140,26 @@ nonisolated final class MeshLibrary {
         return render
     }
 
-    /// Uploads an engine Model built in-engine rather than parsed from a NIF
-    /// path — terrain from LAND (todo 3.1). Shares the library's device +
-    /// TextureLibrary provider so it draws through the same pipeline. Not
-    /// cached: terrain models are per-cell and unique, unlike shared NIF assets.
-    func renderModel(for model: Model) throws -> RenderModel {
-        try RenderModel(device: device, model: model, textureProvider: textures.provider)
+    /// Uploads an engine-built terrain patch: the quadrant mesh plus its
+    /// packed splat-weight stream (two float4 lanes per vertex,
+    /// TerrainVertexLayout) — terrain from LAND (todo 3.1). Shares the
+    /// library's device so terrain draws through the same residency set. Not
+    /// cached: terrain patches are per-cell and unique, unlike shared NIFs.
+    func terrainMesh(
+        _ mesh: Mesh,
+        weights: [SIMD4<Float>]
+    ) throws -> (mesh: RenderMesh, weightsBuffer: MTLBuffer) {
+        let render = try RenderMesh(device: device, mesh: mesh)
+        // Weight stream must cover every vertex the descriptor will fetch.
+        guard
+            weights.count == mesh.positions.count * 2,
+            let buffer = device.makeBuffer(
+                bytes: weights,
+                length: weights.count * MemoryLayout<SIMD4<Float>>.stride,
+                options: .storageModeShared
+            ) else { throw RenderMeshError.bufferAllocationFailed }
+        buffer.label = "\(mesh.name ?? "terrain").weights"
+        return (render, buffer)
     }
 
     /// Shapes dropped during flatten for an already-loaded path (nil if the

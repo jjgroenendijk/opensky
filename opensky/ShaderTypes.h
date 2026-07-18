@@ -19,6 +19,8 @@ typedef NS_ENUM(EnumBackingType, BufferIndex)
     BufferIndexVertices = 0,
     BufferIndexFrameUniforms = 1,
     BufferIndexDrawUniforms = 2,
+    /// Terrain-only second vertex stream: two float4 splat weights per vertex.
+    BufferIndexTerrainWeights = 3,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)
@@ -27,11 +29,24 @@ typedef NS_ENUM(EnumBackingType, VertexAttribute)
     VertexAttributeColor = 1,
     VertexAttributeNormal = 2,
     VertexAttributeTexcoord = 3,
+    /// Splat weights for ATXT layers 0-3 / 4-7 (terrain pipeline only).
+    VertexAttributeLayerWeights0 = 4,
+    VertexAttributeLayerWeights1 = 5,
 };
 
 typedef NS_ENUM(EnumBackingType, TextureIndex)
 {
     TextureIndexDiffuse = 0,
+    /// First of TerrainConstantMaxLayers consecutive layer-diffuse slots.
+    TextureIndexTerrainLayer0 = 1,
+};
+
+/// LAND splat: ATXT layer numbers run 0-7 (UESP LAND), so 8 additional layers
+/// above the BTXT base is the format maximum. Vanilla data peaks around 6 per
+/// quadrant (docs/formats/land.md Verification), so no real data is dropped.
+typedef NS_ENUM(EnumBackingType, TerrainConstant)
+{
+    TerrainConstantMaxLayers = 8,
 };
 
 typedef NS_ENUM(EnumBackingType, SamplerIndex)
@@ -69,5 +84,19 @@ typedef struct
     /// Alpha-test cutoff in [0, 1]; used only by the alpha-test variant.
     float alphaThreshold;
 } DrawUniforms;
+
+/// Terrain splat path (docs/todo.md 3.1): one draw per quadrant blends the
+/// BTXT base with up to TerrainConstantMaxLayers ATXT diffuses by per-vertex
+/// VTXT weights. Shares the DrawUniforms ring (both fit one 256-byte slot).
+typedef struct
+{
+    matrix_float4x4 modelMatrix;
+    /// Inverse-transpose of modelMatrix: transforms normals to world space.
+    matrix_float4x4 normalMatrix;
+    vector_float2 uvOffset;
+    vector_float2 uvScale;
+    /// Bound ATXT layer count, <= TerrainConstantMaxLayers.
+    unsigned int layerCount;
+} TerrainDrawUniforms;
 
 #endif /* ShaderTypes_h */

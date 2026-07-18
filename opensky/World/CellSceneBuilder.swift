@@ -11,6 +11,7 @@
 // docs/engine/cell-scene.md.
 
 import Foundation
+import Metal
 import OSLog
 import simd
 
@@ -43,8 +44,9 @@ private struct ResolvedInstance {
 }
 
 /// A located CELL record plus the cell-children group that follows it
-/// (nil children = cell without references).
-private struct FoundCell {
+/// (nil children = cell without references). Internal: the terrain half of
+/// the build (CellSceneBuilderTerrain.swift) consumes it cross-file.
+nonisolated struct FoundCell {
     let cell: Cell
     let formID: UInt32
     let children: ESMGroup?
@@ -57,27 +59,21 @@ private struct FoundWorld {
     let worldspace: Worldspace?
 }
 
-/// One built terrain patch ready to fold into the scene: its uploaded model,
-/// world placement, model-space bounds, and drawn sub-mesh count.
-private struct TerrainBuild {
-    let model: RenderModel
-    let transform: float4x4
-    let bounds: ModelBounds?
-    let quadrantCount: Int
-}
-
 /// Builds a CellScene from a plugin + asset libraries. Class (not struct)
 /// because the STAT index is cached across builds. Single-threaded like the
 /// libraries it drives: scene build runs once at startup.
 nonisolated final class CellSceneBuilder {
-    fileprivate static let logger = Logger(
+    /// Members below stay internal (not private) where
+    /// CellSceneBuilderTerrain.swift extends the build cross-file; the
+    /// module boundary still hides them from callers.
+    static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "CellScene"
     )
 
-    private let file: ESMFile
-    private let meshes: MeshLibrary
-    private let textures: TextureLibrary
+    let file: ESMFile
+    let meshes: MeshLibrary
+    let textures: TextureLibrary
     /// FormID -> STAT over the STAT top group, built on first use.
     private var statIndex: [UInt32: StaticObject]?
 
@@ -341,21 +337,19 @@ extension CellSceneBuilder {
         terrain: TerrainBuild?,
         counts: BuildCounts
     ) -> CellScene {
-        // Terrain draws under the objects (opaque, no alpha test); appended
-        // last so ref DrawItem ordering (instancing-ready grouping) is intact.
-        var renderInstances = instances.map { ($0.model, $0.transform) }
-        if let terrain {
-            renderInstances.append((terrain.model, terrain.transform))
-        }
-        let renderScene = RenderScene(instances: renderInstances)
+        // Terrain draws through its own splat pipeline list; ref DrawItem
+        // ordering (instancing-ready grouping) stays intact.
+        let renderScene = RenderScene(
+            instances: instances.map { ($0.model, $0.transform) },
+            terrain: terrain?.items ?? []
+        )
         var bounds: ModelBounds?
         for instance in instances {
             guard let local = meshes.bounds(forPath: instance.modelPath) else { continue }
             let world = local.transformed(by: instance.transform)
             bounds = bounds.map { $0.union(world) } ?? world
         }
-        if let terrain, let local = terrain.bounds {
-            let world = local.transformed(by: terrain.transform)
+        if let world = terrain?.bounds {
             bounds = bounds.map { $0.union(world) } ?? world
         }
         let summary = CellLoadSummary(
@@ -371,115 +365,15 @@ extension CellSceneBuilder {
             modelCount: meshes.loadedCount,
             textureCount: textures.loadedCount,
             missingTextureCount: textures.missingCount,
-            terrainQuadrantCount: terrain?.quadrantCount ?? 0
+            terrainQuadrantCount: terrain?.quadrantCount ?? 0,
+            terrainLayerCount: terrain?.layerCount ?? 0,
+            terrainLayerSkipCount: terrain?.layerSkipCount ?? 0
         )
         Self.logger.info("\(summary.summaryLine, privacy: .public)")
         return CellScene(
             renderScene: renderScene,
             summary: summary,
             bounds: bounds.map { (min: $0.min, max: $0.max) }
-        )
-    }
-}
-
-extension CellSceneBuilder {
-    /// Builds terrain for the cell: from its LAND record when present, else a
-    /// flat fallback plane at the worldspace DNAM default land height. Returns
-    /// nil (no terrain drawn) when neither is available or the upload fails —
-    /// terrain never aborts the cell build (mod-quirk rule). Placement puts the
-    /// cell's south-west corner at (gridX*4096, gridY*4096), matching REFR world
-    /// coordinates (docs/decisions/coordinates.md) so vertex local (col*128,
-    /// row*128, height) lands at absolute world position.
-    private func buildTerrain(found: FoundCell, worldspace: Worldspace?) -> TerrainBuild? {
-        guard let grid = found.cell.grid else { return nil }
-        let origin = SIMD3<Float>(Float(grid.x) * 4096, Float(grid.y) * 4096, 0)
-        let transform = MatrixMath.translation(origin)
-
-        let model: Model
-        let quadrantCount: Int
-        if let land = landRecord(in: found.children) {
-            model = TerrainMeshBuilder.model(
-                land: land,
-                hiddenQuadrants: grid.quadFlags,
-                materialForQuadrant: { terrainMaterial(for: $0, in: land) }
-            )
-            quadrantCount = model.meshes.count
-        } else if let height = worldspace?.defaultLandHeight {
-            // LAND-less exterior cell -> flat plane at the WRLD default land
-            // height (Tamriel -27000). When DNAM is absent the correct engine
-            // behavior is UNCONFIRMED (todo: probe); OpenSky draws no ground
-            // rather than guess a floor height that could sit wrong.
-            model = TerrainMeshBuilder.fallbackModel(defaultLandHeight: height)
-            quadrantCount = model.meshes.count
-        } else {
-            return nil
-        }
-        guard !model.meshes.isEmpty else { return nil }
-
-        let bounds = ModelBounds.containing(model: model)
-        do {
-            let render = try meshes.renderModel(for: model)
-            return TerrainBuild(
-                model: render, transform: transform, bounds: bounds,
-                quadrantCount: quadrantCount
-            )
-        } catch {
-            let reason = String(describing: error)
-            Self.logger.warning("terrain upload failed (\(reason, privacy: .public)), skipped")
-            return nil
-        }
-    }
-
-    /// First LAND record in the cell's temporary-children group (type 9), where
-    /// landscape lives (UESP Groups). Malformed decode -> nil (log + skip).
-    private func landRecord(in cellChildren: ESMGroup?) -> Land? {
-        guard let cellChildren, let children = try? cellChildren.children() else { return nil }
-        for case let .group(group) in children where group.kind == .cellTemporaryChildren {
-            guard let records = try? group.children() else { continue }
-            for case let .record(record) in records where record.type == "LAND" {
-                guard !record.isDeleted else { continue }
-                if let land = try? Land(record: record) {
-                    return land
-                }
-                let id = FormID(record.formID).description
-                Self.logger.warning("malformed LAND \(id, privacy: .public) skipped")
-            }
-        }
-        return nil
-    }
-
-    /// Resolves a quadrant's base texture BTXT -> LTEX (TNAM) -> TXST (TX00
-    /// diffuse) into a Material. Any missing link -> Material.fallback (the
-    /// TextureLibrary placeholders an unresolved diffuse path). Raw FormIDs
-    /// suffice while scene build reads one plugin (same rule as STAT lookup).
-    private func terrainMaterial(for quadrant: UInt8, in land: Land) -> Material {
-        guard
-            let base = land.baseTextures.first(where: { $0.quadrant == quadrant }),
-            let ltexRecord = ESMWalk.record(withFormID: base.texture.rawValue, in: file),
-            let ltex = try? LandTexture(record: ltexRecord),
-            let textureSet = ltex.textureSet,
-            let txstRecord = ESMWalk.record(withFormID: textureSet.rawValue, in: file),
-            let txst = try? TextureSet(record: txstRecord),
-            let diffuse = txst.diffusePath.flatMap({ NIFShaderTextureSet.vfsKey(for: $0) })
-        else {
-            return .fallback
-        }
-        // Normal maps are not sampled by the M2 material path yet (RenderMaterial
-        // loads diffuse only); keep the key for when terrain lighting lands.
-        let normal = txst.normalPath.flatMap { NIFShaderTextureSet.vfsKey(for: $0) }
-        let fallback = Material.fallback
-        return Material(
-            diffuseTexture: diffuse,
-            normalTexture: normal,
-            uvOffset: fallback.uvOffset,
-            uvScale: fallback.uvScale,
-            alpha: fallback.alpha,
-            glossiness: fallback.glossiness,
-            specularColor: fallback.specularColor,
-            specularStrength: fallback.specularStrength,
-            doubleSided: false,
-            alphaBlend: false,
-            alphaTestThreshold: nil
         )
     }
 }
