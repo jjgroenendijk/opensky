@@ -116,6 +116,20 @@ nonisolated struct RenderScene {
         self.terrain = terrain
     }
 
+    /// Concatenates already-built scenes into one draw-list union — grid
+    /// composition for `openskycli render --neighbors` (todo 3.1 verify), not
+    /// a streaming scene graph (that's milestone 3.2, grid manager + async
+    /// build/unload). Each source scene already carries absolute world-space
+    /// matrices from its own cell build, so concatenation needs no
+    /// re-transform. `residencyAllocations` still dedups across the merged
+    /// lists — cells sharing one MeshLibrary/TextureLibrary (same VFS path)
+    /// collapse to one allocation, same as within a single scene.
+    init(merging scenes: [RenderScene]) {
+        opaque = scenes.flatMap(\.opaque)
+        alphaTested = scenes.flatMap(\.alphaTested)
+        terrain = scenes.flatMap(\.terrain)
+    }
+
     var drawCount: Int {
         opaque.count + alphaTested.count + terrain.count
     }

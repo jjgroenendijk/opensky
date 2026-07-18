@@ -64,9 +64,9 @@ reachable through doors. One branch/PR per numbered item; format items follow th
 spec/fixture/doc discipline as M2 (cite spec, synthetic in-code fixtures,
 `docs/formats/<name>.md`, verify via repeatable `openskycli` probes).
 
-Sequencing: 3.1 terrain first — everything sits on it, and LAND lives in the same cell
-temporary-children groups `CellSceneBuilder` already walks
-(`docs/engine/cell-scene.md`) -> decoder slots into the existing walk. 3.2 streaming
+Sequencing: 3.1 terrain landed first — everything sits on it, and LAND lived in the same
+cell temporary-children groups `CellSceneBuilder` already walked
+(`docs/engine/cell-scene.md`) -> decoder slotted into the existing walk. 3.2 streaming now
 turns that per-cell unit into a grid + carries the perf work multi-cell rendering needs.
 3.3 LOD needs the grid boundary (rings start where loaded cells end). 3.4 sky/water +
 3.5 interiors independent of 3.2/3.3 -> parallelizable branches; 3.6 lighting last
@@ -78,11 +78,6 @@ Format facts below pre-verified 2026-07-18 against UESP mod-file-format pages + 
 `dev-4.1.6` source (`wbDefinitionsTES5.pas`, `wbDefinitionsCommon.pas`, `wbLOD.pas`) +
 DynDOLOD docs / xLODGen LODGen source. Re-confirm against real install by probe during
 impl; chase flagged UNCONFIRMED points especially.
-
-### 3.1 Terrain
-
-* [ ] Verify: `openskycli render` of target cell + 8 neighbors — terrain under the M2
-      walls, no seams at cell borders; screenshot.
 
 ### 3.2 Cell streaming
 

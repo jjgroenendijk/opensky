@@ -9,9 +9,19 @@ import Foundation
 import ImageIO
 import Metal
 import MetalKit
+import simd
 import UniformTypeIdentifiers
 
 enum RenderCommand {
+    /// Offsets of a cell plus its 8 neighbors — `--neighbors` grid (3.1
+    /// verify: terrain under the M2 walls, no seams at cell borders). Row
+    /// order does not matter; libraries dedup regardless of build order.
+    private static let neighborOffsets: [(dx: Int32, dy: Int32)] = [
+        (-1, -1), (0, -1), (1, -1),
+        (-1, 0), (0, 0), (1, 0),
+        (-1, 1), (0, 1), (1, 1)
+    ]
+
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
         let worldspace = try scanner.option("--worldspace")
             ?? FirstRenderCell.worldspaceEditorID
@@ -20,6 +30,7 @@ enum RenderCommand {
         let output = try scanner.requiredOption("--out")
         let size = try parseSize(scanner.option("--size"))
         let zoom = try parseZoom(scanner.option("--zoom"))
+        let neighbors = scanner.flag("--neighbors")
         try scanner.finish()
 
         guard
@@ -29,21 +40,40 @@ enum RenderCommand {
             throw CLIError.failure("no Metal 4 GPU available")
         }
 
-        let cellScene = try buildScene(
-            context: context,
-            device: device,
-            worldspace: worldspace,
-            gridX: gridX,
-            gridY: gridY
-        )
-        print(cellScene.summary.summaryLine)
-        guard let bounds = cellScene.bounds else {
+        // One shared builder (one MeshLibrary/TextureLibrary/STAT index) so a
+        // 9-cell grid dedups residency same as one cell — not a streaming
+        // grid manager (3.2), just reusing what buildScene already sets up.
+        let builder = try makeBuilder(context: context, device: device)
+        let offsets = neighbors ? neighborOffsets : [(dx: 0, dy: 0)]
+        var cellScenes: [CellScene] = []
+        for offset in offsets {
+            let x = gridX + offset.dx
+            let y = gridY + offset.dy
+            do {
+                let cellScene = try builder.buildScene(
+                    worldspaceEditorID: worldspace,
+                    gridX: x,
+                    gridY: y
+                )
+                print(cellScene.summary.summaryLine)
+                cellScenes.append(cellScene)
+            } catch {
+                // Void grid slots (no CELL at that XCLC) or a malformed
+                // worldspace on one slot must not sink the whole grid.
+                printError("[WARN] cell (\(x),\(y)) skipped: \(String(describing: error))")
+            }
+        }
+        guard !cellScenes.isEmpty else {
+            throw CLIError.failure("no cells built")
+        }
+        guard let bounds = unionBounds(cellScenes) else {
             throw CLIError.failure("nothing drew — no bounds to frame a camera on")
         }
+        let scene = RenderScene(merging: cellScenes.map(\.renderScene))
 
         let texture = try renderOffscreen(
             device: device,
-            scene: cellScene.renderScene,
+            scene: scene,
             camera: zoomed(SceneCamera.framing(bounds: bounds), zoom: zoom),
             size: size
         )
@@ -53,6 +83,25 @@ enum RenderCommand {
         let url = URL(filePath: output)
         try writePNG(pixels: pixels, width: size.width, height: size.height, to: url)
         print("[INFO] wrote frame -> \(url.path(percentEncoded: false))")
+    }
+
+    /// Enclosing AABB over every built cell's bounds; nil input/all-nil
+    /// bounds -> nil (nothing drew anywhere).
+    private static func unionBounds(
+        _ cellScenes: [CellScene]
+    ) -> (min: SIMD3<Float>, max: SIMD3<Float>)? {
+        var result: (min: SIMD3<Float>, max: SIMD3<Float>)?
+        for bounds in cellScenes.compactMap(\.bounds) {
+            guard let existing = result else {
+                result = bounds
+                continue
+            }
+            result = (
+                min: simd_min(existing.min, bounds.min),
+                max: simd_max(existing.max, bounds.max)
+            )
+        }
+        return result
     }
 
     /// Shared with BenchCommand (same scene-build + option surface).
@@ -102,6 +151,7 @@ enum RenderCommand {
         )
     }
 
+    /// Shared with BenchCommand: one cell, fresh libraries.
     static func buildScene(
         context: CLIContext,
         device: MTLDevice,
@@ -109,11 +159,7 @@ enum RenderCommand {
         gridX: Int32,
         gridY: Int32
     ) throws -> CellScene {
-        let fileSystem = context.makeFileSystem()
-        let file = try context.loadSkyrimESM()
-        let textures = TextureLibrary(fileSystem: fileSystem, device: device)
-        let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
-        let builder = CellSceneBuilder(file: file, meshes: meshes, textures: textures)
+        let builder = try makeBuilder(context: context, device: device)
         do {
             return try builder.buildScene(
                 worldspaceEditorID: worldspace,
@@ -123,6 +169,19 @@ enum RenderCommand {
         } catch let error as CellSceneError {
             throw CLIError.failure(String(describing: error))
         }
+    }
+
+    /// One VFS + ESM + MeshLibrary/TextureLibrary/CellSceneBuilder trio.
+    /// Reusing one instance across multiple `buildScene` calls (the
+    /// `--neighbors` grid) shares the STAT index and dedups mesh/texture
+    /// residency across cells — `--neighbors` calls this once, `buildScene`
+    /// calls it once per invocation.
+    static func makeBuilder(context: CLIContext, device: MTLDevice) throws -> CellSceneBuilder {
+        let fileSystem = context.makeFileSystem()
+        let file = try context.loadSkyrimESM()
+        let textures = TextureLibrary(fileSystem: fileSystem, device: device)
+        let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
+        return CellSceneBuilder(file: file, meshes: meshes, textures: textures)
     }
 
     /// Headless MTKView (never shown, no window) carries the pixel-format

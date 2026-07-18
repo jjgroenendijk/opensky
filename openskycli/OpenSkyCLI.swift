@@ -28,9 +28,11 @@ enum OpenSkyCLI {
       nif <key>                   Inspect a mesh: container stats, model summary
       dds <key>                   Inspect a texture: header + mip chain
       render --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
-             [--size WxH] [--zoom <f>]
+             [--size WxH] [--zoom <f>] [--neighbors]
                                   Offscreen-render a cell to a PNG; zoom
-                                  moves the eye toward the framed center
+                                  moves the eye toward the framed center;
+                                  --neighbors adds the 8 surrounding cells,
+                                  camera frames the combined bounds
       bench [--worldspace <edid>] [--x <n>] [--y <n>] [--size WxH]
             [--frames <n>] [--budget-ms <f>]
                                   Sustained offscreen render; report frame

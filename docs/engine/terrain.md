@@ -121,3 +121,30 @@ can weld neighbor cells by dropping one cell's shared row/col instead of averagi
 Real-data visual check (2026-07-18, M1): `openskycli render` of WhiterunExterior06 (Tamriel
 6,-2) — 4 terrain quads, 14 splat layers resolved, 0 missing textures; dirt/grass/rock/snow
 transitions visible under the M2 walls, no flat single-texture quadrants.
+
+## Verification: 3x3 grid (3.1 gate)
+
+`openskycli render --neighbors` (docs/tools/cli.md) builds the target cell plus its 8 grid
+neighbors off one shared `MeshLibrary`/`TextureLibrary`/`CellSceneBuilder` — dedups residency
+and the STAT index across cells — and composes the 9 `CellScene`s with `RenderScene(merging:)`
+(`opensky/Rendering/RenderScene.swift`: flat concat of the opaque/alpha-tested/terrain draw
+lists, no re-transform needed since each cell's items already carry absolute world matrices).
+The framing camera generalizes `SceneCamera.framing` to the union of all 9 cells' bounds.
+
+Run (2026-07-18, real install, Tamriel (6,-2) + 8 neighbors around Whiterun):
+
+```text
+openskycli render --neighbors --size 1280x720 --zoom 2.2 --out <file>
+```
+
+All 9 slots built (WhiterunExterior02/03/05/06/08/09/10, ChillfurrowFarmExterior, cell
+000095F9) — 4 terrain quads each, 0 missing textures, no build failures or skipped grid
+slots. Visual result: terrain is continuous under Whiterun's M2 walls and houses across all
+9 cells; dirt/grass/rock/snow splat variation visible city-wide. Checked both the default
+oblique framing and a steep top-down angle (temporary `eyeDirection` override, reverted, not
+committed) — no visible height cracks or gaps at any of the internal cell borders, matching
+the [LAND edge-overlap probe](/formats/land.md) finding that shared edges match exactly.
+Screenshot: [terrain-3x3-whiterun.png](/img/terrain-3x3-whiterun.png) (default framing,
+`--zoom 2.2`).
+
+3.1 verify item closed — see `docs/log.md`.

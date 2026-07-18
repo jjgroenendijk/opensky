@@ -4,6 +4,24 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* **Terrain 3x3 grid verify, closes M3.1** (M3.1): `openskycli render --neighbors` builds
+  the target cell plus its 8 grid neighbors off one shared `MeshLibrary`/`TextureLibrary`/
+  `CellSceneBuilder` (residency + STAT index dedup across cells, not a streaming grid
+  manager — that's 3.2) and composes the 9 `CellScene`s with new `RenderScene(merging:)`
+  (`opensky/Rendering/RenderScene.swift`: flat concat of the opaque/alpha-tested/terrain
+  draw lists — items already carry absolute world matrices, no re-transform). Camera
+  generalizes `SceneCamera.framing` to the union of all 9 bounds. A neighbor slot that
+  fails to build (void grid position, malformed worldspace) warns to stderr and is
+  skipped, not fatal. Real-install run over Tamriel (6,-2) + 8 neighbors (Whiterun): all 9
+  slots built (WhiterunExterior02/03/05/06/08/09/10, ChillfurrowFarmExterior, cell
+  000095F9), 0 missing textures, 4 terrain quads/cell; visually verified (default + a
+  temporary steep top-down angle, not committed) — terrain continuous under the M2 walls
+  across all 9 cells, no height cracks or gaps at any internal cell border, splat
+  variation visible city-wide. Screenshot:
+  [terrain-3x3-whiterun.png](/img/terrain-3x3-whiterun.png). Docs:
+  [terrain](/engine/terrain.md) Verification section, [cli](/tools/cli.md) `--neighbors`.
+  Tests: `RenderSceneTests` merge cases (concat counts, cross-scene residency dedup, empty
+  input). Closes milestone 3.1 (`docs/todo.md`).
 * **Terrain splat pipeline** (M3.1): third render pipeline (`TerrainSplat`,
   `terrainVertex`/`terrainFragment`) blends each quadrant's BTXT base with up
   to 8 ATXT layer diffuses by per-vertex VTXT opacities in one draw. Binding

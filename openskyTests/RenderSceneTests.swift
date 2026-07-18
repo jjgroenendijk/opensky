@@ -133,6 +133,41 @@ struct RenderSceneTests {
         #expect(scene.residencyAllocations.count == 6)
     }
 
+    @Test(.enabled(if: Self.hasDevice)) func mergesConcatenatingDrawListsAndResidency() throws {
+        let device = try #require(Self.device)
+        // Two synthetic scenes sharing one texture (openskycli render
+        // --neighbors: 9 cells built off one TextureLibrary) — grid
+        // composition should concat draw lists but still dedup the shared
+        // allocation, same as within a single scene.
+        let shared = try Self.texture(device: device)
+        let model = Model(
+            meshes: [Self.mesh(slot: 1), Self.mesh(slot: 0)],
+            materials: [Self.material(alphaTest: 0.5), Self.material()],
+            skippedShapeCount: 0
+        )
+        let renderA = try RenderModel(device: device, model: model) { _, _ in shared }
+        let renderB = try RenderModel(device: device, model: model) { _, _ in shared }
+        let sceneA = RenderScene(instances: [(renderA, matrix_identity_float4x4)])
+        let sceneB = RenderScene(instances: [
+            (renderB, MatrixMath.translation(SIMD3(4096, 0, 0)))
+        ])
+
+        let merged = RenderScene(merging: [sceneA, sceneB])
+
+        #expect(merged.drawCount == sceneA.drawCount + sceneB.drawCount)
+        #expect(merged.opaque.count == sceneA.opaque.count + sceneB.opaque.count)
+        #expect(merged.alphaTested.count == sceneA.alphaTested.count + sceneB.alphaTested.count)
+        #expect(merged.terrain.isEmpty)
+        // 2 meshes x (vertex + index buffer) x 2 scenes + 1 shared texture = 9.
+        #expect(merged.residencyAllocations.count == 9)
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func mergingEmptyListYieldsEmptyScene() {
+        let merged = RenderScene(merging: [])
+        #expect(merged.drawCount == 0)
+        #expect(merged.residencyAllocations.isEmpty)
+    }
+
     @Test(.enabled(if: Self.hasDevice)) func deduplicatesResidencyAllocations() throws {
         let device = try #require(Self.device)
         let model = try Self.renderModel(device: device)
