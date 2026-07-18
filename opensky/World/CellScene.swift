@@ -5,6 +5,15 @@
 import Foundation
 import simd
 
+/// The library cache keys one cell touched: its mesh + texture working set.
+/// Streaming unions these over resident cells to know what to keep when a cell
+/// unloads (eviction — docs/engine/cell-streaming.md). Empty for cells built
+/// without eviction tracking (tests) — an empty keep-set simply evicts more.
+nonisolated struct CellAssets: Equatable {
+    var meshKeys: Set<String> = []
+    var textureKeys: Set<String> = []
+}
+
 /// One built exterior cell, ready to render.
 nonisolated struct CellScene {
     let renderScene: RenderScene
@@ -12,6 +21,8 @@ nonisolated struct CellScene {
     /// World-space AABB over every drawn instance — nil when nothing drew.
     /// Downstream camera placement frames this box.
     let bounds: (min: SIMD3<Float>, max: SIMD3<Float>)?
+    /// Mesh + texture cache keys this cell uses, for unload eviction.
+    var assets = CellAssets()
 }
 
 /// Load accounting for one cell build. Per-ref failures never abort the build
@@ -26,10 +37,11 @@ nonisolated struct CellLoadSummary: Equatable {
     /// children groups.
     let totalRefCount: Int
     let drawnRefCount: Int
-    /// REFR whose base FormID resolves to no STAT record (other base types —
-    /// ACTI, TREE, ... — are out of 2.7 scope).
-    let nonSTATSkipCount: Int
-    /// Base STAT carries no MODL — editor marker, nothing to draw.
+    /// REFR whose base FormID resolves to neither the STAT nor the
+    /// ModelBase (MSTT/TREE/FURN/ACTI/CONT) index — an unsupported base
+    /// type (DOOR, NPC_, ACHR, ...) or a malformed base record.
+    let unsupportedBaseSkipCount: Int
+    /// Resolved base carries no MODL — editor marker, nothing to draw.
     let markerSkipCount: Int
     /// Mesh load failed: missing file, parse error, or empty model.
     let modelFailureSkipCount: Int
@@ -50,17 +62,17 @@ nonisolated struct CellLoadSummary: Equatable {
     var terrainLayerSkipCount = 0
 
     var skippedRefCount: Int {
-        nonSTATSkipCount + markerSkipCount + modelFailureSkipCount + malformedRefSkipCount
+        unsupportedBaseSkipCount + markerSkipCount + modelFailureSkipCount + malformedRefSkipCount
     }
 
     /// One-line load report (AGENTS.md bracket-tag style), e.g.
-    /// "[INFO] WhiterunExterior06 (6,-2): 16 refs, 15 drawn, 1 skipped
-    /// (1 non-STAT), 8 models, 24 textures (0 missing)". The parenthetical
-    /// lists only non-zero skip reasons and disappears when nothing skipped.
+    /// "[INFO] WhiterunExterior06 (6,-2): 16 refs, 16 drawn, 0 skipped,
+    /// 8 models, 24 textures (0 missing)". The parenthetical lists only
+    /// non-zero skip reasons and disappears when nothing skipped.
     var summaryLine: String {
         var reasons: [String] = []
-        if nonSTATSkipCount > 0 {
-            reasons.append("\(nonSTATSkipCount) non-STAT")
+        if unsupportedBaseSkipCount > 0 {
+            reasons.append("\(unsupportedBaseSkipCount) unsupported-base")
         }
         if markerSkipCount > 0 {
             reasons.append("\(markerSkipCount) marker")

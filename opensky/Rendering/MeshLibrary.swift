@@ -5,8 +5,12 @@
 // typed errors so scene build can log + skip one ref instead of aborting the
 // whole cell (AGENTS.md mod-quirk rule).
 //
-// Single-threaded: scene build touches this at startup, so the dictionary
-// needs no lock (TextureLibrary + VFS follow the same rule).
+// Single-threaded by confinement, not locking: every touch (scene build) runs
+// on the streamer's ONE serial build queue (SerialCellBuildRunner), never the
+// main thread, so the dictionary needs no lock. Main only receives finished
+// CellScene values. GPU uploads (RenderModel/RenderMesh) off that queue are
+// safe. TextureLibrary + VFS follow the same confinement rule. Decision:
+// docs/engine/cell-streaming.md.
 
 import Foundation
 import Metal
@@ -91,6 +95,11 @@ nonisolated final class MeshLibrary {
     /// Model-space AABB per loaded path — captured at parse time because the
     /// vertex data is gone from the CPU after upload (see ModelBounds).
     private var modelBounds: [String: ModelBounds] = [:]
+    /// Texture keys captured when each cached model was first uploaded.
+    private var modelTextureKeys: [String: Set<String>] = [:]
+    /// Mesh keys resolved since the last drain, so a cell build can record its
+    /// mesh working set (for eviction keep-sets). Build-queue confined.
+    private var touchedKeys: Set<String> = []
 
     /// Distinct mesh paths successfully parsed + uploaded.
     private(set) var loadedCount = 0
@@ -108,7 +117,9 @@ nonisolated final class MeshLibrary {
     /// RenderModel instance (shared across every placing ref).
     func model(path: String) throws -> RenderModel {
         let key = try meshKey(for: path)
+        touchedKeys.insert(key)
         if let hit = cache[key] {
+            textures.markTouched(modelTextureKeys[key] ?? [])
             return hit
         }
 
@@ -124,6 +135,7 @@ nonisolated final class MeshLibrary {
         guard !model.meshes.isEmpty else { throw MeshLibraryError.emptyModel(path: key) }
 
         let render: RenderModel
+        textures.beginKeyCapture()
         do {
             render = try RenderModel(
                 device: device,
@@ -131,8 +143,10 @@ nonisolated final class MeshLibrary {
                 textureProvider: textures.provider
             )
         } catch {
+            _ = textures.endKeyCapture()
             throw MeshLibraryError.parseFailed(path: key, reason: String(describing: error))
         }
+        modelTextureKeys[key] = textures.endKeyCapture()
         cache[key] = render
         skippedShapes[key] = model.skippedShapeCount
         modelBounds[key] = ModelBounds.containing(model: model)
@@ -179,6 +193,39 @@ nonisolated final class MeshLibrary {
     func bounds(forPath path: String) -> ModelBounds? {
         guard let key = try? meshKey(for: path) else { return nil }
         return modelBounds[key]
+    }
+
+    // MARK: - Eviction (streaming unload)
+
+    /// Returns and clears the mesh keys touched since the last drain -- one
+    /// cell's mesh working set, recorded onto its CellScene so unload can
+    /// compute which models are still needed. Build-queue confined.
+    func drainTouchedKeys() -> Set<String> {
+        let out = touchedKeys
+        touchedKeys.removeAll(keepingCapacity: true)
+        return out
+    }
+
+    /// Drops the cached models (+ bounds/skip counts) whose keys are in `keys`
+    /// -- the set a departing cell used that no resident cell still needs
+    /// (docs/engine/cell-streaming.md eviction). Drop-set (not keep-set) so a
+    /// concurrent build's fresh models are never evicted. The RenderModel
+    /// deallocates once the last reference dies: no resident composed scene
+    /// references a departed cell's meshes, and the renderer's retire list
+    /// frees the GPU buffers when in-flight frames drain. Reloads on demand if
+    /// the cell returns. Runs on the build queue. Returns freed model count.
+    @discardableResult
+    func evict(dropping keys: Set<String>) -> Int {
+        var freed = 0
+        for key in keys {
+            if cache.removeValue(forKey: key) != nil {
+                freed += 1
+            }
+            skippedShapes.removeValue(forKey: key)
+            modelBounds.removeValue(forKey: key)
+            modelTextureKeys.removeValue(forKey: key)
+        }
+        return freed
     }
 
     /// Normalizes a MODL-style path and prepends the "meshes\\" root when the

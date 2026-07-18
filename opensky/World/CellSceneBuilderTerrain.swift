@@ -26,7 +26,7 @@ nonisolated struct TerrainBuild {
 
 /// Post-resolution splat layers for one patch: textures + aligned opacity
 /// arrays capped at the shader's layer maximum, plus the drop count.
-private struct ResolvedTerrainLayers {
+nonisolated private struct ResolvedTerrainLayers {
     var textures: [MTLTexture] = []
     var opacities: [[Float]] = []
     var skipped = 0
@@ -40,7 +40,7 @@ extension CellSceneBuilder {
     /// cell's south-west corner at (gridX*4096, gridY*4096), matching REFR world
     /// coordinates (docs/decisions/coordinates.md) so vertex local (col*128,
     /// row*128, height) lands at absolute world position.
-    func buildTerrain(found: FoundCell, worldspace: Worldspace?) -> TerrainBuild? {
+    nonisolated func buildTerrain(found: FoundCell, worldspace: Worldspace?) -> TerrainBuild? {
         guard let grid = found.cell.grid else { return nil }
         let patches = terrainPatches(
             found: found, worldspace: worldspace, quadFlags: grid.quadFlags
@@ -66,6 +66,10 @@ extension CellSceneBuilder {
                         vertexCount: patch.mesh.positions.count
                     )
                 )
+                // World AABB per patch: feeds the draw item (frustum culling)
+                // and the terrain-wide bounds (camera framing).
+                let world = ModelBounds.containing(patch.mesh.positions)?
+                    .transformed(by: transform)
                 items.append(TerrainDrawItem(
                     mesh: upload.mesh,
                     weightsBuffer: upload.weightsBuffer,
@@ -75,11 +79,11 @@ extension CellSceneBuilder {
                     ),
                     layerTextures: resolved.textures,
                     modelMatrix: transform,
-                    normalMatrix: normalMatrix
+                    normalMatrix: normalMatrix,
+                    bounds: world
                 ))
                 layerCount += resolved.textures.count
-                if let local = ModelBounds.containing(patch.mesh.positions) {
-                    let world = local.transformed(by: transform)
+                if let world {
                     bounds = bounds.map { $0.union(world) } ?? world
                 }
             } catch {
@@ -104,7 +108,7 @@ extension CellSceneBuilder {
     /// land height (Tamriel -27000). When DNAM is absent the correct engine
     /// behavior is UNCONFIRMED (todo: probe); OpenSky draws no ground rather
     /// than guess a floor height that could sit wrong.
-    private func terrainPatches(
+    nonisolated private func terrainPatches(
         found: FoundCell,
         worldspace: Worldspace?,
         quadFlags: UInt32
@@ -123,7 +127,7 @@ extension CellSceneBuilder {
     /// the packed weight stream; drops are counted, never fatal. Layers past
     /// the shader's TerrainConstant.maxLayers bind slots (format max 8, never
     /// seen in vanilla — docs/formats/land.md) drop defensively.
-    private func resolveTerrainLayers(
+    nonisolated private func resolveTerrainLayers(
         _ layers: [TerrainMeshBuilder.Layer]
     ) -> ResolvedTerrainLayers {
         var resolved = ResolvedTerrainLayers()
@@ -149,7 +153,7 @@ extension CellSceneBuilder {
 
     /// First LAND record in the cell's temporary-children group (type 9), where
     /// landscape lives (UESP Groups). Malformed decode -> nil (log + skip).
-    private func landRecord(in cellChildren: ESMGroup?) -> Land? {
+    nonisolated private func landRecord(in cellChildren: ESMGroup?) -> Land? {
         guard let cellChildren, let children = try? cellChildren.children() else { return nil }
         for case let .group(group) in children where group.kind == .cellTemporaryChildren {
             guard let records = try? group.children() else { continue }
@@ -171,7 +175,7 @@ extension CellSceneBuilder {
     /// nil. Raw FormIDs suffice while scene build reads one plugin (same rule
     /// as STAT lookup). Normal maps (TX01) stay unused — the splat path is
     /// diffuse-only like the M2 static pipeline (docs/engine/terrain.md).
-    private func terrainDiffuseKey(for ltexID: FormID) -> String? {
+    nonisolated private func terrainDiffuseKey(for ltexID: FormID) -> String? {
         guard
             let ltexRecord = ESMWalk.record(withFormID: ltexID.rawValue, in: file),
             let ltex = try? LandTexture(record: ltexRecord),
@@ -185,7 +189,7 @@ extension CellSceneBuilder {
     /// Material for a quadrant's BTXT base. Unpainted quadrant or broken
     /// LTEX/TXST chain -> Material.fallback (TextureLibrary placeholders the
     /// unresolved diffuse path).
-    private func terrainBaseMaterial(for baseTexture: FormID?) -> Material {
+    nonisolated private func terrainBaseMaterial(for baseTexture: FormID?) -> Material {
         guard let baseTexture, let diffuse = terrainDiffuseKey(for: baseTexture) else {
             return .fallback
         }

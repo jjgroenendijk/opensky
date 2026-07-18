@@ -95,7 +95,9 @@ final class PreviewDetailBuilder {
         guard let bounds = meshes.bounds(forPath: path) else {
             return Detail(text: text + "\n[WARNING] no bounds — nothing to frame", image: nil)
         }
-        let scene = RenderScene(instances: [(model: model, transform: matrix_identity_float4x4)])
+        let scene = RenderScene(instances: [
+            RenderPlacement(model: model, transform: matrix_identity_float4x4)
+        ])
         let camera = SceneCamera.framing(bounds: (bounds.min, bounds.max))
         return Detail(
             text: text,
@@ -128,7 +130,9 @@ final class PreviewDetailBuilder {
         else {
             return Detail(text: text + "\n[WARNING] no preview image: upload failed", image: nil)
         }
-        let scene = RenderScene(instances: [(model: model, transform: matrix_identity_float4x4)])
+        let scene = RenderScene(instances: [
+            RenderPlacement(model: model, transform: matrix_identity_float4x4)
+        ])
         let size = Self.imageSize(width: file.width, height: file.height)
         return Detail(
             text: text,

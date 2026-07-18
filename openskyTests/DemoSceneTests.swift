@@ -59,12 +59,18 @@ struct DemoSceneTests {
         let device = try #require(Self.device)
         let scene = try DemoScene.build(device: device)
 
-        // Ground + three crates (6 faces each drawn as one mesh) = opaque;
-        // cutout panel = alpha-tested and double-sided.
-        #expect(scene.opaque.count == 4)
+        // Opaque groups: ground + crate (three crates collapse to one
+        // instanced group); cutout panel = alpha-tested and double-sided.
+        #expect(scene.opaque.count == 2)
+        #expect(scene.opaque.map(\.instances.count).sorted() == [1, 3])
         #expect(scene.alphaTested.count == 1)
-        for item in scene.alphaTested {
-            #expect(item.material.doubleSided)
+        #expect(scene.instanceCount == 5)
+        for group in scene.alphaTested {
+            #expect(group.material.doubleSided)
+        }
+        // Every demo instance carries real world bounds (culling path).
+        for group in scene.opaque + scene.alphaTested {
+            #expect(group.instances.allSatisfy { $0.bounds != nil })
         }
         #expect(!scene.residencyAllocations.isEmpty)
     }

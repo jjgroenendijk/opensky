@@ -11,6 +11,27 @@ import MetalKit
 import QuartzCore
 import simd
 
+/// GPU resources retired by a scene swap, still possibly referenced by
+/// frames in flight when they were retired. The strong references here keep
+/// the allocations alive; residency-set removal waits until
+/// `endFrameEvent.signaledValue` proves `lastFrameIndex` drained.
+nonisolated private struct RetiredAllocations {
+    /// Highest frame index that may still reference these allocations.
+    let lastFrameIndex: UInt64
+    let allocations: [MTLAllocation]
+}
+
+/// Per-frame culling + draw accounting from the most recently encoded
+/// frame — deterministic evidence for culling tests and streaming triage.
+nonisolated struct SceneDrawStats: Equatable {
+    /// drawIndexedPrimitives calls encoded.
+    var drawCalls = 0
+    /// Items drawn after frustum culling (static + terrain).
+    var drawnInstances = 0
+    /// Items the frustum test skipped this frame.
+    var culledInstances = 0
+}
+
 nonisolated enum RendererError: Error {
     case deviceUnavailable
     case commandQueueUnavailable
@@ -24,6 +45,7 @@ nonisolated enum RendererError: Error {
     case textureAllocationFailed
     case encoderUnavailable
     case gpuTimeout
+    case offscreenPumpTimedOut(maxFrames: Int)
 }
 
 final class Renderer: NSObject {
@@ -35,9 +57,9 @@ final class Renderer: NSObject {
     /// Uniform slots are 256-byte aligned so every ring offset satisfies
     /// Metal's buffer-offset alignment requirement. The per-draw ring is
     /// shared by static and terrain draws, so its slot fits either struct.
-    private static let alignedFrameUniformsSize =
+    static let alignedFrameUniformsSize =
         (MemoryLayout<FrameUniforms>.size + 0xFF) & -0x100
-    private static let alignedDrawUniformsSize =
+    static let alignedDrawUniformsSize =
         (max(MemoryLayout<DrawUniforms>.size, MemoryLayout<TerrainDrawUniforms>.size)
                 + 0xFF) & -0x100
 
@@ -50,27 +72,48 @@ final class Renderer: NSObject {
     let commandQueue: MTL4CommandQueue
     let commandBuffer: MTL4CommandBuffer
     let commandAllocators: [MTL4CommandAllocator]
-    private let argumentTable: MTL4ArgumentTable
-    private let opaquePipeline: MTLRenderPipelineState
-    private let alphaTestPipeline: MTLRenderPipelineState
-    private let terrainPipeline: MTLRenderPipelineState
-    private let depthState: MTLDepthStencilState
-    private let sampler: MTLSamplerState
-    private let scene: RenderScene
+    let argumentTable: MTL4ArgumentTable
+    let opaquePipeline: MTLRenderPipelineState
+    let alphaTestPipeline: MTLRenderPipelineState
+    let terrainPipeline: MTLRenderPipelineState
+    let depthState: MTLDepthStencilState
+    let sampler: MTLSamplerState
+    /// Current drawable scene; swapped between frames via setScene.
+    private(set) var scene: RenderScene
     /// Injected framing camera — source of the sun/ambient light and the
-    /// free-fly camera's starting pose.
-    private let camera: SceneCamera
+    /// free-fly camera's starting pose. setScene may replace it.
+    private(set) var camera: SceneCamera
     /// Live view pose, seeded from `camera`, advanced each frame from `input`.
-    private var freeFlyCamera: FreeFlyCamera
+    var freeFlyCamera: FreeFlyCamera
     /// Free-fly input, drained once per `draw(in:)`; nil (offscreen/tests) ->
     /// the camera stays on its seeded pose.
     private let input: CameraInputState?
+    /// Optional main-thread per-frame hook, invoked in `draw(in:)` after the
+    /// camera advances with the live free-fly position. Cell streaming drives
+    /// its per-frame `update` here (and may call `setScene` back synchronously
+    /// -- safe, same thread, still between frames). nil (offscreen/tests)
+    /// leaves the loop unchanged.
+    var onFrame: ((SIMD3<Float>) -> Void)?
     /// CACurrentMediaTime of the previous `draw(in:)`, for real delta time.
     private var lastUpdateTime: CFTimeInterval?
-    private let frameUniformBuffer: MTLBuffer
-    /// Per-draw ring: maxFramesInFlight slots x scene.drawCount aligned
-    /// entries. The scene is fixed for 2.6; cell streaming (2.7+) grows it.
-    private let drawUniformBuffer: MTLBuffer
+    let frameUniformBuffer: MTLBuffer
+    /// Per-draw ring: maxFramesInFlight slots x drawUniformSlotCapacity
+    /// aligned entries. Replaced (regrown) by setScene when a new scene's
+    /// drawCount exceeds the capacity.
+    private(set) var drawUniformBuffer: MTLBuffer
+    /// Per-frame slot count of the draw-uniform ring — power-of-two
+    /// headroom over drawCount so per-cell-crossing swaps rarely realloc.
+    private(set) var drawUniformSlotCapacity: Int
+    /// Per-instance transform ring (todo 3.2 instancing): tightly packed
+    /// InstanceTransform entries, instanceSlotCapacity per in-flight frame.
+    /// Same regrow-on-swap treatment as the draw-uniform ring.
+    private(set) var instanceTransformBuffer: MTLBuffer
+    /// Instances per frame slot of the transform ring — power-of-two
+    /// headroom over the scene's instanceCount.
+    private(set) var instanceSlotCapacity: Int
+    /// Old scene resources + rings possibly referenced by in-flight frames
+    /// after a swap; strong refs held until their frames provably drain.
+    private var retired: [RetiredAllocations] = []
     let residencySet: MTLResidencySet
     let endFrameEvent: MTLSharedEvent
     /// Two timestamp entries (frame start/end) per in-flight slot; nil when
@@ -80,6 +123,9 @@ final class Renderer: NSObject {
 
     var frameIndex: Int
     private var projectionMatrix = matrix_identity_float4x4
+    /// Culling/draw counts of the last encoded frame (see SceneDrawStats).
+    /// Written only by encodeScenePass (RendererScenePass.swift).
+    var lastDrawStats = SceneDrawStats()
 
     /// `scene` nil -> synthetic DemoScene; `camera` nil -> its demo camera;
     /// `input` nil -> static seeded pose (offscreen/tests). The app passes a
@@ -141,16 +187,15 @@ final class Renderer: NSObject {
             length: Self.alignedFrameUniformsSize * Self.maxFramesInFlight,
             label: "FrameUniforms"
         )
-        drawUniformBuffer = try Self.makeUniformBuffer(
-            device: device,
-            length: Self.alignedDrawUniformsSize
-                * max(self.scene.drawCount, 1) * Self.maxFramesInFlight,
-            label: "DrawUniforms"
-        )
+        let rings = try Self.makeSceneRings(device: device, scene: self.scene)
+        drawUniformBuffer = rings.drawBuffer
+        drawUniformSlotCapacity = rings.drawCapacity
+        instanceTransformBuffer = rings.instanceBuffer
+        instanceSlotCapacity = rings.instanceCapacity
 
         residencySet = try Self.makeResidencySet(
             device: device,
-            allocations: [frameUniformBuffer, drawUniformBuffer]
+            allocations: [frameUniformBuffer, drawUniformBuffer, instanceTransformBuffer]
                 + self.scene.residencyAllocations
         )
         commandQueue.addResidencySet(residencySet)
@@ -170,26 +215,153 @@ final class Renderer: NSObject {
         return try? device.makeCounterHeap(descriptor: heapDescriptor)
     }
 
-    // MARK: - Per-frame uniforms
-
-    /// Writes this frame's uniforms into its 256-byte-aligned slot and
-    /// returns the byte offset of that slot. View comes from the live free-fly
-    /// camera (pose seeded from the injected SceneCamera); sun/ambient from the
-    /// injected SceneCamera.
-    private func updateFrameUniforms(slot: Int, projection: float4x4) -> Int {
-        let offset = Self.alignedFrameUniformsSize * slot
-        let viewMatrix = freeFlyCamera.viewMatrix()
-        var uniforms = FrameUniforms(
-            viewProjectionMatrix: projection * viewMatrix,
-            cameraPosition: freeFlyCamera.position,
-            sunDirection: camera.sunDirection,
-            sunColor: camera.sunColor,
-            ambientColor: camera.ambientColor
-        )
-        frameUniformBuffer.contents().advanced(by: offset)
-            .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)
-        return offset
+    /// Ring slots per frame for `count` draws: next power of two, min 1 —
+    /// headroom so the per-cell-crossing swaps of streaming rarely realloc.
+    static func slotCapacity(for count: Int) -> Int {
+        count <= 1 ? 1 : 1 << (Int.bitWidth - (count - 1).leadingZeroBitCount)
     }
+
+    /// Scene-sized GPU rings: per-group uniform ring + per-instance
+    /// transform ring, both with slotCapacity headroom.
+    struct SceneRings {
+        let drawBuffer: MTLBuffer
+        let drawCapacity: Int
+        let instanceBuffer: MTLBuffer
+        let instanceCapacity: Int
+    }
+
+    /// Allocates both rings for a scene — shared by init and the regrow
+    /// path in setScene (identical sizing policy in one place).
+    static func makeSceneRings(device: MTLDevice, scene: RenderScene) throws -> SceneRings {
+        let drawCapacity = slotCapacity(for: scene.drawCount)
+        let instanceCapacity = slotCapacity(for: scene.instanceCount)
+        return try SceneRings(
+            drawBuffer: makeUniformBuffer(
+                device: device,
+                length: alignedDrawUniformsSize * drawCapacity * maxFramesInFlight,
+                label: "DrawUniforms"
+            ),
+            drawCapacity: drawCapacity,
+            instanceBuffer: makeUniformBuffer(
+                device: device,
+                length: MemoryLayout<InstanceTransform>.stride
+                    * instanceCapacity * maxFramesInFlight,
+                label: "InstanceTransforms"
+            ),
+            instanceCapacity: instanceCapacity
+        )
+    }
+
+    // MARK: - Scene swap (cell streaming)
+
+    /// Replaces the drawable scene between frames; optional `camera`
+    /// reseeds sun/ambient and the free-fly pose (a first real scene after
+    /// an empty launch scene needs a framing pose).
+    ///
+    /// Threading: must run on the thread that drives draw(in:) /
+    /// renderOffscreen — the main thread. The renderer has no internal
+    /// locking; "between frames" is guaranteed by that shared thread. The
+    /// GPU may still be executing frames that reference the OLD scene:
+    /// those resources go on the retire list instead of being released or
+    /// evicted here — this method never blocks on the GPU.
+    func setScene(_ newScene: RenderScene, camera newCamera: SceneCamera? = nil) throws {
+        purgeRetiredResources()
+        // Prepare every fallible allocation before mutating live renderer
+        // state. Allocation failure leaves old scene + rings intact.
+        var nextDrawBuffer = drawUniformBuffer
+        var nextDrawCapacity = drawUniformSlotCapacity
+        if newScene.drawCount > drawUniformSlotCapacity {
+            nextDrawCapacity = Self.slotCapacity(for: newScene.drawCount)
+            nextDrawBuffer = try Self.makeUniformBuffer(
+                device: device,
+                length: Self.alignedDrawUniformsSize
+                    * nextDrawCapacity * Self.maxFramesInFlight,
+                label: "DrawUniforms"
+            )
+        }
+        var nextInstanceBuffer = instanceTransformBuffer
+        var nextInstanceCapacity = instanceSlotCapacity
+        if newScene.instanceCount > instanceSlotCapacity {
+            nextInstanceCapacity = Self.slotCapacity(for: newScene.instanceCount)
+            nextInstanceBuffer = try Self.makeUniformBuffer(
+                device: device,
+                length: MemoryLayout<InstanceTransform>.stride
+                    * nextInstanceCapacity * Self.maxFramesInFlight,
+                label: "InstanceTransforms"
+            )
+        }
+
+        // Old scene allocations retire as a whole; anything the new scene
+        // shares with it is filtered out at purge time (live-set check in
+        // purgeRetiredResources), not here — simpler and equally correct.
+        var retiring = scene.residencyAllocations
+        scene = newScene
+        if let newCamera {
+            camera = newCamera
+            freeFlyCamera = FreeFlyCamera(framing: newCamera)
+        }
+        if nextDrawBuffer !== drawUniformBuffer {
+            // Old ring may back in-flight frames — retire, never reuse.
+            retiring.append(drawUniformBuffer)
+            drawUniformBuffer = nextDrawBuffer
+            drawUniformSlotCapacity = nextDrawCapacity
+            residencySet.addAllocations([nextDrawBuffer])
+        }
+        if nextInstanceBuffer !== instanceTransformBuffer {
+            retiring.append(instanceTransformBuffer)
+            instanceTransformBuffer = nextInstanceBuffer
+            instanceSlotCapacity = nextInstanceCapacity
+            residencySet.addAllocations([nextInstanceBuffer])
+        }
+        residencySet.addAllocations(newScene.residencyAllocations)
+        residencySet.commit()
+        // Frames < frameIndex are committed; the newest (frameIndex - 1) is
+        // the last that can reference the old resources.
+        retired.append(RetiredAllocations(
+            lastFrameIndex: UInt64(frameIndex - 1),
+            allocations: retiring
+        ))
+    }
+
+    /// Drops retire-list entries whose frames provably drained
+    /// (endFrameEvent.signaledValue >= tag), removing their allocations
+    /// from the residency set. MTLResidencySet membership is a plain set —
+    /// no reference counting, and removals take effect at commit() even if
+    /// queued frames still reference the allocation — so removal must wait
+    /// for the drain proof, and must skip anything the CURRENT scene or
+    /// rings also use (swap A -> B -> A, or adjacent cells sharing
+    /// meshes/textures: the shared allocation is both retired and live).
+    /// Called opportunistically from draw(in:) and setScene.
+    func purgeRetiredResources() {
+        guard !retired.isEmpty else { return }
+        let drained = endFrameEvent.signaledValue
+        var ready: [MTLAllocation] = []
+        retired.removeAll { entry in
+            guard entry.lastFrameIndex <= drained else { return false }
+            ready.append(contentsOf: entry.allocations)
+            return true
+        }
+        guard !ready.isEmpty else { return }
+        var live = Set(scene.residencyAllocations.map(ObjectIdentifier.init))
+        live.insert(ObjectIdentifier(frameUniformBuffer))
+        live.insert(ObjectIdentifier(drawUniformBuffer))
+        live.insert(ObjectIdentifier(instanceTransformBuffer))
+        // A drained A entry may share an allocation with undrained B. Keep
+        // that allocation resident until every retired frame using it drains.
+        for entry in retired {
+            live.formUnion(entry.allocations.map(ObjectIdentifier.init))
+        }
+        var seen = Set<ObjectIdentifier>()
+        let removable = ready.filter { allocation in
+            let id = ObjectIdentifier(allocation)
+            return !live.contains(id) && seen.insert(id).inserted
+        }
+        guard !removable.isEmpty else { return }
+        residencySet.removeAllocations(removable)
+        residencySet.commit()
+    }
+
+    // MARK: - Camera
 
     /// Advances the free-fly camera by one frame of input using real elapsed
     /// time. First frame (or no input) makes no move. dt is clamped so a stall
@@ -201,191 +373,14 @@ final class Renderer: NSObject {
         lastUpdateTime = now
         freeFlyCamera.update(input.makeInput(dt: dt))
     }
-
-    /// Writes one draw's uniforms into the ring and returns its byte offset.
-    private func updateDrawUniforms(slot: Int, draw: Int, item: DrawItem) -> Int {
-        let offset = Self.alignedDrawUniformsSize * (slot * scene.drawCount + draw)
-        var uniforms = DrawUniforms(
-            modelMatrix: item.modelMatrix,
-            normalMatrix: item.normalMatrix,
-            uvOffset: item.material.uvOffset,
-            uvScale: item.material.uvScale,
-            materialAlpha: item.material.alpha,
-            alphaThreshold: item.material.alphaTestThreshold ?? 0
-        )
-        drawUniformBuffer.contents().advanced(by: offset)
-            .copyMemory(from: &uniforms, byteCount: MemoryLayout<DrawUniforms>.size)
-        return offset
-    }
-
-    /// Terrain variant of updateDrawUniforms: same ring, same aligned slots
-    /// (slot size covers both structs), TerrainDrawUniforms layout.
-    private func updateTerrainDrawUniforms(
-        slot: Int,
-        draw: Int,
-        item: TerrainDrawItem
-    ) -> Int {
-        let offset = Self.alignedDrawUniformsSize * (slot * scene.drawCount + draw)
-        var uniforms = TerrainDrawUniforms(
-            modelMatrix: item.modelMatrix,
-            normalMatrix: item.normalMatrix,
-            uvOffset: item.material.uvOffset,
-            uvScale: item.material.uvScale,
-            layerCount: UInt32(min(item.layerTextures.count, TerrainConstant.maxLayers.rawValue))
-        )
-        drawUniformBuffer.contents().advanced(by: offset)
-            .copyMemory(from: &uniforms, byteCount: MemoryLayout<TerrainDrawUniforms>.size)
-        return offset
-    }
 }
 
-// MARK: - Draw encode + scene pass
+// MARK: - GPU timestamps
 
-/// Same-file extension (private member access) keeping the encode path out
-/// of the class body (type-length limits, RendererSetup.swift precedent).
+/// Encode path lives in Rendering/RendererScenePass.swift (file-length
+/// limits); this extension keeps the counter-heap timestamp reads next to
+/// the draw loop that consumes them.
 extension Renderer {
-    private func encode(
-        items: [DrawItem],
-        pipeline: MTLRenderPipelineState,
-        encoder: MTL4RenderCommandEncoder,
-        slot: Int,
-        drawOffset: Int
-    ) {
-        guard !items.isEmpty else { return }
-        encoder.setRenderPipelineState(pipeline)
-        for (index, item) in items.enumerated() {
-            let uniformOffset = updateDrawUniforms(
-                slot: slot,
-                draw: drawOffset + index,
-                item: item
-            )
-            argumentTable.setAddress(
-                item.mesh.vertexBuffer.gpuAddress,
-                index: BufferIndex.vertices.rawValue
-            )
-            argumentTable.setAddress(
-                drawUniformBuffer.gpuAddress + UInt64(uniformOffset),
-                index: BufferIndex.drawUniforms.rawValue
-            )
-            argumentTable.setTexture(
-                item.material.diffuse.gpuResourceID,
-                index: TextureIndex.diffuse.rawValue
-            )
-            encoder.setCullMode(item.material.doubleSided ? .none : .back)
-            encoder.drawIndexedPrimitives(
-                primitiveType: .triangle,
-                indexCount: item.mesh.indexCount,
-                indexType: .uint16,
-                indexBuffer: item.mesh.indexBuffer.gpuAddress,
-                indexBufferLength: item.mesh.indexBuffer.length
-            )
-        }
-    }
-
-    /// Encodes the terrain splat draws: per-quadrant pipeline with the base
-    /// diffuse at TextureIndexDiffuse and the ATXT layer array at
-    /// TextureIndexTerrainLayer0+. Unused layer slots rebind the base diffuse
-    /// so every declared texture argument is valid; the shader never samples
-    /// past TerrainDrawUniforms.layerCount.
-    private func encodeTerrain(
-        items: [TerrainDrawItem],
-        encoder: MTL4RenderCommandEncoder,
-        slot: Int,
-        drawOffset: Int
-    ) {
-        guard !items.isEmpty else { return }
-        encoder.setRenderPipelineState(terrainPipeline)
-        for (index, item) in items.enumerated() {
-            let uniformOffset = updateTerrainDrawUniforms(
-                slot: slot,
-                draw: drawOffset + index,
-                item: item
-            )
-            argumentTable.setAddress(
-                item.mesh.vertexBuffer.gpuAddress,
-                index: BufferIndex.vertices.rawValue
-            )
-            argumentTable.setAddress(
-                item.weightsBuffer.gpuAddress,
-                index: BufferIndex.terrainWeights.rawValue
-            )
-            argumentTable.setAddress(
-                drawUniformBuffer.gpuAddress + UInt64(uniformOffset),
-                index: BufferIndex.drawUniforms.rawValue
-            )
-            argumentTable.setTexture(
-                item.material.diffuse.gpuResourceID,
-                index: TextureIndex.diffuse.rawValue
-            )
-            for layerSlot in 0 ..< TerrainConstant.maxLayers.rawValue {
-                let texture = layerSlot < item.layerTextures.count
-                    ? item.layerTextures[layerSlot]
-                    : item.material.diffuse
-                argumentTable.setTexture(
-                    texture.gpuResourceID,
-                    index: TextureIndex.terrainLayer0.rawValue + layerSlot
-                )
-            }
-            encoder.setCullMode(.back)
-            encoder.drawIndexedPrimitives(
-                primitiveType: .triangle,
-                indexCount: item.mesh.indexCount,
-                indexType: .uint16,
-                indexBuffer: item.mesh.indexBuffer.gpuAddress,
-                indexBufferLength: item.mesh.indexBuffer.length
-            )
-        }
-    }
-
-    /// Encodes the whole scene as one render pass into the open command
-    /// buffer. Returns false when the encoder cannot be created.
-    func encodeScenePass(
-        descriptor: MTL4RenderPassDescriptor,
-        slot: Int,
-        projection: float4x4
-    ) -> Bool {
-        let frameOffset = updateFrameUniforms(slot: slot, projection: projection)
-        guard let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)
-        else { return false }
-        encoder.label = "Static Mesh Encoder"
-        encoder.setDepthStencilState(depthState)
-        // Winding per docs/decisions/coordinates.md (verified on the demo
-        // scene ground plane): faces authored counter-clockwise seen from
-        // outside are front under our view/projection.
-        encoder.setFrontFacing(.counterClockwise)
-        encoder.setArgumentTable(argumentTable, stages: [.vertex, .fragment])
-        argumentTable.setAddress(
-            frameUniformBuffer.gpuAddress + UInt64(frameOffset),
-            index: BufferIndex.frameUniforms.rawValue
-        )
-        argumentTable.setSamplerState(
-            sampler.gpuResourceID,
-            index: SamplerIndex.trilinear.rawValue
-        )
-        encode(
-            items: scene.opaque,
-            pipeline: opaquePipeline,
-            encoder: encoder,
-            slot: slot,
-            drawOffset: 0
-        )
-        encodeTerrain(
-            items: scene.terrain,
-            encoder: encoder,
-            slot: slot,
-            drawOffset: scene.opaque.count
-        )
-        encode(
-            items: scene.alphaTested,
-            pipeline: alphaTestPipeline,
-            encoder: encoder,
-            slot: slot,
-            drawOffset: scene.opaque.count + scene.terrain.count
-        )
-        encoder.endEncoding()
-        return true
-    }
-
     /// Reads a slot's timestamp pair straight from the counter heap. Only
     /// valid when the caller proved (shared-event wait) that the frame which
     /// wrote the slot finished.
@@ -431,6 +426,11 @@ extension Renderer: MTKViewDelegate {
         let cpuStart = frameStats.beginFrame()
 
         advanceCamera()
+        // Streaming drives its per-frame update here; it may setScene back
+        // synchronously (same thread, still between frames) before this frame
+        // encodes, which then draws the freshly streamed scene.
+        onFrame?(freeFlyCamera.position)
+        purgeRetiredResources()
 
         // Block until the GPU finishes the frame that used this slot.
         endFrameEvent.wait(

@@ -37,6 +37,12 @@ enum OpenSkyCLI {
             [--frames <n>] [--budget-ms <f>]
                                   Sustained offscreen render; report frame
                                   stats, fail when avg/p95 miss the budget
+      bench --fly-path [--worldspace <edid>] [--x <n>] [--y <n>]
+            [--size WxH] [--budget-ms <f>] [--max-frames <n>]
+            [--footprint-cap-mb <f>]
+                                  Script east + north cell crossings; require
+                                  settlement, unload, one build/cell, bounded
+                                  physical footprint, avg/p95 frame budget
       help                        Show this text
 
     defaults: cell/render target the first-render cell (Tamriel (6,-2)).

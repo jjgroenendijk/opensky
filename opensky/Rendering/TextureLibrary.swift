@@ -5,8 +5,11 @@
 // a bad DDS all resolve to the loader's shared placeholder, cached so each
 // distinct path logs at most once.
 //
-// Single-threaded: scene build touches this at startup, so the dictionary
-// needs no lock (siblings follow the same rule; VFS itself is thread-safe).
+// Single-threaded by confinement, not locking: every touch (scene build) runs
+// on the streamer's ONE serial build queue (SerialCellBuildRunner), never the
+// main thread, so the dictionary needs no lock. Sibling MeshLibrary follows the
+// same confinement rule; VFS itself is mutex-guarded. Decision:
+// docs/engine/cell-streaming.md.
 
 import Foundation
 import Metal
@@ -24,9 +27,26 @@ nonisolated final class TextureLibrary {
     /// created and logged once. Never collides: normalize rejects empty paths.
     private static let untexturedPath = ""
 
+    /// Stable string form of a cache key, for the touched/keep sets that drive
+    /// eviction (the private CacheKey type does not cross the module).
+    private static func keyString(path: String, usage: TextureUsage) -> String {
+        "\(usage)|\(path)"
+    }
+
+    private static func keyString(_ key: CacheKey) -> String {
+        keyString(path: key.path, usage: key.usage)
+    }
+
     private let fileSystem: VirtualFileSystem
     private let loader: TextureLoader
     private var cache: [CacheKey: MTLTexture] = [:]
+
+    /// Keys resolved since the last drain, so a cell build can record exactly
+    /// which textures it uses (for eviction keep-sets). Confined to the build
+    /// queue like the cache; drained per build by CellSceneBuilder.
+    private var touchedKeys: Set<String> = []
+    /// Per-model capture active only during one RenderModel construction.
+    private var capturedKeys: Set<String>?
 
     /// Distinct paths whose bytes were found and handed to the loader.
     private(set) var loadedCount = 0
@@ -56,6 +76,7 @@ nonisolated final class TextureLibrary {
         // then throws and the miss branch logs + placeholders it once.
         let normalized = (try? VirtualFileSystem.normalize(key)) ?? key
         let cacheKey = CacheKey(path: normalized, usage: usage)
+        recordTouch(Self.keyString(cacheKey))
         if let hit = cache[cacheKey] {
             return hit
         }
@@ -86,11 +107,60 @@ nonisolated final class TextureLibrary {
         label: String
     ) -> MTLTexture {
         let cacheKey = CacheKey(path: path, usage: usage)
+        recordTouch(Self.keyString(cacheKey))
         if let hit = cache[cacheKey] {
             return hit
         }
         let texture = loader.missingTexture(usage: usage, label: label)
         cache[cacheKey] = texture
         return texture
+    }
+
+    // MARK: - Eviction (streaming unload)
+
+    /// Returns and clears the keys touched since the last drain -- one cell's
+    /// texture working set, recorded onto its CellScene so unload can compute
+    /// which textures are still needed. Confined to the build queue.
+    func drainTouchedKeys() -> Set<String> {
+        let out = touchedKeys
+        touchedKeys.removeAll(keepingCapacity: true)
+        return out
+    }
+
+    /// Captures texture keys resolved by one model upload. MeshLibrary stores
+    /// the result so a later mesh-cache hit can reproduce texture liveness.
+    func beginKeyCapture() {
+        capturedKeys = []
+    }
+
+    func endKeyCapture() -> Set<String> {
+        let out = capturedKeys ?? []
+        capturedKeys = nil
+        return out
+    }
+
+    func markTouched(_ keys: Set<String>) {
+        touchedKeys.formUnion(keys)
+    }
+
+    private func recordTouch(_ key: String) {
+        touchedKeys.insert(key)
+        capturedKeys?.insert(key)
+    }
+
+    /// Drops the cached textures whose keys are in `keys` -- the set a departing
+    /// cell used that no resident cell still needs (docs/engine/cell-streaming.md
+    /// eviction). Drop-set (not keep-set) so a concurrent build's fresh
+    /// textures are never evicted. GPU memory frees when the last reference
+    /// dies (the composed scene dropped it on recompose; the renderer's retire
+    /// list frees it once in-flight frames drain). Reloads on demand if the
+    /// cell returns, so over-eviction only costs a reload, never correctness.
+    /// Runs on the build queue (confinement). Returns freed entry count.
+    @discardableResult
+    func evict(dropping keys: Set<String>) -> Int {
+        guard !keys.isEmpty else { return 0 }
+        let before = cache.count
+        cache = cache.filter { !keys.contains(Self.keyString($0.key)) }
+        return before - cache.count
     }
 }

@@ -211,4 +211,34 @@ struct RecordDecoderTests {
         )
         #expect(stat.modelPath == nil)
     }
+
+    // MARK: - ModelBase (MSTT/TREE/FURN/ACTI/CONT)
+
+    @Test func decodesModelBaseForEachSupportedType() throws {
+        for type in ["MSTT", "TREE", "FURN", "ACTI", "CONT"] {
+            let fields = ESMFixture.field("EDID", ESMFixture.zstring("Some\(type)"))
+                + ESMFixture.field("MODL", ESMFixture.zstring("Meshes\\\(type)\\thing.nif"))
+            let base = try ModelBase(
+                record: record(ESMFixture.record(type, formID: 0x77, data: fields))
+            )
+            #expect(base.formID == FormID(0x77))
+            #expect(base.recordType == FourCC(stringLiteral: type))
+            #expect(base.editorID == "Some\(type)")
+            #expect(base.modelPath == "Meshes\\\(type)\\thing.nif")
+        }
+    }
+
+    @Test func modelBaseWithoutModelIsMarker() throws {
+        let base = try ModelBase(
+            record: record(ESMFixture.record("TREE", data: Data()))
+        )
+        #expect(base.modelPath == nil)
+    }
+
+    @Test func modelBaseRejectsUnsupportedRecordType() throws {
+        let statBytes = ESMFixture.record("STAT", data: Data())
+        #expect(throws: (any Error).self) {
+            _ = try ModelBase(record: record(statBytes))
+        }
+    }
 }

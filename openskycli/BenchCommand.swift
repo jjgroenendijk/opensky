@@ -1,9 +1,7 @@
-// `bench`: sustained offscreen render of one exterior cell — the milestone 2
-// fps gate (todo 2.11, ">30 fps sustained on M1, measured via 2.6 frame
-// stats, not eyeballed"). Every frame runs through FrameStats + counter-heap
-// GPU timestamps (Renderer.renderOffscreenSustained); frames are synchronous,
-// so per-frame wall time is a conservative upper bound on the pipelined
-// draw loop. Exit 1 when avg or p95 misses the frame-time budget.
+// `bench`: sustained one-cell rendering plus milestone 3.2's scripted
+// cross-cell streaming path. Both use synchronous offscreen frames +
+// FrameStats; fly-path mode adds guarded physical-footprint, settlement,
+// unload, and duplicate-build gates through shared engine benchmark logic.
 
 import Foundation
 import Metal
@@ -13,19 +11,22 @@ enum BenchCommand {
     /// 30 fps -> 33.33 ms per frame.
     private static let defaultBudgetMS = 1000.0 / 30.0
     private static let defaultFrames = 360 // 3 full FrameStats windows
+    private static let defaultFlyMaxFrames = 36000
+    private static let defaultFootprintCapMB = 1024.0
+
+    private struct Options {
+        let worldspace: String
+        let start: CellCoordinate
+        let size: (width: Int, height: Int)
+        let frames: Int
+        let budgetMS: Double
+        let flyPath: Bool
+        let maxFrames: Int
+        let footprintCapMB: Double
+    }
 
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let worldspace = try scanner.option("--worldspace")
-            ?? FirstRenderCell.worldspaceEditorID
-        let gridX = try RenderCommand.int32(scanner.option("--x"), name: "--x")
-            ?? FirstRenderCell.gridX
-        let gridY = try RenderCommand.int32(scanner.option("--y"), name: "--y")
-            ?? FirstRenderCell.gridY
-        let size = try RenderCommand.parseSize(scanner.option("--size"))
-        let frames = try frameCount(scanner.option("--frames"))
-        let budget = try budgetMS(scanner.option("--budget-ms"))
-        try scanner.finish()
-
+        let options = try parseOptions(scanner: &scanner)
         guard
             let device = MTLCreateSystemDefaultDevice(),
             device.supportsFamily(.metal4)
@@ -33,12 +34,24 @@ enum BenchCommand {
             throw CLIError.failure("no Metal 4 GPU available")
         }
 
+        if options.flyPath {
+            try runFlyPath(context: context, device: device, options: options)
+        } else {
+            try runSustained(context: context, device: device, options: options)
+        }
+    }
+
+    private static func runSustained(
+        context: CLIContext,
+        device: MTLDevice,
+        options: Options
+    ) throws {
         let cellScene = try RenderCommand.buildScene(
             context: context,
             device: device,
-            worldspace: worldspace,
-            gridX: gridX,
-            gridY: gridY
+            worldspace: options.worldspace,
+            gridX: options.start.x,
+            gridY: options.start.y
         )
         print(cellScene.summary.summaryLine)
         guard let bounds = cellScene.bounds else {
@@ -48,7 +61,11 @@ enum BenchCommand {
         // Headless MTKView carries pixel-format config only (render command
         // pattern); the offscreen path never touches its drawable.
         let view = MTKView(
-            frame: CGRect(x: 0, y: 0, width: size.width, height: size.height),
+            frame: CGRect(
+                x: 0, y: 0,
+                width: options.size.width,
+                height: options.size.height
+            ),
             device: device
         )
         view.isPaused = true
@@ -59,20 +76,133 @@ enum BenchCommand {
             camera: SceneCamera.framing(bounds: bounds)
         )
         let result = try renderer.renderOffscreenSustained(
-            width: size.width,
-            height: size.height,
-            frames: frames
+            width: options.size.width,
+            height: options.size.height,
+            frames: options.frames
         )
-        report(result: result, size: size, frames: frames, budget: budget)
+        report(
+            result: result,
+            size: options.size,
+            frames: options.frames,
+            budget: options.budgetMS
+        )
         let avg = result.averageMS
         let p95 = result.percentileMS(95)
-        guard avg <= budget, p95 <= budget else {
+        guard avg <= options.budgetMS, p95 <= options.budgetMS else {
             throw CLIError.failure(String(
                 format: "frame time over budget: avg %.2f ms / p95 %.2f ms vs %.2f ms",
-                avg, p95, budget
+                avg, p95, options.budgetMS
             ))
         }
-        print(String(format: "[ OK ] sustained frame time within %.2f ms budget", budget))
+        print(String(
+            format: "[ OK ] sustained frame time within %.2f ms budget",
+            options.budgetMS
+        ))
+    }
+
+    private static func runFlyPath(
+        context: CLIContext,
+        device: MTLDevice,
+        options: Options
+    ) throws {
+        let builder = try RenderCommand.makeBuilder(context: context, device: device)
+        let provider = BuilderCellSceneProvider(
+            builder: builder,
+            worldspaceEditorID: options.worldspace
+        )
+        let view = MTKView(
+            frame: CGRect(
+                x: 0, y: 0,
+                width: options.size.width,
+                height: options.size.height
+            ),
+            device: device
+        )
+        view.isPaused = true
+        view.enableSetNeedsDisplay = false
+        let renderer = try Renderer(view: view, scene: RenderScene(instances: []))
+        let result = try CellStreamingFlyBenchmark.run(
+            renderer: renderer,
+            provider: provider,
+            configuration: CellStreamingFlyBenchmarkConfiguration(
+                start: options.start,
+                size: options.size,
+                maxFrames: options.maxFrames,
+                footprintCapMB: options.footprintCapMB
+            )
+        )
+        reportFlyPath(
+            result: result,
+            size: options.size,
+            budget: options.budgetMS
+        )
+        guard
+            result.render.averageMS <= options.budgetMS,
+            result.render.percentileMS(95) <= options.budgetMS
+        else {
+            throw CLIError.failure(String(
+                format: "stream frame time over budget: avg %.2f / p95 %.2f vs %.2f ms",
+                result.render.averageMS,
+                result.render.percentileMS(95),
+                options.budgetMS
+            ))
+        }
+        print("[ OK ] cross-cell stream settled, unloaded safely, built each cell once")
+    }
+
+    private static func parseOptions(scanner: inout ArgumentScanner) throws -> Options {
+        let worldspace = try scanner.option("--worldspace")
+            ?? FirstRenderCell.worldspaceEditorID
+        let gridX = try RenderCommand.int32(scanner.option("--x"), name: "--x")
+            ?? FirstRenderCell.gridX
+        let gridY = try RenderCommand.int32(scanner.option("--y"), name: "--y")
+            ?? FirstRenderCell.gridY
+        let options = try Options(
+            worldspace: worldspace,
+            start: CellCoordinate(x: gridX, y: gridY),
+            size: RenderCommand.parseSize(scanner.option("--size")),
+            frames: frameCount(scanner.option("--frames")),
+            budgetMS: budgetMS(scanner.option("--budget-ms")),
+            flyPath: scanner.flag("--fly-path"),
+            maxFrames: maxFrameCount(scanner.option("--max-frames")),
+            footprintCapMB: footprintCapMB(scanner.option("--footprint-cap-mb"))
+        )
+        try scanner.finish()
+        return options
+    }
+
+    private static func reportFlyPath(
+        result: CellStreamingFlyBenchmarkResult,
+        size: (width: Int, height: Int),
+        budget: Double
+    ) {
+        for summary in result.render.windowSummaries {
+            print("[INFO] stats window: \(summary)")
+        }
+        let footprints = result.settledFootprintsMB
+            .map { String(format: "%.0f", $0) }
+            .joined(separator: " -> ")
+        print(
+            "[INFO] waypoint footprint MB: \(footprints); "
+                + String(
+                    format: "peak %.0f / cap %.0f",
+                    result.peakFootprintMB,
+                    result.footprintCapMB
+                )
+        )
+        print(
+            "[INFO] \(result.uniqueBuildCount) unique builds, "
+                + "\(result.unloadedCellCount) initial cells unloaded, "
+                + "\(result.finalResidentCellCount) resident, "
+                + "\(result.finalVoidCellCount) void"
+        )
+        print(String(
+            format: "[INFO] %d stream frames @ %dx%d: avg %.2f ms, p95 %.2f ms, "
+                + "max %.2f ms, budget %.2f ms",
+            result.render.frameMS.count, size.width, size.height,
+            result.render.averageMS, result.render.percentileMS(95),
+            result.render.frameMS.max() ?? 0, budget
+        ))
     }
 
     private static func report(
@@ -108,5 +238,21 @@ enum BenchCommand {
             throw CLIError.usage("--budget-ms expects a positive number, got \(value)")
         }
         return budget
+    }
+
+    private static func maxFrameCount(_ value: String?) throws -> Int {
+        guard let value else { return defaultFlyMaxFrames }
+        guard let frames = Int(value), (1 ... 100_000).contains(frames) else {
+            throw CLIError.usage("--max-frames expects an integer (1-100000), got \(value)")
+        }
+        return frames
+    }
+
+    private static func footprintCapMB(_ value: String?) throws -> Double {
+        guard let value else { return defaultFootprintCapMB }
+        guard let cap = Double(value), cap > 0 else {
+            throw CLIError.usage("--footprint-cap-mb expects a positive number, got \(value)")
+        }
+        return cap
     }
 }

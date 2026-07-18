@@ -48,8 +48,9 @@ where `--out` points (AGENTS.md Legal & IP).
 | `cell [--worldspace <edid>] [--x n] [--y n] [--refs]` | exterior-cell summary without Metal: ref count, base-type histogram, other cell records; `--refs` lists placements |
 | `nif <key>` | container stats + flattened model summary (meshes, verts/tris, bounds, materials with texture paths) |
 | `dds <key>` | header + mip chain (size, BCn format, sRGB declaration) |
-| `render --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f] [--neighbors]` | cell scene build -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load summary + non-background pixel fraction; `--zoom` (0.1-10) moves the eye toward the framed center — whole-cell framing is conservative, sparse cells render small without it; `--neighbors` builds the target cell plus its 8 grid neighbors (one shared `MeshLibrary`/`TextureLibrary`/`CellSceneBuilder`, so residency dedups across cells) and renders one frame framed to the union of all built bounds — a missing or malformed neighbor slot warns to stderr and is skipped, not fatal |
+| `render --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f] [--neighbors]` | cell scene build -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load summary + draw stats (draw calls vs groups/instances/culled — instancing + culling evidence) + non-background pixel fraction; `--zoom` (0.1-10) moves the eye toward the framed center — whole-cell framing is conservative, sparse cells render small without it; `--neighbors` builds the target cell plus its 8 grid neighbors (one shared `MeshLibrary`/`TextureLibrary`/`CellSceneBuilder`, so residency dedups across cells) and renders one frame framed to the union of all built bounds — a missing or malformed neighbor slot warns to stderr and is skipped, not fatal |
 | `bench [--worldspace/--x/--y] [--size WxH] [--frames n] [--budget-ms f]` | sustained offscreen render (default 360 frames @ 1280x720) through `Renderer.renderOffscreenSustained` — FrameStats windows + per-frame wall times; prints avg/p95/max + fps, exit 1 when avg or p95 misses the budget (default 33.33 ms = 30 fps, todo 2.11 gate) |
+| `bench --fly-path [--worldspace/--x/--y] [--size WxH] [--budget-ms f] [--max-frames n] [--footprint-cap-mb f]` | scripted launch-center -> east -> north cell flight through live `CellStreamer`; waits for each 5x5 grid, reuses one render-target pair at 100 Hz, requires physical-footprint plateau/cap, unload, exact 35-cell build union with no duplicates, zero failed builds, avg/p95 frame budget |
 
 `cell`/`render` default to the first-render cell
 ([decision](/decisions/first-render-cell.md), constants in
@@ -76,6 +77,12 @@ Implementation notes:
   already carry absolute world matrices, so no re-transform) and unions the 9 bounds
   boxes before framing. Dumb composition on purpose: this is the 3.1 verify render, not
   the 3.2 streaming grid manager.
+* `bench --fly-path` uses shared `CellStreamingFlyBenchmark` engine logic, not a CLI-only
+  model. It drives production serial build runner, streamer, renderer scene swaps, asset
+  eviction, and `task_vm_info.phys_footprint` sampler. Waypoints move one cell east, then
+  north; overlapping 5x5 grids require exactly 35 unique builds. Repeated count,
+  missing/unexpected coordinate, failed cell, no unload, >1.6x final/start footprint, cap,
+  timeout, or avg/p95 budget miss exits 1.
 
 ## Probe harness (make probe)
 
@@ -85,5 +92,5 @@ default `/Volumes/data/steam/steamapps/common/Skyrim Special Edition`, override 
 finds meshes; `record 0x3C` decodes Tamriel (UESP "Skyrim Mod:FormIDs"); `cell`
 summary; `nif`/`dds` inspect the first listed assets; `render` writes
 `logs/probe-render.png`; `bench` runs the sustained fps gate (360 frames @
-720p, fails over 33.33 ms avg/p95) and echoes the measured line. Full
-output -> `logs/probe.log`.
+720p, fails over 33.33 ms avg/p95); `bench --fly-path` runs the M3.2 cross-cell gate at
+640x360. Full output -> `logs/probe.log`.

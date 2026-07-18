@@ -30,7 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         locateGameData()
 
         let gameViewController = GameViewController()
-        gameViewController.sceneFactory = makeCellSceneFactory()
+        gameViewController.cellProviderFactory = makeCellProviderFactory()
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1280, height: 720),
@@ -49,17 +49,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApplication.shared.activate()
     }
 
-    /// Scene factory handed to GameViewController: builds the launch cell
-    /// (FirstRenderCell — docs/decisions/first-render-cell.md) with a
-    /// framing camera. Any failure past the located-data gate (missing esm,
-    /// build throw, empty bounds) logs [ERROR] and returns nil so the
-    /// renderer falls back to DemoScene — the missing-data alert already
-    /// covered the configuration case, so this path never crashes or
-    /// re-alerts.
-    private func makeCellSceneFactory() -> ((MTLDevice) -> (
-        scene: RenderScene,
-        camera: SceneCamera
-    )?)? {
+    /// Provider factory handed to GameViewController: sets up the off-main
+    /// cell builder (VFS -> ESMFile -> Texture/MeshLibrary -> CellSceneBuilder)
+    /// over the located install. No cell is built here -- that walk moves to
+    /// the streamer's background runner (todo 3.2), so launch never blocks on
+    /// a scene build. Only the cheap setup runs on the view's device (asset
+    /// libraries bind GPU resources there). Any failure past the located-data
+    /// gate (missing esm, ESM parse throw) logs [ERROR] and returns nil so the
+    /// controller falls back to DemoScene -- the missing-data alert already
+    /// covered the configuration case, so this path never crashes or re-alerts.
+    private func makeCellProviderFactory() -> ((MTLDevice) -> (any CellSceneProvider)?)? {
         guard let root = gameDataRoot, let vfs = virtualFileSystem else { return nil }
         let esmURL = root.dataURL.appending(path: "Skyrim.esm")
         return { device in
@@ -68,24 +67,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 let textures = TextureLibrary(fileSystem: vfs, device: device)
                 let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
                 let builder = CellSceneBuilder(file: file, meshes: meshes, textures: textures)
-                let cellScene = try builder.buildScene(
-                    worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
-                    gridX: FirstRenderCell.gridX,
-                    gridY: FirstRenderCell.gridY
+                return BuilderCellSceneProvider(
+                    builder: builder,
+                    worldspaceEditorID: FirstRenderCell.worldspaceEditorID
                 )
-                guard let bounds = cellScene.bounds else {
-                    Self.logger.error("[ERROR] cell scene drew nothing, using demo scene")
-                    return nil
-                }
-                // Builder already logged the summary in its own category;
-                // repeat here so the app-launch story reads in one stream.
-                let summary = cellScene.summary.summaryLine
-                Self.logger.info("\(summary, privacy: .public)")
-                return (cellScene.renderScene, SceneCamera.framing(bounds: bounds))
             } catch {
                 let reason = String(describing: error)
                 Self.logger.error(
-                    "[ERROR] cell scene build failed, using demo scene: \(reason, privacy: .public)"
+                    """
+                    [ERROR] cell provider setup failed, using demo scene: \
+                    \(reason, privacy: .public)
+                    """
                 )
                 return nil
             }

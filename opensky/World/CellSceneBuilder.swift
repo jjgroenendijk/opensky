@@ -1,8 +1,9 @@
-// Cell scene build (todo 2.7 scene build): walk one plugin's WRLD tree to an
-// exterior cell, resolve each REFR's STAT base, load its NIF via MeshLibrary,
-// and emit an instancing-ready RenderScene. Structural failures (worldspace
-// or cell absent) throw; per-ref and per-asset failures log + skip + count
-// and never abort the build (AGENTS.md mod-quirk rule).
+// Cell scene build (todo 2.7 scene build, widened to MSTT/TREE/FURN/ACTI/CONT
+// bases in 3.2): walk one plugin's WRLD tree to an exterior cell, resolve
+// each REFR's base object, load its NIF via MeshLibrary, and emit an
+// instancing-ready RenderScene. Structural failures (worldspace or cell
+// absent) throw; per-ref and per-asset failures log + skip + count and never
+// abort the build (AGENTS.md mod-quirk rule).
 //
 // Group nesting: WRLD top group -> WRLD record + world-children group ->
 // exterior block/sub-block groups -> CELL record + cell-children group ->
@@ -23,16 +24,26 @@ nonisolated enum CellSceneError: Error, Equatable {
 }
 
 /// Per-build skip accounting; folded into CellLoadSummary at the end.
-private struct BuildCounts {
+nonisolated private struct BuildCounts {
     var totalRefs = 0
     var malformedRefs = 0
-    var nonSTATBases = 0
+    var unsupportedBases = 0
     var markers = 0
     var modelFailures = 0
 }
 
+/// One base record resolved to its drawable model path, regardless of
+/// whether it came from the STAT or ModelBase (MSTT/TREE/FURN/ACTI/CONT)
+/// index — resolveInstances treats both the same past this point.
+nonisolated private struct ResolvedBase {
+    let formID: FormID
+    let recordType: FourCC
+    /// Nil = marker base (no MODL), nothing to draw.
+    let modelPath: String?
+}
+
 /// One resolved placement, sortable into instancing-ready order.
-private struct ResolvedInstance {
+nonisolated private struct ResolvedInstance {
     /// Normalized mesh path — primary grouping key.
     let sortKey: String
     /// REFR FormID — deterministic tie-break within one model.
@@ -54,7 +65,7 @@ nonisolated struct FoundCell {
 
 /// The world-children group plus the decoded WRLD it belongs to (DNAM default
 /// land height feeds the LAND-less terrain fallback).
-private struct FoundWorld {
+nonisolated private struct FoundWorld {
     let children: ESMGroup
     let worldspace: Worldspace?
 }
@@ -76,6 +87,9 @@ nonisolated final class CellSceneBuilder {
     let textures: TextureLibrary
     /// FormID -> STAT over the STAT top group, built on first use.
     private var statIndex: [UInt32: StaticObject]?
+    /// FormID -> ModelBase over the MSTT/TREE/FURN/ACTI/CONT top groups,
+    /// built on first use. Checked when a ref's base is not a STAT.
+    private var modelBaseIndex: [UInt32: ModelBase]?
 
     init(file: ESMFile, meshes: MeshLibrary, textures: TextureLibrary) {
         self.file = file
@@ -90,6 +104,11 @@ nonisolated final class CellSceneBuilder {
     ) throws -> CellScene {
         // localized only affects FULL lstrings, which scene build never
         // reads — a failed TES4 decode safely defaults to false.
+        // Clear any stale working set so this build's touched keys are exactly
+        // this cell's mesh + texture set (recorded onto the CellScene for
+        // unload eviction — docs/engine/cell-streaming.md).
+        _ = meshes.drainTouchedKeys()
+        _ = textures.drainTouchedKeys()
         let localized = (try? file.pluginHeader().isLocalized) ?? false
         let world = try worldChildrenGroup(editorID: worldspaceEditorID, localized: localized)
         guard
@@ -107,13 +126,20 @@ nonisolated final class CellSceneBuilder {
         let refs = collectReferences(in: found.children, counts: &counts)
         let instances = resolveInstances(refs: refs, counts: &counts)
         let terrain = buildTerrain(found: found, worldspace: world.worldspace)
-        return makeScene(
+        var scene = makeScene(
             found: found,
             grid: (x: gridX, y: gridY),
             instances: instances,
             terrain: terrain,
             counts: counts
         )
+        // Record the mesh + texture keys this cell touched so streaming unload
+        // can keep the union over resident cells and evict the rest.
+        scene.assets = CellAssets(
+            meshKeys: meshes.drainTouchedKeys(),
+            textureKeys: textures.drainTouchedKeys()
+        )
+        return scene
     }
 }
 
@@ -122,7 +148,10 @@ extension CellSceneBuilder {
     /// labeled by the owning record's FormID. EDID match is exact (editor IDs
     /// are stable identifiers). A malformed WRLD is skipped — another
     /// worldspace may still match.
-    private func worldChildrenGroup(editorID: String, localized: Bool) throws -> FoundWorld {
+    nonisolated private func worldChildrenGroup(
+        editorID: String,
+        localized: Bool
+    ) throws -> FoundWorld {
         guard let top = file.topGroup(of: "WRLD") else {
             throw CellSceneError.worldspaceNotFound(editorID: editorID)
         }
@@ -152,7 +181,7 @@ extension CellSceneBuilder {
     /// Depth-first over exterior block/sub-block groups. Match is by decoded
     /// XCLC grid, never by block labels (unreliable in CK-ignored groups —
     /// see ESMGroup).
-    private func findCell(
+    nonisolated private func findCell(
         in group: ESMGroup,
         gridX: Int32,
         gridY: Int32,
@@ -193,7 +222,7 @@ extension CellSceneBuilder {
 
     /// The cell-children group for a CELL record sits after it among the same
     /// siblings, labeled with the cell's FormID.
-    private func cellChildrenGroup(
+    nonisolated private func cellChildrenGroup(
         following index: Int,
         in children: [ESMGroup.Child],
         cellFormID: UInt32
@@ -212,7 +241,7 @@ extension CellSceneBuilder {
     /// ACHR, PGRE, ...) are not static placements — ignored deliberately and
     /// not counted (skip taxonomy, docs/engine/cell-scene.md). Deleted REFRs
     /// place nothing -> also ignored. A REFR that fails to decode is malformed.
-    private func collectReferences(
+    nonisolated private func collectReferences(
         in cellChildren: ESMGroup?,
         counts: inout BuildCounts
     ) -> [PlacedReference] {
@@ -243,36 +272,46 @@ extension CellSceneBuilder {
         return refs
     }
 
-    /// Resolves refs to placed instances. Skip buckets: base not in the STAT
-    /// index -> non-STAT; STAT without MODL -> marker; mesh load error ->
-    /// model failure. Output is sorted by (normalized mesh path, FormID) so
-    /// instances sharing a RenderModel are adjacent (instancing-ready) and
-    /// the order is deterministic across runs.
-    private func resolveInstances(
+    /// Resolves refs to placed instances. Skip buckets: base FormID resolves
+    /// to neither the STAT nor the ModelBase (MSTT/TREE/FURN/ACTI/CONT)
+    /// index -> unsupported base; a resolved base without MODL -> marker;
+    /// mesh load error -> model failure. Output is sorted by (normalized
+    /// mesh path, FormID) so instances sharing a RenderModel are adjacent
+    /// (instancing-ready) and the order is deterministic across runs.
+    nonisolated private func resolveInstances(
         refs: [PlacedReference],
         counts: inout BuildCounts
     ) -> [ResolvedInstance] {
         guard !refs.isEmpty else { return [] }
-        let index = statIndexBuildingIfNeeded()
+        let statIndex = statIndexBuildingIfNeeded()
+        let modelBaseIndex = modelBaseIndexBuildingIfNeeded()
         var instances: [ResolvedInstance] = []
         for ref in refs {
             let id = ref.formID.description
-            guard let stat = index[ref.base.rawValue] else {
-                counts.nonSTATBases += 1
+            guard
+                let resolved = resolveBase(
+                    formID: ref.base.rawValue, statIndex: statIndex, modelBaseIndex: modelBaseIndex
+                )
+            else {
+                counts.unsupportedBases += 1
                 let base = ref.base.description
                 Self.logger.info(
                     """
                     REFR \(id, privacy: .public): base \(base, privacy: .public) \
-                    not a STAT, skipped
+                    type not supported, skipped
                     """
                 )
                 continue
             }
-            guard let modelPath = stat.modelPath else {
+            guard let modelPath = resolved.modelPath else {
                 counts.markers += 1
-                let base = stat.formID.description
+                let base = resolved.formID.description
+                let type = resolved.recordType.description
                 Self.logger.info(
-                    "REFR \(id, privacy: .public): marker STAT \(base, privacy: .public), skipped"
+                    """
+                    REFR \(id, privacy: .public): marker \(type, privacy: .public) \
+                    \(base, privacy: .public), skipped
+                    """
                 )
                 continue
             }
@@ -307,8 +346,8 @@ extension CellSceneBuilder {
     /// for now: scene build reads a single plugin, so REFR base IDs and STAT
     /// record IDs share one FormID space (cross-plugin resolution via
     /// FormIDResolver arrives with load-order support). Malformed STATs are
-    /// skipped — refs pointing at them fall into the non-STAT bucket.
-    private func statIndexBuildingIfNeeded() -> [UInt32: StaticObject] {
+    /// skipped — refs pointing at them fall into the unsupported-base bucket.
+    nonisolated private func statIndexBuildingIfNeeded() -> [UInt32: StaticObject] {
         if let statIndex {
             return statIndex
         }
@@ -327,28 +366,87 @@ extension CellSceneBuilder {
         return index
     }
 
+    /// FormID -> ModelBase over the MSTT/TREE/FURN/ACTI/CONT top groups
+    /// (milestone 3.2 "widen base coverage"), built on first use and cached
+    /// like statIndex. One top group per record type — unlike STAT there is
+    /// no single shared group. Malformed records are skipped with a log,
+    /// same mod-quirk handling as STAT.
+    nonisolated private func modelBaseIndexBuildingIfNeeded() -> [UInt32: ModelBase] {
+        if let modelBaseIndex {
+            return modelBaseIndex
+        }
+        var index: [UInt32: ModelBase] = [:]
+        for type in ModelBase.supportedTypes {
+            guard let top = file.topGroup(of: type), let children = try? top.children() else {
+                continue
+            }
+            for case let .record(record) in children where record.type == type {
+                guard let base = try? ModelBase(record: record) else {
+                    let id = FormID(record.formID).description
+                    let name = type.description
+                    Self.logger
+                        .warning(
+                            "malformed \(name, privacy: .public) \(id, privacy: .public) skipped"
+                        )
+                    continue
+                }
+                index[record.formID] = base
+            }
+        }
+        modelBaseIndex = index
+        return index
+    }
+
+    /// STAT first (largest, most common base type), falling back to the
+    /// ModelBase index; nil when the base FormID resolves to neither.
+    nonisolated private func resolveBase(
+        formID: UInt32,
+        statIndex: [UInt32: StaticObject],
+        modelBaseIndex: [UInt32: ModelBase]
+    ) -> ResolvedBase? {
+        if let stat = statIndex[formID] {
+            return ResolvedBase(formID: stat.formID, recordType: "STAT", modelPath: stat.modelPath)
+        }
+        if let base = modelBaseIndex[formID] {
+            return ResolvedBase(
+                formID: base.formID, recordType: base.recordType, modelPath: base.modelPath
+            )
+        }
+        return nil
+    }
+
     /// Flattens instances into the RenderScene (opaque first, alpha-test
     /// second — RenderScene orders that way), accumulates the world AABB from
     /// per-model bounds, and logs the one-line summary.
-    private func makeScene(
+    nonisolated private func makeScene(
         found: FoundCell,
         grid: (x: Int32, y: Int32),
         instances: [ResolvedInstance],
         terrain: TerrainBuild?,
         counts: BuildCounts
     ) -> CellScene {
+        // Per-instance world AABB (model bounds through the placement
+        // transform) rides onto the draw items for frustum culling and
+        // accumulates into the cell AABB for camera framing.
+        var bounds: ModelBounds?
+        let placed = instances.map { instance -> RenderPlacement in
+            let world = meshes.bounds(forPath: instance.modelPath)?
+                .transformed(by: instance.transform)
+            if let world {
+                bounds = bounds.map { $0.union(world) } ?? world
+            }
+            return RenderPlacement(
+                model: instance.model,
+                transform: instance.transform,
+                bounds: world
+            )
+        }
         // Terrain draws through its own splat pipeline list; ref DrawItem
         // ordering (instancing-ready grouping) stays intact.
         let renderScene = RenderScene(
-            instances: instances.map { ($0.model, $0.transform) },
+            instances: placed,
             terrain: terrain?.items ?? []
         )
-        var bounds: ModelBounds?
-        for instance in instances {
-            guard let local = meshes.bounds(forPath: instance.modelPath) else { continue }
-            let world = local.transformed(by: instance.transform)
-            bounds = bounds.map { $0.union(world) } ?? world
-        }
         if let world = terrain?.bounds {
             bounds = bounds.map { $0.union(world) } ?? world
         }
@@ -358,7 +456,7 @@ extension CellSceneBuilder {
             gridY: grid.y,
             totalRefCount: counts.totalRefs,
             drawnRefCount: instances.count,
-            nonSTATSkipCount: counts.nonSTATBases,
+            unsupportedBaseSkipCount: counts.unsupportedBases,
             markerSkipCount: counts.markers,
             modelFailureSkipCount: counts.modelFailures,
             malformedRefSkipCount: counts.malformedRefs,

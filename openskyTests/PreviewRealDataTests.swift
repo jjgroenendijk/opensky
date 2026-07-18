@@ -95,7 +95,7 @@ struct PreviewRealDataTests {
                 textureProvider: textures.provider
             )
             let image = try renderImage(
-                scene: RenderScene(instances: [(
+                scene: RenderScene(instances: [RenderPlacement(
                     model: model,
                     transform: matrix_identity_float4x4
                 )]),
@@ -132,7 +132,7 @@ struct PreviewRealDataTests {
                 let bounds = meshes.bounds(forPath: entry.path)
             else { continue }
             let image = try renderImage(
-                scene: RenderScene(instances: [(
+                scene: RenderScene(instances: [RenderPlacement(
                     model: model,
                     transform: matrix_identity_float4x4
                 )]),

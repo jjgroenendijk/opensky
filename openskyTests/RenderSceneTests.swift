@@ -68,9 +68,12 @@ struct RenderSceneTests {
     @Test(.enabled(if: Self.hasDevice)) func groupsOpaqueBeforeAlphaTested() throws {
         let device = try #require(Self.device)
         let model = try Self.renderModel(device: device)
-        let scene = RenderScene(instances: [(model, matrix_identity_float4x4)])
+        let scene = RenderScene(instances: [
+            RenderPlacement(model: model, transform: matrix_identity_float4x4)
+        ])
 
         #expect(scene.drawCount == 2)
+        #expect(scene.instanceCount == 2)
         #expect(scene.opaque.count == 1)
         #expect(scene.alphaTested.count == 1)
         #expect(scene.opaque[0].material.alphaTestThreshold == nil)
@@ -88,11 +91,11 @@ struct RenderSceneTests {
         let shared = try Self.texture(device: device)
         let render = try RenderModel(device: device, model: model) { _, _ in shared }
         let instance = MatrixMath.translation(SIMD3(100, 0, 0))
-        let scene = RenderScene(instances: [(render, instance)])
+        let scene = RenderScene(instances: [RenderPlacement(model: render, transform: instance)])
 
         let expected = instance * local
-        #expect(scene.opaque[0].modelMatrix == expected)
-        #expect(scene.opaque[0].normalMatrix == MatrixMath.normalMatrix(expected))
+        #expect(scene.opaque[0].instances[0].modelMatrix == expected)
+        #expect(scene.opaque[0].instances[0].normalMatrix == MatrixMath.normalMatrix(expected))
     }
 
     @Test(.enabled(if: Self.hasDevice)) func skipsMeshWithBadMaterialSlot() throws {
@@ -104,7 +107,9 @@ struct RenderSceneTests {
         )
         let shared = try Self.texture(device: device)
         let render = try RenderModel(device: device, model: model) { _, _ in shared }
-        let scene = RenderScene(instances: [(render, matrix_identity_float4x4)])
+        let scene = RenderScene(instances: [
+            RenderPlacement(model: render, transform: matrix_identity_float4x4)
+        ])
         #expect(scene.drawCount == 0)
     }
 
@@ -124,7 +129,8 @@ struct RenderSceneTests {
             material: material,
             layerTextures: layers,
             modelMatrix: matrix_identity_float4x4,
-            normalMatrix: matrix_identity_float4x4
+            normalMatrix: matrix_identity_float4x4,
+            bounds: nil
         )
         let scene = RenderScene(instances: [], terrain: [item])
         #expect(scene.drawCount == 1)
@@ -147,19 +153,44 @@ struct RenderSceneTests {
         )
         let renderA = try RenderModel(device: device, model: model) { _, _ in shared }
         let renderB = try RenderModel(device: device, model: model) { _, _ in shared }
-        let sceneA = RenderScene(instances: [(renderA, matrix_identity_float4x4)])
+        let sceneA = RenderScene(instances: [
+            RenderPlacement(model: renderA, transform: matrix_identity_float4x4)
+        ])
         let sceneB = RenderScene(instances: [
-            (renderB, MatrixMath.translation(SIMD3(4096, 0, 0)))
+            RenderPlacement(model: renderB, transform: MatrixMath.translation(SIMD3(4096, 0, 0)))
         ])
 
         let merged = RenderScene(merging: [sceneA, sceneB])
 
+        // Distinct RenderModels -> distinct meshes -> groups concatenate.
         #expect(merged.drawCount == sceneA.drawCount + sceneB.drawCount)
         #expect(merged.opaque.count == sceneA.opaque.count + sceneB.opaque.count)
         #expect(merged.alphaTested.count == sceneA.alphaTested.count + sceneB.alphaTested.count)
         #expect(merged.terrain.isEmpty)
         // 2 meshes x (vertex + index buffer) x 2 scenes + 1 shared texture = 9.
         #expect(merged.residencyAllocations.count == 9)
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func mergingFoldsSharedModelIntoOneGroup() throws {
+        let device = try #require(Self.device)
+        // Adjacent cells placing the same cached RenderModel (one
+        // MeshLibrary) must fold into one instanced group on merge.
+        let model = try Self.renderModel(device: device)
+        let sceneA = RenderScene(instances: [
+            RenderPlacement(model: model, transform: matrix_identity_float4x4)
+        ])
+        let sceneB = RenderScene(instances: [
+            RenderPlacement(model: model, transform: MatrixMath.translation(SIMD3(4096, 0, 0)))
+        ])
+
+        let merged = RenderScene(merging: [sceneA, sceneB])
+
+        #expect(merged.opaque.count == 1)
+        #expect(merged.alphaTested.count == 1)
+        #expect(merged.opaque[0].instances.count == 2)
+        #expect(merged.alphaTested[0].instances.count == 2)
+        #expect(merged.drawCount == 2)
+        #expect(merged.instanceCount == 4)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func mergingEmptyListYieldsEmptyScene() {
@@ -173,11 +204,13 @@ struct RenderSceneTests {
         let model = try Self.renderModel(device: device)
         // Two instances of one model: buffers + shared texture counted once.
         let scene = RenderScene(instances: [
-            (model, matrix_identity_float4x4),
-            (model, MatrixMath.translation(SIMD3(10, 0, 0)))
+            RenderPlacement(model: model, transform: matrix_identity_float4x4),
+            RenderPlacement(model: model, transform: MatrixMath.translation(SIMD3(10, 0, 0)))
         ])
 
-        #expect(scene.drawCount == 4)
+        // 2 meshes -> 2 groups (1 opaque + 1 alpha-tested), 2 instances each.
+        #expect(scene.drawCount == 2)
+        #expect(scene.instanceCount == 4)
         // 2 meshes x (vertex + index buffer) + 1 shared texture = 5.
         #expect(scene.residencyAllocations.count == 5)
     }

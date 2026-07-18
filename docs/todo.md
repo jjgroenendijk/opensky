@@ -67,23 +67,6 @@ Format facts below pre-verified 2026-07-18 against UESP mod-file-format pages + 
 DynDOLOD docs / xLODGen LODGen source. Re-confirm against real install by probe during
 impl; chase flagged UNCONFIRMED points especially.
 
-### 3.2 Cell streaming
-
-* [ ] Grid manager: camera position -> cell coords -> desired 5x5 grid (uGridsToLoad
-      default), diff -> load/unload sets, hysteresis so border crossing does not thrash.
-* [ ] Async build: cell build off main queue (concurrency audit of `CellSceneBuilder` +
-      `MeshLibrary`/`TextureLibrary` sharing), scene handoff on main, per-frame
-      integration budget. Launch path goes async too — no startup block (2.7 note).
-* [ ] Scene structure: per-cell scene units composing one multi-cell draw pass; unload
-      drops instances, libraries stay shared (eviction deferred — measure memory first).
-* [ ] Perf for many cells: instanced draws (2.7 grouping is instancing-ready), frustum
-      culling vs per-model world AABBs.
-* [ ] Widen base coverage so the streamed world is not sparse: MSTT/TREE/FURN/ACTI/CONT
-      bases drawn as static models (skip taxonomy shrinks; animation/interaction stay
-      out of M3).
-* [ ] Verify: scripted camera-path bench (extend `openskycli bench` with a fly-path
-      across cells) — hitch budget during loads, memory plateaus, no crash.
-
 ### 3.3 Merge asset preview into main app
 
 Fold `openskypreview` into the main app -> one product, not two. Motivated by the main app

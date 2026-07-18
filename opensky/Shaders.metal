@@ -30,15 +30,23 @@ typedef struct
     float4 color;
 } StaticVertexOut;
 
+// Instanced (todo 3.2): matrices come from the per-instance transform
+// array, bound at the draw group's base offset — instance_id starts at 0
+// per draw call, so it indexes straight into the group's visible instances.
+// Shared by the opaque and alpha-test pipeline variants (the function
+// constant only specializes the fragment side).
 vertex StaticVertexOut staticMeshVertex(
     StaticVertexIn in [[stage_in]],
+    uint instanceID [[instance_id]],
     constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
-    constant DrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]])
+    constant DrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]],
+    const device InstanceTransform *instances [[buffer(BufferIndexInstanceTransforms)]])
 {
     StaticVertexOut out;
-    float4 world = draw.modelMatrix * float4(in.position, 1.0);
+    const device InstanceTransform &instance = instances[instanceID];
+    float4 world = instance.modelMatrix * float4(in.position, 1.0);
     out.position = frame.viewProjectionMatrix * world;
-    out.normal = (draw.normalMatrix * float4(in.normal, 0.0)).xyz;
+    out.normal = (instance.normalMatrix * float4(in.normal, 0.0)).xyz;
     out.texcoord = in.texcoord * draw.uvScale + draw.uvOffset;
     out.color = in.color;
     return out;

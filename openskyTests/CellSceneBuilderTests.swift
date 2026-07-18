@@ -1,7 +1,8 @@
 // CellSceneBuilder tests over synthetic fixtures only: ESMFixture plugin
-// bytes (WRLD tree + STAT top group) + NIFFixture meshes in a temp-dir VFS.
-// Never extracted game files (AGENTS.md Legal & IP boundary). Needs a Metal
-// device (RenderModel upload), gated like MeshLibraryTests.
+// bytes (WRLD tree + STAT/MSTT/TREE/FURN/ACTI/CONT top groups) + NIFFixture
+// meshes in a temp-dir VFS. Never extracted game files (AGENTS.md Legal & IP
+// boundary). Needs a Metal device (RenderModel upload), gated like
+// MeshLibraryTests.
 
 import Foundation
 import Metal
@@ -41,7 +42,9 @@ struct CellSceneBuilderTests {
         #expect(scene.summary.drawnRefCount == 2)
         #expect(scene.summary.skippedRefCount == 0)
         #expect(scene.summary.modelCount == 1)
-        #expect(scene.renderScene.drawCount == 2)
+        // One shared model -> one instanced group carrying both refs.
+        #expect(scene.renderScene.drawCount == 1)
+        #expect(scene.renderScene.instanceCount == 2)
         // Model extents (0..2, 0..4, 0..6) translated by each REFR position.
         let bounds = try #require(scene.bounds)
         #expect(bounds.min == SIMD3(-10, -20, -30))
@@ -72,16 +75,44 @@ struct CellSceneBuilderTests {
 
     // MARK: - Skip taxonomy
 
-    @Test(.enabled(if: Self.hasDevice)) func skipsRefWithNonSTATBase() throws {
+    @Test(.enabled(if: Self.hasDevice)) func skipsRefWithUnsupportedBase() throws {
         try writeLooseFile("meshes/arch/wall.nif", unitNIF())
         let scene = try build(pluginData: plugin(
             temporaryRefs: refrRecord(formID: 0x200, base: 0x100)
-                + refrRecord(formID: 0x201, base: 0x999), // no STAT with this ID
+                + refrRecord(formID: 0x201, base: 0x999), // no STAT/ModelBase with this ID
             statRecords: statRecord(formID: 0x100, modelPath: "arch\\wall.nif")
         ))
         #expect(scene.summary.totalRefCount == 2)
         #expect(scene.summary.drawnRefCount == 1)
-        #expect(scene.summary.nonSTATSkipCount == 1)
+        #expect(scene.summary.unsupportedBaseSkipCount == 1)
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func drawsAllFiveModelBaseTypes() throws {
+        try writeLooseFile("meshes/arch/wall.nif", unitNIF())
+        let types = ["MSTT", "TREE", "FURN", "ACTI", "CONT"]
+        var records: [String: Data] = [:]
+        var refs = Data()
+        for (index, type) in types.enumerated() {
+            let formID = UInt32(0x300 + index)
+            records[type] = modelBaseRecord(type: type, formID: formID, modelPath: "arch\\wall.nif")
+            refs += refrRecord(formID: UInt32(0x400 + index), base: formID)
+        }
+        let scene = try build(pluginData: plugin(temporaryRefs: refs, modelBaseRecords: records))
+        #expect(scene.summary.totalRefCount == types.count)
+        #expect(scene.summary.drawnRefCount == types.count)
+        #expect(scene.summary.skippedRefCount == 0)
+        // All five bases share one NIF -> one group, five instances.
+        #expect(scene.renderScene.drawCount == 1)
+        #expect(scene.renderScene.instanceCount == types.count)
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func skipsMarkerModelBaseWithoutModel() throws {
+        let scene = try build(pluginData: plugin(
+            temporaryRefs: refrRecord(formID: 0x200, base: 0x100),
+            modelBaseRecords: ["TREE": modelBaseRecord(type: "TREE", formID: 0x100, modelPath: nil)]
+        ))
+        #expect(scene.summary.markerSkipCount == 1)
+        #expect(scene.summary.drawnRefCount == 0)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func skipsMarkerSTATWithoutModel() throws {
@@ -168,20 +199,21 @@ struct CellSceneBuilderTests {
                 + statRecord(formID: 0x101, modelPath: "arch\\aaa.nif")
         ))
         let opaque = scene.renderScene.opaque
-        try #require(opaque.count == 4)
-        // aaa refs (0x201, 0x203) first, then zzz refs (0x200, 0x202).
-        let translations = opaque.map { item in
-            let column = item.modelMatrix.columns.3
-            return SIMD3(column.x, column.y, column.z)
+        try #require(opaque.count == 2)
+        // aaa group (refs 0x201, 0x203) first, then zzz (0x200, 0x202);
+        // instances within a group ordered by FormID.
+        let translations = opaque.map { group in
+            group.instances.map { instance in
+                let column = instance.modelMatrix.columns.3
+                return SIMD3(column.x, column.y, column.z)
+            }
         }
         #expect(translations == [
-            SIMD3(2, 0, 0), SIMD3(4, 0, 0), SIMD3(1, 0, 0), SIMD3(3, 0, 0)
+            [SIMD3(2, 0, 0), SIMD3(4, 0, 0)],
+            [SIMD3(1, 0, 0), SIMD3(3, 0, 0)]
         ])
-        // Adjacent items of one group share the same GPU mesh (shared
-        // RenderModel instance) — the instancing-ready property.
-        #expect(opaque[0].mesh === opaque[1].mesh)
-        #expect(opaque[2].mesh === opaque[3].mesh)
-        #expect(opaque[1].mesh !== opaque[2].mesh)
+        // Groups draw distinct GPU meshes; each group is one instanced call.
+        #expect(opaque[0].mesh !== opaque[1].mesh)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func summaryLineReportsCounts() throws {
@@ -194,7 +226,7 @@ struct CellSceneBuilderTests {
         // Fixture NIF has no shader property -> untextured placeholder, so
         // texture counters stay zero.
         #expect(scene.summary.summaryLine == "[INFO] TestCell06 (6,-2): 2 refs, 1 drawn, "
-            + "1 skipped (1 non-STAT), 1 models, 0 textures (0 missing)")
+            + "1 skipped (1 unsupported-base), 1 models, 0 textures (0 missing)")
     }
 }
 
@@ -255,6 +287,15 @@ extension CellSceneBuilderTests {
         return ESMFixture.record("STAT", formID: formID, data: fields)
     }
 
+    /// One MSTT/TREE/FURN/ACTI/CONT record, same EDID/MODL shape as STAT.
+    private func modelBaseRecord(type: String, formID: UInt32, modelPath: String?) -> Data {
+        var fields = Data()
+        if let modelPath {
+            fields += ESMFixture.field("MODL", ESMFixture.zstring(modelPath))
+        }
+        return ESMFixture.record(type, formID: formID, data: fields)
+    }
+
     private func refrRecord(
         formID: UInt32,
         base: UInt32,
@@ -285,14 +326,18 @@ extension CellSceneBuilderTests {
     }
 
     /// TES4 + WRLD tree (world children -> block -> sub-block -> CELL +
-    /// children with persistent + temporary groups) + STAT top group.
+    /// children with persistent + temporary groups) + STAT top group + one
+    /// top group per non-empty entry in `modelBaseRecords` (keyed by record
+    /// type, e.g. "TREE") — mirrors the real plugin's one-group-per-type
+    /// layout instead of mixing types under a single label.
     private func plugin(
         worldspaceEditorID: String = "Tamriel",
         cellEditorID: String = "TestCell06",
         grid: (x: Int32, y: Int32) = (6, -2),
         persistentRefs: Data = Data(),
         temporaryRefs: Data = Data(),
-        statRecords: Data = Data()
+        statRecords: Data = Data(),
+        modelBaseRecords: [String: Data] = [:]
     ) -> Data {
         let cellFormID: UInt32 = 0x2B
         let worldFormID: UInt32 = 0x1A
@@ -328,9 +373,14 @@ extension CellSceneBuilderTests {
             "WRLD", formID: worldFormID,
             data: ESMFixture.field("EDID", ESMFixture.zstring(worldspaceEditorID))
         )
+        let modelBaseGroups = modelBaseRecords
+            .sorted { $0.key < $1.key } // deterministic fixture bytes
+            .map { type, records in ESMFixture.topGroup(type, contents: records) }
+            .reduce(Data(), +)
         return ESMFixture.tes4()
             + ESMFixture.topGroup("WRLD", contents: wrld + worldChildren)
             + ESMFixture.topGroup("STAT", contents: statRecords)
+            + modelBaseGroups
     }
 
     private func makeBuilder(pluginData: Data, device: MTLDevice) throws -> CellSceneBuilder {

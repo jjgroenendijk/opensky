@@ -4,6 +4,149 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* **M3.2 complete -- guarded async cell streaming**: launch starts empty and builds one
+  center-out cell at a time off main; demo camera cannot recenter before first seed. Local
+  backlog + runner pending-set dedupe bound work; per-cell mesh/texture ownership,
+  resident-union drop sets, serial eviction, stale-success cleanup, transactional renderer
+  swaps, and overlap-safe retire purge make unload safe. External-volume 15 GiB fill growth
+  traced to `.mappedIfSafe` copying ~14.6 GiB BSA set; BSA/ESM now `.alwaysMapped`.
+  Repaired real harness disables parallel tests, preflights exact selector + executed count,
+  guards `task_vm_info.phys_footprint`, reuses targets, paces, and times out. Guarded 5x5:
+  25 resident/0 void, ~444 MB fill, <0.5 GB peak. New shared
+  `CellStreamingFlyBenchmark` + `openskycli bench --fly-path`: center -> east -> north,
+  433 -> 425 -> 419 MB settled (462 MB peak), 35 unique builds exactly once, 9 initial
+  cells unloaded, final 25/0, avg 2.79 ms/p95 5.33 ms/max 53.48 ms at 1280x720. Docs:
+  [cell streaming](/engine/cell-streaming.md), [CLI](/tools/cli.md).
+* **Async cell streaming controller** (M3.2 async build): new
+  `World/CellStreamer.swift` drives live streaming from one main-thread
+  `update(cameraPosition:)`. Concurrency: `CellSceneBuilder` +
+  `MeshLibrary` + `TextureLibrary` confined to ONE serial `DispatchQueue`
+  (`SerialCellBuildRunner`, qos utility) -- queue over actor so builds run
+  one-at-a-time with no reentrancy and the caches stay lock-free
+  (confinement, not locking); main only gets finished `CellScene` values.
+  `CellSceneProvider` is the build seam (`BuilderCellSceneProvider` in the
+  app, fakes in tests); `CellBuildRunning` abstracts the executor. Pure
+  `CellStreamCore` value type holds resident/inFlight/void/failed sets:
+  `accountedCells` feeds `CellGridManager` so void slots (`cellNotFound`) +
+  failed builds are remembered and never re-requested (no retry storm);
+  `integrate` discards stale/out-of-order completions (unloaded mid-flight).
+  Per-frame budget: at most one drawable cell integrated (a swap is a full
+  recompose); void/failed/stale drained free; requests dispatched
+  center-out. `CellGridManager.cellCenter(of:)` added to seed the grid on a
+  launch cell. Docs: [cell streaming](/engine/cell-streaming.md) controller
+  * concurrency sections; MeshLibrary/TextureLibrary threading comments.
+  Tests: `CellStreamCoreTests` (dedupe, void/failed no-retry, unload forget,
+  stale/out-of-order), `CellStreamerTests` (fake runner: budget order,
+  recenter unload, first-cell-only camera reseed).
+* **Instanced draws for repeated models** (M3.2 renderer core): instances
+  sharing mesh + material draw as one `drawIndexedPrimitives(...
+  instanceCount:)`. `RenderScene` now builds `DrawGroup`s (mesh, material,
+  `[DrawInstance]`; key = mesh + diffuse ObjectIdentifiers, first-appearance
+  order); `RenderScene(merging:)` re-groups across cells. Per-draw GPU data
+  split: `DrawUniforms` keeps material scalars in the 256-aligned ring
+  (per group), matrices move to new tightly-packed `InstanceTransform`
+  ring (128 B stride, `instanceSlotCapacity` per slot, same pow2
+  regrow-on-swap). `staticMeshVertex` gains `[[instance_id]]` + `device
+  InstanceTransform*` at `BufferIndexInstanceTransforms` (arg table 5
+  buffers); terrain stays non-instanced. Culling composes per instance:
+  only visible transforms written, group drawn with visible count,
+  all-culled group skipped. `openskycli render` prints a draw-stats line
+  (docs/tools/cli.md updated). Real install: Whiterun (6,-2) 49 instances
+  -> 32 draw calls; 3x3 grid 711 -> 330; grid frame differs from
+  pre-instancing baseline by 54/921600 px (draw-order z-fight edges, max
+  delta 34) — visually identical; bench avg 0.47 ms / p95 0.50 ms. Docs:
+  [metal4-renderer](/rendering/metal4-renderer.md) instanced draws section.
+  Tests: `RendererInstancingTests` (one call for N instances w/ projected
+  pixel evidence, culling composes), grouped-scene updates across
+  `RenderSceneTests`/`DemoSceneTests`/`CellSceneBuilderTests`/
+  `CellSceneCompositionTests`.
+* **Swappable renderer scene + retire list** (M3.2 renderer core):
+  `Renderer.setScene(_:camera:)` swaps the drawable scene between frames
+  (main thread, same as draw(in:); never blocks on the GPU). Draw-uniform
+  ring sized by `drawUniformSlotCapacity` (next pow2 >= drawCount, min 1),
+  regrown on swap when exceeded; old scene allocations + replaced rings go
+  on a retire list tagged with `frameIndex - 1`, released only once
+  `endFrameEvent.signaledValue` proves those frames drained. Residency:
+  setScene only adds (MTLResidencySet removals hit at commit() even with
+  frames queued); removal happens at purge, filtered against the live set
+  (A->B->A swaps, shared cell assets). Optional camera param reseeds
+  sun/ambient + free-fly pose. New `World/CellSceneComposition.swift`:
+  resident `[CellCoordinate: CellScene]`, setCell/removeCell,
+  composedScene() via RenderScene(merging:) in (x,y) order,
+  composedBounds() — container for the upcoming streaming controller.
+  Real-install verify: Whiterun 3x3 PNG byte-identical, bench avg 0.51 ms /
+  p95 0.61 ms. Docs: [metal4-renderer](/rendering/metal4-renderer.md) scene
+  swap section. Tests: `RendererSceneSwapTests` (regrow swap, empty-scene
+  clear frame, camera reseed), `CellSceneCompositionTests`.
+* **Frustum culling wired into the renderer** (M3.2 renderer core): per-draw
+  world AABBs + per-frame culling. New `RenderPlacement` (model, transform,
+  world bounds) replaces the `RenderScene` instance tuples; `DrawItem` /
+  `TerrainDrawItem` carry `bounds: ModelBounds?` (nil -> never culled). Cell
+  build threads `MeshLibrary.bounds(forPath:).transformed(by:)` onto items
+  (same value the cell AABB already unioned); terrain items get per-patch
+  bounds; DemoScene computes its own. `encodeScenePass` builds one
+  `Frustum(viewProjection:)` per frame -> skips failing items; per-draw ring
+  now indexed by running visible-draw cursor (visible <= drawCount = ring
+  capacity). Per-frame counts exposed as `Renderer.lastDrawStats`
+  (`SceneDrawStats`). Encode path split to
+  `Rendering/RendererScenePass.swift` (file-length limit, RendererSetup
+  precedent). Real-install verify: `openskycli render --x 6 --y -2
+  --neighbors` byte-identical PNG before/after (7.4% non-background);
+  `openskycli bench` avg 0.55 ms / p95 0.74 ms vs 33.33 ms budget. Docs:
+  [metal4-renderer](/rendering/metal4-renderer.md) Frustum culling section.
+  Tests: `RendererCullingTests` (culled-vs-drawn stats + pixel checks,
+  all-culled clear frame), existing offscreen/scene suites green.
+* **Widen base coverage, M3.2**: `CellSceneBuilder` drew STAT bases only; MSTT, TREE,
+  FURN, ACTI, CONT placements fell into the (now-gone) non-STAT skip bucket. New shared
+  decoder `ModelBase` (`opensky/Formats/ESM/Records/ModelBase.swift`) reads EDID + MODL
+  for all five types (UESP "Skyrim Mod:Mod File Format" /MSTT /TREE /FURN /ACTI /CONT —
+  same field layout as STAT); animation/interaction fields stay unread, model path only.
+  `CellSceneBuilder` gains a second lazy FormID -> `ModelBase` index over the five
+  top groups (STAT stays first, largest, most common); `resolveInstances` tries STAT
+  then ModelBase before giving up. Skip bucket `nonSTATSkipCount`/`nonSTATBases` renamed
+  to `unsupportedBaseSkipCount`/`unsupportedBases` (`CellScene.swift`,
+  `CellSceneBuilder.swift`) — now means "base FormID resolves to neither index" (DOOR,
+  NPC_, ACHR, IDLM, MISC, FLOR, SOUN, ... bases, or a malformed base record), not
+  "non-STAT". Real-install verify (`openskycli render`, `/Volumes/data/steam/...Skyrim
+  Special Edition`): WhiterunExterior06 (6,-2) 16 refs went from 15/16 to 16/16 drawn
+  (the lone ACTI now draws); WhiterunExterior02 (5,-3) 17/25 -> 25/25; WhiterunExterior10
+  (7,-1) 28/34 -> 34/34; ChillfurrowFarmExterior (7,-3, 134 refs, all 5 new types
+  present) 75/134 -> 104/134 (30 skipped: 13 unsupported-base — IDLM/MISC/DOOR/SOUN/FLOR,
+  genuinely out of scope — plus 17 load-failed on a handful of CONT/FLOR plant meshes
+  with what looks like a doubled-backslash path quirk in that plugin's MODL data, caught
+  and skipped by the existing mesh-load skip bucket, never crashing). Visually verified:
+  `openskycli render --neighbors` over the (6,-2) 3x3 grid — city props (wells, crates,
+  furniture) and farm trees now draw where they were previously invisible, no artifacts.
+  Docs: [record decoders](/formats/records.md), [cell scene](/engine/cell-scene.md).
+  Tests: `RecordDecoderTests` ModelBase cases, `CellSceneBuilderTests` new base-type
+  draw/marker cases + renamed skip-bucket assertions.
+* **Cell streaming grid manager** (M3.2, grid-manager sub-item): new
+  `opensky/World/CellGridManager.swift` -- pure `simd`-only value type, camera
+  `SIMD3<Float>` position -> desired NxN exterior-cell grid (`uGridsToLoad`
+  default 5 -> radius 2, ref UESP "Skyrim:INI Settings" Grid section), diffed
+  against a caller-supplied loaded set. Floor-division cell mapping (not
+  truncation -- negative coords land correctly). Ownership split: the manager
+  tracks only its desired center cell; the loaded set stays with the caller
+  so async loads (later commit, same 3.2 item) can finish out of order or
+  fail without the manager drifting from reality -- `update` always diffs
+  fresh against whatever `loaded` the caller reports that frame. Hysteresis
+  (128-unit margin, checked per axis) stops a camera oscillating across a
+  cell border from thrashing load/unload. Docs:
+  [cell-streaming](/engine/cell-streaming.md). Tests: `CellGridManagerTests`
+  -- floor mapping incl. negative/boundary coords, 5x5 grid contents, radius
+  parameter, one-cell-move diff (leading/trailing edge), hysteresis no-thrash,
+  decisive-crossing, diagonal-corner cases.
+* **Frustum culling math** (M3.2, math only): new `Rendering/Frustum.swift` —
+  `Frustum(viewProjection:)` extracts 6 inward planes from a `P * V` matrix
+  (Gribb/Hartmann 2001, adapted to column-vector convention + Metal's z in
+  [0, 1] clip range: near = row2 alone, not row3 + row2), plus a conservative
+  positive-vertex `intersects(min:max:)` AABB test and a `ModelBounds`
+  convenience overload. Pure, renderer-independent — `Renderer.swift`/
+  `RenderScene.swift` wiring lands with rest of 3.2 cell streaming so world
+  AABBs are available per loaded cell. Docs:
+  [metal4-renderer](/rendering/metal4-renderer.md) Frustum culling section.
+  Tests: `FrustumTests` (ahead/behind/left/right/above/below, near-plane
+  straddle kept, beyond-far culled, enclosing box kept, degenerate point).
 * **Agent workflow efficiency — skills split + dev-loop make targets**: transcript
   mining of 35 sessions (3.7k shell commands) drove two changes. (1) Makefile gains
   the observed repeated loops as targets: `fix` (format then strict lint, one shot),

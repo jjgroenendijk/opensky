@@ -18,11 +18,11 @@ nonisolated struct RenderPipelines {
 
 extension Renderer {
     /// Argument table sized for the whole scene pass. Buffers: vertices,
-    /// frame + draw uniforms, terrain weights. Textures: base diffuse + the
-    /// terrain layer array.
+    /// frame + draw uniforms, terrain weights, instance transforms.
+    /// Textures: base diffuse + the terrain layer array.
     static func makeArgumentTable(device: MTLDevice) throws -> MTL4ArgumentTable {
         let descriptor = MTL4ArgumentTableDescriptor()
-        descriptor.maxBufferBindCount = 4
+        descriptor.maxBufferBindCount = 5
         descriptor.maxTextureBindCount = 1 + TerrainConstant.maxLayers.rawValue
         descriptor.maxSamplerStateBindCount = 1
         return try device.makeArgumentTable(descriptor: descriptor)

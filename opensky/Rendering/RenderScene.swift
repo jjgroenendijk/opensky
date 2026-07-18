@@ -50,14 +50,71 @@ nonisolated final class RenderModel {
     }
 }
 
-/// One draw call: mesh + material + world-space matrices, ready to copy
-/// into the per-draw uniform ring.
-nonisolated struct DrawItem {
-    let mesh: RenderMesh
-    let material: RenderMaterial
+/// One placed model going into a RenderScene: instance transform plus the
+/// world-space AABB used for frustum culling (model bounds pushed through
+/// the transform). nil bounds -> the instance is never culled.
+nonisolated struct RenderPlacement {
+    let model: RenderModel
+    let transform: float4x4
+    let bounds: ModelBounds?
+
+    init(model: RenderModel, transform: float4x4, bounds: ModelBounds? = nil) {
+        self.model = model
+        self.transform = transform
+        self.bounds = bounds
+    }
+}
+
+/// One instance within a DrawGroup: world-space matrices + culling AABB.
+nonisolated struct DrawInstance {
     let modelMatrix: float4x4
     /// Inverse-transpose of modelMatrix (world-space normals).
     let normalMatrix: float4x4
+    /// World-space AABB for frustum culling. Model-level bounds pushed
+    /// through the instance transform — shared by every mesh of the
+    /// instance, so conservative per mesh. nil -> never culled.
+    let bounds: ModelBounds?
+}
+
+/// One instanced draw call (todo 3.2): every instance shares the mesh +
+/// material, drawn as a single drawIndexedPrimitives with instanceCount.
+/// Grouping key is (mesh identity, diffuse identity): a RenderMesh belongs
+/// to exactly one RenderModel whose materials array pins one material per
+/// slot, so identical meshes imply identical material scalars — the diffuse
+/// ObjectIdentifier rides along defensively.
+nonisolated struct DrawGroup {
+    let mesh: RenderMesh
+    let material: RenderMaterial
+    /// Mutable only during scene construction (GroupAccumulator).
+    fileprivate(set) var instances: [DrawInstance]
+}
+
+/// Ordered mesh+material grouping: first appearance fixes group order so
+/// composed scenes stay deterministic across recompositions.
+private struct GroupAccumulator {
+    private struct Key: Hashable {
+        let mesh: ObjectIdentifier
+        let diffuse: ObjectIdentifier
+    }
+
+    private var indexByKey: [Key: Int] = [:]
+    private(set) var groups: [DrawGroup] = []
+
+    mutating func add(mesh: RenderMesh, material: RenderMaterial, instance: DrawInstance) {
+        let key = Key(mesh: ObjectIdentifier(mesh), diffuse: ObjectIdentifier(material.diffuse))
+        if let index = indexByKey[key] {
+            groups[index].instances.append(instance)
+        } else {
+            indexByKey[key] = groups.count
+            groups.append(DrawGroup(mesh: mesh, material: material, instances: [instance]))
+        }
+    }
+
+    mutating func add(group: DrawGroup) {
+        for instance in group.instances {
+            add(mesh: group.mesh, material: group.material, instance: instance)
+        }
+    }
 }
 
 /// One terrain quadrant draw for the splat pipeline: quadrant mesh, its
@@ -74,64 +131,85 @@ nonisolated struct TerrainDrawItem {
     let layerTextures: [MTLTexture]
     let modelMatrix: float4x4
     let normalMatrix: float4x4
+    /// World-space AABB for frustum culling; nil -> never culled.
+    let bounds: ModelBounds?
 }
 
-/// Flattened draw lists for one frame's scene. Instances are (model,
-/// instance transform) pairs; each mesh becomes one DrawItem with
-/// modelMatrix = instance * meshLocal. Terrain items carry their own layer
-/// textures + weight streams and draw through the terrain splat pipeline.
+/// Draw lists for one frame's scene. Each placement's meshes become
+/// DrawInstances (modelMatrix = instance * meshLocal) grouped by mesh +
+/// material into instanced DrawGroups (todo 3.2), opaque groups before
+/// alpha-tested ones. Terrain items carry their own layer
+/// textures + weight streams and draw through the terrain splat pipeline,
+/// one non-instanced draw each.
 nonisolated struct RenderScene {
-    let opaque: [DrawItem]
-    let alphaTested: [DrawItem]
+    let opaque: [DrawGroup]
+    let alphaTested: [DrawGroup]
     let terrain: [TerrainDrawItem]
 
     init(
-        instances: [(model: RenderModel, transform: float4x4)],
+        instances: [RenderPlacement],
         terrain: [TerrainDrawItem] = []
     ) {
-        var opaque: [DrawItem] = []
-        var alphaTested: [DrawItem] = []
-        for (model, transform) in instances {
+        var opaque = GroupAccumulator()
+        var alphaTested = GroupAccumulator()
+        for placement in instances {
+            let model = placement.model
             for mesh in model.meshes {
                 // Slot validated against the producing Model by RenderModel
                 // construction order; guard anyway — external data upstream.
                 guard mesh.materialSlot < model.materials.count else { continue }
                 let material = model.materials[mesh.materialSlot]
-                let modelMatrix = transform * mesh.localTransform
-                let item = DrawItem(
-                    mesh: mesh,
-                    material: material,
+                let modelMatrix = placement.transform * mesh.localTransform
+                let instance = DrawInstance(
                     modelMatrix: modelMatrix,
-                    normalMatrix: MatrixMath.normalMatrix(modelMatrix)
+                    normalMatrix: MatrixMath.normalMatrix(modelMatrix),
+                    bounds: placement.bounds
                 )
                 if material.alphaTestThreshold == nil {
-                    opaque.append(item)
+                    opaque.add(mesh: mesh, material: material, instance: instance)
                 } else {
-                    alphaTested.append(item)
+                    alphaTested.add(mesh: mesh, material: material, instance: instance)
                 }
             }
         }
-        self.opaque = opaque
-        self.alphaTested = alphaTested
+        self.opaque = opaque.groups
+        self.alphaTested = alphaTested.groups
         self.terrain = terrain
     }
 
-    /// Concatenates already-built scenes into one draw-list union — grid
-    /// composition for `openskycli render --neighbors` (todo 3.1 verify), not
-    /// a streaming scene graph (that's milestone 3.2, grid manager + async
-    /// build/unload). Each source scene already carries absolute world-space
-    /// matrices from its own cell build, so concatenation needs no
-    /// re-transform. `residencyAllocations` still dedups across the merged
-    /// lists — cells sharing one MeshLibrary/TextureLibrary (same VFS path)
-    /// collapse to one allocation, same as within a single scene.
+    /// Merges already-built scenes into one draw-list union — grid/streaming
+    /// composition (CellSceneComposition). Each source scene already carries
+    /// absolute world-space matrices from its own cell build, so merging
+    /// needs no re-transform. Groups with the same mesh + material fold
+    /// together (adjacent cells placing the same model share one instanced
+    /// draw); `residencyAllocations` still dedups across the merged lists.
     init(merging scenes: [RenderScene]) {
-        opaque = scenes.flatMap(\.opaque)
-        alphaTested = scenes.flatMap(\.alphaTested)
+        var opaque = GroupAccumulator()
+        var alphaTested = GroupAccumulator()
+        for scene in scenes {
+            for group in scene.opaque {
+                opaque.add(group: group)
+            }
+            for group in scene.alphaTested {
+                alphaTested.add(group: group)
+            }
+        }
+        self.opaque = opaque.groups
+        self.alphaTested = alphaTested.groups
         terrain = scenes.flatMap(\.terrain)
     }
 
+    /// Per-draw uniform ring slots one frame can need: one per group +
+    /// terrain item.
     var drawCount: Int {
         opaque.count + alphaTested.count + terrain.count
+    }
+
+    /// Static instances across all groups — sizes the renderer's
+    /// per-instance transform ring.
+    var instanceCount: Int {
+        opaque.reduce(0) { $0 + $1.instances.count }
+            + alphaTested.reduce(0) { $0 + $1.instances.count }
     }
 
     /// Every GPU allocation the scene touches, deduplicated — feeds the
@@ -144,8 +222,8 @@ nonisolated struct RenderScene {
                 seen.insert(ObjectIdentifier($0)).inserted
             })
         }
-        for item in opaque + alphaTested {
-            add([item.mesh.vertexBuffer, item.mesh.indexBuffer, item.material.diffuse])
+        for group in opaque + alphaTested {
+            add([group.mesh.vertexBuffer, group.mesh.indexBuffer, group.material.diffuse])
         }
         for item in terrain {
             add([
