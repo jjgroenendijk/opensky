@@ -12,6 +12,19 @@
 import Foundation
 
 nonisolated struct Worldspace {
+    /// PNAM flags attached to WNAM. A set bit means use that data category
+    /// from the parent worldspace rather than local fields.
+    struct ParentFlags: OptionSet {
+        let rawValue: UInt16
+
+        static let useLandData = ParentFlags(rawValue: 0x0001)
+        static let useLODData = ParentFlags(rawValue: 0x0002)
+        static let useMapData = ParentFlags(rawValue: 0x0004)
+        static let useWaterData = ParentFlags(rawValue: 0x0008)
+        static let useClimateData = ParentFlags(rawValue: 0x0010)
+        static let useSkyCell = ParentFlags(rawValue: 0x0040)
+    }
+
     /// DATA field (uint8).
     struct Flags: OptionSet {
         let rawValue: UInt8
@@ -32,6 +45,8 @@ nonisolated struct Worldspace {
     let name: LString?
     /// WNAM — parent worldspace this one inherits data from.
     let parent: FormID?
+    /// PNAM — categories inherited from `parent`.
+    let parentFlags: ParentFlags
     let flags: Flags
     /// DNAM first float — default land height for cells without a LAND record
     /// (Tamriel reads -27000). Nil when the record carries no DNAM.
@@ -39,6 +54,8 @@ nonisolated struct Worldspace {
     /// DNAM second float — default water height (Tamriel reads -14000). Nil
     /// when the record carries no DNAM.
     let defaultWaterHeight: Float?
+    /// NAM2 — default WATR record for cells without XCWT.
+    let waterType: FormID?
 
     /// - Parameter localized: TES4 localized flag of the owning plugin
     ///   (`PluginHeader.isLocalized`) — decides lstring decoding.
@@ -51,9 +68,11 @@ nonisolated struct Worldspace {
         var editorID: String?
         var name: LString?
         var parent: FormID?
+        var parentFlags: ParentFlags = []
         var flags: Flags = []
         var defaultLandHeight: Float?
         var defaultWaterHeight: Float?
+        var waterType: FormID?
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -63,6 +82,8 @@ nonisolated struct Worldspace {
                 name = try LString(field: field, localized: localized)
             case "WNAM":
                 parent = try FormID(reader.readUInt32())
+            case "PNAM":
+                parentFlags = try Self.decodeParentFlags(field.data) ?? parentFlags
             case "DATA":
                 flags = try Flags(rawValue: reader.readUInt8())
             case "DNAM":
@@ -72,6 +93,8 @@ nonisolated struct Worldspace {
                     defaultLandHeight = try reader.readFloat32()
                     defaultWaterHeight = try reader.readFloat32()
                 }
+            case "NAM2":
+                waterType = try Self.decodeFormID(field.data)
             default:
                 break
             }
@@ -79,8 +102,22 @@ nonisolated struct Worldspace {
         self.editorID = editorID
         self.name = name
         self.parent = parent
+        self.parentFlags = parentFlags
         self.flags = flags
         self.defaultLandHeight = defaultLandHeight
         self.defaultWaterHeight = defaultWaterHeight
+        self.waterType = waterType
+    }
+
+    private static func decodeParentFlags(_ data: Data) throws -> ParentFlags? {
+        guard data.count >= 2 else { return nil }
+        var reader = BinaryReader(data)
+        return try ParentFlags(rawValue: reader.readUInt16())
+    }
+
+    private static func decodeFormID(_ data: Data) throws -> FormID? {
+        guard data.count >= 4 else { return nil }
+        var reader = BinaryReader(data)
+        return try FormID(reader.readUInt32())
     }
 }

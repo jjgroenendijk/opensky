@@ -49,9 +49,19 @@ struct RecordDecoderTests {
         full.appendUInt32(0x42)
         var wnam = Data()
         wnam.appendUInt32(0x3C)
+        var pnam = Data()
+        pnam.appendUInt16(0x0009)
+        var dnam = Data()
+        dnam.appendFloat32(-27000)
+        dnam.appendFloat32(-14000)
+        var nam2 = Data()
+        nam2.appendUInt32(0x18)
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("Tamriel"))
             + ESMFixture.field("FULL", full)
             + ESMFixture.field("WNAM", wnam)
+            + ESMFixture.field("PNAM", pnam)
+            + ESMFixture.field("DNAM", dnam)
+            + ESMFixture.field("NAM2", nam2)
             + ESMFixture.field("DATA", Data([0x02]))
             + ESMFixture.field("ZNAM", Data(count: 4)) // skipped
         let world = try Worldspace(
@@ -62,7 +72,11 @@ struct RecordDecoderTests {
         #expect(world.editorID == "Tamriel")
         #expect(world.name == .tableID(0x42))
         #expect(world.parent == FormID(0x3C))
+        #expect(world.parentFlags == [.useLandData, .useWaterData])
         #expect(world.flags == .noFastTravel)
+        #expect(world.defaultLandHeight == -27000)
+        #expect(world.defaultWaterHeight == -14000)
+        #expect(world.waterType == FormID(0x18))
     }
 
     @Test func decodesMinimalWorldspace() throws {
@@ -73,7 +87,10 @@ struct RecordDecoderTests {
         #expect(world.editorID == nil)
         #expect(world.name == nil)
         #expect(world.parent == nil)
+        #expect(world.parentFlags.isEmpty)
         #expect(world.flags.isEmpty)
+        #expect(world.defaultWaterHeight == nil)
+        #expect(world.waterType == nil)
     }
 
     @Test func worldspaceRejectsWrongRecordType() throws {
@@ -92,9 +109,15 @@ struct RecordDecoderTests {
         xclc.appendUInt32(0x53FD_0001) // high bits are CK noise, kept verbatim
         var data = Data()
         data.appendUInt16(0x0002)
+        var xclw = Data()
+        xclw.appendFloat32(-14000)
+        var xcwt = Data()
+        xcwt.appendUInt32(0x18)
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("Wilderness"))
             + ESMFixture.field("DATA", data)
             + ESMFixture.field("XCLC", xclc)
+            + ESMFixture.field("XCLW", xclw)
+            + ESMFixture.field("XCWT", xcwt)
         let cell = try Cell(
             record: record(ESMFixture.record("CELL", formID: 0x2B, data: fields)),
             localized: true
@@ -103,6 +126,22 @@ struct RecordDecoderTests {
         #expect(!cell.isInterior)
         #expect(cell.flags.contains(.hasWater))
         #expect(cell.grid == Cell.Grid(x: -3, y: 7, quadFlags: 0x53FD_0001))
+        #expect(cell.waterHeight == .height(-14000))
+        #expect(cell.waterType == FormID(0x18))
+    }
+
+    @Test func cellRecognizesNoWaterSentinels() throws {
+        for bits: UInt32 in [0x7F7F_FFFF, 0x4F7F_FFC9, 0xCF00_0000] {
+            var xclw = Data()
+            xclw.appendUInt32(bits)
+            let cell = try Cell(
+                record: record(ESMFixture.record(
+                    "CELL", data: ESMFixture.field("XCLW", xclw)
+                )),
+                localized: false
+            )
+            #expect(cell.waterHeight == .noWater)
+        }
     }
 
     @Test func decodesInteriorCellWithOneByteFlags() throws {

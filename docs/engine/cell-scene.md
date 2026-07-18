@@ -16,6 +16,10 @@ world-space AABB for camera placement. Inputs: `ESMFile` + `MeshLibrary` +
 `TextureLibrary`; no hardcoded cell — target comes in as parameters (first target:
 [first render cell](/decisions/first-render-cell.md)).
 
+M3.5 extends output with exterior sky + water: WRLD DATA controls sky presence; CELL
+XCLW/XCWT resolve against WRLD/parent defaults into one flat water plane. Full rules:
+[sky + water environment](/engine/sky-water.md).
+
 ## Walk order
 
 Group nesting per UESP "Skyrim Mod:Mod File Format" — Groups:
@@ -83,6 +87,9 @@ the WRLD tree are pruned with a log, letting sibling blocks still resolve.
 9 models, 19 textures (0 missing), 4 terrain quads (14 splat layers)
 ```
 
+Water cells append `, water`; `waterPlaneCount` is 0/1. Sky is intentionally absent from
+summary count because it is worldspace environment state, not cell geometry.
+
 Parenthetical lists only non-zero skip buckets (`unsupported-base`, `marker`,
 `load-failed`, `malformed`) and disappears when nothing skipped. Model/texture counts
 come from the `MeshLibrary`/`TextureLibrary` counters (distinct paths).
@@ -136,3 +143,5 @@ after upload. Scene build transforms the 8 corners per instance and unions into
 The terrain model ([terrain mesh build](/engine/terrain.md)) is built in-engine, so its
 AABB comes straight from the CPU-side `Model`; it unions into `CellScene.bounds` and its
 opaque `DrawItem`s append after the object instances.
+Water plane bounds union the exact cell square at resolved height. Sky is fullscreen and
+does not alter bounds.

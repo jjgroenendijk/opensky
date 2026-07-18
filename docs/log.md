@@ -4,6 +4,19 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* M3.5 sky + water complete -- exterior scenes now carry one procedural fullscreen sky
+  marker unless WRLD says no-sky; hardcoded day/night/twilight gradient + sun disc driven
+  by renderer time-of-day (`openskycli screenshot --time-of-day`, default 13:00). CELL
+  XCLW height overrides decode all three no-water sentinels; missing height resolves WRLD
+  DNAM through PNAM land-data inheritance. CELL XCWT/WRLD NAM2 select WATR; exact SSE DNAM
+  228/232-byte variants decode shallow/deep/reflection RGBX only. Builder emits one cached
+  4096-unit plane per water cell. Renderer adds first straight-alpha Metal 4 pipeline,
+  read-only depth, animated color ripples + view-angle reflection. Synthetic decoder,
+  builder, scene-merge, offscreen sky/time, blend tests green. Real-install target 5x5
+  showed horizon + sun; nearby `WhiterunExterior17` (5,-4) resolved + rendered water.
+  Water-cell bench: 120 frames @ 1280x720 avg 1.13 ms, p95 2.06 ms vs 33.33 ms budget.
+  Docs: [water format](/formats/water.md), [sky + water](/engine/sky-water.md),
+  [renderer](/rendering/metal4-renderer.md), [CLI](/tools/cli.md).
 * M3.4 distant LOD complete -- strict 16-byte `lodsettings` parser; NIF multi-bound +
   `BSSubIndexTriShape` decode; BTR terrain + BTO object atlas loading; `WATER` subtree skip;
   lodsettings-anchored 4/8/16/32 rings outside loaded 5x5. LOD builds on serial streaming

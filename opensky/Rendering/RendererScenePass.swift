@@ -35,7 +35,9 @@ extension Renderer {
             cameraPosition: freeFlyCamera.position,
             sunDirection: camera.sunDirection,
             sunColor: camera.sunColor,
-            ambientColor: camera.ambientColor
+            ambientColor: camera.ambientColor,
+            timeOfDayHours: timeOfDay,
+            animationTime: Float(frameIndex) / 60
         )
         frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)
@@ -105,6 +107,23 @@ extension Renderer {
         )
         drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<TerrainDrawUniforms>.size)
+        return offset
+    }
+
+    private func updateWaterDrawUniforms(
+        slot: Int,
+        draw: Int,
+        item: WaterDrawItem
+    ) -> Int {
+        let offset = Self.alignedDrawUniformsSize * (slot * drawUniformSlotCapacity + draw)
+        var uniforms = WaterDrawUniforms(
+            modelMatrix: item.modelMatrix,
+            shallowColor: item.shallowColor,
+            deepColor: item.deepColor,
+            reflectionColor: item.reflectionColor
+        )
+        drawUniformBuffer.contents().advanced(by: offset)
+            .copyMemory(from: &uniforms, byteCount: MemoryLayout<WaterDrawUniforms>.size)
         return offset
     }
 
@@ -231,6 +250,51 @@ extension Renderer {
         }
     }
 
+    /// Water renders after opaque + cutout geometry. Depth is read-only;
+    /// straight-alpha blend exposes terrain/objects beneath the surface.
+    private func encodeWater(
+        items: [WaterDrawItem],
+        state: inout ScenePassState
+    ) {
+        guard !items.isEmpty else { return }
+        var pipelineBound = false
+        for item in items {
+            if let bounds = item.bounds, !state.frustum.intersects(bounds) {
+                state.stats.culledInstances += 1
+                continue
+            }
+            if !pipelineBound {
+                state.encoder.setRenderPipelineState(waterPipeline)
+                state.encoder.setDepthStencilState(waterDepthState)
+                pipelineBound = true
+            }
+            let uniformOffset = updateWaterDrawUniforms(
+                slot: state.slot,
+                draw: state.drawCursor,
+                item: item
+            )
+            state.drawCursor += 1
+            state.stats.drawCalls += 1
+            state.stats.drawnInstances += 1
+            argumentTable.setAddress(
+                item.mesh.vertexBuffer.gpuAddress,
+                index: BufferIndex.vertices.rawValue
+            )
+            argumentTable.setAddress(
+                drawUniformBuffer.gpuAddress + UInt64(uniformOffset),
+                index: BufferIndex.drawUniforms.rawValue
+            )
+            state.encoder.setCullMode(.none)
+            state.encoder.drawIndexedPrimitives(
+                primitiveType: .triangle,
+                indexCount: item.mesh.indexCount,
+                indexType: .uint16,
+                indexBuffer: item.mesh.indexBuffer.gpuAddress,
+                indexBufferLength: item.mesh.indexBuffer.length
+            )
+        }
+    }
+
     /// Encodes the whole scene as one render pass into the open command
     /// buffer. Returns false when the encoder cannot be created.
     func encodeScenePass(
@@ -246,7 +310,6 @@ extension Renderer {
         guard let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)
         else { return false }
         encoder.label = "Static Mesh Encoder"
-        encoder.setDepthStencilState(depthState)
         // Winding per docs/decisions/coordinates.md (verified on the demo
         // scene ground plane): faces authored counter-clockwise seen from
         // outside are front under our view/projection.
@@ -260,10 +323,17 @@ extension Renderer {
             sampler.gpuResourceID,
             index: SamplerIndex.trilinear.rawValue
         )
+        if scene.sky != nil {
+            encoder.setRenderPipelineState(skyPipeline)
+            encoder.setCullMode(.none)
+            encoder.drawPrimitives(primitiveType: .triangle, vertexStart: 0, vertexCount: 3)
+        }
+        encoder.setDepthStencilState(depthState)
         var state = ScenePassState(encoder: encoder, slot: slot, frustum: frustum)
         encode(groups: scene.opaque, pipeline: opaquePipeline, state: &state)
         encodeTerrain(items: scene.terrain, state: &state)
         encode(groups: scene.alphaTested, pipeline: alphaTestPipeline, state: &state)
+        encodeWater(items: scene.water, state: &state)
         lastDrawStats = state.stats
         encoder.endEncoding()
         return true

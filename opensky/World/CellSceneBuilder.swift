@@ -24,7 +24,7 @@ nonisolated enum CellSceneError: Error, Equatable {
 }
 
 /// Per-build skip accounting; folded into CellLoadSummary at the end.
-nonisolated private struct BuildCounts {
+nonisolated struct BuildCounts {
     var totalRefs = 0
     var malformedRefs = 0
     var unsupportedBases = 0
@@ -43,7 +43,7 @@ nonisolated private struct ResolvedBase {
 }
 
 /// One resolved placement, sortable into instancing-ready order.
-nonisolated private struct ResolvedInstance {
+nonisolated struct ResolvedInstance {
     /// Normalized mesh path — primary grouping key.
     let sortKey: String
     /// REFR FormID — deterministic tie-break within one model.
@@ -65,7 +65,7 @@ nonisolated struct FoundCell {
 
 /// The world-children group plus the decoded WRLD it belongs to (DNAM default
 /// land height feeds the LAND-less terrain fallback).
-nonisolated private struct FoundWorld {
+nonisolated struct FoundWorld {
     let children: ESMGroup
     let worldspace: Worldspace?
 }
@@ -91,6 +91,11 @@ nonisolated final class CellSceneBuilder {
     /// FormID -> ModelBase over the MSTT/TREE/FURN/ACTI/CONT top groups,
     /// built on first use. Checked when a ref's base is not a STAT.
     private var modelBaseIndex: [UInt32: ModelBase]?
+    /// Water/environment indexes + reusable plane mesh. Build-queue confined
+    /// like the existing record indexes and asset libraries.
+    var worldspaceIndex: [UInt32: Worldspace]?
+    var waterTypeIndex: [UInt32: WaterType]?
+    var waterPlaneMesh: RenderMesh?
 
     init(
         file: ESMFile,
@@ -147,11 +152,14 @@ nonisolated final class CellSceneBuilder {
         let refs = collectReferences(in: found.children, counts: &counts)
         let instances = resolveInstances(refs: refs, counts: &counts)
         let terrain = buildTerrain(found: found, worldspace: world.worldspace)
+        let water = buildWater(found: found, worldspace: world.worldspace)
+        let sky = world.worldspace?.flags.contains(.noSky) == false
+            ? SkyParameters() : nil
         var scene = makeScene(
             found: found,
             grid: (x: gridX, y: gridY),
             instances: instances,
-            terrain: terrain,
+            geometry: CellGeometryBuild(terrain: terrain, water: water, sky: sky),
             counts: counts
         )
         // Record the mesh + texture keys this cell touched so streaming unload
@@ -434,65 +442,5 @@ extension CellSceneBuilder {
             )
         }
         return nil
-    }
-
-    /// Flattens instances into the RenderScene (opaque first, alpha-test
-    /// second — RenderScene orders that way), accumulates the world AABB from
-    /// per-model bounds, and logs the one-line summary.
-    nonisolated private func makeScene(
-        found: FoundCell,
-        grid: (x: Int32, y: Int32),
-        instances: [ResolvedInstance],
-        terrain: TerrainBuild?,
-        counts: BuildCounts
-    ) -> CellScene {
-        // Per-instance world AABB (model bounds through the placement
-        // transform) rides onto the draw items for frustum culling and
-        // accumulates into the cell AABB for camera framing.
-        var bounds: ModelBounds?
-        let placed = instances.map { instance -> RenderPlacement in
-            let world = meshes.bounds(forPath: instance.modelPath)?
-                .transformed(by: instance.transform)
-            if let world {
-                bounds = bounds.map { $0.union(world) } ?? world
-            }
-            return RenderPlacement(
-                model: instance.model,
-                transform: instance.transform,
-                bounds: world
-            )
-        }
-        // Terrain draws through its own splat pipeline list; ref DrawItem
-        // ordering (instancing-ready grouping) stays intact.
-        let renderScene = RenderScene(
-            instances: placed,
-            terrain: terrain?.items ?? []
-        )
-        if let world = terrain?.bounds {
-            bounds = bounds.map { $0.union(world) } ?? world
-        }
-        let summary = CellLoadSummary(
-            cellName: found.cell.editorID ?? "cell \(FormID(found.formID).description)",
-            gridX: grid.x,
-            gridY: grid.y,
-            totalRefCount: counts.totalRefs,
-            drawnRefCount: instances.count,
-            unsupportedBaseSkipCount: counts.unsupportedBases,
-            markerSkipCount: counts.markers,
-            modelFailureSkipCount: counts.modelFailures,
-            malformedRefSkipCount: counts.malformedRefs,
-            modelCount: meshes.loadedCount,
-            textureCount: textures.loadedCount,
-            missingTextureCount: textures.missingCount,
-            terrainQuadrantCount: terrain?.quadrantCount ?? 0,
-            terrainLayerCount: terrain?.layerCount ?? 0,
-            terrainLayerSkipCount: terrain?.layerSkipCount ?? 0
-        )
-        Self.logger.info("\(summary.summaryLine, privacy: .public)")
-        return CellScene(
-            renderScene: renderScene,
-            summary: summary,
-            bounds: bounds.map { (min: $0.min, max: $0.max) }
-        )
     }
 }

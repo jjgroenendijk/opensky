@@ -55,31 +55,15 @@ Sequencing: 3.1 terrain landed first — everything sits on it, and LAND lived i
 cell temporary-children groups `CellSceneBuilder` already walked
 (`docs/engine/cell-scene.md`) -> decoder slotted into the existing walk. 3.2 streaming now
 turns that per-cell unit into a grid + carries the perf work multi-cell rendering needs.
-LOD rings now start at loaded-grid boundary. 3.5 sky/water + 3.6 interiors are independent;
-3.7 lighting lands last (interiors
-are where it shows). Verification path: `openskycli render`/`bench` + main-app asset
-browser, screenshot pattern as in `docs/img/`. Watch item: 3.5 sky turns black background
-in screenshots into a real frame.
+LOD rings now start at loaded-grid boundary. 3.6 interiors follows; 3.7 lighting lands
+last because interiors are where it shows. Verification path: `openskycli render`/`bench`
+plus main-app asset
+browser, screenshot pattern as in `docs/img/`.
 
 Format facts below pre-verified 2026-07-18 against UESP mod-file-format pages + xEdit
 `dev-4.1.6` source (`wbDefinitionsTES5.pas`, `wbDefinitionsCommon.pas`, `wbLOD.pas`) +
 DynDOLOD docs / xLODGen LODGen source. Re-confirm against real install by probe during
 impl; chase flagged UNCONFIRMED points especially.
-
-### 3.5 Sky + water
-
-* [ ] Sky: procedural dome or fullscreen gradient + sun disc, time-of-day parameter.
-      Hardcoded plausible colors first; later sample default climate WTHR NAM0 entries
-      (0 sky-upper, 7 sky-lower, 8 horizon — UESP WTHR/CLMT). Weather system itself out
-      of M3 scope.
-* [ ] Water: height from CELL XCLW (sentinel 0x7F7FFFFF = no water; CK-bug values
-      0x4F7FFFC9/0xCF000000 treated same) else WRLD DNAM default (Tamriel -14000, PNAM
-      parent inheritance); flat plane per cell, simple animated shader; colors
-      (shallow/deep/reflection) from WATR DNAM (228/232 B SSE variants — parse only
-      those fields) via CELL XCWT else WRLD NAM2. First alpha-BLEND pipeline variant
-      (renderer has opaque + alpha-test only). Ref: UESP CELL/WRLD/WATR.
-* [ ] Verify: screenshot with horizon sky at the target cell; water visible at a
-      river/lake cell (probe picks one nearby).
 
 ### 3.6 Interiors
 

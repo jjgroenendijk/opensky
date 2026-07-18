@@ -40,6 +40,7 @@ nonisolated enum RendererError: Error {
     case sharedEventUnavailable
     case bufferAllocationFailed
     case defaultLibraryMissing
+    case pipelineAttachmentMissing
     case depthStateAllocationFailed
     case samplerAllocationFailed
     case textureAllocationFailed
@@ -60,8 +61,12 @@ final class Renderer: NSObject {
     static let alignedFrameUniformsSize =
         (MemoryLayout<FrameUniforms>.size + 0xFF) & -0x100
     static let alignedDrawUniformsSize =
-        (max(MemoryLayout<DrawUniforms>.size, MemoryLayout<TerrainDrawUniforms>.size)
-                + 0xFF) & -0x100
+        (max(
+            MemoryLayout<DrawUniforms>.size,
+            MemoryLayout<TerrainDrawUniforms>.size,
+            MemoryLayout<WaterDrawUniforms>.size
+        )
+            + 0xFF) & -0x100
 
     /// Near/far at Skyrim scale per docs/decisions/coordinates.md: near 10
     /// units (~14 cm; below ~1 unit destroys depth precision), far 16 cells.
@@ -73,10 +78,13 @@ final class Renderer: NSObject {
     let commandBuffer: MTL4CommandBuffer
     let commandAllocators: [MTL4CommandAllocator]
     let argumentTable: MTL4ArgumentTable
+    let skyPipeline: MTLRenderPipelineState
     let opaquePipeline: MTLRenderPipelineState
     let alphaTestPipeline: MTLRenderPipelineState
     let terrainPipeline: MTLRenderPipelineState
+    let waterPipeline: MTLRenderPipelineState
     let depthState: MTLDepthStencilState
+    let waterDepthState: MTLDepthStencilState
     let sampler: MTLSamplerState
     /// Current drawable scene; swapped between frames via setScene.
     private(set) var scene: RenderScene
@@ -85,6 +93,8 @@ final class Renderer: NSObject {
     private(set) var camera: SceneCamera
     /// Live view pose, seeded from `camera`, advanced each frame from `input`.
     var freeFlyCamera: FreeFlyCamera
+    /// Procedural exterior sky clock. May change between frames.
+    var timeOfDay: Float
     /// Free-fly input, drained once per `draw(in:)`; nil (offscreen/tests) ->
     /// the camera stays on its seeded pose.
     private let input: CameraInputState?
@@ -135,7 +145,8 @@ final class Renderer: NSObject {
         view: MTKView,
         scene: RenderScene? = nil,
         camera: SceneCamera? = nil,
-        input: CameraInputState? = nil
+        input: CameraInputState? = nil,
+        timeOfDay: Float = 13
     ) throws {
         guard let device = view.device else { throw RendererError.deviceUnavailable }
         self.device = device
@@ -171,16 +182,20 @@ final class Renderer: NSObject {
         view.sampleCount = 1
 
         let pipelines = try Self.makePipelines(device: device, view: view)
+        skyPipeline = pipelines.sky
         opaquePipeline = pipelines.opaque
         alphaTestPipeline = pipelines.alphaTest
         terrainPipeline = pipelines.terrain
+        waterPipeline = pipelines.water
         depthState = try Self.makeDepthState(device: device)
+        waterDepthState = try Self.makeWaterDepthState(device: device)
         sampler = try Self.makeSampler(device: device)
 
         self.scene = try scene ?? DemoScene.build(device: device)
         let resolvedCamera = camera ?? .demo
         self.camera = resolvedCamera
         freeFlyCamera = FreeFlyCamera(framing: resolvedCamera)
+        self.timeOfDay = timeOfDay
         self.input = input
         frameUniformBuffer = try Self.makeUniformBuffer(
             device: device,
