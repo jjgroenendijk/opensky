@@ -10,13 +10,15 @@ import simd
 
 extension Renderer {
     /// Mutable state threaded through one scene pass's encoders: the open
-    /// encoder + frame slot + frustum, the running visible-draw cursor into
-    /// the per-draw uniform ring, and the accumulating draw stats.
+    /// encoder + frame slot + frustum, the running cursors into the
+    /// per-draw uniform ring (visible groups) and the per-instance
+    /// transform ring (visible instances), and the accumulating draw stats.
     struct ScenePassState {
         let encoder: MTL4RenderCommandEncoder
         let slot: Int
         let frustum: Frustum
         var drawCursor = 0
+        var instanceCursor = 0
         var stats = SceneDrawStats()
     }
 
@@ -40,21 +42,50 @@ extension Renderer {
         return offset
     }
 
-    /// Writes one draw's uniforms into the ring and returns its byte offset.
-    /// Ring stride is the (possibly regrown) slot capacity, not drawCount.
-    private func updateDrawUniforms(slot: Int, draw: Int, item: DrawItem) -> Int {
+    /// Writes one group's material scalars into the ring and returns the
+    /// byte offset. Ring stride is the (possibly regrown) slot capacity,
+    /// not drawCount. Matrices live per instance (writeVisibleInstances).
+    private func updateDrawUniforms(slot: Int, draw: Int, material: RenderMaterial) -> Int {
         let offset = Self.alignedDrawUniformsSize * (slot * drawUniformSlotCapacity + draw)
         var uniforms = DrawUniforms(
-            modelMatrix: item.modelMatrix,
-            normalMatrix: item.normalMatrix,
-            uvOffset: item.material.uvOffset,
-            uvScale: item.material.uvScale,
-            materialAlpha: item.material.alpha,
-            alphaThreshold: item.material.alphaTestThreshold ?? 0
+            uvOffset: material.uvOffset,
+            uvScale: material.uvScale,
+            materialAlpha: material.alpha,
+            alphaThreshold: material.alphaTestThreshold ?? 0
         )
         drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<DrawUniforms>.size)
         return offset
+    }
+
+    /// Writes the group's frustum-surviving instance transforms tightly
+    /// packed from the current instance cursor; returns the visible count
+    /// and the byte offset the group's draw binds the transform ring at.
+    /// Total written per frame <= scene.instanceCount <= ring capacity.
+    private func writeVisibleInstances(
+        of group: DrawGroup,
+        state: inout ScenePassState
+    ) -> (written: Int, byteOffset: Int) {
+        let stride = MemoryLayout<InstanceTransform>.stride
+        let base = state.slot * instanceSlotCapacity + state.instanceCursor
+        var written = 0
+        for instance in group.instances {
+            if let bounds = instance.bounds, !state.frustum.intersects(bounds) {
+                state.stats.culledInstances += 1
+                continue
+            }
+            var transforms = InstanceTransform(
+                modelMatrix: instance.modelMatrix,
+                normalMatrix: instance.normalMatrix
+            )
+            instanceTransformBuffer.contents()
+                .advanced(by: (base + written) * stride)
+                .copyMemory(from: &transforms, byteCount: MemoryLayout<InstanceTransform>.size)
+            written += 1
+        }
+        state.instanceCursor += written
+        state.stats.drawnInstances += written
+        return (written, base * stride)
     }
 
     /// Terrain variant of updateDrawUniforms: same ring, same aligned slots
@@ -79,52 +110,59 @@ extension Renderer {
 
     // MARK: - Draw encode
 
+    /// Encodes instanced draw groups: per group, cull per instance, write
+    /// only the visible instances' transforms, bind the transform ring at
+    /// the group's base offset ([[instance_id]] starts at 0 per draw), and
+    /// draw once with the visible instanceCount. All-culled groups encode
+    /// nothing and consume no uniform slot.
     private func encode(
-        items: [DrawItem],
+        groups: [DrawGroup],
         pipeline: MTLRenderPipelineState,
         state: inout ScenePassState
     ) {
-        guard !items.isEmpty else { return }
+        guard !groups.isEmpty else { return }
         // Pipeline bound lazily: an all-culled list encodes nothing.
         var pipelineBound = false
-        for item in items {
-            if let bounds = item.bounds, !state.frustum.intersects(bounds) {
-                state.stats.culledInstances += 1
-                continue
-            }
+        for group in groups {
+            let visible = writeVisibleInstances(of: group, state: &state)
+            guard visible.written > 0 else { continue }
             if !pipelineBound {
                 state.encoder.setRenderPipelineState(pipeline)
                 pipelineBound = true
             }
-            // Running visible-draw cursor indexes the uniform ring: visible
-            // count <= scene.drawCount = ring capacity, so always in range.
+            // Running visible-group cursor indexes the uniform ring:
+            // visible groups <= scene.drawCount <= ring capacity.
             let uniformOffset = updateDrawUniforms(
                 slot: state.slot,
                 draw: state.drawCursor,
-                item: item
+                material: group.material
             )
             state.drawCursor += 1
             state.stats.drawCalls += 1
-            state.stats.drawnInstances += 1
             argumentTable.setAddress(
-                item.mesh.vertexBuffer.gpuAddress,
+                group.mesh.vertexBuffer.gpuAddress,
                 index: BufferIndex.vertices.rawValue
             )
             argumentTable.setAddress(
                 drawUniformBuffer.gpuAddress + UInt64(uniformOffset),
                 index: BufferIndex.drawUniforms.rawValue
             )
+            argumentTable.setAddress(
+                instanceTransformBuffer.gpuAddress + UInt64(visible.byteOffset),
+                index: BufferIndex.instanceTransforms.rawValue
+            )
             argumentTable.setTexture(
-                item.material.diffuse.gpuResourceID,
+                group.material.diffuse.gpuResourceID,
                 index: TextureIndex.diffuse.rawValue
             )
-            state.encoder.setCullMode(item.material.doubleSided ? .none : .back)
+            state.encoder.setCullMode(group.material.doubleSided ? .none : .back)
             state.encoder.drawIndexedPrimitives(
                 primitiveType: .triangle,
-                indexCount: item.mesh.indexCount,
+                indexCount: group.mesh.indexCount,
                 indexType: .uint16,
-                indexBuffer: item.mesh.indexBuffer.gpuAddress,
-                indexBufferLength: item.mesh.indexBuffer.length
+                indexBuffer: group.mesh.indexBuffer.gpuAddress,
+                indexBufferLength: group.mesh.indexBuffer.length,
+                instanceCount: visible.written
             )
         }
     }
@@ -223,9 +261,9 @@ extension Renderer {
             index: SamplerIndex.trilinear.rawValue
         )
         var state = ScenePassState(encoder: encoder, slot: slot, frustum: frustum)
-        encode(items: scene.opaque, pipeline: opaquePipeline, state: &state)
+        encode(groups: scene.opaque, pipeline: opaquePipeline, state: &state)
         encodeTerrain(items: scene.terrain, state: &state)
-        encode(items: scene.alphaTested, pipeline: alphaTestPipeline, state: &state)
+        encode(groups: scene.alphaTested, pipeline: alphaTestPipeline, state: &state)
         lastDrawStats = state.stats
         encoder.endEncoding()
         return true

@@ -122,16 +122,20 @@ struct CellSceneCompositionTests {
         var composition = CellSceneComposition()
         composition.setCell(cell(instances: 2), at: CellCoordinate(x: 0, y: 0))
         composition.setCell(cell(instances: 3), at: CellCoordinate(x: 1, y: 0))
-        #expect(composition.composedScene().drawCount == 5)
+        // Cells share one RenderModel -> the merge folds them into a
+        // single instanced group; instanceCount tracks the placements.
+        #expect(composition.composedScene().drawCount == 1)
+        #expect(composition.composedScene().instanceCount == 5)
 
         composition.removeCell(at: CellCoordinate(x: 0, y: 0))
-        #expect(composition.composedScene().drawCount == 3)
+        #expect(composition.composedScene().instanceCount == 3)
 
         composition.setCell(cell(instances: 1), at: CellCoordinate(x: 2, y: 0))
-        #expect(composition.composedScene().drawCount == 4)
+        #expect(composition.composedScene().instanceCount == 4)
 
         composition.removeCell(at: CellCoordinate(x: 1, y: 0))
         composition.removeCell(at: CellCoordinate(x: 2, y: 0))
         #expect(composition.composedScene().drawCount == 0)
+        #expect(composition.composedScene().instanceCount == 0)
     }
 }

@@ -34,18 +34,20 @@ struct RendererSceneSwapTests {
         ambientColor: DemoScene.ambientColor
     )
 
-    /// `count` crates in a row around the origin, real bounds — enough
-    /// instances to exceed any small ring capacity.
+    /// `count` crates in a row around the origin, real bounds. Each crate
+    /// gets its OWN RenderModel (no instancing collapse) so both the
+    /// per-group uniform ring and the per-instance transform ring must
+    /// regrow when count exceeds their capacities.
     private static func crateScene(device: MTLDevice, count: Int) throws -> RenderScene {
-        let model = Model(
-            meshes: [DemoScene.boxMesh(halfWidth: 32, halfDepth: 32, height: 64)],
-            materials: [Material.fallback],
-            skippedShapeCount: 0
-        )
         let texture = try solidTexture(device: device)
-        let render = try RenderModel(device: device, model: model) { _, _ in texture }
-        let bounds = try #require(ModelBounds.containing(model: model))
-        let placements = (0 ..< count).map { index -> RenderPlacement in
+        let placements = try (0 ..< count).map { index -> RenderPlacement in
+            let model = Model(
+                meshes: [DemoScene.boxMesh(halfWidth: 32, halfDepth: 32, height: 64)],
+                materials: [Material.fallback],
+                skippedShapeCount: 0
+            )
+            let render = try RenderModel(device: device, model: model) { _, _ in texture }
+            let bounds = try #require(ModelBounds.containing(model: model))
             let transform = MatrixMath.translation(
                 SIMD3(Float(index - count / 2) * 80, 0, 0)
             )
@@ -74,14 +76,17 @@ struct RendererSceneSwapTests {
             camera: Self.camera
         )
         #expect(renderer.drawUniformSlotCapacity == 1)
+        #expect(renderer.instanceSlotCapacity == 1)
 
         let first = try renderer.renderOffscreen(width: Self.width, height: Self.height)
         #expect(Self.litPixelCount(texture: first) > 0)
 
-        // Larger scene B: 9 draws > capacity 1 -> ring regrow (pow2 -> 16),
-        // old ring + old scene retired while frame 1 may be in flight.
+        // Larger scene B: 9 groups / 9 instances > capacity 1 -> both rings
+        // regrow (pow2 -> 16), old rings + old scene retired while frame 1
+        // may be in flight.
         try renderer.setScene(Self.crateScene(device: device, count: 9))
         #expect(renderer.drawUniformSlotCapacity == 16)
+        #expect(renderer.instanceSlotCapacity == 16)
         let second = try renderer.renderOffscreen(width: Self.width, height: Self.height)
         let firstLit = Self.litPixelCount(texture: first)
         let secondLit = Self.litPixelCount(texture: second)

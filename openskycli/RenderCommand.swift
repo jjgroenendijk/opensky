@@ -71,13 +71,21 @@ enum RenderCommand {
         }
         let scene = RenderScene(merging: cellScenes.map(\.renderScene))
 
-        let texture = try renderOffscreen(
+        let render = try renderOffscreen(
             device: device,
             scene: scene,
             camera: zoomed(SceneCamera.framing(bounds: bounds), zoom: zoom),
             size: size
         )
-        let pixels = readPixels(texture: texture)
+        // Instancing evidence (3.2): draw calls collapse below the group +
+        // terrain counts only via culling; instances >> draw calls means
+        // repeated models actually batched.
+        print(
+            "[INFO] draw calls: \(render.stats.drawCalls) "
+                + "(\(scene.drawCount) groups+terrain, \(scene.instanceCount) instances, "
+                + "\(render.stats.culledInstances) culled)"
+        )
+        let pixels = readPixels(texture: render.texture)
         let percent = String(format: "%.1f", nonBackgroundFraction(pixels: pixels) * 100)
         print("[INFO] non-background pixels: \(percent)%")
         let url = URL(filePath: output)
@@ -191,7 +199,7 @@ enum RenderCommand {
         scene: RenderScene,
         camera: SceneCamera,
         size: (width: Int, height: Int)
-    ) throws -> MTLTexture {
+    ) throws -> (texture: MTLTexture, stats: SceneDrawStats) {
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: size.width, height: size.height),
             device: device
@@ -199,7 +207,8 @@ enum RenderCommand {
         view.isPaused = true
         view.enableSetNeedsDisplay = false
         let renderer = try Renderer(view: view, scene: scene, camera: camera)
-        return try renderer.renderOffscreen(width: size.width, height: size.height)
+        let texture = try renderer.renderOffscreen(width: size.width, height: size.height)
+        return (texture, renderer.lastDrawStats)
     }
 
     /// BGRA readback of the whole offscreen target.

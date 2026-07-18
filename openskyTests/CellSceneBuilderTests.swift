@@ -42,7 +42,9 @@ struct CellSceneBuilderTests {
         #expect(scene.summary.drawnRefCount == 2)
         #expect(scene.summary.skippedRefCount == 0)
         #expect(scene.summary.modelCount == 1)
-        #expect(scene.renderScene.drawCount == 2)
+        // One shared model -> one instanced group carrying both refs.
+        #expect(scene.renderScene.drawCount == 1)
+        #expect(scene.renderScene.instanceCount == 2)
         // Model extents (0..2, 0..4, 0..6) translated by each REFR position.
         let bounds = try #require(scene.bounds)
         #expect(bounds.min == SIMD3(-10, -20, -30))
@@ -99,7 +101,9 @@ struct CellSceneBuilderTests {
         #expect(scene.summary.totalRefCount == types.count)
         #expect(scene.summary.drawnRefCount == types.count)
         #expect(scene.summary.skippedRefCount == 0)
-        #expect(scene.renderScene.drawCount == types.count)
+        // All five bases share one NIF -> one group, five instances.
+        #expect(scene.renderScene.drawCount == 1)
+        #expect(scene.renderScene.instanceCount == types.count)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func skipsMarkerModelBaseWithoutModel() throws {
@@ -195,20 +199,21 @@ struct CellSceneBuilderTests {
                 + statRecord(formID: 0x101, modelPath: "arch\\aaa.nif")
         ))
         let opaque = scene.renderScene.opaque
-        try #require(opaque.count == 4)
-        // aaa refs (0x201, 0x203) first, then zzz refs (0x200, 0x202).
-        let translations = opaque.map { item in
-            let column = item.modelMatrix.columns.3
-            return SIMD3(column.x, column.y, column.z)
+        try #require(opaque.count == 2)
+        // aaa group (refs 0x201, 0x203) first, then zzz (0x200, 0x202);
+        // instances within a group ordered by FormID.
+        let translations = opaque.map { group in
+            group.instances.map { instance in
+                let column = instance.modelMatrix.columns.3
+                return SIMD3(column.x, column.y, column.z)
+            }
         }
         #expect(translations == [
-            SIMD3(2, 0, 0), SIMD3(4, 0, 0), SIMD3(1, 0, 0), SIMD3(3, 0, 0)
+            [SIMD3(2, 0, 0), SIMD3(4, 0, 0)],
+            [SIMD3(1, 0, 0), SIMD3(3, 0, 0)]
         ])
-        // Adjacent items of one group share the same GPU mesh (shared
-        // RenderModel instance) — the instancing-ready property.
-        #expect(opaque[0].mesh === opaque[1].mesh)
-        #expect(opaque[2].mesh === opaque[3].mesh)
-        #expect(opaque[1].mesh !== opaque[2].mesh)
+        // Groups draw distinct GPU meshes; each group is one instanced call.
+        #expect(opaque[0].mesh !== opaque[1].mesh)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func summaryLineReportsCounts() throws {

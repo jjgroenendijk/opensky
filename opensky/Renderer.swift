@@ -97,6 +97,13 @@ final class Renderer: NSObject {
     /// Per-frame slot count of the draw-uniform ring — power-of-two
     /// headroom over drawCount so per-cell-crossing swaps rarely realloc.
     private(set) var drawUniformSlotCapacity: Int
+    /// Per-instance transform ring (todo 3.2 instancing): tightly packed
+    /// InstanceTransform entries, instanceSlotCapacity per in-flight frame.
+    /// Same regrow-on-swap treatment as the draw-uniform ring.
+    private(set) var instanceTransformBuffer: MTLBuffer
+    /// Instances per frame slot of the transform ring — power-of-two
+    /// headroom over the scene's instanceCount.
+    private(set) var instanceSlotCapacity: Int
     /// Old scene resources + rings possibly referenced by in-flight frames
     /// after a swap; strong refs held until their frames provably drain.
     private var retired: [RetiredAllocations] = []
@@ -173,17 +180,15 @@ final class Renderer: NSObject {
             length: Self.alignedFrameUniformsSize * Self.maxFramesInFlight,
             label: "FrameUniforms"
         )
-        drawUniformSlotCapacity = Self.slotCapacity(for: self.scene.drawCount)
-        drawUniformBuffer = try Self.makeUniformBuffer(
-            device: device,
-            length: Self.alignedDrawUniformsSize
-                * drawUniformSlotCapacity * Self.maxFramesInFlight,
-            label: "DrawUniforms"
-        )
+        let rings = try Self.makeSceneRings(device: device, scene: self.scene)
+        drawUniformBuffer = rings.drawBuffer
+        drawUniformSlotCapacity = rings.drawCapacity
+        instanceTransformBuffer = rings.instanceBuffer
+        instanceSlotCapacity = rings.instanceCapacity
 
         residencySet = try Self.makeResidencySet(
             device: device,
-            allocations: [frameUniformBuffer, drawUniformBuffer]
+            allocations: [frameUniformBuffer, drawUniformBuffer, instanceTransformBuffer]
                 + self.scene.residencyAllocations
         )
         commandQueue.addResidencySet(residencySet)
@@ -207,6 +212,37 @@ final class Renderer: NSObject {
     /// headroom so the per-cell-crossing swaps of streaming rarely realloc.
     static func slotCapacity(for count: Int) -> Int {
         count <= 1 ? 1 : 1 << (Int.bitWidth - (count - 1).leadingZeroBitCount)
+    }
+
+    /// Scene-sized GPU rings: per-group uniform ring + per-instance
+    /// transform ring, both with slotCapacity headroom.
+    struct SceneRings {
+        let drawBuffer: MTLBuffer
+        let drawCapacity: Int
+        let instanceBuffer: MTLBuffer
+        let instanceCapacity: Int
+    }
+
+    /// Allocates both rings for a scene — shared by init and the regrow
+    /// path in setScene (identical sizing policy in one place).
+    static func makeSceneRings(device: MTLDevice, scene: RenderScene) throws -> SceneRings {
+        let drawCapacity = slotCapacity(for: scene.drawCount)
+        let instanceCapacity = slotCapacity(for: scene.instanceCount)
+        return try SceneRings(
+            drawBuffer: makeUniformBuffer(
+                device: device,
+                length: alignedDrawUniformsSize * drawCapacity * maxFramesInFlight,
+                label: "DrawUniforms"
+            ),
+            drawCapacity: drawCapacity,
+            instanceBuffer: makeUniformBuffer(
+                device: device,
+                length: MemoryLayout<InstanceTransform>.stride
+                    * instanceCapacity * maxFramesInFlight,
+                label: "InstanceTransforms"
+            ),
+            instanceCapacity: instanceCapacity
+        )
     }
 
     // MARK: - Scene swap (cell streaming)
@@ -245,6 +281,19 @@ final class Renderer: NSObject {
             drawUniformSlotCapacity = capacity
             residencySet.addAllocations([buffer])
         }
+        if newScene.instanceCount > instanceSlotCapacity {
+            let capacity = Self.slotCapacity(for: newScene.instanceCount)
+            let buffer = try Self.makeUniformBuffer(
+                device: device,
+                length: MemoryLayout<InstanceTransform>.stride
+                    * capacity * Self.maxFramesInFlight,
+                label: "InstanceTransforms"
+            )
+            retiring.append(instanceTransformBuffer)
+            instanceTransformBuffer = buffer
+            instanceSlotCapacity = capacity
+            residencySet.addAllocations([buffer])
+        }
         residencySet.addAllocations(newScene.residencyAllocations)
         residencySet.commit()
         // Frames < frameIndex are committed; the newest (frameIndex - 1) is
@@ -277,6 +326,7 @@ final class Renderer: NSObject {
         var live = Set(scene.residencyAllocations.map(ObjectIdentifier.init))
         live.insert(ObjectIdentifier(frameUniformBuffer))
         live.insert(ObjectIdentifier(drawUniformBuffer))
+        live.insert(ObjectIdentifier(instanceTransformBuffer))
         var seen = Set<ObjectIdentifier>()
         let removable = ready.filter { allocation in
             let id = ObjectIdentifier(allocation)

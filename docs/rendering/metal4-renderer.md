@@ -29,11 +29,12 @@ adapted from Apple's Xcode Metal 4 game template (structure, not copied game cod
 * `RenderModel` — one engine `Model`: `RenderMesh`es + `RenderMaterial`s (diffuse
   `MTLTexture` resolved through a caller-supplied `TextureProvider` closure — demo scene
   feeds procedural textures, 2.7 feeds VFS + `TextureLoader`).
-* `RenderScene` — (model, instance transform) pairs flattened to `DrawItem` lists:
-  `modelMatrix = instance * meshLocal`, `normalMatrix` = inverse-transpose
-  (`MatrixMath.normalMatrix`), opaque items grouped before alpha-tested so the pipeline
-  switches once. `residencyAllocations` = deduped buffers + textures for the residency
-  set. Alpha blending (`Material.alphaBlend`) renders opaque for now — out of 2.6 scope.
+* `RenderScene` — `RenderPlacement`s (model + transform + world AABB) flattened to
+  instanced `DrawGroup` lists (section below): `modelMatrix = instance * meshLocal`,
+  `normalMatrix` = inverse-transpose (`MatrixMath.normalMatrix`), opaque groups before
+  alpha-tested so the pipeline switches once. `residencyAllocations` = deduped buffers +
+  textures for the residency set. Alpha blending (`Material.alphaBlend`) renders opaque
+  for now — out of 2.6 scope.
 * `SceneCamera` — eye/target + sun/ambient consumed by `FrameUniforms`. `.demo` mirrors
   the DemoScene constants; `framing(bounds:)` frames a Z-up world AABB: target = box
   center, eye south-west of and above it along a fixed direction at distance
@@ -168,18 +169,50 @@ drives it lands in a later 3.2 commit. Verified through real frames:
 `RendererSceneSwapTests` (regrow swap keeps rendering, empty-scene swap renders pure
 clear, camera reseed on swap).
 
+## Instanced draws (todo 3.2)
+
+Instances sharing one mesh + material draw as ONE `drawIndexedPrimitives(...
+instanceCount:)`. `RenderScene` groups at construction: `DrawGroup` (mesh, material,
+`[DrawInstance]`), key = (`ObjectIdentifier(mesh)`, `ObjectIdentifier(material.diffuse)`)
+— a `RenderMesh` belongs to exactly one `RenderModel` whose materials array pins one
+material per slot, so mesh identity already implies identical material scalars; the
+diffuse id rides along defensively. First appearance fixes group order (deterministic
+frames); `CellSceneBuilder`'s (mesh path, FormID) instance sort means group order matches
+the old draw order within a cell. `RenderScene(merging:)` re-groups across cells —
+adjacent cells placing the same cached model share one instanced draw.
+
+Per-draw GPU data split: per-GROUP `DrawUniforms` (UV offset/scale, alpha, threshold)
+stay in the 256-aligned ring (group count <= drawCount); per-INSTANCE `InstanceTransform`
+(model + normal matrix, 128 bytes, no padding) moves to a tightly-packed ring (stride =
+struct size, `instanceSlotCapacity` entries per in-flight slot, same pow2
+regrow-on-swap). `staticMeshVertex` gains `[[instance_id]]` and indexes a `device
+InstanceTransform*` bound at the group's base byte offset — instance_id starts at 0 per
+draw call, so the pointer lands exactly on the group's visible instances. Opaque +
+alpha-test variants share the vertex function (the function constant specializes only
+the fragment); terrain stays non-instanced with its own uniforms.
+
+Culling composes per instance: each frame writes only frustum-surviving instances'
+transforms (contiguous, running cursor), draws the group with the visible count, skips
+all-culled groups entirely (no uniform slot consumed). `SceneDrawStats`: drawCalls =
+encoded groups + terrain items; drawnInstances counts written instances. Real-install
+evidence (`openskycli render` draw-stats line): Whiterun (6,-2) 49 instances -> 32 draw
+calls; 3x3 grid 711 instances -> 330 draw calls. Grid frame differs from the
+pre-instancing baseline by 54 of 921 600 pixels (max channel delta 34) — draw-order
+change at z-fighting edges, visually identical.
+
 ## Uniforms + binding
 
 * `FrameUniforms` (viewProjection, camera position, sun direction/color, ambient) — one
   256-byte-aligned slot per in-flight frame.
-* `DrawUniforms` (model + normal matrix, UV offset/scale, material alpha, alpha
-  threshold) — ring of `maxFramesInFlight x drawUniformSlotCapacity` 256-byte-aligned
-  entries, written per visible draw each frame; regrown on scene swap (section above).
-* All binds through one `MTL4ArgumentTable` (4 buffers — vertices, frame + draw uniforms,
-  terrain weights; 1 + 8 textures — diffuse + terrain layer array; 1 sampler); table
-  state is captured per draw, so per-draw `setAddress`/`setTexture` between
-  `drawIndexedPrimitives` calls is the binding model. Sampler: trilinear mipmapped,
-  anisotropy 8, repeat, `supportArgumentBuffers`.
+* `DrawUniforms` (UV offset/scale, material alpha, alpha threshold — per GROUP) — ring
+  of `maxFramesInFlight x drawUniformSlotCapacity` 256-byte-aligned entries, written per
+  visible group each frame; regrown on scene swap (section above). Matrices live in the
+  per-instance `InstanceTransform` ring (instancing section).
+* All binds through one `MTL4ArgumentTable` (5 buffers — vertices, frame + draw uniforms,
+  terrain weights, instance transforms; 1 + 8 textures — diffuse + terrain layer array;
+  1 sampler); table state is captured per draw, so per-draw `setAddress`/`setTexture`
+  between `drawIndexedPrimitives` calls is the binding model. Sampler: trilinear
+  mipmapped, anisotropy 8, repeat, `supportArgumentBuffers`.
 * Residency: app-owned `MTLResidencySet` holds uniform rings + every scene allocation
   (`RenderScene.residencyAllocations`), committed at scene build, attached to the queue.
   Offscreen targets are added/removed around each `renderOffscreen` call.

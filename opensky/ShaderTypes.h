@@ -21,6 +21,9 @@ typedef NS_ENUM(EnumBackingType, BufferIndex)
     BufferIndexDrawUniforms = 2,
     /// Terrain-only second vertex stream: two float4 splat weights per vertex.
     BufferIndexTerrainWeights = 3,
+    /// Static-mesh instance transforms, tightly packed, bound at the draw
+    /// group's base offset so [[instance_id]] (0-based per draw) indexes it.
+    BufferIndexInstanceTransforms = 4,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)
@@ -72,11 +75,11 @@ typedef struct
     vector_float3 ambientColor;
 } FrameUniforms;
 
+/// Per-GROUP material scalars for one instanced static-mesh draw (todo 3.2
+/// instancing): every instance of the group shares them. Matrices moved to
+/// InstanceTransform. Lives in the 256-byte-aligned per-draw uniform ring.
 typedef struct
 {
-    matrix_float4x4 modelMatrix;
-    /// Inverse-transpose of modelMatrix: transforms normals to world space.
-    matrix_float4x4 normalMatrix;
     vector_float2 uvOffset;
     vector_float2 uvScale;
     /// Material opacity multiplier (NIF BSLightingShaderProperty alpha).
@@ -84,6 +87,17 @@ typedef struct
     /// Alpha-test cutoff in [0, 1]; used only by the alpha-test variant.
     float alphaThreshold;
 } DrawUniforms;
+
+/// Per-INSTANCE transforms for the static-mesh path, in a tightly packed
+/// device-address array (stride = struct size, both matrices 16-byte
+/// aligned -> struct is 128 bytes with no padding). The vertex shader
+/// indexes it with [[instance_id]] from the group's base offset.
+typedef struct
+{
+    matrix_float4x4 modelMatrix;
+    /// Inverse-transpose of modelMatrix: transforms normals to world space.
+    matrix_float4x4 normalMatrix;
+} InstanceTransform;
 
 /// Terrain splat path (docs/todo.md 3.1): one draw per quadrant blends the
 /// BTXT base with up to TerrainConstantMaxLayers ATXT diffuses by per-vertex

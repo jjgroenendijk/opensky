@@ -4,6 +4,28 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* **Instanced draws for repeated models** (M3.2 renderer core): instances
+  sharing mesh + material draw as one `drawIndexedPrimitives(...
+  instanceCount:)`. `RenderScene` now builds `DrawGroup`s (mesh, material,
+  `[DrawInstance]`; key = mesh + diffuse ObjectIdentifiers, first-appearance
+  order); `RenderScene(merging:)` re-groups across cells. Per-draw GPU data
+  split: `DrawUniforms` keeps material scalars in the 256-aligned ring
+  (per group), matrices move to new tightly-packed `InstanceTransform`
+  ring (128 B stride, `instanceSlotCapacity` per slot, same pow2
+  regrow-on-swap). `staticMeshVertex` gains `[[instance_id]]` + `device
+  InstanceTransform*` at `BufferIndexInstanceTransforms` (arg table 5
+  buffers); terrain stays non-instanced. Culling composes per instance:
+  only visible transforms written, group drawn with visible count,
+  all-culled group skipped. `openskycli render` prints a draw-stats line
+  (docs/tools/cli.md updated). Real install: Whiterun (6,-2) 49 instances
+  -> 32 draw calls; 3x3 grid 711 -> 330; grid frame differs from
+  pre-instancing baseline by 54/921600 px (draw-order z-fight edges, max
+  delta 34) — visually identical; bench avg 0.47 ms / p95 0.50 ms. Docs:
+  [metal4-renderer](/rendering/metal4-renderer.md) instanced draws section.
+  Tests: `RendererInstancingTests` (one call for N instances w/ projected
+  pixel evidence, culling composes), grouped-scene updates across
+  `RenderSceneTests`/`DemoSceneTests`/`CellSceneBuilderTests`/
+  `CellSceneCompositionTests`.
 * **Swappable renderer scene + retire list** (M3.2 renderer core):
   `Renderer.setScene(_:camera:)` swaps the drawable scene between frames
   (main thread, same as draw(in:); never blocks on the GPU). Draw-uniform
