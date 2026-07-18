@@ -79,8 +79,8 @@ opensky/                Product code — app + engine (Swift, Metal)
   Shaders.metal
   ShaderTypes.h         Shared Swift<->Metal struct defs (bridging header)
   Assets.xcassets/      App chrome only — never game content
-openskycli/             CLI dev tool target (openskycli) — shares engine code under opensky/
-openskypreview/         Asset preview GUI target (openskypreview) — shares engine code too
+openskycli/             CLI dev tool target — rules in openskycli/AGENTS.md
+openskypreview/         Asset preview GUI target — rules in openskypreview/AGENTS.md
 openskyTests/           Unit tests
 openskyUITests/         UI tests
 tools/                  Repository tooling only (no product code)
@@ -99,6 +99,10 @@ Product code (`app`/engine) lives under `opensky/`; group engine subsystems into
 subfolders by domain as they grow (e.g. `Formats/`, `Rendering/`, `World/`, `Scripting/`).
 Keep format parsers separate from rendering. Tooling/automation files live under `tools/`.
 Update this section when structure changes materially.
+
+Nested rules: tool targets carry their own `AGENTS.md` (with `CLAUDE.md` symlinked next
+to it) for target-specific rules — root file stays the global contract. Directory
+outgrows this file -> same pattern. Working in a directory -> read its `AGENTS.md` too.
 
 ## Build, run, test
 
