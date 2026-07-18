@@ -72,7 +72,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 let file = try ESMFile(url: esmURL)
                 let textures = TextureLibrary(fileSystem: vfs, device: device)
                 let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
-                let builder = CellSceneBuilder(file: file, meshes: meshes, textures: textures)
+                let builder = CellSceneBuilder(
+                    file: file,
+                    meshes: meshes,
+                    textures: textures,
+                    fileSystem: vfs
+                )
                 return BuilderCellSceneProvider(
                     builder: builder,
                     worldspaceEditorID: FirstRenderCell.worldspaceEditorID

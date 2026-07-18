@@ -164,6 +164,8 @@ free-fly pose (first real scene after an empty launch scene needs a framing pose
 `[CellCoordinate: CellScene]` with `setCell`/`removeCell`, `composedScene()` via
 `RenderScene(merging:)` in deterministic (x, y) order, `composedBounds()` union for a
 first framing camera, `coordinates` as the `loaded` set for `CellGridManager.update`.
+M3.4 adds optional `DistantLODScene` to draw-list merge + residency union, deliberately
+excluded from `composedBounds()` so horizon assets do not alter launch framing.
 Pure value logic (`CellSceneCompositionTests`); the async streaming controller that
 drives it lands in a later 3.2 commit. Verified through real frames:
 `RendererSceneSwapTests` (regrow swap keeps rendering, empty-scene swap renders pure

@@ -4,6 +4,15 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* M3.4 distant LOD complete -- strict 16-byte `lodsettings` parser; NIF multi-bound +
+  `BSSubIndexTriShape` decode; BTR terrain + BTO object atlas loading; `WATER` subtree skip;
+  lodsettings-anchored 4/8/16/32 rings outside loaded 5x5. LOD builds on serial streaming
+  queue, composes without changing camera framing, retains/evicts shared assets safely.
+  `openskycli lod` swept all vanilla Tamriel 3,060 BTR + 717 BTO with 0 failures. Real 5x5
+  render: 122 LOD blocks, 0 unavailable, horizon filled, intersection-free selection,
+  screenshot. Tree billboards + boundary clipping deferred. Docs:
+  [LOD format](/formats/lod.md), [LOD streaming](/engine/distant-lod.md),
+  [CLI](/tools/cli.md).
 * App + CLI screenshots -- World toolbar gains `Screenshot…`: save panel -> live camera +
   current streamed scene offscreen-rendered at drawable pixel size, PNG output excludes app
   chrome; disabled in Asset Browser. New `openskycli screenshot --out` uses existing

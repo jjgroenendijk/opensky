@@ -85,16 +85,37 @@ nonisolated final class CellSceneBuilder {
     let file: ESMFile
     let meshes: MeshLibrary
     let textures: TextureLibrary
+    private let distantLODBuilder: DistantLODBuilder?
     /// FormID -> STAT over the STAT top group, built on first use.
     private var statIndex: [UInt32: StaticObject]?
     /// FormID -> ModelBase over the MSTT/TREE/FURN/ACTI/CONT top groups,
     /// built on first use. Checked when a ref's base is not a STAT.
     private var modelBaseIndex: [UInt32: ModelBase]?
 
-    init(file: ESMFile, meshes: MeshLibrary, textures: TextureLibrary) {
+    init(
+        file: ESMFile,
+        meshes: MeshLibrary,
+        textures: TextureLibrary,
+        fileSystem: VirtualFileSystem? = nil
+    ) {
         self.file = file
         self.meshes = meshes
         self.textures = textures
+        distantLODBuilder = fileSystem.map {
+            DistantLODBuilder(fileSystem: $0, meshes: meshes, textures: textures)
+        }
+    }
+
+    func buildDistantLOD(
+        worldspaceEditorID: String,
+        center: CellCoordinate,
+        hiddenCells: Set<CellCoordinate>
+    ) throws -> DistantLODScene? {
+        try distantLODBuilder?.build(
+            worldspace: worldspaceEditorID,
+            center: center,
+            hiddenCells: hiddenCells
+        )
     }
 
     func buildScene(

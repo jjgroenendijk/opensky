@@ -73,12 +73,24 @@ nonisolated extension NIFFile {
 
             let block = file.blocks[index]
             if NIFNode.traversedTypes.contains(block.typeName) {
-                let node = try NIFNode(data: block.data, header: file.header)
+                let node: NIFNode
+                if block.typeName == "BSMultiBoundNode" {
+                    let multi = try NIFMultiBoundNode(data: block.data, header: file.header)
+                    // Terrain LOD stores water in a sibling subtree. Water
+                    // gets its own pipeline in milestone 3.5; drawing it as
+                    // opaque geometry would cover land.
+                    if multi.object.name?.uppercased() == "WATER" {
+                        return
+                    }
+                    node = NIFNode(object: multi.object, children: multi.children)
+                } else {
+                    node = try NIFNode(data: block.data, header: file.header)
+                }
                 let world = parent * node.object.localTransform
                 for child in node.children {
                     try visit(ref: child, parent: world, depth: depth + 1)
                 }
-            } else if block.typeName == "BSTriShape" {
+            } else if block.typeName == "BSTriShape" || block.typeName == "BSSubIndexTriShape" {
                 try appendShape(block: block, parent: parent)
             }
             // Any other type is a leaf we do not draw (collision, shader
@@ -89,7 +101,9 @@ nonisolated extension NIFFile {
             block: NIFFile.Block,
             parent: float4x4
         ) throws {
-            let shape = try NIFTriShape(data: block.data, header: file.header)
+            let shape = try block.typeName == "BSSubIndexTriShape"
+                ? NIFSubIndexTriShape(data: block.data, header: file.header).shape
+                : NIFTriShape(data: block.data, header: file.header)
             guard shape.skinRef < 0, !shape.positions.isEmpty else {
                 skippedShapeCount += 1 // skinned or empty: not M2 statics
                 return

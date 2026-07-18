@@ -19,6 +19,20 @@ nonisolated protocol CellSceneProvider {
     /// Drops the given cached assets (a departed cell's keys no resident cell
     /// needs). Runs on the same executor as builds so libraries stay confined.
     func evict(droppingMeshKeys: Set<String>, droppingTextureKeys: Set<String>)
+
+    func buildDistantLOD(
+        center: CellCoordinate,
+        hiddenCells: Set<CellCoordinate>
+    ) throws -> DistantLODScene?
+}
+
+nonisolated extension CellSceneProvider {
+    func buildDistantLOD(
+        center _: CellCoordinate,
+        hiddenCells _: Set<CellCoordinate>
+    ) throws -> DistantLODScene? {
+        nil
+    }
 }
 
 /// Adapts `CellSceneBuilder` to the provider seam, pinning the worldspace so
@@ -44,12 +58,28 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider {
         builder.meshes.evict(dropping: meshKeys)
         builder.textures.evict(dropping: textureKeys)
     }
+
+    func buildDistantLOD(
+        center: CellCoordinate,
+        hiddenCells: Set<CellCoordinate>
+    ) throws -> DistantLODScene? {
+        try builder.buildDistantLOD(
+            worldspaceEditorID: worldspaceEditorID,
+            center: center,
+            hiddenCells: hiddenCells
+        )
+    }
 }
 
 /// One finished build handed back to the main-thread streamer.
 nonisolated struct CellBuildResult {
     let coordinate: CellCoordinate
     let result: Result<CellScene, any Error>
+}
+
+nonisolated struct DistantLODBuildResult {
+    let center: CellCoordinate
+    let result: Result<DistantLODScene?, any Error>
 }
 
 /// Runs cell builds off the main thread and buffers the results for a
@@ -62,6 +92,15 @@ nonisolated protocol CellBuildRunning: AnyObject {
     /// Schedules an eviction pass on the build executor (after queued builds),
     /// dropping the given assets a departed cell no longer needs.
     func enqueueEviction(droppingMeshKeys: Set<String>, droppingTextureKeys: Set<String>)
+    func enqueueDistantLOD(center: CellCoordinate, hiddenCells: Set<CellCoordinate>)
+    func drainCompletedDistantLOD() -> [DistantLODBuildResult]
+}
+
+nonisolated extension CellBuildRunning {
+    func enqueueDistantLOD(center _: CellCoordinate, hiddenCells _: Set<CellCoordinate>) {}
+    func drainCompletedDistantLOD() -> [DistantLODBuildResult] {
+        []
+    }
 }
 
 /// Production runner: one serial `DispatchQueue` builds cells one at a time
@@ -82,6 +121,8 @@ nonisolated final class SerialCellBuildRunner: CellBuildRunning, @unchecked Send
     /// defence in depth over the streamer's own dedup. Bounds the queue depth
     /// to the grid size regardless of caller bugs (guards the 30 GB runaway).
     private var pending: Set<CellCoordinate> = []
+    private var pendingLOD: Set<CellCoordinate> = []
+    private var completedLOD: [DistantLODBuildResult] = []
 
     init(provider: any CellSceneProvider, label: String = "nl.jjgroenendijk.opensky.cellbuild") {
         self.provider = provider
@@ -124,6 +165,32 @@ nonisolated final class SerialCellBuildRunner: CellBuildRunning, @unchecked Send
         queue.async { [self] in
             provider.evict(droppingMeshKeys: meshKeys, droppingTextureKeys: textureKeys)
         }
+    }
+
+    func enqueueDistantLOD(center: CellCoordinate, hiddenCells: Set<CellCoordinate>) {
+        lock.lock()
+        let isNew = pendingLOD.insert(center).inserted
+        lock.unlock()
+        guard isNew else { return }
+        queue.async { [self] in
+            let result = Result {
+                try provider.buildDistantLOD(center: center, hiddenCells: hiddenCells)
+            }
+            lock.lock()
+            completedLOD.append(DistantLODBuildResult(center: center, result: result))
+            lock.unlock()
+        }
+    }
+
+    func drainCompletedDistantLOD() -> [DistantLODBuildResult] {
+        lock.lock()
+        defer { lock.unlock() }
+        let out = completedLOD
+        completedLOD.removeAll(keepingCapacity: true)
+        for entry in out {
+            pendingLOD.remove(entry.center)
+        }
+        return out
     }
 
     /// Thread-safe snapshot for tests + scripted streaming verification.

@@ -24,6 +24,11 @@ nonisolated struct NIFNode {
     /// Child block refs in file order; -1 = empty slot (kept positional).
     let children: [Int32]
 
+    init(object: NIFObjectPrefix, children: [Int32]) {
+        self.object = object
+        self.children = children
+    }
+
     init(data: Data, header: NIFHeader) throws {
         var reader = BinaryReader(data)
         object = try NIFObjectPrefix(reader: &reader, header: header)

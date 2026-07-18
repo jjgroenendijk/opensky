@@ -58,11 +58,14 @@ nonisolated struct NIFTriShape {
 
     init(data: Data, header: NIFHeader) throws {
         var reader = BinaryReader(data)
+        try self.init(reader: &reader, header: header)
+    }
+
+    /// Shared BSTriShape prefix reader. BSSubIndexTriShape appends segment
+    /// records after this payload, so its decoder continues from same cursor.
+    init(reader: inout BinaryReader, header: NIFHeader) throws {
+        try Self.validateStream(header)
         object = try NIFObjectPrefix(reader: &reader, header: header)
-        guard header.bsStream?.version == 100 else {
-            // Stream 83 (LE) predates BSTriShape; FO4 records differ.
-            throw NIFError.unsupported("BSTriShape outside an SSE stream (BS 100)")
-        }
 
         boundingSphereCenter = try reader.readVector3()
         boundingSphereRadius = try reader.readFloat32()
@@ -127,7 +130,20 @@ nonisolated struct NIFTriShape {
 
         // SSE-only trailer: particle-deformed copy of the geometry. The size
         // field is always present; the copy itself is ignored (M2 statics).
-        _ = try reader.readUInt32()
+        let particleDataSize = try Int(reader.readUInt32())
+        guard particleDataSize <= reader.bytesRemaining else {
+            throw NIFError.malformed(
+                "particle data size \(particleDataSize) exceeds block size"
+            )
+        }
+        reader.skip(particleDataSize)
+    }
+
+    private static func validateStream(_ header: NIFHeader) throws {
+        guard header.bsStream?.version == 100 else {
+            // Stream 83 (LE) predates BSTriShape; FO4 records differ.
+            throw NIFError.unsupported("BSTriShape outside an SSE stream (BS 100)")
+        }
     }
 
     private struct VertexArrays {

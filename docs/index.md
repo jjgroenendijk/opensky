@@ -20,6 +20,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   and their engine types.
 * [Terrain records](/formats/land.md) - LAND/LTEX/TXST layouts: VHGT gradient
   height field, VNML/VCLR, BTXT/ATXT/VTXT splat layers, texture sets.
+* [Distant LOD](/formats/lod.md) - lodsettings plus BTR/BTO paths and LOD-specific NIF
+  blocks, placement rules, full vanilla sweep evidence.
 * [NIF mesh](/formats/nif.md) - Gamebryo 20.2.0.7 container: header, block
   table, block walk.
 * [DDS texture container](/formats/dds.md) - DDS_HEADER/DXT10 layout, BCn
@@ -33,6 +35,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   STAT resolution, skip taxonomy, grouping, world bounds.
 * [Terrain mesh build](/engine/terrain.md) - LAND -> per-quadrant meshes under the cell's
   objects: grid topology, base textures, XCLC quad-hiding, DNAM fallback plane, placement.
+* [Distant LOD streaming](/engine/distant-lod.md) - anchored coarsening rings beyond 5x5,
+  async scene replacement, asset lifetime, real-render evidence.
 * [Free-fly camera](/engine/free-fly-camera.md) - WASDQE + mouse-look input capture,
   yaw/pitch pose -> view matrix, movement speeds tuned to Skyrim scale.
 
