@@ -76,9 +76,9 @@ test-ui: ## Build + run UI tests (launches the app, drives it via automation)
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
 		-only-testing:openskyUITests test
 
-install: ## Build Release app + copy to /Applications
+install: ## Build Release app (arm64) + copy to /Applications
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration Release \
-		-derivedDataPath build/install build
+		-derivedDataPath build/install ARCHS=arm64 build
 	@rm -rf /Applications/opensky.app
 	@ditto build/install/Build/Products/Release/opensky.app /Applications/opensky.app
 	@echo "[ OK ] /Applications/opensky.app updated"
