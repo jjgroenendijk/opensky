@@ -1,11 +1,18 @@
 // Record iteration helpers over a parsed plugin: depth-first walk of every
 // group (record headers only — payloads decode only when a caller asks) plus
 // lookups by FormID / editor ID and a FormID -> record-type index. Malformed
-// subtrees are pruned with a warning, never fatal (AGENTS.md mod-quirk rule).
+// subtrees are pruned with a log, never fatal (AGENTS.md mod-quirk rule).
+// Shared by the CLI (record/cell commands) and the preview GUI catalog.
 
 import Foundation
+import OSLog
 
-enum ESMWalk {
+nonisolated enum ESMWalk {
+    private static let logger = Logger(
+        subsystem: "nl.jjgroenendijk.opensky",
+        category: "ESMWalk"
+    )
+
     /// Depth-first over every record in every top group (TES4 excluded).
     /// Return false from `body` to stop early.
     static func forEachRecord(in file: ESMFile, _ body: (ESMRecord) -> Bool) {
@@ -16,7 +23,7 @@ enum ESMWalk {
 
     private static func walk(group: ESMGroup, _ body: (ESMRecord) -> Bool) -> Bool {
         guard let children = try? group.children() else {
-            printError("[WARNING] malformed group skipped")
+            logger.warning("malformed group skipped")
             return true
         }
         for child in children {
