@@ -243,6 +243,11 @@ synchronously inside it -- safe, since it is the same thread and still between f
 frame has not encoded yet), so the frame draws the freshly streamed scene. The offscreen /
 test render paths never set `onFrame`, so they are unchanged.
 
+M3.4 adds one optional [distant LOD scene](/engine/distant-lod.md) to composition. Same
+runner/provider queue builds it only after desired 5x5 is fully accounted, so 100+ first-load
+LOD assets cannot starve near cells. Center changes replace stale ring scene; resident asset
+union includes LOD keys before any cell/LOD eviction.
+
 ## Memory safety + observed plateau
 
 `Data(contentsOf:options:.mappedIfSafe)` may copy instead of map, especially on external

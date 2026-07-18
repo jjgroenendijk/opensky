@@ -27,6 +27,7 @@ enum OpenSkyCLI {
                                   Summarize an exterior cell's references
       nif <key>                   Inspect a mesh: container stats, model summary
       dds <key>                   Inspect a texture: header + mip chain
+      lod [--worldspace <edid>]   Parse settings + sweep all .btr/.bto files
       screenshot --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
              [--size WxH] [--zoom <f>] [--neighbors]
                                   Save an offscreen World frame as PNG; zoom
@@ -96,6 +97,11 @@ enum OpenSkyCLI {
             )
         case "dds":
             try AssetCommand.runDDS(
+                context: .resolve(dataRootOverride: dataRoot),
+                scanner: &scanner
+            )
+        case "lod":
+            try LODCommand.run(
                 context: .resolve(dataRootOverride: dataRoot),
                 scanner: &scanner
             )

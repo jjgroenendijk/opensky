@@ -39,6 +39,7 @@ final class CellStreamer {
     /// Set once the first drawable cell frames the camera; every later
     /// recompose passes a nil camera so the free-fly view is left alone.
     private var hasSeededCamera = false
+    private var requestedLODCenter: CellCoordinate?
 
     /// - Parameters:
     ///   - center: grid center at launch (streaming starts on FirstRenderCell).
@@ -70,6 +71,7 @@ final class CellStreamer {
             pending.append(contentsOf: completed)
             activeBuild = nil
         }
+        let completedLOD = runner.drainCompletedDistantLOD()
 
         var sceneChanged = false
         // Renderer starts on its demo pose. Keep the configured launch grid
@@ -77,7 +79,12 @@ final class CellStreamer {
         let effectivePosition = hasSeededCamera
             ? cameraPosition
             : CellGridManager.cellCenter(of: grid.center)
+        let previousCenter = grid.center
         if let diff = grid.update(cameraPosition: effectivePosition, loaded: core.accountedCells) {
+            if grid.center != previousCenter, let oldLOD = composition.setDistantLOD(nil) {
+                evictUnused(oldLOD.assets)
+                sceneChanged = true
+            }
             let actions = core.apply(diff: diff)
             requests.removeAll { !core.inFlight.contains($0) }
             if !actions.removals.isEmpty {
@@ -90,10 +97,25 @@ final class CellStreamer {
         if integrateOneBuild() {
             sceneChanged = true
         }
+        if integrateDistantLOD(completedLOD) {
+            sceneChanged = true
+        }
         if sceneChanged {
             recomposeAndSink()
         }
         dispatchNextBuild()
+        requestDistantLODIfNeeded()
+    }
+
+    private func requestDistantLODIfNeeded() {
+        // Cell + LOD work share one serial cache-confined queue. Let every
+        // desired full cell reach resident/void/failed first so first-time
+        // loading 100+ distant assets cannot starve the near grid.
+        let resolved = core.resident.union(core.void).union(core.failed)
+        guard resolved.isSuperset(of: grid.desiredCells) else { return }
+        guard requestedLODCenter != grid.center else { return }
+        requestedLODCenter = grid.center
+        runner.enqueueDistantLOD(center: grid.center, hiddenCells: grid.desiredCells)
     }
 
     /// Drops unloaded cells from the composition and schedules eviction of the
@@ -158,6 +180,30 @@ final class CellStreamer {
             }
         }
         return false
+    }
+
+    private func integrateDistantLOD(_ entries: [DistantLODBuildResult]) -> Bool {
+        var changed = false
+        for entry in entries {
+            switch entry.result {
+            case let .success(scene) where entry.center == grid.center:
+                let old = composition.setDistantLOD(scene)
+                if let old {
+                    evictUnused(old.assets)
+                }
+                changed = true
+            case let .success(scene):
+                if let scene {
+                    evictUnused(scene.assets)
+                }
+            case let .failure(error):
+                let reason = String(describing: error)
+                Self.logger.warning(
+                    "[WARNING] distant LOD build failed: \(reason, privacy: .public)"
+                )
+            }
+        }
+        return changed
     }
 
     /// A void slot (no CELL at the grid position) throws `cellNotFound`;
@@ -287,5 +333,9 @@ final class CellStreamer {
     /// Snapshot of the currently composed multi-cell scene.
     var composedScene: RenderScene {
         composition.composedScene()
+    }
+
+    var distantLODBlockCount: Int {
+        composition.distantLOD?.blockCount ?? 0
     }
 }

@@ -55,8 +55,8 @@ Sequencing: 3.1 terrain landed first — everything sits on it, and LAND lived i
 cell temporary-children groups `CellSceneBuilder` already walked
 (`docs/engine/cell-scene.md`) -> decoder slotted into the existing walk. 3.2 streaming now
 turns that per-cell unit into a grid + carries the perf work multi-cell rendering needs.
-3.4 LOD needs the grid boundary (rings start where loaded cells end). 3.5 sky/water + 3.6
-interiors independent of 3.2/3.4 -> parallelizable branches; 3.7 lighting last (interiors
+LOD rings now start at loaded-grid boundary. 3.5 sky/water + 3.6 interiors are independent;
+3.7 lighting lands last (interiors
 are where it shows). Verification path: `openskycli render`/`bench` + main-app asset
 browser, screenshot pattern as in `docs/img/`. Watch item: 3.5 sky turns black background
 in screenshots into a real frame.
@@ -65,28 +65,6 @@ Format facts below pre-verified 2026-07-18 against UESP mod-file-format pages + 
 `dev-4.1.6` source (`wbDefinitionsTES5.pas`, `wbDefinitionsCommon.pas`, `wbLOD.pas`) +
 DynDOLOD docs / xLODGen LODGen source. Re-confirm against real install by probe during
 impl; chase flagged UNCONFIRMED points especially.
-
-### 3.4 Distant LOD
-
-* [ ] `lodsettings/<worldspace>.lod` parse: 16 B = SW origin cell (int16 x2), stride,
-      min/max LOD level. Ref: UESP "LOD Settings File Format" + xEdit `wbLOD.pas`.
-      Doc: `docs/formats/lod.md` (covers all of 3.4).
-* [ ] Terrain LOD: `meshes/terrain/<ws>/<ws>.<level>.<x>.<y>.btr` — NIF container
-      (existing parser) + new blocks BSMultiBoundNode/BSMultiBound/BSMultiBoundAABB;
-      level N covers NxN cells, name coords = SW cell, grid anchored at lodsettings
-      origin; textures `textures/terrain/<ws>/<ws>.<level>.<x>.<y>.dds` + `_n`. Water
-      LOD shapes (node "WATER") skipped until 3.5 lands.
-* [ ] Object LOD: `.../objects/<ws>.<level>.<x>.<y>.bto` — BSSubIndexTriShape (new
-      block), vanilla atlas `textures/terrain/<ws>/objects/<ws>.objects.dds`; levels
-      4/8/16. Caveat: .btr/.bto layout derived from xLODGen generator source, not a
-      Bethesda spec -> defensive parse + probe sweep over every vanilla Tamriel
-      .btr/.bto before trusting.
-* [ ] Ring selection: level-4 blocks outside the loaded 5x5, coarser levels farther,
-      hide blocks under loaded cells; plain distance constants first (ini
-      `fBlockLevel*Distance` fidelity later). Tree LOD (.btt/.lst billboards, non-NIF,
-      layout in `wbLOD.pas`) — include if cheap, else defer with a todo note.
-* [ ] Verify: horizon filled past the grid from the target cell, no double-draw where
-      full cells are loaded; screenshot.
 
 ### 3.5 Sky + water
 
@@ -151,6 +129,8 @@ Direction only — re-scope into numbered gated items at 3.8. Candidate order:
 * Papyrus VM: PEX bytecode interpreter (open docs exist), event dispatch.
 * Audio: .fuz (lip + xwm), xwm via AVFoundation/ffmpeg-free route to be researched.
 * UI: game HUD/menus are Scaleform SWF — likely custom native UI instead; decide.
+* LOD quality: decode tree `.btt`/`.lst` billboards; clip boundary BTR triangles/segments
+  so 4x4 block anchoring leaves no conservative gap; read `fBlockLevel*Distance` INI values.
 
 ## Tooling / meta
 

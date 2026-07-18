@@ -11,6 +11,7 @@ import simd
 /// rebuilds the drawable union after each change.
 nonisolated struct CellSceneComposition {
     private(set) var cells: [CellCoordinate: CellScene] = [:]
+    private(set) var distantLOD: DistantLODScene?
 
     var cellCount: Int {
         cells.count
@@ -40,7 +41,18 @@ nonisolated struct CellSceneComposition {
         let ordered = cells.sorted { lhs, rhs in
             (lhs.key.x, lhs.key.y) < (rhs.key.x, rhs.key.y)
         }
-        return RenderScene(merging: ordered.map(\.value.renderScene))
+        var scenes = ordered.map(\.value.renderScene)
+        if let distantLOD {
+            scenes.append(distantLOD.renderScene)
+        }
+        return RenderScene(merging: scenes)
+    }
+
+    @discardableResult
+    mutating func setDistantLOD(_ scene: DistantLODScene?) -> DistantLODScene? {
+        let old = distantLOD
+        distantLOD = scene
+        return old
     }
 
     /// Union of the mesh + texture cache keys every resident cell uses -- the
@@ -52,6 +64,10 @@ nonisolated struct CellSceneComposition {
         for scene in cells.values {
             meshKeys.formUnion(scene.assets.meshKeys)
             textureKeys.formUnion(scene.assets.textureKeys)
+        }
+        if let distantLOD {
+            meshKeys.formUnion(distantLOD.assets.meshKeys)
+            textureKeys.formUnion(distantLOD.assets.textureKeys)
         }
         return CellAssets(meshKeys: meshKeys, textureKeys: textureKeys)
     }

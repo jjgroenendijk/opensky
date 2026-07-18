@@ -10,14 +10,10 @@ import MetalKit
 import simd
 
 enum RenderCommand {
-    /// Offsets of a cell plus its 8 neighbors — `--neighbors` grid (3.1
-    /// verify: terrain under the M2 walls, no seams at cell borders). Row
-    /// order does not matter; libraries dedup regardless of build order.
-    private static let neighborOffsets: [(dx: Int32, dy: Int32)] = [
-        (-1, -1), (0, -1), (1, -1),
-        (-1, 0), (0, 0), (1, 0),
-        (-1, 1), (0, 1), (1, 1)
-    ]
+    /// Production streaming footprint: target plus two rings (5x5).
+    private static let neighborOffsets: [(dx: Int32, dy: Int32)] = (-2 ... 2).flatMap { y in
+        (-2 ... 2).map { x in (Int32(x), Int32(y)) }
+    }
 
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
         let worldspace = try scanner.option("--worldspace")
@@ -37,36 +33,27 @@ enum RenderCommand {
             throw CLIError.failure("no Metal 4 GPU available")
         }
 
-        // One shared builder (one MeshLibrary/TextureLibrary/STAT index) so a
-        // 9-cell grid dedups residency same as one cell — not a streaming
-        // grid manager (3.2), just reusing what buildScene already sets up.
+        // One shared builder so the 5x5 + LOD dedup cache residency.
         let builder = try makeBuilder(context: context, device: device)
-        let offsets = neighbors ? neighborOffsets : [(dx: 0, dy: 0)]
-        var cellScenes: [CellScene] = []
-        for offset in offsets {
-            let x = gridX + offset.dx
-            let y = gridY + offset.dy
-            do {
-                let cellScene = try builder.buildScene(
-                    worldspaceEditorID: worldspace,
-                    gridX: x,
-                    gridY: y
-                )
-                print(cellScene.summary.summaryLine)
-                cellScenes.append(cellScene)
-            } catch {
-                // Void grid slots (no CELL at that XCLC) or a malformed
-                // worldspace on one slot must not sink the whole grid.
-                printError("[WARN] cell (\(x),\(y)) skipped: \(String(describing: error))")
-            }
-        }
+        let cellScenes = buildCellScenes(
+            builder: builder,
+            worldspace: worldspace,
+            gridX: gridX,
+            gridY: gridY,
+            neighbors: neighbors
+        )
         guard !cellScenes.isEmpty else {
             throw CLIError.failure("no cells built")
         }
         guard let bounds = unionBounds(cellScenes) else {
             throw CLIError.failure("nothing drew — no bounds to frame a camera on")
         }
-        let scene = RenderScene(merging: cellScenes.map(\.renderScene))
+        let scene = try sceneWithLOD(
+            builder: builder,
+            cellScenes: cellScenes,
+            worldspace: worldspace,
+            center: CellCoordinate(x: gridX, y: gridY)
+        )
 
         let render = try renderOffscreen(
             device: device,
@@ -88,6 +75,55 @@ enum RenderCommand {
         let url = URL(filePath: output)
         try FrameScreenshot.write(texture: render.texture, to: url)
         print("[INFO] wrote frame -> \(url.path(percentEncoded: false))")
+    }
+
+    private static func buildCellScenes(
+        builder: CellSceneBuilder,
+        worldspace: String,
+        gridX: Int32,
+        gridY: Int32,
+        neighbors: Bool
+    ) -> [CellScene] {
+        let offsets = neighbors ? neighborOffsets : [(dx: 0, dy: 0)]
+        return offsets.compactMap { offset in
+            let x = gridX + offset.dx
+            let y = gridY + offset.dy
+            do {
+                let scene = try builder.buildScene(
+                    worldspaceEditorID: worldspace,
+                    gridX: x,
+                    gridY: y
+                )
+                print(scene.summary.summaryLine)
+                return scene
+            } catch {
+                printError("[WARN] cell (\(x),\(y)) skipped: \(String(describing: error))")
+                return nil
+            }
+        }
+    }
+
+    private static func sceneWithLOD(
+        builder: CellSceneBuilder,
+        cellScenes: [CellScene],
+        worldspace: String,
+        center: CellCoordinate
+    ) throws -> RenderScene {
+        let grid = CellGridManager(initialPosition: CellGridManager.cellCenter(of: center))
+        let lod = try builder.buildDistantLOD(
+            worldspaceEditorID: worldspace,
+            center: center,
+            hiddenCells: grid.desiredCells
+        )
+        if let lod {
+            print("[INFO] distant LOD: \(lod.blockCount) blocks, "
+                + "\(lod.missingBlockCount) unavailable")
+        }
+        var scenes = cellScenes.map(\.renderScene)
+        if let lod {
+            scenes.append(lod.renderScene)
+        }
+        return RenderScene(merging: scenes)
     }
 
     /// Enclosing AABB over every built cell's bounds; nil input/all-nil
@@ -186,7 +222,12 @@ enum RenderCommand {
         let file = try context.loadSkyrimESM()
         let textures = TextureLibrary(fileSystem: fileSystem, device: device)
         let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
-        return CellSceneBuilder(file: file, meshes: meshes, textures: textures)
+        return CellSceneBuilder(
+            file: file,
+            meshes: meshes,
+            textures: textures,
+            fileSystem: fileSystem
+        )
     }
 
     /// Headless MTKView (never shown, no window) carries the pixel-format

@@ -131,10 +131,10 @@ After the prefix (nif.xml NiNode):
 | uint32         | effect count| BS < FO4 only                  |
 | int32 x count  | effects     | skipped                        |
 
-`NIFNode.traversedTypes` lists the subclasses decoded with this one layout —
-BSFadeNode, BSLeafAnimNode, BSTreeNode, BSOrderedNode, BSMultiBoundNode all
-inherit NiNode in nif.xml and only append tail fields, which the size-sliced
-block payload bounds away. Selector nodes (NiSwitchNode, NiLODNode) are
+`NIFNode.traversedTypes` lists subclasses decoded with this layout. BSFadeNode,
+BSLeafAnimNode, BSTreeNode, BSOrderedNode use prefix only. `BSMultiBoundNode` has a typed
+tail decoder (multi-bound ref + culling mode; [LOD](/formats/lod.md)). Selector nodes
+(NiSwitchNode, NiLODNode) are
 excluded on purpose: they draw one child, not all; traversing them would
 stack LOD alternatives. Impl: `NIFNode.swift`.
 
@@ -183,7 +183,10 @@ the flag still appears in vanilla SSE descs and is ignored. Bitangents are
 stored split (X with position, Y with normal, Z with tangent) and
 reassembled at decode. normbyte remap: `(byte / 255) * 2 - 1`
 (NifSkope/nifly). Triangle indices are validated `< vertex count`. Impl:
-`NIFTriShape.swift`.
+`NIFTriShape.swift`. Declared particle-copy bytes are bounds-checked + skipped.
+
+`BSSubIndexTriShape` inherits this complete payload then appends SSE segment metadata.
+OpenSky validates + flattens it for object LOD; layout: [LOD](/formats/lod.md).
 
 ## Materials subset
 
@@ -244,7 +247,7 @@ Impl: `NIFAlphaProperty.swift`.
 types (`Geometry/Mesh.swift`) decoupled from disk layout:
 
 - Walk starts at footer roots; `NIFNode.traversedTypes` recurse, composing
-  `parent * local` (T·R·S) down the chain; `BSTriShape` leaves become `Mesh`
+  `parent * local` (T·R·S) down the chain; `BSTriShape`/`BSSubIndexTriShape` leaves become `Mesh`
   values carrying the accumulated model-space transform.
 - Material identity dedups by (shader, alpha) property block ref pair;
   each unique pair resolves once into an engine `Material`

@@ -22,7 +22,29 @@ enum AssetCommand {
         let counts = file.blockTypeCounts().sorted { ($0.value, $1.key) > ($1.value, $0.key) }
         print("blocks: \(file.blocks.count) — "
             + counts.map { "\($0.key) \($0.value)" }.joined(separator: ", "))
+        for (index, block) in file.blocks.enumerated() {
+            if let node = decodedNode(block, header: file.header) {
+                print("block \(index): \(block.typeName) \(node.object.name ?? "-") "
+                    + "children \(node.children)")
+            } else if let shape = decodedShape(block, header: file.header) {
+                print("block \(index): \(block.typeName) \(shape.object.name ?? "-") "
+                    + "\(shape.positions.count) vertices, \(shape.indices.count / 3) triangles")
+            }
+        }
         printModelSummary(file: file, key: key)
+    }
+
+    private static func decodedNode(_ block: NIFFile.Block, header: NIFHeader) -> NIFNode? {
+        guard NIFNode.traversedTypes.contains(block.typeName) else { return nil }
+        return try? NIFNode(data: block.data, header: header)
+    }
+
+    private static func decodedShape(
+        _ block: NIFFile.Block,
+        header: NIFHeader
+    ) -> NIFTriShape? {
+        guard ["BSTriShape", "BSSubIndexTriShape"].contains(block.typeName) else { return nil }
+        return try? NIFTriShape(data: block.data, header: header)
     }
 
     /// Flattened engine-model view (drawable meshes + resolved materials).

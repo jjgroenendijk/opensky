@@ -46,9 +46,10 @@ only where `--out` points (AGENTS.md Legal & IP).
 | `vfs cat <key> --out <file>` | extract one resource (loose files win, as in the engine) |
 | `record <formid-or-editorid>` | dump one Skyrim.esm record: header, decoded view (WRLD/CELL/STAT/REFR), field list capped at 64 with a per-type tail summary |
 | `cell [--worldspace <edid>] [--x n] [--y n] [--refs]` | exterior-cell summary without Metal: ref count, base-type histogram, other cell records; `--refs` lists placements |
-| `nif <key>` | container stats + flattened model summary (meshes, verts/tris, bounds, materials with texture paths) |
+| `nif <key>` | container stats + named node/shape rows + flattened model summary (meshes, verts/tris, bounds, materials with texture paths) |
 | `dds <key>` | header + mip chain (size, BCn format, sRGB declaration) |
-| `screenshot --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f] [--neighbors]` | cell scene build -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load summary + draw stats (draw calls vs groups/instances/culled — instancing + culling evidence) + non-background pixel fraction; `--zoom` (0.1-10) moves the eye toward the framed center — whole-cell framing is conservative, sparse cells render small without it; `--neighbors` builds the target cell plus its 8 grid neighbors (one shared `MeshLibrary`/`TextureLibrary`/`CellSceneBuilder`, so residency dedups across cells) and renders one frame framed to the union of all built bounds — a missing or malformed neighbor slot warns to stderr and is skipped, not fatal; `render` remains a compatibility alias with identical options/output |
+| `lod [--worldspace edid]` | parse lodsettings + sweep every worldspace BTR/BTO through LOD block decoders + scene flattener; any failed container exits 1 |
+| `screenshot --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f] [--neighbors]` | cell scene build + distant LOD -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load/LOD/draw stats + non-background fraction; `--zoom` (0.1-10) moves eye toward framed center; `--neighbors` builds production-size 5x5 (shared libraries) and frames full-cell bounds only; missing cell warns + skips; `render` is identical alias |
 | `bench [--worldspace/--x/--y] [--size WxH] [--frames n] [--budget-ms f]` | sustained offscreen render (default 360 frames @ 1280x720) through `Renderer.renderOffscreenSustained` — FrameStats windows + per-frame wall times; prints avg/p95/max + fps, exit 1 when avg or p95 misses the budget (default 33.33 ms = 30 fps, todo 2.11 gate) |
 | `bench --fly-path [--worldspace/--x/--y] [--size WxH] [--budget-ms f] [--max-frames n] [--footprint-cap-mb f]` | scripted launch-center -> east -> north cell flight through live `CellStreamer`; waits for each 5x5 grid, reuses one render-target pair at 100 Hz, requires physical-footprint plateau/cap, unload, exact 35-cell build union with no duplicates, zero failed builds, avg/p95 frame budget |
 
@@ -74,11 +75,13 @@ Implementation notes:
   path never touches a drawable. `render` dispatches the same implementation as a
   compatibility alias. App + CLI both use shared `FrameScreenshot` BGRA readback/PNG
   encoder; no separate screenshot pipeline.
-* `screenshot --neighbors` composes 9 `CellScene` builds with `RenderScene(merging:)` (a
+* `screenshot --neighbors` composes 25 `CellScene` builds + one distant LOD scene with
+  `RenderScene(merging:)` (a
   flat concat of each scene's opaque/alpha-tested/terrain draw lists — draw items
   already carry absolute world matrices, so no re-transform) and unions the 9 bounds
-  boxes before framing. Dumb composition on purpose: this is the 3.1 verify render, not
-  the 3.2 streaming grid manager.
+  boxes before framing. LOD bounds stay excluded so distant mountains do not shrink target.
+* `lod` is M3.4 repeatable clean-room probe. It validates all LOD-specific NIF blocks +
+  flattens each file without GPU upload. Vanilla Tamriel: 3,060 BTR + 717 BTO, 0 failed.
 * `bench --fly-path` uses shared `CellStreamingFlyBenchmark` engine logic, not a CLI-only
   model. It drives production serial build runner, streamer, renderer scene swaps, asset
   eviction, and `task_vm_info.phys_footprint` sampler. Waypoints move one cell east, then
