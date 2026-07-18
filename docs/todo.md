@@ -64,9 +64,9 @@ reachable through doors. One branch/PR per numbered item; format items follow th
 spec/fixture/doc discipline as M2 (cite spec, synthetic in-code fixtures,
 `docs/formats/<name>.md`, verify via repeatable `openskycli` probes).
 
-Sequencing: 3.1 terrain first — everything sits on it, and LAND lives in the same cell
-temporary-children groups `CellSceneBuilder` already walks
-(`docs/engine/cell-scene.md`) -> decoder slots into the existing walk. 3.2 streaming
+Sequencing: 3.1 terrain landed first — everything sits on it, and LAND lived in the same
+cell temporary-children groups `CellSceneBuilder` already walked
+(`docs/engine/cell-scene.md`) -> decoder slotted into the existing walk. 3.2 streaming now
 turns that per-cell unit into a grid + carries the perf work multi-cell rendering needs.
 3.3 LOD needs the grid boundary (rings start where loaded cells end). 3.4 sky/water +
 3.5 interiors independent of 3.2/3.3 -> parallelizable branches; 3.6 lighting last
@@ -78,29 +78,6 @@ Format facts below pre-verified 2026-07-18 against UESP mod-file-format pages + 
 `dev-4.1.6` source (`wbDefinitionsTES5.pas`, `wbDefinitionsCommon.pas`, `wbLOD.pas`) +
 DynDOLOD docs / xLODGen LODGen source. Re-confirm against real install by probe during
 impl; chase flagged UNCONFIRMED points especially.
-
-### 3.1 Terrain
-
-* [ ] LAND + LTEX decoders -> `docs/formats/land.md`. LAND sits in cell
-      temporary-children groups (type 9), usually zlib-compressed (record flag bit 18).
-      Subrecords: DATA flags; VHGT 1096 B = float anchor + 33x33 int8 deltas (col 0
-      carries row-to-row, cols 1-32 accumulate west->east, result x8 game units);
-      VNML/VCLR 3267 B = 33x33x3 bytes; layers BTXT/ATXT 8 B (LTEX formid, quadrant 0-3,
-      layer no) + VTXT 8-B entries (position 0-288 on 17x17 quadrant grid, float
-      opacity). LTEX TNAM -> TXST (TX00 diffuse, TX01 normal). Ref: UESP LAND/LTEX/TXST
-      + xEdit `wbDefinitionsCommon.pas`. Synthetic fixtures; probe sweep every Tamriel
-      LAND (count, height range, layer histogram, VTXT bounds).
-* [ ] Terrain mesh build: heights -> 33x33 vertex grid, 128 units/quad over the 4096
-      cell footprint, normals from VNML, placement from XCLC grid. Neighbor stitch:
-      south row / west col duplicate neighbor edges per spec — verify by probe. LAND-less
-      cell -> flat plane at WRLD DNAM default land height (Tamriel -27000; engine
-      fallback UNCONFIRMED — probe). Respect XCLC force-hide-quad flags.
-* [ ] Terrain render: splat pipeline — base + ATXT layers per quadrant blended by VTXT
-      alpha (format allows 8 + base; live engine limit community-reported ~6 — probe
-      vanilla max), decide texture binding strategy (array vs per-quadrant draws),
-      record in rendering doc.
-* [ ] Verify: `openskycli render` of target cell + 8 neighbors — terrain under the M2
-      walls, no seams at cell borders; screenshot.
 
 ### 3.2 Cell streaming
 

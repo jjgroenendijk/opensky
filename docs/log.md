@@ -4,6 +4,78 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* **Terrain 3x3 grid verify, closes M3.1** (M3.1): `openskycli render --neighbors` builds
+  the target cell plus its 8 grid neighbors off one shared `MeshLibrary`/`TextureLibrary`/
+  `CellSceneBuilder` (residency + STAT index dedup across cells, not a streaming grid
+  manager — that's 3.2) and composes the 9 `CellScene`s with new `RenderScene(merging:)`
+  (`opensky/Rendering/RenderScene.swift`: flat concat of the opaque/alpha-tested/terrain
+  draw lists — items already carry absolute world matrices, no re-transform). Camera
+  generalizes `SceneCamera.framing` to the union of all 9 bounds. A neighbor slot that
+  fails to build (void grid position, malformed worldspace) warns to stderr and is
+  skipped, not fatal. Real-install run over Tamriel (6,-2) + 8 neighbors (Whiterun): all 9
+  slots built (WhiterunExterior02/03/05/06/08/09/10, ChillfurrowFarmExterior, cell
+  000095F9), 0 missing textures, 4 terrain quads/cell; visually verified (default + a
+  temporary steep top-down angle, not committed) — terrain continuous under the M2 walls
+  across all 9 cells, no height cracks or gaps at any internal cell border, splat
+  variation visible city-wide. Screenshot:
+  [terrain-3x3-whiterun.png](/img/terrain-3x3-whiterun.png). Docs:
+  [terrain](/engine/terrain.md) Verification section, [cli](/tools/cli.md) `--neighbors`.
+  Tests: `RenderSceneTests` merge cases (concat counts, cross-scene residency dedup, empty
+  input). Closes milestone 3.1 (`docs/todo.md`).
+* **Terrain splat pipeline** (M3.1): third render pipeline (`TerrainSplat`,
+  `terrainVertex`/`terrainFragment`) blends each quadrant's BTXT base with up
+  to 8 ATXT layer diffuses by per-vertex VTXT opacities in one draw. Binding
+  decision: per-quadrant multi-texture argument-table binds (base at
+  `TextureIndexDiffuse`, `array<texture2d, 8>` at `TextureIndexTerrainLayer0`;
+  `texture2d_array` rejected — layer diffuses vary in size/format; per-layer
+  draws rejected — blend pipeline + N draws/quadrant). Weights = second vertex
+  stream (`BufferIndexTerrainWeights`, two float4 lanes) — static 48-byte
+  layout untouched. `TerrainMeshBuilder` now emits `Patch` values (mesh + base
+  FormID + layers, VTXT baked dense: position 0-288 = 17x17 row-major, UESP
+  LAND); `CellSceneBuilder` resolves base + layer LTEX->TXST diffuses, drops
+  broken layer chains (counted, `terrainLayerSkipCount`), packs weights, emits
+  `RenderScene.terrain` items. Blend = ordered `mix(albedo, layer, opacity)`;
+  exact vanilla curve UNCONFIRMED. Cap `TerrainConstantMaxLayers = 8` (format
+  max; vanilla ~6/quadrant). Lighting identical to static path; TX01 normal
+  maps deferred. Docs: [metal4-renderer](/rendering/metal4-renderer.md) splat
+  section + [terrain](/engine/terrain.md) rewrite. Tests: weight bake/pack +
+  layer routing (`TerrainMeshBuilderTests`), resolution + blend order + drop
+  accounting (`CellSceneTerrainTests`), GPU pixel-level blend proof
+  (`TerrainSplatRenderTests`), terrain residency (`RenderSceneTests`). Visual:
+  WhiterunExterior06 render — 4 quads, 14 layers, dirt/grass/rock/snow
+  transitions under the M2 walls.
+* **Terrain mesh build** (M3.1): new `opensky/World/TerrainMeshBuilder.swift`
+  turns a decoded LAND into engine `Mesh`/`Model` values — 33x33 vertex grid,
+  128-unit quads over the 4096 cell, heights passthrough (VHGT already *8),
+  VNML normals (`v/127` normalized, zero/absent -> up), VCLR colors, UVs
+  `(c,r)/2` (density UNCONFIRMED, tuned in splat commit). One sub-mesh per
+  painted, non-hidden quadrant (XCLC quad-flags force-hide) with its BTXT base
+  material resolved BTXT -> LTEX(TNAM) -> TXST(TX00) via `ESMWalk`, paths
+  canonicalized through `NIFShaderTextureSet.vfsKey`. `CellSceneBuilder` places
+  terrain at `(gridX*4096, gridY*4096)` (REFR world frame), appends opaque
+  DrawItems under the objects, feeds `CellScene.bounds`, adds
+  `terrainQuadrantCount` to the summary. LAND-less exterior cell -> flat plane
+  at WRLD DNAM default land height (new `Worldspace.defaultLandHeight`/
+  `defaultWaterHeight`; Tamriel -27000); DNAM absent -> no ground (UNCONFIRMED,
+  probe later). Docs: [terrain subsystem](/engine/terrain.md), cell-scene LAND
+  note updated. Synthetic-fixture tests (`TerrainMeshBuilderTests`,
+  `CellSceneTerrainTests`). Edge-overlap probe (`LandRealDataTests`, real
+  Tamriel): 4 adjacent pairs, 0 mismatched edge vertices — shared row/col match
+  exactly, overlap claim confirmed (streaming can weld by dropping a shared edge).
+  Splat render is the next 3.1 item.
+* **LAND/LTEX/TXST decoders** (M3.1): new terrain record decoders in
+  `opensky/Formats/ESM/Records/{Land,LandTexture,TextureSet}.swift` +
+  [land format doc](/formats/land.md). LAND = VHGT gradient height field
+  (float anchor + 33x33 int8 deltas; col 0 carries row-to-row, cols 1-32
+  accumulate west->east, result *8 game units), VNML/VCLR 33x33x3 bytes,
+  BTXT base + paired ATXT/VTXT splat layers (quadrant 0-3, VTXT position
+  0-288, float opacity). LTEX TNAM -> TXST TX00 diffuse / TX01 normal. Ref
+  UESP LAND/LTEX/TXST + xEdit `wbDefinitionsCommon.pas`. Synthetic-fixture
+  unit tests (`TerrainRecordDecoderTests`) + env-gated Tamriel sweep
+  (`LandRealDataTests`). Sweep over vanilla Skyrim.esm: 11186 LAND records
+  decoded no throws, height -37032..39392 units, up to 23 cell-wide splat
+  layers, VTXT position max 288, quadrants {0,1,2,3}. Decoders only; mesh
+  build + splat render are later 3.1 items.
 * **Milestone 3 detailed plan**: expanded [todo](/todo.md) M3 into sub-itemed
   3.1-3.7 (terrain -> streaming -> LOD -> sky/water -> interiors -> lighting
   -> gate) with per-item acceptance, spec refs, probe strategy, dependency

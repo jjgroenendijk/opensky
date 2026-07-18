@@ -46,10 +46,11 @@ adapted from Apple's Xcode Metal 4 game template (structure, not copied game cod
 
 ## Pipelines + shaders
 
-* Two `MTL4RenderPipelineState` variants from one fragment function
+* Two static-mesh `MTL4RenderPipelineState` variants from one fragment function
   (`staticMeshFragment`), selected via function constant `FunctionConstantAlphaTest`
   (`MTL4SpecializedFunctionDescriptor` + `MTLFunctionConstantValues`): opaque pays
-  nothing for discard; alpha-test discards below `DrawUniforms.alphaThreshold`.
+  nothing for discard; alpha-test discards below `DrawUniforms.alphaThreshold`. Third
+  pipeline: terrain splat (section below).
 * Shading: diffuse map * (directional sun lambert + ambient), vertex color as baked
   tint (Skyrim bakes AO there), material alpha multiplied through. Normal mapping
   deferred (stretch goal) — no tangent attributes yet.
@@ -59,6 +60,48 @@ adapted from Apple's Xcode Metal 4 game template (structure, not copied game cod
 * Winding: front = counter-clockwise seen from outside, cull back, per-draw cull-none
   for double-sided materials. Verified on the demo ground plane; decision doc updated.
 
+## Terrain splat pipeline (todo 3.1)
+
+Third pipeline (`TerrainSplat`, `terrainVertex`/`terrainFragment`, no function constants)
+draws `RenderScene.terrain` — one `TerrainDrawItem` per LAND quadrant (built by
+`CellSceneBuilder`, see [terrain](/engine/terrain.md)) — encoded between the opaque and
+alpha-test lists. One draw blends the quadrant's BTXT base diffuse with up to 8 ATXT layer
+diffuses by per-vertex VTXT opacities (UESP LAND).
+
+Texture binding strategy — decision: per-quadrant multi-texture argument-table binds. Base
+at `TextureIndexDiffuse`, layers as an MSL `array<texture2d<float>, 8>` at the 8 consecutive
+slots from `TextureIndexTerrainLayer0`; per-draw `setTexture` like every other bind. Unused
+slots rebind the base diffuse so every declared argument is valid; the shader loop stops at
+`TerrainDrawUniforms.layerCount`. Rejected alternatives:
+
+* `texture2d_array` — requires identical size/format/mip count across a quadrant's layer
+  diffuses; vanilla TXST diffuses vary, forcing load-time re-encode/copies.
+* per-layer draws — needs a new blending pipeline + depth-equal state and N draws per
+  quadrant with framebuffer blend traffic; the single-pass shader loop is cheaper and keeps
+  terrain in the one scene pass.
+
+Layer cap: `TerrainConstantMaxLayers = 8` (ShaderTypes.h) — ATXT layer numbers 0-7, the
+format maximum per the M3 plan pre-verification (UESP + xEdit). Vanilla peaks near 6 per
+quadrant ([land](/formats/land.md) Verification), so nothing real is dropped; extras beyond
+8 drop defensively and count into `CellLoadSummary.terrainLayerSkipCount`.
+
+Weights: second per-vertex stream at `BufferIndexTerrainWeights` (`TerrainVertexLayout`:
+two float4 lanes, stride 32) instead of forking the 48-byte `StaticVertexLayout` — the
+static interleave + `RenderMesh` upload stay untouched. VTXT positions 0-288 index the
+17x17 quadrant grid row-major (UESP LAND), exactly the builder's vertex emission order, so
+`TerrainMeshBuilder.denseOpacities` + `packWeights` bake sample -> vertex 1:1.
+
+Blend math: `albedo = base; for layer in ATXT-layer-number order: albedo = mix(albedo,
+layerColor, saturate(weight))`. Straight lerp is the plain reading of the VTXT opacity
+semantics; the exact vanilla blend curve is UNCONFIRMED. Lighting after the blend is
+identical to the static path (sun lambert + ambient, vertex color tint) so terrain matches
+the M2 buildings. Terrain is always opaque.
+
+`TerrainDrawUniforms` shares the per-draw uniform ring (slot size = max of both structs,
+256-byte aligned). Deferred: normal maps (TX01) — splat is diffuse-only like the static
+pipeline; UV tiling density (`uvQuadsPerRepeat = 2`) remains UNCONFIRMED, visually
+plausible at Whiterun.
+
 ## Uniforms + binding
 
 * `FrameUniforms` (viewProjection, camera position, sun direction/color, ambient) — one
@@ -66,7 +109,8 @@ adapted from Apple's Xcode Metal 4 game template (structure, not copied game cod
 * `DrawUniforms` (model + normal matrix, UV offset/scale, material alpha, alpha
   threshold) — ring of `maxFramesInFlight x scene.drawCount` 256-byte-aligned entries,
   written per draw each frame. Scene is fixed in 2.6; growth lands with 2.7 streaming.
-* All binds through one `MTL4ArgumentTable` (3 buffers, 1 texture, 1 sampler); table
+* All binds through one `MTL4ArgumentTable` (4 buffers — vertices, frame + draw uniforms,
+  terrain weights; 1 + 8 textures — diffuse + terrain layer array; 1 sampler); table
   state is captured per draw, so per-draw `setAddress`/`setTexture` between
   `drawIndexedPrimitives` calls is the binding model. Sampler: trilinear mipmapped,
   anisotropy 8, repeat, `supportArgumentBuffers`.

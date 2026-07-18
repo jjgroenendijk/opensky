@@ -48,7 +48,7 @@ where `--out` points (AGENTS.md Legal & IP).
 | `cell [--worldspace <edid>] [--x n] [--y n] [--refs]` | exterior-cell summary without Metal: ref count, base-type histogram, other cell records; `--refs` lists placements |
 | `nif <key>` | container stats + flattened model summary (meshes, verts/tris, bounds, materials with texture paths) |
 | `dds <key>` | header + mip chain (size, BCn format, sRGB declaration) |
-| `render --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f]` | cell scene build -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load summary + non-background pixel fraction; `--zoom` (0.1-10) moves the eye toward the framed center — whole-cell framing is conservative, sparse cells render small without it |
+| `render --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f] [--neighbors]` | cell scene build -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load summary + non-background pixel fraction; `--zoom` (0.1-10) moves the eye toward the framed center — whole-cell framing is conservative, sparse cells render small without it; `--neighbors` builds the target cell plus its 8 grid neighbors (one shared `MeshLibrary`/`TextureLibrary`/`CellSceneBuilder`, so residency dedups across cells) and renders one frame framed to the union of all built bounds — a missing or malformed neighbor slot warns to stderr and is skipped, not fatal |
 | `bench [--worldspace/--x/--y] [--size WxH] [--frames n] [--budget-ms f]` | sustained offscreen render (default 360 frames @ 1280x720) through `Renderer.renderOffscreenSustained` — FrameStats windows + per-frame wall times; prints avg/p95/max + fps, exit 1 when avg or p95 misses the budget (default 33.33 ms = 30 fps, todo 2.11 gate) |
 
 `cell`/`render` default to the first-render cell
@@ -71,6 +71,11 @@ Implementation notes:
 * `render` follows the app launch chain (VFS -> ESM -> libraries ->
   `CellSceneBuilder` -> `SceneCamera.framing`) on a headless `MTKView`; the offscreen
   path never touches a drawable.
+* `render --neighbors` composes 9 `CellScene` builds with `RenderScene(merging:)` (a
+  flat concat of each scene's opaque/alpha-tested/terrain draw lists — draw items
+  already carry absolute world matrices, so no re-transform) and unions the 9 bounds
+  boxes before framing. Dumb composition on purpose: this is the 3.1 verify render, not
+  the 3.2 streaming grid manager.
 
 ## Probe harness (make probe)
 

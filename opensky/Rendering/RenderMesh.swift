@@ -73,6 +73,35 @@ nonisolated enum StaticVertexLayout {
     }
 }
 
+/// Terrain vertex layout: the static interleaved stream plus a second buffer
+/// (BufferIndexTerrainWeights) carrying two float4 splat-weight lanes per
+/// vertex — up to TerrainConstantMaxLayers (8) ATXT layer opacities. Kept as
+/// a parallel stream instead of forking the 48-byte static layout so
+/// RenderMesh upload and StaticVertexLayout stay untouched
+/// (docs/rendering/metal4-renderer.md, terrain splat section).
+nonisolated enum TerrainVertexLayout {
+    /// Two tightly packed float4 lanes per vertex.
+    static let weightsStride = 32
+
+    static func vertexDescriptor() -> MTLVertexDescriptor {
+        let descriptor = StaticVertexLayout.vertexDescriptor()
+        let buffer = BufferIndex.terrainWeights.rawValue
+
+        func set(_ attribute: VertexAttribute, _ offset: Int) {
+            descriptor.attributes[attribute.rawValue].format = .float4
+            descriptor.attributes[attribute.rawValue].offset = offset
+            descriptor.attributes[attribute.rawValue].bufferIndex = buffer
+        }
+        set(.layerWeights0, 0)
+        set(.layerWeights1, 16)
+
+        descriptor.layouts[buffer].stride = weightsStride
+        descriptor.layouts[buffer].stepRate = 1
+        descriptor.layouts[buffer].stepFunction = .perVertex
+        return descriptor
+    }
+}
+
 /// One mesh's GPU residence: interleaved vertex buffer + uint16 index
 /// buffer, plus the mesh-local -> model-root transform and material slot
 /// carried over from the engine Mesh.

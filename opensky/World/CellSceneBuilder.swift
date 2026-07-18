@@ -11,6 +11,7 @@
 // docs/engine/cell-scene.md.
 
 import Foundation
+import Metal
 import OSLog
 import simd
 
@@ -43,25 +44,36 @@ private struct ResolvedInstance {
 }
 
 /// A located CELL record plus the cell-children group that follows it
-/// (nil children = cell without references).
-private struct FoundCell {
+/// (nil children = cell without references). Internal: the terrain half of
+/// the build (CellSceneBuilderTerrain.swift) consumes it cross-file.
+nonisolated struct FoundCell {
     let cell: Cell
     let formID: UInt32
     let children: ESMGroup?
+}
+
+/// The world-children group plus the decoded WRLD it belongs to (DNAM default
+/// land height feeds the LAND-less terrain fallback).
+private struct FoundWorld {
+    let children: ESMGroup
+    let worldspace: Worldspace?
 }
 
 /// Builds a CellScene from a plugin + asset libraries. Class (not struct)
 /// because the STAT index is cached across builds. Single-threaded like the
 /// libraries it drives: scene build runs once at startup.
 nonisolated final class CellSceneBuilder {
-    fileprivate static let logger = Logger(
+    /// Members below stay internal (not private) where
+    /// CellSceneBuilderTerrain.swift extends the build cross-file; the
+    /// module boundary still hides them from callers.
+    static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "CellScene"
     )
 
-    private let file: ESMFile
-    private let meshes: MeshLibrary
-    private let textures: TextureLibrary
+    let file: ESMFile
+    let meshes: MeshLibrary
+    let textures: TextureLibrary
     /// FormID -> STAT over the STAT top group, built on first use.
     private var statIndex: [UInt32: StaticObject]?
 
@@ -80,7 +92,10 @@ nonisolated final class CellSceneBuilder {
         // reads — a failed TES4 decode safely defaults to false.
         let localized = (try? file.pluginHeader().isLocalized) ?? false
         let world = try worldChildrenGroup(editorID: worldspaceEditorID, localized: localized)
-        guard let found = findCell(in: world, gridX: gridX, gridY: gridY, localized: localized)
+        guard
+            let found = findCell(
+                in: world.children, gridX: gridX, gridY: gridY, localized: localized
+            )
         else {
             throw CellSceneError.cellNotFound(
                 worldspaceEditorID: worldspaceEditorID,
@@ -91,11 +106,12 @@ nonisolated final class CellSceneBuilder {
         var counts = BuildCounts()
         let refs = collectReferences(in: found.children, counts: &counts)
         let instances = resolveInstances(refs: refs, counts: &counts)
+        let terrain = buildTerrain(found: found, worldspace: world.worldspace)
         return makeScene(
             found: found,
-            gridX: gridX,
-            gridY: gridY,
+            grid: (x: gridX, y: gridY),
             instances: instances,
+            terrain: terrain,
             counts: counts
         )
     }
@@ -106,11 +122,12 @@ extension CellSceneBuilder {
     /// labeled by the owning record's FormID. EDID match is exact (editor IDs
     /// are stable identifiers). A malformed WRLD is skipped — another
     /// worldspace may still match.
-    private func worldChildrenGroup(editorID: String, localized: Bool) throws -> ESMGroup {
+    private func worldChildrenGroup(editorID: String, localized: Bool) throws -> FoundWorld {
         guard let top = file.topGroup(of: "WRLD") else {
             throw CellSceneError.worldspaceNotFound(editorID: editorID)
         }
         var matchedFormID: UInt32?
+        var matchedWorld: Worldspace?
         for child in try top.children() {
             switch child {
             case let .record(record) where record.type == "WRLD":
@@ -119,10 +136,12 @@ extension CellSceneBuilder {
                     Self.logger.warning("malformed WRLD \(id, privacy: .public) skipped")
                     continue
                 }
-                matchedFormID = world.editorID == editorID ? record.formID : nil
+                let matches = world.editorID == editorID
+                matchedFormID = matches ? record.formID : nil
+                matchedWorld = matches ? world : nil
             case let .group(group)
                 where group.kind == .worldChildren && group.parentFormID == matchedFormID:
-                return group
+                return FoundWorld(children: group, worldspace: matchedWorld)
             default:
                 break
             }
@@ -189,10 +208,10 @@ extension CellSceneBuilder {
     }
 
     /// REFR records from the cell's persistent + temporary children groups.
-    /// Other record types in there (LAND, NAVM, ACHR, PGRE, ...) are not
-    /// static placements — ignored deliberately and not counted (skip
-    /// taxonomy, docs/engine/cell-scene.md). Deleted REFRs place nothing ->
-    /// also ignored. A REFR that fails to decode is counted as malformed.
+    /// LAND is handled separately (buildTerrain); other non-REFR types (NAVM,
+    /// ACHR, PGRE, ...) are not static placements — ignored deliberately and
+    /// not counted (skip taxonomy, docs/engine/cell-scene.md). Deleted REFRs
+    /// place nothing -> also ignored. A REFR that fails to decode is malformed.
     private func collectReferences(
         in cellChildren: ESMGroup?,
         counts: inout BuildCounts
@@ -313,22 +332,30 @@ extension CellSceneBuilder {
     /// per-model bounds, and logs the one-line summary.
     private func makeScene(
         found: FoundCell,
-        gridX: Int32,
-        gridY: Int32,
+        grid: (x: Int32, y: Int32),
         instances: [ResolvedInstance],
+        terrain: TerrainBuild?,
         counts: BuildCounts
     ) -> CellScene {
-        let renderScene = RenderScene(instances: instances.map { ($0.model, $0.transform) })
+        // Terrain draws through its own splat pipeline list; ref DrawItem
+        // ordering (instancing-ready grouping) stays intact.
+        let renderScene = RenderScene(
+            instances: instances.map { ($0.model, $0.transform) },
+            terrain: terrain?.items ?? []
+        )
         var bounds: ModelBounds?
         for instance in instances {
             guard let local = meshes.bounds(forPath: instance.modelPath) else { continue }
             let world = local.transformed(by: instance.transform)
             bounds = bounds.map { $0.union(world) } ?? world
         }
+        if let world = terrain?.bounds {
+            bounds = bounds.map { $0.union(world) } ?? world
+        }
         let summary = CellLoadSummary(
             cellName: found.cell.editorID ?? "cell \(FormID(found.formID).description)",
-            gridX: gridX,
-            gridY: gridY,
+            gridX: grid.x,
+            gridY: grid.y,
             totalRefCount: counts.totalRefs,
             drawnRefCount: instances.count,
             nonSTATSkipCount: counts.nonSTATBases,
@@ -337,7 +364,10 @@ extension CellSceneBuilder {
             malformedRefSkipCount: counts.malformedRefs,
             modelCount: meshes.loadedCount,
             textureCount: textures.loadedCount,
-            missingTextureCount: textures.missingCount
+            missingTextureCount: textures.missingCount,
+            terrainQuadrantCount: terrain?.quadrantCount ?? 0,
+            terrainLayerCount: terrain?.layerCount ?? 0,
+            terrainLayerSkipCount: terrain?.layerSkipCount ?? 0
         )
         Self.logger.info("\(summary.summaryLine, privacy: .public)")
         return CellScene(
