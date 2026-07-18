@@ -140,6 +140,14 @@ nonisolated final class MeshLibrary {
         return render
     }
 
+    /// Uploads an engine Model built in-engine rather than parsed from a NIF
+    /// path — terrain from LAND (todo 3.1). Shares the library's device +
+    /// TextureLibrary provider so it draws through the same pipeline. Not
+    /// cached: terrain models are per-cell and unique, unlike shared NIF assets.
+    func renderModel(for model: Model) throws -> RenderModel {
+        try RenderModel(device: device, model: model, textureProvider: textures.provider)
+    }
+
     /// Shapes dropped during flatten for an already-loaded path (nil if the
     /// path was never successfully loaded).
     func skippedShapeCount(forPath path: String) -> Int? {

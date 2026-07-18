@@ -40,6 +40,9 @@ nonisolated struct CellLoadSummary: Equatable {
     /// Distinct texture paths loaded / unresolved (TextureLibrary counters).
     let textureCount: Int
     let missingTextureCount: Int
+    /// Terrain sub-meshes drawn for the cell: one per painted, non-hidden
+    /// quadrant (0-4), or the single fallback-plane mesh, else 0 (no terrain).
+    var terrainQuadrantCount = 0
 
     var skippedRefCount: Int {
         nonSTATSkipCount + markerSkipCount + modelFailureSkipCount + malformedRefSkipCount
@@ -66,8 +69,11 @@ nonisolated struct CellLoadSummary: Equatable {
         let skipped = reasons.isEmpty
             ? "\(skippedRefCount) skipped"
             : "\(skippedRefCount) skipped (\(reasons.joined(separator: ", ")))"
+        // Terrain clause appended only when present, so a cell without terrain
+        // logs the same line as before terrain build existed.
+        let terrain = terrainQuadrantCount > 0 ? ", \(terrainQuadrantCount) terrain quads" : ""
         return "[INFO] \(cellName) (\(gridX),\(gridY)): \(totalRefCount) refs, "
             + "\(drawnRefCount) drawn, \(skipped), \(modelCount) models, "
-            + "\(textureCount) textures (\(missingTextureCount) missing)"
+            + "\(textureCount) textures (\(missingTextureCount) missing)\(terrain)"
     }
 }

@@ -1,6 +1,7 @@
 // WRLD record decoded into engine types: editor ID, display name, parent
 // worldspace link, behavior flags. A WRLD record is followed by a world
 // children group holding exterior cell blocks (ESMGroup walks those).
+// DNAM carries the default land/water heights terrain build falls back to.
 // Fields OpenSky does not need yet (map size, LOD water, climate, ...) are
 // skipped; unknown modder fields are ignored by the same loop.
 //
@@ -32,6 +33,12 @@ nonisolated struct Worldspace {
     /// WNAM — parent worldspace this one inherits data from.
     let parent: FormID?
     let flags: Flags
+    /// DNAM first float — default land height for cells without a LAND record
+    /// (Tamriel reads -27000). Nil when the record carries no DNAM.
+    let defaultLandHeight: Float?
+    /// DNAM second float — default water height (Tamriel reads -14000). Nil
+    /// when the record carries no DNAM.
+    let defaultWaterHeight: Float?
 
     /// - Parameter localized: TES4 localized flag of the owning plugin
     ///   (`PluginHeader.isLocalized`) — decides lstring decoding.
@@ -45,6 +52,8 @@ nonisolated struct Worldspace {
         var name: LString?
         var parent: FormID?
         var flags: Flags = []
+        var defaultLandHeight: Float?
+        var defaultWaterHeight: Float?
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -56,6 +65,13 @@ nonisolated struct Worldspace {
                 parent = try FormID(reader.readUInt32())
             case "DATA":
                 flags = try Flags(rawValue: reader.readUInt8())
+            case "DNAM":
+                // 8 bytes: float default land height, float default water
+                // height (UESP WRLD). Undersized modder DNAM -> left nil.
+                if field.data.count >= 8 {
+                    defaultLandHeight = try reader.readFloat32()
+                    defaultWaterHeight = try reader.readFloat32()
+                }
             default:
                 break
             }
@@ -64,5 +80,7 @@ nonisolated struct Worldspace {
         self.name = name
         self.parent = parent
         self.flags = flags
+        self.defaultLandHeight = defaultLandHeight
+        self.defaultWaterHeight = defaultWaterHeight
     }
 }

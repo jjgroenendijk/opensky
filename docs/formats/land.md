@@ -131,3 +131,9 @@ worldspace of vanilla Skyrim.esm, 2026-07-18:
   21:94 22:12 23:3` — max 23 additional layers cell-wide (roughly 6/quadrant).
 - Max VTXT position 288 (exactly the documented 17x17 upper bound).
 - Quadrant values seen: {0, 1, 2, 3}.
+
+Neighbor-edge overlap (`LandRealDataTests.adjacentCellEdgesMatch`, groundwork for
+cross-cell stitching in streaming 3.2): spec says a cell's 33x33 grid overlaps its
+neighbors — row 32 of (x,y) equals row 0 of (x,y+1), col 32 equals col 0 of (x+1,y).
+Probed over Whiterun-area adjacent pairs on vanilla Skyrim.esm, 2026-07-18: 4 pairs
+checked, 0 mismatched edge vertices — shared edges match exactly. Overlap confirmed.

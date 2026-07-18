@@ -59,9 +59,10 @@ mod-quirk rule):
 | load-failed | `MeshLibraryError`: file not found, parse failed, empty model |
 
 Ignored deliberately (not refs, not counted): non-REFR records inside cell children
-(LAND, NAVM, ACHR, PGRE, ... — not static placements, out of 2.7 scope) and deleted
-REFRs (they remove placements, nothing to draw). Malformed groups under the WRLD tree
-are pruned with a log, letting sibling blocks still resolve.
+(NAVM, ACHR, PGRE, ... — not static placements, out of scope) and deleted REFRs (they
+remove placements, nothing to draw). LAND is no longer ignored — `buildTerrain` decodes
+it into ground geometry ([terrain mesh build](/engine/terrain.md)). Malformed groups under
+the WRLD tree are pruned with a log, letting sibling blocks still resolve.
 
 ## Summary line
 
@@ -114,3 +115,6 @@ a model-space AABB (`ModelBounds`) at parse time — union of each mesh's vertex
 pushed through its mesh->model transform — because vertex data lives only on the GPU
 after upload. Scene build transforms the 8 corners per instance and unions into
 `CellScene.bounds` (nil when nothing drew); downstream camera placement frames that box.
+The terrain model ([terrain mesh build](/engine/terrain.md)) is built in-engine, so its
+AABB comes straight from the CPU-side `Model`; it unions into `CellScene.bounds` and its
+opaque `DrawItem`s append after the object instances.

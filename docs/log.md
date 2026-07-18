@@ -4,6 +4,25 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* **Terrain mesh build** (M3.1): new `opensky/World/TerrainMeshBuilder.swift`
+  turns a decoded LAND into engine `Mesh`/`Model` values — 33x33 vertex grid,
+  128-unit quads over the 4096 cell, heights passthrough (VHGT already *8),
+  VNML normals (`v/127` normalized, zero/absent -> up), VCLR colors, UVs
+  `(c,r)/2` (density UNCONFIRMED, tuned in splat commit). One sub-mesh per
+  painted, non-hidden quadrant (XCLC quad-flags force-hide) with its BTXT base
+  material resolved BTXT -> LTEX(TNAM) -> TXST(TX00) via `ESMWalk`, paths
+  canonicalized through `NIFShaderTextureSet.vfsKey`. `CellSceneBuilder` places
+  terrain at `(gridX*4096, gridY*4096)` (REFR world frame), appends opaque
+  DrawItems under the objects, feeds `CellScene.bounds`, adds
+  `terrainQuadrantCount` to the summary. LAND-less exterior cell -> flat plane
+  at WRLD DNAM default land height (new `Worldspace.defaultLandHeight`/
+  `defaultWaterHeight`; Tamriel -27000); DNAM absent -> no ground (UNCONFIRMED,
+  probe later). Docs: [terrain subsystem](/engine/terrain.md), cell-scene LAND
+  note updated. Synthetic-fixture tests (`TerrainMeshBuilderTests`,
+  `CellSceneTerrainTests`). Edge-overlap probe (`LandRealDataTests`, real
+  Tamriel): 4 adjacent pairs, 0 mismatched edge vertices — shared row/col match
+  exactly, overlap claim confirmed (streaming can weld by dropping a shared edge).
+  Splat render is the next 3.1 item.
 * **LAND/LTEX/TXST decoders** (M3.1): new terrain record decoders in
   `opensky/Formats/ESM/Records/{Land,LandTexture,TextureSet}.swift` +
   [land format doc](/formats/land.md). LAND = VHGT gradient height field

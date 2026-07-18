@@ -81,11 +81,6 @@ impl; chase flagged UNCONFIRMED points especially.
 
 ### 3.1 Terrain
 
-* [ ] Terrain mesh build: heights -> 33x33 vertex grid, 128 units/quad over the 4096
-      cell footprint, normals from VNML, placement from XCLC grid. Neighbor stitch:
-      south row / west col duplicate neighbor edges per spec — verify by probe. LAND-less
-      cell -> flat plane at WRLD DNAM default land height (Tamriel -27000; engine
-      fallback UNCONFIRMED — probe). Respect XCLC force-hide-quad flags.
 * [ ] Terrain render: splat pipeline — base + ATXT layers per quadrant blended by VTXT
       alpha (format allows 8 + base; live engine limit community-reported ~6 — probe
       vanilla max), decide texture binding strategy (array vs per-quadrant draws),
