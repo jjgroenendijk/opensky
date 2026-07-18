@@ -1,9 +1,9 @@
-// VFS + record browser (todo 2.10): sidebar with category selector, filter
+// VFS + record browser: sidebar with category selector, filter
 // field and a lazy table over the catalog rows; detail pane with preview
 // image + info text. The catalog loads off the main thread (opening every
 // archive and walking Skyrim.esm takes seconds); filtering the ~870k record
 // rows runs off-main too, latest generation wins. Browse logic lives in
-// opensky/Preview/ (AppKit-free, unit-tested); this file is the UI shell.
+// opensky/Preview/ (AppKit-free, unit-tested); this file is the main-app UI shell.
 
 import AppKit
 
@@ -54,6 +54,7 @@ final class PreviewViewController: NSViewController {
         detail.widthAnchor.constraint(greaterThanOrEqualToConstant: 480).isActive = true
         split.setHoldingPriority(NSLayoutConstraint.Priority(260), forSubviewAt: 0)
         view = split
+        view.setAccessibilityIdentifier("AssetBrowser")
     }
 
     override func viewDidLoad() {
@@ -67,6 +68,7 @@ final class PreviewViewController: NSViewController {
     func reload(root: GameDataRoot?, errorMessage: String? = nil) {
         gameDataRoot = root
         startupErrorMessage = errorMessage
+        guard isViewLoaded else { return }
         catalog = nil
         detailBuilder = nil
         filterGeneration += 1
@@ -85,10 +87,12 @@ final class PreviewViewController: NSViewController {
 
     private func makeSidebar() -> NSView {
         categoryPopUp.addItems(withTitles: PreviewCategory.allCases.map(\.title))
+        categoryPopUp.setAccessibilityIdentifier("AssetCategory")
         categoryPopUp.target = self
         categoryPopUp.action = #selector(categoryChanged)
 
         searchField.placeholderString = "Filter"
+        searchField.setAccessibilityIdentifier("AssetFilter")
         searchField.delegate = self
 
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("entry"))
@@ -98,6 +102,7 @@ final class PreviewViewController: NSViewController {
         tableView.allowsMultipleSelection = false
         tableView.dataSource = self
         tableView.delegate = self
+        tableView.setAccessibilityIdentifier("AssetTable")
 
         let scroll = NSScrollView()
         scroll.documentView = tableView
@@ -107,6 +112,7 @@ final class PreviewViewController: NSViewController {
         statusLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
         statusLabel.lineBreakMode = .byTruncatingTail
         statusLabel.stringValue = ""
+        statusLabel.setAccessibilityIdentifier("AssetStatus")
 
         let stack = NSStackView(views: [categoryPopUp, searchField, scroll, statusLabel])
         stack.orientation = .vertical
@@ -119,6 +125,8 @@ final class PreviewViewController: NSViewController {
     private func makeDetailPane() -> NSView {
         imageView.imageScaling = .scaleProportionallyUpOrDown
         imageView.setContentHuggingPriority(.defaultLow, for: .vertical)
+        imageView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        imageView.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
 
         infoTextView?.isEditable = false
         infoTextView?.font = .monospacedSystemFont(ofSize: 12, weight: .regular)

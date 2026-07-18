@@ -7,6 +7,18 @@ import MetalKit
 import OSLog
 
 final class GameViewController: NSViewController {
+    enum ScreenshotError: LocalizedError {
+        case rendererNotReady
+
+        var errorDescription: String? {
+            "World renderer is not ready for a screenshot."
+        }
+    }
+
+    /// Locator failure shown inside World. Settings remains reachable so the
+    /// root can be corrected without relaunching or dismissing an alert loop.
+    var startupErrorMessage: String?
+
     /// Builds the off-main cell provider on the view's Metal device. Set by
     /// the AppDelegate before the window content loads; nil factory or nil
     /// result (missing game data / setup throw) -> no streamer, renderer
@@ -16,6 +28,10 @@ final class GameViewController: NSViewController {
     var cellProviderFactory: ((MTLDevice) -> (any CellSceneProvider)?)?
 
     private var renderer: Renderer?
+    var canWriteScreenshot: Bool {
+        renderer != nil
+    }
+
     /// Retains the streaming controller (and, through it, the build runner +
     /// provider) for the window's lifetime.
     private var streamer: CellStreamer?
@@ -33,6 +49,11 @@ final class GameViewController: NSViewController {
         super.viewDidLoad()
 
         guard let mtkView = view as? MTKView else { return }
+
+        if let startupErrorMessage {
+            show(message: startupErrorMessage)
+            return
+        }
 
         guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4) else {
             show(message: "OpenSky requires a GPU with Metal 4 support.")
@@ -90,19 +111,37 @@ final class GameViewController: NSViewController {
         streamer = controller
     }
 
+    /// Saves the live World camera + current streamed scene, excluding app
+    /// chrome. Runs on main, same as draw(in:), so renderer state cannot race.
+    func writeScreenshot(to url: URL) throws {
+        guard let renderer, let view = view as? MTKView else {
+            throw ScreenshotError.rendererNotReady
+        }
+        let width = Int(view.drawableSize.width.rounded())
+        let height = Int(view.drawableSize.height.rounded())
+        guard width > 0, height > 0 else {
+            throw ScreenshotError.rendererNotReady
+        }
+        let texture = try renderer.renderOffscreen(width: width, height: height)
+        try FrameScreenshot.write(texture: texture, to: url)
+    }
+
     private static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "CellStream"
     )
 
     private func show(message: String) {
-        let label = NSTextField(labelWithString: message)
+        let label = NSTextField(wrappingLabelWithString: message)
+        label.alignment = .center
         label.textColor = .white
         label.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(label)
         NSLayoutConstraint.activate([
             label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+            label.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            label.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 32),
+            label.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -32)
         ])
     }
 }

@@ -27,12 +27,13 @@ enum OpenSkyCLI {
                                   Summarize an exterior cell's references
       nif <key>                   Inspect a mesh: container stats, model summary
       dds <key>                   Inspect a texture: header + mip chain
-      render --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
+      screenshot --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
              [--size WxH] [--zoom <f>] [--neighbors]
-                                  Offscreen-render a cell to a PNG; zoom
+                                  Save an offscreen World frame as PNG; zoom
                                   moves the eye toward the framed center;
                                   --neighbors adds the 8 surrounding cells,
                                   camera frames the combined bounds
+      render <screenshot options> Compatibility alias for screenshot
       bench [--worldspace <edid>] [--x <n>] [--y <n>] [--size WxH]
             [--frames <n>] [--budget-ms <f>]
                                   Sustained offscreen render; report frame
@@ -45,7 +46,7 @@ enum OpenSkyCLI {
                                   physical footprint, avg/p95 frame budget
       help                        Show this text
 
-    defaults: cell/render target the first-render cell (Tamriel (6,-2)).
+    defaults: cell/screenshot/render target the first-render cell (Tamriel (6,-2)).
 
     options:
       --data-root <path>          Skyrim SE install (or Data/) folder. Default:
@@ -100,6 +101,11 @@ enum OpenSkyCLI {
             )
         case "render":
             try RenderCommand.run(
+                context: .resolve(dataRootOverride: dataRoot),
+                scanner: &scanner
+            )
+        case "screenshot":
+            try ScreenshotCommand.run(
                 context: .resolve(dataRootOverride: dataRoot),
                 scanner: &scanner
             )

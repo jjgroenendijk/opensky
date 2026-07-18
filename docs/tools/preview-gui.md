@@ -1,30 +1,37 @@
 ---
 type: Tool
-title: Asset preview GUI (openskypreview)
-description: AppKit browser over the engine VFS + Skyrim.esm records with
-  offscreen-rendered NIF/DDS previews - target layout, browse model, preview
-  pipeline.
+title: Main-app asset browser
+description: OpenSky unified World/browser window with World screenshots plus engine VFS
+  and Skyrim.esm browsing, offscreen-rendered NIF/DDS previews.
 tags: [tool, gui, dev, preview, rendering]
 timestamp: 2026-07-18T00:00:00Z
 ---
 
-# Asset preview GUI (openskypreview)
+# Main-app asset browser
 
-Third product target (todo 2.10): browse the local install's assets and
-preview one at a time — the parser/renderer's eye view without launching the
-game app. M2 scope is browse + single-asset preview; grows into the world
-viewer/test harness later.
+Main app's second mode: browse local install assets and preview one at a time —
+parser/renderer's eye view beside World, with no second product or render pipeline.
+Browser remains dev tooling, not shipped game UI.
 
-## Target sharing
+## Unified window
 
-Same mechanism as [the CLI](/tools/cli.md): macOS app target in
-`opensky.xcodeproj` listing the `opensky/` synchronized root group with a
-`PBXFileSystemSynchronizedBuildFileExceptionSet` excluding app-only files
-(`OpenSkyApp.swift`, `AppDelegate.swift`, `GameViewController.swift`,
-`GameMetalView.swift`, `Assets.xcassets`). App entry code lives in
-`openskypreview/`; shared scheme `openskypreview`; build via `make preview`.
-`Shaders.metal` compiles into the bundle's `default.metallib`, so `Renderer`
-works unchanged.
+`MainViewController` owns one window + `World | Asset Browser` segmented control.
+Launch selects World. Switching replaces child content in place; persistent
+`PreviewViewController` retains loaded catalog, filter, selection, and warm renderer
+caches across mode changes. Selected preview images have low compression resistance ->
+intrinsic bitmap size never resizes the window. Build both modes via `make build`.
+
+World mode exposes a `Screenshot…` button beside the mode switch. It opens `NSSavePanel`
+for a PNG destination, then asks `GameViewController` to synchronously offscreen-render
+the live free-fly camera + current streamed scene at drawable pixel size. App chrome is
+excluded. Asset Browser disables the button: asset previews already render individually
+in the detail pane. Capture failure appears as an action-scoped error sheet. App + CLI
+share `FrameScreenshot` for BGRA readback + PNG encoding.
+
+App-only AppKit shells live under `opensky/` (`MainViewController`,
+`PreviewViewController`, `PreviewDetailBuilder`, `SettingsWindowController`) and are
+excluded from `openskycli` by its synchronized-group exception set. Browse/preview model
+stays AppKit-free under `opensky/Preview/`.
 
 ## UI + browse model
 
@@ -39,18 +46,20 @@ in-window message, app still launches (no crash, no alert loop).
 
 Main menu: app menu (Settings… Cmd+, / Quit) + standard Edit menu (copy/paste
 for the filter field). Settings window
-(`PreviewSettingsWindowController`) shows the resolved data root path + source
+(`SettingsWindowController`) shows the resolved data root path + source
 note (env override flagged as winning over the stored choice) and two actions:
 
 * Choose… — `NSOpenPanel` folder pick, validated + persisted via
-  `GameDataLocator.saveUserChoice` (shared defaults domain, so main app + CLI
-  see it too). Invalid folder -> red note, stored setting untouched.
+  `GameDataLocator.saveUserChoice` (shared defaults domain, so CLI sees it too).
+  Invalid folder -> red note, stored setting untouched.
 * Use Default — `clearUserChoice`, falls back to the Steam default path.
 
-Either change triggers `PreviewViewController.reload(root:errorMessage:)`:
-current catalog dropped, new catalog loads off-main; a catalog-load generation
-counter drops stale in-flight loads (same pattern as filtering). Failed
-re-locate -> in-window message, no relaunch needed to fix.
+Either change makes `AppDelegate` re-run `GameDataLocator`, rebuild World controller +
+provider factory over new root, then call
+`PreviewViewController.reload(root:errorMessage:)`. Current catalog drops, new catalog
+loads off-main; catalog-load generation drops stale in-flight work (same pattern as
+filtering). Failed re-locate -> in-window message in both modes, no modal alert or
+relaunch needed.
 
 Browse logic is AppKit-free in `opensky/Preview/` so it unit-tests without a
 window (`PreviewCatalogTests`, `RecordTextDumpTests`,
@@ -74,7 +83,7 @@ window (`PreviewCatalogTests`, `RecordTextDumpTests`,
 
 ## Preview pipeline
 
-Selection -> `PreviewDetailBuilder` (app side, main thread; MeshLibrary /
+Selection -> `PreviewDetailBuilder` (main-app side, main thread; MeshLibrary /
 TextureLibrary caches make repeat selections cheap):
 
 * NIF -> `MeshLibrary.model(path:)` (same cache the cell build uses) ->
@@ -90,8 +99,9 @@ TextureLibrary caches make repeat selections cheap):
 * Any failure -> `[ERROR]`/`[WARNING]` text in the pane, never a crash
   (mod-quirk rule). No Metal 4 GPU -> text-only previews.
 
-`PreviewFrameImage` does the BGRA readback -> CGImage. Env-gated
+`FrameScreenshot` does shared BGRA readback -> CGImage/PNG. Env-gated
 `PreviewRealDataTests` (skips without `OPENSKY_DATA_ROOT`; pass it as
-`TEST_RUNNER_OPENSKY_DATA_ROOT` through xcodebuild) drives catalog + both
-preview paths against the local install and writes `logs/preview-dds.png` /
-`logs/preview-nif.png` for human review.
+`TEST_RUNNER_OPENSKY_DATA_ROOT` through xcodebuild) drives catalog + both preview paths
+against local install and writes `logs/preview-dds.png` / `logs/preview-nif.png` for human
+review. Env-gated `OpenSkyUITests` captures full World + Asset Browser windows to runner
+temp; verification copies them to `logs/app-world.png` / `logs/app-asset-browser.png`.

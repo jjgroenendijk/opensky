@@ -4,13 +4,10 @@
 // frame. Output goes wherever --out points; engine output (our pixels), not
 // extracted game data.
 
-import CoreGraphics
 import Foundation
-import ImageIO
 import Metal
 import MetalKit
 import simd
-import UniformTypeIdentifiers
 
 enum RenderCommand {
     /// Offsets of a cell plus its 8 neighbors — `--neighbors` grid (3.1
@@ -89,7 +86,7 @@ enum RenderCommand {
         let percent = String(format: "%.1f", nonBackgroundFraction(pixels: pixels) * 100)
         print("[INFO] non-background pixels: \(percent)%")
         let url = URL(filePath: output)
-        try writePNG(pixels: pixels, width: size.width, height: size.height, to: url)
+        try FrameScreenshot.write(texture: render.texture, to: url)
         print("[INFO] wrote frame -> \(url.path(percentEncoded: false))")
     }
 
@@ -237,40 +234,5 @@ enum RenderCommand {
             }
         }
         return Double(lit) / Double(pixels.count / 4)
-    }
-
-    private static func writePNG(
-        pixels: [UInt8],
-        width: Int,
-        height: Int,
-        to url: URL
-    ) throws {
-        var data = pixels
-        guard
-            let colorSpace = CGColorSpace(name: CGColorSpace.sRGB),
-            let cgContext = CGContext(
-                data: &data,
-                width: width,
-                height: height,
-                bitsPerComponent: 8,
-                bytesPerRow: width * 4,
-                space: colorSpace,
-                bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue
-                    | CGBitmapInfo.byteOrder32Little.rawValue
-            ),
-            let image = cgContext.makeImage(),
-            let destination = CGImageDestinationCreateWithURL(
-                url as CFURL,
-                UTType.png.identifier as CFString,
-                1,
-                nil
-            )
-        else {
-            throw CLIError.failure("cannot create PNG encoder for \(url.path)")
-        }
-        CGImageDestinationAddImage(destination, image, nil)
-        guard CGImageDestinationFinalize(destination) else {
-            throw CLIError.failure("cannot write PNG to \(url.path)")
-        }
     }
 }

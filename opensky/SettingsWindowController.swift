@@ -1,11 +1,11 @@
 // Settings window (Cmd+,): configure the game data root. Validation +
 // persistence live in GameDataLocator (AppKit-free, unit-tested); this file
 // only wires the panel UI. Choosing a folder persists it to the shared
-// defaults domain so the main app and CLI pick it up too.
+// defaults domain so the CLI picks it up too.
 
 import AppKit
 
-final class PreviewSettingsWindowController: NSWindowController {
+final class SettingsWindowController: NSWindowController {
     /// Called after the persisted data root changes (chosen or reset).
     var onDataRootChanged: (() -> Void)?
 

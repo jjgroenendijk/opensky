@@ -4,6 +4,25 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* App + CLI screenshots -- World toolbar gains `Screenshot…`: save panel -> live camera +
+  current streamed scene offscreen-rendered at drawable pixel size, PNG output excludes app
+  chrome; disabled in Asset Browser. New `openskycli screenshot --out` uses existing
+  cell/grid/zoom render options; `render` kept as compatibility alias. Shared
+  `FrameScreenshot` owns BGRA readback + PNG encoding across app, CLI, previews, tests.
+  Probe now writes `logs/probe-screenshot.png`. Docs: [main app](/tools/preview-gui.md),
+  [CLI](/tools/cli.md).
+* M3.3 complete -- asset browser merged into main app: one OpenSky window now launches in
+  World mode and swaps in-place to a persistent Asset Browser. AppKit browser/detail/
+  Settings shells moved under `opensky/`; AppKit-free catalog + engine preview pipeline
+  unchanged. Main menu gains Settings Cmd+, + Edit; data-root changes re-resolve locator,
+  rebuild World renderer/streamer dependencies, reload browser without relaunch. Missing
+  install now renders remediation in-window, no modal alert. Removed `openskypreview`
+  target/scheme/source dir + `make preview`; CLI excludes app-only shells. UI smoke covers
+  default mode, switch, missing-data state, Settings; env-gated real install rendered
+  World + selected NIF in browser, full-window screenshots under `logs/`; real catalog +
+  DDS/NIF preview pipeline passed. Preview image compression priorities keep mode switch
+  from resizing window. Docs: [main-app asset browser](/tools/preview-gui.md),
+  [game data locator](/engine/game-data-locator.md).
 * **M3.2 complete -- guarded async cell streaming**: launch starts empty and builds one
   center-out cell at a time off main; demo camera cannot recenter before first seed. Local
   backlog + runner pending-set dedupe bound work; per-cell mesh/texture ownership,
