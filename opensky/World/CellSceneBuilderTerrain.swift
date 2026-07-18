@@ -66,6 +66,10 @@ extension CellSceneBuilder {
                         vertexCount: patch.mesh.positions.count
                     )
                 )
+                // World AABB per patch: feeds the draw item (frustum culling)
+                // and the terrain-wide bounds (camera framing).
+                let world = ModelBounds.containing(patch.mesh.positions)?
+                    .transformed(by: transform)
                 items.append(TerrainDrawItem(
                     mesh: upload.mesh,
                     weightsBuffer: upload.weightsBuffer,
@@ -75,11 +79,11 @@ extension CellSceneBuilder {
                     ),
                     layerTextures: resolved.textures,
                     modelMatrix: transform,
-                    normalMatrix: normalMatrix
+                    normalMatrix: normalMatrix,
+                    bounds: world
                 ))
                 layerCount += resolved.textures.count
-                if let local = ModelBounds.containing(patch.mesh.positions) {
-                    let world = local.transformed(by: transform)
+                if let world {
                     bounds = bounds.map { $0.union(world) } ?? world
                 }
             } catch {

@@ -102,11 +102,10 @@ the M2 buildings. Terrain is always opaque.
 pipeline; UV tiling density (`uvQuadsPerRepeat = 2`) remains UNCONFIRMED, visually
 plausible at Whiterun.
 
-## Frustum culling (todo 3.2, math only)
+## Frustum culling (todo 3.2)
 
-`Rendering/Frustum.swift`, unit-tested (`FrustumTests`), renderer-independent — no
-`Renderer.swift`/`RenderScene.swift` wiring yet, that lands with 3.2 streaming (per-cell
-world AABBs feed it as cells load/unload). `Frustum(viewProjection:)` extracts 6 inward
+`Rendering/Frustum.swift`, unit-tested (`FrustumTests`), renderer-independent.
+`Frustum(viewProjection:)` extracts 6 inward
 planes from a combined `P * V` matrix via Gribb/Hartmann ("Fast Extraction of Viewing
 Frustum Planes from the World-View-Projection Matrix", 2001), adapted twice from the
 paper: column vectors (`clip = M * v`) put the planes on the *rows* of the matrix instead
@@ -120,6 +119,22 @@ test true; only boxes fully outside some plane test false. Never culls a visible
 `intersects(_:ModelBounds)` overload accepts `MeshLibrary.ModelBounds` directly; the core
 API stays on plain `SIMD3<Float>` min/max to keep math decoupled from the mesh-loading
 type.
+
+Wiring (renderer core, 3.2): every draw item carries a world-space AABB —
+`RenderPlacement` (model + transform + bounds) feeds `RenderScene`, which stamps the
+placement's bounds onto each of its `DrawItem`s (model-level AABB shared by all meshes of
+one instance — conservative); `TerrainDrawItem` carries its patch AABB. Sources: cell
+build pushes `MeshLibrary.bounds(forPath:)` through the placement transform (the same
+value the cell AABB unions), terrain uses the patch mesh bounds, `DemoScene` computes its
+own. nil bounds -> never culled (preview single-model scenes, synthetic tests).
+`encodeScenePass` builds one `Frustum` per frame from the exact view-projection the
+shaders get and skips failing items; the per-draw uniform ring is indexed by a running
+visible-draw cursor (visible <= `drawCount` = ring capacity, always safe), not
+precomputed bucket offsets. Per-frame accounting lands in `Renderer.lastDrawStats`
+(`SceneDrawStats`: drawCalls / drawnInstances / culledInstances) — asserted by
+`RendererCullingTests` (culled far object keeps the frame pixel-identical; camera facing
+away culls everything and renders pure clear). Encode path lives in
+`Rendering/RendererScenePass.swift` (split from `Renderer.swift`, file-length limits).
 
 ## Uniforms + binding
 

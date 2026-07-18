@@ -4,6 +4,24 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* **Frustum culling wired into the renderer** (M3.2 renderer core): per-draw
+  world AABBs + per-frame culling. New `RenderPlacement` (model, transform,
+  world bounds) replaces the `RenderScene` instance tuples; `DrawItem` /
+  `TerrainDrawItem` carry `bounds: ModelBounds?` (nil -> never culled). Cell
+  build threads `MeshLibrary.bounds(forPath:).transformed(by:)` onto items
+  (same value the cell AABB already unioned); terrain items get per-patch
+  bounds; DemoScene computes its own. `encodeScenePass` builds one
+  `Frustum(viewProjection:)` per frame -> skips failing items; per-draw ring
+  now indexed by running visible-draw cursor (visible <= drawCount = ring
+  capacity). Per-frame counts exposed as `Renderer.lastDrawStats`
+  (`SceneDrawStats`). Encode path split to
+  `Rendering/RendererScenePass.swift` (file-length limit, RendererSetup
+  precedent). Real-install verify: `openskycli render --x 6 --y -2
+  --neighbors` byte-identical PNG before/after (7.4% non-background);
+  `openskycli bench` avg 0.55 ms / p95 0.74 ms vs 33.33 ms budget. Docs:
+  [metal4-renderer](/rendering/metal4-renderer.md) Frustum culling section.
+  Tests: `RendererCullingTests` (culled-vs-drawn stats + pixel checks,
+  all-culled clear frame), existing offscreen/scene suites green.
 * **Widen base coverage, M3.2**: `CellSceneBuilder` drew STAT bases only; MSTT, TREE,
   FURN, ACTI, CONT placements fell into the (now-gone) non-STAT skip bucket. New shared
   decoder `ModelBase` (`opensky/Formats/ESM/Records/ModelBase.swift`) reads EDID + MODL

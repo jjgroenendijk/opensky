@@ -410,18 +410,28 @@ extension CellSceneBuilder {
         terrain: TerrainBuild?,
         counts: BuildCounts
     ) -> CellScene {
+        // Per-instance world AABB (model bounds through the placement
+        // transform) rides onto the draw items for frustum culling and
+        // accumulates into the cell AABB for camera framing.
+        var bounds: ModelBounds?
+        let placed = instances.map { instance -> RenderPlacement in
+            let world = meshes.bounds(forPath: instance.modelPath)?
+                .transformed(by: instance.transform)
+            if let world {
+                bounds = bounds.map { $0.union(world) } ?? world
+            }
+            return RenderPlacement(
+                model: instance.model,
+                transform: instance.transform,
+                bounds: world
+            )
+        }
         // Terrain draws through its own splat pipeline list; ref DrawItem
         // ordering (instancing-ready grouping) stays intact.
         let renderScene = RenderScene(
-            instances: instances.map { ($0.model, $0.transform) },
+            instances: placed,
             terrain: terrain?.items ?? []
         )
-        var bounds: ModelBounds?
-        for instance in instances {
-            guard let local = meshes.bounds(forPath: instance.modelPath) else { continue }
-            let world = local.transformed(by: instance.transform)
-            bounds = bounds.map { $0.union(world) } ?? world
-        }
         if let world = terrain?.bounds {
             bounds = bounds.map { $0.union(world) } ?? world
         }

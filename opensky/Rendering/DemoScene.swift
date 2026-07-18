@@ -45,55 +45,59 @@ nonisolated enum DemoScene {
             return texture
         }
 
-        let ground = try RenderModel(
-            device: device,
-            model: Model(
-                meshes: [planeMesh(halfSize: 512, uvRepeat: 8)],
-                materials: [material(texture: "demo/checker")],
-                skippedShapeCount: 0
-            ),
-            textureProvider: provider
+        let groundModel = Model(
+            meshes: [planeMesh(halfSize: 512, uvRepeat: 8)],
+            materials: [material(texture: "demo/checker")],
+            skippedShapeCount: 0
         )
-        let crate = try RenderModel(
-            device: device,
-            model: Model(
-                meshes: [boxMesh(halfWidth: 32, halfDepth: 32, height: 64)],
-                materials: [material(texture: "demo/crate")],
-                skippedShapeCount: 0
-            ),
-            textureProvider: provider
+        let crateModel = Model(
+            meshes: [boxMesh(halfWidth: 32, halfDepth: 32, height: 64)],
+            materials: [material(texture: "demo/crate")],
+            skippedShapeCount: 0
         )
-        let panel = try RenderModel(
-            device: device,
-            model: Model(
-                meshes: [panelMesh(halfWidth: 64, height: 128)],
-                materials: [material(
-                    texture: "demo/cutout",
-                    alphaTestThreshold: 0.5,
-                    doubleSided: true
-                )],
-                skippedShapeCount: 0
-            ),
-            textureProvider: provider
+        let panelModel = Model(
+            meshes: [panelMesh(halfWidth: 64, height: 128)],
+            materials: [material(
+                texture: "demo/cutout",
+                alphaTestThreshold: 0.5,
+                doubleSided: true
+            )],
+            skippedShapeCount: 0
         )
+        let ground = try RenderModel(device: device, model: groundModel, textureProvider: provider)
+        let crate = try RenderModel(device: device, model: crateModel, textureProvider: provider)
+        let panel = try RenderModel(device: device, model: panelModel, textureProvider: provider)
+        // Model-space AABBs pushed through each placement below — the demo
+        // scene carries real world bounds so frustum culling runs on the
+        // no-game-data path too (same as cell scene build).
+        let groundBounds = ModelBounds.containing(model: groundModel)
+        let crateBounds = ModelBounds.containing(model: crateModel)
+        let panelBounds = ModelBounds.containing(model: panelModel)
 
         // REFR-style placements (MatrixMath.placement — the exact transform
         // cell scene build will feed): identity ground, one axis-aligned
         // crate, one yawed 45°, one uniformly scaled, one cutout panel.
-        var instances: [(model: RenderModel, transform: float4x4)] = []
-        instances.append((ground, matrix_identity_float4x4))
-        instances.append((crate, MatrixMath.placement(
+        var instances: [RenderPlacement] = []
+        func place(_ model: RenderModel, _ bounds: ModelBounds?, _ transform: float4x4) {
+            instances.append(RenderPlacement(
+                model: model,
+                transform: transform,
+                bounds: bounds?.transformed(by: transform)
+            ))
+        }
+        place(ground, groundBounds, matrix_identity_float4x4)
+        place(crate, crateBounds, MatrixMath.placement(
             position: SIMD3(0, 0, 0), rotation: .zero, scale: 1
-        )))
-        instances.append((crate, MatrixMath.placement(
+        ))
+        place(crate, crateBounds, MatrixMath.placement(
             position: SIMD3(160, 96, 0), rotation: SIMD3(0, 0, .pi / 4), scale: 1
-        )))
-        instances.append((crate, MatrixMath.placement(
+        ))
+        place(crate, crateBounds, MatrixMath.placement(
             position: SIMD3(-144, 128, 0), rotation: .zero, scale: 1.5
-        )))
-        instances.append((panel, MatrixMath.placement(
+        ))
+        place(panel, panelBounds, MatrixMath.placement(
             position: SIMD3(-96, -96, 0), rotation: SIMD3(0, 0, .pi / 6), scale: 1
-        )))
+        ))
         return RenderScene(instances: instances)
     }
 

@@ -50,6 +50,21 @@ nonisolated final class RenderModel {
     }
 }
 
+/// One placed model going into a RenderScene: instance transform plus the
+/// world-space AABB used for frustum culling (model bounds pushed through
+/// the transform). nil bounds -> the instance is never culled.
+nonisolated struct RenderPlacement {
+    let model: RenderModel
+    let transform: float4x4
+    let bounds: ModelBounds?
+
+    init(model: RenderModel, transform: float4x4, bounds: ModelBounds? = nil) {
+        self.model = model
+        self.transform = transform
+        self.bounds = bounds
+    }
+}
+
 /// One draw call: mesh + material + world-space matrices, ready to copy
 /// into the per-draw uniform ring.
 nonisolated struct DrawItem {
@@ -58,6 +73,10 @@ nonisolated struct DrawItem {
     let modelMatrix: float4x4
     /// Inverse-transpose of modelMatrix (world-space normals).
     let normalMatrix: float4x4
+    /// World-space AABB for frustum culling. Model-level bounds pushed
+    /// through the instance transform — shared by every mesh of the
+    /// instance, so conservative per mesh. nil -> never culled.
+    let bounds: ModelBounds?
 }
 
 /// One terrain quadrant draw for the splat pipeline: quadrant mesh, its
@@ -74,6 +93,8 @@ nonisolated struct TerrainDrawItem {
     let layerTextures: [MTLTexture]
     let modelMatrix: float4x4
     let normalMatrix: float4x4
+    /// World-space AABB for frustum culling; nil -> never culled.
+    let bounds: ModelBounds?
 }
 
 /// Flattened draw lists for one frame's scene. Instances are (model,
@@ -86,23 +107,26 @@ nonisolated struct RenderScene {
     let terrain: [TerrainDrawItem]
 
     init(
-        instances: [(model: RenderModel, transform: float4x4)],
+        instances: [RenderPlacement],
         terrain: [TerrainDrawItem] = []
     ) {
         var opaque: [DrawItem] = []
         var alphaTested: [DrawItem] = []
-        for (model, transform) in instances {
+        for placement in instances {
+            let model = placement.model
+            let bounds = placement.bounds
             for mesh in model.meshes {
                 // Slot validated against the producing Model by RenderModel
                 // construction order; guard anyway — external data upstream.
                 guard mesh.materialSlot < model.materials.count else { continue }
                 let material = model.materials[mesh.materialSlot]
-                let modelMatrix = transform * mesh.localTransform
+                let modelMatrix = placement.transform * mesh.localTransform
                 let item = DrawItem(
                     mesh: mesh,
                     material: material,
                     modelMatrix: modelMatrix,
-                    normalMatrix: MatrixMath.normalMatrix(modelMatrix)
+                    normalMatrix: MatrixMath.normalMatrix(modelMatrix),
+                    bounds: bounds
                 )
                 if material.alphaTestThreshold == nil {
                     opaque.append(item)

@@ -68,7 +68,9 @@ struct RenderSceneTests {
     @Test(.enabled(if: Self.hasDevice)) func groupsOpaqueBeforeAlphaTested() throws {
         let device = try #require(Self.device)
         let model = try Self.renderModel(device: device)
-        let scene = RenderScene(instances: [(model, matrix_identity_float4x4)])
+        let scene = RenderScene(instances: [
+            RenderPlacement(model: model, transform: matrix_identity_float4x4)
+        ])
 
         #expect(scene.drawCount == 2)
         #expect(scene.opaque.count == 1)
@@ -88,7 +90,7 @@ struct RenderSceneTests {
         let shared = try Self.texture(device: device)
         let render = try RenderModel(device: device, model: model) { _, _ in shared }
         let instance = MatrixMath.translation(SIMD3(100, 0, 0))
-        let scene = RenderScene(instances: [(render, instance)])
+        let scene = RenderScene(instances: [RenderPlacement(model: render, transform: instance)])
 
         let expected = instance * local
         #expect(scene.opaque[0].modelMatrix == expected)
@@ -104,7 +106,9 @@ struct RenderSceneTests {
         )
         let shared = try Self.texture(device: device)
         let render = try RenderModel(device: device, model: model) { _, _ in shared }
-        let scene = RenderScene(instances: [(render, matrix_identity_float4x4)])
+        let scene = RenderScene(instances: [
+            RenderPlacement(model: render, transform: matrix_identity_float4x4)
+        ])
         #expect(scene.drawCount == 0)
     }
 
@@ -124,7 +128,8 @@ struct RenderSceneTests {
             material: material,
             layerTextures: layers,
             modelMatrix: matrix_identity_float4x4,
-            normalMatrix: matrix_identity_float4x4
+            normalMatrix: matrix_identity_float4x4,
+            bounds: nil
         )
         let scene = RenderScene(instances: [], terrain: [item])
         #expect(scene.drawCount == 1)
@@ -147,9 +152,11 @@ struct RenderSceneTests {
         )
         let renderA = try RenderModel(device: device, model: model) { _, _ in shared }
         let renderB = try RenderModel(device: device, model: model) { _, _ in shared }
-        let sceneA = RenderScene(instances: [(renderA, matrix_identity_float4x4)])
+        let sceneA = RenderScene(instances: [
+            RenderPlacement(model: renderA, transform: matrix_identity_float4x4)
+        ])
         let sceneB = RenderScene(instances: [
-            (renderB, MatrixMath.translation(SIMD3(4096, 0, 0)))
+            RenderPlacement(model: renderB, transform: MatrixMath.translation(SIMD3(4096, 0, 0)))
         ])
 
         let merged = RenderScene(merging: [sceneA, sceneB])
@@ -173,8 +180,8 @@ struct RenderSceneTests {
         let model = try Self.renderModel(device: device)
         // Two instances of one model: buffers + shared texture counted once.
         let scene = RenderScene(instances: [
-            (model, matrix_identity_float4x4),
-            (model, MatrixMath.translation(SIMD3(10, 0, 0)))
+            RenderPlacement(model: model, transform: matrix_identity_float4x4),
+            RenderPlacement(model: model, transform: MatrixMath.translation(SIMD3(10, 0, 0)))
         ])
 
         #expect(scene.drawCount == 4)

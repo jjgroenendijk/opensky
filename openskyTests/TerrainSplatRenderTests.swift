@@ -123,7 +123,8 @@ struct TerrainSplatRenderTests {
             material: material,
             layerTextures: [layer],
             modelMatrix: matrix_identity_float4x4,
-            normalMatrix: matrix_identity_float4x4
+            normalMatrix: matrix_identity_float4x4,
+            bounds: nil
         )
         return RenderScene(instances: [], terrain: [item])
     }

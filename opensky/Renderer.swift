@@ -11,6 +11,17 @@ import MetalKit
 import QuartzCore
 import simd
 
+/// Per-frame culling + draw accounting from the most recently encoded
+/// frame — deterministic evidence for culling tests and streaming triage.
+nonisolated struct SceneDrawStats: Equatable {
+    /// drawIndexedPrimitives calls encoded.
+    var drawCalls = 0
+    /// Items drawn after frustum culling (static + terrain).
+    var drawnInstances = 0
+    /// Items the frustum test skipped this frame.
+    var culledInstances = 0
+}
+
 nonisolated enum RendererError: Error {
     case deviceUnavailable
     case commandQueueUnavailable
@@ -35,9 +46,9 @@ final class Renderer: NSObject {
     /// Uniform slots are 256-byte aligned so every ring offset satisfies
     /// Metal's buffer-offset alignment requirement. The per-draw ring is
     /// shared by static and terrain draws, so its slot fits either struct.
-    private static let alignedFrameUniformsSize =
+    static let alignedFrameUniformsSize =
         (MemoryLayout<FrameUniforms>.size + 0xFF) & -0x100
-    private static let alignedDrawUniformsSize =
+    static let alignedDrawUniformsSize =
         (max(MemoryLayout<DrawUniforms>.size, MemoryLayout<TerrainDrawUniforms>.size)
                 + 0xFF) & -0x100
 
@@ -50,27 +61,27 @@ final class Renderer: NSObject {
     let commandQueue: MTL4CommandQueue
     let commandBuffer: MTL4CommandBuffer
     let commandAllocators: [MTL4CommandAllocator]
-    private let argumentTable: MTL4ArgumentTable
-    private let opaquePipeline: MTLRenderPipelineState
-    private let alphaTestPipeline: MTLRenderPipelineState
-    private let terrainPipeline: MTLRenderPipelineState
-    private let depthState: MTLDepthStencilState
-    private let sampler: MTLSamplerState
-    private let scene: RenderScene
+    let argumentTable: MTL4ArgumentTable
+    let opaquePipeline: MTLRenderPipelineState
+    let alphaTestPipeline: MTLRenderPipelineState
+    let terrainPipeline: MTLRenderPipelineState
+    let depthState: MTLDepthStencilState
+    let sampler: MTLSamplerState
+    let scene: RenderScene
     /// Injected framing camera — source of the sun/ambient light and the
     /// free-fly camera's starting pose.
-    private let camera: SceneCamera
+    let camera: SceneCamera
     /// Live view pose, seeded from `camera`, advanced each frame from `input`.
-    private var freeFlyCamera: FreeFlyCamera
+    var freeFlyCamera: FreeFlyCamera
     /// Free-fly input, drained once per `draw(in:)`; nil (offscreen/tests) ->
     /// the camera stays on its seeded pose.
     private let input: CameraInputState?
     /// CACurrentMediaTime of the previous `draw(in:)`, for real delta time.
     private var lastUpdateTime: CFTimeInterval?
-    private let frameUniformBuffer: MTLBuffer
+    let frameUniformBuffer: MTLBuffer
     /// Per-draw ring: maxFramesInFlight slots x scene.drawCount aligned
     /// entries. The scene is fixed for 2.6; cell streaming (2.7+) grows it.
-    private let drawUniformBuffer: MTLBuffer
+    let drawUniformBuffer: MTLBuffer
     let residencySet: MTLResidencySet
     let endFrameEvent: MTLSharedEvent
     /// Two timestamp entries (frame start/end) per in-flight slot; nil when
@@ -80,6 +91,9 @@ final class Renderer: NSObject {
 
     var frameIndex: Int
     private var projectionMatrix = matrix_identity_float4x4
+    /// Culling/draw counts of the last encoded frame (see SceneDrawStats).
+    /// Written only by encodeScenePass (RendererScenePass.swift).
+    var lastDrawStats = SceneDrawStats()
 
     /// `scene` nil -> synthetic DemoScene; `camera` nil -> its demo camera;
     /// `input` nil -> static seeded pose (offscreen/tests). The app passes a
@@ -170,26 +184,7 @@ final class Renderer: NSObject {
         return try? device.makeCounterHeap(descriptor: heapDescriptor)
     }
 
-    // MARK: - Per-frame uniforms
-
-    /// Writes this frame's uniforms into its 256-byte-aligned slot and
-    /// returns the byte offset of that slot. View comes from the live free-fly
-    /// camera (pose seeded from the injected SceneCamera); sun/ambient from the
-    /// injected SceneCamera.
-    private func updateFrameUniforms(slot: Int, projection: float4x4) -> Int {
-        let offset = Self.alignedFrameUniformsSize * slot
-        let viewMatrix = freeFlyCamera.viewMatrix()
-        var uniforms = FrameUniforms(
-            viewProjectionMatrix: projection * viewMatrix,
-            cameraPosition: freeFlyCamera.position,
-            sunDirection: camera.sunDirection,
-            sunColor: camera.sunColor,
-            ambientColor: camera.ambientColor
-        )
-        frameUniformBuffer.contents().advanced(by: offset)
-            .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)
-        return offset
-    }
+    // MARK: - Camera
 
     /// Advances the free-fly camera by one frame of input using real elapsed
     /// time. First frame (or no input) makes no move. dt is clamped so a stall
@@ -201,191 +196,14 @@ final class Renderer: NSObject {
         lastUpdateTime = now
         freeFlyCamera.update(input.makeInput(dt: dt))
     }
-
-    /// Writes one draw's uniforms into the ring and returns its byte offset.
-    private func updateDrawUniforms(slot: Int, draw: Int, item: DrawItem) -> Int {
-        let offset = Self.alignedDrawUniformsSize * (slot * scene.drawCount + draw)
-        var uniforms = DrawUniforms(
-            modelMatrix: item.modelMatrix,
-            normalMatrix: item.normalMatrix,
-            uvOffset: item.material.uvOffset,
-            uvScale: item.material.uvScale,
-            materialAlpha: item.material.alpha,
-            alphaThreshold: item.material.alphaTestThreshold ?? 0
-        )
-        drawUniformBuffer.contents().advanced(by: offset)
-            .copyMemory(from: &uniforms, byteCount: MemoryLayout<DrawUniforms>.size)
-        return offset
-    }
-
-    /// Terrain variant of updateDrawUniforms: same ring, same aligned slots
-    /// (slot size covers both structs), TerrainDrawUniforms layout.
-    private func updateTerrainDrawUniforms(
-        slot: Int,
-        draw: Int,
-        item: TerrainDrawItem
-    ) -> Int {
-        let offset = Self.alignedDrawUniformsSize * (slot * scene.drawCount + draw)
-        var uniforms = TerrainDrawUniforms(
-            modelMatrix: item.modelMatrix,
-            normalMatrix: item.normalMatrix,
-            uvOffset: item.material.uvOffset,
-            uvScale: item.material.uvScale,
-            layerCount: UInt32(min(item.layerTextures.count, TerrainConstant.maxLayers.rawValue))
-        )
-        drawUniformBuffer.contents().advanced(by: offset)
-            .copyMemory(from: &uniforms, byteCount: MemoryLayout<TerrainDrawUniforms>.size)
-        return offset
-    }
 }
 
-// MARK: - Draw encode + scene pass
+// MARK: - GPU timestamps
 
-/// Same-file extension (private member access) keeping the encode path out
-/// of the class body (type-length limits, RendererSetup.swift precedent).
+/// Encode path lives in Rendering/RendererScenePass.swift (file-length
+/// limits); this extension keeps the counter-heap timestamp reads next to
+/// the draw loop that consumes them.
 extension Renderer {
-    private func encode(
-        items: [DrawItem],
-        pipeline: MTLRenderPipelineState,
-        encoder: MTL4RenderCommandEncoder,
-        slot: Int,
-        drawOffset: Int
-    ) {
-        guard !items.isEmpty else { return }
-        encoder.setRenderPipelineState(pipeline)
-        for (index, item) in items.enumerated() {
-            let uniformOffset = updateDrawUniforms(
-                slot: slot,
-                draw: drawOffset + index,
-                item: item
-            )
-            argumentTable.setAddress(
-                item.mesh.vertexBuffer.gpuAddress,
-                index: BufferIndex.vertices.rawValue
-            )
-            argumentTable.setAddress(
-                drawUniformBuffer.gpuAddress + UInt64(uniformOffset),
-                index: BufferIndex.drawUniforms.rawValue
-            )
-            argumentTable.setTexture(
-                item.material.diffuse.gpuResourceID,
-                index: TextureIndex.diffuse.rawValue
-            )
-            encoder.setCullMode(item.material.doubleSided ? .none : .back)
-            encoder.drawIndexedPrimitives(
-                primitiveType: .triangle,
-                indexCount: item.mesh.indexCount,
-                indexType: .uint16,
-                indexBuffer: item.mesh.indexBuffer.gpuAddress,
-                indexBufferLength: item.mesh.indexBuffer.length
-            )
-        }
-    }
-
-    /// Encodes the terrain splat draws: per-quadrant pipeline with the base
-    /// diffuse at TextureIndexDiffuse and the ATXT layer array at
-    /// TextureIndexTerrainLayer0+. Unused layer slots rebind the base diffuse
-    /// so every declared texture argument is valid; the shader never samples
-    /// past TerrainDrawUniforms.layerCount.
-    private func encodeTerrain(
-        items: [TerrainDrawItem],
-        encoder: MTL4RenderCommandEncoder,
-        slot: Int,
-        drawOffset: Int
-    ) {
-        guard !items.isEmpty else { return }
-        encoder.setRenderPipelineState(terrainPipeline)
-        for (index, item) in items.enumerated() {
-            let uniformOffset = updateTerrainDrawUniforms(
-                slot: slot,
-                draw: drawOffset + index,
-                item: item
-            )
-            argumentTable.setAddress(
-                item.mesh.vertexBuffer.gpuAddress,
-                index: BufferIndex.vertices.rawValue
-            )
-            argumentTable.setAddress(
-                item.weightsBuffer.gpuAddress,
-                index: BufferIndex.terrainWeights.rawValue
-            )
-            argumentTable.setAddress(
-                drawUniformBuffer.gpuAddress + UInt64(uniformOffset),
-                index: BufferIndex.drawUniforms.rawValue
-            )
-            argumentTable.setTexture(
-                item.material.diffuse.gpuResourceID,
-                index: TextureIndex.diffuse.rawValue
-            )
-            for layerSlot in 0 ..< TerrainConstant.maxLayers.rawValue {
-                let texture = layerSlot < item.layerTextures.count
-                    ? item.layerTextures[layerSlot]
-                    : item.material.diffuse
-                argumentTable.setTexture(
-                    texture.gpuResourceID,
-                    index: TextureIndex.terrainLayer0.rawValue + layerSlot
-                )
-            }
-            encoder.setCullMode(.back)
-            encoder.drawIndexedPrimitives(
-                primitiveType: .triangle,
-                indexCount: item.mesh.indexCount,
-                indexType: .uint16,
-                indexBuffer: item.mesh.indexBuffer.gpuAddress,
-                indexBufferLength: item.mesh.indexBuffer.length
-            )
-        }
-    }
-
-    /// Encodes the whole scene as one render pass into the open command
-    /// buffer. Returns false when the encoder cannot be created.
-    func encodeScenePass(
-        descriptor: MTL4RenderPassDescriptor,
-        slot: Int,
-        projection: float4x4
-    ) -> Bool {
-        let frameOffset = updateFrameUniforms(slot: slot, projection: projection)
-        guard let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)
-        else { return false }
-        encoder.label = "Static Mesh Encoder"
-        encoder.setDepthStencilState(depthState)
-        // Winding per docs/decisions/coordinates.md (verified on the demo
-        // scene ground plane): faces authored counter-clockwise seen from
-        // outside are front under our view/projection.
-        encoder.setFrontFacing(.counterClockwise)
-        encoder.setArgumentTable(argumentTable, stages: [.vertex, .fragment])
-        argumentTable.setAddress(
-            frameUniformBuffer.gpuAddress + UInt64(frameOffset),
-            index: BufferIndex.frameUniforms.rawValue
-        )
-        argumentTable.setSamplerState(
-            sampler.gpuResourceID,
-            index: SamplerIndex.trilinear.rawValue
-        )
-        encode(
-            items: scene.opaque,
-            pipeline: opaquePipeline,
-            encoder: encoder,
-            slot: slot,
-            drawOffset: 0
-        )
-        encodeTerrain(
-            items: scene.terrain,
-            encoder: encoder,
-            slot: slot,
-            drawOffset: scene.opaque.count
-        )
-        encode(
-            items: scene.alphaTested,
-            pipeline: alphaTestPipeline,
-            encoder: encoder,
-            slot: slot,
-            drawOffset: scene.opaque.count + scene.terrain.count
-        )
-        encoder.endEncoding()
-        return true
-    }
-
     /// Reads a slot's timestamp pair straight from the counter heap. Only
     /// valid when the caller proved (shared-event wait) that the frame which
     /// wrote the slot finished.
