@@ -54,7 +54,8 @@ enum RenderCommand {
         print("[INFO] wrote frame -> \(url.path(percentEncoded: false))")
     }
 
-    private static func int32(_ value: String?, name: String) throws -> Int32? {
+    /// Shared with BenchCommand (same scene-build + option surface).
+    static func int32(_ value: String?, name: String) throws -> Int32? {
         guard let value else { return nil }
         guard let parsed = Int32(value) else {
             throw CLIError.usage("\(name) expects an integer, got \(value)")
@@ -64,7 +65,7 @@ enum RenderCommand {
 
     /// "--size 1280x720" -> (1280, 720); bounded so a typo cannot ask the
     /// GPU for a texture it can never allocate.
-    private static func parseSize(_ value: String?) throws -> (width: Int, height: Int) {
+    static func parseSize(_ value: String?) throws -> (width: Int, height: Int) {
         guard let value else { return (1280, 720) }
         let parts = value.lowercased().split(separator: "x")
         guard
@@ -77,7 +78,7 @@ enum RenderCommand {
         return (width, height)
     }
 
-    private static func buildScene(
+    static func buildScene(
         context: CLIContext,
         device: MTLDevice,
         worldspace: String,

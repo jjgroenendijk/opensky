@@ -66,4 +66,9 @@ png="$log_dir/probe-render.png"
 run "offscreen render" render --out "$png"
 [ -s "$png" ] || fail "render wrote no PNG"
 echo "[ OK ] render output: $png"
+
+# Sustained fps gate (todo 2.11): 360 frames at 720p via frame stats; the
+# command exits 1 when avg/p95 frame time misses the 33.3 ms (30 fps) budget.
+run "sustained bench (360 frames @ 1280x720)" bench
+grep 'frames @' "$log" | tail -1
 echo "[INFO] probe passed — full output in $log"

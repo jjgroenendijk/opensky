@@ -29,6 +29,10 @@ enum OpenSkyCLI {
       dds <key>                   Inspect a texture: header + mip chain
       render --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
              [--size WxH]         Offscreen-render a cell to a PNG
+      bench [--worldspace <edid>] [--x <n>] [--y <n>] [--size WxH]
+            [--frames <n>] [--budget-ms <f>]
+                                  Sustained offscreen render; report frame
+                                  stats, fail when avg/p95 miss the budget
       help                        Show this text
 
     defaults: cell/render target the first-render cell (Tamriel (6,-2)).
@@ -86,6 +90,11 @@ enum OpenSkyCLI {
             )
         case "render":
             try RenderCommand.run(
+                context: .resolve(dataRootOverride: dataRoot),
+                scanner: &scanner
+            )
+        case "bench":
+            try BenchCommand.run(
                 context: .resolve(dataRootOverride: dataRoot),
                 scanner: &scanner
             )

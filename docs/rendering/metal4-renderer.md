@@ -4,7 +4,7 @@ title: Metal 4 static-mesh renderer
 description: Static-mesh render path - pipeline variants, uniform rings, argument-table
   binds, counter-heap frame stats, offscreen render, scene types.
 tags: [rendering, metal, engine]
-timestamp: 2026-07-10T00:00:00Z
+timestamp: 2026-07-18T00:00:00Z
 ---
 
 # Metal 4 static-mesh renderer
@@ -87,15 +87,26 @@ adapted from Apple's Xcode Metal 4 game template (structure, not copied game cod
   os_signpost interval per frame for Instruments. This is the measurable basis for the
   2.9 >30 fps gate.
 
-## Offscreen render
+## Offscreen render + sustained bench
 
+Offscreen path lives in `Rendering/RendererOffscreen.swift` (split from
+`Renderer.swift` for file-length limits, `RendererSetup.swift` precedent).
 `Renderer.renderOffscreen(width:height:)` renders one frame into an owned color+depth
 target and blocks on the shared event until the GPU finishes — no drawable, no
 compositor. Used by `RendererOffscreenTests` (deterministic pixel assertions + temp PNG
-for human review; Screen Recording TCC is unavailable on dev machines) and intended for
-the 2.9 committed screenshot (engine output, not window capture). Windowless
+for human review; Screen Recording TCC is unavailable on dev machines) and the committed
+milestone screenshot (engine output, not window capture). Windowless
 `MTKView.currentDrawable` rendering crashes in `waitForDrawable` — never test through
 drawables.
+
+`renderOffscreenSustained(width:height:frames:)` loops that frame body against one
+reused target, every frame instrumented: FrameStats begin/end + counter-heap timestamp
+writes, pair resolved right after the synchronous wait. Returns `OffscreenBenchResult`
+(per-frame wall ms — avg / nearest-rank percentile, unit-tested — plus flushed
+FrameStats window lines). Synchronous frames include the full CPU-GPU round trip a
+pipelined loop overlaps -> numbers are a conservative upper bound. Consumed by
+`openskycli bench`, the todo 2.11 ">30 fps sustained, measured" gate
+([CLI](/tools/cli.md)).
 
 ## MatrixMath conventions
 

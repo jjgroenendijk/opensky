@@ -4,7 +4,7 @@ title: CLI dev tool (openskycli)
 description: Terminal dev entrypoints over the engine - VFS list/extract, record and cell
   probes, NIF/DDS inspection, offscreen cell render to PNG, env-gated probe harness.
 tags: [tool, cli, dev, probe, rendering]
-timestamp: 2026-07-17T00:00:00Z
+timestamp: 2026-07-18T00:00:00Z
 ---
 
 # CLI dev tool (openskycli)
@@ -49,6 +49,7 @@ where `--out` points (AGENTS.md Legal & IP).
 | `nif <key>` | container stats + flattened model summary (meshes, verts/tris, bounds, materials with texture paths) |
 | `dds <key>` | header + mip chain (size, BCn format, sRGB declaration) |
 | `render --out <file> [--worldspace/--x/--y] [--size WxH]` | cell scene build -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load summary + non-background pixel fraction |
+| `bench [--worldspace/--x/--y] [--size WxH] [--frames n] [--budget-ms f]` | sustained offscreen render (default 360 frames @ 1280x720) through `Renderer.renderOffscreenSustained` — FrameStats windows + per-frame wall times; prints avg/p95/max + fps, exit 1 when avg or p95 misses the budget (default 33.33 ms = 30 fps, todo 2.11 gate) |
 
 `cell`/`render` default to the first-render cell
 ([decision](/decisions/first-render-cell.md), constants in
@@ -78,4 +79,6 @@ default `/Volumes/data/steam/steamapps/common/Skyrim Special Edition`, override 
 `OPENSKY_DATA_ROOT`. Install absent -> `[INFO]` + exit 0 (CI safe). Checks: `vfs ls`
 finds meshes; `record 0x3C` decodes Tamriel (UESP "Skyrim Mod:FormIDs"); `cell`
 summary; `nif`/`dds` inspect the first listed assets; `render` writes
-`logs/probe-render.png`. Full output -> `logs/probe.log`.
+`logs/probe-render.png`; `bench` runs the sustained fps gate (360 frames @
+720p, fails over 33.33 ms avg/p95) and echoes the measured line. Full
+output -> `logs/probe.log`.
