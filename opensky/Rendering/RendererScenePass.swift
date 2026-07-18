@@ -41,8 +41,9 @@ extension Renderer {
     }
 
     /// Writes one draw's uniforms into the ring and returns its byte offset.
+    /// Ring stride is the (possibly regrown) slot capacity, not drawCount.
     private func updateDrawUniforms(slot: Int, draw: Int, item: DrawItem) -> Int {
-        let offset = Self.alignedDrawUniformsSize * (slot * scene.drawCount + draw)
+        let offset = Self.alignedDrawUniformsSize * (slot * drawUniformSlotCapacity + draw)
         var uniforms = DrawUniforms(
             modelMatrix: item.modelMatrix,
             normalMatrix: item.normalMatrix,
@@ -63,7 +64,7 @@ extension Renderer {
         draw: Int,
         item: TerrainDrawItem
     ) -> Int {
-        let offset = Self.alignedDrawUniformsSize * (slot * scene.drawCount + draw)
+        let offset = Self.alignedDrawUniformsSize * (slot * drawUniformSlotCapacity + draw)
         var uniforms = TerrainDrawUniforms(
             modelMatrix: item.modelMatrix,
             normalMatrix: item.normalMatrix,

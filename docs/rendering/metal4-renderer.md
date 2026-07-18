@@ -136,13 +136,45 @@ precomputed bucket offsets. Per-frame accounting lands in `Renderer.lastDrawStat
 away culls everything and renders pure clear). Encode path lives in
 `Rendering/RendererScenePass.swift` (split from `Renderer.swift`, file-length limits).
 
+## Scene swap + retire list (todo 3.2, streaming precondition)
+
+`Renderer.setScene(_:camera:)` replaces the drawable scene between frames — the
+precondition for cell streaming. Threading: same thread as `draw(in:)` /
+`renderOffscreen` (main); the renderer has no locking, "between frames" comes from that
+shared thread, never from blocking on the GPU. Optional camera reseeds sun/ambient + the
+free-fly pose (first real scene after an empty launch scene needs a framing pose).
+
+* Ring regrowth: the per-draw uniform ring is sized by `drawUniformSlotCapacity` = next
+  power of two >= `drawCount` (min 1) so per-cell-crossing swaps rarely realloc; a swap
+  whose `drawCount` exceeds capacity allocates a new ring and retires the old one (never
+  reused in place — in-flight frames may still read it).
+* Retire list: old scene allocations + replaced rings go into `RetiredAllocations`
+  entries tagged with the newest committed frame index (`frameIndex - 1`). Strong refs
+  keep them alive; entries drop once `endFrameEvent.signaledValue` proves the tag
+  drained. Purged opportunistically in `draw(in:)` and `setScene` — swap never waits.
+* Residency: `MTLResidencySet` membership is a plain set (no refcount) and removals take
+  effect at `commit()` even if queued frames still reference the allocation — so
+  `setScene` only ADDS the new scene's allocations (+ new ring) and commits; removal of
+  the old ones happens at purge time, after the drain proof, filtered against the live
+  set (current scene + rings) because a swap A -> B -> A or adjacent cells sharing
+  meshes/textures make an allocation retired and live at once.
+
+`World/CellSceneComposition.swift` is the streaming controller's cell container:
+`[CellCoordinate: CellScene]` with `setCell`/`removeCell`, `composedScene()` via
+`RenderScene(merging:)` in deterministic (x, y) order, `composedBounds()` union for a
+first framing camera, `coordinates` as the `loaded` set for `CellGridManager.update`.
+Pure value logic (`CellSceneCompositionTests`); the async streaming controller that
+drives it lands in a later 3.2 commit. Verified through real frames:
+`RendererSceneSwapTests` (regrow swap keeps rendering, empty-scene swap renders pure
+clear, camera reseed on swap).
+
 ## Uniforms + binding
 
 * `FrameUniforms` (viewProjection, camera position, sun direction/color, ambient) — one
   256-byte-aligned slot per in-flight frame.
 * `DrawUniforms` (model + normal matrix, UV offset/scale, material alpha, alpha
-  threshold) — ring of `maxFramesInFlight x scene.drawCount` 256-byte-aligned entries,
-  written per draw each frame. Scene is fixed in 2.6; growth lands with 2.7 streaming.
+  threshold) — ring of `maxFramesInFlight x drawUniformSlotCapacity` 256-byte-aligned
+  entries, written per visible draw each frame; regrown on scene swap (section above).
 * All binds through one `MTL4ArgumentTable` (4 buffers — vertices, frame + draw uniforms,
   terrain weights; 1 + 8 textures — diffuse + terrain layer array; 1 sampler); table
   state is captured per draw, so per-draw `setAddress`/`setTexture` between

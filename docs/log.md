@@ -4,6 +4,24 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* **Swappable renderer scene + retire list** (M3.2 renderer core):
+  `Renderer.setScene(_:camera:)` swaps the drawable scene between frames
+  (main thread, same as draw(in:); never blocks on the GPU). Draw-uniform
+  ring sized by `drawUniformSlotCapacity` (next pow2 >= drawCount, min 1),
+  regrown on swap when exceeded; old scene allocations + replaced rings go
+  on a retire list tagged with `frameIndex - 1`, released only once
+  `endFrameEvent.signaledValue` proves those frames drained. Residency:
+  setScene only adds (MTLResidencySet removals hit at commit() even with
+  frames queued); removal happens at purge, filtered against the live set
+  (A->B->A swaps, shared cell assets). Optional camera param reseeds
+  sun/ambient + free-fly pose. New `World/CellSceneComposition.swift`:
+  resident `[CellCoordinate: CellScene]`, setCell/removeCell,
+  composedScene() via RenderScene(merging:) in (x,y) order,
+  composedBounds() — container for the upcoming streaming controller.
+  Real-install verify: Whiterun 3x3 PNG byte-identical, bench avg 0.51 ms /
+  p95 0.61 ms. Docs: [metal4-renderer](/rendering/metal4-renderer.md) scene
+  swap section. Tests: `RendererSceneSwapTests` (regrow swap, empty-scene
+  clear frame, camera reseed), `CellSceneCompositionTests`.
 * **Frustum culling wired into the renderer** (M3.2 renderer core): per-draw
   world AABBs + per-frame culling. New `RenderPlacement` (model, transform,
   world bounds) replaces the `RenderScene` instance tuples; `DrawItem` /

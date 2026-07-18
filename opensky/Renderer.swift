@@ -11,6 +11,16 @@ import MetalKit
 import QuartzCore
 import simd
 
+/// GPU resources retired by a scene swap, still possibly referenced by
+/// frames in flight when they were retired. The strong references here keep
+/// the allocations alive; residency-set removal waits until
+/// `endFrameEvent.signaledValue` proves `lastFrameIndex` drained.
+nonisolated private struct RetiredAllocations {
+    /// Highest frame index that may still reference these allocations.
+    let lastFrameIndex: UInt64
+    let allocations: [MTLAllocation]
+}
+
 /// Per-frame culling + draw accounting from the most recently encoded
 /// frame — deterministic evidence for culling tests and streaming triage.
 nonisolated struct SceneDrawStats: Equatable {
@@ -67,10 +77,11 @@ final class Renderer: NSObject {
     let terrainPipeline: MTLRenderPipelineState
     let depthState: MTLDepthStencilState
     let sampler: MTLSamplerState
-    let scene: RenderScene
+    /// Current drawable scene; swapped between frames via setScene.
+    private(set) var scene: RenderScene
     /// Injected framing camera — source of the sun/ambient light and the
-    /// free-fly camera's starting pose.
-    let camera: SceneCamera
+    /// free-fly camera's starting pose. setScene may replace it.
+    private(set) var camera: SceneCamera
     /// Live view pose, seeded from `camera`, advanced each frame from `input`.
     var freeFlyCamera: FreeFlyCamera
     /// Free-fly input, drained once per `draw(in:)`; nil (offscreen/tests) ->
@@ -79,9 +90,16 @@ final class Renderer: NSObject {
     /// CACurrentMediaTime of the previous `draw(in:)`, for real delta time.
     private var lastUpdateTime: CFTimeInterval?
     let frameUniformBuffer: MTLBuffer
-    /// Per-draw ring: maxFramesInFlight slots x scene.drawCount aligned
-    /// entries. The scene is fixed for 2.6; cell streaming (2.7+) grows it.
-    let drawUniformBuffer: MTLBuffer
+    /// Per-draw ring: maxFramesInFlight slots x drawUniformSlotCapacity
+    /// aligned entries. Replaced (regrown) by setScene when a new scene's
+    /// drawCount exceeds the capacity.
+    private(set) var drawUniformBuffer: MTLBuffer
+    /// Per-frame slot count of the draw-uniform ring — power-of-two
+    /// headroom over drawCount so per-cell-crossing swaps rarely realloc.
+    private(set) var drawUniformSlotCapacity: Int
+    /// Old scene resources + rings possibly referenced by in-flight frames
+    /// after a swap; strong refs held until their frames provably drain.
+    private var retired: [RetiredAllocations] = []
     let residencySet: MTLResidencySet
     let endFrameEvent: MTLSharedEvent
     /// Two timestamp entries (frame start/end) per in-flight slot; nil when
@@ -155,10 +173,11 @@ final class Renderer: NSObject {
             length: Self.alignedFrameUniformsSize * Self.maxFramesInFlight,
             label: "FrameUniforms"
         )
+        drawUniformSlotCapacity = Self.slotCapacity(for: self.scene.drawCount)
         drawUniformBuffer = try Self.makeUniformBuffer(
             device: device,
             length: Self.alignedDrawUniformsSize
-                * max(self.scene.drawCount, 1) * Self.maxFramesInFlight,
+                * drawUniformSlotCapacity * Self.maxFramesInFlight,
             label: "DrawUniforms"
         )
 
@@ -182,6 +201,90 @@ final class Renderer: NSObject {
         heapDescriptor.type = .timestamp
         heapDescriptor.count = 2 * maxFramesInFlight
         return try? device.makeCounterHeap(descriptor: heapDescriptor)
+    }
+
+    /// Ring slots per frame for `count` draws: next power of two, min 1 —
+    /// headroom so the per-cell-crossing swaps of streaming rarely realloc.
+    static func slotCapacity(for count: Int) -> Int {
+        count <= 1 ? 1 : 1 << (Int.bitWidth - (count - 1).leadingZeroBitCount)
+    }
+
+    // MARK: - Scene swap (cell streaming)
+
+    /// Replaces the drawable scene between frames; optional `camera`
+    /// reseeds sun/ambient and the free-fly pose (a first real scene after
+    /// an empty launch scene needs a framing pose).
+    ///
+    /// Threading: must run on the thread that drives draw(in:) /
+    /// renderOffscreen — the main thread. The renderer has no internal
+    /// locking; "between frames" is guaranteed by that shared thread. The
+    /// GPU may still be executing frames that reference the OLD scene:
+    /// those resources go on the retire list instead of being released or
+    /// evicted here — this method never blocks on the GPU.
+    func setScene(_ newScene: RenderScene, camera newCamera: SceneCamera? = nil) throws {
+        purgeRetiredResources()
+        // Old scene allocations retire as a whole; anything the new scene
+        // shares with it is filtered out at purge time (live-set check in
+        // purgeRetiredResources), not here — simpler and equally correct.
+        var retiring = scene.residencyAllocations
+        scene = newScene
+        if let newCamera {
+            camera = newCamera
+            freeFlyCamera = FreeFlyCamera(framing: newCamera)
+        }
+        if newScene.drawCount > drawUniformSlotCapacity {
+            let capacity = Self.slotCapacity(for: newScene.drawCount)
+            let buffer = try Self.makeUniformBuffer(
+                device: device,
+                length: Self.alignedDrawUniformsSize * capacity * Self.maxFramesInFlight,
+                label: "DrawUniforms"
+            )
+            // Old ring may back in-flight frames — retire, never reuse.
+            retiring.append(drawUniformBuffer)
+            drawUniformBuffer = buffer
+            drawUniformSlotCapacity = capacity
+            residencySet.addAllocations([buffer])
+        }
+        residencySet.addAllocations(newScene.residencyAllocations)
+        residencySet.commit()
+        // Frames < frameIndex are committed; the newest (frameIndex - 1) is
+        // the last that can reference the old resources.
+        retired.append(RetiredAllocations(
+            lastFrameIndex: UInt64(frameIndex - 1),
+            allocations: retiring
+        ))
+    }
+
+    /// Drops retire-list entries whose frames provably drained
+    /// (endFrameEvent.signaledValue >= tag), removing their allocations
+    /// from the residency set. MTLResidencySet membership is a plain set —
+    /// no reference counting, and removals take effect at commit() even if
+    /// queued frames still reference the allocation — so removal must wait
+    /// for the drain proof, and must skip anything the CURRENT scene or
+    /// rings also use (swap A -> B -> A, or adjacent cells sharing
+    /// meshes/textures: the shared allocation is both retired and live).
+    /// Called opportunistically from draw(in:) and setScene.
+    func purgeRetiredResources() {
+        guard !retired.isEmpty else { return }
+        let drained = endFrameEvent.signaledValue
+        var ready: [MTLAllocation] = []
+        retired.removeAll { entry in
+            guard entry.lastFrameIndex <= drained else { return false }
+            ready.append(contentsOf: entry.allocations)
+            return true
+        }
+        guard !ready.isEmpty else { return }
+        var live = Set(scene.residencyAllocations.map(ObjectIdentifier.init))
+        live.insert(ObjectIdentifier(frameUniformBuffer))
+        live.insert(ObjectIdentifier(drawUniformBuffer))
+        var seen = Set<ObjectIdentifier>()
+        let removable = ready.filter { allocation in
+            let id = ObjectIdentifier(allocation)
+            return !live.contains(id) && seen.insert(id).inserted
+        }
+        guard !removable.isEmpty else { return }
+        residencySet.removeAllocations(removable)
+        residencySet.commit()
     }
 
     // MARK: - Camera
@@ -249,6 +352,7 @@ extension Renderer: MTKViewDelegate {
         let cpuStart = frameStats.beginFrame()
 
         advanceCamera()
+        purgeRetiredResources()
 
         // Block until the GPU finishes the frame that used this slot.
         endFrameEvent.wait(
