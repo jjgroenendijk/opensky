@@ -55,7 +55,8 @@ struct CellRenderRealDataTests {
         )
 
         let summary = cellScene.summary
-        // Decision doc expects 16 refs / 15 drawn / 1 skipped (non-STAT).
+        // Decision doc expected 16 refs / 15 drawn (STAT-only); 3.2 widened
+        // base coverage to MSTT/TREE/FURN/ACTI/CONT, observed 16/16 drawn.
         // Loose bounds so vanilla patch-level differences do not fail here.
         #expect(summary.drawnRefCount >= 14, "too few refs drew: \(summary.summaryLine)")
         #expect(summary.totalRefCount >= summary.drawnRefCount)

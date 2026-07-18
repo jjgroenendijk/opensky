@@ -4,6 +4,30 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* **Widen base coverage, M3.2**: `CellSceneBuilder` drew STAT bases only; MSTT, TREE,
+  FURN, ACTI, CONT placements fell into the (now-gone) non-STAT skip bucket. New shared
+  decoder `ModelBase` (`opensky/Formats/ESM/Records/ModelBase.swift`) reads EDID + MODL
+  for all five types (UESP "Skyrim Mod:Mod File Format" /MSTT /TREE /FURN /ACTI /CONT —
+  same field layout as STAT); animation/interaction fields stay unread, model path only.
+  `CellSceneBuilder` gains a second lazy FormID -> `ModelBase` index over the five
+  top groups (STAT stays first, largest, most common); `resolveInstances` tries STAT
+  then ModelBase before giving up. Skip bucket `nonSTATSkipCount`/`nonSTATBases` renamed
+  to `unsupportedBaseSkipCount`/`unsupportedBases` (`CellScene.swift`,
+  `CellSceneBuilder.swift`) — now means "base FormID resolves to neither index" (DOOR,
+  NPC_, ACHR, IDLM, MISC, FLOR, SOUN, ... bases, or a malformed base record), not
+  "non-STAT". Real-install verify (`openskycli render`, `/Volumes/data/steam/...Skyrim
+  Special Edition`): WhiterunExterior06 (6,-2) 16 refs went from 15/16 to 16/16 drawn
+  (the lone ACTI now draws); WhiterunExterior02 (5,-3) 17/25 -> 25/25; WhiterunExterior10
+  (7,-1) 28/34 -> 34/34; ChillfurrowFarmExterior (7,-3, 134 refs, all 5 new types
+  present) 75/134 -> 104/134 (30 skipped: 13 unsupported-base — IDLM/MISC/DOOR/SOUN/FLOR,
+  genuinely out of scope — plus 17 load-failed on a handful of CONT/FLOR plant meshes
+  with what looks like a doubled-backslash path quirk in that plugin's MODL data, caught
+  and skipped by the existing mesh-load skip bucket, never crashing). Visually verified:
+  `openskycli render --neighbors` over the (6,-2) 3x3 grid — city props (wells, crates,
+  furniture) and farm trees now draw where they were previously invisible, no artifacts.
+  Docs: [record decoders](/formats/records.md), [cell scene](/engine/cell-scene.md).
+  Tests: `RecordDecoderTests` ModelBase cases, `CellSceneBuilderTests` new base-type
+  draw/marker cases + renamed skip-bucket assertions.
 * **Cell streaming grid manager** (M3.2, grid-manager sub-item): new
   `opensky/World/CellGridManager.swift` -- pure `simd`-only value type, camera
   `SIMD3<Float>` position -> desired NxN exterior-cell grid (`uGridsToLoad`

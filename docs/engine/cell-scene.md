@@ -1,10 +1,10 @@
 ---
 type: Subsystem
 title: Cell scene build
-description: How one exterior cell becomes a draw list - WRLD walk, STAT resolution,
+description: How one exterior cell becomes a draw list - WRLD walk, base resolution,
   skip taxonomy, instancing-ready grouping, world bounds, load summary.
 tags: [engine, world, rendering, esm]
-timestamp: 2026-07-17T00:00:00Z
+timestamp: 2026-07-18T00:00:00Z
 ---
 
 # Cell scene build
@@ -34,15 +34,25 @@ Group nesting per UESP "Skyrim Mod:Mod File Format" — Groups:
    REFR records.
 
 Traversal is lazy throughout: group headers only, record payloads decode on demand,
-non-CELL/WRLD/REFR/STAT records are never decoded.
+non-CELL/WRLD/REFR/STAT/MSTT/TREE/FURN/ACTI/CONT records are never decoded.
 
-## STAT resolution
+## Base resolution
 
-FormID -> `StaticObject` index built over the STAT top group on first use, cached across
-builds. Raw FormIDs suffice while scene build reads a single plugin (REFR base + STAT
-record share one FormID space); cross-plugin resolution via `FormIDResolver` arrives with
-load-order support. MODL paths lack the `meshes\` prefix; `MeshLibrary.model(path:)`
-prepends it (probe-verified — [first render cell](/decisions/first-render-cell.md)).
+Milestone 3.2 "widen base coverage": a ref's base FormID is resolved against two lazy,
+cached indices, STAT first, then `ModelBase` (MSTT/TREE/FURN/ACTI/CONT —
+[record decoders](/formats/records.md)):
+
+* FormID -> `StaticObject` over the single STAT top group.
+* FormID -> `ModelBase` over five top groups, one per record type (unlike STAT there is
+  no single shared group for these).
+
+Both cached across builds on first use. Raw FormIDs suffice while scene build reads a
+single plugin (REFR base + base-record FormID share one FormID space); cross-plugin
+resolution via `FormIDResolver` arrives with load-order support. MODL paths lack the
+`meshes\` prefix; `MeshLibrary.model(path:)` prepends it (probe-verified — [first render
+cell](/decisions/first-render-cell.md)). Animation/interaction fields on the four new
+types (FURN markers, CONT inventory, ACTI activation, TREE billboard) are unread — model
+path only, matching the STAT-only precedent.
 
 ## Skip taxonomy (robustness rule)
 
@@ -54,8 +64,8 @@ mod-quirk rule):
 | bucket | trigger |
 | --- | --- |
 | malformed | REFR record fails to decode (missing NAME/DATA) |
-| non-STAT | base FormID not in the STAT index (ACTI/TREE/... bases, or malformed STAT) |
-| marker | base STAT has no MODL (editor marker) |
+| unsupported-base | base FormID in neither the STAT nor ModelBase index (DOOR, NPC_, ACHR, IDLM, MISC, FLOR, SOUN, ... bases, or a malformed base record) |
+| marker | resolved base has no MODL (editor marker) |
 | load-failed | `MeshLibraryError`: file not found, parse failed, empty model |
 
 Ignored deliberately (not refs, not counted): non-REFR records inside cell children
@@ -69,13 +79,13 @@ the WRLD tree are pruned with a log, letting sibling blocks still resolve.
 `CellLoadSummary.summaryLine`, logged once after build:
 
 ```text
-[INFO] WhiterunExterior06 (6,-2): 16 refs, 15 drawn, 1 skipped (1 non-STAT),
-8 models, 24 textures (0 missing)
+[INFO] WhiterunExterior06 (6,-2): 16 refs, 16 drawn, 0 skipped,
+9 models, 19 textures (0 missing), 4 terrain quads (14 splat layers)
 ```
 
-Parenthetical lists only non-zero skip buckets (`non-STAT`, `marker`, `load-failed`,
-`malformed`) and disappears when nothing skipped. Model/texture counts come from the
-`MeshLibrary`/`TextureLibrary` counters (distinct paths).
+Parenthetical lists only non-zero skip buckets (`unsupported-base`, `marker`,
+`load-failed`, `malformed`) and disappears when nothing skipped. Model/texture counts
+come from the `MeshLibrary`/`TextureLibrary` counters (distinct paths).
 
 ## Grouping (instancing-ready)
 
@@ -103,9 +113,10 @@ later.
 
 Integration test: `CellRenderRealDataTests` (env-gated, auto-skips unless
 `OPENSKY_DATA_ROOT` is set and resolves + Metal 4 present — CI has no game data) builds
-the real cell, asserts the summary loosely against the decision-doc counts, renders
-offscreen 1280x720 with the framing camera, asserts a non-background pixel fraction, and
-writes `logs/cell-whiterunexterior06.png` (path printed in the test log).
+the real cell, asserts the summary loosely (drawn ref count is a floor, not exact —
+widening base coverage in 3.2 raised WhiterunExterior06 from 15/16 to 16/16 drawn),
+renders offscreen 1280x720 with the framing camera, asserts a non-background pixel
+fraction, and writes `logs/cell-whiterunexterior06.png` (path printed in the test log).
 
 ## Transform + bounds
 
