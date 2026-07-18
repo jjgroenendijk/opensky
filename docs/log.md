@@ -4,6 +4,22 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* **Milestone 3 detailed plan**: expanded [todo](/todo.md) M3 into sub-itemed
+  3.1-3.7 (terrain -> streaming -> LOD -> sky/water -> interiors -> lighting
+  -> gate) with per-item acceptance, spec refs, probe strategy, dependency
+  order (3.4/3.5 parallelizable vs 3.2/3.3). Format facts pre-verified
+  against open specs — UESP mod-file-format pages (LAND/CELL/WRLD/LTEX/TXST/
+  REFR/DOOR/WATR/LGTM/LIGH/WTHR/CLMT, LOD Settings File Format), xEdit
+  `dev-4.1.6` source (`wbDefinitionsTES5.pas`, `wbDefinitionsCommon.pas`,
+  `wbLOD.pas`, `wbImplementation.pas`), DynDOLOD docs + xLODGen LODGen
+  source. Key facts folded into item text: VHGT row-carry x8 height decode;
+  .btr/.bto are NIF containers (BSMultiBoundNode / BSSubIndexTriShape),
+  level N = NxN cells SW-anchored, 16-B lodsettings; XTEL 32-B dest-REFR
+  teleport; interior block/sub-block = FormID last decimal digits; XCLW
+  no-water sentinels; XCLL truncation variants. Flagged UNCONFIRMED for
+  impl-time probes: LAND-less-cell flat-plane fallback, live per-quad layer
+  limit (~6, community), XCLL rotation units, vanilla .btr/.bto blocks
+  beyond what xLODGen emits.
 * **Milestone 2 accepted** (2.11, complete — M2 left [todo](/todo.md)):
   target cell textured + recognizable, free-fly verified (2.7/2.8), fps
   gate measured not eyeballed via new `openskycli bench` — offscreen path
