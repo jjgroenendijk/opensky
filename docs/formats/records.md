@@ -1,21 +1,22 @@
 ---
 type: File Format
-title: Record decoders (WRLD, CELL, REFR, STAT)
-description: Field layouts of the first decoded plugin records and OpenSky's engine types.
+title: Record decoders (WRLD, CELL, REFR, STAT, ModelBase)
+description: Field layouts of decoded plugin records and OpenSky's engine types.
 tags: [format, plugin, records, worldspace, cell]
-timestamp: 2026-07-09T00:00:00Z
+timestamp: 2026-07-18T00:00:00Z
 ---
 
 # Record decoders, Skyrim SE
 
-First record decoders over the [ESM container](/formats/esm.md): worldspace
-listing, cell grids, placed references, static base objects — the data needed
-to build an exterior cell scene (milestone 2). TES4 decode lives in
+Record decoders over the [ESM container](/formats/esm.md): worldspace listing, cell
+grids, placed references, static + placeable model base objects — the data needed to
+build an exterior cell scene (milestone 2, widened in 3.2). TES4 decode lives in
 [FormID + TES4 header](/formats/formid.md).
 
 Reference: UESP "Skyrim Mod:Mod File Format" per-record pages
 (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format>, subpages `/WRLD`,
-`/CELL`, `/REFR`, `/STAT`). Impl: `opensky/Formats/ESM/Records/`.
+`/CELL`, `/REFR`, `/STAT`, `/MSTT`, `/TREE`, `/FURN`, `/ACTI`, `/CONT`). Impl:
+`opensky/Formats/ESM/Records/`.
 
 Decode policy: loop over fields, pick known types, skip the rest — unknown
 modder fields are never an error. Decoders throw `ESMError.malformed` only on
@@ -97,6 +98,31 @@ ownership, teleport (XTEL, milestone 3) fields skipped.
 MODL is a mesh path relative to `Data/` (`meshes\...`), resolved through the
 [VFS](/formats/vfs.md). MODT hashes, DNAM (max angle + material), MNAM LOD
 models skipped until the NIF/LOD work needs them.
+
+## MSTT/TREE/FURN/ACTI/CONT -> ModelBase
+
+Milestone 3.2 "widen base coverage": four more placeable base types beyond STAT, decoded
+by one shared `ModelBase` (`opensky/Formats/ESM/Records/ModelBase.swift`) instead of five
+near-identical structs — all four carry EDID + MODL in the same position STAT does, and
+scene build only needs the model path for now (animation/interaction stay out of scope).
+
+| field | type    | decoded                      |
+| ----- | ------- | ---------------------------- |
+| EDID  | zstring | `editorID`                   |
+| MODL  | zstring | `modelPath` (nil = no model) |
+
+Per-type reference, all UESP "Skyrim Mod:Mod File Format":
+
+* MSTT (moveable static) — <https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MSTT>
+* TREE (tree/plant) — <https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/TREE>
+* FURN (furniture) — <https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/FURN>
+* ACTI (activator) — <https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/ACTI>
+* CONT (container) — <https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CONT>
+
+Type-specific fields skipped for all four: FURN furniture-marker/animation fields, CONT
+inventory (CNTO) + open/close sound, ACTI interaction (VNAM/activate text, sound), TREE
+billboard/leaf-curve fields (CVPA/BSNM/...). `ModelBase.recordType` retains which of the
+five the record was so callers can tell them apart without redecoding.
 
 ## Verification
 
