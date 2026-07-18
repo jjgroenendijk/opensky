@@ -30,12 +30,30 @@ extension Renderer {
     /// come from the injected SceneCamera.
     private func updateFrameUniforms(slot: Int, viewProjection: float4x4) -> Int {
         let offset = Self.alignedFrameUniformsSize * slot
+        let lighting = scene.lighting
+        let ambient = lighting?.directionalAmbient ?? .black
+        let fog = lighting?.fog
         var uniforms = FrameUniforms(
             viewProjectionMatrix: viewProjection,
             cameraPosition: freeFlyCamera.position,
-            sunDirection: camera.sunDirection,
-            sunColor: camera.sunColor,
-            ambientColor: camera.ambientColor,
+            sunDirection: lighting?.directionalDirection ?? camera.sunDirection,
+            sunColor: lighting?.directionalColor ?? camera.sunColor,
+            ambientColor: lighting?.ambientColor ?? camera.ambientColor,
+            directionalAmbientPositiveX: ambient.positiveX,
+            directionalAmbientNegativeX: ambient.negativeX,
+            directionalAmbientPositiveY: ambient.positiveY,
+            directionalAmbientNegativeY: ambient.negativeY,
+            directionalAmbientPositiveZ: ambient.positiveZ,
+            directionalAmbientNegativeZ: ambient.negativeZ,
+            fogNearColor: fog?.nearColor ?? .zero,
+            fogFarColor: fog?.farColor ?? .zero,
+            fogDistances: SIMD4(
+                fog?.nearDistance ?? 0,
+                fog?.farDistance ?? 1,
+                fog?.power ?? 1,
+                fog?.maximum ?? 0
+            ),
+            fogEnabled: fog == nil ? 0 : 1,
             timeOfDayHours: timeOfDay,
             animationTime: Float(frameIndex) / 60
         )
@@ -47,17 +65,56 @@ extension Renderer {
     /// Writes one group's material scalars into the ring and returns the
     /// byte offset. Ring stride is the (possibly regrown) slot capacity,
     /// not drawCount. Matrices live per instance (writeVisibleInstances).
-    private func updateDrawUniforms(slot: Int, draw: Int, material: RenderMaterial) -> Int {
+    private func updateDrawUniforms(
+        slot: Int,
+        draw: Int,
+        material: RenderMaterial,
+        pointLightCount: Int
+    ) -> Int {
         let offset = Self.alignedDrawUniformsSize * (slot * drawUniformSlotCapacity + draw)
         var uniforms = DrawUniforms(
             uvOffset: material.uvOffset,
             uvScale: material.uvScale,
             materialAlpha: material.alpha,
-            alphaThreshold: material.alphaTestThreshold ?? 0
+            alphaThreshold: material.alphaTestThreshold ?? 0,
+            pointLightCount: UInt32(pointLightCount)
         )
         drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<DrawUniforms>.size)
         return offset
+    }
+
+    /// Selects + writes nearest supported point lights for one draw. Returns
+    /// count plus byte offset bound at BufferIndexPointLights.
+    private func writePointLights(
+        near position: SIMD3<Float>,
+        slot: Int,
+        draw: Int
+    ) -> (count: Int, byteOffset: Int) {
+        let limit = LightingConstant.maxPointLights.rawValue
+        let lights = scene.nearestPointLights(to: position, limit: limit)
+        let stride = MemoryLayout<PointLightUniform>.stride
+        let first = (slot * drawUniformSlotCapacity + draw) * limit
+        for (index, light) in lights.enumerated() {
+            var uniform = PointLightUniform(
+                positionRadius: SIMD4(light.position, light.radius),
+                colorFalloff: SIMD4(light.color, light.falloffExponent)
+            )
+            pointLightBuffer.contents().advanced(by: (first + index) * stride)
+                .copyMemory(from: &uniform, byteCount: MemoryLayout<PointLightUniform>.size)
+        }
+        return (lights.count, first * stride)
+    }
+
+    private func lightingCenter(of group: DrawGroup) -> SIMD3<Float> {
+        let sum = group.instances.reduce(SIMD3<Float>.zero) { partial, instance in
+            partial + SIMD3(
+                instance.modelMatrix.columns.3.x,
+                instance.modelMatrix.columns.3.y,
+                instance.modelMatrix.columns.3.z
+            )
+        }
+        return sum / Float(max(1, group.instances.count))
     }
 
     /// Writes the group's frustum-surviving instance transforms tightly
@@ -95,7 +152,8 @@ extension Renderer {
     private func updateTerrainDrawUniforms(
         slot: Int,
         draw: Int,
-        item: TerrainDrawItem
+        item: TerrainDrawItem,
+        pointLightCount: Int
     ) -> Int {
         let offset = Self.alignedDrawUniformsSize * (slot * drawUniformSlotCapacity + draw)
         var uniforms = TerrainDrawUniforms(
@@ -103,7 +161,8 @@ extension Renderer {
             normalMatrix: item.normalMatrix,
             uvOffset: item.material.uvOffset,
             uvScale: item.material.uvScale,
-            layerCount: UInt32(min(item.layerTextures.count, TerrainConstant.maxLayers.rawValue))
+            layerCount: UInt32(min(item.layerTextures.count, TerrainConstant.maxLayers.rawValue)),
+            pointLightCount: UInt32(pointLightCount)
         )
         drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<TerrainDrawUniforms>.size)
@@ -151,10 +210,16 @@ extension Renderer {
             }
             // Running visible-group cursor indexes the uniform ring:
             // visible groups <= scene.drawCount <= ring capacity.
+            let lightOffset = writePointLights(
+                near: lightingCenter(of: group),
+                slot: state.slot,
+                draw: state.drawCursor
+            )
             let uniformOffset = updateDrawUniforms(
                 slot: state.slot,
                 draw: state.drawCursor,
-                material: group.material
+                material: group.material,
+                pointLightCount: lightOffset.count
             )
             state.drawCursor += 1
             state.stats.drawCalls += 1
@@ -169,6 +234,10 @@ extension Renderer {
             argumentTable.setAddress(
                 instanceTransformBuffer.gpuAddress + UInt64(visible.byteOffset),
                 index: BufferIndex.instanceTransforms.rawValue
+            )
+            argumentTable.setAddress(
+                pointLightBuffer.gpuAddress + UInt64(lightOffset.byteOffset),
+                index: BufferIndex.pointLights.rawValue
             )
             argumentTable.setTexture(
                 group.material.diffuse.gpuResourceID,
@@ -206,10 +275,18 @@ extension Renderer {
                 state.encoder.setRenderPipelineState(terrainPipeline)
                 pipelineBound = true
             }
+            let center = item.bounds.map { ($0.min + $0.max) * 0.5 }
+                ?? SIMD3(item.modelMatrix.columns.3.x, item.modelMatrix.columns.3.y, 0)
+            let lightOffset = writePointLights(
+                near: center,
+                slot: state.slot,
+                draw: state.drawCursor
+            )
             let uniformOffset = updateTerrainDrawUniforms(
                 slot: state.slot,
                 draw: state.drawCursor,
-                item: item
+                item: item,
+                pointLightCount: lightOffset.count
             )
             state.drawCursor += 1
             state.stats.drawCalls += 1
@@ -226,19 +303,11 @@ extension Renderer {
                 drawUniformBuffer.gpuAddress + UInt64(uniformOffset),
                 index: BufferIndex.drawUniforms.rawValue
             )
-            argumentTable.setTexture(
-                item.material.diffuse.gpuResourceID,
-                index: TextureIndex.diffuse.rawValue
+            argumentTable.setAddress(
+                pointLightBuffer.gpuAddress + UInt64(lightOffset.byteOffset),
+                index: BufferIndex.pointLights.rawValue
             )
-            for layerSlot in 0 ..< TerrainConstant.maxLayers.rawValue {
-                let texture = layerSlot < item.layerTextures.count
-                    ? item.layerTextures[layerSlot]
-                    : item.material.diffuse
-                argumentTable.setTexture(
-                    texture.gpuResourceID,
-                    index: TextureIndex.terrainLayer0.rawValue + layerSlot
-                )
-            }
+            bindTerrainTextures(for: item)
             state.encoder.setCullMode(.back)
             state.encoder.drawIndexedPrimitives(
                 primitiveType: .triangle,
@@ -246,6 +315,22 @@ extension Renderer {
                 indexType: .uint16,
                 indexBuffer: item.mesh.indexBuffer.gpuAddress,
                 indexBufferLength: item.mesh.indexBuffer.length
+            )
+        }
+    }
+
+    private func bindTerrainTextures(for item: TerrainDrawItem) {
+        argumentTable.setTexture(
+            item.material.diffuse.gpuResourceID,
+            index: TextureIndex.diffuse.rawValue
+        )
+        for layerSlot in 0 ..< TerrainConstant.maxLayers.rawValue {
+            let texture = layerSlot < item.layerTextures.count
+                ? item.layerTextures[layerSlot]
+                : item.material.diffuse
+            argumentTable.setTexture(
+                texture.gpuResourceID,
+                index: TextureIndex.terrainLayer0.rawValue + layerSlot
             )
         }
     }

@@ -3,7 +3,7 @@ type: File Format
 title: Record decoders (WRLD, CELL, REFR, STAT, ModelBase)
 description: Field layouts of decoded plugin records and OpenSky's engine types.
 tags: [format, plugin, records, worldspace, cell]
-timestamp: 2026-07-18T00:00:00Z
+timestamp: 2026-07-19T00:00:00Z
 ---
 
 # Record decoders, Skyrim SE
@@ -71,6 +71,8 @@ exterior cell blocks (traversal in [ESM container](/formats/esm.md)).
 | XCLC  | int32 x, int32 y, uint32 quad flags | `grid` (exterior cells)    |
 | XCLW  | float32 bits                        | `waterHeight` override     |
 | XCWT  | formID                              | `waterType` WATR override  |
+| XCLL  | lighting struct                     | `lighting`                 |
+| LTMP  | formID                              | `lightingTemplate` LGTM    |
 
 DATA flag bits: 0x01 interior, 0x02 has water, 0x08 no LOD water, 0x80 show
 sky, more in UESP. Some records store one byte only (UESP note) — decoder
@@ -80,8 +82,9 @@ XCLC: exterior grid slot, one cell = 4096 game units. The quad-flags uint32
 is absent in some form-version-43 records (8-byte field -> flags 0); its
 high bits carry CK noise, kept verbatim.
 
-Lighting (XCLL) + remaining formID links stay skipped. XCLW sentinel policy, WRLD
-inheritance, and WATR colors: [exterior water records](/formats/water.md).
+Lighting layout + inheritance: [interior lighting records](/formats/lighting.md). XCLW
+sentinel policy, WRLD inheritance, and WATR colors:
+[exterior water records](/formats/water.md).
 
 Interior CELLs live below CELL top group -> block group type 2 -> sub-block group type 3.
 xEdit `UpdateInteriorCellGroup` derives labels from low-24-bit object ID written in
@@ -99,6 +102,8 @@ identity/interior status. Refs: UESP CELL page + xEdit `wbImplementation.pas`
 | DATA  | float[6] | `placement` (required)                     |
 | XSCL  | float    | `scale`, defaults 1.0 when absent          |
 | XTEL  | 32 bytes | optional teleport destination              |
+| XRDS  | float32  | optional point-light radius override       |
+| XEMI  | formID   | optional LIGH/REGN emittance               |
 
 DATA: x/y/z position in game units, then x/y/z rotation in radians. Missing
 NAME or DATA throws — a reference without them cannot be placed. XTEL is exact-size:
@@ -106,6 +111,7 @@ destination door REFR FormID (uint32), destination position float3, rotation flo
 radians, flags uint32. Flag 0x01 = no alarm. Any other size throws malformed instead of
 silently shifting fields. Ownership + remaining activation fields stay skipped. Refs:
 UESP REFR page; xEdit `wbDefinitionsTES5.pas` XTEL `wbStruct`.
+XRDS/XEMI lighting policy: [interior lighting records](/formats/lighting.md).
 
 ## STAT -> StaticObject
 

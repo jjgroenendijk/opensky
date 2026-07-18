@@ -2,6 +2,21 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-07-19
+
+* M3.7 lighting complete -- CELL XCLL accepts exact 92-byte + field-boundary truncated
+  tails; LTMP resolves LGTM DATA/DALC per XCLL inheritance bits. Skyrim.esm probe confirms
+  directional rotation int32 values are degrees (`WhiteRunIntLightingTemplate` XY = 180).
+  Exact 48-byte LIGH DATA + FNAM, REFR XRDS/XEMI decode into supported omni point lights;
+  negative/spot/off lights skip. Interior forward path adds base + six-axis ambient,
+  directional lambert, nearest 8 point lights per draw, distance fog. Exterior scenes keep
+  existing `SceneCamera` sun/ambient + procedural sky. Chillfurrow Farm real round trip:
+  232 refs, 118 draws, 69 models, 49 textures, 4 point lights; lit/unlit 1280x720 comparison
+  shows cell fog/ambient shift, return to `(7,-3)` succeeds. Synthetic format/inheritance/
+  selection tests + app/CLI Metal builds green. Docs:
+  [lighting records](/formats/lighting.md), [renderer](/rendering/metal4-renderer.md),
+  [interiors](/engine/interiors.md).
+
 ## 2026-07-18
 
 * M3.6 interiors complete -- CELL top-group type-2/type-3 walk uses FormID decimal

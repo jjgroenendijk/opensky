@@ -4,7 +4,7 @@ title: Metal 4 static-mesh renderer
 description: Static-mesh render path - pipeline variants, uniform rings, argument-table
   binds, counter-heap frame stats, offscreen render, scene types.
 tags: [rendering, metal, engine]
-timestamp: 2026-07-18T00:00:00Z
+timestamp: 2026-07-19T00:00:00Z
 ---
 
 # Metal 4 static-mesh renderer
@@ -34,8 +34,9 @@ adapted from Apple's Xcode Metal 4 game template (structure, not copied game cod
   `normalMatrix` = inverse-transpose (`MatrixMath.normalMatrix`), opaque groups before
   alpha-tested so the pipeline switches once. `residencyAllocations` = deduped buffers +
   textures for residency. `SkyParameters?` marks exterior sky; `WaterDrawItem`s carry
-  plane mesh, model matrix, WATR palette, bounds. Static NIF `Material.alphaBlend` remains
-  deferred; water owns the first dedicated blend path.
+  plane mesh, model matrix, WATR palette, bounds. Optional `RenderLighting` carries cell
+  ambient/directional/fog; `RenderPointLight`s carry resolved LIGH placements. Static NIF
+  `Material.alphaBlend` remains deferred; water owns the first dedicated blend path.
 * `SceneCamera` — eye/target + sun/ambient consumed by `FrameUniforms`. `.demo` mirrors
   the DemoScene constants; `framing(bounds:)` frames a Z-up world AABB: target = box
   center, eye south-west of and above it along a fixed direction at distance
@@ -53,9 +54,11 @@ adapted from Apple's Xcode Metal 4 game template (structure, not copied game cod
   (`MTL4SpecializedFunctionDescriptor` + `MTLFunctionConstantValues`): opaque pays
   nothing for discard; alpha-test discards below `DrawUniforms.alphaThreshold`. Further
   pipelines: terrain splat, procedural sky, water blend (sections below).
-* Shading: diffuse map * (directional sun lambert + ambient), vertex color as baked
-  tint (Skyrim bakes AO there), material alpha multiplied through. Normal mapping
-  deferred (stretch goal) — no tangent attributes yet.
+* Shading: diffuse map * (directional lambert + base ambient + six-axis directional
+  ambient + point lights), vertex color as baked tint (Skyrim bakes AO there), material
+  alpha multiplied through. Exterior scenes omit `RenderLighting` -> existing
+  `SceneCamera` sun/ambient path stays unchanged. Normal mapping deferred (stretch goal)
+  — no tangent attributes yet.
 * Depth: `depth32Float` MTKView attachment, write-through less-compare
   `MTLDepthStencilState`. Metal 4 binds depth format at pass time, not in the pipeline
   descriptor. Near 10 / far 65 536 per [coordinates](/decisions/coordinates.md).
@@ -75,6 +78,20 @@ blending: source RGB `.sourceAlpha`, destination `.oneMinusSourceAlpha`; alpha u
 plus `.oneMinusSourceAlpha`. Read-only depth (`.less`, write disabled) preserves earlier
 terrain/object depth. Shader adds animated color ripples + view-angle reflection; geometry
 stays flat. Details + real-frame evidence: [sky + water environment](/engine/sky-water.md).
+
+## Interior forward lighting (todo 3.7)
+
+Interior scene build resolves [XCLL/LGTM/LIGH](/formats/lighting.md) before renderer entry.
+`FrameUniforms` carries ambient, directional direction/color, six directional-ambient
+colors, fog colors/range/power/maximum. Static + terrain fragments apply fog by camera
+distance after lighting. Invalid fog ranges disable fog.
+
+Each visible draw selects at most `LightingConstantMaxPointLights = 8` lights. CPU sorts
+scene lights by squared distance to draw center, retaining scene order for equal distance.
+One shared `PointLightUniform` ring stores eight `{position, radius, color, falloff}` slots
+per draw per frame. Fragment attenuation = `(1 - distance / radius)^falloff`, clamped to
+range, times lambert. Negative + spot lights never reach ring. Water + sky stay on their
+environment-specific paths.
 
 ## Terrain splat pipeline (todo 3.1)
 
@@ -219,7 +236,7 @@ change at z-fighting edges, visually identical.
 
 ## Uniforms + binding
 
-* `FrameUniforms` (viewProjection, camera position, sun direction/color, ambient,
+* `FrameUniforms` (viewProjection, camera position, directional/ambient/fog,
   time-of-day, animation time) — one
   256-byte-aligned slot per in-flight frame.
 * `DrawUniforms` (UV offset/scale, material alpha, alpha threshold — per GROUP) — ring
@@ -228,9 +245,10 @@ change at z-fighting edges, visually identical.
   per-instance `InstanceTransform` ring (instancing section).
 * `WaterDrawUniforms` shares draw-ring slots with static/terrain uniforms; ring stride uses
   largest struct, 256-byte aligned.
-* All binds through one `MTL4ArgumentTable` (5 buffers — vertices, frame + draw uniforms,
-  terrain weights, instance transforms; 1 + 8 textures — diffuse + terrain layer array;
-  1 sampler); table state is captured per draw, so per-draw `setAddress`/`setTexture`
+* All binds through one `MTL4ArgumentTable` (6 buffers — vertices, frame + draw uniforms,
+  terrain weights, instance transforms, point lights; 1 + 8 textures — diffuse + terrain
+  layer array; 1 sampler); table state is captured per draw, so per-draw
+  `setAddress`/`setTexture`
   between `drawIndexedPrimitives` calls is the binding model. Sampler: trilinear
   mipmapped, anisotropy 8, repeat, `supportArgumentBuffers`.
 * Residency: app-owned `MTLResidencySet` holds uniform rings + every scene allocation

@@ -19,12 +19,21 @@ nonisolated struct RenderPipelines {
 }
 
 extension Renderer {
+    static func makeCommandAllocators(device: MTLDevice) throws -> [MTL4CommandAllocator] {
+        try (0 ..< maxFramesInFlight).map { _ in
+            guard let allocator = device.makeCommandAllocator() else {
+                throw RendererError.commandAllocatorUnavailable
+            }
+            return allocator
+        }
+    }
+
     /// Argument table sized for the whole scene pass. Buffers: vertices,
     /// frame + draw uniforms, terrain weights, instance transforms.
     /// Textures: base diffuse + the terrain layer array.
     static func makeArgumentTable(device: MTLDevice) throws -> MTL4ArgumentTable {
         let descriptor = MTL4ArgumentTableDescriptor()
-        descriptor.maxBufferBindCount = 5
+        descriptor.maxBufferBindCount = 6
         descriptor.maxTextureBindCount = 1 + TerrainConstant.maxLayers.rawValue
         descriptor.maxSamplerStateBindCount = 1
         return try device.makeArgumentTable(descriptor: descriptor)

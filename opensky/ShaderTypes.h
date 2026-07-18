@@ -24,6 +24,8 @@ typedef NS_ENUM(EnumBackingType, BufferIndex)
     /// Static-mesh instance transforms, tightly packed, bound at the draw
     /// group's base offset so [[instance_id]] (0-based per draw) indexes it.
     BufferIndexInstanceTransforms = 4,
+    /// Per-draw array of LightingConstantMaxPointLights nearest lights.
+    BufferIndexPointLights = 5,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)
@@ -52,6 +54,11 @@ typedef NS_ENUM(EnumBackingType, TerrainConstant)
     TerrainConstantMaxLayers = 8,
 };
 
+typedef NS_ENUM(EnumBackingType, LightingConstant)
+{
+    LightingConstantMaxPointLights = 8,
+};
+
 typedef NS_ENUM(EnumBackingType, SamplerIndex)
 {
     SamplerIndexTrilinear = 0,
@@ -73,6 +80,17 @@ typedef struct
     vector_float3 sunDirection;
     vector_float3 sunColor;
     vector_float3 ambientColor;
+    vector_float3 directionalAmbientPositiveX;
+    vector_float3 directionalAmbientNegativeX;
+    vector_float3 directionalAmbientPositiveY;
+    vector_float3 directionalAmbientNegativeY;
+    vector_float3 directionalAmbientPositiveZ;
+    vector_float3 directionalAmbientNegativeZ;
+    vector_float3 fogNearColor;
+    vector_float3 fogFarColor;
+    /// x=near, y=far, z=power, w=maximum opacity.
+    vector_float4 fogDistances;
+    unsigned int fogEnabled;
     /// Procedural sky clock, 0..<24. Renderer parameter, default 13:00.
     float timeOfDayHours;
     /// Deterministic frame time for animated water.
@@ -90,7 +108,16 @@ typedef struct
     float materialAlpha;
     /// Alpha-test cutoff in [0, 1]; used only by the alpha-test variant.
     float alphaThreshold;
+    unsigned int pointLightCount;
 } DrawUniforms;
+
+typedef struct
+{
+    /// xyz world position, w radius.
+    vector_float4 positionRadius;
+    /// rgb radiance, w radial falloff exponent.
+    vector_float4 colorFalloff;
+} PointLightUniform;
 
 /// Per-INSTANCE transforms for the static-mesh path, in a tightly packed
 /// device-address array (stride = struct size, both matrices 16-byte
@@ -115,6 +142,7 @@ typedef struct
     vector_float2 uvScale;
     /// Bound ATXT layer count, <= TerrainConstantMaxLayers.
     unsigned int layerCount;
+    unsigned int pointLightCount;
 } TerrainDrawUniforms;
 
 /// One flat CELL water plane. Colors decode from WATR DNAM RGBX entries.

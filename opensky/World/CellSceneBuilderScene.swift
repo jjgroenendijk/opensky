@@ -10,6 +10,8 @@ nonisolated struct CellGeometryBuild {
     let terrain: TerrainBuild?
     let water: WaterBuild?
     let sky: SkyParameters?
+    let lighting: RenderLighting?
+    let pointLights: [RenderPointLight]
 }
 
 extension CellSceneBuilder {
@@ -39,7 +41,9 @@ extension CellSceneBuilder {
             instances: placed,
             terrain: geometry.terrain?.items ?? [],
             water: geometry.water.map { [$0.item] } ?? [],
-            sky: found.cell.isInterior ? nil : geometry.sky
+            sky: found.cell.isInterior ? nil : geometry.sky,
+            lighting: geometry.lighting,
+            pointLights: geometry.pointLights
         )
         if let world = geometry.terrain?.bounds {
             bounds = bounds.map { $0.union(world) } ?? world
@@ -87,7 +91,8 @@ extension CellSceneBuilder {
             terrainQuadrantCount: geometry.terrain?.quadrantCount ?? 0,
             terrainLayerCount: geometry.terrain?.layerCount ?? 0,
             terrainLayerSkipCount: geometry.terrain?.layerSkipCount ?? 0,
-            waterPlaneCount: geometry.water == nil ? 0 : 1
+            waterPlaneCount: geometry.water == nil ? 0 : 1,
+            pointLightCount: geometry.pointLights.count
         )
     }
 }

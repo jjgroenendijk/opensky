@@ -55,8 +55,8 @@ Sequencing: 3.1 terrain landed first — everything sits on it, and LAND lived i
 cell temporary-children groups `CellSceneBuilder` already walked
 (`docs/engine/cell-scene.md`) -> decoder slotted into the existing walk. 3.2 streaming now
 turns that per-cell unit into a grid + carries the perf work multi-cell rendering needs.
-LOD rings now start at loaded-grid boundary. 3.6 interiors landed; 3.7 lighting lands last
-because interiors are where it shows. Verification path: `openskycli render`/`bench`
+LOD rings now start at loaded-grid boundary. 3.6 interiors + 3.7 lighting landed.
+Verification path: `openskycli render`/`bench`
 plus main-app asset
 browser, screenshot pattern as in `docs/img/`.
 
@@ -64,20 +64,6 @@ Format facts below pre-verified 2026-07-18 against UESP mod-file-format pages + 
 `dev-4.1.6` source (`wbDefinitionsTES5.pas`, `wbDefinitionsCommon.pas`, `wbLOD.pas`) +
 DynDOLOD docs / xLODGen LODGen source. Re-confirm against real install by probe during
 impl; chase flagged UNCONFIRMED points especially.
-
-### 3.7 Lighting pass
-
-* [ ] Cell light values: XCLL (92 B layout; truncated variants exist — fields optional
-      from the directional-ambient block on) + LTMP -> LGTM template (DATA + DALC),
-      XCLL inherit flags pick per-field source. XCLL directional-rotation units
-      UNCONFIRMED — probe. Ref: UESP CELL/LGTM.
-* [ ] LIGH decoder: DATA 48 B — time, radius, color, flags (no type flag = omni point),
-      falloff exponent; FNAM fade; REFR overrides XRDS radius, XEMI emit. Negative/spot
-      lights skipped for now. Ref: UESP LIGH + xEdit flag list.
-* [ ] Forward pass: ambient + directional from cell values, N nearest point lights per
-      draw, fog from XCLL near/far/color.
-* [ ] Verify: interior screenshot lit vs unlit comparison; exterior look unchanged
-      (sun/sky driven).
 
 ### 3.8 Milestone acceptance
 

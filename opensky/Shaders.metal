@@ -8,6 +8,51 @@
 
 using namespace metal;
 
+static float3 directionalAmbient(float3 normal, constant FrameUniforms &frame)
+{
+    float3 weights = abs(normal);
+    weights /= max(weights.x + weights.y + weights.z, 0.0001);
+    float3 x = normal.x >= 0.0
+        ? frame.directionalAmbientPositiveX : frame.directionalAmbientNegativeX;
+    float3 y = normal.y >= 0.0
+        ? frame.directionalAmbientPositiveY : frame.directionalAmbientNegativeY;
+    float3 z = normal.z >= 0.0
+        ? frame.directionalAmbientPositiveZ : frame.directionalAmbientNegativeZ;
+    return x * weights.x + y * weights.y + z * weights.z;
+}
+
+static float3 pointLighting(
+    float3 worldPosition,
+    float3 normal,
+    const device PointLightUniform *lights,
+    uint count)
+{
+    float3 sum = 0.0;
+    for (uint index = 0; index < count; ++index) {
+        float3 toLight = lights[index].positionRadius.xyz - worldPosition;
+        float distanceToLight = length(toLight);
+        float radius = max(lights[index].positionRadius.w, 0.0001);
+        float radial = saturate(1.0 - distanceToLight / radius);
+        float attenuation = pow(radial, max(lights[index].colorFalloff.w, 0.01));
+        float lambert = saturate(dot(normal, toLight / max(distanceToLight, 0.0001)));
+        sum += lights[index].colorFalloff.rgb * attenuation * lambert;
+    }
+    return sum;
+}
+
+static float3 applyFog(float3 color, float3 worldPosition, constant FrameUniforms &frame)
+{
+    if (frame.fogEnabled == 0) {
+        return color;
+    }
+    float distanceToCamera = distance(worldPosition, frame.cameraPosition);
+    float range = max(frame.fogDistances.y - frame.fogDistances.x, 0.0001);
+    float linear = saturate((distanceToCamera - frame.fogDistances.x) / range);
+    float amount = pow(linear, max(frame.fogDistances.z, 0.01)) * frame.fogDistances.w;
+    float3 fogColor = mix(frame.fogNearColor, frame.fogFarColor, linear);
+    return mix(color, fogColor, saturate(amount));
+}
+
 // Procedural exterior sky: fullscreen triangle, time-of-day palette,
 // horizon band, sun disc. Weather/CLMT sampling remains future work.
 
@@ -81,6 +126,7 @@ typedef struct
 {
     float4 position [[position]];
     float3 normal;
+    float3 worldPosition;
     float2 texcoord;
     float4 color;
 } StaticVertexOut;
@@ -102,6 +148,7 @@ vertex StaticVertexOut staticMeshVertex(
     float4 world = instance.modelMatrix * float4(in.position, 1.0);
     out.position = frame.viewProjectionMatrix * world;
     out.normal = (instance.normalMatrix * float4(in.normal, 0.0)).xyz;
+    out.worldPosition = world.xyz;
     out.texcoord = in.texcoord * draw.uvScale + draw.uvOffset;
     out.color = in.color;
     return out;
@@ -111,6 +158,7 @@ fragment float4 staticMeshFragment(
     StaticVertexOut in [[stage_in]],
     constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
     constant DrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]],
+    const device PointLightUniform *pointLights [[buffer(BufferIndexPointLights)]],
     texture2d<float> diffuseMap [[texture(TextureIndexDiffuse)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]])
 {
@@ -121,9 +169,11 @@ fragment float4 staticMeshFragment(
     }
     float3 normal = normalize(in.normal);
     float lambert = saturate(dot(normal, -frame.sunDirection));
-    float3 lit = diffuse.rgb * in.color.rgb
-        * (frame.sunColor * lambert + frame.ambientColor);
-    return float4(lit, alpha);
+    float3 illumination = frame.sunColor * lambert + frame.ambientColor
+        + directionalAmbient(normal, frame)
+        + pointLighting(in.worldPosition, normal, pointLights, draw.pointLightCount);
+    float3 lit = diffuse.rgb * in.color.rgb * illumination;
+    return float4(applyFog(lit, in.worldPosition, frame), alpha);
 }
 
 // Terrain splat path (docs/todo.md 3.1): per-quadrant draw blends the BTXT
@@ -147,6 +197,7 @@ typedef struct
 {
     float4 position [[position]];
     float3 normal;
+    float3 worldPosition;
     float2 texcoord;
     float4 color;
     float4 weights0;
@@ -162,6 +213,7 @@ vertex TerrainVertexOut terrainVertex(
     float4 world = draw.modelMatrix * float4(in.position, 1.0);
     out.position = frame.viewProjectionMatrix * world;
     out.normal = (draw.normalMatrix * float4(in.normal, 0.0)).xyz;
+    out.worldPosition = world.xyz;
     out.texcoord = in.texcoord * draw.uvScale + draw.uvOffset;
     out.color = in.color;
     out.weights0 = in.weights0;
@@ -173,6 +225,7 @@ fragment float4 terrainFragment(
     TerrainVertexOut in [[stage_in]],
     constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
     constant TerrainDrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]],
+    const device PointLightUniform *pointLights [[buffer(BufferIndexPointLights)]],
     texture2d<float> baseMap [[texture(TextureIndexDiffuse)]],
     array<texture2d<float>, TerrainConstantMaxLayers>
         layerMaps [[texture(TextureIndexTerrainLayer0)]],
@@ -193,9 +246,11 @@ fragment float4 terrainFragment(
     }
     float3 normal = normalize(in.normal);
     float lambert = saturate(dot(normal, -frame.sunDirection));
-    float3 lit = albedo * in.color.rgb
-        * (frame.sunColor * lambert + frame.ambientColor);
-    return float4(lit, 1.0);
+    float3 illumination = frame.sunColor * lambert + frame.ambientColor
+        + directionalAmbient(normal, frame)
+        + pointLighting(in.worldPosition, normal, pointLights, draw.pointLightCount);
+    float3 lit = albedo * in.color.rgb * illumination;
+    return float4(applyFog(lit, in.worldPosition, frame), 1.0);
 }
 
 // Cell water: flat geometry, animated interference ripples in color, WATR
