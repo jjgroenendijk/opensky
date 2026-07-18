@@ -9,10 +9,9 @@ timestamp: 2026-07-18T00:00:00Z
 
 # Cell streaming
 
-Todo 3.2. Two halves: a pure grid manager (`CellGridManager`) that decides which cells a
-camera wants, and an async controller (`CellStreamer`) that builds them off the main
-thread and streams them into the renderer. The grid manager is covered first; the
-controller (concurrency model, void-cell handling, launch path) follows.
+Milestone 3.2. Two halves: a pure grid manager (`CellGridManager`) decides which cells a
+camera wants; an async controller (`CellStreamer`) builds them off main and streams them
+into renderer.
 
 `opensky/World/CellGridManager.swift` maps a camera's world position to the set of
 exterior cells that should be loaded around it, and diffs that desired set against
@@ -147,16 +146,28 @@ Queue chosen over an actor deliberately:
 - The build API (`CellSceneBuilder.buildScene`) is already a synchronous throwing call;
   wrapping it in `queue.async` needs no actor refactor of the caches.
 
-The only shared state across the boundary is a tiny completion buffer, guarded by its own
-`NSLock` inside the runner. That lock is in the runner, never in the caches -- confinement
-keeps the caches lock-free, as their header comments state. The main thread polls
-`drainCompleted()` once per frame.
+Shared state across the boundary is a completion buffer, pending-coordinate set, and build
+count map guarded by one `NSLock` inside runner. Lock stays in runner, never in caches --
+confinement keeps caches lock-free. Main polls `drainCompleted()` once per frame.
 
 `CellSceneProvider` is the build seam (`buildCell(at:) -> CellScene`, throwing
 `cellNotFound` for void slots). `BuilderCellSceneProvider` adapts `CellSceneBuilder` in the
 app; unit tests inject a fake so streamer logic runs without Metal or game data.
 `CellBuildRunning` abstracts the executor: `SerialCellBuildRunner` in the app, a manual
 runner in tests that stages completions in any order.
+
+### Request scheduling + dedupe
+
+Core marks full desired grid in flight, but `CellStreamer` owns a center-out local request
+list and submits at most one coordinate to `SerialCellBuildRunner`. Recenter filters
+obsolete local backlog before it touches disk. A completed result is drained + integrated
+before next request dispatch. Result: bounded queue, eviction runs before next build, stale
+work cannot accumulate behind a slow external-volume read.
+
+Runner dedupe is defence in depth. Its `pending` set keeps a coordinate from enqueue until
+main drains completion -- not merely until background build returns. Duplicate enqueue
+while completion waits in buffer remains a no-op. Scripted verification snapshots runner
+execution counts and requires every expected coordinate exactly once.
 
 ### Bookkeeping core + void/failed handling (no retry storms)
 
@@ -182,23 +193,37 @@ that is the out-of-order / stale-completion tolerance.
 A scene swap is a full recompose (`RenderScene(merging:)` + `Renderer.setScene` ring
 regrow), so the controller integrates at most one *drawable* cell per frame. Void / failed
 / stale completions are cheap (no recompose) and drained freely; the first successful
-integration stops the drain and the rest wait for later frames. At launch the 5x5 fills in
-~25 frames (<0.5 s at 60 fps). Requests dispatch center-out (nearest to grid center first,
-deterministic coordinate tie-break) so the launch cell builds first.
+integration stops drain and rest wait for later frames. Once builds finish, integrating 25
+drawable results costs at most 25 frames. Requests dispatch center-out (nearest to grid
+center first, deterministic coordinate tie-break), so launch cell builds first.
 
 ### Camera reseed
 
-The renderer starts on an empty scene (clear frame). The first integrated cell that has
+Renderer starts on an empty scene (clear frame). Before first drawable integration,
+streamer ignores renderer's synthetic demo-camera position and holds configured launch
+center; otherwise first update recenters grid around DemoScene. First integrated cell with
 drawable bounds reseeds the camera via `setScene(camera: SceneCamera.framing(bounds:))`,
 snapping the free-fly view onto the launch cell once it arrives. Every later recompose
 passes a nil camera, so streaming never yanks the view out from under the user. A first
 cell that drew nothing (no bounds) does not reseed -- the next drawable cell does.
 
-### Unload
+### Asset ownership + safe unload
 
-`unloads` drop the cell's `CellScene` from the composition (recompose reflects it);
-libraries keep their caches (eviction deferred per todo -- measure memory first). A cell
-still building when it leaves the grid finishes, then integrates as `.discardedStale`.
+Each `CellScene` carries `CellAssets`: normalized mesh-cache + texture-cache keys touched
+while it built. `MeshLibrary` records a model's texture-key closure, so a cached mesh hit
+still marks every texture new cell owns. Composition unions resident keys.
+
+Unload removes cell scene, then computes `departed keys - resident union`; only that drop
+set goes to provider eviction on serial build queue. Shared neighbor assets survive. With
+one submitted build, unload eviction enters executor before next build. A success that
+became stale while building is never composed; its unowned keys take same eviction path.
+Runner/provider confinement covers loads + unloads: no cache access from main, no
+eviction/build race.
+
+Renderer scene swaps prepare every fallible ring allocation before mutating live state.
+Retired allocations remain resident until their GPU frame drains; purge treats every
+undrained retire entry as live, preventing A -> B -> C overlap from removing allocations B
+still uses. Offscreen pumping purges by same rule.
 
 ### Launch path (async)
 
@@ -217,3 +242,32 @@ is never blank forever.
 synchronously inside it -- safe, since it is the same thread and still between frames (this
 frame has not encoded yet), so the frame draws the freshly streamed scene. The offscreen /
 test render paths never set `onFrame`, so they are unchanged.
+
+## Memory safety + observed plateau
+
+`Data(contentsOf:options:.mappedIfSafe)` may copy instead of map, especially on external
+volumes. Skyrim BSA set here is ~14.6 GiB, matching pre-fix ~15 GiB physical footprint
+before any resident cell existed. Eviction cannot fix that fill-phase growth.
+`BSAArchive` + `ESMFile` now require `.alwaysMapped`: files remain read-only external
+input, pages fault lazily, setup no longer materializes every archive in process memory.
+
+Streaming reports Darwin `task_vm_info.phys_footprint`, not RSS. Real-data tests use two
+guards: in-process sampling each pump tick plus `tools/memguard.sh`, which obtains same
+ledger value through `/usr/bin/footprint` and kills fail-closed if sampling breaks. Harness
+disables parallel execution, enumerates exact Swift Testing identifier first, requires
+exactly one executed/passed result, reuses one color/depth target pair, paces at 100 Hz, and
+throws on timeout. This prevents zero-test green, duplicate host processes, RSS blind
+spots, render-target churn, and infinite polling.
+
+Observed 2026-07-18 against read-only USB Skyrim data:
+
+- Guarded real-data 5x5 fill: 25 resident, 0 void; ~444 MB at fill, ~448 MB after far
+  recenter/unload, ~414 MB at second settled grid; watchdog peak below 0.5 GB.
+- `openskycli bench --fly-path --size 1280x720`: center -> east -> north settled footprints
+  433 -> 425 -> 419 MB, 462 MB peak; 35 expected unique builds, each once; 9 initial
+  residents unloaded; final 25 resident/0 void. 4037 frames: main-thread update + sync
+  render avg 2.79 ms, p95 5.33 ms, max 53.48 ms vs 33.33 ms avg/p95 budget.
+
+These are debug-build verification numbers, not general hardware promise. Hard gates: 1
+GiB fly benchmark, 3.5 GiB in-process real test, 4 GiB external watchdog, final settled
+footprint <1.6x initial.

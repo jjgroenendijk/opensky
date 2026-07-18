@@ -71,4 +71,10 @@ echo "[ OK ] render output: $png"
 # command exits 1 when avg/p95 frame time misses the 33.3 ms (30 fps) budget.
 run "sustained bench (360 frames @ 1280x720)" bench
 grep 'frames @' "$log" | tail -1
+
+# M3.2 streaming gate: deterministic east + north crossings. Shared engine
+# verifier requires three settled 5x5 grids, eviction, 35 unique builds with
+# no duplicates, physical-footprint plateau, and avg/p95 under 30 fps budget.
+run "cross-cell streaming bench (640x360)" bench --fly-path --size 640x360
+grep 'unique builds' "$log" | tail -1
 echo "[INFO] probe passed — full output in $log"

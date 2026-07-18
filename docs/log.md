@@ -4,6 +4,19 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* **M3.2 complete -- guarded async cell streaming**: launch starts empty and builds one
+  center-out cell at a time off main; demo camera cannot recenter before first seed. Local
+  backlog + runner pending-set dedupe bound work; per-cell mesh/texture ownership,
+  resident-union drop sets, serial eviction, stale-success cleanup, transactional renderer
+  swaps, and overlap-safe retire purge make unload safe. External-volume 15 GiB fill growth
+  traced to `.mappedIfSafe` copying ~14.6 GiB BSA set; BSA/ESM now `.alwaysMapped`.
+  Repaired real harness disables parallel tests, preflights exact selector + executed count,
+  guards `task_vm_info.phys_footprint`, reuses targets, paces, and times out. Guarded 5x5:
+  25 resident/0 void, ~444 MB fill, <0.5 GB peak. New shared
+  `CellStreamingFlyBenchmark` + `openskycli bench --fly-path`: center -> east -> north,
+  433 -> 425 -> 419 MB settled (462 MB peak), 35 unique builds exactly once, 9 initial
+  cells unloaded, final 25/0, avg 2.79 ms/p95 5.33 ms/max 53.48 ms at 1280x720. Docs:
+  [cell streaming](/engine/cell-streaming.md), [CLI](/tools/cli.md).
 * **Async cell streaming controller** (M3.2 async build): new
   `World/CellStreamer.swift` drives live streaming from one main-thread
   `update(cameraPosition:)`. Concurrency: `CellSceneBuilder` +
