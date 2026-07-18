@@ -102,6 +102,25 @@ the M2 buildings. Terrain is always opaque.
 pipeline; UV tiling density (`uvQuadsPerRepeat = 2`) remains UNCONFIRMED, visually
 plausible at Whiterun.
 
+## Frustum culling (todo 3.2, math only)
+
+`Rendering/Frustum.swift`, unit-tested (`FrustumTests`), renderer-independent — no
+`Renderer.swift`/`RenderScene.swift` wiring yet, that lands with 3.2 streaming (per-cell
+world AABBs feed it as cells load/unload). `Frustum(viewProjection:)` extracts 6 inward
+planes from a combined `P * V` matrix via Gribb/Hartmann ("Fast Extraction of Viewing
+Frustum Planes from the World-View-Projection Matrix", 2001), adapted twice from the
+paper: column vectors (`clip = M * v`) put the planes on the *rows* of the matrix instead
+of columns, and Metal's z in [0, 1] clip range (vs the paper's OpenGL [-1, 1]) makes near
+= row2 alone (not row3 + row2) and far = row3 - row2. Verified against
+`MatrixMath.perspective`'s actual coefficients, not assumed from the paper.
+
+`intersects(min:max:)` is a conservative positive-vertex (p-vertex) AABB test: per plane,
+test only the box corner furthest along the plane normal. Straddling or fully-inside boxes
+test true; only boxes fully outside some plane test false. Never culls a visible box.
+`intersects(_:ModelBounds)` overload accepts `MeshLibrary.ModelBounds` directly; the core
+API stays on plain `SIMD3<Float>` min/max to keep math decoupled from the mesh-loading
+type.
+
 ## Uniforms + binding
 
 * `FrameUniforms` (viewProjection, camera position, sun direction/color, ambient) — one

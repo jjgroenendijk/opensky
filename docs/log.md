@@ -4,6 +4,17 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* **Frustum culling math** (M3.2, math only): new `Rendering/Frustum.swift` —
+  `Frustum(viewProjection:)` extracts 6 inward planes from a `P * V` matrix
+  (Gribb/Hartmann 2001, adapted to column-vector convention + Metal's z in
+  [0, 1] clip range: near = row2 alone, not row3 + row2), plus a conservative
+  positive-vertex `intersects(min:max:)` AABB test and a `ModelBounds`
+  convenience overload. Pure, renderer-independent — `Renderer.swift`/
+  `RenderScene.swift` wiring lands with rest of 3.2 cell streaming so world
+  AABBs are available per loaded cell. Docs:
+  [metal4-renderer](/rendering/metal4-renderer.md) Frustum culling section.
+  Tests: `FrustumTests` (ahead/behind/left/right/above/below, near-plane
+  straddle kept, beyond-far culled, enclosing box kept, degenerate point).
 * **Agent workflow efficiency — skills split + dev-loop make targets**: transcript
   mining of 35 sessions (3.7k shell commands) drove two changes. (1) Makefile gains
   the observed repeated loops as targets: `fix` (format then strict lint, one shot),
