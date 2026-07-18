@@ -16,7 +16,8 @@ MD_GLOB         := **/*.md
 
 .DEFAULT_GOAL := help
 .PHONY: help bootstrap hooks format format-check lint check swift-format \
-        swift-lint md-format md-lint sh-lint build cli preview probe test test-ui clean
+        swift-lint md-format md-lint sh-lint build cli preview probe test test-ui \
+        install clean
 
 help: ## List available targets
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -74,6 +75,13 @@ test: ## Build + run unit tests (no UI tests)
 test-ui: ## Build + run UI tests (launches the app, drives it via automation)
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
 		-only-testing:openskyUITests test
+
+install: ## Build Release app + copy to /Applications
+	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration Release \
+		-derivedDataPath build/install build
+	@rm -rf /Applications/opensky.app
+	@ditto build/install/Build/Products/Release/opensky.app /Applications/opensky.app
+	@echo "[ OK ] /Applications/opensky.app updated"
 
 clean: ## Remove build artifacts
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) clean

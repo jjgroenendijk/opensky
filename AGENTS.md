@@ -113,6 +113,8 @@ Drive everything through `make` so results are reproducible. `make help` lists t
 - `make cli` — build the `openskycli` dev tool (Debug)
 - `make preview` — build the `openskypreview` asset browser (Debug)
 - `make probe` — CLI smoke checks against the local install (self-skips when absent)
+- `make install` — Release build -> `/Applications/opensky.app` (user's progress-check copy;
+  refresh after landing rendering work)
 - `make test` — build + run unit tests (skips UI tests)
 - `make test-ui` — run UI tests (launches app, drives via automation; CI runs both)
 - `make check` — format-check + lint, no build (fast gate)
