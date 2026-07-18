@@ -4,6 +4,27 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* **Milestone 2 accepted** (2.11, complete — M2 left [todo](/todo.md)):
+  target cell textured + recognizable, free-fly verified (2.7/2.8), fps
+  gate measured not eyeballed via new `openskycli bench` — offscreen path
+  split into `RendererOffscreen.swift`, every frame FrameStats-instrumented,
+  `renderOffscreenSustained` returns per-frame wall times. Apple M1,
+  Debug, real install, `WhiterunExterior06`, 360 frames: avg 0.39 ms
+  (2557 fps) p95 0.43 ms @ 1280x720; avg 0.54 ms (1846 fps) @ 1920x1080 —
+  far above the 30 fps bar. `bench` wired into `make probe`; `render`
+  gained `--zoom` (framing camera alone leaves ~4% of pixels covered).
+  Screenshot (engine output only) committed:
+  [m2-whiterun-exterior.png](/img/m2-whiterun-exterior.png), referenced
+  with numbers from [renderer doc](/rendering/metal4-renderer.md). M3
+  items re-checked against M2 (notes in todo): ordering unchanged,
+  `CellSceneBuilder` is the streaming unit, bench/preview are the M3
+  verification path.
+* **Agent rules restructure**: root AGENTS.md slimmed — tool-target rules
+  moved next to the code (`openskycli/AGENTS.md`,
+  `openskypreview/AGENTS.md`, each with `CLAUDE.md` symlink), commit/PR
+  procedure moved to a skill (`.AGENTS/skills/commit/SKILL.md`,
+  `.claude/skills` symlinks to it; `.claude/*` harness state now
+  gitignored). Root keeps the global contract + non-negotiables.
 * **Asset preview GUI** (2.10, complete): new `openskypreview` app target
   (same synchronized-group sharing as the CLI; `make preview` builds).
   Programmatic AppKit browser: category popup (meshes/textures/records/
