@@ -15,9 +15,9 @@ MD_CFG          := tools/markdown/.markdownlint-cli2.yaml
 MD_GLOB         := **/*.md
 
 .DEFAULT_GOAL := help
-.PHONY: help bootstrap hooks format format-check lint check swift-format \
+.PHONY: help bootstrap hooks format format-check lint check fix swift-format \
         swift-lint md-format md-lint sh-lint build cli preview probe test test-ui \
-        install clean
+        test-one test-report app-path cli-path run-cli install clean
 
 help: ## List available targets
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -40,6 +40,8 @@ format-check: ## Fail if anything is unformatted (no writes) — for CI
 lint: swift-lint md-lint sh-lint ## Run all linters (strict)
 
 check: format-check lint ## Format + lint gate without building
+
+fix: format lint ## Autoformat, then strict lint — one-shot dev gate
 
 swift-format: ## Autoformat Swift
 	@swiftformat --config $(SWIFTFORMAT_CFG) $(SWIFT_PATHS)
@@ -75,6 +77,36 @@ test: ## Build + run unit tests (no UI tests)
 test-ui: ## Build + run UI tests (launches the app, drives it via automation)
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
 		-only-testing:openskyUITests test
+
+test-one: ## Run one test class/method: make test-one T=Class[/test]
+	@test -n "$(T)" || { \
+		echo "[ERROR] usage: make test-one T=ClassName[/testName]"; \
+		echo "        bare names resolve to openskyTests/; prefix a target to override"; \
+		exit 2; }
+	@case "$(T)" in */*) spec="$(T)";; *) spec="openskyTests/$(T)";; esac; \
+	xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
+		-only-testing:"$$spec" test
+
+test-report: ## Print summary of the newest test result bundle
+	@latest=$$(ls -td \
+		~/Library/Developer/Xcode/DerivedData/opensky-*/Logs/Test/*.xcresult \
+		2>/dev/null | head -1); \
+	test -n "$$latest" || { echo "[ERROR] no .xcresult under DerivedData"; exit 1; }; \
+	echo "[INFO] $$latest"; \
+	xcrun xcresulttool get test-results summary --path "$$latest"
+
+app-path: ## Print built opensky.app path ($(CONFIG))
+	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration $(CONFIG) \
+		-showBuildSettings 2>/dev/null \
+		| awk '$$1 == "BUILT_PRODUCTS_DIR" {print $$3 "/opensky.app"; exit}'
+
+cli-path: ## Print built openskycli path ($(CONFIG))
+	@xcodebuild -project $(PROJECT) -scheme $(CLI_SCHEME) -configuration $(CONFIG) \
+		-showBuildSettings 2>/dev/null \
+		| awk '$$1 == "BUILT_PRODUCTS_DIR" {print $$3 "/openskycli"; exit}'
+
+run-cli: cli ## Build + run openskycli: make run-cli ARGS="vfs ls"
+	@"$$($(MAKE) --no-print-directory cli-path)" $(ARGS)
 
 install: ## Build Release app (arm64) + copy to /Applications
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration Release \
