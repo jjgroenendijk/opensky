@@ -128,6 +128,45 @@ struct GameDataLocatorTests {
         }
     }
 
+    @Test func saveUserChoicePersistsValidInstall() throws {
+        let install = try makeInstall(named: "choice")
+        defer { try? FileManager.default.removeItem(at: install) }
+        let defaults = emptyDefaults()
+        let path = install.path(percentEncoded: false)
+
+        let saved = try GameDataLocator.saveUserChoice(path: path, userDefaults: defaults)
+        #expect(saved.installURL.standardizedFileURL == install.standardizedFileURL)
+        #expect(defaults.string(forKey: GameDataLocator.defaultsKey) == path)
+
+        let located = try GameDataLocator.locate(
+            environment: [:],
+            userDefaults: defaults,
+            defaultInstall: missing
+        )
+        #expect(located.source == .userDefaults)
+    }
+
+    @Test func saveUserChoiceRejectsInvalidPathAndKeepsSetting() throws {
+        let install = try makeInstall(named: "keep")
+        defer { try? FileManager.default.removeItem(at: install) }
+        let defaults = emptyDefaults()
+        let kept = install.path(percentEncoded: false)
+        defaults.set(kept, forKey: GameDataLocator.defaultsKey)
+
+        #expect(throws: GameDataError.overrideInvalid(source: .userDefaults, path: "/nope")) {
+            try GameDataLocator.saveUserChoice(path: "/nope", userDefaults: defaults)
+        }
+        #expect(defaults.string(forKey: GameDataLocator.defaultsKey) == kept)
+    }
+
+    @Test func clearUserChoiceRemovesSetting() {
+        let defaults = emptyDefaults()
+        defaults.set("/somewhere", forKey: GameDataLocator.defaultsKey)
+
+        GameDataLocator.clearUserChoice(userDefaults: defaults)
+        #expect(defaults.string(forKey: GameDataLocator.defaultsKey) == nil)
+    }
+
     @Test func directoryWithoutSkyrimEsmIsRejected() throws {
         // A folder that exists but holds no Data/Skyrim.esm is not an install.
         let empty = FileManager.default.temporaryDirectory

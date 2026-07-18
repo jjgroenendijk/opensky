@@ -19,6 +19,9 @@ final class PreviewViewController: NSViewController {
     private var visibleItems: [PreviewItem] = []
     /// Bumped per filter request; stale off-main results are dropped.
     private var filterGeneration = 0
+    /// Bumped per catalog load (Settings can swap the root mid-load);
+    /// stale off-main loads are dropped.
+    private var catalogGeneration = 0
 
     private let categoryPopUp = NSPopUpButton()
     private let searchField = NSSearchField()
@@ -55,9 +58,24 @@ final class PreviewViewController: NSViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        guard let root = gameDataRoot else {
-            statusLabel.stringValue = startupErrorMessage ?? "Game data not located."
-            infoTextView?.string = startupErrorMessage ?? ""
+        reload(root: gameDataRoot, errorMessage: startupErrorMessage)
+    }
+
+    /// Swaps the data root at runtime (Settings change). Drops the current
+    /// catalog + any in-flight load, then reloads from the new root; nil root
+    /// shows `errorMessage` in-window, same as a failed startup locate.
+    func reload(root: GameDataRoot?, errorMessage: String? = nil) {
+        gameDataRoot = root
+        startupErrorMessage = errorMessage
+        catalog = nil
+        detailBuilder = nil
+        filterGeneration += 1
+        catalogGeneration += 1
+        show(items: [])
+        imageView.image = nil
+        infoTextView?.string = errorMessage ?? ""
+        guard let root else {
+            statusLabel.stringValue = errorMessage ?? "Game data not located."
             return
         }
         loadCatalog(root: root)
@@ -121,12 +139,14 @@ final class PreviewViewController: NSViewController {
 
     private func loadCatalog(root: GameDataRoot) {
         statusLabel.stringValue = "Loading archives + Skyrim.esm…"
+        let generation = catalogGeneration
         let fileSystem = VirtualFileSystem(root: root)
         let esmURL = root.dataURL.appending(path: "Skyrim.esm")
         Task.detached(priority: .userInitiated) {
             let loaded = PreviewCatalog.load(fileSystem: fileSystem, esmURL: esmURL)
             await MainActor.run { [weak self] in
-                self?.catalogDidLoad(
+                guard let self, catalogGeneration == generation else { return }
+                catalogDidLoad(
                     loaded.catalog,
                     fileSystem: fileSystem,
                     localized: loaded.localized
