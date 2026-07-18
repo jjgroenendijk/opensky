@@ -194,3 +194,7 @@ Caveman density, effortless to read:
 - Verify claims by building/running — do not report success you have not observed.
 - Do not invent Skyrim internals from memory; confirm against an open spec or observed
   data; flag uncertainty.
+- Perf idea -> file it, don't inline it. Got an idea/suggestion for a future performance
+  improvement, or spot a pre-existing perf issue in the code? Open a GitHub issue
+  (`gh issue create`) instead of acting on it mid-task. Keeps scope tight + preserves the
+  idea. One issue per idea; title states the win, body states where + why.
