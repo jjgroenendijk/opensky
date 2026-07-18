@@ -87,6 +87,12 @@ final class Renderer: NSObject {
     /// Free-fly input, drained once per `draw(in:)`; nil (offscreen/tests) ->
     /// the camera stays on its seeded pose.
     private let input: CameraInputState?
+    /// Optional main-thread per-frame hook, invoked in `draw(in:)` after the
+    /// camera advances with the live free-fly position. Cell streaming drives
+    /// its per-frame `update` here (and may call `setScene` back synchronously
+    /// -- safe, same thread, still between frames). nil (offscreen/tests)
+    /// leaves the loop unchanged.
+    var onFrame: ((SIMD3<Float>) -> Void)?
     /// CACurrentMediaTime of the previous `draw(in:)`, for real delta time.
     private var lastUpdateTime: CFTimeInterval?
     let frameUniformBuffer: MTLBuffer
@@ -402,6 +408,10 @@ extension Renderer: MTKViewDelegate {
         let cpuStart = frameStats.beginFrame()
 
         advanceCamera()
+        // Streaming drives its per-frame update here; it may setScene back
+        // synchronously (same thread, still between frames) before this frame
+        // encodes, which then draws the freshly streamed scene.
+        onFrame?(freeFlyCamera.position)
         purgeRetiredResources()
 
         // Block until the GPU finishes the frame that used this slot.

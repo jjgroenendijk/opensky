@@ -5,8 +5,12 @@
 // typed errors so scene build can log + skip one ref instead of aborting the
 // whole cell (AGENTS.md mod-quirk rule).
 //
-// Single-threaded: scene build touches this at startup, so the dictionary
-// needs no lock (TextureLibrary + VFS follow the same rule).
+// Single-threaded by confinement, not locking: every touch (scene build) runs
+// on the streamer's ONE serial build queue (SerialCellBuildRunner), never the
+// main thread, so the dictionary needs no lock. Main only receives finished
+// CellScene values. GPU uploads (RenderModel/RenderMesh) off that queue are
+// safe. TextureLibrary + VFS follow the same confinement rule. Decision:
+// docs/engine/cell-streaming.md.
 
 import Foundation
 import Metal

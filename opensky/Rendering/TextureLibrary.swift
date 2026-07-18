@@ -5,8 +5,11 @@
 // a bad DDS all resolve to the loader's shared placeholder, cached so each
 // distinct path logs at most once.
 //
-// Single-threaded: scene build touches this at startup, so the dictionary
-// needs no lock (siblings follow the same rule; VFS itself is thread-safe).
+// Single-threaded by confinement, not locking: every touch (scene build) runs
+// on the streamer's ONE serial build queue (SerialCellBuildRunner), never the
+// main thread, so the dictionary needs no lock. Sibling MeshLibrary follows the
+// same confinement rule; VFS itself is mutex-guarded. Decision:
+// docs/engine/cell-streaming.md.
 
 import Foundation
 import Metal

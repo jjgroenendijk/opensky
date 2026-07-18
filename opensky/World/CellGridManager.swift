@@ -93,6 +93,18 @@ nonisolated struct CellGridManager {
         )
     }
 
+    /// World position at the center of a cell (Z=0) — the inverse of
+    /// `cellCoordinate(for:)` up to the half-cell offset. Seeds the grid on a
+    /// known target coordinate (streaming launch centers on FirstRenderCell)
+    /// so `cellCoordinate(for:)` maps it straight back to that cell.
+    static func cellCenter(of coordinate: CellCoordinate) -> SIMD3<Float> {
+        SIMD3<Float>(
+            (Float(coordinate.x) + 0.5) * cellSize,
+            (Float(coordinate.y) + 0.5) * cellSize,
+            0
+        )
+    }
+
     /// The full (2*radius+1)^2 square of cells wanted around `center`.
     /// Unordered — a Set, since load ordering/priority is the streaming
     /// controller's concern, not this type's.

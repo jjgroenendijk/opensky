@@ -4,6 +4,27 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* **Async cell streaming controller** (M3.2 async build): new
+  `World/CellStreamer.swift` drives live streaming from one main-thread
+  `update(cameraPosition:)`. Concurrency: `CellSceneBuilder` +
+  `MeshLibrary` + `TextureLibrary` confined to ONE serial `DispatchQueue`
+  (`SerialCellBuildRunner`, qos utility) -- queue over actor so builds run
+  one-at-a-time with no reentrancy and the caches stay lock-free
+  (confinement, not locking); main only gets finished `CellScene` values.
+  `CellSceneProvider` is the build seam (`BuilderCellSceneProvider` in the
+  app, fakes in tests); `CellBuildRunning` abstracts the executor. Pure
+  `CellStreamCore` value type holds resident/inFlight/void/failed sets:
+  `accountedCells` feeds `CellGridManager` so void slots (`cellNotFound`) +
+  failed builds are remembered and never re-requested (no retry storm);
+  `integrate` discards stale/out-of-order completions (unloaded mid-flight).
+  Per-frame budget: at most one drawable cell integrated (a swap is a full
+  recompose); void/failed/stale drained free; requests dispatched
+  center-out. `CellGridManager.cellCenter(of:)` added to seed the grid on a
+  launch cell. Docs: [cell streaming](/engine/cell-streaming.md) controller
+  * concurrency sections; MeshLibrary/TextureLibrary threading comments.
+  Tests: `CellStreamCoreTests` (dedupe, void/failed no-retry, unload forget,
+  stale/out-of-order), `CellStreamerTests` (fake runner: budget order,
+  recenter unload, first-cell-only camera reseed).
 * **Instanced draws for repeated models** (M3.2 renderer core): instances
   sharing mesh + material draw as one `drawIndexedPrimitives(...
   instanceCount:)`. `RenderScene` now builds `DrawGroup`s (mesh, material,
