@@ -39,7 +39,7 @@ milestone leaves this file; history lives in `docs/log.md` + git.
   `WhiterunExterior06` on screen, free-fly camera, bench-gated fps (avg 0.39 ms/frame @
   720p on M1, Debug), `openskycli` + `openskypreview` dev tools.
 * M3 — world streaming + environment (active): roam exterior worldspace seamlessly —
-  terrain, cell streaming, distant LOD, sky/water, interiors via doors. Gate: 3.7.
+  terrain, cell streaming, distant LOD, sky/water, interiors via doors. Gate: 3.8.
 * M4 — toward playable (direction only): collision, animation, scripting, audio, UI.
   Re-scope after M3; no gate yet.
 
@@ -55,10 +55,11 @@ Sequencing: 3.1 terrain landed first — everything sits on it, and LAND lived i
 cell temporary-children groups `CellSceneBuilder` already walked
 (`docs/engine/cell-scene.md`) -> decoder slotted into the existing walk. 3.2 streaming now
 turns that per-cell unit into a grid + carries the perf work multi-cell rendering needs.
-3.3 LOD needs the grid boundary (rings start where loaded cells end). 3.4 sky/water +
-3.5 interiors independent of 3.2/3.3 -> parallelizable branches; 3.6 lighting last
-(interiors are where it shows). Verification path: `openskycli render`/`bench` +
-`openskypreview`, screenshot pattern as in `docs/img/`. Watch item: 3.4 sky turns the
+3.3 folds the `openskypreview` dev tool into the main app (independent of streaming — land
+anytime). 3.4 LOD needs the grid boundary (rings start where loaded cells end). 3.5
+sky/water + 3.6 interiors independent of 3.2/3.4 -> parallelizable branches; 3.7 lighting
+last (interiors are where it shows). Verification path: `openskycli render`/`bench` + the
+main-app asset browser, screenshot pattern as in `docs/img/`. Watch item: 3.5 sky turns the
 black background in screenshots into a real frame.
 
 Format facts below pre-verified 2026-07-18 against UESP mod-file-format pages + xEdit
@@ -83,16 +84,38 @@ impl; chase flagged UNCONFIRMED points especially.
 * [ ] Verify: scripted camera-path bench (extend `openskycli bench` with a fly-path
       across cells) — hitch budget during loads, memory plateaus, no crash.
 
-### 3.3 Distant LOD
+### 3.3 Merge asset preview into main app
+
+Fold `openskypreview` into the main app -> one product, not two. Motivated by the main app
+shipping with no menu/data-root picker (only Quit) while the picker lives in the separate
+preview tool. Dev-tooling consolidation, off the streaming critical path — land anytime.
+
+* [ ] Single window, mode toggle: `World | Asset Browser` segmented control swaps content in
+      place; browser always available; launch shows the World render. Move window wiring
+      (`PreviewViewController`/`PreviewDetailBuilder`) from `openskypreview/` into
+      `opensky/`; browse/preview logic already AppKit-free under `opensky/Preview/` — reuse
+      as-is (previews keep rendering through the engine path, no second pipeline).
+* [ ] Main app gains Settings + data-root picker: port `PreviewSettingsWindowController`,
+      add Settings (Cmd+,) to the main menu, missing install -> in-window message not crash,
+      Settings change re-resolves `GameDataLocator` + reloads without relaunch. Closes the
+      current gap (main app cannot fix a wrong/absent data root).
+* [ ] Delete the `openskypreview` target: remove from the Xcode project, drop `make
+      preview`, delete `openskypreview/` + its `AGENTS.md`/`CLAUDE.md`. Update root
+      `AGENTS.md` layout, `docs/tools/preview-gui.md`, and M3 verification refs
+      (`openskypreview` -> main-app browser).
+* [ ] Verify: build + run the main app, both modes render (World view + asset preview);
+      `opensky/Preview/` unit + env-gated real-data tests still green; screenshot both modes.
+
+### 3.4 Distant LOD
 
 * [ ] `lodsettings/<worldspace>.lod` parse: 16 B = SW origin cell (int16 x2), stride,
       min/max LOD level. Ref: UESP "LOD Settings File Format" + xEdit `wbLOD.pas`.
-      Doc: `docs/formats/lod.md` (covers all of 3.3).
+      Doc: `docs/formats/lod.md` (covers all of 3.4).
 * [ ] Terrain LOD: `meshes/terrain/<ws>/<ws>.<level>.<x>.<y>.btr` — NIF container
       (existing parser) + new blocks BSMultiBoundNode/BSMultiBound/BSMultiBoundAABB;
       level N covers NxN cells, name coords = SW cell, grid anchored at lodsettings
       origin; textures `textures/terrain/<ws>/<ws>.<level>.<x>.<y>.dds` + `_n`. Water
-      LOD shapes (node "WATER") skipped until 3.4 lands.
+      LOD shapes (node "WATER") skipped until 3.5 lands.
 * [ ] Object LOD: `.../objects/<ws>.<level>.<x>.<y>.bto` — BSSubIndexTriShape (new
       block), vanilla atlas `textures/terrain/<ws>/objects/<ws>.objects.dds`; levels
       4/8/16. Caveat: .btr/.bto layout derived from xLODGen generator source, not a
@@ -105,7 +128,7 @@ impl; chase flagged UNCONFIRMED points especially.
 * [ ] Verify: horizon filled past the grid from the target cell, no double-draw where
       full cells are loaded; screenshot.
 
-### 3.4 Sky + water
+### 3.5 Sky + water
 
 * [ ] Sky: procedural dome or fullscreen gradient + sun disc, time-of-day parameter.
       Hardcoded plausible colors first; later sample default climate WTHR NAM0 entries
@@ -120,7 +143,7 @@ impl; chase flagged UNCONFIRMED points especially.
 * [ ] Verify: screenshot with horizon sky at the target cell; water visible at a
       river/lake cell (probe picks one nearby).
 
-### 3.5 Interiors
+### 3.6 Interiors
 
 * [ ] Interior CELL walk: CELL top group -> block (type 2) / sub-block (type 3) by
       FormID last decimal digits (block = objectID mod 10, sub-block = div 10 mod 10;
@@ -135,7 +158,7 @@ impl; chase flagged UNCONFIRMED points especially.
 * [ ] Verify: enter a Whiterun-area interior through its door, look around, return to
       the exterior grid (probe picks the door pair).
 
-### 3.6 Lighting pass
+### 3.7 Lighting pass
 
 * [ ] Cell light values: XCLL (92 B layout; truncated variants exist — fields optional
       from the directional-ambient block on) + LTMP -> LGTM template (DATA + DALC),
@@ -149,7 +172,7 @@ impl; chase flagged UNCONFIRMED points especially.
 * [ ] Verify: interior screenshot lit vs unlit comparison; exterior look unchanged
       (sun/sky driven).
 
-### 3.7 Milestone acceptance
+### 3.8 Milestone acceptance
 
 * [ ] Free-fly from the M2 target cell across the streamed grid under sky: terrain +
       objects stream without visible pop-in gaps, water renders where cells have it,
@@ -161,7 +184,7 @@ impl; chase flagged UNCONFIRMED points especially.
 
 ## Milestone 4+ — toward playable (far out)
 
-Direction only — re-scope into numbered gated items at 3.7. Candidate order:
+Direction only — re-scope into numbered gated items at 3.8. Candidate order:
 
 * Collision + character controller (walk on terrain first; HKX collision reversing later).
 * Animation: HKX (Havok) reversing — hardest format; consider skeleton-only first.
