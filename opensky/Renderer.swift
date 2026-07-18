@@ -45,6 +45,7 @@ nonisolated enum RendererError: Error {
     case textureAllocationFailed
     case encoderUnavailable
     case gpuTimeout
+    case offscreenPumpTimedOut(maxFrames: Int)
 }
 
 final class Renderer: NSObject {
@@ -265,6 +266,31 @@ final class Renderer: NSObject {
     /// evicted here — this method never blocks on the GPU.
     func setScene(_ newScene: RenderScene, camera newCamera: SceneCamera? = nil) throws {
         purgeRetiredResources()
+        // Prepare every fallible allocation before mutating live renderer
+        // state. Allocation failure leaves old scene + rings intact.
+        var nextDrawBuffer = drawUniformBuffer
+        var nextDrawCapacity = drawUniformSlotCapacity
+        if newScene.drawCount > drawUniformSlotCapacity {
+            nextDrawCapacity = Self.slotCapacity(for: newScene.drawCount)
+            nextDrawBuffer = try Self.makeUniformBuffer(
+                device: device,
+                length: Self.alignedDrawUniformsSize
+                    * nextDrawCapacity * Self.maxFramesInFlight,
+                label: "DrawUniforms"
+            )
+        }
+        var nextInstanceBuffer = instanceTransformBuffer
+        var nextInstanceCapacity = instanceSlotCapacity
+        if newScene.instanceCount > instanceSlotCapacity {
+            nextInstanceCapacity = Self.slotCapacity(for: newScene.instanceCount)
+            nextInstanceBuffer = try Self.makeUniformBuffer(
+                device: device,
+                length: MemoryLayout<InstanceTransform>.stride
+                    * nextInstanceCapacity * Self.maxFramesInFlight,
+                label: "InstanceTransforms"
+            )
+        }
+
         // Old scene allocations retire as a whole; anything the new scene
         // shares with it is filtered out at purge time (live-set check in
         // purgeRetiredResources), not here — simpler and equally correct.
@@ -274,31 +300,18 @@ final class Renderer: NSObject {
             camera = newCamera
             freeFlyCamera = FreeFlyCamera(framing: newCamera)
         }
-        if newScene.drawCount > drawUniformSlotCapacity {
-            let capacity = Self.slotCapacity(for: newScene.drawCount)
-            let buffer = try Self.makeUniformBuffer(
-                device: device,
-                length: Self.alignedDrawUniformsSize * capacity * Self.maxFramesInFlight,
-                label: "DrawUniforms"
-            )
+        if nextDrawBuffer !== drawUniformBuffer {
             // Old ring may back in-flight frames — retire, never reuse.
             retiring.append(drawUniformBuffer)
-            drawUniformBuffer = buffer
-            drawUniformSlotCapacity = capacity
-            residencySet.addAllocations([buffer])
+            drawUniformBuffer = nextDrawBuffer
+            drawUniformSlotCapacity = nextDrawCapacity
+            residencySet.addAllocations([nextDrawBuffer])
         }
-        if newScene.instanceCount > instanceSlotCapacity {
-            let capacity = Self.slotCapacity(for: newScene.instanceCount)
-            let buffer = try Self.makeUniformBuffer(
-                device: device,
-                length: MemoryLayout<InstanceTransform>.stride
-                    * capacity * Self.maxFramesInFlight,
-                label: "InstanceTransforms"
-            )
+        if nextInstanceBuffer !== instanceTransformBuffer {
             retiring.append(instanceTransformBuffer)
-            instanceTransformBuffer = buffer
-            instanceSlotCapacity = capacity
-            residencySet.addAllocations([buffer])
+            instanceTransformBuffer = nextInstanceBuffer
+            instanceSlotCapacity = nextInstanceCapacity
+            residencySet.addAllocations([nextInstanceBuffer])
         }
         residencySet.addAllocations(newScene.residencyAllocations)
         residencySet.commit()
@@ -333,6 +346,11 @@ final class Renderer: NSObject {
         live.insert(ObjectIdentifier(frameUniformBuffer))
         live.insert(ObjectIdentifier(drawUniformBuffer))
         live.insert(ObjectIdentifier(instanceTransformBuffer))
+        // A drained A entry may share an allocation with undrained B. Keep
+        // that allocation resident until every retired frame using it drains.
+        for entry in retired {
+            live.formUnion(entry.allocations.map(ObjectIdentifier.init))
+        }
         var seen = Set<ObjectIdentifier>()
         let removable = ready.filter { allocation in
             let id = ObjectIdentifier(allocation)

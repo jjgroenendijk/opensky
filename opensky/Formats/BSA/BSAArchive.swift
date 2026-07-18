@@ -48,7 +48,9 @@ nonisolated struct BSAArchive {
 
     /// Memory-maps the archive; nothing beyond the tables is read up front.
     init(url: URL) throws {
-        try self.init(data: Data(contentsOf: url, options: .mappedIfSafe))
+        // `mappedIfSafe` may copy external-volume files into anonymous RAM.
+        // Vanilla archives total ~15 GB, so mapping must be mandatory.
+        try self.init(data: Data(contentsOf: url, options: .alwaysMapped))
     }
 
     init(data: Data) throws {

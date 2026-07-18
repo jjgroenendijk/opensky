@@ -16,7 +16,9 @@ nonisolated struct ESMFile {
 
     /// Memory-maps the plugin; nothing beyond top-level headers is read.
     init(url: URL) throws {
-        try self.init(data: Data(contentsOf: url, options: .mappedIfSafe))
+        // `mappedIfSafe` may copy external-volume files into anonymous RAM.
+        // Game installs are commonly on USB volumes, so mapping is mandatory.
+        try self.init(data: Data(contentsOf: url, options: .alwaysMapped))
     }
 
     init(data: Data) throws {

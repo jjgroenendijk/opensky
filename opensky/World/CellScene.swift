@@ -5,6 +5,15 @@
 import Foundation
 import simd
 
+/// The library cache keys one cell touched: its mesh + texture working set.
+/// Streaming unions these over resident cells to know what to keep when a cell
+/// unloads (eviction — docs/engine/cell-streaming.md). Empty for cells built
+/// without eviction tracking (tests) — an empty keep-set simply evicts more.
+nonisolated struct CellAssets: Equatable {
+    var meshKeys: Set<String> = []
+    var textureKeys: Set<String> = []
+}
+
 /// One built exterior cell, ready to render.
 nonisolated struct CellScene {
     let renderScene: RenderScene
@@ -12,6 +21,8 @@ nonisolated struct CellScene {
     /// World-space AABB over every drawn instance — nil when nothing drew.
     /// Downstream camera placement frames this box.
     let bounds: (min: SIMD3<Float>, max: SIMD3<Float>)?
+    /// Mesh + texture cache keys this cell uses, for unload eviction.
+    var assets = CellAssets()
 }
 
 /// Load accounting for one cell build. Per-ref failures never abort the build

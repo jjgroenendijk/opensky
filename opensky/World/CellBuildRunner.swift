@@ -15,6 +15,10 @@ nonisolated protocol CellSceneProvider {
     /// Throws `CellSceneError.cellNotFound` for a void grid slot; any other
     /// throw is a build failure. Both are classified by the streamer.
     func buildCell(at coordinate: CellCoordinate) throws -> CellScene
+
+    /// Drops the given cached assets (a departed cell's keys no resident cell
+    /// needs). Runs on the same executor as builds so libraries stay confined.
+    func evict(droppingMeshKeys: Set<String>, droppingTextureKeys: Set<String>)
 }
 
 /// Adapts `CellSceneBuilder` to the provider seam, pinning the worldspace so
@@ -32,6 +36,14 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider {
             gridY: coordinate.y
         )
     }
+
+    func evict(
+        droppingMeshKeys meshKeys: Set<String>,
+        droppingTextureKeys textureKeys: Set<String>
+    ) {
+        builder.meshes.evict(dropping: meshKeys)
+        builder.textures.evict(dropping: textureKeys)
+    }
 }
 
 /// One finished build handed back to the main-thread streamer.
@@ -47,6 +59,9 @@ nonisolated protocol CellBuildRunning: AnyObject {
     func enqueue(_ coordinate: CellCoordinate)
     /// Returns and clears everything finished since the last drain.
     func drainCompleted() -> [CellBuildResult]
+    /// Schedules an eviction pass on the build executor (after queued builds),
+    /// dropping the given assets a departed cell no longer needs.
+    func enqueueEviction(droppingMeshKeys: Set<String>, droppingTextureKeys: Set<String>)
 }
 
 /// Production runner: one serial `DispatchQueue` builds cells one at a time
@@ -54,11 +69,19 @@ nonisolated protocol CellBuildRunning: AnyObject {
 /// provider + its libraries are confined to this queue; the only shared state
 /// is the tiny completion buffer, guarded by its own lock. That lock lives
 /// here, not inside the libraries -- confinement keeps the caches lock-free.
-nonisolated final class SerialCellBuildRunner: CellBuildRunning {
+nonisolated final class SerialCellBuildRunner: CellBuildRunning, @unchecked Sendable {
     private let provider: any CellSceneProvider
     private let queue: DispatchQueue
     private let lock = NSLock()
     private var completed: [CellBuildResult] = []
+    /// Execution counts support streaming verification. Kept beside pending
+    /// under the same lock so the fly-path gate can prove each desired cell
+    /// built once, including completed results not drained yet.
+    private var buildCounts: [CellCoordinate: Int] = [:]
+    /// Coordinates queued-or-building, so a duplicate enqueue is a no-op --
+    /// defence in depth over the streamer's own dedup. Bounds the queue depth
+    /// to the grid size regardless of caller bugs (guards the 30 GB runaway).
+    private var pending: Set<CellCoordinate> = []
 
     init(provider: any CellSceneProvider, label: String = "nl.jjgroenendijk.opensky.cellbuild") {
         self.provider = provider
@@ -66,7 +89,14 @@ nonisolated final class SerialCellBuildRunner: CellBuildRunning {
     }
 
     func enqueue(_ coordinate: CellCoordinate) {
+        lock.lock()
+        let isNew = pending.insert(coordinate).inserted
+        lock.unlock()
+        guard isNew else { return }
         queue.async { [self] in
+            lock.lock()
+            buildCounts[coordinate, default: 0] += 1
+            lock.unlock()
             let result = Result { try provider.buildCell(at: coordinate) }
             let entry = CellBuildResult(coordinate: coordinate, result: result)
             lock.lock()
@@ -80,6 +110,26 @@ nonisolated final class SerialCellBuildRunner: CellBuildRunning {
         defer { lock.unlock() }
         let out = completed
         completed.removeAll(keepingCapacity: true)
+        for entry in out {
+            pending.remove(entry.coordinate)
+        }
         return out
+    }
+
+    func enqueueEviction(
+        droppingMeshKeys meshKeys: Set<String>,
+        droppingTextureKeys textureKeys: Set<String>
+    ) {
+        guard !meshKeys.isEmpty || !textureKeys.isEmpty else { return }
+        queue.async { [self] in
+            provider.evict(droppingMeshKeys: meshKeys, droppingTextureKeys: textureKeys)
+        }
+    }
+
+    /// Thread-safe snapshot for tests + scripted streaming verification.
+    func buildCountsSnapshot() -> [CellCoordinate: Int] {
+        lock.lock()
+        defer { lock.unlock() }
+        return buildCounts
     }
 }

@@ -27,6 +27,12 @@ final class CellStreamer {
     private let runner: any CellBuildRunning
     private let sink: SceneSink
 
+    /// Desired requests not yet submitted. Only one build reaches the runner
+    /// at a time, so recentering can discard obsolete backlog before it does
+    /// I/O and eviction always queues ahead of the next build.
+    private var requests: [CellCoordinate] = []
+    private var activeBuild: CellCoordinate?
+
     /// Finished builds drained from the runner, awaiting integration. Bounded
     /// by the grid size: at most one entry per in-flight cell.
     private var pending: [CellBuildResult] = []
@@ -59,18 +65,26 @@ final class CellStreamer {
     /// grid), integrates at most one drawable build (a swap is a full
     /// recompose), and sinks the recomposed scene when anything changed.
     func update(cameraPosition: SIMD3<Float>) {
-        pending.append(contentsOf: runner.drainCompleted())
+        let completed = runner.drainCompleted()
+        if !completed.isEmpty {
+            pending.append(contentsOf: completed)
+            activeBuild = nil
+        }
 
         var sceneChanged = false
-        if let diff = grid.update(cameraPosition: cameraPosition, loaded: core.accountedCells) {
+        // Renderer starts on its demo pose. Keep the configured launch grid
+        // fixed until the first drawable cell supplies the framing camera.
+        let effectivePosition = hasSeededCamera
+            ? cameraPosition
+            : CellGridManager.cellCenter(of: grid.center)
+        if let diff = grid.update(cameraPosition: effectivePosition, loaded: core.accountedCells) {
             let actions = core.apply(diff: diff)
-            for coordinate in actions.removals {
-                composition.removeCell(at: coordinate)
+            requests.removeAll { !core.inFlight.contains($0) }
+            if !actions.removals.isEmpty {
+                unload(actions.removals)
                 sceneChanged = true
             }
-            for coordinate in requestsNearestFirst(actions.requests) {
-                runner.enqueue(coordinate)
-            }
+            requests.append(contentsOf: requestsNearestFirst(actions.requests))
         }
 
         if integrateOneBuild() {
@@ -79,6 +93,39 @@ final class CellStreamer {
         if sceneChanged {
             recomposeAndSink()
         }
+        dispatchNextBuild()
+    }
+
+    /// Drops unloaded cells from the composition and schedules eviction of the
+    /// assets they used that no remaining resident cell needs. Drop-set (the
+    /// departed cells' keys minus the resident union) so in-flight builds for
+    /// the new grid keep their freshly-loaded assets (docs/engine/cell-streaming.md
+    /// eviction). Eviction runs on the build queue -- confinement holds.
+    private func unload(_ coordinates: [CellCoordinate]) {
+        var departed = CellAssets()
+        for coordinate in coordinates {
+            guard let removed = composition.removeCell(at: coordinate) else { continue }
+            departed.meshKeys.formUnion(removed.assets.meshKeys)
+            departed.textureKeys.formUnion(removed.assets.textureKeys)
+        }
+        evictUnused(departed)
+    }
+
+    /// Schedules only keys no resident cell owns. With one submitted build,
+    /// this eviction enters the serial runner before the next build starts.
+    private func evictUnused(_ candidates: CellAssets) {
+        let resident = composition.residentAssets()
+        runner.enqueueEviction(
+            droppingMeshKeys: candidates.meshKeys.subtracting(resident.meshKeys),
+            droppingTextureKeys: candidates.textureKeys.subtracting(resident.textureKeys)
+        )
+    }
+
+    private func dispatchNextBuild() {
+        guard activeBuild == nil, pending.isEmpty, !requests.isEmpty else { return }
+        let coordinate = requests.removeFirst()
+        activeBuild = coordinate
+        runner.enqueue(coordinate)
     }
 
     // MARK: - Integration
@@ -92,11 +139,16 @@ final class CellStreamer {
     private func integrateOneBuild() -> Bool {
         while !pending.isEmpty {
             let entry = pending.removeFirst()
+            requests.removeAll { $0 == entry.coordinate }
             switch entry.result {
             case let .success(scene):
-                if core.integrate(coordinate: entry.coordinate, kind: .success) == .integrated {
+                let decision = core.integrate(coordinate: entry.coordinate, kind: .success)
+                if decision == .integrated {
                     composition.setCell(scene, at: entry.coordinate)
                     return true
+                }
+                if decision == .discardedStale {
+                    evictUnused(scene.assets)
                 }
             // Stale success (unloaded mid-flight) -- drop, keep draining.
             case let .failure(error):
@@ -151,6 +203,24 @@ final class CellStreamer {
             hasSeededCamera = true
         }
         sink(scene, camera)
+        logFootprint()
+    }
+
+    /// One-line memory report per recompose -- the streaming footprint budget
+    /// is measured, not guessed (docs/engine/cell-streaming.md memory budget).
+    private func logFootprint() {
+        guard let megabytes = MemoryFootprint.physFootprintMB() else { return }
+        let residentCount = residentCellCount
+        let voidCount = voidCellCount
+        let inFlightCount = inFlightCellCount
+        Self.logger.info(
+            """
+            [INFO] stream: \(residentCount, privacy: .public) resident, \
+            \(voidCount, privacy: .public) void, \
+            \(inFlightCount, privacy: .public) in flight, \
+            footprint \(Int(megabytes), privacy: .public) MB
+            """
+        )
     }
 
     /// Dispatches center-out so the launch cell (and nearest neighbors) build
@@ -185,6 +255,10 @@ final class CellStreamer {
         core.resident.count
     }
 
+    var residentCoordinates: Set<CellCoordinate> {
+        core.resident
+    }
+
     var voidCellCount: Int {
         core.void.count
     }
@@ -199,6 +273,10 @@ final class CellStreamer {
 
     var pendingCompletionCount: Int {
         pending.count
+    }
+
+    var queuedRequestCount: Int {
+        requests.count
     }
 
     /// The full grid the manager currently wants around its center.

@@ -117,4 +117,33 @@ struct TextureLibraryTests {
         #expect(library.loadedCount == 1)
         #expect(library.missingCount == 0)
     }
+
+    @Test(.enabled(if: Self.hasDevice)) func capturedKeysCanRemarkACacheHitWorkingSet() throws {
+        let device = try #require(Self.anyDevice)
+        let library = library(device: device)
+
+        library.beginKeyCapture()
+        _ = library.texture(key: "textures\\shared.dds", usage: .color)
+        let modelKeys = library.endKeyCapture()
+        #expect(!modelKeys.isEmpty)
+        _ = library.drainTouchedKeys()
+
+        library.markTouched(modelKeys)
+        #expect(library.drainTouchedKeys() == modelKeys)
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func evictionDropsOnlyRequestedTextureKeys() throws {
+        let device = try #require(Self.anyDevice)
+        let library = library(device: device)
+        _ = library.texture(key: "textures\\first.dds", usage: .color)
+        _ = library.texture(key: "textures\\second.dds", usage: .color)
+        let keys = library.drainTouchedKeys()
+        let firstKey = try #require(keys.first { $0.contains("first.dds") })
+
+        #expect(library.evict(dropping: [firstKey]) == 1)
+        _ = library.texture(key: "textures\\first.dds", usage: .color)
+        #expect(library.missingCount == 3)
+        _ = library.texture(key: "textures\\second.dds", usage: .color)
+        #expect(library.missingCount == 3)
+    }
 }

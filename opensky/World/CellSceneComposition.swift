@@ -43,6 +43,19 @@ nonisolated struct CellSceneComposition {
         return RenderScene(merging: ordered.map(\.value.renderScene))
     }
 
+    /// Union of the mesh + texture cache keys every resident cell uses -- the
+    /// keep-set streaming hands the libraries on unload so assets no resident
+    /// cell references are evicted (docs/engine/cell-streaming.md).
+    func residentAssets() -> CellAssets {
+        var meshKeys: Set<String> = []
+        var textureKeys: Set<String> = []
+        for scene in cells.values {
+            meshKeys.formUnion(scene.assets.meshKeys)
+            textureKeys.formUnion(scene.assets.textureKeys)
+        }
+        return CellAssets(meshKeys: meshKeys, textureKeys: textureKeys)
+    }
+
     /// Union AABB over the resident cells' bounds — camera framing for a
     /// first composed scene. nil when no resident cell drew anything.
     func composedBounds() -> (min: SIMD3<Float>, max: SIMD3<Float>)? {

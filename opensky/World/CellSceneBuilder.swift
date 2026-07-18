@@ -24,7 +24,7 @@ nonisolated enum CellSceneError: Error, Equatable {
 }
 
 /// Per-build skip accounting; folded into CellLoadSummary at the end.
-private struct BuildCounts {
+nonisolated private struct BuildCounts {
     var totalRefs = 0
     var malformedRefs = 0
     var unsupportedBases = 0
@@ -35,7 +35,7 @@ private struct BuildCounts {
 /// One base record resolved to its drawable model path, regardless of
 /// whether it came from the STAT or ModelBase (MSTT/TREE/FURN/ACTI/CONT)
 /// index — resolveInstances treats both the same past this point.
-private struct ResolvedBase {
+nonisolated private struct ResolvedBase {
     let formID: FormID
     let recordType: FourCC
     /// Nil = marker base (no MODL), nothing to draw.
@@ -43,7 +43,7 @@ private struct ResolvedBase {
 }
 
 /// One resolved placement, sortable into instancing-ready order.
-private struct ResolvedInstance {
+nonisolated private struct ResolvedInstance {
     /// Normalized mesh path — primary grouping key.
     let sortKey: String
     /// REFR FormID — deterministic tie-break within one model.
@@ -65,7 +65,7 @@ nonisolated struct FoundCell {
 
 /// The world-children group plus the decoded WRLD it belongs to (DNAM default
 /// land height feeds the LAND-less terrain fallback).
-private struct FoundWorld {
+nonisolated private struct FoundWorld {
     let children: ESMGroup
     let worldspace: Worldspace?
 }
@@ -104,6 +104,11 @@ nonisolated final class CellSceneBuilder {
     ) throws -> CellScene {
         // localized only affects FULL lstrings, which scene build never
         // reads — a failed TES4 decode safely defaults to false.
+        // Clear any stale working set so this build's touched keys are exactly
+        // this cell's mesh + texture set (recorded onto the CellScene for
+        // unload eviction — docs/engine/cell-streaming.md).
+        _ = meshes.drainTouchedKeys()
+        _ = textures.drainTouchedKeys()
         let localized = (try? file.pluginHeader().isLocalized) ?? false
         let world = try worldChildrenGroup(editorID: worldspaceEditorID, localized: localized)
         guard
@@ -121,13 +126,20 @@ nonisolated final class CellSceneBuilder {
         let refs = collectReferences(in: found.children, counts: &counts)
         let instances = resolveInstances(refs: refs, counts: &counts)
         let terrain = buildTerrain(found: found, worldspace: world.worldspace)
-        return makeScene(
+        var scene = makeScene(
             found: found,
             grid: (x: gridX, y: gridY),
             instances: instances,
             terrain: terrain,
             counts: counts
         )
+        // Record the mesh + texture keys this cell touched so streaming unload
+        // can keep the union over resident cells and evict the rest.
+        scene.assets = CellAssets(
+            meshKeys: meshes.drainTouchedKeys(),
+            textureKeys: textures.drainTouchedKeys()
+        )
+        return scene
     }
 }
 
@@ -136,7 +148,10 @@ extension CellSceneBuilder {
     /// labeled by the owning record's FormID. EDID match is exact (editor IDs
     /// are stable identifiers). A malformed WRLD is skipped — another
     /// worldspace may still match.
-    private func worldChildrenGroup(editorID: String, localized: Bool) throws -> FoundWorld {
+    nonisolated private func worldChildrenGroup(
+        editorID: String,
+        localized: Bool
+    ) throws -> FoundWorld {
         guard let top = file.topGroup(of: "WRLD") else {
             throw CellSceneError.worldspaceNotFound(editorID: editorID)
         }
@@ -166,7 +181,7 @@ extension CellSceneBuilder {
     /// Depth-first over exterior block/sub-block groups. Match is by decoded
     /// XCLC grid, never by block labels (unreliable in CK-ignored groups —
     /// see ESMGroup).
-    private func findCell(
+    nonisolated private func findCell(
         in group: ESMGroup,
         gridX: Int32,
         gridY: Int32,
@@ -207,7 +222,7 @@ extension CellSceneBuilder {
 
     /// The cell-children group for a CELL record sits after it among the same
     /// siblings, labeled with the cell's FormID.
-    private func cellChildrenGroup(
+    nonisolated private func cellChildrenGroup(
         following index: Int,
         in children: [ESMGroup.Child],
         cellFormID: UInt32
@@ -226,7 +241,7 @@ extension CellSceneBuilder {
     /// ACHR, PGRE, ...) are not static placements — ignored deliberately and
     /// not counted (skip taxonomy, docs/engine/cell-scene.md). Deleted REFRs
     /// place nothing -> also ignored. A REFR that fails to decode is malformed.
-    private func collectReferences(
+    nonisolated private func collectReferences(
         in cellChildren: ESMGroup?,
         counts: inout BuildCounts
     ) -> [PlacedReference] {
@@ -263,7 +278,7 @@ extension CellSceneBuilder {
     /// mesh load error -> model failure. Output is sorted by (normalized
     /// mesh path, FormID) so instances sharing a RenderModel are adjacent
     /// (instancing-ready) and the order is deterministic across runs.
-    private func resolveInstances(
+    nonisolated private func resolveInstances(
         refs: [PlacedReference],
         counts: inout BuildCounts
     ) -> [ResolvedInstance] {
@@ -332,7 +347,7 @@ extension CellSceneBuilder {
     /// record IDs share one FormID space (cross-plugin resolution via
     /// FormIDResolver arrives with load-order support). Malformed STATs are
     /// skipped — refs pointing at them fall into the unsupported-base bucket.
-    private func statIndexBuildingIfNeeded() -> [UInt32: StaticObject] {
+    nonisolated private func statIndexBuildingIfNeeded() -> [UInt32: StaticObject] {
         if let statIndex {
             return statIndex
         }
@@ -356,7 +371,7 @@ extension CellSceneBuilder {
     /// like statIndex. One top group per record type — unlike STAT there is
     /// no single shared group. Malformed records are skipped with a log,
     /// same mod-quirk handling as STAT.
-    private func modelBaseIndexBuildingIfNeeded() -> [UInt32: ModelBase] {
+    nonisolated private func modelBaseIndexBuildingIfNeeded() -> [UInt32: ModelBase] {
         if let modelBaseIndex {
             return modelBaseIndex
         }
@@ -384,7 +399,7 @@ extension CellSceneBuilder {
 
     /// STAT first (largest, most common base type), falling back to the
     /// ModelBase index; nil when the base FormID resolves to neither.
-    private func resolveBase(
+    nonisolated private func resolveBase(
         formID: UInt32,
         statIndex: [UInt32: StaticObject],
         modelBaseIndex: [UInt32: ModelBase]
@@ -403,7 +418,7 @@ extension CellSceneBuilder {
     /// Flattens instances into the RenderScene (opaque first, alpha-test
     /// second — RenderScene orders that way), accumulates the world AABB from
     /// per-model bounds, and logs the one-line summary.
-    private func makeScene(
+    nonisolated private func makeScene(
         found: FoundCell,
         grid: (x: Int32, y: Int32),
         instances: [ResolvedInstance],

@@ -13,6 +13,8 @@ import Testing
 /// standing in for the serial DispatchQueue without any async timing.
 nonisolated private final class ManualCellBuildRunner: CellBuildRunning {
     private(set) var enqueued: [CellCoordinate] = []
+    private(set) var evictedMeshKeys: [Set<String>] = []
+    private(set) var evictedTextureKeys: [Set<String>] = []
     private var ready: [CellBuildResult] = []
 
     func enqueue(_ coordinate: CellCoordinate) {
@@ -28,6 +30,14 @@ nonisolated private final class ManualCellBuildRunner: CellBuildRunning {
         ready.removeAll(keepingCapacity: true)
         return out
     }
+
+    func enqueueEviction(
+        droppingMeshKeys meshKeys: Set<String>,
+        droppingTextureKeys textureKeys: Set<String>
+    ) {
+        evictedMeshKeys.append(meshKeys)
+        evictedTextureKeys.append(textureKeys)
+    }
 }
 
 private enum FakeBuildError: Error { case broken }
@@ -39,9 +49,11 @@ struct CellStreamerTests {
     }
 
     /// Synthetic built cell: empty draw list, optional bounds (so the first
-    /// integrated cell can frame a camera).
+    /// integrated cell can frame a camera) and asset keys (for eviction tests).
     private static func cellScene(
-        bounds: (min: SIMD3<Float>, max: SIMD3<Float>)? = (SIMD3(0, 0, 0), SIMD3(10, 10, 10))
+        bounds: (min: SIMD3<Float>, max: SIMD3<Float>)? = (SIMD3(0, 0, 0), SIMD3(10, 10, 10)),
+        meshKeys: Set<String> = [],
+        textureKeys: Set<String> = []
     ) -> CellScene {
         CellScene(
             renderScene: RenderScene(instances: []),
@@ -52,7 +64,8 @@ struct CellStreamerTests {
                 modelFailureSkipCount: 0, malformedRefSkipCount: 0,
                 modelCount: 0, textureCount: 0, missingTextureCount: 0
             ),
-            bounds: bounds
+            bounds: bounds,
+            assets: CellAssets(meshKeys: meshKeys, textureKeys: textureKeys)
         )
     }
 
@@ -72,17 +85,17 @@ struct CellStreamerTests {
     // MARK: - Request dedupe
 
     @Test
-    func firstUpdateRequestsWholeGridOnceAndDoesNotReRequest() {
+    func firstUpdateSubmitsOneBuildAndQueuesRestWithoutDuplicates() {
         let runner = ManualCellBuildRunner()
         let streamer = Self.makeStreamer(runner: runner)
         streamer.update(cameraPosition: Self.center)
-        #expect(runner.enqueued.count == 9) // radius 1 -> 3x3
-        #expect(Set(runner.enqueued).count == 9) // no duplicates
+        #expect(runner.enqueued == [Self.coordinate(0, 0)])
+        #expect(streamer.queuedRequestCount == 8)
+        #expect(streamer.inFlightCellCount == 9)
 
-        // Nothing completed, camera unmoved -> in-flight cells are accounted,
-        // never re-requested.
+        // Nothing completed -> no second build reaches the runner.
         streamer.update(cameraPosition: Self.center)
-        #expect(runner.enqueued.count == 9)
+        #expect(runner.enqueued.count == 1)
     }
 
     @Test
@@ -101,8 +114,8 @@ struct CellStreamerTests {
         let streamer = Self.makeStreamer(runner: runner)
         streamer.update(cameraPosition: Self.center)
 
-        runner.complete(Self.coordinate(1, 1), with: .failure(CellSceneError.cellNotFound(
-            worldspaceEditorID: "Tamriel", gridX: 1, gridY: 1
+        runner.complete(Self.coordinate(0, 0), with: .failure(CellSceneError.cellNotFound(
+            worldspaceEditorID: "Tamriel", gridX: 0, gridY: 0
         )))
         streamer.update(cameraPosition: Self.center)
         #expect(streamer.voidCellCount == 1)
@@ -111,7 +124,7 @@ struct CellStreamerTests {
         for _ in 0 ..< 10 {
             streamer.update(cameraPosition: Self.center)
         }
-        #expect(runner.enqueued.filter { $0 == Self.coordinate(1, 1) }.count == 1)
+        #expect(runner.enqueued.filter { $0 == Self.coordinate(0, 0) }.count == 1)
         #expect(streamer.voidCellCount == 1)
     }
 
@@ -121,12 +134,12 @@ struct CellStreamerTests {
         let streamer = Self.makeStreamer(runner: runner)
         streamer.update(cameraPosition: Self.center)
 
-        runner.complete(Self.coordinate(-1, 0), with: .failure(FakeBuildError.broken))
+        runner.complete(Self.coordinate(0, 0), with: .failure(FakeBuildError.broken))
         for _ in 0 ..< 10 {
             streamer.update(cameraPosition: Self.center)
         }
         #expect(streamer.failedCellCount == 1)
-        #expect(runner.enqueued.filter { $0 == Self.coordinate(-1, 0) }.count == 1)
+        #expect(runner.enqueued.filter { $0 == Self.coordinate(0, 0) }.count == 1)
     }
 
     // MARK: - Integration budget
@@ -222,14 +235,98 @@ struct CellStreamerTests {
         let streamer = Self.makeStreamer(runner: runner)
         streamer.update(cameraPosition: Self.center)
 
-        // Recenter before any build lands: the original in-flight cells leave.
+        // Seed the real camera, then let the next submitted neighbor remain
+        // active while that camera recenters far away.
+        runner.complete(Self.coordinate(0, 0), with: .success(Self.cellScene()))
+        streamer.update(cameraPosition: Self.center)
+
         let far = CellGridManager.cellCenter(of: Self.coordinate(5, 0))
         streamer.update(cameraPosition: far)
 
         // A build from the old grid lands late -> discarded, not resident.
-        runner.complete(Self.coordinate(0, 0), with: .success(Self.cellScene()))
+        runner.complete(Self.coordinate(-1, 0), with: .success(Self.cellScene()))
         streamer.update(cameraPosition: far)
         #expect(streamer.residentCellCount == 0)
+    }
+
+    // MARK: - Eviction on unload
+
+    /// Fills the 3x3 (each cell with its own mesh/texture keys), then jumps far
+    /// away so the whole grid unloads -- every departed asset is scheduled for
+    /// eviction (no resident cell remains to keep any of them).
+    @Test
+    func recenterEvictsEveryDepartedCellsAssets() {
+        let runner = ManualCellBuildRunner()
+        let streamer = Self.makeStreamer(runner: runner)
+        streamer.update(cameraPosition: Self.center)
+
+        let grid = (-1 ... 1)
+            .flatMap { x in (-1 ... 1).map { Self.coordinate(Int32(x), Int32($0)) } }
+        for cell in grid {
+            runner.complete(cell, with: .success(Self.cellScene(
+                meshKeys: ["m\(cell.x)_\(cell.y)"], textureKeys: ["t\(cell.x)_\(cell.y)"]
+            )))
+        }
+        for _ in grid {
+            streamer.update(cameraPosition: Self.center)
+        }
+        #expect(streamer.residentCellCount == 9)
+
+        // Far jump: disjoint new grid, so the whole old grid is dropped.
+        streamer.update(cameraPosition: CellGridManager.cellCenter(of: Self.coordinate(9, 0)))
+        let droppedMesh = runner.evictedMeshKeys.last
+        #expect(droppedMesh == Set(grid.map { "m\($0.x)_\($0.y)" }))
+        let droppedTexture = runner.evictedTextureKeys.last
+        #expect(droppedTexture == Set(grid.map { "t\($0.x)_\($0.y)" }))
+    }
+
+    /// An asset a still-resident cell shares is never evicted when a neighbor
+    /// unloads -- the drop-set subtracts the resident union.
+    @Test
+    func sharedAssetsSurviveWhenANeighborUnloads() {
+        let runner = ManualCellBuildRunner()
+        let streamer = Self.makeStreamer(runner: runner)
+        streamer.update(cameraPosition: Self.center)
+
+        let grid = (-1 ... 1)
+            .flatMap { x in (-1 ... 1).map { Self.coordinate(Int32(x), Int32($0)) } }
+        for cell in grid {
+            // Every cell shares "common"; each also has a unique key.
+            runner.complete(cell, with: .success(Self.cellScene(
+                meshKeys: ["m\(cell.x)_\(cell.y)", "common"]
+            )))
+        }
+        for _ in grid {
+            streamer.update(cameraPosition: Self.center)
+        }
+
+        // One cell east: unloads the x = -1 column only; x = 0/1 stay resident
+        // and still use "common".
+        streamer.update(cameraPosition: CellGridManager.cellCenter(of: Self.coordinate(1, 0)))
+        let dropped = runner.evictedMeshKeys.last ?? []
+        #expect(!dropped.contains("common"), "shared asset evicted while still in use")
+        #expect(dropped.contains("m-1_0"), "departed cell's unique asset not evicted")
+    }
+
+    /// A stationary fill never schedules eviction (nothing unloads).
+    @Test
+    func fillWithoutUnloadNeverEvicts() {
+        let runner = ManualCellBuildRunner()
+        let streamer = Self.makeStreamer(runner: runner)
+        streamer.update(cameraPosition: Self.center)
+        let grid = (-1 ... 1)
+            .flatMap { x in (-1 ... 1).map { Self.coordinate(Int32(x), Int32($0)) } }
+        for cell in grid {
+            runner.complete(
+                cell,
+                with: .success(Self.cellScene(meshKeys: ["m\(cell.x)_\(cell.y)"]))
+            )
+        }
+        for _ in 0 ..< 12 {
+            streamer.update(cameraPosition: Self.center)
+        }
+        #expect(streamer.residentCellCount == 9)
+        #expect(runner.evictedMeshKeys.isEmpty)
     }
 
     // MARK: - Camera reseed
@@ -271,5 +368,38 @@ struct CellStreamerTests {
         try #require(cameras.count == 2)
         #expect(cameras[0] == nil) // boundless cell: no camera
         #expect(cameras[1] != nil) // first drawable cell frames it
+    }
+}
+
+extension CellStreamerTests {
+    @Test
+    func staleSuccessfulBuildEvictsItsUnownedAssetsBeforeNextBuild() {
+        let runner = ManualCellBuildRunner()
+        let streamer = Self.makeStreamer(runner: runner)
+        streamer.update(cameraPosition: Self.center)
+        runner.complete(Self.coordinate(0, 0), with: .success(Self.cellScene()))
+        streamer.update(cameraPosition: Self.center)
+
+        let far = CellGridManager.cellCenter(of: Self.coordinate(5, 0))
+        streamer.update(cameraPosition: far)
+        runner.complete(Self.coordinate(-1, 0), with: .success(Self.cellScene(
+            meshKeys: ["stale-mesh"], textureKeys: ["stale-texture"]
+        )))
+        streamer.update(cameraPosition: far)
+
+        #expect(runner.evictedMeshKeys.last == ["stale-mesh"])
+        #expect(runner.evictedTextureKeys.last == ["stale-texture"])
+        #expect(runner.enqueued.last == Self.coordinate(5, 0))
+    }
+
+    @Test
+    func launchIgnoresDemoCameraUntilFirstDrawableCellSeedsCamera() {
+        let runner = ManualCellBuildRunner()
+        let streamer = Self.makeStreamer(runner: runner)
+        let unrelatedCamera = CellGridManager.cellCenter(of: Self.coordinate(40, 40))
+
+        streamer.update(cameraPosition: unrelatedCamera)
+
+        #expect(runner.enqueued == [Self.coordinate(0, 0)])
     }
 }

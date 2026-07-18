@@ -125,6 +125,7 @@ extension Renderer {
         )
         frameIndex += 1
         guard finished else { throw RendererError.gpuTimeout }
+        purgeRetiredResources()
         // Wait above proved the frame finished -> this slot's pair is valid.
         return frameStats.endFrame(
             cpuStartNS: cpuStart,
@@ -148,6 +149,56 @@ extension Renderer {
             projection: Self.offscreenProjection(width: width, height: height)
         )
         return color
+    }
+
+    /// Pumps a callback + synchronous frame loop through one reused target.
+    /// Streaming tests use this instead of allocating color/depth textures on
+    /// every poll tick. Optional pacing happens outside measured frame time,
+    /// preventing a busy-spin without hiding main-thread stream work. Returns
+    /// timing for every frame through settlement; exhausting `maxFrames`
+    /// throws so a stalled build cannot false-pass.
+    func pumpOffscreen(
+        width: Int,
+        height: Int,
+        maxFrames: Int,
+        minimumFrameInterval: TimeInterval = 0,
+        step: () throws -> Bool
+    ) throws -> OffscreenBenchResult {
+        let (color, depth) = try makeOffscreenTargets(width: width, height: height)
+        residencySet.addAllocations([color, depth])
+        residencySet.commit()
+        defer {
+            residencySet.removeAllocations([color, depth])
+            residencySet.commit()
+        }
+        let descriptor = Self.offscreenPassDescriptor(color: color, depth: depth)
+        let projection = Self.offscreenProjection(width: width, height: height)
+        var frameMS: [Double] = []
+        frameMS.reserveCapacity(maxFrames)
+        var summaries: [String] = []
+
+        for _ in 1 ... maxFrames {
+            if minimumFrameInterval > 0 {
+                Thread.sleep(forTimeInterval: minimumFrameInterval)
+            }
+            let start = DispatchTime.now().uptimeNanoseconds
+            let settled = try step()
+            let summary = try renderOffscreenFrame(
+                descriptor: descriptor,
+                projection: projection
+            )
+            if let summary {
+                summaries.append(summary)
+            }
+            frameMS.append(Double(DispatchTime.now().uptimeNanoseconds - start) / 1e6)
+            if settled {
+                return OffscreenBenchResult(
+                    frameMS: frameMS,
+                    windowSummaries: summaries
+                )
+            }
+        }
+        throw RendererError.offscreenPumpTimedOut(maxFrames: maxFrames)
     }
 
     /// Renders `frames` back-to-back frames into one reused offscreen
