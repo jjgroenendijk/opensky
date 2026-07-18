@@ -4,6 +4,19 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* **LAND/LTEX/TXST decoders** (M3.1): new terrain record decoders in
+  `opensky/Formats/ESM/Records/{Land,LandTexture,TextureSet}.swift` +
+  [land format doc](/formats/land.md). LAND = VHGT gradient height field
+  (float anchor + 33x33 int8 deltas; col 0 carries row-to-row, cols 1-32
+  accumulate west->east, result *8 game units), VNML/VCLR 33x33x3 bytes,
+  BTXT base + paired ATXT/VTXT splat layers (quadrant 0-3, VTXT position
+  0-288, float opacity). LTEX TNAM -> TXST TX00 diffuse / TX01 normal. Ref
+  UESP LAND/LTEX/TXST + xEdit `wbDefinitionsCommon.pas`. Synthetic-fixture
+  unit tests (`TerrainRecordDecoderTests`) + env-gated Tamriel sweep
+  (`LandRealDataTests`). Sweep over vanilla Skyrim.esm: 11186 LAND records
+  decoded no throws, height -37032..39392 units, up to 23 cell-wide splat
+  layers, VTXT position max 288, quadrants {0,1,2,3}. Decoders only; mesh
+  build + splat render are later 3.1 items.
 * **Milestone 3 detailed plan**: expanded [todo](/todo.md) M3 into sub-itemed
   3.1-3.7 (terrain -> streaming -> LOD -> sky/water -> interiors -> lighting
   -> gate) with per-item acceptance, spec refs, probe strategy, dependency

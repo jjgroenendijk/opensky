@@ -81,15 +81,6 @@ impl; chase flagged UNCONFIRMED points especially.
 
 ### 3.1 Terrain
 
-* [ ] LAND + LTEX decoders -> `docs/formats/land.md`. LAND sits in cell
-      temporary-children groups (type 9), usually zlib-compressed (record flag bit 18).
-      Subrecords: DATA flags; VHGT 1096 B = float anchor + 33x33 int8 deltas (col 0
-      carries row-to-row, cols 1-32 accumulate west->east, result x8 game units);
-      VNML/VCLR 3267 B = 33x33x3 bytes; layers BTXT/ATXT 8 B (LTEX formid, quadrant 0-3,
-      layer no) + VTXT 8-B entries (position 0-288 on 17x17 quadrant grid, float
-      opacity). LTEX TNAM -> TXST (TX00 diffuse, TX01 normal). Ref: UESP LAND/LTEX/TXST
-      + xEdit `wbDefinitionsCommon.pas`. Synthetic fixtures; probe sweep every Tamriel
-      LAND (count, height range, layer histogram, VTXT bounds).
 * [ ] Terrain mesh build: heights -> 33x33 vertex grid, 128 units/quad over the 4096
       cell footprint, normals from VNML, placement from XCLC grid. Neighbor stitch:
       south row / west col duplicate neighbor edges per spec — verify by probe. LAND-less
