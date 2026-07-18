@@ -97,19 +97,26 @@ itself splits opaque before alpha-tested draws (todo 2.7 opaque-first).
 
 ## App wiring (launch path)
 
-`AppDelegate` locates game data before the window content exists, then hands
-`GameViewController` a scene factory closure `(MTLDevice) -> (RenderScene, SceneCamera)?`.
-The factory runs in `viewDidLoad` on the view's Metal device (GPU resources must live on
-the rendering device) and chains VFS -> `ESMFile` (`Data/Skyrim.esm`) -> `TextureLibrary`
--> `MeshLibrary` -> `CellSceneBuilder.buildScene` -> `SceneCamera.framing(bounds:)` ->
-`Renderer(view:scene:camera:)`. Target cell constants live in one place:
-`opensky/FirstRenderCell.swift` (`Tamriel`, (6,-2) — [decision](/decisions/first-render-cell.md)).
+Launch is async as of 3.2 -- no cell is built on the launch path. `AppDelegate` locates
+game data before the window content exists, then hands `GameViewController` a *provider*
+factory `(MTLDevice) -> (any CellSceneProvider)?`. The factory runs in `viewDidLoad` on the
+view's Metal device (GPU resources must live on the rendering device) and chains VFS ->
+`ESMFile` (`Data/Skyrim.esm`) -> `TextureLibrary` -> `MeshLibrary` -> `CellSceneBuilder`,
+wrapped in `BuilderCellSceneProvider` -- cheap setup only (ESM is memory-mapped, top-group
+headers only). The renderer starts on an empty scene; a `CellStreamer` centered on
+`FirstRenderCell` builds cells off the main thread and streams them in, framing the camera
+on the first arrival ([cell streaming](/engine/cell-streaming.md)). Target cell constants
+live in one place: `opensky/FirstRenderCell.swift` (`Tamriel`, (6,-2) —
+[decision](/decisions/first-render-cell.md)).
 
-Robustness: missing data already fail-louds via the locator alert; past that gate, any
-factory failure (esm read/parse throw, build throw, nil bounds) logs `[ERROR]` and returns
-nil -> renderer falls back to `DemoScene`, never crashes. The build is synchronous at
-startup — acceptable for 2.7's single small cell; streaming moves it off the launch path
-later.
+Robustness: missing data already fail-louds via the locator alert; past that gate, a
+provider-setup failure (esm read/parse throw) logs `[ERROR]` and returns nil -> no
+streamer, renderer falls back to `DemoScene`, never crashes. Per-cell build failures during
+streaming are recorded (void / failed) and never retried, so a broken slot never storms.
+
+The `openskycli` `render` / `bench` subcommands still call `CellSceneBuilder.buildScene`
+directly (synchronous, single-threaded) -- they are one-shot offscreen tools, not the live
+streaming loop, so they bypass the streamer entirely.
 
 Integration test: `CellRenderRealDataTests` (env-gated, auto-skips unless
 `OPENSKY_DATA_ROOT` is set and resolves + Metal 4 present — CI has no game data) builds

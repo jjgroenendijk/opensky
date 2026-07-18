@@ -4,16 +4,21 @@
 
 import AppKit
 import MetalKit
+import OSLog
 
 final class GameViewController: NSViewController {
-    /// Builds the launch scene on the view's Metal device. Set by the
-    /// AppDelegate before the window content loads; nil factory or nil
-    /// result -> renderer falls back to the synthetic DemoScene. The
-    /// factory runs here (not in the AppDelegate) because GPU resources
-    /// must be created on the device the view renders with.
-    var sceneFactory: ((MTLDevice) -> (scene: RenderScene, camera: SceneCamera)?)?
+    /// Builds the off-main cell provider on the view's Metal device. Set by
+    /// the AppDelegate before the window content loads; nil factory or nil
+    /// result (missing game data / setup throw) -> no streamer, renderer
+    /// falls back to the synthetic DemoScene. The factory runs here (not in
+    /// the AppDelegate) because the asset libraries bind GPU resources to the
+    /// device the view renders with.
+    var cellProviderFactory: ((MTLDevice) -> (any CellSceneProvider)?)?
 
     private var renderer: Renderer?
+    /// Retains the streaming controller (and, through it, the build runner +
+    /// provider) for the window's lifetime.
+    private var streamer: CellStreamer?
     /// Free-fly input shared with the renderer; the view writes it from
     /// NSEvents, the renderer drains it each frame (todo 2.8).
     private let cameraInput = CameraInputState()
@@ -35,24 +40,60 @@ final class GameViewController: NSViewController {
         }
         mtkView.device = device
 
-        // Synchronous cell scene build at startup — acceptable for 2.7's
-        // single small cell; streaming moves this off the launch path later.
-        let content = sceneFactory?(device)
+        // Async launch: no scene is built here. A provider (game data) starts
+        // the renderer on an empty scene and streams cells in around the
+        // camera; no provider (missing data / setup throw) falls back to the
+        // synthetic DemoScene so the window is never blank forever.
+        let provider = cellProviderFactory?(device)
 
         do {
             let newRenderer = try Renderer(
                 view: mtkView,
-                scene: content?.scene,
-                camera: content?.camera,
+                scene: provider != nil ? RenderScene(instances: []) : nil,
+                camera: nil,
                 input: cameraInput
             )
             newRenderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
             mtkView.delegate = newRenderer
             renderer = newRenderer
+            if let provider {
+                startStreaming(provider: provider, renderer: newRenderer)
+            }
         } catch {
             show(message: "Renderer setup failed: \(error)")
         }
     }
+
+    /// Wires a streamer over the provider: builds run off-main on a serial
+    /// runner, the recomposed scene swaps in via `Renderer.setScene`, and the
+    /// renderer's per-frame hook drives the streamer with the live camera
+    /// position. Weak captures both ways -> no retain cycle (this controller
+    /// owns both renderer + streamer).
+    private func startStreaming(provider: any CellSceneProvider, renderer: Renderer) {
+        let runner = SerialCellBuildRunner(provider: provider)
+        let controller = CellStreamer(
+            center: CellCoordinate(x: FirstRenderCell.gridX, y: FirstRenderCell.gridY),
+            runner: runner,
+            sink: { [weak renderer] scene, camera in
+                do {
+                    try renderer?.setScene(scene, camera: camera)
+                } catch {
+                    Self.logger.error(
+                        "[ERROR] scene swap failed: \(String(describing: error), privacy: .public)"
+                    )
+                }
+            }
+        )
+        renderer.onFrame = { [weak controller] position in
+            controller?.update(cameraPosition: position)
+        }
+        streamer = controller
+    }
+
+    private static let logger = Logger(
+        subsystem: "nl.jjgroenendijk.opensky",
+        category: "CellStream"
+    )
 
     private func show(message: String) {
         let label = NSTextField(labelWithString: message)
