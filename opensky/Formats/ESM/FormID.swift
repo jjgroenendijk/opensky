@@ -34,7 +34,7 @@ nonisolated struct FormID: Hashable {
     }
 }
 
-extension FormID: CustomStringConvertible {
+nonisolated extension FormID: CustomStringConvertible {
     var description: String {
         String(format: "%08X", rawValue)
     }

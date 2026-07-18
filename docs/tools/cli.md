@@ -61,6 +61,9 @@ Implementation notes:
   walking all of `Data/` is not worth it for a lookup layer; `cat` still resolves them.
 * Editor-ID lookup scans EDID fields of every record (whole-file decompression):
   ~6 s worst case on Skyrim.esm, fine for a dev tool.
+* `record` prints the shared `RecordTextDump` string; walk helpers live in
+  `opensky/Formats/ESM/ESMWalk.swift` (shared with the
+  [preview GUI](/tools/preview-gui.md) since 2.10).
 * `cell` mirrors the [cell scene build](/engine/cell-scene.md) WRLD walk read-only
   (XCLC grid match, labels ignored) and resolves base types via a headers-only
   FormID -> record-type index.
