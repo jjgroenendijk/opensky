@@ -60,6 +60,8 @@ nonisolated struct CellLoadSummary: Equatable {
     /// Splat layers dropped: unresolvable LTEX/TXST chain or over the
     /// 8-layer format cap (TerrainConstant.maxLayers).
     var terrainLayerSkipCount = 0
+    /// Flat water planes drawn for this cell (0 or 1).
+    var waterPlaneCount = 0
 
     var skippedRefCount: Int {
         unsupportedBaseSkipCount + markerSkipCount + modelFailureSkipCount + malformedRefSkipCount
@@ -92,6 +94,9 @@ nonisolated struct CellLoadSummary: Equatable {
         if terrainLayerCount > 0 || terrainLayerSkipCount > 0 {
             let dropped = terrainLayerSkipCount > 0 ? ", \(terrainLayerSkipCount) dropped" : ""
             terrain += " (\(terrainLayerCount) splat layers\(dropped))"
+        }
+        if waterPlaneCount > 0 {
+            terrain += ", water"
         }
         return "[INFO] \(cellName) (\(gridX),\(gridY)): \(totalRefCount) refs, "
             + "\(drawnRefCount) drawn, \(skipped), \(modelCount) models, "

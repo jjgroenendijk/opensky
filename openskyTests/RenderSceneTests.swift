@@ -214,4 +214,26 @@ struct RenderSceneTests {
         // 2 meshes x (vertex + index buffer) + 1 shared texture = 5.
         #expect(scene.residencyAllocations.count == 5)
     }
+
+    @Test(.enabled(if: Self.hasDevice)) func mergesSkyAndWater() throws {
+        let device = try #require(Self.device)
+        let mesh = try RenderMesh(device: device, mesh: WaterMeshBuilder.cellPlane())
+        let water = WaterDrawItem(
+            mesh: mesh,
+            modelMatrix: matrix_identity_float4x4,
+            shallowColor: SIMD3(0.1, 0.2, 0.3),
+            deepColor: SIMD3(0.01, 0.02, 0.03),
+            reflectionColor: SIMD3(0.4, 0.5, 0.6),
+            bounds: nil
+        )
+        let merged = RenderScene(merging: [
+            RenderScene(instances: [], water: [water], sky: SkyParameters()),
+            RenderScene(instances: [], water: [water])
+        ])
+        #expect(merged.sky != nil)
+        #expect(merged.water.count == 2)
+        #expect(merged.drawCount == 2)
+        // Both items share one mesh -> one vertex + one index allocation.
+        #expect(merged.residencyAllocations.count == 2)
+    }
 }

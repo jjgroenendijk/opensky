@@ -29,9 +29,10 @@ enum OpenSkyCLI {
       dds <key>                   Inspect a texture: header + mip chain
       lod [--worldspace <edid>]   Parse settings + sweep all .btr/.bto files
       screenshot --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
-             [--size WxH] [--zoom <f>] [--neighbors]
+             [--size WxH] [--zoom <f>] [--time-of-day <0-24>] [--neighbors]
                                   Save an offscreen World frame as PNG; zoom
                                   moves the eye toward the framed center;
+                                  time-of-day defaults to 13:00;
                                   --neighbors adds the 8 surrounding cells,
                                   camera frames the combined bounds
       render <screenshot options> Compatibility alias for screenshot

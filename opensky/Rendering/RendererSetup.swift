@@ -11,9 +11,11 @@ import simd
 
 /// The scene pass's pipeline states, built together from one library.
 nonisolated struct RenderPipelines {
+    let sky: MTLRenderPipelineState
     let opaque: MTLRenderPipelineState
     let alphaTest: MTLRenderPipelineState
     let terrain: MTLRenderPipelineState
+    let water: MTLRenderPipelineState
 }
 
 extension Renderer {
@@ -99,10 +101,63 @@ extension Renderer {
         }
 
         return try RenderPipelines(
+            sky: makeSkyPipeline(library: library, compiler: compiler, view: view),
             opaque: makeVariant(alphaTest: false),
             alphaTest: makeVariant(alphaTest: true),
-            terrain: makeTerrain()
+            terrain: makeTerrain(),
+            water: makeWaterPipeline(library: library, compiler: compiler, view: view)
         )
+    }
+
+    private static func makeSkyPipeline(
+        library: MTLLibrary,
+        compiler: MTL4Compiler,
+        view: MTKView
+    ) throws -> MTLRenderPipelineState {
+        let vertexFunction = MTL4LibraryFunctionDescriptor()
+        vertexFunction.library = library
+        vertexFunction.name = "skyVertex"
+        let fragmentFunction = MTL4LibraryFunctionDescriptor()
+        fragmentFunction.library = library
+        fragmentFunction.name = "skyFragment"
+        let descriptor = MTL4RenderPipelineDescriptor()
+        descriptor.label = "ProceduralSky"
+        descriptor.rasterSampleCount = view.sampleCount
+        descriptor.vertexFunctionDescriptor = vertexFunction
+        descriptor.fragmentFunctionDescriptor = fragmentFunction
+        descriptor.colorAttachments[0].pixelFormat = view.colorPixelFormat
+        return try compiler.makeRenderPipelineState(descriptor: descriptor)
+    }
+
+    private static func makeWaterPipeline(
+        library: MTLLibrary,
+        compiler: MTL4Compiler,
+        view: MTKView
+    ) throws -> MTLRenderPipelineState {
+        let vertexFunction = MTL4LibraryFunctionDescriptor()
+        vertexFunction.library = library
+        vertexFunction.name = "waterVertex"
+        let fragmentFunction = MTL4LibraryFunctionDescriptor()
+        fragmentFunction.library = library
+        fragmentFunction.name = "waterFragment"
+        let descriptor = MTL4RenderPipelineDescriptor()
+        descriptor.label = "CellWaterBlend"
+        descriptor.rasterSampleCount = view.sampleCount
+        descriptor.vertexFunctionDescriptor = vertexFunction
+        descriptor.fragmentFunctionDescriptor = fragmentFunction
+        descriptor.vertexDescriptor = StaticVertexLayout.vertexDescriptor()
+        guard let color = descriptor.colorAttachments[0] else {
+            throw RendererError.pipelineAttachmentMissing
+        }
+        color.pixelFormat = view.colorPixelFormat
+        color.blendingState = .enabled
+        color.sourceRGBBlendFactor = .sourceAlpha
+        color.destinationRGBBlendFactor = .oneMinusSourceAlpha
+        color.rgbBlendOperation = .add
+        color.sourceAlphaBlendFactor = .one
+        color.destinationAlphaBlendFactor = .oneMinusSourceAlpha
+        color.alphaBlendOperation = .add
+        return try compiler.makeRenderPipelineState(descriptor: descriptor)
     }
 
     /// Standard opaque depth: write-through, closer fragment wins. Metal 4
@@ -113,6 +168,18 @@ extension Renderer {
         descriptor.label = "OpaqueDepth"
         descriptor.depthCompareFunction = .less
         descriptor.isDepthWriteEnabled = true
+        guard let state = device.makeDepthStencilState(descriptor: descriptor) else {
+            throw RendererError.depthStateAllocationFailed
+        }
+        return state
+    }
+
+    /// Water tests opaque depth but does not write depth while blending.
+    static func makeWaterDepthState(device: MTLDevice) throws -> MTLDepthStencilState {
+        let descriptor = MTLDepthStencilDescriptor()
+        descriptor.label = "WaterReadOnlyDepth"
+        descriptor.depthCompareFunction = .less
+        descriptor.isDepthWriteEnabled = false
         guard let state = device.makeDepthStencilState(descriptor: descriptor) else {
             throw RendererError.depthStateAllocationFailed
         }

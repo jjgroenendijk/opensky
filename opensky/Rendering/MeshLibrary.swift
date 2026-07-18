@@ -176,6 +176,12 @@ nonisolated final class MeshLibrary {
         return (render, buffer)
     }
 
+    /// Uploads small engine-built geometry that needs only the shared static
+    /// vertex stream. Callers cache reusable meshes at their semantic level.
+    func renderMesh(_ mesh: Mesh) throws -> RenderMesh {
+        try RenderMesh(device: device, mesh: mesh)
+    }
+
     /// Shapes dropped during flatten for an already-loaded path (nil if the
     /// path was never successfully loaded).
     func skippedShapeCount(forPath path: String) -> Int? {

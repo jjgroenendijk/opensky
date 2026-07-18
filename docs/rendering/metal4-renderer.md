@@ -9,8 +9,8 @@ timestamp: 2026-07-18T00:00:00Z
 
 # Metal 4 static-mesh renderer
 
-State after milestone 2.7 app wiring: `Renderer.swift` draws a `RenderScene` (engine
-meshes + materials) through opaque and alpha-test pipeline variants. Scene source =
+`Renderer.swift` draws a `RenderScene` through sky, opaque, terrain, alpha-test, and
+water pipeline variants. Scene source =
 injection: `Renderer(view:scene:camera:)` takes a prepared `RenderScene` + `SceneCamera`
 (the app hands in the built cell scene with `SceneCamera.framing(bounds:)`); nil scene
 falls back to the synthetic `DemoScene` with its `.demo` camera (tests, missing game
@@ -33,8 +33,9 @@ adapted from Apple's Xcode Metal 4 game template (structure, not copied game cod
   instanced `DrawGroup` lists (section below): `modelMatrix = instance * meshLocal`,
   `normalMatrix` = inverse-transpose (`MatrixMath.normalMatrix`), opaque groups before
   alpha-tested so the pipeline switches once. `residencyAllocations` = deduped buffers +
-  textures for the residency set. Alpha blending (`Material.alphaBlend`) renders opaque
-  for now — out of 2.6 scope.
+  textures for residency. `SkyParameters?` marks exterior sky; `WaterDrawItem`s carry
+  plane mesh, model matrix, WATR palette, bounds. Static NIF `Material.alphaBlend` remains
+  deferred; water owns the first dedicated blend path.
 * `SceneCamera` — eye/target + sun/ambient consumed by `FrameUniforms`. `.demo` mirrors
   the DemoScene constants; `framing(bounds:)` frames a Z-up world AABB: target = box
   center, eye south-west of and above it along a fixed direction at distance
@@ -50,8 +51,8 @@ adapted from Apple's Xcode Metal 4 game template (structure, not copied game cod
 * Two static-mesh `MTL4RenderPipelineState` variants from one fragment function
   (`staticMeshFragment`), selected via function constant `FunctionConstantAlphaTest`
   (`MTL4SpecializedFunctionDescriptor` + `MTLFunctionConstantValues`): opaque pays
-  nothing for discard; alpha-test discards below `DrawUniforms.alphaThreshold`. Third
-  pipeline: terrain splat (section below).
+  nothing for discard; alpha-test discards below `DrawUniforms.alphaThreshold`. Further
+  pipelines: terrain splat, procedural sky, water blend (sections below).
 * Shading: diffuse map * (directional sun lambert + ambient), vertex color as baked
   tint (Skyrim bakes AO there), material alpha multiplied through. Normal mapping
   deferred (stretch goal) — no tangent attributes yet.
@@ -60,6 +61,20 @@ adapted from Apple's Xcode Metal 4 game template (structure, not copied game cod
   descriptor. Near 10 / far 65 536 per [coordinates](/decisions/coordinates.md).
 * Winding: front = counter-clockwise seen from outside, cull back, per-draw cull-none
   for double-sided materials. Verified on the demo ground plane; decision doc updated.
+
+## Sky + water pipelines (todo 3.5)
+
+Pass order = sky first, then opaque groups, terrain, alpha-test groups, water last. Sky is
+a fullscreen triangle with no vertex buffer or depth state. It reads time-of-day from frame
+uniforms and writes a procedural vertical palette + sun disc; later depth-tested geometry
+replaces its pixels. WRLD `no sky` suppresses the draw.
+
+Water uses reusable cell-plane geometry + per-item `WaterDrawUniforms` (model matrix,
+shallow/deep/reflection colors). Dedicated Metal 4 color attachment enables straight-alpha
+blending: source RGB `.sourceAlpha`, destination `.oneMinusSourceAlpha`; alpha uses `.one`
+plus `.oneMinusSourceAlpha`. Read-only depth (`.less`, write disabled) preserves earlier
+terrain/object depth. Shader adds animated color ripples + view-angle reflection; geometry
+stays flat. Details + real-frame evidence: [sky + water environment](/engine/sky-water.md).
 
 ## Terrain splat pipeline (todo 3.1)
 
@@ -204,12 +219,15 @@ change at z-fighting edges, visually identical.
 
 ## Uniforms + binding
 
-* `FrameUniforms` (viewProjection, camera position, sun direction/color, ambient) — one
+* `FrameUniforms` (viewProjection, camera position, sun direction/color, ambient,
+  time-of-day, animation time) — one
   256-byte-aligned slot per in-flight frame.
 * `DrawUniforms` (UV offset/scale, material alpha, alpha threshold — per GROUP) — ring
   of `maxFramesInFlight x drawUniformSlotCapacity` 256-byte-aligned entries, written per
   visible group each frame; regrown on scene swap (section above). Matrices live in the
   per-instance `InstanceTransform` ring (instancing section).
+* `WaterDrawUniforms` shares draw-ring slots with static/terrain uniforms; ring stride uses
+  largest struct, 256-byte aligned.
 * All binds through one `MTL4ArgumentTable` (5 buffers — vertices, frame + draw uniforms,
   terrain weights, instance transforms; 1 + 8 textures — diffuse + terrain layer array;
   1 sampler); table state is captured per draw, so per-draw `setAddress`/`setTexture`
@@ -272,8 +290,8 @@ proves nothing on screen.
 Milestone 2 shot — WhiterunExterior06 (Tamriel 6,-2) rendered by our engine from the
 user's own install (`openskycli render --size 1920x1080 --zoom 1.8`, 2026-07-18, M1):
 city wall segments with gate arch, Jorrvaskr roof, thatched houses. 15/16 refs drawn.
-Black background = no sky rendering yet (later milestone). Engine output, not extracted
-game data.
+The original M2 shot retains its black-background baseline; current sky/water evidence:
+[sky + water environment](/engine/sky-water.md). Engine output, not extracted game data.
 
 ![WhiterunExterior06 rendered offscreen by OpenSky](/img/m2-whiterun-exterior.png)
 

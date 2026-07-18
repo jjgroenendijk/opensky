@@ -73,6 +73,10 @@ typedef struct
     vector_float3 sunDirection;
     vector_float3 sunColor;
     vector_float3 ambientColor;
+    /// Procedural sky clock, 0..<24. Renderer parameter, default 13:00.
+    float timeOfDayHours;
+    /// Deterministic frame time for animated water.
+    float animationTime;
 } FrameUniforms;
 
 /// Per-GROUP material scalars for one instanced static-mesh draw (todo 3.2
@@ -112,5 +116,14 @@ typedef struct
     /// Bound ATXT layer count, <= TerrainConstantMaxLayers.
     unsigned int layerCount;
 } TerrainDrawUniforms;
+
+/// One flat CELL water plane. Colors decode from WATR DNAM RGBX entries.
+typedef struct
+{
+    matrix_float4x4 modelMatrix;
+    vector_float3 shallowColor;
+    vector_float3 deepColor;
+    vector_float3 reflectionColor;
+} WaterDrawUniforms;
 
 #endif /* ShaderTypes_h */

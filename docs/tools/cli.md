@@ -49,7 +49,7 @@ only where `--out` points (AGENTS.md Legal & IP).
 | `nif <key>` | container stats + named node/shape rows + flattened model summary (meshes, verts/tris, bounds, materials with texture paths) |
 | `dds <key>` | header + mip chain (size, BCn format, sRGB declaration) |
 | `lod [--worldspace edid]` | parse lodsettings + sweep every worldspace BTR/BTO through LOD block decoders + scene flattener; any failed container exits 1 |
-| `screenshot --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f] [--neighbors]` | cell scene build + distant LOD -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load/LOD/draw stats + non-background fraction; `--zoom` (0.1-10) moves eye toward framed center; `--neighbors` builds production-size 5x5 (shared libraries) and frames full-cell bounds only; missing cell warns + skips; `render` is identical alias |
+| `screenshot --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f] [--time-of-day 0-24] [--neighbors]` | cell scene build + distant LOD -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load/LOD/draw stats + non-background fraction; `--zoom` (0.1-10) moves eye toward framed center; `--time-of-day` controls procedural sky (default 13); `--neighbors` builds production-size 5x5 (shared libraries) and frames full-cell bounds only; missing cell warns + skips; `render` is identical alias |
 | `bench [--worldspace/--x/--y] [--size WxH] [--frames n] [--budget-ms f]` | sustained offscreen render (default 360 frames @ 1280x720) through `Renderer.renderOffscreenSustained` — FrameStats windows + per-frame wall times; prints avg/p95/max + fps, exit 1 when avg or p95 misses the budget (default 33.33 ms = 30 fps, todo 2.11 gate) |
 | `bench --fly-path [--worldspace/--x/--y] [--size WxH] [--budget-ms f] [--max-frames n] [--footprint-cap-mb f]` | scripted launch-center -> east -> north cell flight through live `CellStreamer`; waits for each 5x5 grid, reuses one render-target pair at 100 Hz, requires physical-footprint plateau/cap, unload, exact 35-cell build union with no duplicates, zero failed builds, avg/p95 frame budget |
 
@@ -74,7 +74,8 @@ Implementation notes:
   `CellSceneBuilder` -> `SceneCamera.framing`) on a headless `MTKView`; the offscreen
   path never touches a drawable. `render` dispatches the same implementation as a
   compatibility alias. App + CLI both use shared `FrameScreenshot` BGRA readback/PNG
-  encoder; no separate screenshot pipeline.
+  encoder; no separate screenshot pipeline. `--time-of-day` feeds the same renderer field
+  as live frames; 24 normalizes to midnight.
 * `screenshot --neighbors` composes 25 `CellScene` builds + one distant LOD scene with
   `RenderScene(merging:)` (a
   flat concat of each scene's opaque/alpha-tested/terrain draw lists — draw items

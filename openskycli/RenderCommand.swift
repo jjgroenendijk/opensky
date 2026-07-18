@@ -23,6 +23,7 @@ enum RenderCommand {
         let output = try scanner.requiredOption("--out")
         let size = try parseSize(scanner.option("--size"))
         let zoom = try parseZoom(scanner.option("--zoom"))
+        let timeOfDay = try parseTimeOfDay(scanner.option("--time-of-day"))
         let neighbors = scanner.flag("--neighbors")
         try scanner.finish()
 
@@ -59,14 +60,15 @@ enum RenderCommand {
             device: device,
             scene: scene,
             camera: zoomed(SceneCamera.framing(bounds: bounds), zoom: zoom),
-            size: size
+            size: size,
+            timeOfDay: timeOfDay
         )
-        // Instancing evidence (3.2): draw calls collapse below the group +
-        // terrain counts only via culling; instances >> draw calls means
-        // repeated models actually batched.
+        // Instancing evidence (3.2): draw calls collapse below draw-item
+        // count only via culling; instances >> draw calls means repeated
+        // models actually batched.
         print(
             "[INFO] draw calls: \(render.stats.drawCalls) "
-                + "(\(scene.drawCount) groups+terrain, \(scene.instanceCount) instances, "
+                + "(\(scene.drawCount) draw items, \(scene.instanceCount) instances, "
                 + "\(render.stats.culledInstances) culled)"
         )
         let pixels = readPixels(texture: render.texture)
@@ -181,6 +183,14 @@ enum RenderCommand {
         return zoom
     }
 
+    private static func parseTimeOfDay(_ value: String?) throws -> Float {
+        guard let value else { return 13 }
+        guard let hour = Float(value), (0 ... 24).contains(hour) else {
+            throw CLIError.usage("--time-of-day expects an hour in 0-24, got \(value)")
+        }
+        return hour == 24 ? 0 : hour
+    }
+
     private static func zoomed(_ camera: SceneCamera, zoom: Float) -> SceneCamera {
         guard zoom != 1 else { return camera }
         return SceneCamera(
@@ -236,7 +246,8 @@ enum RenderCommand {
         device: MTLDevice,
         scene: RenderScene,
         camera: SceneCamera,
-        size: (width: Int, height: Int)
+        size: (width: Int, height: Int),
+        timeOfDay: Float
     ) throws -> (texture: MTLTexture, stats: SceneDrawStats) {
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: size.width, height: size.height),
@@ -244,7 +255,12 @@ enum RenderCommand {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(view: view, scene: scene, camera: camera)
+        let renderer = try Renderer(
+            view: view,
+            scene: scene,
+            camera: camera,
+            timeOfDay: timeOfDay
+        )
         let texture = try renderer.renderOffscreen(width: size.width, height: size.height)
         return (texture, renderer.lastDrawStats)
     }

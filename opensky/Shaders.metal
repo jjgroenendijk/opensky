@@ -8,6 +8,61 @@
 
 using namespace metal;
 
+// Procedural exterior sky: fullscreen triangle, time-of-day palette,
+// horizon band, sun disc. Weather/CLMT sampling remains future work.
+
+typedef struct
+{
+    float4 position [[position]];
+    float2 uv;
+} SkyVertexOut;
+
+vertex SkyVertexOut skyVertex(uint vertexID [[vertex_id]])
+{
+    float2 positions[3] = {
+        float2(-1.0, -1.0), float2(3.0, -1.0), float2(-1.0, 3.0)
+    };
+    SkyVertexOut out;
+    out.position = float4(positions[vertexID], 1.0, 1.0);
+    out.uv = positions[vertexID] * 0.5 + 0.5;
+    return out;
+}
+
+fragment float4 skyFragment(
+    SkyVertexOut in [[stage_in]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]])
+{
+    float hour = fmod(frame.timeOfDayHours + 24.0, 24.0);
+    float sunrise = smoothstep(5.0, 8.0, hour);
+    float sunset = 1.0 - smoothstep(18.0, 21.0, hour);
+    float daylight = sunrise * sunset;
+    float dawnDistance = min(abs(hour - 6.0), abs(hour - 19.0));
+    float twilight = exp(-0.5 * pow(dawnDistance / 1.2, 2.0));
+
+    float3 nightUpper = float3(0.008, 0.015, 0.045);
+    float3 dayUpper = float3(0.10, 0.34, 0.72);
+    float3 nightHorizon = float3(0.025, 0.035, 0.075);
+    float3 dayHorizon = float3(0.58, 0.74, 0.88);
+    float3 warmHorizon = float3(0.95, 0.33, 0.12);
+    float3 upper = mix(nightUpper, dayUpper, daylight);
+    float3 horizon = mix(nightHorizon, dayHorizon, daylight);
+    horizon = mix(horizon, warmHorizon, saturate(twilight * 0.7));
+    float height = smoothstep(0.05, 0.92, in.uv.y);
+    float3 color = mix(horizon, upper, height);
+
+    float sunPhase = saturate((hour - 6.0) / 12.0);
+    float2 sunCenter = float2(
+        0.08 + sunPhase * 0.84,
+        0.38 + sin(sunPhase * 3.14159265) * 0.36
+    );
+    float sunDistance = distance(in.uv, sunCenter);
+    float disc = (1.0 - smoothstep(0.012, 0.02, sunDistance)) * daylight;
+    float glow = exp(-sunDistance * 32.0) * daylight;
+    color += float3(1.0, 0.72, 0.36) * glow * 0.22;
+    color = mix(color, float3(1.0, 0.92, 0.68), disc);
+    return float4(color, 1.0);
+}
+
 // Static-mesh path (docs/todo.md 2.6): diffuse * (directional sun + ambient),
 // vertex color as tint (Skyrim bakes AO there). Alpha-test pipeline variant
 // selected via function constant so opaque draws pay nothing for it.
@@ -141,4 +196,44 @@ fragment float4 terrainFragment(
     float3 lit = albedo * in.color.rgb
         * (frame.sunColor * lambert + frame.ambientColor);
     return float4(lit, 1.0);
+}
+
+// Cell water: flat geometry, animated interference ripples in color, WATR
+// shallow/deep/reflection palette, camera-angle Fresnel, straight alpha.
+
+typedef struct
+{
+    float4 position [[position]];
+    float3 worldPosition;
+} WaterVertexOut;
+
+vertex WaterVertexOut waterVertex(
+    StaticVertexIn in [[stage_in]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
+    constant WaterDrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]])
+{
+    WaterVertexOut out;
+    float4 world = draw.modelMatrix * float4(in.position, 1.0);
+    out.position = frame.viewProjectionMatrix * world;
+    out.worldPosition = world.xyz;
+    return out;
+}
+
+fragment float4 waterFragment(
+    WaterVertexOut in [[stage_in]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
+    constant WaterDrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]])
+{
+    float2 phase = in.worldPosition.xy * 0.006;
+    float ripple = sin(phase.x + frame.animationTime * 1.3)
+        * cos(phase.y - frame.animationTime * 0.9);
+    float distanceMix = smoothstep(
+        1000.0, 12000.0, distance(in.worldPosition.xy, frame.cameraPosition.xy)
+    );
+    float3 base = mix(draw.shallowColor, draw.deepColor, distanceMix * 0.65 + 0.15);
+    float3 viewDirection = normalize(frame.cameraPosition - in.worldPosition);
+    float fresnel = pow(1.0 - saturate(abs(viewDirection.z)), 3.0);
+    float3 color = mix(base, draw.reflectionColor, saturate(0.18 + fresnel * 0.55));
+    color *= 0.94 + ripple * 0.06;
+    return float4(color, 0.64);
 }

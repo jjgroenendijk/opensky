@@ -14,8 +14,8 @@ import simd
 typealias TextureProvider = (_ key: String?, _ usage: TextureUsage) -> MTLTexture
 
 /// GPU-side material: resolved diffuse texture + the scalar parameters the
-/// shader consumes. Alpha blending (Material.alphaBlend) is out of 2.6
-/// scope and renders opaque for now — noted in docs/rendering/static-mesh.md.
+/// shader consumes. Static NIF alpha blending remains deferred; milestone
+/// 3.5 water uses its dedicated blend pipeline instead.
 nonisolated struct RenderMaterial {
     let diffuse: MTLTexture
     let uvOffset: SIMD2<Float>
@@ -91,7 +91,7 @@ nonisolated struct DrawGroup {
 
 /// Ordered mesh+material grouping: first appearance fixes group order so
 /// composed scenes stay deterministic across recompositions.
-private struct GroupAccumulator {
+nonisolated private struct GroupAccumulator {
     private struct Key: Hashable {
         let mesh: ObjectIdentifier
         let diffuse: ObjectIdentifier
@@ -135,6 +135,21 @@ nonisolated struct TerrainDrawItem {
     let bounds: ModelBounds?
 }
 
+/// Exterior sky marker. Colors are procedural in the shader for now; this
+/// value makes sky presence explicit per worldspace and mergeable per scene.
+nonisolated struct SkyParameters: Equatable {}
+
+/// One exterior-cell water plane. Geometry is a reusable 4096-unit quad;
+/// modelMatrix places it at CELL/WRLD water height. Colors come from WATR.
+nonisolated struct WaterDrawItem {
+    let mesh: RenderMesh
+    let modelMatrix: float4x4
+    let shallowColor: SIMD3<Float>
+    let deepColor: SIMD3<Float>
+    let reflectionColor: SIMD3<Float>
+    let bounds: ModelBounds?
+}
+
 /// Draw lists for one frame's scene. Each placement's meshes become
 /// DrawInstances (modelMatrix = instance * meshLocal) grouped by mesh +
 /// material into instanced DrawGroups (todo 3.2), opaque groups before
@@ -145,10 +160,14 @@ nonisolated struct RenderScene {
     let opaque: [DrawGroup]
     let alphaTested: [DrawGroup]
     let terrain: [TerrainDrawItem]
+    let water: [WaterDrawItem]
+    let sky: SkyParameters?
 
     init(
         instances: [RenderPlacement],
-        terrain: [TerrainDrawItem] = []
+        terrain: [TerrainDrawItem] = [],
+        water: [WaterDrawItem] = [],
+        sky: SkyParameters? = nil
     ) {
         var opaque = GroupAccumulator()
         var alphaTested = GroupAccumulator()
@@ -175,6 +194,8 @@ nonisolated struct RenderScene {
         self.opaque = opaque.groups
         self.alphaTested = alphaTested.groups
         self.terrain = terrain
+        self.water = water
+        self.sky = sky
     }
 
     /// Merges already-built scenes into one draw-list union — grid/streaming
@@ -197,12 +218,14 @@ nonisolated struct RenderScene {
         self.opaque = opaque.groups
         self.alphaTested = alphaTested.groups
         terrain = scenes.flatMap(\.terrain)
+        water = scenes.flatMap(\.water)
+        sky = scenes.lazy.compactMap(\.sky).first
     }
 
     /// Per-draw uniform ring slots one frame can need: one per group +
     /// terrain item.
     var drawCount: Int {
-        opaque.count + alphaTested.count + terrain.count
+        opaque.count + alphaTested.count + terrain.count + water.count
     }
 
     /// Static instances across all groups — sizes the renderer's
@@ -231,6 +254,9 @@ nonisolated struct RenderScene {
                 item.weightsBuffer, item.material.diffuse
             ])
             add(item.layerTextures)
+        }
+        for item in water {
+            add([item.mesh.vertexBuffer, item.mesh.indexBuffer])
         }
         return allocations
     }

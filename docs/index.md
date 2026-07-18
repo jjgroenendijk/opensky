@@ -18,6 +18,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   .ilstrings layout, lenient encoding policy, lstring lookup wiring.
 * [Record decoders](/formats/records.md) - WRLD/CELL/REFR/STAT field layouts
   and their engine types.
+* [Exterior water records](/formats/water.md) - CELL XCLW/XCWT, WRLD defaults + parent
+  inheritance, WATR DNAM color offsets and sentinel policy.
 * [Terrain records](/formats/land.md) - LAND/LTEX/TXST layouts: VHGT gradient
   height field, VNML/VCLR, BTXT/ATXT/VTXT splat layers, texture sets.
 * [Distant LOD](/formats/lod.md) - lodsettings plus BTR/BTO paths and LOD-specific NIF
@@ -37,6 +39,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   objects: grid topology, base textures, XCLC quad-hiding, DNAM fallback plane, placement.
 * [Distant LOD streaming](/engine/distant-lod.md) - anchored coarsening rings beyond 5x5,
   async scene replacement, asset lifetime, real-render evidence.
+* [Sky + water environment](/engine/sky-water.md) - procedural time-of-day sky, per-cell
+  water resolution/build, animated alpha-blend render path.
 * [Free-fly camera](/engine/free-fly-camera.md) - WASDQE + mouse-look input capture,
   yaw/pitch pose -> view matrix, movement speeds tuned to Skyrim scale.
 

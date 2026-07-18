@@ -15,7 +15,8 @@ build an exterior cell scene (milestone 2, widened in 3.2). TES4 decode lives in
 
 Reference: UESP "Skyrim Mod:Mod File Format" per-record pages
 (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format>, subpages `/WRLD`,
-`/CELL`, `/REFR`, `/STAT`, `/MSTT`, `/TREE`, `/FURN`, `/ACTI`, `/CONT`). Impl:
+`/CELL`, `/REFR`, `/STAT`, `/MSTT`, `/TREE`, `/FURN`, `/ACTI`, `/CONT`). Water-specific
+fields + WATR layout: [exterior water records](/formats/water.md). Impl:
 `opensky/Formats/ESM/Records/`.
 
 Decode policy: loop over fields, pick known types, skip the rest — unknown
@@ -42,18 +43,21 @@ exists (open question in [roadmap](/todo.md)).
 
 ## WRLD -> Worldspace
 
-| field | type    | decoded                                |
-| ----- | ------- | -------------------------------------- |
-| EDID  | zstring | `editorID` ("Tamriel")                 |
-| FULL  | lstring | `name` ("Skyrim")                      |
-| WNAM  | formID  | `parent` worldspace (inheritance link) |
-| DATA  | uint8   | `flags`                                |
+| field | type     | decoded                                |
+| ----- | -------- | -------------------------------------- |
+| EDID  | zstring  | `editorID` ("Tamriel")                 |
+| FULL  | lstring  | `name` ("Skyrim")                      |
+| WNAM  | formID   | `parent` worldspace (inheritance link) |
+| PNAM  | uint16   | `parentFlags` inheritance categories   |
+| DATA  | uint8    | `flags`                                |
+| DNAM  | float[2] | default land + water heights           |
+| NAM2  | formID   | default WATR record                    |
 
 DATA flag bits: 0x01 small world, 0x02 no fast travel, 0x08 no LOD water,
 0x10 no landscape, 0x20 no sky, 0x40 fixed dimensions, 0x80 no grass.
 
 Skipped for now: RNAM large refs, MNAM map size, NAM0/NAM9 bounds, climate /
-water / LOD fields. WRLD record is followed by a world-children GRUP holding
+LOD fields. WRLD record is followed by a world-children GRUP holding
 exterior cell blocks (traversal in [ESM container](/formats/esm.md)).
 
 ## CELL -> Cell
@@ -64,6 +68,8 @@ exterior cell blocks (traversal in [ESM container](/formats/esm.md)).
 | FULL  | lstring                             | `name` (interior cells)    |
 | DATA  | uint16                              | `flags`                    |
 | XCLC  | int32 x, int32 y, uint32 quad flags | `grid` (exterior cells)    |
+| XCLW  | float32 bits                        | `waterHeight` override     |
+| XCWT  | formID                              | `waterType` WATR override  |
 
 DATA flag bits: 0x01 interior, 0x02 has water, 0x08 no LOD water, 0x80 show
 sky, more in UESP. Some records store one byte only (UESP note) — decoder
@@ -73,8 +79,8 @@ XCLC: exterior grid slot, one cell = 4096 game units. The quad-flags uint32
 is absent in some form-version-43 records (8-byte field -> flags 0); its
 high bits carry CK noise, kept verbatim.
 
-Lighting (XCLL), water height (XCLW), and the many formID links are skipped
-until rendering needs them.
+Lighting (XCLL) + remaining formID links stay skipped. XCLW sentinel policy, WRLD
+inheritance, and WATR colors: [exterior water records](/formats/water.md).
 
 ## REFR -> PlacedReference
 

@@ -10,6 +10,13 @@
 import Foundation
 
 nonisolated struct Cell {
+    /// XCLW override. Missing field means use WRLD DNAM; three known bit
+    /// patterns mean explicitly no water and must not fall back to WRLD.
+    enum WaterHeight: Equatable {
+        case height(Float)
+        case noWater
+    }
+
     /// DATA field (uint16; one byte in some records — see init).
     struct Flags: OptionSet {
         let rawValue: UInt16
@@ -40,6 +47,10 @@ nonisolated struct Cell {
     let flags: Flags
     /// Present on exterior cells, nil on interiors.
     let grid: Grid?
+    /// XCLW. nil = inherit WRLD DNAM default water height.
+    let waterHeight: WaterHeight?
+    /// XCWT per-cell WATR override. nil = use WRLD NAM2.
+    let waterType: FormID?
 
     var isInterior: Bool {
         flags.contains(.interior)
@@ -56,6 +67,8 @@ nonisolated struct Cell {
         var name: LString?
         var flags: Flags = []
         var grid: Grid?
+        var waterHeight: WaterHeight?
+        var waterType: FormID?
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -77,6 +90,10 @@ nonisolated struct Cell {
                 // uint32 exists only in 12-byte fields.
                 let quadFlags = try reader.bytesRemaining >= 4 ? reader.readUInt32() : 0
                 grid = Grid(x: x, y: y, quadFlags: quadFlags)
+            case "XCLW":
+                waterHeight = try Self.decodeWaterHeight(field.data)
+            case "XCWT":
+                waterType = try Self.decodeFormID(field.data)
             default:
                 break
             }
@@ -85,5 +102,26 @@ nonisolated struct Cell {
         self.name = name
         self.flags = flags
         self.grid = grid
+        self.waterHeight = waterHeight
+        self.waterType = waterType
+    }
+
+    private static func decodeWaterHeight(_ data: Data) throws -> WaterHeight? {
+        guard data.count >= 4 else { return nil }
+        var reader = BinaryReader(data)
+        let bits = try reader.readUInt32()
+        // UESP CELL + xEdit wbDefinitionsTES5.pas. 0x7F7FFFFF is
+        // the documented default/no-water sentinel; the other two
+        // are known CK-bug encodings with the same meaning.
+        return switch bits {
+        case 0x7F7F_FFFF, 0x4F7F_FFC9, 0xCF00_0000: .noWater
+        default: .height(Float(bitPattern: bits))
+        }
+    }
+
+    private static func decodeFormID(_ data: Data) throws -> FormID? {
+        guard data.count >= 4 else { return nil }
+        var reader = BinaryReader(data)
+        return try FormID(reader.readUInt32())
     }
 }

@@ -11,8 +11,8 @@ import simd
 import Testing
 
 struct CellSceneBuilderTests {
-    fileprivate static let device = MTLCreateSystemDefaultDevice()
-    fileprivate static var hasDevice: Bool {
+    static let device = MTLCreateSystemDefaultDevice()
+    static var hasDevice: Bool {
         device != nil
     }
 
@@ -330,24 +330,38 @@ extension CellSceneBuilderTests {
     /// top group per non-empty entry in `modelBaseRecords` (keyed by record
     /// type, e.g. "TREE") — mirrors the real plugin's one-group-per-type
     /// layout instead of mixing types under a single label.
-    private func plugin(
+    func plugin(
         worldspaceEditorID: String = "Tamriel",
         cellEditorID: String = "TestCell06",
         grid: (x: Int32, y: Int32) = (6, -2),
         persistentRefs: Data = Data(),
         temporaryRefs: Data = Data(),
         statRecords: Data = Data(),
-        modelBaseRecords: [String: Data] = [:]
+        modelBaseRecords: [String: Data] = [:],
+        cellFlags: UInt16 = 0,
+        cellWaterHeightBits: UInt32? = nil,
+        cellWaterType: UInt32? = nil,
+        worldDefaultWaterHeight: Float? = nil,
+        worldWaterType: UInt32? = nil,
+        worldFlags: UInt8 = 0,
+        parentWorld: UInt32? = nil,
+        parentFlags: UInt16 = 0,
+        extraWorldRecords: Data = Data(),
+        waterRecords: Data = Data()
     ) -> Data {
         let cellFormID: UInt32 = 0x2B
         let worldFormID: UInt32 = 0x1A
-        var cellFields = ESMFixture.field("EDID", ESMFixture.zstring(cellEditorID))
-        var xclc = Data()
-        xclc.appendUInt32(UInt32(bitPattern: grid.x))
-        xclc.appendUInt32(UInt32(bitPattern: grid.y))
-        xclc.appendUInt32(0)
-        cellFields += ESMFixture.field("XCLC", xclc)
-        let cell = ESMFixture.record("CELL", formID: cellFormID, data: cellFields)
+        let cell = ESMFixture.record(
+            "CELL",
+            formID: cellFormID,
+            data: cellFields(
+                editorID: cellEditorID,
+                grid: grid,
+                flags: cellFlags,
+                waterHeightBits: cellWaterHeightBits,
+                waterType: cellWaterType
+            )
+        )
         let children = ESMFixture.childGroup(
             parent: cellFormID, groupType: 8, contents: persistentRefs
         ) + ESMFixture.childGroup(
@@ -369,18 +383,26 @@ extension CellSceneBuilderTests {
         let worldChildren = ESMFixture.childGroup(
             parent: worldFormID, groupType: 1, contents: block
         )
-        let wrld = ESMFixture.record(
-            "WRLD", formID: worldFormID,
-            data: ESMFixture.field("EDID", ESMFixture.zstring(worldspaceEditorID))
+        let wrld = worldRecord(
+            formID: worldFormID,
+            editorID: worldspaceEditorID,
+            defaultWaterHeight: worldDefaultWaterHeight,
+            waterType: worldWaterType,
+            flags: worldFlags,
+            parent: parentWorld,
+            parentFlags: parentFlags
         )
         let modelBaseGroups = modelBaseRecords
             .sorted { $0.key < $1.key } // deterministic fixture bytes
             .map { type, records in ESMFixture.topGroup(type, contents: records) }
             .reduce(Data(), +)
         return ESMFixture.tes4()
-            + ESMFixture.topGroup("WRLD", contents: wrld + worldChildren)
+            + ESMFixture.topGroup(
+                "WRLD", contents: extraWorldRecords + wrld + worldChildren
+            )
             + ESMFixture.topGroup("STAT", contents: statRecords)
             + modelBaseGroups
+            + ESMFixture.topGroup("WATR", contents: waterRecords)
     }
 
     private func makeBuilder(pluginData: Data, device: MTLDevice) throws -> CellSceneBuilder {
@@ -394,7 +416,7 @@ extension CellSceneBuilderTests {
         )
     }
 
-    private func build(
+    func build(
         pluginData: Data,
         gridX: Int32 = 6,
         gridY: Int32 = -2
