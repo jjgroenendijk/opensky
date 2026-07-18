@@ -56,6 +56,21 @@ nonisolated enum GameDataLocator {
     static let environmentKey = "OPENSKY_DATA_ROOT"
     static let defaultsKey = "OpenSkyDataRoot"
 
+    /// Defaults domain holding the data-root setting. One shared domain so
+    /// every tool (app, preview, CLI) sees the same setting regardless of its
+    /// own bundle id.
+    static let settingsDomain = "nl.jjgroenendijk.opensky"
+
+    /// Defaults store for the data-root setting. `UserDefaults(suiteName:)`
+    /// rejects the current app's own bundle id, so the main app (whose domain
+    /// IS the shared one) uses `.standard` — same plist either way.
+    static var settingsDefaults: UserDefaults {
+        if Bundle.main.bundleIdentifier == settingsDomain {
+            return .standard
+        }
+        return UserDefaults(suiteName: settingsDomain) ?? .standard
+    }
+
     /// Steam's default install location for Skyrim SE on macOS.
     static var defaultSteamInstallURL: URL {
         FileManager.default.homeDirectoryForCurrentUser
@@ -67,7 +82,7 @@ nonisolated enum GameDataLocator {
     /// for tests; production callers use the defaults.
     static func locate(
         environment: [String: String] = ProcessInfo.processInfo.environment,
-        userDefaults: UserDefaults = .standard,
+        userDefaults: UserDefaults = settingsDefaults,
         defaultInstall: URL = defaultSteamInstallURL,
         fileManager: FileManager = .default
     ) throws -> GameDataRoot {
@@ -81,6 +96,25 @@ nonisolated enum GameDataLocator {
             return root
         }
         throw GameDataError.notFound(searched: [defaultInstall.path(percentEncoded: false)])
+    }
+
+    /// Persists a user-chosen install path (Settings UI). Validated first;
+    /// an invalid choice throws and leaves the stored setting untouched.
+    @discardableResult
+    static func saveUserChoice(
+        path: String,
+        userDefaults: UserDefaults = settingsDefaults,
+        fileManager: FileManager = .default
+    ) throws -> GameDataRoot {
+        let root = try validated(path: path, source: .userDefaults, fileManager: fileManager)
+        userDefaults.set(path, forKey: defaultsKey)
+        return root
+    }
+
+    /// Removes the persisted choice; the next locate falls back to the
+    /// default Steam path.
+    static func clearUserChoice(userDefaults: UserDefaults = settingsDefaults) {
+        userDefaults.removeObject(forKey: defaultsKey)
     }
 
     private static func validated(

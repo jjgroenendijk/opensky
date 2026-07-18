@@ -4,6 +4,17 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* **Preview settings menu + data root picker**: `openskypreview` gains a real
+  main menu (Settings… Cmd+, / Edit / Quit) and a Settings window that shows
+  the resolved game data root + source and lets the user pick the install
+  folder via `NSOpenPanel` — validated + persisted through new
+  `GameDataLocator.saveUserChoice`/`clearUserChoice`; browser catalog reloads
+  live on change (new `PreviewViewController.reload`, catalog-load generation
+  counter drops stale loads). Data-root setting now lives in shared defaults
+  domain `nl.jjgroenendijk.opensky` (`GameDataLocator.settingsDefaults`) so
+  app/preview/CLI read one setting despite differing bundle ids. Docs:
+  [preview-gui](/tools/preview-gui.md), [locator](/engine/game-data-locator.md).
+  Tests: `GameDataLocatorTests` save/clear cases.
 * **Terrain 3x3 grid verify, closes M3.1** (M3.1): `openskycli render --neighbors` builds
   the target cell plus its 8 grid neighbors off one shared `MeshLibrary`/`TextureLibrary`/
   `CellSceneBuilder` (residency + STAT index dedup across cells, not a streaming grid

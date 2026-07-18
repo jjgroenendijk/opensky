@@ -35,6 +35,23 @@ monospace info text. Data root comes from the
 [game data locator](/engine/game-data-locator.md) chain; missing install ->
 in-window message, app still launches (no crash, no alert loop).
 
+## Menu + Settings
+
+Main menu: app menu (Settings… Cmd+, / Quit) + standard Edit menu (copy/paste
+for the filter field). Settings window
+(`PreviewSettingsWindowController`) shows the resolved data root path + source
+note (env override flagged as winning over the stored choice) and two actions:
+
+* Choose… — `NSOpenPanel` folder pick, validated + persisted via
+  `GameDataLocator.saveUserChoice` (shared defaults domain, so main app + CLI
+  see it too). Invalid folder -> red note, stored setting untouched.
+* Use Default — `clearUserChoice`, falls back to the Steam default path.
+
+Either change triggers `PreviewViewController.reload(root:errorMessage:)`:
+current catalog dropped, new catalog loads off-main; a catalog-load generation
+counter drops stale in-flight loads (same pattern as filtering). Failed
+re-locate -> in-window message, no relaunch needed to fix.
+
 Browse logic is AppKit-free in `opensky/Preview/` so it unit-tests without a
 window (`PreviewCatalogTests`, `RecordTextDumpTests`,
 `TexturePreviewSceneTests`):

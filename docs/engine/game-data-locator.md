@@ -19,9 +19,23 @@ through to the next source.
 
 1. `OPENSKY_DATA_ROOT` env var — tests, CLI runs, one-off launches.
 2. `OpenSkyDataRoot` UserDefaults key — persistent per-machine setting:
-   `defaults write nl.jjgroenendijk.opensky OpenSkyDataRoot "<install path>"`.
+   `defaults write nl.jjgroenendijk.opensky OpenSkyDataRoot "<install path>"`,
+   or the preview app's Settings window.
 3. Default Steam path:
    `~/Library/Application Support/Steam/steamapps/common/Skyrim Special Edition`.
+
+Setting lives in one shared defaults domain `nl.jjgroenendijk.opensky`
+(`GameDataLocator.settingsDefaults`) — tools with other bundle ids (preview)
+read/write it via `UserDefaults(suiteName:)`; the main app, whose own domain is
+the shared one, uses `.standard` (suiteName rejects the current bundle id).
+Same plist either way.
+
+## Persisting a choice
+
+`GameDataLocator.saveUserChoice(path:)` — validates, then stores under the
+defaults key; invalid path throws and leaves the stored setting untouched.
+`clearUserChoice()` removes it (next locate falls back to the Steam default).
+Preview Settings window drives both.
 
 ## Validation
 
