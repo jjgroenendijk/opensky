@@ -4,6 +4,22 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-18
 
+* **Cell streaming grid manager** (M3.2, grid-manager sub-item): new
+  `opensky/World/CellGridManager.swift` -- pure `simd`-only value type, camera
+  `SIMD3<Float>` position -> desired NxN exterior-cell grid (`uGridsToLoad`
+  default 5 -> radius 2, ref UESP "Skyrim:INI Settings" Grid section), diffed
+  against a caller-supplied loaded set. Floor-division cell mapping (not
+  truncation -- negative coords land correctly). Ownership split: the manager
+  tracks only its desired center cell; the loaded set stays with the caller
+  so async loads (later commit, same 3.2 item) can finish out of order or
+  fail without the manager drifting from reality -- `update` always diffs
+  fresh against whatever `loaded` the caller reports that frame. Hysteresis
+  (128-unit margin, checked per axis) stops a camera oscillating across a
+  cell border from thrashing load/unload. Docs:
+  [cell-streaming](/engine/cell-streaming.md). Tests: `CellGridManagerTests`
+  -- floor mapping incl. negative/boundary coords, 5x5 grid contents, radius
+  parameter, one-cell-move diff (leading/trailing edge), hysteresis no-thrash,
+  decisive-crossing, diagonal-corner cases.
 * **Frustum culling math** (M3.2, math only): new `Rendering/Frustum.swift` —
   `Frustum(viewProjection:)` extracts 6 inward planes from a `P * V` matrix
   (Gribb/Hartmann 2001, adapted to column-vector convention + Metal's z in
