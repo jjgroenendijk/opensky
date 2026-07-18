@@ -123,3 +123,15 @@ ground + crates, alpha-test holes show geometry behind them, per-face lighting. 
 ground plane (only single-sided flat mesh) caught the inverted provisional winding —
 closed boxes masked it. Rendering acceptance stays visual + frame stats; a green build
 proves nothing on screen.
+
+Milestone 2 shot — WhiterunExterior06 (Tamriel 6,-2) rendered by our engine from the
+user's own install (`openskycli render --size 1920x1080 --zoom 1.8`, 2026-07-18, M1):
+city wall segments with gate arch, Jorrvaskr roof, thatched houses. 15/16 refs drawn.
+Black background = no sky rendering yet (later milestone). Engine output, not extracted
+game data.
+
+![WhiterunExterior06 rendered offscreen by OpenSky](/img/m2-whiterun-exterior.png)
+
+Same run's fps gate (todo 2.11), measured via `openskycli bench` on Apple M1, real
+install: 360 frames @ 1280x720 avg 0.39 ms (2557 fps), p95 0.43 ms; @ 1920x1080 avg
+0.54 ms (1846 fps), p95 0.61 ms — >30 fps sustained with wide margin (budget 33.33 ms).
