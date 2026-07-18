@@ -103,6 +103,8 @@ nonisolated final class CellSceneBuilder {
     var worldspaceIndex: [UInt32: Worldspace]?
     var waterTypeIndex: [UInt32: WaterType]?
     var waterPlaneMesh: RenderMesh?
+    var lightingTemplateIndex: [UInt32: LightingTemplate]?
+    var lightIndex: [UInt32: LightRecord]?
 
     init(
         file: ESMFile,
@@ -180,7 +182,9 @@ nonisolated final class CellSceneBuilder {
                 doors: doors,
                 terrain: terrain,
                 water: water,
-                sky: sky
+                sky: sky,
+                lighting: nil,
+                pointLights: []
             ),
             counts: counts
         )
@@ -336,8 +340,9 @@ extension CellSceneBuilder {
         guard !refs.isEmpty else { return [] }
         let statIndex = statIndexBuildingIfNeeded()
         let modelBaseIndex = modelBaseIndexBuildingIfNeeded()
+        let lightIndex = lightIndexBuildingIfNeeded()
         var instances: [ResolvedInstance] = []
-        for ref in refs {
+        for ref in refs where lightIndex[ref.base.rawValue] == nil {
             let id = ref.formID.description
             guard
                 let resolved = resolveBase(

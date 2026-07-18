@@ -4,7 +4,7 @@ title: Interior door transitions
 description: Interior CELL build, DOOR/XTEL resolution, proximity activation, camera
   teleport, suspended exterior streaming, return flow.
 tags: [engine, world, interior, door, streaming]
-timestamp: 2026-07-18T00:00:00Z
+timestamp: 2026-07-19T00:00:00Z
 ---
 
 # Interior door transitions
@@ -23,7 +23,8 @@ fallback handles stale CK labels. CELL record identity wins. DATA 0x01 must mark
 Persistent type-8 + temporary type-9 children reuse exterior ref walk. STAT + shared
 ModelBase index resolve objects, now including DOOR MODL. Interior `CellScene` carries no
 LAND, procedural sky, exterior water plane, or distant LOD. `location = .interior(FormID)`
-replaces XCLC identity. Interior water, lighting, portals remain later work.
+replaces XCLC identity. Interior lighting resolves XCLL against LTMP -> LGTM, then adds
+supported direct LIGH + XEMI placements. Interior water + portals remain later work.
 
 ## Door resolution
 
@@ -71,8 +72,8 @@ door within configured cell radius, requires exterior -> interior -> same exteri
 round trip, renders
 interior arrival pose. `make probe` runs it when local install exists.
 
-Real probe 2026-07-18: Chillfurrow Farm source door 0001633D at physical cell `(7,-3)` ->
-destination 000163A8, interior CELL 00016204; 232 refs, 118 static draws, 69 models, 49
-textures. Reverse XTEL returned to 0001633D + exterior `(7,-3)`, not persistent storage
-cell `(0,0)`. 1280x720 frame showed textured farmhouse interior shell from exact arrival
-pose; black/unlit areas expected before M3.7 lighting.
+Real probe updated 2026-07-19: Chillfurrow Farm source door 0001633D at physical cell
+`(7,-3)` -> destination 000163A8, interior CELL 00016204; 232 refs, 118 static draws, 69
+models, 49 textures, 4 supported point lights. Reverse XTEL returned to 0001633D +
+exterior `(7,-3)`, not persistent storage cell `(0,0)`. 1280x720 lit/unlit frames from exact
+arrival pose show cell ambient/fog change; exterior return retains procedural sun/sky path.

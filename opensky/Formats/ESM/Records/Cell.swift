@@ -51,6 +51,10 @@ nonisolated struct Cell {
     let waterHeight: WaterHeight?
     /// XCWT per-cell WATR override. nil = use WRLD NAM2.
     let waterType: FormID?
+    /// XCLL cell-local lighting values; nil when absent or too truncated.
+    let lighting: CellLightingValues?
+    /// LTMP -> LGTM lighting template.
+    let lightingTemplate: FormID?
 
     var isInterior: Bool {
         flags.contains(.interior)
@@ -69,6 +73,8 @@ nonisolated struct Cell {
         var grid: Grid?
         var waterHeight: WaterHeight?
         var waterType: FormID?
+        var lighting: CellLightingValues?
+        var lightingTemplate: FormID?
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -94,6 +100,10 @@ nonisolated struct Cell {
                 waterHeight = try Self.decodeWaterHeight(field.data)
             case "XCWT":
                 waterType = try Self.decodeFormID(field.data)
+            case "XCLL":
+                lighting = try CellLightingValues.decode(field.data, hasInheritFlags: true)
+            case "LTMP":
+                lightingTemplate = try Self.decodeFormID(field.data)
             default:
                 break
             }
@@ -104,6 +114,8 @@ nonisolated struct Cell {
         self.grid = grid
         self.waterHeight = waterHeight
         self.waterType = waterType
+        self.lighting = lighting
+        self.lightingTemplate = lightingTemplate
     }
 
     private static func decodeWaterHeight(_ data: Data) throws -> WaterHeight? {

@@ -95,6 +95,8 @@ nonisolated struct CellLoadSummary: Equatable {
     var terrainLayerSkipCount = 0
     /// Flat water planes drawn for this cell (0 or 1).
     var waterPlaneCount = 0
+    /// Supported LIGH/XEMI placements available to forward draws.
+    var pointLightCount = 0
 
     var skippedRefCount: Int {
         unsupportedBaseSkipCount + markerSkipCount + modelFailureSkipCount + malformedRefSkipCount
@@ -130,6 +132,9 @@ nonisolated struct CellLoadSummary: Equatable {
         }
         if waterPlaneCount > 0 {
             terrain += ", water"
+        }
+        if pointLightCount > 0 {
+            terrain += ", \(pointLightCount) point lights"
         }
         return "[INFO] \(cellName) (\(gridX),\(gridY)): \(totalRefCount) refs, "
             + "\(drawnRefCount) drawn, \(skipped), \(modelCount) models, "

@@ -18,6 +18,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   .ilstrings layout, lenient encoding policy, lstring lookup wiring.
 * [Record decoders](/formats/records.md) - WRLD/CELL/REFR/STAT field layouts
   and their engine types.
+* [Interior lighting records](/formats/lighting.md) - CELL XCLL/LTMP, LGTM DATA/DALC,
+  LIGH DATA/FNAM, REFR XRDS/XEMI, inheritance + decode policy.
 * [Exterior water records](/formats/water.md) - CELL XCLW/XCWT, WRLD defaults + parent
   inheritance, WATR DNAM color offsets and sentinel policy.
 * [Terrain records](/formats/land.md) - LAND/LTEX/TXST layouts: VHGT gradient

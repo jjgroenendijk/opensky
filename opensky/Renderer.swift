@@ -114,6 +114,8 @@ final class Renderer: NSObject {
     /// Per-frame slot count of the draw-uniform ring — power-of-two
     /// headroom over drawCount so per-cell-crossing swaps rarely realloc.
     private(set) var drawUniformSlotCapacity: Int
+    /// Per-draw nearest-light arrays, same draw-slot indexing as uniforms.
+    private(set) var pointLightBuffer: MTLBuffer
     /// Per-instance transform ring (todo 3.2 instancing): tightly packed
     /// InstanceTransform entries, instanceSlotCapacity per in-flight frame.
     /// Same regrow-on-swap treatment as the draw-uniform ring.
@@ -132,7 +134,7 @@ final class Renderer: NSObject {
     let frameStats: FrameStats
 
     var frameIndex: Int
-    private var projectionMatrix = matrix_identity_float4x4
+    var projectionMatrix = matrix_identity_float4x4
     /// Culling/draw counts of the last encoded frame (see SceneDrawStats).
     /// Written only by encodeScenePass (RendererScenePass.swift).
     var lastDrawStats = SceneDrawStats()
@@ -161,12 +163,7 @@ final class Renderer: NSObject {
         }
         commandBuffer = buffer
 
-        commandAllocators = try (0 ..< Self.maxFramesInFlight).map { _ in
-            guard let allocator = device.makeCommandAllocator() else {
-                throw RendererError.commandAllocatorUnavailable
-            }
-            return allocator
-        }
+        commandAllocators = try Self.makeCommandAllocators(device: device)
 
         argumentTable = try Self.makeArgumentTable(device: device)
 
@@ -204,13 +201,17 @@ final class Renderer: NSObject {
         )
         let rings = try Self.makeSceneRings(device: device, scene: self.scene)
         drawUniformBuffer = rings.drawBuffer
+        pointLightBuffer = rings.pointLightBuffer
         drawUniformSlotCapacity = rings.drawCapacity
         instanceTransformBuffer = rings.instanceBuffer
         instanceSlotCapacity = rings.instanceCapacity
 
         residencySet = try Self.makeResidencySet(
             device: device,
-            allocations: [frameUniformBuffer, drawUniformBuffer, instanceTransformBuffer]
+            allocations: [
+                frameUniformBuffer, drawUniformBuffer, pointLightBuffer,
+                instanceTransformBuffer
+            ]
                 + self.scene.residencyAllocations
         )
         commandQueue.addResidencySet(residencySet)
@@ -240,6 +241,7 @@ final class Renderer: NSObject {
     /// transform ring, both with slotCapacity headroom.
     struct SceneRings {
         let drawBuffer: MTLBuffer
+        let pointLightBuffer: MTLBuffer
         let drawCapacity: Int
         let instanceBuffer: MTLBuffer
         let instanceCapacity: Int
@@ -255,6 +257,13 @@ final class Renderer: NSObject {
                 device: device,
                 length: alignedDrawUniformsSize * drawCapacity * maxFramesInFlight,
                 label: "DrawUniforms"
+            ),
+            pointLightBuffer: makeUniformBuffer(
+                device: device,
+                length: MemoryLayout<PointLightUniform>.stride
+                    * LightingConstant.maxPointLights.rawValue
+                    * drawCapacity * maxFramesInFlight,
+                label: "PointLights"
             ),
             drawCapacity: drawCapacity,
             instanceBuffer: makeUniformBuffer(
@@ -284,6 +293,7 @@ final class Renderer: NSObject {
         // Prepare every fallible allocation before mutating live renderer
         // state. Allocation failure leaves old scene + rings intact.
         var nextDrawBuffer = drawUniformBuffer
+        var nextPointLightBuffer = pointLightBuffer
         var nextDrawCapacity = drawUniformSlotCapacity
         if newScene.drawCount > drawUniformSlotCapacity {
             nextDrawCapacity = Self.slotCapacity(for: newScene.drawCount)
@@ -292,6 +302,13 @@ final class Renderer: NSObject {
                 length: Self.alignedDrawUniformsSize
                     * nextDrawCapacity * Self.maxFramesInFlight,
                 label: "DrawUniforms"
+            )
+            nextPointLightBuffer = try Self.makeUniformBuffer(
+                device: device,
+                length: MemoryLayout<PointLightUniform>.stride
+                    * LightingConstant.maxPointLights.rawValue
+                    * nextDrawCapacity * Self.maxFramesInFlight,
+                label: "PointLights"
             )
         }
         var nextInstanceBuffer = instanceTransformBuffer
@@ -318,9 +335,11 @@ final class Renderer: NSObject {
         if nextDrawBuffer !== drawUniformBuffer {
             // Old ring may back in-flight frames — retire, never reuse.
             retiring.append(drawUniformBuffer)
+            retiring.append(pointLightBuffer)
             drawUniformBuffer = nextDrawBuffer
+            pointLightBuffer = nextPointLightBuffer
             drawUniformSlotCapacity = nextDrawCapacity
-            residencySet.addAllocations([nextDrawBuffer])
+            residencySet.addAllocations([nextDrawBuffer, nextPointLightBuffer])
         }
         if nextInstanceBuffer !== instanceTransformBuffer {
             retiring.append(instanceTransformBuffer)
@@ -360,6 +379,7 @@ final class Renderer: NSObject {
         var live = Set(scene.residencyAllocations.map(ObjectIdentifier.init))
         live.insert(ObjectIdentifier(frameUniformBuffer))
         live.insert(ObjectIdentifier(drawUniformBuffer))
+        live.insert(ObjectIdentifier(pointLightBuffer))
         live.insert(ObjectIdentifier(instanceTransformBuffer))
         // A drained A entry may share an allocation with undrained B. Keep
         // that allocation resident until every retired frame using it drains.
@@ -381,7 +401,7 @@ final class Renderer: NSObject {
     /// Advances the free-fly camera by one frame of input using real elapsed
     /// time. First frame (or no input) makes no move. dt is clamped so a stall
     /// (breakpoint, window occluded) cannot teleport the camera.
-    private func advanceCamera() {
+    func advanceCamera() {
         guard let input else { return }
         let now = CACurrentMediaTime()
         let dt = lastUpdateTime.map { Float(min(now - $0, 0.1)) } ?? 0
@@ -414,77 +434,8 @@ extension Renderer {
     /// Resolves the timestamp pair the slot's previous frame wrote; safe
     /// because the shared-event wait guarantees that frame finished. The
     /// depth guard skips the first ring lap, before any slot was written.
-    private func resolveTimestamps(slot: Int) -> (start: UInt64, end: UInt64)? {
+    func resolveTimestamps(slot: Int) -> (start: UInt64, end: UInt64)? {
         guard frameIndex >= 2 * Self.maxFramesInFlight else { return nil }
         return readTimestampPair(slot: slot)
-    }
-}
-
-extension Renderer: MTKViewDelegate {
-    func mtkView(_: MTKView, drawableSizeWillChange size: CGSize) {
-        let aspect = Float(size.width) / Float(size.height)
-        projectionMatrix = MatrixMath.perspective(
-            fovYRadians: MatrixMath.radians(fromDegrees: 65),
-            aspectRatio: aspect,
-            nearZ: Self.nearPlane,
-            farZ: Self.farPlane
-        )
-    }
-
-    func draw(in view: MTKView) {
-        guard
-            let drawable = view.currentDrawable,
-            let passDescriptor = view.currentMTL4RenderPassDescriptor,
-            let metalLayer = view.layer as? CAMetalLayer
-        else { return }
-
-        let cpuStart = frameStats.beginFrame()
-
-        advanceCamera()
-        // Streaming drives its per-frame update here; it may setScene back
-        // synchronously (same thread, still between frames) before this frame
-        // encodes, which then draws the freshly streamed scene.
-        onFrame?(freeFlyCamera.position)
-        purgeRetiredResources()
-
-        // Block until the GPU finishes the frame that used this slot.
-        endFrameEvent.wait(
-            untilSignaledValue: UInt64(frameIndex - Self.maxFramesInFlight),
-            timeoutMS: 10
-        )
-
-        let slot = frameIndex % Self.maxFramesInFlight
-        let gpuTicks = resolveTimestamps(slot: slot)
-        let allocator = commandAllocators[slot]
-        allocator.reset()
-        commandBuffer.beginCommandBuffer(allocator: allocator)
-        if let heap = timestampHeap {
-            commandBuffer.writeTimestamp(counterHeap: heap, index: slot * 2)
-        }
-
-        let encoded = encodeScenePass(
-            descriptor: passDescriptor,
-            slot: slot,
-            projection: projectionMatrix
-        )
-        guard encoded else {
-            commandBuffer.endCommandBuffer()
-            return
-        }
-
-        if let heap = timestampHeap {
-            commandBuffer.writeTimestamp(counterHeap: heap, index: slot * 2 + 1)
-        }
-        commandBuffer.useResidencySet(metalLayer.residencySet)
-        commandBuffer.endCommandBuffer()
-
-        commandQueue.waitForDrawable(drawable)
-        commandQueue.commit([commandBuffer])
-        commandQueue.signalDrawable(drawable)
-        commandQueue.signalEvent(endFrameEvent, value: UInt64(frameIndex))
-        frameIndex += 1
-        drawable.present()
-
-        frameStats.endFrame(cpuStartNS: cpuStart, gpuTicks: gpuTicks)
     }
 }

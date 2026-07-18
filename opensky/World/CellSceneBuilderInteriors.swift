@@ -96,6 +96,7 @@ extension CellSceneBuilder {
         var counts = BuildCounts()
         let refs = collectReferences(in: found.children, counts: &counts)
         let instances = resolveInstances(refs: refs, counts: &counts)
+        let lighting = buildInteriorLighting(cell: found.cell, references: refs)
         var scene = makeScene(
             found: found,
             grid: (x: 0, y: 0),
@@ -107,7 +108,9 @@ extension CellSceneBuilder {
                 doors: resolveDoors(refs: refs),
                 terrain: nil,
                 water: nil,
-                sky: nil
+                sky: nil,
+                lighting: lighting?.lighting,
+                pointLights: lighting?.pointLights ?? []
             ),
             counts: counts
         )

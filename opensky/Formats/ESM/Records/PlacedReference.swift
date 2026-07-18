@@ -42,6 +42,10 @@ nonisolated struct PlacedReference {
     let scale: Float
     /// XTEL — present only on teleporting door references.
     let teleportDestination: TeleportDestination?
+    /// XRDS — per-reference point-light radius override.
+    let lightRadius: Float?
+    /// XEMI — LIGH/REGN emittance override; LIGH handled by lighting pass.
+    let emittance: FormID?
 
     init(record: ESMRecord) throws {
         guard record.type == "REFR" else {
@@ -53,6 +57,8 @@ nonisolated struct PlacedReference {
         var placement: Placement?
         var scale: Float = 1
         var teleportDestination: TeleportDestination?
+        var lightRadius: Float?
+        var emittance: FormID?
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -75,6 +81,10 @@ nonisolated struct PlacedReference {
                 scale = try Float(bitPattern: reader.readUInt32())
             case "XTEL":
                 teleportDestination = try Self.decodeTeleport(field, reference: formID)
+            case "XRDS":
+                lightRadius = try Self.decodeFloat(field.data)
+            case "XEMI":
+                emittance = try Self.decodeFormID(field.data)
             default:
                 break
             }
@@ -89,6 +99,20 @@ nonisolated struct PlacedReference {
         self.placement = placement
         self.scale = scale
         self.teleportDestination = teleportDestination
+        self.lightRadius = lightRadius
+        self.emittance = emittance
+    }
+
+    private static func decodeFloat(_ data: Data) throws -> Float? {
+        guard data.count >= 4 else { return nil }
+        var reader = BinaryReader(data)
+        return try reader.readFloat32()
+    }
+
+    private static func decodeFormID(_ data: Data) throws -> FormID? {
+        guard data.count >= 4 else { return nil }
+        var reader = BinaryReader(data)
+        return try FormID(reader.readUInt32())
     }
 
     private static func decodeTeleport(

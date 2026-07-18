@@ -162,12 +162,16 @@ nonisolated struct RenderScene {
     let terrain: [TerrainDrawItem]
     let water: [WaterDrawItem]
     let sky: SkyParameters?
+    let lighting: RenderLighting?
+    let pointLights: [RenderPointLight]
 
     init(
         instances: [RenderPlacement],
         terrain: [TerrainDrawItem] = [],
         water: [WaterDrawItem] = [],
-        sky: SkyParameters? = nil
+        sky: SkyParameters? = nil,
+        lighting: RenderLighting? = nil,
+        pointLights: [RenderPointLight] = []
     ) {
         var opaque = GroupAccumulator()
         var alphaTested = GroupAccumulator()
@@ -196,6 +200,8 @@ nonisolated struct RenderScene {
         self.terrain = terrain
         self.water = water
         self.sky = sky
+        self.lighting = lighting
+        self.pointLights = pointLights
     }
 
     /// Merges already-built scenes into one draw-list union — grid/streaming
@@ -220,6 +226,19 @@ nonisolated struct RenderScene {
         terrain = scenes.flatMap(\.terrain)
         water = scenes.flatMap(\.water)
         sky = scenes.lazy.compactMap(\.sky).first
+        lighting = scenes.lazy.compactMap(\.lighting).first
+        pointLights = scenes.flatMap(\.pointLights)
+    }
+
+    /// CPU light culling: stable distance order, original scene order as
+    /// tie-break. The renderer calls this once per visible draw.
+    func nearestPointLights(to position: SIMD3<Float>, limit: Int) -> [RenderPointLight] {
+        guard limit > 0, pointLights.count > limit else { return Array(pointLights.prefix(limit)) }
+        return pointLights.enumerated().sorted { lhs, rhs in
+            let lhsDistance = simd_length_squared(lhs.element.position - position)
+            let rhsDistance = simd_length_squared(rhs.element.position - position)
+            return lhsDistance == rhsDistance ? lhs.offset < rhs.offset : lhsDistance < rhsDistance
+        }.prefix(limit).map(\.element)
     }
 
     /// Per-draw uniform ring slots one frame can need: one per group +
