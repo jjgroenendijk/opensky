@@ -74,4 +74,4 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 * [Testing setup](/testing.md) - test targets, make entrypoints, headless
   unit-test host, fixture policy.
-* [Roadmap](/todo.md) - mission roadmap, milestones, open questions.
+* [Roadmap](/todo.md) - M1-M3 history, future direction, open questions.

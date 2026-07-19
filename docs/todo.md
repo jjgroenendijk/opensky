@@ -3,12 +3,12 @@ type: Task List
 title: Roadmap and outstanding work
 description: OpenSky mission roadmap - agent handoff, milestone plan, open questions.
 tags: [meta, roadmap, planning, handoff]
-timestamp: 2026-07-18T00:00:00Z
+timestamp: 2026-07-19T00:00:00Z
 ---
 
 # TODO — roadmap
 
-State as of 2026-07-18. Ordered by mission priority (AGENTS.md): render static world
+State as of 2026-07-19. Ordered by mission priority (AGENTS.md): render static world
 geometry first -> grow toward playable engine.
 
 ## How to continue (agent handoff)
@@ -38,46 +38,14 @@ milestone leaves this file; history lives in `docs/log.md` + git.
 * M2 — static world geometry. Done 2026-07-18 (PRs #9-#21): textured
   `WhiterunExterior06` on screen, free-fly camera, bench-gated fps (avg 0.39 ms/frame @
   720p on M1, Debug), `openskycli` + main-app asset browser dev tools.
-* M3 — world streaming + environment (active): roam exterior worldspace seamlessly —
-  terrain, cell streaming, distant LOD, sky/water, interiors via doors. Gate: 3.8.
+* M3 — world streaming + environment. Done 2026-07-19 (PRs #22-#35): streamed 5x5
+  exterior grid, terrain, distant LOD, sky/water, lit interiors + door round trips.
 * M4 — toward playable (direction only): collision, animation, scripting, audio, UI.
-  Re-scope after M3; no gate yet.
-
-## Milestone 3 — world streaming + environment
-
-Goal: roam the Tamriel exterior worldspace seamlessly — terrain under every object, cells
-stream in/out around the camera, distant LOD past the loaded grid, sky + water, interiors
-reachable through doors. One branch/PR per numbered item; format items follow the same
-spec/fixture/doc discipline as M2 (cite spec, synthetic in-code fixtures,
-`docs/formats/<name>.md`, verify via repeatable `openskycli` probes).
-
-Sequencing: 3.1 terrain landed first — everything sits on it, and LAND lived in the same
-cell temporary-children groups `CellSceneBuilder` already walked
-(`docs/engine/cell-scene.md`) -> decoder slotted into the existing walk. 3.2 streaming now
-turns that per-cell unit into a grid + carries the perf work multi-cell rendering needs.
-LOD rings now start at loaded-grid boundary. 3.6 interiors + 3.7 lighting landed.
-Verification path: `openskycli render`/`bench`
-plus main-app asset
-browser, screenshot pattern as in `docs/img/`.
-
-Format facts below pre-verified 2026-07-18 against UESP mod-file-format pages + xEdit
-`dev-4.1.6` source (`wbDefinitionsTES5.pas`, `wbDefinitionsCommon.pas`, `wbLOD.pas`) +
-DynDOLOD docs / xLODGen LODGen source. Re-confirm against real install by probe during
-impl; chase flagged UNCONFIRMED points especially.
-
-### 3.8 Milestone acceptance
-
-* [ ] Free-fly from the M2 target cell across the streamed grid under sky: terrain +
-      objects stream without visible pop-in gaps, water renders where cells have it,
-      LOD beyond the grid, enter one interior through a door and return. No crash on
-      any vanilla cell touched; >30 fps sustained measured via `openskycli bench` (not
-      eyeballed).
-* [ ] Screenshot under `docs/`; `docs/log.md` + this file updated; M4 re-scoped into
-      numbered items with a gate.
+  Numbering, scope + gate pending.
 
 ## Milestone 4+ — toward playable (far out)
 
-Direction only — re-scope into numbered gated items at 3.8. Candidate order:
+Direction only — numbering, scope + gate intentionally pending. Candidate order:
 
 * Collision + character controller (walk on terrain first; HKX collision reversing later).
 * Animation: HKX (Havok) reversing — hardest format; consider skeleton-only first.
