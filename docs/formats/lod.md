@@ -64,6 +64,11 @@ and receive translation `(x*4096, y*4096, 0)`. Sample `tamriel.4.4.-4.btr`: `lan
 Terrain files commonly contain two sibling `BSMultiBoundNode`s: `chunk` -> land; `WATER` ->
 water shape. Flattener prunes `WATER` subtree until 3.5 supplies water rendering.
 
+Vanilla L4/L8/L16/L32 diffuse atlases are legacy 32-bit xRGB8888 DDS: B,G,R,X payload,
+opaque alpha, full mip chains. [DDS parser](/formats/dds.md) validates masks + pitch;
+`TextureLoader` uploads them as sRGB BGRA8. Normal atlases remain linear DXT5. Invalid
+assets keep placeholder fallback; valid LOD no longer becomes flat gray.
+
 Multi-bound additions after shared [NIF](/formats/nif.md) layouts:
 
 | block | payload after inherited prefix |
@@ -91,6 +96,9 @@ Unlike BTR, vanilla BTO vertices are already world-space. Probe
 `tamriel.4.4.-4.bto`: bounds near cell `(4,-4)` world origin, 24,843 vertices / 14,024
 triangles across `Obj` + `obj-LargeRef`. Applying filename translation again would move
 objects twice; OpenSky uses identity placement.
+
+Shared object diffuse atlas is RGBA8888 (`DDPF_ALPHAPIXELS`; stored alpha preserved);
+object normal atlas remains DXT5.
 
 SSE `BSSubIndexTriShape` = complete `BSTriShape` payload, then:
 

@@ -28,7 +28,10 @@ adapted from Apple's Xcode Metal 4 game template (structure, not copied game cod
   mod-quirk rule).
 * `RenderModel` — one engine `Model`: `RenderMesh`es + `RenderMaterial`s (diffuse
   `MTLTexture` resolved through a caller-supplied `TextureProvider` closure — demo scene
-  feeds procedural textures, 2.7 feeds VFS + `TextureLoader`).
+  feeds procedural textures, VFS + `TextureLoader` feeds real assets). `TextureLoader`
+  uploads BCn directly; legacy xRGB8888 becomes BGRA8 with X forced opaque, RGBA8888
+  becomes RGBA8 with stored alpha. Usage selects sRGB for diffuse/color, linear for
+  normal/data.
 * `RenderScene` — `RenderPlacement`s (model + transform + world AABB) flattened to
   instanced `DrawGroup` lists (section below): `modelMatrix = instance * meshLocal`,
   `normalMatrix` = inverse-transpose (`MatrixMath.normalMatrix`), opaque groups before

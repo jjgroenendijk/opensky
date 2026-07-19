@@ -36,7 +36,7 @@ nonisolated extension FourCC: CustomStringConvertible {
     }
 }
 
-extension BinaryReader {
+nonisolated extension BinaryReader {
     mutating func readFourCC() throws -> FourCC {
         try FourCC(rawValue: readUInt32())
     }
