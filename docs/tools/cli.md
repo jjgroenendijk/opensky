@@ -1,8 +1,7 @@
 ---
 type: Tool
 title: CLI dev tool (openskycli)
-description: Terminal dev entrypoints over the engine - VFS list/extract, record and cell
-  probes, NIF/DDS inspection, World screenshot to PNG, env-gated probe harness.
+description: Terminal dev entrypoints over engine data, collision, rendering, and probes.
 tags: [tool, cli, dev, probe, rendering]
 timestamp: 2026-07-18T00:00:00Z
 ---
@@ -46,6 +45,7 @@ only where `--out` points (AGENTS.md Legal & IP).
 | `vfs cat <key> --out <file>` | extract one resource (loose files win, as in the engine) |
 | `record <formid-or-editorid>` | dump one Skyrim.esm record: header, decoded view (WRLD/CELL/STAT/REFR), field list capped at 64 with a per-type tail summary |
 | `cell [--worldspace <edid>] [--x n] [--y n] [--refs]` | exterior-cell summary without Metal: ref count, base-type histogram, other cell records; `--refs` lists placements |
+| `collision [--worldspace <edid>] [--x n] [--y n]` | resolve unique cell model paths + sweep embedded bhk collision; report roots/bodies/shapes/tris, filters, unsupported/failures, collision/render bounds; fail acceptance gaps |
 | `interior --out <file> [--worldspace/--x/--y] [--radius n]` | scan exterior doors near target for exterior -> interior -> paired exterior round trip, render exact XTEL arrival pose to PNG; default radius 16 |
 | `nif <key>` | container stats + named node/shape rows + flattened model summary (meshes, verts/tris, bounds, materials with texture paths) |
 | `dds <key>` | header + mip chain (size, BCn format, sRGB declaration) |
@@ -71,6 +71,10 @@ Implementation notes:
 * `cell` mirrors the [cell scene build](/engine/cell-scene.md) WRLD walk read-only
   (XCLC grid match, labels ignored) and resolves base types via a headers-only
   FormID -> record-type index.
+* `collision` uses shared `ExteriorCellModelCatalog` + `NIFCollisionSweep`; CLI only
+  parses/prints. MODL paths receive same missing `meshes\` prefix as `MeshLibrary`.
+  Every model reports independently; any root without geometry, unknown reachable block,
+  decode/load failure exits 1. See [NIF collision](/formats/nif-collision.md).
 * `interior` is M3.6 repeatable acceptance probe. It uses production builder transition
   resolution for both directions; destination must be interior, reverse destination must
   equal source exterior door. One WRLD walk gathers doors without loading assets;
@@ -101,7 +105,8 @@ Implementation notes:
 default `/Volumes/data/steam/steamapps/common/Skyrim Special Edition`, override via
 `OPENSKY_DATA_ROOT`. Install absent -> `[INFO]` + exit 0 (CI safe). Checks: `vfs ls`
 finds meshes; `record 0x3C` decodes Tamriel (UESP "Skyrim Mod:FormIDs"); `cell`
-summary; `nif`/`dds` inspect the first listed assets; `screenshot` writes
+summary; `collision` gates all first-render-cell models; `nif`/`dds` inspect first listed
+assets; `screenshot` writes
 `logs/probe-screenshot.png`; `interior` verifies one door round trip + writes
 `logs/probe-interior.png`; `bench` runs the sustained fps gate (360 frames @
 720p, fails over 33.33 ms avg/p95); `bench --fly-path` runs the M3.2 cross-cell gate at

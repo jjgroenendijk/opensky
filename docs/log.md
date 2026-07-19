@@ -4,6 +4,17 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-19
 
+* M4.2 NIF collision decode complete -- `NIFFile.collisionModel()` follows bhk collision
+  roots through rigid-body metadata, MOPP/list/transform wrappers, compressed/chunked meshes,
+  packed/NiTriStrips collections, convex vertices, box/sphere/capsule primitives. Output
+  preserves object flags + duplicate Havok filters/responses, converts 69.99125 units/m,
+  isolates malformed roots, accounts unknown reachable blocks. Synthetic matrix covers every
+  requested shape/wrapper/filter, big/chunk strips + malformed cycle. Production
+  `openskycli collision` sweep over Tamriel `(6,-2)`: 9 models, 7 collision-bearing,
+  12 roots/bodies, 13 shapes, 583 triangles, 0 unsupported, 0 decode failures; collision/
+  render bounds validate scale + transform composition. Docs:
+  [NIF collision](/formats/nif-collision.md), [CLI](/tools/cli.md). Item 4.2 left
+  [todo](/todo.md).
 * M4.1 terrain walk mode complete -- G toggles default fly camera to 24x128-unit player
   capsule with 112-unit eye, gravity, ground snap, 50-degree slope limit, hardcoded
   180/360-unit walk/run speeds. Controller consumes fixed 1/120 s steps with 100 ms frame
