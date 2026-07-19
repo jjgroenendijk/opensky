@@ -4,6 +4,14 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-19
 
+* M4/M5 roadmap review fixes -- terrain walking now samples renderer-identical triangles;
+  collision decode covers transform wrappers, alternate triangle collections + Havok
+  filters with reachable-block coverage accounting. M4 gate becomes production
+  `bench --walk-path` over M2 target -> Chillfurrow Farm -> interior -> return, measuring
+  active physics instead of static render fps; cross-worldspace Whiterun-city travel stays
+  out of hidden scope. M5 splits template semantics from visual appearance, applies ACBS
+  inheritance flags, adds DOFT/OTFT outfit + body-slot resolution, reason-tagged actor
+  accounting, actor-enabled stream budgets; gate moves to 5.6.
 * Distant terrain coverage fixed -- L4/L8/L16/L32 selection partitions each cell exactly;
   partial BTR blocks clip crossing triangles to owned cell rectangles with interpolated
   attributes + mask-keyed GPU cache variants. LOD hides successful residents only, leaving

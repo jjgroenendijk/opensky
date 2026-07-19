@@ -42,7 +42,7 @@ milestone leaves this file; history lives in `docs/log.md` + git.
   exterior grid, terrain, distant LOD, sky/water, lit interiors + door round trips.
 * M4 — walkable world (active): collision + walk-mode player. Gate: 4.5.
 * M5 — actors on screen: placed actors rendered as skinned meshes in bind pose.
-  Gate: 5.5. Recheck scope at 4.5.
+  Gate: 5.6. Recheck scope at 4.5.
 * M6+ — toward playable (direction only): animation playback, Papyrus VM, audio, UI.
 
 ## Milestone 4 — walkable world (collision + walk mode)
@@ -59,12 +59,15 @@ confirm against `nif.xml` definitions + real-install probe before impl, flag dev
 ### 4.1 Walk-mode controller on terrain
 
 * [ ] Player capsule + gravity + walk/fly toggle (fly stays default dev mode). Ground =
-      LAND heightfield sample (bilinear over the 33x33 grid, `docs/formats/land.md`);
-      snap-to-ground, slope limit, hardcoded walk/run speeds (GMST later). Exterior
-      only; cell-border crossing keeps ground contact (streamed neighbor heightfields).
+      LAND 33x33 heightfield (`docs/formats/land.md`) sampled on the same SW->NE triangle
+      split as `TerrainMeshBuilder`, using barycentric height + normal rather than
+      bilinear interpolation. Snap-to-ground, slope limit, deterministic/clamped time
+      stepping, hardcoded walk/run speeds (GMST later). Exterior only; cell-border
+      crossing keeps ground contact using streamed neighbor heightfields.
 * [ ] Acceptance: walk-mode traverse across >=3 streamed cells from the M2 target cell,
       camera follows terrain, no fall-through at cell seams; unit tests on heightfield
-      sampling + controller math (synthetic heightfields).
+      sampling + controller math (synthetic heightfields), including a non-planar saddle
+      quad proving collision matches rendered triangle planes rather than a bilinear patch.
 
 ### 4.2 NIF collision decode (bhk blocks)
 
@@ -72,14 +75,21 @@ confirm against `nif.xml` definitions + real-install probe before impl, flag dev
       `bhkRigidBody`/`bhkRigidBodyT` -> shape tree (`bhkMoppBvTreeShape` — skip MOPP
       bytecode, take child; `bhkCompressedMeshShape` + `bhkCompressedMeshShapeData`;
       `bhkConvexVerticesShape`; `bhkBoxShape`/`bhkSphereShape`/`bhkCapsuleShape`;
-      `bhkListShape`). Spec: NifTools `nif.xml`. Output: clean Swift collision model
-      (triangle soup + convex primitives) in engine units, decoupled from disk layout.
+      `bhkListShape`; transform wrappers `bhkTransformShape`/
+      `bhkConvexTransformShape`; alternate triangle collections
+      `bhkPackedNiTriStripsShape`/`bhkNiTriStripsShape`). Preserve collision-object flags
+      + rigid-body Havok layer/filter data so triggers/non-collidable bodies do not become
+      player-solid. Spec: NifTools `nif.xml`. Output: clean Swift collision model
+      (triangle soup + convex primitives + query filter) in engine units, decoupled from
+      disk layout.
 * [ ] UNCONFIRMED to chase by probe: Havok-to-engine scale factor (community value
       ~69.99 units/m), `bhkRigidBodyT` transform composition, chunked
       `bhkCompressedMeshShapeData` layout (big-tri vs chunk split).
 * [ ] Acceptance: `openskycli` collision sweep over all vanilla Whiterun-cell models
-      decodes without failure; synthetic-fixture unit tests per shape type; doc
-      `docs/formats/nif-collision.md`.
+      reports collision roots, emitted shapes/tris, filtered bodies + unsupported reachable
+      blocks; zero unsupported blocks reachable from a collision root, zero decode failures,
+      non-empty geometry for every collision-bearing model. Synthetic-fixture unit tests
+      per shape/wrapper/filter type; doc `docs/formats/nif-collision.md`.
 
 ### 4.3 Collision world + streaming integration
 
@@ -88,23 +98,30 @@ confirm against `nif.xml` definitions + real-install probe before impl, flag dev
       Spatial index per cell; evicted with cell unload; interiors included (interior
       floors are meshes, not terrain).
 * [ ] Acceptance: collision stats surfaced via `openskycli` (shapes/tris per cell for
-      target grid); streaming fly-path bench shows no regression breach of frame budget;
-      unit tests on build/evict lifecycle with fake providers.
+      target grid); streaming fly-path bench records collision build latency + physical
+      footprint as well as render time, with explicit budgets; unit tests on build/evict
+      lifecycle with fake providers.
 
 ### 4.4 Capsule vs world response
 
 * [ ] Collide-and-slide capsule vs terrain + mesh collision: walls block, ramps/stairs
       climb via step height, ceilings stop ascent. Door activation (F, 192 units)
-      unchanged in walk mode. Deterministic unit tests: synthetic wall/ramp/stair/step
-      scenes, seam crossing terrain<->mesh.
+      unchanged in walk mode; successful XTEL transition resets controller pose + grounded
+      state to destination before the next physics step. Deterministic unit tests: synthetic
+      wall/ramp/stair/step/filter scenes, seam crossing terrain<->mesh, door teleport.
 
 ### 4.5 Milestone acceptance
 
-* [ ] Walk-mode round trip: spawn at M2 target cell, walk Whiterun streets + stairs,
-      through one door, walk the interior floor, return outside — no fall-through or
-      wall clip along the route, >30 fps sustained via `openskycli bench` in walk mode.
-* [ ] Screenshot under `docs/`; `docs/log.md` + this file updated; M5 re-scoped into
-      confirmed numbered items with a gate.
+* [ ] Add `openskycli bench --walk-path`: fixed-step scripted walk from M2 target cell
+      across Tamriel road/terrain to Chillfurrow Farm `(7,-3)`, climb exterior steps,
+      enter the proven farm interior, cross its floor, return outside. It drives production
+      controller, collision, streaming + door transitions; fails on route timeout,
+      fall-through, unresolved penetration, wrong destination, or unexplained build error.
+      Gate: route completes with no wall clip/fall-through; avg + p95 frame time sustain
+      >30 fps while physics is active.
+* [ ] Acceptance screenshot under `docs/img/`, linked from the walk/collision subsystem
+      doc; `docs/log.md` + this file updated. M5 scope checked against M4 collision +
+      streaming learnings; numbered items + measurable gate retained or revised.
 
 ## Milestone 5 — actors on screen
 
@@ -115,21 +132,35 @@ items follow `format-parser` discipline. Recheck sequencing at 4.5.
 Format leads from UESP mod-file-format pages + xEdit definitions + NifTools `nif.xml`;
 byte-level layouts NOT yet verified — confirm by spec + probe at impl, flag deviations.
 
-### 5.1 Actor record chain decode
+### 5.1 Actor placement + template resolution
 
 * [ ] ACHR placed actor (NAME base, DATA pos/rot, XSCL — REFR-shaped; lives in CELL
       persistent + temporary children). `NPC_` base: RNAM race, TPLT template, WNAM worn
-      armor, PNAM head parts, ACBS flags (female bit). Template chain: TPLT -> LVLN
-      leveled NPC -> deterministic entry pick (first/highest for now) or direct NPC_.
-      Body model chain: NPC_ WNAM (else RACE skin) -> ARMO ARMA parts -> per-gender
-      MOD2/MOD3 model paths; RACE per-gender skeleton path. Head lead: pre-generated
-      FaceGen NIF `meshes/actors/character/facegendata/facegeom/<plugin>/00<formid>.nif`
-      (UNCONFIRMED path shape — probe).
+      armor, PNAM head parts, DOFT default outfit, ACBS gender + template flags. Template
+      chain: TPLT -> direct NPC_ or LVLN deterministic entry policy (first/highest for
+      bind-pose milestone). Resolve appearance fields individually according to ACBS
+      inheritance flags (`Use Traits`, `Use Model/Animation`, `Use Inventory`, etc.);
+      detect cycles + missing targets, never copy every field blindly from one template.
 * [ ] Acceptance: `openskycli` actor probe lists Whiterun-area ACHRs with resolved
-      skeleton + body-part model paths, template chains followed; synthetic-fixture
-      tests per record; doc `docs/formats/actors.md`.
+      base NPC_, chosen leveled entry, template chain + source of every appearance field;
+      synthetic-fixture matrix covers direct/template/leveled cases, each appearance-
+      relevant inheritance flag, cycle + missing target; doc `docs/formats/actors.md`.
 
-### 5.2 Skinned NIF decode + GPU bind-pose skinning
+### 5.2 Visual appearance resolution
+
+* [ ] Resolve race per-gender skeleton; naked skin from `NPC_` WNAM else RACE WNAM -> ARMO
+      armature -> ARMA per-gender MOD2/MOD3. Resolve clothes from `NPC_` DOFT -> OTFT item
+      list -> ARMO armatures -> compatible ARMA models; apply BOD2/body-slot selection so
+      equipped parts mask covered skin parts without duplicate geometry. Resolve FaceGen
+      head from defining plugin + resolved `NPC_` local object ID; confirm directory +
+      zero-padding convention against open docs + real-install probe before encoding it.
+      Missing optional parts degrade by reason-tagged skip; no silent naked fallback when
+      an outfit chain fails.
+* [ ] Acceptance: `openskycli` actor probe resolves skeleton, skin, outfit/body slots +
+      FaceGen paths for named Whiterun NPCs; synthetic fixtures cover gender, skin fallback,
+      outfit/ARMO/ARMA chains, slot masking, cross-plugin identity + missing optional part.
+
+### 5.3 Skinned NIF decode + GPU bind-pose skinning
 
 * [ ] Decode skinning from SSE NIFs: `NiSkinInstance`/`BSDismemberSkinInstance`,
       `NiSkinData` (bone bind transforms), `NiSkinPartition` / SSE per-vertex bone
@@ -140,28 +171,38 @@ byte-level layouts NOT yet verified — confirm by spec + probe at impl, flag de
       offscreen probe), no distortion vs bounds; synthetic skinned-mesh fixtures; doc
       `docs/formats/nif.md` extension + renderer doc update.
 
-### 5.3 Actor assembly
+### 5.4 Actor assembly
 
-* [ ] Compose one actor: race skeleton + body/hands/feet ARMA parts + FaceGen head at
-      ACHR world pose with XSCL scale; missing parts degrade gracefully (skip, log).
+* [ ] Compose one actor: race skeleton + visible skin parts + equipped outfit ARMA parts +
+      FaceGen head at ACHR world pose with XSCL scale. Missing parts degrade gracefully
+      with reason-tagged counters; a partial actor remains renderable when core body/head
+      policy allows it.
 * [ ] Acceptance: named Whiterun NPC composed + rendered offscreen at correct world
-      position; unit tests on assembly selection (gender, template, missing-part).
+      position, clothed under the deterministic M5 equipment policy; unit tests on assembly
+      selection (gender, inherited appearance, slot masking, missing-part).
 
-### 5.4 Actor streaming integration
+### 5.5 Actor streaming integration
 
 * [ ] Actors build/evict with cells on the serial build queue like statics; persistent
       ACHRs mapped into streamed cells by position (pattern from door handling);
       interiors included. Shared skeleton/body assets retained across cells.
-* [ ] Acceptance: streaming fly-path bench with actors shows no frame-budget breach;
-      build/evict lifecycle unit tests with fake providers.
+      Per-cell accounting reports non-deleted ACHRs discovered, rendered, intentionally
+      skipped by reason + failed; initially-disabled actors are explicit skips while M5 has
+      no quest/script state.
+* [ ] Acceptance: actor-enabled streaming fly-path bench shows no render/build-latency or
+      footprint budget breach; build/evict + persistent-position lifecycle tests with fake
+      providers; discovered = rendered + intentional skips + failures for every cell.
 
-### 5.5 Milestone acceptance
+### 5.6 Milestone acceptance
 
-* [ ] Bind-pose actors render at correct positions in Whiterun exterior + one interior
-      (probe count vs `Skyrim.esm` ACHR count for touched cells); no crash across the
-      streamed grid; >30 fps sustained via `openskycli bench`.
-* [ ] Screenshot under `docs/`; `docs/log.md` + this file updated; M6 re-scoped into
-      numbered items with a gate.
+* [ ] Bind-pose, clothed actors render at correct positions in Whiterun exterior + one
+      interior; no crash across the streamed grid. Real probe reports discovered/rendered/
+      intentional-skip/failure counts for each touched cell; gate requires zero unexplained
+      failures + exact accounting, not equality with raw ACHR count. Actor-enabled
+      `openskycli bench --fly-path` sustains >30 fps avg + p95 within explicit build-latency
+      + footprint budgets.
+* [ ] Acceptance screenshot under `docs/img/`, linked from actor/renderer docs;
+      `docs/log.md` + this file updated; M6 re-scoped into numbered items with a gate.
 
 ## Milestone 6+ — toward playable (far out)
 
