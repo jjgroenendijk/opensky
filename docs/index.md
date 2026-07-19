@@ -32,8 +32,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   compressed mesh reconstruction, unit/filter policy, Whiterun sweep evidence.
 * [DDS texture container](/formats/dds.md) - DDS_HEADER/DXT10 layout, BCn + 32-bit RGB,
   mip chain math, color-space policy.
-* [Actor records](/formats/actors.md) - ACHR/NPC_/LVLN layouts, ACBS template
-  flags, deterministic TPLT chain resolution with per-field sources.
+* [Actor records](/formats/actors.md) - ACHR/NPC_/LVLN/LVLI/RACE/ARMO/ARMA/OTFT
+  layouts, TPLT chain + visual appearance resolution (skin/outfit/slot
+  masking), FaceGen path convention.
 
 ## Engine
 

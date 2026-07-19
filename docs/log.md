@@ -4,6 +4,23 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-19
 
+* M5.2 visual appearance resolution complete -- RACE (`Race`: per-gender ANAM
+  skeletons, WNAM skin, DATA FaceGen-head flag), ARMO (`Armor`: MODL armature
+  FormIDs, BOD2/BODT slots), ARMA (`ArmorAddon`: MOD2/MOD3 gendered models,
+  race lists), OTFT (`Outfit`) decoders per UESP + nif.xml biped slots;
+  `LeveledActor` generalized to `LeveledList` (LVLN + LVLI, new `useAll`
+  bundle flag). `ActorVisualResolver` resolves skin (NPC_ WNAM else RACE
+  WNAM) + outfit (DOFT -> OTFT -> ARMO/LVLI) chains to race-compatible ARMA
+  models with cross-gender fallback, masks covered skin parts via BOD2 slot
+  overlap, emits FaceGen facegeom/facetint paths (defining plugin +
+  zero-padded objectID, gated on the RACE FaceGen-head flag). Broken chains
+  throw (no silent naked fallback); optional gaps degrade to reason-tagged
+  skips. `openskycli actor` prints visuals + gains `--npc` for named NPCs
+  (residents live in interior cells); probe gates Heimskr. Real install:
+  WhiterunWorld radius 2/4 -> 31/31, 75/75 incl. LVLI guard bundles;
+  facegen paths cross-checked against BSA listings. Docs:
+  [actor records](/formats/actors.md), [CLI](/tools/cli.md). Item 5.2 left
+  [todo](/todo.md).
 * M5.1 actor placement + template resolution complete -- ACHR (`PlacedActor`), NPC_
   (`ActorBase`: ACBS gender/template flags, TPLT, RNAM, WNAM, PNAM, DOFT), LVLN
   (`LeveledActor`, lenient 8/12-byte LVLO) decoders per UESP + xEdit specs.

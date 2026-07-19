@@ -51,7 +51,7 @@ nonisolated struct ResolvedActorAppearance: Equatable {
 /// (raw-FormID keys, matching CellSceneBuilder's convention).
 nonisolated struct ActorTemplateResolver {
     let actors: [UInt32: ActorBase]
-    let leveledActors: [UInt32: LeveledActor]
+    let leveledActors: [UInt32: LeveledList]
 
     /// Indexes every decodable NPC_ + LVLN top-group record. Undecodable
     /// records drop out of the index and later resolve as missing targets.
@@ -63,11 +63,11 @@ nonisolated struct ActorTemplateResolver {
                 actors[record.formID] = try? ActorBase(record: record, localized: localized)
             }
         }
-        var leveled: [UInt32: LeveledActor] = [:]
+        var leveled: [UInt32: LeveledList] = [:]
         if let top = file.topGroup(of: "LVLN"), let children = try? top.children() {
             for case let .record(record) in children {
                 guard record.type == "LVLN", !record.isDeleted else { continue }
-                leveled[record.formID] = try? LeveledActor(record: record)
+                leveled[record.formID] = try? LeveledList(record: record)
             }
         }
         return ActorTemplateResolver(actors: actors, leveledActors: leveled)

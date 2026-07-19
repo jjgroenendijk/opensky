@@ -1,23 +1,28 @@
-// LVLN record decoded into engine types: leveled NPC list. A TPLT chain may
-// route through one of these; the bind-pose milestone picks one entry
+// LVLN / LVLI records decoded into engine types: leveled NPC and leveled item
+// lists. Both share the LVLD/LVLF/LVLO layout (UESP documents the entry struct
+// once for both). A TPLT chain may route through an LVLN; an OTFT outfit entry
+// may route through an LVLI. The bind-pose milestone picks one entry
 // deterministically (highest level, first among ties) instead of rolling
 // against player level + chance-none.
 //
-// Reference: UESP "Skyrim Mod:Mod File Format/LVLN" (entry struct shared
-// with LVLI): https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/LVLN
+// Reference: UESP "Skyrim Mod:Mod File Format/LVLN" + ".../LVLI" (entry struct
+// shared): https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/LVLN
 // Layout documented in docs/formats/actors.md.
 
 import Foundation
 
-nonisolated struct LeveledActor {
-    /// LVLF flags.
+nonisolated struct LeveledList {
+    /// LVLF flags (UESP LVLN/LVLI flag table).
     struct Flags: OptionSet, Equatable {
         let rawValue: UInt8
 
         /// All entries at or below player level are candidates.
         static let calculateFromAllLevels = Flags(rawValue: 0x01)
-        /// Spawn every candidate instead of one.
+        /// Re-roll the list for each placed count instead of once.
         static let calculateForEach = Flags(rawValue: 0x02)
+        /// Use every entry — the list is a bundle, not alternatives
+        /// (e.g. ArmorStormcloakSet: boots + cuirass + gauntlets + helmet).
+        static let useAll = Flags(rawValue: 0x04)
     }
 
     /// One LVLO entry. UESP documents 12 bytes (uint32 level, FormID
@@ -48,8 +53,8 @@ nonisolated struct LeveledActor {
     }
 
     init(record: ESMRecord) throws {
-        guard record.type == "LVLN" else {
-            throw ESMError.malformed("expected LVLN record, got \(record.type)")
+        guard record.type == "LVLN" || record.type == "LVLI" else {
+            throw ESMError.malformed("expected LVLN/LVLI record, got \(record.type)")
         }
         formID = FormID(record.formID)
 
@@ -71,7 +76,8 @@ nonisolated struct LeveledActor {
                 // unknown fields (incl. COED) fall through to default.
                 guard field.data.count >= 8 else {
                     throw ESMError.malformed(
-                        "LVLN \(formID) LVLO has \(field.data.count) bytes, expected 8 or 12"
+                        "\(record.type) \(formID) LVLO has \(field.data.count) bytes, "
+                            + "expected 8 or 12"
                     )
                 }
                 let level = try reader.readUInt16()

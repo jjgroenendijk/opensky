@@ -101,14 +101,14 @@ struct ActorRecordDecodeTests {
 
     // MARK: - LVLN
 
-    @Test func decodesLeveledActor() throws {
+    @Test func decodesLeveledList() throws {
         let list = try lvln(
             formID: 0x3000,
             chanceNone: 25,
             flags: 0x01,
             entries: [
-                LeveledActor.Entry(level: 1, reference: FormID(0x10), count: 1),
-                LeveledActor.Entry(level: 4, reference: FormID(0x20), count: 1)
+                LeveledList.Entry(level: 1, reference: FormID(0x10), count: 1),
+                LeveledList.Entry(level: 4, reference: FormID(0x20), count: 1)
             ]
         )
         #expect(list.formID == FormID(0x3000))
@@ -116,14 +116,14 @@ struct ActorRecordDecodeTests {
         #expect(list.chanceNone == 25)
         #expect(list.flags == .calculateFromAllLevels)
         #expect(list.entries.count == 2)
-        #expect(list.entries[0] == LeveledActor.Entry(level: 1, reference: FormID(0x10), count: 1))
+        #expect(list.entries[0] == LeveledList.Entry(level: 1, reference: FormID(0x10), count: 1))
     }
 
     @Test func leveledActorRejectsShortEntry() throws {
         let fields = ESMFixture.field("LVLO", Data(count: 4))
         let bytes = ESMFixture.record("LVLN", formID: 1, data: fields)
         #expect(throws: ESMError.self) {
-            _ = try LeveledActor(record: record(bytes))
+            _ = try LeveledList(record: record(bytes))
         }
     }
 
@@ -134,17 +134,17 @@ struct ActorRecordDecodeTests {
         data.appendUInt16(0)
         data.appendUInt32(0x40)
         let fields = ESMFixture.field("LVLO", data)
-        let list = try LeveledActor(
+        let list = try LeveledList(
             record: record(ESMFixture.record("LVLN", formID: 1, data: fields))
         )
-        #expect(list.entries == [LeveledActor.Entry(level: 7, reference: FormID(0x40), count: 1)])
+        #expect(list.entries == [LeveledList.Entry(level: 7, reference: FormID(0x40), count: 1)])
     }
 
     @Test func deterministicEntryPicksHighestLevelFirstAmongTies() throws {
         let list = try lvln(formID: 1, entries: [
-            LeveledActor.Entry(level: 1, reference: FormID(0x10), count: 1),
-            LeveledActor.Entry(level: 4, reference: FormID(0x20), count: 1),
-            LeveledActor.Entry(level: 4, reference: FormID(0x30), count: 1)
+            LeveledList.Entry(level: 1, reference: FormID(0x10), count: 1),
+            LeveledList.Entry(level: 4, reference: FormID(0x20), count: 1),
+            LeveledList.Entry(level: 4, reference: FormID(0x30), count: 1)
         ])
         #expect(list.deterministicEntry?.reference == FormID(0x20))
     }
@@ -251,8 +251,8 @@ struct ActorTemplateResolverTests {
         let chosen = try npc(formID: 0x400, race: 0xA4)
         let other = try npc(formID: 0x500, race: 0xA5)
         let list = try lvln(formID: 0x300, entries: [
-            LeveledActor.Entry(level: 1, reference: FormID(0x500), count: 1),
-            LeveledActor.Entry(level: 10, reference: FormID(0x400), count: 1)
+            LeveledList.Entry(level: 1, reference: FormID(0x500), count: 1),
+            LeveledList.Entry(level: 10, reference: FormID(0x400), count: 1)
         ])
         let base = try npc(
             formID: 0x100,
@@ -399,8 +399,8 @@ private func lvln(
     formID: UInt32,
     chanceNone: UInt8 = 0,
     flags: UInt8 = 0,
-    entries: [LeveledActor.Entry]
-) throws -> LeveledActor {
+    entries: [LeveledList.Entry]
+) throws -> LeveledList {
     var fields = ESMFixture.field("EDID", ESMFixture.zstring("TestLeveled"))
         + ESMFixture.field("LVLD", Data([chanceNone]))
         + ESMFixture.field("LVLF", Data([flags]))
@@ -413,14 +413,14 @@ private func lvln(
         data.appendUInt32(entry.count)
         fields += ESMFixture.field("LVLO", data)
     }
-    return try LeveledActor(
+    return try LeveledList(
         record: record(ESMFixture.record("LVLN", formID: formID, data: fields))
     )
 }
 
 private func resolver(
     npcs: [ActorBase],
-    leveled: [LeveledActor] = []
+    leveled: [LeveledList] = []
 ) -> ActorTemplateResolver {
     ActorTemplateResolver(
         actors: Dictionary(uniqueKeysWithValues: npcs.map { ($0.formID.rawValue, $0) }),

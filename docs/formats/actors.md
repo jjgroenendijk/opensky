@@ -1,25 +1,29 @@
 ---
 type: File Format
-title: Actor records (ACHR, NPC_, LVLN) + template resolution
-description: Placed-actor and actor-base record layouts plus the TPLT template chain policy.
-tags: [format, plugin, actors, achr, npc, leveled, template]
+title: Actor records (ACHR, NPC_, LVLN/LVLI, RACE, ARMO, ARMA, OTFT) + resolution
+description: Actor record layouts, TPLT template chains, and visual appearance resolution incl. FaceGen paths.
+tags: [format, plugin, actors, achr, npc, leveled, template, race, armor, outfit, facegen]
 timestamp: 2026-07-19T00:00:00Z
 ---
 
 # Actor records, Skyrim SE
 
-Milestone 5.1 subset: enough decode to place actors and resolve who they look
-like — no stats, AI, factions, spells, or inventory items yet. Container
-framing: [ESM/ESP plugin container](/formats/esm.md); decode policy (skip
-unknown fields, `ESMError.malformed` only on structurally unusable input):
-[record decoders](/formats/records.md).
+Milestones 5.1 + 5.2 subset: enough decode to place actors, resolve who they
+look like, and turn that into renderable inputs (skeleton, body-part model
+paths, FaceGen paths) — no stats, AI, factions, spells, or carried inventory
+yet. Container framing: [ESM/ESP plugin container](/formats/esm.md); decode
+policy (skip unknown fields, `ESMError.malformed` only on structurally
+unusable input): [record decoders](/formats/records.md).
 
 Reference: UESP "Skyrim Mod:Mod File Format" subpages `/ACHR`, `/NPC_`,
-`/LVLN`, `/LVLI` (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format>);
+`/LVLN`, `/LVLI`, `/RACE`, `/ARMO`, `/ARMA`, `/OTFT`
+(<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format>);
 xEdit dev-4.1.6 `wbDefinitionsTES5.pas` (template flag masks) +
 `wbDefinitionsCommon.pas` (`wbLeveledListEntry`); CK wiki "Template Data"
-(flag -> tab coverage). Impl: `opensky/Formats/ESM/Records/` +
-`opensky/World/ActorResolution.swift`.
+(flag -> tab coverage); NifTools `nif.xml` `BSDismemberBodyPartType`
+(biped slot numbering). Impl: `opensky/Formats/ESM/Records/` +
+`opensky/World/ActorResolution.swift` +
+`opensky/World/ActorVisualResolution.swift`.
 
 ## ACHR -> PlacedActor
 
@@ -76,20 +80,105 @@ spell list, 0x0010 AI data, 0x0020 AI packages, 0x0040 model/animation
 base data, 0x0100 inventory, 0x0200 script, 0x0400 def pack list, 0x0800
 attack data, 0x1000 keywords.
 
-## LVLN -> LeveledActor
+## LVLN / LVLI -> LeveledList
 
-| field | type   | decoded                                    |
-| ----- | ------ | ------------------------------------------ |
-| EDID  | zstring| `editorID`                                 |
-| LVLD  | uint8  | `chanceNone` (always 0 for LVLN per UESP)  |
-| LVLF  | uint8  | `flags`: 0x01 all levels, 0x02 each        |
-| LVLO  | struct | `entries[]`, one per subrecord             |
+Leveled NPC + leveled item lists share one layout (UESP documents the entry
+struct once); one decoder accepts both record types.
+
+| field | type    | decoded                                                 |
+| ----- | ------- | ------------------------------------------------------- |
+| EDID  | zstring | `editorID`                                              |
+| LVLD  | uint8   | `chanceNone` (always 0 for LVLN per UESP)               |
+| LVLF  | uint8   | `flags`: 0x01 all levels, 0x02 each count, 0x04 use all |
+| LVLO  | struct  | `entries[]`, one per subrecord                          |
+
+LVLF 0x04 "use all" marks a bundle: every entry applies at once (probed:
+`ArmorStormcloakSet` = boots + cuirass + gauntlets + helmet list). Without it
+the list is alternatives — one entry is picked.
 
 LVLO: UESP documents 12 bytes (uint32 level, formID reference — NPC_ or
 nested LVLN, uint32 count). xEdit's `wbLeveledListEntry` reads uint16 level +
 2 pad + formID and accepts an 8-byte form with count defaulting 1 —
 byte-identical for sane values; OpenSky decodes the lenient shape. COED owner
 data (own subrecord after an LVLO) + OBND/LLCT/MODL are skipped.
+
+## RACE -> Race
+
+Appearance subset only; DATA stats, spell lists, keywords, body-part/tint
+data, and morphs stay undecoded.
+
+| field     | type    | decoded                                             |
+| --------- | ------- | --------------------------------------------------- |
+| EDID      | zstring | `editorID`                                          |
+| FULL      | lstring | `name`                                              |
+| WNAM      | formID  | `defaultSkin` — ARMO worn when the NPC_ has no WNAM |
+| BOD2/BODT | struct  | `bodyTemplate` (shared decode, below)               |
+| DATA      | struct  | `flags` — uint32 at offset 0x20 only                |
+| MNAM/FNAM | marker  | 0-byte gender markers gating model blocks           |
+| ANAM      | zstring | `maleSkeletonPath` / `femaleSkeletonPath`           |
+
+DATA flags (UESP RACE): 0x1 playable, 0x2 FaceGen head. Probed values:
+playable races carry 0x2, creature races (cow/dog/bear) do not — this bit
+gates FaceGen path emission.
+
+Gendered skeleton block ordering (probed on NordRace): `MNAM`(0 bytes) ->
+male `ANAM` + `MODT`, then `FNAM`(0 bytes) -> female `ANAM` + `MODT`. Later
+MNAM/FNAM markers open other gendered blocks (body models, head data) whose
+bodies carry MODL — ANAM appears only in the skeleton block, so pairing ANAM
+with the most recent marker is unambiguous; first path per gender wins.
+
+## ARMO -> Armor
+
+One equippable piece. Worn geometry comes from ARMA armatures; the ARMO's own
+MOD2/MOD4 path strings are the ground/inventory ("_GO") models and are
+skipped, as are enchantment/value/keywords.
+
+| field     | type    | decoded                                         |
+| --------- | ------- | ----------------------------------------------- |
+| EDID      | zstring | `editorID`                                      |
+| FULL      | lstring | `name`                                          |
+| RNAM      | formID  | `race` filter (usually 0x19 DefaultRace)        |
+| BOD2/BODT | struct  | `bodyTemplate` — equip slots for masking        |
+| MODL      | formID  | `armatures[]` — one ARMA per repeated subrecord |
+
+ARMO MODL is a 4-byte ARMA FormID, never a path (probed: SkinNaked carries
+25); non-4-byte MODL is skipped defensively.
+
+## ARMA -> ArmorAddon
+
+How a piece displays on a body: per-gender models + applicable races.
+MOD4/MOD5 first-person models, texture swaps (NAM0-3), DNAM priorities, and
+MODT hashes are skipped.
+
+| field     | type    | decoded                                       |
+| --------- | ------- | --------------------------------------------- |
+| EDID      | zstring | `editorID`                                    |
+| BOD2/BODT | struct  | `bodyTemplate` — slots the armature covers    |
+| RNAM      | formID  | `primaryRace`                                 |
+| MODL      | formID  | `additionalRaces[]` (base + vampire variants) |
+| MOD2      | zstring | `maleModelPath` (3rd person)                  |
+| MOD3      | zstring | `femaleModelPath` (3rd person)                |
+
+Probed: ARMA records at form version 40 emit 12-byte BODT while ARMO/RACE at
+44 emit 8-byte BOD2 — the shared decoder accepts both.
+
+## OTFT -> Outfit
+
+| field | type    | decoded                                          |
+| ----- | ------- | ------------------------------------------------ |
+| EDID  | zstring | `editorID`                                       |
+| INAM  | formID[]| `items[]` — packed uint32 array, size/4 entries  |
+
+Entries mix ARMO and LVLI freely (probed: guard outfits nest LVLI bundles);
+size not a multiple of 4 -> malformed.
+
+## Body template (BOD2/BODT) + biped slots
+
+Both shapes open with a uint32 biped-slot bitfield; bit N = biped slot
+(30 + N), numbering per nif.xml `BSDismemberBodyPartType` (SBP_30_HEAD ...
+SBP_61_FX01). BOD2 = slots + uint32 armor type (8 bytes). BODT = slots
+[+ uint32 general flags] + uint32 armor type; the 8-byte BODT omits the
+general-flags word, making the tail ambiguous -> armor type nil there.
 
 ## Template resolution (ActorTemplateResolver)
 
@@ -114,9 +203,64 @@ empty lists throw typed `ActorResolveError`s; index misses degrade to
 `missingTarget`, never a crash.
 
 Indexes stay raw-`UInt32`-keyed within one plugin (CellSceneBuilder
-convention); cross-plugin identity waits for load-order support.
+convention); cross-plugin identity waits for load-order support (FaceGen
+already resolves through `FormIDResolver` to defining plugin + objectID).
 
-Verified against the real install via `openskycli actor` (Tamriel (6,-2)
-radius 3: 107/107 ACHRs resolved; WhiterunWorld (5,-3) radius 2: 31/31,
-guard chains route through LVLN lists as expected). Synthetic fixtures:
-`openskyTests/ActorRecordTests.swift`.
+## Visual resolution (ActorVisualResolver)
+
+Turns a template-resolved appearance into renderable inputs:
+
+* Skeleton: RACE ANAM for the resolved gender.
+* Skin chain: NPC_ WNAM else RACE WNAM -> ARMO -> race-compatible ARMAs.
+* Outfit chain: NPC_ DOFT -> OTFT INAM entries; ARMO used directly, LVLI
+  expanded — `useAll` lists take every entry (bundle), others take the
+  deterministic entry (highest level, first among ties, matching the LVLN
+  policy). Cycle detection tracks only the active chain so duplicate
+  siblings stay legal.
+* Slot masking: equipped ARMO BOD2/BODT slots union into a mask; a skin
+  armature whose slots overlap it is hidden (no duplicate geometry under
+  clothes). ARMA slots decide the overlap, falling back to the owning
+  ARMO's slots.
+* ARMA race compatibility: `primaryRace` match or membership in the
+  additional-race MODL list.
+* Gendered model: MOD2 male / MOD3 female with cross-gender fallback —
+  vanilla ships male-only ARMAs worn by both genders (probed:
+  `StormCloakBootsAA`); skip only when neither model exists.
+
+Failure policy (milestone gate): broken chains throw typed
+`ActorVisualError`s — dangling race/skin/outfit/item FormIDs, empty or
+cyclic leveled lists. Never a silent naked fallback. Missing optional parts
+degrade to reason-tagged `AppearanceSkip`s (dangling armature, no compatible
+armature, no model, masked by outfit, duplicate armature, missing skeleton
+or body slots) so accounting stays exact.
+
+## FaceGen paths
+
+Baked head assets, keyed by the NPC_ that provides character-gen data (the
+traits source). Convention verified against the real install (BSA listing +
+per-NPC cross-checks):
+
+```text
+meshes\actors\character\facegendata\facegeom\<plugin>\<id8>.nif
+textures\actors\character\facegendata\facetint\<plugin>\<id8>.dds
+```
+
+`<plugin>` = defining plugin file name lowercased (`skyrim.esm`); `<id8>` =
+8-hex zero-padded FormID with the load-order byte forced to `00` (== the
+24-bit objectID). Lowercase extensions, backslash separators — matches VFS
+key normalization. Emitted only when the race carries the FaceGen-head DATA
+flag (0x2): creature races bake none, while head-part-less humanoids
+(e.g. Nazeem, PNAM-free) still have files.
+
+## Verification
+
+Real install via `openskycli actor`: WhiterunWorld (5,-3) radius 2 -> 31/31
+ACHRs template+visual resolved (radius 4: 75/75); female Stormcloak guards
+get full armor bundles through LVLI expansion with male-boot fallback; cow
+resolves skin without FaceGen. Named residents live in interior home cells,
+so `actor --npc <formid-or-edid>` resolves bases directly: Heimskr,
+Belethor, Ysolda, Nazeem, AdrianneAvenicci, Ulfberth all resolve skeleton,
+parts, slots + FaceGen paths matching files confirmed present in the BSAs.
+Synthetic fixtures: `openskyTests/ActorRecordTests.swift`,
+`openskyTests/AppearanceRecordTests.swift`,
+`openskyTests/ActorVisualResolutionTests.swift`.
