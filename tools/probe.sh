@@ -54,6 +54,12 @@ echo "[ OK ] record 0x0000003C (Tamriel)"
 run "cell summary (first-render cell)" cell
 run "collision grid (5x5 around first-render cell)" collision --radius 2
 
+# M5.1 actor gate: every discovered ACHR around the first-render cell must
+# resolve its template chain — the summary line reports "N failed".
+run "actor probe (3x3 around first-render cell)" actor
+grep 'ACHRs discovered' "$log" | tail -1 | grep -q ' 0 failed' \
+  || fail "actor probe reported unresolved ACHRs"
+
 # Inspect the first mesh + texture the archives provide.
 mesh_key="$("$cli" --data-root "$data_root" vfs ls 'meshes\*.nif' 2>/dev/null \
   | head -1 | cut -f1)"

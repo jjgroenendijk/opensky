@@ -4,6 +4,18 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-19
 
+* M5.1 actor placement + template resolution complete -- ACHR (`PlacedActor`), NPC_
+  (`ActorBase`: ACBS gender/template flags, TPLT, RNAM, WNAM, PNAM, DOFT), LVLN
+  (`LeveledActor`, lenient 8/12-byte LVLO) decoders per UESP + xEdit specs.
+  `ActorTemplateResolver` walks TPLT chains through NPC_ + LVLN (deterministic
+  highest-level-first-tie entry), resolves each appearance field by its ACBS flag
+  (traits/inventory), tags every field with its source NPC_, throws typed errors on
+  cycles/dangling targets/empty lists. New `openskycli actor` probe: Tamriel (6,-2)
+  radius 3 -> 107/107 ACHRs resolved, WhiterunWorld (5,-3) radius 2 -> 31/31; guard
+  chains route through LVLN as expected. Synthetic fixture matrix covers
+  direct/template/leveled, per-flag inheritance, inert flags, cycle, missing target,
+  empty list. Docs: [actor records](/formats/actors.md), [CLI](/tools/cli.md).
+  Item 5.1 left [todo](/todo.md).
 * LOD diffuse DDS fixed -- parser accepts strict 32-bit legacy layouts: terrain xRGB8888
   (`DDPF_RGB`, BGRX masks) + shared object-atlas RGBA8888 (`DDPF_ALPHAPIXELS`, RGBA
   masks), validates pitch/mips, rejects other bit depths/flags/masks. Metal upload maps to

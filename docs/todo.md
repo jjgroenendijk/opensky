@@ -58,20 +58,6 @@ mandatory, actor-enabled fly bench keeps explicit build/footprint/frame budgets.
 Format leads from UESP mod-file-format pages + xEdit definitions + NifTools `nif.xml`;
 byte-level layouts NOT yet verified — confirm by spec + probe at impl, flag deviations.
 
-### 5.1 Actor placement + template resolution
-
-* [ ] ACHR placed actor (NAME base, DATA pos/rot, XSCL — REFR-shaped; lives in CELL
-      persistent + temporary children). `NPC_` base: RNAM race, TPLT template, WNAM worn
-      armor, PNAM head parts, DOFT default outfit, ACBS gender + template flags. Template
-      chain: TPLT -> direct NPC_ or LVLN deterministic entry policy (first/highest for
-      bind-pose milestone). Resolve appearance fields individually according to ACBS
-      inheritance flags (`Use Traits`, `Use Model/Animation`, `Use Inventory`, etc.);
-      detect cycles + missing targets, never copy every field blindly from one template.
-* [ ] Acceptance: `openskycli` actor probe lists Whiterun-area ACHRs with resolved
-      base NPC_, chosen leveled entry, template chain + source of every appearance field;
-      synthetic-fixture matrix covers direct/template/leveled cases, each appearance-
-      relevant inheritance flag, cycle + missing target; doc `docs/formats/actors.md`.
-
 ### 5.2 Visual appearance resolution
 
 * [ ] Resolve race per-gender skeleton; naked skin from `NPC_` WNAM else RACE WNAM -> ARMO

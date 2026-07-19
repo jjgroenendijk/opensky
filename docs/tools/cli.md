@@ -45,6 +45,7 @@ only where `--out` points (AGENTS.md Legal & IP).
 | `vfs cat <key> --out <file>` | extract one resource (loose files win, as in the engine) |
 | `record <formid-or-editorid>` | dump one Skyrim.esm record: header, decoded view (WRLD/CELL/STAT/REFR), field list capped at 64 with a per-type tail summary |
 | `cell [--worldspace <edid>] [--x n] [--y n] [--refs]` | exterior-cell summary without Metal: ref count, base-type histogram, other cell records; `--refs` lists placements |
+| `actor [--worldspace <edid>] [--x n] [--y n] [--radius n]` | list ACHR placed actors in the (2r+1)^2 cell block (persistent-cell ACHRs mapped in by position); per actor: base NPC_+ editor ID, placement, TPLT chain with chosen LVLN entries, source NPC_ of every appearance field; summary counts discovered/resolved/failed/deleted/malformed; default radius 1 |
 | `collision [--worldspace <edid>] [--x n] [--y n] [--radius n]` | center-cell unique-model bhk sweep + production placed collision grid; per cell shapes/tris/build ms/KiB, void cells, aggregate filters/failures; fail acceptance gaps |
 | `interior --out <file> [--worldspace/--x/--y] [--radius n]` | scan exterior doors near target for exterior -> interior -> paired exterior round trip, render exact XTEL arrival pose to PNG; default radius 16 |
 | `nif <key>` | container stats + named node/shape rows + flattened model summary (meshes, verts/tris, bounds, materials with texture paths) |
@@ -73,6 +74,11 @@ Implementation notes:
 * `cell` mirrors the [cell scene build](/engine/cell-scene.md) WRLD walk read-only
   (XCLC grid match, labels ignored) and resolves base types via a headers-only
   FormID -> record-type index.
+* `actor` is M5.1's repeatable probe. Decode + resolution live in the engine tree
+  (`ActorTemplateResolver.build` indexes NPC_/LVLN top groups; see
+  [actor records](/formats/actors.md)); the CLI mirrors `cell`'s WRLD walk over the
+  radius block plus the worldspace (0,0) persistent cell, assigning persistent ACHRs
+  to cells by physical position (door pattern).
 * `collision` uses shared `ExteriorCellModelCatalog` + `NIFCollisionSweep` for center-asset
   diagnostics, then `CellCollisionGridProbe` + production `CellSceneBuilder` placement for
   radius grid. CLI only parses/prints. Any empty root, unknown reachable block, decode/load
@@ -117,7 +123,8 @@ Implementation notes:
 default `/Volumes/data/steam/steamapps/common/Skyrim Special Edition`, override via
 `OPENSKY_DATA_ROOT`. Install absent -> `[INFO]` + exit 0 (CI safe). Checks: `vfs ls`
 finds meshes; `record 0x3C` decodes Tamriel (UESP "Skyrim Mod:FormIDs"); `cell`
-summary; `collision --radius 2` gates placed 5x5 collision; `nif`/`dds` inspect first listed
+summary; `actor` requires zero unresolved ACHR template chains in the default 3x3
+block; `collision --radius 2` gates placed 5x5 collision; `nif`/`dds` inspect first listed
 assets; `screenshot` writes
 `logs/probe-screenshot.png`; `interior` verifies one door round trip + writes
 `logs/probe-interior.png`; `bench` runs the sustained fps gate (360 frames @

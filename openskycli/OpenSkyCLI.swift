@@ -25,6 +25,12 @@ enum OpenSkyCLI {
       record <formid-or-editorid> Dump one Skyrim.esm record (decoded + fields)
       cell [--worldspace <edid>] [--x <n>] [--y <n>] [--refs]
                                   Summarize an exterior cell's references
+      actor [--worldspace <edid>] [--x <n>] [--y <n>] [--radius <n>]
+                                  List placed actors (ACHR) around a cell;
+                                  resolve each base NPC_ through its TPLT
+                                  template chain, report chosen leveled
+                                  entries + the source of every appearance
+                                  field
       collision [--worldspace <edid>] [--x <n>] [--y <n>] [--radius <n>]
                                   Sweep embedded NIF collision for every unique
                                   model used by center cell; report placed
@@ -150,6 +156,10 @@ enum OpenSkyCLI {
             )
         case "cell":
             try CellCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
+        case "actor":
+            try ActorCommand.run(
                 context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
             )
         case "collision":
