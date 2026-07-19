@@ -1,13 +1,13 @@
 ---
 type: Subsystem
-title: Metal 4 static-mesh renderer
-description: Static-mesh render path - pipeline variants, uniform rings, argument-table
+title: Metal 4 mesh renderer
+description: Static + skinned mesh paths - pipelines, uniform rings, argument-table
   binds, counter-heap frame stats, offscreen render, scene types.
 tags: [rendering, metal, engine]
-timestamp: 2026-07-19T00:00:00Z
+timestamp: 2026-07-20T00:00:00Z
 ---
 
-# Metal 4 static-mesh renderer
+# Metal 4 mesh renderer
 
 `Renderer.swift` draws a `RenderScene` through sky, opaque, terrain, alpha-test, and
 water pipeline variants. Scene source =
@@ -24,8 +24,9 @@ adapted from Apple's Xcode Metal 4 game template (structure, not copied game cod
   stride 48, tightly packed. Owns the `MTLVertexDescriptor` + `interleave(Mesh)`.
   Missing attribute arrays -> neutral defaults (+Z normal, origin UV, white color).
 * `RenderMesh` — one engine `Mesh` uploaded: vertex + uint16 index buffer, local
-  transform, material slot. Rejects empty meshes/out-of-range indices (typed errors,
-  mod-quirk rule).
+  transform, material slot. Skinned meshes add a 32-byte/vertex weights + uint16x4 index
+  stream and float4x4 bone palette. Rejects empty meshes, bad skin array sizes,
+  out-of-range triangle/bone indices (typed errors, mod-quirk rule).
 * `RenderModel` — one engine `Model`: `RenderMesh`es + `RenderMaterial`s (diffuse
   `MTLTexture` resolved through a caller-supplied `TextureProvider` closure — demo scene
   feeds procedural textures, VFS + `TextureLoader` feeds real assets). `TextureLoader`
@@ -52,8 +53,9 @@ adapted from Apple's Xcode Metal 4 game template (structure, not copied game cod
 
 ## Pipelines + shaders
 
-* Two static-mesh `MTL4RenderPipelineState` variants from one fragment function
-  (`staticMeshFragment`), selected via function constant `FunctionConstantAlphaTest`
+* Static opaque + alpha-test variants use `staticMeshVertex`; skinned opaque + alpha-test
+  variants use `skinnedMeshVertex`. All share `staticMeshFragment`, selected via function
+  constant `FunctionConstantAlphaTest`
   (`MTL4SpecializedFunctionDescriptor` + `MTLFunctionConstantValues`): opaque pays
   nothing for discard; alpha-test discards below `DrawUniforms.alphaThreshold`. Further
   pipelines: terrain splat, procedural sky, water blend (sections below).
@@ -248,8 +250,9 @@ change at z-fighting edges, visually identical.
   per-instance `InstanceTransform` ring (instancing section).
 * `WaterDrawUniforms` shares draw-ring slots with static/terrain uniforms; ring stride uses
   largest struct, 256-byte aligned.
-* All binds through one `MTL4ArgumentTable` (6 buffers — vertices, frame + draw uniforms,
-  terrain weights, instance transforms, point lights; 1 + 8 textures — diffuse + terrain
+* All binds through one `MTL4ArgumentTable` (8 buffers — vertices, frame + draw uniforms,
+  terrain weights, instance transforms, point lights, skin attributes, bone matrices;
+  1 + 8 textures — diffuse + terrain
   layer array; 1 sampler); table state is captured per draw, so per-draw
   `setAddress`/`setTexture`
   between `drawIndexedPrimitives` calls is the binding model. Sampler: trilinear
@@ -257,6 +260,19 @@ change at z-fighting edges, visually identical.
 * Residency: app-owned `MTLResidencySet` holds uniform rings + every scene allocation
   (`RenderScene.residencyAllocations`), committed at scene build, attached to the queue.
   Offscreen targets are added/removed around each `renderOffscreen` call.
+
+## Bind-pose skinning (M5.3)
+
+Skinned draw groups select pipeline by `RenderMesh.isSkinned`. Vertex buffer 6 carries
+float4 normalized weights + ushort4 global bone indices; buffer 7 carries mesh-local
+float4x4 bone matrices. Vertex shader computes weighted position + direction transforms,
+then applies existing instance model/normal matrices. Static groups keep prior layout +
+pipeline. Both skin buffers join scene residency sets.
+
+Bind-only palettes resolve to identity within float error from NiSkinData inverse binds.
+This draws each mesh in its authored bind pose; animation/current skeleton pose is M6+.
+Real-data gate: textured `malebody_1.nif` through Asset Browser offscreen, CPU weighted
+bounds equal source bounds within 0.01 units, lit pixels >1%.
 
 ## Frame pacing + stats
 

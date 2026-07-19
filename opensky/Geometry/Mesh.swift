@@ -24,6 +24,41 @@ nonisolated struct Mesh {
     let indices: [UInt16]
     /// Index into the owning `Model.materials`.
     let materialSlot: Int
+    /// Nil for rigid geometry. Skinned meshes carry four influences per
+    /// vertex + bind-pose matrices for the GPU skinning path.
+    let skinning: MeshSkinning?
+
+    init(
+        name: String?,
+        transform: float4x4,
+        positions: [SIMD3<Float>],
+        normals: [SIMD3<Float>],
+        tangents: [SIMD3<Float>],
+        bitangents: [SIMD3<Float>],
+        uvs: [SIMD2<Float>],
+        colors: [SIMD4<Float>],
+        indices: [UInt16],
+        materialSlot: Int,
+        skinning: MeshSkinning? = nil
+    ) {
+        self.name = name
+        self.transform = transform
+        self.positions = positions
+        self.normals = normals
+        self.tangents = tangents
+        self.bitangents = bitangents
+        self.uvs = uvs
+        self.colors = colors
+        self.indices = indices
+        self.materialSlot = materialSlot
+        self.skinning = skinning
+    }
+}
+
+nonisolated struct MeshSkinning {
+    let weights: [SIMD4<Float>]
+    let boneIndices: [SIMD4<UInt16>]
+    let bindPoseMatrices: [float4x4]
 }
 
 /// One loaded asset: every drawable mesh plus the materials they index.

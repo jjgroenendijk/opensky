@@ -130,7 +130,9 @@ enum NIFFixture {
         out.appendUInt32(UInt32(bitPattern: collisionRef))
         return out
     }
+}
 
+extension NIFFixture {
     /// NiNode payload: AV-object prefix, children refs, effects refs.
     static func niNode(
         prefix: Data = avObjectPrefix(),
@@ -145,6 +147,151 @@ enum NIFFixture {
         out.appendUInt32(UInt32(effects.count))
         for effect in effects {
             out.appendUInt32(UInt32(bitPattern: effect))
+        }
+        return out
+    }
+
+    /// nif.xml NiTransform: column-major Matrix33, translation, scale.
+    static func niTransform(
+        translation: SIMD3<Float> = .zero,
+        rotationColumns: [Float] = [1, 0, 0, 0, 1, 0, 0, 0, 1],
+        scale: Float = 1
+    ) -> Data {
+        var out = Data()
+        for element in rotationColumns {
+            out.appendFloat32(element)
+        }
+        out.appendFloat32(translation.x)
+        out.appendFloat32(translation.y)
+        out.appendFloat32(translation.z)
+        out.appendFloat32(scale)
+        return out
+    }
+
+    static func skinInstance(
+        dataRef: Int32,
+        partitionRef: Int32,
+        skeletonRootRef: Int32,
+        boneRefs: [Int32],
+        bodyPartitions: [(flags: UInt16, bodyPart: UInt16)] = []
+    ) -> Data {
+        var out = Data()
+        out.appendUInt32(UInt32(bitPattern: dataRef))
+        out.appendUInt32(UInt32(bitPattern: partitionRef))
+        out.appendUInt32(UInt32(bitPattern: skeletonRootRef))
+        out.appendUInt32(UInt32(boneRefs.count))
+        for ref in boneRefs {
+            out.appendUInt32(UInt32(bitPattern: ref))
+        }
+        out.appendUInt32(UInt32(bodyPartitions.count))
+        for partition in bodyPartitions {
+            out.appendUInt16(partition.flags)
+            out.appendUInt16(partition.bodyPart)
+        }
+        return out
+    }
+
+    static func skinData(
+        rootParentToSkin: Data = niTransform(),
+        boneTransforms: [Data],
+        vertexWeights: [[(vertex: UInt16, weight: Float)]]
+    ) -> Data {
+        precondition(boneTransforms.count == vertexWeights.count)
+        var out = rootParentToSkin
+        out.appendUInt32(UInt32(boneTransforms.count))
+        out.append(1) // has vertex weights
+        for (transform, weights) in zip(boneTransforms, vertexWeights) {
+            out.append(transform)
+            out.append(Data(count: 16)) // zero NiBound
+            out.appendUInt16(UInt16(weights.count))
+            for weight in weights {
+                out.appendUInt16(weight.vertex)
+                out.appendFloat32(weight.weight)
+            }
+        }
+        return out
+    }
+
+    /// One vertex|uvs|skinned BSVertexDataSSE record (32 bytes).
+    static func skinnedVertex(
+        position: SIMD3<Float>,
+        uv: SIMD2<Float> = .zero,
+        weights: SIMD4<Float> = SIMD4(1, 0, 0, 0),
+        boneIndices: SIMD4<UInt8> = .zero
+    ) -> Data {
+        var out = Data()
+        out.appendFloat32(position.x)
+        out.appendFloat32(position.y)
+        out.appendFloat32(position.z)
+        out.appendUInt32(0)
+        out.appendFloat16(uv.x)
+        out.appendFloat16(uv.y)
+        for weight in [weights.x, weights.y, weights.z, weights.w] {
+            out.appendFloat16(weight)
+        }
+        out.append(contentsOf: [
+            boneIndices.x, boneIndices.y, boneIndices.z, boneIndices.w
+        ])
+        return out
+    }
+
+    /// SSE NiSkinPartition with one unstripped hardware partition. `triangles`
+    /// are both local faces + global triangle-copy indices because this
+    /// fixture uses an identity vertex map.
+    static func skinPartition(
+        vertexRecords: [Data],
+        triangles: [UInt16],
+        bonePalette: [UInt16],
+        weights: [SIMD4<Float>],
+        boneIndices: [SIMD4<UInt8>],
+        attributes: UInt16 = 0x43,
+        strideDwords: Int = 8
+    ) -> Data {
+        precondition(vertexRecords.count == weights.count)
+        precondition(vertexRecords.count == boneIndices.count)
+        let desc = UInt64(strideDwords & 0xF) | UInt64(attributes) << 44
+        var out = Data()
+        out.appendUInt32(1) // partition count
+        out.appendUInt32(UInt32(vertexRecords.reduce(0) { $0 + $1.count }))
+        out.appendUInt32(UInt32(strideDwords * 4))
+        out.appendUInt64(desc)
+        for vertex in vertexRecords {
+            out.append(vertex)
+        }
+
+        out.appendUInt16(UInt16(vertexRecords.count))
+        out.appendUInt16(UInt16(triangles.count / 3))
+        out.appendUInt16(UInt16(bonePalette.count))
+        out.appendUInt16(0) // strips
+        out.appendUInt16(4) // weights per vertex
+        for bone in bonePalette {
+            out.appendUInt16(bone)
+        }
+        out.append(1) // has vertex map
+        for vertex in vertexRecords.indices {
+            out.appendUInt16(UInt16(vertex))
+        }
+        out.append(1) // has vertex weights
+        for vertexWeights in weights {
+            for weight in [
+                vertexWeights.x, vertexWeights.y, vertexWeights.z, vertexWeights.w
+            ] {
+                out.appendFloat32(weight)
+            }
+        }
+        out.append(1) // has faces
+        for index in triangles {
+            out.appendUInt16(index)
+        }
+        out.append(1) // has bone indices
+        for indices in boneIndices {
+            out.append(contentsOf: [indices.x, indices.y, indices.z, indices.w])
+        }
+        out.append(0) // LOD
+        out.append(0) // global VB
+        out.appendUInt64(desc)
+        for index in triangles {
+            out.appendUInt16(index)
         }
         return out
     }

@@ -1,9 +1,9 @@
 ---
 type: File Format
 title: NIF mesh (Gamebryo 20.2.0.7, Skyrim SE)
-description: On-disk layout of Skyrim SE .nif meshes and how OpenSky reads them.
+description: Skyrim SE .nif container, geometry, materials, skinning, and scene graph.
 tags: [format, mesh, geometry, io]
-timestamp: 2026-07-10T00:00:00Z
+timestamp: 2026-07-20T00:00:00Z
 ---
 
 # NIF mesh, Gamebryo 20.2.0.7
@@ -175,7 +175,7 @@ bytes exist only when normals are also present):
 | normals  | 0x008 | 4     | normbyte x/y/z + bitangent Y normbyte     |
 | tangents | 0x010 | 4     | normbyte x/y/z + bitangent Z normbyte     |
 | colors   | 0x020 | 4     | RGBA bytes / 255                          |
-| skinned  | 0x040 | 12    | 4 half weights + 4 bone indices — skipped |
+| skinned  | 0x040 | 12    | 4 half weights + 4 uint8 palette indices  |
 | eye data | 0x100 | 4     | float — skipped                           |
 
 Positions are always full floats in SSE (`BSVertexDataSSE`), unlike FO4's
@@ -188,6 +188,61 @@ reassembled at decode. normbyte remap: `(byte / 255) * 2 - 1`
 
 `BSSubIndexTriShape` inherits this complete payload then appends SSE segment metadata.
 OpenSky validates + flattens it for object LOD; layout: [LOD](/formats/lod.md).
+
+## Skin blocks (SSE)
+
+Reference: NifTools
+[`nif.xml` at `292bb94`](https://github.com/niftools/nifxml/blob/292bb9403cbf4052c58d66e80906b6bde1700779/nif.xml)
+`NiSkinInstance`, `BSDismemberSkinInstance`, `NiSkinData`, `BoneData`,
+`NiSkinPartition`, `SkinPartition`, `BSVertexDataSSE`. All refs are signed int32
+(`-1` = null).
+
+`NiSkinInstance` links shape -> bind data + partition geometry:
+
+| type          | field          | notes                                 |
+| ------------- | -------------- | ------------------------------------- |
+| int32         | data           | `NiSkinData` ref                      |
+| int32         | skin partition | `NiSkinPartition` ref                 |
+| int32         | skeleton root  | NiNode pointer                        |
+| uint32        | bone count     |                                       |
+| int32 x count | bones          | NiNode pointers, global influence ids |
+
+`BSDismemberSkinInstance` appends uint32 partition count, then one uint16 flags +
+uint16 body-part id pair per partition. Metadata is retained; bind-pose render does not
+mask parts yet.
+
+`NiSkinData` starts with one 52-byte `NiTransform` (Matrix33 rotation, Vector3
+translation, float uniform scale), then uint32 bone count + uint8 has-vertex-weights.
+Each `BoneData` = `NiTransform` skin-to-bone inverse bind, bounding sphere (float3 center
+
++ float radius), uint16 vertex count, optional `(uint16 vertex, float weight)` pairs.
+SSE bodies store hardware weights in `NiSkinPartition`; legacy pairs are still decoded.
+
+SSE `NiSkinPartition` starts with uint32 partition count, uint32 vertex-data size,
+uint32 vertex stride, uint64 BSVertexDesc, then one top-level interleaved vertex stream.
+Each `SkinPartition` carries counts, global-bone palette, local->global vertex map,
+optional float weights/faces/uint8 palette indices, LOD byte, global-VB byte, repeated
+vertex desc, mandatory global uint16 triangle copy. OpenSky uses top-level weights +
+indices, remaps palette-local indices per partition, draws global triangle copies.
+Checks cover counts, maps, palettes, influence totals, triangle ranges.
+
+Vanilla quirk: later `malebody_1.nif` partitions contain values outside local vertex
+count in redundant primary faces, despite nif.xml describing local faces. Mandatory
+global triangle copies match drawable geometry; primary faces are bounded + skipped.
+
+## Skeleton + bind pose
+
+`NIFNodeHierarchy` recursively decodes NiNode names + local transforms. `NIFSkeleton`
+maps names from `skeleton.nif` to complete world-transform tree. Body NIF dummy-bone refs
+resolve by name against that tree; missing bones reject skin. Vanilla body dummy nodes
+omit bind translations -> not a complete pose source.
+
+Gamebryo skin matrix, per
+[public NiSkinInstance help](https://morrowind-nif.github.io/Notes_EN/module_2_3_2_38_4.htm):
+`rootParentToSkin * currentBoneToRootParent * skinToBoneBind`. Bind-only rendering takes
+`currentBoneToRootParent` from this skin's inverse-bind transforms -> identity palette
+within float error. `skeleton.nif` supplies bone identity/tree validation; later animation
+can replace current-bone transforms without changing weights or GPU layout.
 
 ## Materials subset
 
@@ -247,19 +302,21 @@ Impl: `NIFAlphaProperty.swift`.
 `NIFFile.model()` (`NIFModel.swift`) flattens the block tree into engine
 types (`Geometry/Mesh.swift`) decoupled from disk layout:
 
-- Walk starts at footer roots; `NIFNode.traversedTypes` recurse, composing
++ Walk starts at footer roots; `NIFNode.traversedTypes` recurse, composing
   `parent * local` (T·R·S) down the chain; `BSTriShape`/`BSSubIndexTriShape` leaves become `Mesh`
   values carrying the accumulated model-space transform.
-- Material identity dedups by (shader, alpha) property block ref pair;
++ Material identity dedups by (shader, alpha) property block ref pair;
   each unique pair resolves once into an engine `Material`
   (`Geometry/Material.swift`): texture set -> normalized VFS keys, UV
   transform, alpha/glossiness/specular, double-sided bit, alpha blend/test
   from NiAlphaProperty. Non-lighting shaders (effect/water/sky) ->
   `Material.fallback`, untextured but drawn.
-- Skipped: skinned shapes (skin ref set), empty shapes (counted in
-  `Model.skippedShapeCount`); all non-drawable leaf types (collision,
++ Skinned shapes resolve instance/data/partition blocks, partition-owned vertices +
+  triangles, four normalized influences, bone-name validation against optional
+  `NIFSkeleton`, then emit `MeshSkinning`. Empty shapes are counted in
+  `Model.skippedShapeCount`; all non-drawable leaf types (collision,
   controllers, `BSDynamicTriShape`) end the subtree silently.
-- Defense: out-of-range ref, ref cycle (recursion-stack set, so legitimate
++ Defense: out-of-range ref, ref cycle (recursion-stack set, so legitimate
   subtree reuse under two parents still works), depth > 64 -> `malformed`;
   caller skips the asset.
 
@@ -289,8 +346,9 @@ all files):
 
 Statics for M2 need: NiNode (+ BSFadeNode as root), BSTriShape,
 BSLightingShaderProperty, BSShaderTextureSet, NiAlphaProperty. Everything
-Particle (`*PSys*`), controller/interpolator (animation), and skinning get walked over by
-size. Havok blocks stay outside render flattening but decode through
+Particle (`*PSys*`) + controller/interpolator animation blocks get walked over by size.
+Skin blocks now decode through typed M5.3 paths. Havok stays outside render flattening but
+decodes through
 `NIFFile.collisionModel()`; see [NIF Havok collision](/formats/nif-collision.md).
 
 Typed decode sweep (probe, 2026-07-10, item 2.3): every `.nif` in the
@@ -313,3 +371,9 @@ last-`textures/` truncation in `vfsKey`) and 198 genuinely absent textures
 placeholder rule. `farmhouse01.nif` resolves all 8 slots to existing
 diffuse+normal pairs; its thatch roof is double-sided with alpha test 0.5,
 matching in-game foliage-style rendering expectations.
+
+Skin probe (2026-07-20): `malebody_1.nif` -> 2 drawable skinned meshes, 1,802 vertices,
+2,948 triangles, 2 diffuse materials. Partitions: underwear 417 vertices/516 triangles/5
+bones; body 1,385 vertices/2,432 triangles/24 bones across 3 partitions. External
+`skeleton.nif` -> 268 blocks, 98 NiNodes. Asset Browser offscreen render uses vanilla
+diffuses; CPU weighted bind-pose bounds match source min/max within 0.01 units.

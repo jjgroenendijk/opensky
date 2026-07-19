@@ -12,8 +12,39 @@ nonisolated enum RenderMeshError: Error, Equatable {
     /// Triangle index points past the vertex array (defensive: parsers
     /// validate, but this data ultimately comes from external files).
     case indexOutOfRange(index: UInt16, vertexCount: Int)
+    case boneIndexOutOfRange(index: UInt16, boneCount: Int)
+    case invalidSkinningData
     case emptyMesh
     case bufferAllocationFailed
+}
+
+/// Second stream for skinned meshes. Swift's SIMD alignment makes this 32
+/// bytes (16-byte float4, 8-byte ushort4, tail padding); descriptor uses the
+/// same MemoryLayout stride so CPU/GPU packing cannot drift.
+nonisolated struct SkinVertex {
+    let weights: SIMD4<Float>
+    let boneIndices: SIMD4<UInt16>
+}
+
+nonisolated enum SkinVertexLayout {
+    static let weightsOffset = 0
+    static let boneIndicesOffset = 16
+    static let stride = MemoryLayout<SkinVertex>.stride
+
+    static func vertexDescriptor() -> MTLVertexDescriptor {
+        let descriptor = StaticVertexLayout.vertexDescriptor()
+        let buffer = BufferIndex.skinningAttributes.rawValue
+        descriptor.attributes[VertexAttribute.boneWeights.rawValue].format = .float4
+        descriptor.attributes[VertexAttribute.boneWeights.rawValue].offset = weightsOffset
+        descriptor.attributes[VertexAttribute.boneWeights.rawValue].bufferIndex = buffer
+        descriptor.attributes[VertexAttribute.boneIndices.rawValue].format = .ushort4
+        descriptor.attributes[VertexAttribute.boneIndices.rawValue].offset = boneIndicesOffset
+        descriptor.attributes[VertexAttribute.boneIndices.rawValue].bufferIndex = buffer
+        descriptor.layouts[buffer].stride = stride
+        descriptor.layouts[buffer].stepRate = 1
+        descriptor.layouts[buffer].stepFunction = .perVertex
+        return descriptor
+    }
 }
 
 /// Interleaved layout of one static-mesh vertex: float3 position, float3
@@ -109,6 +140,12 @@ nonisolated final class RenderMesh {
     let vertexBuffer: MTLBuffer
     let indexBuffer: MTLBuffer
     let indexCount: Int
+    let skinningBuffer: MTLBuffer?
+    let boneMatrixBuffer: MTLBuffer?
+    var isSkinned: Bool {
+        skinningBuffer != nil
+    }
+
     /// Mesh-local -> model-root transform (see Geometry/Mesh.swift).
     let localTransform: float4x4
     /// Index into the owning model's materials.
@@ -126,6 +163,7 @@ nonisolated final class RenderMesh {
         }
 
         let vertices = StaticVertexLayout.interleave(mesh)
+        let skinBuffers = try Self.makeSkinBuffers(device: device, mesh: mesh)
         guard
             let vertexBuffer = device.makeBuffer(
                 bytes: vertices,
@@ -143,7 +181,45 @@ nonisolated final class RenderMesh {
         self.vertexBuffer = vertexBuffer
         self.indexBuffer = indexBuffer
         indexCount = mesh.indices.count
+        skinningBuffer = skinBuffers.attributes
+        boneMatrixBuffer = skinBuffers.matrices
         localTransform = mesh.transform
         materialSlot = mesh.materialSlot
+    }
+
+    private static func makeSkinBuffers(
+        device: MTLDevice,
+        mesh: Mesh
+    ) throws -> (attributes: MTLBuffer?, matrices: MTLBuffer?) {
+        guard let skinning = mesh.skinning else { return (nil, nil) }
+        guard
+            skinning.weights.count == mesh.positions.count,
+            skinning.boneIndices.count == mesh.positions.count,
+            !skinning.bindPoseMatrices.isEmpty
+        else { throw RenderMeshError.invalidSkinningData }
+        let boneCount = skinning.bindPoseMatrices.count
+        let allIndices = skinning.boneIndices.flatMap { [$0.x, $0.y, $0.z, $0.w] }
+        if let index = allIndices.first(where: { Int($0) >= boneCount }) {
+            throw RenderMeshError.boneIndexOutOfRange(
+                index: index,
+                boneCount: boneCount
+            )
+        }
+        let vertices = zip(skinning.weights, skinning.boneIndices).map(SkinVertex.init)
+        guard
+            let attributes = device.makeBuffer(
+                bytes: vertices,
+                length: vertices.count * MemoryLayout<SkinVertex>.stride,
+                options: .storageModeShared
+            ),
+            let matrices = device.makeBuffer(
+                bytes: skinning.bindPoseMatrices,
+                length: skinning.bindPoseMatrices.count * MemoryLayout<float4x4>.stride,
+                options: .storageModeShared
+            )
+        else { throw RenderMeshError.bufferAllocationFailed }
+        attributes.label = "\(mesh.name ?? "mesh").skin-vertices"
+        matrices.label = "\(mesh.name ?? "mesh").bind-pose-bones"
+        return (attributes, matrices)
     }
 }

@@ -66,6 +66,68 @@ struct PreviewRealDataTests {
         try previewMesh(catalog: catalog, vfs: vfs, device: device)
     }
 
+    @Test(.enabled(if: Self.canRun))
+    @MainActor
+    func previewsSkinnedBodyWithoutBindPoseDistortion() throws {
+        let root = try #require(Self.dataRoot)
+        try previewSkinnedBody(vfs: VirtualFileSystem(root: root))
+    }
+
+    /// Milestone 5.3 acceptance: exact Asset Browser preview path over a
+    /// vanilla body, plus a CPU bind-pose check against source bounds.
+    @MainActor
+    private func previewSkinnedBody(vfs: VirtualFileSystem) throws {
+        let path = "meshes\\actors\\character\\character assets\\malebody_1.nif"
+        let data = try vfs.contents(forPath: path)
+        let skeletonData = try vfs.contents(
+            forPath: "meshes\\actors\\character\\character assets\\skeleton.nif"
+        )
+        let skeleton = try NIFSkeleton(file: NIFFile(data: skeletonData))
+        let model = try NIFFile(data: data).model(skeleton: skeleton)
+
+        #expect(model.meshes.count == 2)
+        #expect(model.meshes.allSatisfy { $0.skinning != nil })
+        #expect(model.materials.compactMap(\.diffuseTexture).count == 2)
+        let sourceBounds = try #require(ModelBounds.containing(model: model))
+        let skinnedBounds = try #require(bindPoseBounds(model: model))
+        #expect(simd_distance(sourceBounds.min, skinnedBounds.min) < 0.01)
+        #expect(simd_distance(sourceBounds.max, skinnedBounds.max) < 0.01)
+
+        let detail = PreviewDetailBuilder(fileSystem: vfs, localized: false).detail(
+            for: .file(VFSEntry(path: path, archive: "Skyrim - Meshes0.bsa"))
+        )
+        #expect(!detail.text.contains("[ERROR]"))
+        #expect(!detail.text.contains("[WARNING] no preview image"))
+        let image = try #require(detail.image)
+        #expect(nonBackgroundFraction(image: image) > 0.01)
+        let url = try write(image: image, name: "preview-skinned-body.png")
+        print("[INFO] skinned body preview (\(path)): \(url.path)")
+    }
+
+    private func bindPoseBounds(model: Model) -> ModelBounds? {
+        var minimum = SIMD3<Float>(repeating: .greatestFiniteMagnitude)
+        var maximum = SIMD3<Float>(repeating: -.greatestFiniteMagnitude)
+        var hasVertex = false
+        for mesh in model.meshes {
+            guard let skinning = mesh.skinning else { continue }
+            for index in mesh.positions.indices {
+                let position = SIMD4(mesh.positions[index], 1)
+                let weights = skinning.weights[index]
+                let bones = skinning.boneIndices[index]
+                var skinned = SIMD4<Float>.zero
+                for lane in 0 ..< 4 where weights[lane] > 0 {
+                    skinned += weights[lane] *
+                        (skinning.bindPoseMatrices[Int(bones[lane])] * position)
+                }
+                let point = (mesh.transform * SIMD4(skinned.xyz, 1)).xyz
+                minimum = simd_min(minimum, point)
+                maximum = simd_max(maximum, point)
+                hasVertex = true
+            }
+        }
+        return hasVertex ? ModelBounds(min: minimum, max: maximum) : nil
+    }
+
     /// First architecture DDS whose quad render lights >30% of the frame —
     /// a black texture legitimately fails the pixel check, so keep looking.
     @MainActor

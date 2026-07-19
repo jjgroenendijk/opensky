@@ -195,18 +195,22 @@ extension Renderer {
     /// nothing and consume no uniform slot.
     private func encode(
         groups: [DrawGroup],
-        pipeline: MTLRenderPipelineState,
+        staticPipeline: MTLRenderPipelineState,
+        skinnedPipeline: MTLRenderPipelineState,
         state: inout ScenePassState
     ) {
         guard !groups.isEmpty else { return }
-        // Pipeline bound lazily: an all-culled list encodes nothing.
-        var pipelineBound = false
+        // Pipeline bound lazily: an all-culled list encodes nothing. Model
+        // ordering is retained, so switch only when rigid/skinned kind does.
+        var boundSkinned: Bool?
         for group in groups {
             let visible = writeVisibleInstances(of: group, state: &state)
             guard visible.written > 0 else { continue }
-            if !pipelineBound {
-                state.encoder.setRenderPipelineState(pipeline)
-                pipelineBound = true
+            if boundSkinned != group.mesh.isSkinned {
+                state.encoder.setRenderPipelineState(
+                    group.mesh.isSkinned ? skinnedPipeline : staticPipeline
+                )
+                boundSkinned = group.mesh.isSkinned
             }
             // Running visible-group cursor indexes the uniform ring:
             // visible groups <= scene.drawCount <= ring capacity.
@@ -227,6 +231,7 @@ extension Renderer {
                 group.mesh.vertexBuffer.gpuAddress,
                 index: BufferIndex.vertices.rawValue
             )
+            bindSkinningBuffers(for: group.mesh)
             argumentTable.setAddress(
                 drawUniformBuffer.gpuAddress + UInt64(uniformOffset),
                 index: BufferIndex.drawUniforms.rawValue
@@ -253,6 +258,21 @@ extension Renderer {
                 instanceCount: visible.written
             )
         }
+    }
+
+    private func bindSkinningBuffers(for mesh: RenderMesh) {
+        guard
+            let skinning = mesh.skinningBuffer,
+            let matrices = mesh.boneMatrixBuffer
+        else { return }
+        argumentTable.setAddress(
+            skinning.gpuAddress,
+            index: BufferIndex.skinningAttributes.rawValue
+        )
+        argumentTable.setAddress(
+            matrices.gpuAddress,
+            index: BufferIndex.boneMatrices.rawValue
+        )
     }
 
     /// Encodes the terrain splat draws: per-quadrant pipeline with the base
@@ -415,9 +435,19 @@ extension Renderer {
         }
         encoder.setDepthStencilState(depthState)
         var state = ScenePassState(encoder: encoder, slot: slot, frustum: frustum)
-        encode(groups: scene.opaque, pipeline: opaquePipeline, state: &state)
+        encode(
+            groups: scene.opaque,
+            staticPipeline: opaquePipeline,
+            skinnedPipeline: skinnedOpaquePipeline,
+            state: &state
+        )
         encodeTerrain(items: scene.terrain, state: &state)
-        encode(groups: scene.alphaTested, pipeline: alphaTestPipeline, state: &state)
+        encode(
+            groups: scene.alphaTested,
+            staticPipeline: alphaTestPipeline,
+            skinnedPipeline: skinnedAlphaTestPipeline,
+            state: &state
+        )
         encodeWater(items: scene.water, state: &state)
         lastDrawStats = state.stats
         encoder.endEncoding()

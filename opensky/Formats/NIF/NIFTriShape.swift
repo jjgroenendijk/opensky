@@ -53,6 +53,11 @@ nonisolated struct NIFTriShape {
     let bitangents: [SIMD3<Float>]
     /// RGBA in [0, 1].
     let colors: [SIMD4<Float>]
+    /// Four linear-blend weights per vertex when the skinned flag is set.
+    let boneWeights: [SIMD4<Float>]
+    /// Partition-local bone palette indices; the skin resolver remaps these
+    /// to NiSkinInstance bone indices before they reach engine geometry.
+    let boneIndices: [SIMD4<UInt16>]
     /// Flat triangle list, three indices each, all < positions.count.
     let indices: [UInt16]
 
@@ -101,32 +106,22 @@ nonisolated struct NIFTriShape {
             )
         }
 
-        if dataSize > 0 {
-            let arrays = try Self.readVertexRecords(
-                &reader,
-                attributes: attributes,
-                count: vertexCount
-            )
-            positions = arrays.positions
-            uvs = arrays.uvs
-            normals = arrays.normals
-            tangents = arrays.tangents
-            bitangents = arrays.bitangents
-            colors = arrays.colors
-            indices = try Self.readTriangles(
-                &reader,
-                triangleCount: triangleCount,
-                vertexCount: vertexCount
-            )
-        } else {
-            positions = []
-            uvs = []
-            normals = []
-            tangents = []
-            bitangents = []
-            colors = []
-            indices = []
-        }
+        let geometry = try Self.readGeometry(
+            &reader,
+            attributes: attributes,
+            vertexCount: vertexCount,
+            triangleCount: triangleCount,
+            present: dataSize > 0
+        )
+        positions = geometry.arrays.positions
+        uvs = geometry.arrays.uvs
+        normals = geometry.arrays.normals
+        tangents = geometry.arrays.tangents
+        bitangents = geometry.arrays.bitangents
+        colors = geometry.arrays.colors
+        boneWeights = geometry.arrays.boneWeights
+        boneIndices = geometry.arrays.boneIndices
+        indices = geometry.indices
 
         // SSE-only trailer: particle-deformed copy of the geometry. The size
         // field is always present; the copy itself is ignored (M2 statics).
@@ -146,16 +141,39 @@ nonisolated struct NIFTriShape {
         }
     }
 
-    private struct VertexArrays {
+    private static func readGeometry(
+        _ reader: inout BinaryReader,
+        attributes: VertexAttributes,
+        vertexCount: Int,
+        triangleCount: Int,
+        present: Bool
+    ) throws -> (arrays: VertexArrays, indices: [UInt16]) {
+        guard present else { return (VertexArrays(), []) }
+        let arrays = try readVertexRecords(
+            &reader,
+            attributes: attributes,
+            count: vertexCount
+        )
+        let indices = try readTriangles(
+            &reader,
+            triangleCount: triangleCount,
+            vertexCount: vertexCount
+        )
+        return (arrays, indices)
+    }
+
+    struct VertexArrays {
         var positions: [SIMD3<Float>] = []
         var uvs: [SIMD2<Float>] = []
         var normals: [SIMD3<Float>] = []
         var tangents: [SIMD3<Float>] = []
         var bitangents: [SIMD3<Float>] = []
         var colors: [SIMD4<Float>] = []
+        var boneWeights: [SIMD4<Float>] = []
+        var boneIndices: [SIMD4<UInt16>] = []
     }
 
-    private static func readVertexRecords(
+    static func readVertexRecords(
         _ reader: inout BinaryReader,
         attributes: VertexAttributes,
         count: Int
@@ -191,7 +209,23 @@ nonisolated struct NIFTriShape {
                 try arrays.colors.append(readByteColor4(&reader))
             }
             if attributes.contains(.skinned) {
-                reader.skip(12) // 4 half weights + 4 byte bone indices
+                let weights = try SIMD4(
+                    readHalf(&reader), readHalf(&reader),
+                    readHalf(&reader), readHalf(&reader)
+                )
+                guard
+                    weights.x.isFinite, weights.x >= 0,
+                    weights.y.isFinite, weights.y >= 0,
+                    weights.z.isFinite, weights.z >= 0,
+                    weights.w.isFinite, weights.w >= 0
+                else {
+                    throw NIFError.malformed("skin weights must be finite and nonnegative")
+                }
+                arrays.boneWeights.append(weights)
+                try arrays.boneIndices.append(SIMD4(
+                    UInt16(reader.readUInt8()), UInt16(reader.readUInt8()),
+                    UInt16(reader.readUInt8()), UInt16(reader.readUInt8())
+                ))
             }
             if attributes.contains(.eyeData) {
                 reader.skip(4)
@@ -222,7 +256,7 @@ nonisolated struct NIFTriShape {
     /// Per-vertex byte stride the attribute flags imply (BSVertexDataSSE
     /// field conditions; position block is 16 bytes with either bitangent X
     /// or unused W as its fourth component).
-    private static func stride(for attributes: VertexAttributes) -> Int {
+    static func stride(for attributes: VertexAttributes) -> Int {
         var stride = 0
         if attributes.contains(.vertex) {
             stride += 16
