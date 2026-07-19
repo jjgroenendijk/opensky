@@ -174,8 +174,7 @@ Direction only — re-scope after M5. Candidate order:
 
 ## Backlog (unscheduled, keep filed)
 
-* LOD quality: tree `.btt`/`.lst` billboards; clip boundary BTR triangles/segments so
-  4x4 block anchoring leaves no conservative gap; read `fBlockLevel*Distance` INI values.
+* LOD quality: tree `.btt`/`.lst` billboards; read `fBlockLevel*Distance` INI values.
 * GMST-driven movement constants (walk/run speed, step height) replacing 4.1 hardcodes.
 
 ## Tooling / meta

@@ -6,6 +6,7 @@ nonisolated private final class LODManualRunner: CellBuildRunning {
     private var ready: [CellBuildResult] = []
     private var readyLOD: [DistantLODBuildResult] = []
     private(set) var lodRequests: [CellCoordinate] = []
+    private(set) var lodHiddenCells: [Set<CellCoordinate>] = []
 
     func enqueue(_: CellCoordinate) {}
 
@@ -21,8 +22,9 @@ nonisolated private final class LODManualRunner: CellBuildRunning {
 
     func enqueueEviction(droppingMeshKeys _: Set<String>, droppingTextureKeys _: Set<String>) {}
 
-    func enqueueDistantLOD(center: CellCoordinate, hiddenCells _: Set<CellCoordinate>) {
+    func enqueueDistantLOD(center: CellCoordinate, hiddenCells: Set<CellCoordinate>) {
         lodRequests.append(center)
+        lodHiddenCells.append(hiddenCells)
     }
 
     func completeLOD(_ center: CellCoordinate, scene: DistantLODScene) {
@@ -71,6 +73,7 @@ struct DistantLODStreamerTests {
             streamer.update(cameraPosition: position)
         }
         #expect(runner.lodRequests == [Self.center])
+        #expect(runner.lodHiddenCells == [Set(cells)])
 
         runner.completeLOD(Self.center, scene: DistantLODScene(
             renderScene: RenderScene(instances: []),
@@ -83,6 +86,35 @@ struct DistantLODStreamerTests {
 
         let moved = CellGridManager.cellCenter(of: CellCoordinate(x: 3, y: 0))
         streamer.update(cameraPosition: moved)
-        #expect(streamer.distantLODBlockCount == 0)
+        #expect(streamer.isCoverageTransitionActive)
+        #expect(streamer.composedCellCount == 9)
+        #expect(streamer.residentCellCount == 0)
+        #expect(streamer.distantLODBlockCount == 7)
+
+        let movedCells = (2 ... 4).flatMap { x in
+            (-1 ... 1).map { CellCoordinate(x: Int32(x), y: Int32($0)) }
+        }
+        for cell in movedCells {
+            runner.complete(cell, scene: cellScene())
+        }
+        for _ in movedCells {
+            streamer.update(cameraPosition: moved)
+        }
+        #expect(runner.lodRequests == [Self.center, CellCoordinate(x: 3, y: 0)])
+        #expect(runner.lodHiddenCells.last == Set(movedCells))
+        #expect(streamer.isCoverageTransitionActive)
+        #expect(streamer.composedCellCount == 9)
+        #expect(streamer.distantLODBlockCount == 7)
+
+        runner.completeLOD(CellCoordinate(x: 3, y: 0), scene: DistantLODScene(
+            renderScene: RenderScene(instances: []),
+            assets: CellAssets(meshKeys: ["next-lod"], textureKeys: []),
+            blockCount: 8,
+            missingBlockCount: 0
+        ))
+        streamer.update(cameraPosition: moved)
+        #expect(!streamer.isCoverageTransitionActive)
+        #expect(streamer.composedCellCount == 9)
+        #expect(streamer.distantLODBlockCount == 8)
     }
 }

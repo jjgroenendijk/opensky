@@ -116,22 +116,41 @@ nonisolated final class MeshLibrary {
     /// so it is prepended when absent. Same normalized key -> identical
     /// RenderModel instance (shared across every placing ref).
     func model(path: String) throws -> RenderModel {
-        let key = try meshKey(for: path)
+        try loadModel(path: path, terrainLODClipMask: nil)
+    }
+
+    /// Loads one terrain LOD variant with geometry clipped to exact visible
+    /// cells. Variants cache independently from full BTR models.
+    func model(
+        path: String,
+        terrainLODClipMask: TerrainLODClipMask
+    ) throws -> RenderModel {
+        try loadModel(path: path, terrainLODClipMask: terrainLODClipMask)
+    }
+
+    private func loadModel(
+        path: String,
+        terrainLODClipMask: TerrainLODClipMask?
+    ) throws -> RenderModel {
+        let pathKey = try meshKey(for: path)
+        let key = cacheKey(path: pathKey, terrainLODClipMask: terrainLODClipMask)
         touchedKeys.insert(key)
         if let hit = cache[key] {
             textures.markTouched(modelTextureKeys[key] ?? [])
             return hit
         }
 
-        guard let data = try? fileSystem.contents(forPath: key) else {
-            throw MeshLibraryError.fileNotFound(path: key)
+        guard let data = try? fileSystem.contents(forPath: pathKey) else {
+            throw MeshLibraryError.fileNotFound(path: pathKey)
         }
-        let model: Model
+        let sourceModel: Model
         do {
-            model = try NIFFile(data: data).model()
+            sourceModel = try NIFFile(data: data).model()
         } catch {
-            throw MeshLibraryError.parseFailed(path: key, reason: String(describing: error))
+            throw MeshLibraryError.parseFailed(path: pathKey, reason: String(describing: error))
         }
+        let model = terrainLODClipMask.map { TerrainLODClipper.clipped(sourceModel, to: $0) }
+            ?? sourceModel
         guard !model.meshes.isEmpty else { throw MeshLibraryError.emptyModel(path: key) }
 
         let render: RenderModel
@@ -197,7 +216,15 @@ nonisolated final class MeshLibrary {
     /// Model-space bounds for an already-loaded path (nil if the path never
     /// loaded or the model carried no vertex positions).
     func bounds(forPath path: String) -> ModelBounds? {
-        guard let key = try? meshKey(for: path) else { return nil }
+        bounds(forPath: path, terrainLODClipMask: nil)
+    }
+
+    func bounds(
+        forPath path: String,
+        terrainLODClipMask: TerrainLODClipMask?
+    ) -> ModelBounds? {
+        guard let pathKey = try? meshKey(for: path) else { return nil }
+        let key = cacheKey(path: pathKey, terrainLODClipMask: terrainLODClipMask)
         return modelBounds[key]
     }
 
@@ -241,5 +268,13 @@ nonisolated final class MeshLibrary {
             throw MeshLibraryError.fileNotFound(path: path)
         }
         return normalized.hasPrefix("meshes\\") ? normalized : "meshes\\" + normalized
+    }
+
+    private func cacheKey(
+        path: String,
+        terrainLODClipMask: TerrainLODClipMask?
+    ) -> String {
+        guard let terrainLODClipMask else { return path }
+        return path + "|terrain-lod:" + terrainLODClipMask.cacheKey
     }
 }

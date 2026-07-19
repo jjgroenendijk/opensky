@@ -4,7 +4,7 @@ title: Cell streaming
 description: Camera position -> desired NxN exterior-cell grid, built off the main thread
   on one serial queue, streamed in/out around the free-fly camera with a per-frame budget.
 tags: [engine, world, streaming, esm, concurrency]
-timestamp: 2026-07-18T00:00:00Z
+timestamp: 2026-07-19T00:00:00Z
 ---
 
 # Cell streaming
@@ -245,8 +245,13 @@ test render paths never set `onFrame`, so they are unchanged.
 
 M3.4 adds one optional [distant LOD scene](/engine/distant-lod.md) to composition. Same
 runner/provider queue builds it only after desired 5x5 is fully accounted, so 100+ first-load
-LOD assets cannot starve near cells. Center changes replace stale ring scene; resident asset
-union includes LOD keys before any cell/LOD eviction.
+LOD assets cannot starve near cells. First settlement still integrates cells progressively.
+Once full grid + LOD exist, recenter starts a coverage transaction: old composition remains
+live, incoming successful cells stage offscreen, void/failed slots remain covered by LOD,
+then matching LOD completion commits staged cells + ring in one renderer swap. Repeated
+recenters discard staged cells outside newest desired grid. Asset keep-set includes staged
+scenes, preventing cache eviction before commit; old cell/LOD keys evict only after new
+composition owns replacement refs.
 
 ### Interior suspension
 
