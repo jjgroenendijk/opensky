@@ -4,6 +4,18 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-19
 
+* M4/M5 re-scope in [todo](/todo.md) -- M4 = walkable world: 4.1 terrain walk controller
+  (LAND heightfield ground), 4.2 NIF bhk collision decode (NifTools `nif.xml`; Havok
+  scale + `bhkCompressedMeshShapeData` layout flagged UNCONFIRMED), 4.3 per-cell
+  collision world on the streaming build queue, 4.4 collide-and-slide capsule, 4.5 gate =
+  walk-mode Whiterun round trip incl. interior, >30 fps via `openskycli bench`. M5 =
+  actors on screen: 5.1 ACHR/NPC_/template/body-model record chain, 5.2 skinned NIF
+  decode + GPU bind-pose skinning (`NiSkinInstance`/`BSDismemberSkinInstance`,
+  `skeleton.nif`), 5.3 actor assembly (skeleton + ARMA parts + FaceGen head), 5.4
+  actor streaming, 5.5 gate = bind-pose actors in Whiterun exterior + interior with
+  probe-verified counts + fps gate. Byte layouts unverified -> confirm at impl; FaceGen
+  path shape flagged UNCONFIRMED. M6+ direction unchanged; LOD-quality + GMST items
+  moved to explicit backlog.
 * M3 complete -- production probe passed exterior streaming + environment acceptance.
   5x5 scripted east/north flight built 35 unique cells once, unloaded 9, settled at 25
   resident/0 void with 458 -> 510 -> 470 MB waypoint footprint (559 MB peak); 4,784
