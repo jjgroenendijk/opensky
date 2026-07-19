@@ -17,6 +17,7 @@ extension CellStreamer {
             apply(transition: transition)
             return true
         case let .failure(error):
+            noteDoorTransitionFailure()
             let reason = String(describing: error)
             Self.logger.warning(
                 "[WARNING] door transition failed: \(reason, privacy: .public)"

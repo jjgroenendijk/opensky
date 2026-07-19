@@ -90,6 +90,7 @@ nonisolated final class CellSceneBuilder {
     let meshes: MeshLibrary
     let textures: TextureLibrary
     let collisionModels: NIFCollisionLibrary?
+    var collisionPartitionCache: [CellCollisionPartitionKey: [StaticCollisionPartition]] = [:]
     private let distantLODBuilder: DistantLODBuilder?
     /// FormID -> STAT over the STAT top group, built on first use.
     private var statIndex: [UInt32: StaticObject]?

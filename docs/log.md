@@ -4,6 +4,20 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-19
 
+* M4.5 milestone acceptance complete -- `bench --walk-path` drives fixed 1/120 s production
+  capsule physics from Tamriel `(6,-2)` to Chillfurrow Farm `(7,-3)`, climbs 22.82 units,
+  enters CELL `00016204`, crosses 160.34 floor units, follows paired door back to recorded
+  exterior pose. Hard gates cover timeout, fall-through, unresolved penetration, wrong
+  door/CELL/return, failed cell/door builds, route distances + active-physics avg/p95.
+  XTEL actor origin now seeds walk feet correctly. Large triangle soups partition into
+  shared-vertex spatial leaves -> 640x360 route 1,065 frames, avg 15.90 ms (62.9 fps), p95
+  29.69 ms, max 58.28 ms; pre-partition p95 was 40.66 ms at 480x270. Synthetic route/
+  partition/XTEL/
+  door-failure tests pass. Fly collision-build p95 budget revised 500 -> 700 ms after repeated
+  Debug baselines varied 450.82-552.57 ms; partitioned p95 533.67-635.78 ms. M5 review retained
+  numbered 5.1-5.6 sequence + measurable gates.
+  M4 done; M5 active in [todo](/todo.md). Utility QoS retained: default/user-initiated trials
+  raised walk p95 to 48.61/55.05 ms by competing with frame physics.
 * M4.4 capsule/world response complete -- production walk mode queries streamed terrain +
   per-cell static collision. Swept submoves + closest-feature narrowphase cover triangle,
   convex, box, sphere, capsule geometry; iterative depenetration slides along walls, grounds

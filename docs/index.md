@@ -80,4 +80,4 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 * [Testing setup](/testing.md) - test targets, make entrypoints, headless
   unit-test host, fixture policy.
-* [Roadmap](/todo.md) - M1-M3 history, active M4 work, future direction.
+* [Roadmap](/todo.md) - M1-M4 history, active M5 work, future direction.

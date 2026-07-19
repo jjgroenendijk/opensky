@@ -106,7 +106,7 @@ Synthetic tests:
 - `CapsuleCollisionTests`: wall slide, ceiling, walkable ramp, low/high steps, forward tread
   probe, player-solid filtering boundary, terrain-to-mesh seam, no unresolved penetration.
 - `RendererSceneSwapTests`: XTEL-style camera reseed clears grounded/controller state and
-  places capsule at destination before next physics step.
+  treats actor-origin XTEL position as capsule feet before next physics step.
 - `CellSceneTerrainTests`: LAND, XCLC hidden quadrant, DNAM fallback, no-terrain builder paths
   retain collision data matching rendered terrain.
 - `CameraInputStateTests`: G request drains exactly once.
@@ -116,3 +116,23 @@ four production `TerrainHeightField` values in `CellSceneComposition`, then drov
 `WalkController` east along world Y `-8128`. Three cell borders crossed in 342 100-ms input
 frames; every physics step stayed grounded, max capsule-bottom distance from sampled rendered
 plane = `0.0` units. Probe code + test-host attempts removed; no game data copied or committed.
+
+## Milestone acceptance route
+
+`openskycli bench --walk-path` owns M4's repeatable production gate. Fixed 1/30 s input
+frames feed 1/120 s controller substeps from Tamriel cell `(6,-2)` across streamed terrain to
+Chillfurrow Farm `(7,-3)`. Fixed waypoints skirt decoded Whiterun wall/farm placements;
+bounded deterministic sidesteps recover when a small static blocks progress. The driver then:
+
+1. Requires grounded travel + no unresolved penetration/fall-through at every active frame.
+2. Measures at least 16 units of exterior stair gain before activating door `0001633D`.
+3. Requires interior CELL `00016204`, crosses at least 80% of a 192-unit floor segment, then
+   returns to paired door `000163A8`.
+4. Requires exterior cell `(7,-3)` + recorded return pose, zero failed cell/door builds,
+   bounded phase/whole-route frames.
+5. Gates active-physics wall time at avg + p95 <= 33.33 ms.
+
+Read-only real-install acceptance at 640x360: 1,065 active physics frames, avg 15.90 ms
+(62.9 fps), p95 29.69 ms, max 58.28 ms; exterior stair gain 22.82 units; interior crossing
+160.34 units; paired return feet `(31233.67, -9784.47, -4059.53)`. No clip, fall-through,
+unresolved penetration, destination mismatch, or build error.

@@ -55,6 +55,11 @@ enum OpenSkyCLI {
                                   settlement, unload, one build/cell, bounded
                                   physical footprint, collision-build p95,
                                   avg/p95 frame budgets
+      bench --walk-path [--size WxH] [--budget-ms <f>]
+            [--max-frames <n>] [--out <file>]
+                                  Fixed-step M4 route: terrain + farm stairs,
+                                  paired interior crossing, exterior return;
+                                  fail route/collision/stream/physics gates
       help                        Show this text
 
     defaults: cell/screenshot/render target the first-render cell (Tamriel (6,-2)).

@@ -40,40 +40,19 @@ milestone leaves this file; history lives in `docs/log.md` + git.
   720p on M1, Debug), `openskycli` + main-app asset browser dev tools.
 * M3 — world streaming + environment. Done 2026-07-19 (PRs #22-#35): streamed 5x5
   exterior grid, terrain, distant LOD, sky/water, lit interiors + door round trips.
-* M4 — walkable world (active): collision + walk-mode player. Gate: 4.5.
-* M5 — actors on screen: placed actors rendered as skinned meshes in bind pose.
-  Gate: 5.6. Recheck scope at 4.5.
+* M4 — walkable world. Done 2026-07-19: streamed terrain/static collision, fixed-step
+  capsule response, walk-mode door round trip + >30 fps route gate.
+* M5 — actors on screen (active): placed actors rendered as skinned meshes in bind pose.
+  Gate: 5.6.
 * M6+ — toward playable (direction only): animation playback, Papyrus VM, audio, UI.
-
-## Milestone 4 — walkable world (collision + walk mode)
-
-Goal: player walks instead of flying — gravity, ground under feet on terrain and meshes,
-stairs climbable, walls solid, doors still work. Physical presence first; animation,
-actors, scripting stay out of scope. One branch/PR per numbered item; format items follow
-`format-parser` discipline (cite spec, synthetic in-code fixtures,
-`docs/formats/<name>.md`, `openskycli` probes).
-
-Format leads below from NifTools `nif.xml` + UESP; byte-level layouts NOT yet verified —
-confirm against `nif.xml` definitions + real-install probe before impl, flag deviations.
-
-### 4.5 Milestone acceptance
-
-* [ ] Add `openskycli bench --walk-path`: fixed-step scripted walk from M2 target cell
-      across Tamriel road/terrain to Chillfurrow Farm `(7,-3)`, climb exterior steps,
-      enter the proven farm interior, cross its floor, return outside. It drives production
-      controller, collision, streaming + door transitions; fails on route timeout,
-      fall-through, unresolved penetration, wrong destination, or unexplained build error.
-      Gate: route completes with no wall clip/fall-through; avg + p95 frame time sustain
-      >30 fps while physics is active.
-* [ ] Acceptance screenshot under `docs/img/`, linked from the walk/collision subsystem
-      doc; `docs/log.md` + this file updated. M5 scope checked against M4 collision +
-      streaming learnings; numbered items + measurable gate retained or revised.
 
 ## Milestone 5 — actors on screen
 
 Goal: placed actors visible in bind pose — Whiterun stops being empty. No animation, AI,
 or dialogue; static skinned bodies at ACHR poses. One branch/PR per numbered item; format
-items follow `format-parser` discipline. Recheck sequencing at 4.5.
+items follow `format-parser` discipline. M4.5 review retained 5.1-5.6 sequencing + measurable
+gates: actor builds stay on serial cell stream path, reason-tagged exact accounting remains
+mandatory, actor-enabled fly bench keeps explicit build/footprint/frame budgets.
 
 Format leads from UESP mod-file-format pages + xEdit definitions + NifTools `nif.xml`;
 byte-level layouts NOT yet verified — confirm by spec + probe at impl, flag deviations.
