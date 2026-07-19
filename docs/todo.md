@@ -40,20 +40,143 @@ milestone leaves this file; history lives in `docs/log.md` + git.
   720p on M1, Debug), `openskycli` + main-app asset browser dev tools.
 * M3 — world streaming + environment. Done 2026-07-19 (PRs #22-#35): streamed 5x5
   exterior grid, terrain, distant LOD, sky/water, lit interiors + door round trips.
-* M4 — toward playable (direction only): collision, animation, scripting, audio, UI.
-  Numbering, scope + gate pending.
+* M4 — walkable world (active): collision + walk-mode player. Gate: 4.5.
+* M5 — actors on screen: placed actors rendered as skinned meshes in bind pose.
+  Gate: 5.5. Recheck scope at 4.5.
+* M6+ — toward playable (direction only): animation playback, Papyrus VM, audio, UI.
 
-## Milestone 4+ — toward playable (far out)
+## Milestone 4 — walkable world (collision + walk mode)
 
-Direction only — numbering, scope + gate intentionally pending. Candidate order:
+Goal: player walks instead of flying — gravity, ground under feet on terrain and meshes,
+stairs climbable, walls solid, doors still work. Physical presence first; animation,
+actors, scripting stay out of scope. One branch/PR per numbered item; format items follow
+`format-parser` discipline (cite spec, synthetic in-code fixtures,
+`docs/formats/<name>.md`, `openskycli` probes).
 
-* Collision + character controller (walk on terrain first; HKX collision reversing later).
-* Animation: HKX (Havok) reversing — hardest format; consider skeleton-only first.
+Format leads below from NifTools `nif.xml` + UESP; byte-level layouts NOT yet verified —
+confirm against `nif.xml` definitions + real-install probe before impl, flag deviations.
+
+### 4.1 Walk-mode controller on terrain
+
+* [ ] Player capsule + gravity + walk/fly toggle (fly stays default dev mode). Ground =
+      LAND heightfield sample (bilinear over the 33x33 grid, `docs/formats/land.md`);
+      snap-to-ground, slope limit, hardcoded walk/run speeds (GMST later). Exterior
+      only; cell-border crossing keeps ground contact (streamed neighbor heightfields).
+* [ ] Acceptance: walk-mode traverse across >=3 streamed cells from the M2 target cell,
+      camera follows terrain, no fall-through at cell seams; unit tests on heightfield
+      sampling + controller math (synthetic heightfields).
+
+### 4.2 NIF collision decode (bhk blocks)
+
+* [ ] Parse embedded Havok collision from SSE NIFs: `bhkCollisionObject` ->
+      `bhkRigidBody`/`bhkRigidBodyT` -> shape tree (`bhkMoppBvTreeShape` — skip MOPP
+      bytecode, take child; `bhkCompressedMeshShape` + `bhkCompressedMeshShapeData`;
+      `bhkConvexVerticesShape`; `bhkBoxShape`/`bhkSphereShape`/`bhkCapsuleShape`;
+      `bhkListShape`). Spec: NifTools `nif.xml`. Output: clean Swift collision model
+      (triangle soup + convex primitives) in engine units, decoupled from disk layout.
+* [ ] UNCONFIRMED to chase by probe: Havok-to-engine scale factor (community value
+      ~69.99 units/m), `bhkRigidBodyT` transform composition, chunked
+      `bhkCompressedMeshShapeData` layout (big-tri vs chunk split).
+* [ ] Acceptance: `openskycli` collision sweep over all vanilla Whiterun-cell models
+      decodes without failure; synthetic-fixture unit tests per shape type; doc
+      `docs/formats/nif-collision.md`.
+
+### 4.3 Collision world + streaming integration
+
+* [ ] Per-cell static collision set built alongside `CellScene` on the serial build
+      queue (ref transform x shape, models without bhk data get none — matches vanilla).
+      Spatial index per cell; evicted with cell unload; interiors included (interior
+      floors are meshes, not terrain).
+* [ ] Acceptance: collision stats surfaced via `openskycli` (shapes/tris per cell for
+      target grid); streaming fly-path bench shows no regression breach of frame budget;
+      unit tests on build/evict lifecycle with fake providers.
+
+### 4.4 Capsule vs world response
+
+* [ ] Collide-and-slide capsule vs terrain + mesh collision: walls block, ramps/stairs
+      climb via step height, ceilings stop ascent. Door activation (F, 192 units)
+      unchanged in walk mode. Deterministic unit tests: synthetic wall/ramp/stair/step
+      scenes, seam crossing terrain<->mesh.
+
+### 4.5 Milestone acceptance
+
+* [ ] Walk-mode round trip: spawn at M2 target cell, walk Whiterun streets + stairs,
+      through one door, walk the interior floor, return outside — no fall-through or
+      wall clip along the route, >30 fps sustained via `openskycli bench` in walk mode.
+* [ ] Screenshot under `docs/`; `docs/log.md` + this file updated; M5 re-scoped into
+      confirmed numbered items with a gate.
+
+## Milestone 5 — actors on screen
+
+Goal: placed actors visible in bind pose — Whiterun stops being empty. No animation, AI,
+or dialogue; static skinned bodies at ACHR poses. One branch/PR per numbered item; format
+items follow `format-parser` discipline. Recheck sequencing at 4.5.
+
+Format leads from UESP mod-file-format pages + xEdit definitions + NifTools `nif.xml`;
+byte-level layouts NOT yet verified — confirm by spec + probe at impl, flag deviations.
+
+### 5.1 Actor record chain decode
+
+* [ ] ACHR placed actor (NAME base, DATA pos/rot, XSCL — REFR-shaped; lives in CELL
+      persistent + temporary children). `NPC_` base: RNAM race, TPLT template, WNAM worn
+      armor, PNAM head parts, ACBS flags (female bit). Template chain: TPLT -> LVLN
+      leveled NPC -> deterministic entry pick (first/highest for now) or direct NPC_.
+      Body model chain: NPC_ WNAM (else RACE skin) -> ARMO ARMA parts -> per-gender
+      MOD2/MOD3 model paths; RACE per-gender skeleton path. Head lead: pre-generated
+      FaceGen NIF `meshes/actors/character/facegendata/facegeom/<plugin>/00<formid>.nif`
+      (UNCONFIRMED path shape — probe).
+* [ ] Acceptance: `openskycli` actor probe lists Whiterun-area ACHRs with resolved
+      skeleton + body-part model paths, template chains followed; synthetic-fixture
+      tests per record; doc `docs/formats/actors.md`.
+
+### 5.2 Skinned NIF decode + GPU bind-pose skinning
+
+* [ ] Decode skinning from SSE NIFs: `NiSkinInstance`/`BSDismemberSkinInstance`,
+      `NiSkinData` (bone bind transforms), `NiSkinPartition` / SSE per-vertex bone
+      weights+indices in `BSTriShape` vertex data (`BSVertexDesc` skinning attributes);
+      `skeleton.nif` NiNode bone tree. Spec: NifTools `nif.xml`. Renderer: bone-matrix
+      buffer + skinned vertex path in `Shaders.metal`, bind pose only.
+* [ ] Acceptance: one vanilla body mesh renders skinned + textured (asset browser +
+      offscreen probe), no distortion vs bounds; synthetic skinned-mesh fixtures; doc
+      `docs/formats/nif.md` extension + renderer doc update.
+
+### 5.3 Actor assembly
+
+* [ ] Compose one actor: race skeleton + body/hands/feet ARMA parts + FaceGen head at
+      ACHR world pose with XSCL scale; missing parts degrade gracefully (skip, log).
+* [ ] Acceptance: named Whiterun NPC composed + rendered offscreen at correct world
+      position; unit tests on assembly selection (gender, template, missing-part).
+
+### 5.4 Actor streaming integration
+
+* [ ] Actors build/evict with cells on the serial build queue like statics; persistent
+      ACHRs mapped into streamed cells by position (pattern from door handling);
+      interiors included. Shared skeleton/body assets retained across cells.
+* [ ] Acceptance: streaming fly-path bench with actors shows no frame-budget breach;
+      build/evict lifecycle unit tests with fake providers.
+
+### 5.5 Milestone acceptance
+
+* [ ] Bind-pose actors render at correct positions in Whiterun exterior + one interior
+      (probe count vs `Skyrim.esm` ACHR count for touched cells); no crash across the
+      streamed grid; >30 fps sustained via `openskycli bench`.
+* [ ] Screenshot under `docs/`; `docs/log.md` + this file updated; M6 re-scoped into
+      numbered items with a gate.
+
+## Milestone 6+ — toward playable (far out)
+
+Direction only — re-scope after M5. Candidate order:
+
+* Animation: HKX (Havok) reversing — hardest format; skeleton-only/idle first.
 * Papyrus VM: PEX bytecode interpreter (open docs exist), event dispatch.
 * Audio: .fuz (lip + xwm), xwm via AVFoundation/ffmpeg-free route to be researched.
 * UI: game HUD/menus are Scaleform SWF — likely custom native UI instead; decide.
-* LOD quality: decode tree `.btt`/`.lst` billboards; clip boundary BTR triangles/segments
-  so 4x4 block anchoring leaves no conservative gap; read `fBlockLevel*Distance` INI values.
+
+## Backlog (unscheduled, keep filed)
+
+* LOD quality: tree `.btt`/`.lst` billboards; clip boundary BTR triangles/segments so
+  4x4 block anchoring leaves no conservative gap; read `fBlockLevel*Distance` INI values.
+* GMST-driven movement constants (walk/run speed, step height) replacing 4.1 hardcodes.
 
 ## Tooling / meta
 
