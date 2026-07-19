@@ -87,6 +87,7 @@ interior collision attachment, BVH overlap + stable order, composition add/remov
 serial fake-provider collision metrics + eviction. NIF byte fixtures remain synthetic and cite
 [NifTools layout doc](/formats/nif-collision.md); no game asset enters repo.
 
-Current boundary: broadphase shapes are available but do not affect player motion yet.
-Terrain remains 4.1 ground sampler until 4.4 combines terrain + static collision in capsule
-collide-and-slide response.
+4.4 consumes broadphase shapes through production
+[walk controller](/engine/walk-mode.md): swept capsule narrowphase, collide-and-slide,
+ceiling response, ramp grounding, and bounded step offset. Static world remains immutable;
+all transient contacts/controller state live outside streamed cells.

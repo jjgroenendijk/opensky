@@ -66,7 +66,7 @@ bodies remain decoded + counted but query consumers filter them.
 | `bhkCompressedMeshShape` | read shape scale + data ref; emit big-triangle + per-chunk soups |
 | `bhkPackedNiTriStripsShape` | read scale + `hkPackedNiTriStripsData`; emit indexed soup |
 | `bhkNiTriStripsShape` | read scale + each `NiTriStripsData`; emit indexed soups |
-| `bhkConvexVerticesShape` | preserve vertex cloud as convex primitive |
+| `bhkConvexVerticesShape` | read vertices + half-space planes; derive hull faces once/model |
 | `bhkBoxShape` | preserve half extents |
 | `bhkSphereShape` | preserve radius |
 | `bhkCapsuleShape` | preserve endpoints + max of serialized radii |
@@ -75,6 +75,11 @@ Reachable unknown shape types are counted by block type. One malformed collision
 a block-indexed failure; sibling roots continue decoding. Recursion depth caps at 64;
 active-path set rejects cycles; every ref, count, vertex index, strip partition, transform
 index, and declared triangle total validates before allocation/output.
+
+Convex plane XYZ is unitless exterior normal; W is signed plane distance and receives Havok
+unit conversion. Face derivation groups vertices on each serialized half-space, orders each
+face around its centroid, then triangulates once in decoded model cache. Placed REFRs share
+those clean engine indices; no point-triple search runs during cell composition.
 
 ## Compressed mesh
 

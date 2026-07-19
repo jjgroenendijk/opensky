@@ -114,6 +114,9 @@ final class GameViewController: NSViewController {
         renderer.terrainSampler = { [weak controller] position in
             controller?.sampleTerrain(at: position)
         }
+        renderer.collisionQuery = { [weak controller] bounds in
+            controller?.collisionCandidates(overlapping: bounds) ?? []
+        }
         streamer = controller
     }
 

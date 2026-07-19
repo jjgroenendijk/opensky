@@ -1,6 +1,5 @@
-// Terrain-only player movement (milestone 4.1): capsule pose, gravity,
-// grounded snap, slope limit, fixed/clamped stepping. Mesh collision lands in
-// later M4 items; this controller accepts a generic ground-sample closure.
+// Fixed-step player movement: capsule pose, gravity, terrain grounding, static
+// mesh collide-and-slide, slope limit, and bounded step response.
 
 import simd
 
@@ -22,6 +21,7 @@ nonisolated struct PlayerCapsule: Equatable {
 
 nonisolated struct WalkController {
     typealias GroundSampler = (SIMD2<Float>) -> TerrainGroundSample?
+    typealias CollisionQuery = CapsuleWorldCollider.CandidateQuery
 
     static let walkSpeed: Float = 180
     static let runSpeed: Float = 360
@@ -30,12 +30,20 @@ nonisolated struct WalkController {
     static let fixedTimeStep: Float = 1 / 120
     static let maximumFrameTime: Float = 0.1
     static let groundSnapDistance: Float = 24
+    static let stepHeight: Float = 32
 
     let capsule: PlayerCapsule
     private(set) var feetPosition: SIMD3<Float>
     private(set) var verticalVelocity: Float = 0
     private(set) var isGrounded = false
+    private(set) var hasUnresolvedPenetration = false
     private var accumulatedTime: Float = 0
+    var activeStepSupportHeight: Float?
+
+    struct HorizontalMove {
+        let result: CapsuleMoveResult
+        let supportHeight: Float?
+    }
 
     init(cameraPosition: SIMD3<Float>, capsule: PlayerCapsule = .standard) {
         self.capsule = capsule
@@ -50,7 +58,9 @@ nonisolated struct WalkController {
         feetPosition = cameraPosition - SIMD3<Float>(0, 0, capsule.eyeHeight)
         verticalVelocity = 0
         isGrounded = false
+        hasUnresolvedPenetration = false
         accumulatedTime = 0
+        activeStepSupportHeight = nil
     }
 
     /// Integrates look once per frame, then translation through fixed 120 Hz
@@ -59,7 +69,8 @@ nonisolated struct WalkController {
     mutating func update(
         camera: inout FreeFlyCamera,
         input: CameraInput,
-        sampleGround: GroundSampler
+        sampleGround: GroundSampler,
+        collisionQuery: CollisionQuery = { _ in [] }
     ) {
         camera.applyLook(lookRight: input.lookRight, lookUp: input.lookUp)
         let clampedTime = min(max(input.dt, 0), Self.maximumFrameTime)
@@ -69,7 +80,8 @@ nonisolated struct WalkController {
                 yaw: camera.yaw,
                 input: input,
                 dt: Self.fixedTimeStep,
-                sampleGround: sampleGround
+                sampleGround: sampleGround,
+                collisionQuery: collisionQuery
             )
             accumulatedTime -= Self.fixedTimeStep
         }
@@ -80,7 +92,8 @@ nonisolated struct WalkController {
         yaw: Float,
         input: CameraInput,
         dt: Float,
-        sampleGround: GroundSampler
+        sampleGround: GroundSampler,
+        collisionQuery: CollisionQuery
     ) {
         let forward = SIMD2<Float>(cosf(yaw), sinf(yaw))
         let right = SIMD2<Float>(sinf(yaw), -cosf(yaw))
@@ -90,46 +103,92 @@ nonisolated struct WalkController {
             direction /= magnitude
         }
 
-        let currentXY = SIMD2<Float>(feetPosition.x, feetPosition.y)
+        let currentPosition = feetPosition
+        let currentXY = SIMD2<Float>(currentPosition.x, currentPosition.y)
         let distance = (input.boost ? Self.runSpeed : Self.walkSpeed) * dt
         var candidateXY = currentXY + direction * distance
         if isBlockedSlope(at: candidateXY, direction: direction, sampleGround: sampleGround) {
             candidateXY = currentXY
         }
-        feetPosition.x = candidateXY.x
-        feetPosition.y = candidateXY.y
+        let collider = CapsuleWorldCollider(capsule: capsule)
+        let horizontal = SIMD3<Float>(
+            candidateXY.x - currentXY.x,
+            candidateXY.y - currentXY.y,
+            0
+        )
+        let horizontalMove = moveHorizontal(
+            from: currentPosition,
+            displacement: horizontal,
+            collider: collider,
+            collisionQuery: collisionQuery
+        )
+        let horizontalResult = horizontalMove.result
+        feetPosition = horizontalResult.position
+        activeStepSupportHeight = horizontalMove.supportHeight
+        hasUnresolvedPenetration = horizontalResult.hasUnresolvedPenetration
 
-        verticalVelocity -= Self.gravity * dt
-        feetPosition.z += verticalVelocity * dt
-        guard let ground = sampleGround(candidateXY) else {
-            isGrounded = false
+        resolveVerticalMovement(
+            collider: collider,
+            dt: dt,
+            sampleGround: sampleGround,
+            collisionQuery: collisionQuery
+        )
+    }
+
+    private mutating func resolveVerticalMovement(
+        collider: CapsuleWorldCollider,
+        dt: Float,
+        sampleGround: GroundSampler,
+        collisionQuery: CollisionQuery
+    ) {
+        if let supportHeight = activeStepSupportHeight {
+            feetPosition.z = supportHeight
+            verticalVelocity = 0
+            isGrounded = true
             return
         }
-        let separation = feetPosition.z - ground.height
-        if separation <= 0 || (isGrounded && separation <= Self.groundSnapDistance) {
-            feetPosition.z = ground.height
+        verticalVelocity -= Self.gravity * dt
+        let verticalResult = collider.move(
+            from: feetPosition,
+            displacement: SIMD3<Float>(0, 0, verticalVelocity * dt),
+            query: collisionQuery
+        )
+        feetPosition = verticalResult.position
+        hasUnresolvedPenetration = hasUnresolvedPenetration
+            || verticalResult.hasUnresolvedPenetration
+        var grounded = hasWalkableContact(verticalResult.contacts)
+        let hitCeiling = verticalResult.contacts.contains { $0.normal.z < -0.1 }
+        if grounded, verticalVelocity <= 0 {
             verticalVelocity = 0
-            isGrounded = isWalkable(ground.normal)
-        } else {
-            isGrounded = false
+        } else if verticalVelocity > 0, hitCeiling {
+            verticalVelocity = 0
         }
-    }
 
-    private func isWalkable(_ normal: SIMD3<Float>) -> Bool {
-        let minimumUp = cosf(MatrixMath.radians(fromDegrees: Self.maximumSlopeDegrees))
-        return normal.z >= minimumUp
-    }
-
-    private func isBlockedSlope(
-        at position: SIMD2<Float>,
-        direction: SIMD2<Float>,
-        sampleGround: GroundSampler
-    ) -> Bool {
-        guard
-            isGrounded,
-            simd_length_squared(direction) > .ulpOfOne,
-            let candidate = sampleGround(position)
-        else { return false }
-        return !isWalkable(candidate.normal)
+        let wasGrounded = isGrounded
+        if let ground = sampleGround(SIMD2(feetPosition.x, feetPosition.y)) {
+            let separation = feetPosition.z - ground.height
+            let withinSnap = (wasGrounded || grounded)
+                && separation <= Self.groundSnapDistance
+            if isWalkable(ground.normal), separation <= 0 || withinSnap {
+                feetPosition.z = ground.height
+                verticalVelocity = 0
+                grounded = true
+            }
+        }
+        if !grounded, wasGrounded, verticalVelocity <= 0 {
+            let snap = collider.move(
+                from: feetPosition,
+                displacement: SIMD3<Float>(0, 0, -Self.groundSnapDistance),
+                query: collisionQuery
+            )
+            if hasWalkableContact(snap.contacts), snap.position.z <= feetPosition.z {
+                feetPosition = snap.position
+                verticalVelocity = 0
+                grounded = true
+                hasUnresolvedPenetration = hasUnresolvedPenetration
+                    || snap.hasUnresolvedPenetration
+            }
+        }
+        isGrounded = grounded
     }
 }

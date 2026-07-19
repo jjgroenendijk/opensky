@@ -56,14 +56,6 @@ actors, scripting stay out of scope. One branch/PR per numbered item; format ite
 Format leads below from NifTools `nif.xml` + UESP; byte-level layouts NOT yet verified —
 confirm against `nif.xml` definitions + real-install probe before impl, flag deviations.
 
-### 4.4 Capsule vs world response
-
-* [ ] Collide-and-slide capsule vs terrain + mesh collision: walls block, ramps/stairs
-      climb via step height, ceilings stop ascent. Door activation (F, 192 units)
-      unchanged in walk mode; successful XTEL transition resets controller pose + grounded
-      state to destination before the next physics step. Deterministic unit tests: synthetic
-      wall/ramp/stair/step/filter scenes, seam crossing terrain<->mesh, door teleport.
-
 ### 4.5 Milestone acceptance
 
 * [ ] Add `openskycli bench --walk-path`: fixed-step scripted walk from M2 target cell

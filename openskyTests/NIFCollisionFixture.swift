@@ -98,14 +98,18 @@ enum NIFCollisionFixture {
         return data
     }
 
-    static func convexVertices(_ vertices: [SIMD3<Float>]) -> Data {
+    static func convexVertices(
+        _ vertices: [SIMD3<Float>],
+        normals: [SIMD4<Float>] = []
+    ) -> Data {
         var data = Data()
         data.appendUInt32(0)
         data.appendFloat32(0.05)
         data.append(Data(count: 24))
         data.appendUInt32(UInt32(vertices.count))
         vertices.forEach { data.appendVector4(SIMD4($0, 0)) }
-        data.appendUInt32(0) // normals
+        data.appendUInt32(UInt32(normals.count))
+        normals.forEach { data.appendVector4($0) }
         return data
     }
 

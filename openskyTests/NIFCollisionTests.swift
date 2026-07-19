@@ -79,9 +79,17 @@ struct NIFCollisionTests {
             .init("bhkCollisionObject", NIFCollisionFixture.collisionObject(body: 2)),
             .init("bhkRigidBody", NIFCollisionFixture.rigidBody(shape: 3)),
             .init("bhkListShape", NIFCollisionFixture.list([4, 5, 6, 7])),
-            .init("bhkConvexVerticesShape", NIFCollisionFixture.convexVertices([
-                SIMD3(1, 2, 3), SIMD3(4, 5, 6)
-            ])),
+            .init("bhkConvexVerticesShape", NIFCollisionFixture.convexVertices(
+                [
+                    SIMD3(0, 0, 0), SIMD3(1, 0, 0),
+                    SIMD3(0, 1, 0), SIMD3(0, 0, 1)
+                ],
+                normals: [
+                    SIMD4(-1, 0, 0, 0), SIMD4(0, -1, 0, 0),
+                    SIMD4(0, 0, -1, 0),
+                    SIMD4(1, 1, 1, -1) / sqrtf(3)
+                ]
+            )),
             .init("bhkBoxShape", NIFCollisionFixture.box(SIMD3(1, 2, 3))),
             .init("bhkSphereShape", NIFCollisionFixture.sphere(radius: 2)),
             .init("bhkCapsuleShape", NIFCollisionFixture.capsule(
@@ -93,12 +101,13 @@ struct NIFCollisionTests {
         let shapes = try #require(file.collisionModel().bodies.first).shapes
         #expect(shapes.count == 4)
 
-        guard case let .convexVertices(vertices) = shapes[0].geometry else {
+        guard case let .convexVertices(vertices, hullIndices) = shapes[0].geometry else {
             Issue.record("expected convex vertices")
             return
         }
-        #expect(vertices.count == 2)
-        #expect(near(vertices[0].x, scale))
+        #expect(vertices.count == 4)
+        #expect(near(vertices[1].x, scale))
+        #expect(hullIndices.count == 12)
         guard case let .box(halfExtents) = shapes[1].geometry else {
             Issue.record("expected box")
             return

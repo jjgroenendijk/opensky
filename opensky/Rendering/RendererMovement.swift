@@ -24,7 +24,8 @@ extension Renderer {
             walkController.update(
                 camera: &freeFlyCamera,
                 input: frameInput,
-                sampleGround: terrainSampler ?? { _ in nil }
+                sampleGround: terrainSampler ?? { _ in nil },
+                collisionQuery: collisionQuery ?? { _ in [] }
             )
         }
     }
