@@ -58,20 +58,6 @@ mandatory, actor-enabled fly bench keeps explicit build/footprint/frame budgets.
 Format leads from UESP mod-file-format pages + xEdit definitions + NifTools `nif.xml`;
 byte-level layouts NOT yet verified — confirm by spec + probe at impl, flag deviations.
 
-### 5.2 Visual appearance resolution
-
-* [ ] Resolve race per-gender skeleton; naked skin from `NPC_` WNAM else RACE WNAM -> ARMO
-      armature -> ARMA per-gender MOD2/MOD3. Resolve clothes from `NPC_` DOFT -> OTFT item
-      list -> ARMO armatures -> compatible ARMA models; apply BOD2/body-slot selection so
-      equipped parts mask covered skin parts without duplicate geometry. Resolve FaceGen
-      head from defining plugin + resolved `NPC_` local object ID; confirm directory +
-      zero-padding convention against open docs + real-install probe before encoding it.
-      Missing optional parts degrade by reason-tagged skip; no silent naked fallback when
-      an outfit chain fails.
-* [ ] Acceptance: `openskycli` actor probe resolves skeleton, skin, outfit/body slots +
-      FaceGen paths for named Whiterun NPCs; synthetic fixtures cover gender, skin fallback,
-      outfit/ARMO/ARMA chains, slot masking, cross-plugin identity + missing optional part.
-
 ### 5.3 Skinned NIF decode + GPU bind-pose skinning
 
 * [ ] Decode skinning from SSE NIFs: `NiSkinInstance`/`BSDismemberSkinInstance`,

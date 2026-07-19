@@ -26,11 +26,14 @@ enum OpenSkyCLI {
       cell [--worldspace <edid>] [--x <n>] [--y <n>] [--refs]
                                   Summarize an exterior cell's references
       actor [--worldspace <edid>] [--x <n>] [--y <n>] [--radius <n>]
+            [--npc <formid-or-edid>]
                                   List placed actors (ACHR) around a cell;
                                   resolve each base NPC_ through its TPLT
-                                  template chain, report chosen leveled
-                                  entries + the source of every appearance
-                                  field
+                                  template chain, then visuals: skeleton,
+                                  skin/outfit body parts with slot masking,
+                                  FaceGen paths, reason-tagged skips.
+                                  --npc resolves one base NPC_ directly
+                                  (no ACHR needed)
       collision [--worldspace <edid>] [--x <n>] [--y <n>] [--radius <n>]
                                   Sweep embedded NIF collision for every unique
                                   model used by center cell; report placed
