@@ -25,6 +25,9 @@ enum OpenSkyCLI {
       record <formid-or-editorid> Dump one Skyrim.esm record (decoded + fields)
       cell [--worldspace <edid>] [--x <n>] [--y <n>] [--refs]
                                   Summarize an exterior cell's references
+      collision [--worldspace <edid>] [--x <n>] [--y <n>]
+                                  Sweep embedded NIF collision for every unique
+                                  model used by one exterior cell
       interior --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
                [--radius <n>]    Find a nearby exterior door, enter its interior,
                                   render the arrival pose, verify the return door
@@ -139,6 +142,10 @@ enum OpenSkyCLI {
             )
         case "cell":
             try CellCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
+        case "collision":
+            try CollisionCommand.run(
                 context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
             )
         case "interior":

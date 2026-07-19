@@ -52,6 +52,7 @@ echo "[ OK ] vfs ls ($mesh_count mesh entries)"
 echo "[ OK ] record 0x0000003C (Tamriel)"
 
 run "cell summary (first-render cell)" cell
+run "collision sweep (first-render cell)" collision
 
 # Inspect the first mesh + texture the archives provide.
 mesh_key="$("$cli" --data-root "$data_root" vfs ls 'meshes\*.nif' 2>/dev/null \

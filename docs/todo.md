@@ -56,28 +56,6 @@ actors, scripting stay out of scope. One branch/PR per numbered item; format ite
 Format leads below from NifTools `nif.xml` + UESP; byte-level layouts NOT yet verified —
 confirm against `nif.xml` definitions + real-install probe before impl, flag deviations.
 
-### 4.2 NIF collision decode (bhk blocks)
-
-* [ ] Parse embedded Havok collision from SSE NIFs: `bhkCollisionObject` ->
-      `bhkRigidBody`/`bhkRigidBodyT` -> shape tree (`bhkMoppBvTreeShape` — skip MOPP
-      bytecode, take child; `bhkCompressedMeshShape` + `bhkCompressedMeshShapeData`;
-      `bhkConvexVerticesShape`; `bhkBoxShape`/`bhkSphereShape`/`bhkCapsuleShape`;
-      `bhkListShape`; transform wrappers `bhkTransformShape`/
-      `bhkConvexTransformShape`; alternate triangle collections
-      `bhkPackedNiTriStripsShape`/`bhkNiTriStripsShape`). Preserve collision-object flags
-      + rigid-body Havok layer/filter data so triggers/non-collidable bodies do not become
-      player-solid. Spec: NifTools `nif.xml`. Output: clean Swift collision model
-      (triangle soup + convex primitives + query filter) in engine units, decoupled from
-      disk layout.
-* [ ] UNCONFIRMED to chase by probe: Havok-to-engine scale factor (community value
-      ~69.99 units/m), `bhkRigidBodyT` transform composition, chunked
-      `bhkCompressedMeshShapeData` layout (big-tri vs chunk split).
-* [ ] Acceptance: `openskycli` collision sweep over all vanilla Whiterun-cell models
-      reports collision roots, emitted shapes/tris, filtered bodies + unsupported reachable
-      blocks; zero unsupported blocks reachable from a collision root, zero decode failures,
-      non-empty geometry for every collision-bearing model. Synthetic-fixture unit tests
-      per shape/wrapper/filter type; doc `docs/formats/nif-collision.md`.
-
 ### 4.3 Collision world + streaming integration
 
 * [ ] Per-cell static collision set built alongside `CellScene` on the serial build

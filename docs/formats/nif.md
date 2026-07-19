@@ -20,7 +20,8 @@ as ground truth viewer. Impl: `opensky/Formats/NIF/`. All integers
 little-endian (header enforces the endian byte).
 
 Doc grows with milestone 2: container (this page), scene graph + geometry
-(2.3), materials subset (2.4).
+(2.3), materials subset (2.4). Embedded Havok layouts + conversion live in
+[NIF Havok collision](/formats/nif-collision.md).
 
 ## String framings
 
@@ -284,12 +285,13 @@ all files):
 | 27 805  | NiSkinData/NiSkinPartition | skinning — skipped for M2    |
 | 21 675  | BSDynamicTriShape          | skinned geometry — skipped   |
 | 18 839  | BSFadeNode                 | NiNode subclass, same layout |
-| 13 736  | bhkCollisionObject         | collision — skipped for M2   |
+| 13 736  | bhkCollisionObject         | collision — decoded since M4 |
 
 Statics for M2 need: NiNode (+ BSFadeNode as root), BSTriShape,
 BSLightingShaderProperty, BSShaderTextureSet, NiAlphaProperty. Everything
-Havok (`bhk*`), particle (`*PSys*`), controller/interpolator (animation) and
-skinning gets walked over by size.
+Particle (`*PSys*`), controller/interpolator (animation), and skinning get walked over by
+size. Havok blocks stay outside render flattening but decode through
+`NIFFile.collisionModel()`; see [NIF Havok collision](/formats/nif-collision.md).
 
 Typed decode sweep (probe, 2026-07-10, item 2.3): every `.nif` in the
 geometry BSAs (Meshes0/1, _ResourcePack — 22 196 files) through

@@ -28,6 +28,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   blocks, placement rules, full vanilla sweep evidence.
 * [NIF mesh](/formats/nif.md) - Gamebryo 20.2.0.7 container: header, block
   table, block walk.
+* [NIF Havok collision](/formats/nif-collision.md) - bhk root/body/shape graphs,
+  compressed mesh reconstruction, unit/filter policy, Whiterun sweep evidence.
 * [DDS texture container](/formats/dds.md) - DDS_HEADER/DXT10 layout, BCn
   formats, mip chain math, color-space policy.
 
@@ -76,4 +78,4 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 * [Testing setup](/testing.md) - test targets, make entrypoints, headless
   unit-test host, fixture policy.
-* [Roadmap](/todo.md) - M1-M3 history, future direction, open questions.
+* [Roadmap](/todo.md) - M1-M3 history, active M4 work, future direction.
