@@ -131,7 +131,27 @@ nonisolated extension NIFCollisionDecoder {
         for _ in 0 ..< count {
             try vertices.append(reader.readVector4().xyz * scale)
         }
-        return NIFCollisionShape(transform: parent, geometry: .convexVertices(vertices))
+        let normalCount = try Int(reader.readUInt32())
+        guard normalCount <= reader.bytesRemaining / 16 else {
+            throw NIFError.malformed("convex normal count \(normalCount) exceeds block size")
+        }
+        var planes: [SIMD4<Float>] = []
+        planes.reserveCapacity(normalCount)
+        for _ in 0 ..< normalCount {
+            var plane = try reader.readVector4()
+            plane.w *= scale
+            planes.append(plane)
+        }
+        return NIFCollisionShape(
+            transform: parent,
+            geometry: .convexVertices(
+                vertices: vertices,
+                hullIndices: NIFCollisionConvexHull.indices(
+                    vertices: vertices,
+                    planes: planes
+                )
+            )
+        )
     }
 
     private func decodeBox(

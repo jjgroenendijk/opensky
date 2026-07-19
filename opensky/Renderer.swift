@@ -99,6 +99,9 @@ final class Renderer: NSObject {
     /// Current resident terrain lookup, wired by GameViewController. nil in
     /// renderer-only tests/offscreen paths -> walk mode has no ground.
     var terrainSampler: WalkController.GroundSampler?
+    /// Resident static collision broadphase, wired beside terrain by
+    /// GameViewController. Empty in renderer-only paths.
+    var collisionQuery: WalkController.CollisionQuery?
     /// Procedural exterior sky clock. May change between frames.
     var timeOfDay: Float
     /// Free-fly input, drained once per `draw(in:)`; nil (offscreen/tests) ->

@@ -1,8 +1,8 @@
 ---
 type: Subsystem
 title: Terrain walk mode
-description: Player capsule movement over streamed LAND height fields with exact triangle
-  sampling, gravity, slope limits, and deterministic fixed stepping.
+description: Fixed-step player capsule over streamed terrain and static mesh collision with
+  gravity, collide-and-slide, slope limits, and bounded step response.
 tags: [engine, world, terrain, collision, movement, streaming]
 timestamp: 2026-07-19T00:00:00Z
 ---
@@ -48,6 +48,7 @@ fixed-step residual. Current hardcoded policy (GMST tuning stays backlog):
 | Gravity | 1,400 units/s² |
 | Max slope | 50 degrees |
 | Ground snap | 24 units |
+| Step height | 32 units |
 | Physics step | 1/120 s |
 | Max accepted frame time | 0.1 s |
 
@@ -60,18 +61,38 @@ terrain rises snap capsule bottom to rendered plane; gravity + snap keep descend
 contact. Airborne player falls until bottom crosses a ground plane, then penetration resolves
 to exact sampled height with zero vertical velocity.
 
+### Static mesh response
+
+`CapsuleWorldCollider` queries resident per-cell BVHs with swept capsule AABBs. Each fixed
+step splits displacement into submoves no longer than half capsule radius -> thin surfaces
+cannot tunnel between endpoints. Narrowphase supports triangle soups, precomputed convex-hull
+faces, oriented boxes, scaled spheres, and transformed capsules. Closest segment/triangle or
+segment/primitive pairs emit penetration normal + depth. Up to eight deepest-contact
+corrections depenetrate; untouched displacement components remain -> wall contact slides.
+Steep positive normals become horizontal blockers. Walkable normals ground capsule. Downward
+contacts zero falling velocity; negative-up contacts stop ascent. Solver exposes
+`hasUnresolvedPenetration` for 4.5 route gate.
+
+Grounded blocked motion gets one bounded 32-unit step attempt. Forward vertical probe accepts
+only surfaces at or below slope limit; riser faces cannot become support. Controller proves
+full step-height clearance, advances horizontally above blocker, then retains tread support
+until capsule center reaches it. Higher obstacles or low ceilings fail clearance -> direct
+wall response wins. Same probe bridges terrain to mesh treads without treating render terrain
+as a mesh duplicate.
+
 `Renderer` owns mode + controller. `GameMetalView` latches G through `CameraInputState`;
 renderer drains toggle once, resets controller from current camera when entering walk, then
-queries `CellStreamer`'s resident composition before streaming update. First-scene framing or
-door camera reseed resets controller pose/grounded state with camera.
+queries `CellStreamer`'s resident terrain + collision composition before streaming update.
+First-scene framing or successful XTEL door camera reseed resets capsule pose, vertical
+velocity, grounded state, fixed-step residual, and active tread support before next physics
+step. Door activation stays F within 192 units.
 
 ## Scope boundary
 
-4.1 controller still responds to exterior terrain only. M4.2-4.3 now decode + stream
-[static collision world](/engine/collision-world.md) for walls, buildings, stairs, ceilings,
-interior floors, but movement narrowphase is not connected: those meshes remain pass-through
-until 4.4 capsule collide-and-slide + step response. Capsule dimensions stay explicit so 4.4
-extends one controller instead of replacing camera semantics.
+4.4 connects terrain + [static collision world](/engine/collision-world.md) to production
+walk input for exterior and interior scenes. Static geometry now blocks player; actors,
+dynamic rigid bodies, jumping, crouch, moving platforms, water buoyancy, and GMST tuning stay
+out of scope. M4.5 supplies fixed real-data route + render/physics acceptance gate.
 
 ## Verification
 
@@ -82,6 +103,10 @@ Synthetic tests:
 - `WalkControllerTests`: capsule eye offset, gravity/ground snap, pitch-independent motion,
   walk/run speeds, slope rejection, 100 ms clamp, fixed-step partition determinism, no-ground
   fall, four resident fields traversed without lost contact.
+- `CapsuleCollisionTests`: wall slide, ceiling, walkable ramp, low/high steps, forward tread
+  probe, player-solid filtering boundary, terrain-to-mesh seam, no unresolved penetration.
+- `RendererSceneSwapTests`: XTEL-style camera reseed clears grounded/controller state and
+  places capsule at destination before next physics step.
 - `CellSceneTerrainTests`: LAND, XCLC hidden quadrant, DNAM fallback, no-terrain builder paths
   retain collision data matching rendered terrain.
 - `CameraInputStateTests`: G request drains exactly once.

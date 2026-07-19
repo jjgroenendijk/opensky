@@ -54,7 +54,9 @@ nonisolated struct NIFCollisionShape {
 nonisolated enum NIFCollisionGeometry {
     /// Vertices are engine units; indices are validated triangle triples.
     case triangleSoup(vertices: [SIMD3<Float>], indices: [UInt32])
-    case convexVertices([SIMD3<Float>])
+    /// Original convex points + derived hull connectivity. NIF stores points
+    /// and plane normals without triangle faces; faces are clean engine data.
+    case convexVertices(vertices: [SIMD3<Float>], hullIndices: [UInt32])
     case box(halfExtents: SIMD3<Float>)
     case sphere(radius: Float)
     case capsule(first: SIMD3<Float>, second: SIMD3<Float>, radius: Float)
@@ -112,7 +114,7 @@ nonisolated struct NIFCollisionModel {
 
     private static func bounds(of geometry: NIFCollisionGeometry) -> ModelBounds? {
         switch geometry {
-        case let .triangleSoup(vertices, _), let .convexVertices(vertices):
+        case let .triangleSoup(vertices, _), let .convexVertices(vertices, _):
             return ModelBounds.containing(vertices)
         case let .box(halfExtents):
             return ModelBounds(min: -halfExtents, max: halfExtents)

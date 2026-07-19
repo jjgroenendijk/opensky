@@ -4,6 +4,16 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-19
 
+* M4.4 capsule/world response complete -- production walk mode queries streamed terrain +
+  per-cell static collision. Swept submoves + closest-feature narrowphase cover triangle,
+  convex, box, sphere, capsule geometry; iterative depenetration slides along walls, grounds
+  ramps/floors, stops ceilings, reports unresolved overlap. 32-unit forward walkable-surface
+  probe climbs low treads, rejects high risers/blocked headroom, spans terrain-to-mesh seams.
+  XTEL scene camera reseed clears full controller state before next physics step; F/192-unit
+  door activation unchanged. Synthetic wall/ramp/step/filter/seam/ceiling + teleport tests
+  pass. Real-install probe passes; collision-build p95 450.82 ms under 500 ms budget. Docs:
+  [walk mode](/engine/walk-mode.md), [collision world](/engine/collision-world.md).
+  Item 4.4 left [todo](/todo.md).
 * M4.3 static collision world complete -- each exterior/interior `CellScene` builds placed
   player-solid bhk geometry on serial stream queue, composing REFR x body x shape transforms.
   Per-cell immutable AABB BVH supplies seam-safe resident broadphase; decoded model cache uses

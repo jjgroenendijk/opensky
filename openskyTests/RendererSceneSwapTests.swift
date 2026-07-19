@@ -158,6 +158,43 @@ struct RendererSceneSwapTests {
         #expect(Self.litPixelCount(texture: framed) > 0)
     }
 
+    @Test(.enabled(if: Self.hasMetal4Device))
+    @MainActor
+    func sceneCameraReseedResetsWalkPoseBeforeNextPhysicsStep() throws {
+        let device = try #require(Self.device)
+        let view = MTKView(
+            frame: CGRect(x: 0, y: 0, width: Self.width, height: Self.height),
+            device: device
+        )
+        let renderer = try Renderer(
+            view: view,
+            scene: RenderScene(instances: []),
+            camera: Self.camera
+        )
+        let groundHeight = renderer.walkController.feetPosition.z
+        renderer.walkController.update(
+            camera: &renderer.freeFlyCamera,
+            input: CameraInput(dt: WalkController.fixedTimeStep),
+            sampleGround: { _ in
+                TerrainGroundSample(height: groundHeight, normal: SIMD3(0, 0, 1))
+            }
+        )
+        #expect(renderer.walkController.isGrounded)
+
+        let destination = SceneCamera(
+            eye: SIMD3(100, 200, 300),
+            target: SIMD3(101, 200, 300),
+            sunDirection: DemoScene.sunDirection,
+            sunColor: DemoScene.sunColor,
+            ambientColor: DemoScene.ambientColor
+        )
+        try renderer.setScene(RenderScene(instances: []), camera: destination)
+
+        #expect(renderer.walkController.cameraPosition == destination.eye)
+        #expect(renderer.walkController.verticalVelocity == 0)
+        #expect(!renderer.walkController.isGrounded)
+    }
+
     // MARK: - Helpers
 
     private static func solidTexture(device: MTLDevice) throws -> MTLTexture {

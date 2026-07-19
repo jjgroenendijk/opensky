@@ -235,7 +235,7 @@ extension CellSceneBuilder {
     ) -> ModelBounds? {
         let local: ModelBounds?
         switch geometry {
-        case let .triangleSoup(vertices, _), let .convexVertices(vertices):
+        case let .triangleSoup(vertices, _), let .convexVertices(vertices, _):
             local = ModelBounds.containing(vertices)
         case let .box(halfExtents):
             local = ModelBounds(min: -halfExtents, max: halfExtents)
@@ -259,8 +259,9 @@ extension CellSceneBuilder {
         case let .triangleSoup(vertices, indices):
             vertices.count * MemoryLayout<SIMD3<Float>>.stride
                 + indices.count * MemoryLayout<UInt32>.stride
-        case let .convexVertices(vertices):
+        case let .convexVertices(vertices, hullIndices):
             vertices.count * MemoryLayout<SIMD3<Float>>.stride
+                + hullIndices.count * MemoryLayout<UInt32>.stride
         case .box, .sphere, .capsule:
             0
         }

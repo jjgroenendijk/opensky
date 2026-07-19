@@ -49,8 +49,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   resolution, proximity activation, camera teleport, suspended exterior streaming.
 * [Free-fly camera](/engine/free-fly-camera.md) - WASDQE + mouse-look input capture,
   yaw/pitch pose -> view matrix, movement speeds tuned to Skyrim scale.
-* [Terrain walk mode](/engine/walk-mode.md) - player capsule, gravity, slope limit, exact
-  rendered-triangle ground queries across streamed LAND cells.
+* [Terrain walk mode](/engine/walk-mode.md) - fixed-step capsule, terrain + mesh
+  collide-and-slide, slope/ceiling response, bounded stairs, door pose reset.
 * [Static collision world](/engine/collision-world.md) - per-cell placed bhk shapes,
   immutable BVH broadphase, serial build/cache confinement, streaming lifetime + budgets.
 
