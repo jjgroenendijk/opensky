@@ -4,6 +4,14 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-19
 
+* Distant terrain coverage fixed -- L4/L8/L16/L32 selection partitions each cell exactly;
+  partial BTR blocks clip crossing triangles to owned cell rectangles with interpolated
+  attributes + mask-keyed GPU cache variants. LOD hides successful residents only, leaving
+  void/failed slots covered. Settled recenter now stages replacement full cells while old
+  grid + LOD remain live, then swaps cells + ring atomically. Synthetic ownership/area tests
+  pass. Real Whiterun 5x5 frame: prior sky seams filled, 101 LOD blocks/0 unavailable, 975
+  visible draws, 3,313 instances, 100% non-background. East/north fly path: 35 unique builds,
+  9 unloads, 25 final residents; 5,192 frames avg 3.32 ms/p95 5.94 ms/max 17.75 ms.
 * M4/M5 re-scope in [todo](/todo.md) -- M4 = walkable world: 4.1 terrain walk controller
   (LAND heightfield ground), 4.2 NIF bhk collision decode (NifTools `nif.xml`; Havok
   scale + `bhkCompressedMeshShapeData` layout flagged UNCONFIRMED), 4.3 per-cell

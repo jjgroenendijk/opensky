@@ -42,6 +42,11 @@ final class CellStreamer {
     /// recompose passes a nil camera so the free-fly view is left alone.
     private var hasSeededCamera = false
     private var requestedLODCenter: CellCoordinate?
+    /// Once settled coverage exists, recenter builds stay offscreen here.
+    /// Old full cells + LOD remain composed until replacement LOD arrives,
+    /// then full grid + ring swap in one recompose.
+    private var coverageTransitionActive = false
+    private var stagedCells: [CellCoordinate: CellScene] = [:]
     var interiorScene: CellScene?
     var transitionInFlight: FormID?
 
@@ -96,13 +101,13 @@ final class CellStreamer {
             : CellGridManager.cellCenter(of: grid.center)
         let previousCenter = grid.center
         if let diff = grid.update(cameraPosition: effectivePosition, loaded: core.accountedCells) {
-            if grid.center != previousCenter, let oldLOD = composition.setDistantLOD(nil) {
-                evictUnused(oldLOD.assets)
-                sceneChanged = true
+            if grid.center != previousCenter, composition.distantLOD != nil {
+                coverageTransitionActive = true
             }
             let actions = core.apply(diff: diff)
             requests.removeAll { !core.inFlight.contains($0) }
-            if !actions.removals.isEmpty {
+            discardStagedCells(outside: grid.desiredCells)
+            if !actions.removals.isEmpty, !coverageTransitionActive {
                 unload(actions.removals)
                 sceneChanged = true
             }
@@ -137,7 +142,7 @@ final class CellStreamer {
         guard resolved.isSuperset(of: grid.desiredCells) else { return }
         guard requestedLODCenter != grid.center else { return }
         requestedLODCenter = grid.center
-        runner.enqueueDistantLOD(center: grid.center, hiddenCells: grid.desiredCells)
+        runner.enqueueDistantLOD(center: grid.center, hiddenCells: core.resident)
     }
 
     /// Drops unloaded cells from the composition and schedules eviction of the
@@ -162,6 +167,10 @@ final class CellStreamer {
         if let interiorScene {
             resident.meshKeys.formUnion(interiorScene.assets.meshKeys)
             resident.textureKeys.formUnion(interiorScene.assets.textureKeys)
+        }
+        for scene in stagedCells.values {
+            resident.meshKeys.formUnion(scene.assets.meshKeys)
+            resident.textureKeys.formUnion(scene.assets.textureKeys)
         }
         runner.enqueueEviction(
             droppingMeshKeys: candidates.meshKeys.subtracting(resident.meshKeys),
@@ -198,6 +207,10 @@ final class CellStreamer {
             case let .success(scene):
                 let decision = core.integrate(coordinate: entry.coordinate, kind: .success)
                 if decision == .integrated {
+                    if coverageTransitionActive {
+                        stagedCells[entry.coordinate] = scene
+                        return false
+                    }
                     composition.setCell(scene, at: entry.coordinate)
                     return true
                 }
@@ -212,30 +225,6 @@ final class CellStreamer {
             }
         }
         return false
-    }
-
-    private func integrateDistantLOD(_ entries: [DistantLODBuildResult]) -> Bool {
-        var changed = false
-        for entry in entries {
-            switch entry.result {
-            case let .success(scene) where entry.center == grid.center:
-                let old = composition.setDistantLOD(scene)
-                if let old {
-                    evictUnused(old.assets)
-                }
-                changed = true
-            case let .success(scene):
-                if let scene {
-                    evictUnused(scene.assets)
-                }
-            case let .failure(error):
-                let reason = String(describing: error)
-                Self.logger.warning(
-                    "[WARNING] distant LOD build failed: \(reason, privacy: .public)"
-                )
-            }
-        }
-        return changed
     }
 
     /// A void slot (no CELL at the grid position) throws `cellNotFound`;
@@ -324,6 +313,66 @@ final class CellStreamer {
 }
 
 extension CellStreamer {
+    private func integrateDistantLOD(_ entries: [DistantLODBuildResult]) -> Bool {
+        var changed = false
+        for entry in entries {
+            switch entry.result {
+            case let .success(scene) where entry.center == grid.center:
+                if coverageTransitionActive {
+                    commitCoverageTransition(distantLOD: scene)
+                } else {
+                    let old = composition.setDistantLOD(scene)
+                    if let old {
+                        evictUnused(old.assets)
+                    }
+                }
+                changed = true
+            case let .success(scene):
+                if let scene {
+                    evictUnused(scene.assets)
+                }
+            case let .failure(error):
+                let reason = String(describing: error)
+                Self.logger.warning(
+                    "[WARNING] distant LOD build failed: \(reason, privacy: .public)"
+                )
+            }
+        }
+        return changed
+    }
+
+    private func discardStagedCells(outside desiredCells: Set<CellCoordinate>) {
+        let stale = stagedCells.keys.filter { !desiredCells.contains($0) }
+        for coordinate in stale {
+            guard let scene = stagedCells.removeValue(forKey: coordinate) else { continue }
+            evictUnused(scene.assets)
+        }
+    }
+
+    private func commitCoverageTransition(distantLOD: DistantLODScene?) {
+        var departed = CellAssets()
+        for coordinate in composition.coordinates where !core.resident.contains(coordinate) {
+            guard let scene = composition.removeCell(at: coordinate) else { continue }
+            departed.meshKeys.formUnion(scene.assets.meshKeys)
+            departed.textureKeys.formUnion(scene.assets.textureKeys)
+        }
+        for (coordinate, scene) in stagedCells where core.resident.contains(coordinate) {
+            if let replaced = composition.setCell(scene, at: coordinate) {
+                departed.meshKeys.formUnion(replaced.assets.meshKeys)
+                departed.textureKeys.formUnion(replaced.assets.textureKeys)
+            }
+        }
+        stagedCells.removeAll(keepingCapacity: true)
+        if let oldLOD = composition.setDistantLOD(distantLOD) {
+            departed.meshKeys.formUnion(oldLOD.assets.meshKeys)
+            departed.textureKeys.formUnion(oldLOD.assets.textureKeys)
+        }
+        coverageTransitionActive = false
+        evictUnused(departed)
+    }
+}
+
+extension CellStreamer {
     // MARK: - Inspection (streaming verification + tests)
 
     /// Grid slots that reached a terminal state: resident + void + failed.
@@ -371,6 +420,14 @@ extension CellStreamer {
 
     var distantLODBlockCount: Int {
         composition.distantLOD?.blockCount ?? 0
+    }
+
+    var composedCellCount: Int {
+        composition.cellCount
+    }
+
+    var isCoverageTransitionActive: Bool {
+        coverageTransitionActive
     }
 
     var isInterior: Bool {

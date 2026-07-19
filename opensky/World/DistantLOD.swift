@@ -15,9 +15,34 @@ nonisolated struct DistantLODBlock: Equatable, Hashable {
     let level: Int32
     let origin: CellCoordinate
     let path: String
+    /// nil means every cell in terrain block is visible. Object LOD never
+    /// carries a mask: partial object-atlas blocks remain excluded.
+    let clipMask: TerrainLODClipMask?
+
+    func coversTerrain(_ cell: CellCoordinate) -> Bool {
+        guard kind == .terrain else { return false }
+        let inside = cell.x >= origin.x && cell.x < origin.x + level
+            && cell.y >= origin.y && cell.y < origin.y + level
+        guard inside else { return false }
+        return clipMask?.contains(cell, blockOrigin: origin) ?? true
+    }
 }
 
 nonisolated enum DistantLODSelection {
+    private struct Band {
+        let level: Int32
+        let innerRadius: Int32
+        let outerRadius: Int32
+    }
+
+    private struct SelectionContext {
+        let worldspace: String
+        let settings: LODSettings
+        let center: CellCoordinate
+        let hiddenCells: Set<CellCoordinate>
+        let band: Band
+    }
+
     /// Plain initial distance constants in cells. INI fidelity arrives later.
     private static let outerRadius: [Int32: Int32] = [4: 8, 8: 16, 16: 32, 32: 64]
     private static let innerRadius: [Int32: Int32] = [4: 2, 8: 8, 16: 16, 32: 32]
@@ -35,42 +60,14 @@ nonisolated enum DistantLODSelection {
                 let inner = innerRadius[level],
                 let outer = outerRadius[level]
             else { continue }
-            let lower = settings.blockOrigin(
-                containing: CellCoordinate(x: center.x - outer, y: center.y - outer),
-                level: level
-            )
-            let upper = settings.blockOrigin(
-                containing: CellCoordinate(x: center.x + outer, y: center.y + outer),
-                level: level
-            )
-            var x = lower.x
-            while x <= upper.x {
-                var y = lower.y
-                while y <= upper.y {
-                    let origin = CellCoordinate(x: x, y: y)
-                    let inside = isInsideSettings(origin, level: level, settings: settings)
-                    let distance = minimumDistance(from: center, to: origin, level: level)
-                    let hidden = intersects(origin: origin, level: level, cells: hiddenCells)
-                    if inside, distance > inner, !hidden {
-                        blocks.append(makeBlock(
-                            kind: .terrain,
-                            worldspace: name,
-                            level: level,
-                            origin: origin
-                        ))
-                        if level <= 16 {
-                            blocks.append(makeBlock(
-                                kind: .objects,
-                                worldspace: name,
-                                level: level,
-                                origin: origin
-                            ))
-                        }
-                    }
-                    y += level
-                }
-                x += level
-            }
+            let band = Band(level: level, innerRadius: inner, outerRadius: outer)
+            blocks.append(contentsOf: blocksForBand(
+                worldspace: name,
+                settings: settings,
+                center: center,
+                hiddenCells: hiddenCells,
+                band: band
+            ))
         }
         return blocks.sorted {
             ($0.level, $0.origin.x, $0.origin.y, $0.kind.rawValue)
@@ -78,11 +75,94 @@ nonisolated enum DistantLODSelection {
         }
     }
 
+    private static func blocksForBand(
+        worldspace: String,
+        settings: LODSettings,
+        center: CellCoordinate,
+        hiddenCells: Set<CellCoordinate>,
+        band: Band
+    ) -> [DistantLODBlock] {
+        let lower = settings.blockOrigin(
+            containing: CellCoordinate(
+                x: center.x - band.outerRadius,
+                y: center.y - band.outerRadius
+            ),
+            level: band.level
+        )
+        let upper = settings.blockOrigin(
+            containing: CellCoordinate(
+                x: center.x + band.outerRadius,
+                y: center.y + band.outerRadius
+            ),
+            level: band.level
+        )
+        var blocks: [DistantLODBlock] = []
+        let context = SelectionContext(
+            worldspace: worldspace,
+            settings: settings,
+            center: center,
+            hiddenCells: hiddenCells,
+            band: band
+        )
+        var x = lower.x
+        while x <= upper.x {
+            var y = lower.y
+            while y <= upper.y {
+                let origin = CellCoordinate(x: x, y: y)
+                blocks.append(contentsOf: blocksAtOrigin(origin, context: context))
+                y += band.level
+            }
+            x += band.level
+        }
+        return blocks
+    }
+
+    private static func blocksAtOrigin(
+        _ origin: CellCoordinate,
+        context: SelectionContext
+    ) -> [DistantLODBlock] {
+        let band = context.band
+        guard isInsideSettings(origin, level: band.level, settings: context.settings) else {
+            return []
+        }
+        let visible = visibleCells(
+            origin: origin,
+            center: context.center,
+            hiddenCells: context.hiddenCells,
+            band: band
+        )
+        guard !visible.isEmpty else { return [] }
+        let mask = TerrainLODClipMask(
+            level: band.level,
+            blockOrigin: origin,
+            visibleCells: visible
+        )
+        var blocks = [makeBlock(
+            kind: .terrain,
+            worldspace: context.worldspace,
+            level: band.level,
+            origin: origin,
+            clipMask: mask.isComplete ? nil : mask
+        )]
+        // BTO atlas geometry cannot yet be clipped safely.
+        if band.level <= 16, mask.isComplete {
+            blocks.append(makeBlock(
+                kind: .objects,
+                worldspace: context.worldspace,
+                level: band.level,
+                origin: origin,
+                clipMask: nil
+            ))
+        }
+        return blocks
+    }
+
     private static func makeBlock(
         kind: DistantLODBlock.Kind,
         worldspace: String,
         level: Int32,
-        origin: CellCoordinate
+        origin: CellCoordinate,
+        clipMask: TerrainLODClipMask?
     ) -> DistantLODBlock {
         let base = "meshes\\terrain\\\(worldspace)\\"
         let folder = kind == .objects ? "objects\\" : ""
@@ -92,7 +172,8 @@ nonisolated enum DistantLODSelection {
             kind: kind,
             level: level,
             origin: origin,
-            path: base + folder + file
+            path: base + folder + file,
+            clipMask: clipMask
         )
     }
 
@@ -108,28 +189,28 @@ nonisolated enum DistantLODSelection {
             && Int64(origin.y) + Int64(level) <= limitY
     }
 
-    private static func minimumDistance(
-        from cell: CellCoordinate,
-        to origin: CellCoordinate,
-        level: Int32
-    ) -> Int32 {
-        let maxX = origin.x + level - 1
-        let maxY = origin.y + level - 1
-        let dx = cell.x < origin.x ? origin.x - cell.x : max(0, cell.x - maxX)
-        let dy = cell.y < origin.y ? origin.y - cell.y : max(0, cell.y - maxY)
-        return max(dx, dy)
-    }
-
-    private static func intersects(
+    private static func visibleCells(
         origin: CellCoordinate,
-        level: Int32,
-        cells: Set<CellCoordinate>
-    ) -> Bool {
-        let maxX = origin.x + level
-        let maxY = origin.y + level
-        return cells.contains {
-            $0.x >= origin.x && $0.x < maxX && $0.y >= origin.y && $0.y < maxY
+        center: CellCoordinate,
+        hiddenCells: Set<CellCoordinate>,
+        band: Band
+    ) -> Set<CellCoordinate> {
+        var visible: Set<CellCoordinate> = []
+        for x in origin.x ..< origin.x + band.level {
+            for y in origin.y ..< origin.y + band.level {
+                let cell = CellCoordinate(x: x, y: y)
+                guard !hiddenCells.contains(cell) else { continue }
+                let distance = max(
+                    abs(Int64(x) - Int64(center.x)),
+                    abs(Int64(y) - Int64(center.y))
+                )
+                let outsideInner = band.level == 4 || distance > Int64(band.innerRadius)
+                if outsideInner, distance <= Int64(band.outerRadius) {
+                    visible.insert(cell)
+                }
+            }
         }
+        return visible
     }
 }
 
@@ -170,7 +251,9 @@ nonisolated final class DistantLODBuilder {
         var missing = 0
         for block in selected {
             do {
-                let model = try meshes.model(path: block.path)
+                let model = try block.clipMask.map {
+                    try meshes.model(path: block.path, terrainLODClipMask: $0)
+                } ?? meshes.model(path: block.path)
                 // .btr terrain vertices are block-local; .bto object vertices
                 // are already world-space (xLODGen generator + vanilla probe).
                 let transform = block.kind == .terrain
@@ -180,7 +263,10 @@ nonisolated final class DistantLODBuilder {
                         0
                     ))
                     : matrix_identity_float4x4
-                let bounds = meshes.bounds(forPath: block.path)?.transformed(by: transform)
+                let bounds = meshes.bounds(
+                    forPath: block.path,
+                    terrainLODClipMask: block.clipMask
+                )?.transformed(by: transform)
                 placements.append(RenderPlacement(
                     model: model,
                     transform: transform,

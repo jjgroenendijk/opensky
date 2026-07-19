@@ -39,8 +39,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   STAT resolution, skip taxonomy, grouping, world bounds.
 * [Terrain mesh build](/engine/terrain.md) - LAND -> per-quadrant meshes under the cell's
   objects: grid topology, base textures, XCLC quad-hiding, DNAM fallback plane, placement.
-* [Distant LOD streaming](/engine/distant-lod.md) - anchored coarsening rings beyond 5x5,
-  async scene replacement, asset lifetime, real-render evidence.
+* [Distant LOD streaming](/engine/distant-lod.md) - cell-clipped coarsening rings beyond
+  5x5, atomic coverage replacement, asset lifetime, real-render evidence.
 * [Sky + water environment](/engine/sky-water.md) - procedural time-of-day sky, per-cell
   water resolution/build, animated alpha-blend render path.
 * [Interior door transitions](/engine/interiors.md) - interior CELL build, DOOR/XTEL
