@@ -30,8 +30,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   table, block walk.
 * [NIF Havok collision](/formats/nif-collision.md) - bhk root/body/shape graphs,
   compressed mesh reconstruction, unit/filter policy, Whiterun sweep evidence.
-* [DDS texture container](/formats/dds.md) - DDS_HEADER/DXT10 layout, BCn
-  formats, mip chain math, color-space policy.
+* [DDS texture container](/formats/dds.md) - DDS_HEADER/DXT10 layout, BCn + 32-bit RGB,
+  mip chain math, color-space policy.
 
 ## Engine
 

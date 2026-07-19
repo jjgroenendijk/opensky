@@ -19,6 +19,26 @@ struct DDSFileTests {
         #expect(!file.declaresSRGB)
     }
 
+    @Test func decodesXRGB8888WithFullMipChain() throws {
+        let file = try DDSFile(data: DDSFixture.xrgb8888File(
+            width: 8,
+            height: 4,
+            mipCount: 4
+        ))
+        #expect(file.width == 8)
+        #expect(file.height == 4)
+        #expect(file.mipCount == 4)
+        #expect(file.format == .xrgb8888)
+        #expect(!file.declaresSRGB)
+        #expect((0 ..< 4).map { file.width(level: $0) } == [8, 4, 2, 1])
+        #expect((0 ..< 4).map { file.height(level: $0) } == [4, 2, 1, 1])
+        #expect((0 ..< 4).map { file.bytesPerRow(level: $0) } == [32, 16, 8, 4])
+        #expect((0 ..< 4).map { file.mipData(level: $0).count } == [128, 32, 8, 4])
+        for level in 0 ..< 4 {
+            #expect(file.mipData(level: level).allSatisfy { $0 == UInt8(level) })
+        }
+    }
+
     @Test(arguments: [
         ("DXT1", DDSPixelFormat.bc1),
         ("DXT3", .bc2),
@@ -183,7 +203,7 @@ struct DDSFileTests {
         #expect(throws: DDSError.unsupported("resource dimension 4")) { try DDSFile(data: data) }
     }
 
-    @Test(arguments: [UInt32(0), 28, 81, 84, 87]) // unknown/uncompressed/SNORM DXGI codes
+    @Test(arguments: [UInt32(0), 28, 81, 84, 87, 88])
     func rejectsUnknownDXGIFormat(dxgi: UInt32) {
         let data = DDSFixture.file(
             width: 4,
@@ -204,18 +224,104 @@ struct DDSFileTests {
         )
         #expect(throws: DDSError.unsupported("FourCC RGBG")) { try DDSFile(data: data) }
     }
+}
 
-    @Test func rejectsUncompressedPixelFormat() {
-        let data = DDSFixture.file(
+struct DDSUncompressedFileTests {
+    @Test func decodesRGBA8888ObjectAtlasLayout() throws {
+        let file = try DDSFile(data: DDSFixture.rgba8888File(
+            width: 8,
+            height: 4,
+            mipCount: 4
+        ))
+        #expect(file.format == .rgba8888)
+        #expect(file.mipCount == 4)
+        #expect((0 ..< 4).map { file.bytesPerRow(level: $0) } == [32, 16, 8, 4])
+        #expect((0 ..< 4).map { file.mipData(level: $0).count } == [128, 32, 8, 4])
+    }
+
+    @Test func rejectsUnsupportedUncompressedPixelFlags() {
+        let data = DDSFixture.xrgb8888File(
             width: 4,
             height: 4,
-            pixelFlags: 0x41, // DDPF_RGB | DDPF_ALPHAPIXELS
-            fourCC: "\0\0\0\0",
-            payload: Data(count: 64)
+            mipCount: 1,
+            pixelFlags: 0x42 // DDPF_RGB absent
         )
-        #expect(throws: DDSError.unsupported("uncompressed pixel format (no FourCC)")) {
+        #expect(throws: DDSError.unsupported("uncompressed pixel flags 0x42")) {
             try DDSFile(data: data)
         }
+    }
+
+    @Test func rejectsWrongUncompressedBitCount() {
+        let data = DDSFixture.xrgb8888File(
+            width: 4,
+            height: 4,
+            mipCount: 1,
+            bitCount: 24
+        )
+        #expect(throws: DDSError.unsupported("uncompressed RGB bit count 24")) {
+            try DDSFile(data: data)
+        }
+    }
+
+    @Test(arguments: [
+        (UInt32(0), UInt32(0x0000_FF00), UInt32(0x0000_00FF), UInt32(0)),
+        (UInt32(0x00FF_0000), UInt32(0), UInt32(0x0000_00FF), UInt32(0)),
+        (UInt32(0x00FF_0000), UInt32(0x0000_FF00), UInt32(0), UInt32(0)),
+        (UInt32(0x00FF_0000), UInt32(0x0000_FF00), UInt32(0x0000_00FF), UInt32(0xFF00_0000))
+    ])
+    func rejectsWrongUncompressedMasks(
+        red: UInt32,
+        green: UInt32,
+        blue: UInt32,
+        alpha: UInt32
+    ) {
+        let data = DDSFixture.xrgb8888File(
+            width: 4,
+            height: 4,
+            mipCount: 1,
+            redMask: red,
+            greenMask: green,
+            blueMask: blue,
+            alphaMask: alpha
+        )
+        #expect(throws: DDSError.unsupported("uncompressed RGB channel masks")) {
+            try DDSFile(data: data)
+        }
+    }
+
+    @Test func rejectsMissingUncompressedPitchFlag() {
+        let data = DDSFixture.xrgb8888File(
+            width: 4,
+            height: 4,
+            mipCount: 1,
+            flags: 0x1007
+        )
+        #expect(throws: DDSError.malformed("uncompressed pitch 16 != expected 16")) {
+            try DDSFile(data: data)
+        }
+    }
+
+    @Test func rejectsWrongUncompressedPitch() {
+        let data = DDSFixture.xrgb8888File(
+            width: 4,
+            height: 4,
+            mipCount: 1,
+            pitch: 20
+        )
+        #expect(throws: DDSError.malformed("uncompressed pitch 20 != expected 16")) {
+            try DDSFile(data: data)
+        }
+    }
+
+    @Test func rejectsTruncatedUncompressedMipChain() {
+        let payload = Data(count: 4 * 4 * 4 + 2 * 2 * 4 - 1)
+        let data = DDSFixture.xrgb8888File(
+            width: 4,
+            height: 4,
+            mipCount: 2,
+            payload: payload
+        )
+        #expect(throws: DDSError.self) { try DDSFile(data: data) }
     }
 
     @Test func rejectsZeroDimension() {

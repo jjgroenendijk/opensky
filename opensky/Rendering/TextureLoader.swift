@@ -1,5 +1,6 @@
 // Parsed DDS -> MTLTexture upload. BCn pixel formats are sampled natively on
-// Apple Silicon, so upload is a straight per-mip replace — no CPU decode.
+// Apple Silicon. Legacy xRGB8888 maps to BGRA8 after forcing X opaque;
+// RGBA8888 maps directly to RGBA8.
 // Color space is the caller's call per usage (todo 2.5): diffuse maps want
 // the sRGB view, normal/data maps stay linear. Any failure (parse, format,
 // allocation) falls back to a 1x1 placeholder and logs — a bad texture must
@@ -62,7 +63,7 @@ nonisolated final class TextureLoader {
 
     /// Throwing core — exercised directly by unit tests.
     func upload(dds: DDSFile, usage: TextureUsage, label: String) throws -> MTLTexture {
-        guard device.supportsBCTextureCompression else {
+        guard !dds.format.isBlockCompressed || device.supportsBCTextureCompression else {
             throw TextureLoaderError.bcTextureCompressionUnsupported
         }
         let descriptor = MTLTextureDescriptor()
@@ -86,7 +87,9 @@ nonisolated final class TextureLoader {
                 dds.width(level: level),
                 dds.height(level: level)
             )
-            dds.mipData(level: level).withUnsafeBytes { bytes in
+            let source = dds.mipData(level: level)
+            let uploadData = dds.format == .xrgb8888 ? Self.withOpaqueAlpha(source) : source
+            uploadData.withUnsafeBytes { bytes in
                 guard let base = bytes.baseAddress else { return } // levels never empty
                 texture.replace(
                     region: region,
@@ -99,6 +102,16 @@ nonisolated final class TextureLoader {
         return texture
     }
 
+    /// xRGB stores B,G,R,X bytes per little-endian channel masks. Metal's
+    /// BGRA8 format consumes the same byte order, but X is undefined -> 255.
+    private static func withOpaqueAlpha(_ source: Data) -> Data {
+        var result = source
+        for offset in stride(from: 3, to: result.count, by: 4) {
+            result[offset] = 255
+        }
+        return result
+    }
+
     /// BCn -> MTLPixelFormat. `usage == .color` picks the sRGB view; BC4/BC5
     /// have no sRGB variants (single/dual channel data formats).
     static func pixelFormat(for format: DDSPixelFormat, usage: TextureUsage) -> MTLPixelFormat {
@@ -109,6 +122,8 @@ nonisolated final class TextureLoader {
         case .bc3: return srgb ? .bc3_rgba_srgb : .bc3_rgba
         case .bc4: return .bc4_rUnorm
         case .bc5: return .bc5_rgUnorm
+        case .rgba8888: return srgb ? .rgba8Unorm_srgb : .rgba8Unorm
+        case .xrgb8888: return srgb ? .bgra8Unorm_srgb : .bgra8Unorm
         case .bc7: return srgb ? .bc7_rgbaUnorm_srgb : .bc7_rgbaUnorm
         }
     }

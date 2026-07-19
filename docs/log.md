@@ -4,6 +4,15 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-19
 
+* LOD diffuse DDS fixed -- parser accepts strict 32-bit legacy layouts: terrain xRGB8888
+  (`DDPF_RGB`, BGRX masks) + shared object-atlas RGBA8888 (`DDPF_ALPHAPIXELS`, RGBA
+  masks), validates pitch/mips, rejects other bit depths/flags/masks. Metal upload maps to
+  sRGB BGRA8/RGBA8; absent xRGB alpha -> 255, stored RGBA alpha preserved. Synthetic
+  parser + GPU readback tests cover full mip chains + malformed variants. Production CLI
+  reports L4/L8/L16/L32 terrain (256x256, 8 mips) + object atlas (2048x2048, 11 mips).
+  Whiterun 5x5 frame: 101 LOD blocks/0 unavailable, textured horizon, 100% non-background.
+  Full 3,060 BTR + 717 BTO sweep: 0 failed. `make probe`: sustained 720p avg 0.87 ms/p95
+  2.91 ms; cross-cell gate 35 unique builds/9 unloads/25 residents/0 void.
 * M4.5 milestone acceptance complete -- `bench --walk-path` drives fixed 1/120 s production
   capsule physics from Tamriel `(6,-2)` to Chillfurrow Farm `(7,-3)`, climbs 22.82 units,
   enters CELL `00016204`, crosses 160.34 floor units, follows paired door back to recorded

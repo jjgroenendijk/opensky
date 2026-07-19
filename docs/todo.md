@@ -39,7 +39,8 @@ milestone leaves this file; history lives in `docs/log.md` + git.
   `WhiterunExterior06` on screen, free-fly camera, bench-gated fps (avg 0.39 ms/frame @
   720p on M1, Debug), `openskycli` + main-app asset browser dev tools.
 * M3 — world streaming + environment. Done 2026-07-19 (PRs #22-#35): streamed 5x5
-  exterior grid, terrain, distant LOD, sky/water, lit interiors + door round trips.
+  exterior grid, terrain, textured distant LOD incl. 32-bit terrain/object diffuse atlases,
+  sky/water, lit interiors + door round trips.
 * M4 — walkable world. Done 2026-07-19: streamed terrain/static collision, fixed-step
   capsule response, walk-mode door round trip + >30 fps route gate.
 * M5 — actors on screen (active): placed actors rendered as skinned meshes in bind pose.
