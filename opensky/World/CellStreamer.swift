@@ -142,6 +142,15 @@ final class CellStreamer {
         return composition.sampleTerrain(at: position)
     }
 
+    /// Active collision broadphase: exact interior while inside, resident
+    /// exterior cell BVHs otherwise. Main-thread value query; no VFS access.
+    func collisionCandidates(overlapping bounds: ModelBounds) -> [StaticCollisionShape] {
+        if let interiorScene {
+            return interiorScene.staticCollision.candidates(overlapping: bounds)
+        }
+        return composition.collisionCandidates(overlapping: bounds)
+    }
+
     private func requestDistantLODIfNeeded() {
         // Cell + LOD work share one serial cache-confined queue. Let every
         // desired full cell reach resident/void/failed first so first-time
@@ -440,5 +449,12 @@ extension CellStreamer {
 
     var isInterior: Bool {
         interiorScene != nil
+    }
+
+    var residentCollisionStats: StaticCollisionStats {
+        if let interiorScene {
+            return interiorScene.staticCollision.stats
+        }
+        return composition.collisionStats()
     }
 }

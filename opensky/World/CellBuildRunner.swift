@@ -63,6 +63,7 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider {
         droppingTextureKeys textureKeys: Set<String>
     ) {
         builder.meshes.evict(dropping: meshKeys)
+        builder.collisionModels?.evict(dropping: meshKeys)
         builder.textures.evict(dropping: textureKeys)
     }
 
@@ -89,6 +90,24 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider {
 nonisolated struct CellBuildResult {
     let coordinate: CellCoordinate
     let result: Result<CellScene, any Error>
+    let totalDurationMS: Double
+
+    init(
+        coordinate: CellCoordinate,
+        result: Result<CellScene, any Error>,
+        totalDurationMS: Double = 0
+    ) {
+        self.coordinate = coordinate
+        self.result = result
+        self.totalDurationMS = totalDurationMS
+    }
+}
+
+nonisolated struct CellBuildMetric: Equatable {
+    let totalDurationMS: Double
+    let collisionDurationMS: Double
+    let collisionShapeCount: Int
+    let collisionTriangleCount: Int
 }
 
 nonisolated struct DistantLODBuildResult {
@@ -143,6 +162,7 @@ nonisolated final class SerialCellBuildRunner: CellBuildRunning, @unchecked Send
     /// under the same lock so the fly-path gate can prove each desired cell
     /// built once, including completed results not drained yet.
     private var buildCounts: [CellCoordinate: Int] = [:]
+    private var buildMetrics: [CellCoordinate: CellBuildMetric] = [:]
     /// Coordinates queued-or-building, so a duplicate enqueue is a no-op --
     /// defence in depth over the streamer's own dedup. Bounds the queue depth
     /// to the grid size regardless of caller bugs (guards the 30 GB runaway).
@@ -166,9 +186,23 @@ nonisolated final class SerialCellBuildRunner: CellBuildRunning, @unchecked Send
             lock.lock()
             buildCounts[coordinate, default: 0] += 1
             lock.unlock()
+            let started = DispatchTime.now().uptimeNanoseconds
             let result = Result { try provider.buildCell(at: coordinate) }
-            let entry = CellBuildResult(coordinate: coordinate, result: result)
+            let duration = Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
+            let entry = CellBuildResult(
+                coordinate: coordinate,
+                result: result,
+                totalDurationMS: duration
+            )
             lock.lock()
+            if case let .success(scene) = result {
+                buildMetrics[coordinate] = CellBuildMetric(
+                    totalDurationMS: duration,
+                    collisionDurationMS: scene.staticCollision.buildDurationMS,
+                    collisionShapeCount: scene.staticCollision.stats.shapeCount,
+                    collisionTriangleCount: scene.staticCollision.stats.triangleCount
+                )
+            }
             completed.append(entry)
             lock.unlock()
         }
@@ -253,5 +287,11 @@ nonisolated final class SerialCellBuildRunner: CellBuildRunning, @unchecked Send
         lock.lock()
         defer { lock.unlock() }
         return buildCounts
+    }
+
+    func buildMetricsSnapshot() -> [CellCoordinate: CellBuildMetric] {
+        lock.lock()
+        defer { lock.unlock() }
+        return buildMetrics
     }
 }

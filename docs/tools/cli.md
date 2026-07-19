@@ -45,14 +45,14 @@ only where `--out` points (AGENTS.md Legal & IP).
 | `vfs cat <key> --out <file>` | extract one resource (loose files win, as in the engine) |
 | `record <formid-or-editorid>` | dump one Skyrim.esm record: header, decoded view (WRLD/CELL/STAT/REFR), field list capped at 64 with a per-type tail summary |
 | `cell [--worldspace <edid>] [--x n] [--y n] [--refs]` | exterior-cell summary without Metal: ref count, base-type histogram, other cell records; `--refs` lists placements |
-| `collision [--worldspace <edid>] [--x n] [--y n]` | resolve unique cell model paths + sweep embedded bhk collision; report roots/bodies/shapes/tris, filters, unsupported/failures, collision/render bounds; fail acceptance gaps |
+| `collision [--worldspace <edid>] [--x n] [--y n] [--radius n]` | center-cell unique-model bhk sweep + production placed collision grid; per cell shapes/tris/build ms/KiB, void cells, aggregate filters/failures; fail acceptance gaps |
 | `interior --out <file> [--worldspace/--x/--y] [--radius n]` | scan exterior doors near target for exterior -> interior -> paired exterior round trip, render exact XTEL arrival pose to PNG; default radius 16 |
 | `nif <key>` | container stats + named node/shape rows + flattened model summary (meshes, verts/tris, bounds, materials with texture paths) |
 | `dds <key>` | header + mip chain (size, BCn format, sRGB declaration) |
 | `lod [--worldspace edid]` | parse lodsettings + sweep every worldspace BTR/BTO through LOD block decoders + scene flattener; any failed container exits 1 |
 | `screenshot --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f] [--time-of-day 0-24] [--neighbors]` | cell scene build + distant LOD -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load/LOD/draw stats + non-background fraction; `--zoom` (0.1-10) moves eye toward framed center; `--time-of-day` controls procedural sky (default 13); `--neighbors` builds production-size 5x5 (shared libraries) and frames full-cell bounds only; missing cell warns + skips; `render` is identical alias |
 | `bench [--worldspace/--x/--y] [--size WxH] [--frames n] [--budget-ms f]` | sustained offscreen render (default 360 frames @ 1280x720) through `Renderer.renderOffscreenSustained` — FrameStats windows + per-frame wall times; prints avg/p95/max + fps, exit 1 when avg or p95 misses the budget (default 33.33 ms = 30 fps, todo 2.11 gate) |
-| `bench --fly-path [--worldspace/--x/--y] [--size WxH] [--budget-ms f] [--max-frames n] [--footprint-cap-mb f]` | scripted launch-center -> east -> north cell flight through live `CellStreamer`; waits for each 5x5 grid, reuses one render-target pair at 100 Hz, requires physical-footprint plateau/cap, unload, exact 35-cell build union with no duplicates, zero failed builds, avg/p95 frame budget |
+| `bench --fly-path [--worldspace/--x/--y] [--size WxH] [--budget-ms f] [--max-frames n] [--footprint-cap-mb f] [--collision-build-budget-ms f]` | scripted launch-center -> east -> north cell flight through live `CellStreamer`; requires physical-footprint plateau/cap, exact 35-cell build union, zero failed builds, collision-build p95 (default 500 ms), avg/p95 frame budget |
 
 `cell`/`screenshot`/`render` default to the first-render cell
 ([decision](/decisions/first-render-cell.md), constants in
@@ -71,10 +71,11 @@ Implementation notes:
 * `cell` mirrors the [cell scene build](/engine/cell-scene.md) WRLD walk read-only
   (XCLC grid match, labels ignored) and resolves base types via a headers-only
   FormID -> record-type index.
-* `collision` uses shared `ExteriorCellModelCatalog` + `NIFCollisionSweep`; CLI only
-  parses/prints. MODL paths receive same missing `meshes\` prefix as `MeshLibrary`.
-  Every model reports independently; any root without geometry, unknown reachable block,
-  decode/load failure exits 1. See [NIF collision](/formats/nif-collision.md).
+* `collision` uses shared `ExteriorCellModelCatalog` + `NIFCollisionSweep` for center-asset
+  diagnostics, then `CellCollisionGridProbe` + production `CellSceneBuilder` placement for
+  radius grid. CLI only parses/prints. Any empty root, unknown reachable block, decode/load
+  failure exits 1. See [NIF collision](/formats/nif-collision.md) +
+  [collision world](/engine/collision-world.md).
 * `interior` is M3.6 repeatable acceptance probe. It uses production builder transition
   resolution for both directions; destination must be interior, reverse destination must
   equal source exterior door. One WRLD walk gathers doors without loading assets;
@@ -97,7 +98,9 @@ Implementation notes:
   eviction, and `task_vm_info.phys_footprint` sampler. Waypoints move one cell east, then
   north; overlapping 5x5 grids require exactly 35 unique builds. Repeated count,
   missing/unexpected coordinate, failed cell, no unload, >1.6x final/start footprint, cap,
-  timeout, or avg/p95 budget miss exits 1.
+  timeout, collision-build p95 budget miss, or avg/p95 frame budget miss exits 1. Per-cell
+  metrics come from `SerialCellBuildRunner`; collision time covers base resolution, decoded
+  model cache, transform placement + BVH build.
 
 ## Probe harness (make probe)
 
@@ -105,9 +108,9 @@ Implementation notes:
 default `/Volumes/data/steam/steamapps/common/Skyrim Special Edition`, override via
 `OPENSKY_DATA_ROOT`. Install absent -> `[INFO]` + exit 0 (CI safe). Checks: `vfs ls`
 finds meshes; `record 0x3C` decodes Tamriel (UESP "Skyrim Mod:FormIDs"); `cell`
-summary; `collision` gates all first-render-cell models; `nif`/`dds` inspect first listed
+summary; `collision --radius 2` gates placed 5x5 collision; `nif`/`dds` inspect first listed
 assets; `screenshot` writes
 `logs/probe-screenshot.png`; `interior` verifies one door round trip + writes
 `logs/probe-interior.png`; `bench` runs the sustained fps gate (360 frames @
 720p, fails over 33.33 ms avg/p95); `bench --fly-path` runs the M3.2 cross-cell gate at
-640x360. Full output -> `logs/probe.log`.
+640x360, including 500 ms collision-build p95 gate. Full output -> `logs/probe.log`.

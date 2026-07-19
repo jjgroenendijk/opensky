@@ -105,8 +105,9 @@ each strip with alternating winding. Declared triangle count must match emitted 
 
 `openskycli collision` resolves every unique model used by target exterior cell, loads via
 VFS, reports roots/bodies/shapes/triangles, filtered bodies, unsupported reachable types,
-decode failures, collision bounds, render bounds. Non-zero exit on any load/decode/
-unsupported/empty-root failure.
+decode failures, collision bounds, render bounds. It then uses production placement +
+[collision world](/engine/collision-world.md) for requested radius grid. Non-zero exit on
+any load/decode/unsupported/empty-root failure.
 
 Tamriel `(6,-2)` probe on 2026-07-19: 9 unique vanilla models; 7 collision-bearing;
 12 roots/bodies, 13 shapes, 583 triangles; 0 filtered bodies, 0 unsupported reachable
@@ -114,6 +115,7 @@ blocks, 0 decode failures. Both LOD-only building models correctly carry no coll
 
 ## Current boundary
 
-Decoder does not execute MOPP bytecode or build a spatial index; MOPP child geometry is
-authoritative input for milestone 4.3 indexing. Collision materials/welding metadata are
-validated/skipped because player queries currently need geometry + solidity only.
+Decoder does not execute MOPP bytecode; MOPP child geometry is authoritative. Per-cell
+spatial index lives above format layer in [collision world](/engine/collision-world.md).
+Collision materials/welding metadata are validated/skipped because player queries currently
+need geometry + solidity only.

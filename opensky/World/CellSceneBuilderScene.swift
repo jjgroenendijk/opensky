@@ -12,6 +12,7 @@ nonisolated struct CellGeometryBuild {
     let sky: SkyParameters?
     let lighting: RenderLighting?
     let pointLights: [RenderPointLight]
+    let staticCollision: StaticCollisionSet
 }
 
 extension CellSceneBuilder {
@@ -65,7 +66,8 @@ extension CellSceneBuilder {
             bounds: bounds.map { (min: $0.min, max: $0.max) },
             location: geometry.location,
             doors: geometry.doors,
-            terrainHeightField: geometry.terrain?.heightField
+            terrainHeightField: geometry.terrain?.heightField,
+            staticCollision: geometry.staticCollision
         )
     }
 

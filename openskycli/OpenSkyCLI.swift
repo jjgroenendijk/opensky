@@ -25,9 +25,10 @@ enum OpenSkyCLI {
       record <formid-or-editorid> Dump one Skyrim.esm record (decoded + fields)
       cell [--worldspace <edid>] [--x <n>] [--y <n>] [--refs]
                                   Summarize an exterior cell's references
-      collision [--worldspace <edid>] [--x <n>] [--y <n>]
+      collision [--worldspace <edid>] [--x <n>] [--y <n>] [--radius <n>]
                                   Sweep embedded NIF collision for every unique
-                                  model used by one exterior cell
+                                  model used by center cell; report placed
+                                  shapes/triangles for target grid
       interior --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
                [--radius <n>]    Find a nearby exterior door, enter its interior,
                                   render the arrival pose, verify the return door
@@ -49,9 +50,11 @@ enum OpenSkyCLI {
       bench --fly-path [--worldspace <edid>] [--x <n>] [--y <n>]
             [--size WxH] [--budget-ms <f>] [--max-frames <n>]
             [--footprint-cap-mb <f>]
+            [--collision-build-budget-ms <f>]
                                   Script east + north cell crossings; require
                                   settlement, unload, one build/cell, bounded
-                                  physical footprint, avg/p95 frame budget
+                                  physical footprint, collision-build p95,
+                                  avg/p95 frame budgets
       help                        Show this text
 
     defaults: cell/screenshot/render target the first-render cell (Tamriel (6,-2)).

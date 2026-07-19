@@ -22,8 +22,8 @@ struct CellSceneBuilderTests {
         device != nil
     }
 
-    fileprivate static let staticAttributes: UInt16 = 0x1B
-    fileprivate static let staticStrideDwords = 7
+    static let staticAttributes: UInt16 = 0x1B
+    static let staticStrideDwords = 7
 
     fileprivate let dataURL: URL
 
@@ -252,7 +252,7 @@ extension CellSceneBuilderTests {
 
     /// One static-layout vertex record at the given position (see
     /// MeshLibraryTests for the interleaved layout the attributes select).
-    private func vertexRecord(position: SIMD3<Float>) -> Data {
+    func vertexRecord(position: SIMD3<Float>) -> Data {
         var record = Data()
         record.appendFloat32(position.x)
         record.appendFloat32(position.y)
@@ -285,7 +285,7 @@ extension CellSceneBuilderTests {
 
     // MARK: - Plugin fixtures
 
-    private func statRecord(formID: UInt32, modelPath: String?) -> Data {
+    func statRecord(formID: UInt32, modelPath: String?) -> Data {
         var fields = Data()
         if let modelPath {
             fields += ESMFixture.field("MODL", ESMFixture.zstring(modelPath))
@@ -465,7 +465,8 @@ extension CellSceneBuilderTests {
         return try CellSceneBuilder(
             file: ESMFile(data: pluginData),
             meshes: meshes,
-            textures: textures
+            textures: textures,
+            fileSystem: vfs
         )
     }
 

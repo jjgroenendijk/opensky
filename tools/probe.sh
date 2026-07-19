@@ -52,7 +52,7 @@ echo "[ OK ] vfs ls ($mesh_count mesh entries)"
 echo "[ OK ] record 0x0000003C (Tamriel)"
 
 run "cell summary (first-render cell)" cell
-run "collision sweep (first-render cell)" collision
+run "collision grid (5x5 around first-render cell)" collision --radius 2
 
 # Inspect the first mesh + texture the archives provide.
 mesh_key="$("$cli" --data-root "$data_root" vfs ls 'meshes\*.nif' 2>/dev/null \
@@ -85,4 +85,5 @@ grep 'frames @' "$log" | tail -1
 # no duplicates, physical-footprint plateau, and avg/p95 under 30 fps budget.
 run "cross-cell streaming bench (640x360)" bench --fly-path --size 640x360
 grep 'unique builds' "$log" | tail -1
+grep 'collision build:' "$log" | tail -1
 echo "[INFO] probe passed — full output in $log"
