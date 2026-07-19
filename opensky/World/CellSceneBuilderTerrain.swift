@@ -17,6 +17,7 @@ import simd
 nonisolated struct TerrainBuild {
     let items: [TerrainDrawItem]
     let bounds: ModelBounds?
+    let heightField: TerrainHeightField
     let quadrantCount: Int
     /// ATXT layers drawn across all quadrants.
     let layerCount: Int
@@ -32,6 +33,13 @@ nonisolated private struct ResolvedTerrainLayers {
     var skipped = 0
 }
 
+nonisolated private struct TerrainItemBuild {
+    var items: [TerrainDrawItem] = []
+    var bounds: ModelBounds?
+    var layerCount = 0
+    var layerSkipCount = 0
+}
+
 extension CellSceneBuilder {
     /// Builds terrain for the cell: from its LAND record when present, else a
     /// flat fallback plane at the worldspace DNAM default land height. Returns
@@ -42,21 +50,40 @@ extension CellSceneBuilder {
     /// row*128, height) lands at absolute world position.
     nonisolated func buildTerrain(found: FoundCell, worldspace: Worldspace?) -> TerrainBuild? {
         guard let grid = found.cell.grid else { return nil }
-        let patches = terrainPatches(
-            found: found, worldspace: worldspace, quadFlags: grid.quadFlags
+        let coordinate = CellCoordinate(x: grid.x, y: grid.y)
+        let source = terrainSource(
+            found: found,
+            worldspace: worldspace,
+            coordinate: coordinate,
+            quadFlags: grid.quadFlags
         )
+        guard let source else { return nil }
+        let patches = source.patches
         guard !patches.isEmpty else { return nil }
 
         let origin = SIMD3<Float>(Float(grid.x) * 4096, Float(grid.y) * 4096, 0)
         let transform = MatrixMath.translation(origin)
+        let built = buildTerrainItems(patches: patches, transform: transform)
+        guard !built.items.isEmpty else { return nil }
+        return TerrainBuild(
+            items: built.items,
+            bounds: built.bounds,
+            heightField: source.heightField,
+            quadrantCount: built.items.count,
+            layerCount: built.layerCount,
+            layerSkipCount: built.layerSkipCount
+        )
+    }
+
+    nonisolated private func buildTerrainItems(
+        patches: [TerrainMeshBuilder.Patch],
+        transform: float4x4
+    ) -> TerrainItemBuild {
         let normalMatrix = MatrixMath.normalMatrix(transform)
-        var items: [TerrainDrawItem] = []
-        var bounds: ModelBounds?
-        var layerCount = 0
-        var layerSkipCount = 0
+        var built = TerrainItemBuild()
         for patch in patches {
             let resolved = resolveTerrainLayers(patch.layers)
-            layerSkipCount += resolved.skipped
+            built.layerSkipCount += resolved.skipped
             do {
                 let upload = try meshes.terrainMesh(
                     patch.mesh,
@@ -70,7 +97,7 @@ extension CellSceneBuilder {
                 // and the terrain-wide bounds (camera framing).
                 let world = ModelBounds.containing(patch.mesh.positions)?
                     .transformed(by: transform)
-                items.append(TerrainDrawItem(
+                built.items.append(TerrainDrawItem(
                     mesh: upload.mesh,
                     weightsBuffer: upload.weightsBuffer,
                     material: RenderMaterial(
@@ -82,9 +109,9 @@ extension CellSceneBuilder {
                     normalMatrix: normalMatrix,
                     bounds: world
                 ))
-                layerCount += resolved.textures.count
+                built.layerCount += resolved.textures.count
                 if let world {
-                    bounds = bounds.map { $0.union(world) } ?? world
+                    built.bounds = built.bounds.map { $0.union(world) } ?? world
                 }
             } catch {
                 let reason = String(describing: error)
@@ -93,14 +120,7 @@ extension CellSceneBuilder {
                 )
             }
         }
-        guard !items.isEmpty else { return nil }
-        return TerrainBuild(
-            items: items,
-            bounds: bounds,
-            quadrantCount: items.count,
-            layerCount: layerCount,
-            layerSkipCount: layerSkipCount
-        )
+        return built
     }
 
     /// Patch source: LAND when present, else the WRLD DNAM fallback plane,
@@ -108,18 +128,37 @@ extension CellSceneBuilder {
     /// land height (Tamriel -27000). When DNAM is absent the correct engine
     /// behavior is UNCONFIRMED (todo: probe); OpenSky draws no ground rather
     /// than guess a floor height that could sit wrong.
-    nonisolated private func terrainPatches(
+    nonisolated private func terrainSource(
         found: FoundCell,
         worldspace: Worldspace?,
+        coordinate: CellCoordinate,
         quadFlags: UInt32
-    ) -> [TerrainMeshBuilder.Patch] {
+    ) -> (patches: [TerrainMeshBuilder.Patch], heightField: TerrainHeightField)? {
         if let land = landRecord(in: found.children) {
-            return TerrainMeshBuilder.patches(land: land, hiddenQuadrants: quadFlags)
+            if let heights = land.heightField?.heights {
+                let field = TerrainHeightField(
+                    coordinate: coordinate,
+                    heights: heights,
+                    hiddenQuadrants: quadFlags
+                )
+                if let field {
+                    return (
+                        TerrainMeshBuilder.patches(land: land, hiddenQuadrants: quadFlags),
+                        field
+                    )
+                }
+            }
         }
         if let height = worldspace?.defaultLandHeight {
-            return [TerrainMeshBuilder.fallbackPatch(defaultLandHeight: height)]
+            let field = TerrainHeightField(
+                coordinate: coordinate,
+                heights: [Float](repeating: height, count: Land.vertexCount)
+            )
+            if let field {
+                return ([TerrainMeshBuilder.fallbackPatch(defaultLandHeight: height)], field)
+            }
         }
-        return []
+        return nil
     }
 
     /// Resolves each ATXT layer's LTEX -> TXST diffuse. A broken chain drops

@@ -29,6 +29,8 @@ layer so the math stays AppKit-free + unit-tested:
 - Boost: Shift (`flagsChanged`) multiplies speed while held.
 - Activate: F latches one request; streamer consumes it to use nearest teleport door
   within 192 units. See [interior door transitions](/engine/interiors.md).
+- Mode: G latches one fly/walk toggle. Fly stays default; walk hands horizontal input + look
+  to [terrain walk controller](/engine/walk-mode.md). Q/E vertical input remains fly-only.
 - Capture: click in the view grabs the pointer (`NSCursor.hide` +
   `CGAssociateMouseAndMouseCursorPosition(0)` -> raw deltas, cursor frozen in window). Esc
   or first-responder loss releases + `CameraInputState.releaseAll()` so no key sticks.
@@ -72,8 +74,9 @@ static, so `RendererOffscreenTests` / `CellRenderRealDataTests` are unchanged).
 `draw(in:)` calls `advanceCamera()`: real `dt` from `CACurrentMediaTime` clamped to 0.1 s
 (a stall cannot teleport), `input.makeInput(dt:)` -> `camera.update`. Sun/ambient still
 come from the injected `SceneCamera`; only view + camera position now come from the
-free-fly pose. `GameViewController` owns the `CameraInputState`, sets it on the
-`GameMetalView`, and passes it to `Renderer`.
+free-fly pose. When G selects walk, renderer instead advances `WalkController` with same
+frame input + resident terrain sampler. `GameViewController` owns the `CameraInputState`,
+sets it on `GameMetalView`, and passes it to `Renderer`.
 
 ## Verification
 

@@ -93,11 +93,17 @@ final class Renderer: NSObject {
     private(set) var camera: SceneCamera
     /// Live view pose, seeded from `camera`, advanced each frame from `input`.
     var freeFlyCamera: FreeFlyCamera
+    /// Fly remains default dev mode. G toggles terrain-constrained walk.
+    var movementMode = CameraMovementMode.fly
+    var walkController: WalkController
+    /// Current resident terrain lookup, wired by GameViewController. nil in
+    /// renderer-only tests/offscreen paths -> walk mode has no ground.
+    var terrainSampler: WalkController.GroundSampler?
     /// Procedural exterior sky clock. May change between frames.
     var timeOfDay: Float
     /// Free-fly input, drained once per `draw(in:)`; nil (offscreen/tests) ->
     /// the camera stays on its seeded pose.
-    private let input: CameraInputState?
+    let input: CameraInputState?
     /// Optional main-thread per-frame hook, invoked in `draw(in:)` after the
     /// camera advances with the live free-fly position. Cell streaming drives
     /// its per-frame `update` here (and may call `setScene` back synchronously
@@ -105,7 +111,7 @@ final class Renderer: NSObject {
     /// leaves the loop unchanged.
     var onFrame: ((SIMD3<Float>) -> Void)?
     /// CACurrentMediaTime of the previous `draw(in:)`, for real delta time.
-    private var lastUpdateTime: CFTimeInterval?
+    var lastUpdateTime: CFTimeInterval?
     let frameUniformBuffer: MTLBuffer
     /// Per-draw ring: maxFramesInFlight slots x drawUniformSlotCapacity
     /// aligned entries. Replaced (regrown) by setScene when a new scene's
@@ -192,6 +198,7 @@ final class Renderer: NSObject {
         let resolvedCamera = camera ?? .demo
         self.camera = resolvedCamera
         freeFlyCamera = FreeFlyCamera(framing: resolvedCamera)
+        walkController = WalkController(cameraPosition: freeFlyCamera.position)
         self.timeOfDay = timeOfDay
         self.input = input
         frameUniformBuffer = try Self.makeUniformBuffer(
@@ -331,6 +338,7 @@ final class Renderer: NSObject {
         if let newCamera {
             camera = newCamera
             freeFlyCamera = FreeFlyCamera(framing: newCamera)
+            walkController.reset(cameraPosition: freeFlyCamera.position)
         }
         if nextDrawBuffer !== drawUniformBuffer {
             // Old ring may back in-flight frames — retire, never reuse.
@@ -394,19 +402,6 @@ final class Renderer: NSObject {
         guard !removable.isEmpty else { return }
         residencySet.removeAllocations(removable)
         residencySet.commit()
-    }
-
-    // MARK: - Camera
-
-    /// Advances the free-fly camera by one frame of input using real elapsed
-    /// time. First frame (or no input) makes no move. dt is clamped so a stall
-    /// (breakpoint, window occluded) cannot teleport the camera.
-    func advanceCamera() {
-        guard let input else { return }
-        let now = CACurrentMediaTime()
-        let dt = lastUpdateTime.map { Float(min(now - $0, 0.1)) } ?? 0
-        lastUpdateTime = now
-        freeFlyCamera.update(input.makeInput(dt: dt))
     }
 }
 

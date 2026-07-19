@@ -134,6 +134,14 @@ final class CellStreamer {
         requestDistantLODIfNeeded()
     }
 
+    /// Main-thread terrain query consumed by walk mode before this frame's
+    /// streaming update. Exterior resident fields only; interiors gain mesh
+    /// floors with M4 collision-world integration.
+    func sampleTerrain(at position: SIMD2<Float>) -> TerrainGroundSample? {
+        guard interiorScene == nil else { return nil }
+        return composition.sampleTerrain(at: position)
+    }
+
     private func requestDistantLODIfNeeded() {
         // Cell + LOD work share one serial cache-confined queue. Let every
         // desired full cell reach resident/void/failed first so first-time

@@ -64,7 +64,8 @@ extension CellSceneBuilder {
             summary: summary,
             bounds: bounds.map { (min: $0.min, max: $0.max) },
             location: geometry.location,
-            doors: geometry.doors
+            doors: geometry.doors,
+            terrainHeightField: geometry.terrain?.heightField
         )
     }
 
