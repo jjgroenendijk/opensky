@@ -12,6 +12,25 @@ nonisolated struct SceneCamera {
     let sunDirection: SIMD3<Float>
     let sunColor: SIMD3<Float>
     let ambientColor: SIMD3<Float>
+    /// Actor-origin pose for an XTEL camera. Free-fly uses `eye` verbatim;
+    /// walk mode raises this feet position by capsule eye height.
+    let walkFeetPosition: SIMD3<Float>?
+
+    init(
+        eye: SIMD3<Float>,
+        target: SIMD3<Float>,
+        sunDirection: SIMD3<Float>,
+        sunColor: SIMD3<Float>,
+        ambientColor: SIMD3<Float>,
+        walkFeetPosition: SIMD3<Float>? = nil
+    ) {
+        self.eye = eye
+        self.target = target
+        self.sunDirection = sunDirection
+        self.sunColor = sunColor
+        self.ambientColor = ambientColor
+        self.walkFeetPosition = walkFeetPosition
+    }
 
     /// DemoScene's hand-tuned camera + light — used whenever no cell scene
     /// is injected (existing tests, missing game data).
@@ -54,9 +73,9 @@ nonisolated struct SceneCamera {
         )
     }
 
-    /// Places free-fly camera at XTEL arrival position + orientation. Skyrim
-    /// rotation X is pitch, Z is heading in same Z-up basis used by REFR
-    /// transforms; Y roll is intentionally ignored by upright free-fly view.
+    /// Creates an XTEL arrival pose. Skyrim rotation X is pitch, Z is heading
+    /// in same Z-up basis used by REFR transforms; Y roll is intentionally
+    /// ignored by upright free-fly view.
     static func teleport(placement: PlacedReference.Placement) -> SceneCamera {
         let yaw = placement.rotation.z
         let pitch = placement.rotation.x
@@ -71,7 +90,8 @@ nonisolated struct SceneCamera {
             target: placement.position + forward,
             sunDirection: demo.sunDirection,
             sunColor: demo.sunColor,
-            ambientColor: demo.ambientColor
+            ambientColor: demo.ambientColor,
+            walkFeetPosition: placement.position
         )
     }
 }

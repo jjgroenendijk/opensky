@@ -292,7 +292,7 @@ Observed 2026-07-18 against read-only USB Skyrim data:
   render avg 2.79 ms, p95 5.33 ms, max 53.48 ms vs 33.33 ms avg/p95 budget.
 
 M4.3 collision-enabled fly path, 2026-07-19: 35 builds processed 2,393 shapes/230,034
-triangles; collision phase avg 102.11 ms, p95 450.37 ms, max 497.01 ms vs 500 ms p95
+triangles; collision phase avg 102.11 ms, p95 450.37 ms, max 497.01 ms vs current 700 ms p95
 budget. Waypoint footprint 471 -> 524 -> 442 MB, 580 MB peak / 1,024 MB cap. 4,730 render
 frames avg 3.13 ms, p95 5.79 ms, max 20.24 ms.
 

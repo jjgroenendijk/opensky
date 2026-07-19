@@ -43,4 +43,30 @@ struct RecordTextDumpTests {
         #expect(dump.contains("fields (71):"))
         #expect(dump.contains("... 7 more: RNAM 7"))
     }
+
+    @Test func dumpsReferenceRotationAndTeleportPose() throws {
+        var name = Data()
+        name.appendUInt32(0x100)
+        var placement = Data()
+        for value: Float in [1, 2, 3, 0.1, 0.2, 0.3] {
+            placement.appendFloat32(value)
+        }
+        var teleport = Data()
+        teleport.appendUInt32(0x200)
+        for value: Float in [4, 5, 6, 0.4, 0.5, 0.6] {
+            teleport.appendFloat32(value)
+        }
+        teleport.appendUInt32(0)
+        let fields = ESMFixture.field("NAME", name)
+            + ESMFixture.field("XTEL", teleport)
+            + ESMFixture.field("DATA", placement)
+        let plugin = ESMFixture.tes4() + ESMFixture.topGroup(
+            "REFR",
+            contents: ESMFixture.record("REFR", formID: 0xABC, data: fields)
+        )
+        let dump = try RecordTextDump.dump(record: firstRecord(in: plugin), localized: false)
+        #expect(dump.contains("rotation (0.1, 0.2, 0.3)"))
+        #expect(dump.contains("teleport 00000200 at SIMD3<Float>(4.0, 5.0, 6.0)"))
+        #expect(dump.contains("rotation SIMD3<Float>(0.4, 0.5, 0.6)"))
+    }
 }

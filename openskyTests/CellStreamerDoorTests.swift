@@ -6,6 +6,26 @@ import Testing
 
 extension CellStreamerTests {
     @Test
+    func failedDoorTransitionIsCountedForAcceptance() {
+        enum DoorFailure: Error { case broken }
+
+        let runner = ManualCellBuildRunner()
+        let streamer = Self.makeStreamer(runner: runner, radius: 0)
+        streamer.update(cameraPosition: Self.center)
+        let outside = Self.door(reference: 0x10, destination: 0x20, position: Self.center)
+        runner.complete(Self.coordinate(0, 0), with: .success(Self.cellScene(
+            location: .exterior(Self.coordinate(0, 0)), doors: [outside]
+        )))
+        streamer.update(cameraPosition: Self.center)
+        streamer.update(cameraPosition: Self.center, activate: true)
+        runner.completeDoorTransition(from: FormID(0x10), with: .failure(DoorFailure.broken))
+        streamer.update(cameraPosition: Self.center)
+
+        #expect(streamer.doorTransitionFailureCount == 1)
+        #expect(!streamer.isInterior)
+    }
+
+    @Test
     func proximityDoorEntersInteriorSuspendsGridThenReturns() {
         let runner = ManualCellBuildRunner()
         var cameras: [SceneCamera?] = []

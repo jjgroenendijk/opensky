@@ -82,4 +82,39 @@ struct StaticCollisionWorldTests {
         #expect(composition.collisionStats().shapeCount == 0)
         #expect(composition.collisionCandidates(overlapping: collision.shapes[0].bounds).isEmpty)
     }
+
+    @Test func largeTriangleSoupPartitionsBroadphaseWithoutChangingTriangles() {
+        var vertices: [SIMD3<Float>] = []
+        var indices: [UInt32] = []
+        for triangle in 0 ..< 1200 {
+            let x: Float = triangle < 600 ? 0 : 2048
+            let base = UInt32(vertices.count)
+            vertices.append(contentsOf: [
+                SIMD3(x, Float(triangle % 10), 0),
+                SIMD3(x + 8, Float(triangle % 10), 0),
+                SIMD3(x, Float(triangle % 10) + 8, 0)
+            ])
+            indices.append(contentsOf: [base, base + 1, base + 2])
+        }
+        let leaves = StaticCollisionShape.placed(
+            reference: FormID(7),
+            transform: matrix_identity_float4x4,
+            geometry: .triangleSoup(vertices: vertices, indices: indices)
+        )
+        #expect(leaves.count > 1)
+        #expect(leaves.reduce(0) { $0 + $1.triangleCount } == 1200)
+
+        let collision = collisionSet(coordinate: coordinate(0, 0), shapes: leaves)
+        let nearby = collision.candidates(overlapping: ModelBounds(
+            min: SIMD3(-16, -16, -16),
+            max: SIMD3(32, 32, 16)
+        ))
+        let nearbyTriangleCount = nearby.reduce(0) { $0 + $1.triangleCount }
+        #expect(nearbyTriangleCount == 640)
+        #expect(nearbyTriangleCount < 1200)
+    }
+
+    private func coordinate(_ x: Int32, _ y: Int32) -> CellCoordinate {
+        CellCoordinate(x: x, y: y)
+    }
 }

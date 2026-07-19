@@ -64,6 +64,7 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider {
     ) {
         builder.meshes.evict(dropping: meshKeys)
         builder.collisionModels?.evict(dropping: meshKeys)
+        builder.evictCollisionPartitions(dropping: meshKeys)
         builder.textures.evict(dropping: textureKeys)
     }
 

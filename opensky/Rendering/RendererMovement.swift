@@ -3,6 +3,15 @@
 import QuartzCore
 
 extension Renderer {
+    func reseedMovement(camera newCamera: SceneCamera) {
+        freeFlyCamera = FreeFlyCamera(framing: newCamera)
+        if movementMode == .walk, let feet = newCamera.walkFeetPosition {
+            freeFlyCamera.position = feet
+                + SIMD3<Float>(0, 0, walkController.capsule.eyeHeight)
+        }
+        walkController.reset(cameraPosition: freeFlyCamera.position)
+    }
+
     /// Advances active movement mode by one input frame. First frame makes no
     /// move. dt clamps to 100 ms; WalkController further uses fixed substeps.
     func advanceCamera() {

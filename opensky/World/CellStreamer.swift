@@ -49,6 +49,7 @@ final class CellStreamer {
     private var stagedCells: [CellCoordinate: CellScene] = [:]
     var interiorScene: CellScene?
     var transitionInFlight: FormID?
+    private(set) var doorTransitionFailureCount = 0
 
     /// - Parameters:
     ///   - center: grid center at launch (streaming starts on FirstRenderCell).
@@ -68,6 +69,10 @@ final class CellStreamer {
         )
         self.runner = runner
         self.sink = sink
+    }
+
+    func noteDoorTransitionFailure() {
+        doorTransitionFailureCount += 1
     }
 
     /// One frame's drive. Collects finished builds, re-grids around the

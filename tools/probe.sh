@@ -86,4 +86,12 @@ grep 'frames @' "$log" | tail -1
 run "cross-cell streaming bench (640x360)" bench --fly-path --size 640x360
 grep 'unique builds' "$log" | tail -1
 grep 'collision build:' "$log" | tail -1
+
+# M4.5 route gate: fixed-step production physics from first-render cell to
+# Chillfurrow Farm, interior floor crossing, then paired exterior return.
+walk_png="$log_dir/probe-walk-path.png"
+run "walk/collision route bench (640x360)" bench --walk-path --size 640x360 \
+  --out "$walk_png"
+[ -s "$walk_png" ] || fail "walk-path bench wrote no PNG"
+grep 'active physics frames @' "$log" | tail -1
 echo "[INFO] probe passed — full output in $log"

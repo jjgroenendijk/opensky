@@ -53,8 +53,15 @@ nonisolated enum RecordTextDump {
         case "REFR":
             guard let ref = try? PlacedReference(record: record) else { return nil }
             let position = ref.placement.position
+            let rotation = ref.placement.rotation
+            let teleport = ref.teleportDestination.map {
+                ", teleport \($0.door) at \($0.placement.position)"
+                    + " rotation \($0.placement.rotation)"
+            } ?? ""
             return "decoded REFR: base \(ref.base), position "
-                + "(\(position.x), \(position.y), \(position.z)), scale \(ref.scale)"
+                + "(\(position.x), \(position.y), \(position.z)), rotation "
+                + "(\(rotation.x), \(rotation.y), \(rotation.z)), scale \(ref.scale)"
+                + teleport
         default:
             return nil
         }

@@ -12,6 +12,25 @@ nonisolated struct CellCollisionPlacement {
     let transform: float4x4
 }
 
+nonisolated struct CellCollisionPartitionKey: Hashable {
+    let modelKey: String
+    let bodyIndex: Int
+    let shapeIndex: Int
+}
+
+nonisolated private func collisionPartitions(
+    key: CellCollisionPartitionKey,
+    geometry: NIFCollisionGeometry,
+    cache: inout [CellCollisionPartitionKey: [StaticCollisionPartition]]
+) -> [StaticCollisionPartition] {
+    if let cached = cache[key] {
+        return cached
+    }
+    let partitions = StaticCollisionShape.partitions(for: geometry)
+    cache[key] = partitions
+    return partitions
+}
+
 nonisolated struct CellCollisionGridEntry {
     let coordinate: CellCoordinate
     let collision: StaticCollisionSet?
@@ -181,23 +200,28 @@ extension CellSceneBuilder {
             stats.unsupportedReachableBlockCount += model.unsupportedReachableBlocks.values
                 .reduce(0, +)
             stats.decodeFailureCount += model.decodeFailures.count
-            for body in model.bodies where body.isPlayerSolid {
-                for shape in body.shapes {
+            let modelKey = collisionModels.canonicalKey(for: placement.modelPath)
+            for (bodyIndex, body) in model.bodies.enumerated() where body.isPlayerSolid {
+                for (shapeIndex, shape) in body.shapes.enumerated() {
                     let transform = placement.transform * body.transform * shape.transform
-                    guard
-                        let bounds = Self.collisionBounds(
-                            geometry: shape.geometry,
-                            transform: transform
-                        ) else { continue }
-                    let placed = StaticCollisionShape(
+                    let key = CellCollisionPartitionKey(
+                        modelKey: modelKey,
+                        bodyIndex: bodyIndex,
+                        shapeIndex: shapeIndex
+                    )
+                    let partitions = collisionPartitions(
+                        key: key,
+                        geometry: shape.geometry,
+                        cache: &collisionPartitionCache
+                    )
+                    let placed = StaticCollisionShape.placed(
                         reference: placement.reference,
                         transform: transform,
-                        geometry: shape.geometry,
-                        bounds: bounds
+                        partitions: partitions
                     )
-                    shapes.append(placed)
+                    shapes.append(contentsOf: placed)
                     stats.shapeCount += 1
-                    stats.triangleCount += placed.triangleCount
+                    stats.triangleCount += placed.reduce(0) { $0 + $1.triangleCount }
                     stats.estimatedBytes += Self.estimatedBytes(of: shape.geometry)
                 }
             }
@@ -210,6 +234,12 @@ extension CellSceneBuilder {
             stats: stats,
             buildDurationMS: duration
         )
+    }
+
+    nonisolated func evictCollisionPartitions(dropping keys: Set<String>) {
+        collisionPartitionCache = collisionPartitionCache.filter { key, _ in
+            !keys.contains(key.modelKey)
+        }
     }
 
     nonisolated private func loadCollisionModel(
@@ -227,31 +257,6 @@ extension CellSceneBuilder {
             )
             return nil
         }
-    }
-
-    nonisolated private static func collisionBounds(
-        geometry: NIFCollisionGeometry,
-        transform: float4x4
-    ) -> ModelBounds? {
-        let local: ModelBounds?
-        switch geometry {
-        case let .triangleSoup(vertices, _), let .convexVertices(vertices, _):
-            local = ModelBounds.containing(vertices)
-        case let .box(halfExtents):
-            local = ModelBounds(min: -halfExtents, max: halfExtents)
-        case let .sphere(radius):
-            local = ModelBounds(
-                min: SIMD3(repeating: -radius),
-                max: SIMD3(repeating: radius)
-            )
-        case let .capsule(first, second, radius):
-            let extent = SIMD3<Float>(repeating: radius)
-            local = ModelBounds(
-                min: simd_min(first, second) - extent,
-                max: simd_max(first, second) + extent
-            )
-        }
-        return local?.transformed(by: transform)
     }
 
     nonisolated private static func estimatedBytes(of geometry: NIFCollisionGeometry) -> Int {

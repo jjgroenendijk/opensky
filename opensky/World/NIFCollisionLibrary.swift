@@ -61,6 +61,10 @@ nonisolated final class NIFCollisionLibrary {
         cache.count
     }
 
+    func canonicalKey(for path: String) -> String {
+        (try? meshKey(for: path)) ?? path
+    }
+
     private func meshKey(for path: String) throws -> String {
         guard let normalized = try? VirtualFileSystem.normalize(path) else {
             throw NIFCollisionLibraryError.fileNotFound(path: path)

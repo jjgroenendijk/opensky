@@ -195,6 +195,30 @@ struct RendererSceneSwapTests {
         #expect(!renderer.walkController.isGrounded)
     }
 
+    @Test(.enabled(if: Self.hasMetal4Device))
+    @MainActor
+    func teleportCameraUsesActorOriginAsWalkFeet() throws {
+        let device = try #require(Self.device)
+        let view = MTKView(
+            frame: CGRect(x: 0, y: 0, width: Self.width, height: Self.height),
+            device: device
+        )
+        let renderer = try Renderer(view: view, scene: RenderScene(instances: []))
+        renderer.movementMode = .walk
+        let placement = PlacedReference.Placement(
+            position: SIMD3(10, 20, 30),
+            rotation: SIMD3(0, 0, 0.5)
+        )
+        try renderer.setScene(
+            RenderScene(instances: []),
+            camera: SceneCamera.teleport(placement: placement)
+        )
+
+        #expect(renderer.walkController.feetPosition == placement.position)
+        #expect(renderer.freeFlyCamera.position.z == 30 + PlayerCapsule.standard.eyeHeight)
+        #expect(abs(renderer.freeFlyCamera.yaw - 0.5) < 0.001)
+    }
+
     // MARK: - Helpers
 
     private static func solidTexture(device: MTLDevice) throws -> MTLTexture {

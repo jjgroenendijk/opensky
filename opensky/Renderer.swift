@@ -340,8 +340,7 @@ final class Renderer: NSObject {
         scene = newScene
         if let newCamera {
             camera = newCamera
-            freeFlyCamera = FreeFlyCamera(framing: newCamera)
-            walkController.reset(cameraPosition: freeFlyCamera.position)
+            reseedMovement(camera: newCamera)
         }
         if nextDrawBuffer !== drawUniformBuffer {
             // Old ring may back in-flight frames — retire, never reuse.
