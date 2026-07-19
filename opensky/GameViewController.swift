@@ -111,6 +111,9 @@ final class GameViewController: NSViewController {
                 activate: cameraInput?.consumeActivation() ?? false
             )
         }
+        renderer.terrainSampler = { [weak controller] position in
+            controller?.sampleTerrain(at: position)
+        }
         streamer = controller
     }
 

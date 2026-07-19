@@ -38,6 +38,9 @@ nonisolated struct CellScene {
     let bounds: (min: SIMD3<Float>, max: SIMD3<Float>)?
     let location: CellSceneLocation?
     let doors: [PlacedDoor]
+    /// CPU collision surface for exterior LAND/DNAM terrain. nil for
+    /// interiors or cells with no drawable terrain.
+    let terrainHeightField: TerrainHeightField?
     /// Mesh + texture cache keys this cell uses, for unload eviction.
     var assets = CellAssets()
 
@@ -47,6 +50,7 @@ nonisolated struct CellScene {
         bounds: (min: SIMD3<Float>, max: SIMD3<Float>)?,
         location: CellSceneLocation? = nil,
         doors: [PlacedDoor] = [],
+        terrainHeightField: TerrainHeightField? = nil,
         assets: CellAssets = CellAssets()
     ) {
         self.renderScene = renderScene
@@ -54,6 +58,7 @@ nonisolated struct CellScene {
         self.bounds = bounds
         self.location = location
         self.doors = doors
+        self.terrainHeightField = terrainHeightField
         self.assets = assets
     }
 }

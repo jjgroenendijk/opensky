@@ -84,4 +84,12 @@ struct CameraInputStateTests {
         #expect(state.consumeActivation())
         #expect(!state.consumeActivation())
     }
+
+    @Test
+    func walkToggleDrainsWithInputFrame() {
+        let state = CameraInputState()
+        state.requestWalkToggle()
+        #expect(state.makeInput(dt: 0.016).toggleWalkMode)
+        #expect(!state.makeInput(dt: 0.016).toggleWalkMode)
+    }
 }

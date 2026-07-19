@@ -56,19 +56,6 @@ actors, scripting stay out of scope. One branch/PR per numbered item; format ite
 Format leads below from NifTools `nif.xml` + UESP; byte-level layouts NOT yet verified —
 confirm against `nif.xml` definitions + real-install probe before impl, flag deviations.
 
-### 4.1 Walk-mode controller on terrain
-
-* [ ] Player capsule + gravity + walk/fly toggle (fly stays default dev mode). Ground =
-      LAND 33x33 heightfield (`docs/formats/land.md`) sampled on the same SW->NE triangle
-      split as `TerrainMeshBuilder`, using barycentric height + normal rather than
-      bilinear interpolation. Snap-to-ground, slope limit, deterministic/clamped time
-      stepping, hardcoded walk/run speeds (GMST later). Exterior only; cell-border
-      crossing keeps ground contact using streamed neighbor heightfields.
-* [ ] Acceptance: walk-mode traverse across >=3 streamed cells from the M2 target cell,
-      camera follows terrain, no fall-through at cell seams; unit tests on heightfield
-      sampling + controller math (synthetic heightfields), including a non-planar saddle
-      quad proving collision matches rendered triangle planes rather than a bilinear patch.
-
 ### 4.2 NIF collision decode (bhk blocks)
 
 * [ ] Parse embedded Havok collision from SSE NIFs: `bhkCollisionObject` ->

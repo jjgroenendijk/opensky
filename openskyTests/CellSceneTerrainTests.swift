@@ -47,6 +47,11 @@ struct CellSceneTerrainTests {
         // the first quadrant's origin vertex lands there.
         let origin = scene.renderScene.terrain[0].modelMatrix * SIMD4<Float>(0, 0, 0, 1)
         #expect(SIMD3(origin.x, origin.y, origin.z) == SIMD3<Float>(24576, -8192, 0))
+        let ground = try #require(scene.terrainHeightField?.sample(
+            at: SIMD2<Float>(24576 + 64, -8192 + 64)
+        ))
+        #expect(ground.height == 0)
+        #expect(ground.normal == SIMD3<Float>(0, 0, 1))
         // Weight stream covers the 17x17 quadrant grid, two float4 per vertex.
         #expect(scene.renderScene.terrain[0].weightsBuffer.length == 17 * 17 * 2 * 16)
     }
@@ -58,6 +63,7 @@ struct CellSceneTerrainTests {
         ))
         #expect(scene.summary.terrainQuadrantCount == 2)
         #expect(scene.renderScene.terrain.count == 2)
+        #expect(scene.terrainHeightField?.sample(at: SIMD2<Float>(27576, -5192)) == nil)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func resolvesATXTLayersInBlendOrder() throws {
@@ -115,6 +121,7 @@ struct CellSceneTerrainTests {
         let bounds = try #require(scene.bounds)
         #expect(bounds.min.z == -27000)
         #expect(bounds.max.z == -27000)
+        #expect(scene.terrainHeightField?.sample(at: SIMD2<Float>(25000, -8000))?.height == -27000)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func noTerrainWhenNoLANDAndNoDNAM() throws {
@@ -122,6 +129,7 @@ struct CellSceneTerrainTests {
         let scene = try build(pluginData: pluginWithLand(land: Data()))
         #expect(scene.summary.terrainQuadrantCount == 0)
         #expect(scene.renderScene.drawCount == 0)
+        #expect(scene.terrainHeightField == nil)
     }
 }
 

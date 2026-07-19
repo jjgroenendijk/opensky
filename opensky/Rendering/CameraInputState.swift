@@ -18,6 +18,7 @@ final class CameraInputState {
     private var pendingLookRight: Float = 0
     private var pendingLookUp: Float = 0
     private var activationRequested = false
+    private var walkToggleRequested = false
 
     func press(_ key: MoveKey) {
         pressed.insert(key)
@@ -48,6 +49,11 @@ final class CameraInputState {
         return activationRequested
     }
 
+    /// Latches one fly/walk toggle until renderer drains the next input frame.
+    func requestWalkToggle() {
+        walkToggleRequested = true
+    }
+
     /// Clears all held state — call on capture loss / focus loss so keys do not
     /// stick after the window stops receiving key-up events.
     func releaseAll() {
@@ -56,6 +62,7 @@ final class CameraInputState {
         pendingLookRight = 0
         pendingLookUp = 0
         activationRequested = false
+        walkToggleRequested = false
     }
 
     /// Snapshots the frame's input and drains accumulated pointer deltas.
@@ -68,10 +75,12 @@ final class CameraInputState {
             lookRight: pendingLookRight,
             lookUp: pendingLookUp,
             boost: boost,
+            toggleWalkMode: walkToggleRequested,
             dt: dt
         )
         pendingLookRight = 0
         pendingLookUp = 0
+        walkToggleRequested = false
         return input
     }
 

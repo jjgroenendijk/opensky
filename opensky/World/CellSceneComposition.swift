@@ -86,6 +86,16 @@ nonisolated struct CellSceneComposition {
             }
     }
 
+    /// Ground query over resident full cells. Cell ownership uses same floor
+    /// division as streaming, including negative coordinates and exact border
+    /// handoff to the north/east neighbor.
+    func sampleTerrain(at position: SIMD2<Float>) -> TerrainGroundSample? {
+        let coordinate = CellGridManager.cellCoordinate(
+            for: SIMD3<Float>(position.x, position.y, 0)
+        )
+        return cells[coordinate]?.terrainHeightField?.sample(at: position)
+    }
+
     /// Union AABB over the resident cells' bounds — camera framing for a
     /// first composed scene. nil when no resident cell drew anything.
     func composedBounds() -> (min: SIMD3<Float>, max: SIMD3<Float>)? {

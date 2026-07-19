@@ -4,6 +4,16 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-19
 
+* M4.1 terrain walk mode complete -- G toggles default fly camera to 24x128-unit player
+  capsule with 112-unit eye, gravity, ground snap, 50-degree slope limit, hardcoded
+  180/360-unit walk/run speeds. Controller consumes fixed 1/120 s steps with 100 ms frame
+  clamp. Each streamed `CellScene` retains LAND/DNAM CPU field; composition query uses same
+  floor ownership as streaming + exact `TerrainMeshBuilder` SW->NE triangle planes (height +
+  face normal), not bilinear interpolation. Synthetic saddle, hidden-quadrant, negative/border
+  cell, controller math + four-cell traversal tests pass. Real Tamriel probe walked `(6,-2)`
+  -> `(9,-2)` at Y -8128 in 342 frames, grounded across three borders with 0.0-unit max
+  plane clearance. Docs: [terrain walk mode](/engine/walk-mode.md). Item 4.1 left
+  [todo](/todo.md).
 * M4/M5 roadmap review fixes -- terrain walking now samples renderer-identical triangles;
   collision decode covers transform wrappers, alternate triangle collections + Havok
   filters with reachable-block coverage accounting. M4 gate becomes production

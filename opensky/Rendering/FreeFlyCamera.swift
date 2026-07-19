@@ -24,6 +24,8 @@ nonisolated struct CameraInput {
     var lookUp: Float = 0
     /// Shift held -> speed boost.
     var boost = false
+    /// One-shot fly/walk mode toggle.
+    var toggleWalkMode = false
     /// Seconds elapsed since the previous update.
     var dt: Float = 0
 }
