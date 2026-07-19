@@ -3,12 +3,12 @@ type: Task List
 title: Roadmap and outstanding work
 description: OpenSky mission roadmap - agent handoff, milestone plan, open questions.
 tags: [meta, roadmap, planning, handoff]
-timestamp: 2026-07-19T00:00:00Z
+timestamp: 2026-07-20T00:00:00Z
 ---
 
 # TODO — roadmap
 
-State as of 2026-07-19. Ordered by mission priority (AGENTS.md): render static world
+State as of 2026-07-20. Ordered by mission priority (AGENTS.md): render static world
 geometry first -> grow toward playable engine.
 
 ## How to continue (agent handoff)
@@ -57,17 +57,6 @@ mandatory, actor-enabled fly bench keeps explicit build/footprint/frame budgets.
 
 Format leads from UESP mod-file-format pages + xEdit definitions + NifTools `nif.xml`;
 byte-level layouts NOT yet verified — confirm by spec + probe at impl, flag deviations.
-
-### 5.3 Skinned NIF decode + GPU bind-pose skinning
-
-* [ ] Decode skinning from SSE NIFs: `NiSkinInstance`/`BSDismemberSkinInstance`,
-      `NiSkinData` (bone bind transforms), `NiSkinPartition` / SSE per-vertex bone
-      weights+indices in `BSTriShape` vertex data (`BSVertexDesc` skinning attributes);
-      `skeleton.nif` NiNode bone tree. Spec: NifTools `nif.xml`. Renderer: bone-matrix
-      buffer + skinned vertex path in `Shaders.metal`, bind pose only.
-* [ ] Acceptance: one vanilla body mesh renders skinned + textured (asset browser +
-      offscreen probe), no distortion vs bounds; synthetic skinned-mesh fixtures; doc
-      `docs/formats/nif.md` extension + renderer doc update.
 
 ### 5.4 Actor assembly
 

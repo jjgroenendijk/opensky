@@ -100,6 +100,8 @@ nonisolated final class MeshLibrary {
     /// Mesh keys resolved since the last drain, so a cell build can record its
     /// mesh working set (for eviction keep-sets). Build-queue confined.
     private var touchedKeys: Set<String> = []
+    private var cachedCharacterSkeleton: NIFSkeleton?
+    private var triedCharacterSkeleton = false
 
     /// Distinct mesh paths successfully parsed + uploaded.
     private(set) var loadedCount = 0
@@ -145,7 +147,11 @@ nonisolated final class MeshLibrary {
         }
         let sourceModel: Model
         do {
-            sourceModel = try NIFFile(data: data).model()
+            let file = try NIFFile(data: data)
+            let usesCharacterSkeleton = pathKey.hasPrefix("meshes\\actors\\character\\")
+                && file.blocks.contains { $0.typeName == "NiSkinData" }
+            let skeleton = usesCharacterSkeleton ? characterSkeleton() : nil
+            sourceModel = try file.model(skeleton: skeleton)
         } catch {
             throw MeshLibraryError.parseFailed(path: pathKey, reason: String(describing: error))
         }
@@ -171,6 +177,21 @@ nonisolated final class MeshLibrary {
         modelBounds[key] = ModelBounds.containing(model: model)
         loadedCount += 1
         return render
+    }
+
+    private func characterSkeleton() -> NIFSkeleton? {
+        if triedCharacterSkeleton {
+            return cachedCharacterSkeleton
+        }
+        triedCharacterSkeleton = true
+        let path = "meshes\\actors\\character\\character assets\\skeleton.nif"
+        guard
+            let data = try? fileSystem.contents(forPath: path),
+            let file = try? NIFFile(data: data),
+            let skeleton = try? NIFSkeleton(file: file)
+        else { return nil }
+        cachedCharacterSkeleton = skeleton
+        return skeleton
     }
 
     /// Uploads an engine-built terrain patch: the quadrant mesh plus its

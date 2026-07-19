@@ -81,6 +81,8 @@ final class Renderer: NSObject {
     let skyPipeline: MTLRenderPipelineState
     let opaquePipeline: MTLRenderPipelineState
     let alphaTestPipeline: MTLRenderPipelineState
+    let skinnedOpaquePipeline: MTLRenderPipelineState
+    let skinnedAlphaTestPipeline: MTLRenderPipelineState
     let terrainPipeline: MTLRenderPipelineState
     let waterPipeline: MTLRenderPipelineState
     let depthState: MTLDepthStencilState
@@ -183,14 +185,14 @@ final class Renderer: NSObject {
         frameIndex = Self.maxFramesInFlight
         endFrameEvent.signaledValue = UInt64(frameIndex - 1)
 
-        view.colorPixelFormat = .bgra8Unorm_srgb
-        view.depthStencilPixelFormat = .depth32Float
-        view.sampleCount = 1
+        Self.configure(view: view)
 
         let pipelines = try Self.makePipelines(device: device, view: view)
         skyPipeline = pipelines.sky
         opaquePipeline = pipelines.opaque
         alphaTestPipeline = pipelines.alphaTest
+        skinnedOpaquePipeline = pipelines.skinnedOpaque
+        skinnedAlphaTestPipeline = pipelines.skinnedAlphaTest
         terrainPipeline = pipelines.terrain
         waterPipeline = pipelines.water
         depthState = try Self.makeDepthState(device: device)
@@ -413,6 +415,12 @@ final class Renderer: NSObject {
 /// limits); this extension keeps the counter-heap timestamp reads next to
 /// the draw loop that consumes them.
 extension Renderer {
+    private static func configure(view: MTKView) {
+        view.colorPixelFormat = .bgra8Unorm_srgb
+        view.depthStencilPixelFormat = .depth32Float
+        view.sampleCount = 1
+    }
+
     /// Reads a slot's timestamp pair straight from the counter heap. Only
     /// valid when the caller proved (shared-event wait) that the frame which
     /// wrote the slot finished.

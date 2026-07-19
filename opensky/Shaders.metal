@@ -131,6 +131,16 @@ typedef struct
     float4 color;
 } StaticVertexOut;
 
+typedef struct
+{
+    float3 position [[attribute(VertexAttributePosition)]];
+    float3 normal [[attribute(VertexAttributeNormal)]];
+    float2 texcoord [[attribute(VertexAttributeTexcoord)]];
+    float4 color [[attribute(VertexAttributeColor)]];
+    float4 boneWeights [[attribute(VertexAttributeBoneWeights)]];
+    ushort4 boneIndices [[attribute(VertexAttributeBoneIndices)]];
+} SkinnedVertexIn;
+
 // Instanced (todo 3.2): matrices come from the per-instance transform
 // array, bound at the draw group's base offset — instance_id starts at 0
 // per draw call, so it indexes straight into the group's visible instances.
@@ -148,6 +158,36 @@ vertex StaticVertexOut staticMeshVertex(
     float4 world = instance.modelMatrix * float4(in.position, 1.0);
     out.position = frame.viewProjectionMatrix * world;
     out.normal = (instance.normalMatrix * float4(in.normal, 0.0)).xyz;
+    out.worldPosition = world.xyz;
+    out.texcoord = in.texcoord * draw.uvScale + draw.uvOffset;
+    out.color = in.color;
+    return out;
+}
+
+// Bind-pose hardware skinning. Bone matrices use Gamebryo's documented
+// rootParentToSkin * currentBoneToRootParent * skinToBoneBind composition;
+// animation will replace this immutable per-mesh buffer in milestone 6.
+vertex StaticVertexOut skinnedMeshVertex(
+    SkinnedVertexIn in [[stage_in]],
+    uint instanceID [[instance_id]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
+    constant DrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]],
+    const device InstanceTransform *instances [[buffer(BufferIndexInstanceTransforms)]],
+    const device matrix_float4x4 *bones [[buffer(BufferIndexBoneMatrices)]])
+{
+    float4 skinPosition = 0.0;
+    float3 skinNormal = 0.0;
+    for (uint influence = 0; influence < 4; ++influence) {
+        float weight = in.boneWeights[influence];
+        matrix_float4x4 bone = bones[in.boneIndices[influence]];
+        skinPosition += weight * (bone * float4(in.position, 1.0));
+        skinNormal += weight * (bone * float4(in.normal, 0.0)).xyz;
+    }
+    const device InstanceTransform &instance = instances[instanceID];
+    float4 world = instance.modelMatrix * skinPosition;
+    StaticVertexOut out;
+    out.position = frame.viewProjectionMatrix * world;
+    out.normal = (instance.normalMatrix * float4(skinNormal, 0.0)).xyz;
     out.worldPosition = world.xyz;
     out.texcoord = in.texcoord * draw.uvScale + draw.uvOffset;
     out.color = in.color;

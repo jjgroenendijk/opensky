@@ -133,10 +133,13 @@ struct MeshLibraryTests {
 
     @Test(.enabled(if: Self.hasDevice)) func reportsSkippedShapeCount() throws {
         let device = try #require(Self.device)
-        // One skinned shape (dropped) + one static shape (kept).
+        // One empty shape (dropped) + one drawable shape (kept).
         try writeLooseFile("meshes/mixed.nif", NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(children: [1, 2])),
-            .init("BSTriShape", shape(skinRef: 3)),
+            .init("BSTriShape", NIFFixture.bsTriShape(
+                attributes: Self.staticAttributes,
+                strideDwords: Self.staticStrideDwords
+            )),
             .init("BSTriShape", shape())
         ]))
         let library = library(device: device)

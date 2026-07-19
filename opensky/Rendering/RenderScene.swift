@@ -265,7 +265,16 @@ nonisolated struct RenderScene {
             })
         }
         for group in opaque + alphaTested {
-            add([group.mesh.vertexBuffer, group.mesh.indexBuffer, group.material.diffuse])
+            var resources: [MTLAllocation] = [
+                group.mesh.vertexBuffer, group.mesh.indexBuffer, group.material.diffuse
+            ]
+            if let skinning = group.mesh.skinningBuffer {
+                resources.append(skinning)
+            }
+            if let matrices = group.mesh.boneMatrixBuffer {
+                resources.append(matrices)
+            }
+            add(resources)
         }
         for item in terrain {
             add([

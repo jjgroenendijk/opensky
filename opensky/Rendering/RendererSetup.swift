@@ -14,6 +14,8 @@ nonisolated struct RenderPipelines {
     let sky: MTLRenderPipelineState
     let opaque: MTLRenderPipelineState
     let alphaTest: MTLRenderPipelineState
+    let skinnedOpaque: MTLRenderPipelineState
+    let skinnedAlphaTest: MTLRenderPipelineState
     let terrain: MTLRenderPipelineState
     let water: MTLRenderPipelineState
 }
@@ -33,7 +35,7 @@ extension Renderer {
     /// Textures: base diffuse + the terrain layer array.
     static func makeArgumentTable(device: MTLDevice) throws -> MTL4ArgumentTable {
         let descriptor = MTL4ArgumentTableDescriptor()
-        descriptor.maxBufferBindCount = 6
+        descriptor.maxBufferBindCount = 8
         descriptor.maxTextureBindCount = 1 + TerrainConstant.maxLayers.rawValue
         descriptor.maxSamplerStateBindCount = 1
         return try device.makeArgumentTable(descriptor: descriptor)
@@ -59,10 +61,10 @@ extension Renderer {
         }
         let compiler = try device.makeCompiler(descriptor: MTL4CompilerDescriptor())
 
-        func makeVariant(alphaTest: Bool) throws -> MTLRenderPipelineState {
+        func makeVariant(alphaTest: Bool, skinned: Bool = false) throws -> MTLRenderPipelineState {
             let vertexFunction = MTL4LibraryFunctionDescriptor()
             vertexFunction.library = library
-            vertexFunction.name = "staticMeshVertex"
+            vertexFunction.name = skinned ? "skinnedMeshVertex" : "staticMeshVertex"
 
             let fragmentFunction = MTL4LibraryFunctionDescriptor()
             fragmentFunction.library = library
@@ -79,11 +81,13 @@ extension Renderer {
             specialized.constantValues = constants
 
             let descriptor = MTL4RenderPipelineDescriptor()
-            descriptor.label = alphaTest ? "StaticMeshAlphaTest" : "StaticMeshOpaque"
+            descriptor.label = (skinned ? "SkinnedMesh" : "StaticMesh")
+                + (alphaTest ? "AlphaTest" : "Opaque")
             descriptor.rasterSampleCount = view.sampleCount
             descriptor.vertexFunctionDescriptor = vertexFunction
             descriptor.fragmentFunctionDescriptor = specialized
-            descriptor.vertexDescriptor = StaticVertexLayout.vertexDescriptor()
+            descriptor.vertexDescriptor = skinned
+                ? SkinVertexLayout.vertexDescriptor() : StaticVertexLayout.vertexDescriptor()
             descriptor.colorAttachments[0].pixelFormat = view.colorPixelFormat
             return try compiler.makeRenderPipelineState(descriptor: descriptor)
         }
@@ -113,6 +117,8 @@ extension Renderer {
             sky: makeSkyPipeline(library: library, compiler: compiler, view: view),
             opaque: makeVariant(alphaTest: false),
             alphaTest: makeVariant(alphaTest: true),
+            skinnedOpaque: makeVariant(alphaTest: false, skinned: true),
+            skinnedAlphaTest: makeVariant(alphaTest: true, skinned: true),
             terrain: makeTerrain(),
             water: makeWaterPipeline(library: library, compiler: compiler, view: view)
         )

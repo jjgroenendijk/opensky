@@ -26,8 +26,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   height field, VNML/VCLR, BTXT/ATXT/VTXT splat layers, texture sets.
 * [Distant LOD](/formats/lod.md) - lodsettings plus BTR/BTO paths and LOD-specific NIF
   blocks, placement rules, full vanilla sweep evidence.
-* [NIF mesh](/formats/nif.md) - Gamebryo 20.2.0.7 container: header, block
-  table, block walk.
+* [NIF mesh](/formats/nif.md) - Gamebryo 20.2.0.7 container, scene graph,
+  geometry/materials, SSE skin blocks + skeleton bind pose.
 * [NIF Havok collision](/formats/nif-collision.md) - bhk root/body/shape graphs,
   compressed mesh reconstruction, unit/filter policy, Whiterun sweep evidence.
 * [DDS texture container](/formats/dds.md) - DDS_HEADER/DXT10 layout, BCn + 32-bit RGB,
@@ -59,8 +59,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 ## Rendering
 
-* [Metal 4 static-mesh renderer](/rendering/metal4-renderer.md) - static-mesh render
-  path: pipeline variants, uniform rings, argument tables, counter-heap frame
+* [Metal 4 mesh renderer](/rendering/metal4-renderer.md) - static + bind-pose skinned
+  paths: pipeline variants, uniform rings, argument tables, counter-heap frame
   stats, offscreen render, scene types.
 
 ## Decisions

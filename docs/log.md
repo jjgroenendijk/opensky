@@ -2,6 +2,18 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-07-20
+
+* M5.3 skinned NIF + GPU bind pose complete -- SSE `NiSkinInstance`/
+  `BSDismemberSkinInstance`, `NiSkinData`, `NiSkinPartition`, partition-owned vertex/
+  triangle streams, four half-weight/uint8 palette influences, dismember metadata.
+  `skeleton.nif` NiNode tree resolves body dummy refs by name; mesh inverse binds remain
+  authoritative for undistorted bind-only palettes. Renderer adds skin stream + bone
+  matrix buffers, opaque/alpha skinned Metal 4 variants, residency. Synthetic parser,
+  palette, skeleton, buffer/error tests pass. Vanilla `malebody_1.nif`: 2 textured meshes,
+  1,802 vertices, 2,948 triangles; Asset Browser offscreen image lit, CPU bind bounds
+  match source within 0.01 units. Item 5.3 left [todo](/todo.md).
+
 ## 2026-07-19
 
 * M5.2 visual appearance resolution complete -- RACE (`Race`: per-gender ANAM

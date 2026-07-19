@@ -106,8 +106,8 @@ struct NIFTriShapeTests {
         #expect(shape.normals.isEmpty)
     }
 
-    @Test func skipsSkinningDataAndReadsColors() throws {
-        // vertex|uvs|colors|skinned: the 12 skinning bytes must be skipped
+    @Test func decodesSkinningDataAndReadsColors() throws {
+        // vertex|uvs|colors|skinned: decode four half weights + byte indices
         // without shifting the following vertex's fields.
         var record = Data()
         record.appendFloat32(7)
@@ -117,7 +117,11 @@ struct NIFTriShapeTests {
         record.appendUInt16(0) // uv
         record.appendUInt16(0)
         record.append(contentsOf: [255, 0, 255, 51]) // RGBA color
-        record.append(Data(count: 12)) // bone weights + indices
+        record.appendFloat16(0.5)
+        record.appendFloat16(0.25)
+        record.appendFloat16(0.25)
+        record.appendFloat16(0)
+        record.append(contentsOf: [3, 2, 1, 0])
         let payload = NIFFixture.bsTriShape(
             attributes: 0x63, // vertex|uvs|colors|skinned
             strideDwords: 9, // 16 + 4 + 4 + 12 bytes
@@ -127,6 +131,8 @@ struct NIFTriShapeTests {
         #expect(shape.positions == [SIMD3(7, 8, 9), SIMD3(7, 8, 9)])
         #expect(shape.colors.count == 2)
         #expect(shape.colors[0] == SIMD4(1, 0, 1, Float(51) / 255))
+        #expect(shape.boneWeights[0] == SIMD4(0.5, 0.25, 0.25, 0))
+        #expect(shape.boneIndices[0] == SIMD4(3, 2, 1, 0))
     }
 
     @Test func strideMismatchIsMalformed() throws {

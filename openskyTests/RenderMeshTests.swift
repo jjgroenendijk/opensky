@@ -71,6 +71,22 @@ struct RenderMeshTests {
         #expect(layout.stride == StaticVertexLayout.stride)
     }
 
+    @Test func skinVertexDescriptorMatchesLayoutConstants() throws {
+        let descriptor = SkinVertexLayout.vertexDescriptor()
+        let weights = try #require(descriptor.attributes[VertexAttribute.boneWeights.rawValue])
+        let indices = try #require(descriptor.attributes[VertexAttribute.boneIndices.rawValue])
+
+        #expect(SkinVertexLayout.weightsOffset == 0)
+        #expect(SkinVertexLayout.boneIndicesOffset == 16)
+        #expect(SkinVertexLayout.stride == 32)
+        #expect(weights.format == .float4)
+        #expect(weights.offset == SkinVertexLayout.weightsOffset)
+        #expect(indices.format == .ushort4)
+        #expect(indices.offset == SkinVertexLayout.boneIndicesOffset)
+        let layout = try #require(descriptor.layouts[BufferIndex.skinningAttributes.rawValue])
+        #expect(layout.stride == SkinVertexLayout.stride)
+    }
+
     @Test func interleavesAllAttributes() {
         let floats = StaticVertexLayout.interleave(Self.fullMesh())
         #expect(floats == [
@@ -114,6 +130,62 @@ struct RenderMeshTests {
         let device = try #require(Self.device)
         #expect(throws: RenderMeshError.indexOutOfRange(index: 7, vertexCount: 2)) {
             try RenderMesh(device: device, mesh: Self.bareMesh(indices: [0, 7, 1]))
+        }
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func uploadsSkinningBuffers() throws {
+        let device = try #require(Self.device)
+        let skinning = MeshSkinning(
+            weights: [SIMD4(1, 0, 0, 0), SIMD4(0.25, 0.75, 0, 0)],
+            boneIndices: [SIMD4(0, 0, 0, 0), SIMD4(0, 1, 0, 0)],
+            bindPoseMatrices: [matrix_identity_float4x4, MatrixMath.translation(SIMD3(2, 3, 4))]
+        )
+        let source = Self.bareMesh()
+        let mesh = Mesh(
+            name: source.name,
+            transform: source.transform,
+            positions: source.positions,
+            normals: source.normals,
+            tangents: source.tangents,
+            bitangents: source.bitangents,
+            uvs: source.uvs,
+            colors: source.colors,
+            indices: source.indices,
+            materialSlot: source.materialSlot,
+            skinning: skinning
+        )
+        let render = try RenderMesh(device: device, mesh: mesh)
+        let attributes = try #require(render.skinningBuffer)
+        let matrices = try #require(render.boneMatrixBuffer)
+
+        #expect(render.isSkinned)
+        #expect(attributes.length == mesh.positions.count * SkinVertexLayout.stride)
+        #expect(matrices.length == 2 * MemoryLayout<float4x4>.stride)
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func rejectsOutOfRangeBoneIndex() throws {
+        let device = try #require(Self.device)
+        let source = Self.bareMesh()
+        let mesh = Mesh(
+            name: source.name,
+            transform: source.transform,
+            positions: source.positions,
+            normals: source.normals,
+            tangents: source.tangents,
+            bitangents: source.bitangents,
+            uvs: source.uvs,
+            colors: source.colors,
+            indices: source.indices,
+            materialSlot: source.materialSlot,
+            skinning: MeshSkinning(
+                weights: Array(repeating: SIMD4(1, 0, 0, 0), count: 2),
+                boneIndices: [SIMD4(0, 0, 0, 0), SIMD4(1, 0, 0, 0)],
+                bindPoseMatrices: [matrix_identity_float4x4]
+            )
+        )
+
+        #expect(throws: RenderMeshError.boneIndexOutOfRange(index: 1, boneCount: 1)) {
+            try RenderMesh(device: device, mesh: mesh)
         }
     }
 

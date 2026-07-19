@@ -26,6 +26,10 @@ typedef NS_ENUM(EnumBackingType, BufferIndex)
     BufferIndexInstanceTransforms = 4,
     /// Per-draw array of LightingConstantMaxPointLights nearest lights.
     BufferIndexPointLights = 5,
+    /// Skinned-mesh second vertex stream: float4 weights + ushort4 indices.
+    BufferIndexSkinningAttributes = 6,
+    /// Skinned-mesh bind-pose bone matrix array.
+    BufferIndexBoneMatrices = 7,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)
@@ -37,6 +41,8 @@ typedef NS_ENUM(EnumBackingType, VertexAttribute)
     /// Splat weights for ATXT layers 0-3 / 4-7 (terrain pipeline only).
     VertexAttributeLayerWeights0 = 4,
     VertexAttributeLayerWeights1 = 5,
+    VertexAttributeBoneWeights = 6,
+    VertexAttributeBoneIndices = 7,
 };
 
 typedef NS_ENUM(EnumBackingType, TextureIndex)

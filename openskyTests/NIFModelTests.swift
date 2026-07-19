@@ -165,15 +165,15 @@ struct NIFModelTests {
         }
     }
 
-    @Test func skipsSkinnedShapesAndCountsThem() throws {
+    @Test func rejectsSkinnedShapeWithMissingInstance() throws {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(children: [1, 2])),
             .init("BSTriShape", shape(skinRef: 3)),
             .init("BSTriShape", shape())
         ]))
-        let model = try file.model()
-        #expect(model.meshes.count == 1)
-        #expect(model.skippedShapeCount == 1)
+        #expect(throws: NIFError.malformed("block ref 3 out of range (3 blocks)")) {
+            try file.model()
+        }
     }
 
     @Test func ignoresNonDrawableLeavesAndSelectorNodes() throws {
