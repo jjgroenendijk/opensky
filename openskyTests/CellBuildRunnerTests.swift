@@ -18,10 +18,16 @@ nonisolated private final class FakeProvider: CellSceneProvider {
     private var evictions: [(mesh: Set<String>, texture: Set<String>)] = []
     private let gate: DispatchSemaphore?
     private let started: DispatchSemaphore?
+    private let collision: StaticCollisionSet
 
-    init(gate: DispatchSemaphore? = nil, started: DispatchSemaphore? = nil) {
+    init(
+        gate: DispatchSemaphore? = nil,
+        started: DispatchSemaphore? = nil,
+        collision: StaticCollisionSet = .empty
+    ) {
         self.gate = gate
         self.started = started
+        self.collision = collision
     }
 
     func buildCell(at coordinate: CellCoordinate) throws -> CellScene {
@@ -39,7 +45,8 @@ nonisolated private final class FakeProvider: CellSceneProvider {
                 modelFailureSkipCount: 0, malformedRefSkipCount: 0,
                 modelCount: 0, textureCount: 0, missingTextureCount: 0
             ),
-            bounds: nil
+            bounds: nil,
+            staticCollision: collision
         )
     }
 
@@ -157,5 +164,44 @@ struct CellBuildRunnerTests {
         runner.enqueueEviction(droppingMeshKeys: [], droppingTextureKeys: [])
         Thread.sleep(forTimeInterval: 0.05)
         #expect(provider.evictionCount == 0)
+    }
+
+    @Test
+    func collisionBuildMetricsAndEvictionUseFakeProviderQueue() {
+        let shape = StaticCollisionShape(
+            reference: FormID(1),
+            transform: matrix_identity_float4x4,
+            geometry: .triangleSoup(
+                vertices: [SIMD3(0, 0, 0), SIMD3(1, 0, 0), SIMD3(0, 1, 0)],
+                indices: [0, 1, 2]
+            ),
+            bounds: ModelBounds(min: SIMD3(0, 0, 0), max: SIMD3(1, 1, 0))
+        )
+        var stats = StaticCollisionStats()
+        stats.shapeCount = 1
+        stats.triangleCount = 1
+        let collision = StaticCollisionSet(
+            location: .exterior(coordinate(6, -2)),
+            shapes: [shape],
+            stats: stats,
+            buildDurationMS: 4.25
+        )
+        let provider = FakeProvider(collision: collision)
+        let runner = SerialCellBuildRunner(provider: provider)
+        let cell = coordinate(6, -2)
+
+        runner.enqueue(cell)
+        #expect(waitUntil { !runner.drainCompleted().isEmpty })
+        let metric = runner.buildMetricsSnapshot()[cell]
+        #expect(metric?.collisionDurationMS == 4.25)
+        #expect(metric?.collisionShapeCount == 1)
+        #expect(metric?.collisionTriangleCount == 1)
+
+        runner.enqueueEviction(
+            droppingMeshKeys: ["meshes\\arch\\solid.nif"],
+            droppingTextureKeys: []
+        )
+        #expect(waitUntil { provider.evictionCount == 1 })
+        #expect(provider.lastEviction?.mesh == ["meshes\\arch\\solid.nif"])
     }
 }

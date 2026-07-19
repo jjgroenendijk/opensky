@@ -67,11 +67,11 @@ door camera reseed resets controller pose/grounded state with camera.
 
 ## Scope boundary
 
-4.1 ground is exterior terrain only. Static meshes have no collision yet: walls, buildings,
-stairs, ceilings, interior floors remain pass-through. NIF bhk decode, per-cell collision
-world, capsule collide-and-slide, step response, interior ground land in 4.2-4.4. Capsule
-dimensions are already explicit so those stages extend one controller instead of replacing
-camera semantics.
+4.1 controller still responds to exterior terrain only. M4.2-4.3 now decode + stream
+[static collision world](/engine/collision-world.md) for walls, buildings, stairs, ceilings,
+interior floors, but movement narrowphase is not connected: those meshes remain pass-through
+until 4.4 capsule collide-and-slide + step response. Capsule dimensions stay explicit so 4.4
+extends one controller instead of replacing camera semantics.
 
 ## Verification
 

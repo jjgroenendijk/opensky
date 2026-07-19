@@ -41,6 +41,9 @@ nonisolated struct CellScene {
     /// CPU collision surface for exterior LAND/DNAM terrain. nil for
     /// interiors or cells with no drawable terrain.
     let terrainHeightField: TerrainHeightField?
+    /// Immutable mesh collision + per-cell broadphase. Empty for cells built
+    /// without a collision VFS (legacy synthetic tests).
+    let staticCollision: StaticCollisionSet
     /// Mesh + texture cache keys this cell uses, for unload eviction.
     var assets = CellAssets()
 
@@ -51,6 +54,7 @@ nonisolated struct CellScene {
         location: CellSceneLocation? = nil,
         doors: [PlacedDoor] = [],
         terrainHeightField: TerrainHeightField? = nil,
+        staticCollision: StaticCollisionSet = .empty,
         assets: CellAssets = CellAssets()
     ) {
         self.renderScene = renderScene
@@ -59,6 +63,7 @@ nonisolated struct CellScene {
         self.location = location
         self.doors = doors
         self.terrainHeightField = terrainHeightField
+        self.staticCollision = staticCollision
         self.assets = assets
     }
 }

@@ -211,7 +211,9 @@ cell that drew nothing (no bounds) does not reseed -- the next drawable cell doe
 
 Each `CellScene` carries `CellAssets`: normalized mesh-cache + texture-cache keys touched
 while it built. `MeshLibrary` records a model's texture-key closure, so a cached mesh hit
-still marks every texture new cell owns. Composition unions resident keys.
+still marks every texture new cell owns. M4.3 collision cache shares mesh keys; collision-only
+models enter same set. Composition unions resident keys. See
+[static collision world](/engine/collision-world.md).
 
 Unload removes cell scene, then computes `departed keys - resident union`; only that drop
 set goes to provider eviction on serial build queue. Shared neighbor assets survive. With
@@ -288,6 +290,11 @@ Observed 2026-07-18 against read-only USB Skyrim data:
   433 -> 425 -> 419 MB, 462 MB peak; 35 expected unique builds, each once; 9 initial
   residents unloaded; final 25 resident/0 void. 4037 frames: main-thread update + sync
   render avg 2.79 ms, p95 5.33 ms, max 53.48 ms vs 33.33 ms avg/p95 budget.
+
+M4.3 collision-enabled fly path, 2026-07-19: 35 builds processed 2,393 shapes/230,034
+triangles; collision phase avg 102.11 ms, p95 450.37 ms, max 497.01 ms vs 500 ms p95
+budget. Waypoint footprint 471 -> 524 -> 442 MB, 580 MB peak / 1,024 MB cap. 4,730 render
+frames avg 3.13 ms, p95 5.79 ms, max 20.24 ms.
 
 These are debug-build verification numbers, not general hardware promise. Hard gates: 1
 GiB fly benchmark, 3.5 GiB in-process real test, 4 GiB external watchdog, final settled

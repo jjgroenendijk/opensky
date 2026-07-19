@@ -4,6 +4,16 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-19
 
+* M4.3 static collision world complete -- each exterior/interior `CellScene` builds placed
+  player-solid bhk geometry on serial stream queue, composing REFR x body x shape transforms.
+  Per-cell immutable AABB BVH supplies seam-safe resident broadphase; decoded model cache uses
+  render mesh keys + same unload keep-set, so scene/index/cache evict together. Collision-only
+  NIFs remain physical; no-bhk models add none. CLI 5x5 probe: 1,795 shapes, 161,427 triangles,
+  137 filtered bodies, zero gaps. Production 35-cell fly path: collision avg 112.78 ms,
+  p95 464.63 ms under 500 ms gate; footprint peak 593/1,024 MB; frame p95 5.77 ms.
+  Synthetic placement/interior/BVH/fake-provider lifecycle tests pass. Docs:
+  [collision world](/engine/collision-world.md), [CLI](/tools/cli.md). Item 4.3 left
+  [todo](/todo.md).
 * M4.2 NIF collision decode complete -- `NIFFile.collisionModel()` follows bhk collision
   roots through rigid-body metadata, MOPP/list/transform wrappers, compressed/chunked meshes,
   packed/NiTriStrips collections, convex vertices, box/sphere/capsule primitives. Output

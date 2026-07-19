@@ -56,17 +56,6 @@ actors, scripting stay out of scope. One branch/PR per numbered item; format ite
 Format leads below from NifTools `nif.xml` + UESP; byte-level layouts NOT yet verified —
 confirm against `nif.xml` definitions + real-install probe before impl, flag deviations.
 
-### 4.3 Collision world + streaming integration
-
-* [ ] Per-cell static collision set built alongside `CellScene` on the serial build
-      queue (ref transform x shape, models without bhk data get none — matches vanilla).
-      Spatial index per cell; evicted with cell unload; interiors included (interior
-      floors are meshes, not terrain).
-* [ ] Acceptance: collision stats surfaced via `openskycli` (shapes/tris per cell for
-      target grid); streaming fly-path bench records collision build latency + physical
-      footprint as well as render time, with explicit budgets; unit tests on build/evict
-      lifecycle with fake providers.
-
 ### 4.4 Capsule vs world response
 
 * [ ] Collide-and-slide capsule vs terrain + mesh collision: walls block, ramps/stairs

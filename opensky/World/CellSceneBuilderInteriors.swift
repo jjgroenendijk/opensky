@@ -89,12 +89,15 @@ extension CellSceneBuilder {
     nonisolated func buildInteriorScene(cellFormID: FormID) throws -> CellScene {
         _ = meshes.drainTouchedKeys()
         _ = textures.drainTouchedKeys()
+        _ = collisionModels?.drainTouchedKeys()
         let localized = (try? file.pluginHeader().isLocalized) ?? false
         guard let found = findInteriorCell(formID: cellFormID, localized: localized) else {
             throw CellSceneError.interiorCellNotFound(formID: cellFormID)
         }
         var counts = BuildCounts()
         let refs = collectReferences(in: found.children, counts: &counts)
+        let location = CellSceneLocation.interior(cellFormID)
+        let staticCollision = buildStaticCollision(refs: refs, location: location)
         let instances = resolveInstances(refs: refs, counts: &counts)
         let lighting = buildInteriorLighting(cell: found.cell, references: refs)
         var scene = makeScene(
@@ -104,18 +107,20 @@ extension CellSceneBuilder {
             // Interiors have no LAND or procedural sky. Interior water needs
             // room bounds rather than exterior's fixed cell plane -> deferred.
             geometry: CellGeometryBuild(
-                location: .interior(cellFormID),
+                location: location,
                 doors: resolveDoors(refs: refs),
                 terrain: nil,
                 water: nil,
                 sky: nil,
                 lighting: lighting?.lighting,
-                pointLights: lighting?.pointLights ?? []
+                pointLights: lighting?.pointLights ?? [],
+                staticCollision: staticCollision
             ),
             counts: counts
         )
         scene.assets = CellAssets(
-            meshKeys: meshes.drainTouchedKeys(),
+            meshKeys: meshes.drainTouchedKeys()
+                .union(collisionModels?.drainTouchedKeys() ?? []),
             textureKeys: textures.drainTouchedKeys()
         )
         return scene

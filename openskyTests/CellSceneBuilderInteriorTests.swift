@@ -7,7 +7,7 @@ import Testing
 
 extension CellSceneBuilderTests {
     @Test(.enabled(if: Self.hasDevice)) func buildsInteriorDespiteWrongGroupLabels() throws {
-        try writeLooseFile("meshes/arch/door.nif", unitNIF())
+        try writeLooseFile("meshes/arch/door.nif", collisionRenderNIF())
         let interiorID: UInt32 = 0x0001_38CA // decimal 80,074 -> block 4 / sub-block 7
         let insideDoor = refrRecord(
             formID: 0x300,
@@ -36,6 +36,8 @@ extension CellSceneBuilderTests {
         #expect(scene.renderScene.terrain.isEmpty)
         #expect(scene.renderScene.sky == nil)
         #expect(scene.doors.map(\.reference) == [FormID(0x300)])
+        #expect(scene.staticCollision.location == .interior(FormID(interiorID)))
+        #expect(scene.staticCollision.stats.shapeCount == 1)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func resolvesDoorPairIntoOwningCells() throws {

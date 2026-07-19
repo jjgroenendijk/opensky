@@ -39,7 +39,7 @@ nonisolated struct BuildCounts {
 /// One base record resolved to its drawable model path, regardless of
 /// whether it came from the STAT or ModelBase (MSTT/TREE/FURN/ACTI/CONT/DOOR)
 /// index — resolveInstances treats both the same past this point.
-nonisolated private struct ResolvedBase {
+nonisolated struct ResolvedBase {
     let formID: FormID
     let recordType: FourCC
     /// Nil = marker base (no MODL), nothing to draw.
@@ -89,6 +89,7 @@ nonisolated final class CellSceneBuilder {
     let file: ESMFile
     let meshes: MeshLibrary
     let textures: TextureLibrary
+    let collisionModels: NIFCollisionLibrary?
     private let distantLODBuilder: DistantLODBuilder?
     /// FormID -> STAT over the STAT top group, built on first use.
     private var statIndex: [UInt32: StaticObject]?
@@ -115,6 +116,7 @@ nonisolated final class CellSceneBuilder {
         self.file = file
         self.meshes = meshes
         self.textures = textures
+        collisionModels = fileSystem.map(NIFCollisionLibrary.init(fileSystem:))
         distantLODBuilder = fileSystem.map {
             DistantLODBuilder(fileSystem: $0, meshes: meshes, textures: textures)
         }
@@ -144,6 +146,7 @@ nonisolated final class CellSceneBuilder {
         // unload eviction — docs/engine/cell-streaming.md).
         _ = meshes.drainTouchedKeys()
         _ = textures.drainTouchedKeys()
+        _ = collisionModels?.drainTouchedKeys()
         let localized = (try? file.pluginHeader().isLocalized) ?? false
         let world = try worldChildrenGroup(editorID: worldspaceEditorID, localized: localized)
         guard
@@ -167,6 +170,8 @@ nonisolated final class CellSceneBuilder {
             localized: localized
         )
         counts.totalRefs = refs.count + counts.malformedRefs
+        let location = CellSceneLocation.exterior(coordinate)
+        let staticCollision = buildStaticCollision(refs: refs, location: location)
         let instances = resolveInstances(refs: refs, counts: &counts)
         let doors = resolveDoors(refs: refs)
         let terrain = buildTerrain(found: found, worldspace: world.worldspace)
@@ -178,20 +183,22 @@ nonisolated final class CellSceneBuilder {
             grid: (x: gridX, y: gridY),
             instances: instances,
             geometry: CellGeometryBuild(
-                location: .exterior(coordinate),
+                location: location,
                 doors: doors,
                 terrain: terrain,
                 water: water,
                 sky: sky,
                 lighting: nil,
-                pointLights: []
+                pointLights: [],
+                staticCollision: staticCollision
             ),
             counts: counts
         )
         // Record the mesh + texture keys this cell touched so streaming unload
         // can keep the union over resident cells and evict the rest.
         scene.assets = CellAssets(
-            meshKeys: meshes.drainTouchedKeys(),
+            meshKeys: meshes.drainTouchedKeys()
+                .union(collisionModels?.drainTouchedKeys() ?? []),
             textureKeys: textures.drainTouchedKeys()
         )
         return scene
@@ -420,7 +427,7 @@ extension CellSceneBuilder {
     /// record IDs share one FormID space (cross-plugin resolution via
     /// FormIDResolver arrives with load-order support). Malformed STATs are
     /// skipped — refs pointing at them fall into the unsupported-base bucket.
-    nonisolated private func statIndexBuildingIfNeeded() -> [UInt32: StaticObject] {
+    nonisolated func statIndexBuildingIfNeeded() -> [UInt32: StaticObject] {
         if let statIndex {
             return statIndex
         }
@@ -444,7 +451,7 @@ extension CellSceneBuilder {
     /// like statIndex. One top group per record type — unlike STAT there is
     /// no single shared group. Malformed records are skipped with a log,
     /// same mod-quirk handling as STAT.
-    nonisolated private func modelBaseIndexBuildingIfNeeded() -> [UInt32: ModelBase] {
+    nonisolated func modelBaseIndexBuildingIfNeeded() -> [UInt32: ModelBase] {
         if let modelBaseIndex {
             return modelBaseIndex
         }
@@ -472,7 +479,7 @@ extension CellSceneBuilder {
 
     /// STAT first (largest, most common base type), falling back to the
     /// ModelBase index; nil when the base FormID resolves to neither.
-    nonisolated private func resolveBase(
+    nonisolated func resolveBase(
         formID: UInt32,
         statIndex: [UInt32: StaticObject],
         modelBaseIndex: [UInt32: ModelBase]

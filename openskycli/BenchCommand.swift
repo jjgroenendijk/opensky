@@ -13,6 +13,7 @@ enum BenchCommand {
     private static let defaultFrames = 360 // 3 full FrameStats windows
     private static let defaultFlyMaxFrames = 36000
     private static let defaultFootprintCapMB = 1024.0
+    private static let defaultCollisionBuildBudgetMS = 500.0
 
     private struct Options {
         let worldspace: String
@@ -23,6 +24,7 @@ enum BenchCommand {
         let flyPath: Bool
         let maxFrames: Int
         let footprintCapMB: Double
+        let collisionBuildBudgetMS: Double
     }
 
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
@@ -128,7 +130,8 @@ enum BenchCommand {
                 start: options.start,
                 size: options.size,
                 maxFrames: options.maxFrames,
-                footprintCapMB: options.footprintCapMB
+                footprintCapMB: options.footprintCapMB,
+                collisionBuildBudgetMS: options.collisionBuildBudgetMS
             )
         )
         reportFlyPath(
@@ -149,7 +152,9 @@ enum BenchCommand {
         }
         print("[ OK ] cross-cell stream settled, unloaded safely, built each cell once")
     }
+}
 
+extension BenchCommand {
     private static func parseOptions(scanner: inout ArgumentScanner) throws -> Options {
         let worldspace = try scanner.option("--worldspace")
             ?? FirstRenderCell.worldspaceEditorID
@@ -165,7 +170,10 @@ enum BenchCommand {
             budgetMS: budgetMS(scanner.option("--budget-ms")),
             flyPath: scanner.flag("--fly-path"),
             maxFrames: maxFrameCount(scanner.option("--max-frames")),
-            footprintCapMB: footprintCapMB(scanner.option("--footprint-cap-mb"))
+            footprintCapMB: footprintCapMB(scanner.option("--footprint-cap-mb")),
+            collisionBuildBudgetMS: collisionBuildBudgetMS(
+                scanner.option("--collision-build-budget-ms")
+            )
         )
         try scanner.finish()
         return options
@@ -196,6 +204,16 @@ enum BenchCommand {
                 + "\(result.finalResidentCellCount) resident, "
                 + "\(result.finalVoidCellCount) void"
         )
+        print(String(
+            format: "[INFO] collision build: avg %.2f ms, p95 %.2f ms, max %.2f ms, "
+                + "budget %.2f ms; %d shapes, %d triangles",
+            result.collisionBuildAverageMS,
+            result.collisionBuildP95MS,
+            result.collisionBuildMaximumMS,
+            result.collisionBuildBudgetMS,
+            result.collisionShapeCount,
+            result.collisionTriangleCount
+        ))
         print(String(
             format: "[INFO] %d stream frames @ %dx%d: avg %.2f ms, p95 %.2f ms, "
                 + "max %.2f ms, budget %.2f ms",
@@ -254,5 +272,15 @@ enum BenchCommand {
             throw CLIError.usage("--footprint-cap-mb expects a positive number, got \(value)")
         }
         return cap
+    }
+
+    private static func collisionBuildBudgetMS(_ value: String?) throws -> Double {
+        guard let value else { return defaultCollisionBuildBudgetMS }
+        guard let budget = Double(value), budget > 0 else {
+            throw CLIError.usage(
+                "--collision-build-budget-ms expects a positive number, got \(value)"
+            )
+        }
+        return budget
     }
 }

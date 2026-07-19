@@ -96,6 +96,18 @@ nonisolated struct CellSceneComposition {
         return cells[coordinate]?.terrainHeightField?.sample(at: position)
     }
 
+    /// Broadphase over resident per-cell BVHs. Cross-cell capsule queries can
+    /// touch both sides of a seam; each cell remains independently evictable.
+    func collisionCandidates(overlapping bounds: ModelBounds) -> [StaticCollisionShape] {
+        cells.values.flatMap { $0.staticCollision.candidates(overlapping: bounds) }
+    }
+
+    func collisionStats() -> StaticCollisionStats {
+        cells.values.reduce(into: StaticCollisionStats()) {
+            $0.add($1.staticCollision.stats)
+        }
+    }
+
     /// Union AABB over the resident cells' bounds — camera framing for a
     /// first composed scene. nil when no resident cell drew anything.
     func composedBounds() -> (min: SIMD3<Float>, max: SIMD3<Float>)? {

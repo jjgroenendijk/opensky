@@ -51,6 +51,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   yaw/pitch pose -> view matrix, movement speeds tuned to Skyrim scale.
 * [Terrain walk mode](/engine/walk-mode.md) - player capsule, gravity, slope limit, exact
   rendered-triangle ground queries across streamed LAND cells.
+* [Static collision world](/engine/collision-world.md) - per-cell placed bhk shapes,
+  immutable BVH broadphase, serial build/cache confinement, streaming lifetime + budgets.
 
 ## Rendering
 
