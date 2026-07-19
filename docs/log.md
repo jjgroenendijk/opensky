@@ -4,6 +4,16 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-19
 
+* M3 complete -- production probe passed exterior streaming + environment acceptance.
+  5x5 scripted east/north flight built 35 unique cells once, unloaded 9, settled at 25
+  resident/0 void with 458 -> 510 -> 470 MB waypoint footprint (559 MB peak); 4,784
+  stream frames averaged 3.11 ms, p95 5.43 ms, max 19.64 ms at 640x360. Sustained
+  1280x720 render averaged 0.77 ms, p95 0.97 ms across 360 frames. Integrated 25-cell
+  frame resolved terrain, 3,396 object instances, water in 8 cells, procedural sky + 122
+  LOD blocks with 0 unavailable. Chillfurrow Farm probe entered interior CELL 00016204
+  through door 0001633D/000163A8, rendered arrival, returned to exterior `(7,-3)`.
+  Screenshot: [M3 world streaming acceptance](/img/m3-world-streaming-acceptance.png).
+  M4 numbering, scope + gate remain intentionally pending.
 * M3.7 lighting complete -- CELL XCLL accepts exact 92-byte + field-boundary truncated
   tails; LTMP resolves LGTM DATA/DALC per XCLL inheritance bits. Skyrim.esm probe confirms
   directional rotation int32 values are degrees (`WhiteRunIntLightingTemplate` XY = 180).
