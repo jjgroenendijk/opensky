@@ -13,7 +13,8 @@ Havok binary packfile — container for skeletons (`skeleton.hkx`), animations
 (`*.hkx` clips), behavior + ragdoll data. This page covers the container only:
 header, section table, fixup tables, class-name inventory. Object internals are
 separate pages: [hkaSkeleton](/formats/hka-skeleton.md) (bones, parents, bind
-pose — done 6.2); spline-compressed animation tracks are later work (todo 6.3+).
+pose — done 6.2); [hkaSplineCompressedAnimation](/formats/hka-animation.md)
+(spline-compressed local-transform tracks — done 6.3).
 
 Parser: `opensky/Formats/HKX/` (`HKXHeader`, `HKXSection`, `HKXFile`). CLI dump:
 `openskycli hkx <key>` ([CLI](/tools/cli.md)). Tests: `HKXFileTests` over

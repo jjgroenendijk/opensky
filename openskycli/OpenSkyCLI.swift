@@ -50,6 +50,8 @@ enum OpenSkyCLI {
                                   chain, roots); --nif name-maps the rig onto
                                   the NIF skeleton nodes, reason-tagging
                                   mismatches both directions
+      animation <hkx-key>         Decode spline-compressed transform tracks;
+                                  sample every frame over full clip duration
       lod [--worldspace <edid>]   Parse settings + sweep all .btr/.bto files
       screenshot --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
              [--size WxH] [--zoom <f>] [--time-of-day <0-24>] [--neighbors]
@@ -111,7 +113,7 @@ enum OpenSkyCLI {
         guard let command = scanner.next() else {
             throw CLIError.usage("no command given")
         }
-        if try runWorldCommand(command, dataRoot: dataRoot, scanner: &scanner) {
+        if try runEngineCommand(command, dataRoot: dataRoot, scanner: &scanner) {
             return
         }
         switch command {
@@ -162,7 +164,7 @@ enum OpenSkyCLI {
         }
     }
 
-    private static func runWorldCommand(
+    private static func runEngineCommand(
         _ command: String,
         dataRoot: String?,
         scanner: inout ArgumentScanner
@@ -190,6 +192,10 @@ enum OpenSkyCLI {
             )
         case "interior":
             try InteriorCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
+        case "animation":
+            try AnimationCommand.run(
                 context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
             )
         default:

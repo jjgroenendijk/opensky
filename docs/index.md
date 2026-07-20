@@ -39,6 +39,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   header, section + fixup tables, class-name inventory, object enumeration.
 * [hkaSkeleton object](/formats/hka-skeleton.md) - bone names, parent indices,
   reference pose decode + name-map onto the NIF skeleton nodes skinning uses.
+* [hkaSplineCompressedAnimation](/formats/hka-animation.md) - idle-clip metadata,
+  spline blocks, 16-bit vector/40-bit quaternion decode + local-transform sampling.
 
 ## Engine
 

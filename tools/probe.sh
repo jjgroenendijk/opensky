@@ -101,6 +101,20 @@ awk '/^--- hkx idle/{f=1;next} /^--- /{f=0} f' "$log" \
   | grep -q 'hkaSplineCompressedAnimation' \
   || fail "hkx idle missing hkaSplineCompressedAnimation class"
 
+# M6.3 idle decode gate: shared hkaSplineCompressedAnimation decoder samples
+# every stored frame over full mt_idle duration. Parser rejects unknown codec
+# variants, malformed blocks, non-finite transforms, and values outside its
+# defensive bound before this summary can print.
+run "animation idle" animation \
+  'meshes\actors\character\animations\male\mt_idle.hkx'
+idle_animation="$(awk '/^--- animation idle/{f=1;next} /^--- /{f=0} f' "$log")"
+printf '%s\n' "$idle_animation" | grep -q '275 frames x 99 tracks, 2 blocks' \
+  || fail "idle animation metadata differs from verified vanilla clip"
+printf '%s\n' "$idle_animation" | grep -q 'bone mapping identity: 99 samples' \
+  || fail "idle animation binding is not verified 99-track identity mapping"
+printf '%s\n' "$idle_animation" | grep -q 'full duration finite + bounded' \
+  || fail "idle animation did not pass full-duration transform gate"
+
 # M6.2 hkaSkeleton gate: decode the human rig skeleton.hkx (bone names, parent
 # chain, roots) + name-map it onto skeleton.nif. The rig must report 99 bones;
 # the map must match 93 of 99 (6 HKX-only control/attach bones, 6 NIF-only
