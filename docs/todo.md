@@ -57,16 +57,12 @@ Goal: streamed actors leave bind pose — race idle animation plays on placed ac
 AI/behavior graphs (no `behaviors/*.hkx` evaluation); direct clip playback only. One
 branch/PR per numbered item; format items follow `format-parser` discipline.
 
-Format caveat: Havok HKX has no official public spec. Leads: community tooling notes
-(hkxcmd, ck-cmd), Bethesda modding wiki hkx pages, NifTools skeleton discussions. All
-byte layouts + version tags below unverified from-memory leads — confirm against real
-headers by probe at impl, flag deviations.
+Format caveat: Havok HKX has no official public spec. Container layout verified by
+probe (6.1, [hkx-container](/formats/hkx-container.md)): hk_2010.2.0-r1, fileVersion 8,
+64-bit LE. Object internals (hkaSkeleton/hkaAnimation members) still unverified —
+leads: hkxparse/HKX2Library open parsers, ZeldaMods Havok wiki; confirm by probe at
+impl, flag deviations.
 
-* [ ] 6.1 HKX container parse: SSE 64-bit Havok packfile — header, version string
-      (expected hk_2010.2.0-r1; verify on real files), section table, class-name
-      table, object data offsets. Gate: `openskycli` dumps section + class inventory
-      for `skeleton.hkx` and one idle `.hkx` from the install; synthetic fixture tests
-      cover header/section/class-table parsing + malformed input.
 * [ ] 6.2 hkaSkeleton decode: bone names, parent indices, reference pose; name-map onto
       the NIF skeleton nodes bind-pose skinning already uses. Gate: real human
       `skeleton.hkx` hierarchy maps onto `skeleton.nif` body bones with mismatches
