@@ -4,6 +4,17 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-20
 
+* M5.4 actor assembly complete -- `ActorAssembler` composes race/gender skeleton,
+  ordered outfit + visible skin ARMAs, dynamic FaceGen head, common ACHR DATA/XSCL
+  transform + world bounds. Missing/invalid skeleton/models retain reason tags; any body/
+  head survivor remains renderable, zero geometry tags `noCoreGeometry`. Mesh cache keys
+  actor models by explicit skeleton. NIF adds spec-cited `BSDynamicTriShape`: appended
+  float4 positions merge with position-free partition UV/normal/color/influence streams;
+  FaceGen uses authored Head/Spine node pose. Synthetic tests cover gender/inherited
+  source, slot masking, partial failure, no-core policy, transform, dynamic attributes +
+  partition-local influences. Real Heimskr probe: boots/robes/hood/hands + 6-mesh head,
+  correct ACHR pose, 800x800 offscreen 10.8% lit; visual check passed. Item 5.4 removed
+  from [todo](/todo.md).
 * M5.3 skinned NIF + GPU bind pose complete -- SSE `NiSkinInstance`/
   `BSDismemberSkinInstance`, `NiSkinData`, `NiSkinPartition`, partition-owned vertex/
   triangle streams, four half-weight/uint8 palette influences, dismember metadata.

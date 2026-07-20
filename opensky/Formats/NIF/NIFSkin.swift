@@ -164,7 +164,7 @@ nonisolated struct NIFSkinPartition {
     let vertices: NIFTriShape.VertexArrays
     let partitions: [Partition]
 
-    init(data: Data, header: NIFHeader) throws {
+    init(data: Data, header: NIFHeader, shapeVertexCount: Int? = nil) throws {
         guard header.bsStream?.version == 100 else {
             throw NIFError.unsupported("NiSkinPartition outside an SSE stream (BS 100)")
         }
@@ -190,6 +190,10 @@ nonisolated struct NIFSkinPartition {
             attributes: attributes,
             count: dataSize / vertexSize
         )
+        let globalVertexCount = shapeVertexCount ?? vertices.positions.count
+        guard globalVertexCount >= vertices.positions.count else {
+            throw NIFError.malformed("skin partition has more vertices than its shape")
+        }
 
         // Every partition has a 24-byte fixed tail after its variable arrays;
         // use that minimum to reject hostile counts before reserving.
@@ -201,7 +205,7 @@ nonisolated struct NIFSkinPartition {
         for _ in 0 ..< partitionCount {
             try partitions.append(Self.readPartition(
                 &reader,
-                vertexCount: vertices.positions.count,
+                vertexCount: globalVertexCount,
                 expectedDesc: desc
             ))
         }

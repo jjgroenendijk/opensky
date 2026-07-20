@@ -189,4 +189,36 @@ struct NIFTriShapeTests {
         let shape = try NIFTriShape(data: payload, header: header())
         #expect(shape.positions.count == 1)
     }
+
+    @Test func dynamicShapeReplacesInheritedPositions() throws {
+        let inherited = NIFFixture.bsTriShape(
+            attributes: 0x3,
+            strideDwords: 5,
+            vertexRecords: [Data(count: 20), Data(count: 20)]
+        )
+        let payload = NIFFixture.bsDynamicTriShape(
+            inherited: inherited,
+            positions: [SIMD3(1, 2, 3), SIMD3(4, 5, 6)]
+        )
+        let shape = try NIFDynamicTriShape(data: payload, header: header()).shape
+
+        #expect(shape.vertexCount == 2)
+        #expect(shape.positions == [SIMD3(1, 2, 3), SIMD3(4, 5, 6)])
+    }
+
+    @Test func dynamicShapeRejectsWrongVertexByteCount() throws {
+        let inherited = NIFFixture.bsTriShape(
+            attributes: 0x3,
+            strideDwords: 5,
+            vertexRecords: [Data(count: 20)]
+        )
+        let payload = NIFFixture.bsDynamicTriShape(
+            inherited: inherited,
+            positions: [SIMD3.zero],
+            byteCountOverride: 12
+        )
+        #expect(throws: NIFError.self) {
+            try NIFDynamicTriShape(data: payload, header: header())
+        }
+    }
 }

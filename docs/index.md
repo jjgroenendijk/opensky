@@ -27,14 +27,14 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Distant LOD](/formats/lod.md) - lodsettings plus BTR/BTO paths and LOD-specific NIF
   blocks, placement rules, full vanilla sweep evidence.
 * [NIF mesh](/formats/nif.md) - Gamebryo 20.2.0.7 container, scene graph,
-  geometry/materials, SSE skin blocks + skeleton bind pose.
+  geometry/materials, SSE skin blocks, dynamic FaceGen + skeleton bind pose.
 * [NIF Havok collision](/formats/nif-collision.md) - bhk root/body/shape graphs,
   compressed mesh reconstruction, unit/filter policy, Whiterun sweep evidence.
 * [DDS texture container](/formats/dds.md) - DDS_HEADER/DXT10 layout, BCn + 32-bit RGB,
   mip chain math, color-space policy.
 * [Actor records](/formats/actors.md) - ACHR/NPC_/LVLN/LVLI/RACE/ARMO/ARMA/OTFT
   layouts, TPLT chain + visual appearance resolution (skin/outfit/slot
-  masking), FaceGen path convention.
+  masking), FaceGen path convention + actor GPU assembly.
 
 ## Engine
 

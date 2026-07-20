@@ -147,7 +147,7 @@ the AV-object prefix (nif.xml BSTriShape, conditions resolved for BS 100):
 | type    | field           | notes                                        |
 | ------- | --------------- | -------------------------------------------- |
 | float x4| bounding sphere | NiBound: center xyz + radius, shape-local    |
-| int32   | skin ref        | -1 = static; >= 0 skinned (skipped in M2)    |
+| int32   | skin ref        | -1 = static; >= 0 links a skin instance      |
 | int32   | shader property | BSLightingShaderProperty ref (2.4)           |
 | int32   | alpha property  | NiAlphaProperty ref (2.4)                    |
 | uint64  | vertex desc     | bitfield below                               |
@@ -189,6 +189,22 @@ reassembled at decode. normbyte remap: `(byte / 255) * 2 - 1`
 `BSSubIndexTriShape` inherits this complete payload then appends SSE segment metadata.
 OpenSky validates + flattens it for object LOD; layout: [LOD](/formats/lod.md).
 
+### BSDynamicTriShape
+
+Skyrim FaceGen uses `BSDynamicTriShape`, which inherits the full `BSTriShape` payload,
+then appends (NifTools `nif.xml` at `292bb94`):
+
+| type                | field             | notes                                   |
+| ------------------- | ----------------- | --------------------------------------- |
+| uint32              | dynamic data size | required = inherited vertex count x 16  |
+| Vector4 x size / 16 | current vertices  | finite float xyzw; xyz becomes position |
+
+Inherited header retains vertex count even when data size is zero. Real FaceGen stores
+current positions in this tail, while `NiSkinPartition` top-level stream retains UVs,
+normals, colors + influences with vertex flag clear. Flatten merges arrays by vertex
+index. Byte count mismatch, truncated/non-finite values, or attribute-count drift rejects
+shape. Impl: `NIFDynamicTriShape.swift` + `NIFModel.swift`.
+
 ## Skin blocks (SSE)
 
 Reference: NifTools
@@ -223,8 +239,9 @@ uint32 vertex stride, uint64 BSVertexDesc, then one top-level interleaved vertex
 Each `SkinPartition` carries counts, global-bone palette, local->global vertex map,
 optional float weights/faces/uint8 palette indices, LOD byte, global-VB byte, repeated
 vertex desc, mandatory global uint16 triangle copy. OpenSky uses top-level weights +
-indices, remaps palette-local indices per partition, draws global triangle copies.
-Checks cover counts, maps, palettes, influence totals, triangle ranges.
+indices when present, otherwise partition-local weights + indices through vertex maps;
+it remaps palette-local indices per partition, draws global triangle copies. Checks cover
+counts, maps, palettes, influence totals, triangle ranges.
 
 Vanilla quirk: later `malebody_1.nif` partitions contain values outside local vertex
 count in redundant primary faces, despite nif.xml describing local faces. Mandatory
@@ -233,16 +250,19 @@ global triangle copies match drawable geometry; primary faces are bounded + skip
 ## Skeleton + bind pose
 
 `NIFNodeHierarchy` recursively decodes NiNode names + local transforms. `NIFSkeleton`
-maps names from `skeleton.nif` to complete world-transform tree. Body NIF dummy-bone refs
+maps names from `skeleton.nif` to complete world-transform tree. Body/FaceGen bone refs
 resolve by name against that tree; missing bones reject skin. Vanilla body dummy nodes
-omit bind translations -> not a complete pose source.
+omit bind translations -> not a complete pose source. FaceGen's own `NPC Head`/`NPC
+Spine2` nodes carry current pose and drive dynamic-shape bind matrices (notably moving
+bone-local mouth geometry to head height).
 
 Gamebryo skin matrix, per
 [public NiSkinInstance help](https://morrowind-nif.github.io/Notes_EN/module_2_3_2_38_4.htm):
 `rootParentToSkin * currentBoneToRootParent * skinToBoneBind`. Bind-only rendering takes
-`currentBoneToRootParent` from this skin's inverse-bind transforms -> identity palette
-within float error. `skeleton.nif` supplies bone identity/tree validation; later animation
-can replace current-bone transforms without changing weights or GPU layout.
+`currentBoneToRootParent` from body inverse-bind transforms -> identity palette within
+float error; dynamic FaceGen takes it from referenced node world transforms. Race
+`skeleton.nif` supplies bone identity/tree validation. Later animation can replace
+current-bone transforms without changing weights or GPU layout.
 
 ## Materials subset
 
@@ -303,8 +323,9 @@ Impl: `NIFAlphaProperty.swift`.
 types (`Geometry/Mesh.swift`) decoupled from disk layout:
 
 + Walk starts at footer roots; `NIFNode.traversedTypes` recurse, composing
-  `parent * local` (T·R·S) down the chain; `BSTriShape`/`BSSubIndexTriShape` leaves become `Mesh`
-  values carrying the accumulated model-space transform.
+  `parent * local` (T·R·S) down the chain; `BSTriShape`/`BSSubIndexTriShape`/
+  `BSDynamicTriShape` leaves become `Mesh` values carrying accumulated model-space
+  transform.
 + Material identity dedups by (shader, alpha) property block ref pair;
   each unique pair resolves once into an engine `Material`
   (`Geometry/Material.swift`): texture set -> normalized VFS keys, UV
@@ -313,9 +334,10 @@ types (`Geometry/Mesh.swift`) decoupled from disk layout:
   `Material.fallback`, untextured but drawn.
 + Skinned shapes resolve instance/data/partition blocks, partition-owned vertices +
   triangles, four normalized influences, bone-name validation against optional
-  `NIFSkeleton`, then emit `MeshSkinning`. Empty shapes are counted in
+  `NIFSkeleton`, then emit `MeshSkinning`. Dynamic shapes merge appended positions with
+  partition attributes + node reference pose. Empty shapes are counted in
   `Model.skippedShapeCount`; all non-drawable leaf types (collision,
-  controllers, `BSDynamicTriShape`) end the subtree silently.
+  controllers) end the subtree silently.
 + Defense: out-of-range ref, ref cycle (recursion-stack set, so legitimate
   subtree reuse under two parents still works), depth > 64 -> `malformed`;
   caller skips the asset.
@@ -377,3 +399,8 @@ Skin probe (2026-07-20): `malebody_1.nif` -> 2 drawable skinned meshes, 1,802 ve
 bones; body 1,385 vertices/2,432 triangles/24 bones across 3 partitions. External
 `skeleton.nif` -> 268 blocks, 98 NiNodes. Asset Browser offscreen render uses vanilla
 diffuses; CPU weighted bind-pose bounds match source min/max within 0.01 units.
+
+FaceGen probe (2026-07-20): Heimskr `00013bac.nif` -> 6/6 dynamic skinned meshes,
+1,591 vertices, 2,647 triangles. Dynamic tails supply positions; position-free partition
+streams supply per-vertex UV/normal/color/influence data. Authored Head/Spine node pose
+places mouth with head. Actor offscreen frame shows complete head inside monk hood.
