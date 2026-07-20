@@ -27,7 +27,8 @@ Fresh session picks up here:
 
 Machine quirks: repo on case-insensitive external APFS volume (case-only rename needs
 `git mv`; AppleDouble `._*` files ignored). Xcode 26 ships without Metal Toolchain
-(bootstrap handles the download). CI gate self-skips below Xcode 26.
+(bootstrap handles the download). CI is suspended (Actions quota) — git hooks are the
+only gate; `ci.yml` is manual-dispatch and self-skips below Xcode 26.
 
 ## Milestones at a glance
 
@@ -85,6 +86,10 @@ Direction only — re-scope after M5. Candidate order:
 
 ## Tooling / meta
 
+* [ ] Re-enable CI when GH Actions quota returns: restore `pull_request` + `push`
+      triggers in `.github/workflows/ci.yml`, re-add "Format & lint" + "Build & test"
+      required status checks on main, drop the suspension notes in AGENTS.md +
+      commit skill. Until then git hooks are the only gate (never `--no-verify`).
 * [ ] Decide `.metal` formatter/linter (clang-format?) — AGENTS.md wants both for every
       language; document exception if none fits.
 * [ ] Commit-msg hook checks subject only; body sections enforced by review.

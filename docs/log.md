@@ -4,6 +4,12 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-20
 
+* CI suspended (GH Actions CPU quota exhausted) -- `ci.yml` reduced to
+  `workflow_dispatch` only; "Format & lint" + "Build & test" required status checks
+  removed from main branch protection (PR-only flow stays). Git hooks are the only
+  gate: pre-commit format/lint, commit-msg, pre-push build+test; `--no-verify`
+  remains forbidden. AGENTS.md + commit skill note the suspension; re-enable task
+  in [todo](/todo.md).
 * M5.5 actor streaming integration complete -- ACHR placed actors build/evict with
   cells on the serial build queue (`CellSceneBuilderActors`): local + worldspace-
   persistent ACHRs (position-owned, door pattern, cached per WRLD), template/visual
