@@ -68,7 +68,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 ## Decisions
 
 * [Native macOS app skeleton](/decisions/native-macos-app.md) - macOS-only target,
-  programmatic AppKit, Metal 4 pipeline, ad-hoc signing, no sandbox.
+  programmatic AppKit, Metal 4 pipeline, stable local signing, no sandbox.
 * [Coordinates + units](/decisions/coordinates.md) - Skyrim Z-up world kept verbatim,
   view/projection convert to Metal; matrix convention, winding, near/far, REFR euler.
 * [First render cell](/decisions/first-render-cell.md) - WhiterunExterior06 at Tamriel
