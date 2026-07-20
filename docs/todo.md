@@ -215,18 +215,9 @@ Scaleform playback not planned. Record as `decisions/ui-approach.md` at M9.1.1.
 * [ ] 9.3.2 Acceptance: HUD + journal render with vanilla glyphs, system-font
       fallback kept; docs updated; next milestone scoped.
 
-## Tooling / meta
+## Tooling / meta / open questions
 
-* [ ] Re-enable CI when GH Actions quota returns: restore `pull_request` + `push`
-      triggers in `.github/workflows/ci.yml`, re-add "Format & lint" + "Build & test"
-      required status checks on main, drop the suspension notes in AGENTS.md +
-      commit skill. Until then git hooks are the only gate (never `--no-verify`).
-* [ ] Decide `.metal` formatter/linter (clang-format?) — AGENTS.md wants both for every
-      language; document exception if none fits.
-* [ ] Commit-msg hook checks subject only; body sections enforced by review.
-
-## Open questions
-
-* String encoding in BSA/ESM: windows-1252 vs UTF-8 (mods vary). Current: cp1252 in BSA.
-  Decide lenient decode strategy engine-wide.
-* Plugin load order source: hardcode vanilla masters first; `plugins.txt` support later?
+Tracked as GitHub issues (`gh issue list`), not here: CI re-enable when Actions quota
+returns (#70), commit-msg body-section enforcement (#71), engine-wide string decode
+strategy (#72), plugins.txt load order (#73). Metal formatter/linter decided 2026-07-20:
+[Metal shader tooling](/decisions/metal-tooling.md).

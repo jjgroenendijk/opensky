@@ -140,10 +140,11 @@ not crash the engine. Full workflow: load the `format-parser` skill.
 Enforce rules automatically: git hooks are THE gate (pre-commit format/lint, commit-msg,
 pre-push build+test — never skip with `--no-verify`). CI is suspended: GH Actions CPU
 quota exhausted 2026-07-20; `.github/workflows/ci.yml` is manual-dispatch only and main
-has no required status checks until quota returns (re-enable task in `docs/todo.md`).
+has no required status checks until quota returns (re-enable task: issue #70).
 If a machine can check a rule, do not rely on people remembering it.
 
 - Every language has a linter AND an auto-formatter (Swift: SwiftFormat + SwiftLint;
+  Metal: clang-format + compiler warnings-as-errors (`MTL_TREAT_WARNINGS_AS_ERRORS`);
   Markdown: markdownlint-cli2; shell: POSIX `sh` + shellcheck). Configs under `tools/`.
 - Linting is strict; warnings are errors. Do not disable or downgrade rules to pass — fix
   the issue. Inline suppression is last resort: specific rule code + why-comment.

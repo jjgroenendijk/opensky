@@ -75,6 +75,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   view/projection convert to Metal; matrix convention, winding, near/far, REFR euler.
 * [First render cell](/decisions/first-render-cell.md) - WhiterunExterior06 at Tamriel
   (6,-2) as the 2.7/2.9 target; probe ranking, MODL `meshes\` prefix rule.
+* [Metal shader tooling](/decisions/metal-tooling.md) - clang-format for .metal,
+  compiler warnings-as-errors as the linter; documented exception to per-language rule.
 
 ## Tools
 
