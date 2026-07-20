@@ -50,6 +50,7 @@ only where `--out` points (AGENTS.md Legal & IP).
 | `interior --out <file> [--worldspace/--x/--y] [--radius n]` | scan exterior doors near target for exterior -> interior -> paired exterior round trip, render exact XTEL arrival pose to PNG; default radius 16 |
 | `nif <key>` | container stats + named node/shape rows + flattened model summary (meshes, verts/tris, bounds, materials with texture paths) |
 | `dds <key>` | header + mip chain (size, BCn format, sRGB declaration) |
+| `hkx <key>` | Havok packfile container: header (version string, fileVersion, pointer size, section count, resolved root class), section table (name, data start/size, local/global/virtual fixup counts), class-name table (signature hex + name), object inventory (total, per-class histogram, first 8 offset/class rows + truncation count); unresolved root class warns on stderr |
 | `lod [--worldspace edid]` | parse lodsettings + sweep every worldspace BTR/BTO through LOD block decoders + scene flattener; any failed container exits 1 |
 | `screenshot --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f] [--time-of-day 0-24] [--neighbors]` | cell scene build + distant LOD -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load/LOD/draw stats + non-background fraction; `--zoom` (0.1-10) moves eye toward framed center; `--time-of-day` controls procedural sky (default 13); `--neighbors` builds production-size 5x5 (shared libraries) and frames full-cell bounds only; missing cell warns + skips; `render` is identical alias |
 | `bench [--worldspace/--x/--y] [--size WxH] [--frames n] [--budget-ms f]` | sustained offscreen render (default 360 frames @ 1280x720) through `Renderer.renderOffscreenSustained` — FrameStats windows + per-frame wall times; prints avg/p95/max + fps, exit 1 when avg or p95 misses the budget (default 33.33 ms = 30 fps, todo 2.11 gate) |
@@ -106,6 +107,11 @@ Implementation notes:
   through the gap around the target cell.
 * `lod` is M3.4 repeatable clean-room probe. It validates all LOD-specific NIF blocks +
   flattens each file without GPU upload. Vanilla Tamriel: 3,060 BTR + 717 BTO, 0 failed.
+* `hkx` is M6.1's container probe. It parses the Havok packfile via shared `HKXFile`
+  (header + section table + class-name table + fixup-derived object inventory) and only
+  prints; object internals stay later milestones (needs class reflection). CLI parses/
+  prints only; a bad magic/layout/section index exits 1. See
+  [HKX container](/formats/hkx-container.md).
 * `bench --fly-path` uses shared `CellStreamingFlyBenchmark` engine logic, not a CLI-only
   model. It drives production serial build runner, streamer, renderer scene swaps, asset
   eviction, and `task_vm_info.phys_footprint` sampler. Waypoints move one cell east, then
@@ -135,7 +141,9 @@ finds meshes; `record 0x3C` decodes Tamriel (UESP "Skyrim Mod:FormIDs"); `cell`
 summary; `actor` requires zero unresolved ACHR template+visual chains in the default
 3x3 block, then `actor --npc Heimskr` must report skeleton, parts + FaceGen path;
 `collision --radius 2` gates placed 5x5 collision; `nif`/`dds` inspect first listed
-assets; `screenshot` writes
+assets; `hkx` dumps the container inventory for `skeleton.hkx` (must show
+`hk_2010.2.0-r1`, `__classnames__`/`__data__` sections, an `hkaSkeleton` class) and a
+human idle `.hkx` (must show `hkaSplineCompressedAnimation`); `screenshot` writes
 `logs/probe-screenshot.png`; `interior` verifies one door round trip + writes
 `logs/probe-interior.png`, and its summary line must report at least one drawn actor
 (M5.6 interior gate); `bench` runs the sustained fps gate (360 frames @

@@ -80,6 +80,27 @@ dds_key="$("$cli" --data-root "$data_root" vfs ls 'textures\*.dds' 2>/dev/null \
   | head -1 | cut -f1)"
 run "dds inspect ($dds_key)" dds "$dds_key"
 
+# M6.1 HKX container gate: dump the packfile inventory for a skeleton and a
+# human idle animation. Both are hk_2010.2.0-r1 64-bit packfiles with the
+# standard __classnames__/__data__ sections; skeleton carries an hkaSkeleton
+# object, the idle an hkaSplineCompressedAnimation. Keys are single-quoted so
+# backslashes + spaces reach the CLI verbatim (VFS keys, not shell paths).
+run "hkx skeleton" hkx 'meshes\actors\character\character assets\skeleton.hkx'
+skeleton_hkx="$(awk '/^--- hkx skeleton/{f=1;next} /^--- /{f=0} f' "$log")"
+printf '%s\n' "$skeleton_hkx" | grep -q 'hk_2010.2.0-r1' \
+  || fail "hkx skeleton missing version string"
+printf '%s\n' "$skeleton_hkx" | grep -q '__classnames__' \
+  || fail "hkx skeleton missing __classnames__ section"
+printf '%s\n' "$skeleton_hkx" | grep -q '__data__' \
+  || fail "hkx skeleton missing __data__ section"
+printf '%s\n' "$skeleton_hkx" | grep -q 'hkaSkeleton' \
+  || fail "hkx skeleton missing hkaSkeleton class"
+
+run "hkx idle" hkx 'meshes\actors\character\animations\male\mt_idle.hkx'
+awk '/^--- hkx idle/{f=1;next} /^--- /{f=0} f' "$log" \
+  | grep -q 'hkaSplineCompressedAnimation' \
+  || fail "hkx idle missing hkaSplineCompressedAnimation class"
+
 # Offscreen screenshot of the first-render cell -> logs/probe-screenshot.png.
 png="$log_dir/probe-screenshot.png"
 run "offscreen screenshot" screenshot --out "$png"

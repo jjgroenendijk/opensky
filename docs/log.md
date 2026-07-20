@@ -4,6 +4,21 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-20
 
+* M6.1 HKX container parse complete -- `HKXFile`/`HKXHeader`/`HKXSection`
+  (`opensky/Formats/HKX/`) decode the SSE Havok packfile container: 64-byte
+  header (magic pair, fileVersion 8, layout rules 8-1-0-1, contents pointers,
+  "hk_2010.2.0-r1" version field), 48-byte section headers, local/global/
+  virtual fixup tables with 0xFFFFFFFF sentinel + 0xFF alignment-tail
+  handling, `__classnames__` signature+0x09+zstring inventory, virtual-fixup
+  object enumeration (`objects`, `rootClassName`, `sectionData(at:)` for
+  6.2+). Layout from open parsers (exyorha/hkxparse, ret2end/HKX2Library,
+  ZeldaMods Havok wiki), probe-verified byte-by-byte on real skeleton.hkx +
+  three idle clips (skeleton: 20 classes/324 objects; idles: 9 classes/5
+  objects, hkaSplineCompressedAnimation). New `openskycli hkx <key>` dumps
+  header/sections/classes/objects; probe gains skeleton + male/mt_idle hkx
+  checks. Synthetic `HKXFixture` + `HKXFileTests` cover happy path +
+  malformed input. Docs: [HKX container](/formats/hkx-container.md),
+  [CLI](/tools/cli.md). Item 6.1 left [todo](/todo.md).
 * Unscheduled backlog moved from [todo](/todo.md) to tracked GitHub issues:
   tree `.btt`/`.lst` LOD + configured distance bands
   ([#62](https://github.com/jjgroenendijk/opensky/issues/62)), GMST-backed walk/run/step

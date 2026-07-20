@@ -43,6 +43,8 @@ enum OpenSkyCLI {
                                   render the arrival pose, verify the return door
       nif <key>                   Inspect a mesh: container stats, model summary
       dds <key>                   Inspect a texture: header + mip chain
+      hkx <key>                   Inspect a Havok packfile: header, section table,
+                                  class-name + object inventory
       lod [--worldspace <edid>]   Parse settings + sweep all .btr/.bto files
       screenshot --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
              [--size WxH] [--zoom <f>] [--time-of-day <0-24>] [--neighbors]
@@ -117,6 +119,11 @@ enum OpenSkyCLI {
             )
         case "dds":
             try AssetCommand.runDDS(
+                context: .resolve(dataRootOverride: dataRoot),
+                scanner: &scanner
+            )
+        case "hkx":
+            try HKXCommand.run(
                 context: .resolve(dataRootOverride: dataRoot),
                 scanner: &scanner
             )

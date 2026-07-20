@@ -35,6 +35,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Actor records](/formats/actors.md) - ACHR/NPC_/LVLN/LVLI/RACE/ARMO/ARMA/OTFT
   layouts, TPLT chain + visual appearance resolution (skin/outfit/slot
   masking), FaceGen path convention + actor GPU assembly.
+* [HKX packfile container](/formats/hkx-container.md) - Havok hk_2010 packfile
+  header, section + fixup tables, class-name inventory, object enumeration.
 
 ## Engine
 
