@@ -334,6 +334,17 @@ extension BenchCommand {
             result.actorBuildMaximumMS,
             result.actorBuildBudgetMS
         ))
+        // Per-cell accounting before the totals: 5.6 acceptance requires the
+        // probe to report counts for each touched cell, failures with reasons.
+        for report in result.actorCellReports {
+            var line = "[INFO] cell (\(report.coordinate.x),\(report.coordinate.y)) actors: "
+                + "\(report.discovered) discovered = \(report.rendered) rendered + "
+                + "\(report.disabledSkips) disabled + \(report.failures) failed"
+            if !report.failureReasons.isEmpty {
+                line += " [\(report.failureReasons.joined(separator: "; "))]"
+            }
+            print(line)
+        }
         print(
             "[INFO] actors: \(result.actorDiscoveredCount) discovered = "
                 + "\(result.actorRenderedCount) rendered + "

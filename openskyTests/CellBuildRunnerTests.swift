@@ -19,15 +19,18 @@ nonisolated private final class FakeProvider: CellSceneProvider {
     private let gate: DispatchSemaphore?
     private let started: DispatchSemaphore?
     private let collision: StaticCollisionSet
+    private let summaryMutation: (@Sendable (inout CellLoadSummary) -> Void)?
 
     init(
         gate: DispatchSemaphore? = nil,
         started: DispatchSemaphore? = nil,
-        collision: StaticCollisionSet = .empty
+        collision: StaticCollisionSet = .empty,
+        summaryMutation: (@Sendable (inout CellLoadSummary) -> Void)? = nil
     ) {
         self.gate = gate
         self.started = started
         self.collision = collision
+        self.summaryMutation = summaryMutation
     }
 
     func buildCell(at coordinate: CellCoordinate) throws -> CellScene {
@@ -36,15 +39,17 @@ nonisolated private final class FakeProvider: CellSceneProvider {
         lock.lock()
         builds[coordinate, default: 0] += 1
         lock.unlock()
+        var summary = CellLoadSummary(
+            cellName: "fake", gridX: coordinate.x, gridY: coordinate.y,
+            totalRefCount: 0, drawnRefCount: 0,
+            unsupportedBaseSkipCount: 0, markerSkipCount: 0,
+            modelFailureSkipCount: 0, malformedRefSkipCount: 0,
+            modelCount: 0, textureCount: 0, missingTextureCount: 0
+        )
+        summaryMutation?(&summary)
         return CellScene(
             renderScene: RenderScene(instances: []),
-            summary: CellLoadSummary(
-                cellName: "fake", gridX: coordinate.x, gridY: coordinate.y,
-                totalRefCount: 0, drawnRefCount: 0,
-                unsupportedBaseSkipCount: 0, markerSkipCount: 0,
-                modelFailureSkipCount: 0, malformedRefSkipCount: 0,
-                modelCount: 0, textureCount: 0, missingTextureCount: 0
-            ),
+            summary: summary,
             bounds: nil,
             staticCollision: collision
         )
@@ -203,5 +208,45 @@ struct CellBuildRunnerTests {
         )
         #expect(waitUntil { provider.evictionCount == 1 })
         #expect(provider.lastEviction?.mesh == ["meshes\\arch\\solid.nif"])
+    }
+
+    // MARK: - Actor accounting mirror (5.5 exact + 5.6 explained rules)
+
+    @Test
+    func actorMetricsMirrorSummaryIncludingFailureReasons() {
+        let provider = FakeProvider { summary in
+            summary.actorCount = 3
+            summary.actorDrawnCount = 1
+            summary.actorDisabledSkipCount = 1
+            summary.actorFailureCount = 1
+            summary.actorFailureReasons = ["ACHR 00000900: unresolved (test)"]
+            summary.actorBuildDurationMS = 2.5
+        }
+        let runner = SerialCellBuildRunner(provider: provider)
+        let cell = coordinate(6, -2)
+
+        runner.enqueue(cell)
+        #expect(waitUntil { !runner.drainCompleted().isEmpty })
+        let metric = runner.buildMetricsSnapshot()[cell]
+        #expect(metric?.actorDiscoveredCount == 3)
+        #expect(metric?.actorRenderedCount == 1)
+        #expect(metric?.actorDisabledSkipCount == 1)
+        #expect(metric?.actorFailureCount == 1)
+        #expect(metric?.actorFailureReasons == ["ACHR 00000900: unresolved (test)"])
+        #expect(metric?.actorDurationMS == 2.5)
+        #expect(metric?.actorAccountingIsExact == true)
+        #expect(metric?.actorFailuresAreExplained == true)
+    }
+
+    @Test
+    func failureWithoutReasonIsUnexplained() {
+        var metric = CellBuildMetric(
+            totalDurationMS: 0, collisionDurationMS: 0,
+            collisionShapeCount: 0, collisionTriangleCount: 0
+        )
+        metric.actorDiscoveredCount = 1
+        metric.actorFailureCount = 1
+        #expect(metric.actorAccountingIsExact)
+        #expect(!metric.actorFailuresAreExplained)
     }
 }

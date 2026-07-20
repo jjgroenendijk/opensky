@@ -93,6 +93,13 @@ run "interior door round trip" interior --out "$interior_png"
 [ -s "$interior_png" ] || fail "interior probe wrote no PNG"
 echo "[ OK ] interior output: $interior_png"
 
+# M5.6 interior actor gate: the visited interior's summary line must report
+# at least one drawn actor (drawn is the first accounting bucket).
+awk '/^--- interior door round trip/{f=1;next} /^--- /{f=0} f' "$log" \
+  | grep -q ' actors ([1-9][0-9]* drawn' \
+  || fail "interior probe reported no drawn actors"
+echo "[ OK ] interior actors drawn"
+
 # Sustained fps gate (todo 2.11): 360 frames at 720p via frame stats; the
 # command exits 1 when avg/p95 frame time misses the 33.3 ms (30 fps) budget.
 run "sustained bench (360 frames @ 1280x720)" bench
@@ -109,6 +116,22 @@ grep 'collision build:' "$log" | tail -1
 grep 'actor build:' "$log" | tail -1
 grep 'actors:' "$log" | tail -1 | grep -q 'discovered' \
   || fail "fly bench reported no actor accounting"
+
+# M5.6 acceptance: one accounting line per touched cell (35 = three settled
+# 5x5 grids). The engine gate already throws on inexact accounting or a
+# reason-less failure; this proves the per-cell report surfaced. Failure
+# lines carry their reasons -> echo them for the acceptance record.
+fly_cells="$(sed -n '/^--- cross-cell streaming bench/,$p' "$log" \
+  | grep -c ') actors: ' || true)"
+[ "$fly_cells" -eq 35 ] \
+  || fail "fly bench reported $fly_cells per-cell actor lines, expected 35"
+echo "[ OK ] per-cell actor accounting (35 cells)"
+explained="$(sed -n '/^--- cross-cell streaming bench/,$p' "$log" \
+  | grep ') actors: ' | grep -v ' 0 failed' || true)"
+if [ -n "$explained" ]; then
+  echo "[INFO] explained actor failures:"
+  printf '%s\n' "$explained"
+fi
 
 # M4.5 route gate: fixed-step production physics from first-render cell to
 # Chillfurrow Farm, interior floor crossing, then paired exterior return.
