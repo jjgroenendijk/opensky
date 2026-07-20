@@ -59,6 +59,28 @@ nonisolated struct MeshSkinning {
     let weights: [SIMD4<Float>]
     let boneIndices: [SIMD4<UInt16>]
     let bindPoseMatrices: [float4x4]
+    /// Skin-instance bone order. Empty for synthetic/legacy meshes that do
+    /// not opt into runtime animation.
+    let boneNames: [String]
+    /// Gamebryo palette composition: rootParentToSkin * currentBone * skinToBone.
+    let rootParentToSkin: float4x4
+    let skinToBoneMatrices: [float4x4]
+
+    init(
+        weights: [SIMD4<Float>],
+        boneIndices: [SIMD4<UInt16>],
+        bindPoseMatrices: [float4x4],
+        boneNames: [String] = [],
+        rootParentToSkin: float4x4 = matrix_identity_float4x4,
+        skinToBoneMatrices: [float4x4] = []
+    ) {
+        self.weights = weights
+        self.boneIndices = boneIndices
+        self.bindPoseMatrices = bindPoseMatrices
+        self.boneNames = boneNames
+        self.rootParentToSkin = rootParentToSkin
+        self.skinToBoneMatrices = skinToBoneMatrices
+    }
 }
 
 /// One loaded asset: every drawable mesh plus the materials they index.

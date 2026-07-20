@@ -20,6 +20,13 @@ nonisolated enum CellStreamingFlyBenchmarkError: LocalizedError {
     case actorBuildExceeded(p95: Double, maximum: Double, budget: Double)
     case actorAccountingMismatch(coordinate: CellCoordinate, discovered: Int, explained: Int)
     case actorFailureUnexplained(coordinate: CellCoordinate, failures: Int, reasons: Int)
+    case actorAnimationAccountingMismatch(
+        coordinate: CellCoordinate, rendered: Int, explained: Int
+    )
+    case actorAnimationFailureUnexplained(
+        coordinate: CellCoordinate, failures: Int, reasons: Int
+    )
+    case animationUpdateExceeded(average: Double, p95: Double, budget: Double)
     case noCellsUnloaded
 
     var errorDescription: String? {
@@ -54,6 +61,17 @@ nonisolated enum CellStreamingFlyBenchmarkError: LocalizedError {
         case let .actorFailureUnexplained(coordinate, failures, reasons):
             "cell (\(coordinate.x),\(coordinate.y)) has \(failures) failed actors "
                 + "but only \(reasons) reasons — unexplained failure"
+        case let .actorAnimationAccountingMismatch(coordinate, rendered, explained):
+            "cell (\(coordinate.x),\(coordinate.y)) animation accounting not exact: "
+                + "\(rendered) rendered vs \(explained) explained"
+        case let .actorAnimationFailureUnexplained(coordinate, failures, reasons):
+            "cell (\(coordinate.x),\(coordinate.y)) has \(failures) static actors "
+                + "but only \(reasons) reasons"
+        case let .animationUpdateExceeded(average, p95, budget):
+            String(
+                format: "animation update avg %.2f ms / p95 %.2f ms exceeded %.2f ms budget",
+                average, p95, budget
+            )
         case .noCellsUnloaded:
             "cross-cell path did not unload any initially resident cells"
         }
@@ -114,6 +132,9 @@ nonisolated struct ActorCellReport: Equatable {
     let disabledSkips: Int
     let failures: Int
     let failureReasons: [String]
+    let animated: Int
+    let animationFailures: Int
+    let animationFailureReasons: [String]
 }
 
 nonisolated struct CellStreamingFlyBenchmarkResult {
@@ -139,6 +160,9 @@ nonisolated struct CellStreamingFlyBenchmarkResult {
     let actorRenderedCount: Int
     let actorDisabledSkipCount: Int
     let actorFailureCount: Int
+    let actorAnimatedCount: Int
+    let actorAnimationFailureCount: Int
+    let animationUpdateBudgetMS: Double
     /// One entry per touched cell, sorted by coordinate for stable output.
     let actorCellReports: [ActorCellReport]
 }
@@ -150,6 +174,7 @@ nonisolated struct CellStreamingFlyBenchmarkConfiguration {
     let footprintCapMB: Double
     let collisionBuildBudgetMS: Double
     let actorBuildBudgetMS: Double
+    let animationUpdateBudgetMS: Double
     var samplesPerLeg = 60
 }
 
@@ -267,6 +292,16 @@ enum CellStreamingFlyBenchmark {
                 runner: runner,
                 configuration: configuration
             )
+            guard
+                render.animationAverageMS <= configuration.animationUpdateBudgetMS,
+                render.animationPercentileMS(95) <= configuration.animationUpdateBudgetMS
+            else {
+                throw CellStreamingFlyBenchmarkError.animationUpdateExceeded(
+                    average: render.animationAverageMS,
+                    p95: render.animationPercentileMS(95),
+                    budget: configuration.animationUpdateBudgetMS
+                )
+            }
             let unloaded = initialResidents.subtracting(streamer.residentCoordinates).count
             guard unloaded > 0 else {
                 throw CellStreamingFlyBenchmarkError.noCellsUnloaded
@@ -295,6 +330,9 @@ enum CellStreamingFlyBenchmark {
                 actorRenderedCount: actors.rendered,
                 actorDisabledSkipCount: actors.disabledSkips,
                 actorFailureCount: actors.failures,
+                actorAnimatedCount: actors.animated,
+                actorAnimationFailureCount: actors.animationFailures,
+                animationUpdateBudgetMS: configuration.animationUpdateBudgetMS,
                 actorCellReports: actors.cellReports
             )
         }

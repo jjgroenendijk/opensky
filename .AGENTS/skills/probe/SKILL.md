@@ -57,13 +57,14 @@ make test-one T=ScratchProbeTests`. Failures detail: `make test-report`.
   is not a package; scripts cannot import `opensky` and die on top-level
   statement rules. Always probe via the test target or `openskycli`.
 
-## Rendering verification (screenshots)
+## Rendering verification
 
 Screen Recording TCC is missing on this machine; UI-test automation flaky. Reliable
-paths, in order:
+paths, in order. Render captures are temporary or `logs/`-local; never add image files to
+the repo:
 
-1. `Renderer.renderOffscreen` from a unit test — pixel asserts + temp PNG, path
-   printed (`RendererOffscreenTests`). Real-data variant dumps PNG to `logs/`.
+1. `Renderer.renderOffscreen` from a unit test — deterministic pixel assertions first;
+   optional local temp capture for human review (`RendererOffscreenTests`).
 2. `make run-cli ARGS="render --out logs/frame.png ..."` (see `docs/tools/cli.md`).
 3. Ask the user to look at the running app (they see launched apps).
 

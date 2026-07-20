@@ -70,4 +70,5 @@ source area with neither gap nor overlap. East/north real fly path settled three
 35 unique builds, 9 unloads, 25 final residents, 0 void; 5,192 frames averaged 3.32 ms,
 p95 5.94 ms, max 17.75 ms under 33.33 ms budget.
 
-![Original Tamriel distant LOD acceptance view](/img/distant-lod-whiterun.png)
+Generated render captures stay local; numeric ownership + frame metrics above are the
+repository acceptance evidence.

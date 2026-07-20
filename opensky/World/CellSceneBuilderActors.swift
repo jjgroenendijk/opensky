@@ -30,11 +30,16 @@ nonisolated struct ActorBuildCounts {
     /// acceptance rule: every counted failure is explained, so
     /// `failureReasons.count == failures` always.
     var failureReasons: [String] = []
+    /// Rendered actors split exactly into animated + bind-pose fallback.
+    var animated = 0
+    var animationFailures = 0
+    var animationFailureReasons: [String] = []
 }
 
 /// Assembled actor render data handed to makeScene beside static instances.
 nonisolated struct CellActorBuild {
     var placements: [RenderPlacement] = []
+    var animations: [any RenderAnimation] = []
     var counts = ActorBuildCounts()
     var durationMS = 0.0
 }
@@ -165,6 +170,16 @@ extension CellSceneBuilder {
                 if assembly.isRenderable {
                     build.counts.rendered += 1
                     build.placements.append(contentsOf: assembly.renderPlacements)
+                    switch makeAnimationPlayback(assembly: assembly) {
+                    case let .success(playback):
+                        build.counts.animated += 1
+                        build.animations.append(playback)
+                    case let .failure(error):
+                        build.counts.animationFailures += 1
+                        build.counts.animationFailureReasons.append(
+                            "ACHR \(id): \(error.localizedDescription)"
+                        )
+                    }
                 } else {
                     build.counts.failures += 1
                     let reasons = assembly.skips.map { String(describing: $0.reason) }

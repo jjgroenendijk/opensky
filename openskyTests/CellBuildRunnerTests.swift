@@ -220,6 +220,8 @@ struct CellBuildRunnerTests {
             summary.actorDisabledSkipCount = 1
             summary.actorFailureCount = 1
             summary.actorFailureReasons = ["ACHR 00000900: unresolved (test)"]
+            summary.actorAnimationFailureCount = 1
+            summary.actorAnimationFailureReasons = ["ACHR 00000800: unsupported skeleton (test)"]
             summary.actorBuildDurationMS = 2.5
         }
         let runner = SerialCellBuildRunner(provider: provider)
@@ -233,9 +235,15 @@ struct CellBuildRunnerTests {
         #expect(metric?.actorDisabledSkipCount == 1)
         #expect(metric?.actorFailureCount == 1)
         #expect(metric?.actorFailureReasons == ["ACHR 00000900: unresolved (test)"])
+        #expect(metric?.actorAnimationFailureCount == 1)
+        #expect(metric?.actorAnimationFailureReasons == [
+            "ACHR 00000800: unsupported skeleton (test)"
+        ])
         #expect(metric?.actorDurationMS == 2.5)
         #expect(metric?.actorAccountingIsExact == true)
         #expect(metric?.actorFailuresAreExplained == true)
+        #expect(metric?.actorAnimationAccountingIsExact == true)
+        #expect(metric?.actorAnimationFailuresAreExplained == true)
     }
 
     @Test
@@ -248,5 +256,17 @@ struct CellBuildRunnerTests {
         metric.actorFailureCount = 1
         #expect(metric.actorAccountingIsExact)
         #expect(!metric.actorFailuresAreExplained)
+    }
+
+    @Test
+    func staticFallbackWithoutReasonIsUnexplained() {
+        var metric = CellBuildMetric(
+            totalDurationMS: 0, collisionDurationMS: 0,
+            collisionShapeCount: 0, collisionTriangleCount: 0
+        )
+        metric.actorRenderedCount = 1
+        metric.actorAnimationFailureCount = 1
+        #expect(metric.actorAnimationAccountingIsExact)
+        #expect(!metric.actorAnimationFailuresAreExplained)
     }
 }

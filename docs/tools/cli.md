@@ -55,8 +55,8 @@ only where `--out` points (AGENTS.md Legal & IP).
 | `animation <hkx-key>` | decode every hkaSplineCompressedAnimation + matching hkaAnimationBinding, sample every stored frame as bone-indexed local transforms, report frame/track/block/mapping counts + max translation/scale + normalized-quaternion range; malformed/unbound/non-finite/unbounded sample exits 1 |
 | `lod [--worldspace edid]` | parse lodsettings + sweep every worldspace BTR/BTO through LOD block decoders + scene flattener; any failed container exits 1 |
 | `screenshot --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f] [--time-of-day 0-24] [--neighbors]` | cell scene build + distant LOD -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load/LOD/draw stats + non-background fraction; `--zoom` (0.1-10) moves eye toward framed center; `--time-of-day` controls procedural sky (default 13); `--neighbors` builds production-size 5x5 (shared libraries) and frames full-cell bounds only; missing cell warns + skips; `render` is identical alias |
-| `bench [--worldspace/--x/--y] [--size WxH] [--frames n] [--budget-ms f]` | sustained offscreen render (default 360 frames @ 1280x720) through `Renderer.renderOffscreenSustained` — FrameStats windows + per-frame wall times; prints avg/p95/max + fps, exit 1 when avg or p95 misses the budget (default 33.33 ms = 30 fps, todo 2.11 gate) |
-| `bench --fly-path [--worldspace/--x/--y] [--size WxH] [--budget-ms f] [--max-frames n] [--footprint-cap-mb f] [--collision-build-budget-ms f] [--actor-build-budget-ms f]` | scripted launch-center -> east -> north cell flight through live `CellStreamer`; requires physical-footprint plateau/cap, exact 35-cell build union, zero failed builds, collision-build p95 (default 700 ms), actor-build p95 (default 3000 ms; Debug baseline p95 2165 ms — first-load skinned bodies + FaceGen dominate) + exact per-cell actor accounting (discovered = rendered + disabled + failed) with every failure reason-tagged (5.6 zero-unexplained gate), avg/p95 frame budget; prints one accounting line per touched cell (failures carry reasons) then aggregate counts |
+| `bench [--worldspace/--x/--y] [--size WxH] [--frames n] [--budget-ms f]` | sustained offscreen render (default 360 frames @ 1280x720) through `Renderer.renderOffscreenSustained` — FrameStats windows + per-frame wall and animation-update times; prints avg/p95/max + fps, exit 1 when avg or p95 misses the budget (default 33.33 ms = 30 fps, todo 2.11 gate) |
+| `bench --fly-path [--worldspace/--x/--y] [--size WxH] [--budget-ms f] [--max-frames n] [--footprint-cap-mb f] [--collision-build-budget-ms f] [--actor-build-budget-ms f] [--animation-budget-ms f]` | scripted launch-center -> east -> north cell flight through live `CellStreamer`; requires physical-footprint plateau/cap, exact 35-cell build union, zero failed builds, collision-build p95 (default 700 ms), actor-build p95 (default 4500 ms; includes cold rig/clip decode), exact per-cell actor accounting (discovered = rendered + disabled + failed), exact animation accounting (rendered = animated + static fallback), every failure reason-tagged, animation-update avg/p95 (default 4 ms), and frame avg/p95 budget; prints per-cell + aggregate counts |
 | `bench --walk-path [--size WxH] [--budget-ms f] [--max-frames n] [--out file]` | fixed M4 production walk from Tamriel `(6,-2)` to Chillfurrow Farm `(7,-3)`, stair ascent, interior floor crossing + paired exterior return; gates timeout, grounding/penetration, destination/build errors, active-physics avg/p95; optional final PNG |
 
 `cell`/`screenshot`/`render` default to the first-render cell
@@ -163,13 +163,13 @@ male `mt_idle.hkx` + samples all 275 frames x 99 tracks over full duration (M6.3
 99-sample identity bone mapping, finite + bounded); `skeleton` decodes the
 human rig `skeleton.hkx` name-mapped onto `skeleton.nif` (M6.2 gate: rig reports 99
 bones, name-map 93 of 99 matched, every mismatch line reason-tagged); `screenshot` writes
-`logs/probe-screenshot.png`; `interior` verifies one door round trip + writes
-`logs/probe-interior.png`, and its summary line must report at least one drawn actor
-(M5.6 interior gate); `bench` runs the sustained fps gate (360 frames @
+a local ignored render capture; `interior` verifies one door round trip + local render,
+and its summary line must report at least one drawn + animated actor; `bench` runs the
+sustained fps gate (360 frames @
 720p, fails over 33.33 ms avg/p95); `bench --fly-path` runs the M3.2 cross-cell gate at
 640x360, including the 700 ms collision-build p95 gate + M5.5/5.6 actor gates (actor-build
-p95, exact accounting, reason-tagged failures; probe additionally requires the aggregate
-accounting line plus one per-cell line for each of the 35 touched cells, echoing
-explained failures);
+p95, exact actor/animation accounting, reason-tagged failures, 4 ms animation-update
+avg/p95; probe additionally requires the aggregate accounting lines plus one per-cell
+line for each of the 35 touched cells, echoing explained failures);
 `bench --walk-path` runs M4's 640x360
 physics/route gate + writes `logs/probe-walk-path.png`. Full output -> `logs/probe.log`.

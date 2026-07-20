@@ -89,6 +89,7 @@ nonisolated final class CellSceneBuilder {
     let file: ESMFile
     let meshes: MeshLibrary
     let textures: TextureLibrary
+    let fileSystem: VirtualFileSystem?
     let collisionModels: NIFCollisionLibrary?
     var collisionPartitionCache: [CellCollisionPartitionKey: [StaticCollisionPartition]] = [:]
     private let distantLODBuilder: DistantLODBuilder?
@@ -107,6 +108,8 @@ nonisolated final class CellSceneBuilder {
     /// cell and cached like statIndex. Build-queue confined.
     var actorTemplateResolver: ActorTemplateResolver?
     var actorVisualResolver: ActorVisualResolver?
+    /// Immutable decoded rig/idle assets; playback objects remain cell-owned.
+    var actorAnimationClips: [ActorAnimationCacheKey: ActorAnimationClip] = [:]
     /// Plugin file name feeding FaceGen path resolution (FormIDResolver).
     let pluginName: String
     /// Water/environment indexes + reusable plane mesh. Build-queue confined
@@ -127,6 +130,7 @@ nonisolated final class CellSceneBuilder {
         self.file = file
         self.meshes = meshes
         self.textures = textures
+        self.fileSystem = fileSystem
         self.pluginName = pluginName
         collisionModels = fileSystem.map(NIFCollisionLibrary.init(fileSystem:))
         distantLODBuilder = fileSystem.map {

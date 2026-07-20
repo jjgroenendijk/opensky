@@ -15,8 +15,11 @@ enum BenchCommand {
     private static let defaultCollisionBuildBudgetMS = 700.0
     /// Debug baseline 2026-07-20: p95 2165 ms over the Whiterun fly path
     /// (first-load skinned bodies + FaceGen heads dominate) -> 3000 ms
-    /// keeps ~1.4x headroom, same policy as the collision 500 -> 700 revision.
-    private static let defaultActorBuildBudgetMS = 3000.0
+    /// plus first human cell now decodes the 99-bone rig + idle clips. M6
+    /// probe p95 3083 ms -> 4500 ms keeps ~1.45x Debug headroom.
+    private static let defaultActorBuildBudgetMS = 4500.0
+    /// CPU-only sample/compose/palette refresh; leaves wide Debug headroom.
+    private static let defaultAnimationUpdateBudgetMS = 4.0
 
     private struct Options {
         let worldspace: String
@@ -31,6 +34,7 @@ enum BenchCommand {
         let footprintCapMB: Double
         let collisionBuildBudgetMS: Double
         let actorBuildBudgetMS: Double
+        let animationUpdateBudgetMS: Double
     }
 
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
@@ -140,7 +144,8 @@ enum BenchCommand {
                 maxFrames: options.maxFrames,
                 footprintCapMB: options.footprintCapMB,
                 collisionBuildBudgetMS: options.collisionBuildBudgetMS,
-                actorBuildBudgetMS: options.actorBuildBudgetMS
+                actorBuildBudgetMS: options.actorBuildBudgetMS,
+                animationUpdateBudgetMS: options.animationUpdateBudgetMS
             )
         )
         reportFlyPath(
@@ -246,6 +251,9 @@ extension BenchCommand {
             ),
             actorBuildBudgetMS: actorBuildBudgetMS(
                 scanner.option("--actor-build-budget-ms")
+            ),
+            animationUpdateBudgetMS: animationUpdateBudgetMS(
+                scanner.option("--animation-budget-ms")
             )
         )
         if options.output != nil, !options.walkPath {
@@ -316,6 +324,18 @@ extension BenchCommand {
                 + "\(result.finalResidentCellCount) resident, "
                 + "\(result.finalVoidCellCount) void"
         )
+        reportFlyMetrics(result)
+        reportFlyActors(result)
+        print(String(
+            format: "[INFO] %d stream frames @ %dx%d: avg %.2f ms, p95 %.2f ms, "
+                + "max %.2f ms, budget %.2f ms",
+            result.render.frameMS.count, size.width, size.height,
+            result.render.averageMS, result.render.percentileMS(95),
+            result.render.frameMS.max() ?? 0, budget
+        ))
+    }
+
+    private static func reportFlyMetrics(_ result: CellStreamingFlyBenchmarkResult) {
         print(String(
             format: "[INFO] collision build: avg %.2f ms, p95 %.2f ms, max %.2f ms, "
                 + "budget %.2f ms; %d shapes, %d triangles",
@@ -334,6 +354,17 @@ extension BenchCommand {
             result.actorBuildMaximumMS,
             result.actorBuildBudgetMS
         ))
+        print(String(
+            format: "[INFO] animation update: avg %.2f ms, p95 %.2f ms, "
+                + "max %.2f ms, budget %.2f ms",
+            result.render.animationAverageMS,
+            result.render.animationPercentileMS(95),
+            result.render.animationMS.max() ?? 0,
+            result.animationUpdateBudgetMS
+        ))
+    }
+
+    private static func reportFlyActors(_ result: CellStreamingFlyBenchmarkResult) {
         // Per-cell accounting before the totals: 5.6 acceptance requires the
         // probe to report counts for each touched cell, failures with reasons.
         for report in result.actorCellReports {
@@ -343,6 +374,11 @@ extension BenchCommand {
             if !report.failureReasons.isEmpty {
                 line += " [\(report.failureReasons.joined(separator: "; "))]"
             }
+            line += "; \(report.animated) animated + "
+                + "\(report.animationFailures) static"
+            if !report.animationFailureReasons.isEmpty {
+                line += " [\(report.animationFailureReasons.joined(separator: "; "))]"
+            }
             print(line)
         }
         print(
@@ -351,13 +387,10 @@ extension BenchCommand {
                 + "\(result.actorDisabledSkipCount) disabled + "
                 + "\(result.actorFailureCount) failed"
         )
-        print(String(
-            format: "[INFO] %d stream frames @ %dx%d: avg %.2f ms, p95 %.2f ms, "
-                + "max %.2f ms, budget %.2f ms",
-            result.render.frameMS.count, size.width, size.height,
-            result.render.averageMS, result.render.percentileMS(95),
-            result.render.frameMS.max() ?? 0, budget
-        ))
+        print(
+            "[INFO] rendered actors: \(result.actorAnimatedCount) animated + "
+                + "\(result.actorAnimationFailureCount) static"
+        )
     }
 
     private static func report(
@@ -426,6 +459,16 @@ extension BenchCommand {
         guard let budget = Double(value), budget > 0 else {
             throw CLIError.usage(
                 "--actor-build-budget-ms expects a positive number, got \(value)"
+            )
+        }
+        return budget
+    }
+
+    private static func animationUpdateBudgetMS(_ value: String?) throws -> Double {
+        guard let value else { return defaultAnimationUpdateBudgetMS }
+        guard let budget = Double(value), budget > 0 else {
+            throw CLIError.usage(
+                "--animation-budget-ms expects a positive number, got \(value)"
             )
         }
         return budget

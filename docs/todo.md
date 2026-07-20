@@ -47,8 +47,8 @@ milestone leaves this file; history lives in `docs/log.md` + git.
 * M5 — actors on screen. Done 2026-07-20 (PRs #52-#59): bind-pose clothed actors stream
   with cells in Whiterun exterior + interiors, reason-tagged exact accounting, actor-enabled
   fly bench within build/footprint/frame budgets.
-* M6 — actors animate (active): skeleton-driven idle playback on streamed actors.
-  Gate: 6.6.
+* M6 — actors animate. Done 2026-07-20: skeleton-driven idle playback on streamed actors,
+  exact lifecycle accounting, deterministic frame-delta gate, exterior/interior probes.
 * M7 — world/render fidelity (planned 2026-07-20, pulled ahead by user priority):
   M7.1 sun shadows, M7.2 data-driven weather, M7.3 grass, M7.4 particles,
   M7.5 dynamic physics. Gates: 7.1.2 / 7.2.3 / 7.3.2 / 7.4.2 / 7.5.3.
@@ -61,31 +61,6 @@ milestone leaves this file; history lives in `docs/log.md` + git.
 * M11+ — toward playable (direction, decided 2026-07-20): gameplay-first order,
   behavior-graph locomotion, native saves + read-only .ess import. Numbered re-scope
   at the M10 gate.
-
-## Milestone 6 — actors animate (idle playback)
-
-Goal: streamed actors leave bind pose — race idle animation plays on placed actors. No
-AI/behavior graphs (no `behaviors/*.hkx` evaluation); direct clip playback only. One
-branch/PR per numbered item; format items follow `format-parser` discipline.
-
-Format caveat: Havok HKX has no official public spec. Container layout verified by
-probe (6.1, [hkx-container](/formats/hkx-container.md)): hk_2010.2.0-r1, fileVersion 8,
-64-bit LE. Object internals (hkaSkeleton/hkaAnimation members) still unverified —
-leads: hkxparse/HKX2Library open parsers, ZeldaMods Havok wiki; confirm by probe at
-impl, flag deviations.
-
-* [ ] 6.4 Pose sampling + palette update: sample clip at frame time -> compose world
-      bone matrices -> refresh skinning palette each frame, replacing the static bind
-      palette. Gate: offscreen frames at two clip times differ for an animated actor,
-      identical for a static prop; palette math unit-tested.
-* [ ] 6.5 Streamed playback lifecycle: resident-cell actors play their race idle,
-      clip state builds/evicts with the cell; actor accounting stays exact +
-      reason-tagged. Gate: actor-enabled fly bench passes with animation on, explicit
-      added per-frame animation budget.
-* [ ] 6.6 Milestone acceptance: Whiterun exterior + one interior animate without crash
-      across the streamed grid; frame-delta evidence + screenshot under `docs/img/`
-      linked from docs; `docs/log.md` + this file updated; M7 plan below reviewed
-      against M6 learnings.
 
 ## Milestone 7 — world/render fidelity (starts after M6)
 
@@ -106,8 +81,8 @@ Biggest visual-fidelity gap; renderer currently has none.
       cascade-selection math unit-tested.
 * [ ] 7.1.2 Streaming + budget + acceptance: per-cascade caster culling limited to
       resident cells, explicit per-frame shadow budget in the fly bench, quality
-      setting (off/low/high). Gate: Whiterun fly bench within budget; shadowed
-      screenshots under `docs/img/`; docs (`rendering/shadows.md`) + log updated.
+      setting (off/low/high). Gate: Whiterun fly bench within budget; deterministic
+      offscreen pixel-delta evidence; docs (`rendering/shadows.md`) + log updated.
       Interior point-light shadows deliberately out of scope — noted for later.
 
 ### M7.2 — data-driven weather
@@ -123,7 +98,7 @@ Replaces the procedural-only sky palette from M3.
       cloudy/foggy looks offscreen.
 * [ ] 7.2.3 Precipitation + acceptance: rain/snow as camera-following particle
       volume, simple roof occlusion (upward ray), storm sky darkening. Gate:
-      rain storm plays + transitions back to clear in-app; screenshots; docs
+      rain storm plays + transitions back to clear in-app; numeric frame-delta evidence; docs
       (`engine/weather.md`) + log updated.
 
 ### M7.3 — grass + flora
@@ -134,7 +109,7 @@ Replaces the procedural-only sky palette from M3.
       probe against observed in-game density, document deviations.
 * [ ] 7.3.2 Instanced rendering + acceptance: batched instancing, wind sway,
       distance fade, per-frame budget; streaming lifetime with cells. Gate:
-      Whiterun tundra grass within fly-bench budget; screenshot; docs
+      Whiterun tundra grass within fly-bench budget; numeric frame-delta evidence; docs
       (`engine/grass.md`) + log updated.
 
 ### M7.4 — particles + effect shaders
@@ -145,7 +120,7 @@ Replaces the procedural-only sky palette from M3.
       fixtures.
 * [ ] 7.4.2 Playback + acceptance: CPU-simulated emitters, billboarded particle
       draw path, effect-shader blend states. Gate: torch flames + brazier smoke
-      animate in Whiterun offscreen frames (frame-delta evidence); screenshot; docs
+      animate in Whiterun offscreen frames (numeric frame-delta evidence); docs
       (`rendering/particles.md`) + log updated.
 
 ### M7.5 — dynamic physics (ragdolls + projectiles)
@@ -164,7 +139,7 @@ Extends the static collision world (M4) with motion; combat consumes this later.
       drag), impact vs collision world, stick-on-hit (dev-tool spawn — no bow
       gameplay yet). Gate: spawned arrows land where aimed within tolerance,
       ragdoll + clutter + projectiles together hold frame budget in bench;
-      screenshots; docs (`engine/dynamic-physics.md`) + log updated; M8 plan
+      numeric motion/bounds evidence; docs (`engine/dynamic-physics.md`) + log updated; M8 plan
       reviewed.
 
 ## Milestone 8 — Papyrus scripting (quest-capable; starts after M7)
@@ -261,7 +236,7 @@ NifTools TRI docs, .lip community notes (thin — probe + document uncertainty).
       math unit-tested; offscreen frame delta on morph apply.
 * [ ] 9.3.3 .lip decode + acceptance: phoneme track -> morph weights over playback
       time. Gate: voice line plays with moving lips — offscreen mouth-region frame
-      deltas + screenshot under `docs/img/`; docs updated; M10 plan reviewed.
+      deltas recorded by deterministic tests; docs updated; M10 plan reviewed.
 
 ## Milestone 10 — game UI (native-first hybrid)
 
@@ -278,8 +253,8 @@ Scaleform playback not planned. Record as `decisions/ui-approach.md` at M10.1.1.
       key/value), activation prompt text from records ("Open <door name>").
 * [ ] 10.1.3 HUD elements + acceptance: crosshair, health/magicka/stamina bars
       (static values pre-combat), compass with markers, activate prompt wired to
-      M8.2 targeting. Gate: walk-mode screenshot with live prompt text under
-      `docs/img/`; docs updated.
+      M8.2 targeting. Gate: UI state + rendered pixel-delta tests with live prompt text;
+      docs updated.
 
 ### M10.2 — menus
 
@@ -287,7 +262,7 @@ Scaleform playback not planned. Record as `decisions/ui-approach.md` at M10.1.1.
 * [ ] 10.2.2 System menu: resume/settings/quit; data root + audio volumes surfaced.
 * [ ] 10.2.3 Journal + acceptance: quest list + objectives from M8.3 state. Gate:
       journal shows real quest title/objective text from the played quest;
-      screenshot; docs updated.
+      deterministic UI-state + pixel-delta evidence; docs updated.
 
 ### M10.3 — vanilla fonts (SWF extraction)
 

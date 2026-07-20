@@ -18,6 +18,18 @@ nonisolated struct OffscreenBenchResult {
     /// FrameStats window summary lines flushed during the run (one per 120
     /// frames) — the 2.6 instrument's own view of the same frames.
     let windowSummaries: [String]
+    /// CPU time spent sampling + composing + refreshing resident actor palettes.
+    let animationMS: [Double]
+
+    init(
+        frameMS: [Double],
+        windowSummaries: [String],
+        animationMS: [Double] = []
+    ) {
+        self.frameMS = frameMS
+        self.windowSummaries = windowSummaries
+        self.animationMS = animationMS
+    }
 
     var averageMS: Double {
         frameMS.isEmpty ? 0 : frameMS.reduce(0, +) / Double(frameMS.count)
@@ -28,6 +40,21 @@ nonisolated struct OffscreenBenchResult {
     func percentileMS(_ percentile: Double) -> Double {
         guard !frameMS.isEmpty else { return 0 }
         let sorted = frameMS.sorted()
+        let rank = Int((percentile / 100 * Double(sorted.count)).rounded(.up))
+        return sorted[min(max(rank - 1, 0), sorted.count - 1)]
+    }
+
+    var animationAverageMS: Double {
+        animationMS.isEmpty ? 0 : animationMS.reduce(0, +) / Double(animationMS.count)
+    }
+
+    func animationPercentileMS(_ percentile: Double) -> Double {
+        Self.percentile(animationMS, percentile: percentile)
+    }
+
+    private static func percentile(_ values: [Double], percentile: Double) -> Double {
+        guard !values.isEmpty else { return 0 }
+        let sorted = values.sorted()
         let rank = Int((percentile / 100 * Double(sorted.count)).rounded(.up))
         return sorted[min(max(rank - 1, 0), sorted.count - 1)]
     }
@@ -99,9 +126,13 @@ extension Renderer {
     @discardableResult
     private func renderOffscreenFrame(
         descriptor: MTL4RenderPassDescriptor,
-        projection: float4x4
+        projection: float4x4,
+        advanceAnimation: Bool = true
     ) throws -> String? {
         let cpuStart = frameStats.beginFrame()
+        if advanceAnimation {
+            updateAnimations(deltaTime: 1 / 30)
+        }
         endFrameEvent.wait(untilSignaledValue: UInt64(frameIndex - 1), timeoutMS: 2000)
         let slot = frameIndex % Self.maxFramesInFlight
         let allocator = commandAllocators[slot]
@@ -151,6 +182,25 @@ extension Renderer {
         return color
     }
 
+    /// Exact animation-time render for deterministic frame-delta gates.
+    func renderOffscreen(width: Int, height: Int, animationTime: Float) throws -> MTLTexture {
+        self.animationTime = animationTime
+        updateAnimations(deltaTime: 0)
+        let (color, depth) = try makeOffscreenTargets(width: width, height: height)
+        residencySet.addAllocations([color, depth])
+        residencySet.commit()
+        defer {
+            residencySet.removeAllocations([color, depth])
+            residencySet.commit()
+        }
+        try renderOffscreenFrame(
+            descriptor: Self.offscreenPassDescriptor(color: color, depth: depth),
+            projection: Self.offscreenProjection(width: width, height: height),
+            advanceAnimation: false
+        )
+        return color
+    }
+
     /// Pumps a callback + synchronous frame loop through one reused target.
     /// Streaming tests use this instead of allocating color/depth textures on
     /// every poll tick. Optional pacing happens outside measured frame time,
@@ -176,6 +226,7 @@ extension Renderer {
         var frameMS: [Double] = []
         frameMS.reserveCapacity(maxFrames)
         var summaries: [String] = []
+        var animationMS: [Double] = []
 
         for _ in 1 ... maxFrames {
             if minimumFrameInterval > 0 {
@@ -191,10 +242,12 @@ extension Renderer {
                 summaries.append(summary)
             }
             frameMS.append(Double(DispatchTime.now().uptimeNanoseconds - start) / 1e6)
+            animationMS.append(lastAnimationUpdateMS)
             if settled {
                 return OffscreenBenchResult(
                     frameMS: frameMS,
-                    windowSummaries: summaries
+                    windowSummaries: summaries,
+                    animationMS: animationMS
                 )
             }
         }
@@ -223,6 +276,7 @@ extension Renderer {
         var frameMS: [Double] = []
         frameMS.reserveCapacity(frames)
         var summaries: [String] = []
+        var animationMS: [Double] = []
         for _ in 0 ..< frames {
             let start = DispatchTime.now().uptimeNanoseconds
             let summary = try renderOffscreenFrame(
@@ -233,7 +287,12 @@ extension Renderer {
                 summaries.append(summary)
             }
             frameMS.append(Double(DispatchTime.now().uptimeNanoseconds - start) / 1e6)
+            animationMS.append(lastAnimationUpdateMS)
         }
-        return OffscreenBenchResult(frameMS: frameMS, windowSummaries: summaries)
+        return OffscreenBenchResult(
+            frameMS: frameMS,
+            windowSummaries: summaries,
+            animationMS: animationMS
+        )
     }
 }

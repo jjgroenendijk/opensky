@@ -54,8 +54,4 @@ Real-install probe 2026-07-18:
 * `WhiterunExterior17` (5,-4) -> CELL water detected, one plane rendered with terrain.
 * Same water cell, 120 frames @ 1280x720 -> avg 1.13 ms, p95 2.06 ms; 33.33 ms gate passed.
 
-Both images are engine output from read-only external game input:
-
-![Tamriel target under procedural sky](/img/m3-sky-target.png)
-
-![WhiterunExterior17 water surface](/img/m3-water-whiterun-exterior17.png)
+Both checks use engine output from read-only external game input; captures stay local.

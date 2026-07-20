@@ -21,10 +21,13 @@ struct OffscreenBenchResultTests {
     func percentileIsOrderIndependent() {
         let result = OffscreenBenchResult(
             frameMS: [30, 10, 50, 20, 40],
-            windowSummaries: []
+            windowSummaries: [],
+            animationMS: [3, 1, 5, 2, 4]
         )
         #expect(result.percentileMS(95) == 50)
         #expect(abs(result.averageMS - 30) < 1e-9)
+        #expect(result.animationPercentileMS(95) == 5)
+        #expect(abs(result.animationAverageMS - 3) < 1e-9)
     }
 
     @Test
@@ -35,5 +38,7 @@ struct OffscreenBenchResultTests {
         let empty = OffscreenBenchResult(frameMS: [], windowSummaries: [])
         #expect(empty.percentileMS(95) == 0)
         #expect(empty.averageMS == 0)
+        #expect(empty.animationPercentileMS(95) == 0)
+        #expect(empty.animationAverageMS == 0)
     }
 }

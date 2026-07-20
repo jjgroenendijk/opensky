@@ -62,12 +62,14 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   collide-and-slide, slope/ceiling response, bounded stairs, door pose reset.
 * [Static collision world](/engine/collision-world.md) - per-cell placed bhk shapes,
   immutable BVH broadphase, serial build/cache confinement, streaming lifetime + budgets.
+* [Actor idle animation](/engine/actor-animation.md) - HKX idle sampling, skeleton-world
+  pose composition, NIF palette refresh, streamed lifetime, fallback accounting + budget.
 
 ## Rendering
 
-* [Metal 4 mesh renderer](/rendering/metal4-renderer.md) - static + bind-pose skinned
-  paths: pipeline variants, uniform rings, argument tables, counter-heap frame
-  stats, offscreen render, scene types.
+* [Metal 4 mesh renderer](/rendering/metal4-renderer.md) - static + animated skinned paths:
+  pipeline variants, uniform/palette rings, argument tables, counter-heap frame stats,
+  offscreen render, scene types.
 
 ## Decisions
 
@@ -91,4 +93,4 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 * [Testing setup](/testing.md) - test targets, make entrypoints, headless
   unit-test host, fixture policy.
-* [Roadmap](/todo.md) - milestone history, active M6 work, tooling, future direction.
+* [Roadmap](/todo.md) - milestone history, active work, tooling, future direction.

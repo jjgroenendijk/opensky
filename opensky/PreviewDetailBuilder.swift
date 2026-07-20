@@ -128,7 +128,10 @@ final class PreviewDetailBuilder {
                 textureProvider: textures.provider
             )
         else {
-            return Detail(text: text + "\n[WARNING] no preview image: upload failed", image: nil)
+            return Detail(
+                text: text + "\n[WARNING] no preview image: GPU transfer failed",
+                image: nil
+            )
         }
         let scene = RenderScene(instances: [
             RenderPlacement(model: model, transform: matrix_identity_float4x4)

@@ -70,9 +70,6 @@ final class Renderer: NSObject {
 
     /// Near/far at Skyrim scale per docs/decisions/coordinates.md: near 10
     /// units (~14 cm; below ~1 unit destroys depth precision), far 16 cells.
-    static let nearPlane: Float = 10
-    static let farPlane: Float = 65536
-
     let device: MTLDevice
     let commandQueue: MTL4CommandQueue
     let commandBuffer: MTL4CommandBuffer
@@ -117,6 +114,9 @@ final class Renderer: NSObject {
     var onFrame: ((SIMD3<Float>) -> Void)?
     /// CACurrentMediaTime of the previous `draw(in:)`, for real delta time.
     var lastUpdateTime: CFTimeInterval?
+    var animationTime: Float = 0
+    var lastAnimationWallTime: CFTimeInterval?
+    var lastAnimationUpdateMS = 0.0
     let frameUniformBuffer: MTLBuffer
     /// Per-draw ring: maxFramesInFlight slots x drawUniformSlotCapacity
     /// aligned entries. Replaced (regrown) by setScene when a new scene's

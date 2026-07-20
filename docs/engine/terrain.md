@@ -144,7 +144,6 @@ slots. Visual result: terrain is continuous under Whiterun's M2 walls and houses
 oblique framing and a steep top-down angle (temporary `eyeDirection` override, reverted, not
 committed) — no visible height cracks or gaps at any of the internal cell borders, matching
 the [LAND edge-overlap probe](/formats/land.md) finding that shared edges match exactly.
-Screenshot: [terrain-3x3-whiterun.png](/img/terrain-3x3-whiterun.png) (default framing,
-`--zoom 2.2`).
+Default framing used `--zoom 2.2`; generated captures stay local.
 
 3.1 verify item closed — see `docs/log.md`.
