@@ -55,6 +55,9 @@ milestone leaves this file; history lives in `docs/log.md` + git.
   (ffmpeg LGPL), M8.2 game wiring, M8.3 voice + lips. Gates: 8.1.3 / 8.2.3 / 8.3.3.
 * M9 — game UI, native-first hybrid (planned 2026-07-20): M9.1 HUD, M9.2 menus, M9.3
   vanilla fonts via SWF extraction. Gates: 9.1.3 / 9.2.3 / 9.3.2.
+* M10+ — toward playable (direction, decided 2026-07-20): gameplay-first order,
+  behavior-graph locomotion, native saves + read-only .ess import. Numbered re-scope
+  at the M9 gate.
 
 ## Milestone 6 — actors animate (idle playback)
 
@@ -214,6 +217,45 @@ Scaleform playback not planned. Record as `decisions/ui-approach.md` at M9.1.1.
       movie playback.
 * [ ] 9.3.2 Acceptance: HUD + journal render with vanilla glyphs, system-font
       fallback kept; docs updated; next milestone scoped.
+
+## Milestone 10+ — toward playable (direction only)
+
+Gap analysis + decisions 2026-07-20; re-scope into numbered milestones with gates at
+the M9 gate (9.3.2). Full decision docs land with first impl items.
+
+Decisions made:
+
+* Locomotion: reimplement Havok Behavior graphs (hkbBehaviorGraph evaluation of
+  vanilla `behaviors/*.hkx`) over a native animation state machine -> exact vanilla
+  movement feel + animation-mod compat. Massive RE effort, thin public docs
+  (hkxparse/HKX2Library lineage, ZeldaMods Havok wiki); expect multiple
+  sub-milestones, probe-driven like M6.
+* Saves: OpenSky-native versioned save format (documented in `docs/`) as primary;
+  later read-only `.ess` import for migration (UESP documents the save layout).
+  Never `.ess` write — runtime state model stays ours.
+* Order: gameplay-first — visible playability before the persistence core. Accepted
+  cost: save/load change-tracking retrofit across systems built before it.
+
+Candidate order (each line roughly one milestone; shared-runtime items scheduled
+just-in-time before their first consumer):
+
+* Inventory + items: pickup, containers, equipping on the actor model, weight,
+  gold, barter.
+* Locomotion: behavior-graph playback (walk/run/jump/sneak/swim), player movement
+  parity over M4 walk mode, first-person camera + arms.
+* Combat: actor values (health/magicka/stamina + regen), melee/archery hit
+  detection, damage, blocking, death.
+* Shared runtime (before AI/dialogue): CTDA condition evaluator (dialogue, perks,
+  packages, leveled lists all consume it), game clock/calendar, GLOB globals.
+* AI: NAVM navmesh decode, pathfinding, packages/schedules, detection/stealth,
+  combat AI.
+* Dialogue + scenes: DIAL/INFO topic trees, dialogue UI/camera, voice via M8.3.
+* Save/load: native format + change tracking engine-wide; `.ess` import after.
+* Magic (MGEF/SPEL/ENCH), perks/leveling, crime/factions/services, locks/traps.
+* World/render track (parallel-friendly): shadows, data-driven weather (WTHR/CLMT),
+  grass (GRAS) + flora, particles/decals, ragdolls + projectiles.
+* Meta: main menu/new-game/chargen flow, settings persistence, key rebinding,
+  map UI (world + local).
 
 ## Tooling / meta / open questions
 
