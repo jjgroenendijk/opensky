@@ -4,6 +4,14 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-20
 
+* M10+ direction recorded in [todo](/todo.md) from playability gap analysis. Decisions:
+  locomotion via Havok Behavior graph reimplementation (exact vanilla movement +
+  anim-mod compat; accepted as major RE effort) over native state machine; saves =
+  OpenSky-native versioned format + later read-only .ess import, never .ess write;
+  milestone order gameplay-first (inventory -> locomotion -> combat -> shared runtime
+  -> AI -> dialogue -> save/load), accepting persistence retrofit cost. Candidate
+  milestone list incl. render track (shadows, weather, grass, particles, ragdolls)
+  * meta (menus/chargen/map). Numbered re-scope deferred to the M9 gate.
 * Metal shader tooling decided ([decision](/decisions/metal-tooling.md)): clang-format
   (via `xcrun`, config `tools/format/.clang-format`) formats `.metal` through
   `make format`/`format-check` + pre-commit hook `35-metal-format.sh`; linter =
