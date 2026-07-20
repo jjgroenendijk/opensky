@@ -101,6 +101,9 @@ Implementation notes:
   flat concat of each scene's opaque/alpha-tested/terrain draw lists — draw items
   already carry absolute world matrices, so no re-transform) and unions the 9 bounds
   boxes before framing. LOD bounds stay excluded so distant mountains do not shrink target.
+  The LOD pass hides only cells actually built: hiding the whole 5x5 while building one
+  cell (no `--neighbors`) left a 24-cell ring with neither terrain nor LOD — sky showed
+  through the gap around the target cell.
 * `lod` is M3.4 repeatable clean-room probe. It validates all LOD-specific NIF blocks +
   flattens each file without GPU upload. Vanilla Tamriel: 3,060 BTR + 717 BTO, 0 failed.
 * `bench --fly-path` uses shared `CellStreamingFlyBenchmark` engine logic, not a CLI-only
