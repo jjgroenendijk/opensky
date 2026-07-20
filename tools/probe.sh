@@ -101,6 +101,26 @@ awk '/^--- hkx idle/{f=1;next} /^--- /{f=0} f' "$log" \
   | grep -q 'hkaSplineCompressedAnimation' \
   || fail "hkx idle missing hkaSplineCompressedAnimation class"
 
+# M6.2 hkaSkeleton gate: decode the human rig skeleton.hkx (bone names, parent
+# chain, roots) + name-map it onto skeleton.nif. The rig must report 99 bones;
+# the map must match 93 of 99 (6 HKX-only control/attach bones, 6 NIF-only
+# nodes); every unmatched line must carry a reason tag (" -> "). Keys
+# single-quoted so backslashes + spaces reach the CLI verbatim (VFS keys).
+run "skeleton rig name-map" skeleton \
+  'meshes\actors\character\character assets\skeleton.hkx' \
+  --nif 'meshes\actors\character\character assets\skeleton.nif'
+skeleton_map="$(awk '/^--- skeleton rig name-map/{f=1;next} /^--- /{f=0} f' "$log")"
+printf '%s\n' "$skeleton_map" | grep -q 'skeleton 0 "NPC Root \[Root\]": 99 bones' \
+  || fail "skeleton rig not 99 bones"
+printf '%s\n' "$skeleton_map" | grep -q '93 of 99 matched' \
+  || fail "skeleton name-map not 93 of 99 matched"
+unmatched="$(printf '%s\n' "$skeleton_map" | grep 'unmatched ' || true)"
+[ -n "$unmatched" ] || fail "skeleton name-map reported no mismatches"
+missing_reason="$(printf '%s\n' "$unmatched" | grep -vc ' -> ' || true)"
+[ "$missing_reason" -eq 0 ] \
+  || fail "skeleton name-map has $missing_reason mismatch lines without a reason tag"
+echo "[ OK ] skeleton name-map (99-bone rig, 93/99 matched, all mismatches reason-tagged)"
+
 # Offscreen screenshot of the first-render cell -> logs/probe-screenshot.png.
 png="$log_dir/probe-screenshot.png"
 run "offscreen screenshot" screenshot --out "$png"

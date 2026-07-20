@@ -37,6 +37,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   masking), FaceGen path convention + actor GPU assembly.
 * [HKX packfile container](/formats/hkx-container.md) - Havok hk_2010 packfile
   header, section + fixup tables, class-name inventory, object enumeration.
+* [hkaSkeleton object](/formats/hka-skeleton.md) - bone names, parent indices,
+  reference pose decode + name-map onto the NIF skeleton nodes skinning uses.
 
 ## Engine
 
