@@ -52,6 +52,7 @@ only where `--out` points (AGENTS.md Legal & IP).
 | `dds <key>` | header + mip chain (size, BCn format, sRGB declaration) |
 | `hkx <key>` | Havok packfile container: header (version string, fileVersion, pointer size, section count, resolved root class), section table (name, data start/size, local/global/virtual fixup counts), class-name table (signature hex + name), object inventory (total, per-class histogram, first 8 offset/class rows + truncation count); unresolved root class warns on stderr |
 | `skeleton <hkx-key> [--nif <nif-key>]` | decode every hkaSkeleton in a Havok packfile: per object name, bone count, root count, first 12 bones with parent index; `--nif` name-maps the rig (most bones) onto the NIF skeleton NiNode names — `M of N matched` plus one reason-tagged `unmatched hkx bone`/`unmatched nif node` line per mismatch, both directions |
+| `animation <hkx-key>` | decode every hkaSplineCompressedAnimation + matching hkaAnimationBinding, sample every stored frame as bone-indexed local transforms, report frame/track/block/mapping counts + max translation/scale + normalized-quaternion range; malformed/unbound/non-finite/unbounded sample exits 1 |
 | `lod [--worldspace edid]` | parse lodsettings + sweep every worldspace BTR/BTO through LOD block decoders + scene flattener; any failed container exits 1 |
 | `screenshot --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f] [--time-of-day 0-24] [--neighbors]` | cell scene build + distant LOD -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load/LOD/draw stats + non-background fraction; `--zoom` (0.1-10) moves eye toward framed center; `--time-of-day` controls procedural sky (default 13); `--neighbors` builds production-size 5x5 (shared libraries) and frames full-cell bounds only; missing cell warns + skips; `render` is identical alias |
 | `bench [--worldspace/--x/--y] [--size WxH] [--frames n] [--budget-ms f]` | sustained offscreen render (default 360 frames @ 1280x720) through `Renderer.renderOffscreenSustained` — FrameStats windows + per-frame wall times; prints avg/p95/max + fps, exit 1 when avg or p95 misses the budget (default 33.33 ms = 30 fps, todo 2.11 gate) |
@@ -119,6 +120,13 @@ Implementation notes:
   failure (typed `HKASkeletonError`) or unreadable key exits 1. Only the largest
   skeleton (the rig) is mapped — the ragdoll is physics, not the mesh bind skeleton.
   See [hkaSkeleton](/formats/hka-skeleton.md).
+* `animation` is M6.3's idle-track probe. Shared
+  `HKASplineCompressedAnimation.animations(in:)` decodes Havok 2010 spline blocks;
+  `HKAAnimationBinding.bindings(in:)` resolves each track to a skeleton bone (empty map =
+  identity); `boneLocalTransforms(at:binding:)` samples all transforms. CLI evaluates every
+  stored frame, so missing binding, typed metadata/block/quantization/spline errors, or
+  non-finite/unbounded transforms exit 1. See
+  [hkaSplineCompressedAnimation](/formats/hka-animation.md).
 * `bench --fly-path` uses shared `CellStreamingFlyBenchmark` engine logic, not a CLI-only
   model. It drives production serial build runner, streamer, renderer scene swaps, asset
   eviction, and `task_vm_info.phys_footprint` sampler. Waypoints move one cell east, then
@@ -150,7 +158,9 @@ summary; `actor` requires zero unresolved ACHR template+visual chains in the def
 `collision --radius 2` gates placed 5x5 collision; `nif`/`dds` inspect first listed
 assets; `hkx` dumps the container inventory for `skeleton.hkx` (must show
 `hk_2010.2.0-r1`, `__classnames__`/`__data__` sections, an `hkaSkeleton` class) and a
-human idle `.hkx` (must show `hkaSplineCompressedAnimation`); `skeleton` decodes the
+human idle `.hkx` (must show `hkaSplineCompressedAnimation`); `animation` decodes
+male `mt_idle.hkx` + samples all 275 frames x 99 tracks over full duration (M6.3 gate:
+99-sample identity bone mapping, finite + bounded); `skeleton` decodes the
 human rig `skeleton.hkx` name-mapped onto `skeleton.nif` (M6.2 gate: rig reports 99
 bones, name-map 93 of 99 matched, every mismatch line reason-tagged); `screenshot` writes
 `logs/probe-screenshot.png`; `interior` verifies one door round trip + writes

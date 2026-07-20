@@ -4,6 +4,25 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-20
 
+* M6.3 idle clip decode complete -- `HKASplineCompressedAnimation` parses Havok 2010
+  hkaAnimation/hkaSplineCompressedAnimation metadata + hkArray/fixup block tables;
+  `HKASplineBlock` decodes transform masks, identity/static lanes, u16-quantized vector
+  splines, 40-bit omitted-largest quaternions, degree-1/3 B-splines -> `HKABonePose` local
+  transforms. `HKAAnimationBinding` resolves track order to bone indices; verified idle
+  binding names `NPC Root [Root]`, uses empty-map identity for all 99 tracks, maps four
+  float tracks to slots 4...7. Decoder is defensive/typed: metadata/table/block bounds,
+  exact transform-region closure, supported quantization only, spline degree/knots/bounds,
+  finite + 1e6-bounded outputs; sampled quaternions normalize. Layout from open parsers
+  (exyorha/hkxparse MIT, ret2end/HKX2Library MIT, PredatorCZ/HavokLib GPLv3),
+  probe-verified on male mt_idle.hkx: hkaSplineCompressedAnimation type 5, 275 frames /
+  9.133333 s, 99 transform + 4 float tracks, two blocks whose decode cursors close at
+  20,552 + 4,216 transform bytes. New `openskycli animation <hkx>` resolves binding, then
+  samples all 275 x 99 bone-indexed transforms over full duration; real gate passed with
+  max translation 121, max scale 1,
+  quaternion norms 0.9999999...1.0000001, no NaN/inf/bound failure. Synthetic
+  `HKASplineAnimationTests` cover linear/static/identity sampling + malformed axes. Docs:
+  [hkaSplineCompressedAnimation](/formats/hka-animation.md), [CLI](/tools/cli.md). Item 6.3
+  left [todo](/todo.md).
 * World/render track promoted to Milestone 7 with full numbered plan in
   [todo](/todo.md) (user priority): M7.1 sun shadows (cascaded maps), M7.2
   data-driven weather (WTHR/CLMT/REGN), M7.3 grass (GRAS), M7.4 particles + effect

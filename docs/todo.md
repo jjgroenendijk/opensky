@@ -74,10 +74,6 @@ probe (6.1, [hkx-container](/formats/hkx-container.md)): hk_2010.2.0-r1, fileVer
 leads: hkxparse/HKX2Library open parsers, ZeldaMods Havok wiki; confirm by probe at
 impl, flag deviations.
 
-* [ ] 6.3 Idle clip decode: hkaAnimation track data for one idle clip
-      (spline-compressed animation expected — probe + document actual class), output
-      per-bone local-transform samples. Gate: real idle clip decodes to bounded,
-      NaN-free transforms over full duration; synthetic decode tests.
 * [ ] 6.4 Pose sampling + palette update: sample clip at frame time -> compose world
       bone matrices -> refresh skinning palette each frame, replacing the static bind
       palette. Gate: offscreen frames at two clip times differ for an animated actor,
