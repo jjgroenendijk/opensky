@@ -67,7 +67,7 @@ nonisolated struct MeshSkinning {
 nonisolated struct Model {
     let meshes: [Mesh]
     let materials: [Material]
-    /// Shapes dropped during flatten (skinned or empty) — surfaced so scene
+    /// Shapes dropped during flatten (unsupported or empty) — surfaced so scene
     /// build (todo 2.7) can report skips instead of silently thinning
     /// geometry.
     let skippedShapeCount: Int

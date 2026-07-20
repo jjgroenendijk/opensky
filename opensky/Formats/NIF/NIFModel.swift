@@ -80,6 +80,8 @@ nonisolated extension NIFFile {
             defer { pathStack.remove(index) }
 
             let block = file.blocks[index]
+            let isShape = ["BSTriShape", "BSSubIndexTriShape", "BSDynamicTriShape"]
+                .contains(block.typeName)
             if NIFNode.traversedTypes.contains(block.typeName) {
                 let node: NIFNode
                 if block.typeName == "BSMultiBoundNode" {
@@ -98,21 +100,29 @@ nonisolated extension NIFFile {
                 for child in node.children {
                     try visit(ref: child, parent: world, depth: depth + 1)
                 }
-            } else if block.typeName == "BSTriShape" || block.typeName == "BSSubIndexTriShape" {
+            } else if isShape {
                 try appendShape(block: block, parent: parent)
             }
             // Any other type is a leaf we do not draw (collision, shader
-            // properties, controllers, BSDynamicTriShape…): subtree ends.
+            // properties, controllers…): subtree ends.
         }
 
         private mutating func appendShape(
             block: NIFFile.Block,
             parent: float4x4
         ) throws {
-            let shape = try block.typeName == "BSSubIndexTriShape"
-                ? NIFSubIndexTriShape(data: block.data, header: file.header).shape
-                : NIFTriShape(data: block.data, header: file.header)
-            let geometry = try resolveGeometry(shape: shape)
+            let shape: NIFTriShape = switch block.typeName {
+            case "BSSubIndexTriShape":
+                try NIFSubIndexTriShape(data: block.data, header: file.header).shape
+            case "BSDynamicTriShape":
+                try NIFDynamicTriShape(data: block.data, header: file.header).shape
+            default:
+                try NIFTriShape(data: block.data, header: file.header)
+            }
+            let geometry = try resolveGeometry(
+                shape: shape,
+                usesNodeReferencePose: block.typeName == "BSDynamicTriShape"
+            )
             guard !geometry.positions.isEmpty, !geometry.indices.isEmpty else {
                 skippedShapeCount += 1
                 return
@@ -157,7 +167,10 @@ nonisolated extension NIFFile {
             let skinning: MeshSkinning?
         }
 
-        private func resolveGeometry(shape: NIFTriShape) throws -> ShapeGeometry {
+        private func resolveGeometry(
+            shape: NIFTriShape,
+            usesNodeReferencePose: Bool
+        ) throws -> ShapeGeometry {
             guard shape.skinRef >= 0 else {
                 return ShapeGeometry(
                     positions: shape.positions,
@@ -170,18 +183,22 @@ nonisolated extension NIFFile {
                     skinning: nil
                 )
             }
-            return try resolveSkinnedGeometry(shape: shape)
+            return try resolveSkinnedGeometry(
+                shape: shape,
+                usesNodeReferencePose: usesNodeReferencePose
+            )
         }
     }
 }
 
-extension NIFFile.Flattener {
+nonisolated extension NIFFile.Flattener {
     /// Gamebryo bind formula:
     /// rootParentToSkin * currentBoneToRootParent * skinToBoneBind.
     /// Reference: NifTools nif.xml block layouts + public Gamebryo
     /// NiSkinInstance help, cited in docs/formats/nif.md.
     private func resolveSkinnedGeometry(
-        shape: NIFTriShape
+        shape: NIFTriShape,
+        usesNodeReferencePose: Bool
     ) throws -> ShapeGeometry {
         let instanceBlock = try block(at: Int(shape.skinRef))
         guard
@@ -202,31 +219,38 @@ extension NIFFile.Flattener {
         let skinData = try NIFSkinData(data: dataBlock.data)
         let partition = try NIFSkinPartition(
             data: partitionBlock.data,
-            header: file.header
+            header: file.header,
+            shapeVertexCount: shape.vertexCount > 0 ? shape.vertexCount : nil
         )
         guard skinData.bones.count == instance.boneRefs.count else {
             throw NIFError.malformed("skin data/instance bone counts differ")
         }
 
-        let arrays = shape.positions.isEmpty
-            ? partition.vertices : NIFTriShape.VertexArrays(
-                positions: shape.positions,
-                uvs: shape.uvs,
-                normals: shape.normals,
-                tangents: shape.tangents,
-                bitangents: shape.bitangents,
-                colors: shape.colors,
-                boneWeights: shape.boneWeights,
-                boneIndices: shape.boneIndices
-            )
+        // BSDynamicTriShape keeps positions in its appended Vector4 array,
+        // while FaceGen's NiSkinPartition top-level stream keeps UVs,
+        // normals, colors, and influences with the vertex bit clear.
+        // Ordinary skinned BSTriShape keeps every array in the partition.
+        let stored = partition.vertices
+        let arrays = NIFTriShape.VertexArrays(
+            positions: shape.positions.isEmpty ? stored.positions : shape.positions,
+            uvs: shape.uvs.isEmpty ? stored.uvs : shape.uvs,
+            normals: shape.normals.isEmpty ? stored.normals : shape.normals,
+            tangents: shape.tangents.isEmpty ? stored.tangents : shape.tangents,
+            bitangents: shape.bitangents.isEmpty ? stored.bitangents : shape.bitangents,
+            colors: shape.colors.isEmpty ? stored.colors : shape.colors,
+            boneWeights: shape.boneWeights.isEmpty
+                ? stored.boneWeights : shape.boneWeights,
+            boneIndices: shape.boneIndices.isEmpty
+                ? stored.boneIndices : shape.boneIndices
+        )
         let triangles = shape.indices.isEmpty
             ? partition.partitions.flatMap(\.triangleIndices) : shape.indices
         let skinning = try resolveSkinning(
-            arrays: arrays,
-            triangles: triangles,
+            geometry: (arrays, triangles),
             partition: partition,
             instance: instance,
-            data: skinData
+            data: skinData,
+            usesNodeReferencePose: usesNodeReferencePose
         )
         return ShapeGeometry(
             positions: arrays.positions,
@@ -241,24 +265,31 @@ extension NIFFile.Flattener {
     }
 
     private func resolveSkinning(
-        arrays: NIFTriShape.VertexArrays,
-        triangles: [UInt16],
+        geometry: (arrays: NIFTriShape.VertexArrays, triangles: [UInt16]),
         partition: NIFSkinPartition,
         instance: NIFSkinInstance,
-        data: NIFSkinData
+        data: NIFSkinData,
+        usesNodeReferencePose: Bool
     ) throws -> MeshSkinning {
+        let arrays = geometry.arrays
+        let triangles = geometry.triangles
         let vertexCount = arrays.positions.count
-        guard
-            arrays.boneWeights.count == vertexCount,
-            arrays.boneIndices.count == vertexCount
-        else {
-            throw NIFError.malformed("skinned vertex stream lacks four influences")
-        }
         var remapped = [SIMD4<UInt16>?](repeating: nil, count: vertexCount)
+        var resolvedWeights = [SIMD4<Float>?](repeating: nil, count: vertexCount)
+        let hasGlobalInfluences = arrays.boneWeights.count == vertexCount
+            && arrays.boneIndices.count == vertexCount
         for submesh in partition.partitions {
+            let hasLocalInfluences = submesh.vertexWeights.count == submesh.vertexMap.count
+                && submesh.boneIndices.count == submesh.vertexMap.count
+            guard hasGlobalInfluences || hasLocalInfluences else {
+                throw NIFError.malformed("skinned vertex stream lacks four influences")
+            }
             for (local, globalIndex) in submesh.vertexMap.enumerated() {
                 let global = Int(globalIndex)
-                let source = arrays.boneIndices[global]
+                let source = hasGlobalInfluences
+                    ? arrays.boneIndices[global] : submesh.boneIndices[local]
+                let weights = hasGlobalInfluences
+                    ? arrays.boneWeights[global] : submesh.vertexWeights[local]
                 var mapped = SIMD4<UInt16>.zero
                 for influence in 0 ..< 4 {
                     let paletteIndex = Int(source[influence])
@@ -276,19 +307,25 @@ extension NIFFile.Flattener {
                         "shared skin vertex uses different partition palettes"
                     )
                 }
+                if let prior = resolvedWeights[global], prior != weights {
+                    throw NIFError.unsupported(
+                        "shared skin vertex uses different partition weights"
+                    )
+                }
                 remapped[global] = mapped
-                // Partition arrays duplicate top-level hardware data.
-                // Reading them above proves their layout; global stream
-                // remains source of truth for one GPU vertex buffer.
-                _ = local
+                resolvedWeights[global] = weights
             }
         }
         guard triangles.allSatisfy({ remapped[Int($0)] != nil }) else {
             throw NIFError.malformed("drawn skin vertex is absent from partition maps")
         }
         let resolvedIndices = remapped.map { $0 ?? .zero }
-        let weights = try arrays.boneWeights.map(Self.normalizedWeights)
-        let matrices = try bindPoseMatrices(instance: instance, data: data)
+        let weights = try resolvedWeights.map { try Self.normalizedWeights($0 ?? .zero) }
+        let matrices = try bindPoseMatrices(
+            instance: instance,
+            data: data,
+            usesNodeReferencePose: usesNodeReferencePose
+        )
         return MeshSkinning(
             weights: weights,
             boneIndices: resolvedIndices,
@@ -306,7 +343,8 @@ extension NIFFile.Flattener {
 
     private func bindPoseMatrices(
         instance: NIFSkinInstance,
-        data: NIFSkinData
+        data: NIFSkinData,
+        usesNodeReferencePose: Bool
     ) throws -> [float4x4] {
         guard
             instance.skeletonRootRef >= 0,
@@ -316,14 +354,16 @@ extension NIFFile.Flattener {
             throw NIFError.malformed("skin skeleton root is unresolved or singular")
         }
         return try zip(instance.boneRefs, data.bones).map { boneRef, bone in
+            guard boneRef >= 0 else {
+                throw NIFError.malformed("skin bone node is unresolved")
+            }
+            let index = Int(boneRef)
             guard
-                boneRef >= 0,
-                hierarchy.worldTransforms[Int(boneRef)] != nil,
+                let nodeBoneToRootParent = hierarchy.worldTransforms[index],
                 abs(bone.skinToBone.matrix.determinant) > .ulpOfOne
             else {
                 throw NIFError.malformed("skin bone node is unresolved")
             }
-            let index = Int(boneRef)
             if let skeleton {
                 guard
                     let name = hierarchy.names[index],
@@ -332,12 +372,15 @@ extension NIFFile.Flattener {
                     throw NIFError.malformed("skin bone is absent from skeleton")
                 }
             }
-            // Bind-only current pose comes from this skin's inverse-bind
-            // data. Vanilla body dummy nodes omit translations; external
-            // skeleton resolves/validates bone identities, but its ref
-            // pose may differ from this mesh's authored bind pose.
-            let currentBoneToRootParent = data.rootParentToSkin.matrix.inverse
-                * bone.skinToBone.matrix.inverse
+            // FaceGen dynamic shapes keep some parts (notably mouth) in bone
+            // space; their own NPC Head/Spine nodes carry current pose.
+            // Ordinary body positions are already authored in bind space;
+            // reconstructing current from inverse-bind preserves them.
+            let currentBoneToRootParent = if usesNodeReferencePose {
+                nodeBoneToRootParent
+            } else {
+                data.rootParentToSkin.matrix.inverse * bone.skinToBone.matrix.inverse
+            }
             return data.rootParentToSkin.matrix
                 * currentBoneToRootParent
                 * bone.skinToBone.matrix

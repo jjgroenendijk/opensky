@@ -52,6 +52,22 @@ struct NIFSkinTests {
         return try NIFFile(data: NIFFixture.file(blocks: blocks))
     }
 
+    private func skeleton(headTranslation: Float) throws -> NIFSkeleton {
+        try NIFSkeleton(file: NIFFile(data: NIFFixture.file(
+            blocks: [
+                .init("NiNode", NIFFixture.niNode(
+                    prefix: NIFFixture.avObjectPrefix(nameIndex: 0),
+                    children: [1]
+                )),
+                .init("NiNode", NIFFixture.niNode(prefix: NIFFixture.avObjectPrefix(
+                    nameIndex: 1,
+                    translation: SIMD3(headTranslation, 0, 0)
+                )))
+            ],
+            strings: ["Root", "Head"]
+        )))
+    }
+
     @Test func decodesInstanceDataAndPartition() throws {
         let file = try fixture()
         let instance = try NIFSkinInstance(data: file.blocks[3].data, isDismember: true)
@@ -122,6 +138,109 @@ struct NIFSkinTests {
             min: SIMD3(0, 0, 0),
             max: SIMD3(100, 100, 0)
         ))
+    }
+
+    @Test func flattensDynamicShapeWithPartitionLocalInfluences() throws {
+        let records = Self.positions.map { NIFFixture.skinnedVertex(position: $0) }
+        let inherited = NIFFixture.bsTriShape(
+            skinRef: 3,
+            attributes: Self.attributes,
+            strideDwords: 8,
+            vertexCountOverride: Self.positions.count
+        )
+        let blocks: [NIFFixture.Block] = [
+            .init("NiNode", NIFFixture.niNode(
+                prefix: NIFFixture.avObjectPrefix(nameIndex: 0),
+                children: [1, 2]
+            )),
+            .init("NiNode", NIFFixture.niNode(prefix: NIFFixture.avObjectPrefix(
+                nameIndex: 1,
+                translation: SIMD3(10, 0, 0)
+            ))),
+            .init("BSDynamicTriShape", NIFFixture.bsDynamicTriShape(
+                inherited: inherited,
+                positions: Self.positions
+            )),
+            .init("NiSkinInstance", NIFFixture.skinInstance(
+                dataRef: 4,
+                partitionRef: 5,
+                skeletonRootRef: 0,
+                boneRefs: [1]
+            )),
+            .init("NiSkinData", NIFFixture.skinData(
+                boneTransforms: [NIFFixture.niTransform()],
+                vertexWeights: [[]]
+            )),
+            .init("NiSkinPartition", NIFFixture.skinPartition(
+                vertexRecords: records,
+                topLevelVertexRecords: [],
+                triangles: [0, 1, 2],
+                bonePalette: [0],
+                weights: Array(repeating: SIMD4(1, 0, 0, 0), count: 3),
+                boneIndices: Array(repeating: .zero, count: 3)
+            ))
+        ]
+
+        let externalSkeleton = try skeleton(headTranslation: 20)
+        let model = try NIFFile(data: NIFFixture.file(
+            blocks: blocks,
+            strings: ["Root", "Head"]
+        )).model(skeleton: externalSkeleton)
+        let mesh = try #require(model.meshes.first)
+        let skinning = try #require(mesh.skinning)
+
+        #expect(mesh.positions == Self.positions)
+        #expect(mesh.indices == [0, 1, 2])
+        #expect(skinning.weights == Array(repeating: SIMD4(1, 0, 0, 0), count: 3))
+        #expect(skinning.boneIndices == Array(repeating: .zero, count: 3))
+        #expect(skinning.bindPoseMatrices[0].columns.3 == SIMD4(10, 0, 0, 1))
+    }
+
+    @Test func mergesDynamicPositionsWithPartitionAttributes() throws {
+        let attributes: UInt16 = 0x4A // uvs|normals|skinned; position is dynamic
+        let uvs = [SIMD2<Float>(0, 0), SIMD2<Float>(1, 0), SIMD2<Float>(0, 1)]
+        let records = uvs.map { NIFFixture.dynamicSkinAttributesVertex(uv: $0) }
+        let inherited = NIFFixture.bsTriShape(
+            skinRef: 3,
+            attributes: attributes,
+            strideDwords: 5,
+            vertexCountOverride: Self.positions.count
+        )
+        let blocks: [NIFFixture.Block] = [
+            .init("NiNode", NIFFixture.niNode(children: [1, 2])),
+            .init("NiNode", NIFFixture.niNode()),
+            .init("BSDynamicTriShape", NIFFixture.bsDynamicTriShape(
+                inherited: inherited,
+                positions: Self.positions
+            )),
+            .init("NiSkinInstance", NIFFixture.skinInstance(
+                dataRef: 4,
+                partitionRef: 5,
+                skeletonRootRef: 0,
+                boneRefs: [1]
+            )),
+            .init("NiSkinData", NIFFixture.skinData(
+                boneTransforms: [NIFFixture.niTransform()],
+                vertexWeights: [[]]
+            )),
+            .init("NiSkinPartition", NIFFixture.skinPartition(
+                vertexRecords: records,
+                triangles: [0, 1, 2],
+                bonePalette: [0],
+                weights: Array(repeating: SIMD4(1, 0, 0, 0), count: 3),
+                boneIndices: Array(repeating: .zero, count: 3),
+                attributes: attributes,
+                strideDwords: 5
+            ))
+        ]
+
+        let model = try NIFFile(data: NIFFixture.file(blocks: blocks)).model()
+        let mesh = try #require(model.meshes.first)
+
+        #expect(mesh.positions == Self.positions)
+        #expect(mesh.uvs == uvs)
+        #expect(mesh.normals.count == Self.positions.count)
+        #expect(mesh.skinning?.weights.count == Self.positions.count)
     }
 
     @Test func rejectsPaletteIndexOutsideBoneList() throws {

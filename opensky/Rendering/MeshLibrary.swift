@@ -79,7 +79,7 @@ nonisolated enum MeshLibraryError: Error, Equatable {
     case fileNotFound(path: String)
     /// NIF container/scene-graph parse or GPU upload failed.
     case parseFailed(path: String, reason: String)
-    /// Parsed fine but flattened to zero drawable meshes (all skinned/empty) —
+    /// Parsed fine but flattened to zero drawable meshes (unsupported/empty) —
     /// nothing to place, so the ref is dropped rather than drawn invisible.
     case emptyModel(path: String)
 }
@@ -89,7 +89,7 @@ nonisolated final class MeshLibrary {
     private let device: MTLDevice
     private let textures: TextureLibrary
     private var cache: [String: RenderModel] = [:]
-    /// Per-path count of shapes the flattener dropped (skinned or empty), so
+    /// Per-path count of shapes the flattener dropped (unsupported or empty), so
     /// scene build can report skips without re-parsing.
     private var skippedShapes: [String: Int] = [:]
     /// Model-space AABB per loaded path — captured at parse time because the
@@ -102,6 +102,7 @@ nonisolated final class MeshLibrary {
     private var touchedKeys: Set<String> = []
     private var cachedCharacterSkeleton: NIFSkeleton?
     private var triedCharacterSkeleton = false
+    private var actorSkeletons: [String: NIFSkeleton] = [:]
 
     /// Distinct mesh paths successfully parsed + uploaded.
     private(set) var loadedCount = 0
@@ -132,10 +133,16 @@ nonisolated final class MeshLibrary {
 
     private func loadModel(
         path: String,
-        terrainLODClipMask: TerrainLODClipMask?
+        terrainLODClipMask: TerrainLODClipMask?,
+        actorSkeleton: ActorSkeletonAsset? = nil,
+        explicitActorSkeleton: Bool = false
     ) throws -> RenderModel {
         let pathKey = try meshKey(for: path)
-        let key = cacheKey(path: pathKey, terrainLODClipMask: terrainLODClipMask)
+        let key = cacheKey(
+            path: pathKey,
+            terrainLODClipMask: terrainLODClipMask,
+            actorSkeletonKey: explicitActorSkeleton ? actorSkeleton?.pathKey ?? "none" : nil
+        )
         touchedKeys.insert(key)
         if let hit = cache[key] {
             textures.markTouched(modelTextureKeys[key] ?? [])
@@ -148,9 +155,14 @@ nonisolated final class MeshLibrary {
         let sourceModel: Model
         do {
             let file = try NIFFile(data: data)
-            let usesCharacterSkeleton = pathKey.hasPrefix("meshes\\actors\\character\\")
-                && file.blocks.contains { $0.typeName == "NiSkinData" }
-            let skeleton = usesCharacterSkeleton ? characterSkeleton() : nil
+            let skeleton: NIFSkeleton?
+            if explicitActorSkeleton {
+                skeleton = actorSkeleton?.skeleton
+            } else {
+                let usesCharacterSkeleton = pathKey.hasPrefix("meshes\\actors\\character\\")
+                    && file.blocks.contains { $0.typeName == "NiSkinData" }
+                skeleton = usesCharacterSkeleton ? characterSkeleton() : nil
+            }
             sourceModel = try file.model(skeleton: skeleton)
         } catch {
             throw MeshLibraryError.parseFailed(path: pathKey, reason: String(describing: error))
@@ -177,6 +189,53 @@ nonisolated final class MeshLibrary {
         modelBounds[key] = ModelBounds.containing(model: model)
         loadedCount += 1
         return render
+    }
+
+    func loadActorSkeleton(path: String) -> Result<ActorSkeletonAsset, ActorAssetFailure> {
+        let pathKey: String
+        do {
+            pathKey = try meshKey(for: path)
+        } catch {
+            return .failure(.missing)
+        }
+        if let skeleton = actorSkeletons[pathKey] {
+            return .success(ActorSkeletonAsset(pathKey: pathKey, skeleton: skeleton))
+        }
+        guard let data = try? fileSystem.contents(forPath: pathKey) else {
+            return .failure(.missing)
+        }
+        do {
+            let skeleton = try NIFSkeleton(file: NIFFile(data: data))
+            actorSkeletons[pathKey] = skeleton
+            return .success(ActorSkeletonAsset(pathKey: pathKey, skeleton: skeleton))
+        } catch {
+            return .failure(.invalid)
+        }
+    }
+
+    func loadActorModel(
+        path: String,
+        skeleton: ActorSkeletonAsset?
+    ) -> Result<ActorRenderAsset, ActorAssetFailure> {
+        do {
+            let model = try loadModel(
+                path: path,
+                terrainLODClipMask: nil,
+                actorSkeleton: skeleton,
+                explicitActorSkeleton: true
+            )
+            let pathKey = try meshKey(for: path)
+            let key = cacheKey(
+                path: pathKey,
+                terrainLODClipMask: nil,
+                actorSkeletonKey: skeleton?.pathKey ?? "none"
+            )
+            return .success(ActorRenderAsset(model: model, bounds: modelBounds[key]))
+        } catch MeshLibraryError.fileNotFound {
+            return .failure(.missing)
+        } catch {
+            return .failure(.invalid)
+        }
     }
 
     private func characterSkeleton() -> NIFSkeleton? {
@@ -293,9 +352,16 @@ nonisolated final class MeshLibrary {
 
     private func cacheKey(
         path: String,
-        terrainLODClipMask: TerrainLODClipMask?
+        terrainLODClipMask: TerrainLODClipMask?,
+        actorSkeletonKey: String? = nil
     ) -> String {
-        guard let terrainLODClipMask else { return path }
-        return path + "|terrain-lod:" + terrainLODClipMask.cacheKey
+        var key = path
+        if let terrainLODClipMask {
+            key += "|terrain-lod:" + terrainLODClipMask.cacheKey
+        }
+        if let actorSkeletonKey {
+            key += "|actor-skeleton:" + actorSkeletonKey
+        }
+        return key
     }
 }

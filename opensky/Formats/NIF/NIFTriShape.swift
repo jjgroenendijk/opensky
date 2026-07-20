@@ -39,11 +39,14 @@ nonisolated struct NIFTriShape {
     /// nif.xml NiBound: precomputed culling sphere in shape-local space.
     let boundingSphereCenter: SIMD3<Float>
     let boundingSphereRadius: Float
-    /// -1 = static geometry; >= 0 means skinned (skipped for M2).
+    /// -1 = static geometry; >= 0 links a skin instance.
     let skinRef: Int32
     let shaderPropertyRef: Int32
     let alphaPropertyRef: Int32
     let attributes: VertexAttributes
+    /// Header count retained even when Data Size is zero; BSDynamicTriShape
+    /// validates its appended Vector4 array against this value.
+    let vertexCount: Int
     let positions: [SIMD3<Float>]
     let uvs: [SIMD2<Float>]
     let normals: [SIMD3<Float>]
@@ -81,6 +84,7 @@ nonisolated struct NIFTriShape {
         let desc = try reader.readUInt64()
         let triangleCount = try Int(reader.readUInt16()) // ushort: BS < 130
         let vertexCount = try Int(reader.readUInt16())
+        self.vertexCount = vertexCount
         let dataSize = try Int(reader.readUInt32())
 
         let attributes = VertexAttributes(rawValue: UInt16((desc >> 44) & 0x7FF))
@@ -301,7 +305,9 @@ nonisolated struct NIFTriShape {
             readNormByte(&reader)
         )
     }
+}
 
+nonisolated extension NIFTriShape {
     /// RGBA bytes, each remapped to [0, 1].
     private static func readByteColor4(
         _ reader: inout BinaryReader
@@ -313,5 +319,27 @@ nonisolated struct NIFTriShape {
             Float(bytes[bytes.startIndex + 2]) / 255,
             Float(bytes[bytes.startIndex + 3]) / 255
         )
+    }
+
+    /// BSDynamicTriShape keeps its current positions in an appended Vector4
+    /// array. All other vertex attributes remain in inherited BSTriShape.
+    init(replacingPositions positions: [SIMD3<Float>], in source: NIFTriShape) {
+        object = source.object
+        boundingSphereCenter = source.boundingSphereCenter
+        boundingSphereRadius = source.boundingSphereRadius
+        skinRef = source.skinRef
+        shaderPropertyRef = source.shaderPropertyRef
+        alphaPropertyRef = source.alphaPropertyRef
+        attributes = source.attributes
+        vertexCount = source.vertexCount
+        self.positions = positions
+        uvs = source.uvs
+        normals = source.normals
+        tangents = source.tangents
+        bitangents = source.bitangents
+        colors = source.colors
+        boneWeights = source.boneWeights
+        boneIndices = source.boneIndices
+        indices = source.indices
     }
 }

@@ -58,16 +58,6 @@ mandatory, actor-enabled fly bench keeps explicit build/footprint/frame budgets.
 Format leads from UESP mod-file-format pages + xEdit definitions + NifTools `nif.xml`;
 byte-level layouts NOT yet verified — confirm by spec + probe at impl, flag deviations.
 
-### 5.4 Actor assembly
-
-* [ ] Compose one actor: race skeleton + visible skin parts + equipped outfit ARMA parts +
-      FaceGen head at ACHR world pose with XSCL scale. Missing parts degrade gracefully
-      with reason-tagged counters; a partial actor remains renderable when core body/head
-      policy allows it.
-* [ ] Acceptance: named Whiterun NPC composed + rendered offscreen at correct world
-      position, clothed under the deterministic M5 equipment policy; unit tests on assembly
-      selection (gender, inherited appearance, slot masking, missing-part).
-
 ### 5.5 Actor streaming integration
 
 * [ ] Actors build/evict with cells on the serial build queue like statics; persistent

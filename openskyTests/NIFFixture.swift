@@ -235,11 +235,33 @@ extension NIFFixture {
         return out
     }
 
+    /// BSVertexDataSSE record without the vertex lane. FaceGen dynamic
+    /// shapes put positions in their Vector4 tail, while NiSkinPartition
+    /// retains UV/normal/influence lanes under attributes 0x4A.
+    static func dynamicSkinAttributesVertex(
+        uv: SIMD2<Float>,
+        weights: SIMD4<Float> = SIMD4(1, 0, 0, 0),
+        boneIndices: SIMD4<UInt8> = .zero
+    ) -> Data {
+        var out = Data()
+        out.appendFloat16(uv.x)
+        out.appendFloat16(uv.y)
+        out.append(contentsOf: [128, 128, 255, 128]) // +Z normal + bitangent Y
+        for weight in [weights.x, weights.y, weights.z, weights.w] {
+            out.appendFloat16(weight)
+        }
+        out.append(contentsOf: [
+            boneIndices.x, boneIndices.y, boneIndices.z, boneIndices.w
+        ])
+        return out
+    }
+
     /// SSE NiSkinPartition with one unstripped hardware partition. `triangles`
     /// are both local faces + global triangle-copy indices because this
     /// fixture uses an identity vertex map.
     static func skinPartition(
         vertexRecords: [Data],
+        topLevelVertexRecords: [Data]? = nil,
         triangles: [UInt16],
         bonePalette: [UInt16],
         weights: [SIMD4<Float>],
@@ -249,13 +271,14 @@ extension NIFFixture {
     ) -> Data {
         precondition(vertexRecords.count == weights.count)
         precondition(vertexRecords.count == boneIndices.count)
+        let topLevelRecords = topLevelVertexRecords ?? vertexRecords
         let desc = UInt64(strideDwords & 0xF) | UInt64(attributes) << 44
         var out = Data()
         out.appendUInt32(1) // partition count
-        out.appendUInt32(UInt32(vertexRecords.reduce(0) { $0 + $1.count }))
+        out.appendUInt32(UInt32(topLevelRecords.reduce(0) { $0 + $1.count }))
         out.appendUInt32(UInt32(strideDwords * 4))
         out.appendUInt64(desc)
-        for vertex in vertexRecords {
+        for vertex in topLevelRecords {
             out.append(vertex)
         }
 
@@ -309,6 +332,7 @@ extension NIFFixture {
         attributes: UInt16,
         strideDwords: Int,
         vertexRecords: [Data] = [],
+        vertexCountOverride: Int? = nil,
         triangles: [UInt16] = [],
         dataSizeOverride: Int? = nil,
         particleData: Data = Data()
@@ -323,7 +347,7 @@ extension NIFFixture {
         out.appendUInt32(UInt32(bitPattern: alphaPropertyRef))
         out.appendUInt64(UInt64(strideDwords & 0xF) | UInt64(attributes) << 44)
         out.appendUInt16(UInt16(triangles.count / 3))
-        out.appendUInt16(UInt16(vertexRecords.count))
+        out.appendUInt16(UInt16(vertexCountOverride ?? vertexRecords.count))
         let dataSize = dataSizeOverride
             ?? vertexRecords.reduce(0) { $0 + $1.count } + triangles.count * 2
         out.appendUInt32(UInt32(dataSize))
@@ -335,6 +359,23 @@ extension NIFFixture {
         }
         out.appendUInt32(UInt32(particleData.count))
         out.append(particleData)
+        return out
+    }
+
+    /// BSDynamicTriShape appends byte size + one float4 per inherited vertex.
+    static func bsDynamicTriShape(
+        inherited: Data,
+        positions: [SIMD3<Float>],
+        byteCountOverride: Int? = nil
+    ) -> Data {
+        var out = inherited
+        out.appendUInt32(UInt32(byteCountOverride ?? positions.count * 16))
+        for position in positions {
+            out.appendFloat32(position.x)
+            out.appendFloat32(position.y)
+            out.appendFloat32(position.z)
+            out.appendFloat32(1)
+        }
         return out
     }
 

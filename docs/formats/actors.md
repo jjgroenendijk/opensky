@@ -1,17 +1,17 @@
 ---
 type: File Format
 title: Actor records (ACHR, NPC_, LVLN/LVLI, RACE, ARMO, ARMA, OTFT) + resolution
-description: Actor record layouts, TPLT template chains, and visual appearance resolution incl. FaceGen paths.
+description: Actor records, appearance resolution, GPU asset assembly, and FaceGen paths.
 tags: [format, plugin, actors, achr, npc, leveled, template, race, armor, outfit, facegen]
-timestamp: 2026-07-19T00:00:00Z
+timestamp: 2026-07-20T00:00:00Z
 ---
 
 # Actor records, Skyrim SE
 
-Milestones 5.1 + 5.2 subset: enough decode to place actors, resolve who they
-look like, and turn that into renderable inputs (skeleton, body-part model
-paths, FaceGen paths) — no stats, AI, factions, spells, or carried inventory
-yet. Container framing: [ESM/ESP plugin container](/formats/esm.md); decode
+Milestones 5.1, 5.2 + 5.4 subset: enough decode to place actors, resolve who they
+look like, and assemble GPU skeleton/body/FaceGen assets at world pose — no stats,
+AI, factions, spells, or carried inventory yet. Container framing:
+[ESM/ESP plugin container](/formats/esm.md); decode
 policy (skip unknown fields, `ESMError.malformed` only on structurally
 unusable input): [record decoders](/formats/records.md).
 
@@ -23,7 +23,7 @@ xEdit dev-4.1.6 `wbDefinitionsTES5.pas` (template flag masks) +
 (flag -> tab coverage); NifTools `nif.xml` `BSDismemberBodyPartType`
 (biped slot numbering). Impl: `opensky/Formats/ESM/Records/` +
 `opensky/World/ActorResolution.swift` +
-`opensky/World/ActorVisualResolution.swift`.
+`opensky/World/ActorVisualResolution.swift` + `opensky/World/ActorAssembly.swift`.
 
 ## ACHR -> PlacedActor
 
@@ -252,6 +252,24 @@ key normalization. Emitted only when the race carries the FaceGen-head DATA
 flag (0x2): creature races bake none, while head-part-less humanoids
 (e.g. Nazeem, PNAM-free) still have files.
 
+## Actor assembly
+
+`ActorAssembler` consumes one `PlacedActor` + `ResolvedActorVisual` and an
+`ActorAssetProvider`:
+
+* Load race/gender skeleton once; missing/invalid skeleton becomes tagged skip.
+* Load resolved outfit parts first, remaining visible skin parts next, FaceGen head last.
+  `MeshLibrary` caches each GPU model by normalized path + explicit skeleton key.
+* Apply one `MatrixMath.placement(position:rotation:scale:)` to every part, preserving
+  ACHR DATA pose + XSCL uniform scale. Per-model bounds transform into one actor world AABB.
+* Preserve appearance skips; model/skeleton failures add exact missing/invalid asset tags.
+  Any surviving body or head model keeps partial actor renderable. Zero models adds
+  `noCoreGeometry` and rejects skeleton-only output.
+
+FaceGen `BSDynamicTriShape` details + node-reference pose live in
+[NIF mesh](/formats/nif.md). `faceGenTintPath` stays attached to head role for later tint
+composition; current NIF material diffuse/vertex color renders baked head geometry.
+
 ## Verification
 
 Real install via `openskycli actor`: WhiterunWorld (5,-3) radius 2 -> 31/31
@@ -261,6 +279,10 @@ resolves skin without FaceGen. Named residents live in interior home cells,
 so `actor --npc <formid-or-edid>` resolves bases directly: Heimskr,
 Belethor, Ysolda, Nazeem, AdrianneAvenicci, Ulfberth all resolve skeleton,
 parts, slots + FaceGen paths matching files confirmed present in the BSAs.
+M5.4 offscreen probe: Heimskr NPC_ `00013BAC`, ACHR `0001A682` at
+`(249.9946, -69.73085, 68)`, XSCL 1. Deterministic models = monk boots, robes, hood,
+visible male hands + 6-mesh FaceGen head. Production assembly rendered 10.8%
+non-background at 800x800; visual check confirmed clothed body + complete head at one pose.
 Synthetic fixtures: `openskyTests/ActorRecordTests.swift`,
 `openskyTests/AppearanceRecordTests.swift`,
-`openskyTests/ActorVisualResolutionTests.swift`.
+`openskyTests/ActorVisualResolutionTests.swift`, `openskyTests/ActorAssemblyTests.swift`.
