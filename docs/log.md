@@ -4,6 +4,13 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-20
 
+* Local app/test builds now use Apple Development signing -> stable designated
+  requirement lets macOS retain removable-volume consent across rebuilds. App Info.plist
+  gains `NSRemovableVolumesUsageDescription`; first access explains Skyrim data reads.
+  `XCODEBUILD_FLAGS` gives certificate-free CI an explicit ad-hoc override. Xcode's UI
+  test graph stays ad-hoc because development signing blocks its non-promptable
+  Developer Tool request and mixed-signature graphs cannot pair. UI fixtures use only
+  synthetic internal-disk data; app/unit/real-data paths remain stable-signed.
 * M6.1 HKX container parse complete -- `HKXFile`/`HKXHeader`/`HKXSection`
   (`opensky/Formats/HKX/`) decode the SSE Havok packfile container: 64-byte
   header (magic pair, fileVersion 8, layout rules 8-1-0-1, contents pointers,

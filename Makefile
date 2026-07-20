@@ -6,6 +6,8 @@ SCHEME         := opensky
 CLI_SCHEME     := openskycli
 CONFIG         ?= Debug
 DESTINATION    ?= platform=macOS
+XCODEBUILD_FLAGS ?=
+UI_TEST_SIGNING_FLAGS := CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM=
 SWIFT_PATHS    := opensky openskycli openskyTests openskyUITests
 
 SWIFTFORMAT_CFG := tools/format/.swiftformat
@@ -58,21 +60,23 @@ sh-lint: ## Shellcheck the hook + tooling scripts
 	@shellcheck -s sh $$(find .githooks tools -type f -name '*.sh') .githooks/hooks/*
 
 build: ## Build the app ($(CONFIG))
-	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration $(CONFIG) build
+	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration $(CONFIG) \
+		$(XCODEBUILD_FLAGS) build
 
 cli: ## Build the openskycli dev tool ($(CONFIG))
-	@xcodebuild -project $(PROJECT) -scheme $(CLI_SCHEME) -configuration $(CONFIG) build
+	@xcodebuild -project $(PROJECT) -scheme $(CLI_SCHEME) -configuration $(CONFIG) \
+		$(XCODEBUILD_FLAGS) build
 
 probe: ## CLI smoke checks against the local install (skips if absent)
 	@./tools/probe.sh
 
 test: ## Build + run unit tests (no UI tests)
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
-		-skip-testing:openskyUITests test
+		$(XCODEBUILD_FLAGS) -skip-testing:openskyUITests test
 
 test-ui: ## Build + run UI tests (launches the app, drives it via automation)
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
-		-only-testing:openskyUITests test
+		$(XCODEBUILD_FLAGS) $(UI_TEST_SIGNING_FLAGS) -only-testing:openskyUITests test
 
 test-one: ## Run one test class/method: make test-one T=Class[/test]
 	@test -n "$(T)" || { \
@@ -81,7 +85,7 @@ test-one: ## Run one test class/method: make test-one T=Class[/test]
 		exit 2; }
 	@case "$(T)" in */*) spec="$(T)";; *) spec="openskyTests/$(T)";; esac; \
 	xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
-		-only-testing:"$$spec" test
+		$(XCODEBUILD_FLAGS) -only-testing:"$$spec" test
 
 test-report: ## Print summary of the newest test result bundle
 	@latest=$$(ls -td \
@@ -93,12 +97,12 @@ test-report: ## Print summary of the newest test result bundle
 
 app-path: ## Print built opensky.app path ($(CONFIG))
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration $(CONFIG) \
-		-showBuildSettings 2>/dev/null \
+		$(XCODEBUILD_FLAGS) -showBuildSettings 2>/dev/null \
 		| awk '$$1 == "BUILT_PRODUCTS_DIR" {print $$3 "/opensky.app"; exit}'
 
 cli-path: ## Print built openskycli path ($(CONFIG))
 	@xcodebuild -project $(PROJECT) -scheme $(CLI_SCHEME) -configuration $(CONFIG) \
-		-showBuildSettings 2>/dev/null \
+		$(XCODEBUILD_FLAGS) -showBuildSettings 2>/dev/null \
 		| awk '$$1 == "BUILT_PRODUCTS_DIR" {print $$3 "/openskycli"; exit}'
 
 run-cli: cli ## Build + run openskycli: make run-cli ARGS="vfs ls"
@@ -106,7 +110,7 @@ run-cli: cli ## Build + run openskycli: make run-cli ARGS="vfs ls"
 
 install: ## Build Release app (arm64) + copy to /Applications
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration Release \
-		-derivedDataPath build/install ARCHS=arm64 build
+		-derivedDataPath build/install ARCHS=arm64 $(XCODEBUILD_FLAGS) build
 	@rm -rf /Applications/opensky.app
 	@ditto build/install/Build/Products/Release/opensky.app /Applications/opensky.app
 	@echo "[ OK ] /Applications/opensky.app updated"

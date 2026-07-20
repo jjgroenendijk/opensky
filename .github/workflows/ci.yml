@@ -47,7 +47,7 @@ jobs:
         run: xcodebuild -downloadComponent MetalToolchain
       - name: Build & test (unit)
         if: ${{ steps.xcode.outputs.major >= 26 }}
-        run: make test
+        run: make test XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
       - name: UI tests
         if: ${{ steps.xcode.outputs.major >= 26 }}
-        run: make test-ui
+        run: make test-ui XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
