@@ -4,6 +4,14 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-20
 
+* Roadmap re-scoped: M7-M9 planned in [todo](/todo.md). M7 Papyrus quest-capable
+  (M7.1 VM core, M7.2 scripts in world, M7.3 quest engine). M8 audio incl. voice +
+  lip sync (M8.1 decode/playback foundation, M8.2 game wiring, M8.3 voice + lips);
+  xwm decode route decided: ffmpeg (LGPL) wrapped behind Swift interface, dynamic
+  link. M9 game UI native-first hybrid (M9.1 HUD, M9.2 menus, M9.3 vanilla fonts
+  via SWF glyph extraction); full Scaleform playback ruled out. Each sub-milestone
+  carries its own acceptance gate; decision docs (`decisions/ffmpeg-audio.md`,
+  `decisions/ui-approach.md`) land with first impl items.
 * M6.2 hkaSkeleton decode complete -- `HKASkeleton`
   (`opensky/Formats/HKX/HKASkeleton.swift`) reads each hkaSkeleton out of the
   packfile via the 6.1 virtual-fixup inventory: m_name, m_parentIndices

@@ -49,7 +49,12 @@ milestone leaves this file; history lives in `docs/log.md` + git.
   fly bench within build/footprint/frame budgets.
 * M6 — actors animate (active): skeleton-driven idle playback on streamed actors.
   Gate: 6.6.
-* M7+ — toward playable (direction only): Papyrus VM, audio, UI.
+* M7 — Papyrus scripting, quest-capable (planned 2026-07-20): M7.1 VM core, M7.2 scripts
+  in world, M7.3 quest engine. Gates: 7.1.4 / 7.2.4 / 7.3.4.
+* M8 — audio incl. voice + lip sync (planned 2026-07-20): M8.1 decode + playback
+  (ffmpeg LGPL), M8.2 game wiring, M8.3 voice + lips. Gates: 8.1.3 / 8.2.3 / 8.3.3.
+* M9 — game UI, native-first hybrid (planned 2026-07-20): M9.1 HUD, M9.2 menus, M9.3
+  vanilla fonts via SWF extraction. Gates: 9.1.3 / 9.2.3 / 9.3.2.
 
 ## Milestone 6 — actors animate (idle playback)
 
@@ -77,16 +82,138 @@ impl, flag deviations.
       added per-frame animation budget.
 * [ ] 6.6 Milestone acceptance: Whiterun exterior + one interior animate without crash
       across the streamed grid; frame-delta evidence + screenshot under `docs/img/`
-      linked from docs; `docs/log.md` + this file updated; M7 re-scoped into numbered
-      items with a gate.
+      linked from docs; `docs/log.md` + this file updated; M7 plan below reviewed
+      against M6 learnings.
 
-## Milestone 7+ — toward playable (far out)
+## Milestone 7 — Papyrus scripting (quest-capable; starts after M6)
 
-Direction only — re-scope after M6. Candidate order:
+Goal: vanilla Papyrus scripts drive world + quest state. Big -> three sub-milestones,
+each with own acceptance gate (last item). One branch/PR per numbered item; format
+items follow `format-parser` discipline. Specs: UESP "Compiled script file" (PEX
+layout), Creation Kit wiki Papyrus reference (VM semantics), xEdit VMAD/QUST defs.
+VM runtime semantics only partly documented -> confirm by observed behavior, flag
+deviations.
 
-* Papyrus VM: PEX bytecode interpreter (open docs exist), event dispatch.
-* Audio: .fuz (lip + xwm), xwm via AVFoundation/ffmpeg-free route to be researched.
-* UI: game HUD/menus are Scaleform SWF — likely custom native UI instead; decide.
+### M7.1 — VM core (headless)
+
+* [ ] 7.1.1 PEX container decode: header, string table, objects/states/functions,
+      instruction stream. Gate: vanilla `.pex` sweep decodes clean; synthetic
+      in-code fixtures cover every opcode encoding.
+* [ ] 7.1.2 Interpreter: value model (bool/int/float/string/object/array), call
+      frames, opcode execution, state switching. Fixtures = hand-assembled synthetic
+      PEX (no compiler dep). Gate: per-opcode unit suite green.
+* [ ] 7.1.3 VMAD decode + script binding: ESM VMAD subrecord (attached scripts,
+      typed properties, fragment payloads), property -> form resolution. Gate:
+      vanilla plugin VMAD sweep decodes; sampled script properties resolve.
+* [ ] 7.1.4 Native dispatch + acceptance: native-function table, latent calls
+      (`Utility.Wait`) via scheduler, unimplemented natives -> logged no-op + tally.
+      Gate: synthetic script calling natives runs deterministically under test;
+      coverage tally of natives referenced by vanilla scripts documented; docs
+      (`formats/pex.md`, `formats/vmad.md`) + log updated.
+
+### M7.2 — scripts run in world
+
+* [ ] 7.2.1 VM in engine loop: per-frame scheduler budget, script-instance lifecycle
+      tied to cell streaming, OnInit/OnLoad/OnCellAttach dispatch.
+* [ ] 7.2.2 Activate input + OnActivate: use-key raycast target from walk mode,
+      activator scripts fire; core ObjectReference natives (Enable/Disable/
+      GetPosition/Translate minimal set).
+* [ ] 7.2.3 Triggers + timers: OnTriggerEnter/Leave volumes, RegisterForUpdate /
+      RegisterForSingleUpdate.
+* [ ] 7.2.4 Acceptance: real Whiterun activator (lever/button/pull chain) visibly
+      runs its vanilla script in-app; no-crash sweep over scripts attached across
+      the streamed grid; per-frame VM budget in bench; docs updated.
+
+### M7.3 — quest engine
+
+* [ ] 7.3.1 QUST record decode: stages, log entries, objectives, alias definitions
+      (xEdit defs); DIAL/INFO decoded only as far as quests need.
+* [ ] 7.3.2 Quest runtime: start/stop, SetStage/GetStage/GetStageDone, stage
+      fragments, objective state; journal state dumpable via dev tool.
+* [ ] 7.3.3 Alias resolution: reference/location aliases, fill types used by the
+      target quest; forced refs first, conditions as needed.
+* [ ] 7.3.4 Acceptance: one simple vanilla quest progresses end-to-end through its
+      real scripts (stage/objective evidence via journal dump); docs updated; M8
+      plan reviewed.
+
+## Milestone 8 — audio
+
+Goal: Whiterun sounds alive — SFX, music, voice, lip sync. Decode route decided
+2026-07-20: ffmpeg (LGPL) wrapped behind a Swift interface, dynamically linked;
+license + justification documented per AGENTS.md dependency rule (no
+redistribution-incompatible linkage). Specs: RIFF XWMA chunk docs, .fuz community
+docs (header + lip size + xwm payload), UESP SNDR/SOUN/MUSC/MUST/INFO records,
+NifTools TRI docs, .lip community notes (thin — probe + document uncertainty).
+
+### M8.1 — decode + playback foundation
+
+* [ ] 8.1.1 ffmpeg dependency: SwiftPM/C wrapper target, dynamic link, xwm (WMA2)
+      payload -> PCM. Decision doc (`decisions/ffmpeg-audio.md`): license, scope
+      (decode only), alternatives rejected. Gate: real + synthetic xwm decode to
+      sane duration/format.
+* [ ] 8.1.2 .fuz + .xwm containers: own parsers for framing (format-parser
+      discipline), payload decode via 8.1.1. Gate: vanilla .fuz/.xwm sweep splits +
+      decodes clean; synthetic fixtures for malformed input.
+* [ ] 8.1.3 Playback engine + acceptance: AVAudioEngine graph, 3D positional sources
+      bound to world transforms, streaming buffers, category volumes. Gate:
+      deterministic buffer-tap tests + audible positional playback of a real SFX
+      (manual confirm); docs (`engine/audio.md`) + log updated.
+
+### M8.2 — game audio wiring
+
+* [ ] 8.2.1 Sound records: SNDR/SOUN/SDSC decode, descriptor -> file resolution,
+      attenuation/looping params.
+* [ ] 8.2.2 World SFX: door open/close + activator sounds from M7.2 events, per-cell
+      ambience loops where resolution is cheap.
+* [ ] 8.2.3 Music + acceptance: MUSC/MUST playlists, exploration/town/interior
+      selection with crossfade. Gate: Whiterun walk has door SFX, ambience, music
+      transitioning interior/exterior; frame budget kept; docs updated.
+
+### M8.3 — voice + lip sync
+
+* [ ] 8.3.1 Voice playback: INFO -> voice path convention
+      (`sound/voice/<plugin>/<voicetype>/`), .fuz line plays positionally from an
+      actor via dev-tool trigger (dialogue UI not required).
+* [ ] 8.3.2 TRI face morphs: TRI container decode (NifTools docs), morph targets
+      applied in the skinned face path (builds on M6 palette work). Gate: morph
+      math unit-tested; offscreen frame delta on morph apply.
+* [ ] 8.3.3 .lip decode + acceptance: phoneme track -> morph weights over playback
+      time. Gate: voice line plays with moving lips — offscreen mouth-region frame
+      deltas + screenshot under `docs/img/`; docs updated; M9 plan reviewed.
+
+## Milestone 9 — game UI (native-first hybrid)
+
+Decision 2026-07-20: vanilla UI is Scaleform SWF (Flash); full Flash runtime out of
+scope. Native Metal/AppKit UI now; cheap SWF asset extraction (fonts) as M9.3; full
+Scaleform playback not planned. Record as `decisions/ui-approach.md` at M9.1.1.
+
+### M9.1 — HUD
+
+* [ ] 9.1.1 Screen-space UI layer: 2D pass over the 3D frame, layout + text
+      primitives, resolution/scale handling. System font initially. Decision doc
+      lands here.
+* [ ] 9.1.2 Strings: `Interface/Translations/*_english.txt` parser (UTF-16LE
+      key/value), activation prompt text from records ("Open <door name>").
+* [ ] 9.1.3 HUD elements + acceptance: crosshair, health/magicka/stamina bars
+      (static values pre-combat), compass with markers, activate prompt wired to
+      M7.2 targeting. Gate: walk-mode screenshot with live prompt text under
+      `docs/img/`; docs updated.
+
+### M9.2 — menus
+
+* [ ] 9.2.1 Menu mode: input capture switch, world-sim pause, menu stack push/pop.
+* [ ] 9.2.2 System menu: resume/settings/quit; data root + audio volumes surfaced.
+* [ ] 9.2.3 Journal + acceptance: quest list + objectives from M7.3 state. Gate:
+      journal shows real quest title/objective text from the played quest;
+      screenshot; docs updated.
+
+### M9.3 — vanilla fonts (SWF extraction)
+
+* [ ] 9.3.1 SWF font parse: DefineFont2/3 glyph extraction from `fonts_en.swf`
+      (Adobe SWF spec is public), `fontconfig.txt` mapping. Extraction only — no
+      movie playback.
+* [ ] 9.3.2 Acceptance: HUD + journal render with vanilla glyphs, system-font
+      fallback kept; docs updated; next milestone scoped.
 
 ## Tooling / meta
 
