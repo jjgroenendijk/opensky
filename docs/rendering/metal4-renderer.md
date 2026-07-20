@@ -332,6 +332,14 @@ The original M2 shot retains its black-background baseline; current sky/water ev
 
 ![WhiterunExterior06 rendered offscreen by OpenSky](/img/m2-whiterun-exterior.png)
 
+Milestone 5 shot — Chillfurrow Farm (Tamriel 7,-3, Whiterun exterior) with placed
+actors as bind-pose skinned bodies (`openskycli screenshot --x 7 --y -3 --zoom 10
+--size 1920x1080`, 2026-07-20): four clothed farmhands stand at their ACHR poses by
+the fence, cell reports 7 actors (7 drawn). Actor pipeline detail:
+[actor records](/formats/actors.md). Engine output, not extracted game data.
+
+![Chillfurrow Farm with bind-pose actors](/img/m5-actors-chillfurrow.png)
+
 Same run's fps gate (todo 2.11), measured via `openskycli bench` on Apple M1, real
 install: 360 frames @ 1280x720 avg 0.39 ms (2557 fps), p95 0.43 ms; @ 1920x1080 avg
 0.54 ms (1846 fps), p95 0.61 ms — >30 fps sustained with wide margin (budget 33.33 ms).

@@ -145,6 +145,7 @@ extension CellSceneBuilder {
         summary.actorDrawnCount = actors.counts.rendered
         summary.actorDisabledSkipCount = actors.counts.disabledSkips
         summary.actorFailureCount = actors.counts.failures
+        summary.actorFailureReasons = actors.counts.failureReasons
         summary.actorBuildDurationMS = actors.durationMS
         return summary
     }

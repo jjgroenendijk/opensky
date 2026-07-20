@@ -116,10 +116,17 @@ nonisolated struct CellBuildMetric: Equatable {
     var actorRenderedCount = 0
     var actorDisabledSkipCount = 0
     var actorFailureCount = 0
+    /// One reason per counted failure, mirrored off CellLoadSummary so the
+    /// fly bench can prove every failure explained (5.6 acceptance).
+    var actorFailureReasons: [String] = []
 
     var actorAccountingIsExact: Bool {
         actorDiscoveredCount
             == actorRenderedCount + actorDisabledSkipCount + actorFailureCount
+    }
+
+    var actorFailuresAreExplained: Bool {
+        actorFailureCount == actorFailureReasons.count
     }
 }
 
@@ -218,7 +225,8 @@ nonisolated final class SerialCellBuildRunner: CellBuildRunning, @unchecked Send
                     actorDiscoveredCount: scene.summary.actorCount,
                     actorRenderedCount: scene.summary.actorDrawnCount,
                     actorDisabledSkipCount: scene.summary.actorDisabledSkipCount,
-                    actorFailureCount: scene.summary.actorFailureCount
+                    actorFailureCount: scene.summary.actorFailureCount,
+                    actorFailureReasons: scene.summary.actorFailureReasons
                 )
             }
             completed.append(entry)

@@ -116,6 +116,9 @@ nonisolated struct CellLoadSummary: Equatable {
     var actorDisabledSkipCount = 0
     /// Malformed ACHR, unresolved template/visual chain, or no core geometry.
     var actorFailureCount = 0
+    /// One reason per counted failure ("ACHR <id>: <why>"). 5.6 acceptance:
+    /// a failure without a reason is unexplained -> gate failure.
+    var actorFailureReasons: [String] = []
     /// Wall time of the cell's actor collect+resolve+assemble phase.
     var actorBuildDurationMS = 0.0
 
@@ -126,6 +129,11 @@ nonisolated struct CellLoadSummary: Equatable {
     /// Every discovered actor landed in exactly one bucket.
     var actorAccountingIsExact: Bool {
         actorCount == actorDrawnCount + actorDisabledSkipCount + actorFailureCount
+    }
+
+    /// Every counted actor failure carries a reason (5.6 zero-unexplained rule).
+    var actorFailuresAreExplained: Bool {
+        actorFailureCount == actorFailureReasons.count
     }
 
     /// One-line load report (AGENTS.md bracket-tag style), e.g.

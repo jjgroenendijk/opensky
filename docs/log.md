@@ -4,6 +4,24 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-20
 
+* M5.6 milestone acceptance complete — M5 (actors on screen) done. Failure
+  accounting gains reasons: `ActorBuildCounts.failureReasons` ("ACHR <id>: <why>")
+  threads through `CellLoadSummary` + `CellBuildMetric`; fly bench gates the new
+  zero-unexplained rule (`failures == failureReasons.count`, new
+  `actorFailureUnexplained` error) and returns per-cell `ActorCellReport`s that
+  `bench --fly-path` prints (one accounting line per touched cell, failures carry
+  reasons). `make probe` gains gates: 35 per-cell lines present, interior summary
+  reports >=1 drawn actor. Full real probe pass: 55 discovered = 27 rendered + 27
+  disabled + 1 failed, exact in all 35 cells; single failure reason-tagged — sabre
+  cat `SabreCat.nif` `NiSkinPartition` vertex-bone-palette variant (backlog);
+  ChillfurrowFarm interior 1 actors (1 drawn); 5,614 stream frames avg 3.15 ms/p95
+  5.79 ms; actor build p95 2190.79 ms vs 3000 ms budget; footprint peak 702/1,024
+  MB. Acceptance screenshot `docs/img/m5-actors-chillfurrow.png` (four clothed
+  bind-pose farmhands at ACHR poses) linked from
+  [actor records](/formats/actors.md) + [renderer](/rendering/metal4-renderer.md).
+  Synthetic reason-accounting + metric-mirror tests added. M5 leaves
+  [todo](/todo.md); M6 (actors animate: HKX idle playback) re-scoped into 6.1-6.6
+  with gates.
 * CI suspended (GH Actions CPU quota exhausted) -- `ci.yml` reduced to
   `workflow_dispatch` only; "Format & lint" + "Build & test" required status checks
   removed from main branch protection (PR-only flow stays). Git hooks are the only

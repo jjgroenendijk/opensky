@@ -26,6 +26,10 @@ nonisolated struct ActorBuildCounts {
     /// Malformed ACHR records, unresolved template/visual chains, and
     /// assemblies with no core geometry.
     var failures = 0
+    /// One human-readable reason per failure ("ACHR <id>: <why>") — the 5.6
+    /// acceptance rule: every counted failure is explained, so
+    /// `failureReasons.count == failures` always.
+    var failureReasons: [String] = []
 }
 
 /// Assembled actor render data handed to makeScene beside static instances.
@@ -46,7 +50,7 @@ extension CellSceneBuilder {
     ) -> CellActorBuild {
         let started = DispatchTime.now().uptimeNanoseconds
         var build = CellActorBuild()
-        var malformed = 0
+        var malformed: [String] = []
         var byID: [UInt32: PlacedActor] = [:]
         for actor in decodeActors(in: cellChildren, malformed: &malformed) {
             byID[actor.formID.rawValue] = actor
@@ -57,8 +61,9 @@ extension CellSceneBuilder {
             byID[actor.formID.rawValue] = actor
         }
         let actors = byID.values.sorted { $0.formID.rawValue < $1.formID.rawValue }
-        build.counts.discovered = actors.count + malformed
-        build.counts.failures = malformed
+        build.counts.discovered = actors.count + malformed.count
+        build.counts.failures = malformed.count
+        build.counts.failureReasons = malformed
         resolveActors(actors, into: &build, localized: localized)
         build.durationMS =
             Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
@@ -73,10 +78,11 @@ extension CellSceneBuilder {
     ) -> CellActorBuild {
         let started = DispatchTime.now().uptimeNanoseconds
         var build = CellActorBuild()
-        var malformed = 0
+        var malformed: [String] = []
         let actors = decodeActors(in: cellChildren, malformed: &malformed)
-        build.counts.discovered = actors.count + malformed
-        build.counts.failures = malformed
+        build.counts.discovered = actors.count + malformed.count
+        build.counts.failures = malformed.count
+        build.counts.failureReasons = malformed
         resolveActors(actors, into: &build, localized: localized)
         build.durationMS =
             Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
@@ -88,7 +94,7 @@ extension CellSceneBuilder {
     /// a decode failure is discovered-but-failed.
     nonisolated private func decodeActors(
         in cellChildren: ESMGroup?,
-        malformed: inout Int
+        malformed: inout [String]
     ) -> [PlacedActor] {
         guard let cellChildren, let children = try? cellChildren.children() else {
             return []
@@ -104,8 +110,8 @@ extension CellSceneBuilder {
                 do {
                     try actors.append(PlacedActor(record: record))
                 } catch {
-                    malformed += 1
                     let id = FormID(record.formID).description
+                    malformed.append("ACHR \(id): malformed record")
                     Self.logger.warning("malformed ACHR \(id, privacy: .public) counted failed")
                 }
             }
@@ -127,7 +133,7 @@ extension CellSceneBuilder {
         }
         var actors: [PlacedActor] = []
         if let persistent = findCell(in: world, gridX: 0, gridY: 0, localized: localized) {
-            var malformed = 0
+            var malformed: [String] = []
             actors = decodeActors(in: persistent.children, malformed: &malformed)
         }
         exteriorPersistentActors[key] = actors
@@ -163,6 +169,9 @@ extension CellSceneBuilder {
                     build.counts.failures += 1
                     let reasons = assembly.skips.map { String(describing: $0.reason) }
                         .joined(separator: ", ")
+                    build.counts.failureReasons.append(
+                        "ACHR \(id): no renderable geometry (\(reasons))"
+                    )
                     Self.logger.warning(
                         """
                         ACHR \(id, privacy: .public): no renderable geometry \
@@ -173,6 +182,7 @@ extension CellSceneBuilder {
             } catch {
                 build.counts.failures += 1
                 let reason = String(describing: error)
+                build.counts.failureReasons.append("ACHR \(id): unresolved (\(reason))")
                 Self.logger.warning(
                     """
                     ACHR \(id, privacy: .public): unresolved \

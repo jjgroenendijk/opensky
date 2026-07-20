@@ -21,7 +21,9 @@ extension CellSceneBuilderTests {
         #expect(scene.summary.actorCount == 1)
         #expect(scene.summary.actorDrawnCount == 1)
         #expect(scene.summary.actorFailureCount == 0)
+        #expect(scene.summary.actorFailureReasons.isEmpty)
         #expect(scene.summary.actorAccountingIsExact)
+        #expect(scene.summary.actorFailuresAreExplained)
         #expect(scene.renderScene.instanceCount == 1)
         // The actor body key joins the cell's working set so streaming
         // eviction treats it exactly like a static's mesh.
@@ -48,6 +50,9 @@ extension CellSceneBuilderTests {
         #expect(scene.summary.actorCount == 1)
         #expect(scene.summary.actorFailureCount == 1)
         #expect(scene.summary.actorAccountingIsExact)
+        // 5.6 zero-unexplained rule: the counted failure carries its reason.
+        #expect(scene.summary.actorFailuresAreExplained)
+        #expect(scene.summary.actorFailureReasons.first?.contains("unresolved") == true)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func malformedACHRCountsFailed() throws {
@@ -57,6 +62,8 @@ extension CellSceneBuilderTests {
         #expect(scene.summary.actorCount == 1)
         #expect(scene.summary.actorFailureCount == 1)
         #expect(scene.summary.actorAccountingIsExact)
+        #expect(scene.summary.actorFailuresAreExplained)
+        #expect(scene.summary.actorFailureReasons == ["ACHR 00000900: malformed record"])
     }
 
     @Test(.enabled(if: Self.hasDevice)) func deletedACHRIsNotDiscovered() throws {

@@ -286,9 +286,11 @@ Consequences, all inherited from the statics design:
   first actor-bearing cell; the one-time cost lands in that cell's actor
   duration (visible as the fly-bench max, excluded from p95 by ranking).
 - Exact accounting per cell: discovered = rendered + disabled skips +
-  failures ([actor records](/formats/actors.md)); `CellBuildMetric` carries
-  the counts + actor phase duration, and `bench --fly-path` fails on any
-  per-cell mismatch or actor-build p95 over budget.
+  failures ([actor records](/formats/actors.md)); every failure carries a
+  reason string (M5.6 zero-unexplained rule). `CellBuildMetric` mirrors
+  counts + reasons + actor phase duration; `bench --fly-path` fails on any
+  per-cell mismatch, reason-less failure, or actor-build p95 over budget,
+  and prints one accounting line per touched cell (`ActorCellReport`).
 
 ## Memory safety + observed plateau
 
@@ -329,6 +331,15 @@ cell paying the one-time resolver index build, the rest is first-load skinned bo
 FaceGen decode (optimization filed: GH issue #56). Waypoint footprint
 539 -> 608 -> 607 MB, 700 MB peak / 1,024 MB cap. 5,559 render frames avg 3.14 ms,
 p95 5.75 ms, max 17.66 ms; collision phase unchanged (p95 465.15 ms).
+
+M5.6 acceptance run, 2026-07-20 (`make probe`, full pass): per-cell report present
+for all 35 touched cells, zero unexplained failures — the one failure is
+reason-tagged (ACHR `000DC8DE` sabre cat: `NiSkinPartition` vertex bone palette
+index rejected by the flattener; creature skinning variant in backlog). 5,614
+stream frames avg 3.15 ms / p95 5.79 ms; actor phase avg 433.09 ms / p95
+2190.79 ms; footprint 543 -> 611 -> 570 MB, peak 702 / 1,024 MB cap. Interior
+(ChillfurrowFarm): 1 actors (1 drawn). Acceptance screenshot:
+[actor records](/formats/actors.md).
 
 These are debug-build verification numbers, not general hardware promise. Hard gates: 1
 GiB fly benchmark, 3.5 GiB in-process real test, 4 GiB external watchdog, final settled

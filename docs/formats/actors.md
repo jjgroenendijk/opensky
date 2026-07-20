@@ -288,10 +288,13 @@ Accounting is exact per cell: `discovered = rendered + disabledSkips +
 failures`. Discovered = non-deleted ACHRs owned by the cell; disabled =
 initially-disabled header flag (intentional skip, no script state yet);
 failures = malformed record, unresolved chain, or assembly with zero
-geometry. Counts land in `CellLoadSummary` (summary-line actor clause) +
-`CellBuildMetric`; `bench --fly-path` gates the invariant and the actor-build
-p95 budget ([CLI](/tools/cli.md)). Streaming lifecycle detail:
-[cell streaming](/engine/cell-streaming.md).
+geometry. Every failure also records a reason string
+(`ACHR <id>: <why>`) — M5.6 zero-unexplained rule:
+`failures == failureReasons.count`, gated. Counts + reasons land in
+`CellLoadSummary` (summary-line actor clause) + `CellBuildMetric`;
+`bench --fly-path` gates both invariants and the actor-build p95 budget,
+printing per-cell accounting ([CLI](/tools/cli.md)). Streaming lifecycle
+detail: [cell streaming](/engine/cell-streaming.md).
 
 ## Verification
 
@@ -309,3 +312,18 @@ non-background at 800x800; visual check confirmed clothed body + complete head a
 Synthetic fixtures: `openskyTests/ActorRecordTests.swift`,
 `openskyTests/AppearanceRecordTests.swift`,
 `openskyTests/ActorVisualResolutionTests.swift`, `openskyTests/ActorAssemblyTests.swift`.
+
+## Milestone acceptance (5.6)
+
+`make probe` 2026-07-20, full pass: actor-enabled fly bench 55 ACHRs discovered =
+27 rendered + 27 disabled + 1 failed, exact accounting + per-cell report in all 35
+touched cells, zero unexplained failures. The single failure is reason-tagged:
+`ACHR 000DC8DE: no renderable geometry (invalidAsset, noCoreGeometry)` — sabre cat
+(`LvlAnimalPlainsPredator` -> `SabreCat.nif`), whose `NiSkinPartition` carries a
+vertex bone palette index our flattener rejects (creature skinning variant,
+backlog). Interior gate: ChillfurrowFarm reports 1 actors (1 drawn). Frame budget:
+5,614 stream frames avg 3.15 ms / p95 5.79 ms @ 640x360; actor build p95 2190.79 ms
+vs 3000 ms budget; footprint peak 702 / 1,024 MB cap. Acceptance screenshot —
+Chillfurrow Farm with four clothed bind-pose farmhands at ACHR poses:
+
+![Chillfurrow Farm with bind-pose actors](/img/m5-actors-chillfurrow.png)

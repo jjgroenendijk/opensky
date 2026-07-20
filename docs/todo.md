@@ -44,37 +44,54 @@ milestone leaves this file; history lives in `docs/log.md` + git.
   sky/water, lit interiors + door round trips.
 * M4 — walkable world. Done 2026-07-19: streamed terrain/static collision, fixed-step
   capsule response, walk-mode door round trip + >30 fps route gate.
-* M5 — actors on screen (active): placed actors rendered as skinned meshes in bind pose.
-  Gate: 5.6.
-* M6+ — toward playable (direction only): animation playback, Papyrus VM, audio, UI.
+* M5 — actors on screen. Done 2026-07-20 (PRs #52-#59): bind-pose clothed actors stream
+  with cells in Whiterun exterior + interiors, reason-tagged exact accounting, actor-enabled
+  fly bench within build/footprint/frame budgets.
+* M6 — actors animate (active): skeleton-driven idle playback on streamed actors.
+  Gate: 6.6.
+* M7+ — toward playable (direction only): Papyrus VM, audio, UI.
 
-## Milestone 5 — actors on screen
+## Milestone 6 — actors animate (idle playback)
 
-Goal: placed actors visible in bind pose — Whiterun stops being empty. No animation, AI,
-or dialogue; static skinned bodies at ACHR poses. One branch/PR per numbered item; format
-items follow `format-parser` discipline. M4.5 review retained 5.1-5.6 sequencing + measurable
-gates: actor builds stay on serial cell stream path, reason-tagged exact accounting remains
-mandatory, actor-enabled fly bench keeps explicit build/footprint/frame budgets.
+Goal: streamed actors leave bind pose — race idle animation plays on placed actors. No
+AI/behavior graphs (no `behaviors/*.hkx` evaluation); direct clip playback only. One
+branch/PR per numbered item; format items follow `format-parser` discipline.
 
-Format leads from UESP mod-file-format pages + xEdit definitions + NifTools `nif.xml`;
-byte-level layouts NOT yet verified — confirm by spec + probe at impl, flag deviations.
+Format caveat: Havok HKX has no official public spec. Leads: community tooling notes
+(hkxcmd, ck-cmd), Bethesda modding wiki hkx pages, NifTools skeleton discussions. All
+byte layouts + version tags below unverified from-memory leads — confirm against real
+headers by probe at impl, flag deviations.
 
-### 5.6 Milestone acceptance
+* [ ] 6.1 HKX container parse: SSE 64-bit Havok packfile — header, version string
+      (expected hk_2010.2.0-r1; verify on real files), section table, class-name
+      table, object data offsets. Gate: `openskycli` dumps section + class inventory
+      for `skeleton.hkx` and one idle `.hkx` from the install; synthetic fixture tests
+      cover header/section/class-table parsing + malformed input.
+* [ ] 6.2 hkaSkeleton decode: bone names, parent indices, reference pose; name-map onto
+      the NIF skeleton nodes bind-pose skinning already uses. Gate: real human
+      `skeleton.hkx` hierarchy maps onto `skeleton.nif` body bones with mismatches
+      reason-tagged; synthetic hierarchy tests.
+* [ ] 6.3 Idle clip decode: hkaAnimation track data for one idle clip
+      (spline-compressed animation expected — probe + document actual class), output
+      per-bone local-transform samples. Gate: real idle clip decodes to bounded,
+      NaN-free transforms over full duration; synthetic decode tests.
+* [ ] 6.4 Pose sampling + palette update: sample clip at frame time -> compose world
+      bone matrices -> refresh skinning palette each frame, replacing the static bind
+      palette. Gate: offscreen frames at two clip times differ for an animated actor,
+      identical for a static prop; palette math unit-tested.
+* [ ] 6.5 Streamed playback lifecycle: resident-cell actors play their race idle,
+      clip state builds/evicts with the cell; actor accounting stays exact +
+      reason-tagged. Gate: actor-enabled fly bench passes with animation on, explicit
+      added per-frame animation budget.
+* [ ] 6.6 Milestone acceptance: Whiterun exterior + one interior animate without crash
+      across the streamed grid; frame-delta evidence + screenshot under `docs/img/`
+      linked from docs; `docs/log.md` + this file updated; M7 re-scoped into numbered
+      items with a gate.
 
-* [ ] Bind-pose, clothed actors render at correct positions in Whiterun exterior + one
-      interior; no crash across the streamed grid. Real probe reports discovered/rendered/
-      intentional-skip/failure counts for each touched cell; gate requires zero unexplained
-      failures + exact accounting, not equality with raw ACHR count. Actor-enabled
-      `openskycli bench --fly-path` sustains >30 fps avg + p95 within explicit build-latency
-      + footprint budgets.
-* [ ] Acceptance screenshot under `docs/img/`, linked from actor/renderer docs;
-      `docs/log.md` + this file updated; M6 re-scoped into numbered items with a gate.
+## Milestone 7+ — toward playable (far out)
 
-## Milestone 6+ — toward playable (far out)
+Direction only — re-scope after M6. Candidate order:
 
-Direction only — re-scope after M5. Candidate order:
-
-* Animation: HKX (Havok) reversing — hardest format; skeleton-only/idle first.
 * Papyrus VM: PEX bytecode interpreter (open docs exist), event dispatch.
 * Audio: .fuz (lip + xwm), xwm via AVFoundation/ffmpeg-free route to be researched.
 * UI: game HUD/menus are Scaleform SWF — likely custom native UI instead; decide.
@@ -83,6 +100,10 @@ Direction only — re-scope after M5. Candidate order:
 
 * LOD quality: tree `.btt`/`.lst` billboards; read `fBlockLevel*Distance` INI values.
 * GMST-driven movement constants (walk/run speed, step height) replacing 4.1 hardcodes.
+* Creature skinning variant: `SabreCat.nif` `NiSkinPartition` carries a vertex bone
+  palette index the flattener rejects ("vertex bone palette index out of range") ->
+  reason-tagged actor failure (ACHR `000DC8DE`, M5.6 run). Decode the variant per
+  nif.xml; natural fit alongside M6 skeleton work.
 
 ## Tooling / meta
 
