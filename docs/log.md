@@ -4,6 +4,14 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-20
 
+* Unscheduled backlog moved from [todo](/todo.md) to tracked GitHub issues:
+  tree `.btt`/`.lst` LOD + configured distance bands
+  ([#62](https://github.com/jjgroenendijk/opensky/issues/62)), GMST-backed walk/run/step
+  tuning ([#63](https://github.com/jjgroenendijk/opensky/issues/63)), and creature
+  `NiSkinPartition` palette handling
+  ([#64](https://github.com/jjgroenendijk/opensky/issues/64)). Each issue records current
+  code boundary, open-spec/probe leads, clean-room scope, synthetic tests, and acceptance
+  gate; roadmap now keeps milestone + tooling work only.
 * Screenshot LOD hole fixed — `openskycli screenshot` without `--neighbors` hid the
   full 5x5 from the distant-LOD pass while building only the center cell -> 24-cell
   ring with neither terrain nor LOD, sky visible through the gap (spotted in the M5
@@ -16,7 +24,6 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   height -14000 vs terrain ~-4200 -> data defines no water surface there; the
   black field-plot + white plant fringes are a separate mesh shading defect,
   filed as a GH issue.
-
 * M5.6 milestone acceptance complete — M5 (actors on screen) done. Failure
   accounting gains reasons: `ActorBuildCounts.failureReasons` ("ACHR <id>: <why>")
   threads through `CellLoadSummary` + `CellBuildMetric`; fly bench gates the new

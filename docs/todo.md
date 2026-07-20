@@ -96,15 +96,6 @@ Direction only — re-scope after M6. Candidate order:
 * Audio: .fuz (lip + xwm), xwm via AVFoundation/ffmpeg-free route to be researched.
 * UI: game HUD/menus are Scaleform SWF — likely custom native UI instead; decide.
 
-## Backlog (unscheduled, keep filed)
-
-* LOD quality: tree `.btt`/`.lst` billboards; read `fBlockLevel*Distance` INI values.
-* GMST-driven movement constants (walk/run speed, step height) replacing 4.1 hardcodes.
-* Creature skinning variant: `SabreCat.nif` `NiSkinPartition` carries a vertex bone
-  palette index the flattener rejects ("vertex bone palette index out of range") ->
-  reason-tagged actor failure (ACHR `000DC8DE`, M5.6 run). Decode the variant per
-  nif.xml; natural fit alongside M6 skeleton work.
-
 ## Tooling / meta
 
 * [ ] Re-enable CI when GH Actions quota returns: restore `pull_request` + `push`
