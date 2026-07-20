@@ -4,6 +4,14 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-20
 
+* World/render track promoted to Milestone 7 with full numbered plan in
+  [todo](/todo.md) (user priority): M7.1 sun shadows (cascaded maps), M7.2
+  data-driven weather (WTHR/CLMT/REGN), M7.3 grass (GRAS), M7.4 particles + effect
+  shaders, M7.5 dynamic physics (rigid bodies, ragdoll, projectiles — combat
+  consumes later). Downstream milestones renumbered: Papyrus M7 -> M8, audio
+  M8 -> M9, UI M9 -> M10; direction section now M11+, re-scope at the M10 gate.
+  M6 idle playback still finishes first; M7 starts at the 6.6 gate. Earlier log
+  entries keep the pre-renumber milestone names.
 * M10+ direction recorded in [todo](/todo.md) from playability gap analysis. Decisions:
   locomotion via Havok Behavior graph reimplementation (exact vanilla movement +
   anim-mod compat; accepted as major RE effort) over native state machine; saves =
