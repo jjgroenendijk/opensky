@@ -4,6 +4,19 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-20
 
+* Screenshot LOD hole fixed — `openskycli screenshot` without `--neighbors` hid the
+  full 5x5 from the distant-LOD pass while building only the center cell -> 24-cell
+  ring with neither terrain nor LOD, sky visible through the gap (spotted in the M5
+  acceptance shot). `RenderCommand.sceneWithLOD` now hides only cells actually
+  built; LOD fills the rest. Acceptance image
+  `docs/img/m5-actors-chillfurrow.png` re-captured with connected terrain (same
+  command). Streaming engine unaffected (app/bench always build the full grid).
+  Probe ruled water out for the dark basin west of the farmhouse: CELL `00009618`/
+  `00009619` XCLW = `0x7F7FFFFF` default sentinel, Tamriel WRLD default water
+  height -14000 vs terrain ~-4200 -> data defines no water surface there; the
+  black field-plot + white plant fringes are a separate mesh shading defect,
+  filed as a GH issue.
+
 * M5.6 milestone acceptance complete — M5 (actors on screen) done. Failure
   accounting gains reasons: `ActorBuildCounts.failureReasons` ("ACHR <id>: <why>")
   threads through `CellLoadSummary` + `CellBuildMetric`; fly bench gates the new

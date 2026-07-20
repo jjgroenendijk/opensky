@@ -111,11 +111,19 @@ enum RenderCommand {
         worldspace: String,
         center: CellCoordinate
     ) throws -> RenderScene {
-        let grid = CellGridManager(initialPosition: CellGridManager.cellCenter(of: center))
+        // Hide only the cells actually built: hiding the whole 5x5 while
+        // rendering a single cell (no --neighbors) left a 24-cell ring with
+        // neither full terrain nor LOD — sky showed through the gap.
+        let built = Set(cellScenes.compactMap { scene -> CellCoordinate? in
+            if case let .exterior(coordinate) = scene.location {
+                return coordinate
+            }
+            return nil
+        })
         let lod = try builder.buildDistantLOD(
             worldspaceEditorID: worldspace,
             center: center,
-            hiddenCells: grid.desiredCells
+            hiddenCells: built
         )
         if let lod {
             print("[INFO] distant LOD: \(lod.blockCount) blocks, "
