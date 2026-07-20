@@ -17,6 +17,8 @@ nonisolated enum CellStreamingFlyBenchmarkError: LocalizedError {
     case unexpectedBuildSet(expected: Int, actual: Int)
     case duplicateBuilds([CellCoordinate: Int])
     case collisionBuildExceeded(p95: Double, maximum: Double, budget: Double)
+    case actorBuildExceeded(p95: Double, maximum: Double, budget: Double)
+    case actorAccountingMismatch(coordinate: CellCoordinate, discovered: Int, explained: Int)
     case noCellsUnloaded
 
     var errorDescription: String? {
@@ -40,6 +42,14 @@ nonisolated enum CellStreamingFlyBenchmarkError: LocalizedError {
                 format: "collision build p95 %.2f ms / max %.2f ms exceeded %.2f ms budget",
                 p95, maximum, budget
             )
+        case let .actorBuildExceeded(p95, maximum, budget):
+            String(
+                format: "actor build p95 %.2f ms / max %.2f ms exceeded %.2f ms budget",
+                p95, maximum, budget
+            )
+        case let .actorAccountingMismatch(coordinate, discovered, explained):
+            "cell (\(coordinate.x),\(coordinate.y)) actor accounting not exact: "
+                + "\(discovered) discovered vs \(explained) explained"
         case .noCellsUnloaded:
             "cross-cell path did not unload any initially resident cells"
         }
@@ -105,6 +115,14 @@ nonisolated struct CellStreamingFlyBenchmarkResult {
     let collisionBuildBudgetMS: Double
     let collisionShapeCount: Int
     let collisionTriangleCount: Int
+    let actorBuildAverageMS: Double
+    let actorBuildP95MS: Double
+    let actorBuildMaximumMS: Double
+    let actorBuildBudgetMS: Double
+    let actorDiscoveredCount: Int
+    let actorRenderedCount: Int
+    let actorDisabledSkipCount: Int
+    let actorFailureCount: Int
 }
 
 nonisolated struct CellStreamingFlyBenchmarkConfiguration {
@@ -113,6 +131,7 @@ nonisolated struct CellStreamingFlyBenchmarkConfiguration {
     let maxFrames: Int
     let footprintCapMB: Double
     let collisionBuildBudgetMS: Double
+    let actorBuildBudgetMS: Double
     var samplesPerLeg = 60
 }
 
@@ -122,6 +141,16 @@ nonisolated private struct CollisionBuildBenchmarkSummary {
     let maximum: Double
     let shapes: Int
     let triangles: Int
+}
+
+nonisolated private struct ActorBuildBenchmarkSummary {
+    let average: Double
+    let p95: Double
+    let maximum: Double
+    let discovered: Int
+    let rendered: Int
+    let disabledSkips: Int
+    let failures: Int
 }
 
 @MainActor
@@ -229,7 +258,15 @@ enum CellStreamingFlyBenchmark {
         func result(render: OffscreenBenchResult) throws -> CellStreamingFlyBenchmarkResult {
             try validateCompletion()
             let counts = try validatedBuildCounts()
-            let collision = try validatedCollisionBuildMetrics(expectedCount: counts.count)
+            let collision = try validatedCollisionBuildMetrics(
+                runner: runner,
+                configuration: configuration,
+                expectedCount: counts.count
+            )
+            let actors = try validatedActorBuildMetrics(
+                runner: runner,
+                configuration: configuration
+            )
             let unloaded = initialResidents.subtracting(streamer.residentCoordinates).count
             guard unloaded > 0 else {
                 throw CellStreamingFlyBenchmarkError.noCellsUnloaded
@@ -249,7 +286,15 @@ enum CellStreamingFlyBenchmark {
                 collisionBuildMaximumMS: collision.maximum,
                 collisionBuildBudgetMS: configuration.collisionBuildBudgetMS,
                 collisionShapeCount: collision.shapes,
-                collisionTriangleCount: collision.triangles
+                collisionTriangleCount: collision.triangles,
+                actorBuildAverageMS: actors.average,
+                actorBuildP95MS: actors.p95,
+                actorBuildMaximumMS: actors.maximum,
+                actorBuildBudgetMS: configuration.actorBuildBudgetMS,
+                actorDiscoveredCount: actors.discovered,
+                actorRenderedCount: actors.rendered,
+                actorDisabledSkipCount: actors.disabledSkips,
+                actorFailureCount: actors.failures
             )
         }
 
@@ -294,49 +339,6 @@ enum CellStreamingFlyBenchmark {
             return counts
         }
 
-        private func validatedCollisionBuildMetrics(
-            expectedCount: Int
-        ) throws -> CollisionBuildBenchmarkSummary {
-            let metrics = runner.buildMetricsSnapshot().values
-            guard metrics.count == expectedCount else {
-                throw CellStreamingFlyBenchmarkError.unexpectedBuildSet(
-                    expected: expectedCount,
-                    actual: metrics.count
-                )
-            }
-            let durations = metrics.map(\.collisionDurationMS).sorted()
-            guard !durations.isEmpty else {
-                return CollisionBuildBenchmarkSummary(
-                    average: 0,
-                    p95: 0,
-                    maximum: 0,
-                    shapes: 0,
-                    triangles: 0
-                )
-            }
-            let average = durations.reduce(0, +) / Double(durations.count)
-            let p95Index = min(
-                durations.count - 1,
-                Int(ceil(Double(durations.count) * 0.95)) - 1
-            )
-            let p95 = durations[p95Index]
-            let maximum = durations.last ?? 0
-            guard p95 <= configuration.collisionBuildBudgetMS else {
-                throw CellStreamingFlyBenchmarkError.collisionBuildExceeded(
-                    p95: p95,
-                    maximum: maximum,
-                    budget: configuration.collisionBuildBudgetMS
-                )
-            }
-            return CollisionBuildBenchmarkSummary(
-                average: average,
-                p95: p95,
-                maximum: maximum,
-                shapes: metrics.reduce(0) { $0 + $1.collisionShapeCount },
-                triangles: metrics.reduce(0) { $0 + $1.collisionTriangleCount }
-            )
-        }
-
         private func validatePlateau() throws {
             guard
                 let initial = settledFootprints.first,
@@ -350,6 +352,9 @@ enum CellStreamingFlyBenchmark {
         }
     }
 
+    /// Metric validation lives in a same-file extension of Driver so the
+    /// enum body stays inside the type-length limit; private members remain
+    /// reachable from same-file extensions.
     private static func isSettled(_ streamer: CellStreamer) -> Bool {
         streamer.resolvedCellCount == streamer.desiredCellCount
             && streamer.inFlightCellCount == 0
@@ -369,4 +374,96 @@ enum CellStreamingFlyBenchmark {
         }
         return footprint
     }
+}
+
+/// Metric validation lives at file scope (enum type-length limit); Driver
+/// hands in its runner + configuration.
+nonisolated private func validatedCollisionBuildMetrics(
+    runner: SerialCellBuildRunner,
+    configuration: CellStreamingFlyBenchmarkConfiguration,
+    expectedCount: Int
+) throws -> CollisionBuildBenchmarkSummary {
+    let metrics = runner.buildMetricsSnapshot().values
+    guard metrics.count == expectedCount else {
+        throw CellStreamingFlyBenchmarkError.unexpectedBuildSet(
+            expected: expectedCount,
+            actual: metrics.count
+        )
+    }
+    let durations = metrics.map(\.collisionDurationMS).sorted()
+    guard !durations.isEmpty else {
+        return CollisionBuildBenchmarkSummary(
+            average: 0,
+            p95: 0,
+            maximum: 0,
+            shapes: 0,
+            triangles: 0
+        )
+    }
+    let average = durations.reduce(0, +) / Double(durations.count)
+    let p95 = durations[p95Index(count: durations.count)]
+    let maximum = durations.last ?? 0
+    guard p95 <= configuration.collisionBuildBudgetMS else {
+        throw CellStreamingFlyBenchmarkError.collisionBuildExceeded(
+            p95: p95,
+            maximum: maximum,
+            budget: configuration.collisionBuildBudgetMS
+        )
+    }
+    return CollisionBuildBenchmarkSummary(
+        average: average,
+        p95: p95,
+        maximum: maximum,
+        shapes: metrics.reduce(0) { $0 + $1.collisionShapeCount },
+        triangles: metrics.reduce(0) { $0 + $1.collisionTriangleCount }
+    )
+}
+
+/// Exact per-cell accounting first (every discovered ACHR explained),
+/// then the latency budget over the same per-cell durations. Count of
+/// metric entries is validated by validatedCollisionBuildMetrics.
+nonisolated private func validatedActorBuildMetrics(
+    runner: SerialCellBuildRunner,
+    configuration: CellStreamingFlyBenchmarkConfiguration
+) throws -> ActorBuildBenchmarkSummary {
+    let metrics = runner.buildMetricsSnapshot()
+    for (coordinate, metric) in metrics where !metric.actorAccountingIsExact {
+        throw CellStreamingFlyBenchmarkError.actorAccountingMismatch(
+            coordinate: coordinate,
+            discovered: metric.actorDiscoveredCount,
+            explained: metric.actorRenderedCount
+                + metric.actorDisabledSkipCount
+                + metric.actorFailureCount
+        )
+    }
+    let durations = metrics.values.map(\.actorDurationMS).sorted()
+    guard !durations.isEmpty else {
+        return ActorBuildBenchmarkSummary(
+            average: 0, p95: 0, maximum: 0,
+            discovered: 0, rendered: 0, disabledSkips: 0, failures: 0
+        )
+    }
+    let average = durations.reduce(0, +) / Double(durations.count)
+    let p95 = durations[p95Index(count: durations.count)]
+    let maximum = durations.last ?? 0
+    guard p95 <= configuration.actorBuildBudgetMS else {
+        throw CellStreamingFlyBenchmarkError.actorBuildExceeded(
+            p95: p95,
+            maximum: maximum,
+            budget: configuration.actorBuildBudgetMS
+        )
+    }
+    return ActorBuildBenchmarkSummary(
+        average: average,
+        p95: p95,
+        maximum: maximum,
+        discovered: metrics.values.reduce(0) { $0 + $1.actorDiscoveredCount },
+        rendered: metrics.values.reduce(0) { $0 + $1.actorRenderedCount },
+        disabledSkips: metrics.values.reduce(0) { $0 + $1.actorDisabledSkipCount },
+        failures: metrics.values.reduce(0) { $0 + $1.actorFailureCount }
+    )
+}
+
+nonisolated private func p95Index(count: Int) -> Int {
+    min(count - 1, Int(ceil(Double(count) * 0.95)) - 1)
 }

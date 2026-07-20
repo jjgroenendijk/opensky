@@ -100,6 +100,15 @@ nonisolated final class CellSceneBuilder {
     /// XTEL refs stored in each WRLD persistent CELL, keyed by WRLD FormID.
     /// Physical placement decides which streamed exterior scene owns them.
     var exteriorPersistentTeleportRefs: [UInt32: [PlacedReference]] = [:]
+    /// ACHRs stored in each WRLD persistent CELL, keyed by WRLD FormID —
+    /// same ownership rule as the teleport refs above (5.5 actor streaming).
+    var exteriorPersistentActors: [UInt32: [PlacedActor]] = [:]
+    /// Template + visual actor resolvers, built on the first actor-bearing
+    /// cell and cached like statIndex. Build-queue confined.
+    var actorTemplateResolver: ActorTemplateResolver?
+    var actorVisualResolver: ActorVisualResolver?
+    /// Plugin file name feeding FaceGen path resolution (FormIDResolver).
+    let pluginName: String
     /// Water/environment indexes + reusable plane mesh. Build-queue confined
     /// like the existing record indexes and asset libraries.
     var worldspaceIndex: [UInt32: Worldspace]?
@@ -112,11 +121,13 @@ nonisolated final class CellSceneBuilder {
         file: ESMFile,
         meshes: MeshLibrary,
         textures: TextureLibrary,
-        fileSystem: VirtualFileSystem? = nil
+        fileSystem: VirtualFileSystem? = nil,
+        pluginName: String = "Skyrim.esm"
     ) {
         self.file = file
         self.meshes = meshes
         self.textures = textures
+        self.pluginName = pluginName
         collisionModels = fileSystem.map(NIFCollisionLibrary.init(fileSystem:))
         distantLODBuilder = fileSystem.map {
             DistantLODBuilder(fileSystem: $0, meshes: meshes, textures: textures)
@@ -174,11 +185,14 @@ nonisolated final class CellSceneBuilder {
         let location = CellSceneLocation.exterior(coordinate)
         let staticCollision = buildStaticCollision(refs: refs, location: location)
         let instances = resolveInstances(refs: refs, counts: &counts)
+        let actors = buildExteriorActors(
+            cellChildren: found.children,
+            world: world.children,
+            coordinate: coordinate,
+            localized: localized
+        )
         let doors = resolveDoors(refs: refs)
-        let terrain = buildTerrain(found: found, worldspace: world.worldspace)
-        let water = buildWater(found: found, worldspace: world.worldspace)
-        let sky = world.worldspace?.flags.contains(.noSky) == false
-            ? SkyParameters() : nil
+        let environment = buildEnvironment(found: found, worldspace: world.worldspace)
         var scene = makeScene(
             found: found,
             grid: (x: gridX, y: gridY),
@@ -186,12 +200,13 @@ nonisolated final class CellSceneBuilder {
             geometry: CellGeometryBuild(
                 location: location,
                 doors: doors,
-                terrain: terrain,
-                water: water,
-                sky: sky,
+                terrain: environment.terrain,
+                water: environment.water,
+                sky: environment.sky,
                 lighting: nil,
                 pointLights: [],
-                staticCollision: staticCollision
+                staticCollision: staticCollision,
+                actors: actors
             ),
             counts: counts
         )
@@ -404,23 +419,6 @@ extension CellSceneBuilder {
             }
         }
         return instances.sorted { ($0.sortKey, $0.formID) < ($1.sortKey, $1.formID) }
-    }
-
-    /// Keeps only REFRs whose base resolves to DOOR and whose XTEL decoded.
-    /// A non-teleport door still renders but has no activation target.
-    nonisolated func resolveDoors(refs: [PlacedReference]) -> [PlacedDoor] {
-        let modelBaseIndex = modelBaseIndexBuildingIfNeeded()
-        return refs.compactMap { ref in
-            guard
-                modelBaseIndex[ref.base.rawValue]?.recordType == "DOOR",
-                let destination = ref.teleportDestination
-            else { return nil }
-            return PlacedDoor(
-                reference: ref.formID,
-                position: ref.placement.position,
-                destination: destination
-            )
-        }
     }
 
     /// FormID -> StaticObject over the STAT top group. Raw FormIDs suffice

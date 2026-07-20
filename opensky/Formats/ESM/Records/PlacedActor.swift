@@ -18,12 +18,16 @@ nonisolated struct PlacedActor {
     let placement: PlacedReference.Placement
     /// XSCL — uniform scale, defaulting to 1 when the field is absent.
     let scale: Float
+    /// Record-header flag 0x800 (UESP): the actor stays hidden until a quest
+    /// or script enables it. M5 has no script state -> explicit render skip.
+    let isInitiallyDisabled: Bool
 
     init(record: ESMRecord) throws {
         guard record.type == "ACHR" else {
             throw ESMError.malformed("expected ACHR record, got \(record.type)")
         }
         formID = FormID(record.formID)
+        isInitiallyDisabled = record.isInitiallyDisabled
 
         var base: FormID?
         var placement: PlacedReference.Placement?

@@ -99,6 +99,7 @@ extension CellSceneBuilder {
         let location = CellSceneLocation.interior(cellFormID)
         let staticCollision = buildStaticCollision(refs: refs, location: location)
         let instances = resolveInstances(refs: refs, counts: &counts)
+        let actors = buildInteriorActors(cellChildren: found.children, localized: localized)
         let lighting = buildInteriorLighting(cell: found.cell, references: refs)
         var scene = makeScene(
             found: found,
@@ -114,7 +115,8 @@ extension CellSceneBuilder {
                 sky: nil,
                 lighting: lighting?.lighting,
                 pointLights: lighting?.pointLights ?? [],
-                staticCollision: staticCollision
+                staticCollision: staticCollision,
+                actors: actors
             ),
             counts: counts
         )

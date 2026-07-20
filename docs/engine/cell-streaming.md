@@ -266,6 +266,30 @@ camera to XTEL pose, clears interior scene, resumes normal grid settlement. Asse
 uses active interior keys while inside, exterior union after return. Full flow:
 [interior door transitions](/engine/interiors.md).
 
+### Actor streaming (M5.5)
+
+Placed actors are cell content, not a separate stream: `buildScene` /
+`buildInteriorScene` run the ACHR collect -> resolve -> assemble pass
+(`CellSceneBuilderActors.swift`) on the same serial queue, and the assembled
+placements merge into the cell's `RenderScene` before the touched-key drain.
+Consequences, all inherited from the statics design:
+
+- Build/evict lifecycle: actor body/head model keys land in `CellScene.assets`
+  -> unload drop-set subtracts the resident union, so a body mesh shared by
+  two resident cells survives one cell's departure. Skeletons + the shared
+  character skeleton are retained by `MeshLibrary` outside cell assets
+  (small, universally shared).
+- Worldspace-persistent ACHRs (stored under the (0,0) persistent CELL) map
+  into streamed cells by physical position — same rule as persistent teleport
+  doors; cached per WRLD on the builder.
+- Resolver indexes (NPC_/LVLN + RACE/ARMO/ARMA/OTFT/LVLI) build once on the
+  first actor-bearing cell; the one-time cost lands in that cell's actor
+  duration (visible as the fly-bench max, excluded from p95 by ranking).
+- Exact accounting per cell: discovered = rendered + disabled skips +
+  failures ([actor records](/formats/actors.md)); `CellBuildMetric` carries
+  the counts + actor phase duration, and `bench --fly-path` fails on any
+  per-cell mismatch or actor-build p95 over budget.
+
 ## Memory safety + observed plateau
 
 `Data(contentsOf:options:.mappedIfSafe)` may copy instead of map, especially on external
@@ -295,6 +319,16 @@ M4.3 collision-enabled fly path, 2026-07-19: 35 builds processed 2,393 shapes/23
 triangles; collision phase avg 102.11 ms, p95 450.37 ms, max 497.01 ms vs current 700 ms p95
 budget. Waypoint footprint 471 -> 524 -> 442 MB, 580 MB peak / 1,024 MB cap. 4,730 render
 frames avg 3.13 ms, p95 5.79 ms, max 20.24 ms.
+
+M5.5 actor-enabled fly path, 2026-07-20: 55 ACHRs discovered = 27 rendered + 27
+initially-disabled skips + 1 asset-level failure, exact accounting in every cell
+(template/visual chains across the path all resolve — 107/107 + 65/65 via `actor`
+probe; the single failure surfaces at assembly). Actor phase avg 425.76 ms, p95
+2164.08 ms, max 5832.06 ms vs 3000 ms p95 budget; max is the first actor-bearing
+cell paying the one-time resolver index build, the rest is first-load skinned body +
+FaceGen decode (optimization filed: GH issue #56). Waypoint footprint
+539 -> 608 -> 607 MB, 700 MB peak / 1,024 MB cap. 5,559 render frames avg 3.14 ms,
+p95 5.75 ms, max 17.66 ms; collision phase unchanged (p95 465.15 ms).
 
 These are debug-build verification numbers, not general hardware promise. Hard gates: 1
 GiB fly benchmark, 3.5 GiB in-process real test, 4 GiB external watchdog, final settled

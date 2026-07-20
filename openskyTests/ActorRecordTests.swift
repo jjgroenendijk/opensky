@@ -34,6 +34,19 @@ struct ActorRecordDecodeTests {
         #expect(actor.scale == 1)
     }
 
+    /// Record-header flag 0x800 = initially disabled (UESP record flags):
+    /// the actor exists but must not render until scripts enable it.
+    @Test func placedActorDecodesInitiallyDisabledHeaderFlag() throws {
+        let disabled = try PlacedActor(record: record(
+            ESMFixture.record("ACHR", formID: 1, flags: 0x0000_0800, data: achrFields())
+        ))
+        #expect(disabled.isInitiallyDisabled)
+        let enabled = try PlacedActor(
+            record: record(ESMFixture.record("ACHR", formID: 2, data: achrFields()))
+        )
+        #expect(!enabled.isInitiallyDisabled)
+    }
+
     @Test func placedActorRequiresBaseAndPlacement() throws {
         var name = Data()
         name.appendUInt32(0x1000)

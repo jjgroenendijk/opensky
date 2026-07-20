@@ -80,8 +80,11 @@ mod-quirk rule):
 | load-failed | `MeshLibraryError`: file not found, parse failed, empty model |
 
 Ignored deliberately (not refs, not counted): non-REFR records inside cell children
-(NAVM, ACHR, PGRE, ... — not static placements, out of scope) and deleted REFRs (they
-remove placements, nothing to draw). LAND is no longer ignored — `buildTerrain` decodes
+(NAVM, PGRE, ... — not static placements, out of scope) and deleted REFRs (they
+remove placements, nothing to draw). ACHR left this list in 5.5: placed actors run a
+parallel collect/resolve/assemble pass with its own exact accounting
+(`discovered = rendered + disabled + failed` — [actor records](/formats/actors.md)).
+LAND is no longer ignored — `buildTerrain` decodes
 it into ground geometry ([terrain mesh build](/engine/terrain.md)). Malformed groups under
 the WRLD tree are pruned with a log, letting sibling blocks still resolve.
 
@@ -100,6 +103,10 @@ summary count because it is worldspace environment state, not cell geometry.
 Parenthetical lists only non-zero skip buckets (`unsupported-base`, `marker`,
 `load-failed`, `malformed`) and disappears when nothing skipped. Model/texture counts
 come from the `MeshLibrary`/`TextureLibrary` counters (distinct paths).
+
+Actor-bearing cells append `, N actors (D drawn, S disabled, F failed)` (zero buckets
+omitted) — the greppable per-cell form of the 5.5 exact-accounting rule
+`N == D + S + F` (`CellLoadSummary.actorAccountingIsExact`).
 
 ## Grouping (instancing-ready)
 

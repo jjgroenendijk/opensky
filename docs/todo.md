@@ -58,18 +58,6 @@ mandatory, actor-enabled fly bench keeps explicit build/footprint/frame budgets.
 Format leads from UESP mod-file-format pages + xEdit definitions + NifTools `nif.xml`;
 byte-level layouts NOT yet verified — confirm by spec + probe at impl, flag deviations.
 
-### 5.5 Actor streaming integration
-
-* [ ] Actors build/evict with cells on the serial build queue like statics; persistent
-      ACHRs mapped into streamed cells by position (pattern from door handling);
-      interiors included. Shared skeleton/body assets retained across cells.
-      Per-cell accounting reports non-deleted ACHRs discovered, rendered, intentionally
-      skipped by reason + failed; initially-disabled actors are explicit skips while M5 has
-      no quest/script state.
-* [ ] Acceptance: actor-enabled streaming fly-path bench shows no render/build-latency or
-      footprint budget breach; build/evict + persistent-position lifecycle tests with fake
-      providers; discovered = rendered + intentional skips + failures for every cell.
-
 ### 5.6 Milestone acceptance
 
 * [ ] Bind-pose, clothed actors render at correct positions in Whiterun exterior + one

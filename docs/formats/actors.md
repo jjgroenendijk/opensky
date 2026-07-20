@@ -38,10 +38,12 @@ cell; physical position decides streamed-cell ownership (door pattern,
 | DATA  | float[6] | `placement` pos + rot radians, required |
 | XSCL  | float    | `scale`, absent -> 1.0                  |
 
-Skipped for now: VMAD script, XEZN encounter zone, patrol data, XRGD/XRGB
-ragdoll, XLCM level modifier, XESP enable parent, XOWN owner, XLCN/XLRL
-location, XLKR link (4- or 8-byte). Header flags of note (undecoded, listed
-for 5.5): 0x200 starts dead, 0x800 initially disabled.
+Record-header flag 0x800 (UESP record flags) decodes to `isInitiallyDisabled`:
+actor placed but hidden until quest/script enables it -> explicit render skip
+while M5 has no script state. Skipped for now: VMAD script, XEZN encounter
+zone, patrol data, XRGD/XRGB ragdoll, XLCM level modifier, XESP enable parent,
+XOWN owner, XLCN/XLRL location, XLKR link (4- or 8-byte), header flag 0x200
+(starts dead).
 
 ## NPC_ -> ActorBase
 
@@ -269,6 +271,27 @@ flag (0x2): creature races bake none, while head-part-less humanoids
 FaceGen `BSDynamicTriShape` details + node-reference pose live in
 [NIF mesh](/formats/nif.md). `faceGenTintPath` stays attached to head role for later tint
 composition; current NIF material diffuse/vertex color renders baked head geometry.
+
+## Actor streaming (5.5)
+
+`CellSceneBuilderActors.swift` runs the full chain on the serial cell build
+queue: ACHR collection (local persistent + temporary children; exterior cells
+union in worldspace-persistent ACHRs owned by physical position — door
+pattern) -> template resolve -> visual resolve -> assembly -> placements merged
+into the cell's `RenderScene`. Resolver pair (`ActorTemplateResolver` +
+`ActorVisualResolver`) builds once on the first actor-bearing cell, cached on
+the builder like `statIndex`. Actor body/head mesh keys join `CellScene.assets`
+-> evict with the cell; skeletons live outside cell assets (`MeshLibrary`
+retains `actorSkeletons` + character skeleton across evictions).
+
+Accounting is exact per cell: `discovered = rendered + disabledSkips +
+failures`. Discovered = non-deleted ACHRs owned by the cell; disabled =
+initially-disabled header flag (intentional skip, no script state yet);
+failures = malformed record, unresolved chain, or assembly with zero
+geometry. Counts land in `CellLoadSummary` (summary-line actor clause) +
+`CellBuildMetric`; `bench --fly-path` gates the invariant and the actor-build
+p95 budget ([CLI](/tools/cli.md)). Streaming lifecycle detail:
+[cell streaming](/engine/cell-streaming.md).
 
 ## Verification
 
