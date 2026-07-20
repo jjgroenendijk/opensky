@@ -28,6 +28,9 @@ nonisolated struct ESMRecord {
         static let localized = Flags(rawValue: 1 << 7)
         /// TES4: ESL (light) file, loaded into the 0xFE FormID space.
         static let esl = Flags(rawValue: 1 << 9)
+        /// REFR/ACHR: placed reference starts disabled until a script or
+        /// quest enables it (UESP record-header flag 0x800).
+        static let initiallyDisabled = Flags(rawValue: 1 << 11)
         static let ignored = Flags(rawValue: 1 << 12)
         /// Data is uint32 decompressedSize + zlib stream.
         static let compressed = Flags(rawValue: 1 << 18)
@@ -90,6 +93,10 @@ nonisolated struct ESMRecord {
 
     var isDeleted: Bool {
         header.flags.contains(.deleted)
+    }
+
+    var isInitiallyDisabled: Bool {
+        header.flags.contains(.initiallyDisabled)
     }
 
     /// Field bytes, zlib-decompressed when the record is compressed.

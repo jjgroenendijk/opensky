@@ -13,6 +13,10 @@ enum BenchCommand {
     private static let defaultFlyMaxFrames = 36000
     private static let defaultFootprintCapMB = 1024.0
     private static let defaultCollisionBuildBudgetMS = 700.0
+    /// Debug baseline 2026-07-20: p95 2165 ms over the Whiterun fly path
+    /// (first-load skinned bodies + FaceGen heads dominate) -> 3000 ms
+    /// keeps ~1.4x headroom, same policy as the collision 500 -> 700 revision.
+    private static let defaultActorBuildBudgetMS = 3000.0
 
     private struct Options {
         let worldspace: String
@@ -26,6 +30,7 @@ enum BenchCommand {
         let maxFrames: Int
         let footprintCapMB: Double
         let collisionBuildBudgetMS: Double
+        let actorBuildBudgetMS: Double
     }
 
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
@@ -134,7 +139,8 @@ enum BenchCommand {
                 size: options.size,
                 maxFrames: options.maxFrames,
                 footprintCapMB: options.footprintCapMB,
-                collisionBuildBudgetMS: options.collisionBuildBudgetMS
+                collisionBuildBudgetMS: options.collisionBuildBudgetMS,
+                actorBuildBudgetMS: options.actorBuildBudgetMS
             )
         )
         reportFlyPath(
@@ -237,6 +243,9 @@ extension BenchCommand {
             footprintCapMB: footprintCapMB(scanner.option("--footprint-cap-mb")),
             collisionBuildBudgetMS: collisionBuildBudgetMS(
                 scanner.option("--collision-build-budget-ms")
+            ),
+            actorBuildBudgetMS: actorBuildBudgetMS(
+                scanner.option("--actor-build-budget-ms")
             )
         )
         if options.output != nil, !options.walkPath {
@@ -318,6 +327,20 @@ extension BenchCommand {
             result.collisionTriangleCount
         ))
         print(String(
+            format: "[INFO] actor build: avg %.2f ms, p95 %.2f ms, max %.2f ms, "
+                + "budget %.2f ms",
+            result.actorBuildAverageMS,
+            result.actorBuildP95MS,
+            result.actorBuildMaximumMS,
+            result.actorBuildBudgetMS
+        ))
+        print(
+            "[INFO] actors: \(result.actorDiscoveredCount) discovered = "
+                + "\(result.actorRenderedCount) rendered + "
+                + "\(result.actorDisabledSkipCount) disabled + "
+                + "\(result.actorFailureCount) failed"
+        )
+        print(String(
             format: "[INFO] %d stream frames @ %dx%d: avg %.2f ms, p95 %.2f ms, "
                 + "max %.2f ms, budget %.2f ms",
             result.render.frameMS.count, size.width, size.height,
@@ -382,6 +405,16 @@ extension BenchCommand {
         guard let budget = Double(value), budget > 0 else {
             throw CLIError.usage(
                 "--collision-build-budget-ms expects a positive number, got \(value)"
+            )
+        }
+        return budget
+    }
+
+    private static func actorBuildBudgetMS(_ value: String?) throws -> Double {
+        guard let value else { return defaultActorBuildBudgetMS }
+        guard let budget = Double(value), budget > 0 else {
+            throw CLIError.usage(
+                "--actor-build-budget-ms expects a positive number, got \(value)"
             )
         }
         return budget

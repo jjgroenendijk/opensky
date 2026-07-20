@@ -109,6 +109,18 @@ nonisolated struct CellBuildMetric: Equatable {
     let collisionDurationMS: Double
     let collisionShapeCount: Int
     let collisionTriangleCount: Int
+    /// Actor phase accounting mirrored off CellLoadSummary so the fly bench
+    /// can gate latency + exact accounting per cell (5.5).
+    var actorDurationMS = 0.0
+    var actorDiscoveredCount = 0
+    var actorRenderedCount = 0
+    var actorDisabledSkipCount = 0
+    var actorFailureCount = 0
+
+    var actorAccountingIsExact: Bool {
+        actorDiscoveredCount
+            == actorRenderedCount + actorDisabledSkipCount + actorFailureCount
+    }
 }
 
 nonisolated struct DistantLODBuildResult {
@@ -201,7 +213,12 @@ nonisolated final class SerialCellBuildRunner: CellBuildRunning, @unchecked Send
                     totalDurationMS: duration,
                     collisionDurationMS: scene.staticCollision.buildDurationMS,
                     collisionShapeCount: scene.staticCollision.stats.shapeCount,
-                    collisionTriangleCount: scene.staticCollision.stats.triangleCount
+                    collisionTriangleCount: scene.staticCollision.stats.triangleCount,
+                    actorDurationMS: scene.summary.actorBuildDurationMS,
+                    actorDiscoveredCount: scene.summary.actorCount,
+                    actorRenderedCount: scene.summary.actorDrawnCount,
+                    actorDisabledSkipCount: scene.summary.actorDisabledSkipCount,
+                    actorFailureCount: scene.summary.actorFailureCount
                 )
             }
             completed.append(entry)

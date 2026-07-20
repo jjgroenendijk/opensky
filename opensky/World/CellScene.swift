@@ -107,9 +107,25 @@ nonisolated struct CellLoadSummary: Equatable {
     var waterPlaneCount = 0
     /// Supported LIGH/XEMI placements available to forward draws.
     var pointLightCount = 0
+    /// Non-deleted ACHRs owned by this cell (local + position-mapped
+    /// worldspace-persistent). Buckets below must account for each exactly
+    /// once (5.5 exact-accounting rule).
+    var actorCount = 0
+    var actorDrawnCount = 0
+    /// Initially-disabled ACHRs — explicit intentional skip (no script state).
+    var actorDisabledSkipCount = 0
+    /// Malformed ACHR, unresolved template/visual chain, or no core geometry.
+    var actorFailureCount = 0
+    /// Wall time of the cell's actor collect+resolve+assemble phase.
+    var actorBuildDurationMS = 0.0
 
     var skippedRefCount: Int {
         unsupportedBaseSkipCount + markerSkipCount + modelFailureSkipCount + malformedRefSkipCount
+    }
+
+    /// Every discovered actor landed in exactly one bucket.
+    var actorAccountingIsExact: Bool {
+        actorCount == actorDrawnCount + actorDisabledSkipCount + actorFailureCount
     }
 
     /// One-line load report (AGENTS.md bracket-tag style), e.g.
@@ -145,6 +161,18 @@ nonisolated struct CellLoadSummary: Equatable {
         }
         if pointLightCount > 0 {
             terrain += ", \(pointLightCount) point lights"
+        }
+        // Actor clause appended only for actor-bearing cells; the breakdown
+        // makes the exact-accounting rule greppable per cell.
+        if actorCount > 0 {
+            var buckets = ["\(actorDrawnCount) drawn"]
+            if actorDisabledSkipCount > 0 {
+                buckets.append("\(actorDisabledSkipCount) disabled")
+            }
+            if actorFailureCount > 0 {
+                buckets.append("\(actorFailureCount) failed")
+            }
+            terrain += ", \(actorCount) actors (\(buckets.joined(separator: ", ")))"
         }
         return "[INFO] \(cellName) (\(gridX),\(gridY)): \(totalRefCount) refs, "
             + "\(drawnRefCount) drawn, \(skipped), \(modelCount) models, "

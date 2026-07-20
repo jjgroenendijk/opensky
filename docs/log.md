@@ -4,6 +4,25 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-20
 
+* M5.5 actor streaming integration complete -- ACHR placed actors build/evict with
+  cells on the serial build queue (`CellSceneBuilderActors`): local + worldspace-
+  persistent ACHRs (position-owned, door pattern, cached per WRLD), template/visual
+  resolvers built once + cached like statIndex, assembled placements merged into each
+  cell's RenderScene; interiors run the same pass. Body/head mesh keys join
+  `CellScene.assets` -> evict with the cell; MeshLibrary retains skeletons. Record-header
+  flag 0x800 decodes to `PlacedActor.isInitiallyDisabled` (UESP record flags) -> explicit
+  skip while M5 has no script state. Exact per-cell accounting (discovered = rendered +
+  disabled + failed) in `CellLoadSummary` + `CellBuildMetric`; `bench --fly-path` gains
+  actor-build p95 + accounting gates (`--actor-build-budget-ms`, default 3000 ms after
+  Debug baseline p95 2165 ms — first-load skinned bodies + FaceGen dominate; perf
+  follow-up GH #56). Real fly path: 55 discovered = 27 rendered + 27 disabled + 1
+  asset-level failure, exact in every cell; actor phase avg 425.76/p95 2164.08/max
+  5832.06 ms; footprint peak 700/1,024 MB; 5,559 frames avg 3.14 ms/p95 5.75 ms.
+  Chillfurrow interior probe: 1 actors (1 drawn). Synthetic builder-actor,
+  streamer-lifecycle + record-flag tests. Docs:
+  [actor records](/formats/actors.md), [cell scene](/engine/cell-scene.md),
+  [cell streaming](/engine/cell-streaming.md), [CLI](/tools/cli.md). Item 5.5 left
+  [todo](/todo.md).
 * M5.4 actor assembly complete -- `ActorAssembler` composes race/gender skeleton,
   ordered outfit + visible skin ARMAs, dynamic FaceGen head, common ACHR DATA/XSCL
   transform + world bounds. Missing/invalid skeleton/models retain reason tags; any body/

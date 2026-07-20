@@ -446,3 +446,34 @@ extension CellStreamerTests {
         #expect(runner.enqueued == [Self.coordinate(0, 0)])
     }
 }
+
+// MARK: - Actor streaming lifecycle (5.5)
+
+extension CellStreamerTests {
+    /// Actor body/head model keys ride the same per-cell asset lifecycle as
+    /// statics (5.5 actor streaming): a departed cell's unique actor mesh is
+    /// evicted, a body mesh shared with a still-resident cell survives.
+    /// (Skeletons never enter cell assets — MeshLibrary retains them.)
+    @Test
+    func actorAssetsEvictWithTheirCellAndSharedBodiesSurvive() {
+        let runner = ManualCellBuildRunner()
+        let streamer = Self.makeStreamer(runner: runner)
+        streamer.update(cameraPosition: Self.center)
+
+        let grid = (-1 ... 1)
+            .flatMap { x in (-1 ... 1).map { Self.coordinate(Int32(x), Int32($0)) } }
+        for cell in grid {
+            runner.complete(cell, with: .success(Self.cellScene(
+                meshKeys: ["actor-body-shared", "actor-head-\(cell.x)_\(cell.y)"]
+            )))
+        }
+        for _ in grid {
+            streamer.update(cameraPosition: Self.center)
+        }
+
+        streamer.update(cameraPosition: CellGridManager.cellCenter(of: Self.coordinate(1, 0)))
+        let dropped = runner.evictedMeshKeys.last ?? []
+        #expect(!dropped.contains("actor-body-shared"), "shared actor body evicted in use")
+        #expect(dropped.contains("actor-head--1_0"), "departed actor asset not evicted")
+    }
+}

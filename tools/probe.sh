@@ -101,9 +101,14 @@ grep 'frames @' "$log" | tail -1
 # M3.2 streaming gate: deterministic east + north crossings. Shared engine
 # verifier requires three settled 5x5 grids, eviction, 35 unique builds with
 # no duplicates, physical-footprint plateau, and avg/p95 under 30 fps budget.
+# M5.5 adds actor-enabled gates: actor-build p95 budget + exact per-cell
+# accounting (discovered = rendered + disabled + failed).
 run "cross-cell streaming bench (640x360)" bench --fly-path --size 640x360
 grep 'unique builds' "$log" | tail -1
 grep 'collision build:' "$log" | tail -1
+grep 'actor build:' "$log" | tail -1
+grep 'actors:' "$log" | tail -1 | grep -q 'discovered' \
+  || fail "fly bench reported no actor accounting"
 
 # M4.5 route gate: fixed-step production physics from first-render cell to
 # Chillfurrow Farm, interior floor crossing, then paired exterior return.
