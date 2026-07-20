@@ -4,6 +4,14 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-20
 
+* Metal shader tooling decided ([decision](/decisions/metal-tooling.md)): clang-format
+  (via `xcrun`, config `tools/format/.clang-format`) formats `.metal` through
+  `make format`/`format-check` + pre-commit hook `35-metal-format.sh`; linter =
+  Metal compiler with `MTL_TREAT_WARNINGS_AS_ERRORS = YES` (both configs), enforced
+  by build gates. `Shaders.metal` one-time reformat. Remaining tooling/meta + open
+  questions moved from [todo](/todo.md) to GitHub issues #70-#73 (CI re-enable,
+  commit-msg body enforcement, string decode strategy, plugins.txt load order);
+  AGENTS.md CI note now points at #70.
 * Roadmap re-scoped: M7-M9 planned in [todo](/todo.md). M7 Papyrus quest-capable
   (M7.1 VM core, M7.2 scripts in world, M7.3 quest engine). M8 audio incl. voice +
   lip sync (M8.1 decode/playback foundation, M8.2 game wiring, M8.3 voice + lips);

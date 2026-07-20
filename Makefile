@@ -12,13 +12,15 @@ SWIFT_PATHS    := opensky openskycli openskyTests openskyUITests
 
 SWIFTFORMAT_CFG := tools/format/.swiftformat
 SWIFTLINT_CFG   := tools/lint/.swiftlint.yml
+CLANGFORMAT_CFG := tools/format/.clang-format
 MD_CFG          := tools/markdown/.markdownlint-cli2.yaml
 MD_GLOB         := **/*.md
+METAL_FILES     := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
 
 .DEFAULT_GOAL := help
 .PHONY: help bootstrap hooks format format-check lint check fix swift-format \
-        swift-lint md-format md-lint sh-lint build cli probe test test-ui \
-        test-one test-report app-path cli-path run-cli install clean
+        swift-lint metal-format md-format md-lint sh-lint build cli probe test \
+        test-ui test-one test-report app-path cli-path run-cli install clean
 
 help: ## List available targets
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -32,10 +34,12 @@ hooks: ## Point git at .githooks/hooks (idempotent)
 	@find .githooks -type f \( -name '*.sh' -o -path '*/hooks/*' \) -exec chmod +x {} +
 	@echo "[ OK ] core.hooksPath = .githooks/hooks"
 
-format: swift-format md-format ## Autoformat everything in place
+format: swift-format metal-format md-format ## Autoformat everything in place
 
 format-check: ## Fail if anything is unformatted (no writes) — for CI
 	@swiftformat --lint --config $(SWIFTFORMAT_CFG) $(SWIFT_PATHS)
+	@[ -z "$(METAL_FILES)" ] || xcrun clang-format --style=file:$(CLANGFORMAT_CFG) \
+		--dry-run --Werror $(METAL_FILES)
 	@markdownlint-cli2 --config $(MD_CFG) "$(MD_GLOB)"
 
 lint: swift-lint md-lint sh-lint ## Run all linters (strict)
@@ -49,6 +53,10 @@ swift-format: ## Autoformat Swift
 
 swift-lint: ## Strict Swift lint (warnings fail)
 	@swiftlint lint --strict --quiet --config $(SWIFTLINT_CFG) $(SWIFT_PATHS)
+
+metal-format: ## Autoformat Metal shaders (clang-format via Xcode)
+	@[ -z "$(METAL_FILES)" ] || xcrun clang-format --style=file:$(CLANGFORMAT_CFG) \
+		-i $(METAL_FILES)
 
 md-format: ## Autofix Markdown
 	@markdownlint-cli2 --fix --config $(MD_CFG) "$(MD_GLOB)" || true

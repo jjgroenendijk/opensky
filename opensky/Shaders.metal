@@ -12,20 +12,17 @@ static float3 directionalAmbient(float3 normal, constant FrameUniforms &frame)
 {
     float3 weights = abs(normal);
     weights /= max(weights.x + weights.y + weights.z, 0.0001);
-    float3 x = normal.x >= 0.0
-        ? frame.directionalAmbientPositiveX : frame.directionalAmbientNegativeX;
-    float3 y = normal.y >= 0.0
-        ? frame.directionalAmbientPositiveY : frame.directionalAmbientNegativeY;
-    float3 z = normal.z >= 0.0
-        ? frame.directionalAmbientPositiveZ : frame.directionalAmbientNegativeZ;
+    float3 x =
+        normal.x >= 0.0 ? frame.directionalAmbientPositiveX : frame.directionalAmbientNegativeX;
+    float3 y =
+        normal.y >= 0.0 ? frame.directionalAmbientPositiveY : frame.directionalAmbientNegativeY;
+    float3 z =
+        normal.z >= 0.0 ? frame.directionalAmbientPositiveZ : frame.directionalAmbientNegativeZ;
     return x * weights.x + y * weights.y + z * weights.z;
 }
 
 static float3 pointLighting(
-    float3 worldPosition,
-    float3 normal,
-    const device PointLightUniform *lights,
-    uint count)
+    float3 worldPosition, float3 normal, const device PointLightUniform *lights, uint count)
 {
     float3 sum = 0.0;
     for (uint index = 0; index < count; ++index) {
@@ -64,9 +61,7 @@ typedef struct
 
 vertex SkyVertexOut skyVertex(uint vertexID [[vertex_id]])
 {
-    float2 positions[3] = {
-        float2(-1.0, -1.0), float2(3.0, -1.0), float2(-1.0, 3.0)
-    };
+    float2 positions[3] = {float2(-1.0, -1.0), float2(3.0, -1.0), float2(-1.0, 3.0)};
     SkyVertexOut out;
     out.position = float4(positions[vertexID], 1.0, 1.0);
     out.uv = positions[vertexID] * 0.5 + 0.5;
@@ -96,10 +91,7 @@ fragment float4 skyFragment(
     float3 color = mix(horizon, upper, height);
 
     float sunPhase = saturate((hour - 6.0) / 12.0);
-    float2 sunCenter = float2(
-        0.08 + sunPhase * 0.84,
-        0.38 + sin(sunPhase * 3.14159265) * 0.36
-    );
+    float2 sunCenter = float2(0.08 + sunPhase * 0.84, 0.38 + sin(sunPhase * 3.14159265) * 0.36);
     float sunDistance = distance(in.uv, sunCenter);
     float disc = (1.0 - smoothstep(0.012, 0.02, sunDistance)) * daylight;
     float glow = exp(-sunDistance * 32.0) * daylight;
@@ -209,9 +201,9 @@ fragment float4 staticMeshFragment(
     }
     float3 normal = normalize(in.normal);
     float lambert = saturate(dot(normal, -frame.sunDirection));
-    float3 illumination = frame.sunColor * lambert + frame.ambientColor
-        + directionalAmbient(normal, frame)
-        + pointLighting(in.worldPosition, normal, pointLights, draw.pointLightCount);
+    float3 illumination =
+        frame.sunColor * lambert + frame.ambientColor + directionalAmbient(normal, frame) +
+        pointLighting(in.worldPosition, normal, pointLights, draw.pointLightCount);
     float3 lit = diffuse.rgb * in.color.rgb * illumination;
     return float4(applyFog(lit, in.worldPosition, frame), alpha);
 }
@@ -267,18 +259,17 @@ fragment float4 terrainFragment(
     constant TerrainDrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]],
     const device PointLightUniform *pointLights [[buffer(BufferIndexPointLights)]],
     texture2d<float> baseMap [[texture(TextureIndexDiffuse)]],
-    array<texture2d<float>, TerrainConstantMaxLayers>
-        layerMaps [[texture(TextureIndexTerrainLayer0)]],
+    array<texture2d<float>, TerrainConstantMaxLayers> layerMaps
+    [[texture(TextureIndexTerrainLayer0)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]])
 {
     // Start opaque base, then lerp each layer in over the running color in
     // ATXT layer order. Straight lerp by VTXT opacity is the plain reading of
     // the spec; the exact vanilla blend curve is UNCONFIRMED.
     float3 albedo = baseMap.sample(trilinear, in.texcoord).rgb;
-    float weights[TerrainConstantMaxLayers] = {
-        in.weights0.x, in.weights0.y, in.weights0.z, in.weights0.w,
-        in.weights1.x, in.weights1.y, in.weights1.z, in.weights1.w
-    };
+    float weights[TerrainConstantMaxLayers] = {in.weights0.x, in.weights0.y, in.weights0.z,
+                                               in.weights0.w, in.weights1.x, in.weights1.y,
+                                               in.weights1.z, in.weights1.w};
     uint count = min(draw.layerCount, uint(TerrainConstantMaxLayers));
     for (uint layer = 0; layer < count; ++layer) {
         float3 layerColor = layerMaps[layer].sample(trilinear, in.texcoord).rgb;
@@ -286,9 +277,9 @@ fragment float4 terrainFragment(
     }
     float3 normal = normalize(in.normal);
     float lambert = saturate(dot(normal, -frame.sunDirection));
-    float3 illumination = frame.sunColor * lambert + frame.ambientColor
-        + directionalAmbient(normal, frame)
-        + pointLighting(in.worldPosition, normal, pointLights, draw.pointLightCount);
+    float3 illumination =
+        frame.sunColor * lambert + frame.ambientColor + directionalAmbient(normal, frame) +
+        pointLighting(in.worldPosition, normal, pointLights, draw.pointLightCount);
     float3 lit = albedo * in.color.rgb * illumination;
     return float4(applyFog(lit, in.worldPosition, frame), 1.0);
 }
@@ -320,11 +311,10 @@ fragment float4 waterFragment(
     constant WaterDrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]])
 {
     float2 phase = in.worldPosition.xy * 0.006;
-    float ripple = sin(phase.x + frame.animationTime * 1.3)
-        * cos(phase.y - frame.animationTime * 0.9);
-    float distanceMix = smoothstep(
-        1000.0, 12000.0, distance(in.worldPosition.xy, frame.cameraPosition.xy)
-    );
+    float ripple =
+        sin(phase.x + frame.animationTime * 1.3) * cos(phase.y - frame.animationTime * 0.9);
+    float distanceMix =
+        smoothstep(1000.0, 12000.0, distance(in.worldPosition.xy, frame.cameraPosition.xy));
     float3 base = mix(draw.shallowColor, draw.deepColor, distanceMix * 0.65 + 0.15);
     float3 viewDirection = normalize(frame.cameraPosition - in.worldPosition);
     float fresnel = pow(1.0 - saturate(abs(viewDirection.z)), 3.0);
