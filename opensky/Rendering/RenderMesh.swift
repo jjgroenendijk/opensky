@@ -142,6 +142,8 @@ nonisolated final class RenderMesh {
     let indexCount: Int
     let skinningBuffer: MTLBuffer?
     let boneMatrixBuffer: MTLBuffer?
+    private let skinningPalette: SkinningPalette?
+    private(set) var currentBoneMatrices: [float4x4]
     var isSkinned: Bool {
         skinningBuffer != nil
     }
@@ -183,15 +185,25 @@ nonisolated final class RenderMesh {
         indexCount = mesh.indices.count
         skinningBuffer = skinBuffers.attributes
         boneMatrixBuffer = skinBuffers.matrices
+        skinningPalette = skinBuffers.palette
+        currentBoneMatrices = mesh.skinning?.bindPoseMatrices ?? []
         localTransform = mesh.transform
         materialSlot = mesh.materialSlot
+    }
+
+    private struct SkinBuffers {
+        let attributes: MTLBuffer?
+        let matrices: MTLBuffer?
+        let palette: SkinningPalette?
     }
 
     private static func makeSkinBuffers(
         device: MTLDevice,
         mesh: Mesh
-    ) throws -> (attributes: MTLBuffer?, matrices: MTLBuffer?) {
-        guard let skinning = mesh.skinning else { return (nil, nil) }
+    ) throws -> SkinBuffers {
+        guard let skinning = mesh.skinning else {
+            return SkinBuffers(attributes: nil, matrices: nil, palette: nil)
+        }
         guard
             skinning.weights.count == mesh.positions.count,
             skinning.boneIndices.count == mesh.positions.count,
@@ -213,13 +225,71 @@ nonisolated final class RenderMesh {
                 options: .storageModeShared
             ),
             let matrices = device.makeBuffer(
-                bytes: skinning.bindPoseMatrices,
-                length: skinning.bindPoseMatrices.count * MemoryLayout<float4x4>.stride,
+                length: skinning.bindPoseMatrices.count * MemoryLayout<float4x4>.stride
+                    * Renderer.maxFramesInFlight,
                 options: .storageModeShared
             )
         else { throw RenderMeshError.bufferAllocationFailed }
         attributes.label = "\(mesh.name ?? "mesh").skin-vertices"
-        matrices.label = "\(mesh.name ?? "mesh").bind-pose-bones"
-        return (attributes, matrices)
+        matrices.label = "\(mesh.name ?? "mesh").bone-palettes"
+        for slot in 0 ..< Renderer.maxFramesInFlight {
+            matrices.contents().advanced(
+                by: slot * skinning.bindPoseMatrices.count * MemoryLayout<float4x4>.stride
+            ).copyMemory(
+                from: skinning.bindPoseMatrices,
+                byteCount: skinning.bindPoseMatrices.count * MemoryLayout<float4x4>.stride
+            )
+        }
+        var palette: SkinningPalette?
+        let hasPaletteMetadata = skinning.boneNames.count == boneCount
+            && skinning.skinToBoneMatrices.count == boneCount
+        if hasPaletteMetadata {
+            palette = SkinningPalette(
+                boneNames: skinning.boneNames,
+                rootParentToSkin: skinning.rootParentToSkin,
+                skinToBoneMatrices: skinning.skinToBoneMatrices,
+                bindPoseMatrices: skinning.bindPoseMatrices
+            )
+        }
+        return SkinBuffers(attributes: attributes, matrices: matrices, palette: palette)
     }
+
+    /// Refreshes CPU palette from an animated skeleton world pose. Unmatched
+    /// helper/NIF-only bones keep their verified bind matrix.
+    @discardableResult
+    func updateSkinningPose(_ transformsByName: [String: float4x4]) -> Int {
+        guard let palette = skinningPalette else { return 0 }
+        var updated = palette.bindPoseMatrices
+        var matchCount = 0
+        for index in palette.boneNames.indices {
+            guard let current = transformsByName[palette.boneNames[index]] else { continue }
+            updated[index] = palette.rootParentToSkin
+                * current
+                * palette.skinToBoneMatrices[index]
+            matchCount += 1
+        }
+        currentBoneMatrices = updated
+        return matchCount
+    }
+
+    /// Copies current CPU palette into this frame-in-flight slot immediately
+    /// before encoding, so CPU updates never race prior GPU frames.
+    func prepareBoneMatrices(slot: Int) {
+        guard let buffer = boneMatrixBuffer, !currentBoneMatrices.isEmpty else { return }
+        buffer.contents().advanced(by: boneMatrixOffset(slot: slot)).copyMemory(
+            from: currentBoneMatrices,
+            byteCount: currentBoneMatrices.count * MemoryLayout<float4x4>.stride
+        )
+    }
+
+    func boneMatrixOffset(slot: Int) -> Int {
+        slot * currentBoneMatrices.count * MemoryLayout<float4x4>.stride
+    }
+}
+
+nonisolated private struct SkinningPalette {
+    let boneNames: [String]
+    let rootParentToSkin: float4x4
+    let skinToBoneMatrices: [float4x4]
+    let bindPoseMatrices: [float4x4]
 }

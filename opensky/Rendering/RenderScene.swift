@@ -164,9 +164,12 @@ nonisolated struct RenderScene {
     let sky: SkyParameters?
     let lighting: RenderLighting?
     let pointLights: [RenderPointLight]
+    /// Cell-owned actor playback objects; references disappear on cell eviction.
+    let animations: [any RenderAnimation]
 
     init(
         instances: [RenderPlacement],
+        animations: [any RenderAnimation] = [],
         terrain: [TerrainDrawItem] = [],
         water: [WaterDrawItem] = [],
         sky: SkyParameters? = nil,
@@ -202,6 +205,7 @@ nonisolated struct RenderScene {
         self.sky = sky
         self.lighting = lighting
         self.pointLights = pointLights
+        self.animations = animations
     }
 
     /// Merges already-built scenes into one draw-list union — grid/streaming
@@ -228,6 +232,39 @@ nonisolated struct RenderScene {
         sky = scenes.lazy.compactMap(\.sky).first
         lighting = scenes.lazy.compactMap(\.lighting).first
         pointLights = scenes.flatMap(\.pointLights)
+        animations = scenes.flatMap(\.animations)
+    }
+
+    /// Samples every resident actor at one shared world clock. A malformed
+    /// runtime sample freezes only that actor; validated clips normally update.
+    @discardableResult
+    func updateAnimations(at time: Float) -> Int {
+        var poses: [ObjectIdentifier: [String: float4x4]] = [:]
+        var failedClips = Set<ObjectIdentifier>()
+        var updatedMeshes = Set<ObjectIdentifier>()
+        var updated = 0
+        for animation in animations {
+            guard let actor = animation as? ActorAnimationPlayback else {
+                updated += animation.update(at: time)
+                continue
+            }
+            let key = ObjectIdentifier(actor.clip)
+            if failedClips.contains(key) {
+                continue
+            }
+            let pose: [String: float4x4]
+            if let cached = poses[key] {
+                pose = cached
+            } else if let sampled = actor.clip.namedWorldTransforms(at: time) {
+                poses[key] = sampled
+                pose = sampled
+            } else {
+                failedClips.insert(key)
+                continue
+            }
+            updated += actor.apply(pose, updating: &updatedMeshes)
+        }
+        return updated
     }
 
     /// CPU light culling: stable distance order, original scene order as

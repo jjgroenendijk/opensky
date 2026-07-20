@@ -4,6 +4,25 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-20
 
+* M6 actors animate complete -- renderer samples direct human `mt_idle.hkx` clips, composes
+  `hkaSkeleton` local poses through parent hierarchy, name-maps world transforms onto NIF
+  palettes, then writes `rootParentToSkin * animatedWorld * skinToBone` into a per-frame GPU
+  palette slot. Unmatched bones retain bind pose. `RenderScene` owns playback objects with
+  resident cells; builder caches immutable clips by skeleton + gender. Rendered actor
+  accounting is exact (`animated + static fallback`) and every fallback reason-tagged.
+  Deterministic offscreen tests prove animated times differ + static frames match; pose,
+  palette, lifecycle metrics tested. Real probes: ChillfurrowFarmExterior 7 rendered = 4
+  animated + 3 unsupported-creature fallbacks; ChillfurrowFarm interior 1 rendered = 1
+  animated; door round trip passed. Animation update has an explicit 4 ms Debug avg/p95
+  fly-bench gate. Per-frame work deduplicates shared clips + meshes: real 35-cell flight
+  found 11 animated + 16 reason-tagged static actors; animation update avg 1.61 ms/p95
+  2.99 ms, frame avg 5.36 ms/p95 9.51 ms. Cold actor-build p95 2883 ms; 4500 ms Debug
+  budget includes first rig/clip decode. Docs: [actor idle animation](/engine/actor-animation.md),
+  [CLI](/tools/cli.md). M6 leaves [todo](/todo.md); M7 plan otherwise unchanged.
+* Render evidence policy changed: generated captures stay local/ignored; repository gates use
+  numeric pixel deltas, accounting, timing, and probe logs. All tracked PNG files + embedded
+  links removed; `.gitignore` rejects PNG case variants; roadmap/probe instructions no longer
+  ask contributors to add image evidence.
 * M6.3 idle clip decode complete -- `HKASplineCompressedAnimation` parses Havok 2010
   hkaAnimation/hkaSplineCompressedAnimation metadata + hkArray/fixup block tables;
   `HKASplineBlock` decodes transform masks, identity/static lanes, u16-quantized vector
@@ -109,10 +128,9 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 * Screenshot LOD hole fixed — `openskycli screenshot` without `--neighbors` hid the
   full 5x5 from the distant-LOD pass while building only the center cell -> 24-cell
   ring with neither terrain nor LOD, sky visible through the gap (spotted in the M5
-  acceptance shot). `RenderCommand.sceneWithLOD` now hides only cells actually
-  built; LOD fills the rest. Acceptance image
-  `docs/img/m5-actors-chillfurrow.png` re-captured with connected terrain (same
-  command). Streaming engine unaffected (app/bench always build the full grid).
+  acceptance check). `RenderCommand.sceneWithLOD` now hides only cells actually
+  built; LOD fills the rest. Streaming engine unaffected (app/bench always build
+  the full grid).
   Probe ruled water out for the dark basin west of the farmhouse: CELL `00009618`/
   `00009619` XCLW = `0x7F7FFFFF` default sentinel, Tamriel WRLD default water
   height -14000 vs terrain ~-4200 -> data defines no water surface there; the
@@ -130,10 +148,7 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   cat `SabreCat.nif` `NiSkinPartition` vertex-bone-palette variant (backlog);
   ChillfurrowFarm interior 1 actors (1 drawn); 5,614 stream frames avg 3.15 ms/p95
   5.79 ms; actor build p95 2190.79 ms vs 3000 ms budget; footprint peak 702/1,024
-  MB. Acceptance screenshot `docs/img/m5-actors-chillfurrow.png` (four clothed
-  bind-pose farmhands at ACHR poses) linked from
-  [actor records](/formats/actors.md) + [renderer](/rendering/metal4-renderer.md).
-  Synthetic reason-accounting + metric-mirror tests added. M5 leaves
+  MB. Synthetic reason-accounting + metric-mirror tests added. M5 leaves
   [todo](/todo.md); M6 (actors animate: HKX idle playback) re-scoped into 6.1-6.6
   with gates.
 * CI suspended (GH Actions CPU quota exhausted) -- `ci.yml` reduced to
@@ -313,7 +328,7 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   frame resolved terrain, 3,396 object instances, water in 8 cells, procedural sky + 122
   LOD blocks with 0 unavailable. Chillfurrow Farm probe entered interior CELL 00016204
   through door 0001633D/000163A8, rendered arrival, returned to exterior `(7,-3)`.
-  Screenshot: [M3 world streaming acceptance](/img/m3-world-streaming-acceptance.png).
+  Numeric cell/frame results above remain the repository acceptance evidence.
   M4 numbering, scope + gate remain intentionally pending.
 * M3.7 lighting complete -- CELL XCLL accepts exact 92-byte + field-boundary truncated
   tails; LTMP resolves LGTM DATA/DALC per XCLL inheritance bits. Skyrim.esm probe confirms
@@ -361,8 +376,8 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   lodsettings-anchored 4/8/16/32 rings outside loaded 5x5. LOD builds on serial streaming
   queue, composes without changing camera framing, retains/evicts shared assets safely.
   `openskycli lod` swept all vanilla Tamriel 3,060 BTR + 717 BTO with 0 failures. Real 5x5
-  render: 122 LOD blocks, 0 unavailable, horizon filled, intersection-free selection,
-  screenshot. Tree billboards + boundary clipping deferred. Docs:
+  render: 122 LOD blocks, 0 unavailable, horizon filled, intersection-free selection.
+  Tree billboards + boundary clipping deferred. Docs:
   [LOD format](/formats/lod.md), [LOD streaming](/engine/distant-lod.md),
   [CLI](/tools/cli.md).
 * App + CLI screenshots -- World toolbar gains `Screenshot…`: save panel -> live camera +
@@ -564,8 +579,7 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   000095F9), 0 missing textures, 4 terrain quads/cell; visually verified (default + a
   temporary steep top-down angle, not committed) — terrain continuous under the M2 walls
   across all 9 cells, no height cracks or gaps at any internal cell border, splat
-  variation visible city-wide. Screenshot:
-  [terrain-3x3-whiterun.png](/img/terrain-3x3-whiterun.png). Docs:
+  variation visible city-wide. Docs:
   [terrain](/engine/terrain.md) Verification section, [cli](/tools/cli.md) `--neighbors`.
   Tests: `RenderSceneTests` merge cases (concat counts, cross-scene residency dedup, empty
   input). Closes milestone 3.1 (`docs/todo.md`).
@@ -648,9 +662,7 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   (2557 fps) p95 0.43 ms @ 1280x720; avg 0.54 ms (1846 fps) @ 1920x1080 —
   far above the 30 fps bar. `bench` wired into `make probe`; `render`
   gained `--zoom` (framing camera alone leaves ~4% of pixels covered).
-  Screenshot (engine output only) committed:
-  [m2-whiterun-exterior.png](/img/m2-whiterun-exterior.png), referenced
-  with numbers from [renderer doc](/rendering/metal4-renderer.md). M3
+  Numeric output remains in [renderer doc](/rendering/metal4-renderer.md). M3
   items re-checked against M2 (notes in todo): ordering unchanged,
   `CellSceneBuilder` is the streaming unit, bench/preview are the M3
   verification path.

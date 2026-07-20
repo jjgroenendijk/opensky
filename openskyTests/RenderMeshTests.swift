@@ -160,7 +160,42 @@ struct RenderMeshTests {
 
         #expect(render.isSkinned)
         #expect(attributes.length == mesh.positions.count * SkinVertexLayout.stride)
-        #expect(matrices.length == 2 * MemoryLayout<float4x4>.stride)
+        #expect(
+            matrices.length
+                == 2 * MemoryLayout<float4x4>.stride * Renderer.maxFramesInFlight
+        )
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func refreshesNamedBonePalette() throws {
+        let device = try #require(Self.device)
+        let source = Self.bareMesh()
+        let skinning = MeshSkinning(
+            weights: Array(repeating: SIMD4(1, 0, 0, 0), count: 2),
+            boneIndices: Array(repeating: .zero, count: 2),
+            bindPoseMatrices: [matrix_identity_float4x4],
+            boneNames: ["root"],
+            rootParentToSkin: MatrixMath.translation(SIMD3(1, 0, 0)),
+            skinToBoneMatrices: [MatrixMath.translation(SIMD3(0, 2, 0))]
+        )
+        let mesh = Mesh(
+            name: source.name,
+            transform: source.transform,
+            positions: source.positions,
+            normals: source.normals,
+            tangents: source.tangents,
+            bitangents: source.bitangents,
+            uvs: source.uvs,
+            colors: source.colors,
+            indices: source.indices,
+            materialSlot: source.materialSlot,
+            skinning: skinning
+        )
+        let render = try RenderMesh(device: device, mesh: mesh)
+
+        #expect(render.updateSkinningPose([
+            "root": MatrixMath.translation(SIMD3(0, 0, 3))
+        ]) == 1)
+        #expect(render.currentBoneMatrices[0].columns.3 == SIMD4(1, 2, 3, 1))
     }
 
     @Test(.enabled(if: Self.hasDevice)) func rejectsOutOfRangeBoneIndex() throws {

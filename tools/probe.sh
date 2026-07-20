@@ -148,12 +148,15 @@ run "interior door round trip" interior --out "$interior_png"
 [ -s "$interior_png" ] || fail "interior probe wrote no PNG"
 echo "[ OK ] interior output: $interior_png"
 
-# M5.6 interior actor gate: the visited interior's summary line must report
-# at least one drawn actor (drawn is the first accounting bucket).
+# M5.6/M6.6 interior actor gate: visited interior must report at least one
+# drawn actor and at least one live animation.
 awk '/^--- interior door round trip/{f=1;next} /^--- /{f=0} f' "$log" \
   | grep -q ' actors ([1-9][0-9]* drawn' \
   || fail "interior probe reported no drawn actors"
-echo "[ OK ] interior actors drawn"
+awk '/^--- interior door round trip/{f=1;next} /^--- /{f=0} f' "$log" \
+  | grep -q ', [1-9][0-9]* animated' \
+  || fail "interior probe reported no animated actors"
+echo "[ OK ] interior actors drawn + animated"
 
 # Sustained fps gate (todo 2.11): 360 frames at 720p via frame stats; the
 # command exits 1 when avg/p95 frame time misses the 33.3 ms (30 fps) budget.
@@ -169,8 +172,11 @@ run "cross-cell streaming bench (640x360)" bench --fly-path --size 640x360
 grep 'unique builds' "$log" | tail -1
 grep 'collision build:' "$log" | tail -1
 grep 'actor build:' "$log" | tail -1
-grep 'actors:' "$log" | tail -1 | grep -q 'discovered' \
+grep '^\[INFO\] actors:' "$log" | tail -1 | grep -q 'discovered' \
   || fail "fly bench reported no actor accounting"
+grep 'animation update:' "$log" | tail -1
+grep 'rendered actors:' "$log" | tail -1 | grep -q '[1-9][0-9]* animated' \
+  || fail "fly bench reported no animated actors"
 
 # M5.6 acceptance: one accounting line per touched cell (35 = three settled
 # 5x5 grids). The engine gate already throws on inexact accounting or a

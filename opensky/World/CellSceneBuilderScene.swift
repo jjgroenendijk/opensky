@@ -83,6 +83,7 @@ extension CellSceneBuilder {
         }
         let renderScene = RenderScene(
             instances: placed + actors.placements,
+            animations: actors.animations,
             terrain: geometry.terrain?.items ?? [],
             water: geometry.water.map { [$0.item] } ?? [],
             sky: found.cell.isInterior ? nil : geometry.sky,
@@ -147,6 +148,9 @@ extension CellSceneBuilder {
         summary.actorFailureCount = actors.counts.failures
         summary.actorFailureReasons = actors.counts.failureReasons
         summary.actorBuildDurationMS = actors.durationMS
+        summary.actorAnimatedCount = actors.counts.animated
+        summary.actorAnimationFailureCount = actors.counts.animationFailures
+        summary.actorAnimationFailureReasons = actors.counts.animationFailureReasons
         return summary
     }
 }

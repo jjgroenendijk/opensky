@@ -21,6 +21,8 @@ nonisolated struct ActorBuildBenchmarkSummary {
     let rendered: Int
     let disabledSkips: Int
     let failures: Int
+    let animated: Int
+    let animationFailures: Int
     let cellReports: [ActorCellReport]
 }
 
@@ -74,39 +76,14 @@ nonisolated func validatedActorBuildMetrics(
     configuration: CellStreamingFlyBenchmarkConfiguration
 ) throws -> ActorBuildBenchmarkSummary {
     let metrics = runner.buildMetricsSnapshot()
-    for (coordinate, metric) in metrics where !metric.actorAccountingIsExact {
-        throw CellStreamingFlyBenchmarkError.actorAccountingMismatch(
-            coordinate: coordinate,
-            discovered: metric.actorDiscoveredCount,
-            explained: metric.actorRenderedCount
-                + metric.actorDisabledSkipCount
-                + metric.actorFailureCount
-        )
-    }
-    for (coordinate, metric) in metrics where !metric.actorFailuresAreExplained {
-        throw CellStreamingFlyBenchmarkError.actorFailureUnexplained(
-            coordinate: coordinate,
-            failures: metric.actorFailureCount,
-            reasons: metric.actorFailureReasons.count
-        )
-    }
-    let cellReports = metrics
-        .sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
-        .map { coordinate, metric in
-            ActorCellReport(
-                coordinate: coordinate,
-                discovered: metric.actorDiscoveredCount,
-                rendered: metric.actorRenderedCount,
-                disabledSkips: metric.actorDisabledSkipCount,
-                failures: metric.actorFailureCount,
-                failureReasons: metric.actorFailureReasons
-            )
-        }
+    try validateActorAccounting(metrics)
+    let cellReports = actorCellReports(metrics)
     let durations = metrics.values.map(\.actorDurationMS).sorted()
     guard !durations.isEmpty else {
         return ActorBuildBenchmarkSummary(
             average: 0, p95: 0, maximum: 0,
             discovered: 0, rendered: 0, disabledSkips: 0, failures: 0,
+            animated: 0, animationFailures: 0,
             cellReports: []
         )
     }
@@ -128,8 +105,67 @@ nonisolated func validatedActorBuildMetrics(
         rendered: metrics.values.reduce(0) { $0 + $1.actorRenderedCount },
         disabledSkips: metrics.values.reduce(0) { $0 + $1.actorDisabledSkipCount },
         failures: metrics.values.reduce(0) { $0 + $1.actorFailureCount },
+        animated: metrics.values.reduce(0) { $0 + $1.actorAnimatedCount },
+        animationFailures: metrics.values.reduce(0) {
+            $0 + $1.actorAnimationFailureCount
+        },
         cellReports: cellReports
     )
+}
+
+nonisolated private func validateActorAccounting(
+    _ metrics: [CellCoordinate: CellBuildMetric]
+) throws {
+    for (coordinate, metric) in metrics where !metric.actorAccountingIsExact {
+        throw CellStreamingFlyBenchmarkError.actorAccountingMismatch(
+            coordinate: coordinate,
+            discovered: metric.actorDiscoveredCount,
+            explained: metric.actorRenderedCount
+                + metric.actorDisabledSkipCount
+                + metric.actorFailureCount
+        )
+    }
+    for (coordinate, metric) in metrics where !metric.actorFailuresAreExplained {
+        throw CellStreamingFlyBenchmarkError.actorFailureUnexplained(
+            coordinate: coordinate,
+            failures: metric.actorFailureCount,
+            reasons: metric.actorFailureReasons.count
+        )
+    }
+    for (coordinate, metric) in metrics where !metric.actorAnimationAccountingIsExact {
+        throw CellStreamingFlyBenchmarkError.actorAnimationAccountingMismatch(
+            coordinate: coordinate,
+            rendered: metric.actorRenderedCount,
+            explained: metric.actorAnimatedCount + metric.actorAnimationFailureCount
+        )
+    }
+    for (coordinate, metric) in metrics where !metric.actorAnimationFailuresAreExplained {
+        throw CellStreamingFlyBenchmarkError.actorAnimationFailureUnexplained(
+            coordinate: coordinate,
+            failures: metric.actorAnimationFailureCount,
+            reasons: metric.actorAnimationFailureReasons.count
+        )
+    }
+}
+
+nonisolated private func actorCellReports(
+    _ metrics: [CellCoordinate: CellBuildMetric]
+) -> [ActorCellReport] {
+    metrics
+        .sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
+        .map { coordinate, metric in
+            ActorCellReport(
+                coordinate: coordinate,
+                discovered: metric.actorDiscoveredCount,
+                rendered: metric.actorRenderedCount,
+                disabledSkips: metric.actorDisabledSkipCount,
+                failures: metric.actorFailureCount,
+                failureReasons: metric.actorFailureReasons,
+                animated: metric.actorAnimatedCount,
+                animationFailures: metric.actorAnimationFailureCount,
+                animationFailureReasons: metric.actorAnimationFailureReasons
+            )
+        }
 }
 
 nonisolated func p95Index(count: Int) -> Int {

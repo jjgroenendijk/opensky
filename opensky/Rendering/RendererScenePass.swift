@@ -231,7 +231,7 @@ extension Renderer {
                 group.mesh.vertexBuffer.gpuAddress,
                 index: BufferIndex.vertices.rawValue
             )
-            bindSkinningBuffers(for: group.mesh)
+            bindSkinningBuffers(for: group.mesh, slot: state.slot)
             argumentTable.setAddress(
                 drawUniformBuffer.gpuAddress + UInt64(uniformOffset),
                 index: BufferIndex.drawUniforms.rawValue
@@ -260,7 +260,7 @@ extension Renderer {
         }
     }
 
-    private func bindSkinningBuffers(for mesh: RenderMesh) {
+    private func bindSkinningBuffers(for mesh: RenderMesh, slot: Int) {
         guard
             let skinning = mesh.skinningBuffer,
             let matrices = mesh.boneMatrixBuffer
@@ -270,9 +270,10 @@ extension Renderer {
             index: BufferIndex.skinningAttributes.rawValue
         )
         argumentTable.setAddress(
-            matrices.gpuAddress,
+            matrices.gpuAddress + UInt64(mesh.boneMatrixOffset(slot: slot)),
             index: BufferIndex.boneMatrices.rawValue
         )
+        mesh.prepareBoneMatrices(slot: slot)
     }
 
     /// Encodes the terrain splat draws: per-quadrant pipeline with the base

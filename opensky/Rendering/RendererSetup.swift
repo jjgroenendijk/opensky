@@ -21,6 +21,14 @@ nonisolated struct RenderPipelines {
 }
 
 extension Renderer {
+    static var nearPlane: Float {
+        10
+    }
+
+    static var farPlane: Float {
+        65536
+    }
+
     static func makeCommandAllocators(device: MTLDevice) throws -> [MTL4CommandAllocator] {
         try (0 ..< maxFramesInFlight).map { _ in
             guard let allocator = device.makeCommandAllocator() else {

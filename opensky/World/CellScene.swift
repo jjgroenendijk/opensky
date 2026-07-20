@@ -121,6 +121,10 @@ nonisolated struct CellLoadSummary: Equatable {
     var actorFailureReasons: [String] = []
     /// Wall time of the cell's actor collect+resolve+assemble phase.
     var actorBuildDurationMS = 0.0
+    /// Rendered actors split into live idle playback + reason-tagged static fallback.
+    var actorAnimatedCount = 0
+    var actorAnimationFailureCount = 0
+    var actorAnimationFailureReasons: [String] = []
 
     var skippedRefCount: Int {
         unsupportedBaseSkipCount + markerSkipCount + modelFailureSkipCount + malformedRefSkipCount
@@ -134,6 +138,14 @@ nonisolated struct CellLoadSummary: Equatable {
     /// Every counted actor failure carries a reason (5.6 zero-unexplained rule).
     var actorFailuresAreExplained: Bool {
         actorFailureCount == actorFailureReasons.count
+    }
+
+    var actorAnimationAccountingIsExact: Bool {
+        actorDrawnCount == actorAnimatedCount + actorAnimationFailureCount
+    }
+
+    var actorAnimationFailuresAreExplained: Bool {
+        actorAnimationFailureCount == actorAnimationFailureReasons.count
     }
 
     /// One-line load report (AGENTS.md bracket-tag style), e.g.
@@ -181,6 +193,10 @@ nonisolated struct CellLoadSummary: Equatable {
                 buckets.append("\(actorFailureCount) failed")
             }
             terrain += ", \(actorCount) actors (\(buckets.joined(separator: ", ")))"
+            terrain += ", \(actorAnimatedCount) animated"
+            if actorAnimationFailureCount > 0 {
+                terrain += ", \(actorAnimationFailureCount) static"
+            }
         }
         return "[INFO] \(cellName) (\(gridX),\(gridY)): \(totalRefCount) refs, "
             + "\(drawnRefCount) drawn, \(skipped), \(modelCount) models, "

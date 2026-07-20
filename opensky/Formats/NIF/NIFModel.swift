@@ -290,18 +290,11 @@ nonisolated extension NIFFile.Flattener {
                     ? arrays.boneIndices[global] : submesh.boneIndices[local]
                 let weights = hasGlobalInfluences
                     ? arrays.boneWeights[global] : submesh.vertexWeights[local]
-                var mapped = SIMD4<UInt16>.zero
-                for influence in 0 ..< 4 {
-                    let paletteIndex = Int(source[influence])
-                    guard paletteIndex < submesh.bonePalette.count else {
-                        throw NIFError.malformed("vertex bone palette index out of range")
-                    }
-                    let bone = submesh.bonePalette[paletteIndex]
-                    guard Int(bone) < instance.boneRefs.count else {
-                        throw NIFError.malformed("skin bone index out of range")
-                    }
-                    mapped[influence] = bone
-                }
+                let mapped = try Self.remapBoneIndices(
+                    source,
+                    palette: submesh.bonePalette,
+                    boneCount: instance.boneRefs.count
+                )
                 if let prior = remapped[global], prior != mapped {
                     throw NIFError.unsupported(
                         "shared skin vertex uses different partition palettes"
@@ -329,8 +322,38 @@ nonisolated extension NIFFile.Flattener {
         return MeshSkinning(
             weights: weights,
             boneIndices: resolvedIndices,
-            bindPoseMatrices: matrices
+            bindPoseMatrices: matrices,
+            boneNames: boneNames(instance: instance),
+            rootParentToSkin: data.rootParentToSkin.matrix,
+            skinToBoneMatrices: data.bones.map(\.skinToBone.matrix)
         )
+    }
+
+    private static func remapBoneIndices(
+        _ source: SIMD4<UInt16>,
+        palette: [UInt16],
+        boneCount: Int
+    ) throws -> SIMD4<UInt16> {
+        var result = SIMD4<UInt16>.zero
+        for influence in 0 ..< 4 {
+            let paletteIndex = Int(source[influence])
+            guard paletteIndex < palette.count else {
+                throw NIFError.malformed("vertex bone palette index out of range")
+            }
+            let bone = palette[paletteIndex]
+            guard Int(bone) < boneCount else {
+                throw NIFError.malformed("skin bone index out of range")
+            }
+            result[influence] = bone
+        }
+        return result
+    }
+
+    private func boneNames(instance: NIFSkinInstance) -> [String] {
+        instance.boneRefs.map { reference in
+            guard reference >= 0 else { return "" }
+            return hierarchy.names[Int(reference)] ?? ""
+        }
     }
 
     private static func normalizedWeights(_ value: SIMD4<Float>) throws -> SIMD4<Float> {

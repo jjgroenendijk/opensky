@@ -338,7 +338,7 @@ reason-tagged (ACHR `000DC8DE` sabre cat: `NiSkinPartition` vertex bone palette
 index rejected by the flattener; creature skinning variant in backlog). 5,614
 stream frames avg 3.15 ms / p95 5.79 ms; actor phase avg 433.09 ms / p95
 2190.79 ms; footprint 543 -> 611 -> 570 MB, peak 702 / 1,024 MB cap. Interior
-(ChillfurrowFarm): 1 actors (1 drawn). Acceptance screenshot:
+(ChillfurrowFarm): 1 actors (1 drawn). Actor acceptance detail:
 [actor records](/formats/actors.md).
 
 These are debug-build verification numbers, not general hardware promise. Hard gates: 1

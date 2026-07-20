@@ -24,6 +24,9 @@ Package.resolved
 .netrc
 node_modules/
 
+# Render captures stay local (logs/ or temp), never in source control.
+*.[pP][nN][gG]
+
 # ── Logs (AGENTS.md "Code scripts": all logs go to logs/) ─────────────────────
 logs/*
 !logs/.gitkeep

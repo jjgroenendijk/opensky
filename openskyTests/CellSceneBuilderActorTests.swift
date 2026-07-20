@@ -24,6 +24,10 @@ extension CellSceneBuilderTests {
         #expect(scene.summary.actorFailureReasons.isEmpty)
         #expect(scene.summary.actorAccountingIsExact)
         #expect(scene.summary.actorFailuresAreExplained)
+        #expect(scene.summary.actorAnimatedCount == 0)
+        #expect(scene.summary.actorAnimationFailureCount == 1)
+        #expect(scene.summary.actorAnimationAccountingIsExact)
+        #expect(scene.summary.actorAnimationFailuresAreExplained)
         #expect(scene.renderScene.instanceCount == 1)
         // The actor body key joins the cell's working set so streaming
         // eviction treats it exactly like a static's mesh.
@@ -83,7 +87,7 @@ extension CellSceneBuilderTests {
             modelBaseRecords: actorChainRecords(npc: 0x800)
         ))
         #expect(scene.summary.summaryLine.hasSuffix(
-            "3 actors (1 drawn, 1 disabled, 1 failed)"
+            "3 actors (1 drawn, 1 disabled, 1 failed), 0 animated, 1 static"
         ))
     }
 
@@ -138,6 +142,7 @@ extension CellSceneBuilderTests {
         #expect(scene.summary.actorCount == 1)
         #expect(scene.summary.actorDrawnCount == 1)
         #expect(scene.summary.actorAccountingIsExact)
+        #expect(scene.summary.actorAnimationAccountingIsExact)
         #expect(scene.assets.meshKeys.contains { $0.contains("torso_m.nif") })
     }
 }

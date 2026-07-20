@@ -323,7 +323,5 @@ touched cells, zero unexplained failures. The single failure is reason-tagged:
 vertex bone palette index our flattener rejects (creature skinning variant,
 backlog). Interior gate: ChillfurrowFarm reports 1 actors (1 drawn). Frame budget:
 5,614 stream frames avg 3.15 ms / p95 5.79 ms @ 640x360; actor build p95 2190.79 ms
-vs 3000 ms budget; footprint peak 702 / 1,024 MB cap. Acceptance screenshot —
-Chillfurrow Farm with four clothed bind-pose farmhands at ACHR poses:
-
-![Chillfurrow Farm with bind-pose actors](/img/m5-actors-chillfurrow.png)
+vs 3000 ms budget; footprint peak 702 / 1,024 MB cap. Generated render captures stay
+local; accounting + frame metrics are the repository acceptance evidence.
