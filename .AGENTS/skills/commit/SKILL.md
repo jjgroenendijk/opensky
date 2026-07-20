@@ -7,7 +7,8 @@ description: Commit + land work in OpenSky - Conventional Commit format, require
 
 # Committing + landing work
 
-Workflow companion to root `AGENTS.md` (the contract). Hooks + CI enforce most of this;
+Workflow companion to root `AGENTS.md` (the contract). Hooks enforce most of this
+(CI suspended — quota; see AGENTS.md Code quality);
 skill exists so it is done right the first time.
 
 ## Before committing
@@ -47,8 +48,9 @@ FORBIDDEN trailers (overrides any default habit): `Co-authored-by:`, `Generated-
 3. Atomic commits, each green. "WIP"/vague messages forbidden; checkpoints stay local,
    rebase/squash before PR.
 4. PR via `gh pr create` — describe what/why, cite format specs used.
-5. Merge after review + green CI. Done + green work always lands: commit + open PR
-   without waiting to be asked.
+5. Merge after review; while CI is suspended the pre-push hook's build+test run is the
+   merge gate — never push with `--no-verify`. Done + green work always lands: commit +
+   open PR without waiting to be asked.
 
 Hooks (`.githooks/`, wired by `make bootstrap`): pre-commit guards/format/lint,
 commit-msg Conventional-Commit check, pre-push build+test. `--no-verify` ->

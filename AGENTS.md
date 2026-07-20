@@ -137,8 +137,11 @@ not crash the engine. Full workflow: load the `format-parser` skill.
 
 ## Code quality
 
-Enforce rules automatically: git hooks for fast checks, CI as backstop. If a machine can
-check a rule, do not rely on people remembering it.
+Enforce rules automatically: git hooks are THE gate (pre-commit format/lint, commit-msg,
+pre-push build+test — never skip with `--no-verify`). CI is suspended: GH Actions CPU
+quota exhausted 2026-07-20; `.github/workflows/ci.yml` is manual-dispatch only and main
+has no required status checks until quota returns (re-enable task in `docs/todo.md`).
+If a machine can check a rule, do not rely on people remembering it.
 
 - Every language has a linter AND an auto-formatter (Swift: SwiftFormat + SwiftLint;
   Markdown: markdownlint-cli2; shell: POSIX `sh` + shellcheck). Configs under `tools/`.
@@ -159,7 +162,7 @@ check a rule, do not rely on people remembering it.
 
 - `make` is the automation hub: anything repeatable becomes a target or hook, never a
   documented manual procedure. Local hooks and CI mirror each other — change one gate ->
-  change both.
+  change both (while CI is suspended, keep `ci.yml` in sync anyway for re-enable).
 - Scripts are POSIX `sh`, shellcheck-clean, executable. Logs always -> `logs/`.
 - Never hand-format; run `make fix`.
 
