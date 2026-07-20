@@ -45,6 +45,11 @@ enum OpenSkyCLI {
       dds <key>                   Inspect a texture: header + mip chain
       hkx <key>                   Inspect a Havok packfile: header, section table,
                                   class-name + object inventory
+      skeleton <hkx-key> [--nif <nif-key>]
+                                  Decode each hkaSkeleton (bone names, parent
+                                  chain, roots); --nif name-maps the rig onto
+                                  the NIF skeleton nodes, reason-tagging
+                                  mismatches both directions
       lod [--worldspace <edid>]   Parse settings + sweep all .btr/.bto files
       screenshot --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
              [--size WxH] [--zoom <f>] [--time-of-day <0-24>] [--neighbors]
@@ -124,6 +129,11 @@ enum OpenSkyCLI {
             )
         case "hkx":
             try HKXCommand.run(
+                context: .resolve(dataRootOverride: dataRoot),
+                scanner: &scanner
+            )
+        case "skeleton":
+            try SkeletonCommand.run(
                 context: .resolve(dataRootOverride: dataRoot),
                 scanner: &scanner
             )

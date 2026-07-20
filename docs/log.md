@@ -4,6 +4,27 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-20
 
+* M6.2 hkaSkeleton decode complete -- `HKASkeleton`
+  (`opensky/Formats/HKX/HKASkeleton.swift`) reads each hkaSkeleton out of the
+  packfile via the 6.1 virtual-fixup inventory: m_name, m_parentIndices
+  (i16/bone, -1 root), m_bones (inline hkaBone stride 16: name + lockTranslation),
+  m_referencePose (hkQsTransform stride 48: translation/quat/scale, w-lane junk
+  ignored). hkArray located via the local fixup at the field pointer offset,
+  size field over capacityAndFlags, size-0 arrays (null ptr, no fixup) decode
+  empty. Defensive typed `HKASkeletonError`: bounds, count mismatch, parent
+  range, missing bone-name fixup, non-finite pose. `SkeletonBoneMap` name-maps
+  the rig onto NIF NiNode names (`NIFSkeleton.boneTransforms`) by exact match,
+  reason-tagging mismatches both directions. Layout from open parsers
+  (exyorha/hkxparse, ret2end/HKX2Library, ZeldaMods Havok wiki), probe-verified
+  on real human + wolf skeleton.hkx (rig + ragdoll). Real human rig: 99 bones,
+  2 roots; name-map 93 of 99 matched, 6 HKX-only helper/attach bones + 6
+  NIF-only nodes (incl. a Shield/Weapon/Quiver case split). New
+  `openskycli skeleton <hkx> [--nif <nif>]` dumps bones/parents/roots + map;
+  probe gains the M6.2 99-bone/93-match/reason-tagged gate. Synthetic
+  `HKASkeletonFixture` + `HKASkeletonTests`/`SkeletonBoneMapTests` cover happy
+  path, empty/multi-root, and one-axis-each malformed input. Docs:
+  [hkaSkeleton](/formats/hka-skeleton.md), [CLI](/tools/cli.md). Item 6.2 left
+  [todo](/todo.md).
 * Local app/test builds now use Apple Development signing -> stable designated
   requirement lets macOS retain removable-volume consent across rebuilds. App Info.plist
   gains `NSRemovableVolumesUsageDescription`; first access explains Skyrim data reads.

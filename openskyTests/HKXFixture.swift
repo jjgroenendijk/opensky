@@ -43,6 +43,10 @@ struct HKXFixture {
     /// Which class-name entry the header's contents pointer targets.
     var rootClassIndex = 2
     var dataPayloadSize = 48
+    /// Replaces the deterministic payload pattern with exact bytes (object
+    /// decoding tests supply a hand-built hkaSkeleton payload). When set the
+    /// __data__ section's data size follows the override length.
+    var payloadOverride: Data?
     var localFixups: [LocalFixup] = [LocalFixup(from: 0, toOffset: 16)]
     var globalFixups: [GlobalFixup] = [GlobalFixup(from: 4, toSection: 2, toOffset: 32)]
     /// Extra objects beyond the auto root object (`rootObjectDataOffset`).
@@ -82,9 +86,10 @@ struct HKXFixture {
         headerSize + sectionCount * sectionHeaderSize
     }
 
-    /// Deterministic payload pattern so slice tests can assert exact bytes.
+    /// Deterministic payload pattern so slice tests can assert exact bytes,
+    /// or the caller's exact override.
     var payloadBytes: Data {
-        Data((0 ..< dataPayloadSize).map { UInt8($0 & 0xFF) })
+        payloadOverride ?? Data((0 ..< dataPayloadSize).map { UInt8($0 & 0xFF) })
     }
 
     /// Class-name blob + each entry's section-local name-string offset
