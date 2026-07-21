@@ -12,6 +12,9 @@ final class MainViewController: NSViewController {
     }
 
     private var worldViewController: GameViewController
+    /// World mode is presented through its sidebar shell (destinations +
+    /// controls) rather than the bare game view; rebuilt on a Settings reload.
+    private var worldContainer: WorldSidebarViewController
     private let browserViewController: PreviewViewController
     private var visibleViewController: NSViewController?
 
@@ -33,6 +36,7 @@ final class MainViewController: NSViewController {
         browserViewController: PreviewViewController
     ) {
         self.worldViewController = worldViewController
+        worldContainer = WorldSidebarViewController(gameViewController: worldViewController)
         self.browserViewController = browserViewController
         super.init(nibName: nil, bundle: nil)
     }
@@ -74,7 +78,7 @@ final class MainViewController: NSViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        show(worldViewController)
+        show(worldContainer)
     }
 
     /// Applies a Settings change without relaunch. Replacing World creates a
@@ -85,14 +89,15 @@ final class MainViewController: NSViewController {
         browserRoot: GameDataRoot?,
         errorMessage: String?
     ) {
-        let worldWasVisible = visibleViewController === self.worldViewController
+        let worldWasVisible = visibleViewController === worldContainer
         if !worldWasVisible {
-            self.worldViewController.removeFromParent()
+            worldContainer.removeFromParent()
         }
         self.worldViewController = worldViewController
+        worldContainer = WorldSidebarViewController(gameViewController: worldViewController)
         browserViewController.reload(root: browserRoot, errorMessage: errorMessage)
         if worldWasVisible {
-            show(worldViewController)
+            show(worldContainer)
         }
     }
 
@@ -100,7 +105,7 @@ final class MainViewController: NSViewController {
         let mode = Mode(rawValue: modeControl.selectedSegment) ?? .world
         switch mode {
         case .world:
-            show(worldViewController)
+            show(worldContainer)
         case .assetBrowser:
             show(browserViewController)
         }
@@ -108,7 +113,7 @@ final class MainViewController: NSViewController {
 
     @objc private func saveScreenshot() {
         guard
-            visibleViewController === worldViewController,
+            visibleViewController === worldContainer,
             let window = view.window else { return }
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.png]
@@ -161,7 +166,7 @@ final class MainViewController: NSViewController {
             controller.view.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
         ])
         visibleViewController = controller
-        screenshotButton.isEnabled = controller === worldViewController
+        screenshotButton.isEnabled = controller === worldContainer
             && worldViewController.canWriteScreenshot
     }
 }

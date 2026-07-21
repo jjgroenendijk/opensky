@@ -27,6 +27,7 @@ nonisolated enum CellStreamingFlyBenchmarkError: LocalizedError {
         coordinate: CellCoordinate, failures: Int, reasons: Int
     )
     case animationUpdateExceeded(average: Double, p95: Double, budget: Double)
+    case shadowUpdateExceeded(average: Double, p95: Double, budget: Double)
     case noCellsUnloaded
 
     var errorDescription: String? {
@@ -70,6 +71,11 @@ nonisolated enum CellStreamingFlyBenchmarkError: LocalizedError {
         case let .animationUpdateExceeded(average, p95, budget):
             String(
                 format: "animation update avg %.2f ms / p95 %.2f ms exceeded %.2f ms budget",
+                average, p95, budget
+            )
+        case let .shadowUpdateExceeded(average, p95, budget):
+            String(
+                format: "shadow update avg %.2f ms / p95 %.2f ms exceeded %.2f ms budget",
                 average, p95, budget
             )
         case .noCellsUnloaded:
@@ -163,6 +169,10 @@ nonisolated struct CellStreamingFlyBenchmarkResult {
     let actorAnimatedCount: Int
     let actorAnimationFailureCount: Int
     let animationUpdateBudgetMS: Double
+    let shadowUpdateBudgetMS: Double
+    /// Final-frame sun-shadow culling/draw accounting — numeric evidence the
+    /// per-cascade caster culling ran (drawn < naive count, some culled).
+    let shadowDrawStats: ShadowDrawStats
     /// One entry per touched cell, sorted by coordinate for stable output.
     let actorCellReports: [ActorCellReport]
 }
@@ -175,6 +185,7 @@ nonisolated struct CellStreamingFlyBenchmarkConfiguration {
     let collisionBuildBudgetMS: Double
     let actorBuildBudgetMS: Double
     let animationUpdateBudgetMS: Double
+    let shadowUpdateBudgetMS: Double
     var samplesPerLeg = 60
 }
 
@@ -292,16 +303,7 @@ enum CellStreamingFlyBenchmark {
                 runner: runner,
                 configuration: configuration
             )
-            guard
-                render.animationAverageMS <= configuration.animationUpdateBudgetMS,
-                render.animationPercentileMS(95) <= configuration.animationUpdateBudgetMS
-            else {
-                throw CellStreamingFlyBenchmarkError.animationUpdateExceeded(
-                    average: render.animationAverageMS,
-                    p95: render.animationPercentileMS(95),
-                    budget: configuration.animationUpdateBudgetMS
-                )
-            }
+            try validateUpdateBudgets(render)
             let unloaded = initialResidents.subtracting(streamer.residentCoordinates).count
             guard unloaded > 0 else {
                 throw CellStreamingFlyBenchmarkError.noCellsUnloaded
@@ -333,8 +335,36 @@ enum CellStreamingFlyBenchmark {
                 actorAnimatedCount: actors.animated,
                 actorAnimationFailureCount: actors.animationFailures,
                 animationUpdateBudgetMS: configuration.animationUpdateBudgetMS,
+                shadowUpdateBudgetMS: configuration.shadowUpdateBudgetMS,
+                shadowDrawStats: renderer.lastShadowDrawStats,
                 actorCellReports: actors.cellReports
             )
+        }
+
+        /// Per-frame CPU update gates: animation (sample/compose/palette) then
+        /// shadow (cascade fit + caster culling + encode) must each hold avg AND
+        /// p95 within budget, mirroring the collision/actor build-latency gates.
+        private func validateUpdateBudgets(_ render: OffscreenBenchResult) throws {
+            guard
+                render.animationAverageMS <= configuration.animationUpdateBudgetMS,
+                render.animationPercentileMS(95) <= configuration.animationUpdateBudgetMS
+            else {
+                throw CellStreamingFlyBenchmarkError.animationUpdateExceeded(
+                    average: render.animationAverageMS,
+                    p95: render.animationPercentileMS(95),
+                    budget: configuration.animationUpdateBudgetMS
+                )
+            }
+            guard
+                render.shadowAverageMS <= configuration.shadowUpdateBudgetMS,
+                render.shadowPercentileMS(95) <= configuration.shadowUpdateBudgetMS
+            else {
+                throw CellStreamingFlyBenchmarkError.shadowUpdateExceeded(
+                    average: render.shadowAverageMS,
+                    p95: render.shadowPercentileMS(95),
+                    budget: configuration.shadowUpdateBudgetMS
+                )
+            }
         }
 
         private func moveOneSample() {

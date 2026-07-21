@@ -62,7 +62,8 @@ extension Renderer {
             shadowCascadeSplits: shadowCascadeSplitBounds(),
             cameraForward: freeFlyCamera.forward,
             shadowsEnabled: shadowsActiveThisFrame ? 1 : 0,
-            shadowInverseResolution: 1 / Float(ShadowConstant.mapResolution.rawValue)
+            shadowInverseResolution: 1 / Float(ShadowConstant.mapResolution.rawValue),
+            shadowSampleRadius: shadowSampleRadius
         )
         frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)

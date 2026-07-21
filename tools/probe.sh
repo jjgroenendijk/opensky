@@ -178,6 +178,12 @@ grep 'animation update:' "$log" | tail -1
 grep 'rendered actors:' "$log" | tail -1 | grep -q '[1-9][0-9]* animated' \
   || fail "fly bench reported no animated actors"
 
+# M7.1.2 sun-shadow gate: per-frame shadow-update budget line + per-cascade
+# caster-culling accounting (some casters culled during the flight).
+grep 'shadow update:' "$log" | tail -1
+grep 'shadow culling:' "$log" | tail -1 | grep -q '[1-9][0-9]* culled' \
+  || fail "fly bench reported no shadow caster culling"
+
 # M5.6 acceptance: one accounting line per touched cell (35 = three settled
 # 5x5 grids). The engine gate already throws on inexact accounting or a
 # reason-less failure; this proves the per-cell report surfaced. Failure

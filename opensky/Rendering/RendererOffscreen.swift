@@ -20,15 +20,21 @@ nonisolated struct OffscreenBenchResult {
     let windowSummaries: [String]
     /// CPU time spent sampling + composing + refreshing resident actor palettes.
     let animationMS: [Double]
+    /// CPU wall time of `encodeShadowPass` per frame (cascade fit + caster
+    /// culling/writes + encode) — the M7.1.2 sun-shadow budget metric. Mirrors
+    /// `animationMS`; empty when the run never sampled it.
+    let shadowMS: [Double]
 
     init(
         frameMS: [Double],
         windowSummaries: [String],
-        animationMS: [Double] = []
+        animationMS: [Double] = [],
+        shadowMS: [Double] = []
     ) {
         self.frameMS = frameMS
         self.windowSummaries = windowSummaries
         self.animationMS = animationMS
+        self.shadowMS = shadowMS
     }
 
     var averageMS: Double {
@@ -50,6 +56,14 @@ nonisolated struct OffscreenBenchResult {
 
     func animationPercentileMS(_ percentile: Double) -> Double {
         Self.percentile(animationMS, percentile: percentile)
+    }
+
+    var shadowAverageMS: Double {
+        shadowMS.isEmpty ? 0 : shadowMS.reduce(0, +) / Double(shadowMS.count)
+    }
+
+    func shadowPercentileMS(_ percentile: Double) -> Double {
+        Self.percentile(shadowMS, percentile: percentile)
     }
 
     private static func percentile(_ values: [Double], percentile: Double) -> Double {
@@ -229,6 +243,7 @@ extension Renderer {
         frameMS.reserveCapacity(maxFrames)
         var summaries: [String] = []
         var animationMS: [Double] = []
+        var shadowMS: [Double] = []
 
         for _ in 1 ... maxFrames {
             if minimumFrameInterval > 0 {
@@ -245,11 +260,13 @@ extension Renderer {
             }
             frameMS.append(Double(DispatchTime.now().uptimeNanoseconds - start) / 1e6)
             animationMS.append(lastAnimationUpdateMS)
+            shadowMS.append(lastShadowUpdateMS)
             if settled {
                 return OffscreenBenchResult(
                     frameMS: frameMS,
                     windowSummaries: summaries,
-                    animationMS: animationMS
+                    animationMS: animationMS,
+                    shadowMS: shadowMS
                 )
             }
         }
@@ -279,6 +296,7 @@ extension Renderer {
         frameMS.reserveCapacity(frames)
         var summaries: [String] = []
         var animationMS: [Double] = []
+        var shadowMS: [Double] = []
         for _ in 0 ..< frames {
             let start = DispatchTime.now().uptimeNanoseconds
             let summary = try renderOffscreenFrame(
@@ -290,11 +308,13 @@ extension Renderer {
             }
             frameMS.append(Double(DispatchTime.now().uptimeNanoseconds - start) / 1e6)
             animationMS.append(lastAnimationUpdateMS)
+            shadowMS.append(lastShadowUpdateMS)
         }
         return OffscreenBenchResult(
             frameMS: frameMS,
             windowSummaries: summaries,
-            animationMS: animationMS
+            animationMS: animationMS,
+            shadowMS: shadowMS
         )
     }
 }

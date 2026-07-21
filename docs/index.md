@@ -71,8 +71,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   pipeline variants, uniform/palette rings, argument tables, counter-heap frame stats,
   offscreen render, scene types.
 * [Cascaded sun shadows](/rendering/shadows.md) - cascade fit math, depth-only
-  pre-pass over static/terrain/skinned casters, PCF sun-term filtering, A/B
-  verification.
+  pre-pass with per-cascade caster culling clamped to resident cells, off/low/high
+  quality + `World > Environment` surface, fly-bench CPU budget, PCF sun-term
+  filtering, A/B verification.
 
 ## Decisions
 

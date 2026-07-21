@@ -56,7 +56,7 @@ only where `--out` points (AGENTS.md Legal & IP).
 | `lod [--worldspace edid]` | parse lodsettings + sweep every worldspace BTR/BTO through LOD block decoders + scene flattener; any failed container exits 1 |
 | `screenshot --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f] [--time-of-day 0-24] [--neighbors]` | cell scene build + distant LOD -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load/LOD/draw stats + non-background fraction; `--zoom` (0.1-10) moves eye toward framed center; `--time-of-day` controls procedural sky (default 13); `--neighbors` builds production-size 5x5 (shared libraries) and frames full-cell bounds only; missing cell warns + skips; `render` is identical alias |
 | `bench [--worldspace/--x/--y] [--size WxH] [--frames n] [--budget-ms f]` | sustained offscreen render (default 360 frames @ 1280x720) through `Renderer.renderOffscreenSustained` — FrameStats windows + per-frame wall and animation-update times; prints avg/p95/max + fps, exit 1 when avg or p95 misses the budget (default 33.33 ms = 30 fps, todo 2.11 gate) |
-| `bench --fly-path [--worldspace/--x/--y] [--size WxH] [--budget-ms f] [--max-frames n] [--footprint-cap-mb f] [--collision-build-budget-ms f] [--actor-build-budget-ms f] [--animation-budget-ms f]` | scripted launch-center -> east -> north cell flight through live `CellStreamer`; requires physical-footprint plateau/cap, exact 35-cell build union, zero failed builds, collision-build p95 (default 700 ms), actor-build p95 (default 4500 ms; includes cold rig/clip decode), exact per-cell actor accounting (discovered = rendered + disabled + failed), exact animation accounting (rendered = animated + static fallback), every failure reason-tagged, animation-update avg/p95 (default 4 ms), and frame avg/p95 budget; prints per-cell + aggregate counts |
+| `bench --fly-path [--worldspace/--x/--y] [--size WxH] [--budget-ms f] [--max-frames n] [--footprint-cap-mb f] [--collision-build-budget-ms f] [--actor-build-budget-ms f] [--animation-budget-ms f] [--shadow-budget-ms f]` | scripted launch-center -> east -> north cell flight through live `CellStreamer`; requires physical-footprint plateau/cap, exact 35-cell build union, zero failed builds, collision-build p95 (default 700 ms), actor-build p95 (default 4500 ms; includes cold rig/clip decode), exact per-cell actor accounting (discovered = rendered + disabled + failed), exact animation accounting (rendered = animated + static fallback), every failure reason-tagged, animation-update avg/p95 (default 4 ms), shadow-update avg/p95 (default 12 ms; `encodeShadowPass` cascade fit + per-cascade caster culling + encode), and frame avg/p95 budget; prints per-cell + aggregate counts plus `shadow update` avg/p95/max/budget and `shadow culling` (draw calls, drawn, culled, cascades — per-cascade caster-culling accounting; high = 3 cascades, low = 2) |
 | `bench --walk-path [--size WxH] [--budget-ms f] [--max-frames n] [--out file]` | fixed M4 production walk from Tamriel `(6,-2)` to Chillfurrow Farm `(7,-3)`, stair ascent, interior floor crossing + paired exterior return; gates timeout, grounding/penetration, destination/build errors, active-physics avg/p95; optional final PNG |
 
 `cell`/`screenshot`/`render` default to the first-render cell
@@ -134,7 +134,8 @@ Implementation notes:
   missing/unexpected coordinate, failed cell, no unload, >1.6x final/start footprint, cap,
   timeout, collision-build p95 budget miss, actor-build p95 budget miss, per-cell actor
   accounting mismatch, a counted actor failure without a reason (5.6
-  zero-unexplained rule), or avg/p95 frame budget miss exits 1. Per-cell
+  zero-unexplained rule), animation- or shadow-update avg/p95 budget miss, or
+  avg/p95 frame budget miss exits 1. Per-cell
   metrics come from `SerialCellBuildRunner`; collision time covers base resolution, decoded
   model cache, transform placement + BVH build; actor time covers ACHR collection,
   template/visual resolution + GPU assembly (first actor-bearing cell also pays the
@@ -169,7 +170,8 @@ sustained fps gate (360 frames @
 720p, fails over 33.33 ms avg/p95); `bench --fly-path` runs the M3.2 cross-cell gate at
 640x360, including the 700 ms collision-build p95 gate + M5.5/5.6 actor gates (actor-build
 p95, exact actor/animation accounting, reason-tagged failures, 4 ms animation-update
-avg/p95; probe additionally requires the aggregate accounting lines plus one per-cell
-line for each of the 35 touched cells, echoing explained failures);
+avg/p95, 12 ms shadow-update avg/p95; probe additionally requires the aggregate
+accounting lines plus one per-cell line for each of the 35 touched cells, echoing
+explained failures, and asserts the `shadow culling` line reports culled casters);
 `bench --walk-path` runs M4's 640x360
 physics/route gate + writes `logs/probe-walk-path.png`. Full output -> `logs/probe.log`.

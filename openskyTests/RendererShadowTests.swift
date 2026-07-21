@@ -14,19 +14,19 @@ import simd
 import Testing
 
 struct RendererShadowTests {
-    private static let device: MTLDevice? = {
+    static let device: MTLDevice? = {
         guard
             let device = MTLCreateSystemDefaultDevice(),
             device.supportsFamily(.metal4) else { return nil }
         return device
     }()
 
-    private static var hasMetal4Device: Bool {
+    static var hasMetal4Device: Bool {
         device != nil
     }
 
-    private static let width = 320
-    private static let height = 240
+    static let width = 320
+    static let height = 240
 
     /// Sun high in the west, travelling east + down: a tall thin tower at the
     /// origin throws a long shadow streak east across the flat ground.
@@ -124,7 +124,10 @@ struct RendererShadowTests {
     // MARK: - Helpers
 
     @MainActor
-    private static func makeRenderer(device: MTLDevice) throws -> Renderer {
+    static func makeRenderer(
+        device: MTLDevice,
+        scene: RenderScene? = nil
+    ) throws -> Renderer {
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: width, height: height),
             device: device
@@ -133,9 +136,66 @@ struct RendererShadowTests {
         view.enableSetNeedsDisplay = false
         return try Renderer(
             view: view,
-            scene: shadowScene(device: device),
+            scene: scene ?? shadowScene(device: device),
             camera: camera
         )
+    }
+
+    /// Ground + a near tower + a second tower far past shadowDistance on +X.
+    /// The two towers share one RenderModel -> one DrawGroup with two
+    /// instances, so per-cascade culling must keep the near instance and drop
+    /// the far one from every cascade.
+    static func cullingScene(device: MTLDevice) throws -> RenderScene {
+        let texture = try solidTexture(device: device)
+        let provider: TextureProvider = { _, _ in texture }
+        let groundModel = Model(
+            meshes: [DemoScene.planeMesh(halfSize: 1500, uvRepeat: 1)],
+            materials: [Material.fallback],
+            skippedShapeCount: 0
+        )
+        let towerModel = Model(
+            meshes: [DemoScene.boxMesh(halfWidth: 45, halfDepth: 45, height: 420)],
+            materials: [Material.fallback],
+            skippedShapeCount: 0
+        )
+        let ground = try RenderModel(device: device, model: groundModel, textureProvider: provider)
+        let tower = try RenderModel(device: device, model: towerModel, textureProvider: provider)
+        let groundBounds = try #require(ModelBounds.containing(model: groundModel))
+        let towerBounds = try #require(ModelBounds.containing(model: towerModel))
+        let identity = matrix_identity_float4x4
+        let far = MatrixMath.translation(SIMD3<Float>(200_000, 0, 0))
+        return RenderScene(
+            instances: [
+                RenderPlacement(
+                    model: ground, transform: identity,
+                    bounds: groundBounds.transformed(by: identity)
+                ),
+                RenderPlacement(
+                    model: tower, transform: identity,
+                    bounds: towerBounds.transformed(by: identity)
+                ),
+                RenderPlacement(
+                    model: tower, transform: far,
+                    bounds: towerBounds.transformed(by: far)
+                )
+            ],
+            sky: SkyParameters()
+        )
+    }
+
+    /// Count of pixels the shadowed render darkened past a small threshold.
+    static func darkerPixelCount(on: [UInt8], off: [UInt8]) -> Int {
+        var darker = 0
+        for pixel in stride(from: 0, to: on.count, by: 4) {
+            var delta = 0
+            for channel in 0 ..< 3 {
+                delta += Int(off[pixel + channel]) - Int(on[pixel + channel])
+            }
+            if delta > 40 {
+                darker += 1
+            }
+        }
+        return darker
     }
 
     /// Flat ground quad + a tall thin tower caster at the origin, under a sky.
@@ -194,7 +254,7 @@ struct RendererShadowTests {
         return texture
     }
 
-    private static func readPixels(texture: MTLTexture) -> [UInt8] {
+    static func readPixels(texture: MTLTexture) -> [UInt8] {
         var pixels = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
         pixels.withUnsafeMutableBytes { bytes in
             guard let base = bytes.baseAddress else { return } // non-empty

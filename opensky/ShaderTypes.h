@@ -127,6 +127,10 @@ typedef struct
     unsigned int shadowsEnabled;
     /// 1.0 / ShadowConstantMapResolution — PCF tap offset in UV space.
     float shadowInverseResolution;
+    /// PCF kernel radius (M7.1.2 quality): 0 -> one hardware depth-compare tap
+    /// (low quality, cheapest); r>0 -> a (2r+1)^2 tap box (high quality uses 1
+    /// -> the 3x3 kernel from 7.1.1). Read only when shadowsEnabled != 0.
+    unsigned int shadowSampleRadius;
 } FrameUniforms;
 
 /// Per-GROUP material scalars for one instanced static-mesh draw (todo 3.2

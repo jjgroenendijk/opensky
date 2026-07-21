@@ -36,12 +36,14 @@
 			membershipExceptions = (
 				AppDelegate.swift,
 				Assets.xcassets,
+				EnvironmentPanelViewController.swift,
 				GameViewController.swift,
 				MainViewController.swift,
 				OpenSkyApp.swift,
 				PreviewDetailBuilder.swift,
 				PreviewViewController.swift,
 				SettingsWindowController.swift,
+				WorldSidebarViewController.swift,
 			);
 			target = 5AC1000130001093001700A1 /* openskycli */;
 		};
