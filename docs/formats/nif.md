@@ -297,6 +297,44 @@ conditional fields: env map scale, skin tint, parallax, eye data…) holds
 nothing the M2 shader needs, so it stays unread; the size-sliced block
 payload bounds it. Impl: `NIFShaderProperty.swift`.
 
+### BSEffectShaderProperty
+
+Material of an effect shape — glow, additive/particle, non-lit effects.
+Skyrim layout (BS 83/100) only; the two streams share an identical layout
+(nif.xml gates every differing field on FO4+, which the stream guard rejects).
+No shader-type uint32 here — the `onlyT` quirk is BSLightingShaderProperty's
+alone, so the block starts straight at the NiObjectNET name. After the
+NiObjectNET run — parenthesized fields are read past, not kept:
+
+| type        | field                     | notes                          |
+| ----------- | ------------------------- | ------------------------------ |
+| uint32      | shader flags 1            | SkyrimShaderPropertyFlags1     |
+| uint32      | shader flags 2            | SkyrimShaderPropertyFlags2     |
+| float x2    | UV offset                 |                                |
+| float x2    | UV scale                  |                                |
+| SizedString | source texture            | inline effect texture path     |
+| byte        | texture clamp mode        | TexClampMode                   |
+| byte        | (lighting influence)      |                                |
+| byte        | (env map min LOD)         |                                |
+| byte        | (unused)                  |                                |
+| float       | falloff start angle       | cosine-of-angle                |
+| float       | falloff stop angle        |                                |
+| float       | falloff start opacity     |                                |
+| float       | falloff stop opacity      |                                |
+| float x4    | base color                | emissive color incl. alpha     |
+| float       | base color scale          | RGB multiplier                 |
+| float       | soft falloff depth        | soft-particle edge fade        |
+| SizedString | greyscale texture         | palette for greyscale-to-\*    |
+
+No refraction-power field at BS 83/100 (nif.xml gates it on Fallout 76), and
+no env/normal/mask textures or luminance tail (all FO4-and-later). Derived
+accessors mirror SkyrimShaderPropertyFlags bit numbers: SLSF2 bit 4
+double-sided, bit 0 ZBuffer_Write (cleared -> no depth write); SLSF1 bit 3
+vertex alpha, bit 4/5 greyscale-to-palette color/alpha, bit 6 use-falloff,
+bit 30 soft-effect, bit 31 ZBuffer_Test (nif.xml puts the test bit in flags
+1, not flags 2). Texture paths canonicalize via
+`NIFShaderTextureSet.vfsKey(for:)`. Impl: `NIFEffectShaderProperty.swift`.
+
 ### BSShaderTextureSet
 
 uint32 count + SizedString per slot. Slot 0 diffuse, slot 1 normal/gloss;
