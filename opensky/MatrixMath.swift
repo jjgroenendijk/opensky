@@ -146,4 +146,29 @@ nonisolated enum MatrixMath {
             SIMD4<Float>(0, 0, zs * nearZ, 0)
         ))
     }
+
+    // Six bounds are the canonical orthographic-frustum signature (l/r/b/t/n/f).
+    // swiftlint:disable function_parameter_count
+    /// Right-handed orthographic projection mapping z to Metal's [0, 1] range.
+    /// Eye space looks down -z, so eye z in [-farZ, -nearZ] maps to clip z in
+    /// [0, 1]; x in [left, right] and y in [bottom, top] map to [-1, 1].
+    static func orthographic(
+        left: Float,
+        right: Float,
+        bottom: Float,
+        top: Float,
+        nearZ: Float,
+        farZ: Float
+    ) -> float4x4 {
+        let rml = right - left
+        let tmb = top - bottom
+        let nmf = nearZ - farZ
+        return float4x4(columns: (
+            SIMD4<Float>(2 / rml, 0, 0, 0),
+            SIMD4<Float>(0, 2 / tmb, 0, 0),
+            SIMD4<Float>(0, 0, 1 / nmf, 0),
+            SIMD4<Float>(-(right + left) / rml, -(top + bottom) / tmb, nearZ / nmf, 1)
+        ))
+    }
+    // swiftlint:enable function_parameter_count
 }

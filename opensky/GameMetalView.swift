@@ -27,6 +27,7 @@ final class GameMetalView: MTKView {
         static let keyE: UInt16 = 14
         static let keyF: UInt16 = 3
         static let keyG: UInt16 = 5
+        static let keyH: UInt16 = 4
         static let escape: UInt16 = 53
     }
 
@@ -57,6 +58,10 @@ final class GameMetalView: MTKView {
         }
         if event.keyCode == KeyCode.keyG {
             input?.requestWalkToggle()
+            return
+        }
+        if event.keyCode == KeyCode.keyH {
+            input?.requestShadowToggle()
             return
         }
         guard let key = Self.moveKey(for: event.keyCode) else {

@@ -19,6 +19,9 @@ extension Renderer {
         let now = CACurrentMediaTime()
         let dt = lastUpdateTime.map { Float(min(now - $0, 0.1)) } ?? 0
         lastUpdateTime = now
+        if input.consumeShadowToggle() {
+            sunShadowsEnabled.toggle()
+        }
         let frameInput = input.makeInput(dt: dt)
         if frameInput.toggleWalkMode {
             movementMode = movementMode == .fly ? .walk : .fly

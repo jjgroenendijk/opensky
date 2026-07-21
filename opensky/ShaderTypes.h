@@ -50,6 +50,9 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     TextureIndexDiffuse = 0,
     /// First of TerrainConstantMaxLayers consecutive layer-diffuse slots.
     TextureIndexTerrainLayer0 = 1,
+    /// Sun-shadow cascade array (depth2d_array). Sits after the terrain
+    /// layer slots 1..TerrainConstantMaxLayers.
+    TextureIndexShadowMap = 9,
 };
 
 /// LAND splat: ATXT layer numbers run 0-7 (UESP LAND), so 8 additional layers
@@ -65,9 +68,19 @@ typedef NS_ENUM(EnumBackingType, LightingConstant)
     LightingConstantMaxPointLights = 8,
 };
 
+/// Cascaded sun-shadow-map config (M7.1.1). CascadeCount also sizes the
+/// FrameUniforms cascade arrays; MapResolution is one shadow-array slice edge.
+typedef NS_ENUM(EnumBackingType, ShadowConstant)
+{
+    ShadowConstantCascadeCount = 3,
+    ShadowConstantMapResolution = 2048,
+};
+
 typedef NS_ENUM(EnumBackingType, SamplerIndex)
 {
     SamplerIndexTrilinear = 0,
+    /// Depth-compare sampler for shadow-map PCF lookups.
+    SamplerIndexShadowCompare = 1,
 };
 
 typedef NS_ENUM(EnumBackingType, FunctionConstantIndex)
@@ -101,6 +114,19 @@ typedef struct
     float timeOfDayHours;
     /// Deterministic frame time for animated water.
     float animationTime;
+    /// World -> light-clip transform per sun-shadow cascade (M7.1.1). Valid
+    /// only when shadowsEnabled != 0.
+    matrix_float4x4 shadowViewProjections[ShadowConstantCascadeCount];
+    /// Per-cascade far bound (view-space depth along cameraForward), padded
+    /// with the last real bound. Mirrors ShadowCascadeMath.cascadeIndex.
+    vector_float4 shadowCascadeSplits;
+    /// Unit camera forward in world space — cascade selection projects the
+    /// receiver onto it (matches the view matrix actually rendered).
+    vector_float3 cameraForward;
+    /// 0 -> shaders skip shadow sampling entirely (map may be stale/empty).
+    unsigned int shadowsEnabled;
+    /// 1.0 / ShadowConstantMapResolution — PCF tap offset in UV space.
+    float shadowInverseResolution;
 } FrameUniforms;
 
 /// Per-GROUP material scalars for one instanced static-mesh draw (todo 3.2
@@ -159,5 +185,19 @@ typedef struct
     vector_float3 deepColor;
     vector_float3 reflectionColor;
 } WaterDrawUniforms;
+
+/// Per-draw slot for the sun-shadow depth pre-pass (M7.1.1). Shares the
+/// per-draw uniform ring layout (fits one 256-byte slot). lightViewProjection
+/// is the cascade's world -> light-clip transform; modelMatrix is used by the
+/// terrain caster (static/skinned casters read the instance/bone path). uv +
+/// alphaThreshold drive the alpha-test caster's discard.
+typedef struct
+{
+    matrix_float4x4 lightViewProjection;
+    matrix_float4x4 modelMatrix;
+    vector_float2 uvOffset;
+    vector_float2 uvScale;
+    float alphaThreshold;
+} ShadowDrawUniforms;
 
 #endif /* ShaderTypes_h */

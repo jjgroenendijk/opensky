@@ -20,6 +20,25 @@ nonisolated struct RenderPipelines {
     let water: MTLRenderPipelineState
 }
 
+/// Sun-shadow depth pre-pass pipelines (M7.1.1): depth-only, no color
+/// attachment. `alphaTest` carries a discard fragment; the rest run
+/// depth-only. `skinned` handles both opaque and alpha-tested skinned casters
+/// (skinned cutouts cast a conservative solid shadow in 7.1.1).
+nonisolated struct ShadowPipelines {
+    let staticCaster: MTLRenderPipelineState
+    let alphaTest: MTLRenderPipelineState
+    let skinned: MTLRenderPipelineState
+    let terrain: MTLRenderPipelineState
+}
+
+/// Every long-lived sun-shadow GPU object, built + stored as a unit so the
+/// renderer init/state stays compact.
+nonisolated struct ShadowResources {
+    let pipelines: ShadowPipelines
+    let sampler: MTLSamplerState
+    let map: MTLTexture
+}
+
 extension Renderer {
     static var nearPlane: Float {
         10
@@ -27,6 +46,35 @@ extension Renderer {
 
     static var farPlane: Float {
         65536
+    }
+
+    /// Sun-shadow far bound: 3 exterior cells (4096 units each), matching the
+    /// resident streaming grid. Casters beyond it are un-shadowed by design in
+    /// 7.1.1 (caster-culling refinement is 7.1.2).
+    static var shadowDistance: Float {
+        12288
+    }
+
+    /// Light near plane extended backwards (toward the sun) by this many world
+    /// units so casters between the sun and a cascade slice still render.
+    static var shadowCasterBackup: Float {
+        12288
+    }
+
+    /// Blend between uniform + logarithmic cascade splits (0 = uniform).
+    static var shadowSplitLambda: Float {
+        0.7
+    }
+
+    /// Raster depth bias for the shadow pre-pass: constant + slope-scaled,
+    /// no clamp. Trades a little peter-panning for acne removal; tune against
+    /// the real install if either shows.
+    static var shadowDepthBias: Float {
+        2
+    }
+
+    static var shadowSlopeScale: Float {
+        3
     }
 
     static func makeCommandAllocators(device: MTLDevice) throws -> [MTL4CommandAllocator] {
@@ -44,8 +92,10 @@ extension Renderer {
     static func makeArgumentTable(device: MTLDevice) throws -> MTL4ArgumentTable {
         let descriptor = MTL4ArgumentTableDescriptor()
         descriptor.maxBufferBindCount = 8
-        descriptor.maxTextureBindCount = 1 + TerrainConstant.maxLayers.rawValue
-        descriptor.maxSamplerStateBindCount = 1
+        // Base diffuse + terrain layer array + the sun-shadow cascade array.
+        descriptor.maxTextureBindCount = 1 + TerrainConstant.maxLayers.rawValue + 1
+        // Trilinear + shadow-compare.
+        descriptor.maxSamplerStateBindCount = 2
         return try device.makeArgumentTable(descriptor: descriptor)
     }
 
@@ -58,6 +108,15 @@ extension Renderer {
         else { throw RendererError.bufferAllocationFailed }
         buffer.label = label
         return buffer
+    }
+
+    /// Per-frame uniform ring: one aligned slot per in-flight frame.
+    static func makeFrameUniformBuffer(device: MTLDevice) throws -> MTLBuffer {
+        try makeUniformBuffer(
+            device: device,
+            length: alignedFrameUniformsSize * maxFramesInFlight,
+            label: "FrameUniforms"
+        )
     }
 
     static func makePipelines(
@@ -130,6 +189,110 @@ extension Renderer {
             terrain: makeTerrain(),
             water: makeWaterPipeline(library: library, compiler: compiler, view: view)
         )
+    }
+
+    /// Builds the shadow pipelines + compare sampler + cascade array together.
+    static func makeShadowResources(device: MTLDevice) throws -> ShadowResources {
+        try ShadowResources(
+            pipelines: makeShadowPipelines(device: device),
+            sampler: makeShadowSampler(device: device),
+            map: makeShadowMap(device: device)
+        )
+    }
+
+    /// Depth-only sun-shadow pipelines. No color attachment; depth format
+    /// binds at pass time (the pass has nothing else to infer the target from,
+    /// unlike the scene pipelines which carry a color attachment).
+    private static func makeShadowPipelines(
+        device: MTLDevice
+    ) throws -> ShadowPipelines {
+        guard let library = device.makeDefaultLibrary() else {
+            throw RendererError.defaultLibraryMissing
+        }
+        let compiler = try device.makeCompiler(descriptor: MTL4CompilerDescriptor())
+
+        func make(
+            label: String,
+            vertex: String,
+            fragment: String?,
+            skinned: Bool
+        ) throws -> MTLRenderPipelineState {
+            let vertexFunction = MTL4LibraryFunctionDescriptor()
+            vertexFunction.library = library
+            vertexFunction.name = vertex
+            let descriptor = MTL4RenderPipelineDescriptor()
+            descriptor.label = label
+            descriptor.rasterSampleCount = 1
+            descriptor.vertexFunctionDescriptor = vertexFunction
+            if let fragment {
+                let fragmentFunction = MTL4LibraryFunctionDescriptor()
+                fragmentFunction.library = library
+                fragmentFunction.name = fragment
+                descriptor.fragmentFunctionDescriptor = fragmentFunction
+            }
+            // Terrain casts through the static interleaved stream (position at
+            // buffer 0); the splat-weight stream is irrelevant to depth.
+            descriptor.vertexDescriptor = skinned
+                ? SkinVertexLayout.vertexDescriptor() : StaticVertexLayout.vertexDescriptor()
+            // No color attachment + depth-only: the depth format binds at pass
+            // time (MTL4RenderPipelineDescriptor carries no depth format, same
+            // as the scene pipelines).
+            return try compiler.makeRenderPipelineState(descriptor: descriptor)
+        }
+
+        return try ShadowPipelines(
+            staticCaster: make(
+                label: "ShadowStatic", vertex: "shadowStaticVertex",
+                fragment: nil, skinned: false
+            ),
+            alphaTest: make(
+                label: "ShadowAlphaTest", vertex: "shadowStaticVertex",
+                fragment: "shadowAlphaTestFragment", skinned: false
+            ),
+            skinned: make(
+                label: "ShadowSkinned", vertex: "shadowSkinnedVertex",
+                fragment: nil, skinned: true
+            ),
+            terrain: make(
+                label: "ShadowTerrain", vertex: "shadowTerrainVertex",
+                fragment: nil, skinned: false
+            )
+        )
+    }
+
+    /// Depth-compare sampler for shadow PCF: linear filtering runs the 2x2
+    /// hardware comparison, clamp-to-edge keeps out-of-map taps lit.
+    private static func makeShadowSampler(device: MTLDevice) throws -> MTLSamplerState {
+        let descriptor = MTLSamplerDescriptor()
+        descriptor.label = "ShadowCompare"
+        descriptor.minFilter = .linear
+        descriptor.magFilter = .linear
+        descriptor.sAddressMode = .clampToEdge
+        descriptor.tAddressMode = .clampToEdge
+        descriptor.compareFunction = .less
+        descriptor.supportArgumentBuffers = true
+        guard let sampler = device.makeSamplerState(descriptor: descriptor) else {
+            throw RendererError.samplerAllocationFailed
+        }
+        return sampler
+    }
+
+    /// One shared cascade array: depth32Float, 2D array of
+    /// ShadowConstantCascadeCount slices, private (GPU-only) storage.
+    private static func makeShadowMap(device: MTLDevice) throws -> MTLTexture {
+        let descriptor = MTLTextureDescriptor()
+        descriptor.textureType = .type2DArray
+        descriptor.pixelFormat = .depth32Float
+        descriptor.width = ShadowConstant.mapResolution.rawValue
+        descriptor.height = ShadowConstant.mapResolution.rawValue
+        descriptor.arrayLength = ShadowConstant.cascadeCount.rawValue
+        descriptor.usage = [.renderTarget, .shaderRead]
+        descriptor.storageMode = .private
+        guard let texture = device.makeTexture(descriptor: descriptor) else {
+            throw RendererError.textureAllocationFailed
+        }
+        texture.label = "SunShadowCascades"
+        return texture
     }
 
     private static func makeSkyPipeline(

@@ -72,7 +72,8 @@ adapted from Apple's Xcode Metal 4 game template (structure, not copied game cod
 
 ## Sky + water pipelines (todo 3.5)
 
-Pass order = sky first, then opaque groups, terrain, alpha-test groups, water last. Sky is
+Pass order = shadow cascade pre-pass ([shadows](/rendering/shadows.md)), then sky,
+opaque groups, terrain, alpha-test groups, water last. Sky is
 a fullscreen triangle with no vertex buffer or depth state. It reads time-of-day from frame
 uniforms and writes a procedural vertical palette + sun disc; later depth-tested geometry
 replaces its pixels. WRLD `no sky` suppresses the draw.
@@ -252,11 +253,11 @@ change at z-fighting edges, visually identical.
   largest struct, 256-byte aligned.
 * All binds through one `MTL4ArgumentTable` (8 buffers — vertices, frame + draw uniforms,
   terrain weights, instance transforms, point lights, skin attributes, bone matrices;
-  1 + 8 textures — diffuse + terrain
-  layer array; 1 sampler); table state is captured per draw, so per-draw
-  `setAddress`/`setTexture`
-  between `drawIndexedPrimitives` calls is the binding model. Sampler: trilinear
-  mipmapped, anisotropy 8, repeat, `supportArgumentBuffers`.
+  1 + 8 + 1 textures — diffuse + terrain layer array + shadow-map array; 2 samplers);
+  table state is captured per draw, so per-draw `setAddress`/`setTexture`
+  between `drawIndexedPrimitives` calls is the binding model. Samplers: trilinear
+  mipmapped, anisotropy 8, repeat, `supportArgumentBuffers`; shadow compare sampler
+  (less, linear, clamp — [shadows](/rendering/shadows.md)).
 * Residency: app-owned `MTLResidencySet` holds uniform rings + every scene allocation
   (`RenderScene.residencyAllocations`), committed at scene build, attached to the queue.
   Offscreen targets are added/removed around each `renderOffscreen` call.

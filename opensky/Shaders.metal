@@ -37,6 +37,50 @@ static float3 pointLighting(
     return sum;
 }
 
+// Receiver-side depth-compare bias (NDC z). Trims residual self-shadow acne
+// the raster depth bias leaves behind; kept small to avoid peter-panning.
+constant float shadowReceiverBias = 0.0015;
+
+// Sun-shadow attenuation for one world-space receiver (M7.1.1). Returns 1.0
+// (fully lit) when shadows are off, the point is beyond the last cascade, or
+// it projects outside the cascade's map. Cascade pick mirrors
+// ShadowCascadeMath.cascadeIndex verbatim; 3x3 PCF softens the edge.
+static float sunShadowFactor(
+    float3 worldPosition,
+    constant FrameUniforms &frame,
+    depth2d_array<float> shadowMap,
+    sampler shadowSampler)
+{
+    if (frame.shadowsEnabled == 0) {
+        return 1.0;
+    }
+    float viewDepth = dot(worldPosition - frame.cameraPosition, frame.cameraForward);
+    if (viewDepth > frame.shadowCascadeSplits[ShadowConstantCascadeCount - 1]) {
+        return 1.0;
+    }
+    int cascade = ShadowConstantCascadeCount - 1;
+    for (int slot = ShadowConstantCascadeCount - 1; slot >= 0; --slot) {
+        if (viewDepth <= frame.shadowCascadeSplits[slot]) {
+            cascade = slot;
+        }
+    }
+    float4 clip = frame.shadowViewProjections[cascade] * float4(worldPosition, 1.0);
+    float3 ndc = clip.xyz / clip.w;
+    if (ndc.x < -1.0 || ndc.x > 1.0 || ndc.y < -1.0 || ndc.y > 1.0 || ndc.z < 0.0 || ndc.z > 1.0) {
+        return 1.0;
+    }
+    float2 uv = ndc.xy * float2(0.5, -0.5) + 0.5;
+    float compareDepth = ndc.z - shadowReceiverBias;
+    float sum = 0.0;
+    for (int dy = -1; dy <= 1; ++dy) {
+        for (int dx = -1; dx <= 1; ++dx) {
+            float2 offset = float2(dx, dy) * frame.shadowInverseResolution;
+            sum += shadowMap.sample_compare(shadowSampler, uv + offset, cascade, compareDepth);
+        }
+    }
+    return sum / 9.0;
+}
+
 static float3 applyFog(float3 color, float3 worldPosition, constant FrameUniforms &frame)
 {
     if (frame.fogEnabled == 0) {
@@ -192,7 +236,9 @@ fragment float4 staticMeshFragment(
     constant DrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]],
     const device PointLightUniform *pointLights [[buffer(BufferIndexPointLights)]],
     texture2d<float> diffuseMap [[texture(TextureIndexDiffuse)]],
-    sampler trilinear [[sampler(SamplerIndexTrilinear)]])
+    depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
+    sampler trilinear [[sampler(SamplerIndexTrilinear)]],
+    sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]])
 {
     float4 diffuse = diffuseMap.sample(trilinear, in.texcoord);
     float alpha = diffuse.a * in.color.a * draw.materialAlpha;
@@ -201,8 +247,9 @@ fragment float4 staticMeshFragment(
     }
     float3 normal = normalize(in.normal);
     float lambert = saturate(dot(normal, -frame.sunDirection));
+    float shadow = sunShadowFactor(in.worldPosition, frame, shadowMap, shadowSampler);
     float3 illumination =
-        frame.sunColor * lambert + frame.ambientColor + directionalAmbient(normal, frame) +
+        frame.sunColor * lambert * shadow + frame.ambientColor + directionalAmbient(normal, frame) +
         pointLighting(in.worldPosition, normal, pointLights, draw.pointLightCount);
     float3 lit = diffuse.rgb * in.color.rgb * illumination;
     return float4(applyFog(lit, in.worldPosition, frame), alpha);
@@ -261,7 +308,9 @@ fragment float4 terrainFragment(
     texture2d<float> baseMap [[texture(TextureIndexDiffuse)]],
     array<texture2d<float>, TerrainConstantMaxLayers> layerMaps
     [[texture(TextureIndexTerrainLayer0)]],
-    sampler trilinear [[sampler(SamplerIndexTrilinear)]])
+    depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
+    sampler trilinear [[sampler(SamplerIndexTrilinear)]],
+    sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]])
 {
     // Start opaque base, then lerp each layer in over the running color in
     // ATXT layer order. Straight lerp by VTXT opacity is the plain reading of
@@ -277,8 +326,9 @@ fragment float4 terrainFragment(
     }
     float3 normal = normalize(in.normal);
     float lambert = saturate(dot(normal, -frame.sunDirection));
+    float shadow = sunShadowFactor(in.worldPosition, frame, shadowMap, shadowSampler);
     float3 illumination =
-        frame.sunColor * lambert + frame.ambientColor + directionalAmbient(normal, frame) +
+        frame.sunColor * lambert * shadow + frame.ambientColor + directionalAmbient(normal, frame) +
         pointLighting(in.worldPosition, normal, pointLights, draw.pointLightCount);
     float3 lit = albedo * in.color.rgb * illumination;
     return float4(applyFog(lit, in.worldPosition, frame), 1.0);
@@ -321,4 +371,72 @@ fragment float4 waterFragment(
     float3 color = mix(base, draw.reflectionColor, saturate(0.18 + fresnel * 0.55));
     color *= 0.94 + ripple * 0.06;
     return float4(color, 0.64);
+}
+
+// Sun-shadow depth pre-pass (M7.1.1): render each caster into one cascade
+// slice, storing only clip-space depth. lightViewProjection folds world ->
+// light clip; static/skinned casters get their model matrix from the
+// instance/bone path (identical to the scene pass), terrain from
+// ShadowDrawUniforms.modelMatrix. Only the alpha-test variant carries a
+// fragment (diffuse alpha discard); opaque casters run depth-only.
+
+typedef struct
+{
+    float4 position [[position]];
+    float2 texcoord;
+} ShadowVertexOut;
+
+vertex ShadowVertexOut shadowStaticVertex(
+    StaticVertexIn in [[stage_in]],
+    uint instanceID [[instance_id]],
+    constant ShadowDrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]],
+    const device InstanceTransform *instances [[buffer(BufferIndexInstanceTransforms)]])
+{
+    ShadowVertexOut out;
+    float4 world = instances[instanceID].modelMatrix * float4(in.position, 1.0);
+    out.position = draw.lightViewProjection * world;
+    out.texcoord = in.texcoord * draw.uvScale + draw.uvOffset;
+    return out;
+}
+
+vertex ShadowVertexOut shadowSkinnedVertex(
+    SkinnedVertexIn in [[stage_in]],
+    uint instanceID [[instance_id]],
+    constant ShadowDrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]],
+    const device InstanceTransform *instances [[buffer(BufferIndexInstanceTransforms)]],
+    const device matrix_float4x4 *bones [[buffer(BufferIndexBoneMatrices)]])
+{
+    float4 skinPosition = 0.0;
+    for (uint influence = 0; influence < 4; ++influence) {
+        float weight = in.boneWeights[influence];
+        skinPosition += weight * (bones[in.boneIndices[influence]] * float4(in.position, 1.0));
+    }
+    ShadowVertexOut out;
+    float4 world = instances[instanceID].modelMatrix * skinPosition;
+    out.position = draw.lightViewProjection * world;
+    out.texcoord = in.texcoord * draw.uvScale + draw.uvOffset;
+    return out;
+}
+
+vertex ShadowVertexOut shadowTerrainVertex(
+    StaticVertexIn in [[stage_in]],
+    constant ShadowDrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]])
+{
+    ShadowVertexOut out;
+    float4 world = draw.modelMatrix * float4(in.position, 1.0);
+    out.position = draw.lightViewProjection * world;
+    out.texcoord = in.texcoord;
+    return out;
+}
+
+fragment void shadowAlphaTestFragment(
+    ShadowVertexOut in [[stage_in]],
+    constant ShadowDrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]],
+    texture2d<float> diffuseMap [[texture(TextureIndexDiffuse)]],
+    sampler trilinear [[sampler(SamplerIndexTrilinear)]])
+{
+    float alpha = diffuseMap.sample(trilinear, in.texcoord).a;
+    if (alpha < draw.alphaThreshold) {
+        discard_fragment();
+    }
 }

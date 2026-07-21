@@ -70,6 +70,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Metal 4 mesh renderer](/rendering/metal4-renderer.md) - static + animated skinned paths:
   pipeline variants, uniform/palette rings, argument tables, counter-heap frame stats,
   offscreen render, scene types.
+* [Cascaded sun shadows](/rendering/shadows.md) - cascade fit math, depth-only
+  pre-pass over static/terrain/skinned casters, PCF sun-term filtering, A/B
+  verification.
 
 ## Decisions
 

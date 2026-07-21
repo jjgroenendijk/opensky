@@ -43,7 +43,8 @@ extension Renderer: MTKViewDelegate {
             commandBuffer.writeTimestamp(counterHeap: heap, index: slot * 2)
         }
 
-        let encoded = encodeScenePass(
+        let shadowEncoded = encodeShadowPass(slot: slot, projection: projectionMatrix)
+        let encoded = shadowEncoded && encodeScenePass(
             descriptor: passDescriptor,
             slot: slot,
             projection: projectionMatrix

@@ -2,6 +2,26 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-07-21
+
+* M7.1.1 cascaded sun shadows -- depth-only pre-pass renders opaque/alpha/terrain +
+  skinned casters into a 2048x2048x3 `depth32Float` array (one encoder per cascade,
+  same reused MTL4CommandBuffer, before the scene pass); `staticMeshFragment` +
+  `terrainFragment` sample it with 3x3 PCF (`depth2d_array.sample_compare`) and darken
+  only the direct sun term. `ShadowCascadeMath` fits practical-split cascades (lambda
+  0.7, distance 12288) with rotation-invariant bounding-sphere ortho extents +
+  texel-snapped origins; `MatrixMath.orthographic` added; MSL cascade pick mirrors
+  `cascadeIndex` verbatim. Dedicated shadow instance/draw rings avoid the scene pass's
+  per-frame cursor reset; caster instances write once per frame, groups cull per
+  cascade by merged bounds. Acne control: raster bias 2/slope 3, receiver bias 0.0015,
+  cull back. Gate passed: `ShadowCascadeMathTests` (20 synthetic),
+  `RendererShadowTests` A/B (receiver darkens, sky bit-identical, off == baseline);
+  real probe WhiterunExterior06 5,194 px differ / 3,370 darker / 0 brighter /
+  deterministic; 5x5 screenshot shows building shadows, no acne; single-cell bench avg
+  1.73 ms. `H` toggles shadows in the game view (sidebar quality setting = 7.1.2).
+  Docs: [shadows](/rendering/shadows.md), [renderer](/rendering/metal4-renderer.md).
+  Item 7.1.1 leaves [todo](/todo.md); 7.1.2 owns streaming/budget/quality acceptance.
+
 ## 2026-07-20
 
 * M6 actors animate complete -- renderer samples direct human `mt_idle.hkx` clips, composes
