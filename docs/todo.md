@@ -94,9 +94,6 @@ use offscreen verification per `probe`. Main-app controls live under
 
 Replaces the procedural-only sky palette from M3; publishes wind for later systems.
 
-* [ ] 7.2.1 Weather records: WTHR (colors per time-of-day layer, fog distances,
-      wind, precipitation type/intensity), CLMT (timing, weather chances), REGN
-      weather lists. Gate: vanilla sweep decodes; synthetic fixtures.
 * [ ] 7.2.2 Weather runtime: region/climate weather selection, timed transitions
       blending sky palette + fog + directional ambient, hooked to the existing
       time-of-day input. Publish current wind vector/intensity for precipitation,

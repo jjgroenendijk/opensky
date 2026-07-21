@@ -4,6 +4,21 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-21
 
+* M7.2.1 weather records -- WTHR/CLMT/REGN decoders (`Weather.swift`,
+  `Climate.swift`, `Region.swift`). WTHR: NAM0 per-time-of-day color layers
+  (count from size; 13/14/17-component variants), FNAM fog distances (32 + legacy
+  16 byte), 19-byte DATA (wind speed/direction, trans delta, sun glare/damage,
+  precipitation + thunder fades, classification flags -> `Precipitation` enum,
+  lightning color). CLMT: WLST weather chances, TNAM timing + packed moons byte,
+  sun/glare/night-sky paths. REGN: weather data areas only (RDAT type 3 + RDWT),
+  worldspace, map color; RDWT bound to last-seen RDAT type. Unknown sizes -> nil/
+  skip, never guess (UESP DATA ambiguity resolved via xEdit: two Visual Effect
+  bytes at 15-16). CLI `record` + Asset Browser dump WTHR/CLMT/REGN summaries.
+  Gates: synthetic-fixture suites green; vanilla sweep (`WeatherRealDataTests`
+  via `tools/realtest.sh`) decodes 84 WTHR / 6 CLMT / 317 REGN no-throw, all
+  CLMT + REGN weather refs resolve to WTHR. Sidebar UI defers to 7.2.3 weather
+  controls (parser-only item). Docs: [weather](/formats/weather.md). Next: 7.2.2
+  weather runtime.
 * M7.1.2 shadow streaming/budget/quality -- M7.1 sun shadows complete. Per-cascade
   per-instance caster culling (survivor runs in a `cascadeCount x` instance ring, one
   instanced draw per group per cascade) + light-volume near-Z clamp to the resident-cell

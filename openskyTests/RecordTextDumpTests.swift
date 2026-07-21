@@ -44,6 +44,64 @@ struct RecordTextDumpTests {
         #expect(dump.contains("... 7 more: RNAM 7"))
     }
 
+    @Test func dumpsDecodedWeatherClimateAndRegion() throws {
+        // WTHR: 13-layer NAM0 + 19-byte DATA (wind speed 255 -> 1.00,
+        // direction 0, rainy flag 0x04).
+        var weatherData = Data(count: 19)
+        weatherData[0] = 255
+        weatherData[11] = 0x04
+        let weatherFields = ESMFixture.field("EDID", ESMFixture.zstring("TestRain"))
+            + ESMFixture.field("NAM0", Data(count: 13 * 16))
+            + ESMFixture.field("DATA", weatherData)
+        // CLMT: one WLST entry + TNAM (sunrise 30-42, sunset 114-126, x10 min).
+        var wlst = Data()
+        wlst.appendUInt32(0x100)
+        wlst.appendUInt32(100)
+        wlst.appendUInt32(0)
+        let climateFields = ESMFixture.field("EDID", ESMFixture.zstring("TestClimate"))
+            + ESMFixture.field("WLST", wlst)
+            + ESMFixture.field("TNAM", Data([30, 42, 114, 126, 50, 0x44]))
+        // REGN: worldspace + weather area (RDAT type 3) with one RDWT entry.
+        var wnam = Data()
+        wnam.appendUInt32(0x3C)
+        var rdat = Data()
+        rdat.appendUInt32(3)
+        rdat.append(contentsOf: [0x01, 60, 0, 0])
+        let regionFields = ESMFixture.field("EDID", ESMFixture.zstring("TestRegion"))
+            + ESMFixture.field("WNAM", wnam)
+            + ESMFixture.field("RDAT", rdat)
+            + ESMFixture.field("RDWT", wlst)
+        let plugin = ESMFixture.tes4()
+            + ESMFixture.topGroup(
+                "WTHR", contents: ESMFixture.record("WTHR", formID: 1, data: weatherFields)
+            )
+            + ESMFixture.topGroup(
+                "CLMT", contents: ESMFixture.record("CLMT", formID: 2, data: climateFields)
+            )
+            + ESMFixture.topGroup(
+                "REGN", contents: ESMFixture.record("REGN", formID: 3, data: regionFields)
+            )
+        let file = try ESMFile(data: plugin)
+        var dumps: [String] = []
+        ESMWalk.forEachRecord(in: file) { record in
+            dumps.append(RecordTextDump.dump(record: record, localized: false))
+            return true
+        }
+        let all = dumps.joined(separator: "\n")
+        #expect(all.contains(
+            "decoded WTHR: editorID TestRain, color layers 13, fog -, "
+                + "wind 1.00 @ 0 deg, class rainy"
+        ))
+        #expect(all.contains(
+            "decoded CLMT: editorID TestClimate, 1 weathers, "
+                + "sunrise 300-420, sunset 1140-1260 min"
+        ))
+        #expect(all.contains(
+            "decoded REGN: editorID TestRegion, worldspace 0000003C, "
+                + "1 weathers, weather priority 60"
+        ))
+    }
+
     @Test func dumpsReferenceRotationAndTeleportPose() throws {
         var name = Data()
         name.appendUInt32(0x100)

@@ -24,6 +24,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   inheritance, WATR DNAM color offsets and sentinel policy.
 * [Terrain records](/formats/land.md) - LAND/LTEX/TXST layouts: VHGT gradient
   height field, VNML/VCLR, BTXT/ATXT/VTXT splat layers, texture sets.
+* [Weather records](/formats/weather.md) - WTHR NAM0 color layers/FNAM fog/DATA
+  wind + precipitation, CLMT weather lists + timing, REGN weather areas.
 * [Distant LOD](/formats/lod.md) - lodsettings plus BTR/BTO paths and LOD-specific NIF
   blocks, placement rules, full vanilla sweep evidence.
 * [NIF mesh](/formats/nif.md) - Gamebryo 20.2.0.7 container, scene graph,
