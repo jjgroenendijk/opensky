@@ -175,6 +175,19 @@ If a machine can check a rule, do not rely on people remembering it.
 - Run tests before every commit (minimum: targeted for the changed area). Every commit
   keeps the repo green.
 
+## Main-app verification surface
+
+- Every new subsystem or user-verifiable behavior adds or extends a discoverable option in
+  the main OpenSky app sidebar in the same milestone. Prefer controls under an existing
+  sidebar destination over one new top-level item per small feature.
+- Sidebar path must let a user select, force, toggle, or inspect the implemented behavior
+  without knowing a CLI command. Keep it available as a durable dev/verification surface.
+- Parser, math, and infrastructure-only items may defer UI until their first visible
+  consumer. If their output is useful alone, expose it in the Asset Browser or a dedicated
+  inspector. Every milestone acceptance records the exact sidebar path used.
+- App verification supplements unit tests, probes, benchmarks, and offscreen evidence; it
+  does not replace them.
+
 ## Writing style (agent output, docs, comments, commit bodies)
 
 Caveman density, effortless to read:

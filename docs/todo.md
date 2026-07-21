@@ -3,12 +3,12 @@ type: Task List
 title: Roadmap and outstanding work
 description: OpenSky mission roadmap - agent handoff, milestone plan, open questions.
 tags: [meta, roadmap, planning, handoff]
-timestamp: 2026-07-20T00:00:00Z
+timestamp: 2026-07-21T00:00:00Z
 ---
 
 # TODO — roadmap
 
-State as of 2026-07-20. Ordered by mission priority (AGENTS.md): render static world
+State as of 2026-07-21. Ordered by mission priority (AGENTS.md): render static world
 geometry first -> grow toward playable engine.
 
 ## How to continue (agent handoff)
@@ -24,6 +24,9 @@ Fresh session picks up here:
    (real-data checks + render verification), `docs-wiki` (doc upkeep).
 4. Game data root (read-only, never copied into repo/build):
    `/Volumes/data/steam/steamapps/common/Skyrim Special Edition/`.
+5. Every milestone adds or extends a discoverable main-app sidebar verification surface.
+   Record exact sidebar path at acceptance. Parser/math-only work may surface with its
+   first visible consumer; CLI/probe evidence remains required where specified.
 
 Machine quirks: repo on case-insensitive external APFS volume (case-only rename needs
 `git mv`; AppleDouble `._*` files ignored). Xcode 26 ships without Metal Toolchain
@@ -32,8 +35,9 @@ only gate; `ci.yml` is manual-dispatch and self-skips below Xcode 26.
 
 ## Milestones at a glance
 
-Each milestone = one goal, one measurable acceptance gate (its last numbered item). Done
-milestone leaves this file; history lives in `docs/log.md` + git.
+Each milestone = one goal + one final measurable acceptance gate. Sub-milestones may add
+earlier integration gates. Done milestone leaves this file; history lives in
+`docs/log.md` + git.
 
 * M1 — data foundation. Done 2026-07-10 (PRs #1-#8): BSA VFS, ESM/plugin record decoders.
 * M2 — static world geometry. Done 2026-07-18 (PRs #9-#21): textured
@@ -49,264 +53,466 @@ milestone leaves this file; history lives in `docs/log.md` + git.
   fly bench within build/footprint/frame budgets.
 * M6 — actors animate. Done 2026-07-20: skeleton-driven idle playback on streamed actors,
   exact lifecycle accounting, deterministic frame-delta gate, exterior/interior probes.
-* M7 — world/render fidelity (planned 2026-07-20, pulled ahead by user priority):
-  M7.1 sun shadows, M7.2 data-driven weather, M7.3 grass, M7.4 particles,
-  M7.5 dynamic physics. Gates: 7.1.2 / 7.2.3 / 7.3.2 / 7.4.2 / 7.5.3.
-* M8 — Papyrus scripting, quest-capable (planned 2026-07-20): M8.1 VM core, M8.2 scripts
-  in world, M8.3 quest engine. Gates: 8.1.4 / 8.2.4 / 8.3.4.
-* M9 — audio incl. voice + lip sync (planned 2026-07-20): M9.1 decode + playback
-  (ffmpeg LGPL), M9.2 game wiring, M9.3 voice + lips. Gates: 9.1.3 / 9.2.3 / 9.3.3.
-* M10 — game UI, native-first hybrid (planned 2026-07-20): M10.1 HUD, M10.2 menus, M10.3
-  vanilla fonts via SWF extraction. Gates: 10.1.3 / 10.2.3 / 10.3.2.
-* M11+ — toward playable (direction, decided 2026-07-20): gameplay-first order,
-  behavior-graph locomotion, native saves + read-only .ess import. Numbered re-scope
-  at the M10 gate.
+* M7 — living environment (active): shadows -> weather/sky/wind -> shared particles ->
+  precipitation -> grass. M7.1.1 sun-shadow pass done; dynamic physics moved to combat.
+  Gate: 7.6.
+* M8 — interaction + UI shell: screen-space UI, interaction targeting, HUD, menu mode,
+  settings. Gate: 8.3.3.
+* M9 — world audio: decode/playback, sound records, positional SFX, ambience, music.
+  Voice + lip sync moved to dialogue. Gate: 9.2.4.
+* M10 — mutable world foundation: runtime identity/state, change tracking, native saves,
+  CTDA conditions, game clock/calendar, GLOB globals. Gate: 10.2.4.
+* M11 — Papyrus world interaction: PEX/VMAD VM core, scheduler, activators, triggers.
+  Quest runtime moved to M13. Gates: 11.1.4 / 11.2.4.
+* M12 — inventory + equipment: pickup, containers, equipping, inventory UI, weight,
+  gold, barter basics. Gate: 12.6.
+* M13 — quests + journal: QUST runtime, aliases, stages/objectives, journal UI.
+  Gate: 13.5.
+* M14 — player locomotion: Havok Behavior graph evaluation, player movement parity,
+  first-person camera + arms. Gate: 14.6.
+* M15 — combat + dynamic physics: actor values, melee/archery, projectiles, death,
+  ragdolls, dynamic clutter. Gate: 15.7.
+* M16 — AI: NAVM pathfinding, packages/schedules, detection, combat AI. Gate: 16.5.
+* M17 — dialogue + voice: DIAL/INFO, scenes, dialogue UI/camera, `.fuz`, TRI, `.lip`.
+  Gate: 17.6.
+* M18+ — broader gameplay: magic/perks/leveling, crime/factions/services, locks/traps,
+  chargen/map, vanilla-font polish, read-only `.ess` import.
 
-## Milestone 7 — world/render fidelity (starts after M6)
+## Milestone 7 — living environment
 
-Goal: world looks alive — shadows, data-driven weather, grass, particles, dynamic
-physics debris. Pulled ahead of scripting/audio/UI + gameplay (user priority
-2026-07-20); M6 idle playback finishes first. Five sub-milestones, each with own
-gate. Specs: UESP + xEdit defs (WTHR/CLMT/REGN/GRAS), NifTools nif.xml (particle +
-effect-shader blocks, bhk constraints). Format items follow `format-parser`
-discipline; render items verified offscreen per `probe` skill.
+Goal: world looks alive — shadows, data-driven sky/fog/wind, particles,
+precipitation, grass. Pulled ahead of scripting/audio/UI + gameplay by user priority
+2026-07-20; M6 idle playback is complete. Shared render primitives land before their
+consumers. Dynamic physics moved to M15 combat.
+
+Specs: UESP + xEdit defs (WTHR/CLMT/REGN/GRAS), NifTools nif.xml (particle +
+effect-shader blocks). Format items follow `format-parser` discipline; render items
+use offscreen verification per `probe`. Main-app controls live under
+`World > Environment` and remain as the visual-verification surface.
 
 ### M7.1 — sun shadows
 
-Biggest visual-fidelity gap; renderer currently has none.
+Core cascaded pass landed in 7.1.1; streaming-aware culling, budget, quality UI remain.
 
 * [ ] 7.1.2 Streaming + budget + acceptance: per-cascade caster culling limited to
       resident cells, explicit per-frame shadow budget in the fly bench, quality
-      setting (off/low/high). Gate: Whiterun fly bench within budget; deterministic
-      offscreen pixel-delta evidence; docs (`rendering/shadows.md`) + log updated.
-      Interior point-light shadows deliberately out of scope — noted for later.
+      setting (off/low/high) under `World > Environment`. Gate: Whiterun fly bench
+      within budget; deterministic offscreen pixel-delta evidence; docs
+      (`rendering/shadows.md`) + log updated. Interior point-light shadows stay out
+      of scope and are noted for later.
 
-### M7.2 — data-driven weather
+### M7.2 — data-driven weather core
 
-Replaces the procedural-only sky palette from M3.
+Replaces the procedural-only sky palette from M3; publishes wind for later systems.
 
 * [ ] 7.2.1 Weather records: WTHR (colors per time-of-day layer, fog distances,
       wind, precipitation type/intensity), CLMT (timing, weather chances), REGN
       weather lists. Gate: vanilla sweep decodes; synthetic fixtures.
 * [ ] 7.2.2 Weather runtime: region/climate weather selection, timed transitions
       blending sky palette + fog + directional ambient, hooked to the existing
-      time-of-day input. Gate: forced-weather dev command shows distinct clear/
-      cloudy/foggy looks offscreen.
-* [ ] 7.2.3 Precipitation + acceptance: rain/snow as camera-following particle
-      volume, simple roof occlusion (upward ray), storm sky darkening. Gate:
-      rain storm plays + transitions back to clear in-app; numeric frame-delta evidence; docs
-      (`engine/weather.md`) + log updated.
+      time-of-day input. Publish current wind vector/intensity for precipitation,
+      grass, particles, and later audio.
+* [ ] 7.2.3 Weather-core acceptance: `World > Environment > Weather` can force
+      distinct clear/cloudy/foggy looks and time transitions in-app. Gate:
+      offscreen differences + transition evidence; docs (`engine/weather.md`) +
+      log updated. Precipitation waits for M7.3 particle playback.
 
-### M7.3 — grass + flora
+### M7.3 — particles + effect shaders
 
-* [ ] 7.3.1 GRAS records + placement: procedural distribution driven by LAND
+Shared visual runtime before precipitation consumes it.
+
+* [ ] 7.3.1 NIF particle + effect blocks: NiParticleSystem emitters/modifiers,
+      BSEffectShaderProperty (additive/soft alpha), decode into engine types
+      (nif.xml). Gate: vanilla sweep over Whiterun-referenced NIFs decodes;
+      synthetic fixtures.
+* [ ] 7.3.2 Playback + acceptance: CPU-simulated emitters, billboarded particle
+      draw path, effect-shader blend states, weather-wind input. Gate: torch flames
+      + brazier smoke animate in Whiterun offscreen frames (numeric frame delta);
+      `World > Environment > Particles` exposes enable/freeze/emitter controls;
+      local visual confirmation; docs (`rendering/particles.md`) + log updated.
+
+### M7.4 — precipitation
+
+Consumes weather state from M7.2 + particle playback from M7.3.
+
+* [ ] 7.4.1 Rain + snow volumes: camera-following emitters driven by WTHR
+      precipitation type/intensity + wind, simple roof occlusion via upward ray,
+      storm sky darkening.
+* [ ] 7.4.2 Precipitation acceptance: `World > Environment > Weather` can force
+      rain/snow, pause transitions, and return to clear. Gate: storm plays +
+      transitions back in-app; numeric offscreen frame-delta evidence + local visual check;
+      weather docs + log updated.
+
+### M7.5 — grass + flora
+
+Consumes M7.2 wind rather than defining a separate animation input.
+
+* [ ] 7.5.1 GRAS records + placement: procedural distribution driven by LAND
       texture layers (density, slope/height limits, position/color variance),
       deterministic per-cell seeding. Placement algorithm not fully documented ->
       probe against observed in-game density, document deviations.
-* [ ] 7.3.2 Instanced rendering + acceptance: batched instancing, wind sway,
-      distance fade, per-frame budget; streaming lifetime with cells. Gate:
-      Whiterun tundra grass within fly-bench budget; numeric frame-delta evidence; docs
+* [ ] 7.5.2 Instanced rendering + acceptance: batched instancing, weather-driven
+      wind sway, distance fade, per-frame budget; streaming lifetime with cells.
+      Gate: Whiterun tundra grass within fly-bench budget; density/distance/wind
+      controls under `World > Environment > Grass`; numeric pixel/motion evidence; docs
       (`engine/grass.md`) + log updated.
 
-### M7.4 — particles + effect shaders
+### M7.6 — integrated acceptance
 
-* [ ] 7.4.1 NIF particle + effect blocks: NiParticleSystem emitters/modifiers,
-      BSEffectShaderProperty (additive/soft alpha), decode into engine types
-      (nif.xml). Gate: vanilla sweep over Whiterun-referenced NIFs decodes; synthetic
-      fixtures.
-* [ ] 7.4.2 Playback + acceptance: CPU-simulated emitters, billboarded particle
-      draw path, effect-shader blend states. Gate: torch flames + brazier smoke
-      animate in Whiterun offscreen frames (numeric frame-delta evidence); docs
-      (`rendering/particles.md`) + log updated.
+* [ ] 7.6 Living Whiterun gate: exterior runs with animation, shadows, selected
+      weather, particles, precipitation, and grass; one interior runs with animation
+      + applicable particles without crash. `World > Environment` exposes every
+      system + A/B toggle; combined fly bench stays within explicit frame/build/
+      footprint budgets. Record numeric deltas + local visual confirmation; update
+      docs/log/todo; review M8 against M7 learnings.
 
-### M7.5 — dynamic physics (ragdolls + projectiles)
+## Milestone 8 — interaction + UI shell
 
-Extends the static collision world (M4) with motion; combat consumes this later.
+Goal: user can inspect and operate the world without CLI knowledge. Establish native
+Metal/AppKit UI, interaction targeting, HUD, menu mode, and settings before scripts
+or quests consume them.
 
-* [ ] 7.5.1 Dynamic rigid bodies: integrate non-fixed bhkRigidBody motion
-      (gravity, impulses, sleep), broadphase updates, pushable clutter in walk
-      mode. Gate: dropped/pushed clutter settles plausibly, no NaN/tunneling in
-      stress test.
-* [ ] 7.5.2 Ragdoll: bhkConstraint chain decode (ragdoll/hinge/limited-hinge),
-      constraint solve on the actor skeleton, blend from animated pose (dev-tool
-      trigger — no death system yet). Gate: triggered ragdoll collapses without
-      explosion/NaN across repeated runs; skeleton stays bounded.
-* [ ] 7.5.3 Projectiles + acceptance: PROJ record decode, arrow flight (gravity +
-      drag), impact vs collision world, stick-on-hit (dev-tool spawn — no bow
-      gameplay yet). Gate: spawned arrows land where aimed within tolerance,
-      ragdoll + clutter + projectiles together hold frame budget in bench;
-      numeric motion/bounds evidence; docs (`engine/dynamic-physics.md`) + log updated; M8 plan
-      reviewed.
+Decision 2026-07-20: vanilla UI is Scaleform SWF (Flash); full Flash runtime is out
+of scope. Native Metal/AppKit UI now; system font first. SWF font extraction becomes
+optional M18+ polish and never gates gameplay. Record the decision as
+`decisions/ui-approach.md` at M8.1.1.
 
-## Milestone 8 — Papyrus scripting (quest-capable; starts after M7)
+### M8.1 — screen-space UI foundation
 
-Goal: vanilla Papyrus scripts drive world + quest state. Big -> three sub-milestones,
-each with own acceptance gate (last item). One branch/PR per numbered item; format
-items follow `format-parser` discipline. Specs: UESP "Compiled script file" (PEX
-layout), Creation Kit wiki Papyrus reference (VM semantics), xEdit VMAD/QUST defs.
-VM runtime semantics only partly documented -> confirm by observed behavior, flag
-deviations.
+* [ ] 8.1.1 Screen-space UI layer: 2D pass over the 3D frame, layout + text
+      primitives, resolution/scale handling. System font initially. Decision doc
+      lands here.
+* [ ] 8.1.2 Menu mode: input capture switch, world-sim pause, menu stack push/pop.
+* [ ] 8.1.3 Strings: `Interface/Translations/*_english.txt` parser (UTF-16LE
+      key/value), reusable localized-label provider for HUD + menus.
+* [ ] 8.1.4 UI-foundation acceptance: `Developer > UI Lab` in the main-app sidebar
+      previews primitives, scale presets, long strings, and menu pause behavior.
+      Gate: deterministic layout/UI-state + pixel-delta tests; decision/UI docs +
+      log updated.
 
-### M8.1 — VM core (headless)
+### M8.2 — interaction + HUD
 
-* [ ] 8.1.1 PEX container decode: header, string table, objects/states/functions,
-      instruction stream. Gate: vanilla `.pex` sweep decodes clean; synthetic
-      in-code fixtures cover every opcode encoding.
-* [ ] 8.1.2 Interpreter: value model (bool/int/float/string/object/array), call
-      frames, opcode execution, state switching. Fixtures = hand-assembled synthetic
-      PEX (no compiler dep). Gate: per-opcode unit suite green.
-* [ ] 8.1.3 VMAD decode + script binding: ESM VMAD subrecord (attached scripts,
-      typed properties, fragment payloads), property -> form resolution. Gate:
-      vanilla plugin VMAD sweep decodes; sampled script properties resolve.
-* [ ] 8.1.4 Native dispatch + acceptance: native-function table, latent calls
-      (`Utility.Wait`) via scheduler, unimplemented natives -> logged no-op + tally.
-      Gate: synthetic script calling natives runs deterministically under test;
-      coverage tally of natives referenced by vanilla scripts documented; docs
-      (`formats/pex.md`, `formats/vmad.md`) + log updated.
+* [ ] 8.2.1 Interaction targeting: use-key raycast target from walk mode,
+      engine-owned interaction action/event, record name + action-label resolution.
+      Existing doors use the same path. Papyrus OnActivate subscribes later in M11.
+* [ ] 8.2.2 HUD elements: crosshair, health/magicka/stamina bars (static values
+      before combat), compass + markers, activation prompt ("Open <door name>").
+* [ ] 8.2.3 HUD acceptance: `World > HUD & Interaction` exposes target debug,
+      prompt preview, compass markers, scale, and element toggles. Gate: walk-mode
+      numeric pixel delta with live door prompt; targeting tests + local visual check;
+      docs/log updated.
 
-### M8.2 — scripts run in world
+### M8.3 — system menu + durable verification surface
 
-* [ ] 8.2.1 VM in engine loop: per-frame scheduler budget, script-instance lifecycle
-      tied to cell streaming, OnInit/OnLoad/OnCellAttach dispatch.
-* [ ] 8.2.2 Activate input + OnActivate: use-key raycast target from walk mode,
-      activator scripts fire; core ObjectReference natives (Enable/Disable/
-      GetPosition/Translate minimal set).
-* [ ] 8.2.3 Triggers + timers: OnTriggerEnter/Leave volumes, RegisterForUpdate /
-      RegisterForSingleUpdate.
-* [ ] 8.2.4 Acceptance: real Whiterun activator (lever/button/pull chain) visibly
-      runs its vanilla script in-app; no-crash sweep over scripts attached across
-      the streamed grid; per-frame VM budget in bench; docs updated.
+* [ ] 8.3.1 System menu: resume/settings/quit; data root + audio-volume placeholders
+      surfaced. Later M9 binds live audio categories.
+* [ ] 8.3.2 Sidebar verification convention: shared control patterns for enable,
+      force, freeze, inspect, and reset; existing destinations extend in place.
+      Each milestone records its exact main-app sidebar path at acceptance.
+* [ ] 8.3.3 Milestone acceptance: launch app -> select World -> enter walk mode ->
+      inspect live interaction/HUD -> pause -> change a setting -> resume, without
+      CLI. Gate: deterministic UI-state + pixel-delta evidence; docs/log/todo updated;
+      review M9.
 
-### M8.3 — quest engine
+## Milestone 9 — world audio
 
-* [ ] 8.3.1 QUST record decode: stages, log entries, objectives, alias definitions
-      (xEdit defs); DIAL/INFO decoded only as far as quests need.
-* [ ] 8.3.2 Quest runtime: start/stop, SetStage/GetStage/GetStageDone, stage
-      fragments, objective state; journal state dumpable via dev tool.
-* [ ] 8.3.3 Alias resolution: reference/location aliases, fill types used by the
-      target quest; forced refs first, conditions as needed.
-* [ ] 8.3.4 Acceptance: one simple vanilla quest progresses end-to-end through its
-      real scripts (stage/objective evidence via journal dump); docs updated; M9
-      plan reviewed.
+Goal: Whiterun sounds alive — positional SFX, ambience, music. Voice + lip sync move
+to M17 dialogue, their first real consumer.
 
-## Milestone 9 — audio
-
-Goal: Whiterun sounds alive — SFX, music, voice, lip sync. Decode route decided
-2026-07-20: ffmpeg (LGPL) wrapped behind a Swift interface, dynamically linked;
-license + justification documented per AGENTS.md dependency rule (no
-redistribution-incompatible linkage). Specs: RIFF XWMA chunk docs, .fuz community
-docs (header + lip size + xwm payload), UESP SNDR/SOUN/MUSC/MUST/INFO records,
-NifTools TRI docs, .lip community notes (thin — probe + document uncertainty).
+Decode route decided 2026-07-20: ffmpeg (LGPL) behind a Swift interface, dynamically
+linked; license + justification documented per AGENTS.md dependency rule. Specs:
+RIFF XWMA chunk docs + UESP SNDR/SOUN/SDSC/MUSC/MUST records.
 
 ### M9.1 — decode + playback foundation
 
 * [ ] 9.1.1 ffmpeg dependency: SwiftPM/C wrapper target, dynamic link, xwm (WMA2)
-      payload -> PCM. Decision doc (`decisions/ffmpeg-audio.md`): license, scope
-      (decode only), alternatives rejected. Gate: real + synthetic xwm decode to
-      sane duration/format.
-* [ ] 9.1.2 .fuz + .xwm containers: own parsers for framing (format-parser
-      discipline), payload decode via 9.1.1. Gate: vanilla .fuz/.xwm sweep splits +
-      decodes clean; synthetic fixtures for malformed input.
+      payload -> PCM. Decision doc (`decisions/ffmpeg-audio.md`): license, decode-only
+      scope, alternatives rejected. Gate: real + synthetic xwm decode to sane
+      duration/format.
+* [ ] 9.1.2 `.xwm` framing: own parser under `format-parser` discipline; payload
+      decode via 9.1.1. Gate: vanilla `.xwm` sweep splits + decodes clean; synthetic
+      fixtures cover malformed input. `.fuz` framing moves to M17 voice.
 * [ ] 9.1.3 Playback engine + acceptance: AVAudioEngine graph, 3D positional sources
       bound to world transforms, streaming buffers, category volumes. Gate:
-      deterministic buffer-tap tests + audible positional playback of a real SFX
-      (manual confirm); docs (`engine/audio.md`) + log updated.
+      deterministic buffer-tap tests + audible positional real SFX; live source +
+      volume controls under `World > Audio`; docs (`engine/audio.md`) + log updated.
 
 ### M9.2 — game audio wiring
 
 * [ ] 9.2.1 Sound records: SNDR/SOUN/SDSC decode, descriptor -> file resolution,
       attenuation/looping params.
-* [ ] 9.2.2 World SFX: door open/close + activator sounds from M8.2 events, per-cell
-      ambience loops where resolution is cheap.
-* [ ] 9.2.3 Music + acceptance: MUSC/MUST playlists, exploration/town/interior
-      selection with crossfade. Gate: Whiterun walk has door SFX, ambience, music
-      transitioning interior/exterior; frame budget kept; docs updated.
+* [ ] 9.2.2 World SFX: door open/close from M8 interaction events + per-cell
+      ambience loops where resolution is cheap. Generic interaction events accept
+      activator sounds; M11 scripts can emit them later.
+* [ ] 9.2.3 Music: MUSC/MUST playlists, exploration/town/interior selection with
+      crossfade.
+* [ ] 9.2.4 Milestone acceptance: `World > Audio` can mute/solo categories, inspect
+      sources, force tracks, and trigger a selected sound. Gate: Whiterun walk has
+      door SFX, ambience, music transitioning interior/exterior; frame budget kept;
+      source/accounting tests + manual audible confirmation; docs/log/todo updated;
+      review M10.
 
-### M9.3 — voice + lip sync
+## Milestone 10 — mutable world foundation
 
-* [ ] 9.3.1 Voice playback: INFO -> voice path convention
-      (`sound/voice/<plugin>/<voicetype>/`), .fuz line plays positionally from an
-      actor via dev-tool trigger (dialogue UI not required).
-* [ ] 9.3.2 TRI face morphs: TRI container decode (NifTools docs), morph targets
-      applied in the skinned face path (builds on M6 palette work). Gate: morph
-      math unit-tested; offscreen frame delta on morph apply.
-* [ ] 9.3.3 .lip decode + acceptance: phoneme track -> morph weights over playback
-      time. Gate: voice line plays with moving lips — offscreen mouth-region frame
-      deltas recorded by deterministic tests; docs updated; M10 plan reviewed.
+Goal: define persistent runtime identity + state before Papyrus, inventory, quests,
+AI, and dialogue mutate the world. Native saves land with first mutable state, not as
+an engine-wide retrofit.
 
-## Milestone 10 — game UI (native-first hybrid)
+Primary format: OpenSky-native, versioned, documented, deterministic. Later read-only
+`.ess` import supports migration; OpenSky never writes `.ess`.
 
-Decision 2026-07-20: vanilla UI is Scaleform SWF (Flash); full Flash runtime out of
-scope. Native Metal/AppKit UI now; cheap SWF asset extraction (fonts) as M10.3; full
-Scaleform playback not planned. Record as `decisions/ui-approach.md` at M10.1.1.
+### M10.1 — runtime state + native saves
 
-### M10.1 — HUD
+* [ ] 10.1.1 Runtime identity: stable keys for forms, placed references, streamed
+      instances, and generated objects; ownership rules independent of cell lifetime.
+* [ ] 10.1.2 Mutable state store + change journal: typed component deltas, dirty
+      tracking, reset-to-plugin-default, deterministic snapshot ordering.
+* [ ] 10.1.3 Streaming integration: changed references evict/reload without losing
+      state; unloaded state does not retain render/collision assets.
+* [ ] 10.1.4 Native save container: versioned header, load-order fingerprint,
+      component chunks, bounds/compatibility checks, atomic write + typed load errors.
+      Document layout in `docs/formats/opensky-save.md`; synthetic fixtures only.
+* [ ] 10.1.5 State acceptance: change a door/reference state, cross a streaming
+      boundary, save, relaunch/load, observe identical state. `World > Runtime State`
+      exposes inspect/change/reset/save/load. Gate: deterministic round-trip tests,
+      corrupt-save tests + in-app inspector confirmation; docs/log updated.
 
-* [ ] 10.1.1 Screen-space UI layer: 2D pass over the 3D frame, layout + text
-      primitives, resolution/scale handling. System font initially. Decision doc
-      lands here.
-* [ ] 10.1.2 Strings: `Interface/Translations/*_english.txt` parser (UTF-16LE
-      key/value), activation prompt text from records ("Open <door name>").
-* [ ] 10.1.3 HUD elements + acceptance: crosshair, health/magicka/stamina bars
-      (static values pre-combat), compass with markers, activate prompt wired to
-      M8.2 targeting. Gate: UI state + rendered pixel-delta tests with live prompt text;
-      docs updated.
+### M10.2 — shared conditions + time
 
-### M10.2 — menus
+* [ ] 10.2.1 CTDA condition decode + evaluator: comparison/operator framing,
+      subject/target/reference contexts, registry of implemented condition functions,
+      unknown functions -> reason-tagged false + coverage tally.
+* [ ] 10.2.2 Game clock/calendar: timescale, pause behavior, day/month/year state,
+      deterministic advancement; drives existing time-of-day + later schedules.
+* [ ] 10.2.3 GLOB records + runtime values: plugin defaults, typed mutation,
+      save/change-journal integration, condition lookup.
+* [ ] 10.2.4 Milestone acceptance: `World > Runtime State` can scrub time, inspect
+      conditions/globals/change journal, and save/load them. Gate: weather/time stays
+      synchronized, state round-trips, vanilla CTDA sweep is accounted, docs/log/todo
+      updated; review M11.
 
-* [ ] 10.2.1 Menu mode: input capture switch, world-sim pause, menu stack push/pop.
-* [ ] 10.2.2 System menu: resume/settings/quit; data root + audio volumes surfaced.
-* [ ] 10.2.3 Journal + acceptance: quest list + objectives from M8.3 state. Gate:
-      journal shows real quest title/objective text from the played quest;
-      deterministic UI-state + pixel-delta evidence; docs updated.
+## Milestone 11 — Papyrus world interaction
 
-### M10.3 — vanilla fonts (SWF extraction)
+Goal: vanilla Papyrus scripts mutate persistent world state + respond to interaction.
+Quest runtime waits for M13 so this milestone can close on a visible activator.
 
-* [ ] 10.3.1 SWF font parse: DefineFont2/3 glyph extraction from `fonts_en.swf`
+One branch/PR per numbered item; format items follow `format-parser`. Specs: UESP
+"Compiled script file" (PEX layout), Creation Kit wiki Papyrus reference (VM
+semantics), xEdit VMAD defs. VM semantics are partly documented -> confirm by
+observed behavior, flag deviations.
+
+### M11.1 — VM core (headless)
+
+* [ ] 11.1.1 PEX container decode: header, string table, objects/states/functions,
+      instruction stream. Gate: vanilla `.pex` sweep decodes clean; synthetic
+      in-code fixtures cover every opcode encoding.
+* [ ] 11.1.2 Interpreter: value model (bool/int/float/string/object/array), call
+      frames, opcode execution, state switching. Fixtures = hand-assembled synthetic
+      PEX (no compiler dependency). Gate: per-opcode unit suite green.
+* [ ] 11.1.3 VMAD decode + script binding: ESM VMAD subrecord (attached scripts,
+      typed properties, fragment payloads), property -> form resolution. Gate:
+      vanilla plugin VMAD sweep decodes; sampled script properties resolve.
+* [ ] 11.1.4 Native dispatch + acceptance: native-function table, latent calls
+      (`Utility.Wait`) via scheduler, unimplemented natives -> logged no-op + tally.
+      Gate: synthetic script calling natives runs deterministically under test;
+      coverage tally of natives referenced by vanilla scripts documented; docs
+      (`formats/pex.md`, `formats/vmad.md`) + log updated.
+
+### M11.2 — scripts run in world
+
+* [ ] 11.2.1 VM in engine loop: per-frame scheduler budget, script-instance
+      lifecycle tied to persistent M10 identity + cell streaming; OnInit/OnLoad/
+      OnCellAttach dispatch.
+* [ ] 11.2.2 OnActivate: subscribe to M8 interaction events; activator scripts fire;
+      core ObjectReference natives (Enable/Disable/GetPosition/Translate minimal
+      set) write through M10 state + change journal.
+* [ ] 11.2.3 Triggers + timers: OnTriggerEnter/Leave volumes, RegisterForUpdate /
+      RegisterForSingleUpdate; pending state survives save/load where required.
+* [ ] 11.2.4 Acceptance: real Whiterun lever/button/pull chain visibly runs its
+      vanilla script in-app; `World > Scripts` exposes target instances, events,
+      scheduler, native coverage, and pause/step controls. Gate: attached-script
+      no-crash sweep across streamed grid; per-frame VM budget; save/load activated
+      state; numeric state/pixel evidence; docs/log/todo updated; review M12.
+
+## Milestone 12 — inventory + equipment
+
+Goal: first repeatable gameplay loop — inspect object, pick it up, carry it, equip it,
+drop it, trade a minimal subset. Persistent state comes from M10; interaction + UI
+come from M8; actor visuals come from M5/M6.
+
+Specs: UESP + xEdit record defs for CONT/MISC/BOOK/ALCH/INGR/WEAP/AMMO and existing
+ARMO/ARMA types. Format work follows `format-parser` discipline.
+
+* [ ] 12.1 Item + container records: decode common inventory forms, names/icons/
+      models, value, weight, stackability, container entries, ownership. Gate:
+      vanilla sweep accounted; synthetic fixtures.
+* [ ] 12.2 Inventory runtime: persistent per-owner stacks, generated stack identity,
+      add/remove/transfer, carry weight, gold, equipped slots; all changes journaled.
+* [ ] 12.3 Pickup + containers: M8 target action selects loose refs/containers;
+      take/take-all/put-back/drop update world visibility + collision through M10
+      state.
+* [ ] 12.4 Equipment: equip/unequip armor + weapon on player actor, slot masking +
+      geometry reuse from M5, hand attachment, animation-safe palette updates.
+* [ ] 12.5 Inventory + barter UI: native item/container views, sort/filter/detail,
+      weight + gold, minimal buy/sell against a dev-selected merchant inventory.
+      Service/faction restrictions wait for M18+.
+* [ ] 12.6 Milestone acceptance: walk to a loose item/container, pick up, equip,
+      transfer, buy/sell, save/load, and see world + actor state preserved.
+      `World > Inventory & Equipment` exposes inventory grants, selected merchant,
+      ownership, and equip inspection. Gate: state/accounting + numeric pixel-delta
+      tests, frame/build budgets, local visual check, docs/log/todo updated; review M13.
+
+## Milestone 13 — quests + journal
+
+Goal: one simple vanilla quest progresses end-to-end through real scripts, persistent
+stage/objective state, conditions, aliases, and visible journal UI.
+
+Specs: xEdit QUST defs + Creation Kit quest/Papyrus docs. Uses M10 CTDA/state/save,
+M11 VM, and M8 UI. DIAL/INFO decode stays limited to fields a target quest needs;
+full dialogue lands in M17.
+
+* [ ] 13.1 QUST record decode: stages, log entries, objectives, alias definitions;
+      DIAL/INFO decoded only as far as the selected quest requires. Gate: vanilla
+      QUST sweep accounted; synthetic fixtures.
+* [ ] 13.2 Quest runtime: start/stop, SetStage/GetStage/GetStageDone, stage
+      fragments, objective state; every mutation change-journaled + saveable.
+* [ ] 13.3 Alias resolution: reference/location aliases, fill types used by target
+      quest; forced refs first, conditions via M10 as needed.
+* [ ] 13.4 Journal UI: quest list, objective state, log entries, localized text;
+      debug state + alias provenance under `World > Quests & Journal`.
+* [ ] 13.5 Milestone acceptance: one simple vanilla quest progresses end-to-end
+      through real scripts, journal shows title/objective/log text, save/load resumes
+      same stage. Gate: journal state + numeric UI evidence, local visual check,
+      docs/log/todo updated; review M14.
+
+## Milestone 14 — player locomotion
+
+Goal: replace M4 capsule-only translation with behavior-graph-driven player movement:
+walk/run/jump/sneak/swim, animation/root-motion coordination, first-person camera + arms.
+
+Decision 2026-07-20: reimplement Havok Behavior graphs (`hkbBehaviorGraph` over
+vanilla `behaviors/*.hkx`) for vanilla movement feel + animation-mod compatibility.
+Massive clean-room RE task, thin public docs (hkxparse/HKX2Library lineage,
+ZeldaMods Havok wiki); probe-driven like M6, deviations flagged.
+
+* [ ] 14.1 Behavior object decode: inventory target graph classes + bindings from
+      real player behavior files, confirm layouts by open parser + probe, synthetic
+      fixtures for implemented objects.
+* [ ] 14.2 Graph evaluator core: variables, events, state machines, transitions,
+      clip generators, blends, sync + graph update ordering. Deterministic headless
+      tests cover each implemented node.
+* [ ] 14.3 Character-controller bridge: graph inputs from controls/ground state,
+      root motion through M4 collision, collision result back into graph variables;
+      no double integration.
+* [ ] 14.4 Locomotion states: idle/walk/run/sprint/jump/land/sneak/swim with
+      direction/speed blends and actor palette playback.
+* [ ] 14.5 First-person camera + arms: camera modes, body/arm visibility, weapon
+      attachment from M12, FOV + near-clip handling.
+* [ ] 14.6 Milestone acceptance: exterior/interior route exercises every state,
+      door round trip still works, movement persists across streaming, >30 fps route
+      gate. `World > Player & Locomotion` exposes graph/state/variables/events,
+      camera mode, forced state, root-motion traces. Gate: numeric motion/frame-delta
+      evidence + local visual check; docs/log/todo updated; review M15.
+
+## Milestone 15 — combat + dynamic physics
+
+Goal: player can fight one actor with melee + archery; damage, blocking, death,
+projectiles, ragdolls, and clutter share one bounded physics/runtime path.
+
+Specs: UESP + xEdit actor-value/WEAP/PROJ defs; NifTools nif.xml for bhk constraints.
+Format work follows `format-parser`; render/physics acceptance follows `probe`.
+
+* [ ] 15.1 Dynamic rigid bodies: integrate non-fixed bhkRigidBody motion (gravity,
+      impulses, sleep), broadphase updates, pushable clutter in walk mode. Gate:
+      dropped/pushed clutter settles plausibly, no NaN/tunneling in stress test.
+* [ ] 15.2 Actor values: health/magicka/stamina, regen, damage/heal, persistent
+      current/base values; M8 HUD bars become live.
+* [ ] 15.3 Melee: attack/block input + behavior events, weapon/unarmed hit volumes,
+      target filtering, damage, stagger hooks, impact feedback.
+* [ ] 15.4 Archery + projectiles: PROJ record decode, aim/fire, arrow flight
+      (gravity + drag), impact vs collision/actors, stick-on-hit, ammo from M12.
+      Gate: arrows land where aimed within tolerance.
+* [ ] 15.5 Death + ragdoll: bhkConstraint chain decode (ragdoll/hinge/
+      limited-hinge), constraint solve on actor skeleton, blend from animated pose,
+      persistent dead state. Gate: repeated collapse stays bounded without NaN.
+* [ ] 15.6 Combat loop: hostility/dev target, hit reactions, death, loot via M12,
+      combined clutter/projectile/ragdoll lifecycle + streaming cleanup.
+* [ ] 15.7 Milestone acceptance: fight one actor with melee + bow, block, take
+      damage, kill, loot, save/load result. `World > Combat & Physics` exposes
+      actor values, hitboxes, projectile spawn/trace, ragdoll trigger, physics
+      freeze/reset. Gate: combined stress + frame budget, deterministic damage/
+      trajectory + pixel/motion-delta tests; local visual check; docs
+      (`engine/dynamic-physics.md` + combat) and log/todo updated; review M16.
+
+## Milestone 16 — AI
+
+Goal: actors navigate, follow schedules, detect the player, and drive M15 combat.
+Uses M10 time/conditions, M14 locomotion, M15 combat, M11 scripts.
+
+* [ ] 16.1 NAVM navmesh decode: topology, triangles, adjacency, doors/links, cell
+      ownership + streaming. Gate: vanilla target-area sweep; synthetic fixtures;
+      app navmesh overlay.
+* [ ] 16.2 Pathfinding: navmesh projection, A*, corridor/funnel, door transitions,
+      bounded repath + streamed-cell lifetime.
+* [ ] 16.3 Packages + schedules: decode package forms needed by target actors;
+      evaluate CTDA/time; travel/wander/sandbox/sleep/eat subset first.
+* [ ] 16.4 Detection + combat AI: sight/hearing/stealth inputs, target selection,
+      pursue/attack/block/flee behavior events, loss/reacquire state.
+* [ ] 16.5 Milestone acceptance: selected Whiterun actors follow schedule, navigate
+      exterior/interior, detect player, fight, disengage, resume. `World > AI &
+      Navigation` exposes navmesh/path/package/detection overlays + actor selection.
+      Gate: deterministic path/condition tests, streamed route + frame budget,
+      overlay pixel-delta evidence + local visual check; docs/log/todo updated;
+      review M17.
+
+## Milestone 17 — dialogue + voice
+
+Goal: player conducts one real voiced dialogue/scene; topic conditions, camera/UI,
+audio, and lip morphs stay synchronized.
+
+Specs: UESP DIAL/INFO/QUST/VTYP records, `.fuz` community docs, NifTools TRI docs,
+`.lip` community notes (thin -> probe + document uncertainty). Uses M9 audio, M10
+conditions/state, M13 quests, M16 AI, M6 face skinning.
+
+* [ ] 17.1 Dialogue records + runtime: DIAL/INFO topic trees, responses, conditions,
+      speaker/quest links, choice/result flow, persistent said/branch state.
+* [ ] 17.2 Dialogue UI + camera: interaction entry, topic/response text, subtitles,
+      actor focus, input/menu mode, scene pause policy.
+* [ ] 17.3 Voice playback + `.fuz`: own `.fuz` header/lip-size/xwm framing parser;
+      INFO -> `sound/voice/<plugin>/<voicetype>/`; payload decode through M9 ffmpeg;
+      positional actor playback. Gate: vanilla `.fuz` sweep + malformed fixtures.
+* [ ] 17.4 TRI face morphs: TRI container decode (NifTools docs), morph targets
+      applied in skinned face path. Gate: morph math tests + offscreen frame delta.
+* [ ] 17.5 `.lip` decode: phoneme track -> morph weights over playback time,
+      synchronized to audio clock + subtitle lifecycle.
+* [ ] 17.6 Milestone acceptance: complete one real voiced conversation/scene that
+      advances or reflects M13 quest state. `World > Dialogue & Voice` exposes
+      speaker/topic selection, condition trace, audio timeline, subtitle + morph
+      controls. Gate: mouth-region frame deltas, audible/manual confirmation,
+      deterministic UI-state evidence, save/load dialogue state, docs/log/todo updated;
+      review M18+.
+
+## Milestone 18+ — broader gameplay + polish
+
+Direction retained; split into numbered milestones with gates at M17 acceptance as
+runtime evidence clarifies scope. Candidate order:
+
+* Magic: MGEF/SPEL/ENCH, casting/projectiles, effects, resistances, AI use.
+* Progression: skills, perks, leveling, race/class bonuses.
+* Crime/factions/services: ownership response, bounty, guards, merchant rules.
+* Locks/traps: lockpicking UI, keys, trap triggers + disarm.
+* Meta: main menu/new-game/chargen, settings persistence, key rebinding, world +
+  local map UI.
+* Save migration: read-only `.ess` import after native-save state coverage is broad
+  enough to map imported changes. Never `.ess` write.
+
+### M18.F — vanilla fonts (optional UI polish; never a gameplay gate)
+
+* [ ] 18.F.1 SWF font parse: DefineFont2/3 glyph extraction from `fonts_en.swf`
       (Adobe SWF spec is public), `fontconfig.txt` mapping. Extraction only — no
       movie playback.
-* [ ] 10.3.2 Acceptance: HUD + journal render with vanilla glyphs, system-font
-      fallback kept; docs updated; M11+ re-scoped into numbered items with gates.
-
-## Milestone 11+ — toward playable (direction only)
-
-Gap analysis + decisions 2026-07-20; re-scope into numbered milestones with gates at
-the M10 gate (10.3.2). Full decision docs land with first impl items.
-
-Decisions made:
-
-* Locomotion: reimplement Havok Behavior graphs (hkbBehaviorGraph evaluation of
-  vanilla `behaviors/*.hkx`) over a native animation state machine -> exact vanilla
-  movement feel + animation-mod compat. Massive RE effort, thin public docs
-  (hkxparse/HKX2Library lineage, ZeldaMods Havok wiki); expect multiple
-  sub-milestones, probe-driven like M6.
-* Saves: OpenSky-native versioned save format (documented in `docs/`) as primary;
-  later read-only `.ess` import for migration (UESP documents the save layout).
-  Never `.ess` write — runtime state model stays ours.
-* Order: gameplay-first — visible playability before the persistence core. Accepted
-  cost: save/load change-tracking retrofit across systems built before it.
-
-Candidate order (each line roughly one milestone; shared-runtime items scheduled
-just-in-time before their first consumer):
-
-* Inventory + items: pickup, containers, equipping on the actor model, weight,
-  gold, barter.
-* Locomotion: behavior-graph playback (walk/run/jump/sneak/swim), player movement
-  parity over M4 walk mode, first-person camera + arms.
-* Combat: actor values (health/magicka/stamina + regen), melee/archery hit
-  detection, damage, blocking, death.
-* Shared runtime (before AI/dialogue): CTDA condition evaluator (dialogue, perks,
-  packages, leveled lists all consume it), game clock/calendar, GLOB globals.
-* AI: NAVM navmesh decode, pathfinding, packages/schedules, detection/stealth,
-  combat AI.
-* Dialogue + scenes: DIAL/INFO topic trees, dialogue UI/camera, voice via M9.3.
-* Save/load: native format + change tracking engine-wide; `.ess` import after.
-* Magic (MGEF/SPEL/ENCH), perks/leveling, crime/factions/services, locks/traps.
-* Meta: main menu/new-game/chargen flow, settings persistence, key rebinding,
-  map UI (world + local).
-
-World/render track promoted to [Milestone 7](#milestone-7--worldrender-fidelity-starts-after-m6)
-2026-07-20 (user priority); combat consumes its dynamic-physics output (7.5).
+* [ ] 18.F.2 Acceptance: HUD/journal/dialogue render with vanilla glyphs,
+      system-font fallback kept; `Developer > UI Lab` can compare fonts; docs updated.
 
 ## Tooling / meta / open questions
 
