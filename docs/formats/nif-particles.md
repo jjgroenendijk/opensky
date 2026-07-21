@@ -146,9 +146,10 @@ Decoded blocks:
   out of scope, skipped like NiObjectNET already skips controller refs.
 - Skin ref / skin instance / material data: skinned particles + legacy material
   metadata are not needed for static decode.
-- Shader property blocks: `shaderPropertyRef` / `alphaPropertyRef` are recorded
-  as raw block indices (-1 = none) and wired later; BSEffectShaderProperty is
-  owned by another subsystem.
+- Shader property blocks other than BSEffectShaderProperty: a
+  `shaderPropertyRef` to e.g. BSLightingShaderProperty (lit particles) stays a
+  raw index and `effectShader` is nil — legitimate content, resolved by the
+  mesh material path instead.
 - Per-particle arrays: empty under BS202; playback sim allocates them.
 - Unknown modifier types -> `.unsupported(typeName:)` (skip + note, never
   throw). Observed in vanilla: NiPSysColliderManager, NiPSysBombModifier,
@@ -162,8 +163,15 @@ Decoded blocks:
 chain, cap depth at 64, detect ref cycles with a path stack, range-check every
 block ref. NiParticleSystem / BSStripParticleSystem leaves become a
 `ParticleSystemDefinition` with the accumulated world transform, resolved
-capacity, emitter list, modifier list, and the raw shader/alpha refs.
+capacity, emitter list, modifier list, and the shader/alpha refs. A ref to a
+[BSEffectShaderProperty](/formats/nif.md) resolves into `effectShader`
+(additive/soft-alpha material); a NiAlphaProperty ref resolves into
+`alphaProperty` (blend/test state). Other shader types stay nil.
 
 Verified against the vanilla install: 109 effect NIFs decoded (216 systems, 216
 emitters, 2347 modifiers) with zero decode failures; the four unmodelled
-modifier types above surfaced as `.unsupported`, none threw.
+modifier types above surfaced as `.unsupported`, none threw. M7.3.1 gate
+(`ParticleRealDataTests`, env-gated): Whiterun sweep (WhiterunWorld grid +
+Tamriel home cell) resolved 283 referenced models, 11 particle-bearing, 23
+systems — every one with an effect shader + alpha property, 0 decode failures;
+summary lands in `logs/particle-sweep.log`.

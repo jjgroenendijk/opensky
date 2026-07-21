@@ -99,7 +99,7 @@ nonisolated extension NIFFile {
                     ))
                 }
             }
-            return ParticleSystemDefinition(
+            return try ParticleSystemDefinition(
                 name: system.object.name,
                 worldTransform: parent * system.object.localTransform,
                 worldSpace: system.worldSpace,
@@ -108,8 +108,32 @@ nonisolated extension NIFFile {
                 modifiers: modifiers,
                 subtextureOffsets: data?.subtextureOffsets ?? [],
                 shaderPropertyRef: system.shaderPropertyRef,
-                alphaPropertyRef: system.alphaPropertyRef
+                alphaPropertyRef: system.alphaPropertyRef,
+                effectShader: effectShader(ref: system.shaderPropertyRef),
+                alphaProperty: alphaProperty(ref: system.alphaPropertyRef)
             )
+        }
+
+        /// Resolves the shader ref when it is a BSEffectShaderProperty. Other
+        /// shader types (e.g. BSLightingShaderProperty on a lit particle
+        /// shape) yield nil — legitimate content, same discipline as
+        /// NIFModel.resolveMaterial's fallback. Out-of-range refs throw.
+        private func effectShader(ref: Int32) throws -> NIFEffectShaderProperty? {
+            guard ref >= 0 else { return nil }
+            let shaderBlock = try block(at: Int(ref))
+            guard shaderBlock.typeName == "BSEffectShaderProperty" else { return nil }
+            return try NIFEffectShaderProperty(
+                data: shaderBlock.data,
+                header: file.header
+            )
+        }
+
+        /// Resolves the alpha ref when it is a NiAlphaProperty; nil otherwise.
+        private func alphaProperty(ref: Int32) throws -> NIFAlphaProperty? {
+            guard ref >= 0 else { return nil }
+            let alphaBlock = try block(at: Int(ref))
+            guard alphaBlock.typeName == "NiAlphaProperty" else { return nil }
+            return try NIFAlphaProperty(data: alphaBlock.data, header: file.header)
         }
 
         /// Resolves the NiPSysData ref; nil ref -> no capacity. A ref to a

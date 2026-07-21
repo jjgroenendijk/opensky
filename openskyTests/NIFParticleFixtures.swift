@@ -266,3 +266,53 @@ enum NIFParticleFixture {
         }
     }
 }
+
+/// Property-block builders used by the decoder's shader/alpha resolution
+/// tests.
+extension NIFParticleFixture {
+    /// BSEffectShaderProperty payload (nif.xml layout, BS stream 83/100):
+    /// NiObjectNET run, flags, UV transform, source texture, clamp + skipped
+    /// bytes, falloff, base color, scale, soft depth, greyscale texture.
+    static func effectShaderProperty(
+        flags1: UInt32 = 0,
+        flags2: UInt32 = 0,
+        sourceTexture: String = "",
+        baseColor: SIMD4<Float> = SIMD4(1, 1, 1, 1),
+        baseColorScale: Float = 1,
+        softFalloffDepth: Float = 0
+    ) -> Data {
+        var out = Data()
+        out.appendUInt32(0xFFFF_FFFF) // name: none
+        out.appendUInt32(0) // extra data count
+        out.appendUInt32(0xFFFF_FFFF) // controller ref
+        out.appendUInt32(flags1)
+        out.appendUInt32(flags2)
+        for value: Float in [0, 0, 1, 1] { // UV offset + scale
+            out.appendFloat32(value)
+        }
+        out.append(NIFFixture.sizedString(sourceTexture))
+        out.append(0) // texture clamp mode
+        out.append(Data(count: 3)) // lighting influence + env-map LOD + unused
+        for value: Float in [1, 0, 1, 0] { // falloff angles + opacities
+            out.appendFloat32(value)
+        }
+        for lane in 0 ..< 4 {
+            out.appendFloat32(baseColor[lane])
+        }
+        out.appendFloat32(baseColorScale)
+        out.appendFloat32(softFalloffDepth)
+        out.append(NIFFixture.sizedString("")) // greyscale texture: none
+        return out
+    }
+
+    /// NiAlphaProperty payload: NiObjectNET run + AlphaFlags + threshold.
+    static func alphaProperty(flags: UInt16, threshold: UInt8) -> Data {
+        var out = Data()
+        out.appendUInt32(0xFFFF_FFFF) // name: none
+        out.appendUInt32(0) // extra data count
+        out.appendUInt32(0xFFFF_FFFF) // controller ref
+        out.appendUInt16(flags)
+        out.append(threshold)
+        return out
+    }
+}

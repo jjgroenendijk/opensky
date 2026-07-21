@@ -94,10 +94,6 @@ use offscreen verification per `probe`. Main-app controls live under
 
 Shared visual runtime before precipitation consumes it.
 
-* [ ] 7.3.1 NIF particle + effect blocks: NiParticleSystem emitters/modifiers,
-      BSEffectShaderProperty (additive/soft alpha), decode into engine types
-      (nif.xml). Gate: vanilla sweep over Whiterun-referenced NIFs decodes;
-      synthetic fixtures.
 * [ ] 7.3.2 Playback + acceptance: CPU-simulated emitters, billboarded particle
       draw path, effect-shader blend states, weather-wind input. Gate: torch flames
       + brazier smoke animate in Whiterun offscreen frames (numeric frame delta);

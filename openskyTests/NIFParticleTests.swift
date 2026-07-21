@@ -59,7 +59,20 @@ struct NIFParticleTests {
                 NIFFixture.Block("NiPSysAgeDeathModifier", NIFParticleFixture.modifierBase()),
                 NIFFixture.Block("NiPSysGravityModifier", gravity),
                 NIFFixture.Block("BSPSysScaleModifier", scale),
-                NIFFixture.Block("BSPSysLODModifier", lod)
+                NIFFixture.Block("BSPSysLODModifier", lod),
+                NIFFixture.Block(
+                    "BSEffectShaderProperty",
+                    NIFParticleFixture.effectShaderProperty(
+                        flags1: 0x4000_0000, // Soft_Effect
+                        flags2: 0x10, // Double_Sided, ZBuffer_Write clear
+                        sourceTexture: "textures/effects/synthfire.dds",
+                        softFalloffDepth: 10
+                    )
+                ),
+                NIFFixture.Block(
+                    "NiAlphaProperty",
+                    NIFParticleFixture.alphaProperty(flags: 0x0001, threshold: 128)
+                )
             ],
             strings: ["Fire", "BoxEmitter"],
             roots: [0]
@@ -78,6 +91,17 @@ struct NIFParticleTests {
         #expect(decoded.maxParticles == 128)
         #expect(decoded.shaderPropertyRef == 8)
         #expect(decoded.alphaPropertyRef == 9)
+
+        // Shader + alpha refs resolve to typed engine values.
+        let shader = try #require(decoded.effectShader)
+        #expect(shader.isSoftEffect)
+        #expect(shader.isDoubleSided)
+        #expect(shader.isZBufferWriteDisabled)
+        #expect(shader.sourceTexture == "textures/effects/synthfire.dds")
+        #expect(shader.softFalloffDepth == 10)
+        let alpha = try #require(decoded.alphaProperty)
+        #expect(alpha.blendEnabled)
+        #expect(!alpha.testEnabled)
         // Parent node translate (0,100,0) composed with local (5,0,0).
         #expect(decoded.worldTransform.columns.3.x == 5)
         #expect(decoded.worldTransform.columns.3.y == 100)
@@ -125,6 +149,26 @@ struct NIFParticleTests {
         try #require(systems.count == 1)
         try #require(systems[0].modifiers.count == 1)
         #expect(systems[0].modifiers[0].kind == .unsupported(typeName: "NiPSysColliderManager"))
+    }
+
+    /// A shader ref that is not a BSEffectShaderProperty (lit particle
+    /// shapes carry BSLightingShaderProperty) resolves to nil, not an error.
+    @Test func nonEffectShaderRefResolvesNil() throws {
+        let system = NIFParticleFixture.particleSystemSSE(
+            shaderPropertyRef: 2, dataRef: -1
+        )
+        let file = try NIFFile(data: NIFFixture.file(
+            blocks: [
+                NIFFixture.Block("NiNode", NIFFixture.niNode(children: [1])),
+                NIFFixture.Block("NiParticleSystem", system),
+                NIFFixture.Block("BSLightingShaderProperty", Data(count: 4))
+            ],
+            roots: [0]
+        ))
+        let systems = try file.particleSystems()
+        try #require(systems.count == 1)
+        #expect(systems[0].effectShader == nil)
+        #expect(systems[0].shaderPropertyRef == 2)
     }
 
     // MARK: Emitter shapes

@@ -1,9 +1,8 @@
 // Engine-facing particle-system value types: the clean, on-disk-decoupled
 // result of decoding a NiParticleSystem / BSStripParticleSystem leaf and its
 // modifier chain. Static decode only (milestone 7.3.1): capacity, emitter
-// shapes, modifier identities + a few salient params, and the shader/alpha
-// property block refs (kept as raw indices — the shader property blocks are
-// owned by another subsystem and wired later, milestone 7.3.2 does playback).
+// shapes, modifier identities + a few salient params, and the resolved
+// effect-shader/alpha property blocks (milestone 7.3.2 does playback).
 //
 // Reference: NifTools nif.xml (NiParticleSystem, NiPSysData, NiPSysEmitter and
 // concrete emitter/modifier blocks).
@@ -29,10 +28,18 @@ nonisolated struct ParticleSystemDefinition: Equatable {
     let modifiers: [ParticleModifier]
     /// NiPSysData subtexture atlas offsets (UV quads), empty when unused.
     let subtextureOffsets: [SIMD4<Float>]
-    /// BSShaderProperty block index; -1 = none. Not resolved here.
+    /// BSShaderProperty block index; -1 = none. Kept raw so callers can spot
+    /// systems whose shader is not a BSEffectShaderProperty.
     let shaderPropertyRef: Int32
-    /// NiAlphaProperty block index; -1 = none. Not resolved here.
+    /// NiAlphaProperty block index; -1 = none.
     let alphaPropertyRef: Int32
+    /// Resolved shader material when `shaderPropertyRef` points at a
+    /// BSEffectShaderProperty; nil for none or other shader types
+    /// (BSLightingShaderProperty on a particle shape is legitimate content).
+    let effectShader: NIFEffectShaderProperty?
+    /// Resolved blend/test state when `alphaPropertyRef` points at a
+    /// NiAlphaProperty.
+    let alphaProperty: NIFAlphaProperty?
 }
 
 /// A NiPSysEmitter leaf: shared birth parameters plus the emission volume.

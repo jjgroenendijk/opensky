@@ -21,7 +21,7 @@
 import Foundation
 import simd
 
-nonisolated struct NIFEffectShaderProperty {
+nonisolated struct NIFEffectShaderProperty: Equatable {
     let name: String?
     /// Raw SkyrimShaderPropertyFlags1/2; derived accessors below expose the
     /// bits the renderer consumes.

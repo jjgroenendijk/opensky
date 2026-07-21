@@ -4,6 +4,29 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-21
 
+* M7.3.1 NIF particle + effect blocks -- static decode of Skyrim particle
+  systems into engine types. New parsers (`opensky/Formats/NIF/`):
+  `NIFParticleSystem` (NiParticleSystem/BSStripParticleSystem, stream 83 + 100
+  NiGeometry layouts), `NIFParticleData` (NiPSysData/BSStripPSysData capacity +
+  presence flags + subtexture atlas), `NIFParticleModifiers` (box/cylinder/
+  sphere/mesh emitters; age-death, spawn, gravity, rotation, position,
+  bound-update, drag, simple-color, scale, wind, inherit-velocity, sub-tex, LOD
+  modifiers; unknown types -> `.unsupported`, never throw),
+  `NIFEffectShaderProperty` (BSEffectShaderProperty: flags + accessors verified
+  bit-by-bit vs nif.xml, source/greyscale textures, falloff, base color, soft
+  depth; stream 83/100 byte-identical). `NIFFile.particleSystems()` walks the
+  scene graph (NIFModel discipline: depth cap, cycle stack, ref range checks)
+  into `ParticleSystemDefinition` with resolved `effectShader` +
+  `alphaProperty`. Spec: NifTools nif.xml, cited per file. Docs:
+  [/formats/nif-particles.md](/formats/nif-particles.md) + BSEffectShaderProperty
+  section in [/formats/nif.md](/formats/nif.md). Tests: `NIFParticleTests` (12)
+  * `NIFEffectShaderTests` (8), synthetic fixtures. Gate passed
+  (`ParticleRealDataTests`, env-gated): Whiterun sweep (WhiterunWorld grid +
+  Tamriel home cell) = 283 referenced models, 11 particle-bearing, 23 systems,
+  23 effect shaders + 23 alpha properties resolved, 0 decode failures
+  (`logs/particle-sweep.log`); broader probe: 109 vanilla effect NIFs, 216
+  systems, 2347 modifiers, 0 throws. UI deferred to M7.3.2 particles controls
+  (first visible consumer).
 * M7.2.3 weather-core acceptance -- M7.2 data-driven weather core complete. Live
   XCLR region feed: `CellScene.regions` carries the built cell's XCLR set,
   `CellStreamer.onCenterRegionsChanged` fires when the resident exterior center

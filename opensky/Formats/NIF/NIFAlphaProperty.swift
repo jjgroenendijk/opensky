@@ -11,7 +11,7 @@
 
 import Foundation
 
-nonisolated struct NIFAlphaProperty {
+nonisolated struct NIFAlphaProperty: Equatable {
     let name: String?
     /// Raw AlphaFlags; derived accessors below.
     let flags: UInt16
