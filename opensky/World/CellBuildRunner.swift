@@ -42,13 +42,22 @@ nonisolated extension CellSceneProvider {
     }
 }
 
+/// Optional weather runtime a provider can expose (M7.2.2). GameViewController
+/// pulls it off the provider to hand the renderer. Built once at setup from the
+/// same ESM data, then read-only value types — safe to share to the main thread.
+nonisolated protocol WeatherProviding {
+    var weatherSystem: WeatherSystem? { get }
+}
+
 /// Adapts `CellSceneBuilder` to the provider seam, pinning the worldspace so
 /// the streamer only passes grid coordinates. The builder + its libraries live
 /// entirely on the runner's serial queue -- never touched from the main
 /// thread -- which is why they need no internal locking.
-nonisolated struct BuilderCellSceneProvider: CellSceneProvider {
+nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding {
     let builder: CellSceneBuilder
     let worldspaceEditorID: String
+    /// Weather runtime for this worldspace; nil when the plugin has no WTHR.
+    var weatherSystem: WeatherSystem?
 
     func buildCell(at coordinate: CellCoordinate) throws -> CellScene {
         try builder.buildScene(

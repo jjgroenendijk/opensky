@@ -56,6 +56,9 @@ nonisolated struct Worldspace {
     let defaultWaterHeight: Float?
     /// NAM2 — default WATR record for cells without XCWT.
     let waterType: FormID?
+    /// CNAM — default CLMT climate for this worldspace; the weather runtime's
+    /// climate fallback when no region weather applies. nil when absent.
+    let climate: FormID?
 
     /// - Parameter localized: TES4 localized flag of the owning plugin
     ///   (`PluginHeader.isLocalized`) — decides lstring decoding.
@@ -73,6 +76,7 @@ nonisolated struct Worldspace {
         var defaultLandHeight: Float?
         var defaultWaterHeight: Float?
         var waterType: FormID?
+        var climate: FormID?
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -95,6 +99,9 @@ nonisolated struct Worldspace {
                 }
             case "NAM2":
                 waterType = try Self.decodeFormID(field.data)
+            case "CNAM":
+                // WRLD CNAM: climate FormID (xEdit wbFormIDCk(CNAM, 'Climate')).
+                climate = try Self.decodeFormID(field.data)
             default:
                 break
             }
@@ -107,6 +114,7 @@ nonisolated struct Worldspace {
         self.defaultLandHeight = defaultLandHeight
         self.defaultWaterHeight = defaultWaterHeight
         self.waterType = waterType
+        self.climate = climate
     }
 
     private static func decodeParentFlags(_ data: Data) throws -> ParentFlags? {

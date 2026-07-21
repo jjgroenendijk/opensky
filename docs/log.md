@@ -4,6 +4,31 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-21
 
+* M7.2.2 weather runtime -- data-driven exterior weather over WTHR/CLMT/REGN.
+  Formats grow WTHR DALC (4x 32-byte sunrise/day/sunset/night ambient keyframes:
+  six axis colors + specular + scale, xEdit `wbDefinitionsTES5` layout), WRLD CNAM
+  climate ref, CELL XCLR region array. `WeatherStore` indexes records once (immutable
+  value types, render-thread safe); `WeatherSelection` builds weighted pools per xEdit
+  REGN semantics (XCLR region weather areas by priority, Override flag gates climate
+  WLST append, fallback WRLD CNAM -> CLMT); deterministic SplitMix64 pick seeded by
+  worldspace + reroll epoch. `WeatherSystem` cross-fades from/to weather
+  (smoothstepped; Trans Delta read as inverse rate `1/clamp(delta,0.02,0.25)` s --
+  unit undocumented in open specs, deviation flagged in doc), rerolls every 6
+  game-hours of time-of-day movement (static clock -> static weather), exposes
+  force API for UI/tests. `TimeOfDayWeights` blends each weather's four keyframes
+  via CLMT TNAM sunrise/sunset windows (defaults 05-07/17-19). Renderer:
+  `FrameUniforms.weatherSkyEnabled` + five-color weather sky palette, exterior-only
+  application (interior CELL/LGTM lighting untouched), weather fog/ambient/sun tint
+  override camera fallbacks, `skyFragment` keeps procedural branch bit-identical
+  when inactive. Wind published as `Renderer.currentWind` (velocity-vector blend)
+  for M7.3-7.5. Environment panel gains Weather popup (Auto + force) + live
+  blend/wind readout; acceptance evidence + docs gate land in 7.2.3. Gates:
+  `WeatherRuntimeTests` (20 synthetic), DALC/CNAM/XCLR fixture tests,
+  `RendererWeatherTests` offscreen A/B (inactive == baseline bit-identical, forced
+  weathers repaint + differ), full suite 739 green; realtest sweep 84 WTHR (83 with
+  DALC), 6 CLMT, 317 REGN all resolve. Docs: [weather runtime](/engine/weather.md),
+  [weather formats](/formats/weather.md), [sky](/engine/sky-water.md). Next: 7.2.3
+  weather-core acceptance.
 * M7.2.1 weather records -- WTHR/CLMT/REGN decoders (`Weather.swift`,
   `Climate.swift`, `Region.swift`). WTHR: NAM0 per-time-of-day color layers
   (count from size; 13/14/17-component variants), FNAM fog distances (32 + legacy

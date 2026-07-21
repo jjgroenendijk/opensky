@@ -63,6 +63,61 @@ struct WeatherRecordTests {
         return out
     }
 
+    /// 32-byte DALC: seven RGBX colors (X+/X-/Y+/Y-/Z+/Z-/Specular), then a
+    /// float Scale. Color `n` = (base+3n, base+3n+1, base+3n+2).
+    private static func dalc(base: UInt8, scale: Float) -> Data {
+        var out = Data()
+        for index in 0 ..< 7 {
+            let channel = base &+ UInt8(index &* 3)
+            out.append(contentsOf: [channel, channel &+ 1, channel &+ 2, 0]) // RGBX pad
+        }
+        out.appendUInt32(scale.bitPattern)
+        return out
+    }
+
+    @Test func decodesDirectionalAmbientKeyframes() throws {
+        let fields = ESMFixture.field("DALC", Self.dalc(base: 10, scale: 1.5))
+            + ESMFixture.field("DALC", Self.dalc(base: 40, scale: 2.5))
+            + ESMFixture.field("DALC", Self.dalc(base: 70, scale: 3.5))
+            + ESMFixture.field("DALC", Self.dalc(base: 100, scale: 4.5))
+        let weather = try Self.decode("WTHR", fields: fields)
+        let ambient = try #require(weather.directionalAmbient)
+        // First DALC -> Sunrise; its X+ axis is color 0 = (base, base+1, base+2).
+        #expect(ambient.sunrise.colors.positiveX == SIMD3<Float>(10, 11, 12) / 255)
+        // Z- is color 5 = base + 15.
+        #expect(ambient.sunrise.colors.negativeZ == SIMD3<Float>(25, 26, 27) / 255)
+        // Specular is color 6 = base + 18.
+        #expect(ambient.sunrise.specular == SIMD3<Float>(28, 29, 30) / 255)
+        #expect(ambient.sunrise.scale == 1.5)
+        // Second/third/fourth DALC -> Day/Sunset/Night.
+        #expect(ambient.day.colors.positiveX == SIMD3<Float>(40, 41, 42) / 255)
+        #expect(ambient.sunset.colors.positiveX == SIMD3<Float>(70, 71, 72) / 255)
+        #expect(ambient.night.colors.positiveX == SIMD3<Float>(100, 101, 102) / 255)
+        #expect(ambient.night.scale == 4.5)
+    }
+
+    @Test func skipsPartialDirectionalAmbient() throws {
+        // Only three DALC -> no defined time-of-day mapping -> nil.
+        let fields = ESMFixture.field("DALC", Self.dalc(base: 10, scale: 1))
+            + ESMFixture.field("DALC", Self.dalc(base: 20, scale: 1))
+            + ESMFixture.field("DALC", Self.dalc(base: 30, scale: 1))
+        let weather = try Self.decode("WTHR", fields: fields)
+        #expect(weather.directionalAmbient == nil)
+    }
+
+    @Test func skipsUndersizedDirectionalAmbient() throws {
+        // A 16-byte DALC is not the 32-byte layout -> skipped, not guessed.
+        let fields = ESMFixture.field("DALC", Data(count: 16))
+            + ESMFixture.field("DALC", Self.dalc(base: 10, scale: 1))
+            + ESMFixture.field("DALC", Self.dalc(base: 20, scale: 1))
+            + ESMFixture.field("DALC", Self.dalc(base: 30, scale: 1))
+            + ESMFixture.field("DALC", Self.dalc(base: 40, scale: 1))
+        let weather = try Self.decode("WTHR", fields: fields)
+        // Four valid frames remain after the undersized one is dropped.
+        let ambient = try #require(weather.directionalAmbient)
+        #expect(ambient.sunrise.colors.positiveX == SIMD3<Float>(10, 11, 12) / 255)
+    }
+
     @Test func decodesFullWeather() throws {
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("TestWeather"))
             + ESMFixture.field("NAM0", Self.nam0(componentCount: 17))
@@ -169,6 +224,7 @@ struct WeatherRecordTests {
         #expect(weather.colors == nil)
         #expect(weather.fog == nil)
         #expect(weather.data == nil)
+        #expect(weather.directionalAmbient == nil)
     }
 
     private static func decode(_ type: String, formID: UInt32 = 0, fields: Data) throws -> Weather {

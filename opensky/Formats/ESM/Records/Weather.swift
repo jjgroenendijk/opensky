@@ -1,14 +1,17 @@
 // WTHR weather record decoded into the fields the sky needs: per-time-of-day
-// color layers (NAM0), fog distances (FNAM), and the DATA block's wind,
-// precipitation, and lightning parameters. Cloud textures, cloud-layer
-// colors/alphas (PNAM/JNAM), sounds (SNAM/TNAM), image spaces (IMSP),
-// directional-ambient lighting (DALC), and static/spell/effect refs are
-// intentionally skipped — milestone 7.2.1 does not consume them.
+// color layers (NAM0), fog distances (FNAM), the DATA block's wind,
+// precipitation, and lightning parameters, and the four DALC directional
+// ambient keyframes (M7.2.2). Cloud textures, cloud-layer colors/alphas
+// (PNAM/JNAM), sounds (SNAM/TNAM), image spaces (IMSP), and static/spell/
+// effect refs are skipped — the weather runtime does not consume them.
 //
 // Reference: UESP "Skyrim Mod:Mod File Format/WTHR"
 //   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/WTHR
-// Cross-checked against xEdit dev-4.1.5 Core/wbDefinitionsTES5.pas WTHR
-// (wbWeatherColors / DATA / FNAM). Layout documented in docs/formats/weather.md.
+// Cross-checked against xEdit dev Core/wbDefinitionsTES5.pas WTHR: the record
+// holds four DALC subrecords in order Sunrise/Day/Sunset/Night, each a
+// wbAmbientColors struct (6 directional wbByteColors X+/X-/Y+/Y-/Z+/Z-, one
+// Specular wbByteColors, one float Scale). wbByteColors = R,G,B,unused bytes.
+// Layout documented in docs/formats/weather.md.
 
 import Foundation
 import simd
@@ -104,6 +107,25 @@ nonisolated struct Weather {
         }
     }
 
+    /// One DALC keyframe: the six-axis directional ambient plus the ambient
+    /// specular color and the trailing float. xEdit labels the float "Scale";
+    /// some community docs call it a fresnel/specular power. Colors are 0-1
+    /// (RGBX bytes, pad dropped, like the NAM0 layers).
+    struct DirectionalAmbient: Equatable {
+        let colors: DirectionalAmbientColors
+        let specular: SIMD3<Float>
+        let scale: Float
+    }
+
+    /// The four DALC keyframes a WTHR carries, one per time of day. Record
+    /// order is Sunrise, Day, Sunset, Night (xEdit wbDefinitionsTES5 WTHR).
+    struct DirectionalAmbientKeyframes: Equatable {
+        let sunrise: DirectionalAmbient
+        let day: DirectionalAmbient
+        let sunset: DirectionalAmbient
+        let night: DirectionalAmbient
+    }
+
     let formID: FormID
     let editorID: String?
     /// NAM0 layers indexed by `Component.rawValue`. nil when NAM0 absent or an
@@ -113,6 +135,9 @@ nonisolated struct Weather {
     let fog: FogDistances?
     /// DATA block. nil when absent or not the known 19-byte SSE size.
     let data: WeatherData?
+    /// DALC directional ambient keyframes. nil when the record carries fewer
+    /// than four 32-byte DALC subrecords (skipped rather than guessed).
+    let directionalAmbient: DirectionalAmbientKeyframes?
 
     init(record: ESMRecord) throws {
         guard record.type == "WTHR" else {
@@ -124,6 +149,9 @@ nonisolated struct Weather {
         var colors: [Colors]?
         var fog: FogDistances?
         var data: WeatherData?
+        // DALC subrecords stream in Sunrise/Day/Sunset/Night order; collect
+        // them positionally and map the first four (see keyframes(from:)).
+        var ambientFrames: [DirectionalAmbient] = []
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -135,56 +163,19 @@ nonisolated struct Weather {
                 fog = try Self.readFog(&reader)
             case "DATA":
                 data = try Self.readData(&reader)
+            case "DALC":
+                if let frame = try Self.readDirectionalAmbient(&reader) {
+                    ambientFrames.append(frame)
+                }
             default:
-                break // cloud/sound/lighting/ref fields skipped (see header)
+                break // cloud/sound/ref fields skipped (see header)
             }
         }
         self.editorID = editorID
         self.colors = colors
         self.fog = fog
         self.data = data
-    }
-
-    /// Layer for a named component, nil if the record omitted that index.
-    func colors(for component: Component) -> Colors? {
-        guard let colors, component.rawValue < colors.count else { return nil }
-        return colors[component.rawValue]
-    }
-
-    var skyUpper: Colors? {
-        colors(for: .skyUpper)
-    }
-
-    var skyLower: Colors? {
-        colors(for: .skyLower)
-    }
-
-    var horizon: Colors? {
-        colors(for: .horizon)
-    }
-
-    var ambient: Colors? {
-        colors(for: .ambient)
-    }
-
-    var sun: Colors? {
-        colors(for: .sun)
-    }
-
-    var sunGlare: Colors? {
-        colors(for: .sunGlare)
-    }
-
-    var stars: Colors? {
-        colors(for: .stars)
-    }
-
-    var fogNear: Colors? {
-        colors(for: .fogNear)
-    }
-
-    var fogFar: Colors? {
-        colors(for: .fogFar)
+        directionalAmbient = Self.keyframes(from: ambientFrames)
     }
 
     // NAM0: array of 16-byte structs, each = sunrise/day/sunset/night RGBX.
@@ -264,6 +255,37 @@ nonisolated struct Weather {
         )
     }
 
+    // DALC: 32-byte wbAmbientColors. Six directional RGBX colors (X+/X-/Y+/Y-/
+    // Z+/Z-), one Specular RGBX, one float Scale. Undersized/unknown DALC ->
+    // nil (skip rather than guess), matching the record's decode policy.
+    private static func readDirectionalAmbient(
+        _ reader: inout BinaryReader
+    ) throws -> DirectionalAmbient? {
+        guard reader.data.count >= 32 else { return nil }
+        let colors = try DirectionalAmbientColors(
+            positiveX: readColor(&reader),
+            negativeX: readColor(&reader),
+            positiveY: readColor(&reader),
+            negativeY: readColor(&reader),
+            positiveZ: readColor(&reader),
+            negativeZ: readColor(&reader)
+        )
+        let specular = try readColor(&reader)
+        let scale = try reader.readFloat32()
+        return DirectionalAmbient(colors: colors, specular: specular, scale: scale)
+    }
+
+    /// Maps the first four DALC keyframes to Sunrise/Day/Sunset/Night. Fewer
+    /// than four -> nil: a partial set has no defined time-of-day mapping.
+    private static func keyframes(
+        from frames: [DirectionalAmbient]
+    ) -> DirectionalAmbientKeyframes? {
+        guard frames.count >= 4 else { return nil }
+        return DirectionalAmbientKeyframes(
+            sunrise: frames[0], day: frames[1], sunset: frames[2], night: frames[3]
+        )
+    }
+
     /// RGBX color: three channels 0-255 then one pad byte (dropped).
     private static func readColor(_ reader: inout BinaryReader) throws -> SIMD3<Float> {
         let color = try readRGB(&reader)
@@ -277,5 +299,51 @@ nonisolated struct Weather {
         let green = try Float(reader.readUInt8()) / 255
         let blue = try Float(reader.readUInt8()) / 255
         return SIMD3(red, green, blue)
+    }
+}
+
+/// Named NAM0 component accessors, in an extension so they stay off the struct's
+/// body-length budget.
+extension Weather {
+    /// Layer for a named component, nil if the record omitted that index.
+    func colors(for component: Component) -> Colors? {
+        guard let colors, component.rawValue < colors.count else { return nil }
+        return colors[component.rawValue]
+    }
+
+    var skyUpper: Colors? {
+        colors(for: .skyUpper)
+    }
+
+    var skyLower: Colors? {
+        colors(for: .skyLower)
+    }
+
+    var horizon: Colors? {
+        colors(for: .horizon)
+    }
+
+    var ambient: Colors? {
+        colors(for: .ambient)
+    }
+
+    var sun: Colors? {
+        colors(for: .sun)
+    }
+
+    var sunGlare: Colors? {
+        colors(for: .sunGlare)
+    }
+
+    var stars: Colors? {
+        colors(for: .stars)
+    }
+
+    var fogNear: Colors? {
+        colors(for: .fogNear)
+    }
+
+    var fogFar: Colors? {
+        colors(for: .fogFar)
     }
 }

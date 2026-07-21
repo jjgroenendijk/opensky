@@ -104,6 +104,7 @@ final class WorldContentViewController: NSViewController {
     /// Points the panel at the live renderer bridge.
     func wireProvider() {
         panel.provider = gameViewController
+        panel.weatherProvider = gameViewController
     }
 
     /// Reveals the panel for `destination` (only Environment today) or hides it.

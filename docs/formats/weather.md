@@ -49,11 +49,22 @@ Decoded fields (`Weather`):
   Classification low nibble (at most one set): 0x01 pleasant, 0x02 cloudy,
   0x04 rainy, 0x08 snow -> `Precipitation` enum; none set -> `.none`.
   Non-19-byte DATA -> nil.
+* `DALC` x4 — directional ambient keyframes, one per time of day in record
+  order Sunrise/Day/Sunset/Night (M7.2.2). Each is a 32-byte `wbAmbientColors`
+  struct: six directional RGBX colors (X+, X-, Y+, Y-, Z+, Z-), one Specular
+  RGBX, one float Scale (xEdit's "Scale"; some community docs call it a
+  fresnel/specular power). Exposed as `directionalAmbient`
+  (`Weather.DirectionalAmbientKeyframes`), each keyframe a six-axis
+  `DirectionalAmbientColors` + specular `SIMD3` + scale. Fewer than four
+  32-byte DALC -> nil (no defined time-of-day mapping); an undersized DALC is
+  skipped rather than guessed. Source: xEdit dev
+  `Core/wbDefinitionsTES5.pas` WTHR (`wbAmbientColors(DALC, 'Sunrise'/'Day'/
+  'Sunset'/'Night')`, `wbByteColors` = R,G,B,unused bytes).
 
-Skipped (out of 7.2.1 scope): cloud textures (`00TX`..`L0TX`), cloud-layer
+Skipped (out of scope): cloud textures (`00TX`..`L0TX`), cloud-layer
 speeds/colors/alphas (`LNAM`/`MNAM`/`NNAM`/`RNAM`/`QNAM`/`PNAM`/`JNAM`),
 `NAM1` disabled-layer bits, sounds (`SNAM`/`TNAM`), image spaces (`IMSP`),
-directional ambient (`DALC`), statics/spells (`NAM2`/`NAM3`/`MODL` etc.).
+statics/spells (`NAM2`/`NAM3`/`MODL` etc.).
 
 ## CLMT — climate
 
@@ -98,5 +109,10 @@ summaries in CLI `record` + Asset Browser). Env-gated vanilla sweep
 references resolve to WTHR records; 53/317 regions carry weather areas.
 Log: `logs/weather-sweep.log`.
 
-Consumers: weather runtime (7.2.2) selects from CLMT/REGN lists and blends
-NAM0/FNAM/DATA into the sky + fog + ambient; wind published from DATA.
+Two more fields feed selection, decoded in their own record parsers
+([records](/formats/records.md)): WRLD `CNAM` (default climate FormID, `Worldspace.climate`)
+and exterior CELL `XCLR` (array of REGN FormIDs, `Cell.regions`).
+
+Consumers: the [weather runtime](/engine/weather.md) (7.2.2) selects from CLMT/REGN lists
+(keyed off WRLD CNAM + CELL XCLR), cross-fades weathers, and blends NAM0/FNAM/DALC/DATA into
+the sky + fog + directional ambient + sun tint; wind published from DATA.
