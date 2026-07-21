@@ -96,4 +96,5 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 * [Testing setup](/testing.md) - test targets, make entrypoints, headless
   unit-test host, fixture policy.
-* [Roadmap](/todo.md) - milestone history, active work, tooling, future direction.
+* [Roadmap](/todo.md) - active M7 work, dependency-ordered milestones, acceptance gates,
+  app-sidebar verification paths.

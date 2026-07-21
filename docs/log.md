@@ -4,6 +4,19 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-21
 
+* Roadmap dependency order rebuilt in [todo](/todo.md) without dropping planned work.
+  M7 now orders shadows -> weather/wind -> shared particles -> precipitation -> grass;
+  dynamic physics moved to M15 combat. Early M8 interaction/UI shell + M9 world audio
+  create user-visible vertical slices. M10 runtime identity/change journal/native saves +
+  CTDA/time/GLOB now precede mutable gameplay. Papyrus interaction = M11, inventory = M12,
+  quests + journal = M13, behavior locomotion = M14, combat = M15, AI = M16, dialogue +
+  voice/lips = M17. Vanilla SWF fonts + read-only `.ess` import no longer gate gameplay.
+  Every milestone keeps a numbered acceptance gate + planned main-app sidebar path.
+  AGENTS.md now requires each new subsystem/user-verifiable behavior to add or extend a
+  durable sidebar verification surface; parser/math-only work may wait for its first
+  visible consumer. App inspection supplements probes/tests/benchmarks, never replaces them.
+  Rebased after M6 + M7.1.1 landed: completed items stay out of todo; evidence follows the
+  local-capture + numeric-gate policy.
 * M7.1.1 cascaded sun shadows -- depth-only pre-pass renders opaque/alpha/terrain +
   skinned casters into a 2048x2048x3 `depth32Float` array (one encoder per cascade,
   same reused MTL4CommandBuffer, before the scene pass); `staticMeshFragment` +
