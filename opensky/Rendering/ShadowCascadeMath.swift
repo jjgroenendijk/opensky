@@ -53,7 +53,8 @@ nonisolated enum ShadowCascadeMath {
         cascadeCount: Int,
         lambda: Float,
         shadowMapResolution: Int,
-        casterBackup: Float
+        casterBackup: Float,
+        residentBounds: ModelBounds? = nil
     ) -> [ShadowCascade] {
         let count = max(cascadeCount, 1)
         let resolution = max(shadowMapResolution, 1)
@@ -83,7 +84,8 @@ nonisolated enum ShadowCascadeMath {
                 sun: sun,
                 up: up,
                 resolution: resolution,
-                casterBackup: casterBackup
+                casterBackup: casterBackup,
+                residentBounds: residentBounds
             )
             cascades.append(ShadowCascade(
                 viewProjection: viewProjection,
@@ -173,7 +175,8 @@ nonisolated enum ShadowCascadeMath {
         sun: SIMD3<Float>,
         up: SIMD3<Float>,
         resolution: Int,
-        casterBackup: Float
+        casterBackup: Float,
+        residentBounds: ModelBounds? = nil
     ) -> simd_float4x4 {
         let sphere = boundingSphere(corners)
         let lightView = MatrixMath.lookAt(
@@ -197,8 +200,17 @@ nonisolated enum ShadowCascadeMath {
         let originX = (minBound.x / texelSize).rounded(.down) * texelSize
         let originY = (minBound.y / texelSize).rounded(.down) * texelSize
         // Eye space looks down -z: nearest corner has the largest (least
-        // negative) z, so nearZ = -maxZ. Extend it toward the sun by casterBackup.
-        let nearZ = -maxBound.z - casterBackup
+        // negative) z, so slice near = -maxZ. The casterBackup extension is
+        // clamped to resident geometry so it never reaches past what exists.
+        let sliceNearZ = -maxBound.z
+        let residentNearZ = residentBounds.map {
+            residentNearLightZ($0, lightView: lightView)
+        }
+        let nearZ = clampedShadowNearZ(
+            sliceNearZ: sliceNearZ,
+            fullBackupNearZ: sliceNearZ - casterBackup,
+            residentNearZ: residentNearZ
+        )
         let farZ = max(-minBound.z, nearZ + 1e-4)
         let ortho = MatrixMath.orthographic(
             left: originX,
@@ -209,5 +221,36 @@ nonisolated enum ShadowCascadeMath {
             farZ: farZ
         )
         return ortho * lightView
+    }
+
+    /// Nearest-toward-sun light-space near distance of a world AABB: the max
+    /// light-space z of its eight corners, negated into
+    /// MatrixMath.orthographic's positive near-distance convention (eye looks
+    /// down -z, so the corner closest to the sun has the largest z).
+    static func residentNearLightZ(_ bounds: ModelBounds, lightView: simd_float4x4) -> Float {
+        var maxZ = -Float.greatestFiniteMagnitude
+        for corner in bounds.corners {
+            let z = (lightView * SIMD4<Float>(corner.x, corner.y, corner.z, 1)).z
+            maxZ = max(maxZ, z)
+        }
+        return -maxZ
+    }
+
+    /// Clamp the light near plane so the casterBackup extension reaches no
+    /// further toward the sun than resident geometry actually does. The scene
+    /// is the resident cell set, so its bounds enclose every caster: pulling
+    /// the near plane back to them is a precision/cost win, never a visual
+    /// change. `sliceNearZ` keeps the frustum slice covered; `fullBackupNearZ`
+    /// is the unclamped 7.1.1 near; `residentNearZ` nil -> unclamped. The
+    /// result stays <= sliceNearZ (slice covered) and, whenever resident
+    /// geometry sits within the backup, <= residentNearZ (no caster clipped),
+    /// and never reaches past the full backup toward the sun.
+    static func clampedShadowNearZ(
+        sliceNearZ: Float,
+        fullBackupNearZ: Float,
+        residentNearZ: Float?
+    ) -> Float {
+        guard let residentNearZ else { return fullBackupNearZ }
+        return min(sliceNearZ, max(fullBackupNearZ, residentNearZ))
     }
 }

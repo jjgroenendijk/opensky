@@ -51,6 +51,26 @@ final class OpenSkyUITests: XCTestCase {
         XCTAssertTrue(app.buttons["ScreenshotButton"].exists)
     }
 
+    /// World > Environment sidebar surface (M7.1.2): the sidebar lists the
+    /// Environment destination, selecting it exposes the sun-shadow quality
+    /// control + live stats readout, and changing quality sticks. Runs on the
+    /// synthetic (game-data-free) root; the renderer falls back to DemoScene.
+    @MainActor
+    func testWorldSidebarEnvironmentShadowQuality() throws {
+        let app = try launchApp()
+        let sidebar = app.tables["WorldSidebar"]
+        XCTAssertTrue(sidebar.waitForExistence(timeout: 5))
+        sidebar.cells["WorldDestination-environment"].firstMatch.click()
+
+        let quality = app.popUpButtons["ShadowQualityControl"]
+        XCTAssertTrue(quality.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["ShadowStatsLabel"].exists)
+
+        quality.click()
+        app.menuItems["Low"].click()
+        XCTAssertEqual(quality.value as? String, "Low")
+    }
+
     @MainActor
     func testModeSwitcherShowsAssetBrowser() throws {
         let app = try launchApp()

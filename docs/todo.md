@@ -54,7 +54,7 @@ earlier integration gates. Done milestone leaves this file; history lives in
 * M6 — actors animate. Done 2026-07-20: skeleton-driven idle playback on streamed actors,
   exact lifecycle accounting, deterministic frame-delta gate, exterior/interior probes.
 * M7 — living environment (active): shadows -> weather/sky/wind -> shared particles ->
-  precipitation -> grass. M7.1.1 sun-shadow pass done; dynamic physics moved to combat.
+  precipitation -> grass. M7.1 sun shadows done; dynamic physics moved to combat.
   Gate: 7.6.
 * M8 — interaction + UI shell: screen-space UI, interaction targeting, HUD, menu mode,
   settings. Gate: 8.3.3.
@@ -89,17 +89,6 @@ Specs: UESP + xEdit defs (WTHR/CLMT/REGN/GRAS), NifTools nif.xml (particle +
 effect-shader blocks). Format items follow `format-parser` discipline; render items
 use offscreen verification per `probe`. Main-app controls live under
 `World > Environment` and remain as the visual-verification surface.
-
-### M7.1 — sun shadows
-
-Core cascaded pass landed in 7.1.1; streaming-aware culling, budget, quality UI remain.
-
-* [ ] 7.1.2 Streaming + budget + acceptance: per-cascade caster culling limited to
-      resident cells, explicit per-frame shadow budget in the fly bench, quality
-      setting (off/low/high) under `World > Environment`. Gate: Whiterun fly bench
-      within budget; deterministic offscreen pixel-delta evidence; docs
-      (`rendering/shadows.md`) + log updated. Interior point-light shadows stay out
-      of scope and are noted for later.
 
 ### M7.2 — data-driven weather core
 

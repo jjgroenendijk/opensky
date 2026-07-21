@@ -73,7 +73,10 @@ adapted from Apple's Xcode Metal 4 game template (structure, not copied game cod
 ## Sky + water pipelines (todo 3.5)
 
 Pass order = shadow cascade pre-pass ([shadows](/rendering/shadows.md)), then sky,
-opaque groups, terrain, alpha-test groups, water last. Sky is
+opaque groups, terrain, alpha-test groups, water last. MTL4 does not auto-track
+cross-encoder hazards: the final cascade encoder issues a producer barrier
+(`barrier(afterStages: .fragment, beforeQueueStages: .fragment, visibilityOptions:
+.device)`) so the scene pass never samples the shadow array before depth writes land. Sky is
 a fullscreen triangle with no vertex buffer or depth state. It reads time-of-day from frame
 uniforms and writes a procedural vertical palette + sun disc; later depth-tested geometry
 replaces its pixels. WRLD `no sky` suppresses the draw.

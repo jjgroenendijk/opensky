@@ -63,8 +63,13 @@ extension Renderer {
                     * shadowDrawCapacity(drawCapacity) * maxFramesInFlight,
                 label: "ShadowDrawUniforms"
             ),
+            // Per-cascade caster culling (M7.1.2) writes a contiguous
+            // instance run per cascade, so worst case is every instance drawn
+            // in every cascade -> cascadeCount x the scene instance ring.
             shadowInstanceBuffer: makeUniformBuffer(
-                device: device, length: instanceLength, label: "ShadowInstanceTransforms"
+                device: device,
+                length: instanceLength * ShadowConstant.cascadeCount.rawValue,
+                label: "ShadowInstanceTransforms"
             )
         )
     }

@@ -20,6 +20,13 @@ enum BenchCommand {
     private static let defaultActorBuildBudgetMS = 4500.0
     /// CPU-only sample/compose/palette refresh; leaves wide Debug headroom.
     private static let defaultAnimationUpdateBudgetMS = 4.0
+    /// CPU cost of encodeShadowPass: cascade fit + per-cascade caster culling +
+    /// instance/uniform ring writes + depth encode (3 cascades on high; the
+    /// shadow map is fixed-resolution so cost is ~independent of --size).
+    /// Whiterun fly-path Debug baseline 2026-07-21 @ 640x360: avg 3.26 ms /
+    /// p95 6.52 ms / max 9.72 ms -> 12.0 ms keeps ~1.8x headroom over p95 and
+    /// sits above the transient max while still catching a real regression.
+    private static let defaultShadowUpdateBudgetMS = 12.0
 
     private struct Options {
         let worldspace: String
@@ -35,6 +42,7 @@ enum BenchCommand {
         let collisionBuildBudgetMS: Double
         let actorBuildBudgetMS: Double
         let animationUpdateBudgetMS: Double
+        let shadowUpdateBudgetMS: Double
     }
 
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
@@ -145,7 +153,8 @@ enum BenchCommand {
                 footprintCapMB: options.footprintCapMB,
                 collisionBuildBudgetMS: options.collisionBuildBudgetMS,
                 actorBuildBudgetMS: options.actorBuildBudgetMS,
-                animationUpdateBudgetMS: options.animationUpdateBudgetMS
+                animationUpdateBudgetMS: options.animationUpdateBudgetMS,
+                shadowUpdateBudgetMS: options.shadowUpdateBudgetMS
             )
         )
         reportFlyPath(
@@ -240,20 +249,32 @@ extension BenchCommand {
             start: CellCoordinate(x: gridX, y: gridY),
             size: RenderCommand.parseSize(scanner.option("--size")),
             frames: frameCount(scanner.option("--frames")),
-            budgetMS: budgetMS(scanner.option("--budget-ms")),
+            budgetMS: positiveDouble(
+                scanner.option("--budget-ms"), flag: "--budget-ms", fallback: defaultBudgetMS
+            ),
             flyPath: flyPath,
             walkPath: walkPath,
             output: scanner.option("--out"),
             maxFrames: maxFrameCount(scanner.option("--max-frames")),
-            footprintCapMB: footprintCapMB(scanner.option("--footprint-cap-mb")),
-            collisionBuildBudgetMS: collisionBuildBudgetMS(
-                scanner.option("--collision-build-budget-ms")
+            footprintCapMB: positiveDouble(
+                scanner.option("--footprint-cap-mb"),
+                flag: "--footprint-cap-mb", fallback: defaultFootprintCapMB
             ),
-            actorBuildBudgetMS: actorBuildBudgetMS(
-                scanner.option("--actor-build-budget-ms")
+            collisionBuildBudgetMS: positiveDouble(
+                scanner.option("--collision-build-budget-ms"),
+                flag: "--collision-build-budget-ms", fallback: defaultCollisionBuildBudgetMS
             ),
-            animationUpdateBudgetMS: animationUpdateBudgetMS(
-                scanner.option("--animation-budget-ms")
+            actorBuildBudgetMS: positiveDouble(
+                scanner.option("--actor-build-budget-ms"),
+                flag: "--actor-build-budget-ms", fallback: defaultActorBuildBudgetMS
+            ),
+            animationUpdateBudgetMS: positiveDouble(
+                scanner.option("--animation-budget-ms"),
+                flag: "--animation-budget-ms", fallback: defaultAnimationUpdateBudgetMS
+            ),
+            shadowUpdateBudgetMS: positiveDouble(
+                scanner.option("--shadow-budget-ms"),
+                flag: "--shadow-budget-ms", fallback: defaultShadowUpdateBudgetMS
             )
         )
         if options.output != nil, !options.walkPath {
@@ -362,6 +383,21 @@ extension BenchCommand {
             result.render.animationMS.max() ?? 0,
             result.animationUpdateBudgetMS
         ))
+        print(String(
+            format: "[INFO] shadow update: avg %.2f ms, p95 %.2f ms, "
+                + "max %.2f ms, budget %.2f ms",
+            result.render.shadowAverageMS,
+            result.render.shadowPercentileMS(95),
+            result.render.shadowMS.max() ?? 0,
+            result.shadowUpdateBudgetMS
+        ))
+        let shadow = result.shadowDrawStats
+        print(
+            "[INFO] shadow culling: \(shadow.drawCalls) draw calls, "
+                + "\(shadow.drawnInstances) drawn, "
+                + "\(shadow.culledInstances) culled, "
+                + "\(shadow.cascadesRendered) cascades"
+        )
     }
 
     private static func reportFlyActors(_ result: CellStreamingFlyBenchmarkResult) {
@@ -420,14 +456,6 @@ extension BenchCommand {
         return frames
     }
 
-    private static func budgetMS(_ value: String?) throws -> Double {
-        guard let value else { return defaultBudgetMS }
-        guard let budget = Double(value), budget > 0 else {
-            throw CLIError.usage("--budget-ms expects a positive number, got \(value)")
-        }
-        return budget
-    }
-
     private static func maxFrameCount(_ value: String?) throws -> Int {
         guard let value else { return defaultFlyMaxFrames }
         guard let frames = Int(value), (1 ... 100_000).contains(frames) else {
@@ -436,41 +464,18 @@ extension BenchCommand {
         return frames
     }
 
-    private static func footprintCapMB(_ value: String?) throws -> Double {
-        guard let value else { return defaultFootprintCapMB }
-        guard let cap = Double(value), cap > 0 else {
-            throw CLIError.usage("--footprint-cap-mb expects a positive number, got \(value)")
+    /// Shared positive-number option parser for every millisecond budget + the
+    /// footprint cap: absent -> `fallback`, present -> a value that must parse
+    /// as a Double above zero (a typo or non-positive is a usage error).
+    private static func positiveDouble(
+        _ value: String?,
+        flag: String,
+        fallback: Double
+    ) throws -> Double {
+        guard let value else { return fallback }
+        guard let parsed = Double(value), parsed > 0 else {
+            throw CLIError.usage("\(flag) expects a positive number, got \(value)")
         }
-        return cap
-    }
-
-    private static func collisionBuildBudgetMS(_ value: String?) throws -> Double {
-        guard let value else { return defaultCollisionBuildBudgetMS }
-        guard let budget = Double(value), budget > 0 else {
-            throw CLIError.usage(
-                "--collision-build-budget-ms expects a positive number, got \(value)"
-            )
-        }
-        return budget
-    }
-
-    private static func actorBuildBudgetMS(_ value: String?) throws -> Double {
-        guard let value else { return defaultActorBuildBudgetMS }
-        guard let budget = Double(value), budget > 0 else {
-            throw CLIError.usage(
-                "--actor-build-budget-ms expects a positive number, got \(value)"
-            )
-        }
-        return budget
-    }
-
-    private static func animationUpdateBudgetMS(_ value: String?) throws -> Double {
-        guard let value else { return defaultAnimationUpdateBudgetMS }
-        guard let budget = Double(value), budget > 0 else {
-            throw CLIError.usage(
-                "--animation-budget-ms expects a positive number, got \(value)"
-            )
-        }
-        return budget
+        return parsed
     }
 }

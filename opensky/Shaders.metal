@@ -44,7 +44,8 @@ constant float shadowReceiverBias = 0.0015;
 // Sun-shadow attenuation for one world-space receiver (M7.1.1). Returns 1.0
 // (fully lit) when shadows are off, the point is beyond the last cascade, or
 // it projects outside the cascade's map. Cascade pick mirrors
-// ShadowCascadeMath.cascadeIndex verbatim; 3x3 PCF softens the edge.
+// ShadowCascadeMath.cascadeIndex verbatim; PCF kernel radius comes from
+// FrameUniforms.shadowSampleRadius (M7.1.2 quality: 0 = 1 tap, 1 = 3x3).
 static float sunShadowFactor(
     float3 worldPosition,
     constant FrameUniforms &frame,
@@ -71,14 +72,21 @@ static float sunShadowFactor(
     }
     float2 uv = ndc.xy * float2(0.5, -0.5) + 0.5;
     float compareDepth = ndc.z - shadowReceiverBias;
+    int radius = int(frame.shadowSampleRadius);
+    // Low quality: single hardware depth-compare tap, no PCF blur.
+    if (radius <= 0) {
+        return shadowMap.sample_compare(shadowSampler, uv, cascade, compareDepth);
+    }
     float sum = 0.0;
-    for (int dy = -1; dy <= 1; ++dy) {
-        for (int dx = -1; dx <= 1; ++dx) {
+    float taps = 0.0;
+    for (int dy = -radius; dy <= radius; ++dy) {
+        for (int dx = -radius; dx <= radius; ++dx) {
             float2 offset = float2(dx, dy) * frame.shadowInverseResolution;
             sum += shadowMap.sample_compare(shadowSampler, uv + offset, cascade, compareDepth);
+            taps += 1.0;
         }
     }
-    return sum / 9.0;
+    return sum / taps;
 }
 
 static float3 applyFog(float3 color, float3 worldPosition, constant FrameUniforms &frame)

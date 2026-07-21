@@ -4,6 +4,30 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-21
 
+* M7.1.2 shadow streaming/budget/quality -- M7.1 sun shadows complete. Per-cascade
+  per-instance caster culling (survivor runs in a `cascadeCount x` instance ring, one
+  instanced draw per group per cascade) + light-volume near-Z clamp to the resident-cell
+  caster union (`ShadowCascadeMath.clampedShadowNearZ`; casterBackup never reaches past
+  streamed geometry). `ShadowQuality` off/low/high: high = 3 cascades/12288/3x3 PCF,
+  low = 2 cascades/8192/1-tap (`FrameUniforms.shadowSampleRadius` drives MSL taps; no
+  map realloc), off skips the pass; `H` A/B toggle preserved independently. Fixed latent
+  M7.1.1 MTL4 hazard: no cross-encoder barrier between shadow depth writes + scene-pass
+  sampling flipped ~52% of pixels in ~half of runs -- final cascade encoder now issues a
+  device-visibility fragment barrier; determinism test guards it. Fly bench gains explicit
+  shadow budget: `lastShadowUpdateMS` -> `OffscreenBenchResult.shadowMS`,
+  `shadowUpdateExceeded` gate, `bench --fly-path --shadow-budget-ms` (default 12 ms from
+  measured Whiterun avg 3.26/p95 6.52 ms @ 640x360 Debug, ~1.8x headroom); probe asserts
+  the new `shadow culling` accounting line (`lastShadowDrawStats`). First main-app sidebar
+  surface: `World > Environment > Sun shadows` (Off/Low/High popup, live 2 Hz shadow
+  stats, UserDefaults `ShadowQualitySetting`, `WorldDestination` enum = extension point
+  for M7.2-7.5). Gates passed: quality deltas off/high 5,879 px, off/low 2,449 px,
+  low/high 5,131 px, same-quality re-renders bit-identical; fly bench shadow avg
+  3.28/p95 6.55 vs 12 ms, all prior gates green; full unit suite green. `make test-ui`
+  blocked at harness init on this machine (TCC automation timeout, environment-level);
+  sidebar UI test recorded for when it returns. Interior point-light shadows stay out of
+  scope (later milestone). Docs: [shadows](/rendering/shadows.md),
+  [renderer](/rendering/metal4-renderer.md), [CLI](/tools/cli.md). M7.1 leaves
+  [todo](/todo.md); next M7.2 weather core.
 * Roadmap dependency order rebuilt in [todo](/todo.md) without dropping planned work.
   M7 now orders shadows -> weather/wind -> shared particles -> precipitation -> grass;
   dynamic physics moved to M15 combat. Early M8 interaction/UI shell + M9 world audio

@@ -91,8 +91,14 @@ final class Renderer: NSObject {
     /// once, always resident, and bound at TextureIndexShadowMap every scene
     /// pass so validation stays clean even with shadows disabled.
     let shadow: ShadowResources
-    /// User/dev toggle. Default on; the app sidebar and A/B tests flip it.
+    /// User/dev A/B toggle (the `H` key). Default on; ANDed with `shadowQuality`
+    /// so it flips shadows on/off without discarding the selected quality.
     var sunShadowsEnabled = true
+    /// Sun-shadow quality tier (M7.1.2). `.off` skips the pass entirely; `.low`
+    /// and `.high` differ in cascade count, range, and PCF taps (see the
+    /// RendererShadowPass computed parameters). Set on the main thread between
+    /// frames like other renderer state; the UI agent owns persistence.
+    var shadowQuality = ShadowQuality.high
     /// This frame's cascades, produced by encodeShadowPass, consumed by
     /// updateFrameUniforms. Empty when shadows are off/idle this frame.
     var shadowCascades: [ShadowCascade] = []
@@ -135,6 +141,10 @@ final class Renderer: NSObject {
     var animationTime: Float = 0
     var lastAnimationWallTime: CFTimeInterval?
     var lastAnimationUpdateMS = 0.0
+    /// CPU wall time of the last `encodeShadowPass` (cascade fit + caster
+    /// writes + encode), in ms. 0 until the first frame; idle/off frames
+    /// record their near-zero actual cost. Mirrors `lastAnimationUpdateMS`.
+    var lastShadowUpdateMS = 0.0
     let frameUniformBuffer: MTLBuffer
     /// Per-draw ring: maxFramesInFlight slots x drawUniformSlotCapacity
     /// aligned entries. Replaced (regrown) by setScene when a new scene's
@@ -175,6 +185,10 @@ final class Renderer: NSObject {
     /// Culling/draw counts of the last encoded frame (see SceneDrawStats).
     /// Written only by encodeScenePass (RendererScenePass.swift).
     var lastDrawStats = SceneDrawStats()
+    /// Shadow-pass culling/draw counts of the last encoded frame (see
+    /// ShadowDrawStats). Written only by encodeShadowPass; reset to zero on
+    /// idle/off frames.
+    var lastShadowDrawStats = ShadowDrawStats()
 
     /// `scene` nil -> synthetic DemoScene; `camera` nil -> its demo camera;
     /// `input` nil -> static seeded pose (offscreen/tests). The app passes a
@@ -402,8 +416,12 @@ extension Renderer {
             instance: Self.makeUniformBuffer(
                 device: device, length: length, label: "InstanceTransforms"
             ),
+            // Per-cascade caster runs need cascadeCount x the scene ring
+            // (matches makeSceneRings sizing).
             shadowInstance: Self.makeUniformBuffer(
-                device: device, length: length, label: "ShadowInstanceTransforms"
+                device: device,
+                length: length * ShadowConstant.cascadeCount.rawValue,
+                label: "ShadowInstanceTransforms"
             ),
             capacity: capacity
         )

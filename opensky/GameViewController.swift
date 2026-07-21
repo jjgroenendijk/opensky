@@ -74,6 +74,9 @@ final class GameViewController: NSViewController {
                 camera: nil,
                 input: cameraInput
             )
+            // Persisted World > Environment > Sun shadows choice; invalid stored
+            // value falls back to .high inside ShadowQualitySettings.load().
+            newRenderer.shadowQuality = ShadowQualitySettings.load()
             newRenderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
             mtkView.delegate = newRenderer
             renderer = newRenderer
@@ -152,5 +155,35 @@ final class GameViewController: NSViewController {
             label.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 32),
             label.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -32)
         ])
+    }
+}
+
+/// Renderer bridge for the World > Environment panel. Reads/writes the live
+/// renderer's shadow state on the main thread (same context as draw(in:)) and
+/// persists the quality choice. A nil renderer (Metal 4 unavailable) degrades to
+/// the stored/default quality and empty stats so the panel never crashes.
+extension GameViewController: ShadowControlProviding {
+    var shadowQuality: ShadowQuality {
+        get { renderer?.shadowQuality ?? ShadowQualitySettings.load() }
+        set {
+            renderer?.shadowQuality = newValue
+            ShadowQualitySettings.store(newValue)
+        }
+    }
+
+    var shadowDrawStats: ShadowDrawStats {
+        renderer?.lastShadowDrawStats ?? ShadowDrawStats()
+    }
+
+    var shadowUpdateMS: Double {
+        renderer?.lastShadowUpdateMS ?? 0
+    }
+
+    var shadowsActive: Bool {
+        renderer?.shadowRenders ?? false
+    }
+
+    func refocusGameView() {
+        view.window?.makeFirstResponder(view)
     }
 }

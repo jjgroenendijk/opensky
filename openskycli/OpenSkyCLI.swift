@@ -70,12 +70,13 @@ enum OpenSkyCLI {
             [--footprint-cap-mb <f>]
             [--collision-build-budget-ms <f>]
             [--actor-build-budget-ms <f>]
-            [--animation-budget-ms <f>]
+            [--animation-budget-ms <f>] [--shadow-budget-ms <f>]
                                   Script east + north cell crossings; require
                                   settlement, unload, one build/cell, bounded
                                   physical footprint, collision-build p95,
                                   actor-build p95, exact per-cell actor/animation
-                                  accounting, animation + frame budgets
+                                  accounting, animation + shadow + frame budgets;
+                                  report per-cascade shadow caster culling
       bench --walk-path [--size WxH] [--budget-ms <f>]
             [--max-frames <n>] [--out <file>]
                                   Fixed-step M4 route: terrain + farm stairs,

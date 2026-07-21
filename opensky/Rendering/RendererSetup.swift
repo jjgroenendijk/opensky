@@ -48,11 +48,17 @@ extension Renderer {
         65536
     }
 
-    /// Sun-shadow far bound: 3 exterior cells (4096 units each), matching the
-    /// resident streaming grid. Casters beyond it are un-shadowed by design in
-    /// 7.1.1 (caster-culling refinement is 7.1.2).
+    /// Sun-shadow far bound (high quality): 3 exterior cells (4096 units each),
+    /// matching the resident streaming grid. Casters beyond it are un-shadowed
+    /// by design.
     static var shadowDistance: Float {
         12288
+    }
+
+    /// Low-quality sun-shadow far bound: 2 exterior cells. Shorter range +
+    /// fewer cascades (see shadowCascadeCount) trade shadow reach for cost.
+    static var shadowDistanceLow: Float {
+        8192
     }
 
     /// Light near plane extended backwards (toward the sun) by this many world
