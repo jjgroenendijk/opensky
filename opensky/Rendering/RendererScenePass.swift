@@ -55,7 +55,14 @@ extension Renderer {
             ),
             fogEnabled: fog == nil ? 0 : 1,
             timeOfDayHours: timeOfDay,
-            animationTime: Float(frameIndex) / 60
+            animationTime: Float(frameIndex) / 60,
+            shadowViewProjections: (
+                shadowCascadeMatrix(0), shadowCascadeMatrix(1), shadowCascadeMatrix(2)
+            ),
+            shadowCascadeSplits: shadowCascadeSplitBounds(),
+            cameraForward: freeFlyCamera.forward,
+            shadowsEnabled: shadowsActiveThisFrame ? 1 : 0,
+            shadowInverseResolution: 1 / Float(ShadowConstant.mapResolution.rawValue)
         )
         frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)
@@ -273,6 +280,15 @@ extension Renderer {
             matrices.gpuAddress + UInt64(mesh.boneMatrixOffset(slot: slot)),
             index: BufferIndex.boneMatrices.rawValue
         )
+        prepareBoneMatricesOnce(for: mesh, slot: slot)
+    }
+
+    /// Copies a skinned mesh's palette into this frame's slot at most once —
+    /// the shadow and scene passes both bind skinned casters, but the CPU
+    /// palette is identical across both within one frame, so a second copy is
+    /// pure waste. frameBonePrepared resets at the top of each frame's encode.
+    func prepareBoneMatricesOnce(for mesh: RenderMesh, slot: Int) {
+        guard frameBonePrepared.insert(ObjectIdentifier(mesh)).inserted else { return }
         mesh.prepareBoneMatrices(slot: slot)
     }
 
@@ -428,6 +444,17 @@ extension Renderer {
         argumentTable.setSamplerState(
             sampler.gpuResourceID,
             index: SamplerIndex.trilinear.rawValue
+        )
+        // Bound every frame (even shadows-off) so the fragment shaders' shadow
+        // texture/sampler arguments are always valid for Metal validation; the
+        // shadowsEnabled flag gates whether they are actually sampled.
+        argumentTable.setTexture(
+            shadow.map.gpuResourceID,
+            index: TextureIndex.shadowMap.rawValue
+        )
+        argumentTable.setSamplerState(
+            shadow.sampler.gpuResourceID,
+            index: SamplerIndex.shadowCompare.rawValue
         )
         if scene.sky != nil {
             encoder.setRenderPipelineState(skyPipeline)

@@ -75,10 +75,6 @@ discipline; render items verified offscreen per `probe` skill.
 
 Biggest visual-fidelity gap; renderer currently has none.
 
-* [ ] 7.1.1 Cascaded shadow maps: depth-only pass over static + terrain + skinned
-      actors, cascade split over view frustum, PCF filtering in the mesh/terrain
-      fragment paths. Gate: offscreen A/B (shadows on/off) differs where expected;
-      cascade-selection math unit-tested.
 * [ ] 7.1.2 Streaming + budget + acceptance: per-cascade caster culling limited to
       resident cells, explicit per-frame shadow budget in the fly bench, quality
       setting (off/low/high). Gate: Whiterun fly bench within budget; deterministic

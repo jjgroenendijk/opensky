@@ -141,7 +141,9 @@ extension Renderer {
         if let heap = timestampHeap {
             commandBuffer.writeTimestamp(counterHeap: heap, index: slot * 2)
         }
-        let encoded = encodeScenePass(descriptor: descriptor, slot: slot, projection: projection)
+        let shadowEncoded = encodeShadowPass(slot: slot, projection: projection)
+        let encoded = shadowEncoded
+            && encodeScenePass(descriptor: descriptor, slot: slot, projection: projection)
         if let heap = timestampHeap {
             commandBuffer.writeTimestamp(counterHeap: heap, index: slot * 2 + 1)
         }

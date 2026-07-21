@@ -64,7 +64,8 @@ final class Renderer: NSObject {
         (max(
             MemoryLayout<DrawUniforms>.size,
             MemoryLayout<TerrainDrawUniforms>.size,
-            MemoryLayout<WaterDrawUniforms>.size
+            MemoryLayout<WaterDrawUniforms>.size,
+            MemoryLayout<ShadowDrawUniforms>.size
         )
             + 0xFF) & -0x100
 
@@ -85,6 +86,23 @@ final class Renderer: NSObject {
     let depthState: MTLDepthStencilState
     let waterDepthState: MTLDepthStencilState
     let sampler: MTLSamplerState
+    /// Sun-shadow pipelines + compare sampler + the shared cascade array
+    /// (depth32Float, ShadowConstantCascadeCount slices). The array is created
+    /// once, always resident, and bound at TextureIndexShadowMap every scene
+    /// pass so validation stays clean even with shadows disabled.
+    let shadow: ShadowResources
+    /// User/dev toggle. Default on; the app sidebar and A/B tests flip it.
+    var sunShadowsEnabled = true
+    /// This frame's cascades, produced by encodeShadowPass, consumed by
+    /// updateFrameUniforms. Empty when shadows are off/idle this frame.
+    var shadowCascades: [ShadowCascade] = []
+    /// Whether encodeShadowPass rendered cascades this frame (drives the
+    /// shader's shadowsEnabled flag). Reset every frame.
+    var shadowsActiveThisFrame = false
+    /// Meshes whose bone palette was already copied into this frame's slot —
+    /// shared guard so the shadow + scene pass never double-prepare (RenderMesh
+    /// palette is identical across both passes within one frame).
+    var frameBonePrepared: Set<ObjectIdentifier> = []
     /// Current drawable scene; swapped between frames via setScene.
     private(set) var scene: RenderScene
     /// Injected framing camera — source of the sun/ambient light and the
@@ -134,6 +152,14 @@ final class Renderer: NSObject {
     /// Instances per frame slot of the transform ring — power-of-two
     /// headroom over the scene's instanceCount.
     private(set) var instanceSlotCapacity: Int
+    /// Dedicated shadow-pass rings, parallel to the scene-pass rings so the two
+    /// passes never collide (the scene pass resets its cursors to 0 each
+    /// frame). Same sizing + regrow triggers as their scene-pass twins:
+    /// shadowInstanceBuffer holds every caster once (<= instanceSlotCapacity);
+    /// shadowDrawUniformBuffer holds ShadowConstantCascadeCount slots per
+    /// draw-ring slot (one ShadowDrawUniforms per cascade per drawn caster).
+    private(set) var shadowInstanceBuffer: MTLBuffer
+    private(set) var shadowDrawUniformBuffer: MTLBuffer
     /// Old scene resources + rings possibly referenced by in-flight frames
     /// after a swap; strong refs held until their frames provably drain.
     private var retired: [RetiredAllocations] = []
@@ -198,6 +224,7 @@ final class Renderer: NSObject {
         depthState = try Self.makeDepthState(device: device)
         waterDepthState = try Self.makeWaterDepthState(device: device)
         sampler = try Self.makeSampler(device: device)
+        shadow = try Self.makeShadowResources(device: device)
 
         self.scene = try scene ?? DemoScene.build(device: device)
         let resolvedCamera = camera ?? .demo
@@ -206,23 +233,22 @@ final class Renderer: NSObject {
         walkController = WalkController(cameraPosition: freeFlyCamera.position)
         self.timeOfDay = timeOfDay
         self.input = input
-        frameUniformBuffer = try Self.makeUniformBuffer(
-            device: device,
-            length: Self.alignedFrameUniformsSize * Self.maxFramesInFlight,
-            label: "FrameUniforms"
-        )
+        frameUniformBuffer = try Self.makeFrameUniformBuffer(device: device)
         let rings = try Self.makeSceneRings(device: device, scene: self.scene)
         drawUniformBuffer = rings.drawBuffer
         pointLightBuffer = rings.pointLightBuffer
         drawUniformSlotCapacity = rings.drawCapacity
         instanceTransformBuffer = rings.instanceBuffer
         instanceSlotCapacity = rings.instanceCapacity
+        shadowDrawUniformBuffer = rings.shadowDrawBuffer
+        shadowInstanceBuffer = rings.shadowInstanceBuffer
 
         residencySet = try Self.makeResidencySet(
             device: device,
             allocations: [
                 frameUniformBuffer, drawUniformBuffer, pointLightBuffer,
-                instanceTransformBuffer
+                instanceTransformBuffer, shadowDrawUniformBuffer, shadowInstanceBuffer,
+                shadow.map
             ]
                 + self.scene.residencyAllocations
         )
@@ -241,171 +267,6 @@ final class Renderer: NSObject {
         heapDescriptor.type = .timestamp
         heapDescriptor.count = 2 * maxFramesInFlight
         return try? device.makeCounterHeap(descriptor: heapDescriptor)
-    }
-
-    /// Ring slots per frame for `count` draws: next power of two, min 1 —
-    /// headroom so the per-cell-crossing swaps of streaming rarely realloc.
-    static func slotCapacity(for count: Int) -> Int {
-        count <= 1 ? 1 : 1 << (Int.bitWidth - (count - 1).leadingZeroBitCount)
-    }
-
-    /// Scene-sized GPU rings: per-group uniform ring + per-instance
-    /// transform ring, both with slotCapacity headroom.
-    struct SceneRings {
-        let drawBuffer: MTLBuffer
-        let pointLightBuffer: MTLBuffer
-        let drawCapacity: Int
-        let instanceBuffer: MTLBuffer
-        let instanceCapacity: Int
-    }
-
-    /// Allocates both rings for a scene — shared by init and the regrow
-    /// path in setScene (identical sizing policy in one place).
-    static func makeSceneRings(device: MTLDevice, scene: RenderScene) throws -> SceneRings {
-        let drawCapacity = slotCapacity(for: scene.drawCount)
-        let instanceCapacity = slotCapacity(for: scene.instanceCount)
-        return try SceneRings(
-            drawBuffer: makeUniformBuffer(
-                device: device,
-                length: alignedDrawUniformsSize * drawCapacity * maxFramesInFlight,
-                label: "DrawUniforms"
-            ),
-            pointLightBuffer: makeUniformBuffer(
-                device: device,
-                length: MemoryLayout<PointLightUniform>.stride
-                    * LightingConstant.maxPointLights.rawValue
-                    * drawCapacity * maxFramesInFlight,
-                label: "PointLights"
-            ),
-            drawCapacity: drawCapacity,
-            instanceBuffer: makeUniformBuffer(
-                device: device,
-                length: MemoryLayout<InstanceTransform>.stride
-                    * instanceCapacity * maxFramesInFlight,
-                label: "InstanceTransforms"
-            ),
-            instanceCapacity: instanceCapacity
-        )
-    }
-
-    // MARK: - Scene swap (cell streaming)
-
-    /// Replaces the drawable scene between frames; optional `camera`
-    /// reseeds sun/ambient and the free-fly pose (a first real scene after
-    /// an empty launch scene needs a framing pose).
-    ///
-    /// Threading: must run on the thread that drives draw(in:) /
-    /// renderOffscreen — the main thread. The renderer has no internal
-    /// locking; "between frames" is guaranteed by that shared thread. The
-    /// GPU may still be executing frames that reference the OLD scene:
-    /// those resources go on the retire list instead of being released or
-    /// evicted here — this method never blocks on the GPU.
-    func setScene(_ newScene: RenderScene, camera newCamera: SceneCamera? = nil) throws {
-        purgeRetiredResources()
-        // Prepare every fallible allocation before mutating live renderer
-        // state. Allocation failure leaves old scene + rings intact.
-        var nextDrawBuffer = drawUniformBuffer
-        var nextPointLightBuffer = pointLightBuffer
-        var nextDrawCapacity = drawUniformSlotCapacity
-        if newScene.drawCount > drawUniformSlotCapacity {
-            nextDrawCapacity = Self.slotCapacity(for: newScene.drawCount)
-            nextDrawBuffer = try Self.makeUniformBuffer(
-                device: device,
-                length: Self.alignedDrawUniformsSize
-                    * nextDrawCapacity * Self.maxFramesInFlight,
-                label: "DrawUniforms"
-            )
-            nextPointLightBuffer = try Self.makeUniformBuffer(
-                device: device,
-                length: MemoryLayout<PointLightUniform>.stride
-                    * LightingConstant.maxPointLights.rawValue
-                    * nextDrawCapacity * Self.maxFramesInFlight,
-                label: "PointLights"
-            )
-        }
-        var nextInstanceBuffer = instanceTransformBuffer
-        var nextInstanceCapacity = instanceSlotCapacity
-        if newScene.instanceCount > instanceSlotCapacity {
-            nextInstanceCapacity = Self.slotCapacity(for: newScene.instanceCount)
-            nextInstanceBuffer = try Self.makeUniformBuffer(
-                device: device,
-                length: MemoryLayout<InstanceTransform>.stride
-                    * nextInstanceCapacity * Self.maxFramesInFlight,
-                label: "InstanceTransforms"
-            )
-        }
-
-        // Old scene allocations retire as a whole; anything the new scene
-        // shares with it is filtered out at purge time (live-set check in
-        // purgeRetiredResources), not here — simpler and equally correct.
-        var retiring = scene.residencyAllocations
-        scene = newScene
-        if let newCamera {
-            camera = newCamera
-            reseedMovement(camera: newCamera)
-        }
-        if nextDrawBuffer !== drawUniformBuffer {
-            // Old ring may back in-flight frames — retire, never reuse.
-            retiring.append(drawUniformBuffer)
-            retiring.append(pointLightBuffer)
-            drawUniformBuffer = nextDrawBuffer
-            pointLightBuffer = nextPointLightBuffer
-            drawUniformSlotCapacity = nextDrawCapacity
-            residencySet.addAllocations([nextDrawBuffer, nextPointLightBuffer])
-        }
-        if nextInstanceBuffer !== instanceTransformBuffer {
-            retiring.append(instanceTransformBuffer)
-            instanceTransformBuffer = nextInstanceBuffer
-            instanceSlotCapacity = nextInstanceCapacity
-            residencySet.addAllocations([nextInstanceBuffer])
-        }
-        residencySet.addAllocations(newScene.residencyAllocations)
-        residencySet.commit()
-        // Frames < frameIndex are committed; the newest (frameIndex - 1) is
-        // the last that can reference the old resources.
-        retired.append(RetiredAllocations(
-            lastFrameIndex: UInt64(frameIndex - 1),
-            allocations: retiring
-        ))
-    }
-
-    /// Drops retire-list entries whose frames provably drained
-    /// (endFrameEvent.signaledValue >= tag), removing their allocations
-    /// from the residency set. MTLResidencySet membership is a plain set —
-    /// no reference counting, and removals take effect at commit() even if
-    /// queued frames still reference the allocation — so removal must wait
-    /// for the drain proof, and must skip anything the CURRENT scene or
-    /// rings also use (swap A -> B -> A, or adjacent cells sharing
-    /// meshes/textures: the shared allocation is both retired and live).
-    /// Called opportunistically from draw(in:) and setScene.
-    func purgeRetiredResources() {
-        guard !retired.isEmpty else { return }
-        let drained = endFrameEvent.signaledValue
-        var ready: [MTLAllocation] = []
-        retired.removeAll { entry in
-            guard entry.lastFrameIndex <= drained else { return false }
-            ready.append(contentsOf: entry.allocations)
-            return true
-        }
-        guard !ready.isEmpty else { return }
-        var live = Set(scene.residencyAllocations.map(ObjectIdentifier.init))
-        live.insert(ObjectIdentifier(frameUniformBuffer))
-        live.insert(ObjectIdentifier(drawUniformBuffer))
-        live.insert(ObjectIdentifier(pointLightBuffer))
-        live.insert(ObjectIdentifier(instanceTransformBuffer))
-        // A drained A entry may share an allocation with undrained B. Keep
-        // that allocation resident until every retired frame using it drains.
-        for entry in retired {
-            live.formUnion(entry.allocations.map(ObjectIdentifier.init))
-        }
-        var seen = Set<ObjectIdentifier>()
-        let removable = ready.filter { allocation in
-            let id = ObjectIdentifier(allocation)
-            return !live.contains(id) && seen.insert(id).inserted
-        }
-        guard !removable.isEmpty else { return }
-        residencySet.removeAllocations(removable)
-        residencySet.commit()
     }
 }
 
@@ -442,5 +303,172 @@ extension Renderer {
     func resolveTimestamps(slot: Int) -> (start: UInt64, end: UInt64)? {
         guard frameIndex >= 2 * Self.maxFramesInFlight else { return nil }
         return readTimestampPair(slot: slot)
+    }
+}
+
+// MARK: - Scene swap (cell streaming)
+
+/// Same-file extension (private-member access): the scene-swap machinery moved
+/// off the class body to keep it under the length limit, but still reads the
+/// renderer's private rings + retire list.
+extension Renderer {
+    /// Replaces the drawable scene between frames; optional `camera` reseeds
+    /// sun/ambient and the free-fly pose (a first real scene after an empty
+    /// launch scene needs a framing pose).
+    ///
+    /// Threading: must run on the thread that drives draw(in:) /
+    /// renderOffscreen — the main thread. The renderer has no internal locking;
+    /// "between frames" is guaranteed by that shared thread. The GPU may still
+    /// be executing frames that reference the OLD scene: those resources go on
+    /// the retire list instead of being released here — never blocks the GPU.
+    func setScene(_ newScene: RenderScene, camera newCamera: SceneCamera? = nil) throws {
+        purgeRetiredResources()
+        // Allocate every fallible buffer before mutating live state; a failure
+        // leaves the old scene + rings intact.
+        let newDraw = try regrownDrawRing(for: newScene.drawCount)
+        let newInstance = try regrownInstanceRing(for: newScene.instanceCount)
+        // Old scene allocations retire as a whole; anything the new scene
+        // shares is filtered out at purge time (live-set check), not here.
+        var retiring = scene.residencyAllocations
+        scene = newScene
+        if let newCamera {
+            camera = newCamera
+            reseedMovement(camera: newCamera)
+        }
+        if let newDraw {
+            adoptDrawRing(newDraw, retiring: &retiring)
+        }
+        if let newInstance {
+            adoptInstanceRing(newInstance, retiring: &retiring)
+        }
+        residencySet.addAllocations(newScene.residencyAllocations)
+        residencySet.commit()
+        // Frames < frameIndex are committed; the newest (frameIndex - 1) is the
+        // last that can reference the old resources.
+        retired.append(RetiredAllocations(
+            lastFrameIndex: UInt64(frameIndex - 1),
+            allocations: retiring
+        ))
+    }
+
+    /// Replacement draw-side rings (draw + point-light + shadow-draw), sized to
+    /// the new draw count. nil when the current rings already fit.
+    private struct DrawRingRegrow {
+        let draw: MTLBuffer
+        let pointLight: MTLBuffer
+        let shadowDraw: MTLBuffer
+        let capacity: Int
+    }
+
+    /// Replacement instance-side rings (scene + shadow), sized to the new
+    /// instance count. nil when the current rings already fit.
+    private struct InstanceRingRegrow {
+        let instance: MTLBuffer
+        let shadowInstance: MTLBuffer
+        let capacity: Int
+    }
+
+    private func regrownDrawRing(for drawCount: Int) throws -> DrawRingRegrow? {
+        guard drawCount > drawUniformSlotCapacity else { return nil }
+        let capacity = Self.slotCapacity(for: drawCount)
+        return try DrawRingRegrow(
+            draw: Self.makeUniformBuffer(
+                device: device,
+                length: Self.alignedDrawUniformsSize * capacity * Self.maxFramesInFlight,
+                label: "DrawUniforms"
+            ),
+            pointLight: Self.makeUniformBuffer(
+                device: device,
+                length: MemoryLayout<PointLightUniform>.stride
+                    * LightingConstant.maxPointLights.rawValue
+                    * capacity * Self.maxFramesInFlight,
+                label: "PointLights"
+            ),
+            shadowDraw: Self.makeUniformBuffer(
+                device: device,
+                length: Self.alignedDrawUniformsSize
+                    * Self.shadowDrawCapacity(capacity) * Self.maxFramesInFlight,
+                label: "ShadowDrawUniforms"
+            ),
+            capacity: capacity
+        )
+    }
+
+    private func regrownInstanceRing(for instanceCount: Int) throws -> InstanceRingRegrow? {
+        guard instanceCount > instanceSlotCapacity else { return nil }
+        let capacity = Self.slotCapacity(for: instanceCount)
+        let length = MemoryLayout<InstanceTransform>.stride * capacity * Self.maxFramesInFlight
+        return try InstanceRingRegrow(
+            instance: Self.makeUniformBuffer(
+                device: device, length: length, label: "InstanceTransforms"
+            ),
+            shadowInstance: Self.makeUniformBuffer(
+                device: device, length: length, label: "ShadowInstanceTransforms"
+            ),
+            capacity: capacity
+        )
+    }
+
+    /// Swaps in the new draw-side rings, retiring the old ones (they may back
+    /// in-flight frames) and adding the new ones to the residency set.
+    private func adoptDrawRing(_ ring: DrawRingRegrow, retiring: inout [MTLAllocation]) {
+        retiring.append(drawUniformBuffer)
+        retiring.append(pointLightBuffer)
+        retiring.append(shadowDrawUniformBuffer)
+        drawUniformBuffer = ring.draw
+        pointLightBuffer = ring.pointLight
+        shadowDrawUniformBuffer = ring.shadowDraw
+        drawUniformSlotCapacity = ring.capacity
+        residencySet.addAllocations([ring.draw, ring.pointLight, ring.shadowDraw])
+    }
+
+    private func adoptInstanceRing(_ ring: InstanceRingRegrow, retiring: inout [MTLAllocation]) {
+        retiring.append(instanceTransformBuffer)
+        retiring.append(shadowInstanceBuffer)
+        instanceTransformBuffer = ring.instance
+        shadowInstanceBuffer = ring.shadowInstance
+        instanceSlotCapacity = ring.capacity
+        residencySet.addAllocations([ring.instance, ring.shadowInstance])
+    }
+
+    /// Drops retire-list entries whose frames provably drained
+    /// (endFrameEvent.signaledValue >= tag), removing their allocations from
+    /// the residency set. MTLResidencySet membership is a plain set — removals
+    /// take effect at commit() even if queued frames still reference the
+    /// allocation — so removal waits for the drain proof, and must skip
+    /// anything the CURRENT scene or rings also use (swap A -> B -> A, or
+    /// adjacent cells sharing meshes: the allocation is both retired and live).
+    /// Called opportunistically from draw(in:) and setScene.
+    func purgeRetiredResources() {
+        guard !retired.isEmpty else { return }
+        let drained = endFrameEvent.signaledValue
+        var ready: [MTLAllocation] = []
+        retired.removeAll { entry in
+            guard entry.lastFrameIndex <= drained else { return false }
+            ready.append(contentsOf: entry.allocations)
+            return true
+        }
+        guard !ready.isEmpty else { return }
+        var live = Set(scene.residencyAllocations.map(ObjectIdentifier.init))
+        live.insert(ObjectIdentifier(frameUniformBuffer))
+        live.insert(ObjectIdentifier(drawUniformBuffer))
+        live.insert(ObjectIdentifier(pointLightBuffer))
+        live.insert(ObjectIdentifier(instanceTransformBuffer))
+        live.insert(ObjectIdentifier(shadowDrawUniformBuffer))
+        live.insert(ObjectIdentifier(shadowInstanceBuffer))
+        live.insert(ObjectIdentifier(shadow.map))
+        // A drained A entry may share an allocation with undrained B. Keep that
+        // allocation resident until every retired frame using it drains.
+        for entry in retired {
+            live.formUnion(entry.allocations.map(ObjectIdentifier.init))
+        }
+        var seen = Set<ObjectIdentifier>()
+        let removable = ready.filter { allocation in
+            let id = ObjectIdentifier(allocation)
+            return !live.contains(id) && seen.insert(id).inserted
+        }
+        guard !removable.isEmpty else { return }
+        residencySet.removeAllocations(removable)
+        residencySet.commit()
     }
 }

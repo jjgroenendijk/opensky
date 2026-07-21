@@ -19,6 +19,7 @@ final class CameraInputState {
     private var pendingLookUp: Float = 0
     private var activationRequested = false
     private var walkToggleRequested = false
+    private var shadowToggleRequested = false
 
     func press(_ key: MoveKey) {
         pressed.insert(key)
@@ -54,6 +55,16 @@ final class CameraInputState {
         walkToggleRequested = true
     }
 
+    /// Latches one sun-shadow on/off toggle (dev verification surface).
+    func requestShadowToggle() {
+        shadowToggleRequested = true
+    }
+
+    func consumeShadowToggle() -> Bool {
+        defer { shadowToggleRequested = false }
+        return shadowToggleRequested
+    }
+
     /// Clears all held state — call on capture loss / focus loss so keys do not
     /// stick after the window stops receiving key-up events.
     func releaseAll() {
@@ -63,6 +74,7 @@ final class CameraInputState {
         pendingLookUp = 0
         activationRequested = false
         walkToggleRequested = false
+        shadowToggleRequested = false
     }
 
     /// Snapshots the frame's input and drains accumulated pointer deltas.
