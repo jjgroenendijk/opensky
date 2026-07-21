@@ -283,7 +283,9 @@ fragment float4 staticMeshFragment(
     }
     float3 normal = normalize(in.normal);
     float lambert = saturate(dot(normal, -frame.sunDirection));
-    float shadow = sunShadowFactor(in.worldPosition, frame, shadowMap, shadowSampler);
+    float shadow = draw.receivesShadows != 0
+                       ? sunShadowFactor(in.worldPosition, frame, shadowMap, shadowSampler)
+                       : 1.0;
     float3 illumination =
         frame.sunColor * lambert * shadow + frame.ambientColor + directionalAmbient(normal, frame) +
         pointLighting(in.worldPosition, normal, pointLights, draw.pointLightCount);

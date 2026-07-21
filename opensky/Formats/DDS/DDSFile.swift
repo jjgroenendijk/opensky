@@ -1,6 +1,6 @@
 // DDS (DirectDraw Surface) texture container for Skyrim SE textures:
 // magic, DDS_HEADER, optional DDS_HEADER_DXT10, then a tightly packed mip
-// chain. Reads 2D BC1-BC5/BC7 plus legacy 32-bit xRGB8888/RGBA8888;
+// chain. Reads 2D BC1-BC5/BC7 plus legacy 32-bit xRGB8888/RGBA8888/BGRA8888;
 // cubemaps, volumes and arrays throw `unsupported`.
 //
 // Reference: Microsoft DDS programming guide
@@ -27,12 +27,13 @@ nonisolated enum DDSPixelFormat: UInt32 {
     case bc4 = 80 // DXGI_FORMAT_BC4_UNORM, FourCC "ATI1"/"BC4U"
     case bc5 = 83 // DXGI_FORMAT_BC5_UNORM, FourCC "ATI2"/"BC5U"
     case rgba8888 = 28 // DXGI_FORMAT_R8G8B8A8_UNORM, legacy DDPF_RGB header
+    case bgra8888 = 87 // DXGI_FORMAT_B8G8R8A8_UNORM, legacy DDPF_RGB header
     case xrgb8888 = 88 // DXGI_FORMAT_B8G8R8X8_UNORM, legacy DDPF_RGB header
     case bc7 = 98 // DXGI_FORMAT_BC7_UNORM, DX10 header only
 
     var isBlockCompressed: Bool {
         switch self {
-        case .rgba8888, .xrgb8888: false
+        case .rgba8888, .bgra8888, .xrgb8888: false
         default: true
         }
     }
@@ -47,7 +48,7 @@ nonisolated enum DDSPixelFormat: UInt32 {
         switch self {
         case .bc1, .bc4: 8
         case .bc2, .bc3, .bc5, .bc7: 16
-        case .rgba8888, .xrgb8888: 4
+        case .rgba8888, .bgra8888, .xrgb8888: 4
         }
     }
 }
@@ -74,6 +75,10 @@ nonisolated struct DDSFile {
         static let rgbaGreenMask: UInt32 = 0x0000_FF00
         static let rgbaBlueMask: UInt32 = 0x00FF_0000
         static let rgbaAlphaMask: UInt32 = 0xFF00_0000
+        static let bgraRedMask: UInt32 = 0x00FF_0000
+        static let bgraGreenMask: UInt32 = 0x0000_FF00
+        static let bgraBlueMask: UInt32 = 0x0000_00FF
+        static let bgraAlphaMask: UInt32 = 0xFF00_0000
         // DDS_HEADER.dwCaps2
         static let capsCubemap: UInt32 = 0x200 // DDSCAPS2_CUBEMAP
         static let capsVolume: UInt32 = 0x200000 // DDSCAPS2_VOLUME
@@ -210,7 +215,9 @@ nonisolated struct DDSFile {
             alphaMask: reader.readUInt32()
         )
     }
+}
 
+nonisolated extension DDSFile {
     private static func resolveUncompressedFormat(header: Header) throws -> DDSPixelFormat {
         let pixelFormat = header.pixelFormat
         let xrgbFlags = Layout.flagRGB
@@ -233,7 +240,12 @@ nonisolated struct DDSFile {
             && pixelFormat.greenMask == Layout.rgbaGreenMask
             && pixelFormat.blueMask == Layout.rgbaBlueMask
             && pixelFormat.alphaMask == Layout.rgbaAlphaMask
-        guard isXRGB || isRGBA else {
+        let isBGRA = pixelFormat.flags == rgbaFlags
+            && pixelFormat.redMask == Layout.bgraRedMask
+            && pixelFormat.greenMask == Layout.bgraGreenMask
+            && pixelFormat.blueMask == Layout.bgraBlueMask
+            && pixelFormat.alphaMask == Layout.bgraAlphaMask
+        guard isXRGB || isRGBA || isBGRA else {
             throw DDSError.unsupported("uncompressed RGB channel masks")
         }
 
@@ -250,7 +262,10 @@ nonisolated struct DDSFile {
                 "uncompressed pitch \(header.pitchOrLinearSize) != expected \(expectedPitch)"
             )
         }
-        return isXRGB ? .xrgb8888 : .rgba8888
+        if isXRGB {
+            return .xrgb8888
+        }
+        return isBGRA ? .bgra8888 : .rgba8888
     }
 
     /// FourCC -> format; "DX10" pulls the format out of DDS_HEADER_DXT10 and

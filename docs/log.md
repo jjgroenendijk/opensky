@@ -20,13 +20,27 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   `alphaProperty`. Spec: NifTools nif.xml, cited per file. Docs:
   [/formats/nif-particles.md](/formats/nif-particles.md) + BSEffectShaderProperty
   section in [/formats/nif.md](/formats/nif.md). Tests: `NIFParticleTests` (12)
-  * `NIFEffectShaderTests` (8), synthetic fixtures. Gate passed
+  plus `NIFEffectShaderTests` (8), synthetic fixtures. Gate passed
   (`ParticleRealDataTests`, env-gated): Whiterun sweep (WhiterunWorld grid +
   Tamriel home cell) = 283 referenced models, 11 particle-bearing, 23 systems,
   23 effect shaders + 23 alpha properties resolved, 0 decode failures
   (`logs/particle-sweep.log`); broader probe: 109 vanilla effect NIFs, 216
   systems, 2347 modifiers, 0 throws. UI deferred to M7.3.2 particles controls
   (first visible consumer).
+* Issue #62 tree LOD + configured distances complete. Typed read-only INI layer merges
+  Skyrim defaults/prefs/custom files with malformed-value fallback; four validated
+  `[TerrainManager]` values drive contiguous L4/L8/L16/L32 selection + tree radius.
+  `World > Environment > Distant LOD` exposes only those live settings, applies/rebuilds
+  immediately, reports source, and resets to Skyrim INI. Defensive xEdit-cited LST/BTT
+  parsers + generated crossed-plane atlas billboards join normal model/texture
+  cache/residency/eviction; exact world-space tree radius rejects diagonal overdraw,
+  optional malformed blocks degrade with accounting. Tree LOD stays inside resident cells
+  until full `TREE` rendering exists -> no near-grid hole. Vanilla Tamriel sweep: 3,060 BTR,
+  717 BTO, 34 tree types, 329 BTT/40,839 refs, 0 failed. Whiterun 5x5 offscreen: 121
+  terrain/object blocks + 9 available tree blocks/2 radius-valid trees; focused cell: 131
+  blocks + 9 tree blocks/35 trees. Both 100% non-background. Docs:
+  [INI](/formats/ini.md), [LOD format](/formats/lod.md),
+  [distant LOD](/engine/distant-lod.md), [CLI](/tools/cli.md).
 * M7.2.3 weather-core acceptance -- M7.2 data-driven weather core complete. Live
   XCLR region feed: `CellScene.regions` carries the built cell's XCLR set,
   `CellStreamer.onCenterRegionsChanged` fires when the resident exterior center

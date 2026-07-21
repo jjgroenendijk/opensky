@@ -186,8 +186,9 @@ final class CellStreamer {
         let resolved = core.resident.union(core.void).union(core.failed)
         guard resolved.isSuperset(of: grid.desiredCells) else { return }
         guard requestedLODCenter != grid.center else { return }
-        requestedLODCenter = grid.center
-        runner.enqueueDistantLOD(center: grid.center, hiddenCells: core.resident)
+        if runner.enqueueDistantLOD(center: grid.center, hiddenCells: core.resident) {
+            requestedLODCenter = grid.center
+        }
     }
 
     /// Drops unloaded cells from the composition and schedules eviction of the
@@ -418,6 +419,12 @@ extension CellStreamer {
 }
 
 extension CellStreamer {
+    /// Requests a fresh ring for current center. If a build is already in
+    /// flight, requestDistantLODIfNeeded retries until runner accepts it.
+    func invalidateDistantLOD() {
+        requestedLODCenter = nil
+    }
+
     // MARK: - Inspection (streaming verification + tests)
 
     /// Grid slots that reached a terminal state: resident + void + failed.

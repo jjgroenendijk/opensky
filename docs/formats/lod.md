@@ -1,9 +1,9 @@
 ---
 type: File Format
 title: Skyrim SE distant LOD
-description: lodsettings, terrain BTR, object BTO, NIF block layouts, paths, and probe evidence.
-tags: [format, lod, terrain, nif, rendering]
-timestamp: 2026-07-18T00:00:00Z
+description: lodsettings, terrain BTR, object BTO, tree LST/BTT layouts, and probe evidence.
+tags: [format, lod, terrain, tree, nif, rendering]
+timestamp: 2026-07-21T00:00:00Z
 ---
 
 # Skyrim SE distant LOD
@@ -112,6 +112,46 @@ SSE `BSSubIndexTriShape` = complete `BSTriShape` payload, then:
 Segment metadata is decoded + validated; current renderer draws complete shape. Particle-copy
 bytes in inherited `BSTriShape` are skipped by declared size before segment decode.
 
+## Tree LST + BTT
+
+Traditional tree LOD uses one type list, one atlas, and L4 placement blocks:
+
+```text
+meshes/terrain/<ws>/trees/<ws>.lst
+meshes/terrain/<ws>/trees/<ws>.4.<x>.<y>.btt
+textures/terrain/<ws>/trees/<ws>treelod.dds
+```
+
+xEdit `TwbLodTES5TreeType.LoadFromData` defines LST as int32 count followed by 32-byte
+records:
+
+| bytes | type | field |
+| ---: | --- | --- |
+| 4 | int32 | stable type index referenced by BTT |
+| 4 + 4 | float32 | billboard width, height |
+| 4 x 4 | float32 | atlas UV min X/Y, max X/Y |
+| 4 | uint32 | retained opaque metadata |
+
+`TwbLodTES5TreeBlock.LoadFromData` defines BTT as int32 group count. Each group starts with
+int32 type index + int32 reference count, then 32-byte references:
+
+| bytes | type | field |
+| ---: | --- | --- |
+| 12 | float32 x3 | world position |
+| 4 | float32 | rotation about +Z, radians |
+| 4 | float32 | uniform scale |
+| 4 | uint32 | source FormID |
+| 8 | uint32 x2 | retained opaque metadata |
+
+Parser rejects impossible counts, non-finite/invalid dimensions and transforms, duplicate
+LST indices, unknown BTT type indices, and trailing bytes. Atlas UVs may bleed slightly
+outside 0...1; vanilla padding does, so validation requires finite ordered bounds only.
+
+DynDOLOD's [Tree LOD](https://dyndolod.info/Help/Tree-LOD) description confirms traditional
+billboards are two double-sided planes intersecting at 90 degrees. OpenSky generates those
+planes at runtime from LST dimensions/UVs, alpha-tests atlas pixels, then places them using
+BTT transform data. Generated models remain normal mesh/texture cache entries.
+
 ## Probe evidence
 
 Repeatable command:
@@ -120,5 +160,6 @@ Repeatable command:
 make run-cli ARGS="lod --worldspace Tamriel"
 ```
 
-2026-07-18 vanilla AE install: 3,060 `.btr` + 717 `.bto`; every container parsed, every
-LOD-specific block decoded, every scene flattened; 0 failures. No files were extracted.
+2026-07-21 vanilla AE install: 3,060 `.btr` + 717 `.bto`, plus 34 LST types + 329 `.btt`
+blocks + 40,839 tree refs. Every container parsed, every BTT type resolved, every
+LOD-specific NIF block decoded, every scene flattened; 0 failures. No files were extracted.

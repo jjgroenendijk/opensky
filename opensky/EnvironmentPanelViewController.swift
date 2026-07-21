@@ -21,6 +21,13 @@ protocol ShadowControlProviding: AnyObject {
     func refocusGameView()
 }
 
+@MainActor
+protocol TerrainLODControlProviding: AnyObject {
+    var terrainLODConfigurationSnapshot: TerrainLODConfigurationSnapshot { get }
+    func applyTerrainLODConfiguration(_ configuration: TerrainLODConfiguration) -> Bool
+    func resetTerrainLODConfiguration()
+}
+
 /// Renderer-facing weather surface the Environment panel drives (M7.2.2):
 /// force/inspect the exterior weather runtime without touching CLI or code.
 /// A nil renderer / no weather data degrades to an empty list + calm readout.
@@ -44,10 +51,11 @@ protocol WeatherControlProviding: AnyObject {
 final class EnvironmentPanelViewController: NSViewController {
     /// Live renderer bridge. Weak: the game controller owns this panel's parent
     /// and the renderer, so the panel must not retain back into that graph.
-    weak var provider: (any ShadowControlProviding)? {
+    weak var provider: (any ShadowControlProviding & TerrainLODControlProviding)? {
         didSet {
             guard isViewLoaded else { return }
             syncQualitySelection()
+            syncLODFields()
             refreshStats()
         }
     }
@@ -73,6 +81,11 @@ final class EnvironmentPanelViewController: NSViewController {
     )
     private let timeLabel = NSTextField(labelWithString: "")
     private let statsLabel = NSTextField(wrappingLabelWithString: "")
+    private let level0Field = NSTextField()
+    private let level1Field = NSTextField()
+    private let maximumField = NSTextField()
+    private let treeField = NSTextField()
+    private let lodStatusLabel = NSTextField(wrappingLabelWithString: "")
     private var statsTimer: Timer?
     /// "Auto" sentinel title for automatic weather selection.
     private static let autoWeatherTitle = "Auto"
@@ -115,7 +128,7 @@ final class EnvironmentPanelViewController: NSViewController {
         note.textColor = .tertiaryLabelColor
         note.widthAnchor.constraint(equalToConstant: 272).isActive = true
 
-        let stack = NSStackView(views: [
+        let shadowViews: [NSView] = [
             Self.heading("Environment"),
             Self.caption("Sun shadows"),
             qualityControl,
@@ -126,7 +139,8 @@ final class EnvironmentPanelViewController: NSViewController {
             timeLabel,
             statsLabel,
             note
-        ])
+        ]
+        let stack = NSStackView(views: shadowViews + makeLODViews())
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 8
@@ -141,9 +155,44 @@ final class EnvironmentPanelViewController: NSViewController {
         view = root
     }
 
+    private func makeLODViews() -> [NSView] {
+        configureDistanceField(level0Field, identifier: "LODLevel0DistanceField")
+        configureDistanceField(level1Field, identifier: "LODLevel1DistanceField")
+        configureDistanceField(maximumField, identifier: "LODMaximumDistanceField")
+        configureDistanceField(treeField, identifier: "LODTreeDistanceField")
+        lodStatusLabel.font = .systemFont(ofSize: 11)
+        lodStatusLabel.textColor = .secondaryLabelColor
+        lodStatusLabel.widthAnchor.constraint(equalToConstant: 272).isActive = true
+
+        let applyButton = NSButton(
+            title: "Apply",
+            target: self,
+            action: #selector(applyLODDistances)
+        )
+        applyButton.setAccessibilityIdentifier("LODApplyButton")
+        let resetButton = NSButton(
+            title: "Use Skyrim INI",
+            target: self,
+            action: #selector(resetLODDistances)
+        )
+        resetButton.setAccessibilityIdentifier("LODResetButton")
+        let buttons = NSStackView(views: [resetButton, applyButton])
+        buttons.orientation = .horizontal
+        return [
+            Self.caption("Distant LOD (world units)"),
+            Self.distanceRow("L4 maximum", field: level0Field),
+            Self.distanceRow("L8 maximum", field: level1Field),
+            Self.distanceRow("Far maximum", field: maximumField),
+            Self.distanceRow("Trees", field: treeField),
+            buttons,
+            lodStatusLabel
+        ]
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         syncQualitySelection()
+        syncLODFields()
         syncWeatherMenu()
         syncTimeOfDay()
         refreshStats()
@@ -181,6 +230,17 @@ final class EnvironmentPanelViewController: NSViewController {
         qualityControl.selectItem(at: idx)
     }
 
+    private func syncLODFields() {
+        guard let snapshot = provider?.terrainLODConfigurationSnapshot else { return }
+        let configuration = snapshot.configuration
+        level0Field.stringValue = Self.distanceString(configuration.level0Distance)
+        level1Field.stringValue = Self.distanceString(configuration.level1Distance)
+        maximumField.stringValue = Self.distanceString(configuration.maximumDistance)
+        treeField.stringValue = Self.distanceString(configuration.treeLoadDistance)
+        lodStatusLabel.textColor = .secondaryLabelColor
+        lodStatusLabel.stringValue = "Source: \(snapshot.source). Apply rebuilds LOD live."
+    }
+
     @objc private func qualityChanged() {
         let idx = qualityControl.indexOfSelectedItem
         guard qualities.indices.contains(idx) else { return }
@@ -189,6 +249,43 @@ final class EnvironmentPanelViewController: NSViewController {
         // Popup interaction grabbed first responder; hand it back so the game
         // view keeps receiving WASD/look without a manual click.
         provider?.refocusGameView()
+    }
+}
+
+extension EnvironmentPanelViewController {
+    @objc private func applyLODDistances() {
+        guard
+            let level0 = Float(level0Field.stringValue),
+            let level1 = Float(level1Field.stringValue),
+            let maximum = Float(maximumField.stringValue),
+            let tree = Float(treeField.stringValue)
+        else {
+            showLODError("Enter numeric distances.")
+            return
+        }
+        let configuration = TerrainLODConfiguration(
+            level0Distance: level0,
+            level1Distance: level1,
+            maximumDistance: maximum,
+            treeLoadDistance: tree
+        )
+        guard provider?.applyTerrainLODConfiguration(configuration) == true else {
+            showLODError("Require 0 < L4 <= L8 <= Far; Trees > 0.")
+            return
+        }
+        syncLODFields()
+        provider?.refocusGameView()
+    }
+
+    @objc private func resetLODDistances() {
+        provider?.resetTerrainLODConfiguration()
+        syncLODFields()
+        provider?.refocusGameView()
+    }
+
+    private func showLODError(_ message: String) {
+        lodStatusLabel.textColor = .systemRed
+        lodStatusLabel.stringValue = message
     }
 
     /// Rebuilds the weather popup (Auto + selectable editor IDs) and selects
@@ -291,6 +388,30 @@ final class EnvironmentPanelViewController: NSViewController {
         let label = NSTextField(labelWithString: text)
         label.font = .systemFont(ofSize: 12)
         return label
+    }
+
+    private func configureDistanceField(
+        _ field: NSTextField,
+        identifier: String
+    ) {
+        field.alignment = .right
+        field.font = .monospacedDigitSystemFont(ofSize: 12, weight: .regular)
+        field.widthAnchor.constraint(equalToConstant: 105).isActive = true
+        field.setAccessibilityIdentifier(identifier)
+    }
+
+    private static func distanceRow(_ label: String, field: NSTextField) -> NSStackView {
+        let caption = NSTextField(labelWithString: label)
+        caption.widthAnchor.constraint(equalToConstant: 145).isActive = true
+        let row = NSStackView(views: [caption, field])
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = 8
+        return row
+    }
+
+    private static func distanceString(_ value: Float) -> String {
+        String(format: "%.0f", value)
     }
 
     private static func title(for quality: ShadowQuality) -> String {

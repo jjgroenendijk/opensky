@@ -99,13 +99,16 @@ enum DDSFixture {
         if format == .rgba8888 {
             return rgba8888File(width: width, height: height, mipCount: mipCount)
         }
+        if format == .bgra8888 {
+            return bgra8888File(width: width, height: height, mipCount: mipCount)
+        }
         let fourCC = switch format {
         case .bc1: "DXT1"
         case .bc2: "DXT3"
         case .bc3: "DXT5"
         case .bc4: "ATI1"
         case .bc5: "ATI2"
-        case .rgba8888: "\0\0\0\0" // handled above
+        case .rgba8888, .bgra8888: "\0\0\0\0" // handled above
         case .xrgb8888: "\0\0\0\0" // handled above
         case .bc7: "DX10"
         }
@@ -182,6 +185,26 @@ enum DDSFixture {
             redMask: 0x0000_00FF,
             greenMask: 0x0000_FF00,
             blueMask: 0x00FF_0000,
+            alphaMask: 0xFF00_0000,
+            payload: payload
+        )
+    }
+
+    /// Legacy DDPF_RGB + DDPF_ALPHAPIXELS BGRA8888 tree-atlas file.
+    static func bgra8888File(
+        width: Int,
+        height: Int,
+        mipCount: Int,
+        payload: Data? = nil
+    ) -> Data {
+        xrgb8888File(
+            width: width,
+            height: height,
+            mipCount: mipCount,
+            pixelFlags: 0x41,
+            redMask: 0x00FF_0000,
+            greenMask: 0x0000_FF00,
+            blueMask: 0x0000_00FF,
             alphaMask: 0xFF00_0000,
             payload: payload
         )
