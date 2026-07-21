@@ -79,7 +79,8 @@ probe: ## CLI smoke checks against the local install (skips if absent)
 	@./tools/probe.sh
 
 test: ## Build + run unit tests (no UI tests)
-	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
+	@TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
+		xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
 		$(XCODEBUILD_FLAGS) -skip-testing:openskyUITests test
 
 test-ui: ## Build + run UI tests (launches the app, drives it via automation)
@@ -92,7 +93,8 @@ test-one: ## Run one test class/method: make test-one T=Class[/test]
 		echo "        bare names resolve to openskyTests/; prefix a target to override"; \
 		exit 2; }
 	@case "$(T)" in */*) spec="$(T)";; *) spec="openskyTests/$(T)";; esac; \
-	xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
+	TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
+		xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
 		$(XCODEBUILD_FLAGS) -only-testing:"$$spec" test
 
 test-report: ## Print summary of the newest test result bundle
