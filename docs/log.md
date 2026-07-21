@@ -4,6 +4,26 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-21
 
+* M7.2.3 weather-core acceptance -- M7.2 data-driven weather core complete. Live
+  XCLR region feed: `CellScene.regions` carries the built cell's XCLR set,
+  `CellStreamer.onCenterRegionsChanged` fires when the resident exterior center
+  cell's region set changes, `GameViewController` forwards to
+  `WeatherSystem.setRegions` -> region-weighted selection runs live (interior path
+  leaves regions unchanged; weather is exterior-only). Sidebar surface finalized:
+  `World > Environment > Weather` = weather popup (`WeatherControl`, Auto + 84
+  editor-ID-sorted vanilla weathers) + new 0-24 h time-of-day slider
+  (`TimeOfDayControl`/`TimeOfDayLabel`, drives `Renderer.timeOfDay` live,
+  persisted via `TimeOfDaySettings` UserDefaults trio) + current weather/blend/wind
+  readout. Gate passed (`WeatherAcceptanceRealDataTests`, real Skyrim.esm exterior,
+  1280x720 = 921,600 px): pairwise forced-weather deltas SkyrimClear/SkyrimCloudy
+  585,095 px, SkyrimClear/SkyrimFog 921,600, SkyrimCloudy/SkyrimFog 921,595;
+  timed SkyrimClear->SkyrimCloudy transition stepped to 0.45 over 37 monotone
+  samples, mid-frame differs from both endpoints (204,770 / 364,563 px);
+  SkyrimClear 04:00 vs 13:00 differs 921,600 px. Streamer seam unit-tested
+  (`CellStreamerRegionFeedTests`); full suite 741 green. `make test-ui` still
+  env-blocked (TCC); accessibility ids recorded for its return. Precipitation
+  waits for M7.3 particle playback. Docs: [weather runtime](/engine/weather.md).
+  M7.2 leaves [todo](/todo.md); next 7.3.1 NIF particle blocks.
 * M7.2.2 weather runtime -- data-driven exterior weather over WTHR/CLMT/REGN.
   Formats grow WTHR DALC (4x 32-byte sunrise/day/sunset/night ambient keyframes:
   six axis colors + specular + scale, xEdit `wbDefinitionsTES5` layout), WRLD CNAM

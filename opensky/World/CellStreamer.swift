@@ -26,6 +26,14 @@ final class CellStreamer {
     var core = CellStreamCore()
     let runner: any CellBuildRunning
     let sink: SceneSink
+    /// Live XCLR region feed (M7.2.3): fires with the current exterior center
+    /// cell's REGN FormIDs whenever they change, so region-weighted weather
+    /// selection runs live. GameViewController wires it to
+    /// `Renderer.weather.setRegions`. nil in tests that ignore weather.
+    var onCenterRegionsChanged: (([FormID]) -> Void)?
+    /// Last region set pushed through `onCenterRegionsChanged`; nil = never
+    /// emitted. Guards against re-firing an unchanged set every frame.
+    private var lastEmittedRegions: [FormID]?
     /// Proximity-only interaction for M3.6; raycast selection lands later.
     static let doorActivationRadius: Float = 192
 
@@ -137,6 +145,21 @@ final class CellStreamer {
         }
         dispatchNextBuild()
         requestDistantLODIfNeeded()
+        emitCenterRegionsIfChanged()
+    }
+
+    /// Pushes the current exterior center cell's XCLR regions to the weather
+    /// feed when they change. Only fires for a resident exterior center: the
+    /// interior path returns before this (regions left unchanged — weather is
+    /// exterior-only, so entering a building keeps the exterior region so the
+    /// exit resumes seamlessly), and a center that has not streamed in yet is
+    /// skipped so a brief loading gap never drops region weighting.
+    private func emitCenterRegionsIfChanged() {
+        guard let scene = composition.cells[grid.center] else { return }
+        let regions = scene.regions
+        guard regions != lastEmittedRegions else { return }
+        lastEmittedRegions = regions
+        onCenterRegionsChanged?(regions)
     }
 
     /// Main-thread terrain query consumed by walk mode before this frame's

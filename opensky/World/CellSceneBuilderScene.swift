@@ -110,6 +110,7 @@ extension CellSceneBuilder {
             bounds: bounds.map { (min: $0.min, max: $0.max) },
             location: geometry.location,
             doors: geometry.doors,
+            regions: found.cell.regions,
             terrainHeightField: geometry.terrain?.heightField,
             staticCollision: geometry.staticCollision
         )

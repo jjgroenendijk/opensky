@@ -36,6 +36,9 @@ protocol WeatherControlProviding: AnyObject {
     var weatherTransitionFraction: Float { get }
     /// Published wind for the readout.
     var windState: WindState { get }
+    /// Exterior sky clock in game-hours (0-24). Drives the time-of-day keyframe
+    /// blend live and the sun position; persisted across launches by the setter.
+    var timeOfDay: Float { get set }
 }
 
 final class EnvironmentPanelViewController: NSViewController {
@@ -54,12 +57,21 @@ final class EnvironmentPanelViewController: NSViewController {
         didSet {
             guard isViewLoaded else { return }
             syncWeatherMenu()
+            syncTimeOfDay()
             refreshStats()
         }
     }
 
     private let qualityControl = NSPopUpButton(frame: .zero, pullsDown: false)
     private let weatherControl = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let timeControl = NSSlider(
+        value: Double(TimeOfDaySettings.fallback),
+        minValue: Double(TimeOfDaySettings.range.lowerBound),
+        maxValue: Double(TimeOfDaySettings.range.upperBound),
+        target: nil,
+        action: nil
+    )
+    private let timeLabel = NSTextField(labelWithString: "")
     private let statsLabel = NSTextField(wrappingLabelWithString: "")
     private var statsTimer: Timer?
     /// "Auto" sentinel title for automatic weather selection.
@@ -81,6 +93,15 @@ final class EnvironmentPanelViewController: NSViewController {
         weatherControl.action = #selector(weatherChanged)
         weatherControl.setAccessibilityIdentifier("WeatherControl")
 
+        timeControl.target = self
+        timeControl.action = #selector(timeOfDayChanged)
+        timeControl.isContinuous = true
+        timeControl.setAccessibilityIdentifier("TimeOfDayControl")
+        timeControl.widthAnchor.constraint(equalToConstant: 272).isActive = true
+        timeLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
+        timeLabel.textColor = .secondaryLabelColor
+        timeLabel.setAccessibilityIdentifier("TimeOfDayLabel")
+
         statsLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statsLabel.textColor = .secondaryLabelColor
         statsLabel.setAccessibilityIdentifier("ShadowStatsLabel")
@@ -100,6 +121,9 @@ final class EnvironmentPanelViewController: NSViewController {
             qualityControl,
             Self.caption("Weather"),
             weatherControl,
+            Self.caption("Time of day"),
+            timeControl,
+            timeLabel,
             statsLabel,
             note
         ])
@@ -121,6 +145,7 @@ final class EnvironmentPanelViewController: NSViewController {
         super.viewDidLoad()
         syncQualitySelection()
         syncWeatherMenu()
+        syncTimeOfDay()
         refreshStats()
     }
 
@@ -129,6 +154,7 @@ final class EnvironmentPanelViewController: NSViewController {
     func startInspecting() {
         syncQualitySelection()
         syncWeatherMenu()
+        syncTimeOfDay()
         refreshStats()
         guard statsTimer == nil else { return }
         let timer = Timer(
@@ -186,6 +212,39 @@ final class EnvironmentPanelViewController: NSViewController {
         weatherProvider?.forceWeather(named: title == Self.autoWeatherTitle ? nil : title)
         refreshStats()
         provider?.refocusGameView()
+    }
+
+    /// Pulls the live renderer's clock onto the slider + label. No weather
+    /// provider -> the slider stays disabled at the stored default.
+    private func syncTimeOfDay() {
+        guard let weatherProvider else {
+            timeControl.isEnabled = false
+            timeLabel.stringValue = Self.timeText(TimeOfDaySettings.load())
+            return
+        }
+        timeControl.isEnabled = true
+        timeControl.doubleValue = Double(weatherProvider.timeOfDay)
+        timeLabel.stringValue = Self.timeText(weatherProvider.timeOfDay)
+    }
+
+    @objc private func timeOfDayChanged() {
+        let hour = Float(timeControl.doubleValue)
+        weatherProvider?.timeOfDay = hour
+        timeLabel.stringValue = Self.timeText(hour)
+        // Continuous drag steals first responder each tick; only hand focus
+        // back when the drag ends so WASD/look resume without fighting the slider.
+        if NSApp.currentEvent?.type == .leftMouseUp {
+            provider?.refocusGameView()
+        }
+    }
+
+    /// "HH:MM" from a fractional game-hour.
+    private static func timeText(_ hour: Float) -> String {
+        let wrapped = hour.truncatingRemainder(dividingBy: 24)
+        let normalized = wrapped < 0 ? wrapped + 24 : wrapped
+        let hours = Int(normalized)
+        let minutes = Int((normalized - Float(hours)) * 60) % 60
+        return String(format: "Time: %02d:%02d", hours, minutes)
     }
 
     @objc private func statsTick() {

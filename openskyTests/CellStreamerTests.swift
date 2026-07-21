@@ -76,7 +76,8 @@ struct CellStreamerTests {
         meshKeys: Set<String> = [],
         textureKeys: Set<String> = [],
         location: CellSceneLocation? = nil,
-        doors: [PlacedDoor] = []
+        doors: [PlacedDoor] = [],
+        regions: [FormID] = []
     ) -> CellScene {
         CellScene(
             renderScene: RenderScene(instances: []),
@@ -90,6 +91,7 @@ struct CellStreamerTests {
             bounds: bounds,
             location: location,
             doors: doors,
+            regions: regions,
             assets: CellAssets(meshKeys: meshKeys, textureKeys: textureKeys)
         )
     }
