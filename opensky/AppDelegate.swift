@@ -86,9 +86,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     fileSystem: vfs,
                     terrainLODConfigurationStore: configurationStore
                 )
+                // Weather runtime built once from the same ESM (WTHR/CLMT/REGN
+                // + WRLD CNAM); nil when the plugin carries no weather data.
+                let weather = WeatherSystem(
+                    file: file,
+                    worldspaceEditorID: FirstRenderCell.worldspaceEditorID
+                )
                 return BuilderCellSceneProvider(
                     builder: builder,
-                    worldspaceEditorID: FirstRenderCell.worldspaceEditorID
+                    worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
+                    weatherSystem: weather
                 )
             } catch {
                 let reason = String(describing: error)

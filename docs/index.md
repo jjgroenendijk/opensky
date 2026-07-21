@@ -24,6 +24,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   inheritance, WATR DNAM color offsets and sentinel policy.
 * [Terrain records](/formats/land.md) - LAND/LTEX/TXST layouts: VHGT gradient
   height field, VNML/VCLR, BTXT/ATXT/VTXT splat layers, texture sets.
+* [Weather records](/formats/weather.md) - WTHR NAM0 color layers/FNAM fog/DATA
+  wind + precipitation, CLMT weather lists + timing, REGN weather areas.
 * [Distant LOD](/formats/lod.md) - lodsettings plus BTR/BTO paths and LOD-specific NIF
   blocks, tree LST/BTT layouts, placement rules, full vanilla sweep evidence.
 * [Skyrim INI settings](/formats/ini.md) - read-only decode, file precedence, typed
@@ -56,6 +58,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   billboards, atomic replacement, asset lifetime, real-render evidence.
 * [Sky + water environment](/engine/sky-water.md) - procedural time-of-day sky, per-cell
   water resolution/build, animated alpha-blend render path.
+* [Weather runtime](/engine/weather.md) - region/climate weather selection, timed
+  sky/fog/ambient transitions over the time-of-day input, published wind vector.
 * [Interior door transitions](/engine/interiors.md) - interior CELL build, DOOR/XTEL
   resolution, proximity activation, camera teleport, suspended exterior streaming.
 * [Free-fly camera](/engine/free-fly-camera.md) - WASDQE + mouse-look input capture,

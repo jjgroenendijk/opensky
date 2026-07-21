@@ -55,6 +55,9 @@ nonisolated struct Cell {
     let lighting: CellLightingValues?
     /// LTMP -> LGTM lighting template.
     let lightingTemplate: FormID?
+    /// XCLR — REGN regions overlapping this exterior cell (empty on interiors
+    /// and cells without XCLR). Feeds region weather selection (M7.2.2).
+    let regions: [FormID]
 
     var isInterior: Bool {
         flags.contains(.interior)
@@ -75,6 +78,7 @@ nonisolated struct Cell {
         var waterType: FormID?
         var lighting: CellLightingValues?
         var lightingTemplate: FormID?
+        var regions: [FormID] = []
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -83,12 +87,7 @@ nonisolated struct Cell {
             case "FULL":
                 name = try LString(field: field, localized: localized)
             case "DATA":
-                // uint16 in SSE; some records carry only one byte (UESP).
-                flags = if field.data.count == 1 {
-                    try Flags(rawValue: UInt16(reader.readUInt8()))
-                } else {
-                    try Flags(rawValue: reader.readUInt16())
-                }
+                flags = try Self.decodeFlags(&reader, count: field.data.count)
             case "XCLC":
                 let x = try Int32(bitPattern: reader.readUInt32())
                 let y = try Int32(bitPattern: reader.readUInt32())
@@ -104,6 +103,10 @@ nonisolated struct Cell {
                 lighting = try CellLightingValues.decode(field.data, hasInheritFlags: true)
             case "LTMP":
                 lightingTemplate = try Self.decodeFormID(field.data)
+            case "XCLR":
+                // Array of 4-byte REGN FormIDs (xEdit wbArrayS XCLR 'Regions').
+                // Non-multiple-of-4 payloads are skipped rather than guessed.
+                regions = try Self.decodeRegions(field.data)
             default:
                 break
             }
@@ -116,6 +119,26 @@ nonisolated struct Cell {
         self.waterType = waterType
         self.lighting = lighting
         self.lightingTemplate = lightingTemplate
+        self.regions = regions
+    }
+
+    /// DATA flags: uint16 in SSE; some records carry only one byte (UESP).
+    private static func decodeFlags(_ reader: inout BinaryReader, count: Int) throws -> Flags {
+        if count == 1 {
+            return try Flags(rawValue: UInt16(reader.readUInt8()))
+        }
+        return try Flags(rawValue: reader.readUInt16())
+    }
+
+    private static func decodeRegions(_ data: Data) throws -> [FormID] {
+        guard data.count % 4 == 0, !data.isEmpty else { return [] }
+        var reader = BinaryReader(data)
+        var out: [FormID] = []
+        out.reserveCapacity(data.count / 4)
+        for _ in 0 ..< (data.count / 4) {
+            try out.append(FormID(reader.readUInt32()))
+        }
+        return out
     }
 
     private static func decodeWaterHeight(_ data: Data) throws -> WaterHeight? {

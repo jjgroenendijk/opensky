@@ -86,6 +86,12 @@ final class GameViewController: NSViewController {
             // Persisted World > Environment > Sun shadows choice; invalid stored
             // value falls back to .high inside ShadowQualitySettings.load().
             newRenderer.shadowQuality = ShadowQualitySettings.load()
+            // Persisted World > Environment > Time of day; invalid stored value
+            // falls back to 13:00 inside TimeOfDaySettings.load().
+            newRenderer.timeOfDay = TimeOfDaySettings.load()
+            // Exterior weather runtime (M7.2.2); nil provider / no weather data
+            // leaves the renderer on its procedural sky, exactly as before.
+            newRenderer.weather = (provider as? WeatherProviding)?.weatherSystem
             newRenderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
             mtkView.delegate = newRenderer
             renderer = newRenderer
@@ -122,6 +128,13 @@ final class GameViewController: NSViewController {
                 cameraPosition: position,
                 activate: cameraInput?.consumeActivation() ?? false
             )
+        }
+        // Live XCLR region feed (M7.2.3): the streamer pushes the center cell's
+        // REGN set into the weather runtime so region-weighted selection runs
+        // live. Same main thread as the draw loop -> WeatherSystem stays
+        // single-thread-owned.
+        controller.onCenterRegionsChanged = { [weak renderer] regions in
+            renderer?.weather?.setRegions(regions)
         }
         renderer.terrainSampler = { [weak controller] position in
             controller?.sampleTerrain(at: position)
@@ -218,5 +231,45 @@ extension GameViewController: TerrainLODControlProviding {
         let root = try? GameDataLocator.locate()
         terrainLODConfigurationStore.replace(with: TerrainLODSettings.load(root: root))
         streamer?.invalidateDistantLOD()
+    }
+}
+
+/// Weather bridge for the World > Environment panel (M7.2.2). Reads/forces the
+/// live renderer's weather runtime on the main thread. A nil renderer or no
+/// weather data degrades to an empty list + calm readout.
+extension GameViewController: WeatherControlProviding {
+    var selectableWeatherNames: [String] {
+        (renderer?.weather?.store.selectableWeathers() ?? [])
+            .compactMap(\.editorID)
+    }
+
+    func forceWeather(named name: String?) {
+        guard let weather = renderer?.weather else { return }
+        guard let name else {
+            weather.forceWeather(nil, transition: .timed)
+            return
+        }
+        let match = weather.store.selectableWeathers().first { $0.editorID == name }
+        weather.forceWeather(match?.formID, transition: .timed)
+    }
+
+    var currentWeatherName: String? {
+        renderer?.weather?.currentWeatherEditorID
+    }
+
+    var weatherTransitionFraction: Float {
+        renderer?.weather?.transitionFraction ?? 1
+    }
+
+    var windState: WindState {
+        renderer?.currentWind ?? .calm
+    }
+
+    var timeOfDay: Float {
+        get { renderer?.timeOfDay ?? TimeOfDaySettings.load() }
+        set {
+            renderer?.timeOfDay = newValue
+            TimeOfDaySettings.store(newValue)
+        }
     }
 }

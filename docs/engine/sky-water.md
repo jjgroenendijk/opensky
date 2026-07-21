@@ -19,8 +19,12 @@ Exterior WRLD without DATA `no sky` bit emits `SkyParameters`. Scene composition
 marker if any resident scene has sky. Renderer draws a fullscreen triangle first, before
 depth-tested world geometry. Fragment shader produces hardcoded night/day/twilight upper +
 horizon palettes and a soft sun disc from `FrameUniforms.timeOfDayHours` (default 13:00).
-CLI screenshot accepts `--time-of-day 0...24`; 24 normalizes to 0. Weather + CLMT/WTHR
-sampling remain out of M3 scope.
+CLI screenshot accepts `--time-of-day 0...24`; 24 normalizes to 0.
+
+The hardcoded palette is now the fallback path: when weather is active
+(`FrameUniforms.weatherSkyEnabled`), `skyFragment` uses the CPU-blended WTHR sky palette
+instead — see [weather runtime](/engine/weather.md). Weather off (no data / inactive)
+reproduces this procedural path bit-for-bit.
 
 ## Water build
 

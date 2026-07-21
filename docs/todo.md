@@ -54,8 +54,8 @@ earlier integration gates. Done milestone leaves this file; history lives in
 * M6 — actors animate. Done 2026-07-20: skeleton-driven idle playback on streamed actors,
   exact lifecycle accounting, deterministic frame-delta gate, exterior/interior probes.
 * M7 — living environment (active): shadows -> weather/sky/wind -> shared particles ->
-  precipitation -> grass. M7.1 sun shadows done; dynamic physics moved to combat.
-  Gate: 7.6.
+  precipitation -> grass. M7.1 sun shadows + M7.2 weather core done; dynamic physics
+  moved to combat. Gate: 7.6.
 * M8 — interaction + UI shell: screen-space UI, interaction targeting, HUD, menu mode,
   settings. Gate: 8.3.3.
 * M9 — world audio: decode/playback, sound records, positional SFX, ambience, music.
@@ -89,22 +89,6 @@ Specs: UESP + xEdit defs (WTHR/CLMT/REGN/GRAS), NifTools nif.xml (particle +
 effect-shader blocks). Format items follow `format-parser` discipline; render items
 use offscreen verification per `probe`. Main-app controls live under
 `World > Environment` and remain as the visual-verification surface.
-
-### M7.2 — data-driven weather core
-
-Replaces the procedural-only sky palette from M3; publishes wind for later systems.
-
-* [ ] 7.2.1 Weather records: WTHR (colors per time-of-day layer, fog distances,
-      wind, precipitation type/intensity), CLMT (timing, weather chances), REGN
-      weather lists. Gate: vanilla sweep decodes; synthetic fixtures.
-* [ ] 7.2.2 Weather runtime: region/climate weather selection, timed transitions
-      blending sky palette + fog + directional ambient, hooked to the existing
-      time-of-day input. Publish current wind vector/intensity for precipitation,
-      grass, particles, and later audio.
-* [ ] 7.2.3 Weather-core acceptance: `World > Environment > Weather` can force
-      distinct clear/cloudy/foggy looks and time transitions in-app. Gate:
-      offscreen differences + transition evidence; docs (`engine/weather.md`) +
-      log updated. Precipitation waits for M7.3 particle playback.
 
 ### M7.3 — particles + effect shaders
 

@@ -14,9 +14,70 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   optional malformed blocks degrade with accounting. Tree LOD stays inside resident cells
   until full `TREE` rendering exists -> no near-grid hole. Vanilla Tamriel sweep: 3,060 BTR,
   717 BTO, 34 tree types, 329 BTT/40,839 refs, 0 failed. Whiterun 5x5 offscreen: 121
-  terrain/object blocks + 9 available tree blocks/35 trees, 100% non-background. Docs:
+  terrain/object blocks + 9 available tree blocks/2 radius-valid trees; focused cell: 131
+  blocks + 9 tree blocks/35 trees. Both 100% non-background. Docs:
   [INI](/formats/ini.md), [LOD format](/formats/lod.md),
   [distant LOD](/engine/distant-lod.md), [CLI](/tools/cli.md).
+* M7.2.3 weather-core acceptance -- M7.2 data-driven weather core complete. Live
+  XCLR region feed: `CellScene.regions` carries the built cell's XCLR set,
+  `CellStreamer.onCenterRegionsChanged` fires when the resident exterior center
+  cell's region set changes, `GameViewController` forwards to
+  `WeatherSystem.setRegions` -> region-weighted selection runs live (interior path
+  leaves regions unchanged; weather is exterior-only). Sidebar surface finalized:
+  `World > Environment > Weather` = weather popup (`WeatherControl`, Auto + 84
+  editor-ID-sorted vanilla weathers) + new 0-24 h time-of-day slider
+  (`TimeOfDayControl`/`TimeOfDayLabel`, drives `Renderer.timeOfDay` live,
+  persisted via `TimeOfDaySettings` UserDefaults trio) + current weather/blend/wind
+  readout. Gate passed (`WeatherAcceptanceRealDataTests`, real Skyrim.esm exterior,
+  1280x720 = 921,600 px): pairwise forced-weather deltas SkyrimClear/SkyrimCloudy
+  585,095 px, SkyrimClear/SkyrimFog 921,600, SkyrimCloudy/SkyrimFog 921,595;
+  timed SkyrimClear->SkyrimCloudy transition stepped to 0.45 over 37 monotone
+  samples, mid-frame differs from both endpoints (204,770 / 364,563 px);
+  SkyrimClear 04:00 vs 13:00 differs 921,600 px. Streamer seam unit-tested
+  (`CellStreamerRegionFeedTests`); full suite 741 green. `make test-ui` still
+  env-blocked (TCC); accessibility ids recorded for its return. Precipitation
+  waits for M7.3 particle playback. Docs: [weather runtime](/engine/weather.md).
+  M7.2 leaves [todo](/todo.md); next 7.3.1 NIF particle blocks.
+* M7.2.2 weather runtime -- data-driven exterior weather over WTHR/CLMT/REGN.
+  Formats grow WTHR DALC (4x 32-byte sunrise/day/sunset/night ambient keyframes:
+  six axis colors + specular + scale, xEdit `wbDefinitionsTES5` layout), WRLD CNAM
+  climate ref, CELL XCLR region array. `WeatherStore` indexes records once (immutable
+  value types, render-thread safe); `WeatherSelection` builds weighted pools per xEdit
+  REGN semantics (XCLR region weather areas by priority, Override flag gates climate
+  WLST append, fallback WRLD CNAM -> CLMT); deterministic SplitMix64 pick seeded by
+  worldspace + reroll epoch. `WeatherSystem` cross-fades from/to weather
+  (smoothstepped; Trans Delta read as inverse rate `1/clamp(delta,0.02,0.25)` s --
+  unit undocumented in open specs, deviation flagged in doc), rerolls every 6
+  game-hours of time-of-day movement (static clock -> static weather), exposes
+  force API for UI/tests. `TimeOfDayWeights` blends each weather's four keyframes
+  via CLMT TNAM sunrise/sunset windows (defaults 05-07/17-19). Renderer:
+  `FrameUniforms.weatherSkyEnabled` + five-color weather sky palette, exterior-only
+  application (interior CELL/LGTM lighting untouched), weather fog/ambient/sun tint
+  override camera fallbacks, `skyFragment` keeps procedural branch bit-identical
+  when inactive. Wind published as `Renderer.currentWind` (velocity-vector blend)
+  for M7.3-7.5. Environment panel gains Weather popup (Auto + force) + live
+  blend/wind readout; acceptance evidence + docs gate land in 7.2.3. Gates:
+  `WeatherRuntimeTests` (20 synthetic), DALC/CNAM/XCLR fixture tests,
+  `RendererWeatherTests` offscreen A/B (inactive == baseline bit-identical, forced
+  weathers repaint + differ), full suite 739 green; realtest sweep 84 WTHR (83 with
+  DALC), 6 CLMT, 317 REGN all resolve. Docs: [weather runtime](/engine/weather.md),
+  [weather formats](/formats/weather.md), [sky](/engine/sky-water.md). Next: 7.2.3
+  weather-core acceptance.
+* M7.2.1 weather records -- WTHR/CLMT/REGN decoders (`Weather.swift`,
+  `Climate.swift`, `Region.swift`). WTHR: NAM0 per-time-of-day color layers
+  (count from size; 13/14/17-component variants), FNAM fog distances (32 + legacy
+  16 byte), 19-byte DATA (wind speed/direction, trans delta, sun glare/damage,
+  precipitation + thunder fades, classification flags -> `Precipitation` enum,
+  lightning color). CLMT: WLST weather chances, TNAM timing + packed moons byte,
+  sun/glare/night-sky paths. REGN: weather data areas only (RDAT type 3 + RDWT),
+  worldspace, map color; RDWT bound to last-seen RDAT type. Unknown sizes -> nil/
+  skip, never guess (UESP DATA ambiguity resolved via xEdit: two Visual Effect
+  bytes at 15-16). CLI `record` + Asset Browser dump WTHR/CLMT/REGN summaries.
+  Gates: synthetic-fixture suites green; vanilla sweep (`WeatherRealDataTests`
+  via `tools/realtest.sh`) decodes 84 WTHR / 6 CLMT / 317 REGN no-throw, all
+  CLMT + REGN weather refs resolve to WTHR. Sidebar UI defers to 7.2.3 weather
+  controls (parser-only item). Docs: [weather](/formats/weather.md). Next: 7.2.2
+  weather runtime.
 * M7.1.2 shadow streaming/budget/quality -- M7.1 sun shadows complete. Per-cascade
   per-instance caster culling (survivor runs in a `cascadeCount x` instance ring, one
   instanced draw per group per cascade) + light-volume near-Z clamp to the resident-cell

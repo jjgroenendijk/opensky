@@ -28,6 +28,26 @@ protocol TerrainLODControlProviding: AnyObject {
     func resetTerrainLODConfiguration()
 }
 
+/// Renderer-facing weather surface the Environment panel drives (M7.2.2):
+/// force/inspect the exterior weather runtime without touching CLI or code.
+/// A nil renderer / no weather data degrades to an empty list + calm readout.
+@MainActor
+protocol WeatherControlProviding: AnyObject {
+    /// Editor IDs of forceable weathers, sorted; empty when no weather data.
+    var selectableWeatherNames: [String] { get }
+    /// Force a weather by editor ID (timed transition); nil resumes automatic.
+    func forceWeather(named name: String?)
+    /// Editor ID of the weather currently in effect, nil when inactive.
+    var currentWeatherName: String? { get }
+    /// 0-1 progress of the active transition (1 when settled).
+    var weatherTransitionFraction: Float { get }
+    /// Published wind for the readout.
+    var windState: WindState { get }
+    /// Exterior sky clock in game-hours (0-24). Drives the time-of-day keyframe
+    /// blend live and the sun position; persisted across launches by the setter.
+    var timeOfDay: Float { get set }
+}
+
 final class EnvironmentPanelViewController: NSViewController {
     /// Live renderer bridge. Weak: the game controller owns this panel's parent
     /// and the renderer, so the panel must not retain back into that graph.
@@ -40,7 +60,26 @@ final class EnvironmentPanelViewController: NSViewController {
         }
     }
 
+    /// Live weather bridge (M7.2.2). Same owner + threading as `provider`.
+    weak var weatherProvider: (any WeatherControlProviding)? {
+        didSet {
+            guard isViewLoaded else { return }
+            syncWeatherMenu()
+            syncTimeOfDay()
+            refreshStats()
+        }
+    }
+
     private let qualityControl = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let weatherControl = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let timeControl = NSSlider(
+        value: Double(TimeOfDaySettings.fallback),
+        minValue: Double(TimeOfDaySettings.range.lowerBound),
+        maxValue: Double(TimeOfDaySettings.range.upperBound),
+        target: nil,
+        action: nil
+    )
+    private let timeLabel = NSTextField(labelWithString: "")
     private let statsLabel = NSTextField(wrappingLabelWithString: "")
     private let level0Field = NSTextField()
     private let level1Field = NSTextField()
@@ -48,6 +87,8 @@ final class EnvironmentPanelViewController: NSViewController {
     private let treeField = NSTextField()
     private let lodStatusLabel = NSTextField(wrappingLabelWithString: "")
     private var statsTimer: Timer?
+    /// "Auto" sentinel title for automatic weather selection.
+    private static let autoWeatherTitle = "Auto"
 
     private let qualities = ShadowQuality.allCases
 
@@ -60,6 +101,19 @@ final class EnvironmentPanelViewController: NSViewController {
         qualityControl.target = self
         qualityControl.action = #selector(qualityChanged)
         qualityControl.setAccessibilityIdentifier("ShadowQualityControl")
+
+        weatherControl.target = self
+        weatherControl.action = #selector(weatherChanged)
+        weatherControl.setAccessibilityIdentifier("WeatherControl")
+
+        timeControl.target = self
+        timeControl.action = #selector(timeOfDayChanged)
+        timeControl.isContinuous = true
+        timeControl.setAccessibilityIdentifier("TimeOfDayControl")
+        timeControl.widthAnchor.constraint(equalToConstant: 272).isActive = true
+        timeLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
+        timeLabel.textColor = .secondaryLabelColor
+        timeLabel.setAccessibilityIdentifier("TimeOfDayLabel")
 
         statsLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statsLabel.textColor = .secondaryLabelColor
@@ -78,6 +132,11 @@ final class EnvironmentPanelViewController: NSViewController {
             Self.heading("Environment"),
             Self.caption("Sun shadows"),
             qualityControl,
+            Self.caption("Weather"),
+            weatherControl,
+            Self.caption("Time of day"),
+            timeControl,
+            timeLabel,
             statsLabel,
             note
         ]
@@ -134,6 +193,8 @@ final class EnvironmentPanelViewController: NSViewController {
         super.viewDidLoad()
         syncQualitySelection()
         syncLODFields()
+        syncWeatherMenu()
+        syncTimeOfDay()
         refreshStats()
     }
 
@@ -141,6 +202,8 @@ final class EnvironmentPanelViewController: NSViewController {
     /// run-loop mode so the readout keeps ticking during menu/resize tracking.
     func startInspecting() {
         syncQualitySelection()
+        syncWeatherMenu()
+        syncTimeOfDay()
         refreshStats()
         guard statsTimer == nil else { return }
         let timer = Timer(
@@ -187,7 +250,9 @@ final class EnvironmentPanelViewController: NSViewController {
         // view keeps receiving WASD/look without a manual click.
         provider?.refocusGameView()
     }
+}
 
+extension EnvironmentPanelViewController {
     @objc private func applyLODDistances() {
         guard
             let level0 = Float(level0Field.stringValue),
@@ -223,6 +288,62 @@ final class EnvironmentPanelViewController: NSViewController {
         lodStatusLabel.stringValue = message
     }
 
+    /// Rebuilds the weather popup (Auto + selectable editor IDs) and selects
+    /// the weather in effect. No weather data -> Auto only, disabled.
+    private func syncWeatherMenu() {
+        let names = weatherProvider?.selectableWeatherNames ?? []
+        weatherControl.removeAllItems()
+        weatherControl.addItem(withTitle: Self.autoWeatherTitle)
+        weatherControl.addItems(withTitles: names)
+        weatherControl.isEnabled = !names.isEmpty
+        let current = weatherProvider?.currentWeatherName
+        if let current, weatherControl.itemTitles.contains(current) {
+            weatherControl.selectItem(withTitle: current)
+        } else {
+            weatherControl.selectItem(withTitle: Self.autoWeatherTitle)
+        }
+    }
+
+    @objc private func weatherChanged() {
+        let title = weatherControl.titleOfSelectedItem
+        weatherProvider?.forceWeather(named: title == Self.autoWeatherTitle ? nil : title)
+        refreshStats()
+        provider?.refocusGameView()
+    }
+
+    /// Pulls the live renderer's clock onto the slider + label. No weather
+    /// provider -> the slider stays disabled at the stored default.
+    private func syncTimeOfDay() {
+        guard let weatherProvider else {
+            timeControl.isEnabled = false
+            timeLabel.stringValue = Self.timeText(TimeOfDaySettings.load())
+            return
+        }
+        timeControl.isEnabled = true
+        timeControl.doubleValue = Double(weatherProvider.timeOfDay)
+        timeLabel.stringValue = Self.timeText(weatherProvider.timeOfDay)
+    }
+
+    @objc private func timeOfDayChanged() {
+        let hour = Float(timeControl.doubleValue)
+        weatherProvider?.timeOfDay = hour
+        timeLabel.stringValue = Self.timeText(hour)
+        // Continuous drag steals first responder each tick; only hand focus
+        // back when the drag ends so WASD/look resume without fighting the slider.
+        if NSApp.currentEvent?.type == .leftMouseUp {
+            provider?.refocusGameView()
+        }
+    }
+
+    /// "HH:MM" from a fractional game-hour.
+    private static func timeText(_ hour: Float) -> String {
+        let wrapped = hour.truncatingRemainder(dividingBy: 24)
+        let normalized = wrapped < 0 ? wrapped + 24 : wrapped
+        let hours = Int(normalized)
+        let minutes = Int((normalized - Float(hours)) * 60) % 60
+        return String(format: "Time: %02d:%02d", hours, minutes)
+    }
+
     @objc private func statsTick() {
         refreshStats()
     }
@@ -240,6 +361,20 @@ final class EnvironmentPanelViewController: NSViewController {
         Drawn: \(stats.drawnInstances)  Culled: \(stats.culledInstances)
         Cascades: \(stats.cascadesRendered)
         CPU: \(String(format: "%.2f", provider.shadowUpdateMS)) ms
+        \(weatherReadout())
+        """
+    }
+
+    private func weatherReadout() -> String {
+        guard let weatherProvider else { return "Weather: unavailable" }
+        let name = weatherProvider.currentWeatherName ?? "none"
+        let wind = weatherProvider.windState
+        let heading = Int((atan2(wind.direction.y, wind.direction.x) * 180 / .pi + 360)
+            .truncatingRemainder(dividingBy: 360))
+        let progress = Int((weatherProvider.weatherTransitionFraction * 100).rounded())
+        return """
+        Weather: \(name) (blend \(progress)%)
+        Wind: \(String(format: "%.2f", wind.speed)) @ \(heading)°
         """
     }
 

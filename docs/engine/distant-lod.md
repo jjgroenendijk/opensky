@@ -79,10 +79,11 @@ openskycli render --worldspace Tamriel --x 6 --y -2 --neighbors \
   --size 1280x720 --zoom 1.4 --out logs/distant-lod-3.4-5x5.png
 ```
 
-2026-07-21 configured INI result: 121 terrain/object blocks, 0 unavailable, 9 available tree
-blocks, 0 unavailable tree blocks, 35 spatially valid tree placements, 100% non-background
-pixels. Tree atlas billboards are visible across distant hills and inside the loaded grid as
-the temporary full-tree fallback.
+2026-07-21 configured INI 5x5 result: 121 terrain/object blocks, 0 unavailable, 9 available
+tree blocks, 0 unavailable tree blocks, 2 placements inside the exact camera radius, 100%
+non-background pixels. Focused `(7,-3)` render: 131 terrain/object blocks, 9 tree blocks,
+35 placements, 100% non-background; tree atlas billboards are visible across distant hills
+and inside the loaded cell as the temporary full-tree fallback.
 Selection tests prove exact configured band boundaries and every cell through L32 outer
 radius has one terrain owner; synthetic crossing-triangle tests prove adjacent masks
 preserve source area with neither gap nor overlap. East/north real fly path settled three grids with

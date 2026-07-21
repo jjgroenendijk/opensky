@@ -127,6 +127,14 @@ final class Renderer: NSObject {
     var collisionQuery: WalkController.CollisionQuery?
     /// Procedural exterior sky clock. May change between frames.
     var timeOfDay: Float
+    /// Data-driven weather runtime (M7.2.2). nil -> procedural sky + camera
+    /// lighting, exactly as before. Owned + advanced on the main draw thread.
+    var weather: WeatherSystem?
+    /// This frame's resolved weather (exterior only). nil -> no weather active.
+    var currentResolvedWeather: ResolvedWeather?
+    /// CACurrentMediaTime of the previous weather update, for real delta time.
+    var lastWeatherWallTime: CFTimeInterval?
+
     /// Free-fly input, drained once per `draw(in:)`; nil (offscreen/tests) ->
     /// the camera stays on its seeded pose.
     let input: CameraInputState?
