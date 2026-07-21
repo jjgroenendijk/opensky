@@ -53,8 +53,8 @@ final class OpenSkyUITests: XCTestCase {
 
     /// World > Environment sidebar surface (M7.1.2): the sidebar lists the
     /// Environment destination, selecting it exposes the sun-shadow quality
-    /// control + live stats readout, and changing quality sticks. Runs on the
-    /// synthetic (game-data-free) root; the renderer falls back to DemoScene.
+    /// control + live stats readout, and only implemented LOD distance values.
+    /// Runs on synthetic data; renderer falls back to DemoScene.
     @MainActor
     func testWorldSidebarEnvironmentShadowQuality() throws {
         let app = try launchApp()
@@ -65,6 +65,12 @@ final class OpenSkyUITests: XCTestCase {
         let quality = app.popUpButtons["ShadowQualityControl"]
         XCTAssertTrue(quality.waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["ShadowStatsLabel"].exists)
+        XCTAssertTrue(app.textFields["LODLevel0DistanceField"].exists)
+        XCTAssertTrue(app.textFields["LODLevel1DistanceField"].exists)
+        XCTAssertTrue(app.textFields["LODMaximumDistanceField"].exists)
+        XCTAssertTrue(app.textFields["LODTreeDistanceField"].exists)
+        XCTAssertTrue(app.buttons["LODApplyButton"].exists)
+        XCTAssertTrue(app.buttons["LODResetButton"].exists)
 
         quality.click()
         app.menuItems["Low"].click()

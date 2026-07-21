@@ -239,6 +239,18 @@ struct DDSUncompressedFileTests {
         #expect((0 ..< 4).map { file.mipData(level: $0).count } == [128, 32, 8, 4])
     }
 
+    @Test func decodesBGRA8888TreeAtlasLayout() throws {
+        let file = try DDSFile(data: DDSFixture.bgra8888File(
+            width: 8,
+            height: 4,
+            mipCount: 4
+        ))
+        #expect(file.format == .bgra8888)
+        #expect(file.mipCount == 4)
+        #expect((0 ..< 4).map { file.bytesPerRow(level: $0) } == [32, 16, 8, 4])
+        #expect((0 ..< 4).map { file.mipData(level: $0).count } == [128, 32, 8, 4])
+    }
+
     @Test func rejectsUnsupportedUncompressedPixelFlags() {
         let data = DDSFixture.xrgb8888File(
             width: 4,

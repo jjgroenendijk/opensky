@@ -44,6 +44,8 @@ struct TextureLoaderTests {
         (.bc5, .data, .bc5_rgUnorm),
         (.rgba8888, .color, .rgba8Unorm_srgb),
         (.rgba8888, .data, .rgba8Unorm),
+        (.bgra8888, .color, .bgra8Unorm_srgb),
+        (.bgra8888, .data, .bgra8Unorm),
         (.xrgb8888, .color, .bgra8Unorm_srgb),
         (.xrgb8888, .data, .bgra8Unorm),
         (.bc7, .color, .bc7_rgbaUnorm_srgb),
@@ -118,6 +120,26 @@ struct TextureLoaderTests {
         ))
         let texture = try loader().upload(dds: dds, usage: .color, label: "test-rgba")
         #expect(texture.pixelFormat == .rgba8Unorm_srgb)
+
+        var pixel = [UInt8](repeating: 0, count: 4)
+        texture.getBytes(
+            &pixel,
+            bytesPerRow: 4,
+            from: MTLRegionMake2D(0, 0, 1, 1),
+            mipmapLevel: 0
+        )
+        #expect(pixel == [10, 20, 30, 40])
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func uploadsBGRAWithStoredAlpha() throws {
+        let dds = try DDSFile(data: DDSFixture.bgra8888File(
+            width: 1,
+            height: 1,
+            mipCount: 1,
+            payload: Data([10, 20, 30, 40])
+        ))
+        let texture = try loader().upload(dds: dds, usage: .color, label: "test-bgra")
+        #expect(texture.pixelFormat == .bgra8Unorm_srgb)
 
         var pixel = [UInt8](repeating: 0, count: 4)
         texture.getBytes(

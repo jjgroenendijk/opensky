@@ -155,6 +155,7 @@ typedef struct
     /// Alpha-test cutoff in [0, 1]; used only by the alpha-test variant.
     float alphaThreshold;
     unsigned int pointLightCount;
+    unsigned int receivesShadows;
 } DrawUniforms;
 
 typedef struct

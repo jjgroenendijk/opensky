@@ -127,7 +127,9 @@ enum RenderCommand {
         )
         if let lod {
             print("[INFO] distant LOD: \(lod.blockCount) blocks, "
-                + "\(lod.missingBlockCount) unavailable")
+                + "\(lod.missingBlockCount) unavailable, \(lod.treeBlockCount) tree blocks, "
+                + "\(lod.missingTreeBlockCount) unavailable tree blocks, "
+                + "\(lod.treeInstanceCount) trees")
         }
         var scenes = cellScenes.map(\.renderScene)
         if let lod {
@@ -244,7 +246,8 @@ enum RenderCommand {
             file: file,
             meshes: meshes,
             textures: textures,
-            fileSystem: fileSystem
+            fileSystem: fileSystem,
+            terrainLODConfigurationStore: context.makeTerrainLODConfigurationStore()
         )
     }
 

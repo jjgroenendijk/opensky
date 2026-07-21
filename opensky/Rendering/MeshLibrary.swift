@@ -281,6 +281,41 @@ nonisolated final class MeshLibrary {
         try RenderMesh(device: device, mesh: mesh)
     }
 
+    /// Uploads + caches engine-generated model geometry under a semantic key.
+    /// Tree LOD uses this for one crossed-quad model per LST atlas type, then
+    /// instances it for every BTT reference. Generated keys join normal
+    /// touched-key eviction + texture liveness accounting.
+    func generatedModel(key: String, model: Model) throws -> RenderModel {
+        let cacheKey = "generated|\(key)"
+        touchedKeys.insert(cacheKey)
+        if let hit = cache[cacheKey] {
+            textures.markTouched(modelTextureKeys[cacheKey] ?? [])
+            return hit
+        }
+
+        textures.beginKeyCapture()
+        let render: RenderModel
+        do {
+            render = try RenderModel(
+                device: device,
+                model: model,
+                textureProvider: textures.provider
+            )
+        } catch {
+            _ = textures.endKeyCapture()
+            throw MeshLibraryError.parseFailed(
+                path: cacheKey,
+                reason: String(describing: error)
+            )
+        }
+        modelTextureKeys[cacheKey] = textures.endKeyCapture()
+        cache[cacheKey] = render
+        skippedShapes[cacheKey] = model.skippedShapeCount
+        modelBounds[cacheKey] = ModelBounds.containing(model: model)
+        loadedCount += 1
+        return render
+    }
+
     /// Shapes dropped during flatten for an already-loaded path (nil if the
     /// path was never successfully loaded).
     func skippedShapeCount(forPath path: String) -> Int? {

@@ -19,7 +19,8 @@ enum LODCommand {
 
         let terrainPrefix = "meshes\\terrain\\\(worldspace)\\"
         let objectPrefix = terrainPrefix + "objects\\"
-        let entries = vfs.archiveEntries().map(\.path).filter {
+        let archivePaths = vfs.archiveEntries().map(\.path)
+        let entries = archivePaths.filter {
             ($0.hasPrefix(terrainPrefix) && $0.hasSuffix(".btr"))
                 || ($0.hasPrefix(objectPrefix) && $0.hasSuffix(".bto"))
         }
@@ -47,6 +48,56 @@ enum LODCommand {
             throw CLIError.failure("LOD sweep failed for \(failed.count) of \(entries.count) files")
         }
         print("[INFO] LOD sweep: \(terrainCount) .btr + \(objectCount) .bto, 0 failed")
+
+        try sweepTreeLOD(
+            worldspace: worldspace,
+            terrainPrefix: terrainPrefix,
+            archivePaths: archivePaths,
+            fileSystem: vfs
+        )
+    }
+
+    private static func sweepTreeLOD(
+        worldspace: String,
+        terrainPrefix: String,
+        archivePaths: [String],
+        fileSystem: VirtualFileSystem
+    ) throws {
+        let treePrefix = terrainPrefix + "trees\\"
+        let listPath = treePrefix + worldspace + ".lst"
+        guard archivePaths.contains(listPath) || fileSystem.exists(listPath) else {
+            print("[INFO] tree LOD: no .lst; skipped")
+            return
+        }
+        let list = try TreeLODList(data: fileSystem.contents(forPath: listPath))
+        let treeBlocks = archivePaths.filter {
+            $0.hasPrefix(treePrefix) && $0.hasSuffix(".btt")
+        }
+        var treeReferences = 0
+        var treeFailures: [(String, String)] = []
+        for path in treeBlocks {
+            do {
+                let block = try TreeLODBlock(
+                    data: fileSystem.contents(forPath: path),
+                    list: list
+                )
+                treeReferences += block.referenceCount
+            } catch {
+                treeFailures.append((path, String(describing: error)))
+            }
+        }
+        for failure in treeFailures.prefix(20) {
+            printError("[ERROR] \(failure.0): \(failure.1)")
+        }
+        guard treeFailures.isEmpty else {
+            throw CLIError.failure(
+                "tree LOD sweep failed for \(treeFailures.count) of \(treeBlocks.count) files"
+            )
+        }
+        print(
+            "[INFO] tree LOD: \(list.types.count) types + \(treeBlocks.count) .btt + "
+                + "\(treeReferences) refs, 0 failed"
+        )
     }
 
     private static func validateLODBlocks(_ file: NIFFile) throws {

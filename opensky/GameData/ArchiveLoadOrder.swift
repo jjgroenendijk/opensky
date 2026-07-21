@@ -90,40 +90,26 @@ nonisolated enum ArchiveLoadOrder {
     /// override, rarely present next to the executable) wins over the shipped
     /// Skyrim_Default.ini; neither readable -> built-in vanilla list.
     private static func resourceListNames(installURL: URL) -> [String] {
-        for candidate in ["Skyrim.ini", "Skyrim_Default.ini"] {
-            let url = installURL.appending(path: candidate, directoryHint: .notDirectory)
-            if let names = resourceLists(fromIniAt: url) {
-                return names
-            }
-        }
-        return vanillaResourceArchives
+        let ini = INISettings.load(candidates: [
+            (
+                "Skyrim_Default.ini",
+                installURL.appending(path: "Skyrim_Default.ini", directoryHint: .notDirectory)
+            ),
+            (
+                "Skyrim.ini",
+                installURL.appending(path: "Skyrim.ini", directoryHint: .notDirectory)
+            )
+        ])
+        let first = ini.string(section: "Archive", key: "sResourceArchiveList")?.value
+        let second = ini.string(section: "Archive", key: "sResourceArchiveList2")?.value
+        guard first != nil || second != nil else { return vanillaResourceArchives }
+        return archiveNames(first) + archiveNames(second)
     }
 
-    /// Concatenates the sResourceArchiveList + sResourceArchiveList2 values
-    /// (comma-separated archive names). Section headers are ignored — both
-    /// keys are unique across the file.
-    private static func resourceLists(fromIniAt url: URL) -> [String]? {
-        guard let data = try? Data(contentsOf: url) else { return nil }
-        // Bethesda ini files are ASCII in practice; accept cp1252 leftovers.
-        guard
-            let text = String(data: data, encoding: .utf8)
-            ?? String(data: data, encoding: .windowsCP1252) else { return nil }
-
-        var lists: [String: [String]] = [:]
-        for rawLine in text.split(whereSeparator: \.isNewline) {
-            let line = rawLine.trimmingCharacters(in: .whitespaces)
-            guard let equals = line.firstIndex(of: "=") else { continue }
-            let key = line[..<equals].trimmingCharacters(in: .whitespaces).lowercased()
-            guard key == "sresourcearchivelist" || key == "sresourcearchivelist2" else {
-                continue
-            }
-            lists[key] = line[line.index(after: equals)...]
-                .split(separator: ",")
-                .map { $0.trimmingCharacters(in: .whitespaces) }
-                .filter { !$0.isEmpty }
-        }
-        guard !lists.isEmpty else { return nil }
-        return (lists["sresourcearchivelist"] ?? []) + (lists["sresourcearchivelist2"] ?? [])
+    private static func archiveNames(_ value: String?) -> [String] {
+        value?.split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty } ?? []
     }
 
     /// `<plugin>.bsa` + `<plugin> - Textures.bsa` for each plugin in `Data/`

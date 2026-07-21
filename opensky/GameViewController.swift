@@ -27,6 +27,15 @@ final class GameViewController: NSViewController {
     /// device the view renders with.
     var cellProviderFactory: ((MTLDevice) -> (any CellSceneProvider)?)?
 
+    /// Thread-safe effective INI/sidebar LOD values shared with the off-main
+    /// DistantLODBuilder. AppDelegate replaces this before view load.
+    var terrainLODConfigurationStore = TerrainLODConfigurationStore(
+        snapshot: TerrainLODConfigurationSnapshot(
+            configuration: .fallback,
+            source: "safe defaults"
+        )
+    )
+
     private var renderer: Renderer?
     var canWriteScreenshot: Bool {
         renderer != nil
@@ -198,6 +207,30 @@ extension GameViewController: ShadowControlProviding {
 
     func refocusGameView() {
         view.window?.makeFirstResponder(view)
+    }
+}
+
+extension GameViewController: TerrainLODControlProviding {
+    var terrainLODConfigurationSnapshot: TerrainLODConfigurationSnapshot {
+        terrainLODConfigurationStore.snapshot()
+    }
+
+    func applyTerrainLODConfiguration(_ configuration: TerrainLODConfiguration) -> Bool {
+        guard configuration.isValid else { return false }
+        TerrainLODSettings.store(configuration)
+        terrainLODConfigurationStore.replace(with: TerrainLODConfigurationSnapshot(
+            configuration: configuration,
+            source: "OpenSky sidebar override"
+        ))
+        streamer?.invalidateDistantLOD()
+        return true
+    }
+
+    func resetTerrainLODConfiguration() {
+        TerrainLODSettings.clearOverride()
+        let root = try? GameDataLocator.locate()
+        terrainLODConfigurationStore.replace(with: TerrainLODSettings.load(root: root))
+        streamer?.invalidateDistantLOD()
     }
 }
 
