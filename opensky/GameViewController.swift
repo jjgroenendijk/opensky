@@ -77,6 +77,9 @@ final class GameViewController: NSViewController {
             // Persisted World > Environment > Sun shadows choice; invalid stored
             // value falls back to .high inside ShadowQualitySettings.load().
             newRenderer.shadowQuality = ShadowQualitySettings.load()
+            // Persisted World > Environment > Time of day; invalid stored value
+            // falls back to 13:00 inside TimeOfDaySettings.load().
+            newRenderer.timeOfDay = TimeOfDaySettings.load()
             // Exterior weather runtime (M7.2.2); nil provider / no weather data
             // leaves the renderer on its procedural sky, exactly as before.
             newRenderer.weather = (provider as? WeatherProviding)?.weatherSystem
@@ -116,6 +119,13 @@ final class GameViewController: NSViewController {
                 cameraPosition: position,
                 activate: cameraInput?.consumeActivation() ?? false
             )
+        }
+        // Live XCLR region feed (M7.2.3): the streamer pushes the center cell's
+        // REGN set into the weather runtime so region-weighted selection runs
+        // live. Same main thread as the draw loop -> WeatherSystem stays
+        // single-thread-owned.
+        controller.onCenterRegionsChanged = { [weak renderer] regions in
+            renderer?.weather?.setRegions(regions)
         }
         renderer.terrainSampler = { [weak controller] position in
             controller?.sampleTerrain(at: position)
@@ -220,5 +230,13 @@ extension GameViewController: WeatherControlProviding {
 
     var windState: WindState {
         renderer?.currentWind ?? .calm
+    }
+
+    var timeOfDay: Float {
+        get { renderer?.timeOfDay ?? TimeOfDaySettings.load() }
+        set {
+            renderer?.timeOfDay = newValue
+            TimeOfDaySettings.store(newValue)
+        }
     }
 }

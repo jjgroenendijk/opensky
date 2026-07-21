@@ -9,7 +9,8 @@ timestamp: 2026-07-21T00:00:00Z
 
 # Weather runtime
 
-M7.2.2. Data-driven exterior weather over the [weather records](/formats/weather.md)
+M7.2.2 (core) + M7.2.3 (live region feed, time-of-day slider, acceptance). Data-driven
+exterior weather over the [weather records](/formats/weather.md)
 (WTHR/CLMT/REGN + WRLD CNAM + CELL XCLR). Picks a weather for the current worldspace,
 cross-fades between weathers over time, blends each weather's four time-of-day keyframes by
 the [sky clock](/engine/sky-water.md) `timeOfDay`, and feeds the result into the renderer's
@@ -43,10 +44,23 @@ exterior cell's XCLR regions (xEdit REGN semantics):
 (worldspace FormID + reroll epoch), so a given epoch always picks the same weather (tests
 depend on it). All-zero chances fall back to a uniform pick.
 
-Live wiring feeds the worldspace climate path; the per-cell XCLR region feed is not yet
-pushed from the streamer (region selection is fully implemented + unit-tested via
-`setRegions`, deferred live to 7.2.3). `WeatherStore` is built in the AppDelegate cell
-provider and handed to the renderer through `WeatherProviding`.
+`WeatherStore` is built in the AppDelegate cell provider and handed to the renderer through
+`WeatherProviding`.
+
+### Live XCLR region feed (M7.2.3)
+
+The per-cell region feed is now live. `CellScene` carries the built cell's XCLR REGN FormIDs
+(`found.cell.regions`, decoded by the Cell parser). `CellStreamer.emitCenterRegionsIfChanged`
+reads the current exterior center cell's regions each drive and, when they change, fires
+`onCenterRegionsChanged`; `GameViewController` wires that to `Renderer.weather.setRegions`, so
+region-weighted selection runs against the cell the camera actually sits in. Same main thread
+as the draw loop -> WeatherSystem stays single-thread-owned.
+
+Only a resident exterior center fires: a center that has not streamed in yet is skipped (a
+brief loading gap must not drop region weighting), and the interior path returns before the
+emit so entering a building leaves the last exterior region set in place (weather is
+exterior-only; the exit resumes seamlessly). A changed region set rerolls immediately unless a
+weather is forced.
 
 ## Transitions
 
@@ -106,10 +120,35 @@ unchanged.
 
 ## Verification surface
 
-World > Environment panel (`EnvironmentPanelViewController`): a Weather popup (Auto + every
-selectable weather's editor ID) forces the live weather with a timed transition, and a
-readout shows the current weather, transition blend %, and wind speed/heading. Selecting
-Auto resumes automatic selection.
+Sidebar path `World > Environment > Weather` (`EnvironmentPanelViewController`), controls:
+
+* Weather popup (`WeatherControl`): Auto + every selectable weather's editor ID
+  (`WeatherStore.selectableWeathers`, sorted by editor ID so vanilla weathers like
+  SkyrimClear/SkyrimCloudy/SkyrimFog are findable among the 84). Forces the live weather with
+  a timed transition; Auto resumes automatic selection.
+* Time-of-day slider (`TimeOfDayControl`, 0-24 h) + `TimeOfDayLabel` HH:MM readout: drives
+  `Renderer.timeOfDay` live — the "time transitions in-app" surface, and an A/B of the
+  time-of-day keyframe blend. Persisted via `TimeOfDaySettings` (UserDefaults trio, mirrors
+  `ShadowQualitySettings`; fallback 13:00), applied at renderer creation.
+* Readout: current weather, transition blend %, wind speed/heading.
+
+Every control carries an accessibility identifier for UI tests; focus returns to the World
+view after each interaction (`refocusGameView`, on slider drag-end so a drag does not fight
+the game view for first responder).
+
+## Acceptance evidence (M7.2.3)
+
+`WeatherAcceptanceRealDataTests` (env-gated, one @Test, run via
+`sh tools/realtest.sh openskyTests/WeatherAcceptanceRealDataTests/\
+forcedWeathersTransitionsAndTimeProduceDistinctFrames()`) renders the FirstRenderCell exterior
+scene offscreen (1280x720) against the real Skyrim.esm and asserts pairwise pixel deltas above
+1000 changed pixels. Observed (921600 px total):
+
+* Distinct looks (forced instant, 13:00): SkyrimClear vs SkyrimCloudy 585095 px, clear vs
+  SkyrimFog 921600 px, cloudy vs fog 921595 px.
+* Transition (clear -> cloudy timed, stepped to 0.45 over 37 monotone samples): mid-frame vs
+  clear 204770 px, vs cloudy 364563 px — differs from both endpoints, progress monotonic.
+* Time of day (SkyrimClear 04:00 vs 13:00): 921600 px.
 
 ## Tests
 
@@ -123,3 +162,9 @@ Auto resumes automatic selection.
   weathers render different skies.
 * `WeatherRealDataTests` (env-gated sweep): every vanilla WTHR DALC decodes with in-range
   channels; Tamriel's WRLD CNAM resolves to a decoded CLMT.
+* `CellStreamerTests` (region feed, synthetic): the center cell's XCLR set pushes through
+  `onCenterRegionsChanged` exactly once, never re-fires on an unchanged center, and a
+  region-less center emits an empty set.
+* `WeatherAcceptanceRealDataTests` (env-gated, Metal 4 offscreen): the acceptance gate above —
+  distinct clear/cloudy/fog looks, a monotone mid-transition frame differing from both
+  endpoints, and a time-of-day difference.

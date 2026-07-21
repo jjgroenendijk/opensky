@@ -38,6 +38,10 @@ nonisolated struct CellScene {
     let bounds: (min: SIMD3<Float>, max: SIMD3<Float>)?
     let location: CellSceneLocation?
     let doors: [PlacedDoor]
+    /// XCLR REGN regions overlapping this exterior cell (empty on interiors +
+    /// cells without XCLR). The streamer pushes the center cell's set into the
+    /// weather runtime so region-weighted selection runs live (M7.2.3).
+    let regions: [FormID]
     /// CPU collision surface for exterior LAND/DNAM terrain. nil for
     /// interiors or cells with no drawable terrain.
     let terrainHeightField: TerrainHeightField?
@@ -53,6 +57,7 @@ nonisolated struct CellScene {
         bounds: (min: SIMD3<Float>, max: SIMD3<Float>)?,
         location: CellSceneLocation? = nil,
         doors: [PlacedDoor] = [],
+        regions: [FormID] = [],
         terrainHeightField: TerrainHeightField? = nil,
         staticCollision: StaticCollisionSet = .empty,
         assets: CellAssets = CellAssets()
@@ -62,6 +67,7 @@ nonisolated struct CellScene {
         self.bounds = bounds
         self.location = location
         self.doors = doors
+        self.regions = regions
         self.terrainHeightField = terrainHeightField
         self.staticCollision = staticCollision
         self.assets = assets
