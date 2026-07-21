@@ -94,10 +94,6 @@ use offscreen verification per `probe`. Main-app controls live under
 
 Replaces the procedural-only sky palette from M3; publishes wind for later systems.
 
-* [ ] 7.2.2 Weather runtime: region/climate weather selection, timed transitions
-      blending sky palette + fog + directional ambient, hooked to the existing
-      time-of-day input. Publish current wind vector/intensity for precipitation,
-      grass, particles, and later audio.
 * [ ] 7.2.3 Weather-core acceptance: `World > Environment > Weather` can force
       distinct clear/cloudy/foggy looks and time transitions in-app. Gate:
       offscreen differences + transition evidence; docs (`engine/weather.md`) +

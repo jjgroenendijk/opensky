@@ -77,6 +77,9 @@ final class GameViewController: NSViewController {
             // Persisted World > Environment > Sun shadows choice; invalid stored
             // value falls back to .high inside ShadowQualitySettings.load().
             newRenderer.shadowQuality = ShadowQualitySettings.load()
+            // Exterior weather runtime (M7.2.2); nil provider / no weather data
+            // leaves the renderer on its procedural sky, exactly as before.
+            newRenderer.weather = (provider as? WeatherProviding)?.weatherSystem
             newRenderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
             mtkView.delegate = newRenderer
             renderer = newRenderer
@@ -185,5 +188,37 @@ extension GameViewController: ShadowControlProviding {
 
     func refocusGameView() {
         view.window?.makeFirstResponder(view)
+    }
+}
+
+/// Weather bridge for the World > Environment panel (M7.2.2). Reads/forces the
+/// live renderer's weather runtime on the main thread. A nil renderer or no
+/// weather data degrades to an empty list + calm readout.
+extension GameViewController: WeatherControlProviding {
+    var selectableWeatherNames: [String] {
+        (renderer?.weather?.store.selectableWeathers() ?? [])
+            .compactMap(\.editorID)
+    }
+
+    func forceWeather(named name: String?) {
+        guard let weather = renderer?.weather else { return }
+        guard let name else {
+            weather.forceWeather(nil, transition: .timed)
+            return
+        }
+        let match = weather.store.selectableWeathers().first { $0.editorID == name }
+        weather.forceWeather(match?.formID, transition: .timed)
+    }
+
+    var currentWeatherName: String? {
+        renderer?.weather?.currentWeatherEditorID
+    }
+
+    var weatherTransitionFraction: Float {
+        renderer?.weather?.transitionFraction ?? 1
+    }
+
+    var windState: WindState {
+        renderer?.currentWind ?? .calm
     }
 }

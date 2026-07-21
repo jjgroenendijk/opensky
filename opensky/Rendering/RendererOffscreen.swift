@@ -147,6 +147,10 @@ extension Renderer {
         if advanceAnimation {
             updateAnimations(deltaTime: 1 / 30)
         }
+        // Weather resolves from the current time-of-day each frame; forced
+        // weather (tests) stays deterministic because reroll is off and the
+        // fixed hour accumulates no game-hours.
+        updateWeather(deltaTime: advanceAnimation ? 1 / 30 : 0)
         endFrameEvent.wait(untilSignaledValue: UInt64(frameIndex - 1), timeoutMS: 2000)
         let slot = frameIndex % Self.maxFramesInFlight
         let allocator = commandAllocators[slot]

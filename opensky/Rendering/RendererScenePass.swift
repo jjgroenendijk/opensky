@@ -30,30 +30,33 @@ extension Renderer {
     /// come from the injected SceneCamera.
     private func updateFrameUniforms(slot: Int, viewProjection: float4x4) -> Int {
         let offset = Self.alignedFrameUniformsSize * slot
-        let lighting = scene.lighting
-        let ambient = lighting?.directionalAmbient ?? .black
-        let fog = lighting?.fog
+        let interiorLighting = scene.lighting
+        // Weather is an exterior-only source: interiors keep their own baked
+        // CELL/LGTM lighting untouched (weatherLight nil there). The sky
+        // palette applies only when the scene actually draws a sky.
+        let weatherLight = interiorLighting == nil ? currentResolvedWeather : nil
+        let weatherSky = scene.sky != nil ? weatherLight : nil
+        let ambient = weatherLight?.directionalAmbient
+            ?? interiorLighting?.directionalAmbient ?? .black
+        let fog = Self.resolvedFog(weatherLight: weatherLight, interior: interiorLighting?.fog)
         var uniforms = FrameUniforms(
             viewProjectionMatrix: viewProjection,
             cameraPosition: freeFlyCamera.position,
-            sunDirection: lighting?.directionalDirection ?? camera.sunDirection,
-            sunColor: lighting?.directionalColor ?? camera.sunColor,
-            ambientColor: lighting?.ambientColor ?? camera.ambientColor,
+            sunDirection: interiorLighting?.directionalDirection ?? camera.sunDirection,
+            sunColor: weatherLight?.sunlightColor
+                ?? interiorLighting?.directionalColor ?? camera.sunColor,
+            ambientColor: weatherLight?.ambientColor
+                ?? interiorLighting?.ambientColor ?? camera.ambientColor,
             directionalAmbientPositiveX: ambient.positiveX,
             directionalAmbientNegativeX: ambient.negativeX,
             directionalAmbientPositiveY: ambient.positiveY,
             directionalAmbientNegativeY: ambient.negativeY,
             directionalAmbientPositiveZ: ambient.positiveZ,
             directionalAmbientNegativeZ: ambient.negativeZ,
-            fogNearColor: fog?.nearColor ?? .zero,
-            fogFarColor: fog?.farColor ?? .zero,
-            fogDistances: SIMD4(
-                fog?.nearDistance ?? 0,
-                fog?.farDistance ?? 1,
-                fog?.power ?? 1,
-                fog?.maximum ?? 0
-            ),
-            fogEnabled: fog == nil ? 0 : 1,
+            fogNearColor: fog.nearColor,
+            fogFarColor: fog.farColor,
+            fogDistances: fog.distances,
+            fogEnabled: fog.enabled,
             timeOfDayHours: timeOfDay,
             animationTime: Float(frameIndex) / 60,
             shadowViewProjections: (
@@ -63,7 +66,13 @@ extension Renderer {
             cameraForward: freeFlyCamera.forward,
             shadowsEnabled: shadowsActiveThisFrame ? 1 : 0,
             shadowInverseResolution: 1 / Float(ShadowConstant.mapResolution.rawValue),
-            shadowSampleRadius: shadowSampleRadius
+            shadowSampleRadius: shadowSampleRadius,
+            weatherSkyEnabled: weatherSky == nil ? 0 : 1,
+            weatherSkyUpperColor: weatherSky?.skyUpper ?? .zero,
+            weatherSkyLowerColor: weatherSky?.skyLower ?? .zero,
+            weatherHorizonColor: weatherSky?.horizon ?? .zero,
+            weatherSunColor: weatherSky?.sun ?? .zero,
+            weatherGlareColor: weatherSky?.sunGlare ?? .zero
         )
         frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)

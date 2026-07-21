@@ -27,6 +27,7 @@ extension Renderer: MTKViewDelegate {
         // Streaming may setScene synchronously before this frame encodes.
         onFrame?(freeFlyCamera.position)
         updateAnimationsFromWallClock()
+        updateWeatherFromWallClock()
         purgeRetiredResources()
 
         endFrameEvent.wait(

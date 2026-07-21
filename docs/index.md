@@ -56,6 +56,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   5x5, atomic coverage replacement, asset lifetime, real-render evidence.
 * [Sky + water environment](/engine/sky-water.md) - procedural time-of-day sky, per-cell
   water resolution/build, animated alpha-blend render path.
+* [Weather runtime](/engine/weather.md) - region/climate weather selection, timed
+  sky/fog/ambient transitions over the time-of-day input, published wind vector.
 * [Interior door transitions](/engine/interiors.md) - interior CELL build, DOOR/XTEL
   resolution, proximity activation, camera teleport, suspended exterior streaming.
 * [Free-fly camera](/engine/free-fly-camera.md) - WASDQE + mouse-look input capture,

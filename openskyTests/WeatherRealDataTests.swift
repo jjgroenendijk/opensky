@@ -33,6 +33,19 @@ struct WeatherRealDataTests {
         #expect(!regions.isEmpty, "no REGN records in Skyrim.esm")
         #expect(regions.unresolved == 0, "REGN RDWT references missing WTHR records")
 
+        // WeatherStore builds the runtime index off the same file: Tamriel's
+        // WRLD CNAM must resolve to a decoded CLMT (no hardcoded FormIDs).
+        let store = WeatherStore(file: file)
+        let tamriel = try #require(
+            store.worldspaceByEditorID[FirstRenderCell.worldspaceEditorID],
+            "no Tamriel worldspace in Skyrim.esm"
+        )
+        let climateID = try #require(
+            store.worldspaceClimate[tamriel], "Tamriel WRLD carries no CNAM climate"
+        )
+        #expect(store.climate(climateID) != nil, "Tamriel CNAM does not resolve to a CLMT")
+        #expect(!store.selectableWeathers().isEmpty)
+
         let layers = weathers.layerHistogram.sorted { $0.key < $1.key }
             .map { "\($0.key):\($0.value)" }.joined(separator: " ")
         let classes = weathers.classHistogram.sorted { $0.key < $1.key }
@@ -42,7 +55,7 @@ struct WeatherRealDataTests {
         \(climates.records) CLMT, \(regions.records) REGN decoded, no throws
         [INFO] WTHR NAM0 layer-count histogram (layers:records): \(layers)
         [INFO] WTHR classification histogram: \(classes); \
-        DATA missing: \(weathers.dataMissing)
+        DATA missing: \(weathers.dataMissing); DALC present: \(weathers.dalcPresent)
         [INFO] CLMT WLST entries: \(climates.entries) (unresolved \(climates.unresolved)); \
         timing missing: \(climates.timingMissing)
         [INFO] REGN with weather areas: \(regions.weatherRegions)/\(regions.records), \
@@ -60,6 +73,7 @@ struct WeatherRealDataTests {
         var layerHistogram: [Int: Int] = [:] // NAM0 layer count -> records
         var classHistogram: [String: Int] = [:]
         var dataMissing = 0
+        var dalcPresent = 0
         var isEmpty: Bool {
             records == 0
         }
@@ -81,6 +95,15 @@ struct WeatherRealDataTests {
             }
             if let fog = weather.fog {
                 #expect(fog.dayNear.isFinite && fog.dayFar.isFinite)
+            }
+            if let ambient = weather.directionalAmbient {
+                stats.dalcPresent += 1
+                // Every DALC channel is a 0-1 RGBX byte color; the Scale float
+                // must at least be finite.
+                for keyframe in [ambient.sunrise, ambient.day, ambient.sunset, ambient.night] {
+                    #expect((0 ... 1).contains(keyframe.colors.positiveZ.z))
+                    #expect(keyframe.scale.isFinite)
+                }
             }
         }
         return stats

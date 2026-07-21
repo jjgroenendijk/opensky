@@ -102,8 +102,9 @@ static float3 applyFog(float3 color, float3 worldPosition, constant FrameUniform
     return mix(color, fogColor, saturate(amount));
 }
 
-// Procedural exterior sky: fullscreen triangle, time-of-day palette,
-// horizon band, sun disc. Weather/CLMT sampling remains future work.
+// Exterior sky: fullscreen triangle. When weather is active (M7.2.2), the sky
+// uses the CPU-blended WTHR palette in FrameUniforms; otherwise it falls back
+// to the procedural time-of-day palette below (bit-identical to pre-weather).
 
 typedef struct
 {
@@ -120,11 +121,38 @@ vertex SkyVertexOut skyVertex(uint vertexID [[vertex_id]])
     return out;
 }
 
+// Weather sky: horizon -> sky-lower -> sky-upper vertical gradient, with the
+// procedural sun disc/glow retained (sun position still from time of day) but
+// tinted by the weather sun + sun-glare colors.
+static float4 weatherSky(SkyVertexOut in, constant FrameUniforms &frame, float hour)
+{
+    float3 lower =
+        mix(frame.weatherHorizonColor, frame.weatherSkyLowerColor, smoothstep(0.0, 0.5, in.uv.y));
+    float3 upper =
+        mix(frame.weatherSkyLowerColor, frame.weatherSkyUpperColor, smoothstep(0.5, 1.0, in.uv.y));
+    float3 color = in.uv.y < 0.5 ? lower : upper;
+
+    float sunrise = smoothstep(5.0, 8.0, hour);
+    float sunset = 1.0 - smoothstep(18.0, 21.0, hour);
+    float daylight = sunrise * sunset;
+    float sunPhase = saturate((hour - 6.0) / 12.0);
+    float2 sunCenter = float2(0.08 + sunPhase * 0.84, 0.38 + sin(sunPhase * 3.14159265) * 0.36);
+    float sunDistance = distance(in.uv, sunCenter);
+    float disc = (1.0 - smoothstep(0.012, 0.02, sunDistance)) * daylight;
+    float glow = exp(-sunDistance * 32.0) * daylight;
+    color += frame.weatherGlareColor * glow * 0.5;
+    color = mix(color, frame.weatherSunColor, disc);
+    return float4(color, 1.0);
+}
+
 fragment float4 skyFragment(
     SkyVertexOut in [[stage_in]],
     constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]])
 {
     float hour = fmod(frame.timeOfDayHours + 24.0, 24.0);
+    if (frame.weatherSkyEnabled != 0) {
+        return weatherSky(in, frame, hour);
+    }
     float sunrise = smoothstep(5.0, 8.0, hour);
     float sunset = 1.0 - smoothstep(18.0, 21.0, hour);
     float daylight = sunrise * sunset;

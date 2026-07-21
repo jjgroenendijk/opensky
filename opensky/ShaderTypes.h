@@ -131,6 +131,16 @@ typedef struct
     /// (low quality, cheapest); r>0 -> a (2r+1)^2 tap box (high quality uses 1
     /// -> the 3x3 kernel from 7.1.1). Read only when shadowsEnabled != 0.
     unsigned int shadowSampleRadius;
+    /// 0 -> skyFragment uses its procedural time-of-day palette (unchanged);
+    /// 1 -> it uses the blended weather sky palette below (M7.2.2).
+    unsigned int weatherSkyEnabled;
+    /// Weather sky palette, already time-of-day + transition blended on the
+    /// CPU (WTHR NAM0 sky-upper/lower/horizon and sun/sun-glare tints).
+    vector_float3 weatherSkyUpperColor;
+    vector_float3 weatherSkyLowerColor;
+    vector_float3 weatherHorizonColor;
+    vector_float3 weatherSunColor;
+    vector_float3 weatherGlareColor;
 } FrameUniforms;
 
 /// Per-GROUP material scalars for one instanced static-mesh draw (todo 3.2

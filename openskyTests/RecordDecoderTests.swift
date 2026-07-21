@@ -56,12 +56,15 @@ struct RecordDecoderTests {
         dnam.appendFloat32(-14000)
         var nam2 = Data()
         nam2.appendUInt32(0x18)
+        var cnam = Data()
+        cnam.appendUInt32(0x2A) // climate FormID
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("Tamriel"))
             + ESMFixture.field("FULL", full)
             + ESMFixture.field("WNAM", wnam)
             + ESMFixture.field("PNAM", pnam)
             + ESMFixture.field("DNAM", dnam)
             + ESMFixture.field("NAM2", nam2)
+            + ESMFixture.field("CNAM", cnam)
             + ESMFixture.field("DATA", Data([0x02]))
             + ESMFixture.field("ZNAM", Data(count: 4)) // skipped
         let world = try Worldspace(
@@ -77,6 +80,7 @@ struct RecordDecoderTests {
         #expect(world.defaultLandHeight == -27000)
         #expect(world.defaultWaterHeight == -14000)
         #expect(world.waterType == FormID(0x18))
+        #expect(world.climate == FormID(0x2A))
     }
 
     @Test func decodesMinimalWorldspace() throws {
@@ -91,6 +95,7 @@ struct RecordDecoderTests {
         #expect(world.flags.isEmpty)
         #expect(world.defaultWaterHeight == nil)
         #expect(world.waterType == nil)
+        #expect(world.climate == nil)
     }
 
     @Test func worldspaceRejectsWrongRecordType() throws {
@@ -113,11 +118,15 @@ struct RecordDecoderTests {
         xclw.appendFloat32(-14000)
         var xcwt = Data()
         xcwt.appendUInt32(0x18)
+        var xclr = Data()
+        xclr.appendUInt32(0x101) // region FormIDs
+        xclr.appendUInt32(0x102)
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("Wilderness"))
             + ESMFixture.field("DATA", data)
             + ESMFixture.field("XCLC", xclc)
             + ESMFixture.field("XCLW", xclw)
             + ESMFixture.field("XCWT", xcwt)
+            + ESMFixture.field("XCLR", xclr)
         let cell = try Cell(
             record: record(ESMFixture.record("CELL", formID: 0x2B, data: fields)),
             localized: true
@@ -128,6 +137,7 @@ struct RecordDecoderTests {
         #expect(cell.grid == Cell.Grid(x: -3, y: 7, quadFlags: 0x53FD_0001))
         #expect(cell.waterHeight == .height(-14000))
         #expect(cell.waterType == FormID(0x18))
+        #expect(cell.regions == [FormID(0x101), FormID(0x102)])
     }
 
     @Test func cellRecognizesNoWaterSentinels() throws {
