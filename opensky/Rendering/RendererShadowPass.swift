@@ -144,7 +144,8 @@ extension Renderer {
         lastShadowDrawStats = ShadowDrawStats()
 
         guard shadowRenders else { return true }
-        let hasCasters = !scene.opaque.isEmpty || !scene.alphaTested.isEmpty
+        let hasCasters = scene.opaque.contains(where: \.castsShadows)
+            || scene.alphaTested.contains(where: \.castsShadows)
             || !scene.terrain.isEmpty
         guard hasCasters else { return true }
 
@@ -228,11 +229,13 @@ extension Renderer {
             return true
         }
         for group in scene.opaque {
+            guard group.castsShadows else { continue }
             for instance in group.instances where !merge(instance.bounds) {
                 return nil
             }
         }
         for group in scene.alphaTested {
+            guard group.castsShadows else { continue }
             for instance in group.instances where !merge(instance.bounds) {
                 return nil
             }
@@ -255,7 +258,7 @@ extension Renderer {
         state: inout ShadowPassState
     ) {
         var boundPipeline: ObjectIdentifier?
-        for group in groups where !group.instances.isEmpty {
+        for group in groups where group.castsShadows {
             let visible = writeVisibleShadowInstances(of: group, in: context, state: &state)
             guard visible.written > 0 else { continue }
             let pipeline = shadowPipeline(skinned: group.mesh.isSkinned, alphaTested: alphaTested)

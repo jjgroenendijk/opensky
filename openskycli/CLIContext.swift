@@ -24,6 +24,10 @@ struct CLIContext {
         VirtualFileSystem(root: root)
     }
 
+    func makeTerrainLODConfigurationStore() -> TerrainLODConfigurationStore {
+        TerrainLODConfigurationStore(snapshot: TerrainLODSettings.load(root: root))
+    }
+
     func loadSkyrimESM() throws -> ESMFile {
         let url = root.dataURL.appending(path: "Skyrim.esm")
         do {

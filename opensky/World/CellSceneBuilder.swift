@@ -92,7 +92,7 @@ nonisolated final class CellSceneBuilder {
     let fileSystem: VirtualFileSystem?
     let collisionModels: NIFCollisionLibrary?
     var collisionPartitionCache: [CellCollisionPartitionKey: [StaticCollisionPartition]] = [:]
-    private let distantLODBuilder: DistantLODBuilder?
+    let distantLODBuilder: DistantLODBuilder?
     /// FormID -> STAT over the STAT top group, built on first use.
     private var statIndex: [UInt32: StaticObject]?
     /// FormID -> ModelBase over MSTT/TREE/FURN/ACTI/CONT/DOOR top groups,
@@ -125,7 +125,8 @@ nonisolated final class CellSceneBuilder {
         meshes: MeshLibrary,
         textures: TextureLibrary,
         fileSystem: VirtualFileSystem? = nil,
-        pluginName: String = "Skyrim.esm"
+        pluginName: String = "Skyrim.esm",
+        terrainLODConfigurationStore: TerrainLODConfigurationStore? = nil
     ) {
         self.file = file
         self.meshes = meshes
@@ -134,20 +135,13 @@ nonisolated final class CellSceneBuilder {
         self.pluginName = pluginName
         collisionModels = fileSystem.map(NIFCollisionLibrary.init(fileSystem:))
         distantLODBuilder = fileSystem.map {
-            DistantLODBuilder(fileSystem: $0, meshes: meshes, textures: textures)
+            DistantLODBuilder(
+                fileSystem: $0,
+                meshes: meshes,
+                textures: textures,
+                configurationStore: terrainLODConfigurationStore ?? .fallback()
+            )
         }
-    }
-
-    func buildDistantLOD(
-        worldspaceEditorID: String,
-        center: CellCoordinate,
-        hiddenCells: Set<CellCoordinate>
-    ) throws -> DistantLODScene? {
-        try distantLODBuilder?.build(
-            worldspace: worldspaceEditorID,
-            center: center,
-            hiddenCells: hiddenCells
-        )
     }
 
     func buildScene(

@@ -54,6 +54,14 @@ echo "[ OK ] record 0x0000003C (Tamriel)"
 run "cell summary (first-render cell)" cell
 run "collision grid (5x5 around first-render cell)" collision --radius 2
 
+# M7.2 distant LOD gate: every terrain/object and tree LOD file in Tamriel
+# parses, and tree-list indices resolve. No game data leaves the install.
+run "distant LOD sweep" lod
+grep 'LOD sweep:' "$log" | tail -1 | grep -q ' 0 failed' \
+  || fail "distant terrain/object LOD sweep reported failures"
+grep 'tree LOD:' "$log" | tail -1 | grep -q ' 0 failed' \
+  || fail "tree LOD sweep reported failures"
+
 # M5.1/5.2 actor gate: every discovered ACHR around the first-render cell
 # must resolve its template chain AND its visuals (skeleton, skin/outfit
 # parts, FaceGen) — the summary line reports "N failed".

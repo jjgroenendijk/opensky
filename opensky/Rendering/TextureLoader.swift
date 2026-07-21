@@ -123,7 +123,7 @@ nonisolated final class TextureLoader {
         case .bc4: return .bc4_rUnorm
         case .bc5: return .bc5_rgUnorm
         case .rgba8888: return srgb ? .rgba8Unorm_srgb : .rgba8Unorm
-        case .xrgb8888: return srgb ? .bgra8Unorm_srgb : .bgra8Unorm
+        case .bgra8888, .xrgb8888: return srgb ? .bgra8Unorm_srgb : .bgra8Unorm
         case .bc7: return srgb ? .bc7_rgbaUnorm_srgb : .bc7_rgbaUnorm
         }
     }

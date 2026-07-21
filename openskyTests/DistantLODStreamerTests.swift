@@ -22,9 +22,11 @@ nonisolated private final class LODManualRunner: CellBuildRunning {
 
     func enqueueEviction(droppingMeshKeys _: Set<String>, droppingTextureKeys _: Set<String>) {}
 
-    func enqueueDistantLOD(center: CellCoordinate, hiddenCells: Set<CellCoordinate>) {
+    @discardableResult
+    func enqueueDistantLOD(center: CellCoordinate, hiddenCells: Set<CellCoordinate>) -> Bool {
         lodRequests.append(center)
         lodHiddenCells.append(hiddenCells)
+        return true
     }
 
     func completeLOD(_ center: CellCoordinate, scene: DistantLODScene) {

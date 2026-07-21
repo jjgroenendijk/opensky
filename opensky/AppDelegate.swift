@@ -16,6 +16,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var mainViewController: MainViewController?
     private var settingsController: SettingsWindowController?
     private var gameDataErrorMessage: String?
+    private let terrainLODConfigurationStore = TerrainLODConfigurationStore(
+        snapshot: TerrainLODConfigurationSnapshot(
+            configuration: .fallback,
+            source: "safe defaults"
+        )
+    )
 
     /// Located install, nil when locating failed. Consumers (VFS, loaders) read this.
     private(set) var gameDataRoot: GameDataRoot?
@@ -67,6 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func makeCellProviderFactory() -> ((MTLDevice) -> (any CellSceneProvider)?)? {
         guard let root = gameDataRoot, let vfs = virtualFileSystem else { return nil }
         let esmURL = root.dataURL.appending(path: "Skyrim.esm")
+        let configurationStore = terrainLODConfigurationStore
         return { device in
             do {
                 let file = try ESMFile(url: esmURL)
@@ -76,7 +83,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     file: file,
                     meshes: meshes,
                     textures: textures,
-                    fileSystem: vfs
+                    fileSystem: vfs,
+                    terrainLODConfigurationStore: configurationStore
                 )
                 return BuilderCellSceneProvider(
                     builder: builder,
@@ -99,6 +107,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let controller = GameViewController()
         controller.cellProviderFactory = makeCellProviderFactory()
         controller.startupErrorMessage = gameDataErrorMessage
+        controller.terrainLODConfigurationStore = terrainLODConfigurationStore
         return controller
     }
 
@@ -134,6 +143,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Self.logger.error("Game data missing: \(message, privacy: .public)")
             gameDataErrorMessage = message
         }
+        terrainLODConfigurationStore.replace(with: TerrainLODSettings.load(root: gameDataRoot))
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_: NSApplication) -> Bool {

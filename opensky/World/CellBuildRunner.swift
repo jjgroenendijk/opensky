@@ -161,14 +161,19 @@ nonisolated protocol CellBuildRunning: AnyObject {
     /// Schedules an eviction pass on the build executor (after queued builds),
     /// dropping the given assets a departed cell no longer needs.
     func enqueueEviction(droppingMeshKeys: Set<String>, droppingTextureKeys: Set<String>)
-    func enqueueDistantLOD(center: CellCoordinate, hiddenCells: Set<CellCoordinate>)
+    @discardableResult
+    func enqueueDistantLOD(center: CellCoordinate, hiddenCells: Set<CellCoordinate>) -> Bool
     func drainCompletedDistantLOD() -> [DistantLODBuildResult]
     func enqueueDoorTransition(from sourceDoor: FormID)
     func drainCompletedDoorTransitions() -> [DoorTransitionBuildResult]
 }
 
 nonisolated extension CellBuildRunning {
-    func enqueueDistantLOD(center _: CellCoordinate, hiddenCells _: Set<CellCoordinate>) {}
+    @discardableResult
+    func enqueueDistantLOD(center _: CellCoordinate, hiddenCells _: Set<CellCoordinate>) -> Bool {
+        false
+    }
+
     func drainCompletedDistantLOD() -> [DistantLODBuildResult] {
         []
     }
@@ -269,11 +274,12 @@ nonisolated final class SerialCellBuildRunner: CellBuildRunning, @unchecked Send
         }
     }
 
-    func enqueueDistantLOD(center: CellCoordinate, hiddenCells: Set<CellCoordinate>) {
+    @discardableResult
+    func enqueueDistantLOD(center: CellCoordinate, hiddenCells: Set<CellCoordinate>) -> Bool {
         lock.lock()
         let isNew = pendingLOD.insert(center).inserted
         lock.unlock()
-        guard isNew else { return }
+        guard isNew else { return false }
         queue.async { [self] in
             let result = Result {
                 try provider.buildDistantLOD(center: center, hiddenCells: hiddenCells)
@@ -282,6 +288,7 @@ nonisolated final class SerialCellBuildRunner: CellBuildRunning, @unchecked Send
             completedLOD.append(DistantLODBuildResult(center: center, result: result))
             lock.unlock()
         }
+        return true
     }
 
     func drainCompletedDistantLOD() -> [DistantLODBuildResult] {

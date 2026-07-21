@@ -39,12 +39,35 @@ struct DistantLODSelectionTests {
 
         let terrain = blocks.filter { $0.kind == .terrain }
         #expect(Set(terrain.compactMap(\.clipMask).map(\.level)) == [4, 8, 16, 32])
-        for x in center.x - 64 ... center.x + 64 {
-            for y in center.y - 64 ... center.y + 64 {
+        let outer = try #require(
+            DistantLODSelection.bands(settings: settings, configuration: .fallback).last
+        ).outerRadius
+        for x in center.x - outer ... center.x + outer {
+            for y in center.y - outer ... center.y + outer {
                 let cell = CellCoordinate(x: x, y: y)
                 let owners = terrain.count { $0.coversTerrain(cell) }
                 #expect(owners == (grid.desiredCells.contains(cell) ? 0 : 1))
             }
         }
+    }
+
+    @Test func mapsWorldDistancesToContiguousPowerOfTwoBands() throws {
+        let configuration = TerrainLODConfiguration(
+            level0Distance: 12288,
+            level1Distance: 32768,
+            maximumDistance: 131_072,
+            treeLoadDistance: 65536
+        )
+        let bands = try DistantLODSelection.bands(
+            settings: settings(),
+            configuration: configuration
+        )
+
+        #expect(bands == [
+            DistantLODBand(level: 4, innerRadius: 2, outerRadius: 3),
+            DistantLODBand(level: 8, innerRadius: 3, outerRadius: 8),
+            DistantLODBand(level: 16, innerRadius: 8, outerRadius: 16),
+            DistantLODBand(level: 32, innerRadius: 16, outerRadius: 32)
+        ])
     }
 }

@@ -2,15 +2,15 @@
 type: File Format
 title: DDS texture container
 description: On-disk layout of Skyrim SE .dds textures and how OpenSky parses them.
-tags: [format, texture, dds, bcn, rgba8888, xrgb8888, rendering]
-timestamp: 2026-07-10T00:00:00Z
+tags: [format, texture, dds, bcn, rgba8888, bgra8888, xrgb8888, rendering]
+timestamp: 2026-07-21T00:00:00Z
 ---
 
 # DDS texture container
 
 DirectDraw Surface — every Skyrim SE texture (`textures/**/*.dds` inside the texture
-BSAs, plus loose overrides). OpenSky reads 2D BC1-BC5/BC7 plus legacy 32-bit xRGB8888 +
-RGBA8888. Parser: `opensky/Formats/DDS/DDSFile.swift`. GPU upload: `MTLTexture` via
+BSAs, plus loose overrides). OpenSky reads 2D BC1-BC5/BC7 plus legacy 32-bit xRGB8888,
+RGBA8888, and BGRA8888. Parser: `opensky/Formats/DDS/DDSFile.swift`. GPU upload: `MTLTexture` via
 native BCn/BGRA8/RGBA8 pixel formats.
 
 Reference: Microsoft DDS programming guide + struct pages —
@@ -64,9 +64,10 @@ variants unseen in SSE -> `unsupported`.)
 Legacy xRGB8888 has no FourCC. `DDPF_RGB` + masks above describe a little-endian 32-bit
 word, so payload bytes are B,G,R,X. Parser also accepts `DDPF_RGB | DDPF_ALPHAPIXELS`
 RGBA8888 (`R=0x000000ff`, `G=0x0000ff00`, `B=0x00ff0000`, `A=0xff000000`) used by
-vanilla object LOD atlas. Both require `DDSD_PITCH` + top-level pitch `width * 4`;
-other bit depths/flags/masks reject. xRGB X is undefined -> uploader writes 255 before
-BGRA8 upload; RGBA alpha stays unchanged.
+vanilla object LOD atlas. BGRA8888 (`R=0x00ff0000`, `G=0x0000ff00`, `B=0x000000ff`,
+`A=0xff000000`) carries stored alpha in vanilla tree LOD atlas. All require `DDSD_PITCH` +
+top-level pitch `width * 4`; other bit depths/flags/masks reject. xRGB X is undefined ->
+uploader writes 255 before BGRA8 upload; RGBA/BGRA alpha stays unchanged.
 
 ### DDS_HEADER_DXT10 (20 bytes)
 
@@ -96,9 +97,9 @@ _ResourcePack, CC Fish/AdvDSGS/Curios): 32 920 files.
   headers -> zero BC7, zero declared-sRGB; vanilla is legacy-FourCC only
   (DX10/BC7 path still needed: standard for mods).
 * Initial sweep found 10 225 uncompressed RGB files (face `_msn` normal maps, tint masks,
-  interface art, LOD diffuse atlases), 58 cubemaps, 1 volume. xRGB8888 terrain + RGBA8888
-  object LOD diffuse maps now parse; other uncompressed layouts, cubemaps + volumes remain
-  typed errors -> placeholders.
+  interface art, LOD diffuse atlases), 58 cubemaps, 1 volume. xRGB8888 terrain, RGBA8888
+  object LOD, and BGRA8888 tree LOD diffuse maps now parse; other uncompressed layouts,
+  cubemaps + volumes remain typed errors -> placeholders.
 * 150 single-mip files; max dimension 8192 (not 4096).
 * Farmhouse texture set (candidate 2.7 cell area): 64 files, full decode +
   `MTLTexture` upload, zero failures.
@@ -108,5 +109,6 @@ _ResourcePack, CC Fish/AdvDSGS/Curios): 32 920 files.
 `declaresSRGB` (DX10 `_SRGB` code) is advisory only. The renderer picks color space
 per usage: diffuse -> sRGB `MTLPixelFormat` variant, normal/data maps -> linear
 (BC4/BC5 have no sRGB variants). Legacy-FourCC files carry no color-space info at all.
-32-bit RGB follows same usage policy: xRGB8888 -> BGRA8, RGBA8888 -> RGBA8; diffuse uses
-sRGB, data uses linear. Absent xRGB alpha becomes fully opaque; stored RGBA alpha remains.
+32-bit RGB follows same usage policy: xRGB8888/BGRA8888 -> BGRA8, RGBA8888 -> RGBA8;
+diffuse uses sRGB, data uses linear. Absent xRGB alpha becomes fully opaque; stored alpha
+remains.

@@ -57,11 +57,28 @@ nonisolated struct RenderPlacement {
     let model: RenderModel
     let transform: float4x4
     let bounds: ModelBounds?
+    /// Distant LOD stays outside sun-shadow caster set. Default true keeps
+    /// regular cell geometry + actors unchanged.
+    let castsShadows: Bool
+    /// Distant geometry uses world lighting only. Skipping local lights keeps
+    /// large billboard batches out of the per-fragment point-light loop.
+    let receivesPointLights: Bool
+    let receivesShadows: Bool
 
-    init(model: RenderModel, transform: float4x4, bounds: ModelBounds? = nil) {
+    init(
+        model: RenderModel,
+        transform: float4x4,
+        bounds: ModelBounds? = nil,
+        castsShadows: Bool = true,
+        receivesPointLights: Bool = true,
+        receivesShadows: Bool = true
+    ) {
         self.model = model
         self.transform = transform
         self.bounds = bounds
+        self.castsShadows = castsShadows
+        self.receivesPointLights = receivesPointLights
+        self.receivesShadows = receivesShadows
     }
 }
 
@@ -74,6 +91,9 @@ nonisolated struct DrawInstance {
     /// through the instance transform — shared by every mesh of the
     /// instance, so conservative per mesh. nil -> never culled.
     let bounds: ModelBounds?
+    let castsShadows: Bool
+    let receivesPointLights: Bool
+    let receivesShadows: Bool
 }
 
 /// One instanced draw call (todo 3.2): every instance shares the mesh +
@@ -87,6 +107,14 @@ nonisolated struct DrawGroup {
     let material: RenderMaterial
     /// Mutable only during scene construction (GroupAccumulator).
     fileprivate(set) var instances: [DrawInstance]
+
+    var castsShadows: Bool {
+        instances.first?.castsShadows == true
+    }
+
+    var receivesShadows: Bool {
+        instances.first?.receivesShadows == true
+    }
 }
 
 /// Ordered mesh+material grouping: first appearance fixes group order so
@@ -95,13 +123,22 @@ nonisolated private struct GroupAccumulator {
     private struct Key: Hashable {
         let mesh: ObjectIdentifier
         let diffuse: ObjectIdentifier
+        let castsShadows: Bool
+        let receivesPointLights: Bool
+        let receivesShadows: Bool
     }
 
     private var indexByKey: [Key: Int] = [:]
     private(set) var groups: [DrawGroup] = []
 
     mutating func add(mesh: RenderMesh, material: RenderMaterial, instance: DrawInstance) {
-        let key = Key(mesh: ObjectIdentifier(mesh), diffuse: ObjectIdentifier(material.diffuse))
+        let key = Key(
+            mesh: ObjectIdentifier(mesh),
+            diffuse: ObjectIdentifier(material.diffuse),
+            castsShadows: instance.castsShadows,
+            receivesPointLights: instance.receivesPointLights,
+            receivesShadows: instance.receivesShadows
+        )
         if let index = indexByKey[key] {
             groups[index].instances.append(instance)
         } else {
@@ -189,7 +226,10 @@ nonisolated struct RenderScene {
                 let instance = DrawInstance(
                     modelMatrix: modelMatrix,
                     normalMatrix: MatrixMath.normalMatrix(modelMatrix),
-                    bounds: placement.bounds
+                    bounds: placement.bounds,
+                    castsShadows: placement.castsShadows,
+                    receivesPointLights: placement.receivesPointLights,
+                    receivesShadows: placement.receivesShadows
                 )
                 if material.alphaTestThreshold == nil {
                     opaque.add(mesh: mesh, material: material, instance: instance)

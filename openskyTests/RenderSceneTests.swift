@@ -193,6 +193,27 @@ struct RenderSceneTests {
         #expect(merged.instanceCount == 4)
     }
 
+    @Test(.enabled(if: Self.hasDevice)) func separatesDistantLightingGroups() throws {
+        let device = try #require(Self.device)
+        let model = try Self.renderModel(device: device)
+        let scene = RenderScene(instances: [
+            RenderPlacement(model: model, transform: matrix_identity_float4x4),
+            RenderPlacement(
+                model: model,
+                transform: MatrixMath.translation(SIMD3(10, 0, 0)),
+                castsShadows: false,
+                receivesPointLights: false,
+                receivesShadows: false
+            )
+        ])
+
+        #expect(scene.opaque.count == 2)
+        #expect(scene.alphaTested.count == 2)
+        #expect(scene.opaque.map(\.castsShadows) == [true, false])
+        #expect(scene.opaque.map { $0.instances[0].receivesPointLights } == [true, false])
+        #expect(scene.opaque.map(\.receivesShadows) == [true, false])
+    }
+
     @Test(.enabled(if: Self.hasDevice)) func mergingEmptyListYieldsEmptyScene() {
         let merged = RenderScene(merging: [])
         #expect(merged.drawCount == 0)

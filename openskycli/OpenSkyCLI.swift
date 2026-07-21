@@ -52,7 +52,7 @@ enum OpenSkyCLI {
                                   mismatches both directions
       animation <hkx-key>         Decode spline-compressed transform tracks;
                                   sample every frame over full clip duration
-      lod [--worldspace <edid>]   Parse settings + sweep all .btr/.bto files
+      lod [--worldspace <edid>]   Parse settings + sweep .btr/.bto/.lst/.btt
       screenshot --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
              [--size WxH] [--zoom <f>] [--time-of-day <0-24>] [--neighbors]
                                   Save an offscreen World frame as PNG; zoom

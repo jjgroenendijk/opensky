@@ -77,7 +77,8 @@ extension Renderer {
         slot: Int,
         draw: Int,
         material: RenderMaterial,
-        pointLightCount: Int
+        pointLightCount: Int,
+        receivesShadows: Bool
     ) -> Int {
         let offset = Self.alignedDrawUniformsSize * (slot * drawUniformSlotCapacity + draw)
         var uniforms = DrawUniforms(
@@ -85,7 +86,8 @@ extension Renderer {
             uvScale: material.uvScale,
             materialAlpha: material.alpha,
             alphaThreshold: material.alphaTestThreshold ?? 0,
-            pointLightCount: UInt32(pointLightCount)
+            pointLightCount: UInt32(pointLightCount),
+            receivesShadows: receivesShadows ? 1 : 0
         )
         drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<DrawUniforms>.size)
@@ -222,16 +224,17 @@ extension Renderer {
             }
             // Running visible-group cursor indexes the uniform ring:
             // visible groups <= scene.drawCount <= ring capacity.
-            let lightOffset = writePointLights(
-                near: lightingCenter(of: group),
-                slot: state.slot,
-                draw: state.drawCursor
-            )
+            let lightOffset = group.instances.first?.receivesPointLights == true
+                ? writePointLights(
+                    near: lightingCenter(of: group), slot: state.slot, draw: state.drawCursor
+                )
+                : (count: 0, byteOffset: 0)
             let uniformOffset = updateDrawUniforms(
                 slot: state.slot,
                 draw: state.drawCursor,
                 material: group.material,
-                pointLightCount: lightOffset.count
+                pointLightCount: lightOffset.count,
+                receivesShadows: group.receivesShadows
             )
             state.drawCursor += 1
             state.stats.drawCalls += 1

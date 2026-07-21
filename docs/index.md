@@ -25,7 +25,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Terrain records](/formats/land.md) - LAND/LTEX/TXST layouts: VHGT gradient
   height field, VNML/VCLR, BTXT/ATXT/VTXT splat layers, texture sets.
 * [Distant LOD](/formats/lod.md) - lodsettings plus BTR/BTO paths and LOD-specific NIF
-  blocks, placement rules, full vanilla sweep evidence.
+  blocks, tree LST/BTT layouts, placement rules, full vanilla sweep evidence.
+* [Skyrim INI settings](/formats/ini.md) - read-only decode, file precedence, typed
+  terrain-distance values, and OpenSky override policy.
 * [NIF mesh](/formats/nif.md) - Gamebryo 20.2.0.7 container, scene graph,
   geometry/materials, SSE skin blocks, dynamic FaceGen + skeleton bind pose.
 * [NIF Havok collision](/formats/nif-collision.md) - bhk root/body/shape graphs,
@@ -50,8 +52,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   STAT resolution, skip taxonomy, grouping, world bounds.
 * [Terrain mesh build](/engine/terrain.md) - LAND -> per-quadrant meshes under the cell's
   objects: grid topology, base textures, XCLC quad-hiding, DNAM fallback plane, placement.
-* [Distant LOD streaming](/engine/distant-lod.md) - cell-clipped coarsening rings beyond
-  5x5, atomic coverage replacement, asset lifetime, real-render evidence.
+* [Distant LOD streaming](/engine/distant-lod.md) - INI-driven cell-clipped rings, tree
+  billboards, atomic replacement, asset lifetime, real-render evidence.
 * [Sky + water environment](/engine/sky-water.md) - procedural time-of-day sky, per-cell
   water resolution/build, animated alpha-blend render path.
 * [Interior door transitions](/engine/interiors.md) - interior CELL build, DOOR/XTEL

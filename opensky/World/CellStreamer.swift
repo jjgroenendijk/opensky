@@ -75,6 +75,12 @@ final class CellStreamer {
         doorTransitionFailureCount += 1
     }
 
+    /// Requests a fresh ring for current center. If a build is already in
+    /// flight, requestDistantLODIfNeeded retries until runner accepts it.
+    func invalidateDistantLOD() {
+        requestedLODCenter = nil
+    }
+
     /// One frame's drive. Collects finished builds, re-grids around the
     /// camera (dispatching newly-needed cells, dropping cells that left the
     /// grid), integrates at most one drawable build (a swap is a full
@@ -163,8 +169,9 @@ final class CellStreamer {
         let resolved = core.resident.union(core.void).union(core.failed)
         guard resolved.isSuperset(of: grid.desiredCells) else { return }
         guard requestedLODCenter != grid.center else { return }
-        requestedLODCenter = grid.center
-        runner.enqueueDistantLOD(center: grid.center, hiddenCells: core.resident)
+        if runner.enqueueDistantLOD(center: grid.center, hiddenCells: core.resident) {
+            requestedLODCenter = grid.center
+        }
     }
 
     /// Drops unloaded cells from the composition and schedules eviction of the

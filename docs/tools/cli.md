@@ -3,7 +3,7 @@ type: Tool
 title: CLI dev tool (openskycli)
 description: Terminal dev entrypoints over engine data, collision, rendering, and probes.
 tags: [tool, cli, dev, probe, rendering]
-timestamp: 2026-07-18T00:00:00Z
+timestamp: 2026-07-21T00:00:00Z
 ---
 
 # CLI dev tool (openskycli)
@@ -53,7 +53,7 @@ only where `--out` points (AGENTS.md Legal & IP).
 | `hkx <key>` | Havok packfile container: header (version string, fileVersion, pointer size, section count, resolved root class), section table (name, data start/size, local/global/virtual fixup counts), class-name table (signature hex + name), object inventory (total, per-class histogram, first 8 offset/class rows + truncation count); unresolved root class warns on stderr |
 | `skeleton <hkx-key> [--nif <nif-key>]` | decode every hkaSkeleton in a Havok packfile: per object name, bone count, root count, first 12 bones with parent index; `--nif` name-maps the rig (most bones) onto the NIF skeleton NiNode names — `M of N matched` plus one reason-tagged `unmatched hkx bone`/`unmatched nif node` line per mismatch, both directions |
 | `animation <hkx-key>` | decode every hkaSplineCompressedAnimation + matching hkaAnimationBinding, sample every stored frame as bone-indexed local transforms, report frame/track/block/mapping counts + max translation/scale + normalized-quaternion range; malformed/unbound/non-finite/unbounded sample exits 1 |
-| `lod [--worldspace edid]` | parse lodsettings + sweep every worldspace BTR/BTO through LOD block decoders + scene flattener; any failed container exits 1 |
+| `lod [--worldspace edid]` | parse lodsettings + sweep every worldspace BTR/BTO and tree LST/BTT through production decoders; any failed container/type reference exits 1 |
 | `screenshot --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f] [--time-of-day 0-24] [--neighbors]` | cell scene build + distant LOD -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load/LOD/draw stats + non-background fraction; `--zoom` (0.1-10) moves eye toward framed center; `--time-of-day` controls procedural sky (default 13); `--neighbors` builds production-size 5x5 (shared libraries) and frames full-cell bounds only; missing cell warns + skips; `render` is identical alias |
 | `bench [--worldspace/--x/--y] [--size WxH] [--frames n] [--budget-ms f]` | sustained offscreen render (default 360 frames @ 1280x720) through `Renderer.renderOffscreenSustained` — FrameStats windows + per-frame wall and animation-update times; prints avg/p95/max + fps, exit 1 when avg or p95 misses the budget (default 33.33 ms = 30 fps, todo 2.11 gate) |
 | `bench --fly-path [--worldspace/--x/--y] [--size WxH] [--budget-ms f] [--max-frames n] [--footprint-cap-mb f] [--collision-build-budget-ms f] [--actor-build-budget-ms f] [--animation-budget-ms f] [--shadow-budget-ms f]` | scripted launch-center -> east -> north cell flight through live `CellStreamer`; requires physical-footprint plateau/cap, exact 35-cell build union, zero failed builds, collision-build p95 (default 700 ms), actor-build p95 (default 4500 ms; includes cold rig/clip decode), exact per-cell actor accounting (discovered = rendered + disabled + failed), exact animation accounting (rendered = animated + static fallback), every failure reason-tagged, animation-update avg/p95 (default 4 ms), shadow-update avg/p95 (default 12 ms; `encodeShadowPass` cascade fit + per-cascade caster culling + encode), and frame avg/p95 budget; prints per-cell + aggregate counts plus `shadow update` avg/p95/max/budget and `shadow culling` (draw calls, drawn, culled, cascades — per-cascade caster-culling accounting; high = 3 cascades, low = 2) |
@@ -107,8 +107,10 @@ Implementation notes:
   The LOD pass hides only cells actually built: hiding the whole 5x5 while building one
   cell (no `--neighbors`) left a 24-cell ring with neither terrain nor LOD — sky showed
   through the gap around the target cell.
-* `lod` is M3.4 repeatable clean-room probe. It validates all LOD-specific NIF blocks +
-  flattens each file without GPU upload. Vanilla Tamriel: 3,060 BTR + 717 BTO, 0 failed.
+* `lod` is repeatable clean-room probe. It validates all LOD-specific NIF blocks, flattens
+  each file without GPU upload, parses tree LST/BTT, and resolves every type reference.
+  Vanilla Tamriel: 3,060 BTR + 717 BTO + 329 BTT/40,839 refs, 0 failed. Screenshot/render
+  load the same [INI precedence](/formats/ini.md) as main app.
 * `hkx` is M6.1's container probe. It parses the Havok packfile via shared `HKXFile`
   (header + section table + class-name table + fixup-derived object inventory) and only
   prints; object internals stay later milestones (needs class reflection). CLI parses/
