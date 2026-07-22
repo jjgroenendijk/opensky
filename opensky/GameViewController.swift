@@ -5,6 +5,7 @@
 import AppKit
 import MetalKit
 import OSLog
+import simd
 
 final class GameViewController: NSViewController {
     enum ScreenshotError: LocalizedError {
@@ -271,5 +272,31 @@ extension GameViewController: WeatherControlProviding {
             renderer?.timeOfDay = newValue
             TimeOfDaySettings.store(newValue)
         }
+    }
+}
+
+extension GameViewController: ParticleControlProviding {
+    var particlesEnabled: Bool {
+        get { renderer?.particlesEnabled ?? true }
+        set { renderer?.particlesEnabled = newValue }
+    }
+
+    var particlesFrozen: Bool {
+        get { renderer?.particlesFrozen ?? false }
+        set { renderer?.particlesFrozen = newValue }
+    }
+
+    var particleEmissionScale: Float {
+        get { renderer?.particleEmissionScale ?? 1 }
+        set { renderer?.particleEmissionScale = simd_clamp(newValue, 0, 2) }
+    }
+
+    var particleSnapshot: ParticleControlSnapshot {
+        let playbacks = renderer?.scene.particles ?? []
+        return ParticleControlSnapshot(
+            systemCount: playbacks.count,
+            emitterCount: playbacks.reduce(0) { $0 + $1.emitterCount },
+            liveCount: playbacks.reduce(0) { $0 + $1.liveCount }
+        )
     }
 }

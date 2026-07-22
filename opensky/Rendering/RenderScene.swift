@@ -201,6 +201,8 @@ nonisolated struct RenderScene {
     let sky: SkyParameters?
     let lighting: RenderLighting?
     let pointLights: [RenderPointLight]
+    /// Cell-owned CPU particle systems + their texture/instance buffers.
+    let particles: [ParticlePlayback]
     /// Cell-owned actor playback objects; references disappear on cell eviction.
     let animations: [any RenderAnimation]
 
@@ -211,7 +213,8 @@ nonisolated struct RenderScene {
         water: [WaterDrawItem] = [],
         sky: SkyParameters? = nil,
         lighting: RenderLighting? = nil,
-        pointLights: [RenderPointLight] = []
+        pointLights: [RenderPointLight] = [],
+        particles: [ParticlePlayback] = []
     ) {
         var opaque = GroupAccumulator()
         var alphaTested = GroupAccumulator()
@@ -245,6 +248,7 @@ nonisolated struct RenderScene {
         self.sky = sky
         self.lighting = lighting
         self.pointLights = pointLights
+        self.particles = particles
         self.animations = animations
     }
 
@@ -272,6 +276,7 @@ nonisolated struct RenderScene {
         sky = scenes.lazy.compactMap(\.sky).first
         lighting = scenes.lazy.compactMap(\.lighting).first
         pointLights = scenes.flatMap(\.pointLights)
+        particles = scenes.flatMap(\.particles)
         animations = scenes.flatMap(\.animations)
     }
 
@@ -321,7 +326,7 @@ nonisolated struct RenderScene {
     /// Per-draw uniform ring slots one frame can need: one per group +
     /// terrain item.
     var drawCount: Int {
-        opaque.count + alphaTested.count + terrain.count + water.count
+        opaque.count + alphaTested.count + terrain.count + water.count + particles.count
     }
 
     /// Static instances across all groups — sizes the renderer's
@@ -362,6 +367,9 @@ nonisolated struct RenderScene {
         }
         for item in water {
             add([item.mesh.vertexBuffer, item.mesh.indexBuffer])
+        }
+        for particle in particles {
+            add([particle.instanceBuffer, particle.texture])
         }
         return allocations
     }

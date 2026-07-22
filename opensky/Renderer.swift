@@ -53,7 +53,7 @@ final class Renderer: NSObject {
     /// Members below default to internal (not private) where
     /// RendererOffscreen.swift / RendererSetup.swift extend the loop
     /// cross-file; the module boundary still hides them from callers.
-    static let maxFramesInFlight = 3
+    nonisolated static let maxFramesInFlight = 3
 
     /// Uniform slots are 256-byte aligned so every ring offset satisfies
     /// Metal's buffer-offset alignment requirement. The per-draw ring is
@@ -83,6 +83,7 @@ final class Renderer: NSObject {
     let skinnedAlphaTestPipeline: MTLRenderPipelineState
     let terrainPipeline: MTLRenderPipelineState
     let waterPipeline: MTLRenderPipelineState
+    let particlePipelines: ParticlePipelines
     let depthState: MTLDepthStencilState
     let waterDepthState: MTLDepthStencilState
     let sampler: MTLSamplerState
@@ -109,7 +110,6 @@ final class Renderer: NSObject {
     /// shared guard so the shadow + scene pass never double-prepare (RenderMesh
     /// palette is identical across both passes within one frame).
     var frameBonePrepared: Set<ObjectIdentifier> = []
-    /// Current drawable scene; swapped between frames via setScene.
     private(set) var scene: RenderScene
     /// Injected framing camera — source of the sun/ambient light and the
     /// free-fly camera's starting pose. setScene may replace it.
@@ -125,7 +125,6 @@ final class Renderer: NSObject {
     /// Resident static collision broadphase, wired beside terrain by
     /// GameViewController. Empty in renderer-only paths.
     var collisionQuery: WalkController.CollisionQuery?
-    /// Procedural exterior sky clock. May change between frames.
     var timeOfDay: Float
     /// Data-driven weather runtime (M7.2.2). nil -> procedural sky + camera
     /// lighting, exactly as before. Owned + advanced on the main draw thread.
@@ -134,6 +133,9 @@ final class Renderer: NSObject {
     var currentResolvedWeather: ResolvedWeather?
     /// CACurrentMediaTime of the previous weather update, for real delta time.
     var lastWeatherWallTime: CFTimeInterval?
+    var particlesEnabled = true
+    var particlesFrozen = false
+    var particleEmissionScale: Float = 1
 
     /// Free-fly input, drained once per `draw(in:)`; nil (offscreen/tests) ->
     /// the camera stays on its seeded pose.
@@ -149,9 +151,7 @@ final class Renderer: NSObject {
     var animationTime: Float = 0
     var lastAnimationWallTime: CFTimeInterval?
     var lastAnimationUpdateMS = 0.0
-    /// CPU wall time of the last `encodeShadowPass` (cascade fit + caster
-    /// writes + encode), in ms. 0 until the first frame; idle/off frames
-    /// record their near-zero actual cost. Mirrors `lastAnimationUpdateMS`.
+    /// CPU wall time of last shadow pass; idle/off frames record near-zero cost.
     var lastShadowUpdateMS = 0.0
     let frameUniformBuffer: MTLBuffer
     /// Per-draw ring: maxFramesInFlight slots x drawUniformSlotCapacity
@@ -242,7 +242,7 @@ final class Renderer: NSObject {
         skinnedOpaquePipeline = pipelines.skinnedOpaque
         skinnedAlphaTestPipeline = pipelines.skinnedAlphaTest
         terrainPipeline = pipelines.terrain
-        waterPipeline = pipelines.water
+        (waterPipeline, particlePipelines) = (pipelines.water, pipelines.particles)
         depthState = try Self.makeDepthState(device: device)
         waterDepthState = try Self.makeWaterDepthState(device: device)
         sampler = try Self.makeSampler(device: device)

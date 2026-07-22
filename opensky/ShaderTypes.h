@@ -30,6 +30,8 @@ typedef NS_ENUM(EnumBackingType, BufferIndex)
     BufferIndexSkinningAttributes = 6,
     /// Skinned-mesh bind-pose bone matrix array.
     BufferIndexBoneMatrices = 7,
+    /// CPU-simulated particle billboard instances.
+    BufferIndexParticleInstances = 8,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)
@@ -141,7 +143,21 @@ typedef struct
     vector_float3 weatherHorizonColor;
     vector_float3 weatherSunColor;
     vector_float3 weatherGlareColor;
+    /// Camera basis for world-space particle billboards.
+    vector_float3 cameraRight;
+    vector_float3 cameraUp;
 } FrameUniforms;
+
+/// One live CPU particle uploaded per frame. Vertex shader expands it into a
+/// two-triangle camera-facing quad from vertex_id; no static vertex buffer.
+typedef struct
+{
+    /// xyz world center, w billboard half-size.
+    vector_float4 positionSize;
+    vector_float4 color;
+    /// xy UV origin, zw UV extent (NIF Subtexture Offset).
+    vector_float4 uvRect;
+} ParticleInstance;
 
 /// Per-GROUP material scalars for one instanced static-mesh draw (todo 3.2
 /// instancing): every instance of the group shares them. Matrices moved to

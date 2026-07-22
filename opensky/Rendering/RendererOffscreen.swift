@@ -151,6 +151,9 @@ extension Renderer {
         // weather (tests) stays deterministic because reroll is off and the
         // fixed hour accumulates no game-hours.
         updateWeather(deltaTime: advanceAnimation ? 1 / 30 : 0)
+        if advanceAnimation {
+            updateParticles(deltaTime: 1 / 30)
+        }
         endFrameEvent.wait(untilSignaledValue: UInt64(frameIndex - 1), timeoutMS: 2000)
         let slot = frameIndex % Self.maxFramesInFlight
         let allocator = commandAllocators[slot]
@@ -206,6 +209,8 @@ extension Renderer {
     func renderOffscreen(width: Int, height: Int, animationTime: Float) throws -> MTLTexture {
         self.animationTime = animationTime
         updateAnimations(deltaTime: 0)
+        updateWeather(deltaTime: 0)
+        seekParticles(to: animationTime)
         let (color, depth) = try makeOffscreenTargets(width: width, height: height)
         residencySet.addAllocations([color, depth])
         residencySet.commit()

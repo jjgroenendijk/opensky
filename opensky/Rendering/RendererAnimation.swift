@@ -11,10 +11,34 @@ extension Renderer {
             Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
     }
 
-    func updateAnimationsFromWallClock() {
+    @discardableResult
+    func updateAnimationsFromWallClock() -> Float {
         let now = CACurrentMediaTime()
         let delta = lastAnimationWallTime.map { Float(min(now - $0, 0.1)) } ?? 0
         lastAnimationWallTime = now
         updateAnimations(deltaTime: delta)
+        return delta
+    }
+
+    func updateParticles(deltaTime: Float) {
+        guard particlesEnabled, !particlesFrozen else { return }
+        for playback in scene.particles {
+            playback.advance(
+                deltaTime: deltaTime,
+                wind: currentWind,
+                emissionScale: particleEmissionScale
+            )
+        }
+    }
+
+    func seekParticles(to time: Float) {
+        guard particlesEnabled else { return }
+        for playback in scene.particles {
+            playback.seek(
+                to: time,
+                wind: currentWind,
+                emissionScale: particleEmissionScale
+            )
+        }
     }
 }

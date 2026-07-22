@@ -115,7 +115,7 @@ struct NIFMaterialBlockTests {
     }
 
     @Test func decodesAlphaPropertyBits() throws {
-        // Blend on, src SRC_ALPHA (4), dst INV_SRC_ALPHA (5), test on,
+        // Blend on, src DEST_COLOR (4), dst INV_DEST_COLOR (5), test on,
         // func GREATER (4), no-sorter on: 1 | 4<<1 | 5<<5 | 0x200 | 4<<10 | 0x2000.
         let flags: UInt16 = 1 | 4 << 1 | 5 << 5 | 0x200 | 4 << 10 | 0x2000
         let property = try NIFAlphaProperty(

@@ -18,6 +18,23 @@ nonisolated struct RenderPipelines {
     let skinnedAlphaTest: MTLRenderPipelineState
     let terrain: MTLRenderPipelineState
     let water: MTLRenderPipelineState
+    let particles: ParticlePipelines
+}
+
+nonisolated struct ParticlePipelines {
+    let alpha: MTLRenderPipelineState
+    let additive: MTLRenderPipelineState
+    let additiveOne: MTLRenderPipelineState
+    let multiply: MTLRenderPipelineState
+
+    func pipeline(for mode: ParticleBlendMode) -> MTLRenderPipelineState {
+        switch mode {
+        case .alpha: alpha
+        case .additive: additive
+        case .additiveOne: additiveOne
+        case .multiply: multiply
+        }
+    }
 }
 
 /// Sun-shadow depth pre-pass pipelines (M7.1.1): depth-only, no color
@@ -93,11 +110,11 @@ extension Renderer {
     }
 
     /// Argument table sized for the whole scene pass. Buffers: vertices,
-    /// frame + draw uniforms, terrain weights, instance transforms.
+    /// frame + draw uniforms, terrain weights, instance transforms, particles.
     /// Textures: base diffuse + the terrain layer array.
     static func makeArgumentTable(device: MTLDevice) throws -> MTL4ArgumentTable {
         let descriptor = MTL4ArgumentTableDescriptor()
-        descriptor.maxBufferBindCount = 8
+        descriptor.maxBufferBindCount = BufferIndex.particleInstances.rawValue + 1
         // Base diffuse + terrain layer array + the sun-shadow cascade array.
         descriptor.maxTextureBindCount = 1 + TerrainConstant.maxLayers.rawValue + 1
         // Trilinear + shadow-compare.
@@ -193,7 +210,31 @@ extension Renderer {
             skinnedOpaque: makeVariant(alphaTest: false, skinned: true),
             skinnedAlphaTest: makeVariant(alphaTest: true, skinned: true),
             terrain: makeTerrain(),
-            water: makeWaterPipeline(library: library, compiler: compiler, view: view)
+            water: makeWaterPipeline(library: library, compiler: compiler, view: view),
+            particles: makeParticlePipelines(
+                library: library, compiler: compiler, view: view
+            )
+        )
+    }
+
+    private static func makeParticlePipelines(
+        library: MTLLibrary,
+        compiler: MTL4Compiler,
+        view: MTKView
+    ) throws -> ParticlePipelines {
+        try ParticlePipelines(
+            alpha: makeParticlePipeline(
+                library: library, compiler: compiler, view: view, mode: .alpha
+            ),
+            additive: makeParticlePipeline(
+                library: library, compiler: compiler, view: view, mode: .additive
+            ),
+            additiveOne: makeParticlePipeline(
+                library: library, compiler: compiler, view: view, mode: .additiveOne
+            ),
+            multiply: makeParticlePipeline(
+                library: library, compiler: compiler, view: view, mode: .multiply
+            )
         )
     }
 
@@ -345,6 +386,49 @@ extension Renderer {
         color.blendingState = .enabled
         color.sourceRGBBlendFactor = .sourceAlpha
         color.destinationRGBBlendFactor = .oneMinusSourceAlpha
+        color.rgbBlendOperation = .add
+        color.sourceAlphaBlendFactor = .one
+        color.destinationAlphaBlendFactor = .oneMinusSourceAlpha
+        color.alphaBlendOperation = .add
+        return try compiler.makeRenderPipelineState(descriptor: descriptor)
+    }
+
+    private static func makeParticlePipeline(
+        library: MTLLibrary,
+        compiler: MTL4Compiler,
+        view: MTKView,
+        mode: ParticleBlendMode
+    ) throws -> MTLRenderPipelineState {
+        let vertexFunction = MTL4LibraryFunctionDescriptor()
+        vertexFunction.library = library
+        vertexFunction.name = "particleVertex"
+        let fragmentFunction = MTL4LibraryFunctionDescriptor()
+        fragmentFunction.library = library
+        fragmentFunction.name = "particleFragment"
+        let descriptor = MTL4RenderPipelineDescriptor()
+        descriptor.label = "Particles.\(mode)"
+        descriptor.rasterSampleCount = view.sampleCount
+        descriptor.vertexFunctionDescriptor = vertexFunction
+        descriptor.fragmentFunctionDescriptor = fragmentFunction
+        guard let color = descriptor.colorAttachments[0] else {
+            throw RendererError.pipelineAttachmentMissing
+        }
+        color.pixelFormat = view.colorPixelFormat
+        color.blendingState = .enabled
+        switch mode {
+        case .alpha:
+            color.sourceRGBBlendFactor = .sourceAlpha
+            color.destinationRGBBlendFactor = .oneMinusSourceAlpha
+        case .additive:
+            color.sourceRGBBlendFactor = .sourceAlpha
+            color.destinationRGBBlendFactor = .one
+        case .additiveOne:
+            color.sourceRGBBlendFactor = .one
+            color.destinationRGBBlendFactor = .one
+        case .multiply:
+            color.sourceRGBBlendFactor = .destinationColor
+            color.destinationRGBBlendFactor = .zero
+        }
         color.rgbBlendOperation = .add
         color.sourceAlphaBlendFactor = .one
         color.destinationAlphaBlendFactor = .oneMinusSourceAlpha
