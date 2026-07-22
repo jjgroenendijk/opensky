@@ -117,6 +117,8 @@ nonisolated final class CellSceneBuilder {
     var worldspaceIndex: [UInt32: Worldspace]?
     var waterTypeIndex: [UInt32: WaterType]?
     var waterPlaneMesh: RenderMesh?
+    var landTextureIndex: [UInt32: LandTexture]?
+    var grassIndex: [UInt32: Grass]?
     var lightingTemplateIndex: [UInt32: LightingTemplate]?
     var lightIndex: [UInt32: LightRecord]?
 
@@ -189,7 +191,6 @@ nonisolated final class CellSceneBuilder {
             coordinate: coordinate,
             localized: localized
         )
-        let doors = resolveDoors(refs: refs)
         let environment = buildEnvironment(found: found, worldspace: world.worldspace)
         var scene = makeScene(
             found: found,
@@ -197,8 +198,9 @@ nonisolated final class CellSceneBuilder {
             instances: instances,
             geometry: CellGeometryBuild(
                 location: location,
-                doors: doors,
+                doors: resolveDoors(refs: refs),
                 terrain: environment.terrain,
+                grass: environment.grass,
                 water: environment.water,
                 sky: environment.sky,
                 lighting: nil,

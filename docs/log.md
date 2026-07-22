@@ -4,6 +4,17 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-22
 
+* M7.5.1 GRAS + deterministic placement -- xEdit-cited GRAS decoder reads MODL + fixed
+  32-byte DATA (density, slopes, water rule/distance, position/height/color variance, wave,
+  flags); LTEX retains repeated GNAM links. Cell-owned CPU placement reconstructs ordered
+  LAND BTXT/ATXT coverage, samples renderer-identical terrain triangles/VCLR, filters density,
+  slope, water, hidden quadrants, and seeds each candidate from cell/LAND/GRAS/grid through
+  SplitMix64. WRLD No Grass suppresses generation; summaries count placements + usable/
+  skipped types. Vanilla probe: 27 GRAS, 68 LTEX, 39 GNAM links/0 unresolved; Tamriel (6,-2)
+  generated 126 placements across 2 types (56 + 70), zero skipped, identical rebuild. Exact
+  Bethesda lattice/PRNG remains undocumented; deviations recorded. Rendering + app controls
+  defer to first visible consumer, M7.5.2. Docs: [grass records](/formats/grass.md),
+  [placement](/engine/grass.md).
 * M7.4.2 precipitation acceptance complete -- `World > Environment > Weather` adds stable
   data-driven Clear/Rain/Snow shortcuts + transition-only pause; Environment panel scrolls so
   all M7 controls remain reachable. Synthetic preset/pause + panel-geometry tests cover state

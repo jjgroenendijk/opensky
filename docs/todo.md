@@ -8,7 +8,7 @@ timestamp: 2026-07-22T00:00:00Z
 
 # TODO — roadmap
 
-State as of 2026-07-21. Ordered by mission priority (AGENTS.md): render static world
+State as of 2026-07-22. Ordered by mission priority (AGENTS.md): render static world
 geometry first -> grow toward playable engine.
 
 ## How to continue (agent handoff)
@@ -54,7 +54,8 @@ earlier integration gates. Done milestone leaves this file; history lives in
 * M6 — actors animate. Done 2026-07-20: skeleton-driven idle playback on streamed actors,
   exact lifecycle accounting, deterministic frame-delta gate, exterior/interior probes.
 * M7 — living environment (active): shadows -> weather/sky/wind -> shared particles ->
-  precipitation -> grass. M7.1-M7.4 done; grass next. Dynamic physics moved to combat.
+  precipitation -> grass. M7.1-M7.4 + grass placement done; rendering next. Dynamic physics
+  moved to combat.
   Gate: 7.6.
 * M8 — interaction + UI shell: screen-space UI, interaction targeting, HUD, menu mode,
   settings. Gate: 8.3.3.
@@ -94,10 +95,6 @@ use offscreen verification per `probe`. Main-app controls live under
 
 Consumes M7.2 wind rather than defining a separate animation input.
 
-* [ ] 7.5.1 GRAS records + placement: procedural distribution driven by LAND
-      texture layers (density, slope/height limits, position/color variance),
-      deterministic per-cell seeding. Placement algorithm not fully documented ->
-      probe against observed in-game density, document deviations.
 * [ ] 7.5.2 Instanced rendering + acceptance: batched instancing, weather-driven
       wind sway, distance fade, per-frame budget; streaming lifetime with cells.
       Gate: Whiterun tundra grass within fly-bench budget; density/distance/wind

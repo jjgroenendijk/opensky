@@ -4,7 +4,7 @@ title: Terrain mesh build
 description: LAND height field -> per-quadrant terrain patches with splat layers placed
   under a cell's objects; weight baking, texture resolution, fallback plane, placement math.
 tags: [engine, world, terrain, rendering, esm]
-timestamp: 2026-07-18T00:00:00Z
+timestamp: 2026-07-22T00:00:00Z
 ---
 
 # Terrain mesh build
@@ -80,6 +80,11 @@ world AABB (per-patch `ModelBounds`, transformed) like every other instance.
 `CellLoadSummary.terrainQuadrantCount` records the drawn patch count (0-4 quadrants, or 1
 fallback plane, else 0). The summary line appends `, N terrain quads` only when non-zero, so a
 terrain-free cell logs byte-identically to before.
+
+The same LAND height triangles, VCLR interpolation, hidden-quadrant mask, and ordered
+BTXT/ATXT coverage now feed [procedural grass placement](/engine/grass.md). One source of
+terrain truth prevents grass floating above a renderer/collision triangle or appearing on a
+texture whose final splat contribution was painted away.
 
 ## Fallback plane
 

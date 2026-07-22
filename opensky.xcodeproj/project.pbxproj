@@ -36,7 +36,10 @@
 			membershipExceptions = (
 				AppDelegate.swift,
 				Assets.xcassets,
+				EnvironmentParticleControls.swift,
 				EnvironmentPanelViewController.swift,
+				EnvironmentPrecipitationControls.swift,
+				EnvironmentWeatherControls.swift,
 				GameViewController.swift,
 				MainViewController.swift,
 				OpenSkyApp.swift,

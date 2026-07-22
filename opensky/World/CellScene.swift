@@ -45,6 +45,9 @@ nonisolated struct CellScene {
     /// CPU collision surface for exterior LAND/DNAM terrain. nil for
     /// interiors or cells with no drawable terrain.
     let terrainHeightField: TerrainHeightField?
+    /// Deterministic cell-owned CPU instances. 7.5.2 uploads/batches these;
+    /// keeping them on CellScene already gives streaming exact lifetime.
+    let grassPlacements: [GrassPlacement]
     /// Immutable mesh collision + per-cell broadphase. Empty for cells built
     /// without a collision VFS (legacy synthetic tests).
     let staticCollision: StaticCollisionSet
@@ -59,6 +62,7 @@ nonisolated struct CellScene {
         doors: [PlacedDoor] = [],
         regions: [FormID] = [],
         terrainHeightField: TerrainHeightField? = nil,
+        grassPlacements: [GrassPlacement] = [],
         staticCollision: StaticCollisionSet = .empty,
         assets: CellAssets = CellAssets()
     ) {
@@ -69,6 +73,7 @@ nonisolated struct CellScene {
         self.doors = doors
         self.regions = regions
         self.terrainHeightField = terrainHeightField
+        self.grassPlacements = grassPlacements
         self.staticCollision = staticCollision
         self.assets = assets
     }
@@ -109,6 +114,11 @@ nonisolated struct CellLoadSummary: Equatable {
     /// Splat layers dropped: unresolvable LTEX/TXST chain or over the
     /// 8-layer format cap (TerrainConstant.maxLayers).
     var terrainLayerSkipCount = 0
+    /// Procedural GRAS instances/types retained by this cell.
+    var grassPlacementCount = 0
+    var grassTypeCount = 0
+    /// LTEX GNAM references with no usable GRAS DATA/MODL record.
+    var grassTypeSkipCount = 0
     /// Flat water planes drawn for this cell (0 or 1).
     var waterPlaneCount = 0
     /// Supported LIGH/XEMI placements available to forward draws.
@@ -184,6 +194,11 @@ nonisolated struct CellLoadSummary: Equatable {
         }
         if waterPlaneCount > 0 {
             terrain += ", water"
+        }
+        if grassTypeCount > 0 || grassTypeSkipCount > 0 {
+            let dropped = grassTypeSkipCount > 0 ? ", \(grassTypeSkipCount) dropped" : ""
+            terrain += ", \(grassPlacementCount) grass placements "
+                + "(\(grassTypeCount) types\(dropped))"
         }
         if pointLightCount > 0 {
             terrain += ", \(pointLightCount) point lights"

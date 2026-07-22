@@ -1,0 +1,93 @@
+// Cell-scene integration for milestone 7.5.1: resolve LAND LTEX -> repeated
+// GNAM -> GRAS, then retain deterministic CPU placements with cell lifetime.
+
+import OSLog
+
+nonisolated struct GrassBuild {
+    let placements: [GrassPlacement]
+    let typeCount: Int
+    let typeSkipCount: Int
+}
+
+extension CellSceneBuilder {
+    nonisolated func buildGrass(
+        found: FoundCell,
+        worldspace: Worldspace?,
+        terrain: TerrainBuild?,
+        waterHeight: Float?
+    ) -> GrassBuild? {
+        guard
+            worldspace?.flags.contains(.noGrass) != true,
+            let terrain,
+            let land = landRecord(in: found.children)
+        else { return nil }
+
+        let textures = landTextureIndexBuildingIfNeeded()
+        let grasses = grassIndexBuildingIfNeeded()
+        let usedTextureIDs = Set(
+            land.baseTextures.map(\.texture.rawValue)
+                + land.layers.map(\.texture.rawValue)
+        )
+        var referencedGrassIDs = Set<UInt32>()
+        for textureID in usedTextureIDs {
+            guard let texture = textures[textureID] else { continue }
+            referencedGrassIDs.formUnion(texture.grasses.map(\.rawValue))
+        }
+        guard !referencedGrassIDs.isEmpty else { return nil }
+
+        let usable = referencedGrassIDs.filter { grassID in
+            guard let grass = grasses[grassID] else { return false }
+            return grass.modelPath != nil && grass.placement != nil
+        }
+        let placements = GrassPlacementBuilder.placements(
+            land: land,
+            heightField: terrain.heightField,
+            landTextures: textures,
+            grasses: grasses,
+            waterHeight: waterHeight
+        )
+        let skipped = referencedGrassIDs.count - usable.count
+        if skipped > 0 {
+            Self.logger.warning("\(skipped) referenced grass types unresolvable, dropped")
+        }
+        return GrassBuild(
+            placements: placements,
+            typeCount: usable.count,
+            typeSkipCount: skipped
+        )
+    }
+
+    nonisolated private func landTextureIndexBuildingIfNeeded() -> [UInt32: LandTexture] {
+        if let landTextureIndex {
+            return landTextureIndex
+        }
+        var index: [UInt32: LandTexture] = [:]
+        if let top = file.topGroup(of: "LTEX"), let children = try? top.children() {
+            for case let .record(record) in children {
+                guard record.type == "LTEX", !record.isDeleted else { continue }
+                if let texture = try? LandTexture(record: record) {
+                    index[record.formID] = texture
+                }
+            }
+        }
+        landTextureIndex = index
+        return index
+    }
+
+    nonisolated private func grassIndexBuildingIfNeeded() -> [UInt32: Grass] {
+        if let grassIndex {
+            return grassIndex
+        }
+        var index: [UInt32: Grass] = [:]
+        if let top = file.topGroup(of: "GRAS"), let children = try? top.children() {
+            for case let .record(record) in children {
+                guard record.type == "GRAS", !record.isDeleted else { continue }
+                if let grass = try? Grass(record: record) {
+                    index[record.formID] = grass
+                }
+            }
+        }
+        grassIndex = index
+        return index
+    }
+}
