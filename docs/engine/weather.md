@@ -9,7 +9,8 @@ timestamp: 2026-07-21T00:00:00Z
 
 # Weather runtime
 
-M7.2.2 (core) + M7.2.3 (live region feed, time-of-day slider, acceptance). Data-driven
+M7.2.2 (core) + M7.2.3 (live region feed, time-of-day slider, acceptance) + M7.4.1
+precipitation output. Data-driven
 exterior weather over the [weather records](/formats/weather.md)
 (WTHR/CLMT/REGN + WRLD CNAM + CELL XCLR). Picks a weather for the current worldspace,
 cross-fades between weathers over time, blends each weather's four time-of-day keyframes by
@@ -95,15 +96,17 @@ in lockstep across the day. No TNAM timing -> default windows (sunrise 05:00-07:
 sun-glare/stars colors (NAM0), fog near/far colors + day/night-blended distances/power/max
 (FNAM), sunlight + ambient colors (NAM0), the six-axis directional ambient (DALC, blended
 across its four keyframes), and wind. `ResolvedWeather.blend` lerps two snapshots for the
-transition. Missing NAM0/FNAM/DALC fields resolve to zero/disabled rather than throwing.
+transition. WTHR Rainy/Snow classification resolves to a two-channel precipitation state;
+transition blend supplies its intensity. Missing NAM0/FNAM/DALC fields resolve to
+zero/disabled rather than throwing. See [precipitation volumes](/rendering/precipitation.md).
 
 ## Wind publication
 
 `WindState` = XY unit direction + 0-1 speed + meander range (degrees), from WTHR DATA Wind
 Speed / Direction / Direction Range. Blended across transitions as velocity vectors
 (`direction * speed`) so opposing winds cross through calm instead of snapping 180 degrees.
-Exposed as `Renderer.currentWind` (calm when inactive) for M7.3-7.5 precipitation, grass,
-particle, and audio consumers.
+Exposed as `Renderer.currentWind` (calm when inactive) for precipitation, particles, grass,
+and later audio consumers.
 
 ## Renderer integration
 

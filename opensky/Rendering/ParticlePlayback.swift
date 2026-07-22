@@ -76,7 +76,7 @@ nonisolated struct ParticleSimulator {
     static let maximumCapacity = 2048
 
     let definition: ParticleSystemDefinition
-    let placementTransform: float4x4
+    private(set) var placementTransform: float4x4
     let capacity: Int
     private(set) var particles: [SimulatedParticle] = []
     private var random: ParticleRandom
@@ -96,6 +96,15 @@ nonisolated struct ParticleSimulator {
         random = ParticleRandom(seed: seed)
         birthAccumulator = 0
         nextEmitter = 0
+    }
+
+    /// Re-centers a camera-following emitter and its existing particles by
+    /// the same world-space delta. Placed NIF emitters never call this path.
+    mutating func translate(by delta: SIMD3<Float>) {
+        placementTransform.columns.3 += SIMD4(delta, 0)
+        for index in particles.indices {
+            particles[index].position += delta
+        }
     }
 
     mutating func advance(deltaTime: Float, wind: WindState, emissionScale: Float) {
@@ -285,6 +294,15 @@ nonisolated final class ParticlePlayback {
     func advance(deltaTime: Float, wind: WindState, emissionScale: Float) {
         simulator.advance(deltaTime: deltaTime, wind: wind, emissionScale: emissionScale)
         simulationTime += max(deltaTime, 0)
+    }
+
+    func translate(by delta: SIMD3<Float>) {
+        simulator.translate(by: delta)
+    }
+
+    func reset() {
+        simulator.reset(seed: seed)
+        simulationTime = 0
     }
 
     func seek(to time: Float, wind: WindState, emissionScale: Float) {

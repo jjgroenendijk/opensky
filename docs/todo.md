@@ -94,9 +94,6 @@ use offscreen verification per `probe`. Main-app controls live under
 
 Consumes weather state from M7.2 + particle playback from M7.3.
 
-* [ ] 7.4.1 Rain + snow volumes: camera-following emitters driven by WTHR
-      precipitation type/intensity + wind, simple roof occlusion via upward ray,
-      storm sky darkening.
 * [ ] 7.4.2 Precipitation acceptance: `World > Environment > Weather` can force
       rain/snow, pause transitions, and return to clear. Gate: storm plays +
       transitions back in-app; numeric offscreen frame-delta evidence + local visual check;

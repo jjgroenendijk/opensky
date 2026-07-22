@@ -300,3 +300,19 @@ extension GameViewController: ParticleControlProviding {
         )
     }
 }
+
+extension GameViewController: PrecipitationControlProviding {
+    var precipitationEnabled: Bool {
+        get { renderer?.precipitationEnabled ?? true }
+        set { renderer?.precipitationEnabled = newValue }
+    }
+
+    var precipitationSnapshot: PrecipitationRuntimeSnapshot {
+        renderer?.precipitation.snapshot ?? PrecipitationRuntimeSnapshot(
+            state: .none,
+            roofOccluded: false,
+            rainLiveCount: 0,
+            snowLiveCount: 0
+        )
+    }
+}

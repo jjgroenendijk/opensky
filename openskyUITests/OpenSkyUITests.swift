@@ -68,6 +68,7 @@ final class OpenSkyUITests: XCTestCase {
         XCTAssertTrue(app.checkBoxes["ParticlesEnabledControl"].exists)
         XCTAssertTrue(app.checkBoxes["ParticlesFrozenControl"].exists)
         XCTAssertTrue(app.sliders["ParticleEmissionControl"].exists)
+        XCTAssertTrue(app.checkBoxes["PrecipitationEnabledControl"].exists)
         XCTAssertTrue(app.textFields["LODLevel0DistanceField"].exists)
         XCTAssertTrue(app.textFields["LODLevel1DistanceField"].exists)
         XCTAssertTrue(app.textFields["LODMaximumDistanceField"].exists)

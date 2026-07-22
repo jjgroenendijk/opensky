@@ -126,13 +126,13 @@ final class Renderer: NSObject {
     /// GameViewController. Empty in renderer-only paths.
     var collisionQuery: WalkController.CollisionQuery?
     var timeOfDay: Float
-    /// Data-driven weather runtime (M7.2.2). nil -> procedural sky + camera
-    /// lighting, exactly as before. Owned + advanced on the main draw thread.
+    /// Data-driven weather runtime; nil -> procedural sky + camera lighting.
     var weather: WeatherSystem?
     /// This frame's resolved weather (exterior only). nil -> no weather active.
     var currentResolvedWeather: ResolvedWeather?
-    /// CACurrentMediaTime of the previous weather update, for real delta time.
     var lastWeatherWallTime: CFTimeInterval?
+    let precipitation: PrecipitationVolume
+    var precipitationEnabled = true
     var particlesEnabled = true
     var particlesFrozen = false
     var particleEmissionScale: Float = 1
@@ -248,13 +248,12 @@ final class Renderer: NSObject {
         sampler = try Self.makeSampler(device: device)
         shadow = try Self.makeShadowResources(device: device)
 
-        self.scene = try scene ?? DemoScene.build(device: device)
+        (self.scene, precipitation) = try Self.makeInitialScene(device: device, requested: scene)
         let resolvedCamera = camera ?? .demo
         self.camera = resolvedCamera
         freeFlyCamera = FreeFlyCamera(framing: resolvedCamera)
         walkController = WalkController(cameraPosition: freeFlyCamera.position)
-        self.timeOfDay = timeOfDay
-        self.input = input
+        (self.timeOfDay, self.input) = (timeOfDay, input)
         frameUniformBuffer = try Self.makeFrameUniformBuffer(device: device)
         let rings = try Self.makeSceneRings(device: device, scene: self.scene)
         drawUniformBuffer = rings.drawBuffer
@@ -273,6 +272,7 @@ final class Renderer: NSObject {
                 shadow.map
             ]
                 + self.scene.residencyAllocations
+                + precipitation.residencyAllocations
         )
         commandQueue.addResidencySet(residencySet)
 
