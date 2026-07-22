@@ -58,6 +58,11 @@ Deterministic offscreen tests set exact clip times. Sustained/fly benchmarks rec
 CPU time independently and gate average + p95 against the CLI animation budget (4 ms in
 Debug by default).
 
+`World > Environment > Actor animation > Enabled` is the durable A/B surface. Off resets
+every skinned palette to bind pose; on resumes clip sampling from renderer time. Its live
+readout reports playback count, updated bones, mode, and update time. Renderer time continues
+while animation is off so unrelated grass/particle effects do not freeze.
+
 Synthetic gates cover hierarchy composition, reference-pose fallback, cycle rejection,
 palette formula, triple-buffer isolation, and render output: two animated times differ while
 two static frames remain byte-identical. Real read-only install probes on 2026-07-20 found:
@@ -67,9 +72,10 @@ two static frames remain byte-identical. Real read-only install probes on 2026-0
   33.33 ms frame budget.
 * ChillfurrowFarm interior: 1 rendered actor = 1 animated human; exterior -> interior ->
   exterior door round trip completed.
-* Full 35-cell fly: 55 actors discovered = 27 rendered + 27 disabled + 1 failed; rendered
-  split 11 animated + 16 reason-tagged static. Animation update averaged 1.61 ms, p95
-  2.99 ms vs 4 ms budget. Total frame avg 5.36 ms, p95 9.51 ms vs 33.33 ms budget.
+* M7.6 full 35-cell living-environment fly: 55 actors discovered = 27 rendered + 27 disabled
+  * 1 failed; rendered split 11 animated + 16 reason-tagged static. Peak updated palette was
+  445 bones. Animation update averaged 1.52 ms, p95 2.85 ms vs 4 ms budget. Total frame avg
+  15.43 ms, p95 30.12 ms vs 33.33 ms with all M7 systems active.
 
 Generated captures stay local. Repository evidence is deterministic pixel comparison,
 exact accounting, timing metrics, and probe output in ignored `logs/`.

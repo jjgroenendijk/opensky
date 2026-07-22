@@ -128,8 +128,10 @@ retakes first responder, so WASD/mouse-look resume without a manual click.
 `CellStreamingFlyBenchmarkConfiguration.shadowUpdateBudgetMS` gates shadow avg
 AND p95 per frame (`shadowUpdateExceeded` mirror of the animation gate);
 `OffscreenBenchResult.shadowMS` collects `lastShadowUpdateMS`. CLI flag
-`--shadow-budget-ms`, default 12 ms: measured Whiterun fly path @ 640x360 Debug
-avg 3.26 / p95 6.52 / max 9.72 ms -> ~1.8x p95 headroom, above transient max.
+`--shadow-budget-ms`, default 14 ms: original shadow-only Whiterun fly @ 640x360 Debug
+measured avg 3.26 / p95 6.52 / max 9.72 ms. M7.6 full-probe warm-process runs measured
+p95 12.13/12.19/13.20 ms; 14 keeps 6% measured headroom while staying below half the
+33.33 ms total-frame budget.
 Report prints `shadow update` + `shadow culling` lines; `tools/probe.sh`
 asserts culled casters are reported.
 

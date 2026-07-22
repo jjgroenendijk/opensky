@@ -14,6 +14,8 @@ struct EnvironmentPanelTests {
         panel.view.layoutSubtreeIfNeeded()
 
         let controls = [
+            panel.animationsEnabledControl,
+            panel.weatherEnabledControl,
             panel.clearWeatherControl,
             panel.rainWeatherControl,
             panel.snowWeatherControl,

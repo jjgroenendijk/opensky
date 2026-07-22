@@ -19,6 +19,10 @@ private final class SyntheticBoneAnimation: RenderAnimation {
             "root": MatrixMath.translation(SIMD3(time * 40, 0, 0))
         ])
     }
+
+    func resetToBindPose() -> Int {
+        mesh.updateSkinningPose(["root": matrix_identity_float4x4])
+    }
 }
 
 struct ActorAnimationRenderTests {
@@ -54,6 +58,26 @@ struct ActorAnimationRenderTests {
 
         #expect(actorFrames.first != actorFrames.second)
         #expect(propFrames.first == propFrames.second)
+    }
+
+    @Test(.enabled(if: Self.hasMetal4Device))
+    @MainActor
+    func disabledActorAnimationRestoresBindPose() throws {
+        let device = try #require(Self.device)
+        let animated = try makeScene(device: device, skinned: true)
+        let view = MTKView(frame: CGRect(x: 0, y: 0, width: 256, height: 256), device: device)
+        view.isPaused = true
+        view.enableSetNeedsDisplay = false
+        let renderer = try Renderer(view: view, scene: animated.scene, camera: animated.camera)
+        let moving = try pixels(renderer.renderOffscreen(
+            width: 256, height: 256, animationTime: 1
+        ))
+        renderer.actorAnimationsEnabled = false
+        let bindPose = try pixels(renderer.renderOffscreen(
+            width: 256, height: 256, animationTime: 1
+        ))
+        #expect(moving != bindPose)
+        #expect(renderer.lastAnimationUpdatedBoneCount == 1)
     }
 
     @MainActor

@@ -115,6 +115,26 @@ struct PrecipitationTests {
         }
         #expect(rainy.precipitation.snapshot.rainLiveCount > 20)
         #expect(changed > 100, "rain changed only \(changed) channels")
+
+        rainy.particlesEnabled = false
+        let worldParticlesOff = try RendererShadowTests.readPixels(
+            texture: rainy.renderOffscreen(
+                width: RendererShadowTests.width,
+                height: RendererShadowTests.height,
+                animationTime: 0
+            )
+        )
+        #expect(worldParticlesOff == rainyPixels)
+
+        rainy.precipitationEnabled = false
+        let precipitationOff = try RendererShadowTests.readPixels(
+            texture: rainy.renderOffscreen(
+                width: RendererShadowTests.width,
+                height: RendererShadowTests.height,
+                animationTime: 0
+            )
+        )
+        #expect(precipitationOff == baselinePixels)
     }
 }
 

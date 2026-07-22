@@ -10,7 +10,7 @@ extension Renderer {
     /// Published wind for precipitation/grass/particles/audio (M7.3-7.5). Calm
     /// when no weather is active.
     var currentWind: WindState {
-        weather?.currentWind ?? .calm
+        weatherEnabled ? weather?.currentWind ?? .calm : .calm
     }
 
     /// Advances the weather runtime (transition + reroll accumulation) and
@@ -18,7 +18,7 @@ extension Renderer {
     /// stays nil and the renderer behaves exactly as before (procedural sky,
     /// camera lighting). Cheap: two resolves + one blend.
     func updateWeather(deltaTime: Float) {
-        guard let weather else {
+        guard weatherEnabled, let weather else {
             currentResolvedWeather = nil
             return
         }

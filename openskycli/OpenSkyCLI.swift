@@ -76,7 +76,8 @@ enum OpenSkyCLI {
                                   physical footprint, collision-build p95,
                                   actor-build p95, exact per-cell actor/animation
                                   accounting, animation + shadow + frame budgets;
-                                  report per-cascade shadow caster culling
+                                  require selected rain, live world particles,
+                                  precipitation, shadows, and grass; report peaks
       bench --walk-path [--size WxH] [--budget-ms <f>]
             [--max-frames <n>] [--out <file>]
                                   Fixed-step M4 route: terrain + farm stairs,

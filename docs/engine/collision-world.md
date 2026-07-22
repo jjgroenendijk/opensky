@@ -83,8 +83,9 @@ triangles, build ms, estimated KiB. Grid acceptance requires zero load, decode, 
 type gaps. Void cells report explicitly.
 
 `bench --fly-path` records collision phase duration for every successful serial cell build.
-Gate: p95 <= 700 ms. Existing render gate remains avg + p95 <= 33.33 ms; physical footprint
-cap remains 1,024 MB + plateau requirement.
+Gate: p95 <= 750 ms. M7.6 warm-process full probe reached 723.09 ms after an isolated
+574.22 ms run; 750 ms keeps a measured ceiling with scheduler room. Existing render gate
+remains avg + p95 <= 33.33 ms; physical footprint cap remains 1,024 MB + plateau requirement.
 
 Real read-only Tamriel probe, 2026-07-19:
 

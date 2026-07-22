@@ -134,6 +134,8 @@ unchanged.
 
 Sidebar path `World > Environment > Weather` (`EnvironmentPanelViewController`), controls:
 
+* Enabled (`WeatherEnabledControl`): master A/B. Off resolves no WTHR snapshot and publishes
+  calm wind; selection/transition state stays available for re-enable.
 * Weather popup (`WeatherControl`): Auto + every selectable weather's editor ID
   (`WeatherStore.selectableWeathers`, sorted by editor ID so vanilla weathers like
   SkyrimClear/SkyrimCloudy/SkyrimFog are findable among the 84). Forces the live weather with

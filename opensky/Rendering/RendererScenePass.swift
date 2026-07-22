@@ -16,8 +16,6 @@ extension Renderer {
         var stats = SceneDrawStats()
     }
 
-    // MARK: - Uniform writes
-
     /// Writes this frame's uniforms into its 256-byte-aligned slot and
     /// returns the byte offset of that slot. `viewProjection` is computed by
     /// the caller (encodeScenePass shares it with the frustum). Sun/ambient
@@ -214,8 +212,6 @@ extension Renderer {
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<WaterDrawUniforms>.size)
         return offset
     }
-
-    // MARK: - Draw encode
 
     /// Encodes instanced draw groups: per group, cull per instance, write
     /// only the visible instances' transforms, bind the transform ring at
@@ -491,8 +487,12 @@ extension Renderer {
         )
         encodeGrass(groups: scene.grass, state: &state)
         encodeWater(items: scene.water, state: &state)
-        encodeParticles(items: scene.particles, state: &state)
-        encodeParticles(items: precipitation.drawItems, state: &state)
+        encodeParticles(items: scene.particles, enabled: particlesEnabled, state: &state)
+        encodeParticles(
+            items: precipitation.drawItems,
+            enabled: precipitationEnabled,
+            state: &state
+        )
         lastDrawStats = state.stats
         encoder.endEncoding()
         return true

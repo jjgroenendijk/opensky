@@ -127,6 +127,17 @@ nonisolated enum ActorAnimationLoadError: LocalizedError {
 nonisolated protocol RenderAnimation: AnyObject {
     @discardableResult
     func update(at time: Float) -> Int
+
+    /// Restore bind/reference state for a true animation-off A/B frame.
+    @discardableResult
+    func resetToBindPose() -> Int
+}
+
+nonisolated extension RenderAnimation {
+    @discardableResult
+    func resetToBindPose() -> Int {
+        0
+    }
 }
 
 nonisolated final class ActorAnimationPlayback: RenderAnimation {
@@ -158,6 +169,11 @@ nonisolated final class ActorAnimationPlayback: RenderAnimation {
             guard updatedMeshes.insert(ObjectIdentifier(mesh)).inserted else { return count }
             return count + mesh.updateSkinningPose(transforms)
         }
+    }
+
+    @discardableResult
+    func resetToBindPose() -> Int {
+        meshes.reduce(0) { $0 + $1.resetSkinningPose() }
     }
 }
 

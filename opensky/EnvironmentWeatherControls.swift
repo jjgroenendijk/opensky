@@ -8,6 +8,9 @@ extension EnvironmentPanelViewController {
     }
 
     func makeWeatherViews() -> [NSView] {
+        weatherEnabledControl.target = self
+        weatherEnabledControl.action = #selector(weatherEnabledChanged)
+        weatherEnabledControl.setAccessibilityIdentifier("WeatherEnabledControl")
         weatherControl.target = self
         weatherControl.action = #selector(weatherChanged)
         weatherControl.setAccessibilityIdentifier("WeatherControl")
@@ -39,7 +42,8 @@ extension EnvironmentPanelViewController {
         timeLabel.setAccessibilityIdentifier("TimeOfDayLabel")
 
         return [
-            Self.caption("Weather"), weatherControl, presets, weatherTransitionsPausedControl,
+            Self.caption("Weather"), weatherEnabledControl, weatherControl, presets,
+            weatherTransitionsPausedControl,
             Self.caption("Time of day"), timeControl, timeLabel
         ]
     }
@@ -66,6 +70,8 @@ extension EnvironmentPanelViewController {
         weatherControl.addItem(withTitle: Self.autoWeatherTitle)
         weatherControl.addItems(withTitles: names)
         weatherControl.isEnabled = !names.isEmpty
+        weatherEnabledControl.isEnabled = !names.isEmpty
+        weatherEnabledControl.state = weatherProvider?.weatherEnabled == true ? .on : .off
         for button in [clearWeatherControl, rainWeatherControl, snowWeatherControl] {
             button.isEnabled = !names.isEmpty
         }
@@ -78,6 +84,11 @@ extension EnvironmentPanelViewController {
         } else {
             weatherControl.selectItem(withTitle: Self.autoWeatherTitle)
         }
+    }
+
+    @objc private func weatherEnabledChanged() {
+        weatherProvider?.weatherEnabled = weatherEnabledControl.state == .on
+        finishWeatherInteraction()
     }
 
     @objc private func weatherChanged() {
@@ -147,6 +158,7 @@ extension EnvironmentPanelViewController {
 
     func weatherReadout() -> String {
         guard let weatherProvider else { return "Weather: unavailable" }
+        guard weatherProvider.weatherEnabled else { return "Weather: disabled" }
         let name = weatherProvider.currentWeatherName ?? "none"
         let wind = weatherProvider.windState
         let heading = Int((atan2(wind.direction.y, wind.direction.x) * 180 / .pi + 360)

@@ -323,6 +323,12 @@ nonisolated struct RenderScene {
         return updated
     }
 
+    /// Restores all resident actor meshes to their NIF bind palettes.
+    @discardableResult
+    func resetAnimationsToBindPose() -> Int {
+        animations.reduce(0) { $0 + $1.resetToBindPose() }
+    }
+
     /// CPU light culling: stable distance order, original scene order as
     /// tie-break. The renderer calls this once per visible draw.
     func nearestPointLights(to position: SIMD3<Float>, limit: Int) -> [RenderPointLight] {

@@ -105,6 +105,7 @@ final class WorldContentViewController: NSViewController {
     func wireProvider() {
         panel.provider = gameViewController
         panel.weatherProvider = gameViewController
+        panel.animationProvider = gameViewController
         panel.particleProvider = gameViewController
         panel.precipitationProvider = gameViewController
         panel.grassProvider = gameViewController
