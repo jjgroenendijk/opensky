@@ -4,14 +4,14 @@ title: Weather runtime
 description: Region/climate weather selection, timed sky/fog/ambient transitions blended
   over the time-of-day input, and published wind for precipitation/grass/particles.
 tags: [engine, weather, sky, environment, wind]
-timestamp: 2026-07-21T00:00:00Z
+timestamp: 2026-07-22T00:00:00Z
 ---
 
 # Weather runtime
 
-M7.2.2 (core) + M7.2.3 (live region feed, time-of-day slider, acceptance) + M7.4.1
-precipitation output. Data-driven
-exterior weather over the [weather records](/formats/weather.md)
+M7.2.2 (core) + M7.2.3 (live region feed, time-of-day slider, acceptance) + M7.4
+precipitation output + acceptance. Data-driven exterior weather over the
+[weather records](/formats/weather.md)
 (WTHR/CLMT/REGN + WRLD CNAM + CELL XCLR). Picks a weather for the current worldspace,
 cross-fades between weathers over time, blends each weather's four time-of-day keyframes by
 the [sky clock](/engine/sky-water.md) `timeOfDay`, and feeds the result into the renderer's
@@ -48,6 +48,11 @@ depend on it). All-zero chances fall back to a uniform pick.
 `WeatherStore` is built in the AppDelegate cell provider and handed to the renderer through
 `WeatherProviding`.
 
+M7.4 adds stable Clear/Rain/Snow shortcuts for app acceptance. Each shortcut prefers a known
+vanilla editor ID (`SkyrimClear`, `SkyrimOvercastRainFF`, `SkyrimStormSnow`), then falls back
+to the first editor-ID-sorted WTHR with matching decoded precipitation classification. The
+fallback keeps the controls data-driven for non-vanilla data sets.
+
 ### Live XCLR region feed (M7.2.3)
 
 The per-cell region feed is now live. `CellScene` carries the built cell's XCLR REGN FormIDs
@@ -74,6 +79,10 @@ Auto reroll is driven off the time-of-day input, not real time: each `update` ac
 the forward change in `hour` (midnight-wrapped) and rerolls every `rerollGameHours`
 (6 game-hours). A static clock therefore never auto-rerolls — deterministic for tests and
 for a paused sky.
+
+`transitionsPaused` stops only cross-fade progress. A forced target may still replace the
+pending target at progress 0; weather resolution, renderer frames, and precipitation particle
+playback continue. Resume advances the same transition from its frozen fraction.
 
 ### Trans Delta interpretation (deviation flagged)
 
@@ -129,6 +138,10 @@ Sidebar path `World > Environment > Weather` (`EnvironmentPanelViewController`),
   (`WeatherStore.selectableWeathers`, sorted by editor ID so vanilla weathers like
   SkyrimClear/SkyrimCloudy/SkyrimFog are findable among the 84). Forces the live weather with
   a timed transition; Auto resumes automatic selection.
+* Clear/Rain/Snow buttons (`ClearWeatherControl`, `RainWeatherControl`,
+  `SnowWeatherControl`): force stable data-driven acceptance presets with timed transitions.
+* Pause transitions (`WeatherTransitionsPausedControl`): freezes only weather blend progress;
+  readout appends `paused`. Renderer + precipitation playback continue for inspection.
 * Time-of-day slider (`TimeOfDayControl`, 0-24 h) + `TimeOfDayLabel` HH:MM readout: drives
   `Renderer.timeOfDay` live — the "time transitions in-app" surface, and an A/B of the
   time-of-day keyframe blend. Persisted via `TimeOfDaySettings` (UserDefaults trio, mirrors
@@ -153,12 +166,29 @@ scene offscreen (1280x720) against the real Skyrim.esm and asserts pairwise pixe
   clear 204770 px, vs cloudy 364563 px — differs from both endpoints, progress monotonic.
 * Time of day (SkyrimClear 04:00 vs 13:00): 921600 px.
 
+## Precipitation acceptance evidence (M7.4.2)
+
+`PrecipitationAcceptanceRealDataTests` forces stable clear/rain/snow presets through the live
+`WeatherSystem` + renderer path at FirstRenderCell (640x360). It freezes a partial rain
+transition while renderer frames continue, resumes to settled rain, cross-fades to snow, then
+returns clear and waits for both particle volumes to drain. Observed changed-pixel counts:
+
+* clear/rain 229507;
+* clear/snow 230266;
+* rain/snow 132802;
+* rain/returned-clear 229507.
+
+All exceed the 250 px gate. `World > Environment > Weather` visual check observed rain at
+100% with 297 live rain particles; snow target held at blend 0% while paused, resumed to snow
+100% with 768 live snow particles, then returned to SkyrimClear 100% with rain/snow counts 0.
+Rendered evidence stays gitignored under `logs/` because it contains game-derived pixels.
+
 ## Tests
 
 * `WeatherRuntimeTests` (synthetic): time-of-day weights peak/sum/wrap, resolved blend
   endpoints + monotonicity, fog day/night blend, wind blend, region priority/override +
-  climate-fallback selection, deterministic + weighted pick, and the WeatherSystem
-  instant/timed transition machine.
+  climate-fallback selection, deterministic + weighted pick, stable precipitation presets,
+  and the WeatherSystem instant/timed/pause transition machine.
 * `WeatherRecordTests` / `RecordDecoderTests`: DALC keyframes, WRLD CNAM, CELL XCLR decode.
 * `RendererWeatherTests` (Metal 4, offscreen A/B): inactive weather reproduces the
   procedural baseline bit-for-bit; a forced synthetic weather repaints the sky; two distinct
@@ -171,3 +201,5 @@ scene offscreen (1280x720) against the real Skyrim.esm and asserts pairwise pixe
 * `WeatherAcceptanceRealDataTests` (env-gated, Metal 4 offscreen): the acceptance gate above —
   distinct clear/cloudy/fog looks, a monotone mid-transition frame differing from both
   endpoints, and a time-of-day difference.
+* `PrecipitationAcceptanceRealDataTests` (env-gated, Metal 4 offscreen): partial paused rain,
+  settled rain/snow, clear return + particle drain, and numeric frame deltas above.

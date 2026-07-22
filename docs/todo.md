@@ -3,7 +3,7 @@ type: Task List
 title: Roadmap and outstanding work
 description: OpenSky mission roadmap - agent handoff, milestone plan, open questions.
 tags: [meta, roadmap, planning, handoff]
-timestamp: 2026-07-21T00:00:00Z
+timestamp: 2026-07-22T00:00:00Z
 ---
 
 # TODO — roadmap
@@ -54,8 +54,8 @@ earlier integration gates. Done milestone leaves this file; history lives in
 * M6 — actors animate. Done 2026-07-20: skeleton-driven idle playback on streamed actors,
   exact lifecycle accounting, deterministic frame-delta gate, exterior/interior probes.
 * M7 — living environment (active): shadows -> weather/sky/wind -> shared particles ->
-  precipitation -> grass. M7.1 sun shadows + M7.2 weather core done; dynamic physics
-  moved to combat. Gate: 7.6.
+  precipitation -> grass. M7.1-M7.4 done; grass next. Dynamic physics moved to combat.
+  Gate: 7.6.
 * M8 — interaction + UI shell: screen-space UI, interaction targeting, HUD, menu mode,
   settings. Gate: 8.3.3.
 * M9 — world audio: decode/playback, sound records, positional SFX, ambience, music.
@@ -89,15 +89,6 @@ Specs: UESP + xEdit defs (WTHR/CLMT/REGN/GRAS), NifTools nif.xml (particle +
 effect-shader blocks). Format items follow `format-parser` discipline; render items
 use offscreen verification per `probe`. Main-app controls live under
 `World > Environment` and remain as the visual-verification surface.
-
-### M7.4 — precipitation
-
-Consumes weather state from M7.2 + particle playback from M7.3.
-
-* [ ] 7.4.2 Precipitation acceptance: `World > Environment > Weather` can force
-      rain/snow, pause transitions, and return to clear. Gate: storm plays +
-      transitions back in-app; numeric offscreen frame-delta evidence + local visual check;
-      weather docs + log updated.
 
 ### M7.5 — grass + flora
 

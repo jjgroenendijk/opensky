@@ -155,6 +155,13 @@ struct WeatherRuntimeTests {
         #expect(WeatherSelection.pick(from: [], seed: 7) == nil)
     }
 
+    @Test func precipitationPresetsPreferStableIDsThenClassification() throws {
+        let store = try Self.presetStore()
+        #expect(store.weather(for: .clear)?.editorID == "SkyrimClear")
+        #expect(store.weather(for: .rain)?.editorID == "AlternateRain")
+        #expect(store.weather(for: .snow)?.editorID == "SkyrimStormSnow")
+    }
+
     // MARK: - WeatherSystem transitions
 
     @Test func forceInstantSnaps() throws {
@@ -184,6 +191,24 @@ struct WeatherRuntimeTests {
         #expect(system.currentWind.speed > windA.speed)
     }
 
+    @Test func pausedTransitionFreezesBlendUntilResumed() throws {
+        let system = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
+        system.forceWeather(FormID(0x100), transition: .instant)
+        system.update(deltaTime: 0, hour: 12)
+        system.forceWeather(FormID(0x200), transition: .timed)
+        system.update(deltaTime: 0.5, hour: 12)
+        let pausedFraction = system.transitionFraction
+        #expect(pausedFraction > 0 && pausedFraction < 1)
+
+        system.transitionsPaused = true
+        system.update(deltaTime: 100, hour: 12)
+        #expect(system.transitionFraction == pausedFraction)
+
+        system.transitionsPaused = false
+        system.update(deltaTime: 100, hour: 12)
+        #expect(system.transitionFraction == 1)
+    }
+
     @Test func autoRerollAdvancesWithGameHours() throws {
         let system = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
         // Prime the time-of-day accumulator, then jump forward more than the
@@ -208,6 +233,33 @@ struct WeatherRuntimeTests {
 extension WeatherRuntimeTests {
     fileprivate static func store() throws -> WeatherStore {
         try WeatherStore(file: ESMFile(data: plugin()))
+    }
+
+    private static func presetStore() throws -> WeatherStore {
+        let records = weather(
+            formID: 0x600,
+            skyUpperDay: 0x40,
+            windSpeed: 0,
+            transDelta: 0x33,
+            editorID: "SkyrimClear",
+            precipitationFlag: 0x01
+        ) + weather(
+            formID: 0x601,
+            skyUpperDay: 0x40,
+            windSpeed: 0,
+            transDelta: 0x33,
+            editorID: "AlternateRain",
+            precipitationFlag: 0x04
+        ) + weather(
+            formID: 0x602,
+            skyUpperDay: 0x40,
+            windSpeed: 0,
+            transDelta: 0x33,
+            editorID: "SkyrimStormSnow",
+            precipitationFlag: 0x08
+        )
+        let plugin = ESMFixture.tes4() + ESMFixture.topGroup("WTHR", contents: records)
+        return try WeatherStore(file: ESMFile(data: plugin))
     }
 
     /// Plugin with two weathers, one climate, two regions, one worldspace.
@@ -259,7 +311,12 @@ extension WeatherRuntimeTests {
     }
 
     private static func weather(
-        formID: UInt32, skyUpperDay: UInt8, windSpeed: UInt8, transDelta: UInt8
+        formID: UInt32,
+        skyUpperDay: UInt8,
+        windSpeed: UInt8,
+        transDelta: UInt8,
+        editorID: String? = nil,
+        precipitationFlag: UInt8 = 0
     ) -> Data {
         // NAM0: 17 components; component 0 (sky-upper) day = grey skyUpperDay.
         var nam0 = Data()
@@ -278,9 +335,12 @@ extension WeatherRuntimeTests {
             fnam.appendFloat32(value)
         }
         var data = Data([windSpeed, 0, 0, transDelta, 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0])
+        data[11] = precipitationFlag
         data.append(64) // wind direction
         data.append(32) // wind direction range
-        let fields = ESMFixture.field("EDID", ESMFixture.zstring("WTHR\(formID)"))
+        let fields = ESMFixture.field(
+            "EDID", ESMFixture.zstring(editorID ?? "WTHR\(formID)")
+        )
             + ESMFixture.field("NAM0", nam0)
             + ESMFixture.field("FNAM", fnam)
             + ESMFixture.field("DATA", data)

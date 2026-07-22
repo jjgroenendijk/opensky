@@ -254,12 +254,25 @@ extension GameViewController: WeatherControlProviding {
         weather.forceWeather(match?.formID, transition: .timed)
     }
 
+    func forceWeather(_ preset: WeatherPreset) {
+        guard
+            let weather = renderer?.weather,
+            let match = weather.store.weather(for: preset)
+        else { return }
+        weather.forceWeather(match.formID, transition: .timed)
+    }
+
     var currentWeatherName: String? {
         renderer?.weather?.currentWeatherEditorID
     }
 
     var weatherTransitionFraction: Float {
         renderer?.weather?.transitionFraction ?? 1
+    }
+
+    var weatherTransitionsPaused: Bool {
+        get { renderer?.weather?.transitionsPaused ?? false }
+        set { renderer?.weather?.transitionsPaused = newValue }
     }
 
     var windState: WindState {

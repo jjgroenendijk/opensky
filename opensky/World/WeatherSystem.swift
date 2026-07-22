@@ -55,6 +55,10 @@ nonisolated final class WeatherSystem {
     private var lastHour: Float?
     /// Cached resolve at the last update — recomputed only on update().
     private(set) var resolvedWeather: ResolvedWeather?
+    /// Freezes only weather cross-fade progress. Time-of-day resolution and
+    /// precipitation particle playback continue, enabling a stable mid-storm
+    /// inspection frame in the main app.
+    var transitionsPaused = false
 
     init(store: WeatherStore, worldspaceFormID: UInt32?) {
         self.store = store
@@ -139,7 +143,7 @@ nonisolated final class WeatherSystem {
     // MARK: Transition mechanics
 
     private func advanceTransition(deltaTime: Float) {
-        guard transitionProgress < 1 else { return }
+        guard !transitionsPaused, transitionProgress < 1 else { return }
         let step = transitionDuration > 0 ? deltaTime / transitionDuration : 1
         transitionProgress = simd_clamp(transitionProgress + step, 0, 1)
         if transitionProgress >= 1 {

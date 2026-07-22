@@ -61,7 +61,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Sky + water environment](/engine/sky-water.md) - procedural time-of-day sky, per-cell
   water resolution/build, animated alpha-blend render path.
 * [Weather runtime](/engine/weather.md) - region/climate weather selection, timed
-  sky/fog/ambient transitions over the time-of-day input, published wind vector.
+  sky/fog/ambient transitions over time-of-day, published wind, force/pause app controls.
 * [Interior door transitions](/engine/interiors.md) - interior CELL build, DOOR/XTEL
   resolution, proximity activation, camera teleport, suspended exterior streaming.
 * [Free-fly camera](/engine/free-fly-camera.md) - WASDQE + mouse-look input capture,
@@ -86,7 +86,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   modifiers, instanced Metal billboards, effect blend pipelines, app controls + Whiterun
   offscreen acceptance.
 * [Precipitation volumes](/rendering/precipitation.md) - WTHR-driven camera rain/snow,
-  shared particle rendering, wind, roof ray occlusion, storm sky darkening + app inspection.
+  shared particle rendering, wind, roof ray occlusion, storm sky darkening + acceptance.
 
 ## Decisions
 
