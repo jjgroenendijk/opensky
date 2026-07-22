@@ -106,6 +106,7 @@ final class WorldContentViewController: NSViewController {
         panel.provider = gameViewController
         panel.weatherProvider = gameViewController
         panel.particleProvider = gameViewController
+        panel.precipitationProvider = gameViewController
     }
 
     /// Reveals the panel for `destination` (only Environment today) or hides it.

@@ -85,6 +85,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Particle playback](/rendering/particles.md) - deterministic CPU emitters, weather-wind
   modifiers, instanced Metal billboards, effect blend pipelines, app controls + Whiterun
   offscreen acceptance.
+* [Precipitation volumes](/rendering/precipitation.md) - WTHR-driven camera rain/snow,
+  shared particle rendering, wind, roof ray occlusion, storm sky darkening + app inspection.
 
 ## Decisions
 

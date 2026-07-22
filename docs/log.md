@@ -4,6 +4,18 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-22
 
+* M7.4.1 rain + snow volumes -- renderer-owned camera-following emitters reuse shared M7.3
+  deterministic simulator, triple-buffered instances, alpha billboard pass, and generated
+  streak/flake masks (no game asset). WTHR Rainy/Snow classification becomes transition-
+  blended rain/snow intensity; live weather wind drives drift; full storms darken sky/sun/
+  glare up to 35%. One upward camera ray through resident collision BVHs suppresses + clears
+  precipitation under triangle/convex/box roofs (curved fallback = AABB). `World >
+  Environment > Precipitation` adds enable A/B + type/intensity/live/roof readout; Weather
+  popup forces decoded rain/snow. Synthetic math/ray/lifecycle/Metal tests pass. Real
+  FirstRenderCell 640x360 scratch probe: `SkyrimOvercastRainFF` 3,452 changed px,
+  `SkyrimStormSnow` 681; both captures visually checked, evidence gitignored in `logs/`.
+  Docs: [precipitation volumes](/rendering/precipitation.md). Next: 7.4.2 transition/clear
+  acceptance.
 * M7.3.2 particle playback complete -- cell-owned deterministic CPU simulation for NIF
   box/cylinder/sphere/mesh-origin emitters; capacity/lifetime/variation + ordered
   gravity/wind/scale modifiers; weather vector input; stable exact-time seek. Metal path

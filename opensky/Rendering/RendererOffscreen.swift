@@ -153,6 +153,7 @@ extension Renderer {
         updateWeather(deltaTime: advanceAnimation ? 1 / 30 : 0)
         if advanceAnimation {
             updateParticles(deltaTime: 1 / 30)
+            updatePrecipitation(deltaTime: 1 / 30)
         }
         endFrameEvent.wait(untilSignaledValue: UInt64(frameIndex - 1), timeoutMS: 2000)
         let slot = frameIndex % Self.maxFramesInFlight

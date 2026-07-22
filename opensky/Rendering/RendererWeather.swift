@@ -23,7 +23,7 @@ extension Renderer {
             return
         }
         weather.update(deltaTime: max(deltaTime, 0), hour: timeOfDay)
-        currentResolvedWeather = weather.resolvedWeather
+        currentResolvedWeather = weather.resolvedWeather?.applyingStormSkyDarkening()
     }
 
     func updateWeatherFromWallClock() {

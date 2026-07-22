@@ -175,6 +175,48 @@ nonisolated struct WindState: Equatable {
     }
 }
 
+/// Transition-blended precipitation contribution. WTHR DATA carries a
+/// classification, not a separate density scalar, so a settled rain/snow
+/// weather contributes 1 and the weather cross-fade supplies intensity.
+nonisolated struct PrecipitationState: Equatable {
+    let rainIntensity: Float
+    let snowIntensity: Float
+
+    static let none = PrecipitationState(rainIntensity: 0, snowIntensity: 0)
+
+    init(rainIntensity: Float, snowIntensity: Float) {
+        self.rainIntensity = simd_clamp(rainIntensity, 0, 1)
+        self.snowIntensity = simd_clamp(snowIntensity, 0, 1)
+    }
+
+    init(_ classification: Weather.Precipitation) {
+        switch classification {
+        case .rainy:
+            self.init(rainIntensity: 1, snowIntensity: 0)
+        case .snow:
+            self.init(rainIntensity: 0, snowIntensity: 1)
+        case .none, .pleasant, .cloudy:
+            self = .none
+        }
+    }
+
+    var intensity: Float {
+        max(rainIntensity, snowIntensity)
+    }
+
+    static func blend(
+        _ lhs: PrecipitationState,
+        _ rhs: PrecipitationState,
+        _ time: Float
+    ) -> PrecipitationState {
+        let time = simd_clamp(time, 0, 1)
+        return PrecipitationState(
+            rainIntensity: lhs.rainIntensity * (1 - time) + rhs.rainIntensity * time,
+            snowIntensity: lhs.snowIntensity * (1 - time) + rhs.snowIntensity * time
+        )
+    }
+}
+
 /// Fully time-of-day-blended snapshot of one weather (or a transition blend of
 /// two), ready to feed FrameUniforms. Sky palette colors drive the sky shader;
 /// fog + ambient + directional feed the exterior lit path.
@@ -196,6 +238,7 @@ nonisolated struct ResolvedWeather: Equatable {
     var ambientColor: SIMD3<Float>
     var directionalAmbient: DirectionalAmbientColors
     var wind: WindState
+    var precipitation: PrecipitationState
 
     /// Resolves one weather at `hour` under `timing`. Missing NAM0/FNAM/DALC
     /// fields resolve to zero/disabled rather than throwing (mod-quirk rule).
@@ -228,7 +271,8 @@ nonisolated struct ResolvedWeather: Equatable {
                 weather.directionalAmbient,
                 weights: weights
             ),
-            wind: WindState.from(weather.data)
+            wind: WindState.from(weather.data),
+            precipitation: PrecipitationState(weather.data?.precipitation ?? .none)
         )
     }
 
@@ -261,8 +305,24 @@ nonisolated struct ResolvedWeather: Equatable {
             directionalAmbient: Self.blendDirectional(
                 lhs.directionalAmbient, rhs.directionalAmbient, time
             ),
-            wind: WindState.blend(lhs.wind, rhs.wind, time)
+            wind: WindState.blend(lhs.wind, rhs.wind, time),
+            precipitation: PrecipitationState.blend(
+                lhs.precipitation, rhs.precipitation, time
+            )
         )
+    }
+
+    /// Extra storm attenuation over the authored WTHR palette. Kept in the
+    /// renderer-facing snapshot so fog/lighting remain authored values.
+    func applyingStormSkyDarkening(maximum: Float = 0.35) -> ResolvedWeather {
+        var result = self
+        let scale = 1 - simd_clamp(maximum, 0, 1) * precipitation.intensity
+        result.skyUpper *= scale
+        result.skyLower *= scale
+        result.horizon *= scale
+        result.sun *= scale
+        result.sunGlare *= scale
+        return result
     }
 
     /// Day/night-blended fog scalars.

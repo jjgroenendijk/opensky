@@ -100,4 +100,4 @@ committed.
 * NiPSysEmitterCtlr birth rates + interpolators.
 * Mesh-surface births, rotation, drag, spawn/death chains, collision, strip particles.
 * Back-to-front transparent sorting + soft-particle depth fade.
-* Precipitation volumes consume this path in M7.4.
+* Precipitation-specific collision/splashes; camera volumes now consume this path in M7.4.1.

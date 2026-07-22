@@ -490,6 +490,7 @@ extension Renderer {
         )
         encodeWater(items: scene.water, state: &state)
         encodeParticles(items: scene.particles, state: &state)
+        encodeParticles(items: precipitation.drawItems, state: &state)
         lastDrawStats = state.stats
         encoder.endEncoding()
         return true

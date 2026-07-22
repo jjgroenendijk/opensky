@@ -64,7 +64,7 @@ nonisolated struct Weather {
 
     /// Weather classification, derived from the DATA flags low nibble. At most
     /// one bit is set; absent -> none. Raw flags kept in `WeatherData.flags`.
-    enum Precipitation {
+    enum Precipitation: Equatable {
         case none
         case pleasant
         case cloudy

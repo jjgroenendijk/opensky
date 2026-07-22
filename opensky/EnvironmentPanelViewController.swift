@@ -62,6 +62,12 @@ protocol ParticleControlProviding: AnyObject {
     var particleSnapshot: ParticleControlSnapshot { get }
 }
 
+@MainActor
+protocol PrecipitationControlProviding: AnyObject {
+    var precipitationEnabled: Bool { get set }
+    var precipitationSnapshot: PrecipitationRuntimeSnapshot { get }
+}
+
 final class EnvironmentPanelViewController: NSViewController {
     /// Live renderer bridge. Weak: the game controller owns this panel's parent
     /// and the renderer, so the panel must not retain back into that graph.
@@ -92,6 +98,14 @@ final class EnvironmentPanelViewController: NSViewController {
         }
     }
 
+    weak var precipitationProvider: (any PrecipitationControlProviding)? {
+        didSet {
+            guard isViewLoaded else { return }
+            syncPrecipitationControls()
+            refreshStats()
+        }
+    }
+
     private let qualityControl = NSPopUpButton(frame: .zero, pullsDown: false)
     private let weatherControl = NSPopUpButton(frame: .zero, pullsDown: false)
     private let timeControl = NSSlider(
@@ -108,6 +122,9 @@ final class EnvironmentPanelViewController: NSViewController {
     )
     let particlesFrozenControl = NSButton(
         checkboxWithTitle: "Freeze simulation", target: nil, action: nil
+    )
+    let precipitationEnabledControl = NSButton(
+        checkboxWithTitle: "Enabled", target: nil, action: nil
     )
     let emissionControl = NSSlider(
         value: 1, minValue: 0, maxValue: 2, target: nil, action: nil
@@ -172,7 +189,9 @@ final class EnvironmentPanelViewController: NSViewController {
             statsLabel,
             note
         ]
-        let stack = NSStackView(views: shadowViews + makeParticleViews() + makeLODViews())
+        let stack = NSStackView(
+            views: shadowViews + makeParticleViews() + makePrecipitationViews() + makeLODViews()
+        )
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 8
@@ -228,6 +247,7 @@ final class EnvironmentPanelViewController: NSViewController {
         syncWeatherMenu()
         syncTimeOfDay()
         syncParticleControls()
+        syncPrecipitationControls()
         refreshStats()
     }
 
@@ -238,6 +258,7 @@ final class EnvironmentPanelViewController: NSViewController {
         syncWeatherMenu()
         syncTimeOfDay()
         syncParticleControls()
+        syncPrecipitationControls()
         refreshStats()
         guard statsTimer == nil else { return }
         let timer = Timer(
@@ -397,6 +418,7 @@ extension EnvironmentPanelViewController {
         CPU: \(String(format: "%.2f", provider.shadowUpdateMS)) ms
         \(weatherReadout())
         \(particleReadout())
+        \(precipitationReadout())
         """
     }
 

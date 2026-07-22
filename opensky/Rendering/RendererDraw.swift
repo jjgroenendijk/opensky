@@ -29,6 +29,7 @@ extension Renderer: MTKViewDelegate {
         updateWeatherFromWallClock()
         let particleDelta = updateAnimationsFromWallClock()
         updateParticles(deltaTime: particleDelta)
+        updatePrecipitation(deltaTime: particleDelta)
         purgeRetiredResources()
 
         endFrameEvent.wait(
