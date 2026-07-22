@@ -8,8 +8,8 @@ timestamp: 2026-07-22T00:00:00Z
 
 # Precipitation volumes
 
-M7.4.1 adds exterior rain + snow without a separate effect engine. Renderer owns two
-camera-following `ParticlePlayback` objects; they use the shared
+M7.4 adds exterior rain + snow plus its force/pause/clear acceptance path without a separate
+effect engine. Renderer owns two camera-following `ParticlePlayback` objects; they use the shared
 [particle simulation + Metal billboard pass](/rendering/particles.md), generated streak/
 flake masks, alpha blending, depth test, three-frame instance buffers, and weather wind.
 Impl: `PrecipitationVolume.swift`, `RendererPrecipitation.swift`,
@@ -58,14 +58,13 @@ edge masks and splashes remain later work.
 
 ## Verification surface
 
-Sidebar path: `World > Environment > Precipitation`.
+Sidebar path: `World > Environment`.
 
-* Existing Weather popup can force any rain/snow WTHR and shows transition progress.
+* Weather popup can force any decoded WTHR and shows transition progress.
+* Weather Clear/Rain/Snow shortcuts select stable decoded presets.
+* Pause transitions freezes only weather cross-fade progress; particle playback continues.
 * `PrecipitationEnabledControl` is the durable A/B toggle.
 * Live readout reports dominant type, blended intensity, rain/snow counts, and `roofed`.
-
-M7.4.2 owns transition pause/clear acceptance controls. M7.4.1 exposes force + A/B + inspect
-without prematurely completing that gate.
 
 ## Verification
 
@@ -87,9 +86,18 @@ Both captures passed local visual review: distinct rain streaks / snow flakes ov
 cell. PNG + numeric report remain gitignored under `logs/`; they contain rendered game data
 and never enter the repo.
 
+M7.4.2 durable acceptance runs `PrecipitationAcceptanceRealDataTests` against FirstRenderCell
+at 640x360. The test pauses a partial rain transition while rendering 35 frames, settles rain,
+settles snow, then returns clear and waits until both particle counts reach zero. Observed
+changed pixels: clear/rain 229507, clear/snow 230266, rain/snow 132802,
+rain/returned-clear 229507 (gate: each >250).
+
+Local main-app check at `World > Environment > Weather`: dense rain rendered; snow target
+held at blend 0% while paused; resume reached snow 100% with 768 live snow particles; Clear
+reached 100% with rain 0, snow 0. Evidence PNGs + report stay gitignored under `logs/`.
+
 ## Deferred
 
 * Multi-ray/spatial roof masks, precipitation collision, splashes, accumulation.
 * Per-weather density tuning beyond classification + transition intensity.
 * Streak geometry/aspect independent from generic square billboards.
-* M7.4.2 pause-transition + clear-return acceptance and durable real-data gate.

@@ -4,6 +4,18 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-22
 
+* M7.4.2 precipitation acceptance complete -- `World > Environment > Weather` adds stable
+  data-driven Clear/Rain/Snow shortcuts + transition-only pause; Environment panel scrolls so
+  all M7 controls remain reachable. Synthetic preset/pause + panel-geometry tests cover state
+  and layout. Durable real-data FirstRenderCell gate (640x360): clear/rain 229,507 changed px,
+  clear/snow 230,266, rain/snow 132,802, rain/returned-clear 229,507 (each >250); partial rain
+  stayed frozen while renderer/particles advanced, clear return drained both precip volumes.
+  Local app check: rain visible; snow target stayed blend 0% while paused, resumed to snow
+  100% with 768 live particles, then SkyrimClear 100% with rain/snow 0. Evidence stays
+  gitignored under `logs/`. Docs: [weather runtime](/engine/weather.md),
+  [precipitation volumes](/rendering/precipitation.md). `make test-ui` compiled; runner again
+  stopped at environment TCC accessibility loading before first assertion. M7.4 leaves
+  [todo](/todo.md); grass next.
 * M7.4.1 rain + snow volumes -- renderer-owned camera-following emitters reuse shared M7.3
   deterministic simulator, triple-buffered instances, alpha billboard pass, and generated
   streak/flake masks (no game asset). WTHR Rainy/Snow classification becomes transition-

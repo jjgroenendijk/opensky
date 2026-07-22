@@ -15,6 +15,31 @@ nonisolated struct WeightedWeather: Equatable {
     let chance: Int
 }
 
+/// Data-driven shortcuts used by the main-app precipitation acceptance
+/// surface. Preferred vanilla editor IDs keep the visual gate reproducible;
+/// classification fallback keeps the controls useful with other data sets.
+nonisolated enum WeatherPreset: CaseIterable {
+    case clear
+    case rain
+    case snow
+
+    fileprivate var preferredEditorID: String {
+        switch self {
+        case .clear: "SkyrimClear"
+        case .rain: "SkyrimOvercastRainFF"
+        case .snow: "SkyrimStormSnow"
+        }
+    }
+
+    fileprivate func matches(_ classification: Weather.Precipitation) -> Bool {
+        switch self {
+        case .clear: classification != .rainy && classification != .snow
+        case .rain: classification == .rainy
+        case .snow: classification == .snow
+        }
+    }
+}
+
 /// Decoded WTHR/CLMT/REGN index plus worldspace climate links, built once from
 /// an ESMFile. Holds only value types after construction (no ESMFile
 /// reference), so it is safe to read from the render thread while the cell
@@ -70,6 +95,17 @@ nonisolated final class WeatherStore {
             .filter { $0.colors != nil }
             .sorted {
                 ($0.editorID ?? $0.formID.description) < ($1.editorID ?? $1.formID.description)
+            }
+    }
+
+    /// Stable rain/snow/clear candidates for the app's quick controls.
+    /// Exact known vanilla records win; otherwise select the first sorted WTHR
+    /// with the required decoded classification.
+    func weather(for preset: WeatherPreset) -> Weather? {
+        let selectable = selectableWeathers()
+        return selectable.first { $0.editorID == preset.preferredEditorID }
+            ?? selectable.first { weather in
+                preset.matches(weather.data?.precipitation ?? .none)
             }
     }
 

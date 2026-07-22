@@ -7,6 +7,7 @@ extension EnvironmentPanelViewController {
         precipitationEnabledControl.target = self
         precipitationEnabledControl.action = #selector(precipitationEnabledChanged)
         precipitationEnabledControl.setAccessibilityIdentifier("PrecipitationEnabledControl")
+        precipitationEnabledControl.heightAnchor.constraint(equalToConstant: 20).isActive = true
         return [Self.caption("Precipitation"), precipitationEnabledControl]
     }
 

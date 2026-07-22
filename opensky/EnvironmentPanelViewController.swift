@@ -37,10 +37,14 @@ protocol WeatherControlProviding: AnyObject {
     var selectableWeatherNames: [String] { get }
     /// Force a weather by editor ID (timed transition); nil resumes automatic.
     func forceWeather(named name: String?)
+    /// Force the stable data-driven precipitation acceptance presets.
+    func forceWeather(_ preset: WeatherPreset)
     /// Editor ID of the weather currently in effect, nil when inactive.
     var currentWeatherName: String? { get }
     /// 0-1 progress of the active transition (1 when settled).
     var weatherTransitionFraction: Float { get }
+    /// Freeze/resume only the weather cross-fade.
+    var weatherTransitionsPaused: Bool { get set }
     /// Published wind for the readout.
     var windState: WindState { get }
     /// Exterior sky clock in game-hours (0-24). Drives the time-of-day keyframe
@@ -107,15 +111,21 @@ final class EnvironmentPanelViewController: NSViewController {
     }
 
     private let qualityControl = NSPopUpButton(frame: .zero, pullsDown: false)
-    private let weatherControl = NSPopUpButton(frame: .zero, pullsDown: false)
-    private let timeControl = NSSlider(
+    let weatherControl = NSPopUpButton(frame: .zero, pullsDown: false)
+    let clearWeatherControl = NSButton(title: "Clear", target: nil, action: nil)
+    let rainWeatherControl = NSButton(title: "Rain", target: nil, action: nil)
+    let snowWeatherControl = NSButton(title: "Snow", target: nil, action: nil)
+    let weatherTransitionsPausedControl = NSButton(
+        checkboxWithTitle: "Pause transitions", target: nil, action: nil
+    )
+    let timeControl = NSSlider(
         value: Double(TimeOfDaySettings.fallback),
         minValue: Double(TimeOfDaySettings.range.lowerBound),
         maxValue: Double(TimeOfDaySettings.range.upperBound),
         target: nil,
         action: nil
     )
-    private let timeLabel = NSTextField(labelWithString: "")
+    let timeLabel = NSTextField(labelWithString: "")
     private let statsLabel = NSTextField(wrappingLabelWithString: "")
     let particlesEnabledControl = NSButton(
         checkboxWithTitle: "Enabled", target: nil, action: nil
@@ -136,13 +146,14 @@ final class EnvironmentPanelViewController: NSViewController {
     private let treeField = NSTextField()
     private let lodStatusLabel = NSTextField(wrappingLabelWithString: "")
     private var statsTimer: Timer?
-    /// "Auto" sentinel title for automatic weather selection.
-    private static let autoWeatherTitle = "Auto"
-
+    private var positionedScrollView = false
     private let qualities = ShadowQuality.allCases
 
     override func loadView() {
-        let root = NSView(frame: NSRect(x: 0, y: 0, width: 300, height: 700))
+        let root = NSScrollView(frame: NSRect(x: 0, y: 0, width: 300, height: 700))
+        root.hasVerticalScroller = true
+        root.autohidesScrollers = true
+        root.drawsBackground = false
 
         for quality in qualities {
             qualityControl.addItem(withTitle: Self.title(for: quality))
@@ -150,19 +161,6 @@ final class EnvironmentPanelViewController: NSViewController {
         qualityControl.target = self
         qualityControl.action = #selector(qualityChanged)
         qualityControl.setAccessibilityIdentifier("ShadowQualityControl")
-
-        weatherControl.target = self
-        weatherControl.action = #selector(weatherChanged)
-        weatherControl.setAccessibilityIdentifier("WeatherControl")
-
-        timeControl.target = self
-        timeControl.action = #selector(timeOfDayChanged)
-        timeControl.isContinuous = true
-        timeControl.setAccessibilityIdentifier("TimeOfDayControl")
-        timeControl.widthAnchor.constraint(equalToConstant: 272).isActive = true
-        timeLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
-        timeLabel.textColor = .secondaryLabelColor
-        timeLabel.setAccessibilityIdentifier("TimeOfDayLabel")
 
         statsLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statsLabel.textColor = .secondaryLabelColor
@@ -181,29 +179,40 @@ final class EnvironmentPanelViewController: NSViewController {
             Self.heading("Environment"),
             Self.caption("Sun shadows"),
             qualityControl,
-            Self.caption("Weather"),
-            weatherControl,
-            Self.caption("Time of day"),
-            timeControl,
-            timeLabel,
             statsLabel,
             note
         ]
-        let stack = NSStackView(
-            views: shadowViews + makeParticleViews() + makePrecipitationViews() + makeLODViews()
-        )
+        let controls = shadowViews + makeWeatherViews() + makeParticleViews()
+            + makePrecipitationViews() + makeLODViews()
+        let stack = NSStackView(views: controls)
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 8
         stack.edgeInsets = NSEdgeInsets(top: 14, left: 14, bottom: 14, right: 14)
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        root.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: root.topAnchor),
-            stack.leadingAnchor.constraint(equalTo: root.leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: root.trailingAnchor)
-        ])
+        for control in controls {
+            control.setContentCompressionResistancePriority(.required, for: .vertical)
+        }
+        let controlsHeight = controls.reduce(0) { $0 + $1.fittingSize.height }
+        let spacingHeight = stack.spacing * CGFloat(max(controls.count - 1, 0))
+        let contentHeight = controlsHeight + spacingHeight
+            + stack.edgeInsets.top + stack.edgeInsets.bottom
+        stack.frame = NSRect(x: 0, y: 0, width: 300, height: contentHeight)
+        stack.autoresizingMask = [.width]
+        root.documentView = stack
         view = root
+    }
+
+    override func viewDidLayout() {
+        super.viewDidLayout()
+        guard
+            !positionedScrollView,
+            let scrollView = view as? NSScrollView,
+            let document = scrollView.documentView
+        else { return }
+        let top = max(document.frame.height - scrollView.contentView.bounds.height, 0)
+        scrollView.contentView.scroll(to: NSPoint(x: 0, y: top))
+        scrollView.reflectScrolledClipView(scrollView.contentView)
+        positionedScrollView = true
     }
 
     private func makeLODViews() -> [NSView] {
@@ -343,62 +352,6 @@ extension EnvironmentPanelViewController {
         lodStatusLabel.stringValue = message
     }
 
-    /// Rebuilds the weather popup (Auto + selectable editor IDs) and selects
-    /// the weather in effect. No weather data -> Auto only, disabled.
-    private func syncWeatherMenu() {
-        let names = weatherProvider?.selectableWeatherNames ?? []
-        weatherControl.removeAllItems()
-        weatherControl.addItem(withTitle: Self.autoWeatherTitle)
-        weatherControl.addItems(withTitles: names)
-        weatherControl.isEnabled = !names.isEmpty
-        let current = weatherProvider?.currentWeatherName
-        if let current, weatherControl.itemTitles.contains(current) {
-            weatherControl.selectItem(withTitle: current)
-        } else {
-            weatherControl.selectItem(withTitle: Self.autoWeatherTitle)
-        }
-    }
-
-    @objc private func weatherChanged() {
-        let title = weatherControl.titleOfSelectedItem
-        weatherProvider?.forceWeather(named: title == Self.autoWeatherTitle ? nil : title)
-        refreshStats()
-        provider?.refocusGameView()
-    }
-
-    /// Pulls the live renderer's clock onto the slider + label. No weather
-    /// provider -> the slider stays disabled at the stored default.
-    private func syncTimeOfDay() {
-        guard let weatherProvider else {
-            timeControl.isEnabled = false
-            timeLabel.stringValue = Self.timeText(TimeOfDaySettings.load())
-            return
-        }
-        timeControl.isEnabled = true
-        timeControl.doubleValue = Double(weatherProvider.timeOfDay)
-        timeLabel.stringValue = Self.timeText(weatherProvider.timeOfDay)
-    }
-
-    @objc private func timeOfDayChanged() {
-        let hour = Float(timeControl.doubleValue)
-        weatherProvider?.timeOfDay = hour
-        timeLabel.stringValue = Self.timeText(hour)
-        // Continuous drag steals first responder each tick; only hand focus
-        // back when the drag ends so WASD/look resume without fighting the slider.
-        if NSApp.currentEvent?.type == .leftMouseUp {
-            provider?.refocusGameView()
-        }
-    }
-
-    /// "HH:MM" from a fractional game-hour.
-    private static func timeText(_ hour: Float) -> String {
-        let wrapped = hour.truncatingRemainder(dividingBy: 24)
-        let normalized = wrapped < 0 ? wrapped + 24 : wrapped
-        let hours = Int(normalized)
-        let minutes = Int((normalized - Float(hours)) * 60) % 60
-        return String(format: "Time: %02d:%02d", hours, minutes)
-    }
-
     @objc private func statsTick() {
         refreshStats()
     }
@@ -419,19 +372,6 @@ extension EnvironmentPanelViewController {
         \(weatherReadout())
         \(particleReadout())
         \(precipitationReadout())
-        """
-    }
-
-    private func weatherReadout() -> String {
-        guard let weatherProvider else { return "Weather: unavailable" }
-        let name = weatherProvider.currentWeatherName ?? "none"
-        let wind = weatherProvider.windState
-        let heading = Int((atan2(wind.direction.y, wind.direction.x) * 180 / .pi + 360)
-            .truncatingRemainder(dividingBy: 360))
-        let progress = Int((weatherProvider.weatherTransitionFraction * 100).rounded())
-        return """
-        Weather: \(name) (blend \(progress)%)
-        Wind: \(String(format: "%.2f", wind.speed)) @ \(heading)°
         """
     }
 
