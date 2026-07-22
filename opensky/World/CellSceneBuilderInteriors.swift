@@ -111,6 +111,7 @@ extension CellSceneBuilder {
                 location: location,
                 doors: resolveDoors(refs: refs),
                 terrain: nil,
+                grass: nil,
                 water: nil,
                 sky: nil,
                 lighting: lighting?.lighting,

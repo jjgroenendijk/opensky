@@ -8,6 +8,7 @@ nonisolated struct CellGeometryBuild {
     let location: CellSceneLocation
     let doors: [PlacedDoor]
     let terrain: TerrainBuild?
+    let grass: GrassBuild?
     let water: WaterBuild?
     let sky: SkyParameters?
     let lighting: RenderLighting?
@@ -20,6 +21,7 @@ nonisolated struct CellGeometryBuild {
 /// Exterior environment trio built beside the placed models.
 nonisolated struct EnvironmentBuild {
     let terrain: TerrainBuild?
+    let grass: GrassBuild?
     let water: WaterBuild?
     let sky: SkyParameters?
 }
@@ -30,9 +32,17 @@ extension CellSceneBuilder {
         found: FoundCell,
         worldspace: Worldspace?
     ) -> EnvironmentBuild {
-        EnvironmentBuild(
-            terrain: buildTerrain(found: found, worldspace: worldspace),
-            water: buildWater(found: found, worldspace: worldspace),
+        let terrain = buildTerrain(found: found, worldspace: worldspace)
+        let water = buildWater(found: found, worldspace: worldspace)
+        return EnvironmentBuild(
+            terrain: terrain,
+            grass: buildGrass(
+                found: found,
+                worldspace: worldspace,
+                terrain: terrain,
+                waterHeight: water?.height
+            ),
+            water: water,
             sky: worldspace?.flags.contains(.noSky) == false ? SkyParameters() : nil
         )
     }
@@ -114,6 +124,7 @@ extension CellSceneBuilder {
             doors: geometry.doors,
             regions: found.cell.regions,
             terrainHeightField: geometry.terrain?.heightField,
+            grassPlacements: geometry.grass?.placements ?? [],
             staticCollision: geometry.staticCollision
         )
     }
@@ -163,6 +174,9 @@ extension CellSceneBuilder {
             terrainQuadrantCount: geometry.terrain?.quadrantCount ?? 0,
             terrainLayerCount: geometry.terrain?.layerCount ?? 0,
             terrainLayerSkipCount: geometry.terrain?.layerSkipCount ?? 0,
+            grassPlacementCount: geometry.grass?.placements.count ?? 0,
+            grassTypeCount: geometry.grass?.typeCount ?? 0,
+            grassTypeSkipCount: geometry.grass?.typeSkipCount ?? 0,
             waterPlaneCount: geometry.water == nil ? 0 : 1,
             pointLightCount: geometry.pointLights.count
         )

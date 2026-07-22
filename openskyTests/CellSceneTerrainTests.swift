@@ -131,6 +131,30 @@ struct CellSceneTerrainTests {
         #expect(scene.renderScene.drawCount == 0)
         #expect(scene.terrainHeightField == nil)
     }
+
+    @Test(.enabled(if: Self.hasDevice)) func retainsGrassPlacementsWithCellLifetime() throws {
+        let plugin = pluginWithLand(
+            land: landFields(baseQuadrants: [0, 1, 2, 3], ltexFormID: 0x300),
+            ltex: ltexRecord(formID: 0x300, textureSet: 0, grasses: [0x500]),
+            grass: grassRecord(formID: 0x500)
+        )
+        let first = try build(pluginData: plugin)
+        let second = try build(pluginData: plugin)
+        #expect(first.grassPlacements == second.grassPlacements)
+        #expect(first.grassPlacements.count == 64)
+        #expect(first.summary.grassPlacementCount == 64)
+        #expect(first.summary.grassTypeCount == 1)
+        #expect(first.summary.grassTypeSkipCount == 0)
+
+        let disabled = try build(pluginData: pluginWithLand(
+            land: landFields(baseQuadrants: [0, 1, 2, 3], ltexFormID: 0x300),
+            ltex: ltexRecord(formID: 0x300, textureSet: 0, grasses: [0x500]),
+            grass: grassRecord(formID: 0x500),
+            worldFlags: 0x80
+        ))
+        #expect(disabled.grassPlacements.isEmpty)
+        #expect(disabled.summary.grassTypeCount == 0)
+    }
 }
 
 /// Fixture builders + harness in an extension to keep the test body small.
@@ -188,12 +212,41 @@ extension CellSceneTerrainTests {
         return fields
     }
 
-    private func ltexRecord(formID: UInt32, textureSet: UInt32) -> Data {
+    private func ltexRecord(
+        formID: UInt32,
+        textureSet: UInt32,
+        grasses: [UInt32] = []
+    ) -> Data {
         var tnam = Data()
         tnam.appendUInt32(textureSet)
-        let fields = ESMFixture.field("EDID", ESMFixture.zstring("LTEX\(formID)"))
+        var fields = ESMFixture.field("EDID", ESMFixture.zstring("LTEX\(formID)"))
             + ESMFixture.field("TNAM", tnam)
+        for grass in grasses {
+            var gnam = Data()
+            gnam.appendUInt32(grass)
+            fields += ESMFixture.field("GNAM", gnam)
+        }
         return ESMFixture.record("LTEX", formID: formID, data: fields)
+    }
+
+    private func grassRecord(formID: UInt32) -> Data {
+        var data = Data()
+        data.append(100) // density
+        data.append(0) // minimum slope
+        data.append(90) // maximum slope
+        data.append(0)
+        data.appendUInt16(0)
+        data.appendUInt16(0)
+        data.appendUInt32(0)
+        data.appendFloat32(512) // position range -> 8x8 candidates
+        data.appendFloat32(0)
+        data.appendFloat32(0)
+        data.appendFloat32(1)
+        data.append(0)
+        data.append(contentsOf: [0, 0, 0])
+        let fields = ESMFixture.field("MODL", ESMFixture.zstring("grass.nif"))
+            + ESMFixture.field("DATA", data)
+        return ESMFixture.record("GRAS", formID: formID, data: fields)
     }
 
     private func txstRecord(formID: UInt32, diffuse: String) -> Data {
@@ -210,8 +263,10 @@ extension CellSceneTerrainTests {
         land: Data,
         ltex: Data = Data(),
         txst: Data = Data(),
+        grass: Data = Data(),
         quadFlags: UInt32 = 0,
         defaultLandHeight: Float? = nil,
+        worldFlags: UInt8 = 0,
         grid: (x: Int32, y: Int32) = (6, -2)
     ) -> Data {
         let cellFormID: UInt32 = 0x2B
@@ -243,6 +298,9 @@ extension CellSceneTerrainTests {
             parent: worldFormID, groupType: 1, contents: block
         )
         var worldFields = ESMFixture.field("EDID", ESMFixture.zstring("Tamriel"))
+        if worldFlags != 0 {
+            worldFields += ESMFixture.field("DATA", Data([worldFlags]))
+        }
         if let defaultLandHeight {
             var dnam = Data()
             dnam.appendFloat32(defaultLandHeight)
@@ -254,6 +312,7 @@ extension CellSceneTerrainTests {
             + ESMFixture.topGroup("WRLD", contents: wrld + worldChildren)
             + ESMFixture.topGroup("LTEX", contents: ltex)
             + ESMFixture.topGroup("TXST", contents: txst)
+            + ESMFixture.topGroup("GRAS", contents: grass)
             + ESMFixture.topGroup("STAT", contents: Data())
     }
 

@@ -192,7 +192,7 @@ extension CellSceneBuilder {
 
     /// First LAND record in the cell's temporary-children group (type 9), where
     /// landscape lives (UESP Groups). Malformed decode -> nil (log + skip).
-    nonisolated private func landRecord(in cellChildren: ESMGroup?) -> Land? {
+    nonisolated func landRecord(in cellChildren: ESMGroup?) -> Land? {
         guard let cellChildren, let children = try? cellChildren.children() else { return nil }
         for case let .group(group) in children where group.kind == .cellTemporaryChildren {
             guard let records = try? group.children() else { continue }

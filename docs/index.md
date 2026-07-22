@@ -24,6 +24,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   inheritance, WATR DNAM color offsets and sentinel policy.
 * [Terrain records](/formats/land.md) - LAND/LTEX/TXST layouts: VHGT gradient
   height field, VNML/VCLR, BTXT/ATXT/VTXT splat layers, texture sets.
+* [Grass records](/formats/grass.md) - GRAS fixed DATA controls + repeated LTEX GNAM links.
 * [Weather records](/formats/weather.md) - WTHR NAM0 color layers/FNAM fog/DATA
   wind + precipitation, CLMT weather lists + timing, REGN weather areas.
 * [Distant LOD](/formats/lod.md) - lodsettings plus BTR/BTO paths and LOD-specific NIF
@@ -56,6 +57,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   STAT resolution, skip taxonomy, grouping, world bounds.
 * [Terrain mesh build](/engine/terrain.md) - LAND -> per-quadrant meshes under the cell's
   objects: grid topology, base textures, XCLC quad-hiding, DNAM fallback plane, placement.
+* [Procedural grass placement](/engine/grass.md) - deterministic cell-owned instances from
+  LAND texture coverage, GRAS density/slope/water limits, and variance controls.
 * [Distant LOD streaming](/engine/distant-lod.md) - INI-driven cell-clipped rings, tree
   billboards, atomic replacement, asset lifetime, real-render evidence.
 * [Sky + water environment](/engine/sky-water.md) - procedural time-of-day sky, per-cell

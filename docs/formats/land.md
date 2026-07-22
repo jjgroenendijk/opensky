@@ -3,7 +3,7 @@ type: File Format
 title: Terrain records (LAND, LTEX, TXST)
 description: Byte layouts of Skyrim SE landscape, land-texture, and texture-set records and OpenSky's terrain types.
 tags: [format, plugin, records, terrain, land]
-timestamp: 2026-07-18T00:00:00Z
+timestamp: 2026-07-22T00:00:00Z
 ---
 
 # Terrain record decoders, Skyrim SE
@@ -83,13 +83,15 @@ drives splat blend order. Sparse: only painted vertices appear in VTXT.
 
 ## LTEX -> LandTexture
 
-| field | type    | decoded                               |
-| ----- | ------- | ------------------------------------- |
-| EDID  | zstring | `editorID`                            |
-| TNAM  | formID  | `textureSet` — the TXST it draws from |
+| field | type    | decoded                                      |
+| ----- | ------- | -------------------------------------------- |
+| EDID  | zstring | `editorID`                                   |
+| TNAM  | formID  | `textureSet` — the TXST it draws from        |
+| GNAM  | formID  | repeated `grasses` entries — GRAS references |
 
-Skipped for now: MNAM (material type), HNAM (havok friction/restitution), SNAM
-(specular exponent), GNAM (grass FormIDs) — none needed to splat terrain.
+GNAM feeds [procedural grass placement](/engine/grass.md); repeated fields keep
+record order. Skipped for now: MNAM (material type), HNAM (havok
+friction/restitution), SNAM (specular exponent), and INAM (SSE snow flag).
 
 ## TXST -> TextureSet
 
@@ -107,7 +109,7 @@ splat needs only diffuse + normal today.
 ## Skipped for now
 
 - LAND MPCD (multi-pass color data, rare) — not read.
-- LTEX/TXST material, decal, and secondary-map fields listed above.
+- LTEX/TXST material, decal, snow, and secondary-map fields listed above.
 - Quadrant/position values are kept verbatim (not clamped); the mesh/splat build
   is responsible for grid placement.
 
@@ -116,8 +118,8 @@ splat needs only diffuse + normal today.
 Unit tests: `openskyTests/TerrainRecordDecoderTests.swift` (synthetic in-code
 fixtures) — VHGT delta accumulation with hand-computed heights incl. the
 column-0 row carry and *8 scaling, VNML/VCLR decode, BTXT/ATXT/VTXT pairing +
-quadrant/position bounds, compressed-LAND round-trip, LTEX->TNAM, TXST
-TX00/TX01, wrong-record-type + malformed-size rejection.
+quadrant/position bounds, compressed-LAND round-trip, LTEX->TNAM + repeated
+GNAM, TXST TX00/TX01, wrong-record-type + malformed-size rejection.
 
 Real-data sweep: `openskyTests/LandRealDataTests.swift` (env-gated on
 `OPENSKY_DATA_ROOT`, self-skips when absent). Every LAND in the Tamriel

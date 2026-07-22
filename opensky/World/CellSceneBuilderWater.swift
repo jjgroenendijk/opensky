@@ -9,6 +9,7 @@ import simd
 
 nonisolated struct WaterBuild {
     let item: WaterDrawItem
+    let height: Float
 }
 
 nonisolated private struct ResolvedWorldWater {
@@ -82,14 +83,17 @@ extension CellSceneBuilder {
             min: .zero,
             max: SIMD3(TerrainMeshBuilder.cellSize, TerrainMeshBuilder.cellSize, 0)
         )
-        return WaterBuild(item: WaterDrawItem(
-            mesh: mesh,
-            modelMatrix: transform,
-            shallowColor: colors.shallow,
-            deepColor: colors.deep,
-            reflectionColor: colors.reflection,
-            bounds: localBounds.transformed(by: transform)
-        ))
+        return WaterBuild(
+            item: WaterDrawItem(
+                mesh: mesh,
+                modelMatrix: transform,
+                shallowColor: colors.shallow,
+                deepColor: colors.deep,
+                reflectionColor: colors.reflection,
+                bounds: localBounds.transformed(by: transform)
+            ),
+            height: height
+        )
     }
 
     /// Applies WRLD PNAM category inheritance recursively. Cycles are invalid
