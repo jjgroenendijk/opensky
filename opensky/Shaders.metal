@@ -293,6 +293,74 @@ fragment float4 staticMeshFragment(
     return float4(applyFog(lit, in.worldPosition, frame), alpha);
 }
 
+// GRAS path: same material/lighting model as cutout static meshes, with one
+// placement per GPU instance. LAND tint is per instance. Weather wind bends
+// only upper vertices; wave period + stable phase keep neighboring blades
+// asynchronous. Distance fade multiplies alpha before cutoff.
+
+typedef struct
+{
+    float4 position [[position]];
+    float3 normal;
+    float3 worldPosition;
+    float2 texcoord;
+    float4 color;
+    float distanceFade;
+} GrassVertexOut;
+
+vertex GrassVertexOut grassVertex(
+    StaticVertexIn in [[stage_in]],
+    uint instanceID [[instance_id]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
+    constant GrassDrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]],
+    const device InstanceTransform *instances [[buffer(BufferIndexInstanceTransforms)]])
+{
+    const device InstanceTransform &instance = instances[instanceID];
+    float4 world = instance.modelMatrix * float4(in.position, 1.0);
+    float height = saturate((in.position.z - draw.modelMinimumZ) * draw.inverseModelHeight);
+    float wavePeriod = max(instance.grassParameters.x, 0.1);
+    float phase = frame.animationTime / wavePeriod + instance.grassParameters.y;
+    float oscillation = sin(phase * 6.28318530718);
+    float bend = height * height * (72.0 + 24.0 * oscillation);
+    world.xy += frame.grassWind * bend;
+
+    GrassVertexOut out;
+    out.position = frame.viewProjectionMatrix * world;
+    out.normal = (instance.normalMatrix * float4(in.normal, 0.0)).xyz;
+    out.worldPosition = world.xyz;
+    out.texcoord = in.texcoord * draw.uvScale + draw.uvOffset;
+    out.color = in.color * instance.instanceColor;
+    float fadeWidth = max(frame.grassFadeDistances.y - frame.grassFadeDistances.x, 1.0);
+    out.distanceFade = saturate(
+        (frame.grassFadeDistances.y - distance(world.xyz, frame.cameraPosition)) / fadeWidth);
+    return out;
+}
+
+fragment float4 grassFragment(
+    GrassVertexOut in [[stage_in]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
+    constant GrassDrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]],
+    texture2d<float> diffuseMap [[texture(TextureIndexDiffuse)]],
+    depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
+    sampler trilinear [[sampler(SamplerIndexTrilinear)]],
+    sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]])
+{
+    float4 diffuse = diffuseMap.sample(trilinear, in.texcoord);
+    float alpha = diffuse.a * in.color.a * draw.materialAlpha * in.distanceFade;
+    if (alpha < draw.alphaThreshold) {
+        discard_fragment();
+    }
+    float3 normal = normalize(in.normal);
+    float lambert = saturate(dot(normal, -frame.sunDirection));
+    float shadow = draw.receivesShadows != 0
+                       ? sunShadowFactor(in.worldPosition, frame, shadowMap, shadowSampler)
+                       : 1.0;
+    float3 illumination =
+        frame.sunColor * lambert * shadow + frame.ambientColor + directionalAmbient(normal, frame);
+    float3 lit = diffuse.rgb * in.color.rgb * illumination;
+    return float4(applyFog(lit, in.worldPosition, frame), alpha);
+}
+
 // Terrain splat path (docs/todo.md 3.1): per-quadrant draw blends the BTXT
 // base diffuse with up to TerrainConstantMaxLayers ATXT layer diffuses by
 // per-vertex VTXT opacities (UESP LAND: VTXT holds a 0.0-1.0 opacity per

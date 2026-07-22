@@ -4,6 +4,22 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-22
 
+* M7.5.2 instanced grass + acceptance -- cell builder loads one shared NIF per GRAS type;
+  `RenderScene` batches mesh/material instances across resident cells and drops them on cell
+  eviction. Dedicated alpha-test pipeline applies fit-to-slope transforms, LAND tint,
+  weather-vector wind bend, 70%-range distance fade, stable density thinning, frustum
+  culling, and hard 16,384 mesh-instance/frame cap. `World > Environment > Grass` exposes
+  enable/density/distance/wind + exact counters. Whiterun 640x360 gate: 126 placements ->
+  126 instances in 2 calls/0 drops; on/off 1,015 changed px, windy exact-time pair 44 px
+  (wind 0.698); half density drew 67/culled 59, minimum range culled 126. Cross-cell fly:
+  peak 11,452 scene instances, 637 visible in 3 calls, 0 drops; 5,420 frames averaged 15.90
+  ms / p95 31.50 ms vs 33.33 ms; final/peak footprint 738/889 MB vs 1,024 MB. Synthetic
+  suites cover slope fit, cross-cell batch lifetime, hard-budget enforcement + panel layout;
+  UI suite pins discoverability identifiers. Evidence stays gitignored. Docs:
+  [grass](/engine/grass.md),
+  [renderer](/rendering/metal4-renderer.md), [CLI probe](/tools/cli.md). M7.5 leaves
+  [todo](/todo.md); integrated M7.6 gate next. `make test-ui` compiled; runner hit this
+  machine's known environment TCC accessibility stall before first assertion.
 * M7.5.1 GRAS + deterministic placement -- xEdit-cited GRAS decoder reads MODL + fixed
   32-byte DATA (density, slopes, water rule/distance, position/height/color variance, wave,
   flags); LTEX retains repeated GNAM links. Cell-owned CPU placement reconstructs ordered

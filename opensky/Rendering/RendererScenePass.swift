@@ -1,5 +1,3 @@
-// Scene-pass uniform writes + frustum-culled static/terrain encoding.
-
 import Metal
 import MetalKit
 import simd
@@ -35,6 +33,11 @@ extension Renderer {
         let ambient = weatherLight?.directionalAmbient
             ?? interiorLighting?.directionalAmbient ?? .black
         let fog = Self.resolvedFog(weatherLight: weatherLight, interior: interiorLighting?.fog)
+        let grassDistance = simd_clamp(
+            grassDrawDistance,
+            GrassRenderPolicy.minimumDrawDistance,
+            GrassRenderPolicy.maximumDrawDistance
+        )
         var uniforms = FrameUniforms(
             viewProjectionMatrix: viewProjection,
             cameraPosition: freeFlyCamera.position,
@@ -54,7 +57,7 @@ extension Renderer {
             fogDistances: fog.distances,
             fogEnabled: fog.enabled,
             timeOfDayHours: timeOfDay,
-            animationTime: Float(frameIndex) / 60,
+            animationTime: animationTime,
             shadowViewProjections: (
                 shadowCascadeMatrix(0), shadowCascadeMatrix(1), shadowCascadeMatrix(2)
             ),
@@ -71,7 +74,13 @@ extension Renderer {
             weatherGlareColor: weatherSky?.sunGlare ?? .zero,
 
             cameraRight: freeFlyCamera.right,
-            cameraUp: simd_normalize(simd_cross(freeFlyCamera.right, freeFlyCamera.forward))
+            cameraUp: simd_normalize(simd_cross(freeFlyCamera.right, freeFlyCamera.forward)),
+            grassWind: currentWind.direction * currentWind.speed
+                * simd_clamp(grassWindScale, 0, GrassRenderPolicy.maximumWindScale),
+            grassFadeDistances: SIMD2(
+                max(grassDistance * 0.7, GrassRenderPolicy.minimumDrawDistance * 0.5),
+                grassDistance
+            )
         )
         frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)
@@ -153,7 +162,9 @@ extension Renderer {
             }
             var transforms = InstanceTransform(
                 modelMatrix: instance.modelMatrix,
-                normalMatrix: instance.normalMatrix
+                normalMatrix: instance.normalMatrix,
+                instanceColor: SIMD4(1, 1, 1, 1),
+                grassParameters: .zero
             )
             instanceTransformBuffer.contents()
                 .advanced(by: (base + written) * stride)
@@ -429,24 +440,17 @@ extension Renderer {
         }
     }
 
-    /// Encodes the whole scene as one render pass into the open command
-    /// buffer. Returns false when the encoder cannot be created.
     func encodeScenePass(
         descriptor: MTL4RenderPassDescriptor,
         slot: Int,
         projection: float4x4
     ) -> Bool {
-        // One frustum per frame from the same view-projection the shaders
-        // get — culling can never disagree with what the GPU would clip.
         let viewProjection = projection * freeFlyCamera.viewMatrix()
         let frustum = Frustum(viewProjection: viewProjection)
         let frameOffset = updateFrameUniforms(slot: slot, viewProjection: viewProjection)
         guard let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)
         else { return false }
         encoder.label = "Static Mesh Encoder"
-        // Winding per docs/decisions/coordinates.md (verified on the demo
-        // scene ground plane): faces authored counter-clockwise seen from
-        // outside are front under our view/projection.
         encoder.setFrontFacing(.counterClockwise)
         encoder.setArgumentTable(argumentTable, stages: [.vertex, .fragment])
         argumentTable.setAddress(
@@ -457,9 +461,6 @@ extension Renderer {
             sampler.gpuResourceID,
             index: SamplerIndex.trilinear.rawValue
         )
-        // Bound every frame (even shadows-off) so the fragment shaders' shadow
-        // texture/sampler arguments are always valid for Metal validation; the
-        // shadowsEnabled flag gates whether they are actually sampled.
         argumentTable.setTexture(
             shadow.map.gpuResourceID,
             index: TextureIndex.shadowMap.rawValue
@@ -488,6 +489,7 @@ extension Renderer {
             skinnedPipeline: skinnedAlphaTestPipeline,
             state: &state
         )
+        encodeGrass(groups: scene.grass, state: &state)
         encodeWater(items: scene.water, state: &state)
         encodeParticles(items: scene.particles, state: &state)
         encodeParticles(items: precipitation.drawItems, state: &state)

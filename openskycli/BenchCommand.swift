@@ -398,6 +398,15 @@ extension BenchCommand {
                 + "\(shadow.culledInstances) culled, "
                 + "\(shadow.cascadesRendered) cascades"
         )
+        let grass = result.grassDrawStats
+        print(
+            "[INFO] grass instancing: \(grass.drawCalls) draw calls, "
+                + "\(grass.drawnInstances)/\(grass.sceneInstances) drawn, "
+                + "\(grass.densityCulledInstances) density-culled, "
+                + "\(grass.distanceCulledInstances) distance-culled, "
+                + "\(grass.frustumCulledInstances) frustum-culled, "
+                + "\(grass.budgetDroppedInstances) budget-dropped"
+        )
     }
 
     private static func reportFlyActors(_ result: CellStreamingFlyBenchmarkResult) {

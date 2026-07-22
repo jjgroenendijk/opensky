@@ -329,3 +329,48 @@ extension GameViewController: PrecipitationControlProviding {
         )
     }
 }
+
+extension GameViewController: GrassControlProviding {
+    var grassEnabled: Bool {
+        get { renderer?.grassEnabled ?? true }
+        set { renderer?.grassEnabled = newValue }
+    }
+
+    var grassDensityScale: Float {
+        get { renderer?.grassDensityScale ?? 1 }
+        set { renderer?.grassDensityScale = simd_clamp(newValue, 0, 1) }
+    }
+
+    var grassDrawDistance: Float {
+        get { renderer?.grassDrawDistance ?? GrassRenderPolicy.defaultDrawDistance }
+        set {
+            renderer?.grassDrawDistance = simd_clamp(
+                newValue,
+                GrassRenderPolicy.minimumDrawDistance,
+                GrassRenderPolicy.maximumDrawDistance
+            )
+        }
+    }
+
+    var grassWindScale: Float {
+        get { renderer?.grassWindScale ?? 1 }
+        set {
+            renderer?.grassWindScale = simd_clamp(
+                newValue, 0, GrassRenderPolicy.maximumWindScale
+            )
+        }
+    }
+
+    var grassSnapshot: GrassControlSnapshot {
+        let stats = renderer?.lastGrassDrawStats ?? GrassDrawStats()
+        return GrassControlSnapshot(
+            sceneInstances: stats.sceneInstances,
+            drawnInstances: stats.drawnInstances,
+            drawCalls: stats.drawCalls,
+            distanceCulledInstances: stats.distanceCulledInstances,
+            densityCulledInstances: stats.densityCulledInstances,
+            frustumCulledInstances: stats.frustumCulledInstances,
+            budgetDroppedInstances: stats.budgetDroppedInstances
+        )
+    }
+}

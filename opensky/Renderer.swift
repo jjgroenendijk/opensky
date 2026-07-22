@@ -1,10 +1,5 @@
-// Metal 4 static-mesh render loop (todo 2.6): opaque + alpha-test pipeline
-// variants, per-frame and per-draw uniform rings, textures + sampler bound
-// through the MTL4ArgumentTable, GPU frame timing via counter-heap
-// timestamps. Command flow adapted from Apple's Xcode Metal 4 game template.
-// Scene + camera are injected at init (todo 2.7 app wiring): the app hands a
-// built cell scene with a framing SceneCamera; nil falls back to the
-// synthetic DemoScene + its demo camera (tests, missing game data).
+// Metal 4 render loop: pipelines, rings, argument table, residency, timing.
+// Scene + camera are injected; nil selects synthetic demo state for tests.
 
 import Metal
 import MetalKit
@@ -19,17 +14,6 @@ nonisolated private struct RetiredAllocations {
     /// Highest frame index that may still reference these allocations.
     let lastFrameIndex: UInt64
     let allocations: [MTLAllocation]
-}
-
-/// Per-frame culling + draw accounting from the most recently encoded
-/// frame — deterministic evidence for culling tests and streaming triage.
-nonisolated struct SceneDrawStats: Equatable {
-    /// drawIndexedPrimitives calls encoded.
-    var drawCalls = 0
-    /// Items drawn after frustum culling (static + terrain).
-    var drawnInstances = 0
-    /// Items the frustum test skipped this frame.
-    var culledInstances = 0
 }
 
 nonisolated enum RendererError: Error {
@@ -63,6 +47,7 @@ final class Renderer: NSObject {
     static let alignedDrawUniformsSize =
         (max(
             MemoryLayout<DrawUniforms>.size,
+            MemoryLayout<GrassDrawUniforms>.size,
             MemoryLayout<TerrainDrawUniforms>.size,
             MemoryLayout<WaterDrawUniforms>.size,
             MemoryLayout<ShadowDrawUniforms>.size
@@ -81,6 +66,7 @@ final class Renderer: NSObject {
     let alphaTestPipeline: MTLRenderPipelineState
     let skinnedOpaquePipeline: MTLRenderPipelineState
     let skinnedAlphaTestPipeline: MTLRenderPipelineState
+    let grassPipeline: MTLRenderPipelineState
     let terrainPipeline: MTLRenderPipelineState
     let waterPipeline: MTLRenderPipelineState
     let particlePipelines: ParticlePipelines
@@ -136,6 +122,14 @@ final class Renderer: NSObject {
     var particlesEnabled = true
     var particlesFrozen = false
     var particleEmissionScale: Float = 1
+    /// World > Environment > Grass live controls. Values clamp at encode so
+    /// tests/CLI callers cannot bypass renderer safety policy.
+    var grassEnabled = true
+    var grassDensityScale: Float = 1
+    var grassDrawDistance = GrassRenderPolicy.defaultDrawDistance
+    var grassWindScale: Float = 1
+    /// Test/diagnostic override stays bounded by production hard cap.
+    var grassInstanceBudget = GrassRenderPolicy.maximumInstancesPerFrame
 
     /// Free-fly input, drained once per `draw(in:)`; nil (offscreen/tests) ->
     /// the camera stays on its seeded pose.
@@ -193,6 +187,7 @@ final class Renderer: NSObject {
     /// Culling/draw counts of the last encoded frame (see SceneDrawStats).
     /// Written only by encodeScenePass (RendererScenePass.swift).
     var lastDrawStats = SceneDrawStats()
+    var lastGrassDrawStats = GrassDrawStats()
     /// Shadow-pass culling/draw counts of the last encoded frame (see
     /// ShadowDrawStats). Written only by encodeShadowPass; reset to zero on
     /// idle/off frames.
@@ -241,7 +236,7 @@ final class Renderer: NSObject {
         alphaTestPipeline = pipelines.alphaTest
         skinnedOpaquePipeline = pipelines.skinnedOpaque
         skinnedAlphaTestPipeline = pipelines.skinnedAlphaTest
-        terrainPipeline = pipelines.terrain
+        (grassPipeline, terrainPipeline) = (pipelines.grass, pipelines.terrain)
         (waterPipeline, particlePipelines) = (pipelines.water, pipelines.particles)
         depthState = try Self.makeDepthState(device: device)
         waterDepthState = try Self.makeWaterDepthState(device: device)

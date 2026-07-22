@@ -54,8 +54,8 @@ earlier integration gates. Done milestone leaves this file; history lives in
 * M6 — actors animate. Done 2026-07-20: skeleton-driven idle playback on streamed actors,
   exact lifecycle accounting, deterministic frame-delta gate, exterior/interior probes.
 * M7 — living environment (active): shadows -> weather/sky/wind -> shared particles ->
-  precipitation -> grass. M7.1-M7.4 + grass placement done; rendering next. Dynamic physics
-  moved to combat.
+  precipitation -> grass. M7.1-M7.5 done; integrated acceptance next. Dynamic physics moved
+  to combat.
   Gate: 7.6.
 * M8 — interaction + UI shell: screen-space UI, interaction targeting, HUD, menu mode,
   settings. Gate: 8.3.3.
@@ -90,16 +90,6 @@ Specs: UESP + xEdit defs (WTHR/CLMT/REGN/GRAS), NifTools nif.xml (particle +
 effect-shader blocks). Format items follow `format-parser` discipline; render items
 use offscreen verification per `probe`. Main-app controls live under
 `World > Environment` and remain as the visual-verification surface.
-
-### M7.5 — grass + flora
-
-Consumes M7.2 wind rather than defining a separate animation input.
-
-* [ ] 7.5.2 Instanced rendering + acceptance: batched instancing, weather-driven
-      wind sway, distance fade, per-frame budget; streaming lifetime with cells.
-      Gate: Whiterun tundra grass within fly-bench budget; density/distance/wind
-      controls under `World > Environment > Grass`; numeric pixel/motion evidence; docs
-      (`engine/grass.md`) + log updated.
 
 ### M7.6 — integrated acceptance
 

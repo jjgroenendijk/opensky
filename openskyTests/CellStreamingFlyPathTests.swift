@@ -111,6 +111,7 @@ struct CellStreamingFlyPathTests {
             animationUpdateBudgetMS: 4,
             shadowUpdateBudgetMS: shadowBudgetMS,
             shadowDrawStats: shadowStats,
+            grassDrawStats: GrassDrawStats(drawCalls: 2, drawnInstances: 20),
             actorCellReports: []
         )
     }

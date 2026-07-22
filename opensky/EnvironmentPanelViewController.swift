@@ -2,8 +2,8 @@
 // (M7.1.2). Hosts the sun-shadow quality selector (Off/Low/High) bound to the
 // live renderer, a cheap 2 Hz inspection readout of the per-frame shadow draw
 // stats + CPU time, and a note about the `H` dev A/B toggle. Talks to the
-// renderer only through ShadowControlProviding so it never touches renderer
-// internals. Weather/particles/grass controls join this panel in M7.2-7.5.
+// renderer only through narrow provider protocols, never renderer internals.
+// Weather, particles, precipitation, and grass share this durable surface.
 
 import AppKit
 
@@ -72,6 +72,25 @@ protocol PrecipitationControlProviding: AnyObject {
     var precipitationSnapshot: PrecipitationRuntimeSnapshot { get }
 }
 
+nonisolated struct GrassControlSnapshot: Equatable {
+    let sceneInstances: Int
+    let drawnInstances: Int
+    let drawCalls: Int
+    let distanceCulledInstances: Int
+    let densityCulledInstances: Int
+    let frustumCulledInstances: Int
+    let budgetDroppedInstances: Int
+}
+
+@MainActor
+protocol GrassControlProviding: AnyObject {
+    var grassEnabled: Bool { get set }
+    var grassDensityScale: Float { get set }
+    var grassDrawDistance: Float { get set }
+    var grassWindScale: Float { get set }
+    var grassSnapshot: GrassControlSnapshot { get }
+}
+
 final class EnvironmentPanelViewController: NSViewController {
     /// Live renderer bridge. Weak: the game controller owns this panel's parent
     /// and the renderer, so the panel must not retain back into that graph.
@@ -110,6 +129,14 @@ final class EnvironmentPanelViewController: NSViewController {
         }
     }
 
+    weak var grassProvider: (any GrassControlProviding)? {
+        didSet {
+            guard isViewLoaded else { return }
+            syncGrassControls()
+            refreshStats()
+        }
+    }
+
     private let qualityControl = NSPopUpButton(frame: .zero, pullsDown: false)
     let weatherControl = NSPopUpButton(frame: .zero, pullsDown: false)
     let clearWeatherControl = NSButton(title: "Clear", target: nil, action: nil)
@@ -140,6 +167,29 @@ final class EnvironmentPanelViewController: NSViewController {
         value: 1, minValue: 0, maxValue: 2, target: nil, action: nil
     )
     let emissionLabel = NSTextField(labelWithString: "")
+    let grassEnabledControl = NSButton(
+        checkboxWithTitle: "Enabled", target: nil, action: nil
+    )
+    let grassDensityControl = NSSlider(
+        value: 1, minValue: 0, maxValue: 1, target: nil, action: nil
+    )
+    let grassDistanceControl = NSSlider(
+        value: Double(GrassRenderPolicy.defaultDrawDistance),
+        minValue: Double(GrassRenderPolicy.minimumDrawDistance),
+        maxValue: Double(GrassRenderPolicy.maximumDrawDistance),
+        target: nil,
+        action: nil
+    )
+    let grassWindControl = NSSlider(
+        value: 1,
+        minValue: 0,
+        maxValue: Double(GrassRenderPolicy.maximumWindScale),
+        target: nil,
+        action: nil
+    )
+    let grassDensityLabel = NSTextField(labelWithString: "")
+    let grassDistanceLabel = NSTextField(labelWithString: "")
+    let grassWindLabel = NSTextField(labelWithString: "")
     private let level0Field = NSTextField()
     private let level1Field = NSTextField()
     private let maximumField = NSTextField()
@@ -183,7 +233,7 @@ final class EnvironmentPanelViewController: NSViewController {
             note
         ]
         let controls = shadowViews + makeWeatherViews() + makeParticleViews()
-            + makePrecipitationViews() + makeLODViews()
+            + makePrecipitationViews() + makeGrassViews() + makeLODViews()
         let stack = NSStackView(views: controls)
         stack.orientation = .vertical
         stack.alignment = .leading
@@ -257,6 +307,7 @@ final class EnvironmentPanelViewController: NSViewController {
         syncTimeOfDay()
         syncParticleControls()
         syncPrecipitationControls()
+        syncGrassControls()
         refreshStats()
     }
 
@@ -268,6 +319,7 @@ final class EnvironmentPanelViewController: NSViewController {
         syncTimeOfDay()
         syncParticleControls()
         syncPrecipitationControls()
+        syncGrassControls()
         refreshStats()
         guard statsTimer == nil else { return }
         let timer = Timer(
@@ -372,6 +424,7 @@ extension EnvironmentPanelViewController {
         \(weatherReadout())
         \(particleReadout())
         \(precipitationReadout())
+        \(grassReadout())
         """
     }
 

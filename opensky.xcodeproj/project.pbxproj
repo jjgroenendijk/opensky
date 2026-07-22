@@ -37,6 +37,7 @@
 				AppDelegate.swift,
 				Assets.xcassets,
 				EnvironmentParticleControls.swift,
+				EnvironmentGrassControls.swift,
 				EnvironmentPanelViewController.swift,
 				EnvironmentPrecipitationControls.swift,
 				EnvironmentWeatherControls.swift,

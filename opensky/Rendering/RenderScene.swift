@@ -1,9 +1,6 @@
-// Drawable scene for the static-mesh pipeline (todo 2.6): engine Models ->
-// GPU meshes + resolved textures -> flat draw lists with precomputed
-// per-draw matrices, opaque items grouped before alpha-tested ones so the
-// renderer switches pipeline once. Texture lookup is a caller-supplied
-// closure — the demo scene feeds procedural textures, cell scene build
-// (todo 2.7) will feed VFS + TextureLoader, this type stays agnostic.
+// Drawable scene: engine Models -> GPU meshes + resolved textures -> grouped
+// static + grass instances, terrain, water, sky, particles, and animations.
+// Texture lookup stays caller-supplied so demo + VFS-backed scenes share it.
 
 import Foundation
 import Metal
@@ -201,6 +198,9 @@ nonisolated struct RenderScene {
     let sky: SkyParameters?
     let lighting: RenderLighting?
     let pointLights: [RenderPointLight]
+    /// Cell-owned GRAS meshes grouped across placements/cells for one
+    /// instanced draw per mesh/material after runtime visibility filtering.
+    let grass: [GrassDrawGroup]
     /// Cell-owned CPU particle systems + their texture/instance buffers.
     let particles: [ParticlePlayback]
     /// Cell-owned actor playback objects; references disappear on cell eviction.
@@ -214,6 +214,7 @@ nonisolated struct RenderScene {
         sky: SkyParameters? = nil,
         lighting: RenderLighting? = nil,
         pointLights: [RenderPointLight] = [],
+        grass: [GrassRenderPlacement] = [],
         particles: [ParticlePlayback] = []
     ) {
         var opaque = GroupAccumulator()
@@ -248,6 +249,11 @@ nonisolated struct RenderScene {
         self.sky = sky
         self.lighting = lighting
         self.pointLights = pointLights
+        var grassGroups = GrassGroupAccumulator()
+        for placement in grass {
+            grassGroups.add(placement)
+        }
+        self.grass = grassGroups.groups
         self.particles = particles
         self.animations = animations
     }
@@ -261,12 +267,16 @@ nonisolated struct RenderScene {
     init(merging scenes: [RenderScene]) {
         var opaque = GroupAccumulator()
         var alphaTested = GroupAccumulator()
+        var grass = GrassGroupAccumulator()
         for scene in scenes {
             for group in scene.opaque {
                 opaque.add(group: group)
             }
             for group in scene.alphaTested {
                 alphaTested.add(group: group)
+            }
+            for group in scene.grass {
+                grass.add(group)
             }
         }
         self.opaque = opaque.groups
@@ -276,6 +286,7 @@ nonisolated struct RenderScene {
         sky = scenes.lazy.compactMap(\.sky).first
         lighting = scenes.lazy.compactMap(\.lighting).first
         pointLights = scenes.flatMap(\.pointLights)
+        self.grass = grass.groups
         particles = scenes.flatMap(\.particles)
         animations = scenes.flatMap(\.animations)
     }
@@ -326,7 +337,8 @@ nonisolated struct RenderScene {
     /// Per-draw uniform ring slots one frame can need: one per group +
     /// terrain item.
     var drawCount: Int {
-        opaque.count + alphaTested.count + terrain.count + water.count + particles.count
+        opaque.count + alphaTested.count + terrain.count + water.count + grass.count
+            + particles.count
     }
 
     /// Static instances across all groups — sizes the renderer's
@@ -334,6 +346,7 @@ nonisolated struct RenderScene {
     var instanceCount: Int {
         opaque.reduce(0) { $0 + $1.instances.count }
             + alphaTested.reduce(0) { $0 + $1.instances.count }
+            + grass.reduce(0) { $0 + $1.instances.count }
     }
 
     /// Every GPU allocation the scene touches, deduplicated — feeds the
@@ -367,6 +380,12 @@ nonisolated struct RenderScene {
         }
         for item in water {
             add([item.mesh.vertexBuffer, item.mesh.indexBuffer])
+        }
+        for group in grass {
+            add([
+                group.mesh.vertexBuffer, group.mesh.indexBuffer,
+                group.material.diffuse
+            ])
         }
         for particle in particles {
             add([particle.instanceBuffer, particle.texture])

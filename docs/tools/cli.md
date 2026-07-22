@@ -136,7 +136,8 @@ Implementation notes:
   missing/unexpected coordinate, failed cell, no unload, >1.6x final/start footprint, cap,
   timeout, collision-build p95 budget miss, actor-build p95 budget miss, per-cell actor
   accounting mismatch, a counted actor failure without a reason (5.6
-  zero-unexplained rule), animation- or shadow-update avg/p95 budget miss, or
+  zero-unexplained rule), animation- or shadow-update avg/p95 budget miss, no rendered
+  grass, grass hard-budget drops, or
   avg/p95 frame budget miss exits 1. Per-cell
   metrics come from `SerialCellBuildRunner`; collision time covers base resolution, decoded
   model cache, transform placement + BVH build; actor time covers ACHR collection,
@@ -172,8 +173,9 @@ sustained fps gate (360 frames @
 720p, fails over 33.33 ms avg/p95); `bench --fly-path` runs the M3.2 cross-cell gate at
 640x360, including the 700 ms collision-build p95 gate + M5.5/5.6 actor gates (actor-build
 p95, exact actor/animation accounting, reason-tagged failures, 4 ms animation-update
-avg/p95, 12 ms shadow-update avg/p95; probe additionally requires the aggregate
-accounting lines plus one per-cell line for each of the 35 touched cells, echoing
-explained failures, and asserts the `shadow culling` line reports culled casters);
+  avg/p95, 12 ms shadow-update avg/p95; probe additionally requires the aggregate
+  accounting lines plus one per-cell line for each of the 35 touched cells, echoing
+  explained failures, asserts the `shadow culling` line reports culled casters, and
+  requires nonzero `grass instancing` draws with zero budget drops);
 `bench --walk-path` runs M4's 640x360
 physics/route gate + writes `logs/probe-walk-path.png`. Full output -> `logs/probe.log`.

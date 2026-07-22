@@ -28,6 +28,8 @@ nonisolated enum CellStreamingFlyBenchmarkError: LocalizedError {
     )
     case animationUpdateExceeded(average: Double, p95: Double, budget: Double)
     case shadowUpdateExceeded(average: Double, p95: Double, budget: Double)
+    case noGrassRendered
+    case grassBudgetExceeded(dropped: Int)
     case noCellsUnloaded
 
     var errorDescription: String? {
@@ -78,6 +80,10 @@ nonisolated enum CellStreamingFlyBenchmarkError: LocalizedError {
                 format: "shadow update avg %.2f ms / p95 %.2f ms exceeded %.2f ms budget",
                 average, p95, budget
             )
+        case .noGrassRendered:
+            "fly path rendered no grass instances"
+        case let .grassBudgetExceeded(dropped):
+            "grass per-frame budget dropped up to \(dropped) mesh instances"
         case .noCellsUnloaded:
             "cross-cell path did not unload any initially resident cells"
         }
@@ -173,6 +179,8 @@ nonisolated struct CellStreamingFlyBenchmarkResult {
     /// Final-frame sun-shadow culling/draw accounting — numeric evidence the
     /// per-cascade caster culling ran (drawn < naive count, some culled).
     let shadowDrawStats: ShadowDrawStats
+    /// Peak per-field grass accounting sampled across rendered fly frames.
+    let grassDrawStats: GrassDrawStats
     /// One entry per touched cell, sorted by coordinate for stable output.
     let actorCellReports: [ActorCellReport]
 }
@@ -228,6 +236,7 @@ enum CellStreamingFlyBenchmark {
         private var moving = false
         private var settledFootprints: [Double] = []
         private var peakFootprint = 0.0
+        private var peakGrassDrawStats = GrassDrawStats()
         private var initialResidents = Set<CellCoordinate>()
         private var currentPosition: SIMD3<Float>
 
@@ -262,6 +271,7 @@ enum CellStreamingFlyBenchmark {
         }
 
         func step() throws -> Bool {
+            captureGrassDrawStats()
             _ = try sampleFootprint()
             if let error = swapError.error {
                 throw CellStreamingFlyBenchmarkError.sceneSwapFailed(error)
@@ -304,6 +314,14 @@ enum CellStreamingFlyBenchmark {
                 configuration: configuration
             )
             try validateUpdateBudgets(render)
+            guard peakGrassDrawStats.drawnInstances > 0 else {
+                throw CellStreamingFlyBenchmarkError.noGrassRendered
+            }
+            guard peakGrassDrawStats.budgetDroppedInstances == 0 else {
+                throw CellStreamingFlyBenchmarkError.grassBudgetExceeded(
+                    dropped: peakGrassDrawStats.budgetDroppedInstances
+                )
+            }
             let unloaded = initialResidents.subtracting(streamer.residentCoordinates).count
             guard unloaded > 0 else {
                 throw CellStreamingFlyBenchmarkError.noCellsUnloaded
@@ -337,8 +355,13 @@ enum CellStreamingFlyBenchmark {
                 animationUpdateBudgetMS: configuration.animationUpdateBudgetMS,
                 shadowUpdateBudgetMS: configuration.shadowUpdateBudgetMS,
                 shadowDrawStats: renderer.lastShadowDrawStats,
+                grassDrawStats: peakGrassDrawStats,
                 actorCellReports: actors.cellReports
             )
+        }
+
+        private func captureGrassDrawStats() {
+            peakGrassDrawStats.formMaximum(renderer.lastGrassDrawStats)
         }
 
         /// Per-frame CPU update gates: animation (sample/compose/palette) then

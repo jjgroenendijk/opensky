@@ -295,7 +295,9 @@ extension Renderer {
             }
             var transform = InstanceTransform(
                 modelMatrix: instance.modelMatrix,
-                normalMatrix: instance.normalMatrix
+                normalMatrix: instance.normalMatrix,
+                instanceColor: SIMD4(1, 1, 1, 1),
+                grassParameters: .zero
             )
             shadowInstanceBuffer.contents()
                 .advanced(by: (base + written) * stride)

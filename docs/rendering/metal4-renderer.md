@@ -226,7 +226,7 @@ adjacent cells placing the same cached model share one instanced draw.
 
 Per-draw GPU data split: per-GROUP `DrawUniforms` (UV offset/scale, alpha, threshold)
 stay in the 256-aligned ring (group count <= drawCount); per-INSTANCE `InstanceTransform`
-(model + normal matrix, 128 bytes, no padding) moves to a tightly-packed ring (stride =
+(model + normal matrix + GRAS metadata, 160 bytes) moves to a tightly-packed ring (stride =
 struct size, `instanceSlotCapacity` entries per in-flight slot, same pow2
 regrow-on-swap). `staticMeshVertex` gains `[[instance_id]]` and indexes a `device
 InstanceTransform*` bound at the group's base byte offset — instance_id starts at 0 per
@@ -242,6 +242,14 @@ evidence (`openskycli render` draw-stats line): Whiterun (6,-2) 49 instances -> 
 calls; 3x3 grid 711 instances -> 330 draw calls. Grid frame differs from the
 pre-instancing baseline by 54 of 921 600 pixels (max channel delta 34) — draw-order
 change at z-fighting edges, visually identical.
+
+Grass reuses the transform ring with a dedicated `GrassDrawUniforms` + pipeline.
+Cell scenes group shared NIF mesh/material instances across resident cells. Each frame
+applies stable density thinning, distance + frustum culling, then a 16,384-instance hard
+budget before encoding one indexed instanced draw per surviving group. Per-instance LAND
+color, wave period, and phase drive weather-vector vertex bend; alpha-tested distance fade
+starts at 70% range. Grass receives sun shadows + fog but neither casts shadows nor selects
+point lights. Full policy + evidence: [grass](/engine/grass.md).
 
 ## Uniforms + binding
 

@@ -146,6 +146,10 @@ typedef struct
     /// Camera basis for world-space particle billboards.
     vector_float3 cameraRight;
     vector_float3 cameraUp;
+    /// Weather wind velocity in XY after user wind-scale control.
+    vector_float2 grassWind;
+    /// x=fade start, y=hard draw distance in world units.
+    vector_float2 grassFadeDistances;
 } FrameUniforms;
 
 /// One live CPU particle uploaded per frame. Vertex shader expands it into a
@@ -174,6 +178,19 @@ typedef struct
     unsigned int receivesShadows;
 } DrawUniforms;
 
+/// Per-GROUP GRAS material + mesh-height controls. Fade/wind are per-frame;
+/// color, motion phase, and wave period are per instance.
+typedef struct
+{
+    vector_float2 uvOffset;
+    vector_float2 uvScale;
+    float materialAlpha;
+    float alphaThreshold;
+    float modelMinimumZ;
+    float inverseModelHeight;
+    unsigned int receivesShadows;
+} GrassDrawUniforms;
+
 typedef struct
 {
     /// xyz world position, w radius.
@@ -183,14 +200,17 @@ typedef struct
 } PointLightUniform;
 
 /// Per-INSTANCE transforms for the static-mesh path, in a tightly packed
-/// device-address array (stride = struct size, both matrices 16-byte
-/// aligned -> struct is 128 bytes with no padding). The vertex shader
+/// device-address array (stride = struct size: 160 bytes). The vertex shader
 /// indexes it with [[instance_id]] from the group's base offset.
 typedef struct
 {
     matrix_float4x4 modelMatrix;
     /// Inverse-transpose of modelMatrix: transforms normals to world space.
     matrix_float4x4 normalMatrix;
+    /// rgb LAND/GRAS tint, a unused. Static/shadow paths ignore both extras.
+    vector_float4 instanceColor;
+    /// x=wave period, y=motion phase, z/w reserved.
+    vector_float4 grassParameters;
 } InstanceTransform;
 
 /// Terrain splat path (docs/todo.md 3.1): one draw per quadrant blends the

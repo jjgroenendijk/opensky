@@ -45,8 +45,8 @@ nonisolated struct CellScene {
     /// CPU collision surface for exterior LAND/DNAM terrain. nil for
     /// interiors or cells with no drawable terrain.
     let terrainHeightField: TerrainHeightField?
-    /// Deterministic cell-owned CPU instances. 7.5.2 uploads/batches these;
-    /// keeping them on CellScene already gives streaming exact lifetime.
+    /// Deterministic cell-owned CPU instances retained for inspection +
+    /// accounting; matching GPU grass batches live in renderScene.
     let grassPlacements: [GrassPlacement]
     /// Immutable mesh collision + per-cell broadphase. Empty for cells built
     /// without a collision VFS (legacy synthetic tests).
