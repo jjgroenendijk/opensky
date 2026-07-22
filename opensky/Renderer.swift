@@ -1,5 +1,4 @@
-// Metal 4 render loop: pipelines, rings, argument table, residency, timing.
-// Scene + camera are injected; nil selects synthetic demo state for tests.
+// Metal 4 render loop; nil injected scene selects synthetic demo state for tests.
 
 import Metal
 import MetalKit
@@ -114,6 +113,8 @@ final class Renderer: NSObject {
     var timeOfDay: Float
     /// Data-driven weather runtime; nil -> procedural sky + camera lighting.
     var weather: WeatherSystem?
+    /// Data-driven sky/fog/light/wind + precipitation-input A/B.
+    var weatherEnabled = true
     /// This frame's resolved weather (exterior only). nil -> no weather active.
     var currentResolvedWeather: ResolvedWeather?
     var lastWeatherWallTime: CFTimeInterval?
@@ -143,8 +144,12 @@ final class Renderer: NSObject {
     /// CACurrentMediaTime of the previous `draw(in:)`, for real delta time.
     var lastUpdateTime: CFTimeInterval?
     var animationTime: Float = 0
+    /// World > Environment actor-animation A/B. Off restores bind palettes;
+    /// global time still advances so grass/particle effects stay independent.
+    var actorAnimationsEnabled = true
     var lastAnimationWallTime: CFTimeInterval?
     var lastAnimationUpdateMS = 0.0
+    var lastAnimationUpdatedBoneCount = 0
     /// CPU wall time of last shadow pass; idle/off frames record near-zero cost.
     var lastShadowUpdateMS = 0.0
     let frameUniformBuffer: MTLBuffer

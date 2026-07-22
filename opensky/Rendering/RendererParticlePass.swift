@@ -7,9 +7,10 @@ extension Renderer {
     /// tests opaque geometry but never writes, matching effect blend pipelines.
     func encodeParticles(
         items: [ParticlePlayback],
+        enabled: Bool,
         state: inout ScenePassState
     ) {
-        guard particlesEnabled, !items.isEmpty else { return }
+        guard enabled, !items.isEmpty else { return }
         state.encoder.setDepthStencilState(waterDepthState)
         var boundMode: ParticleBlendMode?
         for item in items {

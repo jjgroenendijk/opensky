@@ -53,11 +53,9 @@ earlier integration gates. Done milestone leaves this file; history lives in
   fly bench within build/footprint/frame budgets.
 * M6 — actors animate. Done 2026-07-20: skeleton-driven idle playback on streamed actors,
   exact lifecycle accounting, deterministic frame-delta gate, exterior/interior probes.
-* M7 — living environment (active): shadows -> weather/sky/wind -> shared particles ->
-  precipitation -> grass. M7.1-M7.5 done; integrated acceptance next. Dynamic physics moved
-  to combat.
-  Gate: 7.6.
-* M8 — interaction + UI shell: screen-space UI, interaction targeting, HUD, menu mode,
+* M7 — living environment. Done 2026-07-22: shadows, weather/sky/wind, shared particles,
+  precipitation, grass, app A/B controls + integrated exterior/interior/fly gates.
+* M8 — interaction + UI shell (active): screen-space UI, interaction targeting, HUD, menu mode,
   settings. Gate: 8.3.3.
 * M9 — world audio: decode/playback, sound records, positional SFX, ambience, music.
   Voice + lip sync moved to dialogue. Gate: 9.2.4.
@@ -78,27 +76,6 @@ earlier integration gates. Done milestone leaves this file; history lives in
   Gate: 17.6.
 * M18+ — broader gameplay: magic/perks/leveling, crime/factions/services, locks/traps,
   chargen/map, vanilla-font polish, read-only `.ess` import.
-
-## Milestone 7 — living environment
-
-Goal: world looks alive — shadows, data-driven sky/fog/wind, particles,
-precipitation, grass. Pulled ahead of scripting/audio/UI + gameplay by user priority
-2026-07-20; M6 idle playback is complete. Shared render primitives land before their
-consumers. Dynamic physics moved to M15 combat.
-
-Specs: UESP + xEdit defs (WTHR/CLMT/REGN/GRAS), NifTools nif.xml (particle +
-effect-shader blocks). Format items follow `format-parser` discipline; render items
-use offscreen verification per `probe`. Main-app controls live under
-`World > Environment` and remain as the visual-verification surface.
-
-### M7.6 — integrated acceptance
-
-* [ ] 7.6 Living Whiterun gate: exterior runs with animation, shadows, selected
-      weather, particles, precipitation, and grass; one interior runs with animation
-      + applicable particles without crash. `World > Environment` exposes every
-      system + A/B toggle; combined fly bench stays within explicit frame/build/
-      footprint budgets. Record numeric deltas + local visual confirmation; update
-      docs/log/todo; review M8 against M7 learnings.
 
 ## Milestone 8 — interaction + UI shell
 
@@ -140,9 +117,10 @@ optional M18+ polish and never gates gameplay. Record the decision as
 
 * [ ] 8.3.1 System menu: resume/settings/quit; data root + audio-volume placeholders
       surfaced. Later M9 binds live audio categories.
-* [ ] 8.3.2 Sidebar verification convention: shared control patterns for enable,
-      force, freeze, inspect, and reset; existing destinations extend in place.
-      Each milestone records its exact main-app sidebar path at acceptance.
+* [ ] 8.3.2 Sidebar verification convention: separate enable, force, freeze/pause,
+      inspect, and reset actions; live numeric state + stable accessibility IDs;
+      scroll/layout tests. Existing destinations extend in place. Each milestone
+      records its exact main-app sidebar path + deterministic A/B evidence at acceptance.
 * [ ] 8.3.3 Milestone acceptance: launch app -> select World -> enter walk mode ->
       inspect live interaction/HUD -> pause -> change a setting -> resume, without
       CLI. Gate: deterministic UI-state + pixel-delta evidence; docs/log/todo updated;

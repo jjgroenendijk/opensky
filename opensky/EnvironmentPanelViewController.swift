@@ -7,90 +7,6 @@
 
 import AppKit
 
-/// Renderer-facing surface the Environment panel drives. GameViewController
-/// implements it over its live renderer; a nil renderer degrades to defaults
-/// so the panel never crashes when Metal 4 is unavailable.
-@MainActor
-protocol ShadowControlProviding: AnyObject {
-    var shadowQuality: ShadowQuality { get set }
-    var shadowDrawStats: ShadowDrawStats { get }
-    var shadowUpdateMS: Double { get }
-    var shadowsActive: Bool { get }
-    /// Return keyboard focus to the World view so WASD/look keep working after
-    /// a control interaction steals first responder.
-    func refocusGameView()
-}
-
-@MainActor
-protocol TerrainLODControlProviding: AnyObject {
-    var terrainLODConfigurationSnapshot: TerrainLODConfigurationSnapshot { get }
-    func applyTerrainLODConfiguration(_ configuration: TerrainLODConfiguration) -> Bool
-    func resetTerrainLODConfiguration()
-}
-
-/// Renderer-facing weather surface the Environment panel drives (M7.2.2):
-/// force/inspect the exterior weather runtime without touching CLI or code.
-/// A nil renderer / no weather data degrades to an empty list + calm readout.
-@MainActor
-protocol WeatherControlProviding: AnyObject {
-    /// Editor IDs of forceable weathers, sorted; empty when no weather data.
-    var selectableWeatherNames: [String] { get }
-    /// Force a weather by editor ID (timed transition); nil resumes automatic.
-    func forceWeather(named name: String?)
-    /// Force the stable data-driven precipitation acceptance presets.
-    func forceWeather(_ preset: WeatherPreset)
-    /// Editor ID of the weather currently in effect, nil when inactive.
-    var currentWeatherName: String? { get }
-    /// 0-1 progress of the active transition (1 when settled).
-    var weatherTransitionFraction: Float { get }
-    /// Freeze/resume only the weather cross-fade.
-    var weatherTransitionsPaused: Bool { get set }
-    /// Published wind for the readout.
-    var windState: WindState { get }
-    /// Exterior sky clock in game-hours (0-24). Drives the time-of-day keyframe
-    /// blend live and the sun position; persisted across launches by the setter.
-    var timeOfDay: Float { get set }
-}
-
-nonisolated struct ParticleControlSnapshot: Equatable {
-    let systemCount: Int
-    let emitterCount: Int
-    let liveCount: Int
-}
-
-@MainActor
-protocol ParticleControlProviding: AnyObject {
-    var particlesEnabled: Bool { get set }
-    var particlesFrozen: Bool { get set }
-    var particleEmissionScale: Float { get set }
-    var particleSnapshot: ParticleControlSnapshot { get }
-}
-
-@MainActor
-protocol PrecipitationControlProviding: AnyObject {
-    var precipitationEnabled: Bool { get set }
-    var precipitationSnapshot: PrecipitationRuntimeSnapshot { get }
-}
-
-nonisolated struct GrassControlSnapshot: Equatable {
-    let sceneInstances: Int
-    let drawnInstances: Int
-    let drawCalls: Int
-    let distanceCulledInstances: Int
-    let densityCulledInstances: Int
-    let frustumCulledInstances: Int
-    let budgetDroppedInstances: Int
-}
-
-@MainActor
-protocol GrassControlProviding: AnyObject {
-    var grassEnabled: Bool { get set }
-    var grassDensityScale: Float { get set }
-    var grassDrawDistance: Float { get set }
-    var grassWindScale: Float { get set }
-    var grassSnapshot: GrassControlSnapshot { get }
-}
-
 final class EnvironmentPanelViewController: NSViewController {
     /// Live renderer bridge. Weak: the game controller owns this panel's parent
     /// and the renderer, so the panel must not retain back into that graph.
@@ -109,6 +25,14 @@ final class EnvironmentPanelViewController: NSViewController {
             guard isViewLoaded else { return }
             syncWeatherMenu()
             syncTimeOfDay()
+            refreshStats()
+        }
+    }
+
+    weak var animationProvider: (any AnimationControlProviding)? {
+        didSet {
+            guard isViewLoaded else { return }
+            syncAnimationControls()
             refreshStats()
         }
     }
@@ -139,6 +63,9 @@ final class EnvironmentPanelViewController: NSViewController {
 
     private let qualityControl = NSPopUpButton(frame: .zero, pullsDown: false)
     let weatherControl = NSPopUpButton(frame: .zero, pullsDown: false)
+    let weatherEnabledControl = NSButton(
+        checkboxWithTitle: "Enabled", target: nil, action: nil
+    )
     let clearWeatherControl = NSButton(title: "Clear", target: nil, action: nil)
     let rainWeatherControl = NSButton(title: "Rain", target: nil, action: nil)
     let snowWeatherControl = NSButton(title: "Snow", target: nil, action: nil)
@@ -153,6 +80,9 @@ final class EnvironmentPanelViewController: NSViewController {
         action: nil
     )
     let timeLabel = NSTextField(labelWithString: "")
+    let animationsEnabledControl = NSButton(
+        checkboxWithTitle: "Enabled", target: nil, action: nil
+    )
     private let statsLabel = NSTextField(wrappingLabelWithString: "")
     let particlesEnabledControl = NSButton(
         checkboxWithTitle: "Enabled", target: nil, action: nil
@@ -232,7 +162,7 @@ final class EnvironmentPanelViewController: NSViewController {
             statsLabel,
             note
         ]
-        let controls = shadowViews + makeWeatherViews() + makeParticleViews()
+        let controls = shadowViews + makeAnimationViews() + makeWeatherViews() + makeParticleViews()
             + makePrecipitationViews() + makeGrassViews() + makeLODViews()
         let stack = NSStackView(views: controls)
         stack.orientation = .vertical
@@ -265,44 +195,11 @@ final class EnvironmentPanelViewController: NSViewController {
         positionedScrollView = true
     }
 
-    private func makeLODViews() -> [NSView] {
-        configureDistanceField(level0Field, identifier: "LODLevel0DistanceField")
-        configureDistanceField(level1Field, identifier: "LODLevel1DistanceField")
-        configureDistanceField(maximumField, identifier: "LODMaximumDistanceField")
-        configureDistanceField(treeField, identifier: "LODTreeDistanceField")
-        lodStatusLabel.font = .systemFont(ofSize: 11)
-        lodStatusLabel.textColor = .secondaryLabelColor
-        lodStatusLabel.widthAnchor.constraint(equalToConstant: 272).isActive = true
-
-        let applyButton = NSButton(
-            title: "Apply",
-            target: self,
-            action: #selector(applyLODDistances)
-        )
-        applyButton.setAccessibilityIdentifier("LODApplyButton")
-        let resetButton = NSButton(
-            title: "Use Skyrim INI",
-            target: self,
-            action: #selector(resetLODDistances)
-        )
-        resetButton.setAccessibilityIdentifier("LODResetButton")
-        let buttons = NSStackView(views: [resetButton, applyButton])
-        buttons.orientation = .horizontal
-        return [
-            Self.caption("Distant LOD (world units)"),
-            Self.distanceRow("L4 maximum", field: level0Field),
-            Self.distanceRow("L8 maximum", field: level1Field),
-            Self.distanceRow("Far maximum", field: maximumField),
-            Self.distanceRow("Trees", field: treeField),
-            buttons,
-            lodStatusLabel
-        ]
-    }
-
     override func viewDidLoad() {
         super.viewDidLoad()
         syncQualitySelection()
         syncLODFields()
+        syncAnimationControls()
         syncWeatherMenu()
         syncTimeOfDay()
         syncParticleControls()
@@ -317,6 +214,7 @@ final class EnvironmentPanelViewController: NSViewController {
         syncQualitySelection()
         syncWeatherMenu()
         syncTimeOfDay()
+        syncAnimationControls()
         syncParticleControls()
         syncPrecipitationControls()
         syncGrassControls()
@@ -369,6 +267,40 @@ final class EnvironmentPanelViewController: NSViewController {
 }
 
 extension EnvironmentPanelViewController {
+    private func makeLODViews() -> [NSView] {
+        configureDistanceField(level0Field, identifier: "LODLevel0DistanceField")
+        configureDistanceField(level1Field, identifier: "LODLevel1DistanceField")
+        configureDistanceField(maximumField, identifier: "LODMaximumDistanceField")
+        configureDistanceField(treeField, identifier: "LODTreeDistanceField")
+        lodStatusLabel.font = .systemFont(ofSize: 11)
+        lodStatusLabel.textColor = .secondaryLabelColor
+        lodStatusLabel.widthAnchor.constraint(equalToConstant: 272).isActive = true
+
+        let applyButton = NSButton(
+            title: "Apply",
+            target: self,
+            action: #selector(applyLODDistances)
+        )
+        applyButton.setAccessibilityIdentifier("LODApplyButton")
+        let resetButton = NSButton(
+            title: "Use Skyrim INI",
+            target: self,
+            action: #selector(resetLODDistances)
+        )
+        resetButton.setAccessibilityIdentifier("LODResetButton")
+        let buttons = NSStackView(views: [resetButton, applyButton])
+        buttons.orientation = .horizontal
+        return [
+            Self.caption("Distant LOD (world units)"),
+            Self.distanceRow("L4 maximum", field: level0Field),
+            Self.distanceRow("L8 maximum", field: level1Field),
+            Self.distanceRow("Far maximum", field: maximumField),
+            Self.distanceRow("Trees", field: treeField),
+            buttons,
+            lodStatusLabel
+        ]
+    }
+
     @objc private func applyLODDistances() {
         guard
             let level0 = Float(level0Field.stringValue),
@@ -422,6 +354,7 @@ extension EnvironmentPanelViewController {
         Cascades: \(stats.cascadesRendered)
         CPU: \(String(format: "%.2f", provider.shadowUpdateMS)) ms
         \(weatherReadout())
+        \(animationReadout())
         \(particleReadout())
         \(precipitationReadout())
         \(grassReadout())

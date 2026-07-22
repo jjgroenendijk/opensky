@@ -65,6 +65,8 @@ final class OpenSkyUITests: XCTestCase {
         let quality = app.popUpButtons["ShadowQualityControl"]
         XCTAssertTrue(quality.waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["ShadowStatsLabel"].exists)
+        XCTAssertTrue(app.checkBoxes["AnimationsEnabledControl"].exists)
+        XCTAssertTrue(app.checkBoxes["WeatherEnabledControl"].exists)
         XCTAssertTrue(app.checkBoxes["ParticlesEnabledControl"].exists)
         XCTAssertTrue(app.checkBoxes["ParticlesFrozenControl"].exists)
         XCTAssertTrue(app.sliders["ParticleEmissionControl"].exists)

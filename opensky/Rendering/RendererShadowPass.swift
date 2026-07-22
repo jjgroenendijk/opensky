@@ -33,6 +33,13 @@ nonisolated struct ShadowDrawStats: Equatable {
     var culledInstances = 0
     /// Cascade slices actually rendered (2 low, 3 high).
     var cascadesRendered = 0
+
+    mutating func formMaximum(_ other: ShadowDrawStats) {
+        drawCalls = max(drawCalls, other.drawCalls)
+        drawnInstances = max(drawnInstances, other.drawnInstances)
+        culledInstances = max(culledInstances, other.culledInstances)
+        cascadesRendered = max(cascadesRendered, other.cascadesRendered)
+    }
 }
 
 extension Renderer {

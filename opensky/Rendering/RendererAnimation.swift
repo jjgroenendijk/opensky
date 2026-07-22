@@ -6,7 +6,11 @@ extension Renderer {
     func updateAnimations(deltaTime: Float) {
         animationTime += max(deltaTime, 0)
         let started = DispatchTime.now().uptimeNanoseconds
-        _ = scene.updateAnimations(at: animationTime)
+        lastAnimationUpdatedBoneCount = if actorAnimationsEnabled {
+            scene.updateAnimations(at: animationTime)
+        } else {
+            scene.resetAnimationsToBindPose()
+        }
         lastAnimationUpdateMS =
             Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
     }

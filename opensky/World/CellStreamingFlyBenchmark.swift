@@ -8,95 +8,6 @@
 import Foundation
 import simd
 
-nonisolated enum CellStreamingFlyBenchmarkError: LocalizedError {
-    case memoryMeasurementFailed
-    case footprintExceeded(megabytes: Double, cap: Double)
-    case footprintDidNotPlateau(initial: Double, final: Double)
-    case sceneSwapFailed(any Error)
-    case cellBuildFailed(count: Int)
-    case unexpectedBuildSet(expected: Int, actual: Int)
-    case duplicateBuilds([CellCoordinate: Int])
-    case collisionBuildExceeded(p95: Double, maximum: Double, budget: Double)
-    case actorBuildExceeded(p95: Double, maximum: Double, budget: Double)
-    case actorAccountingMismatch(coordinate: CellCoordinate, discovered: Int, explained: Int)
-    case actorFailureUnexplained(coordinate: CellCoordinate, failures: Int, reasons: Int)
-    case actorAnimationAccountingMismatch(
-        coordinate: CellCoordinate, rendered: Int, explained: Int
-    )
-    case actorAnimationFailureUnexplained(
-        coordinate: CellCoordinate, failures: Int, reasons: Int
-    )
-    case animationUpdateExceeded(average: Double, p95: Double, budget: Double)
-    case shadowUpdateExceeded(average: Double, p95: Double, budget: Double)
-    case noGrassRendered
-    case grassBudgetExceeded(dropped: Int)
-    case noCellsUnloaded
-
-    var errorDescription: String? {
-        switch self {
-        case .memoryMeasurementFailed:
-            "cannot read task_vm_info.phys_footprint"
-        case let .footprintExceeded(megabytes, cap):
-            String(format: "physical footprint %.0f MB exceeded %.0f MB cap", megabytes, cap)
-        case let .footprintDidNotPlateau(initial, final):
-            String(format: "physical footprint did not plateau: %.0f -> %.0f MB", initial, final)
-        case let .sceneSwapFailed(error):
-            "scene swap failed: \(String(describing: error))"
-        case let .cellBuildFailed(count):
-            "streaming ended with \(count) failed cell builds"
-        case let .unexpectedBuildSet(expected, actual):
-            "fly path built \(actual) unique cells; expected \(expected)"
-        case let .duplicateBuilds(counts):
-            "duplicate cell builds: \(Self.describe(counts))"
-        case let .collisionBuildExceeded(p95, maximum, budget):
-            String(
-                format: "collision build p95 %.2f ms / max %.2f ms exceeded %.2f ms budget",
-                p95, maximum, budget
-            )
-        case let .actorBuildExceeded(p95, maximum, budget):
-            String(
-                format: "actor build p95 %.2f ms / max %.2f ms exceeded %.2f ms budget",
-                p95, maximum, budget
-            )
-        case let .actorAccountingMismatch(coordinate, discovered, explained):
-            "cell (\(coordinate.x),\(coordinate.y)) actor accounting not exact: "
-                + "\(discovered) discovered vs \(explained) explained"
-        case let .actorFailureUnexplained(coordinate, failures, reasons):
-            "cell (\(coordinate.x),\(coordinate.y)) has \(failures) failed actors "
-                + "but only \(reasons) reasons — unexplained failure"
-        case let .actorAnimationAccountingMismatch(coordinate, rendered, explained):
-            "cell (\(coordinate.x),\(coordinate.y)) animation accounting not exact: "
-                + "\(rendered) rendered vs \(explained) explained"
-        case let .actorAnimationFailureUnexplained(coordinate, failures, reasons):
-            "cell (\(coordinate.x),\(coordinate.y)) has \(failures) static actors "
-                + "but only \(reasons) reasons"
-        case let .animationUpdateExceeded(average, p95, budget):
-            String(
-                format: "animation update avg %.2f ms / p95 %.2f ms exceeded %.2f ms budget",
-                average, p95, budget
-            )
-        case let .shadowUpdateExceeded(average, p95, budget):
-            String(
-                format: "shadow update avg %.2f ms / p95 %.2f ms exceeded %.2f ms budget",
-                average, p95, budget
-            )
-        case .noGrassRendered:
-            "fly path rendered no grass instances"
-        case let .grassBudgetExceeded(dropped):
-            "grass per-frame budget dropped up to \(dropped) mesh instances"
-        case .noCellsUnloaded:
-            "cross-cell path did not unload any initially resident cells"
-        }
-    }
-
-    private static func describe(_ counts: [CellCoordinate: Int]) -> String {
-        counts
-            .sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
-            .map { "(\($0.key.x),\($0.key.y))=\($0.value)" }
-            .joined(separator: ", ")
-    }
-}
-
 /// Deterministic path: launch center -> one cell east -> one cell north.
 /// Each leg samples a linear camera flight; every waypoint then waits for its
 /// full 5x5 grid to settle before continuing.
@@ -176,8 +87,13 @@ nonisolated struct CellStreamingFlyBenchmarkResult {
     let actorAnimationFailureCount: Int
     let animationUpdateBudgetMS: Double
     let shadowUpdateBudgetMS: Double
-    /// Final-frame sun-shadow culling/draw accounting — numeric evidence the
-    /// per-cascade caster culling ran (drawn < naive count, some culled).
+    let weatherName: String
+    let windSpeed: Float
+    let animationUpdatedBoneCount: Int
+    let particleSystemCount: Int
+    let particleLiveCount: Int
+    let rainLiveCount: Int
+    /// Peak sun-shadow culling/draw accounting across streamed frames.
     let shadowDrawStats: ShadowDrawStats
     /// Peak per-field grass accounting sampled across rendered fly frames.
     let grassDrawStats: GrassDrawStats
@@ -208,6 +124,15 @@ enum CellStreamingFlyBenchmark {
         provider: any CellSceneProvider,
         configuration: CellStreamingFlyBenchmarkConfiguration
     ) throws -> CellStreamingFlyBenchmarkResult {
+        guard let weather = (provider as? WeatherProviding)?.weatherSystem else {
+            throw CellStreamingFlyBenchmarkError.weatherUnavailable
+        }
+        guard let rain = weather.store.weather(for: .rain) else {
+            throw CellStreamingFlyBenchmarkError.rainWeatherUnavailable
+        }
+        renderer.weather = weather
+        renderer.timeOfDay = 13
+        weather.forceWeather(rain.formID, transition: .instant)
         let driver = Driver(
             renderer: renderer,
             provider: provider,
@@ -236,7 +161,7 @@ enum CellStreamingFlyBenchmark {
         private var moving = false
         private var settledFootprints: [Double] = []
         private var peakFootprint = 0.0
-        private var peakGrassDrawStats = GrassDrawStats()
+        private var environmentEvidence = LivingEnvironmentFlyEvidence()
         private var initialResidents = Set<CellCoordinate>()
         private var currentPosition: SIMD3<Float>
 
@@ -271,7 +196,7 @@ enum CellStreamingFlyBenchmark {
         }
 
         func step() throws -> Bool {
-            captureGrassDrawStats()
+            environmentEvidence.capture(renderer)
             _ = try sampleFootprint()
             if let error = swapError.error {
                 throw CellStreamingFlyBenchmarkError.sceneSwapFailed(error)
@@ -302,6 +227,7 @@ enum CellStreamingFlyBenchmark {
         }
 
         func result(render: OffscreenBenchResult) throws -> CellStreamingFlyBenchmarkResult {
+            environmentEvidence.capture(renderer)
             try validateCompletion()
             let counts = try validatedBuildCounts()
             let collision = try validatedCollisionBuildMetrics(
@@ -314,14 +240,9 @@ enum CellStreamingFlyBenchmark {
                 configuration: configuration
             )
             try validateUpdateBudgets(render)
-            guard peakGrassDrawStats.drawnInstances > 0 else {
-                throw CellStreamingFlyBenchmarkError.noGrassRendered
-            }
-            guard peakGrassDrawStats.budgetDroppedInstances == 0 else {
-                throw CellStreamingFlyBenchmarkError.grassBudgetExceeded(
-                    dropped: peakGrassDrawStats.budgetDroppedInstances
-                )
-            }
+            let environment = try environmentEvidence.validated(
+                animatedActorCount: actors.animated
+            )
             let unloaded = initialResidents.subtracting(streamer.residentCoordinates).count
             guard unloaded > 0 else {
                 throw CellStreamingFlyBenchmarkError.noCellsUnloaded
@@ -354,14 +275,16 @@ enum CellStreamingFlyBenchmark {
                 actorAnimationFailureCount: actors.animationFailures,
                 animationUpdateBudgetMS: configuration.animationUpdateBudgetMS,
                 shadowUpdateBudgetMS: configuration.shadowUpdateBudgetMS,
-                shadowDrawStats: renderer.lastShadowDrawStats,
-                grassDrawStats: peakGrassDrawStats,
+                weatherName: environment.weatherName ?? "selected rain",
+                windSpeed: environment.windSpeed,
+                animationUpdatedBoneCount: environment.animationUpdatedBoneCount,
+                particleSystemCount: environment.particleSystemCount,
+                particleLiveCount: environment.particleLiveCount,
+                rainLiveCount: environment.rainLiveCount,
+                shadowDrawStats: environment.shadowDrawStats,
+                grassDrawStats: environment.grassDrawStats,
                 actorCellReports: actors.cellReports
             )
-        }
-
-        private func captureGrassDrawStats() {
-            peakGrassDrawStats.formMaximum(renderer.lastGrassDrawStats)
         }
 
         /// Per-frame CPU update gates: animation (sample/compose/palette) then
@@ -443,26 +366,25 @@ enum CellStreamingFlyBenchmark {
             )
         }
     }
+}
 
-    /// Metric validation lives in CellStreamingFlyBenchmarkMetrics.swift
-    /// (file + type length limits); Driver hands in runner + configuration.
-    private static func isSettled(_ streamer: CellStreamer) -> Bool {
-        streamer.resolvedCellCount == streamer.desiredCellCount
-            && streamer.inFlightCellCount == 0
-            && streamer.pendingCompletionCount == 0
-            && streamer.queuedRequestCount == 0
-    }
+@MainActor
+private func isSettled(_ streamer: CellStreamer) -> Bool {
+    streamer.resolvedCellCount == streamer.desiredCellCount
+        && streamer.inFlightCellCount == 0
+        && streamer.pendingCompletionCount == 0
+        && streamer.queuedRequestCount == 0
+}
 
-    private static func checkedFootprint(capMB: Double) throws -> Double {
-        guard let footprint = MemoryFootprint.physFootprintMB() else {
-            throw CellStreamingFlyBenchmarkError.memoryMeasurementFailed
-        }
-        guard footprint < capMB else {
-            throw CellStreamingFlyBenchmarkError.footprintExceeded(
-                megabytes: footprint,
-                cap: capMB
-            )
-        }
-        return footprint
+private func checkedFootprint(capMB: Double) throws -> Double {
+    guard let footprint = MemoryFootprint.physFootprintMB() else {
+        throw CellStreamingFlyBenchmarkError.memoryMeasurementFailed
     }
+    guard footprint < capMB else {
+        throw CellStreamingFlyBenchmarkError.footprintExceeded(
+            megabytes: footprint,
+            cap: capMB
+        )
+    }
+    return footprint
 }

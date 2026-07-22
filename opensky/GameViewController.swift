@@ -239,6 +239,11 @@ extension GameViewController: TerrainLODControlProviding {
 /// live renderer's weather runtime on the main thread. A nil renderer or no
 /// weather data degrades to an empty list + calm readout.
 extension GameViewController: WeatherControlProviding {
+    var weatherEnabled: Bool {
+        get { renderer?.weatherEnabled ?? true }
+        set { renderer?.weatherEnabled = newValue }
+    }
+
     var selectableWeatherNames: [String] {
         (renderer?.weather?.store.selectableWeathers() ?? [])
             .compactMap(\.editorID)
@@ -285,6 +290,21 @@ extension GameViewController: WeatherControlProviding {
             renderer?.timeOfDay = newValue
             TimeOfDaySettings.store(newValue)
         }
+    }
+}
+
+extension GameViewController: AnimationControlProviding {
+    var actorAnimationsEnabled: Bool {
+        get { renderer?.actorAnimationsEnabled ?? true }
+        set { renderer?.actorAnimationsEnabled = newValue }
+    }
+
+    var animationSnapshot: AnimationControlSnapshot {
+        AnimationControlSnapshot(
+            playbackCount: renderer?.scene.animations.count ?? 0,
+            updatedBoneCount: renderer?.lastAnimationUpdatedBoneCount ?? 0,
+            updateMS: renderer?.lastAnimationUpdateMS ?? 0
+        )
     }
 }
 

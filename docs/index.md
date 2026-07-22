@@ -75,6 +75,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   immutable BVH broadphase, serial build/cache confinement, streaming lifetime + budgets.
 * [Actor idle animation](/engine/actor-animation.md) - HKX idle sampling, skeleton-world
   pose composition, NIF palette refresh, streamed lifetime, fallback accounting + budget.
+* [Living environment integration](/engine/living-environment.md) - combined M7 runtime,
+  app A/B controls, exterior/interior evidence + frame/build/footprint gate.
 
 ## Rendering
 
@@ -113,5 +115,5 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 * [Testing setup](/testing.md) - test targets, make entrypoints, headless
   unit-test host, fixture policy.
-* [Roadmap](/todo.md) - active M7 work, dependency-ordered milestones, acceptance gates,
+* [Roadmap](/todo.md) - active M8 work, dependency-ordered milestones, acceptance gates,
   app-sidebar verification paths.

@@ -171,11 +171,12 @@ echo "[ OK ] interior actors drawn + animated"
 run "sustained bench (360 frames @ 1280x720)" bench
 grep 'frames @' "$log" | tail -1
 
-# M3.2 streaming gate: deterministic east + north crossings. Shared engine
+# M3.2/M7.6 streaming gate: deterministic east + north crossings. Shared engine
 # verifier requires three settled 5x5 grids, eviction, 35 unique builds with
 # no duplicates, physical-footprint plateau, and avg/p95 under 30 fps budget.
 # M5.5 adds actor-enabled gates: actor-build p95 budget + exact per-cell
-# accounting (discovered = rendered + disabled + failed).
+# accounting (discovered = rendered + disabled + failed). M7.6 requires selected
+# rainy weather plus live animation, world particles, precipitation, shadows, and grass.
 run "cross-cell streaming bench (640x360)" bench --fly-path --size 640x360
 grep 'unique builds' "$log" | tail -1
 grep 'collision build:' "$log" | tail -1
@@ -185,6 +186,13 @@ grep '^\[INFO\] actors:' "$log" | tail -1 | grep -q 'discovered' \
 grep 'animation update:' "$log" | tail -1
 grep 'rendered actors:' "$log" | tail -1 | grep -q '[1-9][0-9]* animated' \
   || fail "fly bench reported no animated actors"
+living_line="$(grep 'living environment:' "$log" | tail -1)"
+printf '%s\n' "$living_line" | grep -q 'weather .*; [1-9][0-9]* animated bones' \
+  || fail "fly bench reported no selected weather or animated bones"
+printf '%s\n' "$living_line" | grep -q '[1-9][0-9]* live particles in [1-9][0-9]* systems' \
+  || fail "fly bench reported no live world particles"
+printf '%s\n' "$living_line" | grep -q '[1-9][0-9]* live rain' \
+  || fail "fly bench reported no live precipitation"
 
 # M7.1.2 sun-shadow gate: per-frame shadow-update budget line + per-cascade
 # caster-culling accounting (some casters culled during the flight).

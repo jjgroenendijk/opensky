@@ -4,6 +4,22 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-22
 
+* M7.6 living environment accepted -- production exterior runs actor animation, cascaded
+  shadows, selected rain, world particles, precipitation + grass together; Chillfurrow Farm
+  interior runs 1 animated actor + 1 particle system without precipitation/crash. `World >
+  Environment` now gives every M7 system an independent master A/B plus live numeric readout.
+  Real exterior A/B: 230,400 all-on/all-off changed px; 408 animation bones, 292 rain,
+  350 shadow casters, 450 drawn grass; interior exact-time animation changed 5 px with 12
+  particles live. Local captures visually confirmed rainy/overcast vs clear exterior + actor
+  pose change. Combined 640x360 fly: 5,530 frames at 13.62 ms avg / 23.64 ms p95 vs 33.33;
+  collision 551.25 ms p95 vs 750 (warm repeat 723.09), actors 3,014.79 vs 4,500,
+  animation 3.20 vs 4, shadows 7.53 vs 14; full-probe repeats reached
+  12.13/12.19/13.20. Peak 879 MiB vs 1,024. Peaks:
+  445 animated bones, 1,305 particles/58
+  systems, 306 rain, 847 shadow draws, 637 grass/0 drops. M7 leaves [todo](/todo.md); M8
+  control convention now separates enable/force/freeze/inspect/reset + requires live state,
+  accessibility IDs, layout tests + deterministic A/B evidence. Docs:
+  [living environment](/engine/living-environment.md), [CLI](/tools/cli.md).
 * M7.5.2 instanced grass + acceptance -- cell builder loads one shared NIF per GRAS type;
   `RenderScene` batches mesh/material instances across resident cells and drops them on cell
   eviction. Dedicated alpha-test pipeline applies fit-to-slope transforms, LAND tint,

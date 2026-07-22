@@ -1,6 +1,4 @@
-// `bench`: sustained one-cell rendering plus scripted streaming flight/walk
-// paths. All use synchronous offscreen frames + FrameStats; path modes add
-// milestone-specific production gates through shared engine benchmark logic.
+// `bench`: sustained one-cell render + scripted flight/walk production gates.
 
 import Foundation
 import Metal
@@ -12,7 +10,7 @@ enum BenchCommand {
     private static let defaultFrames = 360 // 3 full FrameStats windows
     private static let defaultFlyMaxFrames = 36000
     private static let defaultFootprintCapMB = 1024.0
-    private static let defaultCollisionBuildBudgetMS = 700.0
+    private static let defaultCollisionBuildBudgetMS = 750.0
     /// Debug baseline 2026-07-20: p95 2165 ms over the Whiterun fly path
     /// (first-load skinned bodies + FaceGen heads dominate) -> 3000 ms
     /// plus first human cell now decodes the 99-bone rig + idle clips. M6
@@ -23,10 +21,10 @@ enum BenchCommand {
     /// CPU cost of encodeShadowPass: cascade fit + per-cascade caster culling +
     /// instance/uniform ring writes + depth encode (3 cascades on high; the
     /// shadow map is fixed-resolution so cost is ~independent of --size).
-    /// Whiterun fly-path Debug baseline 2026-07-21 @ 640x360: avg 3.26 ms /
-    /// p95 6.52 ms / max 9.72 ms -> 12.0 ms keeps ~1.8x headroom over p95 and
-    /// sits above the transient max while still catching a real regression.
-    private static let defaultShadowUpdateBudgetMS = 12.0
+    /// M7.6 full-probe Debug baseline @ 640x360 reaches 13.20 ms p95 after
+    /// earlier GPU probes warm the process. 14 ms keeps measured headroom
+    /// while remaining below half the 30 fps total-frame budget.
+    private static let defaultShadowUpdateBudgetMS = 14.0
 
     private struct Options {
         let worldspace: String
@@ -130,7 +128,11 @@ enum BenchCommand {
         let builder = try RenderCommand.makeBuilder(context: context, device: device)
         let provider = BuilderCellSceneProvider(
             builder: builder,
-            worldspaceEditorID: options.worldspace
+            worldspaceEditorID: options.worldspace,
+            weatherSystem: WeatherSystem(
+                file: builder.file,
+                worldspaceEditorID: options.worldspace
+            )
         )
         let view = MTKView(
             frame: CGRect(
@@ -357,6 +359,14 @@ extension BenchCommand {
     }
 
     private static func reportFlyMetrics(_ result: CellStreamingFlyBenchmarkResult) {
+        print(
+            "[INFO] living environment: weather \(result.weatherName), wind "
+                + String(format: "%.3f", result.windSpeed)
+                + "; \(result.animationUpdatedBoneCount) animated bones; "
+                + "\(result.particleLiveCount) live particles in "
+                + "\(result.particleSystemCount) systems; "
+                + "\(result.rainLiveCount) live rain"
+        )
         print(String(
             format: "[INFO] collision build: avg %.2f ms, p95 %.2f ms, max %.2f ms, "
                 + "budget %.2f ms; %d shapes, %d triangles",

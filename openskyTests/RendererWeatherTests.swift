@@ -75,6 +75,25 @@ struct RendererWeatherTests {
 
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
+    func disabledWeatherRestoresProceduralSkyAndCalmWind() throws {
+        let device = try #require(RendererShadowTests.device)
+        let renderer = try RendererShadowTests.makeRenderer(device: device)
+        renderer.weather = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
+        renderer.weather?.forceWeather(FormID(0x100), transition: .instant)
+        let active = try RendererShadowTests.readPixels(
+            texture: renderer.renderOffscreen(width: Self.width, height: Self.height)
+        )
+        renderer.weatherEnabled = false
+        let disabled = try RendererShadowTests.readPixels(
+            texture: renderer.renderOffscreen(width: Self.width, height: Self.height)
+        )
+        #expect(active != disabled)
+        #expect(renderer.currentResolvedWeather == nil)
+        #expect(renderer.currentWind == .calm)
+    }
+
+    @Test(.enabled(if: Self.hasMetal4Device))
+    @MainActor
     func twoWeathersProduceDifferentSkies() throws {
         let device = try #require(RendererShadowTests.device)
 

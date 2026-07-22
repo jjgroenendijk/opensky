@@ -280,6 +280,15 @@ nonisolated final class RenderMesh {
         return matchCount
     }
 
+    /// Restores verified NIF bind matrices for actor-animation A/B. Returns
+    /// palette size so live inspection can prove resident skinning work ran.
+    @discardableResult
+    func resetSkinningPose() -> Int {
+        guard let palette = skinningPalette else { return 0 }
+        currentBoneMatrices = palette.bindPoseMatrices
+        return palette.bindPoseMatrices.count
+    }
+
     /// Copies current CPU palette into this frame-in-flight slot immediately
     /// before encoding, so CPU updates never race prior GPU frames.
     func prepareBoneMatrices(slot: Int) {

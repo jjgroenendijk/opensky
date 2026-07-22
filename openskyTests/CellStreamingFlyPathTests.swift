@@ -110,6 +110,12 @@ struct CellStreamingFlyPathTests {
             actorAnimationFailureCount: 0,
             animationUpdateBudgetMS: 4,
             shadowUpdateBudgetMS: shadowBudgetMS,
+            weatherName: "Rain",
+            windSpeed: 0.5,
+            animationUpdatedBoneCount: 10,
+            particleSystemCount: 2,
+            particleLiveCount: 20,
+            rainLiveCount: 128,
             shadowDrawStats: shadowStats,
             grassDrawStats: GrassDrawStats(drawCalls: 2, drawnInstances: 20),
             actorCellReports: []
