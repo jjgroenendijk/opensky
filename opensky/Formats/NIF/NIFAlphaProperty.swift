@@ -22,7 +22,8 @@ nonisolated struct NIFAlphaProperty: Equatable {
         flags & 0x0001 != 0
     }
 
-    /// nif.xml AlphaFunction: 0 ONE, 1 ZERO, 4 SRC_ALPHA, 5 INV_SRC_ALPHA…
+    /// nif.xml AlphaFunction: 0 ONE, 1 ZERO, 4 DEST_COLOR, 5 INV_DEST_COLOR,
+    /// 6 SRC_ALPHA, 7 INV_SRC_ALPHA…
     var sourceBlendMode: UInt16 {
         (flags >> 1) & 0xF
     }

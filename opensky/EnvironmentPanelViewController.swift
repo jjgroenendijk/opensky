@@ -48,6 +48,20 @@ protocol WeatherControlProviding: AnyObject {
     var timeOfDay: Float { get set }
 }
 
+nonisolated struct ParticleControlSnapshot: Equatable {
+    let systemCount: Int
+    let emitterCount: Int
+    let liveCount: Int
+}
+
+@MainActor
+protocol ParticleControlProviding: AnyObject {
+    var particlesEnabled: Bool { get set }
+    var particlesFrozen: Bool { get set }
+    var particleEmissionScale: Float { get set }
+    var particleSnapshot: ParticleControlSnapshot { get }
+}
+
 final class EnvironmentPanelViewController: NSViewController {
     /// Live renderer bridge. Weak: the game controller owns this panel's parent
     /// and the renderer, so the panel must not retain back into that graph.
@@ -70,6 +84,14 @@ final class EnvironmentPanelViewController: NSViewController {
         }
     }
 
+    weak var particleProvider: (any ParticleControlProviding)? {
+        didSet {
+            guard isViewLoaded else { return }
+            syncParticleControls()
+            refreshStats()
+        }
+    }
+
     private let qualityControl = NSPopUpButton(frame: .zero, pullsDown: false)
     private let weatherControl = NSPopUpButton(frame: .zero, pullsDown: false)
     private let timeControl = NSSlider(
@@ -81,6 +103,16 @@ final class EnvironmentPanelViewController: NSViewController {
     )
     private let timeLabel = NSTextField(labelWithString: "")
     private let statsLabel = NSTextField(wrappingLabelWithString: "")
+    let particlesEnabledControl = NSButton(
+        checkboxWithTitle: "Enabled", target: nil, action: nil
+    )
+    let particlesFrozenControl = NSButton(
+        checkboxWithTitle: "Freeze simulation", target: nil, action: nil
+    )
+    let emissionControl = NSSlider(
+        value: 1, minValue: 0, maxValue: 2, target: nil, action: nil
+    )
+    let emissionLabel = NSTextField(labelWithString: "")
     private let level0Field = NSTextField()
     private let level1Field = NSTextField()
     private let maximumField = NSTextField()
@@ -140,7 +172,7 @@ final class EnvironmentPanelViewController: NSViewController {
             statsLabel,
             note
         ]
-        let stack = NSStackView(views: shadowViews + makeLODViews())
+        let stack = NSStackView(views: shadowViews + makeParticleViews() + makeLODViews())
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 8
@@ -195,6 +227,7 @@ final class EnvironmentPanelViewController: NSViewController {
         syncLODFields()
         syncWeatherMenu()
         syncTimeOfDay()
+        syncParticleControls()
         refreshStats()
     }
 
@@ -204,6 +237,7 @@ final class EnvironmentPanelViewController: NSViewController {
         syncQualitySelection()
         syncWeatherMenu()
         syncTimeOfDay()
+        syncParticleControls()
         refreshStats()
         guard statsTimer == nil else { return }
         let timer = Timer(
@@ -348,7 +382,7 @@ extension EnvironmentPanelViewController {
         refreshStats()
     }
 
-    private func refreshStats() {
+    func refreshStats() {
         guard let provider else {
             statsLabel.stringValue = "Shadow stats unavailable."
             return
@@ -362,6 +396,7 @@ extension EnvironmentPanelViewController {
         Cascades: \(stats.cascadesRendered)
         CPU: \(String(format: "%.2f", provider.shadowUpdateMS)) ms
         \(weatherReadout())
+        \(particleReadout())
         """
     }
 
@@ -384,7 +419,7 @@ extension EnvironmentPanelViewController {
         return label
     }
 
-    private static func caption(_ text: String) -> NSTextField {
+    static func caption(_ text: String) -> NSTextField {
         let label = NSTextField(labelWithString: text)
         label.font = .systemFont(ofSize: 12)
         return label

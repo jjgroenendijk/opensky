@@ -1,17 +1,17 @@
 ---
 type: File Format
 title: NIF particle systems (Skyrim SE)
-description: NiParticleSystem, NiPSysData, and the emitter/modifier blocks, and how OpenSky statically decodes them.
+description: NiParticleSystem, NiPSysData, emitter/modifier blocks, static decode, and runtime handoff.
 tags: [format, mesh, particles, io]
-timestamp: 2026-07-21T00:00:00Z
+timestamp: 2026-07-22T00:00:00Z
 ---
 
 # NIF particle systems
 
 Static decode of Skyrim particle blocks: capacity, emitter shapes, modifier
-chain, shader/alpha refs. No playback — the CPU sim + rendering are a later
-milestone. Container + scene graph are [NIF mesh](/formats/nif.md); this page
-covers only the particle blocks that hang off it. Impl:
+chain, shader/alpha refs. Runtime consumes these definitions through
+[particle playback](/rendering/particles.md). Container + scene graph are
+[NIF mesh](/formats/nif.md); this page covers only the particle blocks that hang off it. Impl:
 `opensky/Formats/NIF/NIFParticle*.swift`, engine types in
 `ParticleSystemDefinition.swift`.
 
@@ -142,8 +142,9 @@ Decoded blocks:
 
 ## What is skipped + why
 
-- Controllers (NiPSysUpdateCtlr, NiPSysEmitterCtlr, interpolators): animation,
-  out of scope, skipped like NiObjectNET already skips controller refs.
+- Controllers (NiPSysUpdateCtlr, NiPSysEmitterCtlr, interpolators): not decoded yet,
+  skipped like NiObjectNET already skips controller refs. Playback uses a documented
+  bounded birth-rate fallback until controller tracks land.
 - Skin ref / skin instance / material data: skinned particles + legacy material
   metadata are not needed for static decode.
 - Shader property blocks other than BSEffectShaderProperty: a

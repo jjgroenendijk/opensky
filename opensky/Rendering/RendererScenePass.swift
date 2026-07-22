@@ -1,8 +1,4 @@
-// Scene-pass encode path, split from Renderer.swift (file-length limits,
-// RendererSetup.swift precedent): per-frame + per-draw uniform writes, the
-// frustum-culled static/terrain encoders, and the single-pass scene encode.
-// Members it touches stay internal on Renderer (cross-file extension); the
-// module boundary still hides them from callers.
+// Scene-pass uniform writes + frustum-culled static/terrain encoding.
 
 import Metal
 import MetalKit
@@ -72,7 +68,10 @@ extension Renderer {
             weatherSkyLowerColor: weatherSky?.skyLower ?? .zero,
             weatherHorizonColor: weatherSky?.horizon ?? .zero,
             weatherSunColor: weatherSky?.sun ?? .zero,
-            weatherGlareColor: weatherSky?.sunGlare ?? .zero
+            weatherGlareColor: weatherSky?.sunGlare ?? .zero,
+
+            cameraRight: freeFlyCamera.right,
+            cameraUp: simd_normalize(simd_cross(freeFlyCamera.right, freeFlyCamera.forward))
         )
         frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)
@@ -490,6 +489,7 @@ extension Renderer {
             state: &state
         )
         encodeWater(items: scene.water, state: &state)
+        encodeParticles(items: scene.particles, state: &state)
         lastDrawStats = state.stats
         encoder.endEncoding()
         return true

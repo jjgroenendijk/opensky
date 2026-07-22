@@ -90,16 +90,6 @@ effect-shader blocks). Format items follow `format-parser` discipline; render it
 use offscreen verification per `probe`. Main-app controls live under
 `World > Environment` and remain as the visual-verification surface.
 
-### M7.3 — particles + effect shaders
-
-Shared visual runtime before precipitation consumes it.
-
-* [ ] 7.3.2 Playback + acceptance: CPU-simulated emitters, billboarded particle
-      draw path, effect-shader blend states, weather-wind input. Gate: torch flames
-      + brazier smoke animate in Whiterun offscreen frames (numeric frame delta);
-      `World > Environment > Particles` exposes enable/freeze/emitter controls;
-      local visual confirmation; docs (`rendering/particles.md`) + log updated.
-
 ### M7.4 — precipitation
 
 Consumes weather state from M7.2 + particle playback from M7.3.

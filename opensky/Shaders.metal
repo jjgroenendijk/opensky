@@ -411,6 +411,52 @@ fragment float4 waterFragment(
     return float4(color, 0.64);
 }
 
+// CPU particle path: six vertex_id corners per instance. Camera basis comes
+// from FrameUniforms, so every quad remains billboarded without CPU rebuild.
+
+typedef struct
+{
+    float4 position [[position]];
+    float3 worldPosition;
+    float2 texcoord;
+    float4 color;
+} ParticleVertexOut;
+
+vertex ParticleVertexOut particleVertex(
+    uint vertexID [[vertex_id]],
+    uint instanceID [[instance_id]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
+    const device ParticleInstance *particles [[buffer(BufferIndexParticleInstances)]])
+{
+    constexpr float2 corners[6] = {float2(-1, -1), float2(1, -1), float2(-1, 1),
+                                   float2(-1, 1),  float2(1, -1), float2(1, 1)};
+    const device ParticleInstance &particle = particles[instanceID];
+    float2 corner = corners[vertexID];
+    float3 world =
+        particle.positionSize.xyz +
+        (frame.cameraRight * corner.x + frame.cameraUp * corner.y) * particle.positionSize.w;
+    ParticleVertexOut out;
+    out.position = frame.viewProjectionMatrix * float4(world, 1.0);
+    out.worldPosition = world;
+    float2 atlasUV = corner * 0.5 + 0.5;
+    out.texcoord = particle.uvRect.xy + atlasUV * particle.uvRect.zw;
+    out.color = particle.color;
+    return out;
+}
+
+fragment float4 particleFragment(
+    ParticleVertexOut in [[stage_in]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
+    texture2d<float> sourceMap [[texture(TextureIndexDiffuse)]],
+    sampler trilinear [[sampler(SamplerIndexTrilinear)]])
+{
+    float4 sample = sourceMap.sample(trilinear, in.texcoord) * in.color;
+    if (sample.a <= 0.002) {
+        discard_fragment();
+    }
+    return float4(applyFog(sample.rgb, in.worldPosition, frame), sample.a);
+}
+
 // Sun-shadow depth pre-pass (M7.1.1): render each caster into one cascade
 // slice, storing only clip-space depth. lightViewProjection folds world ->
 // light clip; static/skinned casters get their model matrix from the

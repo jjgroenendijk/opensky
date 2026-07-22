@@ -65,6 +65,7 @@ extension CellSceneBuilder {
     ) -> CellScene {
         let actors = geometry.actors
         var bounds: ModelBounds?
+        let particles = makeParticlePlaybacks(instances: instances)
         let placed = instances.map { instance -> RenderPlacement in
             let world = meshes.bounds(forPath: instance.modelPath)?
                 .transformed(by: instance.transform)
@@ -88,7 +89,8 @@ extension CellSceneBuilder {
             water: geometry.water.map { [$0.item] } ?? [],
             sky: found.cell.isInterior ? nil : geometry.sky,
             lighting: geometry.lighting,
-            pointLights: geometry.pointLights
+            pointLights: geometry.pointLights,
+            particles: particles
         )
         if let world = geometry.terrain?.bounds {
             bounds = bounds.map { $0.union(world) } ?? world
@@ -114,6 +116,27 @@ extension CellSceneBuilder {
             terrainHeightField: geometry.terrain?.heightField,
             staticCollision: geometry.staticCollision
         )
+    }
+
+    nonisolated private func makeParticlePlaybacks(
+        instances: [ResolvedInstance]
+    ) -> [ParticlePlayback] {
+        var result: [ParticlePlayback] = []
+        for instance in instances {
+            do {
+                result += try meshes.particlePlaybacks(
+                    path: instance.modelPath,
+                    placementTransform: instance.transform,
+                    formID: instance.formID
+                )
+            } catch {
+                let reason = String(describing: error)
+                let source = instance.modelPath
+                let message = "particle playback \(source) failed: \(reason)"
+                Self.logger.warning("\(message, privacy: .public)")
+            }
+        }
+        return result
     }
 
     nonisolated private func makeSummary(

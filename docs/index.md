@@ -82,6 +82,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   pre-pass with per-cascade caster culling clamped to resident cells, off/low/high
   quality + `World > Environment` surface, fly-bench CPU budget, PCF sun-term
   filtering, A/B verification.
+* [Particle playback](/rendering/particles.md) - deterministic CPU emitters, weather-wind
+  modifiers, instanced Metal billboards, effect blend pipelines, app controls + Whiterun
+  offscreen acceptance.
 
 ## Decisions
 

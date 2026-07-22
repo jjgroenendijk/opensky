@@ -86,8 +86,8 @@ nonisolated enum MeshLibraryError: Error, Equatable {
 
 nonisolated final class MeshLibrary {
     private let fileSystem: VirtualFileSystem
-    private let device: MTLDevice
-    private let textures: TextureLibrary
+    let device: MTLDevice
+    let textures: TextureLibrary
     private var cache: [String: RenderModel] = [:]
     /// Per-path count of shapes the flattener dropped (unsupported or empty), so
     /// scene build can report skips without re-parsing.
@@ -97,6 +97,10 @@ nonisolated final class MeshLibrary {
     private var modelBounds: [String: ModelBounds] = [:]
     /// Texture keys captured when each cached model was first uploaded.
     private var modelTextureKeys: [String: Set<String>] = [:]
+    /// Immutable particle definitions decoded beside each normal model. A
+    /// placed ref gets fresh playback state while sharing cached texture/GPU
+    /// resources through TextureLibrary.
+    var particleDefinitions: [String: [ParticleSystemDefinition]] = [:]
     /// Mesh keys resolved since the last drain, so a cell build can record its
     /// mesh working set (for eviction keep-sets). Build-queue confined.
     private var touchedKeys: Set<String> = []
@@ -153,6 +157,7 @@ nonisolated final class MeshLibrary {
             throw MeshLibraryError.fileNotFound(path: pathKey)
         }
         let sourceModel: Model
+        let decodedParticles: [ParticleSystemDefinition]
         do {
             let file = try NIFFile(data: data)
             let skeleton: NIFSkeleton?
@@ -164,6 +169,7 @@ nonisolated final class MeshLibrary {
                 skeleton = usesCharacterSkeleton ? characterSkeleton() : nil
             }
             sourceModel = try file.model(skeleton: skeleton)
+            decodedParticles = try file.particleSystems()
         } catch {
             throw MeshLibraryError.parseFailed(path: pathKey, reason: String(describing: error))
         }
@@ -185,6 +191,7 @@ nonisolated final class MeshLibrary {
         }
         modelTextureKeys[key] = textures.endKeyCapture()
         cache[key] = render
+        particleDefinitions[key] = decodedParticles
         skippedShapes[key] = model.skippedShapeCount
         modelBounds[key] = ModelBounds.containing(model: model)
         loadedCount += 1
@@ -372,20 +379,21 @@ nonisolated final class MeshLibrary {
             skippedShapes.removeValue(forKey: key)
             modelBounds.removeValue(forKey: key)
             modelTextureKeys.removeValue(forKey: key)
+            particleDefinitions.removeValue(forKey: key)
         }
         return freed
     }
 
     /// Normalizes a MODL-style path and prepends the "meshes\\" root when the
     /// record omitted it. Rejects empty/escaping paths as not-found.
-    private func meshKey(for path: String) throws -> String {
+    func meshKey(for path: String) throws -> String {
         guard let normalized = try? VirtualFileSystem.normalize(path) else {
             throw MeshLibraryError.fileNotFound(path: path)
         }
         return normalized.hasPrefix("meshes\\") ? normalized : "meshes\\" + normalized
     }
 
-    private func cacheKey(
+    func cacheKey(
         path: String,
         terrainLODClipMask: TerrainLODClipMask?,
         actorSkeletonKey: String? = nil

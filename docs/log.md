@@ -2,6 +2,23 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-07-22
+
+* M7.3.2 particle playback complete -- cell-owned deterministic CPU simulation for NIF
+  box/cylinder/sphere/mesh-origin emitters; capacity/lifetime/variation + ordered
+  gravity/wind/scale modifiers; weather vector input; stable exact-time seek. Metal path
+  uploads triple-buffered instances, expands camera-facing six-vertex quads, samples effect
+  DDS + fog, depth-tests read-only, selects exact alpha/additive-one/additive/multiply
+  pipelines from NIF AlphaFunction pairs. `World > Environment > Particles` adds
+  enable/freeze/0-200% emit
+  controls + live system/emitter/particle readout. Gates: synthetic sim/blend/Metal tests;
+  env-gated WhiterunWorld `(4,-2)` `FlamesTall01` + `smoke10` exact-time 512x512 frame
+  delta passed with 41,742 -> 78,014 lit pixels + 73,613 changed pixels, numeric/PNG
+  evidence in gitignored `logs/`. Docs: [particle playback](/rendering/particles.md),
+  [NIF particle systems](/formats/nif-particles.md). M7.3 leaves [todo](/todo.md); M7.4
+  precipitation consumes shared playback next. `make test-ui` target compiled; runner
+  initialization remains environment-blocked by TCC automation timeout before test start.
+
 ## 2026-07-21
 
 * M7.3.1 NIF particle + effect blocks -- static decode of Skyrim particle
