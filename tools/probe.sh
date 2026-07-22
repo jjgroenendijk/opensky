@@ -149,6 +149,18 @@ run "offscreen screenshot" screenshot --out "$png"
 [ -s "$png" ] || fail "screenshot wrote no PNG"
 echo "[ OK ] screenshot output: $png"
 
+# M8.1.1 screen-space UI gate: same frame with the sample overlay must draw
+# UI quads + glyphs without exhausting the hard quad budget.
+ui_png="$log_dir/probe-ui-overlay.png"
+run "offscreen screenshot (UI sample overlay)" screenshot --out "$ui_png" --ui-sample
+[ -s "$ui_png" ] || fail "UI overlay screenshot wrote no PNG"
+ui_line="$(grep 'ui overlay:' "$log" | tail -1)"
+printf '%s\n' "$ui_line" | grep -q '[1-9][0-9]* quads, [1-9][0-9]* glyphs' \
+  || fail "UI overlay reported no quads/glyphs"
+printf '%s\n' "$ui_line" | grep -q ' 0 dropped' \
+  || fail "UI overlay exceeded quad budget"
+echo "[ OK ] UI sample overlay: $ui_png"
+
 # M3.6 interior gate: find one teleport door near Whiterun, follow XTEL in,
 # render exact arrival pose, follow paired door back to exterior.
 interior_png="$log_dir/probe-interior.png"

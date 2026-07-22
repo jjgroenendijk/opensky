@@ -394,3 +394,35 @@ extension GameViewController: GrassControlProviding {
         )
     }
 }
+
+extension GameViewController: UILabControlProviding {
+    var uiOverlayEnabled: Bool {
+        get { renderer?.uiEnabled ?? true }
+        set { renderer?.uiEnabled = newValue }
+    }
+
+    /// UIScene is not Equatable, so sample presence is inferred from emptiness:
+    /// labSample is the only non-empty scene this surface ever assigns.
+    var uiSampleShown: Bool {
+        get { renderer.map { !$0.uiScene.isEmpty } ?? false }
+        set { renderer?.uiScene = newValue ? .labSample : .empty }
+    }
+
+    var uiScale: Float {
+        get { renderer?.uiScale ?? 1 }
+        set {
+            renderer?.uiScale = min(
+                max(newValue, UIScale.range.lowerBound), UIScale.range.upperBound
+            )
+        }
+    }
+
+    var uiSnapshot: UILabControlSnapshot {
+        UILabControlSnapshot(
+            overlayEnabled: uiOverlayEnabled,
+            sampleShown: uiSampleShown,
+            scale: uiScale,
+            stats: renderer?.lastUIDrawStats ?? UIDrawStats()
+        )
+    }
+}

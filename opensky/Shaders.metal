@@ -592,3 +592,43 @@ fragment void shadowAlphaTestFragment(
         discard_fragment();
     }
 }
+
+// Screen-space 2D UI overlay (M8.1.1): drawn last, depth off. Vertices arrive
+// in framebuffer pixels (origin top-left, y down) as a device pointer indexed
+// by vertex_id (no vertex descriptor, like the particle path). One pipeline
+// draws solid fills + text: solid quads sample the atlas white texel (r == 1),
+// glyph quads sample their coverage cell. Output is premultiplied so the
+// pipeline's premultiplied-over blend composites text edges correctly.
+
+typedef struct
+{
+    float4 position [[position]];
+    float2 uv;
+    float4 color;
+} UIVertexOut;
+
+vertex UIVertexOut uiVertex(
+    uint vertexID [[vertex_id]],
+    const device UIVertex *vertices [[buffer(BufferIndexUIVertices)]],
+    constant UIFrameUniforms &frame [[buffer(BufferIndexUIUniforms)]])
+{
+    const device UIVertex &in = vertices[vertexID];
+    float2 normalized = in.position / frame.viewportSize;
+    UIVertexOut out;
+    // Pixel origin top-left, y down -> NDC origin center, y up. z = 0 keeps UI
+    // in front; the pass runs depth-test-always with writes off.
+    out.position = float4(normalized.x * 2.0 - 1.0, 1.0 - normalized.y * 2.0, 0.0, 1.0);
+    out.uv = in.uv;
+    out.color = in.color;
+    return out;
+}
+
+fragment float4 uiFragment(
+    UIVertexOut in [[stage_in]],
+    texture2d<float> atlas [[texture(TextureIndexUIAtlas)]],
+    sampler uiSampler [[sampler(SamplerIndexUIAtlas)]])
+{
+    float coverage = atlas.sample(uiSampler, in.uv).r;
+    float alpha = in.color.a * coverage;
+    return float4(in.color.rgb * alpha, alpha);
+}

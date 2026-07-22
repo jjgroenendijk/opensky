@@ -55,11 +55,14 @@ enum OpenSkyCLI {
       lod [--worldspace <edid>]   Parse settings + sweep .btr/.bto/.lst/.btt
       screenshot --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
              [--size WxH] [--zoom <f>] [--time-of-day <0-24>] [--neighbors]
+             [--ui-sample]
                                   Save an offscreen World frame as PNG; zoom
                                   moves the eye toward the framed center;
                                   time-of-day defaults to 13:00;
                                   --neighbors adds the 8 surrounding cells,
-                                  camera frames the combined bounds
+                                  camera frames the combined bounds;
+                                  --ui-sample overlays the screen-space UI
+                                  sample scene + prints its draw stats
       render <screenshot options> Compatibility alias for screenshot
       bench [--worldspace <edid>] [--x <n>] [--y <n>] [--size WxH]
             [--frames <n>] [--budget-ms <f>]

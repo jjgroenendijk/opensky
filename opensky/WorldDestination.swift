@@ -6,11 +6,13 @@
 
 nonisolated enum WorldDestination: String, CaseIterable {
     case environment
+    case uiLab
 
     /// Sidebar row title.
     var title: String {
         switch self {
         case .environment: "Environment"
+        case .uiLab: "UI Lab"
         }
     }
 

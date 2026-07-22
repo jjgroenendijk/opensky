@@ -91,6 +91,22 @@ final class OpenSkyUITests: XCTestCase {
         XCTAssertEqual(quality.value as? String, "Low")
     }
 
+    /// World > UI Lab sidebar surface (M8.1.1): the sidebar lists the UI Lab
+    /// destination; selecting it exposes the overlay-enable + sample toggles,
+    /// the scale preset popup, and the live UIDrawStats readout.
+    @MainActor
+    func testWorldSidebarUILabControls() throws {
+        let app = try launchApp()
+        let sidebar = app.tables["WorldSidebar"]
+        XCTAssertTrue(sidebar.waitForExistence(timeout: 5))
+        sidebar.cells["WorldDestination-uiLab"].firstMatch.click()
+
+        XCTAssertTrue(app.checkBoxes["UIOverlayEnabledControl"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.checkBoxes["UILabSampleControl"].exists)
+        XCTAssertTrue(app.popUpButtons["UIScaleControl"].exists)
+        XCTAssertTrue(app.staticTexts["UIStatsLabel"].exists)
+    }
+
     @MainActor
     func testModeSwitcherShowsAssetBrowser() throws {
         let app = try launchApp()

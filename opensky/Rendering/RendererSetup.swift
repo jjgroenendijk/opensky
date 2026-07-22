@@ -115,11 +115,13 @@ extension Renderer {
     /// Textures: base diffuse + the terrain layer array.
     static func makeArgumentTable(device: MTLDevice) throws -> MTL4ArgumentTable {
         let descriptor = MTL4ArgumentTableDescriptor()
-        descriptor.maxBufferBindCount = BufferIndex.particleInstances.rawValue + 1
-        // Base diffuse + terrain layer array + the sun-shadow cascade array.
-        descriptor.maxTextureBindCount = 1 + TerrainConstant.maxLayers.rawValue + 1
-        // Trilinear + shadow-compare.
-        descriptor.maxSamplerStateBindCount = 2
+        // Highest buffer index is the UI uniforms slot (M8.1.1).
+        descriptor.maxBufferBindCount = BufferIndex.uiUniforms.rawValue + 1
+        // Base diffuse + terrain layer array + sun-shadow cascade array + the
+        // UI glyph/solid atlas.
+        descriptor.maxTextureBindCount = 1 + TerrainConstant.maxLayers.rawValue + 1 + 1
+        // Trilinear + shadow-compare + UI.
+        descriptor.maxSamplerStateBindCount = 3
         return try device.makeArgumentTable(descriptor: descriptor)
     }
 

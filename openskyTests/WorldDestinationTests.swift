@@ -12,10 +12,12 @@ struct WorldDestinationTests {
 
     @Test func titlesAreHumanReadable() {
         #expect(WorldDestination.environment.title == "Environment")
+        #expect(WorldDestination.uiLab.title == "UI Lab")
     }
 
     @Test func identifiersAreStableAndUnique() {
         #expect(WorldDestination.environment.sidebarIdentifier == "WorldDestination-environment")
+        #expect(WorldDestination.uiLab.sidebarIdentifier == "WorldDestination-uiLab")
         let ids = WorldDestination.allCases.map(\.sidebarIdentifier)
         #expect(Set(ids).count == ids.count)
     }

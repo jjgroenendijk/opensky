@@ -85,14 +85,11 @@ or quests consume them.
 
 Decision 2026-07-20: vanilla UI is Scaleform SWF (Flash); full Flash runtime is out
 of scope. Native Metal/AppKit UI now; system font first. SWF font extraction becomes
-optional M18+ polish and never gates gameplay. Record the decision as
-`decisions/ui-approach.md` at M8.1.1.
+optional M18+ polish and never gates gameplay. Decision recorded:
+[UI approach](/decisions/ui-approach.md).
 
 ### M8.1 — screen-space UI foundation
 
-* [ ] 8.1.1 Screen-space UI layer: 2D pass over the 3D frame, layout + text
-      primitives, resolution/scale handling. System font initially. Decision doc
-      lands here.
 * [ ] 8.1.2 Menu mode: input capture switch, world-sim pause, menu stack push/pop.
 * [ ] 8.1.3 Strings: `Interface/Translations/*_english.txt` parser (UTF-16LE
       key/value), reusable localized-label provider for HUD + menus.
