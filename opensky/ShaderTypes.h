@@ -32,6 +32,11 @@ typedef NS_ENUM(EnumBackingType, BufferIndex)
     BufferIndexBoneMatrices = 7,
     /// CPU-simulated particle billboard instances.
     BufferIndexParticleInstances = 8,
+    /// Screen-space UI vertex stream (UIVertex), indexed by [[vertex_id]];
+    /// no vertex descriptor, read as a device pointer like particles.
+    BufferIndexUIVertices = 9,
+    /// Per-frame UI uniforms (UIFrameUniforms): viewport pixel size.
+    BufferIndexUIUniforms = 10,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)
@@ -55,6 +60,9 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     /// Sun-shadow cascade array (depth2d_array). Sits after the terrain
     /// layer slots 1..TerrainConstantMaxLayers.
     TextureIndexShadowMap = 9,
+    /// Single-channel (r8Unorm) screen-space UI glyph/solid atlas. The solid
+    /// white texel region backs untextured quads (filled rects/borders).
+    TextureIndexUIAtlas = 10,
 };
 
 /// LAND splat: ATXT layer numbers run 0-7 (UESP LAND), so 8 additional layers
@@ -83,6 +91,8 @@ typedef NS_ENUM(EnumBackingType, SamplerIndex)
     SamplerIndexTrilinear = 0,
     /// Depth-compare sampler for shadow-map PCF lookups.
     SamplerIndexShadowCompare = 1,
+    /// Linear clamp-to-edge sampler for the UI glyph/solid atlas.
+    SamplerIndexUIAtlas = 2,
 };
 
 typedef NS_ENUM(EnumBackingType, FunctionConstantIndex)
@@ -250,5 +260,23 @@ typedef struct
     vector_float2 uvScale;
     float alphaThreshold;
 } ShadowDrawUniforms;
+
+/// One screen-space UI vertex. Position is in framebuffer pixels (origin
+/// top-left, y down); the vertex shader maps it to NDC via UIFrameUniforms.
+/// uv samples the r8 atlas (white texel -> solid fill, glyph cell -> text).
+/// color is straight (non-premultiplied) RGBA; the fragment premultiplies.
+typedef struct
+{
+    vector_float2 position;
+    vector_float2 uv;
+    vector_float4 color;
+} UIVertex;
+
+/// Per-frame UI uniforms. viewportSize is the framebuffer pixel size the
+/// vertex shader divides by to reach NDC.
+typedef struct
+{
+    vector_float2 viewportSize;
+} UIFrameUniforms;
 
 #endif /* ShaderTypes_h */

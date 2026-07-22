@@ -4,6 +4,23 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-22
 
+* M8.1.1 screen-space UI layer -- new `opensky/UI/` subsystem (anchored value-type scene,
+  9-point anchors + stack layout, points -> pixels `UIScale` with per-edge snapping,
+  CoreText system-font shaping/wrap + shelf-packed r8 glyph atlas with white texel) renders
+  as the final draws of the scene encoder: one premultiplied pipeline, triple-buffered
+  vertex ring, 4,096-quad hard budget with exact drop count, `lastUIDrawStats`. Drawable +
+  offscreen paths share the encode. Renderer API: `uiEnabled`/`uiScene`/`uiScale`.
+  `World > UI Lab` sidebar destination adds overlay enable, sample toggle, 50-200% scale
+  presets + 2 Hz stats readout (content view now swaps panels per destination).
+  `screenshot --ui-sample` CLI flag + probe gate print quad/glyph/dropped/atlas evidence.
+  Synthetic gates: 40 layout/text/budget cases; offscreen 480x320 labSample vs empty
+  64,567 changed px, scale 1x vs 2x 93,036, disabled + repeat renders byte-identical.
+  Real FirstRenderCell 1280x720 A/B: 64,576 changed px at 138 quads / 129 glyphs /
+  0 dropped, atlas 512x512; capture visually checked. Full unit suite 0 failed; probe UI
+  gate green (walk-bench budget overshoot pre-exists on main, measured UI-independent,
+  filed #95). Docs:
+  [UI approach decision](/decisions/ui-approach.md), [screen-space UI](/rendering/ui.md),
+  [CLI](/tools/cli.md). Next: 8.1.2 menu mode.
 * M7.6 living environment accepted -- production exterior runs actor animation, cascaded
   shadows, selected rain, world particles, precipitation + grass together; Chillfurrow Farm
   interior runs 1 animated actor + 1 particle system without precipitation/crash. `World >

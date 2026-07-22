@@ -72,6 +72,14 @@ final class Renderer: NSObject {
     let depthState: MTLDepthStencilState
     let waterDepthState: MTLDepthStencilState
     let sampler: MTLSamplerState
+    /// Screen-space UI overlay (M8.1.1): pipeline (solid fills + text
+    /// premultiplied over the finished 3D frame, depth-test-always, writes
+    /// off), depth state, atlas sampler, r8 glyph/solid atlas texture, the
+    /// triple-buffered vertex + uniform rings, and the CPU shelf-packed glyph
+    /// atlas backing the texture. Encode + resolve live in RendererUIPass.swift.
+    let uiResources: UIResources
+    /// Atlas revision last copied into the atlas texture; re-upload on change.
+    var uiUploadedAtlasRevision = -1
     /// Sun-shadow pipelines + compare sampler + the shared cascade array
     /// (depth32Float, ShadowConstantCascadeCount slices). The array is created
     /// once, always resident, and bound at TextureIndexShadowMap every scene
@@ -131,6 +139,19 @@ final class Renderer: NSObject {
     var grassWindScale: Float = 1
     /// Test/diagnostic override stays bounded by production hard cap.
     var grassInstanceBudget = GrassRenderPolicy.maximumInstancesPerFrame
+    /// Screen-space UI A/B toggle. Off -> the UI pass encodes zero draws and
+    /// the frame matches a never-enabled baseline exactly.
+    var uiEnabled = true
+    /// Resolved to a draw list each frame against the framebuffer pixel size +
+    /// uiScale. Default empty -> zero draws.
+    var uiScene = UIScene.empty
+    /// UI points -> framebuffer pixels multiplier (user preset x backing
+    /// scale, supplied by the app). Clamped to UIScale.range at encode.
+    var uiScale: Float = 1
+    /// UI culling/draw accounting from the most recently encoded frame.
+    /// Written only by encodeUI (RendererUIPass.swift), like the other
+    /// last-frame stat mirrors.
+    var lastUIDrawStats = UIDrawStats()
 
     /// Free-fly input, drained once per `draw(in:)`; nil (offscreen/tests) ->
     /// the camera stays on its seeded pose.
@@ -236,17 +257,16 @@ final class Renderer: NSObject {
         Self.configure(view: view)
 
         let pipelines = try Self.makePipelines(device: device, view: view)
-        skyPipeline = pipelines.sky
-        opaquePipeline = pipelines.opaque
-        alphaTestPipeline = pipelines.alphaTest
-        skinnedOpaquePipeline = pipelines.skinnedOpaque
-        skinnedAlphaTestPipeline = pipelines.skinnedAlphaTest
-        (grassPipeline, terrainPipeline) = (pipelines.grass, pipelines.terrain)
-        (waterPipeline, particlePipelines) = (pipelines.water, pipelines.particles)
+        (skyPipeline, opaquePipeline) = (pipelines.sky, pipelines.opaque)
+        (alphaTestPipeline, skinnedOpaquePipeline) = (pipelines.alphaTest, pipelines.skinnedOpaque)
+        (skinnedAlphaTestPipeline, grassPipeline) = (pipelines.skinnedAlphaTest, pipelines.grass)
+        (terrainPipeline, waterPipeline) = (pipelines.terrain, pipelines.water)
+        particlePipelines = pipelines.particles
         depthState = try Self.makeDepthState(device: device)
         waterDepthState = try Self.makeWaterDepthState(device: device)
         sampler = try Self.makeSampler(device: device)
         shadow = try Self.makeShadowResources(device: device)
+        uiResources = try Self.makeUIResources(device: device, view: view)
 
         (self.scene, precipitation) = try Self.makeInitialScene(device: device, requested: scene)
         let resolvedCamera = camera ?? .demo
@@ -269,7 +289,8 @@ final class Renderer: NSObject {
             allocations: [
                 frameUniformBuffer, drawUniformBuffer, pointLightBuffer,
                 instanceTransformBuffer, shadowDrawUniformBuffer, shadowInstanceBuffer,
-                shadow.map
+                shadow.map, uiResources.atlasTexture,
+                uiResources.vertexBuffer, uiResources.uniformBuffer
             ]
                 + self.scene.residencyAllocations
                 + precipitation.residencyAllocations
@@ -281,58 +302,10 @@ final class Renderer: NSObject {
 
         super.init()
     }
-
-    /// Two timestamp entries (frame start/end) per in-flight slot; nil when the
-    /// device cannot allocate one — stats then report CPU time only.
-    private static func makeTimestampHeap(device: MTLDevice) -> MTL4CounterHeap? {
-        let heapDescriptor = MTL4CounterHeapDescriptor()
-        heapDescriptor.type = .timestamp
-        heapDescriptor.count = 2 * maxFramesInFlight
-        return try? device.makeCounterHeap(descriptor: heapDescriptor)
-    }
-}
-
-// MARK: - GPU timestamps
-
-/// Encode path lives in Rendering/RendererScenePass.swift (file-length
-/// limits); this extension keeps the counter-heap timestamp reads next to
-/// the draw loop that consumes them.
-extension Renderer {
-    private static func configure(view: MTKView) {
-        view.colorPixelFormat = .bgra8Unorm_srgb
-        view.depthStencilPixelFormat = .depth32Float
-        view.sampleCount = 1
-    }
-
-    /// Reads a slot's timestamp pair straight from the counter heap. Only
-    /// valid when the caller proved (shared-event wait) that the frame which
-    /// wrote the slot finished.
-    func readTimestampPair(slot: Int) -> (start: UInt64, end: UInt64)? {
-        guard
-            let heap = timestampHeap,
-            let data = try? heap.resolveCounterRange(slot * 2 ..< slot * 2 + 2),
-            data.count >= 2 * MemoryLayout<MTL4TimestampHeapEntry>.stride
-        else { return nil }
-        let entries = data.withUnsafeBytes { bytes in
-            Array(bytes.bindMemory(to: MTL4TimestampHeapEntry.self))
-        }
-        return (entries[0].timestamp, entries[1].timestamp)
-    }
-
-    /// Resolves the timestamp pair the slot's previous frame wrote; safe
-    /// because the shared-event wait guarantees that frame finished. The
-    /// depth guard skips the first ring lap, before any slot was written.
-    func resolveTimestamps(slot: Int) -> (start: UInt64, end: UInt64)? {
-        guard frameIndex >= 2 * Self.maxFramesInFlight else { return nil }
-        return readTimestampPair(slot: slot)
-    }
 }
 
 // MARK: - Scene swap (cell streaming)
 
-/// Same-file extension (private-member access): the scene-swap machinery moved
-/// off the class body to keep it under the length limit, but still reads the
-/// renderer's private rings + retire list.
 extension Renderer {
     /// Replaces the drawable scene between frames; optional `camera` reseeds
     /// sun/ambient and the free-fly pose (a first real scene after an empty

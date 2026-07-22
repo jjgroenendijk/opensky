@@ -25,6 +25,7 @@ enum RenderCommand {
         let zoom = try parseZoom(scanner.option("--zoom"))
         let timeOfDay = try parseTimeOfDay(scanner.option("--time-of-day"))
         let neighbors = scanner.flag("--neighbors")
+        let uiSample = scanner.flag("--ui-sample")
         try scanner.finish()
 
         guard
@@ -61,8 +62,12 @@ enum RenderCommand {
             scene: scene,
             camera: zoomed(SceneCamera.framing(bounds: bounds), zoom: zoom),
             size: size,
-            timeOfDay: timeOfDay
+            timeOfDay: timeOfDay,
+            uiScene: uiSample ? .labSample : .empty
         )
+        if uiSample {
+            printUIOverlayStats(render.uiStats)
+        }
         // Instancing evidence (3.2): draw calls collapse below draw-item
         // count only via culling; instances >> draw calls means repeated
         // models actually batched.
@@ -249,31 +254,6 @@ enum RenderCommand {
             fileSystem: fileSystem,
             terrainLODConfigurationStore: context.makeTerrainLODConfigurationStore()
         )
-    }
-
-    /// Headless MTKView (never shown, no window) carries the pixel-format
-    /// config Renderer reads; renderOffscreen never touches its drawable.
-    static func renderOffscreen(
-        device: MTLDevice,
-        scene: RenderScene,
-        camera: SceneCamera,
-        size: (width: Int, height: Int),
-        timeOfDay: Float
-    ) throws -> (texture: MTLTexture, stats: SceneDrawStats) {
-        let view = MTKView(
-            frame: CGRect(x: 0, y: 0, width: size.width, height: size.height),
-            device: device
-        )
-        view.isPaused = true
-        view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(
-            view: view,
-            scene: scene,
-            camera: camera,
-            timeOfDay: timeOfDay
-        )
-        let texture = try renderer.renderOffscreen(width: size.width, height: size.height)
-        return (texture, renderer.lastDrawStats)
     }
 
     /// BGRA readback of the whole offscreen target.

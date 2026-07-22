@@ -51,14 +51,32 @@ final class WorldSidebarViewController: NSSplitViewController {
     }
 }
 
+/// A destination controls panel with a 2 Hz live readout the content area can
+/// start/stop as the panel is revealed or the World view leaves screen.
+protocol WorldInspectorPanel: NSViewController {
+    func startInspecting()
+    func stopInspecting()
+}
+
+extension EnvironmentPanelViewController: WorldInspectorPanel {}
+extension UILabPanelViewController: WorldInspectorPanel {}
+
 /// Detail area: the live World view with an optional leading controls panel.
-/// The MTKView never leaves the hierarchy; the panel collapses to zero width
-/// when no destination is selected.
+/// The MTKView never leaves the hierarchy; the panel slot collapses to zero
+/// width when no destination is selected. Each destination owns its own panel;
+/// they stack in a shared leading slot and only the active one is visible.
 final class WorldContentViewController: NSViewController {
     let gameViewController: GameViewController
-    private let panel = EnvironmentPanelViewController()
+    private let environmentPanel = EnvironmentPanelViewController()
+    private let uiLabPanel = UILabPanelViewController()
+    private let panelSlot = NSView()
     private var panelWidth: NSLayoutConstraint?
     private var currentDestination: WorldDestination?
+
+    /// Every destination panel, in row order (matches WorldDestination).
+    private var panels: [WorldInspectorPanel] {
+        [environmentPanel, uiLabPanel]
+    }
 
     init(gameViewController: GameViewController) {
         self.gameViewController = gameViewController
@@ -77,63 +95,94 @@ final class WorldContentViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         addChild(gameViewController)
-        addChild(panel)
+        for panel in panels {
+            addChild(panel)
+        }
 
         let gameView = gameViewController.view
-        let panelView = panel.view
         gameView.translatesAutoresizingMaskIntoConstraints = false
-        panelView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(panelView)
+        panelSlot.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(panelSlot)
         view.addSubview(gameView)
 
-        let width = panelView.widthAnchor.constraint(equalToConstant: 0)
+        for panel in panels {
+            let panelView = panel.view
+            panelView.translatesAutoresizingMaskIntoConstraints = false
+            panelSlot.addSubview(panelView)
+            NSLayoutConstraint.activate([
+                panelView.topAnchor.constraint(equalTo: panelSlot.topAnchor),
+                panelView.bottomAnchor.constraint(equalTo: panelSlot.bottomAnchor),
+                panelView.leadingAnchor.constraint(equalTo: panelSlot.leadingAnchor),
+                panelView.trailingAnchor.constraint(equalTo: panelSlot.trailingAnchor)
+            ])
+            panelView.isHidden = true
+        }
+
+        let width = panelSlot.widthAnchor.constraint(equalToConstant: 0)
         panelWidth = width
         NSLayoutConstraint.activate([
-            panelView.topAnchor.constraint(equalTo: view.topAnchor),
-            panelView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            panelView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            panelSlot.topAnchor.constraint(equalTo: view.topAnchor),
+            panelSlot.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            panelSlot.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             width,
             gameView.topAnchor.constraint(equalTo: view.topAnchor),
             gameView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            gameView.leadingAnchor.constraint(equalTo: panelView.trailingAnchor),
+            gameView.leadingAnchor.constraint(equalTo: panelSlot.trailingAnchor),
             gameView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
-        panelView.isHidden = true
     }
 
-    /// Points the panel at the live renderer bridge.
+    /// Points every destination panel at the live renderer bridge.
     func wireProvider() {
-        panel.provider = gameViewController
-        panel.weatherProvider = gameViewController
-        panel.animationProvider = gameViewController
-        panel.particleProvider = gameViewController
-        panel.precipitationProvider = gameViewController
-        panel.grassProvider = gameViewController
+        environmentPanel.provider = gameViewController
+        environmentPanel.weatherProvider = gameViewController
+        environmentPanel.animationProvider = gameViewController
+        environmentPanel.particleProvider = gameViewController
+        environmentPanel.precipitationProvider = gameViewController
+        environmentPanel.grassProvider = gameViewController
+        uiLabPanel.provider = gameViewController
     }
 
-    /// Reveals the panel for `destination` (only Environment today) or hides it.
+    /// Reveals the panel for `destination` (hiding the rest) or collapses the
+    /// slot. Only the revealed panel inspects; the others stop ticking.
     func showDestination(_ destination: WorldDestination?) {
         currentDestination = destination
-        let show = destination == .environment
-        panel.view.isHidden = !show
+        let active = panel(for: destination)
+        for panel in panels {
+            let isActive = panel === active
+            panel.view.isHidden = !isActive
+            if !isActive {
+                panel.stopInspecting()
+            }
+        }
+        let show = active != nil
         panelWidth?.constant = show ? 300 : 0
         if show, view.window != nil {
-            panel.startInspecting()
+            active?.startInspecting()
         } else {
-            panel.stopInspecting()
+            active?.stopInspecting()
+        }
+    }
+
+    /// Maps a destination to its panel (nil collapses the slot).
+    private func panel(for destination: WorldDestination?) -> WorldInspectorPanel? {
+        switch destination {
+        case .environment: environmentPanel
+        case .uiLab: uiLabPanel
+        case nil: nil
         }
     }
 
     override func viewDidAppear() {
         super.viewDidAppear()
-        if currentDestination == .environment {
-            panel.startInspecting()
-        }
+        panel(for: currentDestination)?.startInspecting()
     }
 
     override func viewDidDisappear() {
         super.viewDidDisappear()
-        panel.stopInspecting()
+        for panel in panels {
+            panel.stopInspecting()
+        }
     }
 }
 
