@@ -16,6 +16,7 @@ nonisolated struct RenderPipelines {
     let alphaTest: MTLRenderPipelineState
     let skinnedOpaque: MTLRenderPipelineState
     let skinnedAlphaTest: MTLRenderPipelineState
+    let grass: MTLRenderPipelineState
     let terrain: MTLRenderPipelineState
     let water: MTLRenderPipelineState
     let particles: ParticlePipelines
@@ -182,34 +183,14 @@ extension Renderer {
             return try compiler.makeRenderPipelineState(descriptor: descriptor)
         }
 
-        /// Terrain splat pipeline: own vertex/fragment pair (extra weight
-        /// stream + layer texture array), no function constants.
-        func makeTerrain() throws -> MTLRenderPipelineState {
-            let vertexFunction = MTL4LibraryFunctionDescriptor()
-            vertexFunction.library = library
-            vertexFunction.name = "terrainVertex"
-
-            let fragmentFunction = MTL4LibraryFunctionDescriptor()
-            fragmentFunction.library = library
-            fragmentFunction.name = "terrainFragment"
-
-            let descriptor = MTL4RenderPipelineDescriptor()
-            descriptor.label = "TerrainSplat"
-            descriptor.rasterSampleCount = view.sampleCount
-            descriptor.vertexFunctionDescriptor = vertexFunction
-            descriptor.fragmentFunctionDescriptor = fragmentFunction
-            descriptor.vertexDescriptor = TerrainVertexLayout.vertexDescriptor()
-            descriptor.colorAttachments[0].pixelFormat = view.colorPixelFormat
-            return try compiler.makeRenderPipelineState(descriptor: descriptor)
-        }
-
         return try RenderPipelines(
             sky: makeSkyPipeline(library: library, compiler: compiler, view: view),
             opaque: makeVariant(alphaTest: false),
             alphaTest: makeVariant(alphaTest: true),
             skinnedOpaque: makeVariant(alphaTest: false, skinned: true),
             skinnedAlphaTest: makeVariant(alphaTest: true, skinned: true),
-            terrain: makeTerrain(),
+            grass: makeGrassPipeline(library: library, compiler: compiler, view: view),
+            terrain: makeTerrainPipeline(library: library, compiler: compiler, view: view),
             water: makeWaterPipeline(library: library, compiler: compiler, view: view),
             particles: makeParticlePipelines(
                 library: library, compiler: compiler, view: view

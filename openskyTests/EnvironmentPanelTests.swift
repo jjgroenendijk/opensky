@@ -18,7 +18,11 @@ struct EnvironmentPanelTests {
             panel.rainWeatherControl,
             panel.snowWeatherControl,
             panel.weatherTransitionsPausedControl,
-            panel.precipitationEnabledControl
+            panel.precipitationEnabledControl,
+            panel.grassEnabledControl,
+            panel.grassDensityControl,
+            panel.grassDistanceControl,
+            panel.grassWindControl
         ]
         for control in controls {
             #expect(!control.isHidden, "\(control.identifier?.rawValue ?? "control") hidden")

@@ -150,11 +150,18 @@ nonisolated final class RenderMesh {
 
     /// Mesh-local -> model-root transform (see Geometry/Mesh.swift).
     let localTransform: float4x4
+    /// Mesh-local bounds retained for vertex effects that need normalized
+    /// height (grass sway). RenderModel also retains model-root bounds for
+    /// placement culling through MeshLibrary.
+    let localBounds: ModelBounds
     /// Index into the owning model's materials.
     let materialSlot: Int
 
     init(device: MTLDevice, mesh: Mesh) throws {
         guard !mesh.positions.isEmpty, !mesh.indices.isEmpty else {
+            throw RenderMeshError.emptyMesh
+        }
+        guard let localBounds = ModelBounds.containing(mesh.positions) else {
             throw RenderMeshError.emptyMesh
         }
         if let bad = mesh.indices.first(where: { Int($0) >= mesh.positions.count }) {
@@ -188,6 +195,7 @@ nonisolated final class RenderMesh {
         skinningPalette = skinBuffers.palette
         currentBoneMatrices = mesh.skinning?.bindPoseMatrices ?? []
         localTransform = mesh.transform
+        self.localBounds = localBounds
         materialSlot = mesh.materialSlot
     }
 

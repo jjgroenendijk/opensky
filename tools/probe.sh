@@ -192,6 +192,14 @@ grep 'shadow update:' "$log" | tail -1
 grep 'shadow culling:' "$log" | tail -1 | grep -q '[1-9][0-9]* culled' \
   || fail "fly bench reported no shadow caster culling"
 
+# M7.5.2 grass gate: fly path must render batched grass without exhausting
+# the hard per-frame instance budget.
+grass_line="$(grep 'grass instancing:' "$log" | tail -1)"
+printf '%s\n' "$grass_line" | grep -q '[1-9][0-9]*/[1-9][0-9]* drawn' \
+  || fail "fly bench rendered no grass"
+printf '%s\n' "$grass_line" | grep -q '0 budget-dropped' \
+  || fail "fly bench exceeded grass instance budget"
+
 # M5.6 acceptance: one accounting line per touched cell (35 = three settled
 # 5x5 grids). The engine gate already throws on inexact accounting or a
 # reason-less failure; this proves the per-cell report surfaced. Failure

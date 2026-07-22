@@ -1,18 +1,18 @@
 ---
 type: Subsystem
-title: Procedural grass placement
-description: Deterministic cell-owned GRAS placement from LAND texture coverage.
+title: Procedural grass
+description: Cell-owned GRAS placement, instanced Metal rendering, fade, wind, and controls.
 tags: [engine, world, grass, terrain, streaming]
 timestamp: 2026-07-22T00:00:00Z
 ---
 
-# Procedural grass placement
+# Procedural grass
 
-Milestone 7.5.1 produces immutable CPU `GrassPlacement` values. Each stores
+Milestone 7.5 produces immutable CPU `GrassPlacement` values. Each stores
 GRAS identity/model, world position, terrain normal, yaw, scale, vertex color,
-wave period, and flags. `CellScene` owns the array -> existing cell
-load/unload lifetime owns grass too. M7.5.2 consumes it for mesh loading,
-instanced Metal draws, weather wind, distance fade, and app controls.
+wave period, and flags. `CellScene` owns the array + `RenderScene` owns matching
+GPU batches -> existing cell load/unload, merge, residency, and cache eviction
+own grass too.
 
 Input chain:
 
@@ -62,6 +62,38 @@ patterns. `CellLoadSummary` reports placements, usable GRAS types, and unusable
 GNAM targets. WRLD `No Grass` suppresses the pass. Interiors and LAND-less
 cells retain no grass.
 
+## GPU batching + runtime policy
+
+`CellSceneBuilder` groups placements by GRAS FormID, loads each NIF once through
+`MeshLibrary`, then expands its meshes into `GrassDrawGroup` values. Group key =
+shared mesh + diffuse identity. `RenderScene(merging:)` regroups across resident
+cells, so repeated grass types stay one indexed instanced draw per mesh/material.
+Cell eviction removes its instances; shared cache residency remains while any
+resident cell references the allocation.
+
+Per-instance upload = model/normal matrix, LAND color, stable density key,
+motion phase, and GRAS wave period. Fit To Slope maps local +Z to LAND normal;
+random yaw then rotates in the tangent plane. Vertex shader bends upper mesh
+vertices in weather's published XY wind vector. Wind scale is 0-2. Distance
+fade starts at 70% of selected range and feeds alpha-test coverage to avoid a
+hard pop.
+
+Per-frame filter order:
+
+1. Stable density key vs 0-100% user scale.
+2. Camera distance, clamped to 512-16,384 game units.
+3. Frustum against sway-expanded world bounds.
+4. Hard 16,384 mesh-instance upload/draw cap.
+
+`GrassDrawStats` separates every rejection bucket. Budget overflow skips only
+that frame; fly acceptance requires zero drops. Grass receives sun shadows +
+fog. It does not cast shadows or enter point-light selection: small alpha
+blades are kept out of dominant shadow/local-light costs.
+
+Main app verification path: `World > Environment > Grass`. Controls toggle
+rendering, choose density, draw distance, and wind scale; readout reports
+drawn/scene counts, draw calls, distance/frustum rejects, and budget drops.
+
 ## Known deviations
 
 + Candidate lattice, SplitMix64 seed, 32-unit floor, and 128-axis safety cap
@@ -75,7 +107,9 @@ cells retain no grass.
   Exact vanilla distributions are unknown.
 + Water enum labels come from xEdit. Boundary comparisons are OpenSky's direct
   interpretation; unknown values pass through.
-+ Terrain-normal fit is retained but not applied until M7.5.2 renderer work.
++ Bend normals are not recomputed after vertex displacement; lighting keeps the
+  slope-fitted undeformed mesh normal.
++ Budget order follows deterministic scene/group order, not nearest-first.
 
 ## Verification
 
@@ -84,9 +118,19 @@ neighbor seed changes, full + painted texture coverage, density/slope/water/
 hidden-quadrant rejection, variance bounds, WRLD suppression, scene lifetime,
 and exact summary accounting.
 
-Real probe (`GrassRealDataTests`, vanilla Skyrim.esm, 2026-07-22): 27 GRAS and
+Placement probe (`GrassRealDataTests`, vanilla Skyrim.esm, 2026-07-22): 27 GRAS and
 68 LTEX decoded; 39 GNAM links resolve. `Tamriel (6,-2)` produced 126 CPU
 placements across two usable types (56 + 70), zero skipped. Second build was
-identical. This proves internal consistency + plausible nonzero density, not
-visual parity with vanilla; M7.5.2's offscreen/app gate owns visual comparison.
-Evidence stays gitignored under `logs/`.
+identical.
+
+Render acceptance (`GrassRenderingAcceptanceRealDataTests`, 640x360): same 126
+placements became 126 mesh instances, drawn in 2 calls with zero budget drops.
+Grass off/on changed 1,015 pixels; `SkyrimStormSnow` wind 0.698 at 2x scale
+changed 44 pixels between exact times 0 and 0.37. Half density drew 67 and
+culled 59; minimum distance culled all 126.
+
+Cross-cell fly gate `(6,-2) -> (7,-2) -> (7,-1)`: peak scene carried 11,452
+grass mesh instances; 637 visible drew in 3 calls, 9,361 distance-culled, 2,170
+frustum-culled, zero budget-dropped. Full streamed run: 5,420 frames at
+640x360, 15.90 ms avg / 31.50 ms p95 vs 33.33 ms budget; footprint 738 MB final,
+889 MB peak vs 1,024 MB cap. Evidence stays gitignored under `logs/`.

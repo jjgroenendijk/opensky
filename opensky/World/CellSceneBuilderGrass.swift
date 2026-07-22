@@ -1,10 +1,12 @@
-// Cell-scene integration for milestone 7.5.1: resolve LAND LTEX -> repeated
-// GNAM -> GRAS, then retain deterministic CPU placements with cell lifetime.
+// Cell-scene integration for M7.5: resolve LAND LTEX -> repeated GNAM ->
+// GRAS, retain deterministic CPU placements, load shared models, emit GPU
+// batch inputs with identical cell lifetime.
 
 import OSLog
 
 nonisolated struct GrassBuild {
     let placements: [GrassPlacement]
+    let renderPlacements: [GrassRenderPlacement]
     let typeCount: Int
     let typeSkipCount: Int
 }
@@ -50,11 +52,43 @@ extension CellSceneBuilder {
         if skipped > 0 {
             Self.logger.warning("\(skipped) referenced grass types unresolvable, dropped")
         }
+        let renderPlacements = makeGrassRenderPlacements(placements)
         return GrassBuild(
             placements: placements,
+            renderPlacements: renderPlacements,
             typeCount: usable.count,
             typeSkipCount: skipped
         )
+    }
+
+    /// Loads each GRAS model once through MeshLibrary, then expands every
+    /// deterministic CPU placement into renderer input. One malformed/missing
+    /// model drops only that grass type; other cell geometry stays valid.
+    nonisolated private func makeGrassRenderPlacements(
+        _ placements: [GrassPlacement]
+    ) -> [GrassRenderPlacement] {
+        let byType = Dictionary(grouping: placements, by: \.grass)
+        var result: [GrassRenderPlacement] = []
+        result.reserveCapacity(placements.count)
+        for grassID in byType.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
+            guard let typePlacements = byType[grassID], let first = typePlacements.first else {
+                continue
+            }
+            do {
+                let model = try meshes.model(path: first.modelPath)
+                let bounds = meshes.bounds(forPath: first.modelPath)
+                result += typePlacements.map {
+                    GrassRenderPlacement(placement: $0, model: model, modelBounds: bounds)
+                }
+            } catch {
+                let id = grassID.description
+                let reason = String(describing: error)
+                Self.logger.warning(
+                    "grass \(id, privacy: .public) model failed: \(reason, privacy: .public)"
+                )
+            }
+        }
+        return result
     }
 
     nonisolated private func landTextureIndexBuildingIfNeeded() -> [UInt32: LandTexture] {

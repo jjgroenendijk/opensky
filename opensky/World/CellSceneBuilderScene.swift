@@ -100,6 +100,7 @@ extension CellSceneBuilder {
             sky: found.cell.isInterior ? nil : geometry.sky,
             lighting: geometry.lighting,
             pointLights: geometry.pointLights,
+            grass: geometry.grass?.renderPlacements ?? [],
             particles: particles
         )
         if let world = geometry.terrain?.bounds {
