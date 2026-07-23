@@ -237,11 +237,30 @@ SSE bodies store hardware weights in `NiSkinPartition`; legacy pairs are still d
 SSE `NiSkinPartition` starts with uint32 partition count, uint32 vertex-data size,
 uint32 vertex stride, uint64 BSVertexDesc, then one top-level interleaved vertex stream.
 Each `SkinPartition` carries counts, global-bone palette, local->global vertex map,
-optional float weights/faces/uint8 palette indices, LOD byte, global-VB byte, repeated
-vertex desc, mandatory global uint16 triangle copy. OpenSky uses top-level weights +
-indices when present, otherwise partition-local weights + indices through vertex maps;
-it remaps palette-local indices per partition, draws global triangle copies. Checks cover
-counts, maps, palettes, influence totals, triangle ranges.
+optional float weights/faces/uint8 palette indices, LOD byte, global-VB byte (retained,
+`usesGlobalVertexBuffer`), repeated vertex desc, mandatory global uint16 triangle copy.
+
+Two influence-index spaces coexist and must not be conflated:
+
++ Top-level `BSVertexDataSSE` `Bone Indices` (interleaved stream, global-vertex-indexed)
+  store skin-instance-global bone ids -> index the `NiSkinInstance` bone list directly.
+  No palette hop; bounds-check against bone count only.
++ Per-partition `SkinPartition.Bone Indices` array stores palette-local ids -> remap
+  through the partition's global-bone palette.
+
+OpenSky uses the top-level global stream when present (ordinary skinned `BSTriShape`),
+else partition-local indices through vertex maps + palette (FaceGen/BSDynamicTriShape,
+empty top-level stream). Draws global triangle copies. Checks cover counts, maps,
+palettes, influence totals, triangle ranges, and both index spaces' bounds.
+
+Probed `SabreCat.nif` 2026-07-23 (read-only): `SabreCat` shape, 3311 verts, 61 bones, two
+partitions sharing the top-level global stream. Partition[1] palette has 59 entries
+`[0,3,4..60]` (non-identity) while the top-level stream reaches global bone 60. Remapping
+the global stream through that 59-entry palette (the old bug) threw
+`vertex bone palette index out of range`; treating it as global flattens with bounded
+indices. Vanilla bodies (`malebody_1.nif`) carry identity palettes, which masked the bug.
+Observed global-VB byte is 0 on every SabreCat partition, so it does not gate the index
+space — stream presence does. Impl: `NIFModelSkinning.swift` (`InfluenceAccumulator`).
 
 Vanilla quirk: later `malebody_1.nif` partitions contain values outside local vertex
 count in redundant primary faces, despite nif.xml describing local faces. Mandatory
