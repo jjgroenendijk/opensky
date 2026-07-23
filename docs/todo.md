@@ -83,10 +83,10 @@ Goal: user can inspect and operate the world without CLI knowledge. Establish na
 Metal/AppKit UI, interaction targeting, HUD, menu mode, and settings before scripts
 or quests consume them.
 
-Decision 2026-07-20: vanilla UI is Scaleform SWF (Flash); full Flash runtime is out
-of scope. Native Metal/AppKit UI now; system font first. SWF font extraction becomes
-optional M18+ polish and never gates gameplay. Decision recorded:
-[UI approach](/decisions/ui-approach.md).
+Direction 2026-07-23: port the original game UI — parse + render vanilla
+`Interface/*.swf` Scaleform movies via Metal (issue #99). Earlier native-UI decision
+scrapped; the M8.1.1 screen-space layer stays as compositing infrastructure. M8.1.x
+items below predate this and get rescoped under #99.
 
 ### M8.1 — screen-space UI foundation
 

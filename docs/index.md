@@ -106,8 +106,6 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   (6,-2) as the 2.7/2.9 target; probe ranking, MODL `meshes\` prefix rule.
 * [Metal shader tooling](/decisions/metal-tooling.md) - clang-format for .metal,
   compiler warnings-as-errors as the linter; documented exception to per-language rule.
-* [UI approach](/decisions/ui-approach.md) - native Metal/AppKit UI, no Scaleform SWF
-  runtime; system font now, vanilla-font extraction optional M18+ polish.
 
 ## Tools
 
