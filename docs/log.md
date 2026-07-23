@@ -4,6 +4,19 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-23
 
+* Creature `NiSkinPartition` global/local index-space decode (issue #64): SSE
+  skin has two influence-index spaces — the top-level `BSVertexDataSSE` stream
+  stores skin-instance-global bone ids, the per-partition `Bone Indices` array
+  stores palette-local ids. Flattener wrongly remapped the global stream through
+  the partition palette, throwing `vertex bone palette index out of range` on
+  `SabreCat.nif` (non-identity palette); vanilla bodies survived via identity
+  palettes. Now global-stream indices bounds-check against bone count directly;
+  local indices still remap through the palette. Retained the global-VB byte
+  (`usesGlobalVertexBuffer`); read-only SabreCat probe showed it 0 despite a
+  global stream, so stream presence gates the space, not the flag. Split skin
+  decode into `NIFModelSkinning.swift` (`InfluenceAccumulator`). Fixtures for
+  both spaces + invalid cases. M5.6 fly bench: ACHR `000DC8DE` now renders.
+  [nif](/formats/nif.md), [actors](/formats/actors.md).
 * Unified sidebar shell (issue #98 PR 2 / #113): one `NSSplitViewController` shell
   (`AppShellViewController` + `AppSidebarViewController` + `ShellContentViewController`
   under `opensky/Shell/`) replaces the segmented World/Asset Browser mode switch

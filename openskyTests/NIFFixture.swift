@@ -267,7 +267,8 @@ extension NIFFixture {
         weights: [SIMD4<Float>],
         boneIndices: [SIMD4<UInt8>],
         attributes: UInt16 = 0x43,
-        strideDwords: Int = 8
+        strideDwords: Int = 8,
+        globalVertexBuffer: Bool = false
     ) -> Data {
         precondition(vertexRecords.count == weights.count)
         precondition(vertexRecords.count == boneIndices.count)
@@ -311,7 +312,7 @@ extension NIFFixture {
             out.append(contentsOf: [indices.x, indices.y, indices.z, indices.w])
         }
         out.append(0) // LOD
-        out.append(0) // global VB
+        out.append(globalVertexBuffer ? 1 : 0) // global VB
         out.appendUInt64(desc)
         for index in triangles {
             out.appendUInt16(index)
