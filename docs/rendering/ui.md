@@ -10,9 +10,10 @@ timestamp: 2026-07-22T00:00:00Z
 
 # Screen-space UI layer
 
-M8.1.1. Native-UI decision: [UI approach](/decisions/ui-approach.md). Draws as the
-final commands of the existing scene encoder (after precipitation) -> drawable +
-offscreen render paths get the overlay automatically, no extra pass.
+M8.1.1. Draws as the final commands of the existing scene encoder (after
+precipitation) -> drawable + offscreen render paths get the overlay automatically,
+no extra pass. Game-UI direction is a vanilla SWF port (issue #99); this layer
+remains the screen-space compositing foundation it renders through.
 
 ## Model (`opensky/UI/`)
 

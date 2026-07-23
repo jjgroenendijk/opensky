@@ -2,6 +2,14 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-07-23
+
+* Game-UI direction reversed (owner decision): port vanilla `Interface/*.swf`
+  Scaleform UI, rendered via Metal — issue #99. `decisions/ui-approach.md`
+  (native Metal/AppKit, no Scaleform) removed; older log/todo links to it are
+  historical. M8.1.1 screen-space layer stays as SWF compositing foundation;
+  M8.1.x roadmap items rescope under #99.
+
 ## 2026-07-22
 
 * M8.1.1 screen-space UI layer -- new `opensky/UI/` subsystem (anchored value-type scene,
