@@ -1,39 +1,44 @@
 ---
 type: Tool
 title: Main-app asset browser
-description: OpenSky unified World/browser window with World screenshots plus engine VFS
-  and Skyrim.esm browsing, offscreen-rendered NIF/DDS previews.
+description: Library > Asset Browser destination in the unified sidebar shell — engine VFS
+  and Skyrim.esm browsing, offscreen-rendered NIF/DDS previews, toolbar World screenshots.
 tags: [tool, gui, dev, preview, rendering]
-timestamp: 2026-07-18T00:00:00Z
+timestamp: 2026-07-23T00:00:00Z
 ---
 
 # Main-app asset browser
 
-Main app's second mode: browse local install assets and preview one at a time —
-parser/renderer's eye view beside World, with no second product or render pipeline.
-Browser remains dev tooling, not shipped game UI.
+`Library > Asset Browser` sidebar destination: browse local install assets and preview
+one at a time — parser/renderer's eye view beside World, with no second product or
+render pipeline. Browser remains dev tooling, not shipped game UI.
 
-## Unified window
+## Sidebar shell
 
-`MainViewController` owns one window + `World | Asset Browser` segmented control.
-Launch selects World. Switching replaces child content in place; persistent
-`PreviewViewController` retains loaded catalog, filter, selection, and warm renderer
-caches across mode changes. Selected preview images have low compression resistance ->
-intrinsic bitmap size never resizes the window. Build both modes via `make build`.
+One window, one unified sidebar (`AppShellViewController`, issue #98 PR 2 — see
+[app-ui](/tools/app-ui.md) for the shell anatomy). Asset Browser is the `Library`
+section's full-content destination: selecting it covers the always-live game view,
+which keeps drawing at a low rate so streaming stays warm; returning to a World
+destination is instant. The browser controller is built lazily on first selection and
+cached forever — loaded catalog, filter, selection, and warm renderer caches survive
+destination round trips and Settings reloads. Selected preview images have low
+compression resistance -> intrinsic bitmap size never resizes the window. Build via
+`make build`.
 
-World mode exposes a `Screenshot…` button beside the mode switch. It opens `NSSavePanel`
-for a PNG destination, then asks `GameViewController` to synchronously offscreen-render
-the live free-fly camera + current streamed scene at drawable pixel size. App chrome is
-excluded. Asset Browser disables the button: asset previews already render individually
-in the detail pane. Capture failure appears as an action-scoped error sheet. App + CLI
+The window toolbar (`unifiedCompact`) carries the `Screenshot…` button. It opens
+`NSSavePanel` for a PNG destination, then asks `GameViewController` to synchronously
+offscreen-render the live free-fly camera + current streamed scene at drawable pixel
+size (`ScreenshotCoordinator`). App chrome is excluded. The button is enabled only
+while a World destination is frontmost: asset previews already render individually in
+the detail pane. Capture failure appears as an action-scoped error sheet. App + CLI
 share `FrameScreenshot` for BGRA readback + PNG encoding.
 
-App-only AppKit shells live under `opensky/` (`MainViewController`,
-`PreviewViewController`, `PreviewDetailBuilder`, `SettingsWindowController`, and the panel
-framework under `opensky/Shell/`) and are excluded from `openskycli` by its
-synchronized-group exception set. Browse/preview model stays AppKit-free under
-`opensky/Preview/`. The World sidebar destinations + control panels are built on the shared
-UI framework — see [app-ui](/tools/app-ui.md).
+App-only AppKit shells live under `opensky/` (`PreviewViewController`,
+`PreviewDetailBuilder`, `SettingsWindowController`, and the shell + panel framework
+under `opensky/Shell/`) and are excluded from `openskycli` by its synchronized-group
+exception set. Browse/preview model stays AppKit-free under `opensky/Preview/`. The
+sidebar destinations + control panels are built on the shared UI framework — see
+[app-ui](/tools/app-ui.md).
 
 ## UI + browse model
 
@@ -56,12 +61,14 @@ note (env override flagged as winning over the stored choice) and two actions:
   Invalid folder -> red note, stored setting untouched.
 * Use Default — `clearUserChoice`, falls back to the Steam default path.
 
-Either change makes `AppDelegate` re-run `GameDataLocator`, rebuild World controller +
-provider factory over new root, then call
-`PreviewViewController.reload(root:errorMessage:)`. Current catalog drops, new catalog
-loads off-main; catalog-load generation drops stale in-flight work (same pattern as
-filtering). Failed re-locate -> in-window message in both modes, no modal alert or
-relaunch needed.
+Either change makes `AppDelegate` re-run `GameDataLocator`, then hand the shell a fresh
+`GameViewController` (new renderer + streamer over the new root) plus a new
+`FullContentContext`; the shell rebuilds inspector panels, reloads the cached browser in
+place (`FullContentReloadable` -> `PreviewViewController.reload(root:errorMessage:)`),
+and re-applies the current sidebar selection — the flow works regardless of which
+destination is frontmost. Current catalog drops, new catalog loads off-main;
+catalog-load generation drops stale in-flight work (same pattern as filtering). Failed
+re-locate -> in-window message in every destination, no modal alert or relaunch needed.
 
 Browse logic is AppKit-free in `opensky/Preview/` so it unit-tests without a
 window (`PreviewCatalogTests`, `RecordTextDumpTests`,

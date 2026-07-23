@@ -317,11 +317,15 @@ Synthetic fixtures: `openskyTests/ActorRecordTests.swift`,
 
 `make probe` 2026-07-20, full pass: actor-enabled fly bench 55 ACHRs discovered =
 27 rendered + 27 disabled + 1 failed, exact accounting + per-cell report in all 35
-touched cells, zero unexplained failures. The single failure is reason-tagged:
+touched cells, zero unexplained failures. The single failure was reason-tagged:
 `ACHR 000DC8DE: no renderable geometry (invalidAsset, noCoreGeometry)` — sabre cat
-(`LvlAnimalPlainsPredator` -> `SabreCat.nif`), whose `NiSkinPartition` carries a
-vertex bone palette index our flattener rejects (creature skinning variant,
-backlog). Interior gate: ChillfurrowFarm reports 1 actors (1 drawn). Frame budget:
+(`LvlAnimalPlainsPredator` -> `SabreCat.nif`), whose `NiSkinPartition` carried a
+global influence index our flattener wrongly remapped through the partition
+palette. Resolved by issue #64 (see [nif](/formats/nif.md) skin blocks): re-verified
+2026-07-23, the fly bench reports 55 = 28 rendered + 27 disabled + 0 failed and ACHR
+`000DC8DE` renders (static — the creature idle-path tag for
+`meshes\actors\sabrecat\character assets\skeleton.nif` is animation, not geometry).
+Interior gate: ChillfurrowFarm reports 1 actors (1 drawn). Frame budget:
 5,614 stream frames avg 3.15 ms / p95 5.79 ms @ 640x360; actor build p95 2190.79 ms
 vs 3000 ms budget; footprint peak 702 / 1,024 MB cap. Generated render captures stay
 local; accounting + frame metrics are the repository acceptance evidence.

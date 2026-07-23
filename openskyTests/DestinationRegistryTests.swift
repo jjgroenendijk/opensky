@@ -97,14 +97,40 @@ struct DestinationRegistryTests {
     }
 
     @Test
-    func worldInspectorOrderAndIdentifiers() {
-        let inspectors = DestinationRegistry.worldInspectors
-        #expect(inspectors.map(\.id) == ["environment", "uiLab"])
+    func registryOrderAndIdentifiers() {
+        #expect(
+            DestinationRegistry.all.map(\.id)
+                == ["viewport", "environment", "uiLab", "assetBrowser"]
+        )
         // Accessibility identifiers are the UI-test contract; pin them literally.
         #expect(
-            inspectors.map(\.sidebarIdentifier)
-                == ["WorldDestination-environment", "WorldDestination-uiLab"]
+            DestinationRegistry.all.map(\.sidebarIdentifier) == [
+                "Destination-viewport",
+                "Destination-environment",
+                "Destination-uiLab",
+                "Destination-assetBrowser"
+            ]
         )
+        #expect(DestinationRegistry.worldInspectors.map(\.id) == ["environment", "uiLab"])
+        #expect(DestinationRegistry.defaultDestinationID == "viewport")
+    }
+
+    @Test
+    func gameViewVisibilityPerContentKind() {
+        #expect(DestinationRegistry.destination(id: "viewport")?.showsGameView == true)
+        #expect(DestinationRegistry.destination(id: "environment")?.showsGameView == true)
+        #expect(DestinationRegistry.destination(id: "assetBrowser")?.showsGameView == false)
+    }
+
+    @Test @MainActor
+    func fullContentFactoryBuildsAController() {
+        let context = FullContentContext(gameDataRoot: nil, startupErrorMessage: "test")
+        for descriptor in DestinationRegistry.all {
+            guard case let .fullContent(makeController) = descriptor.content else { continue }
+            let controller = makeController(context)
+            // Reload must reach the cached controller in place (Settings flow).
+            #expect(controller is any FullContentReloadable)
+        }
     }
 
     @Test @MainActor

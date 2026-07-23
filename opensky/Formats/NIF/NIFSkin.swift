@@ -158,6 +158,11 @@ nonisolated struct NIFSkinPartition {
         let boneIndices: [SIMD4<UInt16>]
         /// Global vertex indices in SSE's mandatory triangle-copy field.
         let triangleIndices: [UInt16]
+        /// SSE "Global VB" byte (nif.xml SkinPartition). Set on creature
+        /// meshes whose top-level stream stores skin-instance bone indices
+        /// directly; clear when indices are partition-palette-local.
+        /// Semantics probed on SabreCat.nif — see docs/formats/nif.md.
+        let usesGlobalVertexBuffer: Bool
     }
 
     let attributes: NIFTriShape.VertexAttributes
@@ -255,7 +260,7 @@ nonisolated struct NIFSkinPartition {
             present: hasBoneIndices
         )
         _ = try reader.readUInt8() // LOD level
-        _ = try reader.readUInt8() // global-VB flag
+        let usesGlobalVertexBuffer = try reader.readUInt8() != 0
         let partitionDesc = try reader.readUInt64()
         guard partitionDesc == expectedDesc else {
             throw NIFError.unsupported("skin partition vertex descriptors differ")
@@ -271,7 +276,8 @@ nonisolated struct NIFSkinPartition {
             vertexMap: vertexMap,
             vertexWeights: storedWeights,
             boneIndices: storedIndices,
-            triangleIndices: triangles
+            triangleIndices: triangles,
+            usesGlobalVertexBuffer: usesGlobalVertexBuffer
         )
     }
 

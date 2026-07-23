@@ -1,4 +1,4 @@
-// Localized-strings preview content for World > UI Lab (M8.1.4). Invented
+// Localized-strings preview content for Developer > UI Lab (M8.1.4). Invented
 // $KEY fixture strings merged through the real TranslationFile ->
 // LocalizedLabels path, and a UIScene that renders them via
 // LocalizedLabels.label(for:): a wrapped long string, an unwrapped long line

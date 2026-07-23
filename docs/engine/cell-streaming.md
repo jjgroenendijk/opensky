@@ -333,9 +333,11 @@ FaceGen decode (optimization filed: GH issue #56). Waypoint footprint
 p95 5.75 ms, max 17.66 ms; collision phase unchanged (p95 465.15 ms).
 
 M5.6 acceptance run, 2026-07-20 (`make probe`, full pass): per-cell report present
-for all 35 touched cells, zero unexplained failures — the one failure is
-reason-tagged (ACHR `000DC8DE` sabre cat: `NiSkinPartition` vertex bone palette
-index rejected by the flattener; creature skinning variant in backlog). 5,614
+for all 35 touched cells, zero unexplained failures — the one failure was
+reason-tagged (ACHR `000DC8DE` sabre cat: `NiSkinPartition` global influence index
+wrongly remapped through the partition palette). Resolved by issue #64; re-verified
+2026-07-23 the fly bench reports 55 = 28 rendered + 27 disabled + 0 failed, ACHR
+`000DC8DE` renders. 5,614
 stream frames avg 3.15 ms / p95 5.79 ms; actor phase avg 433.09 ms / p95
 2190.79 ms; footprint 543 -> 611 -> 570 MB, peak 702 / 1,024 MB cap. Interior
 (ChillfurrowFarm): 1 actors (1 drawn). Actor acceptance detail:

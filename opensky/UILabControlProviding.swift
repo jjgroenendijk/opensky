@@ -1,4 +1,4 @@
-// Narrow live-renderer seam consumed by World > UI Lab controls (M8.1.1,
+// Narrow live-renderer seam consumed by Developer > UI Lab controls (M8.1.1,
 // extended M8.1.4). The panel drives the screen-space UI layer (enable, sample
 // scenes, scale), previews menu mode (push/pop/clear against the real
 // MenuModeController), and reads localized-strings state — only through this

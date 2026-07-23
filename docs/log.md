@@ -4,7 +4,7 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-23
 
-* M8.1 UI shell foundation accepted (item 8.1.4): `World > UI Lab` is the
+* M8.1 UI shell foundation accepted (item 8.1.4): `Developer > UI Lab` is the
   durable verification surface for the whole foundation. Menu-mode preview
   (Push menu / Pop / Clear buttons, ids `UIMenuPushControl` / `UIMenuPopControl`
   / `UIMenuClearControl`) drives the real `MenuModeController` on
@@ -27,6 +27,37 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   green). Docs: [screen-space UI](/rendering/ui.md),
   [menu mode](/engine/menu-mode.md),
   [UI translation strings](/formats/translation-strings.md).
+* Creature `NiSkinPartition` global/local index-space decode (issue #64): SSE
+  skin has two influence-index spaces — the top-level `BSVertexDataSSE` stream
+  stores skin-instance-global bone ids, the per-partition `Bone Indices` array
+  stores palette-local ids. Flattener wrongly remapped the global stream through
+  the partition palette, throwing `vertex bone palette index out of range` on
+  `SabreCat.nif` (non-identity palette); vanilla bodies survived via identity
+  palettes. Now global-stream indices bounds-check against bone count directly;
+  local indices still remap through the palette. Retained the global-VB byte
+  (`usesGlobalVertexBuffer`); read-only SabreCat probe showed it 0 despite a
+  global stream, so stream presence gates the space, not the flag. Split skin
+  decode into `NIFModelSkinning.swift` (`InfluenceAccumulator`). Fixtures for
+  both spaces + invalid cases. M5.6 fly bench: ACHR `000DC8DE` now renders.
+  [nif](/formats/nif.md), [actors](/formats/actors.md).
+* Unified sidebar shell (issue #98 PR 2 / #113): one `NSSplitViewController` shell
+  (`AppShellViewController` + `AppSidebarViewController` + `ShellContentViewController`
+  under `opensky/Shell/`) replaces the segmented World/Asset Browser mode switch
+  (`MainViewController` + `WorldSidebarViewController` deleted). Sidebar map — World:
+  Viewport, Environment · Developer: UI Lab · Library: Asset Browser; launch selects
+  Viewport. `DestinationContent` gains `viewport`; `fullContent` factories now take a
+  `FullContentContext` (data root + startup error) and the Asset Browser registers
+  through the registry, lazily built + cached forever (`FullContentReloadable` lets a
+  Settings reload reach it in place). Library destinations merely cover the always-live
+  MTKView, which drops to 10 fps while covered (no hide, no pause) so streaming stays
+  warm. `NSToolbar` (`unifiedCompact`): sidebar toggle + tracking separator +
+  `Screenshot…` (`ScreenshotCoordinator`), enabled only on world destinations.
+  Accessibility ids migrate: `AppSidebar` outline, `Destination-<id>` rows;
+  `ModeSwitcher`/`WorldSidebar`/`WorldDestination-<id>` gone; panel/control ids +
+  `ScreenshotButton` unchanged — pinned in `DestinationRegistryTests`, new
+  `AppSidebarModelTests` covers grouping/order/default. Docs:
+  [app-ui](/tools/app-ui.md) shell anatomy as-built,
+  [preview-gui](/tools/preview-gui.md) rewritten for the sidebar path.
 * UI translation strings (item 8.1.3): parser for
   `Interface/Translations/<name>_<language>.txt` (UTF-16LE + BOM, `$key<TAB>value`,
   CRLF) in `opensky/Formats/Strings/TranslationFile.swift`, and

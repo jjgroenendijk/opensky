@@ -57,7 +57,7 @@ remains the screen-space compositing foundation it renders through.
 
 ## App surface
 
-`World > UI Lab` sidebar destination — the M8.1 foundation acceptance surface
+`Developer > UI Lab` sidebar destination — the M8.1 foundation acceptance surface
 (M8.1.4), talking to the engine through `UILabControlProviding` on
 `GameViewController` (bridge split to `opensky/GameViewControllerUILab.swift` for
 the file-size limit; weak-provider pattern shared with the Environment panel):

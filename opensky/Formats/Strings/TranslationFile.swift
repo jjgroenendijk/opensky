@@ -42,7 +42,7 @@ nonisolated struct TranslationFile: Equatable {
     }
 
     /// Builds a file directly from already-parsed entries. Used by in-app
-    /// synthetic sample content (World > UI Lab localized preview) and tests;
+    /// synthetic sample content (Developer > UI Lab localized preview) and tests;
     /// `init(data:)` remains the only on-disk path.
     init(entries: [String: String]) {
         self.entries = entries

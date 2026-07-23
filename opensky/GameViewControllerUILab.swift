@@ -1,4 +1,4 @@
-// World > UI Lab renderer bridge: UILabControlProviding over the live renderer
+// Developer > UI Lab renderer bridge: UILabControlProviding over the live renderer
 // (M8.1.1 overlay controls) plus the M8.1.4 menu-mode and localized-strings
 // previews. Satellite of GameViewController.swift (500-line file limit); the
 // stored state it maps (uiLabSampleSelection, localizedLabelsLoader and its

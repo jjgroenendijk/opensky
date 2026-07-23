@@ -13,7 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     )
 
     private var windowController: NSWindowController?
-    private var mainViewController: MainViewController?
+    private var shellViewController: AppShellViewController?
     private var settingsController: SettingsWindowController?
     private var gameDataErrorMessage: String?
     private let terrainLODConfigurationStore = TerrainLODConfigurationStore(
@@ -34,15 +34,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Unit-test host never reaches here (OpenSkyApp.main skips the
         // delegate under XCTest), so the probe runs unconditionally.
-        // Located before window content: both mode controllers need state
-        // before either view loads.
+        // Located before window content: every destination needs state
+        // before its view loads.
         resolveGameData()
 
-        let mainViewController = MainViewController(
-            worldViewController: makeWorldViewController(),
-            browserViewController: makeBrowserViewController()
+        let shell = AppShellViewController(
+            gameViewController: makeWorldViewController(),
+            fullContentContext: makeFullContentContext()
         )
-        self.mainViewController = mainViewController
+        shellViewController = shell
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1280, height: 720),
@@ -51,7 +51,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             defer: false
         )
         window.title = "OpenSky"
-        window.contentViewController = mainViewController
+        window.contentViewController = shell
+        window.toolbarStyle = .unifiedCompact
+        window.toolbar = shell.makeToolbar()
         window.center()
 
         let controller = NSWindowController(window: window)
@@ -123,11 +125,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return controller
     }
 
-    private func makeBrowserViewController() -> PreviewViewController {
-        let controller = PreviewViewController()
-        controller.gameDataRoot = gameDataRoot
-        controller.startupErrorMessage = gameDataErrorMessage
-        return controller
+    /// Root context handed to full-content destination factories (and reload).
+    private func makeFullContentContext() -> FullContentContext {
+        FullContentContext(
+            gameDataRoot: gameDataRoot,
+            startupErrorMessage: gameDataErrorMessage
+        )
     }
 
     /// Fail-loud game data probe (AGENTS.md "Loading game data"): missing or
@@ -216,10 +219,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func reloadDataRoot() {
         resolveGameData()
-        mainViewController?.reload(
-            worldViewController: makeWorldViewController(),
-            browserRoot: gameDataRoot,
-            errorMessage: gameDataErrorMessage
+        shellViewController?.reload(
+            gameViewController: makeWorldViewController(),
+            fullContentContext: makeFullContentContext()
         )
     }
 }

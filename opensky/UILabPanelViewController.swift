@@ -1,4 +1,4 @@
-// World > UI Lab destination panel: the sidebar verification surface for the
+// Developer > UI Lab destination panel: the sidebar verification surface for the
 // UI shell foundation (M8.1). Toggles the screen-space overlay, swaps the
 // built-in sample scenes (M8.1.1 lab sample, M8.1.4 localized-strings sample),
 // picks a scale preset, previews menu mode (push/pop/clear on the real

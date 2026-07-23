@@ -32,9 +32,13 @@ standalone (own sync/readout/ticker) so promotion is free — control ids unchan
 
 - Add one `DestinationDescriptor` to `DestinationRegistry.all`
   (`Shell/DestinationRegistry.swift`). Never edit the shell view controllers to
-  add a destination — the registry is the single registration point.
+  add a destination — the registry is the single registration point. Sections:
+  `world`, `developer`, `library` (`SidebarSection` order = sidebar order).
 - `worldInspector` factory wires the panel's providers from
   `context.providers` (game controller conforms to all `*ControlProviding`).
+- `fullContent` factory receives a `FullContentContext` (data root + startup
+  error); conform the controller to `FullContentReloadable` so a Settings
+  reload reaches the shell-cached instance in place.
 - Add every new `Shell/` file to the `openskycli` membership-exception set in
   `opensky.xcodeproj/project.pbxproj` (app-only AppKit, excluded from CLI). Build
   BOTH targets (`make build && make cli`) — a hand-edited pbxproj is easy to get
@@ -53,9 +57,10 @@ standalone (own sync/readout/ticker) so promotion is free — control ids unchan
 
 ## Accessibility-id contract
 
-Ids are the UI-test API — never change silently. `WorldDestination-<id>` rows,
-`PanelSection-<id>` headers, `<Thing>Control` / `<Thing>StatsLabel`. `make
-test-ui` is blocked on this machine (TCC) -> pin ids as literal assertions in
+Ids are the UI-test API — never change silently. `AppSidebar` outline,
+`Destination-<id>` rows, `PanelSection-<id>` headers, `<Thing>Control` /
+`<Thing>StatsLabel`, toolbar `ScreenshotButton`. `make test-ui` is blocked on
+this machine (TCC) -> pin ids as literal assertions in
 `DestinationRegistryTests` and keep `OpenSkyUITests` correct for CI (#70).
 
 ## Verify

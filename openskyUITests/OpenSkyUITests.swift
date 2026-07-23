@@ -1,6 +1,6 @@
-// Smoke tests: app launches, shows its main window, and both unified modes
-// remain reachable. Real-data screenshots are env-gated; host copies runner
-// temp output into gitignored logs/ for inspection.
+// Smoke tests: app launches, shows its main window, and every sidebar
+// destination remains reachable. Real-data screenshots are env-gated; host
+// copies runner temp output into gitignored logs/ for inspection.
 //
 // Launches with OPENSKY_DATA_ROOT pointing at a synthetic install (empty
 // Skyrim.esm marker) so the game-data probe succeeds deterministically on
@@ -45,8 +45,7 @@ final class OpenSkyUITests: XCTestCase {
     func testAppLaunchesAndShowsWindow() throws {
         let app = try launchApp()
         XCTAssertEqual(app.dialogs.count, 0, "No game-data alert expected with valid root")
-        XCTAssertEqual(app.radioButtons["World"].value as? Int, 1)
-        XCTAssertEqual(app.radioButtons["Asset Browser"].value as? Int, 0)
+        XCTAssertTrue(app.outlines["AppSidebar"].waitForExistence(timeout: 5))
         // CI runners may expose AppKit accessibility without Metal 4.
         XCTAssertTrue(app.buttons["ScreenshotButton"].exists)
     }
@@ -58,9 +57,9 @@ final class OpenSkyUITests: XCTestCase {
     @MainActor
     func testWorldSidebarEnvironmentShadowQuality() throws {
         let app = try launchApp()
-        let sidebar = app.tables["WorldSidebar"]
+        let sidebar = app.outlines["AppSidebar"]
         XCTAssertTrue(sidebar.waitForExistence(timeout: 5))
-        sidebar.cells["WorldDestination-environment"].firstMatch.click()
+        sidebar.cells["Destination-environment"].firstMatch.click()
 
         let quality = app.popUpButtons["ShadowQualityControl"]
         XCTAssertTrue(quality.waitForExistence(timeout: 5))
@@ -91,16 +90,16 @@ final class OpenSkyUITests: XCTestCase {
         XCTAssertEqual(quality.value as? String, "Low")
     }
 
-    /// World > UI Lab sidebar surface (M8.1.1 + M8.1.4): the sidebar lists the
-    /// UI Lab destination; selecting it exposes the overlay-enable + sample
+    /// Developer > UI Lab sidebar surface (M8.1.1 + M8.1.4): the sidebar lists
+    /// the UI Lab destination; selecting it exposes the overlay-enable + sample
     /// toggles, the scale preset popup, the menu-mode preview buttons, and the
     /// live UIDrawStats / menu-stack / localized-strings readouts.
     @MainActor
     func testWorldSidebarUILabControls() throws {
         let app = try launchApp()
-        let sidebar = app.tables["WorldSidebar"]
+        let sidebar = app.outlines["AppSidebar"]
         XCTAssertTrue(sidebar.waitForExistence(timeout: 5))
-        sidebar.cells["WorldDestination-uiLab"].firstMatch.click()
+        sidebar.cells["Destination-uiLab"].firstMatch.click()
 
         XCTAssertTrue(app.checkBoxes["UIOverlayEnabledControl"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.checkBoxes["UILabSampleControl"].exists)
@@ -133,10 +132,14 @@ final class OpenSkyUITests: XCTestCase {
         return false
     }
 
+    /// Library > Asset Browser: a full-content destination covering the game
+    /// view; the toolbar screenshot stays disabled while it is frontmost.
     @MainActor
-    func testModeSwitcherShowsAssetBrowser() throws {
+    func testSidebarShowsAssetBrowser() throws {
         let app = try launchApp()
-        app.radioButtons["Asset Browser"].click()
+        let sidebar = app.outlines["AppSidebar"]
+        XCTAssertTrue(sidebar.waitForExistence(timeout: 5))
+        sidebar.cells["Destination-assetBrowser"].firstMatch.click()
         XCTAssertTrue(app.popUpButtons["AssetCategory"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.searchFields["AssetFilter"].exists)
         XCTAssertTrue(app.tables["AssetTable"].exists)
@@ -192,7 +195,7 @@ final class OpenSkyUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 5)
         try write(window.screenshot(), name: "app-world.png")
 
-        app.radioButtons["Asset Browser"].click()
+        app.outlines["AppSidebar"].cells["Destination-assetBrowser"].firstMatch.click()
         let table = app.tables["AssetTable"]
         XCTAssertTrue(table.waitForExistence(timeout: 5))
         XCTAssertTrue(table.tableRows.firstMatch.waitForExistence(timeout: 30))

@@ -53,12 +53,12 @@ final class GameViewController: NSViewController {
 
     /// Menu-mode source of truth (todo 8.1.2), shared with the input view and
     /// the renderer. Entering menu mode pauses world sim and drops held world
-    /// input; leaving it resumes with no time jump. The World > UI Lab preview
+    /// input; leaving it resumes with no time jump. The Developer > UI Lab preview
     /// (M8.1.4, via GameViewControllerUILab.swift) is the only trigger until
     /// real SWF menus land (M8.2).
     let menuMode = MenuModeController()
 
-    /// Which built-in overlay sample World > UI Lab shows (M8.1.4). Stored here
+    /// Which built-in overlay sample Developer > UI Lab shows (M8.1.4). Stored here
     /// because both samples share `Renderer.uiScene`; the UI Lab bridge maps it
     /// onto the renderer.
     enum UILabSampleSelection {

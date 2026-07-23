@@ -69,7 +69,7 @@ Impl: `opensky/Formats/Strings/TranslationFile.swift` (parser),
 files with one os_log error. Language defaults to "english" until a language
 setting exists (same open question as the string tables).
 
-First visible consumer: the `World > UI Lab` localized-strings preview
+First visible consumer: the `Developer > UI Lab` localized-strings preview
 (M8.1.4) renders invented fixture strings through `label(for:)` — including the
 verbatim unknown-key fallback — and reports the merged file/key counts over the
 located install ([screen-space UI](/rendering/ui.md)). `TranslationFile` gained

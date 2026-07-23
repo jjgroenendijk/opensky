@@ -243,8 +243,11 @@ struct NIFSkinTests {
         #expect(mesh.skinning?.weights.count == Self.positions.count)
     }
 
-    @Test func rejectsPaletteIndexOutsideBoneList() throws {
+    @Test func rejectsGlobalBoneIndexOutsideBoneList() throws {
         let file = try fixture()
+        // Top-level SSE stream stores skin-instance-global indices; index 1
+        // with a single-bone instance is out of range and must be rejected
+        // without a palette hop.
         let badRecord = NIFFixture.skinnedVertex(
             position: .zero,
             boneIndices: SIMD4(1, 0, 0, 0)
@@ -259,8 +262,6 @@ struct NIFSkinTests {
         var blocks = file.blocks.enumerated().map { index, block in
             NIFFixture.Block(block.typeName, index == 5 ? badPartition : block.data)
         }
-        // Shape still points at the same valid block graph; partition now has
-        // one vertex whose top stream selects nonexistent palette index 1.
         blocks[2] = .init("BSTriShape", NIFFixture.bsTriShape(
             skinRef: 3,
             attributes: Self.attributes,
