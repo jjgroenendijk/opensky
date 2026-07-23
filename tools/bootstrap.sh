@@ -21,6 +21,14 @@ for tool in swiftformat swiftlint markdownlint-cli2 shellcheck; do
   fi
 done
 
+# librsvg: rsvg-convert renders the AppIcon set from the SVG logo (make icon).
+if command -v rsvg-convert >/dev/null 2>&1; then
+  echo "  [ OK ] rsvg-convert"
+else
+  echo "  [INFO] installing librsvg"
+  brew install librsvg
+fi
+
 if ! command -v xcodebuild >/dev/null 2>&1; then
   echo "  [WARN] xcodebuild not found — install Xcode from the App Store." >&2
 else
