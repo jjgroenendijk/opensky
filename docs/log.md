@@ -4,6 +4,12 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-23
 
+* CLI target-boundary lint (issue #109): `make cli-boundary`
+  (`tools/lint/cli-boundary.sh`) asserts every AppKit/Cocoa/SwiftUI-importing file under
+  `opensky/` has a `membershipExceptions` entry for the openskycli target — synced groups
+  otherwise pull app-only files into the CLI build (broke `make cli` twice). Wired into
+  `make lint` (so `make check` + CI cover it) and pre-commit
+  (`.githooks/pre-commit/45-cli-boundary.sh`); pre-push `make cli` stays as backstop.
 * `docs/log.md` merge conflicts eliminated (issue #108): root `.gitattributes`
   gives it the built-in `merge=union` driver — parallel PRs prepending entries
   now merge clean, keeping both sides (the resolution that was always done by
