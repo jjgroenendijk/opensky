@@ -4,6 +4,18 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-23
 
+* UI translation strings (item 8.1.3): parser for
+  `Interface/Translations/<name>_<language>.txt` (UTF-16LE + BOM, `$key<TAB>value`,
+  CRLF) in `opensky/Formats/Strings/TranslationFile.swift`, and
+  `LocalizedLabels` provider (`opensky/GameData/LocalizedLabels.swift`) that
+  merges every discovered file and resolves a `$KEY` token, unknown key ->
+  token verbatim (vanilla-observable fallback). Keys case-sensitive (Scaleform).
+  Discovery added `VirtualFileSystem.fileNames(inDirectory:)` (loose + archive,
+  one level). Backbone for HUD (M8.2) and vanilla SWF menus (issue #99); UI Lab
+  long-strings preview (8.1.4) is the first visible consumer, so no sidebar
+  surface this item. Format + decisions:
+  [UI translation strings](/formats/translation-strings.md). Probe: 172 750
+  archive entries, zero translation files in this vanilla install (expected).
 * App logo added: original "North Peak" mark (twin peaks + frost north star,
   white on black) as `opensky/Branding/opensky-logo.svg`; `make icon`
   (`tools/gen-appicon.sh`, librsvg) renders the macOS AppIcon set;
