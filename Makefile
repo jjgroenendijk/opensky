@@ -9,6 +9,7 @@ DESTINATION    ?= platform=macOS
 XCODEBUILD_FLAGS ?=
 UI_TEST_SIGNING_FLAGS := CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM=
 SWIFT_PATHS    := opensky openskycli openskyTests openskyUITests
+TEST_RESULTS   := build/test-results
 
 SWIFTFORMAT_CFG := tools/format/.swiftformat
 SWIFTLINT_CFG   := tools/lint/.swiftlint.yml
@@ -19,8 +20,10 @@ METAL_FILES     := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
 
 .DEFAULT_GOAL := help
 .PHONY: help bootstrap hooks format format-check lint check fix swift-format \
-        swift-lint metal-format md-format md-lint sh-lint docs-links build cli probe test \
-        test-ui test-one test-report app-path cli-path run-cli install clean icon
+        swift-lint metal-format md-format md-lint sh-lint cli-boundary docs-links build cli \
+        probe test \
+        test-ui test-one test-report realtest test-perms app-path cli-path run-cli \
+        install clean icon
 
 help: ## List available targets
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -42,7 +45,7 @@ format-check: ## Fail if anything is unformatted (no writes) — for CI
 		--dry-run --Werror $(METAL_FILES)
 	@markdownlint-cli2 --config $(MD_CFG) "$(MD_GLOB)"
 
-lint: swift-lint md-lint sh-lint ## Run all linters (strict)
+lint: swift-lint md-lint sh-lint cli-boundary ## Run all linters (strict)
 
 check: format-check lint docs-links ## Format + lint gate without building
 
@@ -64,6 +67,9 @@ md-format: ## Autofix Markdown
 md-lint: ## Strict Markdown lint
 	@markdownlint-cli2 --config $(MD_CFG) "$(MD_GLOB)"
 
+cli-boundary: ## AppKit files under opensky/ must be excluded from openskycli
+	@./tools/lint/cli-boundary.sh && echo "[ OK ] CLI target boundary clean"
+
 sh-lint: ## Shellcheck the hook + tooling scripts
 	@shellcheck -s sh $$(find .githooks tools -type f -name '*.sh') .githooks/hooks/*
 
@@ -82,31 +88,42 @@ probe: ## CLI smoke checks against the local install (skips if absent)
 	@./tools/probe.sh
 
 test: ## Build + run unit tests (no UI tests)
+	@rm -rf $(TEST_RESULTS)/unit.xcresult && mkdir -p $(TEST_RESULTS)
 	@TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
 		xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
-		$(XCODEBUILD_FLAGS) -skip-testing:openskyUITests test
+		$(XCODEBUILD_FLAGS) -resultBundlePath $(TEST_RESULTS)/unit.xcresult \
+		-skip-testing:openskyUITests test
 
 test-ui: ## Build + run UI tests (launches the app, drives it via automation)
-	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
-		$(XCODEBUILD_FLAGS) $(UI_TEST_SIGNING_FLAGS) -only-testing:openskyUITests test
+	@OPENSKY_RESULT_BUNDLE=$(TEST_RESULTS)/ui.xcresult ./tools/test-ui.sh \
+		$(PROJECT) $(SCHEME) '$(DESTINATION)' $(UI_TEST_SIGNING_FLAGS) $(XCODEBUILD_FLAGS)
 
 test-one: ## Run one test class/method: make test-one T=Class[/test]
 	@test -n "$(T)" || { \
 		echo "[ERROR] usage: make test-one T=ClassName[/testName]"; \
 		echo "        bare names resolve to openskyTests/; prefix a target to override"; \
 		exit 2; }
+	@rm -rf $(TEST_RESULTS)/one.xcresult && mkdir -p $(TEST_RESULTS)
 	@case "$(T)" in */*) spec="$(T)";; *) spec="openskyTests/$(T)";; esac; \
 	TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
 		xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
-		$(XCODEBUILD_FLAGS) -only-testing:"$$spec" test
+		$(XCODEBUILD_FLAGS) -resultBundlePath $(TEST_RESULTS)/one.xcresult \
+		-only-testing:"$$spec" test
 
-test-report: ## Print summary of the newest test result bundle
-	@latest=$$(ls -td \
-		~/Library/Developer/Xcode/DerivedData/opensky-*/Logs/Test/*.xcresult \
-		2>/dev/null | head -1); \
-	test -n "$$latest" || { echo "[ERROR] no .xcresult under DerivedData"; exit 1; }; \
-	echo "[INFO] $$latest"; \
-	xcrun xcresulttool get test-results summary --path "$$latest"
+test-report: ## Print pass/fail summary + failure detail from the newest result bundle
+	@./tools/test-report.sh $(TEST_RESULTS)
+
+realtest: ## Run one env-gated real-data test under the RSS watchdog: make realtest T=Class/method() [CAP=MB]
+	@test -n "$(T)" || { \
+		echo "[ERROR] usage: make realtest T='Class/method()' [CAP=MB]"; \
+		echo "        selector must resolve to exactly one test (fully qualified)"; \
+		echo "        e.g. make realtest T='CellRenderRealDataTests/streamsFiveByFiveGridToCompletion()'"; \
+		exit 2; }
+	@case "$(T)" in openskyTests/*) spec="$(T)";; *) spec="openskyTests/$(T)";; esac; \
+	OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" ./tools/realtest.sh "$$spec" $(CAP)
+
+test-perms: ## Check/guide the one-time TCC grants that stop test permission popups
+	@./tools/test-perms.sh
 
 app-path: ## Print built opensky.app path ($(CONFIG))
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration $(CONFIG) \

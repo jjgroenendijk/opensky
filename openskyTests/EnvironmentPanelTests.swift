@@ -5,6 +5,18 @@ import AppKit
 @testable import opensky
 import Testing
 
+@MainActor
+private final class FakeGrassProvider: GrassControlProviding {
+    var grassEnabled = true
+    var grassDensityScale: Float = 1
+    var grassDrawDistance: Float = GrassRenderPolicy.defaultDrawDistance
+    var grassWindScale: Float = 1
+    var grassSnapshot = GrassControlSnapshot(
+        sceneInstances: 0, drawnInstances: 0, drawCalls: 0, distanceCulledInstances: 0,
+        densityCulledInstances: 0, frustumCulledInstances: 0, budgetDroppedInstances: 0
+    )
+}
+
 struct EnvironmentPanelTests {
     @Test @MainActor
     func weatherAndPrecipitationControlsHaveVisibleFrames() throws {
@@ -40,5 +52,24 @@ struct EnvironmentPanelTests {
         }
         let document = try #require(scrollView.documentView)
         #expect(document.frame.height > 0)
+    }
+
+    @Test @MainActor
+    func grassSectionRoundTripsProviderState() {
+        let panel = EnvironmentPanelViewController()
+        panel.loadViewIfNeeded()
+        let fake = FakeGrassProvider()
+        fake.grassEnabled = false
+        panel.grassProvider = fake
+
+        // Provider state syncs onto the forwarded control...
+        #expect(panel.grassEnabledControl.state == .off)
+
+        // ...and a control interaction drives the provider back.
+        panel.grassEnabledControl.state = .on
+        panel.grassEnabledControl.sendAction(
+            panel.grassEnabledControl.action, to: panel.grassEnabledControl.target
+        )
+        #expect(fake.grassEnabled == true)
     }
 }

@@ -117,10 +117,12 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   vfs/record/cell/nif/dds/screenshot commands, env-gated make probe harness.
 * [Main-app asset browser](/tools/preview-gui.md) - unified World/browser window: VFS +
   record browsing, World PNG capture, offscreen-rendered NIF/DDS previews.
+* [Main-app UI framework + placement](/tools/app-ui.md) - destination registry, panel base
+  classes + shared components, placement decision tree, accessibility-id contract.
 
 ## Meta
 
-* [Testing setup](/testing.md) - test targets, make entrypoints, headless
-  unit-test host, fixture policy.
+* [Testing setup](/testing.md) - test targets, make entrypoints, real-data
+  suites + watchdog, result reporting, machine-specific quirks.
 * [Roadmap](/todo.md) - active M8 work, dependency-ordered milestones, acceptance gates,
   app-sidebar verification paths.

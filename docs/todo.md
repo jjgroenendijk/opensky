@@ -153,10 +153,10 @@ findings.
 * [ ] 8.5.1 System menu: resume/settings/quit; data root + audio-volume placeholders
       surfaced; vanilla menu movie where the AS2 subset suffices (per 8.3.1).
       Later M9 binds live audio categories.
-* [ ] 8.5.2 Sidebar verification convention: separate enable, force, freeze/pause,
-      inspect, and reset actions; live numeric state + stable accessibility IDs;
-      scroll/layout tests. Existing destinations extend in place. Each milestone
-      records its exact main-app sidebar path + deterministic A/B evidence at acceptance.
+* [ ] 8.5.2 Sidebar verification convention: framework + placement rules landed (issue #98,
+      `docs/tools/app-ui.md` + `app-ui` skill — registry, panel base classes, control-state
+      + accessibility-id conventions, scroll/layout tests). Remaining: each milestone records
+      its exact main-app sidebar path + deterministic A/B evidence at acceptance.
 * [ ] 8.5.3 Milestone acceptance: launch app -> select World -> enter walk mode ->
       inspect live vanilla-SWF interaction/HUD -> pause -> change a setting ->
       resume, without CLI. Gate: deterministic UI-state + pixel-delta evidence;

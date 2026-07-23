@@ -41,6 +41,12 @@ formats is fine. Redistributing Bethesda content or code is not. Therefore:
   a format.
 - `.gitignore` excludes anything that could be extracted content. When in doubt, ignore it.
   About to add a binary blob -> stop, ask.
+- Rendered screenshots count as game content when they show game assets (textures,
+  meshes, UI art). A frame OpenSky renders from the user's install embeds those assets,
+  so acceptance/verification captures go to `logs/` (gitignored), NEVER `docs/img/` or
+  any tracked path — not even as milestone evidence. Link the local path in the PR;
+  don't commit the image. (Earlier milestones committed such renders before this was
+  explicit; do not repeat it.)
 
 Task seems to require committing or embedding game data -> do not. Surface the conflict.
 
@@ -58,6 +64,13 @@ this contract keeps only the non-negotiable core:
   in the same commit as the change they document.
 - `probe` — running engine code against the real install; scratch-test template + render
   verification paths. Core: probes never land in commits.
+- `app-ui` — adding/changing main-app dev UI (sidebar destinations, control panels). Core:
+  register via `DestinationRegistry` (never hand-wire the shell), build panels from the
+  `Shell/` base classes + `PanelComponents`, accessibility ids are the UI-test API.
+- `delegate` — orchestrating a milestone across sub-agents. Core: map once (Explore brief)
+  and hand it down into every implementer prompt, sub-agents trust `docs/index.md` over
+  globbing, verify a worktree agent's base is the feature branch, restate AGENTS.md
+  criticals per prompt.
 
 ## Environment & tech stack
 
@@ -150,6 +163,17 @@ If a machine can check a rule, do not rely on people remembering it.
   the issue. Inline suppression is last resort: specific rule code + why-comment.
 - 100-char line limit for hand-written lines (exception: unbreakable tokens).
 - No force-unwrap / force-try / force-cast on data from external files — hard lint errors.
+- App-only sources (import AppKit/Cocoa/SwiftUI) under `opensky/` need a
+  `membershipExceptions` entry excluding them from openskycli — filesystem-synced groups
+  add new files to every target. `make cli-boundary` (in `make lint` + pre-commit)
+  enforces it; the fail message shows the fix.
+- Size to the strict-lint limits while writing, not after a failed `make fix` (the
+  top recurring time sink). Thresholds (`tools/lint/.swiftlint.yml`): file ≤500 lines,
+  function body ≤60, type body ≤250, cyclomatic complexity ≤12, ≤5 function params,
+  no tuples with >2 members, identifiers ≥3 chars (2-char allowlist in config). Past
+  the file cap → split into a satellite file (e.g. `Renderer.swift` →
+  `RendererScenePass.swift`); note which members need same-file `private(set)` access
+  before moving them. Past the param/tuple cap → introduce a struct.
 
 ## Coding conventions
 
@@ -187,6 +211,8 @@ If a machine can check a rule, do not rely on people remembering it.
   inspector. Every milestone acceptance records the exact sidebar path used.
 - App verification supplements unit tests, probes, benchmarks, and offscreen evidence; it
   does not replace them.
+- Framework + placement rules (where a new item goes, how to register + build a panel) live
+  in `docs/tools/app-ui.md`; load the `app-ui` skill before app-shell UI work.
 
 ## Writing style (agent output, docs, comments, commit bodies)
 

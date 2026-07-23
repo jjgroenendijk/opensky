@@ -16,6 +16,63 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   surface this item. Format + decisions:
   [UI translation strings](/formats/translation-strings.md). Probe: 172 750
   archive entries, zero translation files in this vanilla install (expected).
+* CLI target-boundary lint (issue #109): `make cli-boundary`
+  (`tools/lint/cli-boundary.sh`) asserts every AppKit/Cocoa/SwiftUI-importing file under
+  `opensky/` has a `membershipExceptions` entry for the openskycli target — synced groups
+  otherwise pull app-only files into the CLI build (broke `make cli` twice). Wired into
+  `make lint` (so `make check` + CI cover it) and pre-commit
+  (`.githooks/pre-commit/45-cli-boundary.sh`); pre-push `make cli` stays as backstop.
+* `docs/log.md` merge conflicts eliminated (issue #108): root `.gitattributes`
+  gives it the built-in `merge=union` driver — parallel PRs prepending entries
+  now merge clean, keeping both sides (the resolution that was always done by
+  hand). Validated in a scratch repo: two branches adding entries under the
+  same new date heading merge without conflict or duplicated heading. Union is
+  line-based -> log.md only; `todo.md`/`index.md` see deletions, union would
+  resurrect them. After a union merge, scan the top section once — same-line
+  edits can still duplicate lines (mechanical dedupe, MD024 catches dup
+  headings on next lint).
+* `delegate` sub-agent orchestration skill (issue #107): new `.AGENTS/skills/delegate/`
+  plus an AGENTS.md Skills bullet. Codifies the fix for sub-agents re-deriving the repo
+  context every milestone — map once via one Explore/Plan pass and paste the brief
+  (paths + type signatures) into each implementer prompt, sub-agents trust
+  `docs/index.md`'s path table over globbing, verify a worktree agent's base is the
+  feature branch (not stale `main`) at handoff, restate AGENTS.md criticals per prompt.
+  Process-only; no engine change.
+* Main-app UI framework (issue #98, PR 1): shared inspector-panel framework under
+  `opensky/Shell/` — `DestinationRegistry` (single registration point, replaces the
+  former four per-destination touch-points), `InspectorPanelViewController` /
+  `PanelSectionViewController` base classes, `PanelComponents` + `PanelMetrics` control
+  vocabulary, `InspectionTicker` readout lifecycle, `CollapsibleSectionView` (persisted
+  expand state). The Environment panel (`EnvironmentPanelViewController` + its five control
+  extensions) is decomposed into seven standalone sections (shadows, animation, weather,
+  particles, precipitation, grass, distant LOD); the old aggregate readout splits per
+  section. UI Lab rebased onto the framework. `WorldDestination` enum removed (registry ids
+  replace it). New tests: `PanelFrameworkTests`, `DestinationRegistryTests` (pins the
+  accessibility-id contract as literals while `make test-ui` is blocked). Guidance +
+  placement rules: [app-ui](/tools/app-ui.md) + the `app-ui` skill, referenced from
+  AGENTS.md. Provider-protocol + 2 Hz-poll renderer bridge unchanged. The unified-sidebar
+  shell redesign follows in PR 2.
+* Dev-loop friction fixes from mining past agent transcripts (issue #100).
+  Testing: `make test`/`test-one` write fixed result bundles under
+  `build/test-results/`; `make test-report` (`tools/test-report.sh`) now names
+  failing tests + messages and waits for bundle finalization instead of
+  misreporting a half-written `.xcresult`; new `make realtest T='Class/method()'`
+  wraps `tools/realtest.sh` (data-root injection + RSS watchdog); `make test-ui`
+  (`tools/test-ui.sh`) turns the "enabling automation mode" TCC hang into an
+  actionable message; new `make test-perms` (`tools/test-perms.sh`) guides the
+  one-time Full Disk Access / Automation grants; pre-push hook now also runs
+  `make cli` to catch app/CLI target-membership regressions. Lint: `opening_brace`
+  set to ignore multi-line conditions/signatures/headers so SwiftFormat and
+  SwiftLint stop fighting; markdownlint MD060 relaxed to `style: consistent`
+  (no forced pipe alignment); AGENTS.md gains a strict-lint threshold cheat-sheet.
+  Skills: `format-parser` records the UESP-403 curl recipe + xEdit `dev-4.1.6`
+  branch; `probe` corrects the `print()`-capture claim and points at
+  `make realtest`/CLI-first; `commit` drops the stale `make preview` and adds the
+  worktree-holds-main + CI-wait gotchas; `docs-wiki` notes the table/emphasis
+  markdown traps. AGENTS.md: explicit rule that rendered game-asset screenshots
+  go to `logs/`, never a tracked path. `docs/testing.md` rewritten to match the
+  current suite. Report: no committed report — findings live in the PR + filed
+  follow-up issues.
 * App logo added: original "North Peak" mark (twin peaks + frost north star,
   white on black) as `opensky/Branding/opensky-logo.svg`; `make icon`
   (`tools/gen-appicon.sh`, librsvg) renders the macOS AppIcon set;
