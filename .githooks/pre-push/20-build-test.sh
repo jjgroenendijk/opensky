@@ -14,4 +14,10 @@ fi
 require_tool xcodebuild
 hook_info "build + test before push (set OPENSKY_SKIP_BUILD=1 to skip)"
 make -C "$ROOT" test
-hook_ok "build + test passed"
+# Build the CLI too: app-only source files silently entering the openskycli
+# target (Xcode filesystem-synced groups default new files into every target)
+# have broken `make cli` on main more than once, caught only by the next
+# milestone's session. CI is suspended, so this hook is the only gate.
+hook_info "build openskycli (catches app/CLI target-membership regressions)"
+make -C "$ROOT" cli
+hook_ok "build + test + cli passed"

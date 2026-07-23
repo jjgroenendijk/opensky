@@ -16,6 +16,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   lists, raw FormID -> (plugin, objectID) resolution.
 * [Localized string tables](/formats/strings.md) - .strings/.dlstrings/
   .ilstrings layout, lenient encoding policy, lstring lookup wiring.
+* [UI translation strings](/formats/translation-strings.md) - UTF-16
+  Interface/Translations/*.txt files, $KEY token resolution, label provider.
 * [Record decoders](/formats/records.md) - WRLD/CELL/REFR/STAT field layouts
   and their engine types.
 * [Interior lighting records](/formats/lighting.md) - CELL XCLL/LTMP, LGTM DATA/DALC,
@@ -77,6 +79,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   pose composition, NIF palette refresh, streamed lifetime, fallback accounting + budget.
 * [Living environment integration](/engine/living-environment.md) - combined M7 runtime,
   app A/B controls, exterior/interior evidence + frame/build/footprint gate.
+* [Menu mode](/engine/menu-mode.md) - push/pop menu stack, world-vs-menu input-capture
+  switch, world-sim pause via a pausable frame clock (no time jump on resume).
 
 ## Rendering
 
@@ -106,17 +110,21 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   (6,-2) as the 2.7/2.9 target; probe ranking, MODL `meshes\` prefix rule.
 * [Metal shader tooling](/decisions/metal-tooling.md) - clang-format for .metal,
   compiler warnings-as-errors as the linter; documented exception to per-language rule.
+* [App logo + icon pipeline](/decisions/app-logo.md) - original "North Peak" SVG mark,
+  `make icon` renders AppIcon set via rsvg-convert; legal rationale.
 
 ## Tools
 
 * [CLI dev tool](/tools/cli.md) - openskycli target sharing the engine sources:
   vfs/record/cell/nif/dds/screenshot commands, env-gated make probe harness.
-* [Main-app asset browser](/tools/preview-gui.md) - unified World/browser window: VFS +
-  record browsing, World PNG capture, offscreen-rendered NIF/DDS previews.
+* [Main-app asset browser](/tools/preview-gui.md) - Library > Asset Browser destination:
+  VFS + record browsing, toolbar World PNG capture, offscreen NIF/DDS previews.
+* [Main-app UI framework + placement](/tools/app-ui.md) - unified sidebar shell,
+  destination registry, panel base classes, placement tree, accessibility-id contract.
 
 ## Meta
 
-* [Testing setup](/testing.md) - test targets, make entrypoints, headless
-  unit-test host, fixture policy.
+* [Testing setup](/testing.md) - test targets, make entrypoints, real-data
+  suites + watchdog, result reporting, machine-specific quirks.
 * [Roadmap](/todo.md) - active M8 work, dependency-ordered milestones, acceptance gates,
   app-sidebar verification paths.

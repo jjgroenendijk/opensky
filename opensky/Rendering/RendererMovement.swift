@@ -16,9 +16,9 @@ extension Renderer {
     /// move. dt clamps to 100 ms; WalkController further uses fixed substeps.
     func advanceCamera() {
         guard let input else { return }
-        let now = CACurrentMediaTime()
-        let dt = lastUpdateTime.map { Float(min(now - $0, 0.1)) } ?? 0
-        lastUpdateTime = now
+        // Menu mode pauses the sim: dt goes to zero so the camera holds its pose
+        // while the clock keeps its mark fresh (resume carries no time jump).
+        let dt = cameraClock.advance(to: CACurrentMediaTime(), paused: worldSimPaused)
         if input.consumeShadowToggle() {
             sunShadowsEnabled.toggle()
         }

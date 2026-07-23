@@ -17,9 +17,9 @@ extension Renderer {
 
     @discardableResult
     func updateAnimationsFromWallClock() -> Float {
-        let now = CACurrentMediaTime()
-        let delta = lastAnimationWallTime.map { Float(min(now - $0, 0.1)) } ?? 0
-        lastAnimationWallTime = now
+        // Returned delta also drives particles + precipitation this frame, so a
+        // paused (zero) delta freezes all three together.
+        let delta = animationClock.advance(to: CACurrentMediaTime(), paused: worldSimPaused)
         updateAnimations(deltaTime: delta)
         return delta
     }

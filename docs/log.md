@@ -17,6 +17,114 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   decode into `NIFModelSkinning.swift` (`InfluenceAccumulator`). Fixtures for
   both spaces + invalid cases. M5.6 fly bench: ACHR `000DC8DE` now renders.
   [nif](/formats/nif.md), [actors](/formats/actors.md).
+* Unified sidebar shell (issue #98 PR 2 / #113): one `NSSplitViewController` shell
+  (`AppShellViewController` + `AppSidebarViewController` + `ShellContentViewController`
+  under `opensky/Shell/`) replaces the segmented World/Asset Browser mode switch
+  (`MainViewController` + `WorldSidebarViewController` deleted). Sidebar map — World:
+  Viewport, Environment · Developer: UI Lab · Library: Asset Browser; launch selects
+  Viewport. `DestinationContent` gains `viewport`; `fullContent` factories now take a
+  `FullContentContext` (data root + startup error) and the Asset Browser registers
+  through the registry, lazily built + cached forever (`FullContentReloadable` lets a
+  Settings reload reach it in place). Library destinations merely cover the always-live
+  MTKView, which drops to 10 fps while covered (no hide, no pause) so streaming stays
+  warm. `NSToolbar` (`unifiedCompact`): sidebar toggle + tracking separator +
+  `Screenshot…` (`ScreenshotCoordinator`), enabled only on world destinations.
+  Accessibility ids migrate: `AppSidebar` outline, `Destination-<id>` rows;
+  `ModeSwitcher`/`WorldSidebar`/`WorldDestination-<id>` gone; panel/control ids +
+  `ScreenshotButton` unchanged — pinned in `DestinationRegistryTests`, new
+  `AppSidebarModelTests` covers grouping/order/default. Docs:
+  [app-ui](/tools/app-ui.md) shell anatomy as-built,
+  [preview-gui](/tools/preview-gui.md) rewritten for the sidebar path.
+* UI translation strings (item 8.1.3): parser for
+  `Interface/Translations/<name>_<language>.txt` (UTF-16LE + BOM, `$key<TAB>value`,
+  CRLF) in `opensky/Formats/Strings/TranslationFile.swift`, and
+  `LocalizedLabels` provider (`opensky/GameData/LocalizedLabels.swift`) that
+  merges every discovered file and resolves a `$KEY` token, unknown key ->
+  token verbatim (vanilla-observable fallback). Keys case-sensitive (Scaleform).
+  Discovery added `VirtualFileSystem.fileNames(inDirectory:)` (loose + archive,
+  one level). Backbone for HUD (M8.2) and vanilla SWF menus (issue #99); UI Lab
+  long-strings preview (8.1.4) is the first visible consumer, so no sidebar
+  surface this item. Format + decisions:
+  [UI translation strings](/formats/translation-strings.md). Probe: 172 750
+  archive entries, zero translation files in this vanilla install (expected).
+* CLI target-boundary lint (issue #109): `make cli-boundary`
+  (`tools/lint/cli-boundary.sh`) asserts every AppKit/Cocoa/SwiftUI-importing file under
+  `opensky/` has a `membershipExceptions` entry for the openskycli target — synced groups
+  otherwise pull app-only files into the CLI build (broke `make cli` twice). Wired into
+  `make lint` (so `make check` + CI cover it) and pre-commit
+  (`.githooks/pre-commit/45-cli-boundary.sh`); pre-push `make cli` stays as backstop.
+* `docs/log.md` merge conflicts eliminated (issue #108): root `.gitattributes`
+  gives it the built-in `merge=union` driver — parallel PRs prepending entries
+  now merge clean, keeping both sides (the resolution that was always done by
+  hand). Validated in a scratch repo: two branches adding entries under the
+  same new date heading merge without conflict or duplicated heading. Union is
+  line-based -> log.md only; `todo.md`/`index.md` see deletions, union would
+  resurrect them. After a union merge, scan the top section once — same-line
+  edits can still duplicate lines (mechanical dedupe, MD024 catches dup
+  headings on next lint).
+* `delegate` sub-agent orchestration skill (issue #107): new `.AGENTS/skills/delegate/`
+  plus an AGENTS.md Skills bullet. Codifies the fix for sub-agents re-deriving the repo
+  context every milestone — map once via one Explore/Plan pass and paste the brief
+  (paths + type signatures) into each implementer prompt, sub-agents trust
+  `docs/index.md`'s path table over globbing, verify a worktree agent's base is the
+  feature branch (not stale `main`) at handoff, restate AGENTS.md criticals per prompt.
+  Process-only; no engine change.
+* Menu mode (todo 8.1.2): engine-owned menu-mode infrastructure. New
+  `opensky/UI/MenuStack.swift` (pure duplicate-free push/pop stack of opaque
+  `MenuIdentifier`s; empty = gameplay, non-empty = menu mode; pop-on-empty and
+  duplicate-push edge cases decided) and `opensky/UI/MenuMode.swift`
+  (`MenuModeController` source of truth, `MenuInputConsumer` protocol,
+  `MenuInputEvent`, `InputRoute`). Input-capture switch in
+  `opensky/GameMetalView.swift`: menu mode stops feeding `CameraInputState` and
+  maps NSEvents to menu events. World-sim pause via new
+  `opensky/Rendering/FrameSimClock.swift` (pausable wall-clock delta that keeps
+  its mark fresh while paused -> no time jump on resume); `Renderer.worldSimPaused`
+  gates the camera/weather/animation/particle/precipitation advance while the
+  frame still renders. UI-toolkit-agnostic for the coming SWF menu layer;
+  `GameViewController` wires it (no menu opens it yet -- 8.1.4 adds the UI Lab
+  trigger). Tests: `MenuStackTests`, `MenuModeControllerTests`,
+  `FrameSimClockTests`, Metal-gated `RendererMenuModeTests`. Design:
+  [menu mode](/engine/menu-mode.md).
+* Main-app UI framework (issue #98, PR 1): shared inspector-panel framework under
+  `opensky/Shell/` — `DestinationRegistry` (single registration point, replaces the
+  former four per-destination touch-points), `InspectorPanelViewController` /
+  `PanelSectionViewController` base classes, `PanelComponents` + `PanelMetrics` control
+  vocabulary, `InspectionTicker` readout lifecycle, `CollapsibleSectionView` (persisted
+  expand state). The Environment panel (`EnvironmentPanelViewController` + its five control
+  extensions) is decomposed into seven standalone sections (shadows, animation, weather,
+  particles, precipitation, grass, distant LOD); the old aggregate readout splits per
+  section. UI Lab rebased onto the framework. `WorldDestination` enum removed (registry ids
+  replace it). New tests: `PanelFrameworkTests`, `DestinationRegistryTests` (pins the
+  accessibility-id contract as literals while `make test-ui` is blocked). Guidance +
+  placement rules: [app-ui](/tools/app-ui.md) + the `app-ui` skill, referenced from
+  AGENTS.md. Provider-protocol + 2 Hz-poll renderer bridge unchanged. The unified-sidebar
+  shell redesign follows in PR 2.
+* Dev-loop friction fixes from mining past agent transcripts (issue #100).
+  Testing: `make test`/`test-one` write fixed result bundles under
+  `build/test-results/`; `make test-report` (`tools/test-report.sh`) now names
+  failing tests + messages and waits for bundle finalization instead of
+  misreporting a half-written `.xcresult`; new `make realtest T='Class/method()'`
+  wraps `tools/realtest.sh` (data-root injection + RSS watchdog); `make test-ui`
+  (`tools/test-ui.sh`) turns the "enabling automation mode" TCC hang into an
+  actionable message; new `make test-perms` (`tools/test-perms.sh`) guides the
+  one-time Full Disk Access / Automation grants; pre-push hook now also runs
+  `make cli` to catch app/CLI target-membership regressions. Lint: `opening_brace`
+  set to ignore multi-line conditions/signatures/headers so SwiftFormat and
+  SwiftLint stop fighting; markdownlint MD060 relaxed to `style: consistent`
+  (no forced pipe alignment); AGENTS.md gains a strict-lint threshold cheat-sheet.
+  Skills: `format-parser` records the UESP-403 curl recipe + xEdit `dev-4.1.6`
+  branch; `probe` corrects the `print()`-capture claim and points at
+  `make realtest`/CLI-first; `commit` drops the stale `make preview` and adds the
+  worktree-holds-main + CI-wait gotchas; `docs-wiki` notes the table/emphasis
+  markdown traps. AGENTS.md: explicit rule that rendered game-asset screenshots
+  go to `logs/`, never a tracked path. `docs/testing.md` rewritten to match the
+  current suite. Report: no committed report — findings live in the PR + filed
+  follow-up issues.
+* App logo added: original "North Peak" mark (twin peaks + frost north star,
+  white on black) as `opensky/Branding/opensky-logo.svg`; `make icon`
+  (`tools/gen-appicon.sh`, librsvg) renders the macOS AppIcon set;
+  `Contents.json` moved from iOS-universal template to `mac` idiom.
+  Rationale + legal: [app logo](/decisions/app-logo.md).
 * Docs link check automated (issue #102): `tools/check-docs-links.sh` resolves
   bundle-absolute `[x](/path.md)` links against `docs/`, reports file:line per
   miss, logs to `logs/docs-links.log`. Wired into pre-commit

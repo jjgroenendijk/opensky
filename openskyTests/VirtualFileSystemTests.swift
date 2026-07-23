@@ -121,6 +121,42 @@ struct VirtualFileSystemTests {
         ])
     }
 
+    @Test func fileNamesListsDirectFilesFromLooseAndArchives() throws {
+        let archive = try writeArchive(named: "base.bsa", files: [
+            .init(
+                folder: "interface\\translations",
+                name: "base_english.txt",
+                stored: Data("a".utf8)
+            ),
+            .init(
+                folder: "interface\\translations",
+                name: "base_french.txt",
+                stored: Data("b".utf8)
+            ),
+            // One level deeper: must not appear in the directory listing.
+            .init(
+                folder: "interface\\translations\\extra",
+                name: "deep.txt",
+                stored: Data("c".utf8)
+            ),
+            // Sibling directory: excluded.
+            .init(folder: "interface", name: "note.txt", stored: Data("d".utf8))
+        ])
+        try writeLooseFile("Interface/Translations/Mod_English.txt", "loose")
+        let vfs = VirtualFileSystem(dataURL: dataURL, archiveURLs: [archive])
+
+        #expect(vfs.fileNames(inDirectory: "Interface\\Translations") == [
+            "interface\\translations\\base_english.txt",
+            "interface\\translations\\base_french.txt",
+            "interface\\translations\\mod_english.txt"
+        ])
+    }
+
+    @Test func fileNamesEmptyForAbsentDirectory() {
+        let vfs = VirtualFileSystem(dataURL: dataURL, archiveURLs: [])
+        #expect(vfs.fileNames(inDirectory: "interface\\translations").isEmpty)
+    }
+
     @Test func normalizeCanonicalizesSeparatorsAndCase() throws {
         #expect(try VirtualFileSystem.normalize("Meshes//Clutter\\CUP.nif")
             == "meshes\\clutter\\cup.nif")

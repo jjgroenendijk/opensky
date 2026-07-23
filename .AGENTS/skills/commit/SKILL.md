@@ -15,7 +15,8 @@ skill exists so it is done right the first time.
 
 1. One logical change per commit — no mixed refactor/behavior/formatting.
 2. Gates green: `make check` + `make test` (targeted minimum); product code -> builds
-   (`make build` / `make cli` / `make preview` as touched).
+   (`make build` / `make cli` as touched — app-only files can silently join the CLI
+   target, so build both when a change spans app + CLI).
 3. Staged files legal: nothing extracted from the game install. New binary blob ->
    stop, ask.
 
@@ -48,9 +49,20 @@ FORBIDDEN trailers (overrides any default habit): `Co-authored-by:`, `Generated-
 3. Atomic commits, each green. "WIP"/vague messages forbidden; checkpoints stay local,
    rebase/squash before PR.
 4. PR via `gh pr create` — describe what/why, cite format specs used.
-5. Merge after review; while CI is suspended the pre-push hook's build+test run is the
-   merge gate — never push with `--no-verify`. Done + green work always lands: commit +
-   open PR without waiting to be asked.
+5. Merge after review; while CI is suspended the pre-push hook's build+test+cli run is
+   the merge gate — never push with `--no-verify`. Done + green work always lands:
+   commit + open PR without waiting to be asked.
+
+Landing gotchas seen repeatedly:
+
+- A stray worktree can hold `main` (`git worktree list`), making `git checkout main`
+  and `gh pr merge --delete-branch` fail with "'main' is already used by worktree".
+  The merge itself still succeeds — verify with `gh pr view <n> --json mergedAt`; a
+  failed local branch-delete is cosmetic. To sync main safely, prefer
+  `git fetch && git switch --detach origin/main` over assuming `git checkout main`.
+- Waiting on CI/PR checks: `sleep N && gh pr checks` is hard-blocked by the harness.
+  Use `gh pr checks <n> --watch` (blocking) or a `run_in_background` + poll, not
+  chained sleeps.
 
 Hooks (`.githooks/`, wired by `make bootstrap`): pre-commit guards/format/lint,
 commit-msg Conventional-Commit check, pre-push build+test. `--no-verify` ->

@@ -37,6 +37,16 @@ change they document.
   history, newest first, ISO-8601 date headings).
 - Links bundle-absolute from `docs/`: `[BSA](/formats/bsa.md)`. Broken links
   tolerated; relationship comes from prose.
+- `log.md` merges with `merge=union` (root `.gitattributes`, issue #108):
+  parallel PRs prepending entries merge clean, both kept. After merging main
+  into a branch that touched `log.md`, scan the top section — same-line edits
+  can duplicate lines (dedupe by hand; MD024 flags dup headings). Driver is
+  for append-only files only; never extend it to `todo.md`/`index.md`.
+- Tables: pipes need not visually align to the header (config allows consistent
+  style); do not hand-align them. Wrap bare record/field signatures in backticks
+  (`` `NPC_ WNAM` ``) — raw `NPC_ WNAM` trips markdownlint MD037 (parsed as
+  emphasis). Do not start a wrapped prose line with `+`/`-`/`*` (parsed as a list
+  item, MD004). `make format` autofixes most markdown but not these two.
 
 ## Maintenance obligations
 

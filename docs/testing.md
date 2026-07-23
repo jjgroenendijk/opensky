@@ -1,57 +1,135 @@
 ---
 type: Process
 title: Testing setup
-description: Test targets, make entrypoints, headless unit-test host, UI smoke
-  test, and the synthetic-fixture policy.
+description: Test targets, make entrypoints, real-data suites, result reporting,
+  the RSS watchdog, and this machine's known test-environment quirks.
 tags: [testing, tooling, process]
-timestamp: 2026-07-10T00:00:00Z
+timestamp: 2026-07-23T00:00:00Z
 ---
 
 # Testing setup
 
-Two test targets, two `make` entrypoints. Rules for fixtures in AGENTS.md
-"Testing" + "Legal & IP" — synthetic data built in code only, never extracted
-game files.
+Two test targets, driven through `make`. Fixture rules in AGENTS.md "Testing" +
+"Legal & IP" — synthetic data built in code only, never extracted game files.
 
 ## Targets
 
 * `openskyTests` — unit tests (Swift Testing, `@testable import opensky`).
-  Format parsers, math, game-data locator, VFS. Pure logic, no UI.
-* `openskyUITests` — one XCUITest smoke test: app launches, main window
-  appears, no game-data alert (launches with `OPENSKY_DATA_ROOT` pointing at a
-  synthetic install so the probe succeeds without real data).
+  Format parsers, math, VFS, and the renderer via offscreen paths. This includes
+  the env-gated real-data suites (see below), which skip without a data root.
+* `openskyUITests` — XCUITest smoke tests: app launches, main window appears, no
+  game-data alert.
 
 ## Entrypoints
 
-* `make test` — unit tests only (`-skip-testing:openskyUITests`). Fast local
-  gate; pre-push hook runs this.
-* `make test-ui` — UI smoke test only (`-only-testing:openskyUITests`).
-  Launches the app + drives it via macOS automation (expect the OS overlay).
-* CI runs both; it is the full backstop for UI regressions.
+* `make test` — unit tests only (`-skip-testing:openskyUITests`). Writes a fixed
+  result bundle at `build/test-results/unit.xcresult`.
+* `make test-one T=Class[/test]` — one class or method. Bare names resolve to
+  `openskyTests/`. Bundle: `build/test-results/one.xcresult`.
+* `make test-report` — pass/fail summary plus each failing test's name and
+  message, read from the newest fixed bundle (falls back to the DerivedData
+  glob). It waits for the bundle to finalize, so it no longer misreports a
+  half-written `.xcresult` as a failure.
+* `make realtest T='Class/method()' [CAP=MB]` — run one real-data test against
+  the install (see next section).
+* `make test-ui` — UI smoke tests. See "test-ui on this machine" below.
+* `make test-perms` — one-time TCC setup that stops permission popups.
+
+There is no required CI status right now: GitHub Actions is quota-suspended
+(issue #70), so `ci.yml` is manual-dispatch only. The pre-push hook
+(`.githooks/pre-push/20-build-test.sh`) is the sole merge gate: it runs
+`make test` then `make cli` (the CLI build catches app-only source files that
+Xcode's filesystem-synced groups silently pull into the `openskycli` target).
+`OPENSKY_SKIP_BUILD=1` skips the gate for bootstrap/emergency only.
+
+## Real-data suites and the data root
+
+12 `*RealDataTests` suites exercise the parser/renderer stack against a real
+Skyrim SE install. They gate on the `OPENSKY_DATA_ROOT` env var
+(`GameDataLocator.environmentKey`, `opensky/GameData/GameDataLocator.swift`):
+`@Test(.enabled(if: dataRoot != nil))`, so machines without it skip
+deterministically. Metal-dependent tests also gate on
+`device.supportsFamily(.metal4)`.
+
+Plain `xcodebuild test` does NOT forward `OPENSKY_DATA_ROOT` into the unit-test
+host (proven: the host sees `<nil>`), so exporting the var in your shell is not
+enough — the gated tests silently skip. `make realtest` does it the reliable way
+(`tools/realtest.sh`): `build-for-testing`, inject the data root into the
+generated `.xctestrun`, then `test-without-building`. The selector must resolve
+to exactly one fully-qualified test, e.g.:
+
+```sh
+make realtest T='CellRenderRealDataTests/streamsFiveByFiveGridToCompletion()'
+```
+
+The underlying xcodebuild gap is tracked as issue #82.
+
+## RSS watchdog (mandatory for heavy real-data tests)
+
+A cell-streaming test once ran away to ~30 GB RSS and locked the machine (BSA
+`.mappedIfSafe` on an external APFS volume can fall back to full reads). Every
+`make realtest` run has `tools/memguard.sh` polling the process tree and killing
+it past a cap (`CAP` MB, default 4096) before it can wedge the machine. Do not
+run a heavy real-data test with a raw `xcodebuild` invocation that bypasses the
+watchdog — go through `make realtest`.
+
+## Result reporting and perf gates
+
+* After any run, `make test-report` names failures; you should not hand-parse
+  the `.xcresult` JSON.
+* Perf/bench budgets (per-cell build p95, actor build p95, frame time) must be
+  calibrated from a real-install measurement before being locked — guessing a
+  threshold then bumping it after each failing bench wasted many multi-minute
+  reruns. Take a baseline sample, add margin, then set the cap. Keep correctness
+  gates (must always pass) separate from perf gates (wide margin during active
+  dev). Background load skews timings: no other OpenSky instance should be alive,
+  and watch for Spotlight indexing build output.
 
 ## Headless unit-test host
 
 `@testable import` of an app target requires the app as test host
-(`TEST_HOST = opensky.app` in the project). Hosting does not require UI:
-`OpenSkyApp.main()` checks `XCTestConfigurationFilePath` in the environment —
-set by XCTest inside the host process — and when present skips the
-`AppDelegate` entirely (no window, no `Renderer`, no game-data probe) and sets
-activation policy `.prohibited` (no Dock icon, no focus steal). `NSApplication`
-still runs so the injected test bundle executes.
+(`TEST_HOST = opensky.app`). Hosting does not require UI: `OpenSkyApp.main()`
+checks `XCTestConfigurationFilePath` (set by XCTest inside the host process) and
+when present skips the `AppDelegate` entirely — no window, no `Renderer`, no
+game-data probe — and sets activation policy `.prohibited` (no Dock icon, no
+focus steal). `NSApplication` still runs so the injected bundle executes.
 
-XCUITest-launched app instances lack that variable -> full app path. That is
-what the smoke test asserts, so a broken guard shows up in `make test-ui`.
+XCUITest-launched app instances lack that variable -> full app path. The smoke
+test asserts that, so a broken guard shows up in `make test-ui`.
 
-Consequence: nothing app-lifecycle-dependent can run in unit tests — there is
-no delegate, no window, no Metal device wired up. Unit-test code touching
-those belongs in the UI target or needs its own explicit setup.
+Consequence: nothing app-lifecycle-dependent runs in unit tests — no delegate, no
+window, no Metal device wired up. Code touching those belongs in the UI target or
+needs its own setup.
+
+## Known test-environment quirks (this machine)
+
+* test-ui on this machine: `make test-ui` reliably dies at harness init with
+  "Timed out while enabling automation mode" — a TCC/automation-permission gap,
+  not a code fault. `make test-ui` now surfaces that as an actionable message
+  (via `tools/test-ui.sh`) instead of hanging to timeout, and points at
+  `make test-perms`. Until the grant is in place, verify UI/render behavior with
+  `Renderer.renderOffscreen` unit tests or `make run-cli ARGS="render ..."`.
+* Permission popups: the app is ad-hoc signed (`"-"`), so its identity changes
+  every rebuild and per-app TCC grants to it never persist. Grant Full Disk
+  Access + Automation to the stable parent you launch tests from (Terminal /
+  iTerm / Xcode) instead — child test hosts inherit it. `make test-perms` guides
+  and opens the right pane; TCC is SIP-protected, so the actual grant is one
+  manual click (it cannot be scripted).
+* Stale `testmanagerd`: a days-old XCTest daemon can wedge a fresh run (or the
+  pre-push hook) at 0% CPU. If a test host hangs before running, recycle it:
+  `killall testmanagerd`, then retry (no `--no-verify` bypass).
+* One xcodebuild at a time: two concurrent `xcodebuild` invocations against the
+  same DerivedData (e.g. a probe while the pre-push hook builds) deadlock until
+  the tool timeout. Let one finish before starting another.
 
 ## Fixtures
 
-* Built in code (`BSAFixture`, `ESMFixture`, `StringTableFixture`) or tiny
-  synthetic files the test generates. Never checked-in game assets.
+* Built in code (`BSAFixture`, `ESMFixture`, `NIFFixture`, `StringTableFixture`)
+  or tiny synthetic files the test generates. Never checked-in game assets.
 * Rendering checks prefer deterministic assertions (buffer contents, transform
-  math) + manual visual confirmation of the real frame.
+  math) + human review of a capture written to `logs/` (gitignored). `print()`
+  shows in the live xcodebuild console but is NOT in the `.xcresult`, so a
+  backgrounded/polled run loses it — assert on a value or write an artifact.
 * Full-path render checks go through `Renderer.renderOffscreen`
   (`RendererOffscreenTests`): synchronous frame into an owned texture, pixel
   assertions, temp PNG logged for human review. Never render through

@@ -144,16 +144,20 @@ extension Renderer {
         advanceAnimation: Bool = true
     ) throws -> String? {
         let cpuStart = frameStats.beginFrame()
+        // Menu mode freezes the sim while the frame still renders (todo 8.1.2):
+        // a paused frame advances every sim clock by zero, so successive frames
+        // are byte-identical, yet the pass below still encodes and presents.
+        let simDelta: Float = worldSimPaused ? 0 : 1 / 30
         if advanceAnimation {
-            updateAnimations(deltaTime: 1 / 30)
+            updateAnimations(deltaTime: simDelta)
         }
         // Weather resolves from the current time-of-day each frame; forced
         // weather (tests) stays deterministic because reroll is off and the
         // fixed hour accumulates no game-hours.
-        updateWeather(deltaTime: advanceAnimation ? 1 / 30 : 0)
+        updateWeather(deltaTime: advanceAnimation ? simDelta : 0)
         if advanceAnimation {
-            updateParticles(deltaTime: 1 / 30)
-            updatePrecipitation(deltaTime: 1 / 30)
+            updateParticles(deltaTime: simDelta)
+            updatePrecipitation(deltaTime: simDelta)
         }
         endFrameEvent.wait(untilSignaledValue: UInt64(frameIndex - 1), timeoutMS: 2000)
         let slot = frameIndex % Self.maxFramesInFlight
