@@ -29,9 +29,11 @@ in the detail pane. Capture failure appears as an action-scoped error sheet. App
 share `FrameScreenshot` for BGRA readback + PNG encoding.
 
 App-only AppKit shells live under `opensky/` (`MainViewController`,
-`PreviewViewController`, `PreviewDetailBuilder`, `SettingsWindowController`) and are
-excluded from `openskycli` by its synchronized-group exception set. Browse/preview model
-stays AppKit-free under `opensky/Preview/`.
+`PreviewViewController`, `PreviewDetailBuilder`, `SettingsWindowController`, and the panel
+framework under `opensky/Shell/`) and are excluded from `openskycli` by its
+synchronized-group exception set. Browse/preview model stays AppKit-free under
+`opensky/Preview/`. The World sidebar destinations + control panels are built on the shared
+UI framework — see [app-ui](/tools/app-ui.md).
 
 ## UI + browse model
 
