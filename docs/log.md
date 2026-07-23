@@ -13,6 +13,13 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   resurrect them. After a union merge, scan the top section once — same-line
   edits can still duplicate lines (mechanical dedupe, MD024 catches dup
   headings on next lint).
+* `delegate` sub-agent orchestration skill (issue #107): new `.AGENTS/skills/delegate/`
+  plus an AGENTS.md Skills bullet. Codifies the fix for sub-agents re-deriving the repo
+  context every milestone — map once via one Explore/Plan pass and paste the brief
+  (paths + type signatures) into each implementer prompt, sub-agents trust
+  `docs/index.md`'s path table over globbing, verify a worktree agent's base is the
+  feature branch (not stale `main`) at handoff, restate AGENTS.md criticals per prompt.
+  Process-only; no engine change.
 * Main-app UI framework (issue #98, PR 1): shared inspector-panel framework under
   `opensky/Shell/` — `DestinationRegistry` (single registration point, replaces the
   former four per-destination touch-points), `InspectorPanelViewController` /
