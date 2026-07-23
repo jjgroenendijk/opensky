@@ -99,7 +99,7 @@ findings.
 * [ ] 8.1.3 Strings: `Interface/Translations/*_english.txt` parser (UTF-16LE
       key/value), reusable provider resolving `$`-prefixed keys for HUD + SWF
       text fields.
-* [ ] 8.1.4 Foundation acceptance: `World > UI Lab` previews menu-mode pause
+* [ ] 8.1.4 Foundation acceptance: `Developer > UI Lab` previews menu-mode pause
       behavior + localized strings (long-string/scale cases). Gate: deterministic
       layout/UI-state + pixel-delta tests; docs + log updated.
 
@@ -119,7 +119,7 @@ findings.
       screen-space pass over the 3D frame.
 * [ ] 8.2.5 Static-render acceptance: frame-1 display list of selected vanilla
       menus (e.g. cursor, book, loading) renders correctly offscreen + in-app;
-      `World > UI Lab` selects a movie + shows tag/draw stats. Gate: pixel-delta
+      `Developer > UI Lab` selects a movie + shows tag/draw stats. Gate: pixel-delta
       evidence + sweep accounting; docs (`formats/swf.md`, `rendering/ui.md`) +
       log updated.
 
@@ -134,7 +134,7 @@ findings.
       init + drive selected menus; engine<->movie invoke bridge (GFx-style);
       unimplemented ops/APIs -> logged no-op + tally.
 * [ ] 8.3.3 Runtime acceptance: one vanilla menu runs interactively (open,
-      navigate, close) on the AS2 subset; `World > UI Lab` exposes movie state,
+      navigate, close) on the AS2 subset; `Developer > UI Lab` exposes movie state,
       invoke log, op tally. Gate: deterministic UI-state + pixel evidence;
       docs/log updated.
 
@@ -156,10 +156,11 @@ findings.
 * [ ] 8.5.1 System menu: resume/settings/quit; data root + audio-volume placeholders
       surfaced; vanilla menu movie where the AS2 subset suffices (per 8.3.1).
       Later M9 binds live audio categories.
-* [ ] 8.5.2 Sidebar verification convention: framework + placement rules landed (issue #98,
-      `docs/tools/app-ui.md` + `app-ui` skill — registry, panel base classes, control-state
-      + accessibility-id conventions, scroll/layout tests). Remaining: each milestone records
-      its exact main-app sidebar path + deterministic A/B evidence at acceptance.
+* [ ] 8.5.2 Sidebar verification convention: framework + placement rules + unified
+      sidebar shell landed (issue #98, PRs #112 + #113 — registry, panel base classes,
+      `AppShellViewController` shell, accessibility-id conventions, scroll/layout tests;
+      `docs/tools/app-ui.md` + `app-ui` skill). Remaining: each milestone records its
+      exact main-app sidebar path + deterministic A/B evidence at acceptance.
 * [ ] 8.5.3 Milestone acceptance: launch app -> select World -> enter walk mode ->
       inspect live vanilla-SWF interaction/HUD -> pause -> change a setting ->
       resume, without CLI. Gate: deterministic UI-state + pixel-delta evidence;

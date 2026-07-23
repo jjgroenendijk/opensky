@@ -24,18 +24,40 @@ in the same milestone (AGENTS.md). This doc says where that surface goes and how
 to build it. The durable dev/verification requirement is unchanged — a user must
 be able to select/force/toggle/inspect the behavior without a CLI command.
 
-## Shell anatomy
+## Shell anatomy (as built, issue #98 PR 2)
 
-- Sidebar groups destinations into sections (`SidebarSection`: World, Library;
-  future Developer). A destination is one sidebar row.
-- Two content kinds (`DestinationContent`):
-  - `worldInspector` — a controls panel shown in the leading slot beside the
-    always-live game view. The MTKView never leaves the hierarchy, so rendering
-    and streaming keep running while you tune knobs.
-  - `fullContent` — a controller that fills the content area (e.g. Asset
-    Browser).
+- One `NSSplitViewController` shell (`AppShellViewController`): source-list
+  sidebar (`AppSidebarViewController`, `NSOutlineView` with non-selectable
+  group rows) + layered content (`ShellContentViewController`). The old
+  segmented World/Asset Browser mode switch is gone.
+- Sidebar map: World: Viewport, Environment · Developer: UI Lab · Library:
+  Asset Browser. Launch selects Viewport
+  (`DestinationRegistry.defaultDestinationID`). Sections come from
+  `SidebarSection` (world, developer, library — `allCases` order); empty
+  sections drop. Grouping is unit-tested via `AppSidebarModel`
+  (`AppSidebarModelTests`).
+- Three content kinds (`DestinationContent`):
+  - `viewport` — the bare always-live game view, no panel.
+  - `worldInspector` — a controls panel shown in the leading 300pt slot beside
+    the always-live game view.
+  - `fullContent` — a controller that covers the content area (Asset Browser).
+    The MTKView stays attached underneath and keeps drawing at a low rate
+    (10 fps covered / 60 live, `ShellContentViewController`) — never hidden,
+    never paused — so the per-frame-driven streamer stays warm and returning
+    to a world destination is instant.
+- Full-content controllers are built lazily from their registry factory, which
+  receives a `FullContentContext` (data root + startup error), and cached
+  forever by the shell — catalog/filter/selection survive destination changes.
+  A Settings reload calls `FullContentReloadable.reloadFullContent(context:)`
+  on each cached controller in place.
+- Toolbar (`unifiedCompact`, built by `AppShellViewController.makeToolbar()`):
+  sidebar toggle, tracking separator, flexible space, screenshot. Screenshot
+  (save-panel + error-sheet flow in `ScreenshotCoordinator`) is enabled only
+  while a destination with `showsGameView` is active. Settings stays the
+  Cmd+, window — no sidebar destination.
 - A world-inspector panel is a column of collapsible sections. Each section is a
-  self-contained control group with its own live readout.
+  self-contained control group with its own live readout. Selecting a world
+  destination refocuses the game view so WASD/mouse capture keep working.
 
 ## Placement decision tree
 
@@ -67,6 +89,9 @@ content. Never touch the shell view controllers to add a destination.
   every `*ControlProviding` protocol via `WorldControlProviders`). Downward:
   control action -> provider setter -> renderer. Upward: a 2 Hz ticker polls the
   provider's snapshot into a readout label. No bindings/Combine.
+- A `fullContent` factory receives a `FullContentContext` (data root + startup
+  error). Conform the controller to `FullContentReloadable` so a Settings
+  reload reaches the cached instance in place instead of rebuilding it.
 - Add every new `Shell/` file to the `openskycli` membership-exception set in
   `opensky.xcodeproj/project.pbxproj` (app-only AppKit, excluded from the CLI).
 
@@ -94,9 +119,12 @@ content. Never touch the shell view controllers to add a destination.
 
 Accessibility identifiers are the UI-test API and never change silently.
 
-- Destination rows: `WorldDestination-<id>` (via `sidebarIdentifier`).
+- Sidebar outline: `AppSidebar`; destination rows: `Destination-<id>` (via
+  `sidebarIdentifier`). PR 2 renamed the rows from `WorldDestination-<id>` and
+  replaced the `WorldSidebar` table + `ModeSwitcher` radios with the outline.
 - Section headers: `PanelSection-<sectionIdentifier>`.
 - Controls: `<Thing>Control`; readouts: `<Thing>StatsLabel`.
+- Toolbar screenshot: `ScreenshotButton` (unchanged from the old shell).
 
 `make test-ui` is blocked on the dev machine (TCC harness init), so the id
 contract is pinned as unit assertions in `DestinationRegistryTests` — update
