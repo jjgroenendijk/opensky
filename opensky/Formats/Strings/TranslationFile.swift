@@ -41,6 +41,13 @@ nonisolated struct TranslationFile: Equatable {
         Array(entries.keys)
     }
 
+    /// Builds a file directly from already-parsed entries. Used by in-app
+    /// synthetic sample content (Developer > UI Lab localized preview) and tests;
+    /// `init(data:)` remains the only on-disk path.
+    init(entries: [String: String]) {
+        self.entries = entries
+    }
+
     init(data: Data) throws {
         let text = try Self.decodeUTF16(data)
         var entries: [String: String] = [:]

@@ -5,7 +5,7 @@ description: 2D overlay pass over the finished 3D frame - anchored value-type sc
   layout + text primitives, CoreText system-font glyph atlas, points -> pixels scale
   handling, single premultiplied draw call.
 tags: [rendering, ui, metal, text, layout]
-timestamp: 2026-07-22T00:00:00Z
+timestamp: 2026-07-23T00:00:00Z
 ---
 
 # Screen-space UI layer
@@ -57,25 +57,53 @@ remains the screen-space compositing foundation it renders through.
 
 ## App surface
 
-`World > UI Lab` sidebar destination: overlay enable, sample-overlay toggle, scale
-presets (50/100/150/200%), live draw-stats readout via `UILabControlProviding` on
-`GameViewController` (weak-provider pattern shared with the Environment panel).
-Extends at M8.1.4 into the full UI Lab acceptance surface.
+`Developer > UI Lab` sidebar destination — the M8.1 foundation acceptance surface
+(M8.1.4), talking to the engine through `UILabControlProviding` on
+`GameViewController` (bridge split to `opensky/GameViewControllerUILab.swift` for
+the file-size limit; weak-provider pattern shared with the Environment panel):
+
+- Overlay enable (`UIOverlayEnabledControl`), lab-sample toggle
+  (`UILabSampleControl`), localized-sample toggle (`UIStringsSampleControl` —
+  the two samples share `Renderer.uiScene`, so enabling one clears the other),
+  scale presets 50/100/150/200% (`UIScaleControl`), live draw-stats readout
+  (`UIStatsLabel`).
+- Menu-mode preview: Push menu / Pop / Clear buttons (`UIMenuPushControl`,
+  `UIMenuPopControl`, `UIMenuClearControl`) drive the real `MenuModeController`
+  with depth-derived names (`UILabMenu1`, ...); `UIMenuStatsLabel` mirrors
+  `isMenuMode`, top menu, stack depth, and `isWorldSimPaused` at 2 Hz.
+- Localized-strings readout (`UIStringsStatsLabel`): synthetic sample key count
+  plus merged translation file/key counts over the located install (loaded
+  lazily, once).
+
+`UIScene.localizedSample` (`opensky/UI/UILocalizedSample.swift`) is the
+localized preview content: invented `$KEY` fixtures merged through the real
+`TranslationFile` -> `LocalizedLabels` path, rendered via `label(for:)` — a
+wrapped long paragraph (`maxWidth` 312 pt), an unwrapped line that clips past
+the frame edge, and the deliberately unknown `$OPENSKY_UILAB_MISSING` token
+shown verbatim ([UI translation strings](/formats/translation-strings.md)).
 
 ## Verification
 
 - Device-free: layout/anchor/stack math, pixel snapping at 1.0/1.5/2.0, measurement
   monotonicity, wrap, draw-list quads/uv/white-texel, budget drops, resolve
-  determinism (`UILayoutTests`).
+  determinism (`UILayoutTests`); localized-sample resolution, verbatim
+  unknown-key fallback, wrap/clip cases, per-scale resolve determinism
+  (`UILocalizedSampleTests`); panel geometry, control round trips, readouts, and
+  the pinned accessibility-id contract (`UILabPanelTests`); menu preview and
+  strings snapshot state on the real controller (`GameViewControllerUILabTests`).
 - Offscreen Metal-gated (`RendererUITests`, 480x320): labSample vs empty 64,567
   changed px; scale 1.0 vs 2.0 93,036 changed px; `uiEnabled=false` byte-identical
   to empty baseline; repeated render byte-identical.
+- M8.1.4 acceptance (`RendererUIFoundationAcceptanceTests`, 480x320): localized
+  sample vs empty 88,534 changed px; scale 1.0 vs 2.0 82,710 changed px; with
+  `worldSimPaused` repeated frames byte-identical while `animationTime` holds
+  at 0 and the overlay still draws.
 
 ## Limits / next
 
 - One font family (system), coverage-only atlas (no color glyphs/emoji), no
   clipping/scissor. Menu mode (input-capture switch + world-sim pause) landed in
-  M8.1.2 ([menu mode](/engine/menu-mode.md)); focus/text entry arrive with the SWF
-  menu layer, localized strings M8.1.3.
+  M8.1.2 ([menu mode](/engine/menu-mode.md)) with the UI Lab preview as its
+  trigger (M8.1.4); focus/text entry arrive with the SWF menu layer (M8.2).
 - Atlas is fixed-size shelf pack; full-atlas behavior = glyph dropped from list
   (counted), never a crash.

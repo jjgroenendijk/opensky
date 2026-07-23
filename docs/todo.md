@@ -93,12 +93,6 @@ all game data. Downstream menu items (M12.5 inventory, M13.4 journal, M17.2
 dialogue) target their vanilla SWF menus; depth follows 8.3.1 feasibility
 findings.
 
-### M8.1 — UI shell foundation
-
-* [ ] 8.1.4 Foundation acceptance: `Developer > UI Lab` previews menu-mode pause
-      behavior + localized strings (long-string/scale cases). Gate: deterministic
-      layout/UI-state + pixel-delta tests; docs + log updated.
-
 ### M8.2 — SWF format + static rendering
 
 * [ ] 8.2.1 SWF container decode: signature/compression (FWS/CWS), header rect/

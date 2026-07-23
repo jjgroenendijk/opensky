@@ -39,6 +39,7 @@
 				EnvironmentPanelViewController.swift,
 				GameMetalView.swift,
 				GameViewController.swift,
+				GameViewControllerUILab.swift,
 				OpenSkyApp.swift,
 				PreviewDetailBuilder.swift,
 				PreviewViewController.swift,

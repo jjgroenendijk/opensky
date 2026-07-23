@@ -90,9 +90,10 @@ final class OpenSkyUITests: XCTestCase {
         XCTAssertEqual(quality.value as? String, "Low")
     }
 
-    /// Developer > UI Lab sidebar surface (M8.1.1): the sidebar lists the UI
-    /// Lab destination; selecting it exposes the overlay-enable + sample
-    /// toggles, the scale preset popup, and the live UIDrawStats readout.
+    /// Developer > UI Lab sidebar surface (M8.1.1 + M8.1.4): the sidebar lists
+    /// the UI Lab destination; selecting it exposes the overlay-enable + sample
+    /// toggles, the scale preset popup, the menu-mode preview buttons, and the
+    /// live UIDrawStats / menu-stack / localized-strings readouts.
     @MainActor
     func testWorldSidebarUILabControls() throws {
         let app = try launchApp()
@@ -102,8 +103,33 @@ final class OpenSkyUITests: XCTestCase {
 
         XCTAssertTrue(app.checkBoxes["UIOverlayEnabledControl"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.checkBoxes["UILabSampleControl"].exists)
+        XCTAssertTrue(app.checkBoxes["UIStringsSampleControl"].exists)
         XCTAssertTrue(app.popUpButtons["UIScaleControl"].exists)
         XCTAssertTrue(app.staticTexts["UIStatsLabel"].exists)
+        XCTAssertTrue(app.buttons["UIMenuPushControl"].exists)
+        XCTAssertTrue(app.buttons["UIMenuPopControl"].exists)
+        XCTAssertTrue(app.buttons["UIMenuClearControl"].exists)
+        XCTAssertTrue(app.staticTexts["UIMenuStatsLabel"].exists)
+        XCTAssertTrue(app.staticTexts["UIStringsStatsLabel"].exists)
+
+        // Menu-mode preview round trip: push pauses world sim, clear resumes.
+        app.buttons["UIMenuPushControl"].click()
+        let menuStats = app.staticTexts["UIMenuStatsLabel"]
+        XCTAssertTrue(menuStats.label.contains("paused") || waitForPause(menuStats))
+        app.buttons["UIMenuClearControl"].click()
+    }
+
+    /// The 2 Hz readout ticker may lag one interaction; poll briefly.
+    @MainActor
+    private func waitForPause(_ label: XCUIElement) -> Bool {
+        let deadline = Date().addingTimeInterval(3)
+        while Date() < deadline {
+            if label.label.contains("paused") {
+                return true
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        return false
     }
 
     /// Library > Asset Browser: a full-content destination covering the game

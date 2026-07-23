@@ -76,6 +76,17 @@ private final class FakeWorldProviders: WorldControlProviders {
     var uiSnapshot = UILabControlSnapshot(
         overlayEnabled: true, sampleShown: false, scale: 1, stats: UIDrawStats()
     )
+    var menuModeSnapshot = MenuModeControlSnapshot(
+        isMenuMode: false, topMenuName: nil, stackDepth: 0, isWorldSimPaused: false
+    )
+    func pushPreviewMenu() {}
+    func popPreviewMenu() {}
+    func clearPreviewMenus() {}
+    var uiLocalizedSampleShown = false
+    var localizedLabelsSnapshot = LocalizedLabelsControlSnapshot(
+        sampleShown: false, sampleKeyCount: 0, language: "english",
+        installLoaded: false, installFileCount: 0, installKeyCount: 0
+    )
 }
 
 struct DestinationRegistryTests {

@@ -4,6 +4,29 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-23
 
+* M8.1 UI shell foundation accepted (item 8.1.4): `Developer > UI Lab` is the
+  durable verification surface for the whole foundation. Menu-mode preview
+  (Push menu / Pop / Clear buttons, ids `UIMenuPushControl` / `UIMenuPopControl`
+  / `UIMenuClearControl`) drives the real `MenuModeController` on
+  `GameViewController` with depth-derived names (`UILabMenu1`, `UILabMenu2`, ...)
+  and mirrors `isMenuMode` / top menu / stack depth / `isWorldSimPaused` in the
+  `UIMenuStatsLabel` readout. Localized-strings preview
+  (`UIStringsSampleControl`) renders `UIScene.localizedSample` — invented
+  fixture strings through the real `TranslationFile` -> `LocalizedLabels` path —
+  covering a wrapped long string, an unwrapped line that clips at the frame
+  edge, and the unknown-key token `$OPENSKY_UILAB_MISSING` shown verbatim, at
+  the existing 50-200% scale presets; `UIStringsStatsLabel` reports sample key
+  count plus merged file/key counts over the located install (vanilla: 0 files,
+  per the 8.1.3 probe). Renderer bridge split to
+  `opensky/GameViewControllerUILab.swift` (file-size limit). Evidence at
+  480x320: localized sample vs empty baseline 88 534 changed pixels, scale 1.0
+  vs 2.0 82 710 changed pixels, paused repeat renders byte-identical with
+  `animationTime` held at 0 (`RendererUIFoundationAcceptanceTests`).
+  Deterministic state/layout tests: `UILocalizedSampleTests`,
+  `GameViewControllerUILabTests`, extended `UILabPanelTests` (880 unit tests
+  green). Docs: [screen-space UI](/rendering/ui.md),
+  [menu mode](/engine/menu-mode.md),
+  [UI translation strings](/formats/translation-strings.md).
 * Creature `NiSkinPartition` global/local index-space decode (issue #64): SSE
   skin has two influence-index spaces — the top-level `BSVertexDataSSE` stream
   stores skin-instance-global bone ids, the per-partition `Bone Indices` array
