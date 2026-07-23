@@ -27,9 +27,7 @@ extension Renderer {
     }
 
     func updateWeatherFromWallClock() {
-        let now = CACurrentMediaTime()
-        let delta = lastWeatherWallTime.map { Float(min(now - $0, 0.1)) } ?? 0
-        lastWeatherWallTime = now
+        let delta = weatherClock.advance(to: CACurrentMediaTime(), paused: worldSimPaused)
         updateWeather(deltaTime: delta)
     }
 

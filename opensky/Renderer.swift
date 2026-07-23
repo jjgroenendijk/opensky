@@ -125,7 +125,8 @@ final class Renderer: NSObject {
     var weatherEnabled = true
     /// This frame's resolved weather (exterior only). nil -> no weather active.
     var currentResolvedWeather: ResolvedWeather?
-    var lastWeatherWallTime: CFTimeInterval?
+    /// Wall-clock delta source for the weather runtime, paused in menu mode.
+    var weatherClock = FrameSimClock()
     let precipitation: PrecipitationVolume
     var precipitationEnabled = true
     var particlesEnabled = true
@@ -148,6 +149,12 @@ final class Renderer: NSObject {
     /// UI points -> framebuffer pixels multiplier (user preset x backing
     /// scale, supplied by the app). Clamped to UIScale.range at encode.
     var uiScale: Float = 1
+    /// Menu-mode world-sim pause gate (todo 8.1.2). True freezes the per-frame
+    /// time advance (game time, camera, animations, weather, particles,
+    /// precipitation) while the frame still renders and the screen-space UI
+    /// still draws. Driven by MenuModeController.isWorldSimPaused; the frame
+    /// clocks keep their marks fresh while paused so resume carries no time jump.
+    var worldSimPaused = false
     /// UI culling/draw accounting from the most recently encoded frame.
     /// Written only by encodeUI (RendererUIPass.swift), like the other
     /// last-frame stat mirrors.
@@ -162,13 +169,14 @@ final class Renderer: NSObject {
     /// -- safe, same thread, still between frames). nil (offscreen/tests)
     /// leaves the loop unchanged.
     var onFrame: ((SIMD3<Float>) -> Void)?
-    /// CACurrentMediaTime of the previous `draw(in:)`, for real delta time.
-    var lastUpdateTime: CFTimeInterval?
+    /// Wall-clock delta source for camera movement, paused in menu mode.
+    var cameraClock = FrameSimClock()
     var animationTime: Float = 0
     /// World > Environment actor-animation A/B. Off restores bind palettes;
     /// global time still advances so grass/particle effects stay independent.
     var actorAnimationsEnabled = true
-    var lastAnimationWallTime: CFTimeInterval?
+    /// Wall-clock delta source for the animation clock, paused in menu mode.
+    var animationClock = FrameSimClock()
     var lastAnimationUpdateMS = 0.0
     var lastAnimationUpdatedBoneCount = 0
     /// CPU wall time of last shadow pass; idle/off frames record near-zero cost.
