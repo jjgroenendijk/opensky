@@ -112,6 +112,51 @@ nonisolated final class VirtualFileSystem: Sendable {
         return result.sorted { $0.path < $1.path }
     }
 
+    /// Canonical VFS keys of files directly inside `directory` (one level, no
+    /// recursion), from loose files and every archive combined. Loose and
+    /// archive contributions union — either source makes the path resolvable via
+    /// `contents(forPath:)`; a loose file still wins the actual read. For
+    /// subsystems that must discover a known bounded directory (e.g.
+    /// Interface/Translations) without walking all of `Data/`. Opens every
+    /// archive, so callers use it sparingly. Sorted for stable output.
+    func fileNames(inDirectory directory: String) -> [String] {
+        guard let normalized = try? Self.normalize(directory) else { return [] }
+        let prefix = normalized + "\\"
+        var paths: Set<String> = []
+        for name in looseFileNames(inDirectory: normalized) {
+            paths.insert(prefix + name.lowercased())
+        }
+        for entry in archiveEntries() where entry.path.hasPrefix(prefix) {
+            let remainder = entry.path.dropFirst(prefix.count)
+            if !remainder.contains("\\") {
+                paths.insert(entry.path)
+            }
+        }
+        return paths.sorted()
+    }
+
+    /// On-disk names of regular files directly inside a loose directory (given
+    /// as a normalized VFS key). Empty when the directory is absent. Resolves
+    /// each path component case-insensitively, matching `looseFileURL`.
+    private func looseFileNames(inDirectory normalized: String) -> [String] {
+        var url = dataURL
+        var directoryKey = ""
+        for component in normalized.split(separator: "\\").map(String.init) {
+            guard let onDisk = onDiskName(component, inDirectory: directoryKey, at: url) else {
+                return []
+            }
+            url.append(path: onDisk, directoryHint: .isDirectory)
+            directoryKey = directoryKey.isEmpty ? component : directoryKey + "\\" + component
+        }
+        let contents = (try? FileManager.default.contentsOfDirectory(
+            at: url,
+            includingPropertiesForKeys: [.isRegularFileKey]
+        )) ?? []
+        return contents.filter { entry in
+            (try? entry.resourceValues(forKeys: [.isRegularFileKey]))?.isRegularFile == true
+        }.map(\.lastPathComponent)
+    }
+
     /// Canonical key: lowercase, backslash separators, no redundant
     /// separators. Rejects empty paths and "."/".." components — game data
     /// never uses them, and they could escape the data root.

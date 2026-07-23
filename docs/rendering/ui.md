@@ -74,7 +74,8 @@ Extends at M8.1.4 into the full UI Lab acceptance surface.
 ## Limits / next
 
 - One font family (system), coverage-only atlas (no color glyphs/emoji), no
-  clipping/scissor, no input - menu mode + focus arrive M8.1.2, localized strings
-  M8.1.3.
+  clipping/scissor. Menu mode (input-capture switch + world-sim pause) landed in
+  M8.1.2 ([menu mode](/engine/menu-mode.md)); focus/text entry arrive with the SWF
+  menu layer, localized strings M8.1.3.
 - Atlas is fixed-size shelf pack; full-atlas behavior = glyph dropped from list
   (counted), never a crash.

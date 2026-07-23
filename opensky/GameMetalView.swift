@@ -14,6 +14,12 @@ final class GameMetalView: MTKView {
     /// seeded pose).
     var input: CameraInputState?
 
+    /// Menu-mode source of truth (todo 8.1.2). When it reports menu mode, this
+    /// view stops feeding world input and forwards the mapped menu events
+    /// instead. nil (before wiring / tests) leaves every event on the world
+    /// path, exactly as before menu mode existed.
+    var menuMode: MenuModeController?
+
     private var captured = false
 
     /// US ANSI virtual key codes (Carbon `kVK_*`). Physical layout, not
@@ -29,6 +35,12 @@ final class GameMetalView: MTKView {
         static let keyG: UInt16 = 5
         static let keyH: UInt16 = 4
         static let escape: UInt16 = 53
+        static let returnKey: UInt16 = 36
+        static let keypadEnter: UInt16 = 76
+        static let arrowLeft: UInt16 = 123
+        static let arrowRight: UInt16 = 124
+        static let arrowDown: UInt16 = 125
+        static let arrowUp: UInt16 = 126
     }
 
     override var acceptsFirstResponder: Bool {
@@ -46,6 +58,12 @@ final class GameMetalView: MTKView {
         // Ignore autorepeat: the pressed-key set already holds the key, and a
         // repeat carries no new state.
         if event.isARepeat {
+            return
+        }
+        // Menu mode is the input-capture switch: world movement/look keys are
+        // suppressed and mapped to menu events for the menu layer (todo 8.1.2).
+        if menuMode?.isMenuMode == true {
+            routeMenuKey(event)
             return
         }
         if event.keyCode == KeyCode.escape {
@@ -72,11 +90,33 @@ final class GameMetalView: MTKView {
     }
 
     override func keyUp(with event: NSEvent) {
+        // Menus act on key-down; swallow key-up so it never reaches world input.
+        if menuMode?.isMenuMode == true {
+            return
+        }
         guard let key = Self.moveKey(for: event.keyCode) else {
             super.keyUp(with: event)
             return
         }
         input?.release(key)
+    }
+
+    /// Maps a key-down to a toolkit-free menu event and routes it while menu
+    /// mode is active. Unmapped keys are swallowed (still suppressed from the
+    /// world) rather than passed on.
+    private func routeMenuKey(_ event: NSEvent) {
+        let menuEvent: MenuInputEvent? = switch event.keyCode {
+        case KeyCode.keyW, KeyCode.arrowUp: .move(.up)
+        case KeyCode.keyS, KeyCode.arrowDown: .move(.down)
+        case KeyCode.keyA, KeyCode.arrowLeft: .move(.left)
+        case KeyCode.keyD, KeyCode.arrowRight: .move(.right)
+        case KeyCode.returnKey, KeyCode.keypadEnter: .button(.accept)
+        case KeyCode.escape: .button(.cancel)
+        default: nil
+        }
+        if let menuEvent {
+            menuMode?.routeMenuInput(menuEvent)
+        }
     }
 
     override func flagsChanged(with event: NSEvent) {
@@ -99,6 +139,12 @@ final class GameMetalView: MTKView {
     // MARK: - Pointer
 
     override func mouseDown(with event: NSEvent) {
+        // Menu mode keeps the pointer free (a menu wants a visible cursor); a
+        // click is the accept button for the menu layer.
+        if menuMode?.isMenuMode == true {
+            menuMode?.routeMenuInput(.button(.accept))
+            return
+        }
         if captured {
             handleLook(event)
         } else {
@@ -115,6 +161,14 @@ final class GameMetalView: MTKView {
     }
 
     private func handleLook(_ event: NSEvent) {
+        // Menu mode routes pointer motion to the menu layer instead of camera
+        // look; capture state is irrelevant there.
+        if menuMode?.isMenuMode == true {
+            menuMode?.routeMenuInput(
+                .pointer(deltaX: Float(event.deltaX), deltaY: Float(event.deltaY))
+            )
+            return
+        }
         guard captured else { return }
         // NSEvent.deltaY is positive when the pointer moves down (top-left
         // origin); negate so pointer-up -> look up.

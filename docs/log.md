@@ -22,6 +22,56 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   `AppSidebarModelTests` covers grouping/order/default. Docs:
   [app-ui](/tools/app-ui.md) shell anatomy as-built,
   [preview-gui](/tools/preview-gui.md) rewritten for the sidebar path.
+* UI translation strings (item 8.1.3): parser for
+  `Interface/Translations/<name>_<language>.txt` (UTF-16LE + BOM, `$key<TAB>value`,
+  CRLF) in `opensky/Formats/Strings/TranslationFile.swift`, and
+  `LocalizedLabels` provider (`opensky/GameData/LocalizedLabels.swift`) that
+  merges every discovered file and resolves a `$KEY` token, unknown key ->
+  token verbatim (vanilla-observable fallback). Keys case-sensitive (Scaleform).
+  Discovery added `VirtualFileSystem.fileNames(inDirectory:)` (loose + archive,
+  one level). Backbone for HUD (M8.2) and vanilla SWF menus (issue #99); UI Lab
+  long-strings preview (8.1.4) is the first visible consumer, so no sidebar
+  surface this item. Format + decisions:
+  [UI translation strings](/formats/translation-strings.md). Probe: 172 750
+  archive entries, zero translation files in this vanilla install (expected).
+* CLI target-boundary lint (issue #109): `make cli-boundary`
+  (`tools/lint/cli-boundary.sh`) asserts every AppKit/Cocoa/SwiftUI-importing file under
+  `opensky/` has a `membershipExceptions` entry for the openskycli target — synced groups
+  otherwise pull app-only files into the CLI build (broke `make cli` twice). Wired into
+  `make lint` (so `make check` + CI cover it) and pre-commit
+  (`.githooks/pre-commit/45-cli-boundary.sh`); pre-push `make cli` stays as backstop.
+* `docs/log.md` merge conflicts eliminated (issue #108): root `.gitattributes`
+  gives it the built-in `merge=union` driver — parallel PRs prepending entries
+  now merge clean, keeping both sides (the resolution that was always done by
+  hand). Validated in a scratch repo: two branches adding entries under the
+  same new date heading merge without conflict or duplicated heading. Union is
+  line-based -> log.md only; `todo.md`/`index.md` see deletions, union would
+  resurrect them. After a union merge, scan the top section once — same-line
+  edits can still duplicate lines (mechanical dedupe, MD024 catches dup
+  headings on next lint).
+* `delegate` sub-agent orchestration skill (issue #107): new `.AGENTS/skills/delegate/`
+  plus an AGENTS.md Skills bullet. Codifies the fix for sub-agents re-deriving the repo
+  context every milestone — map once via one Explore/Plan pass and paste the brief
+  (paths + type signatures) into each implementer prompt, sub-agents trust
+  `docs/index.md`'s path table over globbing, verify a worktree agent's base is the
+  feature branch (not stale `main`) at handoff, restate AGENTS.md criticals per prompt.
+  Process-only; no engine change.
+* Menu mode (todo 8.1.2): engine-owned menu-mode infrastructure. New
+  `opensky/UI/MenuStack.swift` (pure duplicate-free push/pop stack of opaque
+  `MenuIdentifier`s; empty = gameplay, non-empty = menu mode; pop-on-empty and
+  duplicate-push edge cases decided) and `opensky/UI/MenuMode.swift`
+  (`MenuModeController` source of truth, `MenuInputConsumer` protocol,
+  `MenuInputEvent`, `InputRoute`). Input-capture switch in
+  `opensky/GameMetalView.swift`: menu mode stops feeding `CameraInputState` and
+  maps NSEvents to menu events. World-sim pause via new
+  `opensky/Rendering/FrameSimClock.swift` (pausable wall-clock delta that keeps
+  its mark fresh while paused -> no time jump on resume); `Renderer.worldSimPaused`
+  gates the camera/weather/animation/particle/precipitation advance while the
+  frame still renders. UI-toolkit-agnostic for the coming SWF menu layer;
+  `GameViewController` wires it (no menu opens it yet -- 8.1.4 adds the UI Lab
+  trigger). Tests: `MenuStackTests`, `MenuModeControllerTests`,
+  `FrameSimClockTests`, Metal-gated `RendererMenuModeTests`. Design:
+  [menu mode](/engine/menu-mode.md).
 * Main-app UI framework (issue #98, PR 1): shared inspector-panel framework under
   `opensky/Shell/` — `DestinationRegistry` (single registration point, replaces the
   former four per-destination touch-points), `InspectorPanelViewController` /
