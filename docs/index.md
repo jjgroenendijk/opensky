@@ -118,7 +118,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 ## Meta
 
-* [Testing setup](/testing.md) - test targets, make entrypoints, headless
-  unit-test host, fixture policy.
+* [Testing setup](/testing.md) - test targets, make entrypoints, real-data
+  suites + watchdog, result reporting, machine-specific quirks.
 * [Roadmap](/todo.md) - active M8 work, dependency-ordered milestones, acceptance gates,
   app-sidebar verification paths.

@@ -36,13 +36,24 @@ struct ScratchProbeTests {
     @Test(.enabled(if: Self.dataRoot != nil))
     func probe() throws {
         let root = try #require(Self.dataRoot)
-        // ... hypothesis check here; print() output lands in the xcodebuild log
+        // ... hypothesis check here. `print()` shows in the LIVE xcodebuild
+        // console but is NOT in the .xcresult, so `make test-report` and any
+        // backgrounded/polled run lose it. To capture a result, write an
+        // artifact to logs/ (PNG, sidecar .txt) or #expect on a value.
     }
 }
 ```
 
 Run: `OPENSKY_DATA_ROOT="/Volumes/data/steam/steamapps/common/Skyrim Special Edition" \
-make test-one T=ScratchProbeTests`. Failures detail: `make test-report`.
+make test-one T=ScratchProbeTests`. Failures detail (names + messages from the
+result bundle): `make test-report`.
+
+For a real-data test that must actually execute against the install: plain
+`xcodebuild test` does NOT forward `OPENSKY_DATA_ROOT` to the unit-test host, so
+env-gated tests silently skip. Use `make realtest T='Class/method()'` — it
+injects the data root the reliable way and runs under the RSS watchdog
+(`tools/realtest.sh`). The selector must resolve to exactly one fully-qualified
+test.
 
 ## Rules that prevent the usual compile failures
 
@@ -67,6 +78,12 @@ the repo:
    optional local temp capture for human review (`RendererOffscreenTests`).
 2. `make run-cli ARGS="render --out logs/frame.png ..."` (see `docs/tools/cli.md`).
 3. Ask the user to look at the running app (they see launched apps).
+
+If a real-data XCTest host hangs at 0% CPU before running (a known flake on this
+machine — see `docs/testing.md`), do not keep killing and retrying it: move the
+one-off check into `openskycli` and drive it with `make run-cli`. The CLI is the
+first-choice real-data probe surface here, not a fallback. UI tests blocking on
+"enabling automation mode" is the same TCC class — run `make test-perms` once.
 
 ## Prefer openskycli when it already covers the question
 

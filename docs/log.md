@@ -4,6 +4,27 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-23
 
+* Dev-loop friction fixes from mining past agent transcripts (issue #100).
+  Testing: `make test`/`test-one` write fixed result bundles under
+  `build/test-results/`; `make test-report` (`tools/test-report.sh`) now names
+  failing tests + messages and waits for bundle finalization instead of
+  misreporting a half-written `.xcresult`; new `make realtest T='Class/method()'`
+  wraps `tools/realtest.sh` (data-root injection + RSS watchdog); `make test-ui`
+  (`tools/test-ui.sh`) turns the "enabling automation mode" TCC hang into an
+  actionable message; new `make test-perms` (`tools/test-perms.sh`) guides the
+  one-time Full Disk Access / Automation grants; pre-push hook now also runs
+  `make cli` to catch app/CLI target-membership regressions. Lint: `opening_brace`
+  set to ignore multi-line conditions/signatures/headers so SwiftFormat and
+  SwiftLint stop fighting; markdownlint MD060 relaxed to `style: consistent`
+  (no forced pipe alignment); AGENTS.md gains a strict-lint threshold cheat-sheet.
+  Skills: `format-parser` records the UESP-403 curl recipe + xEdit `dev-4.1.6`
+  branch; `probe` corrects the `print()`-capture claim and points at
+  `make realtest`/CLI-first; `commit` drops the stale `make preview` and adds the
+  worktree-holds-main + CI-wait gotchas; `docs-wiki` notes the table/emphasis
+  markdown traps. AGENTS.md: explicit rule that rendered game-asset screenshots
+  go to `logs/`, never a tracked path. `docs/testing.md` rewritten to match the
+  current suite. Report: no committed report — findings live in the PR + filed
+  follow-up issues.
 * App logo added: original "North Peak" mark (twin peaks + frost north star,
   white on black) as `opensky/Branding/opensky-logo.svg`; `make icon`
   (`tools/gen-appicon.sh`, librsvg) renders the macOS AppIcon set;
