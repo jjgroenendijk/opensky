@@ -41,10 +41,14 @@ be able to select/force/toggle/inspect the behavior without a CLI command.
   - `worldInspector` — a controls panel shown in the leading 300pt slot beside
     the always-live game view.
   - `fullContent` — a controller that covers the content area (Asset Browser).
-    The MTKView stays attached underneath and keeps drawing at a low rate
-    (10 fps covered / 60 live, `ShellContentViewController`) — never hidden,
-    never paused — so the per-frame-driven streamer stays warm and returning
-    to a world destination is instant.
+    The MTKView stays attached underneath, but while covered it is hidden and
+    its draw loop paused (`ShellContentViewController.setGameCovered`), and the
+    full-content slot draws an opaque themed backdrop. Owner decision
+    2026-07-23: the world must not render behind the Asset Browser. This
+    reverses the original issue #98 low-rate choice (10 fps covered so the
+    streamer stayed warm); uncovering resumes the draw loop and the streamer
+    re-warms on the next frame. Pinned by
+    `ShellContentCoverTests/coveredGameViewIsHiddenAndPaused()`.
 - Full-content controllers are built lazily from their registry factory, which
   receives a `FullContentContext` (data root + startup error), and cached
   forever by the shell — catalog/filter/selection survive destination changes.
@@ -114,6 +118,30 @@ content. Never touch the shell view controllers to add a destination.
 - Control-state convention: give each knob a separate enable / force / freeze /
   inspect / reset action and a live numeric readout, rather than one overloaded
   control.
+
+## Theme
+
+The shell is a committed dark, Skyrim-inspired design (owner request
+2026-07-23). All tokens live in `opensky/Shell/Theme.swift`; the app forces
+dark appearance at launch (`AppDelegate`), so system controls sit on the same
+palette in every environment.
+
+- Surfaces: `Theme.windowBackground` (window + full-content backdrop),
+  `Theme.panelBackground` (inspector-panel slot), `Theme.raisedBackground`
+  (text/image wells).
+- Ink: `Theme.parchment` (primary), `Theme.parchmentDim` (readouts/status),
+  `Theme.gold` (accent — also the asset-catalog `AccentColor`, so selection
+  and focus tint match), `Theme.divider` (hairlines via `Theme.hairline()`).
+- Type: headings/section titles go through
+  `Theme.headingAttributed(_:size:color:)` — uppercase, tracked, in
+  `Theme.displayFont` (macOS-bundled Futura Condensed Medium with a system
+  fallback; nothing is shipped, so the fallback path is a hard requirement and
+  is unit-tested in `ThemeTests`).
+- Rules: never hand-pick colors or heading fonts in panels or shell code — take
+  them from `Theme`. `PanelComponents.heading`/`caption`/`statsLabel` and
+  `CollapsibleSectionView` already apply the treatment, so sectioned panels get
+  the look for free. Legal boundary as everywhere: no Bethesda fonts, art, or
+  extracted UI assets; the vibe comes from palette + typography only.
 
 ## Accessibility-id contract
 

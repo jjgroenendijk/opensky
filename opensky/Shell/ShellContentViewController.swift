@@ -1,10 +1,11 @@
 // Content area of the unified shell (issue #98 PR 2). Three layers, back to
-// front: the always-live game view (never leaves the hierarchy, so rendering +
-// streaming keep running), a leading 300pt inspector-panel slot, and a
-// full-bleed full-content slot that merely covers the game view for Library
-// destinations. While covered, the MTKView drops to a low frame rate instead
-// of hiding or pausing — the streamer is per-frame driven, so streaming stays
-// warm and returning to a world destination is instant.
+// front: the game view (stays in the hierarchy so its renderer + streamer
+// survive destination changes), a leading 300pt inspector-panel slot, and a
+// full-bleed full-content slot covering the game view for Library
+// destinations. While covered, the MTKView is hidden and its draw loop paused
+// (owner decision 2026-07-23, reversing the issue #98 low-rate choice): the
+// world must not render behind the Asset Browser. Uncovering resumes the loop;
+// the streamer re-warms on the next drawn frame.
 
 import AppKit
 import MetalKit
@@ -18,14 +19,6 @@ final class ShellContentViewController: NSViewController {
     private var panelWidth: NSLayoutConstraint?
     private var currentPanelID: String?
     private var fullContentController: NSViewController?
-
-    /// Draw rates for the live vs covered game view. Covered keeps a low-rate
-    /// draw loop (issue #98 decision: no isHidden, no pause) so the per-frame
-    /// streamer hook keeps running while the Asset Browser is frontmost.
-    private enum FrameRate {
-        static let live = 60
-        static let covered = 10
-    }
 
     /// Registered world-inspector panels, keyed + ordered by registry id;
     /// rebuilt when a Settings reload swaps the game controller.
@@ -51,9 +44,23 @@ final class ShellContentViewController: NSViewController {
         panelSlot.translatesAutoresizingMaskIntoConstraints = false
         gameSlot.translatesAutoresizingMaskIntoConstraints = false
         fullContentSlot.translatesAutoresizingMaskIntoConstraints = false
+        panelSlot.wantsLayer = true
+        panelSlot.layer?.backgroundColor = Theme.panelBackground.cgColor
+        let panelEdge = Theme.hairline()
+        panelSlot.addSubview(panelEdge)
+        NSLayoutConstraint.activate([
+            panelEdge.topAnchor.constraint(equalTo: panelSlot.topAnchor),
+            panelEdge.bottomAnchor.constraint(equalTo: panelSlot.bottomAnchor),
+            panelEdge.trailingAnchor.constraint(equalTo: panelSlot.trailingAnchor),
+            panelEdge.widthAnchor.constraint(equalToConstant: 1)
+        ])
         view.addSubview(panelSlot)
         view.addSubview(gameSlot)
         view.addSubview(fullContentSlot)
+        // Opaque backdrop: full-content destinations fully replace the world
+        // view, never float over it.
+        fullContentSlot.wantsLayer = true
+        fullContentSlot.layer?.backgroundColor = Theme.windowBackground.cgColor
         fullContentSlot.isHidden = true
 
         let width = panelSlot.widthAnchor.constraint(equalToConstant: 0)
@@ -220,7 +227,8 @@ final class ShellContentViewController: NSViewController {
 
     private func setGameCovered(_ covered: Bool) {
         guard let mtkView = gameViewController.view as? MTKView else { return }
-        mtkView.preferredFramesPerSecond = covered ? FrameRate.covered : FrameRate.live
+        mtkView.isPaused = covered
+        mtkView.isHidden = covered
     }
 
     override func viewDidAppear() {

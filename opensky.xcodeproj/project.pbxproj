@@ -61,6 +61,7 @@
 				"Shell/Sections/TerrainLODSection.swift",
 				"Shell/Sections/WeatherSection.swift",
 				"Shell/ShellContentViewController.swift",
+				"Shell/Theme.swift",
 				UILabPanelViewController.swift,
 			);
 			target = 5AC1000130001093001700A1 /* openskycli */;
