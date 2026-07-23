@@ -1,0 +1,7 @@
+# docs/log.md is append-only, newest-first history: when parallel PRs both
+# prepend entries, keeping both sides is always the right resolution. The
+# built-in union merge driver does that automatically (issue #108).
+# Union is line-based and can reorder/duplicate lines when both sides edit
+# the SAME lines — safe only for append-only files. Do not add todo.md or
+# index.md here: they see deletions/rewrites, and union would resurrect them.
+docs/log.md merge=union
