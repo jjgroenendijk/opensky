@@ -4,6 +4,12 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-23
 
+* Docs link check automated (issue #102): `tools/check-docs-links.sh` resolves
+  bundle-absolute `[x](/path.md)` links against `docs/`, reports file:line per
+  miss, logs to `logs/docs-links.log`. Wired into pre-commit
+  (`.githooks/pre-commit/55-docs-links.sh`, runs on any staged docs/ path),
+  `make check` (`docs-links` target), and `ci.yml`. Policy: `log.md` skipped —
+  append-only history may reference removed docs.
 * Roadmap rescoped for the SWF port (issue #99): M8 now phases vanilla SWF UI —
   M8.1 shell foundation (menu mode, strings), M8.2 SWF parse + static render
   (container, shapes/bitmaps, fonts/text, display list), M8.3 AS2 feasibility +
