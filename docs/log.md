@@ -4,6 +4,11 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-23
 
+* App logo added: original "North Peak" mark (twin peaks + frost north star,
+  white on black) as `opensky/Branding/opensky-logo.svg`; `make icon`
+  (`tools/gen-appicon.sh`, librsvg) renders the macOS AppIcon set;
+  `Contents.json` moved from iOS-universal template to `mac` idiom.
+  Rationale + legal: [app logo](/decisions/app-logo.md).
 * Docs link check automated (issue #102): `tools/check-docs-links.sh` resolves
   bundle-absolute `[x](/path.md)` links against `docs/`, reports file:line per
   miss, logs to `logs/docs-links.log`. Wired into pre-commit

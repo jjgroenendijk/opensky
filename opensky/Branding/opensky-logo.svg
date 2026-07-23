@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- OpenSky mark: "North Peak" — twin peaks under a frost north star.
+       Original geometry; no Bethesda imagery. macOS icon canvas: 1024 grid,
+       824-pt rounded tile centered (Apple icon template proportions). -->
+  <g transform="translate(100 100) scale(1.609375)">
+    <rect width="512" height="512" rx="115" fill="#000000"/>
+    <line x1="112" y1="376" x2="400" y2="376" stroke="#EAEDF0" stroke-width="10"/>
+    <polyline points="128 376 244 176 320 300" fill="none" stroke="#EAEDF0" stroke-width="22"/>
+    <polyline points="236 376 318 240 400 376" fill="none" stroke="#EAEDF0" stroke-width="22"/>
+    <path d="M372 118 L386 152 L372 186 L358 152 Z" fill="#A8CBDE"/>
+  </g>
+</svg>
