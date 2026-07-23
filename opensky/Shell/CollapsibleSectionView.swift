@@ -26,7 +26,11 @@ final class CollapsibleSectionView: NSView {
         disclosure.translatesAutoresizingMaskIntoConstraints = false
 
         let titleLabel = NSTextField(labelWithString: title)
-        titleLabel.font = PanelMetrics.captionFont
+        titleLabel.attributedStringValue = Theme.headingAttributed(
+            title,
+            size: 12,
+            color: Theme.gold
+        )
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
 
         let header = NSStackView(views: [disclosure, titleLabel])

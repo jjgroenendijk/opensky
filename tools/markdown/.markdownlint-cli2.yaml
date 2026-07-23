@@ -24,5 +24,6 @@ ignores:
   - .build
   - build
   - DerivedData
+  - logs            # gitignored scratch output; agents drop free-form notes here
   - "**/._*"        # macOS AppleDouble junk on this volume
   - "._*"

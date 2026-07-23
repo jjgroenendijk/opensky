@@ -139,7 +139,11 @@ extension AppSidebarViewController: NSOutlineViewDelegate {
                 text: group.group.section.title,
                 symbolName: nil
             )
-            cell.textField?.stringValue = group.group.section.title
+            cell.textField?.attributedStringValue = Theme.headingAttributed(
+                group.group.section.title,
+                size: 11,
+                color: Theme.gold
+            )
             return cell
         case let destination as DestinationItem:
             let descriptor = destination.descriptor
@@ -148,6 +152,8 @@ extension AppSidebarViewController: NSOutlineViewDelegate {
                 text: descriptor.title,
                 symbolName: descriptor.symbolName
             )
+            cell.textField?.textColor = Theme.parchment
+            cell.imageView?.contentTintColor = Theme.gold
             cell.setAccessibilityIdentifier(descriptor.sidebarIdentifier)
             cell.textField?.setAccessibilityIdentifier(descriptor.sidebarIdentifier)
             return cell

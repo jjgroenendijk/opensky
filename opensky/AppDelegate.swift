@@ -30,6 +30,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private(set) var virtualFileSystem: VirtualFileSystem?
 
     func applicationDidFinishLaunching(_: Notification) {
+        // The shell is a committed dark design (Theme.swift): forcing dark
+        // appearance keeps every system control on the charcoal palette
+        // regardless of the user's system setting.
+        NSApplication.shared.appearance = NSAppearance(named: .darkAqua)
         NSApplication.shared.mainMenu = makeMainMenu()
 
         // Unit-test host never reaches here (OpenSkyApp.main skips the
@@ -54,6 +58,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.contentViewController = shell
         window.toolbarStyle = .unifiedCompact
         window.toolbar = shell.makeToolbar()
+        window.titlebarAppearsTransparent = true
+        window.backgroundColor = Theme.windowBackground
         window.center()
 
         let controller = NSWindowController(window: window)

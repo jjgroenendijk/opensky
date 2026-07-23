@@ -28,10 +28,10 @@ enum PanelMetrics {
 /// Stateless factories for the labels, rows, and controls panels share. Extract
 /// only what was already duplicated across panels — keep it small.
 enum PanelComponents {
-    /// Bold panel/section title.
+    /// Panel/section title in the themed uppercase display treatment.
     static func heading(_ text: String) -> NSTextField {
         let label = NSTextField(labelWithString: text)
-        label.font = PanelMetrics.headingFont
+        label.attributedStringValue = Theme.headingAttributed(text, size: 15)
         return label
     }
 
@@ -39,6 +39,7 @@ enum PanelComponents {
     static func caption(_ text: String) -> NSTextField {
         let label = NSTextField(labelWithString: text)
         label.font = PanelMetrics.captionFont
+        label.textColor = Theme.parchment
         return label
     }
 
@@ -55,7 +56,7 @@ enum PanelComponents {
     static func statsLabel(identifier: String) -> NSTextField {
         let label = NSTextField(wrappingLabelWithString: "")
         label.font = PanelMetrics.monoFont
-        label.textColor = .secondaryLabelColor
+        label.textColor = Theme.parchmentDim
         label.setAccessibilityIdentifier(identifier)
         label.widthAnchor.constraint(equalToConstant: PanelMetrics.contentWidth).isActive = true
         return label

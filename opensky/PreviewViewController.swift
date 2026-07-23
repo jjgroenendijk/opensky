@@ -110,6 +110,7 @@ final class PreviewViewController: NSViewController {
         scroll.setContentHuggingPriority(.defaultLow, for: .vertical)
 
         statusLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        statusLabel.textColor = Theme.parchmentDim
         statusLabel.lineBreakMode = .byTruncatingTail
         statusLabel.stringValue = ""
         statusLabel.setAccessibilityIdentifier("AssetStatus")
@@ -130,6 +131,10 @@ final class PreviewViewController: NSViewController {
 
         infoTextView?.isEditable = false
         infoTextView?.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
+        infoTextView?.backgroundColor = Theme.raisedBackground
+        infoTextView?.textColor = Theme.parchment
+        imageView.wantsLayer = true
+        imageView.layer?.backgroundColor = Theme.raisedBackground.cgColor
 
         let stack = NSStackView(views: [imageView, infoScroll])
         stack.orientation = .vertical

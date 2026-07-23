@@ -204,7 +204,8 @@ final class GameViewController: NSViewController {
     private func show(message: String) {
         let label = NSTextField(wrappingLabelWithString: message)
         label.alignment = .center
-        label.textColor = .white
+        label.font = Theme.displayFont(size: 16)
+        label.textColor = Theme.parchment
         label.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(label)
         NSLayoutConstraint.activate([

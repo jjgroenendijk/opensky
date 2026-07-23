@@ -4,6 +4,21 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-23
 
+* App shell restyled with a Skyrim-inspired dark theme (owner request): new
+  `opensky/Shell/Theme.swift` (charcoal surfaces, parchment ink, muted gold
+  accent + asset-catalog `AccentColor`, uppercase tracked headings in the
+  macOS-bundled Futura Condensed Medium with system fallback — no Bethesda
+  assets). Dark appearance forced at launch; sidebar group headers and
+  destination rows, panel headings/captions/readouts, collapsible-section
+  titles, Asset Browser wells, and the in-window startup message all take the
+  treatment; inspector-panel slot gets a themed background + gold hairline
+  edge. Covered-game behavior reversed (owner decision, was issue #98
+  low-rate): a full-content destination (Asset Browser) now hides and pauses
+  the MTKView behind an opaque backdrop — the world no longer renders behind
+  it; uncovering resumes the loop. Tests: `ThemeTests` (font fallback, heading
+  treatment, hairline) + `ShellContentCoverTests` (hidden + paused while
+  covered, restored after). Doc: [app-ui](/tools/app-ui.md) theme section +
+  updated shell anatomy.
 * M8.1 UI shell foundation accepted (item 8.1.4): `Developer > UI Lab` is the
   durable verification surface for the whole foundation. Menu-mode preview
   (Push menu / Pop / Clear buttons, ids `UIMenuPushControl` / `UIMenuPopControl`
