@@ -106,6 +106,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   (6,-2) as the 2.7/2.9 target; probe ranking, MODL `meshes\` prefix rule.
 * [Metal shader tooling](/decisions/metal-tooling.md) - clang-format for .metal,
   compiler warnings-as-errors as the linter; documented exception to per-language rule.
+* [App logo + icon pipeline](/decisions/app-logo.md) - original "North Peak" SVG mark,
+  `make icon` renders AppIcon set via rsvg-convert; legal rationale.
 
 ## Tools
 

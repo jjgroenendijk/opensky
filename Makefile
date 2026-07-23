@@ -21,7 +21,8 @@ METAL_FILES     := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
 .DEFAULT_GOAL := help
 .PHONY: help bootstrap hooks format format-check lint check fix swift-format \
         swift-lint metal-format md-format md-lint sh-lint docs-links build cli probe test \
-        test-ui test-one test-report realtest test-perms app-path cli-path run-cli install clean
+        test-ui test-one test-report realtest test-perms app-path cli-path run-cli \
+        install clean icon
 
 help: ## List available targets
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -132,6 +133,9 @@ cli-path: ## Print built openskycli path ($(CONFIG))
 
 run-cli: cli ## Build + run openskycli: make run-cli ARGS="vfs ls"
 	@"$$($(MAKE) --no-print-directory cli-path)" $(ARGS)
+
+icon: ## Regenerate AppIcon PNGs from opensky/Branding/opensky-logo.svg
+	@./tools/gen-appicon.sh
 
 install: ## Build Release app (arm64) + copy to /Applications
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration Release \
