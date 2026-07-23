@@ -19,6 +19,15 @@ are the contract; this is the how).
    uncertainty in code + doc.
 2. Never guess byte layouts. Never consult Bethesda code/decompiles. Reimplement
    from spec + observed behavior only.
+3. Fetching the specs (these bite every session otherwise):
+   - UESP (`en.uesp.net`, `ck.uesp.net`) blocks the WebFetch tool with HTTP 403.
+     Go straight to `curl -sL -A 'Mozilla/5.0' '<url>'`. If `ck.uesp.net` still
+     refuses, fetch it through the Wayback Machine (`web.archive.org`).
+   - xEdit source: the GitHub default branch is `dev-4.1.6` (not `main`/`dev`);
+     raw-file URLs 404 on the wrong branch. `gh api repos/TES5Edit/TES5Edit` if
+     unsure.
+   - A format already documented in `docs/formats/<name>.md` with its citation is
+     the primary source — trust it; only re-pull upstream to extend past it.
 
 ## Writing it
 

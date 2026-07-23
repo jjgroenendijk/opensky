@@ -83,4 +83,15 @@ cyclomatic_complexity:
 nesting:
   type_level: 2
 
+# SwiftFormat (--wrapconditions before-first, --enable wrapMultilineStatementBraces)
+# breaks a long `if let a, let b, c > 0 {` onto multiple lines and drops the `{`
+# onto its own line. Default opening_brace then flags that brace, so the two
+# formatters fight and the only escape is hand-restructuring the condition. Let
+# SwiftFormat own multi-line condition/signature/header brace placement; still
+# catch same-line offenders like `func abc(){}`.
+opening_brace:
+  ignore_multiline_statement_conditions: true
+  ignore_multiline_function_signatures: true
+  ignore_multiline_type_headers: true
+
 reporter: "xcode"

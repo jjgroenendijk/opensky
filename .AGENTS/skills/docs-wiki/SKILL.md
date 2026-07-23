@@ -37,6 +37,11 @@ change they document.
   history, newest first, ISO-8601 date headings).
 - Links bundle-absolute from `docs/`: `[BSA](/formats/bsa.md)`. Broken links
   tolerated; relationship comes from prose.
+- Tables: pipes need not visually align to the header (config allows consistent
+  style); do not hand-align them. Wrap bare record/field signatures in backticks
+  (`` `NPC_ WNAM` ``) — raw `NPC_ WNAM` trips markdownlint MD037 (parsed as
+  emphasis). Do not start a wrapped prose line with `+`/`-`/`*` (parsed as a list
+  item, MD004). `make format` autofixes most markdown but not these two.
 
 ## Maintenance obligations
 
