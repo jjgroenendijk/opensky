@@ -95,9 +95,6 @@ findings.
 
 ### M8.1 — UI shell foundation
 
-* [ ] 8.1.3 Strings: `Interface/Translations/*_english.txt` parser (UTF-16LE
-      key/value), reusable provider resolving `$`-prefixed keys for HUD + SWF
-      text fields.
 * [ ] 8.1.4 Foundation acceptance: `World > UI Lab` previews menu-mode pause
       behavior + localized strings (long-string/scale cases). Gate: deterministic
       layout/UI-state + pixel-delta tests; docs + log updated.

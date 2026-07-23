@@ -16,6 +16,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   lists, raw FormID -> (plugin, objectID) resolution.
 * [Localized string tables](/formats/strings.md) - .strings/.dlstrings/
   .ilstrings layout, lenient encoding policy, lstring lookup wiring.
+* [UI translation strings](/formats/translation-strings.md) - UTF-16
+  Interface/Translations/*.txt files, $KEY token resolution, label provider.
 * [Record decoders](/formats/records.md) - WRLD/CELL/REFR/STAT field layouts
   and their engine types.
 * [Interior lighting records](/formats/lighting.md) - CELL XCLL/LTMP, LGTM DATA/DALC,
