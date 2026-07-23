@@ -115,6 +115,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         controller.cellProviderFactory = makeCellProviderFactory()
         controller.startupErrorMessage = gameDataErrorMessage
         controller.terrainLODConfigurationStore = terrainLODConfigurationStore
+        // UI Lab localized-strings readout (M8.1.4): merged translation counts
+        // over the located install. Loaded lazily on first readout, not here.
+        if let vfs = virtualFileSystem {
+            controller.localizedLabelsLoader = { LocalizedLabels.load(vfs: vfs) }
+        }
         return controller
     }
 

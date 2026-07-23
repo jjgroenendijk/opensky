@@ -37,7 +37,9 @@ final class GameViewController: NSViewController {
         )
     )
 
-    private var renderer: Renderer?
+    /// Readable by the UI Lab bridge (GameViewControllerUILab.swift); only this
+    /// file assigns it.
+    private(set) var renderer: Renderer?
     var canWriteScreenshot: Bool {
         renderer != nil
     }
@@ -51,9 +53,27 @@ final class GameViewController: NSViewController {
 
     /// Menu-mode source of truth (todo 8.1.2), shared with the input view and
     /// the renderer. Entering menu mode pauses world sim and drops held world
-    /// input; leaving it resumes with no time jump. No menu opens it yet (the
-    /// UI Lab trigger lands in 8.1.4), so it stays in gameplay mode today.
-    private let menuMode = MenuModeController()
+    /// input; leaving it resumes with no time jump. The World > UI Lab preview
+    /// (M8.1.4, via GameViewControllerUILab.swift) is the only trigger until
+    /// real SWF menus land (M8.2).
+    let menuMode = MenuModeController()
+
+    /// Which built-in overlay sample World > UI Lab shows (M8.1.4). Stored here
+    /// because both samples share `Renderer.uiScene`; the UI Lab bridge maps it
+    /// onto the renderer.
+    enum UILabSampleSelection {
+        case none, lab, localized
+    }
+
+    var uiLabSampleSelection: UILabSampleSelection = .none
+
+    /// Builds the merged translation provider over the located install. Set by
+    /// the AppDelegate; nil when game data is missing. The UI Lab bridge
+    /// invokes it once, lazily, caching into `installLocalizedLabels`.
+    var localizedLabelsLoader: (() -> LocalizedLabels)?
+    /// Cache written only by the UI Lab bridge (`resolveInstallLabels`).
+    var installLocalizedLabels: LocalizedLabels?
+    var installLocalizedLabelsResolved = false
 
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))
@@ -406,38 +426,6 @@ extension GameViewController: GrassControlProviding {
             densityCulledInstances: stats.densityCulledInstances,
             frustumCulledInstances: stats.frustumCulledInstances,
             budgetDroppedInstances: stats.budgetDroppedInstances
-        )
-    }
-}
-
-extension GameViewController: UILabControlProviding {
-    var uiOverlayEnabled: Bool {
-        get { renderer?.uiEnabled ?? true }
-        set { renderer?.uiEnabled = newValue }
-    }
-
-    /// UIScene is not Equatable, so sample presence is inferred from emptiness:
-    /// labSample is the only non-empty scene this surface ever assigns.
-    var uiSampleShown: Bool {
-        get { renderer.map { !$0.uiScene.isEmpty } ?? false }
-        set { renderer?.uiScene = newValue ? .labSample : .empty }
-    }
-
-    var uiScale: Float {
-        get { renderer?.uiScale ?? 1 }
-        set {
-            renderer?.uiScale = min(
-                max(newValue, UIScale.range.lowerBound), UIScale.range.upperBound
-            )
-        }
-    }
-
-    var uiSnapshot: UILabControlSnapshot {
-        UILabControlSnapshot(
-            overlayEnabled: uiOverlayEnabled,
-            sampleShown: uiSampleShown,
-            scale: uiScale,
-            stats: renderer?.lastUIDrawStats ?? UIDrawStats()
         )
     }
 }
