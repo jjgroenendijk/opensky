@@ -3,12 +3,12 @@ type: Task List
 title: Roadmap and outstanding work
 description: OpenSky mission roadmap - agent handoff, milestone plan, open questions.
 tags: [meta, roadmap, planning, handoff]
-timestamp: 2026-07-22T00:00:00Z
+timestamp: 2026-07-23T00:00:00Z
 ---
 
 # TODO — roadmap
 
-State as of 2026-07-22. Ordered by mission priority (AGENTS.md): render static world
+State as of 2026-07-23. Ordered by mission priority (AGENTS.md): render static world
 geometry first -> grow toward playable engine.
 
 ## How to continue (agent handoff)
@@ -55,8 +55,8 @@ earlier integration gates. Done milestone leaves this file; history lives in
   exact lifecycle accounting, deterministic frame-delta gate, exterior/interior probes.
 * M7 — living environment. Done 2026-07-22: shadows, weather/sky/wind, shared particles,
   precipitation, grass, app A/B controls + integrated exterior/interior/fly gates.
-* M8 — interaction + UI shell (active): screen-space UI, interaction targeting, HUD, menu mode,
-  settings. Gate: 8.3.3.
+* M8 — interaction + UI shell (active): vanilla SWF UI (SWF parse, static render,
+  AS2 subset — issue #99), menu mode, interaction targeting, HUD, settings. Gate: 8.5.3.
 * M9 — world audio: decode/playback, sound records, positional SFX, ambience, music.
   Voice + lip sync moved to dialogue. Gate: 9.2.4.
 * M10 — mutable world foundation: runtime identity/state, change tracking, native saves,
@@ -75,53 +75,95 @@ earlier integration gates. Done milestone leaves this file; history lives in
 * M17 — dialogue + voice: DIAL/INFO, scenes, dialogue UI/camera, `.fuz`, TRI, `.lip`.
   Gate: 17.6.
 * M18+ — broader gameplay: magic/perks/leveling, crime/factions/services, locks/traps,
-  chargen/map, vanilla-font polish, read-only `.ess` import.
+  chargen/map, read-only `.ess` import.
 
 ## Milestone 8 — interaction + UI shell
 
-Goal: user can inspect and operate the world without CLI knowledge. Establish native
-Metal/AppKit UI, interaction targeting, HUD, menu mode, and settings before scripts
-or quests consume them.
+Goal: user can inspect and operate the world without CLI knowledge, through the
+vanilla game UI. Direction 2026-07-23 (issue #99): port the original Scaleform
+interface — parse + render vanilla `Interface/*.swf` movies via Metal. Earlier
+native-UI decision scrapped (log 2026-07-23); the M8.1.1 screen-space pass
+(glyph atlas, premultiplied alpha, final draws over 3D frame) stays as the
+compositing foundation.
 
-Direction 2026-07-23: port the original game UI — parse + render vanilla
-`Interface/*.swf` Scaleform movies via Metal (issue #99). Earlier native-UI decision
-scrapped; the M8.1.1 screen-space layer stays as compositing infrastructure. M8.1.x
-items below predate this and get rescoped under #99.
+Legal: Adobe SWF File Format Spec is public — reimplement SWF/GFx behavior from
+spec + observation under `format-parser` discipline (synthetic fixtures only).
+No Scaleform SDK code; `.swf` files load from the user's install at runtime like
+all game data. Downstream menu items (M12.5 inventory, M13.4 journal, M17.2
+dialogue) target their vanilla SWF menus; depth follows 8.3.1 feasibility
+findings.
 
-### M8.1 — screen-space UI foundation
+### M8.1 — UI shell foundation
 
 * [ ] 8.1.2 Menu mode: input capture switch, world-sim pause, menu stack push/pop.
 * [ ] 8.1.3 Strings: `Interface/Translations/*_english.txt` parser (UTF-16LE
-      key/value), reusable localized-label provider for HUD + menus.
-* [ ] 8.1.4 UI-foundation acceptance: `Developer > UI Lab` in the main-app sidebar
-      previews primitives, scale presets, long strings, and menu pause behavior.
-      Gate: deterministic layout/UI-state + pixel-delta tests; decision/UI docs +
+      key/value), reusable provider resolving `$`-prefixed keys for HUD + SWF
+      text fields.
+* [ ] 8.1.4 Foundation acceptance: `World > UI Lab` previews menu-mode pause
+      behavior + localized strings (long-string/scale cases). Gate: deterministic
+      layout/UI-state + pixel-delta tests; docs + log updated.
+
+### M8.2 — SWF format + static rendering
+
+* [ ] 8.2.1 SWF container decode: signature/compression (FWS/CWS), header rect/
+      frame fields, tag framing. Cite Adobe SWF spec; synthetic fixtures. Gate:
+      vanilla `Interface/*.swf` sweep accounted (known/unknown tag tally).
+* [ ] 8.2.2 Shapes + bitmaps: DefineShape-DefineShape4 fill/line styles + edge
+      records, tessellation cached per `DefineShape`; DefineBitsLossless/2 +
+      JPEG-variant bitmap decode. Gate: synthetic shape fixtures + vanilla sweep.
+* [ ] 8.2.3 Fonts + text: DefineFont2/3 glyph extraction (incl. `fonts_en.swf`
+      + `fontconfig.txt` mapping — absorbs old M18.F), DefineText/DefineEditText
+      static content through the M8.1.1 glyph-atlas path; system-font fallback kept.
+* [ ] 8.2.4 Display list render: PlaceObject2/3 depth/matrix/color transform ->
+      per-draw uniforms, stencil for clip layers, drawn through the M8.1.1
+      screen-space pass over the 3D frame.
+* [ ] 8.2.5 Static-render acceptance: frame-1 display list of selected vanilla
+      menus (e.g. cursor, book, loading) renders correctly offscreen + in-app;
+      `World > UI Lab` selects a movie + shows tag/draw stats. Gate: pixel-delta
+      evidence + sweep accounting; docs (`formats/swf.md`, `rendering/ui.md`) +
       log updated.
 
-### M8.2 — interaction + HUD
+### M8.3 — AS2 runtime subset
 
-* [ ] 8.2.1 Interaction targeting: use-key raycast target from walk mode,
+* [ ] 8.3.1 Feasibility investigation: inventory DoAction/DoInitAction opcodes +
+      GFx extensions vanilla menus actually use; phased-subset plan + decision
+      doc (`decisions/swf-as2-scope.md`). Gate: opcode/API coverage tally
+      documented; scrapped decision's "full second VM project" risk answered
+      with phasing.
+* [ ] 8.3.2 Minimal AS2 interpreter: opcode subset from 8.3.1 sufficient to
+      init + drive selected menus; engine<->movie invoke bridge (GFx-style);
+      unimplemented ops/APIs -> logged no-op + tally.
+* [ ] 8.3.3 Runtime acceptance: one vanilla menu runs interactively (open,
+      navigate, close) on the AS2 subset; `World > UI Lab` exposes movie state,
+      invoke log, op tally. Gate: deterministic UI-state + pixel evidence;
+      docs/log updated.
+
+### M8.4 — interaction + HUD
+
+* [ ] 8.4.1 Interaction targeting: use-key raycast target from walk mode,
       engine-owned interaction action/event, record name + action-label resolution.
       Existing doors use the same path. Papyrus OnActivate subscribes later in M11.
-* [ ] 8.2.2 HUD elements: crosshair, health/magicka/stamina bars (static values
-      before combat), compass + markers, activation prompt ("Open <door name>").
-* [ ] 8.2.3 HUD acceptance: `World > HUD & Interaction` exposes target debug,
+* [ ] 8.4.2 HUD via vanilla `hudmenu.swf`: crosshair, health/magicka/stamina
+      bars (static values before combat), compass + markers, activation prompt
+      ("Open <door name>") driven through the engine->movie bridge.
+* [ ] 8.4.3 HUD acceptance: `World > HUD & Interaction` exposes target debug,
       prompt preview, compass markers, scale, and element toggles. Gate: walk-mode
       numeric pixel delta with live door prompt; targeting tests + local visual check;
       docs/log updated.
 
-### M8.3 — system menu + durable verification surface
+### M8.5 — system menu + durable verification surface
 
-* [ ] 8.3.1 System menu: resume/settings/quit; data root + audio-volume placeholders
-      surfaced. Later M9 binds live audio categories.
-* [ ] 8.3.2 Sidebar verification convention: separate enable, force, freeze/pause,
+* [ ] 8.5.1 System menu: resume/settings/quit; data root + audio-volume placeholders
+      surfaced; vanilla menu movie where the AS2 subset suffices (per 8.3.1).
+      Later M9 binds live audio categories.
+* [ ] 8.5.2 Sidebar verification convention: separate enable, force, freeze/pause,
       inspect, and reset actions; live numeric state + stable accessibility IDs;
       scroll/layout tests. Existing destinations extend in place. Each milestone
       records its exact main-app sidebar path + deterministic A/B evidence at acceptance.
-* [ ] 8.3.3 Milestone acceptance: launch app -> select World -> enter walk mode ->
-      inspect live interaction/HUD -> pause -> change a setting -> resume, without
-      CLI. Gate: deterministic UI-state + pixel-delta evidence; docs/log/todo updated;
-      review M9.
+* [ ] 8.5.3 Milestone acceptance: launch app -> select World -> enter walk mode ->
+      inspect live vanilla-SWF interaction/HUD -> pause -> change a setting ->
+      resume, without CLI. Gate: deterministic UI-state + pixel-delta evidence;
+      docs/log/todo updated; review M9.
 
 ## Milestone 9 — world audio
 
@@ -262,9 +304,10 @@ ARMO/ARMA types. Format work follows `format-parser` discipline.
       state.
 * [ ] 12.4 Equipment: equip/unequip armor + weapon on player actor, slot masking +
       geometry reuse from M5, hand attachment, animation-safe palette updates.
-* [ ] 12.5 Inventory + barter UI: native item/container views, sort/filter/detail,
-      weight + gold, minimal buy/sell against a dev-selected merchant inventory.
-      Service/faction restrictions wait for M18+.
+* [ ] 12.5 Inventory + barter UI: vanilla SWF inventory/container/barter menus
+      (depth per 8.3.1 feasibility), sort/filter/detail, weight + gold, minimal
+      buy/sell against a dev-selected merchant inventory. Service/faction
+      restrictions wait for M18+.
 * [ ] 12.6 Milestone acceptance: walk to a loose item/container, pick up, equip,
       transfer, buy/sell, save/load, and see world + actor state preserved.
       `World > Inventory & Equipment` exposes inventory grants, selected merchant,
@@ -415,13 +458,8 @@ runtime evidence clarifies scope. Candidate order:
 * Save migration: read-only `.ess` import after native-save state coverage is broad
   enough to map imported changes. Never `.ess` write.
 
-### M18.F — vanilla fonts (optional UI polish; never a gameplay gate)
-
-* [ ] 18.F.1 SWF font parse: DefineFont2/3 glyph extraction from `fonts_en.swf`
-      (Adobe SWF spec is public), `fontconfig.txt` mapping. Extraction only — no
-      movie playback.
-* [ ] 18.F.2 Acceptance: HUD/journal/dialogue render with vanilla glyphs,
-      system-font fallback kept; `Developer > UI Lab` can compare fonts; docs updated.
+M18.F vanilla fonts folded into M8.2.3 (SWF font decode is core UI work now,
+not polish).
 
 ## Tooling / meta / open questions
 

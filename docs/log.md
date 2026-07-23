@@ -4,6 +4,12 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-23
 
+* Roadmap rescoped for the SWF port (issue #99): M8 now phases vanilla SWF UI —
+  M8.1 shell foundation (menu mode, strings), M8.2 SWF parse + static render
+  (container, shapes/bitmaps, fonts/text, display list), M8.3 AS2 feasibility +
+  minimal runtime subset, M8.4 HUD via `hudmenu.swf`, M8.5 system menu +
+  acceptance (gate now 8.5.3). M18.F vanilla fonts folded into 8.2.3; downstream
+  menu items (M12.5 inventory) retarget vanilla SWF menus. [todo](/todo.md).
 * Game-UI direction reversed (owner decision): port vanilla `Interface/*.swf`
   Scaleform UI, rendered via Metal — issue #99. `decisions/ui-approach.md`
   (native Metal/AppKit, no Scaleform) removed; older log/todo links to it are
