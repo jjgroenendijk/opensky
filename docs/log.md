@@ -4,6 +4,20 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-23
 
+* Main-app UI framework (issue #98, PR 1): shared inspector-panel framework under
+  `opensky/Shell/` — `DestinationRegistry` (single registration point, replaces the
+  former four per-destination touch-points), `InspectorPanelViewController` /
+  `PanelSectionViewController` base classes, `PanelComponents` + `PanelMetrics` control
+  vocabulary, `InspectionTicker` readout lifecycle, `CollapsibleSectionView` (persisted
+  expand state). The Environment panel (`EnvironmentPanelViewController` + its five control
+  extensions) is decomposed into seven standalone sections (shadows, animation, weather,
+  particles, precipitation, grass, distant LOD); the old aggregate readout splits per
+  section. UI Lab rebased onto the framework. `WorldDestination` enum removed (registry ids
+  replace it). New tests: `PanelFrameworkTests`, `DestinationRegistryTests` (pins the
+  accessibility-id contract as literals while `make test-ui` is blocked). Guidance +
+  placement rules: [app-ui](/tools/app-ui.md) + the `app-ui` skill, referenced from
+  AGENTS.md. Provider-protocol + 2 Hz-poll renderer bridge unchanged. The unified-sidebar
+  shell redesign follows in PR 2.
 * Dev-loop friction fixes from mining past agent transcripts (issue #100).
   Testing: `make test`/`test-one` write fixed result bundles under
   `build/test-results/`; `make test-report` (`tools/test-report.sh`) now names

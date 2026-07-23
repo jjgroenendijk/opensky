@@ -64,6 +64,9 @@ this contract keeps only the non-negotiable core:
   in the same commit as the change they document.
 - `probe` — running engine code against the real install; scratch-test template + render
   verification paths. Core: probes never land in commits.
+- `app-ui` — adding/changing main-app dev UI (sidebar destinations, control panels). Core:
+  register via `DestinationRegistry` (never hand-wire the shell), build panels from the
+  `Shell/` base classes + `PanelComponents`, accessibility ids are the UI-test API.
 
 ## Environment & tech stack
 
@@ -200,6 +203,8 @@ If a machine can check a rule, do not rely on people remembering it.
   inspector. Every milestone acceptance records the exact sidebar path used.
 - App verification supplements unit tests, probes, benchmarks, and offscreen evidence; it
   does not replace them.
+- Framework + placement rules (where a new item goes, how to register + build a panel) live
+  in `docs/tools/app-ui.md`; load the `app-ui` skill before app-shell UI work.
 
 ## Writing style (agent output, docs, comments, commit bodies)
 

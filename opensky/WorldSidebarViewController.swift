@@ -1,10 +1,10 @@
-// World-mode shell (M7.1.2): a collapsible source-list sidebar of
-// WorldDestinations beside the always-live World MTKView. Selecting a
-// destination reveals its controls panel without ever removing the game view
-// from the hierarchy, so rendering + streaming keep running. First destination
-// is Environment (sun-shadow controls); future milestones append to
-// WorldDestination and swap the detail panel. AppKit-programmatic to match the
-// codebase (no storyboard).
+// World-mode shell (M7.1.2): a collapsible source-list sidebar of world
+// destinations beside the always-live World MTKView. Selecting a destination
+// reveals its controls panel without ever removing the game view from the
+// hierarchy, so rendering + streaming keep running. Destinations come from the
+// shared DestinationRegistry (issue #98) — adding one never touches this shell.
+// AppKit-programmatic to match the codebase (no storyboard). The unified-sidebar
+// redesign (issue #98 PR 2) replaces this World-only shell.
 
 import AppKit
 
@@ -41,9 +41,8 @@ final class WorldSidebarViewController: NSSplitViewController {
         addSplitViewItem(contentItem)
         splitView.dividerStyle = .thin
 
-        content.wireProvider()
-        sidebarList.onSelect = { [weak self] destination in
-            self?.content.showDestination(destination)
+        sidebarList.onSelect = { [weak self] id in
+            self?.content.showDestination(id: id)
         }
         // Default-select the first destination so the surface + its controls
         // are visible on entry (and reachable by UI tests without navigation).
@@ -51,41 +50,41 @@ final class WorldSidebarViewController: NSSplitViewController {
     }
 }
 
-/// A destination controls panel with a 2 Hz live readout the content area can
-/// start/stop as the panel is revealed or the World view leaves screen.
-protocol WorldInspectorPanel: NSViewController {
-    func startInspecting()
-    func stopInspecting()
-}
-
-extension EnvironmentPanelViewController: WorldInspectorPanel {}
-extension UILabPanelViewController: WorldInspectorPanel {}
-
 /// Detail area: the live World view with an optional leading controls panel.
 /// The MTKView never leaves the hierarchy; the panel slot collapses to zero
-/// width when no destination is selected. Each destination owns its own panel;
-/// they stack in a shared leading slot and only the active one is visible.
+/// width when no destination is selected. Each destination owns its own panel
+/// (built once from the registry); they stack in a shared leading slot and only
+/// the active one is visible.
 final class WorldContentViewController: NSViewController {
     let gameViewController: GameViewController
-    private let environmentPanel = EnvironmentPanelViewController()
-    private let uiLabPanel = UILabPanelViewController()
     private let panelSlot = NSView()
     private var panelWidth: NSLayoutConstraint?
-    private var currentDestination: WorldDestination?
+    private var currentID: String?
 
-    /// Every destination panel, in row order (matches WorldDestination).
-    private var panels: [WorldInspectorPanel] {
-        [environmentPanel, uiLabPanel]
-    }
+    /// Registered world-inspector panels, keyed + ordered by registry id.
+    private let panels: [(id: String, panel: any InspectorPanel)]
 
     init(gameViewController: GameViewController) {
         self.gameViewController = gameViewController
+        panels = WorldContentViewController.buildPanels(providers: gameViewController)
         super.init(nibName: nil, bundle: nil)
     }
 
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
         fatalError("init(coder:) is unavailable")
+    }
+
+    /// Builds every world-inspector panel from the registry, wired to the live
+    /// renderer bridge. Non-inspector destinations are handled by PR 2's shell.
+    private static func buildPanels(
+        providers: any WorldControlProviders
+    ) -> [(id: String, panel: any InspectorPanel)] {
+        let context = WorldPanelContext(providers: providers)
+        return DestinationRegistry.worldInspectors.compactMap { descriptor in
+            guard case let .worldInspector(makePanel) = descriptor.content else { return nil }
+            return (descriptor.id, makePanel(context))
+        }
     }
 
     override func loadView() {
@@ -95,8 +94,8 @@ final class WorldContentViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         addChild(gameViewController)
-        for panel in panels {
-            addChild(panel)
+        for entry in panels {
+            addChild(entry.panel)
         }
 
         let gameView = gameViewController.view
@@ -105,8 +104,8 @@ final class WorldContentViewController: NSViewController {
         view.addSubview(panelSlot)
         view.addSubview(gameView)
 
-        for panel in panels {
-            let panelView = panel.view
+        for entry in panels {
+            let panelView = entry.panel.view
             panelView.translatesAutoresizingMaskIntoConstraints = false
             panelSlot.addSubview(panelView)
             NSLayoutConstraint.activate([
@@ -132,31 +131,20 @@ final class WorldContentViewController: NSViewController {
         ])
     }
 
-    /// Points every destination panel at the live renderer bridge.
-    func wireProvider() {
-        environmentPanel.provider = gameViewController
-        environmentPanel.weatherProvider = gameViewController
-        environmentPanel.animationProvider = gameViewController
-        environmentPanel.particleProvider = gameViewController
-        environmentPanel.precipitationProvider = gameViewController
-        environmentPanel.grassProvider = gameViewController
-        uiLabPanel.provider = gameViewController
-    }
-
-    /// Reveals the panel for `destination` (hiding the rest) or collapses the
-    /// slot. Only the revealed panel inspects; the others stop ticking.
-    func showDestination(_ destination: WorldDestination?) {
-        currentDestination = destination
-        let active = panel(for: destination)
-        for panel in panels {
-            let isActive = panel === active
-            panel.view.isHidden = !isActive
+    /// Reveals the panel for `id` (hiding the rest) or collapses the slot. Only
+    /// the revealed panel inspects; the others stop ticking.
+    func showDestination(id: String?) {
+        currentID = id
+        let active = panel(for: id)
+        for entry in panels {
+            let isActive = entry.id == id
+            entry.panel.view.isHidden = !isActive
             if !isActive {
-                panel.stopInspecting()
+                entry.panel.stopInspecting()
             }
         }
         let show = active != nil
-        panelWidth?.constant = show ? 300 : 0
+        panelWidth?.constant = show ? PanelMetrics.panelWidth : 0
         if show, view.window != nil {
             active?.startInspecting()
         } else {
@@ -164,34 +152,32 @@ final class WorldContentViewController: NSViewController {
         }
     }
 
-    /// Maps a destination to its panel (nil collapses the slot).
-    private func panel(for destination: WorldDestination?) -> WorldInspectorPanel? {
-        switch destination {
-        case .environment: environmentPanel
-        case .uiLab: uiLabPanel
-        case nil: nil
-        }
+    /// Maps a registry id to its panel (nil collapses the slot).
+    private func panel(for id: String?) -> (any InspectorPanel)? {
+        guard let id else { return nil }
+        return panels.first { $0.id == id }?.panel
     }
 
     override func viewDidAppear() {
         super.viewDidAppear()
-        panel(for: currentDestination)?.startInspecting()
+        panel(for: currentID)?.startInspecting()
     }
 
     override func viewDidDisappear() {
         super.viewDidDisappear()
-        for panel in panels {
-            panel.stopInspecting()
+        for entry in panels {
+            entry.panel.stopInspecting()
         }
     }
 }
 
-/// Source-list sidebar listing WorldDestinations; reports selection changes.
+/// Source-list sidebar listing world-inspector destinations; reports selection
+/// changes by registry id.
 final class SidebarListViewController: NSViewController {
-    var onSelect: ((WorldDestination?) -> Void)?
+    var onSelect: ((String?) -> Void)?
 
     private let tableView = NSTableView()
-    private let destinations = WorldDestination.allCases
+    private let destinations = DestinationRegistry.worldInspectors
 
     override func loadView() {
         let scroll = NSScrollView()
@@ -216,7 +202,7 @@ final class SidebarListViewController: NSViewController {
     func selectFirst() {
         guard !destinations.isEmpty else { return }
         tableView.selectRowIndexes(IndexSet(integer: 0), byExtendingSelection: false)
-        onSelect?(destinations[0])
+        onSelect?(destinations[0].id)
     }
 
     private static func makeCell(id: NSUserInterfaceItemIdentifier) -> NSTableCellView {
@@ -260,6 +246,6 @@ extension SidebarListViewController: NSTableViewDelegate {
 
     func tableViewSelectionDidChange(_: Notification) {
         let row = tableView.selectedRow
-        onSelect?(destinations.indices.contains(row) ? destinations[row] : nil)
+        onSelect?(destinations.indices.contains(row) ? destinations[row].id : nil)
     }
 }
