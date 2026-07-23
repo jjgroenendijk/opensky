@@ -159,6 +159,10 @@ If a machine can check a rule, do not rely on people remembering it.
   the issue. Inline suppression is last resort: specific rule code + why-comment.
 - 100-char line limit for hand-written lines (exception: unbreakable tokens).
 - No force-unwrap / force-try / force-cast on data from external files — hard lint errors.
+- App-only sources (import AppKit/Cocoa/SwiftUI) under `opensky/` need a
+  `membershipExceptions` entry excluding them from openskycli — filesystem-synced groups
+  add new files to every target. `make cli-boundary` (in `make lint` + pre-commit)
+  enforces it; the fail message shows the fix.
 - Size to the strict-lint limits while writing, not after a failed `make fix` (the
   top recurring time sink). Thresholds (`tools/lint/.swiftlint.yml`): file ≤500 lines,
   function body ≤60, type body ≤250, cyclomatic complexity ≤12, ≤5 function params,

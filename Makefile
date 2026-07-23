@@ -20,7 +20,8 @@ METAL_FILES     := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
 
 .DEFAULT_GOAL := help
 .PHONY: help bootstrap hooks format format-check lint check fix swift-format \
-        swift-lint metal-format md-format md-lint sh-lint docs-links build cli probe test \
+        swift-lint metal-format md-format md-lint sh-lint cli-boundary docs-links build cli \
+        probe test \
         test-ui test-one test-report realtest test-perms app-path cli-path run-cli \
         install clean icon
 
@@ -44,7 +45,7 @@ format-check: ## Fail if anything is unformatted (no writes) — for CI
 		--dry-run --Werror $(METAL_FILES)
 	@markdownlint-cli2 --config $(MD_CFG) "$(MD_GLOB)"
 
-lint: swift-lint md-lint sh-lint ## Run all linters (strict)
+lint: swift-lint md-lint sh-lint cli-boundary ## Run all linters (strict)
 
 check: format-check lint docs-links ## Format + lint gate without building
 
@@ -65,6 +66,9 @@ md-format: ## Autofix Markdown
 
 md-lint: ## Strict Markdown lint
 	@markdownlint-cli2 --config $(MD_CFG) "$(MD_GLOB)"
+
+cli-boundary: ## AppKit files under opensky/ must be excluded from openskycli
+	@./tools/lint/cli-boundary.sh && echo "[ OK ] CLI target boundary clean"
 
 sh-lint: ## Shellcheck the hook + tooling scripts
 	@shellcheck -s sh $$(find .githooks tools -type f -name '*.sh') .githooks/hooks/*
