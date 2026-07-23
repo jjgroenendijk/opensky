@@ -4,6 +4,15 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-23
 
+* `docs/log.md` merge conflicts eliminated (issue #108): root `.gitattributes`
+  gives it the built-in `merge=union` driver — parallel PRs prepending entries
+  now merge clean, keeping both sides (the resolution that was always done by
+  hand). Validated in a scratch repo: two branches adding entries under the
+  same new date heading merge without conflict or duplicated heading. Union is
+  line-based -> log.md only; `todo.md`/`index.md` see deletions, union would
+  resurrect them. After a union merge, scan the top section once — same-line
+  edits can still duplicate lines (mechanical dedupe, MD024 catches dup
+  headings on next lint).
 * Main-app UI framework (issue #98, PR 1): shared inspector-panel framework under
   `opensky/Shell/` — `DestinationRegistry` (single registration point, replaces the
   former four per-destination touch-points), `InspectorPanelViewController` /
