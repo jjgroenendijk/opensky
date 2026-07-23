@@ -190,19 +190,15 @@ If a machine can check a rule, do not rely on people remembering it.
 
 ## Writing style (agent output, docs, comments, commit bodies)
 
-Caveman density, effortless to read:
+Write normal, clear prose. Complete sentences; plain words over jargon; no filler or
+hedging. Optimize for the reader, not for brevity.
 
-- Abbreviate common prose words (DB, auth, config, req, res, fn, impl). Strip conjunctions.
-  One word when one word does the job.
-- Arrows for causality (X -> Y) instead of connective phrasing.
-- Drop articles (a/an/the), filler (just/really/basically/actually/simply), pleasantries,
-  hedging.
-- Never abbreviate code symbols, function names, API names, or error strings — verbatim,
-  even when compressing everything else.
-- Prefer short synonyms: "big" not "extensive", "fix" not "implement a solution for".
-  Fragments fine.
-- No bold in markdown unless the info is absolutely critical. No emojis anywhere; bracket
-  tags: `[ERROR]`, `[WARNING]`, `[INFO]`. Headings unnumbered.
+- Never abbreviate code symbols, function names, API names, or error strings — quote them
+  verbatim.
+- No emojis anywhere; use bracket tags where a severity marker is needed: `[ERROR]`,
+  `[WARNING]`, `[INFO]`. Headings unnumbered.
+- Existing text written in the old compressed style may stay as-is; rewrite it
+  opportunistically when a change touches it anyway.
 
 ## How agents work here
 
