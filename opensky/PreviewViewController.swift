@@ -265,3 +265,14 @@ extension PreviewViewController: NSSearchFieldDelegate {
         applyFilter()
     }
 }
+
+// MARK: - Shell integration
+
+/// Lets the shell re-apply a changed data root to the cached browser instead
+/// of rebuilding it (issue #98 PR 2): the controller — and with it catalog,
+/// filter, selection, and warm renderer caches — survives the reload.
+extension PreviewViewController: FullContentReloadable {
+    func reloadFullContent(context: FullContentContext) {
+        reload(root: context.gameDataRoot, errorMessage: context.startupErrorMessage)
+    }
+}

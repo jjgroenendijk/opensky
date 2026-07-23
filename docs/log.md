@@ -4,6 +4,24 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-23
 
+* Unified sidebar shell (issue #98 PR 2 / #113): one `NSSplitViewController` shell
+  (`AppShellViewController` + `AppSidebarViewController` + `ShellContentViewController`
+  under `opensky/Shell/`) replaces the segmented World/Asset Browser mode switch
+  (`MainViewController` + `WorldSidebarViewController` deleted). Sidebar map — World:
+  Viewport, Environment · Developer: UI Lab · Library: Asset Browser; launch selects
+  Viewport. `DestinationContent` gains `viewport`; `fullContent` factories now take a
+  `FullContentContext` (data root + startup error) and the Asset Browser registers
+  through the registry, lazily built + cached forever (`FullContentReloadable` lets a
+  Settings reload reach it in place). Library destinations merely cover the always-live
+  MTKView, which drops to 10 fps while covered (no hide, no pause) so streaming stays
+  warm. `NSToolbar` (`unifiedCompact`): sidebar toggle + tracking separator +
+  `Screenshot…` (`ScreenshotCoordinator`), enabled only on world destinations.
+  Accessibility ids migrate: `AppSidebar` outline, `Destination-<id>` rows;
+  `ModeSwitcher`/`WorldSidebar`/`WorldDestination-<id>` gone; panel/control ids +
+  `ScreenshotButton` unchanged — pinned in `DestinationRegistryTests`, new
+  `AppSidebarModelTests` covers grouping/order/default. Docs:
+  [app-ui](/tools/app-ui.md) shell anatomy as-built,
+  [preview-gui](/tools/preview-gui.md) rewritten for the sidebar path.
 * UI translation strings (item 8.1.3): parser for
   `Interface/Translations/<name>_<language>.txt` (UTF-16LE + BOM, `$key<TAB>value`,
   CRLF) in `opensky/Formats/Strings/TranslationFile.swift`, and
