@@ -19,7 +19,7 @@ METAL_FILES     := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
 
 .DEFAULT_GOAL := help
 .PHONY: help bootstrap hooks format format-check lint check fix swift-format \
-        swift-lint metal-format md-format md-lint sh-lint build cli probe test \
+        swift-lint metal-format md-format md-lint sh-lint docs-links build cli probe test \
         test-ui test-one test-report app-path cli-path run-cli install clean
 
 help: ## List available targets
@@ -44,7 +44,7 @@ format-check: ## Fail if anything is unformatted (no writes) — for CI
 
 lint: swift-lint md-lint sh-lint ## Run all linters (strict)
 
-check: format-check lint ## Format + lint gate without building
+check: format-check lint docs-links ## Format + lint gate without building
 
 fix: format lint ## Autoformat, then strict lint — one-shot dev gate
 
@@ -66,6 +66,9 @@ md-lint: ## Strict Markdown lint
 
 sh-lint: ## Shellcheck the hook + tooling scripts
 	@shellcheck -s sh $$(find .githooks tools -type f -name '*.sh') .githooks/hooks/*
+
+docs-links: ## Check intra-wiki links in docs/ resolve (log.md skipped)
+	@./tools/check-docs-links.sh
 
 build: ## Build the app ($(CONFIG))
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration $(CONFIG) \
