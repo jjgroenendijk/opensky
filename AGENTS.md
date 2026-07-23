@@ -67,6 +67,10 @@ this contract keeps only the non-negotiable core:
 - `app-ui` — adding/changing main-app dev UI (sidebar destinations, control panels). Core:
   register via `DestinationRegistry` (never hand-wire the shell), build panels from the
   `Shell/` base classes + `PanelComponents`, accessibility ids are the UI-test API.
+- `delegate` — orchestrating a milestone across sub-agents. Core: map once (Explore brief)
+  and hand it down into every implementer prompt, sub-agents trust `docs/index.md` over
+  globbing, verify a worktree agent's base is the feature branch, restate AGENTS.md
+  criticals per prompt.
 
 ## Environment & tech stack
 

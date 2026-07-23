@@ -10,6 +10,22 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   otherwise pull app-only files into the CLI build (broke `make cli` twice). Wired into
   `make lint` (so `make check` + CI cover it) and pre-commit
   (`.githooks/pre-commit/45-cli-boundary.sh`); pre-push `make cli` stays as backstop.
+* `docs/log.md` merge conflicts eliminated (issue #108): root `.gitattributes`
+  gives it the built-in `merge=union` driver — parallel PRs prepending entries
+  now merge clean, keeping both sides (the resolution that was always done by
+  hand). Validated in a scratch repo: two branches adding entries under the
+  same new date heading merge without conflict or duplicated heading. Union is
+  line-based -> log.md only; `todo.md`/`index.md` see deletions, union would
+  resurrect them. After a union merge, scan the top section once — same-line
+  edits can still duplicate lines (mechanical dedupe, MD024 catches dup
+  headings on next lint).
+* `delegate` sub-agent orchestration skill (issue #107): new `.AGENTS/skills/delegate/`
+  plus an AGENTS.md Skills bullet. Codifies the fix for sub-agents re-deriving the repo
+  context every milestone — map once via one Explore/Plan pass and paste the brief
+  (paths + type signatures) into each implementer prompt, sub-agents trust
+  `docs/index.md`'s path table over globbing, verify a worktree agent's base is the
+  feature branch (not stale `main`) at handoff, restate AGENTS.md criticals per prompt.
+  Process-only; no engine change.
 * Main-app UI framework (issue #98, PR 1): shared inspector-panel framework under
   `opensky/Shell/` — `DestinationRegistry` (single registration point, replaces the
   former four per-destination touch-points), `InspectorPanelViewController` /
