@@ -79,6 +79,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   pose composition, NIF palette refresh, streamed lifetime, fallback accounting + budget.
 * [Living environment integration](/engine/living-environment.md) - combined M7 runtime,
   app A/B controls, exterior/interior evidence + frame/build/footprint gate.
+* [Menu mode](/engine/menu-mode.md) - push/pop menu stack, world-vs-menu input-capture
+  switch, world-sim pause via a pausable frame clock (no time jump on resume).
 
 ## Rendering
 

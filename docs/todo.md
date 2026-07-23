@@ -95,7 +95,6 @@ findings.
 
 ### M8.1 — UI shell foundation
 
-* [ ] 8.1.2 Menu mode: input capture switch, world-sim pause, menu stack push/pop.
 * [ ] 8.1.4 Foundation acceptance: `World > UI Lab` previews menu-mode pause
       behavior + localized strings (long-string/scale cases). Gate: deterministic
       layout/UI-state + pixel-delta tests; docs + log updated.

@@ -49,9 +49,16 @@ final class GameViewController: NSViewController {
     /// NSEvents, the renderer drains it each frame (todo 2.8).
     private let cameraInput = CameraInputState()
 
+    /// Menu-mode source of truth (todo 8.1.2), shared with the input view and
+    /// the renderer. Entering menu mode pauses world sim and drops held world
+    /// input; leaving it resumes with no time jump. No menu opens it yet (the
+    /// UI Lab trigger lands in 8.1.4), so it stays in gameplay mode today.
+    private let menuMode = MenuModeController()
+
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))
         gameView.input = cameraInput
+        gameView.menuMode = menuMode
         view = gameView
     }
 
@@ -96,6 +103,14 @@ final class GameViewController: NSViewController {
             newRenderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
             mtkView.delegate = newRenderer
             renderer = newRenderer
+            // Menu mode drives the renderer's world-sim pause and clears held
+            // world input on entry so no key sticks while the menu owns input.
+            menuMode.onModeChange = { [weak newRenderer, weak cameraInput] paused in
+                newRenderer?.worldSimPaused = paused
+                if paused {
+                    cameraInput?.releaseAll()
+                }
+            }
             if let provider {
                 startStreaming(provider: provider, renderer: newRenderer)
             }

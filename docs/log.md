@@ -38,6 +38,22 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   `docs/index.md`'s path table over globbing, verify a worktree agent's base is the
   feature branch (not stale `main`) at handoff, restate AGENTS.md criticals per prompt.
   Process-only; no engine change.
+* Menu mode (todo 8.1.2): engine-owned menu-mode infrastructure. New
+  `opensky/UI/MenuStack.swift` (pure duplicate-free push/pop stack of opaque
+  `MenuIdentifier`s; empty = gameplay, non-empty = menu mode; pop-on-empty and
+  duplicate-push edge cases decided) and `opensky/UI/MenuMode.swift`
+  (`MenuModeController` source of truth, `MenuInputConsumer` protocol,
+  `MenuInputEvent`, `InputRoute`). Input-capture switch in
+  `opensky/GameMetalView.swift`: menu mode stops feeding `CameraInputState` and
+  maps NSEvents to menu events. World-sim pause via new
+  `opensky/Rendering/FrameSimClock.swift` (pausable wall-clock delta that keeps
+  its mark fresh while paused -> no time jump on resume); `Renderer.worldSimPaused`
+  gates the camera/weather/animation/particle/precipitation advance while the
+  frame still renders. UI-toolkit-agnostic for the coming SWF menu layer;
+  `GameViewController` wires it (no menu opens it yet -- 8.1.4 adds the UI Lab
+  trigger). Tests: `MenuStackTests`, `MenuModeControllerTests`,
+  `FrameSimClockTests`, Metal-gated `RendererMenuModeTests`. Design:
+  [menu mode](/engine/menu-mode.md).
 * Main-app UI framework (issue #98, PR 1): shared inspector-panel framework under
   `opensky/Shell/` — `DestinationRegistry` (single registration point, replaces the
   former four per-destination touch-points), `InspectorPanelViewController` /
