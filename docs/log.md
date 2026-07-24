@@ -2,6 +2,53 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-07-25
+
+* **SWF static-render acceptance** (milestone 8.2.5, closing M8.2): the app can
+  now select and render a vanilla movie without a CLI command.
+  `Developer > UI Lab` grew a hosted **SWF movie** section
+  (`opensky/Shell/Sections/SWFMovieSection.swift`,
+  `PanelSection-swfMovie`): a popup listing `None` plus every
+  `Interface\*.swf` in the located install (`SWFMovieControl`), a layer toggle
+  bound to `Renderer.swfEnabled` (`SWFLayerEnabledControl`), and a readout
+  (`SWFMovieStatsLabel`) showing the decoded `SWFMovieTally` — place/move/
+  remove counts, `ShowFrame`s, sprites, clip layers, filters, blend modes,
+  `ClipActions`, dangling placements — beside the live `SWFDrawStats`,
+  unresolved font names, and any load error. Selecting an entry runs the 8.2.4
+  path unchanged (`SWFMovieLoader.load(path:)` -> `Renderer.setSWFMovie(_:)`);
+  `None` clears with `setSWFMovie(nil)`. The seam is a new
+  `SWFLabControlProviding` + `SWFLabControlSnapshot` (`SWFLabReadout` builds the
+  text device-free), implemented in the new
+  `opensky/GameViewControllerSWFLab.swift` satellite; the loader and movie list
+  resolve once, lazily, because enumerating movies walks every archive index
+  and the 2 Hz ticker must not repeat it. A missing install, an undecodable
+  movie, and a failing GPU package build all land in the readout instead of
+  throwing out of a control action. Framework additions:
+  `PanelComponents.configurePopUp(...)` and the hosted-section pattern (a
+  direct-content panel adopting a `PanelSectionViewController` under the
+  standard collapsible header), both documented in
+  [app-ui](/tools/app-ui.md). **Milestone acceptance sidebar path:**
+  `Developer > UI Lab > SWF movie`, controls `SWFMovieControl` +
+  `SWFLayerEnabledControl`, readout `SWFMovieStatsLabel`.
+  Offscreen evidence (`RendererSWFStaticAcceptanceTests`, 480x320, synthetic
+  menu-shaped movie): 6 draws / 18 triangles / 4 glyphs / 2 mask draws / 0
+  skipped and 103,686 changed pixels over the movie-free baseline; the same
+  movie under an alpha-zero CXFORM still encodes its draws and reproduces the
+  baseline byte for byte, which is exactly why most vanilla menus are blank at
+  frame 1. `swfEnabled = false`, a cleared movie, a re-assigned movie, and
+  repeated frames all behave byte-exactly. Vanilla evidence (per-movie
+  `swf render-sweep` at 960x600, reproduced through the app's own picker with
+  identical numbers): `creationclubmenu.swf` 97 draws / 344,207 changed px,
+  `console.swf` 4 / 239,216, `quest_journal.swf` 612 / 237,525,
+  `bookmenu.swf` 9 / 57,600, `hudmenu.swf` 185 draws with 24 stencil mask
+  draws / 7,637, while `book.swf` and `loadingmenu.swf` encode draws and change
+  nothing. Whole-install sweep at 480x320: 53 of 53 rendered, 0 failed, 18
+  unchanged frames, 2,296 draws, 697,388 triangles, 6,033 glyphs, 44 mask
+  draws, 1 unresolved font name (`Times New Roman`, in `hudmenu.swf`).
+  Details in [SWF container](/formats/swf.md) and
+  [screen-space UI layer](/rendering/ui.md); frame captures stay under `logs/`
+  because a rendered vanilla movie embeds game art.
+
 ## 2026-07-24
 
 * **SWF display-list render** (milestone 8.2.4): the display-list control tags

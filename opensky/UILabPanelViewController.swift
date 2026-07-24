@@ -3,9 +3,11 @@
 // built-in sample scenes (M8.1.1 lab sample, M8.1.4 localized-strings sample),
 // picks a scale preset, previews menu mode (push/pop/clear on the real
 // MenuModeController), and shows live 2 Hz readouts of the last-frame
-// UIDrawStats, the menu stack, and the translation-provider counts. Built on
-// the shared panel framework (opensky/Shell) as a direct-content panel. Talks
-// to the engine only through the narrow UILabControlProviding seam.
+// UIDrawStats, the menu stack, and the translation-provider counts. M8.2.5
+// adds the hosted SWFMovieSection: pick a vanilla movie, toggle the SWF layer,
+// read its tag/draw stats. Built on the shared panel framework (opensky/Shell)
+// as a direct-content panel. Talks to the engine only through the narrow
+// UILabControlProviding and SWFLabControlProviding seams.
 
 import AppKit
 
@@ -45,6 +47,15 @@ final class UILabPanelViewController: InspectorPanelViewController {
     )
     private let stringsStatsLabel = PanelComponents.statsLabel(identifier: "UIStringsStatsLabel")
 
+    /// SWF movie selector (M8.2.5). A self-contained child section hosted by
+    /// this direct-content panel, so the SWF controls carry their own sync,
+    /// readout, and ticker (docs/tools/app-ui.md "Hosting a section").
+    let swfSection = SWFMovieSection()
+
+    weak var swfProvider: (any SWFLabControlProviding)? {
+        didSet { swfSection.provider = swfProvider }
+    }
+
     /// Current readout texts; the verification-surface tests read them directly.
     var statsReadout: String {
         statsLabel.stringValue
@@ -75,8 +86,32 @@ final class UILabPanelViewController: InspectorPanelViewController {
             PanelComponents.buttonRow([menuPushControl, menuPopControl, menuClearControl]),
             menuStatsLabel,
             PanelComponents.caption("Localized strings"),
-            stringsStatsLabel
+            stringsStatsLabel,
+            hostSWFSection()
         ]
+    }
+
+    /// Adopts the SWF section as a child and wraps it in the standard
+    /// collapsible header, matching how a sectioned panel presents its groups.
+    /// The refocus indirection reads the panel's current action at call time.
+    private func hostSWFSection() -> NSView {
+        addChild(swfSection)
+        swfSection.refocusAction = { [weak self] in self?.refocusAction?() }
+        return CollapsibleSectionView(
+            title: swfSection.sectionTitle,
+            identifier: swfSection.sectionIdentifier,
+            content: swfSection.view
+        )
+    }
+
+    override func startInspecting() {
+        super.startInspecting()
+        swfSection.startInspecting()
+    }
+
+    override func stopInspecting() {
+        super.stopInspecting()
+        swfSection.stopInspecting()
     }
 
     private func configureControls() {
@@ -93,9 +128,10 @@ final class UILabPanelViewController: InspectorPanelViewController {
         for preset in Self.scalePresets {
             scaleControl.addItem(withTitle: preset.title)
         }
-        scaleControl.target = self
-        scaleControl.action = #selector(scaleChanged)
-        scaleControl.setAccessibilityIdentifier("UIScaleControl")
+        PanelComponents.configurePopUp(
+            scaleControl, target: self, action: #selector(scaleChanged),
+            identifier: "UIScaleControl"
+        )
     }
 
     private func configure(_ button: NSButton, _ action: Selector, _ identifier: String) {

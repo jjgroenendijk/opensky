@@ -127,6 +127,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // over the located install. Loaded lazily on first readout, not here.
         if let vfs = virtualFileSystem {
             controller.localizedLabelsLoader = { LocalizedLabels.load(vfs: vfs) }
+            // UI Lab SWF movie selector (M8.2.5): enumerates and decodes
+            // Interface movies. Built on first use, not here.
+            controller.swfMovieLoaderFactory = { SWFMovieLoader(fileSystem: vfs) }
         }
         return controller
     }

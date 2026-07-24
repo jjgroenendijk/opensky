@@ -554,3 +554,55 @@ glyph atlas fills up (issue #127); `--movie <name>` renders one movie with a
 fresh renderer for honest numbers. Full output: `logs/swf-render-sweep.log`,
 optional frame captures under `logs/swf-frames/` — both gitignored, never
 committed (AGENTS.md Legal & IP: a rendered vanilla movie embeds game art).
+
+## Static-render acceptance (milestone 8.2.5)
+
+The M8.2 acceptance renders frame 1 of selected vanilla menus, offscreen and
+through the app's own path (`Developer > UI Lab`, see
+[screen-space UI layer](/rendering/ui.md)), and compares each frame against a
+movie-free baseline of the same scene. Numbers below are from
+`openskycli swf render-sweep --movie '\<name>.swf'` (one movie per renderer, so
+the shared glyph atlas is not already full) and an equivalent in-app run through
+the picker; both agree exactly, which is the point of routing the CLI and the
+app through the same `SWFMovieLoader` -> `Renderer.setSWFMovie(_:)` path.
+
+Per movie at 960x600 (576,000 pixels), changed pixels against the baseline:
+
+| Movie | Draws | Triangles | Glyphs | Mask draws | Changed px |
+|---|---|---|---|---|---|
+| `creationclubmenu.swf` | 97 | 11,030 | 164 | 0 | 344,207 |
+| `console.swf` | 4 | 26 | 12 | 0 | 239,216 |
+| `quest_journal.swf` | 612 | 88,294 | 1,535 | 2 | 237,525 |
+| `bookmenu.swf` | 9 | 52 | 14 | 0 | 57,600 |
+| `hudmenu.swf` | 185 | 18,088 | 124 | 24 | 7,637 |
+| `book.swf` | 1 | 26 | 13 | 0 | 0 |
+| `loadingmenu.swf` | 10 | 885 | 37 | 2 | 0 |
+
+The same movies at 480x320 (153,600 pixels) scale as expected: 91,474 /
+60,203 / 63,313 / 19,200 / 1,824 / 0 / 0. `hudmenu.swf` is the clip-stencil
+demo — 12 clip layers become 24 stencil mask draws — and its small changed
+count is correct: a HUD is mostly transparent. `book.swf` and `loadingmenu.swf`
+encode draws but change nothing, the alpha-zero CXFORM case described above.
+
+Movie-level tag tallies the UI Lab readout shows for the same set
+(`PlaceObject`/`PlaceObject2`/`PlaceObject3`, then sprites / clip layers /
+filters / blend modes / `ClipActions`): `console.swf` 0/7/0, 7 sprites;
+`creationclubmenu.swf` 0/472/8, 272 sprites, 3 clips, 1 blend, 4 clip actions;
+`quest_journal.swf` 0/627/28, 301 sprites, 1 clip, 27 filters, 36 clip actions;
+`bookmenu.swf` 0/25/1, 30 sprites, 1 filter; `hudmenu.swf` 0/362/21, 291
+sprites, 12 clips, 15 filters, 6 blends. Dangling placements are 0 everywhere.
+`hudmenu.swf` is the one movie carrying the install's single unresolved font
+name (`Times New Roman`), which the readout surfaces rather than hiding.
+
+Whole-install accounting at 480x320 (`swf render-sweep`, all 53 movies in one
+renderer): 53 rendered, 0 failed, 18 frames unchanged, 2,296 draws, 697,388
+triangles, 6,033 glyphs, 44 mask draws, 1 unresolved font name. The 7,909
+skipped items in that run are glyphs the shared atlas could not pack after it
+filled up (issue #127), not decode failures — per-movie runs report 0 skipped
+except `hudmenu.swf`, which skips 1.
+
+What M8.3 (AS2 runtime subset) inherits: every menu whose frame 1 is blank is
+blank because ActionScript has not run, not because decoding failed. The draws
+are encoded and the geometry is correct; only the CXFORM alpha (and, for some
+movies, a later frame) is missing. `book.swf` and `loadingmenu.swf` are the
+clearest single-movie tests for that milestone.

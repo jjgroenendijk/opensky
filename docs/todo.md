@@ -93,20 +93,6 @@ all game data. Downstream menu items (M12.5 inventory, M13.4 journal, M17.2
 dialogue) target their vanilla SWF menus; depth follows 8.3.1 feasibility
 findings.
 
-### M8.2 — SWF format + static rendering
-
-* [ ] 8.2.5 Static-render acceptance: frame-1 display list of selected vanilla
-      menus renders correctly offscreen + in-app; `Developer > UI Lab` selects a
-      movie + shows tag/draw stats, built on the 8.2.4 renderer API
-      (`SWFMovieLoader.load(path:)` -> `Renderer.setSWFMovie(_:)`, `swfEnabled`,
-      `lastSWFDrawStats`). Pick demos that actually draw at frame 1 — most
-      vanilla menus hide frame-1 content behind a zero-alpha CXFORM (see
-      `formats/swf.md`); `console.swf`, `creationclubmenu.swf`,
-      `quest_journal.swf`, and `bookmenu.swf` render substantial content, while
-      `book.swf` and `loadingmenu.swf` come up blank. Gate: pixel-delta evidence
-      + sweep accounting; docs (`formats/swf.md`, `rendering/ui.md`) + log
-      updated.
-
 ### M8.3 — AS2 runtime subset
 
 * [ ] 8.3.1 Feasibility investigation: inventory DoAction/DoInitAction opcodes +
