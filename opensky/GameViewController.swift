@@ -75,6 +75,14 @@ final class GameViewController: NSViewController {
     var installLocalizedLabels: LocalizedLabels?
     var installLocalizedLabelsResolved = false
 
+    /// Builds the SWF movie loader over the located install (M8.2.5). Set by
+    /// the AppDelegate; nil when game data is missing. The UI Lab SWF bridge
+    /// invokes it once, lazily, into `swfLab`.
+    var swfMovieLoaderFactory: (() -> SWFMovieLoader)?
+    /// Selector state owned by the UI Lab SWF bridge
+    /// (`GameViewControllerSWFLab.swift`); nothing else writes it.
+    var swfLab = SWFLabState()
+
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))
         gameView.input = cameraInput

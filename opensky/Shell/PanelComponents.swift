@@ -110,6 +110,24 @@ enum PanelComponents {
         slider.setAccessibilityIdentifier(identifier)
     }
 
+    /// Wires a popup button's target/action + accessibility id, and optionally
+    /// pins its width so a long item title cannot stretch the panel column.
+    /// Items are added by the caller (the list is usually data-driven).
+    static func configurePopUp(
+        _ popUp: NSPopUpButton,
+        target: AnyObject,
+        action: Selector,
+        identifier: String,
+        width: CGFloat? = nil
+    ) {
+        popUp.target = target
+        popUp.action = action
+        popUp.setAccessibilityIdentifier(identifier)
+        if let width {
+            popUp.widthAnchor.constraint(equalToConstant: width).isActive = true
+        }
+    }
+
     /// Wires a value label's font + fixed width for readouts beside a slider.
     static func valueLabel(width: CGFloat) -> NSTextField {
         let label = NSTextField(labelWithString: "")

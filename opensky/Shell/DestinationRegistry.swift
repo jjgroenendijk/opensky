@@ -26,8 +26,9 @@ enum SidebarSection: String, CaseIterable {
 /// The live-renderer bridges a world inspector panel may consume. The game
 /// controller conforms to all of them, so one value wires every panel.
 typealias WorldControlProviders = AnimationControlProviding & GrassControlProviding
-    & ParticleControlProviding & PrecipitationControlProviding & ShadowControlProviding
-    & TerrainLODControlProviding & UILabControlProviding & WeatherControlProviding
+    & ParticleControlProviding & PrecipitationControlProviding & SWFLabControlProviding
+    & ShadowControlProviding & TerrainLODControlProviding & UILabControlProviding
+    & WeatherControlProviding
 
 /// Passed to a world-inspector factory so the panel can wire its providers.
 @MainActor
@@ -130,6 +131,7 @@ enum DestinationRegistry {
             content: .worldInspector { context in
                 let panel = UILabPanelViewController()
                 panel.provider = context.providers
+                panel.swfProvider = context.providers
                 return panel
             }
         ),

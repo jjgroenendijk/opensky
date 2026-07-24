@@ -4,7 +4,7 @@ title: Main-app UI framework + placement
 description: How OpenSky's dev/verification UI is built — destination registry, panel
   base classes, shared components, placement rules, and the accessibility-id contract.
 tags: [tool, gui, dev, ui, framework]
-timestamp: 2026-07-23T00:00:00Z
+timestamp: 2026-07-25T00:00:00Z
 ---
 
 # Main-app UI framework + placement
@@ -111,13 +111,36 @@ content. Never touch the shell view controllers to add a destination.
   Call `finishInteraction()` from a control action to refresh + return focus to
   the game view; pass `refocusOnMouseUpOnly: true` for continuous sliders.
 - `PanelComponents` + `PanelMetrics` — the shared control vocabulary (heading,
-  caption, note, statsLabel, sliderRow, labeledFieldRow, buttonRow, slider/field
-  configuration). Use these so 100 knobs still read as one panel; do not
-  hand-roll fonts/widths.
+  caption, note, statsLabel, sliderRow, labeledFieldRow, buttonRow, slider/popup
+  /field configuration). Use these so 100 knobs still read as one panel; do not
+  hand-roll fonts/widths. `configurePopUp(_:target:action:identifier:width:)`
+  wires an `NSPopUpButton`'s target/action/id and optionally pins its width, so
+  a data-driven list (movie names, weather names) cannot stretch the column;
+  the caller adds the items.
 - `InspectionTicker` — the 2 Hz readout timer lifecycle (idempotent start).
 - Control-state convention: give each knob a separate enable / force / freeze /
   inspect / reset action and a live numeric readout, rather than one overloaded
   control.
+
+### Hosting a section inside a direct-content panel
+
+A direct-content panel (`makeContentViews()`) that grows a distinct subsystem
+group should not absorb it inline — the panel class hits the 250-line
+type-body limit and the group loses its own readout cadence. Host it instead
+(`UILabPanelViewController.hostSWFSection()`, M8.2.5):
+
+1. Hold the group as a `PanelSectionViewController` subclass stored on the panel.
+2. In `makeContentViews()`, `addChild(section)`, point
+   `section.refocusAction` at a closure reading the panel's current
+   `refocusAction`, and return
+   `CollapsibleSectionView(title:identifier:content: section.view)` as the last
+   column entry — the same header treatment a sectioned panel gets, so the
+   group carries a `PanelSection-<id>` accessibility id.
+3. Override `startInspecting()` / `stopInspecting()` to forward to the section,
+   since the base class only fans out to `makeSections()` children.
+
+The hosted group stays promotable: it is already a standalone section, so
+moving it into its own destination later changes nothing about its control ids.
 
 ## Theme
 
@@ -151,7 +174,11 @@ Accessibility identifiers are the UI-test API and never change silently.
   `sidebarIdentifier`). PR 2 renamed the rows from `WorldDestination-<id>` and
   replaced the `WorldSidebar` table + `ModeSwitcher` radios with the outline.
 - Section headers: `PanelSection-<sectionIdentifier>`.
-- Controls: `<Thing>Control`; readouts: `<Thing>StatsLabel`.
+- Controls: `<Thing>Control`; readouts: `<Thing>StatsLabel`. Current UI Lab set:
+  `UIOverlayEnabledControl`, `UILabSampleControl`, `UIStringsSampleControl`,
+  `UIScaleControl`, `UIMenuPushControl`/`UIMenuPopControl`/`UIMenuClearControl`,
+  `SWFMovieControl`, `SWFLayerEnabledControl`; readouts `UIStatsLabel`,
+  `UIMenuStatsLabel`, `UIStringsStatsLabel`, `SWFMovieStatsLabel`.
 - Toolbar screenshot: `ScreenshotButton` (unchanged from the old shell).
 
 `make test-ui` is blocked on the dev machine (TCC harness init), so the id

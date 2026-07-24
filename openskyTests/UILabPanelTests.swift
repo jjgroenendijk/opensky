@@ -9,7 +9,7 @@ import AppKit
 import Testing
 
 @MainActor
-private final class FakeUILabProvider: UILabControlProviding {
+private final class FakeUILabProvider: UILabControlProviding, SWFLabControlProviding {
     var uiOverlayEnabled = true
     var uiSampleShown = false
     var uiScale: Float = 1
@@ -52,6 +52,14 @@ private final class FakeUILabProvider: UILabControlProviding {
     var localizedLabelsSnapshot = LocalizedLabelsControlSnapshot(
         sampleShown: false, sampleKeyCount: 0, language: "english",
         installLoaded: false, installFileCount: 0, installKeyCount: 0
+    )
+
+    var swfMoviePaths: [String] = []
+    var swfLayerEnabled = true
+    func selectSWFMovie(path _: String?) {}
+    var swfLabSnapshot = SWFLabControlSnapshot(
+        selectedPath: nil, layerEnabled: true, loadError: nil, tally: nil,
+        unresolvedFontNames: [], drawStats: SWFDrawStats(), installLoaded: false
     )
 }
 
@@ -163,6 +171,55 @@ struct UILabPanelTests {
         #expect(panel.menuPushControl.accessibilityIdentifier() == "UIMenuPushControl")
         #expect(panel.menuPopControl.accessibilityIdentifier() == "UIMenuPopControl")
         #expect(panel.menuClearControl.accessibilityIdentifier() == "UIMenuClearControl")
+    }
+
+    /// The SWF movie selector (M8.2.5) is a hosted child section: it must be
+    /// adopted as a child view controller and appear in the scroll document
+    /// under the standard collapsible header.
+    @Test @MainActor
+    func swfSectionIsHostedInsideThePanel() throws {
+        let panel = UILabPanelViewController()
+        let scrollView = try #require(panel.view as? NSScrollView)
+        panel.view.frame = NSRect(x: 0, y: 0, width: 300, height: 900)
+        panel.view.layoutSubtreeIfNeeded()
+
+        #expect(panel.swfSection.parent === panel)
+        let document = try #require(scrollView.documentView)
+        #expect(
+            Self.containsIdentifier("PanelSection-swfMovie", in: document),
+            "SWF section header missing from the UI Lab document"
+        )
+        let sectionFrame = panel.swfSection.view.convert(
+            panel.swfSection.view.bounds, to: document
+        )
+        #expect(document.bounds.intersects(sectionFrame), "SWF section outside document")
+    }
+
+    private static func containsIdentifier(_ identifier: String, in view: NSView) -> Bool {
+        if view.accessibilityIdentifier() == identifier {
+            return true
+        }
+        return view.subviews.contains { containsIdentifier(identifier, in: $0) }
+    }
+
+    /// The panel's ticker must reach the hosted section too, or its readout
+    /// would freeze while the rest of the panel updates.
+    @Test @MainActor
+    func inspectingThePanelDrivesTheSWFSection() {
+        let panel = UILabPanelViewController()
+        panel.loadViewIfNeeded()
+        panel.startInspecting()
+        defer { panel.stopInspecting() }
+        #expect(panel.swfSection.statsReadout == "SWF state unavailable.")
+    }
+
+    @Test @MainActor
+    func swfProviderReachesTheHostedSection() {
+        let panel = UILabPanelViewController()
+        panel.loadViewIfNeeded()
+        let fake = FakeUILabProvider()
+        panel.swfProvider = fake
+        #expect(panel.swfSection.provider === fake)
     }
 
     @Test @MainActor

@@ -5,7 +5,7 @@ description: 2D overlay pass over the finished 3D frame - anchored value-type sc
   layout + text primitives, CoreText system-font glyph atlas, points -> pixels scale
   handling, single premultiplied draw call, plus the SWF display-list render layer.
 tags: [rendering, ui, metal, text, layout]
-timestamp: 2026-07-23T00:00:00Z
+timestamp: 2026-07-25T00:00:00Z
 ---
 
 # Screen-space UI layer
@@ -126,9 +126,11 @@ stats and readouts stay on top). Tag decode and the frame-1 semantics live in
 ## App surface
 
 `Developer > UI Lab` sidebar destination — the M8.1 foundation acceptance surface
-(M8.1.4), talking to the engine through `UILabControlProviding` on
-`GameViewController` (bridge split to `opensky/GameViewControllerUILab.swift` for
-the file-size limit; weak-provider pattern shared with the Environment panel):
+(M8.1.4) and the M8.2 SWF static-render acceptance surface (M8.2.5), talking to
+the engine through `UILabControlProviding` and `SWFLabControlProviding` on
+`GameViewController` (bridges split to `opensky/GameViewControllerUILab.swift`
+and `opensky/GameViewControllerSWFLab.swift` for the file-size limit;
+weak-provider pattern shared with the Environment panel):
 
 - Overlay enable (`UIOverlayEnabledControl`), lab-sample toggle
   (`UILabSampleControl`), localized-sample toggle (`UIStringsSampleControl` —
@@ -142,6 +144,23 @@ the file-size limit; weak-provider pattern shared with the Environment panel):
 - Localized-strings readout (`UIStringsStatsLabel`): synthetic sample key count
   plus merged translation file/key counts over the located install (loaded
   lazily, once).
+- SWF movie selector (M8.2.5), a hosted child section titled **SWF movie**
+  (`PanelSection-swfMovie`): a popup listing `None` plus every
+  `Interface\*.swf` in the located install (`SWFMovieControl`), a layer toggle
+  bound to `Renderer.swfEnabled` (`SWFLayerEnabledControl`), and a readout
+  (`SWFMovieStatsLabel`) that shows the selected movie, the decoded
+  `SWFMovieTally` (place/move/remove counts, `ShowFrame`s, sprites, clip
+  layers, filters, blend modes, `ClipActions`, dangling placements), the live
+  `SWFDrawStats`, unresolved font names, and any load error. Selecting an entry
+  runs `SWFMovieLoader.load(path:)` -> `Renderer.setSWFMovie(_:)`; `None`
+  clears with `setSWFMovie(nil)`. Bridge:
+  `SWFLabControlProviding` on `GameViewController`
+  (`opensky/GameViewControllerSWFLab.swift`), readout text built by the
+  device-free `SWFLabReadout`. The loader and the movie list resolve once,
+  lazily, because enumerating movies walks every archive index and the 2 Hz
+  ticker must not repeat it. No install, an undecodable movie, or a failing GPU
+  package build all degrade to an explanatory readout — never a throw out of a
+  control action.
 
 `UIScene.localizedSample` (`opensky/UI/UILocalizedSample.swift`) is the
 localized preview content: invented `$KEY` fixtures merged through the real
@@ -174,10 +193,25 @@ shown verbatim ([UI translation strings](/formats/translation-strings.md)).
   of the unclipped draw with exactly 2 mask draws; draw stats count 2 draws /
   4 triangles for the two rectangles and 2 glyphs for an edit text over a
   synthetic font.
+- M8.2.5 static-render acceptance (`RendererSWFStaticAcceptanceTests`, 480x320,
+  one synthetic menu-shaped movie: plate + nested sprite + clip layer + edit
+  text over a synthetic font): 6 draws, 18 triangles, 4 glyphs, 2 mask draws, 0
+  skipped, 103,686 changed px over the movie-free baseline. The same movie with
+  an alpha-zero CXFORM on every top-level placement still encodes its 6 draws
+  and reproduces the baseline **byte for byte** — the pinned reproduction of why
+  most vanilla menus render blank at frame 1. `swfEnabled = false`, clearing the
+  movie, and re-assigning it all behave: baseline byte-identical when off or
+  cleared, identical frames and identical stats when reassigned, repeated frames
+  byte-identical.
 - Vanilla evidence is CLI-side (`openskycli swf render-sweep`, gates in
-  `tools/probe.sh`): 53 of 53 movies render frame 1 with 0 failures. Numbers and
-  the blank-frame explanation live in [SWF container](/formats/swf.md); captures
-  stay under `logs/` because they embed game art.
+  `tools/probe.sh`): 53 of 53 movies render frame 1 with 0 failures. Per-movie
+  changed-pixel counts, tag tallies, and the blank-frame explanation live in
+  [SWF container](/formats/swf.md); captures stay under `logs/` because they
+  embed game art.
+- M8.2 milestone acceptance sidebar path: `Developer > UI Lab > SWF movie` —
+  pick `console.swf`, `creationclubmenu.swf`, `quest_journal.swf`,
+  `bookmenu.swf`, or `hudmenu.swf` from `SWFMovieControl`, watch
+  `SWFMovieStatsLabel`, and A/B the frame with `SWFLayerEnabledControl`.
 
 ## Limits / next
 

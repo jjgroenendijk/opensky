@@ -87,6 +87,15 @@ private final class FakeWorldProviders: WorldControlProviders {
         sampleShown: false, sampleKeyCount: 0, language: "english",
         installLoaded: false, installFileCount: 0, installKeyCount: 0
     )
+
+    // SWFLabControlProviding
+    var swfMoviePaths: [String] = []
+    var swfLayerEnabled = true
+    func selectSWFMovie(path _: String?) {}
+    var swfLabSnapshot = SWFLabControlSnapshot(
+        selectedPath: nil, layerEnabled: true, loadError: nil, tally: nil,
+        unresolvedFontNames: [], drawStats: SWFDrawStats(), installLoaded: false
+    )
 }
 
 struct DestinationRegistryTests {

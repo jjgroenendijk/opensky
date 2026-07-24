@@ -104,7 +104,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Screen-space UI layer](/rendering/ui.md) - 2D overlay over the finished frame:
   anchored scene, layout + text primitives, system-font glyph atlas, scale handling,
   UI Lab surface, and the SWF display-list render layer (per-draw uniforms,
-  stencil clips).
+  stencil clips, UI Lab movie selector).
 
 ## Decisions
 
@@ -126,7 +126,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Main-app asset browser](/tools/preview-gui.md) - Library > Asset Browser destination:
   VFS + record browsing, toolbar World PNG capture, offscreen NIF/DDS previews.
 * [Main-app UI framework + placement](/tools/app-ui.md) - unified sidebar shell,
-  destination registry, panel base classes, placement tree, accessibility-id contract.
+  destination registry, panel base classes, hosted sections, placement tree,
+  accessibility-id contract.
 
 ## Meta
 
