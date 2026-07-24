@@ -3,14 +3,16 @@
 // (milestone 8.2.1 gate), then decode every shape and bitmap definition tag
 // and tessellate the shapes (milestone 8.2.2 gate), every font and text tag
 // (8.2.3), and every frame-1 display list (8.2.4). `swf render-sweep` renders
-// those display lists on the GPU; `swf info <path>` inspects a single movie.
+// those display lists on the GPU; `swf action-sweep` inventories the AS2
+// opcodes/host API every movie's action side uses (8.3.1); `swf info <path>`
+// inspects a single movie.
 
 import Foundation
 
 enum SWFCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
         guard let sub = scanner.next() else {
-            throw CLIError.usage("swf: missing subcommand (sweep|render-sweep|info)")
+            throw CLIError.usage("swf: missing subcommand (sweep|render-sweep|action-sweep|info)")
         }
         switch sub {
         case "sweep":
@@ -18,6 +20,8 @@ enum SWFCommand {
             try runSweep(context: context)
         case "render-sweep":
             try SWFRenderSweep.run(context: context, scanner: &scanner)
+        case "action-sweep":
+            try SWFActionSweep.run(context: context, scanner: &scanner)
         case "info":
             let path = try scanner.positional("path")
             try scanner.finish()

@@ -64,6 +64,15 @@ enum OpenSkyCLI {
                                   draw stats + changed pixels. --out writes
                                   one PNG per movie (use a logs/ path: the
                                   frames embed game art)
+      swf action-sweep [--movie <substring>] [--limit <n>]
+                                  Decode every movie's action side (DoAction,
+                                  DoInitAction, CLIPACTIONS) and print an
+                                  opcode-frequency table, unknown-opcode
+                                  report, structurally-resolved host/GFx API
+                                  name surface (--limit caps the printed
+                                  names, default 120), clip-event usage,
+                                  function/structure stats, and a
+                                  most-action-records movie ranking
       swf info <key>               Parse one movie; print header + tag list
       screenshot --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
              [--size WxH] [--zoom <f>] [--time-of-day <0-24>] [--neighbors]

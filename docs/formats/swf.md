@@ -673,14 +673,14 @@ a malformed CLIPACTIONS block that keeps its placement, the action tally, and
 frame 1 being untouched by any of it), over
 `openskyTests/SWFActionFixture.swift`.
 
-An env-gated probe over the vanilla install during 8.3.1 (not committed —
-`probe` skill) framed every action stream in all 53 movies: 3,414 action blocks,
-533,562 ACTIONRECORDs, 56 distinct opcodes, **0 unknown opcodes, 0 undecoded
-opcodes, 0 parse warnings**, and 464 distinct pushed string literals
-(`registerClass` 254, `Object` 254, `this` 181, `Map.MapMarker` 67,
-`gfx.controls.Button` 42 — the GFx host names 8.3.2 has to answer). The
-per-movie numbers are visible in the app at `Developer > UI Lab > SWF movie`.
-`openskycli swf sweep` does not report them yet.
+`openskycli swf action-sweep` (milestone 8.3.1 stage 2) is the committed,
+reproducible version of that inventory: `SWFActionInventory`
+(`opensky/Formats/SWF/SWFActionInventory.swift`) walks every action block
+`SWFMovie.actionBlocks` exposes plus every CLIPACTIONS handler, tallying opcode
+frequency, unknown opcodes, a structurally-resolved host/GFx API name surface,
+clip-event usage, and function/structure stats; `openskycli/SWFActionSweep.swift`
+only parses `--movie`/`--limit` and prints. Per-movie numbers are also visible
+in the app at `Developer > UI Lab > SWF movie`.
 
 `openskycli swf sweep` ([CLI dev tool](/tools/cli.md)) is the milestone 8.2.1 +
 8.2.2 + 8.2.3 + 8.2.4 gate: every archive/loose path under `interface\` ending
@@ -691,7 +691,9 @@ DefineFont2/3 and DefineText/2/EditText tag decoded (glyphs also converted to
 with its edit texts laid out, and a fontconfig alias-resolution report; any
 shape/bitmap/font/text/display-list decode failure fails the sweep.
 `openskycli swf render-sweep` is the GPU half: every movie is assigned to the
-production renderer and its frame 1 rendered offscreen.
+production renderer and its frame 1 rendered offscreen. `openskycli
+swf action-sweep` is the AS2 inventory: see the results below and
+[CLI dev tool](/tools/cli.md).
 
 ## Vanilla sweep results
 
@@ -761,6 +763,42 @@ glyph atlas fills up (issue #127); `--movie <name>` renders one movie with a
 fresh renderer for honest numbers. Full output: `logs/swf-render-sweep.log`,
 optional frame captures under `logs/swf-frames/` — both gitignored, never
 committed (AGENTS.md Legal & IP: a rendered vanilla movie embeds game art).
+
+AS2 action inventory (`openskycli swf action-sweep`, milestone 8.3.1 stage 2):
+53 movies, 0 failed, 3,414 action blocks (2,163 DoAction, 1,127 DoInitAction,
+124 ClipActions), 533,562 ACTIONRECORDs, 56 distinct opcodes, **0 unknown
+opcodes**. The five most-used opcodes are `ActionPush` (191,644), `ActionGetMember`
+(83,487), `ActionPop` (37,127), `ActionSetMember` (30,757), and `ActionNot`
+(28,569); every one of the 56 observed codes is in the Adobe action table.
+1,323 `ActionDefineFunction` and 10,575 `ActionDefineFunction2` records appear
+(max 23 registers used), 936 `ActionConstantPool` records (max pool size 404),
+and zero `ActionWith`/`ActionTry` — vanilla menus never use the `with` block or
+try/catch. The largest single action block is 32,240 bytes / 5,886 records.
+
+The structurally-resolved host/GFx API surface (the name immediately preceding
+`ActionGetMember`/`ActionSetMember`/`ActionCallMethod`/`ActionCallFunction`/
+`ActionGetVariable`/`ActionSetVariable`/`ActionNewMethod`/`ActionDefineLocal`,
+constant-pool references resolved) finds 3,382 distinct names. The ten most
+common: `gfx` (8,094 occurrences across 41 movies), `_global` (3,526/42),
+`Shared` (2,316/41), `prototype` (1,987/41), `ui` (1,935/41), `NavigationCode`
+(1,669/34), `io` (1,596/38), `addProperty` (1,535/34), `GameDelegate`
+(1,520/38), and `length` (1,513/41) — the `gfx.*` namespace (Scaleform's own
+component library: `gfx.controls.Button`, `EventDispatcher`, `Constraints`,
+and similar) dominates over game-specific names, confirming vanilla menus are
+built on the stock GFx component framework rather than bespoke AS2.
+
+CLIPACTIONS handler events: 124 handlers total, but only three carry a
+non-`construct` event across the whole install — one `load` and one
+`enterFrame` handler, both on `statsmenu.swf` — plus 122 `construct` handlers
+(Scaleform's component-construction event, used by 24 movies). None of the
+pointer/keyboard events (`press`, `release`, `rollOver`, `keyPress`, ...)
+appear on a PlaceObject2/3 CLIPACTIONS block anywhere in vanilla — button-level
+interactivity is driven by `ActionCallMethod`/`addEventListener` inside DoAction
+bodies, not by clip-level event handlers. Ranked by action-record volume,
+`quest_journal.swf` (33,692 records / 250 blocks) is the largest single AS2
+consumer, followed by `modmanager.swf` (29,383/62) and `inventorymenu.swf`
+(24,754/68); the reproduction command and full opcode/host-API tables are the
+probe log, `logs/swf-action-sweep.log` (gitignored — AGENTS.md Legal & IP).
 
 ## Static-render acceptance (milestone 8.2.5)
 
