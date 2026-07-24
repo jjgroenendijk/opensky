@@ -56,7 +56,14 @@ enum OpenSkyCLI {
       swf sweep                   Parse every interface\\*.swf movie; report
                                   per-file header summary + known/unknown
                                   tag-code tally (ZWS counted as
-                                  accounted-but-unsupported)
+                                  accounted-but-unsupported), shape/bitmap,
+                                  font/text, and frame-1 display-list tallies
+      swf render-sweep [--size WxH] [--out <dir>]
+                                  Render every movie's frame-1 display list
+                                  over an offscreen frame; report per-movie
+                                  draw stats + changed pixels. --out writes
+                                  one PNG per movie (use a logs/ path: the
+                                  frames embed game art)
       swf info <key>               Parse one movie; print header + tag list
       screenshot --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
              [--size WxH] [--zoom <f>] [--time-of-day <0-24>] [--neighbors]

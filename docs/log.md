@@ -4,6 +4,43 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-24
 
+* **SWF display-list render** (milestone 8.2.4): the display-list control tags
+  now decode (`opensky/Formats/SWF/SWFDisplayList.swift`) — PlaceObject (4),
+  PlaceObject2 (26), PlaceObject3 (70) with MATRIX, CXFORM/CXFORMWITHALPHA,
+  ratio, name, and clip depth; RemoveObject (5) / RemoveObject2 (28);
+  ShowFrame (1); SetBackgroundColor (9) — and `SWFMovie` builds a character
+  dictionary plus the frame-1 display list from them, freezing the timeline at
+  the first `ShowFrame` and expanding DefineSprite (39) nested tag streams into
+  their own frame-1 lists. `SWFScene` flattens that into an ordered draw-command
+  stream with concatenated transforms and color transforms and begin/end mask
+  commands for clip layers. `SWFTransform` / `SWFColorTransform` carry the
+  spec's MATRIX and CXFORM algebra; `SWFTextLayout` lays out static-text records
+  and edit-text initial content in twips. PlaceObject3 filters and blend modes
+  are framed, counted, and not applied; `ClipActions` are recorded and skipped.
+  ImportAssets (57) / ImportAssets2 (71) also decode
+  (`SWFImportAssets.swift`) because vanilla movies import their fonts by name —
+  without that, 523 of the 595 edit texts with content resolve no font at all.
+  `SWFMovieLoader` turns a VFS path into a font-resolved `SWFMovieScene` for
+  both the CLI and the app. Rendering (`Rendering/RendererSWFMovie.swift`,
+  `RendererSWFResources.swift`, `RendererSWFPass.swift`, `swfVertex`/
+  `swfFragment`/`swfMaskFragment` in `Shaders.metal`) draws that stream over the
+  finished 3D frame inside the scene pass, before the dev UI overlay: one
+  256-byte-aligned `SWFDrawUniforms` slot per draw carrying the concatenated
+  place -> sprite -> movie -> viewport -> NDC transform, the fill mapping, and
+  the CXFORM; shapes from the tessellated per-movie vertex buffer, bitmaps as
+  `rgba8Unorm` textures, gradients from a baked ramp atlas, text through the
+  shared UI glyph atlas. Clip layers use a counting stencil (increment/decrement
+  mask draws, content tests `stencil == active clip count`), so the scene pass
+  now uses `depth32Float_stencil8`. Renderer API: `setSWFMovie(_:)`,
+  `swfScene`, `swfEnabled`, `lastSWFDrawStats`. The layer is deterministic —
+  same movie and viewport give byte-identical frames. Gates: `swf sweep` gained
+  display-list tallies and `swf render-sweep` renders every vanilla movie's
+  frame 1 (53 of 53, 0 failed, 2,277 draws, 692,328 triangles); both wired into
+  `tools/probe.sh`. Notable observation: 1,032 of the 1,902 vanilla frame-1
+  draws resolve to alpha 0, because vanilla menus hide frame-1 content and
+  reveal it from ActionScript, so a blank frame-1 render is often correct.
+  Details: [SWF container](/formats/swf.md),
+  [screen-space UI layer](/rendering/ui.md), [CLI dev tool](/tools/cli.md).
 * **SWF fonts + static text** (milestone 8.2.3): DefineFont2 (48) / DefineFont3
   (75) now decode through `SWFFontParser.parse(tag:)`
   (`opensky/Formats/SWF/SWFFont.swift`, `SWFFontParser.swift`): flags, name,

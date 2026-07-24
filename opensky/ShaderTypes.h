@@ -37,6 +37,13 @@ typedef NS_ENUM(EnumBackingType, BufferIndex)
     BufferIndexUIVertices = 9,
     /// Per-frame UI uniforms (UIFrameUniforms): viewport pixel size.
     BufferIndexUIUniforms = 10,
+    /// SWF display-list vertex stream (SWFVertex), device pointer indexed by
+    /// [[vertex_id]] like the UI stream. Shape meshes bind the static
+    /// per-movie buffer; glyph quads bind the per-frame ring.
+    BufferIndexSWFVertices = 11,
+    /// Per-draw SWF uniforms (SWFDrawUniforms), one 256-byte-aligned slot per
+    /// display-list draw.
+    BufferIndexSWFUniforms = 12,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)
@@ -63,6 +70,12 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     /// Single-channel (r8Unorm) screen-space UI glyph/solid atlas. The solid
     /// white texel region backs untextured quads (filled rects/borders).
     TextureIndexUIAtlas = 10,
+    /// Current SWF bitmap-fill texture (rgba8Unorm), rebound per draw. A 1x1
+    /// white fallback keeps the argument valid for non-bitmap draws.
+    TextureIndexSWFBitmap = 11,
+    /// SWF gradient ramp atlas: one 256-texel row per gradient fill in the
+    /// active movie (rgba8Unorm, straight alpha).
+    TextureIndexSWFGradient = 12,
 };
 
 /// LAND splat: ATXT layer numbers run 0-7 (UESP LAND), so 8 additional layers
@@ -93,6 +106,9 @@ typedef NS_ENUM(EnumBackingType, SamplerIndex)
     SamplerIndexShadowCompare = 1,
     /// Linear clamp-to-edge sampler for the UI glyph/solid atlas.
     SamplerIndexUIAtlas = 2,
+    /// Linear repeat sampler for tiled SWF bitmap fills (fill types
+    /// 0x40/0x42); clipped fills reuse the UI clamp sampler.
+    SamplerIndexSWFRepeat = 3,
 };
 
 typedef NS_ENUM(EnumBackingType, FunctionConstantIndex)
@@ -278,5 +294,68 @@ typedef struct
 {
     vector_float2 viewportSize;
 } UIFrameUniforms;
+
+/// How the SWF fragment shader resolves a draw's color (M8.2.4).
+typedef NS_ENUM(EnumBackingType, SWFFillMode)
+{
+    /// baseColor as-is (solid fill).
+    SWFFillModeSolid = 0,
+    /// Sample the per-draw bitmap texture at the fill-space position.
+    SWFFillModeBitmap = 1,
+    /// baseColor with alpha scaled by the UI glyph atlas coverage at uv.
+    SWFFillModeGlyph = 2,
+    /// Sample the gradient ramp at the linear-gradient parameter.
+    SWFFillModeLinearGradient = 3,
+    /// Sample the gradient ramp at the radial-gradient parameter.
+    SWFFillModeRadialGradient = 4,
+};
+
+/// GRADIENT SpreadMode (SWF spec v19 p. 135) applied to the ramp parameter.
+typedef NS_ENUM(EnumBackingType, SWFGradientSpread)
+{
+    SWFGradientSpreadPad = 0,
+    SWFGradientSpreadReflect = 1,
+    SWFGradientSpreadRepeat = 2,
+};
+
+/// One SWF display-list vertex. Shape meshes carry twip-space positions with
+/// unused uv; glyph quads carry framebuffer-pixel positions with UI-atlas uv.
+/// The per-draw transform maps either space to clip coordinates.
+typedef struct
+{
+    vector_float2 position;
+    vector_float2 uv;
+} SWFVertex;
+
+/// Per-draw uniforms for one SWF display-list draw. Both 2x3 affine
+/// transforms are stored as a rotation/scale block (a, b, c, d) plus a
+/// translation: out.x = a*x + c*y + tx, out.y = b*x + d*y + ty.
+typedef struct
+{
+    /// Vertex space -> clip (NDC) transform: the concatenated
+    /// place-matrix -> movie -> viewport -> NDC mapping.
+    vector_float4 transformRotation;
+    vector_float2 transformTranslation;
+    /// Vertex space -> fill space: bitmap fills reach normalized 0..1 texture
+    /// coordinates, gradient fills reach the -1..1 gradient square.
+    vector_float4 fillRotation;
+    vector_float2 fillTranslation;
+    /// CXFORM terms in the straight-alpha 0..1 domain: multiply then add.
+    vector_float4 colorMultiply;
+    vector_float4 colorAdd;
+    /// Straight-alpha fill color for solid fills and glyph text.
+    vector_float4 baseColor;
+    /// Ramp-row v coordinate for gradient fills.
+    float gradientV;
+    /// SWFFillMode.
+    unsigned int fillMode;
+    /// SWFGradientSpread for gradient fills.
+    unsigned int gradientSpread;
+    /// 1 -> the bound bitmap texture stores premultiplied alpha (Lossless2
+    /// ARGB); the shader unpremultiplies before applying the CXFORM.
+    unsigned int sourcePremultiplied;
+    /// 1 -> tiled bitmap fill (repeat sampler), 0 -> clipped (clamp).
+    unsigned int bitmapTiled;
+} SWFDrawUniforms;
 
 #endif /* ShaderTypes_h */

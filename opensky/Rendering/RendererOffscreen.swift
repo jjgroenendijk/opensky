@@ -89,8 +89,10 @@ extension Renderer {
         )
         colorDescriptor.usage = .renderTarget
         colorDescriptor.storageMode = .shared // CPU readback
+        // Combined depth + stencil to match the drawable path: the SWF
+        // layer's clip masks stencil-test inside the scene pass.
         let depthDescriptor = MTLTextureDescriptor.texture2DDescriptor(
-            pixelFormat: .depth32Float,
+            pixelFormat: .depth32Float_stencil8,
             width: width,
             height: height,
             mipmapped: false
@@ -121,6 +123,10 @@ extension Renderer {
         descriptor.depthAttachment.loadAction = .clear
         descriptor.depthAttachment.storeAction = .dontCare
         descriptor.depthAttachment.clearDepth = 1
+        descriptor.stencilAttachment.texture = depth
+        descriptor.stencilAttachment.loadAction = .clear
+        descriptor.stencilAttachment.storeAction = .dontCare
+        descriptor.stencilAttachment.clearStencil = 0
         return descriptor
     }
 
