@@ -45,6 +45,7 @@ enum SWFCommand {
             .filter { $0.hasPrefix("interface\\") && $0.hasSuffix(".swf") }
         var tally = SWFSweepTally()
         var content = SWFContentTally()
+        var fontText = SWFFontTextTally()
         var unexpected: [(String, String)] = []
         for path in paths {
             do {
@@ -52,6 +53,7 @@ enum SWFCommand {
                 print("[INFO] \(path): \(summaryLine(for: file))")
                 tally.record(file)
                 content.record(file, path: path)
+                fontText.record(file, path: path)
             } catch let SWFError.unsupportedCompression(signature) {
                 print("[INFO] \(path): unsupported compression (\(signature)), accounted")
                 tally.unsupported += 1
@@ -59,15 +61,18 @@ enum SWFCommand {
                 unexpected.append((path, String(describing: error)))
             }
         }
-        for failure in (unexpected + content.failures).prefix(20) {
+        for failure in (unexpected + content.failures + fontText.failures).prefix(20) {
             printError("[ERROR] \(failure.0): \(failure.1)")
         }
         printContentTally(content)
+        fontText.printReport()
+        SWFFontConfigReport.run(vfs: vfs)
         printTally(tally, total: paths.count, unexpected: unexpected.count)
-        guard unexpected.isEmpty, content.failures.isEmpty else {
+        guard unexpected.isEmpty, content.failures.isEmpty, fontText.failures.isEmpty else {
             throw CLIError.failure(
                 "swf sweep failed: \(unexpected.count) container, "
-                    + "\(content.failures.count) shape/bitmap decode failures"
+                    + "\(content.failures.count) shape/bitmap, "
+                    + "\(fontText.failures.count) font/text decode failures"
             )
         }
     }

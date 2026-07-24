@@ -95,9 +95,6 @@ findings.
 
 ### M8.2 — SWF format + static rendering
 
-* [ ] 8.2.3 Fonts + text: DefineFont2/3 glyph extraction (incl. `fonts_en.swf`
-      + `fontconfig.txt` mapping — absorbs old M18.F), DefineText/DefineEditText
-      static content through the M8.1.1 glyph-atlas path; system-font fallback kept.
 * [ ] 8.2.4 Display list render: PlaceObject2/3 depth/matrix/color transform ->
       per-draw uniforms, stencil for clip layers, drawn through the M8.1.1
       screen-space pass over the 3D frame.

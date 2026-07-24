@@ -8,8 +8,16 @@ import CoreGraphics
 import CoreText
 import simd
 
-/// Cache key: font discriminator + glyph id + integer pixel size.
+/// Cache key: glyph source namespace + font discriminator + glyph id + integer
+/// pixel size. The namespace keeps SWF-font glyphs from colliding with system
+/// glyphs that happen to share the same numeric `fontKey`.
 struct UIGlyphKey: Hashable {
+    enum Source: Hashable {
+        case system
+        case swf
+    }
+
+    let source: Source
     let fontKey: Int
     let glyphID: UInt16
     let pixelSize: Int
@@ -67,14 +75,55 @@ final class UIGlyphAtlas {
         shelfY = Self.whiteBlock + Self.padding
     }
 
-    /// Returns the cached entry for a glyph, rasterizing + packing on first use.
-    /// `ctFont` must be built at `pixelSize` (same font `fontKey` identifies).
+    /// Returns the cached entry for a system-font glyph, rasterizing + packing
+    /// on first use. `ctFont` must be built at `pixelSize` (same font `fontKey`
+    /// identifies).
     func entry(fontKey: Int, glyphID: CGGlyph, pixelSize: Int, ctFont: CTFont) -> UIGlyphEntry {
-        let key = UIGlyphKey(fontKey: fontKey, glyphID: UInt16(glyphID), pixelSize: pixelSize)
+        let key = UIGlyphKey(
+            source: .system, fontKey: fontKey, glyphID: UInt16(glyphID), pixelSize: pixelSize
+        )
         if let cached = cache[key] {
             return cached
         }
-        let packed = rasterize(glyphID: glyphID, ctFont: ctFont)
+        var glyph = glyphID
+        let bounds = CTFontGetBoundingRectsForGlyphs(ctFont, .default, &glyph, nil, 1)
+        let packed = rasterize(bounds: bounds) { context, box in
+            var mutableGlyph = glyph
+            var position = CGPoint(x: Double(box.drawX), y: Double(box.drawY))
+            CTFontDrawGlyphs(ctFont, &mutableGlyph, &position, 1, context)
+        }
+        cache[key] = packed
+        return packed
+    }
+
+    /// Returns the cached entry for an SWF-font glyph, rasterizing the supplied
+    /// pixel-space CGPath (y-up, baseline at the origin) with an even-odd fill
+    /// on first use. `makePath` runs only on a cache miss; nil (an empty glyph)
+    /// caches as `.empty`. `fontKey` must be unique per (movie, font id) so two
+    /// fonts' glyph indices never collide; the `.swf` namespace already
+    /// separates these from system glyphs.
+    func swfEntry(
+        fontKey: Int,
+        glyphIndex: Int,
+        emPixelSize: Int,
+        makePath: () -> CGPath?
+    ) -> UIGlyphEntry {
+        let key = UIGlyphKey(
+            source: .swf, fontKey: fontKey,
+            glyphID: UInt16(truncatingIfNeeded: glyphIndex), pixelSize: emPixelSize
+        )
+        if let cached = cache[key] {
+            return cached
+        }
+        let packed: UIGlyphEntry = if let path = makePath() {
+            rasterize(bounds: path.boundingBoxOfPath) { context, box in
+                context.translateBy(x: CGFloat(box.drawX), y: CGFloat(box.drawY))
+                context.addPath(path)
+                context.drawPath(using: .eoFill)
+            }
+        } else {
+            .empty
+        }
         cache[key] = packed
         return packed
     }
@@ -90,24 +139,17 @@ final class UIGlyphAtlas {
         let bearingY: Int
     }
 
-    private func rasterize(glyphID: CGGlyph, ctFont: CTFont) -> UIGlyphEntry {
-        var glyph = glyphID
-        let bounds = CTFontGetBoundingRectsForGlyphs(ctFont, .default, &glyph, nil, 1)
-        guard bounds.width > 0, bounds.height > 0, !bounds.isNull, !bounds.isInfinite else {
-            return .empty
-        }
-        let minX = Int((bounds.minX).rounded(.down)) - Self.padding
-        let minY = Int((bounds.minY).rounded(.down)) - Self.padding
-        let maxX = Int((bounds.maxX).rounded(.up)) + Self.padding
-        let maxY = Int((bounds.maxY).rounded(.up)) + Self.padding
-        // maxY is the cell top's height above the baseline (CG y-up).
-        let box = GlyphBox(
-            width: maxX - minX, height: maxY - minY,
-            drawX: -minX, drawY: -minY, bearingX: minX, bearingY: maxY
-        )
+    /// Shared rasterization: fit a tight cell to `bounds`, run `draw` into a
+    /// grayscale context, and shelf-pack the coverage. `draw` positions its
+    /// content using the box's draw origin (system glyphs via the draw
+    /// position, SWF paths via a context translate).
+    private func rasterize(
+        bounds: CGRect,
+        draw: (CGContext, GlyphBox) -> Void
+    ) -> UIGlyphEntry {
         guard
-            box.width > 0, box.height > 0,
-            let coverage = renderCoverage(glyph: glyph, ctFont: ctFont, box: box),
+            let box = glyphBox(from: bounds),
+            let coverage = renderCoverage(box: box, draw: draw),
             let placement = pack(cellWidth: box.width, cellHeight: box.height, coverage: coverage)
         else { return .empty }
         return UIGlyphEntry(
@@ -121,9 +163,27 @@ final class UIGlyphAtlas {
         )
     }
 
-    /// Draws the glyph white-on-black into a tight grayscale bitmap, returning
-    /// its coverage bytes (top-left origin). Font smoothing off for determinism.
-    private func renderCoverage(glyph: CGGlyph, ctFont: CTFont, box: GlyphBox) -> [UInt8]? {
+    /// A padded integer cell around a baseline-relative bounding box. `maxY` is
+    /// the cell top's height above the baseline (CG y-up). nil for an empty box.
+    private func glyphBox(from bounds: CGRect) -> GlyphBox? {
+        guard bounds.width > 0, bounds.height > 0, !bounds.isNull, !bounds.isInfinite else {
+            return nil
+        }
+        let minX = Int(bounds.minX.rounded(.down)) - Self.padding
+        let minY = Int(bounds.minY.rounded(.down)) - Self.padding
+        let maxX = Int(bounds.maxX.rounded(.up)) + Self.padding
+        let maxY = Int(bounds.maxY.rounded(.up)) + Self.padding
+        let box = GlyphBox(
+            width: maxX - minX, height: maxY - minY,
+            drawX: -minX, drawY: -minY, bearingX: minX, bearingY: maxY
+        )
+        guard box.width > 0, box.height > 0 else { return nil }
+        return box
+    }
+
+    /// Draws white-on-black into a tight grayscale bitmap, returning its
+    /// coverage bytes (top-left origin). Font smoothing off for determinism.
+    private func renderCoverage(box: GlyphBox, draw: (CGContext, GlyphBox) -> Void) -> [UInt8]? {
         guard
             let context = CGContext(
                 data: nil,
@@ -138,9 +198,7 @@ final class UIGlyphAtlas {
         context.setShouldSmoothFonts(false)
         context.setAllowsFontSmoothing(false)
         context.setFillColor(CGColor(gray: 1, alpha: 1))
-        var mutableGlyph = glyph
-        var position = CGPoint(x: Double(box.drawX), y: Double(box.drawY))
-        CTFontDrawGlyphs(ctFont, &mutableGlyph, &position, 1, context)
+        draw(context, box)
         guard let data = context.data else { return nil }
         let bytesPerRow = context.bytesPerRow
         var coverage = [UInt8](repeating: 0, count: box.width * box.height)

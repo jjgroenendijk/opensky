@@ -12,8 +12,10 @@ timestamp: 2026-07-24T00:00:00Z
 Skyrim's interface is authored in Adobe SWF and played back by Scaleform GFx.
 Milestone 8.2.1 decodes the container: signature and compression, the fixed
 header fields, and the flat tag stream. Milestone 8.2.2 adds the shape
-definition tags (with CPU tessellation) and the bitmap definition tags. Fonts,
-text, and the display list follow in 8.2.3-8.2.4.
+definition tags (with CPU tessellation) and the bitmap definition tags.
+Milestone 8.2.3 adds the font tags (glyph extraction) and the static-text tags,
+plus the Scaleform `fontconfig.txt` alias mapping. The display list follows in
+8.2.4.
 
 Reference: Adobe SWF File Format Specification, version 19 (public Adobe
 document). Impl: `opensky/Formats/SWF/`. All byte-aligned integers are
@@ -162,6 +164,130 @@ consumes this cache. GPU upload is out of scope for 8.2.2.
   fill-based, and stroke meshes need the 8.2.4 draw path to pick a pixel
   scale.
 
+## Font tags — DefineFont2 (48), DefineFont3 (75)
+
+Reference: spec chapter 10 "Fonts and Text" (pp. 176-182). Impl:
+`opensky/Formats/SWF/SWFFont.swift` (value types),
+`SWFFontParser.swift` (DefineFont2/3), `SWFFontCompanionParser.swift`
+(companion tags).
+
+Tag body: `FontID` UI16, a flag byte (`HasLayout`, `ShiftJIS`, `SmallText`,
+`ANSI`, `WideOffsets`, `WideCodes`, `Italic`, `Bold`, MSB first), `LanguageCode`
+UI8, a length-prefixed `FontName`, `NumGlyphs` UI16, then:
+
+* OffsetTable — `NumGlyphs` entries plus a trailing `CodeTableOffset`, each
+  UI32 when `WideOffsets` else UI16. All offsets are measured from the start of
+  the OffsetTable (immediately after `NumGlyphs`). OpenSky slices each glyph's
+  SHAPE from the body using these offsets rather than parsing sequentially, so
+  any per-glyph padding is irrelevant.
+* GlyphShapeTable — one bare SHAPE per glyph (NumFillBits/NumLineBits + shape
+  records, no style arrays), decoded through
+  `SWFShapeDefinition.parseGlyphSegments(_:)`; fill indices follow the glyph
+  convention (0 = off, 1 = on).
+* CodeTable — `NumGlyphs` character codes, UI16 when `WideCodes` else UI8.
+* Layout (only when `FontFlagsHasLayout`): `FontAscent`/`FontDescent`/
+  `FontLeading` SI16, a `FontAdvanceTable` of SI16 advances, a `FontBoundsTable`
+  of bit-packed RECTs (one per glyph), then `KerningCount` UI16 and the
+  KERNINGRECORDs (code pair sized by `WideCodes`, SI16 adjustment).
+
+DefineFont3 is byte-identical to DefineFont2 except its glyph and layout
+coordinates use a 20x-finer EM square (spec p. 179). The decoded font exposes
+`unitsPerEM` (1024 for DefineFont2, 20480 for DefineFont3), so a consumer scales
+any glyph coordinate by `emPixelSize / unitsPerEM` to reach pixels regardless of
+tag version — the EM square equals one font-size unit.
+
+Defensive cases: a device-font placeholder with `NumGlyphs == 0` omits the
+OffsetTable, CodeTable, and layout entirely (observed in `hudmenu.swf`); it
+decodes to an empty font rather than over-reading. Malformed offsets throw
+`SWFFontError.glyphOffsetOutOfRange`; a truncated body throws the underlying
+`BinaryReaderError` / `SWFBitReaderError`.
+
+Companion tags decode minimally (`SWFFontCompanionParser`) and are retained but
+not applied — OpenSky rasterizes glyphs through its own CoreGraphics coverage
+path, so the FlashType hinting is parsed-and-ignored:
+
+* DefineFontAlignZones (73): `FontID` UI16 and the `CSMTableHint` (UB[2]); the
+  per-glyph ZONERECORD table (which needs the referenced font's glyph count to
+  size) is kept raw.
+* CSMTextSettings (74): `TextID`, `UseFlashType`, `GridFit`, and the
+  `Thickness`/`Sharpness` FLOAT32 hints.
+* DefineFontName (88): the full font name and copyright strings.
+
+## Glyph rasterization
+
+Impl: `opensky/Formats/SWF/SWFGlyphPath.swift`, plus
+`UIGlyphAtlas.swfEntry(...)` — see [Screen-space UI layer](/rendering/ui.md) for
+the atlas side. `SWFGlyphPath.makePath(segments:unitsPerEM:emPixelSize:)` builds
+a CoreGraphics `CGPath` from a glyph's straight + quadratic edges, scaled by
+`emPixelSize / unitsPerEM` and flipped from SWF's y-down glyph space to
+CoreGraphics y-up with the baseline at the origin. The glyph fills even-odd per
+SWF glyph semantics. An empty glyph (no segments) yields nil, drawing no quad.
+
+## Static text tags — DefineText (11), DefineText2 (33), DefineEditText (37)
+
+Reference: spec chapter 10 (pp. 173-177). Impl:
+`opensky/Formats/SWF/SWFText.swift` (DefineText/2),
+`SWFEditText.swift` (DefineEditText).
+
+DefineText/DefineText2 body: `CharacterID` UI16, `TextBounds` RECT, `TextMatrix`
+MATRIX, `GlyphBits` UI8, `AdvanceBits` UI8, then a run of TEXTRECORDs terminated
+by a zero byte. Each TEXTRECORD's flag byte (byte-aligned) selects optional
+state changes — font id + text height, color, x offset, y offset — applied in
+that spec order, then `GlyphCount` UI8 and that many GLYPHENTRYs of
+`GlyphIndex` UB[GlyphBits] + `GlyphAdvance` SB[AdvanceBits] (bit-packed; the next
+record re-aligns). State fields absent from a record inherit the value carried
+by earlier records. DefineText2 stores RGBA colors where DefineText stores RGB.
+The glyph indices point into the record's active font's glyph table, so static
+text lays out directly from the record data (no CoreText shaping).
+
+DefineEditText body: `CharacterID` UI16, `Bounds` RECT, then a 16-bit flag word
+(`HasText`, `WordWrap`, `Multiline`, `Password`, `ReadOnly`, `HasTextColor`,
+`HasMaxLength`, `HasFont`, `HasFontClass`, `AutoSize`, `HasLayout`, `NoSelect`,
+`Border`, `WasStatic`, `HTML`, `UseOutlines`, MSB first). Then, gated by the
+flags: `FontID` (HasFont), `FontClass` STRING (HasFontClass), `FontHeight`
+(HasFont or HasFontClass), `TextColor` RGBA (HasTextColor), `MaxLength`
+(HasMaxLength), a layout block (align, margins, indent, leading — HasLayout), a
+`VariableName` STRING, and `InitialText` STRING (HasText). STRINGs are
+null-terminated UTF-8 (SWF 6+) with a CP1252 fallback. For static rendering the
+plain-text content is the target: HTML fields keep the raw markup verbatim and
+expose a tag-stripped `plainText`; full HTML text layout is deferred to 8.3.x.
+
+Alignment note (as with shapes, the spec marks only RECT/MATRIX byte-aligned):
+OpenSky byte-aligns before the DefineEditText flag word and treats it as two
+whole bytes, which keeps the following UI16 fields aligned. All vanilla text
+tags decode cleanly under this rule.
+
+## fontconfig.txt (Scaleform GFx font mapping)
+
+Impl: `opensky/Formats/SWF/SWFFontConfig.swift` (parser),
+`SWFFontLibrary.swift` (resolver). The game ships `Interface/fontconfig.txt`,
+read via the VFS (`vfs.contents(forPath: "interface\\fontconfig.txt")`). It maps
+logical font aliases to font names defined inside fontlib movies.
+
+This grammar is OBSERVED behavior, not a published specification (open GFx
+documentation is thin) — the subset OpenSky implements:
+
+* `fontlib "<Interface\movie.swf>"` — declare a movie whose fonts back the
+  aliases. The name is an install-relative path (already carries the
+  `Interface\` prefix in vanilla).
+* `map "$Alias" = "FontName" [Style ...]` — map a logical alias (e.g.
+  `$EverywhereFont`) to a font name, with optional trailing style keywords
+  (`Normal`, `Bold`, `Italic`, ...) retained but not used for matching.
+* `#` begins a comment to the end of the line (outside quotes); blank lines are
+  ignored.
+
+Any other non-empty line (e.g. vanilla's `mapdefault`, `validNameChars`) is
+retained verbatim in `unrecognizedLines` and reported, never silently dropped —
+the uncertainty is surfaced rather than guessed away.
+
+Resolution: `SWFFontLibrary.register(movie:file:)` decodes a movie's
+DefineFont2/3 tags and its ExportAssets (56) name table, indexing each font by
+its export name and its internal font name. `resolve(alias:config:)` looks the
+alias up in the config's `map` directives, then finds a registered font with
+that name (exact, then case-insensitive). GFx font naming — whether a `map`
+name matches an export name or an internal name — is itself observed, so both
+are tried.
+
 ## Bitmap tags
 
 Reference: spec chapter 8 "Bitmaps" (pp. 137-143). Impl:
@@ -201,8 +327,9 @@ CoreGraphics context and are flagged accordingly.
 
 * `ZWS` (LZMA) body decompression.
 * Stroke tessellation for line styles (decoded, not meshed — see above).
-* Fonts, text, the display list, and ActionScript / GFx extension tags
-  (milestones 8.2.3-8.2.4, 8.3.x).
+* HTML/rich text layout in DefineEditText (raw markup retained, plain-text
+  stripped) and dynamic text bound to a variable name (8.3.x).
+* The display list and ActionScript / GFx extension tags (8.2.4, 8.3.x).
 
 ## Verification
 
@@ -222,11 +349,23 @@ winding vs. even-odd, deterministic curve flattening, cache), and
 premultiply, JPEG2/3/4, JPEGTables merge, PNG signature detection, erroneous
 header stripping, typed failures) with ImageIO-generated synthetic payloads.
 
+Milestone 8.2.3 tests: `openskyTests/SWFFontTests.swift` (DefineFont2/3 glyphs +
+code tables, wide offsets/codes, layout with advances/bounds/kerning, the
+companion tags, truncation) over `SWFFontBodyBuilder`;
+`SWFTextTests.swift` (DefineText mixed style records, DefineText2 RGBA,
+DefineEditText flag combinations, HTML strip, truncation) over
+`SWFTextBodyBuilder` / `SWFEditTextBodyBuilder`; `SWFFontConfigTests.swift`
+(directive/comment/unrecognized parsing, alias resolution by internal + export
+name) with synthetic fontlib movies; and `SWFGlyphPathTests.swift` (y-flip,
+DefineFont2 vs DefineFont3 scaling, conversion determinism, atlas caching).
+
 `openskycli swf sweep` ([CLI dev tool](/tools/cli.md)) is the milestone 8.2.1 +
-8.2.2 gate: every archive/loose path under `interface\` ending `.swf` parsed
-through `SWFFile` with a known/unknown tag-code tally, every shape tag decoded
-and tessellated, and every bitmap tag decoded to RGBA; any shape/bitmap decode
-failure fails the sweep.
+8.2.2 + 8.2.3 gate: every archive/loose path under `interface\` ending `.swf`
+parsed through `SWFFile` with a known/unknown tag-code tally, every shape tag
+decoded and tessellated, every bitmap tag decoded to RGBA, every DefineFont2/3
+and DefineText/2/EditText tag decoded (glyphs also converted to `CGPath`), and a
+fontconfig alias-resolution report; any shape/bitmap/font/text decode failure
+fails the sweep.
 
 ## Vanilla sweep results
 
@@ -247,3 +386,15 @@ colormapped/15-bit/24-bit lossless, DefineBitsJPEG2/3/4, PNG, or GIF payloads
 appear in vanilla. Full per-file output: `logs/swf-shape-sweep.log`
 (gitignored, not committed — AGENTS.md Legal & IP; reproduce with
 `openskycli swf sweep`).
+
+Fonts and text (milestone 8.2.3): 97 fonts decoded with 0 failures — 96 carry a
+layout block; 54,988 glyphs total (54,987 code-mapped, 34,379 with a drawable
+CGPath — the remainder are blank glyphs such as spaces), 17,336 kerning pairs.
+One DefineFont3 in `hudmenu.swf` is a 0-glyph device-font placeholder. Text:
+665 DefineEditText (644 with initial text, 571 HTML) and 0 DefineText/DefineText2
+— vanilla Skyrim UI text is entirely dynamic (DefineEditText bound to variables),
+so no static DefineText blocks appear. fontconfig: `Interface/fontconfig.txt`
+declares 3 fontlibs (`fonts_console.swf`, `fonts_en.swf`, `fonts_cclub.swf`) and
+20 `map` aliases, all 20 resolving against the fontlib movies; the `mapdefault`
+and `validNameChars` directives are outside the implemented subset and reported
+as unrecognized.

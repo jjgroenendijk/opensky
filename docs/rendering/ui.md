@@ -33,6 +33,16 @@ remains the screen-space compositing foundation it renders through.
   Glyphs rasterize once per (font, glyph, pixel size) through CGContext with font
   smoothing off (determinism) into `UIGlyphAtlas`: CPU shelf-packed r8 coverage
   bitmap with reserved white texel; `revision` bumps on pack.
+- SWF fonts (M8.2.3): `UIGlyphAtlas.swfEntry(fontKey:glyphIndex:emPixelSize:makePath:)`
+  rasterizes a decoded SWF glyph the same way, from a CoreGraphics `CGPath`
+  (`SWFGlyphPath.makePath`, even-odd fill) instead of a CTFont glyph — the shared
+  rasterizer path packs both into the one r8 atlas, so SWF text draws through the
+  same premultiplied screen-space pipeline as system text. The cache key carries a
+  `.system`/`.swf` source namespace so an SWF glyph never collides with a system
+  glyph sharing the same numeric `fontKey`; callers keep `fontKey` unique per
+  (movie, font id). Missing/undecoded fonts fall back to `UIFont` system rendering.
+  Font/text/glyph decode lives in [SWF container](/formats/swf.md); the display-list
+  render that places these glyph quads is 8.2.4.
 - Draw list: `UIDrawList` immediate-mode builder - `fillRect`, `strokeRect`,
   `addGlyphQuad`; 6 vertices/quad; solid quads sample the white texel so one
   pipeline draws everything.
@@ -101,9 +111,10 @@ shown verbatim ([UI translation strings](/formats/translation-strings.md)).
 
 ## Limits / next
 
-- One font family (system), coverage-only atlas (no color glyphs/emoji), no
-  clipping/scissor. Menu mode (input-capture switch + world-sim pause) landed in
-  M8.1.2 ([menu mode](/engine/menu-mode.md)) with the UI Lab preview as its
-  trigger (M8.1.4); focus/text entry arrive with the SWF menu layer (M8.2).
+- System font plus SWF-font glyphs (M8.2.3) share the coverage-only atlas (no
+  color glyphs/emoji), no clipping/scissor yet. Menu mode (the input-capture
+  switch plus world-sim pause) landed in M8.1.2
+  ([menu mode](/engine/menu-mode.md)) with the UI Lab preview as its trigger
+  (M8.1.4); focus/text entry arrive with the SWF menu layer (M8.2).
 - Atlas is fixed-size shelf pack; full-atlas behavior = glyph dropped from list
   (counted), never a crash.

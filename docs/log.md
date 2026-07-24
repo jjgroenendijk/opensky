@@ -4,6 +4,41 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-24
 
+* **SWF fonts + static text** (milestone 8.2.3): DefineFont2 (48) / DefineFont3
+  (75) now decode through `SWFFontParser.parse(tag:)`
+  (`opensky/Formats/SWF/SWFFont.swift`, `SWFFontParser.swift`): flags, name,
+  language code, the glyph OffsetTable + CodeTable (8/16-bit codes, 16/32-bit
+  offsets), each glyph SHAPE via `SWFShapeDefinition.parseGlyphSegments(_:)`,
+  and the optional layout block (ascent/descent/leading, per-glyph advance +
+  bounds, kerning) under `FontFlagsHasLayout`. DefineFont3's 20x-resolution
+  glyph coordinates are captured by `unitsPerEM` (1024 vs 20480), so a consumer
+  scales any glyph by `emPixelSize / unitsPerEM` regardless of version. A
+  0-glyph device-font placeholder (its OffsetTable omitted, seen in
+  `hudmenu.swf`) returns an empty font rather than over-reading. Companion tags
+  DefineFontAlignZones (73), CSMTextSettings (74), and DefineFontName (88) parse
+  minimally (`SWFFontCompanionParser`) — retained, hinting parsed-and-ignored.
+  DefineText (11) / DefineText2 (33) decode through `SWFTextDefinition.parse`
+  (`SWFText.swift`): TEXTRECORD state changes (font/height, RGB vs RGBA color,
+  x/y offset) and bit-packed GLYPHENTRY index+advance runs. DefineEditText (37)
+  decodes through `SWFEditText.parse` (`SWFEditText.swift`): the 16-bit flag
+  word, optional font/class/height, color, paragraph layout, variable name, and
+  initial text; HTML fields keep the raw markup and expose a tag-stripped
+  `plainText` (full HTML layout deferred to 8.3.x). Glyph shapes convert to a
+  CoreGraphics `CGPath` (`SWFGlyphPath.makePath`, even-odd fill, y-flip to CG
+  space) and rasterize into the M8.1.1 atlas via a new
+  `UIGlyphAtlas.swfEntry(fontKey:glyphIndex:emPixelSize:makePath:)` on a `.swf`
+  key namespace that cannot collide with system glyphs; system-font fallback is
+  untouched. `Interface/fontconfig.txt` parses via `SWFFontConfig.parse`
+  (observed `fontlib` / `map` grammar) and `SWFFontLibrary` resolves a logical
+  alias -> fontlib movie -> decoded font. `openskycli swf sweep` gained font,
+  text, and fontconfig tallies; vanilla gate: 97 fonts (96 with layout, 54,988
+  glyphs, 17,336 kerning pairs, 0 failures), 665 DefineEditText (0 DefineText
+  in vanilla), and 20/20 fontconfig aliases resolved against `fonts_en.swf` /
+  `fonts_console.swf` / `fonts_cclub.swf`. Reference: Adobe SWF File Format
+  Specification v19 chapter 10. Docs: [SWF container](/formats/swf.md),
+  [Screen-space UI layer](/rendering/ui.md); tests: `SWFFontTests`,
+  `SWFTextTests`, `SWFFontConfigTests`, `SWFGlyphPathTests` over synthetic
+  fixtures (`SWFFontBodyBuilder`, `SWFTextBodyBuilder`, `SWFEditTextBodyBuilder`).
 * **SWF shapes + bitmaps** (milestone 8.2.2): DefineShape (2) / DefineShape2
   (22) / DefineShape3 (32) / DefineShape4 (83) tag bodies now decode through
   `SWFShapeDefinition.parse(tag:)` (`opensky/Formats/SWF/SWFShape.swift`,

@@ -92,4 +92,18 @@ nonisolated struct SWFBitReader {
         let high = try readUB(8)
         return UInt16(high << 8 | low)
     }
+
+    /// The backing bytes from the current byte position to the end, for handing
+    /// a byte-oriented sub-read (such as a null-terminated string) to a
+    /// `BinaryReader`. Callers `align()` first; a mid-byte cursor drops the
+    /// partial leading byte. Pair with `advance(byteCount:)` to resync.
+    var remainingData: Data {
+        data.subdata(in: (data.startIndex + byteOffset) ..< data.endIndex)
+    }
+
+    /// Advances the cursor by whole bytes, e.g. after a `BinaryReader` consumed
+    /// `byteCount` bytes of `remainingData`.
+    mutating func advance(byteCount: Int) {
+        bitPosition += byteCount * 8
+    }
 }
