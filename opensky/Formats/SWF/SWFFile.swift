@@ -124,8 +124,9 @@ nonisolated struct SWFFile {
 
     /// RECORDHEADER framing: UI16 LE, code = value >> 6, length = value & 0x3F.
     /// length == 0x3F means the real length follows as a UI32 LE ("long" tag).
-    /// The stream terminates at the End tag (code 0).
-    private static func parseTags(_ reader: inout BinaryReader) throws -> [SWFTag] {
+    /// The stream terminates at the End tag (code 0). Internal because
+    /// DefineSprite (39) bodies carry the same nested tag framing (SWFMovie).
+    static func parseTags(_ reader: inout BinaryReader) throws -> [SWFTag] {
         var tags: [SWFTag] = []
         while true {
             let recordHeader = try reader.readUInt16()

@@ -85,6 +85,21 @@ grep 'swf sweep fonts:' "$log" | tail -1 | grep -q ' 0 failed' \
 grep 'swf sweep text:' "$log" | tail -1 | grep -q ' 0 failed' \
   || fail "swf sweep reported text decode failures"
 
+# M8.2.4 SWF display-list gate: every movie's frame-1 display list assembles
+# and flattens into draw commands, and every edit text with content resolves a
+# font. Vanilla install: 53 movies, 130 frame-1 placements, 0 failed.
+grep 'swf sweep display:' "$log" | tail -1 | grep -q ' 0 failed' \
+  || fail "swf sweep reported display-list decode failures"
+grep 'swf sweep display text:' "$log" | tail -1 | grep -q '0 edit texts without a font' \
+  || fail "swf sweep found edit texts with content but no resolvable font"
+
+# M8.2.4 SWF render gate: every movie's frame-1 display list renders through
+# the production Metal layer over an offscreen frame. Vanilla install: 53
+# rendered, 0 failed (frames stay in memory — no --out, they embed game art).
+run "swf render-sweep (vanilla frame-1 display lists)" swf render-sweep --size 480x320
+grep 'swf render-sweep:' "$log" | tail -1 | grep -q ' 0 failed' \
+  || fail "swf render-sweep reported movies that did not render"
+
 # M5.1/5.2 actor gate: every discovered ACHR around the first-render cell
 # must resolve its template chain AND its visuals (skeleton, skin/outfit
 # parts, FaceGen) — the summary line reports "N failed".

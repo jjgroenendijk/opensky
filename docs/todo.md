@@ -95,14 +95,17 @@ findings.
 
 ### M8.2 — SWF format + static rendering
 
-* [ ] 8.2.4 Display list render: PlaceObject2/3 depth/matrix/color transform ->
-      per-draw uniforms, stencil for clip layers, drawn through the M8.1.1
-      screen-space pass over the 3D frame.
 * [ ] 8.2.5 Static-render acceptance: frame-1 display list of selected vanilla
-      menus (e.g. cursor, book, loading) renders correctly offscreen + in-app;
-      `Developer > UI Lab` selects a movie + shows tag/draw stats. Gate: pixel-delta
-      evidence + sweep accounting; docs (`formats/swf.md`, `rendering/ui.md`) +
-      log updated.
+      menus renders correctly offscreen + in-app; `Developer > UI Lab` selects a
+      movie + shows tag/draw stats, built on the 8.2.4 renderer API
+      (`SWFMovieLoader.load(path:)` -> `Renderer.setSWFMovie(_:)`, `swfEnabled`,
+      `lastSWFDrawStats`). Pick demos that actually draw at frame 1 — most
+      vanilla menus hide frame-1 content behind a zero-alpha CXFORM (see
+      `formats/swf.md`); `console.swf`, `creationclubmenu.swf`,
+      `quest_journal.swf`, and `bookmenu.swf` render substantial content, while
+      `book.swf` and `loadingmenu.swf` come up blank. Gate: pixel-delta evidence
+      + sweep accounting; docs (`formats/swf.md`, `rendering/ui.md`) + log
+      updated.
 
 ### M8.3 — AS2 runtime subset
 

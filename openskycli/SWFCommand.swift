@@ -1,20 +1,23 @@
 // `swf sweep`: parse every archive/loose `Interface\*.swf` movie through the
 // production SWFFile container decoder and report a known/unknown tag tally
 // (milestone 8.2.1 gate), then decode every shape and bitmap definition tag
-// and tessellate the shapes (milestone 8.2.2 gate). `swf info <path>`
-// inspects a single movie.
+// and tessellate the shapes (milestone 8.2.2 gate), every font and text tag
+// (8.2.3), and every frame-1 display list (8.2.4). `swf render-sweep` renders
+// those display lists on the GPU; `swf info <path>` inspects a single movie.
 
 import Foundation
 
 enum SWFCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
         guard let sub = scanner.next() else {
-            throw CLIError.usage("swf: missing subcommand (sweep|info)")
+            throw CLIError.usage("swf: missing subcommand (sweep|render-sweep|info)")
         }
         switch sub {
         case "sweep":
             try scanner.finish()
             try runSweep(context: context)
+        case "render-sweep":
+            try SWFRenderSweep.run(context: context, scanner: &scanner)
         case "info":
             let path = try scanner.positional("path")
             try scanner.finish()
@@ -46,6 +49,8 @@ enum SWFCommand {
         var tally = SWFSweepTally()
         var content = SWFContentTally()
         var fontText = SWFFontTextTally()
+        var display = SWFDisplayTally()
+        let fonts = SWFMovieLoader(fileSystem: vfs).fontEnvironment()
         var unexpected: [(String, String)] = []
         for path in paths {
             do {
@@ -54,6 +59,7 @@ enum SWFCommand {
                 tally.record(file)
                 content.record(file, path: path)
                 fontText.record(file, path: path)
+                display.record(file, path: path, fonts: fonts)
             } catch let SWFError.unsupportedCompression(signature) {
                 print("[INFO] \(path): unsupported compression (\(signature)), accounted")
                 tally.unsupported += 1
@@ -61,18 +67,21 @@ enum SWFCommand {
                 unexpected.append((path, String(describing: error)))
             }
         }
-        for failure in (unexpected + content.failures + fontText.failures).prefix(20) {
+        let failed = unexpected + content.failures + fontText.failures + display.failures
+        for failure in failed.prefix(20) {
             printError("[ERROR] \(failure.0): \(failure.1)")
         }
         printContentTally(content)
         fontText.printReport()
+        display.printReport()
         SWFFontConfigReport.run(vfs: vfs)
         printTally(tally, total: paths.count, unexpected: unexpected.count)
-        guard unexpected.isEmpty, content.failures.isEmpty, fontText.failures.isEmpty else {
+        guard failed.isEmpty else {
             throw CLIError.failure(
                 "swf sweep failed: \(unexpected.count) container, "
                     + "\(content.failures.count) shape/bitmap, "
-                    + "\(fontText.failures.count) font/text decode failures"
+                    + "\(fontText.failures.count) font/text, "
+                    + "\(display.failures.count) display-list decode failures"
             )
         }
     }

@@ -80,6 +80,10 @@ final class Renderer: NSObject {
     let uiResources: UIResources
     /// Atlas revision last copied into the atlas texture; re-upload on change.
     var uiUploadedAtlasRevision = -1
+    /// SWF display-list layer (M8.2.4): content/mask pipelines + counting
+    /// stencil states built at init; the movie package swaps via
+    /// `setSWFMovie`. State accessors + encode live in RendererSWFPass.swift.
+    let swf: SWFPassResources
     /// Sun-shadow pipelines + compare sampler + the shared cascade array
     /// (depth32Float, ShadowConstantCascadeCount slices). The array is created
     /// once, always resident, and bound at TextureIndexShadowMap every scene
@@ -275,6 +279,7 @@ final class Renderer: NSObject {
         sampler = try Self.makeSampler(device: device)
         shadow = try Self.makeShadowResources(device: device)
         uiResources = try Self.makeUIResources(device: device, view: view)
+        swf = try Self.makeSWFPassResources(device: device, view: view)
 
         (self.scene, precipitation) = try Self.makeInitialScene(device: device, requested: scene)
         let resolvedCamera = camera ?? .demo
@@ -297,11 +302,10 @@ final class Renderer: NSObject {
             allocations: [
                 frameUniformBuffer, drawUniformBuffer, pointLightBuffer,
                 instanceTransformBuffer, shadowDrawUniformBuffer, shadowInstanceBuffer,
-                shadow.map, uiResources.atlasTexture,
-                uiResources.vertexBuffer, uiResources.uniformBuffer
+                shadow.map, uiResources.atlasTexture, uiResources.vertexBuffer,
+                uiResources.uniformBuffer, swf.whiteTexture, swf.fallbackRamp
             ]
-                + self.scene.residencyAllocations
-                + precipitation.residencyAllocations
+                + self.scene.residencyAllocations + precipitation.residencyAllocations
         )
         commandQueue.addResidencySet(residencySet)
 
@@ -438,6 +442,17 @@ extension Renderer {
         residencySet.addAllocations([ring.instance, ring.shadowInstance])
     }
 
+    /// Queues allocations for deferred residency-set removal once the frames
+    /// that may still reference them provably drain (used by setSWFMovie;
+    /// setScene manages its own retire entry alongside the ring swap).
+    func retireAllocations(_ allocations: [MTLAllocation]) {
+        guard !allocations.isEmpty else { return }
+        retired.append(RetiredAllocations(
+            lastFrameIndex: UInt64(frameIndex - 1),
+            allocations: allocations
+        ))
+    }
+
     /// Drops retire-list entries whose frames provably drained
     /// (endFrameEvent.signaledValue >= tag), removing their allocations from
     /// the residency set. MTLResidencySet membership is a plain set — removals
@@ -464,6 +479,9 @@ extension Renderer {
         live.insert(ObjectIdentifier(shadowDrawUniformBuffer))
         live.insert(ObjectIdentifier(shadowInstanceBuffer))
         live.insert(ObjectIdentifier(shadow.map))
+        if let movie = swf.movie {
+            live.formUnion(movie.residencyAllocations.map(ObjectIdentifier.init))
+        }
         // A drained A entry may share an allocation with undrained B. Keep that
         // allocation resident until every retired frame using it drains.
         for entry in retired {

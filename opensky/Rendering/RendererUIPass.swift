@@ -144,8 +144,9 @@ extension Renderer {
     /// Uploads the atlas only when new glyphs packed since the last upload. The
     /// atlas is a single shared texture; the glyph set stabilizes after a
     /// scene's first frame, so steady-state frames skip this entirely and no
-    /// in-flight frame races a re-upload of identical bytes.
-    private func uploadUIAtlasIfNeeded() {
+    /// in-flight frame races a re-upload of identical bytes. Internal because
+    /// the SWF layer packs its glyphs into the same atlas (encodeSWF).
+    func uploadUIAtlasIfNeeded() {
         let atlas = uiResources.glyphAtlas
         guard atlas.revision != uiUploadedAtlasRevision else { return }
         atlas.pixels.withUnsafeBytes { bytes in

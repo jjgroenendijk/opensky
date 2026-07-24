@@ -53,7 +53,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [SWF container](/formats/swf.md) - FWS/CWS signature + compression, bit-packed
   FrameSize RECT, tag stream framing, standard tag-name table (Scaleform UI);
   DefineShape-DefineShape4 decode + tessellation, lossless/JPEG bitmap tags,
-  DefineFont2/3 glyphs + text tags, and fontconfig.txt alias mapping.
+  DefineFont2/3 glyphs + text tags, fontconfig.txt alias mapping, and the
+  display-list control tags (place/remove, sprites, clip depth, asset imports).
 
 ## Engine
 
@@ -102,7 +103,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   shared particle rendering, wind, roof ray occlusion, storm sky darkening + acceptance.
 * [Screen-space UI layer](/rendering/ui.md) - 2D overlay over the finished frame:
   anchored scene, layout + text primitives, system-font glyph atlas, scale handling,
-  UI Lab surface.
+  UI Lab surface, and the SWF display-list render layer (per-draw uniforms,
+  stencil clips).
 
 ## Decisions
 

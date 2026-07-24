@@ -2,7 +2,7 @@
 type: File Format
 title: SWF container (FWS/CWS)
 description: On-disk layout of SWF UI files - container framing, shape tags with
-  tessellation, and bitmap tags.
+  tessellation, bitmap/font/text tags, and the display-list control tags.
 tags: [format, swf, ui, scaleform]
 timestamp: 2026-07-24T00:00:00Z
 ---
@@ -14,8 +14,10 @@ Milestone 8.2.1 decodes the container: signature and compression, the fixed
 header fields, and the flat tag stream. Milestone 8.2.2 adds the shape
 definition tags (with CPU tessellation) and the bitmap definition tags.
 Milestone 8.2.3 adds the font tags (glyph extraction) and the static-text tags,
-plus the Scaleform `fontconfig.txt` alias mapping. The display list follows in
-8.2.4.
+plus the Scaleform `fontconfig.txt` alias mapping. Milestone 8.2.4 adds the
+display-list control tags, sprite timelines, and asset imports — everything the
+renderer needs to draw a movie's first frame
+([screen-space UI layer](/rendering/ui.md)).
 
 Reference: Adobe SWF File Format Specification, version 19 (public Adobe
 document). Impl: `opensky/Formats/SWF/`. All byte-aligned integers are
@@ -323,13 +325,117 @@ payloads only (spec p. 139). JPEG color with a substituted alpha plane is
 straight (non-premultiplied); PNG/GIF decode through a premultiplied
 CoreGraphics context and are flagged accordingly.
 
+## Display-list tags
+
+Reference: spec chapter 3 "The display list" (pp. 31-39) plus DefineSprite in
+chapter 13 (p. 233). Impl: `opensky/Formats/SWF/SWFDisplayList.swift` (tag
+decode), `SWFMovie.swift` (dictionary + frame-1 list), `SWFScene.swift`
+(flattening to draw commands), `SWFTransform.swift` / `SWFColorTransform.swift`
+(the affine and color algebra).
+
+A movie's visible content is a depth-keyed list of placed characters. Control
+tags mutate that list; `ShowFrame` (1) publishes it. OpenSky builds the list up
+to the **first** `ShowFrame` — frame 1 — and freezes it there; later frames are
+timeline work (8.3.x). Later define tags still enter the dictionary.
+
+| tag | name              | body                                                     |
+| --- | ----------------- | -------------------------------------------------------- |
+| 4   | PlaceObject       | `CharacterId` UI16, `Depth` UI16, MATRIX, optional CXFORM |
+| 26  | PlaceObject2      | flag byte, `Depth` UI16, then the gated field run         |
+| 70  | PlaceObject3      | two flag bytes, `Depth` UI16, class name, field run, extras |
+| 5   | RemoveObject      | `CharacterId` UI16, `Depth` UI16                          |
+| 28  | RemoveObject2     | `Depth` UI16                                              |
+| 1   | ShowFrame         | empty                                                     |
+| 9   | SetBackgroundColor| RGB record                                                |
+| 39  | DefineSprite      | `SpriteID` UI16, `FrameCount` UI16, nested tag stream     |
+
+PlaceObject2's flag byte, MSB to LSB: `HasClipActions`, `HasClipDepth`,
+`HasName`, `HasRatio`, `HasColorTransform`, `HasMatrix`, `HasCharacter`,
+`Move`. The gated fields follow in that (reverse) order: `CharacterId` UI16,
+MATRIX, CXFORMWITHALPHA, `Ratio` UI16, `Name` STRING, `ClipDepth` UI16.
+PlaceObject3 keeps that byte and adds a second one (MSB to LSB: reserved,
+`OpaqueBackground`, `HasVisible`, `HasImage`, `HasClassName`,
+`HasCacheAsBitmap`, `HasBlendMode`, `HasFilterList`); its class name precedes
+the character id, and `SurfaceFilterList`, `BlendMode` UI8, `BitmapCache` UI8,
+`Visible` UI8, and an RGBA `BackgroundColor` follow the clip depth.
+
+Place semantics (spec p. 34), applied by `SWFDisplayListBuilder`:
+
+* `Move` clear + character id -> place a new character at the depth.
+* `Move` set, no character id -> modify the object already at the depth; the
+  fields present overwrite, the rest persist. An empty depth here is a dangling
+  placement: skipped and counted, never fatal.
+* `Move` set + character id -> replace the character at the depth. The spec
+  leaves the unspecified fields undefined; observed Flash/GFx behavior keeps the
+  previous state, which is what OpenSky does.
+* `RemoveObject`/`RemoveObject2` clear the depth (the character id in tag 5 is
+  informational — removal is by depth).
+
+MATRIX (spec p. 23) is bit-packed and byte-aligned: `HasScale` UB[1] (then
+`NScaleBits` UB[5] and two SB 16.16 fixed-point terms), `HasRotate` UB[1] (same
+shape), then `NTranslateBits` UB[5] and two SB translations in twips. Semantics:
+`x' = x*ScaleX + y*RotateSkew1 + TranslateX`, `y' = x*RotateSkew0 + y*ScaleY +
+TranslateY`. `SWFTransform` mirrors those field names so the concatenation
+algebra stays checkable against the spec.
+
+CXFORM / CXFORMWITHALPHA (spec pp. 24-25), also byte-aligned: `HasAddTerms`
+UB[1], `HasMultTerms` UB[1], `Nbits` UB[4], then the multiply terms
+(R, G, B[, A] as SB[Nbits], 8.8 fixed point — divide by 256) followed by the add
+terms (same width, the -255..255 integer domain — divide by 255). Application is
+`clamp(color * multiply + add, 0, 1)` in the straight-alpha domain; nesting
+concatenates as `multiply = outer.multiply * inner.multiply`,
+`add = outer.multiply * inner.add + outer.add`.
+
+Clip layers: a placement carrying `ClipDepth` draws no color of its own and
+masks every placement at depths `(depth, clipDepth]`. Ranges may interleave, so
+`SWFScene` emits `beginClip`/`endClip` commands around the affected draws and
+records how many masks are active per draw; the renderer turns that into a
+counting stencil ([screen-space UI layer](/rendering/ui.md)).
+
+DefineSprite (39) carries its own End-terminated tag stream in its body — the
+same `RECORDHEADER` framing as the top level (`SWFFile.parseTags` is shared).
+Each sprite keeps its own frame-1 display list, and the scene flattener expands
+a placed sprite recursively, concatenating the parent transform and color
+transform into every child (recursion bounded at 16 levels defensively; vanilla
+nesting is shallow).
+
+Parsed and deliberately not rendered, each counted so the deferral stays
+measured: PlaceObject3 `SurfaceFilterList` (framed per spec chapter 8, pp.
+143-151 — each `FilterID` selects a fixed body size, except GradientGlow/
+GradientBevel whose size depends on `NumColors` and Convolution whose size
+depends on the matrix dimensions), `BlendMode`, and `ClipActions` (OpenSky runs
+no ActionScript yet). `Ratio` is decoded and retained; morph shapes are not
+implemented.
+
+## ImportAssets / ImportAssets2
+
+Reference: spec chapter 14 "Sharing fonts and other assets" — ImportAssets (57,
+p. 285) and ImportAssets2 (71, p. 286). Impl:
+`opensky/Formats/SWF/SWFImportAssets.swift`.
+
+Body: `URL` STRING, then (ImportAssets2 only) two reserved bytes (1 and 0),
+`Count` UI16, and `Count` pairs of `CharacterId` UI16 + `Name` STRING. The
+importing movie uses those character ids as if it had defined them; the actual
+character lives in the named source movie.
+
+This matters for text: vanilla Interface movies import their fonts from the
+fontlib movies, so an edit text's `FontID` usually names a character the movie
+never defines (523 of the 595 vanilla fields with content, before imports were
+honored). `SWFMovie.importedNames` keeps the id -> export-name mapping and
+`SWFMovieScene.resolvedFont(for:)` resolves that name through fontconfig, the
+same path a zero-glyph placeholder font takes.
+
 ## Not implemented (yet)
 
 * `ZWS` (LZMA) body decompression.
 * Stroke tessellation for line styles (decoded, not meshed — see above).
 * HTML/rich text layout in DefineEditText (raw markup retained, plain-text
   stripped) and dynamic text bound to a variable name (8.3.x).
-* The display list and ActionScript / GFx extension tags (8.2.4, 8.3.x).
+* Frames past the first: the display list freezes at the first `ShowFrame`, so
+  timeline playback, `Ratio` morph shapes, and button states wait for 8.3.x.
+* PlaceObject3 filters and blend modes (framed, counted, not applied) and
+  `ClipActions` (recorded, never executed — no ActionScript yet).
+* ActionScript and GFx extension tags (8.3.x).
 
 ## Verification
 
@@ -359,13 +465,26 @@ DefineEditText flag combinations, HTML strip, truncation) over
 name) with synthetic fontlib movies; and `SWFGlyphPathTests.swift` (y-flip,
 DefineFont2 vs DefineFont3 scaling, conversion determinism, atlas caching).
 
+Milestone 8.2.4 tests: `openskyTests/SWFDisplayListTests.swift` (CXFORM/
+CXFORMWITHALPHA decode + algebra, all three PlaceObject versions with every
+gated field, filters and blend modes, removals, background color, truncation,
+and the `SWFTransform`/viewport math) over `openskyTests/SWFDisplayFixture.swift`
+(bit-exact place/remove/sprite tag builders); `SWFMovieTests.swift` (dictionary
+building, place/move/replace/remove, ShowFrame freeze, sprite frame 1, clip-depth
+command ranges with interleaving, tallies); `SWFTextLayoutTests.swift` (record
+state inheritance, kerning, wrap, alignment, missing glyphs); and
+`SWFImportAssetsTests.swift` (both import tags, imported-font resolution).
+
 `openskycli swf sweep` ([CLI dev tool](/tools/cli.md)) is the milestone 8.2.1 +
-8.2.2 + 8.2.3 gate: every archive/loose path under `interface\` ending `.swf`
-parsed through `SWFFile` with a known/unknown tag-code tally, every shape tag
-decoded and tessellated, every bitmap tag decoded to RGBA, every DefineFont2/3
-and DefineText/2/EditText tag decoded (glyphs also converted to `CGPath`), and a
-fontconfig alias-resolution report; any shape/bitmap/font/text decode failure
-fails the sweep.
+8.2.2 + 8.2.3 + 8.2.4 gate: every archive/loose path under `interface\` ending
+`.swf` parsed through `SWFFile` with a known/unknown tag-code tally, every shape
+tag decoded and tessellated, every bitmap tag decoded to RGBA, every
+DefineFont2/3 and DefineText/2/EditText tag decoded (glyphs also converted to
+`CGPath`), every frame-1 display list assembled and flattened into draw commands
+with its edit texts laid out, and a fontconfig alias-resolution report; any
+shape/bitmap/font/text/display-list decode failure fails the sweep.
+`openskycli swf render-sweep` is the GPU half: every movie is assigned to the
+production renderer and its frame 1 rendered offscreen.
 
 ## Vanilla sweep results
 
@@ -398,3 +517,40 @@ declares 3 fontlibs (`fonts_console.swf`, `fonts_en.swf`, `fonts_cclub.swf`) and
 20 `map` aliases, all 20 resolving against the fontlib movies; the `mapdefault`
 and `validNameChars` directives are outside the implemented subset and reported
 as unrecognized.
+
+Display lists (milestone 8.2.4): 53 movies decoded with 0 failures, 130 frame-1
+placements on the main timelines (5 movies place nothing at frame 1), 53
+`SetBackgroundColor` tags. Place tags across the main timelines and every
+sprite's frame 1: 0 PlaceObject, 5,926 PlaceObject2, 281 PlaceObject3, 3,202
+`ShowFrame`, 3,971 sprites, 30 clip layers — and **0 moves and 0 removals**.
+Vanilla frame 1 only places; the modify/replace/remove paths exist for
+correctness and are exercised by unit tests, not by vanilla's first frame.
+Flattening those lists yields 1,207 shape draws, 695 edit-text draws, 0
+static-text draws (vanilla has no DefineText), and 22 clip ranges, with 20
+placements referencing something undrawable. Recorded-but-deferred features:
+233 filters, 25 blend modes, 122 `ClipActions` blocks; 0 dangling placements.
+
+Text through the display list: all 595 edit texts that carry content resolve a
+font and lay out 15,238 glyphs with 0 missing glyphs (100 further fields are
+empty). That depends on ImportAssets2 — without it 523 of those fields resolve
+nothing. One font name remains unresolved across the whole install.
+
+An important consequence for acceptance: 1,032 of the 1,902 frame-1 draws
+resolve to alpha 0 through their CXFORM. Vanilla menus hide most of their
+content at frame 1 and reveal it from ActionScript, so a correct frame-1 render
+of many movies is legitimately blank — 20 of the 53 movies change no pixels at
+all, and 10 of them (the fontlib and asset-only movies) produce no draws
+at all.
+
+GPU frame-1 render (`openskycli swf render-sweep --size 960x600`): 53 movies,
+53 rendered, 0 failed, 2,277 draws, 692,328 triangles, 44 stencil mask draws.
+Per-movie highlights: `modmanager.swf` 275 draws / 372,128 changed pixels,
+`creationclubmenu.swf` 97 draws with 164 glyphs / 344,207, `quest_journal.swf`
+(rendered on its own) 612 draws with 1,535 glyphs / 237,525, `console.swf`
+4 draws with 12 glyphs / 239,216, `hudmenu.swf` 185 draws with 24 mask draws /
+7,637. Glyph
+counts in a full 53-movie sweep under-report late movies because the shared
+glyph atlas fills up (issue #127); `--movie <name>` renders one movie with a
+fresh renderer for honest numbers. Full output: `logs/swf-render-sweep.log`,
+optional frame captures under `logs/swf-frames/` — both gitignored, never
+committed (AGENTS.md Legal & IP: a rendered vanilla movie embeds game art).

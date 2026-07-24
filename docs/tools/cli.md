@@ -54,7 +54,8 @@ only where `--out` points (AGENTS.md Legal & IP).
 | `skeleton <hkx-key> [--nif <nif-key>]` | decode every hkaSkeleton in a Havok packfile: per object name, bone count, root count, first 12 bones with parent index; `--nif` name-maps the rig (most bones) onto the NIF skeleton NiNode names — `M of N matched` plus one reason-tagged `unmatched hkx bone`/`unmatched nif node` line per mismatch, both directions |
 | `animation <hkx-key>` | decode every hkaSplineCompressedAnimation + matching hkaAnimationBinding, sample every stored frame as bone-indexed local transforms, report frame/track/block/mapping counts + max translation/scale + normalized-quaternion range; malformed/unbound/non-finite/unbounded sample exits 1 |
 | `lod [--worldspace edid]` | parse lodsettings + sweep every worldspace BTR/BTO and tree LST/BTT through production decoders; any failed container/type reference exits 1 |
-| `swf sweep` | parse every `interface\*.swf` movie through `SWFFile`; per-file header line (version, compression, frame size, frame count, tag count) plus final tallies: files parsed/unsupported (ZWS)/failed, total tags, known vs. unknown tag-code counts, shapes decoded + tessellated (`swf sweep shapes:` — per-tag counts, triangle total, failures), bitmaps decoded (`swf sweep bitmaps:` — per-source-format counts, failures), fonts decoded (`swf sweep fonts:` — glyphs, layout, kerning, CGPaths built, failures), static text (`swf sweep text:` — DefineText/2/EditText counts, failures), and fontconfig alias resolution (`swf sweep fontconfig:` — fontlibs, aliases resolved/unresolved); ZWS (LZMA) movies count as accounted-but-unsupported, not a failure; a malformed/truncated file or any shape/bitmap/font/text decode failure exits 1 |
+| `swf sweep` | parse every `interface\*.swf` movie through `SWFFile`; per-file header line (version, compression, frame size, frame count, tag count) plus final tallies: files parsed/unsupported (ZWS)/failed, total tags, known vs. unknown tag-code counts, shapes decoded + tessellated (`swf sweep shapes:` — per-tag counts, triangle total, failures), bitmaps decoded (`swf sweep bitmaps:` — per-source-format counts, failures), fonts decoded (`swf sweep fonts:` — glyphs, layout, kerning, CGPaths built, failures), static text (`swf sweep text:` — DefineText/2/EditText counts, failures), frame-1 display lists (`swf sweep display:` — movies, placements, background colors; `swf sweep display tags:` — place/move/remove/ShowFrame/sprite/clip counts; `swf sweep display draws:` — flattened shape/text draws, clip ranges, fully transparent draws; `swf sweep display deferred:` — filters, blend modes, ClipActions; `swf sweep display text:` — glyphs laid out, unresolved fonts), and fontconfig alias resolution (`swf sweep fontconfig:` — fontlibs, aliases resolved/unresolved); ZWS (LZMA) movies count as accounted-but-unsupported, not a failure; a malformed/truncated file or any shape/bitmap/font/text/display-list decode failure exits 1 |
+| `swf render-sweep [--size WxH] [--movie substring] [--out dir]` | assign every `interface\*.swf` movie in turn to the production `Renderer` and render its frame-1 display list offscreen over a movie-free baseline; per-movie line with draw/triangle/glyph/mask/skipped counts and changed-pixel count, then `swf render-sweep:` (movies, rendered, unchanged frames, failed) and `swf render-sweep draws:` totals; `--movie` filters by path substring (a fresh renderer per run gives honest per-movie glyph counts), `--out` writes one PNG per movie — point it at `logs/`, the frames embed game art; any decode or render error exits 1 |
 | `swf info <key>` | parse one movie and print its header line plus every tag (code, name or "unknown", body byte count) |
 | `screenshot --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f] [--time-of-day 0-24] [--neighbors] [--ui-sample]` | cell scene build + distant LOD -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load/LOD/draw stats + non-background fraction; `--zoom` (0.1-10) moves eye toward framed center; `--time-of-day` controls procedural sky (default 13); `--neighbors` builds production-size 5x5 (shared libraries) and frames full-cell bounds only; missing cell warns + skips; `--ui-sample` sets `uiScene = .labSample` ([screen-space UI](/rendering/ui.md)) and prints its quad/glyph/dropped/atlas stats; `render` is identical alias |
 | `bench [--worldspace/--x/--y] [--size WxH] [--frames n] [--budget-ms f]` | sustained offscreen render (default 360 frames @ 1280x720) through `Renderer.renderOffscreenSustained` — FrameStats windows + per-frame wall and animation-update times; prints avg/p95/max + fps, exit 1 when avg or p95 misses the budget (default 33.33 ms = 30 fps, todo 2.11 gate) |
@@ -113,7 +114,7 @@ Implementation notes:
   each file without GPU upload, parses tree LST/BTT, and resolves every type reference.
   Vanilla Tamriel: 3,060 BTR + 717 BTO + 329 BTT/40,839 refs, 0 failed. Screenshot/render
   load the same [INI precedence](/formats/ini.md) as main app.
-* `swf sweep` is milestone 8.2.1's and 8.2.2's gate probe. It enumerates every
+* `swf sweep` is the milestone 8.2.1-8.2.4 gate probe. It enumerates every
   archive path under `interface\` ending `.swf` and decodes each through the
   production `SWFFile` container parser, tallying `SWFTagName.isKnown` per tag.
   `ZWS` (LZMA) movies raise the documented `SWFError.unsupportedCompression`
@@ -126,10 +127,21 @@ Implementation notes:
   conversion) and DefineText/2/EditText tag (`swf sweep text:`), and reports
   fontconfig alias resolution (`swf sweep fontconfig:`) by loading the fontlib
   movies named in `Interface/fontconfig.txt`; any shape/bitmap/font/text decode
-  failure on vanilla data exits 1. Vanilla install: 2,677 shapes (2,195,435
-  triangles), 453 bitmaps, 97 fonts (54,988 glyphs), 665 DefineEditText, and
-  20/20 fontconfig aliases resolved, 0 failed. See
+  failure on vanilla data exits 1. For 8.2.4 it assembles every movie's frame-1
+  display list (`SWFMovie`), flattens it into the renderer's draw-command stream
+  (`SWFScene`), and lays out every edit text with the font fontconfig resolves —
+  any display-list decode failure exits 1. Vanilla install: 2,677 shapes
+  (2,195,435 triangles), 453 bitmaps, 97 fonts (54,988 glyphs), 665
+  DefineEditText, 20/20 fontconfig aliases resolved, 53 movies with 130 frame-1
+  placements and 15,238 laid-out glyphs, 0 failed. See
   [SWF container](/formats/swf.md).
+* `swf render-sweep` is milestone 8.2.4's GPU gate: one `Renderer` over the
+  synthetic demo scene, a movie-free baseline frame, then `setSWFMovie` +
+  `renderOffscreen` per movie with a per-channel changed-pixel count against
+  that baseline. Vanilla install: 53 movies rendered, 0 failed, 2,277 draws,
+  692,328 triangles, 44 stencil mask draws; 20 movies change no pixels because
+  vanilla hides most frame-1 content behind a zero-alpha CXFORM and reveals it
+  from ActionScript. See [screen-space UI layer](/rendering/ui.md).
 * `hkx` is M6.1's container probe. It parses the Havok packfile via shared `HKXFile`
   (header + section table + class-name table + fixup-derived object inventory) and only
   prints; object internals stay later milestones (needs class reflection). CLI parses/
