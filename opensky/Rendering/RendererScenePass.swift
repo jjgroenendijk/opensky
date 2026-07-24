@@ -431,6 +431,8 @@ extension Renderer {
             enabled: precipitationEnabled,
             state: &state
         )
+        // SWF layer before the dev UI overlay so stats/readouts stay on top.
+        encodeSWF(descriptor: descriptor, state: &state)
         encodeUI(descriptor: descriptor, state: &state)
         lastDrawStats = state.stats
         encoder.endEncoding()
