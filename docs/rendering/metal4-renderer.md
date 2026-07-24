@@ -73,8 +73,9 @@ adapted from Apple's Xcode Metal 4 game template (structure, not copied game cod
 ## Sky + water pipelines (todo 3.5)
 
 Pass order = shadow cascade pre-pass ([shadows](/rendering/shadows.md)), then sky,
-opaque groups, terrain, alpha-test groups, water last. MTL4 does not auto-track
-cross-encoder hazards: the final cascade encoder issues a producer barrier
+opaque groups, terrain, alpha-test groups, grass, water — followed by particles,
+precipitation, the SWF display-list layer, and the dev UI overlay last. MTL4 does not
+auto-track cross-encoder hazards: the final cascade encoder issues a producer barrier
 (`barrier(afterStages: .fragment, beforeQueueStages: .fragment, visibilityOptions:
 .device)`) so the scene pass never samples the shadow array before depth writes land. Sky is
 a fullscreen triangle with no vertex buffer or depth state. It reads time-of-day from frame
@@ -262,13 +263,16 @@ point lights. Full policy + evidence: [grass](/engine/grass.md).
   per-instance `InstanceTransform` ring (instancing section).
 * `WaterDrawUniforms` shares draw-ring slots with static/terrain uniforms; ring stride uses
   largest struct, 256-byte aligned.
-* All binds through one `MTL4ArgumentTable` (8 buffers — vertices, frame + draw uniforms,
-  terrain weights, instance transforms, point lights, skin attributes, bone matrices;
-  1 + 8 + 1 textures — diffuse + terrain layer array + shadow-map array; 2 samplers);
-  table state is captured per draw, so per-draw `setAddress`/`setTexture`
-  between `drawIndexedPrimitives` calls is the binding model. Samplers: trilinear
-  mipmapped, anisotropy 8, repeat, `supportArgumentBuffers`; shadow compare sampler
-  (less, linear, clamp — [shadows](/rendering/shadows.md)).
+* All binds through one `MTL4ArgumentTable`, sized from the highest index in each
+  `ShaderTypes.h` enum (`RendererSetup.makeArgumentTable`): 13 buffers — vertices,
+  frame + draw uniforms, terrain weights, instance transforms, point lights, skin
+  attributes, bone matrices, particle instances, UI vertices + uniforms, SWF vertices
+  * uniforms; 13 textures — diffuse, the 8 terrain layer slots, shadow-map array, UI
+  atlas, SWF bitmap, SWF gradient ramp; 4 samplers. Table state is captured per draw,
+  so per-draw `setAddress`/`setTexture` between `drawIndexedPrimitives` calls is the
+  binding model. Samplers: trilinear mipmapped, anisotropy 8, repeat,
+  `supportArgumentBuffers`; shadow compare sampler (less, linear, clamp —
+  [shadows](/rendering/shadows.md)); UI linear clamp; SWF linear repeat.
 * Residency: app-owned `MTLResidencySet` holds uniform rings + every scene allocation
   (`RenderScene.residencyAllocations`), committed at scene build, attached to the queue.
   Offscreen targets are added/removed around each `renderOffscreen` call.

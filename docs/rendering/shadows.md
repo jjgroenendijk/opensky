@@ -60,7 +60,10 @@ Microsoft "Cascaded Shadow Maps" technique article) — no Bethesda code consult
   cascade; the scene pass resets its own cursors to 0 per frame, so sharing its
   ring would collide. `ShadowDrawUniforms` (light view-projection, model
   matrix, cutout params) go to a `cascadeCount x drawCapacity` shadow draw
-  ring. Both rings regrow on the scene-pass triggers (`RendererRings.swift`).
+  ring. `RendererRings.swift` sizes both at build time; they regrow on the
+  scene-pass triggers in `Renderer.swift`'s scene-swap extension
+  (`regrownDrawRing`/`regrownInstanceRing`, adopted by
+  `adoptDrawRing`/`adoptInstanceRing`).
 * Per-frame accounting: `Renderer.lastShadowDrawStats`
   (`ShadowDrawStats`: draw calls, drawn instances, culled instances, cascades
   rendered) and `Renderer.lastShadowUpdateMS` (CPU wall time of
@@ -81,9 +84,11 @@ Microsoft "Cascaded Shadow Maps" technique article) — no Bethesda code consult
 ## Scene-pass sampling
 
 * `FrameUniforms` gains `shadowViewProjections[3]`, `shadowCascadeSplits`,
-  `cameraForward`, `shadowsEnabled`, `shadowInverseResolution`. Argument table
-  grows to 1 + 8 + 1 textures (`TextureIndexShadowMap` = 9) and 2 samplers
-  (`SamplerIndexShadowCompare` = 1, `compareFunction .less`, linear, clamp).
+  `cameraForward`, `shadowsEnabled`, `shadowInverseResolution`. The shadow pass
+  claims one texture slot (`TextureIndexShadowMap` = 9, after the terrain layer
+  array) and one sampler (`SamplerIndexShadowCompare` = 1, `compareFunction
+  .less`, linear, clamp); current argument-table totals live in
+  [Metal 4 renderer](/rendering/metal4-renderer.md).
 * `sunShadowFactor` (`Shaders.metal`): view depth = `dot(worldPos - cameraPosition,
   cameraForward)` -> cascade pick (mirror of `cascadeIndex`) -> light-clip
   transform; outside [0, 1] or beyond last split -> lit. PCF via
@@ -111,15 +116,15 @@ flips shadows without losing the selected quality.
 
 ## App surface — `World > Environment`
 
-First sidebar verification surface (AGENTS.md contract): World mode hosts a
-collapsible sidebar (`WorldSidebarViewController`, destinations in
-`WorldDestination` — future M7.2-7.5 panels append there). Environment panel:
+First sidebar verification surface (AGENTS.md contract): the app shell hosts one
+unified sidebar (`AppSidebarViewController`, destinations declared in
+`DestinationRegistry` — later panels append there). Environment panel:
 `Sun shadows` popup (Off/Low/High -> `Renderer.shadowQuality`, applied live),
 2 Hz stats readout (`lastShadowDrawStats` + `lastShadowUpdateMS`), `H`-toggle
 note. Choice persists via UserDefaults key `ShadowQualitySetting`
 (`ShadowQualitySettings`; corrupt/missing -> high), applied on renderer
 creation incl. the Settings reload path. Accessibility ids tests + later
-milestones rely on: `WorldSidebar`, `WorldDestination-<case>`,
+milestones rely on: `AppSidebar`, `Destination-<id>`,
 `ShadowQualityControl`, `ShadowStatsLabel`. After a popup change the game view
 retakes first responder, so WASD/mouse-look resume without a manual click.
 
