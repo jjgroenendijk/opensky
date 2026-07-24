@@ -69,6 +69,14 @@ run "swf sweep (vanilla Interface movies)" swf sweep
 grep 'swf sweep:' "$log" | tail -1 | grep -q ' 0 failed' \
   || fail "swf sweep reported unexpected parse failures"
 
+# M8.2.2 SWF shape/bitmap gate: every DefineShape-DefineShape4 body decodes
+# and tessellates, and every bitmap tag decodes to RGBA. Vanilla install:
+# 2677 shapes, 453 bitmaps, 0 failed each.
+grep 'swf sweep shapes:' "$log" | tail -1 | grep -q ' 0 failed' \
+  || fail "swf sweep reported shape decode/tessellation failures"
+grep 'swf sweep bitmaps:' "$log" | tail -1 | grep -q ' 0 failed' \
+  || fail "swf sweep reported bitmap decode failures"
+
 # M5.1/5.2 actor gate: every discovered ACHR around the first-render cell
 # must resolve its template chain AND its visuals (skeleton, skin/outfit
 # parts, FaceGen) — the summary line reports "N failed".

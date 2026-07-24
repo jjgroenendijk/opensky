@@ -54,7 +54,7 @@ only where `--out` points (AGENTS.md Legal & IP).
 | `skeleton <hkx-key> [--nif <nif-key>]` | decode every hkaSkeleton in a Havok packfile: per object name, bone count, root count, first 12 bones with parent index; `--nif` name-maps the rig (most bones) onto the NIF skeleton NiNode names — `M of N matched` plus one reason-tagged `unmatched hkx bone`/`unmatched nif node` line per mismatch, both directions |
 | `animation <hkx-key>` | decode every hkaSplineCompressedAnimation + matching hkaAnimationBinding, sample every stored frame as bone-indexed local transforms, report frame/track/block/mapping counts + max translation/scale + normalized-quaternion range; malformed/unbound/non-finite/unbounded sample exits 1 |
 | `lod [--worldspace edid]` | parse lodsettings + sweep every worldspace BTR/BTO and tree LST/BTT through production decoders; any failed container/type reference exits 1 |
-| `swf sweep` | parse every `interface\*.swf` movie through `SWFFile`; per-file header line (version, compression, frame size, frame count, tag count) plus a final tally: files parsed/unsupported (ZWS)/failed, total tags, known vs. unknown tag-code counts, and one line per unknown code with its occurrence count; ZWS (LZMA) movies count as accounted-but-unsupported, not a failure; a malformed/truncated file exits 1 |
+| `swf sweep` | parse every `interface\*.swf` movie through `SWFFile`; per-file header line (version, compression, frame size, frame count, tag count) plus final tallies: files parsed/unsupported (ZWS)/failed, total tags, known vs. unknown tag-code counts, shapes decoded + tessellated (`swf sweep shapes:` — per-tag counts, triangle total, failures), and bitmaps decoded (`swf sweep bitmaps:` — per-source-format counts, failures); ZWS (LZMA) movies count as accounted-but-unsupported, not a failure; a malformed/truncated file or any shape/bitmap decode failure exits 1 |
 | `swf info <key>` | parse one movie and print its header line plus every tag (code, name or "unknown", body byte count) |
 | `screenshot --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f] [--time-of-day 0-24] [--neighbors] [--ui-sample]` | cell scene build + distant LOD -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load/LOD/draw stats + non-background fraction; `--zoom` (0.1-10) moves eye toward framed center; `--time-of-day` controls procedural sky (default 13); `--neighbors` builds production-size 5x5 (shared libraries) and frames full-cell bounds only; missing cell warns + skips; `--ui-sample` sets `uiScene = .labSample` ([screen-space UI](/rendering/ui.md)) and prints its quad/glyph/dropped/atlas stats; `render` is identical alias |
 | `bench [--worldspace/--x/--y] [--size WxH] [--frames n] [--budget-ms f]` | sustained offscreen render (default 360 frames @ 1280x720) through `Renderer.renderOffscreenSustained` — FrameStats windows + per-frame wall and animation-update times; prints avg/p95/max + fps, exit 1 when avg or p95 misses the budget (default 33.33 ms = 30 fps, todo 2.11 gate) |
@@ -113,12 +113,17 @@ Implementation notes:
   each file without GPU upload, parses tree LST/BTT, and resolves every type reference.
   Vanilla Tamriel: 3,060 BTR + 717 BTO + 329 BTT/40,839 refs, 0 failed. Screenshot/render
   load the same [INI precedence](/formats/ini.md) as main app.
-* `swf sweep` is milestone 8.2.1's gate probe. It enumerates every archive path
-  under `interface\` ending `.swf` and decodes each through the production
-  `SWFFile` container parser, tallying `SWFTagName.isKnown` per tag. `ZWS`
-  (LZMA) movies raise the documented `SWFError.unsupportedCompression` and are
-  counted as accounted-but-unsupported rather than a failure; any other thrown
-  error (malformed/truncated data) is unexpected and exits 1. See
+* `swf sweep` is milestone 8.2.1's and 8.2.2's gate probe. It enumerates every
+  archive path under `interface\` ending `.swf` and decodes each through the
+  production `SWFFile` container parser, tallying `SWFTagName.isKnown` per tag.
+  `ZWS` (LZMA) movies raise the documented `SWFError.unsupportedCompression`
+  and are counted as accounted-but-unsupported rather than a failure; any
+  other thrown error (malformed/truncated data) is unexpected and exits 1. For
+  8.2.2 it additionally decodes every DefineShape-DefineShape4 body through
+  `SWFShapeDefinition.parse(tag:)` + `SWFShapeTessellator.tessellate(_:)` and
+  every bitmap tag through `SWFBitmapDecoder.decode(tag:jpegTables:)`; any
+  decode failure on vanilla data exits 1. Vanilla install: 2,677 shapes
+  (2,195,435 triangles) and 453 bitmaps, 0 failed. See
   [SWF container](/formats/swf.md).
 * `hkx` is M6.1's container probe. It parses the Havok packfile via shared `HKXFile`
   (header + section table + class-name table + fixup-derived object inventory) and only

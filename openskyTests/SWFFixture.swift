@@ -49,7 +49,7 @@ struct SWFFixture {
     /// MSB-first, padded to a byte boundary.
     private func rectBytes() -> Data {
         let nbits = [xMin, xMax, yMin, yMax].map(Self.signedBitWidth).max() ?? 1
-        var writer = BitWriter()
+        var writer = SWFBitWriter()
         writer.writeUB(UInt32(nbits), count: 5)
         for value in [xMin, xMax, yMin, yMax] {
             writer.writeSB(value, count: nbits)
@@ -80,8 +80,9 @@ struct SWFFixture {
     }
 }
 
-/// MSB-first bit accumulator mirroring SWFBitReader's read order.
-private struct BitWriter {
+/// MSB-first bit accumulator mirroring SWFBitReader's read order. Shared by
+/// the container fixture and the shape/bitmap fixtures (SWFShapeFixture).
+struct SWFBitWriter {
     private var bits: [UInt8] = []
 
     mutating func writeUB(_ value: UInt32, count: Int) {
@@ -93,6 +94,35 @@ private struct BitWriter {
     mutating func writeSB(_ value: Int32, count: Int) {
         let mask: UInt32 = count >= 32 ? .max : (1 << count) - 1
         writeUB(UInt32(bitPattern: value) & mask, count: count)
+    }
+
+    /// Pads with zero bits to the next byte boundary, mirroring
+    /// `SWFBitReader.align()`.
+    mutating func align() {
+        while bits.count % 8 != 0 {
+            bits.append(0)
+        }
+    }
+
+    mutating func appendByte(_ value: UInt8) {
+        align()
+        writeUB(UInt32(value), count: 8)
+    }
+
+    mutating func appendBytes(_ values: [UInt8]) {
+        for value in values {
+            appendByte(value)
+        }
+    }
+
+    mutating func appendUInt16LE(_ value: UInt16) {
+        appendByte(UInt8(value & 0xFF))
+        appendByte(UInt8(value >> 8))
+    }
+
+    mutating func appendUInt32LE(_ value: UInt32) {
+        appendUInt16LE(UInt16(value & 0xFFFF))
+        appendUInt16LE(UInt16(value >> 16))
     }
 
     func bytes() -> Data {

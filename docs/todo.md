@@ -95,9 +95,6 @@ findings.
 
 ### M8.2 — SWF format + static rendering
 
-* [ ] 8.2.2 Shapes + bitmaps: DefineShape-DefineShape4 fill/line styles + edge
-      records, tessellation cached per `DefineShape`; DefineBitsLossless/2 +
-      JPEG-variant bitmap decode. Gate: synthetic shape fixtures + vanilla sweep.
 * [ ] 8.2.3 Fonts + text: DefineFont2/3 glyph extraction (incl. `fonts_en.swf`
       + `fontconfig.txt` mapping — absorbs old M18.F), DefineText/DefineEditText
       static content through the M8.1.1 glyph-atlas path; system-font fallback kept.

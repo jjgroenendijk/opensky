@@ -4,6 +4,32 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-24
 
+* **SWF shapes + bitmaps** (milestone 8.2.2): DefineShape (2) / DefineShape2
+  (22) / DefineShape3 (32) / DefineShape4 (83) tag bodies now decode through
+  `SWFShapeDefinition.parse(tag:)` (`opensky/Formats/SWF/SWFShape.swift`,
+  `SWFShapeParser.swift`, `SWFShapeTypes.swift`): FILLSTYLEARRAY (solid,
+  linear/radial/focal gradients, bitmap fills with MATRIX), LINESTYLEARRAY
+  (LINESTYLE and DefineShape4's LINESTYLE2), style-change / straight-edge /
+  curved-edge records with fill0/fill1 dual fills, extended 0xFF style
+  counts, per-version RGB vs RGBA rules, and glyph SHAPE reuse for 8.2.3
+  (`SWFShapeDefinition.parseGlyphSegments(_:)`).
+  `SWFShapeTessellator.tessellate(_:)` flattens quadratic edges
+  deterministically and triangulates per fill via an even-odd/winding
+  trapezoid sweep into `SWFShapeMesh` (twip-space triangle list + per-fill
+  runs), memoized per character id by `SWFShapeCache` for 8.2.4; stroke
+  tessellation is decoded-but-deferred. Bitmap tags DefineBitsLossless (20) /
+  DefineBitsLossless2 (36) (zlib; 8-bit colormapped, PIX15, PIX24, ARGB
+  premultiplied) and the JPEG family DefineBits (6) + JPEGTables (8),
+  DefineBitsJPEG2 (21), DefineBitsJPEG3 (35, zlib alpha plane),
+  DefineBitsJPEG4 (90, deblock param) decode to a shared RGBA8 `SWFBitmap`
+  via ImageIO/CoreGraphics, with PNG/GIF signature detection per SWF 8+.
+  `openskycli swf sweep` now decodes and tallies all shape/bitmap tags;
+  vanilla gate: 2,677 shapes (944/1,097/574/62 by version) -> 2,195,435
+  triangles, 453 bitmaps (451 `lossless32`, 2 `jpeg`), 0 failures.
+  Reference: Adobe SWF File Format Specification v19 chapters 1, 6, 7, 8.
+  Doc: [SWF container](/formats/swf.md); tests: `SWFShapeTests`,
+  `SWFShapeTessellatorTests`, `SWFBitmapTests` over synthetic fixtures
+  (`SWFShapeBodyBuilder`, ImageIO-generated payloads).
 * **SWF container parser** (milestone 8.2.1 stage 1): new `opensky/Formats/SWF/`
   decodes the Adobe SWF container that Skyrim's Scaleform UI is authored in.
   `SWFFile.init(data:)` parses the signature/compression (`FWS` raw, `CWS` zlib
