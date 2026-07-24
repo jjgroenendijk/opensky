@@ -4,6 +4,30 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-25
 
+* **Docs accuracy pass** (issue #124): fixed the twelve inaccuracies a full
+  audit of `docs/` found, plus one stale code comment. `index.md` now lists
+  [cell streaming](/engine/cell-streaming.md), which had been missing from the
+  Engine section. [esm](/formats/esm.md) no longer claims localized strings and
+  per-record decoders are unimplemented (both landed in M1); the section now
+  names the real container-layer gaps — no `plugins.txt` load order or
+  cross-plugin override merge (issue #73), and no ESL 0xFE FormID space.
+  [shadows](/rendering/shadows.md) drops the removed `WorldSidebarViewController`
+  / `WorldDestination` / `WorldSidebar` names for `AppSidebarViewController`,
+  `DestinationRegistry`, `AppSidebar`, and `Destination-<id>`; its ring-regrow
+  pointer now names `Renderer.swift`'s scene-swap extension rather than
+  `RendererRings.swift` (sizing only); and its argument-table totals are scoped
+  to the slot the shadow pass itself claims, with the running totals left to
+  [Metal 4 renderer](/rendering/metal4-renderer.md). Those totals are refreshed
+  to today's 13 buffers / 13 textures / 4 samplers, and both it and
+  [sky + water](/engine/sky-water.md) record the real pass order — grass between
+  alpha-test and water, then particles, precipitation, the SWF layer, and the UI
+  overlay last. [preview-gui](/tools/preview-gui.md) and the matching
+  `DestinationRegistry` doc comment now say the covered game view is paused and
+  hidden, not drawing at a low rate. [vfs](/formats/vfs.md) describes the ini
+  archive lists as a per-key merge of `Skyrim_Default.ini` under `Skyrim.ini`
+  rather than either/or. [distant LOD](/engine/distant-lod.md) names the real
+  `Apply` button (`LODApplyButton`), and [UI overlay](/rendering/ui.md) spells
+  the fragment output as premultiplied. Docs only — no behavior change.
 * **SWF static-render acceptance** (milestone 8.2.5, closing M8.2): the app can
   now select and render a vanilla movie without a CLI command.
   `Developer > UI Lab` grew a hosted **SWF movie** section

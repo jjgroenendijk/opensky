@@ -103,8 +103,15 @@ least that, so traversal always terminates.
 
 ## Not implemented (yet)
 
-* Localized string lookup (TES4 flag 0x80 -> lstring tables).
-* Per-record-type decoders (WRLD, CELL, REFR, STAT, ...).
+Localized string lookup ([strings](/formats/strings.md)) and the per-record-type
+decoders ([records](/formats/records.md)) both landed in M1. What the container
+layer still lacks:
+
+* Multi-plugin load order: no `plugins.txt` parsing and no cross-plugin record
+  override/merge — consumers open one plugin at a time (`Skyrim.esm` by default,
+  issue #73).
+* ESL light-master FormID space: `masterIndex` is the plain high byte, so the
+  0xFE + 12-bit-slot addressing a light master uses is not decoded.
 
 ## Verification
 

@@ -17,11 +17,13 @@ render pipeline. Browser remains dev tooling, not shipped game UI.
 
 One window, one unified sidebar (`AppShellViewController`, issue #98 PR 2 — see
 [app-ui](/tools/app-ui.md) for the shell anatomy). Asset Browser is the `Library`
-section's full-content destination: selecting it covers the always-live game view,
-which keeps drawing at a low rate so streaming stays warm; returning to a World
-destination is instant. The browser controller is built lazily on first selection and
-cached forever — loaded catalog, filter, selection, and warm renderer caches survive
-destination round trips and Settings reloads. Selected preview images have low
+section's full-content destination: selecting it covers the game view, which is
+paused and hidden while covered (`ShellContentViewController.setGameCovered`) so
+it costs nothing; returning to a World destination unhides and resumes it, and
+the streamed scene is still in memory, so the switch is instant. The browser
+controller is built lazily on first selection and cached forever — loaded catalog,
+filter, selection, and warm renderer caches survive destination round trips and
+Settings reloads. Selected preview images have low
 compression resistance -> intrinsic bitmap size never resizes the window. Build via
 `make build`.
 

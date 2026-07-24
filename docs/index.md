@@ -62,6 +62,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   found and validated at launch; override settings.
 * [Cell scene build](/engine/cell-scene.md) - exterior cell -> draw list: WRLD walk,
   STAT resolution, skip taxonomy, grouping, world bounds.
+* [Cell streaming](/engine/cell-streaming.md) - camera position -> desired NxN exterior-cell
+  grid, built off the main thread on one serial queue with a per-frame residency budget.
 * [Terrain mesh build](/engine/terrain.md) - LAND -> per-quadrant meshes under the cell's
   objects: grid topology, base textures, XCLC quad-hiding, DNAM fallback plane, placement.
 * [Procedural grass](/engine/grass.md) - deterministic LAND-driven placement, cell-owned

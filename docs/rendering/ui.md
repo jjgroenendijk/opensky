@@ -57,7 +57,8 @@ remains the screen-space compositing foundation it renders through.
   pass color-attachment size, upload atlas only when `revision` changed (glyph set
   stabilizes after first frame), apply hard budget `uiQuadBudget = 4096` with exact
   drop count, one `drawPrimitives` call. Shader maps pixel coords -> NDC (y-flip)
-  from `UIFrameUniforms.viewportSize`; fragment = `color * atlas.r`.
+  from `UIFrameUniforms.viewportSize`; fragment output is premultiplied —
+`alpha = color.a * atlas.r`, `rgb = color.rgb * alpha` — matching the source-one blend.
 - Shared structs/indices in `ShaderTypes.h`: `UIVertex` (pos/uv/color),
   `UIFrameUniforms`; `BufferIndexUIVertices/UIUniforms`, `TextureIndexUIAtlas`,
   `SamplerIndexUIAtlas`; argument-table counts bumped in `makeArgumentTable`.

@@ -39,7 +39,8 @@ buffers. Streaming ownership remains per cell even though mesh storage is shared
 
 ## Render pass
 
-Order: sky -> opaque instances -> terrain -> alpha-test instances -> water. Water has its
+Order: sky -> opaque instances -> terrain -> alpha-test instances -> grass -> water
+(`encodeScenePass`, which then draws particles, precipitation, and overlays). Water has its
 own Metal 4 pipeline: straight-alpha RGB blend (`sourceAlpha`, `oneMinusSourceAlpha`),
 depth compare `.less`, depth writes off, culling off. Shader mixes shallow/deep WATR colors
 by camera distance, reflection color by view-angle Fresnel, then animates low-cost crossed

@@ -57,7 +57,8 @@ enum DestinationContent {
     /// An inspector panel shown beside the always-live game view.
     case worldInspector(makePanel: @MainActor (WorldPanelContext) -> any InspectorPanel)
     /// A full-content controller that covers the content area (e.g. Asset
-    /// Browser). The game view stays attached underneath and keeps drawing.
+    /// Browser). The game view stays attached underneath but is paused and
+    /// hidden while covered, so it costs nothing until the user returns.
     case fullContent(makeController: @MainActor (FullContentContext) -> NSViewController)
 }
 

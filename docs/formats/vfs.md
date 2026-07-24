@@ -39,9 +39,11 @@ First opened = lowest priority. Steps:
 
 1. Ini resource lists: `sResourceArchiveList` then `sResourceArchiveList2`
    (comma-separated, `[Archive]` section; keys matched case-insensitively
-   anywhere in the file). Ini source: `Skyrim.ini` in the install root if
-   present, else the shipped `Skyrim_Default.ini`, else a built-in copy of the
-   vanilla SSE 1.6 lists. (The real user ini lives in the Windows-side
+   anywhere in the file). Ini source: both install-root files are loaded when
+   present and merged per key by `INISettings` — `Skyrim_Default.ini` at low
+   priority, `Skyrim.ini` overriding it — so each key resolves independently.
+   Only when neither file supplies either key does the built-in copy of the
+   vanilla SSE 1.6 lists apply. (The real user ini lives in the Windows-side
    `My Games` folder — under Proton prefixes on this setup; not probed yet.)
 2. Plugin-named archives: for every `.esm`/`.esp`/`.esl` in `Data/`, open
    `<plugin>.bsa` then `<plugin> - Textures.bsa` when present (SSE auto-load
