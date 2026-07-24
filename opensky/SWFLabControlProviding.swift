@@ -51,7 +51,10 @@ nonisolated enum SWFLabReadout {
     }
 
     static func text(for snapshot: SWFLabControlSnapshot) -> String {
-        var lines = [movieLine(snapshot), tagLine(snapshot), spriteLine(snapshot)]
+        var lines = [
+            movieLine(snapshot), tagLine(snapshot), spriteLine(snapshot),
+            actionLine(snapshot)
+        ]
         let stats = snapshot.drawStats
         lines.append(
             "Draws: \(stats.drawCalls) · triangles \(stats.triangles) · "
@@ -87,6 +90,19 @@ nonisolated enum SWFLabReadout {
         return "Sprites: \(tally.sprites) · clips \(tally.clipLayers) · "
             + "filters \(tally.filters) · blends \(tally.blendModes) · "
             + "actions \(tally.clipActions) · dangling \(tally.danglingPlacements)"
+    }
+
+    /// Whole-movie ActionScript inventory (milestone 8.3.1). Nothing executes
+    /// yet, so this reports what was framed, not what ran.
+    private static func actionLine(_ snapshot: SWFLabControlSnapshot) -> String {
+        guard let tally = snapshot.tally else {
+            return "Actions: no movie loaded"
+        }
+        return "Actions: \(tally.actionBlocks) blocks · "
+            + "\(tally.actionRecords) records · "
+            + "unknown \(tally.unknownActionOpcodes) · "
+            + "undecoded \(tally.undecodedActionOpcodes) · "
+            + "warnings \(tally.actionWarnings)"
     }
 
     private static func fontLine(_ snapshot: SWFLabControlSnapshot) -> String {

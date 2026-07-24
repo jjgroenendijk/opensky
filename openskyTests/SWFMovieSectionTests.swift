@@ -140,6 +140,9 @@ struct SWFMovieSectionTests {
         tally.sprites = 7
         tally.clipLayers = 3
         tally.clipActions = 9
+        tally.actionBlocks = 17
+        tally.actionRecords = 940
+        tally.unknownActionOpcodes = 0
         provider.snapshot = SWFLabControlSnapshot(
             selectedPath: "interface\\hudmenu.swf",
             layerEnabled: true,
@@ -156,6 +159,7 @@ struct SWFMovieSectionTests {
         let readout = section.statsReadout
         for token in [
             "hudmenu.swf", "layer on", "12", "5", "7", "3", "9",
+            "17 blocks", "940 records", "unknown 0", "undecoded 0", "warnings 0",
             "185", "4321", "24", "skipped 2", "$MissingFont"
         ] {
             #expect(readout.contains(token), "missing \(token) in: \(readout)")

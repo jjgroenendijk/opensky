@@ -151,8 +151,11 @@ weak-provider pattern shared with the Environment panel):
   bound to `Renderer.swfEnabled` (`SWFLayerEnabledControl`), and a readout
   (`SWFMovieStatsLabel`) that shows the selected movie, the decoded
   `SWFMovieTally` (place/move/remove counts, `ShowFrame`s, sprites, clip
-  layers, filters, blend modes, `ClipActions`, dangling placements), the live
-  `SWFDrawStats`, unresolved font names, and any load error. Selecting an entry
+  layers, filters, blend modes, `ClipActions`, dangling placements), the
+  whole-movie ActionScript inventory added in M8.3.1 (`Actions:` — action
+  blocks, ACTIONRECORDs, unknown opcodes, undecoded opcodes, parse warnings;
+  nothing executes yet), the live `SWFDrawStats`, unresolved font names, and any
+  load error. Selecting an entry
   runs `SWFMovieLoader.load(path:)` -> `Renderer.setSWFMovie(_:)`; `None`
   clears with `setSWFMovie(nil)`. Bridge:
   `SWFLabControlProviding` on `GameViewController`
