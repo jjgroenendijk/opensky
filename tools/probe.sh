@@ -77,6 +77,14 @@ grep 'swf sweep shapes:' "$log" | tail -1 | grep -q ' 0 failed' \
 grep 'swf sweep bitmaps:' "$log" | tail -1 | grep -q ' 0 failed' \
   || fail "swf sweep reported bitmap decode failures"
 
+# M8.2.3 SWF font/text gate: every DefineFont2/3 and DefineText/2/EditText body
+# decodes. Vanilla install: 97 fonts, 665 DefineEditText, 0 failed each; the
+# fontconfig report resolves all 20 aliases against the fontlib movies.
+grep 'swf sweep fonts:' "$log" | tail -1 | grep -q ' 0 failed' \
+  || fail "swf sweep reported font decode failures"
+grep 'swf sweep text:' "$log" | tail -1 | grep -q ' 0 failed' \
+  || fail "swf sweep reported text decode failures"
+
 # M5.1/5.2 actor gate: every discovered ACHR around the first-render cell
 # must resolve its template chain AND its visuals (skeleton, skin/outfit
 # parts, FaceGen) — the summary line reports "N failed".
