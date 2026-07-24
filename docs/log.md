@@ -20,6 +20,17 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   8.2.2-8.2.4. Reference: Adobe SWF File Format Specification, version 19. Doc:
   [SWF container](/formats/swf.md). Tests: `SWFFileTests`, `SWFBitReaderTests`
   over synthetic fixtures in `openskyTests/SWFFixture.swift`.
+* **SWF sweep command** (milestone 8.2.1 stage 2, completes 8.2.1): new
+  `openskycli swf sweep`/`swf info` (`openskycli/SWFCommand.swift`) parses
+  every archive/loose `interface\*.swf` movie through the production `SWFFile`
+  decoder and tallies known vs. unknown tag codes via `SWFTagName.isKnown`.
+  `ZWS` (LZMA) movies are counted as accounted-but-unsupported
+  (`SWFError.unsupportedCompression`), not a failure; any other thrown error
+  is unexpected and exits 1. Gate evidence against the vanilla install: 53
+  `.swf` files, 53 parsed, 0 unsupported, 0 failed; 14,477 tags total, 14,477
+  known, 0 unknown. Milestone 8.2.1 accepted. `tools/probe.sh` gained a `swf
+  sweep` smoke check; doc: [SWF container](/formats/swf.md) "Vanilla sweep
+  results", [CLI dev tool](/tools/cli.md).
 
 ## 2026-07-23
 

@@ -94,3 +94,18 @@ Unit tests: synthetic in-code fixtures (`openskyTests/SWFFileTests.swift`,
 and long tags, End-tag termination with trailing bytes, unknown-tag passthrough,
 the tag-name table, and rejection of bad signatures, `ZWS`, truncated headers,
 truncated tag bodies, and a RECT running past the end.
+
+`openskycli swf sweep` ([CLI dev tool](/tools/cli.md)) is the milestone 8.2.1 gate:
+every archive/loose path under `interface\` ending `.swf` parsed through
+`SWFFile`, with a known/unknown tag-code tally over `SWFTagName`.
+
+## Vanilla sweep results
+
+`openskycli swf sweep` against the vanilla install (`Skyrim - Interface.bsa`):
+53 `.swf` movies, all 53 parsed (0 `ZWS`/unsupported, 0 failed). 14,477 tags
+total, all 14,477 known to the Adobe tag table — no unknown or GFx-extension
+(~1000+) tag codes appeared in vanilla `Interface/*.swf`. Versions observed:
+mostly SWF 15, with `racesex_menu.swf` at version 8 and `fonts_pl.swf` /
+`fonts_ru.swf` / `gfxfontlib.swf` / `sharedcomponents.swf` at version 10. Full
+per-file output: `logs/swf-sweep.log` (gitignored, not committed — AGENTS.md
+Legal & IP; reproduce with `openskycli swf sweep`).
