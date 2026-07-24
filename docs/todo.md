@@ -95,9 +95,6 @@ findings.
 
 ### M8.2 — SWF format + static rendering
 
-* [ ] 8.2.1 SWF container decode: signature/compression (FWS/CWS), header rect/
-      frame fields, tag framing. Cite Adobe SWF spec; synthetic fixtures. Gate:
-      vanilla `Interface/*.swf` sweep accounted (known/unknown tag tally).
 * [ ] 8.2.2 Shapes + bitmaps: DefineShape-DefineShape4 fill/line styles + edge
       records, tessellation cached per `DefineShape`; DefineBitsLossless/2 +
       JPEG-variant bitmap decode. Gate: synthetic shape fixtures + vanilla sweep.

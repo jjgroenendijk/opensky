@@ -53,6 +53,11 @@ enum OpenSkyCLI {
       animation <hkx-key>         Decode spline-compressed transform tracks;
                                   sample every frame over full clip duration
       lod [--worldspace <edid>]   Parse settings + sweep .btr/.bto/.lst/.btt
+      swf sweep                   Parse every interface\\*.swf movie; report
+                                  per-file header summary + known/unknown
+                                  tag-code tally (ZWS counted as
+                                  accounted-but-unsupported)
+      swf info <key>               Parse one movie; print header + tag list
       screenshot --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
              [--size WxH] [--zoom <f>] [--time-of-day <0-24>] [--neighbors]
              [--ui-sample]
@@ -202,6 +207,10 @@ enum OpenSkyCLI {
             )
         case "animation":
             try AnimationCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
+        case "swf":
+            try SWFCommand.run(
                 context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
             )
         default:

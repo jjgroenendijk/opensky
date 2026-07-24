@@ -2,6 +2,36 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-07-24
+
+* **SWF container parser** (milestone 8.2.1 stage 1): new `opensky/Formats/SWF/`
+  decodes the Adobe SWF container that Skyrim's Scaleform UI is authored in.
+  `SWFFile.init(data:)` parses the signature/compression (`FWS` raw, `CWS` zlib
+  via the existing `Zlib.decompress`; `ZWS`/LZMA declined with
+  `SWFError.unsupportedCompression`), the 8-byte header (version, FileLength),
+  the bit-packed FrameSize RECT, the 8.8 fixed-point FrameRate, FrameCount, and
+  the flat tag stream (RECORDHEADER code/length, long-form `0x3F` escape,
+  terminating End tag, trailing bytes ignored). `SWFBitReader`
+  (`opensky/Formats/SWF/SWFBitReader.swift`) is a new MSB-first `readUB`/`readSB`
+  bit reader — the repo had none. `SWFTagName.name(forCode:)`
+  (`opensky/Formats/SWF/SWFTagName.swift`) maps the standard Adobe tag codes for
+  a known/unknown tally; Scaleform GFx extension tags (~1000+) are unknown by
+  design. Tag bodies stay undecoded — shapes/fonts/text/display list land in
+  8.2.2-8.2.4. Reference: Adobe SWF File Format Specification, version 19. Doc:
+  [SWF container](/formats/swf.md). Tests: `SWFFileTests`, `SWFBitReaderTests`
+  over synthetic fixtures in `openskyTests/SWFFixture.swift`.
+* **SWF sweep command** (milestone 8.2.1 stage 2, completes 8.2.1): new
+  `openskycli swf sweep`/`swf info` (`openskycli/SWFCommand.swift`) parses
+  every archive/loose `interface\*.swf` movie through the production `SWFFile`
+  decoder and tallies known vs. unknown tag codes via `SWFTagName.isKnown`.
+  `ZWS` (LZMA) movies are counted as accounted-but-unsupported
+  (`SWFError.unsupportedCompression`), not a failure; any other thrown error
+  is unexpected and exits 1. Gate evidence against the vanilla install: 53
+  `.swf` files, 53 parsed, 0 unsupported, 0 failed; 14,477 tags total, 14,477
+  known, 0 unknown. Milestone 8.2.1 accepted. `tools/probe.sh` gained a `swf
+  sweep` smoke check; doc: [SWF container](/formats/swf.md) "Vanilla sweep
+  results", [CLI dev tool](/tools/cli.md).
+
 ## 2026-07-23
 
 * App shell restyled with a Skyrim-inspired dark theme (owner request): new

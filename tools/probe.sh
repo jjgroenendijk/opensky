@@ -62,6 +62,13 @@ grep 'LOD sweep:' "$log" | tail -1 | grep -q ' 0 failed' \
 grep 'tree LOD:' "$log" | tail -1 | grep -q ' 0 failed' \
   || fail "tree LOD sweep reported failures"
 
+# M8.2.1 SWF container gate: every vanilla Interface/*.swf movie parses (or,
+# for ZWS/LZMA bodies, is accounted as unsupported) with zero unexpected
+# failures. Vanilla install: 53 files, 0 unsupported, 0 failed, 0 unknown tags.
+run "swf sweep (vanilla Interface movies)" swf sweep
+grep 'swf sweep:' "$log" | tail -1 | grep -q ' 0 failed' \
+  || fail "swf sweep reported unexpected parse failures"
+
 # M5.1/5.2 actor gate: every discovered ACHR around the first-render cell
 # must resolve its template chain AND its visuals (skeleton, skin/outfit
 # parts, FaceGen) — the summary line reports "N failed".
