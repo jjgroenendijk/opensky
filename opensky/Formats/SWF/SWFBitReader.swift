@@ -74,4 +74,22 @@ nonisolated struct SWFBitReader {
         let mask: UInt32 = bits == 32 ? .max : (1 << bits) - 1
         return Int32(bitPattern: raw | ~mask)
     }
+
+    // Shape structures (SWF spec v19 chapter 6) interleave byte-aligned UI8 /
+    // UI16 fields with bit-packed runs, so the bit cursor needs aligned byte
+    // reads without handing off to a separate BinaryReader each time.
+
+    /// Aligns to the next byte boundary and reads one byte (UI8).
+    mutating func readAlignedUInt8() throws -> UInt8 {
+        align()
+        return try UInt8(readUB(8))
+    }
+
+    /// Aligns to the next byte boundary and reads a little-endian UI16.
+    mutating func readAlignedUInt16() throws -> UInt16 {
+        align()
+        let low = try readUB(8)
+        let high = try readUB(8)
+        return UInt16(high << 8 | low)
+    }
 }

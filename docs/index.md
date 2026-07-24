@@ -51,7 +51,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [hkaSplineCompressedAnimation](/formats/hka-animation.md) - idle-clip metadata,
   spline blocks, 16-bit vector/40-bit quaternion decode + local-transform sampling.
 * [SWF container](/formats/swf.md) - FWS/CWS signature + compression, bit-packed
-  FrameSize RECT, tag stream framing, standard tag-name table (Scaleform UI).
+  FrameSize RECT, tag stream framing, standard tag-name table (Scaleform UI);
+  DefineShape-DefineShape4 decode + tessellation and lossless/JPEG bitmap tags.
 
 ## Engine
 

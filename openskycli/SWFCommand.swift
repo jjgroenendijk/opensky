@@ -1,6 +1,8 @@
 // `swf sweep`: parse every archive/loose `Interface\*.swf` movie through the
 // production SWFFile container decoder and report a known/unknown tag tally
-// (milestone 8.2.1 gate). `swf info <path>` inspects a single movie.
+// (milestone 8.2.1 gate), then decode every shape and bitmap definition tag
+// and tessellate the shapes (milestone 8.2.2 gate). `swf info <path>`
+// inspects a single movie.
 
 import Foundation
 
@@ -42,12 +44,14 @@ enum SWFCommand {
         let paths = vfs.archiveEntries().map(\.path)
             .filter { $0.hasPrefix("interface\\") && $0.hasSuffix(".swf") }
         var tally = SWFSweepTally()
+        var content = SWFContentTally()
         var unexpected: [(String, String)] = []
         for path in paths {
             do {
                 let file = try SWFFile(data: vfs.contents(forPath: path))
                 print("[INFO] \(path): \(summaryLine(for: file))")
                 tally.record(file)
+                content.record(file, path: path)
             } catch let SWFError.unsupportedCompression(signature) {
                 print("[INFO] \(path): unsupported compression (\(signature)), accounted")
                 tally.unsupported += 1
@@ -55,13 +59,15 @@ enum SWFCommand {
                 unexpected.append((path, String(describing: error)))
             }
         }
-        for failure in unexpected.prefix(20) {
+        for failure in (unexpected + content.failures).prefix(20) {
             printError("[ERROR] \(failure.0): \(failure.1)")
         }
+        printContentTally(content)
         printTally(tally, total: paths.count, unexpected: unexpected.count)
-        guard unexpected.isEmpty else {
+        guard unexpected.isEmpty, content.failures.isEmpty else {
             throw CLIError.failure(
-                "swf sweep failed for \(unexpected.count) of \(paths.count) files"
+                "swf sweep failed: \(unexpected.count) container, "
+                    + "\(content.failures.count) shape/bitmap decode failures"
             )
         }
     }
@@ -78,6 +84,23 @@ enum SWFCommand {
             + "tags \(file.tags.count)"
     }
 
+    private static func printContentTally(_ content: SWFContentTally) {
+        let shapeBreakdown = content.shapeCountByTag.sorted { $0.key < $1.key }
+            .map { "\($0.key) \($0.value)" }
+            .joined(separator: ", ")
+        print(
+            "[INFO] swf sweep shapes: \(content.shapeCount) decoded (\(shapeBreakdown)), "
+                + "\(content.triangleCount) triangles, \(content.shapeFailureCount) failed"
+        )
+        let bitmapBreakdown = content.bitmapCountByFormat.sorted { $0.key < $1.key }
+            .map { "\($0.key) \($0.value)" }
+            .joined(separator: ", ")
+        print(
+            "[INFO] swf sweep bitmaps: \(content.bitmapCount) decoded (\(bitmapBreakdown)), "
+                + "\(content.bitmapFailureCount) failed"
+        )
+    }
+
     private static func printTally(_ tally: SWFSweepTally, total: Int, unexpected: Int) {
         let parsed = total - unexpected - tally.unsupported
         print(
@@ -90,6 +113,60 @@ enum SWFCommand {
         )
         for (code, count) in tally.unknownCodes.sorted(by: { $0.key < $1.key }) {
             print("[INFO]   unknown tag \(code): \(count) occurrences")
+        }
+    }
+}
+
+/// Decodes and tallies every shape and bitmap definition tag across an
+/// `swf sweep` run (milestone 8.2.2 gate): shapes are parsed and tessellated,
+/// bitmaps decoded to RGBA. Any decode failure on a vanilla movie is recorded
+/// and fails the sweep.
+private struct SWFContentTally {
+    var shapeCount = 0
+    var shapeCountByTag: [String: Int] = [:]
+    var triangleCount = 0
+    var shapeFailureCount = 0
+    var bitmapCount = 0
+    var bitmapCountByFormat: [String: Int] = [:]
+    var bitmapFailureCount = 0
+    var failures: [(String, String)] = []
+
+    mutating func record(_ file: SWFFile, path: String) {
+        // JPEGTables is movie-global context for DefineBits (tag 6).
+        let jpegTables = file.tags
+            .first { $0.code == SWFBitmapDecoder.jpegTablesTagCode }?.body
+        for tag in file.tags {
+            if SWFShapeDefinition.tagCodes.contains(tag.code) {
+                recordShape(tag, path: path)
+            } else if SWFBitmapDecoder.tagCodes.contains(tag.code) {
+                recordBitmap(tag, path: path, jpegTables: jpegTables)
+            }
+        }
+    }
+
+    private mutating func recordShape(_ tag: SWFTag, path: String) {
+        let name = SWFTagName.name(forCode: tag.code) ?? "tag \(tag.code)"
+        do {
+            let shape = try SWFShapeDefinition.parse(tag: tag)
+            let mesh = SWFShapeTessellator.tessellate(shape)
+            shapeCount += 1
+            shapeCountByTag[name, default: 0] += 1
+            triangleCount += mesh.triangleCount
+        } catch {
+            shapeFailureCount += 1
+            failures.append(("\(path) \(name)", String(describing: error)))
+        }
+    }
+
+    private mutating func recordBitmap(_ tag: SWFTag, path: String, jpegTables: Data?) {
+        let name = SWFTagName.name(forCode: tag.code) ?? "tag \(tag.code)"
+        do {
+            let bitmap = try SWFBitmapDecoder.decode(tag: tag, jpegTables: jpegTables)
+            bitmapCount += 1
+            bitmapCountByFormat[bitmap.sourceFormat.rawValue, default: 0] += 1
+        } catch {
+            bitmapFailureCount += 1
+            failures.append(("\(path) \(name)", String(describing: error)))
         }
     }
 }
