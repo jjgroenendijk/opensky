@@ -30,14 +30,21 @@ be able to select/force/toggle/inspect the behavior without a CLI command.
   sidebar (`AppSidebarViewController`, `NSOutlineView` with non-selectable
   group rows) + layered content (`ShellContentViewController`). The old
   segmented World/Asset Browser mode switch is gone.
-- Sidebar map: World: Viewport, Environment · Developer: UI Lab · Library:
-  Asset Browser. Launch selects Viewport
+- Sidebar map: World: World, Environment · Developer: UI Lab · Library:
+  Asset Browser. Launch selects World
   (`DestinationRegistry.defaultDestinationID`). Sections come from
   `SidebarSection` (world, developer, library — `allCases` order); empty
   sections drop. Grouping is unit-tested via `AppSidebarModel`
   (`AppSidebarModelTests`).
 - Three content kinds (`DestinationContent`):
-  - `viewport` — the bare always-live game view, no panel.
+  - `viewport` — the bare always-live game view, no panel. No sidebar row uses
+    it: `Viewport` was a row that rendered nothing of its own and only
+    collapsed the inspector column, which gave a first-time user no hint that
+    any controls existed. It is now the `World` destination (camera pose +
+    fly/walk selector, frame timing, scene and residency counts). The content
+    kind survives as the mechanism for hiding the inspector column
+    (`ShellContentViewController.showViewport()`), which becomes a View-menu
+    command over whichever world destination is selected.
   - `worldInspector` — a controls panel shown in the leading 300pt slot beside
     the always-live game view.
   - `fullContent` — a controller that covers the content area (Asset Browser).
@@ -111,8 +118,11 @@ a unit test; a change that breaks one must fix the code, not the test.
   main menu so it is discoverable and listed. Sun shadows were an `H` keypress
   advertised by a hint note glued to the shadow section until M8; that note was
   the whole discovery mechanism, and it does not scale past a handful of knobs.
-  Camera and gameplay input (`WASD`/`QE`/`Shift`/`Esc`/mouse-look, `F` activate,
-  `G` fly-walk) are input, not configuration, and stay on the keyboard.
+  Camera and gameplay input (`WASD`/`QE`/`Shift`/`Esc`/mouse-look, `F` activate)
+  is input, not configuration, and stays on the keyboard. `G` fly-walk is the
+  boundary case: it moves the camera like input but selects a mode like
+  configuration, so `World > Camera` carries the selector and `G` accelerates
+  it over the same renderer state.
 - Widgets come from `PanelComponents`. If the one you need is missing, add it
   there rather than hand-rolling it in a section — the hand-rolled copies are
   where naming and styling drift start.
@@ -289,6 +299,9 @@ Accessibility identifiers are the UI-test API and never change silently.
   `SWFRuntimeTallyStatsLabel`. Section headers in UI Lab:
   `PanelSection-swfMovie`, `PanelSection-swfRuntime`.
 - Toolbar: `ScreenshotButton` (unchanged from the old shell), `SidebarToggleButton`.
+- World set: `CameraMovementModeControl`, `CameraCopyPoseControl`; readouts
+  `CameraStatsLabel`, `FrameStatsLabel`, `SceneStatsLabel`. Section headers:
+  `PanelSection-camera`, `-frame`, `-scene`.
 - Environment set, so a name can be checked in one place: `SunShadowsEnabledControl`,
   `ShadowQualityControl`, `AnimationsEnabledControl`, `WeatherEnabledControl`,
   `WeatherControl`, `ClearWeatherControl`/`RainWeatherControl`/`SnowWeatherControl`,

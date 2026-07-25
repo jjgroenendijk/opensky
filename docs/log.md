@@ -4,6 +4,23 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-25
 
+* **`Viewport` becomes the `World` destination**: the first sidebar row was not a
+  destination at all — it rendered no content of its own, showed no numbers, and its only
+  effect was to collapse the inspector column, so the app opened on a view that gave a
+  first-time user no hint that any controls existed. It is now `World`
+  (`Destination-world`, the launch default), a `worldInspector` panel composed of three
+  sections over the provider seams landed earlier today: `Camera` (live position, yaw and
+  pitch in degrees, exterior cell, a fly/walk selector that gives the `G` key a visible
+  settable surface, and a "Copy pose" button that puts the shared
+  `cameraPoseDescription` on the pasteboard so a bug report can carry an exact camera),
+  `Frame` (fps, average and worst frame milliseconds, CPU encode, GPU or `n/a`), and
+  `Scene` (draw calls, drawn and culled instances, resident cells, process footprint).
+  The `Frame` readout distinguishes "measuring" — no 30-frame window has closed yet —
+  from a genuine zero, which the raw `.empty` snapshot would otherwise render as 0 fps.
+  The `.viewport` content kind stays as the mechanism for hiding the inspector column,
+  now with no sidebar row using it; the View-menu command that drives it lands
+  next. `Destination-viewport` is retired in favour of
+  `Destination-world` in both the unit-pinned id contract and the UI tests.
 * **Live frame, camera and scene stats seam**: the frame timing the engine already
   measures left `FrameStats` only as one os_log line per 120-frame window, which is the
   milestone 2.9 fps gate and therefore not something a UI readout may reset or re-window.

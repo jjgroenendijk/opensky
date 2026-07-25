@@ -7,8 +7,11 @@ import AppKit
 @testable import opensky
 import Testing
 
+/// Stands in for the game controller, which conforms to every provider
+/// protocol. Shared with `WorldPanelTests` so a panel test exercises the same
+/// wiring the registry factory does, rather than a second partial fake.
 @MainActor
-private final class FakeWorldProviders: WorldControlProviders {
+final class FakeWorldProviders: WorldControlProviders {
     var refocusCount = 0
 
     // ShadowControlProviding
@@ -128,24 +131,37 @@ struct DestinationRegistryTests {
     func registryOrderAndIdentifiers() {
         #expect(
             DestinationRegistry.all.map(\.id)
-                == ["viewport", "environment", "uiLab", "assetBrowser"]
+                == ["world", "environment", "uiLab", "assetBrowser"]
         )
         // Accessibility identifiers are the UI-test contract; pin them literally.
         #expect(
             DestinationRegistry.all.map(\.sidebarIdentifier) == [
-                "Destination-viewport",
+                "Destination-world",
                 "Destination-environment",
                 "Destination-uiLab",
                 "Destination-assetBrowser"
             ]
         )
-        #expect(DestinationRegistry.worldInspectors.map(\.id) == ["environment", "uiLab"])
-        #expect(DestinationRegistry.defaultDestinationID == "viewport")
+        #expect(
+            DestinationRegistry.worldInspectors.map(\.id) == ["world", "environment", "uiLab"]
+        )
+        #expect(DestinationRegistry.defaultDestinationID == "world")
+    }
+
+    /// No registered destination uses `.viewport` any more — hiding the
+    /// inspector column is a View-menu mode, not a sidebar row.
+    @Test
+    func noRegisteredDestinationUsesBareViewport() {
+        for descriptor in DestinationRegistry.all {
+            if case .viewport = descriptor.content {
+                Issue.record("\(descriptor.id) still registers the bare viewport content")
+            }
+        }
     }
 
     @Test
     func gameViewVisibilityPerContentKind() {
-        #expect(DestinationRegistry.destination(id: "viewport")?.showsGameView == true)
+        #expect(DestinationRegistry.destination(id: "world")?.showsGameView == true)
         #expect(DestinationRegistry.destination(id: "environment")?.showsGameView == true)
         #expect(DestinationRegistry.destination(id: "assetBrowser")?.showsGameView == false)
     }
