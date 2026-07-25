@@ -4,6 +4,10 @@
 // plus the last frame's draw stats — only through this bridge, never renderer
 // or loader internals. The readout text is built by `SWFLabReadout` so the
 // formatting is device-free and unit-testable without AppKit.
+//
+// M8.3.3 widens the same seam to the AS2 runtime: start / tick / input / call /
+// stop, plus the `SWFLabRuntimeSnapshot` the runtime section reads (movie
+// state, invoke log, op tally — see SWFLabRuntimeReadout.swift).
 
 /// UI Lab SWF readout: what is selected, what decoding produced, and what the
 /// last encoded frame drew.
@@ -24,6 +28,10 @@ nonisolated struct SWFLabControlSnapshot: Equatable {
     let drawStats: SWFDrawStats
     /// True when an install was located and its movies could be enumerated.
     let installLoaded: Bool
+    /// AS2 runtime state (M8.3.3), or nil while the layer is on the static
+    /// frame-1 path. Read on the main thread between frames, like every other
+    /// renderer seam.
+    let runtime: SWFLabRuntimeSnapshot?
 }
 
 @MainActor
@@ -40,6 +48,34 @@ protocol SWFLabControlProviding: AnyObject {
 
     var swfLayerEnabled: Bool { get set }
     var swfLabSnapshot: SWFLabControlSnapshot { get }
+
+    // MARK: AS2 runtime (M8.3.3)
+
+    // Same discipline as `selectSWFMovie(path:)`: none of the calls below
+    // throws. A runtime that will not start, a tick that faults, or a callback
+    // the movie never registered all land in the snapshot's `loadError`,
+    // because a malformed movie must not take the app down.
+
+    /// Brings the selected movie's ActionScript up and pushes the display list
+    /// it produced.
+    func startSWFRuntime()
+
+    /// Applies `ticks` explicit ticks, pushing whatever each one changed.
+    func advanceSWFRuntime(ticks: Int)
+
+    /// Drops the runtime and restores the static frame-1 stream.
+    func stopSWFRuntime()
+
+    /// Injects one pointer or key event. Pointer coordinates are movie stage
+    /// pixels, the space `Stage.width` and `_xmouse` are expressed in.
+    func sendSWFRuntimeInput(_ event: SWFInputEvent)
+
+    /// Calls a callback the movie registered with `GameDelegate.addCallBack`,
+    /// or a function on its root clip, with no arguments.
+    func callSWFRuntimeMovie(_ name: String)
+
+    /// Empties the bridge invoke log so the next interaction reads clean.
+    func clearSWFInvokeLog()
 }
 
 /// Builds the UI Lab SWF readout text from a snapshot. Pure formatting, kept

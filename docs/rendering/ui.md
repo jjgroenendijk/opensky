@@ -177,17 +177,19 @@ is unchanged; only the source of the stream differs.
   sequence always produces the same frame; `setInterval` callbacks fire from the
   tick rather than from a clock; and `Math.random` inside a movie draws from a
   seeded generator for the same reason.
-- Not yet driven from the app: no `Developer > UI Lab` control starts or ticks a
-  runtime, so the shipped app still shows frame 1 only. That control is the
-  app-facing half of milestone 8.3.
+- Driven from the app since M8.3.3: the **SWF runtime** section under
+  `Developer > UI Lab` starts, ticks, drives, and stops a runtime (see
+  App surface below). A movie nobody starts still shows frame 1 only.
 
 ## App surface
 
 `Developer > UI Lab` sidebar destination — the M8.1 foundation acceptance surface
-(M8.1.4) and the M8.2 SWF static-render acceptance surface (M8.2.5), talking to
-the engine through `UILabControlProviding` and `SWFLabControlProviding` on
-`GameViewController` (bridges split to `opensky/GameViewControllerUILab.swift`
-and `opensky/GameViewControllerSWFLab.swift` for the file-size limit;
+(M8.1.4), the M8.2 SWF static-render acceptance surface (M8.2.5), and the M8.3.3
+AS2 runtime acceptance surface, talking to the engine through
+`UILabControlProviding` and `SWFLabControlProviding` on `GameViewController`
+(bridges split to `opensky/GameViewControllerUILab.swift`,
+`opensky/GameViewControllerSWFLab.swift`, and
+`opensky/GameViewControllerSWFRuntime.swift` for the file-size limit;
 weak-provider pattern shared with the Environment panel):
 
 - Overlay enable (`UIOverlayEnabledControl`), lab-sample toggle
@@ -222,6 +224,51 @@ weak-provider pattern shared with the Environment panel):
   ticker must not repeat it. No install, an undecodable movie, or a failing GPU
   package build all degrade to an explanatory readout — never a throw out of a
   control action.
+- **SWF runtime driver (M8.3.3)**, a second hosted child section titled
+  **SWF runtime** (`PanelSection-swfRuntime`,
+  `opensky/Shell/Sections/SWFRuntimeSection.swift` plus its
+  `SWFRuntimeSectionInput.swift` action satellite). It runs the movie the
+  selector above assigned, so the two sections are ordered selector then
+  runtime. Controls, all disabled until they can do something — Start needs an
+  assigned movie, everything else needs a running runtime:
+  - Transport: `SWFRuntimeStartControl` (`Renderer.startSWFRuntime()`),
+    `SWFRuntimeTickControl` (one `advanceSWFRuntime()`),
+    `SWFRuntimeTickBurstControl` (twenty, because a vanilla menu's open and
+    close animations are each about twenty frames), `SWFRuntimeStopControl`
+    (`stopSWFRuntime()`, back to the static frame-1 stream).
+  - Input: a navigation-key popup (`SWFRuntimeKeyControl` — Left, Up, Right,
+    Down, Enter, Escape, Space, Tab, from `SWFKeyCode`) plus
+    `SWFRuntimeSendKeyControl`, which injects the key down and its up.
+    `SWFRuntimePointerXControl` / `SWFRuntimePointerYControl` take a position
+    in **movie stage pixels** for `SWFRuntimePointerMoveControl` (one
+    `pointerMoved`) and `SWFRuntimePointerClickControl` (`pointerPressed` then
+    `pointerReleased` at the same point).
+  - Bridge: an editable combo box (`SWFRuntimeCallControl`) prefilled with the
+    movie's own `GameDelegate.addCallBack` names, plus
+    `SWFRuntimeCallInvokeControl` (`Renderer.callSWFMovie(_:)`, no arguments)
+    and `SWFRuntimeClearLogControl`. Editable rather than a fixed popup because
+    a menu's entry points are not all enumerable: `tweenmenu.swf` registers
+    `StartOpenMenuAnim` and `StartCloseMenuAnim` with the delegate, but
+    `SetPlatform` and `InitExtensions` are plain root-clip functions that
+    `callMovie` reaches through its fallback.
+  - Readouts, the three the M8.3.3 gate names, all built by the device-free
+    `SWFLabReadout` from a `SWFLabRuntimeSnapshot`
+    (`opensky/SWFLabRuntimeReadout.swift`) at 2 Hz:
+    `SWFRuntimeStatsLabel` (started/loaded, tick count, root playhead and frame
+    count, node count, root child count, focus target path, pointer/key event
+    counts, last key code, live timers, and dropped instantiations / frame
+    actions / timers), `SWFRuntimeInvokeStatsLabel` (invoke totals, unhandled
+    count, dropped count, the movie's registered callback names, and the last
+    six entries as `direction name(args) -> result` with `[unhandled]` marked),
+    and `SWFRuntimeTallyStatsLabel` (actions/blocks/calls executed, fault total
+    with ranked kinds, stack underflows, ranked unimplemented opcodes, ranked
+    missing host-API names, and the last `trace` message). Every clipped list
+    keeps its total beside it, so a truncated readout never reads as complete.
+  - Bridge implementation: `opensky/GameViewControllerSWFRuntime.swift`. Like
+    the selector, no control action throws — a start with no movie, a tick
+    before Start, a blank callback name, a missing Metal 4 device, and a GPU
+    failure inside a push all land in the same `loadError` the selector's
+    readout shows.
 
 `UIScene.localizedSample` (`opensky/UI/UILocalizedSample.swift`) is the
 localized preview content: invented `$KEY` fixtures merged through the real
@@ -292,10 +339,46 @@ shown verbatim ([UI translation strings](/formats/translation-strings.md)).
   changed-pixel counts, tag tallies, and the blank-frame explanation live in
   [SWF container](/formats/swf.md); captures stay under `logs/` because they
   embed game art.
+- M8.3.3 panel coverage, device-free and install-free: the runtime snapshot and
+  the three readouts, including every truncation case
+  (`SWFLabRuntimeReadoutTests` — the snapshot is also asserted against a live
+  `SWFMovieRuntime` built from a synthetic movie); the section's control
+  wiring, gating, callback list, and pinned accessibility ids
+  (`SWFRuntimeSectionTests`); the bridge reporting instead of throwing without
+  a renderer (`GameViewControllerSWFLabTests`); hosting inside the UI Lab
+  document (`UILabPanelTests`).
 - M8.2 milestone acceptance sidebar path: `Developer > UI Lab > SWF movie` —
   pick `console.swf`, `creationclubmenu.swf`, `quest_journal.swf`,
   `bookmenu.swf`, or `hudmenu.swf` from `SWFMovieControl`, watch
   `SWFMovieStatsLabel`, and A/B the frame with `SWFLayerEnabledControl`.
+- M8.3 milestone acceptance sidebar path:
+  `Developer > UI Lab > SWF movie` then `Developer > UI Lab > SWF runtime`.
+  Open / navigate / close on `tweenmenu.swf`, click by click:
+  1. `SWFMovieControl` -> `tweenmenu.swf` (assigns the movie; frame 1 is blank,
+     which is correct).
+  2. `SWFRuntimeStartControl` — Start. The state readout goes to
+     `Runtime: running`, and the tally shows the bring-up ops.
+  3. `SWFRuntimeCallControl` -> type `SetPlatform`, then
+     `SWFRuntimeCallInvokeControl`. Repeat for `InitExtensions`. Both are
+     root-clip functions, so they are typed rather than picked.
+  4. `SWFRuntimeCallControl` -> pick `StartOpenMenuAnim` from the list, then
+     Call. Press `SWFRuntimeTickBurstControl` once (twenty ticks) — the invoke
+     readout gains `movie->engine OpenAnimFinished()`.
+  5. Navigate: `SWFRuntimeKeyControl` -> `Down`/`Up`/`Left`/`Right`, then
+     `SWFRuntimeSendKeyControl` for each. Every accepted move fires
+     `movie->engine HighlightMenu(n)` into the invoke readout. Hovering works
+     the same way through `SWFRuntimePointerXControl`/`Y` +
+     `SWFRuntimePointerMoveControl`.
+  6. Close: `SWFRuntimeCallControl` -> `StartCloseMenuAnim`, Call, then
+     `SWFRuntimeTickBurstControl` — `movie->engine CloseMenu()` lands in the
+     log. `SWFRuntimeStopControl` returns the layer to the static frame.
+
+  Measured on the user's own install through exactly those controls (output to
+  `logs/`, never committed — a rendered vanilla menu embeds game art): 39 nodes
+  at bring-up rising to 84, invoke log 10 entries with 1 unhandled
+  (`OpenHighlightedMenu`, which no host function was registered for), 76,572
+  actions / 79 blocks / 2,491 calls, **0 faults**, 0 unimplemented opcodes, and
+  26 missing host-API hits headed by `getControllerFocusGroup`.
 
 ## Limits / next
 

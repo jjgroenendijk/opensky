@@ -116,7 +116,11 @@ content. Never touch the shell view controllers to add a destination.
   hand-roll fonts/widths. `configurePopUp(_:target:action:identifier:width:)`
   wires an `NSPopUpButton`'s target/action/id and optionally pins its width, so
   a data-driven list (movie names, weather names) cannot stretch the column;
-  the caller adds the items.
+  the caller adds the items. `configureComboBox(_:target:action:identifier:
+  width:)` does the same for an editable `NSComboBox` — use it where a knob
+  takes a free-form name that usually comes from a short live list (a SWF
+  movie's registered callbacks), so the common values autocomplete and anything
+  outside the list can still be typed.
 - `InspectionTicker` — the 2 Hz readout timer lifecycle (idempotent start).
 - Control-state convention: give each knob a separate enable / force / freeze /
   inspect / reset action and a live numeric readout, rather than one overloaded
@@ -141,6 +145,17 @@ type-body limit and the group loses its own readout cadence. Host it instead
 
 The hosted group stays promotable: it is already a standalone section, so
 moving it into its own destination later changes nothing about its control ids.
+
+A panel can host more than one: UI Lab hosts **SWF movie** (the M8.2.5 static
+selector) and **SWF runtime** (the M8.3.3 AS2 driver) in that order, because the
+second runs whatever the first assigned. `SWF runtime` sits at thirteen controls,
+past the ~8 promotion threshold above, and stays a hosted section anyway because
+the M8.3.3 acceptance names `Developer > UI Lab` as its path. A milestone
+naming the path outranks the threshold; promote it when a later milestone gives
+it a path of its own. A section whose class approaches the 250-line type-body
+limit splits its wiring and `@objc` actions into a `<Name>SectionInput.swift`
+extension satellite (`SWFRuntimeSectionInput.swift`) rather than shedding
+controls.
 
 ## Theme
 
@@ -177,8 +192,17 @@ Accessibility identifiers are the UI-test API and never change silently.
 - Controls: `<Thing>Control`; readouts: `<Thing>StatsLabel`. Current UI Lab set:
   `UIOverlayEnabledControl`, `UILabSampleControl`, `UIStringsSampleControl`,
   `UIScaleControl`, `UIMenuPushControl`/`UIMenuPopControl`/`UIMenuClearControl`,
-  `SWFMovieControl`, `SWFLayerEnabledControl`; readouts `UIStatsLabel`,
-  `UIMenuStatsLabel`, `UIStringsStatsLabel`, `SWFMovieStatsLabel`.
+  `SWFMovieControl`, `SWFLayerEnabledControl`, and the M8.3.3 runtime set
+  `SWFRuntimeStartControl`, `SWFRuntimeTickControl`,
+  `SWFRuntimeTickBurstControl`, `SWFRuntimeStopControl`, `SWFRuntimeKeyControl`,
+  `SWFRuntimeSendKeyControl`, `SWFRuntimePointerXControl`,
+  `SWFRuntimePointerYControl`, `SWFRuntimePointerMoveControl`,
+  `SWFRuntimePointerClickControl`, `SWFRuntimeCallControl`,
+  `SWFRuntimeCallInvokeControl`, `SWFRuntimeClearLogControl`; readouts
+  `UIStatsLabel`, `UIMenuStatsLabel`, `UIStringsStatsLabel`,
+  `SWFMovieStatsLabel`, `SWFRuntimeStatsLabel`, `SWFRuntimeInvokeStatsLabel`,
+  `SWFRuntimeTallyStatsLabel`. Section headers in UI Lab:
+  `PanelSection-swfMovie`, `PanelSection-swfRuntime`.
 - Toolbar screenshot: `ScreenshotButton` (unchanged from the old shell).
 
 `make test-ui` is blocked on the dev machine (TCC harness init), so the id

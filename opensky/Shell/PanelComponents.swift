@@ -128,6 +128,27 @@ enum PanelComponents {
         }
     }
 
+    /// Wires an editable combo box's target/action/id + width. Use this where a
+    /// knob takes a free-form name that usually comes from a short, live list
+    /// (a movie's registered callbacks) — the list autocompletes, and anything
+    /// outside it can still be typed. Items are added by the caller.
+    static func configureComboBox(
+        _ comboBox: NSComboBox,
+        target: AnyObject,
+        action: Selector,
+        identifier: String,
+        width: CGFloat
+    ) {
+        comboBox.target = target
+        comboBox.action = action
+        comboBox.isEditable = true
+        comboBox.completes = true
+        comboBox.usesDataSource = false
+        comboBox.font = PanelMetrics.monoFont
+        comboBox.widthAnchor.constraint(equalToConstant: width).isActive = true
+        comboBox.setAccessibilityIdentifier(identifier)
+    }
+
     /// Wires a value label's font + fixed width for readouts beside a slider.
     static func valueLabel(width: CGFloat) -> NSTextField {
         let label = NSTextField(labelWithString: "")

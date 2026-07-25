@@ -9,30 +9,6 @@ import AppKit
 @testable import opensky
 import Testing
 
-@MainActor
-private final class FakeSWFLabProvider: SWFLabControlProviding {
-    var swfMoviePaths: [String] = []
-    var swfLayerEnabled = true
-    var selections: [String?] = []
-    var snapshot = SWFLabControlSnapshot(
-        selectedPath: nil,
-        layerEnabled: true,
-        loadError: nil,
-        tally: nil,
-        unresolvedFontNames: [],
-        drawStats: SWFDrawStats(),
-        installLoaded: false
-    )
-
-    func selectSWFMovie(path: String?) {
-        selections.append(path)
-    }
-
-    var swfLabSnapshot: SWFLabControlSnapshot {
-        snapshot
-    }
-}
-
 struct SWFMovieSectionTests {
     @MainActor
     private static func makeSection(
@@ -125,7 +101,8 @@ struct SWFMovieSectionTests {
             tally: nil,
             unresolvedFontNames: [],
             drawStats: SWFDrawStats(),
-            installLoaded: true
+            installLoaded: true,
+            runtime: nil
         )
         section.syncControls()
         #expect(section.movieControl.titleOfSelectedItem == "hudmenu.swf")
@@ -152,7 +129,8 @@ struct SWFMovieSectionTests {
             drawStats: SWFDrawStats(
                 drawCalls: 185, triangles: 4321, glyphs: 24, maskDraws: 24, skippedItems: 2
             ),
-            installLoaded: true
+            installLoaded: true,
+            runtime: nil
         )
         section.refreshReadout()
 
@@ -176,7 +154,8 @@ struct SWFMovieSectionTests {
             tally: nil,
             unresolvedFontNames: [],
             drawStats: SWFDrawStats(),
-            installLoaded: true
+            installLoaded: true,
+            runtime: nil
         )
         section.refreshReadout()
         let readout = section.statsReadout

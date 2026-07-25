@@ -59,8 +59,15 @@ private final class FakeUILabProvider: UILabControlProviding, SWFLabControlProvi
     func selectSWFMovie(path _: String?) {}
     var swfLabSnapshot = SWFLabControlSnapshot(
         selectedPath: nil, layerEnabled: true, loadError: nil, tally: nil,
-        unresolvedFontNames: [], drawStats: SWFDrawStats(), installLoaded: false
+        unresolvedFontNames: [], drawStats: SWFDrawStats(), installLoaded: false,
+        runtime: nil
     )
+    func startSWFRuntime() {}
+    func advanceSWFRuntime(ticks _: Int) {}
+    func stopSWFRuntime() {}
+    func sendSWFRuntimeInput(_: SWFInputEvent) {}
+    func callSWFRuntimeMovie(_: String) {}
+    func clearSWFInvokeLog() {}
 }
 
 struct UILabPanelTests {
@@ -195,6 +202,27 @@ struct UILabPanelTests {
         #expect(document.bounds.intersects(sectionFrame), "SWF section outside document")
     }
 
+    /// The AS2 runtime driver (M8.3.3) is hosted the same way, beside the
+    /// selector rather than inside it.
+    @Test @MainActor
+    func swfRuntimeSectionIsHostedInsideThePanel() throws {
+        let panel = UILabPanelViewController()
+        let scrollView = try #require(panel.view as? NSScrollView)
+        panel.view.frame = NSRect(x: 0, y: 0, width: 300, height: 1400)
+        panel.view.layoutSubtreeIfNeeded()
+
+        #expect(panel.swfRuntimeSection.parent === panel)
+        let document = try #require(scrollView.documentView)
+        #expect(
+            Self.containsIdentifier("PanelSection-swfRuntime", in: document),
+            "SWF runtime section header missing from the UI Lab document"
+        )
+        let sectionFrame = panel.swfRuntimeSection.view.convert(
+            panel.swfRuntimeSection.view.bounds, to: document
+        )
+        #expect(document.bounds.intersects(sectionFrame), "SWF runtime section outside document")
+    }
+
     private static func containsIdentifier(_ identifier: String, in view: NSView) -> Bool {
         if view.accessibilityIdentifier() == identifier {
             return true
@@ -211,6 +239,7 @@ struct UILabPanelTests {
         panel.startInspecting()
         defer { panel.stopInspecting() }
         #expect(panel.swfSection.statsReadout == "SWF state unavailable.")
+        #expect(panel.swfRuntimeSection.stateReadout == "SWF runtime unavailable.")
     }
 
     @Test @MainActor
@@ -220,6 +249,7 @@ struct UILabPanelTests {
         let fake = FakeUILabProvider()
         panel.swfProvider = fake
         #expect(panel.swfSection.provider === fake)
+        #expect(panel.swfRuntimeSection.provider === fake)
     }
 
     @Test @MainActor
