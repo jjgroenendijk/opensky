@@ -121,11 +121,12 @@ Done 2026-07-25. See [AS2 runtime scope](/decisions/swf-as2-scope.md) and
       `callDepthExceeded` faults, unreadable `_root.CodeObj` contract, phase-4 save
       data); it returns in 8.5.1.
 
-Carried forward: the interpreter recurses on the Swift stack, so deep CLIK
-constructor chains hit the 64-frame call-depth cap (394 faults across the install,
-26 of 53 movies fully clean). It needs an explicit heap frame stack — issue #132,
-which also unblocks the data-driven menus M12.5/M13.4 depend on. Per-event global
-mouse tree walk is issue #133.
+Carried forward: the interpreter now runs calls on its own frame stack (issue #132
+landed), so `callDepth` is a policy limit at 256 and no cap crashes the host. The 394
+faults across the install did not move with it: they are `super()` recursing forever on a
+three-level class hierarchy, which is the vanilla CLIK shape — issue #136, and that is what
+unblocks the data-driven menus M12.5/M13.4 depend on. Per-event global mouse tree walk is
+issue #133.
 
 ### M8.4 — interaction + HUD
 

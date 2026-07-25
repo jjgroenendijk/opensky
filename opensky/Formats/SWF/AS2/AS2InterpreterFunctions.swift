@@ -21,8 +21,7 @@ extension AS2Interpreter {
     /// resumes after it.
     func defineFunction(
         _ record: SWFActionRecord,
-        frame: AS2Frame,
-        range: Range<Int>
+        frame: AS2Frame
     ) throws(AS2Fault) -> AS2Flow {
         guard case let .defineFunction(definition) = record.operands else {
             return .next
@@ -42,32 +41,39 @@ extension AS2Interpreter {
         } else {
             frame.localScope.define(.object(function), for: definition.name)
         }
-        return try skipBody(record, definition: definition, frame: frame, range: range)
+        return try skipBody(record, definition: definition, frame: frame)
     }
 
     private func skipBody(
         _ record: SWFActionRecord,
         definition: SWFActionFunction,
-        frame: AS2Frame,
-        range: Range<Int>
+        frame: AS2Frame
     ) throws(AS2Fault) -> AS2Flow {
         guard definition.bodySize > 0 else {
             return .next
         }
         let body = frame.block.records(from: record.endOffset, byteCount: definition.bodySize)
-        guard !body.isEmpty, body.endIndex <= range.upperBound else {
+        guard !body.isEmpty, body.endIndex <= frame.range.upperBound else {
             throw AS2Fault.truncatedBody(offset: record.offset)
         }
         return .jump(body.endIndex)
     }
 
-    /// Runs a bytecode function body in a fresh frame.
-    func callBytecode(
+    /// Builds the frame a bytecode function body runs in. Returns nil for an
+    /// empty body, which calls to `undefined` without ever entering the loop.
+    func makeFrame(
         _ body: AS2BytecodeBody,
         function: AS2Object,
         thisValue: AS2Value,
         arguments: [AS2Value]
-    ) throws(AS2Fault) -> AS2Value {
+    ) throws(AS2Fault) -> AS2Frame? {
+        guard body.definition.bodySize > 0 else {
+            return nil
+        }
+        let records = body.block.records(from: body.bodyOffset, byteCount: body.definition.bodySize)
+        guard !records.isEmpty else {
+            throw AS2Fault.truncatedBody(offset: body.bodyOffset)
+        }
         let activation = AS2Object()
         let frame = AS2Frame(
             runtime: runtime, block: body.block, target: body.target, thisValue: thisValue
@@ -77,15 +83,9 @@ extension AS2Interpreter {
         frame.scope = body.scope + [activation]
         frame.registers = Array(repeating: .undefined, count: registerCount(for: body))
         bind(arguments, body: body, frame: frame, function: function)
-
-        guard body.definition.bodySize > 0 else {
-            return .undefined
-        }
-        let records = body.block.records(from: body.bodyOffset, byteCount: body.definition.bodySize)
-        guard !records.isEmpty else {
-            throw AS2Fault.truncatedBody(offset: body.bodyOffset)
-        }
-        return try run(frame: frame, range: records.startIndex ..< records.endIndex)
+        frame.range = records.startIndex ..< records.endIndex
+        frame.index = records.startIndex
+        return frame
     }
 
     private func registerCount(for body: AS2BytecodeBody) -> Int {
