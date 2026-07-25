@@ -29,6 +29,10 @@ else
   brew install librsvg
 fi
 
+# Audio decode needs a decode-only, LGPL-only ffmpeg that we build ourselves; Homebrew's
+# is GPL-configured (docs/decisions/ffmpeg-audio.md).
+./tools/vendor-ffmpeg.sh
+
 if ! command -v xcodebuild >/dev/null 2>&1; then
   echo "  [WARN] xcodebuild not found — install Xcode from the App Store." >&2
 else

@@ -23,6 +23,30 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   stereo WMAv2, 0 packet-table mismatches, 347.0 declared minutes. The tally carries a
   `decoded` column that stays 0 until the decoder lands, so the probe's grep does not
   have to change then. See [xWMA container](/formats/xwm.md).
+* **ffmpeg vendored for audio decode (M9.1.1)**: OpenSky's first external native
+  dependency. `tools/vendor-ffmpeg.sh` (run by `make bootstrap`, also `make ffmpeg`)
+  builds ffmpeg 8.1.2 from source into the gitignored `.vendor/ffmpeg` prefix, configured
+  `--disable-everything --disable-gpl --disable-nonfree --disable-autodetect
+  --disable-avformat --enable-decoder=wmav2 --install-name-dir=@rpath`. That yields three
+  dylibs totalling 1.2 MB with no third-party dependencies, and the script proves the
+  claim rather than trusting the flags: it compiles a probe that asserts
+  `avutil_license()` is `LGPL version 2.1 or later` and that the configuration string
+  enables no GPL, nonfree or `--enable-lib*` component, then rejects any `otool -L` entry
+  outside `@rpath`, `/usr/lib` and `/System`. This corrects the 2026-07-20 premise: the
+  Homebrew ffmpeg installed here is `--enable-gpl --enable-version3` and linking it would
+  have relicensed a redistributed OpenSky as GPLv3. Linkage is a system-library module map
+  (`tools/ffmpeg/module.modulemap`, `import CFFmpeg`) with `SWIFT_INCLUDE_PATHS` on both
+  project configurations and link flags on the app and `openskycli` targets; the three
+  dylibs are embedded in `opensky.app/Contents/Frameworks` at build time, so the installed
+  app is self-contained. A missing prefix fails the build with a message naming
+  `make bootstrap` rather than a raw linker error. `opensky/Audio/WMADecoder.swift` is the
+  whole C boundary: container-supplied `AudioCodecParameters` in, interleaved 32-bit float
+  `DecodedAudio` out, `WMADecoderError` for every failure, and every ffmpeg allocation
+  owned by one private holder whose deinit is the only place anything is freed. Probe
+  evidence (never committed): a synthetic 440 Hz sine decoded to 1.9969 s against a 1.999 s
+  container, and one real `.xwm` from the player's install to 105.55791383 s against
+  105.557914 s, both 44,100 Hz stereo. Decision: [ffmpeg for audio
+  decode](/decisions/ffmpeg-audio.md). Refs #151.
 * **Merged PRs backfilled into the milestones that shipped them**: all 107 merged PRs
   were assigned to a milestone and added to the roadmap board, so M1-M7 stopped being
   empty number-holders and became a queryable record of how each finished milestone was
@@ -984,7 +1008,11 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   (M7.1 VM core, M7.2 scripts in world, M7.3 quest engine). M8 audio incl. voice +
   lip sync (M8.1 decode/playback foundation, M8.2 game wiring, M8.3 voice + lips);
   xwm decode route decided: ffmpeg (LGPL) wrapped behind Swift interface, dynamic
-  link. M9 game UI native-first hybrid (M9.1 HUD, M9.2 menus, M9.3 vanilla fonts
+  link. (Correction, 2026-07-25: "ffmpeg (LGPL)" was true of ffmpeg in general but
+  not of any ffmpeg on this machine — the installed Homebrew build is configured
+  `--enable-gpl --enable-version3`. The route stands only because OpenSky now builds
+  its own decode-only LGPL library; see [ffmpeg for audio decode](/decisions/ffmpeg-audio.md).)
+  M9 game UI native-first hybrid (M9.1 HUD, M9.2 menus, M9.3 vanilla fonts
   via SWF glyph extraction); full Scaleform playback ruled out. Each sub-milestone
   carries its own acceptance gate; decision docs (`decisions/ffmpeg-audio.md`,
   `decisions/ui-approach.md`) land with first impl items.

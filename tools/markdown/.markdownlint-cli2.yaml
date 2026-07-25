@@ -25,5 +25,6 @@ ignores:
   - build
   - DerivedData
   - logs            # gitignored scratch output; agents drop free-form notes here
+  - .vendor         # vendored upstream sources built by make bootstrap, not ours to lint
   - "**/._*"        # macOS AppleDouble junk on this volume
   - "._*"

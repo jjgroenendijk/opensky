@@ -1,0 +1,13 @@
+// System-library module map for the vendored, decode-only ffmpeg build. Reachable
+// because SWIFT_INCLUDE_PATHS lists this directory; `import CFFmpeg` then works from any
+// Swift file without ffmpeg entering the implicit namespace of every other file.
+//
+// Deliberately no `link` directives: autolinking would make every target that merely
+// imports the module (the unit-test bundle included) emit -lavcodec, which would then
+// need library search paths it has no business owning. The app and openskycli link the
+// three dylibs explicitly through OTHER_LDFLAGS instead; the test bundle resolves the
+// symbols through its BUNDLE_LOADER host.
+module CFFmpeg [system] {
+    header "shim.h"
+    export *
+}

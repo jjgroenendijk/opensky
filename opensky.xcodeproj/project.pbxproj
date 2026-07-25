@@ -158,9 +158,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 5A3BAE2C3000109300177F95 /* Build configuration list for PBXNativeTarget "opensky" */;
 			buildPhases = (
+				5AFF000130001093001700B1 /* Check vendored ffmpeg */,
 				5A3BADFD3000109100177F95 /* Sources */,
 				5A3BADFE3000109100177F95 /* Frameworks */,
 				5A3BADFF3000109100177F95 /* Resources */,
+				5AFF000130001093001700B2 /* Embed vendored ffmpeg */,
 			);
 			buildRules = (
 			);
@@ -218,6 +220,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 5AC1000130001093001700A9 /* Build configuration list for PBXNativeTarget "openskycli" */;
 			buildPhases = (
+				5AFF000130001093001700B3 /* Check vendored ffmpeg */,
 				5AC1000130001093001700A3 /* Sources */,
 				5AC1000130001093001700A4 /* Frameworks */,
 			);
@@ -298,6 +301,67 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		5AFF000130001093001700B1 /* Check vendored ffmpeg */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/tools/ffmpeg/xcode-phase.sh",
+				"$(SRCROOT)/.vendor/ffmpeg/lib",
+			);
+			name = "Check vendored ffmpeg";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SRCROOT/tools/ffmpeg/xcode-phase.sh\" check\n";
+		};
+		5AFF000130001093001700B2 /* Embed vendored ffmpeg */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"$(SRCROOT)/.vendor/ffmpeg/embed-inputs.xcfilelist",
+			);
+			inputPaths = (
+				"$(SRCROOT)/tools/ffmpeg/xcode-phase.sh",
+				"$(SRCROOT)/.vendor/ffmpeg/lib",
+			);
+			name = "Embed vendored ffmpeg";
+			outputFileListPaths = (
+				"$(SRCROOT)/.vendor/ffmpeg/embed-outputs.xcfilelist",
+			);
+			outputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/$(FRAMEWORKS_FOLDER_PATH)",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SRCROOT/tools/ffmpeg/xcode-phase.sh\" embed\n";
+		};
+		5AFF000130001093001700B3 /* Check vendored ffmpeg */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/tools/ffmpeg/xcode-phase.sh",
+				"$(SRCROOT)/.vendor/ffmpeg/lib",
+			);
+			name = "Check vendored ffmpeg";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SRCROOT/tools/ffmpeg/xcode-phase.sh\" check\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		5A3BADFD3000109100177F95 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -352,7 +416,17 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/.vendor/ffmpeg/lib",
+				);
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lavcodec",
+					"-lavutil",
+					"-lswresample",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = nl.jjgroenendijk.opensky;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -383,7 +457,17 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/.vendor/ffmpeg/lib",
+				);
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lavcodec",
+					"-lavutil",
+					"-lswresample",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = nl.jjgroenendijk.opensky;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -457,6 +541,11 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_INCLUDE_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/tools/ffmpeg",
+					"$(SRCROOT)/.vendor/ffmpeg/include",
+				);
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -513,6 +602,11 @@
 				MTL_FAST_MATH = YES;
 				MTL_TREAT_WARNINGS_AS_ERRORS = YES;
 				SDKROOT = macosx;
+				SWIFT_INCLUDE_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/tools/ffmpeg",
+					"$(SRCROOT)/.vendor/ffmpeg/include",
+				);
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -607,7 +701,21 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 92X872A57T;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/.vendor/ffmpeg/lib",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/.vendor/ffmpeg/lib",
+				);
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lavcodec",
+					"-lavutil",
+					"-lswresample",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = macosx;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -625,7 +733,21 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 92X872A57T;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/.vendor/ffmpeg/lib",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/.vendor/ffmpeg/lib",
+				);
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lavcodec",
+					"-lavutil",
+					"-lswresample",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = macosx;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
