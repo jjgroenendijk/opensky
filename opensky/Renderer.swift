@@ -89,8 +89,8 @@ final class Renderer: NSObject {
     /// once, always resident, and bound at TextureIndexShadowMap every scene
     /// pass so validation stays clean even with shadows disabled.
     let shadow: ShadowResources
-    /// User/dev A/B toggle (the `H` key). Default on; ANDed with `shadowQuality`
-    /// so it flips shadows on/off without discarding the selected quality.
+    /// A/B toggle from `World > Environment > Sun shadows`. Default on; ANDed
+    /// with `shadowQuality` so it flips shadows without discarding the tier.
     var sunShadowsEnabled = true
     /// Sun-shadow quality tier (M7.1.2). `.off` skips the pass entirely; `.low`
     /// and `.high` differ in cascade count, range, and PCF taps (see the

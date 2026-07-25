@@ -15,6 +15,39 @@ private final class DirectPanel: InspectorPanelViewController {
     }
 }
 
+/// A section with enough content that a failure to collapse is unmistakable.
+private final class TallSection: PanelSectionViewController {
+    private let id: String
+
+    init(id: String) {
+        self.id = id
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
+        fatalError("init(coder:) is unavailable")
+    }
+
+    override var sectionTitle: String {
+        "Tall \(id)"
+    }
+
+    override var sectionIdentifier: String {
+        id
+    }
+
+    override func makeContentViews() -> [NSView] {
+        (0 ..< 6).map { NSTextField(labelWithString: "row \($0)") }
+    }
+}
+
+private final class TwoSectionPanel: InspectorPanelViewController {
+    override func makeSections() -> [PanelSectionViewController] {
+        [TallSection(id: "test-first"), TallSection(id: "test-second")]
+    }
+}
+
 struct PanelFrameworkTests {
     @Test @MainActor
     func tickerStartsIdempotentlyAndStops() {
@@ -43,6 +76,57 @@ struct PanelFrameworkTests {
         #expect(content.isHidden)
         section.setExpanded(true)
         #expect(!content.isHidden)
+    }
+
+    /// The invariant that matters for panel density: a collapsed section must
+    /// occupy its header and nothing more. Before this was asserted, collapsing
+    /// only set `isHidden` on a non-arranged subview, so the section kept its
+    /// full expanded height and the column reserved a blank block for it.
+    @Test @MainActor
+    func collapsedSectionOccupiesOnlyItsHeader() throws {
+        let panel = TwoSectionPanel()
+        let scrollView = try #require(panel.view as? NSScrollView)
+        defer {
+            for id in ["test-first", "test-second"] {
+                UserDefaults.standard.removeObject(forKey: "panelSection.expanded.\(id)")
+            }
+        }
+        panel.view.frame = NSRect(x: 0, y: 0, width: 300, height: 700)
+        panel.view.layoutSubtreeIfNeeded()
+
+        let sections = try Self.collapsibleSections(in: #require(scrollView.documentView))
+        #expect(sections.count == 2)
+        let first = try #require(sections.first)
+        let header = try #require(first.arrangedSubviews.first)
+        let expandedHeight = first.frame.height
+        let expandedDocumentHeight = try #require(scrollView.documentView).frame.height
+        #expect(expandedHeight > header.frame.height)
+
+        first.setExpanded(false)
+        panel.view.layoutSubtreeIfNeeded()
+
+        #expect(
+            abs(first.frame.height - header.frame.height) < 0.5,
+            "collapsed section is \(first.frame.height) tall, header is \(header.frame.height)"
+        )
+        let collapsedDocument = try #require(scrollView.documentView).frame.height
+        #expect(
+            collapsedDocument < expandedDocumentHeight,
+            "document did not shrink: \(expandedDocumentHeight) -> \(collapsedDocument)"
+        )
+
+        // Re-expanding restores the original geometry.
+        first.setExpanded(true)
+        panel.view.layoutSubtreeIfNeeded()
+        #expect(abs(first.frame.height - expandedHeight) < 0.5)
+    }
+
+    /// Every `CollapsibleSectionView` in `root`'s subtree, in layout order.
+    private static func collapsibleSections(in root: NSView) -> [CollapsibleSectionView] {
+        if let section = root as? CollapsibleSectionView {
+            return [section]
+        }
+        return root.subviews.flatMap { collapsibleSections(in: $0) }
     }
 
     @Test @MainActor

@@ -1,6 +1,6 @@
 // World > Environment > Sun shadows section (issue #98 decomposition of the
-// former monolithic Environment panel). Quality selector bound to the live
-// renderer + a 2 Hz shadow-draw readout + the H dev A/B hint.
+// former monolithic Environment panel). Enable + quality selector bound to the
+// live renderer, plus a 2 Hz shadow-draw readout.
 
 import AppKit
 
@@ -13,6 +13,9 @@ final class ShadowSection: PanelSectionViewController {
         }
     }
 
+    let enabledControl = NSButton(
+        checkboxWithTitle: "Enable sun shadows", target: nil, action: nil
+    )
     let qualityControl = NSPopUpButton(frame: .zero, pullsDown: false)
     private let statsLabel = PanelComponents.statsLabel(identifier: "ShadowStatsLabel")
     private let qualities = ShadowQuality.allCases
@@ -26,6 +29,10 @@ final class ShadowSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        enabledControl.target = self
+        enabledControl.action = #selector(enabledChanged)
+        enabledControl.setAccessibilityIdentifier("SunShadowsEnabledControl")
+
         for quality in qualities {
             qualityControl.addItem(withTitle: Self.title(for: quality))
         }
@@ -33,19 +40,13 @@ final class ShadowSection: PanelSectionViewController {
         qualityControl.action = #selector(qualityChanged)
         qualityControl.setAccessibilityIdentifier("ShadowQualityControl")
 
-        return [
-            qualityControl,
-            statsLabel,
-            PanelComponents.note(
-                "Press H in the World view to toggle shadows on/off (dev A/B)."
-            )
-        ]
+        return [enabledControl, qualityControl, statsLabel]
     }
 
     override func syncControls() {
-        guard let provider, let idx = qualities.firstIndex(of: provider.shadowQuality) else {
-            return
-        }
+        guard let provider else { return }
+        enabledControl.state = provider.sunShadowsEnabled ? .on : .off
+        guard let idx = qualities.firstIndex(of: provider.shadowQuality) else { return }
         qualityControl.selectItem(at: idx)
     }
 
@@ -63,6 +64,11 @@ final class ShadowSection: PanelSectionViewController {
         Cascades: \(stats.cascadesRendered)
         CPU: \(String(format: "%.2f", provider.shadowUpdateMS)) ms
         """
+    }
+
+    @objc private func enabledChanged() {
+        provider?.sunShadowsEnabled = enabledControl.state == .on
+        finishInteraction()
     }
 
     @objc private func qualityChanged() {

@@ -5,6 +5,32 @@ import AppKit
 @testable import opensky
 import Testing
 
+/// Conforms to both protocols the panel's `provider` requires, so assigning it
+/// exercises the real wiring — including the refocus fan-out to sections.
+@MainActor
+private final class FakeShadowProvider: ShadowControlProviding, TerrainLODControlProviding {
+    var sunShadowsEnabled = true
+    var shadowQuality: ShadowQuality = .high
+    var shadowDrawStats = ShadowDrawStats()
+    var shadowUpdateMS: Double = 0
+    var shadowsActive = true
+    var refocusCount = 0
+
+    func refocusGameView() {
+        refocusCount += 1
+    }
+
+    var terrainLODConfigurationSnapshot = TerrainLODConfigurationSnapshot(
+        configuration: .fallback, source: "test"
+    )
+
+    func applyTerrainLODConfiguration(_: TerrainLODConfiguration) -> Bool {
+        true
+    }
+
+    func resetTerrainLODConfiguration() {}
+}
+
 @MainActor
 private final class FakeGrassProvider: GrassControlProviding {
     var grassEnabled = true
@@ -26,6 +52,7 @@ struct EnvironmentPanelTests {
         panel.view.layoutSubtreeIfNeeded()
 
         let controls = [
+            panel.sunShadowsEnabledControl,
             panel.animationsEnabledControl,
             panel.weatherEnabledControl,
             panel.clearWeatherControl,
@@ -52,6 +79,25 @@ struct EnvironmentPanelTests {
         }
         let document = try #require(scrollView.documentView)
         #expect(document.frame.height > 0)
+    }
+
+    /// The sun-shadow A/B is a checkbox, not a hidden `H` keystroke: it must
+    /// show the live state and drive it back (docs/tools/app-ui.md).
+    @Test @MainActor
+    func sunShadowsCheckboxRoundTripsProviderState() {
+        let panel = EnvironmentPanelViewController()
+        panel.loadViewIfNeeded()
+        let fake = FakeShadowProvider()
+        fake.sunShadowsEnabled = false
+        panel.provider = fake
+
+        #expect(panel.sunShadowsEnabledControl.state == .off)
+
+        let control = panel.sunShadowsEnabledControl
+        control.state = .on
+        control.sendAction(control.action, to: control.target)
+        #expect(fake.sunShadowsEnabled == true)
+        #expect(fake.refocusCount == 1, "control interaction must hand focus back to the world")
     }
 
     @Test @MainActor

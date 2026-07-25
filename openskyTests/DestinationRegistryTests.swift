@@ -12,6 +12,7 @@ private final class FakeWorldProviders: WorldControlProviders {
     var refocusCount = 0
 
     // ShadowControlProviding
+    var sunShadowsEnabled = true
     var shadowQuality: ShadowQuality = .high
     var shadowDrawStats = ShadowDrawStats()
     var shadowUpdateMS: Double = 0

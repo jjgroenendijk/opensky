@@ -55,13 +55,59 @@ be able to select/force/toggle/inspect the behavior without a CLI command.
   A Settings reload calls `FullContentReloadable.reloadFullContent(context:)`
   on each cached controller in place.
 - Toolbar (`unifiedCompact`, built by `AppShellViewController.makeToolbar()`):
-  sidebar toggle, tracking separator, flexible space, screenshot. Screenshot
-  (save-panel + error-sheet flow in `ScreenshotCoordinator`) is enabled only
-  while a destination with `showsGameView` is active. Settings stays the
-  Cmd+, window — no sidebar destination.
+  sidebar toggle, flexible space, screenshot. Screenshot (save-panel +
+  error-sheet flow in `ScreenshotCoordinator`) is enabled only while a
+  destination with `showsGameView` is active. Settings stays the Cmd+, window —
+  no sidebar destination.
+- The toolbar carries **no `.sidebarTrackingSeparator`**. That item pins toolbar
+  items to the split divider, which put the sidebar toggle inside the sidebar
+  region: collapsing the sidebar collapsed the region and the toggle slid left,
+  so the button moved every time it was clicked. Laying the toolbar out
+  left-to-right from a fixed origin keeps it put in both states. The toggle is a
+  custom `NSToolbarItem` rather than the system `.toggleSidebar` so it carries an
+  accessibility id (`SidebarToggleButton`) like every other control.
+- Menu bar (`AppDelegate.makeMainMenu()` + `makeViewMenu()`): App (Settings
+  Cmd+comma, Quit), View (Hide Sidebar Ctrl+Cmd+S), Edit. A toolbar affordance
+  that is also a mode gets a View-menu command, so it is discoverable and
+  carries a listed shortcut.
 - A world-inspector panel is a column of collapsible sections. Each section is a
   self-contained control group with its own live readout. Selecting a world
   destination refocuses the game view so WASD/mouse capture keep working.
+
+## Layout invariants
+
+These are properties of the framework, not of any one panel. Each is asserted by
+a unit test; a change that breaks one must fix the code, not the test.
+
+- **A collapsed section occupies its header height and nothing more.**
+  `CollapsibleSectionView` is an `NSStackView` with the header and the content as
+  *arranged* subviews, because Auto Layout only reclaims a hidden view's space
+  when it is arranged. Pinned as an ordinary subview with
+  `content.bottom == self.bottom`, a collapsed section kept its full expanded
+  height and the column reserved a blank block for it — visible as large gaps
+  between collapsed sections. Pinned by
+  `PanelFrameworkTests/collapsedSectionOccupiesOnlyItsHeader()`, which also
+  asserts the scroll document shrinks when a section collapses. The older
+  `collapsibleSectionTogglesContent()` checks only `isHidden`, which is why the
+  gap shipped unnoticed; keep both.
+- **The scroll document starts at the top.** The flipped document view means the
+  first control sits at a small `y` (`directContentPanelScrollDocumentStartsAtTop`).
+- Do not pin `heightAnchor` constants on section controls. A hard height defeats
+  intrinsic sizing and survives hiding; let the control size itself.
+
+## Interaction rules
+
+- **No dev behaviour is reachable only by an unadvertised keystroke.** Every
+  toggle is a control in a panel. A keyboard shortcut is allowed only as an
+  accelerator for a control that already exists, and only when registered in the
+  main menu so it is discoverable and listed. Sun shadows were an `H` keypress
+  advertised by a hint note glued to the shadow section until M8; that note was
+  the whole discovery mechanism, and it does not scale past a handful of knobs.
+  Camera and gameplay input (`WASD`/`QE`/`Shift`/`Esc`/mouse-look, `F` activate,
+  `G` fly-walk) are input, not configuration, and stay on the keyboard.
+- Widgets come from `PanelComponents`. If the one you need is missing, add it
+  there rather than hand-rolling it in a section — the hand-rolled copies are
+  where naming and styling drift start.
 
 ## Placement decision tree
 
@@ -203,7 +249,24 @@ Accessibility identifiers are the UI-test API and never change silently.
   `SWFMovieStatsLabel`, `SWFRuntimeStatsLabel`, `SWFRuntimeInvokeStatsLabel`,
   `SWFRuntimeTallyStatsLabel`. Section headers in UI Lab:
   `PanelSection-swfMovie`, `PanelSection-swfRuntime`.
-- Toolbar screenshot: `ScreenshotButton` (unchanged from the old shell).
+- Toolbar: `ScreenshotButton` (unchanged from the old shell), `SidebarToggleButton`.
+- Environment set, so a name can be checked in one place: `SunShadowsEnabledControl`,
+  `ShadowQualityControl`, `AnimationsEnabledControl`, `WeatherEnabledControl`,
+  `WeatherControl`, `ClearWeatherControl`/`RainWeatherControl`/`SnowWeatherControl`,
+  `WeatherTransitionsPausedControl`, `TimeOfDayControl`, `ParticlesEnabledControl`,
+  `ParticlesFrozenControl`, `ParticleEmissionControl`, `PrecipitationEnabledControl`,
+  `GrassEnabledControl`, `GrassDensityControl`, `GrassDistanceControl`,
+  `GrassWindControl`, `LODLevel0DistanceField`, `LODLevel1DistanceField`,
+  `LODMaximumDistanceField`, `LODTreeDistanceField`, `LODApplyButton`,
+  `LODResetButton`; readouts `ShadowStatsLabel`, `AnimationStatsLabel`,
+  `WeatherStatsLabel`, `TimeOfDayLabel`, `ParticleStatsLabel`,
+  `PrecipitationStatsLabel`, `GrassStatsLabel`, `LODStatusLabel`. Section headers:
+  `PanelSection-shadows`, `-animation`, `-weather`, `-particles`,
+  `-precipitation`, `-grass`, `-lod`.
+- Known drift: the LOD and time-of-day controls use `*Field` / `*Button` /
+  `*Label` rather than `*Control` / `*StatsLabel`. Renaming them is worth one
+  commit before the id surface grows further; until then, do not copy the
+  pattern into new sections.
 
 `make test-ui` is blocked on the dev machine (TCC harness init), so the id
 contract is pinned as unit assertions in `DestinationRegistryTests` — update
