@@ -4,6 +4,28 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-25
 
+* **Dev-shell UI fixes + framework invariants**: three defects in the app shell, each
+  fixed at the framework level so future panels inherit the fix. (1) Collapsing a panel
+  section left a blank block as tall as the section. `CollapsibleSectionView` pinned its
+  content as an ordinary subview (`content.bottom == self.bottom`) and only set
+  `isHidden`; Auto Layout reclaims a hidden view's space only for an `NSStackView`'s
+  *arranged* subviews, so the section kept its expanded height and the column reserved it.
+  The view is now a stack with header + content arranged. The real gap was the test:
+  `collapsibleSectionTogglesContent()` asserted `isHidden` and nothing about geometry,
+  which is why this shipped — `collapsedSectionOccupiesOnlyItsHeader()` now pins collapsed
+  height == header height and a strictly shrinking scroll document, and was confirmed to
+  fail against the old behavior. (2) The sidebar toggle moved when clicked:
+  `.sidebarTrackingSeparator` pins items to the split divider, so the toggle lived inside
+  the sidebar region and slid left as it collapsed. Dropped it; the toggle is now a custom
+  item with id `SidebarToggleButton`, and a View menu supplies Hide Sidebar (Ctrl+Cmd+S),
+  the app's first View menu. (3) Sun-shadow A/B was the `H` key, advertised only by a hint
+  note in the shadow section. It is now a `SunShadowsEnabledControl` checkbox over a new
+  `ShadowControlProviding.sunShadowsEnabled` seam; the whole key path (`KeyCode.keyH`,
+  `CameraInputState.requestShadowToggle`/`consumeShadowToggle`, the `RendererMovement`
+  consumption) is deleted. Not persisted, unlike the quality tier: a shadowless world
+  restored on next launch reads as a rendering bug. The general rule — no dev behaviour
+  reachable only by an unadvertised keystroke — is now in
+  [app-ui](/tools/app-ui.md) and the `app-ui` skill, alongside the layout invariants.
 * **AS2 `super` resolution** (issue #136): `super` was derived from the receiver's
   prototype, which never advances as a constructor chain is walked, so the base constructor
   of a three-level hierarchy called itself until the depth cap aborted it — the vanilla CLIK

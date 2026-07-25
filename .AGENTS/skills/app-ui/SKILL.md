@@ -44,6 +44,29 @@ standalone (own sync/readout/ticker) so promotion is free — control ids unchan
   BOTH targets (`make build && make cli`) — a hand-edited pbxproj is easy to get
   wrong.
 
+## Layout + interaction invariants
+
+Framework properties, each pinned by a test. Break one -> fix the code, not the
+test.
+
+- A collapsed section occupies its **header height and nothing more**.
+  `CollapsibleSectionView` is an `NSStackView` with header + content as
+  *arranged* subviews: Auto Layout only reclaims a hidden view's space when it
+  is arranged. As an ordinary pinned subview it kept full height and the column
+  showed blank gaps. Pinned by
+  `PanelFrameworkTests/collapsedSectionOccupiesOnlyItsHeader()`.
+- Never pin `heightAnchor` constants on section controls — a hard height defeats
+  intrinsic sizing and survives hiding.
+- **No dev behaviour reachable only by an unadvertised keystroke.** Every toggle
+  is a control in a panel. A shortcut is allowed only as an accelerator for an
+  existing control, registered in the main menu so it is listed. Camera/gameplay
+  input (WASD/QE/Shift/Esc/mouse-look, F, G) is input, not configuration.
+- Toolbar carries no `.sidebarTrackingSeparator` (it pins items to the split
+  divider, so the sidebar toggle moved when clicked). Toolbar items carry
+  accessibility ids like any control.
+- Need a widget `PanelComponents` lacks -> add it there, never hand-roll it in a
+  section.
+
 ## How to build a panel
 
 - Subclass `InspectorPanelViewController`: `makeSections()` for a sectioned

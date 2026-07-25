@@ -1,10 +1,16 @@
 // A disclosure header above a section's content (issue #98). Collapsing hides
 // the content so long, knob-heavy panels stay scannable as OpenSky's config
 // surface grows. Collapse state persists per section id across launches.
+//
+// This is an NSStackView, not a plain NSView, and that is load-bearing: Auto
+// Layout only reclaims a hidden view's space when it is an *arranged* subview
+// of a stack. Pinned as an ordinary subview, a collapsed section kept its full
+// expanded height and the panel column reserved a blank block for it
+// (docs/tools/app-ui.md, "collapsed section occupies its header height").
 
 import AppKit
 
-final class CollapsibleSectionView: NSView {
+final class CollapsibleSectionView: NSStackView {
     private let disclosure = NSButton()
     private let content: NSView
     private let sectionID: String
@@ -41,17 +47,14 @@ final class CollapsibleSectionView: NSView {
         header.setAccessibilityIdentifier("PanelSection-\(sectionID)")
 
         content.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(header)
-        addSubview(content)
-        NSLayoutConstraint.activate([
-            header.topAnchor.constraint(equalTo: topAnchor),
-            header.leadingAnchor.constraint(equalTo: leadingAnchor),
-            header.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor),
-            content.topAnchor.constraint(equalTo: header.bottomAnchor, constant: 4),
-            content.leadingAnchor.constraint(equalTo: leadingAnchor),
-            content.trailingAnchor.constraint(equalTo: trailingAnchor),
-            content.bottomAnchor.constraint(equalTo: bottomAnchor)
-        ])
+        orientation = .vertical
+        alignment = .leading
+        spacing = 4
+        addArrangedSubview(header)
+        addArrangedSubview(content)
+        // The stack's .leading alignment supplies the leading edge; pin the
+        // trailing edge so content spans the section's full width as before.
+        content.trailingAnchor.constraint(equalTo: trailingAnchor).isActive = true
 
         applyExpanded(Self.loadExpanded(sectionID))
     }
@@ -79,6 +82,10 @@ final class CollapsibleSectionView: NSView {
     private func applyExpanded(_ expanded: Bool) {
         disclosure.state = expanded ? .on : .off
         content.isHidden = !expanded
+        // Belt and braces: hiding an arranged subview already collapses it, but
+        // stating the visibility priority makes the intent explicit and survives
+        // a caller that unhides `content` behind our back.
+        setVisibilityPriority(expanded ? .mustHold : .notVisible, for: content)
     }
 
     // MARK: Persistence

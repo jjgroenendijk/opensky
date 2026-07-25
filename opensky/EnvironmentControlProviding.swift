@@ -2,6 +2,11 @@
 
 @MainActor
 protocol ShadowControlProviding: AnyObject {
+    /// Sun-shadow on/off, independent of the selected quality tier so an A/B
+    /// flip does not discard the tier. Was the `H` key until it became a
+    /// checkbox (no dev behaviour reachable only by an unadvertised keystroke —
+    /// docs/tools/app-ui.md).
+    var sunShadowsEnabled: Bool { get set }
     var shadowQuality: ShadowQuality { get set }
     var shadowDrawStats: ShadowDrawStats { get }
     var shadowUpdateMS: Double { get }

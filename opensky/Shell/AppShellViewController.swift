@@ -113,7 +113,12 @@ final class AppShellViewController: NSSplitViewController {
     }
 
     private enum ToolbarItemID {
+        static let sidebarToggle = NSToolbarItem.Identifier("SidebarToggle")
         static let screenshot = NSToolbarItem.Identifier("Screenshot")
+    }
+
+    @objc private func toggleSidebarItem() {
+        toggleSidebar(nil)
     }
 
     private func updateScreenshotButton() {
@@ -133,8 +138,12 @@ final class AppShellViewController: NSSplitViewController {
 }
 
 extension AppShellViewController: NSToolbarDelegate {
+    /// No `.sidebarTrackingSeparator`: it pins items to the split divider, so
+    /// the sidebar toggle sat inside the sidebar region and slid left whenever
+    /// the sidebar collapsed. Laying the toolbar out left-to-right from a fixed
+    /// origin keeps the toggle put in both states (docs/tools/app-ui.md).
     func toolbarDefaultItemIdentifiers(_: NSToolbar) -> [NSToolbarItem.Identifier] {
-        [.toggleSidebar, .sidebarTrackingSeparator, .flexibleSpace, ToolbarItemID.screenshot]
+        [ToolbarItemID.sidebarToggle, .flexibleSpace, ToolbarItemID.screenshot]
     }
 
     func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
@@ -146,6 +155,9 @@ extension AppShellViewController: NSToolbarDelegate {
         itemForItemIdentifier itemIdentifier: NSToolbarItem.Identifier,
         willBeInsertedIntoToolbar _: Bool
     ) -> NSToolbarItem? {
+        if itemIdentifier == ToolbarItemID.sidebarToggle {
+            return makeSidebarToggleItem(identifier: itemIdentifier)
+        }
         guard itemIdentifier == ToolbarItemID.screenshot else { return nil }
         screenshotButton.bezelStyle = .toolbar
         screenshotButton.target = self
@@ -157,6 +169,29 @@ extension AppShellViewController: NSToolbarDelegate {
         item.view = screenshotButton
         item.label = "Screenshot"
         item.paletteLabel = "Screenshot"
+        return item
+    }
+
+    /// A custom item rather than the system `.toggleSidebar`, so the toggle
+    /// carries an accessibility id like every other control.
+    private func makeSidebarToggleItem(
+        identifier: NSToolbarItem.Identifier
+    ) -> NSToolbarItem {
+        let button = NSButton(
+            image: NSImage(
+                systemSymbolName: "sidebar.leading",
+                accessibilityDescription: "Toggle sidebar"
+            ) ?? NSImage(),
+            target: self,
+            action: #selector(toggleSidebarItem)
+        )
+        button.bezelStyle = .toolbar
+        button.toolTip = "Show or hide the sidebar"
+        button.setAccessibilityIdentifier("SidebarToggleButton")
+        let item = NSToolbarItem(itemIdentifier: identifier)
+        item.view = button
+        item.label = "Sidebar"
+        item.paletteLabel = "Sidebar"
         return item
     }
 }

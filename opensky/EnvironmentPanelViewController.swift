@@ -56,6 +56,10 @@ final class EnvironmentPanelViewController: InspectorPanelViewController {
 
     /// Control forwards for the verification-surface tests. Sections own the
     /// controls; these keep the existing test + wiring API stable.
+    var sunShadowsEnabledControl: NSButton {
+        shadowSection.enabledControl
+    }
+
     var animationsEnabledControl: NSButton {
         animationSection.enabledControl
     }

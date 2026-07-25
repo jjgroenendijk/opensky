@@ -46,6 +46,7 @@ final class OpenSkyUITests: XCTestCase {
         let app = try launchApp()
         XCTAssertEqual(app.dialogs.count, 0, "No game-data alert expected with valid root")
         XCTAssertTrue(app.outlines["AppSidebar"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["SidebarToggleButton"].exists)
         // CI runners may expose AppKit accessibility without Metal 4.
         XCTAssertTrue(app.buttons["ScreenshotButton"].exists)
     }
@@ -64,6 +65,7 @@ final class OpenSkyUITests: XCTestCase {
         let quality = app.popUpButtons["ShadowQualityControl"]
         XCTAssertTrue(quality.waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["ShadowStatsLabel"].exists)
+        XCTAssertTrue(app.checkBoxes["SunShadowsEnabledControl"].exists)
         XCTAssertTrue(app.checkBoxes["AnimationsEnabledControl"].exists)
         XCTAssertTrue(app.checkBoxes["WeatherEnabledControl"].exists)
         XCTAssertTrue(app.checkBoxes["ParticlesEnabledControl"].exists)

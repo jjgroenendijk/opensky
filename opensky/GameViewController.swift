@@ -230,6 +230,14 @@ final class GameViewController: NSViewController {
 /// persists the quality choice. A nil renderer (Metal 4 unavailable) degrades to
 /// the stored/default quality and empty stats so the panel never crashes.
 extension GameViewController: ShadowControlProviding {
+    /// Not persisted: an A/B flip is a transient dev comparison, unlike the
+    /// quality tier. A shadowless world restored on next launch would read as a
+    /// rendering bug.
+    var sunShadowsEnabled: Bool {
+        get { renderer?.sunShadowsEnabled ?? true }
+        set { renderer?.sunShadowsEnabled = newValue }
+    }
+
     var shadowQuality: ShadowQuality {
         get { renderer?.shadowQuality ?? ShadowQualitySettings.load() }
         set {

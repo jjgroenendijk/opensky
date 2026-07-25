@@ -195,6 +195,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         appMenuItem.submenu = appMenu
 
+        let viewMenuItem = NSMenuItem()
+        mainMenu.addItem(viewMenuItem)
+        viewMenuItem.submenu = Self.makeViewMenu()
+
         let editMenuItem = NSMenuItem()
         mainMenu.addItem(editMenuItem)
         let editMenu = NSMenu(title: "Edit")
@@ -216,6 +220,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         editMenuItem.submenu = editMenu
         return mainMenu
+    }
+
+    /// Sidebar visibility belongs in a discoverable, listed menu command rather
+    /// than an unadvertised keystroke (docs/tools/app-ui.md). `toggleSidebar(_:)`
+    /// resolves on the responder chain to the shell's split-view controller.
+    private static func makeViewMenu() -> NSMenu {
+        let viewMenu = NSMenu(title: "View")
+        let toggleSidebar = NSMenuItem(
+            title: "Hide Sidebar",
+            action: #selector(NSSplitViewController.toggleSidebar(_:)),
+            keyEquivalent: "s"
+        )
+        toggleSidebar.keyEquivalentModifierMask = [.control, .command]
+        viewMenu.addItem(toggleSidebar)
+        return viewMenu
     }
 
     @objc private func openSettings() {

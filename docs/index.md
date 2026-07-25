@@ -135,7 +135,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   VFS + record browsing, toolbar World PNG capture, offscreen NIF/DDS previews.
 * [Main-app UI framework + placement](/tools/app-ui.md) - unified sidebar shell,
   destination registry, panel base classes, hosted sections, placement tree,
-  accessibility-id contract.
+  layout + interaction invariants, accessibility-id contract.
 
 ## Meta
 
