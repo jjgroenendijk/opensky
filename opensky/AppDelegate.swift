@@ -130,6 +130,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // UI Lab SWF movie selector (M8.2.5): enumerates and decodes
             // Interface movies. Built on first use, not here.
             controller.swfMovieLoaderFactory = { SWFMovieLoader(fileSystem: vfs) }
+            // World > Audio picker + playback source (M9.1.3).
+            controller.audioFileSystem = vfs
         }
         return controller
     }

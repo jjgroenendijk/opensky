@@ -118,6 +118,26 @@ final class FakeWorldProviders: WorldControlProviders {
 
     /// SceneStatsProviding
     var sceneStatsSnapshot = SceneStatsSnapshot.empty
+
+    // AudioControlProviding
+    var audioEnabled = false
+    var audioMasterVolume: Float = 1
+    private var audioCategoryVolumes: [AudioCategory: Float] = [:]
+    func audioVolume(for category: AudioCategory) -> Float {
+        audioCategoryVolumes[category] ?? 1
+    }
+
+    func setAudioVolume(_ volume: Float, for category: AudioCategory) {
+        audioCategoryVolumes[category] = volume
+    }
+
+    var selectableAudioFileNames: [String] = []
+    func playAudioFile(named _: String) -> String? {
+        nil
+    }
+
+    func stopAllAudioSources() {}
+    var audioStatsSnapshot = AudioStatsSnapshot.empty
 }
 
 struct DestinationRegistryTests {
@@ -131,19 +151,21 @@ struct DestinationRegistryTests {
     func registryOrderAndIdentifiers() {
         #expect(
             DestinationRegistry.all.map(\.id)
-                == ["world", "environment", "uiLab", "assetBrowser"]
+                == ["world", "environment", "audio", "uiLab", "assetBrowser"]
         )
         // Accessibility identifiers are the UI-test contract; pin them literally.
         #expect(
             DestinationRegistry.all.map(\.sidebarIdentifier) == [
                 "Destination-world",
                 "Destination-environment",
+                "Destination-audio",
                 "Destination-uiLab",
                 "Destination-assetBrowser"
             ]
         )
         #expect(
-            DestinationRegistry.worldInspectors.map(\.id) == ["world", "environment", "uiLab"]
+            DestinationRegistry.worldInspectors.map(\.id)
+                == ["world", "environment", "audio", "uiLab"]
         )
         #expect(DestinationRegistry.defaultDestinationID == "world")
     }

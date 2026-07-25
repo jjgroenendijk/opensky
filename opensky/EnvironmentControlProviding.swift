@@ -168,3 +168,50 @@ nonisolated struct SceneStatsSnapshot: Equatable {
 protocol SceneStatsProviding: AnyObject {
     var sceneStatsSnapshot: SceneStatsSnapshot { get }
 }
+
+/// One playing audio source as the World > Audio panel shows it.
+nonisolated struct AudioSourceStatsSnapshot: Equatable {
+    /// VFS path of the playing file.
+    let name: String
+    let categoryName: String
+    /// World position in native Skyrim units.
+    let worldPosition: SIMD3<Float>
+    /// Listener distance in meters (the attenuation model's unit).
+    let distanceMeters: Float
+    /// master x category x source gain, before distance attenuation.
+    let effectiveGain: Float
+}
+
+/// Published state of the world audio graph, read at 2 Hz by the panel. Only
+/// this Equatable value crosses from the engine to the readout.
+nonisolated struct AudioStatsSnapshot: Equatable {
+    let enabled: Bool
+    let engineRunning: Bool
+    /// Output device format line, or the failure reason when not running.
+    let outputDescription: String
+    let sources: [AudioSourceStatsSnapshot]
+    let sourceCap: Int
+
+    /// Reported by providers with no live audio engine.
+    static let empty = AudioStatsSnapshot(
+        enabled: false, engineRunning: false, outputDescription: "no engine",
+        sources: [], sourceCap: 0
+    )
+}
+
+@MainActor
+protocol AudioControlProviding: AnyObject {
+    var audioEnabled: Bool { get set }
+    var audioMasterVolume: Float { get set }
+    func audioVolume(for category: AudioCategory) -> Float
+    func setAudioVolume(_ volume: Float, for category: AudioCategory)
+    /// VFS paths the World > Audio picker offers (vanilla: the 269 `.xwm`
+    /// music files — sound effects are `.wav` and wait on a PCM reader).
+    var selectableAudioFileNames: [String] { get }
+    /// Streams the picked file as a positional source placed a fixed offset in
+    /// front of the camera, so panning/attenuation are audible immediately.
+    /// Returns nil on success or a short failure description for the readout.
+    func playAudioFile(named name: String) -> String?
+    func stopAllAudioSources()
+    var audioStatsSnapshot: AudioStatsSnapshot { get }
+}

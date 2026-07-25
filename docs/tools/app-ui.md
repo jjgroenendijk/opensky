@@ -30,7 +30,7 @@ be able to select/force/toggle/inspect the behavior without a CLI command.
   sidebar (`AppSidebarViewController`, `NSOutlineView` with non-selectable
   group rows) + layered content (`ShellContentViewController`). The old
   segmented World/Asset Browser mode switch is gone.
-- Sidebar map: World: World, Environment · Developer: UI Lab · Library:
+- Sidebar map: World: World, Environment, Audio · Developer: UI Lab · Library:
   Asset Browser. Launch selects World
   (`DestinationRegistry.defaultDestinationID`). Sections come from
   `SidebarSection` (world, developer, library — `allCases` order); empty
@@ -335,6 +335,13 @@ Accessibility identifiers are the UI-test API and never change silently.
   `PrecipitationStatsLabel`, `GrassStatsLabel`, `LODStatsLabel`. Section headers:
   `PanelSection-shadows`, `-animation`, `-weather`, `-particles`,
   `-precipitation`, `-grass`, `-lod`.
+- Audio set (World > Audio, M9.1.3): `AudioEnabledControl`,
+  `AudioMasterVolumeControl`, `AudioMusicVolumeControl`,
+  `AudioEffectsVolumeControl`, `AudioAmbienceVolumeControl` (the
+  `Audio<Category>VolumeControl` family tracks the provisional
+  `AudioCategory` list), `AudioFileControl`, `AudioPlaySelectedControl`,
+  `AudioStopAllControl`; readouts `AudioStatsLabel`, `AudioSourcesStatsLabel`.
+  Section headers: `PanelSection-audioOutput`, `-audioSources`.
 - The convention is now uniform. The LOD and time-of-day controls used to carry
   `*Field` / `*Button` / `*Label` suffixes; they were renamed to
   `*Control` / `*StatsLabel` in one pass before the id surface grew further.

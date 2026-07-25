@@ -80,6 +80,15 @@ final class GameViewController: NSViewController {
     /// the AppDelegate; nil when game data is missing. The UI Lab SWF bridge
     /// invokes it once, lazily, into `swfLab`.
     var swfMovieLoaderFactory: (() -> SWFMovieLoader)?
+
+    /// Resource lookup for World > Audio (M9.1.3). Set by the AppDelegate; nil
+    /// when game data is missing — the panel then lists nothing to play.
+    var audioFileSystem: VirtualFileSystem?
+    /// World audio graph, created on first enable by the audio bridge
+    /// (GameViewControllerAudio.swift), which also hands it to the renderer.
+    var worldAudio: WorldAudioEngine?
+    /// Cached picker paths — enumerating every archive entry is not free.
+    var cachedAudioFileNames: [String]?
     /// Selector state owned by the UI Lab SWF bridge
     /// (`GameViewControllerSWFLab.swift`); nothing else writes it.
     var swfLab = SWFLabState()

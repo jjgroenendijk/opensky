@@ -30,6 +30,7 @@ extension Renderer: MTKViewDelegate {
         let particleDelta = updateAnimationsFromWallClock()
         updateParticles(deltaTime: particleDelta)
         updatePrecipitation(deltaTime: particleDelta)
+        updateAudioFromWallClock()
         purgeRetiredResources()
 
         endFrameEvent.wait(

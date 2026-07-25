@@ -95,6 +95,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [AS2 runtime](/engine/as2-runtime.md) - ActionScript 2 interpreter and the movie it
   drives: value model + coercions, bounded execution, display objects and timeline,
   events, input and hit testing, the GameDelegate bridge, missing-API tally.
+* [World audio playback](/engine/audio.md) - AVAudioEngine graph with 3D positional
+  sources, streaming WMA decode off the main thread, provisional category volumes,
+  source budget/eviction, and the `World > Audio` verification surface.
 
 ## Rendering
 

@@ -11,7 +11,7 @@ struct AppSidebarModelTests {
     func groupsFollowSectionAndRegistryOrder() {
         let groups = AppSidebarModel.groups()
         #expect(groups.map(\.section) == [.world, .developer, .library])
-        #expect(groups[0].destinations.map(\.id) == ["world", "environment"])
+        #expect(groups[0].destinations.map(\.id) == ["world", "environment", "audio"])
         #expect(groups[1].destinations.map(\.id) == ["uiLab"])
         #expect(groups[2].destinations.map(\.id) == ["assetBrowser"])
     }
