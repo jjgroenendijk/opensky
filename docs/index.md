@@ -88,6 +88,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   app A/B controls, exterior/interior evidence + frame/build/footprint gate.
 * [Menu mode](/engine/menu-mode.md) - push/pop menu stack, world-vs-menu input-capture
   switch, world-sim pause via a pausable frame clock (no time jump on resume).
+* [AS2 runtime](/engine/as2-runtime.md) - ActionScript 2 interpreter and the movie it
+  drives: value model + coercions, bounded execution, display objects and timeline,
+  events, input and hit testing, the GameDelegate bridge, missing-API tally.
 
 ## Rendering
 
@@ -118,6 +121,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   (6,-2) as the 2.7/2.9 target; probe ranking, MODL `meshes\` prefix rule.
 * [Metal shader tooling](/decisions/metal-tooling.md) - clang-format for .metal,
   compiler warnings-as-errors as the linter; documented exception to per-language rule.
+* [AS2 runtime scope](/decisions/swf-as2-scope.md) - implement the closed 56-opcode
+  set vanilla menus use in full; phase the open-ended host API behind a logged
+  no-op plus tally.
 * [App logo + icon pipeline](/decisions/app-logo.md) - original "North Peak" SVG mark,
   `make icon` renders AppIcon set via rsvg-convert; legal rationale.
 

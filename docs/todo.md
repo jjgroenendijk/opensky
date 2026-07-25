@@ -3,12 +3,12 @@ type: Task List
 title: Roadmap and outstanding work
 description: OpenSky mission roadmap - agent handoff, milestone plan, open questions.
 tags: [meta, roadmap, planning, handoff]
-timestamp: 2026-07-23T00:00:00Z
+timestamp: 2026-07-25T00:00:00Z
 ---
 
 # TODO — roadmap
 
-State as of 2026-07-23. Ordered by mission priority (AGENTS.md): render static world
+State as of 2026-07-25. Ordered by mission priority (AGENTS.md): render static world
 geometry first -> grow toward playable engine.
 
 ## How to continue (agent handoff)
@@ -57,6 +57,7 @@ earlier integration gates. Done milestone leaves this file; history lives in
   precipitation, grass, app A/B controls + integrated exterior/interior/fly gates.
 * M8 — interaction + UI shell (active): vanilla SWF UI (SWF parse, static render,
   AS2 subset — issue #99), menu mode, interaction targeting, HUD, settings. Gate: 8.5.3.
+  M8.1-M8.3 done; next is M8.4 interaction + HUD.
 * M9 — world audio: decode/playback, sound records, positional SFX, ambience, music.
   Voice + lip sync moved to dialogue. Gate: 9.2.4.
 * M10 — mutable world foundation: runtime identity/state, change tracking, native saves,
@@ -90,23 +91,41 @@ Legal: Adobe SWF File Format Spec is public — reimplement SWF/GFx behavior fro
 spec + observation under `format-parser` discipline (synthetic fixtures only).
 No Scaleform SDK code; `.swf` files load from the user's install at runtime like
 all game data. Downstream menu items (M12.5 inventory, M13.4 journal, M17.2
-dialogue) target their vanilla SWF menus; depth follows 8.3.1 feasibility
-findings.
+dialogue) target their vanilla SWF menus; depth follows the phases in
+[AS2 runtime scope](/decisions/swf-as2-scope.md), which 8.3.1 settled.
 
 ### M8.3 — AS2 runtime subset
 
-* [ ] 8.3.1 Feasibility investigation: inventory DoAction/DoInitAction opcodes +
-      GFx extensions vanilla menus actually use; phased-subset plan + decision
-      doc (`decisions/swf-as2-scope.md`). Gate: opcode/API coverage tally
-      documented; scrapped decision's "full second VM project" risk answered
-      with phasing.
-* [ ] 8.3.2 Minimal AS2 interpreter: opcode subset from 8.3.1 sufficient to
-      init + drive selected menus; engine<->movie invoke bridge (GFx-style);
-      unimplemented ops/APIs -> logged no-op + tally.
-* [ ] 8.3.3 Runtime acceptance: one vanilla menu runs interactively (open,
-      navigate, close) on the AS2 subset; `Developer > UI Lab` exposes movie state,
-      invoke log, op tally. Gate: deterministic UI-state + pixel evidence;
-      docs/log updated.
+Done 2026-07-25. See [AS2 runtime scope](/decisions/swf-as2-scope.md) and
+[AS2 runtime](/engine/as2-runtime.md).
+
+* [x] 8.3.1 Feasibility investigation. `openskycli swf action-sweep` measured the
+      install: 533,562 action records, **56 distinct opcodes, 0 unknown**, 3,382
+      host-API names, and `With`/`Try`/`SetTarget`/`GetURL`/`WaitForFrame` entirely
+      absent. The "full second VM project" risk is answered by that closure — the
+      VM is bounded and implemented whole; the host API is what gets phased, behind
+      a logged no-op plus tally.
+* [x] 8.3.2 Minimal AS2 interpreter: all 56 opcodes, ECMA-262-3 coercions,
+      prototype chain and `DefineFunction2` registers under a step/depth budget;
+      mutable display list with `MovieClip`/`TextField`/`Stage`/`Selection`,
+      timeline control and class instantiation on placement; renderer per-frame
+      update path; `gfx.io.GameDelegate` bridge both directions with an invoke log;
+      unimplemented ops and APIs are a logged no-op plus tally.
+* [x] 8.3.3 Runtime acceptance: `tweenmenu.swf` opens, navigates and closes with 0
+      faults and 0 unimplemented opcodes (460 / 988-1,863 / 24,691 changed pixels,
+      `OpenAnimFinished()`, `HighlightMenu(n)`, `CloseMenu()` across the bridge).
+      Sidebar path: `Developer > UI Lab > SWF movie` to select, then
+      `Developer > UI Lab > SWF runtime` (`PanelSection-swfRuntime`) to start, tick,
+      send keys/pointer, invoke a callback, and read movie state, invoke log and op
+      tally. `startmenu.swf` was nominated and rejected on measurement (35
+      `callDepthExceeded` faults, unreadable `_root.CodeObj` contract, phase-4 save
+      data); it returns in 8.5.1.
+
+Carried forward: the interpreter recurses on the Swift stack, so deep CLIK
+constructor chains hit the 64-frame call-depth cap (394 faults across the install,
+26 of 53 movies fully clean). It needs an explicit heap frame stack — issue #132,
+which also unblocks the data-driven menus M12.5/M13.4 depend on. Per-event global
+mouse tree walk is issue #133.
 
 ### M8.4 — interaction + HUD
 

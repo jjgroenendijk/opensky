@@ -4,6 +4,65 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-25
 
+* **AS2 runtime subset** (milestone 8.3, closing 8.3.1/8.3.2/8.3.3): vanilla menus
+  now execute their own ActionScript, and one of them runs interactively. Seven
+  commits.
+  * *Reachability.* `SWFActionParser` frames `ACTIONRECORD`s (byte offsets kept so
+    the interpreter can seek to a jump target), `SWFActionName` names 100 opcodes,
+    and `SWFClipActions` decodes the `CLIPACTIONS` block that `PlaceObject2`/`3`
+    previously flagged and skipped. A shared `SWFTimeline` model replaced the
+    frame-1-only view, so sprites keep every frame and every action stream.
+    `FrameLabel` (43) and `ExportAssets` (56) decode as well — the latter is the
+    linkage-name table `Object.registerClass` needs, without which nothing can be
+    instantiated. Observed deviation from the spec's wording: `ActionPush` type 6
+    DOUBLE stores its high-order 32-bit word first; reading it as a plain
+    little-endian `UI64` yields denormal garbage.
+  * *Measurement.* `openskycli swf action-sweep` plus `SWFActionInventory` tally the
+    install: 53 movies, 3,414 action blocks, **533,562 action records, 56 distinct
+    opcodes, 0 unknown, 0 parse warnings**. `With`, `Try`/`Throw`, `SetTarget`,
+    `GetURL` and `WaitForFrame` never appear — no scope chain, no exceptions, no
+    external loading. That measurement is what answers the scrapped native-UI
+    decision's "full second VM project" objection, and it is recorded in
+    [AS2 runtime scope](/decisions/swf-as2-scope.md): the VM is closed and bounded,
+    the 3,382-name host API is the open-ended part, and it is phased behind a
+    logged no-op plus tally so a menu degrades instead of failing.
+  * *Interpreter.* `opensky/Formats/SWF/AS2/` implements all 56 opcodes over an
+    ECMA-262-3-style value model, prototype chain, and `DefineFunction2` registers,
+    under an explicit step budget, call-depth cap and bounded trace log. Malformed
+    bytecode degrades to a recorded diagnostic and aborts one invocation. An
+    empty-stack read yields `undefined` rather than faulting: the vanilla compiler
+    emits a join-point `ActionPop` reached with an empty stack in 666 of 1,180
+    blocks, and Flash behaves the same way.
+  * *Dynamic display list.* A mutable display tree (`SWFDisplayObject`,
+    `SWFMovieRuntime`) drives `MovieClip`/`TextField`/`Stage`/`Selection`, the
+    property surface, and timeline control by frame or label, with registered
+    classes constructed on placement. The renderer gained a cheap per-frame update
+    path that re-plans draws and text while retaining tessellation, textures and
+    the glyph atlas, with headroomed buffers that grow rather than overrun. The
+    layer stays driven by an explicit tick, never wall clock, so an unadvanced
+    movie still renders byte-identically.
+  * *Interaction.* Clip-event dispatch, `Key`/`Mouse` broadcasters, pointer and key
+    injection, bounds-level hit testing, focus and `NavigationCode` routing, and the
+    `gfx.io.GameDelegate` bridge in both directions with a bounded invoke log.
+  * *Acceptance.* `tweenmenu.swf` opens, navigates and closes on the AS2 subset with
+    0 faults and 0 unimplemented opcodes: `StartOpenMenuAnim` plus 20 ticks opens it
+    (460 changed pixels, `OpenAnimFinished()` back to the engine), arrow keys and
+    pointer hover move the selection (`HighlightMenu(n)`, 988-1,863 changed pixels),
+    `StartCloseMenuAnim` closes it (24,691 changed pixels, `CloseMenu()`).
+    `startmenu.swf` was the nominated target and was rejected on measurement — 35
+    `callDepthExceeded` faults, an unreadable `_root.CodeObj` host contract, and
+    save-list data that belongs to a later phase. Sidebar path:
+    `Developer > UI Lab > SWF movie` to pick the movie, then
+    `Developer > UI Lab > SWF runtime` (`PanelSection-swfRuntime`) to start, tick,
+    send keys and pointer events, invoke a movie callback, and read movie state,
+    invoke log and op tally.
+  * *Known ceiling.* Bringing up all 53 movies now registers 305 classes but records
+    394 `callDepthExceeded` faults, because the interpreter recurses on the Swift
+    stack and the 64-frame cap exists for stack safety — probes at 128 and 256 both
+    crashed the test host. The aborted CLIK constructors are why `dispatchEvent`,
+    `addEventListener` and `textField` head the remaining missing-API tally. Fixing
+    it needs an explicit heap frame stack (issue #132); the per-event global mouse
+    tree walk is issue #133.
 * **Docs accuracy pass** (issue #124): fixed the twelve inaccuracies a full
   audit of `docs/` found, plus one stale code comment. `index.md` now lists
   [cell streaming](/engine/cell-streaming.md), which had been missing from the
