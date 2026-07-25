@@ -51,6 +51,7 @@
 				"Shell/AppSidebarViewController.swift",
 				"Shell/CollapsibleSectionView.swift",
 				"Shell/DestinationRegistry.swift",
+				"Shell/FrameHUDView.swift",
 				"Shell/InspectorPanel.swift",
 				"Shell/InspectorPanelViewController.swift",
 				"Shell/PanelComponents.swift",

@@ -19,6 +19,9 @@ final class AppShellViewController: NSSplitViewController {
     /// Data-root context handed to full-content factories; replaced on reload.
     private var fullContentContext: FullContentContext
     private var currentDestinationID: String?
+    /// View > Hide Inspector state. Applies to whichever world destination is
+    /// frontmost, which is what the retired `Viewport` row used to do.
+    private var isInspectorHidden = false
 
     /// The embedded live World controller (screenshot + reload target).
     var gameViewController: GameViewController {
@@ -68,7 +71,11 @@ final class AppShellViewController: NSSplitViewController {
         case .viewport:
             content.showViewport()
         case .worldInspector:
-            content.showInspector(id: descriptor.id)
+            if isInspectorHidden {
+                content.showViewport()
+            } else {
+                content.showInspector(id: descriptor.id)
+            }
         case let .fullContent(makeController):
             let controller = fullContentControllers[descriptor.id]
                 ?? makeController(fullContentContext)
@@ -98,6 +105,42 @@ final class AppShellViewController: NSSplitViewController {
             show(descriptor)
         }
         updateScreenshotButton()
+    }
+
+    // MARK: - View-menu commands
+
+    /// True when the frontmost destination actually has an inspector column to
+    /// hide; a full-content destination (Asset Browser) has none.
+    var canToggleInspector: Bool {
+        currentDestinationID
+            .flatMap(DestinationRegistry.destination(id:))?.isWorldInspector ?? false
+    }
+
+    /// True while the inspector column is collapsed by the View-menu command.
+    var isInspectorCollapsed: Bool {
+        isInspectorHidden
+    }
+
+    /// Whether the always-on frame overlay is wanted (persisted).
+    var isFrameHUDEnabled: Bool {
+        content.isFrameHUDEnabled
+    }
+
+    /// View > Show Frame HUD. Reaches the shell through the responder chain.
+    @objc func toggleFrameHUD(_: Any?) {
+        content.isFrameHUDEnabled.toggle()
+    }
+
+    /// View > Hide Inspector. Collapses or restores the panel column of the
+    /// frontmost world destination.
+    @objc func toggleInspectorColumn(_: Any?) {
+        guard
+            let id = currentDestinationID,
+            let descriptor = DestinationRegistry.destination(id: id),
+            descriptor.isWorldInspector
+        else { return }
+        isInspectorHidden.toggle()
+        show(descriptor)
     }
 
     // MARK: - Toolbar
@@ -134,6 +177,26 @@ final class AppShellViewController: NSSplitViewController {
             window: window,
             button: screenshotButton
         )
+    }
+}
+
+/// Menu validation for the two shell commands: a command that cannot apply is
+/// greyed out rather than silently doing nothing, and each carries a checkmark
+/// showing which way it will go. Everything else falls through to
+/// `NSSplitViewController`'s own validation, which is what keeps the sidebar
+/// item's title in sync.
+extension AppShellViewController: NSMenuItemValidation {
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        switch menuItem.action {
+        case #selector(toggleFrameHUD):
+            menuItem.state = isFrameHUDEnabled ? .on : .off
+            return true
+        case #selector(toggleInspectorColumn):
+            menuItem.state = isInspectorHidden ? .on : .off
+            return canToggleInspector
+        default:
+            return validateUserInterfaceItem(menuItem)
+        }
     }
 }
 

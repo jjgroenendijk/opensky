@@ -57,6 +57,27 @@ struct ShellContentCoverTests {
         #expect(!mtkView.isPaused)
     }
 
+    /// The frame HUD is an overlay on the game slot, so it must disappear with
+    /// the game view a full-content destination covers.
+    @Test func frameHUDHidesWhileTheGameViewIsCovered() {
+        let key = FrameHUDView.visibilityDefaultsKey
+        defer { UserDefaults.standard.removeObject(forKey: key) }
+        UserDefaults.standard.set(true, forKey: key)
+
+        let content = ShellContentViewController(gameViewController: GameViewController())
+        _ = content.view
+        #expect(content.isFrameHUDOnScreen)
+
+        content.showFullContent(NSViewController())
+        #expect(!content.isFrameHUDOnScreen)
+        #expect(!content.isFrameHUDTicking)
+        // Covering does not change the user's choice, only what is on screen.
+        #expect(content.isFrameHUDEnabled)
+
+        content.showViewport()
+        #expect(content.isFrameHUDOnScreen)
+    }
+
     /// Inspector panels are built on first reveal, not at launch: the shell
     /// caches them like full-content controllers, so adding destinations does
     /// not add launch-time provider graphs.

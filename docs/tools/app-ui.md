@@ -82,9 +82,28 @@ be able to select/force/toggle/inspect the behavior without a CLI command.
   custom `NSToolbarItem` rather than the system `.toggleSidebar` so it carries an
   accessibility id (`SidebarToggleButton`) like every other control.
 - Menu bar (`AppDelegate.makeMainMenu()` + `makeViewMenu()`): App (Settings
-  Cmd+comma, Quit), View (Hide Sidebar Ctrl+Cmd+S), Edit. A toolbar affordance
-  that is also a mode gets a View-menu command, so it is discoverable and
-  carries a listed shortcut.
+  Cmd+comma, Quit), View (Hide Sidebar Ctrl+Cmd+S, Show Frame HUD Opt+Cmd+H,
+  Hide Inspector Opt+Cmd+I), Edit. A toolbar affordance that is also a mode gets
+  a View-menu command, so it is discoverable and carries a listed shortcut. All
+  three View actions resolve on the responder chain to `AppShellViewController`,
+  which validates them (`NSMenuItemValidation`): each carries a checkmark
+  showing which way it will go, and `Hide Inspector` greys out on a destination
+  with no inspector column (a `fullContent` destination) instead of silently
+  doing nothing. `Hide Inspector` is what drives the `.viewport` content kind
+  over whichever world destination is selected.
+- **Frame HUD** (`Shell/FrameHUDView.swift`): a small always-on readout pinned to
+  the top-trailing corner of the game slot — fps, frame milliseconds, GPU or
+  `n/a`, draw calls, drawn and culled instances, resident cells, footprint. It
+  reads the same `FrameStatsProviding`/`SceneStatsProviding` snapshots the
+  `World` panel reads, so the two surfaces cannot disagree, and refreshes on the
+  shared 2 Hz `InspectionTicker`. It is an AppKit overlay and **not** a render
+  pass: it needs no shader work, and it must stay out of
+  `Renderer.renderOffscreen`, which feeds `openskycli screenshot`, the bench loop
+  and every offscreen evidence capture — chrome encoded into the scene pass would
+  burn itself into those images. Hidden (and its ticker stopped, so it costs
+  nothing) whenever the user turns it off or a full-content destination covers
+  the game view. The show/hide choice persists under the `frameHUD.visible`
+  user default, defaulting to visible.
 - A world-inspector panel is a column of collapsible sections. Each section is a
   self-contained control group with its own live readout. Selecting a world
   destination refocuses the game view so WASD/mouse capture keep working.
@@ -299,6 +318,7 @@ Accessibility identifiers are the UI-test API and never change silently.
   `SWFRuntimeTallyStatsLabel`. Section headers in UI Lab:
   `PanelSection-swfMovie`, `PanelSection-swfRuntime`.
 - Toolbar: `ScreenshotButton` (unchanged from the old shell), `SidebarToggleButton`.
+- Frame HUD overlay: `FrameHUDStatsLabel` (on the label inside `FrameHUDView`).
 - World set: `CameraMovementModeControl`, `CameraCopyPoseControl`; readouts
   `CameraStatsLabel`, `FrameStatsLabel`, `SceneStatsLabel`. Section headers:
   `PanelSection-camera`, `-frame`, `-scene`.

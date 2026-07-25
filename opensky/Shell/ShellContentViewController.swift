@@ -16,6 +16,9 @@ final class ShellContentViewController: NSViewController {
     private let panelSlot = NSView()
     private let gameSlot = NSView()
     private let fullContentSlot = NSView()
+    /// Always-on stats overlay pinned inside `gameSlot` (never a render pass,
+    /// so evidence captures stay clean — see FrameHUDView).
+    private let frameHUD = FrameHUDView()
     private var panelWidth: NSLayoutConstraint?
     private var currentPanelID: String?
     private var fullContentController: NSViewController?
@@ -84,6 +87,43 @@ final class ShellContentViewController: NSViewController {
         ])
 
         installGame(gameViewController)
+        installFrameHUD()
+    }
+
+    // MARK: - Frame HUD
+
+    /// The persisted show/hide choice for the overlay (View > Show Frame HUD).
+    var isFrameHUDEnabled: Bool {
+        get { frameHUD.isEnabled }
+        set { frameHUD.isEnabled = newValue }
+    }
+
+    /// True while the overlay is actually on screen; false when the user hid it
+    /// or a full-content destination covers the game view.
+    var isFrameHUDOnScreen: Bool {
+        !frameHUD.isHidden
+    }
+
+    /// True while the overlay's 2 Hz refresh timer is scheduled.
+    var isFrameHUDTicking: Bool {
+        frameHUD.isTicking
+    }
+
+    /// Current overlay text; the verification tests read it directly.
+    var frameHUDReadout: String {
+        frameHUD.statsReadout
+    }
+
+    private func installFrameHUD() {
+        gameSlot.addSubview(frameHUD)
+        let inset = PanelMetrics.edgeInset
+        NSLayoutConstraint.activate([
+            frameHUD.topAnchor.constraint(equalTo: gameSlot.topAnchor, constant: inset),
+            frameHUD.trailingAnchor.constraint(
+                equalTo: gameSlot.trailingAnchor,
+                constant: -inset
+            )
+        ])
     }
 
     // MARK: - Destination display
@@ -155,7 +195,10 @@ final class ShellContentViewController: NSViewController {
         addChild(controller)
         let gameView = controller.view
         gameView.translatesAutoresizingMaskIntoConstraints = false
-        gameSlot.addSubview(gameView)
+        // Behind the HUD overlay, which stays the frontmost child of the slot
+        // across a Settings reload.
+        gameSlot.addSubview(gameView, positioned: .below, relativeTo: nil)
+        frameHUD.wire(providers: controller)
         NSLayoutConstraint.activate([
             gameView.topAnchor.constraint(equalTo: gameSlot.topAnchor),
             gameView.bottomAnchor.constraint(equalTo: gameSlot.bottomAnchor),
@@ -226,6 +269,7 @@ final class ShellContentViewController: NSViewController {
     }
 
     private func setGameCovered(_ covered: Bool) {
+        frameHUD.setGameCovered(covered)
         guard let mtkView = gameViewController.view as? MTKView else { return }
         mtkView.isPaused = covered
         mtkView.isHidden = covered
@@ -234,6 +278,7 @@ final class ShellContentViewController: NSViewController {
     override func viewDidAppear() {
         super.viewDidAppear()
         panel(for: currentPanelID)?.startInspecting()
+        frameHUD.resumeUpdates()
     }
 
     override func viewDidDisappear() {
@@ -241,5 +286,6 @@ final class ShellContentViewController: NSViewController {
         for panel in panels.values {
             panel.stopInspecting()
         }
+        frameHUD.suspendUpdates()
     }
 }
