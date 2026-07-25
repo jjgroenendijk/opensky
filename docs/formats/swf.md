@@ -338,9 +338,12 @@ decode), `SWFMovie.swift` (dictionary + frame-1 list), `SWFScene.swift`
 (the affine and color algebra).
 
 A movie's visible content is a depth-keyed list of placed characters. Control
-tags mutate that list; `ShowFrame` (1) publishes it. OpenSky builds the list up
-to the **first** `ShowFrame` — frame 1 — and freezes it there; later frames are
-timeline work (8.3.x). Later define tags still enter the dictionary.
+tags mutate that list; `ShowFrame` (1) publishes it. `SWFMovie.frame1` builds the
+list up to the **first** `ShowFrame` and freezes it there, which is the static
+render path; later define tags still enter the dictionary. Every later frame is
+retained on `SWFTimeline` and stepped by the
+[AS2 runtime](/engine/as2-runtime.md), which applies the same
+place/modify/replace/remove semantics to a mutable tree.
 
 | tag | name              | body                                                     |
 | --- | ----------------- | -------------------------------------------------------- |
@@ -584,6 +587,50 @@ whatever handlers were framed plus a `malformedClipActions` warning, and the
 placement is still applied. `SWFMovieTally.clipActions` still counts frame-1
 placements carrying the flag, exactly as before (122 install-wide, unchanged).
 
+## FrameLabel (43)
+
+Reference: spec chapter 3 "The display list" — the "FrameLabel" control tag.
+Impl: `opensky/Formats/SWF/SWFFrameLabel.swift`, attached to a frame by
+`SWFTimeline.swift`.
+
+| field       | type   | notes                                                  |
+| ----------- | ------ | ------------------------------------------------------ |
+| Name        | STRING | the label, null-terminated                             |
+| NamedAnchor | UI8    | optional; present only when a byte remains in the body |
+
+The named-anchor byte is optional in the sense that the tag length decides
+whether it is there, which is how a SWF 5 and a SWF 6 movie both frame. A label
+names the frame it appears in, so the decoder holds it until that frame's
+`ShowFrame` closes and stores it on `SWFTimelineFrame.label`. Main timelines and
+sprites both carry labels; `SWFTimeline.frameIndex(forLabel:)` resolves one,
+matching exactly first and case-insensitively second, because ActionScript path
+and label matching is case-insensitive below SWF 7 and authors mix casing.
+
+Decoding this tag is what gives `gotoAndStop("label")` and `ActionGoToLabel`
+(0x8C, 80 records in 4 movies) a target table. A malformed label costs the name,
+never the frame.
+
+## ExportAssets (56)
+
+Reference: spec chapter 14 "Sharing fonts and other assets" — "ExportAssets",
+the tag immediately preceding ImportAssets. Impl:
+`opensky/Formats/SWF/SWFExportAssets.swift`.
+
+Body: `Count` UI16, then `Count` pairs of `CharacterId` UI16 + `Name` STRING —
+ImportAssets' body without the leading URL.
+
+This is the **linkage table**, and it is what makes a registered class
+instantiable. `Object.registerClass(linkageName, constructor)` binds a class to
+a *name*, and only this tag says which character id that name belongs to;
+without it a movie's own classes can never reach the display list.
+`SWFMovie.exportedNames` holds name -> id and `SWFMovie.exportedIds` holds the
+reverse (duplicate exports of one id keep the alphabetically first name, so the
+map is deterministic). `MovieClip.attachMovie` looks up the same table.
+
+A malformed export table costs the linkage and not the movie: the affected
+classes simply never instantiate. That is deliberately laxer than
+ImportAssets, whose failure loses a font the renderer needs.
+
 ## ImportAssets / ImportAssets2
 
 Reference: spec chapter 14 "Sharing fonts and other assets" — ImportAssets (57,
@@ -607,17 +654,14 @@ same path a zero-glyph placeholder font takes.
 * `ZWS` (LZMA) body decompression.
 * Stroke tessellation for line styles (decoded, not meshed — see above).
 * HTML/rich text layout in DefineEditText (raw markup retained, plain-text
-  stripped) and dynamic text bound to a variable name (8.3.x).
-* Timeline playback. Every frame is decoded and retained, but the renderer still
-  draws frame 1 only; stepping frames, `Ratio` morph shapes, and button states
-  wait for 8.3.x.
+  stripped). Runtime text — `field.text`, `SetText`, and the `VariableName`
+  binding — is implemented by the [AS2 runtime](/engine/as2-runtime.md).
+* `Ratio` morph shapes and button states. Frame stepping itself is implemented
+  (the AS2 runtime steps a mutable display list); these two are not.
 * PlaceObject3 filters and blend modes (framed, counted, not applied).
-* ActionScript **execution**. Bytecode is framed, named, and reachable
-  (DoAction, DoInitAction, CLIPACTIONS), but no opcode runs and no GFx host
-  object exists — that is 8.3.2.
-* `FrameLabel` (43): present in vanilla movies (`loadingmenu.swf`,
-  `racesex_menu.swf`) but not decoded, so `gotoAndStop("label")` has no target
-  table yet.
+* CLIPACTIONS **dispatch**. The handlers are framed and reachable, but nothing
+  routes an event to them; `construct` is the only clip event vanilla uses
+  meaningfully (122 handlers in 24 movies).
 * DoABC (82) / ActionScript 3 and GFx extension tags.
 
 ## Verification
@@ -672,6 +716,15 @@ multiple handlers, a `keyPress` handler's `KeyCode`, the narrow SWF 5 flag word,
 a malformed CLIPACTIONS block that keeps its placement, the action tally, and
 frame 1 being untouched by any of it), over
 `openskyTests/SWFActionFixture.swift`.
+
+Milestone 8.3.2 tests: `openskyTests/SWFLinkageTests.swift` covers both tags
+added here — FrameLabel with and without its named-anchor byte, labels attached
+to the right frame on a main timeline and inside a sprite, exact-then-folded
+label matching, ExportAssets records, the name -> id and id -> name maps
+including the duplicate-id tie-break, and a truncated export table that loses
+the linkage without losing the movie. The runtime that consumes them is tested
+in `SWFMovieRuntimeTests`, `SWFRuntimePropertyTests`, and
+`SWFRuntimeNativesTests` — see [AS2 runtime](/engine/as2-runtime.md).
 
 `openskycli swf action-sweep` (milestone 8.3.1 stage 2) is the committed,
 reproducible version of that inventory: `SWFActionInventory`

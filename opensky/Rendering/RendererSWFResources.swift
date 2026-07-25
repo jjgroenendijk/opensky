@@ -45,6 +45,9 @@ nonisolated final class SWFPassResources {
     /// A/B toggle mirrored by `Renderer.swfEnabled`.
     var enabled = true
     var movie: SWFMovieResources?
+    /// The AS2 runtime driving `movie`, when one was started. nil keeps the
+    /// layer on the static frame-1 path.
+    var runtime: SWFMovieRuntime?
     var lastDrawStats = SWFDrawStats()
     /// Bumped per setSWFMovie: namespaces glyph-atlas font keys so two loaded
     /// movies (or reloads) never collide in the shared atlas cache.

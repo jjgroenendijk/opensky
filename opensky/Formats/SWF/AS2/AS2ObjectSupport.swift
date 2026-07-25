@@ -8,7 +8,7 @@
 
 import Foundation
 
-extension AS2Object {
+nonisolated extension AS2Object {
     /// Reads an array element by index. Elements live in the ordinary property
     /// table under their decimal names, as ECMAScript specifies.
     func element(at index: Int) -> AS2Value {
@@ -53,7 +53,7 @@ extension AS2Object {
     }
 }
 
-extension AS2Object {
+nonisolated extension AS2Object {
     /// The names `ActionEnumerate2` yields: own properties first, then each
     /// prototype's, skipping `dontEnumerate` slots and names already seen.
     /// Insertion order is used throughout, which the specification leaves

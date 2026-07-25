@@ -11,9 +11,15 @@ timestamp: 2026-07-25T00:00:00Z
 # AS2 runtime
 
 Todo 8.3.2. The virtual machine that executes the ActionScript 1/2 bytecode
-[`SWFActionParser`](/formats/swf.md) frames. It is the interpreter and its object model
-only: there are no display objects, no timeline stepping, no input, and no rendering. Those
-arrive in a later milestone and plug into the host protocol this milestone leaves behind.
+[`SWFActionParser`](/formats/swf.md) frames, plus the display objects it drives.
+
+The milestone landed in two phases. Phase 1 is the interpreter and its object model —
+values, coercions, prototypes, functions, bounds, and the `AS2Host` seam. Phase 2 is the
+runtime display list behind that seam: a mutable clip tree, timeline stepping, the
+property surface, and the draw-command stream the [screen-space UI
+layer](/rendering/ui.md) renders. Input routing, event dispatch, the CLIK/`gfx` component
+framework, and the `GameDelegate` bridge are phase 3 and are **not** here; see the
+[AS2 scope decision](/decisions/swf-as2-scope.md).
 
 Vanilla Skyrim menus are class-registration code. The measured inventory (milestone 8.3.1,
 `openskycli swf action-sweep`) found 1,127 `DoInitAction` blocks against 2,163 timeline
@@ -22,11 +28,30 @@ Vanilla Skyrim menus are class-registration code. The measured inventory (milest
 running a vanilla movie's bytecode is not a frame — it is the set of constructors left in
 `_global` and handed to `Object.registerClass`. Both are readable from `AS2Runtime`.
 
-Everything lives in `opensky/Formats/SWF/AS2/`. The `AS2` prefix marks the boundary:
-`SWF*` types parse bytes off disk, `AS2*` types execute the bytecode those parsers framed,
-and the two never share a type. The directory sits under `Formats/SWF/` because the runtime
-is the consumer of that format's action tags and has no rendering dependency — it does not
-import AppKit and builds into both the app and `openskycli`.
+The interpreter lives in `opensky/Formats/SWF/AS2/` and the display runtime in
+`opensky/Formats/SWF/Runtime/`. The prefixes mark the boundary: `SWF*` types parse bytes
+off disk, `AS2*` types execute the bytecode those parsers framed, and the two never share
+a type. The `Runtime/` files are the one deliberate meeting point — they are named `SWF*`
+because they are made of decoded characters and timelines, and they are the only place that
+holds both an `AS2Object` and a `SWFPlacement`. Both directories sit under `Formats/SWF/`
+because they consume that format and have no rendering dependency: they do not import
+AppKit and build into both the app and `openskycli`.
+
+## One virtual machine per movie
+
+Each movie gets its own `AS2Runtime` and therefore its own `_global`. The
+[scope decision](/decisions/swf-as2-scope.md) left this open; it is closed here, and the
+evidence is in the files. `inventorymenu.swf`, `startmenu.swf`, and `hudmenu.swf` each
+carry byte-identical `DoInitAction` blocks — 8,490, 5,108, 3,621, 2,374, 2,974, 941, and
+612 bytes among others — so every menu already embeds its own private copy of the CLIK
+library rather than expecting a shared one. Sharing in vanilla happens at the
+character-dictionary level through `ImportAssets2` (fonts, `sharedcomponents.swf`), not
+through `_global`.
+
+A shared machine would therefore gain nothing and cost isolation: one menu's
+`ASSetPropFlags` or prototype patch would reach every other menu, and a mod movie could
+overwrite a vanilla class globally. Per-movie also makes teardown trivial — dropping the
+`SWFMovieRuntime` drops the whole object graph.
 
 ## Value model
 
@@ -192,9 +217,155 @@ Declining is normal — every method may return nil or false — and the interpr
 decline into a tally entry, never an error. Member lookups only consult the host for objects
 that carry a `hostPayload`, so the seam is not on the path of ordinary property misses.
 
-`AS2RecordingHost` is this milestone's implementation: it appends every request to a bounded
-`AS2HostEvent` list and declines all of them, which makes a movie's demands on the display
-layer measurable before the display layer exists.
+`SWFRuntimeHost` is the real implementation and answers all of it from the display tree; its
+back-reference to `SWFMovieRuntime` is weak, because `AS2Runtime` owns its host and the
+runtime owns the `AS2Runtime`. `AS2RecordingHost` remains as the phase-1 stand-in: it
+appends every request to a bounded `AS2HostEvent` list and declines all of them, which is
+what the interpreter's own tests run against and what measures a movie's demands without a
+display list.
+
+## Display objects
+
+`SWFDisplayObject` is one placed character: its depth, instance name, matrix, color
+transform, clip depth, visibility, and — for a clip — its own `SWFTimeline`, playhead, and
+play state. Children are keyed by depth and read back depth-ascending, which is the paint
+order. A leaf is a shape, a static text, or an edit text.
+
+Every node carries an `AS2Object` face so ActionScript can address it. The pair points both
+ways: the node owns the object, and `AS2Object.hostPayload` holds a `SWFDisplayHandle`
+whose reference back to the node is **weak**. A strong pair would never be freed, and the
+weak side also gives the right semantics — script that kept a reference to a removed clip
+sees its members go `undefined` rather than resurrecting it. Clips set
+`typeOverride = "movieclip"` so `typeof` answers the way Flash does.
+
+A named instance is also defined as a property of its parent's `AS2Object`. That is what
+makes a bare `panel` resolve from a frame action and `_root.panel._x` resolve through the
+ordinary member path; the host's own child lookup is the fallback for anything that missed.
+
+Bounds are computed on demand (`SWFBoundsBox`): a leaf's character bounds, a clip's union
+of its children's transformed bounds. `_width` and `_height` are the axis-aligned extent of
+the *transformed* box, so a rotated clip is wider than its artwork, which is what Flash
+reports.
+
+## Bring-up and timeline execution
+
+The runtime's whole public surface:
+
+```swift
+init(movieScene: SWFMovieScene, limits: AS2Limits = .standard)
+func start()                                   // bring-up, idempotent
+func advance()                                 // one explicit tick
+func makeScene() -> SWFScene                   // regenerate the command stream
+func sceneIfChanged() -> SWFScene?             // nil when nothing moved
+@discardableResult
+func invoke(_ name: String, on target: SWFDisplayObject? = nil,
+            arguments: [AS2Value] = []) -> AS2ExecutionResult
+var root: SWFDisplayObject { get }              // _root / _level0
+var tally: AS2Tally { get };  var traceLog: AS2TraceLog { get }
+```
+
+`start()` runs the sequence the 8.3.1 measurement implies — vanilla menus are class
+libraries, not timeline scripts:
+
+1. every `DoInitAction` block, in tag order, against the root clip;
+2. the root's frame 1 control tags, which instantiate characters as they are placed;
+3. the root's frame-1 `DoAction` blocks.
+
+Instantiating a placed sprite is where a movie comes alive. If the character id has a
+linkage name (`ExportAssets`) and a class was registered against that name
+(`Object.registerClass`), the constructor runs with the display object as `this` and the
+class prototype becomes the node's `__proto__`. The clip's own frame 1 is applied *before*
+the constructor, so a CLIK component's constructor sees the children it expects. Because a
+registered class may not `extend MovieClip`, the built-in clip methods are also reachable
+through the host as a fallback after the prototype chain misses — Flash resolves those
+natively rather than through the chain.
+
+`advance()` is the only thing that moves a playhead, and it moves every playing clip by one
+frame. Stepping forward by one applies just that frame's control tags, which is what a
+player does; any other jump rebuilds the clip's children from frame 1 to the destination,
+because a display list is the accumulation of every step before it and the tags carry no
+undo. The destination frame's `DoAction` blocks run either way; skipped frames' do not,
+matching `gotoAndStop`. A frame action that jumps its own clip re-enters this path, so
+re-entry is capped at `maximumGotoDepth` (8) and the dropped blocks are counted in
+`droppedFrameActions`.
+
+`gotoAndStop`/`gotoAndPlay` accept a **one-based** frame number or a label, while
+`ActionGotoFrame`'s operand is zero-based as the specification defines it. An unknown label
+is a tally entry and leaves the playhead alone.
+
+## Property surface
+
+ActionScript property units are pixels and degrees; the display list is twips and matrix
+terms. Every conversion goes through one constant (`twipsPerPixel`, 20), because getting it
+wrong misplaces a whole menu without erroring — `SWFRuntimePropertyTests` pins each one.
+
+| property | read | write |
+|---|---|---|
+| `_x`, `_y` | translation / 20 | rounded and clamped into the `Int32` twip domain |
+| `_xscale`, `_yscale` | length of the matrix basis vector x 100 | rescales that basis vector |
+| `_width`, `_height` | transformed bounding box / 20 | rescales so the box matches |
+| `_rotation` | `atan2(RotateSkew0, ScaleX)` in degrees | rebuilds the linear part, keeping both basis lengths |
+| `_alpha` | CXFORM alpha multiplier x 100 | sets that multiplier |
+| `_visible` | node flag | node flag; a hidden node's whole subtree leaves the scene |
+| `_name`, `_target` | instance name, slash path | `_name` writes and rebinds the parent's property |
+| `_currentframe`, `_totalframes`, `_framesloaded` | one-based playhead, declared frame count | declined |
+| `_droptarget`, `_url`, `_highquality`, `_focusrect`, `_soundbuftime`, `_quality`, `_xmouse`, `_ymouse` | fixed answers | declined |
+
+The last row is answered rather than declined so a runtime with no window, no sound, and no
+pointer does not crowd the missing-API tally with names that will never be implemented. The
+pointer pair reads 0 until input arrives in phase 3.
+
+CLIK's `__width` / `__height` pair are **ordinary** properties, not display properties. The
+host declines them, which is what lets the write fall through to the object's own table.
+
+## Built-in display classes
+
+`MovieClip`, `TextField`, `Stage`, and `Selection` were the head of the missing-API tally
+after phase 1 — 168, 25, 7, and 179 hits respectively — so they are what phase 2
+implements. They are Flash and Scaleform GFx built-ins with no specification behind them,
+reimplemented from public ActionScript 2 API documentation and observed bytecode.
+
+- **`MovieClip.prototype`** — `play`, `stop`, `gotoAndPlay`, `gotoAndStop`, `nextFrame`,
+  `prevFrame`, `getDepth`, `getNextHighestDepth`, `getInstanceAtDepth`, `swapDepths`,
+  `removeMovieClip`, `attachMovie`, `createEmptyMovieClip`, `hitTest`, `toString`.
+  `hitTest` is bounding-box only; shape-level hit testing is not implemented.
+- **`TextField.prototype`** — `SetText` and `SetTextHTML` (GFx extensions, 595 calls across
+  31 vanilla movies), plus `setTextFormat`/`getTextFormat`, which are accepted and ignored
+  because the layout path renders one font and color per field.
+- **`Stage`** — a plain object, not a constructor: `width` and `height` in pixels from the
+  movie's own `FrameSize` (OpenSky letterboxes rather than reflowing, so the stage never
+  resizes), `scaleMode`, `align`, `showMenu`, and a listener list.
+- **`Selection`** — `setFocus` and `getFocus` round-trip a focus target, and the range
+  queries answer -1. Focus *behavior* is not implemented: nothing routes input to the
+  focused object, draws an indicator, or dispatches `onSetFocus`. Recording it keeps the
+  name off the tally and leaves state for the phase-3 focus manager to adopt.
+
+`addListener`/`removeListener` record listeners on `Stage` and `Selection` without
+dispatching to them, for the same reason.
+
+## Text
+
+A field's runtime string is, in order: an explicit assignment (`field.text = "..."` or
+`SetText`), the value of its `VariableName` binding, then the character's `InitialText`.
+`SWFEditText.variableName` was decoded in milestone 8.2 and unread until now; writing the
+field writes the bound variable back, so a movie that reads `_root.someVar` afterwards sees
+the same string.
+
+The string travels to the renderer on `SWFSceneItem.textOverride`, an additive field that
+is nil on the static path, and `SWFTextLayout.editText(_:font:content:)` re-lays out that
+run without fabricating a second `SWFEditText`.
+
+## Scene generation
+
+`SWFMovieRuntime.makeScene()` produces the same `SWFScene` / `SWFSceneCommand` /
+`SWFSceneItem` vocabulary as the static `SWFScene.build(movie:)`, with the same clip
+semantics and paint order, so the renderer consumes one stream type and never learns
+whether ActionScript is running. `sceneIfChanged()` returns nil when nothing moved, which
+is what makes an idle movie free.
+
+Bounds on the tree: `maximumNodes` (4,096) caps instantiation — a runaway `attachMovie`
+loop is counted in `droppedInstantiations` instead of exhausting memory — and
+`maximumTreeDepth` (32) bounds every recursive walk.
 
 ## Tally and trace
 
@@ -205,7 +376,7 @@ unknown host API becomes a logged no-op plus a tally entry rather than an error,
 - `unimplementedOpcodes` / `unimplementedTotal`, ranked by count through
   `rankedUnimplemented` with Adobe opcode names.
 - `missingNames` / `missingTotal` / `unnamedMissing`, ranked through `rankedMissing`. This is
-  where `MovieClip`, `Stage`, `Selection`, and the `gfx` framework land today.
+  where the CLIK/`gfx` framework and the per-menu data APIs land today.
 - `faults` / `faultTotal`.
 - `stackUnderflows` — empty-stack reads, which are normal rather than wrong (see above), so
   they do not count against `isClean`.
@@ -232,11 +403,17 @@ twice — the [rendering layer's determinism contract](/rendering/ui.md).
 
 ## Deliberately absent
 
-- **Display objects**: `MovieClip`, `TextField`, `Stage`, `Selection`, `EventDispatcher`,
-  and the `gfx` framework. A reference to any of them resolves to `undefined` and lands in
-  the tally as a named missing API — the coverage evidence the next milestone starts from.
-- **Timeline stepping and rendering**: the timeline opcodes are decoded and routed, never
-  executed.
+- **The CLIK / `gfx` component framework**: `EventDispatcher`, `addEventListener`,
+  `dispatchEvent`, `Constraints`, `FocusHandler`, `NavigationCode`, and the button and list
+  controls. A reference to any of them resolves to `undefined` and lands in the tally as a
+  named missing API — the coverage evidence phase 3 starts from.
+- **Input and event dispatch**: nothing routes a mouse or key event anywhere, `Mouse` and
+  `Key` do not exist, and `Selection` records focus without acting on it.
+- **The `GameDelegate` bridge**: `gfx.io.GameDelegate` is 1,520 uses in 38 movies and is
+  phase 3's engine-to-movie channel. `SWFMovieRuntime.invoke(_:on:arguments:)` is the seam
+  it will be built on.
+- **Per-menu data APIs**: `InventoryDefines`, `_CategoriesList`, `EntriesA`, and the rest
+  are phase 4, deferred to the milestones that own the data.
 - **Opcodes no vanilla movie uses**: `ActionWith` (no `with` scope chain),
   `ActionTry`/`ActionThrow` (no exceptions), `ActionSetTarget`/`ActionSetTarget2`,
   `ActionGetURL`/`ActionGetURL2` (no external loading),
@@ -244,9 +421,9 @@ twice — the [rendering layer's determinism contract](/rendering/ui.md).
   occurs). They frame correctly in the parser and execute as a tallied no-op.
 - **CLIPACTIONS event dispatch**: the handlers are parsed and reachable as action blocks, but
   nothing routes an event to them yet.
-- **The app surface**: no `Developer > UI Lab` control exposes runtime state in this
-  milestone. It arrives with the display layer, which is what makes the state worth looking
-  at.
+- **The app surface**: no `Developer > UI Lab` control starts, ticks, or inspects a runtime
+  yet. That is the app-facing half of milestone 8.3 and lands alongside the invoke log and
+  op tally the 8.3.3 gate asks for.
 
 ## Verification
 
@@ -275,33 +452,79 @@ Device-free, synthetic fixtures only — no test reads a real `.swf`. Action byt
   bounds, the timeline and display-property host routes, and a coverage check that all 58
   implemented opcodes are named Adobe actions.
 
+Phase 2 adds three device-free suites over `openskyTests/SWFRuntimeFixture.swift`, which
+assembles a movie whose sprite is exported under a linkage name and whose `DoInitAction`
+registers a class against it:
+
+- `SWFMovieRuntimeTests` — bring-up, a registered class running with the placed display
+  object as `this`, a sprite with no linkage name, `start()` being idempotent, one-frame
+  stepping and the wrap, a stopped clip staying put, `gotoAndStop` by number and by label
+  through both the Swift API and `ActionGoToLabel`, backward jumps rebuilding the list, an
+  unknown label being tallied, path resolution (`_root`, `_parent`, `..`, dotted, slash,
+  instance names), target paths, member resolution, scene generation matching the static
+  scene at frame 1, visibility removing a subtree, dirty tracking, and clip layers still
+  producing begin/end pairs.
+- `SWFRuntimePropertyTests` — every getter and setter above with its exact twip/pixel or
+  degree conversion, a non-finite write clamping instead of trapping, rotation preserving
+  scale, read-only properties refusing writes, `__width` not being a display property, and
+  the three text paths (assignment, variable binding, write-back).
+- `SWFRuntimeNativesTests` — the four globals resolving, the clip methods being present,
+  `attachMovie` instantiating and constructing an exported character, an unknown linkage
+  name being tallied, `createEmptyMovieClip`/`removeMovieClip`, depth queries and swaps,
+  bounding-box `hitTest`, `Stage` size in pixels, `Selection` focus round-tripping, listener
+  recording, and `SetText`/`SetTextHTML`.
+
+Pixel evidence is `RendererSWFDynamicAcceptanceTests` — see the
+[rendering layer](/rendering/ui.md).
+
 ## Measured against the vanilla install
 
-An env-gated probe (not committed — AGENTS.md "Legal & IP boundary") ran every
-`DoInitAction` and timeline `DoAction` block of the 53 vanilla `Interface/*.swf` movies
-through `AS2Runtime`:
+An env-gated probe (not committed — AGENTS.md "Legal & IP boundary") brought up all 53
+vanilla `Interface/*.swf` movies through `SWFMovieRuntime`: every `DoInitAction` block, the
+root's frame 1 with class instantiation, and the frame's `DoAction`.
 
-| Measure | Result |
-|---|---|
-| Movies decoded | 53 |
-| Action blocks executed | 1,180 |
-| Faults | 0 |
-| Unimplemented opcodes reached | 0 |
-| Classes left in `Object.registerClass` | 108 |
-| Distinct missing API names | 146 |
+| Measure | Phase 1 (interpreter only) | Phase 2 (display runtime) |
+|---|---|---|
+| Movies brought up | 53 | 53 |
+| Movies with no fault and no unimplemented opcode | 53 | 37 |
+| Faults | 0 | 49, all `callDepthExceeded` |
+| Unimplemented opcodes reached | 0 | 0 |
+| Classes registered | 108 | 108 |
+| Display nodes instantiated | — | 4,805 |
+| Draw commands generated | — | 1,633 |
+| Distinct missing API names | 146 | 198 |
 
-The missing names are the display and framework surface, in order of frequency: `Selection`
-(179), `MovieClip` (168), `Map.MapMarker` (67), `Components.CrossPlatformButtons` (43),
-`gfx.controls.Button` (42), `gfx` (41), `Shared` (41), `addListener` (36), `TextField` (25),
-`Stage` (7). Nothing in that list is an interpreter gap; all of it is the display layer the
-next milestone builds behind `AS2Host`.
+Both movements are expected. `Selection`, `MovieClip`, `TextField`, and `Stage` — 379 hits
+between them — left the tally entirely, while running constructors reaches code phase 1
+never executed, which surfaces names that were previously unreachable. The new head is the
+framework and the per-menu data contracts, in order of frequency: `Map.MapMarker` (67),
+`addEventListener` (49), `Components.CrossPlatformButtons` (43), `gfx.controls.Button`
+(42), `Shared` (41), `gfx` (41), `Components` (30), `addListener` (28, now on `Key`,
+`Mouse`, and `MovieClipLoader` rather than `Stage`/`Selection`), `InventoryLists_mc` (20),
+and `MovieClipLoader` (20). That is phase 3 and phase 4 work, exactly as the
+[scope decision](/decisions/swf-as2-scope.md) phased it.
+
+The 49 faults are all one shape: deep CLIK constructor chains exceeding the 64-frame
+`callDepth` cap, concentrated in the largest movies (`modmanager.swf` 19,
+`racesex_menu.swf` 8, `quest_journal.swf` 6). Raising the cap is not the fix — a probe run
+at 256 crashed the test host on a Swift stack overflow, which confirms the cap's stated
+rationale. Making the interpreter iterative rather than recursive is the real fix and is
+not phase 2 work. Each fault aborts one constructor and leaves the movie usable, which is
+why 37 movies still come up completely clean.
 
 ## Limits / next
 
-- The probe above is not a committed surface. Turning it into a
-  `openskycli swf action-run` sweep and a `Developer > UI Lab` readout belongs with the
-  display layer, which is what makes the runtime state worth looking at.
+- The probe above is not a committed surface. Turning it into an
+  `openskycli swf action-run` sweep and a `Developer > UI Lab` readout is the app-facing
+  half of this milestone.
+- **Call depth.** The interpreter recurses on the Swift stack, so `callDepth` is 64 and
+  deep CLIK constructor chains hit it (see above). An iterative call implementation would
+  remove the cap as a correctness limit.
 - `ActionCallFunction` binds `this` to the calling frame's `this`. Flash binds it to the
   target clip when the name did not resolve on an object; the two agree for timeline code and
   can differ inside a method.
 - The scope chain has no `with` frame, because no vanilla movie emits `ActionWith`.
+- `hitTest` is bounding-box only, `_xmouse`/`_ymouse` read 0, and `setTextFormat` is
+  accepted and ignored.
+- A clip's `onEnterFrame` is not called: `advance()` steps playheads but dispatches no
+  events, because event dispatch is phase 3.

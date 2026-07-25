@@ -37,11 +37,19 @@ nonisolated enum SWFTimelineStep: Equatable {
     }
 }
 
-/// One frame: the control tags that execute before its ShowFrame and the
-/// DoAction (12) blocks that run with it.
+/// One frame: the control tags that execute before its ShowFrame, the
+/// DoAction (12) blocks that run with it, and the FrameLabel (43) naming it.
 nonisolated struct SWFTimelineFrame: Equatable {
     let steps: [SWFTimelineStep]
     let actions: [SWFActionBlock]
+    /// FrameLabel (43) attached to this frame, or nil when it has none.
+    let label: String?
+
+    init(steps: [SWFTimelineStep], actions: [SWFActionBlock], label: String? = nil) {
+        self.steps = steps
+        self.actions = actions
+        self.label = label
+    }
 }
 
 /// A decoded timeline: every frame, plus the display list and tag counters
@@ -56,6 +64,22 @@ nonisolated struct SWFTimeline: Equatable {
     let tally: SWFMovieTally
 
     static let empty = SWFTimeline(frames: [], frame1: [], tally: SWFMovieTally())
+
+    /// Zero-based index of the frame carrying `label`. Matched exactly first,
+    /// then case-insensitively: ActionScript path and label matching is
+    /// case-insensitive below SWF 7, and authors mix casing either way.
+    func frameIndex(forLabel label: String) -> Int? {
+        if let exact = frames.firstIndex(where: { $0.label == label }) {
+            return exact
+        }
+        let folded = label.lowercased()
+        return frames.firstIndex { $0.label?.lowercased() == folded }
+    }
+
+    /// Every label in frame order, for reporting.
+    var frameLabels: [String] {
+        frames.compactMap(\.label)
+    }
 
     /// Every action stream this timeline carries, frame by frame: the frame's
     /// DoAction blocks first, then the CLIPACTIONS handlers its placements
@@ -97,6 +121,7 @@ nonisolated struct SWFTimelineDecoder {
     private var frames: [SWFTimelineFrame] = []
     private var steps: [SWFTimelineStep] = []
     private var actions: [SWFActionBlock] = []
+    private var label: String?
 
     init(version: UInt8) {
         self.version = version
@@ -127,6 +152,11 @@ nonisolated struct SWFTimelineDecoder {
             if let block = try? SWFActionParser.parseDoAction(tag: tag) {
                 actions.append(block)
             }
+        case SWFFrameLabel.tagCode:
+            // A malformed label loses the name, never the frame.
+            if let decoded = try? SWFFrameLabel.parse(tag: tag), !decoded.name.isEmpty {
+                label = decoded.name
+            }
         default:
             break
         }
@@ -134,7 +164,7 @@ nonisolated struct SWFTimelineDecoder {
 
     /// Closes any pending frame and resolves frame 1.
     mutating func finish() -> SWFTimeline {
-        if !steps.isEmpty || !actions.isEmpty {
+        if !steps.isEmpty || !actions.isEmpty || label != nil {
             closeFrame()
         }
         return SWFTimeline(frames: frames, frame1: builder.placements, tally: builder.tally)
@@ -169,9 +199,10 @@ nonisolated struct SWFTimelineDecoder {
     }
 
     private mutating func closeFrame() {
-        frames.append(SWFTimelineFrame(steps: steps, actions: actions))
+        frames.append(SWFTimelineFrame(steps: steps, actions: actions, label: label))
         steps = []
         actions = []
+        label = nil
     }
 
     private mutating func notePlaceTally(_ code: UInt16) {

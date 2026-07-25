@@ -14,6 +14,7 @@ nonisolated struct SWFMovieDecoder {
     let jpegTables: Data?
     var characters: [UInt16: SWFCharacter] = [:]
     var importedNames: [UInt16: String] = [:]
+    var exportedNames: [String: UInt16] = [:]
     var initActions: [SWFDoInitAction] = []
     var timeline: SWFTimelineDecoder
     /// Display-list and action counters summed over every sprite.
@@ -59,6 +60,13 @@ nonisolated struct SWFMovieDecoder {
         } else if SWFImportedAssets.tagCodes.contains(tag.code) {
             for asset in try SWFImportedAssets.parse(tag: tag).assets {
                 importedNames[asset.characterId] = asset.name
+            }
+        } else if tag.code == SWFExportedAssets.tagCode {
+            // Linkage names: what Object.registerClass and attachMovie address.
+            // A malformed table costs the linkage, never the movie — the
+            // affected classes simply never instantiate.
+            for asset in (try? SWFExportedAssets.parse(tag: tag))?.assets ?? [] {
+                exportedNames[asset.name] = asset.characterId
             }
         }
     }

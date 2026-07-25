@@ -159,6 +159,27 @@ enum SWFDisplayFixture {
         SWFFixture.Tag(code: 9, body: Data([color.red, color.green, color.blue]))
     }
 
+    /// FrameLabel (43): Name STRING plus the optional NamedAnchor UI8.
+    static func frameLabelTag(_ name: String, namedAnchor: Bool = false) -> SWFFixture.Tag {
+        var writer = SWFBitWriter()
+        writeString(&writer, name)
+        if namedAnchor {
+            writer.appendByte(1)
+        }
+        return SWFFixture.Tag(code: 43, body: writer.bytes())
+    }
+
+    /// ExportAssets (56): Count UI16 then (CharacterId UI16, Name STRING).
+    static func exportAssetsTag(_ assets: [(UInt16, String)]) -> SWFFixture.Tag {
+        var writer = SWFBitWriter()
+        writer.appendUInt16LE(UInt16(assets.count))
+        for asset in assets {
+            writer.appendUInt16LE(asset.0)
+            writeString(&writer, asset.1)
+        }
+        return SWFFixture.Tag(code: 56, body: writer.bytes())
+    }
+
     /// DefineSprite (39): id + frame count + nested control tags + End.
     static func spriteTag(
         characterId: UInt16,

@@ -207,6 +207,16 @@ nonisolated struct SWFMovie {
     /// their fonts this way, so an edit text's FontID often lands here rather
     /// than in `characters`.
     let importedNames: [UInt16: String]
+    /// Characters this movie exports by name (ExportAssets): linkage name ->
+    /// character id. `Object.registerClass` binds a class to a linkage name, so
+    /// this is the table that turns a registered class into something the
+    /// display list can instantiate.
+    let exportedNames: [String: UInt16]
+    /// The same table read the other way: character id -> linkage name. A
+    /// placement carries an id, so this is the direction instantiation needs.
+    /// Duplicate exports of one id keep the alphabetically first name, which
+    /// makes the map deterministic.
+    let exportedIds: [UInt16: String]
     let tally: SWFMovieTally
 
     /// Main-timeline display list at the first ShowFrame, depth-ascending.
@@ -241,6 +251,13 @@ nonisolated struct SWFMovie {
         backgroundColor = decoder.timeline.backgroundColor
         characters = decoder.characters
         importedNames = decoder.importedNames
+        exportedNames = decoder.exportedNames
+        var byId: [UInt16: String] = [:]
+        for name in decoder.exportedNames.keys.sorted() {
+            guard let id = decoder.exportedNames[name], byId[id] == nil else { continue }
+            byId[id] = name
+        }
+        exportedIds = byId
         initActions = decoder.initActions
         let mainTimeline = decoder.timeline.finish()
         timeline = mainTimeline

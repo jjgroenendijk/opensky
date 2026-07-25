@@ -76,11 +76,13 @@ stats and readouts stay on top). Tag decode and the frame-1 semantics live in
 - Movie package (`Rendering/RendererSWFMovie.swift`, `SWFMovieResources`): built
   once per assigned movie. Every dictionary shape is tessellated through
   `SWFShapeCache` into one static twip-space vertex buffer with a per-fill run
-  table; bitmap characters upload as `rgba8Unorm` textures (carrying the
-  decoder's `premultipliedAlpha` flag); gradient fills bake into a ramp atlas,
-  one 256-texel row per fill; text draws are laid out in twips at build time
-  (`SWFTextLayout`), viewport-independent. Per-draw uniform and glyph-vertex
-  rings are sized exactly for the frame's command stream and triple-buffered.
+  table (`RendererSWFBuild.swift`); bitmap characters upload as `rgba8Unorm`
+  textures (carrying the decoder's `premultipliedAlpha` flag); gradient fills
+  bake into a ramp atlas, one 256-texel row per fill; text draws are laid out in
+  twips (`RendererSWFTextPlan.swift`, `SWFTextLayout`), viewport-independent.
+  Per-draw uniform and glyph-vertex rings are triple-buffered and sized for the
+  current command stream plus headroom (half again, floor 64), because a
+  display list that ActionScript mutates outgrows an exact fit immediately.
 - Static objects (`Rendering/RendererSWFResources.swift`, `SWFPassResources`):
   the content and mask pipelines (shared `swfVertex`, `swfFragment` vs
   `swfMaskFragment`), the three depth/stencil states, a linear repeat sampler
@@ -96,7 +98,6 @@ stats and readouts stay on top). Tag decode and the frame-1 semantics live in
   axis-aligned in pixel space at the on-screen EM size.
 - Viewport mapping (`SWFViewportMapping`): uniform scale fitting the movie's
   `FrameSize` into the viewport, centered — letterboxed on an aspect mismatch.
-  No wall-clock or frame-counter input anywhere in the layer.
 - Clip layers use a **counting stencil**: `beginClip` draws the mask geometry
   with increment-clamp, `endClip` repeats it with decrement-clamp, and each
   content draw tests `stencil == active clip count` (the reference value set per
@@ -116,13 +117,59 @@ stats and readouts stay on top). Tag decode and the frame-1 semantics live in
   and `lastSWFDrawStats` (`SWFDrawStats`: `drawCalls`, `triangles`, `glyphs`,
   `maskDraws`, `skippedItems`). `SWFMovieLoader` turns a VFS path into a
   font-resolved `SWFMovieScene`.
-- Determinism: the whole path is a pure function of movie plus viewport, so
-  repeated renders are byte-identical (asserted in `RendererSWFTests`).
 - Known visual gaps: line styles are not stroked (fills only), focal radial
   gradients render as plain radial, `linearRGB` gradient interpolation is
   treated as normal RGB, PlaceObject3 filters and blend modes are ignored, and
   glyph quads follow a transform's position and scale but not its rotation or
   skew (vanilla UI text is unrotated).
+
+## Dynamic SWF path (M8.3.2)
+
+The layer draws frame 1 until something runs the movie's ActionScript. The
+[AS2 runtime](/engine/as2-runtime.md) owns the mutable display list and produces
+the same `SWFScene` command stream the static flattener does, so the encode path
+is unchanged; only the source of the stream differs.
+
+- Renderer API (`Rendering/RendererSWFRuntimePass.swift`), all main thread,
+  between frames:
+
+  ```swift
+  var swfRuntime: SWFMovieRuntime? { get }
+  @discardableResult
+  func startSWFRuntime(limits: AS2Limits = .standard) throws -> SWFMovieRuntime?
+  func advanceSWFRuntime() throws
+  func stopSWFRuntime() throws
+  func updateSWFScene(_ scene: SWFScene) throws
+  ```
+
+  `startSWFRuntime` brings the assigned movie up (every `DoInitAction`, then
+  frame 1, then its `DoAction`) and pushes the display list it produced.
+  `advanceSWFRuntime` ticks it once and pushes a new stream **only** when the
+  tick changed something. `stopSWFRuntime` drops the runtime and restores the
+  static frame-1 stream. `setSWFMovie` clears any runtime, because a new movie
+  invalidates the old one's tree.
+- Cheap update (`SWFMovieResources.update(scene:device:)`): re-plans draw ops,
+  uniforms, and text runs from a new command stream while **retaining** every
+  static GPU resource — tessellated geometry, bitmap textures, the gradient
+  ramp, and the shared glyph atlas. The text planner is kept alive across
+  updates so external-font atlas keys stay stable; re-keying them per update
+  would refill the atlas with duplicates. Rings grow (never shrink) when a
+  stream outgrows them, and the replaced buffers retire once in-flight frames
+  drain, exactly like a movie swap. Draws past the ring capacity are still
+  counted in `skippedItems` rather than dropped silently.
+- Per-instance text reaches the renderer on `SWFSceneItem.textOverride`, an
+  additive field that is nil on the static path, and re-lays out through
+  `SWFTextLayout.editText(_:font:content:)`.
+- **Determinism**: the encode path is still a pure function of the command
+  stream plus the viewport, and nothing in the layer reads a wall clock or a
+  frame counter. The layer moves only when the engine calls
+  `advanceSWFRuntime()`, so a movie that is not advanced renders byte-identically
+  frame to frame — the static contract, restated as an explicit-tick contract
+  rather than weakened. `Math.random` inside a movie draws from a seeded
+  generator for the same reason.
+- Not yet driven from the app: no `Developer > UI Lab` control starts or ticks a
+  runtime, so the shipped app still shows frame 1 only. That control is the
+  app-facing half of milestone 8.3.
 
 ## App surface
 
@@ -207,6 +254,19 @@ shown verbatim ([UI translation strings](/formats/translation-strings.md)).
   movie, and re-assigning it all behave: baseline byte-identical when off or
   cleared, identical frames and identical stats when reassigned, repeated frames
   byte-identical.
+- M8.3.2 dynamic-render acceptance (`RendererSWFDynamicAcceptanceTests`,
+  480x320, one synthetic movie whose whole frame-1 content sits under an
+  alpha-zero CXFORM and whose frame-1 `DoAction` sets `panel._alpha = 100`):
+  frame 1 encodes 2 draws and changes **0** pixels over the movie-free baseline;
+  after `startSWFRuntime()` the same movie changes **68,160** pixels with 0
+  skipped items and 0 AS2 faults. The same movie with its `DoAction` removed
+  stays at 0 changed pixels after bring-up, which is what makes the delta
+  attributable to the ActionScript rather than to the runtime existing.
+  Determinism: with the runtime started but never advanced, repeated frames are
+  byte-identical, and advancing a one-frame movie keeps them byte-identical.
+  Ring growth: a movie whose second frame places 200 more rectangles encodes 1
+  draw before the tick and 201 after, with 0 skipped. `stopSWFRuntime()`
+  reproduces the static frame byte for byte.
 - Vanilla evidence is CLI-side (`openskycli swf render-sweep`, gates in
   `tools/probe.sh`): 53 of 53 movies render frame 1 with 0 failures. Per-movie
   changed-pixel counts, tag tallies, and the blank-frame explanation live in

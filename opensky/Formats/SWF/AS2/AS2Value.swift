@@ -23,7 +23,7 @@ nonisolated enum AS2Value {
     case object(AS2Object)
 }
 
-extension AS2Value {
+nonisolated extension AS2Value {
     /// A number built from an integer, the form most opcodes produce.
     static func integer(_ value: Int) -> AS2Value {
         .number(Double(value))
@@ -70,7 +70,7 @@ extension AS2Value {
     }
 }
 
-extension AS2Value: Equatable {
+nonisolated extension AS2Value: Equatable {
     /// Strict equality (`ActionStrictEquals`, 0x66): same type and same value,
     /// with objects compared by identity. NaN is unequal to itself and -0
     /// equals 0, both inherited from `Double`.
