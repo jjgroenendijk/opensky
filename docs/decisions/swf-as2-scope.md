@@ -59,7 +59,7 @@ next phase. The same rule applies to any opcode a future non-vanilla movie intro
 
 Work proceeds in four phases (see [Phased subset plan](#phased-subset-plan)). Phase 4 —
 per-menu game-data APIs — is explicitly deferred to the milestones that own the data, as
-`docs/todo.md` already anticipates for M12.5, M13.4, and M17.2. Milestone 8.3 is complete
+the roadmap already anticipates for M12.5, M13.4, and M17.2. Milestone 8.3 is complete
 when one menu is interactive on phases 1 through 3; it is not complete when every menu
 works, and no schedule assumes otherwise.
 

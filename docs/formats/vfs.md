@@ -50,7 +50,7 @@ First opened = lowest priority. Steps:
    convention, UESP archive notes). Plugin order: official masters first
    (Skyrim, Update, Dawnguard, HearthFires, Dragonborn), remaining plugins
    alphabetically. Provisional until plugins.txt support lands
-   ([roadmap](/todo.md) open question).
+   (open question, GitHub issue #73).
 
 Names resolve case-insensitively against the on-disk `Data/` listing;
 duplicates collapse to the first mention. Listed-but-absent archives log +

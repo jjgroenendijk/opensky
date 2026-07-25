@@ -72,6 +72,34 @@ this contract keeps only the non-negotiable core:
   globbing, verify a worktree agent's base is the feature branch, restate AGENTS.md
   criticals per prompt.
 
+## Roadmap and open work — GitHub, not docs/
+
+Open work lives in GitHub issues and milestones. There is no roadmap file in the repo;
+`docs/todo.md` was migrated out on 2026-07-25 (see `docs/log.md`). A fresh session picks
+up from `gh`, not from a doc snapshot.
+
+- GitHub milestone `#n` **is** OpenSky milestone `Mn` — `M9` is milestone `#9`, and
+  `M18+` is `#18`. M1-M7 are closed and kept so the numbering keeps holding; their
+  history is in `docs/log.md` and git.
+- The milestone description carries the goal, spec references, and legal notes. Each
+  issue is one numbered roadmap item (`9.1.2 .xwm framing parser`) and carries its own
+  acceptance gate.
+- Start work: `gh issue list --milestone "M8 - interaction + UI shell"`, take the
+  topmost open item, one branch and one PR per issue, and close it from the PR body
+  (`Closes #NNN`) rather than editing a checklist by hand.
+- Labels: `roadmap` (came from the migrated roadmap), `acceptance-gate` (a milestone or
+  sub-milestone gate), `format-parser`, `app-ui`.
+- Live branch and PR state comes from `gh pr list` + `git log` — never trust a snapshot
+  written into a doc.
+- Milestone done -> close the GitHub milestone and record the outcome in `docs/log.md`.
+  Scope changes are issue edits, not doc edits.
+
+Machine quirks: the repo sits on a case-insensitive external APFS volume (a case-only
+rename needs `git mv`; AppleDouble `._*` files are ignored). Xcode 26 ships without the
+Metal Toolchain — `make bootstrap`, once per checkout, handles the download. CI is
+suspended on Actions quota, so git hooks are the only gate; `ci.yml` is manual-dispatch
+and self-skips below Xcode 26.
+
 ## Environment & tech stack
 
 - Swift (primary), Metal Shading Language for GPU. Minimal C interop only where a format
@@ -97,7 +125,7 @@ openskycli/             CLI dev tool target — rules in openskycli/AGENTS.md
 openskyTests/           Unit tests        openskyUITests/  UI tests
 tools/                  Repo tooling only (format/lint/markdown configs, scripts)
 .githooks/              Tracked git hooks  .github/workflows/  CI
-docs/                   OKF knowledge wiki (docs/index.md is the map; docs/todo.md roadmap)
+docs/                   OKF knowledge wiki (docs/index.md is the map)
 logs/                   Script/tool logs (gitignored)
 ```
 
@@ -138,8 +166,9 @@ triangle appeared. Keep the app launchable at every commit.
 `docs/` is an OKF v0.1 knowledge wiki: reverse-engineered formats, subsystem design,
 decisions. Part of done: a change that adds/alters a subsystem, parser, or non-obvious
 decision updates `docs/` in the same commit (`docs/log.md` + `docs/index.md` included).
-`docs/todo.md` holds open work only — done items leave it in the same commit. Format
-rules + templates: load the `docs-wiki` skill.
+`docs/` holds knowledge, never open work — the roadmap lives in GitHub issues and
+milestones (see Roadmap and open work). Format rules + templates: load the `docs-wiki`
+skill.
 
 ## Reverse-engineering discipline
 

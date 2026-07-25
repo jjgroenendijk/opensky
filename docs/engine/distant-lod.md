@@ -54,7 +54,7 @@ full-cell bounds only; far LOD must not pull launch camera back to whole-world s
 
 `DistantLODBuilder` reuses `MeshLibrary` + `TextureLibrary`: paths cache exactly like regular
 NIF/DDS assets. BTR gets south-west translation; BTO stays world-space. `WATER` subtree is
-absent until [sky + water milestone](/todo.md). [LST/BTT tree LOD](/formats/lod.md) generates
+absent until the sky and water milestone (M3). [LST/BTT tree LOD](/formats/lod.md) generates
 one cached crossed-plane model per tree type, then batches BTT transforms through normal
 instancing. `fTreeLoadDistance` applies as an exact world-space XY radius, not a square cell
 approximation. Tree LOD remains visible inside resident cells because full `TREE` records
