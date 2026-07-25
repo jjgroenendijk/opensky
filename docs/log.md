@@ -4,6 +4,25 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-25
 
+* **`.xwm` (xWMA) container framing added** (`opensky/Formats/XWM/`): Skyrim SE's music
+  is Microsoft's xWMA — a RIFF form carrying a WMAv2 stream in `nBlockAlign`-sized
+  packets. `XWMFile` frames and validates it and deliberately decodes nothing: it
+  publishes the WAVEFORMATEX codec parameters, the `dpds` decoded-packet-cumulative-size
+  table and the encoded payload (whole or per packet) so the WMA decoder from M9.1.1 can
+  be dropped in behind it without the parser changing. Every byte offset is cited to
+  MultimediaWiki's Microsoft xWMA page, FFmpeg's `libavformat/xwma.c` (read as
+  documentation, never transcribed — copying it would import its license) and Microsoft's
+  WAVEFORMATEX and RIFF documentation. Only `wFormatTag 0x0161` is accepted; WMA Pro and
+  WMA Lossless are recognized and declined as `unsupported`. A missing `dpds` chunk and a
+  `dpds`/packet-count mismatch are reported rather than rejected, because both are legal
+  containers, while a misaligned or duplicated table is malformed. New `openskycli audio
+  info` and `audio sweep` subcommands expose it; the sweep is gated in `tools/probe.sh`
+  in the same shape as the `lod` and `swf` sweeps and streams file by file, holding only
+  counts, since an unbounded audio sweep is the shape that has run this machine out of
+  memory before. Vanilla evidence: 269 files, 269 framed, 0 unsupported, 0 failed, all
+  stereo WMAv2, 0 packet-table mismatches, 347.0 declared minutes. The tally carries a
+  `decoded` column that stays 0 until the decoder lands, so the probe's grep does not
+  have to change then. See [xWMA container](/formats/xwm.md).
 * **Merged PRs backfilled into the milestones that shipped them**: all 107 merged PRs
   were assigned to a milestone and added to the roadmap board, so M1-M7 stopped being
   empty number-holders and became a queryable record of how each finished milestone was

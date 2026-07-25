@@ -110,6 +110,14 @@ grep 'swf action-sweep:' "$log" | tail -1 | grep -q ' 0 failed' \
 grep 'swf action-sweep unknown:' "$log" | tail -1 | grep -q '^\[INFO\] swf action-sweep unknown: 0 ' \
   || fail "swf action-sweep reported unknown AS2 opcodes"
 
+# M9.1.2 xWMA container gate: every vanilla .xwm frames through XWMFile with
+# zero failures. Vanilla install: 269 files, 269 framed, 0 unsupported,
+# 0 failed, all WAVE_FORMAT_WMAUDIO2. The "decoded" column stays 0 until the
+# WMA decoder lands (M9.1.1); the grep below only gates framing.
+run "xwm audio sweep (vanilla music)" audio sweep
+grep 'audio sweep:' "$log" | tail -1 | grep -q ' 0 failed' \
+  || fail "xwm audio sweep reported framing failures"
+
 # M5.1/5.2 actor gate: every discovered ACHR around the first-render cell
 # must resolve its template chain AND its visuals (skeleton, skin/outfit
 # parts, FaceGen) — the summary line reports "N failed".
