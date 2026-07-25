@@ -12,6 +12,10 @@ xcuserdata/
 *.dSYM.zip
 *.dSYM
 
+# ── Vendored native dependencies (built by make bootstrap, never committed) ───
+# tools/vendor-ffmpeg.sh builds a decode-only LGPL ffmpeg into .vendor/ffmpeg.
+/.vendor/
+
 # ── SwiftPM ───────────────────────────────────────────────────────────────────
 .swiftpm/
 Packages/

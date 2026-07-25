@@ -126,8 +126,8 @@ Repo root holds only: this doc, `Makefile`, the Xcode project, and hidden dotfil
 ```text
 Makefile                Automation hub. `make help` lists targets.
 opensky.xcodeproj/      Xcode project (macOS-only, shared scheme)
-opensky/                Product code — app + engine (Formats/, Geometry/, Rendering/,
-                        World/, Renderer.swift, Shaders.metal, ShaderTypes.h)
+opensky/                Product code — app + engine (Audio/, Formats/, Geometry/,
+                        Rendering/, World/, Renderer.swift, Shaders.metal, ShaderTypes.h)
 openskycli/             CLI dev tool target — rules in openskycli/AGENTS.md
 .AGENTS/skills/         Agent skills; .claude/skills symlinks here
 openskyTests/           Unit tests        openskyUITests/  UI tests
@@ -135,6 +135,8 @@ tools/                  Repo tooling only (format/lint/markdown configs, scripts
 .githooks/              Tracked git hooks  .github/workflows/  CI
 docs/                   OKF knowledge wiki (docs/index.md is the map)
 logs/                   Script/tool logs (gitignored)
+.vendor/                Vendored native dependencies built by `make bootstrap`
+                        (gitignored; see docs/decisions/ffmpeg-audio.md)
 ```
 
 Group engine subsystems under `opensky/` by domain; format parsers stay separate from
@@ -153,6 +155,8 @@ Drive everything through `make`; `make help` lists all targets. Key ones:
 - `make run-cli ARGS="..."` — build + run openskycli; `make app-path` / `make cli-path`
   print built-product paths
 - `make probe` — CLI smoke checks against the local install (self-skips when absent)
+- `make ffmpeg` — rebuild the vendored decode-only LGPL ffmpeg in `.vendor/ffmpeg`
+  (also run by `make bootstrap`; the build fails naming it when the prefix is missing)
 - `make install` — Release build -> `/Applications/opensky.app` (refresh after landing
   rendering work)
 

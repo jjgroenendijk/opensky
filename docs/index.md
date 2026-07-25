@@ -130,6 +130,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   no-op plus tally.
 * [App logo + icon pipeline](/decisions/app-logo.md) - original "North Peak" SVG mark,
   `make icon` renders AppIcon set via rsvg-convert; legal rationale.
+* [ffmpeg for audio decode](/decisions/ffmpeg-audio.md) - vendored decode-only LGPL build
+  in a gitignored prefix, `import CFFmpeg` module map, dylibs embedded in the app bundle;
+  why the Homebrew build is unusable and what LGPL requires.
 
 ## Tools
 

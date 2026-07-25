@@ -19,7 +19,7 @@ MD_GLOB         := **/*.md
 METAL_FILES     := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
 
 .DEFAULT_GOAL := help
-.PHONY: help bootstrap hooks format format-check lint check fix swift-format \
+.PHONY: help bootstrap ffmpeg hooks format format-check lint check fix swift-format \
         swift-lint metal-format md-format md-lint sh-lint cli-boundary docs-links build cli \
         probe test \
         test-ui test-one test-report realtest test-perms app-path cli-path run-cli \
@@ -31,6 +31,9 @@ help: ## List available targets
 
 bootstrap: ## Install toolchain (Homebrew) + wire git hooks
 	@./tools/bootstrap.sh
+
+ffmpeg: ## Build the vendored decode-only LGPL ffmpeg into .vendor/ffmpeg
+	@./tools/vendor-ffmpeg.sh
 
 hooks: ## Point git at .githooks/hooks (idempotent)
 	@git config core.hooksPath .githooks/hooks
