@@ -43,9 +43,10 @@ final class GrassSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
-        enabledControl.target = self
-        enabledControl.action = #selector(enabledChanged)
-        enabledControl.setAccessibilityIdentifier("GrassEnabledControl")
+        PanelComponents.configureCheckbox(
+            enabledControl, target: self, action: #selector(enabledChanged),
+            identifier: "GrassEnabledControl"
+        )
         PanelComponents.configureSlider(
             densityControl, target: self, action: #selector(densityChanged),
             identifier: "GrassDensityControl", width: 174
@@ -59,10 +60,12 @@ final class GrassSection: PanelSectionViewController {
             identifier: "GrassWindControl", width: 174
         )
         return [
-            enabledControl,
-            PanelComponents.sliderRow(slider: densityControl, valueLabel: densityLabel),
-            PanelComponents.sliderRow(slider: distanceControl, valueLabel: distanceLabel),
-            PanelComponents.sliderRow(slider: windControl, valueLabel: windLabel),
+            PanelComponents.group([
+                enabledControl,
+                PanelComponents.sliderRow(slider: densityControl, valueLabel: densityLabel),
+                PanelComponents.sliderRow(slider: distanceControl, valueLabel: distanceLabel),
+                PanelComponents.sliderRow(slider: windControl, valueLabel: windLabel)
+            ]),
             statsLabel
         ]
     }

@@ -66,7 +66,7 @@ fog still apply. Per-instance main-pass culling + one instanced draw per LST typ
 
 Configuration loads once at app/CLI startup. Main app surface:
 `World > Environment > Distant LOD`. Four fields expose only live consumers: L4, L8, far,
-and trees. `Apply` (id `LODApplyButton`) writes an OpenSky override, updates the
+and trees. `Apply` (id `LODApplyControl`) writes an OpenSky override, updates the
 thread-safe config snapshot, and invalidates the current LOD ring so it rebuilds live.
 `Use Skyrim INI` clears override, reloads files, and rebuilds. Source label shows
 active filename or OpenSky override.

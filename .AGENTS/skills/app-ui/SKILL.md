@@ -75,8 +75,14 @@ test.
 - Subclass `PanelSectionViewController` for one control group; set
   `sectionTitle` + `sectionIdentifier`; call `finishInteraction()` from actions
   (`refocusOnMouseUpOnly: true` for continuous sliders).
-- Build controls only from `PanelComponents` + `PanelMetrics`. Do not hand-roll
-  fonts/widths/timers (`InspectionTicker` owns the 2 Hz readout).
+- Build controls only from `PanelComponents` + `PanelMetrics` (inventory table
+  in the doc). Do not hand-roll fonts/widths/timers (`InspectionTicker` owns the
+  2 Hz readout).
+- Spacing is a three-step scale: `rowSpacing` inside a group, `groupSpacing`
+  between groups (a section's stack), `sectionSpacing` between sections. Wrap
+  tightly-related controls in `PanelComponents.group([...])`.
+- Panels are built on first reveal and cached by destination id — never all at
+  launch.
 
 ## Accessibility-id contract
 

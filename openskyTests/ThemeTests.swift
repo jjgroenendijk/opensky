@@ -56,4 +56,26 @@ struct ShellContentCoverTests {
         #expect(!mtkView.isHidden)
         #expect(!mtkView.isPaused)
     }
+
+    /// Inspector panels are built on first reveal, not at launch: the shell
+    /// caches them like full-content controllers, so adding destinations does
+    /// not add launch-time provider graphs.
+    @Test func inspectorPanelsAreBuiltOnFirstReveal() throws {
+        let content = ShellContentViewController(gameViewController: GameViewController())
+        _ = content.view
+
+        // Only the game controller is a child before any inspector is shown.
+        let inspectorIDs = DestinationRegistry.worldInspectors.map(\.id)
+        #expect(!inspectorIDs.isEmpty, "test needs at least one world inspector")
+        #expect(content.children.count == 1)
+
+        let first = try #require(inspectorIDs.first)
+        content.showInspector(id: first)
+        #expect(content.children.count == 2)
+
+        // Revealing the same destination again reuses the cached panel.
+        content.showViewport()
+        content.showInspector(id: first)
+        #expect(content.children.count == 2)
+    }
 }

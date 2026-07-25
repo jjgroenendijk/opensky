@@ -24,9 +24,10 @@ final class AnimationSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
-        enabledControl.target = self
-        enabledControl.action = #selector(enabledChanged)
-        enabledControl.setAccessibilityIdentifier("AnimationsEnabledControl")
+        PanelComponents.configureCheckbox(
+            enabledControl, target: self, action: #selector(enabledChanged),
+            identifier: "AnimationsEnabledControl"
+        )
         return [enabledControl, statsLabel]
     }
 

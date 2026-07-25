@@ -144,7 +144,7 @@ Sidebar path `World > Environment > Weather` (`EnvironmentPanelViewController`),
   `SnowWeatherControl`): force stable data-driven acceptance presets with timed transitions.
 * Pause transitions (`WeatherTransitionsPausedControl`): freezes only weather blend progress;
   readout appends `paused`. Renderer + precipitation playback continue for inspection.
-* Time-of-day slider (`TimeOfDayControl`, 0-24 h) + `TimeOfDayLabel` HH:MM readout: drives
+* Time-of-day slider (`TimeOfDayControl`, 0-24 h) + `TimeOfDayStatsLabel` HH:MM readout: drives
   `Renderer.timeOfDay` live — the "time transitions in-app" surface, and an A/B of the
   time-of-day keyframe blend. Persisted via `TimeOfDaySettings` (UserDefaults trio, mirrors
   `ShadowQualitySettings`; fallback 13:00), applied at renderer creation.

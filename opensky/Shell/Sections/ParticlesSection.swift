@@ -29,12 +29,14 @@ final class ParticlesSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
-        enabledControl.target = self
-        enabledControl.action = #selector(enabledChanged)
-        enabledControl.setAccessibilityIdentifier("ParticlesEnabledControl")
-        frozenControl.target = self
-        frozenControl.action = #selector(frozenChanged)
-        frozenControl.setAccessibilityIdentifier("ParticlesFrozenControl")
+        PanelComponents.configureCheckbox(
+            enabledControl, target: self, action: #selector(enabledChanged),
+            identifier: "ParticlesEnabledControl"
+        )
+        PanelComponents.configureCheckbox(
+            frozenControl, target: self, action: #selector(frozenChanged),
+            identifier: "ParticlesFrozenControl"
+        )
         PanelComponents.configureSlider(
             emissionControl,
             target: self,
@@ -43,9 +45,11 @@ final class ParticlesSection: PanelSectionViewController {
             width: 190
         )
         return [
-            enabledControl,
-            frozenControl,
-            PanelComponents.sliderRow(slider: emissionControl, valueLabel: emissionLabel),
+            PanelComponents.group([
+                enabledControl,
+                frozenControl,
+                PanelComponents.sliderRow(slider: emissionControl, valueLabel: emissionLabel)
+            ]),
             statsLabel
         ]
     }

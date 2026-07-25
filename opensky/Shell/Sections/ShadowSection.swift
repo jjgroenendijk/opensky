@@ -29,18 +29,18 @@ final class ShadowSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
-        enabledControl.target = self
-        enabledControl.action = #selector(enabledChanged)
-        enabledControl.setAccessibilityIdentifier("SunShadowsEnabledControl")
-
+        PanelComponents.configureCheckbox(
+            enabledControl, target: self, action: #selector(enabledChanged),
+            identifier: "SunShadowsEnabledControl"
+        )
         for quality in qualities {
             qualityControl.addItem(withTitle: Self.title(for: quality))
         }
-        qualityControl.target = self
-        qualityControl.action = #selector(qualityChanged)
-        qualityControl.setAccessibilityIdentifier("ShadowQualityControl")
-
-        return [enabledControl, qualityControl, statsLabel]
+        PanelComponents.configurePopUp(
+            qualityControl, target: self, action: #selector(qualityChanged),
+            identifier: "ShadowQualityControl"
+        )
+        return [PanelComponents.group([enabledControl, qualityControl]), statsLabel]
     }
 
     override func syncControls() {
