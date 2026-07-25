@@ -79,8 +79,10 @@ Open work lives in GitHub issues and milestones. There is no roadmap file in the
 up from `gh`, not from a doc snapshot.
 
 - GitHub milestone `#n` **is** OpenSky milestone `Mn` — `M9` is milestone `#9`, and
-  `M18+` is `#18`. M1-M7 are closed and kept so the numbering keeps holding; their
-  history is in `docs/log.md` and git.
+  `M18+` is `#18`. M1-M7 are closed but not empty: every merged PR is assigned to the
+  milestone it landed under, so `gh pr list --state merged --milestone "M4 - walkable
+  world"` shows how a finished milestone was actually built. Narrative history stays in
+  `docs/log.md`.
 - The milestone description carries the goal, spec references, and legal notes. Each
   issue is one numbered roadmap item (`9.1.2 .xwm framing parser`) and carries its own
   acceptance gate.
@@ -91,7 +93,8 @@ up from `gh`, not from a doc snapshot.
   sub-milestone gate), `format-parser`, `app-ui`.
 - Board view across milestones: the `OpenSky roadmap` project
   (<https://github.com/users/jjgroenendijk/projects/7>), which holds every open issue
-  and groups by the built-in `Milestone` field. `gh project item-list 7 --owner
+  and every merged PR, grouped by the built-in `Milestone` field — so M1-M7 read as
+  shipped work and M8+ as planned work. `gh project item-list 7 --owner
   jjgroenendijk`. The board is a view, not the source of truth — issues and milestones
   are.
 - Live branch and PR state comes from `gh pr list` + `git log` — never trust a snapshot

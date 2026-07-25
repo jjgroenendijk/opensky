@@ -4,6 +4,20 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-25
 
+* **Merged PRs backfilled into the milestones that shipped them**: all 107 merged PRs
+  were assigned to a milestone and added to the roadmap board, so M1-M7 stopped being
+  empty number-holders and became a queryable record of how each finished milestone was
+  actually built. Milestone boundaries came from the acceptance PRs themselves rather
+  than from guesswork — PR numbers are chronological, and each milestone closes with its
+  own gate PR (#8 for M1, #21 "complete milestone 2", #35, #45, #59, #78, #94), so the
+  ranges between those gates are exact. That rule also assigns the cross-cutting tooling
+  and docs PRs to the milestone they were done in service of, which is the honest answer
+  to "what did M6 cost" — the toolchain work was part of the milestone, not free. The
+  in-flight M8 got the same treatment (30 merged, 7 open), so the board now reads as
+  shipped work behind the current milestone and planned work ahead of it. Counts per
+  milestone: M1 8, M2 13, M3 14, M4 8, M5 8, M6 11, M7 15, M8 30. Fifteen open issues
+  stay unmilestoned by choice — they are standing infrastructure items (#70-#73 and
+  peers), not roadmap steps.
 * **Roadmap migrated out of `docs/todo.md` into GitHub issues and milestones**: the
   roadmap had grown into a 460-line file that was simultaneously a task tracker, a
   handoff note, a machine-quirks list, and a milestone history, and every one of those
@@ -12,9 +26,9 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   enforcing — the `format-parser` skill even carried a "delete it there in the same
   commit" clause to compensate. Open work now lives in GitHub: eighteen milestones where
   milestone `#n` is OpenSky milestone `Mn` (`M18+` is `#18`), and 71 issues (#145-#215),
-  one per numbered roadmap item, each carrying its own acceptance gate. M1-M7 exist as
-  closed, empty milestones purely to hold that numbering identity; their history was
-  already in this log and in git, so nothing was duplicated into them. The milestone
+  one per numbered roadmap item, each carrying its own acceptance gate. M1-M7 are closed
+  milestones that hold that numbering identity and, after the backfill described below,
+  the merged PRs that built them. The milestone
   description now carries what the roadmap's prose preamble carried — goal, spec
   references, and the legal notes on SWF, Havok, and `.ess` — so the context travels with
   the work instead of sitting in a file nobody opens mid-task. Labels `roadmap`,
