@@ -14,6 +14,18 @@
 
 import Foundation
 
+/// What the interpreter does with the value a frame returns when it is popped.
+nonisolated enum AS2FrameCompletion {
+    /// The frame is the base of an interpreter loop: the value is the result of
+    /// the `AS2Interpreter` entry point that started it.
+    case value
+    /// Push the value onto the calling frame's operand stack — an ordinary call.
+    case push
+    /// `new`: push the object the constructor returned, or this instance when
+    /// it returned no object of its own.
+    case construct(AS2Object)
+}
+
 nonisolated final class AS2Frame {
     /// Where an empty-stack read is recorded.
     let runtime: AS2Runtime
@@ -34,6 +46,18 @@ nonisolated final class AS2Frame {
     var stackLimit = AS2Limits.standard.stackDepth
     /// Byte offset of the record being executed, so a fault can name it.
     var currentOffset = 0
+
+    /// The records this frame executes: a whole block for a timeline stream, a
+    /// function body for a call.
+    var range: Range<Int> = 0 ..< 0
+    /// The instruction pointer — the next record index inside `range`. It lives
+    /// on the frame rather than in a local so the interpreter can suspend a
+    /// frame across a call instead of recursing on the Swift stack.
+    var index = 0
+    var completion: AS2FrameCompletion = .value
+    /// False for the frame an entry point starts with, true for a frame a call
+    /// pushed. Only the latter count against `AS2Limits.callDepth`.
+    var isCall = false
 
     /// `ActionDefineFunction` has no register header; the SWF 5 action model
     /// gives a stream four registers.

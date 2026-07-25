@@ -157,6 +157,31 @@ the same block, so a `return` and a branch behave identically at any nesting dep
 that lands in the middle of a record, or outside the body being executed, is a fault rather
 than a silent reinterpretation of operand bytes as opcodes.
 
+### The call stack
+
+Calls run on the interpreter's own frame stack, not on the Swift stack. Each `AS2Frame`
+carries its own record range and instruction pointer, so calling a bytecode function pushes
+a frame and returns to the same loop; when that frame is popped, its `AS2FrameCompletion`
+says where the value goes — onto the calling frame's operand stack for an ordinary call, or
+through the `new` rule (the constructor's own object if it returned one, otherwise the fresh
+instance) for a construction.
+
+That is a change from the milestone 8.3.2 implementation, which called by recursing on the
+Swift stack (issue #132). Recursion made `callDepth` a stack-safety limit that had to stay
+at 64, and vanilla CLIK constructor chains nest deeper than that: every aborted constructor
+was a component that never reached `EventDispatcher.initialize(this)`, which is why
+`dispatchEvent`, `addEventListener`, and `textField` headed the missing-API tally. Raising
+the cap was measured twice and crashed the test host both times — at 256 and again at 128.
+With an explicit stack the depth a chain may reach is bounded by memory, so `callDepth` is a
+policy limit and now matches Flash's own default of 256.
+
+Swift recursion survives in exactly one place: a call that has to produce its value inside a
+Swift call rather than back in the loop. That is a built-in re-entering bytecode
+(`Function.prototype.call` and `.apply`) and a property accessor answering a member read or
+write. `AS2Interpreter.call` is that path, and `reentryDepth` — a much smaller cap, raising
+`reentryDepthExceeded` — is what keeps it from overflowing the Swift stack. Every other
+call goes through `startCall`, which pushes a frame and never recurses.
+
 Variable resolution is innermost-first through the scope chain, then `this`, then `_global`.
 An assignment to a name nothing declared lands on the timeline target, not in the innermost
 activation — that is ActionScript, not ECMAScript.
@@ -184,7 +209,8 @@ nothing upstream validates it, so each way a stream can be wrong ends in a recor
 | Limit | Default | Why |
 |---|---|---|
 | `actionBudget` | 1,000,000 | Shared by every nested call of one invocation. The largest vanilla action block is 5,886 records, so this leaves about two orders of magnitude of loop headroom while capping a runaway well under a second |
-| `callDepth` | 64 | The interpreter recurses on the Swift stack and a worker thread's stack is far smaller than the main thread's. Set for stack safety, not for parity with Flash's 256-frame default |
+| `callDepth` | 256 | Calls run on the interpreter's own frame stack, so this is a policy limit and matches Flash's own 256-frame default rather than being sized for Swift stack safety |
+| `reentryDepth` | 32 | Nested Swift re-entries into the interpreter — a built-in or a property accessor that needs a bytecode result synchronously. The only path that still costs Swift stack |
 | `stackDepth` | 4,096 | Flash compiles expressions, not unbounded stack machines |
 | `registerCount` | 256 | The `ActionDefineFunction2` header field is a `UInt8`; the deepest vanilla function uses 23 |
 | `tallyNames` | 256 | Distinct names kept per tally table; totals keep counting past it |
@@ -193,9 +219,9 @@ nothing upstream validates it, so each way a stream can be wrong ends in a recor
 | `traceLength` | 512 | Characters kept per trace message |
 
 Faults: `stackOverflow`, `invalidJump`, `truncatedBody`, `budgetExhausted`,
-`callDepthExceeded`. Each carries the byte offset it was raised at and a stable `kind`
-string for reporting. `AS2ExecutionResult` reports the value, the actions executed, and the
-fault if any. A faulted block leaves the runtime fully usable.
+`callDepthExceeded`, `reentryDepthExceeded`. Each carries the byte offset it was raised at
+and a stable `kind` string for reporting. `AS2ExecutionResult` reports the value, the
+actions executed, and the fault if any. A faulted block leaves the runtime fully usable.
 
 An empty-stack read is deliberately *not* a fault. Flash yields `undefined` and continues,
 and vanilla bytecode depends on that: the compiler emits a join-point `ActionPop` that both
@@ -719,7 +745,8 @@ Device-free, synthetic fixtures only — no test reads a real `.swf`. Action byt
   record, and a branch to the end of the block.
 - `AS2FunctionTests` — register and named parameter binding, the preload flags, anonymous
   function literals, nested calls, captured constant pools, a body longer than its stream,
-  and the call-depth cap.
+  the call-depth cap, two hundred nested calls completing on the interpreter's own frame
+  stack, and a re-entrant `Function.prototype.call` chain stopping at the re-entry cap.
 - `AS2ObjectModelTests` — object and array literals, `ActionEnumerate2` order, `ActionExtends`
   with `ActionInstanceOf` and `ActionCastOp`, prototype methods through `new` and
   `ActionCallMethod`, `super` reaching the base constructor with the derived instance,
@@ -787,13 +814,14 @@ vanilla `Interface/*.swf` movies through `SWFMovieRuntime`: every `DoInitAction`
 root's frame 1 with class instantiation, and the frame's `DoAction`.
 
 Phase 3's sweep additionally ticks each movie once, so it executes `enterFrame` handlers and
-timer callbacks that phase 2 never reached.
+timer callbacks that phase 2 never reached. The phase-3 column was re-measured after the
+frame-stack rewrite (issue #132) and is what the current engine produces.
 
 | Measure | Phase 1 (interpreter) | Phase 2 (display runtime) | Phase 3 (interaction) |
 |---|---|---|---|
 | Movies brought up | 53 | 53 | 53 |
 | Movies with no fault and no unimplemented opcode | 53 | 37 | 26 |
-| Faults | 0 | 49 | 394, all `callDepthExceeded` |
+| Faults | 0 | 49 | 394, all `callDepthExceeded` (see below) |
 | Unimplemented opcodes reached | 0 | 0 | 0 |
 | Classes registered | 108 | 108 | 305 |
 | Display nodes instantiated | — | 4,805 | 4,889 |
@@ -817,17 +845,49 @@ them. After them the tail is per-menu data: `EntriesA` (54), `InventoryLists_mc`
 `ListScrollbar` (20), `_CategoriesList`, `InventoryDefines` — phase 4, exactly as the
 [scope decision](/decisions/swf-as2-scope.md) phased it.
 
-**The call-depth cap is the binding limitation.** All 394 faults are
-`callDepthExceeded`, concentrated in the largest movies (`racesex_menu.swf` 180,
-`quest_journal.swf` 159, `modmanager.swf` 19, `itemcard.swf` 17). The count rose with phase 3
-because deeper execution reaches deeper CLIK constructor chains, and each aborted
-constructor is what leaves `addEventListener` and friends missing on that component.
-Raising the cap is not the fix: a probe at 128 crashed the test host on a Swift stack
-overflow, which is the same result the phase-2 probe got at 256 and confirms the cap's
-stated rationale. Making the interpreter iterative rather than recursive is the real fix and
-is not milestone 8.3 work (issue #132). Each fault aborts one constructor and leaves the
-movie usable, which is why 26 movies still come up completely clean and why the interactive
-target below is one of them.
+All 394 faults are `callDepthExceeded`, concentrated in the largest movies
+(`quest_journal.swf` 159, `racesex_menu.swf` 57, `startmenu.swf` 35, `modmanager.swf` 19,
+`itemcard.swf` 17); 27 movies fault and 26 do not. Each fault aborts one constructor and
+leaves the movie usable, which is why 26 movies still come up completely clean and why the
+interactive target below is one of them.
+
+### `super` resolution, not call depth, is the binding limitation
+
+Phase 3 read the depth cap as the cause and issue #132 as the fix. The frame stack landed
+(see [the call stack](#the-call-stack)) and the sweep was re-run at three caps in one
+process: the aggregate row above is what all three produce.
+
+| Measure | `callDepth` 64 | 256 (shipping) | 4,096 |
+|---|---|---|---|
+| Faults, all `callDepthExceeded` | 394 | 394 | 394 |
+| `reentryDepthExceeded` | 0 | 0 | 0 |
+| Movies with no fault and no unimplemented opcode | 26 | 26 | 26 |
+| Distinct missing API names | 245 | 245 | 245 |
+| Total missing-API hits | 2,527 | 2,527 | 2,527 |
+| Sweep wall-clock | 34.9 s | 36.4 s | 88.9 s |
+
+The per-movie distribution is identical at all three caps too. Only the cost changes, and it
+changes linearly with the cap, because a cycle that never terminates runs to whatever cap
+exists before it aborts. No cap crashes the host any more — 4,096 completes cleanly, which
+the recursive interpreter could not do at 128 — and no cap helps either.
+
+The cycle is `super()`. `superBinding(for:)` derives the binding from the receiver — it
+calls `this.__proto__`'s `__constructor__` and re-binds `this` to the same instance — so
+`this.__proto__` never advances as the chain is walked, and the base constructor's `super`
+resolves to the constructor it was just reached through. Two levels work; three loop, and
+three is the vanilla shape, because a CLIK component extends `gfx.core.UIComponent`, which
+extends `MovieClip`. The top single fault site is the shared embedded CLIK library
+(`quest_journal.swf` action block 172, byte-identical in `racesex_menu.swf` block 61 and
+`startmenu.swf` block 76) at offset 1398, the empty-name `ActionCallMethod` that
+`gfx.core.UIComponent`'s constructor uses to reach its base. Resolving `super` against the
+class whose method is executing, rather than against the receiver's prototype, is what
+retires the bulk of the 394 faults and the aborted constructors behind `dispatchEvent`,
+`addEventListener`, and `textField` — issue #136.
+
+What #132 did change is the shape of the cost, not the tally: `racesex_menu.swf` fell from
+180 faults to 57 on the frame stack alone (at the same cap of 64), the depth cap is a policy
+number again, and `reentryDepthExceeded` is zero across the whole install — no vanilla menu
+exercises the remaining Swift-recursive path at bring-up plus one tick.
 
 ### The interactive menu: `tweenmenu.swf`
 
@@ -872,11 +932,14 @@ addressable.
 - The probes above are not a committed surface. Turning them into an
   `openskycli swf action-run` sweep and a `Developer > UI Lab` readout is the app-facing
   half of this milestone.
-- **Call depth.** The interpreter recurses on the Swift stack, so `callDepth` is 64 and
-  deep CLIK constructor chains hit it (see above). It is now the single largest source of
-  missing-API hits, because an aborted constructor is a component without its
-  `EventDispatcher` mixin. An iterative call implementation would remove the cap as a
-  correctness limit.
+- **`super` resolution.** Derived from the receiver's prototype, so a three-level class
+  hierarchy recurses forever and aborts at the call-depth cap. It is the whole of the
+  remaining 394 faults across the install and the reason the CLIK missing-API tally looks
+  the way it does — issue #136.
+- **Re-entry depth.** Bytecode calls no longer recurse on the Swift stack (issue #132), but a
+  built-in or a property accessor that calls back into bytecode still does, under
+  `reentryDepth` (32). No vanilla movie has been observed to reach it; a chain of accessors
+  that each read another accessor would.
 - `ActionCallFunction` binds `this` to the calling frame's `this`. Flash binds it to the
   target clip when the name did not resolve on an object; the two agree for timeline code and
   can differ inside a method.

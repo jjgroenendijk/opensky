@@ -139,6 +139,95 @@ struct AS2FunctionTests {
         #expect(runtime.tally.callsPerformed == 9)
     }
 
+    /// The interpreter runs calls on its own frame stack, so nesting far past
+    /// the old Swift-recursive cap of 64 completes (issue #132). Two hundred
+    /// nested calls is deeper than any vanilla CLIK constructor chain.
+    @Test func deepRecursionCompletesWithoutTouchingTheSwiftStack() {
+        let runtime = AS2Runtime()
+        let result = AS2Fixture.result(Self.countdown(from: 200), runtime: runtime)
+        #expect(result.fault == nil)
+        #expect(AS2Fixture.number(result.value) == 0)
+        #expect(runtime.tally.callsPerformed == 200)
+    }
+
+    /// A built-in that calls back into bytecode does consume Swift stack, so it
+    /// runs under `AS2Limits.reentryDepth` rather than the call-depth cap.
+    /// `Function.prototype.call` recursing on itself is the shape that shows it.
+    @Test func reentrantNativeRecursionStopsAtTheReentryCap() {
+        var limits = AS2Limits.standard
+        limits.reentryDepth = 4
+        let runtime = AS2Runtime(limits: limits)
+        let body = Self.callMethod("recurse", named: "call") + [AS2Fixture.returnAction]
+        let define = SWFActionFixture.defineFunction2(
+            name: "recurse", parameters: [], registerCount: 1, flags: [],
+            bodySize: UInt16(AS2Fixture.size(body))
+        )
+        let result = AS2Fixture.result(
+            [define] + body + Self.call("recurse", arguments: []), runtime: runtime
+        )
+        #expect(result.fault?.kind == "reentryDepthExceeded")
+    }
+
+    /// Sequential calls are not nested calls: the frame stack has to give the
+    /// depth back on every return, or a long timeline of ordinary calls would
+    /// fault against a cap it never actually reaches.
+    @Test func sequentialCallsDoNotAccumulateDepth() {
+        var limits = AS2Limits.standard
+        limits.callDepth = 4
+        let runtime = AS2Runtime(limits: limits)
+        let body = [AS2Fixture.push([.integer(1)]), AS2Fixture.returnAction]
+        let define = SWFActionFixture.defineFunction2(
+            name: "once", parameters: [], registerCount: 1, flags: [],
+            bodySize: UInt16(AS2Fixture.size(body))
+        )
+        let step = Self.call("once", arguments: []) + [AS2Fixture.opcode(0x17)]
+        var actions = [define] + body
+        for _ in 0 ..< 200 {
+            actions += step
+        }
+        let result = AS2Fixture.run(actions, runtime: runtime)
+        #expect(result.fault == nil)
+        #expect(runtime.tally.callsPerformed == 200)
+    }
+
+    /// `n = n - 1; if (n) { down(); } return n;`, called once with `n` preset,
+    /// so the stream performs exactly `count` strictly nested calls.
+    private static func countdown(from count: Int32) -> [AS2Fixture.Action] {
+        let recurse = call("down", arguments: []) + [AS2Fixture.opcode(0x17)]
+        let body = [AS2Fixture.push([.string("n")])]
+            + AS2Fixture.getVariable("n")
+            + [
+                AS2Fixture.push([.integer(1)]),
+                AS2Fixture.opcode(0x0B),
+                AS2Fixture.opcode(0x1D)
+            ]
+            + AS2Fixture.getVariable("n")
+            // `ActionNot` so the branch skips the recursive call once `n` is 0.
+            + [
+                AS2Fixture.opcode(0x12),
+                SWFActionFixture.branch(code: 0x9D, offset: Int16(AS2Fixture.size(recurse)))
+            ]
+            + recurse
+            + AS2Fixture.getVariable("n")
+            + [AS2Fixture.returnAction]
+        let define = SWFActionFixture.defineFunction2(
+            name: "down", parameters: [], registerCount: 1, flags: [],
+            bodySize: UInt16(AS2Fixture.size(body))
+        )
+        return AS2Fixture.setVariable("n", .integer(count))
+            + [define] + body + call("down", arguments: [])
+    }
+
+    /// `ActionCallMethod` on a named variable: the argument count, then the
+    /// receiver the variable holds, then the method name on top.
+    private static func callMethod(_ variable: String, named method: String)
+        -> [AS2Fixture.Action]
+    {
+        [AS2Fixture.push([.integer(0)])]
+            + AS2Fixture.getVariable(variable)
+            + [AS2Fixture.push([.string(method)]), AS2Fixture.opcode(0x52)]
+    }
+
     @Test func aBodyLongerThanItsStreamFaults() {
         let define = SWFActionFixture.defineFunction2(
             name: "broken", parameters: [], registerCount: 1, flags: [], bodySize: 64

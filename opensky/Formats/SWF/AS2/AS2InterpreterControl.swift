@@ -18,8 +18,7 @@ import Foundation
 extension AS2Interpreter {
     func controlOp(
         _ record: SWFActionRecord,
-        frame: AS2Frame,
-        range: Range<Int>
+        frame: AS2Frame
     ) throws(AS2Fault) -> AS2Flow? {
         guard case let .branch(offset) = record.operands else {
             return nil
@@ -27,14 +26,14 @@ extension AS2Interpreter {
         switch record.code {
         case AS2Opcode.jump:
             let target = record.endOffset + Int(offset)
-            return try .jump(recordIndex(forByteOffset: target, frame: frame, range: range))
+            return try .jump(recordIndex(forByteOffset: target, frame: frame))
         case AS2Opcode.branchIfTrue:
             let condition = frame.pop()
             guard toBoolean(condition) else {
                 return .next
             }
             let target = record.endOffset + Int(offset)
-            return try .jump(recordIndex(forByteOffset: target, frame: frame, range: range))
+            return try .jump(recordIndex(forByteOffset: target, frame: frame))
         default:
             return nil
         }

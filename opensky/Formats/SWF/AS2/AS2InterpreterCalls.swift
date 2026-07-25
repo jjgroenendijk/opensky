@@ -14,8 +14,7 @@ import Foundation
 extension AS2Interpreter {
     func callOp(
         _ record: SWFActionRecord,
-        frame: AS2Frame,
-        range: Range<Int>
+        frame: AS2Frame
     ) throws(AS2Fault) -> AS2Flow? {
         switch record.code {
         case AS2Opcode.callFunction:
@@ -27,31 +26,33 @@ extension AS2Interpreter {
         case AS2Opcode.newMethod:
             try constructMethod(frame, offset: record.offset)
         case AS2Opcode.returnValue:
-            return .done(frame.pop())
+            .done(frame.pop())
         case AS2Opcode.defineFunction, AS2Opcode.defineFunction2:
-            return try defineFunction(record, frame: frame, range: range)
+            try defineFunction(record, frame: frame)
         default:
-            return nil
+            nil
         }
-        return .next
     }
 
-    private func callNamedFunction(_ frame: AS2Frame, offset: Int) throws(AS2Fault) {
+    private func callNamedFunction(_ frame: AS2Frame, offset: Int) throws(AS2Fault) -> AS2Flow {
         let name = try toString(frame.pop())
         let arguments = try popArguments(frame)
         let callee = try getVariable(name, frame: frame, offset: offset)
         guard let function = callee.functionValue else {
             runtime.noteMissing(name)
             try frame.push(.undefined)
-            return
+            return .next
         }
-        let result = try call(
-            function, thisValue: frame.thisValue, arguments: arguments, offset: offset
+        return try callPushingResult(
+            function,
+            thisValue: frame.thisValue,
+            arguments: arguments,
+            offset: offset,
+            frame: frame
         )
-        try frame.push(result)
     }
 
-    private func callNamedMethod(_ frame: AS2Frame, offset: Int) throws(AS2Fault) {
+    private func callNamedMethod(_ frame: AS2Frame, offset: Int) throws(AS2Fault) -> AS2Flow {
         let nameValue = frame.pop()
         let receiver = frame.pop()
         let arguments = try popArguments(frame)
@@ -71,22 +72,23 @@ extension AS2Interpreter {
         guard let function = callee.functionValue else {
             runtime.noteMissing(name.isEmpty ? "[[call]]" : name)
             try frame.push(.undefined)
-            return
+            return .next
         }
-        let result = try call(
-            function, thisValue: thisValue, arguments: arguments, offset: offset
+        return try callPushingResult(
+            function, thisValue: thisValue, arguments: arguments, offset: offset, frame: frame
         )
-        try frame.push(result)
     }
 
-    private func constructNamed(_ frame: AS2Frame, offset: Int) throws(AS2Fault) {
+    private func constructNamed(_ frame: AS2Frame, offset: Int) throws(AS2Fault) -> AS2Flow {
         let name = try toString(frame.pop())
         let arguments = try popArguments(frame)
         let callee = try getVariable(name, frame: frame, offset: offset)
-        try pushConstructed(callee, name: name, arguments: arguments, frame: frame, offset: offset)
+        return try startConstruction(
+            callee, name: name, arguments: arguments, frame: frame, offset: offset
+        )
     }
 
-    private func constructMethod(_ frame: AS2Frame, offset: Int) throws(AS2Fault) {
+    private func constructMethod(_ frame: AS2Frame, offset: Int) throws(AS2Fault) -> AS2Flow {
         let name = try toString(frame.pop())
         let receiver = frame.pop()
         let arguments = try popArguments(frame)
@@ -94,49 +96,56 @@ extension AS2Interpreter {
         if !name.isEmpty {
             callee = try getMember(name, of: receiver, offset: offset)
         }
-        try pushConstructed(callee, name: name, arguments: arguments, frame: frame, offset: offset)
+        return try startConstruction(
+            callee, name: name, arguments: arguments, frame: frame, offset: offset
+        )
     }
 
-    private func pushConstructed(
+    private func startConstruction(
         _ callee: AS2Value,
         name: String,
         arguments: [AS2Value],
         frame: AS2Frame,
         offset: Int
-    ) throws(AS2Fault) {
+    ) throws(AS2Fault) -> AS2Flow {
         guard let constructor = callee.functionValue else {
             runtime.noteMissing(name)
             try frame.push(.undefined)
-            return
+            return .next
         }
-        try frame.push(construct(constructor, arguments: arguments, offset: offset))
+        return try construct(constructor, arguments: arguments, offset: offset, frame: frame)
     }
 
     /// `new`: a fresh object whose prototype is the constructor's `prototype`,
     /// handed to the constructor as `this`. A constructor that returns an
     /// object of its own wins, which is what the `Array` and `Object`
-    /// built-ins rely on.
+    /// built-ins rely on — `AS2FrameCompletion.construct` applies that rule
+    /// when the constructor's frame is popped.
     func construct(
         _ constructor: AS2Object,
         arguments: [AS2Value],
-        offset: Int
-    ) throws(AS2Fault) -> AS2Value {
+        offset: Int,
+        frame: AS2Frame
+    ) throws(AS2Fault) -> AS2Flow {
         let prototype = constructor.lookup("prototype")?.property.value.objectValue
         let instance = AS2Object(prototype: prototype ?? runtime.objectPrototype)
         instance.define(
             .object(constructor), for: "__constructor__", flags: [.dontEnumerate, .dontDelete]
         )
-        let result = try call(
+        let start = try startCall(
             constructor,
             thisValue: .object(instance),
             arguments: arguments,
             offset: offset,
-            constructing: true
+            completion: .construct(instance)
         )
-        if let returned = result.objectValue {
-            return .object(returned)
+        switch start {
+        case let .value(value):
+            try frame.push(value.objectValue.map(AS2Value.object) ?? .object(instance))
+            return .next
+        case .pushed:
+            return .called
         }
-        return .object(instance)
     }
 
     /// Pops the argument count and then the arguments. The first argument is on

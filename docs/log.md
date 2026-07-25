@@ -4,6 +4,27 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-25
 
+* **AS2 interpreter call stack** (issue #132): calling a bytecode function recursed on
+  the Swift stack (`callBytecode` -> `run` -> `callOp` -> `call`), so `AS2Limits.callDepth`
+  had to be a stack-safety number (64) rather than a policy one, and probes at 128 and 256
+  both crashed the test host. Calls now run on the interpreter's own frame stack:
+  `AS2Frame` carries its record range, instruction pointer, and an `AS2FrameCompletion`
+  saying where its return value goes (the caller's operand stack, or the `new` rule for a
+  constructor), and `AS2Interpreter.runFrames` pops and resumes frames in one loop.
+  `callDepth` is now a policy limit at Flash's own default of 256. Swift recursion survives
+  only where a value is needed synchronously inside a Swift call — a built-in such as
+  `Function.prototype.apply`, or a property accessor — bounded by the new
+  `AS2Limits.reentryDepth` (32) and its `reentryDepthExceeded` fault.
+  Re-measured over the user's own install, all 53 vanilla `Interface/*.swf` movies brought
+  up and ticked once, at three caps in one process: 64, 256, and 4,096 produce identical
+  faults (394), identical per-movie distribution, and identical missing-API tallies (2,527
+  hits, 245 names); only wall-clock changes, and 4,096 completes cleanly where the recursive
+  interpreter died at 128. That cap-independence identified the real cause: `super()`
+  resolves through the receiver's prototype, which never advances, so a three-level class
+  hierarchy recurses forever — the vanilla CLIK shape, filed as issue #136. The frame stack
+  did move the distribution on its own (`racesex_menu.swf` 180 faults to 57 at the same cap
+  of 64). See [AS2 runtime](/engine/as2-runtime.md).
+
 * **Glyph-atlas eviction** (issue #127): the shared `UIGlyphAtlas` is one fixed-size
   512x512 shelf pack, and nothing ever handed cells back. Rendering all 53 vanilla
   `Interface/*.swf` movies in one process therefore exhausted it after roughly a

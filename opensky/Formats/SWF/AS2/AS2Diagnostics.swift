@@ -25,13 +25,18 @@ nonisolated enum AS2Fault: Error, Equatable {
     case budgetExhausted(offset: Int)
     /// Calls nested deeper than `AS2Limits.callDepth` — runaway recursion.
     case callDepthExceeded(offset: Int)
+    /// Swift re-entries into the interpreter nested deeper than
+    /// `AS2Limits.reentryDepth` — a built-in or a property accessor chain that
+    /// keeps calling back into bytecode.
+    case reentryDepthExceeded(offset: Int)
 
     /// Byte offset within the block where the fault was raised.
     var offset: Int {
         switch self {
         case let .stackOverflow(offset),
              let .invalidJump(offset, _), let .truncatedBody(offset),
-             let .budgetExhausted(offset), let .callDepthExceeded(offset):
+             let .budgetExhausted(offset), let .callDepthExceeded(offset),
+             let .reentryDepthExceeded(offset):
             offset
         }
     }
@@ -44,6 +49,7 @@ nonisolated enum AS2Fault: Error, Equatable {
         case .truncatedBody: "truncatedBody"
         case .budgetExhausted: "budgetExhausted"
         case .callDepthExceeded: "callDepthExceeded"
+        case .reentryDepthExceeded: "reentryDepthExceeded"
         }
     }
 }
@@ -57,12 +63,16 @@ nonisolated struct AS2Limits: Equatable {
     /// million actions leaves roughly two orders of magnitude of headroom for
     /// loops while capping a runaway at well under a second of work.
     var actionBudget = 1_000_000
-    /// Nested calls. The interpreter recurses on the Swift stack, and a worker
-    /// thread's stack is far smaller than the main thread's, so this is set for
-    /// stack safety rather than for parity with Flash's own 256-frame default.
-    /// Vanilla menu code is class-registration and event handling, neither of
-    /// which nests anywhere near this deep.
-    var callDepth = 64
+    /// Nested calls. The interpreter runs bytecode calls on its own frame stack
+    /// rather than on the Swift stack, so this is a policy limit and matches
+    /// Flash's own 256-frame default instead of being sized for stack safety.
+    var callDepth = 256
+    /// Nested re-entries into the interpreter from Swift. A built-in such as
+    /// `Function.prototype.apply`, or a property accessor that has to answer
+    /// with a bytecode result, needs that result synchronously and therefore
+    /// runs a nested interpreter loop. Those are the only calls that consume
+    /// Swift stack, so they carry their own — much smaller — cap.
+    var reentryDepth = 32
     /// Operand-stack entries per frame. Flash compiles expressions, not
     /// unbounded stack machines; a few thousand entries only ever accumulate
     /// through a bug in the bytecode or in this interpreter.
