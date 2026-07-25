@@ -41,7 +41,8 @@ change they document.
   parallel PRs prepending entries merge clean, both kept. After merging main
   into a branch that touched `log.md`, scan the top section — same-line edits
   can duplicate lines (dedupe by hand; MD024 flags dup headings). Driver is
-  for append-only files only; never extend it to `todo.md`/`index.md`.
+  for append-only files only; never extend it to `index.md` or any file that sees
+  deletions.
 - Tables: pipes need not visually align to the header (config allows consistent
   style); do not hand-align them. Wrap bare record/field signatures in backticks
   (`` `NPC_ WNAM` ``) — raw `NPC_ WNAM` trips markdownlint MD037 (parsed as
@@ -52,6 +53,8 @@ change they document.
 
 - Any add/material change -> entry in `docs/log.md` (newest first) + listing in
   `docs/index.md`, same commit.
-- `docs/todo.md` is open work only. Item done -> same commit deletes it there,
-  folds learning into the wiki, records it in `log.md`. No "Done" sections.
+- `docs/` holds knowledge, never open work. Open work is GitHub issues and
+  milestones (AGENTS.md "Roadmap and open work"). Item done -> the PR closes its
+  issue (`Closes #NNN`), folds the learning into the wiki, and records it in
+  `log.md`. No roadmap file, no "Done" sections, no checklists to hand-edit.
 - Reversed format -> byte layout + reference in `docs/formats/<name>.md`.

@@ -40,7 +40,7 @@ TES4 localized flag (0x80):
 (`GameData/LocalizedStrings.swift`) resolves IDs through the VFS at
 `strings\<plugin stem>_<language>.<ext>`, lazy per kind, missing table ->
 nil + one os_log error. Language defaults to "english" until a setting
-exists (open question in [roadmap](/todo.md)).
+exists (open question, GitHub issue #72).
 
 ## WRLD -> Worldspace
 

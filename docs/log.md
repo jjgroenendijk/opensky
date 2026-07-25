@@ -4,6 +4,53 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-25
 
+* **Merged PRs backfilled into the milestones that shipped them**: all 107 merged PRs
+  were assigned to a milestone and added to the roadmap board, so M1-M7 stopped being
+  empty number-holders and became a queryable record of how each finished milestone was
+  actually built. Milestone boundaries came from the acceptance PRs themselves rather
+  than from guesswork — PR numbers are chronological, and each milestone closes with its
+  own gate PR (#8 for M1, #21 "complete milestone 2", #35, #45, #59, #78, #94), so the
+  ranges between those gates are exact. That rule also assigns the cross-cutting tooling
+  and docs PRs to the milestone they were done in service of, which is the honest answer
+  to "what did M6 cost" — the toolchain work was part of the milestone, not free. The
+  in-flight M8 got the same treatment (30 merged, 7 open), so the board now reads as
+  shipped work behind the current milestone and planned work ahead of it. Counts per
+  milestone: M1 8, M2 13, M3 14, M4 8, M5 8, M6 11, M7 15, M8 30. Fifteen open issues
+  stay unmilestoned by choice — they are standing infrastructure items (#70-#73 and
+  peers), not roadmap steps.
+* **Roadmap migrated out of `docs/todo.md` into GitHub issues and milestones**: the
+  roadmap had grown into a 460-line file that was simultaneously a task tracker, a
+  handoff note, a machine-quirks list, and a milestone history, and every one of those
+  jobs was done better somewhere else. Worse, it was a checklist a human had to hand-edit
+  in the same commit as the work, which is exactly the kind of rule a machine should be
+  enforcing — the `format-parser` skill even carried a "delete it there in the same
+  commit" clause to compensate. Open work now lives in GitHub: eighteen milestones where
+  milestone `#n` is OpenSky milestone `Mn` (`M18+` is `#18`), and 71 issues (#145-#215),
+  one per numbered roadmap item, each carrying its own acceptance gate. M1-M7 are closed
+  milestones that hold that numbering identity and, after the backfill described below,
+  the merged PRs that built them. The milestone
+  description now carries what the roadmap's prose preamble carried — goal, spec
+  references, and the legal notes on SWF, Havok, and `.ess` — so the context travels with
+  the work instead of sitting in a file nobody opens mid-task. Labels `roadmap`,
+  `acceptance-gate`, `format-parser`, and `app-ui` make the cross-milestone slices
+  queryable. The `OpenSky roadmap` project board holds all 88 open issues and groups on
+  the built-in `Milestone` field, so it needed no custom fields; it is a view over the
+  issues, never the source of truth. The non-issue-shaped content moved to AGENTS.md
+  under "Roadmap and open work": how a fresh session picks up work from `gh` rather than
+  a doc snapshot, and the machine quirks (case-insensitive APFS volume, Xcode 26 without the Metal Toolchain,
+  CI suspended on Actions quota). `docs/` is now knowledge only, which is what OKF wanted
+  it to be — `docs-wiki` and `format-parser` were updated to say so, and an item is
+  closed by its PR (`Closes #NNN`) rather than by editing a checkbox. The ~40 historical
+  `[todo](/todo.md)` links in this log now dangle, which is fine and deliberate:
+  `tools/check-docs-links.sh` skips this file for exactly this reason, since append-only
+  history may reference docs that existed when the entry was written, and rewriting those
+  links would have rewritten the history they date-stamp. The four dangling `/todo.md`
+  links outside this log were repointed at whatever actually owns the question — issue
+  #72 for the string-decode and language-setting notes in
+  [records](/formats/records.md) and [strings](/formats/strings.md), issue #73 for the
+  plugins.txt note in [VFS](/formats/vfs.md), and the M3 milestone name in
+  [distant LOD](/engine/distant-lod.md). `ci.yml` now cites issue #70 rather than the
+  deleted file.
 * **Always-on frame HUD and the View-menu commands that go with it**: the frame and
   scene numbers were readable only while the `World` inspector was the frontmost
   destination, so a stutter noticed while flying around under `Environment` or `UI Lab`

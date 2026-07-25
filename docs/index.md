@@ -141,5 +141,5 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 * [Testing setup](/testing.md) - test targets, make entrypoints, real-data
   suites + watchdog, result reporting, machine-specific quirks.
-* [Roadmap](/todo.md) - active M8 work, dependency-ordered milestones, acceptance gates,
-  app-sidebar verification paths.
+* Roadmap - not in this wiki. Open work lives in GitHub issues and milestones, where
+  milestone `#n` is OpenSky milestone `Mn`. See AGENTS.md "Roadmap and open work".

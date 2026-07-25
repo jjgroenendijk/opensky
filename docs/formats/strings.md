@@ -46,8 +46,8 @@ Directory offsets are relative to the data block start. Entry framing:
 * Length-prefixed entries missing their trailing null are tolerated.
 * Encoding: no marker in the file, languages mix UTF-8 and legacy codepages.
   Policy: bytes valid as UTF-8 decode as UTF-8 (accidental valid UTF-8 is
-  rare), else windows-1252 — consistent with BSA/ESM string handling. See
-  open question in [roadmap](/todo.md).
+  rare), else windows-1252 — consistent with BSA/ESM string handling. The
+  engine-wide decode strategy is an open question, GitHub issue #72.
 
 Lookup wiring lives in `GameData/LocalizedStrings.swift`: resolves an
 `LString` (see [records](/formats/records.md)) against

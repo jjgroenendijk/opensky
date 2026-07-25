@@ -51,4 +51,4 @@ are the contract; this is the how).
 - `docs/formats/<name>.md` — byte layout + reference used (`docs-wiki` skill for
   OKF frontmatter shape).
 - `docs/index.md` entry + `docs/log.md` entry.
-- Item came from `docs/todo.md` -> delete it there in the same commit.
+- Item came from a roadmap issue -> close it from the PR body (`Closes #NNN`).

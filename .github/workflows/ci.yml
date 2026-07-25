@@ -4,7 +4,7 @@ name: CI
 # git hooks (.githooks/, wired by `make bootstrap`) are the only gate for
 # now. Manual dispatch kept so the workflow can verify a branch when quota
 # returns; restoring pull_request/push triggers + required status checks on
-# main re-enables CI (see docs/todo.md).
+# main re-enables CI (see GitHub issue #70).
 on:
   workflow_dispatch:
 
