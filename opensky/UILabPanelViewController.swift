@@ -5,7 +5,10 @@
 // MenuModeController), and shows live 2 Hz readouts of the last-frame
 // UIDrawStats, the menu stack, and the translation-provider counts. M8.2.5
 // adds the hosted SWFMovieSection: pick a vanilla movie, toggle the SWF layer,
-// read its tag/draw stats. Built on the shared panel framework (opensky/Shell)
+// read its tag/draw stats. M8.3.3 adds the hosted SWFRuntimeSection beside it:
+// run that movie's ActionScript, drive it with keys and pointer events, and
+// read its movie state, invoke log, and op tally. Built on the shared panel
+// framework (opensky/Shell)
 // as a direct-content panel. Talks to the engine only through the narrow
 // UILabControlProviding and SWFLabControlProviding seams.
 
@@ -52,8 +55,16 @@ final class UILabPanelViewController: InspectorPanelViewController {
     /// readout, and ticker (docs/tools/app-ui.md "Hosting a section").
     let swfSection = SWFMovieSection()
 
+    /// AS2 runtime driver (M8.3.3). A sibling section rather than more controls
+    /// in the selector: it has its own readout cadence and its own three
+    /// readouts (movie state, invoke log, op tally).
+    let swfRuntimeSection = SWFRuntimeSection()
+
     weak var swfProvider: (any SWFLabControlProviding)? {
-        didSet { swfSection.provider = swfProvider }
+        didSet {
+            swfSection.provider = swfProvider
+            swfRuntimeSection.provider = swfProvider
+        }
     }
 
     /// Current readout texts; the verification-surface tests read them directly.
@@ -87,31 +98,34 @@ final class UILabPanelViewController: InspectorPanelViewController {
             menuStatsLabel,
             PanelComponents.caption("Localized strings"),
             stringsStatsLabel,
-            hostSWFSection()
+            host(swfSection),
+            host(swfRuntimeSection)
         ]
     }
 
-    /// Adopts the SWF section as a child and wraps it in the standard
-    /// collapsible header, matching how a sectioned panel presents its groups.
-    /// The refocus indirection reads the panel's current action at call time.
-    private func hostSWFSection() -> NSView {
-        addChild(swfSection)
-        swfSection.refocusAction = { [weak self] in self?.refocusAction?() }
+    /// Adopts a section as a child and wraps it in the standard collapsible
+    /// header, matching how a sectioned panel presents its groups. The refocus
+    /// indirection reads the panel's current action at call time.
+    private func host(_ section: PanelSectionViewController) -> NSView {
+        addChild(section)
+        section.refocusAction = { [weak self] in self?.refocusAction?() }
         return CollapsibleSectionView(
-            title: swfSection.sectionTitle,
-            identifier: swfSection.sectionIdentifier,
-            content: swfSection.view
+            title: section.sectionTitle,
+            identifier: section.sectionIdentifier,
+            content: section.view
         )
     }
 
     override func startInspecting() {
         super.startInspecting()
         swfSection.startInspecting()
+        swfRuntimeSection.startInspecting()
     }
 
     override func stopInspecting() {
         super.stopInspecting()
         swfSection.stopInspecting()
+        swfRuntimeSection.stopInspecting()
     }
 
     private func configureControls() {
@@ -163,49 +177,6 @@ final class UILabPanelViewController: InspectorPanelViewController {
         refreshStringsStats()
     }
 
-    private func refreshUIStats() {
-        guard let snapshot = provider?.uiSnapshot else {
-            statsLabel.stringValue = "UI stats unavailable."
-            return
-        }
-        let stats = snapshot.stats
-        let state = snapshot.overlayEnabled ? "on" : "off"
-        statsLabel.stringValue = """
-        Overlay: \(state) · scale \(String(format: "%.2f", snapshot.scale))
-        Draw calls: \(stats.drawCalls)
-        Quads: \(stats.quads)  Glyphs: \(stats.glyphs)
-        Dropped: \(stats.dropped)
-        Atlas: \(stats.atlasWidth)x\(stats.atlasHeight)
-        """
-    }
-
-    private func refreshMenuStats() {
-        guard let snapshot = provider?.menuModeSnapshot else {
-            menuStatsLabel.stringValue = "Menu state unavailable."
-            return
-        }
-        menuStatsLabel.stringValue = """
-        Menu mode: \(snapshot.isMenuMode ? "on" : "off")  Depth: \(snapshot.stackDepth)
-        Top: \(snapshot.topMenuName ?? "none")
-        World sim: \(snapshot.isWorldSimPaused ? "paused" : "running")
-        """
-    }
-
-    private func refreshStringsStats() {
-        guard let snapshot = provider?.localizedLabelsSnapshot else {
-            stringsStatsLabel.stringValue = "Strings state unavailable."
-            return
-        }
-        let sample = snapshot.sampleShown ? "on" : "off"
-        let install = snapshot.installLoaded
-            ? "\(snapshot.installFileCount) files · \(snapshot.installKeyCount) keys"
-            : "no game data"
-        stringsStatsLabel.stringValue = """
-        Sample: \(sample) · \(snapshot.sampleKeyCount) sample keys (\(snapshot.language))
-        Install: \(install)
-        """
-    }
-
     /// Test hook: refresh the readouts without the ticker running.
     func refreshStats() {
         refreshReadout()
@@ -250,5 +221,52 @@ final class UILabPanelViewController: InspectorPanelViewController {
     @objc private func menuClearPressed() {
         provider?.clearPreviewMenus()
         finishInteraction()
+    }
+}
+
+/// Readout formatting, split out of the class body so the panel stays inside
+/// the strict-lint type-body limit as its hosted sections grow.
+extension UILabPanelViewController {
+    private func refreshUIStats() {
+        guard let snapshot = provider?.uiSnapshot else {
+            statsLabel.stringValue = "UI stats unavailable."
+            return
+        }
+        let stats = snapshot.stats
+        let state = snapshot.overlayEnabled ? "on" : "off"
+        statsLabel.stringValue = """
+        Overlay: \(state) · scale \(String(format: "%.2f", snapshot.scale))
+        Draw calls: \(stats.drawCalls)
+        Quads: \(stats.quads)  Glyphs: \(stats.glyphs)
+        Dropped: \(stats.dropped)
+        Atlas: \(stats.atlasWidth)x\(stats.atlasHeight)
+        """
+    }
+
+    private func refreshMenuStats() {
+        guard let snapshot = provider?.menuModeSnapshot else {
+            menuStatsLabel.stringValue = "Menu state unavailable."
+            return
+        }
+        menuStatsLabel.stringValue = """
+        Menu mode: \(snapshot.isMenuMode ? "on" : "off")  Depth: \(snapshot.stackDepth)
+        Top: \(snapshot.topMenuName ?? "none")
+        World sim: \(snapshot.isWorldSimPaused ? "paused" : "running")
+        """
+    }
+
+    private func refreshStringsStats() {
+        guard let snapshot = provider?.localizedLabelsSnapshot else {
+            stringsStatsLabel.stringValue = "Strings state unavailable."
+            return
+        }
+        let sample = snapshot.sampleShown ? "on" : "off"
+        let install = snapshot.installLoaded
+            ? "\(snapshot.installFileCount) files · \(snapshot.installKeyCount) keys"
+            : "no game data"
+        stringsStatsLabel.stringValue = """
+        Sample: \(sample) · \(snapshot.sampleKeyCount) sample keys (\(snapshot.language))
+        Install: \(install)
+        """
     }
 }

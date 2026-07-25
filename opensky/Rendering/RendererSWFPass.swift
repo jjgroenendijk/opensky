@@ -34,6 +34,9 @@ extension Renderer {
     /// in-flight frames drain. Main thread, between frames, like `setScene`.
     func setSWFMovie(_ scene: SWFMovieScene?) throws {
         purgeRetiredResources()
+        // A new movie invalidates any runtime driving the old one; the caller
+        // starts a fresh one with `startSWFRuntime()`.
+        swf.runtime = nil
         let old = swf.movie
         if let scene {
             swf.generation += 1

@@ -2,13 +2,15 @@
 // PlaceObject3 (70), RemoveObject (5), RemoveObject2 (28), and
 // SetBackgroundColor (9). PlaceObject3's filter list and blend mode are
 // decoded as framing only (counted + retained minimally, not rendered — the
-// deferral is documented in docs/formats/swf.md); ClipActions are recorded as
-// present and skipped, since OpenSky executes no ActionScript at this stage.
+// deferral is documented in docs/formats/swf.md). ClipActions are framed and
+// their action streams parsed as of milestone 8.3.1 (see `SWFClipActions`);
+// OpenSky still executes no ActionScript.
 //
 // Reference: Adobe SWF File Format Specification, version 19, chapter 3 "The
-// display list" — PlaceObject (p. 33), PlaceObject2 (pp. 33-35), PlaceObject3
-// (pp. 35-38), RemoveObject/RemoveObject2 (p. 38), SetBackgroundColor (p. 39),
-// and chapter 8 "Filters" for the FILTERLIST framing (pp. 143-151).
+// display list" — PlaceObject (p. 34), PlaceObject2 (pp. 35-37), the CLIPACTIONS
+// tables (pp. 36-37), PlaceObject3 (pp. 38-41), the filter records (pp. 42-47),
+// ClipEventFlags (pp. 48-49), RemoveObject/RemoveObject2 (p. 50), and chapter 4
+// "Control tags" SetBackgroundColor (p. 52).
 
 import Foundation
 
@@ -38,8 +40,13 @@ nonisolated struct SWFPlacement: Equatable {
     var blendMode: UInt8?
     /// PlaceObject3 SurfaceFilterList entry count, recorded + ignored.
     var filterCount = 0
-    /// PlaceObject2/3 ClipActions present (skipped — no ActionScript).
+    /// PlaceObject2/3 `PlaceFlagHasClipActions`.
     var hasClipActions = false
+    /// The decoded CLIPACTIONS block, non-nil whenever `hasClipActions` is set.
+    /// A block that could not be framed still lands here, carrying whatever
+    /// handlers were read plus its warnings, so a malformed handler list never
+    /// costs the tag its placement.
+    var clipActions: SWFClipActions?
 }
 
 /// One RemoveObject/RemoveObject2 tag. RemoveObject also names the character
@@ -59,12 +66,15 @@ nonisolated enum SWFDisplayListParser {
     static let showFrameCode: UInt16 = 1
     static let defineSpriteCode: UInt16 = 39
 
-    /// Decodes any of the three PlaceObject tag versions.
-    static func parsePlacement(tag: SWFTag) throws -> SWFPlacement {
+    /// Decodes any of the three PlaceObject tag versions. `version` is the
+    /// movie's SWF version, which sets the CLIPEVENTFLAGS width; it defaults to
+    /// 6 because every vanilla Interface movie is SWF 8 or later, so the wide
+    /// form is the norm.
+    static func parsePlacement(tag: SWFTag, version: UInt8 = 6) throws -> SWFPlacement {
         switch tag.code {
         case placeObjectCode: try parsePlaceObject(tag.body)
-        case placeObject2Code: try parsePlaceObject2(tag.body)
-        case placeObject3Code: try parsePlaceObject3(tag.body)
+        case placeObject2Code: try parsePlaceObject2(tag.body, version: version)
+        case placeObject3Code: try parsePlaceObject3(tag.body, version: version)
         default: throw SWFDisplayListError.unsupportedTag(tag.code)
         }
     }
@@ -110,14 +120,17 @@ nonisolated enum SWFDisplayListParser {
 
     /// PlaceObject2 (26) flag byte, MSB -> LSB: HasClipActions, HasClipDepth,
     /// HasName, HasRatio, HasColorTransform, HasMatrix, HasCharacter, Move.
-    private static func parsePlaceObject2(_ body: Data) throws -> SWFPlacement {
+    private static func parsePlaceObject2(
+        _ body: Data,
+        version: UInt8
+    ) throws -> SWFPlacement {
         var bits = SWFBitReader(body)
         let flags = try bits.readAlignedUInt8()
         var placement = SWFPlacement()
         placement.isMove = flags & 0x01 != 0
         placement.depth = try bits.readAlignedUInt16()
         try parseCommonFields(&bits, flags: flags, into: &placement)
-        placement.hasClipActions = flags & 0x80 != 0
+        readClipActions(&bits, flags: flags, version: version, into: &placement)
         return placement
     }
 
@@ -126,7 +139,10 @@ nonisolated enum SWFDisplayListParser {
     /// HasClassName, HasCacheAsBitmap, HasBlendMode, HasFilterList), with the
     /// class name inserted before the character id and the filter/blend/cache/
     /// visibility fields after the clip depth.
-    private static func parsePlaceObject3(_ body: Data) throws -> SWFPlacement {
+    private static func parsePlaceObject3(
+        _ body: Data,
+        version: UInt8
+    ) throws -> SWFPlacement {
         var bits = SWFBitReader(body)
         let flags = try bits.readAlignedUInt8()
         let flags2 = try bits.readAlignedUInt8()
@@ -154,8 +170,24 @@ nonisolated enum SWFDisplayListParser {
         if flags2 & 0x40 != 0 {
             _ = try SWFShapeParser.parseColor(&bits, hasAlpha: true) // BackgroundColor
         }
-        placement.hasClipActions = flags & 0x80 != 0
+        readClipActions(&bits, flags: flags, version: version, into: &placement)
         return placement
+    }
+
+    /// CLIPACTIONS closes both PlaceObject2 and PlaceObject3 when
+    /// `PlaceFlagHasClipActions` (0x80) is set. Parsing never throws, so a
+    /// malformed handler list costs the block, not the placement.
+    private static func readClipActions(
+        _ bits: inout SWFBitReader,
+        flags: UInt8,
+        version: UInt8,
+        into placement: inout SWFPlacement
+    ) {
+        guard flags & 0x80 != 0 else {
+            return
+        }
+        placement.hasClipActions = true
+        placement.clipActions = SWFClipActionsParser.parse(&bits, version: version)
     }
 
     /// The field run shared by PlaceObject2 and PlaceObject3: CharacterId,

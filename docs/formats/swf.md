@@ -2,7 +2,8 @@
 type: File Format
 title: SWF container (FWS/CWS)
 description: On-disk layout of SWF UI files - container framing, shape tags with
-  tessellation, bitmap/font/text tags, and the display-list control tags.
+  tessellation, bitmap/font/text tags, the display-list control tags, and the
+  ActionScript 1/2 action records (framed and named, not executed).
 tags: [format, swf, ui, scaleform]
 timestamp: 2026-07-24T00:00:00Z
 ---
@@ -17,7 +18,10 @@ Milestone 8.2.3 adds the font tags (glyph extraction) and the static-text tags,
 plus the Scaleform `fontconfig.txt` alias mapping. Milestone 8.2.4 adds the
 display-list control tags, sprite timelines, and asset imports — everything the
 renderer needs to draw a movie's first frame
-([screen-space UI layer](/rendering/ui.md)).
+([screen-space UI layer](/rendering/ui.md)). Milestone 8.3.1 adds the action
+side: full timelines instead of frame 1 alone, DoAction/DoInitAction bytecode
+framed and named, and PlaceObject2/3 CLIPACTIONS event handlers decoded. Nothing
+in that bytecode is executed yet — 8.3.2 builds the interpreter on top.
 
 Reference: Adobe SWF File Format Specification, version 19 (public Adobe
 document). Impl: `opensky/Formats/SWF/`. All byte-aligned integers are
@@ -53,7 +57,9 @@ Parsed from the (decompressed) body, in order:
    MSB-first: `Nbits = UB[5]`, then `Xmin`, `Xmax`, `Ymin`, `Ymax`, each a
    signed `SB[Nbits]`. The stream byte-aligns after the RECT.
 2. FrameRate — `UI16` little-endian read as 8.8 fixed point: the frame rate is
-   the stored value divided by 256.
+   the stored value divided by 256. Retained on `SWFMovie` since milestone 8.3.2
+   phase 3, because the AS2 timer natives convert a millisecond interval into
+   ticks with it (see [AS2 runtime](/engine/as2-runtime.md)).
 3. FrameCount — `UI16` little-endian, number of frames in the main timeline.
 
 The bit-packed reads go through `SWFBitReader` (`readUB` / `readSB`), the only
@@ -334,9 +340,12 @@ decode), `SWFMovie.swift` (dictionary + frame-1 list), `SWFScene.swift`
 (the affine and color algebra).
 
 A movie's visible content is a depth-keyed list of placed characters. Control
-tags mutate that list; `ShowFrame` (1) publishes it. OpenSky builds the list up
-to the **first** `ShowFrame` — frame 1 — and freezes it there; later frames are
-timeline work (8.3.x). Later define tags still enter the dictionary.
+tags mutate that list; `ShowFrame` (1) publishes it. `SWFMovie.frame1` builds the
+list up to the **first** `ShowFrame` and freezes it there, which is the static
+render path; later define tags still enter the dictionary. Every later frame is
+retained on `SWFTimeline` and stepped by the
+[AS2 runtime](/engine/as2-runtime.md), which applies the same
+place/modify/replace/remove semantics to a mutable tree.
 
 | tag | name              | body                                                     |
 | --- | ----------------- | -------------------------------------------------------- |
@@ -400,12 +409,229 @@ transform into every child (recursion bounded at 16 levels defensively; vanilla
 nesting is shallow).
 
 Parsed and deliberately not rendered, each counted so the deferral stays
-measured: PlaceObject3 `SurfaceFilterList` (framed per spec chapter 8, pp.
-143-151 — each `FilterID` selects a fixed body size, except GradientGlow/
-GradientBevel whose size depends on `NumColors` and Convolution whose size
-depends on the matrix dimensions), `BlendMode`, and `ClipActions` (OpenSky runs
-no ActionScript yet). `Ratio` is decoded and retained; morph shapes are not
-implemented.
+measured: PlaceObject3 `SurfaceFilterList` (framed per the filter records in
+spec chapter 3, pp. 42-47 — each `FilterID` selects a fixed body size, except
+GradientGlow/GradientBevel whose size depends on `NumColors` and Convolution
+whose size depends on the matrix dimensions) and `BlendMode`. `Ratio` is decoded
+and retained; morph shapes are not implemented. `ClipActions` is no longer
+skipped — see the next section.
+
+Milestone 8.3.1 stopped discarding the frames after the first. Every timeline —
+the main one and each sprite's — keeps an `SWFTimeline`: a `frames` array where
+each `SWFTimelineFrame` holds its `steps` (`.place`/`.remove` in tag order) and
+its `actions`. `SWFMovie.frame1` and `SWFSprite.frame1` are now computed from
+`timeline.frame1`, which is still resolved from the tags up to and including the
+first `ShowFrame`, so every display-list counter and every rendered frame is
+unchanged. The later frames exist for the timeline runtime (8.3.x) and are not
+executed today.
+
+## Action tags — DoAction (12), DoInitAction (59)
+
+Reference: spec chapter 5 "Actions" — "DoAction" and "ACTIONRECORD" (p. 63),
+"DoInitAction" (p. 108), and the per-action field tables in the SWF 3 action
+model (pp. 64-66), SWF 4 action model (pp. 68-88), SWF 5 action model
+(pp. 89-107), SWF 6 action model (pp. 108-110), and SWF 7 action model
+(pp. 111-116). Impl: `opensky/Formats/SWF/SWFActionParser.swift` (framing),
+`SWFActionOperands.swift` (typed operands), `SWFAction.swift` (model types),
+`SWFActionName.swift` (opcode table), `SWFTimeline.swift` (which frame a block
+belongs to), `SWFMovieDecoder.swift` (tag routing).
+
+Milestone 8.3.1 frames and names ActionScript 1/2 bytecode. **Nothing is
+executed**; this is the inventory the 8.3.2 interpreter is built on.
+
+| tag | name         | body                                                     |
+| --- | ------------ | -------------------------------------------------------- |
+| 12  | DoAction     | ACTIONRECORD stream, `ActionEndFlag` terminated          |
+| 59  | DoInitAction | `Sprite ID` UI16, then the same stream                   |
+
+DoAction's actions run when the enclosing frame's `ShowFrame` is reached,
+wherever in the frame the tag sits, so OpenSky attaches each block to the frame
+being accumulated (`SWFTimelineFrame.actions`). DoInitAction's actions run once,
+before the named sprite is first instantiated; they are collected in tag order
+into `SWFMovie.initActions` as `SWFDoInitAction(spriteId:actions:)`.
+
+### ACTIONRECORD framing
+
+| field      | type                 | notes                                     |
+| ---------- | -------------------- | ----------------------------------------- |
+| ActionCode | UI8                  | 0 is `ActionEndFlag` and ends the stream  |
+| Length     | UI16 if code >= 0x80 | operand byte count, header excluded       |
+| operands   | UI8[Length]          | absent when the code is below 0x80        |
+
+Records are addressed by byte offset, because that is what `ActionJump` (0x99)
+and `ActionIf` (0x9D) branch to and what an `ActionDefineFunction` body is sized
+in. `SWFActionRecord` therefore carries `offset` (its own `ActionCode` byte) and
+`endOffset` (one past the record); a `BranchOffset` of 0 points at `endOffset`.
+`SWFActionBlock.record(atOffset:)` resolves a target by binary search over the
+ascending offsets and returns nil for a branch into the middle of a record, and
+`records(from:byteCount:)` returns the records of a nested body.
+
+A missing trailing `ActionEndFlag` is not an error, and bytes after one are
+ignored. Anything worse degrades instead of throwing, and is counted:
+
+| warning                | cause                                                |
+| ---------------------- | ---------------------------------------------------- |
+| `truncatedRecord`      | header or operand payload past the end; stream stops |
+| `malformedOperands`    | typed decode failed; raw bytes kept, framing resumes |
+| `bodySizeOutOfBounds`  | `codeSize`/`Size`/Try sizes past the end; stream stops |
+| `malformedClipActions` | CLIPACTIONS framing failed at this tag-body offset   |
+
+### Opcode table
+
+`SWFActionName` names all 100 codes the specification defines (99 actions plus
+code 0). The spec prints code 0x08 as `ActionToggleQualty`; that is a
+typographic error in the document and the table uses `ActionToggleQuality`.
+Scaleform GFx executes the same bytecode — its extensions are host objects
+reached through `ActionGetMember`/`ActionCallMethod`, not new opcodes — so an
+unknown code means a malformed stream, not a GFx feature.
+
+Seventeen opcodes get typed operands; the rest are framed with their bytes
+retained and report `SWFActionOperands.none`.
+
+| code | action                  | operands                                          |
+| ---- | ----------------------- | ------------------------------------------------- |
+| 0x81 | ActionGotoFrame         | `Frame` UI16                                      |
+| 0x83 | ActionGetURL            | `UrlString` STRING, `TargetString` STRING         |
+| 0x87 | ActionStoreRegister     | `RegisterNumber` UI8                              |
+| 0x88 | ActionConstantPool      | `Count` UI16, `ConstantPool` STRING[Count]        |
+| 0x8A | ActionWaitForFrame      | `Frame` UI16, `SkipCount` UI8                     |
+| 0x8B | ActionSetTarget         | `TargetName` STRING                               |
+| 0x8C | ActionGoToLabel         | `Label` STRING                                    |
+| 0x8D | ActionWaitForFrame2     | `SkipCount` UI8                                   |
+| 0x8E | ActionDefineFunction2   | see below                                         |
+| 0x8F | ActionTry               | see below                                         |
+| 0x94 | ActionWith              | `Size` UI16 (body length that follows)            |
+| 0x96 | ActionPush              | repeated `Type` UI8 + value, filling the payload  |
+| 0x99 | ActionJump              | `BranchOffset` SI16                               |
+| 0x9A | ActionGetURL2           | `SendVarsMethod` UB[2], UB[4], target, variables  |
+| 0x9B | ActionDefineFunction    | name, `NumParams` UI16, names, `codeSize` UI16    |
+| 0x9D | ActionIf                | `BranchOffset` SI16                               |
+| 0x9F | ActionGotoFrame2        | UB[6], `SceneBiasFlag`, `Play`, opt. `SceneBias`  |
+
+`ActionPush` value types (spec p. 69); types 2 through 9 exist from SWF 5:
+
+| type | value                                    |
+| ---- | ---------------------------------------- |
+| 0    | STRING (null-terminated)                 |
+| 1    | FLOAT, 32-bit IEEE little-endian         |
+| 2    | null                                     |
+| 3    | undefined                                |
+| 4    | register number UI8                      |
+| 5    | Boolean UI8                              |
+| 6    | DOUBLE, 64-bit IEEE (see the callout)    |
+| 7    | 32-bit integer, read signed              |
+| 8    | constant-pool index UI8                  |
+| 9    | constant-pool index UI16                 |
+
+**Observed vs. specified — the DOUBLE word order.** The spec calls the type-6
+value a "64-bit IEEE double-precision little-endian double value", which reads
+as a plain little-endian UI64. It is not: Flash authoring writes the two 32-bit
+halves with the high-order word first. Measured over the vanilla Interface
+movies (16,607 pushed doubles), the swapped reading yields ordinary constants —
+`0.5`, `0.55`, `147.3`, `4294967295` — while the literal reading yields
+denormals such as `1.06e-314` and magnitudes such as `-8.99e+307`.
+`SWFActionOperandDecoder.readDouble` reassembles from two UI32 reads.
+
+`ActionDefineFunction` (p. 92) is `FunctionName` STRING, `NumParams` UI16, that
+many parameter-name STRINGs, then `codeSize` UI16. `ActionDefineFunction2`
+(p. 111) inserts `RegisterCount` UI8 and a 16-bit preload/suppress flag word
+after `NumParams`, and replaces the parameter names with REGISTERPARAM records
+(`Register` UI8 + `ParamName` STRING). Both bodies are *not* nested inside the
+record: the next `codeSize` bytes of the same stream are the body, which is why
+`SWFActionBlock.records(from:byteCount:)` exists. `ActionWith` and `ActionTry`
+size their bodies the same way; `ActionTry` (p. 115) is a flag byte (reserved
+UB[5], `CatchInRegisterFlag`, `FinallyBlockFlag`, `CatchBlockFlag`), then
+`TrySize`, `CatchSize`, and `FinallySize` UI16 — all three always present — then
+`CatchName` STRING or `CatchRegister` UI8.
+
+STRINGs decode UTF-8 with a CP1252 fallback, the same convention the display
+list and edit-text parsers use.
+
+## CLIPACTIONS
+
+Reference: spec chapter 3 "The display list" — the CLIPACTIONS and
+CLIPACTIONRECORD tables under "PlaceObject2" (pp. 36-37) and "ClipEventFlags"
+(pp. 48-49). Impl: `opensky/Formats/SWF/SWFClipActions.swift`, attached to a
+placement by `SWFDisplayList.swift`.
+
+`PlaceFlagHasClipActions` (0x80 of the first flag byte) closes a PlaceObject2 or
+PlaceObject3 body with the sprite's event handlers — `onPress`, `onEnterFrame`,
+and the rest. Before 8.3.1 the parser recorded the flag and stopped reading; it
+now frames the block and parses each handler's action stream into
+`SWFPlacement.clipActions`.
+
+| field             | type                             | notes                    |
+| ----------------- | -------------------------------- | ------------------------ |
+| Reserved          | UI16                             | must be 0                |
+| AllEventFlags     | CLIPEVENTFLAGS                   | declared union of events |
+| ClipActionRecords | CLIPACTIONRECORD[]               | one per handler          |
+| ClipActionEndFlag | UI16 (SWF <= 5) or UI32 (SWF 6+) | all-zero terminator      |
+
+Each CLIPACTIONRECORD is `EventFlags` CLIPEVENTFLAGS, `ActionRecordSize` UI32,
+a `KeyCode` UI8 present only when `EventFlags` contains `ClipEventKeyPress`, and
+then the ACTIONRECORD stream. `ActionRecordSize` is measured from the end of
+that field to the next record, so the `KeyCode` byte counts against it: the
+action stream is `ActionRecordSize - 1` bytes for a `keyPress` handler.
+
+CLIPEVENTFLAGS is 2 bytes through SWF 5 and 4 bytes from SWF 6. The spec lists
+it as a run of UB[1] fields; read as a little-endian word the bit values are
+`ClipEventLoad` 0, `EnterFrame` 1, `Unload` 2, `MouseMove` 3, `MouseDown` 4,
+`MouseUp` 5, `KeyDown` 6, `KeyUp` 7, `Data` 8, `Initialize` 9, `Press` 10,
+`Release` 11, `ReleaseOutside` 12, `RollOver` 13, `RollOut` 14, `DragOver` 15,
+`DragOut` 16, `KeyPress` 17, `Construct` 18. The narrow form is the low half of
+the wide one, so `SWFClipEventFlags` stores one `UInt32` for both and the
+movie's SWF version picks the read width. `AllEventFlags` is kept as written
+rather than recomputed from the handlers, so a movie that disagrees with itself
+stays inspectable.
+
+Parsing never throws out of a place tag: a malformed CLIPACTIONS block yields
+whatever handlers were framed plus a `malformedClipActions` warning, and the
+placement is still applied. `SWFMovieTally.clipActions` still counts frame-1
+placements carrying the flag, exactly as before (122 install-wide, unchanged).
+
+## FrameLabel (43)
+
+Reference: spec chapter 3 "The display list" — the "FrameLabel" control tag.
+Impl: `opensky/Formats/SWF/SWFFrameLabel.swift`, attached to a frame by
+`SWFTimeline.swift`.
+
+| field       | type   | notes                                                  |
+| ----------- | ------ | ------------------------------------------------------ |
+| Name        | STRING | the label, null-terminated                             |
+| NamedAnchor | UI8    | optional; present only when a byte remains in the body |
+
+The named-anchor byte is optional in the sense that the tag length decides
+whether it is there, which is how a SWF 5 and a SWF 6 movie both frame. A label
+names the frame it appears in, so the decoder holds it until that frame's
+`ShowFrame` closes and stores it on `SWFTimelineFrame.label`. Main timelines and
+sprites both carry labels; `SWFTimeline.frameIndex(forLabel:)` resolves one,
+matching exactly first and case-insensitively second, because ActionScript path
+and label matching is case-insensitive below SWF 7 and authors mix casing.
+
+Decoding this tag is what gives `gotoAndStop("label")` and `ActionGoToLabel`
+(0x8C, 80 records in 4 movies) a target table. A malformed label costs the name,
+never the frame.
+
+## ExportAssets (56)
+
+Reference: spec chapter 14 "Sharing fonts and other assets" — "ExportAssets",
+the tag immediately preceding ImportAssets. Impl:
+`opensky/Formats/SWF/SWFExportAssets.swift`.
+
+Body: `Count` UI16, then `Count` pairs of `CharacterId` UI16 + `Name` STRING —
+ImportAssets' body without the leading URL.
+
+This is the **linkage table**, and it is what makes a registered class
+instantiable. `Object.registerClass(linkageName, constructor)` binds a class to
+a *name*, and only this tag says which character id that name belongs to;
+without it a movie's own classes can never reach the display list.
+`SWFMovie.exportedNames` holds name -> id and `SWFMovie.exportedIds` holds the
+reverse (duplicate exports of one id keep the alphabetically first name, so the
+map is deterministic). `MovieClip.attachMovie` looks up the same table.
+
+A malformed export table costs the linkage and not the movie: the affected
+classes simply never instantiate. That is deliberately laxer than
+ImportAssets, whose failure loses a font the renderer needs.
 
 ## ImportAssets / ImportAssets2
 
@@ -430,12 +656,16 @@ same path a zero-glyph placeholder font takes.
 * `ZWS` (LZMA) body decompression.
 * Stroke tessellation for line styles (decoded, not meshed — see above).
 * HTML/rich text layout in DefineEditText (raw markup retained, plain-text
-  stripped) and dynamic text bound to a variable name (8.3.x).
-* Frames past the first: the display list freezes at the first `ShowFrame`, so
-  timeline playback, `Ratio` morph shapes, and button states wait for 8.3.x.
-* PlaceObject3 filters and blend modes (framed, counted, not applied) and
-  `ClipActions` (recorded, never executed — no ActionScript yet).
-* ActionScript and GFx extension tags (8.3.x).
+  stripped). Runtime text — `field.text`, `SetText`, and the `VariableName`
+  binding — is implemented by the [AS2 runtime](/engine/as2-runtime.md).
+* `Ratio` morph shapes and button states. Frame stepping itself is implemented
+  (the AS2 runtime steps a mutable display list); these two are not.
+* PlaceObject3 filters and blend modes (framed, counted, not applied).
+* Nothing further on CLIPACTIONS: the handlers are framed here and **dispatched**
+  by the [AS2 runtime](/engine/as2-runtime.md) since milestone 8.3.2 phase 3.
+  `construct` is the only clip event vanilla uses meaningfully (122 handlers in
+  24 movies).
+* DoABC (82) / ActionScript 3 and GFx extension tags.
 
 ## Verification
 
@@ -475,6 +705,39 @@ command ranges with interleaving, tallies); `SWFTextLayoutTests.swift` (record
 state inheritance, kerning, wrap, alignment, missing glyphs); and
 `SWFImportAssetsTests.swift` (both import tags, imported-font resolution).
 
+Milestone 8.3.1 tests: `openskyTests/SWFActionTests.swift` (short and long record
+framing with exact offsets, the opcode table, `ActionEndFlag` termination with
+trailing bytes, a missing terminator, every `ActionPush` value type, the constant
+pool, forward and backward branch offsets, offset seeking including a branch into
+the middle of a record, `ActionDefineFunction`/`ActionDefineFunction2` body
+framing, `ActionTry`, the remaining typed operands, unknown and undecoded opcodes
+retained as raw bytes, and the three degradation paths — truncated payload,
+nested body size past the end, malformed operands) and
+`SWFActionMovieTests.swift` (DoAction landing on its frame, DoInitAction keyed by
+sprite id, a sprite keeping its later frames and actions, CLIPACTIONS with
+multiple handlers, a `keyPress` handler's `KeyCode`, the narrow SWF 5 flag word,
+a malformed CLIPACTIONS block that keeps its placement, the action tally, and
+frame 1 being untouched by any of it), over
+`openskyTests/SWFActionFixture.swift`.
+
+Milestone 8.3.2 tests: `openskyTests/SWFLinkageTests.swift` covers both tags
+added here — FrameLabel with and without its named-anchor byte, labels attached
+to the right frame on a main timeline and inside a sprite, exact-then-folded
+label matching, ExportAssets records, the name -> id and id -> name maps
+including the duplicate-id tie-break, and a truncated export table that loses
+the linkage without losing the movie. The runtime that consumes them is tested
+in `SWFMovieRuntimeTests`, `SWFRuntimePropertyTests`, and
+`SWFRuntimeNativesTests` — see [AS2 runtime](/engine/as2-runtime.md).
+
+`openskycli swf action-sweep` (milestone 8.3.1 stage 2) is the committed,
+reproducible version of that inventory: `SWFActionInventory`
+(`opensky/Formats/SWF/SWFActionInventory.swift`) walks every action block
+`SWFMovie.actionBlocks` exposes plus every CLIPACTIONS handler, tallying opcode
+frequency, unknown opcodes, a structurally-resolved host/GFx API name surface,
+clip-event usage, and function/structure stats; `openskycli/SWFActionSweep.swift`
+only parses `--movie`/`--limit` and prints. Per-movie numbers are also visible
+in the app at `Developer > UI Lab > SWF movie`.
+
 `openskycli swf sweep` ([CLI dev tool](/tools/cli.md)) is the milestone 8.2.1 +
 8.2.2 + 8.2.3 + 8.2.4 gate: every archive/loose path under `interface\` ending
 `.swf` parsed through `SWFFile` with a known/unknown tag-code tally, every shape
@@ -484,7 +747,9 @@ DefineFont2/3 and DefineText/2/EditText tag decoded (glyphs also converted to
 with its edit texts laid out, and a fontconfig alias-resolution report; any
 shape/bitmap/font/text/display-list decode failure fails the sweep.
 `openskycli swf render-sweep` is the GPU half: every movie is assigned to the
-production renderer and its frame 1 rendered offscreen.
+production renderer and its frame 1 rendered offscreen. `openskycli
+swf action-sweep` is the AS2 inventory: see the results below and
+[CLI dev tool](/tools/cli.md).
 
 ## Vanilla sweep results
 
@@ -555,6 +820,42 @@ fresh renderer for honest numbers. Full output: `logs/swf-render-sweep.log`,
 optional frame captures under `logs/swf-frames/` — both gitignored, never
 committed (AGENTS.md Legal & IP: a rendered vanilla movie embeds game art).
 
+AS2 action inventory (`openskycli swf action-sweep`, milestone 8.3.1 stage 2):
+53 movies, 0 failed, 3,414 action blocks (2,163 DoAction, 1,127 DoInitAction,
+124 ClipActions), 533,562 ACTIONRECORDs, 56 distinct opcodes, **0 unknown
+opcodes**. The five most-used opcodes are `ActionPush` (191,644), `ActionGetMember`
+(83,487), `ActionPop` (37,127), `ActionSetMember` (30,757), and `ActionNot`
+(28,569); every one of the 56 observed codes is in the Adobe action table.
+1,323 `ActionDefineFunction` and 10,575 `ActionDefineFunction2` records appear
+(max 23 registers used), 936 `ActionConstantPool` records (max pool size 404),
+and zero `ActionWith`/`ActionTry` — vanilla menus never use the `with` block or
+try/catch. The largest single action block is 32,240 bytes / 5,886 records.
+
+The structurally-resolved host/GFx API surface (the name immediately preceding
+`ActionGetMember`/`ActionSetMember`/`ActionCallMethod`/`ActionCallFunction`/
+`ActionGetVariable`/`ActionSetVariable`/`ActionNewMethod`/`ActionDefineLocal`,
+constant-pool references resolved) finds 3,382 distinct names. The ten most
+common: `gfx` (8,094 occurrences across 41 movies), `_global` (3,526/42),
+`Shared` (2,316/41), `prototype` (1,987/41), `ui` (1,935/41), `NavigationCode`
+(1,669/34), `io` (1,596/38), `addProperty` (1,535/34), `GameDelegate`
+(1,520/38), and `length` (1,513/41) — the `gfx.*` namespace (Scaleform's own
+component library: `gfx.controls.Button`, `EventDispatcher`, `Constraints`,
+and similar) dominates over game-specific names, confirming vanilla menus are
+built on the stock GFx component framework rather than bespoke AS2.
+
+CLIPACTIONS handler events: 124 handlers total, but only three carry a
+non-`construct` event across the whole install — one `load` and one
+`enterFrame` handler, both on `statsmenu.swf` — plus 122 `construct` handlers
+(Scaleform's component-construction event, used by 24 movies). None of the
+pointer/keyboard events (`press`, `release`, `rollOver`, `keyPress`, ...)
+appear on a PlaceObject2/3 CLIPACTIONS block anywhere in vanilla — button-level
+interactivity is driven by `ActionCallMethod`/`addEventListener` inside DoAction
+bodies, not by clip-level event handlers. Ranked by action-record volume,
+`quest_journal.swf` (33,692 records / 250 blocks) is the largest single AS2
+consumer, followed by `modmanager.swf` (29,383/62) and `inventorymenu.swf`
+(24,754/68); the reproduction command and full opcode/host-API tables are the
+probe log, `logs/swf-action-sweep.log` (gitignored — AGENTS.md Legal & IP).
+
 ## Static-render acceptance (milestone 8.2.5)
 
 The M8.2 acceptance renders frame 1 of selected vanilla menus, offscreen and
@@ -605,4 +906,6 @@ What M8.3 (AS2 runtime subset) inherits: every menu whose frame 1 is blank is
 blank because ActionScript has not run, not because decoding failed. The draws
 are encoded and the geometry is correct; only the CXFORM alpha (and, for some
 movies, a later frame) is missing. `book.swf` and `loadingmenu.swf` are the
-clearest single-movie tests for that milestone.
+clearest single-movie tests for that milestone. Milestone 8.3.1 closed the
+reachability half of that gap: the bytecode, the later frames, and the event
+handlers are all decoded and addressable now, so 8.3.2 only has to execute them.

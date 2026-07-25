@@ -82,15 +82,20 @@ nonisolated enum SWFTextLayout {
         return SWFTextLayoutResult(runs: runs, missingGlyphs: 0)
     }
 
-    /// Lays out an edit text's plain initial content with the resolved font.
-    /// Lines split on newlines; word wrap applies when the field is flagged
-    /// WordWrap; alignment comes from the layout block (0 left, 1 right,
-    /// 2 center; justify falls back to left).
+    /// Lays out an edit text's content with the resolved font. `content`
+    /// overrides the character's `InitialText`, which is how a field written by
+    /// ActionScript (`field.text = "..."`) or bound to a variable re-lays out
+    /// without a second `SWFEditText` being fabricated; nil keeps the authored
+    /// text. Lines split on newlines; word wrap applies when the field is
+    /// flagged WordWrap; alignment comes from the layout block (0 left, 1
+    /// right, 2 center; justify falls back to left).
     static func editText(
         _ text: SWFEditText,
-        font: SWFFontDefinition
+        font: SWFFontDefinition,
+        content override: String? = nil
     ) -> SWFTextLayoutResult {
-        guard let content = text.plainText, !content.isEmpty, !font.glyphs.isEmpty else {
+        let content = override ?? text.plainText
+        guard let content, !content.isEmpty, !font.glyphs.isEmpty else {
             return SWFTextLayoutResult(runs: [], missingGlyphs: 0)
         }
         let metrics = FontScaledMetrics(

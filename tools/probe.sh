@@ -100,6 +100,16 @@ run "swf render-sweep (vanilla frame-1 display lists)" swf render-sweep --size 4
 grep 'swf render-sweep:' "$log" | tail -1 | grep -q ' 0 failed' \
   || fail "swf render-sweep reported movies that did not render"
 
+# M8.3.1 SWF action-inventory gate: every movie's action side (DoAction,
+# DoInitAction, CLIPACTIONS) decodes with zero unexpected failures and zero
+# opcodes outside the Adobe action table. Vanilla install: 53 movies, ~3,414
+# action blocks, ~533,562 action records, ~56 distinct opcodes, 0 unknown.
+run "swf action-sweep (vanilla AS2 inventory)" swf action-sweep
+grep 'swf action-sweep:' "$log" | tail -1 | grep -q ' 0 failed' \
+  || fail "swf action-sweep reported movies that did not decode"
+grep 'swf action-sweep unknown:' "$log" | tail -1 | grep -q '^\[INFO\] swf action-sweep unknown: 0 ' \
+  || fail "swf action-sweep reported unknown AS2 opcodes"
+
 # M5.1/5.2 actor gate: every discovered ACHR around the first-render cell
 # must resolve its template chain AND its visuals (skeleton, skin/outfit
 # parts, FaceGen) — the summary line reports "N failed".

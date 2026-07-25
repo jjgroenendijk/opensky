@@ -25,6 +25,11 @@ nonisolated struct SWFSceneItem: Equatable {
     let content: Content
     let transform: SWFTransform
     let colorTransform: SWFColorTransform
+    /// Runtime text for an `editText` item, overriding the character's
+    /// `InitialText`. nil means "draw the character as authored", which is what
+    /// the static path always produces. Declared last so the memberwise
+    /// initializer of the static path keeps its three-argument spelling.
+    var textOverride: String?
 }
 
 /// Ordered render commands for one frame. Masks carry the geometry items the

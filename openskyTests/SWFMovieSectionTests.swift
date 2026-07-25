@@ -9,30 +9,6 @@ import AppKit
 @testable import opensky
 import Testing
 
-@MainActor
-private final class FakeSWFLabProvider: SWFLabControlProviding {
-    var swfMoviePaths: [String] = []
-    var swfLayerEnabled = true
-    var selections: [String?] = []
-    var snapshot = SWFLabControlSnapshot(
-        selectedPath: nil,
-        layerEnabled: true,
-        loadError: nil,
-        tally: nil,
-        unresolvedFontNames: [],
-        drawStats: SWFDrawStats(),
-        installLoaded: false
-    )
-
-    func selectSWFMovie(path: String?) {
-        selections.append(path)
-    }
-
-    var swfLabSnapshot: SWFLabControlSnapshot {
-        snapshot
-    }
-}
-
 struct SWFMovieSectionTests {
     @MainActor
     private static func makeSection(
@@ -125,7 +101,8 @@ struct SWFMovieSectionTests {
             tally: nil,
             unresolvedFontNames: [],
             drawStats: SWFDrawStats(),
-            installLoaded: true
+            installLoaded: true,
+            runtime: nil
         )
         section.syncControls()
         #expect(section.movieControl.titleOfSelectedItem == "hudmenu.swf")
@@ -140,6 +117,9 @@ struct SWFMovieSectionTests {
         tally.sprites = 7
         tally.clipLayers = 3
         tally.clipActions = 9
+        tally.actionBlocks = 17
+        tally.actionRecords = 940
+        tally.unknownActionOpcodes = 0
         provider.snapshot = SWFLabControlSnapshot(
             selectedPath: "interface\\hudmenu.swf",
             layerEnabled: true,
@@ -149,13 +129,15 @@ struct SWFMovieSectionTests {
             drawStats: SWFDrawStats(
                 drawCalls: 185, triangles: 4321, glyphs: 24, maskDraws: 24, skippedItems: 2
             ),
-            installLoaded: true
+            installLoaded: true,
+            runtime: nil
         )
         section.refreshReadout()
 
         let readout = section.statsReadout
         for token in [
             "hudmenu.swf", "layer on", "12", "5", "7", "3", "9",
+            "17 blocks", "940 records", "unknown 0", "undecoded 0", "warnings 0",
             "185", "4321", "24", "skipped 2", "$MissingFont"
         ] {
             #expect(readout.contains(token), "missing \(token) in: \(readout)")
@@ -172,7 +154,8 @@ struct SWFMovieSectionTests {
             tally: nil,
             unresolvedFontNames: [],
             drawStats: SWFDrawStats(),
-            installLoaded: true
+            installLoaded: true,
+            runtime: nil
         )
         section.refreshReadout()
         let readout = section.statsReadout

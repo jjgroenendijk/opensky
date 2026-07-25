@@ -76,11 +76,13 @@ stats and readouts stay on top). Tag decode and the frame-1 semantics live in
 - Movie package (`Rendering/RendererSWFMovie.swift`, `SWFMovieResources`): built
   once per assigned movie. Every dictionary shape is tessellated through
   `SWFShapeCache` into one static twip-space vertex buffer with a per-fill run
-  table; bitmap characters upload as `rgba8Unorm` textures (carrying the
-  decoder's `premultipliedAlpha` flag); gradient fills bake into a ramp atlas,
-  one 256-texel row per fill; text draws are laid out in twips at build time
-  (`SWFTextLayout`), viewport-independent. Per-draw uniform and glyph-vertex
-  rings are sized exactly for the frame's command stream and triple-buffered.
+  table (`RendererSWFBuild.swift`); bitmap characters upload as `rgba8Unorm`
+  textures (carrying the decoder's `premultipliedAlpha` flag); gradient fills
+  bake into a ramp atlas, one 256-texel row per fill; text draws are laid out in
+  twips (`RendererSWFTextPlan.swift`, `SWFTextLayout`), viewport-independent.
+  Per-draw uniform and glyph-vertex rings are triple-buffered and sized for the
+  current command stream plus headroom (half again, floor 64), because a
+  display list that ActionScript mutates outgrows an exact fit immediately.
 - Static objects (`Rendering/RendererSWFResources.swift`, `SWFPassResources`):
   the content and mask pipelines (shared `swfVertex`, `swfFragment` vs
   `swfMaskFragment`), the three depth/stencil states, a linear repeat sampler
@@ -96,7 +98,6 @@ stats and readouts stay on top). Tag decode and the frame-1 semantics live in
   axis-aligned in pixel space at the on-screen EM size.
 - Viewport mapping (`SWFViewportMapping`): uniform scale fitting the movie's
   `FrameSize` into the viewport, centered — letterboxed on an aspect mismatch.
-  No wall-clock or frame-counter input anywhere in the layer.
 - Clip layers use a **counting stencil**: `beginClip` draws the mask geometry
   with increment-clamp, `endClip` repeats it with decrement-clamp, and each
   content draw tests `stencil == active clip count` (the reference value set per
@@ -116,21 +117,79 @@ stats and readouts stay on top). Tag decode and the frame-1 semantics live in
   and `lastSWFDrawStats` (`SWFDrawStats`: `drawCalls`, `triangles`, `glyphs`,
   `maskDraws`, `skippedItems`). `SWFMovieLoader` turns a VFS path into a
   font-resolved `SWFMovieScene`.
-- Determinism: the whole path is a pure function of movie plus viewport, so
-  repeated renders are byte-identical (asserted in `RendererSWFTests`).
 - Known visual gaps: line styles are not stroked (fills only), focal radial
   gradients render as plain radial, `linearRGB` gradient interpolation is
   treated as normal RGB, PlaceObject3 filters and blend modes are ignored, and
   glyph quads follow a transform's position and scale but not its rotation or
   skew (vanilla UI text is unrotated).
 
+## Dynamic SWF path (M8.3.2)
+
+The layer draws frame 1 until something runs the movie's ActionScript. The
+[AS2 runtime](/engine/as2-runtime.md) owns the mutable display list and produces
+the same `SWFScene` command stream the static flattener does, so the encode path
+is unchanged; only the source of the stream differs.
+
+- Renderer API (`Rendering/RendererSWFRuntimePass.swift`), all main thread,
+  between frames:
+
+  ```swift
+  var swfRuntime: SWFMovieRuntime? { get }
+  @discardableResult
+  func startSWFRuntime(limits: AS2Limits = .standard) throws -> SWFMovieRuntime?
+  func advanceSWFRuntime() throws
+  @discardableResult
+  func sendSWFInput(_ event: SWFInputEvent) throws -> Bool
+  @discardableResult
+  func callSWFMovie(_ name: String, arguments: [AS2Value] = []) throws -> AS2Value
+  func stopSWFRuntime() throws
+  func updateSWFScene(_ scene: SWFScene) throws
+  ```
+
+  `startSWFRuntime` brings the assigned movie up (every `DoInitAction`, then
+  frame 1, then its `DoAction`) and pushes the display list it produced.
+  `advanceSWFRuntime` ticks it once and pushes a new stream **only** when the
+  tick changed something. `sendSWFInput` injects one pointer or key event and
+  pushes whatever the movie changed in response, answering whether the movie
+  consumed it; `callSWFMovie` is the engine-to-movie half of the
+  [`GameDelegate` bridge](/engine/as2-runtime.md) and pushes the same way.
+  `stopSWFRuntime` drops the runtime and restores the static frame-1 stream.
+  `setSWFMovie` clears any runtime, because a new movie invalidates the old
+  one's tree.
+- Cheap update (`SWFMovieResources.update(scene:device:)`): re-plans draw ops,
+  uniforms, and text runs from a new command stream while **retaining** every
+  static GPU resource — tessellated geometry, bitmap textures, the gradient
+  ramp, and the shared glyph atlas. The text planner is kept alive across
+  updates so external-font atlas keys stay stable; re-keying them per update
+  would refill the atlas with duplicates. Rings grow (never shrink) when a
+  stream outgrows them, and the replaced buffers retire once in-flight frames
+  drain, exactly like a movie swap. Draws past the ring capacity are still
+  counted in `skippedItems` rather than dropped silently.
+- Per-instance text reaches the renderer on `SWFSceneItem.textOverride`, an
+  additive field that is nil on the static path, and re-lays out through
+  `SWFTextLayout.editText(_:font:content:)`.
+- **Determinism**: the encode path is still a pure function of the command
+  stream plus the viewport, and nothing in the layer reads a wall clock or a
+  frame counter. The layer moves only when the engine calls
+  `advanceSWFRuntime()`, so a movie that is not advanced renders byte-identically
+  frame to frame — the static contract, restated as an explicit-tick contract
+  rather than weakened. Input is injected rather than read, so the same event
+  sequence always produces the same frame; `setInterval` callbacks fire from the
+  tick rather than from a clock; and `Math.random` inside a movie draws from a
+  seeded generator for the same reason.
+- Driven from the app since M8.3.3: the **SWF runtime** section under
+  `Developer > UI Lab` starts, ticks, drives, and stops a runtime (see
+  App surface below). A movie nobody starts still shows frame 1 only.
+
 ## App surface
 
 `Developer > UI Lab` sidebar destination — the M8.1 foundation acceptance surface
-(M8.1.4) and the M8.2 SWF static-render acceptance surface (M8.2.5), talking to
-the engine through `UILabControlProviding` and `SWFLabControlProviding` on
-`GameViewController` (bridges split to `opensky/GameViewControllerUILab.swift`
-and `opensky/GameViewControllerSWFLab.swift` for the file-size limit;
+(M8.1.4), the M8.2 SWF static-render acceptance surface (M8.2.5), and the M8.3.3
+AS2 runtime acceptance surface, talking to the engine through
+`UILabControlProviding` and `SWFLabControlProviding` on `GameViewController`
+(bridges split to `opensky/GameViewControllerUILab.swift`,
+`opensky/GameViewControllerSWFLab.swift`, and
+`opensky/GameViewControllerSWFRuntime.swift` for the file-size limit;
 weak-provider pattern shared with the Environment panel):
 
 - Overlay enable (`UIOverlayEnabledControl`), lab-sample toggle
@@ -151,8 +210,11 @@ weak-provider pattern shared with the Environment panel):
   bound to `Renderer.swfEnabled` (`SWFLayerEnabledControl`), and a readout
   (`SWFMovieStatsLabel`) that shows the selected movie, the decoded
   `SWFMovieTally` (place/move/remove counts, `ShowFrame`s, sprites, clip
-  layers, filters, blend modes, `ClipActions`, dangling placements), the live
-  `SWFDrawStats`, unresolved font names, and any load error. Selecting an entry
+  layers, filters, blend modes, `ClipActions`, dangling placements), the
+  whole-movie ActionScript inventory added in M8.3.1 (`Actions:` — action
+  blocks, ACTIONRECORDs, unknown opcodes, undecoded opcodes, parse warnings;
+  nothing executes yet), the live `SWFDrawStats`, unresolved font names, and any
+  load error. Selecting an entry
   runs `SWFMovieLoader.load(path:)` -> `Renderer.setSWFMovie(_:)`; `None`
   clears with `setSWFMovie(nil)`. Bridge:
   `SWFLabControlProviding` on `GameViewController`
@@ -162,6 +224,51 @@ weak-provider pattern shared with the Environment panel):
   ticker must not repeat it. No install, an undecodable movie, or a failing GPU
   package build all degrade to an explanatory readout — never a throw out of a
   control action.
+- **SWF runtime driver (M8.3.3)**, a second hosted child section titled
+  **SWF runtime** (`PanelSection-swfRuntime`,
+  `opensky/Shell/Sections/SWFRuntimeSection.swift` plus its
+  `SWFRuntimeSectionInput.swift` action satellite). It runs the movie the
+  selector above assigned, so the two sections are ordered selector then
+  runtime. Controls, all disabled until they can do something — Start needs an
+  assigned movie, everything else needs a running runtime:
+  - Transport: `SWFRuntimeStartControl` (`Renderer.startSWFRuntime()`),
+    `SWFRuntimeTickControl` (one `advanceSWFRuntime()`),
+    `SWFRuntimeTickBurstControl` (twenty, because a vanilla menu's open and
+    close animations are each about twenty frames), `SWFRuntimeStopControl`
+    (`stopSWFRuntime()`, back to the static frame-1 stream).
+  - Input: a navigation-key popup (`SWFRuntimeKeyControl` — Left, Up, Right,
+    Down, Enter, Escape, Space, Tab, from `SWFKeyCode`) plus
+    `SWFRuntimeSendKeyControl`, which injects the key down and its up.
+    `SWFRuntimePointerXControl` / `SWFRuntimePointerYControl` take a position
+    in **movie stage pixels** for `SWFRuntimePointerMoveControl` (one
+    `pointerMoved`) and `SWFRuntimePointerClickControl` (`pointerPressed` then
+    `pointerReleased` at the same point).
+  - Bridge: an editable combo box (`SWFRuntimeCallControl`) prefilled with the
+    movie's own `GameDelegate.addCallBack` names, plus
+    `SWFRuntimeCallInvokeControl` (`Renderer.callSWFMovie(_:)`, no arguments)
+    and `SWFRuntimeClearLogControl`. Editable rather than a fixed popup because
+    a menu's entry points are not all enumerable: `tweenmenu.swf` registers
+    `StartOpenMenuAnim` and `StartCloseMenuAnim` with the delegate, but
+    `SetPlatform` and `InitExtensions` are plain root-clip functions that
+    `callMovie` reaches through its fallback.
+  - Readouts, the three the M8.3.3 gate names, all built by the device-free
+    `SWFLabReadout` from a `SWFLabRuntimeSnapshot`
+    (`opensky/SWFLabRuntimeReadout.swift`) at 2 Hz:
+    `SWFRuntimeStatsLabel` (started/loaded, tick count, root playhead and frame
+    count, node count, root child count, focus target path, pointer/key event
+    counts, last key code, live timers, and dropped instantiations / frame
+    actions / timers), `SWFRuntimeInvokeStatsLabel` (invoke totals, unhandled
+    count, dropped count, the movie's registered callback names, and the last
+    six entries as `direction name(args) -> result` with `[unhandled]` marked),
+    and `SWFRuntimeTallyStatsLabel` (actions/blocks/calls executed, fault total
+    with ranked kinds, stack underflows, ranked unimplemented opcodes, ranked
+    missing host-API names, and the last `trace` message). Every clipped list
+    keeps its total beside it, so a truncated readout never reads as complete.
+  - Bridge implementation: `opensky/GameViewControllerSWFRuntime.swift`. Like
+    the selector, no control action throws — a start with no movie, a tick
+    before Start, a blank callback name, a missing Metal 4 device, and a GPU
+    failure inside a push all land in the same `loadError` the selector's
+    readout shows.
 
 `UIScene.localizedSample` (`opensky/UI/UILocalizedSample.swift`) is the
 localized preview content: invented `$KEY` fixtures merged through the real
@@ -204,15 +311,74 @@ shown verbatim ([UI translation strings](/formats/translation-strings.md)).
   movie, and re-assigning it all behave: baseline byte-identical when off or
   cleared, identical frames and identical stats when reassigned, repeated frames
   byte-identical.
+- M8.3.2 dynamic-render acceptance (`RendererSWFDynamicAcceptanceTests`,
+  480x320, one synthetic movie whose whole frame-1 content sits under an
+  alpha-zero CXFORM and whose frame-1 `DoAction` sets `panel._alpha = 100`):
+  frame 1 encodes 2 draws and changes **0** pixels over the movie-free baseline;
+  after `startSWFRuntime()` the same movie changes **68,160** pixels with 0
+  skipped items and 0 AS2 faults. The same movie with its `DoAction` removed
+  stays at 0 changed pixels after bring-up, which is what makes the delta
+  attributable to the ActionScript rather than to the runtime existing.
+  Determinism: with the runtime started but never advanced, repeated frames are
+  byte-identical, and advancing a one-frame movie keeps them byte-identical.
+  Ring growth: a movie whose second frame places 200 more rectangles encodes 1
+  draw before the tick and 201 after, with 0 skipped. `stopSWFRuntime()`
+  reproduces the static frame byte for byte.
+- M8.3.3 interactive acceptance (`RendererSWFInteractiveAcceptanceTests`,
+  480x320, one synthetic movie whose `highlight` clip is hidden by an alpha-zero
+  CXFORM and whose `button` clip carries the handlers that reveal it): a pointer
+  move onto the button is consumed and changes **59,840** pixels; a pointer move
+  onto empty stage is not consumed and changes **0**; a key down routed to the
+  menu's own `handleInput` changes the same 59,840. Determinism holds across
+  input: frames between injected events are byte-identical, and re-injecting the
+  same pointer position sends no second rollover and changes nothing. An
+  engine-to-movie call the movie never registered leaves the frame untouched and
+  lands in the invoke log as unhandled.
 - Vanilla evidence is CLI-side (`openskycli swf render-sweep`, gates in
   `tools/probe.sh`): 53 of 53 movies render frame 1 with 0 failures. Per-movie
   changed-pixel counts, tag tallies, and the blank-frame explanation live in
   [SWF container](/formats/swf.md); captures stay under `logs/` because they
   embed game art.
+- M8.3.3 panel coverage, device-free and install-free: the runtime snapshot and
+  the three readouts, including every truncation case
+  (`SWFLabRuntimeReadoutTests` — the snapshot is also asserted against a live
+  `SWFMovieRuntime` built from a synthetic movie); the section's control
+  wiring, gating, callback list, and pinned accessibility ids
+  (`SWFRuntimeSectionTests`); the bridge reporting instead of throwing without
+  a renderer (`GameViewControllerSWFLabTests`); hosting inside the UI Lab
+  document (`UILabPanelTests`).
 - M8.2 milestone acceptance sidebar path: `Developer > UI Lab > SWF movie` —
   pick `console.swf`, `creationclubmenu.swf`, `quest_journal.swf`,
   `bookmenu.swf`, or `hudmenu.swf` from `SWFMovieControl`, watch
   `SWFMovieStatsLabel`, and A/B the frame with `SWFLayerEnabledControl`.
+- M8.3 milestone acceptance sidebar path:
+  `Developer > UI Lab > SWF movie` then `Developer > UI Lab > SWF runtime`.
+  Open / navigate / close on `tweenmenu.swf`, click by click:
+  1. `SWFMovieControl` -> `tweenmenu.swf` (assigns the movie; frame 1 is blank,
+     which is correct).
+  2. `SWFRuntimeStartControl` — Start. The state readout goes to
+     `Runtime: running`, and the tally shows the bring-up ops.
+  3. `SWFRuntimeCallControl` -> type `SetPlatform`, then
+     `SWFRuntimeCallInvokeControl`. Repeat for `InitExtensions`. Both are
+     root-clip functions, so they are typed rather than picked.
+  4. `SWFRuntimeCallControl` -> pick `StartOpenMenuAnim` from the list, then
+     Call. Press `SWFRuntimeTickBurstControl` once (twenty ticks) — the invoke
+     readout gains `movie->engine OpenAnimFinished()`.
+  5. Navigate: `SWFRuntimeKeyControl` -> `Down`/`Up`/`Left`/`Right`, then
+     `SWFRuntimeSendKeyControl` for each. Every accepted move fires
+     `movie->engine HighlightMenu(n)` into the invoke readout. Hovering works
+     the same way through `SWFRuntimePointerXControl`/`Y` +
+     `SWFRuntimePointerMoveControl`.
+  6. Close: `SWFRuntimeCallControl` -> `StartCloseMenuAnim`, Call, then
+     `SWFRuntimeTickBurstControl` — `movie->engine CloseMenu()` lands in the
+     log. `SWFRuntimeStopControl` returns the layer to the static frame.
+
+  Measured on the user's own install through exactly those controls (output to
+  `logs/`, never committed — a rendered vanilla menu embeds game art): 39 nodes
+  at bring-up rising to 84, invoke log 10 entries with 1 unhandled
+  (`OpenHighlightedMenu`, which no host function was registered for), 76,572
+  actions / 79 blocks / 2,491 calls, **0 faults**, 0 unimplemented opcodes, and
+  26 missing host-API hits headed by `getControllerFocusGroup`.
 
 ## Limits / next
 

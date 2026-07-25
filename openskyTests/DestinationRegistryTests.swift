@@ -94,8 +94,15 @@ private final class FakeWorldProviders: WorldControlProviders {
     func selectSWFMovie(path _: String?) {}
     var swfLabSnapshot = SWFLabControlSnapshot(
         selectedPath: nil, layerEnabled: true, loadError: nil, tally: nil,
-        unresolvedFontNames: [], drawStats: SWFDrawStats(), installLoaded: false
+        unresolvedFontNames: [], drawStats: SWFDrawStats(), installLoaded: false,
+        runtime: nil
     )
+    func startSWFRuntime() {}
+    func advanceSWFRuntime(ticks _: Int) {}
+    func stopSWFRuntime() {}
+    func sendSWFRuntimeInput(_: SWFInputEvent) {}
+    func callSWFRuntimeMovie(_: String) {}
+    func clearSWFInvokeLog() {}
 }
 
 struct DestinationRegistryTests {

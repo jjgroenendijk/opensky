@@ -5,8 +5,14 @@
 // nested tag stream and keep their own frame-1 list; rendering nested sprites
 // beyond frame 1 (timeline animation) is 8.3.x work.
 //
+// Milestone 8.3.1 adds the action side without executing any of it: the main
+// movie and every sprite keep a full `SWFTimeline` (all frames, each with its
+// control tags and DoAction blocks), DoInitAction (59) blocks are collected by
+// sprite id, and PlaceObject2/3 CLIPACTIONS handlers hang off their placement.
+//
 // Reference: Adobe SWF File Format Specification, version 19 — chapter 3
-// "The display list" (pp. 31-39) and DefineSprite (chapter 13, p. 233).
+// "The display list" (pp. 33-51), chapter 5 "Actions" (pp. 63-118), and
+// DefineSprite (chapter 13, p. 201).
 
 import Foundation
 
@@ -20,12 +26,18 @@ nonisolated enum SWFCharacter {
     case sprite(SWFSprite)
 }
 
-/// A DefineSprite character: its declared frame count plus its frame-1
-/// display list (nested placements resolved by depth like the main timeline).
+/// A DefineSprite character: its declared frame count plus its own timeline
+/// (nested placements resolved by depth like the main timeline, and the action
+/// blocks of every frame).
 nonisolated struct SWFSprite {
     let characterId: UInt16
     let frameCount: UInt16
-    let frame1: [SWFPlacedObject]
+    let timeline: SWFTimeline
+
+    /// The sprite's frame-1 display list, depth-ascending.
+    var frame1: [SWFPlacedObject] {
+        timeline.frame1
+    }
 }
 
 /// One resolved display-list slot after executing the placement tags: the
@@ -59,6 +71,26 @@ nonisolated struct SWFMovieTally: Equatable {
     /// modify targeting an empty depth — skipped, never fatal.
     var danglingPlacements = 0
 
+    // The counters above describe frame 1 only, because that is all the
+    // renderer draws. The action counters below describe the whole movie —
+    // every frame of the main timeline and of every sprite, plus DoInitAction
+    // and CLIPACTIONS — because the 8.3.1 inventory is about what the bytecode
+    // uses, not about what frame 1 shows.
+
+    /// Action streams found anywhere in the movie: DoAction (12), DoInitAction
+    /// (59), and PlaceObject2/3 CLIPACTIONS handlers.
+    var actionBlocks = 0
+    /// ACTIONRECORDs framed across those streams (the terminating
+    /// `ActionEndFlag` is not a record and is not counted).
+    var actionRecords = 0
+    /// Records whose `ActionCode` is not in the Adobe action table.
+    var unknownActionOpcodes = 0
+    /// Records with an operand payload this stage frames but does not decode
+    /// into typed operands. Their bytes are retained either way.
+    var undecodedActionOpcodes = 0
+    /// Action-stream framing problems recorded instead of thrown.
+    var actionWarnings = 0
+
     mutating func add(_ other: SWFMovieTally) {
         placeObject += other.placeObject
         placeObject2 += other.placeObject2
@@ -72,6 +104,11 @@ nonisolated struct SWFMovieTally: Equatable {
         blendModes += other.blendModes
         clipActions += other.clipActions
         danglingPlacements += other.danglingPlacements
+        actionBlocks += other.actionBlocks
+        actionRecords += other.actionRecords
+        unknownActionOpcodes += other.unknownActionOpcodes
+        undecodedActionOpcodes += other.undecodedActionOpcodes
+        actionWarnings += other.actionWarnings
     }
 }
 
@@ -151,33 +188,90 @@ nonisolated struct SWFDisplayListBuilder {
 /// A decoded movie ready for scene flattening: header framing, dictionary,
 /// background color, and the frame-1 display list.
 nonisolated struct SWFMovie {
+    /// SWF version of the source file. CLIPEVENTFLAGS width depends on it, and
+    /// so will the action model a later interpreter accepts.
+    let version: UInt8
     let frameSize: SWFRect
     let frameCount: UInt16
+    /// Header `FrameRate` in frames per second. The AS2 timer natives convert a
+    /// millisecond interval into ticks with it, so `setInterval` stays a
+    /// function of the movie rather than of a clock.
+    let frameRate: Float
     /// SetBackgroundColor (9); nil when the movie never sets one.
     let backgroundColor: SWFColor?
     let characters: [UInt16: SWFCharacter]
-    /// Main-timeline display list at the first ShowFrame, depth-ascending.
-    let frame1: [SWFPlacedObject]
+    /// The main timeline: every frame's control tags and DoAction blocks.
+    let timeline: SWFTimeline
+    /// DoInitAction (59) blocks in tag order. Each names the sprite whose first
+    /// instantiation its actions precede; the spec allows at most one per
+    /// sprite, which is not enforced here.
+    let initActions: [SWFDoInitAction]
     /// Characters this movie imports by name (ImportAssets/ImportAssets2):
     /// character id -> export name in the source movie. Vanilla movies import
     /// their fonts this way, so an edit text's FontID often lands here rather
     /// than in `characters`.
     let importedNames: [UInt16: String]
+    /// Characters this movie exports by name (ExportAssets): linkage name ->
+    /// character id. `Object.registerClass` binds a class to a linkage name, so
+    /// this is the table that turns a registered class into something the
+    /// display list can instantiate.
+    let exportedNames: [String: UInt16]
+    /// The same table read the other way: character id -> linkage name. A
+    /// placement carries an id, so this is the direction instantiation needs.
+    /// Duplicate exports of one id keep the alphabetically first name, which
+    /// makes the map deterministic.
+    let exportedIds: [UInt16: String]
     let tally: SWFMovieTally
 
+    /// Main-timeline display list at the first ShowFrame, depth-ascending.
+    var frame1: [SWFPlacedObject] {
+        timeline.frame1
+    }
+
+    /// Every action stream the movie carries, in a stable order: the main
+    /// timeline frame by frame, then each sprite's timeline (character id
+    /// ascending), then the DoInitAction blocks in tag order. Within a frame,
+    /// its DoAction blocks come before the CLIPACTIONS handlers of its
+    /// placements. A consumer walks a block with `SWFActionBlock.records` and
+    /// seeks by byte offset with `SWFActionBlock.record(atOffset:)`.
+    var actionBlocks: [SWFActionBlock] {
+        var blocks = timeline.actionBlocks
+        for characterId in characters.keys.sorted() {
+            if case let .sprite(sprite) = characters[characterId] {
+                blocks += sprite.timeline.actionBlocks
+            }
+        }
+        return blocks + initActions.map(\.actions)
+    }
+
     init(file: SWFFile) throws {
+        version = file.version
         frameSize = file.frameSize
         frameCount = file.frameCount
+        frameRate = file.frameRate
         let jpegTables = file.tags
             .first { $0.code == SWFBitmapDecoder.jpegTablesTagCode }?.body
-        var decoder = MovieDecoder(jpegTables: jpegTables)
+        var decoder = SWFMovieDecoder(version: file.version, jpegTables: jpegTables)
         try decoder.run(tags: file.tags)
-        backgroundColor = decoder.backgroundColor
+        backgroundColor = decoder.timeline.backgroundColor
         characters = decoder.characters
         importedNames = decoder.importedNames
-        frame1 = decoder.timeline.placements
-        var total = decoder.timeline.tally
+        exportedNames = decoder.exportedNames
+        var byId: [UInt16: String] = [:]
+        for name in decoder.exportedNames.keys.sorted() {
+            guard let id = decoder.exportedNames[name], byId[id] == nil else { continue }
+            byId[id] = name
+        }
+        exportedIds = byId
+        initActions = decoder.initActions
+        let mainTimeline = decoder.timeline.finish()
+        timeline = mainTimeline
+        var total = mainTimeline.tally
+        total.add(mainTimeline.actionTally)
         total.add(decoder.spriteTally)
+        for initAction in decoder.initActions {
+            total.record(actions: initAction.actions)
+        }
         tally = total
     }
 
@@ -224,132 +318,10 @@ nonisolated struct SWFMovie {
     }
 }
 
-/// Walks a tag stream once: define tags feed the dictionary, display-list
-/// tags execute on the timeline until its first ShowFrame.
-private struct MovieDecoder {
-    let jpegTables: Data?
-    var characters: [UInt16: SWFCharacter] = [:]
-    var importedNames: [UInt16: String] = [:]
-    var backgroundColor: SWFColor?
-    var timeline = SWFDisplayListBuilder()
-    var spriteTally = SWFMovieTally()
-    private var timelineFrozen = false
-
-    init(jpegTables: Data?) {
-        self.jpegTables = jpegTables
-    }
-
-    mutating func run(tags: [SWFTag]) throws {
-        for tag in tags {
-            try decodeDefinition(tag)
-            guard !timelineFrozen else { continue }
-            if let background = Self.applyControl(tag, to: &timeline) {
-                backgroundColor = background
-            }
-            if tag.code == SWFDisplayListParser.showFrameCode {
-                // Frame 1 is complete; later define tags still enter the
-                // dictionary, later frames are 8.3.x timeline work.
-                timelineFrozen = true
-            }
-        }
-    }
-
-    private mutating func decodeDefinition(_ tag: SWFTag) throws {
-        if SWFShapeDefinition.tagCodes.contains(tag.code) {
-            let shape = try SWFShapeDefinition.parse(tag: tag)
-            characters[shape.characterId] = .shape(shape)
-        } else if SWFBitmapDecoder.tagCodes.contains(tag.code) {
-            let bitmap = try SWFBitmapDecoder.decode(tag: tag, jpegTables: jpegTables)
-            characters[bitmap.characterId] = .bitmap(bitmap)
-        } else if SWFFontDefinition.tagCodes.contains(tag.code) {
-            let font = try SWFFontParser.parse(tag: tag)
-            characters[font.fontID] = .font(font)
-        } else if SWFTextDefinition.tagCodes.contains(tag.code) {
-            let text = try SWFTextDefinition.parse(tag: tag)
-            characters[text.characterId] = .staticText(text)
-        } else if tag.code == SWFEditText.tagCode {
-            let text = try SWFEditText.parse(tag: tag)
-            characters[text.characterId] = .editText(text)
-        } else if tag.code == SWFDisplayListParser.defineSpriteCode {
-            let sprite = try decodeSprite(tag)
-            characters[sprite.characterId] = .sprite(sprite)
-        } else if SWFImportedAssets.tagCodes.contains(tag.code) {
-            for asset in try SWFImportedAssets.parse(tag: tag).assets {
-                importedNames[asset.characterId] = asset.name
-            }
-        }
-    }
-
-    /// DefineSprite (39): SpriteID UI16, FrameCount UI16, then a nested
-    /// control-tag stream (End-terminated) forming the sprite's own timeline.
-    private mutating func decodeSprite(_ tag: SWFTag) throws -> SWFSprite {
-        var reader = BinaryReader(tag.body)
-        let spriteId = try reader.readUInt16()
-        let spriteFrameCount = try reader.readUInt16()
-        let nested = try SWFFile.parseTags(&reader)
-        var builder = SWFDisplayListBuilder()
-        for nestedTag in nested {
-            _ = Self.applyControl(nestedTag, to: &builder)
-            if nestedTag.code == SWFDisplayListParser.showFrameCode {
-                break
-            }
-        }
-        spriteTally.add(builder.tally)
-        spriteTally.sprites += 1
-        return SWFSprite(
-            characterId: spriteId,
-            frameCount: spriteFrameCount,
-            frame1: builder.placements
-        )
-    }
-
-    /// Executes one display-list control tag against a builder, returning a
-    /// decoded background color when the tag is SetBackgroundColor. A
-    /// malformed control tag is skipped (counted as dangling) rather than
-    /// failing the movie — placements are per-tag independent. Static so the
-    /// caller can pass its own stored builder inout without overlapping
-    /// access to self.
-    private static func applyControl(
-        _ tag: SWFTag,
-        to builder: inout SWFDisplayListBuilder
-    ) -> SWFColor? {
-        switch tag.code {
-        case SWFDisplayListParser.placeObjectCode,
-             SWFDisplayListParser.placeObject2Code,
-             SWFDisplayListParser.placeObject3Code:
-            recordPlaceTally(tag.code, in: &builder)
-            if let placement = try? SWFDisplayListParser.parsePlacement(tag: tag) {
-                builder.apply(placement)
-            } else {
-                builder.noteDanglingPlacement()
-            }
-        case SWFDisplayListParser.removeObjectCode,
-             SWFDisplayListParser.removeObject2Code:
-            if let removal = try? SWFDisplayListParser.parseRemoval(tag: tag) {
-                builder.remove(removal)
-            }
-        case SWFDisplayListParser.setBackgroundColorCode:
-            return try? SWFDisplayListParser.parseBackgroundColor(tag: tag)
-        case SWFDisplayListParser.showFrameCode:
-            builder.noteShowFrame()
-        default:
-            break
-        }
-        return nil
-    }
-
-    private static func recordPlaceTally(_ code: UInt16, in builder: inout SWFDisplayListBuilder) {
-        switch code {
-        case SWFDisplayListParser.placeObjectCode: builder.notePlaceObject(version: 1)
-        case SWFDisplayListParser.placeObject2Code: builder.notePlaceObject(version: 2)
-        default: builder.notePlaceObject(version: 3)
-        }
-    }
-}
-
 extension SWFDisplayListBuilder {
-    /// Tally-only notes recorded by the movie decoder alongside apply/remove
-    /// (same-file access to the private(set) tally).
+    /// Tally-only notes recorded by the timeline decoder alongside apply/remove.
+    /// They live here because `tally` is `private(set)`, which limits its setter
+    /// to this file.
     mutating func notePlaceObject(version: Int) {
         switch version {
         case 1: tally.placeObject += 1

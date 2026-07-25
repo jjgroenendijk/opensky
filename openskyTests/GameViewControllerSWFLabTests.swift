@@ -160,4 +160,47 @@ struct GameViewControllerSWFLabTests {
         controller.swfLayerEnabled = false
         #expect(controller.swfLayerEnabled)
     }
+
+    /// M8.3.3: every runtime control action reports why it did nothing instead
+    /// of throwing out of the panel. Without a Metal 4 device there is no
+    /// renderer, which is the same shape as a control pressed too early.
+    @Test @MainActor
+    func runtimeControlsReportInsteadOfThrowingWithoutARenderer() {
+        let controller = GameViewController()
+        controller.startSWFRuntime()
+        #expect(controller.swfLabSnapshot.loadError?.contains("No renderer") == true)
+        #expect(controller.swfLabSnapshot.runtime == nil)
+
+        for action in [
+            { controller.advanceSWFRuntime(ticks: 20) },
+            { controller.sendSWFRuntimeInput(.keyDown(code: SWFKeyCode.right, ascii: 0)) },
+            { controller.callSWFRuntimeMovie("StartOpenMenuAnim") },
+            { controller.stopSWFRuntime() },
+            { controller.clearSWFInvokeLog() }
+        ] {
+            action()
+        }
+        #expect(controller.swfLabSnapshot.loadError != nil)
+    }
+
+    /// An empty callback name is a user mistake, not a bridge call.
+    @Test @MainActor
+    func blankCallbackNameIsRejectedBeforeTheBridge() {
+        let controller = GameViewController()
+        controller.callSWFRuntimeMovie("   ")
+        #expect(controller.swfLabSnapshot.loadError == "Enter a callback name to call.")
+    }
+
+    /// The runtime half of the snapshot stays nil while the layer is on the
+    /// static frame-1 path, which is what keeps the M8.2.5 readout unchanged.
+    @Test @MainActor
+    func snapshotCarriesNoRuntimeOnTheStaticPath() throws {
+        let controller = try makeController(movies: [("alpha.swf", Self.movieBytes())])
+        controller.selectSWFMovie(path: "interface\\alpha.swf")
+        let snapshot = controller.swfLabSnapshot
+        #expect(snapshot.runtime == nil)
+        #expect(SWFLabReadout.runtimeText(for: snapshot).hasPrefix("Runtime: stopped"))
+        #expect(SWFLabReadout.invokeText(for: snapshot) == "Invokes: runtime not started")
+        #expect(SWFLabReadout.tallyText(for: snapshot) == "Ops: runtime not started")
+    }
 }

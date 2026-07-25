@@ -2,7 +2,8 @@
 // live renderer, built on the 8.2.4 API (SWFMovieLoader.load(path:) ->
 // Renderer.setSWFMovie(_:), swfEnabled, lastSWFDrawStats). Satellite of
 // GameViewController.swift (500-line file limit); the class holds only the
-// factory and the SWFLabState it mutates.
+// factory and the SWFLabState it mutates. The AS2 runtime half of the same
+// protocol lives in GameViewControllerSWFRuntime.swift (M8.3.3).
 //
 // Both the loader and the movie list are resolved once, lazily: enumerating
 // `interface\*.swf` walks every mounted archive index, and the 2 Hz panel
@@ -74,7 +75,8 @@ extension GameViewController: SWFLabControlProviding {
             tally: swfLab.tally,
             unresolvedFontNames: swfLab.unresolvedFontNames,
             drawStats: renderer?.lastSWFDrawStats ?? SWFDrawStats(),
-            installLoaded: resolveSWFLoader() != nil
+            installLoaded: resolveSWFLoader() != nil,
+            runtime: renderer?.swfRuntime.map(SWFLabRuntimeSnapshot.init(runtime:))
         )
     }
 
