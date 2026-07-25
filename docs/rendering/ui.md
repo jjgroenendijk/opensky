@@ -43,6 +43,20 @@ remains the screen-space compositing foundation it renders through.
   (movie, font id). Missing/undecoded fonts fall back to `UIFont` system rendering.
   Font/text/glyph decode lives in [SWF container](/formats/swf.md); the display-list
   render that places these glyph quads is the SWF layer below.
+- Eviction (issue #127): the atlas is one fixed-size texture shared by every movie,
+  so a host that swaps movies must hand cells back or the shelf runs out and later
+  movies render with no text. Each packed cell keeps the coverage bytes it was
+  rasterized from (`UIGlyphAtlas.PackedGlyph`), and
+  `releaseSWFGlyphs(where:)` (`UI/UIGlyphAtlasPacking.swift`) drops every `.swf`
+  glyph whose `fontKey` matches the predicate, then repacks the survivors from
+  their retained coverage — tallest cell first, ties broken by a total order over
+  the key, so the repacked image is deterministic. System-font glyphs are never
+  released (the dev UI outlives any movie). Survivors keep their metrics but move,
+  so callers must re-query per frame; the bumped `revision` re-uploads the texture.
+  `Renderer.setSWFMovie` calls it for the outgoing package's generation
+  (`SWFTextPlanner.generation(forFontKey:)` reads the generation back out of the
+  key). Counters for readouts: `packedGlyphCount`, `occupancy`, `packFailures`
+  (glyphs dropped because the atlas was full, reset by an eviction).
 - Draw list: `UIDrawList` immediate-mode builder - `fillRect`, `strokeRect`,
   `addGlyphQuad`; 6 vertices/quad; solid quads sample the white texel so one
   pipeline draws everything.
@@ -64,7 +78,9 @@ remains the screen-space compositing foundation it renders through.
   `SamplerIndexUIAtlas`; argument-table counts bumped in `makeArgumentTable`.
 - Renderer API: `uiEnabled` (default true), `uiScene` (default `.empty` -> zero
   draws), `uiScale` (default 1), `lastUIDrawStats` (`drawCalls, quads, glyphs,
-  dropped, atlasWidth, atlasHeight`).
+  dropped, atlasWidth, atlasHeight, atlasGlyphs, atlasOccupancy,
+  atlasPackFailures`). The atlas counters cover both text sources: the SWF layer
+  packs into the same atlas and encodes before the overlay.
 
 ## SWF display-list layer (M8.2.4)
 
@@ -196,7 +212,10 @@ weak-provider pattern shared with the Environment panel):
   (`UILabSampleControl`), localized-sample toggle (`UIStringsSampleControl` —
   the two samples share `Renderer.uiScene`, so enabling one clears the other),
   scale presets 50/100/150/200% (`UIScaleControl`), live draw-stats readout
-  (`UIStatsLabel`).
+  (`UIStatsLabel`) — draw calls, quads, glyphs, dropped, plus atlas size, packed
+  glyph count, occupancy, and atlas overflow. The atlas lines are how a user
+  watches eviction work: swap movies in the **SWF movie** section below and the
+  packed-glyph count returns to the new movie's own demand instead of climbing.
 - Menu-mode preview: Push menu / Pop / Clear buttons (`UIMenuPushControl`,
   `UIMenuPopControl`, `UIMenuClearControl`) drive the real `MenuModeController`
   with depth-derived names (`UILabMenu1`, ...); `UIMenuStatsLabel` mirrors
@@ -388,4 +407,7 @@ shown verbatim ([UI translation strings](/formats/translation-strings.md)).
   ([menu mode](/engine/menu-mode.md)) with the UI Lab preview as its trigger
   (M8.1.4); focus/text entry arrive with the SWF menu layer (M8.2).
 - Atlas is fixed-size shelf pack; full-atlas behavior = glyph dropped from list
-  (counted), never a crash.
+  (counted in `packFailures` and in the SWF layer's `skippedItems`), never a crash.
+  Releasing a movie reclaims its cells (above), so a movie-swapping host no longer
+  exhausts it, but a single movie needing more than 512x512 of coverage still
+  drops glyphs. Growing the atlas is the next step if one appears.

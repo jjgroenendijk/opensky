@@ -214,6 +214,26 @@ struct RendererSWFTests {
         #expect(changed > 100, "text changed only \(changed) pixels")
     }
 
+    /// Issue #127: the glyph atlas is shared and fixed-size, so swapping movies
+    /// has to hand the old movie's cells back. Without eviction each swap packs
+    /// the same glyphs under a fresh generation key until the atlas is full and
+    /// later text draws nothing.
+    @Test(.enabled(if: Self.hasMetal4Device))
+    @MainActor
+    func swappingMoviesReleasesTheirGlyphCells() throws {
+        let renderer = try Self.makeRenderer()
+        try renderer.setSWFMovie(Self.textMovie())
+        _ = try Self.render(renderer)
+        let firstOccupancy = renderer.lastUIDrawStats.atlasGlyphs
+        for _ in 0 ..< 40 {
+            try renderer.setSWFMovie(Self.textMovie())
+            _ = try Self.render(renderer)
+        }
+        #expect(renderer.lastSWFDrawStats.glyphs == 2)
+        #expect(renderer.lastUIDrawStats.atlasGlyphs == firstOccupancy)
+        #expect(renderer.lastUIDrawStats.atlasPackFailures == 0)
+    }
+
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func clearingTheMovieRestoresBaseline() throws {

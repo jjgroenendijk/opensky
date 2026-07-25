@@ -153,14 +153,17 @@ struct UILabPanelTests {
         panel.loadViewIfNeeded()
         let fake = FakeUILabProvider()
         fake.stats = UIDrawStats(
-            drawCalls: 1, quads: 12, glyphs: 34, dropped: 2, atlasWidth: 256, atlasHeight: 128
+            drawCalls: 1, quads: 12, glyphs: 34, dropped: 2, atlasWidth: 256, atlasHeight: 128,
+            atlasGlyphs: 77, atlasOccupancy: 0.5, atlasPackFailures: 9
         )
         panel.provider = fake
         panel.refreshStats()
 
         let readout = panel.statsReadout
         #expect(!readout.isEmpty)
-        for token in ["12", "34", "2", "256", "128"] {
+        // Atlas occupancy + overflow (issue #127) are part of the contract: they
+        // are how a user sees glyph cells come back when movies swap.
+        for token in ["12", "34", "2", "256", "128", "77 glyphs", "50% full", "overflow: 9"] {
             #expect(readout.contains(token), "missing \(token) in: \(readout)")
         }
     }

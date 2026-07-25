@@ -51,6 +51,19 @@ extension Renderer {
         }
         if let old {
             retireAllocations(old.residencyAllocations)
+            releaseSWFGlyphs(generation: old.generation)
+        }
+    }
+
+    /// Hands one released movie's glyph cells back to the shared atlas. Without
+    /// this a host that swaps movies fills the fixed-size atlas with fonts
+    /// nothing draws any more, and later movies render with no text at all
+    /// (issue #127). Safe between frames: survivors move, but the SWF and UI
+    /// passes both re-query the atlas every frame and the bumped revision
+    /// re-uploads the texture.
+    private func releaseSWFGlyphs(generation: Int) {
+        uiResources.glyphAtlas.releaseSWFGlyphs { fontKey in
+            SWFTextPlanner.generation(forFontKey: fontKey) == generation
         }
     }
 

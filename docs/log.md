@@ -4,6 +4,24 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-25
 
+* **Glyph-atlas eviction** (issue #127): the shared `UIGlyphAtlas` is one fixed-size
+  512x512 shelf pack, and nothing ever handed cells back. Rendering all 53 vanilla
+  `Interface/*.swf` movies in one process therefore exhausted it after roughly a
+  dozen text-bearing movies, and everything after that drew no text at all —
+  `interface\quest_journal.swf` rendered 1,535 glyphs alone and 0 late in the sweep.
+  Fix: every packed cell now retains the coverage bytes it was rasterized from, and
+  `releaseSWFGlyphs(where:)` drops one released movie's glyphs and repacks the
+  survivors from that retained coverage (tallest first, ties broken by a total order
+  over the key, so the repacked image is deterministic). `Renderer.setSWFMovie` calls
+  it for the outgoing package's generation; system-font glyphs are never released.
+  Packing + eviction moved to `opensky/UI/UIGlyphAtlasPacking.swift`.
+  `lastUIDrawStats` gained `atlasGlyphs`, `atlasOccupancy`, and `atlasPackFailures`,
+  all three shown in `Developer > UI Lab`'s stats readout so a user can watch cells
+  come back while swapping movies. Verified with `openskycli swf render-sweep` over
+  the user's own install: 53 movies, 53 rendered, 0 failed, 13,842 glyphs total, and
+  `quest_journal.swf` back to its standalone 1,535 glyphs inside the full sweep.
+  See [screen-space UI layer](/rendering/ui.md).
+
 * **AS2 runtime subset** (milestone 8.3, closing 8.3.1/8.3.2/8.3.3): vanilla menus
   now execute their own ActionScript, and one of them runs interactively. Seven
   commits.

@@ -93,11 +93,20 @@ nonisolated final class SWFTextPlanner {
         }
     }
 
+    /// Bit position of the movie generation inside an atlas font key.
+    static let generationShift = 18
+
+    /// The movie generation an atlas font key belongs to. Lets the renderer
+    /// evict one released movie's glyphs from the shared atlas (issue #127).
+    static func generation(forFontKey key: Int) -> Int {
+        key >> generationShift
+    }
+
     /// Atlas key namespace: bits 0-15 the internal font id, bit 17 the
     /// external-substitution flag, bits 18+ the movie generation. Unique per
     /// (loaded movie, font) as the shared atlas cache requires.
     private func internalFontKey(_ fontID: UInt16) -> Int {
-        (generation << 18) | Int(fontID)
+        (generation << Self.generationShift) | Int(fontID)
     }
 
     private func fontKey(for font: SWFFontDefinition, editText: SWFEditText) -> Int {
@@ -111,7 +120,7 @@ nonisolated final class SWFTextPlanner {
         if let existing = externalFontKeys[name] {
             return existing
         }
-        let key = (generation << 18) | 0x20000 | externalFontKeys.count
+        let key = (generation << Self.generationShift) | 0x20000 | externalFontKeys.count
         externalFontKeys[name] = key
         return key
     }

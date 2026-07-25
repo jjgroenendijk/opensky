@@ -239,7 +239,10 @@ extension UILabPanelViewController {
         Draw calls: \(stats.drawCalls)
         Quads: \(stats.quads)  Glyphs: \(stats.glyphs)
         Dropped: \(stats.dropped)
-        Atlas: \(stats.atlasWidth)x\(stats.atlasHeight)
+        Atlas: \(stats.atlasWidth)x\(stats.atlasHeight)  \
+        \(stats.atlasGlyphs) glyphs  \
+        \(String(format: "%.0f%%", stats.atlasOccupancy * 100)) full
+        Atlas overflow: \(stats.atlasPackFailures)
         """
     }
 

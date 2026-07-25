@@ -57,6 +57,9 @@ nonisolated final class SWFMovieResources {
     }
 
     let scene: SWFMovieScene
+    /// Namespaces this package's glyph-atlas font keys, so releasing the
+    /// package can evict exactly its glyphs from the shared atlas.
+    let generation: Int
     /// The current draw-command stream: frame 1 at build, then whatever the AS2
     /// runtime last produced.
     private(set) var commands: [SWFSceneCommand]
@@ -95,6 +98,7 @@ nonisolated final class SWFMovieResources {
 
     init(device: MTLDevice, scene: SWFMovieScene, generation: Int) throws {
         self.scene = scene
+        self.generation = generation
         let flattened = SWFScene.build(movie: scene.movie)
         commands = flattened.commands
         var builder = SWFMovieShapeBuilder(scene: scene)
