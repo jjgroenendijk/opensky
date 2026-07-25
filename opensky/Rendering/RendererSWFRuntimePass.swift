@@ -51,6 +51,38 @@ extension Renderer {
         try updateSWFScene(scene)
     }
 
+    /// Delivers one input event to the running movie and pushes whatever the
+    /// movie changed in response. Returns true when the movie consumed the
+    /// event, so the caller can give an unconsumed key to the world instead.
+    /// Nothing here reads a clock or an event queue — the event is injected, on
+    /// the main thread, between frames.
+    @discardableResult
+    func sendSWFInput(_ event: SWFInputEvent) throws -> Bool {
+        guard let runtime = swf.runtime else {
+            return false
+        }
+        let handled = runtime.handle(event)
+        if let scene = runtime.sceneIfChanged() {
+            try updateSWFScene(scene)
+        }
+        return handled
+    }
+
+    /// Calls a named callback the movie registered with `gfx.io.GameDelegate`,
+    /// or a function on its root clip — the engine-to-movie half of the bridge —
+    /// and pushes whatever the call changed.
+    @discardableResult
+    func callSWFMovie(_ name: String, arguments: [AS2Value] = []) throws -> AS2Value {
+        guard let runtime = swf.runtime else {
+            return .undefined
+        }
+        let result = runtime.callMovie(name, arguments: arguments)
+        if let scene = runtime.sceneIfChanged() {
+            try updateSWFScene(scene)
+        }
+        return result
+    }
+
     /// Drops the runtime and restores the movie's static frame-1 stream.
     func stopSWFRuntime() throws {
         guard swf.runtime != nil, let movie = swf.movie else {

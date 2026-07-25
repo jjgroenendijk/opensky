@@ -193,6 +193,10 @@ nonisolated struct SWFMovie {
     let version: UInt8
     let frameSize: SWFRect
     let frameCount: UInt16
+    /// Header `FrameRate` in frames per second. The AS2 timer natives convert a
+    /// millisecond interval into ticks with it, so `setInterval` stays a
+    /// function of the movie rather than of a clock.
+    let frameRate: Float
     /// SetBackgroundColor (9); nil when the movie never sets one.
     let backgroundColor: SWFColor?
     let characters: [UInt16: SWFCharacter]
@@ -244,6 +248,7 @@ nonisolated struct SWFMovie {
         version = file.version
         frameSize = file.frameSize
         frameCount = file.frameCount
+        frameRate = file.frameRate
         let jpegTables = file.tags
             .first { $0.code == SWFBitmapDecoder.jpegTablesTagCode }?.body
         var decoder = SWFMovieDecoder(version: file.version, jpegTables: jpegTables)

@@ -9,7 +9,7 @@
 
 import Foundation
 
-extension AS2Coercion {
+nonisolated extension AS2Coercion {
     /// The exclusive bound below which an integral number prints in positional
     /// notation rather than exponential (ECMA-262 9.8.1 step 6).
     static let positionalLimit = 1e21

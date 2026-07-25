@@ -3,11 +3,12 @@
 // blocks, and the four goto forms `AS2Host.perform` routes here.
 //
 // Stepping forward by one frame applies only that frame's control tags, which
-// is what a player does. Any other jump rebuilds the clip's children from
-// frame 1 up to the destination, because a display list is the accumulation of
-// every step before it and the tags carry no undo. The destination frame's
-// DoAction blocks run either way; the skipped frames' do not, matching how
-// `gotoAndStop` behaves in Flash.
+// is what a player does. Any other jump accumulates the destination state from
+// frame 1 — a display list is the sum of every step before it and the tags carry
+// no undo — and then reconciles the live children against it, keeping every
+// instance the destination frame still places at the same depth (see
+// `SWFRuntimeGoto.swift`). The destination frame's DoAction blocks run either
+// way; the skipped frames' do not, matching how `gotoAndStop` behaves in Flash.
 //
 // Reference: Adobe SWF File Format Specification, version 19, chapter 3 "The
 // display list" (place/modify/replace/remove at a depth) and chapter 5
@@ -33,7 +34,7 @@ nonisolated extension SWFMovieRuntime {
         if target == node.currentFrame + 1 {
             apply(frame: frames[target], to: node)
         } else if target != node.currentFrame {
-            rebuild(to: target, of: node, frames: frames)
+            reconcile(to: target, of: node, frames: frames)
         }
         node.currentFrame = target
         markDirty()
@@ -75,23 +76,17 @@ nonisolated extension SWFMovieRuntime {
 
     // MARK: - Frame execution
 
-    private func rebuild(
-        to index: Int,
-        of node: SWFDisplayObject,
-        frames: [SWFTimelineFrame]
-    ) {
-        node.removeAllChildren()
-        for step in 0 ... index {
-            apply(frame: frames[step], to: node)
-        }
-    }
-
     private func apply(frame: SWFTimelineFrame, to node: SWFDisplayObject) {
         for step in frame.steps {
             switch step {
             case let .place(placement):
                 place(placement, into: node)
             case let .remove(removal):
+                // Unload is dispatched while the child is still attached, so
+                // `_root` and `_parent` still resolve inside the handler.
+                if let removed = node.child(atDepth: removal.depth) {
+                    dispatchPlacementLifecycle(removed, phase: .unloaded)
+                }
                 node.removeChild(atDepth: removal.depth)
             }
         }
@@ -142,11 +137,14 @@ nonisolated extension SWFMovieRuntime {
             node.clipDepth = existing.clipDepth
         }
         apply(placement, to: node)
+        if let replaced = parent.child(atDepth: placement.depth) {
+            dispatchPlacementLifecycle(replaced, phase: .unloaded)
+        }
         parent.addChild(node, atDepth: placement.depth)
         bringUp(node)
     }
 
-    private func apply(_ placement: SWFPlacement, to node: SWFDisplayObject) {
+    func apply(_ placement: SWFPlacement, to node: SWFDisplayObject) {
         if let matrix = placement.matrix {
             node.matrix = matrix
         }
@@ -163,19 +161,28 @@ nonisolated extension SWFMovieRuntime {
         if let clipDepth = placement.clipDepth {
             node.clipDepth = clipDepth
         }
+        if let clipActions = placement.clipActions {
+            node.clipActions = clipActions
+            if !clipActions.allEvents.isDisjoint(with: [.keyDown, .keyUp, .keyPress]) {
+                noteKeyClipHandler()
+            }
+        }
     }
 
-    /// A newly placed instance: build its own frame 1, then run the class its
-    /// linkage name registered, then that frame's actions. The constructor sees
-    /// a clip whose children already exist, which is what CLIK components
-    /// expect.
+    /// A newly placed instance: build its own frame 1, dispatch `initialize`,
+    /// run the class its linkage name registered, then dispatch `construct` and
+    /// `load` and run the frame's actions. The constructor sees a clip whose
+    /// children already exist, which is what CLIK components expect, and the
+    /// event order is the one the `ClipEventFlags` table implies.
     func bringUp(_ node: SWFDisplayObject) {
         let frames = frames(of: node)
         if node.isClip, !frames.isEmpty {
             apply(frame: frames[0], to: node)
             node.currentFrame = 0
         }
+        dispatchPlacementLifecycle(node, phase: .initialize)
         constructRegisteredClass(for: node)
+        dispatchPlacementLifecycle(node, phase: .constructed)
         if let first = frames.first {
             runActions(of: first, on: node)
         }

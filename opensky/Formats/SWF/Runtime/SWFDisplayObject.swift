@@ -56,6 +56,9 @@ nonisolated final class SWFDisplayObject {
     /// Runtime text for an edit-text node, overriding the character's
     /// `InitialText`.
     var textOverride: String?
+    /// CLIPACTIONS handlers the placement attached, if any. Parsed since
+    /// milestone 8.3.1 and dispatched since phase 3.
+    var clipActions: SWFClipActions?
 
     /// The sprite's frames; nil for a leaf.
     let timeline: SWFTimeline?

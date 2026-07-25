@@ -2,8 +2,9 @@
 type: Subsystem
 title: AS2 runtime
 description: The ActionScript 2 bytecode interpreter - value model and ECMAScript
-  coercions, the object and function model, bounded execution, the host protocol the
-  display layer plugs into, and the tally of everything not implemented.
+  coercions, the object and function model, bounded execution, the display list it
+  drives, event dispatch and input routing, the GameDelegate bridge, and the tally
+  of everything not implemented.
 tags: [engine, swf, actionscript, ui, scaleform]
 timestamp: 2026-07-25T00:00:00Z
 ---
@@ -13,12 +14,14 @@ timestamp: 2026-07-25T00:00:00Z
 Todo 8.3.2. The virtual machine that executes the ActionScript 1/2 bytecode
 [`SWFActionParser`](/formats/swf.md) frames, plus the display objects it drives.
 
-The milestone landed in two phases. Phase 1 is the interpreter and its object model —
+The milestone landed in three phases. Phase 1 is the interpreter and its object model —
 values, coercions, prototypes, functions, bounds, and the `AS2Host` seam. Phase 2 is the
 runtime display list behind that seam: a mutable clip tree, timeline stepping, the
 property surface, and the draw-command stream the [screen-space UI
-layer](/rendering/ui.md) renders. Input routing, event dispatch, the CLIK/`gfx` component
-framework, and the `GameDelegate` bridge are phase 3 and are **not** here; see the
+layer](/rendering/ui.md) renders. Phase 3 is interaction: event dispatch, input routing
+and hit testing, the timer wheel the CLIK component library needs, focus and keyboard
+navigation, and the `gfx.io.GameDelegate` bridge with its invoke log. Phase 4 —
+per-menu game-data APIs — stays deferred to the milestones that own the data; see the
 [AS2 scope decision](/decisions/swf-as2-scope.md).
 
 Vanilla Skyrim menus are class-registration code. The measured inventory (milestone 8.3.1,
@@ -158,6 +161,15 @@ Variable resolution is innermost-first through the scope chain, then `this`, the
 An assignment to a name nothing declared lands on the timeline target, not in the innermost
 activation — that is ActionScript, not ECMAScript.
 
+A name carrying separators is resolved twice over. The dotted spelling walks members from
+its head component, so `gfx.controls.Button` reaches `_global.gfx.controls.Button`; only
+when that misses does it fall through to the display-tree path resolver, which owns the
+slash spelling and `..`. The order was measured rather than assumed: resolving the display
+path first made every fully-qualified class reference in the vanilla CLIK library miss,
+which is what put `Map.MapMarker` (67 hits), `Components.CrossPlatformButtons` (43), and
+`gfx.controls.Button` (42) at the head of the phase-2 missing-API tally. Fixing the order
+removed all three entirely.
+
 `ActionDefineFunction2` fills preload registers from register 1 upward in the specification's
 flag order: `this`, `arguments`, `super`, `_root`, `_parent`, `_global`. `suppressThis` and
 `suppressSuper` are deliberately ignored, because `this` and `super` are answered from the
@@ -281,12 +293,24 @@ through the host as a fallback after the prototype chain misses — Flash resolv
 natively rather than through the chain.
 
 `advance()` is the only thing that moves a playhead, and it moves every playing clip by one
-frame. Stepping forward by one applies just that frame's control tags, which is what a
-player does; any other jump rebuilds the clip's children from frame 1 to the destination,
-because a display list is the accumulation of every step before it and the tags carry no
-undo. The destination frame's `DoAction` blocks run either way; skipped frames' do not,
-matching `gotoAndStop`. A frame action that jumps its own clip re-enters this path, so
-re-entry is capped at `maximumGotoDepth` (8) and the dropped blocks are counted in
+frame, then dispatches `enterFrame` and fires the timers that came due. Stepping forward by
+one applies just that frame's control tags, which is what a player does.
+
+Any other jump *accumulates* the destination state from frame 1 — a display list is the sum
+of every step before it and the tags carry no undo — and then reconciles the live children
+against it (`SWFRuntimeGoto.swift`). Reconciling rather than rebuilding is the correction
+phase 3 made to phase 2's shortcut, and it matters as soon as ActionScript is running: an
+instance the destination frame still places at the same depth with the same character is
+kept and re-applied, so a clip can attach a handler to a child, jump its own timeline, and
+still find the handler there. `tweenmenu.swf` does exactly that — it wires `onRollOver` and
+`onMouseDown` onto its four input rectangles in `InitExtensions`, then opens itself with a
+`gotoAndPlay` two frames further on — and a rebuild-from-scratch left the menu unclickable.
+Instances the destination does not place are unloaded; depths it introduces are
+instantiated and brought up.
+
+The destination frame's `DoAction` blocks run either way; skipped frames' do not, matching
+`gotoAndStop`. A frame action that jumps its own clip re-enters this path, so re-entry is
+capped at `maximumGotoDepth` (8) and the dropped blocks are counted in
 `droppedFrameActions`.
 
 `gotoAndStop`/`gotoAndPlay` accept a **one-based** frame number or a label, while
@@ -309,14 +333,253 @@ wrong misplaces a whole menu without erroring — `SWFRuntimePropertyTests` pins
 | `_visible` | node flag | node flag; a hidden node's whole subtree leaves the scene |
 | `_name`, `_target` | instance name, slash path | `_name` writes and rebinds the parent's property |
 | `_currentframe`, `_totalframes`, `_framesloaded` | one-based playhead, declared frame count | declined |
-| `_droptarget`, `_url`, `_highquality`, `_focusrect`, `_soundbuftime`, `_quality`, `_xmouse`, `_ymouse` | fixed answers | declined |
+| `_xmouse`, `_ymouse` | injected pointer, mapped into the node's own space, in pixels | declined |
+| `_droptarget`, `_url`, `_highquality`, `_focusrect`, `_soundbuftime`, `_quality` | fixed answers | declined |
 
-The last row is answered rather than declined so a runtime with no window, no sound, and no
-pointer does not crowd the missing-API tally with names that will never be implemented. The
-pointer pair reads 0 until input arrives in phase 3.
+The last row is answered rather than declined so a runtime with no window and no sound does
+not crowd the missing-API tally with names that will never be implemented.
 
 CLIK's `__width` / `__height` pair are **ordinary** properties, not display properties. The
 host declines them, which is what lets the write fall through to the object's own table.
+
+## Events
+
+Three mechanisms deliver an event to a running movie, and the 8.3.1 clip-event measurement
+decides how much weight each carries. Across all 53 vanilla movies only `construct` occurs
+meaningfully (122 handlers in 24 movies); `load` and `enterFrame` occur once each, and
+**every** mouse and key `CLIPACTIONS` event is zero.
+
+- **Handler members** — `clip.onPress`, `clip.onRollOver`, `clip.onEnterFrame`. This is what
+  vanilla actually uses: `gfx.controls.Button` assigns `onPress = handleMousePress` in
+  `configUI`, and `tweenmenu.swf` assigns `onRollOver` and `onMouseDown` onto its input
+  rectangles. `SWFMovieRuntime.dispatch(_:to:arguments:)` looks the name up through the
+  ordinary prototype chain, so a handler inherited from a registered class behaves like one
+  assigned on the instance. A node with no such handler is the normal case, not a fault.
+- **`CLIPACTIONS` handlers** — parsed since milestone 8.3.1 and dispatched since phase 3.
+  `SWFDisplayObject.clipActions` carries the placement's block;
+  `dispatchClipEvent(_:to:keyCode:)` runs every record whose flags include the event and,
+  for a `keyPress` record, only when the trapped key matches. Because vanilla registers no
+  key clip handler at all, key dispatch counts registrations (`keyClipHandlers`) and skips
+  the tree walk entirely when the count is zero.
+- **Broadcaster listeners** — the `addListener` / `removeListener` convention `Key`,
+  `Mouse`, `Stage`, and `Selection` share. `broadcast(_:from:arguments:)` calls the named
+  message on every recorded listener and answers how many had one.
+
+Lifecycle order for a newly placed instance follows the specification's `ClipEventFlags`
+table, which states that `initialize` and `construct` fire when the clip is created, before
+`load`: the clip's own frame 1 is built, `initialize` fires, the registered class
+constructor runs, then `construct` and `load`. Removal fires `unload` while the child is
+still attached, so `_root` and `_parent` still resolve inside the handler. `enterFrame`
+fires once per `advance()` for every clip, root excluded.
+
+## Input
+
+Input is **injected**, never read. There is no clock, no `NSEvent`, and no global anywhere
+on this path, so a test, the offscreen render path, and the app drive the same code and
+produce the same frame.
+
+```swift
+nonisolated enum SWFInputEvent: Equatable {
+    case pointerMoved(x: Double, y: Double)
+    case pointerPressed(x: Double, y: Double)
+    case pointerReleased(x: Double, y: Double)
+    case pointerWheel(delta: Double)
+    case keyDown(code: Int, ascii: Int)
+    case keyUp(code: Int)
+}
+
+@discardableResult func handle(_ event: SWFInputEvent) -> Bool
+```
+
+Pointer coordinates are **movie stage pixels**, the space `Stage.width`, `Stage.height`, and
+`_xmouse` are expressed in. `SWFInputMapping.stagePoint(viewportPoint:frameSize:viewportPixels:)`
+converts a framebuffer pixel into that space by inverting the letterbox transform
+`SWFViewportMapping.twipsToPixels` builds, and returns nil for a point in the letterbox
+bars, which belongs to no part of the movie. Internally everything is twips, because the
+display list is; one constant (`twipsPerPixel`) does every conversion.
+
+`handle` answers whether the movie consumed the event, which is what lets the engine give an
+unconsumed key to the world instead. A false answer is normal and never a fault.
+
+Pointer routing:
+
+- A move retargets the hover object and sends `rollOut` to the one it left and `rollOver` to
+  the one it entered — or `dragOut` / `dragOver` when the button is held over the pressed
+  object, which is what Flash does.
+- A press sends `press` to the object under the pointer and records it; a release sends
+  `release` when the pointer is still over that object and `releaseOutside` when it is not,
+  which is how a CLIK button cancels cleanly.
+- `onMouseMove`, `onMouseDown`, and `onMouseUp` are **global** in Flash: every clip that
+  defines one is called wherever the pointer is, unlike `onPress`. Vanilla depends on the
+  distinction — `tweenmenu.swf` wires each input rectangle with an `onRollOver` for
+  highlighting and an `onMouseDown` for activation, and the second would never fire on a
+  hit-target-only route. The `Mouse` broadcaster receives the same three messages.
+
+Key routing:
+
+- The `Key` broadcaster receives `onKeyDown` / `onKeyUp` first, because that is where CLIK's
+  `gfx.managers.InputDelegate` registers itself. A listener is an **observer**, not a
+  consumer: only `handleInput` answers whether it took the event, and vanilla movies
+  register unrelated `Key` listeners (`Shared.GlobalFunc.IsKeyPressed` in `tweenmenu.swf`)
+  that would otherwise swallow every keystroke. Delivery is unconditional; only the returned
+  flag is an OR.
+- Then the menu's own `handleInput` (below), then CLIK's `FocusHandler`, then the focused
+  object's `onKeyDown` as a last resort.
+- A key *release* is delivered to the broadcaster, the clip events, and the focused object,
+  but **not** to `handleInput`. A vanilla menu's `handleInput` acts on the event rather than
+  on its phase, so routing both edges of one keystroke moves a selection twice and lands
+  back where it started. One press is one navigation event.
+
+## Hit testing
+
+`hitTest(stageTwips:)` walks the tree in reverse paint order and answers two things: the
+topmost drawable node under the pointer, and the topmost *mouse-enabled* one, which is what
+receives `onPress`. It respects `_visible` (an invisible subtree catches nothing), the
+accumulated matrix chain (the point is carried down into each node's local space rather than
+each box being carried up), and clip layers (a node masked by a `ClipDepth` layer is only hit
+where the mask is, the same `(depth, clipDepth]` rule the scene generator uses).
+
+A clip is mouse-enabled when it carries any of `onPress`, `onRelease`, `onReleaseOutside`,
+`onRollOver`, `onRollOut`, `onDragOver`, `onDragOut`, `onMouseDown`, or `onMouseUp`, or a
+mouse `CLIPACTIONS` handler. Flash routes a mouse event to a clip only when the clip can
+handle one, and CLIK assigns exactly these in `configUI`.
+
+**Resolution is bounding-box, not shape-level.** A node is hit when the point falls inside
+its character bounds. That matches `MovieClip.hitTest`, which is bounding-box in Flash too,
+and it matches what vanilla asks for — every mouse-enabled control in the CLIK library is a
+rectangular button or list row. A rotated or non-rectangular control therefore has a
+slightly generous hit area. Shape-level testing would need the tessellated outline and is
+not implemented.
+
+## Focus and navigation
+
+Vanilla menus navigate through CLIK: `NavigationCode` is referenced 1,669 times across 34
+movies and `FocusHandler` 420 times. The framework's own path is `InputDelegate` listening on
+`Key`, translating a key code into a `gfx.ui.NavigationCode` string, wrapping it in a
+`gfx.ui.InputDetails`, and dispatching an `input` event that `FocusHandler` routes down the
+focus path to the focused component's `handleInput`.
+
+A probe over `startmenu.swf` shows only half of that chain wakes up on its own:
+`FocusHandler._instance` exists after bring-up while `InputDelegate._instance` does not, so
+nothing has registered on `Key`. The engine therefore performs the step the absent
+`InputDelegate` would have performed, and it does so with the movie's **own** constants
+rather than strings invented here — `navigationEquivalent(forKey:)` reads
+`gfx.ui.NavigationCode.UP` and friends off the movie, and `makeInputDetails(code:value:)`
+constructs a real `gfx.ui.InputDetails` when the movie ships the class, falling back to a
+plain object carrying the same five fields when it does not.
+
+Two destinations, tried in order:
+
+- `routeToMenuHandler(code:value:)` — the Bethesda menu-root convention. Every vanilla menu
+  class defines `handleInput(details, pathToFocus)`: `TweenMenuObj`, `StartMenu`,
+  `gfx.controls.Button`, `Shared.BSScrollingList`, and `FocusHandler` all carry the same
+  two-argument shape. `menuInputHandler` finds the outermost clip that defines it,
+  breadth-first from the root and capped at `maximumHandlerDepth` (3), which keeps the search
+  on menu roots — a vanilla menu clip sits one or two levels below `_root`, while the CLIK
+  controls that also define `handleInput` sit deeper and are reached by the menu's own
+  forwarding.
+- `routeToFocusHandler(code:value:)` — `gfx.managers.FocusHandler.instance.handleInput`, for a
+  movie whose focus manager is live. The singleton is behind a getter, so reading it is a
+  call, and calling it is also what creates it.
+
+`Selection.setFocus` / `getFocus` round-trip through `focusTarget` as before; the focus path
+handed to `handleInput` is the chain of clips between the handler and the focused object,
+empty when nothing has focus — which is what a menu that owns its own selection state
+expects.
+
+## Timers
+
+`setInterval`, `clearInterval`, `setTimeout`, and `clearTimeout` are load-bearing, not a
+convenience: they were the head of the missing-API tally once qualified class names started
+resolving (1,204 `clearInterval` hits, 796 `setInterval`, 590 `invalidationIntervalID`
+across the install). CLIK's `UIComponent.invalidate()` schedules its own `draw()` through
+`setInterval(this, "_validate", 1)`, so a component that cannot set an interval never lays
+itself out, never fills its text fields, and never becomes interactive.
+
+A timer is measured in **ticks**, not wall-clock milliseconds. The millisecond argument is
+converted with the movie's own header `FrameRate` (`timerTicks(milliseconds:)`, never zero,
+capped at `maximumTimerTicks` = 3,600), and a timer fires from `advance()` — the same
+explicit tick that moves a playhead. A timer scheduled by a callback during a firing pass
+does not fire in that pass. Both ActionScript calling conventions are supported
+(`setInterval(function, ms, …)` and `setInterval(object, "method", ms, …)`, the second being
+the one CLIK uses), the method name is resolved at fire time so a movie can replace it
+between fires, and the list is capped at `maximumTimers` (256) with the excess counted in
+`dropped`.
+
+## The `GameDelegate` bridge
+
+`gfx.io.GameDelegate` is Scaleform's host channel and the one vanilla actually uses: 1,520
+references across 38 of the 53 movies. OpenSky adopts its shape rather than inventing a
+bridge, because the movies are unmodified and a different bridge would mean they call into
+nothing.
+
+The delegate itself is ActionScript that ships **inside** each movie — a probe over
+`startmenu.swf` reads back `call`, `receiveResponse`, `addCallBack`, `removeCallBack`,
+`receiveCall`, `initialize`, `responseHash`, `callBackHash`, and `nextID` on
+`_global.gfx.io.GameDelegate` — so the engine does not reimplement it. It supplies the two
+ends the delegate reaches for.
+
+```swift
+typealias SWFHostFunction = @Sendable (SWFHostCall) -> AS2Value?
+
+func registerHostFunction(_ name: String, _ body: @escaping SWFHostFunction)
+func removeHostFunction(_ name: String)
+var hostFunctionNames: [String] { get }
+@discardableResult func callHost(_ name: String, arguments: [AS2Value]) -> AS2Value?
+@discardableResult func callMovie(_ name: String, arguments: [AS2Value] = []) -> AS2Value
+var gameDelegate: AS2Object? { get }
+var movieCallbackNames: [String] { get }
+```
+
+**Movie to engine.** `ExternalInterface.call` and `fscommand` are player built-ins and
+therefore the engine's to provide; `GameDelegate.call` routes through the first. A registered
+Swift handler answers, and an unregistered name is a logged no-op plus a tally entry — the
+binding rule the [scope decision](/decisions/swf-as2-scope.md) fixed. `ExternalInterface` is
+installed under both the bare global name and `flash.external.ExternalInterface`, because AS2
+spells it either way.
+
+Telling a response id from an ordinary argument cannot be done by shape, and guessing is a
+real failure mode: `tweenmenu.swf` calls `HighlightMenu(3)` with the 3 as its only argument,
+and a rule that treated any leading number as an id would silently drop it. The delegate's
+own bookkeeping decides instead. It writes `responseHash[id]` immediately before the call
+when the movie passed a callback and passes the literal -1 when it did not, so an id is a
+number that is either -1 or a live `responseHash` key — and only a movie that ships a
+delegate can produce either. A handler's value then travels back through
+`GameDelegate.receiveResponse(id, value)`.
+
+**Engine to movie.** `callMovie(_:arguments:)` invokes a callback the movie registered with
+`addCallBack`, through `receiveCall`. A movie that ships no delegate falls back to a function
+on the root clip, so the engine has one entry point either way; a name neither answers is a
+tally entry and an unhandled log entry.
+
+## Invoke log
+
+Both directions land in `SWFInvokeLog`, which milestone 8.3.3 requires `Developer > UI Lab`
+to expose.
+
+```swift
+nonisolated struct SWFInvokeEntry: Equatable {
+    enum Direction: String { case movieToEngine = "movie->engine"
+                             case engineToMovie = "engine->movie" }
+    let direction: Direction;  let name: String
+    let arguments: String;     let result: String
+    let isHandled: Bool
+}
+
+nonisolated struct SWFInvokeLog: Equatable {
+    let entryLimit: Int;  let textLimit: Int
+    private(set) var entries: [SWFInvokeEntry]
+    private(set) var total: Int
+    private(set) var unhandled: Int
+    var dropped: Int { get }
+}
+```
+
+Bounded on both axes and counting past both: at most `entryLimit` (256) entries are kept,
+oldest dropped first, while `total`, `unhandled`, and `dropped` keep counting; each argument
+summary is clipped to `textLimit` (240) characters. An object is summarized by kind rather
+than walked, because the log must not depend on an object graph that may be cyclic. The
+runtime exposes `invokeLog` and `clearInvokeLog()`.
 
 ## Built-in display classes
 
@@ -336,12 +599,25 @@ reimplemented from public ActionScript 2 API documentation and observed bytecode
   movie's own `FrameSize` (OpenSky letterboxes rather than reflowing, so the stage never
   resizes), `scaleMode`, `align`, `showMenu`, and a listener list.
 - **`Selection`** — `setFocus` and `getFocus` round-trip a focus target, and the range
-  queries answer -1. Focus *behavior* is not implemented: nothing routes input to the
-  focused object, draws an indicator, or dispatches `onSetFocus`. Recording it keeps the
-  name off the tally and leaves state for the phase-3 focus manager to adopt.
+  queries answer -1. Caret and range behavior still need a text-input implementation and are
+  not there.
 
-`addListener`/`removeListener` record listeners on `Stage` and `Selection` without
-dispatching to them, for the same reason.
+Phase 3 adds the rest of the player surface the component library needs: `Key` and `Mouse`
+as real broadcasters (see [Input](#input)), the four timer globals (see [Timers](#timers)),
+`ExternalInterface` and `fscommand` (see [the bridge](#the-gamedelegate-bridge)),
+`getBounds` / `localToGlobal` / `globalToLocal` / `duplicateMovieClip` on
+`MovieClip.prototype`, `flash.geom.Point` with `add` / `subtract` / `clone` / `equals`, the
+deprecated global `random(n)`, and `MovieClipLoader`.
+
+`MovieClipLoader` is the one deliberate stub. It implements the object and the listener
+protocol but never loads anything: there is no second movie to load, and reaching outside
+the movie is out of scope (`ActionGetURL` never appears in vanilla either). A `loadClip`
+reports failure through `onLoadError` on the next tick — queued rather than sent inline,
+because Flash delivers it asynchronously and a component that calls `loadClip` from its own
+constructor must not be re-entered mid-construction — which lets CLIK's icon loader give up
+cleanly instead of waiting forever. `Key.isToggled` answers false for the same class of
+reason: OpenSky injects key events, it does not own a keyboard, so a toggle state would be
+invented.
 
 ## Text
 
@@ -403,27 +679,29 @@ twice — the [rendering layer's determinism contract](/rendering/ui.md).
 
 ## Deliberately absent
 
-- **The CLIK / `gfx` component framework**: `EventDispatcher`, `addEventListener`,
-  `dispatchEvent`, `Constraints`, `FocusHandler`, `NavigationCode`, and the button and list
-  controls. A reference to any of them resolves to `undefined` and lands in the tally as a
-  named missing API — the coverage evidence phase 3 starts from.
-- **Input and event dispatch**: nothing routes a mouse or key event anywhere, `Mouse` and
-  `Key` do not exist, and `Selection` records focus without acting on it.
-- **The `GameDelegate` bridge**: `gfx.io.GameDelegate` is 1,520 uses in 38 movies and is
-  phase 3's engine-to-movie channel. `SWFMovieRuntime.invoke(_:on:arguments:)` is the seam
-  it will be built on.
+- **A Swift reimplementation of the CLIK / `gfx` component library**: none is needed and
+  none exists. `EventDispatcher`, `FocusHandler`, `NavigationCode`, `InputDelegate`,
+  `Constraints`, and the button and list controls all ship inside the movies as AS2 the
+  interpreter already executes; phase 3 supplies the player primitives they stand on and
+  reads their constants back off the movie rather than inventing them. What is still
+  missing is measured, not guessed: `dispatchEvent` (326 hits across the install),
+  `addEventListener` (317), `invalidationIntervalID` (326), `textField` (265),
+  `CLIK_loadCallback` (144), and `focusIndicator` (123) are reads that miss on components
+  whose construction aborted — see the call-depth limit below.
 - **Per-menu data APIs**: `InventoryDefines`, `_CategoriesList`, `EntriesA`, and the rest
   are phase 4, deferred to the milestones that own the data.
+- **Shape-level hit testing**: bounding-box only, in both `hitTest(stageTwips:)` and
+  `MovieClip.hitTest`.
+- **Text input**: `Selection`'s caret and range queries answer -1, and no key event edits a
+  field.
 - **Opcodes no vanilla movie uses**: `ActionWith` (no `with` scope chain),
   `ActionTry`/`ActionThrow` (no exceptions), `ActionSetTarget`/`ActionSetTarget2`,
   `ActionGetURL`/`ActionGetURL2` (no external loading),
   `ActionWaitForFrame`/`ActionWaitForFrame2`, and `ActionEnumerate` (only `ActionEnumerate2`
   occurs). They frame correctly in the parser and execute as a tallied no-op.
-- **CLIPACTIONS event dispatch**: the handlers are parsed and reachable as action blocks, but
-  nothing routes an event to them yet.
-- **The app surface**: no `Developer > UI Lab` control starts, ticks, or inspects a runtime
-  yet. That is the app-facing half of milestone 8.3 and lands alongside the invoke log and
-  op tally the 8.3.3 gate asks for.
+- **The app surface**: the `Developer > UI Lab` controls that start, tick, drive, and
+  inspect a runtime are the app-facing half of milestone 8.3 and land separately, over the
+  `SWFMovieRuntime` and `Renderer` API described here.
 
 ## Verification
 
@@ -474,8 +752,33 @@ registers a class against it:
   bounding-box `hitTest`, `Stage` size in pixels, `Selection` focus round-tripping, listener
   recording, and `SetText`/`SetTextHTML`.
 
-Pixel evidence is `RendererSWFDynamicAcceptanceTests` — see the
-[rendering layer](/rendering/ui.md).
+Phase 3 adds three more device-free suites:
+
+- `SWFRuntimeEventTests` — the CLIPACTIONS lifecycle order around the constructor
+  (`initialize`, constructor, `construct`, `load`), `unload` on removal, `enterFrame` per
+  tick and not during bring-up, a `keyPress` handler matching only its trapped key code,
+  `Key` and `Mouse` being installed as broadcasters with the standard key constants,
+  listeners receiving broadcasts until removed, `Key.getCode` / `Key.isDown` answering from
+  injected state, intervals firing on ticks and stopping when cleared, timeouts firing once,
+  the timer list's cap and drop count, and the millisecond-to-tick conversion.
+- `SWFRuntimeInputTests` — hit testing finding the topmost mouse-enabled object, respecting
+  the transform chain, ignoring an invisible object, and honoring a clip layer's mask;
+  rollover and rollout on a move; press then release routing `onRelease`; press then leave
+  then release routing `onDragOut` and `onReleaseOutside`; `onMouseDown` reaching a clip
+  wherever the pointer is; `_xmouse` / `_ymouse` in the node's own space; an unconsumed key
+  falling back to the focused object; navigation reaching the menu's `handleInput` on press
+  and not on release; `InputDetails` carrying the code and the movie's own navigation
+  equivalent; and the viewport-to-stage mapping including the letterbox bars and a non-zero
+  frame origin.
+- `SWFGameDelegateTests` — a registered host function receiving the movie's call, an
+  unregistered one tallying and logging unhandled, a response id routing the result back
+  through `receiveResponse`, -1 consumed as an id with nothing sent back, a numeric argument
+  that is *not* a response id being preserved, a registered callback invoked through
+  `receiveCall`, a movie without a delegate falling back to a root function, a callback the
+  movie never defined, and the invoke log's bound, drop count, clipping, and clear.
+
+Pixel evidence is `RendererSWFDynamicAcceptanceTests` and
+`RendererSWFInteractiveAcceptanceTests` — see the [rendering layer](/rendering/ui.md).
 
 ## Measured against the vanilla install
 
@@ -483,48 +786,110 @@ An env-gated probe (not committed — AGENTS.md "Legal & IP boundary") brought u
 vanilla `Interface/*.swf` movies through `SWFMovieRuntime`: every `DoInitAction` block, the
 root's frame 1 with class instantiation, and the frame's `DoAction`.
 
-| Measure | Phase 1 (interpreter only) | Phase 2 (display runtime) |
-|---|---|---|
-| Movies brought up | 53 | 53 |
-| Movies with no fault and no unimplemented opcode | 53 | 37 |
-| Faults | 0 | 49, all `callDepthExceeded` |
-| Unimplemented opcodes reached | 0 | 0 |
-| Classes registered | 108 | 108 |
-| Display nodes instantiated | — | 4,805 |
-| Draw commands generated | — | 1,633 |
-| Distinct missing API names | 146 | 198 |
+Phase 3's sweep additionally ticks each movie once, so it executes `enterFrame` handlers and
+timer callbacks that phase 2 never reached.
 
-Both movements are expected. `Selection`, `MovieClip`, `TextField`, and `Stage` — 379 hits
-between them — left the tally entirely, while running constructors reaches code phase 1
-never executed, which surfaces names that were previously unreachable. The new head is the
-framework and the per-menu data contracts, in order of frequency: `Map.MapMarker` (67),
-`addEventListener` (49), `Components.CrossPlatformButtons` (43), `gfx.controls.Button`
-(42), `Shared` (41), `gfx` (41), `Components` (30), `addListener` (28, now on `Key`,
-`Mouse`, and `MovieClipLoader` rather than `Stage`/`Selection`), `InventoryLists_mc` (20),
-and `MovieClipLoader` (20). That is phase 3 and phase 4 work, exactly as the
+| Measure | Phase 1 (interpreter) | Phase 2 (display runtime) | Phase 3 (interaction) |
+|---|---|---|---|
+| Movies brought up | 53 | 53 | 53 |
+| Movies with no fault and no unimplemented opcode | 53 | 37 | 26 |
+| Faults | 0 | 49 | 394, all `callDepthExceeded` |
+| Unimplemented opcodes reached | 0 | 0 | 0 |
+| Classes registered | 108 | 108 | 305 |
+| Display nodes instantiated | — | 4,805 | 4,889 |
+| Draw commands generated | — | 1,633 | 1,658 |
+| Distinct missing API names | 146 | 198 | 245 |
+| Total missing-API hits | — | — | 2,527 |
+
+Every movement is a consequence of executing more, not of regressing. Qualified-name
+resolution alone removed `Map.MapMarker` (67 hits), `gfx.controls.Button` (42),
+`Components.CrossPlatformButtons` (43), and every other fully-qualified class reference from
+the tally; the timer globals removed a further 2,000 hits (`clearInterval` 1,204,
+`setInterval` 796); `flash.geom.Point`, `duplicateMovieClip`, and `random` removed roughly
+1,900 more. Class registrations tripled (108 to 305) because constructors that previously
+aborted now run to the `registerClass` call at their end.
+
+The head of what remains is one shape, and it is the same shape as the faults:
+`dispatchEvent` (326), `invalidationIntervalID` (326), `addEventListener` (317), `textField`
+(265), `CLIK_loadCallback` (144), `focusIndicator` (123). These are reads on components
+whose construction aborted before `EventDispatcher.initialize(this)` copied the mixin onto
+them. After them the tail is per-menu data: `EntriesA` (54), `InventoryLists_mc` (20),
+`ListScrollbar` (20), `_CategoriesList`, `InventoryDefines` — phase 4, exactly as the
 [scope decision](/decisions/swf-as2-scope.md) phased it.
 
-The 49 faults are all one shape: deep CLIK constructor chains exceeding the 64-frame
-`callDepth` cap, concentrated in the largest movies (`modmanager.swf` 19,
-`racesex_menu.swf` 8, `quest_journal.swf` 6). Raising the cap is not the fix — a probe run
-at 256 crashed the test host on a Swift stack overflow, which confirms the cap's stated
-rationale. Making the interpreter iterative rather than recursive is the real fix and is
-not phase 2 work. Each fault aborts one constructor and leaves the movie usable, which is
-why 37 movies still come up completely clean.
+**The call-depth cap is the binding limitation.** All 394 faults are
+`callDepthExceeded`, concentrated in the largest movies (`racesex_menu.swf` 180,
+`quest_journal.swf` 159, `modmanager.swf` 19, `itemcard.swf` 17). The count rose with phase 3
+because deeper execution reaches deeper CLIK constructor chains, and each aborted
+constructor is what leaves `addEventListener` and friends missing on that component.
+Raising the cap is not the fix: a probe at 128 crashed the test host on a Swift stack
+overflow, which is the same result the phase-2 probe got at 256 and confirms the cap's
+stated rationale. Making the interpreter iterative rather than recursive is the real fix and
+is not milestone 8.3 work (issue #132). Each fault aborts one constructor and leaves the
+movie usable, which is why 26 movies still come up completely clean and why the interactive
+target below is one of them.
+
+### The interactive menu: `tweenmenu.swf`
+
+The 8.3.3 gate asks for one vanilla menu that opens, navigates, and closes. The
+[scope decision](/decisions/swf-as2-scope.md) nominated `startmenu.swf`; measurement rejected
+it and chose `tweenmenu.swf` instead — Skyrim's four-way pause selector (Skills, Magic,
+Inventory, Map).
+
+`startmenu.swf` was measured and is gated on three things phase 3 does not own: 35
+`callDepthExceeded` faults after bring-up, a `_root.CodeObj` host-object contract whose shape
+is not readable from the bytecode, and the save-list data contract behind
+`onFillCharacterListComplete`, `onSaveLoadBatchComplete`, and `ConfirmOKToLoad` — phase-4
+work by definition. `tweenmenu.swf` has none of those: **0 faults**, 0 unimplemented opcodes,
+39 display nodes, and its four options are structural clips in the movie rather than data
+pushed by the engine. Its class `TweenMenuObj` carries exactly the surface the gate names —
+`StartOpenMenuAnim`, `onFinishOpenMenuAnim`, `handleInput`, `onInputRectMouseOver`,
+`onInputRectClick`, `StartCloseMenuAnim`, `onCloseComplete` — and milestone 8.5.1 still needs
+`startmenu.swf`, so nothing is spent twice.
+
+Measured end to end through `Renderer.sendSWFInput` and `Renderer.callSWFMovie` at 640x360,
+with the movie's own frames as the state readout:
+
+| Step | Driven by | UI-state delta | Changed pixels | Bridge |
+|---|---|---|---|---|
+| Static frame 1 | `setSWFMovie` | 20 draws | 24,490 over empty | — |
+| Bring-up | `startSWFRuntime` | 39 nodes, 0 faults | 0 | — |
+| **Open** | `SetPlatform`, `InitExtensions`, `StartOpenMenuAnim`, 20 ticks | menu frame 0 -> 10, playhead stops | 460 | `OpenAnimFinished()` movie -> engine |
+| **Navigate** (keys) | `keyDown` left / up / right / down | selection frame 0 -> 2 -> 1 -> 3 -> 4 | 988 / 1,590 / 1,477 / 1,374 | `HighlightMenu(2)`, `(1)`, `(3)`, `(4)` |
+| **Navigate** (pointer) | `pointerMoved` over each input rectangle | selection frame 1 -> 2 -> 3 -> 4 | 1,101 / 1,590 / 1,863 / 1,374 | `HighlightMenu(1)` … `(4)` |
+| **Close** | `StartCloseMenuAnim`, 20 ticks | menu frame 10 -> 19, playhead stops | 24,691 | `CloseMenu()` movie -> engine |
+
+Every input was consumed (`handle` returned true), the run ended with 0 faults and 0
+unimplemented opcodes, and the invoke log held 12 entries with **0 unhandled** across both
+directions. Twelve distinct names remain missing, all in the controller-focus path CLIK uses
+for gamepads (`getControllerFocusGroup` 8, `findFocus` 4, `getControllerMaskByFocusGroup` 1)
+plus the usual one-shot `_global` guard reads (`gfx`, `Shared`, `Components`). The menu's own
+frame labels — `showMenu`, `hideMenu`, `startExpand`, `endExpand` — are decoded and
+addressable.
 
 ## Limits / next
 
-- The probe above is not a committed surface. Turning it into an
+- The probes above are not a committed surface. Turning them into an
   `openskycli swf action-run` sweep and a `Developer > UI Lab` readout is the app-facing
   half of this milestone.
 - **Call depth.** The interpreter recurses on the Swift stack, so `callDepth` is 64 and
-  deep CLIK constructor chains hit it (see above). An iterative call implementation would
-  remove the cap as a correctness limit.
+  deep CLIK constructor chains hit it (see above). It is now the single largest source of
+  missing-API hits, because an aborted constructor is a component without its
+  `EventDispatcher` mixin. An iterative call implementation would remove the cap as a
+  correctness limit.
 - `ActionCallFunction` binds `this` to the calling frame's `this`. Flash binds it to the
   target clip when the name did not resolve on an object; the two agree for timeline code and
   can differ inside a method.
 - The scope chain has no `with` frame, because no vanilla movie emits `ActionWith`.
-- `hitTest` is bounding-box only, `_xmouse`/`_ymouse` read 0, and `setTextFormat` is
-  accepted and ignored.
-- A clip's `onEnterFrame` is not called: `advance()` steps playheads but dispatches no
-  events, because event dispatch is phase 3.
+- Hit testing is bounding-box only, in both directions (`hitTest(stageTwips:)` and
+  `MovieClip.hitTest`), and `setTextFormat` is accepted and ignored.
+- `onMouseMove`, `onMouseDown`, and `onMouseUp` walk every clip in the tree per event,
+  because Flash delivers them globally. Bounded by `maximumNodes` (4,096) and cheap for a
+  menu; a movie with thousands of clips would want an index (issue #133).
+- `menuInputHandler` finds a menu root by searching for `handleInput` breadth-first to depth
+  3. That is the observed vanilla shape, not a declared contract; a movie that buries its
+  menu root deeper, or that puts a CLIK control that shallow, would need the engine to name
+  the handler explicitly.
+- `MovieClipLoader` never loads: a `loadClip` always reports `onLoadError`.
+- `createTextField` is not implemented — a runtime-created field has no character
+  definition to lay out, so it would hold text and draw nothing.

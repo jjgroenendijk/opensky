@@ -57,7 +57,9 @@ Parsed from the (decompressed) body, in order:
    MSB-first: `Nbits = UB[5]`, then `Xmin`, `Xmax`, `Ymin`, `Ymax`, each a
    signed `SB[Nbits]`. The stream byte-aligns after the RECT.
 2. FrameRate — `UI16` little-endian read as 8.8 fixed point: the frame rate is
-   the stored value divided by 256.
+   the stored value divided by 256. Retained on `SWFMovie` since milestone 8.3.2
+   phase 3, because the AS2 timer natives convert a millisecond interval into
+   ticks with it (see [AS2 runtime](/engine/as2-runtime.md)).
 3. FrameCount — `UI16` little-endian, number of frames in the main timeline.
 
 The bit-packed reads go through `SWFBitReader` (`readUB` / `readSB`), the only
@@ -659,9 +661,10 @@ same path a zero-glyph placeholder font takes.
 * `Ratio` morph shapes and button states. Frame stepping itself is implemented
   (the AS2 runtime steps a mutable display list); these two are not.
 * PlaceObject3 filters and blend modes (framed, counted, not applied).
-* CLIPACTIONS **dispatch**. The handlers are framed and reachable, but nothing
-  routes an event to them; `construct` is the only clip event vanilla uses
-  meaningfully (122 handlers in 24 movies).
+* Nothing further on CLIPACTIONS: the handlers are framed here and **dispatched**
+  by the [AS2 runtime](/engine/as2-runtime.md) since milestone 8.3.2 phase 3.
+  `construct` is the only clip event vanilla uses meaningfully (122 handlers in
+  24 movies).
 * DoABC (82) / ActionScript 3 and GFx extension tags.
 
 ## Verification

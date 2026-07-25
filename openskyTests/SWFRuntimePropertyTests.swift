@@ -101,7 +101,6 @@ struct SWFRuntimePropertyTests {
     @Test func readOnlyPropertiesAnswerAndRefuseWrites() throws {
         let (runtime, panel) = try startedPanel()
         #expect(runtime.displayProperty(.quality, of: panel) == .string("HIGH"))
-        #expect(runtime.displayProperty(.mouseX, of: panel) == .number(0))
         #expect(runtime.setDisplayProperty(.currentFrame, of: panel, to: .number(3)) == false)
         #expect(runtime.setDisplayProperty(.target, of: panel, to: .string("/x")) == false)
     }

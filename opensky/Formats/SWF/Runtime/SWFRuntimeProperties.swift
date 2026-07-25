@@ -44,6 +44,8 @@ nonisolated extension SWFMovieRuntime {
         case .rotation: .number(Double(Self.rotationDegrees(node.matrix)))
         case .alpha: .number(Double(node.colorTransform.multiply.w * 100))
         case .visible: .boolean(node.isVisible)
+        case .mouseX: .number(Double(mousePosition(in: node).x))
+        case .mouseY: .number(Double(mousePosition(in: node).y))
         default: nil
         }
     }
@@ -62,10 +64,9 @@ nonisolated extension SWFMovieRuntime {
         }
     }
 
-    /// The properties a runtime with no window, no sound, and no pointer can
-    /// still answer honestly. They are answered rather than declined so they do
-    /// not crowd the missing-API tally with things that will never be
-    /// implemented; the pointer pair becomes real when input arrives.
+    /// The properties a runtime with no window and no sound can still answer
+    /// honestly. They are answered rather than declined so they do not crowd the
+    /// missing-API tally with things that will never be implemented.
     private func staticProperty(_ property: AS2DisplayProperty) -> AS2Value {
         switch property {
         case .dropTarget, .url: .string("")
@@ -73,7 +74,6 @@ nonisolated extension SWFMovieRuntime {
         case .focusRect: .boolean(true)
         case .soundBufferTime: .integer(5)
         case .quality: .string("HIGH")
-        case .mouseX, .mouseY: .integer(0)
         default: .undefined
         }
     }

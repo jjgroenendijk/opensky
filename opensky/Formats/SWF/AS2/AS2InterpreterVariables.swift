@@ -73,6 +73,23 @@ extension AS2Interpreter {
         if let value = specialVariable(name, frame: frame) {
             return value
         }
+        if let value = try scopedVariable(name, frame: frame, offset: offset) {
+            return value
+        }
+        if let value = try qualifiedVariable(name, frame: frame, offset: offset) {
+            return value
+        }
+        runtime.noteMissing(name)
+        return .undefined
+    }
+
+    /// The ordinary chain: innermost scope, then `this`, then `_global`. Returns
+    /// nil rather than tallying, so a qualified name can try again.
+    private func scopedVariable(
+        _ name: String,
+        frame: AS2Frame,
+        offset: Int
+    ) throws(AS2Fault) -> AS2Value? {
         for scope in frame.scope.reversed() where scope.hasProperty(name) {
             return try getMember(name, of: .object(scope), offset: offset)
         }
@@ -82,8 +99,61 @@ extension AS2Interpreter {
         if runtime.globalObject.hasProperty(name) {
             return try getMember(name, of: .object(runtime.globalObject), offset: offset)
         }
-        runtime.noteMissing(name)
-        return .undefined
+        return nil
+    }
+
+    /// A name carrying `.` or `/` separators. The dotted spelling is resolved by
+    /// walking members from the head component, which is what makes
+    /// `gfx.controls.Button` reach `_global.gfx.controls.Button`; only then does
+    /// it fall back to the display-tree path resolver, which owns the slash
+    /// spelling and `..`.
+    ///
+    /// Order matters and was measured: resolving the display path first made
+    /// every fully-qualified class reference in the vanilla CLIK library miss,
+    /// which put `Components.CrossPlatformButtons`, `gfx.controls.Button`, and
+    /// `Map.MapMarker` at the head of the missing-API tally.
+    private func qualifiedVariable(
+        _ name: String,
+        frame: AS2Frame,
+        offset: Int
+    ) throws(AS2Fault) -> AS2Value? {
+        guard name.contains(".") || name.contains("/") else {
+            return nil
+        }
+        if !name.contains("/"), let value = try dottedVariable(name, frame: frame, offset: offset) {
+            return value
+        }
+        guard let object = runtime.host.object(atPath: name, from: frame.target) else {
+            return nil
+        }
+        return .object(object)
+    }
+
+    private func dottedVariable(
+        _ name: String,
+        frame: AS2Frame,
+        offset: Int
+    ) throws(AS2Fault) -> AS2Value? {
+        var components = name.split(separator: ".", omittingEmptySubsequences: false)
+            .map(String.init)
+        guard components.count > 1, !components.contains(where: \.isEmpty) else {
+            return nil
+        }
+        let first = components.removeFirst()
+        var head = specialVariable(first, frame: frame)
+        if head == nil {
+            head = try scopedVariable(first, frame: frame, offset: offset)
+        }
+        guard var value = head else {
+            return nil
+        }
+        for component in components {
+            guard value.objectValue != nil else {
+                return nil
+            }
+            value = try getMember(component, of: value, offset: offset)
+        }
+        return value == .undefined ? nil : value
     }
 
     func setVariable(
@@ -101,8 +171,9 @@ extension AS2Interpreter {
         try setMember(name, of: .object(frame.target), to: value, offset: offset)
     }
 
-    /// `this`, `super`, `_global`, the host-owned targets, and dotted or
-    /// slash-separated paths. Returns nil for an ordinary name.
+    /// `this`, `super`, `_global`, and the host-owned targets `_root`,
+    /// `_parent`, and `_level0`. Returns nil for an ordinary name; qualified
+    /// names are resolved by `qualifiedVariable`.
     private func specialVariable(_ name: String, frame: AS2Frame) -> AS2Value? {
         switch name {
         case "this":
@@ -115,20 +186,13 @@ extension AS2Interpreter {
             break
         }
         if let special = AS2SpecialTarget(rawValue: name) {
-            return hosted(runtime.host.specialObject(special, relativeTo: frame.target), name: name)
-        }
-        if name.contains(".") || name.contains("/") {
-            return hosted(runtime.host.object(atPath: name, from: frame.target), name: name)
+            guard let object = runtime.host.specialObject(special, relativeTo: frame.target) else {
+                runtime.noteMissing(name)
+                return .undefined
+            }
+            return .object(object)
         }
         return nil
-    }
-
-    private func hosted(_ object: AS2Object?, name: String) -> AS2Value {
-        guard let object else {
-            runtime.noteMissing(name)
-            return .undefined
-        }
-        return .object(object)
     }
 
     private func deleteVariable(_ name: String, frame: AS2Frame) -> Bool {

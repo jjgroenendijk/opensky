@@ -32,6 +32,12 @@ nonisolated enum SWFRuntimeNatives {
         installTextField(runtime, prototype: textFieldPrototype)
         installStage(runtime, movie: movie)
         installSelection(runtime)
+        installKey(runtime)
+        installMouse(runtime)
+        installExternalInterface(runtime)
+        installTimers(runtime)
+        installMovieClipLoader(runtime)
+        installGeometry(runtime)
         return Installed(
             movieClipPrototype: movieClipPrototype,
             textFieldPrototype: textFieldPrototype
@@ -82,6 +88,8 @@ nonisolated enum SWFRuntimeNatives {
         installPlayback(runtime, prototype: prototype)
         installDepths(runtime, prototype: prototype)
         installInstancing(runtime, prototype: prototype)
+        installClipGeometry(runtime, prototype: prototype)
+        installDuplicate(runtime, prototype: prototype)
         AS2Natives.method(runtime, on: prototype, name: "toString") { context in
             .string(node(context)?.targetPath ?? "[object MovieClip]")
         }

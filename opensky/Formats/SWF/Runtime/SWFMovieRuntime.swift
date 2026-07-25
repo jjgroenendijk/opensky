@@ -48,20 +48,37 @@ nonisolated final class SWFMovieRuntime {
     private(set) var droppedFrameActions = 0
     /// True once `start()` has run.
     private(set) var isStarted = false
-    /// What `Selection.setFocus` last pointed at. Recorded only — routing input
-    /// to it and drawing a focus indicator are phase 3.
+    /// What `Selection.setFocus` last pointed at. An unconsumed key falls back
+    /// to this node's own handler; the CLIK framework does its own focus
+    /// bookkeeping on top.
     weak var focusTarget: SWFDisplayObject?
     /// Accepted `Selection.setFocus` calls, so a test can assert focus moved
     /// without depending on which node it moved to.
     var focusChanges = 0
     /// Nesting guard for a frame action that jumps the same clip again.
     var gotoDepth = 0
+    /// Live pointer and key state (milestone 8.3.2 phase 3).
+    let input = SWFRuntimeInputState()
+    /// `setInterval` / `setTimeout` callbacks, fired from `advance()`.
+    let timers = SWFRuntimeTimers()
+    /// Both directions of the `GameDelegate` bridge, bounded.
+    private(set) var invokeLog = SWFInvokeLog()
+    /// Engine-side handlers a movie may call by name.
+    var hostFunctions: [String: SWFHostFunction] = [:]
+    /// Placements that attached a key CLIPACTIONS handler. Zero across the whole
+    /// vanilla install, which is what lets key dispatch skip the tree walk.
+    private(set) var keyClipHandlers = 0
 
     /// Display nodes one movie may hold. Vanilla menus build a few hundred; a
     /// runaway `attachMovie` loop is what this stops.
     static let maximumNodes = 4096
     /// How deep a `gotoAndStop` inside a frame action may re-enter.
     static let maximumGotoDepth = 8
+    /// How far below the root the engine looks for a menu's `handleInput`.
+    static let maximumHandlerDepth = 3
+    /// Longest interval a movie may schedule, in ticks. A minute at 60 frames
+    /// per second, which is far past anything a menu waits for.
+    static let maximumTimerTicks = 3600
 
     var movie: SWFMovie {
         movieScene.movie
@@ -121,6 +138,8 @@ nonisolated final class SWFMovieRuntime {
         }
         tickCount += 1
         advancePlayhead(of: root)
+        dispatchEnterFrame(of: root, remainingDepth: SWFDisplayObject.maximumTreeDepth)
+        fireDueTimers()
     }
 
     /// Advances a clip and then its children, so a parent that replaced its
@@ -161,6 +180,19 @@ nonisolated final class SWFMovieRuntime {
 
     func noteDroppedFrameActions(_ count: Int) {
         droppedFrameActions += count
+    }
+
+    /// Records one bridge call. The log is bounded and drops oldest first.
+    func noteInvoke(_ entry: SWFInvokeEntry) {
+        invokeLog.append(entry)
+    }
+
+    func clearInvokeLog() {
+        invokeLog.clear()
+    }
+
+    func noteKeyClipHandler() {
+        keyClipHandlers += 1
     }
 
     /// Clears the dirty flag; the scene generator calls it after it reads the

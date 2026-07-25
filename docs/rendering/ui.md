@@ -138,6 +138,10 @@ is unchanged; only the source of the stream differs.
   @discardableResult
   func startSWFRuntime(limits: AS2Limits = .standard) throws -> SWFMovieRuntime?
   func advanceSWFRuntime() throws
+  @discardableResult
+  func sendSWFInput(_ event: SWFInputEvent) throws -> Bool
+  @discardableResult
+  func callSWFMovie(_ name: String, arguments: [AS2Value] = []) throws -> AS2Value
   func stopSWFRuntime() throws
   func updateSWFScene(_ scene: SWFScene) throws
   ```
@@ -145,9 +149,13 @@ is unchanged; only the source of the stream differs.
   `startSWFRuntime` brings the assigned movie up (every `DoInitAction`, then
   frame 1, then its `DoAction`) and pushes the display list it produced.
   `advanceSWFRuntime` ticks it once and pushes a new stream **only** when the
-  tick changed something. `stopSWFRuntime` drops the runtime and restores the
-  static frame-1 stream. `setSWFMovie` clears any runtime, because a new movie
-  invalidates the old one's tree.
+  tick changed something. `sendSWFInput` injects one pointer or key event and
+  pushes whatever the movie changed in response, answering whether the movie
+  consumed it; `callSWFMovie` is the engine-to-movie half of the
+  [`GameDelegate` bridge](/engine/as2-runtime.md) and pushes the same way.
+  `stopSWFRuntime` drops the runtime and restores the static frame-1 stream.
+  `setSWFMovie` clears any runtime, because a new movie invalidates the old
+  one's tree.
 - Cheap update (`SWFMovieResources.update(scene:device:)`): re-plans draw ops,
   uniforms, and text runs from a new command stream while **retaining** every
   static GPU resource — tessellated geometry, bitmap textures, the gradient
@@ -165,8 +173,10 @@ is unchanged; only the source of the stream differs.
   frame counter. The layer moves only when the engine calls
   `advanceSWFRuntime()`, so a movie that is not advanced renders byte-identically
   frame to frame — the static contract, restated as an explicit-tick contract
-  rather than weakened. `Math.random` inside a movie draws from a seeded
-  generator for the same reason.
+  rather than weakened. Input is injected rather than read, so the same event
+  sequence always produces the same frame; `setInterval` callbacks fire from the
+  tick rather than from a clock; and `Math.random` inside a movie draws from a
+  seeded generator for the same reason.
 - Not yet driven from the app: no `Developer > UI Lab` control starts or ticks a
   runtime, so the shipped app still shows frame 1 only. That control is the
   app-facing half of milestone 8.3.
@@ -267,6 +277,16 @@ shown verbatim ([UI translation strings](/formats/translation-strings.md)).
   Ring growth: a movie whose second frame places 200 more rectangles encodes 1
   draw before the tick and 201 after, with 0 skipped. `stopSWFRuntime()`
   reproduces the static frame byte for byte.
+- M8.3.3 interactive acceptance (`RendererSWFInteractiveAcceptanceTests`,
+  480x320, one synthetic movie whose `highlight` clip is hidden by an alpha-zero
+  CXFORM and whose `button` clip carries the handlers that reveal it): a pointer
+  move onto the button is consumed and changes **59,840** pixels; a pointer move
+  onto empty stage is not consumed and changes **0**; a key down routed to the
+  menu's own `handleInput` changes the same 59,840. Determinism holds across
+  input: frames between injected events are byte-identical, and re-injecting the
+  same pointer position sends no second rollover and changes nothing. An
+  engine-to-movie call the movie never registered leaves the frame untouched and
+  lands in the invoke log as unhandled.
 - Vanilla evidence is CLI-side (`openskycli swf render-sweep`, gates in
   `tools/probe.sh`): 53 of 53 movies render frame 1 with 0 failures. Per-movie
   changed-pixel counts, tag tallies, and the blank-frame explanation live in
