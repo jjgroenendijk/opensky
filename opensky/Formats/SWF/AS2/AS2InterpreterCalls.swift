@@ -45,9 +45,7 @@ extension AS2Interpreter {
         }
         return try callPushingResult(
             function,
-            thisValue: frame.thisValue,
-            arguments: arguments,
-            offset: offset,
+            AS2CallSite(thisValue: frame.thisValue, arguments: arguments, offset: offset),
             frame: frame
         )
     }
@@ -61,12 +59,16 @@ extension AS2Interpreter {
             name = try toString(nameValue)
         }
         // An empty method name calls the receiver itself, which is how
-        // `super(...)` reaches the base constructor.
+        // `super(...)` reaches the base constructor. That call's base is the
+        // one the `super` binding carries; a named call's base is the prototype
+        // the method was actually found on.
         var callee = receiver
         var defaultThis = AS2Value.undefined
+        var base = receiver.objectValue?.superBase
         if !name.isEmpty {
             callee = try getMember(name, of: receiver, offset: offset)
             defaultThis = receiver
+            base = memberHome(name, of: receiver)
         }
         let thisValue = receiver.objectValue?.superThis ?? defaultThis
         guard let function = callee.functionValue else {
@@ -74,9 +76,10 @@ extension AS2Interpreter {
             try frame.push(.undefined)
             return .next
         }
-        return try callPushingResult(
-            function, thisValue: thisValue, arguments: arguments, offset: offset, frame: frame
+        let site = AS2CallSite(
+            thisValue: thisValue, arguments: arguments, offset: offset, base: base
         )
+        return try callPushingResult(function, site, frame: frame)
     }
 
     private func constructNamed(_ frame: AS2Frame, offset: Int) throws(AS2Fault) -> AS2Flow {
@@ -132,13 +135,16 @@ extension AS2Interpreter {
         instance.define(
             .object(constructor), for: "__constructor__", flags: [.dontEnumerate, .dontDelete]
         )
-        let start = try startCall(
-            constructor,
+        // The constructor's own `prototype` is the class it belongs to, so its
+        // `super` starts from there and reaches the superclass recorded on it.
+        let site = AS2CallSite(
             thisValue: .object(instance),
             arguments: arguments,
             offset: offset,
-            completion: .construct(instance)
+            completion: .construct(instance),
+            base: prototype
         )
+        let start = try startCall(constructor, site)
         switch start {
         case let .value(value):
             try frame.push(value.objectValue.map(AS2Value.object) ?? .object(instance))

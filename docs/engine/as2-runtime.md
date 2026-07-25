@@ -134,6 +134,32 @@ prototype is the superclass prototype and whose `superThis` re-binds `this` to t
 receiver, which makes both `super.method()` and a bare `super(...)` constructor call work
 off the same object.
 
+### `super` resolves from the running class, not from the receiver
+
+A binding derived from `this.__proto__` is only correct one level deep. `this` does not
+change as a constructor chain is walked, so the base constructor's `super` resolves to the
+constructor it was just reached through and calls itself until the depth cap aborts it —
+issue #136, and three levels is the vanilla shape, because a CLIK component extends
+`gfx.core.UIComponent`, which extends `MovieClip`.
+
+`AS2Frame.basePrototype` is what the binding is built from instead: the prototype of the
+class whose method the frame is running. Each frame gets it from the call that started it
+(`AS2CallSite.base`):
+
+- **`new C()`** — the constructor's own `prototype` object.
+- **`obj.method()`** — the prototype the method resolved on
+  (`AS2Interpreter.memberHome(_:of:)`), or nil when the receiver owns the slot itself, in
+  which case the receiver's prototype is the fallback.
+- **A call through a `super` binding** — the superclass prototype the binding recorded in
+  `AS2Object.superBase` when it was built, so the next `super` up the chain starts one level
+  higher.
+
+Only the class's *own* `__constructor__` names the superclass; the inherited one belongs to
+the superclass and would name the wrong parent. The frame's base is assigned before
+parameter binding, because `ActionDefineFunction2`'s `PreloadSuper` builds the `super`
+register at that moment and vanilla constructors call `super()` through that register rather
+than by name.
+
 ## Execution
 
 `AS2Runtime` is the per-movie object an engine holds: `_global`, the built-in prototypes,
@@ -751,6 +777,10 @@ Device-free, synthetic fixtures only — no test reads a real `.swf`. Action byt
   with `ActionInstanceOf` and `ActionCastOp`, prototype methods through `new` and
   `ActionCallMethod`, `super` reaching the base constructor with the derived instance,
   `addProperty` getters, `ASSetPropFlags`, and `Object.registerClass`.
+- `AS2SuperChainTests` — the three-level hierarchy from issue #136: `super()` walking one
+  level per call from `Leaf` through `Mid` to `Base`, two-level construction still reaching
+  the base constructor, and `super.method()` resolving from the class that defined the
+  method rather than from the receiver's prototype.
 - `AS2LimitsTests` — budget exhaustion, empty-stack tallying, stack overflow, recovery after
   a fault,
   unimplemented-opcode tallying, missing-API tallying, the tally name cap, the trace log
@@ -815,19 +845,30 @@ root's frame 1 with class instantiation, and the frame's `DoAction`.
 
 Phase 3's sweep additionally ticks each movie once, so it executes `enterFrame` handlers and
 timer callbacks that phase 2 never reached. The phase-3 column was re-measured after the
-frame-stack rewrite (issue #132) and is what the current engine produces.
+frame-stack rewrite (issue #132); the `super` column is the same sweep after `super`
+resolution was fixed (issue #136) and is what the current engine produces.
 
-| Measure | Phase 1 (interpreter) | Phase 2 (display runtime) | Phase 3 (interaction) |
-|---|---|---|---|
-| Movies brought up | 53 | 53 | 53 |
-| Movies with no fault and no unimplemented opcode | 53 | 37 | 26 |
-| Faults | 0 | 49 | 394, all `callDepthExceeded` (see below) |
-| Unimplemented opcodes reached | 0 | 0 | 0 |
-| Classes registered | 108 | 108 | 305 |
-| Display nodes instantiated | — | 4,805 | 4,889 |
-| Draw commands generated | — | 1,633 | 1,658 |
-| Distinct missing API names | 146 | 198 | 245 |
-| Total missing-API hits | — | — | 2,527 |
+| Measure | Phase 1 (interpreter) | Phase 2 (display runtime) | Phase 3 (interaction) | After `super` fix |
+|---|---|---|---|---|
+| Movies brought up | 53 | 53 | 53 | 53 |
+| Movies with no fault and no unimplemented opcode | 53 | 37 | 26 | 53 |
+| Faults | 0 | 49 | 394, all `callDepthExceeded` | 0 |
+| Unimplemented opcodes reached | 0 | 0 | 0 | 0 |
+| Classes registered | 108 | 108 | 305 | 305 |
+| Display nodes instantiated | — | 4,805 | 4,889 | 4,889 |
+| Draw commands generated | — | 1,633 | 1,658 | 1,658 |
+| Distinct missing API names | 146 | 198 | 245 | 240 |
+| Total missing-API hits | — | — | 2,527 | 3,754 |
+
+Every vanilla movie now brings up and ticks without a single fault. The missing-API total
+rose because the constructors that used to abort now run to their end and read the rest of
+their own state: `dispatchEvent` (326 hits) and `addEventListener` (317) fell off the head
+of the tally — `addEventListener` to 109 — and what replaced them is
+`EventDispatcher`'s own mixin state and the component fields behind it (`_listeners` 585,
+`invalidationIntervalID` 521, `textField` 271, `height` 246, `width` 240,
+`CLIK_loadCallback` 227, `focusIndicator` 188, `inspectableGroupName` 186). Those are the
+phase-4 data surface the [scope decision](/decisions/swf-as2-scope.md) defers, not aborted
+work.
 
 Every movement is a consequence of executing more, not of regressing. Qualified-name
 resolution alone removed `Map.MapMarker` (67 hits), `gfx.controls.Button` (42),
@@ -837,25 +878,26 @@ the tally; the timer globals removed a further 2,000 hits (`clearInterval` 1,204
 1,900 more. Class registrations tripled (108 to 305) because constructors that previously
 aborted now run to the `registerClass` call at their end.
 
-The head of what remains is one shape, and it is the same shape as the faults:
-`dispatchEvent` (326), `invalidationIntervalID` (326), `addEventListener` (317), `textField`
-(265), `CLIK_loadCallback` (144), `focusIndicator` (123). These are reads on components
-whose construction aborted before `EventDispatcher.initialize(this)` copied the mixin onto
-them. After them the tail is per-menu data: `EntriesA` (54), `InventoryLists_mc` (20),
-`ListScrollbar` (20), `_CategoriesList`, `InventoryDefines` — phase 4, exactly as the
+Before the `super` fix the head of the phase-3 tally was one shape, and it was the same
+shape as the faults: `dispatchEvent` (326), `invalidationIntervalID` (326),
+`addEventListener` (317), `textField` (265), `CLIK_loadCallback` (144), `focusIndicator`
+(123) — reads on components whose construction aborted before
+`EventDispatcher.initialize(this)` copied the mixin onto them. The tail behind them is
+per-menu data: `EntriesA` (54), `InventoryLists_mc` (20), `ListScrollbar` (20),
+`_CategoriesList`, `InventoryDefines` — phase 4, exactly as the
 [scope decision](/decisions/swf-as2-scope.md) phased it.
 
-All 394 faults are `callDepthExceeded`, concentrated in the largest movies
+All 394 phase-3 faults were `callDepthExceeded`, concentrated in the largest movies
 (`quest_journal.swf` 159, `racesex_menu.swf` 57, `startmenu.swf` 35, `modmanager.swf` 19,
-`itemcard.swf` 17); 27 movies fault and 26 do not. Each fault aborts one constructor and
-leaves the movie usable, which is why 26 movies still come up completely clean and why the
-interactive target below is one of them.
+`itemcard.swf` 17); 27 movies faulted and 26 did not. Each fault aborted one constructor and
+left the movie usable, which is why 26 movies came up completely clean even then, and why
+the interactive target below was one of them. All 53 do now.
 
-### `super` resolution, not call depth, is the binding limitation
+### `super` resolution, not call depth, was the binding limitation
 
 Phase 3 read the depth cap as the cause and issue #132 as the fix. The frame stack landed
 (see [the call stack](#the-call-stack)) and the sweep was re-run at three caps in one
-process: the aggregate row above is what all three produce.
+process: the phase-3 column above is what all three produced.
 
 | Measure | `callDepth` 64 | 256 (shipping) | 4,096 |
 |---|---|---|---|
@@ -871,18 +913,21 @@ changes linearly with the cap, because a cycle that never terminates runs to wha
 exists before it aborts. No cap crashes the host any more — 4,096 completes cleanly, which
 the recursive interpreter could not do at 128 — and no cap helps either.
 
-The cycle is `super()`. `superBinding(for:)` derives the binding from the receiver — it
-calls `this.__proto__`'s `__constructor__` and re-binds `this` to the same instance — so
-`this.__proto__` never advances as the chain is walked, and the base constructor's `super`
-resolves to the constructor it was just reached through. Two levels work; three loop, and
-three is the vanilla shape, because a CLIK component extends `gfx.core.UIComponent`, which
-extends `MovieClip`. The top single fault site is the shared embedded CLIK library
+The cycle was `super()`. `superBinding(for:)` derived the binding from the receiver — it
+called `this.__proto__`'s `__constructor__` and re-bound `this` to the same instance — so
+`this.__proto__` never advanced as the chain was walked, and the base constructor's `super`
+resolved to the constructor it was just reached through. Two levels worked; three looped,
+and three is the vanilla shape, because a CLIK component extends `gfx.core.UIComponent`,
+which extends `MovieClip`. The top single fault site was the shared embedded CLIK library
 (`quest_journal.swf` action block 172, byte-identical in `racesex_menu.swf` block 61 and
 `startmenu.swf` block 76) at offset 1398, the empty-name `ActionCallMethod` that
-`gfx.core.UIComponent`'s constructor uses to reach its base. Resolving `super` against the
-class whose method is executing, rather than against the receiver's prototype, is what
-retires the bulk of the 394 faults and the aborted constructors behind `dispatchEvent`,
-`addEventListener`, and `textField` — issue #136.
+`gfx.core.UIComponent`'s constructor uses to reach its base — a `super()` reaching the
+binding through a `PreloadSuper` register rather than by name.
+
+Resolving `super` against the class whose method is executing (see
+[`super` resolves from the running class](#super-resolves-from-the-running-class-not-from-the-receiver))
+retired all 394 faults: every one of the 53 movies now brings up and ticks clean, and
+`quest_journal.swf` alone went from 159 faults to 0 — issue #136.
 
 What #132 did change is the shape of the cost, not the tally: `racesex_menu.swf` fell from
 180 faults to 57 on the frame stack alone (at the same cap of 64), the depth cap is a policy
@@ -932,10 +977,10 @@ addressable.
 - The probes above are not a committed surface. Turning them into an
   `openskycli swf action-run` sweep and a `Developer > UI Lab` readout is the app-facing
   half of this milestone.
-- **`super` resolution.** Derived from the receiver's prototype, so a three-level class
-  hierarchy recurses forever and aborts at the call-depth cap. It is the whole of the
-  remaining 394 faults across the install and the reason the CLIK missing-API tally looks
-  the way it does — issue #136.
+- **`super` in a method the receiver owns.** When a function is an own property of the
+  instance rather than of a class prototype, the frame has no class to walk up from and
+  falls back to the receiver's prototype — the pre-#136 behavior, correct for one level.
+  No vanilla movie has been observed to do this in a `super` chain.
 - **Re-entry depth.** Bytecode calls no longer recurse on the Swift stack (issue #132), but a
   built-in or a property accessor that calls back into bytecode still does, under
   `reentryDepth` (32). No vanilla movie has been observed to reach it; a chain of accessors

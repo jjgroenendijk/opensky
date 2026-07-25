@@ -4,6 +4,24 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-25
 
+* **AS2 `super` resolution** (issue #136): `super` was derived from the receiver's
+  prototype, which never advances as a constructor chain is walked, so the base constructor
+  of a three-level hierarchy called itself until the depth cap aborted it — the vanilla CLIK
+  shape, since a component extends `gfx.core.UIComponent`, which extends `MovieClip`. A
+  frame now carries `basePrototype`, the prototype of the class whose method it is running,
+  and `super` walks from there: `new C()` supplies the constructor's own `prototype`,
+  `obj.method()` supplies the prototype the method resolved on, and a call through a `super`
+  binding supplies the superclass prototype the binding recorded (`AS2Object.superBase`).
+  Only a class's own `__constructor__` names its superclass. The base is assigned before
+  parameter binding, because `PreloadSuper` builds the `super` register at that moment and
+  vanilla constructors call `super()` through the register, not by name. Call parameters
+  moved into an `AS2CallSite` value to carry it. Re-measured over the user's own install,
+  all 53 vanilla `Interface/*.swf` movies brought up and ticked once: **394 faults to 0**,
+  every movie clean (was 26 of 53), `quest_journal.swf` 159 faults to 0. Missing-API hits
+  rose 2,527 to 3,754 because constructors now run to their end — `dispatchEvent` (326) and
+  `addEventListener` (317 to 109) left the head of the tally, replaced by
+  `EventDispatcher`'s own mixin state (`_listeners` 585, `invalidationIntervalID` 521),
+  which is phase-4 data. Regression cover is `AS2SuperChainTests`.
 * **AS2 interpreter call stack** (issue #132): calling a bytecode function recursed on
   the Swift stack (`callBytecode` -> `run` -> `callOp` -> `call`), so `AS2Limits.callDepth`
   had to be a stack-safety number (64) rather than a policy one, and probes at 128 and 256

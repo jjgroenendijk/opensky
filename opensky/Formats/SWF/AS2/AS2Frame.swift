@@ -58,6 +58,12 @@ nonisolated final class AS2Frame {
     /// False for the frame an entry point starts with, true for a frame a call
     /// pushed. Only the latter count against `AS2Limits.callDepth`.
     var isCall = false
+    /// The prototype the running function was found on — the class whose method
+    /// this frame is executing. `super` resolves from here rather than from
+    /// `thisValue.__proto__`, which is what lets a three-level hierarchy walk up
+    /// one level per call instead of calling itself forever (issue #136). Nil
+    /// when the frame is not running a method of a class.
+    var basePrototype: AS2Object?
 
     /// `ActionDefineFunction` has no register header; the SWF 5 action model
     /// gives a stream four registers.

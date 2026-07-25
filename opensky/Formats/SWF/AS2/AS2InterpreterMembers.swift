@@ -40,6 +40,21 @@ extension AS2Interpreter {
         return .undefined
     }
 
+    /// The prototype a method resolved on, which is the class a `super` inside
+    /// that method walks up from (issue #136). Nil when the receiver owns the
+    /// slot itself — there is no class in between, so the caller falls back to
+    /// the receiver's own prototype.
+    func memberHome(_ name: String, of value: AS2Value) -> AS2Object? {
+        guard
+            let object = value.objectValue,
+            let found = object.lookup(name),
+            found.owner !== object
+        else {
+            return nil
+        }
+        return found.owner
+    }
+
     func setMember(
         _ name: String,
         of value: AS2Value,

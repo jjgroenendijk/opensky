@@ -104,7 +104,8 @@ nonisolated final class AS2Interpreter {
         finish { () throws(AS2Fault) -> AS2Value in
             let base = self.frames.count
             let start = try self.startCall(
-                function, thisValue: thisValue, arguments: arguments, offset: 0
+                function,
+                AS2CallSite(thisValue: thisValue, arguments: arguments, offset: 0)
             )
             switch start {
             case let .value(value):

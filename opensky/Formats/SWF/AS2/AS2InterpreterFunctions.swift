@@ -64,8 +64,7 @@ extension AS2Interpreter {
     func makeFrame(
         _ body: AS2BytecodeBody,
         function: AS2Object,
-        thisValue: AS2Value,
-        arguments: [AS2Value]
+        site: AS2CallSite
     ) throws(AS2Fault) -> AS2Frame? {
         guard body.definition.bodySize > 0 else {
             return nil
@@ -76,13 +75,15 @@ extension AS2Interpreter {
         }
         let activation = AS2Object()
         let frame = AS2Frame(
-            runtime: runtime, block: body.block, target: body.target, thisValue: thisValue
+            runtime: runtime, block: body.block, target: body.target, thisValue: site.thisValue
         )
         frame.stackLimit = limits.stackDepth
         frame.constantPool = body.constantPool
         frame.scope = body.scope + [activation]
         frame.registers = Array(repeating: .undefined, count: registerCount(for: body))
-        bind(arguments, body: body, frame: frame, function: function)
+        // Before `bind`: the `PreloadSuper` register is built from it.
+        frame.basePrototype = site.base
+        bind(site.arguments, body: body, frame: frame, function: function)
         frame.range = records.startIndex ..< records.endIndex
         frame.index = records.startIndex
         return frame
@@ -139,7 +140,7 @@ extension AS2Interpreter {
             next += 1
         }
         if flags.contains(.preloadSuper) {
-            let binding = superBinding(for: frame.thisValue)
+            let binding = superBinding(for: frame.thisValue, base: frame.basePrototype)
             frame.setRegister(next, to: binding.map(AS2Value.object) ?? .undefined)
             next += 1
         }
