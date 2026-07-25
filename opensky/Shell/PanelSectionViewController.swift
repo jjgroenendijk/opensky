@@ -28,7 +28,9 @@ class PanelSectionViewController: NSViewController, InspectorPanel {
         let stack = NSStackView(views: controls)
         stack.orientation = .vertical
         stack.alignment = .leading
-        stack.spacing = PanelMetrics.rowSpacing
+        // `makeContentViews` returns groups; controls inside a group are packed
+        // at the tighter `rowSpacing` by `PanelComponents.group`.
+        stack.spacing = PanelMetrics.groupSpacing
         for control in controls {
             control.setContentCompressionResistancePriority(.required, for: .vertical)
         }

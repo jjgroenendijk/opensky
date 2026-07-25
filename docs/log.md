@@ -4,6 +4,27 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-25
 
+* **Dev-shell framework: spacing scale, component vocabulary, lazy panels, id
+  convention**: follow-up to the shell bug fixes, aimed at the destination count the
+  roadmap implies (five more named in `todo.md`). Panel spacing was one 8pt constant
+  applied between a checkbox and its own slider as much as between two subsystems, so
+  the column read as loose floating blocks; `PanelMetrics` now carries `rowSpacing`
+  (6, inside a group), `groupSpacing` (12, a section's own stack) and `sectionSpacing`
+  (18, between sections), with `PanelComponents.group([...])` binding related controls
+  at the narrow step. Structure comes from the step between sections rather than
+  uniform air. Five sections each hand-rolled `NSButton(checkboxWithTitle:)` plus
+  target/action/id — the reason id conventions drifted — so `configureCheckbox`,
+  `configureButton`, `group` and `separator` joined `PanelComponents`, and the doc now
+  carries a factory inventory table instead of a prose list. The hand-pinned
+  `heightAnchor` constants in `WeatherSection`/`PrecipitationSection` are gone; they
+  defeated intrinsic sizing and were part of what kept collapsed space alive.
+  `ShellContentViewController` built every world inspector at launch and kept them
+  hidden; panels are now built on first reveal and cached by destination id, matching
+  the existing `fullContent` strategy (`inspectorPanelsAreBuiltOnFirstReveal`).
+  Finally the drifted accessibility ids (`LOD*Field`, `LODApplyButton`,
+  `LODResetButton`, `LODStatusLabel`, `TimeOfDayLabel`) were renamed to the documented
+  `*Control` / `*StatsLabel` convention in one pass, before the id surface grows
+  further; toolbar items stay `*Button` as documented window chrome.
 * **Dev-shell UI fixes + framework invariants**: three defects in the app shell, each
   fixed at the framework level so future panels inherit the fix. (1) Collapsing a panel
   section left a blank block as tall as the section. `CollapsibleSectionView` pinned its

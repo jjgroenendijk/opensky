@@ -13,8 +13,17 @@ enum PanelMetrics {
     static let contentWidth: CGFloat = 272
     /// Panel edge insets.
     static let edgeInset: CGFloat = 14
-    /// Vertical spacing between stacked controls.
-    static let rowSpacing: CGFloat = 8
+    // Three-step vertical rhythm. One spacing value applied everywhere made a
+    // checkbox and its slider look as separate as two whole subsystems, so the
+    // column read as loose floating blocks. Structure now comes from the step
+    // between sections, not from uniform air.
+
+    /// Between controls inside one group (a checkbox and its slider).
+    static let rowSpacing: CGFloat = 6
+    /// Between control groups within a section.
+    static let groupSpacing: CGFloat = 12
+    /// Between whole sections in a panel column.
+    static let sectionSpacing: CGFloat = 18
     /// Horizontal spacing inside a control row.
     static let rowGap: CGFloat = 8
 
@@ -92,6 +101,55 @@ enum PanelComponents {
         row.orientation = .horizontal
         row.alignment = .centerY
         return row
+    }
+
+    /// Wires a checkbox's target/action + accessibility id. Sections declare
+    /// their controls as stored properties (no `self` yet), so this configures
+    /// an existing button rather than making one — same shape as
+    /// `configureSlider`. Every enable/freeze/pause toggle goes through here so
+    /// the five hand-rolled copies cannot drift apart again.
+    static func configureCheckbox(
+        _ checkbox: NSButton,
+        target: AnyObject,
+        action: Selector,
+        identifier: String
+    ) {
+        checkbox.target = target
+        checkbox.action = action
+        checkbox.setAccessibilityIdentifier(identifier)
+    }
+
+    /// Wires a push button's target/action + accessibility id (weather presets,
+    /// apply/reset).
+    static func configureButton(
+        _ button: NSButton,
+        target: AnyObject,
+        action: Selector,
+        identifier: String
+    ) {
+        button.target = target
+        button.action = action
+        button.setAccessibilityIdentifier(identifier)
+    }
+
+    /// Stacks tightly-related controls at `rowSpacing` into one unit. A section
+    /// returns *groups*; the section stack spaces those at `groupSpacing`, so a
+    /// checkbox sits close to the slider it governs while distinct groups stay
+    /// visually separate.
+    static func group(_ views: [NSView]) -> NSStackView {
+        let stack = NSStackView(views: views)
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = PanelMetrics.rowSpacing
+        return stack
+    }
+
+    /// Full-width hairline between control groups inside a section.
+    static func separator() -> NSView {
+        let line = Theme.hairline()
+        line.heightAnchor.constraint(equalToConstant: 1).isActive = true
+        line.widthAnchor.constraint(equalToConstant: PanelMetrics.contentWidth).isActive = true
+        return line
     }
 
     /// Wires a slider's target/action + width + accessibility id in one call.

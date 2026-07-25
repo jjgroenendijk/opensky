@@ -54,6 +54,14 @@ be able to select/force/toggle/inspect the behavior without a CLI command.
   forever by the shell — catalog/filter/selection survive destination changes.
   A Settings reload calls `FullContentReloadable.reloadFullContent(context:)`
   on each cached controller in place.
+- **Panel lifetime**: world-inspector panels follow the same rule — built from
+  their registry factory on first reveal, then cached by destination id for the
+  life of the game controller. They used to be built all at once at launch, which
+  cost a live provider graph per destination before the user had opened any of
+  them; that does not scale as the roadmap adds inspectors. A Settings reload
+  drops the whole cache (`replaceGame`) so panels rebuild against the new
+  renderer. Pinned by
+  `ShellContentCoverTests/inspectorPanelsAreBuiltOnFirstReveal()`.
 - Toolbar (`unifiedCompact`, built by `AppShellViewController.makeToolbar()`):
   sidebar toggle, flexible space, screenshot. Screenshot (save-panel +
   error-sheet flow in `ScreenshotCoordinator`) is enabled only while a
@@ -156,21 +164,52 @@ content. Never touch the shell view controllers to add a destination.
   `syncControls`, `refreshReadout`; set `sectionTitle` + `sectionIdentifier`.
   Call `finishInteraction()` from a control action to refresh + return focus to
   the game view; pass `refocusOnMouseUpOnly: true` for continuous sliders.
-- `PanelComponents` + `PanelMetrics` — the shared control vocabulary (heading,
-  caption, note, statsLabel, sliderRow, labeledFieldRow, buttonRow, slider/popup
-  /field configuration). Use these so 100 knobs still read as one panel; do not
-  hand-roll fonts/widths. `configurePopUp(_:target:action:identifier:width:)`
-  wires an `NSPopUpButton`'s target/action/id and optionally pins its width, so
-  a data-driven list (movie names, weather names) cannot stretch the column;
-  the caller adds the items. `configureComboBox(_:target:action:identifier:
-  width:)` does the same for an editable `NSComboBox` — use it where a knob
-  takes a free-form name that usually comes from a short live list (a SWF
-  movie's registered callbacks), so the common values autocomplete and anything
-  outside the list can still be typed.
 - `InspectionTicker` — the 2 Hz readout timer lifecycle (idempotent start).
 - Control-state convention: give each knob a separate enable / force / freeze /
   inspect / reset action and a live numeric readout, rather than one overloaded
   control.
+
+### Component inventory
+
+Build controls only from these, so a hundred knobs still read as one panel.
+Need something the list lacks? Add it here — never hand-roll it in a section.
+Sections declare their controls as stored properties (no `self` at that point),
+which is why widgets that need a target come as `configure*` rather than
+factories.
+
+| Factory | Use for |
+|---|---|
+| `heading(_:)` | Panel/section title, themed uppercase |
+| `caption(_:)` | Sub-heading above a control group |
+| `note(_:)` | Wrapping tertiary hint, pinned to `contentWidth` |
+| `statsLabel(identifier:)` | Wrapping monospaced live readout; carries the id |
+| `group(_:)` | Stacks tightly-related controls at `rowSpacing` into one unit |
+| `separator()` | Full-width hairline between groups |
+| `sliderRow(slider:valueLabel:)` | Slider + trailing value label |
+| `labeledFieldRow(caption:captionWidth:field:)` | Caption + field, aligned column |
+| `buttonRow(_:)` | Horizontal row of push buttons |
+| `valueLabel(width:)` | Mono-digit readout beside a slider |
+| `configureCheckbox(_:target:action:identifier:)` | Every enable/freeze/pause toggle |
+| `configureButton(_:target:action:identifier:)` | Push buttons (presets, apply/reset) |
+| `configureSlider(_:target:action:identifier:width:continuous:)` | Sliders |
+| `configurePopUp(_:target:action:identifier:width:)` | Popups; optional width pin so a data-driven list cannot stretch the column (caller adds items) |
+| `configureComboBox(_:target:action:identifier:width:)` | Editable free-form name from a short live list (a SWF movie's callbacks): common values autocomplete, anything else can still be typed |
+
+### Spacing
+
+`PanelMetrics` carries a three-step vertical rhythm. One value applied
+everywhere made a checkbox and the slider it governs look as separate as two
+whole subsystems, so the column read as loose floating blocks:
+
+- `rowSpacing` (6) — between controls inside one group.
+- `groupSpacing` (12) — between groups within a section. This is the spacing of
+  a section's own stack, so whatever `makeContentViews()` returns is treated as
+  a group.
+- `sectionSpacing` (18) — between sections in a panel column.
+
+Structure comes from the step between sections, not from uniform air. Wrap
+tightly-related controls in `PanelComponents.group([...])` so they stay together
+at the narrow step.
 
 ### Hosting a section inside a direct-content panel
 
@@ -256,17 +295,18 @@ Accessibility identifiers are the UI-test API and never change silently.
   `WeatherTransitionsPausedControl`, `TimeOfDayControl`, `ParticlesEnabledControl`,
   `ParticlesFrozenControl`, `ParticleEmissionControl`, `PrecipitationEnabledControl`,
   `GrassEnabledControl`, `GrassDensityControl`, `GrassDistanceControl`,
-  `GrassWindControl`, `LODLevel0DistanceField`, `LODLevel1DistanceField`,
-  `LODMaximumDistanceField`, `LODTreeDistanceField`, `LODApplyButton`,
-  `LODResetButton`; readouts `ShadowStatsLabel`, `AnimationStatsLabel`,
-  `WeatherStatsLabel`, `TimeOfDayLabel`, `ParticleStatsLabel`,
-  `PrecipitationStatsLabel`, `GrassStatsLabel`, `LODStatusLabel`. Section headers:
+  `GrassWindControl`, `LODLevel0DistanceControl`, `LODLevel1DistanceControl`,
+  `LODMaximumDistanceControl`, `LODTreeDistanceControl`, `LODApplyControl`,
+  `LODResetControl`; readouts `ShadowStatsLabel`, `AnimationStatsLabel`,
+  `WeatherStatsLabel`, `TimeOfDayStatsLabel`, `ParticleStatsLabel`,
+  `PrecipitationStatsLabel`, `GrassStatsLabel`, `LODStatsLabel`. Section headers:
   `PanelSection-shadows`, `-animation`, `-weather`, `-particles`,
   `-precipitation`, `-grass`, `-lod`.
-- Known drift: the LOD and time-of-day controls use `*Field` / `*Button` /
-  `*Label` rather than `*Control` / `*StatsLabel`. Renaming them is worth one
-  commit before the id surface grows further; until then, do not copy the
-  pattern into new sections.
+- The convention is now uniform. The LOD and time-of-day controls used to carry
+  `*Field` / `*Button` / `*Label` suffixes; they were renamed to
+  `*Control` / `*StatsLabel` in one pass before the id surface grew further.
+  Toolbar items are the one documented exception (`ScreenshotButton`,
+  `SidebarToggleButton`) — they are window chrome, not panel controls.
 
 `make test-ui` is blocked on the dev machine (TCC harness init), so the id
 contract is pinned as unit assertions in `DestinationRegistryTests` — update

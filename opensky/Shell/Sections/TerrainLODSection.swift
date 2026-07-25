@@ -16,7 +16,7 @@ final class TerrainLODSection: PanelSectionViewController {
     private let level1Field = NSTextField()
     private let maximumField = NSTextField()
     private let treeField = NSTextField()
-    private let statusLabel = PanelComponents.statsLabel(identifier: "LODStatusLabel")
+    private let statusLabel = PanelComponents.statsLabel(identifier: "LODStatsLabel")
 
     override var sectionTitle: String {
         "Distant LOD (world units)"
@@ -27,23 +27,27 @@ final class TerrainLODSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
-        configureField(level0Field, identifier: "LODLevel0DistanceField")
-        configureField(level1Field, identifier: "LODLevel1DistanceField")
-        configureField(maximumField, identifier: "LODMaximumDistanceField")
-        configureField(treeField, identifier: "LODTreeDistanceField")
+        configureField(level0Field, identifier: "LODLevel0DistanceControl")
+        configureField(level1Field, identifier: "LODLevel1DistanceControl")
+        configureField(maximumField, identifier: "LODMaximumDistanceControl")
+        configureField(treeField, identifier: "LODTreeDistanceControl")
 
-        let applyButton = NSButton(title: "Apply", target: self, action: #selector(apply))
-        applyButton.setAccessibilityIdentifier("LODApplyButton")
-        let resetButton = NSButton(
-            title: "Use Skyrim INI", target: self, action: #selector(reset)
+        let applyButton = NSButton(title: "Apply", target: nil, action: nil)
+        PanelComponents.configureButton(
+            applyButton, target: self, action: #selector(apply), identifier: "LODApplyControl"
         )
-        resetButton.setAccessibilityIdentifier("LODResetButton")
+        let resetButton = NSButton(title: "Use Skyrim INI", target: nil, action: nil)
+        PanelComponents.configureButton(
+            resetButton, target: self, action: #selector(reset), identifier: "LODResetControl"
+        )
 
         return [
-            row("L4 maximum", field: level0Field),
-            row("L8 maximum", field: level1Field),
-            row("Far maximum", field: maximumField),
-            row("Trees", field: treeField),
+            PanelComponents.group([
+                row("L4 maximum", field: level0Field),
+                row("L8 maximum", field: level1Field),
+                row("Far maximum", field: maximumField),
+                row("Trees", field: treeField)
+            ]),
             PanelComponents.buttonRow([resetButton, applyButton]),
             statusLabel
         ]

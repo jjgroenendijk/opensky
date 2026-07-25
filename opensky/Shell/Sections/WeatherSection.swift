@@ -41,23 +41,24 @@ final class WeatherSection: PanelSectionViewController {
     private static let autoWeatherTitle = "Auto"
 
     override func makeContentViews() -> [NSView] {
-        enabledControl.target = self
-        enabledControl.action = #selector(enabledChanged)
-        enabledControl.setAccessibilityIdentifier("WeatherEnabledControl")
-        weatherControl.target = self
-        weatherControl.action = #selector(weatherChanged)
-        weatherControl.setAccessibilityIdentifier("WeatherControl")
+        PanelComponents.configureCheckbox(
+            enabledControl, target: self, action: #selector(enabledChanged),
+            identifier: "WeatherEnabledControl"
+        )
+        PanelComponents.configurePopUp(
+            weatherControl, target: self, action: #selector(weatherChanged),
+            identifier: "WeatherControl"
+        )
 
         configurePreset(clearControl, action: #selector(forceClear), id: "ClearWeatherControl")
         configurePreset(rainControl, action: #selector(forceRain), id: "RainWeatherControl")
         configurePreset(snowControl, action: #selector(forceSnow), id: "SnowWeatherControl")
         let presets = PanelComponents.buttonRow([clearControl, rainControl, snowControl])
-        presets.heightAnchor.constraint(equalToConstant: 24).isActive = true
 
-        transitionsPausedControl.target = self
-        transitionsPausedControl.action = #selector(pauseChanged)
-        transitionsPausedControl.setAccessibilityIdentifier("WeatherTransitionsPausedControl")
-        transitionsPausedControl.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        PanelComponents.configureCheckbox(
+            transitionsPausedControl, target: self, action: #selector(pauseChanged),
+            identifier: "WeatherTransitionsPausedControl"
+        )
 
         timeControl.target = self
         timeControl.action = #selector(timeChanged)
@@ -68,18 +69,21 @@ final class WeatherSection: PanelSectionViewController {
         ).isActive = true
         timeLabel.font = PanelMetrics.monoFont
         timeLabel.textColor = .secondaryLabelColor
-        timeLabel.setAccessibilityIdentifier("TimeOfDayLabel")
+        timeLabel.setAccessibilityIdentifier("TimeOfDayStatsLabel")
 
         return [
-            enabledControl, weatherControl, presets, transitionsPausedControl,
-            PanelComponents.caption("Time of day"), timeControl, timeLabel, statsLabel
+            PanelComponents.group([
+                enabledControl, weatherControl, presets, transitionsPausedControl
+            ]),
+            PanelComponents.group([
+                PanelComponents.caption("Time of day"), timeControl, timeLabel
+            ]),
+            statsLabel
         ]
     }
 
     private func configurePreset(_ button: NSButton, action: Selector, id: String) {
-        button.target = self
-        button.action = action
-        button.setAccessibilityIdentifier(id)
+        PanelComponents.configureButton(button, target: self, action: action, identifier: id)
     }
 
     override func syncControls() {

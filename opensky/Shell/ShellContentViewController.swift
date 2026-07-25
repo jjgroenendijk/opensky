@@ -20,9 +20,12 @@ final class ShellContentViewController: NSViewController {
     private var currentPanelID: String?
     private var fullContentController: NSViewController?
 
-    /// Registered world-inspector panels, keyed + ordered by registry id;
-    /// rebuilt when a Settings reload swaps the game controller.
-    private var panels: [(id: String, panel: any InspectorPanel)] = []
+    /// World-inspector panels built on first reveal and cached by registry id,
+    /// matching how the shell caches full-content controllers. Building all of
+    /// them up front cost a live provider graph per destination at launch,
+    /// which does not scale as the roadmap adds inspectors. Cleared when a
+    /// Settings reload swaps the game controller.
+    private var panels: [String: any InspectorPanel] = [:]
 
     init(gameViewController: GameViewController) {
         self.gameViewController = gameViewController
@@ -81,7 +84,6 @@ final class ShellContentViewController: NSViewController {
         ])
 
         installGame(gameViewController)
-        rebuildPanels()
     }
 
     // MARK: - Destination display
@@ -133,19 +135,18 @@ final class ShellContentViewController: NSViewController {
     /// a new data root) and rebuilds every inspector panel against it. The
     /// shell re-applies the current destination afterwards.
     func replaceGame(with newController: GameViewController) {
-        for entry in panels {
-            entry.panel.stopInspecting()
-            entry.panel.view.removeFromSuperview()
-            entry.panel.removeFromParent()
+        for panel in panels.values {
+            panel.stopInspecting()
+            panel.view.removeFromSuperview()
+            panel.removeFromParent()
         }
-        panels = []
+        panels = [:]
         currentPanelID = nil
         gameViewController.view.removeFromSuperview()
         gameViewController.removeFromParent()
         gameViewController = newController
         guard isViewLoaded else { return }
         installGame(newController)
-        rebuildPanels()
     }
 
     // MARK: - Panel + game plumbing
@@ -164,27 +165,31 @@ final class ShellContentViewController: NSViewController {
         setGameCovered(!fullContentSlot.isHidden)
     }
 
-    /// Builds every world-inspector panel from the registry, wired to the
-    /// current game controller, stacked hidden in the panel slot.
-    private func rebuildPanels() {
-        let context = WorldPanelContext(providers: gameViewController)
-        panels = DestinationRegistry.worldInspectors.compactMap { descriptor in
-            guard case let .worldInspector(makePanel) = descriptor.content else { return nil }
-            return (descriptor.id, makePanel(context))
+    /// Returns the cached panel for `id`, building and installing it on first
+    /// use from its registry factory.
+    private func panel(for id: String?) -> (any InspectorPanel)? {
+        guard let id else { return nil }
+        if let cached = panels[id] {
+            return cached
         }
-        for entry in panels {
-            addChild(entry.panel)
-            let panelView = entry.panel.view
-            panelView.translatesAutoresizingMaskIntoConstraints = false
-            panelSlot.addSubview(panelView)
-            NSLayoutConstraint.activate([
-                panelView.topAnchor.constraint(equalTo: panelSlot.topAnchor),
-                panelView.bottomAnchor.constraint(equalTo: panelSlot.bottomAnchor),
-                panelView.leadingAnchor.constraint(equalTo: panelSlot.leadingAnchor),
-                panelView.trailingAnchor.constraint(equalTo: panelSlot.trailingAnchor)
-            ])
-            panelView.isHidden = true
-        }
+        guard
+            let descriptor = DestinationRegistry.destination(id: id),
+            case let .worldInspector(makePanel) = descriptor.content
+        else { return nil }
+        let panel = makePanel(WorldPanelContext(providers: gameViewController))
+        panels[id] = panel
+        addChild(panel)
+        let panelView = panel.view
+        panelView.translatesAutoresizingMaskIntoConstraints = false
+        panelSlot.addSubview(panelView)
+        NSLayoutConstraint.activate([
+            panelView.topAnchor.constraint(equalTo: panelSlot.topAnchor),
+            panelView.bottomAnchor.constraint(equalTo: panelSlot.bottomAnchor),
+            panelView.leadingAnchor.constraint(equalTo: panelSlot.leadingAnchor),
+            panelView.trailingAnchor.constraint(equalTo: panelSlot.trailingAnchor)
+        ])
+        panelView.isHidden = true
+        return panel
     }
 
     /// Reveals the panel for `id` (hiding the rest) or collapses the slot.
@@ -192,11 +197,11 @@ final class ShellContentViewController: NSViewController {
     private func revealPanel(id: String?) {
         currentPanelID = id
         let active = panel(for: id)
-        for entry in panels {
-            let isActive = entry.id == id
-            entry.panel.view.isHidden = !isActive
+        for (panelID, panel) in panels {
+            let isActive = panelID == id
+            panel.view.isHidden = !isActive
             if !isActive {
-                entry.panel.stopInspecting()
+                panel.stopInspecting()
             }
         }
         panelWidth?.constant = active != nil ? PanelMetrics.panelWidth : 0
@@ -205,11 +210,6 @@ final class ShellContentViewController: NSViewController {
         } else {
             active?.stopInspecting()
         }
-    }
-
-    private func panel(for id: String?) -> (any InspectorPanel)? {
-        guard let id else { return nil }
-        return panels.first { $0.id == id }?.panel
     }
 
     private func hideFullContent() {
@@ -238,8 +238,8 @@ final class ShellContentViewController: NSViewController {
 
     override func viewDidDisappear() {
         super.viewDidDisappear()
-        for entry in panels {
-            entry.panel.stopInspecting()
+        for panel in panels.values {
+            panel.stopInspecting()
         }
     }
 }

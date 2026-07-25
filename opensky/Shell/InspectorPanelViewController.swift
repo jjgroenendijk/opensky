@@ -59,7 +59,12 @@ class InspectorPanelViewController: NSViewController, InspectorPanel {
         let stack = NSStackView(views: column)
         stack.orientation = .vertical
         stack.alignment = .leading
-        stack.spacing = PanelMetrics.rowSpacing
+        // Sections are the panel's structure, so they get the widest step; a
+        // direct-content panel's bare controls are one group and get the
+        // narrowest.
+        stack.spacing = sections.isEmpty
+            ? PanelMetrics.rowSpacing
+            : PanelMetrics.sectionSpacing
         stack.edgeInsets = NSEdgeInsets(
             top: PanelMetrics.edgeInset,
             left: PanelMetrics.edgeInset,

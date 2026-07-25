@@ -24,10 +24,10 @@ final class PrecipitationSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
-        enabledControl.target = self
-        enabledControl.action = #selector(enabledChanged)
-        enabledControl.setAccessibilityIdentifier("PrecipitationEnabledControl")
-        enabledControl.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        PanelComponents.configureCheckbox(
+            enabledControl, target: self, action: #selector(enabledChanged),
+            identifier: "PrecipitationEnabledControl"
+        )
         return [enabledControl, statsLabel]
     }
 
