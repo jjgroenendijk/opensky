@@ -3,6 +3,13 @@
 // texture. A reserved solid-white texel backs untextured quads so one pipeline
 // draws fills + text. Font smoothing is disabled -> same-process renders are
 // byte-deterministic. Glyph cache keyed by font + glyph id + pixel size.
+//
+// The atlas is fixed-size, so a host that swaps content (the UI Lab movie
+// selector, later real menus) has to hand cells back or the shelf runs out and
+// later text silently disappears (issue #127). Every packed cell therefore
+// keeps its coverage bytes, and `releaseSWFGlyphs(where:)` drops a released
+// movie's glyphs and repacks the survivors. The packing + eviction half of the
+// class lives in UIGlyphAtlasPacking.swift.
 
 import CoreGraphics
 import CoreText
@@ -43,36 +50,60 @@ struct UIGlyphEntry: Equatable {
 
 final class UIGlyphAtlas {
     static let dimension = 512
-    private static let padding = 1
-    private static let whiteBlock = 4
+    static let padding = 1
+    static let whiteBlock = 4
+
+    /// A cached glyph: its placement plus the coverage bytes that produced it.
+    /// Coverage is retained so an eviction can repack the survivors without
+    /// re-rasterizing them; empty (whitespace, unpackable) glyphs carry none.
+    struct PackedGlyph {
+        let entry: UIGlyphEntry
+        let coverage: [UInt8]?
+
+        static let empty = PackedGlyph(entry: .empty, coverage: nil)
+    }
 
     let width = dimension
     let height = dimension
     /// Coverage bytes, row-major, top-left origin (matches Metal texture v-down).
+    /// Only the packing extension writes it.
     private(set) var pixels: [UInt8]
-    /// Bumped whenever new glyphs pack -> the renderer re-uploads the texture.
-    private(set) var revision = 0
+    /// Bumped whenever the atlas image changes — new glyphs packed, or survivors
+    /// repacked by an eviction -> the renderer re-uploads the texture.
+    var revision = 0
     /// UV of a fully-opaque texel; solid fills sample it for coverage == 1.
     let whiteUV: SIMD2<Float>
+    /// Glyphs dropped because the atlas was full, counted since the last
+    /// eviction. Non-zero means text is missing from the rendered frame.
+    var packFailures = 0
+    /// Atlas texels occupied by packed glyph cells (the white block excluded).
+    var usedTexels = 0
 
-    private var cache: [UIGlyphKey: UIGlyphEntry] = [:]
-    private var shelfX = 0
-    private var shelfY: Int
-    private var shelfHeight = 0
+    /// Internal, not private: the packing extension lives in another file so
+    /// this type stays inside the strict-lint type-body limit.
+    var cache: [UIGlyphKey: PackedGlyph] = [:]
+    var shelfX = 0
+    var shelfY: Int
+    var shelfHeight = 0
 
     init() {
         pixels = [UInt8](repeating: 0, count: Self.dimension * Self.dimension)
-        // Reserve a solid-white block top-left for untextured quads.
-        for row in 0 ..< Self.whiteBlock {
-            for col in 0 ..< Self.whiteBlock {
-                pixels[row * Self.dimension + col] = 255
-            }
-        }
         whiteUV = SIMD2(
             Float(Self.whiteBlock) / 2 / Float(Self.dimension),
             Float(Self.whiteBlock) / 2 / Float(Self.dimension)
         )
         shelfY = Self.whiteBlock + Self.padding
+        clearImage()
+    }
+
+    /// Glyph cells currently occupying the atlas (empty glyphs excluded).
+    var packedGlyphCount: Int {
+        cache.values.count { $0.coverage != nil }
+    }
+
+    /// Occupied fraction of the atlas, 0...1, for diagnostics readouts.
+    var occupancy: Float {
+        Float(usedTexels) / Float(width * height)
     }
 
     /// Returns the cached entry for a system-font glyph, rasterizing + packing
@@ -83,7 +114,7 @@ final class UIGlyphAtlas {
             source: .system, fontKey: fontKey, glyphID: UInt16(glyphID), pixelSize: pixelSize
         )
         if let cached = cache[key] {
-            return cached
+            return cached.entry
         }
         var glyph = glyphID
         let bounds = CTFontGetBoundingRectsForGlyphs(ctFont, .default, &glyph, nil, 1)
@@ -93,7 +124,7 @@ final class UIGlyphAtlas {
             CTFontDrawGlyphs(ctFont, &mutableGlyph, &position, 1, context)
         }
         cache[key] = packed
-        return packed
+        return packed.entry
     }
 
     /// Returns the cached entry for an SWF-font glyph, rasterizing the supplied
@@ -113,9 +144,9 @@ final class UIGlyphAtlas {
             glyphID: UInt16(truncatingIfNeeded: glyphIndex), pixelSize: emPixelSize
         )
         if let cached = cache[key] {
-            return cached
+            return cached.entry
         }
-        let packed: UIGlyphEntry = if let path = makePath() {
+        let packed: PackedGlyph = if let path = makePath() {
             rasterize(bounds: path.boundingBoxOfPath) { context, box in
                 context.translateBy(x: CGFloat(box.drawX), y: CGFloat(box.drawY))
                 context.addPath(path)
@@ -125,115 +156,29 @@ final class UIGlyphAtlas {
             .empty
         }
         cache[key] = packed
-        return packed
+        return packed.entry
     }
 
-    /// A glyph's tight coverage cell: pixel size + the draw origin (offset that
-    /// shifts the baseline-relative bbox into the cell) + the left/top bearings.
-    private struct GlyphBox {
-        let width: Int
-        let height: Int
-        let drawX: Int
-        let drawY: Int
-        let bearingX: Int
-        let bearingY: Int
-    }
-
-    /// Shared rasterization: fit a tight cell to `bounds`, run `draw` into a
-    /// grayscale context, and shelf-pack the coverage. `draw` positions its
-    /// content using the box's draw origin (system glyphs via the draw
-    /// position, SWF paths via a context translate).
-    private func rasterize(
-        bounds: CGRect,
-        draw: (CGContext, GlyphBox) -> Void
-    ) -> UIGlyphEntry {
-        guard
-            let box = glyphBox(from: bounds),
-            let coverage = renderCoverage(box: box, draw: draw),
-            let placement = pack(cellWidth: box.width, cellHeight: box.height, coverage: coverage)
-        else { return .empty }
-        return UIGlyphEntry(
-            uvMin: SIMD2(Float(placement.x) / Float(width), Float(placement.y) / Float(height)),
-            uvMax: SIMD2(
-                Float(placement.x + box.width) / Float(width),
-                Float(placement.y + box.height) / Float(height)
-            ),
-            size: SIMD2(Float(box.width), Float(box.height)),
-            bearing: SIMD2(Float(box.bearingX), Float(box.bearingY))
-        )
-    }
-
-    /// A padded integer cell around a baseline-relative bounding box. `maxY` is
-    /// the cell top's height above the baseline (CG y-up). nil for an empty box.
-    private func glyphBox(from bounds: CGRect) -> GlyphBox? {
-        guard bounds.width > 0, bounds.height > 0, !bounds.isNull, !bounds.isInfinite else {
-            return nil
+    /// Clears the image to its initial state: everything transparent except the
+    /// reserved solid-white block top-left that backs untextured quads.
+    func clearImage() {
+        for index in pixels.indices {
+            pixels[index] = 0
         }
-        let minX = Int(bounds.minX.rounded(.down)) - Self.padding
-        let minY = Int(bounds.minY.rounded(.down)) - Self.padding
-        let maxX = Int(bounds.maxX.rounded(.up)) + Self.padding
-        let maxY = Int(bounds.maxY.rounded(.up)) + Self.padding
-        let box = GlyphBox(
-            width: maxX - minX, height: maxY - minY,
-            drawX: -minX, drawY: -minY, bearingX: minX, bearingY: maxY
-        )
-        guard box.width > 0, box.height > 0 else { return nil }
-        return box
-    }
-
-    /// Draws white-on-black into a tight grayscale bitmap, returning its
-    /// coverage bytes (top-left origin). Font smoothing off for determinism.
-    private func renderCoverage(box: GlyphBox, draw: (CGContext, GlyphBox) -> Void) -> [UInt8]? {
-        guard
-            let context = CGContext(
-                data: nil,
-                width: box.width,
-                height: box.height,
-                bitsPerComponent: 8,
-                bytesPerRow: 0,
-                space: CGColorSpaceCreateDeviceGray(),
-                bitmapInfo: CGImageAlphaInfo.none.rawValue
-            ) else { return nil }
-        context.setShouldAntialias(true)
-        context.setShouldSmoothFonts(false)
-        context.setAllowsFontSmoothing(false)
-        context.setFillColor(CGColor(gray: 1, alpha: 1))
-        draw(context, box)
-        guard let data = context.data else { return nil }
-        let bytesPerRow = context.bytesPerRow
-        var coverage = [UInt8](repeating: 0, count: box.width * box.height)
-        // CG bitmap memory row 0 is the image top -> copy directly, no flip.
-        for row in 0 ..< box.height {
-            let source = data.advanced(by: row * bytesPerRow).assumingMemoryBound(to: UInt8.self)
-            for col in 0 ..< box.width {
-                coverage[row * box.width + col] = source[col]
+        for row in 0 ..< Self.whiteBlock {
+            for col in 0 ..< Self.whiteBlock {
+                pixels[row * Self.dimension + col] = 255
             }
         }
-        return coverage
     }
 
-    /// Shelf-packs a cell, blitting its coverage into the atlas. nil when the
-    /// atlas is full (glyph dropped rather than overrunning).
-    private func pack(cellWidth: Int, cellHeight: Int, coverage: [UInt8]) -> (x: Int, y: Int)? {
-        if shelfX + cellWidth > width {
-            shelfY += shelfHeight + Self.padding
-            shelfX = 0
-            shelfHeight = 0
-        }
-        guard shelfX + cellWidth <= width, shelfY + cellHeight <= height else {
-            return nil
-        }
-        let originX = shelfX
-        let originY = shelfY
+    /// Writes one packed cell's coverage into the atlas image.
+    func blit(coverage: [UInt8], cellWidth: Int, cellHeight: Int, originX: Int, originY: Int) {
         for row in 0 ..< cellHeight {
             let destRow = (originY + row) * width + originX
             for col in 0 ..< cellWidth {
                 pixels[destRow + col] = coverage[row * cellWidth + col]
             }
         }
-        shelfX += cellWidth + Self.padding
-        shelfHeight = max(shelfHeight, cellHeight)
-        revision += 1
-        return (originX, originY)
     }
 }

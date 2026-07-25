@@ -20,6 +20,13 @@ nonisolated struct UIDrawStats: Equatable {
     var dropped = 0
     var atlasWidth = 0
     var atlasHeight = 0
+    /// Glyph cells the shared atlas currently holds (system + SWF fonts).
+    var atlasGlyphs = 0
+    /// Occupied fraction of the atlas, 0...1.
+    var atlasOccupancy: Float = 0
+    /// Glyphs dropped because the atlas was full, since the last eviction.
+    /// Non-zero means text is missing from the frame (issue #127).
+    var atlasPackFailures = 0
 }
 
 struct UIDrawList {

@@ -171,23 +171,31 @@ extension Renderer {
             Float(colorTexture?.width ?? 0), Float(colorTexture?.height ?? 0)
         )
         var stats = UIDrawStats(atlasWidth: atlas.width, atlasHeight: atlas.height)
+        defer { lastUIDrawStats = stats }
         guard uiEnabled, viewportPixels.x > 0, viewportPixels.y > 0 else {
-            lastUIDrawStats = stats
+            recordAtlasStats(into: &stats)
             return
         }
         let list = uiScene.resolve(viewportPixels: viewportPixels, scale: uiScale, atlas: atlas)
         uploadUIAtlasIfNeeded()
+        recordAtlasStats(into: &stats)
         let budgeted = list.budgeted(maxQuads: Self.uiQuadBudget)
         stats.quads = budgeted.quads
         stats.glyphs = list.glyphCount
         stats.dropped = budgeted.dropped
-        guard budgeted.quads > 0 else {
-            lastUIDrawStats = stats
-            return
-        }
+        guard budgeted.quads > 0 else { return }
         bindAndDrawUI(budgeted: budgeted, viewportPixels: viewportPixels, state: &state)
         stats.drawCalls = 1
-        lastUIDrawStats = stats
+    }
+
+    /// Mirrors the shared atlas's occupancy into the frame stats. The SWF layer
+    /// packs into the same atlas and encodes before the overlay, so these counts
+    /// cover both text sources.
+    private func recordAtlasStats(into stats: inout UIDrawStats) {
+        let atlas = uiResources.glyphAtlas
+        stats.atlasGlyphs = atlas.packedGlyphCount
+        stats.atlasOccupancy = atlas.occupancy
+        stats.atlasPackFailures = atlas.packFailures
     }
 
     private func bindAndDrawUI(
