@@ -74,6 +74,12 @@ enum OpenSkyCLI {
                                   function/structure stats, and a
                                   most-action-records movie ranking
       swf info <key>               Parse one movie; print header + tag list
+      audio info <key>            Frame one .xwm file; print WAVEFORMATEX codec
+                                  parameters, dpds packet table and payload
+                                  stats (framing only — no decode yet)
+      audio sweep                 Frame every .xwm the archives provide;
+                                  report per-file summaries plus a
+                                  files/framed/decoded/failed tally
       screenshot --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
              [--size WxH] [--zoom <f>] [--time-of-day <0-24>] [--neighbors]
              [--ui-sample]
@@ -227,6 +233,10 @@ enum OpenSkyCLI {
             )
         case "swf":
             try SWFCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
+        case "audio":
+            try AudioCommand.run(
                 context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
             )
         default:
