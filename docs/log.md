@@ -19,9 +19,11 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   references, and the legal notes on SWF, Havok, and `.ess` — so the context travels with
   the work instead of sitting in a file nobody opens mid-task. Labels `roadmap`,
   `acceptance-gate`, `format-parser`, and `app-ui` make the cross-milestone slices
-  queryable. The non-issue-shaped content moved to AGENTS.md under "Roadmap and open
-  work": how a fresh session picks up work from `gh` rather than a doc snapshot, and the
-  machine quirks (case-insensitive APFS volume, Xcode 26 without the Metal Toolchain,
+  queryable. The `OpenSky roadmap` project board holds all 88 open issues and groups on
+  the built-in `Milestone` field, so it needed no custom fields; it is a view over the
+  issues, never the source of truth. The non-issue-shaped content moved to AGENTS.md
+  under "Roadmap and open work": how a fresh session picks up work from `gh` rather than
+  a doc snapshot, and the machine quirks (case-insensitive APFS volume, Xcode 26 without the Metal Toolchain,
   CI suspended on Actions quota). `docs/` is now knowledge only, which is what OKF wanted
   it to be — `docs-wiki` and `format-parser` were updated to say so, and an item is
   closed by its PR (`Closes #NNN`) rather than by editing a checkbox. The ~40 historical

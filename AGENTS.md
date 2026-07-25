@@ -89,6 +89,11 @@ up from `gh`, not from a doc snapshot.
   (`Closes #NNN`) rather than editing a checklist by hand.
 - Labels: `roadmap` (came from the migrated roadmap), `acceptance-gate` (a milestone or
   sub-milestone gate), `format-parser`, `app-ui`.
+- Board view across milestones: the `OpenSky roadmap` project
+  (<https://github.com/users/jjgroenendijk/projects/7>), which holds every open issue
+  and groups by the built-in `Milestone` field. `gh project item-list 7 --owner
+  jjgroenendijk`. The board is a view, not the source of truth — issues and milestones
+  are.
 - Live branch and PR state comes from `gh pr list` + `git log` — never trust a snapshot
   written into a doc.
 - Milestone done -> close the GitHub milestone and record the outcome in `docs/log.md`.
