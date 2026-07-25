@@ -69,6 +69,11 @@ nonisolated final class AS2Object {
     /// Set on a `super` binding: calls through this object bind `this` to the
     /// stored value instead of to the binding itself.
     var superThis: AS2Value?
+    /// Set on a `super` binding: the prototype the superclass constructor this
+    /// binding calls belongs to. It becomes the called frame's
+    /// `AS2Frame.basePrototype`, so the next `super` up the chain resolves one
+    /// level higher instead of re-entering the same constructor (issue #136).
+    var superBase: AS2Object?
     /// Non-nil for array-like objects; one past the highest assigned index.
     private(set) var arrayLength: Int?
 

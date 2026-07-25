@@ -179,7 +179,8 @@ extension AS2Interpreter {
         case "this":
             return frame.thisValue
         case "super":
-            return superBinding(for: frame.thisValue).map(AS2Value.object) ?? .undefined
+            return superBinding(for: frame.thisValue, base: frame.basePrototype)
+                .map(AS2Value.object) ?? .undefined
         case "_global":
             return .object(runtime.globalObject)
         default:

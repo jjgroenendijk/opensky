@@ -120,18 +120,22 @@ extension AS2Interpreter {
 
     /// The `super` binding a method sees: an empty object whose prototype is
     /// the superclass prototype and whose calls re-bind `this` to the original
-    /// receiver. Nil when `this` has no prototype chain to climb.
-    func superBinding(for thisValue: AS2Value) -> AS2Object? {
-        guard
-            let object = thisValue.objectValue,
-            let prototype = object.prototype
-        else {
+    /// receiver. Nil when there is no prototype chain to climb.
+    ///
+    /// `base` is the prototype of the class whose method is running, which the
+    /// frame carries. Deriving the binding from the receiver instead would pin
+    /// it to `this.__proto__` for the whole chain, so the base constructor of a
+    /// three-level hierarchy would call itself until the depth cap fired
+    /// (issue #136). Only the class's own `__constructor__` counts: the
+    /// inherited one belongs to the superclass and would name the wrong parent.
+    func superBinding(for thisValue: AS2Value, base: AS2Object? = nil) -> AS2Object? {
+        guard let home = base ?? thisValue.objectValue?.prototype else {
             return nil
         }
-        let binding = AS2Object(prototype: prototype.prototype)
+        let binding = AS2Object(prototype: home.prototype)
         binding.superThis = thisValue
-        binding.callable = prototype
-            .lookup("__constructor__")?.property.value.objectValue?.callable
+        binding.superBase = home.prototype
+        binding.callable = home.ownProperty("__constructor__")?.value.objectValue?.callable
         return binding
     }
 }
