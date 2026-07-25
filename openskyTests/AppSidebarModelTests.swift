@@ -1,6 +1,6 @@
 // Sidebar structure for the unified shell (issue #98 PR 2): sections group in
 // declaration order, destinations keep registry order, empty sections drop,
-// and launch selects the Viewport. Pinned as unit assertions because make
+// and launch selects the World destination. Pinned as unit assertions because make
 // test-ui is blocked on the dev machine (TCC).
 
 @testable import opensky
@@ -11,7 +11,7 @@ struct AppSidebarModelTests {
     func groupsFollowSectionAndRegistryOrder() {
         let groups = AppSidebarModel.groups()
         #expect(groups.map(\.section) == [.world, .developer, .library])
-        #expect(groups[0].destinations.map(\.id) == ["viewport", "environment"])
+        #expect(groups[0].destinations.map(\.id) == ["world", "environment"])
         #expect(groups[1].destinations.map(\.id) == ["uiLab"])
         #expect(groups[2].destinations.map(\.id) == ["assetBrowser"])
     }
@@ -24,9 +24,9 @@ struct AppSidebarModelTests {
     }
 
     @Test
-    func defaultSelectionIsViewport() {
+    func defaultSelectionIsTheWorldDestination() {
         let id = DestinationRegistry.defaultDestinationID
-        #expect(id == "viewport")
+        #expect(id == "world")
         #expect(DestinationRegistry.destination(id: id) != nil)
     }
 

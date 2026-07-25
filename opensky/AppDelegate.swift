@@ -222,19 +222,42 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return mainMenu
     }
 
-    /// Sidebar visibility belongs in a discoverable, listed menu command rather
-    /// than an unadvertised keystroke (docs/tools/app-ui.md). `toggleSidebar(_:)`
-    /// resolves on the responder chain to the shell's split-view controller.
+    /// Shell chrome belongs in discoverable, listed menu commands rather than
+    /// unadvertised keystrokes (docs/tools/app-ui.md). Every action here
+    /// resolves on the responder chain to the shell's split-view controller,
+    /// which also validates them.
     private static func makeViewMenu() -> NSMenu {
         let viewMenu = NSMenu(title: "View")
-        let toggleSidebar = NSMenuItem(
+        viewMenu.addItem(viewMenuItem(
             title: "Hide Sidebar",
             action: #selector(NSSplitViewController.toggleSidebar(_:)),
-            keyEquivalent: "s"
-        )
-        toggleSidebar.keyEquivalentModifierMask = [.control, .command]
-        viewMenu.addItem(toggleSidebar)
+            keyEquivalent: "s",
+            modifiers: [.control, .command]
+        ))
+        viewMenu.addItem(viewMenuItem(
+            title: "Show Frame HUD",
+            action: #selector(AppShellViewController.toggleFrameHUD(_:)),
+            keyEquivalent: "h",
+            modifiers: [.option, .command]
+        ))
+        viewMenu.addItem(viewMenuItem(
+            title: "Hide Inspector",
+            action: #selector(AppShellViewController.toggleInspectorColumn(_:)),
+            keyEquivalent: "i",
+            modifiers: [.option, .command]
+        ))
         return viewMenu
+    }
+
+    private static func viewMenuItem(
+        title: String,
+        action: Selector,
+        keyEquivalent: String,
+        modifiers: NSEvent.ModifierFlags
+    ) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: keyEquivalent)
+        item.keyEquivalentModifierMask = modifiers
+        return item
     }
 
     @objc private func openSettings() {

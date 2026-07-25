@@ -25,8 +25,9 @@ enum SidebarSection: String, CaseIterable {
 
 /// The live-renderer bridges a world inspector panel may consume. The game
 /// controller conforms to all of them, so one value wires every panel.
-typealias WorldControlProviders = AnimationControlProviding & GrassControlProviding
-    & ParticleControlProviding & PrecipitationControlProviding & SWFLabControlProviding
+typealias WorldControlProviders = AnimationControlProviding & CameraControlProviding
+    & FrameStatsProviding & GrassControlProviding & ParticleControlProviding
+    & PrecipitationControlProviding & SWFLabControlProviding & SceneStatsProviding
     & ShadowControlProviding & TerrainLODControlProviding & UILabControlProviding
     & WeatherControlProviding
 
@@ -52,7 +53,9 @@ protocol FullContentReloadable: NSViewController {
 
 /// How a destination fills the content area.
 enum DestinationContent {
-    /// The bare always-live game view, no inspector panel.
+    /// The bare always-live game view, no inspector panel. No sidebar row uses
+    /// this: hiding the inspector column is a View-menu mode over whichever
+    /// world destination is selected, not a destination of its own.
     case viewport
     /// An inspector panel shown beside the always-live game view.
     case worldInspector(makePanel: @MainActor (WorldPanelContext) -> any InspectorPanel)
@@ -97,16 +100,26 @@ struct DestinationDescriptor {
 
 /// The registered destinations, in sidebar order.
 enum DestinationRegistry {
-    /// Selected on launch: the plain live render.
-    static let defaultDestinationID = "viewport"
+    /// Selected on launch: the live render plus its camera/frame/scene readouts.
+    static let defaultDestinationID = "world"
 
     static let all: [DestinationDescriptor] = [
         DestinationDescriptor(
-            id: "viewport",
-            title: "Viewport",
+            id: "world",
+            title: "World",
             section: .world,
             symbolName: "cube.transparent",
-            content: .viewport
+            content: .worldInspector { context in
+                let panel = WorldPanelViewController()
+                panel.cameraProvider = context.providers
+                panel.frameStatsProvider = context.providers
+                panel.sceneStatsProvider = context.providers
+                // None of the panel's own provider seams carry refocus, so the
+                // factory supplies it from the full provider set.
+                let providers = context.providers
+                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                return panel
+            }
         ),
         DestinationDescriptor(
             id: "environment",

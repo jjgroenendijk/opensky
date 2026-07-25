@@ -4,6 +4,62 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-25
 
+* **Always-on frame HUD and the View-menu commands that go with it**: the frame and
+  scene numbers were readable only while the `World` inspector was the frontmost
+  destination, so a stutter noticed while flying around under `Environment` or `UI Lab`
+  could not be read without changing destination first. A small `FrameHUDView` overlay now
+  sits in the top-trailing corner of the game slot in every destination that shows the
+  game view — fps, frame milliseconds, GPU or `n/a`, draw calls, drawn and culled
+  instances, resident cells and process footprint — reading the same
+  `FrameStatsProviding` and `SceneStatsProviding` snapshots the `World` panel reads, so
+  the two surfaces cannot quote different numbers, and refreshing on the shared 2 Hz
+  `InspectionTicker`. It is an AppKit view rather than a render pass on purpose: it needs
+  no shader work, and it must stay out of `Renderer.renderOffscreen`, which feeds
+  `openskycli screenshot`, the bench loop and every offscreen evidence capture. Chrome
+  encoded into the scene pass would burn itself into those images; an overlay view cannot,
+  because the offscreen path never touches the view hierarchy. The HUD hides itself, and
+  stops its ticker, whenever a full-content destination covers the game view, so a hidden
+  HUD costs nothing. `View` gains `Show Frame HUD` (Option+Command+H, checkmarked, the
+  choice persisted under the `frameHUD.visible` default) and `Hide Inspector`
+  (Option+Command+I), which drives the `.viewport` content kind that the retired
+  `Viewport` row used to be the only way to reach. Both validate on the shell:
+  `Hide Inspector` greys out on a destination that has no inspector column, rather than
+  silently doing nothing.
+* **`Viewport` becomes the `World` destination**: the first sidebar row was not a
+  destination at all — it rendered no content of its own, showed no numbers, and its only
+  effect was to collapse the inspector column, so the app opened on a view that gave a
+  first-time user no hint that any controls existed. It is now `World`
+  (`Destination-world`, the launch default), a `worldInspector` panel composed of three
+  sections over the provider seams landed earlier today: `Camera` (live position, yaw and
+  pitch in degrees, exterior cell, a fly/walk selector that gives the `G` key a visible
+  settable surface, and a "Copy pose" button that puts the shared
+  `cameraPoseDescription` on the pasteboard so a bug report can carry an exact camera),
+  `Frame` (fps, average and worst frame milliseconds, CPU encode, GPU or `n/a`), and
+  `Scene` (draw calls, drawn and culled instances, resident cells, process footprint).
+  The `Frame` readout distinguishes "measuring" — no 30-frame window has closed yet —
+  from a genuine zero, which the raw `.empty` snapshot would otherwise render as 0 fps.
+  The `.viewport` content kind stays as the mechanism for hiding the inspector column,
+  now with no sidebar row using it; the View-menu command that drives it lands
+  next. `Destination-viewport` is retired in favour of
+  `Destination-world` in both the unit-pinned id contract and the UI tests.
+* **Live frame, camera and scene stats seam**: the frame timing the engine already
+  measures left `FrameStats` only as one os_log line per 120-frame window, which is the
+  milestone 2.9 fps gate and therefore not something a UI readout may reset or re-window.
+  `FrameStats` now runs a second 30-frame window in parallel and publishes it as
+  `FrameStatsSnapshot` (fps, average and worst frame milliseconds, CPU encode, optional
+  GPU milliseconds, sample count), with its own `sampleTimestamps` correlation pair so a
+  reader never moves the log window's boundary. Only the published snapshot crosses
+  threads, behind an `OSAllocatedUnfairLock`; the accumulators stay confined to the render
+  callback, which is what makes a 2 Hz poll from the main thread safe while frames are
+  recording. Three provider protocols join the existing `*ControlProviding` family:
+  `CameraControlProviding` (pose, exterior cell, settable fly/walk mode — the `G` key
+  becomes an accelerator rather than the only affordance — and a `cameraPoseDescription`
+  formatted once in a protocol extension so two readouts of one camera cannot disagree),
+  `FrameStatsProviding`, and `SceneStatsProviding` (draw calls, drawn and culled
+  instances, resident cell count, process footprint). `GameViewController` conforms in the
+  new `GameViewControllerWorldStats.swift`, degrading to documented empty snapshots when
+  there is no renderer or streamer. This is the seam only; the World panel and the frame
+  HUD that consume it land next.
 * **Dev-shell framework: spacing scale, component vocabulary, lazy panels, id
   convention**: follow-up to the shell bug fixes, aimed at the destination count the
   roadmap implies (five more named in `todo.md`). Panel spacing was one 8pt constant

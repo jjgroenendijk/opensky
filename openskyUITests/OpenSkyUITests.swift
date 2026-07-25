@@ -51,6 +51,24 @@ final class OpenSkyUITests: XCTestCase {
         XCTAssertTrue(app.buttons["ScreenshotButton"].exists)
     }
 
+    /// World sidebar surface: the launch destination is the World panel, which
+    /// carries the camera/frame/scene readouts and the fly/walk selector that
+    /// the `G` key accelerates.
+    @MainActor
+    func testWorldDestinationShowsCameraAndStats() throws {
+        let app = try launchApp()
+        let sidebar = app.outlines["AppSidebar"]
+        XCTAssertTrue(sidebar.waitForExistence(timeout: 5))
+        sidebar.cells["Destination-world"].firstMatch.click()
+
+        let mode = app.popUpButtons["CameraMovementModeControl"]
+        XCTAssertTrue(mode.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["CameraCopyPoseControl"].exists)
+        XCTAssertTrue(app.staticTexts["CameraStatsLabel"].exists)
+        XCTAssertTrue(app.staticTexts["FrameStatsLabel"].exists)
+        XCTAssertTrue(app.staticTexts["SceneStatsLabel"].exists)
+    }
+
     /// World > Environment sidebar surface (M7.1.2): the sidebar lists the
     /// Environment destination, selecting it exposes the sun-shadow quality
     /// control + live stats readout, particle controls, and only implemented LOD values.
