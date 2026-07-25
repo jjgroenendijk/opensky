@@ -45,8 +45,9 @@ final class GameViewController: NSViewController {
     }
 
     /// Retains the streaming controller (and, through it, the build runner +
-    /// provider) for the window's lifetime.
-    private var streamer: CellStreamer?
+    /// provider) for the window's lifetime. Readable by the world-stats bridge
+    /// (GameViewControllerWorldStats.swift); only this file assigns it.
+    private(set) var streamer: CellStreamer?
     /// Free-fly input shared with the renderer; the view writes it from
     /// NSEvents, the renderer drains it each frame (todo 2.8).
     private let cameraInput = CameraInputState()

@@ -4,6 +4,24 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-25
 
+* **Live frame, camera and scene stats seam**: the frame timing the engine already
+  measures left `FrameStats` only as one os_log line per 120-frame window, which is the
+  milestone 2.9 fps gate and therefore not something a UI readout may reset or re-window.
+  `FrameStats` now runs a second 30-frame window in parallel and publishes it as
+  `FrameStatsSnapshot` (fps, average and worst frame milliseconds, CPU encode, optional
+  GPU milliseconds, sample count), with its own `sampleTimestamps` correlation pair so a
+  reader never moves the log window's boundary. Only the published snapshot crosses
+  threads, behind an `OSAllocatedUnfairLock`; the accumulators stay confined to the render
+  callback, which is what makes a 2 Hz poll from the main thread safe while frames are
+  recording. Three provider protocols join the existing `*ControlProviding` family:
+  `CameraControlProviding` (pose, exterior cell, settable fly/walk mode — the `G` key
+  becomes an accelerator rather than the only affordance — and a `cameraPoseDescription`
+  formatted once in a protocol extension so two readouts of one camera cannot disagree),
+  `FrameStatsProviding`, and `SceneStatsProviding` (draw calls, drawn and culled
+  instances, resident cell count, process footprint). `GameViewController` conforms in the
+  new `GameViewControllerWorldStats.swift`, degrading to documented empty snapshots when
+  there is no renderer or streamer. This is the seam only; the World panel and the frame
+  HUD that consume it land next.
 * **Dev-shell framework: spacing scale, component vocabulary, lazy panels, id
   convention**: follow-up to the shell bug fixes, aimed at the destination count the
   roadmap implies (five more named in `todo.md`). Panel spacing was one 8pt constant

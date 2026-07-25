@@ -302,6 +302,24 @@ bounds equal source bounds within 0.01 units, lit pixels >1%.
   category `FrameStats`): avg/max frame interval + fps, avg CPU encode, avg GPU ms;
   os_signpost interval per frame for Instruments. This is the measurable basis for the
   2.9 >30 fps gate.
+* Live readouts read a second, shorter window instead of that log line.
+  `FrameStats.snapshot() -> FrameStatsSnapshot` returns the last closed 30-frame window
+  (~0.5 s at 60 fps): `fps`, `frameMS`, `maxFrameMS`, `encodeMS`, optional `gpuMS`, and
+  `sampleCount` (zero, `FrameStatsSnapshot.empty`, before the first window closes — a
+  readout distinguishes "measuring" from "zero fps" through `hasMeasurement`). The live
+  window accumulates the same per-frame measurements on its own cadence and keeps its own
+  `MTLDevice.sampleTimestamps` correlation pair, so nothing a reader does moves the
+  120-frame window's boundary, counters, or log line. Thread safety: the accumulators stay
+  confined to the render callback, and only the published snapshot crosses threads, behind
+  an `OSAllocatedUnfairLock` — so a 2 Hz poll from the main thread can never observe a
+  half-updated window.
+* The snapshot reaches the app through `FrameStatsProviding`, alongside
+  `CameraControlProviding` (pose, cell, fly/walk mode, `cameraPoseDescription`) and
+  `SceneStatsProviding` (`SceneDrawStats` + resident cell count + process footprint) in
+  `opensky/EnvironmentControlProviding.swift`. `GameViewController` implements all three
+  in `GameViewControllerWorldStats.swift`, degrading to the documented empty snapshots
+  with no renderer or streamer. Every consumer polls the same snapshot, so two readouts of
+  one frame cannot disagree.
 
 ## Offscreen render + sustained bench
 

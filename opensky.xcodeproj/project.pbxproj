@@ -42,6 +42,7 @@
 				GameViewControllerSWFLab.swift,
 				GameViewControllerSWFRuntime.swift,
 				GameViewControllerUILab.swift,
+				GameViewControllerWorldStats.swift,
 				OpenSkyApp.swift,
 				PreviewDetailBuilder.swift,
 				PreviewViewController.swift,

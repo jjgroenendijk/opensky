@@ -104,6 +104,17 @@ private final class FakeWorldProviders: WorldControlProviders {
     func sendSWFRuntimeInput(_: SWFInputEvent) {}
     func callSWFRuntimeMovie(_: String) {}
     func clearSWFInvokeLog() {}
+
+    // CameraControlProviding (cameraPoseDescription comes from the protocol
+    // extension, deliberately not overridden here).
+    var cameraPose = CameraPoseSnapshot.unavailable
+    var movementMode = CameraMovementMode.fly
+
+    /// FrameStatsProviding
+    var frameStatsSnapshot = FrameStatsSnapshot.empty
+
+    /// SceneStatsProviding
+    var sceneStatsSnapshot = SceneStatsSnapshot.empty
 }
 
 struct DestinationRegistryTests {

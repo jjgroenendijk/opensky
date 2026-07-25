@@ -25,8 +25,9 @@ enum SidebarSection: String, CaseIterable {
 
 /// The live-renderer bridges a world inspector panel may consume. The game
 /// controller conforms to all of them, so one value wires every panel.
-typealias WorldControlProviders = AnimationControlProviding & GrassControlProviding
-    & ParticleControlProviding & PrecipitationControlProviding & SWFLabControlProviding
+typealias WorldControlProviders = AnimationControlProviding & CameraControlProviding
+    & FrameStatsProviding & GrassControlProviding & ParticleControlProviding
+    & PrecipitationControlProviding & SWFLabControlProviding & SceneStatsProviding
     & ShadowControlProviding & TerrainLODControlProviding & UILabControlProviding
     & WeatherControlProviding
 
