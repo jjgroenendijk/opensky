@@ -59,7 +59,7 @@ only where `--out` points (AGENTS.md Legal & IP).
 | `swf action-sweep [--movie substring] [--limit n]` | decode every movie's action side (main-timeline + sprite DoAction, CLIPACTIONS, DoInitAction) through `SWFActionInventory`; per-movie line (blocks, records, distinct opcodes, unknown, undecoded, warnings), then `swf action-sweep opcodes:` (every observed opcode descending by count, `0x<hex> <name-or-unknown> <count> <movies>`), `swf action-sweep unknown:` (opcodes absent from `SWFActionName`, expect 0), `swf action-sweep hostapi:` (member/method names structurally resolved from the immediately preceding `ActionPush`, capped by `--limit`, default 120), `swf action-sweep clipevents:` (per-`SWFClipEventFlags` handler usage, fixed bit order), `swf action-sweep structure:` (DefineFunction/2, register/With/Try/ConstantPool counts, largest block), and `swf action-sweep ranking:` (top 20 movies by action-record count); `--movie` filters by path substring; any decode failure exits 1, and reported unknown opcodes fail the probe gate even though the command itself does not exit non-zero for them |
 | `swf info <key>` | parse one movie and print its header line plus every tag (code, name or "unknown", body byte count) |
 | `audio info <key>` | frame one `.xwm` through `XWMFile` and print its WAVEFORMATEX fields (`wFormatTag`, `nChannels`, `nSamplesPerSec`, `nAvgBytesPerSec`, `nBlockAlign`, `wBitsPerSample`, `cbSize`), payload size + packet count, `dpds` entry count, declared decoded bytes/sample frames, and whether the packet table matches the payload; framing only, no decode |
-| `audio sweep` | frame every `.xwm` the archives provide through `XWMFile`, streaming one file at a time; per-file summary line (channels, rate, block align, packets, payload bytes, declared duration) plus `audio sweep:` (files, framed, decoded, unsupported, failed), `audio sweep format:` (format-tag/channel/rate/block-align/cbSize histograms), `audio sweep packets:` (files without `dpds`, `dpds`/packet mismatches, partial final packets), and `audio sweep payload:` (total bytes, declared minutes); an unexpected format tag counts as unsupported, any framing failure exits 1. The `decoded` column is 0 until the WMA decoder lands (M9.1.1) |
+| `audio sweep` | frame every `.xwm` the archives provide through `XWMFile` and decode it packet-by-packet through `WMADecoder`, streaming one file at a time (per-chunk PCM is counted and dropped); per-file summary line (channels, rate, block align, packets, payload bytes, declared duration) plus `audio sweep:` (files, framed, decoded, unsupported, failed), `audio sweep decode:` (total decoded frames, frame-count mismatches against `dpds`), `audio sweep format:` (format-tag/channel/rate/block-align/cbSize histograms), `audio sweep packets:` (files without `dpds`, `dpds`/packet mismatches, partial final packets), and `audio sweep payload:` (total bytes, declared minutes); an unexpected format tag counts as unsupported, any framing or decode failure exits 1 |
 | `screenshot --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f] [--time-of-day 0-24] [--neighbors] [--ui-sample]` | cell scene build + distant LOD -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load/LOD/draw stats + non-background fraction; `--zoom` (0.1-10) moves eye toward framed center; `--time-of-day` controls procedural sky (default 13); `--neighbors` builds production-size 5x5 (shared libraries) and frames full-cell bounds only; missing cell warns + skips; `--ui-sample` sets `uiScene = .labSample` ([screen-space UI](/rendering/ui.md)) and prints its quad/glyph/dropped/atlas stats; `render` is identical alias |
 | `bench [--worldspace/--x/--y] [--size WxH] [--frames n] [--budget-ms f]` | sustained offscreen render (default 360 frames @ 1280x720) through `Renderer.renderOffscreenSustained` — FrameStats windows + per-frame wall and animation-update times; prints avg/p95/max + fps, exit 1 when avg or p95 misses the budget (default 33.33 ms = 30 fps, todo 2.11 gate) |
 | `bench --fly-path [--worldspace/--x/--y] [--size WxH] [--budget-ms f] [--max-frames n] [--footprint-cap-mb f] [--collision-build-budget-ms f] [--actor-build-budget-ms f] [--animation-budget-ms f] [--shadow-budget-ms f]` | scripted launch-center -> east -> north cell flight through live `CellStreamer`; requires physical-footprint plateau/cap, exact 35-cell build union, zero failed builds, collision-build p95 (default 750 ms), actor-build p95 (default 4500 ms; includes cold rig/clip decode), exact/reason-tagged actor + animation accounting, animation-update avg/p95 (default 4 ms), shadow-update avg/p95 (default 14 ms), selected rainy weather, updated actor bones, live world particles + rain, shadow casters, drawn grass with zero hard-budget drops, and frame avg/p95 budget; prints living-system peaks, build/update budgets, per-cell accounting, shadow culling + grass instancing |
@@ -156,15 +156,17 @@ Implementation notes:
   blocks (2,163 DoAction, 1,127 DoInitAction, 124 ClipActions), 533,562 action
   records, 56 distinct opcodes, 0 unknown, 3,382 distinct host-API names. See
   [SWF container](/formats/swf.md).
-* `audio sweep` is the milestone 9.1.2 gate probe. It enumerates every archive
-  path ending `.xwm` and frames each through the production `XWMFile` container
-  parser, keeping only counts and histograms — one file's bytes are read,
-  tallied and dropped before the next path opens, because an unbounded audio
-  sweep is exactly the shape that has run this machine out of memory. Vanilla
-  install: 269 files, 269 framed, 0 unsupported, 0 failed, all
-  WAVE_FORMAT_WMAUDIO2 stereo, 0 `dpds` mismatches, 347.0 declared minutes. The
-  tally's `decoded` column is 0 for now: this stage frames and validates only,
-  and the decoder arrives with M9.1.1. See [xWMA container](/formats/xwm.md).
+* `audio sweep` is the milestone 9.1.2 + 9.1.3 gate probe. It enumerates every
+  archive path ending `.xwm`, frames each through the production `XWMFile`
+  container parser and decodes it packet-by-packet through `WMADecoder`,
+  keeping only counts and histograms — one file's bytes are read, decoded chunk
+  by chunk, tallied and dropped before the next path opens, because an
+  unbounded audio sweep is exactly the shape that has run this machine out of
+  memory. Vanilla install: 269 files, 269 framed, 269 decoded, 0 unsupported,
+  0 failed, all WAVE_FORMAT_WMAUDIO2 stereo, 0 `dpds` mismatches, 869,476,352
+  decoded frames with 0 frame-count mismatches, 347.0 declared minutes. See
+  [xWMA container](/formats/xwm.md) and
+  [World audio playback](/engine/audio.md).
 * `hkx` is M6.1's container probe. It parses the Havok packfile via shared `HKXFile`
   (header + section table + class-name table + fixup-derived object inventory) and only
   prints; object internals stay later milestones (needs class reflection). CLI parses/

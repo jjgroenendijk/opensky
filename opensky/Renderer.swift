@@ -5,33 +5,6 @@ import MetalKit
 import QuartzCore
 import simd
 
-/// GPU resources retired by a scene swap, still possibly referenced by
-/// frames in flight when they were retired. The strong references here keep
-/// the allocations alive; residency-set removal waits until
-/// `endFrameEvent.signaledValue` proves `lastFrameIndex` drained.
-nonisolated private struct RetiredAllocations {
-    /// Highest frame index that may still reference these allocations.
-    let lastFrameIndex: UInt64
-    let allocations: [MTLAllocation]
-}
-
-nonisolated enum RendererError: Error {
-    case deviceUnavailable
-    case commandQueueUnavailable
-    case commandBufferUnavailable
-    case commandAllocatorUnavailable
-    case sharedEventUnavailable
-    case bufferAllocationFailed
-    case defaultLibraryMissing
-    case pipelineAttachmentMissing
-    case depthStateAllocationFailed
-    case samplerAllocationFailed
-    case textureAllocationFailed
-    case encoderUnavailable
-    case gpuTimeout
-    case offscreenPumpTimedOut(maxFrames: Int)
-}
-
 final class Renderer: NSObject {
     /// Members below default to internal (not private) where
     /// RendererOffscreen.swift / RendererSetup.swift extend the loop
@@ -131,6 +104,11 @@ final class Renderer: NSObject {
     var currentResolvedWeather: ResolvedWeather?
     /// Wall-clock delta source for the weather runtime, paused in menu mode.
     var weatherClock = FrameSimClock()
+    /// World audio playback graph; nil until the app wires one (offscreen and
+    /// CLI paths stay silent). Ticked by RendererAudio.swift.
+    var worldAudio: WorldAudioEngine?
+    /// Wall-clock delta source for the audio tick, paused in menu mode.
+    var audioClock = FrameSimClock()
     let precipitation: PrecipitationVolume
     var precipitationEnabled = true
     var particlesEnabled = true

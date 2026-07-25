@@ -25,11 +25,11 @@ enum SidebarSection: String, CaseIterable {
 
 /// The live-renderer bridges a world inspector panel may consume. The game
 /// controller conforms to all of them, so one value wires every panel.
-typealias WorldControlProviders = AnimationControlProviding & CameraControlProviding
-    & FrameStatsProviding & GrassControlProviding & ParticleControlProviding
-    & PrecipitationControlProviding & SWFLabControlProviding & SceneStatsProviding
-    & ShadowControlProviding & TerrainLODControlProviding & UILabControlProviding
-    & WeatherControlProviding
+typealias WorldControlProviders = AnimationControlProviding & AudioControlProviding
+    & CameraControlProviding & FrameStatsProviding & GrassControlProviding
+    & ParticleControlProviding & PrecipitationControlProviding & SWFLabControlProviding
+    & SceneStatsProviding & ShadowControlProviding & TerrainLODControlProviding
+    & UILabControlProviding & WeatherControlProviding
 
 /// Passed to a world-inspector factory so the panel can wire its providers.
 @MainActor
@@ -134,6 +134,19 @@ enum DestinationRegistry {
                 panel.particleProvider = context.providers
                 panel.precipitationProvider = context.providers
                 panel.grassProvider = context.providers
+                return panel
+            }
+        ),
+        DestinationDescriptor(
+            id: "audio",
+            title: "Audio",
+            section: .world,
+            symbolName: "speaker.wave.2",
+            content: .worldInspector { context in
+                let panel = AudioPanelViewController()
+                panel.provider = context.providers
+                let providers = context.providers
+                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
                 return panel
             }
         ),

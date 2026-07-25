@@ -161,9 +161,11 @@ archives, 2026-07-25:
 | payload                | 125,908,870 bytes, 347.0 minutes declared    |
 
 No file names or bytes leave the install; the sweep prints counts and per-file
-summary lines only. The tally line carries a `decoded` column that stays 0 until
-the WMA decoder lands (milestone 9.1.1) — the probe grep gates `0 failed`, so
-the line shape does not change when decoding is wired in.
+summary lines only. Since milestone 9.1.3 the sweep also decodes each file
+streaming through `WMADecoder` (extradata policy in
+[World audio playback](/engine/audio.md)): all 269 decode, 869,476,352 frames
+total, and every file's decoded frame count equals what its `dpds` table
+declares. The probe grep gates `0 failed` as before.
 
 Sample rate and block align pair up: 2230-byte packets go with 44.1 kHz,
 2304-byte packets with 32 kHz. The single 48 kHz file with 1008-byte packets is

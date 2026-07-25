@@ -1,7 +1,7 @@
 // `audio info <path>` inspects one `.xwm` file through the production
-// `XWMFile` container parser; `audio sweep` frames every `.xwm` the install
-// provides (milestone 9.1.2 gate, gated in tools/probe.sh). Framing only —
-// decoding to PCM arrives with the WMA decoder (milestone 9.1.1).
+// `XWMFile` container parser; `audio sweep` frames and WMA-decodes every
+// `.xwm` the install provides (milestones 9.1.2 + 9.1.3, gated in
+// tools/probe.sh).
 
 import Foundation
 

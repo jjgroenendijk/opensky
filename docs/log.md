@@ -4,6 +4,35 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-25
 
+* **World audio playback engine + `World > Audio` (M9.1.3)**: an `AVAudioEngine`
+  graph turns the framed + decoded `.xwm` work of 9.1.1/9.1.2 into audible,
+  positioned sound. One `AVAudioEnvironmentNode` does the 3D mixing over mono
+  player-node inputs (stereo sources are downmixed — the environment node passes
+  stereo through unspatialized); provisional category submixes (music, effects,
+  ambience — renamed once 9.2.1 decodes `SNDR`/`SDSC`) and the main mixer as
+  master volume multiply as effective gain = master x category x source. The
+  world-to-listener conversion is written down in `opensky/Audio/AudioSpace.swift`
+  and the doc: Z-up native units -> Y-up meters via `(x, y, z) -> (x, z, -y)`
+  times 0.0142875. Streaming: `AudioSourceStreamer` confines each non-Sendable
+  `WMADecoder` to one serial decode queue, schedules 16-packet (~0.75 s) chunks
+  at most 3 ahead, and runs no OpenSky code on the audio render thread. Budget:
+  8 concurrent sources, FIFO eviction, finished-stream retirement and a
+  3-ring cell purge on the renderer's `updateAudioFromWallClock()` tick (own
+  `FrameSimClock`, gated on `worldSimPaused`). The decoder-side extradata policy
+  the container parser declined now lives in `AudioCodecParameters(xwm:)`:
+  empty `cbSize` extradata becomes ffmpeg's synthesized six-byte WMAv2 block
+  (byte 4 = 31, per `libavformat/xwma.c`). With it, `openskycli audio sweep`
+  now decodes the whole vanilla corpus streaming: 269/269 decoded, 869,476,352
+  frames, 0 frame-count mismatches against `dpds`, 0 failures. New sidebar
+  destination `World > Audio` (Output + Sources sections, ids
+  `AudioEnabledControl`, `AudioMasterVolumeControl`,
+  `Audio<Category>VolumeControl`, `AudioFileControl`,
+  `AudioPlaySelectedControl`, `AudioStopAllControl`, `AudioStatsLabel`,
+  `AudioSourcesStatsLabel`) triggers a positional source ~10 m ahead of the
+  camera. Deterministic coverage renders the graph offline: channel balance for
+  known poses, distance attenuation, the volume product, master-zero silence,
+  cap eviction and cell purge, with no device and no audible playback. See
+  [World audio playback](/engine/audio.md).
 * **`.xwm` (xWMA) container framing added** (`opensky/Formats/XWM/`): Skyrim SE's music
   is Microsoft's xWMA — a RIFF form carrying a WMAv2 stream in `nBlockAlign`-sized
   packets. `XWMFile` frames and validates it and deliberately decodes nothing: it
