@@ -176,11 +176,19 @@ nonisolated struct AudioSourceStatsSnapshot: Equatable {
     /// VFS path of the playing file.
     let name: String
     let categoryName: String
-    /// World position in native Skyrim units.
+    /// False for a non-positional source (music beds routed to a category
+    /// submix): its position and distance are not meaningful.
+    let isPositional: Bool
+    /// World position in native Skyrim units. Zero when not positional.
     let worldPosition: SIMD3<Float>
-    /// Listener distance in meters (the attenuation model's unit).
+    /// Listener distance in meters (the attenuation model's unit). Zero when
+    /// not positional.
     let distanceMeters: Float
-    /// master x category x source gain, before distance attenuation.
+    /// Fade multiplier in [0, 1] currently folded into the gain. 1 = not faded.
+    let fadeGain: Float
+    /// True while a gain ramp is in flight on this source.
+    let isFading: Bool
+    /// master x category x source x fade gain, before distance attenuation.
     let effectiveGain: Float
 }
 

@@ -1,10 +1,11 @@
 ---
 type: Subsystem
 title: World audio playback
-description: AVAudioEngine graph with 3D positional sources, streaming WMA decode,
-  provisional category volumes, source budget, and the World > Audio surface.
+description: AVAudioEngine graph with 3D positional sources, non-positional submix
+  playback, gain ramps, streaming WMA decode, provisional category volumes, source
+  budget, and the World > Audio surface.
 tags: [engine, audio, playback, spatial]
-timestamp: 2026-07-25T00:00:00Z
+timestamp: 2026-07-26T00:00:00Z
 ---
 
 # World audio playback
@@ -15,6 +16,7 @@ the CLI. Consumes the [xWMA container parser](/formats/xwm.md) and the
 [vendored ffmpeg WMA decoder](/decisions/ffmpeg-audio.md). Implementation:
 `opensky/Audio/WorldAudioEngine.swift` (graph, volumes),
 `WorldAudioEngineSources.swift` (source lifecycle),
+`WorldAudioEngineFades.swift` (gain ramps),
 `WorldAudioEngineSnapshot.swift` (published UI state),
 `AudioSourceStreamer.swift` (streaming decode), `AudioSpace.swift` (coordinate
 conversion), `AudioCategory.swift` (provisional categories),
@@ -29,8 +31,8 @@ enable and handed to the renderer for the per-frame tick:
 ```text
 positional AVAudioPlayerNode (mono, one per source)
     --> AVAudioEnvironmentNode --> main mixer --> output device
-category submix AVAudioMixerNode (music/effects/ambience)
-    ------------------------------->--/
+non-positional AVAudioPlayerNode (stereo, one per source)
+    --> category submix AVAudioMixerNode (music/effects/ambience) --->--/
 ```
 
 * The environment node does the 3D mixing. Its inputs must be **mono** — it
@@ -39,14 +41,22 @@ category submix AVAudioMixerNode (music/effects/ambience)
 * Per-source rendering algorithm is `.equalPowerPanning`: deterministic and
   cheap, which is what the offline-render tests need. HRTF selection is a
   later decision alongside the M9.2 attenuation data.
-* Category submixes exist for future non-positional beds (music, ambience
-  loops). A positional source cannot route through one — each source needs its
-  own environment-node input — so its category volume is applied at its player
-  node instead. Both paths use the same stored per-category volume, so they
-  cannot disagree.
-* Volumes multiply as: **effective gain = master x category x source**. Master
-  is `mainMixerNode.outputVolume`; category x source is the player node's
-  `volume`. Distance attenuation applies after all three.
+* Category submixes carry the **non-positional** path: a source with no world
+  position (music, and any other 2D bed) keeps the file's own channel layout,
+  connects straight into `categoryMixers[category]`, and gets no panning, no
+  distance attenuation and no position. A positional source cannot route
+  through a submix — each needs its own environment-node input — so it carries
+  its category factor at its player node instead.
+* Routing is explicit, not inferred from the category: `AudioRouting`
+  (`.positional` / `.nonPositional`) is recorded on `ActiveAudioSource` by the
+  play call that started it, and surfaces in the snapshot as `isPositional`.
+* Volumes multiply as: **effective gain = master x category x source x fade**.
+  Master is `mainMixerNode.outputVolume`; the fade is the ramp factor below.
+  The category factor is applied **exactly once**: at the player node for a
+  positional source, at the submix for a non-positional one (applying it at
+  both would square it). The player node's `volume` therefore holds
+  `category x source x fade` when positional and `source x fade` when not.
+  Distance attenuation applies after all of it, and only to positional sources.
 * Engine off by default; enabling it in the panel starts it. A start failure
   (no output device) is captured as `unavailableReason` and shown in the
   readout — it never crashes and never blocks the render loop.
@@ -103,10 +113,16 @@ panel is the Equatable `AudioStatsSnapshot`, read at 2 Hz by the
 
 ## Budget, eviction, cleanup
 
-* **Cap**: `WorldAudioEngine.maxConcurrentSources = 8` (provisional).
-* **Eviction**: starting a source at the cap stops the **oldest** playing
-  source first (FIFO by start order). Predictable and matches how one-shot
-  effects naturally expire; a priority scheme waits for game-authored data.
+* **Cap**: `WorldAudioEngine.maxConcurrentSources = 8` (provisional), counting
+  **positional sources only**.
+* **Eviction**: starting a positional source at the cap stops the **oldest**
+  playing positional source first (FIFO by start order). Predictable and
+  matches how one-shot effects naturally expire; a priority scheme waits for
+  game-authored data.
+* **Non-positional exemption**: a music bed is outside the budget and outside
+  the cell purge. It is never evicted by a burst of effects and never stopped
+  because the world streamed away — it has no meaningful cell. Only an explicit
+  stop, a completed fade-out, or the engine shutting down ends one.
 * **Retirement**: a streamer that played its last buffer sets its finished
   flag; the next tick stops and detaches the node.
 * **Looping**: `AudioPlayRequest.loops` starts a continuous source (the
@@ -118,9 +134,41 @@ panel is the Equatable `AudioStatsSnapshot`, read at 2 Hz by the
   decoder cannot use can never spin the decode queue. The buffer-backed test
   seam expresses the same request through `AVAudioPlayerNode`'s own `.loops`
   scheduling option.
-* **Cell unload**: each source records the exterior cell of its position;
-  the tick stops sources more than `cellPurgeRadius = 3` Chebyshev rings from
-  the listener's cell (one ring beyond the streamer's default 5x5 residency).
+* **Cell unload**: each positional source records the exterior cell of its
+  position; the tick stops sources more than `cellPurgeRadius = 3` Chebyshev
+  rings from the listener's cell (one ring beyond the streamer's default 5x5
+  residency).
+
+## Gain ramps (the crossfade primitive)
+
+Every source carries a **fade gain** in [0, 1], multiplied into its node volume
+on top of the per-source gain. `GainFade` (`WorldAudioEngineFades.swift`) is the
+ramp: a start gain, a target, a duration in seconds, and elapsed time.
+
+* **Time source**: ramps advance only from an explicit `deltaTime` handed to
+  `advanceFades(deltaTime:)` by `tick(listenerCell:deltaTime:)`. No `Date`, no
+  `DispatchTime`. The renderer supplies the delta from its paused-aware
+  `FrameSimClock` and skips the tick entirely while `worldSimPaused`, so a
+  crossfade freezes in menu mode and never jumps on resume. A zero or negative
+  delta advances nothing.
+* **Curve**: linear in amplitude (not decibels). Simple, deterministic and
+  adequate at music crossfade lengths; only `GainFade.currentGain` would change
+  if an equal-power curve is ever wanted.
+* **Retargeting**: a second fade requested mid-ramp replaces the first and
+  starts from the gain the source is at right now, so the audible level never
+  jumps. A duration of zero (or less) applies the target immediately.
+* **Fade out and stop**: `fadeOutAndStopSource(id:overSeconds:)` ramps to
+  silence and retires the source when the ramp completes, so a departing track
+  cleans itself up. With duration zero it stops on the call.
+* **Completion tolerance**: a ramp within `GainFade.completionEpsilon` (1 ms) of
+  its duration counts as done and snaps to the target, because accumulating
+  frame deltas in `Float` never sums exactly (60 additions of 1/60 miss 1).
+  Without it a fade-out could hover just above silence and never retire.
+* **Volume interaction**: the fade is folded into the same node-volume product
+  `applyVolumesToSources()` writes, so moving a category or master slider
+  mid-crossfade re-applies the ramp rather than stomping it.
+* **Engine stop**: fades live on the source, so disabling the engine (which
+  stops every source) discards them with the sources themselves.
 
 ## Decode policy (xWMA -> WMADecoder)
 
@@ -170,6 +218,12 @@ Ids are pinned in `AudioPanelTests` and `DestinationRegistryTests`.
   playback): left/right channel balance for known poses, distance
   attenuation, the volume product (category 0.25 renders ~0.25x RMS),
   master-zero silence, FIFO cap eviction, cell purge, snapshot contents.
+* `WorldAudioEngineNonPositionalTests` — submix routing, stereo material, the
+  category factor applied once, and both exemptions (purge, FIFO budget).
+* `WorldAudioEngineFadeTests` — ramp arithmetic, fade-out-and-stop retirement,
+  retargeting mid-ramp, a two-source crossfade, tick-driven advance with a
+  zero delta freezing it, and the regression that a slider move mid-fade does
+  not stomp the ramp.
 * `AudioSourceStreamerTests` — mono downmix + interleaved-to-planar packing.
 * `AudioCodecParametersXWMTests` — extradata substitution.
 * `AudioPanelTests`, `DestinationRegistryTests`, `AppSidebarModelTests` —

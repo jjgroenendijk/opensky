@@ -25,6 +25,10 @@ nonisolated enum AudioEngineError: Error, Equatable {
     case notRunning
     /// A pcm format could not be constructed for the source's sample rate.
     case formatUnavailable
+    /// The category submix a non-positional source needs is missing from the
+    /// graph. Cannot happen while every `AudioCategory` gets a mixer; it exists
+    /// so the play path never force-unwraps.
+    case submixUnavailable
 }
 
 /// Provisional distance-attenuation defaults, in meters (the listener-space
@@ -137,9 +141,13 @@ final class WorldAudioEngine {
         )
     }
 
-    /// Per-frame housekeeping, driven by Renderer.updateAudio: retire sources
-    /// whose stream completed and stop sources the world streamed away from.
-    func tick(listenerCell: CellCoordinate) {
+    /// Per-frame housekeeping, driven by Renderer.updateAudio: advance gain
+    /// ramps by the frame delta, retire sources whose stream completed, and
+    /// stop sources the world streamed away from. `deltaTime` is in seconds and
+    /// comes from the renderer's paused-aware audio clock, so fades freeze in
+    /// menu mode and never jump on resume. Zero advances nothing.
+    func tick(listenerCell: CellCoordinate, deltaTime: Float = 0) {
+        advanceFades(deltaTime: deltaTime)
         retireFinishedSources()
         purgeSources(fartherThan: Self.cellPurgeRadius, fromCell: listenerCell)
     }

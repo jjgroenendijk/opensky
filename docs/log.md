@@ -4,6 +4,27 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-26
 
+* **Non-positional playback + gain ramps (M9.2.3, issue #156)**: the audio
+  engine primitive a music crossfade needs. `playNonPositional(fileData:)` /
+  `(buffer:)` start a source with the file's own channel layout wired straight
+  into `categoryMixers[category]` — no mono downmix, no panning, no distance
+  attenuation. Routing is explicit (`AudioRouting` on `ActiveAudioSource`),
+  and a non-positional source is exempt from both the FIFO source budget
+  (which now counts positional sources only) and the cell purge, so a music
+  bed survives an effect burst and the world streaming around it. The category
+  factor moved to whichever stage applies it once: player node when positional,
+  submix when not. `WorldAudioEngineFades.swift` adds `GainFade` plus
+  `fadeSource(id:to:overSeconds:)`, `fadeOutAndStopSource(id:overSeconds:)` and
+  `advanceFades(deltaTime:)`, advanced from the renderer's paused-aware frame
+  delta (now threaded through `updateAudio(deltaTime:)` into
+  `tick(listenerCell:deltaTime:)`) rather than any wall clock, so fades are
+  deterministic and freeze in menu mode. The fade factor is folded into the
+  node-volume product, so a slider move mid-crossfade cannot stomp a ramp; the
+  documented invariant is now master x category x source x fade. Snapshot rows
+  gained `isPositional`, `fadeGain` and `isFading`. See
+  [world audio playback](/engine/audio.md); covered by
+  `WorldAudioEngineNonPositionalTests` and `WorldAudioEngineFadeTests`
+  (offline manual rendering, explicit deltas).
 * **Music records (M9.2.3, issue #156)**: added the MUSC/MUST format layer that
   the music director builds on. `MusicType` decodes the playlist flags,
   priority, ducking and fade duration plus the ordered MUST link list;

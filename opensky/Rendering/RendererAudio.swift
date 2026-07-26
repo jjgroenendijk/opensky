@@ -17,11 +17,12 @@ extension Renderer {
         updateAudio(deltaTime: delta)
     }
 
-    /// Pushes the camera pose as the listener and retires finished or
-    /// streamed-away sources. `deltaTime` is accepted for parity with the other
-    /// subsystem ticks; the engine currently needs only the pose and the tick
-    /// itself (AVFAudio advances playback on its own render thread).
-    func updateAudio(deltaTime _: Float) {
+    /// Pushes the camera pose as the listener, advances in-flight gain ramps by
+    /// `deltaTime` seconds, and retires finished or streamed-away sources.
+    /// AVFAudio advances playback itself on its own render thread; `deltaTime`
+    /// drives only the engine-side fades, which is why a paused frame (which
+    /// never reaches here) freezes a crossfade instead of skipping through it.
+    func updateAudio(deltaTime: Float) {
         guard let worldAudio else { return }
         worldAudio.updateListener(
             worldPosition: freeFlyCamera.position,
@@ -29,7 +30,8 @@ extension Renderer {
             pitch: freeFlyCamera.pitch
         )
         worldAudio.tick(
-            listenerCell: CellGridManager.cellCoordinate(for: freeFlyCamera.position)
+            listenerCell: CellGridManager.cellCoordinate(for: freeFlyCamera.position),
+            deltaTime: deltaTime
         )
     }
 }

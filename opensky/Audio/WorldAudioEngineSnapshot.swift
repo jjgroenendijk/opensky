@@ -26,11 +26,14 @@ extension WorldAudioEngine {
                 AudioSourceStatsSnapshot(
                     name: source.name,
                     categoryName: source.category.displayName,
+                    isPositional: source.isPositional,
                     worldPosition: source.worldPosition,
-                    distanceMeters: AudioSpace.distanceMeters(
+                    distanceMeters: source.isPositional ? AudioSpace.distanceMeters(
                         fromWorld: listenerWorldPosition,
                         toWorld: source.worldPosition
-                    ),
+                    ) : 0,
+                    fadeGain: source.fadeGain,
+                    isFading: source.activeFade != nil,
                     effectiveGain: effectiveGain(of: source)
                 )
             },
