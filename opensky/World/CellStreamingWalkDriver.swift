@@ -86,6 +86,12 @@ final class CellStreamingWalkDriver {
         let activeTimes = zip(render.frameMS, physicsFrameMask).compactMap { time, active in
             active ? time : nil
         }
+        // Same mask over the per-frame audio samples, so `physicsRender`
+        // describes exactly the active-physics frames on every metric it
+        // carries rather than reporting audio over frames it excluded.
+        let activeAudio = zip(render.audioUpdateMS, physicsFrameMask).compactMap { time, active in
+            active ? time : nil
+        }
         let stepGain = (maximumStepHeight ?? 0) - (stepStartHeight ?? 0)
         guard stepGain >= WalkPathRoute.minimumExteriorStepGain else {
             throw CellStreamingWalkBenchmarkError.stepNotClimbed(stepGain)
@@ -97,7 +103,8 @@ final class CellStreamingWalkDriver {
             render: render,
             physicsRender: OffscreenBenchResult(
                 frameMS: activeTimes,
-                windowSummaries: render.windowSummaries
+                windowSummaries: render.windowSummaries,
+                audioUpdateMS: activeAudio
             ),
             routeFrameCount: routeFrameCount,
             exteriorStepGain: stepGain,

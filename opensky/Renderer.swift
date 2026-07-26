@@ -166,6 +166,10 @@ final class Renderer: NSObject {
     var lastAnimationUpdatedBoneCount = 0
     /// CPU wall time of last shadow pass; idle/off frames record near-zero cost.
     var lastShadowUpdateMS = 0.0
+    /// CPU wall time of the last per-frame audio update (listener pose + engine
+    /// tick + music director). Exactly zero on a frame that did no audio work,
+    /// which is every frame while no `WorldAudioEngine` is attached.
+    var lastAudioUpdateMS = 0.0
     let frameUniformBuffer: MTLBuffer
     /// Per-draw ring: maxFramesInFlight slots x drawUniformSlotCapacity
     /// aligned entries. Replaced (regrown) by setScene when a new scene's

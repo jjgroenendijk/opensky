@@ -79,9 +79,69 @@ struct CellStreamingFlyPathTests {
         #expect(result.shadowDrawStats.cascadesRendered == 3)
     }
 
+    /// An audio-update run over budget must produce the reason-tagged error in
+    /// the same shape as the animation and shadow gates, with the numbers the
+    /// acceptance record quotes. Uses the same avg/p95 accessors the Driver
+    /// guard reads, so a change to either accessor breaks this test.
+    @Test
+    func audioUpdateBudgetViolationSurfacesAveragesAndBudget() {
+        let render = OffscreenBenchResult(
+            frameMS: [8, 8, 8],
+            windowSummaries: [],
+            audioUpdateMS: [1, 2, 3] // avg 2, p95 3 — over a 0.5 ms budget
+        )
+        let budget = 0.5
+        #expect(render.audioUpdateAverageMS > budget)
+        #expect(render.audioUpdatePercentileMS(95) > budget)
+        let error = CellStreamingFlyBenchmarkError.audioUpdateExceeded(
+            average: render.audioUpdateAverageMS,
+            p95: render.audioUpdatePercentileMS(95),
+            budget: budget
+        )
+        #expect(
+            error.errorDescription
+                == "audio update avg 2.00 ms / p95 3.00 ms exceeded 0.50 ms budget"
+        )
+    }
+
+    /// A run with no audio engine attached samples zeros, which must stay under
+    /// any positive budget: the gate never fails a bench that did no audio work.
+    @Test
+    func audioUpdateWithoutEngineStaysWithinBudget() {
+        let render = OffscreenBenchResult(
+            frameMS: [8, 8],
+            windowSummaries: [],
+            audioUpdateMS: [0, 0]
+        )
+        #expect(render.audioUpdateAverageMS == 0)
+        #expect(render.audioUpdatePercentileMS(95) == 0)
+        #expect(OffscreenBenchResult(frameMS: [8], windowSummaries: [])
+            .audioUpdateAverageMS == 0)
+    }
+
+    /// The report struct threads the audio budget through to the CLI alongside
+    /// the animation and shadow budgets.
+    @Test
+    func resultCarriesAudioBudget() {
+        let result = CellStreamingFlyPathTests.makeResult(
+            shadowBudgetMS: 1.5,
+            shadowStats: ShadowDrawStats(
+                drawCalls: 1,
+                drawnInstances: 1,
+                culledInstances: 0,
+                cascadesRendered: 1
+            ),
+            audioBudgetMS: 0.5
+        )
+        #expect(result.audioUpdateBudgetMS == 0.5)
+        #expect(result.animationUpdateBudgetMS == 4)
+        #expect(result.shadowUpdateBudgetMS == 1.5)
+    }
+
     private static func makeResult(
         shadowBudgetMS: Double,
-        shadowStats: ShadowDrawStats
+        shadowStats: ShadowDrawStats,
+        audioBudgetMS: Double = 0.5
     ) -> CellStreamingFlyBenchmarkResult {
         CellStreamingFlyBenchmarkResult(
             render: OffscreenBenchResult(frameMS: [8], windowSummaries: []),
@@ -110,6 +170,7 @@ struct CellStreamingFlyPathTests {
             actorAnimationFailureCount: 0,
             animationUpdateBudgetMS: 4,
             shadowUpdateBudgetMS: shadowBudgetMS,
+            audioUpdateBudgetMS: audioBudgetMS,
             weatherName: "Rain",
             windSpeed: 0.5,
             animationUpdatedBoneCount: 10,

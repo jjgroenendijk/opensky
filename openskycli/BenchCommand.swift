@@ -25,6 +25,23 @@ enum BenchCommand {
     /// earlier GPU probes warm the process. 14 ms keeps measured headroom
     /// while remaining below half the 30 fps total-frame budget.
     private static let defaultShadowUpdateBudgetMS = 14.0
+    /// CPU cost of the per-frame audio update: listener pose into the
+    /// environment node, `WorldAudioEngine.tick` (fade advance, finished-source
+    /// retirement, Chebyshev cell purge) over at most
+    /// `WorldAudioEngine.maxConcurrentSources` (8) sources, and the music
+    /// director. The work is a handful of scalar updates per source with no
+    /// decode, no allocation and no I/O on the main thread, so it is bounded
+    /// well below the animation gate's 4 ms.
+    ///
+    /// Measured 2026-07-26, `bench --walk-path --size 640x360` (Debug, 814
+    /// active physics frames, engine attached and ticking, no live sources):
+    /// avg 0.005 ms, p95 0.014 ms, max 0.028 ms. That is the fixed floor — the
+    /// listener push plus an empty tick. The per-source part scales with at
+    /// most `maxConcurrentSources`, so 0.5 ms (about 1.5% of the 33.33 ms
+    /// frame at 30 fps) is a reasoned ceiling over that measured floor: wide
+    /// enough that only a real regression, per-frame work scaling with
+    /// something other than the source cap, can trip it.
+    private static let defaultAudioUpdateBudgetMS = 0.5
 
     private struct Options {
         let worldspace: String
@@ -41,6 +58,7 @@ enum BenchCommand {
         let actorBuildBudgetMS: Double
         let animationUpdateBudgetMS: Double
         let shadowUpdateBudgetMS: Double
+        let audioUpdateBudgetMS: Double
     }
 
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
@@ -145,6 +163,7 @@ enum BenchCommand {
         view.isPaused = true
         view.enableSetNeedsDisplay = false
         let renderer = try Renderer(view: view, scene: RenderScene(instances: []))
+        renderer.worldAudio = benchAudioEngine()
         let result = try CellStreamingFlyBenchmark.run(
             renderer: renderer,
             provider: provider,
@@ -156,7 +175,8 @@ enum BenchCommand {
                 collisionBuildBudgetMS: options.collisionBuildBudgetMS,
                 actorBuildBudgetMS: options.actorBuildBudgetMS,
                 animationUpdateBudgetMS: options.animationUpdateBudgetMS,
-                shadowUpdateBudgetMS: options.shadowUpdateBudgetMS
+                shadowUpdateBudgetMS: options.shadowUpdateBudgetMS,
+                audioUpdateBudgetMS: options.audioUpdateBudgetMS
             )
         )
         reportFlyPath(
@@ -199,6 +219,7 @@ enum BenchCommand {
         view.isPaused = true
         view.enableSetNeedsDisplay = false
         let renderer = try Renderer(view: view, scene: RenderScene(instances: []))
+        renderer.worldAudio = benchAudioEngine()
         let result = try CellStreamingWalkBenchmark.run(
             renderer: renderer,
             provider: provider,
@@ -208,7 +229,12 @@ enum BenchCommand {
                 worldspaceEditorID: options.worldspace
             )
         )
-        reportWalkPath(result: result, size: options.size, budget: options.budgetMS)
+        reportWalkPath(
+            result: result,
+            size: options.size,
+            budget: options.budgetMS,
+            audioBudget: options.audioUpdateBudgetMS
+        )
         guard
             result.physicsRender.averageMS <= options.budgetMS,
             result.physicsRender.percentileMS(95) <= options.budgetMS
@@ -220,6 +246,10 @@ enum BenchCommand {
                 options.budgetMS
             ))
         }
+        try checkAudioBudget(
+            render: result.physicsRender,
+            budget: options.audioUpdateBudgetMS
+        )
         if let output = options.output {
             let texture = try renderer.renderOffscreen(
                 width: options.size.width,
@@ -234,6 +264,36 @@ enum BenchCommand {
 }
 
 extension BenchCommand {
+    /// A world audio engine attached to the benchmark renderer so the per-frame
+    /// audio update actually runs and can be measured. It is left disabled, so
+    /// no output device is opened and nothing plays: the benchmark measures the
+    /// fixed per-frame cost of the listener push, the engine tick and the music
+    /// director, which is the part of the audio subsystem that runs every frame
+    /// regardless of how many sources are live.
+    private static func benchAudioEngine() -> WorldAudioEngine {
+        WorldAudioEngine()
+    }
+
+    /// Shared audio-budget gate for the walk path. The fly path enforces the
+    /// same numbers inside `CellStreamingFlyBenchmark`, which owns its own
+    /// reason-tagged error type.
+    private static func checkAudioBudget(
+        render: OffscreenBenchResult,
+        budget: Double
+    ) throws {
+        guard
+            render.audioUpdateAverageMS <= budget,
+            render.audioUpdatePercentileMS(95) <= budget
+        else {
+            throw CLIError.failure(String(
+                format: "audio update over budget: avg %.2f / p95 %.2f vs %.2f ms",
+                render.audioUpdateAverageMS,
+                render.audioUpdatePercentileMS(95),
+                budget
+            ))
+        }
+    }
+
     private static func parseOptions(scanner: inout ArgumentScanner) throws -> Options {
         let worldspace = try scanner.option("--worldspace")
             ?? FirstRenderCell.worldspaceEditorID
@@ -277,8 +337,19 @@ extension BenchCommand {
             shadowUpdateBudgetMS: positiveDouble(
                 scanner.option("--shadow-budget-ms"),
                 flag: "--shadow-budget-ms", fallback: defaultShadowUpdateBudgetMS
+            ),
+            audioUpdateBudgetMS: positiveDouble(
+                scanner.option("--audio-budget-ms"),
+                flag: "--audio-budget-ms", fallback: defaultAudioUpdateBudgetMS
             )
         )
+        try validateCombination(options)
+        try scanner.finish()
+        return options
+    }
+
+    /// Flag combinations no single option check can catch.
+    private static func validateCombination(_ options: Options) throws {
         if options.output != nil, !options.walkPath {
             throw CLIError.usage("--out is supported only with --walk-path")
         }
@@ -290,181 +361,6 @@ extension BenchCommand {
                 throw CLIError.usage("--walk-path uses fixed Tamriel start cell (6,-2)")
             }
         }
-        try scanner.finish()
-        return options
-    }
-
-    private static func reportWalkPath(
-        result: CellStreamingWalkBenchmarkResult,
-        size: (width: Int, height: Int),
-        budget: Double
-    ) {
-        let render = result.physicsRender
-        let avg = render.averageMS
-        let fps = avg > 0 ? 1000 / avg : 0
-        print(
-            "[INFO] walk route: (6,-2) -> (7,-3) -> interior 00016204 -> (7,-3)"
-        )
-        print(String(
-            format: "[INFO] %d active physics frames @ %dx%d: avg %.2f ms (%.1f fps), "
-                + "p95 %.2f ms, max %.2f ms, budget %.2f ms",
-            render.frameMS.count, size.width, size.height, avg, fps,
-            render.percentileMS(95), render.frameMS.max() ?? 0, budget
-        ))
-        print(String(
-            format: "[INFO] exterior stair gain %.2f; interior crossing %.2f; "
-                + "final feet (%.2f, %.2f, %.2f)",
-            result.exteriorStepGain,
-            result.interiorDistance,
-            result.finalFeetPosition.x,
-            result.finalFeetPosition.y,
-            result.finalFeetPosition.z
-        ))
-    }
-
-    private static func reportFlyPath(
-        result: CellStreamingFlyBenchmarkResult,
-        size: (width: Int, height: Int),
-        budget: Double
-    ) {
-        for summary in result.render.windowSummaries {
-            print("[INFO] stats window: \(summary)")
-        }
-        let footprints = result.settledFootprintsMB
-            .map { String(format: "%.0f", $0) }
-            .joined(separator: " -> ")
-        print(
-            "[INFO] waypoint footprint MB: \(footprints); "
-                + String(
-                    format: "peak %.0f / cap %.0f",
-                    result.peakFootprintMB,
-                    result.footprintCapMB
-                )
-        )
-        print(
-            "[INFO] \(result.uniqueBuildCount) unique builds, "
-                + "\(result.unloadedCellCount) initial cells unloaded, "
-                + "\(result.finalResidentCellCount) resident, "
-                + "\(result.finalVoidCellCount) void"
-        )
-        reportFlyMetrics(result)
-        reportFlyActors(result)
-        print(String(
-            format: "[INFO] %d stream frames @ %dx%d: avg %.2f ms, p95 %.2f ms, "
-                + "max %.2f ms, budget %.2f ms",
-            result.render.frameMS.count, size.width, size.height,
-            result.render.averageMS, result.render.percentileMS(95),
-            result.render.frameMS.max() ?? 0, budget
-        ))
-    }
-
-    private static func reportFlyMetrics(_ result: CellStreamingFlyBenchmarkResult) {
-        print(
-            "[INFO] living environment: weather \(result.weatherName), wind "
-                + String(format: "%.3f", result.windSpeed)
-                + "; \(result.animationUpdatedBoneCount) animated bones; "
-                + "\(result.particleLiveCount) live particles in "
-                + "\(result.particleSystemCount) systems; "
-                + "\(result.rainLiveCount) live rain"
-        )
-        print(String(
-            format: "[INFO] collision build: avg %.2f ms, p95 %.2f ms, max %.2f ms, "
-                + "budget %.2f ms; %d shapes, %d triangles",
-            result.collisionBuildAverageMS,
-            result.collisionBuildP95MS,
-            result.collisionBuildMaximumMS,
-            result.collisionBuildBudgetMS,
-            result.collisionShapeCount,
-            result.collisionTriangleCount
-        ))
-        print(String(
-            format: "[INFO] actor build: avg %.2f ms, p95 %.2f ms, max %.2f ms, "
-                + "budget %.2f ms",
-            result.actorBuildAverageMS,
-            result.actorBuildP95MS,
-            result.actorBuildMaximumMS,
-            result.actorBuildBudgetMS
-        ))
-        print(String(
-            format: "[INFO] animation update: avg %.2f ms, p95 %.2f ms, "
-                + "max %.2f ms, budget %.2f ms",
-            result.render.animationAverageMS,
-            result.render.animationPercentileMS(95),
-            result.render.animationMS.max() ?? 0,
-            result.animationUpdateBudgetMS
-        ))
-        print(String(
-            format: "[INFO] shadow update: avg %.2f ms, p95 %.2f ms, "
-                + "max %.2f ms, budget %.2f ms",
-            result.render.shadowAverageMS,
-            result.render.shadowPercentileMS(95),
-            result.render.shadowMS.max() ?? 0,
-            result.shadowUpdateBudgetMS
-        ))
-        let shadow = result.shadowDrawStats
-        print(
-            "[INFO] shadow culling: \(shadow.drawCalls) draw calls, "
-                + "\(shadow.drawnInstances) drawn, "
-                + "\(shadow.culledInstances) culled, "
-                + "\(shadow.cascadesRendered) cascades"
-        )
-        let grass = result.grassDrawStats
-        print(
-            "[INFO] grass instancing: \(grass.drawCalls) draw calls, "
-                + "\(grass.drawnInstances)/\(grass.sceneInstances) drawn, "
-                + "\(grass.densityCulledInstances) density-culled, "
-                + "\(grass.distanceCulledInstances) distance-culled, "
-                + "\(grass.frustumCulledInstances) frustum-culled, "
-                + "\(grass.budgetDroppedInstances) budget-dropped"
-        )
-    }
-
-    private static func reportFlyActors(_ result: CellStreamingFlyBenchmarkResult) {
-        // Per-cell accounting before the totals: 5.6 acceptance requires the
-        // probe to report counts for each touched cell, failures with reasons.
-        for report in result.actorCellReports {
-            var line = "[INFO] cell (\(report.coordinate.x),\(report.coordinate.y)) actors: "
-                + "\(report.discovered) discovered = \(report.rendered) rendered + "
-                + "\(report.disabledSkips) disabled + \(report.failures) failed"
-            if !report.failureReasons.isEmpty {
-                line += " [\(report.failureReasons.joined(separator: "; "))]"
-            }
-            line += "; \(report.animated) animated + "
-                + "\(report.animationFailures) static"
-            if !report.animationFailureReasons.isEmpty {
-                line += " [\(report.animationFailureReasons.joined(separator: "; "))]"
-            }
-            print(line)
-        }
-        print(
-            "[INFO] actors: \(result.actorDiscoveredCount) discovered = "
-                + "\(result.actorRenderedCount) rendered + "
-                + "\(result.actorDisabledSkipCount) disabled + "
-                + "\(result.actorFailureCount) failed"
-        )
-        print(
-            "[INFO] rendered actors: \(result.actorAnimatedCount) animated + "
-                + "\(result.actorAnimationFailureCount) static"
-        )
-    }
-
-    private static func report(
-        result: OffscreenBenchResult,
-        size: (width: Int, height: Int),
-        frames: Int,
-        budget: Double
-    ) {
-        for summary in result.windowSummaries {
-            print("[INFO] stats window: \(summary)")
-        }
-        let avg = result.averageMS
-        let fps = avg > 0 ? 1000 / avg : 0
-        print(String(
-            format: "[INFO] %d frames @ %dx%d: avg %.2f ms (%.1f fps), "
-                + "p95 %.2f ms, max %.2f ms, budget %.2f ms",
-            frames, size.width, size.height, avg, fps,
-            result.percentileMS(95), result.frameMS.max() ?? 0, budget
-        ))
     }
 
     private static func frameCount(_ value: String?) throws -> Int {

@@ -244,6 +244,46 @@ The trigger places the source 700 units (~10 m) straight ahead of the camera
 under the `effects` category, so turning or strafing immediately pans it.
 Ids are pinned in `AudioPanelTests` and `DestinationRegistryTests`.
 
+## Per-frame cost and the frame budget
+
+The audio subsystem's only main-thread per-frame work is
+`Renderer.updateAudio(deltaTime:)`: push the camera pose into the environment
+node, run `WorldAudioEngine.tick` (advance gain ramps, retire finished sources,
+purge sources outside `cellPurgeRadius`), then tick the music director. Decode
+never runs here — it lives on `decodeQueue` — and the AVFAudio render thread
+runs no OpenSky code, so this is the whole cost the frame pays.
+
+The work is bounded by `maxConcurrentSources = 8`: a handful of scalar updates
+per source with no allocation, no I/O and no decode. That is why the budget sits
+an order of magnitude below the animation gate rather than beside it.
+
+* **Metric**: `Renderer.lastAudioUpdateMS`, the wall time of one
+  `updateAudio(deltaTime:)` call, sampled per frame into
+  `OffscreenBenchResult.audioUpdateMS` next to the animation and shadow samples.
+  A frame that does no audio work (menu-mode pause, or no engine attached)
+  records exactly zero; with no engine attached the guard returns before the
+  clock is read, so the instrumentation costs one optional test.
+* **Accessors**: `audioUpdateAverageMS` and `audioUpdatePercentileMS(_:)`,
+  mirroring `animationAverageMS` / `animationPercentileMS(_:)`.
+* **Gate**: `CellStreamingFlyBenchmarkConfiguration.audioUpdateBudgetMS`.
+  Average **and** p95 must both stay within it or the fly benchmark throws
+  `CellStreamingFlyBenchmarkError.audioUpdateExceeded`; the walk path enforces
+  the same number in `BenchCommand`.
+* **Budget**: **0.5 ms**, about 1.5% of the 33.33 ms frame at 30 fps. Override
+  with `bench --audio-budget-ms`.
+
+Measured 2026-07-26 on `bench --walk-path --size 640x360` (Debug build, 814
+active physics frames, engine attached and ticking every frame, no live
+sources): **avg 0.005 ms, p95 0.014 ms, max 0.028 ms**. That is the fixed
+floor — the listener push plus an empty tick — and it sits roughly 35x under
+the p95 gate. The remaining cost scales with the number of live sources, which
+the FIFO cap holds at 8, so the 0.5 ms ceiling is reasoned headroom over a
+measured floor rather than a measurement of a full source set.
+
+Both `bench --fly-path` and `bench --walk-path` attach a (disabled) world audio
+engine so the tick really runs, and print an `audio update:` line with avg, p95,
+max and budget. `make probe` greps for that line on both paths.
+
 ## Verification
 
 * `AudioSpaceTests` — conversion table above.
