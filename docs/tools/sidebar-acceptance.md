@@ -104,13 +104,19 @@ column is deliberately absent: the id contract is pinned in unit tests instead. 
 | M8.4.2 interaction target | `World > HUD & Interaction > Target` | `Destination-hudInteraction` | Live selection only — no forcing control | `HUDTargetStatsLabel` | `HUDInteractionPanelTests` | [interaction](/engine/interaction.md) |
 | M8.4.3 HUD elements | `World > HUD & Interaction > Elements` | `Destination-hudInteraction` | `HUDLayerEnabledControl`, `HUDCrosshairControl`, `HUDMetersControl`, `HUDCompassControl`, `HUDMarkersControl`, `HUDPromptControl`, `HUDPlaceholderTextControl`, `HUDScaleControl` | `HUDElementsStatsLabel` | `HUDInteractionPanelTests`, `DestinationRegistryTests`, `HUDAcceptanceRealDataTests` | [screen-space UI](/rendering/ui.md) |
 | M8.5.1 system menu | `World > System Menu` | `Destination-systemMenu` | `SystemMenuOpenControl`, `SystemMenuResumeControl`, `SystemMenuUpControl`, `SystemMenuDownControl`, `SystemMenuActivateControl`, `SystemMenuMovieControl`, `SystemMenuMasterVolumeControl` | `SystemMenuStatsLabel`, `SystemMenuDataRootStatsLabel`, `SystemMenuSettingsStatsLabel` | `SystemMenuPanelTests`, `SystemMenuAcceptanceRealDataTests` | [system menu](/engine/system-menu.md) |
-| **M8 overall acceptance** | **To be recorded at M8 acceptance (issue #150)** | — | — | — | — | — |
+| M8 overall acceptance | `World > World` (walk mode), `World > HUD & Interaction > Elements` and `> Target`, `Developer > UI Lab > UI foundation` (pause), `World > Environment > Sun shadows` (setting while paused), `World > System Menu > Menu` (second pause surface) | `Destination-world`, `Destination-hudInteraction`, `Destination-uiLab`, `Destination-environment`, `Destination-systemMenu` | `CameraMovementModeControl`, `HUDLayerEnabledControl`, `HUDCrosshairControl`, `UIMenuPushControl`, `UIMenuPopControl`, `SunShadowsEnabledControl`, `ShadowQualityControl`, `SystemMenuOpenControl`, `SystemMenuResumeControl` | `CameraStatsLabel`, `HUDElementsStatsLabel`, `HUDTargetStatsLabel`, `UIMenuStatsLabel`, `ShadowStatsLabel`, `SystemMenuStatsLabel`, plus the `Destination-<id>-OverrideIndicator` dots | `M8AcceptanceTests`, `DestinationRegistryTests`, `AppSidebarModelTests`, `WorldPanelTests`, `HUDInteractionPanelTests`, `UILabPanelTests`, `SystemMenuPanelTests`, `EnvironmentPanelTests` | [screen-space UI](/rendering/ui.md) |
 | M9.1.3 audio | `World > Audio` | `Destination-audio` | `AudioEnabledControl`, `AudioMasterVolumeControl`, the generated `Audio<Category>VolumeControl` family, `AudioFileControl`, `AudioPlaySelectedControl`, `AudioStopAllControl` | `AudioStatsLabel`, `AudioSourcesStatsLabel` | `AudioPanelTests` | [audio](/engine/audio.md) |
 
 `World > World` (`Destination-world`, controls `CameraMovementModeControl`,
 `CameraCopyPoseControl`, readouts `CameraStatsLabel`, `FrameStatsLabel`,
-`SceneStatsLabel`) is the launch destination and is exercised by `WorldPanelTests`, but no
-milestone recorded it as its acceptance surface.
+`SceneStatsLabel`) is the launch destination, exercised by `WorldPanelTests` and, since
+the M8 gate, part of the M8 overall acceptance row above.
+
+One caveat is recorded with that row: `CameraStatsLabel` prints position, orientation, and
+cell, not the movement mode, so walk mode is proven by the selector's own state
+(`CameraMovementModeControl` reading `Walk`) plus the sidebar row's
+`Destination-world-OverrideIndicator` turning on, which is what a user sees. A readout
+that names the mode would be a cheaper check; it does not exist yet.
 
 Settings is deliberately not a sidebar destination — it is the standard Cmd+, window — so
 it never appears as an acceptance path.

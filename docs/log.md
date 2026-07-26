@@ -4,6 +4,37 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-26
 
+* **M8 milestone acceptance (M8.5.3)**: the interaction + UI shell milestone is
+  accepted end to end from the main app alone. What M8 delivered, in the order
+  the gate walks it: a screen-space UI layer with a glyph atlas and localized
+  strings (M8.1), engine-owned menu mode with a world-sim pause (M8.1.2), a SWF
+  presentation layer that renders vanilla movies (M8.2) and runs their
+  ActionScript (M8.3), walk-mode interaction targeting driving the real
+  `hudmenu.swf` (M8.4), and the system menu with its settings placeholders
+  (M8.5.1). The acceptance flow is one session with no CLI and no keystroke-only
+  path: select `World > World` and switch `CameraMovementModeControl` to Walk,
+  move to `World > HUD & Interaction` and A/B the live HUD with
+  `HUDCrosshairControl`/`HUDLayerEnabledControl` while `HUDElementsStatsLabel`
+  and `HUDTargetStatsLabel` report the movie and the selected target, pause from
+  `Developer > UI Lab` with `UIMenuPushControl` (`UIMenuStatsLabel` reads
+  `World sim: paused`), change `World > Environment > Sun shadows` while paused,
+  then resume with `UIMenuPopControl` and find the setting and both overrides
+  still in place. `World > System Menu` is accepted as the second, gameplay-facing
+  pause. The evidence is the new `M8AcceptanceTests`, which drives that exact
+  sequence through the destination registry's own panel factories, the real
+  `AppSidebarViewController` (selection callback and override dots), and the real
+  `MenuModeController`, reading every readout back out of the built view
+  hierarchy by accessibility identifier; the shared `FakeWorldProviders` fixture
+  now runs menu mode on that controller instead of a stored snapshot, so a pushed
+  menu reports the pause the engine would. Per the
+  [sidebar verification convention](/tools/sidebar-acceptance.md), no A/B capture
+  was produced: the deterministic suite is the gate, and a rendered frame would
+  embed the user's Bethesda assets. One honest gap is recorded rather than papered
+  over — no readout names the camera's movement mode, so walk mode is proven by
+  the selector state plus the sidebar override dot. `make test-ui` stays blocked
+  on this machine (TCC), which is why the gate is a unit-level test.
+  See [screen-space UI](/rendering/ui.md) and
+  [sidebar acceptance](/tools/sidebar-acceptance.md). Closes #150.
 * **Sidebar verification convention (M8.5.2)**: the standing obligation to record
   a milestone's main-app acceptance surface now has a format and one home.
   [sidebar acceptance](/tools/sidebar-acceptance.md) defines the fixed record —
