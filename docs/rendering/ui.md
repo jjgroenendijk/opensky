@@ -264,11 +264,11 @@ milestone names that exact path. Its two sections talk through
 `HUDControlProviding`; the panel does not own renderer or targeting state.
 
 - **Elements** A/Bs the live layer, crosshair, actor meters, compass,
-  interaction marker, and activation prompt. Scale presets are 50, 75, 100,
-  125, 150, and 200 percent. The readout reports load/error state, effective
-  scale, draw calls, and skipped items. Defaults are all elements on at 100
-  percent, and the section participates in destination and Reset-all override
-  provenance.
+  interaction marker, activation prompt, and the movie's authored placeholder
+  text. Scale presets are 50, 75, 100, 125, 150, and 200 percent. The readout
+  reports load/error state, effective scale, draw calls, and skipped items.
+  Gameplay elements default on, authored placeholder text defaults off, and
+  the section participates in destination and Reset-all override provenance.
 - **Target** reports the current walk-mode REFR and base FormIDs, action and
   resolved name, distance, placed and hit positions, exact prompt, camera
   heading, and marker headings. It has no synthetic preview: the acceptance
@@ -278,15 +278,20 @@ milestone names that exact path. Its two sections talk through
 Element toggles mutate the existing runtime between frames. Crosshair and
 compass visibility use the movie's observed setters. Meter visibility changes
 the installed `/HUDMovieBaseInstance/Health`, `Magica`, and `Stamina` clips,
-whose paths were observed in the legally owned movie's runtime tree. Scale is a
-centered renderer presentation multiplier and does not mutate the display list.
-UI Lab still owns an explicit whole-movie override; selecting `None` restores
-the HUD with its saved M8.4.3 element and scale preferences.
+whose paths were observed in the legally owned movie's runtime tree. The
+installed movie also starts with authoring samples visible under
+`/HUDMovieBaseInstance/RolloverInfoInstance` and
+`/HUDMovieBaseInstance/SubtitleTextHolder`. Initialization hides both so raw
+font markup and `Dialogue Line 1Dialogue Line 2` do not leak into gameplay;
+**Authored placeholder text** makes them intentionally inspectable. Scale is a
+centered renderer presentation multiplier and does not mutate the display
+list. UI Lab still owns an explicit whole-movie override; selecting `None`
+restores the HUD with its saved M8.4.3 element and scale preferences.
 
 The environment-gated `HUDAcceptanceRealDataTests` builds the installed
 walk-route farm cell, exact-raycasts real door REFR `0001633D` at 83.329315
 units, and feeds its `Open Door` prompt to the installed `hudmenu.swf`. At
-1280x720, prompt off/on changed 7,509 pixels with zero skipped items. Both
+1280x720, prompt off/on changed 4,069 pixels with zero skipped items. Both
 frames and the report stay in gitignored `logs/`. Local inspection confirmed
 the activation text appears at the crosshair and the compass/crosshair remain
 stable; no game-art capture is tracked.

@@ -54,6 +54,7 @@ struct HUDAcceptanceRealDataTests {
         let runtime = try #require(try renderer.startSWFRuntime())
         try HUDMovieBridge.validate(runtime: runtime)
         HUDMovieBridge.initialize(runtime: runtime, activationPrompt: nil)
+        try assertAuthoredPlaceholderTextIsHidden(runtime)
         let hidden = try render(renderer)
 
         try renderer.updateSWFRuntime { runtime in
@@ -89,6 +90,18 @@ struct HUDAcceptanceRealDataTests {
             encoding: .utf8
         )
         print(report)
+    }
+
+    private func assertAuthoredPlaceholderTextIsHidden(
+        _ runtime: SWFMovieRuntime
+    ) throws {
+        for path in [
+            "/HUDMovieBaseInstance/RolloverInfoInstance",
+            "/HUDMovieBaseInstance/SubtitleTextHolder"
+        ] {
+            let node = try #require(runtime.node(atPath: path, from: runtime.root))
+            #expect(!node.isVisible)
+        }
     }
 
     private func makeFarmScene(

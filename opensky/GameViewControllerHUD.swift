@@ -17,6 +17,7 @@ struct HUDRuntimeState {
     var compassEnabled = true
     var markersEnabled = true
     var promptEnabled = true
+    var placeholderTextEnabled = false
     var scale: Float = 1
     var promptNeedsUpdate = false
     var markersNeedUpdate = false
@@ -55,6 +56,10 @@ extension GameViewController {
                 HUDMovieBridge.setCompassHeading(
                     heading,
                     visible: hud.compassEnabled,
+                    runtime: runtime
+                )
+                HUDMovieBridge.setAuthoredPlaceholderTextEnabled(
+                    hud.placeholderTextEnabled,
                     runtime: runtime
                 )
             }
@@ -181,6 +186,10 @@ extension GameViewController {
                     runtime: runtime
                 )
                 HUDMovieBridge.setActivationPrompt(effectiveHUDPrompt, runtime: runtime)
+                HUDMovieBridge.setAuthoredPlaceholderTextEnabled(
+                    hud.placeholderTextEnabled,
+                    runtime: runtime
+                )
             }
             hud.promptNeedsUpdate = false
             hud.markersNeedUpdate = false
@@ -260,6 +269,14 @@ extension GameViewController: HUDControlProviding {
         get { hud.promptEnabled }
         set {
             hud.promptEnabled = newValue
+            applyHUDPresentation()
+        }
+    }
+
+    var hudPlaceholderTextEnabled: Bool {
+        get { hud.placeholderTextEnabled }
+        set {
+            hud.placeholderTextEnabled = newValue
             applyHUDPresentation()
         }
     }

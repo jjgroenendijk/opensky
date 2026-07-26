@@ -27,6 +27,9 @@ final class HUDElementsSection: PanelSectionViewController {
     let promptControl = NSButton(
         checkboxWithTitle: "Activation prompt", target: nil, action: nil
     )
+    let placeholderTextControl = NSButton(
+        checkboxWithTitle: "Authored placeholder text", target: nil, action: nil
+    )
     let scaleControl = NSPopUpButton(frame: .zero, pullsDown: false)
     private let statsLabel = PanelComponents.statsLabel(identifier: "HUDElementsStatsLabel")
 
@@ -58,6 +61,7 @@ final class HUDElementsSection: PanelSectionViewController {
             || !provider.hudCompassEnabled
             || !provider.hudMarkersEnabled
             || !provider.hudPromptEnabled
+            || provider.hudPlaceholderTextEnabled
             || provider.hudScale != 1
     }
 
@@ -69,6 +73,7 @@ final class HUDElementsSection: PanelSectionViewController {
         provider.hudCompassEnabled = true
         provider.hudMarkersEnabled = true
         provider.hudPromptEnabled = true
+        provider.hudPlaceholderTextEnabled = false
         provider.hudScale = 1
     }
 
@@ -77,7 +82,7 @@ final class HUDElementsSection: PanelSectionViewController {
         return [
             PanelComponents.group([
                 layerControl, crosshairControl, metersControl, compassControl,
-                markersControl, promptControl
+                markersControl, promptControl, placeholderTextControl
             ]),
             PanelComponents.group([
                 PanelComponents.caption("Scale"), scaleControl
@@ -90,7 +95,8 @@ final class HUDElementsSection: PanelSectionViewController {
         let available = provider != nil
         for control: NSControl in [
             layerControl, crosshairControl, compassControl,
-            metersControl, markersControl, promptControl, scaleControl
+            metersControl, markersControl, promptControl,
+            placeholderTextControl, scaleControl
         ] {
             control.isEnabled = available
         }
@@ -100,6 +106,7 @@ final class HUDElementsSection: PanelSectionViewController {
         compassControl.state = provider?.hudCompassEnabled == true ? .on : .off
         markersControl.state = provider?.hudMarkersEnabled == true ? .on : .off
         promptControl.state = provider?.hudPromptEnabled == true ? .on : .off
+        placeholderTextControl.state = provider?.hudPlaceholderTextEnabled == true ? .on : .off
         let scale = provider?.hudScale ?? 1
         let index = Self.scalePresets.firstIndex { $0.value == scale } ?? 2
         scaleControl.selectItem(at: index)
@@ -128,6 +135,11 @@ final class HUDElementsSection: PanelSectionViewController {
         configure(compassControl, action: #selector(compassChanged), id: "HUDCompassControl")
         configure(markersControl, action: #selector(markersChanged), id: "HUDMarkersControl")
         configure(promptControl, action: #selector(promptChanged), id: "HUDPromptControl")
+        configure(
+            placeholderTextControl,
+            action: #selector(placeholderTextChanged),
+            id: "HUDPlaceholderTextControl"
+        )
         for preset in Self.scalePresets {
             scaleControl.addItem(withTitle: preset.title)
         }
@@ -170,6 +182,11 @@ final class HUDElementsSection: PanelSectionViewController {
 
     @objc private func promptChanged() {
         provider?.hudPromptEnabled = promptControl.state == .on
+        finishInteraction()
+    }
+
+    @objc private func placeholderTextChanged() {
+        provider?.hudPlaceholderTextEnabled = placeholderTextControl.state == .on
         finishInteraction()
     }
 

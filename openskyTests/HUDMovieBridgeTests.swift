@@ -121,6 +121,12 @@ struct HUDMovieBridgeTests {
             let depth = UInt16(harness.target.children.count + 1)
             harness.target.addChild(meter, atDepth: depth)
         }
+        let rollover = SWFDisplayObject(content: .editText(1))
+        rollover.name = "RolloverInfoInstance"
+        harness.target.addChild(rollover, atDepth: 10)
+        let subtitles = SWFDisplayObject(content: .clip(nil))
+        subtitles.name = "SubtitleTextHolder"
+        harness.target.addChild(subtitles, atDepth: 11)
 
         HUDMovieBridge.setCrosshairEnabled(false, runtime: harness.runtime)
         HUDMovieBridge.setCompassHeading(
@@ -129,6 +135,7 @@ struct HUDMovieBridgeTests {
             runtime: harness.runtime
         )
         HUDMovieBridge.setMetersEnabled(false, runtime: harness.runtime)
+        HUDMovieBridge.setAuthoredPlaceholderTextEnabled(false, runtime: harness.runtime)
 
         #expect(harness.log.calls["SetCrosshairEnabled"]?.last == [.boolean(false)])
         #expect(harness.log.calls["SetCompassAngle"]?.last == [
@@ -137,6 +144,12 @@ struct HUDMovieBridgeTests {
         for name in ["Health", "Magica", "Stamina"] {
             #expect(harness.target.child(named: name)?.isVisible == false)
         }
+        #expect(!rollover.isVisible)
+        #expect(!subtitles.isVisible)
+
+        HUDMovieBridge.setAuthoredPlaceholderTextEnabled(true, runtime: harness.runtime)
+        #expect(rollover.isVisible)
+        #expect(subtitles.isVisible)
     }
 
     @Test func activationPromptMapsToTheVanillaTenArgumentCall() throws {

@@ -75,6 +75,10 @@ nonisolated enum HUDMovieBridge {
         "/HUDMovieBaseInstance/Magica",
         "/HUDMovieBaseInstance/Stamina"
     ]
+    private static let authoredPlaceholderPaths = [
+        "/HUDMovieBaseInstance/RolloverInfoInstance",
+        "/HUDMovieBaseInstance/SubtitleTextHolder"
+    ]
 
     static func validate(runtime: SWFMovieRuntime) throws {
         guard let target = runtime.node(atPath: targetPath, from: runtime.root) else {
@@ -99,6 +103,7 @@ nonisolated enum HUDMovieBridge {
         setCompassMarkers(markers, runtime: runtime)
         setCompassHeading(headingDegrees, runtime: runtime)
         setActivationPrompt(activationPrompt, runtime: runtime)
+        setAuthoredPlaceholderTextEnabled(false, runtime: runtime)
     }
 
     static func setCrosshairEnabled(_ enabled: Bool, runtime: SWFMovieRuntime) {
@@ -117,6 +122,21 @@ nonisolated enum HUDMovieBridge {
                 continue
             }
             runtime.setDisplayProperty(.visible, of: meter, to: .boolean(enabled))
+        }
+    }
+
+    /// The vanilla movie ships visible authoring samples in two otherwise
+    /// engine-driven fields. Keep them inspectable without leaking them into
+    /// normal gameplay before OpenSky publishes item info and subtitles.
+    static func setAuthoredPlaceholderTextEnabled(
+        _ enabled: Bool,
+        runtime: SWFMovieRuntime
+    ) {
+        for path in authoredPlaceholderPaths {
+            guard let node = runtime.node(atPath: path, from: runtime.root) else {
+                continue
+            }
+            runtime.setDisplayProperty(.visible, of: node, to: .boolean(enabled))
         }
     }
 

@@ -30,6 +30,7 @@ struct HUDInteractionPanelTests {
             (section.compassControl, "HUDCompassControl"),
             (section.markersControl, "HUDMarkersControl"),
             (section.promptControl, "HUDPromptControl"),
+            (section.placeholderTextControl, "HUDPlaceholderTextControl"),
             (section.scaleControl, "HUDScaleControl")
         ]
         for (control, identifier) in controls {
@@ -43,10 +44,14 @@ struct HUDInteractionPanelTests {
         section.scaleControl.selectItem(withTitle: "150%")
         send(section.scaleControl)
         #expect(provider.hudScale == 1.5)
-        #expect(provider.refocusCount == 2)
+        section.placeholderTextControl.state = .on
+        send(section.placeholderTextControl)
+        #expect(provider.hudPlaceholderTextEnabled)
+        #expect(provider.refocusCount == 3)
 
         section.performResetToDefaults()
         #expect(provider.hudMetersEnabled)
+        #expect(!provider.hudPlaceholderTextEnabled)
         #expect(provider.hudScale == 1)
     }
 
