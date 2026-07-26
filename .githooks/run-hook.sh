@@ -1,7 +1,7 @@
 #!/bin/sh
 # Generic hook runner. Executes every numbered script in .githooks/<hook>/ in sorted
 # order, forwards args + stdin, stops on first failure. Called by the tiny wrappers in
-# .githooks/hooks/. See AGENTS.md "Git workflow".
+# .githooks/hooks/. See the commit skill.
 set -eu
 
 hook="${1:?usage: run-hook.sh <hook-name> [args...]}"

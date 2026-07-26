@@ -1,5 +1,5 @@
 #!/bin/sh
-# Block direct commits to protected branches (AGENTS.md "Git workflow").
+# Block direct commits to protected branches (commit skill).
 set -eu
 # shellcheck source=/dev/null
 . "$(git rev-parse --show-toplevel)/.githooks/lib.sh"

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Block direct pushes to protected branches (AGENTS.md "Git workflow").
+# Block direct pushes to protected branches (commit skill).
 # stdin: <local ref> <local sha> <remote ref> <remote sha>  (per line)
 set -eu
 # shellcheck source=/dev/null
