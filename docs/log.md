@@ -4,6 +4,25 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-26
 
+* **Sidebar verification convention (M8.5.2)**: the standing obligation to record
+  a milestone's main-app acceptance surface now has a format and one home.
+  [sidebar acceptance](/tools/sidebar-acceptance.md) defines the fixed record —
+  sidebar path, `Destination-<id>`, the control ids exercised, the readout id
+  that proves the change, the deterministic tests that cover it, and an optional
+  local A/B note — and carries the ledger of every recorded surface, backfilled
+  from the six different phrasings the records had been scattered across
+  (`World > Environment` for M3 distant LOD through M7.6, `Developer > UI Lab`
+  for M8.1.4/M8.2.5/M8.3.3, `World > HUD & Interaction` for M8.4.2/M8.4.3,
+  `World > System Menu` for M8.5.1, `World > Audio` for M9.1.3). Milestones
+  predating the rule and surfaces with no recorded path are listed as not
+  recorded rather than reconstructed. The evidence bar is stated explicitly:
+  the existing deterministic suite — panel geometry and accessibility-id
+  assertions plus `DestinationRegistryTests` and the offscreen acceptance tests
+  — is the evidence, and changed-pixel A/B captures are optional, local-only,
+  and never committed, because a rendered frame embeds the user's Bethesda
+  assets. AGENTS.md, [app-ui](/tools/app-ui.md), and the `app-ui` skill now
+  point at the convention instead of restating a rule with no format. Docs only
+  — no behavior change. Closes #149.
 * **System menu (M8.5.1)**: `World > System Menu` adds the Resume / Settings /
   Quit selector and the two settings placeholders the milestone names. The
   selector (`opensky/UI/SystemMenuModel.swift`) is toolkit-free and movie-free,

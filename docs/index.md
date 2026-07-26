@@ -155,6 +155,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Main-app UI framework + placement](/tools/app-ui.md) - unified sidebar shell,
   destination registry, panel base classes, hosted sections, placement tree,
   layout + interaction invariants, accessibility-id contract.
+* [Sidebar verification convention](/tools/sidebar-acceptance.md) - the record every
+  milestone acceptance writes (path, destination id, control ids, readout, covering
+  tests), what counts as evidence, and the per-milestone ledger.
 
 ## Meta
 
