@@ -38,14 +38,13 @@ conflict.
   `git mv`, and AppleDouble `._*` files are ignored.
 - Xcode 26 ships without the Metal Toolchain. `make bootstrap`, once per checkout,
   downloads it.
-- CI is suspended (GitHub Actions CPU quota exhausted 2026-07-20). `ci.yml` is
-  manual-dispatch only and `main` has no required status checks until quota returns
-  (re-enable task: issue #70). Git hooks are the only gate — never `--no-verify`.
 - Filesystem-synced groups add every new file under `opensky/` to every target, so an
   app-only source (importing AppKit, Cocoa, or SwiftUI) needs a `membershipExceptions`
   entry excluding it from `openskycli`. `make cli-boundary` catches this.
-- `make test-ui` is blocked at harness initialization on this machine by TCC. Pin
-  accessibility ids as literal assertions in unit tests instead.
+- Git hooks are the gate — never `--no-verify`.
+- Facts about this machine and the outside world that will expire — CI status, missing TCC
+  permissions, blocked upstream spec hosts — live in `docs/tools/environment.md` with the
+  date each was observed. Record them there, never inline here or in a skill.
 
 ## Environment & tech stack
 
@@ -106,7 +105,7 @@ fresh session picks up from `gh`, not from a doc snapshot.
 
 `docs/index.md` is the map. A change that adds or alters a subsystem, parser, or non-obvious
 decision updates `docs/` in the same commit, `docs/log.md` and `docs/index.md` included.
-Load the `docs-wiki` skill before writing there.
+Load the `writing-wiki-docs` skill before writing there.
 
 ## Main-app verification surface
 
@@ -144,7 +143,7 @@ tuple cap, introduce a struct.
 - `throws` plus typed errors for parse and load failures; malformed input must not crash.
 - Anything repeatable becomes a `make` target or a git hook, never a documented manual
   procedure. Local hooks and CI mirror each other, so changing one gate changes both — keep
-  `ci.yml` in sync even while CI is suspended.
+  `ci.yml` in sync whether or not CI is currently running.
 
 ## Writing style (agent output, docs, comments, commit bodies)
 
@@ -172,9 +171,9 @@ matching one before starting that work rather than reconstructing the rules here
 
 | Skill | Load it when |
 | --- | --- |
-| `commit` | Committing, pushing, or opening and merging a PR |
-| `format-parser` | Adding or changing any game file-format parser |
-| `docs-wiki` | Writing anything under `docs/` |
-| `probe` | Running engine code against the real install |
-| `app-ui` | Adding or changing main-app dev UI |
-| `delegate` | Splitting a milestone across sub-agents |
+| `committing-and-landing-work` | Committing, pushing, or opening and merging a pull request |
+| `implementing-format-parsers` | Adding or changing any parser for ESM records, BSA, NIF, DDS, or LOD data |
+| `writing-wiki-docs` | Adding or materially changing anything under `docs/` |
+| `probing-real-game-data` | Running engine code against the real Skyrim SE install |
+| `building-app-ui` | Adding or changing main-app UI — sidebar destinations, control panels, inspectors |
+| `delegating-to-subagents` | Splitting a task across parallel or sequential sub-agents |
