@@ -105,12 +105,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 // the sound director only when the user enables audio.
                 let soundStore = SoundRecordStore(file: file)
                 let aspcStore = AcousticSpaceStore(file: file)
+                // Music playlists (M9.2.3): MUSC/MUST index from the same ESM.
+                let musicStore = MusicRecordStore(file: file)
                 return BuilderCellSceneProvider(
                     builder: builder,
                     worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
                     weatherSystem: weather,
                     soundStore: soundStore,
-                    aspcStore: aspcStore
+                    aspcStore: aspcStore,
+                    musicStore: musicStore
                 )
             } catch {
                 let reason = String(describing: error)

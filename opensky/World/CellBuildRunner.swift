@@ -56,6 +56,8 @@ nonisolated protocol WeatherProviding {
 nonisolated protocol AudioDataProviding {
     var soundStore: SoundRecordStore? { get }
     var aspcStore: AcousticSpaceStore? { get }
+    /// Music record index (MUSC/MUST), added in M9.2.3 for the music director.
+    var musicStore: MusicRecordStore? { get }
 }
 
 /// Adapts `CellSceneBuilder` to the provider seam, pinning the worldspace so
@@ -73,6 +75,8 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     var soundStore: SoundRecordStore?
     /// Acoustic-space index (ASPC); nil when the plugin has no ASPC records.
     var aspcStore: AcousticSpaceStore?
+    /// Music record index (MUSC/MUST); nil when the plugin has no music data.
+    var musicStore: MusicRecordStore?
 
     func buildCell(at coordinate: CellCoordinate) throws -> CellScene {
         try builder.buildScene(

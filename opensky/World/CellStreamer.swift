@@ -41,6 +41,13 @@ final class CellStreamer {
     /// Last ambience key pushed; nil = never emitted. Guards against re-firing.
     /// Internal for the CellStreamerAmbience satellite to read/write.
     var lastEmittedAmbienceKey: AmbienceKey?
+    /// Music director subscription (M9.2.3): fires with the current cell's
+    /// music-selection identity whenever it changes. The director resolves the
+    /// playlist and crossfades.
+    var onMusicContextChanged: ((MusicContext) -> Void)?
+    /// Last music key pushed; nil = never emitted. Internal for the
+    /// CellStreamerMusic satellite to read/write.
+    var lastEmittedMusicKey: MusicKey?
     /// Retained for deterministic walk benchmarks that inspect nearby doors.
     /// Production use-key activation is view-ray based.
     static let doorActivationRadius = InteractionRay.defaultMaximumDistance
@@ -57,12 +64,14 @@ final class CellStreamer {
     /// Set once the first drawable cell frames the camera; every later
     /// recompose passes a nil camera so the free-fly view is left alone.
     private var hasSeededCamera = false
-    private var requestedLODCenter: CellCoordinate?
+    /// Internal (not private) so the CellStreamerCoverage satellite can read
+    /// and write it; the coverage state below is shared for the same reason.
+    var requestedLODCenter: CellCoordinate?
     /// Once settled coverage exists, recenter builds stay offscreen here.
     /// Old full cells + LOD remain composed until replacement LOD arrives,
     /// then full grid + ring swap in one recompose.
-    private var coverageTransitionActive = false
-    private var stagedCells: [CellCoordinate: CellScene] = [:]
+    var coverageTransitionActive = false
+    var stagedCells: [CellCoordinate: CellScene] = [:]
     var interiorScene: CellScene?
     var transitionInFlight: FormID?
     private(set) var doorTransitionFailureCount = 0
@@ -164,6 +173,7 @@ final class CellStreamer {
         requestDistantLODIfNeeded()
         emitCenterRegionsIfChanged()
         emitAmbienceContextIfNeeded()
+        emitMusicContextIfNeeded()
     }
 
     /// Pushes the current exterior center cell's XCLR regions to the weather
@@ -178,18 +188,6 @@ final class CellStreamer {
         guard regions != lastEmittedRegions else { return }
         lastEmittedRegions = regions
         onCenterRegionsChanged?(regions)
-    }
-
-    private func requestDistantLODIfNeeded() {
-        // Cell + LOD work share one serial cache-confined queue. Let every
-        // desired full cell reach resident/void/failed first so first-time
-        // loading 100+ distant assets cannot starve the near grid.
-        let resolved = core.resident.union(core.void).union(core.failed)
-        guard resolved.isSuperset(of: grid.desiredCells) else { return }
-        guard requestedLODCenter != grid.center else { return }
-        if runner.enqueueDistantLOD(center: grid.center, hiddenCells: core.resident) {
-            requestedLODCenter = grid.center
-        }
     }
 
     /// Drops unloaded cells from the composition and schedules eviction of the
@@ -356,66 +354,6 @@ final class CellStreamer {
         let deltaX = Int(lhs.x) - Int(rhs.x)
         let deltaY = Int(lhs.y) - Int(rhs.y)
         return deltaX * deltaX + deltaY * deltaY
-    }
-}
-
-extension CellStreamer {
-    private func integrateDistantLOD(_ entries: [DistantLODBuildResult]) -> Bool {
-        var changed = false
-        for entry in entries {
-            switch entry.result {
-            case let .success(scene) where entry.center == grid.center:
-                if coverageTransitionActive {
-                    commitCoverageTransition(distantLOD: scene)
-                } else {
-                    let old = composition.setDistantLOD(scene)
-                    if let old {
-                        evictUnused(old.assets)
-                    }
-                }
-                changed = true
-            case let .success(scene):
-                if let scene {
-                    evictUnused(scene.assets)
-                }
-            case let .failure(error):
-                let reason = String(describing: error)
-                Self.logger.warning(
-                    "[WARNING] distant LOD build failed: \(reason, privacy: .public)"
-                )
-            }
-        }
-        return changed
-    }
-
-    private func discardStagedCells(outside desiredCells: Set<CellCoordinate>) {
-        let stale = stagedCells.keys.filter { !desiredCells.contains($0) }
-        for coordinate in stale {
-            guard let scene = stagedCells.removeValue(forKey: coordinate) else { continue }
-            evictUnused(scene.assets)
-        }
-    }
-
-    private func commitCoverageTransition(distantLOD: DistantLODScene?) {
-        var departed = CellAssets()
-        for coordinate in composition.coordinates where !core.resident.contains(coordinate) {
-            guard let scene = composition.removeCell(at: coordinate) else { continue }
-            departed.meshKeys.formUnion(scene.assets.meshKeys)
-            departed.textureKeys.formUnion(scene.assets.textureKeys)
-        }
-        for (coordinate, scene) in stagedCells where core.resident.contains(coordinate) {
-            if let replaced = composition.setCell(scene, at: coordinate) {
-                departed.meshKeys.formUnion(replaced.assets.meshKeys)
-                departed.textureKeys.formUnion(replaced.assets.textureKeys)
-            }
-        }
-        stagedCells.removeAll(keepingCapacity: true)
-        if let oldLOD = composition.setDistantLOD(distantLOD) {
-            departed.meshKeys.formUnion(oldLOD.assets.meshKeys)
-            departed.textureKeys.formUnion(oldLOD.assets.textureKeys)
-        }
-        coverageTransitionActive = false
-        evictUnused(departed)
     }
 }
 

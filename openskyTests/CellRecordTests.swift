@@ -39,6 +39,37 @@ struct CellRecordTests {
         #expect(cell.acousticSpace == nil)
     }
 
+    @Test func decodesMusicTypeField() throws {
+        // XCMO (M9.2.3): MUSC override, decoded alongside the other links.
+        let fields = ESMFixture.field("EDID", ESMFixture.zstring("Tavern"))
+            + ESMFixture.field("DATA", Data([0x01, 0x00]))
+            + ESMFixture.field("XCAS", formID(0xABC))
+            + ESMFixture.field("XCMO", formID(0xDEF))
+        let cell = try Cell(record: record(ESMFixture.record(
+            "CELL", formID: 0x14, data: fields
+        )), localized: false)
+
+        #expect(cell.musicType == FormID(0xDEF))
+        #expect(cell.acousticSpace == FormID(0xABC))
+    }
+
+    @Test func musicTypeNilWhenAbsentNullOrTruncated() throws {
+        let bare = try Cell(record: record(ESMFixture.record(
+            "CELL", formID: 0x15, data: ESMFixture.field("DATA", Data([0x01, 0x00]))
+        )), localized: false)
+        #expect(bare.musicType == nil)
+
+        let null = try Cell(record: record(ESMFixture.record(
+            "CELL", formID: 0x16, data: ESMFixture.field("XCMO", formID(0))
+        )), localized: false)
+        #expect(null.musicType == nil)
+
+        let short = try Cell(record: record(ESMFixture.record(
+            "CELL", formID: 0x17, data: ESMFixture.field("XCMO", Data([1, 2]))
+        )), localized: false)
+        #expect(short.musicType == nil)
+    }
+
     @Test func exteriorGridAndFlagsDecode() throws {
         var xclc = Data()
         xclc.appendUInt32(UInt32(bitPattern: Int32(4)))

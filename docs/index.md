@@ -34,6 +34,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Acoustic space (ASPC)](/formats/acoustic-space.md) - interior-ambience bridge:
   ASPC fields, the `RDAT` FormID collision with REGN's area header, and the
   interior-only region borrow.
+* [Music records (MUSC, MUST)](/formats/music.md) - MUSC playlist flags/priority/
+  ducking plus MUST track type, loop and cue data, the CELL/WRLD/REGN music links,
+  and the `music\` path rules.
 * [Distant LOD](/formats/lod.md) - lodsettings plus BTR/BTO paths and LOD-specific NIF
   blocks, tree LST/BTT layouts, placement rules, full vanilla sweep evidence.
 * [Skyrim INI settings](/formats/ini.md) - read-only decode, file precedence, typed
@@ -113,6 +116,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [World SFX + ambience](/engine/world-sfx.md) - world sound director wiring
   interaction events to one-shot SFX, per-cell ASPC/REGN ambience bed resolution,
   and the `World > Audio > SFX & Ambience` verification surface.
+* [Music playlists](/engine/music.md) - MUSC/MUST playlist selection through the
+  CELL/REGN/WRLD precedence chain, the derived exploration/town/interior states,
+  palette expansion and flag handling, and the crossfading music director.
 
 ## Rendering
 

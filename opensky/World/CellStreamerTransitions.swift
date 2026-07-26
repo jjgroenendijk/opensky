@@ -85,5 +85,7 @@ extension CellStreamer {
         // (e.g. re-entering the same interior); force a re-emit next tick.
         invalidateAmbienceContext()
         emitAmbienceContextIfNeeded()
+        invalidateMusicContext()
+        emitMusicContextIfNeeded()
     }
 }

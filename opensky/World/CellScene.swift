@@ -49,6 +49,12 @@ nonisolated struct CellScene {
     /// current cell's value into the world sound director so its ambient bed
     /// resolves against the right ASPC record.
     let acousticSpace: FormID?
+    /// XCMO music-type override authored on this CELL (M9.2.3); nil when the
+    /// cell authors none. First link in the music selection precedence chain.
+    let musicType: FormID?
+    /// ZNAM music type of the worldspace this cell belongs to; nil on
+    /// interiors and worldspaces without one. Last link in the chain.
+    let worldspaceMusicType: FormID?
     /// CPU collision surface for exterior LAND/DNAM terrain. nil for
     /// interiors or cells with no drawable terrain.
     let terrainHeightField: TerrainHeightField?
@@ -70,6 +76,8 @@ nonisolated struct CellScene {
         interactions: [FormID: PlacedInteraction] = [:],
         regions: [FormID] = [],
         acousticSpace: FormID? = nil,
+        musicType: FormID? = nil,
+        worldspaceMusicType: FormID? = nil,
         terrainHeightField: TerrainHeightField? = nil,
         grassPlacements: [GrassPlacement] = [],
         staticCollision: StaticCollisionSet = .empty,
@@ -83,6 +91,8 @@ nonisolated struct CellScene {
         self.interactions = interactions
         self.regions = regions
         self.acousticSpace = acousticSpace
+        self.musicType = musicType
+        self.worldspaceMusicType = worldspaceMusicType
         self.terrainHeightField = terrainHeightField
         self.grassPlacements = grassPlacements
         self.staticCollision = staticCollision

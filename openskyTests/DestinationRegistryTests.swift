@@ -247,6 +247,19 @@ final class FakeWorldProviders: WorldControlProviders {
     var lastSFXDescription: String?
     var lastSFXError: String?
     var currentAmbienceDescription = "none"
+
+    // Music director bridges (M9.2.3).
+    var musicEnabled = true
+    var selectableMusicTypeNames: [String] = []
+    func forceMusicType(named _: String) -> String? {
+        nil
+    }
+
+    func stopMusic() {}
+    var currentMusicDescription = "none"
+    var currentMusicStateName = "exploration"
+    var currentMusicTrackName: String?
+    var lastMusicError: String?
 }
 
 struct DestinationRegistryTests {
@@ -366,6 +379,13 @@ struct DestinationRegistryTests {
         #expect(isOverridden("audio", context: context))
         reset("audio", context: context)
         #expect(!providers.audioEnabled)
+
+        // M9.2.3: a disabled music director is an audio-destination override,
+        // and the destination-level reset re-enables it.
+        providers.musicEnabled = false
+        #expect(isOverridden("audio", context: context))
+        reset("audio", context: context)
+        #expect(providers.musicEnabled)
 
         providers.uiOverlayEnabled = false
         #expect(isOverridden("uiLab", context: context))

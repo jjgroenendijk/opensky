@@ -91,6 +91,10 @@ final class GameViewController: NSViewController {
     /// first enable. Subscribed to streamer callbacks; lives in
     /// `opensky/Audio/WorldAudioSoundDirector.swift`.
     var soundDirector: WorldAudioSoundDirector?
+    /// Music director (M9.2.3), built beside the engine on first enable.
+    /// Subscribed to the streamer's music-context callback and ticked by the
+    /// renderer; lives in `opensky/Audio/WorldMusicDirector.swift`.
+    var musicDirector: WorldMusicDirector?
     /// Cell provider the audio bridge reads sound/aspc stores off when it
     /// constructs the SFX director (M9.2.2). Held weakly because the build
     /// runner (and through it the streamer) already retains the provider.

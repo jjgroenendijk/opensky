@@ -63,6 +63,10 @@ nonisolated struct Cell {
     /// (M9.2.2). Exterior cells generally carry none; interiors point at an
     /// ASPC whose SNAM/RDAT drive the per-cell ambient bed. nil when absent.
     let acousticSpace: FormID?
+    /// XCMO — music type (MUSC) override for this cell (M9.2.3). nil when
+    /// absent or null; the music director then falls back to the worldspace
+    /// or region music.
+    let musicType: FormID?
 
     var isInterior: Bool {
         flags.contains(.interior)
@@ -89,6 +93,7 @@ nonisolated struct Cell {
         lightingTemplate = fields.lightingTemplate
         regions = fields.regions
         acousticSpace = fields.acousticSpace
+        musicType = fields.musicType
     }
 
     /// Mutable accumulator for the field loop. Split out so the field switch
@@ -105,6 +110,7 @@ nonisolated struct Cell {
         var lightingTemplate: FormID?
         var regions: [FormID] = []
         var acousticSpace: FormID?
+        var musicType: FormID?
 
         mutating func decode(field: ESMField, localized: Bool) throws {
             var reader = BinaryReader(field.data)
@@ -124,10 +130,20 @@ nonisolated struct Cell {
                 grid = Grid(x: x, y: y, quadFlags: quadFlags)
             case "XCLW":
                 waterHeight = try Cell.decodeWaterHeight(field.data)
-            case "XCWT":
-                waterType = try Cell.decodeFormID(field.data)
             case "XCLL":
                 lighting = try CellLightingValues.decode(field.data, hasInheritFlags: true)
+            default:
+                try decodeReference(field: field)
+            }
+        }
+
+        /// Fields that are a plain FormID link or an array of them. Split out
+        /// of `decode` so neither switch passes the strict-lint cyclomatic-
+        /// complexity cap (XCMO, added in M9.2.3, tipped it over).
+        private mutating func decodeReference(field: ESMField) throws {
+            switch field.type {
+            case "XCWT":
+                waterType = try Cell.decodeFormID(field.data)
             case "LTMP":
                 lightingTemplate = try Cell.decodeFormID(field.data)
             case "XCLR":
@@ -137,6 +153,10 @@ nonisolated struct Cell {
             case "XCAS":
                 // FormID into ASPC. xEdit wbDefinitionsTES5.pas:4376.
                 acousticSpace = try Cell.decodeFormID(field.data)
+            case "XCMO":
+                // FormID into MUSC. xEdit wbDefinitionsTES5.pas:4378 +
+                // UESP CELL. A null link means "no override".
+                musicType = try Cell.decodeNonNullFormID(field.data)
             default:
                 break
             }
@@ -179,5 +199,12 @@ nonisolated struct Cell {
         guard data.count >= 4 else { return nil }
         var reader = BinaryReader(data)
         return try FormID(reader.readUInt32())
+    }
+
+    /// Same as `decodeFormID` but folds an authored null link to nil, which is
+    /// how the music override reads ("no override" rather than "form 0").
+    private static func decodeNonNullFormID(_ data: Data) throws -> FormID? {
+        guard let formID = try decodeFormID(data) else { return nil }
+        return formID.isNull ? nil : formID
     }
 }

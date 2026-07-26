@@ -4,6 +4,79 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-26
 
+* **Music verification surface (M9.2.3, issue #156)**: `World > Audio` gains a
+  fourth section, `Music` (`opensky/Shell/Sections/AudioMusicSection.swift`),
+  so the playlist director is reachable without a CLI command. It carries the
+  `AudioMusicEnabledControl` toggle, an `AudioMusicTypeControl` picker offering
+  `None (automatic)` ahead of the sorted MUSC editor ids, an
+  `AudioStopMusicControl` button, and the `AudioMusicStatsLabel` readout showing
+  the derived state, the playing playlist and track, and any error. Forcing a
+  playlist is panel-local state (nothing on the provider records it), so the
+  section reports itself overridden on a force or a disabled director while the
+  static mirror the `audio` destination unions in judges only the toggle;
+  resetting the destination re-enables music, stops it so the precedence chain
+  resolves again, and the shell's cached-panel reset returns the picker to
+  automatic. Accessibility ids are pinned in `AudioPanelTests` because
+  `make test-ui` is blocked on this machine. Acceptance record and ledger row:
+  [music playlists](/engine/music.md),
+  [sidebar acceptance](/tools/sidebar-acceptance.md).
+* **Music selection + director (M9.2.3, issue #156)**: the runtime that turns
+  the MUSC/MUST records into playing music. `MusicCatalog.swift` is pure value
+  logic: a `MusicContext` from the streamer resolves through the
+  `CELL.XCMO -> REGN.RDMO -> WRLD.ZNAM` precedence chain into a `MusicSelection`
+  carrying the winning playlist, its ordered playable tracks, an advance policy
+  derived from the MUSC flags (`Plays One Selection`, `Cycle Tracks`,
+  `Maintain Track Order`), and the crossfade duration (`WNAM`, else two seconds,
+  else zero for `Abrupt Transition`). Palettes expand depth-bounded and
+  cycle-safe; silent and unplayable tracks are filtered; an unordered playlist is
+  shuffled deterministically from a context-derived seed rather than from
+  `Hasher`. The three states the milestone names are derived, not authored:
+  `interior` from the cell type, `town` from the `MUSTown` editor-id convention,
+  `exploration` as the catch-all — limits written down in the doc.
+  `WorldMusicDirector` owns the non-positional music sources (nothing else will
+  retire them), crossfades on a selection change with the stage-2 recipe,
+  advances the playlist when the engine retires a finished stream, and keeps the
+  SFX director's three invariants (single apply path, remembered desired state,
+  live-source-derived readout). `CellStreamerMusic.swift` emits the context from
+  the same two sites as the ambience emission, `CellScene` now carries the cell
+  and worldspace music links, and the renderer's paused-aware audio tick drives
+  the director. `AudioControlProviding` gained the music members the panel stage
+  binds to. See [music playlists](/engine/music.md); covered by
+  `MusicCatalogTests`, `WorldMusicDirectorTests` and `CellStreamerMusicTests`.
+* **Non-positional playback + gain ramps (M9.2.3, issue #156)**: the audio
+  engine primitive a music crossfade needs. `playNonPositional(fileData:)` /
+  `(buffer:)` start a source with the file's own channel layout wired straight
+  into `categoryMixers[category]` — no mono downmix, no panning, no distance
+  attenuation. Routing is explicit (`AudioRouting` on `ActiveAudioSource`),
+  and a non-positional source is exempt from both the FIFO source budget
+  (which now counts positional sources only) and the cell purge, so a music
+  bed survives an effect burst and the world streaming around it. The category
+  factor moved to whichever stage applies it once: player node when positional,
+  submix when not. `WorldAudioEngineFades.swift` adds `GainFade` plus
+  `fadeSource(id:to:overSeconds:)`, `fadeOutAndStopSource(id:overSeconds:)` and
+  `advanceFades(deltaTime:)`, advanced from the renderer's paused-aware frame
+  delta (now threaded through `updateAudio(deltaTime:)` into
+  `tick(listenerCell:deltaTime:)`) rather than any wall clock, so fades are
+  deterministic and freeze in menu mode. The fade factor is folded into the
+  node-volume product, so a slider move mid-crossfade cannot stomp a ramp; the
+  documented invariant is now master x category x source x fade. Snapshot rows
+  gained `isPositional`, `fadeGain` and `isFading`. See
+  [world audio playback](/engine/audio.md); covered by
+  `WorldAudioEngineNonPositionalTests` and `WorldAudioEngineFadeTests`
+  (offline manual rendering, explicit deltas).
+* **Music records (M9.2.3, issue #156)**: added the MUSC/MUST format layer that
+  the music director builds on. `MusicType` decodes the playlist flags,
+  priority, ducking and fade duration plus the ordered MUST link list;
+  `MusicTrack` decodes the track type tag, duration, fade-out, track and finale
+  filenames, cue points, loop data and palette children. The three world links
+  that select a playlist are now decoded too: `CELL.XCMO`, `WRLD.ZNAM`, and
+  `REGN.RDMO` (previously skipped). `MusicRecordStore` indexes both record types
+  eagerly, expands a MUSC into its ordered tracks, and canonicalizes ANAM/BNAM
+  filenames under the `music\` root — a separate rule from the `sound\` root
+  `SoundRecordStore` applies. The store is exposed through `AudioDataProviding`
+  so the director stage can pull it. See [music records](/formats/music.md);
+  covered by `MusicRecordTests`, `MusicRecordStoreTests`, plus the new field
+  cases in `CellRecordTests`, `RegionRecordTests` and `RecordDecoderTests`.
 * **World SFX + ambience (M9.2.2, issue #155)**: the world sound director
   wires the M8 interaction-event seam to one-shot SFX and the streaming
   cell lifecycle to a positional ambience bed. Door open SFX plays under

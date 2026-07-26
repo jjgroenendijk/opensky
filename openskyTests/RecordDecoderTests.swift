@@ -58,6 +58,8 @@ struct RecordDecoderTests {
         nam2.appendUInt32(0x18)
         var cnam = Data()
         cnam.appendUInt32(0x2A) // climate FormID
+        var znam = Data()
+        znam.appendUInt32(0x2B) // music type FormID
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("Tamriel"))
             + ESMFixture.field("FULL", full)
             + ESMFixture.field("WNAM", wnam)
@@ -66,7 +68,7 @@ struct RecordDecoderTests {
             + ESMFixture.field("NAM2", nam2)
             + ESMFixture.field("CNAM", cnam)
             + ESMFixture.field("DATA", Data([0x02]))
-            + ESMFixture.field("ZNAM", Data(count: 4)) // skipped
+            + ESMFixture.field("ZNAM", znam) // default music type (M9.2.3)
         let world = try Worldspace(
             record: record(ESMFixture.record("WRLD", formID: 0x3C, data: fields)),
             localized: true
@@ -81,6 +83,17 @@ struct RecordDecoderTests {
         #expect(world.defaultWaterHeight == -14000)
         #expect(world.waterType == FormID(0x18))
         #expect(world.climate == FormID(0x2A))
+        #expect(world.musicType == FormID(0x2B))
+    }
+
+    @Test func worldspaceIgnoresNullMusicType() throws {
+        let world = try Worldspace(
+            record: record(ESMFixture.record(
+                "WRLD", formID: 0x3D, data: ESMFixture.field("ZNAM", Data(count: 4))
+            )),
+            localized: false
+        )
+        #expect(world.musicType == nil)
     }
 
     @Test func decodesMinimalWorldspace() throws {
@@ -96,6 +109,7 @@ struct RecordDecoderTests {
         #expect(world.defaultWaterHeight == nil)
         #expect(world.waterType == nil)
         #expect(world.climate == nil)
+        #expect(world.musicType == nil)
     }
 
     @Test func worldspaceRejectsWrongRecordType() throws {

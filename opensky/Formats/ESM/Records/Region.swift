@@ -81,6 +81,10 @@ nonisolated struct Region {
     let soundPriority: Int?
     /// Sound area RDAT override flag.
     let soundOverride: Bool
+    /// RDMO — region music type (MUSC), M9.2.3. UESP REGN notes it "can appear
+    /// with RDSA under same RDAT or on its own", so it is accepted regardless
+    /// of the current area context. nil when absent or null.
+    let musicType: FormID?
 
     init(record: ESMRecord) throws {
         guard record.type == "REGN" else {
@@ -101,6 +105,7 @@ nonisolated struct Region {
         soundList = fields.soundList
         soundPriority = fields.soundPriority
         soundOverride = fields.soundOverride
+        musicType = fields.musicType
     }
 
     /// Mutable accumulator for the field loop. Split out so the area-aware
@@ -116,6 +121,7 @@ nonisolated struct Region {
         var soundList: [SoundEntry] = []
         var soundPriority: Int?
         var soundOverride = false
+        var musicType: FormID?
         /// Last RDAT area type seen; area fields (RDWT, RDSA, ...) bind to it.
         var currentArea: AreaType?
 
@@ -148,10 +154,13 @@ nonisolated struct Region {
                 soundList = try Region.readSoundList(
                     &reader, count: field.data.count / 12
                 )
+            case "RDMO":
+                // Region music (MUSC). xEdit wbDefinitionsTES5.pas:9984.
+                // Accepted outside the sound area on purpose (see `musicType`).
+                musicType = Region.readMusicType(field.data) ?? musicType
             default:
                 // Skipped: RPLI/RPLD (region point list), RDOT (objects),
-                // RDMP (map name), RDGS (grass), RDMO (region music -> MUSC,
-                // milestone 9.2.3 issue #156). Their payloads stream past
+                // RDMP (map name), RDGS (grass). Their payloads stream past
                 // untouched.
                 break
             }
@@ -217,6 +226,16 @@ nonisolated struct Region {
             ))
         }
         return entries
+    }
+
+    /// 4-byte MUSC FormID. Wrong widths and null links yield nil so the caller
+    /// keeps whatever a previous RDMO supplied.
+    private static func readMusicType(_ data: Data) -> FormID? {
+        guard data.count == 4 else { return nil }
+        var reader = BinaryReader(data)
+        guard let raw = try? reader.readUInt32() else { return nil }
+        let formID = FormID(raw)
+        return formID.isNull ? nil : formID
     }
 
     private static func readColor(_ reader: inout BinaryReader) throws -> SIMD3<Float> {
