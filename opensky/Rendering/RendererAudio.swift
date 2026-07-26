@@ -13,7 +13,13 @@ extension Renderer {
     /// the listener pose stays where it was when the pause began.
     func updateAudioFromWallClock() {
         let delta = audioClock.advance(to: CACurrentMediaTime(), paused: worldSimPaused)
-        guard !worldSimPaused else { return }
+        guard !worldSimPaused else {
+            // A paused frame does no audio work at all, so the measured cost of
+            // this frame's audio update is genuinely zero rather than the stale
+            // value from the last unpaused frame.
+            lastAudioUpdateMS = 0
+            return
+        }
         updateAudio(deltaTime: delta)
     }
 
@@ -22,8 +28,22 @@ extension Renderer {
     /// AVFAudio advances playback itself on its own render thread; `deltaTime`
     /// drives only the engine-side fades, which is why a paused frame (which
     /// never reaches here) freezes a crossfade instead of skipping through it.
+    ///
+    /// The whole update is timed into `lastAudioUpdateMS`, which the offscreen
+    /// benchmark samples per frame the same way it samples the animation and
+    /// shadow updates. With no engine attached the guard below returns before
+    /// the clock is read, so the instrumentation costs one optional test.
     func updateAudio(deltaTime: Float) {
-        guard let worldAudio else { return }
+        guard let worldAudio else {
+            lastAudioUpdateMS = 0
+            return
+        }
+        let started = DispatchTime.now().uptimeNanoseconds
+        // Registered first, so it runs last and covers the music tick below.
+        defer {
+            lastAudioUpdateMS =
+                Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
+        }
         // Music runs after the engine tick so the director sees this frame's
         // retirements: a track that reached its end is already gone from
         // `sources`, which is how the playlist knows to advance.

@@ -24,17 +24,24 @@ nonisolated struct OffscreenBenchResult {
     /// culling/writes + encode) — the M7.1.2 sun-shadow budget metric. Mirrors
     /// `animationMS`; empty when the run never sampled it.
     let shadowMS: [Double]
+    /// CPU wall time of the per-frame audio update per frame (listener pose +
+    /// `WorldAudioEngine.tick` + music director) — the M9.2.4 audio budget
+    /// metric. Mirrors `animationMS`; every entry is zero on a run with no
+    /// audio engine attached, and the array is empty when never sampled.
+    let audioUpdateMS: [Double]
 
     init(
         frameMS: [Double],
         windowSummaries: [String],
         animationMS: [Double] = [],
-        shadowMS: [Double] = []
+        shadowMS: [Double] = [],
+        audioUpdateMS: [Double] = []
     ) {
         self.frameMS = frameMS
         self.windowSummaries = windowSummaries
         self.animationMS = animationMS
         self.shadowMS = shadowMS
+        self.audioUpdateMS = audioUpdateMS
     }
 
     var averageMS: Double {
@@ -64,6 +71,14 @@ nonisolated struct OffscreenBenchResult {
 
     func shadowPercentileMS(_ percentile: Double) -> Double {
         Self.percentile(shadowMS, percentile: percentile)
+    }
+
+    var audioUpdateAverageMS: Double {
+        audioUpdateMS.isEmpty ? 0 : audioUpdateMS.reduce(0, +) / Double(audioUpdateMS.count)
+    }
+
+    func audioUpdatePercentileMS(_ percentile: Double) -> Double {
+        Self.percentile(audioUpdateMS, percentile: percentile)
     }
 
     private static func percentile(_ values: [Double], percentile: Double) -> Double {
@@ -164,6 +179,10 @@ extension Renderer {
         if advanceAnimation {
             updateParticles(deltaTime: simDelta)
             updatePrecipitation(deltaTime: simDelta)
+            // Same per-frame audio work draw(in:) does, so the benchmark's audio
+            // budget measures the shipping tick. A no-op (and unmeasured) while
+            // no WorldAudioEngine is attached, which is every render test.
+            updateAudio(deltaTime: simDelta)
         }
         endFrameEvent.wait(untilSignaledValue: UInt64(frameIndex - 1), timeoutMS: 2000)
         let slot = frameIndex % Self.maxFramesInFlight
@@ -264,6 +283,7 @@ extension Renderer {
         var summaries: [String] = []
         var animationMS: [Double] = []
         var shadowMS: [Double] = []
+        var audioUpdateMS: [Double] = []
 
         for _ in 1 ... maxFrames {
             if minimumFrameInterval > 0 {
@@ -281,12 +301,14 @@ extension Renderer {
             frameMS.append(Double(DispatchTime.now().uptimeNanoseconds - start) / 1e6)
             animationMS.append(lastAnimationUpdateMS)
             shadowMS.append(lastShadowUpdateMS)
+            audioUpdateMS.append(lastAudioUpdateMS)
             if settled {
                 return OffscreenBenchResult(
                     frameMS: frameMS,
                     windowSummaries: summaries,
                     animationMS: animationMS,
-                    shadowMS: shadowMS
+                    shadowMS: shadowMS,
+                    audioUpdateMS: audioUpdateMS
                 )
             }
         }
@@ -317,6 +339,7 @@ extension Renderer {
         var summaries: [String] = []
         var animationMS: [Double] = []
         var shadowMS: [Double] = []
+        var audioUpdateMS: [Double] = []
         for _ in 0 ..< frames {
             let start = DispatchTime.now().uptimeNanoseconds
             let summary = try renderOffscreenFrame(
@@ -329,12 +352,14 @@ extension Renderer {
             frameMS.append(Double(DispatchTime.now().uptimeNanoseconds - start) / 1e6)
             animationMS.append(lastAnimationUpdateMS)
             shadowMS.append(lastShadowUpdateMS)
+            audioUpdateMS.append(lastAudioUpdateMS)
         }
         return OffscreenBenchResult(
             frameMS: frameMS,
             windowSummaries: summaries,
             animationMS: animationMS,
-            shadowMS: shadowMS
+            shadowMS: shadowMS,
+            audioUpdateMS: audioUpdateMS
         )
     }
 }

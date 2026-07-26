@@ -101,18 +101,20 @@ enum OpenSkyCLI {
             [--collision-build-budget-ms <f>]
             [--actor-build-budget-ms <f>]
             [--animation-budget-ms <f>] [--shadow-budget-ms <f>]
+            [--audio-budget-ms <f>]
                                   Script east + north cell crossings; require
                                   settlement, unload, one build/cell, bounded
                                   physical footprint, collision-build p95,
                                   actor-build p95, exact per-cell actor/animation
-                                  accounting, animation + shadow + frame budgets;
-                                  require selected rain, live world particles,
-                                  precipitation, shadows, and grass; report peaks
+                                  accounting, animation + shadow + audio + frame
+                                  budgets; require selected rain, live world
+                                  particles, precipitation, shadows, and grass;
+                                  report peaks
       bench --walk-path [--size WxH] [--budget-ms <f>]
-            [--max-frames <n>] [--out <file>]
+            [--max-frames <n>] [--audio-budget-ms <f>] [--out <file>]
                                   Fixed-step M4 route: terrain + farm stairs,
                                   paired interior crossing, exterior return;
-                                  fail route/collision/stream/physics gates
+                                  fail route/collision/stream/physics/audio gates
       help                        Show this text
 
     defaults: cell/screenshot/render target the first-render cell (Tamriel (6,-2)).

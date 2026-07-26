@@ -246,13 +246,18 @@ final class WorldMusicDirector {
 
     /// Starts one playable track as a non-positional music source. Returns nil
     /// (with `lastMusicError` set) when the file or the engine refuses.
+    ///
+    /// The authored `MUST ANAM` name is resolved through
+    /// `MusicRecordStore.loadAudioFile`, which falls back to the `.xwm` sibling
+    /// when the archives ship no file under the authored name (issue #246), so
+    /// the source is named after the file that really loaded.
     private func startSource(for track: PlayableMusicTrack) -> Int? {
         do {
-            let data = try fileLoader(track.path)
+            let file = try MusicRecordStore.loadAudioFile(at: track.path, load: fileLoader)
             return try engine.playNonPositional(
-                fileData: data,
+                fileData: file.data,
                 request: .nonPositional(
-                    name: track.path,
+                    name: file.key,
                     category: .music,
                     gain: 1,
                     // `.repeatCurrent` has the engine rewind at end of file;

@@ -232,18 +232,68 @@ final class FakeWorldProviders: WorldControlProviders {
         audioCategoryVolumes[category] = volume
     }
 
-    var selectableAudioFileNames: [String] = []
-    func playAudioFile(named _: String) -> String? {
-        nil
+    private var mutedAudioCategories: Set<AudioCategory> = []
+    var soloedAudioCategory: AudioCategory?
+    func audioCategoryIsMuted(_ category: AudioCategory) -> Bool {
+        mutedAudioCategories.contains(category)
     }
 
-    func stopAllAudioSources() {}
+    func setAudioCategoryMuted(_ muted: Bool, for category: AudioCategory) {
+        if muted {
+            mutedAudioCategories.insert(category)
+        } else {
+            mutedAudioCategories.remove(category)
+        }
+    }
+
+    var selectableAudioFileNames: [String] = []
+    /// Files the Sources section asked to play, in order. The M9 acceptance
+    /// gate reads this to prove the trigger reached the provider.
+    private(set) var playedAudioFileNames: [String] = []
+    /// Failure the next `playAudioFile(named:)` reports; nil means success.
+    var audioPlayFailure: String?
+    /// Mirrors the live bridge: a successful trigger starts one positional
+    /// effects source, which the next snapshot then lists.
+    func playAudioFile(named name: String) -> String? {
+        playedAudioFileNames.append(name)
+        guard audioPlayFailure == nil else { return audioPlayFailure }
+        audioStatsSnapshot = AudioStatsSnapshot(
+            enabled: audioStatsSnapshot.enabled,
+            engineRunning: audioStatsSnapshot.engineRunning,
+            outputDescription: audioStatsSnapshot.outputDescription,
+            sources: audioStatsSnapshot.sources + [
+                AudioSourceStatsSnapshot(
+                    name: name,
+                    categoryName: AudioCategory.effects.rawValue,
+                    isPositional: true,
+                    worldPosition: SIMD3<Float>(700, 0, 0),
+                    distanceMeters: 10,
+                    fadeGain: 1,
+                    isFading: false,
+                    effectiveGain: 1
+                )
+            ],
+            sourceCap: audioStatsSnapshot.sourceCap
+        )
+        return nil
+    }
+
+    private(set) var stopAllAudioSourcesCount = 0
+    func stopAllAudioSources() {
+        stopAllAudioSourcesCount += 1
+    }
+
     var audioStatsSnapshot = AudioStatsSnapshot.empty
 
     // World SFX director bridges (M9.2.2).
     var sfxEnabled = true
     var ambienceEnabled = true
-    func stopAmbience() {}
+    private(set) var stopAmbienceCount = 0
+    func stopAmbience() {
+        stopAmbienceCount += 1
+        currentAmbienceDescription = "none"
+    }
+
     var lastSFXDescription: String?
     var lastSFXError: String?
     var currentAmbienceDescription = "none"
@@ -251,11 +301,27 @@ final class FakeWorldProviders: WorldControlProviders {
     // Music director bridges (M9.2.3).
     var musicEnabled = true
     var selectableMusicTypeNames: [String] = []
-    func forceMusicType(named _: String) -> String? {
-        nil
+    /// MUSC editor ids the Music section forced, in order.
+    private(set) var forcedMusicTypeNames: [String] = []
+    /// Failure the next `forceMusicType(named:)` reports; nil means success.
+    var musicForceFailure: String?
+    /// Mirrors the live bridge: a successful force names the playlist in the
+    /// description the readout shows.
+    func forceMusicType(named name: String) -> String? {
+        forcedMusicTypeNames.append(name)
+        guard musicForceFailure == nil else { return musicForceFailure }
+        currentMusicDescription = "\(name) — music\\\(name).xwm"
+        currentMusicTrackName = "music\\\(name).xwm"
+        return nil
     }
 
-    func stopMusic() {}
+    private(set) var stopMusicCount = 0
+    func stopMusic() {
+        stopMusicCount += 1
+        currentMusicDescription = "none"
+        currentMusicTrackName = nil
+    }
+
     var currentMusicDescription = "none"
     var currentMusicStateName = "exploration"
     var currentMusicTrackName: String?
@@ -386,6 +452,18 @@ struct DestinationRegistryTests {
         #expect(isOverridden("audio", context: context))
         reset("audio", context: context)
         #expect(providers.musicEnabled)
+
+        // M9.2.4: a muted or soloed category is an audio-destination override,
+        // and the destination-level reset clears both.
+        providers.setAudioCategoryMuted(true, for: .music)
+        #expect(isOverridden("audio", context: context))
+        reset("audio", context: context)
+        #expect(!providers.audioCategoryIsMuted(.music))
+
+        providers.soloedAudioCategory = .ambience
+        #expect(isOverridden("audio", context: context))
+        reset("audio", context: context)
+        #expect(providers.soloedAudioCategory == nil)
 
         providers.uiOverlayEnabled = false
         #expect(isOverridden("uiLab", context: context))

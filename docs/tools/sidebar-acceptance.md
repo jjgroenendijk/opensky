@@ -5,7 +5,7 @@ description: The record every milestone acceptance must produce — sidebar path
   and control accessibility ids, readout, and the deterministic tests that are the evidence —
   plus the per-milestone ledger of what was actually recorded.
 tags: [app-ui, verification, acceptance, convention]
-timestamp: 2026-07-26T00:00:00Z
+timestamp: 2026-07-27T00:00:00Z
 ---
 
 # Sidebar verification convention
@@ -64,7 +64,8 @@ Field rules:
   `Destination-<id>` for one of the ids registered in `DestinationRegistry`.
 - **Controls exercised** — the literal accessibility ids of the controls the acceptance
   actually touched, not every control on the panel. Ids that are generated at runtime
-  rather than written as literals (the `Audio<Category>VolumeControl` family, built in
+  rather than written as literals (the `Audio<Category>VolumeControl`,
+  `Audio<Category>MuteControl` and `Audio<Category>SoloControl` families, all built in
   `AudioOutputSection.swift`) must be named as a family with that caveat, because they
   cannot be found by grepping for the full id.
 - **Readout** — the accessibility id of the label whose text proves the behavior changed.
@@ -116,6 +117,7 @@ because the UI-test harness does not run on every machine
 | M9.1.3 audio | `World > Audio` | `Destination-audio` | `AudioEnabledControl`, `AudioMasterVolumeControl`, the generated `Audio<Category>VolumeControl` family, `AudioFileControl`, `AudioPlaySelectedControl`, `AudioStopAllControl` | `AudioStatsLabel`, `AudioSourcesStatsLabel` | `AudioPanelTests` | [audio](/engine/audio.md) |
 | M9.2.2 world SFX + ambience | `World > Audio > SFX & Ambience` | `Destination-audio` | `AudioSfxEnabledControl`, `AudioAmbienceEnabledControl`, `AudioStopAmbienceControl`, `AudioEnabledControl` (Output section, starts the engine) | `AudioSfxStatsLabel` | `AudioPanelTests`, `DestinationRegistryTests`, `WorldAudioSoundDirectorTests`, `WorldAudioDirectorAmbienceTests`, `WorldAudioEngineTests`, `AudioSourceStreamerTests`, `AmbienceCatalogTests`, `CellStreamerTests` (cases in `CellStreamerAmbienceTests.swift`), `RecordDecoderTests` (cases in `ModelBaseSoundTests.swift`), `AcousticSpaceRecordTests`, `RegionRecordTests`, `CellRecordTests` | [world SFX + ambience](/engine/world-sfx.md) |
 | M9.2.3 music playlists | `World > Audio > Music` | `Destination-audio` | `AudioMusicEnabledControl`, `AudioMusicTypeControl`, `AudioStopMusicControl`, `AudioEnabledControl` (Output section, starts the engine) | `AudioMusicStatsLabel` | `AudioPanelTests`, `DestinationRegistryTests`, `MusicCatalogTests`, `MusicCatalogPlaylistTests`, `WorldMusicDirectorTests`, `CellStreamerTests` (cases in `CellStreamerMusicTests.swift`), `MusicRecordTests`, `MusicRecordStoreTests` | [music playlists](/engine/music.md) |
+| M9 overall acceptance | `World > Audio > Output`, `> Sources`, `> Music`, `> SFX & Ambience` | `Destination-audio` | `AudioEnabledControl`, the generated `Audio<Category>MuteControl` and `Audio<Category>SoloControl` families (`AudioEffectsMuteControl` and `AudioMusicSoloControl` are the two the gate clicks, reached as `outputSection.muteControls[.effects]` and `soloControls[.music]`), `AudioFileControl`, `AudioPlaySelectedControl`, `AudioStopAllControl`, `AudioMusicTypeControl`, `AudioStopMusicControl`, `AudioSfxEnabledControl`, `AudioStopAmbienceControl` | `AudioStatsLabel`, `AudioSourcesStatsLabel`, `AudioMusicStatsLabel`, `AudioSfxStatsLabel`, plus the `Destination-audio-OverrideIndicator` dot | `M9AcceptanceTests`, `WorldAudioTransitionAcceptanceTests`, `M9AudioAcceptanceRealDataTests` (env-gated, `make realtest`), `AudioPanelTests`, `AudioPanelMuteSoloTests`, `WorldAudioEngineMuteSoloTests`, `DestinationRegistryTests`, `AppSidebarModelTests`, `MusicRecordStoreTests`, `WorldMusicDirectorTests`, `CellStreamingFlyPathTests` (audio frame budget) | [audio](/engine/audio.md) |
 
 `World > World` (`Destination-world`, controls `CameraMovementModeControl`,
 `CameraCopyPoseControl`, readouts `CameraStatsLabel`, `FrameStatsLabel`,

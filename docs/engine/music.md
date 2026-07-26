@@ -76,6 +76,10 @@ The winning MUSC contributes an ordered list of playable tracks:
   filename fails the `music\` path rules are dropped, preserving the order of
   the survivors. A playlist that loses every track resolves to silence; the
   winning MUSC is still reported so the readout can say which one it was.
+  Whether the named file exists is not a filter concern — selection is pure
+  value logic with no VFS — so a track survives here and fails later at the
+  load site if nothing backs it (see
+  [shipped-file resolution](#shipped-file-resolution)).
 * **Order.** `Maintain Track Order` (0x0008) keeps the authored `TNAM` order.
   Without it the order is a deterministic shuffle: Fisher-Yates over
   `SplitMix64` seeded from the context (FNV-1a over the interior flag, the
@@ -91,6 +95,40 @@ The winning MUSC contributes an ordered list of playable tracks:
 `Ducks Current Track`, `Does Not Queue` and the MUSC priority are decoded but
 not acted on: they only matter once two playlists can be active at once
 (combat music over exploration music), which needs the systems above.
+
+## Shipped-file resolution
+
+A canonical music path is the name the record authors, normalized
+([path resolution](/formats/music.md#path-resolution)). On the shipped install
+that is not the name of a file that exists. Observed behaviour of the archives,
+not a documented rule: every one of the 242 distinct `MUST` `ANAM`/`BNAM`
+filenames in `Skyrim.esm` ends in `.wav`, while the 269 entries the archives
+provide under `music\` are all `.xwm`. Reading the authored name verbatim
+therefore failed for every vanilla track (issue #246). Vanilla `SNDR` tracks are
+the opposite case — those genuinely ship as `.wav`, so `SoundRecordStore` needs
+no equivalent rule.
+
+`MusicRecordStore.loadAudioFile(at:load:)` resolves it. The caller supplies its
+reach into the VFS (`VirtualFileSystem.contents(forPath:)` in the runtime, a
+stub in tests) and the function tries, in order:
+
+1. the canonical path exactly as authored;
+2. `MusicRecordStore.shippedAudioSibling(of:)` — the same directory and stem
+   with the extension replaced by `.xwm` — but only when the authored name did
+   not load, and only when the authored name has an extension that is not
+   already `.xwm`.
+
+A track present under neither name rethrows the error the *authored* path
+produced, so a genuinely missing file is still reported as missing rather than
+disguised as a wrong-extension one. Nothing else is rewritten: this is a
+narrow, existence-conditioned fallback, not a blanket extension swap.
+
+The fallback lives at the load site rather than in `canonicalMusicPath(_:)`
+because the canonical rule is a pure string transform with no way to tell an
+authored name that exists from one that does not; rewriting the extension there
+would guess for every track, including modded ones that really do ship `.wav`.
+`WorldMusicDirector.startSource(for:)` names its audio source after the key that
+actually loaded, so the panel readout and `currentTrackName` show the real file.
 
 ## Crossfade contract
 
@@ -250,10 +288,35 @@ rendered frame would prove nothing (same reasoning as the M9.2.2 row).
   the toggle and the forced selection.
 * `DestinationRegistryTests` — a disabled music director shows as an override on
   `Destination-audio`, and the destination-level reset re-enables it.
+* `WorldAudioTransitionAcceptanceTests` — the music half of the M9 transition
+  sentence: the same exterior -> interior -> exterior sequence that drives the
+  ambience bed also switches the music state to `interior` and back, with the
+  sound and music directors subscribed to one streamer.
+* `M9AcceptanceTests` — the Music section inside the milestone gate: the picker
+  offers `None (automatic)` first, forcing `MUSTownWhiterun` reaches the
+  provider and `AudioMusicStatsLabel`, and `AudioStopMusicControl` returns the
+  readout to `Music: none`.
+* `MusicRecordStoreTests` — the canonicalization rules including the
+  separator-led `\Data\Music\...` form, `shippedAudioSibling(of:)` swapping only
+  a final extension, and the three `loadAudioFile(at:load:)` outcomes: authored
+  name resolves, authored name absent so the `.xwm` sibling loads, and absent
+  under both names rethrowing the authored path's error.
+* `WorldMusicDirectorTests` — the same three outcomes at director level: the
+  source is named after the file that loaded, and a track missing under both
+  names leaves the engine silent with the authored path in `lastMusicError`.
+* `M9AudioAcceptanceRealDataTests` (env-gated, `make realtest`) — the route
+  exterior cell resolves a real playlist through the precedence chain, every
+  track in it resolves to a file the archives ship, and the route interior
+  derives the `interior` state. That test is where the `MUST ANAM` extension
+  mismatch surfaced (issue #246), and it now asserts the fix by driving the
+  engine's own `MusicRecordStore.loadAudioFile(at:load:)` over the VFS instead of
+  carrying a local workaround.
 * Fixtures are synthetic plugins built in code
   (`openskyTests/WorldMusicFixtures.swift`); the audio payload is
   `XWMFixture.file`. No extracted game file enters the repository.
 
 Audible acceptance is a human step: enable audio, walk an exterior cell, and
 listen for the exploration playlist; enter a city cell and confirm the crossfade
-to its town playlist; enter an interior and confirm the state readout.
+to its town playlist; enter an interior and confirm the state readout. A failure
+to load still surfaces as a `Music error:` line in `AudioMusicStatsLabel`, and
+forcing a playlist from `AudioMusicTypeControl` reports the same reason.

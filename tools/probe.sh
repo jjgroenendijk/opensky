@@ -268,6 +268,11 @@ grep 'shadow update:' "$log" | tail -1
 grep 'shadow culling:' "$log" | tail -1 | grep -q '[1-9][0-9]* culled' \
   || fail "fly bench reported no shadow caster culling"
 
+# M9.2.4 audio gate: per-frame audio-update budget line. The engine gate throws
+# when avg or p95 exceeds the budget, so reaching here means it held.
+grep 'audio update:' "$log" | tail -1 \
+  || fail "fly bench reported no audio update budget line"
+
 # M7.5.2 grass gate: fly path must render batched grass without exhausting
 # the hard per-frame instance budget.
 grass_line="$(grep 'grass instancing:' "$log" | tail -1)"
@@ -299,4 +304,6 @@ run "walk/collision route bench (640x360)" bench --walk-path --size 640x360 \
   --out "$walk_png"
 [ -s "$walk_png" ] || fail "walk-path bench wrote no PNG"
 grep 'active physics frames @' "$log" | tail -1
+grep 'audio update:' "$log" | tail -1 \
+  || fail "walk bench reported no audio update budget line"
 echo "[INFO] probe passed — full output in $log"

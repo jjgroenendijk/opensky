@@ -87,6 +87,7 @@ nonisolated struct CellStreamingFlyBenchmarkResult {
     let actorAnimationFailureCount: Int
     let animationUpdateBudgetMS: Double
     let shadowUpdateBudgetMS: Double
+    let audioUpdateBudgetMS: Double
     let weatherName: String
     let windSpeed: Float
     let animationUpdatedBoneCount: Int
@@ -110,6 +111,7 @@ nonisolated struct CellStreamingFlyBenchmarkConfiguration {
     let actorBuildBudgetMS: Double
     let animationUpdateBudgetMS: Double
     let shadowUpdateBudgetMS: Double
+    let audioUpdateBudgetMS: Double
     var samplesPerLeg = 60
 }
 
@@ -275,6 +277,7 @@ enum CellStreamingFlyBenchmark {
                 actorAnimationFailureCount: actors.animationFailures,
                 animationUpdateBudgetMS: configuration.animationUpdateBudgetMS,
                 shadowUpdateBudgetMS: configuration.shadowUpdateBudgetMS,
+                audioUpdateBudgetMS: configuration.audioUpdateBudgetMS,
                 weatherName: environment.weatherName ?? "selected rain",
                 windSpeed: environment.windSpeed,
                 animationUpdatedBoneCount: environment.animationUpdatedBoneCount,
@@ -287,9 +290,10 @@ enum CellStreamingFlyBenchmark {
             )
         }
 
-        /// Per-frame CPU update gates: animation (sample/compose/palette) then
-        /// shadow (cascade fit + caster culling + encode) must each hold avg AND
-        /// p95 within budget, mirroring the collision/actor build-latency gates.
+        /// Per-frame CPU update gates: animation (sample/compose/palette), then
+        /// shadow (cascade fit + caster culling + encode), then audio (listener
+        /// pose + engine tick + music director) must each hold avg AND p95
+        /// within budget, mirroring the collision/actor build-latency gates.
         private func validateUpdateBudgets(_ render: OffscreenBenchResult) throws {
             guard
                 render.animationAverageMS <= configuration.animationUpdateBudgetMS,
@@ -309,6 +313,16 @@ enum CellStreamingFlyBenchmark {
                     average: render.shadowAverageMS,
                     p95: render.shadowPercentileMS(95),
                     budget: configuration.shadowUpdateBudgetMS
+                )
+            }
+            guard
+                render.audioUpdateAverageMS <= configuration.audioUpdateBudgetMS,
+                render.audioUpdatePercentileMS(95) <= configuration.audioUpdateBudgetMS
+            else {
+                throw CellStreamingFlyBenchmarkError.audioUpdateExceeded(
+                    average: render.audioUpdateAverageMS,
+                    p95: render.audioUpdatePercentileMS(95),
+                    budget: configuration.audioUpdateBudgetMS
                 )
             }
         }

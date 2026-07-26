@@ -215,6 +215,14 @@ protocol AudioControlProviding: AnyObject {
     var audioMasterVolume: Float { get set }
     func audioVolume(for category: AudioCategory) -> Float
     func setAudioVolume(_ volume: Float, for category: AudioCategory)
+    /// True while the category contributes zero gain because the user muted
+    /// it. Its volume is preserved, so unmuting restores that level.
+    func audioCategoryIsMuted(_ category: AudioCategory) -> Bool
+    func setAudioCategoryMuted(_ muted: Bool, for category: AudioCategory)
+    /// The soloed category, or nil when nothing is soloed. While it is set,
+    /// every other category is silent. Mute and solo are independent: soloing
+    /// a category does not unmute it.
+    var soloedAudioCategory: AudioCategory? { get set }
     /// VFS paths the World > Audio picker offers (vanilla: the 269 `.xwm`
     /// music files — sound effects are `.wav` and wait on a PCM reader).
     var selectableAudioFileNames: [String] { get }

@@ -4,7 +4,7 @@ title: World SFX + ambience
 description: World SFX director that wires interaction events to one-shot SFX and
   per-cell context to a positional ambience bed; the M9.2.2 verification surface.
 tags: [engine, audio, sfx, ambience]
-timestamp: 2026-07-26T00:00:00Z
+timestamp: 2026-07-27T00:00:00Z
 ---
 
 # World SFX + ambience
@@ -194,6 +194,18 @@ nothing.
   repository).
 * `CellStreamerAmbienceTests` (under `CellStreamerTests`) — streamer emits
   context on cell arrival, dedups steady-state, regionless center emits empty.
+* `WorldAudioTransitionAcceptanceTests` — the M9 gate's transition sentence as
+  one synthetic sequence: an exterior cell arrives and starts its region bed and
+  exploration playlist, a door interaction plays its activation SFX without
+  disturbing either, `apply(transition:)` swaps in an interior whose acoustic
+  space supplies a new bed and whose cell music switches the state to interior,
+  and the paired transition back restores both. This is the interior coverage
+  `CellStreamerAmbienceTests` explicitly does not claim, because the
+  exterior-center path never flips to interior on its own.
+* `M9AudioAcceptanceRealDataTests` (env-gated, `make realtest`) — the route
+  exterior cell's regions and the route interior's `XCAS` resolve to real beds,
+  and the route door's base yields open and close descriptors resolving to real
+  files. Report in gitignored `logs/m9-audio-acceptance.log`.
 * `AudioPanelTests` — id contract for the new controls + round-trip test
   through the provider.
 * Env-gated probe (`make probe` 2026-07-26 against Skyrim.esm): 45 ASPC, 53
@@ -205,6 +217,13 @@ Audible acceptance is a human step: open World > Audio, tick Enabled, walk a
 Whiterun exterior cell (regions carry ambient beds), press F on a door (open
 SFX under effects), enter an interior (XCAS-sourced bed under ambience).
 Toggle `AudioSfxEnabledControl` to confirm SFX mute independently from the bed.
+The M9 gate asks for that route once end to end — exterior bed, door SFX,
+interior bed, and back out through the paired door — with each change confirmed
+by ear while `AudioSfxStatsLabel` names the sound and the bed. Nothing in the
+repository records that anyone has done it: `WorldAudioTransitionAcceptanceTests`
+proves the same sequence drives the directors, and
+`M9AudioAcceptanceRealDataTests` proves the records behind it resolve on the
+install, but the listening itself is still outstanding.
 
 ## Follow-ups filed
 

@@ -101,6 +101,22 @@ final class WorldAudioEngine {
     private var categoryVolumes: [AudioCategory: Float] =
         Dictionary(uniqueKeysWithValues: AudioCategory.allCases.map { ($0, 1) })
 
+    /// Categories the user silenced in World > Audio. Held separately from
+    /// `categoryVolumes` so unmuting restores the slider value the user had
+    /// dialled in rather than snapping back to full.
+    private var mutedCategories: Set<AudioCategory> = []
+
+    /// While non-nil, only this category is audible; every other category
+    /// contributes zero gain. Mute and solo are independent filters and both
+    /// must pass, so soloing a category does not unmute it: an explicitly
+    /// muted category stays silent even while it is the soloed one.
+    var soloedCategory: AudioCategory? {
+        didSet {
+            guard soloedCategory != oldValue else { return }
+            applyCategoryGains()
+        }
+    }
+
     /// Offline manual-rendering hook for deterministic tests. Production passes
     /// nil and renders to the output device.
     private let manualRenderingFormat: AVAudioFormat?
@@ -115,9 +131,47 @@ final class WorldAudioEngine {
     }
 
     func setVolume(_ volume: Float, for category: AudioCategory) {
-        let clamped = simd_clamp(volume, 0, 1)
-        categoryVolumes[category] = clamped
-        categoryMixers[category]?.outputVolume = clamped
+        categoryVolumes[category] = simd_clamp(volume, 0, 1)
+        applyCategoryGains()
+    }
+
+    func isMuted(_ category: AudioCategory) -> Bool {
+        mutedCategories.contains(category)
+    }
+
+    /// Mutes or unmutes one category. The category's volume is untouched, so
+    /// unmuting restores exactly the level the slider was left at.
+    func setMuted(_ muted: Bool, for category: AudioCategory) {
+        let changed: Bool = if muted {
+            mutedCategories.insert(category).inserted
+        } else {
+            mutedCategories.remove(category) != nil
+        }
+        guard changed else { return }
+        applyCategoryGains()
+    }
+
+    /// The category factor the graph actually applies: the category's volume
+    /// when it is audible, and zero when it is muted or when a different
+    /// category is soloed. Every gain path folds mute and solo in here, so the
+    /// submixes, the positional node volumes and the panel's reported
+    /// `effectiveGain` can never disagree.
+    func audibleVolume(for category: AudioCategory) -> Float {
+        guard !mutedCategories.contains(category) else { return 0 }
+        if let soloedCategory, soloedCategory != category {
+            return 0
+        }
+        return volume(for: category)
+    }
+
+    /// Re-applies every category factor after a volume, mute or solo change:
+    /// the submixes carry it for non-positional sources, and
+    /// `applyVolumesToSources()` pushes it into the positional player nodes, so
+    /// already-playing sources react on the call.
+    private func applyCategoryGains() {
+        for category in AudioCategory.allCases {
+            categoryMixers[category]?.outputVolume = audibleVolume(for: category)
+        }
         applyVolumesToSources()
     }
 
@@ -185,7 +239,7 @@ final class WorldAudioEngine {
             engine.connect(mixer, to: engine.mainMixerNode, format: mixFormat)
         }
         for (category, mixer) in categoryMixers {
-            mixer.outputVolume = categoryVolumes[category] ?? 1
+            mixer.outputVolume = audibleVolume(for: category)
         }
         engine.mainMixerNode.outputVolume = masterVolume
     }
