@@ -92,6 +92,10 @@ final class GameViewController: NSViewController {
     /// Selector state owned by the UI Lab SWF bridge
     /// (`GameViewControllerSWFLab.swift`); nothing else writes it.
     var swfLab = SWFLabState()
+    /// Vanilla gameplay HUD state. The implementation lives in
+    /// `GameViewControllerHUD.swift`; stored here because extensions cannot
+    /// add state.
+    var hud = HUDRuntimeState()
 
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))
@@ -141,6 +145,8 @@ final class GameViewController: NSViewController {
             newRenderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
             mtkView.delegate = newRenderer
             renderer = newRenderer
+            startHUD(renderer: newRenderer)
+            wireHUDFrameUpdates(renderer: newRenderer)
             // Menu mode drives the renderer's world-sim pause and clears held
             // world input on entry so no key sticks while the menu owns input.
             menuMode.onModeChange = { [weak newRenderer, weak cameraInput] paused in
@@ -177,7 +183,7 @@ final class GameViewController: NSViewController {
                 }
             }
         )
-        renderer.onFrame = { [weak controller, weak cameraInput, weak renderer] position in
+        renderer.onFrame = { [weak self, weak controller, weak renderer] position in
             let interactionRay = renderer.flatMap { renderer -> InteractionRay? in
                 guard renderer.movementMode == .walk else { return nil }
                 return InteractionRay(
@@ -188,8 +194,11 @@ final class GameViewController: NSViewController {
             controller?.update(
                 cameraPosition: position,
                 interactionRay: interactionRay,
-                activate: cameraInput?.consumeActivation() ?? false
+                activate: self?.cameraInput.consumeActivation() ?? false
             )
+            if let renderer {
+                self?.updateHUDFrame(renderer: renderer)
+            }
         }
         // Live XCLR region feed (M7.2.3): the streamer pushes the center cell's
         // REGN set into the weather runtime so region-weighted selection runs
@@ -197,6 +206,9 @@ final class GameViewController: NSViewController {
         // single-thread-owned.
         controller.onCenterRegionsChanged = { [weak renderer] regions in
             renderer?.weather?.setRegions(regions)
+        }
+        controller.onInteractionTargetChanged = { [weak self] target in
+            self?.updateHUDTarget(target)
         }
         renderer.terrainSampler = { [weak controller] position in
             controller?.sampleTerrain(at: position)

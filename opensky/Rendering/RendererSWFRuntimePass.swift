@@ -32,8 +32,13 @@ extension Renderer {
         }
         let runtime = SWFMovieRuntime(movieScene: movie.scene, limits: limits)
         runtime.start()
-        swf.runtime = runtime
-        try updateSWFScene(runtime.makeScene())
+        do {
+            try updateSWFScene(runtime.makeScene())
+            swf.runtime = runtime
+        } catch {
+            swf.runtime = nil
+            throw error
+        }
         return runtime
     }
 
@@ -83,6 +88,34 @@ extension Renderer {
         return result
     }
 
+    /// Calls a function on a specific display-list instance, then pushes the
+    /// changed command stream. Vanilla `hudmenu.swf` keeps its entry points on
+    /// `/HUDMovieBaseInstance` instead of registering GameDelegate callbacks.
+    @discardableResult
+    func callSWFMovie(
+        _ name: String,
+        atPath path: String,
+        arguments: [AS2Value] = []
+    ) throws -> AS2Value {
+        guard let runtime = swf.runtime else {
+            return .undefined
+        }
+        let result = runtime.callMovie(name, atPath: path, arguments: arguments)
+        try synchronizeSWFRuntime(runtime)
+        return result
+    }
+
+    /// Applies one engine-owned mutation to the live runtime and synchronizes
+    /// the renderer once. HUD initialization uses this to batch meter, compass,
+    /// and prompt state without rebuilding the command stream after each call.
+    func updateSWFRuntime(_ body: (SWFMovieRuntime) -> Void) throws {
+        guard let runtime = swf.runtime else {
+            return
+        }
+        body(runtime)
+        try synchronizeSWFRuntime(runtime)
+    }
+
     /// Drops the runtime and restores the movie's static frame-1 stream.
     func stopSWFRuntime() throws {
         guard swf.runtime != nil, let movie = swf.movie else {
@@ -111,5 +144,17 @@ extension Renderer {
         residencySet.addAllocations(movie.residencyAllocations)
         residencySet.commit()
         retireAllocations(retiring)
+    }
+
+    private func synchronizeSWFRuntime(_ runtime: SWFMovieRuntime) throws {
+        guard let scene = runtime.sceneIfChanged() else {
+            return
+        }
+        do {
+            try updateSWFScene(scene)
+        } catch {
+            runtime.markDirty()
+            throw error
+        }
     }
 }

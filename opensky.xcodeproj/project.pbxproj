@@ -41,6 +41,7 @@
 				GameMetalView.swift,
 				GameViewController.swift,
 				GameViewControllerAudio.swift,
+				GameViewControllerHUD.swift,
 				GameViewControllerSWFLab.swift,
 				GameViewControllerSWFRuntime.swift,
 				GameViewControllerUILab.swift,

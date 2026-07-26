@@ -4,6 +4,21 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-26
 
+* **Vanilla gameplay HUD (M8.4.2)**: the app now loads and starts
+  `Interface\hudmenu.swf` as the default SWF layer, validates its observed
+  `/HUDMovieBaseInstance` entry points, and drives the vanilla crosshair, full
+  static health/magicka/stamina meters, camera compass, selected-target marker,
+  and interaction prompt through direct engine-to-movie calls. Target callbacks
+  remain state-only; one frame-hook batch synchronizes the changed runtime.
+  UI Lab movie selection temporarily overrides the HUD, and choosing `None`
+  restores it. Synthetic AS2 tests cover the typed contract, while a Metal-gated
+  acceptance test proves a path-targeted movie call changes pixels and then
+  settles deterministically. A real-install 1280x720 offscreen probe changed
+  1,783 pixels for a prompt plus marker with 208 draws, zero skipped items, and
+  zero runtime faults; its statistics remain gitignored. See
+  [AS2 runtime](/engine/as2-runtime.md),
+  [interaction targeting](/engine/interaction.md), and
+  [screen-space UI](/rendering/ui.md). Refs #146.
 * **Indexed global SWF mouse handlers** (issue #133): `onMouseMove`,
   `onMouseDown`, and `onMouseUp` no longer trigger a full display-tree walk on
   every pointer event. Each runtime maintains a weak candidate index from

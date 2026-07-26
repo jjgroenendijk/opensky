@@ -158,6 +158,11 @@ is unchanged; only the source of the stream differs.
   func sendSWFInput(_ event: SWFInputEvent) throws -> Bool
   @discardableResult
   func callSWFMovie(_ name: String, arguments: [AS2Value] = []) throws -> AS2Value
+  @discardableResult
+  func callSWFMovie(
+      _ name: String, atPath path: String, arguments: [AS2Value] = []
+  ) throws -> AS2Value
+  func updateSWFRuntime(_ body: (SWFMovieRuntime) -> Void) throws
   func stopSWFRuntime() throws
   func updateSWFScene(_ scene: SWFScene) throws
   ```
@@ -169,6 +174,10 @@ is unchanged; only the source of the stream differs.
   pushes whatever the movie changed in response, answering whether the movie
   consumed it; `callSWFMovie` is the engine-to-movie half of the
   [`GameDelegate` bridge](/engine/as2-runtime.md) and pushes the same way.
+  Its path overload reaches functions on a named display object.
+  `updateSWFRuntime` batches several engine-owned mutations and synchronizes
+  one command stream afterwards; a failed GPU update restores the runtime's
+  dirty flag so the same state can be retried.
   `stopSWFRuntime` drops the runtime and restores the static frame-1 stream.
   `setSWFMovie` clears any runtime, because a new movie invalidates the old
   one's tree.
@@ -196,6 +205,55 @@ is unchanged; only the source of the stream differs.
 - Driven from the app since M8.3.3: the **SWF runtime** section under
   `Developer > UI Lab` starts, ticks, drives, and stops a runtime (see
   App surface below). A movie nobody starts still shows frame 1 only.
+
+## Vanilla gameplay HUD (M8.4.2)
+
+The app now loads `Interface\hudmenu.swf` through the same VFS-backed
+`SWFMovieLoader` used by UI Lab, starts its AS2 runtime, and validates the
+functions on `/HUDMovieBaseInstance` before publishing any state. Missing game
+data, a missing entry point, or a renderer failure leaves the HUD disabled and
+logs the reason; it does not prevent the 3D world from starting.
+
+`HUDMovieBridge` owns the typed engine-to-movie contract:
+
+- `SetCrosshairEnabled` keeps the vanilla crosshair visible.
+- `SetHealthMeterPercent`, `SetMagickaMeterPercent`, and
+  `SetStaminaMeterPercent` receive clamped 0...1 values. M8.4.2 initializes all
+  three to full; live actor statistics are later scope.
+- `SetCrosshairTarget` receives the current interaction prompt, such as
+  `Open <door name>`, or an empty hidden target when nothing is selected.
+- `CompassTargetDataA` receives a flat four-value record per marker: heading,
+  Flash `_alpha`, the movie's own marker-type value, and Flash scale.
+  `SetCompassMarkers` applies that array. M8.4.2 publishes one location marker
+  for the selected interaction target.
+- `SetCompassAngle` receives the camera heading and keeps the compass visible.
+
+Those names and argument shapes were observed by probing the legally owned
+installed movie: the HUD starts with 203 display nodes and no runtime faults,
+and the meter setters retained a supplied `0.75` percent value. The marker
+array field order was observed in the movie's own `CompassTargetDataA`
+consumer; alpha and scale use Flash's 0...100 property units. A 1280x720
+offscreen run over that movie changed 1,783 pixels after publishing a prompt
+and marker, with 208 draw calls, zero skipped items, and zero runtime faults;
+its local statistics remain under gitignored `logs/`.
+
+Angle orientation is still provisional. OpenSky maps world +X to zero degrees,
+normalizes into 0..<360, and passes the same camera yaw as the player and
+compass angles. The public SWF format does not specify this HUD-specific GFx
+contract, so the cardinal alignment belongs to the M8.4.3 real-world visual
+acceptance rather than being presented as proven here.
+
+HUD state changes are collected by `GameViewControllerHUD` and applied once
+between frames. Target callbacks only mark prompt and marker state dirty; the
+frame hook owns renderer mutation. This static milestone deliberately does not
+advance the movie timeline at the display refresh rate: direct HUD methods
+update the required state, and tying one AS2 tick to each 60 or 120 Hz display
+frame would make behavior depend on the monitor. Timed HUD animation needs an
+explicit movie-frame cadence in later scope.
+
+The gameplay HUD owns the single SWF layer by default. Choosing a movie in
+`Developer > UI Lab > SWF movie` is an explicit debug override; choosing
+`None` restores `hudmenu.swf`.
 
 ## App surface
 
@@ -235,7 +293,8 @@ weak-provider pattern shared with the Environment panel):
   nothing executes yet), the live `SWFDrawStats`, unresolved font names, and any
   load error. Selecting an entry
   runs `SWFMovieLoader.load(path:)` -> `Renderer.setSWFMovie(_:)`; `None`
-  clears with `setSWFMovie(nil)`. Bridge:
+  restores the gameplay HUD when the renderer is available (and otherwise
+  clears the layer). Bridge:
   `SWFLabControlProviding` on `GameViewController`
   (`opensky/GameViewControllerSWFLab.swift`), readout text built by the
   device-free `SWFLabReadout`. The loader and the movie list resolve once,

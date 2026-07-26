@@ -42,16 +42,25 @@ extension GameViewController: SWFLabControlProviding {
     }
 
     func selectSWFMovie(path: String?) {
+        // UI Lab takes ownership of the one SWF layer while inspecting a
+        // movie. The gameplay HUD stops updating, so it can never mutate a
+        // replacement runtime; clearing the selection starts a fresh HUD.
+        hud.isLoaded = false
         swfLab.selectedPath = path
         swfLab.loadError = nil
         swfLab.tally = nil
         swfLab.unresolvedFontNames = []
         guard let path else {
-            assignSWFScene(nil)
+            if let renderer {
+                startHUD(renderer: renderer)
+            } else {
+                assignSWFScene(nil)
+            }
             return
         }
         guard let loader = resolveSWFLoader() else {
             swfLab.loadError = "No game data located."
+            assignSWFScene(nil)
             return
         }
         do {
@@ -91,7 +100,7 @@ extension GameViewController: SWFLabControlProviding {
         }
     }
 
-    private func resolveSWFLoader() -> SWFMovieLoader? {
+    func resolveSWFLoader() -> SWFMovieLoader? {
         if !swfLab.loaderResolved {
             swfLab.loader = swfMovieLoaderFactory?()
             swfLab.loaderResolved = true

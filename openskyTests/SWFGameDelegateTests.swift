@@ -36,9 +36,13 @@ struct SWFGameDelegateTests {
     /// A reference box a `@Sendable` host handler can write into.
     final class CallLog: @unchecked Sendable {
         private(set) var calls: [[AS2Value]] = []
+        private(set) var receivers: [AS2Object] = []
 
-        func append(_ arguments: [AS2Value]) {
+        func append(_ arguments: [AS2Value], receiver: AS2Object? = nil) {
             calls.append(arguments)
+            if let receiver {
+                receivers.append(receiver)
+            }
         }
     }
 
@@ -183,6 +187,36 @@ struct SWFGameDelegateTests {
         #expect(log.calls.count == 1)
         #expect(runtime.gameDelegate == nil)
         #expect(runtime.movieCallbackNames.isEmpty)
+    }
+
+    @Test func aDisplayPathTargetsTheNamedMovieClip() throws {
+        let runtime = try SWFRuntimeFixture.started(tags: Self.movie([]))
+        let target = SWFDisplayObject(content: .clip(nil))
+        target.name = "HUDMovieBaseInstance"
+        runtime.root.addChild(target, atDepth: 7)
+        let log = CallLog()
+        AS2Natives.method(runtime.runtime, on: target.object, name: "RefreshHUD") { context in
+            log.append(context.arguments, receiver: context.thisObject)
+            return .string("updated")
+        }
+
+        let result = runtime.callMovie(
+            "RefreshHUD",
+            atPath: "/HUDMovieBaseInstance",
+            arguments: [.number(0.75)]
+        )
+
+        #expect(result == .string("updated"))
+        #expect(log.calls.first == [.number(0.75)])
+        #expect(log.receivers.first === target.object)
+        #expect(runtime.invokeLog.entries.last?.isHandled == true)
+    }
+
+    @Test func aMissingDisplayPathIsTalliedAndLoggedUnhandled() throws {
+        let runtime = try SWFRuntimeFixture.started(tags: Self.movie([]))
+        #expect(runtime.callMovie("RefreshHUD", atPath: "/missing") == .undefined)
+        #expect(runtime.tally.missingNames["RefreshHUD"] == 1)
+        #expect(runtime.invokeLog.entries.last?.isHandled == false)
     }
 
     @Test func aCallbackTheMovieNeverDefinedIsTalliedAndLoggedUnhandled() throws {

@@ -582,6 +582,9 @@ func removeHostFunction(_ name: String)
 var hostFunctionNames: [String] { get }
 @discardableResult func callHost(_ name: String, arguments: [AS2Value]) -> AS2Value?
 @discardableResult func callMovie(_ name: String, arguments: [AS2Value] = []) -> AS2Value
+@discardableResult func callMovie(
+    _ name: String, atPath path: String, arguments: [AS2Value] = []
+) -> AS2Value
 var gameDelegate: AS2Object? { get }
 var movieCallbackNames: [String] { get }
 ```
@@ -606,6 +609,13 @@ delegate can produce either. A handler's value then travels back through
 `addCallBack`, through `receiveCall`. A movie that ships no delegate falls back to a function
 on the root clip, so the engine has one entry point either way; a name neither answers is a
 tally entry and an unhandled log entry.
+
+Some vanilla movies expose their host entry points on a named display-list instance instead
+of registering a delegate callback. `hudmenu.swf` is one: a probe over the user's installed
+movie found its HUD functions on `/HUDMovieBaseInstance`. The path overload resolves that
+instance, invokes the function with the instance as `this`, and records the same handled or
+unhandled engine-to-movie log entry. A missing path is a bounded missing-name tally entry and
+an unhandled call, not a crash.
 
 ## Invoke log
 
