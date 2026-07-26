@@ -4,6 +4,33 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-26
 
+* **World SFX + ambience (M9.2.2, issue #155)**: the world sound director
+  wires the M8 interaction-event seam to one-shot SFX and the streaming
+  cell lifecycle to a positional ambience bed. Door open SFX plays under
+  `.effects` on use-key activation; per-cell ambient SNDR set plays under
+  `.ambience` and follows exterior region areas (`REGN.RDSA`) or interior
+  acoustic spaces (`CELL.XCAS -> ASPC.SNAM` + the `ASPC.RDAT` interior-only
+  region borrow). The director subscribes to the existing
+  `CellStreamer.onInteraction` and a new `onAmbienceContextChanged`; the
+  M11 Papyrus OnActivate subscriber will join alongside, not replace.
+  Verification: `World > Audio > SFX & Ambience` (independent enable
+  toggles, force-stop button, last-SFX + current-bed readout) plus
+  `ModelBaseSoundTests`, `RegionRecordTests` (RDSA), `CellRecordTests`
+  (XCAS), `AcousticSpaceRecordTests`, `AmbienceCatalogTests`,
+  `WorldAudioSoundDirectorTests` (offline render), `CellStreamerAmbienceTests`,
+  extended `AudioPanelTests`. Probe against Skyrim.esm: 45 ASPC, 53 REGN with
+  sound area, 687 RDSA entries; RDSA.Chance pinned at 0.01-1.0 (issue #237
+  closed); all 497 activator/door/container sound references target SNDR
+  directly. Decoders: `ModelBase.Sounds` (DOOR SNAM/ANAM/BNAM, ACTI SNAM/VNAM,
+  CONT SNAM/QNAM — QNAM, not ANAM, is the close-sound field),
+  `Region.SoundEntry` (12-byte RDSA struct under type-7 RDAT),
+  `Cell.acousticSpace` (XCAS), new `AcousticSpace` (ASPC, with the `RDAT`
+  FormID-vs-area-header collision handled). Doc: [world SFX + ambience](/engine/world-sfx.md),
+  [acoustic space](/formats/acoustic-space.md); records / weather / index
+  updated. Door close SFX (needs animation event), AudioCategory rename
+  (provisional taxonomy), and non-positional ambience bed (current stopgap is
+  positional-at-listener) filed as #234 / #235 / #236.
+
 * **M8 milestone acceptance (M8.5.3)**: the interaction + UI shell milestone is
   accepted end to end from the main app alone. What M8 delivered, in the order
   the gate walks it: a screen-space UI layer with a glyph atlas and localized

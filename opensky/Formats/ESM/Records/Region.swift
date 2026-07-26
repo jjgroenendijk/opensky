@@ -47,9 +47,9 @@ nonisolated struct Region {
         /// SOUN.SDSC hop to its SNDR.
         let sound: FormID
         let conditions: Conditions
-        /// Per-entry weight. Field type is fixed (float, 4 bytes); the exact
-        /// range is not pinned by xEdit or UESP — treated as an opaque weight,
-        /// not interpreted as 0-1 or 0-100 until a probe confirms.
+        /// Per-entry weight in the 0-1 range (probe against Skyrim.esm:
+        /// min 0.01, max 1.0; the CK presents it as a percentage but the
+        /// stored value is the 0-1 weight the runtime uses).
         let chance: Float
     }
 

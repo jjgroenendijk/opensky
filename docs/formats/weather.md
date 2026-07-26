@@ -94,9 +94,16 @@ binds payload fields to it. Decoded (`Region`):
 * `RDWT` (type-3 area only) — 12-byte structs: `formid` weather + `uint32`
   chance (percent) + `formid` global (unused, 0 = none). Size not multiple
   of 12, or outside a weather area -> skipped.
+* `RDSA` (type-7 area only, M9.2.2) — 12-byte structs: `formid` sound
+  (SNDR or SOUN legacy marker), then `uint32` weather-state conditions
+  (0x01 pleasant, 0x02 cloudy, 0x04 rainy, 0x08 snowy; empty set = all
+  states), then `float` chance (0-1 weight; probe against Skyrim.esm
+  2026-07-26 pinned the range at min 0.01 max 1.0). Size not multiple of
+  12, or outside a sound area -> skipped.
 
-Other area payloads (`RPLI`/`RPLD`, `RDOT`, `RDMP`, `RDGS`,
-`RDSA`/`RDMO`/`RDMD`) stream past untouched.
+Other area payloads (`RPLI`/`RPLD`, `RDOT`, `RDMP`, `RDGS`, `RDMO`) stream past
+untouched. `RDMO` (region music -> MUSC) waits on the music milestone (#156);
+`RDMD` is a TES4 leftover SSE does not use.
 
 ## Verification
 
