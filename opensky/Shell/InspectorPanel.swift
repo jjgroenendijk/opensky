@@ -8,6 +8,15 @@ import AppKit
 /// the containing view leaves screen. Sections and full panels both conform.
 @MainActor
 protocol InspectorPanel: NSViewController {
+    /// True when any control in the panel differs from its documented default.
+    var isOverridden: Bool { get }
+
+    /// Reports override changes so shell chrome can update without another timer.
+    var onOverrideStateChange: (() -> Void)? { get set }
+
+    /// Restores every control in the panel to its documented default.
+    func resetToDefaults()
+
     func startInspecting()
     func stopInspecting()
 }

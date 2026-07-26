@@ -278,6 +278,10 @@ extension GameViewController: TerrainLODControlProviding {
         terrainLODConfigurationStore.snapshot()
     }
 
+    var terrainLODOverrideActive: Bool {
+        TerrainLODSettings.hasOverride()
+    }
+
     func applyTerrainLODConfiguration(_ configuration: TerrainLODConfiguration) -> Bool {
         guard configuration.isValid else { return false }
         TerrainLODSettings.store(configuration)
@@ -331,6 +335,10 @@ extension GameViewController: WeatherControlProviding {
 
     var currentWeatherName: String? {
         renderer?.weather?.currentWeatherEditorID
+    }
+
+    var weatherOverrideActive: Bool {
+        renderer?.weather?.forced != nil
     }
 
     var weatherTransitionFraction: Float {

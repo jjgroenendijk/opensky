@@ -30,4 +30,9 @@ enum TimeOfDaySettings {
         let clamped = min(max(hour, range.lowerBound), range.upperBound)
         defaults.set(Double(clamped), forKey: defaultsKey)
     }
+
+    /// Removes the explicit choice so subsequent launches use the fallback.
+    static func clearOverride(from defaults: UserDefaults = .standard) {
+        defaults.removeObject(forKey: defaultsKey)
+    }
 }

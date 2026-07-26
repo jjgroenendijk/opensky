@@ -28,6 +28,28 @@ final class ParticlesSection: PanelSectionViewController {
         "particles"
     }
 
+    override var isOverridden: Bool {
+        Self.isOverridden(provider: provider)
+    }
+
+    override func resetToDefaults() {
+        Self.resetToDefaults(provider: provider)
+    }
+
+    static func isOverridden(provider: (any ParticleControlProviding)?) -> Bool {
+        guard let provider else { return false }
+        return !provider.particlesEnabled
+            || provider.particlesFrozen
+            || provider.particleEmissionScale != 1
+    }
+
+    static func resetToDefaults(provider: (any ParticleControlProviding)?) {
+        guard let provider else { return }
+        provider.particlesEnabled = true
+        provider.particlesFrozen = false
+        provider.particleEmissionScale = 1
+    }
+
     override func makeContentViews() -> [NSView] {
         PanelComponents.configureCheckbox(
             enabledControl, target: self, action: #selector(enabledChanged),

@@ -28,4 +28,9 @@ enum ShadowQualitySettings {
     static func store(_ quality: ShadowQuality, to defaults: UserDefaults = .standard) {
         defaults.set(quality.rawValue, forKey: defaultsKey)
     }
+
+    /// Removes the explicit choice so subsequent launches use the fallback.
+    static func clearOverride(from defaults: UserDefaults = .standard) {
+        defaults.removeObject(forKey: defaultsKey)
+    }
 }

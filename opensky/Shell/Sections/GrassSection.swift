@@ -42,6 +42,30 @@ final class GrassSection: PanelSectionViewController {
         "grass"
     }
 
+    override var isOverridden: Bool {
+        Self.isOverridden(provider: provider)
+    }
+
+    override func resetToDefaults() {
+        Self.resetToDefaults(provider: provider)
+    }
+
+    static func isOverridden(provider: (any GrassControlProviding)?) -> Bool {
+        guard let provider else { return false }
+        return !provider.grassEnabled
+            || provider.grassDensityScale != 1
+            || provider.grassDrawDistance != GrassRenderPolicy.defaultDrawDistance
+            || provider.grassWindScale != 1
+    }
+
+    static func resetToDefaults(provider: (any GrassControlProviding)?) {
+        guard let provider else { return }
+        provider.grassEnabled = true
+        provider.grassDensityScale = 1
+        provider.grassDrawDistance = GrassRenderPolicy.defaultDrawDistance
+        provider.grassWindScale = 1
+    }
+
     override func makeContentViews() -> [NSView] {
         PanelComponents.configureCheckbox(
             enabledControl, target: self, action: #selector(enabledChanged),

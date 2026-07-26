@@ -28,6 +28,23 @@ final class CameraSection: PanelSectionViewController {
         "camera"
     }
 
+    override var isOverridden: Bool {
+        Self.isOverridden(provider: provider)
+    }
+
+    override func resetToDefaults() {
+        Self.resetToDefaults(provider: provider)
+    }
+
+    static func isOverridden(provider: (any CameraControlProviding)?) -> Bool {
+        guard let provider else { return false }
+        return provider.movementMode != .fly
+    }
+
+    static func resetToDefaults(provider: (any CameraControlProviding)?) {
+        provider?.movementMode = .fly
+    }
+
     /// Current readout text; the verification-surface tests read it directly.
     var statsReadout: String {
         statsLabel.stringValue

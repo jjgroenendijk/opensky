@@ -28,25 +28,36 @@ final class FakeWorldProviders: WorldControlProviders {
     var terrainLODConfigurationSnapshot = TerrainLODConfigurationSnapshot(
         configuration: .fallback, source: "test"
     )
+    var terrainLODOverrideActive = false
     func applyTerrainLODConfiguration(_: TerrainLODConfiguration) -> Bool {
-        true
+        terrainLODOverrideActive = true
+        return true
     }
 
-    func resetTerrainLODConfiguration() {}
+    func resetTerrainLODConfiguration() {
+        terrainLODOverrideActive = false
+    }
 
     // WeatherControlProviding
-    var weatherEnabled = false
+    var weatherEnabled = true
     var selectableWeatherNames: [String] = []
-    func forceWeather(named _: String?) {}
-    func forceWeather(_: WeatherPreset) {}
+    func forceWeather(named name: String?) {
+        weatherOverrideActive = name != nil
+    }
+
+    func forceWeather(_: WeatherPreset) {
+        weatherOverrideActive = true
+    }
+
     var currentWeatherName: String?
+    var weatherOverrideActive = false
     var weatherTransitionFraction: Float = 0
     var weatherTransitionsPaused = false
     var windState: WindState = .calm
-    var timeOfDay: Float = 12
+    var timeOfDay: Float = TimeOfDaySettings.fallback
 
     // AnimationControlProviding
-    var actorAnimationsEnabled = false
+    var actorAnimationsEnabled = true
     var animationSnapshot = AnimationControlSnapshot(
         playbackCount: 0, updatedBoneCount: 0, updateMS: 0
     )
@@ -58,7 +69,7 @@ final class FakeWorldProviders: WorldControlProviders {
     var particleSnapshot = ParticleControlSnapshot(systemCount: 0, emitterCount: 0, liveCount: 0)
 
     // PrecipitationControlProviding
-    var precipitationEnabled = false
+    var precipitationEnabled = true
     var precipitationSnapshot = PrecipitationRuntimeSnapshot(
         state: .none, roofOccluded: false, rainLiveCount: 0, snowLiveCount: 0
     )
@@ -85,7 +96,12 @@ final class FakeWorldProviders: WorldControlProviders {
     )
     func pushPreviewMenu() {}
     func popPreviewMenu() {}
-    func clearPreviewMenus() {}
+    func clearPreviewMenus() {
+        menuModeSnapshot = MenuModeControlSnapshot(
+            isMenuMode: false, topMenuName: nil, stackDepth: 0, isWorldSimPaused: false
+        )
+    }
+
     var uiLocalizedSampleShown = false
     var localizedLabelsSnapshot = LocalizedLabelsControlSnapshot(
         sampleShown: false, sampleKeyCount: 0, language: "english",
@@ -212,5 +228,48 @@ struct DestinationRegistryTests {
             panel.loadViewIfNeeded()
             #expect(panel.view.frame.width >= 0)
         }
+    }
+
+    @Test @MainActor
+    func destinationOverrideActionsTrackAndResetProviders() throws {
+        let providers = FakeWorldProviders()
+        let context = WorldPanelContext(providers: providers)
+
+        for descriptor in DestinationRegistry.worldInspectors {
+            let overrides = try #require(descriptor.overrides)
+            #expect(!overrides.isOverridden(context), "\(descriptor.id) is not at defaults")
+        }
+
+        providers.movementMode = .walk
+        #expect(isOverridden("world", context: context))
+        reset("world", context: context)
+        #expect(providers.movementMode == .fly)
+
+        providers.grassEnabled = false
+        #expect(isOverridden("environment", context: context))
+        reset("environment", context: context)
+        #expect(providers.grassEnabled)
+
+        providers.audioEnabled = true
+        #expect(isOverridden("audio", context: context))
+        reset("audio", context: context)
+        #expect(!providers.audioEnabled)
+
+        providers.uiOverlayEnabled = false
+        #expect(isOverridden("uiLab", context: context))
+        reset("uiLab", context: context)
+        #expect(providers.uiOverlayEnabled)
+
+        #expect(DestinationRegistry.destination(id: "assetBrowser")?.overrides == nil)
+    }
+
+    @MainActor
+    private func isOverridden(_ id: String, context: WorldPanelContext) -> Bool {
+        DestinationRegistry.destination(id: id)?.overrides?.isOverridden(context) ?? false
+    }
+
+    @MainActor
+    private func reset(_ id: String, context: WorldPanelContext) {
+        DestinationRegistry.destination(id: id)?.overrides?.resetToDefaults(context)
     }
 }

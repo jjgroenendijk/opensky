@@ -59,8 +59,15 @@ final class AppShellViewController: NSSplitViewController {
         sidebar.onSelect = { [weak self] descriptor in
             self?.show(descriptor)
         }
+        sidebar.isDestinationOverridden = { [weak self] id in
+            self?.content.isDestinationOverridden(id: id) ?? false
+        }
+        content.onOverrideStateChange = { [weak self] in
+            self?.sidebar.refreshOverrideIndicators()
+        }
         // Default selection on launch: the plain live render.
         sidebar.select(id: DestinationRegistry.defaultDestinationID)
+        sidebar.refreshOverrideIndicators()
     }
 
     // MARK: - Destination routing
@@ -83,6 +90,7 @@ final class AppShellViewController: NSSplitViewController {
             content.showFullContent(controller)
         }
         updateScreenshotButton()
+        sidebar.refreshOverrideIndicators()
     }
 
     // MARK: - Settings reload
@@ -105,6 +113,7 @@ final class AppShellViewController: NSSplitViewController {
             show(descriptor)
         }
         updateScreenshotButton()
+        sidebar.refreshOverrideIndicators()
     }
 
     // MARK: - View-menu commands
@@ -141,6 +150,13 @@ final class AppShellViewController: NSSplitViewController {
         else { return }
         isInspectorHidden.toggle()
         show(descriptor)
+    }
+
+    /// View > Reset all overrides. Registry actions reach unopened panels
+    /// without constructing them, then cached panels resync their controls.
+    @objc func resetAllOverrides(_: Any?) {
+        content.resetAllOverrides()
+        sidebar.refreshOverrideIndicators()
     }
 
     // MARK: - Toolbar
@@ -194,6 +210,8 @@ extension AppShellViewController: NSMenuItemValidation {
         case #selector(toggleInspectorColumn):
             menuItem.state = isInspectorHidden ? .on : .off
             return canToggleInspector
+        case #selector(resetAllOverrides):
+            return content.hasOverrides
         default:
             return validateUserInterfaceItem(menuItem)
         }

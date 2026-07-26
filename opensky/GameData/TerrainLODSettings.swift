@@ -120,6 +120,12 @@ nonisolated enum TerrainLODSettings {
         [level0Key, level1Key, maximumKey, treeKey].forEach(defaults.removeObject(forKey:))
     }
 
+    static func hasOverride(
+        in defaults: UserDefaults = GameDataLocator.settingsDefaults
+    ) -> Bool {
+        loadOverride(from: defaults) != nil
+    }
+
     private static func loadOverride(from defaults: UserDefaults) -> TerrainLODConfiguration? {
         let keys = [level0Key, level1Key, maximumKey, treeKey]
         guard keys.allSatisfy({ defaults.object(forKey: $0) != nil }) else { return nil }

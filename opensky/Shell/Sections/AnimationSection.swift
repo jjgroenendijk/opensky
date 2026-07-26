@@ -23,6 +23,22 @@ final class AnimationSection: PanelSectionViewController {
         "animation"
     }
 
+    override var isOverridden: Bool {
+        Self.isOverridden(provider: provider)
+    }
+
+    override func resetToDefaults() {
+        Self.resetToDefaults(provider: provider)
+    }
+
+    static func isOverridden(provider: (any AnimationControlProviding)?) -> Bool {
+        provider?.actorAnimationsEnabled == false
+    }
+
+    static func resetToDefaults(provider: (any AnimationControlProviding)?) {
+        provider?.actorAnimationsEnabled = true
+    }
+
     override func makeContentViews() -> [NSView] {
         PanelComponents.configureCheckbox(
             enabledControl, target: self, action: #selector(enabledChanged),

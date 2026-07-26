@@ -28,6 +28,7 @@ enum AppSidebarModel {
 
 final class AppSidebarViewController: NSViewController {
     var onSelect: ((DestinationDescriptor) -> Void)?
+    var isDestinationOverridden: ((String) -> Bool)?
 
     private let outlineView = NSOutlineView()
 
@@ -51,7 +52,11 @@ final class AppSidebarViewController: NSViewController {
         }
     }
 
-    private let groups = AppSidebarModel.groups().map(GroupItem.init)
+    private final class DestinationCell: NSTableCellView {
+        let overrideIndicator = NSTextField(labelWithString: "●")
+    }
+
+    private lazy var groups = AppSidebarModel.groups().map(GroupItem.init)
 
     override func loadView() {
         let scroll = NSScrollView()
@@ -88,6 +93,28 @@ final class AppSidebarViewController: NSViewController {
         let row = outlineView.row(forItem: item)
         guard row >= 0 else { return }
         outlineView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+    }
+
+    /// Re-queries visible destination rows without rebuilding the sidebar model.
+    func refreshOverrideIndicators() {
+        for group in groups {
+            for child in group.children {
+                outlineView.reloadItem(child)
+            }
+        }
+    }
+
+    /// Test seam for the accessibility-backed row projection.
+    func overrideIndicatorIsVisible(destinationID: String) -> Bool? {
+        guard let item = destinationItem(id: destinationID) else { return nil }
+        let row = outlineView.row(forItem: item)
+        guard
+            row >= 0,
+            let cell = outlineView.view(
+                atColumn: 0, row: row, makeIfNecessary: true
+            ) as? DestinationCell
+        else { return nil }
+        return !cell.overrideIndicator.isHidden
     }
 
     private func destinationItem(id: String) -> DestinationItem? {
@@ -147,15 +174,16 @@ extension AppSidebarViewController: NSOutlineViewDelegate {
             return cell
         case let destination as DestinationItem:
             let descriptor = destination.descriptor
-            let cell = makeCell(
-                id: "SidebarDestinationCell",
-                text: descriptor.title,
-                symbolName: descriptor.symbolName
-            )
+            let cell = makeDestinationCell(descriptor)
             cell.textField?.textColor = Theme.parchment
             cell.imageView?.contentTintColor = Theme.gold
             cell.setAccessibilityIdentifier(descriptor.sidebarIdentifier)
             cell.textField?.setAccessibilityIdentifier(descriptor.sidebarIdentifier)
+            cell.overrideIndicator.isHidden =
+                isDestinationOverridden?(descriptor.id) != true
+            cell.overrideIndicator.setAccessibilityIdentifier(
+                "\(descriptor.sidebarIdentifier)-OverrideIndicator"
+            )
             return cell
         default:
             return nil
@@ -211,6 +239,57 @@ extension AppSidebarViewController: NSOutlineViewDelegate {
             label.leadingAnchor.constraint(equalTo: leading, constant: 6),
             label.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -6),
             label.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
+        ])
+        return cell
+    }
+
+    private func makeDestinationCell(_ descriptor: DestinationDescriptor) -> DestinationCell {
+        let identifier = NSUserInterfaceItemIdentifier("SidebarDestinationCell")
+        if
+            let cell = outlineView.makeView(
+                withIdentifier: identifier, owner: self
+            ) as? DestinationCell
+        {
+            cell.textField?.stringValue = descriptor.title
+            cell.imageView?.image = NSImage(
+                systemSymbolName: descriptor.symbolName,
+                accessibilityDescription: nil
+            )
+            return cell
+        }
+
+        let cell = DestinationCell()
+        cell.identifier = identifier
+        let image = NSImageView(
+            image: NSImage(
+                systemSymbolName: descriptor.symbolName,
+                accessibilityDescription: nil
+            ) ?? NSImage()
+        )
+        image.translatesAutoresizingMaskIntoConstraints = false
+        cell.addSubview(image)
+        cell.imageView = image
+
+        let label = NSTextField(labelWithString: descriptor.title)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        cell.addSubview(label)
+        cell.textField = label
+
+        let indicator = cell.overrideIndicator
+        indicator.textColor = Theme.gold
+        indicator.toolTip = "This destination has controls that differ from their defaults"
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        cell.addSubview(indicator)
+
+        NSLayoutConstraint.activate([
+            image.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 4),
+            image.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
+            image.widthAnchor.constraint(equalToConstant: 18),
+            label.leadingAnchor.constraint(equalTo: image.trailingAnchor, constant: 6),
+            label.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
+            indicator.leadingAnchor.constraint(greaterThanOrEqualTo: label.trailingAnchor),
+            indicator.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -6),
+            indicator.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
         ])
         return cell
     }

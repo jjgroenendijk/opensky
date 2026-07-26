@@ -12,15 +12,25 @@ import AppKit
 
 final class CollapsibleSectionView: NSStackView {
     private let disclosure = NSButton()
+    private let overrideIndicator = NSTextField(labelWithString: "●")
+    private let resetButton = NSButton(title: "Reset", target: nil, action: nil)
     private let content: NSView
     private let sectionID: String
+    private let onReset: (() -> Void)?
 
     /// Wraps `content` under a disclosure header titled `title`. `identifier`
     /// keys both the accessibility id (`PanelSection-<id>`) and the persisted
     /// expanded/collapsed state.
-    init(title: String, identifier: String, content: NSView) {
+    init(
+        title: String,
+        identifier: String,
+        content: NSView,
+        isOverridden: Bool = false,
+        onReset: (() -> Void)? = nil
+    ) {
         self.content = content
         sectionID = identifier
+        self.onReset = onReset
         super.init(frame: .zero)
         translatesAutoresizingMaskIntoConstraints = false
 
@@ -39,7 +49,20 @@ final class CollapsibleSectionView: NSStackView {
         )
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let header = NSStackView(views: [disclosure, titleLabel])
+        let spacer = NSView()
+        overrideIndicator.textColor = Theme.gold
+        overrideIndicator.toolTip = "This section differs from its defaults"
+        overrideIndicator.setAccessibilityIdentifier(
+            "PanelSection-\(sectionID)-OverrideIndicator"
+        )
+        resetButton.bezelStyle = .inline
+        resetButton.target = self
+        resetButton.action = #selector(reset)
+        resetButton.setAccessibilityIdentifier("PanelSection-\(sectionID)-ResetControl")
+
+        let header = NSStackView(
+            views: [disclosure, titleLabel, spacer, overrideIndicator, resetButton]
+        )
         header.orientation = .horizontal
         header.alignment = .centerY
         header.spacing = 4
@@ -53,10 +76,14 @@ final class CollapsibleSectionView: NSStackView {
         addArrangedSubview(header)
         addArrangedSubview(content)
         // The stack's .leading alignment supplies the leading edge; pin the
-        // trailing edge so content spans the section's full width as before.
-        content.trailingAnchor.constraint(equalTo: trailingAnchor).isActive = true
+        // trailing edges so header and content span the section's full width.
+        NSLayoutConstraint.activate([
+            header.trailingAnchor.constraint(equalTo: trailingAnchor),
+            content.trailingAnchor.constraint(equalTo: trailingAnchor)
+        ])
 
         applyExpanded(Self.loadExpanded(sectionID))
+        setOverridden(isOverridden)
     }
 
     @available(*, unavailable)
@@ -75,8 +102,18 @@ final class CollapsibleSectionView: NSStackView {
         Self.storeExpanded(sectionID, expanded: expanded)
     }
 
+    /// Shows the shared gold marker and Reset button only for a non-default state.
+    func setOverridden(_ overridden: Bool) {
+        overrideIndicator.isHidden = !overridden
+        resetButton.isHidden = !overridden
+    }
+
     @objc private func toggle() {
         setExpanded(disclosure.state == .on)
+    }
+
+    @objc private func reset() {
+        onReset?()
     }
 
     private func applyExpanded(_ expanded: Bool) {

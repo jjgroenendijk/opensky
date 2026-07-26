@@ -8,6 +8,9 @@ import AppKit
 class InspectorPanelViewController: NSViewController, InspectorPanel {
     private let ticker = InspectionTicker()
 
+    /// Reports aggregate override changes to the shell sidebar.
+    var onOverrideStateChange: (() -> Void)?
+
     /// Child sections in display order (empty for a direct-content panel).
     private(set) var sections: [PanelSectionViewController] = []
 
@@ -39,6 +42,14 @@ class InspectorPanelViewController: NSViewController, InspectorPanel {
     /// Direct-content panels: refresh the live readout on the ticker.
     func refreshReadout() {}
 
+    /// Direct-content panels may override this until their controls become sections.
+    var directContentIsOverridden: Bool {
+        false
+    }
+
+    /// Direct-content panels may override this until their controls become sections.
+    func resetDirectContentToDefaults() {}
+
     override func loadView() {
         sections = makeSections()
         for section in sections {
@@ -48,13 +59,7 @@ class InspectorPanelViewController: NSViewController, InspectorPanel {
 
         let column: [NSView] = sections.isEmpty
             ? makeContentViews()
-            : sections.map {
-                CollapsibleSectionView(
-                    title: $0.sectionTitle,
-                    identifier: $0.sectionIdentifier,
-                    content: $0.view
-                )
-            }
+            : sections.map(makeCollapsibleSection)
 
         let stack = NSStackView(views: column)
         stack.orientation = .vertical
@@ -110,11 +115,29 @@ class InspectorPanelViewController: NSViewController, InspectorPanel {
 
     // MARK: InspectorPanel
 
+    var isOverridden: Bool {
+        directContentIsOverridden || sections.contains(where: \.isOverridden)
+    }
+
+    func resetToDefaults() {
+        resetDirectContentToDefaults()
+        for section in sections {
+            section.performResetToDefaults()
+        }
+        syncControls()
+        refreshReadout()
+        onOverrideStateChange?()
+    }
+
     func startInspecting() {
         syncControls()
         refreshReadout()
         if sections.isEmpty {
-            ticker.start { [weak self] in self?.refreshReadout() }
+            onOverrideStateChange?()
+            ticker.start { [weak self] in
+                self?.refreshReadout()
+                self?.onOverrideStateChange?()
+            }
         } else {
             for section in sections {
                 section.startInspecting()
@@ -132,10 +155,28 @@ class InspectorPanelViewController: NSViewController, InspectorPanel {
     /// Direct-content panels: refresh + return focus to the game view.
     func finishInteraction(refocusOnMouseUpOnly: Bool = false) {
         refreshReadout()
+        onOverrideStateChange?()
         if refocusOnMouseUpOnly, NSApp.currentEvent?.type != .leftMouseUp {
             return
         }
         refocusAction?()
+    }
+
+    private func makeCollapsibleSection(
+        _ section: PanelSectionViewController
+    ) -> CollapsibleSectionView {
+        let hosted = CollapsibleSectionView(
+            title: section.sectionTitle,
+            identifier: section.sectionIdentifier,
+            content: section.view,
+            isOverridden: section.isOverridden,
+            onReset: { [weak section] in section?.performResetToDefaults() }
+        )
+        section.onOverrideStateChange = { [weak self, weak section, weak hosted] in
+            hosted?.setOverridden(section?.isOverridden ?? false)
+            self?.onOverrideStateChange?()
+        }
+        return hosted
     }
 }
 

@@ -23,6 +23,22 @@ final class PrecipitationSection: PanelSectionViewController {
         "precipitation"
     }
 
+    override var isOverridden: Bool {
+        Self.isOverridden(provider: provider)
+    }
+
+    override func resetToDefaults() {
+        Self.resetToDefaults(provider: provider)
+    }
+
+    static func isOverridden(provider: (any PrecipitationControlProviding)?) -> Bool {
+        provider?.precipitationEnabled == false
+    }
+
+    static func resetToDefaults(provider: (any PrecipitationControlProviding)?) {
+        provider?.precipitationEnabled = true
+    }
+
     override func makeContentViews() -> [NSView] {
         PanelComponents.configureCheckbox(
             enabledControl, target: self, action: #selector(enabledChanged),

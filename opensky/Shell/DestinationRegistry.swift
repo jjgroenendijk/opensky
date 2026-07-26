@@ -44,6 +44,13 @@ struct FullContentContext {
     let startupErrorMessage: String?
 }
 
+/// Provider-backed override queries and resets for one destination. These stay
+/// separate from panel construction so unopened destinations remain lazy.
+struct DestinationOverrideActions {
+    let isOverridden: @MainActor (WorldPanelContext) -> Bool
+    let resetToDefaults: @MainActor (WorldPanelContext) -> Void
+}
+
 /// A full-content controller that can re-apply a changed data root in place
 /// (Settings reload) instead of being rebuilt, preserving its loaded state.
 @MainActor
@@ -73,6 +80,23 @@ struct DestinationDescriptor {
     /// SF Symbol name for the sidebar row.
     let symbolName: String
     let content: DestinationContent
+    let overrides: DestinationOverrideActions?
+
+    init(
+        id: String,
+        title: String,
+        section: SidebarSection,
+        symbolName: String,
+        content: DestinationContent,
+        overrides: DestinationOverrideActions? = nil
+    ) {
+        self.id = id
+        self.title = title
+        self.section = section
+        self.symbolName = symbolName
+        self.content = content
+        self.overrides = overrides
+    }
 
     /// Stable accessibility identifier — the UI-test contract. Never change
     /// silently (docs/tools/app-ui.md).
@@ -119,7 +143,11 @@ enum DestinationRegistry {
                 let providers = context.providers
                 panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
                 return panel
-            }
+            },
+            overrides: DestinationOverrideActions(
+                isOverridden: { CameraSection.isOverridden(provider: $0.providers) },
+                resetToDefaults: { CameraSection.resetToDefaults(provider: $0.providers) }
+            )
         ),
         DestinationDescriptor(
             id: "environment",
@@ -135,7 +163,8 @@ enum DestinationRegistry {
                 panel.precipitationProvider = context.providers
                 panel.grassProvider = context.providers
                 return panel
-            }
+            },
+            overrides: environmentOverrides
         ),
         DestinationDescriptor(
             id: "audio",
@@ -148,7 +177,11 @@ enum DestinationRegistry {
                 let providers = context.providers
                 panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
                 return panel
-            }
+            },
+            overrides: DestinationOverrideActions(
+                isOverridden: { AudioOutputSection.isOverridden(provider: $0.providers) },
+                resetToDefaults: { AudioOutputSection.resetToDefaults(provider: $0.providers) }
+            )
         ),
         DestinationDescriptor(
             id: "uiLab",
@@ -160,7 +193,8 @@ enum DestinationRegistry {
                 panel.provider = context.providers
                 panel.swfProvider = context.providers
                 return panel
-            }
+            },
+            overrides: uiLabOverrides
         ),
         DestinationDescriptor(
             id: "assetBrowser",
@@ -175,6 +209,40 @@ enum DestinationRegistry {
             }
         )
     ]
+
+    private static let environmentOverrides = DestinationOverrideActions(
+        isOverridden: { context in
+            let providers = context.providers
+            return ShadowSection.isOverridden(provider: providers)
+                || AnimationSection.isOverridden(provider: providers)
+                || WeatherSection.isOverridden(provider: providers)
+                || ParticlesSection.isOverridden(provider: providers)
+                || PrecipitationSection.isOverridden(provider: providers)
+                || GrassSection.isOverridden(provider: providers)
+                || TerrainLODSection.isOverridden(provider: providers)
+        },
+        resetToDefaults: { context in
+            let providers = context.providers
+            ShadowSection.resetToDefaults(provider: providers)
+            AnimationSection.resetToDefaults(provider: providers)
+            WeatherSection.resetToDefaults(provider: providers)
+            ParticlesSection.resetToDefaults(provider: providers)
+            PrecipitationSection.resetToDefaults(provider: providers)
+            GrassSection.resetToDefaults(provider: providers)
+            TerrainLODSection.resetToDefaults(provider: providers)
+        }
+    )
+
+    private static let uiLabOverrides = DestinationOverrideActions(
+        isOverridden: { context in
+            UILabControlsSection.isOverridden(provider: context.providers)
+                || SWFMovieSection.isOverridden(provider: context.providers)
+        },
+        resetToDefaults: { context in
+            UILabControlsSection.resetToDefaults(provider: context.providers)
+            SWFMovieSection.resetToDefaults(provider: context.providers)
+        }
+    )
 
     /// World-inspector destinations, in order.
     static var worldInspectors: [DestinationDescriptor] {

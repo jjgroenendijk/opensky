@@ -48,7 +48,59 @@ private final class TwoSectionPanel: InspectorPanelViewController {
     }
 }
 
+private final class MutableSection: PanelSectionViewController {
+    var overridden = true
+    var resetCount = 0
+    var syncCount = 0
+    var readoutCount = 0
+
+    override var sectionTitle: String {
+        "Mutable"
+    }
+
+    override var sectionIdentifier: String {
+        "test-mutable"
+    }
+
+    override var isOverridden: Bool {
+        overridden
+    }
+
+    override func makeContentViews() -> [NSView] {
+        [NSTextField(labelWithString: "mutable")]
+    }
+
+    override func syncControls() {
+        syncCount += 1
+    }
+
+    override func refreshReadout() {
+        readoutCount += 1
+    }
+
+    override func resetToDefaults() {
+        resetCount += 1
+        overridden = false
+    }
+}
+
+private final class MutablePanel: InspectorPanelViewController {
+    let mutableSection = MutableSection()
+
+    override func makeSections() -> [PanelSectionViewController] {
+        [mutableSection]
+    }
+}
+
 struct PanelFrameworkTests {
+    @Test @MainActor
+    func sectionOverrideHooksHaveSafeDefaults() {
+        let section = PanelSectionViewController()
+        #expect(!section.isOverridden)
+        section.resetToDefaults()
+        #expect(!section.isOverridden)
+    }
+
     @Test @MainActor
     func tickerStartsIdempotentlyAndStops() {
         let ticker = InspectionTicker()
@@ -144,6 +196,49 @@ struct PanelFrameworkTests {
     }
 
     @Test @MainActor
+    func overrideHeaderTracksStateAndResets() throws {
+        let panel = MutablePanel()
+        let document = try #require((panel.view as? NSScrollView)?.documentView)
+        let indicator = try #require(
+            Self.view(
+                identified: "PanelSection-test-mutable-OverrideIndicator",
+                in: document
+            ) as? NSTextField
+        )
+        let reset = try #require(
+            Self.view(
+                identified: "PanelSection-test-mutable-ResetControl",
+                in: document
+            ) as? NSButton
+        )
+
+        #expect(!indicator.isHidden)
+        #expect(indicator.textColor == Theme.gold)
+        #expect(!reset.isHidden)
+        let syncBeforeReset = panel.mutableSection.syncCount
+        let readoutBeforeReset = panel.mutableSection.readoutCount
+
+        reset.sendAction(reset.action, to: reset.target)
+
+        #expect(panel.mutableSection.resetCount == 1)
+        #expect(panel.mutableSection.syncCount > syncBeforeReset)
+        #expect(panel.mutableSection.readoutCount > readoutBeforeReset)
+        #expect(indicator.isHidden)
+        #expect(reset.isHidden)
+        #expect(!panel.isOverridden)
+    }
+
+    @Test @MainActor
+    func panelAggregatesAndResetsChildOverrides() {
+        let panel = MutablePanel()
+        panel.loadViewIfNeeded()
+        #expect(panel.isOverridden)
+        panel.resetToDefaults()
+        #expect(!panel.isOverridden)
+        #expect(panel.mutableSection.resetCount == 1)
+    }
+
+    @Test @MainActor
     func directContentPanelScrollDocumentStartsAtTop() throws {
         let panel = DirectPanel()
         let scrollView = try #require(panel.view as? NSScrollView)
@@ -156,5 +251,14 @@ struct PanelFrameworkTests {
         let markerInDoc = panel.marker.convert(panel.marker.bounds, to: document)
         #expect(markerInDoc.minY < 60, "marker not near top: \(markerInDoc)")
         #expect(document.bounds.intersects(markerInDoc))
+    }
+
+    private static func view(identified identifier: String, in root: NSView) -> NSView? {
+        if root.accessibilityIdentifier() == identifier {
+            return root
+        }
+        return root.subviews.lazy.compactMap {
+            view(identified: identifier, in: $0)
+        }.first
     }
 }

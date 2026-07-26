@@ -19,6 +19,7 @@ protocol ShadowControlProviding: AnyObject {
 @MainActor
 protocol TerrainLODControlProviding: AnyObject {
     var terrainLODConfigurationSnapshot: TerrainLODConfigurationSnapshot { get }
+    var terrainLODOverrideActive: Bool { get }
     func applyTerrainLODConfiguration(_ configuration: TerrainLODConfiguration) -> Bool
     func resetTerrainLODConfiguration()
 }
@@ -30,6 +31,7 @@ protocol WeatherControlProviding: AnyObject {
     func forceWeather(named name: String?)
     func forceWeather(_ preset: WeatherPreset)
     var currentWeatherName: String? { get }
+    var weatherOverrideActive: Bool { get }
     var weatherTransitionFraction: Float { get }
     var weatherTransitionsPaused: Bool { get set }
     var windState: WindState { get }

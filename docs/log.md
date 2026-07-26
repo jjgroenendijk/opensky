@@ -2,6 +2,25 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-07-26
+
+* **Dev-shell override provenance and Reset all** (issue #143): every mutable
+  `PanelSectionViewController` now reports `isOverridden` and implements
+  `resetToDefaults()` against its live provider. A `Theme.gold` dot and Reset
+  control stay in each overridden section header even while collapsed, and the
+  existing 2 Hz `InspectionTicker` republishes their state without another
+  timer. Sidebar dots aggregate the same provider-backed state for
+  `World > World`, `World > Environment`, `World > Audio`, and
+  `Developer > UI Lab`; `DestinationOverrideActions` live beside each registry
+  descriptor so unopened panels remain lazy. `View > Reset all overrides`
+  reaches every destination and resyncs cached panels, removing persisted
+  shadow-quality, time-of-day, and LOD override keys while preserving section
+  collapse state. UI Lab is now the normal three-section composition
+  `UI foundation` / `SWF movie` / `SWF runtime`; its existing control ids stay
+  stable. New chrome ids are `PanelSection-<id>-OverrideIndicator`,
+  `PanelSection-<id>-ResetControl`, `Destination-<id>-OverrideIndicator`, and
+  `ResetAllOverridesCommand`. See [Main-app UI framework](/tools/app-ui.md).
+
 ## 2026-07-25
 
 * **World audio playback engine + `World > Audio` (M9.1.3)**: an `AVAudioEngine`

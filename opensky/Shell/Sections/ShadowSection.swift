@@ -28,6 +28,26 @@ final class ShadowSection: PanelSectionViewController {
         "shadows"
     }
 
+    override var isOverridden: Bool {
+        Self.isOverridden(provider: provider)
+    }
+
+    override func resetToDefaults() {
+        Self.resetToDefaults(provider: provider)
+    }
+
+    static func isOverridden(provider: (any ShadowControlProviding)?) -> Bool {
+        guard let provider else { return false }
+        return !provider.sunShadowsEnabled
+            || provider.shadowQuality != ShadowQualitySettings.fallback
+    }
+
+    static func resetToDefaults(provider: (any ShadowControlProviding)?) {
+        provider?.sunShadowsEnabled = true
+        provider?.shadowQuality = ShadowQualitySettings.fallback
+        ShadowQualitySettings.clearOverride()
+    }
+
     override func makeContentViews() -> [NSView] {
         PanelComponents.configureCheckbox(
             enabledControl, target: self, action: #selector(enabledChanged),

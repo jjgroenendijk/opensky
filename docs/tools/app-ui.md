@@ -4,7 +4,7 @@ title: Main-app UI framework + placement
 description: How OpenSky's dev/verification UI is built — destination registry, panel
   base classes, shared components, placement rules, and the accessibility-id contract.
 tags: [tool, gui, dev, ui, framework]
-timestamp: 2026-07-25T00:00:00Z
+timestamp: 2026-07-26T00:00:00Z
 ---
 
 # Main-app UI framework + placement
@@ -69,6 +69,13 @@ be able to select/force/toggle/inspect the behavior without a CLI command.
   drops the whole cache (`replaceGame`) so panels rebuild against the new
   renderer. Pinned by
   `ShellContentCoverTests/inspectorPanelsAreBuiltOnFirstReveal()`.
+- **Override provenance**: each mutable section reports whether its live
+  provider differs from the section defaults and can restore those defaults.
+  A gold dot and Reset control in the section header stay visible even while
+  its content is collapsed. Destination rows aggregate the same state through
+  provider-backed `DestinationOverrideActions` stored beside the registry
+  descriptor, so an unopened panel can show a dot without being constructed.
+  Resetting cached panels resyncs their controls after the provider changes.
 - Toolbar (`unifiedCompact`, built by `AppShellViewController.makeToolbar()`):
   sidebar toggle, flexible space, screenshot. Screenshot (save-panel +
   error-sheet flow in `ScreenshotCoordinator`) is enabled only while a
@@ -83,14 +90,12 @@ be able to select/force/toggle/inspect the behavior without a CLI command.
   accessibility id (`SidebarToggleButton`) like every other control.
 - Menu bar (`AppDelegate.makeMainMenu()` + `makeViewMenu()`): App (Settings
   Cmd+comma, Quit), View (Hide Sidebar Ctrl+Cmd+S, Show Frame HUD Opt+Cmd+H,
-  Hide Inspector Opt+Cmd+I), Edit. A toolbar affordance that is also a mode gets
-  a View-menu command, so it is discoverable and carries a listed shortcut. All
-  three View actions resolve on the responder chain to `AppShellViewController`,
-  which validates them (`NSMenuItemValidation`): each carries a checkmark
-  showing which way it will go, and `Hide Inspector` greys out on a destination
-  with no inspector column (a `fullContent` destination) instead of silently
-  doing nothing. `Hide Inspector` is what drives the `.viewport` content kind
-  over whichever world destination is selected.
+  Hide Inspector Opt+Cmd+I, Reset all overrides), Edit. The View actions
+  resolve on the responder chain to `AppShellViewController`, which validates
+  them (`NSMenuItemValidation`). Modes carry checkmarks, `Hide Inspector`
+  greys out on a destination with no inspector column, and Reset all greys out
+  when every provider is at its defaults. `Hide Inspector` drives the
+  `.viewport` content kind over whichever world destination is selected.
 - **Frame HUD** (`Shell/FrameHUDView.swift`): a small always-on readout pinned to
   the top-trailing corner of the game slot — fps, frame milliseconds, GPU or
   `n/a`, draw calls, drawn and culled instances, resident cells, footprint. It
@@ -146,6 +151,38 @@ a unit test; a change that breaks one must fix the code, not the test.
   there rather than hand-rolling it in a section — the hand-rolled copies are
   where naming and styling drift start.
 
+## Override provenance and reset
+
+`PanelSectionViewController` defines two mandatory section-contract hooks:
+`var isOverridden: Bool` and `func resetToDefaults()`. Every mutable section
+implements both against its live provider. The base false/no-op implementation
+is deliberate only for a readout-only or action-only section whose controls do
+not leave provider state behind.
+
+Override state comes from the provider, never from the current widget values.
+That distinction matters for controls such as automatic weather: the current
+weather popup can show a real weather while the provider is still in automatic
+mode. It also lets the sidebar report an override before its panel has ever
+been opened.
+
+`CollapsibleSectionView` renders a `Theme.gold` dot and Reset control whenever
+its section is overridden. Both are part of the header, so collapsing the
+content never hides the warning or its remedy. The section's existing 2 Hz
+`InspectionTicker` republishes the state alongside the readout; override chrome
+must not introduce another timer.
+
+Reset restores the section's semantic defaults and then resyncs visible
+controls and readouts. Shadow quality and time of day remove their persisted
+defaults keys, and distant LOD removes the OpenSky LOD override keys so Skyrim
+INI values become authoritative again. Section collapse state is presentation
+state, not an override, and Reset preserves it.
+
+The sidebar dot aggregates every mutable section under its exact path:
+`World > World`, `World > Environment`, `World > Audio`, or
+`Developer > UI Lab`. `View > Reset all overrides` invokes every registered
+destination action, including unopened destinations, and then resyncs cached
+panels.
+
 ## Placement decision tree
 
 Config grows without bound — decide deliberately:
@@ -176,6 +213,10 @@ content. Never touch the shell view controllers to add a destination.
   every `*ControlProviding` protocol via `WorldControlProviders`). Downward:
   control action -> provider setter -> renderer. Upward: a 2 Hz ticker polls the
   provider's snapshot into a readout label. No bindings/Combine.
+- A mutable destination also stores `DestinationOverrideActions` beside its
+  descriptor. Its status and reset closures call the same provider-backed
+  section helpers as the panel. This is the lightweight path used by sidebar
+  dots and Reset all; do not build a panel to inspect its state.
 - A `fullContent` factory receives a `FullContentContext` (data root + startup
   error). Conform the controller to `FullContentReloadable` so a Settings
   reload reaches the cached instance in place instead of rebuilding it.
@@ -186,13 +227,15 @@ content. Never touch the shell view controllers to add a destination.
 
 - `InspectorPanelViewController` — a full destination panel. Override
   `makeSections()` for a sectioned panel, or `makeContentViews()` +
-  `syncControls()`/`refreshReadout()` for a direct-content panel (UI Lab). It
+  `syncControls()`/`refreshReadout()` for a direct-content panel. It
   supplies the scrolling flipped document that starts at the top — no
   hand-computed content heights.
 - `PanelSectionViewController` — one control group. Override `makeContentViews`,
-  `syncControls`, `refreshReadout`; set `sectionTitle` + `sectionIdentifier`.
-  Call `finishInteraction()` from a control action to refresh + return focus to
-  the game view; pass `refocusOnMouseUpOnly: true` for continuous sliders.
+  `syncControls`, `refreshReadout`, `isOverridden`, and `resetToDefaults`; set
+  `sectionTitle` + `sectionIdentifier`. Readout/action-only sections may
+  deliberately inherit the base false/no-op override hooks. Call
+  `finishInteraction()` from a control action to refresh + return focus to the
+  game view; pass `refocusOnMouseUpOnly: true` for continuous sliders.
 - `InspectionTicker` — the 2 Hz readout timer lifecycle (idempotent start).
 - Control-state convention: give each knob a separate enable / force / freeze /
   inspect / reset action and a live numeric readout, rather than one overloaded
@@ -240,36 +283,27 @@ Structure comes from the step between sections, not from uniform air. Wrap
 tightly-related controls in `PanelComponents.group([...])` so they stay together
 at the narrow step.
 
-### Hosting a section inside a direct-content panel
+### Sectioned UI Lab and direct-content panels
 
-A direct-content panel (`makeContentViews()`) that grows a distinct subsystem
-group should not absorb it inline — the panel class hits the 250-line
-type-body limit and the group loses its own readout cadence. Host it instead
-(`UILabPanelViewController.hostSWFSection()`, M8.2.5):
+UI Lab began as direct controls with two manually hosted SWF sections. Override
+aggregation made that split misleading: its unsectioned controls also leave
+provider state behind. It is now a normal sectioned panel, in this order:
+**UI foundation**, **SWF movie**, **SWF runtime**. Their headers are
+`PanelSection-uiFoundation`, `PanelSection-swfMovie`, and
+`PanelSection-swfRuntime`; the existing control identifiers did not change.
 
-1. Hold the group as a `PanelSectionViewController` subclass stored on the panel.
-2. In `makeContentViews()`, `addChild(section)`, point
-   `section.refocusAction` at a closure reading the panel's current
-   `refocusAction`, and return
-   `CollapsibleSectionView(title:identifier:content: section.view)` as the last
-   column entry — the same header treatment a sectioned panel gets, so the
-   group carries a `PanelSection-<id>` accessibility id.
-3. Override `startInspecting()` / `stopInspecting()` to forward to the section,
-   since the base class only fans out to `makeSections()` children.
+The runtime section remains under `Developer > UI Lab` even though its control
+count exceeds the usual promotion threshold, because the M8.3.3 acceptance
+names that exact path. A milestone-named path outranks the threshold. A section
+whose class approaches the 250-line type-body limit splits its wiring and
+`@objc` actions into a `<Name>SectionInput.swift` extension satellite
+(`SWFRuntimeSectionInput.swift`) rather than shedding controls.
 
-The hosted group stays promotable: it is already a standalone section, so
-moving it into its own destination later changes nothing about its control ids.
-
-A panel can host more than one: UI Lab hosts **SWF movie** (the M8.2.5 static
-selector) and **SWF runtime** (the M8.3.3 AS2 driver) in that order, because the
-second runs whatever the first assigned. `SWF runtime` sits at thirteen controls,
-past the ~8 promotion threshold above, and stays a hosted section anyway because
-the M8.3.3 acceptance names `Developer > UI Lab` as its path. A milestone
-naming the path outranks the threshold; promote it when a later milestone gives
-it a path of its own. A section whose class approaches the 250-line type-body
-limit splits its wiring and `@objc` actions into a `<Name>SectionInput.swift`
-extension satellite (`SWFRuntimeSectionInput.swift`) rather than shedding
-controls.
+Direct-content panels remain appropriate for a genuinely full-column surface.
+If one later gains a distinct control group, convert it to normal
+`makeSections()` composition. Do not manually host a section: the standard
+panel fan-out owns ticker lifecycle, override aggregation, reset, and refocus
+wiring.
 
 ## Theme
 
@@ -302,6 +336,11 @@ Accessibility identifiers are the UI-test API and never change silently.
 - Sidebar outline: `AppSidebar`; destination rows: `Destination-<id>` (via
   `sidebarIdentifier`). PR 2 renamed the rows from `WorldDestination-<id>` and
   replaced the `WorldSidebar` table + `ModeSwitcher` radios with the outline.
+- Override chrome: destination dots
+  `Destination-<id>-OverrideIndicator`; section dots
+  `PanelSection-<sectionIdentifier>-OverrideIndicator`; section Reset controls
+  `PanelSection-<sectionIdentifier>-ResetControl`; View-menu Reset all item
+  `ResetAllOverridesCommand`.
 - Section headers: `PanelSection-<sectionIdentifier>`.
 - Controls: `<Thing>Control`; readouts: `<Thing>StatsLabel`. Current UI Lab set:
   `UIOverlayEnabledControl`, `UILabSampleControl`, `UIStringsSampleControl`,
@@ -316,7 +355,8 @@ Accessibility identifiers are the UI-test API and never change silently.
   `UIStatsLabel`, `UIMenuStatsLabel`, `UIStringsStatsLabel`,
   `SWFMovieStatsLabel`, `SWFRuntimeStatsLabel`, `SWFRuntimeInvokeStatsLabel`,
   `SWFRuntimeTallyStatsLabel`. Section headers in UI Lab:
-  `PanelSection-swfMovie`, `PanelSection-swfRuntime`.
+  `PanelSection-uiFoundation`, `PanelSection-swfMovie`,
+  `PanelSection-swfRuntime`.
 - Toolbar: `ScreenshotButton` (unchanged from the old shell), `SidebarToggleButton`.
 - Frame HUD overlay: `FrameHUDStatsLabel` (on the label inside `FrameHUDView`).
 - World set: `CameraMovementModeControl`, `CameraCopyPoseControl`; readouts

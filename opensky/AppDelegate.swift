@@ -228,7 +228,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// unadvertised keystrokes (docs/tools/app-ui.md). Every action here
     /// resolves on the responder chain to the shell's split-view controller,
     /// which also validates them.
-    private static func makeViewMenu() -> NSMenu {
+    static func makeViewMenu() -> NSMenu {
         let viewMenu = NSMenu(title: "View")
         viewMenu.addItem(viewMenuItem(
             title: "Hide Sidebar",
@@ -248,6 +248,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             keyEquivalent: "i",
             modifiers: [.option, .command]
         ))
+        viewMenu.addItem(.separator())
+        let resetItem = NSMenuItem(
+            title: "Reset all overrides",
+            action: #selector(AppShellViewController.resetAllOverrides(_:)),
+            keyEquivalent: ""
+        )
+        resetItem.identifier = NSUserInterfaceItemIdentifier("ResetAllOverridesCommand")
+        viewMenu.addItem(resetItem)
         return viewMenu
     }
 
