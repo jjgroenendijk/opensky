@@ -4,6 +4,18 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-26
 
+* **HUD authored samples hidden by default**: the installed `hudmenu.swf`
+  initializes with raw font markup under
+  `/HUDMovieBaseInstance/RolloverInfoInstance` and
+  `Dialogue Line 1Dialogue Line 2` under
+  `/HUDMovieBaseInstance/SubtitleTextHolder`. HUD initialization now hides both
+  engine-driven fields until real item or subtitle data exists.
+  `World > HUD & Interaction > Elements > Authored placeholder text` preserves
+  an explicit inspection toggle, defaults off, and participates in reset and
+  override provenance. Synthetic bridge and panel tests cover both states; the
+  environment-gated installed-movie acceptance test guards the clean default.
+  See [screen-space UI](/rendering/ui.md) and
+  [Main-app UI framework](/tools/app-ui.md). Refs #147.
 * **HUD acceptance surface (M8.4.3)**: `World > HUD & Interaction` now exposes
   the live vanilla HUD as two standard inspector sections. **Elements** A/Bs the
   layer, crosshair, actor meters, compass, selected-target marker, activation
@@ -16,7 +28,7 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   `Health`, `Magica`, and `Stamina` clips. The environment-gated acceptance
   built farm cell `(7,-3)`, exact-raycast real door `0001633D` at 83.329315
   units, and sent its live `Open Door` prompt to the installed HUD: prompt
-  off/on changed 7,509 pixels at 1280x720 with zero skipped items. Local A/B
+  off/on changed 4,069 pixels at 1280x720 with zero skipped items. Local A/B
   inspection confirmed prompt placement and stable compass/crosshair; frames
   remain gitignored. See [interaction targeting](/engine/interaction.md),
   [screen-space UI](/rendering/ui.md), and

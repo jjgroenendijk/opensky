@@ -124,6 +124,7 @@ final class OpenSkyUITests: XCTestCase {
         XCTAssertTrue(app.checkBoxes["HUDCompassControl"].exists)
         XCTAssertTrue(app.checkBoxes["HUDMarkersControl"].exists)
         XCTAssertTrue(app.checkBoxes["HUDPromptControl"].exists)
+        XCTAssertTrue(app.checkBoxes["HUDPlaceholderTextControl"].exists)
         XCTAssertTrue(app.popUpButtons["HUDScaleControl"].exists)
         XCTAssertTrue(app.staticTexts["HUDElementsStatsLabel"].exists)
         XCTAssertTrue(app.staticTexts["HUDTargetStatsLabel"].exists)

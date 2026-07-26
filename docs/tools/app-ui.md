@@ -308,7 +308,7 @@ wiring.
 `World > HUD & Interaction` is another normal sectioned panel. **Elements**
 (`PanelSection-hudElements`) owns reversible presentation overrides;
 **Target** (`PanelSection-hudTarget`) is read-only live diagnostics. The
-milestone names the destination path, so its seven controls do not get folded
+milestone names the destination path, so its eight controls do not get folded
 into World or UI Lab.
 
 ## Theme
@@ -391,7 +391,7 @@ Accessibility identifiers are the UI-test API and never change silently.
 - HUD set (World > HUD & Interaction, M8.4.3):
   `HUDLayerEnabledControl`, `HUDCrosshairControl`, `HUDMetersControl`,
   `HUDCompassControl`, `HUDMarkersControl`, `HUDPromptControl`,
-  `HUDScaleControl`; readouts `HUDElementsStatsLabel`,
+  `HUDPlaceholderTextControl`, `HUDScaleControl`; readouts `HUDElementsStatsLabel`,
   `HUDTargetStatsLabel`. Section headers: `PanelSection-hudElements`,
   `PanelSection-hudTarget`.
 - The convention is now uniform. The LOD and time-of-day controls used to carry

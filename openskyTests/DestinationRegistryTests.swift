@@ -91,6 +91,7 @@ final class FakeWorldProviders: WorldControlProviders {
     var hudCompassEnabled = true
     var hudMarkersEnabled = true
     var hudPromptEnabled = true
+    var hudPlaceholderTextEnabled = false
     var hudScale: Float = 1
     var hudControlSnapshot = HUDControlSnapshot(
         isLoaded: false,

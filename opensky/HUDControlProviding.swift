@@ -29,6 +29,7 @@ protocol HUDControlProviding: AnyObject {
     var hudCompassEnabled: Bool { get set }
     var hudMarkersEnabled: Bool { get set }
     var hudPromptEnabled: Bool { get set }
+    var hudPlaceholderTextEnabled: Bool { get set }
     var hudScale: Float { get set }
     var hudControlSnapshot: HUDControlSnapshot { get }
     func refocusGameView()
