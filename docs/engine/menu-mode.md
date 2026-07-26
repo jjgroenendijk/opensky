@@ -15,7 +15,9 @@ input stops driving the camera, world simulation freezes, and the frozen frame k
 rendering with the screen-space UI on top. Deliberately UI-toolkit-agnostic so the
 vanilla Scaleform SWF menu layer (M8.2) and the HUD (M8.2+) drive the same stack
 without the engine knowing any concrete menu type. This is not AppKit menus and not a
-menu UI; the only trigger today is the `Developer > UI Lab` menu-mode preview (M8.1.4).
+menu UI. Two things open the stack today: the `Developer > UI Lab` menu-mode preview
+(M8.1.4), which pushes named placeholders and attaches no consumer, and the
+[system menu](/engine/system-menu.md) (M8.5.1), the first real `MenuInputConsumer`.
 
 Three parts, split by layer so the logic stays AppKit-free and unit-tested:
 
@@ -114,13 +116,18 @@ the `GameMetalView` for routing, and sets `onModeChange` to flip
 
 ## Limits / next
 
-- The `Developer > UI Lab` menu-mode preview (M8.1.4) is the only thing that opens the
-  stack: its Push menu / Pop / Clear buttons call `pushPreviewMenu()` /
+- `MenuInputConsumer` has an implementer as of M8.5.1: the
+  [system menu](/engine/system-menu.md) installs `GameViewController` as the consumer
+  when it pushes `SystemMenu` onto the stack, so `Esc`, `Return`, and the movement keys
+  drive the Resume/Settings/Quit selector while the world stays paused. Text entry and
+  CLIK focus navigation still arrive with the wider SWF menu layer.
+- The `Developer > UI Lab` menu-mode preview (M8.1.4) opens the stack without a
+  consumer: its Push menu / Pop / Clear buttons call `pushPreviewMenu()` /
   `popPreviewMenu()` / `clearPreviewMenus()` on `GameViewController`
   (`opensky/GameViewControllerUILab.swift`), pushing depth-derived names
   (`UILabMenu1`, `UILabMenu2`, ...) so pure push/pop use never trips the
   duplicate-name rejection. Real menus are the SWF layer (M8.2). The panel readout
   mirrors `isMenuMode`, the top menu, stack depth, and `isWorldSimPaused`
-  ([screen-space UI](/rendering/ui.md), `GameViewControllerUILabTests`).
-- `MenuInputConsumer` has no implementer yet, so routed events are swallowed; focus
-  navigation and text entry arrive with the SWF menu layer.
+  ([screen-space UI](/rendering/ui.md), `GameViewControllerUILabTests`). Events routed
+  while only a preview menu is open are still swallowed, because the preview attaches
+  no consumer.

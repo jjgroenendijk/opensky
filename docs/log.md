@@ -4,6 +4,35 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-26
 
+* **System menu (M8.5.1)**: `World > System Menu` adds the Resume / Settings /
+  Quit selector and the two settings placeholders the milestone names. The
+  selector (`opensky/UI/SystemMenuModel.swift`) is toolkit-free and movie-free,
+  so it works with no install; opening it pushes `SystemMenu` onto the engine
+  menu stack, which makes `GameViewController` the first real
+  `MenuInputConsumer` and pauses world simulation through the existing
+  `onModeChange` wiring. Cancel is Resume, vertical moves wrap, and the menu has
+  no opening keystroke because `Esc` already releases mouse capture in gameplay.
+  Settings surfaces the located data root read-only (resolved once and cached)
+  and a master volume that writes through the same `AudioControlProviding` seam
+  as `World > Audio`; M9 binds the per-category volumes behind it.
+  The vanilla `startmenu.swf` presentation layer returns here after its 8.3.3
+  rejection, and two of the three blockers are gone: the 35 `callDepthExceeded`
+  faults were retired by issue #136, and `_root.CodeObj` turned out not to be a
+  host object at all — the movie's own `StartMenu` constructor creates it, and
+  all 16 names on it are Bethesda.net login calls. Measured against the install:
+  bring-up 0 faults, 0 unimplemented opcodes, 152 draw calls, 4,285 changed
+  pixels; after `SetPlatform`, `InitExtensions`, and `sendMenuProperties` the
+  engine-pushed list reads back `$NEW`, `$LOAD`, `$CREDITS`, `$QUIT` with 0
+  unhandled invokes of 36. Two gaps stay open and recorded: the populated `Main`
+  state stages off the viewport (0 changed pixels), and arrow keys are consumed
+  without effect because the focus chain starts at a holder clip with no
+  `handleInput`. `Renderer.startSWFRuntime` gained a `prepare` hook because
+  bring-up makes 24 `myLog` calls before the old post-start hook could answer
+  them. Scope finding: `startmenu.swf` is the title screen and has no
+  `$SETTINGS`; the in-game system menu is `quest_journal.swf`.
+  See [system menu](/engine/system-menu.md), [menu mode](/engine/menu-mode.md),
+  [AS2 runtime](/engine/as2-runtime.md), [screen-space UI](/rendering/ui.md),
+  and [Main-app UI framework](/tools/app-ui.md). Refs #148.
 * **Sound descriptor records (issue #154)**: `SNDR` now exposes ordered track names,
   category and output-model links, looping mode, signed frequency controls, priority,
   variance, and static attenuation. `SOUN SDSC` resolves through a typed record store to

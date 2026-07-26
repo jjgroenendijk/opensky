@@ -253,9 +253,13 @@ update the required state, and tying one AS2 tick to each 60 or 120 Hz display
 frame would make behavior depend on the monitor. Timed HUD animation needs an
 explicit movie-frame cadence in later scope.
 
-The gameplay HUD owns the single SWF layer by default. Choosing a movie in
-`Developer > UI Lab > SWF movie` is an explicit debug override; choosing
-`None` restores `hudmenu.swf`.
+The gameplay HUD owns the single SWF layer by default. Two surfaces take it
+over explicitly and hand it back: choosing a movie in
+`Developer > UI Lab > SWF movie` is a debug override, and choosing `None`
+restores `hudmenu.swf`; enabling the vanilla movie in `World > System Menu`
+brings `startmenu.swf` up while the menu is open and restores the HUD on
+Resume. There is one layer, so these are mutually exclusive by construction —
+see [system menu](/engine/system-menu.md).
 
 ## HUD acceptance surface (M8.4.3)
 
@@ -295,6 +299,16 @@ units, and feeds its `Open Door` prompt to the installed `hudmenu.swf`. At
 frames and the report stay in gitignored `logs/`. Local inspection confirmed
 the activation text appears at the crosshair and the compass/crosshair remain
 stable; no game-art capture is tracked.
+
+## System menu surface (M8.5.1)
+
+`World > System Menu` is the durable M8.5 acceptance surface: **Menu** opens the
+engine menu stack and drives the Resume/Settings/Quit selector, **Settings**
+carries the data-root and audio-volume placeholders. It talks through
+`SystemMenuControlProviding`, and the vanilla `startmenu.swf` presentation layer
+behind it is an A/B on top of an engine-drawn selector that works with no movie
+at all. Full description, including the menu-stack handoff and the
+accessibility-id set: [system menu](/engine/system-menu.md).
 
 ## App surface
 

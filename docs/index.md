@@ -97,6 +97,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   app A/B controls, exterior/interior evidence + frame/build/footprint gate.
 * [Menu mode](/engine/menu-mode.md) - push/pop menu stack, world-vs-menu input-capture
   switch, world-sim pause via a pausable frame clock (no time jump on resume).
+* [System menu](/engine/system-menu.md) - Resume/Settings/Quit selector, the menu-stack
+  handoff that pauses the world, the data-root and audio-volume settings placeholders,
+  and the vanilla `startmenu.swf` presentation layer.
 * [AS2 runtime](/engine/as2-runtime.md) - ActionScript 2 interpreter and the movie it
   drives: value model + coercions, bounded execution, display objects and timeline,
   events, indexed global mouse input and hit testing, the GameDelegate bridge,

@@ -130,6 +130,34 @@ final class OpenSkyUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["HUDTargetStatsLabel"].exists)
     }
 
+    /// World > System Menu acceptance surface (M8.5.1): Resume/Settings/Quit
+    /// selector plus the data-root and audio-volume placeholders behind it.
+    @MainActor
+    func testSystemMenuControlsAndReadouts() throws {
+        let app = try launchApp()
+        let sidebar = app.outlines["AppSidebar"]
+        XCTAssertTrue(sidebar.waitForExistence(timeout: 5))
+        sidebar.cells["Destination-systemMenu"].firstMatch.click()
+
+        let open = app.buttons["SystemMenuOpenControl"]
+        XCTAssertTrue(open.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["SystemMenuResumeControl"].exists)
+        XCTAssertTrue(app.buttons["SystemMenuUpControl"].exists)
+        XCTAssertTrue(app.buttons["SystemMenuDownControl"].exists)
+        XCTAssertTrue(app.buttons["SystemMenuActivateControl"].exists)
+        XCTAssertTrue(app.checkBoxes["SystemMenuMovieControl"].exists)
+        XCTAssertTrue(app.sliders["SystemMenuMasterVolumeControl"].exists)
+        XCTAssertTrue(app.staticTexts["SystemMenuStatsLabel"].exists)
+        XCTAssertTrue(app.staticTexts["SystemMenuDataRootStatsLabel"].exists)
+        XCTAssertTrue(app.staticTexts["SystemMenuSettingsStatsLabel"].exists)
+
+        // Opening the menu pushes the engine menu stack, which pauses world sim.
+        open.click()
+        let readout = app.staticTexts["SystemMenuStatsLabel"]
+        XCTAssertTrue(readout.value is String)
+        app.buttons["SystemMenuResumeControl"].click()
+    }
+
     /// Developer > UI Lab sidebar surface (M8.1.1 + M8.1.4): the sidebar lists
     /// the UI Lab destination; selecting it exposes the overlay-enable + sample
     /// toggles, the scale preset popup, the menu-mode preview buttons, and the

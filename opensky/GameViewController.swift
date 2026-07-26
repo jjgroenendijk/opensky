@@ -96,6 +96,10 @@ final class GameViewController: NSViewController {
     /// `GameViewControllerHUD.swift`; stored here because extensions cannot
     /// add state.
     var hud = HUDRuntimeState()
+    /// System menu selector + presentation state. The implementation lives in
+    /// `GameViewControllerSystemMenu.swift`; stored here because extensions
+    /// cannot add state.
+    var systemMenu = SystemMenuRuntimeState()
 
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))
