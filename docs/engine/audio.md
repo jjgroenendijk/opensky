@@ -2,10 +2,10 @@
 type: Subsystem
 title: World audio playback
 description: AVAudioEngine graph with 3D positional sources, non-positional submix
-  playback, gain ramps, streaming WMA decode, provisional category volumes, source
-  budget, and the World > Audio surface.
+  playback, gain ramps, streaming WMA decode, provisional category volumes with mute
+  and solo, source budget, the per-frame audio budget, and the World > Audio surface.
 tags: [engine, audio, playback, spatial]
-timestamp: 2026-07-26T00:00:00Z
+timestamp: 2026-07-27T00:00:00Z
 ---
 
 # World audio playback
@@ -211,7 +211,10 @@ renames this set.
 ## World > Audio surface
 
 Sidebar path for acceptance: **World > Audio** (`Destination-audio`).
-`AudioPanelViewController` composes two sections:
+`AudioPanelViewController` composes four sections. The two this page owns are
+below; **SFX & Ambience** (`PanelSection-audioSfx`) is documented in
+[world SFX + ambience](/engine/world-sfx.md) and **Music**
+(`PanelSection-audioMusic`) in [music playlists](/engine/music.md):
 
 * **Output** (`PanelSection-audioOutput`): `AudioEnabledControl` checkbox,
   `AudioMasterVolumeControl` slider, `AudioMusicVolumeControl`,
@@ -243,6 +246,64 @@ Sidebar path for acceptance: **World > Audio** (`Destination-audio`).
 The trigger places the source 700 units (~10 m) straight ahead of the camera
 under the `effects` category, so turning or strafing immediately pans it.
 Ids are pinned in `AudioPanelTests` and `DestinationRegistryTests`.
+
+### Acceptance record
+
+The M9 milestone gate (issue #157) covers the whole destination, not one
+section, so its record lives here rather than on the SFX or music page. It is
+the record required by the
+[sidebar verification convention](/tools/sidebar-acceptance.md), also carried as
+one row in that page's ledger:
+
+```text
+Milestone: M9.2.4 (M9 overall acceptance)
+Sidebar path: World > Audio > Output, > Sources, > Music, > SFX & Ambience
+Destination id: Destination-audio
+Controls exercised: AudioEnabledControl, the generated Audio<Category>MuteControl
+  and Audio<Category>SoloControl families (AudioEffectsMuteControl and
+  AudioMusicSoloControl are the two the gate clicks), AudioFileControl,
+  AudioPlaySelectedControl, AudioStopAllControl, AudioMusicTypeControl,
+  AudioStopMusicControl, AudioSfxEnabledControl, AudioStopAmbienceControl
+Readout: AudioStatsLabel, AudioSourcesStatsLabel, AudioMusicStatsLabel,
+  AudioSfxStatsLabel, plus the Destination-audio-OverrideIndicator dot
+Deterministic tests: M9AcceptanceTests, WorldAudioTransitionAcceptanceTests,
+  M9AudioAcceptanceRealDataTests, AudioPanelTests, AudioPanelMuteSoloTests,
+  WorldAudioEngineMuteSoloTests, DestinationRegistryTests, AppSidebarModelTests,
+  MusicRecordStoreTests, WorldMusicDirectorTests, CellStreamingFlyPathTests
+Local A/B (optional, never committed): none
+```
+
+The two mute and solo ids are generated at runtime as
+`"Audio\(category.identifierFragment)MuteControl"` and `...SoloControl` in
+`opensky/Shell/Sections/AudioOutputSection.swift`, so grepping for the full id
+finds nothing; `M9AcceptanceTests` reaches them as
+`outputSection.muteControls[.effects]` and `soloControls[.music]`, which is why
+they are named as a family here. `CellStreamingFlyPathTests` is listed because
+the gate's "frame budget kept" clause is the audio-update budget above, and
+those cases are what enforce it. No A/B capture applies: everything this
+milestone adds is audible rather than visible, so a rendered frame would prove
+nothing.
+
+`M9AcceptanceTests` asserts these readout substrings verbatim: `Audio:
+disabled`, `Audio: running`, `Output: 44100 Hz, 2 ch`,
+`Mute: Effects  Solo: Music` and `Mute: none  Solo: none` on `AudioStatsLabel`;
+`Sources: 2 / 8`, `Sources: 1 / 8`,
+`doorwoodopen.xwm [effects] 700, 0, 0 | 10.0 m | gain 1.00` and
+`wind.xwm [ambience] 0, 0, 0 | 0.0 m | gain 0.50` on `AudioSourcesStatsLabel`,
+with no `Play failed` line; `State: town`,
+`Music: MUSTownWhiterun — music\MUSTownWhiterun.xwm` and `Music: none` on
+`AudioMusicStatsLabel`, with no `Music error` line; and
+`SFX: sound\fx\dor\doorwoodopen.xwm`, `Ambience: 0x0001AABB` and
+`Ambience: none` on `AudioSfxStatsLabel`. The Music picker's first entry is
+pinned to `AudioMusicSection.automaticTitle` (`None (automatic)`). The sample
+rate, the file names and the FormID are invented for the test; no game data is
+read.
+
+What the record does **not** claim is that anyone has heard it. The
+deterministic suites prove the control-to-provider-to-readout path and the
+record resolution; the audible half is the human step at the end of this page,
+of [world SFX + ambience](/engine/world-sfx.md) and of
+[music playlists](/engine/music.md), and it has not been performed.
 
 ## Per-frame cost and the frame budget
 

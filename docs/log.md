@@ -2,6 +2,82 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-07-27
+
+* **World audio acceptance gate (M9.2.4, issue #157)**: the M9 gate is closed by
+  four changes on one branch. `World > Audio > Output` gained per-category mute
+  and solo, generated as `Audio<Category>MuteControl` and
+  `Audio<Category>SoloControl` in
+  `opensky/Shell/Sections/AudioOutputSection.swift`, backed by
+  `WorldAudioEngine.soloedCategory`, `isMuted(_:)`, `setMuted(_:for:)` and the
+  single gain function `audibleVolume(for:)` every path reads. The two filters
+  are independent and both must pass, so soloing a muted category leaves it
+  silent, and unmuting restores the level the slider was left at.
+  `AudioStatsLabel` grew a routing line that reads `Mute: none  Solo: none` at
+  defaults, and either filter counts as a destination override, so
+  `Destination-audio-OverrideIndicator` lights up and the reset clears both.
+  Second, the per-frame audio work is now measured: `Renderer.lastAudioUpdateMS`
+  feeds `OffscreenBenchResult.audioUpdateMS`, and
+  `CellStreamingFlyBenchmarkConfiguration.audioUpdateBudgetMS` (CLI
+  `--audio-budget-ms`, default 0.5 ms) is enforced on both `bench --fly-path`
+  and `bench --walk-path` through
+  `CellStreamingFlyBenchmarkError.audioUpdateExceeded`. Measured on the real
+  install (Debug, walk path, 814 active-physics frames, engine attached, no live
+  sources): average 0.005 ms, p95 0.014 ms, max 0.028 ms against the 0.50 ms
+  budget, so the budget is reasoned headroom over a measured floor, bounded by
+  `WorldAudioEngine.maxConcurrentSources` of 8. Third, the evidence:
+  `openskyTests/M9AcceptanceTests.swift` drives the whole gate sentence through
+  the real app shell with no game data, `WorldAudioTransitionAcceptanceTests`
+  runs one synthetic exterior to interior and back sequence proving the ambience
+  bed, the music state and the door SFX all react to the same
+  `apply(transition:)` (the interior coverage
+  `openskyTests/CellStreamerAmbienceTests.swift` explicitly did not claim), and
+  the env-gated `M9AudioAcceptanceRealDataTests` reports against the user's
+  install into gitignored `logs/m9-audio-acceptance.log`. Fourth, that real-data
+  run found issue #246 and it is fixed here. Acceptance record and ledger row:
+  [audio](/engine/audio.md), [sidebar acceptance](/tools/sidebar-acceptance.md).
+* **Vanilla music tracks resolve to the shipped file (M9.2.4, issue #246)**: no
+  vanilla music track could load at all, for two independent reasons confirmed
+  against the shipped install. All 269 archive entries under `music\` are
+  `.xwm`, with no loose `Data/music`, while all 242 distinct `MUST` `ANAM` and
+  `BNAM` filenames in `Skyrim.esm` name a `.wav`, so the authored name resolved
+  for nothing; 234 of them resolve once the `.xwm` sibling is tried, and 8 exist
+  under neither name because they are leftover development tracks that must keep
+  failing. Separately, `canonicalMusicPath` rejected any path with a leading
+  separator as absolute, and 209 of the 242 are authored `\Data\Music\...`, so
+  only 33 tracks survived canonicalization before playback was ever attempted.
+  The fallback lives at the load site, `MusicRecordStore.loadAudioFile(at:load:)`,
+  so it can be conditioned on the authored name genuinely not loading rather than
+  guessing for every track: the authored key is tried first,
+  `shippedAudioSibling(of:)` swaps only a final non-`.xwm` extension, and a track
+  absent under both names rethrows the authored path's typed error so a missing
+  file is still reported as missing. On the real install the route exterior
+  playlist went from 5 resolvable tracks to 61, all loading.
+  `SoundRecordStore.canonicalSoundPath` needs no extension rule (`sound\` ships
+  5,978 `.wav`) but has the same leading-separator defect, dropping 310 of 4,951
+  track entries; that is filed as issue #247 rather than folded in here. Details:
+  [music playlists](/engine/music.md), [MUSC/MUST records](/formats/music.md).
+* **What the M9 gate does and does not prove (M9.2.4, issue #157)**: the
+  evidence is deterministic. `M9AcceptanceTests`, `AudioPanelMuteSoloTests`,
+  `WorldAudioEngineMuteSoloTests`, `WorldAudioTransitionAcceptanceTests`,
+  `AudioPanelTests`, `DestinationRegistryTests` and `AppSidebarModelTests` pin
+  the control-to-provider-to-readout path and the accessibility-id contract,
+  `CellStreamingFlyPathTests` pins the audio frame budget, and the env-gated
+  `M9AudioAcceptanceRealDataTests` proves the ambience, sound and music records
+  behind the Whiterun route resolve to files the archives really ship. None of
+  that is a sound. The audible half of the gate is a human step — the routes
+  written down in [world SFX + ambience](/engine/world-sfx.md) and
+  [music playlists](/engine/music.md), plus the mute and solo pass in
+  [audio](/engine/audio.md) — and nothing in the repository records that anyone
+  has performed it, so the milestone should be read as behaviour proven at the
+  seam and still awaiting one listening session. Vanilla effects and ambience
+  are `.wav`, which no decoder here reads yet, so parts of that session cannot
+  pass until a PCM `.wav` reader lands. Related issues filed while doing this
+  work: #244 (walk-path p95 exceeds the 33.33 ms frame budget in Debug), #245
+  (`CellStreamingWalkDriver` does not mask animation and shadow samples to
+  active-physics frames), #246 (fixed here) and #247
+  (`canonicalSoundPath` leading-separator rejection).
+
 ## 2026-07-26
 
 * **Skills rewritten against the skill-authoring best practices**: the six skills in

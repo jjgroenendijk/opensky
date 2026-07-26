@@ -112,13 +112,15 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   path-targeted HUD calls, missing-API tally.
 * [World audio playback](/engine/audio.md) - AVAudioEngine graph with 3D positional
   sources, streaming WMA decode off the main thread, provisional category volumes,
-  source budget/eviction, and the `World > Audio` verification surface.
+  per-category mute and solo, source budget/eviction, the per-frame audio-update
+  budget, and the `World > Audio` surface plus the M9 acceptance record.
 * [World SFX + ambience](/engine/world-sfx.md) - world sound director wiring
   interaction events to one-shot SFX, per-cell ASPC/REGN ambience bed resolution,
   and the `World > Audio > SFX & Ambience` verification surface.
 * [Music playlists](/engine/music.md) - MUSC/MUST playlist selection through the
   CELL/REGN/WRLD precedence chain, the derived exploration/town/interior states,
-  palette expansion and flag handling, and the crossfading music director.
+  palette expansion and flag handling, the shipped-file `.xwm` resolution the
+  vanilla `.wav` track names need, and the crossfading music director.
 
 ## Rendering
 
