@@ -398,7 +398,12 @@ Accessibility identifiers are the UI-test API and never change silently.
   `Audio<Category>VolumeControl` family tracks the provisional
   `AudioCategory` list), `AudioFileControl`, `AudioPlaySelectedControl`,
   `AudioStopAllControl`; readouts `AudioStatsLabel`, `AudioSourcesStatsLabel`.
-  Section headers: `PanelSection-audioOutput`, `-audioSources`.
+  Extended by the world sound director (M9.2.2): `AudioSfxEnabledControl`,
+  `AudioAmbienceEnabledControl`, `AudioStopAmbienceControl`; readout
+  `AudioSfxStatsLabel`. Extended again by the music director (M9.2.3):
+  `AudioMusicEnabledControl`, `AudioMusicTypeControl`, `AudioStopMusicControl`;
+  readout `AudioMusicStatsLabel`. Section headers:
+  `PanelSection-audioOutput`, `-audioSources`, `-audioSfx`, `-audioMusic`.
 - HUD set (World > HUD & Interaction, M8.4.3):
   `HUDLayerEnabledControl`, `HUDCrosshairControl`, `HUDMetersControl`,
   `HUDCompassControl`, `HUDMarkersControl`, `HUDPromptControl`,

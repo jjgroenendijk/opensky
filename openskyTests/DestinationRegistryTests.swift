@@ -380,6 +380,13 @@ struct DestinationRegistryTests {
         reset("audio", context: context)
         #expect(!providers.audioEnabled)
 
+        // M9.2.3: a disabled music director is an audio-destination override,
+        // and the destination-level reset re-enables it.
+        providers.musicEnabled = false
+        #expect(isOverridden("audio", context: context))
+        reset("audio", context: context)
+        #expect(providers.musicEnabled)
+
         providers.uiOverlayEnabled = false
         #expect(isOverridden("uiLab", context: context))
         reset("uiLab", context: context)

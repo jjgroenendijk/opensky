@@ -76,7 +76,10 @@ struct AudioPanelTests {
             panel.audioMasterVolumeControl,
             panel.audioFileControl,
             panel.audioPlaySelectedControl,
-            panel.audioStopAllControl
+            panel.audioStopAllControl,
+            panel.audioMusicEnabledControl,
+            panel.audioMusicTypeControl,
+            panel.audioStopMusicControl
         ] + panel.outputSection.categoryControls.values.map(\.self)
         for control in controls {
             #expect(!control.isHidden)
@@ -125,6 +128,14 @@ struct AudioPanelTests {
             panel.sfxSection.stopAmbienceControl.accessibilityIdentifier()
                 == "AudioStopAmbienceControl"
         )
+        // M9.2.3 music playlist section pins.
+        #expect(panel.musicSection.sectionIdentifier == "audioMusic")
+        #expect(
+            panel.audioMusicEnabledControl.accessibilityIdentifier()
+                == "AudioMusicEnabledControl"
+        )
+        #expect(panel.audioMusicTypeControl.accessibilityIdentifier() == "AudioMusicTypeControl")
+        #expect(panel.audioStopMusicControl.accessibilityIdentifier() == "AudioStopMusicControl")
     }
 
     @Test @MainActor
@@ -208,5 +219,122 @@ struct AudioPanelTests {
             to: panel.sfxSection.stopAmbienceControl.target
         )
         #expect(fake.stopAmbienceCount == 1)
+    }
+
+    /// M9.2.3: the picker offers the automatic entry plus the provider's MUSC
+    /// list, and forcing an entry reaches the director.
+    @Test @MainActor
+    func musicPickerForcesTheSelectedPlaylist() {
+        let panel = AudioPanelViewController()
+        panel.loadViewIfNeeded()
+        let fake = FakeAudioProvider()
+        fake.selectableMusicTypeNames = ["MUSDungeon", "MUSExplore"]
+        panel.provider = fake
+
+        #expect(panel.audioMusicTypeControl.itemTitles == [
+            AudioMusicSection.automaticTitle, "MUSDungeon", "MUSExplore"
+        ])
+        #expect(panel.audioMusicTypeControl.titleOfSelectedItem
+            == AudioMusicSection.automaticTitle)
+
+        panel.audioMusicTypeControl.selectItem(withTitle: "MUSExplore")
+        panel.audioMusicTypeControl.sendAction(
+            panel.audioMusicTypeControl.action, to: panel.audioMusicTypeControl.target
+        )
+        #expect(fake.forcedMusicTypeNames == ["MUSExplore"])
+        #expect(panel.musicSection.forcedTypeName == "MUSExplore")
+
+        // Back to automatic: no new force, and the director is told to stop so
+        // the next streamed cell resolves the playlist itself.
+        panel.audioMusicTypeControl.selectItem(withTitle: AudioMusicSection.automaticTitle)
+        panel.audioMusicTypeControl.sendAction(
+            panel.audioMusicTypeControl.action, to: panel.audioMusicTypeControl.target
+        )
+        #expect(fake.forcedMusicTypeNames == ["MUSExplore"])
+        #expect(fake.stopMusicCount == 1)
+        #expect(panel.musicSection.forcedTypeName == nil)
+    }
+
+    @Test @MainActor
+    func musicToggleAndStopReachTheProvider() {
+        let panel = AudioPanelViewController()
+        panel.loadViewIfNeeded()
+        let fake = FakeAudioProvider()
+        panel.provider = fake
+
+        #expect(panel.audioMusicEnabledControl.state == .on)
+        panel.audioMusicEnabledControl.state = .off
+        panel.audioMusicEnabledControl.sendAction(
+            panel.audioMusicEnabledControl.action, to: panel.audioMusicEnabledControl.target
+        )
+        #expect(fake.musicEnabled == false)
+
+        panel.audioStopMusicControl.sendAction(
+            panel.audioStopMusicControl.action, to: panel.audioStopMusicControl.target
+        )
+        #expect(fake.stopMusicCount == 1)
+    }
+
+    @Test @MainActor
+    func musicReadoutShowsStateDescriptionAndError() {
+        let panel = AudioPanelViewController()
+        panel.loadViewIfNeeded()
+        let fake = FakeAudioProvider()
+        fake.currentMusicStateName = "interior"
+        fake.currentMusicDescription = "MUSDungeon — music\\dungeon\\a.xwm"
+        panel.provider = fake
+        panel.musicSection.refreshReadout()
+
+        var readout = Self.readout("AudioMusicStatsLabel", in: panel.view) ?? ""
+        #expect(readout.contains("State: interior"))
+        #expect(readout.contains("Music: MUSDungeon — music\\dungeon\\a.xwm"))
+        #expect(!readout.contains("Music error"))
+
+        fake.lastMusicError = "missing track"
+        panel.musicSection.refreshReadout()
+        readout = Self.readout("AudioMusicStatsLabel", in: panel.view) ?? ""
+        #expect(readout.contains("Music error: missing track"))
+    }
+
+    /// A forced playlist and a disabled director are both overrides; reset
+    /// clears each and hands selection back to the precedence chain.
+    @Test @MainActor
+    func musicOverrideStateTracksForceAndEnable() {
+        let panel = AudioPanelViewController()
+        panel.loadViewIfNeeded()
+        let fake = FakeAudioProvider()
+        fake.selectableMusicTypeNames = ["MUSExplore"]
+        panel.provider = fake
+        #expect(!panel.musicSection.isOverridden)
+
+        panel.audioMusicTypeControl.selectItem(withTitle: "MUSExplore")
+        panel.audioMusicTypeControl.sendAction(
+            panel.audioMusicTypeControl.action, to: panel.audioMusicTypeControl.target
+        )
+        #expect(panel.musicSection.isOverridden)
+
+        fake.musicEnabled = false
+        #expect(AudioMusicSection.isOverridden(provider: fake))
+
+        panel.musicSection.performResetToDefaults()
+        #expect(fake.musicEnabled)
+        #expect(panel.musicSection.forcedTypeName == nil)
+        #expect(!panel.musicSection.isOverridden)
+        #expect(panel.audioMusicTypeControl.titleOfSelectedItem
+            == AudioMusicSection.automaticTitle)
+    }
+
+    /// Depth-first search for a readout label's text, mirroring the acceptance
+    /// harness helper.
+    private static func readout(_ identifier: String, in view: NSView) -> String? {
+        if view.accessibilityIdentifier() == identifier, let field = view as? NSTextField {
+            return field.stringValue
+        }
+        for subview in view.subviews {
+            if let found = readout(identifier, in: subview) {
+                return found
+            }
+        }
+        return nil
     }
 }

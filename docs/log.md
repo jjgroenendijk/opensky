@@ -4,6 +4,22 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-26
 
+* **Music verification surface (M9.2.3, issue #156)**: `World > Audio` gains a
+  fourth section, `Music` (`opensky/Shell/Sections/AudioMusicSection.swift`),
+  so the playlist director is reachable without a CLI command. It carries the
+  `AudioMusicEnabledControl` toggle, an `AudioMusicTypeControl` picker offering
+  `None (automatic)` ahead of the sorted MUSC editor ids, an
+  `AudioStopMusicControl` button, and the `AudioMusicStatsLabel` readout showing
+  the derived state, the playing playlist and track, and any error. Forcing a
+  playlist is panel-local state (nothing on the provider records it), so the
+  section reports itself overridden on a force or a disabled director while the
+  static mirror the `audio` destination unions in judges only the toggle;
+  resetting the destination re-enables music, stops it so the precedence chain
+  resolves again, and the shell's cached-panel reset returns the picker to
+  automatic. Accessibility ids are pinned in `AudioPanelTests` because
+  `make test-ui` is blocked on this machine. Acceptance record and ledger row:
+  [music playlists](/engine/music.md),
+  [sidebar acceptance](/tools/sidebar-acceptance.md).
 * **Music selection + director (M9.2.3, issue #156)**: the runtime that turns
   the MUSC/MUST records into playing music. `MusicCatalog.swift` is pure value
   logic: a `MusicContext` from the streamer resolves through the
