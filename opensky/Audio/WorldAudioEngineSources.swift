@@ -276,16 +276,18 @@ extension WorldAudioEngine {
     /// bypasses the submixes (each needs its own environment-node input), so it
     /// carries the category factor at its node; a non-positional source already
     /// passes through the category submix, which carries it. Master volume
-    /// lives on the main mixer and is never part of this product.
+    /// lives on the main mixer and is never part of this product. The category
+    /// factor is `audibleVolume(for:)`, so mute and solo apply on both paths.
     func applyVolume(to source: ActiveAudioSource) {
-        let categoryFactor = source.isPositional ? volume(for: source.category) : 1
+        let categoryFactor = source.isPositional ? audibleVolume(for: source.category) : 1
         source.node.volume = categoryFactor * source.gain * source.fadeGain
     }
 
     /// Effective gain of one source as the listener hears it before distance
-    /// attenuation: master x category x source x fade.
+    /// attenuation: master x category x source x fade, where the category
+    /// factor is zero while the category is muted or another one is soloed.
     func effectiveGain(of source: ActiveAudioSource) -> Float {
-        masterVolume * volume(for: source.category) * source.gain * source.fadeGain
+        masterVolume * audibleVolume(for: source.category) * source.gain * source.fadeGain
     }
 
     // MARK: - Internals
@@ -303,7 +305,7 @@ extension WorldAudioEngine {
         node.renderingAlgorithm = .equalPowerPanning
         let position = AudioSpace.listenerPosition(fromWorld: request.worldPosition)
         node.position = AVAudio3DPoint(x: position.x, y: position.y, z: position.z)
-        node.volume = volume(for: request.category) * request.gain
+        node.volume = audibleVolume(for: request.category) * request.gain
         return node
     }
 

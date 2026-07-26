@@ -1,6 +1,7 @@
 // World > Audio > Output section: engine enable, master + provisional category
-// volumes, and the device/format readout (M9.1.3). Category names are the
-// provisional M9.1 set (AudioCategory); 9.2.1 renames them from game data.
+// volumes, per-category mute and solo (M9.2.4), and the device/format readout
+// (M9.1.3). Category names are the provisional M9.1 set (AudioCategory); 9.2.1
+// renames them from game data.
 
 import AppKit
 
@@ -17,6 +18,8 @@ final class AudioOutputSection: PanelSectionViewController {
     let masterControl = NSSlider(value: 1, minValue: 0, maxValue: 1, target: nil, action: nil)
     private let masterValueLabel = PanelComponents.valueLabel(width: 44)
     private(set) var categoryControls: [AudioCategory: NSSlider] = [:]
+    private(set) var muteControls: [AudioCategory: NSButton] = [:]
+    private(set) var soloControls: [AudioCategory: NSButton] = [:]
     private var categoryValueLabels: [AudioCategory: NSTextField] = [:]
     private let statsLabel = PanelComponents.statsLabel(identifier: "AudioStatsLabel")
 
@@ -40,8 +43,9 @@ final class AudioOutputSection: PanelSectionViewController {
         guard let provider else { return false }
         return provider.audioEnabled
             || provider.audioMasterVolume != 1
+            || provider.soloedAudioCategory != nil
             || AudioCategory.allCases.contains {
-                provider.audioVolume(for: $0) != 1
+                provider.audioVolume(for: $0) != 1 || provider.audioCategoryIsMuted($0)
             }
     }
 
@@ -49,8 +53,10 @@ final class AudioOutputSection: PanelSectionViewController {
         guard let provider else { return }
         provider.audioEnabled = false
         provider.audioMasterVolume = 1
+        provider.soloedAudioCategory = nil
         for category in AudioCategory.allCases {
             provider.setAudioVolume(1, for: category)
+            provider.setAudioCategoryMuted(false, for: category)
         }
     }
 
@@ -63,28 +69,45 @@ final class AudioOutputSection: PanelSectionViewController {
             masterControl, target: self, action: #selector(masterChanged),
             identifier: "AudioMasterVolumeControl", width: 200
         )
-        var volumeRows: [NSView] = [
+        let volumeRows: [NSView] = [
             PanelComponents.caption("Master"),
             PanelComponents.sliderRow(slider: masterControl, valueLabel: masterValueLabel)
-        ]
-        for category in AudioCategory.allCases {
-            let slider = NSSlider(value: 1, minValue: 0, maxValue: 1, target: nil, action: nil)
-            PanelComponents.configureSlider(
-                slider, target: self, action: #selector(categoryChanged(_:)),
-                identifier: "Audio\(category.identifierFragment)VolumeControl", width: 200
-            )
-            let valueLabel = PanelComponents.valueLabel(width: 44)
-            categoryControls[category] = slider
-            categoryValueLabels[category] = valueLabel
-            volumeRows.append(PanelComponents.caption(category.displayName))
-            volumeRows.append(
-                PanelComponents.sliderRow(slider: slider, valueLabel: valueLabel)
-            )
-        }
+        ] + AudioCategory.allCases.flatMap(makeCategoryRows(for:))
         return [
             PanelComponents.group([enabledControl]),
             PanelComponents.group(volumeRows),
             statsLabel
+        ]
+    }
+
+    /// Caption, volume slider, and the mute/solo pair for one category. Solo is
+    /// a checkbox rather than a radio group because clicking the active one
+    /// clears it, which a radio group cannot express.
+    private func makeCategoryRows(for category: AudioCategory) -> [NSView] {
+        let slider = NSSlider(value: 1, minValue: 0, maxValue: 1, target: nil, action: nil)
+        PanelComponents.configureSlider(
+            slider, target: self, action: #selector(categoryChanged(_:)),
+            identifier: "Audio\(category.identifierFragment)VolumeControl", width: 200
+        )
+        let valueLabel = PanelComponents.valueLabel(width: 44)
+        let mute = NSButton(checkboxWithTitle: "Mute", target: nil, action: nil)
+        PanelComponents.configureCheckbox(
+            mute, target: self, action: #selector(muteChanged(_:)),
+            identifier: "Audio\(category.identifierFragment)MuteControl"
+        )
+        let solo = NSButton(checkboxWithTitle: "Solo", target: nil, action: nil)
+        PanelComponents.configureCheckbox(
+            solo, target: self, action: #selector(soloChanged(_:)),
+            identifier: "Audio\(category.identifierFragment)SoloControl"
+        )
+        categoryControls[category] = slider
+        categoryValueLabels[category] = valueLabel
+        muteControls[category] = mute
+        soloControls[category] = solo
+        return [
+            PanelComponents.caption(category.displayName),
+            PanelComponents.sliderRow(slider: slider, valueLabel: valueLabel),
+            PanelComponents.buttonRow([mute, solo])
         ]
     }
 
@@ -94,9 +117,16 @@ final class AudioOutputSection: PanelSectionViewController {
         enabledControl.state = provider?.audioEnabled == true ? .on : .off
         masterControl.isEnabled = provider != nil
         masterControl.floatValue = provider?.audioMasterVolume ?? 1
+        let soloed = provider?.soloedAudioCategory
         for (category, slider) in categoryControls {
             slider.isEnabled = provider != nil
             slider.floatValue = provider?.audioVolume(for: category) ?? 1
+            let mute = muteControls[category]
+            mute?.isEnabled = provider != nil
+            mute?.state = provider?.audioCategoryIsMuted(category) == true ? .on : .off
+            let solo = soloControls[category]
+            solo?.isEnabled = provider != nil
+            solo?.state = soloed == category ? .on : .off
         }
         syncValueLabels()
     }
@@ -127,21 +157,55 @@ final class AudioOutputSection: PanelSectionViewController {
         finishInteraction(refocusOnMouseUpOnly: true)
     }
 
+    @objc private func muteChanged(_ sender: NSButton) {
+        for (category, control) in muteControls where control === sender {
+            provider?.setAudioCategoryMuted(sender.state == .on, for: category)
+        }
+        refreshReadout()
+        finishInteraction()
+    }
+
+    /// Solo is mutually exclusive: picking one category clears any other, and
+    /// clicking the category that is already soloed clears solo entirely.
+    @objc private func soloChanged(_ sender: NSButton) {
+        for (category, control) in soloControls where control === sender {
+            provider?.soloedAudioCategory = sender.state == .on ? category : nil
+        }
+        let soloed = provider?.soloedAudioCategory
+        for (category, control) in soloControls {
+            control.state = soloed == category ? .on : .off
+        }
+        refreshReadout()
+        finishInteraction()
+    }
+
     override func refreshReadout() {
         guard let provider else {
             statsLabel.stringValue = "Audio: unavailable"
             return
         }
         let snapshot = provider.audioStatsSnapshot
-        guard snapshot.enabled else {
-            statsLabel.stringValue = "Audio: disabled"
-            return
+        var lines: [String] = if snapshot.enabled {
+            [
+                "Audio: \(snapshot.engineRunning ? "running" : "not running")",
+                "Output: \(snapshot.outputDescription)"
+            ]
+        } else {
+            ["Audio: disabled"]
         }
-        let state = snapshot.engineRunning ? "running" : "not running"
-        statsLabel.stringValue = """
-        Audio: \(state)
-        Output: \(snapshot.outputDescription)
-        """
+        lines.append(Self.routingLine(provider: provider))
+        statsLabel.stringValue = lines.joined(separator: "\n")
+    }
+
+    /// Mute and solo state as one readout line, so the acceptance record can
+    /// read the category routing out of the panel text.
+    private static func routingLine(provider: any AudioControlProviding) -> String {
+        let muted = AudioCategory.allCases
+            .filter { provider.audioCategoryIsMuted($0) }
+            .map(\.displayName)
+        let mutedText = muted.isEmpty ? "none" : muted.joined(separator: ", ")
+        let soloText = provider.soloedAudioCategory?.displayName ?? "none"
+        return "Mute: \(mutedText)  Solo: \(soloText)"
     }
 
     private static func percentText(_ value: Float) -> String {

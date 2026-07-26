@@ -6,11 +6,15 @@ import AppKit
 @testable import opensky
 import Testing
 
+/// Shared with the M9.2.4 mute/solo satellite file
+/// (`AudioPanelMuteSoloTests.swift`), so it is internal rather than private.
 @MainActor
-private final class FakeAudioProvider: AudioControlProviding {
+final class FakeAudioProvider: AudioControlProviding {
     var audioEnabled = false
     var audioMasterVolume: Float = 1
     private var categoryVolumes: [AudioCategory: Float] = [:]
+    private var mutedCategories: Set<AudioCategory> = []
+    var soloedAudioCategory: AudioCategory?
     var selectableAudioFileNames: [String] = []
     var playedFiles: [String] = []
     var stopAllCount = 0
@@ -38,6 +42,18 @@ private final class FakeAudioProvider: AudioControlProviding {
 
     func setAudioVolume(_ volume: Float, for category: AudioCategory) {
         categoryVolumes[category] = volume
+    }
+
+    func audioCategoryIsMuted(_ category: AudioCategory) -> Bool {
+        mutedCategories.contains(category)
+    }
+
+    func setAudioCategoryMuted(_ muted: Bool, for category: AudioCategory) {
+        if muted {
+            mutedCategories.insert(category)
+        } else {
+            mutedCategories.remove(category)
+        }
     }
 
     func playAudioFile(named name: String) -> String? {
@@ -81,6 +97,8 @@ struct AudioPanelTests {
             panel.audioMusicTypeControl,
             panel.audioStopMusicControl
         ] + panel.outputSection.categoryControls.values.map(\.self)
+            + panel.outputSection.muteControls.values.map(\.self)
+            + panel.outputSection.soloControls.values.map(\.self)
         for control in controls {
             #expect(!control.isHidden)
             #expect(control.frame.height > 0)
@@ -111,6 +129,17 @@ struct AudioPanelTests {
         #expect(categoryIDs == [
             "AudioAmbienceVolumeControl", "AudioEffectsVolumeControl",
             "AudioMusicVolumeControl"
+        ])
+        // M9.2.4 per-category mute + solo pins.
+        let muteIDs = panel.outputSection.muteControls.values
+            .map { $0.accessibilityIdentifier() }.sorted()
+        #expect(muteIDs == [
+            "AudioAmbienceMuteControl", "AudioEffectsMuteControl", "AudioMusicMuteControl"
+        ])
+        let soloIDs = panel.outputSection.soloControls.values
+            .map { $0.accessibilityIdentifier() }.sorted()
+        #expect(soloIDs == [
+            "AudioAmbienceSoloControl", "AudioEffectsSoloControl", "AudioMusicSoloControl"
         ])
         #expect(panel.outputSection.sectionIdentifier == "audioOutput")
         #expect(panel.sourcesSection.sectionIdentifier == "audioSources")

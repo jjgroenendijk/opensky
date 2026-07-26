@@ -57,6 +57,22 @@ non-positional AVAudioPlayerNode (stereo, one per source)
   both would square it). The player node's `volume` therefore holds
   `category x source x fade` when positional and `source x fade` when not.
   Distance attenuation applies after all of it, and only to positional sources.
+* **Mute and solo** (M9.2.4) are two more per-category filters folded into the
+  same category factor, `WorldAudioEngine.audibleVolume(for:)`: it returns the
+  category's volume when the category is audible and zero when the category is
+  muted or when a *different* category is soloed. Every gain path reads that
+  one function — the submix output volumes, the positional player-node volumes,
+  and the snapshot's `effectiveGain` — so the three can never disagree, and
+  changing either filter re-applies them through `applyVolumesToSources()`, so
+  sources that are already playing react on the call.
+  * **Precedence**: mute and solo are independent filters and *both* must pass.
+    Solo overrides nothing about mute, so soloing a category that is explicitly
+    muted leaves it silent; unmuting it is the only way to hear it.
+  * Mute is separate state from the volume (`mutedCategories`, a set, next to
+    `categoryVolumes`), so unmuting restores exactly the level the slider was
+    left at rather than snapping back to full.
+  * Solo is a single optional category (`soloedCategory`), so it is mutually
+    exclusive by construction; nil means nothing is soloed.
 * Engine off by default; enabling it in the panel starts it. A start failure
   (no output device) is captured as `unavailableReason` and shown in the
   readout — it never crashes and never blocks the render loop.
@@ -199,8 +215,25 @@ Sidebar path for acceptance: **World > Audio** (`Destination-audio`).
 
 * **Output** (`PanelSection-audioOutput`): `AudioEnabledControl` checkbox,
   `AudioMasterVolumeControl` slider, `AudioMusicVolumeControl`,
-  `AudioEffectsVolumeControl`, `AudioAmbienceVolumeControl`, readout
-  `AudioStatsLabel` (running state + output device format or failure reason).
+  `AudioEffectsVolumeControl`, `AudioAmbienceVolumeControl`, and per category a
+  mute checkbox and a solo checkbox — `AudioMusicMuteControl`,
+  `AudioEffectsMuteControl`, `AudioAmbienceMuteControl`,
+  `AudioMusicSoloControl`, `AudioEffectsSoloControl`,
+  `AudioAmbienceSoloControl`. Readout `AudioStatsLabel`:
+
+  ```text
+  Audio: running
+  Output: 48000 Hz, 2 ch
+  Mute: Music, Effects  Solo: Ambience
+  ```
+
+  The last line is always present (it reads `Mute: none  Solo: none` at
+  defaults) and lists muted categories by display name, comma separated. Solo
+  is a checkbox rather than a radio group because clicking the category that is
+  already soloed clears solo, which a radio group cannot express; picking a
+  second category moves the solo. A muted or soloed category counts as an
+  override, so `Destination-audio-OverrideIndicator` lights up and the
+  destination reset clears both.
 * **Sources** (`PanelSection-audioSources`): `AudioFileControl` popup listing
   the install's `.xwm` paths, `AudioPlaySelectedControl`,
   `AudioStopAllControl`, readout `AudioSourcesStatsLabel` (live source list —
@@ -218,6 +251,11 @@ Ids are pinned in `AudioPanelTests` and `DestinationRegistryTests`.
   playback): left/right channel balance for known poses, distance
   attenuation, the volume product (category 0.25 renders ~0.25x RMS),
   master-zero silence, FIFO cap eviction, cell purge, snapshot contents.
+* `WorldAudioEngineMuteSoloTests` — offline manual rendering again: a muted
+  category renders silence while another category still sounds, a solo silences
+  the others and clearing it restores them, a soloed but muted category stays
+  silent, unmuting restores the prior category volume, and a source started
+  while its category is muted comes up at zero node volume.
 * `WorldAudioEngineNonPositionalTests` — submix routing, stereo material, the
   category factor applied once, and both exemptions (purge, FIFO budget).
 * `WorldAudioEngineFadeTests` — ramp arithmetic, fade-out-and-stop retirement,

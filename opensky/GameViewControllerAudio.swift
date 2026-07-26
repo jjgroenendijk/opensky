@@ -77,6 +77,19 @@ extension GameViewController: AudioControlProviding {
         worldAudio?.setVolume(volume, for: category)
     }
 
+    func audioCategoryIsMuted(_ category: AudioCategory) -> Bool {
+        worldAudio?.isMuted(category) ?? false
+    }
+
+    func setAudioCategoryMuted(_ muted: Bool, for category: AudioCategory) {
+        worldAudio?.setMuted(muted, for: category)
+    }
+
+    var soloedAudioCategory: AudioCategory? {
+        get { worldAudio?.soloedCategory }
+        set { worldAudio?.soloedCategory = newValue }
+    }
+
     var selectableAudioFileNames: [String] {
         if let cachedAudioFileNames {
             return cachedAudioFileNames

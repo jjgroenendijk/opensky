@@ -232,6 +232,20 @@ final class FakeWorldProviders: WorldControlProviders {
         audioCategoryVolumes[category] = volume
     }
 
+    private var mutedAudioCategories: Set<AudioCategory> = []
+    var soloedAudioCategory: AudioCategory?
+    func audioCategoryIsMuted(_ category: AudioCategory) -> Bool {
+        mutedAudioCategories.contains(category)
+    }
+
+    func setAudioCategoryMuted(_ muted: Bool, for category: AudioCategory) {
+        if muted {
+            mutedAudioCategories.insert(category)
+        } else {
+            mutedAudioCategories.remove(category)
+        }
+    }
+
     var selectableAudioFileNames: [String] = []
     func playAudioFile(named _: String) -> String? {
         nil
@@ -386,6 +400,18 @@ struct DestinationRegistryTests {
         #expect(isOverridden("audio", context: context))
         reset("audio", context: context)
         #expect(providers.musicEnabled)
+
+        // M9.2.4: a muted or soloed category is an audio-destination override,
+        // and the destination-level reset clears both.
+        providers.setAudioCategoryMuted(true, for: .music)
+        #expect(isOverridden("audio", context: context))
+        reset("audio", context: context)
+        #expect(!providers.audioCategoryIsMuted(.music))
+
+        providers.soloedAudioCategory = .ambience
+        #expect(isOverridden("audio", context: context))
+        reset("audio", context: context)
+        #expect(providers.soloedAudioCategory == nil)
 
         providers.uiOverlayEnabled = false
         #expect(isOverridden("uiLab", context: context))
