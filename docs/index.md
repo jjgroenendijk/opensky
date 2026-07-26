@@ -29,6 +29,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Grass records](/formats/grass.md) - GRAS fixed DATA controls + repeated LTEX GNAM links.
 * [Weather records](/formats/weather.md) - WTHR NAM0 color layers/FNAM fog/DATA
   wind + precipitation, CLMT weather lists + timing, REGN weather areas.
+* [Sound records](/formats/sound.md) - SNDR descriptor tracks, attenuation and looping,
+  SOUN SDSC links, and canonical VFS path resolution.
 * [Distant LOD](/formats/lod.md) - lodsettings plus BTR/BTO paths and LOD-specific NIF
   blocks, tree LST/BTT layouts, placement rules, full vanilla sweep evidence.
 * [Skyrim INI settings](/formats/ini.md) - read-only decode, file precedence, typed
