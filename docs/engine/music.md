@@ -250,10 +250,28 @@ rendered frame would prove nothing (same reasoning as the M9.2.2 row).
   the toggle and the forced selection.
 * `DestinationRegistryTests` — a disabled music director shows as an override on
   `Destination-audio`, and the destination-level reset re-enables it.
+* `WorldAudioTransitionAcceptanceTests` — the music half of the M9 transition
+  sentence: the same exterior -> interior -> exterior sequence that drives the
+  ambience bed also switches the music state to `interior` and back, with the
+  sound and music directors subscribed to one streamer.
+* `M9AcceptanceTests` — the Music section inside the milestone gate: the picker
+  offers `None (automatic)` first, forcing `MUSTownWhiterun` reaches the
+  provider and `AudioMusicStatsLabel`, and `AudioStopMusicControl` returns the
+  readout to `Music: none`.
+* `M9AudioAcceptanceRealDataTests` (env-gated, `make realtest`) — the route
+  exterior cell resolves a real playlist through the precedence chain and its
+  first track is present in the archives, and the route interior derives the
+  `interior` state. That test is also where the vanilla `MUST ANAM` extension
+  mismatch surfaced (issue #246): the ANAM names a `.wav` the archives do not
+  ship, so `WorldMusicDirector` cannot load a vanilla track until the resolver
+  tries the `.xwm` sibling.
 * Fixtures are synthetic plugins built in code
   (`openskyTests/WorldMusicFixtures.swift`); the audio payload is
   `XWMFixture.file`. No extracted game file enters the repository.
 
 Audible acceptance is a human step: enable audio, walk an exterior cell, and
 listen for the exploration playlist; enter a city cell and confirm the crossfade
-to its town playlist; enter an interior and confirm the state readout.
+to its town playlist; enter an interior and confirm the state readout. Until
+issue #246 is fixed that step cannot pass on a real install, because no vanilla
+track loads; forcing a playlist from `AudioMusicTypeControl` fails the same way,
+and the reason appears in `AudioMusicStatsLabel` as a `Music error:` line.

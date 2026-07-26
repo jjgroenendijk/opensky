@@ -306,6 +306,19 @@ max and budget. `make probe` greps for that line on both paths.
 * `AudioCodecParametersXWMTests` — extradata substitution.
 * `AudioPanelTests`, `DestinationRegistryTests`, `AppSidebarModelTests` —
   panel geometry, id contract, registry wiring.
+* `M9AcceptanceTests` — the milestone gate driven through the app shell with no
+  game data: select `Destination-audio`, enable the engine, mute one category
+  and solo another, inspect the source list, trigger the picked file, force a
+  playlist, and switch the SFX toggle, reading every result back out of
+  `AudioStatsLabel`, `AudioSourcesStatsLabel`, `AudioSfxStatsLabel` and
+  `AudioMusicStatsLabel`.
+* `M9AudioAcceptanceRealDataTests` (env-gated, `make realtest`) — the same gate
+  against the user's install: the route exterior cell's regions resolve to an
+  ambient bed, its precedence chain resolves to a playlist whose first track is
+  really in the archives, the interior cell's acoustic space resolves, and the
+  route door's base yields open and close sound descriptors that resolve to
+  files. Report in gitignored `logs/m9-audio-acceptance.log`; no audible
+  assertion, because the vanilla effect and ambience files are `.wav`.
 * `openskycli audio sweep` (gated in `make probe`) — frames **and decodes**
   the full vanilla corpus, streaming, asserting zero failures and reporting
   frame-count mismatches against `dpds`.
@@ -313,6 +326,10 @@ max and budget. `make probe` greps for that line on both paths.
   **World > Audio**, tick `Enabled`, pick any `music\...` file, press `Play`,
   then turn (mouse-look) and strafe (A/D) — the sound must pan between ears
   as the source passes the view axis and fade with distance as you fly away.
+  For the M9 gate the same person also mutes `Effects` and confirms the
+  triggered sound goes silent while music keeps playing, solos `Music` and
+  confirms everything else drops out, then clears both from the sidebar's reset
+  and confirms the mix returns.
 
 Sound effects in the vanilla install are `.wav` (5,978 entries) and voice is
 `.fuz`; neither goes through this path yet. The `.xwm` corpus is music, so the
