@@ -56,8 +56,13 @@ nonisolated struct Cell {
     /// LTMP -> LGTM lighting template.
     let lightingTemplate: FormID?
     /// XCLR — REGN regions overlapping this exterior cell (empty on interiors
-    /// and cells without XCLR). Feeds region weather selection (M7.2.2).
+    /// and cells without XCLR). Feeds region weather selection (M7.2.2) and
+    /// region ambient sound selection (M9.2.2).
     let regions: [FormID]
+    /// XCAS — acoustic space (ASPC) reference, the interior-ambience hook
+    /// (M9.2.2). Exterior cells generally carry none; interiors point at an
+    /// ASPC whose SNAM/RDAT drive the per-cell ambient bed. nil when absent.
+    let acousticSpace: FormID?
 
     var isInterior: Bool {
         flags.contains(.interior)
@@ -70,6 +75,26 @@ nonisolated struct Cell {
         }
         formID = FormID(record.formID)
 
+        var fields = CellFields()
+        for field in try record.fields() {
+            try fields.decode(field: field, localized: localized)
+        }
+        editorID = fields.editorID
+        name = fields.name
+        flags = fields.flags
+        grid = fields.grid
+        waterHeight = fields.waterHeight
+        waterType = fields.waterType
+        lighting = fields.lighting
+        lightingTemplate = fields.lightingTemplate
+        regions = fields.regions
+        acousticSpace = fields.acousticSpace
+    }
+
+    /// Mutable accumulator for the field loop. Split out so the field switch
+    /// does not push init past the strict-lint cyclomatic-complexity cap
+    /// (XCAS, added in M9.2.2, tipped it over).
+    private struct CellFields {
         var editorID: String?
         var name: LString?
         var flags: Flags = []
@@ -79,7 +104,9 @@ nonisolated struct Cell {
         var lighting: CellLightingValues?
         var lightingTemplate: FormID?
         var regions: [FormID] = []
-        for field in try record.fields() {
+        var acousticSpace: FormID?
+
+        mutating func decode(field: ESMField, localized: Bool) throws {
             var reader = BinaryReader(field.data)
             switch field.type {
             case "EDID":
@@ -87,7 +114,7 @@ nonisolated struct Cell {
             case "FULL":
                 name = try LString(field: field, localized: localized)
             case "DATA":
-                flags = try Self.decodeFlags(&reader, count: field.data.count)
+                flags = try Cell.decodeFlags(&reader, count: field.data.count)
             case "XCLC":
                 let x = try Int32(bitPattern: reader.readUInt32())
                 let y = try Int32(bitPattern: reader.readUInt32())
@@ -96,30 +123,24 @@ nonisolated struct Cell {
                 let quadFlags = try reader.bytesRemaining >= 4 ? reader.readUInt32() : 0
                 grid = Grid(x: x, y: y, quadFlags: quadFlags)
             case "XCLW":
-                waterHeight = try Self.decodeWaterHeight(field.data)
+                waterHeight = try Cell.decodeWaterHeight(field.data)
             case "XCWT":
-                waterType = try Self.decodeFormID(field.data)
+                waterType = try Cell.decodeFormID(field.data)
             case "XCLL":
                 lighting = try CellLightingValues.decode(field.data, hasInheritFlags: true)
             case "LTMP":
-                lightingTemplate = try Self.decodeFormID(field.data)
+                lightingTemplate = try Cell.decodeFormID(field.data)
             case "XCLR":
                 // Array of 4-byte REGN FormIDs (xEdit wbArrayS XCLR 'Regions').
                 // Non-multiple-of-4 payloads are skipped rather than guessed.
-                regions = try Self.decodeRegions(field.data)
+                regions = try Cell.decodeRegions(field.data)
+            case "XCAS":
+                // FormID into ASPC. xEdit wbDefinitionsTES5.pas:4376.
+                acousticSpace = try Cell.decodeFormID(field.data)
             default:
                 break
             }
         }
-        self.editorID = editorID
-        self.name = name
-        self.flags = flags
-        self.grid = grid
-        self.waterHeight = waterHeight
-        self.waterType = waterType
-        self.lighting = lighting
-        self.lightingTemplate = lightingTemplate
-        self.regions = regions
     }
 
     /// DATA flags: uint16 in SSE; some records carry only one byte (UESP).

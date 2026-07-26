@@ -216,4 +216,24 @@ protocol AudioControlProviding: AnyObject {
     func playAudioFile(named name: String) -> String?
     func stopAllAudioSources()
     var audioStatsSnapshot: AudioStatsSnapshot { get }
+
+    // World SFX + ambience director controls (M9.2.2). The director lives
+    // beside the audio engine; these no-op when audio is not enabled.
+
+    /// Use-key activation plays the activator's SNDR. Off still lets ambience
+    /// run; the toggles are independent.
+    var sfxEnabled: Bool { get set }
+    /// Per-cell ambient bed starts/stops with the center cell. Off still lets
+    /// one-shot SFX run.
+    var ambienceEnabled: Bool { get set }
+    /// Force-stops the current ambience bed; the next cell change restarts it.
+    /// Verification helper for A/B inspection.
+    func stopAmbience()
+    /// Most recent SFX file path the director played (or failed to play).
+    var lastSFXDescription: String? { get }
+    /// Most recent SFX failure reason; nil when the last trigger succeeded.
+    var lastSFXError: String? { get }
+    /// FormIDs of the SNDR/SOUN records in the current ambient bed, joined for
+    /// the readout. "none" when the bed is empty.
+    var currentAmbienceDescription: String { get }
 }

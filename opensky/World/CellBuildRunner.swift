@@ -49,15 +49,30 @@ nonisolated protocol WeatherProviding {
     var weatherSystem: WeatherSystem? { get }
 }
 
+/// Optional decoded audio-record stores a provider can expose (M9.2.2).
+/// GameViewController pulls these off the provider to construct the world
+/// sound director alongside the audio engine. WeatherStore arrives via
+/// `WeatherProviding.weatherSystem?.store`.
+nonisolated protocol AudioDataProviding {
+    var soundStore: SoundRecordStore? { get }
+    var aspcStore: AcousticSpaceStore? { get }
+}
+
 /// Adapts `CellSceneBuilder` to the provider seam, pinning the worldspace so
 /// the streamer only passes grid coordinates. The builder + its libraries live
 /// entirely on the runner's serial queue -- never touched from the main
 /// thread -- which is why they need no internal locking.
-nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding {
+nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding,
+    AudioDataProviding
+{
     let builder: CellSceneBuilder
     let worldspaceEditorID: String
     /// Weather runtime for this worldspace; nil when the plugin has no WTHR.
     var weatherSystem: WeatherSystem?
+    /// Sound record index (SOUN/SNDR); nil when the plugin has no sound data.
+    var soundStore: SoundRecordStore?
+    /// Acoustic-space index (ASPC); nil when the plugin has no ASPC records.
+    var aspcStore: AcousticSpaceStore?
 
     func buildCell(at coordinate: CellCoordinate) throws -> CellScene {
         try builder.buildScene(

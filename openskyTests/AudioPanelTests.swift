@@ -16,6 +16,13 @@ private final class FakeAudioProvider: AudioControlProviding {
     var stopAllCount = 0
     var audioStatsSnapshot = AudioStatsSnapshot.empty
 
+    var sfxEnabled = true
+    var ambienceEnabled = true
+    var stopAmbienceCount = 0
+    var lastSFXDescription: String?
+    var lastSFXError: String?
+    var currentAmbienceDescription = "none"
+
     func audioVolume(for category: AudioCategory) -> Float {
         categoryVolumes[category] ?? 1
     }
@@ -31,6 +38,10 @@ private final class FakeAudioProvider: AudioControlProviding {
 
     func stopAllAudioSources() {
         stopAllCount += 1
+    }
+
+    func stopAmbience() {
+        stopAmbienceCount += 1
     }
 }
 
@@ -82,6 +93,20 @@ struct AudioPanelTests {
         ])
         #expect(panel.outputSection.sectionIdentifier == "audioOutput")
         #expect(panel.sourcesSection.sectionIdentifier == "audioSources")
+        // M9.2.2 SFX + ambience section pins.
+        #expect(panel.sfxSection.sectionIdentifier == "audioSfx")
+        #expect(
+            panel.sfxSection.sfxEnabledControl.accessibilityIdentifier()
+                == "AudioSfxEnabledControl"
+        )
+        #expect(
+            panel.sfxSection.ambienceEnabledControl.accessibilityIdentifier()
+                == "AudioAmbienceEnabledControl"
+        )
+        #expect(
+            panel.sfxSection.stopAmbienceControl.accessibilityIdentifier()
+                == "AudioStopAmbienceControl"
+        )
     }
 
     @Test @MainActor
@@ -134,5 +159,36 @@ struct AudioPanelTests {
         }
         #expect(abs(fake.audioVolume(for: .music) - 0.4) < 1e-5)
         #expect(abs(fake.audioVolume(for: .effects) - 1) < 1e-5)
+    }
+
+    @Test @MainActor
+    func sfxSectionRoundTripsProviderState() {
+        let panel = AudioPanelViewController()
+        panel.loadViewIfNeeded()
+        let fake = FakeAudioProvider()
+        panel.provider = fake
+
+        // Both default on; toggle SFX off through the checkbox.
+        #expect(panel.sfxSection.sfxEnabledControl.state == .on)
+        panel.sfxSection.sfxEnabledControl.state = .off
+        panel.sfxSection.sfxEnabledControl.sendAction(
+            panel.sfxSection.sfxEnabledControl.action,
+            to: panel.sfxSection.sfxEnabledControl.target
+        )
+        #expect(fake.sfxEnabled == false)
+
+        // Ambience toggle and stop button exercise the same path.
+        panel.sfxSection.ambienceEnabledControl.state = .off
+        panel.sfxSection.ambienceEnabledControl.sendAction(
+            panel.sfxSection.ambienceEnabledControl.action,
+            to: panel.sfxSection.ambienceEnabledControl.target
+        )
+        #expect(fake.ambienceEnabled == false)
+
+        panel.sfxSection.stopAmbienceControl.sendAction(
+            panel.sfxSection.stopAmbienceControl.action,
+            to: panel.sfxSection.stopAmbienceControl.target
+        )
+        #expect(fake.stopAmbienceCount == 1)
     }
 }

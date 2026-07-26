@@ -31,6 +31,9 @@ nonisolated final class AudioSourceStreamer: @unchecked Sendable {
     private let format: AVAudioFormat
     private let file: XWMFile
     private let downmixToMono: Bool
+    /// Continuous sources (the per-cell ambient bed) rewind to the first packet
+    /// at end of file instead of finishing, so the engine never retires them.
+    private let loops: Bool
 
     // Queue-confined state: touched only on `queue`.
     private var decoder: WMADecoder?
@@ -38,6 +41,10 @@ nonisolated final class AudioSourceStreamer: @unchecked Sendable {
     private var chunksInFlight = 0
     private var drained = false
     private var stopped = false
+    /// Whether the current pass over the file has yielded any PCM. A looping
+    /// source whose pass decoded nothing ends instead of rewinding, so a file
+    /// the decoder cannot use never spins the decode queue forever.
+    private var passProducedSamples = false
 
     /// Cross-thread completion flag, polled by the main actor each audio tick.
     private let finished = Mutex(false)
@@ -53,18 +60,22 @@ nonisolated final class AudioSourceStreamer: @unchecked Sendable {
     ///   - format: the node's connection format (mono for positional sources).
     ///   - downmixToMono: averages stereo PCM into one channel so the
     ///     environment node can spatialize it (it passes stereo through flat).
+    ///   - loops: rewind to the first packet at end of file instead of
+    ///     reporting completion.
     ///   - queue: the engine's shared serial decode queue.
     init(
         file: XWMFile,
         node: AVAudioPlayerNode,
         format: AVAudioFormat,
         downmixToMono: Bool,
+        loops: Bool = false,
         queue: DispatchQueue
     ) {
         self.file = file
         self.node = node
         self.format = format
         self.downmixToMono = downmixToMono
+        self.loops = loops
         self.queue = queue
     }
 
@@ -121,8 +132,9 @@ nonisolated final class AudioSourceStreamer: @unchecked Sendable {
         }
     }
 
-    /// Decodes up to `packetsPerChunk` packets; sets `drained` at end of file.
-    /// Returns nil after a decode error (the source ends early but never traps).
+    /// Decodes up to `packetsPerChunk` packets. At end of file a looping source
+    /// rewinds and any other source sets `drained`. Returns nil after a decode
+    /// error (the source ends early but never traps).
     private func decodeNextChunk() -> [Float]? {
         guard let decoder else {
             drained = true
@@ -133,19 +145,43 @@ nonisolated final class AudioSourceStreamer: @unchecked Sendable {
         do {
             while packetsUsed < Self.packetsPerChunk {
                 guard let packet = file.packet(at: nextPacketIndex) else {
-                    try samples.append(contentsOf: decoder.flush())
-                    drained = true
+                    let tail = try decoder.flush()
+                    append(tail, to: &samples)
+                    rewindOrDrain(decoder: decoder)
                     break
                 }
                 nextPacketIndex += 1
                 packetsUsed += 1
-                try samples.append(contentsOf: decoder.decode(packet: packet))
+                try append(decoder.decode(packet: packet), to: &samples)
             }
         } catch {
             drained = true
             return nil
         }
         return samples
+    }
+
+    private func append(_ decoded: [Float], to samples: inout [Float]) {
+        guard !decoded.isEmpty else { return }
+        passProducedSamples = true
+        samples.append(contentsOf: decoded)
+    }
+
+    /// End of the packet table. A looping source starts the file over with a
+    /// reset decoder; everything else finishes once the scheduled buffers play
+    /// out.
+    private func rewindOrDrain(decoder: WMADecoder) {
+        guard
+            Self.shouldRewind(
+                loops: loops, passProducedSamples: passProducedSamples, stopped: stopped
+            )
+        else {
+            drained = true
+            return
+        }
+        decoder.reset()
+        nextPacketIndex = 0
+        passProducedSamples = false
     }
 
     private func chunkCompleted() {
@@ -163,7 +199,15 @@ nonisolated final class AudioSourceStreamer: @unchecked Sendable {
         finished.withLock { $0 = true }
     }
 
-    // MARK: - PCM packing (pure, unit-tested)
+    // MARK: - Policy + PCM packing (pure, unit-tested)
+
+    /// Rewind policy at end of file, kept pure because no WMA fixture may enter
+    /// the repository and the decode loop itself can only be exercised against
+    /// the user's own install. A source rewinds when it was started as a loop,
+    /// its last pass actually produced PCM, and no stop was requested.
+    static func shouldRewind(loops: Bool, passProducedSamples: Bool, stopped: Bool) -> Bool {
+        loops && passProducedSamples && !stopped
+    }
 
     /// Averages interleaved multi-channel PCM into one mono channel.
     static func monoDownmix(_ interleaved: [Float], channelCount: Int) -> [Float] {

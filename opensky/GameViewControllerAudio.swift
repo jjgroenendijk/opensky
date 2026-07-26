@@ -21,9 +21,30 @@ extension GameViewController: AudioControlProviding {
                 worldAudio = engine
                 // The renderer's per-frame tick drives the listener pose.
                 renderer?.worldAudio = engine
+                buildSoundDirectorIfNeeded(engine: engine)
             }
             worldAudio?.isEnabled = newValue
         }
+    }
+
+    /// Pulls the sound/aspc stores off the cell provider and constructs the
+    /// world SFX director with the new engine. Idempotent — repeated enables
+    /// reuse the existing director. The director subscribes to streamer
+    /// callbacks at construction time and remains a no-op until the engine is
+    /// also running.
+    private func buildSoundDirectorIfNeeded(engine: WorldAudioEngine) {
+        guard soundDirector == nil else { return }
+        let provider = streamerCellProvider
+        let weatherStore = (provider as? WeatherProviding)?.weatherSystem?.store
+        let soundStore = (provider as? AudioDataProviding)?.soundStore
+        let aspcStore = (provider as? AudioDataProviding)?.aspcStore
+        soundDirector = WorldAudioSoundDirector(
+            engine: engine,
+            soundStore: soundStore,
+            weatherStore: weatherStore,
+            aspcStore: aspcStore,
+            fileSystem: audioFileSystem
+        )
     }
 
     var audioMasterVolume: Float {
@@ -81,5 +102,36 @@ extension GameViewController: AudioControlProviding {
 
     var audioStatsSnapshot: AudioStatsSnapshot {
         worldAudio?.statsSnapshot() ?? .empty
+    }
+
+    // MARK: - World SFX director bridges (M9.2.2)
+
+    var sfxEnabled: Bool {
+        get { soundDirector?.sfxEnabled ?? true }
+        set { soundDirector?.sfxEnabled = newValue }
+    }
+
+    var ambienceEnabled: Bool {
+        get { soundDirector?.ambienceEnabled ?? true }
+        set { soundDirector?.ambienceEnabled = newValue }
+    }
+
+    func stopAmbience() {
+        // Force an empty context through the director: it retires the current
+        // bed and caches the empty one, so ambience stays off until the next
+        // cell change emits a fresh (non-empty) context.
+        soundDirector?.handleAmbienceContext(.empty)
+    }
+
+    var lastSFXDescription: String? {
+        soundDirector?.lastSFXDescription
+    }
+
+    var lastSFXError: String? {
+        soundDirector?.lastSFXError
+    }
+
+    var currentAmbienceDescription: String {
+        soundDirector?.currentAmbienceDescription ?? "none"
     }
 }

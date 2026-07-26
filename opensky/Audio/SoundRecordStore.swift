@@ -49,6 +49,24 @@ nonisolated final class SoundRecordStore {
         )
     }
 
+    /// Resolves a sound reference that may target a SNDR directly or reach it
+    /// via a SOUN legacy marker. activator/door/container sound fields store
+    /// raw FormIDs whose target type the decoder does not pin, so runtime
+    /// consumers route them through here. Throws `soundNotFound` when the
+    /// reference is neither a SOUN nor a SNDR.
+    func resolveAny(_ id: FormID) throws -> ResolvedSound {
+        // Direct SNDR hit: synthesize a marker so the public shape stays
+        // consistent with the SOUN path.
+        if let descriptor = descriptors[id.rawValue] {
+            return ResolvedSound(
+                sound: SoundMarker(formID: id, editorID: nil, descriptor: id),
+                descriptor: descriptor,
+                filePaths: descriptor.tracks.compactMap(Self.canonicalSoundPath)
+            )
+        }
+        return try resolve(sound: id)
+    }
+
     private static func index<Value>(
         _ file: ESMFile,
         type: FourCC,

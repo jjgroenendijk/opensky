@@ -73,6 +73,8 @@ exterior cell blocks (traversal in [ESM container](/formats/esm.md)).
 | XCWT  | formID                              | `waterType` WATR override  |
 | XCLL  | lighting struct                     | `lighting`                 |
 | LTMP  | formID                              | `lightingTemplate` LGTM    |
+| XCLR  | formID array                        | `regions` REGN overlap     |
+| XCAS  | formID                              | `acousticSpace` ASPC (M9.2.2) |
 
 DATA flag bits: 0x01 interior, 0x02 has water, 0x08 no LOD water, 0x80 show
 sky, more in UESP. Some records store one byte only (UESP note) — decoder
@@ -128,7 +130,8 @@ models skipped until the NIF/LOD work needs them.
 
 One shared `ModelBase` (`opensky/Formats/ESM/Records/ModelBase.swift`) decodes six
 placeable base types beyond STAT. M3.6 added DOOR draw coverage; M8.4.1 adds display and
-activation metadata. Teleport data belongs to placed REFR XTEL, not DOOR.
+activation metadata; M9.2.2 adds the sound links that drive activator/door/container SFX
+(issue #155).
 
 | field | type    | decoded                                        |
 | ----- | ------- | ---------------------------------------------- |
@@ -138,6 +141,11 @@ activation metadata. Teleport data belongs to placed REFR XTEL, not DOOR.
 | RNAM  | lstring | ACTI-only `activateTextOverride`               |
 | FNAM  | uint8   | DOOR flags; bit 1 means automatic              |
 | MNAM  | uint32  | FURN marker flags; bit 25 disables activation  |
+| SNAM  | formID  | sound link; per-type meaning (see table below) |
+| ANAM  | formID  | DOOR close sound                               |
+| BNAM  | formID  | DOOR loop sound                                |
+| VNAM  | formID  | ACTI activation sound                          |
+| QNAM  | formID  | CONT close sound (not ANAM — cross-record trap)|
 
 Per-type reference, all UESP "Skyrim Mod:Mod File Format":
 
@@ -155,11 +163,40 @@ MSTT at 5409-5437, and TREE at 10221-10253. In addition to the field flags above
 ACTI record-header bit 20 means `Ignore Object Interaction`. These three suppression
 values produce `allowsManualInteraction = false`.
 
+### Sound links (M9.2.2)
+
+`ModelBase.Sounds` groups the per-type sound fields by runtime semantics so the
+audio director reads one field per concept:
+
+| semantic | DOOR | ACTI | CONT |
+| -------- | ---- | ---- | ---- |
+| `activation` (one-shot on use-key) | `SNAM` | `VNAM` | `SNAM` |
+| `close` (one-shot on close; deferred — issue #234) | `ANAM` | — | `QNAM` |
+| `loop` (continuous positional loop) | `BNAM` | `SNAM` | — |
+
+Each FormID stores either a SNDR descriptor (the modern record) or a SOUN legacy
+marker (whose `SDSC` redirects to a SNDR). The decoder does not pin which one;
+runtime `SoundRecordStore.resolveAny` follows the `SOUN -> SDSC -> SNDR` hop
+when present. A probe against Skyrim.esm (`make probe`, 2026-07-26) found all
+497 activator/door/container sound references target SNDR directly — vanilla SSE
+ships no SOUN markers on these records, but the decoder still supports them.
+
+Probe counts (Skyrim.esm 2026-07-26):
+
+| record type | sound slot | bases carrying it |
+| ----------- | ---------- | ----------------- |
+| DOOR        | open       | 92                |
+| DOOR        | close      | 86                |
+| DOOR        | loop       | 0                 |
+| ACTI        | activation | 33                |
+| ACTI        | loop       | 18                |
+| CONT        | open       | 135               |
+| CONT        | close      | 133               |
+
 Type-specific fields still skipped: remaining FURN furniture-marker/animation fields,
-CONT inventory (CNTO) and open/close sound, ACTI sounds and water type, TREE
-billboard/leaf-curve fields (CVPA/BSNM/...), and remaining DOOR sounds/flags.
-`ModelBase.recordType` retains source record type so callers can distinguish them without
-redecoding.
+CONT inventory (CNTO), ACTI water type, TREE billboard/leaf-curve fields
+(CVPA/BSNM/...), and remaining DOOR flags. `ModelBase.recordType` retains source
+record type so callers can distinguish them without redecoding.
 
 ## Verification
 

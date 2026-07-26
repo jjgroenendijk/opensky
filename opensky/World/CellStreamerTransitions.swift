@@ -81,5 +81,9 @@ extension CellStreamer {
         case nil:
             Self.logger.warning("[WARNING] door destination scene has no CELL identity")
         }
+        // A scene swap changes the ambience context even when the key matches
+        // (e.g. re-entering the same interior); force a re-emit next tick.
+        invalidateAmbienceContext()
+        emitAmbienceContextIfNeeded()
     }
 }

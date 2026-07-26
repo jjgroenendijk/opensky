@@ -28,9 +28,12 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   height field, VNML/VCLR, BTXT/ATXT/VTXT splat layers, texture sets.
 * [Grass records](/formats/grass.md) - GRAS fixed DATA controls + repeated LTEX GNAM links.
 * [Weather records](/formats/weather.md) - WTHR NAM0 color layers/FNAM fog/DATA
-  wind + precipitation, CLMT weather lists + timing, REGN weather areas.
+  wind + precipitation, CLMT weather lists + timing, REGN weather and sound areas.
 * [Sound records](/formats/sound.md) - SNDR descriptor tracks, attenuation and looping,
   SOUN SDSC links, and canonical VFS path resolution.
+* [Acoustic space (ASPC)](/formats/acoustic-space.md) - interior-ambience bridge:
+  ASPC fields, the `RDAT` FormID collision with REGN's area header, and the
+  interior-only region borrow.
 * [Distant LOD](/formats/lod.md) - lodsettings plus BTR/BTO paths and LOD-specific NIF
   blocks, tree LST/BTT layouts, placement rules, full vanilla sweep evidence.
 * [Skyrim INI settings](/formats/ini.md) - read-only decode, file precedence, typed
@@ -107,6 +110,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [World audio playback](/engine/audio.md) - AVAudioEngine graph with 3D positional
   sources, streaming WMA decode off the main thread, provisional category volumes,
   source budget/eviction, and the `World > Audio` verification surface.
+* [World SFX + ambience](/engine/world-sfx.md) - world sound director wiring
+  interaction events to one-shot SFX, per-cell ASPC/REGN ambience bed resolution,
+  and the `World > Audio > SFX & Ambience` verification surface.
 
 ## Rendering
 

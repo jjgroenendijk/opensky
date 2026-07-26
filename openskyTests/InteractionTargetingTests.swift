@@ -20,7 +20,8 @@ extension CellStreamerTests {
             position: position,
             name: name,
             action: action,
-            actionLabel: actionLabel
+            actionLabel: actionLabel,
+            sounds: nil
         )
     }
 

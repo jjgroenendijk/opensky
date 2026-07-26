@@ -79,7 +79,8 @@ struct CellStreamerTests {
         doors: [PlacedDoor] = [],
         interactions: [FormID: PlacedInteraction] = [:],
         staticCollision: StaticCollisionSet = .empty,
-        regions: [FormID] = []
+        regions: [FormID] = [],
+        acousticSpace: FormID? = nil
     ) -> CellScene {
         CellScene(
             renderScene: RenderScene(instances: []),
@@ -95,6 +96,7 @@ struct CellStreamerTests {
             doors: doors,
             interactions: interactions,
             regions: regions,
+            acousticSpace: acousticSpace,
             staticCollision: staticCollision,
             assets: CellAssets(meshKeys: meshKeys, textureKeys: textureKeys)
         )

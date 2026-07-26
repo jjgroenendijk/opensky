@@ -100,10 +100,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     file: file,
                     worldspaceEditorID: FirstRenderCell.worldspaceEditorID
                 )
+                // World SFX + ambience (M9.2.2): SOUN/SNDR + ASPC indices,
+                // built once from the same ESM. Cheap to build; consumed by
+                // the sound director only when the user enables audio.
+                let soundStore = SoundRecordStore(file: file)
+                let aspcStore = AcousticSpaceStore(file: file)
                 return BuilderCellSceneProvider(
                     builder: builder,
                     worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
-                    weatherSystem: weather
+                    weatherSystem: weather,
+                    soundStore: soundStore,
+                    aspcStore: aspcStore
                 )
             } catch {
                 let reason = String(describing: error)

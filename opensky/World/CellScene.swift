@@ -44,6 +44,11 @@ nonisolated struct CellScene {
     /// cells without XCLR). The streamer pushes the center cell's set into the
     /// weather runtime so region-weighted selection runs live (M7.2.3).
     let regions: [FormID]
+    /// XCAS acoustic space (ASPC) reference for interior ambience (M9.2.2);
+    /// nil on exteriors or interiors without one. The streamer pushes the
+    /// current cell's value into the world sound director so its ambient bed
+    /// resolves against the right ASPC record.
+    let acousticSpace: FormID?
     /// CPU collision surface for exterior LAND/DNAM terrain. nil for
     /// interiors or cells with no drawable terrain.
     let terrainHeightField: TerrainHeightField?
@@ -64,6 +69,7 @@ nonisolated struct CellScene {
         doors: [PlacedDoor] = [],
         interactions: [FormID: PlacedInteraction] = [:],
         regions: [FormID] = [],
+        acousticSpace: FormID? = nil,
         terrainHeightField: TerrainHeightField? = nil,
         grassPlacements: [GrassPlacement] = [],
         staticCollision: StaticCollisionSet = .empty,
@@ -76,6 +82,7 @@ nonisolated struct CellScene {
         self.doors = doors
         self.interactions = interactions
         self.regions = regions
+        self.acousticSpace = acousticSpace
         self.terrainHeightField = terrainHeightField
         self.grassPlacements = grassPlacements
         self.staticCollision = staticCollision

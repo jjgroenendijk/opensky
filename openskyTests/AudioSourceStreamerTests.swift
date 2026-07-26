@@ -21,6 +21,26 @@ struct AudioSourceStreamerTests {
         #expect(AudioSourceStreamer.monoDownmix(samples, channelCount: 1) == samples)
     }
 
+    /// Rewind policy at end of file: only a looping source whose pass produced
+    /// PCM and that was not asked to stop starts the file over. The "produced
+    /// PCM" clause is what keeps an undecodable file from spinning the decode
+    /// queue forever.
+    @Test
+    func rewindsOnlyForAProductiveUnstoppedLoop() {
+        #expect(AudioSourceStreamer.shouldRewind(
+            loops: true, passProducedSamples: true, stopped: false
+        ))
+        #expect(!AudioSourceStreamer.shouldRewind(
+            loops: false, passProducedSamples: true, stopped: false
+        ))
+        #expect(!AudioSourceStreamer.shouldRewind(
+            loops: true, passProducedSamples: false, stopped: false
+        ))
+        #expect(!AudioSourceStreamer.shouldRewind(
+            loops: true, passProducedSamples: true, stopped: true
+        ))
+    }
+
     @Test
     func makeBufferDownmixesToMonoFormat() throws {
         let format = try #require(
