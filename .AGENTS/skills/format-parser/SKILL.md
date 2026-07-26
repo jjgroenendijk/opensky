@@ -8,8 +8,8 @@ description: Reverse-engineer + implement a game file format - spec citation rul
 
 # Implementing a file format
 
-Workflow companion to root `AGENTS.md` (Legal & IP + reverse-engineering sections
-are the contract; this is the how).
+Workflow companion to root `AGENTS.md` ("Legal & IP boundary" is the contract; this
+is the how). Reverse-engineering discipline lives here, not there.
 
 ## Before writing the parser
 

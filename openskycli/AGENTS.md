@@ -1,17 +1,14 @@
 # AGENTS.md — openskycli
 
-CLI dev tool target. Root `/AGENTS.md` is the contract; this file adds CLI-specific
-rules. Full tool reference: `docs/tools/cli.md`.
+CLI dev tool target. Full tool reference, including data-root resolution order and exit
+codes: `docs/tools/cli.md`.
 
 ## What it is
 
 Terminal probes over the engine against a real install: `vfs ls|cat`, `record`, `cell`,
-`nif`, `dds`, `screenshot --out [--zoom]` (`render` alias), `bench` (sustained-fps
-gate). Runs the same
-engine code the app runs — a CLI failure reproduces the renderer's behavior.
-Data root resolution: `--data-root` flag ->
-`OPENSKY_DATA_ROOT` env -> `OpenSkyDataRoot` user default -> Steam path. Exit codes:
-0 ok, 1 failure, 2 usage.
+`nif`, `dds`, `screenshot --out [--zoom]` (`render` alias), `bench` (sustained-fps gate).
+It runs the same engine code the app runs, so a CLI failure reproduces the renderer's
+behavior.
 
 ## Build + verify
 

@@ -9,8 +9,9 @@ timestamp: 2026-07-23T00:00:00Z
 
 # Testing setup
 
-Two test targets, driven through `make`. Fixture rules in AGENTS.md "Testing" +
-"Legal & IP" — synthetic data built in code only, never extracted game files.
+Two test targets, driven through `make`. Fixture rules in `openskyTests/AGENTS.md` and
+AGENTS.md "Legal & IP boundary" — synthetic data built in code only, never extracted game
+files.
 
 ## Targets
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Enforce Conventional Commits (AGENTS.md "Git commits"). Arg 1 = commit message file.
+# Enforce Conventional Commits (commit skill). Arg 1 = commit message file.
 set -eu
 # shellcheck source=/dev/null
 . "$(git rev-parse --show-toplevel)/.githooks/lib.sh"

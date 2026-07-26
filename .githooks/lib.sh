@@ -21,7 +21,3 @@ require_tool() {
 staged_matching() {
   git diff --cached --name-only --diff-filter=ACM | grep -E "$1" || true
 }
-
-# Extensions that indicate extracted Bethesda/game content (AGENTS.md "Legal & IP").
-# shellcheck disable=SC2034  # sourced + used by pre-commit/20-no-game-content.sh
-FORBIDDEN_EXT_RE='\.(bsa|ba2|esm|esp|esl|nif|dds|hkx|hkc|pex|psc|bik|fuz|xwm|lip|tri|btr|bto|btt)$'

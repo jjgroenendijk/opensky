@@ -77,6 +77,34 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   so the director stage can pull it. See [music records](/formats/music.md);
   covered by `MusicRecordTests`, `MusicRecordStoreTests`, plus the new field
   cases in `CellRecordTests`, `RegionRecordTests` and `RecordDecoderTests`.
+* **Agent instruction surface rightsized**: root `AGENTS.md` cut from 285 lines /
+  16.6 KB to 180 / 9.8 KB, applying Anthropic's context-engineering guidance for
+  Claude 5 generation models (spend tokens on gotchas, not on what the file tree and
+  `make help` already say; disclose progressively through skills instead of
+  front-loading). Removed: the repo tree, the make-target list, the
+  reverse-engineering section (verbatim in the `format-parser` skill), the generic
+  Swift conventions, and the per-skill "Core:" restatements that made every skill
+  rule readable twice in two phrasings. Fixed a drift that had made the contract
+  wrong: the quoted SwiftLint thresholds claimed "type body ≤250" and "identifiers
+  ≥3 chars", but `tools/lint/.swiftlint.yml` configures neither
+  `type_body_length` (SwiftLint default warns at 200) nor a 3-char minimum
+  (`identifier_name.min_length` is 2, with a one-character allowlist) — prose now
+  points at the config instead of copying it. New nested `openskyTests/AGENTS.md`
+  (plus `CLAUDE.md` symlink, matching `openskycli/`) takes the test-writing rules
+  that were reachable only by loading the `probe` skill: the `@MainActor`
+  requirement, env gating, `make realtest` versus `xcodebuild test`, and the
+  synthetic-fixture helpers. `probe` shrank to the genuinely task-scoped parts.
+* **Two prose rules became gates**: new `tools/lint/no-game-content.sh` is the single
+  source of truth for the game-content rules and runs from both the pre-commit hook
+  (staged files) and `make lint` via `make no-game-content` (the whole tracked tree,
+  which also catches a blob arriving by merge or rebase). It now rejects any tracked
+  raster image outside `opensky/Assets.xcassets/`, since a frame OpenSky renders
+  embeds the user's game assets — previously documented only in prose and violated
+  by earlier milestones. New `.githooks/commit-msg/20-no-ai-trailers.sh` rejects
+  `Co-authored-by:`, `Generated-by:`, `AI-Generated-by:`, `Assisted-by:`, and
+  `Model:` trailers, which the harness's own default appends. Stale
+  `AGENTS.md "Git workflow"` comments in four hook scripts now point at the `commit`
+  skill.
 * **World SFX + ambience (M9.2.2, issue #155)**: the world sound director
   wires the M8 interaction-event seam to one-shot SFX and the streaming
   cell lifecycle to a positional ambience bed. Door open SFX plays under

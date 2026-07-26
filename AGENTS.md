@@ -1,285 +1,180 @@
 # AGENTS.md — OpenSky
 
-Rules for agentic coding on OpenSky: clean-room reimplementation of the Skyrim Special
-Edition engine (Bethesda Creation Engine, Gamebryo lineage) for macOS using Swift + Metal 4.
+OpenSky is a clean-room reimplementation of the Skyrim Special Edition engine (Bethesda
+Creation Engine, Gamebryo lineage) for macOS in Swift and Metal 4. It loads a user's own,
+legally-owned install from disk and runs it. Trade-offs resolve in this order: legal
+cleanliness, correctness, native feel, performance, feature completeness.
 
-This file is the contract, loaded into every session — it holds only rules that apply to
-every task. Task-specific workflows live in skills (see Skills); load the matching skill
-before that kind of work. On conflict with a default habit, this file wins. Keep it
-current: change to repo layout, build commands, tooling, or conventions updates this file
-in the same commit.
-
-## Mission
-
-Native macOS engine that loads a user's own, legally-owned copy of Skyrim SE from disk and
-runs it. Start by rendering static world geometry -> grow toward a playable engine.
-Reimplement behavior + file formats. Never port or decompile Bethesda binaries.
-
-Priority order for trade-offs:
-
-1. Legal cleanliness (never redistribute copyrighted content)
-2. Correctness (matches observed behavior / documented formats)
-3. Native feel (Metal 4, Apple Silicon, no shims)
-4. Performance
-5. Feature completeness
+This file holds what applies to every task. Task-specific workflows live in skills; a
+change to repo layout, tooling, or conventions updates this file in the same commit.
 
 ## Legal & IP boundary — non-negotiable
 
-Located in Netherlands. EU Software Directive 2009/24/EC (arts. 5-6) + Dutch Auteurswet ->
-reverse-engineering a program you lawfully own for interoperability is permitted. Reversing
-formats is fine. Redistributing Bethesda content or code is not. Therefore:
+Located in Netherlands. EU Software Directive 2009/24/EC (arts. 5-6) and the Dutch
+Auteurswet permit reverse-engineering a program you lawfully own for interoperability.
+Reversing formats is fine. Redistributing Bethesda content or code is not. Therefore:
 
 - NEVER commit game content. No `.bsa`/`.ba2` archives, `.esm`/`.esp` plugins, `.nif`
   meshes, `.dds` textures, `.hkx` animations, `.pex` scripts, audio, or anything extracted
   from the install. Not even as test fixtures.
 - NEVER copy Bethesda code. No decompiled, disassembled, or leaked source. No pasted
-  SKSE/Creation Kit internals. Reimplement from observed behavior + open format docs.
-- Game install is read-only external input. Located at runtime (see Loading game data),
-  never bundled, cached into the repo, or copied into build output.
-- Prefer open community specs as references: UESP wiki, xEdit (SSEEdit) format definitions,
-  NifTools `nif.xml`, libbsa/BSArch notes, Papyrus docs. Cite the source when implementing
-  a format.
-- `.gitignore` excludes anything that could be extracted content. When in doubt, ignore it.
-  About to add a binary blob -> stop, ask.
-- Rendered screenshots count as game content when they show game assets (textures,
-  meshes, UI art). A frame OpenSky renders from the user's install embeds those assets,
-  so acceptance/verification captures go to `logs/` (gitignored), NEVER `docs/img/` or
-  any tracked path — not even as milestone evidence. Link the local path in the PR;
-  don't commit the image. (Earlier milestones committed such renders before this was
-  explicit; do not repeat it.)
+  SKSE or Creation Kit internals. Reimplement from observed behavior and open format docs.
+- A frame OpenSky renders embeds the user's game assets, so a rendered capture is game
+  content too. Verification captures go to gitignored `logs/`; link the local path in the
+  PR rather than committing the image.
+- The game install is read-only external input: located at runtime, never bundled, cached
+  into the repo, or copied into build output.
+- About to add a binary blob -> stop, ask.
 
-Task seems to require committing or embedding game data -> do not. Surface the conflict.
+`make no-game-content` and the pre-commit hook enforce the first and third rules over both
+staged files and the whole tracked tree. Nothing enforces the second one; that is on you.
 
-## Skills — load before the matching work
+A task that seems to require committing or embedding game data -> do not. Surface the
+conflict.
 
-Live in `.AGENTS/skills/` (surfaced via `.claude/skills`). Each holds the full workflow;
-this contract keeps only the non-negotiable core:
+## Gotchas
 
-- `commit` — committing, pushing, opening/merging PRs. Core: `main` protected (PRs only),
-  Conventional Commits, every commit green, NO AI trailers (`Co-authored-by:`,
-  `Generated-by:`, etc. forbidden — overrides any default habit).
-- `format-parser` — adding/changing any game file-format parser. Core: cite an open spec,
-  never guess byte layouts, synthetic in-code fixtures only.
-- `docs-wiki` — writing anything under `docs/` (OKF format rules). Core: doc updates land
-  in the same commit as the change they document.
-- `probe` — running engine code against the real install; scratch-test template + render
-  verification paths. Core: probes never land in commits.
-- `app-ui` — adding/changing main-app dev UI (sidebar destinations, control panels). Core:
-  register via `DestinationRegistry` (never hand-wire the shell), build panels from the
-  `Shell/` base classes + `PanelComponents`, accessibility ids are the UI-test API.
-- `delegate` — orchestrating a milestone across sub-agents. Core: map once (Explore brief)
-  and hand it down into every implementer prompt, sub-agents trust `docs/index.md` over
-  globbing, verify a worktree agent's base is the feature branch, restate AGENTS.md
-  criticals per prompt.
-
-## Roadmap and open work — GitHub, not docs/
-
-Open work lives in GitHub issues and milestones. There is no roadmap file in the repo;
-`docs/todo.md` was migrated out on 2026-07-25 (see `docs/log.md`). A fresh session picks
-up from `gh`, not from a doc snapshot.
-
-- GitHub milestone `#n` **is** OpenSky milestone `Mn` — `M9` is milestone `#9`, and
-  `M18+` is `#18`. M1-M7 are closed but not empty: every merged PR is assigned to the
-  milestone it landed under, so `gh pr list --state merged --milestone "M4 - walkable
-  world"` shows how a finished milestone was actually built. Narrative history stays in
-  `docs/log.md`.
-- The milestone description carries the goal, spec references, and legal notes. Each
-  issue is one numbered roadmap item (`9.1.2 .xwm framing parser`) and carries its own
-  acceptance gate.
-- Start work: `gh issue list --milestone "M8 - interaction + UI shell"`, take the
-  topmost open item, one branch and one PR per issue, and close it from the PR body
-  (`Closes #NNN`) rather than editing a checklist by hand.
-- Labels: `roadmap` (came from the migrated roadmap), `acceptance-gate` (a milestone or
-  sub-milestone gate), `format-parser`, `app-ui`.
-- Board view across milestones: the `OpenSky roadmap` project
-  (<https://github.com/users/jjgroenendijk/projects/7>), which holds every open issue
-  and every merged PR, grouped by the built-in `Milestone` field — so M1-M7 read as
-  shipped work and M8+ as planned work. `gh project item-list 7 --owner
-  jjgroenendijk`. The board is a view, not the source of truth — issues and milestones
-  are.
-- Live branch and PR state comes from `gh pr list` + `git log` — never trust a snapshot
-  written into a doc.
-- Milestone done -> close the GitHub milestone and record the outcome in `docs/log.md`.
-  Scope changes are issue edits, not doc edits.
-
-Machine quirks: the repo sits on a case-insensitive external APFS volume (a case-only
-rename needs `git mv`; AppleDouble `._*` files are ignored). Xcode 26 ships without the
-Metal Toolchain — `make bootstrap`, once per checkout, handles the download. CI is
-suspended on Actions quota, so git hooks are the only gate; `ci.yml` is manual-dispatch
-and self-skips below Xcode 26.
+- The repo sits on a case-insensitive external APFS volume. A case-only rename needs
+  `git mv`, and AppleDouble `._*` files are ignored.
+- Xcode 26 ships without the Metal Toolchain. `make bootstrap`, once per checkout,
+  downloads it.
+- CI is suspended (GitHub Actions CPU quota exhausted 2026-07-20). `ci.yml` is
+  manual-dispatch only and `main` has no required status checks until quota returns
+  (re-enable task: issue #70). Git hooks are the only gate — never `--no-verify`.
+- Filesystem-synced groups add every new file under `opensky/` to every target, so an
+  app-only source (importing AppKit, Cocoa, or SwiftUI) needs a `membershipExceptions`
+  entry excluding it from `openskycli`. `make cli-boundary` catches this.
+- `make test-ui` is blocked at harness initialization on this machine by TCC. Pin
+  accessibility ids as literal assertions in unit tests instead.
 
 ## Environment & tech stack
 
-- Swift (primary), Metal Shading Language for GPU. Minimal C interop only where a format
-  genuinely needs it — justify it.
 - Metal 4 only. No OpenGL, no MoltenVK, no abstraction layer over another API.
 - macOS 26+ (Tahoe), Xcode 26, Apple Silicon. No older-macOS or Intel paths unless asked.
-- Dependencies: prefer stdlib + Apple frameworks; then Swift Packages via SwiftPM; C/C++
-  only when no reasonable Swift option exists, wrapped behind a Swift interface. No
-  embedded game engine, no graphics-abstraction layer. Record each new dependency + reason
-  in `docs/`; licenses must stay compatible with redistributing our code.
+- Minimal C interop, only where a format genuinely needs it, wrapped behind a Swift
+  interface. No embedded game engine.
+- Dependencies: prefer the standard library and Apple frameworks, then Swift Packages via
+  SwiftPM. Record each new dependency and the reason in `docs/decisions/`; its license must
+  stay compatible with redistributing our code.
 
-## Repository layout
+## Where things live
 
-Repo root holds only: this doc, `Makefile`, the Xcode project, and hidden dotfiles.
-
-```text
-Makefile                Automation hub. `make help` lists targets.
-opensky.xcodeproj/      Xcode project (macOS-only, shared scheme)
-opensky/                Product code — app + engine (Audio/, Formats/, Geometry/,
-                        Rendering/, World/, Renderer.swift, Shaders.metal, ShaderTypes.h)
-openskycli/             CLI dev tool target — rules in openskycli/AGENTS.md
-.AGENTS/skills/         Agent skills; .claude/skills symlinks here
-openskyTests/           Unit tests        openskyUITests/  UI tests
-tools/                  Repo tooling only (format/lint/markdown configs, scripts)
-.githooks/              Tracked git hooks  .github/workflows/  CI
-docs/                   OKF knowledge wiki (docs/index.md is the map)
-logs/                   Script/tool logs (gitignored)
-.vendor/                Vendored native dependencies built by `make bootstrap`
-                        (gitignored; see docs/decisions/ffmpeg-audio.md)
-```
-
-Group engine subsystems under `opensky/` by domain; format parsers stay separate from
-rendering. Working in a directory with its own `AGENTS.md` -> read it too. Update this
-section when structure changes materially.
+The repo root holds only this document, `Makefile`, the Xcode project, and dotfiles. Group
+engine subsystems under `opensky/` by domain, and keep format parsers separate from
+rendering. Skills live in `.AGENTS/skills/` (`.claude/skills` symlinks there). `logs/` and
+`.vendor/` are gitignored. `docs/index.md` maps the wiki — trust it over globbing.
 
 ## Build, run, test
 
-Drive everything through `make`; `make help` lists all targets. Key ones:
+`make help` lists every target. `make fix` (autoformat plus strict lint) before committing;
+`make check` is the same gate without writes. `make install` refreshes
+`/Applications/opensky.app` after landing rendering work.
 
-- `make fix` — autoformat + strict lint, one shot (use before committing)
-- `make check` — format-check + lint, no writes (CI gate)
-- `make build` / `make cli` — build main app (incl. asset browser) / CLI tool (Debug)
-- `make test` — unit tests; `make test-one T=Class[/test]` — single class/method;
-  `make test-report` — failures from the newest result bundle; `make test-ui` — UI tests
-- `make run-cli ARGS="..."` — build + run openskycli; `make app-path` / `make cli-path`
-  print built-product paths
-- `make probe` — CLI smoke checks against the local install (self-skips when absent)
-- `make ffmpeg` — rebuild the vendored decode-only LGPL ffmpeg in `.vendor/ffmpeg`
-  (also run by `make bootstrap`; the build fails naming it when the prefix is missing)
-- `make install` — Release build -> `/Applications/opensky.app` (refresh after landing
-  rendering work)
-
-A change to product code is not done until it builds and tests pass. Prefer driving the
-actual app or an offscreen render to confirm behavior — a green build does not prove a
-triangle appeared. Keep the app launchable at every commit.
+A green build does not prove a triangle appeared. Confirm rendering work by driving the app
+or an offscreen render. Unit-test every format parser and math routine, with synthetic
+fixtures built in code. Every pushed commit is green.
 
 ## Loading game data (runtime, never repo)
 
-- Default install path to probe:
-  `~/Library/Application Support/Steam/steamapps/common/Skyrim Special Edition/`
-  (on this machine data lives under `/Volumes/data/steam/steamapps/...`).
-- Data root is a configurable setting, not a hardcoded constant. Missing -> fail loud.
-  Never fall back to bundled data (there is none).
-- Load order: `Data/Skyrim.esm` + official masters, then `.bsa` archives. Parse lazily.
+The default path to probe is
+`~/Library/Application Support/Steam/steamapps/common/Skyrim Special Edition/`; on this
+machine the data lives under `/Volumes/data/steam/steamapps/...`. The data root is a
+configurable setting, never a hardcoded constant. Missing -> fail loud. There is no bundled
+data to fall back to.
+
+## Roadmap and open work — GitHub, not docs/
+
+Open work lives in GitHub issues and milestones. There is no roadmap file in the repo, so a
+fresh session picks up from `gh`, not from a doc snapshot.
+
+- GitHub milestone `#n` **is** OpenSky milestone `Mn`. Each issue is one numbered roadmap
+  item (`9.1.2 .xwm framing parser`) and carries its own acceptance gate; the milestone
+  description carries the goal, spec references, and legal notes.
+- Start work with `gh issue list --milestone "M9 - audio"`, take the topmost open item, and
+  use one branch and one PR per issue, closed from the PR body with `Closes #NNN`.
+- Labels: `roadmap`, `acceptance-gate`, `format-parser`, `app-ui`.
+- Closed milestones are not empty — every merged PR is assigned to the milestone it landed
+  under, so `gh pr list --state merged --milestone "M4 - walkable world"` shows how a
+  finished milestone was actually built. Narrative history stays in `docs/log.md`.
+- The `OpenSky roadmap` project board
+  (<https://github.com/users/jjgroenendijk/projects/7>) is a view across milestones, not
+  the source of truth. Live branch and PR state comes from `gh pr list` and `git log`.
+- Milestone done -> close the GitHub milestone and record the outcome in `docs/log.md`.
+  Scope changes are issue edits, not doc edits.
 
 ## Documentation wiki — docs/
 
-`docs/` is an OKF v0.1 knowledge wiki: reverse-engineered formats, subsystem design,
-decisions. Part of done: a change that adds/alters a subsystem, parser, or non-obvious
-decision updates `docs/` in the same commit (`docs/log.md` + `docs/index.md` included).
-`docs/` holds knowledge, never open work — the roadmap lives in GitHub issues and
-milestones (see Roadmap and open work). Format rules + templates: load the `docs-wiki`
-skill.
-
-## Reverse-engineering discipline
-
-Do not guess binary layouts; cite the spec (UESP, xEdit, NifTools) or probe + document the
-uncertainty. One format, one parser, well-tested with synthetic in-code fixtures — never
-real extracted files. Clean Swift types decoupled from on-disk layout; malformed input must
-not crash the engine. Full workflow: load the `format-parser` skill.
-
-## Code quality
-
-Enforce rules automatically: git hooks are THE gate (pre-commit format/lint, commit-msg,
-pre-push build+test — never skip with `--no-verify`). CI is suspended: GH Actions CPU
-quota exhausted 2026-07-20; `.github/workflows/ci.yml` is manual-dispatch only and main
-has no required status checks until quota returns (re-enable task: issue #70).
-If a machine can check a rule, do not rely on people remembering it.
-
-- Every language has a linter AND an auto-formatter (Swift: SwiftFormat + SwiftLint;
-  Metal: clang-format + compiler warnings-as-errors (`MTL_TREAT_WARNINGS_AS_ERRORS`);
-  Markdown: markdownlint-cli2; shell: POSIX `sh` + shellcheck). Configs under `tools/`.
-- Linting is strict; warnings are errors. Do not disable or downgrade rules to pass — fix
-  the issue. Inline suppression is last resort: specific rule code + why-comment.
-- 100-char line limit for hand-written lines (exception: unbreakable tokens).
-- No force-unwrap / force-try / force-cast on data from external files — hard lint errors.
-- App-only sources (import AppKit/Cocoa/SwiftUI) under `opensky/` need a
-  `membershipExceptions` entry excluding them from openskycli — filesystem-synced groups
-  add new files to every target. `make cli-boundary` (in `make lint` + pre-commit)
-  enforces it; the fail message shows the fix.
-- Size to the strict-lint limits while writing, not after a failed `make fix` (the
-  top recurring time sink). Thresholds (`tools/lint/.swiftlint.yml`): file ≤500 lines,
-  function body ≤60, type body ≤250, cyclomatic complexity ≤12, ≤5 function params,
-  no tuples with >2 members, identifiers ≥3 chars (2-char allowlist in config). Past
-  the file cap → split into a satellite file (e.g. `Renderer.swift` →
-  `RendererScenePass.swift`); note which members need same-file `private(set)` access
-  before moving them. Past the param/tuple cap → introduce a struct.
-
-## Coding conventions
-
-- Swift API Design Guidelines. Clear names over clever. Match surrounding style.
-- Value types by default; classes for identity/reference (Metal objects, subsystems).
-- Swift<->Metal shared structs in `ShaderTypes.h`; explicit `simd`-aligned layout.
-- `throws` + typed errors for parse/load failures.
-- Comment the why, not the what. No dead code, no commented-out blocks.
-
-## Scripts & automation
-
-- `make` is the automation hub: anything repeatable becomes a target or hook, never a
-  documented manual procedure. Local hooks and CI mirror each other — change one gate ->
-  change both (while CI is suspended, keep `ci.yml` in sync anyway for re-enable).
-- Scripts are POSIX `sh`, shellcheck-clean, executable. Logs always -> `logs/`.
-- Never hand-format; run `make fix`.
-
-## Testing
-
-- Unit-test every format parser + math routine; fixtures synthetic, built in code.
-- Rendering: deterministic checks (buffer contents, transform math) + visual confirmation
-  of the actual frame (offscreen render path — see `probe` skill).
-- Run tests before every commit (minimum: targeted for the changed area). Every commit
-  keeps the repo green.
+`docs/index.md` is the map. A change that adds or alters a subsystem, parser, or non-obvious
+decision updates `docs/` in the same commit, `docs/log.md` and `docs/index.md` included.
+Load the `docs-wiki` skill before writing there.
 
 ## Main-app verification surface
 
-- Every new subsystem or user-verifiable behavior adds or extends a discoverable option in
-  the main OpenSky app sidebar in the same milestone. Prefer controls under an existing
-  sidebar destination over one new top-level item per small feature.
-- Sidebar path must let a user select, force, toggle, or inspect the implemented behavior
-  without knowing a CLI command. Keep it available as a durable dev/verification surface.
-- Parser, math, and infrastructure-only items may defer UI until their first visible
-  consumer. If their output is useful alone, expose it in the Asset Browser or a dedicated
-  inspector.
-- Every milestone acceptance writes one record — sidebar path, destination id, control ids
-  exercised, readout id, covering tests — in the format and ledger defined by
-  `docs/tools/sidebar-acceptance.md`. The record is mandatory; the deterministic tests are
-  the evidence. Changed-pixel A/B captures are optional, stay in gitignored `logs/`, and are
-  never committed (a rendered frame embeds Bethesda assets).
-- App verification supplements unit tests, probes, benchmarks, and offscreen evidence; it
-  does not replace them.
-- Framework + placement rules (where a new item goes, how to register + build a panel) live
-  in `docs/tools/app-ui.md`; load the `app-ui` skill before app-shell UI work.
+Every new subsystem or user-verifiable behavior adds or extends a discoverable option in the
+main app sidebar in the same milestone, and the sidebar path must let a user select, force,
+toggle, or inspect the behavior without knowing a CLI command. Prefer controls under an
+existing destination over a new top-level item.
+
+Parser, math, and infrastructure-only items may defer UI until their first visible consumer;
+if their output is useful alone, expose it in the Asset Browser or an inspector.
+
+Every milestone acceptance writes one record in the format and ledger defined by
+`docs/tools/sidebar-acceptance.md`. The record is mandatory and the deterministic tests are
+its evidence. This supplements unit tests, probes, and benchmarks; it does not replace them.
+
+## Code quality
+
+If a machine can check a rule, do not rely on people remembering it. Every language has both
+a linter and an auto-formatter, configured under `tools/`; never hand-format.
+
+Linting is strict and warnings are errors. Do not disable or downgrade a rule to pass — fix
+the issue. Inline suppression is a last resort and needs a specific rule code plus a
+why-comment. No force-unwrap, force-try, or force-cast on data from external files.
+
+Size to the lint limits while writing rather than after a failed `make fix`, which is the
+top recurring time sink. Read the thresholds from `tools/lint/.swiftlint.yml` rather than
+from a copy in prose; rules absent from that file run at SwiftLint defaults. Past the file
+cap, split into a satellite file (`Renderer.swift` -> `RendererScenePass.swift`), noting
+which members need same-file `private(set)` access before moving them. Past the parameter or
+tuple cap, introduce a struct.
+
+## Conventions
+
+- Swift-to-Metal shared structs go in `ShaderTypes.h` with explicit `simd`-aligned layout.
+- `throws` plus typed errors for parse and load failures; malformed input must not crash.
+- Anything repeatable becomes a `make` target or a git hook, never a documented manual
+  procedure. Local hooks and CI mirror each other, so changing one gate changes both — keep
+  `ci.yml` in sync even while CI is suspended.
 
 ## Writing style (agent output, docs, comments, commit bodies)
 
-Write normal, clear prose. Complete sentences; plain words over jargon; no filler or
+Write normal, clear prose: complete sentences, plain words over jargon, no filler or
 hedging. Optimize for the reader, not for brevity.
 
-- Never abbreviate code symbols, function names, API names, or error strings — quote them
+- Never abbreviate code symbols, function names, API names, or error strings. Quote them
   verbatim.
-- No emojis anywhere; use bracket tags where a severity marker is needed: `[ERROR]`,
-  `[WARNING]`, `[INFO]`. Headings unnumbered.
-- Existing text written in the old compressed style may stay as-is; rewrite it
-  opportunistically when a change touches it anyway.
+- No emojis anywhere. Where a severity marker is needed use bracket tags: `[ERROR]`,
+  `[WARNING]`, `[INFO]`. Headings are unnumbered.
 
 ## How agents work here
 
-- Legal check first: could the file contain Bethesda content? Yes/unsure -> do not add.
-- Work incrementally; keep the app building at each step.
-- Verify claims by building/running — do not report success you have not observed.
-- Do not invent Skyrim internals from memory; confirm against an open spec or observed
-  data; flag uncertainty.
-- Perf idea -> file it, don't inline it. Got an idea/suggestion for a future performance
-  improvement, or spot a pre-existing perf issue in the code? Open a GitHub issue
-  (`gh issue create`) instead of acting on it mid-task. Keeps scope tight + preserves the
-  idea. One issue per idea; title states the win, body states where + why.
+- Do not invent Skyrim internals from memory. Training data is confidently wrong about byte
+  layouts; confirm against an open spec or observed data, and flag uncertainty.
+- A performance idea, or a pre-existing performance problem spotted mid-task, becomes a
+  GitHub issue (`gh issue create`) rather than an inline fix. One issue per idea; the title
+  states the win, the body states where and why.
+- Commits carry no AI or co-author attribution trailers. The commit-msg hook enforces this.
+
+## Skills — load before the matching work
+
+Each skill in `.AGENTS/skills/` holds the full workflow for one kind of task. Load the
+matching one before starting that work rather than reconstructing the rules here.
+
+| Skill | Load it when |
+| --- | --- |
+| `commit` | Committing, pushing, or opening and merging a PR |
+| `format-parser` | Adding or changing any game file-format parser |
+| `docs-wiki` | Writing anything under `docs/` |
+| `probe` | Running engine code against the real install |
+| `app-ui` | Adding or changing main-app dev UI |
+| `delegate` | Splitting a milestone across sub-agents |

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Build + test before push so main-bound PRs stay green (AGENTS.md "Git workflow").
+# Build + test before push so main-bound PRs stay green (commit skill).
 # OPENSKY_SKIP_BUILD=1 skips this gate; the protected-branch guard always runs.
 set -eu
 # shellcheck source=/dev/null
