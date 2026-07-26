@@ -4,6 +4,14 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-26
 
+* **Sound descriptor records (issue #154)**: `SNDR` now exposes ordered track names,
+  category and output-model links, looping mode, signed frequency controls, priority,
+  variance, and static attenuation. `SOUN SDSC` resolves through a typed record store to
+  canonical `sound\...` VFS paths, discarding unsafe tracks and distinguishing missing
+  marker from missing descriptor errors. Decoders skip malformed optional structures;
+  synthetic fixtures cover all layouts and resolution failures. This change supplies
+  records for later playback wiring; it does not add runtime source integration. See
+  [sound records](/formats/sound.md).
 * **HUD authored samples hidden by default**: the installed `hudmenu.swf`
   initializes with raw font markup under
   `/HUDMovieBaseInstance/RolloverInfoInstance` and
