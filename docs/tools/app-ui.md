@@ -427,6 +427,15 @@ correct for CI re-enable (issue #70).
 - Add/extend a panel geometry unit test (controls visible, within the scroll
   document) — see `EnvironmentPanelTests`, `UILabPanelTests`,
   `PanelFrameworkTests`.
-- Every milestone acceptance records the exact sidebar path it verified.
+- Every milestone acceptance writes one record in the fixed format defined by
+  the [sidebar verification convention](/tools/sidebar-acceptance.md): sidebar
+  path, `Destination-<id>`, the control ids exercised, the readout id that
+  proves the change, the deterministic tests that cover it, and an optional
+  local A/B note. The record goes in the subsystem page and in that page's
+  ledger, in the same commit as the work.
+- Those deterministic tests are the evidence. A changed-pixel A/B capture is
+  optional and local-only: captures live in the gitignored `logs/` directory
+  and are never committed, because a rendered frame embeds the user's Bethesda
+  assets (AGENTS.md "Legal & IP boundary").
 - App verification supplements unit tests, probes, benchmarks, and offscreen
   evidence; it does not replace them.

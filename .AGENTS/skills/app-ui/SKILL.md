@@ -109,6 +109,9 @@ blocked on this machine (TCC) -> pin ids as literal assertions in
 ## Verify
 
 `make fix && make check && make build && make cli && make test`. Add/extend a
-panel geometry unit test. Record the exact sidebar path in the milestone
-acceptance. Same-commit docs: update [app-ui](/tools/app-ui.md) when the
-framework changes.
+panel geometry unit test. At milestone acceptance write the record defined by
+[sidebar acceptance](/tools/sidebar-acceptance.md) — sidebar path,
+`Destination-<id>`, control ids, readout id, covering tests — into the subsystem
+page and that page's ledger. Those tests are the evidence; A/B captures are
+optional, stay in gitignored `logs/`, and are never committed. Same-commit docs:
+update [app-ui](/tools/app-ui.md) when the framework changes.

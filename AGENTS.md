@@ -249,7 +249,12 @@ If a machine can check a rule, do not rely on people remembering it.
   without knowing a CLI command. Keep it available as a durable dev/verification surface.
 - Parser, math, and infrastructure-only items may defer UI until their first visible
   consumer. If their output is useful alone, expose it in the Asset Browser or a dedicated
-  inspector. Every milestone acceptance records the exact sidebar path used.
+  inspector.
+- Every milestone acceptance writes one record — sidebar path, destination id, control ids
+  exercised, readout id, covering tests — in the format and ledger defined by
+  `docs/tools/sidebar-acceptance.md`. The record is mandatory; the deterministic tests are
+  the evidence. Changed-pixel A/B captures are optional, stay in gitignored `logs/`, and are
+  never committed (a rendered frame embeds Bethesda assets).
 - App verification supplements unit tests, probes, benchmarks, and offscreen evidence; it
   does not replace them.
 - Framework + placement rules (where a new item goes, how to register + build a panel) live

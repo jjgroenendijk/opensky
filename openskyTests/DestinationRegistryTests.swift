@@ -161,15 +161,30 @@ final class FakeWorldProviders: WorldControlProviders {
     var uiSnapshot = UILabControlSnapshot(
         overlayEnabled: true, sampleShown: false, scale: 1, stats: UIDrawStats()
     )
-    var menuModeSnapshot = MenuModeControlSnapshot(
-        isMenuMode: false, topMenuName: nil, stackDepth: 0, isWorldSimPaused: false
-    )
-    func pushPreviewMenu() {}
-    func popPreviewMenu() {}
-    func clearPreviewMenus() {
-        menuModeSnapshot = MenuModeControlSnapshot(
-            isMenuMode: false, topMenuName: nil, stackDepth: 0, isWorldSimPaused: false
+    /// Menu mode runs on the real `MenuModeController`, exactly as
+    /// `GameViewControllerUILab` wires it, so a test that pushes a menu
+    /// observes the same world-sim pause the engine would report.
+    private let menuMode = MenuModeController()
+
+    var menuModeSnapshot: MenuModeControlSnapshot {
+        MenuModeControlSnapshot(
+            isMenuMode: menuMode.isMenuMode,
+            topMenuName: menuMode.topMenu?.name,
+            stackDepth: menuMode.stack.count,
+            isWorldSimPaused: menuMode.isWorldSimPaused
         )
+    }
+
+    func pushPreviewMenu() {
+        menuMode.present(MenuIdentifier("UILabMenu\(menuMode.stack.count + 1)"))
+    }
+
+    func popPreviewMenu() {
+        menuMode.dismissTop()
+    }
+
+    func clearPreviewMenus() {
+        menuMode.dismissAll()
     }
 
     var uiLocalizedSampleShown = false

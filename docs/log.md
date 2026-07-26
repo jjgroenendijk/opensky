@@ -4,6 +4,56 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-26
 
+* **M8 milestone acceptance (M8.5.3)**: the interaction + UI shell milestone is
+  accepted end to end from the main app alone. What M8 delivered, in the order
+  the gate walks it: a screen-space UI layer with a glyph atlas and localized
+  strings (M8.1), engine-owned menu mode with a world-sim pause (M8.1.2), a SWF
+  presentation layer that renders vanilla movies (M8.2) and runs their
+  ActionScript (M8.3), walk-mode interaction targeting driving the real
+  `hudmenu.swf` (M8.4), and the system menu with its settings placeholders
+  (M8.5.1). The acceptance flow is one session with no CLI and no keystroke-only
+  path: select `World > World` and switch `CameraMovementModeControl` to Walk,
+  move to `World > HUD & Interaction` and A/B the live HUD with
+  `HUDCrosshairControl`/`HUDLayerEnabledControl` while `HUDElementsStatsLabel`
+  and `HUDTargetStatsLabel` report the movie and the selected target, pause from
+  `Developer > UI Lab` with `UIMenuPushControl` (`UIMenuStatsLabel` reads
+  `World sim: paused`), change `World > Environment > Sun shadows` while paused,
+  then resume with `UIMenuPopControl` and find the setting and both overrides
+  still in place. `World > System Menu` is accepted as the second, gameplay-facing
+  pause. The evidence is the new `M8AcceptanceTests`, which drives that exact
+  sequence through the destination registry's own panel factories, the real
+  `AppSidebarViewController` (selection callback and override dots), and the real
+  `MenuModeController`, reading every readout back out of the built view
+  hierarchy by accessibility identifier; the shared `FakeWorldProviders` fixture
+  now runs menu mode on that controller instead of a stored snapshot, so a pushed
+  menu reports the pause the engine would. Per the
+  [sidebar verification convention](/tools/sidebar-acceptance.md), no A/B capture
+  was produced: the deterministic suite is the gate, and a rendered frame would
+  embed the user's Bethesda assets. One honest gap is recorded rather than papered
+  over — no readout names the camera's movement mode, so walk mode is proven by
+  the selector state plus the sidebar override dot. `make test-ui` stays blocked
+  on this machine (TCC), which is why the gate is a unit-level test.
+  See [screen-space UI](/rendering/ui.md) and
+  [sidebar acceptance](/tools/sidebar-acceptance.md). Closes #150.
+* **Sidebar verification convention (M8.5.2)**: the standing obligation to record
+  a milestone's main-app acceptance surface now has a format and one home.
+  [sidebar acceptance](/tools/sidebar-acceptance.md) defines the fixed record —
+  sidebar path, `Destination-<id>`, the control ids exercised, the readout id
+  that proves the change, the deterministic tests that cover it, and an optional
+  local A/B note — and carries the ledger of every recorded surface, backfilled
+  from the six different phrasings the records had been scattered across
+  (`World > Environment` for M3 distant LOD through M7.6, `Developer > UI Lab`
+  for M8.1.4/M8.2.5/M8.3.3, `World > HUD & Interaction` for M8.4.2/M8.4.3,
+  `World > System Menu` for M8.5.1, `World > Audio` for M9.1.3). Milestones
+  predating the rule and surfaces with no recorded path are listed as not
+  recorded rather than reconstructed. The evidence bar is stated explicitly:
+  the existing deterministic suite — panel geometry and accessibility-id
+  assertions plus `DestinationRegistryTests` and the offscreen acceptance tests
+  — is the evidence, and changed-pixel A/B captures are optional, local-only,
+  and never committed, because a rendered frame embeds the user's Bethesda
+  assets. AGENTS.md, [app-ui](/tools/app-ui.md), and the `app-ui` skill now
+  point at the convention instead of restating a rule with no format. Docs only
+  — no behavior change. Closes #149.
 * **System menu (M8.5.1)**: `World > System Menu` adds the Resume / Settings /
   Quit selector and the two settings placeholders the milestone names. The
   selector (`opensky/UI/SystemMenuModel.swift`) is toolkit-free and movie-free,

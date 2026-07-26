@@ -521,6 +521,28 @@ shown verbatim ([UI translation strings](/formats/translation-strings.md)).
   actions / 79 blocks / 2,491 calls, **0 faults**, 0 unimplemented opcodes, and
   26 missing host-API hits headed by `getControllerFocusGroup`.
 
+- M8 milestone acceptance path, one uninterrupted session with no CLI:
+  `World > World` (`CameraMovementModeControl` -> Walk; the selector's own state
+  and the `Destination-world-OverrideIndicator` dot are the proof, because
+  `CameraStatsLabel` prints pose, not mode) ->
+  `World > HUD & Interaction` (`HUDCrosshairControl` and `HUDLayerEnabledControl`
+  A/B the live vanilla layer while `HUDElementsStatsLabel` and
+  `HUDTargetStatsLabel` report the loaded movie, its draw calls, and the selected
+  target's prompt) -> `Developer > UI Lab` (`UIMenuPushControl` pauses world sim;
+  `UIMenuStatsLabel` reads `World sim: paused`) -> `World > Environment > Sun
+  shadows` while still paused (`SunShadowsEnabledControl`, `ShadowQualityControl`;
+  `ShadowStatsLabel` follows) -> back to `Developer > UI Lab`,
+  `UIMenuPopControl` to resume (`World sim: running`), with the walk-mode and HUD
+  overrides still marked on their sidebar rows. `World > System Menu`
+  (`SystemMenuOpenControl` / `SystemMenuResumeControl`, readout
+  `SystemMenuStatsLabel`) is the gameplay-facing pause and is accepted the same
+  way. `M8AcceptanceTests` drives that whole sequence through the registry
+  factories, the real `AppSidebarViewController`, and the real
+  `MenuModeController`, reading each readout back by accessibility identifier —
+  it is the milestone's deterministic evidence, needs no install, and renders no
+  frame. Record and ledger row:
+  [sidebar acceptance](/tools/sidebar-acceptance.md).
+
 ## Limits / next
 
 - System font plus SWF-font glyphs (M8.2.3) share the coverage-only atlas (no
