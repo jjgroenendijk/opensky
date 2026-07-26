@@ -61,10 +61,24 @@ streamer requests a transition for that exact REFR. A door with XTEL follows the
 interior/exterior transition path; a door without XTEL still emits the interaction event
 but has no built-in animation yet.
 
+## HUD publication
+
+M8.4.2 subscribes the vanilla `hudmenu.swf` bridge to target changes. The callback only
+records the new value and marks derived state dirty; the renderer frame hook applies prompt,
+compass-marker, and camera-heading changes together between frames.
+
+The prompt is the interaction action label plus its resolved name, so a selected door shows
+`Open <door name>`. The compass publishes one location marker at the placed reference
+position rather than the collision hit point, which keeps its heading stable while the ray
+moves across the same object. Clearing the target hides the prompt and removes the marker.
+Activation and door dispatch remain on the typed event path above; the HUD is a subscriber,
+not a second interaction system.
+
 ## Verification
 
 Synthetic coverage exercises every supported collision primitive, transformed world
 distance, inside-shape exits, invalid input, range rejection, deterministic ties, target
 publication and clearing, wall occlusion, localized/inline record text, record suppression,
-action resolution, activation events, and selected-door transitions. The M4 walk benchmark
-now enters and exits through the selected interaction target instead of proximity dispatch.
+action resolution, activation events, selected-door transitions, prompt mapping, and compass
+heading derivation. The M4 walk benchmark now enters and exits through the selected
+interaction target instead of proximity dispatch.

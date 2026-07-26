@@ -216,6 +216,44 @@ struct RendererSWFInteractiveAcceptanceTests {
         #expect(runtime.tally.missingNames["NoSuchCallback"] == 1)
     }
 
+    /// The HUD uses functions on a named movie clip rather than root callbacks.
+    /// Exercise that renderer seam and the batched mutation seam against real
+    /// GPU output: the targeted call reveals the highlight, and one batched
+    /// mutation restores the original frame.
+    @Test(.enabled(if: Self.hasMetal4Device))
+    @MainActor
+    func aPathTargetedCallSynchronizesTheRenderedFrame() throws {
+        let renderer = try Self.makeRenderer()
+        try renderer.setSWFMovie(SWFInteractiveFixture.scene())
+        let runtime = try #require(try renderer.startSWFRuntime())
+        let highlight = try #require(runtime.root.child(named: "highlight"))
+        let hiddenTransform = highlight.colorTransform
+        let target = SWFDisplayObject(content: .clip(nil))
+        target.name = "HUDMovieBaseInstance"
+        runtime.root.addChild(target, atDepth: 7)
+        AS2Natives.method(runtime.runtime, on: target.object, name: "RevealHUD") { _ in
+            highlight.colorTransform = .identity
+            runtime.markDirty()
+            return .boolean(true)
+        }
+        let hidden = try Self.render(renderer)
+
+        let result = try renderer.callSWFMovie(
+            "RevealHUD",
+            atPath: "/HUDMovieBaseInstance"
+        )
+        #expect(result == .boolean(true))
+        let visible = try Self.render(renderer)
+        #expect(Self.changedPixels(hidden, visible) > 50000)
+
+        try renderer.updateSWFRuntime { liveRuntime in
+            highlight.colorTransform = hiddenTransform
+            liveRuntime.markDirty()
+        }
+        #expect(try Self.render(renderer) == hidden)
+        #expect(try Self.render(renderer) == hidden)
+    }
+
     // MARK: - Helpers
 
     @MainActor

@@ -81,7 +81,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Interior door transitions](/engine/interiors.md) - interior CELL build, DOOR/XTEL
   resolution, selected activation, camera teleport, suspended exterior streaming.
 * [Interaction targeting](/engine/interaction.md) - walk-mode view-ray selection,
-  localized record names and action labels, typed activation events, exact door dispatch.
+  localized record names and action labels, typed activation events, HUD publication,
+  exact door dispatch.
 * [Free-fly camera](/engine/free-fly-camera.md) - WASDQE + mouse-look input capture,
   yaw/pitch pose -> view matrix, movement speeds tuned to Skyrim scale.
 * [Terrain walk mode](/engine/walk-mode.md) - fixed-step capsule, terrain + mesh
@@ -97,7 +98,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [AS2 runtime](/engine/as2-runtime.md) - ActionScript 2 interpreter and the movie it
   drives: value model + coercions, bounded execution, display objects and timeline,
   events, indexed global mouse input and hit testing, the GameDelegate bridge,
-  missing-API tally.
+  path-targeted HUD calls, missing-API tally.
 * [World audio playback](/engine/audio.md) - AVAudioEngine graph with 3D positional
   sources, streaming WMA decode off the main thread, provisional category volumes,
   source budget/eviction, and the `World > Audio` verification surface.
@@ -119,7 +120,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Screen-space UI layer](/rendering/ui.md) - 2D overlay over the finished frame:
   anchored scene, layout + text primitives, system-font glyph atlas, scale handling,
   UI Lab surface, and the SWF display-list render layer (per-draw uniforms,
-  stencil clips, UI Lab movie selector).
+  stencil clips, live vanilla HUD, UI Lab movie selector).
 
 ## Decisions
 

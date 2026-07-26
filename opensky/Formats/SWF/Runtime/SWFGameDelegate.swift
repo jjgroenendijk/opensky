@@ -271,6 +271,34 @@ nonisolated extension SWFMovieRuntime {
         return result
     }
 
+    /// Invokes a function on a named display object. HUD movies expose their
+    /// engine entry points on `/HUDMovieBaseInstance` rather than registering
+    /// `GameDelegate` callbacks, so the engine-to-movie bridge needs a precise
+    /// target path as well as the root/delegate entry point above.
+    @discardableResult
+    func callMovie(
+        _ name: String,
+        atPath path: String,
+        arguments: [AS2Value] = []
+    ) -> AS2Value {
+        guard
+            let target = node(atPath: path, from: root),
+            let function = target.object.lookup(name)?.property.value.functionValue
+        else {
+            runtime.noteMissing(name)
+            noteMovieCall(name, arguments: arguments, result: .undefined, handled: false)
+            return .undefined
+        }
+        markDirty()
+        let result = runtime.invoke(
+            .object(function),
+            thisValue: .object(target.object),
+            arguments: arguments
+        ).value
+        noteMovieCall(name, arguments: arguments, result: result, handled: true)
+        return result
+    }
+
     /// `_global.gfx.io.GameDelegate`, or nil for a movie that does not ship the
     /// CLIK library.
     var gameDelegate: AS2Object? {
@@ -296,6 +324,23 @@ nonisolated extension SWFMovieRuntime {
             return false
         }
         return hash.hasOwnProperty(name)
+    }
+
+    private func noteMovieCall(
+        _ name: String,
+        arguments: [AS2Value],
+        result: AS2Value,
+        handled: Bool
+    ) {
+        noteInvoke(
+            SWFInvokeEntry(
+                direction: .engineToMovie,
+                name: name,
+                arguments: invokeLog.summary(arguments),
+                result: invokeLog.summary(result),
+                isHandled: handled
+            )
+        )
     }
 
     @discardableResult
