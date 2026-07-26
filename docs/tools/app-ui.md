@@ -30,8 +30,8 @@ be able to select/force/toggle/inspect the behavior without a CLI command.
   sidebar (`AppSidebarViewController`, `NSOutlineView` with non-selectable
   group rows) + layered content (`ShellContentViewController`). The old
   segmented World/Asset Browser mode switch is gone.
-- Sidebar map: World: World, Environment, HUD & Interaction, Audio · Developer:
-  UI Lab · Library: Asset Browser. Launch selects World
+- Sidebar map: World: World, Environment, HUD & Interaction, System Menu, Audio ·
+  Developer: UI Lab · Library: Asset Browser. Launch selects World
   (`DestinationRegistry.defaultDestinationID`). Sections come from
   `SidebarSection` (world, developer, library — `allCases` order); empty
   sections drop. Grouping is unit-tested via `AppSidebarModel`
@@ -179,7 +179,8 @@ state, not an override, and Reset preserves it.
 
 The sidebar dot aggregates every mutable section under its exact path:
 `World > World`, `World > Environment`, `World > HUD & Interaction`,
-`World > Audio`, or `Developer > UI Lab`. `View > Reset all overrides` invokes
+`World > System Menu`, `World > Audio`, or `Developer > UI Lab`.
+`View > Reset all overrides` invokes
 every registered destination action, including unopened destinations, and then
 resyncs cached panels.
 
@@ -311,6 +312,16 @@ wiring.
 milestone names the destination path, so its eight controls do not get folded
 into World or UI Lab.
 
+`World > System Menu` (M8.5.1) follows the same shape. **Menu**
+(`PanelSection-systemMenu`) opens the engine menu stack and drives the
+Resume/Settings/Quit selector; **Settings** (`PanelSection-systemMenuSettings`)
+carries the two placeholders the milestone surfaces. Both count as overrides —
+an open menu pauses world simulation and an enabled movie takes the SWF layer
+from the gameplay HUD, so the sidebar dot must show either. The menu has no
+opening keystroke: `Esc` already releases mouse capture in gameplay, and a
+key-only trigger would break the no-unadvertised-keystroke rule. See
+[system menu](/engine/system-menu.md).
+
 ## Theme
 
 The shell is a committed dark, Skyrim-inspired design (owner request
@@ -394,6 +405,12 @@ Accessibility identifiers are the UI-test API and never change silently.
   `HUDPlaceholderTextControl`, `HUDScaleControl`; readouts `HUDElementsStatsLabel`,
   `HUDTargetStatsLabel`. Section headers: `PanelSection-hudElements`,
   `PanelSection-hudTarget`.
+- System menu set (World > System Menu, M8.5.1): `SystemMenuOpenControl`,
+  `SystemMenuResumeControl`, `SystemMenuUpControl`, `SystemMenuDownControl`,
+  `SystemMenuActivateControl`, `SystemMenuMovieControl`,
+  `SystemMenuMasterVolumeControl`; readouts `SystemMenuStatsLabel`,
+  `SystemMenuDataRootStatsLabel`, `SystemMenuSettingsStatsLabel`. Section
+  headers: `PanelSection-systemMenu`, `PanelSection-systemMenuSettings`.
 - The convention is now uniform. The LOD and time-of-day controls used to carry
   `*Field` / `*Button` / `*Label` suffixes; they were renamed to
   `*Control` / `*StatsLabel` in one pass before the id surface grew further.

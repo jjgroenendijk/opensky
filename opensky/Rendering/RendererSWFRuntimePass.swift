@@ -25,12 +25,21 @@ extension Renderer {
     /// Brings the assigned movie's ActionScript up — every `DoInitAction`
     /// block, then frame 1, then that frame's `DoAction` — and pushes the
     /// display list it produced. Returns nil when no movie is assigned.
+    ///
+    /// `prepare` runs on the fresh runtime *before* `start()`. Bring-up is the
+    /// first thing that calls out to the host — `startmenu.swf` makes 24
+    /// `myLog` calls inside its own `DoInitAction` blocks — so a host surface
+    /// installed after this returns arrives too late to answer them.
     @discardableResult
-    func startSWFRuntime(limits: AS2Limits = .standard) throws -> SWFMovieRuntime? {
+    func startSWFRuntime(
+        limits: AS2Limits = .standard,
+        prepare: ((SWFMovieRuntime) -> Void)? = nil
+    ) throws -> SWFMovieRuntime? {
         guard let movie = swf.movie else {
             return nil
         }
         let runtime = SWFMovieRuntime(movieScene: movie.scene, limits: limits)
+        prepare?(runtime)
         runtime.start()
         do {
             try updateSWFScene(runtime.makeScene())

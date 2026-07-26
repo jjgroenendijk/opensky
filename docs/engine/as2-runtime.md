@@ -954,11 +954,13 @@ The 8.3.3 gate asks for one vanilla menu that opens, navigates, and closes. The
 it and chose `tweenmenu.swf` instead — Skyrim's four-way pause selector (Skills, Magic,
 Inventory, Map).
 
-`startmenu.swf` was measured and is gated on three things phase 3 does not own: 35
+`startmenu.swf` was measured and was gated on three things phase 3 did not own: 35
 `callDepthExceeded` faults after bring-up, a `_root.CodeObj` host-object contract whose shape
-is not readable from the bytecode, and the save-list data contract behind
+was not readable from the bytecode, and the save-list data contract behind
 `onFillCharacterListComplete`, `onSaveLoadBatchComplete`, and `ConfirmOKToLoad` — phase-4
-work by definition. `tweenmenu.swf` has none of those: **0 faults**, 0 unimplemented opcodes,
+work by definition. Two of the three have since been retired; see
+[`startmenu.swf` re-measured](#startmenuswf-re-measured-at-851) below.
+`tweenmenu.swf` had none of those: **0 faults**, 0 unimplemented opcodes,
 39 display nodes, and its four options are structural clips in the movie rather than data
 pushed by the engine. Its class `TweenMenuObj` carries exactly the surface the gate names —
 `StartOpenMenuAnim`, `onFinishOpenMenuAnim`, `handleInput`, `onInputRectMouseOver`,
@@ -984,6 +986,65 @@ for gamepads (`getControllerFocusGroup` 8, `findFocus` 4, `getControllerMaskByFo
 plus the usual one-shot `_global` guard reads (`gfx`, `Shared`, `Components`). The menu's own
 frame labels — `showMenu`, `hideMenu`, `startExpand`, `endExpand` — are decoded and
 addressable.
+
+### `startmenu.swf` re-measured at 8.5.1
+
+Milestone 8.5.1 ([system menu](/engine/system-menu.md)) came back to the movie 8.3.3
+rejected, and two of the three blockers were gone.
+
+The **35 `callDepthExceeded` faults** were retired by the `super` resolution fix
+(issue #136), along with the other 359. Bring-up plus five ticks now reports 0 faults and
+0 unimplemented opcodes.
+
+**`_root.CodeObj` is not a host object.** It was read as one because the bytecode only ever
+calls through it. In fact the movie creates it itself — `StartMenu`'s constructor runs
+`_root.CodeObj = this.codeObj = new Object()` and installs `_root.ReleaseCodeObject` and
+`_root.onCodeObjectInit` beside it — so after plain bring-up the object is already present
+and empty. All 16 names the bytecode reaches on it are outbound calls with no data reads,
+and every one is the Bethesda.net login path: `initLogin`, `BeginLogin`, `GetBnetUpdate`,
+`ModsBlockedByBnet`, `CClubBlockedByPermissions`, `CClubBlockedByBnet`, `startEditText`,
+`endEditText`, `onLoginScreenOpen`, `onLoginScreenClose`, `attemptLogin`,
+`createQuickAccount`, `AcceptLegalDoc`, `PopulateEULA`, `PlaySound`, `PlayOKSound`. Nothing
+needs synthesizing; the engine attaches no-op natives and the login screen never opens.
+
+**The save-list contract still stands**, and it is why the bridge answers
+`sendMenuProperties` with "no saves": the list comes up without `$CONTINUE`, with `$LOAD`
+disabled.
+
+The list itself is entirely engine-driven, through three calls in order — `SetPlatform(0,
+false)` and `InitExtensions` directly on `/MenuHolder/Menu_mc`, then the `GameDelegate`
+callback `sendMenuProperties` with 14 flat arguments. `InitExtensions` is what registers
+that callback: the movie goes from 4 registered callbacks to 17. `setupMainMenu` then
+clears `MainList.EntriesA`, pushes one `{text, index, disabled, showIcon}` row per enabled
+capability, and calls `InvalidateData()`.
+
+| Stage | Faults | Unimplemented | Draw calls | Rows | Changed pixels |
+|---|---|---|---|---|---|
+| Bring-up + 5 ticks | 0 | 0 | 152 | none (authored placeholders) | 4,285 over empty |
+| `activate` + 30 ticks | 0 | 0 | 89 | `$NEW`, `$LOAD`, `$CREDITS`, `$QUIT` | 0 over empty |
+
+Answering the outbound side takes six names: `myLog`, `PlaySound`, `PlayOKSound`,
+`StartState`, and `currentState` as `GameDelegate` host functions, plus `gfxProcessSound`
+as a plain `_global` native. `myLog` alone accounts for 24 calls, and all of them happen
+inside the movie's own `DoInitAction` blocks — which is why `Renderer.startSWFRuntime` grew
+a `prepare` hook that runs before `start()`. With those six registered the invoke log ends
+at **0 unhandled of 36**, and 44 distinct names remain missing, all CLIK cosmetics
+(`_listeners` 50, `height`/`width` 40 each, `invalidationIntervalID` 40, `apply` 33,
+`CLIK_loadCallback` 17).
+
+Two things are measured and open. The populated `Main` state stages its content off the
+viewport, so the list is addressable and reads back correctly but renders nothing — the
+last row of the table. And arrow keys through `handle()` are consumed without effect,
+because `routeToMenuHandler` hands `StartMenu.handleInput` the raw display chain
+`[MainListHolder, List_mc]` and the holder clip defines no `handleInput`; passing
+`[List_mc]` alone drives selection and dispatches the row's outbound call. Tracked as
+issues #230 and #229.
+
+Finally, a scope finding worth recording: `startmenu.swf` is Skyrim's **title screen**. Its
+1,674-string pool contains no `$SETTINGS`, and its rows are Continue/New/Load/Creations/
+Mods/Credits/Quit/Help. The in-game system menu is `quest_journal.swf`, whose pool carries
+`$SYSTEM`, `$SETTINGS`, `$CONTROLS`, `$SAVE`, `$LOAD`, `$QUIT`, and the whole settings
+tree. Issue #231.
 
 ## Limits / next
 

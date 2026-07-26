@@ -110,6 +110,50 @@ final class FakeWorldProviders: WorldControlProviders {
         drawStats: SWFDrawStats()
     )
 
+    // SystemMenuControlProviding
+    var systemMenuModel = SystemMenuModel()
+    var systemMenuMovieEnabled = false
+    var systemMenuMasterVolume: Float = 1
+    var systemMenuIsOpen: Bool {
+        systemMenuModel.isOpen
+    }
+
+    func openSystemMenu() {
+        systemMenuModel.open()
+    }
+
+    func closeSystemMenu() {
+        systemMenuModel.close()
+    }
+
+    func sendSystemMenuInput(_ event: MenuInputEvent) {
+        systemMenuModel.handle(event)
+    }
+
+    var systemMenuSnapshot: SystemMenuControlSnapshot {
+        SystemMenuControlSnapshot(
+            isOpen: systemMenuModel.isOpen,
+            entryTitles: systemMenuModel.entries.map(\.title),
+            selectedIndex: systemMenuModel.selectedIndex,
+            lastOutcome: systemMenuModel.lastOutcome?.label,
+            settingsRevealed: systemMenuModel.settingsRevealed,
+            openMenus: systemMenuModel.isOpen ? ["SystemMenu"] : [],
+            worldSimPaused: systemMenuModel.isOpen,
+            dataRootPath: nil,
+            dataRootSource: nil,
+            masterVolume: systemMenuMasterVolume,
+            audioEnabled: audioEnabled,
+            movieEnabled: systemMenuMovieEnabled,
+            movieLoaded: false,
+            movieError: nil,
+            movieDrawStats: SWFDrawStats(),
+            movieFaults: 0,
+            movieMissingNames: 0,
+            movieEntryTitles: [],
+            movieState: nil
+        )
+    }
+
     // UILabControlProviding
     var uiOverlayEnabled = true
     var uiSampleShown = false
@@ -194,8 +238,8 @@ struct DestinationRegistryTests {
         #expect(
             DestinationRegistry.all.map(\.id)
                 == [
-                    "world", "environment", "hudInteraction", "audio",
-                    "uiLab", "assetBrowser"
+                    "world", "environment", "hudInteraction", "systemMenu",
+                    "audio", "uiLab", "assetBrowser"
                 ]
         )
         // Accessibility identifiers are the UI-test contract; pin them literally.
@@ -204,6 +248,7 @@ struct DestinationRegistryTests {
                 "Destination-world",
                 "Destination-environment",
                 "Destination-hudInteraction",
+                "Destination-systemMenu",
                 "Destination-audio",
                 "Destination-uiLab",
                 "Destination-assetBrowser"
@@ -211,7 +256,10 @@ struct DestinationRegistryTests {
         )
         #expect(
             DestinationRegistry.worldInspectors.map(\.id)
-                == ["world", "environment", "hudInteraction", "audio", "uiLab"]
+                == [
+                    "world", "environment", "hudInteraction", "systemMenu",
+                    "audio", "uiLab"
+                ]
         )
         #expect(DestinationRegistry.defaultDestinationID == "world")
     }
@@ -285,6 +333,11 @@ struct DestinationRegistryTests {
         #expect(isOverridden("hudInteraction", context: context))
         reset("hudInteraction", context: context)
         #expect(providers.hudMetersEnabled)
+
+        providers.openSystemMenu()
+        #expect(isOverridden("systemMenu", context: context))
+        reset("systemMenu", context: context)
+        #expect(!providers.systemMenuIsOpen)
 
         providers.audioEnabled = true
         #expect(isOverridden("audio", context: context))

@@ -348,8 +348,10 @@ exposing movie state, the invoke log, and the unimplemented-API tally.
 Deferred by design. `InventoryDefines` (8 movies), `_CategoriesList` (9 movies),
 `EntriesA` (15 movies), and `iSelectedIndex` (15 movies) are inventory and list-menu data
 contracts that cannot be implemented meaningfully before the engine has inventory data to
-put in them. Each such API lands in the milestone that owns its data, and until then it is
-a logged no-op with a tally entry — which is exactly the degradation the mechanism is for.
+put in them. `EntriesA` is the one that has since been driven for real: 8.5.1 fills
+`startmenu.swf`'s copy through `sendMenuProperties`, which is what that phasing predicted —
+the API lands in the milestone that owns its data. Until then each such API is a logged
+no-op with a tally entry — which is exactly the degradation the mechanism is for.
 
 ## First targets
 
@@ -369,6 +371,14 @@ keyboard and mouse navigation, which exercises exactly the framework phase 3 imp
 entries are structural rather than data-driven, so it needs only a small number of
 `GameDelegate` callbacks and almost no phase 4 work; and milestone 8.5.1 already needs a
 system menu on a vanilla movie, so the work is not spent twice.
+
+Two claims in that paragraph did not survive measurement, recorded here rather than edited
+away. 8.3.3 rejected `startmenu.swf` on measurement and used `tweenmenu.swf` instead; 8.5.1
+came back to it and drove it clean. Its entries are **not** structural — they are pushed
+entirely by the engine through `sendMenuProperties` — and it is the **title screen**, not
+the in-game system menu, so it carries no Settings row. Both are measured in the
+[AS2 runtime](/engine/as2-runtime.md) and consumed by the
+[system menu](/engine/system-menu.md).
 
 The counter-example is worth stating. `quest_journal.swf` (33,692 records),
 `modmanager.swf` (29,383), and `inventorymenu.swf` (24,754) are the three largest AS2

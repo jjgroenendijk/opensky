@@ -29,7 +29,8 @@ typealias WorldControlProviders = AnimationControlProviding & AudioControlProvid
     & CameraControlProviding & FrameStatsProviding & GrassControlProviding
     & HUDControlProviding & ParticleControlProviding & PrecipitationControlProviding
     & SWFLabControlProviding & SceneStatsProviding & ShadowControlProviding
-    & TerrainLODControlProviding & UILabControlProviding & WeatherControlProviding
+    & SystemMenuControlProviding & TerrainLODControlProviding & UILabControlProviding
+    & WeatherControlProviding
 
 /// Passed to a world-inspector factory so the panel can wire its providers.
 @MainActor
@@ -184,6 +185,18 @@ enum DestinationRegistry {
             )
         ),
         DestinationDescriptor(
+            id: "systemMenu",
+            title: "System Menu",
+            section: .world,
+            symbolName: "list.bullet.rectangle",
+            content: .worldInspector { context in
+                let panel = SystemMenuPanelViewController()
+                panel.provider = context.providers
+                return panel
+            },
+            overrides: systemMenuOverrides
+        ),
+        DestinationDescriptor(
             id: "audio",
             title: "Audio",
             section: .world,
@@ -247,6 +260,17 @@ enum DestinationRegistry {
             PrecipitationSection.resetToDefaults(provider: providers)
             GrassSection.resetToDefaults(provider: providers)
             TerrainLODSection.resetToDefaults(provider: providers)
+        }
+    )
+
+    private static let systemMenuOverrides = DestinationOverrideActions(
+        isOverridden: { context in
+            SystemMenuSection.isOverridden(provider: context.providers)
+                || SystemMenuSettingsSection.isOverridden(provider: context.providers)
+        },
+        resetToDefaults: { context in
+            SystemMenuSection.resetToDefaults(provider: context.providers)
+            SystemMenuSettingsSection.resetToDefaults(provider: context.providers)
         }
     )
 
