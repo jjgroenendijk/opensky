@@ -68,6 +68,8 @@ nonisolated final class SWFMovieRuntime {
     /// Placements that attached a key CLIPACTIONS handler. Zero across the whole
     /// vanilla install, which is what lets key dispatch skip the tree walk.
     private(set) var keyClipHandlers = 0
+    /// Clips that currently expose one of Flash's three global mouse handlers.
+    let globalMouseHandlers = SWFGlobalMouseHandlerRegistry()
 
     /// Display nodes one movie may hold. Vanilla menus build a few hundred; a
     /// runaway `attachMovie` loop is what this stops.
@@ -95,6 +97,10 @@ nonisolated final class SWFMovieRuntime {
     /// Live node count, walked on demand (the tree is small).
     var nodeCount: Int {
         root.nodeCount()
+    }
+
+    var globalMouseHandlerClips: Int {
+        globalMouseHandlers.count
     }
 
     init(movieScene: SWFMovieScene, limits: AS2Limits = .standard) {
@@ -219,6 +225,7 @@ nonisolated final class SWFMovieRuntime {
                 frameCount: max(1, Int(sprite.frameCount))
             )
             node.object.prototype = movieClipPrototype
+            globalMouseHandlers.observe(node)
             return node
         case .shape:
             return SWFDisplayObject(content: .shape(characterId))

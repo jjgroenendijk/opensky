@@ -172,9 +172,31 @@ struct SWFRuntimeInputTests {
     @Test func mouseDownReachesEveryClipRegardlessOfThePointer() throws {
         let (runtime, button) = try startedButton()
         let log = RoutingLog()
+        #expect(runtime.globalMouseHandlerClips == 0)
         record(runtime, on: button, "onMouseDown", into: log)
+        #expect(runtime.globalMouseHandlerClips == 1)
         runtime.handle(.pointerPressed(x: 400, y: 400))
         #expect(log.entries == ["onMouseDown"])
+    }
+
+    @Test func globalMouseHandlerIndexTracksPrototypeMutations() throws {
+        let (runtime, button) = try startedButton()
+        let log = RoutingLog()
+        let prototype = runtime.runtime.makeObject()
+        button.object.prototype = prototype
+        #expect(runtime.globalMouseHandlerClips == 0)
+
+        AS2Natives.method(runtime.runtime, on: prototype, name: "onMouseMove") { _ in
+            log.append("onMouseMove")
+            return .undefined
+        }
+        #expect(runtime.globalMouseHandlerClips == 1)
+        #expect(runtime.handle(.pointerMoved(x: 400, y: 400)))
+        #expect(log.entries == ["onMouseMove"])
+
+        #expect(prototype.removeProperty("onMouseMove"))
+        #expect(runtime.globalMouseHandlerClips == 0)
+        #expect(runtime.handle(.pointerMoved(x: 410, y: 410)) == false)
     }
 
     @Test func mousePositionIsReportedInTheNodesOwnSpace() throws {

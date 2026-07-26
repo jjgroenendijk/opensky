@@ -51,12 +51,26 @@ nonisolated struct AS2PropertyLookup {
     let property: AS2Property
 }
 
+/// Receives object-table mutations that a host needs to index. The interpreter
+/// remains unaware of what the observer represents.
+nonisolated protocol AS2ObjectMutationObserver: AnyObject {
+    func object(_ object: AS2Object, didMutateProperty name: String)
+    func objectDidMutatePrototype(_ object: AS2Object)
+}
+
 /// An ActionScript 2 object. Functions are objects with a `callable`; arrays
 /// are objects with a live `arrayLength`; display objects (a later milestone)
 /// are objects carrying a `hostPayload`.
 nonisolated final class AS2Object {
     /// `__proto__`. Member lookup walks this chain.
-    var prototype: AS2Object?
+    var prototype: AS2Object? {
+        didSet {
+            mutationObserver?.objectDidMutatePrototype(self)
+        }
+    }
+
+    /// Optional weak hook for host indexes derived from dynamic members.
+    weak var mutationObserver: (any AS2ObjectMutationObserver)?
     /// Non-nil when this object can be called or constructed.
     var callable: AS2Callable?
     /// Opaque engine-owned payload — the seam a later milestone uses to back an
@@ -188,6 +202,7 @@ nonisolated final class AS2Object {
         }
         table[name] = nil
         order.removeAll { $0 == name }
+        mutationObserver?.object(self, didMutateProperty: name)
         return true
     }
 
@@ -197,6 +212,7 @@ nonisolated final class AS2Object {
             noteArrayIndex(name)
         }
         table[name] = property
+        mutationObserver?.object(self, didMutateProperty: name)
     }
 
     /// Replaces a slot's attributes without touching its value.

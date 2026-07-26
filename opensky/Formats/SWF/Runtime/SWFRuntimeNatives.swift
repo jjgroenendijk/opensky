@@ -179,6 +179,7 @@ nonisolated enum SWFRuntimeNatives {
             }
             let created = SWFDisplayObject(content: .clip(nil), frameCount: 1)
             created.object.prototype = owner.movieClipPrototype
+            owner.globalMouseHandlers.observe(created)
             created.name = try context.string(0)
             try node.addChild(created, atDepth: depthValue(context.number(1)))
             owner.markDirty()

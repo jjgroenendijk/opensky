@@ -162,7 +162,7 @@ nonisolated extension SWFMovieRuntime {
     @discardableResult
     private func dispatchGlobalMouse(_ event: SWFClipEventFlags) -> Bool {
         var handled = false
-        forEachClip { node in
+        for node in globalMouseHandlers.activeClips(in: root) where node.rootObject === root {
             handled = dispatchClipEvent(event, to: node) || handled
         }
         return handled
