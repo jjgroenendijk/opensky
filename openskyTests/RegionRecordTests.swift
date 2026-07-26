@@ -81,6 +81,70 @@ struct RegionRecordTests {
         #expect(region.weatherPriority == nil)
     }
 
+    @Test func decodesSoundAreaEntries() throws {
+        // Sound area (type 7) with two RDSA entries. Fields per xEdit
+        // wbDefinitionsCommon.pas:8729-8747: formid, uint32 conditions, float chance.
+        var soundHeader = Data()
+        soundHeader.appendUInt32(7)
+        soundHeader.append(contentsOf: [0x01, 4]) // override flag, priority
+        soundHeader.appendUInt16(0)
+
+        var entry1 = Data()
+        entry1.appendUInt32(0x100) // sound SNDR
+        entry1.appendUInt32(0x01 | 0x04) // pleasant | rainy
+        entry1.appendUInt32(Float(0.5).bitPattern)
+
+        var entry2 = Data()
+        entry2.appendUInt32(0x101)
+        entry2.appendUInt32(0) // all weather (empty set)
+        entry2.appendUInt32(Float(1.0).bitPattern)
+
+        let fields = ESMFixture.field("EDID", ESMFixture.zstring("SoundRegion"))
+            + ESMFixture.field("RDAT", soundHeader)
+            + ESMFixture.field("RDSA", entry1 + entry2)
+        let region = try Region(record: record(ESMFixture.record(
+            "REGN", formID: 0x42, data: fields
+        )))
+
+        #expect(region.soundPriority == 4)
+        #expect(region.soundOverride)
+        #expect(region.soundList.count == 2)
+        let first = try #require(region.soundList.first)
+        #expect(first.sound == FormID(0x100))
+        #expect(first.conditions == [.pleasant, .rainy])
+        #expect(first.chance == 0.5)
+        let second = try #require(region.soundList.last)
+        #expect(second.sound == FormID(0x101))
+        #expect(second.conditions.isEmpty)
+        #expect(second.chance == 1.0)
+    }
+
+    @Test func skipsSoundEntriesWithBadSize() throws {
+        var soundHeader = Data()
+        soundHeader.appendUInt32(7)
+        soundHeader.append(contentsOf: [0x00, 1])
+        soundHeader.appendUInt16(0)
+        // 13 bytes: not a multiple of 12 -> RDSA rejected.
+        let fields = ESMFixture.field("RDAT", soundHeader)
+            + ESMFixture.field("RDSA", Data(count: 13))
+        let region = try Region(record: record(ESMFixture.record("REGN", data: fields)))
+        #expect(region.soundList.isEmpty)
+        #expect(region.soundPriority == 1)
+    }
+
+    @Test func ignoresRDSAOutsideSoundArea() throws {
+        // RDSA under a weather area must not bind.
+        var weatherHeader = Data()
+        weatherHeader.appendUInt32(3)
+        weatherHeader.append(contentsOf: [0x00, 1])
+        weatherHeader.appendUInt16(0)
+        let fields = ESMFixture.field("RDAT", weatherHeader)
+            + ESMFixture.field("RDSA", Data(count: 12))
+        let region = try Region(record: record(ESMFixture.record("REGN", data: fields)))
+        #expect(region.soundList.isEmpty)
+        #expect(region.soundPriority == nil)
+    }
+
     @Test func missingFieldsDecodeToEmptyAndNil() throws {
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("Bare"))
         let region = try Region(record: record(ESMFixture.record("REGN", data: fields)))
@@ -90,6 +154,9 @@ struct RegionRecordTests {
         #expect(region.weatherList.isEmpty)
         #expect(region.weatherPriority == nil)
         #expect(!region.weatherOverride)
+        #expect(region.soundList.isEmpty)
+        #expect(region.soundPriority == nil)
+        #expect(!region.soundOverride)
     }
 
     @Test func wrongRecordTypeThrows() throws {
