@@ -244,4 +244,26 @@ protocol AudioControlProviding: AnyObject {
     /// FormIDs of the SNDR/SOUN records in the current ambient bed, joined for
     /// the readout. "none" when the bed is empty.
     var currentAmbienceDescription: String { get }
+
+    // Music director controls (M9.2.3). Same lazy-construction policy: these
+    // no-op (and read their defaults) until audio is enabled.
+
+    /// MUSC playlist playback follows the streamed cell. Off fades the current
+    /// track out; on restarts the selection the last context resolved.
+    var musicEnabled: Bool { get set }
+    /// MUSC editor ids the music picker offers, sorted. Empty without data.
+    var selectableMusicTypeNames: [String] { get }
+    /// Forces a crossfade to a named MUSC, bypassing the precedence chain.
+    /// Returns nil on success or a short failure description for the readout.
+    func forceMusicType(named name: String) -> String?
+    /// Force-stops music; the next cell change resolves and starts it again.
+    func stopMusic()
+    /// Playlist plus playing file, joined for the readout. "none" when silent.
+    var currentMusicDescription: String { get }
+    /// Derived music state: "exploration", "town" or "interior".
+    var currentMusicStateName: String { get }
+    /// VFS path of the track currently sounding; nil when silent.
+    var currentMusicTrackName: String? { get }
+    /// Most recent music failure reason; nil when the last start succeeded.
+    var lastMusicError: String? { get }
 }

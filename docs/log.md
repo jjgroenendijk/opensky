@@ -4,6 +4,29 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-26
 
+* **Music selection + director (M9.2.3, issue #156)**: the runtime that turns
+  the MUSC/MUST records into playing music. `MusicCatalog.swift` is pure value
+  logic: a `MusicContext` from the streamer resolves through the
+  `CELL.XCMO -> REGN.RDMO -> WRLD.ZNAM` precedence chain into a `MusicSelection`
+  carrying the winning playlist, its ordered playable tracks, an advance policy
+  derived from the MUSC flags (`Plays One Selection`, `Cycle Tracks`,
+  `Maintain Track Order`), and the crossfade duration (`WNAM`, else two seconds,
+  else zero for `Abrupt Transition`). Palettes expand depth-bounded and
+  cycle-safe; silent and unplayable tracks are filtered; an unordered playlist is
+  shuffled deterministically from a context-derived seed rather than from
+  `Hasher`. The three states the milestone names are derived, not authored:
+  `interior` from the cell type, `town` from the `MUSTown` editor-id convention,
+  `exploration` as the catch-all — limits written down in the doc.
+  `WorldMusicDirector` owns the non-positional music sources (nothing else will
+  retire them), crossfades on a selection change with the stage-2 recipe,
+  advances the playlist when the engine retires a finished stream, and keeps the
+  SFX director's three invariants (single apply path, remembered desired state,
+  live-source-derived readout). `CellStreamerMusic.swift` emits the context from
+  the same two sites as the ambience emission, `CellScene` now carries the cell
+  and worldspace music links, and the renderer's paused-aware audio tick drives
+  the director. `AudioControlProviding` gained the music members the panel stage
+  binds to. See [music playlists](/engine/music.md); covered by
+  `MusicCatalogTests`, `WorldMusicDirectorTests` and `CellStreamerMusicTests`.
 * **Non-positional playback + gain ramps (M9.2.3, issue #156)**: the audio
   engine primitive a music crossfade needs. `playNonPositional(fileData:)` /
   `(buffer:)` start a source with the file's own channel layout wired straight

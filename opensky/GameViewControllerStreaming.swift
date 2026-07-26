@@ -62,6 +62,11 @@ extension GameViewController {
         controller.onAmbienceContextChanged = { [weak self] context in
             self?.soundDirector?.handleAmbienceContext(context)
         }
+        // Music director subscription (M9.2.3). Same lazy-construction policy
+        // as the sound director: a no-op until audio is enabled.
+        controller.onMusicContextChanged = { [weak self] context in
+            self?.musicDirector?.handleMusicContext(context)
+        }
         renderer.terrainSampler = { [weak controller] position in
             controller?.sampleTerrain(at: position)
         }

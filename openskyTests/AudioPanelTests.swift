@@ -23,6 +23,15 @@ private final class FakeAudioProvider: AudioControlProviding {
     var lastSFXError: String?
     var currentAmbienceDescription = "none"
 
+    var musicEnabled = true
+    var selectableMusicTypeNames: [String] = []
+    var forcedMusicTypeNames: [String] = []
+    var stopMusicCount = 0
+    var currentMusicDescription = "none"
+    var currentMusicStateName = "exploration"
+    var currentMusicTrackName: String?
+    var lastMusicError: String?
+
     func audioVolume(for category: AudioCategory) -> Float {
         categoryVolumes[category] ?? 1
     }
@@ -42,6 +51,15 @@ private final class FakeAudioProvider: AudioControlProviding {
 
     func stopAmbience() {
         stopAmbienceCount += 1
+    }
+
+    func forceMusicType(named name: String) -> String? {
+        forcedMusicTypeNames.append(name)
+        return nil
+    }
+
+    func stopMusic() {
+        stopMusicCount += 1
     }
 }
 

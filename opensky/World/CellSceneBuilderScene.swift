@@ -17,6 +17,9 @@ nonisolated struct CellGeometryBuild {
     let staticCollision: StaticCollisionSet
     /// Assembled actor placements + exact accounting (5.5 actor streaming).
     let actors: CellActorBuild
+    /// WRLD.ZNAM of the owning worldspace (M9.2.3 music selection). `var` with
+    /// a default so the interior path, which has no worldspace, omits it.
+    var worldspaceMusicType: FormID?
 }
 
 /// Exterior environment trio built beside the placed models.
@@ -185,6 +188,8 @@ extension CellSceneBuilder {
             interactions: geometry.interactions,
             regions: found.cell.regions,
             acousticSpace: found.cell.acousticSpace,
+            musicType: found.cell.musicType,
+            worldspaceMusicType: geometry.worldspaceMusicType,
             terrainHeightField: geometry.terrain?.heightField,
             grassPlacements: geometry.grass?.placements ?? [],
             staticCollision: geometry.staticCollision

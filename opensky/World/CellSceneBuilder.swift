@@ -207,7 +207,8 @@ nonisolated final class CellSceneBuilder {
                 lighting: nil,
                 pointLights: [],
                 staticCollision: staticCollision,
-                actors: actors
+                actors: actors,
+                worldspaceMusicType: world.worldspace?.musicType
             ),
             counts: counts
         )

@@ -22,6 +22,7 @@ extension GameViewController: AudioControlProviding {
                 // The renderer's per-frame tick drives the listener pose.
                 renderer?.worldAudio = engine
                 buildSoundDirectorIfNeeded(engine: engine)
+                buildMusicDirectorIfNeeded(engine: engine)
             }
             worldAudio?.isEnabled = newValue
         }
@@ -45,6 +46,22 @@ extension GameViewController: AudioControlProviding {
             aspcStore: aspcStore,
             fileSystem: audioFileSystem
         )
+    }
+
+    /// Same policy as the SFX director: pulls the music + weather stores off
+    /// the cell provider, builds the director once, and hands it to the
+    /// renderer so the per-frame audio tick advances the playlist.
+    private func buildMusicDirectorIfNeeded(engine: WorldAudioEngine) {
+        guard musicDirector == nil else { return }
+        let provider = streamerCellProvider
+        let director = WorldMusicDirector(
+            engine: engine,
+            musicStore: (provider as? AudioDataProviding)?.musicStore,
+            weatherStore: (provider as? WeatherProviding)?.weatherSystem?.store,
+            fileSystem: audioFileSystem
+        )
+        musicDirector = director
+        renderer?.musicDirector = director
     }
 
     var audioMasterVolume: Float {
@@ -133,5 +150,41 @@ extension GameViewController: AudioControlProviding {
 
     var currentAmbienceDescription: String {
         soundDirector?.currentAmbienceDescription ?? "none"
+    }
+
+    // MARK: - Music director bridges (M9.2.3)
+
+    var musicEnabled: Bool {
+        get { musicDirector?.musicEnabled ?? true }
+        set { musicDirector?.musicEnabled = newValue }
+    }
+
+    var selectableMusicTypeNames: [String] {
+        musicDirector?.selectableMusicTypeNames ?? []
+    }
+
+    func forceMusicType(named name: String) -> String? {
+        guard let musicDirector else { return "audio is not enabled" }
+        return musicDirector.forcePlayMusicType(named: name)
+    }
+
+    func stopMusic() {
+        musicDirector?.stopMusic()
+    }
+
+    var currentMusicDescription: String {
+        musicDirector?.currentMusicDescription ?? "none"
+    }
+
+    var currentMusicStateName: String {
+        musicDirector?.currentStateName ?? "unknown"
+    }
+
+    var currentMusicTrackName: String? {
+        musicDirector?.currentTrackName
+    }
+
+    var lastMusicError: String? {
+        musicDirector?.lastMusicError
     }
 }

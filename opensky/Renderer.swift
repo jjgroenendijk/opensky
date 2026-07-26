@@ -107,6 +107,9 @@ final class Renderer: NSObject {
     /// World audio playback graph; nil until the app wires one (offscreen and
     /// CLI paths stay silent). Ticked by RendererAudio.swift.
     var worldAudio: WorldAudioEngine?
+    /// Music director (M9.2.3), ticked from the same paused-aware audio hook so
+    /// a playlist advance freezes with the world sim. nil until audio is on.
+    var musicDirector: WorldMusicDirector?
     /// Wall-clock delta source for the audio tick, paused in menu mode.
     var audioClock = FrameSimClock()
     let precipitation: PrecipitationVolume

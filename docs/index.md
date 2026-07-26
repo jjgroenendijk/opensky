@@ -116,6 +116,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [World SFX + ambience](/engine/world-sfx.md) - world sound director wiring
   interaction events to one-shot SFX, per-cell ASPC/REGN ambience bed resolution,
   and the `World > Audio > SFX & Ambience` verification surface.
+* [Music playlists](/engine/music.md) - MUSC/MUST playlist selection through the
+  CELL/REGN/WRLD precedence chain, the derived exploration/town/interior states,
+  palette expansion and flag handling, and the crossfading music director.
 
 ## Rendering
 

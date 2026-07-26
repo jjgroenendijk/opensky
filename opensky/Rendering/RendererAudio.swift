@@ -24,6 +24,10 @@ extension Renderer {
     /// never reaches here) freezes a crossfade instead of skipping through it.
     func updateAudio(deltaTime: Float) {
         guard let worldAudio else { return }
+        // Music runs after the engine tick so the director sees this frame's
+        // retirements: a track that reached its end is already gone from
+        // `sources`, which is how the playlist knows to advance.
+        defer { musicDirector?.tick(deltaTime: deltaTime) }
         worldAudio.updateListener(
             worldPosition: freeFlyCamera.position,
             yaw: freeFlyCamera.yaw,
