@@ -101,9 +101,14 @@ binds payload fields to it. Decoded (`Region`):
   2026-07-26 pinned the range at min 0.01 max 1.0). Size not multiple of
   12, or outside a sound area -> skipped.
 
-Other area payloads (`RPLI`/`RPLD`, `RDOT`, `RDMP`, `RDGS`, `RDMO`) stream past
-untouched. `RDMO` (region music -> MUSC) waits on the music milestone (#156);
-`RDMD` is a TES4 leftover SSE does not use.
+* `RDMO` (M9.2.3) — 4-byte `formid` region music (MUSC). Unlike `RDWT` and
+  `RDSA` this one is accepted regardless of the current area type, because
+  UESP records that it "can appear with RDSA under same RDAT or on its own".
+  Wrong width or a null link -> skipped, leaving any earlier value in place.
+  See [music records](/formats/music.md).
+
+Other area payloads (`RPLI`/`RPLD`, `RDOT`, `RDMP`, `RDGS`) stream past
+untouched. `RDMD` is a TES4 leftover SSE does not use.
 
 ## Verification
 

@@ -59,6 +59,10 @@ nonisolated struct Worldspace {
     /// CNAM — default CLMT climate for this worldspace; the weather runtime's
     /// climate fallback when no region weather applies. nil when absent.
     let climate: FormID?
+    /// ZNAM — default music type (MUSC) for this worldspace (M9.2.3). The
+    /// music director's fallback when the cell carries no XCMO and no region
+    /// music applies. nil when absent or null.
+    let musicType: FormID?
 
     /// - Parameter localized: TES4 localized flag of the owning plugin
     ///   (`PluginHeader.isLocalized`) — decides lstring decoding.
@@ -68,6 +72,26 @@ nonisolated struct Worldspace {
         }
         formID = FormID(record.formID)
 
+        var fields = WorldspaceFields()
+        for field in try record.fields() {
+            try fields.decode(field: field, localized: localized)
+        }
+        editorID = fields.editorID
+        name = fields.name
+        parent = fields.parent
+        parentFlags = fields.parentFlags
+        flags = fields.flags
+        defaultLandHeight = fields.defaultLandHeight
+        defaultWaterHeight = fields.defaultWaterHeight
+        waterType = fields.waterType
+        climate = fields.climate
+        musicType = fields.musicType
+    }
+
+    /// Mutable accumulator for the field loop, matching `Cell`/`Region`. Split
+    /// out so the field switch stays under the strict-lint cyclomatic-
+    /// complexity cap (ZNAM, added in M9.2.3, tipped it over).
+    private struct WorldspaceFields {
         var editorID: String?
         var name: LString?
         var parent: FormID?
@@ -77,7 +101,9 @@ nonisolated struct Worldspace {
         var defaultWaterHeight: Float?
         var waterType: FormID?
         var climate: FormID?
-        for field in try record.fields() {
+        var musicType: FormID?
+
+        mutating func decode(field: ESMField, localized: Bool) throws {
             var reader = BinaryReader(field.data)
             switch field.type {
             case "EDID":
@@ -87,7 +113,7 @@ nonisolated struct Worldspace {
             case "WNAM":
                 parent = try FormID(reader.readUInt32())
             case "PNAM":
-                parentFlags = try Self.decodeParentFlags(field.data) ?? parentFlags
+                parentFlags = try Worldspace.decodeParentFlags(field.data) ?? parentFlags
             case "DATA":
                 flags = try Flags(rawValue: reader.readUInt8())
             case "DNAM":
@@ -97,24 +123,28 @@ nonisolated struct Worldspace {
                     defaultLandHeight = try reader.readFloat32()
                     defaultWaterHeight = try reader.readFloat32()
                 }
+            default:
+                try decodeReference(field: field)
+            }
+        }
+
+        /// Fields that are a plain FormID link.
+        private mutating func decodeReference(field: ESMField) throws {
+            switch field.type {
             case "NAM2":
-                waterType = try Self.decodeFormID(field.data)
+                waterType = try Worldspace.decodeFormID(field.data)
             case "CNAM":
                 // WRLD CNAM: climate FormID (xEdit wbFormIDCk(CNAM, 'Climate')).
-                climate = try Self.decodeFormID(field.data)
+                climate = try Worldspace.decodeFormID(field.data)
+            case "ZNAM":
+                // WRLD ZNAM: default music type (xEdit wbDefinitionsTES5.pas:
+                // 10772, wbFormIDCk(ZNAM, 'Music', [MUSC]); UESP WRLD "always
+                // a MUSC form ID"). A null link means no worldspace music.
+                musicType = try Worldspace.decodeNonNullFormID(field.data)
             default:
                 break
             }
         }
-        self.editorID = editorID
-        self.name = name
-        self.parent = parent
-        self.parentFlags = parentFlags
-        self.flags = flags
-        self.defaultLandHeight = defaultLandHeight
-        self.defaultWaterHeight = defaultWaterHeight
-        self.waterType = waterType
-        self.climate = climate
     }
 
     private static func decodeParentFlags(_ data: Data) throws -> ParentFlags? {
@@ -127,5 +157,11 @@ nonisolated struct Worldspace {
         guard data.count >= 4 else { return nil }
         var reader = BinaryReader(data)
         return try FormID(reader.readUInt32())
+    }
+
+    /// Same as `decodeFormID` but folds an authored null link to nil.
+    private static func decodeNonNullFormID(_ data: Data) throws -> FormID? {
+        guard let formID = try decodeFormID(data) else { return nil }
+        return formID.isNull ? nil : formID
     }
 }

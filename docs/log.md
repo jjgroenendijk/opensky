@@ -4,6 +4,19 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-26
 
+* **Music records (M9.2.3, issue #156)**: added the MUSC/MUST format layer that
+  the music director builds on. `MusicType` decodes the playlist flags,
+  priority, ducking and fade duration plus the ordered MUST link list;
+  `MusicTrack` decodes the track type tag, duration, fade-out, track and finale
+  filenames, cue points, loop data and palette children. The three world links
+  that select a playlist are now decoded too: `CELL.XCMO`, `WRLD.ZNAM`, and
+  `REGN.RDMO` (previously skipped). `MusicRecordStore` indexes both record types
+  eagerly, expands a MUSC into its ordered tracks, and canonicalizes ANAM/BNAM
+  filenames under the `music\` root — a separate rule from the `sound\` root
+  `SoundRecordStore` applies. The store is exposed through `AudioDataProviding`
+  so the director stage can pull it. See [music records](/formats/music.md);
+  covered by `MusicRecordTests`, `MusicRecordStoreTests`, plus the new field
+  cases in `CellRecordTests`, `RegionRecordTests` and `RecordDecoderTests`.
 * **World SFX + ambience (M9.2.2, issue #155)**: the world sound director
   wires the M8 interaction-event seam to one-shot SFX and the streaming
   cell lifecycle to a positional ambience bed. Door open SFX plays under

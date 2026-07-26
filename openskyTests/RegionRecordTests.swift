@@ -145,6 +145,44 @@ struct RegionRecordTests {
         #expect(region.soundPriority == nil)
     }
 
+    @Test func decodesRegionMusicInSoundArea() throws {
+        // RDMO (M9.2.3) alongside RDSA under the same sound-area RDAT.
+        var soundHeader = Data()
+        soundHeader.appendUInt32(7)
+        soundHeader.append(contentsOf: [0x00, 2])
+        soundHeader.appendUInt16(0)
+        let fields = ESMFixture.field("RDAT", soundHeader)
+            + ESMFixture.field("RDMO", formID(0x300))
+            + ESMFixture.field("RDSA", Data(count: 12))
+        let region = try Region(record: record(ESMFixture.record(
+            "REGN", formID: 0x50, data: fields
+        )))
+        #expect(region.musicType == FormID(0x300))
+        #expect(region.soundList.count == 1)
+    }
+
+    @Test func decodesRegionMusicWithoutSoundArea() throws {
+        // UESP REGN: RDMO "can appear ... on its own", so no area context.
+        let fields = ESMFixture.field("EDID", ESMFixture.zstring("MusicOnly"))
+            + ESMFixture.field("RDMO", formID(0x301))
+        let region = try Region(record: record(ESMFixture.record("REGN", data: fields)))
+        #expect(region.musicType == FormID(0x301))
+        #expect(region.soundList.isEmpty)
+    }
+
+    @Test func ignoresNullAndTruncatedRegionMusic() throws {
+        let null = try Region(record: record(ESMFixture.record(
+            "REGN", data: ESMFixture.field("RDMO", formID(0))
+        )))
+        #expect(null.musicType == nil)
+
+        // A later wrong-width RDMO must not clear a valid earlier one.
+        let fields = ESMFixture.field("RDMO", formID(0x302))
+            + ESMFixture.field("RDMO", Data([1, 2]))
+        let short = try Region(record: record(ESMFixture.record("REGN", data: fields)))
+        #expect(short.musicType == FormID(0x302))
+    }
+
     @Test func missingFieldsDecodeToEmptyAndNil() throws {
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("Bare"))
         let region = try Region(record: record(ESMFixture.record("REGN", data: fields)))
@@ -157,6 +195,7 @@ struct RegionRecordTests {
         #expect(region.soundList.isEmpty)
         #expect(region.soundPriority == nil)
         #expect(!region.soundOverride)
+        #expect(region.musicType == nil)
     }
 
     @Test func wrongRecordTypeThrows() throws {

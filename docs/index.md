@@ -34,6 +34,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Acoustic space (ASPC)](/formats/acoustic-space.md) - interior-ambience bridge:
   ASPC fields, the `RDAT` FormID collision with REGN's area header, and the
   interior-only region borrow.
+* [Music records (MUSC, MUST)](/formats/music.md) - MUSC playlist flags/priority/
+  ducking plus MUST track type, loop and cue data, the CELL/WRLD/REGN music links,
+  and the `music\` path rules.
 * [Distant LOD](/formats/lod.md) - lodsettings plus BTR/BTO paths and LOD-specific NIF
   blocks, tree LST/BTT layouts, placement rules, full vanilla sweep evidence.
 * [Skyrim INI settings](/formats/ini.md) - read-only decode, file precedence, typed
