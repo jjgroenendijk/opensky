@@ -20,6 +20,15 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   stable. New chrome ids are `PanelSection-<id>-OverrideIndicator`,
   `PanelSection-<id>-ResetControl`, `Destination-<id>-OverrideIndicator`, and
   `ResetAllOverridesCommand`. See [Main-app UI framework](/tools/app-ui.md).
+* **Walk-mode interaction targeting (M8.4.1)**: F now activates the exact object under a
+  finite 192-unit camera ray instead of selecting a nearby door. Resident collision BVHs
+  provide broadphase candidates; exact triangle, convex, box, sphere, and capsule tests
+  select the first solid hit before interaction metadata lookup, so walls occlude targets.
+  Streamed scenes retain localized FULL names, ACTI RNAM overrides, typed actions, and the
+  record flags that suppress manual interaction. Target changes and use-key actions publish
+  engine values for the HUD and later Papyrus bridge. Existing XTEL doors consume the same
+  selected event path for interior/exterior transitions. See
+  [interaction targeting](/engine/interaction.md). Refs #145.
 
 ## 2026-07-25
 

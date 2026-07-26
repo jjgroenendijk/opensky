@@ -13,11 +13,12 @@ extension CellStreamerTests {
         let streamer = Self.makeStreamer(runner: runner, radius: 0)
         streamer.update(cameraPosition: Self.center)
         let outside = Self.door(reference: 0x10, destination: 0x20, position: Self.center)
-        runner.complete(Self.coordinate(0, 0), with: .success(Self.cellScene(
-            location: .exterior(Self.coordinate(0, 0)), doors: [outside]
+        runner.complete(Self.coordinate(0, 0), with: .success(Self.interactiveScene(
+            location: .exterior(Self.coordinate(0, 0)), door: outside
         )))
         streamer.update(cameraPosition: Self.center)
-        streamer.update(cameraPosition: Self.center, activate: true)
+        let usePosition = Self.center - SIMD3<Float>(10, 0, 0)
+        Self.activate(streamer, from: usePosition, toward: Self.center)
         runner.completeDoorTransition(from: FormID(0x10), with: .failure(DoorFailure.broken))
         streamer.update(cameraPosition: Self.center)
 
@@ -26,7 +27,7 @@ extension CellStreamerTests {
     }
 
     @Test
-    func proximityDoorEntersInteriorSuspendsGridThenReturns() {
+    func selectedDoorEntersInteriorSuspendsGridThenReturns() {
         let runner = ManualCellBuildRunner()
         var cameras: [SceneCamera?] = []
         let streamer = Self.makeStreamer(runner: runner, radius: 0) { _, camera in
@@ -34,20 +35,22 @@ extension CellStreamerTests {
         }
         streamer.update(cameraPosition: Self.center)
         let outside = Self.door(reference: 0x10, destination: 0x20, position: Self.center)
-        runner.complete(Self.coordinate(0, 0), with: .success(Self.cellScene(
-            location: .exterior(Self.coordinate(0, 0)), doors: [outside]
+        runner.complete(Self.coordinate(0, 0), with: .success(Self.interactiveScene(
+            location: .exterior(Self.coordinate(0, 0)), door: outside
         )))
         streamer.update(cameraPosition: Self.center)
 
-        streamer.update(cameraPosition: Self.center + SIMD3(500, 0, 0), activate: true)
+        let farPosition = Self.center + SIMD3<Float>(500, 0, 0)
+        Self.activate(streamer, from: farPosition, toward: Self.center)
         #expect(runner.enqueuedDoorTransitions.isEmpty)
-        streamer.update(cameraPosition: Self.center, activate: true)
+        let outsideUsePosition = Self.center - SIMD3<Float>(10, 0, 0)
+        Self.activate(streamer, from: outsideUsePosition, toward: Self.center)
         #expect(runner.enqueuedDoorTransitions == [FormID(0x10)])
 
         let insidePosition = SIMD3<Float>(100, 200, 300)
         let inside = Self.door(reference: 0x20, destination: 0x10, position: insidePosition)
-        let interior = Self.cellScene(
-            location: .interior(FormID(0x138CA)), doors: [inside]
+        let interior = Self.interactiveScene(
+            location: .interior(FormID(0x138CA)), door: inside
         )
         runner.completeDoorTransition(from: FormID(0x10), with: .success(DoorTransition(
             sourceDoor: FormID(0x10),
@@ -65,10 +68,11 @@ extension CellStreamerTests {
         streamer.update(cameraPosition: CellGridManager.cellCenter(of: Self.coordinate(20, 20)))
         #expect(runner.enqueued.count == exteriorBuildCount)
 
-        streamer.update(cameraPosition: insidePosition, activate: true)
+        let insideUsePosition = insidePosition - SIMD3<Float>(10, 0, 0)
+        Self.activate(streamer, from: insideUsePosition, toward: insidePosition)
         #expect(runner.enqueuedDoorTransitions == [FormID(0x10), FormID(0x20)])
-        let outsideScene = Self.cellScene(
-            location: .exterior(Self.coordinate(0, 0)), doors: [outside]
+        let outsideScene = Self.interactiveScene(
+            location: .exterior(Self.coordinate(0, 0)), door: outside
         )
         runner.completeDoorTransition(from: FormID(0x20), with: .success(DoorTransition(
             sourceDoor: FormID(0x20),
@@ -81,5 +85,38 @@ extension CellStreamerTests {
         streamer.update(cameraPosition: insidePosition)
         #expect(!streamer.isInterior)
         #expect(cameras.last.flatMap(\.self)?.eye == Self.center)
+    }
+
+    private static func interactiveScene(
+        location: CellSceneLocation,
+        door: PlacedDoor
+    ) -> CellScene {
+        let reference = door.reference
+        return cellScene(
+            location: location,
+            doors: [door],
+            interactions: [
+                reference: interaction(
+                    reference: reference.rawValue,
+                    position: door.position
+                )
+            ],
+            staticCollision: collision(
+                reference: reference.rawValue,
+                position: door.position
+            )
+        )
+    }
+
+    private static func activate(
+        _ streamer: CellStreamer,
+        from origin: SIMD3<Float>,
+        toward target: SIMD3<Float>
+    ) {
+        streamer.update(
+            cameraPosition: origin,
+            interactionRay: interactionRay(from: origin, to: target),
+            activate: true
+        )
     }
 }

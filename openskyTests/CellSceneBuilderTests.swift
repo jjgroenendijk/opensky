@@ -294,10 +294,24 @@ extension CellSceneBuilderTests {
     }
 
     /// One MSTT/TREE/FURN/ACTI/CONT record, same EDID/MODL shape as STAT.
-    func modelBaseRecord(type: String, formID: UInt32, modelPath: String?) -> Data {
+    func modelBaseRecord(
+        type: String,
+        formID: UInt32,
+        modelPath: String?,
+        displayName: String? = nil,
+        activateTextOverride: String? = nil
+    ) -> Data {
         var fields = Data()
+        if let displayName {
+            fields += ESMFixture.field("FULL", ESMFixture.zstring(displayName))
+        }
         if let modelPath {
             fields += ESMFixture.field("MODL", ESMFixture.zstring(modelPath))
+        }
+        if let activateTextOverride {
+            fields += ESMFixture.field(
+                "RNAM", ESMFixture.zstring(activateTextOverride)
+            )
         }
         return ESMFixture.record(type, formID: formID, data: fields)
     }

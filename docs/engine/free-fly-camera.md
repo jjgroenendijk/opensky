@@ -4,7 +4,7 @@ title: Free-fly camera
 description: Free-fly camera input model + math - WASDQE + mouse-look capture, yaw/pitch
   pose, view matrix, movement speeds tuned to Skyrim scale.
 tags: [engine, rendering, camera, input]
-timestamp: 2026-07-17T00:00:00Z
+timestamp: 2026-07-26T00:00:00Z
 ---
 
 # Free-fly camera
@@ -27,8 +27,8 @@ layer so the math stays AppKit-free + unit-tested:
 - Look: mouse deltas (`NSEvent.deltaX/deltaY`) while captured. Pointer right -> turn right,
   pointer up -> look up. `deltaY` is positive pointer-down (top-left origin) -> negated.
 - Boost: Shift (`flagsChanged`) multiplies speed while held.
-- Activate: F latches one request; streamer consumes it to use nearest teleport door
-  within 192 units. See [interior door transitions](/engine/interiors.md).
+- Activate: F latches one request. Walk mode resolves the current 192-unit
+  [interaction view ray](/engine/interaction.md); fly mode has no target and ignores it.
 - Mode: G latches one fly/walk toggle. Fly stays default; walk hands horizontal input + look
   to [terrain walk controller](/engine/walk-mode.md). Q/E vertical input remains fly-only.
 - Capture: click in the view grabs the pointer (`NSCursor.hide` +

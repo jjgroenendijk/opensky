@@ -94,10 +94,10 @@ nonisolated final class CellSceneBuilder {
     var collisionPartitionCache: [CellCollisionPartitionKey: [StaticCollisionPartition]] = [:]
     let distantLODBuilder: DistantLODBuilder?
     /// FormID -> STAT over the STAT top group, built on first use.
-    private var statIndex: [UInt32: StaticObject]?
+    var statIndex: [UInt32: StaticObject]?
     /// FormID -> ModelBase over MSTT/TREE/FURN/ACTI/CONT/DOOR top groups,
     /// built on first use. Checked when a ref's base is not a STAT.
-    private var modelBaseIndex: [UInt32: ModelBase]?
+    var modelBaseIndex: [UInt32: ModelBase]?
     /// XTEL refs stored in each WRLD persistent CELL, keyed by WRLD FormID.
     /// Physical placement decides which streamed exterior scene owns them.
     var exteriorPersistentTeleportRefs: [UInt32: [PlacedReference]] = [:]
@@ -112,6 +112,10 @@ nonisolated final class CellSceneBuilder {
     var actorAnimationClips: [ActorAnimationCacheKey: ActorAnimationClip] = [:]
     /// Plugin file name feeding FaceGen path resolution (FormIDResolver).
     let pluginName: String
+    /// TES4 0x80 selects table-ID lstrings instead of inline zstrings.
+    let pluginLocalized: Bool
+    /// Resolves FULL/RNAM interaction text when the builder has a VFS.
+    let localizedStrings: LocalizedStrings?
     /// Water/environment indexes + reusable plane mesh. Build-queue confined
     /// like the existing record indexes and asset libraries.
     var worldspaceIndex: [UInt32: Worldspace]?
@@ -135,6 +139,10 @@ nonisolated final class CellSceneBuilder {
         self.textures = textures
         self.fileSystem = fileSystem
         self.pluginName = pluginName
+        pluginLocalized = (try? file.pluginHeader().isLocalized) ?? false
+        localizedStrings = fileSystem.map {
+            LocalizedStrings(vfs: $0, pluginName: pluginName)
+        }
         collisionModels = fileSystem.map(NIFCollisionLibrary.init(fileSystem:))
         distantLODBuilder = fileSystem.map {
             DistantLODBuilder(
@@ -151,27 +159,19 @@ nonisolated final class CellSceneBuilder {
         gridX: Int32,
         gridY: Int32
     ) throws -> CellScene {
-        // localized only affects FULL lstrings, which scene build never
-        // reads — a failed TES4 decode safely defaults to false.
         // Clear any stale working set so this build's touched keys are exactly
         // this cell's mesh + texture set (recorded onto the CellScene for
         // unload eviction — docs/engine/cell-streaming.md).
         _ = meshes.drainTouchedKeys()
         _ = textures.drainTouchedKeys()
         _ = collisionModels?.drainTouchedKeys()
-        let localized = (try? file.pluginHeader().isLocalized) ?? false
-        let world = try worldChildrenGroup(editorID: worldspaceEditorID, localized: localized)
-        guard
-            let found = findCell(
-                in: world.children, gridX: gridX, gridY: gridY, localized: localized
-            )
-        else {
-            throw CellSceneError.cellNotFound(
-                worldspaceEditorID: worldspaceEditorID,
-                gridX: gridX,
-                gridY: gridY
-            )
-        }
+        let source = try exteriorBuildSource(
+            worldspaceEditorID: worldspaceEditorID,
+            gridX: gridX,
+            gridY: gridY
+        )
+        let world = source.world
+        let found = source.cell
         var counts = BuildCounts()
         let localRefs = collectReferences(in: found.children, counts: &counts)
         let coordinate = CellCoordinate(x: gridX, y: gridY)
@@ -179,7 +179,7 @@ nonisolated final class CellSceneBuilder {
             local: localRefs,
             world: world.children,
             coordinate: coordinate,
-            localized: localized
+            localized: pluginLocalized
         )
         counts.totalRefs = refs.count + counts.malformedRefs
         let location = CellSceneLocation.exterior(coordinate)
@@ -189,7 +189,7 @@ nonisolated final class CellSceneBuilder {
             cellChildren: found.children,
             world: world.children,
             coordinate: coordinate,
-            localized: localized
+            localized: pluginLocalized
         )
         let environment = buildEnvironment(found: found, worldspace: world.worldspace)
         var scene = makeScene(
@@ -199,6 +199,7 @@ nonisolated final class CellSceneBuilder {
             geometry: CellGeometryBuild(
                 location: location,
                 doors: resolveDoors(refs: refs),
+                interactions: resolveInteractions(refs: refs),
                 terrain: environment.terrain,
                 grass: environment.grass,
                 water: environment.water,
@@ -419,78 +420,5 @@ extension CellSceneBuilder {
             }
         }
         return instances.sorted { ($0.sortKey, $0.formID) < ($1.sortKey, $1.formID) }
-    }
-
-    /// FormID -> StaticObject over the STAT top group. Raw FormIDs suffice
-    /// for now: scene build reads a single plugin, so REFR base IDs and STAT
-    /// record IDs share one FormID space (cross-plugin resolution via
-    /// FormIDResolver arrives with load-order support). Malformed STATs are
-    /// skipped — refs pointing at them fall into the unsupported-base bucket.
-    nonisolated func statIndexBuildingIfNeeded() -> [UInt32: StaticObject] {
-        if let statIndex {
-            return statIndex
-        }
-        var index: [UInt32: StaticObject] = [:]
-        if let top = file.topGroup(of: "STAT"), let children = try? top.children() {
-            for case let .record(record) in children where record.type == "STAT" {
-                guard let stat = try? StaticObject(record: record) else {
-                    let id = FormID(record.formID).description
-                    Self.logger.warning("malformed STAT \(id, privacy: .public) skipped")
-                    continue
-                }
-                index[record.formID] = stat
-            }
-        }
-        statIndex = index
-        return index
-    }
-
-    /// FormID -> ModelBase over MSTT/TREE/FURN/ACTI/CONT/DOOR top groups
-    /// (milestone 3.2 "widen base coverage"), built on first use and cached
-    /// like statIndex. One top group per record type — unlike STAT there is
-    /// no single shared group. Malformed records are skipped with a log,
-    /// same mod-quirk handling as STAT.
-    nonisolated func modelBaseIndexBuildingIfNeeded() -> [UInt32: ModelBase] {
-        if let modelBaseIndex {
-            return modelBaseIndex
-        }
-        var index: [UInt32: ModelBase] = [:]
-        for type in ModelBase.supportedTypes {
-            guard let top = file.topGroup(of: type), let children = try? top.children() else {
-                continue
-            }
-            for case let .record(record) in children where record.type == type {
-                guard let base = try? ModelBase(record: record) else {
-                    let id = FormID(record.formID).description
-                    let name = type.description
-                    Self.logger
-                        .warning(
-                            "malformed \(name, privacy: .public) \(id, privacy: .public) skipped"
-                        )
-                    continue
-                }
-                index[record.formID] = base
-            }
-        }
-        modelBaseIndex = index
-        return index
-    }
-
-    /// STAT first (largest, most common base type), falling back to the
-    /// ModelBase index; nil when the base FormID resolves to neither.
-    nonisolated func resolveBase(
-        formID: UInt32,
-        statIndex: [UInt32: StaticObject],
-        modelBaseIndex: [UInt32: ModelBase]
-    ) -> ResolvedBase? {
-        if let stat = statIndex[formID] {
-            return ResolvedBase(formID: stat.formID, recordType: "STAT", modelPath: stat.modelPath)
-        }
-        if let base = modelBaseIndex[formID] {
-            return ResolvedBase(
-                formID: base.formID, recordType: base.recordType, modelPath: base.modelPath
-            )
-        }
-        return nil
     }
 }

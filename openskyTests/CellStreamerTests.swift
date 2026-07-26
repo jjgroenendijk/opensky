@@ -77,6 +77,8 @@ struct CellStreamerTests {
         textureKeys: Set<String> = [],
         location: CellSceneLocation? = nil,
         doors: [PlacedDoor] = [],
+        interactions: [FormID: PlacedInteraction] = [:],
+        staticCollision: StaticCollisionSet = .empty,
         regions: [FormID] = []
     ) -> CellScene {
         CellScene(
@@ -91,7 +93,9 @@ struct CellStreamerTests {
             bounds: bounds,
             location: location,
             doors: doors,
+            interactions: interactions,
             regions: regions,
+            staticCollision: staticCollision,
             assets: CellAssets(meshKeys: meshKeys, textureKeys: textureKeys)
         )
     }

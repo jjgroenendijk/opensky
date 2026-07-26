@@ -177,9 +177,17 @@ final class GameViewController: NSViewController {
                 }
             }
         )
-        renderer.onFrame = { [weak controller, weak cameraInput] position in
+        renderer.onFrame = { [weak controller, weak cameraInput, weak renderer] position in
+            let interactionRay = renderer.flatMap { renderer -> InteractionRay? in
+                guard renderer.movementMode == .walk else { return nil }
+                return InteractionRay(
+                    origin: renderer.freeFlyCamera.position,
+                    direction: renderer.freeFlyCamera.forward
+                )
+            }
             controller?.update(
                 cameraPosition: position,
+                interactionRay: interactionRay,
                 activate: cameraInput?.consumeActivation() ?? false
             )
         }

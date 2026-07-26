@@ -1,4 +1,4 @@
-// Door proximity interaction + async interior/exterior scene swaps. Split
+// Selected-door transition dispatch + async interior/exterior scene swaps. Split
 // from CellStreamer so exterior grid scheduling stays readable.
 
 import OSLog
@@ -29,18 +29,13 @@ extension CellStreamer {
     /// Returns true while interior owns current view. Exterior composition +
     /// bookkeeping remain resident but frozen until a door returns outside.
     func updateInteriorIfNeeded(
-        cameraPosition: SIMD3<Float>,
-        activate: Bool,
         completedLOD: [DistantLODBuildResult]
     ) -> Bool {
-        guard let interiorScene else { return false }
+        guard interiorScene != nil else { return false }
         for entry in completedLOD {
             if case let .success(scene) = entry.result, let scene {
                 evictUnused(scene.assets)
             }
-        }
-        if activate {
-            requestDoorTransition(nearestDoor(in: interiorScene, to: cameraPosition))
         }
         return true
     }
@@ -61,6 +56,7 @@ extension CellStreamer {
     }
 
     func apply(transition: DoorTransition) {
+        updateInteractionTarget(ray: nil)
         let camera = SceneCamera.teleport(placement: transition.destinationPlacement)
         switch transition.scene.location {
         case .interior:

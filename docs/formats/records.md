@@ -3,7 +3,7 @@ type: File Format
 title: Record decoders (WRLD, CELL, REFR, STAT, ModelBase)
 description: Field layouts of decoded plugin records and OpenSky's engine types.
 tags: [format, plugin, records, worldspace, cell]
-timestamp: 2026-07-19T00:00:00Z
+timestamp: 2026-07-26T00:00:00Z
 ---
 
 # Record decoders, Skyrim SE
@@ -127,14 +127,17 @@ models skipped until the NIF/LOD work needs them.
 ## MSTT/TREE/FURN/ACTI/CONT/DOOR -> ModelBase
 
 One shared `ModelBase` (`opensky/Formats/ESM/Records/ModelBase.swift`) decodes six
-placeable base types beyond STAT. All carry EDID + MODL in the same position STAT does;
-scene build needs model path only. M3.6 adds DOOR draw coverage; teleport data belongs to
-placed REFR XTEL, not DOOR.
+placeable base types beyond STAT. M3.6 added DOOR draw coverage; M8.4.1 adds display and
+activation metadata. Teleport data belongs to placed REFR XTEL, not DOOR.
 
-| field | type    | decoded                      |
-| ----- | ------- | ---------------------------- |
-| EDID  | zstring | `editorID`                   |
-| MODL  | zstring | `modelPath` (nil = no model) |
+| field | type    | decoded                                        |
+| ----- | ------- | ---------------------------------------------- |
+| EDID  | zstring | `editorID`                                     |
+| FULL  | lstring | `name`; inline or localized `.strings` ID      |
+| MODL  | zstring | `modelPath` (nil = no model)                   |
+| RNAM  | lstring | ACTI-only `activateTextOverride`               |
+| FNAM  | uint8   | DOOR flags; bit 1 means automatic              |
+| MNAM  | uint32  | FURN marker flags; bit 25 disables activation  |
 
 Per-type reference, all UESP "Skyrim Mod:Mod File Format":
 
@@ -145,14 +148,23 @@ Per-type reference, all UESP "Skyrim Mod:Mod File Format":
 * CONT (container) — <https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CONT>
 * DOOR (door) — <https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DOOR>
 
-Type-specific fields skipped: FURN furniture-marker/animation fields, CONT
-inventory (CNTO) + open/close sound, ACTI interaction (VNAM/activate text, sound), TREE
-billboard/leaf-curve fields (CVPA/BSNM/...), DOOR sounds/flags. `ModelBase.recordType`
-retains source record type so callers can distinguish them without redecoding.
+The cross-type field and flag authority is xEdit `dev-4.1.6`
+[`wbDefinitionsTES5.pas`](https://github.com/TES5Edit/TES5Edit/blob/fd1e36020b2b5b6217e553dc0038983146a2e2dd/Core/wbDefinitionsTES5.pas):
+ACTI at lines 3297-3332, CONT at 4492-4521, DOOR at 4908-4933, FURN at 5205-5260,
+MSTT at 5409-5437, and TREE at 10221-10253. In addition to the field flags above,
+ACTI record-header bit 20 means `Ignore Object Interaction`. These three suppression
+values produce `allowsManualInteraction = false`.
+
+Type-specific fields still skipped: remaining FURN furniture-marker/animation fields,
+CONT inventory (CNTO) and open/close sound, ACTI sounds and water type, TREE
+billboard/leaf-curve fields (CVPA/BSNM/...), and remaining DOOR sounds/flags.
+`ModelBase.recordType` retains source record type so callers can distinguish them without
+redecoding.
 
 ## Verification
 
 Unit tests: `openskyTests/RecordDecoderTests.swift`,
+`ModelBaseInteractionTests.swift`,
 `LocalizedStringsTests.swift` (synthetic fixtures). Runtime probe 2026-07-09
 against vanilla Skyrim.esm (milestone 1 acceptance): 37 worldspaces listed
 with EDID + FULL resolved via string tables from `Skyrim - Interface.bsa`

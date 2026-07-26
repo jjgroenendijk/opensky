@@ -86,6 +86,21 @@ nonisolated struct CellSceneComposition {
             }
     }
 
+    func interaction(reference: FormID) -> PlacedInteraction? {
+        for scene in cells.values {
+            if let interaction = scene.interactions[reference] {
+                return interaction
+            }
+        }
+        return nil
+    }
+
+    func door(reference: FormID) -> PlacedDoor? {
+        cells.values
+            .flatMap(\.doors)
+            .first { $0.reference == reference }
+    }
+
     /// Ground query over resident full cells. Cell ownership uses same floor
     /// division as streaming, including negative coordinates and exact border
     /// handoff to the north/east neighbor.

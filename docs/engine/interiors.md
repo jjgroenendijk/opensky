@@ -1,10 +1,10 @@
 ---
 type: Subsystem
 title: Interior door transitions
-description: Interior CELL build, DOOR/XTEL resolution, proximity activation, camera
+description: Interior CELL build, DOOR/XTEL resolution, view-ray activation, camera
   teleport, suspended exterior streaming, return flow.
 tags: [engine, world, interior, door, streaming]
-timestamp: 2026-07-19T00:00:00Z
+timestamp: 2026-07-26T00:00:00Z
 ---
 
 # Interior door transitions
@@ -50,9 +50,14 @@ Load-order override support waits for multi-plugin world loading.
 
 ## Activation + streaming
 
-`F` latches one activation request. Each frame streamer picks nearest teleport door within
-192 world units; requests outside radius do nothing. Raycast/interaction prompt remain
-later work. Same proximity path works inside for return door.
+`F` latches one activation request. In walk mode, the streamer resolves the nearest exact
+collision hit on the camera view ray within 192 world units and activates it only when the
+hit maps to interaction metadata. Fly mode publishes no ray, clears any target, and ignores
+the activation request. Details: [interaction targeting](/engine/interaction.md).
+
+Doors use the same typed target/event path as other interactables. Only an `Open` target
+requests a transition, and it passes the exact selected REFR rather than repeating a
+nearest-door search. The same path works inside for the return door.
 
 While transition builds, current scene stays live. On interior arrival renderer swaps to
 one interior scene; camera eye becomes XTEL position, pitch = rotation X, yaw = rotation Z
@@ -65,7 +70,8 @@ settlement evicts old cells/assets.
 
 Synthetic tests cover wrong interior labels, type-2/type-3 traversal, no terrain/sky,
 DOOR draw + XTEL metadata, exact 32-byte XTEL rejection, two-way destination-cell
-resolution including persistent `(0,0)` storage, proximity activation, suspended exterior
+resolution including persistent `(0,0)` storage, selected view-ray activation, suspended
+exterior
 requests, exact camera pose, return
 resume. `openskycli interior --out logs/interior-probe.png` selects nearest persistent
 door within configured cell radius, requires exterior -> interior -> same exterior door

@@ -79,7 +79,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Weather runtime](/engine/weather.md) - region/climate weather selection, timed
   sky/fog/ambient transitions over time-of-day, published wind, force/pause app controls.
 * [Interior door transitions](/engine/interiors.md) - interior CELL build, DOOR/XTEL
-  resolution, proximity activation, camera teleport, suspended exterior streaming.
+  resolution, selected activation, camera teleport, suspended exterior streaming.
+* [Interaction targeting](/engine/interaction.md) - walk-mode view-ray selection,
+  localized record names and action labels, typed activation events, exact door dispatch.
 * [Free-fly camera](/engine/free-fly-camera.md) - WASDQE + mouse-look input capture,
   yaw/pitch pose -> view matrix, movement speeds tuned to Skyrim scale.
 * [Terrain walk mode](/engine/walk-mode.md) - fixed-step capsule, terrain + mesh
