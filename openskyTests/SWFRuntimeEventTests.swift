@@ -144,6 +144,15 @@ struct SWFRuntimeEventTests {
         #expect(log(runtime) == "CDDP")
     }
 
+    @Test func globalMouseClipActionsEnterTheHandlerIndex() throws {
+        let runtime = try SWFRuntimeFixture.started(
+            tags: Self.lifecycleTags([Self.handler(.mouseDown, "M")], removing: false)
+        )
+        #expect(runtime.globalMouseHandlerClips == 1)
+        #expect(runtime.handle(.pointerPressed(x: 400, y: 400)))
+        #expect(log(runtime) == "CM")
+    }
+
     // MARK: - Broadcasters
 
     private func startedBroadcastRuntime() throws -> SWFMovieRuntime {

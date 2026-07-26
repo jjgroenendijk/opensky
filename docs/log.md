@@ -4,6 +4,12 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-26
 
+* **Indexed global SWF mouse handlers** (issue #133): `onMouseMove`,
+  `onMouseDown`, and `onMouseUp` no longer trigger a full display-tree walk on
+  every pointer event. Each runtime maintains a weak candidate index from
+  direct and inherited AS2 property mutations plus mouse `CLIPACTIONS`,
+  preserves the former highest-depth-first display order, and removes dead or
+  detached clips during dispatch. See [AS2 runtime](/engine/as2-runtime.md).
 * **Dev-shell override provenance and Reset all** (issue #143): every mutable
   `PanelSectionViewController` now reports `isOverridden` and implements
   `resetToDefaults()` against its live provider. A `Theme.gold` dot and Reset

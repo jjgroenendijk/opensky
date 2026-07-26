@@ -6,7 +6,7 @@ description: The ActionScript 2 bytecode interpreter - value model and ECMAScrip
   drives, event dispatch and input routing, the GameDelegate bridge, and the tally
   of everything not implemented.
 tags: [engine, swf, actionscript, ui, scaleform]
-timestamp: 2026-07-25T00:00:00Z
+timestamp: 2026-07-26T00:00:00Z
 ---
 
 # AS2 runtime
@@ -465,7 +465,10 @@ Pointer routing:
   defines one is called wherever the pointer is, unlike `onPress`. Vanilla depends on the
   distinction — `tweenmenu.swf` wires each input rectangle with an `onRollOver` for
   highlighting and an `onMouseDown` for activation, and the second would never fire on a
-  hit-target-only route. The `Mouse` broadcaster receives the same three messages.
+  hit-target-only route. The runtime indexes clips with one of these member handlers or a
+  matching `CLIPACTIONS` handler as properties and prototypes mutate. Pointer events walk
+  that weak index in display-tree order instead of scanning every clip; detached clips are
+  discarded. The `Mouse` broadcaster receives the same three messages.
 
 Key routing:
 
@@ -991,9 +994,6 @@ addressable.
 - The scope chain has no `with` frame, because no vanilla movie emits `ActionWith`.
 - Hit testing is bounding-box only, in both directions (`hitTest(stageTwips:)` and
   `MovieClip.hitTest`), and `setTextFormat` is accepted and ignored.
-- `onMouseMove`, `onMouseDown`, and `onMouseUp` walk every clip in the tree per event,
-  because Flash delivers them globally. Bounded by `maximumNodes` (4,096) and cheap for a
-  menu; a movie with thousands of clips would want an index (issue #133).
 - `menuInputHandler` finds a menu root by searching for `handleInput` breadth-first to depth
   3. That is the observed vanilla shape, not a declared contract; a movie that buries its
   menu root deeper, or that puts a CLIK control that shallow, would need the engine to name

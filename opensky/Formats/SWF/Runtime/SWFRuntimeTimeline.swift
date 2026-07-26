@@ -163,6 +163,7 @@ nonisolated extension SWFMovieRuntime {
         }
         if let clipActions = placement.clipActions {
             node.clipActions = clipActions
+            globalMouseHandlers.refresh(node)
             if !clipActions.allEvents.isDisjoint(with: [.keyDown, .keyUp, .keyPress]) {
                 noteKeyClipHandler()
             }
