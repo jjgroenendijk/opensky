@@ -23,6 +23,7 @@ private final class FakeShadowProvider: ShadowControlProviding, TerrainLODContro
     var terrainLODConfigurationSnapshot = TerrainLODConfigurationSnapshot(
         configuration: .fallback, source: "test"
     )
+    var terrainLODOverrideActive = false
 
     func applyTerrainLODConfiguration(_: TerrainLODConfiguration) -> Bool {
         true

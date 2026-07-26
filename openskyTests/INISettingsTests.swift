@@ -80,11 +80,13 @@ struct INISettingsTests {
         )
 
         TerrainLODSettings.store(configuration, to: defaults)
+        #expect(TerrainLODSettings.hasOverride(in: defaults))
         let loaded = TerrainLODSettings.load(root: nil, defaults: defaults)
         #expect(loaded.configuration == configuration)
         #expect(loaded.source == "OpenSky sidebar override")
 
         TerrainLODSettings.clearOverride(from: defaults)
+        #expect(!TerrainLODSettings.hasOverride(in: defaults))
         #expect(TerrainLODSettings.load(root: nil, defaults: defaults).configuration == .fallback)
     }
 }

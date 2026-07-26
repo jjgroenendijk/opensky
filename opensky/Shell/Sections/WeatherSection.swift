@@ -38,6 +38,31 @@ final class WeatherSection: PanelSectionViewController {
         "weather"
     }
 
+    override var isOverridden: Bool {
+        Self.isOverridden(provider: provider)
+    }
+
+    override func resetToDefaults() {
+        Self.resetToDefaults(provider: provider)
+    }
+
+    static func isOverridden(provider: (any WeatherControlProviding)?) -> Bool {
+        guard let provider else { return false }
+        return !provider.weatherEnabled
+            || provider.weatherOverrideActive
+            || provider.weatherTransitionsPaused
+            || provider.timeOfDay != TimeOfDaySettings.fallback
+    }
+
+    static func resetToDefaults(provider: (any WeatherControlProviding)?) {
+        guard let provider else { return }
+        provider.weatherEnabled = true
+        provider.forceWeather(named: nil)
+        provider.weatherTransitionsPaused = false
+        provider.timeOfDay = TimeOfDaySettings.fallback
+        TimeOfDaySettings.clearOverride()
+    }
+
     private static let autoWeatherTitle = "Auto"
 
     override func makeContentViews() -> [NSView] {

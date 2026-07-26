@@ -7,14 +7,14 @@
 // adds the hosted SWFMovieSection: pick a vanilla movie, toggle the SWF layer,
 // read its tag/draw stats. M8.3.3 adds the hosted SWFRuntimeSection beside it:
 // run that movie's ActionScript, drive it with keys and pointer events, and
-// read its movie state, invoke log, and op tally. Built on the shared panel
-// framework (opensky/Shell)
-// as a direct-content panel. Talks to the engine only through the narrow
-// UILabControlProviding and SWFLabControlProviding seams.
+// read its movie state, invoke log, and op tally. Built as three normal
+// sections on the shared panel framework (opensky/Shell). Talks to the engine
+// only through the narrow UILabControlProviding and SWFLabControlProviding
+// seams.
 
 import AppKit
 
-final class UILabPanelViewController: InspectorPanelViewController {
+final class UILabControlsSection: PanelSectionViewController {
     /// Discrete scale presets surfaced by the popup (points -> pixels factor).
     private static let scalePresets: [(title: String, value: Float)] = [
         ("50%", 0.5), ("100%", 1), ("150%", 1.5), ("200%", 2)
@@ -50,21 +50,38 @@ final class UILabPanelViewController: InspectorPanelViewController {
     )
     private let stringsStatsLabel = PanelComponents.statsLabel(identifier: "UIStringsStatsLabel")
 
-    /// SWF movie selector (M8.2.5). A self-contained child section hosted by
-    /// this direct-content panel, so the SWF controls carry their own sync,
-    /// readout, and ticker (docs/tools/app-ui.md "Hosting a section").
-    let swfSection = SWFMovieSection()
+    override var sectionTitle: String {
+        "UI foundation"
+    }
 
-    /// AS2 runtime driver (M8.3.3). A sibling section rather than more controls
-    /// in the selector: it has its own readout cadence and its own three
-    /// readouts (movie state, invoke log, op tally).
-    let swfRuntimeSection = SWFRuntimeSection()
+    override var sectionIdentifier: String {
+        "uiFoundation"
+    }
 
-    weak var swfProvider: (any SWFLabControlProviding)? {
-        didSet {
-            swfSection.provider = swfProvider
-            swfRuntimeSection.provider = swfProvider
-        }
+    override var isOverridden: Bool {
+        Self.isOverridden(provider: provider)
+    }
+
+    override func resetToDefaults() {
+        Self.resetToDefaults(provider: provider)
+    }
+
+    static func isOverridden(provider: (any UILabControlProviding)?) -> Bool {
+        guard let provider else { return false }
+        return !provider.uiOverlayEnabled
+            || provider.uiSampleShown
+            || provider.uiLocalizedSampleShown
+            || provider.uiScale != 1
+            || provider.menuModeSnapshot.stackDepth != 0
+    }
+
+    static func resetToDefaults(provider: (any UILabControlProviding)?) {
+        guard let provider else { return }
+        provider.uiOverlayEnabled = true
+        provider.uiSampleShown = false
+        provider.uiLocalizedSampleShown = false
+        provider.uiScale = 1
+        provider.clearPreviewMenus()
     }
 
     /// Current readout texts; the verification-surface tests read them directly.
@@ -97,35 +114,8 @@ final class UILabPanelViewController: InspectorPanelViewController {
             PanelComponents.buttonRow([menuPushControl, menuPopControl, menuClearControl]),
             menuStatsLabel,
             PanelComponents.caption("Localized strings"),
-            stringsStatsLabel,
-            host(swfSection),
-            host(swfRuntimeSection)
+            stringsStatsLabel
         ]
-    }
-
-    /// Adopts a section as a child and wraps it in the standard collapsible
-    /// header, matching how a sectioned panel presents its groups. The refocus
-    /// indirection reads the panel's current action at call time.
-    private func host(_ section: PanelSectionViewController) -> NSView {
-        addChild(section)
-        section.refocusAction = { [weak self] in self?.refocusAction?() }
-        return CollapsibleSectionView(
-            title: section.sectionTitle,
-            identifier: section.sectionIdentifier,
-            content: section.view
-        )
-    }
-
-    override func startInspecting() {
-        super.startInspecting()
-        swfSection.startInspecting()
-        swfRuntimeSection.startInspecting()
-    }
-
-    override func stopInspecting() {
-        super.stopInspecting()
-        swfSection.stopInspecting()
-        swfRuntimeSection.stopInspecting()
     }
 
     private func configureControls() {
@@ -226,7 +216,7 @@ final class UILabPanelViewController: InspectorPanelViewController {
 
 /// Readout formatting, split out of the class body so the panel stays inside
 /// the strict-lint type-body limit as its hosted sections grow.
-extension UILabPanelViewController {
+extension UILabControlsSection {
     private func refreshUIStats() {
         guard let snapshot = provider?.uiSnapshot else {
             statsLabel.stringValue = "UI stats unavailable."
@@ -271,5 +261,76 @@ extension UILabPanelViewController {
         Sample: \(sample) · \(snapshot.sampleKeyCount) sample keys (\(snapshot.language))
         Install: \(install)
         """
+    }
+}
+
+/// Developer > UI Lab is a normal sectioned panel so every mutable group
+/// participates in override indicators, per-section reset, and Reset all.
+final class UILabPanelViewController: InspectorPanelViewController {
+    let controlsSection = UILabControlsSection()
+    let swfSection = SWFMovieSection()
+    let swfRuntimeSection = SWFRuntimeSection()
+
+    weak var provider: (any UILabControlProviding)? {
+        didSet {
+            controlsSection.provider = provider
+            let provider = provider
+            refocusAction = { [weak provider] in provider?.refocusGameView() }
+        }
+    }
+
+    weak var swfProvider: (any SWFLabControlProviding)? {
+        didSet {
+            swfSection.provider = swfProvider
+            swfRuntimeSection.provider = swfProvider
+        }
+    }
+
+    override func makeSections() -> [PanelSectionViewController] {
+        [controlsSection, swfSection, swfRuntimeSection]
+    }
+
+    var overlayEnabledControl: NSButton {
+        controlsSection.overlayEnabledControl
+    }
+
+    var sampleControl: NSButton {
+        controlsSection.sampleControl
+    }
+
+    var localizedSampleControl: NSButton {
+        controlsSection.localizedSampleControl
+    }
+
+    var scaleControl: NSPopUpButton {
+        controlsSection.scaleControl
+    }
+
+    var menuPushControl: NSButton {
+        controlsSection.menuPushControl
+    }
+
+    var menuPopControl: NSButton {
+        controlsSection.menuPopControl
+    }
+
+    var menuClearControl: NSButton {
+        controlsSection.menuClearControl
+    }
+
+    var statsReadout: String {
+        controlsSection.statsReadout
+    }
+
+    var menuReadout: String {
+        controlsSection.menuReadout
+    }
+
+    var stringsReadout: String {
+        controlsSection.stringsReadout
+    }
+
+    func refreshStats() {
+        controlsSection.refreshStats()
     }
 }

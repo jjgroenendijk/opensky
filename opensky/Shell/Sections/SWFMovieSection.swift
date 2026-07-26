@@ -37,6 +37,25 @@ final class SWFMovieSection: PanelSectionViewController {
         "swfMovie"
     }
 
+    override var isOverridden: Bool {
+        Self.isOverridden(provider: provider)
+    }
+
+    override func resetToDefaults() {
+        Self.resetToDefaults(provider: provider)
+    }
+
+    static func isOverridden(provider: (any SWFLabControlProviding)?) -> Bool {
+        guard let provider else { return false }
+        return provider.swfLabSnapshot.selectedPath != nil
+            || !provider.swfLayerEnabled
+    }
+
+    static func resetToDefaults(provider: (any SWFLabControlProviding)?) {
+        provider?.selectSWFMovie(path: nil)
+        provider?.swfLayerEnabled = true
+    }
+
     /// Current readout text; the verification-surface tests read it directly.
     var statsReadout: String {
         statsLabel.stringValue

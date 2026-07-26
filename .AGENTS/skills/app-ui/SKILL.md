@@ -73,8 +73,11 @@ test.
   panel, or `makeContentViews()` + `syncControls()`/`refreshReadout()` for
   direct content.
 - Subclass `PanelSectionViewController` for one control group; set
-  `sectionTitle` + `sectionIdentifier`; call `finishInteraction()` from actions
-  (`refocusOnMouseUpOnly: true` for continuous sliders).
+  `sectionTitle` + `sectionIdentifier`; every mutable section must also
+  implement `isOverridden` + `resetToDefaults()` against its live provider.
+  The base false/no-op is deliberate only for readout/action-only sections.
+  Call `finishInteraction()` from actions (`refocusOnMouseUpOnly: true` for
+  continuous sliders).
 - Build controls only from `PanelComponents` + `PanelMetrics` (inventory table
   in the doc). Do not hand-roll fonts/widths/timers (`InspectionTicker` owns the
   2 Hz readout).
@@ -83,13 +86,24 @@ test.
   tightly-related controls in `PanelComponents.group([...])`.
 - Panels are built on first reveal and cached by destination id — never all at
   launch.
+- Register provider-backed `DestinationOverrideActions` beside each mutable
+  `DestinationDescriptor`. Sidebar aggregation and Reset all must use those
+  actions, never construct an unopened panel. Reset cached panels afterwards so
+  visible controls resync.
+- `CollapsibleSectionView` republishes a section's override state on that
+  section's existing 2 Hz ticker. Its gold dot and Reset control remain visible
+  while the content is collapsed; never add another timer. Reset clears
+  persisted knob overrides but preserves collapse state.
 
 ## Accessibility-id contract
 
 Ids are the UI-test API — never change silently. `AppSidebar` outline,
 `Destination-<id>` rows, `PanelSection-<id>` headers, `<Thing>Control` /
-`<Thing>StatsLabel`, toolbar `ScreenshotButton`. `make test-ui` is blocked on
-this machine (TCC) -> pin ids as literal assertions in
+`<Thing>StatsLabel`, section state
+`PanelSection-<id>-OverrideIndicator`/`PanelSection-<id>-ResetControl`,
+destination state `Destination-<id>-OverrideIndicator`, menu item
+`ResetAllOverridesCommand`, toolbar `ScreenshotButton`. `make test-ui` is
+blocked on this machine (TCC) -> pin ids as literal assertions in
 `DestinationRegistryTests` and keep `OpenSkyUITests` correct for CI (#70).
 
 ## Verify

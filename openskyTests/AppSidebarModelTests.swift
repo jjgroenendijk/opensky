@@ -3,6 +3,7 @@
 // and launch selects the World destination. Pinned as unit assertions because make
 // test-ui is blocked on the dev machine (TCC).
 
+import AppKit
 @testable import opensky
 import Testing
 
@@ -35,5 +36,23 @@ struct AppSidebarModelTests {
         #expect(SidebarSection.world.title == "World")
         #expect(SidebarSection.developer.title == "Developer")
         #expect(SidebarSection.library.title == "Library")
+    }
+
+    @Test @MainActor
+    func destinationOverrideIndicatorRefreshesWithoutChangingSelection() throws {
+        let sidebar = AppSidebarViewController()
+        var overridden: Set<String> = []
+        sidebar.isDestinationOverridden = { overridden.contains($0) }
+        _ = sidebar.view
+        sidebar.select(id: "world")
+
+        #expect(try #require(sidebar.overrideIndicatorIsVisible(destinationID: "world")) == false)
+        overridden.insert("world")
+        sidebar.refreshOverrideIndicators()
+        #expect(try #require(sidebar.overrideIndicatorIsVisible(destinationID: "world")) == true)
+
+        overridden.remove("world")
+        sidebar.refreshOverrideIndicators()
+        #expect(try #require(sidebar.overrideIndicatorIsVisible(destinationID: "world")) == false)
     }
 }

@@ -26,6 +26,22 @@ final class TerrainLODSection: PanelSectionViewController {
         "lod"
     }
 
+    override var isOverridden: Bool {
+        Self.isOverridden(provider: provider)
+    }
+
+    override func resetToDefaults() {
+        Self.resetToDefaults(provider: provider)
+    }
+
+    static func isOverridden(provider: (any TerrainLODControlProviding)?) -> Bool {
+        provider?.terrainLODOverrideActive == true
+    }
+
+    static func resetToDefaults(provider: (any TerrainLODControlProviding)?) {
+        provider?.resetTerrainLODConfiguration()
+    }
+
     override func makeContentViews() -> [NSView] {
         configureField(level0Field, identifier: "LODLevel0DistanceControl")
         configureField(level1Field, identifier: "LODLevel1DistanceControl")

@@ -28,6 +28,32 @@ final class AudioOutputSection: PanelSectionViewController {
         "audioOutput"
     }
 
+    override var isOverridden: Bool {
+        Self.isOverridden(provider: provider)
+    }
+
+    override func resetToDefaults() {
+        Self.resetToDefaults(provider: provider)
+    }
+
+    static func isOverridden(provider: (any AudioControlProviding)?) -> Bool {
+        guard let provider else { return false }
+        return provider.audioEnabled
+            || provider.audioMasterVolume != 1
+            || AudioCategory.allCases.contains {
+                provider.audioVolume(for: $0) != 1
+            }
+    }
+
+    static func resetToDefaults(provider: (any AudioControlProviding)?) {
+        guard let provider else { return }
+        provider.audioEnabled = false
+        provider.audioMasterVolume = 1
+        for category in AudioCategory.allCases {
+            provider.setAudioVolume(1, for: category)
+        }
+    }
+
     override func makeContentViews() -> [NSView] {
         PanelComponents.configureCheckbox(
             enabledControl, target: self, action: #selector(enabledChanged),

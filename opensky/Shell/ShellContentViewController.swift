@@ -13,6 +13,9 @@ import MetalKit
 final class ShellContentViewController: NSViewController {
     private(set) var gameViewController: GameViewController
 
+    /// Tells shell chrome to re-query provider-backed destination state.
+    var onOverrideStateChange: (() -> Void)?
+
     private let panelSlot = NSView()
     private let gameSlot = NSView()
     private let fullContentSlot = NSView()
@@ -29,6 +32,11 @@ final class ShellContentViewController: NSViewController {
     /// which does not scale as the roadmap adds inspectors. Cleared when a
     /// Settings reload swaps the game controller.
     private var panels: [String: any InspectorPanel] = [:]
+
+    /// Cached ids are exposed internally for the lazy-construction contract tests.
+    var cachedPanelIDs: Set<String> {
+        Set(panels.keys)
+    }
 
     init(gameViewController: GameViewController) {
         self.gameViewController = gameViewController
@@ -169,6 +177,35 @@ final class ShellContentViewController: NSViewController {
         window.makeFirstResponder(gameViewController.view)
     }
 
+    // MARK: - Override state
+
+    func isDestinationOverridden(id: String) -> Bool {
+        guard
+            let descriptor = DestinationRegistry.destination(id: id),
+            let overrides = descriptor.overrides
+        else { return false }
+        return overrides.isOverridden(WorldPanelContext(providers: gameViewController))
+    }
+
+    var hasOverrides: Bool {
+        DestinationRegistry.worldInspectors.contains {
+            isDestinationOverridden(id: $0.id)
+        }
+    }
+
+    /// Resets provider state through registry actions, so unopened panels stay
+    /// unopened, then resyncs only panels that were already cached.
+    func resetAllOverrides() {
+        let context = WorldPanelContext(providers: gameViewController)
+        for descriptor in DestinationRegistry.worldInspectors {
+            descriptor.overrides?.resetToDefaults(context)
+        }
+        for panel in panels.values {
+            panel.resetToDefaults()
+        }
+        onOverrideStateChange?()
+    }
+
     // MARK: - Settings reload
 
     /// Swaps in a freshly built game controller (new renderer + streamer over
@@ -220,6 +257,9 @@ final class ShellContentViewController: NSViewController {
             case let .worldInspector(makePanel) = descriptor.content
         else { return nil }
         let panel = makePanel(WorldPanelContext(providers: gameViewController))
+        panel.onOverrideStateChange = { [weak self] in
+            self?.onOverrideStateChange?()
+        }
         panels[id] = panel
         addChild(panel)
         let panelView = panel.view

@@ -38,4 +38,12 @@ struct ShadowQualitySettingsTests {
         ShadowQualitySettings.store(.low, to: defaults)
         #expect(defaults.string(forKey: ShadowQualitySettings.defaultsKey) == "low")
     }
+
+    @Test func clearOverrideRemovesStoredQuality() throws {
+        let defaults = try makeDefaults()
+        ShadowQualitySettings.store(.low, to: defaults)
+        ShadowQualitySettings.clearOverride(from: defaults)
+        #expect(defaults.object(forKey: ShadowQualitySettings.defaultsKey) == nil)
+        #expect(ShadowQualitySettings.load(from: defaults) == .high)
+    }
 }
