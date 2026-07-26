@@ -10,6 +10,7 @@ XCODEBUILD_FLAGS ?=
 UI_TEST_SIGNING_FLAGS := CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM=
 SWIFT_PATHS    := opensky openskycli openskyTests openskyUITests
 TEST_RESULTS   := build/test-results
+XCODE_DERIVED_DATA ?= $(HOME)/Library/Developer/Xcode/DerivedData
 
 SWIFTFORMAT_CFG := tools/format/.swiftformat
 SWIFTLINT_CFG   := tools/lint/.swiftlint.yml
@@ -151,6 +152,10 @@ install: ## Build Release app (arm64) + copy to /Applications
 	@ditto build/install/Build/Products/Release/opensky.app /Applications/opensky.app
 	@echo "[ OK ] /Applications/opensky.app updated"
 
-clean: ## Remove build artifacts
+clean: ## Remove OpenSky build artifacts and Xcode caches
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) clean
 	@rm -rf build DerivedData
+	@if [ -d "$(XCODE_DERIVED_DATA)" ]; then \
+		find "$(XCODE_DERIVED_DATA)" -mindepth 1 -maxdepth 1 \
+			-type d -name 'opensky-*' -exec rm -rf {} +; \
+	fi
