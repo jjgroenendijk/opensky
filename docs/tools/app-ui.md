@@ -17,6 +17,20 @@ in `opensky/Shell/` (issue #98).
 
 Load this before adding or changing any app-shell UI.
 
+## Contents
+
+- Scope
+- Shell anatomy — split view, sidebar, destinations, HUD
+- Layout invariants — collapsed sections, scroll document, no pinned heights
+- Interaction rules — discoverability, `PanelComponents` ownership
+- Override provenance and reset — the section contract hooks
+- Placement decision tree — where a new surface goes, promotion threshold
+- How to register a destination — `DestinationRegistry`, target membership
+- Building panels — base classes, component inventory, spacing, UI Lab
+- Theme
+- Accessibility-id contract — the UI-test API
+- Verification obligations — geometry tests and the acceptance record
+
 ## Scope
 
 Every new subsystem or user-verifiable behavior gets a discoverable app surface
@@ -422,10 +436,11 @@ Accessibility identifiers are the UI-test API and never change silently.
   Toolbar items are the one documented exception (`ScreenshotButton`,
   `SidebarToggleButton`) — they are window chrome, not panel controls.
 
-`make test-ui` is blocked on the dev machine (TCC harness init), so the id
-contract is pinned as unit assertions in `DestinationRegistryTests` — update
-those literals in the same change that renames an id, and keep `OpenSkyUITests`
-correct for CI re-enable (issue #70).
+The id contract is pinned as unit assertions in `DestinationRegistryTests` —
+update those literals in the same change that renames an id, and keep
+`openskyUITests` correct so it passes wherever the UI-test harness runs. Whether
+`make test-ui` works locally is environment state, recorded in
+[local environment](/tools/environment.md).
 
 ## Verification obligations
 

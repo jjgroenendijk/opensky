@@ -4,6 +4,29 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-26
 
+* **Skills rewritten against the skill-authoring best practices**: the six skills in
+  `.AGENTS/skills/` were audited against Anthropic's skill-authoring guidance and
+  reworked. All six were renamed to gerund form (`commit` ->
+  `committing-and-landing-work`, `format-parser` -> `implementing-format-parsers`,
+  `docs-wiki` -> `writing-wiki-docs`, `probe` -> `probing-real-game-data`, `app-ui` ->
+  `building-app-ui`, `delegate` -> `delegating-to-subagents`), and every `description`
+  was rewritten in third person because that field is injected into the system prompt
+  and drives skill selection. The `docs-wiki` description had advertised "todo hygiene",
+  a topic its body never covered. Machine-specific and third-party state that three
+  skills asserted in the present tense with no date — missing TCC permissions, the
+  suspended CI, UESP's HTTP 403, the `TES5Edit` default branch — moved to the new
+  [local environment](/tools/environment.md) page, where each entry carries an
+  observation date and the condition that retires it; `AGENTS.md` "Gotchas" now keeps
+  only durable repo facts plus a pointer. `probing-real-game-data` had contradicted
+  itself, ranking `Renderer.renderOffscreen` first in a list and then declaring the CLI
+  "first-choice, not a fallback" four lines later; the CLI promotion is now scoped to the
+  hang case it was written for. `building-app-ui` dropped from 115 lines to a navigation
+  overview, since its panel base-class walkthrough, spacing scale, and
+  `CollapsibleSectionView` internals were already in [app-ui](/tools/app-ui.md);
+  that page and [sidebar acceptance](/tools/sidebar-acceptance.md) gained `## Contents`
+  lists, and the reference cycle between them was cut so they read in one direction.
+  Skills now use repo-relative doc paths, because the bundle-absolute `/tools/...` form
+  is ambiguous outside `docs/` against the repo-root `tools/` directory.
 * **Music verification surface (M9.2.3, issue #156)**: `World > Audio` gains a
   fourth section, `Music` (`opensky/Shell/Sections/AudioMusicSection.swift`),
   so the playlist director is reachable without a CLI command. It carries the

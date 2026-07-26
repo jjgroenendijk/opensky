@@ -14,7 +14,15 @@ Every milestone ships a durable main-app surface (AGENTS.md "Main-app verificati
 surface"). This page defines what that milestone must write down at acceptance, where the
 record goes, and what counts as evidence. The framework and placement rules — how to
 register a destination and build a panel — live in
-[Main-app UI framework](/tools/app-ui.md).
+[Main-app UI framework](/tools/app-ui.md). That page is the prerequisite; this page does not
+link back into it, so the two read in one direction.
+
+## Contents
+
+- What is mandatory
+- The record format
+- Where the record goes
+- Acceptance ledger — one row per milestone that recorded a surface
 
 ## What is mandatory
 
@@ -50,20 +58,20 @@ Local A/B (optional, never committed): logs/hud-elements-ab.png
 
 Field rules:
 
-* **Sidebar path** — the literal breadcrumb a user clicks, sections included, exactly as
+- **Sidebar path** — the literal breadcrumb a user clicks, sections included, exactly as
   the sidebar and section headers spell it (`World > Environment > Weather`).
-* **Destination id** — the accessibility id of the sidebar row, always
+- **Destination id** — the accessibility id of the sidebar row, always
   `Destination-<id>` for one of the ids registered in `DestinationRegistry`.
-* **Controls exercised** — the literal accessibility ids of the controls the acceptance
+- **Controls exercised** — the literal accessibility ids of the controls the acceptance
   actually touched, not every control on the panel. Ids that are generated at runtime
   rather than written as literals (the `Audio<Category>VolumeControl` family, built in
   `AudioOutputSection.swift`) must be named as a family with that caveat, because they
   cannot be found by grepping for the full id.
-* **Readout** — the accessibility id of the label whose text proves the behavior changed.
+- **Readout** — the accessibility id of the label whose text proves the behavior changed.
   A record with no readout is incomplete: without it there is nothing for a later session
   to re-check.
-* **Deterministic tests** — the test classes that pin the above. These are the evidence.
-* **Local A/B** — optional. A path under `logs/` or the word `none`.
+- **Deterministic tests** — the test classes that pin the above. These are the evidence.
+- **Local A/B** — optional. A path under `logs/` or the word `none`.
 
 ## Where the record goes
 
@@ -82,9 +90,9 @@ authoritative index.
 One row per milestone or sub-milestone that recorded a surface. "Not recorded" means no
 existing doc states it — the row is not an invitation to reconstruct one from memory.
 
-`make test-ui` is blocked on the development machine (TCC harness init), so the UI-test
-column is deliberately absent: the id contract is pinned in unit tests instead. See
-[Main-app UI framework](/tools/app-ui.md).
+The UI-test column is deliberately absent: the id contract is pinned in unit tests instead,
+because the UI-test harness does not run on every machine
+([local environment](/tools/environment.md)).
 
 | Milestone | Sidebar path | Destination id | Controls exercised | Readout | Deterministic tests | Recorded in |
 |---|---|---|---|---|---|---|

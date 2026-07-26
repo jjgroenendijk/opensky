@@ -75,7 +75,8 @@ Sidebar path: `World > Environment`.
 * camera-anchor movement, rain/snow births, wind input, and roof suppression;
 * shared Metal billboard pass A/B with more than 100 changed channels.
 
-Local env-gated scratch probe (removed before commit per `probe` skill) built
+Local env-gated scratch probe (removed before commit per the `probing-real-game-data`
+skill) built
 FirstRenderCell from user's read-only Skyrim install, selected decoded WTHR records by
 Rainy/Snow classification, and rendered 640x360 A/B captures. Observed:
 
