@@ -33,6 +33,14 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   See [system menu](/engine/system-menu.md), [menu mode](/engine/menu-mode.md),
   [AS2 runtime](/engine/as2-runtime.md), [screen-space UI](/rendering/ui.md),
   and [Main-app UI framework](/tools/app-ui.md). Refs #148.
+* **Sound descriptor records (issue #154)**: `SNDR` now exposes ordered track names,
+  category and output-model links, looping mode, signed frequency controls, priority,
+  variance, and static attenuation. `SOUN SDSC` resolves through a typed record store to
+  canonical `sound\...` VFS paths, discarding unsafe tracks and distinguishing missing
+  marker from missing descriptor errors. Decoders skip malformed optional structures;
+  synthetic fixtures cover all layouts and resolution failures. This change supplies
+  records for later playback wiring; it does not add runtime source integration. See
+  [sound records](/formats/sound.md).
 * **HUD authored samples hidden by default**: the installed `hudmenu.swf`
   initializes with raw font markup under
   `/HUDMovieBaseInstance/RolloverInfoInstance` and
