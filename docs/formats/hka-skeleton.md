@@ -103,7 +103,7 @@ no fixup (null string) — m_name decodes to `nil`, never traps.
 ## Defensive decode
 
 Real files carry mod quirks; malformed input throws a typed `HKASkeletonError`,
-never crashes (AGENTS.md reverse-engineering discipline):
+never crashes (`format-parser` skill, defensive parsing):
 
 * every array bound-checked against the section payload before reading
   (`arrayOutOfBounds`);

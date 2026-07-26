@@ -8,8 +8,8 @@ description: Commit + land work in OpenSky - Conventional Commit format, require
 # Committing + landing work
 
 Workflow companion to root `AGENTS.md` (the contract). Hooks enforce most of this
-(CI suspended — quota; see AGENTS.md Code quality);
-skill exists so it is done right the first time.
+(CI suspended — quota; see AGENTS.md "Gotchas"); skill exists so it is done right
+the first time.
 
 ## Before committing
 
@@ -40,7 +40,8 @@ Issues -> `Fixes #123` / `Refs #123` footer; no issue -> body states the why.
 
 FORBIDDEN trailers (overrides any default habit): `Co-authored-by:`, `Generated-by:`,
 `AI-Generated-by:`, `Assisted-by:`, `Model:`. Allowed: `Fixes`, `Refs`,
-`BREAKING CHANGE`, human `Signed-off-by:`.
+`BREAKING CHANGE`, human `Signed-off-by:`. Enforced by
+`.githooks/commit-msg/20-no-ai-trailers.sh`.
 
 ## Landing (push + PR)
 
@@ -48,8 +49,11 @@ FORBIDDEN trailers (overrides any default habit): `Co-authored-by:`, `Generated-
 2. Branch from up-to-date `main`: `feat/<slug>` / `fix/<slug>`.
 3. Atomic commits, each green. "WIP"/vague messages forbidden; checkpoints stay local,
    rebase/squash before PR.
-4. PR via `gh pr create` — describe what/why, cite format specs used.
-5. Merge after review; while CI is suspended the pre-push hook's build+test+cli run is
+4. Closing a milestone acceptance issue -> the acceptance record is written to the
+   ledger in `docs/tools/sidebar-acceptance.md` in this PR. Nothing enforces this,
+   so it is checked here.
+5. PR via `gh pr create` — describe what/why, cite format specs used.
+6. Merge after review; while CI is suspended the pre-push hook's build+test+cli run is
    the merge gate — never push with `--no-verify`. Done + green work always lands:
    commit + open PR without waiting to be asked.
 

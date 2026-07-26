@@ -12,8 +12,6 @@ control panels). Not the in-game Scaleform UI (issue #99). Framework lives in
 `opensky/Shell/`. Full reference + placement rules:
 [app-ui](/tools/app-ui.md) (`docs/tools/app-ui.md`).
 
-Core rules (this file wins on conflict with a default habit):
-
 ## Where a new surface goes
 
 Decide before building (config surface grows without bound):
