@@ -29,7 +29,31 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   [acoustic space](/formats/acoustic-space.md); records / weather / index
   updated. Door close SFX (needs animation event), AudioCategory rename
   (provisional taxonomy), and non-positional ambience bed (current stopgap is
-  positional-at-listener) filed as #234 / #235 / #236.
+  positional-at-listener) filed as #234 / #235 / #236. The mandatory acceptance
+  record (sidebar path, `Destination-audio`, the three section control ids, the
+  `AudioSfxStatsLabel` readout, and the covering tests) is written in both places
+  the convention requires: the surface section of
+  [world SFX + ambience](/engine/world-sfx.md) and a new row in the
+  [acceptance ledger](/tools/sidebar-acceptance.md).
+
+* **Ambience beds loop, and the toggle toggles (M9.2.2, issue #155)**: review
+  of the world sound director found two functional gaps. A bed source had no
+  loop path, so it played through once and the engine retired it while the
+  panel still reported a bed as current; `AudioPlayRequest.loops` now starts a
+  continuous source whose streamer resets the decoder and rewinds at end of
+  file (a pass that decoded nothing ends instead, so an undecodable file cannot
+  spin the decode queue). The `ambienceEnabled` checkbox set a flag without
+  acting on it; both the checkbox and a context change now run one
+  `applyAmbienceState()` path, so unticking retires the playing bed and
+  re-ticking restarts the bed the last context resolved. The readout is derived
+  from live engine sources, so it reports `none` once nothing is playing.
+  `WorldAudioEngine.playPositional` returns the new source id rather than
+  leaving the caller to guess it from `sources.last`. Tests:
+  `WorldAudioDirectorAmbienceTests` (new suite, fixtures shared through
+  `WorldAudioDirectorFixtures`), `WorldAudioEngineTests`
+  `loopingSourceKeepsPlayingPastItsMaterial`, and the pure rewind policy in
+  `AudioSourceStreamerTests`. Docs: [world SFX + ambience](/engine/world-sfx.md),
+  [audio engine](/engine/audio.md).
 
 * **M8 milestone acceptance (M8.5.3)**: the interaction + UI shell milestone is
   accepted end to end from the main app alone. What M8 delivered, in the order

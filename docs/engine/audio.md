@@ -109,6 +109,15 @@ panel is the Equatable `AudioStatsSnapshot`, read at 2 Hz by the
   effects naturally expire; a priority scheme waits for game-authored data.
 * **Retirement**: a streamer that played its last buffer sets its finished
   flag; the next tick stops and detaches the node.
+* **Looping**: `AudioPlayRequest.loops` starts a continuous source (the
+  [ambience bed](/engine/world-sfx.md) is the only caller today). At end of
+  file its streamer resets the decoder, rewinds to the first packet and keeps
+  scheduling, so it never sets the finished flag and the tick never retires
+  it; only an explicit stop, the FIFO cap or the cell purge ends it. A pass
+  that decoded no PCM ends the source instead of rewinding, so a file the
+  decoder cannot use can never spin the decode queue. The buffer-backed test
+  seam expresses the same request through `AVAudioPlayerNode`'s own `.loops`
+  scheduling option.
 * **Cell unload**: each source records the exterior cell of its position;
   the tick stops sources more than `cellPurgeRadius = 3` Chebyshev rings from
   the listener's cell (one ring beyond the streamer's default 5x5 residency).

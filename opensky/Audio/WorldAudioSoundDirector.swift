@@ -6,7 +6,9 @@
 //     the `effects` category, fired from the placed reference's position.
 //   - Continuous ambience loop set when the center cell changes, under the
 //     `ambience` category, fired from the listener position (a stopgap until
-//     a non-positional bed path exists; see issue #236).
+//     a non-positional bed path exists; see issue #236). Bed sources are
+//     started as loops, so they rewind in the streamer rather than ending
+//     after one pass; the panel toggle retires and restarts them live.
 //
 // Main-actor only (the engine + streamer are main-actor); decode work runs
 // inside WorldAudioEngine's decode queue. Defensive: an absent engine, store,
@@ -37,15 +39,24 @@ final class WorldAudioSoundDirector {
     /// SFX on use-key activation. Off by default until the user enables audio;
     /// the panel control writes back here.
     var sfxEnabled = true
-    /// Continuous ambience bed. Same default policy as `sfxEnabled`.
-    var ambienceEnabled = true
+    /// Continuous ambience bed. Same default policy as `sfxEnabled`. Toggling
+    /// it takes effect immediately: switching off retires the playing bed,
+    /// switching back on restarts the bed the last context resolved.
+    var ambienceEnabled = true {
+        didSet {
+            guard ambienceEnabled != oldValue else { return }
+            applyAmbienceState()
+        }
+    }
 
     /// Active ambience source ids owned by this director. Tracked so a context
     /// change can retire exactly the previous bed without touching unrelated
     /// one-shot SFX the engine is also playing.
     private var ambienceSourceIDs: [Int] = []
-    /// Last resolved bed; diffed against a fresh context to skip no-op restarts.
-    private var currentBed = AmbienceBed.empty
+    /// Bed the last context resolved to, whether or not it is playing. Diffed
+    /// against a fresh context to skip no-op restarts, and re-used as the bed
+    /// to start when ambience is switched back on.
+    private var desiredBed = AmbienceBed.empty
 
     /// Most recent SFX outcome, surfaced through the World > Audio readout.
     private(set) var lastSFXDescription: String?
@@ -107,20 +118,26 @@ final class WorldAudioSoundDirector {
     }
 
     /// CellStreamer.onAmbienceContextChanged subscriber. Resolves the new bed
-    /// and, when it differs from the active one, retires the previous sources
-    /// and starts the new ones. No-op when ambience is disabled, the engine is
-    /// not running, or the bed did not change.
+    /// and, when it differs from the last resolved one, retires the previous
+    /// sources and starts the new ones. A bed that did not change is a no-op;
+    /// a bed resolved while ambience is off is remembered but not started.
     func handleAmbienceContext(_ context: AmbienceContext) {
         let bed = AmbienceBed.resolve(
             context: context,
             weatherStore: weatherStore,
             aspcStore: aspcStore
         )
-        guard bed != currentBed else { return }
-        currentBed = bed
+        guard bed != desiredBed else { return }
+        desiredBed = bed
+        applyAmbienceState()
+    }
+
+    /// Single path from wanted state to playing state, shared by the context
+    /// change and the panel toggle so the two cannot drift apart.
+    private func applyAmbienceState() {
         retireAmbience()
         guard ambienceEnabled, engine.isRunning else { return }
-        startAmbience(bed: bed)
+        startAmbience(bed: desiredBed)
     }
 
     // MARK: - Panel entry points (Phase 3 verification surface)
@@ -137,10 +154,14 @@ final class WorldAudioSoundDirector {
         )
     }
 
-    /// Last ambience bed the director resolved, for the panel readout.
+    /// Ambience bed the panel readout shows. Reports "none" unless at least one
+    /// of this director's ambience sources is still alive in the engine, so the
+    /// readout cannot claim a bed the engine already retired (FIFO eviction,
+    /// cell purge, or a stream that ended).
     var currentAmbienceDescription: String {
-        guard !currentBed.entries.isEmpty else { return "none" }
-        return currentBed.entries
+        pruneRetiredAmbienceSources()
+        guard !ambienceSourceIDs.isEmpty else { return "none" }
+        return desiredBed.entries
             .map(\.sound.description)
             .joined(separator: ", ")
     }
@@ -185,18 +206,19 @@ final class WorldAudioSoundDirector {
         for entry in bed.entries {
             guard let resolved = resolveSound(id: entry.sound) else { continue }
             do {
-                try engine.playPositional(
+                let sourceID = try engine.playPositional(
                     fileData: resolved.data,
                     request: AudioPlayRequest(
                         name: resolved.name,
                         category: .ambience,
                         worldPosition: position,
-                        gain: ambienceGainPerEntry(in: bed)
+                        gain: ambienceGainPerEntry(in: bed),
+                        // A bed is continuous: the streamer rewinds at end of
+                        // file instead of letting the engine retire it.
+                        loops: true
                     )
                 )
-                if let id = engine.sources.last?.id {
-                    ambienceSourceIDs.append(id)
-                }
+                ambienceSourceIDs.append(sourceID)
             } catch {
                 let reason = String(describing: error)
                 Self.logger.warning(
@@ -218,6 +240,13 @@ final class WorldAudioSoundDirector {
             engine.stopSource(id: id)
         }
         ambienceSourceIDs.removeAll()
+    }
+
+    /// Forgets ids the engine already stopped on its own, so the tracked set
+    /// only ever names sources that are actually playing.
+    private func pruneRetiredAmbienceSources() {
+        let live = Set(engine.sources.map(\.id))
+        ambienceSourceIDs.removeAll { !live.contains($0) }
     }
 
     private func resolveSound(id: FormID) -> (data: Data, name: String)? {

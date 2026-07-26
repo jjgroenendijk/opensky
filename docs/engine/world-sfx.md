@@ -60,6 +60,37 @@ The bed is diffed against the previous one; only changes retire + restart
 sources. `apply(transition:)` forces a re-emit on scene swaps so an interior
 re-entered with the same key still refreshes.
 
+### Bed lifetime and the enable toggle
+
+A bed is continuous, so every bed source starts with
+`AudioPlayRequest.loops = true`: at end of file its streamer resets the decoder
+and rewinds to the first packet instead of reporting completion, and the audio
+tick therefore never retires it (see
+[looping in the audio engine](/engine/audio.md)). Without that a "bed" would
+play through exactly once and fall silent until the center cell changed.
+
+The director keeps two pieces of state and one path between them:
+
+* `desiredBed` — the bed the last `AmbienceContext` resolved to, whether or not
+  it is playing. It is what a context change diffs against, and what gets
+  started when ambience is switched back on.
+* `ambienceSourceIDs` — the ids of the bed sources actually started, so
+  `WorldAudioEngine.stopSource(id:)` retires exactly this bed and leaves
+  concurrent one-shot SFX playing.
+
+Both a context change and the `ambienceEnabled` toggle go through the same
+`applyAmbienceState()`: retire what is playing, then start `desiredBed` when
+ambience is enabled and the engine is running. So unticking the checkbox stops
+the bed immediately, ticking it restarts the bed the last context resolved (no
+waiting for the next cell change), and a context that arrives while ambience is
+off is remembered rather than swallowed.
+
+The readout is derived from live sources, not from the resolved bed: ids the
+engine already stopped on its own (FIFO eviction, cell purge, a stream that
+ended) are pruned first, and `currentAmbienceDescription` reports `none` when
+nothing of this director's is still playing. It therefore cannot claim a bed is
+playing when it is not.
+
 ## Threading
 
 Main-actor only, like the rest of the audio engine. Decode work runs inside the
@@ -108,6 +139,37 @@ Sidebar path for acceptance: **World > Audio > SFX & Ambience**
 Override aggregation: the audio destination's `isOverridden` unions
 `AudioOutputSection` and `AudioSfxSection`; reset all clears both.
 
+### Acceptance record
+
+The record required by the
+[sidebar verification convention](/tools/sidebar-acceptance.md), also carried as
+one row in that page's ledger:
+
+```text
+Milestone: M9.2.2
+Sidebar path: World > Audio > SFX & Ambience
+Destination id: Destination-audio
+Controls exercised: AudioSfxEnabledControl, AudioAmbienceEnabledControl,
+  AudioStopAmbienceControl, AudioEnabledControl
+Readout: AudioSfxStatsLabel
+Deterministic tests: AudioPanelTests, DestinationRegistryTests,
+  WorldAudioSoundDirectorTests, WorldAudioDirectorAmbienceTests,
+  WorldAudioEngineTests, AudioSourceStreamerTests, AmbienceCatalogTests,
+  CellStreamerTests, RecordDecoderTests, AcousticSpaceRecordTests,
+  RegionRecordTests, CellRecordTests
+Local A/B (optional, never committed): none
+```
+
+`AudioEnabledControl` lives in the Output section of the same destination and is
+listed because nothing in this section produces sound until the world audio
+engine is running. `CellStreamerTests` and `RecordDecoderTests` are the class
+names the ambience and sound-field cases extend; the cases themselves live in
+`openskyTests/CellStreamerAmbienceTests.swift` and
+`openskyTests/ModelBaseSoundTests.swift`, so grepping for the class name finds
+the base file, not the milestone's cases. No A/B capture applies: the behavior
+this milestone adds is audible, not visible, so a rendered frame would prove
+nothing.
+
 ## Verification
 
 * `ModelBaseSoundTests`, `CellRecordTests`, `RegionRecordTests`,
@@ -116,8 +178,20 @@ Override aggregation: the audio destination's `isOverridden` unions
 * `AmbienceCatalogTests` — bed resolution for exterior/interior, unknown-region
   skip, missing-ASPC, ASPC-without-direct-or-borrow.
 * `WorldAudioSoundDirectorTests` — offline-render coverage: interaction plays
-  activation sound, ambience starts/stops on context change, no-op when
-  disabled, force trigger, resolve-failure error.
+  activation sound (as a non-looping effect), force trigger, resolve-failure
+  error. Fixtures shared with the ambience suite live in
+  `openskyTests/WorldAudioDirectorFixtures.swift`.
+* `WorldAudioDirectorAmbienceTests` — offline-render coverage of the bed:
+  start on context, retire on context change, no-op when disabled, toggle
+  retires and restarts, a context resolved while disabled starts on enable,
+  bed sources are looping, retiring the bed leaves a concurrent one-shot SFX
+  alive (`stopSource(id:)` selectivity), and the readout falls back to `none`
+  once the engine has retired the bed.
+* `WorldAudioEngineTests.loopingSourceKeepsPlayingPastItsMaterial` — offline
+  render proving a looping request keeps sounding past the end of its material
+  while a one-shot falls silent; `AudioSourceStreamerTests` covers the
+  end-of-file rewind policy itself (pure, because no WMA fixture may enter the
+  repository).
 * `CellStreamerAmbienceTests` (under `CellStreamerTests`) — streamer emits
   context on cell arrival, dedups steady-state, regionless center emits empty.
 * `AudioPanelTests` — id contract for the new controls + round-trip test

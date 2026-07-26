@@ -20,6 +20,8 @@ final class ActiveAudioSource {
     let cell: CellCoordinate
     /// Per-source gain, multiplied with the category and master volumes.
     let gain: Float
+    /// Continuous source: it restarts at the beginning instead of ending.
+    let loops: Bool
     let node: AVAudioPlayerNode
     /// nil for buffer-backed test sources; streamed sources own their decoder
     /// through this.
@@ -37,6 +39,7 @@ final class ActiveAudioSource {
         worldPosition = request.worldPosition
         cell = CellGridManager.cellCoordinate(for: request.worldPosition)
         gain = request.gain
+        loops = request.loops
         self.node = node
         self.streamer = streamer
     }
@@ -49,12 +52,17 @@ nonisolated struct AudioPlayRequest {
     let category: AudioCategory
     let worldPosition: SIMD3<Float>
     var gain: Float = 1
+    /// Continuous playback: the source restarts at the beginning instead of
+    /// ending. Ambience beds set this; one-shot effects do not.
+    var loops = false
 }
 
 extension WorldAudioEngine {
     /// Starts a positional streamed source from framed `.xwm` bytes. Decode
     /// runs on the decode queue; this only builds and wires the player node.
-    func playPositional(fileData: Data, request: AudioPlayRequest) throws {
+    /// Returns the new source's id so the caller can retire exactly it later.
+    @discardableResult
+    func playPositional(fileData: Data, request: AudioPlayRequest) throws -> Int {
         guard isRunning else { throw AudioEngineError.notRunning }
         let file = try XWMFile(data: fileData)
         // Positional inputs must be mono: the environment node spatializes
@@ -72,26 +80,35 @@ extension WorldAudioEngine {
             node: node,
             format: format,
             downmixToMono: file.codec.channelCount > 1,
+            loops: request.loops,
             queue: decodeQueue
         )
-        adoptSource(ActiveAudioSource(
+        let source = ActiveAudioSource(
             id: takeSourceID(), request: request, node: node, streamer: streamer
-        ))
+        )
+        adoptSource(source)
         streamer.start()
         node.play()
+        return source.id
     }
 
     /// Starts a positional source from an already-built PCM buffer. Test seam:
     /// the deterministic offline-render tests use this so no decoder or decode
-    /// queue timing is involved.
-    func playPositional(buffer: AVAudioPCMBuffer, request: AudioPlayRequest) throws {
+    /// queue timing is involved. A looping request re-plays the buffer through
+    /// the player node's own loop option.
+    @discardableResult
+    func playPositional(buffer: AVAudioPCMBuffer, request: AudioPlayRequest) throws -> Int {
         guard isRunning else { throw AudioEngineError.notRunning }
         let node = makePositionalNode(request: request, format: buffer.format)
-        adoptSource(ActiveAudioSource(
+        let source = ActiveAudioSource(
             id: takeSourceID(), request: request, node: node, streamer: nil
-        ))
-        node.scheduleBuffer(buffer)
+        )
+        adoptSource(source)
+        node.scheduleBuffer(
+            buffer, at: nil, options: request.loops ? .loops : [], completionHandler: nil
+        )
         node.play()
+        return source.id
     }
 
     func stopAllSources() {
