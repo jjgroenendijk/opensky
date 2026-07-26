@@ -47,10 +47,10 @@ final class GameViewController: NSViewController {
     /// Retains the streaming controller (and, through it, the build runner +
     /// provider) for the window's lifetime. Readable by the world-stats bridge
     /// (GameViewControllerWorldStats.swift); only this file assigns it.
-    private(set) var streamer: CellStreamer?
+    var streamer: CellStreamer?
     /// Free-fly input shared with the renderer; the view writes it from
     /// NSEvents, the renderer drains it each frame (todo 2.8).
-    private let cameraInput = CameraInputState()
+    let cameraInput = CameraInputState()
 
     /// Menu-mode source of truth (todo 8.1.2), shared with the input view and
     /// the renderer. Entering menu mode pauses world sim and drops held world
@@ -87,6 +87,14 @@ final class GameViewController: NSViewController {
     /// World audio graph, created on first enable by the audio bridge
     /// (GameViewControllerAudio.swift), which also hands it to the renderer.
     var worldAudio: WorldAudioEngine?
+    /// World SFX + ambience director (M9.2.2), built beside the engine on
+    /// first enable. Subscribed to streamer callbacks; lives in
+    /// `opensky/Audio/WorldAudioSoundDirector.swift`.
+    var soundDirector: WorldAudioSoundDirector?
+    /// Cell provider the audio bridge reads sound/aspc stores off when it
+    /// constructs the SFX director (M9.2.2). Held weakly because the build
+    /// runner (and through it the streamer) already retains the provider.
+    var streamerCellProvider: (any CellSceneProvider)?
     /// Cached picker paths — enumerating every archive entry is not free.
     var cachedAudioFileNames: [String]?
     /// Selector state owned by the UI Lab SWF bridge
@@ -160,6 +168,7 @@ final class GameViewController: NSViewController {
                 }
             }
             if let provider {
+                streamerCellProvider = provider
                 startStreaming(provider: provider, renderer: newRenderer)
             }
         } catch {
@@ -170,57 +179,10 @@ final class GameViewController: NSViewController {
     /// Wires a streamer over the provider: builds run off-main on a serial
     /// runner, the recomposed scene swaps in via `Renderer.setScene`, and the
     /// renderer's per-frame hook drives the streamer with the live camera
-    /// position. Weak captures both ways -> no retain cycle (this controller
-    /// owns both renderer + streamer).
+    /// position. Body lives in `GameViewControllerStreaming.swift` to keep this
+    /// file under the strict-lint size cap.
     private func startStreaming(provider: any CellSceneProvider, renderer: Renderer) {
-        let runner = SerialCellBuildRunner(provider: provider)
-        let controller = CellStreamer(
-            center: CellCoordinate(x: FirstRenderCell.gridX, y: FirstRenderCell.gridY),
-            runner: runner,
-            sink: { [weak renderer] scene, camera in
-                do {
-                    try renderer?.setScene(scene, camera: camera)
-                } catch {
-                    Self.logger.error(
-                        "[ERROR] scene swap failed: \(String(describing: error), privacy: .public)"
-                    )
-                }
-            }
-        )
-        renderer.onFrame = { [weak self, weak controller, weak renderer] position in
-            let interactionRay = renderer.flatMap { renderer -> InteractionRay? in
-                guard renderer.movementMode == .walk else { return nil }
-                return InteractionRay(
-                    origin: renderer.freeFlyCamera.position,
-                    direction: renderer.freeFlyCamera.forward
-                )
-            }
-            controller?.update(
-                cameraPosition: position,
-                interactionRay: interactionRay,
-                activate: self?.cameraInput.consumeActivation() ?? false
-            )
-            if let renderer {
-                self?.updateHUDFrame(renderer: renderer)
-            }
-        }
-        // Live XCLR region feed (M7.2.3): the streamer pushes the center cell's
-        // REGN set into the weather runtime so region-weighted selection runs
-        // live. Same main thread as the draw loop -> WeatherSystem stays
-        // single-thread-owned.
-        controller.onCenterRegionsChanged = { [weak renderer] regions in
-            renderer?.weather?.setRegions(regions)
-        }
-        controller.onInteractionTargetChanged = { [weak self] target in
-            self?.updateHUDTarget(target)
-        }
-        renderer.terrainSampler = { [weak controller] position in
-            controller?.sampleTerrain(at: position)
-        }
-        renderer.collisionQuery = { [weak controller] bounds in
-            controller?.collisionCandidates(overlapping: bounds) ?? []
-        }
-        streamer = controller
+        wireStreaming(provider: provider, renderer: renderer)
     }
 
     /// Saves the live World camera + current streamed scene, excluding app
@@ -238,7 +200,7 @@ final class GameViewController: NSViewController {
         try FrameScreenshot.write(texture: texture, to: url)
     }
 
-    private static let logger = Logger(
+    static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "CellStream"
     )

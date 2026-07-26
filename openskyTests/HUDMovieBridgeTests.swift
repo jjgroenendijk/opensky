@@ -172,7 +172,8 @@ struct HUDMovieBridgeTests {
             position: SIMD3<Float>(0, 10, 0),
             name: "Test Door",
             action: .open,
-            actionLabel: "Open"
+            actionLabel: "Open",
+            sounds: nil
         )
         let target = InteractionTarget(
             interaction: interaction,

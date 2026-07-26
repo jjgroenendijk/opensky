@@ -21,7 +21,7 @@ final class CellStreamer {
         category: "CellStream"
     )
 
-    private var grid: CellGridManager
+    var grid: CellGridManager
     var composition = CellSceneComposition()
     var core = CellStreamCore()
     let runner: any CellBuildRunning
@@ -34,6 +34,13 @@ final class CellStreamer {
     /// Last region set pushed through `onCenterRegionsChanged`; nil = never
     /// emitted. Guards against re-firing an unchanged set every frame.
     private var lastEmittedRegions: [FormID]?
+    /// World SFX director subscription (M9.2.2): fires with the current cell's
+    /// ambience identity whenever it changes (exterior recenter, interior
+    /// enter/exit). The director resolves the bed and starts/stops loops.
+    var onAmbienceContextChanged: ((AmbienceContext) -> Void)?
+    /// Last ambience key pushed; nil = never emitted. Guards against re-firing.
+    /// Internal for the CellStreamerAmbience satellite to read/write.
+    var lastEmittedAmbienceKey: AmbienceKey?
     /// Retained for deterministic walk benchmarks that inspect nearby doors.
     /// Production use-key activation is view-ray based.
     static let doorActivationRadius = InteractionRay.defaultMaximumDistance
@@ -156,6 +163,7 @@ final class CellStreamer {
         dispatchNextBuild()
         requestDistantLODIfNeeded()
         emitCenterRegionsIfChanged()
+        emitAmbienceContextIfNeeded()
     }
 
     /// Pushes the current exterior center cell's XCLR regions to the weather

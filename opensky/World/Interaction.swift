@@ -30,6 +30,12 @@ nonisolated struct PlacedInteraction: Equatable, Sendable {
     let name: String
     let action: InteractionAction
     let actionLabel: String
+    /// Sound links resolved off the base record (DOOR/ACTI/CONT) at cell-build
+    /// time. Nil when the base carries no decoded sound fields. The audio
+    /// director consumes `activation` on use-key events; `close` and `loop`
+    /// wait on door-animation wiring (issue #234) but ride along here so the
+    /// cell build remains the single resolution point.
+    let sounds: ModelBase.Sounds?
 }
 
 /// Current crosshair target. Distance and hit position come from exact

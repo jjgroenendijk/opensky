@@ -147,6 +147,15 @@ nonisolated struct SoundMarker {
     let editorID: String?
     let descriptor: FormID?
 
+    /// Memberwise init for synthesized markers (e.g. when a SNDR FormID was
+    /// stored directly on a DOOR/ACTI/CONT and the runtime resolves it
+    /// without an actual SOUN record in the plugin).
+    init(formID: FormID, editorID: String?, descriptor: FormID?) {
+        self.formID = formID
+        self.editorID = editorID
+        self.descriptor = descriptor
+    }
+
     init(record: ESMRecord) throws {
         guard record.type == "SOUN" else {
             throw ESMError.malformed("expected SOUN record, got \(record.type)")

@@ -89,7 +89,8 @@ extension CellSceneBuilder {
                 position: ref.placement.position,
                 name: name ?? base.editorID ?? base.formID.description,
                 action: action,
-                actionLabel: override ?? action.defaultLabel
+                actionLabel: override ?? action.defaultLabel,
+                sounds: base.sounds
             )
             interactions[ref.formID] = interaction
         }
@@ -183,6 +184,7 @@ extension CellSceneBuilder {
             doors: geometry.doors,
             interactions: geometry.interactions,
             regions: found.cell.regions,
+            acousticSpace: found.cell.acousticSpace,
             terrainHeightField: geometry.terrain?.heightField,
             grassPlacements: geometry.grass?.placements ?? [],
             staticCollision: geometry.staticCollision

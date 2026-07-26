@@ -100,6 +100,16 @@ extension WorldAudioEngine {
         }
     }
 
+    /// Stops one source by id. Returns true when a source was stopped. Used by
+    /// the world sound director to retire ambience beds without losing
+    /// unrelated one-shot SFX (issue #155).
+    @discardableResult
+    func stopSource(id: Int) -> Bool {
+        guard let source = sources.first(where: { $0.id == id }) else { return false }
+        stop(source)
+        return true
+    }
+
     /// Detaches sources whose stream reported completion. Called from the
     /// per-frame audio tick.
     func retireFinishedSources() {

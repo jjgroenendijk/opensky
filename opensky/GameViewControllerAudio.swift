@@ -21,9 +21,30 @@ extension GameViewController: AudioControlProviding {
                 worldAudio = engine
                 // The renderer's per-frame tick drives the listener pose.
                 renderer?.worldAudio = engine
+                buildSoundDirectorIfNeeded(engine: engine)
             }
             worldAudio?.isEnabled = newValue
         }
+    }
+
+    /// Pulls the sound/aspc stores off the cell provider and constructs the
+    /// world SFX director with the new engine. Idempotent — repeated enables
+    /// reuse the existing director. The director subscribes to streamer
+    /// callbacks at construction time and remains a no-op until the engine is
+    /// also running.
+    private func buildSoundDirectorIfNeeded(engine: WorldAudioEngine) {
+        guard soundDirector == nil else { return }
+        let provider = streamerCellProvider
+        let weatherStore = (provider as? WeatherProviding)?.weatherSystem?.store
+        let soundStore = (provider as? AudioDataProviding)?.soundStore
+        let aspcStore = (provider as? AudioDataProviding)?.aspcStore
+        soundDirector = WorldAudioSoundDirector(
+            engine: engine,
+            soundStore: soundStore,
+            weatherStore: weatherStore,
+            aspcStore: aspcStore,
+            fileSystem: audioFileSystem
+        )
     }
 
     var audioMasterVolume: Float {
