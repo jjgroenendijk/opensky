@@ -209,8 +209,14 @@ enum DestinationRegistry {
                 return panel
             },
             overrides: DestinationOverrideActions(
-                isOverridden: { AudioOutputSection.isOverridden(provider: $0.providers) },
-                resetToDefaults: { AudioOutputSection.resetToDefaults(provider: $0.providers) }
+                isOverridden: { context in
+                    AudioOutputSection.isOverridden(provider: context.providers)
+                        || AudioSfxSection.isOverridden(provider: context.providers)
+                },
+                resetToDefaults: { context in
+                    AudioOutputSection.resetToDefaults(provider: context.providers)
+                    AudioSfxSection.resetToDefaults(provider: context.providers)
+                }
             )
         ),
         DestinationDescriptor(

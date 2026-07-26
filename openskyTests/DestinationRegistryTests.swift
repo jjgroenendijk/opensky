@@ -239,6 +239,14 @@ final class FakeWorldProviders: WorldControlProviders {
 
     func stopAllAudioSources() {}
     var audioStatsSnapshot = AudioStatsSnapshot.empty
+
+    // World SFX director bridges (M9.2.2).
+    var sfxEnabled = true
+    var ambienceEnabled = true
+    func stopAmbience() {}
+    var lastSFXDescription: String?
+    var lastSFXError: String?
+    var currentAmbienceDescription = "none"
 }
 
 struct DestinationRegistryTests {

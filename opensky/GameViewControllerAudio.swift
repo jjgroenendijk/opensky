@@ -103,4 +103,35 @@ extension GameViewController: AudioControlProviding {
     var audioStatsSnapshot: AudioStatsSnapshot {
         worldAudio?.statsSnapshot() ?? .empty
     }
+
+    // MARK: - World SFX director bridges (M9.2.2)
+
+    var sfxEnabled: Bool {
+        get { soundDirector?.sfxEnabled ?? true }
+        set { soundDirector?.sfxEnabled = newValue }
+    }
+
+    var ambienceEnabled: Bool {
+        get { soundDirector?.ambienceEnabled ?? true }
+        set { soundDirector?.ambienceEnabled = newValue }
+    }
+
+    func stopAmbience() {
+        // Force an empty context through the director: it retires the current
+        // bed and caches the empty one, so ambience stays off until the next
+        // cell change emits a fresh (non-empty) context.
+        soundDirector?.handleAmbienceContext(.empty)
+    }
+
+    var lastSFXDescription: String? {
+        soundDirector?.lastSFXDescription
+    }
+
+    var lastSFXError: String? {
+        soundDirector?.lastSFXError
+    }
+
+    var currentAmbienceDescription: String {
+        soundDirector?.currentAmbienceDescription ?? "none"
+    }
 }
