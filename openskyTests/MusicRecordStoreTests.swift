@@ -54,10 +54,66 @@ struct MusicRecordStoreTests {
             == "music\\dungeon\\a.xwm")
     }
 
-    @Test func rejectsAbsoluteAndVolumePaths() {
-        #expect(MusicRecordStore.canonicalMusicPath("\\Music\\mus.xwm") == nil)
-        #expect(MusicRecordStore.canonicalMusicPath("/Music/mus.xwm") == nil)
+    @Test func rejectsVolumePaths() {
         #expect(MusicRecordStore.canonicalMusicPath("C:\\Music\\mus.xwm") == nil)
+        #expect(MusicRecordStore.canonicalMusicPath("") == nil)
+        #expect(MusicRecordStore.canonicalMusicPath("Music\\..\\mus.xwm") == nil)
+    }
+
+    /// The vanilla authoring form: a leading separator marks a root-relative
+    /// path, not a volume, so it is stripped like any other `Data\` root.
+    @Test func acceptsSeparatorLedDataRootedPaths() {
+        #expect(
+            MusicRecordStore.canonicalMusicPath("\\Data\\Music\\Combat\\MUS_Combat_01.wav")
+                == "music\\combat\\mus_combat_01.wav"
+        )
+        #expect(MusicRecordStore.canonicalMusicPath("\\Music\\mus.xwm") == "music\\mus.xwm")
+        #expect(MusicRecordStore.canonicalMusicPath("/Music/mus.xwm") == "music\\mus.xwm")
+    }
+
+    @Test func shippedAudioSiblingSwapsOnlyTheFinalExtension() {
+        #expect(
+            MusicRecordStore.shippedAudioSibling(of: "music\\explore\\a.wav")
+                == "music\\explore\\a.xwm"
+        )
+        // Already the shipped extension, so there is nothing to fall back to.
+        #expect(MusicRecordStore.shippedAudioSibling(of: "music\\explore\\a.xwm") == nil)
+        // A dot in a directory name is not an extension.
+        #expect(MusicRecordStore.shippedAudioSibling(of: "music\\v1.0\\a") == nil)
+        #expect(MusicRecordStore.shippedAudioSibling(of: "music\\a.") == nil)
+    }
+
+    @Test func loadAudioFileUsesTheAuthoredNameWhenItResolves() throws {
+        let file = try MusicRecordStore.loadAudioFile(at: "music\\a.wav") { path in
+            #expect(path == "music\\a.wav")
+            return Data([1, 2, 3])
+        }
+        #expect(file.key == "music\\a.wav")
+        #expect(file.data == Data([1, 2, 3]))
+    }
+
+    /// The vanilla case: the ANAM `.wav` is absent and the `.xwm` sibling is
+    /// what the archives ship.
+    @Test func loadAudioFileFallsBackToTheShippedSibling() throws {
+        var attempted: [String] = []
+        let file = try MusicRecordStore.loadAudioFile(at: "music\\a.wav") { path in
+            attempted.append(path)
+            guard path == "music\\a.xwm" else {
+                throw VFSError.fileNotFound(path: path)
+            }
+            return Data([4, 5])
+        }
+        #expect(attempted == ["music\\a.wav", "music\\a.xwm"])
+        #expect(file.key == "music\\a.xwm")
+        #expect(file.data == Data([4, 5]))
+    }
+
+    @Test func loadAudioFileRethrowsWhenNeitherNameResolves() {
+        #expect(throws: VFSError.fileNotFound(path: "music\\a.wav")) {
+            _ = try MusicRecordStore.loadAudioFile(at: "music\\a.wav") { path in
+                throw VFSError.fileNotFound(path: path)
+            }
+        }
     }
 
     @Test func audioPathsCoverTrackThenFinale() throws {

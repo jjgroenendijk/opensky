@@ -197,6 +197,52 @@ struct WorldMusicDirectorTests {
         #expect(director.lastMusicError != nil)
     }
 
+    // MARK: - Shipped-file resolution (issue #246)
+
+    /// An authored name the install really holds is used as authored; no
+    /// fallback is attempted.
+    @Test func anAuthoredNameThatResolvesIsUsedVerbatim() throws {
+        let engine = try MusicDirectorFixture.makeRunningEngine()
+        let director = MusicDirectorFixture.makeDirector(
+            engine: engine,
+            musicStore: MusicFixture.makeWavAuthoredStore(),
+            availablePaths: [MusicFixture.wavAuthoredPath, MusicFixture.shippedAuthoredPath]
+        )
+        director.handleMusicContext(MusicFixture.context(cellMusicType: 0x20))
+        #expect(director.currentTrackName == MusicFixture.wavAuthoredPath)
+        #expect(director.lastMusicError == nil)
+    }
+
+    /// The vanilla case: `MUST ANAM` names a `.wav` the archives do not ship,
+    /// and the `.xwm` sibling is what starts.
+    @Test func anAbsentAuthoredNameFallsBackToTheShippedSibling() throws {
+        let engine = try MusicDirectorFixture.makeRunningEngine()
+        let director = MusicDirectorFixture.makeDirector(
+            engine: engine,
+            musicStore: MusicFixture.makeWavAuthoredStore(),
+            availablePaths: [MusicFixture.shippedAuthoredPath]
+        )
+        director.handleMusicContext(MusicFixture.context(cellMusicType: 0x20))
+        #expect(director.currentTrackName == MusicFixture.shippedAuthoredPath)
+        #expect(director.lastMusicError == nil)
+    }
+
+    /// Absent under both names is still a failure, reported against the
+    /// authored path rather than the guessed sibling.
+    @Test func aTrackAbsentUnderBothNamesStillReportsTheAuthoredFailure() throws {
+        let engine = try MusicDirectorFixture.makeRunningEngine()
+        let director = MusicDirectorFixture.makeDirector(
+            engine: engine,
+            musicStore: MusicFixture.makeWavAuthoredStore(),
+            availablePaths: []
+        )
+        director.handleMusicContext(MusicFixture.context(cellMusicType: 0x20))
+        #expect(engine.sources.isEmpty)
+        let reason = try #require(director.lastMusicError)
+        #expect(reason.hasPrefix(MusicFixture.wavAuthoredPath))
+        #expect(reason.contains("fileNotFound"))
+    }
+
     @Test func stopMusicRetiresTheCurrentTrack() throws {
         let engine = try MusicDirectorFixture.makeRunningEngine()
         let director = MusicDirectorFixture.makeDirector(engine: engine)

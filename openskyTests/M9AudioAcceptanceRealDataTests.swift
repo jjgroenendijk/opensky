@@ -154,8 +154,20 @@ struct M9AudioAcceptanceRealDataTests {
             let located = try #require(
                 locate(track: track.path), "the playlist's first track is in no archive"
             )
+            #expect(
+                located.key.hasSuffix(".xwm"),
+                "the resolver did not reach a shipped .xwm asset"
+            )
             let framed = try XWMFile(data: located.data)
             #expect(framed.packetCount > 0)
+            // Every other track in the playlist must resolve the same way, so
+            // the fallback is proven over the whole selection rather than one
+            // lucky record.
+            let resolvedTracks = selection.tracks.filter { locate(track: $0.path) != nil }
+            #expect(
+                resolvedTracks.count == selection.tracks.count,
+                "not every playlist track resolves to a shipped file"
+            )
 
             return """
             [INFO] exterior \(exteriorCell.formID.description) \
@@ -164,7 +176,8 @@ struct M9AudioAcceptanceRealDataTests {
             [INFO] exterior bed files: \(bedPaths.joined(separator: ", "))
             [INFO] exterior music: \(selection.editorID ?? "?") \
             (\(selection.musicType?.description ?? "?")), state \(selection.state.displayName), \
-            \(selection.tracks.count) tracks, crossfade \(selection.crossfadeSeconds) s
+            \(selection.tracks.count) tracks (\(resolvedTracks.count) resolved), crossfade \
+            \(selection.crossfadeSeconds) s
             [INFO] exterior first track: \(track.path) -> \(located.key) — \
             \(framed.packetCount) packets, \(framed.codec.sampleRate) Hz, \
             \(framed.codec.channelCount) ch
@@ -172,30 +185,24 @@ struct M9AudioAcceptanceRealDataTests {
             """
         }
 
-        /// Reads a MUST track out of the archives. Vanilla `MUST ANAM` names a
-        /// `.wav` file while the shipped asset is the `.xwm` sibling, so the
-        /// `.xwm` fallback is tried before declaring a track missing. The
-        /// runtime loader has no such fallback, so vanilla music does not start
-        /// on a real install yet — issue #246, which this test's report names.
+        /// Reads a MUST track out of the archives through the engine's own
+        /// resolver — the same `MusicRecordStore.loadAudioFile` the runtime
+        /// director calls, with the VFS as its loader. Vanilla `MUST ANAM`
+        /// names a `.wav` while the shipped asset is the `.xwm` sibling, so
+        /// this is the assertion that the fallback for issue #246 works on the
+        /// real install rather than only on synthetic fixtures.
         private func locate(track path: String) -> (key: String, data: Data)? {
-            if let data = try? fileSystem.contents(forPath: path) {
-                return (path, data)
+            try? MusicRecordStore.loadAudioFile(at: path) { key in
+                try fileSystem.contents(forPath: key)
             }
-            guard path.lowercased().hasSuffix(".wav") else { return nil }
-            let swapped = path.dropLast(4) + ".xwm"
-            guard let data = try? fileSystem.contents(forPath: String(swapped)) else {
-                return nil
-            }
-            return (String(swapped), data)
         }
 
         private static func extensionNote(anam: String, key: String) -> String {
             guard anam != key else {
                 return "[INFO] MUST ANAM names the shipped asset directly"
             }
-            return "[WARNING] MUST ANAM names \(anam) but the archives ship \(key); "
-                + "WorldMusicDirector loads the ANAM path verbatim, so vanilla music "
-                + "cannot start until the loader tries the .xwm sibling"
+            return "[INFO] MUST ANAM names \(anam); the archives ship \(key), "
+                + "which the engine resolver found through the .xwm sibling rule"
         }
 
         /// Interior half: the cell's XCAS acoustic space must decode, and the

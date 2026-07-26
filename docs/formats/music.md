@@ -137,11 +137,23 @@ filename into a VFS key. Music assets live under `music\...`, not the
 `sound\...` root that `SoundRecordStore` applies to `SNDR` tracks, so the two
 normalizers are deliberately separate.
 
-The rules, in order: reject absolute paths (a leading `/` or `\`) and any path
-that still carries a `:` after normalization; strip a leading `data\` when the
+The rules, in order: reject any path that still carries a `:` after
+normalization (it names a drive or volume); strip a leading `data\` when the
 remainder is already music-rooted; otherwise prefix `music\` when the path is
 not already music-rooted. A filename that fails the rules is dropped without
 reordering the survivors.
+
+A leading `/` or `\` is stripped rather than rejected. Bethesda authors most
+music tracks in the separator-led form `\Data\Music\...`, which is a Windows
+root-relative marker, not a volume: on the shipped `Skyrim.esm` 209 of the 242
+distinct `ANAM`/`BNAM` filenames look like that, and rejecting them left only
+33 tracks playable across the whole plugin. `VirtualFileSystem.normalize`
+already rejects `.` and `..` components, so a normalized path cannot leave the
+data root and the leading separator carries no meaning to preserve.
+
+The canonical key is the name as authored, which on the shipped install is not
+the name of the file that exists — see
+[shipped-file resolution](/engine/music.md#shipped-file-resolution).
 
 ## Not decoded yet
 

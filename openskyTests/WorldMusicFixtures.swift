@@ -120,6 +120,28 @@ enum MusicFixture {
         )
     }
 
+    /// The vanilla authoring shape (issue #246): one MUSC whose single MUST
+    /// names a `\Data\Music\...\*.wav` the archives do not ship. Used with
+    /// `MusicDirectorFixture.makeDirector(engine:musicStore:availablePaths:)`
+    /// to model an install that holds only the `.xwm` sibling.
+    static func makeWavAuthoredStore() -> MusicRecordStore {
+        makeStore(
+            types: [TypeSpec(formID: 0x20, editorID: "MUSExploreTundra", tracks: [0x100])],
+            tracks: [
+                TrackSpec(
+                    formID: 0x100,
+                    editorID: "TrackWav",
+                    file: "\\Data\\Music\\Explore\\MUS_Explore_Day_07.wav"
+                )
+            ]
+        )
+    }
+
+    /// Canonical key `makeWavAuthoredStore`'s single track resolves to.
+    static let wavAuthoredPath = "music\\explore\\mus_explore_day_07.wav"
+    /// The file such an install actually ships.
+    static let shippedAuthoredPath = "music\\explore\\mus_explore_day_07.xwm"
+
     static func context(
         cellMusicType: UInt32? = nil,
         regions: [UInt32] = [],
@@ -163,6 +185,27 @@ enum MusicDirectorFixture {
             fileLoader: { path in
                 guard !missingPaths.contains(path) else {
                     throw NSError(domain: "MusicDirectorFixture", code: 2)
+                }
+                return XWMFixture.file(packetCount: 2)
+            }
+        )
+    }
+
+    /// Director whose loader serves exactly `availablePaths` and throws
+    /// `VFSError.fileNotFound` for everything else, so a test can model an
+    /// install that ships only some of the names the records author.
+    static func makeDirector(
+        engine: WorldAudioEngine,
+        musicStore: MusicRecordStore,
+        availablePaths: Set<String>
+    ) -> WorldMusicDirector {
+        WorldMusicDirector(
+            engine: engine,
+            musicStore: musicStore,
+            weatherStore: nil,
+            fileLoader: { path in
+                guard availablePaths.contains(path) else {
+                    throw VFSError.fileNotFound(path: path)
                 }
                 return XWMFixture.file(packetCount: 2)
             }
