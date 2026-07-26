@@ -113,6 +113,32 @@ struct HUDMovieBridgeTests {
         ])
     }
 
+    @Test func elementVisibilityUsesObservedEntryPointsAndMeterClips() throws {
+        let harness = try makeRuntime()
+        for name in ["Health", "Magica", "Stamina"] {
+            let meter = SWFDisplayObject(content: .clip(nil))
+            meter.name = name
+            let depth = UInt16(harness.target.children.count + 1)
+            harness.target.addChild(meter, atDepth: depth)
+        }
+
+        HUDMovieBridge.setCrosshairEnabled(false, runtime: harness.runtime)
+        HUDMovieBridge.setCompassHeading(
+            90,
+            visible: false,
+            runtime: harness.runtime
+        )
+        HUDMovieBridge.setMetersEnabled(false, runtime: harness.runtime)
+
+        #expect(harness.log.calls["SetCrosshairEnabled"]?.last == [.boolean(false)])
+        #expect(harness.log.calls["SetCompassAngle"]?.last == [
+            .number(90), .number(90), .boolean(false)
+        ])
+        for name in ["Health", "Magica", "Stamina"] {
+            #expect(harness.target.child(named: name)?.isVisible == false)
+        }
+    }
+
     @Test func activationPromptMapsToTheVanillaTenArgumentCall() throws {
         let harness = try makeRuntime()
         HUDMovieBridge.setActivationPrompt("Open Test Door", runtime: harness.runtime)

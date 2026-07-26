@@ -11,6 +11,13 @@ struct HUDRuntimeState {
     var isLoaded = false
     var loadError: String?
     var interactionTarget: InteractionTarget?
+    var layerEnabled = true
+    var crosshairEnabled = true
+    var metersEnabled = true
+    var compassEnabled = true
+    var markersEnabled = true
+    var promptEnabled = true
+    var scale: Float = 1
     var promptNeedsUpdate = false
     var markersNeedUpdate = false
     var lastCameraPosition: SIMD3<Float>?
@@ -26,6 +33,8 @@ extension GameViewController {
         do {
             let scene = try loader.load(path: HUDMovieBridge.moviePath)
             try renderer.setSWFMovie(scene)
+            renderer.swfEnabled = hud.layerEnabled
+            renderer.swfScale = hud.scale
             guard let runtime = try renderer.startSWFRuntime() else {
                 return
             }
@@ -35,11 +44,18 @@ extension GameViewController {
                 HUDMovieBridge.initialize(
                     runtime: runtime,
                     headingDegrees: heading,
-                    markers: Self.hudMarkers(
-                        for: hud.interactionTarget,
-                        cameraPosition: renderer.freeFlyCamera.position
-                    ),
-                    activationPrompt: Self.hudPrompt(for: hud.interactionTarget)
+                    markers: effectiveHUDMarkers(cameraPosition: renderer.freeFlyCamera.position),
+                    activationPrompt: effectiveHUDPrompt
+                )
+                HUDMovieBridge.setCrosshairEnabled(
+                    hud.crosshairEnabled,
+                    runtime: runtime
+                )
+                HUDMovieBridge.setMetersEnabled(hud.metersEnabled, runtime: runtime)
+                HUDMovieBridge.setCompassHeading(
+                    heading,
+                    visible: hud.compassEnabled,
+                    runtime: runtime
                 )
             }
             hud.isLoaded = true
@@ -69,21 +85,22 @@ extension GameViewController {
             try renderer.updateSWFRuntime { runtime in
                 if hud.promptNeedsUpdate {
                     HUDMovieBridge.setActivationPrompt(
-                        Self.hudPrompt(for: hud.interactionTarget),
+                        effectiveHUDPrompt,
                         runtime: runtime
                     )
                 }
                 if markersNeedUpdate {
                     HUDMovieBridge.setCompassMarkers(
-                        Self.hudMarkers(
-                            for: hud.interactionTarget,
-                            cameraPosition: camera.position
-                        ),
+                        effectiveHUDMarkers(cameraPosition: camera.position),
                         runtime: runtime
                     )
                 }
                 if headingNeedsUpdate {
-                    HUDMovieBridge.setCompassHeading(heading, runtime: runtime)
+                    HUDMovieBridge.setCompassHeading(
+                        heading,
+                        visible: hud.compassEnabled,
+                        runtime: runtime
+                    )
                 }
             }
             hud.promptNeedsUpdate = false
@@ -96,10 +113,10 @@ extension GameViewController {
     }
 
     func updateHUDTarget(_ target: InteractionTarget?) {
-        let oldPrompt = Self.hudPrompt(for: hud.interactionTarget)
+        let oldPrompt = effectiveHUDPrompt
         let oldReference = hud.interactionTarget?.interaction.reference
         hud.interactionTarget = target
-        hud.promptNeedsUpdate = oldPrompt != Self.hudPrompt(for: target)
+        hud.promptNeedsUpdate = oldPrompt != effectiveHUDPrompt
         hud.markersNeedUpdate = oldReference != target?.interaction.reference
     }
 
@@ -129,6 +146,51 @@ extension GameViewController {
         return [HUDCompassMarker(headingDegrees: heading, kind: .location)]
     }
 
+    private var effectiveHUDPrompt: String? {
+        guard hud.promptEnabled else { return nil }
+        return Self.hudPrompt(for: hud.interactionTarget)
+    }
+
+    private func effectiveHUDMarkers(
+        cameraPosition: SIMD3<Float>
+    ) -> [HUDCompassMarker] {
+        guard hud.markersEnabled else { return [] }
+        return Self.hudMarkers(
+            for: hud.interactionTarget,
+            cameraPosition: cameraPosition
+        )
+    }
+
+    private func applyHUDPresentation() {
+        guard hud.isLoaded, let renderer else { return }
+        let heading = Self.hudHeadingDegrees(renderer.freeFlyCamera.yaw)
+        do {
+            try renderer.updateSWFRuntime { runtime in
+                HUDMovieBridge.setCrosshairEnabled(
+                    hud.crosshairEnabled,
+                    runtime: runtime
+                )
+                HUDMovieBridge.setMetersEnabled(hud.metersEnabled, runtime: runtime)
+                HUDMovieBridge.setCompassHeading(
+                    heading,
+                    visible: hud.compassEnabled,
+                    runtime: runtime
+                )
+                HUDMovieBridge.setCompassMarkers(
+                    effectiveHUDMarkers(cameraPosition: renderer.freeFlyCamera.position),
+                    runtime: runtime
+                )
+                HUDMovieBridge.setActivationPrompt(effectiveHUDPrompt, runtime: runtime)
+            }
+            hud.promptNeedsUpdate = false
+            hud.markersNeedUpdate = false
+            hud.lastCameraPosition = renderer.freeFlyCamera.position
+            hud.lastHeadingDegrees = heading
+        } catch {
+            failHUD(error, renderer: renderer)
+        }
+    }
+
     private func failHUD(_ error: Error, renderer: Renderer) {
         try? renderer.setSWFMovie(nil)
         hud.isLoaded = false
@@ -149,4 +211,89 @@ extension GameViewController {
         subsystem: "nl.jjgroenendijk.opensky",
         category: "HUD"
     )
+}
+
+extension GameViewController: HUDControlProviding {
+    var hudLayerEnabled: Bool {
+        get { hud.layerEnabled }
+        set {
+            hud.layerEnabled = newValue
+            if hud.isLoaded {
+                renderer?.swfEnabled = newValue
+            }
+        }
+    }
+
+    var hudCrosshairEnabled: Bool {
+        get { hud.crosshairEnabled }
+        set {
+            hud.crosshairEnabled = newValue
+            applyHUDPresentation()
+        }
+    }
+
+    var hudCompassEnabled: Bool {
+        get { hud.compassEnabled }
+        set {
+            hud.compassEnabled = newValue
+            applyHUDPresentation()
+        }
+    }
+
+    var hudMetersEnabled: Bool {
+        get { hud.metersEnabled }
+        set {
+            hud.metersEnabled = newValue
+            applyHUDPresentation()
+        }
+    }
+
+    var hudMarkersEnabled: Bool {
+        get { hud.markersEnabled }
+        set {
+            hud.markersEnabled = newValue
+            applyHUDPresentation()
+        }
+    }
+
+    var hudPromptEnabled: Bool {
+        get { hud.promptEnabled }
+        set {
+            hud.promptEnabled = newValue
+            applyHUDPresentation()
+        }
+    }
+
+    var hudScale: Float {
+        get { hud.scale }
+        set {
+            let finite = newValue.isFinite ? newValue : 1
+            hud.scale = max(0.5, min(2, finite))
+            if hud.isLoaded {
+                renderer?.swfScale = hud.scale
+            }
+        }
+    }
+
+    var hudControlSnapshot: HUDControlSnapshot {
+        let target = hud.interactionTarget
+        let cameraPosition = renderer?.freeFlyCamera.position ?? .zero
+        return HUDControlSnapshot(
+            isLoaded: hud.isLoaded,
+            loadError: hud.loadError,
+            targetReference: target?.interaction.reference,
+            targetBase: target?.interaction.base,
+            targetName: target?.interaction.name,
+            targetAction: target?.interaction.actionLabel,
+            targetDistance: target?.distance,
+            targetPosition: target?.interaction.position,
+            hitPosition: target?.hitPosition,
+            prompt: effectiveHUDPrompt,
+            markerHeadings: effectiveHUDMarkers(cameraPosition: cameraPosition)
+                .map(\.headingDegrees),
+            cameraHeading: renderer.map { Self.hudHeadingDegrees($0.freeFlyCamera.yaw) },
+            scale: hudScale,
+            drawStats: renderer?.lastSWFDrawStats ?? SWFDrawStats()
+        )
+    }
 }

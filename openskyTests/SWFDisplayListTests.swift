@@ -266,6 +266,25 @@ struct SWFTransformTests {
         #expect(abs(origin.y - 0) < 1e-3)
     }
 
+    @Test func viewportMappingAppliesCenteredContentScale() {
+        let frame = SWFRect(xMin: 0, xMax: 8000, yMin: 0, yMax: 6000)
+        let half = SWFViewportMapping.twipsToPixels(
+            frameSize: frame,
+            viewportPixels: SIMD2(400, 300),
+            contentScale: 0.5
+        )
+        let doubled = SWFViewportMapping.twipsToPixels(
+            frameSize: frame,
+            viewportPixels: SIMD2(400, 300),
+            contentScale: 2
+        )
+
+        #expect(half.apply(SIMD2(0, 0)) == SIMD2(100, 75))
+        #expect(half.apply(SIMD2(8000, 6000)) == SIMD2(300, 225))
+        #expect(doubled.apply(SIMD2(0, 0)) == SIMD2(-200, -150))
+        #expect(doubled.apply(SIMD2(8000, 6000)) == SIMD2(600, 450))
+    }
+
     @Test func pixelsToClipMapsCornersToNDC() {
         let clip = SWFViewportMapping.pixelsToClip(viewportPixels: SIMD2(480, 320))
         #expect(clip.apply(SIMD2(0, 0)) == SIMD2(-1, 1))

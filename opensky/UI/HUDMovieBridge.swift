@@ -70,6 +70,11 @@ nonisolated enum HUDMovieBridge {
         "SetMagickaMeterPercent",
         "SetStaminaMeterPercent"
     ]
+    private static let meterPaths = [
+        "/HUDMovieBaseInstance/Health",
+        "/HUDMovieBaseInstance/Magica",
+        "/HUDMovieBaseInstance/Stamina"
+    ]
 
     static func validate(runtime: SWFMovieRuntime) throws {
         guard let target = runtime.node(atPath: targetPath, from: runtime.root) else {
@@ -89,17 +94,30 @@ nonisolated enum HUDMovieBridge {
         markers: [HUDCompassMarker] = [],
         activationPrompt: String? = nil
     ) {
-        call("SetCrosshairEnabled", [.boolean(true)], runtime: runtime)
+        setCrosshairEnabled(true, runtime: runtime)
         setMeters(meters, runtime: runtime)
         setCompassMarkers(markers, runtime: runtime)
         setCompassHeading(headingDegrees, runtime: runtime)
         setActivationPrompt(activationPrompt, runtime: runtime)
     }
 
+    static func setCrosshairEnabled(_ enabled: Bool, runtime: SWFMovieRuntime) {
+        call("SetCrosshairEnabled", [.boolean(enabled)], runtime: runtime)
+    }
+
     static func setMeters(_ meters: HUDMeterValues, runtime: SWFMovieRuntime) {
         meter("SetHealthMeterPercent", value: meters.health, runtime: runtime)
         meter("SetMagickaMeterPercent", value: meters.magicka, runtime: runtime)
         meter("SetStaminaMeterPercent", value: meters.stamina, runtime: runtime)
+    }
+
+    static func setMetersEnabled(_ enabled: Bool, runtime: SWFMovieRuntime) {
+        for path in meterPaths {
+            guard let meter = runtime.node(atPath: path, from: runtime.root) else {
+                continue
+            }
+            runtime.setDisplayProperty(.visible, of: meter, to: .boolean(enabled))
+        }
     }
 
     static func setActivationPrompt(_ prompt: String?, runtime: SWFMovieRuntime) {
@@ -147,11 +165,15 @@ nonisolated enum HUDMovieBridge {
         call("SetCompassMarkers", runtime: runtime)
     }
 
-    static func setCompassHeading(_ headingDegrees: Float, runtime: SWFMovieRuntime) {
+    static func setCompassHeading(
+        _ headingDegrees: Float,
+        visible: Bool = true,
+        runtime: SWFMovieRuntime
+    ) {
         let heading = Double(normalizedDegrees(headingDegrees))
         call(
             "SetCompassAngle",
-            [.number(heading), .number(heading), .boolean(true)],
+            [.number(heading), .number(heading), .boolean(visible)],
             runtime: runtime
         )
     }

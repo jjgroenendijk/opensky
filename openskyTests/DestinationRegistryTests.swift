@@ -84,6 +84,31 @@ final class FakeWorldProviders: WorldControlProviders {
         densityCulledInstances: 0, frustumCulledInstances: 0, budgetDroppedInstances: 0
     )
 
+    // HUDControlProviding
+    var hudLayerEnabled = true
+    var hudCrosshairEnabled = true
+    var hudMetersEnabled = true
+    var hudCompassEnabled = true
+    var hudMarkersEnabled = true
+    var hudPromptEnabled = true
+    var hudScale: Float = 1
+    var hudControlSnapshot = HUDControlSnapshot(
+        isLoaded: false,
+        loadError: nil,
+        targetReference: nil,
+        targetBase: nil,
+        targetName: nil,
+        targetAction: nil,
+        targetDistance: nil,
+        targetPosition: nil,
+        hitPosition: nil,
+        prompt: nil,
+        markerHeadings: [],
+        cameraHeading: nil,
+        scale: 1,
+        drawStats: SWFDrawStats()
+    )
+
     // UILabControlProviding
     var uiOverlayEnabled = true
     var uiSampleShown = false
@@ -167,13 +192,17 @@ struct DestinationRegistryTests {
     func registryOrderAndIdentifiers() {
         #expect(
             DestinationRegistry.all.map(\.id)
-                == ["world", "environment", "audio", "uiLab", "assetBrowser"]
+                == [
+                    "world", "environment", "hudInteraction", "audio",
+                    "uiLab", "assetBrowser"
+                ]
         )
         // Accessibility identifiers are the UI-test contract; pin them literally.
         #expect(
             DestinationRegistry.all.map(\.sidebarIdentifier) == [
                 "Destination-world",
                 "Destination-environment",
+                "Destination-hudInteraction",
                 "Destination-audio",
                 "Destination-uiLab",
                 "Destination-assetBrowser"
@@ -181,7 +210,7 @@ struct DestinationRegistryTests {
         )
         #expect(
             DestinationRegistry.worldInspectors.map(\.id)
-                == ["world", "environment", "audio", "uiLab"]
+                == ["world", "environment", "hudInteraction", "audio", "uiLab"]
         )
         #expect(DestinationRegistry.defaultDestinationID == "world")
     }
@@ -201,6 +230,7 @@ struct DestinationRegistryTests {
     func gameViewVisibilityPerContentKind() {
         #expect(DestinationRegistry.destination(id: "world")?.showsGameView == true)
         #expect(DestinationRegistry.destination(id: "environment")?.showsGameView == true)
+        #expect(DestinationRegistry.destination(id: "hudInteraction")?.showsGameView == true)
         #expect(DestinationRegistry.destination(id: "assetBrowser")?.showsGameView == false)
     }
 
@@ -249,6 +279,11 @@ struct DestinationRegistryTests {
         #expect(isOverridden("environment", context: context))
         reset("environment", context: context)
         #expect(providers.grassEnabled)
+
+        providers.hudMetersEnabled = false
+        #expect(isOverridden("hudInteraction", context: context))
+        reset("hudInteraction", context: context)
+        #expect(providers.hudMetersEnabled)
 
         providers.audioEnabled = true
         #expect(isOverridden("audio", context: context))

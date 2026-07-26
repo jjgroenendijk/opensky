@@ -74,6 +74,12 @@ moves across the same object. Clearing the target hides the prompt and removes t
 Activation and door dispatch remain on the typed event path above; the HUD is a subscriber,
 not a second interaction system.
 
+`World > HUD & Interaction > Target` is the durable inspection surface. It publishes the
+selected REFR and base FormIDs, resolved action and name, ray distance, placed and collision-hit
+positions, the exact prompt sent to the movie, camera heading, and target-marker headings. The
+readout is deliberately live-only: it does not provide a synthetic target that could hide a
+selection or localization failure.
+
 ## Verification
 
 Synthetic coverage exercises every supported collision primitive, transformed world
@@ -82,3 +88,10 @@ publication and clearing, wall occlusion, localized/inline record text, record s
 action resolution, activation events, selected-door transitions, prompt mapping, and compass
 heading derivation. The M4 walk benchmark now enters and exits through the selected
 interaction target instead of proximity dispatch.
+
+The environment-gated M8.4.3 acceptance builds the real walk-route farm cell `(7,-3)`, resolves
+DOOR REFR `0001633D`, and raycasts its installed NIF collision through the same exact narrowphase.
+The hit was 83.329315 units away and produced the live prompt `Open Door`. Publishing only that
+prompt to the installed HUD movie changed 7,509 pixels at 1280x720. Prompt-off/on frames and the
+numeric report stay under gitignored `logs/`; a local A/B inspection confirmed the prompt appears
+at the crosshair while the compass and crosshair stay stable.

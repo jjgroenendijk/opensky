@@ -30,8 +30,8 @@ be able to select/force/toggle/inspect the behavior without a CLI command.
   sidebar (`AppSidebarViewController`, `NSOutlineView` with non-selectable
   group rows) + layered content (`ShellContentViewController`). The old
   segmented World/Asset Browser mode switch is gone.
-- Sidebar map: World: World, Environment, Audio · Developer: UI Lab · Library:
-  Asset Browser. Launch selects World
+- Sidebar map: World: World, Environment, HUD & Interaction, Audio · Developer:
+  UI Lab · Library: Asset Browser. Launch selects World
   (`DestinationRegistry.defaultDestinationID`). Sections come from
   `SidebarSection` (world, developer, library — `allCases` order); empty
   sections drop. Grouping is unit-tested via `AppSidebarModel`
@@ -178,10 +178,10 @@ INI values become authoritative again. Section collapse state is presentation
 state, not an override, and Reset preserves it.
 
 The sidebar dot aggregates every mutable section under its exact path:
-`World > World`, `World > Environment`, `World > Audio`, or
-`Developer > UI Lab`. `View > Reset all overrides` invokes every registered
-destination action, including unopened destinations, and then resyncs cached
-panels.
+`World > World`, `World > Environment`, `World > HUD & Interaction`,
+`World > Audio`, or `Developer > UI Lab`. `View > Reset all overrides` invokes
+every registered destination action, including unopened destinations, and then
+resyncs cached panels.
 
 ## Placement decision tree
 
@@ -305,6 +305,12 @@ If one later gains a distinct control group, convert it to normal
 panel fan-out owns ticker lifecycle, override aggregation, reset, and refocus
 wiring.
 
+`World > HUD & Interaction` is another normal sectioned panel. **Elements**
+(`PanelSection-hudElements`) owns reversible presentation overrides;
+**Target** (`PanelSection-hudTarget`) is read-only live diagnostics. The
+milestone names the destination path, so its seven controls do not get folded
+into World or UI Lab.
+
 ## Theme
 
 The shell is a committed dark, Skyrim-inspired design (owner request
@@ -382,6 +388,12 @@ Accessibility identifiers are the UI-test API and never change silently.
   `AudioCategory` list), `AudioFileControl`, `AudioPlaySelectedControl`,
   `AudioStopAllControl`; readouts `AudioStatsLabel`, `AudioSourcesStatsLabel`.
   Section headers: `PanelSection-audioOutput`, `-audioSources`.
+- HUD set (World > HUD & Interaction, M8.4.3):
+  `HUDLayerEnabledControl`, `HUDCrosshairControl`, `HUDMetersControl`,
+  `HUDCompassControl`, `HUDMarkersControl`, `HUDPromptControl`,
+  `HUDScaleControl`; readouts `HUDElementsStatsLabel`,
+  `HUDTargetStatsLabel`. Section headers: `PanelSection-hudElements`,
+  `PanelSection-hudTarget`.
 - The convention is now uniform. The LOD and time-of-day controls used to carry
   `*Field` / `*Button` / `*Label` suffixes; they were renamed to
   `*Control` / `*StatsLabel` in one pass before the id surface grew further.
