@@ -127,6 +127,7 @@ nonisolated struct ExteriorCellModelCatalog {
 
     private func baseModelPaths() -> [UInt32: String?] {
         var result: [UInt32: String?] = [:]
+        let localized = (try? file.pluginHeader().isLocalized) ?? false
         if let top = file.topGroup(of: "STAT"), let children = try? top.children() {
             for case let .record(record) in children where record.type == "STAT" {
                 if let object = try? StaticObject(record: record) {
@@ -139,7 +140,7 @@ nonisolated struct ExteriorCellModelCatalog {
                 continue
             }
             for case let .record(record) in children where record.type == type {
-                if let object = try? ModelBase(record: record) {
+                if let object = try? ModelBase(record: record, localized: localized) {
                     result[record.formID] = object.modelPath
                 }
             }

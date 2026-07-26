@@ -174,7 +174,23 @@ final class CellStreamingWalkDriver {
                 actual: door?.reference
             )
         }
-        streamer.update(cameraPosition: renderer.freeFlyCamera.position, activate: true)
+        let interactionRay = door.flatMap {
+            InteractionRay(
+                origin: renderer.freeFlyCamera.position,
+                direction: $0.position - renderer.freeFlyCamera.position
+            )
+        }
+        streamer.update(
+            cameraPosition: renderer.freeFlyCamera.position,
+            interactionRay: interactionRay,
+            activate: true
+        )
+        guard streamer.interactionTarget?.interaction.reference == WalkPathRoute.farmDoor else {
+            throw CellStreamingWalkBenchmarkError.wrongDoor(
+                expected: WalkPathRoute.farmDoor,
+                actual: streamer.interactionTarget?.interaction.reference
+            )
+        }
         changePhase(.waitInterior)
     }
 }

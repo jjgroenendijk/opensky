@@ -110,6 +110,7 @@ extension CellSceneBuilder {
             geometry: CellGeometryBuild(
                 location: location,
                 doors: resolveDoors(refs: refs),
+                interactions: resolveInteractions(refs: refs),
                 terrain: nil,
                 grass: nil,
                 water: nil,

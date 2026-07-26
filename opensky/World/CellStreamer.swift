@@ -34,8 +34,9 @@ final class CellStreamer {
     /// Last region set pushed through `onCenterRegionsChanged`; nil = never
     /// emitted. Guards against re-firing an unchanged set every frame.
     private var lastEmittedRegions: [FormID]?
-    /// Proximity-only interaction for M3.6; raycast selection lands later.
-    static let doorActivationRadius: Float = 192
+    /// Retained for deterministic walk benchmarks that inspect nearby doors.
+    /// Production use-key activation is view-ray based.
+    static let doorActivationRadius = InteractionRay.defaultMaximumDistance
 
     /// Desired requests not yet submitted. Only one build reaches the runner
     /// at a time, so recentering can discard obsolete backlog before it does
@@ -58,6 +59,12 @@ final class CellStreamer {
     var interiorScene: CellScene?
     var transitionInFlight: FormID?
     private(set) var doorTransitionFailureCount = 0
+    var interactionTarget: InteractionTarget?
+    /// Fires when view-ray target identity, text, or hit details change.
+    var onInteractionTargetChanged: ((InteractionTarget?) -> Void)?
+    /// Engine-owned use-key event. HUD observes targets; Papyrus subscribes
+    /// here later without taking ownership of raycast or door behavior.
+    var onInteraction: ((InteractionEvent) -> Void)?
 
     /// - Parameters:
     ///   - center: grid center at launch (streaming starts on FirstRenderCell).
@@ -87,7 +94,11 @@ final class CellStreamer {
     /// camera (dispatching newly-needed cells, dropping cells that left the
     /// grid), integrates at most one drawable build (a swap is a full
     /// recompose), and sinks the recomposed scene when anything changed.
-    func update(cameraPosition: SIMD3<Float>, activate: Bool = false) {
+    func update(
+        cameraPosition: SIMD3<Float>,
+        interactionRay: InteractionRay? = nil,
+        activate: Bool = false
+    ) {
         let completed = runner.drainCompleted()
         if !completed.isEmpty {
             pending.append(contentsOf: completed)
@@ -98,11 +109,13 @@ final class CellStreamer {
             return
         }
         let isInside = updateInteriorIfNeeded(
-            cameraPosition: cameraPosition,
-            activate: activate,
             completedLOD: completedLOD
         )
         if isInside {
+            updateInteractionTarget(ray: interactionRay)
+            if activate {
+                activateInteractionTarget()
+            }
             return
         }
 
@@ -136,12 +149,9 @@ final class CellStreamer {
         if sceneChanged {
             recomposeAndSink()
         }
+        updateInteractionTarget(ray: interactionRay)
         if activate {
-            requestDoorTransition(
-                composition.nearestDoor(
-                    to: cameraPosition, within: Self.doorActivationRadius
-                )
-            )
+            activateInteractionTarget()
         }
         dispatchNextBuild()
         requestDistantLODIfNeeded()
@@ -160,23 +170,6 @@ final class CellStreamer {
         guard regions != lastEmittedRegions else { return }
         lastEmittedRegions = regions
         onCenterRegionsChanged?(regions)
-    }
-
-    /// Main-thread terrain query consumed by walk mode before this frame's
-    /// streaming update. Exterior resident fields only; interiors gain mesh
-    /// floors with M4 collision-world integration.
-    func sampleTerrain(at position: SIMD2<Float>) -> TerrainGroundSample? {
-        guard interiorScene == nil else { return nil }
-        return composition.sampleTerrain(at: position)
-    }
-
-    /// Active collision broadphase: exact interior while inside, resident
-    /// exterior cell BVHs otherwise. Main-thread value query; no VFS access.
-    func collisionCandidates(overlapping bounds: ModelBounds) -> [StaticCollisionShape] {
-        if let interiorScene {
-            return interiorScene.staticCollision.candidates(overlapping: bounds)
-        }
-        return composition.collisionCandidates(overlapping: bounds)
     }
 
     private func requestDistantLODIfNeeded() {

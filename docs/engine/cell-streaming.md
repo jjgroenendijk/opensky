@@ -4,7 +4,7 @@ title: Cell streaming
 description: Camera position -> desired NxN exterior-cell grid, built off the main thread
   on one serial queue, streamed in/out around the free-fly camera with a per-frame budget.
 tags: [engine, world, streaming, esm, concurrency]
-timestamp: 2026-07-19T00:00:00Z
+timestamp: 2026-07-26T00:00:00Z
 ---
 
 # Cell streaming
@@ -257,13 +257,14 @@ composition owns replacement refs.
 
 ### Interior suspension
 
-M3.6 routes F activation through same serial runner. Nearest XTEL-capable DOOR within 192
-units queues one transition; pending-source dedupe prevents key repeat. Exterior scene stays
-live during build. Interior success swaps renderer to one non-grid scene and freezes grid
-diffs, build dispatch, LOD, unload. Exterior composition remains retained as return cache.
-Returning through an interior door seeds/replaces destination exterior cell, teleports
-camera to XTEL pose, clears interior scene, resumes normal grid settlement. Asset eviction
-uses active interior keys while inside, exterior union after return. Full flow:
+M3.6 routes door transitions through the same serial runner. M8.4.1 supplies the exact DOOR
+REFR selected by the walk-mode [interaction view ray](/engine/interaction.md); pending-source
+dedupe prevents key repeat. Exterior scene stays live during build. Interior success swaps
+renderer to one non-grid scene and freezes grid diffs, build dispatch, LOD, unload. Exterior
+composition remains retained as return cache. Returning through an interior door
+seeds/replaces destination exterior cell, teleports camera to XTEL pose, clears interior
+scene, resumes normal grid settlement. Asset eviction uses active interior keys while
+inside, exterior union after return. Full flow:
 [interior door transitions](/engine/interiors.md).
 
 ### Actor streaming (M5.5)

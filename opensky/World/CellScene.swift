@@ -38,6 +38,8 @@ nonisolated struct CellScene {
     let bounds: (min: SIMD3<Float>, max: SIMD3<Float>)?
     let location: CellSceneLocation?
     let doors: [PlacedDoor]
+    /// REFR -> resolved record text/action for view-ray interaction.
+    let interactions: [FormID: PlacedInteraction]
     /// XCLR REGN regions overlapping this exterior cell (empty on interiors +
     /// cells without XCLR). The streamer pushes the center cell's set into the
     /// weather runtime so region-weighted selection runs live (M7.2.3).
@@ -60,6 +62,7 @@ nonisolated struct CellScene {
         bounds: (min: SIMD3<Float>, max: SIMD3<Float>)?,
         location: CellSceneLocation? = nil,
         doors: [PlacedDoor] = [],
+        interactions: [FormID: PlacedInteraction] = [:],
         regions: [FormID] = [],
         terrainHeightField: TerrainHeightField? = nil,
         grassPlacements: [GrassPlacement] = [],
@@ -71,6 +74,7 @@ nonisolated struct CellScene {
         self.bounds = bounds
         self.location = location
         self.doors = doors
+        self.interactions = interactions
         self.regions = regions
         self.terrainHeightField = terrainHeightField
         self.grassPlacements = grassPlacements

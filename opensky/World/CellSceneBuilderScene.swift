@@ -7,6 +7,7 @@ import OSLog
 nonisolated struct CellGeometryBuild {
     let location: CellSceneLocation
     let doors: [PlacedDoor]
+    let interactions: [FormID: PlacedInteraction]
     let terrain: TerrainBuild?
     let grass: GrassBuild?
     let water: WaterBuild?
@@ -48,7 +49,7 @@ extension CellSceneBuilder {
     }
 
     /// Keeps only REFRs whose base resolves to DOOR and whose XTEL decoded.
-    /// A non-teleport door still renders but has no activation target.
+    /// Interaction metadata independently includes non-teleport doors.
     nonisolated func resolveDoors(refs: [PlacedReference]) -> [PlacedDoor] {
         let modelBaseIndex = modelBaseIndexBuildingIfNeeded()
         return refs.compactMap { ref in
@@ -62,6 +63,63 @@ extension CellSceneBuilder {
                 destination: destination
             )
         }
+    }
+
+    /// Retains named use-key targets beside collision geometry. Every
+    /// interaction-capable base uses the generic activation action except
+    /// doors, whose typed open action can additionally drive XTEL.
+    nonisolated func resolveInteractions(
+        refs: [PlacedReference]
+    ) -> [FormID: PlacedInteraction] {
+        let modelBaseIndex = modelBaseIndexBuildingIfNeeded()
+        var interactions: [FormID: PlacedInteraction] = [:]
+        for ref in refs {
+            guard
+                let base = modelBaseIndex[ref.base.rawValue],
+                base.allowsManualInteraction,
+                let action = interactionAction(for: base.recordType)
+            else { continue }
+            let override = resolvedText(base.activateTextOverride)
+                .flatMap { $0.isEmpty ? nil : $0 }
+            let name = resolvedText(base.name)
+                .flatMap { $0.isEmpty ? nil : $0 }
+            let interaction = PlacedInteraction(
+                reference: ref.formID,
+                base: ref.base,
+                position: ref.placement.position,
+                name: name ?? base.editorID ?? base.formID.description,
+                action: action,
+                actionLabel: override ?? action.defaultLabel
+            )
+            interactions[ref.formID] = interaction
+        }
+        return interactions
+    }
+
+    nonisolated private func interactionAction(
+        for recordType: FourCC
+    ) -> InteractionAction? {
+        switch recordType {
+        case "DOOR":
+            .open
+        case "ACTI":
+            .activate
+        case "CONT":
+            .search
+        case "TREE":
+            .harvest
+        case "FURN":
+            .use
+        default:
+            nil
+        }
+    }
+
+    nonisolated private func resolvedText(_ text: LString?) -> String? {
+        if case let .inline(value) = text {
+            return value
+        }
+        return localizedStrings?.resolve(text)
     }
 
     /// RenderScene handles opaque/alpha-test order; environment adds terrain,
@@ -123,6 +181,7 @@ extension CellSceneBuilder {
             bounds: bounds.map { (min: $0.min, max: $0.max) },
             location: geometry.location,
             doors: geometry.doors,
+            interactions: geometry.interactions,
             regions: found.cell.regions,
             terrainHeightField: geometry.terrain?.heightField,
             grassPlacements: geometry.grass?.placements ?? [],

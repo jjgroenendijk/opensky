@@ -85,7 +85,8 @@ renderer drains toggle once, resets controller from current camera when entering
 queries `CellStreamer`'s resident terrain + collision composition before streaming update.
 First-scene framing or successful XTEL door camera reseed resets capsule pose, vertical
 velocity, grounded state, fixed-step residual, and active tread support before next physics
-step. Door activation stays F within 192 units.
+step. F activates the exact [interaction target](/engine/interaction.md) under the walk-mode
+view ray within 192 units; fly mode neither targets nor activates.
 
 ## Scope boundary
 
