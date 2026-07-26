@@ -110,6 +110,25 @@ final class OpenSkyUITests: XCTestCase {
         XCTAssertEqual(quality.value as? String, "Low")
     }
 
+    /// World > HUD & Interaction acceptance surface (M8.4.3).
+    @MainActor
+    func testHUDInteractionControlsAndReadouts() throws {
+        let app = try launchApp()
+        let sidebar = app.outlines["AppSidebar"]
+        XCTAssertTrue(sidebar.waitForExistence(timeout: 5))
+        sidebar.cells["Destination-hudInteraction"].firstMatch.click()
+
+        XCTAssertTrue(app.checkBoxes["HUDLayerEnabledControl"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.checkBoxes["HUDCrosshairControl"].exists)
+        XCTAssertTrue(app.checkBoxes["HUDMetersControl"].exists)
+        XCTAssertTrue(app.checkBoxes["HUDCompassControl"].exists)
+        XCTAssertTrue(app.checkBoxes["HUDMarkersControl"].exists)
+        XCTAssertTrue(app.checkBoxes["HUDPromptControl"].exists)
+        XCTAssertTrue(app.popUpButtons["HUDScaleControl"].exists)
+        XCTAssertTrue(app.staticTexts["HUDElementsStatsLabel"].exists)
+        XCTAssertTrue(app.staticTexts["HUDTargetStatsLabel"].exists)
+    }
+
     /// Developer > UI Lab sidebar surface (M8.1.1 + M8.1.4): the sidebar lists
     /// the UI Lab destination; selecting it exposes the overlay-enable + sample
     /// toggles, the scale preset popup, the menu-mode preview buttons, and the

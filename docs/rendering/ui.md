@@ -5,7 +5,7 @@ description: 2D overlay pass over the finished 3D frame - anchored value-type sc
   layout + text primitives, CoreText system-font glyph atlas, points -> pixels scale
   handling, single premultiplied draw call, plus the SWF display-list render layer.
 tags: [rendering, ui, metal, text, layout]
-timestamp: 2026-07-25T00:00:00Z
+timestamp: 2026-07-26T00:00:00Z
 ---
 
 # Screen-space UI layer
@@ -114,6 +114,8 @@ stats and readouts stay on top). Tag decode and the frame-1 semantics live in
   axis-aligned in pixel space at the on-screen EM size.
 - Viewport mapping (`SWFViewportMapping`): uniform scale fitting the movie's
   `FrameSize` into the viewport, centered — letterboxed on an aspect mismatch.
+  The renderer's 0.5...2 presentation multiplier scales that fit around the
+  same viewport center rather than pinning the movie to an edge.
 - Clip layers use a **counting stencil**: `beginClip` draws the mask geometry
   with increment-clamp, `endClip` repeats it with decrement-clamp, and each
   content draw tests `stencil == active clip count` (the reference value set per
@@ -237,11 +239,11 @@ offscreen run over that movie changed 1,783 pixels after publishing a prompt
 and marker, with 208 draw calls, zero skipped items, and zero runtime faults;
 its local statistics remain under gitignored `logs/`.
 
-Angle orientation is still provisional. OpenSky maps world +X to zero degrees,
-normalizes into 0..<360, and passes the same camera yaw as the player and
-compass angles. The public SWF format does not specify this HUD-specific GFx
-contract, so the cardinal alignment belongs to the M8.4.3 real-world visual
-acceptance rather than being presented as proven here.
+OpenSky maps world +X to zero degrees, normalizes into 0..<360, and passes the
+same camera yaw as the player and compass angles. The public SWF format does not
+specify this HUD-specific GFx contract. M8.4.3's local visual check confirmed
+that heading zero centers the movie's north marker and that publishing a prompt
+does not move the compass.
 
 HUD state changes are collected by `GameViewControllerHUD` and applied once
 between frames. Target callbacks only mark prompt and marker state dirty; the
@@ -254,6 +256,40 @@ explicit movie-frame cadence in later scope.
 The gameplay HUD owns the single SWF layer by default. Choosing a movie in
 `Developer > UI Lab > SWF movie` is an explicit debug override; choosing
 `None` restores `hudmenu.swf`.
+
+## HUD acceptance surface (M8.4.3)
+
+`World > HUD & Interaction` is a separate World destination because the
+milestone names that exact path. Its two sections talk through
+`HUDControlProviding`; the panel does not own renderer or targeting state.
+
+- **Elements** A/Bs the live layer, crosshair, actor meters, compass,
+  interaction marker, and activation prompt. Scale presets are 50, 75, 100,
+  125, 150, and 200 percent. The readout reports load/error state, effective
+  scale, draw calls, and skipped items. Defaults are all elements on at 100
+  percent, and the section participates in destination and Reset-all override
+  provenance.
+- **Target** reports the current walk-mode REFR and base FormIDs, action and
+  resolved name, distance, placed and hit positions, exact prompt, camera
+  heading, and marker headings. It has no synthetic preview: the acceptance
+  surface must expose a broken live targeting or localization path rather than
+  masking it.
+
+Element toggles mutate the existing runtime between frames. Crosshair and
+compass visibility use the movie's observed setters. Meter visibility changes
+the installed `/HUDMovieBaseInstance/Health`, `Magica`, and `Stamina` clips,
+whose paths were observed in the legally owned movie's runtime tree. Scale is a
+centered renderer presentation multiplier and does not mutate the display list.
+UI Lab still owns an explicit whole-movie override; selecting `None` restores
+the HUD with its saved M8.4.3 element and scale preferences.
+
+The environment-gated `HUDAcceptanceRealDataTests` builds the installed
+walk-route farm cell, exact-raycasts real door REFR `0001633D` at 83.329315
+units, and feeds its `Open Door` prompt to the installed `hudmenu.swf`. At
+1280x720, prompt off/on changed 7,509 pixels with zero skipped items. Both
+frames and the report stay in gitignored `logs/`. Local inspection confirmed
+the activation text appears at the crosshair and the compass/crosshair remain
+stable; no game-art capture is tracked.
 
 ## App surface
 
@@ -425,6 +461,14 @@ shown verbatim ([UI translation strings](/formats/translation-strings.md)).
   (`SWFRuntimeSectionTests`); the bridge reporting instead of throwing without
   a renderer (`GameViewControllerSWFLabTests`); hosting inside the UI Lab
   document (`UILabPanelTests`).
+- M8.4.3 panel coverage, device-free and install-free:
+  `HUDInteractionPanelTests` pins both section identifiers, every control id,
+  provider round trips, default reset, the live target readout, refocus, and
+  panel geometry. `DestinationRegistryTests` pins placement under World,
+  game-view visibility, and unopened-destination override reset. The exact
+  acceptance path is `World > HUD & Interaction`: use **Elements** to A/B the
+  layer, crosshair, meters, compass, marker, prompt, and centered scale while
+  **Target** shows the live walk-mode selection and movie payload.
 - M8.2 milestone acceptance sidebar path: `Developer > UI Lab > SWF movie` —
   pick `console.swf`, `creationclubmenu.swf`, `quest_journal.swf`,
   `bookmenu.swf`, or `hudmenu.swf` from `SWFMovieControl`, watch

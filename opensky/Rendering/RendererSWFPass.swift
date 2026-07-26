@@ -19,6 +19,16 @@ extension Renderer {
         set { swf.enabled = newValue }
     }
 
+    /// Centered SWF presentation scale. The HUD acceptance panel uses this for
+    /// live A/B checks without mutating the movie's display list.
+    var swfScale: Float {
+        get { swf.scale }
+        set {
+            let finite = newValue.isFinite ? newValue : 1
+            swf.scale = max(0.5, min(2, finite))
+        }
+    }
+
     /// The movie package assigned via `setSWFMovie`; nil -> no SWF draws.
     var swfScene: SWFMovieScene? {
         swf.movie?.scene
@@ -82,6 +92,7 @@ extension Renderer {
         var frame = SWFFrameBuilder(
             movie: movie,
             viewport: viewport,
+            contentScale: swf.scale,
             glyphAtlas: uiResources.glyphAtlas
         )
         frame.build()
@@ -209,10 +220,21 @@ nonisolated struct SWFFrameBuilder {
     private var glyphQuadCount = 0
 
     init(movie: SWFMovieResources, viewport: SIMD2<Float>, glyphAtlas: UIGlyphAtlas) {
+        self.init(movie: movie, viewport: viewport, contentScale: 1, glyphAtlas: glyphAtlas)
+    }
+
+    init(
+        movie: SWFMovieResources,
+        viewport: SIMD2<Float>,
+        contentScale: Float,
+        glyphAtlas: UIGlyphAtlas
+    ) {
         self.movie = movie
         self.glyphAtlas = glyphAtlas
         stageToPixels = SWFViewportMapping.twipsToPixels(
-            frameSize: movie.scene.movie.frameSize, viewportPixels: viewport
+            frameSize: movie.scene.movie.frameSize,
+            viewportPixels: viewport,
+            contentScale: contentScale
         )
         pixelsToClip = SWFViewportMapping.pixelsToClip(viewportPixels: viewport)
     }

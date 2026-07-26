@@ -44,6 +44,8 @@ nonisolated final class SWFPassResources {
 
     /// A/B toggle mirrored by `Renderer.swfEnabled`.
     var enabled = true
+    /// Centered scale multiplier over the fit-to-viewport mapping.
+    var scale: Float = 1
     var movie: SWFMovieResources?
     /// The AS2 runtime driving `movie`, when one was started. nil keeps the
     /// layer on the static frame-1 path.

@@ -46,6 +46,7 @@ extension GameViewController: SWFLabControlProviding {
         // movie. The gameplay HUD stops updating, so it can never mutate a
         // replacement runtime; clearing the selection starts a fresh HUD.
         hud.isLoaded = false
+        renderer?.swfScale = 1
         swfLab.selectedPath = path
         swfLab.loadError = nil
         swfLab.tally = nil
@@ -58,6 +59,7 @@ extension GameViewController: SWFLabControlProviding {
             }
             return
         }
+        renderer?.swfEnabled = true
         guard let loader = resolveSWFLoader() else {
             swfLab.loadError = "No game data located."
             assignSWFScene(nil)

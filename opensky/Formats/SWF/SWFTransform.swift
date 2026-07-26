@@ -120,7 +120,8 @@ nonisolated enum SWFViewportMapping {
     /// `viewportPixels`.
     static func twipsToPixels(
         frameSize: SWFRect,
-        viewportPixels: SIMD2<Float>
+        viewportPixels: SIMD2<Float>,
+        contentScale: Float = 1
     ) -> SWFTransform {
         let widthTwips = Float(frameSize.xMax - frameSize.xMin)
         let heightTwips = Float(frameSize.yMax - frameSize.yMin)
@@ -130,7 +131,9 @@ nonisolated enum SWFViewportMapping {
         else {
             return .identity
         }
-        let scale = min(viewportPixels.x / widthTwips, viewportPixels.y / heightTwips)
+        let fitScale = min(viewportPixels.x / widthTwips, viewportPixels.y / heightTwips)
+        let multiplier = contentScale.isFinite ? max(0.5, min(2, contentScale)) : 1
+        let scale = fitScale * multiplier
         let offsetX = (viewportPixels.x - widthTwips * scale) / 2
         let offsetY = (viewportPixels.y - heightTwips * scale) / 2
         return SWFTransform(

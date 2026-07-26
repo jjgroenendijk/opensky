@@ -4,6 +4,23 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-26
 
+* **HUD acceptance surface (M8.4.3)**: `World > HUD & Interaction` now exposes
+  the live vanilla HUD as two standard inspector sections. **Elements** A/Bs the
+  layer, crosshair, actor meters, compass, selected-target marker, activation
+  prompt, and centered 50...200 percent presentation scale; its defaults
+  participate in section, destination, and Reset-all override provenance.
+  **Target** reports the exact walk-mode REFR/base, action/name, ray distance,
+  placed/hit positions, prompt, camera heading, and marker headings, without a
+  synthetic preview that could mask a targeting failure. Crosshair and compass
+  use observed movie setters; meter visibility uses the observed installed
+  `Health`, `Magica`, and `Stamina` clips. The environment-gated acceptance
+  built farm cell `(7,-3)`, exact-raycast real door `0001633D` at 83.329315
+  units, and sent its live `Open Door` prompt to the installed HUD: prompt
+  off/on changed 7,509 pixels at 1280x720 with zero skipped items. Local A/B
+  inspection confirmed prompt placement and stable compass/crosshair; frames
+  remain gitignored. See [interaction targeting](/engine/interaction.md),
+  [screen-space UI](/rendering/ui.md), and
+  [Main-app UI framework](/tools/app-ui.md). Refs #147.
 * **Vanilla gameplay HUD (M8.4.2)**: the app now loads and starts
   `Interface\hudmenu.swf` as the default SWF layer, validates its observed
   `/HUDMovieBaseInstance` entry points, and drives the vanilla crosshair, full
