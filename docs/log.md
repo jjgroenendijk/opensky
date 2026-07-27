@@ -4,6 +4,23 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-27
 
+* **Cell builds honour runtime state (issue #160, stage A)**: a `WorldStateSnapshot` now
+  travels into every cell build, through `CellSceneProvider.buildCell(at:state:)`,
+  `CellBuildRunning.enqueue(_:state:)` and the two `CellSceneBuilder` entry points, and is
+  applied at one point per build in `opensky/World/CellSceneBuilderRuntimeState.swift`.
+  Runtime-disabled and runtime-deleted references are skipped exactly as initially-disabled
+  ones are, landing in the new `runtimeDisabled` / `runtimeDeleted` buckets and in the load
+  summary line; a `ReferenceTransformOverride` replaces the record placement and scale
+  before both instance resolution and collision placement, so a moved object's mesh and its
+  collision shape cannot disagree. Placed actors run the same visibility check through
+  `ReferenceState`, which means a runtime enable now overrides the record's
+  `initiallyDisabled` flag. Snapshots carry a monotonic `sequence` (outside their equality)
+  and each `CellScene` records the `stateSequence` it was built with, for the stale-build
+  comparison stage B needs. `CellStreamer` passes `.empty` until it owns a store.
+  Documented in [Runtime reference identity and world state](/engine/runtime-state.md) and
+  [Cell scene build](/engine/cell-scene.md); tests in
+  `openskyTests/CellSceneBuilderRuntimeStateTests.swift` and
+  `openskyTests/WorldStateJournalTests.swift`.
 * **Mutable world-state store (issue #159)**: `WorldStateStore`
   (`opensky/World/WorldStateStore.swift`) is the one place runtime deviations from plugin
   data live. State is typed component deltas keyed by `ReferenceKey` — enable state,

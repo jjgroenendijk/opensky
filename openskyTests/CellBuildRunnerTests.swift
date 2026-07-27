@@ -15,6 +15,9 @@ import Testing
 nonisolated private final class FakeProvider: CellSceneProvider {
     private let lock = NSLock()
     private var builds: [CellCoordinate: Int] = [:]
+    /// Snapshot each build ran against, so a test can assert the runner passes
+    /// the caller's state through (issue #160).
+    private var states: [CellCoordinate: WorldStateSnapshot] = [:]
     private var evictions: [(mesh: Set<String>, texture: Set<String>)] = []
     private let gate: DispatchSemaphore?
     private let started: DispatchSemaphore?
@@ -33,11 +36,12 @@ nonisolated private final class FakeProvider: CellSceneProvider {
         self.summaryMutation = summaryMutation
     }
 
-    func buildCell(at coordinate: CellCoordinate) throws -> CellScene {
+    func buildCell(at coordinate: CellCoordinate, state: WorldStateSnapshot) throws -> CellScene {
         started?.signal()
         gate?.wait()
         lock.lock()
         builds[coordinate, default: 0] += 1
+        states[coordinate] = state
         lock.unlock()
         var summary = CellLoadSummary(
             cellName: "fake", gridX: coordinate.x, gridY: coordinate.y,
@@ -68,6 +72,12 @@ nonisolated private final class FakeProvider: CellSceneProvider {
         lock.lock()
         defer { lock.unlock() }
         return builds[coordinate, default: 0]
+    }
+
+    func buildState(_ coordinate: CellCoordinate) -> WorldStateSnapshot? {
+        lock.lock()
+        defer { lock.unlock() }
+        return states[coordinate]
     }
 
     var evictionCount: Int {
@@ -108,11 +118,11 @@ struct CellBuildRunnerTests {
         let runner = SerialCellBuildRunner(provider: provider)
 
         let cell = coordinate(6, -2)
-        runner.enqueue(cell)
+        runner.enqueue(cell, state: .empty)
         // Ensure the build is running (in `pending`) before enqueuing again.
         #expect(started.wait(timeout: .now() + 5) == .success)
-        runner.enqueue(cell) // deduped -- coordinate still pending
-        runner.enqueue(cell) // deduped
+        runner.enqueue(cell, state: .empty) // deduped -- coordinate still pending
+        runner.enqueue(cell, state: .empty) // deduped
         gate.signal() // release the single build
 
         #expect(waitUntil {
@@ -129,10 +139,10 @@ struct CellBuildRunnerTests {
         let runner = SerialCellBuildRunner(provider: provider)
         let cell = coordinate(0, 0)
 
-        runner.enqueue(cell)
+        runner.enqueue(cell, state: .empty)
         #expect(waitUntil { runner.drainCompleted().isEmpty == false })
         // No longer pending -> a fresh enqueue rebuilds (e.g. after unload).
-        runner.enqueue(cell)
+        runner.enqueue(cell, state: .empty)
         #expect(waitUntil { provider.buildCount(cell) == 2 })
     }
 
@@ -142,10 +152,10 @@ struct CellBuildRunnerTests {
         let runner = SerialCellBuildRunner(provider: provider)
         let cell = coordinate(2, 3)
 
-        runner.enqueue(cell)
+        runner.enqueue(cell, state: .empty)
         #expect(waitUntil { provider.buildCount(cell) == 1 })
         Thread.sleep(forTimeInterval: 0.05) // completion now buffered
-        runner.enqueue(cell)
+        runner.enqueue(cell, state: .empty)
         Thread.sleep(forTimeInterval: 0.05)
 
         #expect(provider.buildCount(cell) == 1)
@@ -195,7 +205,7 @@ struct CellBuildRunnerTests {
         let runner = SerialCellBuildRunner(provider: provider)
         let cell = coordinate(6, -2)
 
-        runner.enqueue(cell)
+        runner.enqueue(cell, state: .empty)
         #expect(waitUntil { !runner.drainCompleted().isEmpty })
         let metric = runner.buildMetricsSnapshot()[cell]
         #expect(metric?.collisionDurationMS == 4.25)
@@ -227,7 +237,7 @@ struct CellBuildRunnerTests {
         let runner = SerialCellBuildRunner(provider: provider)
         let cell = coordinate(6, -2)
 
-        runner.enqueue(cell)
+        runner.enqueue(cell, state: .empty)
         #expect(waitUntil { !runner.drainCompleted().isEmpty })
         let metric = runner.buildMetricsSnapshot()[cell]
         #expect(metric?.actorDiscoveredCount == 3)

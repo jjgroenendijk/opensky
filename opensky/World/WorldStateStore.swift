@@ -256,13 +256,18 @@ final class WorldStateStore {
     /// depends only on the end state and not on the order the mutations
     /// arrived in. This value is the only part of the store that crosses to
     /// another thread.
+    ///
+    /// The journal sequence travels with it as `WorldStateSnapshot.sequence`,
+    /// so a cell built off this value can be compared against later state
+    /// without the builder ever touching the store.
     func snapshot() -> WorldStateSnapshot {
         WorldStateSnapshot(
             entries: sortedDirtyKeys().compactMap { key in
                 guard let delta = deltas[key] else { return nil }
                 return WorldStateSnapshotEntry(key: key, delta: delta)
             },
-            nextGeneratedSequence: allocator.nextSequence
+            nextGeneratedSequence: allocator.nextSequence,
+            sequence: changeJournal.nextSequence
         )
     }
 

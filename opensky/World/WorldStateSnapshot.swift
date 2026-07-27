@@ -28,7 +28,10 @@ nonisolated struct WorldStateSnapshotEntry: Equatable, Sendable {
 /// Equality is value equality over the ordered entries plus the allocator
 /// position, so it is a genuine "same end state" test rather than a same-object
 /// test. Mutation history is deliberately absent — the journal is a separate,
-/// bounded, order-dependent product of the same store.
+/// bounded, order-dependent product of the same store. `sequence` is excluded
+/// from equality for the same reason: it says when the snapshot was taken, not
+/// what state it describes, and two stores that reached the same end state
+/// through different numbers of mutations are still equal.
 nonisolated struct WorldStateSnapshot: Equatable, Sendable {
     /// Dirty references in `ReferenceKey` total order.
     let entries: [WorldStateSnapshotEntry]
@@ -37,8 +40,27 @@ nonisolated struct WorldStateSnapshot: Equatable, Sendable {
     /// off, and because two stores that allocated different numbers of
     /// generated keys are not in the same end state.
     let nextGeneratedSequence: UInt64
+    /// The store's journal sequence at snapshot time, which is monotonic across
+    /// the session (issue #160). A cell built from this snapshot records the
+    /// value on its `CellScene`, so a later comparison against the store's
+    /// current sequence tells the streamer whether the built scene is stale.
+    let sequence: UInt64
 
-    static let empty = WorldStateSnapshot(entries: [], nextGeneratedSequence: 1)
+    static let empty = WorldStateSnapshot(entries: [], nextGeneratedSequence: 1, sequence: 0)
+
+    init(
+        entries: [WorldStateSnapshotEntry],
+        nextGeneratedSequence: UInt64,
+        sequence: UInt64 = 0
+    ) {
+        self.entries = entries
+        self.nextGeneratedSequence = nextGeneratedSequence
+        self.sequence = sequence
+    }
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.entries == rhs.entries && lhs.nextGeneratedSequence == rhs.nextGeneratedSequence
+    }
 
     /// Number of dirty references.
     var dirtyCount: Int {
@@ -56,6 +78,20 @@ nonisolated struct WorldStateSnapshot: Equatable, Sendable {
 
     subscript(key: ReferenceKey) -> ReferenceStateDelta? {
         entries.first { $0.key == key }?.delta
+    }
+
+    /// Every delta in one dictionary, for a consumer that looks up many keys.
+    ///
+    /// `subscript(key:)` is a linear scan, which is the right shape for the odd
+    /// single probe and the wrong shape for a cell build, which asks once per
+    /// reference. A build materializes this once and looks up from it instead.
+    func deltasByKey() -> [ReferenceKey: ReferenceStateDelta] {
+        var result: [ReferenceKey: ReferenceStateDelta] = [:]
+        result.reserveCapacity(entries.count)
+        for entry in entries {
+            result[entry.key] = entry.delta
+        }
+        return result
     }
 
     /// Dirty references last mutated under `cell`.

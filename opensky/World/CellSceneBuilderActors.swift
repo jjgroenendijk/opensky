@@ -20,8 +20,11 @@ nonisolated struct ActorBuildCounts {
     /// children plus position-mapped worldspace-persistent placements.
     var discovered = 0
     var rendered = 0
-    /// Initially-disabled ACHRs (record-header flag 0x800): explicit
-    /// intentional skip while M5 carries no quest/script state.
+    /// Actors present but deliberately not drawn: initially-disabled ACHRs
+    /// (record-header flag 0x800), plus the ones runtime state disabled or
+    /// deleted since load (issue #160). All three share one bucket so the
+    /// exact-accounting rule above keeps holding; the per-actor log line says
+    /// which of them applied.
     var disabledSkips = 0
     /// Malformed ACHR records, unresolved template/visual chains, and
     /// assemblies with no core geometry.
@@ -55,7 +58,8 @@ extension CellSceneBuilder {
         cellChildren: ESMGroup?,
         world: ESMGroup,
         coordinate: CellCoordinate,
-        localized: Bool
+        localized: Bool,
+        deltas: [ReferenceKey: ReferenceStateDelta] = [:]
     ) -> CellActorBuild {
         let started = DispatchTime.now().uptimeNanoseconds
         var build = CellActorBuild()
@@ -77,7 +81,7 @@ extension CellSceneBuilder {
         build.counts.discovered = actors.count + malformed.count
         build.counts.failures = malformed.count
         build.counts.failureReasons = malformed
-        resolveActors(actors, into: &build, localized: localized)
+        resolveActors(actors, into: &build, localized: localized, deltas: deltas)
         build.durationMS =
             Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
         return build
@@ -87,7 +91,8 @@ extension CellSceneBuilder {
     /// have no worldspace persistent cell to map in.
     nonisolated func buildInteriorActors(
         cellChildren: ESMGroup?,
-        localized: Bool
+        localized: Bool,
+        deltas: [ReferenceKey: ReferenceStateDelta] = [:]
     ) -> CellActorBuild {
         let started = DispatchTime.now().uptimeNanoseconds
         var build = CellActorBuild()
@@ -98,7 +103,7 @@ extension CellSceneBuilder {
         build.counts.discovered = actors.count + malformed.count
         build.counts.failures = malformed.count
         build.counts.failureReasons = malformed
-        resolveActors(actors, into: &build, localized: localized)
+        resolveActors(actors, into: &build, localized: localized, deltas: deltas)
         build.durationMS =
             Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
         return build
@@ -165,16 +170,22 @@ extension CellSceneBuilder {
     nonisolated private func resolveActors(
         _ actors: [PlacedActor],
         into build: inout CellActorBuild,
-        localized: Bool
+        localized: Bool,
+        deltas: [ReferenceKey: ReferenceStateDelta]
     ) {
         guard !actors.isEmpty else { return }
         let resolvers = actorResolversBuildingIfNeeded(localized: localized)
         let assembler = ActorAssembler(provider: meshes)
+        let indexed = entriesByFormID(build.entries)
         for actor in actors {
             let id = actor.formID.description
-            if actor.isInitiallyDisabled {
+            if
+                let skip = actorRuntimeSkip(
+                    actor: actor, entry: indexed[actor.formID], deltas: deltas
+                )
+            {
                 build.counts.disabledSkips += 1
-                Self.logger.info("ACHR \(id, privacy: .public): initially disabled, skipped")
+                Self.logger.info("ACHR \(id, privacy: .public): \(skip, privacy: .public), skipped")
                 continue
             }
             do {
@@ -220,6 +231,31 @@ extension CellSceneBuilder {
                 )
             }
         }
+    }
+
+    /// Why this actor is not drawn, or nil when it should be.
+    ///
+    /// The record's initially-disabled flag and the runtime enable/deletion
+    /// components resolve through the one `ReferenceState` path (issue #160),
+    /// so a script that enables a hidden actor makes it appear, and one that
+    /// disables or deletes a visible actor makes it vanish. An actor with no
+    /// index entry has no runtime identity, so only its record flag applies.
+    nonisolated private func actorRuntimeSkip(
+        actor: PlacedActor,
+        entry: RuntimeReferenceEntry?,
+        deltas: [ReferenceKey: ReferenceStateDelta]
+    ) -> String? {
+        guard let entry else {
+            return actor.isInitiallyDisabled ? "initially disabled" : nil
+        }
+        let resolved = resolvedRuntimeState(for: entry, deltas: deltas)
+        guard !resolved.isVisible else { return nil }
+        if resolved.deletion.isDeleted {
+            return "deleted at runtime"
+        }
+        return resolved.overriddenKinds.contains(.enableState)
+            ? "disabled at runtime"
+            : "initially disabled"
     }
 
     /// Template + visual resolver pair over the plugin's NPC_/LVLN and

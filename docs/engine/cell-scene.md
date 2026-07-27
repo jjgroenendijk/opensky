@@ -78,6 +78,8 @@ mod-quirk rule):
 | unsupported-base | base FormID in neither STAT nor ModelBase index (NPC_, ACHR, IDLM, MISC, FLOR, SOUN, ... bases, or malformed base record) |
 | marker | resolved base has no MODL (editor marker) |
 | load-failed | `MeshLibraryError`: file not found, parse failed, empty model |
+| runtime-disabled | world state disabled the reference since load ([runtime state](/engine/runtime-state.md)) |
+| runtime-deleted | world state deleted the reference since load |
 
 Ignored deliberately (not refs, not counted): non-REFR records inside cell children
 (NAVM, PGRE, ... — not static placements, out of scope) and deleted REFRs (they
@@ -101,8 +103,9 @@ Water cells append `, water`; `waterPlaneCount` is 0/1. Sky is intentionally abs
 summary count because it is worldspace environment state, not cell geometry.
 
 Parenthetical lists only non-zero skip buckets (`unsupported-base`, `marker`,
-`load-failed`, `malformed`) and disappears when nothing skipped. Model/texture counts
-come from the `MeshLibrary`/`TextureLibrary` counters (distinct paths).
+`load-failed`, `malformed`, `runtime-disabled`, `runtime-deleted`) and disappears when
+nothing skipped. Model/texture counts come from the `MeshLibrary`/`TextureLibrary`
+counters (distinct paths).
 
 Actor-bearing cells append `, N actors (D drawn, S disabled, F failed)` (zero buckets
 omitted) — the greppable per-cell form of the 5.5 exact-accounting rule

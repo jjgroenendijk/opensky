@@ -52,7 +52,8 @@ extension CellStreamer {
     func requestDoorTransition(_ door: PlacedDoor?) {
         guard transitionInFlight == nil, let door else { return }
         transitionInFlight = door.reference
-        runner.enqueueDoorTransition(from: door.reference)
+        // Plugin baseline until Stage B of issue #160 captures the live store.
+        runner.enqueueDoorTransition(from: door.reference, state: .empty)
     }
 
     func apply(transition: DoorTransition) {

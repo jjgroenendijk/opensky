@@ -34,6 +34,12 @@ nonisolated struct BuildCounts {
     var unsupportedBases = 0
     var markers = 0
     var modelFailures = 0
+    /// References the runtime disabled since load (issue #160): dropped from
+    /// this build exactly as an initially-disabled record is.
+    var runtimeDisabled = 0
+    /// References the runtime deleted since load. Distinct from the record
+    /// header's `deleted` flag, which never reaches a build at all.
+    var runtimeDeleted = 0
 }
 
 /// One base record resolved to its drawable model path, regardless of
@@ -163,10 +169,14 @@ nonisolated final class CellSceneBuilder {
         }
     }
 
+    /// - Parameter state: runtime deviations to lay over the plugin's data
+    ///   (issue #160). `.empty` builds exactly what the plugin authored, which
+    ///   is what a build with no session state behind it wants.
     func buildScene(
         worldspaceEditorID: String,
         gridX: Int32,
-        gridY: Int32
+        gridY: Int32,
+        state: WorldStateSnapshot = .empty
     ) throws -> CellScene {
         // Clear any stale working set so this build's touched keys are exactly
         // this cell's mesh + texture set (recorded onto the CellScene for
@@ -192,13 +202,18 @@ nonisolated final class CellSceneBuilder {
         )
         counts.totalRefs = refs.count + counts.malformedRefs
         let location = CellSceneLocation.exterior(coordinate)
-        let staticCollision = buildStaticCollision(refs: refs, location: location)
-        let instances = resolveInstances(refs: refs, counts: &counts)
+        let resolved = effectiveReferences(
+            refs: refs, collected: collected, state: state, counts: &counts
+        )
+        let effective = resolved.references
+        let staticCollision = buildStaticCollision(refs: effective, location: location)
+        let instances = resolveInstances(refs: effective, counts: &counts)
         let actors = buildExteriorActors(
             cellChildren: found.children,
             world: world.children,
             coordinate: coordinate,
-            localized: pluginLocalized
+            localized: pluginLocalized,
+            deltas: resolved.deltas
         )
         let environment = buildEnvironment(found: found, worldspace: world.worldspace)
         var scene = makeScene(
@@ -207,8 +222,8 @@ nonisolated final class CellSceneBuilder {
             instances: instances,
             geometry: CellGeometryBuild(
                 location: location,
-                doors: resolveDoors(refs: refs),
-                interactions: resolveInteractions(refs: refs),
+                doors: resolveDoors(refs: effective),
+                interactions: resolveInteractions(refs: effective),
                 terrain: environment.terrain,
                 grass: environment.grass,
                 water: environment.water,
@@ -218,17 +233,12 @@ nonisolated final class CellSceneBuilder {
                 staticCollision: staticCollision,
                 actors: actors,
                 worldspaceMusicType: world.worldspace?.musicType,
-                referenceEntries: referenceEntries(refs: refs, collected: collected)
+                referenceEntries: resolved.entries,
+                stateSequence: state.sequence
             ),
             counts: counts
         )
-        // Record the mesh + texture keys this cell touched so streaming unload
-        // can keep the union over resident cells and evict the rest.
-        scene.assets = CellAssets(
-            meshKeys: meshes.drainTouchedKeys()
-                .union(collisionModels?.drainTouchedKeys() ?? []),
-            textureKeys: textures.drainTouchedKeys()
-        )
+        scene.assets = drainTouchedAssets()
         return scene
     }
 }

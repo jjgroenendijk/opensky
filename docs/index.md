@@ -124,8 +124,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Runtime reference identity and world state](/engine/runtime-state.md) - session-stable
   ReferenceKey identity over plugin and generated references, the per-cell
   RuntimeReferenceIndex, and the mutable WorldStateStore above it: typed component deltas,
-  dirty tracking, reset-to-plugin-default, the bounded change journal, and the
-  deterministic snapshot.
+  dirty tracking, reset-to-plugin-default, the bounded change journal, the
+  deterministic snapshot, and how a cell build applies that snapshot to render and
+  collision together.
 
 ## Rendering
 

@@ -233,7 +233,9 @@ final class CellStreamer {
         else { return }
         let coordinate = requests.removeFirst()
         activeBuild = coordinate
-        runner.enqueue(coordinate)
+        // Stage B of issue #160 captures the live store snapshot here; until
+        // the streamer owns a store, every build sees the plugin baseline.
+        runner.enqueue(coordinate, state: .empty)
     }
 
     // MARK: - Integration

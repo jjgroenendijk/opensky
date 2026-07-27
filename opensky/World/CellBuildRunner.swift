@@ -14,7 +14,11 @@ import Foundation
 nonisolated protocol CellSceneProvider {
     /// Throws `CellSceneError.cellNotFound` for a void grid slot; any other
     /// throw is a build failure. Both are classified by the streamer.
-    func buildCell(at coordinate: CellCoordinate) throws -> CellScene
+    ///
+    /// - Parameter state: the runtime world state to build against (issue
+    ///   #160). It is an immutable value captured on the main thread, which is
+    ///   the only way store state reaches this executor.
+    func buildCell(at coordinate: CellCoordinate, state: WorldStateSnapshot) throws -> CellScene
 
     /// Drops the given cached assets (a departed cell's keys no resident cell
     /// needs). Runs on the same executor as builds so libraries stay confined.
@@ -26,7 +30,10 @@ nonisolated protocol CellSceneProvider {
     ) throws -> DistantLODScene?
 
     /// Resolves + builds the destination of one placed teleport door.
-    func buildDoorTransition(from sourceDoor: FormID) throws -> DoorTransition
+    func buildDoorTransition(
+        from sourceDoor: FormID,
+        state: WorldStateSnapshot
+    ) throws -> DoorTransition
 }
 
 nonisolated extension CellSceneProvider {
@@ -37,7 +44,10 @@ nonisolated extension CellSceneProvider {
         nil
     }
 
-    func buildDoorTransition(from sourceDoor: FormID) throws -> DoorTransition {
+    func buildDoorTransition(
+        from sourceDoor: FormID,
+        state _: WorldStateSnapshot
+    ) throws -> DoorTransition {
         throw CellSceneError.doorReferenceNotFound(formID: sourceDoor)
     }
 }
@@ -78,11 +88,12 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     /// Music record index (MUSC/MUST); nil when the plugin has no music data.
     var musicStore: MusicRecordStore?
 
-    func buildCell(at coordinate: CellCoordinate) throws -> CellScene {
+    func buildCell(at coordinate: CellCoordinate, state: WorldStateSnapshot) throws -> CellScene {
         try builder.buildScene(
             worldspaceEditorID: worldspaceEditorID,
             gridX: coordinate.x,
-            gridY: coordinate.y
+            gridY: coordinate.y,
+            state: state
         )
     }
 
@@ -107,10 +118,14 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
         )
     }
 
-    func buildDoorTransition(from sourceDoor: FormID) throws -> DoorTransition {
+    func buildDoorTransition(
+        from sourceDoor: FormID,
+        state: WorldStateSnapshot
+    ) throws -> DoorTransition {
         try builder.buildDoorTransition(
             from: sourceDoor,
-            worldspaceEditorID: worldspaceEditorID
+            worldspaceEditorID: worldspaceEditorID,
+            state: state
         )
     }
 }
@@ -183,7 +198,9 @@ nonisolated struct DoorTransitionBuildResult {
 /// main-thread poll. The streamer enqueues coordinates and drains completions
 /// once per frame; ordering of completions is the executor's business.
 nonisolated protocol CellBuildRunning: AnyObject {
-    func enqueue(_ coordinate: CellCoordinate)
+    /// - Parameter state: the world-state snapshot the build runs against,
+    ///   captured by the caller before the work leaves the main thread.
+    func enqueue(_ coordinate: CellCoordinate, state: WorldStateSnapshot)
     /// Returns and clears everything finished since the last drain.
     func drainCompleted() -> [CellBuildResult]
     /// Schedules an eviction pass on the build executor (after queued builds),
@@ -192,7 +209,7 @@ nonisolated protocol CellBuildRunning: AnyObject {
     @discardableResult
     func enqueueDistantLOD(center: CellCoordinate, hiddenCells: Set<CellCoordinate>) -> Bool
     func drainCompletedDistantLOD() -> [DistantLODBuildResult]
-    func enqueueDoorTransition(from sourceDoor: FormID)
+    func enqueueDoorTransition(from sourceDoor: FormID, state: WorldStateSnapshot)
     func drainCompletedDoorTransitions() -> [DoorTransitionBuildResult]
 }
 
@@ -206,7 +223,7 @@ nonisolated extension CellBuildRunning {
         []
     }
 
-    func enqueueDoorTransition(from _: FormID) {}
+    func enqueueDoorTransition(from _: FormID, state _: WorldStateSnapshot) {}
     func drainCompletedDoorTransitions() -> [DoorTransitionBuildResult] {
         []
     }
@@ -241,7 +258,7 @@ nonisolated final class SerialCellBuildRunner: CellBuildRunning, @unchecked Send
         queue = DispatchQueue(label: label, qos: .utility)
     }
 
-    func enqueue(_ coordinate: CellCoordinate) {
+    func enqueue(_ coordinate: CellCoordinate, state: WorldStateSnapshot) {
         lock.lock()
         let isNew = pending.insert(coordinate).inserted
         lock.unlock()
@@ -251,7 +268,7 @@ nonisolated final class SerialCellBuildRunner: CellBuildRunning, @unchecked Send
             buildCounts[coordinate, default: 0] += 1
             lock.unlock()
             let started = DispatchTime.now().uptimeNanoseconds
-            let result = Result { try provider.buildCell(at: coordinate) }
+            let result = Result { try provider.buildCell(at: coordinate, state: state) }
             let duration = Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
             let entry = CellBuildResult(
                 coordinate: coordinate,
@@ -330,13 +347,15 @@ nonisolated final class SerialCellBuildRunner: CellBuildRunning, @unchecked Send
         return out
     }
 
-    func enqueueDoorTransition(from sourceDoor: FormID) {
+    func enqueueDoorTransition(from sourceDoor: FormID, state: WorldStateSnapshot) {
         lock.lock()
         let isNew = pendingDoorTransitions.insert(sourceDoor).inserted
         lock.unlock()
         guard isNew else { return }
         queue.async { [self] in
-            let result = Result { try provider.buildDoorTransition(from: sourceDoor) }
+            let result = Result {
+                try provider.buildDoorTransition(from: sourceDoor, state: state)
+            }
             lock.lock()
             completedDoorTransitions.append(DoorTransitionBuildResult(
                 sourceDoor: sourceDoor,

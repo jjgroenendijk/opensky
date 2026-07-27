@@ -16,11 +16,16 @@ nonisolated final class ManualCellBuildRunner: CellBuildRunning {
     private(set) var evictedMeshKeys: [Set<String>] = []
     private(set) var evictedTextureKeys: [Set<String>] = []
     private(set) var enqueuedDoorTransitions: [FormID] = []
+    /// World-state snapshots handed to each build, in enqueue order, so a test
+    /// can assert what state a build ran against (issue #160).
+    private(set) var enqueuedStates: [WorldStateSnapshot] = []
+    private(set) var enqueuedDoorTransitionStates: [WorldStateSnapshot] = []
     private var ready: [CellBuildResult] = []
     private var readyDoorTransitions: [DoorTransitionBuildResult] = []
 
-    func enqueue(_ coordinate: CellCoordinate) {
+    func enqueue(_ coordinate: CellCoordinate, state: WorldStateSnapshot) {
         enqueued.append(coordinate)
+        enqueuedStates.append(state)
     }
 
     func complete(_ coordinate: CellCoordinate, with result: Result<CellScene, any Error>) {
@@ -41,8 +46,9 @@ nonisolated final class ManualCellBuildRunner: CellBuildRunning {
         evictedTextureKeys.append(textureKeys)
     }
 
-    func enqueueDoorTransition(from sourceDoor: FormID) {
+    func enqueueDoorTransition(from sourceDoor: FormID, state: WorldStateSnapshot) {
         enqueuedDoorTransitions.append(sourceDoor)
+        enqueuedDoorTransitionStates.append(state)
     }
 
     func completeDoorTransition(

@@ -23,6 +23,7 @@ identity scheme, the per-cell index built from it, and the store above both.
 * Query surface
 * Ownership: where identity state lives
 * `WorldStateStore` — components, dirty tracking, reset, journal, snapshot
+* Applying state during a cell build
 
 ## Why raw FormID cannot be the key
 
@@ -224,12 +225,11 @@ record, and lays the delta over it (`ReferenceState`,
 says, and `ReferenceState.overriddenKinds` reports which slots the delta supplied, so
 "disabled by a script" stays distinguishable from "disabled by the record".
 
-Two baseline gaps are deliberate and belong to issue #160, where deltas start being applied
-at build time. `PlacedReference` does not decode the record header, so a REFR baselines as
-enabled regardless of its `initiallyDisabled` flag; `PlacedActor` does carry the flag and is
-honoured. Neither placement type carries the header's `deleted` flag, so the deletion
-baseline is always "not deleted" — that flag means the plugin removed the record, which is a
-load-time concern.
+Two baseline gaps are deliberate. `PlacedReference` does not decode the record header, so a
+REFR baselines as enabled regardless of its `initiallyDisabled` flag; `PlacedActor` does
+carry the flag and is honoured. Neither placement type carries the header's `deleted` flag,
+so the deletion baseline is always "not deleted" — that flag means the plugin removed the
+record, which is a load-time concern and is filtered during reference collection.
 
 ### Change journal
 
@@ -264,6 +264,51 @@ snapshots, and `WorldStateSnapshot` is `Equatable` so that is directly testable.
 history is deliberately absent from the snapshot — the journal is the separate, bounded,
 order-dependent product of the same store. Allocator position is included, because two
 stores that minted different numbers of generated keys are not in the same end state.
+
+## Applying state during a cell build
+
+Issue #160 (item 10.1.3) is where the store stops being a ledger nobody reads. A build takes
+a `WorldStateSnapshot` as a parameter — `CellSceneBuilder.buildScene(worldspaceEditorID:
+gridX:gridY:state:)` and `buildInteriorScene(cellFormID:state:)`, both defaulting to
+`.empty` — and the streaming seam carries it across the queue boundary:
+`CellSceneProvider.buildCell(at:state:)` and `CellBuildRunning.enqueue(_:state:)`. The value
+is captured on the main thread and is immutable, which is the whole reason the store itself
+never leaves the main actor.
+
+Application happens at exactly one point per build, in
+`opensky/World/CellSceneBuilderRuntimeState.swift`. References are collected and given their
+`ReferenceKey`s, then `effectiveReferences(refs:collected:state:counts:)` resolves each one
+through `ReferenceState.applying(_:)` and returns two things: the index entries, which keep
+every reference the plugin placed, and the *effective* references, which are what actually
+gets placed. Render instancing and collision assembly both read that one effective array, so
+a reference moved by a `ReferenceTransformOverride` cannot end up drawn in one place and
+solid in another. Doors and interaction metadata read it too, so a disabled door is not
+activatable.
+
+* A reference whose resolved state is not visible (`isVisible == false` — disabled or
+  deleted at runtime) is dropped and counted, exactly as an initially-disabled record is.
+  The counts land in `BuildCounts.runtimeDisabled` / `runtimeDeleted`, fold into
+  `CellLoadSummary.skippedRefCount`, and name themselves in the summary line as
+  `runtime-disabled` and `runtime-deleted` ([cell scene build](/engine/cell-scene.md)).
+* A reference carrying a transform override is placed at the override's position, rotation
+  and scale instead of the record's DATA and XSCL values.
+* Placed actors run the same visibility check. Their skips share the existing
+  `disabledSkips` bucket so the 5.5 exact-accounting rule keeps holding; the per-actor log
+  line says whether the record flag, a runtime disable, or a runtime delete applied. Because
+  the record flag and the runtime component resolve through one `ReferenceState`, enabling a
+  hidden actor at runtime makes it appear.
+* The index keeps hidden references. An object a script disabled still exists, so it stays
+  addressable through `CellScene.references` even though nothing drew it.
+
+Deltas are looked up through `WorldStateSnapshot.deltasByKey()`, materialized once per
+build. `subscript(key:)` is a linear scan, which is right for a single probe and wrong for a
+loop over every reference in a cell.
+
+Each snapshot also carries `sequence`, the store's journal sequence at capture time, and
+each built `CellScene` records it as `stateSequence`. Comparing that against the store's
+current sequence is how a later stage tells a scene built from stale state from a current
+one. `sequence` is deliberately outside `WorldStateSnapshot`'s equality: it says when a
+snapshot was taken, not what state it describes.
 
 ## Related pages
 
