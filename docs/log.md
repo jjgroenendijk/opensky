@@ -4,6 +4,21 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-27
 
+* **WMA streaming decode overload (issue #218)**: `WMADecoder` gained a streaming
+  static overload `decode(packets:parameters:onChunk:)` that hands each non-empty PCM
+  chunk to a callback instead of accumulating the whole file, and the existing
+  accumulating `decode(packets:parameters:) -> DecodedAudio` now delegates to it so the
+  two share one decode loop. A vanilla music track decodes to roughly 37 MB, so the
+  accumulating overload is a memory hazard for whole-corpus sweeps and playback; the
+  streaming overload makes the bounded-memory path the obvious choice rather than the
+  careful one. The corpus sweep (`openskycli audio sweep`) and the playback streamer
+  (`AudioSourceStreamer`) already decode packet-by-packet over the lazy
+  `XWMFile.packet(at:)` source and are unchanged — forcing them through the `[Data]`
+  overload would buffer every packet's bytes and regress their footprint. Tests in
+  `openskyTests/WMADecoderTests.swift` cover the empty-input contract (callback never
+  fires) and the non-empty-chunk invariant over garbage payloads; real-PCM behaviour
+  stays a probe under `make probe`, as no game audio enters the repository.
+
 * **World audio acceptance gate (M9.2.4, issue #157)**: the M9 gate is closed by
   four changes on one branch. `World > Audio > Output` gained per-category mute
   and solo, generated as `Audio<Category>MuteControl` and
