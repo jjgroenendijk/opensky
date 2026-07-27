@@ -88,7 +88,8 @@ struct CellStreamerTests {
         regions: [FormID] = [],
         acousticSpace: FormID? = nil,
         musicType: FormID? = nil,
-        worldspaceMusicType: FormID? = nil
+        worldspaceMusicType: FormID? = nil,
+        stateSequence: UInt64 = 0
     ) -> CellScene {
         CellScene(
             renderScene: RenderScene(instances: []),
@@ -108,6 +109,7 @@ struct CellStreamerTests {
             musicType: musicType,
             worldspaceMusicType: worldspaceMusicType,
             staticCollision: staticCollision,
+            stateSequence: stateSequence,
             assets: CellAssets(meshKeys: meshKeys, textureKeys: textureKeys)
         )
     }

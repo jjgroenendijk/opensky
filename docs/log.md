@@ -4,6 +4,19 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-27
 
+* **Streaming reacts to runtime state (issue #160, stage B)**: `GameViewController` now owns
+  the session `WorldStateStore` and wires it to the streamer, so every dispatched build
+  snapshots the live store on the main thread instead of seeing the plugin baseline. A
+  journalled mutation calls `CellStreamer.noteStateMutation(in:sequence:)`, which queues a
+  rebuild of the affected cell; `CellStreamCore` grew a `rebuilding` set so the cell stays
+  resident and keeps rendering its old scene until the replacement integrates. Staleness is
+  one comparison — `CellScene.stateSequence` against the newest mutation sequence for the
+  cell — which resolves the mutation-during-an-in-flight-build race without losing or
+  double-applying anything, and works around the runner's pending-coordinate dedupe by
+  holding the rebuild request streamer-side. An unattributed mutation conservatively rebuilds
+  every resident cell, and an interior rebuild re-runs its door transition with no camera so
+  the player is not teleported. See
+  [runtime reference identity and world state](/engine/runtime-state.md).
 * **Cell builds honour runtime state (issue #160, stage A)**: a `WorldStateSnapshot` now
   travels into every cell build, through `CellSceneProvider.buildCell(at:state:)`,
   `CellBuildRunning.enqueue(_:state:)` and the two `CellSceneBuilder` entry points, and is

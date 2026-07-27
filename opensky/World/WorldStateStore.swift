@@ -43,6 +43,18 @@ final class WorldStateStore {
     private var changeJournal: WorldStateJournal
     private var allocator: GeneratedReferenceAllocator
 
+    /// Fires once per journalled mutation with the cell the mutation was
+    /// attributed to (nil when it was not attributed to any cell) and the
+    /// journal sequence a snapshot taken immediately afterwards would carry.
+    ///
+    /// This is how `CellStreamer` learns that a resident scene no longer
+    /// matches the store (issue #160). It deliberately carries no payload
+    /// beyond the location and the sequence: the streamer rebuilds whole
+    /// cells from plugin bytes plus a fresh snapshot rather than patching
+    /// individual instances, so it needs to know only that something changed
+    /// and how recently.
+    var onMutation: ((CellSceneLocation?, UInt64) -> Void)?
+
     /// - Parameters:
     ///   - journalCapacity: retained change-journal entries; see
     ///     `WorldStateJournal.defaultCapacity`.
@@ -115,6 +127,7 @@ final class WorldStateStore {
             newValue: value,
             cell: delta.cell
         )
+        onMutation?(delta.cell, changeJournal.nextSequence)
         return true
     }
 
@@ -138,6 +151,7 @@ final class WorldStateStore {
             newValue: nil,
             cell: cell
         )
+        onMutation?(cell, changeJournal.nextSequence)
         return true
     }
 

@@ -9,12 +9,14 @@ extension CellStreamer {
     func finishDoorTransition(_ entries: [DoorTransitionBuildResult]) -> Bool {
         guard let entry = entries.last else { return false }
         transitionInFlight = nil
+        let isRebuild = interiorRebuildInFlight
+        interiorRebuildInFlight = false
         // A cell build ahead of transition on serial queue may complete in
         // same poll. Fold it into suspended exterior state first.
         _ = integrateOneBuild()
         switch entry.result {
         case let .success(transition):
-            apply(transition: transition)
+            apply(transition: transition, sourceDoor: entry.sourceDoor, isRebuild: isRebuild)
             return true
         case let .failure(error):
             noteDoorTransitionFailure()
@@ -37,6 +39,7 @@ extension CellStreamer {
                 evictUnused(scene.assets)
             }
         }
+        dispatchInteriorRebuildIfNeeded()
         return true
     }
 
@@ -52,17 +55,31 @@ extension CellStreamer {
     func requestDoorTransition(_ door: PlacedDoor?) {
         guard transitionInFlight == nil, let door else { return }
         transitionInFlight = door.reference
-        // Plugin baseline until Stage B of issue #160 captures the live store.
-        runner.enqueueDoorTransition(from: door.reference, state: .empty)
+        interiorRebuildInFlight = false
+        // Issue #160: the destination is built against the live store, so an
+        // interior the player has already changed comes back changed.
+        runner.enqueueDoorTransition(from: door.reference, state: stateSource())
     }
 
-    func apply(transition: DoorTransition) {
+    /// Swaps in a built door destination.
+    ///
+    /// - Parameters:
+    ///   - sourceDoor: the door whose transition produced this scene, retained
+    ///     for an interior so a later world-state change can be made visible by
+    ///     re-running the same transition (issue #160).
+    ///   - isRebuild: true when this transition is such a rebuild rather than a
+    ///     player-driven move. A rebuild passes no camera to the sink, so the
+    ///     scene swaps underneath a player who stays where they were standing.
+    func apply(transition: DoorTransition, sourceDoor: FormID? = nil, isRebuild: Bool = false) {
         updateInteractionTarget(ray: nil)
-        let camera = SceneCamera.teleport(placement: transition.destinationPlacement)
+        let camera = isRebuild
+            ? nil
+            : SceneCamera.teleport(placement: transition.destinationPlacement)
         switch transition.scene.location {
         case .interior:
             let previous = interiorScene
             interiorScene = transition.scene
+            interiorSourceDoor = sourceDoor ?? interiorSourceDoor
             if let previous {
                 evictUnused(previous.assets)
             }
@@ -70,6 +87,8 @@ extension CellStreamer {
         case let .exterior(coordinate):
             let previousInterior = interiorScene
             interiorScene = nil
+            interiorSourceDoor = nil
+            interiorMutationSequence = 0
             let replaced = composition.setCell(transition.scene, at: coordinate)
             core.seedResident(coordinate)
             if let previousInterior {

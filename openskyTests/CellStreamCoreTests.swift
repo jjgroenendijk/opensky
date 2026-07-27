@@ -122,6 +122,77 @@ struct CellStreamCoreTests {
         #expect(core.integrate(coordinate: cells[1], kind: .success) == .integrated)
         #expect(core.resident == Set(cells))
     }
+
+    // MARK: - World-state rebuilds (issue #160)
+
+    @Test
+    func aRebuildKeepsTheCellResidentWhileItIsInFlight() {
+        var core = CellStreamCore()
+        let cell = coordinate(0, 0)
+        _ = core.apply(diff: CellGridDiff(loads: [cell], unloads: []))
+        _ = core.integrate(coordinate: cell, kind: .success)
+
+        let accepted = core.beginRebuild(cell)
+        #expect(accepted)
+        #expect(core.resident == [cell])
+        #expect(core.rebuilding == [cell])
+        #expect(core.inFlight.isEmpty)
+    }
+
+    @Test
+    func aRebuildCompletionIntegratesInsteadOfBeingDiscardedAsStale() {
+        var core = CellStreamCore()
+        let cell = coordinate(0, 0)
+        _ = core.apply(diff: CellGridDiff(loads: [cell], unloads: []))
+        _ = core.integrate(coordinate: cell, kind: .success)
+        _ = core.beginRebuild(cell)
+
+        #expect(core.integrate(coordinate: cell, kind: .success) == .integrated)
+        #expect(core.resident == [cell])
+        #expect(core.rebuilding.isEmpty)
+        // A further completion has nothing to replace -> stale again.
+        #expect(core.integrate(coordinate: cell, kind: .success) == .discardedStale)
+    }
+
+    @Test
+    func aFailedRebuildLeavesTheOldSceneResident() {
+        var core = CellStreamCore()
+        let cell = coordinate(0, 0)
+        _ = core.apply(diff: CellGridDiff(loads: [cell], unloads: []))
+        _ = core.integrate(coordinate: cell, kind: .success)
+        _ = core.beginRebuild(cell)
+
+        #expect(core.integrate(coordinate: cell, kind: .failure) == .discardedStale)
+        #expect(core.resident == [cell])
+        #expect(core.failed.isEmpty)
+        #expect(core.rebuilding.isEmpty)
+    }
+
+    @Test
+    func aRebuildIsRefusedForACellThatIsNotResident() {
+        var core = CellStreamCore()
+        let cell = coordinate(0, 0)
+        _ = core.apply(diff: CellGridDiff(loads: [cell], unloads: []))
+
+        let accepted = core.beginRebuild(cell)
+        #expect(!accepted)
+        #expect(core.rebuilding.isEmpty)
+    }
+
+    @Test
+    func unloadingACellForgetsItsRebuild() {
+        var core = CellStreamCore()
+        let cell = coordinate(0, 0)
+        _ = core.apply(diff: CellGridDiff(loads: [cell], unloads: []))
+        _ = core.integrate(coordinate: cell, kind: .success)
+        _ = core.beginRebuild(cell)
+
+        _ = core.apply(diff: CellGridDiff(loads: [], unloads: [cell]))
+        #expect(core.rebuilding.isEmpty)
+        #expect(core.resident.isEmpty)
+        // The late rebuild completion now has nowhere to land.
+        #expect(core.integrate(coordinate: cell, kind: .success) == .discardedStale)
+    }
 }
 
 extension CellStreamCore {

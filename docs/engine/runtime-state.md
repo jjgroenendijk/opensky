@@ -24,6 +24,7 @@ identity scheme, the per-cell index built from it, and the store above both.
 * Ownership: where identity state lives
 * `WorldStateStore` — components, dirty tracking, reset, journal, snapshot
 * Applying state during a cell build
+* Making a mutation visible: snapshot capture and cell rebuilds
 
 ## Why raw FormID cannot be the key
 
@@ -309,6 +310,54 @@ each built `CellScene` records it as `stateSequence`. Comparing that against the
 current sequence is how a later stage tells a scene built from stale state from a current
 one. `sequence` is deliberately outside `WorldStateSnapshot`'s equality: it says when a
 snapshot was taken, not what state it describes.
+
+## Making a mutation visible: snapshot capture and cell rebuilds
+
+Applying a snapshot during a build only helps if builds see the current store and if a
+change to an already-drawn cell reaches the screen. Both are `CellStreamer`'s job, and the
+logic lives in `opensky/World/CellStreamerRuntimeState.swift`.
+
+`GameViewController` owns the session's `WorldStateStore` and wires it in
+`wireStreaming(provider:renderer:)`: `CellStreamer.stateSource` is set to a closure that
+snapshots the store, and `WorldStateStore.onMutation` is set to call
+`CellStreamer.noteStateMutation(in:sequence:)`. Both run on the main thread, which is the
+whole point — the store never leaves the main actor, and the snapshot is taken at dispatch,
+the last main-thread moment before the build crosses to the serial runner.
+
+The scheduling rule is one comparison. A mutation raises `cellMutationSequence` for the cell
+the store attributed it to; a scene records the snapshot sequence it was built from as
+`CellScene.stateSequence`; a resident scene is current exactly while `stateSequence` is at
+least the recorded mutation sequence. A mutation for a resident cell queues a rebuild, and
+`CellStreamCore.beginRebuild(_:)` moves the coordinate into a `rebuilding` set while keeping
+it resident, so the old scene keeps rendering and its completion is integrated rather than
+discarded as stale. Rebuild requests sit in their own queue behind first loads, so a cell
+that has never been drawn still arrives center-out.
+
+That single comparison also settles the race where a mutation lands while a build for the
+same cell is already running. The in-flight result is always integrated, so the cell is
+drawable as early as it can be; if it turns out to predate the mutation, a rebuild is queued
+against a fresh snapshot at integration time. This is also what works around
+`SerialCellBuildRunner.enqueue` deduplicating a coordinate that is still pending: the
+rebuild request waits streamer-side and is dispatched after the stale completion drains,
+rather than being silently dropped by the runner. Because a rebuild reconstructs the whole
+cell from plugin bytes plus the current snapshot, applying it twice is indistinguishable
+from applying it once — there is no delta to double-apply and none to lose.
+
+Three consequences follow from state living only in the store:
+
+* Unloading a cell changes nothing about state, and a pending rebuild for an unloaded cell
+  is simply dropped (`pruneRebuildState()`). A returning cell rebuilds from plugin bytes
+  plus the current snapshot, which reapplies the delta on its own.
+* A mutation the store could not attribute to any cell rebuilds every resident cell. That is
+  correctness first: the streamer has no cheaper way to tell which cell a reference lives
+  in. Narrowing it means attributing the write, not guessing here.
+* An interior owning the view has no provider entry point that builds it on its own — an
+  interior only ever arrives as a door destination — so its rebuild re-runs the same door
+  transition against a fresh snapshot, passing no camera so the swap leaves the player where
+  they are standing instead of teleporting them back to the door.
+
+Rebuilding the whole cell is the v1 answer; there is no per-instance patching, and the
+per-frame budget is unchanged at one integration and one dispatch.
 
 ## Related pages
 

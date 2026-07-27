@@ -267,4 +267,51 @@ struct WorldStateStoreTests {
         #expect(store.dirtyCount(in: whiterun) == 0)
         #expect(store.dirtyCount(in: inn) == 1)
     }
+
+    // MARK: - Mutation hook (issue #160)
+
+    @Test func mutationHookFiresWithTheCellAndTheSequenceForEveryChange() {
+        let store = WorldStateStore()
+        var observed: [(CellSceneLocation?, UInt64)] = []
+        store.onMutation = { location, sequence in
+            observed.append((location, sequence))
+        }
+
+        store.set(ReferenceEnableState.disabled, for: key(0x200), in: whiterun)
+        store.set(transform(1), for: key(0x201), in: inn)
+        store.set(ReferenceEnableState.disabled, for: key(0x202))
+        store.reset(.enableState, for: key(0x200))
+
+        #expect(observed.map(\.0) == [whiterun, inn, nil, whiterun])
+        // The sequence handed out is the one a snapshot taken right after the
+        // mutation carries. Journal numbering starts at 1, so the first change
+        // hands out 2: the snapshot that follows it is already past entry 1.
+        #expect(observed.map(\.1) == [2, 3, 4, 5])
+        #expect(store.nextJournalSequence == 5)
+    }
+
+    @Test func mutationHookStaysSilentForAWriteThatChangesNothing() {
+        let store = WorldStateStore()
+        store.set(ReferenceEnableState.disabled, for: key(0x200), in: whiterun)
+        var fireCount = 0
+        store.onMutation = { _, _ in fireCount += 1 }
+
+        store.set(ReferenceEnableState.disabled, for: key(0x200), in: whiterun)
+        store.reset(.transform, for: key(0x200))
+
+        #expect(fireCount == 0)
+    }
+
+    @Test func mutationHookFiresOncePerClearedComponentOnAWholeReferenceReset() {
+        let store = WorldStateStore()
+        store.set(ReferenceEnableState.disabled, for: key(0x200), in: whiterun)
+        store.set(transform(1), for: key(0x200), in: whiterun)
+        var observed: [UInt64] = []
+        store.onMutation = { _, sequence in observed.append(sequence) }
+
+        store.reset(key(0x200))
+
+        #expect(observed == [4, 5])
+        #expect(store.dirtyCount == 0)
+    }
 }

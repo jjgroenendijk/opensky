@@ -50,6 +50,12 @@ nonisolated struct CellStreamCore {
     private(set) var void: Set<CellCoordinate> = []
     /// Slots whose build threw -- same no-retry treatment as void.
     private(set) var failed: Set<CellCoordinate> = []
+    /// Resident cells whose scene is being rebuilt against newer world state
+    /// (issue #160). A rebuilding cell stays in `resident` throughout, so it
+    /// keeps rendering its old scene until the replacement arrives; this set
+    /// only records that a completion for an already-resident coordinate is
+    /// expected and must not be discarded as stale.
+    private(set) var rebuilding: Set<CellCoordinate> = []
 
     /// Everything the grid manager must treat as already handled, so
     /// `CellGridManager.update` never re-emits these in `loads`. Feeding
@@ -66,7 +72,18 @@ nonisolated struct CellStreamCore {
         inFlight.remove(coordinate)
         void.remove(coordinate)
         failed.remove(coordinate)
+        rebuilding.remove(coordinate)
         resident.insert(coordinate)
+    }
+
+    /// Records that a rebuild is being dispatched for an already-resident
+    /// cell (issue #160). Returns false when the coordinate is not resident,
+    /// which is how the streamer declines to dispatch a rebuild for a cell
+    /// whose first build has not landed yet or that has since been unloaded.
+    mutating func beginRebuild(_ coordinate: CellCoordinate) -> Bool {
+        guard resident.contains(coordinate) else { return false }
+        rebuilding.insert(coordinate)
+        return true
     }
 
     /// Folds one grid diff into the bookkeeping. `loads` (already excluding
@@ -88,6 +105,7 @@ nonisolated struct CellStreamCore {
             inFlight.remove(coordinate)
             void.remove(coordinate)
             failed.remove(coordinate)
+            rebuilding.remove(coordinate)
         }
         return StreamActions(requests: Array(diff.loads), removals: removals)
     }
@@ -96,12 +114,18 @@ nonisolated struct CellStreamCore {
     /// unloaded mid-flight (recenter) -> `.discardedStale`; this is also how
     /// a duplicate late completion for an already-integrated slot is ignored.
     /// Otherwise the slot leaves `inFlight` and lands in the matching set.
+    ///
+    /// A completion for a coordinate in `rebuilding` is a world-state rebuild
+    /// (issue #160): a drawable result replaces the resident scene, while a
+    /// void or failed result is discarded so the cell keeps the scene it is
+    /// already rendering rather than vanishing because of a transient error.
     mutating func integrate(
         coordinate: CellCoordinate,
         kind: BuildKind
     ) -> IntegrationResult {
         guard inFlight.remove(coordinate) != nil else {
-            return .discardedStale
+            let wasRebuilding = rebuilding.remove(coordinate) != nil
+            return wasRebuilding && kind == .success ? .integrated : .discardedStale
         }
         switch kind {
         case .success:
