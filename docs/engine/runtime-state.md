@@ -1,18 +1,28 @@
 ---
 type: Subsystem
-title: Runtime reference identity
+title: Runtime reference identity and world state
 description: Session-stable ReferenceKey identity, the per-cell RuntimeReferenceIndex, the
-  generated-object allocator, and where runtime-state ownership sits relative to cells.
+  generated-object allocator, and the mutable WorldStateStore that holds every runtime
+  deviation from plugin data.
 tags: [engine, world, identity, cell-scene, save-state]
 timestamp: 2026-07-27T00:00:00Z
 ---
 
-# Runtime reference identity
+# Runtime reference identity and world state
 
 Issue #158 (milestone M10.1, item 10.1.1) gives every placed object a session-stable
-identity that survives the fact that a raw `FormID` does not. This page documents that
-identity scheme, the per-cell index built from it, and the ownership seam it leaves for
-later M10.1 work.
+identity that survives the fact that a raw `FormID` does not. Issue #159 (item 10.1.2)
+builds the mutable store that keys runtime state by that identity. This page documents the
+identity scheme, the per-cell index built from it, and the store above both.
+
+## Contents
+
+* Why raw FormID cannot be the key
+* `ReferenceKey`, its total order, and `GeneratedReferenceAllocator`
+* `RuntimeReferenceIndex` — the per-cell, immutable lookup
+* Query surface
+* Ownership: where identity state lives
+* `WorldStateStore` — components, dirty tracking, reset, journal, snapshot
 
 ## Why raw FormID cannot be the key
 
@@ -66,8 +76,9 @@ state a future save must persist, and `init(nextSequence:)` is how a restored se
 resumes allocating from where it left off. `allocate()` is the only mutating operation and
 returns the freshly minted `ReferenceKey`.
 
-This issue ships the allocator as a standalone value type. It does not yet live anywhere —
-see "Ownership: where identity state lives" below.
+Issue #158 shipped the allocator as a standalone value type. Issue #159 gave it an owner:
+`WorldStateStore` holds one instance and hands out keys through `allocateGeneratedKey()`,
+because generated identity outlives every cell exactly like the deltas beside it.
 
 ## `RuntimeReferenceIndex`
 
@@ -133,7 +144,7 @@ Two layers query the index by the time a cell is resident:
 
 ## Ownership: where identity state lives
 
-This issue draws the ownership line that issue #159 builds on:
+Issue #158 drew the ownership line that issue #159 builds on:
 
 * State keyed per cell — the `RuntimeReferenceIndex` itself — lives with `CellScene`,
   rebuilt on every cell load and dropped on eviction, same as the rest of a cell's decoded
@@ -144,9 +155,115 @@ This issue draws the ownership line that issue #159 builds on:
   `WeatherStore` pattern already used for weather (`opensky/World/WeatherStore.swift`):
   queue-confined build, an immutable value handed off to the render/main thread, no locks.
 
-This issue ships `GeneratedReferenceAllocator` as a standalone value type and deliberately
-does not build that store — that is the next issue's work, tracked in GitHub rather than
-here.
+`WorldStateStore` is that store, and the rest of this page documents it. It departs from the
+`WeatherStore` pattern in one way: weather state is built once on a queue and read as an
+immutable value, whereas world state is mutable for the whole session. The handoff shape
+survives the difference — the store itself never leaves the main actor, and the immutable
+`WorldStateSnapshot` is what crosses to the build queue.
+
+## `WorldStateStore`
+
+`WorldStateStore` (`opensky/World/WorldStateStore.swift`) is the single place runtime
+deviations from plugin data live: the substrate Papyrus (M11), inventory (M12) and quests
+(M13) mutate. Unlike `WeatherStore`, `SoundRecordStore` and `MusicRecordStore` — immutable
+read-only indices built once from an `ESMFile` and readable from any thread — this store is
+mutable, so it is `@MainActor`, owned alongside `CellStreamer`, and holds no locks.
+
+### Typed component deltas
+
+Runtime state is stored as separate typed components per reference rather than one wide
+state blob, so a later milestone adds inventory or actor values without reshaping anything.
+The pieces (`opensky/World/WorldStateComponents.swift`):
+
+* `WorldStateComponentKind` — the slot identity, one case per component.
+* `WorldStateComponent` — the protocol a component value type conforms to, supplying its
+  kind and the two erasure members (`erased`, `init?(erased:)`).
+* `WorldStateComponentValue` — the erased carrier the delta stores and the journal records.
+* `ReferenceStateDelta` — every deviation for one reference: at most one value per kind,
+  plus the cell the most recent mutation was recorded under.
+
+The initial component set:
+
+| Component | Kind | Holds |
+| --- | --- | --- |
+| `ReferenceEnableState` | `.enableState` | `isEnabled`, overriding the record header's `initiallyDisabled` flag |
+| `ReferenceTransformOverride` | `.transform` | a `PlacedReference.Placement` plus the uniform `scale` XSCL carries separately |
+| `ReferenceActivationState` | `.activation` | `activationCount`, the `isOpen` marker, and `lastActivator` for M11's `OnActivate` |
+| `ReferenceDeletionState` | `.deletion` | `isDeleted` at runtime, which is not the record header's `deleted` flag |
+
+Adding a component in a later milestone means adding a `WorldStateComponentKind` case, a
+conforming value type and a `WorldStateComponentValue` case. Every store operation — set,
+reset, dirty tracking, journalling, snapshot — is written against the protocol and the
+erased value, so none of it changes.
+
+### Failure model
+
+No operation on the store throws, and this is a deliberate decision rather than an
+oversight. Mutating an unknown key is not a failure: a reference need not be resident, or
+even plugin defined, for state to be recorded against it, because a script can disable an
+object in a cell that has never been loaded. Resetting a clean reference is a no-op that
+reports `false`. This is runtime state, not file parsing; there is no malformed input to
+reject. Writing a value equal to the one already stored is likewise a no-op — nothing is
+journalled, and `set` returns `false`.
+
+### Dirty tracking and reset
+
+`dirtyCount` is the number of references deviating from plugin data, and only dirty
+references have a stored delta at all: clearing the last component removes the key. Cells
+are tracked incrementally in a `[CellSceneLocation: Int]` (which is why `CellSceneLocation`
+is `Hashable`), so `dirtyCount(in:)` is a dictionary lookup rather than a scan. The cell is
+supplied by the caller at mutation time and remembered in the delta, because the store
+outlives cell eviction and the cell may be long gone by the time a sidebar asks for counts.
+A mutation with no meaningful cell is allowed and shows up in `unattributedDirtyCount`.
+
+`reset(_:for:)` drops one component and `reset(_:)` drops a reference's whole delta;
+`resetAll()` empties the store. Baselines are never cached: `resolvedState(for:)` takes the
+`RuntimeReferenceEntry` from the index, re-derives the plugin default from the decoded
+record, and lays the delta over it (`ReferenceState`,
+`opensky/World/ReferenceState.swift`). A reset therefore restores whatever the record now
+says, and `ReferenceState.overriddenKinds` reports which slots the delta supplied, so
+"disabled by a script" stays distinguishable from "disabled by the record".
+
+Two baseline gaps are deliberate and belong to issue #160, where deltas start being applied
+at build time. `PlacedReference` does not decode the record header, so a REFR baselines as
+enabled regardless of its `initiallyDisabled` flag; `PlacedActor` does carry the flag and is
+honoured. Neither placement type carries the header's `deleted` flag, so the deletion
+baseline is always "not deleted" — that flag means the plugin removed the record, which is a
+load-time concern.
+
+### Change journal
+
+`WorldStateJournal` (`opensky/World/WorldStateJournal.swift`) is an ordered log of every
+mutation, not a debug aid: save serialization (10.1.4) replays it to know what changed, the
+sidebar readout (10.1.5) shows it, and Papyrus needs a causal order for the events it fires.
+Each `WorldStateJournalEntry` carries a store-wide monotonic `sequence` (starting at 1), the
+key, the kind, the old and new erased values, and the cell. `oldValue` is nil when the slot
+was clean; `newValue` is nil when the mutation was a reset.
+
+The journal is bounded, because a running game mutates state forever and an unbounded log is
+a leak with a slow fuse. The cap is `WorldStateJournal.defaultCapacity`, **4096 entries**,
+injectable through `WorldStateStore(journalCapacity:)` and clamped to at least 1 rather than
+rejected — journalling must never be the thing that fails a mutation. Storage is a
+fixed-size ring, so recording is O(1) and memory is bounded at construction. Once the window
+is full the oldest entry is dropped, `droppedJournalEntryCount` counts the losses, and
+sequence numbers keep climbing so a consumer can tell "nothing happened" from "I missed it".
+`clearJournal()` empties the window without resetting sequence numbering, because clearing
+the log is not a claim that the mutations never happened.
+
+### Deterministic snapshot
+
+`snapshot()` returns a `WorldStateSnapshot` (`opensky/World/WorldStateSnapshot.swift`): an
+immutable `Sendable` value holding dirty references in `ReferenceKey`'s total order, plus
+the allocator's `nextGeneratedSequence`. It is the only part of the store that crosses to
+the serial build queue.
+
+Ordering is what makes it useful. The store's backing dictionaries iterate
+nondeterministically, so the snapshot flattens them through `sortedKeys()`-style ordering;
+two stores that reached the same end state through different mutation orders produce equal
+snapshots, and `WorldStateSnapshot` is `Equatable` so that is directly testable. Mutation
+history is deliberately absent from the snapshot — the journal is the separate, bounded,
+order-dependent product of the same store. Allocator position is included, because two
+stores that minted different numbers of generated keys are not in the same end state.
 
 ## Related pages
 

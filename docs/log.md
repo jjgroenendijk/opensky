@@ -4,6 +4,24 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-27
 
+* **Mutable world-state store (issue #159)**: `WorldStateStore`
+  (`opensky/World/WorldStateStore.swift`) is the one place runtime deviations from plugin
+  data live. State is typed component deltas keyed by `ReferenceKey` — enable state,
+  transform override, activation, runtime deletion — behind a `WorldStateComponent`
+  protocol and an erased `WorldStateComponentValue`, so M12 inventory and actor values can
+  be added without reshaping the store. It tracks dirty references globally and per
+  `CellSceneLocation` (now `Hashable`), resets per component or wholesale by re-deriving the
+  baseline from the #158 index rather than caching it, logs every mutation to a bounded
+  4096-entry ring journal with monotonic sequence numbers, and produces an `Equatable`
+  `WorldStateSnapshot` ordered by `ReferenceKey` so identical end states compare equal
+  regardless of mutation order. The store is `@MainActor` and lock-free — the snapshot is
+  the only value that crosses to the build queue — and it now owns the
+  `GeneratedReferenceAllocator` that #158 left homeless. No operation throws: an unknown key
+  is runtime state, not malformed input. Documented in
+  [Runtime reference identity and world state](/engine/runtime-state.md); tests in
+  `openskyTests/WorldStateStoreTests.swift` and
+  `openskyTests/WorldStateJournalTests.swift`.
+
 * **SWF focus-path filter (issue #229)**: `routeToMenuHandler` in
   `opensky/Formats/SWF/Runtime/SWFRuntimeFocus.swift` filtered the focus chain to clips that
   define `handleInput` before handing it to the movie. Vanilla nests a list under a plain
