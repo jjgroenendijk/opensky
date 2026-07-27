@@ -121,9 +121,11 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   CELL/REGN/WRLD precedence chain, the derived exploration/town/interior states,
   palette expansion and flag handling, the shipped-file `.xwm` resolution the
   vanilla `.wav` track names need, and the crossfading music director.
-* [Runtime reference identity](/engine/runtime-state.md) - session-stable ReferenceKey
-  identity over plugin and generated references, the per-cell RuntimeReferenceIndex,
-  the generated-object allocator, and the cell-vs-above-cell state ownership seam.
+* [Runtime reference identity and world state](/engine/runtime-state.md) - session-stable
+  ReferenceKey identity over plugin and generated references, the per-cell
+  RuntimeReferenceIndex, and the mutable WorldStateStore above it: typed component deltas,
+  dirty tracking, reset-to-plugin-default, the bounded change journal, and the
+  deterministic snapshot.
 
 ## Rendering
 
