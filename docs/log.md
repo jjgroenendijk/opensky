@@ -4,36 +4,33 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-27
 
-* **Streaming reacts to runtime state (issue #160, stage B)**: `GameViewController` now owns
-  the session `WorldStateStore` and wires it to the streamer, so every dispatched build
-  snapshots the live store on the main thread instead of seeing the plugin baseline. A
-  journalled mutation calls `CellStreamer.noteStateMutation(in:sequence:)`, which queues a
-  rebuild of the affected cell; `CellStreamCore` grew a `rebuilding` set so the cell stays
-  resident and keeps rendering its old scene until the replacement integrates. Staleness is
-  one comparison — `CellScene.stateSequence` against the newest mutation sequence for the
-  cell — which resolves the mutation-during-an-in-flight-build race without losing or
-  double-applying anything, and works around the runner's pending-coordinate dedupe by
-  holding the rebuild request streamer-side. An unattributed mutation conservatively rebuilds
-  every resident cell, and an interior rebuild re-runs its door transition with no camera so
-  the player is not teleported. See
-  [runtime reference identity and world state](/engine/runtime-state.md).
-* **Cell builds honour runtime state (issue #160, stage A)**: a `WorldStateSnapshot` now
-  travels into every cell build, through `CellSceneProvider.buildCell(at:state:)`,
-  `CellBuildRunning.enqueue(_:state:)` and the two `CellSceneBuilder` entry points, and is
-  applied at one point per build in `opensky/World/CellSceneBuilderRuntimeState.swift`.
-  Runtime-disabled and runtime-deleted references are skipped exactly as initially-disabled
-  ones are, landing in the new `runtimeDisabled` / `runtimeDeleted` buckets and in the load
-  summary line; a `ReferenceTransformOverride` replaces the record placement and scale
-  before both instance resolution and collision placement, so a moved object's mesh and its
-  collision shape cannot disagree. Placed actors run the same visibility check through
-  `ReferenceState`, which means a runtime enable now overrides the record's
-  `initiallyDisabled` flag. Snapshots carry a monotonic `sequence` (outside their equality)
-  and each `CellScene` records the `stateSequence` it was built with, for the stale-build
-  comparison stage B needs. `CellStreamer` passes `.empty` until it owns a store.
+* **Streaming integration for mutated references (issue #160)**: cell streaming now honours
+  `WorldStateStore` end to end. A `WorldStateSnapshot` travels into every cell build, through
+  `CellSceneProvider.buildCell(at:state:)`, `CellBuildRunning.enqueue(_:state:)` and the two
+  `CellSceneBuilder` entry points, and is applied at one point per build in
+  `opensky/World/CellSceneBuilderRuntimeState.swift`: runtime-disabled and runtime-deleted
+  references are skipped exactly as initially-disabled ones are, landing in the new
+  `runtimeDisabled` / `runtimeDeleted` buckets and in the load summary line, and a
+  `ReferenceTransformOverride` replaces the record placement and scale before both instance
+  resolution and collision placement, so a moved object's mesh and its collision shape cannot
+  disagree. Placed actors run the same visibility check through `ReferenceState`, which means
+  a runtime enable now overrides the record's `initiallyDisabled` flag. `GameViewController`
+  owns the session `WorldStateStore` and wires it to the streamer, so every dispatched build
+  snapshots the live store on the main thread instead of seeing the plugin baseline, and each
+  built `CellScene` records the `stateSequence` it was built from. A journalled mutation calls
+  `CellStreamer.noteStateMutation(in:sequence:)`, which queues a rebuild of the affected cell;
+  `CellStreamCore` grew a `rebuilding` set so the cell stays resident and keeps rendering its
+  old scene until the replacement integrates. Staleness is one comparison —
+  `CellScene.stateSequence` against the newest mutation sequence for the cell — which resolves
+  the mutation-during-an-in-flight-build race without losing or double-applying anything, and
+  works around the runner's pending-coordinate dedupe by holding the rebuild request
+  streamer-side. An unattributed mutation conservatively rebuilds every resident cell, and an
+  interior rebuild re-runs its door transition with no camera so the player is not teleported.
   Documented in [Runtime reference identity and world state](/engine/runtime-state.md) and
   [Cell scene build](/engine/cell-scene.md); tests in
-  `openskyTests/CellSceneBuilderRuntimeStateTests.swift` and
-  `openskyTests/WorldStateJournalTests.swift`.
+  `openskyTests/CellSceneBuilderRuntimeStateTests.swift`,
+  `openskyTests/CellStreamerRuntimeStateTests.swift`, `openskyTests/CellStreamCoreTests.swift`,
+  `openskyTests/WorldStateStoreTests.swift` and `openskyTests/WorldStateJournalTests.swift`.
 * **Mutable world-state store (issue #159)**: `WorldStateStore`
   (`opensky/World/WorldStateStore.swift`) is the one place runtime deviations from plugin
   data live. State is typed component deltas keyed by `ReferenceKey` — enable state,

@@ -2,9 +2,10 @@
 type: Subsystem
 title: Cell streaming
 description: Camera position -> desired NxN exterior-cell grid, built off the main thread
-  on one serial queue, streamed in/out around the free-fly camera with a per-frame budget.
+  on one serial queue, streamed in/out around the free-fly camera with a per-frame budget,
+  and the world-state snapshot every dispatched build carries.
 tags: [engine, world, streaming, esm, concurrency]
-timestamp: 2026-07-26T00:00:00Z
+timestamp: 2026-07-27T00:00:00Z
 ---
 
 # Cell streaming

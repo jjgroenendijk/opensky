@@ -75,7 +75,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Cell scene build](/engine/cell-scene.md) - exterior cell -> draw list: WRLD walk,
   STAT resolution, skip taxonomy, grouping, world bounds.
 * [Cell streaming](/engine/cell-streaming.md) - camera position -> desired NxN exterior-cell
-  grid, built off the main thread on one serial queue with a per-frame residency budget.
+  grid, built off the main thread on one serial queue with a per-frame residency budget, and
+  the world-state snapshot every dispatched build carries.
 * [Terrain mesh build](/engine/terrain.md) - LAND -> per-quadrant meshes under the cell's
   objects: grid topology, base textures, XCLC quad-hiding, DNAM fallback plane, placement.
 * [Procedural grass](/engine/grass.md) - deterministic LAND-driven placement, cell-owned
@@ -125,8 +126,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   ReferenceKey identity over plugin and generated references, the per-cell
   RuntimeReferenceIndex, and the mutable WorldStateStore above it: typed component deltas,
   dirty tracking, reset-to-plugin-default, the bounded change journal, the
-  deterministic snapshot, and how a cell build applies that snapshot to render and
-  collision together.
+  deterministic snapshot, how a cell build applies that snapshot to render and
+  collision together, and how a mutation to an already-resident cell reaches the screen
+  through a streamer-driven rebuild.
 
 ## Rendering
 
