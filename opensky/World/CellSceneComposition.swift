@@ -95,6 +95,27 @@ nonisolated struct CellSceneComposition {
         return nil
     }
 
+    /// Runtime reference lookup across resident cells (issue #158). Linear
+    /// like `interaction(reference:)`: the scan is over a handful of resident
+    /// cells and each per-cell lookup is a dictionary hit.
+    func referenceEntry(key: ReferenceKey) -> RuntimeReferenceEntry? {
+        for scene in cells.values {
+            if let entry = scene.references[key] {
+                return entry
+            }
+        }
+        return nil
+    }
+
+    func referenceEntry(formID: FormID) -> RuntimeReferenceEntry? {
+        for scene in cells.values {
+            if let entry = scene.references.entry(for: formID) {
+                return entry
+            }
+        }
+        return nil
+    }
+
     func door(reference: FormID) -> PlacedDoor? {
         cells.values
             .flatMap(\.doors)

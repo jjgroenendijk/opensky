@@ -95,7 +95,8 @@ extension CellSceneBuilder {
             throw CellSceneError.interiorCellNotFound(formID: cellFormID)
         }
         var counts = BuildCounts()
-        let refs = collectReferences(in: found.children, counts: &counts)
+        let collected = collectTaggedReferences(in: found.children, counts: &counts)
+        let refs = collected.map(\.reference)
         let location = CellSceneLocation.interior(cellFormID)
         let staticCollision = buildStaticCollision(refs: refs, location: location)
         let instances = resolveInstances(refs: refs, counts: &counts)
@@ -118,7 +119,8 @@ extension CellSceneBuilder {
                 lighting: lighting?.lighting,
                 pointLights: lighting?.pointLights ?? [],
                 staticCollision: staticCollision,
-                actors: actors
+                actors: actors,
+                referenceEntries: referenceEntries(refs: refs, collected: collected)
             ),
             counts: counts
         )

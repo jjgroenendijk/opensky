@@ -112,6 +112,10 @@ nonisolated final class CellSceneBuilder {
     var actorAnimationClips: [ActorAnimationCacheKey: ActorAnimationClip] = [:]
     /// Plugin file name feeding FaceGen path resolution (FormIDResolver).
     let pluginName: String
+    /// Master-list resolver for this plugin, built once here because
+    /// `ESMFile.pluginHeader()` re-decodes the header on every call and every
+    /// indexed reference needs a resolution.
+    let formIDResolver: FormIDResolver
     /// TES4 0x80 selects table-ID lstrings instead of inline zstrings.
     let pluginLocalized: Bool
     /// Resolves FULL/RNAM interaction text when the builder has a VFS.
@@ -139,7 +143,12 @@ nonisolated final class CellSceneBuilder {
         self.textures = textures
         self.fileSystem = fileSystem
         self.pluginName = pluginName
-        pluginLocalized = (try? file.pluginHeader().isLocalized) ?? false
+        let header = try? file.pluginHeader()
+        pluginLocalized = header?.isLocalized ?? false
+        // A plugin whose header failed to decode still resolves its own
+        // records: master index 0 then falls through to the plugin itself.
+        formIDResolver = header?.formIDResolver(pluginName: pluginName)
+            ?? FormIDResolver(pluginName: pluginName, masters: [])
         localizedStrings = fileSystem.map {
             LocalizedStrings(vfs: $0, pluginName: pluginName)
         }
@@ -173,10 +182,10 @@ nonisolated final class CellSceneBuilder {
         let world = source.world
         let found = source.cell
         var counts = BuildCounts()
-        let localRefs = collectReferences(in: found.children, counts: &counts)
+        let collected = collectTaggedReferences(in: found.children, counts: &counts)
         let coordinate = CellCoordinate(x: gridX, y: gridY)
         let refs = exteriorReferences(
-            local: localRefs,
+            local: collected.map(\.reference),
             world: world.children,
             coordinate: coordinate,
             localized: pluginLocalized
@@ -208,7 +217,8 @@ nonisolated final class CellSceneBuilder {
                 pointLights: [],
                 staticCollision: staticCollision,
                 actors: actors,
-                worldspaceMusicType: world.worldspace?.musicType
+                worldspaceMusicType: world.worldspace?.musicType,
+                referenceEntries: referenceEntries(refs: refs, collected: collected)
             ),
             counts: counts
         )
@@ -314,42 +324,6 @@ extension CellSceneBuilder {
             }
         }
         return nil
-    }
-
-    /// REFR records from the cell's persistent + temporary children groups.
-    /// LAND is handled separately (buildTerrain); other non-REFR types (NAVM,
-    /// ACHR, PGRE, ...) are not static placements — ignored deliberately and
-    /// not counted (skip taxonomy, docs/engine/cell-scene.md). Deleted REFRs
-    /// place nothing -> also ignored. A REFR that fails to decode is malformed.
-    nonisolated func collectReferences(
-        in cellChildren: ESMGroup?,
-        counts: inout BuildCounts
-    ) -> [PlacedReference] {
-        guard let cellChildren, let children = try? cellChildren.children() else {
-            if cellChildren != nil {
-                Self.logger.warning("malformed cell-children group skipped")
-            }
-            return []
-        }
-        var refs: [PlacedReference] = []
-        for case let .group(group) in children {
-            guard
-                group.kind == .cellPersistentChildren || group.kind == .cellTemporaryChildren,
-                let records = try? group.children()
-            else { continue }
-            for case let .record(record) in records where record.type == "REFR" {
-                guard !record.isDeleted else { continue }
-                counts.totalRefs += 1
-                do {
-                    try refs.append(PlacedReference(record: record))
-                } catch {
-                    counts.malformedRefs += 1
-                    let id = FormID(record.formID).description
-                    Self.logger.warning("malformed REFR \(id, privacy: .public) skipped")
-                }
-            }
-        }
-        return refs
     }
 
     /// Resolves refs to placed instances. Skip buckets: base FormID resolves

@@ -42,6 +42,10 @@ nonisolated struct CellActorBuild {
     var animations: [any RenderAnimation] = []
     var counts = ActorBuildCounts()
     var durationMS = 0.0
+    /// Runtime index entries for the ACHRs this cell owns (issue #158).
+    /// Populated for every discovered actor, including ones skipped for
+    /// rendering: an initially-disabled actor still exists at runtime.
+    var entries: [RuntimeReferenceEntry] = []
 }
 
 extension CellSceneBuilder {
@@ -56,16 +60,20 @@ extension CellSceneBuilder {
         let started = DispatchTime.now().uptimeNanoseconds
         var build = CellActorBuild()
         var malformed: [String] = []
-        var byID: [UInt32: PlacedActor] = [:]
-        for actor in decodeActors(in: cellChildren, malformed: &malformed) {
-            byID[actor.formID.rawValue] = actor
+        var byID: [UInt32: CollectedActor] = [:]
+        for collected in decodeActors(in: cellChildren, malformed: &malformed) {
+            byID[collected.actor.formID.rawValue] = collected
         }
+        // Records stored in the worldspace persistent CELL are persistent by
+        // definition, whichever children group inside it holds them.
         for actor in persistentActors(in: world, localized: localized) {
             let owner = CellGridManager.cellCoordinate(for: actor.placement.position)
             guard owner == coordinate else { continue }
-            byID[actor.formID.rawValue] = actor
+            byID[actor.formID.rawValue] = CollectedActor(actor: actor, isPersistent: true)
         }
-        let actors = byID.values.sorted { $0.formID.rawValue < $1.formID.rawValue }
+        let collected = byID.values.sorted { $0.actor.formID.rawValue < $1.actor.formID.rawValue }
+        let actors = collected.map(\.actor)
+        build.entries = actorEntries(collected)
         build.counts.discovered = actors.count + malformed.count
         build.counts.failures = malformed.count
         build.counts.failureReasons = malformed
@@ -84,7 +92,9 @@ extension CellSceneBuilder {
         let started = DispatchTime.now().uptimeNanoseconds
         var build = CellActorBuild()
         var malformed: [String] = []
-        let actors = decodeActors(in: cellChildren, malformed: &malformed)
+        let collected = decodeActors(in: cellChildren, malformed: &malformed)
+        let actors = collected.map(\.actor)
+        build.entries = actorEntries(collected)
         build.counts.discovered = actors.count + malformed.count
         build.counts.failures = malformed.count
         build.counts.failureReasons = malformed
@@ -100,20 +110,23 @@ extension CellSceneBuilder {
     nonisolated private func decodeActors(
         in cellChildren: ESMGroup?,
         malformed: inout [String]
-    ) -> [PlacedActor] {
+    ) -> [CollectedActor] {
         guard let cellChildren, let children = try? cellChildren.children() else {
             return []
         }
-        var actors: [PlacedActor] = []
+        var actors: [CollectedActor] = []
         for case let .group(group) in children {
             guard
                 group.kind == .cellPersistentChildren || group.kind == .cellTemporaryChildren,
                 let records = try? group.children()
             else { continue }
+            let isPersistent = group.kind == .cellPersistentChildren
             for case let .record(record) in records where record.type == "ACHR" {
                 guard !record.isDeleted else { continue }
                 do {
-                    try actors.append(PlacedActor(record: record))
+                    try actors.append(CollectedActor(
+                        actor: PlacedActor(record: record), isPersistent: isPersistent
+                    ))
                 } catch {
                     let id = FormID(record.formID).description
                     malformed.append("ACHR \(id): malformed record")
@@ -140,6 +153,7 @@ extension CellSceneBuilder {
         if let persistent = findCell(in: world, gridX: 0, gridY: 0, localized: localized) {
             var malformed: [String] = []
             actors = decodeActors(in: persistent.children, malformed: &malformed)
+                .map(\.actor)
         }
         exteriorPersistentActors[key] = actors
         return actors
