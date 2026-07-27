@@ -539,8 +539,11 @@ Two destinations, tried in order:
 
 `Selection.setFocus` / `getFocus` round-trip through `focusTarget` as before; the focus path
 handed to `handleInput` is the chain of clips between the handler and the focused object,
-empty when nothing has focus — which is what a menu that owns its own selection state
-expects.
+**filtered to clips that define `handleInput`**, empty when nothing has focus — which is what
+a menu that owns its own selection state expects. The filter matters because a vanilla menu
+nests its list under a plain holder clip (`startmenu.swf`: `Menu_mc` -> `MainListHolder` ->
+`List_mc`), and the movie's own `handleInput` forwards down `pathToFocus[0]`; an unfiltered
+path hands it the holder, which defines no `handleInput`, and the key is dropped (issue #229).
 
 ## Timers
 
@@ -837,7 +840,8 @@ Phase 3 adds three more device-free suites:
   then release routing `onDragOut` and `onReleaseOutside`; `onMouseDown` reaching a clip
   wherever the pointer is; `_xmouse` / `_ymouse` in the node's own space; an unconsumed key
   falling back to the focused object; navigation reaching the menu's `handleInput` on press
-  and not on release; `InputDetails` carrying the code and the movie's own navigation
+  and not on release; the focus path dropping holder clips that define no `handleInput`
+  before it reaches the movie; `InputDetails` carrying the code and the movie's own navigation
   equivalent; and the viewport-to-stage mapping including the letterbox bars and a non-zero
   frame origin.
 - `SWFGameDelegateTests` — a registered host function receiving the movie's call, an
@@ -1032,13 +1036,14 @@ at **0 unhandled of 36**, and 44 distinct names remain missing, all CLIK cosmeti
 (`_listeners` 50, `height`/`width` 40 each, `invalidationIntervalID` 40, `apply` 33,
 `CLIK_loadCallback` 17).
 
-Two things are measured and open. The populated `Main` state stages its content off the
-viewport, so the list is addressable and reads back correctly but renders nothing — the
-last row of the table. And arrow keys through `handle()` are consumed without effect,
-because `routeToMenuHandler` hands `StartMenu.handleInput` the raw display chain
-`[MainListHolder, List_mc]` and the holder clip defines no `handleInput`; passing
-`[List_mc]` alone drives selection and dispatches the row's outbound call. Tracked as
-issues #230 and #229.
+Two things were measured here. One is still open: the populated `Main` state stages its
+content off the viewport, so the list is addressable and reads back correctly but renders
+nothing — the last row of the table. The other is closed: arrow keys through `handle()` were
+consumed without effect, because `routeToMenuHandler` handed `StartMenu.handleInput` the raw
+display chain `[MainListHolder, List_mc]` and the holder clip defines no `handleInput`. The
+focus path is now filtered to clips that define `handleInput` before it reaches the movie, so
+`[List_mc]` drives selection and dispatches the row's outbound call. Issue #229; the staging
+gap is #230.
 
 Finally, a scope finding worth recording: `startmenu.swf` is Skyrim's **title screen**. Its
 1,674-string pool contains no `$SETTINGS`, and its rows are Continue/New/Load/Creations/

@@ -4,6 +4,16 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-27
 
+* **SWF focus-path filter (issue #229)**: `routeToMenuHandler` in
+  `opensky/Formats/SWF/Runtime/SWFRuntimeFocus.swift` filtered the focus chain to clips that
+  define `handleInput` before handing it to the movie. Vanilla nests a list under a plain
+  holder clip (`startmenu.swf`: `Menu_mc` -> `MainListHolder` -> `List_mc`), and the movie's
+  own `handleInput` forwards down `pathToFocus[0]`, so the raw chain handed it `MainListHolder`,
+  which defines no `handleInput`, and the key was dropped. A new `definesHandleInput(_:)`
+  helper deduplicates the predicate between the menu-handler search and the filter. Arrow keys
+  now drive the `startmenu.swf` list. Test in
+  `openskyTests/SWFRuntimeFocusPathTests.swift::theFocusPathDropsHolderClipsWithoutHandleInput`.
+
 * **WMA streaming decode overload (issue #218)**: `WMADecoder` gained a streaming
   static overload `decode(packets:parameters:onChunk:)` that hands each non-empty PCM
   chunk to a callback instead of accumulating the whole file, and the existing
