@@ -20,6 +20,15 @@ nonisolated struct CellGeometryBuild {
     /// WRLD.ZNAM of the owning worldspace (M9.2.3 music selection). `var` with
     /// a default so the interior path, which has no worldspace, omits it.
     var worldspaceMusicType: FormID?
+    /// Runtime index entries for this cell's REFRs (issue #158). Actor entries
+    /// travel inside `actors` and are merged in by makeScene.
+    var referenceEntries: [RuntimeReferenceEntry] = []
+
+    /// Statics and actors share one per-cell index; both are placements the
+    /// runtime addresses by `ReferenceKey`.
+    var referenceIndex: RuntimeReferenceIndex {
+        RuntimeReferenceIndex(entries: referenceEntries + actors.entries)
+    }
 }
 
 /// Exterior environment trio built beside the placed models.
@@ -192,7 +201,8 @@ extension CellSceneBuilder {
             worldspaceMusicType: geometry.worldspaceMusicType,
             terrainHeightField: geometry.terrain?.heightField,
             grassPlacements: geometry.grass?.placements ?? [],
-            staticCollision: geometry.staticCollision
+            staticCollision: geometry.staticCollision,
+            references: geometry.referenceIndex
         )
     }
 

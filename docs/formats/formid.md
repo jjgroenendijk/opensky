@@ -58,8 +58,11 @@ Runtime load-order indices (what the game shows in console) are a different
 numbering — they depend on the user's full load order. OpenSky models
 identity load-order-independently as `ResolvedFormID` = (plugin file name,
 objectID); `FormIDResolver(pluginName:masters:)` maps raw file-local IDs to
-it. Plugin-name matching is currently verbatim-case (vanilla masters are
-spelled consistently); case-insensitive matching may be needed for mods.
+it. Plugin-name matching in `FormIDResolver` itself is verbatim-case (vanilla
+masters are spelled consistently); the session-stable `ReferenceKey` built on
+top of `ResolvedFormID` lowercases the plugin name instead, since neither raw
+`FormID` nor `ResolvedFormID` is safe as a persistent identity across a
+session — see [Runtime reference identity](/engine/runtime-state.md).
 
 ESL note: the 0xFE prefix space is a runtime load-order construct — raw
 FormIDs inside a plugin file never use it. ESL-flagged plugins still encode

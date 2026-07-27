@@ -64,6 +64,10 @@ nonisolated struct CellScene {
     /// Immutable mesh collision + per-cell broadphase. Empty for cells built
     /// without a collision VFS (legacy synthetic tests).
     let staticCollision: StaticCollisionSet
+    /// Decoded REFR/ACHR records of this cell, addressable by session-stable
+    /// `ReferenceKey` and by raw FormID (issue #158). Empty for cells built
+    /// without reference retention (synthetic render tests).
+    let references: RuntimeReferenceIndex
     /// Mesh + texture cache keys this cell uses, for unload eviction.
     var assets = CellAssets()
 
@@ -81,6 +85,7 @@ nonisolated struct CellScene {
         terrainHeightField: TerrainHeightField? = nil,
         grassPlacements: [GrassPlacement] = [],
         staticCollision: StaticCollisionSet = .empty,
+        references: RuntimeReferenceIndex = .empty,
         assets: CellAssets = CellAssets()
     ) {
         self.renderScene = renderScene
@@ -96,6 +101,7 @@ nonisolated struct CellScene {
         self.terrainHeightField = terrainHeightField
         self.grassPlacements = grassPlacements
         self.staticCollision = staticCollision
+        self.references = references
         self.assets = assets
     }
 }

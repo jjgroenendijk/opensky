@@ -43,6 +43,23 @@ extension CellStreamer {
         return composition.interaction(reference: reference)
     }
 
+    /// Full decoded record behind a reference the player is looking at or
+    /// otherwise addressing (issue #158). An interior scene replaces the
+    /// exterior composition entirely, so it answers alone when present.
+    func referenceEntry(formID: FormID) -> RuntimeReferenceEntry? {
+        if let interiorScene {
+            return interiorScene.references.entry(for: formID)
+        }
+        return composition.referenceEntry(formID: formID)
+    }
+
+    func referenceEntry(key: ReferenceKey) -> RuntimeReferenceEntry? {
+        if let interiorScene {
+            return interiorScene.references[key]
+        }
+        return composition.referenceEntry(key: key)
+    }
+
     func activateInteractionTarget() {
         guard let interactionTarget else { return }
         onInteraction?(InteractionEvent(target: interactionTarget))
