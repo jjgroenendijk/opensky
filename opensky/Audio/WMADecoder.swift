@@ -104,18 +104,48 @@ nonisolated final class WMADecoder {
     }
 
     /// Decodes a whole packet sequence, the shape a file-at-a-time caller wants.
+    /// Hands the full PCM back in one array, which is fine for short clips and the
+    /// one-file inspection paths but materializes the whole track: a vanilla music
+    /// file decodes to roughly 37 MB. Whole-corpus sweeps and playback should use the
+    /// streaming overload below instead (issue #218).
     static func decode(packets: [Data], parameters: AudioCodecParameters) throws -> DecodedAudio {
-        let decoder = try WMADecoder(parameters: parameters)
         var samples: [Float] = []
-        for packet in packets {
-            try samples.append(contentsOf: decoder.decode(packet: packet))
+        try decode(packets: packets, parameters: parameters) { chunk in
+            samples.append(contentsOf: chunk)
         }
-        try samples.append(contentsOf: decoder.flush())
         return DecodedAudio(
-            sampleRate: decoder.outputSampleRate,
-            channelCount: decoder.outputChannelCount,
+            sampleRate: parameters.sampleRate,
+            channelCount: parameters.channelCount,
             samples: samples
         )
+    }
+
+    /// Decodes `packets` and hands each non-empty PCM chunk to `onChunk` instead of
+    /// accumulating the whole file. The decoder buffers input, so a packet often
+    /// yields no PCM until enough have arrived; those empty results are not passed
+    /// to `onChunk`. The final flush is delivered the same way when it produces PCM.
+    ///
+    /// Use this over the accumulating overload whenever the caller does not need the
+    /// full PCM at once: a streaming consumer discards each chunk as it goes and
+    /// stays flat in memory across a whole-corpus sweep or a long playback session
+    /// (issue #218). The callback receives interleaved float at the source sample
+    /// rate and channel count, matching the accumulating overload's output.
+    static func decode(
+        packets: [Data],
+        parameters: AudioCodecParameters,
+        onChunk: (_ samples: [Float]) throws -> Void
+    ) throws {
+        let decoder = try WMADecoder(parameters: parameters)
+        for packet in packets {
+            let samples = try decoder.decode(packet: packet)
+            if !samples.isEmpty {
+                try onChunk(samples)
+            }
+        }
+        let tail = try decoder.flush()
+        if !tail.isEmpty {
+            try onChunk(tail)
+        }
     }
 
     // MARK: - Packet submission

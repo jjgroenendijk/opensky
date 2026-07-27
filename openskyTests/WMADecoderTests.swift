@@ -121,6 +121,34 @@ struct WMADecoderTests {
         #expect(audio.channelCount == 2)
         #expect(audio.samples.isEmpty)
     }
+
+    @Test func streamingOverloadWithEmptyInputInvokesNoCallback() throws {
+        let parameters = WMADecoderFixture.parameters()
+        var invocations = 0
+        try WMADecoder.decode(packets: [], parameters: parameters) { _ in
+            invocations += 1
+        }
+        #expect(invocations == 0)
+    }
+
+    @Test func streamingOverloadDeliversOnlyNonEmptyChunks() {
+        // Garbage payloads cannot produce valid WMA frames reliably, so the test pins the
+        // invariants the streaming contract guarantees without real PCM: it returns
+        // without trapping, and every chunk it delivers is non-empty (the decode loop's
+        // `!samples.isEmpty` guard). A decode throw is acceptable and swallowed here, as
+        // in `garbagePacketsNeverCrash`; a trap or an empty delivered chunk is not.
+        let parameters = WMADecoderFixture.parameters()
+        var deliveredEmpty = false
+        for size in [1, 16, 512, 2972] {
+            let packet = WMADecoderFixture.noisePacket(byteCount: size)
+            try? WMADecoder.decode(packets: [packet], parameters: parameters) { chunk in
+                if chunk.isEmpty {
+                    deliveredEmpty = true
+                }
+            }
+        }
+        #expect(deliveredEmpty == false)
+    }
 }
 
 struct DecodedAudioTests {

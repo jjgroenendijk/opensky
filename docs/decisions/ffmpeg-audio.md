@@ -28,7 +28,14 @@ what happens when it is absent.
   message naming `make bootstrap`, and the app bundle carries its own copies of the three
   dylibs so the installed app is self-contained.
 * Keep every ffmpeg type behind `opensky/Audio/WMADecoder.swift`. Callers pass container
-  metadata and `Data`, and receive interleaved 32-bit float PCM or a typed error.
+  metadata and `Data`, and receive interleaved 32-bit float PCM or a typed error. The
+  static `decode(packets:parameters:)` comes in two overloads: an accumulating one that
+  returns the whole track as one `[Float]`, and a streaming one that hands each non-empty
+  PCM chunk to a callback. The streaming overload exists because a vanilla music track
+  decodes to roughly 37 MB, so whole-file accumulation is a memory hazard for corpus
+  sweeps and playback; those paths use the streaming overload (or the per-packet instance
+  `decode(packet:)` over a lazy packet source) and discard each chunk as they go (issue
+  #218).
 
 ## Why not Homebrew's ffmpeg
 
