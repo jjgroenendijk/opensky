@@ -122,7 +122,15 @@ nonisolated extension SWFMovieRuntime {
             return false
         }
         markDirty()
-        let path = runtime.makeArray(focusChain(under: node).map { .object($0.object) })
+        // The path carries only clips that define `handleInput`. Vanilla nests a
+        // list under a plain holder clip (`startmenu.swf`:
+        // `[MainListHolder, List_mc]`); the movie's own `handleInput` forwards
+        // down `pathToFocus[0]`, so an unfiltered path hands it a clip that
+        // defines none and the key is dropped (issue #229).
+        let path = runtime.makeArray(
+            focusChain(under: node).filter { definesHandleInput($0) }
+                .map { .object($0.object) }
+        )
         let result = runtime.invoke(
             .object(function), thisValue: .object(node.object),
             arguments: [details, .object(path)]
@@ -139,17 +147,22 @@ nonisolated extension SWFMovieRuntime {
         var frontier = root.children.filter(\.isClip)
         var depth = 1
         while !frontier.isEmpty, depth <= SWFMovieRuntime.maximumHandlerDepth {
-            if
-                let found = frontier.first(where: {
-                    $0.object.lookup("handleInput")?.property.value.functionValue != nil
-                })
-            {
+            if let found = frontier.first(where: { definesHandleInput($0) }) {
                 return found
             }
             frontier = frontier.flatMap { $0.children.filter(\.isClip) }
             depth += 1
         }
         return nil
+    }
+
+    /// Whether a clip defines `handleInput` as a callable function — the CLIK
+    /// routing contract. A holder clip that defines none is skipped both by the
+    /// menu-handler search and by the focus-path filter, because the movie's own
+    /// `handleInput` forwards down `pathToFocus[0]` and a clip without one drops
+    /// the key (issue #229).
+    func definesHandleInput(_ node: SWFDisplayObject) -> Bool {
+        node.object.lookup("handleInput")?.property.value.functionValue != nil
     }
 
     /// The clips between `node` and the focused object, outermost first. Empty

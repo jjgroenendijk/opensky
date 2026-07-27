@@ -111,11 +111,11 @@ result back for the panel. The invoke log ends at 0 unhandled of 36.
 not this movie. The panel prints both lists so the difference stays visible rather than
 being quietly conflated. Skyrim's real in-game system menu is `quest_journal.swf`.
 
-Two measured gaps remain open. The populated `Main` state stages its content off the
-viewport, so the list reads back correctly but draws nothing; and arrow keys are consumed
-without effect because the focus chain handed to `StartMenu.handleInput` starts at a holder
-clip that defines no `handleInput`. Both are recorded in the acceptance evidence and
-tracked as issues #230 and #229; the correct movie for a true system menu is issue #231.
+One measured gap remains open. The populated `Main` state stages its content off the
+viewport, so the list reads back correctly but draws nothing. Arrow keys now drive the list:
+the focus path handed to `StartMenu.handleInput` is filtered to clips that define
+`handleInput`, so the `MainListHolder` between `Menu_mc` and `List_mc` no longer swallows the
+key (#229). Both are recorded in the acceptance evidence; the staging gap is tracked as #230.
 
 The renderer owns exactly one SWF layer. The system menu takes it over from the
 gameplay HUD while the movie is up and hands it back on Resume — the same handoff
