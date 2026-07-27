@@ -52,10 +52,34 @@ final class CellStreamer {
     /// Production use-key activation is view-ray based.
     static let doorActivationRadius = InteractionRay.defaultMaximumDistance
 
+    /// Supplies the runtime world state each dispatched build runs against
+    /// (issue #160). Called on the main thread at dispatch time, so the build
+    /// sees the store exactly as it was when the work left the main thread.
+    /// The default keeps every build on the plugin baseline, which is what
+    /// tests and any caller with no store want.
+    var stateSource: () -> WorldStateSnapshot = { .empty }
+
     /// Desired requests not yet submitted. Only one build reaches the runner
     /// at a time, so recentering can discard obsolete backlog before it does
     /// I/O and eviction always queues ahead of the next build.
     private var requests: [CellCoordinate] = []
+    /// Resident cells awaiting a world-state rebuild, oldest request first.
+    /// Kept apart from `requests` so first loads keep their center-out
+    /// priority; rebuilds are dispatched only once the load queue is drained.
+    /// Details in the CellStreamerRuntimeState satellite.
+    var rebuildRequests: [CellCoordinate] = []
+    /// Highest journal sequence of a mutation attributed to each cell. A
+    /// resident scene is current exactly while its `stateSequence` is at
+    /// least this value.
+    var cellMutationSequence: [CellCoordinate: UInt64] = [:]
+    /// Same, for the interior scene currently owning the view.
+    var interiorMutationSequence: UInt64 = 0
+    /// Source door of the transition that produced the current interior, so a
+    /// mutation inside it can be rebuilt through the door-transition path.
+    var interiorSourceDoor: FormID?
+    /// True while the in-flight door transition is an interior rebuild rather
+    /// than a player-driven move, which suppresses the camera teleport.
+    var interiorRebuildInFlight = false
     private var activeBuild: CellCoordinate?
 
     /// Finished builds drained from the runner, awaiting integration. Bounded
@@ -148,6 +172,7 @@ final class CellStreamer {
             }
             let actions = core.apply(diff: diff)
             requests.removeAll { !core.inFlight.contains($0) }
+            pruneRebuildState()
             discardStagedCells(outside: grid.desiredCells)
             if !actions.removals.isEmpty, !coverageTransitionActive {
                 unload(actions.removals)
@@ -223,17 +248,41 @@ final class CellStreamer {
         )
     }
 
+    /// Submits at most one build per frame. First loads drain before world-
+    /// state rebuilds, so a cell that has never been drawn still arrives
+    /// center-out; a rebuild only ever displaces an already-drawn cell, so
+    /// deferring it costs nothing visible. The world-state snapshot is taken
+    /// here, at dispatch, which is the last main-thread moment before the
+    /// build leaves for the serial runner (issue #160).
     private func dispatchNextBuild() {
         guard
             transitionInFlight == nil,
             interiorScene == nil,
             activeBuild == nil,
-            pending.isEmpty,
-            !requests.isEmpty
+            pending.isEmpty
         else { return }
-        let coordinate = requests.removeFirst()
-        activeBuild = coordinate
-        runner.enqueue(coordinate)
+        if !requests.isEmpty {
+            let coordinate = requests.removeFirst()
+            activeBuild = coordinate
+            runner.enqueue(coordinate, state: stateSource())
+            return
+        }
+        dispatchNextRebuild()
+    }
+
+    /// Takes the first rebuild request the core still accepts. A request whose
+    /// cell stopped being resident (unloaded, or its first build has not
+    /// landed yet) is dropped here rather than dispatched; for the unloaded
+    /// case that is the cancellation, and for the not-yet-resident case the
+    /// integration of the first build re-queues it against the fresher state.
+    private func dispatchNextRebuild() {
+        while !rebuildRequests.isEmpty {
+            let coordinate = rebuildRequests.removeFirst()
+            guard core.beginRebuild(coordinate) else { continue }
+            activeBuild = coordinate
+            runner.enqueue(coordinate, state: stateSource())
+            return
+        }
     }
 
     // MARK: - Integration
@@ -252,11 +301,16 @@ final class CellStreamer {
             case let .success(scene):
                 let decision = core.integrate(coordinate: entry.coordinate, kind: .success)
                 if decision == .integrated {
+                    requeueRebuildIfStateMoved(entry.coordinate, scene: scene)
                     if coverageTransitionActive {
-                        stagedCells[entry.coordinate] = scene
+                        if let replaced = stagedCells.updateValue(scene, forKey: entry.coordinate) {
+                            evictUnused(replaced.assets)
+                        }
                         return false
                     }
-                    composition.setCell(scene, at: entry.coordinate)
+                    if let replaced = composition.setCell(scene, at: entry.coordinate) {
+                        evictUnused(replaced.assets)
+                    }
                     return true
                 }
                 if decision == .discardedStale {
@@ -317,7 +371,9 @@ final class CellStreamer {
         sink(scene, camera)
         logFootprint()
     }
+}
 
+extension CellStreamer {
     /// One-line memory report per recompose -- the streaming footprint budget
     /// is measured, not guessed (docs/engine/cell-streaming.md memory budget).
     private func logFootprint() {
@@ -355,9 +411,7 @@ final class CellStreamer {
         let deltaY = Int(lhs.y) - Int(rhs.y)
         return deltaX * deltaX + deltaY * deltaY
     }
-}
 
-extension CellStreamer {
     /// Requests a fresh ring for current center. If a build is already in
     /// flight, requestDistantLODIfNeeded retries until runner accepts it.
     func invalidateDistantLOD() {

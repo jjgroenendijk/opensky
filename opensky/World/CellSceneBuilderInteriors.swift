@@ -86,7 +86,12 @@ extension CellSceneBuilder {
         return refs
     }
 
-    nonisolated func buildInteriorScene(cellFormID: FormID) throws -> CellScene {
+    /// - Parameter state: runtime deviations to lay over the plugin's data
+    ///   (issue #160), applied through the same path the exterior build uses.
+    nonisolated func buildInteriorScene(
+        cellFormID: FormID,
+        state: WorldStateSnapshot = .empty
+    ) throws -> CellScene {
         _ = meshes.drainTouchedKeys()
         _ = textures.drainTouchedKeys()
         _ = collisionModels?.drainTouchedKeys()
@@ -98,10 +103,16 @@ extension CellSceneBuilder {
         let collected = collectTaggedReferences(in: found.children, counts: &counts)
         let refs = collected.map(\.reference)
         let location = CellSceneLocation.interior(cellFormID)
-        let staticCollision = buildStaticCollision(refs: refs, location: location)
-        let instances = resolveInstances(refs: refs, counts: &counts)
-        let actors = buildInteriorActors(cellChildren: found.children, localized: localized)
-        let lighting = buildInteriorLighting(cell: found.cell, references: refs)
+        let resolved = effectiveReferences(
+            refs: refs, collected: collected, state: state, counts: &counts
+        )
+        let effective = resolved.references
+        let staticCollision = buildStaticCollision(refs: effective, location: location)
+        let instances = resolveInstances(refs: effective, counts: &counts)
+        let actors = buildInteriorActors(
+            cellChildren: found.children, localized: localized, deltas: resolved.deltas
+        )
+        let lighting = buildInteriorLighting(cell: found.cell, references: effective)
         var scene = makeScene(
             found: found,
             grid: (x: 0, y: 0),
@@ -110,8 +121,8 @@ extension CellSceneBuilder {
             // room bounds rather than exterior's fixed cell plane -> deferred.
             geometry: CellGeometryBuild(
                 location: location,
-                doors: resolveDoors(refs: refs),
-                interactions: resolveInteractions(refs: refs),
+                doors: resolveDoors(refs: effective),
+                interactions: resolveInteractions(refs: effective),
                 terrain: nil,
                 grass: nil,
                 water: nil,
@@ -120,15 +131,12 @@ extension CellSceneBuilder {
                 pointLights: lighting?.pointLights ?? [],
                 staticCollision: staticCollision,
                 actors: actors,
-                referenceEntries: referenceEntries(refs: refs, collected: collected)
+                referenceEntries: resolved.entries,
+                stateSequence: state.sequence
             ),
             counts: counts
         )
-        scene.assets = CellAssets(
-            meshKeys: meshes.drainTouchedKeys()
-                .union(collisionModels?.drainTouchedKeys() ?? []),
-            textureKeys: textures.drainTouchedKeys()
-        )
+        scene.assets = drainTouchedAssets()
         return scene
     }
 
@@ -136,7 +144,8 @@ extension CellSceneBuilder {
     /// then builds that exact cell on the same cache-confined queue.
     nonisolated func buildDoorTransition(
         from sourceDoor: FormID,
-        worldspaceEditorID: String
+        worldspaceEditorID: String,
+        state: WorldStateSnapshot = .empty
     ) throws -> DoorTransition {
         guard
             let sourceRecord = ESMWalk.record(withFormID: sourceDoor.rawValue, in: file),
@@ -164,13 +173,14 @@ extension CellSceneBuilder {
         )
         let scene: CellScene
         if let interior {
-            scene = try buildInteriorScene(cellFormID: FormID(interior.formID))
+            scene = try buildInteriorScene(cellFormID: FormID(interior.formID), state: state)
         } else {
             let grid = CellGridManager.cellCoordinate(for: destination.placement.position)
             scene = try buildScene(
                 worldspaceEditorID: worldspaceEditorID,
                 gridX: grid.x,
-                gridY: grid.y
+                gridY: grid.y,
+                state: state
             )
         }
         return DoorTransition(

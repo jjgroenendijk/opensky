@@ -2,9 +2,10 @@
 type: Subsystem
 title: Cell streaming
 description: Camera position -> desired NxN exterior-cell grid, built off the main thread
-  on one serial queue, streamed in/out around the free-fly camera with a per-frame budget.
+  on one serial queue, streamed in/out around the free-fly camera with a per-frame budget,
+  and the world-state snapshot every dispatched build carries.
 tags: [engine, world, streaming, esm, concurrency]
-timestamp: 2026-07-26T00:00:00Z
+timestamp: 2026-07-27T00:00:00Z
 ---
 
 # Cell streaming
@@ -127,6 +128,17 @@ driven once per frame (`Renderer.onFrame`, below). Per call it: (1) collects fin
 builds, (2) re-grids around the camera -- dispatching newly-needed cells, dropping cells
 that left the grid, (3) integrates at most one finished cell, (4) hands the recomposed
 scene to a sink (`Renderer.setScene` in the app) when anything changed.
+
+### Runtime world state crosses here
+
+Every dispatched build carries a `WorldStateSnapshot`, taken from `CellStreamer.stateSource`
+on the main thread at dispatch time — that value is the only way mutable runtime state
+reaches the build queue. A mutation to an already-drawn cell queues a rebuild through the
+same one-per-frame path, and `CellStreamCore.rebuilding` keeps the cell resident (still
+rendering its old scene) while that rebuild is in flight, so a rebuild completion integrates
+instead of being discarded as stale. Full design, including how a mutation racing an
+in-flight build is resolved: [runtime reference identity and world
+state](/engine/runtime-state.md).
 
 ### Concurrency model: one serial queue, confinement not locks
 

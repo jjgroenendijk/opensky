@@ -26,6 +26,16 @@ extension GameViewController {
                 }
             }
         )
+        // Runtime world state (issue #160). Every dispatched build snapshots the
+        // store on the main thread, and every journalled mutation tells the
+        // streamer which cell to rebuild so the change is visible without a
+        // reload. Unowned-free: the store outlives the streamer, and the
+        // streamer is captured weakly the other way.
+        let worldState = worldState
+        controller.stateSource = { worldState.snapshot() }
+        worldState.onMutation = { [weak controller] location, sequence in
+            controller?.noteStateMutation(in: location, sequence: sequence)
+        }
         renderer.onFrame = { [weak self, weak controller, weak renderer] position in
             let interactionRay = renderer.flatMap { renderer -> InteractionRay? in
                 guard renderer.movementMode == .walk else { return nil }

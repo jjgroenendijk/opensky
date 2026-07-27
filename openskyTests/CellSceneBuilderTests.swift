@@ -487,12 +487,13 @@ extension CellSceneBuilderTests {
     func build(
         pluginData: Data,
         gridX: Int32 = 6,
-        gridY: Int32 = -2
+        gridY: Int32 = -2,
+        state: WorldStateSnapshot = .empty
     ) throws -> CellScene {
         let device = try #require(Self.device)
         let builder = try makeBuilder(pluginData: pluginData, device: device)
         return try builder.buildScene(
-            worldspaceEditorID: "Tamriel", gridX: gridX, gridY: gridY
+            worldspaceEditorID: "Tamriel", gridX: gridX, gridY: gridY, state: state
         )
     }
 }

@@ -184,6 +184,38 @@ struct WorldStateJournalTests {
         #expect(snapshot.entries(in: whiterun).map(\.key) == [entry.key])
     }
 
+    @Test func snapshotSequenceFollowsTheJournalAndIsZeroWhenEmpty() {
+        // The sequence marks when a snapshot was taken, so a cell built from
+        // it can be compared against later state (issue #160).
+        #expect(WorldStateSnapshot.empty.sequence == 0)
+        let store = WorldStateStore()
+        #expect(store.snapshot().sequence == store.nextJournalSequence)
+        let initial = store.snapshot().sequence
+        store.set(ReferenceEnableState.disabled, for: key(0x200), in: whiterun)
+        let afterOne = store.snapshot().sequence
+        #expect(afterOne > initial)
+        store.set(transform(1), for: key(0x201), in: whiterun)
+        #expect(store.snapshot().sequence > afterOne)
+        // A no-op write journals nothing, so the sequence holds still.
+        store.set(transform(1), for: key(0x201), in: whiterun)
+        #expect(store.snapshot().sequence == afterOne + 1)
+    }
+
+    @Test func snapshotSequenceIsOutsideEquality() {
+        // Two stores in the same end state are equal however many mutations it
+        // took to get there, so the sequence stays out of `==`.
+        let first = WorldStateStore()
+        first.set(ReferenceEnableState.disabled, for: key(0x200), in: whiterun)
+
+        let second = WorldStateStore()
+        second.set(transform(1), for: key(0x201), in: whiterun)
+        second.reset(key(0x201))
+        second.set(ReferenceEnableState.disabled, for: key(0x200), in: whiterun)
+
+        #expect(first.snapshot() == second.snapshot())
+        #expect(first.snapshot().sequence != second.snapshot().sequence)
+    }
+
     // MARK: - Generated references
 
     @Test func allocatesGeneratedKeysThroughTheStore() {

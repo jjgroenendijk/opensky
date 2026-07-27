@@ -37,9 +37,14 @@ nonisolated struct PlacedReference {
     let formID: FormID
     /// NAME — the base object this reference places.
     let base: FormID
-    let placement: Placement
-    /// XSCL — uniform scale, defaulting to 1 when the field is absent.
-    let scale: Float
+    /// DATA placement as decoded. `var` because a cell build lays a runtime
+    /// transform override over the record's value before it places anything
+    /// (issue #160, `CellSceneBuilder.applyRuntimeState`); decoding itself
+    /// never rewrites it.
+    var placement: Placement
+    /// XSCL — uniform scale, defaulting to 1 when the field is absent. `var`
+    /// for the same runtime-override reason as `placement`.
+    var scale: Float
     /// XTEL — present only on teleporting door references.
     let teleportDestination: TeleportDestination?
     /// XRDS — per-reference point-light radius override.

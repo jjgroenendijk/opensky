@@ -8,7 +8,7 @@ nonisolated private final class LODManualRunner: CellBuildRunning {
     private(set) var lodRequests: [CellCoordinate] = []
     private(set) var lodHiddenCells: [Set<CellCoordinate>] = []
 
-    func enqueue(_: CellCoordinate) {}
+    func enqueue(_: CellCoordinate, state _: WorldStateSnapshot) {}
 
     func complete(_ coordinate: CellCoordinate, scene: CellScene) {
         ready.append(CellBuildResult(coordinate: coordinate, result: .success(scene)))

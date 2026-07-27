@@ -23,6 +23,8 @@ identity scheme, the per-cell index built from it, and the store above both.
 * Query surface
 * Ownership: where identity state lives
 * `WorldStateStore` — components, dirty tracking, reset, journal, snapshot
+* Applying state during a cell build
+* Making a mutation visible: snapshot capture and cell rebuilds
 
 ## Why raw FormID cannot be the key
 
@@ -224,12 +226,11 @@ record, and lays the delta over it (`ReferenceState`,
 says, and `ReferenceState.overriddenKinds` reports which slots the delta supplied, so
 "disabled by a script" stays distinguishable from "disabled by the record".
 
-Two baseline gaps are deliberate and belong to issue #160, where deltas start being applied
-at build time. `PlacedReference` does not decode the record header, so a REFR baselines as
-enabled regardless of its `initiallyDisabled` flag; `PlacedActor` does carry the flag and is
-honoured. Neither placement type carries the header's `deleted` flag, so the deletion
-baseline is always "not deleted" — that flag means the plugin removed the record, which is a
-load-time concern.
+Two baseline gaps are deliberate. `PlacedReference` does not decode the record header, so a
+REFR baselines as enabled regardless of its `initiallyDisabled` flag; `PlacedActor` does
+carry the flag and is honoured. Neither placement type carries the header's `deleted` flag,
+so the deletion baseline is always "not deleted" — that flag means the plugin removed the
+record, which is a load-time concern and is filtered during reference collection.
 
 ### Change journal
 
@@ -264,6 +265,99 @@ snapshots, and `WorldStateSnapshot` is `Equatable` so that is directly testable.
 history is deliberately absent from the snapshot — the journal is the separate, bounded,
 order-dependent product of the same store. Allocator position is included, because two
 stores that minted different numbers of generated keys are not in the same end state.
+
+## Applying state during a cell build
+
+Issue #160 (item 10.1.3) is where the store stops being a ledger nobody reads. A build takes
+a `WorldStateSnapshot` as a parameter — `CellSceneBuilder.buildScene(worldspaceEditorID:
+gridX:gridY:state:)` and `buildInteriorScene(cellFormID:state:)`, both defaulting to
+`.empty` — and the streaming seam carries it across the queue boundary:
+`CellSceneProvider.buildCell(at:state:)` and `CellBuildRunning.enqueue(_:state:)`. The value
+is captured on the main thread and is immutable, which is the whole reason the store itself
+never leaves the main actor.
+
+Application happens at exactly one point per build, in
+`opensky/World/CellSceneBuilderRuntimeState.swift`. References are collected and given their
+`ReferenceKey`s, then `effectiveReferences(refs:collected:state:counts:)` resolves each one
+through `ReferenceState.applying(_:)` and returns two things: the index entries, which keep
+every reference the plugin placed, and the *effective* references, which are what actually
+gets placed. Render instancing and collision assembly both read that one effective array, so
+a reference moved by a `ReferenceTransformOverride` cannot end up drawn in one place and
+solid in another. Doors and interaction metadata read it too, so a disabled door is not
+activatable.
+
+* A reference whose resolved state is not visible (`isVisible == false` — disabled or
+  deleted at runtime) is dropped and counted, exactly as an initially-disabled record is.
+  The counts land in `BuildCounts.runtimeDisabled` / `runtimeDeleted`, fold into
+  `CellLoadSummary.skippedRefCount`, and name themselves in the summary line as
+  `runtime-disabled` and `runtime-deleted` ([cell scene build](/engine/cell-scene.md)).
+* A reference carrying a transform override is placed at the override's position, rotation
+  and scale instead of the record's DATA and XSCL values.
+* Placed actors run the same visibility check. Their skips share the existing
+  `disabledSkips` bucket so the 5.5 exact-accounting rule keeps holding; the per-actor log
+  line says whether the record flag, a runtime disable, or a runtime delete applied. Because
+  the record flag and the runtime component resolve through one `ReferenceState`, enabling a
+  hidden actor at runtime makes it appear.
+* The index keeps hidden references. An object a script disabled still exists, so it stays
+  addressable through `CellScene.references` even though nothing drew it.
+
+Deltas are looked up through `WorldStateSnapshot.deltasByKey()`, materialized once per
+build. `subscript(key:)` is a linear scan, which is right for a single probe and wrong for a
+loop over every reference in a cell.
+
+Each snapshot also carries `sequence`, the store's journal sequence at capture time, and
+each built `CellScene` records it as `stateSequence`. Comparing that against the store's
+current sequence is how a later stage tells a scene built from stale state from a current
+one. `sequence` is deliberately outside `WorldStateSnapshot`'s equality: it says when a
+snapshot was taken, not what state it describes.
+
+## Making a mutation visible: snapshot capture and cell rebuilds
+
+Applying a snapshot during a build only helps if builds see the current store and if a
+change to an already-drawn cell reaches the screen. Both are `CellStreamer`'s job, and the
+logic lives in `opensky/World/CellStreamerRuntimeState.swift`.
+
+`GameViewController` owns the session's `WorldStateStore` and wires it in
+`wireStreaming(provider:renderer:)`: `CellStreamer.stateSource` is set to a closure that
+snapshots the store, and `WorldStateStore.onMutation` is set to call
+`CellStreamer.noteStateMutation(in:sequence:)`. Both run on the main thread, which is the
+whole point — the store never leaves the main actor, and the snapshot is taken at dispatch,
+the last main-thread moment before the build crosses to the serial runner.
+
+The scheduling rule is one comparison. A mutation raises `cellMutationSequence` for the cell
+the store attributed it to; a scene records the snapshot sequence it was built from as
+`CellScene.stateSequence`; a resident scene is current exactly while `stateSequence` is at
+least the recorded mutation sequence. A mutation for a resident cell queues a rebuild, and
+`CellStreamCore.beginRebuild(_:)` moves the coordinate into a `rebuilding` set while keeping
+it resident, so the old scene keeps rendering and its completion is integrated rather than
+discarded as stale. Rebuild requests sit in their own queue behind first loads, so a cell
+that has never been drawn still arrives center-out.
+
+That single comparison also settles the race where a mutation lands while a build for the
+same cell is already running. The in-flight result is always integrated, so the cell is
+drawable as early as it can be; if it turns out to predate the mutation, a rebuild is queued
+against a fresh snapshot at integration time. This is also what works around
+`SerialCellBuildRunner.enqueue` deduplicating a coordinate that is still pending: the
+rebuild request waits streamer-side and is dispatched after the stale completion drains,
+rather than being silently dropped by the runner. Because a rebuild reconstructs the whole
+cell from plugin bytes plus the current snapshot, applying it twice is indistinguishable
+from applying it once — there is no delta to double-apply and none to lose.
+
+Three consequences follow from state living only in the store:
+
+* Unloading a cell changes nothing about state, and a pending rebuild for an unloaded cell
+  is simply dropped (`pruneRebuildState()`). A returning cell rebuilds from plugin bytes
+  plus the current snapshot, which reapplies the delta on its own.
+* A mutation the store could not attribute to any cell rebuilds every resident cell. That is
+  correctness first: the streamer has no cheaper way to tell which cell a reference lives
+  in. Narrowing it means attributing the write, not guessing here.
+* An interior owning the view has no provider entry point that builds it on its own — an
+  interior only ever arrives as a door destination — so its rebuild re-runs the same door
+  transition against a fresh snapshot, passing no camera so the swap leaves the player where
+  they are standing instead of teleporting them back to the door.
+
+Rebuilding the whole cell is the v1 answer; there is no per-instance patching, and the
+per-frame budget is unchanged at one integration and one dispatch.
 
 ## Related pages
 

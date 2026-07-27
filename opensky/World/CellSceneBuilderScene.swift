@@ -23,6 +23,9 @@ nonisolated struct CellGeometryBuild {
     /// Runtime index entries for this cell's REFRs (issue #158). Actor entries
     /// travel inside `actors` and are merged in by makeScene.
     var referenceEntries: [RuntimeReferenceEntry] = []
+    /// Journal sequence of the world-state snapshot this build applied
+    /// (issue #160); 0 for a build with no runtime state behind it.
+    var stateSequence: UInt64 = 0
 
     /// Statics and actors share one per-cell index; both are placements the
     /// runtime addresses by `ReferenceKey`.
@@ -135,6 +138,31 @@ extension CellSceneBuilder {
         return localizedStrings?.resolve(text)
     }
 
+    /// The mesh + texture keys the cell just touched, drained so streaming
+    /// unload can keep the union over resident cells and evict the rest.
+    nonisolated func drainTouchedAssets() -> CellAssets {
+        CellAssets(
+            meshKeys: meshes.drainTouchedKeys()
+                .union(collisionModels?.drainTouchedKeys() ?? []),
+            textureKeys: textures.drainTouchedKeys()
+        )
+    }
+
+    /// World AABB over everything the cell draws: placed models, actors,
+    /// terrain and water. Nil when nothing drew.
+    nonisolated private func unionedBounds(
+        placements: [RenderPlacement],
+        geometry: CellGeometryBuild
+    ) -> ModelBounds? {
+        var bounds: ModelBounds?
+        let worlds = placements.compactMap(\.bounds)
+            + [geometry.terrain?.bounds, geometry.water?.item.bounds].compactMap(\.self)
+        for world in worlds {
+            bounds = bounds.map { $0.union(world) } ?? world
+        }
+        return bounds
+    }
+
     /// RenderScene handles opaque/alpha-test order; environment adds terrain,
     /// water, sky. Model + geometry AABBs feed framing and frustum culling.
     nonisolated func makeScene(
@@ -145,24 +173,18 @@ extension CellSceneBuilder {
         counts: BuildCounts
     ) -> CellScene {
         let actors = geometry.actors
-        var bounds: ModelBounds?
         let particles = makeParticlePlaybacks(instances: instances)
-        let placed = instances.map { instance -> RenderPlacement in
-            let world = meshes.bounds(forPath: instance.modelPath)?
-                .transformed(by: instance.transform)
-            if let world {
-                bounds = bounds.map { $0.union(world) } ?? world
-            }
-            return RenderPlacement(
+        let placed = instances.map { instance in
+            RenderPlacement(
                 model: instance.model,
                 transform: instance.transform,
-                bounds: world
+                bounds: meshes.bounds(forPath: instance.modelPath)?
+                    .transformed(by: instance.transform)
             )
         }
-        for placement in actors.placements {
-            guard let world = placement.bounds else { continue }
-            bounds = bounds.map { $0.union(world) } ?? world
-        }
+        let bounds = unionedBounds(
+            placements: placed + actors.placements, geometry: geometry
+        )
         let renderScene = RenderScene(
             instances: placed + actors.placements,
             animations: actors.animations,
@@ -174,12 +196,6 @@ extension CellSceneBuilder {
             grass: geometry.grass?.renderPlacements ?? [],
             particles: particles
         )
-        if let world = geometry.terrain?.bounds {
-            bounds = bounds.map { $0.union(world) } ?? world
-        }
-        if let world = geometry.water?.item.bounds {
-            bounds = bounds.map { $0.union(world) } ?? world
-        }
         let summary = makeSummary(
             found: found,
             grid: grid,
@@ -202,7 +218,8 @@ extension CellSceneBuilder {
             terrainHeightField: geometry.terrain?.heightField,
             grassPlacements: geometry.grass?.placements ?? [],
             staticCollision: geometry.staticCollision,
-            references: geometry.referenceIndex
+            references: geometry.referenceIndex,
+            stateSequence: geometry.stateSequence
         )
     }
 
@@ -257,6 +274,8 @@ extension CellSceneBuilder {
             waterPlaneCount: geometry.water == nil ? 0 : 1,
             pointLightCount: geometry.pointLights.count
         )
+        summary.runtimeDisabledSkipCount = counts.runtimeDisabled
+        summary.runtimeDeletedSkipCount = counts.runtimeDeleted
         summary.actorCount = actors.counts.discovered
         summary.actorDrawnCount = actors.counts.rendered
         summary.actorDisabledSkipCount = actors.counts.disabledSkips

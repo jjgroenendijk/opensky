@@ -48,6 +48,12 @@ final class GameViewController: NSViewController {
     /// provider) for the window's lifetime. Readable by the world-stats bridge
     /// (GameViewControllerWorldStats.swift); only this file assigns it.
     var streamer: CellStreamer?
+    /// Mutable runtime world state for this session (issue #160). It is the
+    /// production owner of `WorldStateStore`: `wireStreaming` reads snapshots
+    /// off it at build dispatch and rebuilds resident cells when it changes.
+    /// Papyrus, inventory and quests mutate it later; the sidebar readout
+    /// (issue #162) reads it.
+    let worldState = WorldStateStore()
     /// Free-fly input shared with the renderer; the view writes it from
     /// NSEvents, the renderer drains it each frame (todo 2.8).
     let cameraInput = CameraInputState()

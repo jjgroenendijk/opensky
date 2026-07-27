@@ -72,6 +72,11 @@ nonisolated struct CellScene {
     /// `ReferenceKey` and by raw FormID (issue #158). Empty for cells built
     /// without reference retention (synthetic render tests).
     let references: RuntimeReferenceIndex
+    /// Journal sequence of the `WorldStateSnapshot` this cell was built from
+    /// (issue #160). 0 means the build applied no runtime state. Comparing it
+    /// against the store's current sequence is how the streamer will tell a
+    /// stale scene from a current one.
+    let stateSequence: UInt64
     /// Mesh + texture cache keys this cell uses, for unload eviction.
     var assets = CellAssets()
 
@@ -90,6 +95,7 @@ nonisolated struct CellScene {
         grassPlacements: [GrassPlacement] = [],
         staticCollision: StaticCollisionSet = .empty,
         references: RuntimeReferenceIndex = .empty,
+        stateSequence: UInt64 = 0,
         assets: CellAssets = CellAssets()
     ) {
         self.renderScene = renderScene
@@ -106,6 +112,7 @@ nonisolated struct CellScene {
         self.grassPlacements = grassPlacements
         self.staticCollision = staticCollision
         self.references = references
+        self.stateSequence = stateSequence
         self.assets = assets
     }
 }
@@ -154,6 +161,13 @@ nonisolated struct CellLoadSummary: Equatable {
     var waterPlaneCount = 0
     /// Supported LIGH/XEMI placements available to forward draws.
     var pointLightCount = 0
+    /// References the runtime disabled since load (issue #160) — the same
+    /// intentional skip an initially-disabled record gets, arrived at from
+    /// world state rather than from the plugin.
+    var runtimeDisabledSkipCount = 0
+    /// References the runtime deleted since load. Not the record header's
+    /// `deleted` flag, which is filtered before a reference is ever counted.
+    var runtimeDeletedSkipCount = 0
     /// Non-deleted ACHRs owned by this cell (local + position-mapped
     /// worldspace-persistent). Buckets below must account for each exactly
     /// once (5.5 exact-accounting rule).
@@ -174,7 +188,8 @@ nonisolated struct CellLoadSummary: Equatable {
     var actorAnimationFailureReasons: [String] = []
 
     var skippedRefCount: Int {
-        unsupportedBaseSkipCount + markerSkipCount + modelFailureSkipCount + malformedRefSkipCount
+        unsupportedBaseSkipCount + markerSkipCount + modelFailureSkipCount
+            + malformedRefSkipCount + runtimeDisabledSkipCount + runtimeDeletedSkipCount
     }
 
     /// Every discovered actor landed in exactly one bucket.
@@ -212,6 +227,12 @@ nonisolated struct CellLoadSummary: Equatable {
         }
         if malformedRefSkipCount > 0 {
             reasons.append("\(malformedRefSkipCount) malformed")
+        }
+        if runtimeDisabledSkipCount > 0 {
+            reasons.append("\(runtimeDisabledSkipCount) runtime-disabled")
+        }
+        if runtimeDeletedSkipCount > 0 {
+            reasons.append("\(runtimeDeletedSkipCount) runtime-deleted")
         }
         let skipped = reasons.isEmpty
             ? "\(skippedRefCount) skipped"
