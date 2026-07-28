@@ -23,6 +23,7 @@ enum OpenSkyCLI {
                                   substring); prints "path<TAB>archive"
       vfs cat <key> --out <file>  Extract one resource to a file
       record <formid-or-editorid> Dump one Skyrim.esm record (decoded + fields)
+      gmst movement              Print resolved walk/run/step values + sources
       cell [--worldspace <edid>] [--x <n>] [--y <n>] [--refs]
                                   Summarize an exterior cell's references
       actor [--worldspace <edid>] [--x <n>] [--y <n>] [--radius <n>]
@@ -211,6 +212,10 @@ enum OpenSkyCLI {
             )
         case "record":
             try RecordCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
+        case "gmst":
+            try GMSTCommand.run(
                 context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
             )
         case "cell":

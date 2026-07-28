@@ -12,6 +12,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   files over archives, archive load order, lazy open.
 * [ESM/ESP plugin container](/formats/esm.md) - record/GRUP/field framing,
   zlib-compressed records, lazy traversal.
+* [Game settings](/formats/gmst.md) - typed GMST DATA values, selected movement
+  tuning, active-plugin precedence, and explicit fallback policy.
 * [FormID + TES4 header](/formats/formid.md) - plugin header fields, master
   lists, raw FormID -> (plugin, objectID) resolution.
 * [Localized string tables](/formats/strings.md) - .strings/.dlstrings/

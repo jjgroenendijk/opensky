@@ -63,6 +63,23 @@ struct WorldPanelTests {
     }
 
     @Test @MainActor
+    func cameraReadoutShowsMovementValuesAndSources() {
+        let providers = FakeWorldProviders()
+        providers.movementConfiguration = PlayerMovementConfiguration(
+            walkSpeed: MovementSetting(value: 100, source: "Skyrim.esm"),
+            runSpeed: MovementSetting(value: 370, source: "engine default"),
+            stepHeight: MovementSetting(value: 32, source: "OpenSky fallback")
+        )
+        let panel = makePanel(providers)
+        panel.cameraSection.refreshReadout()
+        let readout = panel.cameraSection.statsReadout
+
+        #expect(readout.contains("Walk: 100.0 units/s (Skyrim.esm)"))
+        #expect(readout.contains("Run: 370.0 units/s (engine default)"))
+        #expect(readout.contains("Step: 32.0 units (OpenSky fallback)"))
+    }
+
+    @Test @MainActor
     func copyPosePutsTheSharedDescriptionOnThePasteboard() {
         let providers = FakeWorldProviders()
         providers.cameraPose = CameraPoseSnapshot(

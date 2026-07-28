@@ -65,6 +65,40 @@ struct WalkControllerTests {
     }
 
     @Test
+    func injectedWalkAndRunSpeedsDriveDistance() {
+        let configuration = PlayerMovementConfiguration(
+            walkSpeed: MovementSetting(value: 40, source: "test"),
+            runSpeed: MovementSetting(value: 140, source: "test"),
+            stepHeight: MovementSetting(value: 32, source: "test")
+        )
+        var walkCamera = Self.camera()
+        var runCamera = Self.camera()
+        var walker = WalkController(
+            cameraPosition: walkCamera.position,
+            configuration: configuration
+        )
+        var runner = WalkController(
+            cameraPosition: runCamera.position,
+            configuration: configuration
+        )
+        Self.settle(&walker, camera: &walkCamera)
+        Self.settle(&runner, camera: &runCamera)
+
+        walker.update(
+            camera: &walkCamera,
+            input: CameraInput(moveForward: 1, dt: 0.1),
+            sampleGround: Self.flatGround
+        )
+        runner.update(
+            camera: &runCamera,
+            input: CameraInput(moveForward: 1, boost: true, dt: 0.1),
+            sampleGround: Self.flatGround
+        )
+        #expect(abs(walker.feetPosition.x - 4) < 0.01)
+        #expect(abs(runner.feetPosition.x - 14) < 0.01)
+    }
+
+    @Test
     func steepGroundBlocksGroundedHorizontalMove() {
         var camera = Self.camera()
         var controller = WalkController(cameraPosition: camera.position)
@@ -92,7 +126,10 @@ struct WalkControllerTests {
             input: CameraInput(moveForward: 1, dt: 10),
             sampleGround: Self.flatGround
         )
-        #expect(abs(controller.feetPosition.x - WalkController.walkSpeed * 0.1) < 0.01)
+        #expect(
+            abs(controller.feetPosition.x - PlayerMovementConfiguration.synthetic.walkSpeed.value
+                * 0.1) < 0.01
+        )
     }
 
     @Test

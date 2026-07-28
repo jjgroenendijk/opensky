@@ -4,6 +4,19 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-28
 
+* **GMST-backed movement tuning (issue #63)**: a strict decoder now derives GMST DATA type
+  from the EDID prefix (`s`, `i`, `f`, or `b`) and rejects wrong sizes, invalid Booleans,
+  unknown prefixes, duplicate required fields, and trailing string bytes. The targeted
+  store walks official masters, installed `Skyrim.ccc` entries, and starred active
+  `plugins.txt` entries; later valid values win by EDID. `WalkController` receives one
+  immutable configuration, so real scenes use `fMoveCharWalkBase = 100` from `Skyrim.esm`,
+  the documented absent-record fallback `fMoveCharRunBase = 370`, and an explicit 32-unit
+  step fallback because no Skyrim SE step GMST identifier was confirmed. Synthetic scenes
+  and the walk benchmark inject their historic 180/360/32 configuration explicitly.
+  `openskycli gmst movement` and `World > World > Camera` report every value and source.
+  Documented in [game settings](/formats/gmst.md), [terrain walk mode](/engine/walk-mode.md),
+  and [CLI dev tool](/tools/cli.md).
+
 * **Vanilla sound-category taxonomy (issue #235)**: `SNCT` now decodes editor and
   localized names, hierarchy links, flags, and static/default volume values.
   `SoundRecordStore` follows each `SNDR.GNAM -> SNCT.PNAM` chain with cycle protection and

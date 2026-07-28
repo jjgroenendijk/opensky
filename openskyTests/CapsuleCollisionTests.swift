@@ -157,7 +157,7 @@ struct CapsuleCollisionTests {
         let support = collider.stepSupportHeight(
             at: SIMD2(start.x + PlayerCapsule.standard.radius + 1.5, start.y),
             minimumHeight: start.z,
-            maximumHeight: start.z + WalkController.stepHeight,
+            maximumHeight: start.z + PlayerMovementConfiguration.synthetic.stepHeight.value,
             query: query
         )
         #expect(abs((support ?? -1) - 16) < 0.01)

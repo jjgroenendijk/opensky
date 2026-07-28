@@ -86,6 +86,18 @@ echo "[ OK ] vfs ls ($mesh_count mesh entries)"
   || fail "record 0x3C did not decode as Tamriel"
 echo "[ OK ] record 0x0000003C (Tamriel)"
 
+# Movement tuning resolves active GMST overrides and reports an explicit source
+# for every value. Do not pin numeric values here: an active user plugin may
+# intentionally override them.
+run "movement GMST resolution" gmst movement
+movement="$(awk '/^--- movement GMST resolution/{f=1;next} /^--- /{f=0} f' "$log")"
+printf '%s\n' "$movement" | grep -q '^fMoveCharWalkBase = .* units/s \[.*\]$' \
+  || fail "movement probe did not report walk value and source"
+printf '%s\n' "$movement" | grep -q '^fMoveCharRunBase = .* units/s \[.*\]$' \
+  || fail "movement probe did not report run value and source"
+printf '%s\n' "$movement" | grep -q '^stepHeight = .* units \[.*\]$' \
+  || fail "movement probe did not report step value and source"
+
 run "cell summary (first-render cell)" cell
 run "collision grid (5x5 around first-render cell)" collision --radius 2
 

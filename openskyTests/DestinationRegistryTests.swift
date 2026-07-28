@@ -213,6 +213,7 @@ final class FakeWorldProviders: WorldControlProviders {
     // extension, deliberately not overridden here).
     var cameraPose = CameraPoseSnapshot.unavailable
     var movementMode = CameraMovementMode.fly
+    var movementConfiguration = PlayerMovementConfiguration.synthetic
 
     /// FrameStatsProviding
     var frameStatsSnapshot = FrameStatsSnapshot.empty

@@ -153,7 +153,9 @@ final class GameViewController: NSViewController {
                 view: mtkView,
                 scene: provider != nil ? RenderScene(instances: []) : nil,
                 camera: nil,
-                input: cameraInput
+                input: cameraInput,
+                movementConfiguration: (provider as? MovementConfigurationProviding)?
+                    .movementConfiguration ?? .synthetic
             )
             // Persisted World > Environment > Sun shadows choice; invalid stored
             // value falls back to .high inside ShadowQualitySettings.load().

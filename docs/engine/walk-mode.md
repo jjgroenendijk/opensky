@@ -37,18 +37,20 @@ Distant LOD never supplies player ground.
 ## Controller
 
 `WalkController` owns capsule bottom (`feetPosition`), vertical velocity, grounded flag, and
-fixed-step residual. Current hardcoded policy (GMST tuning stays backlog):
+fixed-step residual. It also owns one immutable `PlayerMovementConfiguration`, resolved
+before renderer setup from the selected [GMST movement settings](/formats/gmst.md):
 
-| Value | Setting |
-| --- | ---: |
+| Setting | Value |
+| --- | --- |
 | Capsule radius | 24 units |
 | Capsule height | 128 units |
 | Camera eye above bottom | 112 units |
-| Walk / run speed | 180 / 360 units/s |
+| Walk speed | `fMoveCharWalkBase`, fallback 100 units/s |
+| Run speed | `fMoveCharRunBase`, fallback 370 units/s |
 | Gravity | 1,400 units/s² |
 | Max slope | 50 degrees |
 | Ground snap | 24 units |
-| Step height | 32 units |
+| Step height | 32 units, explicit fallback; no confirmed Skyrim SE GMST |
 | Physics step | 1/120 s |
 | Max accepted frame time | 0.1 s |
 
@@ -73,7 +75,7 @@ Steep positive normals become horizontal blockers. Walkable normals ground capsu
 contacts zero falling velocity; negative-up contacts stop ascent. Solver exposes
 `hasUnresolvedPenetration` for 4.5 route gate.
 
-Grounded blocked motion gets one bounded 32-unit step attempt. Forward vertical probe accepts
+Grounded blocked motion gets one bounded configured step attempt. Forward vertical probe accepts
 only surfaces at or below slope limit; riser faces cannot become support. Controller proves
 full step-height clearance, advances horizontally above blocker, then retains tread support
 until capsule center reaches it. Higher obstacles or low ceilings fail clearance -> direct
@@ -92,8 +94,8 @@ view ray within 192 units; fly mode neither targets nor activates.
 
 4.4 connects terrain + [static collision world](/engine/collision-world.md) to production
 walk input for exterior and interior scenes. Static geometry now blocks player; actors,
-dynamic rigid bodies, jumping, crouch, moving platforms, water buoyancy, and GMST tuning stay
-out of scope. M4.5 supplies fixed real-data route + render/physics acceptance gate.
+dynamic rigid bodies, jumping, crouch, moving platforms, and water buoyancy stay out of
+scope. M4.5 supplies fixed real-data route + render/physics acceptance gate.
 
 ## Verification
 
@@ -102,8 +104,10 @@ Synthetic tests:
 - `TerrainHeightFieldTests`: flat/negative cells, hidden quadrants, exact east-neighbor border,
   saddle proving triangle-plane vs bilinear result.
 - `WalkControllerTests`: capsule eye offset, gravity/ground snap, pitch-independent motion,
-  walk/run speeds, slope rejection, 100 ms clamp, fixed-step partition determinism, no-ground
-  fall, four resident fields traversed without lost contact.
+  injected walk/run speeds, slope rejection, 100 ms clamp, fixed-step partition determinism,
+  no-ground fall, four resident fields traversed without lost contact.
+- `WalkControllerConfigurationTests`: changing only injected step height changes whether the
+  same synthetic obstacle is accepted.
 - `CapsuleCollisionTests`: wall slide, ceiling, walkable ramp, low/high steps, forward tread
   probe, player-solid filtering boundary, terrain-to-mesh seam, no unresolved penetration.
 - `RendererSceneSwapTests`: XTEL-style camera reseed clears grounded/controller state and
@@ -147,3 +151,18 @@ Read-only real-install acceptance at 640x360: 1,065 active physics frames, avg 1
 (62.9 fps), p95 29.69 ms, max 58.28 ms; exterior stair gain 22.82 units; interior crossing
 160.34 units; paired return feet `(31233.67, -9784.47, -4059.53)`. No clip, fall-through,
 unresolved penetration, destination mismatch, or build error.
+
+## Movement-tuning acceptance surface
+
+Milestone: M4 movement tuning (issue #63)
+Sidebar path: World > World > Camera
+Destination id: Destination-world
+Controls exercised: CameraMovementModeControl
+Readout: CameraStatsLabel
+Deterministic tests: WorldPanelTests, WalkControllerTests,
+WalkControllerConfigurationTests, GameSettingStoreTests
+Local A/B (optional, never committed): none
+
+`CameraStatsLabel` displays walk and run values in units per second, step height in world
+units, and the winning plugin or fallback source. The selector enters the controller path
+that consumes the displayed immutable configuration.

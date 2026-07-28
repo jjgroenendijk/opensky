@@ -31,10 +31,10 @@ nonisolated extension WalkController {
             ) else { return HorizontalMove(result: direct, supportHeight: nil) }
         let raised = collider.move(
             from: start,
-            displacement: SIMD3<Float>(0, 0, Self.stepHeight),
+            displacement: SIMD3<Float>(0, 0, configuration.stepHeight.value),
             query: collisionQuery
         )
-        guard raised.position.z >= start.z + Self.stepHeight - 0.05 else {
+        guard raised.position.z >= start.z + configuration.stepHeight.value - 0.05 else {
             return HorizontalMove(result: direct, supportHeight: nil)
         }
         let across = collider.move(
@@ -97,7 +97,7 @@ nonisolated extension WalkController {
         return collider.stepSupportHeight(
             at: point,
             minimumHeight: start.z + 0.05,
-            maximumHeight: start.z + Self.stepHeight,
+            maximumHeight: start.z + configuration.stepHeight.value,
             query: collisionQuery
         )
     }
