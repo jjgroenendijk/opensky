@@ -78,7 +78,7 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   as `(x, y, z)` tuples. Synthetic dump coverage and probe-level usage checks pin the
   behavior. Documented in [CLI dev tool](/tools/cli.md).
 
-* **Stable walk-path timing policy (issue #48)**: the production route keeps its active-
+* **Stable walk-path timing policy (issues #48 and #244)**: the production route keeps its active-
   physics average at one 30 fps interval in every build and keeps Release p95 at the same
   33.33 ms ceiling. Debug p95 may occupy two intervals (66.67 ms) because the synchronous
   offscreen benchmark includes debug-runtime and scheduler variance; an explicit
@@ -88,7 +88,8 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   array and drops the full-run `FrameStats` window summaries, whose 120-frame windows cannot
   truthfully describe the active-only sample. Synthetic tests pin Debug, Release, override,
   rejection, and filtering behavior. Documented in
-  [terrain walk mode](/engine/walk-mode.md) and [CLI dev tool](/tools/cli.md).
+  [terrain walk mode](/engine/walk-mode.md) and [CLI dev tool](/tools/cli.md). This also
+  resolves the Debug-only p95 failure reported separately in issue #244.
 
 * **Fail-loud collision partition accounting (issue #46)**: broadphase partitioning now
   returns cached leaves together with a decode-failure count. A wholly degenerate geometry
@@ -273,7 +274,8 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   seam and still awaiting one listening session. Vanilla effects and ambience
   are `.wav`, which no decoder here reads yet, so parts of that session cannot
   pass until a PCM `.wav` reader lands. Related issues filed while doing this
-  work: #244 (walk-path p95 exceeds the 33.33 ms frame budget in Debug), #245
+  work: #244 (walk-path p95 exceeds the 33.33 ms frame budget in Debug; resolved by the
+  build-aware timing policy above), #245
   (`CellStreamingWalkDriver` does not mask animation and shadow samples to
   active-physics frames), #246 (fixed here) and #247
   (`canonicalSoundPath` leading-separator rejection).
