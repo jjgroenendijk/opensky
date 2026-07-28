@@ -341,6 +341,14 @@ store.
 | `comparisonValue(_:)` | the right-hand side of a CTDA comparison (issue #251) |
 | `isOverridden(_:)` | whether the session has written this global |
 
+Issue #164 threads the [game clock](/engine/game-clock.md) through this seam: a resolution
+built with a clock (`globalResolution(defaults:clock:)`) answers the five vanilla time
+globals from the clock ahead of any override, and `setGlobal(_:formID:defaults:)` on one of
+those editor IDs redirects into the clock through `onTimeGlobalWrite` — journalling through
+the globals ring, storing no override, and deliberately not firing `onGlobalMutation` so a
+time scrub cannot reroll the weather. The authority rule and its rationale live on the game
+clock page.
+
 `comparisonValue(_:)` takes the `Condition.ComparisonValue` the
 [CTDA decoder](/formats/conditions.md) produces: a `.value` literal passes through
 unchanged, a `.global` operand resolves through the store. A `nil` result means the

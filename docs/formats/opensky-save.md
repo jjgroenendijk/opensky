@@ -147,7 +147,7 @@ A chunk whose declared length runs past the end of the file is
 `chunkBoundsViolation(tag:)`. A chunk whose tag this build does not know is skipped using
 that declared length, which is what makes a newer build's save loadable in an older one.
 
-Version 1 defines two chunks; `GVAR` was added additively afterwards.
+Version 1 defines two chunks; `GVAR` and `CLOK` were added additively afterwards.
 
 `GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
 any other size is `invalidValue`.
@@ -191,6 +191,20 @@ terms as `RDLT`. An unknown `valueType` tag is `invalidValue`: unlike an unknown
 value whose type is unreadable cannot be skipped without silently changing what the global
 means. The declared type is stored rather than re-derived from the plugin so a save stays
 readable without the game data it was written against.
+
+`CLOK` — game clock state (issue #164), added additively like `GVAR` and equally without a
+`currentVersion` bump. The payload must be exactly eight bytes; any other size is
+`invalidValue`.
+
+| type    | field            | notes                                                   |
+| ------- | ---------------- | ------------------------------------------------------- |
+| float64 | totalGameSeconds | `GameClock.totalGameSeconds`, IEEE 754 bit pattern      |
+
+The clock's whole state is this one number — game seconds since the calendar epoch (see
+[game clock](/engine/game-clock.md)) — so nothing else needs encoding. A non-finite or
+negative value is `invalidValue` rather than a clock. A file with no `CLOK` chunk — every
+pre-clock save — restores the vanilla-start clock, and an encoder given no clock writes no
+chunk, keeping pre-clock byte-equality tests valid.
 
 The snapshot's journal `sequence` is not saved. It is session-local bookkeeping, and a
 decoded snapshot always reports sequence 0.

@@ -54,6 +54,10 @@ final class GameViewController: NSViewController {
     /// Papyrus, inventory and quests mutate it later; the sidebar readout
     /// (issue #162) reads it.
     let worldState = WorldStateStore()
+    /// GLOB defaults of the loaded plugin, set by `wireStreaming` (issue
+    /// #165). nil without game data; the time-of-day scrub then writes the
+    /// renderer's clock directly instead of going through the global seam.
+    var globalStore: GlobalStore?
     /// Free-fly input shared with the renderer; the view writes it from
     /// NSEvents, the renderer drains it each frame (todo 2.8).
     let cameraInput = CameraInputState()
@@ -357,10 +361,24 @@ extension GameViewController: WeatherControlProviding {
         renderer?.currentWind ?? .calm
     }
 
+    /// Scrubs the game clock's hour (issue #164). With game data present the
+    /// write goes through the `GameHour` global so it journals and exercises
+    /// the same redirect any script write will; the redirect moves the clock,
+    /// never a stored override. Without a `GlobalStore` (demo scene) the
+    /// clock is scrubbed directly. The persisted hour seeds the next launch's
+    /// clock, preserving the pre-clock behaviour.
     var timeOfDay: Float {
         get { renderer?.timeOfDay ?? TimeOfDaySettings.load() }
         set {
-            renderer?.timeOfDay = newValue
+            if
+                let globalStore,
+                let id = globalStore.formID(editorID: GameClock.TimeGlobal.gameHour.editorID),
+                renderer != nil
+            {
+                worldState.setGlobal(newValue, formID: id, defaults: globalStore)
+            } else {
+                renderer?.timeOfDay = newValue
+            }
             TimeOfDaySettings.store(newValue)
         }
     }

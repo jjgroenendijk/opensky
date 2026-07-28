@@ -36,20 +36,7 @@ extension GameViewController {
         worldState.onMutation = { [weak controller] location, sequence in
             controller?.noteStateMutation(in: location, sequence: sequence)
         }
-        // Runtime global variables (issue #165). Weather-chance selection is
-        // the first consumer, so every global write hands the weather runtime a
-        // fresh resolution rather than rebuilding cells: a global changes a
-        // number, not a scene.
-        let globalStore = (provider as? GlobalDataProviding)?.globalStore
-        renderer.weather?.setGlobalResolution(
-            worldState.globalResolution(defaults: globalStore), reroll: false
-        )
-        // Weak `self` breaks what would otherwise be a cycle through the store
-        // this controller owns.
-        worldState.onGlobalMutation = { [weak self, weak renderer] _ in
-            guard let self, let weather = renderer?.weather else { return }
-            weather.setGlobalResolution(self.worldState.globalResolution(defaults: globalStore))
-        }
+        wireGlobals(provider: provider, renderer: renderer)
         renderer.onFrame = { [weak self, weak controller, weak renderer] position in
             let interactionRay = renderer.flatMap { renderer -> InteractionRay? in
                 guard renderer.movementMode == .walk else { return nil }
@@ -85,6 +72,37 @@ extension GameViewController {
             controller?.collisionCandidates(overlapping: bounds) ?? []
         }
         streamer = controller
+    }
+
+    /// Runtime global variables (issue #165) and the game clock (issue #164).
+    /// Weather-chance selection and the clock's per-frame TimeScale read both
+    /// consume `GlobalResolution`, so every global write hands each a fresh
+    /// resolution rather than rebuilding cells: a global changes a number, not
+    /// a scene. Writes to the five clock-owned time globals redirect into the
+    /// renderer's clock instead of storing an override (one source of truth;
+    /// see docs/engine/game-clock.md).
+    private func wireGlobals(provider: any CellSceneProvider, renderer: Renderer) {
+        let worldState = worldState
+        let globalStore = (provider as? GlobalDataProviding)?.globalStore
+        self.globalStore = globalStore
+        renderer.weather?.setGlobalResolution(
+            worldState.globalResolution(defaults: globalStore), reroll: false
+        )
+        renderer.gameTime.globalResolution = worldState.globalResolution(defaults: globalStore)
+        worldState.onTimeGlobalWrite = { [weak renderer] timeGlobal, value in
+            guard let renderer else { return nil }
+            let previous = renderer.gameClock.projectedValue(timeGlobal)
+            renderer.gameTime.clock.setProjectedValue(value, for: timeGlobal)
+            return previous
+        }
+        // Weak `self` breaks what would otherwise be a cycle through the store
+        // this controller owns.
+        worldState.onGlobalMutation = { [weak self, weak renderer] _ in
+            guard let self, let renderer else { return }
+            let resolution = self.worldState.globalResolution(defaults: globalStore)
+            renderer.gameTime.globalResolution = resolution
+            renderer.weather?.setGlobalResolution(resolution)
+        }
     }
 
     /// World-audio directors are built lazily alongside the audio engine, so

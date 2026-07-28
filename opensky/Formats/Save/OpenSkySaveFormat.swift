@@ -45,6 +45,11 @@ nonisolated enum OpenSkySaveFormat {
         /// by its declared length and loads the rest of the save, which is the
         /// tolerance the chunk stream exists to provide.
         static let globalValues = "GVAR"
+        /// Game clock state (issue #164). Payload is exactly one `Float64`
+        /// bit pattern: `GameClock.totalGameSeconds`. Additive like `GVAR` —
+        /// an older build skips it, and a file without it restores the
+        /// vanilla-start clock.
+        static let clock = "CLOK"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.

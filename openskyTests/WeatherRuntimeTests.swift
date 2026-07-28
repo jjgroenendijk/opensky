@@ -209,12 +209,23 @@ struct WeatherRuntimeTests {
         #expect(system.transitionFraction == 1)
     }
 
-    @Test func autoRerollAdvancesWithGameHours() throws {
+    @Test func autoRerollAdvancesWithElapsedGameHours() throws {
+        // Real elapsed game hours off the game clock (issue #164) drive the
+        // reroll cadence; the old scrubbed-hour wrap heuristic is gone.
         let system = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
-        // Prime the time-of-day accumulator, then jump forward more than the
-        // reroll interval; a target weather is still selected (never nil here).
-        system.update(deltaTime: 0.016, hour: 8)
-        system.update(deltaTime: 0.016, hour: 20)
+        system.update(deltaTime: 100, hour: 8) // settle the initial pick
+        let settled = system.currentWeatherID
+        #expect(settled != nil)
+
+        // A static clock never elapses hours, so no reroll ever fires.
+        system.update(deltaTime: 100, hour: 8)
+        #expect(system.currentWeatherID == settled)
+        #expect(system.transitionFraction == 1)
+
+        // Hours accumulate across updates and reroll at the 6-hour cadence.
+        system.update(deltaTime: 0.016, hour: 10, elapsedGameHours: 3)
+        #expect(system.transitionFraction == 1, "below the cadence: no reroll yet")
+        system.update(deltaTime: 0.016, hour: 13, elapsedGameHours: 3.5)
         #expect(system.currentWeatherID != nil)
         #expect(system.resolvedWeather != nil)
     }

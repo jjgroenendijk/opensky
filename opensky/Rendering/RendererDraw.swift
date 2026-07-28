@@ -26,6 +26,7 @@ extension Renderer: MTKViewDelegate {
         advanceCamera()
         // Streaming may setScene synchronously before this frame encodes.
         onFrame?(freeFlyCamera.position)
+        advanceGameClockFromWallClock()
         updateWeatherFromWallClock()
         let particleDelta = updateAnimationsFromWallClock()
         updateParticles(deltaTime: particleDelta)

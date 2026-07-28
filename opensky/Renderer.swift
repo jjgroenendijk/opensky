@@ -95,7 +95,10 @@ final class Renderer: NSObject {
     /// Resident static collision broadphase, wired beside terrain by
     /// GameViewController. Empty in renderer-only paths.
     var collisionQuery: WalkController.CollisionQuery?
-    var timeOfDay: Float
+    /// Game clock + its pause-aware wall-delta source + the seam TimeScale is
+    /// read through (issue #164). `timeOfDay` is now a projection of this
+    /// clock; see RendererGameClock.swift.
+    var gameTime = RendererGameTime()
     /// Data-driven weather runtime; nil -> procedural sky + camera lighting.
     var weather: WeatherSystem?
     /// Data-driven sky/fog/light/wind + precipitation-input A/B.
@@ -272,7 +275,7 @@ final class Renderer: NSObject {
         self.camera = resolvedCamera
         freeFlyCamera = FreeFlyCamera(framing: resolvedCamera)
         walkController = Self.makeWalkController(freeFlyCamera, movementConfiguration)
-        (self.timeOfDay, self.input) = (timeOfDay, input)
+        (gameTime, self.input) = (RendererGameTime(clock: GameClock(hour: timeOfDay)), input)
         frameUniformBuffer = try Self.makeFrameUniformBuffer(device: device)
         let rings = try Self.makeSceneRings(device: device, scene: self.scene)
         drawUniformBuffer = rings.drawBuffer
