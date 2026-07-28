@@ -42,40 +42,54 @@ enum MusicAudioFixture {
         return buffer
     }
 
-    /// Root-mean-square of ~0.2 s of offline render across both channels.
+    /// Root-mean-square of exactly 0.2 s of offline render across both channels.
     ///
     /// `scheduleBuffer` hands the buffer to the player node asynchronously, so
-    /// the first chunks can come back silent while it is still starting. Those
-    /// leading silent chunks are skipped rather than averaged in: how long the
-    /// node took to start is machine load, not signal level, and averaging it
-    /// in makes every level comparison here load-dependent (issue #257).
+    /// rendering can begin with silence or start partway through a chunk. The
+    /// measurement begins at the first frame carrying signal and covers a fixed
+    /// number of frames: how long the node took to start is machine load, not
+    /// signal level (issues #240 and #255).
     static func renderRMS(_ engine: WorldAudioEngine) throws -> Float {
         let format = engine.engine.manualRenderingFormat
         let chunk = try #require(AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 4096))
         var sum: Float = 0
-        var frames = 0
+        var measuredFrames = 0
         var started = false
-        // Bounded so a genuinely silent engine still returns instead of
-        // spinning: silence is a real answer for the muted and solo tests.
         var attempts = 0
-        while frames < 8820, attempts < 64 {
+        let targetFrames = 8820
+        while measuredFrames < targetFrames, attempts < 64 {
             attempts += 1
             let status = try engine.engine.renderOffline(4096, to: chunk)
-            guard status == .success else { break }
+            guard status == .success else { continue }
             let channels = try #require(chunk.floatChannelData)
-            var chunkSum: Float = 0
+            var firstFrame = 0
+            if !started {
+                firstFrame = Int(chunk.frameLength)
+                findSignal: for frame in 0 ..< Int(chunk.frameLength) {
+                    for channel in 0 ..< Int(format.channelCount)
+                        where channels[channel][frame] != 0
+                    {
+                        firstFrame = frame
+                        started = true
+                        break findSignal
+                    }
+                }
+                guard started else { continue }
+            }
+            let frameCount = min(
+                Int(chunk.frameLength) - firstFrame,
+                targetFrames - measuredFrames
+            )
             for channel in 0 ..< Int(format.channelCount) {
-                for frame in 0 ..< Int(chunk.frameLength) {
+                for frame in firstFrame ..< firstFrame + frameCount {
                     let sample = channels[channel][frame]
-                    chunkSum += sample * sample
+                    sum += sample * sample
                 }
             }
-            guard started || chunkSum > 0 else { continue }
-            started = true
-            sum += chunkSum
-            frames += Int(chunk.frameLength)
+            measuredFrames += frameCount
         }
-        return sqrtf(sum / Float(max(frames, 1)))
+        try #require(measuredFrames == targetFrames, "offline player produced no signal")
+        return sqrtf(sum / Float(measuredFrames * Int(format.channelCount)))
     }
 
     @discardableResult
