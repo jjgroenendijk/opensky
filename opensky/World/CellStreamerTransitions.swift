@@ -9,6 +9,8 @@ extension CellStreamer {
     func finishDoorTransition(_ entries: [DoorTransitionBuildResult]) -> Bool {
         guard let entry = entries.last else { return false }
         transitionInFlight = nil
+        let motionInteraction = doorMotionInteraction
+        doorMotionInteraction = nil
         let isRebuild = interiorRebuildInFlight
         interiorRebuildInFlight = false
         // A cell build ahead of transition on serial queue may complete in
@@ -16,9 +18,11 @@ extension CellStreamer {
         _ = integrateOneBuild()
         switch entry.result {
         case let .success(transition):
+            emitDoorMotion(.closed, interaction: motionInteraction)
             apply(transition: transition, sourceDoor: entry.sourceDoor, isRebuild: isRebuild)
             return true
         case let .failure(error):
+            emitDoorMotion(.cancelled, interaction: motionInteraction)
             noteDoorTransitionFailure()
             let reason = String(describing: error)
             Self.logger.warning(
@@ -52,13 +56,26 @@ extension CellStreamer {
             }
     }
 
-    func requestDoorTransition(_ door: PlacedDoor?) {
-        guard transitionInFlight == nil, let door else { return }
+    @discardableResult
+    func requestDoorTransition(_ door: PlacedDoor?) -> Bool {
+        guard transitionInFlight == nil, let door else { return false }
         transitionInFlight = door.reference
         interiorRebuildInFlight = false
         // Issue #160: the destination is built against the live store, so an
         // interior the player has already changed comes back changed.
         runner.enqueueDoorTransition(from: door.reference, state: stateSource())
+        return true
+    }
+
+    private func emitDoorMotion(
+        _ phase: InteractionAnimationPhase,
+        interaction: PlacedInteraction?
+    ) {
+        guard let interaction else { return }
+        onInteractionAnimation?(InteractionAnimationEvent(
+            interaction: interaction,
+            phase: phase
+        ))
     }
 
     /// Swaps in a built door destination.

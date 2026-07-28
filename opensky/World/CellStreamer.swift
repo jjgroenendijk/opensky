@@ -105,6 +105,12 @@ final class CellStreamer {
     /// Engine-owned use-key event. HUD observes targets; Papyrus subscribes
     /// here later without taking ownership of raycast or door behavior.
     var onInteraction: ((InteractionEvent) -> Void)?
+    /// Player-driven door motion boundaries. World audio consumes these to
+    /// start the authored movement loop, retire it, and play the close sound.
+    var onInteractionAnimation: ((InteractionAnimationEvent) -> Void)?
+    /// Source placement retained across an asynchronous door build. Runtime
+    /// state rebuilds have no player interaction and leave this nil.
+    var doorMotionInteraction: PlacedInteraction?
 
     /// - Parameters:
     ///   - center: grid center at launch (streaming starts on FirstRenderCell).

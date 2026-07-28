@@ -64,7 +64,14 @@ extension CellStreamer {
         guard let interactionTarget else { return }
         onInteraction?(InteractionEvent(target: interactionTarget))
         guard interactionTarget.interaction.action == .open else { return }
-        requestDoorTransition(activeDoor(reference: interactionTarget.interaction.reference))
+        guard
+            requestDoorTransition(activeDoor(reference: interactionTarget.interaction.reference))
+        else { return }
+        doorMotionInteraction = interactionTarget.interaction
+        onInteractionAnimation?(InteractionAnimationEvent(
+            interaction: interactionTarget.interaction,
+            phase: .motionStarted
+        ))
     }
 
     private func activeDoor(reference: FormID) -> PlacedDoor? {

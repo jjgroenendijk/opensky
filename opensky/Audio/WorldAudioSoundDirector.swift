@@ -64,6 +64,10 @@ final class WorldAudioSoundDirector {
     /// against a fresh context to skip no-op restarts, and re-used as the bed
     /// to start when ambience is switched back on.
     private var desiredBed = AmbienceBed.empty
+    /// Authored motion loops by placed reference. A close or cancelled
+    /// animation boundary retires exactly its loop without touching ambience
+    /// or unrelated effects.
+    private var interactionLoopSourceIDs: [FormID: Int] = [:]
 
     /// Most recent SFX outcome, surfaced through the World > Audio readout.
     private(set) var lastSFXDescription: String?
@@ -107,9 +111,7 @@ final class WorldAudioSoundDirector {
     // MARK: - Streamer event hooks
 
     /// CellStreamer.onInteraction subscriber. Plays the activator's activation
-    /// sound (DOOR.SNAM, ACTI.VNAM, CONT.SNAM) at the placed position. Close
-    /// and loop sounds ride along on PlacedInteraction but wait on door-
-    /// animation wiring (issue #234).
+    /// sound (DOOR.SNAM, ACTI.VNAM, CONT.SNAM) at the placed position.
     func handleInteraction(_ event: InteractionEvent) {
         guard sfxEnabled, engine.isRunning else { return }
         guard
@@ -121,6 +123,43 @@ final class WorldAudioSoundDirector {
             at: event.target.interaction.position,
             kind: "SFX"
         )
+    }
+
+    /// Door-animation lifecycle subscriber. Movement starts the authored loop;
+    /// close and cancellation both retire it, while only close plays the
+    /// authored one-shot. The same event also supports a future container
+    /// animation because DOOR.ANAM and CONT.QNAM share `sounds.close`.
+    func handleInteractionAnimation(_ event: InteractionAnimationEvent) {
+        let interaction = event.interaction
+        switch event.phase {
+        case .motionStarted:
+            retireInteractionLoop(reference: interaction.reference)
+            guard
+                sfxEnabled,
+                engine.isRunning,
+                let loopID = interaction.sounds?.loop
+            else { return }
+            interactionLoopSourceIDs[interaction.reference] = playResolved(
+                id: loopID,
+                at: interaction.position,
+                kind: "interaction loop",
+                loops: true
+            )
+        case .closed:
+            retireInteractionLoop(reference: interaction.reference)
+            guard
+                sfxEnabled,
+                engine.isRunning,
+                let closeID = interaction.sounds?.close
+            else { return }
+            playResolved(
+                id: closeID,
+                at: interaction.position,
+                kind: "interaction close"
+            )
+        case .cancelled:
+            retireInteractionLoop(reference: interaction.reference)
+        }
     }
 
     /// CellStreamer.onAmbienceContextChanged subscriber. Resolves the new bed
@@ -172,36 +211,48 @@ final class WorldAudioSoundDirector {
 
     // MARK: - Internals
 
+    @discardableResult
     private func playResolved(
         id: FormID,
         at position: SIMD3<Float>,
-        kind: String
-    ) {
+        kind: String,
+        loops: Bool = false
+    ) -> Int? {
         guard let resolved = resolveSound(id: id) else {
             lastSFXError = "unresolved \(id.description)"
             Self.logger.debug(
                 "[INFO] \(kind, privacy: .public) unresolved: \(id.description, privacy: .public)"
             )
-            return
+            return nil
         }
         do {
-            try engine.playPositional(
+            let sourceID = try engine.playPositional(
                 fileData: resolved.data,
                 request: AudioPlayRequest(
                     name: resolved.name,
                     category: resolved.category,
-                    worldPosition: position
+                    worldPosition: position,
+                    loops: loops
                 )
             )
             lastSFXDescription = resolved.name
             lastSFXError = nil
+            return sourceID
         } catch {
             let reason = String(describing: error)
             lastSFXError = reason
             Self.logger.warning(
                 "[WARNING] \(kind, privacy: .public) play failed: \(reason, privacy: .public)"
             )
+            return nil
         }
+    }
+
+    private func retireInteractionLoop(reference: FormID) {
+        guard let sourceID = interactionLoopSourceIDs.removeValue(forKey: reference) else {
+            return
+        }
+        engine.stopSource(id: sourceID)
     }
 
     private func startAmbience(bed: AmbienceBed) {

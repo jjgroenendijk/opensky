@@ -32,9 +32,9 @@ nonisolated struct PlacedInteraction: Equatable, Sendable {
     let actionLabel: String
     /// Sound links resolved off the base record (DOOR/ACTI/CONT) at cell-build
     /// time. Nil when the base carries no decoded sound fields. The audio
-    /// director consumes `activation` on use-key events; `close` and `loop`
-    /// wait on door-animation wiring (issue #234) but ride along here so the
-    /// cell build remains the single resolution point.
+    /// director consumes `activation` on use-key events and `close`/`loop` on
+    /// interaction-animation boundaries. They ride together so the cell build
+    /// remains the single resolution point.
     let sounds: ModelBase.Sounds?
 }
 
@@ -50,6 +50,25 @@ nonisolated struct InteractionTarget: Equatable, Sendable {
 /// engine event without changing the raycast or door transition path.
 nonisolated struct InteractionEvent: Equatable, Sendable {
     let target: InteractionTarget
+}
+
+/// Motion lifecycle for an activated interaction.
+///
+/// Door transitions publish these phases today. A future rendered door or
+/// container animation can publish the same event at its authored animation
+/// boundaries without changing the audio director.
+nonisolated enum InteractionAnimationPhase: Equatable, Sendable {
+    case motionStarted
+    case closed
+    case cancelled
+}
+
+/// One animation boundary for a placed interaction. The whole placement rides
+/// along because a scene transition may evict the source cell before the close
+/// boundary fires.
+nonisolated struct InteractionAnimationEvent: Equatable, Sendable {
+    let interaction: PlacedInteraction
+    let phase: InteractionAnimationPhase
 }
 
 /// Finite normalized world-space ray. A nil ray means the current camera mode
