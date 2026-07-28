@@ -49,7 +49,6 @@ nonisolated enum CellStreamingWalkBenchmarkError: LocalizedError {
 nonisolated struct CellStreamingWalkBenchmarkConfiguration {
     let size: (width: Int, height: Int)
     let maxFrames: Int
-    let worldspaceEditorID: String
 }
 
 nonisolated struct CellStreamingWalkBenchmarkResult {

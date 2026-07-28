@@ -176,7 +176,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 ## Tools
 
 * [CLI dev tool](/tools/cli.md) - openskycli target sharing the engine sources:
-  vfs/record/cell/nif/dds/screenshot commands, env-gated make probe harness.
+  commands, mode-specific benchmark validation, and env-gated make probe harness.
 * [Main-app asset browser](/tools/preview-gui.md) - Library > Asset Browser destination:
   VFS + record browsing, toolbar World PNG capture, offscreen NIF/DDS previews.
 * [Main-app UI framework + placement](/tools/app-ui.md) - unified sidebar shell,

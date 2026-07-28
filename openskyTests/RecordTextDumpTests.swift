@@ -124,7 +124,7 @@ struct RecordTextDumpTests {
         )
         let dump = try RecordTextDump.dump(record: firstRecord(in: plugin), localized: false)
         #expect(dump.contains("rotation (0.1, 0.2, 0.3)"))
-        #expect(dump.contains("teleport 00000200 at SIMD3<Float>(4.0, 5.0, 6.0)"))
-        #expect(dump.contains("rotation SIMD3<Float>(0.4, 0.5, 0.6)"))
+        #expect(dump.contains("teleport 00000200 at (4.0, 5.0, 6.0)"))
+        #expect(dump.contains("rotation (0.4, 0.5, 0.6)"))
     }
 }
