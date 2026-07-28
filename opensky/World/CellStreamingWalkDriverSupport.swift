@@ -44,31 +44,106 @@ nonisolated enum WalkBenchmarkPhase: CustomStringConvertible {
     }
 }
 
+nonisolated struct WalkBenchmarkControllerSnapshot {
+    let position: SIMD3<Float>
+    let isGrounded: Bool
+    let hasUnresolvedPenetration: Bool
+}
+
+nonisolated struct WalkBenchmarkControllerState {
+    private static let maximumAirborneFrames = 15
+
+    var lastGroundedHeight: Float?
+    private(set) var airborneFrames = 0
+
+    mutating func validate(
+        phase: WalkBenchmarkPhase,
+        snapshot: WalkBenchmarkControllerSnapshot,
+        capsule: PlayerCapsule = .standard
+    ) throws {
+        if snapshot.hasUnresolvedPenetration {
+            throw CellStreamingWalkBenchmarkError.unresolvedPenetration(
+                phase.description,
+                snapshot.position
+            )
+        }
+        if snapshot.isGrounded {
+            lastGroundedHeight = snapshot.position.z
+            airborneFrames = 0
+        } else {
+            airborneFrames += 1
+        }
+        let fellBelowGround = lastGroundedHeight.map {
+            snapshot.position.z < $0 - capsule.height
+        } ?? false
+        if airborneFrames > Self.maximumAirborneFrames, fellBelowGround {
+            throw CellStreamingWalkBenchmarkError.fallThrough(
+                phase.description,
+                snapshot.position
+            )
+        }
+    }
+}
+
+nonisolated struct WalkBenchmarkNavigationState {
+    private static let minimumProgress: Float = 2
+    private static let maximumStalledFrames = 20
+    private static let avoidanceDurationFrames = 36
+
+    private(set) var bestDistance = Float.greatestFiniteMagnitude
+    private(set) var stalledFrames = 0
+    var avoidanceFrames = 0
+    private(set) var avoidanceAttempt = 0
+    private(set) var avoidanceDirection: Float = 1
+
+    mutating func update(distance: Float, routeIndex: Int) {
+        if distance < bestDistance - Self.minimumProgress {
+            bestDistance = distance
+            stalledFrames = 0
+        } else {
+            stalledFrames += 1
+        }
+        guard avoidanceFrames == 0, stalledFrames >= Self.maximumStalledFrames else {
+            return
+        }
+        avoidanceDirection = (routeIndex + avoidanceAttempt).isMultiple(of: 2) ? 1 : -1
+        avoidanceAttempt += 1
+        avoidanceFrames = Self.avoidanceDurationFrames
+        stalledFrames = 0
+    }
+}
+
+nonisolated enum WalkBenchmarkStateMachine {
+    static func validateTimeout(
+        phaseFrames: Int,
+        limit: Int,
+        phase: WalkBenchmarkPhase,
+        position: SIMD3<Float>
+    ) throws {
+        guard phaseFrames < limit else {
+            throw CellStreamingWalkBenchmarkError.routeTimedOut(
+                phase.description,
+                position
+            )
+        }
+    }
+}
+
 @MainActor
 extension CellStreamingWalkDriver {
     func drive(toward target: SIMD2<Float>, routeIndex: Int) {
         updateNavigationProgress(distance: distance(to: target), routeIndex: routeIndex)
         renderer.freeFlyCamera.yaw = WalkPathRoute.yaw(from: currentXY, to: target)
-        if avoidanceFrames > 0 {
-            updateController(moveForward: 0.5, moveRight: avoidanceDirection)
-            avoidanceFrames -= 1
+        if navigationState.avoidanceFrames > 0 {
+            updateController(moveForward: 0.5, moveRight: navigationState.avoidanceDirection)
+            navigationState.avoidanceFrames -= 1
         } else {
             updateController(moveForward: 1)
         }
     }
 
     func updateNavigationProgress(distance: Float, routeIndex: Int) {
-        if distance < bestNavigationDistance - 2 {
-            bestNavigationDistance = distance
-            stalledNavigationFrames = 0
-        } else {
-            stalledNavigationFrames += 1
-        }
-        guard avoidanceFrames == 0, stalledNavigationFrames >= 20 else { return }
-        avoidanceDirection = (routeIndex + avoidanceAttempt).isMultiple(of: 2) ? 1 : -1
-        avoidanceAttempt += 1
-        avoidanceFrames = 36
-        stalledNavigationFrames = 0
+        navigationState.update(distance: distance, routeIndex: routeIndex)
     }
 
     func updateController(moveForward: Float, moveRight: Float = 0) {
@@ -87,24 +162,15 @@ extension CellStreamingWalkDriver {
 
     func validateController() throws {
         let position = renderer.walkController.feetPosition
-        if renderer.walkController.hasUnresolvedPenetration {
-            throw CellStreamingWalkBenchmarkError.unresolvedPenetration(
-                phase.description,
-                position
-            )
-        }
-        if renderer.walkController.isGrounded {
-            lastGroundedHeight = position.z
-            airborneFrames = 0
-        } else {
-            airborneFrames += 1
-        }
-        let fellBelowGround = lastGroundedHeight.map {
-            position.z < $0 - PlayerCapsule.standard.height
-        } ?? false
-        if airborneFrames > 15, fellBelowGround {
-            throw CellStreamingWalkBenchmarkError.fallThrough(phase.description, position)
-        }
+        try controllerState.validate(
+            phase: phase,
+            snapshot: WalkBenchmarkControllerSnapshot(
+                position: position,
+                isGrounded: renderer.walkController.isGrounded,
+                hasUnresolvedPenetration: renderer.walkController.hasUnresolvedPenetration
+            ),
+            capsule: renderer.walkController.capsule
+        )
     }
 
     func validateBuildsAndSwap() throws {
@@ -122,21 +188,18 @@ extension CellStreamingWalkDriver {
     }
 
     func timeout(limit: Int) throws {
-        guard phaseFrames < limit else {
-            throw CellStreamingWalkBenchmarkError.routeTimedOut(
-                phase.description,
-                renderer.walkController.feetPosition
-            )
-        }
+        try WalkBenchmarkStateMachine.validateTimeout(
+            phaseFrames: phaseFrames,
+            limit: limit,
+            phase: phase,
+            position: renderer.walkController.feetPosition
+        )
     }
 
     func changePhase(_ next: WalkBenchmarkPhase) {
         phase = next
         phaseFrames = 0
-        bestNavigationDistance = Float.greatestFiniteMagnitude
-        stalledNavigationFrames = 0
-        avoidanceFrames = 0
-        avoidanceAttempt = 0
+        navigationState = WalkBenchmarkNavigationState()
     }
 
     var currentXY: SIMD2<Float> {

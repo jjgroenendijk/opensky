@@ -24,17 +24,36 @@ nonisolated struct CellCollisionPartitionKey: Hashable {
     }
 }
 
-nonisolated private func collisionPartitions(
-    key: CellCollisionPartitionKey,
-    geometry: NIFCollisionGeometry,
-    cache: inout [CellCollisionPartitionKey: StaticCollisionPartitionResult]
-) -> StaticCollisionPartitionResult {
-    if let cached = cache[key] {
-        return cached
+nonisolated struct CellCollisionPartitionCache {
+    private var entries: [
+        CellCollisionPartitionKey: StaticCollisionPartitionResult
+    ] = [:]
+
+    mutating func partitions(
+        key: CellCollisionPartitionKey,
+        geometry: NIFCollisionGeometry
+    ) -> StaticCollisionPartitionResult {
+        if let cached = entries[key] {
+            return cached
+        }
+        let partitions = StaticCollisionShape.partitions(for: geometry)
+        entries[key] = partitions
+        return partitions
     }
-    let partitions = StaticCollisionShape.partitions(for: geometry)
-    cache[key] = partitions
-    return partitions
+
+    mutating func evict(dropping modelKeys: Set<String>) {
+        entries = entries.filter { key, _ in
+            !modelKeys.contains(key.modelKey)
+        }
+    }
+
+    func contains(_ key: CellCollisionPartitionKey) -> Bool {
+        entries[key] != nil
+    }
+
+    var count: Int {
+        entries.count
+    }
 }
 
 nonisolated struct CellCollisionGridEntry {
@@ -211,10 +230,9 @@ extension CellSceneBuilder {
                 for (shapeIndex, shape) in body.shapes.enumerated() {
                     let transform = placement.transform * body.transform * shape.transform
                     let key = CellCollisionPartitionKey(modelKey, bodyIndex, shapeIndex)
-                    let partitioning = collisionPartitions(
+                    let partitioning = collisionPartitionCache.partitions(
                         key: key,
-                        geometry: shape.geometry,
-                        cache: &collisionPartitionCache
+                        geometry: shape.geometry
                     )
                     stats.decodeFailureCount += partitioning.failureCount
                     guard !partitioning.partitions.isEmpty else { continue }
@@ -241,9 +259,7 @@ extension CellSceneBuilder {
     }
 
     nonisolated func evictCollisionPartitions(dropping keys: Set<String>) {
-        collisionPartitionCache = collisionPartitionCache.filter { key, _ in
-            !keys.contains(key.modelKey)
-        }
+        collisionPartitionCache.evict(dropping: keys)
     }
 
     nonisolated private func loadCollisionModel(

@@ -14,18 +14,13 @@ final class CellStreamingWalkDriver {
     var phaseFrames = 0
     var physicsFrameMask: [Bool] = []
     var routeFrameCount = 0
-    var lastGroundedHeight: Float?
-    var airborneFrames = 0
+    var controllerState = WalkBenchmarkControllerState()
     var stepStartHeight: Float?
     var maximumStepHeight: Float?
     var interiorArrival: SIMD2<Float>?
     var interiorTarget: SIMD2<Float>?
     var interiorDistance: Float = 0
-    var bestNavigationDistance = Float.greatestFiniteMagnitude
-    var stalledNavigationFrames = 0
-    var avoidanceFrames = 0
-    var avoidanceAttempt = 0
-    var avoidanceDirection: Float = 1
+    var navigationState = WalkBenchmarkNavigationState()
 
     init(
         renderer: Renderer,
@@ -133,7 +128,7 @@ final class CellStreamingWalkDriver {
         )
         renderer.freeFlyCamera.pitch = 0
         renderer.walkController.reset(cameraPosition: renderer.freeFlyCamera.position)
-        lastGroundedHeight = ground.height
+        controllerState.lastGroundedHeight = ground.height
         changePhase(.settleStart)
     }
 
