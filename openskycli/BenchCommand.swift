@@ -7,6 +7,11 @@ import MetalKit
 enum BenchCommand {
     /// 30 fps -> 33.33 ms per frame.
     private static let defaultBudgetMS = 1000.0 / 30.0
+    #if DEBUG
+        private static let isDebugBuild = true
+    #else
+        private static let isDebugBuild = false
+    #endif
     private static let defaultFrames = 360 // 3 full FrameStats windows
     private static let defaultFlyMaxFrames = 36000
     private static let defaultFootprintCapMB = 1024.0
@@ -49,6 +54,7 @@ enum BenchCommand {
         let size: (width: Int, height: Int)
         let frames: Int
         let budgetMS: Double
+        let walkFrameBudget: WalkBenchmarkFrameBudget
         let flyPath: Bool
         let walkPath: Bool
         let output: String?
@@ -232,18 +238,17 @@ enum BenchCommand {
         reportWalkPath(
             result: result,
             size: options.size,
-            budget: options.budgetMS,
+            frameBudget: options.walkFrameBudget,
             audioBudget: options.audioUpdateBudgetMS
         )
-        guard
-            result.physicsRender.averageMS <= options.budgetMS,
-            result.physicsRender.percentileMS(95) <= options.budgetMS
-        else {
+        guard options.walkFrameBudget.contains(result.physicsRender) else {
             throw CLIError.failure(String(
-                format: "physics frame time over budget: avg %.2f / p95 %.2f vs %.2f ms",
+                format: "physics frame time over budget: avg %.2f vs %.2f ms / "
+                    + "p95 %.2f vs %.2f ms",
                 result.physicsRender.averageMS,
+                options.walkFrameBudget.averageMS,
                 result.physicsRender.percentileMS(95),
-                options.budgetMS
+                options.walkFrameBudget.percentile95MS
             ))
         }
         try checkAudioBudget(
@@ -306,13 +311,21 @@ extension BenchCommand {
         guard !flyPath || !walkPath else {
             throw CLIError.usage("choose one of --fly-path or --walk-path")
         }
+        let budgetOption = try scanner.option("--budget-ms")
+        let budgetMS = try positiveDouble(
+            budgetOption,
+            flag: "--budget-ms",
+            fallback: defaultBudgetMS
+        )
         let options = try Options(
             worldspace: worldspace,
             start: CellCoordinate(x: gridX, y: gridY),
             size: RenderCommand.parseSize(scanner.option("--size")),
             frames: frameCount(scanner.option("--frames")),
-            budgetMS: positiveDouble(
-                scanner.option("--budget-ms"), flag: "--budget-ms", fallback: defaultBudgetMS
+            budgetMS: budgetMS,
+            walkFrameBudget: walkFrameBudget(
+                budgetMS: budgetMS,
+                wasExplicit: budgetOption != nil
             ),
             flyPath: flyPath,
             walkPath: walkPath,
@@ -346,6 +359,19 @@ extension BenchCommand {
         try validateCombination(options)
         try scanner.finish()
         return options
+    }
+
+    private static func walkFrameBudget(
+        budgetMS: Double,
+        wasExplicit: Bool
+    ) -> WalkBenchmarkFrameBudget {
+        if wasExplicit {
+            return WalkBenchmarkFrameBudget.strict(frameIntervalMS: budgetMS)
+        }
+        return WalkBenchmarkFrameBudget.buildDefault(
+            frameIntervalMS: budgetMS,
+            debugBuild: isDebugBuild
+        )
     }
 
     /// Flag combinations no single option check can catch.

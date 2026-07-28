@@ -61,6 +61,33 @@ nonisolated struct CellStreamingWalkBenchmarkResult {
     let finalFeetPosition: SIMD3<Float>
 }
 
+/// Active-physics frame-time policy for the walk route.
+///
+/// Debug's synchronous offscreen loop includes scheduler and debug-runtime
+/// variance that the shipping build does not. The average still has to sustain
+/// the requested frame interval, while Debug may spend up to two intervals at
+/// p95. An explicit CLI budget remains strict for both metrics.
+nonisolated struct WalkBenchmarkFrameBudget: Equatable {
+    let averageMS: Double
+    let percentile95MS: Double
+
+    static func buildDefault(frameIntervalMS: Double, debugBuild: Bool) -> Self {
+        Self(
+            averageMS: frameIntervalMS,
+            percentile95MS: debugBuild ? frameIntervalMS * 2 : frameIntervalMS
+        )
+    }
+
+    static func strict(frameIntervalMS: Double) -> Self {
+        Self(averageMS: frameIntervalMS, percentile95MS: frameIntervalMS)
+    }
+
+    func contains(_ result: OffscreenBenchResult) -> Bool {
+        result.averageMS <= averageMS
+            && result.percentileMS(95) <= percentile95MS
+    }
+}
+
 @MainActor
 enum CellStreamingWalkBenchmark {
     static func run(
@@ -82,5 +109,30 @@ enum CellStreamingWalkBenchmark {
             try driver.step()
         }
         return try driver.result(render: render)
+    }
+
+    /// Applies the driver's frame mask to every per-frame metric. FrameStats
+    /// summaries cover fixed full-run windows and cannot be remapped to the
+    /// filtered sample, so the derived result deliberately carries none.
+    nonisolated static func activePhysicsResult(
+        render: OffscreenBenchResult,
+        frameMask: [Bool]
+    ) -> OffscreenBenchResult {
+        OffscreenBenchResult(
+            frameMS: activeSamples(render.frameMS, frameMask: frameMask),
+            windowSummaries: [],
+            animationMS: activeSamples(render.animationMS, frameMask: frameMask),
+            shadowMS: activeSamples(render.shadowMS, frameMask: frameMask),
+            audioUpdateMS: activeSamples(render.audioUpdateMS, frameMask: frameMask)
+        )
+    }
+
+    nonisolated private static func activeSamples(
+        _ samples: [Double],
+        frameMask: [Bool]
+    ) -> [Double] {
+        zip(samples, frameMask).compactMap { sample, active in
+            active ? sample : nil
+        }
     }
 }

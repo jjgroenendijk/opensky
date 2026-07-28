@@ -99,7 +99,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Free-fly camera](/engine/free-fly-camera.md) - WASDQE + mouse-look input capture,
   yaw/pitch pose -> view matrix, movement speeds tuned to Skyrim scale.
 * [Terrain walk mode](/engine/walk-mode.md) - fixed-step capsule, terrain + mesh
-  collide-and-slide, slope/ceiling response, bounded stairs, door pose reset.
+  collide-and-slide, slope/ceiling response, bounded stairs, door pose reset, build-aware
+  route timing gate.
 * [Static collision world](/engine/collision-world.md) - per-cell placed bhk shapes,
   immutable BVH broadphase, fail-loud geometry accounting, streaming lifetime + budgets.
 * [Actor idle animation](/engine/actor-animation.md) - HKX idle sampling, skeleton-world
