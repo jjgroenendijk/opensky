@@ -110,6 +110,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 let aspcStore = AcousticSpaceStore(file: file)
                 // Music playlists (M9.2.3): MUSC/MUST index from the same ESM.
                 let musicStore = MusicRecordStore(file: file)
+                // Global variables (M10.2.2): GLOB defaults from the same ESM,
+                // paired with the session's runtime overrides by the view
+                // controller. The plugin file name is needed for the
+                // session-stable keys the runtime layer and saves use.
+                let globalStore = GlobalStore(
+                    file: file, pluginName: esmURL.lastPathComponent
+                )
                 return BuilderCellSceneProvider(
                     builder: builder,
                     worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
@@ -117,6 +124,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     soundStore: soundStore,
                     aspcStore: aspcStore,
                     musicStore: musicStore,
+                    globalStore: globalStore,
                     movementConfiguration: movementConfiguration
                 )
             } catch {

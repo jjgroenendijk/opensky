@@ -3,7 +3,7 @@ type: File Format
 title: Weather records (WTHR, CLMT, REGN)
 description: Field layouts of the weather-core records and OpenSky's engine types.
 tags: [format, plugin, records, weather, climate, region]
-timestamp: 2026-07-21T00:00:00Z
+timestamp: 2026-07-28T00:00:00Z
 ---
 
 # Weather records, Skyrim SE
@@ -72,8 +72,11 @@ Decoded fields (`Climate`):
 
 * `EDID` — editor ID, zstring.
 * `WLST` — weather list: 12-byte structs, `formid` weather + `uint32` chance
-  (percent, sums to 100) + `formid` global (0 = none). Size not multiple of
-  12 -> field skipped.
+  (percent, sums to 100) + `formid` [GLOB](/formats/records.md) (0 = none).
+  Size not multiple of 12 -> field skipped. What the game does with the global
+  is undocumented in UESP and xEdit alike; OpenSky's chosen semantics (the
+  global replaces the static chance when it resolves) are flagged in
+  [weather runtime](/engine/weather.md).
 * `TNAM` — timing, 6 bytes: sunrise begin/end, sunset begin/end (uint8, x10
   = minutes past midnight), volatility (0-100), moons byte (bits 0-5 phase
   length days, 0x40 Masser, 0x80 Secunda). Non-6-byte -> nil.

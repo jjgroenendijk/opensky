@@ -39,6 +39,12 @@ nonisolated enum OpenSkySaveFormat {
         static let allocator = "GALC"
         /// Runtime reference deltas, one entry per dirty reference.
         static let referenceDeltas = "RDLT"
+        /// Runtime global-variable overrides, one entry per overridden global
+        /// (issue #165). Added after version 1 shipped and deliberately did not
+        /// bump `currentVersion`: it is a new chunk, so an older build skips it
+        /// by its declared length and loads the rest of the save, which is the
+        /// tolerance the chunk stream exists to provide.
+        static let globalValues = "GVAR"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.
@@ -59,6 +65,10 @@ nonisolated enum OpenSkySaveFormat {
     /// component count (1). Used to reject an impossible entry count before
     /// any array is reserved.
     static let minimumEntrySize = 9
+    /// Smallest number of bytes a single `GVAR` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4), the declared-type tag (1) and the
+    /// float32 value (4).
+    static let minimumGlobalEntrySize = 12
     /// Smallest number of bytes one fingerprint plugin entry can occupy: an
     /// empty name (2) plus the three stats fields (12).
     static let minimumFingerprintEntrySize = 14
@@ -85,6 +95,30 @@ nonisolated extension WorldStateComponentKind {
         case 1: self = .transform
         case 2: self = .activation
         case 3: self = .deletion
+        default: return nil
+        }
+    }
+}
+
+/// On-disk tag of a global's declared FNAM type.
+///
+/// Written out case by case for the same reason component tags are: the FNAM
+/// characters are Bethesda's and the byte values here are ours, and neither
+/// side should drift when the other changes.
+nonisolated extension Global.ValueType {
+    var saveTag: UInt8 {
+        switch self {
+        case .short: 0
+        case .long: 1
+        case .float: 2
+        }
+    }
+
+    init?(saveTag: UInt8) {
+        switch saveTag {
+        case 0: self = .short
+        case 1: self = .long
+        case 2: self = .float
         default: return nil
         }
     }

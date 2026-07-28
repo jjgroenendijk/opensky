@@ -59,6 +59,14 @@ nonisolated protocol WeatherProviding {
     var weatherSystem: WeatherSystem? { get }
 }
 
+/// Optional GLOB index a provider can expose (issue #165). GameViewController
+/// pairs it with the session's `WorldStateStore` to build the
+/// `GlobalResolution` conditions, the clock and weather-chance selection read
+/// global values through.
+nonisolated protocol GlobalDataProviding {
+    var globalStore: GlobalStore? { get }
+}
+
 /// Optional immutable player-movement tuning resolved from active GMST data.
 nonisolated protocol MovementConfigurationProviding {
     var movementConfiguration: PlayerMovementConfiguration { get }
@@ -80,7 +88,7 @@ nonisolated protocol AudioDataProviding {
 /// entirely on the runner's serial queue -- never touched from the main
 /// thread -- which is why they need no internal locking.
 nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding,
-    AudioDataProviding, MovementConfigurationProviding
+    AudioDataProviding, MovementConfigurationProviding, GlobalDataProviding
 {
     let builder: CellSceneBuilder
     let worldspaceEditorID: String
@@ -92,6 +100,8 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     var aspcStore: AcousticSpaceStore?
     /// Music record index (MUSC/MUST); nil when the plugin has no music data.
     var musicStore: MusicRecordStore?
+    /// Global-variable index (GLOB); nil when the plugin has no GLOB records.
+    var globalStore: GlobalStore?
     /// GMST-derived walk/run values plus explicit documented fallbacks.
     var movementConfiguration: PlayerMovementConfiguration = .synthetic
 

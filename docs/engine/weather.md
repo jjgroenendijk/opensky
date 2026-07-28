@@ -4,7 +4,7 @@ title: Weather runtime
 description: Region/climate weather selection, timed sky/fog/ambient transitions blended
   over the time-of-day input, and published wind for precipitation/grass/particles.
 tags: [engine, weather, sky, environment, wind]
-timestamp: 2026-07-22T00:00:00Z
+timestamp: 2026-07-28T00:00:00Z
 ---
 
 # Weather runtime
@@ -83,6 +83,29 @@ for a paused sky.
 `transitionsPaused` stops only cross-fade progress. A forced target may still replace the
 pending target at progress 0; weather resolution, renderer frames, and precipitation particle
 playback continue. Resume advances the same transition from its frozen fraction.
+
+### CLMT WLST chance global (semantics chosen, flagged)
+
+Each CLMT `WLST` entry carries an optional GLOB beside its static chance, and no open source
+says what the game does with it: UESP's CLMT page lists the field as `formid - Global` and
+stops, and xEdit's `wbRecord(CLMT)` names it `'Global'` with no comment. OpenSky's chosen
+semantics, implemented in `WeatherSelection.climateCandidates(worldspace:store:globals:)`,
+are that **a global that resolves replaces the entry's static chance**; an entry with no
+global, or one naming a global the data does not define, keeps the authored chance. Resolved
+values are rounded half away from zero and clamped to a non-negative weight, since
+`WeatherSelection.pick` sums them. Replacement was chosen over scaling because a scale
+factor has no documented neutral value — a global defaulting to 0 would silently delete the
+weather — while replacement makes the authored number the fallback and the global the
+override, which is how every other runtime value in the engine behaves. Revisit if a real
+description surfaces.
+
+REGN `RDWT` entries carry a similar global. It stays ignored and is documented as unused in
+[weather records](/formats/weather.md).
+
+The resolver is a parameter rather than stored state: `WeatherStore` remains immutable, and
+`WeatherSystem.setGlobalResolution(_:)` adopts a fresh
+[`GlobalResolution`](/engine/runtime-state.md) and rerolls so a mutated global shifts the
+weather immediately rather than at the next six-game-hour boundary.
 
 ### Trans Delta interpretation (deviation flagged)
 
@@ -191,6 +214,10 @@ Rendered evidence stays gitignored under `logs/` because it contains game-derive
   endpoints + monotonicity, fog day/night blend, wind blend, region priority/override +
   climate-fallback selection, deterministic + weighted pick, stable precipitation presets,
   and the WeatherSystem instant/timed/pause transition machine.
+* `WeatherGlobalChanceTests` (synthetic): the CLMT WLST chance global — authored chance
+  without a resolver, plugin default replacing it, a mutated global shifting both the weight
+  and the deterministic pick, a negative global clamping to zero, and
+  `WeatherSystem.setGlobalResolution` rerolling onto the newly-dominant weather.
 * `WeatherRecordTests` / `RecordDecoderTests`: DALC keyframes, WRLD CNAM, CELL XCLR decode.
 * `RendererWeatherTests` (Metal 4, offscreen A/B): inactive weather reproduces the
   procedural baseline bit-for-bit; a forced synthetic weather repaints the sky; two distinct

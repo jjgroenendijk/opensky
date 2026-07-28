@@ -59,6 +59,11 @@ nonisolated final class WeatherSystem {
     /// precipitation particle playback continue, enabling a stable mid-storm
     /// inspection frame in the main app.
     var transitionsPaused = false
+    /// Current global-variable values, used to honour the CLMT WLST global on
+    /// each climate weather chance (issue #165). Nil leaves every chance at the
+    /// authored number. Replaced through `setGlobalResolution(_:)` whenever the
+    /// session mutates a global.
+    private(set) var globalResolution: GlobalResolution?
 
     init(store: WeatherStore, worldspaceFormID: UInt32?) {
         self.store = store
@@ -111,6 +116,17 @@ nonisolated final class WeatherSystem {
         guard regions != currentRegions else { return }
         currentRegions = regions
         guard forced == nil else { return }
+        reroll(startTransition: true)
+    }
+
+    /// Adopts new global values and, unless a weather is forced, rerolls so the
+    /// changed chances are visible immediately rather than at the next
+    /// six-game-hour boundary. That is what makes a mutated weather-chance
+    /// global observable in the running app.
+    func setGlobalResolution(_ resolution: GlobalResolution?, reroll shouldReroll: Bool = true) {
+        globalResolution = resolution
+        guard shouldReroll, forced == nil else { return }
+        gameHoursSinceRoll = 0
         reroll(startTransition: true)
     }
 
@@ -208,7 +224,8 @@ nonisolated final class WeatherSystem {
         let pool = WeatherSelection.candidates(
             worldspace: worldspaceFormID,
             regionIDs: currentRegions,
-            store: store
+            store: store,
+            globals: globalResolution
         )
         let seed = (UInt64(worldspaceFormID ?? 0) << 32) ^ epoch &* 0x2545_F491_4F6C_DD1D
         return WeatherSelection.pick(from: pool, seed: seed)

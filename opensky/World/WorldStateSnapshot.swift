@@ -19,6 +19,15 @@ nonisolated struct WorldStateSnapshotEntry: Equatable, Sendable {
     let delta: ReferenceStateDelta
 }
 
+/// One global variable whose runtime value deviates from its plugin default
+/// (issue #165). Globals with no override never appear, for the same reason
+/// clean references do not: the default is re-derived from `GlobalStore`.
+nonisolated struct WorldStateGlobalSnapshotEntry: Equatable, Sendable {
+    /// The GLOB record's session-stable key.
+    let key: ReferenceKey
+    let value: GlobalValue
+}
+
 /// Immutable, order-independent view of every runtime deviation in a store.
 ///
 /// Only dirty references appear: a reference with no delta is, by definition,
@@ -35,6 +44,10 @@ nonisolated struct WorldStateSnapshotEntry: Equatable, Sendable {
 nonisolated struct WorldStateSnapshot: Equatable, Sendable {
     /// Dirty references in `ReferenceKey` total order.
     let entries: [WorldStateSnapshotEntry]
+    /// Overridden global variables, also in `ReferenceKey` total order
+    /// (issue #165). Part of equality: two sessions whose globals differ are
+    /// not in the same end state.
+    let globals: [WorldStateGlobalSnapshotEntry]
     /// The store's generated-key allocator position at snapshot time. Included
     /// because a restored session must resume allocating where this one left
     /// off, and because two stores that allocated different numbers of
@@ -51,15 +64,19 @@ nonisolated struct WorldStateSnapshot: Equatable, Sendable {
     init(
         entries: [WorldStateSnapshotEntry],
         nextGeneratedSequence: UInt64,
+        globals: [WorldStateGlobalSnapshotEntry] = [],
         sequence: UInt64 = 0
     ) {
         self.entries = entries
         self.nextGeneratedSequence = nextGeneratedSequence
+        self.globals = globals
         self.sequence = sequence
     }
 
     static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.entries == rhs.entries && lhs.nextGeneratedSequence == rhs.nextGeneratedSequence
+        lhs.entries == rhs.entries
+            && lhs.globals == rhs.globals
+            && lhs.nextGeneratedSequence == rhs.nextGeneratedSequence
     }
 
     /// Number of dirty references.
@@ -67,8 +84,13 @@ nonisolated struct WorldStateSnapshot: Equatable, Sendable {
         entries.count
     }
 
+    /// Number of overridden globals.
+    var dirtyGlobalCount: Int {
+        globals.count
+    }
+
     var isEmpty: Bool {
-        entries.isEmpty
+        entries.isEmpty && globals.isEmpty
     }
 
     /// Dirty keys, in the same total order as `entries`.
@@ -78,6 +100,13 @@ nonisolated struct WorldStateSnapshot: Equatable, Sendable {
 
     subscript(key: ReferenceKey) -> ReferenceStateDelta? {
         entries.first { $0.key == key }?.delta
+    }
+
+    /// Runtime override recorded for a global, nil when it still matches the
+    /// plugin. A linear scan, like `subscript(key:)`; a consumer resolving many
+    /// globals builds a `GlobalResolution` from this snapshot instead.
+    func globalValue(for key: ReferenceKey) -> GlobalValue? {
+        globals.first { $0.key == key }?.value
     }
 
     /// Every delta in one dictionary, for a consumer that looks up many keys.
