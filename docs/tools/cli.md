@@ -44,6 +44,7 @@ only where `--out` points (AGENTS.md Legal & IP).
 | `vfs ls [pattern]` | list archive entries as `path<TAB>archive`; fnmatch wildcards (`FNM_NOESCAPE` — `\` stays a separator) or substring match; count on stderr |
 | `vfs cat <key> --out <file>` | extract one resource (loose files win, as in the engine) |
 | `record <formid-or-editorid>` | dump one Skyrim.esm record: header, decoded view (WRLD/CELL/STAT/REFR, with every REFR pose rendered as an `(x, y, z)` tuple), field list capped at 64 with a per-type tail summary |
+| `gmst movement` | resolve selected movement GMSTs across official, Creation Club, and starred active plugins; print walk/run/step values, units, and winning plugin or fallback source |
 | `cell [--worldspace <edid>] [--x n] [--y n] [--refs]` | exterior-cell summary without Metal: ref count, base-type histogram, other cell records; `--refs` lists placements |
 | `actor [--worldspace <edid>] [--x n] [--y n] [--radius n] [--npc <formid-or-edid>]` | list ACHR placed actors in the (2r+1)^2 cell block (persistent-cell ACHRs mapped in by position); per actor: base NPC_+ editor ID, placement, TPLT chain with chosen LVLN entries, source NPC_ of every appearance field, then visuals — skeleton path, `part` lines (origin ARMO, ARMA, biped slots, gendered model path), FaceGen mesh path, reason-tagged skips; summary counts discovered/resolved/failed/deleted/malformed (visual failures count as failed); `--npc` resolves one base NPC_ directly (named residents live in interior cells), exit 1 on failure; default radius 1 |
 | `collision [--worldspace <edid>] [--x n] [--y n] [--radius n]` | center-cell unique-model bhk sweep + production placed collision grid; per cell shapes/tris/build ms/KiB, void cells, aggregate filters/failures; fail acceptance gaps |
@@ -216,7 +217,8 @@ Implementation notes:
 `tools/probe.sh` (POSIX sh): env-gated smoke run against the local install —
 default `/Volumes/data/steam/steamapps/common/Skyrim Special Edition`, override via
 `OPENSKY_DATA_ROOT`. Install absent -> `[INFO]` + exit 0 (CI safe). Checks: `vfs ls`
-finds meshes; `record 0x3C` decodes Tamriel (UESP "Skyrim Mod:FormIDs"); `cell`
+finds meshes; `record 0x3C` decodes Tamriel (UESP "Skyrim Mod:FormIDs");
+`gmst movement` reports walk/run/step values and sources; `cell`
 summary; `actor` requires zero unresolved ACHR template+visual chains in the default
 3x3 block, then `actor --npc Heimskr` must report skeleton, parts + FaceGen path;
 `collision --radius 2` gates placed 5x5 collision; `nif`/`dds` inspect first listed

@@ -119,6 +119,7 @@ nonisolated struct CameraPoseSnapshot: Equatable {
 @MainActor
 protocol CameraControlProviding: AnyObject {
     var cameraPose: CameraPoseSnapshot { get }
+    var movementConfiguration: PlayerMovementConfiguration { get }
     /// Settable so fly/walk is reachable from the sidebar. The `G` key stays as
     /// an accelerator over the same renderer state, per docs/tools/app-ui.md:
     /// no dev behaviour reachable only by an unadvertised keystroke.
@@ -128,6 +129,10 @@ protocol CameraControlProviding: AnyObject {
 }
 
 extension CameraControlProviding {
+    var movementConfiguration: PlayerMovementConfiguration {
+        .synthetic
+    }
+
     /// Default implementation so every consumer formats the pose identically;
     /// a conformer that overrode it would let two readouts of the same camera
     /// disagree.

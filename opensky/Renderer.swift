@@ -225,7 +225,8 @@ final class Renderer: NSObject {
         scene: RenderScene? = nil,
         camera: SceneCamera? = nil,
         input: CameraInputState? = nil,
-        timeOfDay: Float = 13
+        timeOfDay: Float = 13,
+        movementConfiguration: PlayerMovementConfiguration = .synthetic
     ) throws {
         guard let device = view.device else { throw RendererError.deviceUnavailable }
         self.device = device
@@ -270,7 +271,7 @@ final class Renderer: NSObject {
         let resolvedCamera = camera ?? .demo
         self.camera = resolvedCamera
         freeFlyCamera = FreeFlyCamera(framing: resolvedCamera)
-        walkController = WalkController(cameraPosition: freeFlyCamera.position)
+        walkController = Self.makeWalkController(freeFlyCamera, movementConfiguration)
         (self.timeOfDay, self.input) = (timeOfDay, input)
         frameUniformBuffer = try Self.makeFrameUniformBuffer(device: device)
         let rings = try Self.makeSceneRings(device: device, scene: self.scene)
@@ -298,6 +299,15 @@ final class Renderer: NSObject {
         frameStats = FrameStats(device: device)
 
         super.init()
+    }
+}
+
+extension Renderer {
+    fileprivate static func makeWalkController(
+        _ camera: FreeFlyCamera,
+        _ configuration: PlayerMovementConfiguration
+    ) -> WalkController {
+        WalkController(cameraPosition: camera.position, configuration: configuration)
     }
 }
 

@@ -83,14 +83,21 @@ final class CameraSection: PanelSectionViewController {
             return
         }
         let pose = provider.cameraPose
+        let movement = provider.movementConfiguration
         statsLabel.stringValue = String(
             format: """
             Position: %.1f, %.1f, %.1f
             Yaw: %.1f deg  Pitch: %.1f deg
             Cell: %d, %d
+            Walk: %.1f units/s (%@)
+            Run: %.1f units/s (%@)
+            Step: %.1f units (%@)
             """,
             pose.position.x, pose.position.y, pose.position.z,
-            pose.yawDegrees, pose.pitchDegrees, pose.cell.x, pose.cell.y
+            pose.yawDegrees, pose.pitchDegrees, pose.cell.x, pose.cell.y,
+            movement.walkSpeed.value, movement.walkSpeed.source,
+            movement.runSpeed.value, movement.runSpeed.source,
+            movement.stepHeight.value, movement.stepHeight.source
         )
     }
 

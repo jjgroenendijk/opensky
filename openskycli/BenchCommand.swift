@@ -147,7 +147,8 @@ enum BenchCommand {
         let renderer = try Renderer(
             view: view,
             scene: cellScene.renderScene,
-            camera: SceneCamera.framing(bounds: bounds)
+            camera: SceneCamera.framing(bounds: bounds),
+            movementConfiguration: .synthetic
         )
         let result = try renderer.renderOffscreenSustained(
             width: options.size.width,
@@ -198,7 +199,11 @@ enum BenchCommand {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(view: view, scene: RenderScene(instances: []))
+        let renderer = try Renderer(
+            view: view,
+            scene: RenderScene(instances: []),
+            movementConfiguration: .synthetic
+        )
         renderer.worldAudio = benchAudioEngine()
         let result = try CellStreamingFlyBenchmark.run(
             renderer: renderer,
@@ -254,7 +259,11 @@ enum BenchCommand {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(view: view, scene: RenderScene(instances: []))
+        let renderer = try Renderer(
+            view: view,
+            scene: RenderScene(instances: []),
+            movementConfiguration: .synthetic
+        )
         renderer.worldAudio = benchAudioEngine()
         let result = try CellStreamingWalkBenchmark.run(
             renderer: renderer,

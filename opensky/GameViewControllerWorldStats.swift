@@ -23,6 +23,10 @@ extension GameViewController: CameraControlProviding {
         get { renderer?.movementMode ?? .fly }
         set { renderer?.movementMode = newValue }
     }
+
+    var movementConfiguration: PlayerMovementConfiguration {
+        renderer?.walkController.configuration ?? .synthetic
+    }
 }
 
 extension GameViewController: FrameStatsProviding {

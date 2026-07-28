@@ -85,6 +85,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return { device in
             do {
                 let file = try ESMFile(url: esmURL)
+                let movementConfiguration = PlayerMovementConfiguration.resolve(
+                    store: GameSettingLoader.load(root: root, baseFile: file)
+                )
                 let textures = TextureLibrary(fileSystem: vfs, device: device)
                 let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
                 let builder = CellSceneBuilder(
@@ -113,7 +116,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     weatherSystem: weather,
                     soundStore: soundStore,
                     aspcStore: aspcStore,
-                    musicStore: musicStore
+                    musicStore: musicStore,
+                    movementConfiguration: movementConfiguration
                 )
             } catch {
                 let reason = String(describing: error)

@@ -23,16 +23,14 @@ nonisolated struct WalkController {
     typealias GroundSampler = (SIMD2<Float>) -> TerrainGroundSample?
     typealias CollisionQuery = CapsuleWorldCollider.CandidateQuery
 
-    static let walkSpeed: Float = 180
-    static let runSpeed: Float = 360
     static let gravity: Float = 1400
     static let maximumSlopeDegrees: Float = 50
     static let fixedTimeStep: Float = 1 / 120
     static let maximumFrameTime: Float = 0.1
     static let groundSnapDistance: Float = 24
-    static let stepHeight: Float = 32
 
     let capsule: PlayerCapsule
+    let configuration: PlayerMovementConfiguration
     private(set) var feetPosition: SIMD3<Float>
     private(set) var verticalVelocity: Float = 0
     private(set) var isGrounded = false
@@ -45,8 +43,13 @@ nonisolated struct WalkController {
         let supportHeight: Float?
     }
 
-    init(cameraPosition: SIMD3<Float>, capsule: PlayerCapsule = .standard) {
+    init(
+        cameraPosition: SIMD3<Float>,
+        capsule: PlayerCapsule = .standard,
+        configuration: PlayerMovementConfiguration = .synthetic
+    ) {
         self.capsule = capsule
+        self.configuration = configuration
         feetPosition = cameraPosition - SIMD3<Float>(0, 0, capsule.eyeHeight)
     }
 
@@ -105,7 +108,8 @@ nonisolated struct WalkController {
 
         let currentPosition = feetPosition
         let currentXY = SIMD2<Float>(currentPosition.x, currentPosition.y)
-        let distance = (input.boost ? Self.runSpeed : Self.walkSpeed) * dt
+        let speed = input.boost ? configuration.runSpeed.value : configuration.walkSpeed.value
+        let distance = speed * dt
         var candidateXY = currentXY + direction * distance
         if isBlockedSlope(at: candidateXY, direction: direction, sampleGround: sampleGround) {
             candidateXY = currentXY

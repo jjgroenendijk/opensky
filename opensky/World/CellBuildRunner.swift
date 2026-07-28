@@ -59,6 +59,11 @@ nonisolated protocol WeatherProviding {
     var weatherSystem: WeatherSystem? { get }
 }
 
+/// Optional immutable player-movement tuning resolved from active GMST data.
+nonisolated protocol MovementConfigurationProviding {
+    var movementConfiguration: PlayerMovementConfiguration { get }
+}
+
 /// Optional decoded audio-record stores a provider can expose (M9.2.2).
 /// GameViewController pulls these off the provider to construct the world
 /// sound director alongside the audio engine. WeatherStore arrives via
@@ -75,7 +80,7 @@ nonisolated protocol AudioDataProviding {
 /// entirely on the runner's serial queue -- never touched from the main
 /// thread -- which is why they need no internal locking.
 nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding,
-    AudioDataProviding
+    AudioDataProviding, MovementConfigurationProviding
 {
     let builder: CellSceneBuilder
     let worldspaceEditorID: String
@@ -87,6 +92,8 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     var aspcStore: AcousticSpaceStore?
     /// Music record index (MUSC/MUST); nil when the plugin has no music data.
     var musicStore: MusicRecordStore?
+    /// GMST-derived walk/run values plus explicit documented fallbacks.
+    var movementConfiguration: PlayerMovementConfiguration = .synthetic
 
     func buildCell(at coordinate: CellCoordinate, state: WorldStateSnapshot) throws -> CellScene {
         try builder.buildScene(
