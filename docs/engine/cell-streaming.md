@@ -356,6 +356,16 @@ stream frames avg 3.15 ms / p95 5.79 ms; actor phase avg 433.09 ms / p95
 (ChillfurrowFarm): 1 actors (1 drawn). Actor acceptance detail:
 [actor records](/formats/actors.md).
 
+Issue #56 follow-up, 2026-07-28: a time-profile of the cold fly path found actor
+body and FaceGen loads spending most sampled queue time decompressing DDS
+payloads through the Debug Swift LZ4 loop. The [BSA reader](/formats/bsa.md)
+now sends independent raw blocks to Apple's system decoder while preserving
+the clean-room linked-block path. With identical 55 = 28 rendered + 27
+disabled + 0 failed actor accounting, the 35-cell Debug run moved from
+577.33/3093.60/7218.41 ms actor average/p95/max to
+378.44/2224.46/4427.78 ms. The actor p95 gate returns from 4500 to 3000 ms;
+cold rig, clip, body, and FaceGen loads remain inside the measured phase.
+
 These are debug-build verification numbers, not general hardware promise. Hard gates: 1
 GiB fly benchmark, 3.5 GiB in-process real test, 4 GiB external watchdog, final settled
 footprint <1.6x initial.

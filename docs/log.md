@@ -4,6 +4,22 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-28
 
+* **Faster actor streaming through system LZ4 (issue #56)**: a cold Debug fly-path
+  time profile found actor body and FaceGen model loads spending most sampled queue time
+  decompressing DDS payloads through the clean-room Swift LZ4 loop. `LZ4` now parses the
+  standard frame descriptor, sends independent raw blocks to Apple's
+  `COMPRESSION_LZ4_RAW`, and retains the existing Swift decoder for linked blocks whose
+  matches need prior output. The `BD` block maximum and BSA decompressed size still bound
+  every decode; corrupt blocks and output overflow remain typed failures. A real archive
+  sweep found 64,601 independent and 1,036 linked compressed entries across the two mesh
+  and nine texture archives. The unchanged 35-cell benchmark kept exact 55 = 28 rendered
+  plus 27 disabled and 0 failed actor accounting while average/p95/max fell from
+  577.33/3093.60/7218.41 ms to 378.44/2224.46/4427.78 ms. The default actor p95 gate is
+  back to 3000 ms. Synthetic tests cover both decoder paths, linked cross-block matches,
+  corrupt independent data, and size overflow. Documented in
+  [BSA archive](/formats/bsa.md), [actor records](/formats/actors.md),
+  [cell streaming](/engine/cell-streaming.md), and [CLI dev tool](/tools/cli.md).
+
 * **Walk-path CLI cleanup (issue #49)**: `bench --walk-path` now rejects the sustained-only
   `--frames` option and every fly-only footprint/build/update budget instead of parsing and
   ignoring them. The walk benchmark configuration no longer carries an unread worldspace

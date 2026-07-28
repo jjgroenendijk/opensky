@@ -329,3 +329,11 @@ Interior gate: ChillfurrowFarm reports 1 actors (1 drawn). Frame budget:
 5,614 stream frames avg 3.15 ms / p95 5.79 ms @ 640x360; actor build p95 2190.79 ms
 vs 3000 ms budget; footprint peak 702 / 1,024 MB cap. Generated render captures stay
 local; accounting + frame metrics are the repository acceptance evidence.
+
+Issue #56 follow-up, 2026-07-28: the serial actor phase was dominated by DDS
+payload decompression from BSA archives, not resolver indexing or Metal upload.
+System-decoding independent LZ4 blocks reduced the 35-cell Debug actor phase
+from 577.33 ms average / 3093.60 ms p95 / 7218.41 ms maximum to
+378.44 / 2224.46 / 4427.78 ms. Actor accounting remained exactly 55 discovered
+= 28 rendered + 27 disabled + 0 failed, including 11 animated + 17
+reason-tagged static fallbacks. The default p95 gate is 3000 ms again.
