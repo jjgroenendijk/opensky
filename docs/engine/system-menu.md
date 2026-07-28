@@ -111,11 +111,16 @@ result back for the panel. The invoke log ends at 0 unhandled of 36.
 not this movie. The panel prints both lists so the difference stays visible rather than
 being quietly conflated. Skyrim's real in-game system menu is `quest_journal.swf`.
 
-One measured gap remains open. The populated `Main` state stages its content off the
-viewport, so the list reads back correctly but draws nothing. Arrow keys now drive the list:
-the focus path handed to `StartMenu.handleInput` is filtered to clips that define
-`handleInput`, so the `MainListHolder` between `Menu_mc` and `List_mc` no longer swallows the
-key (#229). Both are recorded in the acceptance evidence; the staging gap is tracked as #230.
+`InitExtensions` installs the shared `MovieClip.Lock` helper, which positions each clip
+against Scaleform's `Stage.visibleRect` and `Stage.safeRect`. Both reads used to return
+`undefined`; numeric coercion turned their edges into zero, and
+`MenuHolder.Lock("BR")` moved the ancestor from the stage's lower-right corner to `(0, 0)`,
+leaving its negative authored children outside the viewport. `Stage` now publishes separate
+full-frame visible and safe rectangles (OpenSky has no overscan crop or safe-area inset), so
+the populated `Main` state changes 5,522 pixels over an empty frame. Arrow keys drive the
+same visible list: the focus path handed to `StartMenu.handleInput` is filtered to clips that
+define `handleInput`, so the `MainListHolder` between `Menu_mc` and `List_mc` no longer
+swallows the key (#229). The staging fix is #230.
 
 The renderer owns exactly one SWF layer. The system menu takes it over from the
 gameplay HUD while the movie is up and hands it back on Resume — the same handoff

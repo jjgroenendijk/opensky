@@ -665,7 +665,9 @@ reimplemented from public ActionScript 2 API documentation and observed bytecode
   because the layout path renders one font and color per field.
 - **`Stage`** — a plain object, not a constructor: `width` and `height` in pixels from the
   movie's own `FrameSize` (OpenSky letterboxes rather than reflowing, so the stage never
-  resizes), `scaleMode`, `align`, `showMenu`, and a listener list.
+  resizes), separate `visibleRect` and `safeRect` objects covering that full frame,
+  `scaleMode`, `align`, `showMenu`, and a listener list. The two Scaleform GFx rectangles
+  carry `x`, `y`, `width`, and `height`; OpenSky has no overscan crop or safe-area inset.
 - **`Selection`** — `setFocus` and `getFocus` round-trip a focus target, and the range
   queries answer -1. Caret and range behavior still need a text-input implementation and are
   not there.
@@ -1025,7 +1027,7 @@ capability, and calls `InvalidateData()`.
 | Stage | Faults | Unimplemented | Draw calls | Rows | Changed pixels |
 |---|---|---|---|---|---|
 | Bring-up + 5 ticks | 0 | 0 | 152 | none (authored placeholders) | 4,285 over empty |
-| `activate` + 30 ticks | 0 | 0 | 89 | `$NEW`, `$LOAD`, `$CREDITS`, `$QUIT` | 0 over empty |
+| `activate` + 30 ticks | 0 | 0 | 89 | `$NEW`, `$LOAD`, `$CREDITS`, `$QUIT` | 5,522 over empty |
 
 Answering the outbound side takes six names: `myLog`, `PlaySound`, `PlayOKSound`,
 `StartState`, and `currentState` as `GameDelegate` host functions, plus `gfxProcessSound`
@@ -1036,14 +1038,16 @@ at **0 unhandled of 36**, and 44 distinct names remain missing, all CLIK cosmeti
 (`_listeners` 50, `height`/`width` 40 each, `invalidationIntervalID` 40, `apply` 33,
 `CLIK_loadCallback` 17).
 
-Two things were measured here. One is still open: the populated `Main` state stages its
-content off the viewport, so the list is addressable and reads back correctly but renders
-nothing — the last row of the table. The other is closed: arrow keys through `handle()` were
-consumed without effect, because `routeToMenuHandler` handed `StartMenu.handleInput` the raw
-display chain `[MainListHolder, List_mc]` and the holder clip defines no `handleInput`. The
-focus path is now filtered to clips that define `handleInput` before it reaches the movie, so
-`[List_mc]` drives selection and dispatches the row's outbound call. Issue #229; the staging
-gap is #230.
+Both measured failures are closed. `InitExtensions` installs the shared `MovieClip.Lock`
+helper, whose `BR` branch positions `/MenuHolder` from `Stage.visibleRect` and
+`Stage.safeRect`. OpenSky exposed neither Scaleform GFx rectangle, so the reads became
+`undefined`, numeric coercion made every edge zero, and the helper moved the holder from
+`(1280, 720)` to `(0, 0)`. Publishing separate full-frame rectangles keeps the holder at the
+stage's lower-right corner and makes the last table row visible (issue #230). Arrow keys
+through `handle()` were consumed without effect because `routeToMenuHandler` handed
+`StartMenu.handleInput` the raw display chain `[MainListHolder, List_mc]` and the holder clip
+defines no `handleInput`. Filtering the focus path to clips that define `handleInput` sends
+`[List_mc]`, which drives selection and dispatches the row's outbound call (issue #229).
 
 Finally, a scope finding worth recording: `startmenu.swf` is Skyrim's **title screen**. Its
 1,674-string pool contains no `$SETTINGS`, and its rows are Continue/New/Load/Creations/

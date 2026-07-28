@@ -4,6 +4,19 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-28
 
+* **Visible driven start menu (issue #230)**: `startmenu.swf` reaches its populated `Main`
+  state through `InitExtensions`, which installs the shared `MovieClip.Lock` helper.
+  OpenSky's `Stage` omitted the Scaleform GFx `visibleRect` and `safeRect` objects that
+  helper reads; their `undefined` values coerced to zero, so `MenuHolder.Lock("BR")` moved
+  the holder from `(1280, 720)` to `(0, 0)` and left its negative authored children outside
+  the viewport. `Stage` now exposes separate, full-frame rectangles with pixel-space `x`,
+  `y`, `width`, and `height` fields. Synthetic tests pin both objects and their independence,
+  while the real-data acceptance gate now requires the driven frame to change pixels. The
+  measured menu remains at 0 faults, 0 unimplemented opcodes, 89 draw calls, 0 skipped
+  items, and 0 unhandled invokes of 36; its `$NEW`, `$LOAD`, `$CREDITS`, `$QUIT` state now
+  changes 5,522 pixels over empty. Documented in
+  [system menu](/engine/system-menu.md) and [AS2 runtime](/engine/as2-runtime.md).
+
 * **Faster actor streaming through system LZ4 (issue #56)**: a cold Debug fly-path
   time profile found actor body and FaceGen model loads spending most sampled queue time
   decompressing DDS payloads through the clean-room Swift LZ4 loop. `LZ4` now parses the

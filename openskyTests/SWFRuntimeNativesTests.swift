@@ -120,6 +120,18 @@ struct SWFRuntimeNativesTests {
         #expect(stage.lookup("width")?.property.value == .number(400))
         #expect(stage.lookup("height")?.property.value == .number(300))
         #expect(stage.lookup("scaleMode")?.property.value == .string("noScale"))
+        for name in ["visibleRect", "safeRect"] {
+            let rectangle = try #require(
+                stage.lookup(name)?.property.value.objectValue
+            )
+            #expect(rectangle.lookup("x")?.property.value == .number(0))
+            #expect(rectangle.lookup("y")?.property.value == .number(0))
+            #expect(rectangle.lookup("width")?.property.value == .number(400))
+            #expect(rectangle.lookup("height")?.property.value == .number(300))
+        }
+        let visible = stage.lookup("visibleRect")?.property.value.objectValue
+        let safe = stage.lookup("safeRect")?.property.value.objectValue
+        #expect(visible !== safe)
     }
 
     @Test func selectionRecordsFocusWithoutImplementingIt() throws {
