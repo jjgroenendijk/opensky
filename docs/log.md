@@ -2,6 +2,42 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-07-28
+
+* **Native save container (issue #161)**: `.osav`, OpenSky's own save format, lives in
+  `opensky/Formats/Save/`. It is not Bethesda's `.ess` and is not derived from it, so
+  [OpenSky save container](/formats/opensky-save.md) is the specification rather than a
+  reverse-engineering note; OpenSky never writes an `.ess`, and read-only import of one
+  stays a separate far-future item. A short header carries the `OSAV` magic, a
+  `formatVersion`, and a length-delimited metadata block holding the creation timestamp and
+  the writing build's version — the timestamp is injected by the caller so the encoder never
+  reads the clock, and trailing metadata fields a newer build adds are skipped rather than
+  mistaken for the next structure. Everything after that metadata is deterministic:
+  `OpenSkySaveEncoder` writes entries in the `WorldStateSnapshot`'s canonical `ReferenceKey`
+  order and components in ascending on-disk tag order, so two sessions that reached the same
+  end state through different mutation orders produce byte-identical tails. The body is a
+  load-order fingerprint — per plugin the on-disk name plus the three TES4 HEDR statistics,
+  which the Creation Kit rewrites on every edit and which therefore answer "is this the same
+  plugin" without hashing archives — followed by tagged, length-prefixed chunks: `GALC` for
+  the `GeneratedReferenceAllocator` position and `RDLT` for one delta per dirty reference.
+  The two tolerance rules point in opposite directions on purpose: an unknown chunk is
+  skipped by its declared length, while an unknown component kind is rejected, because a
+  missing chunk is a degraded but honest world and a delta that quietly lost components is a
+  wrong one. `SaveReader` bounds every read and turns each underlying failure into
+  `OpenSkySaveError.truncated(context:)` naming the structure, every declared count is
+  checked against the bytes remaining before storage is reserved, each chunk payload decodes
+  through its own cursor so a corrupt inner count cannot walk into the next chunk, and a
+  boolean byte must be exactly 0 or 1. Fingerprint verification is kept out of decoding so a
+  save can be inspected on a machine with no game install. `OpenSkySaveIO` writes to
+  `~/Library/Application Support/OpenSky/Saves/` — never the repo, never the game install —
+  through a temp file beside the destination, an explicit `synchronize()`, and a `rename()`,
+  so a crash mid-write leaves the previous save intact rather than a file of zeroes.
+  Encoding goes through a new `BinaryWriter`, the deterministic little-endian counterpart to
+  `BinaryReader`, which future format writers share. Documented in
+  [OpenSky save container](/formats/opensky-save.md); the 61 tests use synthetic in-code
+  fixtures only, across `OpenSkySaveRoundTripTests`, `OpenSkySaveCorruptionTests`,
+  `OpenSkySaveEntryCorruptionTests`, `OpenSkySaveFingerprintTests` and `OpenSkySaveIOTests`.
+
 ## 2026-07-27
 
 * **Streaming integration for mutated references (issue #160)**: cell streaming now honours

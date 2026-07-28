@@ -1,0 +1,316 @@
+---
+type: File Format
+title: OpenSky native save container (.osav)
+description: Byte layout of OpenSky's own .osav save file, its determinism and version rules.
+tags: [format, save, io, world-state, determinism]
+timestamp: 2026-07-28T00:00:00Z
+---
+
+# OpenSky native save container
+
+`.osav` is the file OpenSky writes when it saves a session. It carries the
+[world-state snapshot](/engine/runtime-state.md) — every runtime deviation from what the
+plugins say — plus the load order the session was running, and enough header metadata to
+describe the file to a user before anything is restored.
+
+This format is OpenSky's own. It is not Bethesda's `.ess`, it is not derived from `.ess`,
+and nothing in it is reverse engineered, so this document is the specification rather than
+a description of someone else's. There is no external reference to cite. OpenSky never
+writes a Bethesda save file; read-only import of an existing `.ess` is a separate,
+far-future item and shares none of the layout below.
+
+Implementation: `opensky/Formats/Save/`. All integers are little-endian, floats are IEEE
+754 single precision written as their little-endian bit pattern, and strings are a `UInt16`
+byte length followed by that many UTF-8 bytes. The file extension is `osav`.
+
+## Contents
+
+* Design goals
+* Header — the non-deterministic region
+* The deterministic region
+* Load-order fingerprint
+* Chunks
+* `RDLT` entry layout
+* Version policy
+* Defensive decoding
+* Where saves live and how they are written
+* Future options
+* Verification
+
+## Design goals
+
+Three properties drove every choice in the layout.
+
+Deterministic bytes. Everything after the header metadata is a pure function of the
+`WorldStateSnapshot` and the load-order fingerprint. Two sessions that reached the same end
+state through different mutation orders write byte-identical tails, which makes a
+round-trip test an exact byte comparison rather than a structural one and makes a
+corruption report reproducible.
+
+Forward and backward tolerance, applied asymmetrically. The body is a stream of tagged,
+length-prefixed chunks, so a build that does not recognise a chunk skips it and still loads
+everything else. Component kinds inside a chunk get the opposite treatment: an unrecognised
+one is an error, because a delta that silently lost components produces a world that is
+quietly wrong rather than one that is merely missing a feature.
+
+Defensive decoding. Every declared count is checked against the bytes that actually remain
+before any storage is reserved for it, so a corrupt four-byte length is a thrown error
+instead of a multi-gigabyte allocation.
+
+## Header — the non-deterministic region
+
+| offset | type   | field          | notes                                     |
+| ------ | ------ | -------------- | ----------------------------------------- |
+| 0x00   | char4  | magic          | ASCII `OSAV`                              |
+| 0x04   | uint32 | formatVersion  | 1 — the only version this build reads     |
+| 0x08   | uint32 | metadataLength | byte length of the metadata block below   |
+| 0x0C   | bytes  | metadata       | `metadataLength` bytes                    |
+
+The metadata block holds, in order:
+
+| type   | field             | notes                                          |
+| ------ | ----------------- | ---------------------------------------------- |
+| uint64 | creationTimestamp | seconds since the unix epoch                    |
+| string | appVersion        | uint16 byte length plus UTF-8 build version     |
+
+The timestamp is injected by the caller rather than read from the clock inside the encoder.
+Determinism tests must be able to produce the same bytes twice, and a save that is replayed
+or migrated should keep its original creation time rather than acquiring a new one.
+
+The block is length-delimited, and the decoder stops reading after `appVersion` no matter
+how many bytes are left inside it. Trailing bytes a newer build added are skipped rather
+than mistaken for the start of the fingerprint, so metadata can grow without a
+`formatVersion` bump.
+
+## The deterministic region
+
+Everything after the metadata bytes — the fingerprint and every chunk — is the deterministic
+region. Three rules produce that guarantee:
+
+* Entries come out of `WorldStateSnapshot` in its canonical `ReferenceKey` order, which the
+  store establishes by sorting its dirty keys, not by mutation order.
+* Components within an entry are written in ascending on-disk tag order, and the decoder
+  rejects any other order, so a given delta has exactly one legal spelling.
+* Nothing in the encoder consults the clock, a hash seed, or dictionary iteration order.
+
+Only the header depends on `SaveCreationMetadata`, so two saves of the same world state
+taken at different times differ only in their first few dozen bytes.
+
+## Load-order fingerprint
+
+The fingerprint records the plugins the session was running, in load order.
+
+| type   | field       | notes                                             |
+| ------ | ----------- | ------------------------------------------------- |
+| uint32 | pluginCount | number of entries that follow                     |
+
+Then `pluginCount` entries of:
+
+| type   | field        | notes                                                  |
+| ------ | ------------ | ------------------------------------------------------ |
+| string | name         | plugin file name, spelled as it appears on disk        |
+| uint32 | hedrVersion  | bit pattern of the HEDR version `Float` (0.94/1.7/1.71) |
+| uint32 | recordCount  | bit pattern of the HEDR record and group count `Int32`  |
+| uint32 | nextObjectID | HEDR next object ID                                    |
+
+The three statistics come straight from the plugin's TES4 HEDR field (see
+[FormID and TES4 header](/formats/formid.md)). The Creation Kit rewrites them whenever the
+file changes, so together they are a cheap "is this the same plugin as before" check that
+costs nothing compared with hashing whole archives.
+
+`OpenSkySaveFile.verifyFingerprint(against:)` compares the saved list against the installed
+one position by position and throws `fingerprintMismatch` naming the first difference.
+File-name case is ignored, matching how plugin names are compared everywhere else in the
+engine — `ReferenceKey` already normalises to lowercase. Order matters and a reordered load
+order is a mismatch rather than an accepted file: plugin-defined `ReferenceKey`s are
+name-based and survive reordering, but records, masters, and object IDs do not.
+
+Verification is deliberately not part of decoding. Decoding needs nothing but the file, so
+an inspector, a test, or a repair tool can read a save on a machine with no game install at
+all, and the app can show what a save contains before explaining why it cannot be loaded.
+
+A real `plugins.txt` load order does not exist in the engine yet. The fingerprint is
+list-shaped now so that it is already the right shape when it does.
+
+## Chunks
+
+The rest of the file is a sequence of chunks, repeating until end of file.
+
+| type   | field         | notes                                       |
+| ------ | ------------- | ------------------------------------------- |
+| char4  | tag           | four ASCII bytes                            |
+| uint32 | payloadLength | byte length of the payload that follows     |
+| bytes  | payload       | `payloadLength` bytes                       |
+
+A chunk whose declared length runs past the end of the file is
+`chunkBoundsViolation(tag:)`. A chunk whose tag this build does not know is skipped using
+that declared length, which is what makes a newer build's save loadable in an older one.
+
+Version 1 defines two chunks.
+
+`GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
+any other size is `invalidValue`.
+
+| type   | field                 | notes                                              |
+| ------ | --------------------- | -------------------------------------------------- |
+| uint64 | nextGeneratedSequence | restores `GeneratedReferenceAllocator`              |
+
+A restored session resumes handing out generated keys from this position, so a new key
+cannot collide with one already in the save. A file with no `GALC` chunk restores an
+allocator that has handed out nothing, which is sequence 1.
+
+`RDLT` — runtime reference deltas, one entry per dirty reference.
+
+| type   | field      | notes                                     |
+| ------ | ---------- | ----------------------------------------- |
+| uint32 | entryCount | number of entries that follow             |
+| bytes  | entries    | `entryCount` entries, layout below        |
+
+The snapshot's journal `sequence` is not saved. It is session-local bookkeeping, and a
+decoded snapshot always reports sequence 0.
+
+## `RDLT` entry layout
+
+Each entry is a reference key, a cell location, and a component list.
+
+| type   | field          | notes                                             |
+| ------ | -------------- | ------------------------------------------------- |
+| key    | key            | the reference this delta applies to               |
+| cell   | cell           | where the reference lived when it was dirtied     |
+| uint8  | componentCount | components that follow                            |
+| bytes  | components     | `componentCount` components in ascending tag order |
+
+Reference key, used both here and for `lastActivator` inside an activation component:
+
+| tag  | kind      | payload                                                     |
+| ---- | --------- | ----------------------------------------------------------- |
+| 0    | plugin    | string plugin name, then uint32 `objectID`                   |
+| 1    | generated | uint64 allocator sequence                                    |
+
+Cell location:
+
+| tag  | kind     | payload                                                          |
+| ---- | -------- | ---------------------------------------------------------------- |
+| 0    | absent   | none                                                             |
+| 1    | exterior | uint32 x and uint32 y, bit patterns of the `Int32` cell coordinates |
+| 2    | interior | uint32 raw `FormID` of the cell                                  |
+
+Components. Each is a `UInt8` tag followed by its payload, and tags must strictly ascend
+within an entry. Strict ascent makes "at most one value per slot" checkable in a single
+pass and keeps the encoder's output the only accepted spelling of a given delta.
+
+| tag  | component   | payload                                                            |
+| ---- | ----------- | ------------------------------------------------------------------ |
+| 0    | enableState | one byte, exactly 0 or 1                                            |
+| 1    | transform   | position x/y/z, rotation x/y/z, then scale — seven float32          |
+| 2    | activation  | uint32 `activationCount`, `isOpen` byte, `hasLastActivator` byte,   |
+|      |             | then a reference key when that byte is 1                            |
+| 3    | deletion    | one byte, exactly 0 or 1                                            |
+
+Tag values are written out case by case in the code rather than derived from the enum's
+declaration order, because declaration order is a source-level detail that may change while
+these byte values may not.
+
+## Version policy
+
+A new chunk tag is additive and needs no `formatVersion` bump. Unknown chunks are skipped by
+their declared length, so an older build reading a newer save loses that chunk's feature and
+nothing else.
+
+A bump is required for a change to an existing chunk's payload layout, for a new component
+kind, and for a changed component payload. Unknown component kinds are rejected rather than
+skipped, so an older build cannot degrade gracefully through one; it would have to guess how
+many bytes to step over, and guessing wrong desynchronises the rest of the entry stream.
+
+The asymmetry is deliberate. A missing whole chunk is a degraded but honest world — the
+build plainly does not have the feature. A delta that silently lost some of its components
+is a world that looks correct and is not, which is the worse failure to ship.
+
+`formatVersion` is checked for exact equality on load. A file declaring anything other than
+the version this build implements fails with `unsupportedVersion(found:)` rather than being
+parsed hopefully.
+
+## Defensive decoding
+
+All decoding goes through `SaveReader`, a bounds-checked cursor that converts every
+underlying reader failure into `OpenSkySaveError.truncated(context:)` with the name of the
+structure being read, so callers only ever switch over one error type.
+
+* Every declared count is validated against the bytes actually remaining, divided by the
+  smallest possible size of one element, before any array reserves capacity.
+* A chunk payload is decoded through a fresh cursor over just that payload, so a corrupt
+  count inside a chunk cannot walk into the next chunk's bytes.
+* A string length past the end of the data is a truncation, never an allocation — the bytes
+  are read before they are interpreted.
+* A byte the format defines as boolean must be exactly 0 or 1. Treating `0x7F` as `true`
+  would hide a writer or decoder bug behind a plausible-looking world.
+
+The error cases, from `OpenSkySaveError.swift`:
+
+| case                                              | meaning                                          |
+| ------------------------------------------------- | ------------------------------------------------ |
+| `badMagic`                                        | the first four bytes are not ASCII `OSAV`        |
+| `unsupportedVersion(found:)`                      | the file declares a layout version this build does not implement |
+| `truncated(context:)`                             | the file ends inside a structure that required more bytes; `context` names that structure |
+| `invalidCount(chunk:count:remaining:)`            | a declared element count cannot fit in the bytes that remain |
+| `invalidValue(context:)`                          | a value the format does not define — a non-boolean boolean byte, an unknown tag, or out-of-order component kinds |
+| `chunkBoundsViolation(tag:)`                      | a chunk's declared payload length runs past the end of the file |
+| `fingerprintMismatch(reason:)`                    | the save was written against a different load order than the one installed now |
+
+Every case is `Equatable`, so a test can assert the exact failure a given corruption
+produces rather than merely that something threw.
+
+Encoding, by contrast, is total and does not throw: every input the engine can produce has a
+byte representation. The one lossy edge is a string longer than 64 KiB, which is cut back to
+the last whole UTF-8 scalar that fits. A plugin file name or build version that long is
+already nonsense, and losing the save over it would be worse than losing the tail.
+
+## Where saves live and how they are written
+
+Saves go in the user's Application Support directory,
+`~/Library/Application Support/OpenSky/Saves/`, created on demand. Never the repository, and
+never the game install: the install is read-only external input, and a save is the user's
+data rather than ours.
+
+`OpenSkySaveIO.writeAtomically(_:to:)` writes in three steps, each of which is there for a
+specific failure:
+
+1. Write to a temp file created beside the destination, in the same directory. Beside,
+   because a rename only replaces atomically within a single filesystem, and a temp file in
+   `/tmp` may well be on another one.
+2. `synchronize()` the handle before closing, forcing the contents to disk. Skipping this
+   keeps the rename atomic but allows the directory metadata to land before the file
+   contents after a power loss, which is the classic way to end up with a file full of
+   zeroes.
+3. `rename()` over the destination. A rename within one filesystem replaces the target in a
+   single step, so a crash or a full disk mid-write leaves the previous save intact instead
+   of a half-written one.
+
+Any failure removes the temp file, so a failed save leaves neither a damaged destination nor
+litter behind.
+
+## Future options
+
+Compression is a deliberate non-feature for now. Saves at this stage hold deltas rather than
+whole worlds, so they are small, and an uncompressed file is directly inspectable in a hex
+editor when a determinism test disagrees with itself.
+
+The game clock and global variables land later as their own additive chunks, which under the
+version policy above costs no `formatVersion` bump.
+
+Read-only import of a Bethesda `.ess` save is a separate item and shares nothing with this
+layout. OpenSky will never write one.
+
+## Verification
+
+Unit tests use synthetic in-code fixtures only; no game content is involved, and none is
+needed, because the format is entirely our own. They cover round-trip equality, byte-level
+determinism across differing mutation orders, unknown-chunk skipping, fingerprint
+comparison including reordering and case, and one test per `OpenSkySaveError` case driven by
+a targeted corruption.
+
+Related: [Runtime reference identity and world state](/engine/runtime-state.md) for the
+store and snapshot this format serializes, [FormID and TES4 header](/formats/formid.md) for
+the HEDR statistics behind the fingerprint and for the raw FormID in an interior cell
+location, and [ESM/ESP plugin container](/formats/esm.md) for the plugin files the load
+order names.
