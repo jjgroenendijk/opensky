@@ -142,6 +142,11 @@ nonisolated struct MusicTrack {
     /// SNAM — palette children (MUST FormIDs). A null entry is a layer
     /// separator (UESP MUST), so nulls are kept verbatim.
     let tracks: [FormID]
+    /// CTDA conditions gating this track, in record order.
+    let conditions: [Condition]
+    /// CITC, the authored condition count. nil when the field is absent; it can
+    /// disagree with `conditions.count` if a CTDA payload was malformed.
+    let declaredConditionCount: Int?
 
     init(record: ESMRecord) throws {
         guard record.type == "MUST" else {
@@ -162,6 +167,8 @@ nonisolated struct MusicTrack {
         cuePoints = fields.cuePoints
         loopData = fields.loopData
         tracks = fields.tracks
+        conditions = fields.conditions.conditions
+        declaredConditionCount = fields.conditions.declaredCount
     }
 
     private struct MusicTrackFields {
@@ -174,6 +181,7 @@ nonisolated struct MusicTrack {
         var cuePoints: [Float] = []
         var loopData: LoopData?
         var tracks: [FormID] = []
+        var conditions = ConditionList()
 
         mutating func decode(field: ESMField) throws {
             var reader = BinaryReader(field.data)
@@ -198,9 +206,9 @@ nonisolated struct MusicTrack {
             case "SNAM":
                 tracks = try MusicFieldReader.formIDArray(field.data)
             default:
-                // CITC/CTDA conditions are not decoded: OpenSky has no
-                // condition evaluator yet (docs/formats/music.md).
-                break
+                // CITC/CTDA/CIS1/CIS2 go to the shared condition decoder; any
+                // other field streams past untouched.
+                try conditions.decode(field: field)
             }
         }
     }

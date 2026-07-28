@@ -4,6 +4,26 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-28
 
+* **Shared CTDA condition decode (issue #163)**: `Condition` and `ConditionList` in
+  `opensky/Formats/ESM/Records/Condition.swift` decode the 32-byte `CTDA` payload —
+  comparison operator and flag bits out of the packed first byte, a comparison value that
+  is a float or a `GLOB` FormID depending on the use-global flag, the raw on-disk function
+  index, both function parameters kept raw behind typed accessors, run-on type, reference,
+  and parameter #3 — plus the `CITC` count and the `CIS1`/`CIS2` string overrides that
+  attach to the preceding condition. Interpreting the function index and evaluating the
+  result stay with the evaluator (issue #251); this is decode only. `MUST` is the first
+  consumer: `MusicTrack` now exposes `conditions` and `declaredConditionCount` instead of
+  skipping the fields, and every other condition-bearing record type adopts the same
+  accumulator as it lands. `ConditionRealDataTests` swept the shipped `Skyrim.esm` and
+  decoded all 83,759 conditions across 32,501 records with nothing skipped and nothing
+  thrown, which settled two ambiguities the open references leave open: `CITC` counts one
+  condition run rather than every condition in the record (all 142 disagreeing records are
+  `PACK`, where the remaining conditions belong to nested package data), and the reference
+  word is zero in vanilla whenever the run-on type is not Reference, so xEdit marking it
+  ignored is mod tolerance rather than observed behavior. Documented in
+  [conditions](/formats/conditions.md) and
+  [music records](/formats/music.md).
+
 * **Runtime State verification surface and M10.1 state round trip (issue #162)**: the
   `World > Runtime State` panel is now the durable acceptance surface for the whole M10.1
   runtime-state line: Inspect reads the live store's resident/dirty counts, allocator

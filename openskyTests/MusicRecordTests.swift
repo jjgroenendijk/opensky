@@ -163,17 +163,48 @@ struct MusicRecordTests {
         #expect(must.tracks.isEmpty)
     }
 
-    @Test func ignoresConditionFields() throws {
-        // CITC/CTDA are deliberately not decoded; they must not disturb the
-        // fields around them.
+    @Test func decodesConditionFields() throws {
+        // CITC/CTDA route to the shared condition decoder without disturbing
+        // the fields around them (docs/formats/conditions.md).
+        var ctda = Data([0x01, 0, 0, 0]) // equal, OR with the next condition
+        ctda.appendFloat32(1)
+        ctda.appendUInt16(576) // function index, raw on-disk value
+        ctda.appendUInt16(0)
+        ctda.appendUInt32(0x0001_0800) // parameter #1
+        ctda.appendUInt32(0)
+        ctda.appendUInt32(1) // run on Target
+        ctda.appendUInt32(0)
+        ctda.appendUInt32(UInt32(bitPattern: -1))
         let fields = ESMFixture.field("CNAM", uint32(0x6ED7_E048))
             + ESMFixture.field("CITC", uint32(1))
-            + ESMFixture.field("CTDA", Data(count: 32))
+            + ESMFixture.field("CTDA", ctda)
             + ESMFixture.field("ANAM", ESMFixture.zstring("Music\\mus.xwm"))
         let must = try MusicTrack(record: record(ESMFixture.record(
             "MUST", formID: 0x105, data: fields
         )))
         #expect(must.trackType == .singleTrack)
+        #expect(must.trackFileName == "Music\\mus.xwm")
+        #expect(must.declaredConditionCount == 1)
+        #expect(must.conditions.count == 1)
+        let condition = try #require(must.conditions.first)
+        #expect(condition.comparison == .equal)
+        #expect(condition.flags.contains(.or))
+        #expect(condition.comparisonValue == .value(1))
+        #expect(condition.functionIndex == 576)
+        #expect(condition.parameter1.rawValue == 0x0001_0800)
+        #expect(condition.runOn == .target)
+    }
+
+    @Test func skipsMalformedConditionFields() throws {
+        // A wrong-width CTDA is a mod quirk: drop the condition, keep the rest.
+        let fields = ESMFixture.field("CITC", uint32(1))
+            + ESMFixture.field("CTDA", Data(count: 20))
+            + ESMFixture.field("ANAM", ESMFixture.zstring("Music\\mus.xwm"))
+        let must = try MusicTrack(record: record(ESMFixture.record(
+            "MUST", formID: 0x106, data: fields
+        )))
+        #expect(must.conditions.isEmpty)
+        #expect(must.declaredConditionCount == 1)
         #expect(must.trackFileName == "Music\\mus.xwm")
     }
 
