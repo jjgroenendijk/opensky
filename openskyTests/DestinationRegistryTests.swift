@@ -327,6 +327,13 @@ final class FakeWorldProviders: WorldControlProviders {
     var currentMusicStateName = "exploration"
     var currentMusicTrackName: String?
     var lastMusicError: String?
+
+    /// RuntimeStateControlProviding (M10.1.5) is delegated to the panel tests'
+    /// fake so both suites record mutations through one implementation. The
+    /// forwarding conformance lives in the satellite
+    /// `DestinationRegistryRuntimeStateTests.swift`, which keeps this file
+    /// under the length limit.
+    let runtimeState = FakeRuntimeStateProvider()
 }
 
 struct DestinationRegistryTests {
@@ -342,7 +349,7 @@ struct DestinationRegistryTests {
             DestinationRegistry.all.map(\.id)
                 == [
                     "world", "environment", "hudInteraction", "systemMenu",
-                    "audio", "uiLab", "assetBrowser"
+                    "audio", "runtimeState", "uiLab", "assetBrowser"
                 ]
         )
         // Accessibility identifiers are the UI-test contract; pin them literally.
@@ -353,6 +360,7 @@ struct DestinationRegistryTests {
                 "Destination-hudInteraction",
                 "Destination-systemMenu",
                 "Destination-audio",
+                "Destination-runtimeState",
                 "Destination-uiLab",
                 "Destination-assetBrowser"
             ]
@@ -361,7 +369,7 @@ struct DestinationRegistryTests {
             DestinationRegistry.worldInspectors.map(\.id)
                 == [
                     "world", "environment", "hudInteraction", "systemMenu",
-                    "audio", "uiLab"
+                    "audio", "runtimeState", "uiLab"
                 ]
         )
         #expect(DestinationRegistry.defaultDestinationID == "world")

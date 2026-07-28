@@ -14,7 +14,10 @@ struct AppSidebarModelTests {
         #expect(groups.map(\.section) == [.world, .developer, .library])
         #expect(
             groups[0].destinations.map(\.id)
-                == ["world", "environment", "hudInteraction", "systemMenu", "audio"]
+                == [
+                    "world", "environment", "hudInteraction", "systemMenu", "audio",
+                    "runtimeState"
+                ]
         )
         #expect(groups[1].destinations.map(\.id) == ["uiLab"])
         #expect(groups[2].destinations.map(\.id) == ["assetBrowser"])

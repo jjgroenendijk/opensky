@@ -207,6 +207,24 @@ enum PanelComponents {
         comboBox.setAccessibilityIdentifier(identifier)
     }
 
+    /// Wires a free-text entry field's font, width, placeholder, and
+    /// accessibility id. Unlike `configureComboBox` this takes no target or
+    /// action: the fields it serves (a FormID to mutate, a save-slot name) are
+    /// read when the user presses the button beside them, not on every keystroke
+    /// or on end-editing, so an action would fire a mutation the user did not
+    /// ask for.
+    static func configureTextField(
+        _ field: NSTextField,
+        identifier: String,
+        width: CGFloat,
+        placeholder: String? = nil
+    ) {
+        field.font = PanelMetrics.monoFont
+        field.placeholderString = placeholder
+        field.widthAnchor.constraint(equalToConstant: width).isActive = true
+        field.setAccessibilityIdentifier(identifier)
+    }
+
     /// Wires a value label's font + fixed width for readouts beside a slider.
     static func valueLabel(width: CGFloat) -> NSTextField {
         let label = NSTextField(labelWithString: "")

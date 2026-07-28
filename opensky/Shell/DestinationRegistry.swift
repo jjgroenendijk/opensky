@@ -28,7 +28,8 @@ enum SidebarSection: String, CaseIterable {
 typealias WorldControlProviders = AnimationControlProviding & AudioControlProviding
     & CameraControlProviding & FrameStatsProviding & GrassControlProviding
     & HUDControlProviding & ParticleControlProviding & PrecipitationControlProviding
-    & SWFLabControlProviding & SceneStatsProviding & ShadowControlProviding
+    & RuntimeStateControlProviding & SWFLabControlProviding & SceneStatsProviding
+    & ShadowControlProviding
     & SystemMenuControlProviding & TerrainLODControlProviding & UILabControlProviding
     & WeatherControlProviding
 
@@ -222,6 +223,20 @@ enum DestinationRegistry {
             )
         ),
         DestinationDescriptor(
+            id: "runtimeState",
+            title: "Runtime State",
+            section: .world,
+            symbolName: "clock.arrow.circlepath",
+            content: .worldInspector { context in
+                let panel = RuntimeStatePanelViewController()
+                panel.provider = context.providers
+                let providers = context.providers
+                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                return panel
+            },
+            overrides: runtimeStateOverrides
+        ),
+        DestinationDescriptor(
             id: "uiLab",
             title: "UI Lab",
             section: .developer,
@@ -279,6 +294,19 @@ enum DestinationRegistry {
         resetToDefaults: { context in
             SystemMenuSection.resetToDefaults(provider: context.providers)
             SystemMenuSettingsSection.resetToDefaults(provider: context.providers)
+        }
+    )
+
+    /// Only the Reset section carries overridden-ness: a dirty reference is the
+    /// world deviating from plugin data, which is this destination's notion of
+    /// a non-default value, and "Reset all" is what restores it. Inspecting and
+    /// saving change no setting.
+    private static let runtimeStateOverrides = DestinationOverrideActions(
+        isOverridden: { context in
+            RuntimeStateResetSection.isOverridden(provider: context.providers)
+        },
+        resetToDefaults: { context in
+            RuntimeStateResetSection.resetToDefaults(provider: context.providers)
         }
     )
 
