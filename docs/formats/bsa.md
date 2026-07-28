@@ -3,7 +3,7 @@ type: File Format
 title: BSA Archive (v105, Skyrim SE)
 description: On-disk layout of Skyrim SE .bsa archives and how OpenSky reads them.
 tags: [format, archive, io, lz4]
-timestamp: 2026-07-09T00:00:00Z
+timestamp: 2026-07-28T00:00:00Z
 ---
 
 # BSA archive, version 105
@@ -69,11 +69,13 @@ At each record's offset, `packedSize` bytes total:
    counts toward packedSize.
 2. Uncompressed entry -> raw payload.
 3. Compressed entry -> uint32 decompressedSize, then an LZ4 *frame*
-   (magic 0x184D2204), typically linked blocks. OpenSky decodes with a
-   clean-room LZ4 (`opensky/Formats/LZ4.swift`, specs:
-   lz4 Block/Frame format docs on github.com/lz4/lz4). Decoding all blocks
-   into one buffer makes linked-block matches resolve naturally. xxHash
-   checksums are skipped; output validated against decompressedSize instead.
+   (magic 0x184D2204). OpenSky parses the frame descriptor and blocks itself
+   (`opensky/Formats/LZ4.swift`, using the public lz4 Block/Frame format
+   specifications). Independent raw blocks (`FLG` bit 5 set) decode through
+   Apple's `COMPRESSION_LZ4_RAW`; linked blocks retain the clean-room Swift
+   decoder so matches can reach any prior output byte. The `BD` block-maximum
+   code and declared decompressed size bound every system decode. xxHash
+   checksums are skipped; output is validated against decompressedSize instead.
 
 ## Not implemented (yet)
 
@@ -87,3 +89,11 @@ Unit tests: synthetic in-code fixtures (`openskyTests/BSAArchiveTests.swift`).
 Runtime probe 2026-07-09 against vanilla SSE: Misc/Meshes0/Textures0/Interface
 parse (14032/19443/5891/386 files); extracted NIFs start with
 `Gamebryo File Format`, DDS with `DDS`, interface txt readable.
+
+Runtime probe 2026-07-28 across `Skyrim - Meshes0/1.bsa` and
+`Skyrim - Textures0...8.bsa`: all 65,637 compressed entries carried standard
+LZ4 frame magic; 64,601 used independent blocks (`FLG 0x60`) and 1,036 used
+linked blocks (`FLG 0x40`). The full actor-enabled fly benchmark exercised both
+paths with exact asset and actor accounting. System-decoding independent blocks
+reduced actor build average/p95/max from 577.33/3093.60/7218.41 ms to
+378.44/2224.46/4427.78 ms in Debug.

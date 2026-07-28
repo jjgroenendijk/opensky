@@ -47,11 +47,10 @@ enum BenchCommand {
     private static let defaultFlyMaxFrames = 36000
     private static let defaultFootprintCapMB = 1024.0
     private static let defaultCollisionBuildBudgetMS = 750.0
-    /// Debug baseline 2026-07-20: p95 2165 ms over the Whiterun fly path
-    /// (first-load skinned bodies + FaceGen heads dominate) -> 3000 ms
-    /// plus first human cell now decodes the 99-bone rig + idle clips. M6
-    /// probe p95 3083 ms -> 4500 ms keeps ~1.45x Debug headroom.
-    private static let defaultActorBuildBudgetMS = 4500.0
+    /// Independent-block LZ4 acceleration restored the original 3000 ms
+    /// Debug budget while retaining cold rig, clip, body, and FaceGen loads.
+    /// Issue #56 verification p95: 2224 ms over the Whiterun fly path.
+    private static let defaultActorBuildBudgetMS = 3000.0
     /// CPU-only sample/compose/palette refresh; leaves wide Debug headroom.
     private static let defaultAnimationUpdateBudgetMS = 4.0
     /// CPU cost of encodeShadowPass: cascade fit + per-cascade caster culling +

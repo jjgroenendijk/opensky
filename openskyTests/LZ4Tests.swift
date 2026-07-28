@@ -12,9 +12,13 @@ struct LZ4Tests {
         + Data([0x04, 0x00, 0x50]) + Data("XYZQW".utf8)
     private static let samplePlain = Data("abcdabcdabcdXYZQW".utf8)
 
-    private static func frame(blocks: [(Data, uncompressed: Bool)]) -> Data {
+    private static func frame(
+        blocks: [(Data, uncompressed: Bool)],
+        independent: Bool = false
+    ) -> Data {
         var out = Data([0x04, 0x22, 0x4D, 0x18]) // magic, little-endian
-        out.append(contentsOf: [0x40, 0x40, 0x00]) // FLG v01, BD 64K, HC (unchecked)
+        let flg: UInt8 = independent ? 0x60 : 0x40
+        out.append(contentsOf: [flg, 0x40, 0x00]) // v01, 64K blocks, HC unchecked
         for (block, uncompressed) in blocks {
             var size = UInt32(block.count)
             if uncompressed {
@@ -43,6 +47,15 @@ struct LZ4Tests {
 
     @Test func decodesFrameWithCompressedBlock() throws {
         let frame = Self.frame(blocks: [(Self.sampleBlock, uncompressed: false)])
+        let plain = try LZ4.decompressFrame(frame, sizeLimit: Self.samplePlain.count)
+        #expect(plain == Self.samplePlain)
+    }
+
+    @Test func decodesIndependentBlockWithSystemDecoder() throws {
+        let frame = Self.frame(
+            blocks: [(Self.sampleBlock, uncompressed: false)],
+            independent: true
+        )
         let plain = try LZ4.decompressFrame(frame, sizeLimit: Self.samplePlain.count)
         #expect(plain == Self.samplePlain)
     }
@@ -83,6 +96,27 @@ struct LZ4Tests {
         var output: [UInt8] = []
         #expect(throws: LZ4Error.outputOverflow(limit: 4)) {
             try LZ4.decompressBlock(Self.sampleBlock, into: &output, sizeLimit: 4)
+        }
+    }
+
+    @Test func independentBlockOverLimitThrows() {
+        let frame = Self.frame(
+            blocks: [(Self.sampleBlock, uncompressed: false)],
+            independent: true
+        )
+        #expect(throws: LZ4Error.outputOverflow(limit: 4)) {
+            try LZ4.decompressFrame(frame, sizeLimit: 4)
+        }
+    }
+
+    @Test func invalidIndependentBlockThrows() {
+        let invalid = Data([0x11, 0x61, 0x09, 0x00])
+        let frame = Self.frame(
+            blocks: [(invalid, uncompressed: false)],
+            independent: true
+        )
+        #expect(throws: LZ4Error.blockDecodeFailed) {
+            try LZ4.decompressFrame(frame, sizeLimit: 64)
         }
     }
 }
