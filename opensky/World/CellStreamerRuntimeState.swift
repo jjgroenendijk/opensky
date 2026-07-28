@@ -158,6 +158,17 @@ extension CellStreamer {
         core.rebuilding.count
     }
 
+    /// Runtime references retained by the scenes currently owning the view
+    /// (issue #162). An interior owns the view alone when one is loaded, which
+    /// is the same precedence `referenceEntry(key:)` uses, so a lookup that
+    /// succeeds is always counted here.
+    var residentReferenceCount: Int {
+        if let interiorScene {
+            return interiorScene.references.count
+        }
+        return composition.cells.values.reduce(0) { $0 + $1.references.count }
+    }
+
     /// The world state the next dispatched build would run against.
     var currentStateSnapshot: WorldStateSnapshot {
         stateSource()

@@ -34,6 +34,7 @@ byte length followed by that many UTF-8 bytes. The file extension is `osav`.
 * Version policy
 * Defensive decoding
 * Where saves live and how they are written
+* The slot store — `OpenSkySaveStore`
 * Future options
 * Verification
 
@@ -288,6 +289,37 @@ specific failure:
 
 Any failure removes the temp file, so a failed save leaves neither a damaged destination nor
 litter behind.
+
+## The slot store — `OpenSkySaveStore`
+
+Issue #161 (item 10.1.4) adds `OpenSkySaveStore` (`opensky/Formats/Save/OpenSkySaveStore.swift`),
+a slot façade over the codec above so callers name a save by a short slot name rather than
+building a `URL` themselves. It owns one directory — the Saves directory described above, or
+an injected one for tests — and every operation resolves a slot name to `<slot>.osav` inside
+it.
+
+* `save(snapshot:fingerprint:metadata:toSlot:)` encodes a `WorldStateSnapshot`, a load-order
+  fingerprint, and `SaveCreationMetadata`, then writes the result through
+  `OpenSkySaveIO.writeAtomically(_:to:)`.
+* `load(slot:verifyingAgainst:)` reads `<slot>.osav` and decodes it; the fingerprint
+  parameter is optional, so a caller can inspect a save with no install present at all, and
+  when supplied it is checked with the same `verifyFingerprint(against:)` used everywhere
+  else.
+* `listSlots()` enumerates the directory and returns the slot names present, sorted.
+
+Slot names are validated before they ever become a path component: empty, containing a path
+separator, or containing any character outside a small allow-list is rejected as a typed
+`OpenSkySaveStoreError` rather than passed to the filesystem, since a slot name ultimately
+comes from a text field the user can type into
+([the Save section of `World > Runtime State`](/engine/runtime-state.md)).
+`OpenSkySaveStoreError.slotNotFound(_:)` is the other case, raised by `load` when the named
+file does not exist.
+
+`OpenSkySaveStore.fingerprint(forRoot:)` and `fingerprint(forPlugins:)` build the load-order
+fingerprint from a live install: they resolve the plugin load order through
+`PluginLoadOrder` and read each plugin's `PluginHeader.stats` (the same `HEDR` fields the
+[load-order fingerprint](#load-order-fingerprint) section above lists), so a caller never
+hand-assembles a `[SavePluginFingerprint]` from raw TES4 bytes itself.
 
 ## Future options
 

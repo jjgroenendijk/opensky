@@ -177,6 +177,40 @@ final class WorldStateStore {
         }
     }
 
+    // MARK: - Restoring a saved session
+
+    /// Replaces every delta in the store with `snapshot`'s entries and resumes
+    /// the generated-key allocator at `snapshot.nextGeneratedSequence`, which
+    /// is how a decoded `OpenSkySaveFile` becomes live state (issue #162).
+    ///
+    /// Journal semantics: the replay records no entries and does not advance
+    /// sequence numbering, because the mutations it replays already happened,
+    /// in the session that wrote the save. The retained window is cleared
+    /// instead, so the readout does not mix this session's history with a
+    /// restored world it no longer describes. `droppedJournalEntryCount` is
+    /// untouched for the same reason `clearJournal()` leaves it alone.
+    ///
+    /// Because nothing is journalled, `snapshot()` taken straight afterwards
+    /// equals the snapshot passed in: `WorldStateSnapshot` equality covers the
+    /// entries and the allocator position and deliberately ignores `sequence`.
+    ///
+    /// One unattributed mutation is announced through `onMutation` so every
+    /// resident cell rebuilds against the restored state. `CellStreamer` queues
+    /// a rebuild for each resident cell on an unattributed mutation regardless
+    /// of sequence, so the world catches up even though the sequence did not
+    /// move.
+    func restore(from snapshot: WorldStateSnapshot) {
+        deltas = [:]
+        dirtyCountsByCell = [:]
+        for entry in snapshot.entries {
+            deltas[entry.key] = entry.delta
+            adjustCellCount(entry.delta.cell, by: 1)
+        }
+        allocator = GeneratedReferenceAllocator(nextSequence: snapshot.nextGeneratedSequence)
+        changeJournal.removeAll()
+        onMutation?(nil, changeJournal.nextSequence)
+    }
+
     // MARK: - Dirty tracking
 
     /// Number of references deviating from plugin data.

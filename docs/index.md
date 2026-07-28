@@ -72,7 +72,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 * [OpenSky save container](/formats/opensky-save.md) - our own .osav format, not
   Bethesda's: header metadata, load-order fingerprint, tagged chunks and the
-  reference-delta entry layout, determinism and version rules, atomic write.
+  reference-delta entry layout, determinism and version rules, atomic write, and the
+  `OpenSkySaveStore` slot façade + fingerprint builders above it.
 
 ## Engine
 
@@ -135,8 +136,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   RuntimeReferenceIndex, and the mutable WorldStateStore above it: typed component deltas,
   dirty tracking, reset-to-plugin-default, the bounded change journal, the
   deterministic snapshot, how a cell build applies that snapshot to render and
-  collision together, and how a mutation to an already-resident cell reaches the screen
-  through a streamer-driven rebuild.
+  collision together, how a mutation to an already-resident cell reaches the screen
+  through a streamer-driven rebuild, the save/load round trip through OpenSkySaveStore, and
+  the `World > Runtime State` M10.1 acceptance record.
 
 ## Rendering
 
