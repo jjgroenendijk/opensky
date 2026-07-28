@@ -39,6 +39,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Music records (MUSC, MUST)](/formats/music.md) - MUSC playlist flags/priority/
   ducking plus MUST track type, loop and cue data, the CELL/WRLD/REGN music links,
   and the `music\` path rules.
+* [Conditions (CTDA, CITC, CIS1, CIS2)](/formats/conditions.md) - the shared 32-byte
+  condition payload: operator and flag bits, float or GLOB comparison value, raw
+  function index and parameters, run-on types, and the skip-don't-throw decode policy.
 * [Distant LOD](/formats/lod.md) - lodsettings plus BTR/BTO paths and LOD-specific NIF
   blocks, tree LST/BTT layouts, placement rules, full vanilla sweep evidence.
 * [Skyrim INI settings](/formats/ini.md) - read-only decode, file precedence, typed

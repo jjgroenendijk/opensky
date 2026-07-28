@@ -80,8 +80,8 @@ Decoder: `MusicTrack` in the same file.
 | `FNAM` | float array | cue points in seconds | both |
 | `LNAM` | 12-byte struct | float loop begin, float loop end, uint32 loop count | both |
 | `SNAM` | FormID array | child `MUST` links (palette tracks) | both |
-| `CITC` | uint32 | condition count — not decoded | both |
-| `CTDA` | condition | conditions — not decoded | both |
+| `CITC` | uint32 | declared condition count, see [conditions](/formats/conditions.md) | both |
+| `CTDA` | condition | decoded into `MusicTrack.conditions` | both |
 
 `CNAM` is a hashed tag rather than a dense enumeration, so `MusicTrack.TrackType`
 carries an `unknown(UInt32)` case:
@@ -157,9 +157,10 @@ the name of the file that exists — see
 
 ## Not decoded yet
 
-* `MUST` `CITC` + `CTDA` conditions. OpenSky has no condition evaluator, so a
-  conditional track is treated as unconditional. Revisit when the condition
-  system lands.
+* `MUST` conditions are decoded but not evaluated. `CITC` and `CTDA` now land in
+  `MusicTrack.declaredConditionCount` and `MusicTrack.conditions` — see
+  [conditions](/formats/conditions.md) — but OpenSky has no condition evaluator,
+  so a conditional track is still played as if unconditional.
 * `MUSC`/`MUST` have no other Skyrim SE fields; modder-added fields stream past
   untouched.
 * The `LCTN.NAM1` location music link (xEdit `wbDefinitionsTES5.pas`:6506) is
