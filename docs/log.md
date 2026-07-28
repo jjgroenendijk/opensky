@@ -4,6 +4,18 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-28
 
+* **Vanilla sound-category taxonomy (issue #235)**: `SNCT` now decodes editor and
+  localized names, hierarchy links, flags, and static/default volume values.
+  `SoundRecordStore` follows each `SNDR.GNAM -> SNCT.PNAM` chain with cycle protection and
+  maps the four vanilla menu-visible categories: Effects, Voice, Music, and Footsteps.
+  The audio graph keeps its existing master x category x source x fade gain model while
+  the World > Audio panel exposes the four authored category controls; SFX and ambience
+  now use descriptor-authored routing with an Effects fallback for absent or malformed
+  metadata. A read-only Skyrim.esm probe found 18 categories, 13 direct GNAM targets, and
+  exactly four menu-visible nodes. Documented in [sound records](/formats/sound.md),
+  [world audio playback](/engine/audio.md), and
+  [world SFX + ambience](/engine/world-sfx.md).
+
 * **Real vanilla system menu (issue #231)**: `World > System Menu` now loads
   `quest_journal.swf`, not Skyrim's `startmenu.swf` title screen. The bridge opens the
   measured `PageArray[2]` System page, seeds the page/index/focus state normally supplied

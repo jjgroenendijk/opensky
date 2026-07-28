@@ -1,17 +1,24 @@
-// Provisional playback categories for the M9.1 audio graph.
-//
-// The real taxonomy is deliberately deferred: milestone 9.2.1 decodes the game's
-// own `SNDR`/`SDSC` records and reveals which categories vanilla content actually
-// uses, at which point this list is renamed or replaced to match (issue #153,
-// "Decisions settled" item 6). Keep it small and cheap to rename — nothing may
-// persist these raw values or bake them into a file format.
+// User-facing playback categories authored by vanilla SNCT records. These are
+// the four nodes carrying SNCT.FNAM `Should Appear on Menu`; the separate
+// `_AudioCategoryMaster` node remains WorldAudioEngine.masterVolume.
 
 nonisolated enum AudioCategory: String, CaseIterable, Sendable {
-    case music
     case effects
-    case ambience
+    case voice
+    case music
+    case footsteps
 
-    /// Panel label. Capitalized display form of the case name.
+    /// Vanilla SNCT.EDID used when resolving a SNDR.GNAM parent chain.
+    var soundCategoryEditorID: String {
+        switch self {
+        case .effects: "AudioCategorySFX"
+        case .voice: "AudioCategoryVOCGeneral"
+        case .music: "AudioCategoryMUS"
+        case .footsteps: "AudioCategoryFST"
+        }
+    }
+
+    /// SNCT.FULL's English labels, without the translation `$` marker.
     var displayName: String {
         rawValue.prefix(1).uppercased() + rawValue.dropFirst()
     }
@@ -19,5 +26,14 @@ nonisolated enum AudioCategory: String, CaseIterable, Sendable {
     /// Accessibility-identifier fragment (`Audio<Category>VolumeControl`).
     var identifierFragment: String {
         displayName
+    }
+
+    init?(soundCategoryEditorID: String?) {
+        guard let wanted = soundCategoryEditorID?.lowercased() else { return nil }
+        guard
+            let category = Self.allCases.first(where: {
+                $0.soundCategoryEditorID.lowercased() == wanted
+            }) else { return nil }
+        self = category
     }
 }

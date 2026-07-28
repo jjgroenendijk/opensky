@@ -148,6 +148,7 @@ struct SoundRecordTests {
         let resolved = try store.resolve(sound: FormID(0x300))
         #expect(resolved.sound.formID == FormID(0x300))
         #expect(resolved.descriptor.formID == FormID(0x200))
+        #expect(resolved.audioCategory == nil)
         #expect(resolved.filePaths == [
             "sound\\fx\\thunder.wav",
             "sound\\ambient\\rain.xwm",
@@ -188,10 +189,15 @@ struct SoundRecordTests {
         }
     }
 
-    private func soundStore(descriptors: Data, sounds: Data) throws -> SoundRecordStore {
+    private func soundStore(
+        descriptors: Data,
+        sounds: Data,
+        categories: Data = Data()
+    ) throws -> SoundRecordStore {
         let plugin = ESMFixture.tes4()
             + ESMFixture.topGroup("SNDR", contents: descriptors)
             + ESMFixture.topGroup("SOUN", contents: sounds)
+            + ESMFixture.topGroup("SNCT", contents: categories)
         return try SoundRecordStore(file: ESMFile(data: plugin))
     }
 

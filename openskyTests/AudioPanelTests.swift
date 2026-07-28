@@ -127,19 +127,21 @@ struct AudioPanelTests {
         let categoryIDs = panel.outputSection.categoryControls.values
             .map { $0.accessibilityIdentifier() }.sorted()
         #expect(categoryIDs == [
-            "AudioAmbienceVolumeControl", "AudioEffectsVolumeControl",
-            "AudioMusicVolumeControl"
+            "AudioEffectsVolumeControl", "AudioFootstepsVolumeControl",
+            "AudioMusicVolumeControl", "AudioVoiceVolumeControl"
         ])
         // M9.2.4 per-category mute + solo pins.
         let muteIDs = panel.outputSection.muteControls.values
             .map { $0.accessibilityIdentifier() }.sorted()
         #expect(muteIDs == [
-            "AudioAmbienceMuteControl", "AudioEffectsMuteControl", "AudioMusicMuteControl"
+            "AudioEffectsMuteControl", "AudioFootstepsMuteControl",
+            "AudioMusicMuteControl", "AudioVoiceMuteControl"
         ])
         let soloIDs = panel.outputSection.soloControls.values
             .map { $0.accessibilityIdentifier() }.sorted()
         #expect(soloIDs == [
-            "AudioAmbienceSoloControl", "AudioEffectsSoloControl", "AudioMusicSoloControl"
+            "AudioEffectsSoloControl", "AudioFootstepsSoloControl",
+            "AudioMusicSoloControl", "AudioVoiceSoloControl"
         ])
         #expect(panel.outputSection.sectionIdentifier == "audioOutput")
         #expect(panel.sourcesSection.sectionIdentifier == "audioSources")

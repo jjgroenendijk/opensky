@@ -43,19 +43,19 @@ struct AudioPanelMuteSoloTests {
         panel.provider = fake
 
         let music = try #require(panel.outputSection.soloControls[.music])
-        let ambience = try #require(panel.outputSection.soloControls[.ambience])
+        let voice = try #require(panel.outputSection.soloControls[.voice])
         music.state = .on
         music.sendAction(music.action, to: music.target)
         #expect(fake.soloedAudioCategory == .music)
-        #expect(ambience.state == .off)
+        #expect(voice.state == .off)
 
-        ambience.state = .on
-        ambience.sendAction(ambience.action, to: ambience.target)
-        #expect(fake.soloedAudioCategory == .ambience)
+        voice.state = .on
+        voice.sendAction(voice.action, to: voice.target)
+        #expect(fake.soloedAudioCategory == .voice)
         #expect(music.state == .off, "picking a second category must clear the first")
 
-        ambience.state = .off
-        ambience.sendAction(ambience.action, to: ambience.target)
+        voice.state = .off
+        voice.sendAction(voice.action, to: voice.target)
         #expect(fake.soloedAudioCategory == nil)
     }
 
@@ -72,10 +72,10 @@ struct AudioPanelMuteSoloTests {
 
         fake.setAudioCategoryMuted(true, for: .music)
         fake.setAudioCategoryMuted(true, for: .effects)
-        fake.soloedAudioCategory = .ambience
+        fake.soloedAudioCategory = .voice
         panel.outputSection.refreshReadout()
         #expect(Self.readout("AudioStatsLabel", in: panel.view)?
-            .contains("Mute: Music, Effects  Solo: Ambience") == true)
+            .contains("Mute: Effects, Music  Solo: Voice") == true)
     }
 
     /// Mute and solo are destination overrides, and the section reset clears
@@ -85,10 +85,10 @@ struct AudioPanelMuteSoloTests {
         let fake = FakeAudioProvider()
         #expect(!AudioOutputSection.isOverridden(provider: fake))
 
-        fake.setAudioCategoryMuted(true, for: .ambience)
+        fake.setAudioCategoryMuted(true, for: .footsteps)
         #expect(AudioOutputSection.isOverridden(provider: fake))
         AudioOutputSection.resetToDefaults(provider: fake)
-        #expect(!fake.audioCategoryIsMuted(.ambience))
+        #expect(!fake.audioCategoryIsMuted(.footsteps))
 
         fake.soloedAudioCategory = .music
         #expect(AudioOutputSection.isOverridden(provider: fake))

@@ -17,7 +17,7 @@ struct WorldAudioDirectorAmbienceTests {
         director.handleAmbienceContext(Fixture.regionContext)
 
         #expect(engine.sources.count == 1)
-        #expect(engine.sources.first?.category == .ambience)
+        #expect(engine.sources.first?.category == .effects)
     }
 
     @Test func handleAmbienceRetiresPreviousBedOnContextChange() throws {
@@ -62,7 +62,7 @@ struct WorldAudioDirectorAmbienceTests {
 
         director.ambienceEnabled = true
         #expect(engine.sources.count == 1, "re-ticking must restart the bed")
-        #expect(engine.sources.first?.category == .ambience)
+        #expect(engine.sources.first?.category == .effects)
         #expect(director.currentAmbienceDescription != "none")
     }
 

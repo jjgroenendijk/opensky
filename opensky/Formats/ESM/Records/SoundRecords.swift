@@ -4,6 +4,80 @@
 
 import Foundation
 
+/// SNCT sound-category node. Categories form a parent hierarchy; the records
+/// flagged `shouldAppearOnMenu` are the user-facing mixer categories.
+nonisolated struct SoundCategory {
+    struct Flags: OptionSet, Equatable {
+        let rawValue: UInt32
+
+        static let muteWhenSubmerged = Flags(rawValue: 1 << 0)
+        static let shouldAppearOnMenu = Flags(rawValue: 1 << 1)
+    }
+
+    let formID: FormID
+    let editorID: String?
+    let name: LString?
+    let flags: Flags
+    let parent: FormID?
+    let staticVolumeMultiplier: Float?
+    let defaultMenuValue: Float?
+
+    init(record: ESMRecord, localized: Bool) throws {
+        guard record.type == "SNCT" else {
+            throw ESMError.malformed("expected SNCT record, got \(record.type)")
+        }
+        formID = FormID(record.formID)
+
+        var editorID: String?
+        var name: LString?
+        var flags: Flags = []
+        var parent: FormID?
+        var staticVolumeMultiplier: Float?
+        var defaultMenuValue: Float?
+
+        // Field layouts:
+        // https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/SNCT
+        // https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas
+        for field in try record.fields() {
+            var reader = BinaryReader(field.data)
+            switch field.type {
+            case "EDID":
+                editorID = try reader.readZString()
+            case "FULL":
+                name = try LString(field: field, localized: localized)
+            case "FNAM":
+                guard field.data.count == 4 else { continue }
+                flags = try Flags(rawValue: reader.readUInt32())
+            case "PNAM":
+                guard field.data.count == 4 else { continue }
+                let value = try FormID(reader.readUInt32())
+                parent = value.isNull ? nil : value
+            case "VNAM":
+                staticVolumeMultiplier = try Self.readVolume(&reader, size: field.data.count)
+            case "UNAM":
+                defaultMenuValue = try Self.readVolume(&reader, size: field.data.count)
+            default:
+                break
+            }
+        }
+
+        self.editorID = editorID
+        self.name = name
+        self.flags = flags
+        self.parent = parent
+        self.staticVolumeMultiplier = staticVolumeMultiplier
+        self.defaultMenuValue = defaultMenuValue
+    }
+
+    private static func readVolume(
+        _ reader: inout BinaryReader,
+        size: Int
+    ) throws -> Float? {
+        guard size == 2 else { return nil }
+        return try Float(reader.readUInt16()) / Float(UInt16.max)
+    }
+}
+
 nonisolated struct SoundDescriptor {
     enum Looping: Equatable {
         case none
