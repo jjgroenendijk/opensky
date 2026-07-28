@@ -3,7 +3,7 @@ type: Tool
 title: CLI dev tool (openskycli)
 description: Terminal dev entrypoints over engine data, collision, rendering, and probes.
 tags: [tool, cli, dev, probe, rendering]
-timestamp: 2026-07-21T00:00:00Z
+timestamp: 2026-07-28T00:00:00Z
 ---
 
 # CLI dev tool (openskycli)
@@ -63,7 +63,7 @@ only where `--out` points (AGENTS.md Legal & IP).
 | `screenshot --out <file> [--worldspace/--x/--y] [--size WxH] [--zoom f] [--time-of-day 0-24] [--neighbors] [--ui-sample]` | cell scene build + distant LOD -> framing camera -> `Renderer.renderOffscreen` -> PNG; prints load/LOD/draw stats + non-background fraction; `--zoom` (0.1-10) moves eye toward framed center; `--time-of-day` controls procedural sky (default 13); `--neighbors` builds production-size 5x5 (shared libraries) and frames full-cell bounds only; missing cell warns + skips; `--ui-sample` sets `uiScene = .labSample` ([screen-space UI](/rendering/ui.md)) and prints its quad/glyph/dropped/atlas stats; `render` is identical alias |
 | `bench [--worldspace/--x/--y] [--size WxH] [--frames n] [--budget-ms f]` | sustained offscreen render (default 360 frames @ 1280x720) through `Renderer.renderOffscreenSustained` — FrameStats windows + per-frame wall and animation-update times; prints avg/p95/max + fps, exit 1 when avg or p95 misses the budget (default 33.33 ms = 30 fps, todo 2.11 gate) |
 | `bench --fly-path [--worldspace/--x/--y] [--size WxH] [--budget-ms f] [--max-frames n] [--footprint-cap-mb f] [--collision-build-budget-ms f] [--actor-build-budget-ms f] [--animation-budget-ms f] [--shadow-budget-ms f] [--audio-budget-ms f]` | scripted launch-center -> east -> north cell flight through live `CellStreamer`; requires physical-footprint plateau/cap, exact 35-cell build union, zero failed builds, collision-build p95 (default 750 ms), actor-build p95 (default 4500 ms; includes cold rig/clip decode), exact/reason-tagged actor + animation accounting, animation-update avg/p95 (default 4 ms), shadow-update avg/p95 (default 14 ms), audio-update avg/p95 (default 0.5 ms), selected rainy weather, updated actor bones, live world particles + rain, shadow casters, drawn grass with zero hard-budget drops, and frame avg/p95 budget; prints living-system peaks, build/update budgets, per-cell accounting, shadow culling + grass instancing |
-| `bench --walk-path [--size WxH] [--budget-ms f] [--max-frames n] [--audio-budget-ms f] [--out file]` | fixed M4 production walk from Tamriel `(6,-2)` to Chillfurrow Farm `(7,-3)`, stair ascent, interior floor crossing + paired exterior return; gates timeout, grounding/penetration, destination/build errors, active-physics avg/p95, audio-update avg/p95 (default 0.5 ms); optional final PNG |
+| `bench --walk-path [--size WxH] [--budget-ms f] [--max-frames n] [--audio-budget-ms f] [--out file]` | fixed M4 production walk from Tamriel `(6,-2)` to Chillfurrow Farm `(7,-3)`, stair ascent, interior floor crossing + paired exterior return; gates timeout, grounding/penetration, destination/build errors, active-physics average (default 33.33 ms), build-aware p95 (Debug 66.67 ms, Release 33.33 ms), and audio-update avg/p95 (default 0.5 ms); explicit `--budget-ms` is strict for both frame metrics; optional final PNG |
 
 `cell`/`screenshot`/`render` default to the first-render cell
 ([decision](/decisions/first-render-cell.md), constants in
@@ -205,8 +205,11 @@ Implementation notes:
   fixed-step `WalkController`, streamed terrain/static collision, serial scene builds + door
   transitions. Bounded sidesteps avoid small placed obstacles without clipping/teleporting.
   Any timeout, fall-through, unresolved penetration, wrong door/CELL/return pose, failed
-  cell/door build, <16-unit stair gain, short interior crossing, or active-physics avg/p95
-  over budget exits 1.
+  cell/door build, <16-unit stair gain, short interior crossing, or active-physics timing
+  over budget exits 1. The default average budget is one 30 fps interval in every build.
+  Release p95 uses the same interval; Debug p95 allows two intervals for synchronous
+  offscreen scheduler/runtime variance. Passing `--budget-ms` applies that value strictly to
+  both metrics.
 
 ## Probe harness (make probe)
 
@@ -235,5 +238,5 @@ p95, exact actor/animation accounting, reason-tagged failures, 4 ms animation-up
   accounting lines plus one per-cell line for each of the 35 touched cells, echoing
   explained failures, asserts the `shadow culling` line reports culled casters, and
   requires nonzero `grass instancing` draws with zero budget drops);
-`bench --walk-path` runs M4's 640x360
-physics/route gate + writes `logs/probe-walk-path.png`. Full output -> `logs/probe.log`.
+`bench --walk-path` runs M4's 640x360 physics/route gate with the build-aware default frame
+budgets + writes `logs/probe-walk-path.png`. Full output -> `logs/probe.log`.

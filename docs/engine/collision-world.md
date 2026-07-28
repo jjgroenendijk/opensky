@@ -58,7 +58,8 @@ route at 640x360 measured 15.90/29.69 ms.
 Repeated Debug fly-path runs during 4.5 measured unpartitioned p95 552.57 ms and partitioned
 p95 533.67-635.78 ms after earlier 450-465 ms runs. Build budget moves from 500 to 700 ms to
 cover observed utility-queue scheduler variance while retaining a measured p95 ceiling;
-active physics keeps its separate 33.33 ms avg/p95 gate.
+active physics keeps its separate 33.33 ms average gate. Its p95 gate is 33.33 ms in Release
+and 66.67 ms in Debug; see [terrain walk mode](/engine/walk-mode.md) for the variance policy.
 
 Index is per cell, not one global tree. `CellSceneComposition.collisionCandidates` queries
 all resident cell BVHs so a capsule can overlap both sides of a streamed seam. While inside,

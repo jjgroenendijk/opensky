@@ -8,7 +8,7 @@ extension BenchCommand {
     static func reportWalkPath(
         result: CellStreamingWalkBenchmarkResult,
         size: (width: Int, height: Int),
-        budget: Double,
+        frameBudget: WalkBenchmarkFrameBudget,
         audioBudget: Double
     ) {
         let render = result.physicsRender
@@ -19,9 +19,10 @@ extension BenchCommand {
         )
         print(String(
             format: "[INFO] %d active physics frames @ %dx%d: avg %.2f ms (%.1f fps), "
-                + "p95 %.2f ms, max %.2f ms, budget %.2f ms",
+                + "p95 %.2f ms, max %.2f ms, avg/p95 budgets %.2f/%.2f ms",
             render.frameMS.count, size.width, size.height, avg, fps,
-            render.percentileMS(95), render.frameMS.max() ?? 0, budget
+            render.percentileMS(95), render.frameMS.max() ?? 0,
+            frameBudget.averageMS, frameBudget.percentile95MS
         ))
         print(String(
             format: "[INFO] exterior stair gain %.2f; interior crossing %.2f; "

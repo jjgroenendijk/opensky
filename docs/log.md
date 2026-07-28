@@ -4,6 +4,18 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-28
 
+* **Stable walk-path timing policy (issue #48)**: the production route keeps its active-
+  physics average at one 30 fps interval in every build and keeps Release p95 at the same
+  33.33 ms ceiling. Debug p95 may occupy two intervals (66.67 ms) because the synchronous
+  offscreen benchmark includes debug-runtime and scheduler variance; an explicit
+  `--budget-ms` remains strict for both metrics. This preserves the shipping performance
+  claim and catches sustained Debug regressions without making an occasional second-interval
+  tail fail the local probe. The derived `physicsRender` now filters every per-frame timing
+  array and drops the full-run `FrameStats` window summaries, whose 120-frame windows cannot
+  truthfully describe the active-only sample. Synthetic tests pin Debug, Release, override,
+  rejection, and filtering behavior. Documented in
+  [terrain walk mode](/engine/walk-mode.md) and [CLI dev tool](/tools/cli.md).
+
 * **Fail-loud collision partition accounting (issue #46)**: broadphase partitioning now
   returns cached leaves together with a decode-failure count. A wholly degenerate geometry
   contributes no logical shape or estimated bytes, while an invalid leaf in a large
