@@ -72,13 +72,17 @@ weather is forced.
 
 `WeatherSystem` holds a `from`/`to` weather pair and a 0-1 `transitionProgress`. A reroll or
 a forced timed change settles the current visual into `from`, sets the new `to`, and resets
-progress to 0. `update(deltaTime:hour:)` advances progress by real `deltaTime / duration`
-(smoothstepped for the blend), and at 1 collapses `from` onto `to`.
+progress to 0. `update(deltaTime:hour:elapsedGameHours:)` advances progress by real
+`deltaTime / duration` (smoothstepped for the blend), and at 1 collapses `from` onto `to`.
 
-Auto reroll is driven off the time-of-day input, not real time: each `update` accumulates
-the forward change in `hour` (midnight-wrapped) and rerolls every `rerollGameHours`
-(6 game-hours). A static clock therefore never auto-rerolls — deterministic for tests and
-for a paused sky.
+Auto reroll is driven off real elapsed game time: each `update` accumulates
+`elapsedGameHours` — supplied by the renderer from the [game clock](/engine/game-clock.md)'s
+own motion since the previous frame — and rerolls every `rerollGameHours` (6 game-hours).
+The pre-clock wrap heuristic that reconstructed elapsed hours from frame-to-frame deltas of
+the scrubbed hour is gone (issue #164). A forward scrub still ages the weather (capped at
+one day per step) because the clock genuinely moved; a backward scrub ages nothing; and a
+clock that never advances — offscreen renders, the CLI, a paused sim — elapses zero hours
+and never auto-rerolls, deterministic for tests and for a paused sky.
 
 `transitionsPaused` stops only cross-fade progress. A forced target may still replace the
 pending target at progress 0; weather resolution, renderer frames, and precipitation particle
@@ -167,10 +171,13 @@ Sidebar path `World > Environment > Weather` (`EnvironmentPanelViewController`),
   `SnowWeatherControl`): force stable data-driven acceptance presets with timed transitions.
 * Pause transitions (`WeatherTransitionsPausedControl`): freezes only weather blend progress;
   readout appends `paused`. Renderer + precipitation playback continue for inspection.
-* Time-of-day slider (`TimeOfDayControl`, 0-24 h) + `TimeOfDayStatsLabel` HH:MM readout: drives
-  `Renderer.timeOfDay` live — the "time transitions in-app" surface, and an A/B of the
-  time-of-day keyframe blend. Persisted via `TimeOfDaySettings` (UserDefaults trio, mirrors
-  `ShadowQualitySettings`; fallback 13:00), applied at renderer creation.
+* Time-of-day slider (`TimeOfDayControl`, 0-24 h) + `TimeOfDayStatsLabel` HH:MM readout:
+  scrubs the [game clock](/engine/game-clock.md)'s hour live through `Renderer.timeOfDay`
+  (issue #164: with game data loaded the write routes through the `GameHour` global, so it
+  journals and keeps the clock the single source of truth) — the "time transitions in-app"
+  surface, and an A/B of the time-of-day keyframe blend. Persisted via `TimeOfDaySettings`
+  (UserDefaults trio, mirrors `ShadowQualitySettings`; fallback 13:00), seeding the clock's
+  start hour at renderer creation.
 * Readout: current weather, transition blend %, wind speed/heading.
 
 Every control carries an accessibility identifier for UI tests; focus returns to the World
@@ -213,7 +220,8 @@ Rendered evidence stays gitignored under `logs/` because it contains game-derive
 * `WeatherRuntimeTests` (synthetic): time-of-day weights peak/sum/wrap, resolved blend
   endpoints + monotonicity, fog day/night blend, wind blend, region priority/override +
   climate-fallback selection, deterministic + weighted pick, stable precipitation presets,
-  and the WeatherSystem instant/timed/pause transition machine.
+  the WeatherSystem instant/timed/pause transition machine, and the elapsed-game-hours
+  reroll cadence (a static clock never rerolls; accumulated hours reroll at 6).
 * `WeatherGlobalChanceTests` (synthetic): the CLMT WLST chance global — authored chance
   without a resolver, plugin default replacing it, a mutated global shifting both the weight
   and the deterministic pick, a negative global clamping to zero, and

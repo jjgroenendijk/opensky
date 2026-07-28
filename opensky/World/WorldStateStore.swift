@@ -71,6 +71,19 @@ final class WorldStateStore {
     /// `GlobalResolution` from here instead.
     var onGlobalMutation: ((UInt64) -> Void)?
 
+    /// Redirect for writes to the five clock-owned time globals (issue #164).
+    ///
+    /// When set, `setGlobal(_:formID:defaults:)` on `GameHour`,
+    /// `GameDaysPassed`, `GameDay`, `GameMonth` or `GameYear` moves the game
+    /// clock instead of recording an override — one source of truth, no
+    /// stored value to drift from the projection. The handler applies the
+    /// write and returns the value the global projected before it, or nil to
+    /// decline (no clock attached), which falls back to a plain override.
+    /// Redirected writes journal through the globals ring but do not fire
+    /// `onGlobalMutation`: the clock's motion is already continuous for its
+    /// consumers, and firing would reroll the weather on every scrub tick.
+    var onTimeGlobalWrite: ((GameClock.TimeGlobal, Float) -> Float?)?
+
     /// - Parameters:
     ///   - journalCapacity: retained change-journal entries; see
     ///     `WorldStateJournal.defaultCapacity`.
@@ -229,7 +242,9 @@ final class WorldStateStore {
     }
 
     /// Writes a raw number to the global `id` names, taking the declared type
-    /// and the session-stable key from `defaults`.
+    /// and the session-stable key from `defaults`. A write to a clock-owned
+    /// time global redirects into the game clock via `onTimeGlobalWrite`
+    /// instead of recording an override (issue #164).
     ///
     /// - Returns: false when `defaults` defines no such global, as well as when
     ///   the write is a no-op.
@@ -237,6 +252,17 @@ final class WorldStateStore {
     func setGlobal(_ raw: Float, formID id: FormID, defaults: GlobalStore) -> Bool {
         guard let global = defaults.global(id), let key = defaults.key(for: id) else {
             return false
+        }
+        if
+            let editorID = global.editorID,
+            let timeGlobal = GameClock.TimeGlobal(editorID: editorID),
+            let previous = onTimeGlobalWrite?(timeGlobal, raw)
+        {
+            let oldValue = GlobalValue(type: global.valueType, rawValue: previous)
+            let newValue = GlobalValue(type: global.valueType, rawValue: raw)
+            guard oldValue != newValue else { return false }
+            changeJournal.recordGlobal(key: key, oldValue: oldValue, newValue: newValue)
+            return true
         }
         return setGlobal(raw, type: global.valueType, for: key)
     }
@@ -282,9 +308,13 @@ final class WorldStateStore {
 
     /// The lookup seam conditions (#251), the game clock (#164) and weather
     /// chance selection read global values through: this session's overrides
-    /// over `defaults`' plugin values.
-    func globalResolution(defaults: GlobalStore?) -> GlobalResolution {
-        GlobalResolution(defaults: defaults, overrides: globalValues)
+    /// over `defaults`' plugin values. Passing `clock` projects the five
+    /// time globals from it; a consumer reading time builds a fresh
+    /// resolution, because the projection captures the clock at this moment.
+    func globalResolution(
+        defaults: GlobalStore?, clock: GameClock? = nil
+    ) -> GlobalResolution {
+        GlobalResolution(defaults: defaults, overrides: globalValues, clock: clock)
     }
 
     // MARK: - Restoring a saved session

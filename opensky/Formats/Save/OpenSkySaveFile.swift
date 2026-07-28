@@ -21,6 +21,26 @@ nonisolated struct OpenSkySaveFile: Equatable, Sendable {
     /// Allocator resumed at the saved position, so a restored session hands
     /// out generated keys that cannot collide with saved ones.
     let allocator: GeneratedReferenceAllocator
+    /// Game clock at save time (issue #164), nil when the file carries no
+    /// `CLOK` chunk — a pre-clock save — which restores the vanilla-start
+    /// clock.
+    let clock: GameClock?
+
+    init(
+        formatVersion: UInt32,
+        metadata: SaveCreationMetadata,
+        fingerprint: [SavePluginFingerprint],
+        snapshot: WorldStateSnapshot,
+        allocator: GeneratedReferenceAllocator,
+        clock: GameClock? = nil
+    ) {
+        self.formatVersion = formatVersion
+        self.metadata = metadata
+        self.fingerprint = fingerprint
+        self.snapshot = snapshot
+        self.allocator = allocator
+        self.clock = clock
+    }
 
     /// Checks the saved load order against the one currently installed.
     ///

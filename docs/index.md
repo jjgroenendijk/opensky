@@ -135,6 +135,10 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   CELL/REGN/WRLD precedence chain, the derived exploration/town/interior states,
   palette expansion and flag handling, the shipped-file `.xwm` resolution the
   vanilla `.wav` track names need, and the crossfading music director.
+* [Game clock and calendar](/engine/game-clock.md) - timescale-driven game time over the
+  Tamriel calendar: the deterministic GameClock value, the clock-owns-time authority rule
+  for the vanilla time globals, weather's elapsed-game-hours feed, the CLOK save chunk,
+  and the fixed-clock offscreen/CLI story.
 * [Runtime reference identity and world state](/engine/runtime-state.md) - session-stable
   ReferenceKey identity over plugin and generated references, the per-cell
   RuntimeReferenceIndex, and the mutable WorldStateStore above it: typed component deltas,

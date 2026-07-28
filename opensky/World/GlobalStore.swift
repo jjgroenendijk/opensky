@@ -124,28 +124,49 @@ nonisolated final class GlobalStore: Sendable {
 nonisolated struct GlobalResolution: Sendable {
     private let defaults: GlobalStore
     private let overrides: [ReferenceKey: GlobalValue]
+    /// Game clock the five vanilla time globals project from (issue #164).
+    /// When set, `GameHour`/`GameDaysPassed`/`GameDay`/`GameMonth`/`GameYear`
+    /// answer from the clock — before any override, so a stale override can
+    /// never shadow the clock. The projection captures the clock at
+    /// construction: a consumer reading time builds a fresh resolution.
+    /// `TimeScale` is not projected; it stays an ordinary global.
+    private let clock: GameClock?
 
     static let empty = GlobalResolution(defaults: .empty, overrides: [:])
 
-    init(defaults: GlobalStore?, overrides: [ReferenceKey: GlobalValue] = [:]) {
+    init(
+        defaults: GlobalStore?,
+        overrides: [ReferenceKey: GlobalValue] = [:],
+        clock: GameClock? = nil
+    ) {
         self.defaults = defaults ?? .empty
         self.overrides = overrides
+        self.clock = clock
     }
 
     /// Resolution over a snapshot's globals, for a consumer running off the
     /// main actor where the live store is unreachable.
-    init(defaults: GlobalStore?, snapshot: WorldStateSnapshot) {
+    init(defaults: GlobalStore?, snapshot: WorldStateSnapshot, clock: GameClock? = nil) {
         var overrides: [ReferenceKey: GlobalValue] = [:]
         overrides.reserveCapacity(snapshot.globals.count)
         for entry in snapshot.globals {
             overrides[entry.key] = entry.value
         }
-        self.init(defaults: defaults, overrides: overrides)
+        self.init(defaults: defaults, overrides: overrides, clock: clock)
     }
 
     /// Current value of the global `id` names, or nil when no global does.
     func value(for id: FormID) -> GlobalValue? {
         guard let global = defaults.global(id) else { return nil }
+        if
+            let clock, let editorID = global.editorID,
+            let timeGlobal = GameClock.TimeGlobal(editorID: editorID)
+        {
+            return GlobalValue(
+                type: global.valueType,
+                rawValue: clock.projectedValue(timeGlobal)
+            )
+        }
         guard let key = defaults.key(for: id), let override = overrides[key] else {
             return global.defaultValue
         }

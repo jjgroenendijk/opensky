@@ -27,8 +27,9 @@ nonisolated final class WeatherSystem {
 
     // MARK: Tuning constants (documented in docs/engine/weather.md)
 
-    /// Auto reroll cadence in game-hours, accumulated from the time-of-day
-    /// input. Chosen for a visible-but-not-frantic churn on a dev clock.
+    /// Auto reroll cadence in game-hours, accumulated from the game clock's
+    /// elapsed hours. Chosen for a visible-but-not-frantic churn on a dev
+    /// clock.
     static let rerollGameHours: Float = 6
     /// Fallback transition seconds when a weather has no DATA Trans Delta.
     static let defaultTransitionSeconds: Float = 10
@@ -52,7 +53,6 @@ nonisolated final class WeatherSystem {
     private var transitionProgress: Float = 1
     private var transitionDuration: Float = WeatherSystem.defaultTransitionSeconds
     private var gameHoursSinceRoll: Float = 0
-    private var lastHour: Float?
     /// Cached resolve at the last update — recomputed only on update().
     private(set) var resolvedWeather: ResolvedWeather?
     /// Freezes only weather cross-fade progress. Time-of-day resolution and
@@ -143,12 +143,17 @@ nonisolated final class WeatherSystem {
         beginTransition(to: weather, transition: transition)
     }
 
-    /// Advances the transition by real `deltaTime` seconds and accumulates
-    /// reroll game-hours from the change in `hour`, then recomputes the
-    /// resolved blend. Cheap: two resolves + one lerp.
-    func update(deltaTime: Float, hour: Float) {
+    /// Advances the transition by real `deltaTime` seconds and the reroll
+    /// cadence by `elapsedGameHours` — real game hours off the game clock
+    /// (issue #164), replacing the old hour-delta wrap heuristic — then
+    /// recomputes the resolved blend at `hour`. A clock that never advances
+    /// elapses zero hours and so never auto-rerolls, which keeps forced
+    /// weather deterministic for tests and offscreen renders.
+    func update(deltaTime: Float, hour: Float, elapsedGameHours: Float = 0) {
         advanceTransition(deltaTime: max(0, deltaTime))
-        accumulateGameHours(hour: hour)
+        if elapsedGameHours.isFinite, elapsedGameHours > 0 {
+            gameHoursSinceRoll += elapsedGameHours
+        }
         if forced == nil, gameHoursSinceRoll >= Self.rerollGameHours {
             gameHoursSinceRoll = 0
             reroll(startTransition: true)
@@ -165,18 +170,6 @@ nonisolated final class WeatherSystem {
         if transitionProgress >= 1 {
             fromWeather = toWeather
         }
-    }
-
-    private func accumulateGameHours(hour: Float) {
-        defer { lastHour = hour }
-        guard let last = lastHour else { return }
-        var delta = hour - last
-        // Forward-wrap: a decrease means the clock rolled past midnight (or was
-        // scrubbed forward). Clamp into a single day to bound scrub jumps.
-        if delta < 0 {
-            delta += 24
-        }
-        gameHoursSinceRoll += simd_clamp(delta, 0, 24)
     }
 
     private func reroll(startTransition: Bool) {

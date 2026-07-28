@@ -4,6 +4,19 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-28
 
+* **Game clock + calendar (issue #164)**: `GameClock` replaces the scrubbed time-of-day
+  float — one `Double` of game seconds since the calendar epoch, advanced per frame as
+  wall delta times the `TimeScale` global (read through the #165 seam, vanilla default
+  20, clamped 0-10000) and derived into hour/day/month/year over the UESP-cited Tamriel
+  calendar (17th of Last Seed, 4E 201 start). Authority rule: the clock owns time — the
+  five vanilla time globals project from it on read via `GlobalResolution(clock:)`, and a
+  `setGlobal` on one of them redirects into the clock, journalling through the globals
+  ring without storing an override. `Renderer.timeOfDay` became a projection of the
+  clock, menu pause freezes game time through the existing `FrameSimClock`, the weather
+  runtime now consumes real elapsed game hours (the `accumulateGameHours` wrap heuristic
+  is deleted), offscreen/CLI renders hold a fixed clock, and the clock persists in the
+  additive `CLOK` save chunk (absent chunk restores the vanilla start). New page
+  [engine/game-clock.md](/engine/game-clock.md).
 * **GLOB records + runtime globals (issue #165)**: `Global` decodes the GLOB record — EDID,
   the FNAM type character (`s` short, `l` long, `f` float), FLTV, and the 0x40 constant
   header flag — with the layout's one trap handled explicitly: FLTV is a float32 whatever

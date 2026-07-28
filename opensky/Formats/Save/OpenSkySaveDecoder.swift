@@ -22,6 +22,9 @@ nonisolated enum OpenSkySaveDecoder {
         /// file with no `GALC` chunk restores an allocator that has handed
         /// out nothing.
         var nextGeneratedSequence: UInt64 = 1
+        /// Absent `CLOK` chunk (issue #164) means the vanilla-start clock,
+        /// which is also what a save written before that chunk existed means.
+        var clock: GameClock?
     }
 
     static func decode(_ data: Data) throws -> OpenSkySaveFile {
@@ -47,7 +50,8 @@ nonisolated enum OpenSkySaveDecoder {
                 globals: body.globals,
                 sequence: 0
             ),
-            allocator: GeneratedReferenceAllocator(nextSequence: body.nextGeneratedSequence)
+            allocator: GeneratedReferenceAllocator(nextSequence: body.nextGeneratedSequence),
+            clock: body.clock
         )
     }
 
@@ -130,9 +134,29 @@ nonisolated enum OpenSkySaveDecoder {
             body.entries = try OpenSkySaveEntryDecoder.decodeEntries(payload)
         case OpenSkySaveFormat.ChunkTag.globalValues:
             body.globals = try OpenSkySaveEntryDecoder.decodeGlobals(payload)
+        case OpenSkySaveFormat.ChunkTag.clock:
+            body.clock = try decodeClock(payload)
         default:
             break // Unknown chunk: skipped by its declared length.
         }
+    }
+
+    /// `CLOK` payload: one `Float64` bit pattern of the clock's total game
+    /// seconds. A non-finite or negative value is corruption, not a clock.
+    private static func decodeClock(_ payload: Data) throws -> GameClock {
+        guard payload.count == MemoryLayout<UInt64>.size else {
+            throw OpenSkySaveError.invalidValue(
+                context: "CLOK payload is \(payload.count) bytes, expected 8"
+            )
+        }
+        var payloadReader = SaveReader(payload)
+        let seconds = try Double(bitPattern: payloadReader.uint64("CLOK total game seconds"))
+        guard seconds.isFinite, seconds >= 0 else {
+            throw OpenSkySaveError.invalidValue(
+                context: "CLOK total game seconds is \(seconds), expected a finite value >= 0"
+            )
+        }
+        return GameClock(totalGameSeconds: seconds)
     }
 
     /// Rejects a declared element count that cannot possibly fit in the bytes

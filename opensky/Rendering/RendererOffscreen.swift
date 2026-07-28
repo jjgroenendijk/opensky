@@ -173,8 +173,9 @@ extension Renderer {
             updateAnimations(deltaTime: simDelta)
         }
         // Weather resolves from the current time-of-day each frame; forced
-        // weather (tests) stays deterministic because reroll is off and the
-        // fixed hour accumulates no game-hours.
+        // weather (tests) stays deterministic because the offscreen path never
+        // advances the game clock, so no game-hours elapse and auto reroll
+        // never fires (issue #164).
         updateWeather(deltaTime: advanceAnimation ? simDelta : 0)
         if advanceAnimation {
             updateParticles(deltaTime: simDelta)

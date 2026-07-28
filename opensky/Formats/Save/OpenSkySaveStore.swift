@@ -118,13 +118,15 @@ nonisolated struct OpenSkySaveStore {
         snapshot: WorldStateSnapshot,
         fingerprint: [SavePluginFingerprint],
         metadata: SaveCreationMetadata,
+        clock: GameClock? = nil,
         toSlot slot: String
     ) throws -> URL {
         let destination = try url(forSlot: slot)
         let data = OpenSkySaveEncoder.encode(
             snapshot: snapshot,
             fingerprint: fingerprint,
-            metadata: metadata
+            metadata: metadata,
+            clock: clock
         )
         try OpenSkySaveIO.writeAtomically(data, to: destination)
         return destination

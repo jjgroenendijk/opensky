@@ -16,10 +16,13 @@ nonisolated enum OpenSkySaveEncoder {
     /// tag order, and nothing consults the clock or a hash seed. Only the
     /// header region depends on `metadata`, so two saves of the same state
     /// taken at different times share an identical tail.
+    /// `clock` is optional so pre-clock call sites keep compiling; nil writes
+    /// no `CLOK` chunk, which decodes as the vanilla-start clock.
     static func encode(
         snapshot: WorldStateSnapshot,
         fingerprint: [SavePluginFingerprint],
-        metadata: SaveCreationMetadata
+        metadata: SaveCreationMetadata,
+        clock: GameClock? = nil
     ) -> Data {
         var writer = BinaryWriter()
         writeHeader(metadata: metadata, into: &writer)
@@ -39,6 +42,11 @@ nonisolated enum OpenSkySaveEncoder {
                 writeKey(entry.key, into: &payload)
                 payload.writeUInt8(entry.value.type.saveTag)
                 payload.writeFloat32(entry.value.value)
+            }
+        }
+        if let clock {
+            writeChunk(tag: OpenSkySaveFormat.ChunkTag.clock, into: &writer) { payload in
+                payload.writeUInt64(clock.totalGameSeconds.bitPattern)
             }
         }
         return writer.data

@@ -115,6 +115,7 @@ extension GameViewController: RuntimeStateControlProviding {
                 snapshot: worldState.snapshot(),
                 fingerprint: runtimeStatePluginFingerprint(),
                 metadata: metadata,
+                clock: renderer?.gameClock,
                 toSlot: slot
             )
             runtimeState.lastSaveOutcome = .saved(slot: slot)
@@ -137,6 +138,10 @@ extension GameViewController: RuntimeStateControlProviding {
                 slot: slot, verifyingAgainst: try? runtimeStatePluginFingerprint()
             )
             worldState.restore(from: file.snapshot)
+            // Absent CLOK chunk (a pre-clock save) restores the vanilla-start
+            // clock; setting `gameClock` also resets the weather's
+            // elapsed-hours mark so the date jump ages no weather.
+            renderer?.gameClock = file.clock ?? GameClock()
             runtimeState.lastSaveOutcome = .loaded(slot: slot)
         } catch {
             runtimeState.lastSaveOutcome = .failed(

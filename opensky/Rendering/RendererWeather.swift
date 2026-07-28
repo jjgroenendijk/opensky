@@ -16,13 +16,19 @@ extension Renderer {
     /// Advances the weather runtime (transition + reroll accumulation) and
     /// caches this frame's resolved weather. No weather system -> the cache
     /// stays nil and the renderer behaves exactly as before (procedural sky,
-    /// camera lighting). Cheap: two resolves + one blend.
+    /// camera lighting). Cheap: two resolves + one blend. Reroll cadence is
+    /// fed real elapsed game hours off the game clock (issue #164); a fixed
+    /// clock — offscreen renders, CLI — therefore elapses none.
     func updateWeather(deltaTime: Float) {
         guard weatherEnabled, let weather else {
             currentResolvedWeather = nil
             return
         }
-        weather.update(deltaTime: max(deltaTime, 0), hour: timeOfDay)
+        weather.update(
+            deltaTime: max(deltaTime, 0),
+            hour: timeOfDay,
+            elapsedGameHours: consumeElapsedGameHours()
+        )
         currentResolvedWeather = weather.resolvedWeather?.applyingStormSkyDarkening()
     }
 
