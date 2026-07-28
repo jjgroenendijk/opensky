@@ -16,13 +16,19 @@ nonisolated struct CellCollisionPartitionKey: Hashable {
     let modelKey: String
     let bodyIndex: Int
     let shapeIndex: Int
+
+    init(_ modelKey: String, _ bodyIndex: Int, _ shapeIndex: Int) {
+        self.modelKey = modelKey
+        self.bodyIndex = bodyIndex
+        self.shapeIndex = shapeIndex
+    }
 }
 
 nonisolated private func collisionPartitions(
     key: CellCollisionPartitionKey,
     geometry: NIFCollisionGeometry,
-    cache: inout [CellCollisionPartitionKey: [StaticCollisionPartition]]
-) -> [StaticCollisionPartition] {
+    cache: inout [CellCollisionPartitionKey: StaticCollisionPartitionResult]
+) -> StaticCollisionPartitionResult {
     if let cached = cache[key] {
         return cached
     }
@@ -204,20 +210,18 @@ extension CellSceneBuilder {
             for (bodyIndex, body) in model.bodies.enumerated() where body.isPlayerSolid {
                 for (shapeIndex, shape) in body.shapes.enumerated() {
                     let transform = placement.transform * body.transform * shape.transform
-                    let key = CellCollisionPartitionKey(
-                        modelKey: modelKey,
-                        bodyIndex: bodyIndex,
-                        shapeIndex: shapeIndex
-                    )
-                    let partitions = collisionPartitions(
+                    let key = CellCollisionPartitionKey(modelKey, bodyIndex, shapeIndex)
+                    let partitioning = collisionPartitions(
                         key: key,
                         geometry: shape.geometry,
                         cache: &collisionPartitionCache
                     )
+                    stats.decodeFailureCount += partitioning.failureCount
+                    guard !partitioning.partitions.isEmpty else { continue }
                     let placed = StaticCollisionShape.placed(
                         reference: placement.reference,
                         transform: transform,
-                        partitions: partitions
+                        partitions: partitioning.partitions
                     )
                     shapes.append(contentsOf: placed)
                     stats.shapeCount += 1

@@ -101,7 +101,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Terrain walk mode](/engine/walk-mode.md) - fixed-step capsule, terrain + mesh
   collide-and-slide, slope/ceiling response, bounded stairs, door pose reset.
 * [Static collision world](/engine/collision-world.md) - per-cell placed bhk shapes,
-  immutable BVH broadphase, serial build/cache confinement, streaming lifetime + budgets.
+  immutable BVH broadphase, fail-loud geometry accounting, streaming lifetime + budgets.
 * [Actor idle animation](/engine/actor-animation.md) - HKX idle sampling, skeleton-world
   pose composition, NIF palette refresh, streamed lifetime, fallback accounting + budget.
 * [Living environment integration](/engine/living-environment.md) - combined M7 runtime,

@@ -4,6 +4,14 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-28
 
+* **Fail-loud collision partition accounting (issue #46)**: broadphase partitioning now
+  returns cached leaves together with a decode-failure count. A wholly degenerate geometry
+  contributes no logical shape or estimated bytes, while an invalid leaf in a large
+  triangle soup increments the failure count without discarding valid sibling leaves.
+  `world-grid` acceptance therefore exposes both post-decode geometry loss paths. Documented
+  in [Static collision world](/engine/collision-world.md); synthetic tests cover the
+  production empty-geometry build and the mixed valid/invalid partition boundary.
+
 * **Native save container (issue #161)**: `.osav`, OpenSky's own save format, lives in
   `opensky/Formats/Save/`. It is not Bethesda's `.ess` and is not derived from it, so
   [OpenSky save container](/formats/opensky-save.md) is the specification rather than a

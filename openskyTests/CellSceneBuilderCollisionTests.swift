@@ -45,6 +45,31 @@ extension CellSceneBuilderTests {
         #expect(abs(shape.bounds.max.z - (300 + 2 * scale)) < 0.01)
     }
 
+    @Test(.enabled(if: Self.hasDevice)) func countsDegenerateGeometryAsDecodeFailure() throws {
+        try writeLooseFile("meshes/arch/degenerate.nif", degenerateCollisionNIF())
+        let device = try #require(Self.device)
+        let builder = try makeBuilder(
+            pluginData: plugin(
+                temporaryRefs: refrRecord(formID: 0x200, base: 0x100),
+                statRecords: statRecord(
+                    formID: 0x100,
+                    modelPath: "arch\\degenerate.nif"
+                )
+            ),
+            device: device
+        )
+        let collision = try builder.buildStaticCollision(
+            worldspaceEditorID: "Tamriel",
+            gridX: 6,
+            gridY: -2
+        )
+
+        #expect(collision.shapes.isEmpty)
+        #expect(collision.stats.shapeCount == 0)
+        #expect(collision.stats.decodeFailureCount == 1)
+        #expect(collision.stats.estimatedBytes == 0)
+    }
+
     func collisionRenderNIF() -> Data {
         NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(
@@ -64,6 +89,20 @@ extension CellSceneBuilderTests {
             .init("bhkCollisionObject", NIFCollisionFixture.collisionObject(body: 3)),
             .init("bhkRigidBody", NIFCollisionFixture.rigidBody(shape: 4)),
             .init("bhkSphereShape", NIFCollisionFixture.sphere(radius: 1))
+        ])
+    }
+
+    func degenerateCollisionNIF() -> Data {
+        NIFFixture.file(blocks: [
+            .init("NiNode", NIFFixture.niNode(
+                prefix: NIFFixture.avObjectPrefix(collisionRef: 1)
+            )),
+            .init("bhkCollisionObject", NIFCollisionFixture.collisionObject(body: 2)),
+            .init("bhkRigidBody", NIFCollisionFixture.rigidBody(shape: 3)),
+            .init(
+                "bhkConvexVerticesShape",
+                NIFCollisionFixture.convexVertices([])
+            )
         ])
     }
 }
