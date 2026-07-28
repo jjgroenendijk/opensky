@@ -5,7 +5,7 @@ description: Session-stable ReferenceKey identity, the per-cell RuntimeReference
   generated-object allocator, and the mutable WorldStateStore that holds every runtime
   deviation from plugin data.
 tags: [engine, world, identity, cell-scene, save-state]
-timestamp: 2026-07-27T00:00:00Z
+timestamp: 2026-07-28T00:00:00Z
 ---
 
 # Runtime reference identity and world state
@@ -25,6 +25,8 @@ identity scheme, the per-cell index built from it, and the store above both.
 * `WorldStateStore` — components, dirty tracking, reset, journal, snapshot
 * Applying state during a cell build
 * Making a mutation visible: snapshot capture and cell rebuilds
+* Save and load: the snapshot through `OpenSkySaveStore`
+* Verification — `World > Runtime State` and the M10.1 acceptance record
 
 ## Why raw FormID cannot be the key
 
@@ -359,6 +361,97 @@ Three consequences follow from state living only in the store:
 Rebuilding the whole cell is the v1 answer; there is no per-instance patching, and the
 per-frame budget is unchanged at one integration and one dispatch.
 
+## Save and load: the snapshot through `OpenSkySaveStore`
+
+Issue #161 (item 10.1.4) closes the loop: the store's own `snapshot()` is exactly the value
+a save needs to write, and `restore(from:)` is exactly the operation loading a save
+performs. Neither the store nor `WorldStateSnapshot` knows the byte layout that carries a
+snapshot to disk — that is `OpenSkySaveStore`'s job, documented in full in
+[OpenSky native save container](/formats/opensky-save.md). This section covers only the
+seam between the two.
+
+`OpenSkySaveStore` (`opensky/Formats/Save/OpenSkySaveStore.swift`) is a slot façade over the
+`.osav` codec: `save(snapshot:fingerprint:metadata:toSlot:)` encodes a `WorldStateSnapshot`
+plus a load-order fingerprint and writes it atomically to `<slot>.osav`;
+`load(slot:verifyingAgainst:)` decodes a slot and, when a fingerprint is supplied, checks it
+against the one recorded in the file; `listSlots()` enumerates what is on disk; slot names
+are validated against a fixed character set before either becomes a filesystem path.
+`OpenSkySaveStore.fingerprint(forRoot:)` and `fingerprint(forPlugins:)` build the load-order
+fingerprint from a `GameDataRoot`, reading only each plugin's TES4 `HEDR` field.
+
+Saving: `RuntimeStateControlProviding.save(toSlot:)` (`opensky/RuntimeStateControlProviding.swift`)
+takes the live store's `snapshot()`, builds a fingerprint over the session's plugin load
+order, and calls `OpenSkySaveStore.save`. Loading is the inverse and one step longer: the
+store decodes the slot, optionally verifies the fingerprint, and calls
+`WorldStateStore.restore(from:)` with the decoded snapshot. `restore(from:)` replaces every
+delta, adopts the allocator position from `nextGeneratedSequence` so newly generated keys
+never collide with ones already in the save, journals nothing (a load is not a sequence of
+individually meaningful mutations), and fires one unattributed `onMutation` so every
+resident cell rebuilds against the restored state — the same rebuild path described above
+for a live mutation, just triggered once for the whole world instead of per reference.
+
+A round trip is therefore: `WorldStateStore.snapshot()` -> `OpenSkySaveStore.save` -> bytes
+on disk -> `OpenSkySaveStore.load` -> `WorldStateStore.restore(from:)` -> the same deltas,
+in a possibly different store instance, driving the same resident cells to rebuild. The
+save format's determinism guarantee (same `docs/formats/opensky-save.md` document) is what
+lets a test compare the restored store's `snapshot()` against the original by equality
+rather than by re-deriving the effect on a rendered cell.
+
+## Verification — `World > Runtime State` and the M10.1 acceptance record
+
+Issue #162 (item 10.1.5) is the milestone acceptance surface for everything above. The
+`World > Runtime State` destination (`opensky/RuntimeStatePanelViewController.swift`,
+sidebar id `runtimeState`, symbol `clock.arrow.circlepath`) is a normal sectioned panel with
+four sections, each a `PanelSectionViewController` in
+`opensky/Shell/Sections/RuntimeState*.swift`:
+
+* **Inspect** (`PanelSection-runtimeStateInspect`) — read-only live counts: resident
+  reference count, dirty count, allocator position, dropped journal entries, and the tail
+  of the change journal. Readouts `RuntimeStateStatsLabel`, `RuntimeStateJournalStatsLabel`.
+* **Change** (`PanelSection-runtimeStateChange`) — the one target field
+  (`RuntimeStateTargetControl`, a typed FormID or the current interaction target) plus
+  Disable/Enable/Nudge actions (`RuntimeStateDisableControl`, `RuntimeStateEnableControl`,
+  `RuntimeStateNudgeControl`). Readout `RuntimeStateChangeStatsLabel`.
+* **Reset** (`PanelSection-runtimeStateReset`) — reset the Change section's target
+  (`RuntimeStateResetTargetControl`) or every reference at once
+  (`RuntimeStateResetAllControl`). Readout `RuntimeStateResetStatsLabel`.
+* **Save** (`PanelSection-runtimeStateSave`) — a slot name field
+  (`RuntimeStateSlotControl`) plus Save/Load actions (`RuntimeStateSaveControl`,
+  `RuntimeStateLoadControl`), reporting the slots on disk and the outcome of the last
+  operation, including a failed load's typed error message verbatim. Readout
+  `RuntimeStateSaveStatsLabel`.
+
+`GameViewControllerRuntimeState.swift` bridges `RuntimeStateControlProviding` onto
+`GameViewController`: the current interaction target resolves through the streamer's
+resident reference index, typed FormIDs are parsed as hex, and save metadata takes its app
+version from `CFBundleShortVersionString`. The destination is overridden whenever
+`dirtyReferenceCount > 0`, and Reset all calls `resetAllReferenceState()`.
+
+`M10StateAcceptanceTests.swift` drives the panel half of the gate end to end on one
+provider set — select the destination, inspect the live snapshot, disable and nudge a
+reference by typed FormID, save a slot, load it back, and reset everything — reading every
+readout back by accessibility identifier out of the built view hierarchy.
+`M10StateAcceptanceEngineTests.swift` proves the engine half with no fakes: a real
+`WorldStateStore`, a real `CellStreamer`, and a real `OpenSkySaveStore` show that mutating
+two references in a resident cell, evicting and reloading that cell by walking away and
+back, saving to a slot, and restoring into a brand-new store produces an identical
+`WorldStateSnapshot`, allocator position included, and that a `CellSceneBuilder` fed the
+restored snapshot drops the disabled reference and moves the nudged one exactly as the
+original build did. `M10StateAcceptanceRealDataTests.swift` (env-gated, `make realtest`) ran
+green against the real install: a ten-plugin load order fingerprinted with `skyrim.esm`
+first, a four-delta snapshot round-tripped through a real slot file and verified against
+that fingerprint, and a changed load order refused on load.
+
+```text
+Milestone: M10.1.5
+Sidebar path: World > Runtime State
+Destination id: Destination-runtimeState
+Controls exercised: RuntimeStateTargetControl, RuntimeStateDisableControl, RuntimeStateEnableControl, RuntimeStateNudgeControl, RuntimeStateResetTargetControl, RuntimeStateResetAllControl, RuntimeStateSlotControl, RuntimeStateSaveControl, RuntimeStateLoadControl
+Readout: RuntimeStateStatsLabel, RuntimeStateJournalStatsLabel, RuntimeStateChangeStatsLabel, RuntimeStateResetStatsLabel, RuntimeStateSaveStatsLabel
+Deterministic tests: M10StateAcceptanceTests, RuntimeStatePanelTests, DestinationRegistryTests
+Local A/B (optional, never committed): none
+```
+
 ## Related pages
 
 * [FormID + TES4 plugin header](/formats/formid.md) — the raw and resolved FormID types
@@ -370,3 +463,8 @@ per-frame budget is unchanged at one integration and one dispatch.
 * [Interaction targeting](/engine/interaction.md) — the raw-FormID lookup pattern
   `referenceEntry(formID:)` follows, and the interior-first fallback it shares with
   `interaction(reference:)`.
+* [OpenSky native save container](/formats/opensky-save.md) — the `.osav` byte layout that
+  `OpenSkySaveStore` writes and reads on behalf of the save/load section above.
+* [Main-app UI framework + placement](/tools/app-ui.md) and
+  [Sidebar verification convention](/tools/sidebar-acceptance.md) — how `World > Runtime
+  State` was registered and what its acceptance record must contain.

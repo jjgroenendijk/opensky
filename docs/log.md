@@ -4,6 +4,29 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-28
 
+* **Runtime State verification surface and M10.1 state round trip (issue #162)**: the
+  `World > Runtime State` panel is now the durable acceptance surface for the whole M10.1
+  runtime-state line: Inspect reads the live store's resident/dirty counts, allocator
+  position, and change-journal tail; Change disables, enables, and nudges a typed-FormID
+  target; Reset clears one reference or every reference back to plugin data; Save/Load write
+  and read a named slot through `OpenSkySaveStore`, surfacing a failed load's typed error
+  message verbatim. `M10StateAcceptanceEngineTests` proves the engine half with real types
+  throughout: mutating two references in a resident cell, evicting and reloading that cell
+  by walking away and back, saving the store's snapshot to a real `.osav` slot, and
+  restoring it into a brand-new `WorldStateStore` produces an identical snapshot, allocator
+  position included, and a `CellSceneBuilder` fed the restored state drops the disabled
+  reference and moves the nudged one exactly as the original build did.
+  `M10StateAcceptanceTests` drives the panel end to end against a fake provider, and
+  `M10StateAcceptanceRealDataTests` ran green against the real install (`make realtest`): a
+  ten-plugin load order fingerprinted with `skyrim.esm` first, a four-delta snapshot
+  round-tripped through a real slot file and verified against that fingerprint, and a
+  changed load order refused on load. Documented in
+  [runtime reference identity and world state](/engine/runtime-state.md) (save/load section
+  plus the acceptance record), [OpenSky native save container](/formats/opensky-save.md)
+  (the new `OpenSkySaveStore` slot-store section), the
+  [sidebar verification convention](/tools/sidebar-acceptance.md) ledger, and
+  [main-app UI framework](/tools/app-ui.md).
+
 * **Door motion and close SFX (issue #234)**: accepted player door transitions now publish
   typed `motionStarted`, `closed`, and `cancelled` animation boundaries while retaining
   the placed interaction across the asynchronous destination build. The world-audio
