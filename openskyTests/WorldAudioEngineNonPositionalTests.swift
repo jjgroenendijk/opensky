@@ -43,21 +43,36 @@ enum MusicAudioFixture {
     }
 
     /// Root-mean-square of ~0.2 s of offline render across both channels.
+    ///
+    /// `scheduleBuffer` hands the buffer to the player node asynchronously, so
+    /// the first chunks can come back silent while it is still starting. Those
+    /// leading silent chunks are skipped rather than averaged in: how long the
+    /// node took to start is machine load, not signal level, and averaging it
+    /// in makes every level comparison here load-dependent (issue #257).
     static func renderRMS(_ engine: WorldAudioEngine) throws -> Float {
         let format = engine.engine.manualRenderingFormat
         let chunk = try #require(AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 4096))
         var sum: Float = 0
         var frames = 0
-        while frames < 8820 {
+        var started = false
+        // Bounded so a genuinely silent engine still returns instead of
+        // spinning: silence is a real answer for the muted and solo tests.
+        var attempts = 0
+        while frames < 8820, attempts < 64 {
+            attempts += 1
             let status = try engine.engine.renderOffline(4096, to: chunk)
             guard status == .success else { break }
             let channels = try #require(chunk.floatChannelData)
+            var chunkSum: Float = 0
             for channel in 0 ..< Int(format.channelCount) {
                 for frame in 0 ..< Int(chunk.frameLength) {
                     let sample = channels[channel][frame]
-                    sum += sample * sample
+                    chunkSum += sample * sample
                 }
             }
+            guard started || chunkSum > 0 else { continue }
+            started = true
+            sum += chunkSum
             frames += Int(chunk.frameLength)
         }
         return sqrtf(sum / Float(max(frames, 1)))

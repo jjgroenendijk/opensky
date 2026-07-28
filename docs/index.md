@@ -68,6 +68,10 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   WAVEFORMATEX parameters, dpds packet table, data payload, frame-only policy
   and vanilla sweep evidence.
 
+* [OpenSky save container](/formats/opensky-save.md) - our own .osav format, not
+  Bethesda's: header metadata, load-order fingerprint, tagged chunks and the
+  reference-delta entry layout, determinism and version rules, atomic write.
+
 ## Engine
 
 * [Game data locator](/engine/game-data-locator.md) - how the Skyrim SE install is
