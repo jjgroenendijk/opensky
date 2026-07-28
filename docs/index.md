@@ -111,11 +111,11 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   switch, world-sim pause via a pausable frame clock (no time jump on resume).
 * [System menu](/engine/system-menu.md) - Resume/Settings/Quit selector, the menu-stack
   handoff that pauses the world, the data-root and audio-volume settings placeholders,
-  and the vanilla `startmenu.swf` presentation layer.
+  and the visible vanilla `startmenu.swf` presentation layer.
 * [AS2 runtime](/engine/as2-runtime.md) - ActionScript 2 interpreter and the movie it
   drives: value model + coercions, bounded execution, display objects and timeline,
-  events, indexed global mouse input and hit testing, the GameDelegate bridge,
-  path-targeted HUD calls, missing-API tally.
+  Scaleform Stage rectangles, events, indexed global mouse input and hit testing, the
+  GameDelegate bridge, path-targeted HUD calls, missing-API tally.
 * [World audio playback](/engine/audio.md) - AVAudioEngine graph with 3D positional
   sources, streaming WMA decode off the main thread, provisional category volumes,
   per-category mute and solo, source budget/eviction, the per-frame audio-update

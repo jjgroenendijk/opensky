@@ -67,8 +67,38 @@ nonisolated extension SWFRuntimeNatives {
         stage.define(.string("noScale"), for: "scaleMode", flags: .dontEnumerate)
         stage.define(.string("TL"), for: "align", flags: .dontEnumerate)
         stage.define(.boolean(false), for: "showMenu", flags: .dontEnumerate)
+        stage.define(
+            .object(stageRectangle(runtime, width: widthTwips, height: heightTwips)),
+            for: "visibleRect", flags: .dontEnumerate
+        )
+        stage.define(
+            .object(stageRectangle(runtime, width: widthTwips, height: heightTwips)),
+            for: "safeRect", flags: .dontEnumerate
+        )
         installListenerList(runtime, on: stage)
         runtime.globalObject.define(.object(stage), for: "Stage", flags: .dontEnumerate)
+    }
+
+    /// Scaleform GFx exposes both rectangles in stage pixels. OpenSky has no
+    /// overscan crop or safe-area inset, so each covers the movie FrameSize.
+    /// They remain separate objects because menu bytecode may mutate one.
+    private static func stageRectangle(
+        _ runtime: AS2Runtime,
+        width: Float,
+        height: Float
+    ) -> AS2Object {
+        let rectangle = runtime.makeObject()
+        rectangle.define(.number(0), for: "x")
+        rectangle.define(.number(0), for: "y")
+        rectangle.define(
+            .number(Double(width / SWFMovieRuntime.twipsPerPixel)),
+            for: "width"
+        )
+        rectangle.define(
+            .number(Double(height / SWFMovieRuntime.twipsPerPixel)),
+            for: "height"
+        )
+        return rectangle
     }
 
     // MARK: - Selection

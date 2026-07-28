@@ -86,10 +86,11 @@ struct SystemMenuAcceptanceRealDataTests {
         #expect(stats.drawCalls > 0, "the vanilla menu movie drew nothing")
         let changed = Self.changedPixels(empty.pixels, broughtUp.pixels)
         #expect(changed > 100, "menu bring-up changed only \(changed) pixels")
-        // Driving the movie into `Main` currently stages its content off the
-        // viewport, so the populated list is addressable but not yet visible.
-        // Recorded rather than asserted away — see docs/engine/system-menu.md.
         let activatedChanged = Self.changedPixels(empty.pixels, activated.pixels)
+        #expect(
+            activatedChanged > 100,
+            "populated menu changed only \(activatedChanged) pixels"
+        )
 
         try writeFrames(empty: empty, broughtUp: broughtUp, activated: activated)
         try writeEvidence(
@@ -154,8 +155,7 @@ struct SystemMenuAcceptanceRealDataTests {
         [INFO] actions executed: \(runtime.tally.actionsExecuted)
         [INFO] draw calls: \(stats.drawCalls) · skipped items: \(stats.skippedItems)
         [INFO] bring-up off/on changed pixels: \(measurement.broughtUpChanged)
-        [INFO] activated changed pixels: \(measurement.activatedChanged) \
-        (0 = populated list staged off the viewport)
+        [INFO] activated changed pixels: \(measurement.activatedChanged)
         [INFO] distinct missing names: \(measurement.diagnostics.missingNames) \
         (total hits \(runtime.tally.missingTotal))
         [INFO] top missing: \(missing)
