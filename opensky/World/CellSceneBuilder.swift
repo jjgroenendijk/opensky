@@ -97,7 +97,9 @@ nonisolated final class CellSceneBuilder {
     let textures: TextureLibrary
     let fileSystem: VirtualFileSystem?
     let collisionModels: NIFCollisionLibrary?
-    var collisionPartitionCache: [CellCollisionPartitionKey: [StaticCollisionPartition]] = [:]
+    var collisionPartitionCache: [
+        CellCollisionPartitionKey: StaticCollisionPartitionResult
+    ] = [:]
     let distantLODBuilder: DistantLODBuilder?
     /// FormID -> STAT over the STAT top group, built on first use.
     var statIndex: [UInt32: StaticObject]?

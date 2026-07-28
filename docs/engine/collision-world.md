@@ -4,7 +4,7 @@ title: Static collision world
 description: Per-cell placed NIF collision, BVH broadphase, streaming lifetime, and build
   budgets for exterior and interior cells.
 tags: [engine, world, collision, nif, streaming, spatial-index]
-timestamp: 2026-07-19T00:00:00Z
+timestamp: 2026-07-28T00:00:00Z
 ---
 
 # Static collision world
@@ -30,7 +30,10 @@ base resolution, malformed-ref handling. Collision reuses that list:
 Models without bhk bodies contribute no shapes. Render load success is irrelevant: a
 collision-only NIF remains physical. One broken model increments load failures; sibling refs
 still build. Unknown reachable bhk blocks + isolated root decode failures remain explicit
-stats, never silent geometry loss.
+stats, never silent geometry loss. Geometry that cannot produce a broadphase partition
+increments decode failures too. A wholly degenerate shape contributes neither a logical
+shape nor estimated bytes; valid sibling leaves of a partially malformed large soup remain
+available while each dropped leaf makes grid acceptance fail.
 
 `StaticCollisionShape` retains decoded geometry + final transform + world AABB + source REFR.
 Triangle soups keep shared model arrays; repeated placements copy array headers, not vertex
@@ -100,8 +103,9 @@ Real read-only Tamriel probe, 2026-07-19:
 
 Synthetic tests cover REFR scale/translation x bhk sphere placement, decoded-cache reuse,
 interior collision attachment, BVH overlap + stable order, composition add/remove lifetime,
-large-soup partition pruning with exact triangle preservation, serial fake-provider collision
-metrics + eviction. NIF byte fixtures remain synthetic and cite
+large-soup partition pruning with exact triangle preservation, fail-loud degenerate and
+invalid-leaf accounting, serial fake-provider collision metrics + eviction. NIF byte
+fixtures remain synthetic and cite
 [NifTools layout doc](/formats/nif-collision.md); no game asset enters repo.
 
 4.4 consumes broadphase shapes through production

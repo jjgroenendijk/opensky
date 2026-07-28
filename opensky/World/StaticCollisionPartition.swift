@@ -9,6 +9,11 @@ nonisolated struct StaticCollisionPartition {
     let localBounds: ModelBounds
 }
 
+nonisolated struct StaticCollisionPartitionResult {
+    let partitions: [StaticCollisionPartition]
+    let failureCount: Int
+}
+
 nonisolated extension StaticCollisionShape {
     private static let maximumTrianglesPerLeaf = 64
 
@@ -20,7 +25,7 @@ nonisolated extension StaticCollisionShape {
         placed(
             reference: reference,
             transform: transform,
-            partitions: partitions(for: geometry)
+            partitions: partitions(for: geometry).partitions
         )
     }
 
@@ -39,21 +44,38 @@ nonisolated extension StaticCollisionShape {
         }
     }
 
-    static func partitions(for geometry: NIFCollisionGeometry) -> [StaticCollisionPartition] {
+    static func partitions(
+        for geometry: NIFCollisionGeometry
+    ) -> StaticCollisionPartitionResult {
         guard case let .triangleSoup(vertices, indices) = geometry else {
             return singlePartition(geometry)
         }
         guard indices.count / 3 > maximumTrianglesPerLeaf else {
             return singlePartition(geometry)
         }
-        return stride(from: 0, to: indices.count, by: maximumTrianglesPerLeaf * 3)
-            .compactMap { start in
-                let end = min(start + maximumTrianglesPerLeaf * 3, indices.count)
-                return trianglePartition(
+        var partitions: [StaticCollisionPartition] = []
+        var failureCount = 0
+        for start in stride(
+            from: 0,
+            to: indices.count,
+            by: maximumTrianglesPerLeaf * 3
+        ) {
+            let end = min(start + maximumTrianglesPerLeaf * 3, indices.count)
+            if
+                let partition = trianglePartition(
                     vertices: vertices,
                     indices: Array(indices[start ..< end])
                 )
+            {
+                partitions.append(partition)
+            } else {
+                failureCount += 1
             }
+        }
+        return StaticCollisionPartitionResult(
+            partitions: partitions,
+            failureCount: failureCount
+        )
     }
 
     private static func trianglePartition(
@@ -77,9 +99,14 @@ nonisolated extension StaticCollisionShape {
 
     private static func singlePartition(
         _ geometry: NIFCollisionGeometry
-    ) -> [StaticCollisionPartition] {
-        guard let bounds = localBounds(geometry) else { return [] }
-        return [StaticCollisionPartition(geometry: geometry, localBounds: bounds)]
+    ) -> StaticCollisionPartitionResult {
+        guard let bounds = localBounds(geometry) else {
+            return StaticCollisionPartitionResult(partitions: [], failureCount: 1)
+        }
+        return StaticCollisionPartitionResult(
+            partitions: [StaticCollisionPartition(geometry: geometry, localBounds: bounds)],
+            failureCount: 0
+        )
     }
 
     private static func localBounds(_ geometry: NIFCollisionGeometry) -> ModelBounds? {

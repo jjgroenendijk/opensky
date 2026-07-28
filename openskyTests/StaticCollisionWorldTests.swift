@@ -114,6 +114,30 @@ struct StaticCollisionWorldTests {
         #expect(nearbyTriangleCount < 1200)
     }
 
+    @Test func partitioningReportsInvalidLeavesWithoutDiscardingSiblings() {
+        let vertices = [
+            SIMD3<Float>(0, 0, 0),
+            SIMD3<Float>(1, 0, 0),
+            SIMD3<Float>(0, 1, 0)
+        ]
+        var validLeaf: [UInt32] = []
+        for _ in 0 ..< 64 {
+            validLeaf.append(contentsOf: [0, 1, 2])
+        }
+        let result = StaticCollisionShape.partitions(for: .triangleSoup(
+            vertices: vertices,
+            indices: validLeaf + [3, 4, 5]
+        ))
+
+        #expect(result.partitions.count == 1)
+        #expect(result.failureCount == 1)
+        guard case let .triangleSoup(_, indices) = result.partitions[0].geometry else {
+            Issue.record("expected triangle soup")
+            return
+        }
+        #expect(indices.count / 3 == 64)
+    }
+
     private func coordinate(_ x: Int32, _ y: Int32) -> CellCoordinate {
         CellCoordinate(x: x, y: y)
     }
