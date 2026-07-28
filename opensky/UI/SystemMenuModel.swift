@@ -2,7 +2,7 @@
 // pause stack opens. Toolkit-free and movie-free on purpose — the model owns
 // entry identity, selection, and activation, so the same state drives keyboard
 // input, the verification panel, and (when it comes up) the vanilla
-// `Interface\startmenu.swf` presentation layer in SystemMenuMovieBridge.swift.
+// `Interface\quest_journal.swf` presentation layer in SystemMenuMovieBridge.swift.
 // See docs/engine/system-menu.md.
 
 import Foundation

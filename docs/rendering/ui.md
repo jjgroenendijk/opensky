@@ -257,9 +257,9 @@ The gameplay HUD owns the single SWF layer by default. Two surfaces take it
 over explicitly and hand it back: choosing a movie in
 `Developer > UI Lab > SWF movie` is a debug override, and choosing `None`
 restores `hudmenu.swf`; enabling the vanilla movie in `World > System Menu`
-brings `startmenu.swf` up while the menu is open and restores the HUD on
-Resume. There is one layer, so these are mutually exclusive by construction —
-see [system menu](/engine/system-menu.md).
+brings `quest_journal.swf` up on its System page while the menu is open and
+restores the HUD on Resume. There is one layer, so these are mutually exclusive
+by construction — see [system menu](/engine/system-menu.md).
 
 ## HUD acceptance surface (M8.4.3)
 
@@ -305,10 +305,10 @@ stable; no game-art capture is tracked.
 `World > System Menu` is the durable M8.5 acceptance surface: **Menu** opens the
 engine menu stack and drives the Resume/Settings/Quit selector, **Settings**
 carries the data-root and audio-volume placeholders. It talks through
-`SystemMenuControlProviding`, and the vanilla `startmenu.swf` presentation layer
-behind it is an A/B on top of an engine-drawn selector that works with no movie
-at all. Full description, including the menu-stack handoff and the
-accessibility-id set: [system menu](/engine/system-menu.md).
+`SystemMenuControlProviding`, and the vanilla `quest_journal.swf` System-page
+presentation layer behind it is an A/B on top of an engine-drawn selector that
+works with no movie at all. Full description, including the menu-stack handoff
+and the accessibility-id set: [system menu](/engine/system-menu.md).
 
 ## App surface
 

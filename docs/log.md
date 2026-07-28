@@ -4,6 +4,19 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-28
 
+* **Real vanilla system menu (issue #231)**: `World > System Menu` now loads
+  `quest_journal.swf`, not Skyrim's `startmenu.swf` title screen. The bridge opens the
+  measured `PageArray[2]` System page, seeds the page/index/focus state normally supplied
+  by the engine-backed tab group, and routes panel and keyboard events through the movie.
+  Its rows are `$QUICKSAVE`, `$SAVE`, `$LOAD`, `$INSTALLED CONTENT`, `$SETTINGS`,
+  `$CONTROLS`, `$HELP`, `$QUIT`; activating Settings opens the original `$Gameplay`,
+  `$Display`, `$Audio` panel through the named `SystemPage.SETTINGS_CATEGORY_STATE`.
+  The real-data gate reports 0 faults (159 before issue #136), 0 unimplemented opcodes,
+  0 unhandled invokes of 36, 572 draws, 361,540 changed pixels over empty, and an
+  11,951-pixel System-to-Settings transition. Captures remain in ignored `logs/`.
+  Documented in [system menu](/engine/system-menu.md) and
+  [AS2 runtime](/engine/as2-runtime.md).
+
 * **Visible driven start menu (issue #230)**: `startmenu.swf` reaches its populated `Main`
   state through `InitExtensions`, which installs the shared `MovieClip.Lock` helper.
   OpenSky's `Stage` omitted the Scaleform GFx `visibleRect` and `safeRect` objects that

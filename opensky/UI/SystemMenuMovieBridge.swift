@@ -1,74 +1,48 @@
 // Vanilla presentation layer for the system menu (M8.5.1): the measured AS2
-// contract of `Interface\startmenu.swf`. Device-free and AppKit-free so it
+// contract of `Interface\quest_journal.swf`. Device-free and AppKit-free so it
 // builds into the CLI target and can be unit-tested against synthetic AS2
 // fixtures; it owns no renderer and no movie lifetime. The engine-side selector
 // it presents is UI/SystemMenuModel.swift.
 //
-// The 8.3.3 measurement rejected this movie on three grounds. Two are gone:
-// the 35 `callDepthExceeded` faults were retired by the `super` resolution fix
-// (issue #136), and `_root.CodeObj` turned out not to be a host object at all —
-// the movie's own `StartMenu` constructor creates it (`_root.CodeObj =
-// this.codeObj = new Object()`) and only ever calls out through it, all 16
-// names on the Bethesda.net login path. The third, the save-list data contract,
-// still stands and is why this bridge reports no saves.
-//
-// Scope note recorded from the same measurement: `startmenu.swf` is Skyrim's
-// title screen, so its rows are Continue/New/Load/Quit and its 1,674-string
-// pool contains no `$SETTINGS`. The engine-side selector, not this movie, is
-// what carries Resume/Settings/Quit. See docs/engine/system-menu.md.
+// `quest_journal.swf` was the worst faulter before issue #136 at 159
+// `callDepthExceeded` faults. It now starts and drives with zero faults. Its
+// `SystemPage` builds the actual in-game system categories and their Settings
+// and Quit submenus; no game-derived data is embedded here.
 
 import Foundation
 
 nonisolated enum SystemMenuMovieBridge {
-    static let moviePath = "interface\\startmenu.swf"
-    /// The `StartMenu` instance. `SetPlatform` and `InitExtensions` are direct
-    /// methods on it, not `GameDelegate` callbacks.
-    static let menuPath = "/MenuHolder/Menu_mc"
+    static let moviePath = "interface\\quest_journal.swf"
+    /// The `QuestJournalBase` instance. Page switching is a direct method on
+    /// this clip; engine lifecycle calls are `GameDelegate` callbacks.
+    static let menuPath = "/QuestJournalFader/Menu_mc"
+    static let systemPagePath = "\(menuPath)/SystemFader/Page_mc"
+    static let systemCategoryListPath = "\(systemPagePath)/CategoryList_mc/List_mc"
+    static let settingsCategoryListPath = "\(systemPagePath)/SettingsPanel/List_mc"
+    static let systemFaderPath = "\(menuPath)/SystemFader"
+    static let questsFaderPath = "\(menuPath)/QuestsFader"
+    static let statsFaderPath = "\(menuPath)/StatsFader"
 
     /// `PLATFORM_PC_KBMOUSE`, the value the movie's platform switch expects for
     /// keyboard and mouse.
     static let pcPlatform = 0.0
 
-    /// Trace sink. The movie routes `myLog` out through `GameDelegate.call`,
-    /// 24 times inside its own `DoInitAction` blocks; every one was an
-    /// unhandled call before this. Answering it keeps the invoke log's
-    /// unhandled count meaningful instead of drowned in known-benign trace.
-    /// `StartState` and `currentState` are the movie's own state
-    /// notifications, emitted on every transition; `PlaySound`/`PlayOKSound`
-    /// are the UI sound bank OpenSky does not have yet.
+    /// Movie-to-engine calls that do not mutate OpenSky state yet. The boolean
+    /// queries return false; the rest are notifications or requests whose data
+    /// consumers are outside the system-page surface.
     static let sinkHostFunctions = [
-        "myLog", "PlaySound", "PlayOKSound", "StartState", "currentState"
+        "myLog", "PlaySound", "PlayOKSound", "RememberCurrentTabIndex",
+        "RequestPlayerInfo"
     ]
+    static let falseHostFunctions = ["ShouldShowMod", "GetIsRemoteDevice"]
 
     /// Scaleform's UI-sound hook, which the movie reaches for as a plain
     /// `_global` function rather than through `GameDelegate`. OpenSky has no UI
     /// sound bank yet, so it is a no-op rather than a missing name.
     static let globalSinkFunctions = ["gfxProcessSound"]
 
-    /// Every name the bytecode calls on `_root.CodeObj`, all of them on the
-    /// Bethesda.net login path (`StartMenu` and `BethesdaNetLogin`). OpenSky
-    /// implements none of them; attaching no-ops keeps a menu that never opens
-    /// the login screen from accumulating unresolved calls.
-    static let codeObjectMethods = [
-        "initLogin", "BeginLogin", "GetBnetUpdate", "ModsBlockedByBnet",
-        "CClubBlockedByPermissions", "CClubBlockedByBnet",
-        "startEditText", "endEditText", "onLoginScreenOpen", "onLoginScreenClose",
-        "attemptLogin", "createQuickAccount", "AcceptLegalDoc", "PopulateEULA",
-        "PlaySound", "PlayOKSound"
-    ]
-
-    /// The rows the movie can activate. Only `QuitToDesktop` has an engine
-    /// meaning today; the rest are logged so the invoke log shows the movie
-    /// reaching a real engine seam rather than a missing name.
-    static let actionHostFunctions = [
-        "CONTINUE", "NEW", "LOAD", "MOD", "HELP", "CREDITS",
-        "QuitToDesktop", "QuitToMainMenu", "OnDisabledLoadPress",
-        "fadeOutStarted", "EndPressStartState"
-    ]
-
-    /// The row whose activation means "terminate", so the host can honour the
-    /// vanilla menu's own Quit rather than only the engine selector's.
-    static let quitHostFunction = "QuitToDesktop"
+    /// `PageArray` is `[Quests, Stats, System]`, measured from the live movie.
+    static let systemTabIndex = 2
 
     // MARK: - Bring-up
 
@@ -79,54 +53,59 @@ nonisolated enum SystemMenuMovieBridge {
         for name in sinkHostFunctions {
             runtime.registerHostFunction(name) { _ in .undefined }
         }
+        for name in falseHostFunctions {
+            runtime.registerHostFunction(name) { _ in .boolean(false) }
+        }
         let global = runtime.runtime.globalObject
         for name in globalSinkFunctions {
             AS2Natives.method(runtime.runtime, on: global, name: name) { _ in .undefined }
         }
     }
 
-    /// Drives the started movie into its populated `Main` state. Runs after
-    /// `start()` because `_root.CodeObj` does not exist until the `StartMenu`
-    /// constructor has run. `onQuit` fires when the movie's own Quit row is
-    /// activated.
+    /// Opens the journal movie directly on its System page. Runs after
+    /// `start()` because `InitExtensions` and `ShowMenu` are installed by the
+    /// placed `QuestJournalBase` instance.
     ///
     /// Nothing here throws. A movie that does not match the measured contract
     /// leaves entries in the missing-API tally, which the panel reports.
     static func activate(
         runtime: SWFMovieRuntime,
-        version: String,
-        onQuit: @escaping @Sendable () -> Void
+        onClose: @escaping @MainActor @Sendable () -> Void
     ) {
-        attachCodeObjectMethods(runtime: runtime)
-        registerActions(runtime: runtime, onQuit: onQuit)
-        runtime.callMovie("SetPlatform", atPath: menuPath, arguments: [
-            .number(pcPlatform), .boolean(false)
-        ])
-        runtime.callMovie("InitExtensions", atPath: menuPath)
-        runtime.callMovie("sendMenuProperties", arguments: menuProperties(version: version))
+        runtime.registerHostFunction("CloseMenu") { _ in
+            MainActor.assumeIsolated {
+                onClose()
+            }
+            return .undefined
+        }
+        runtime.callMovie("SetPlatform", arguments: [.number(pcPlatform)])
+        runtime.callMovie("InitExtensions")
+        runtime.callMovie("ShowMenu")
+        runtime.callMovie(
+            "SwitchPageToFront",
+            atPath: menuPath,
+            arguments: [.integer(systemTabIndex), .boolean(true)]
+        )
+        showSystemPage(runtime: runtime)
     }
 
-    /// The 14 flat arguments `StartMenu.setupMainMenu` reads. OpenSky has no
-    /// save system, no downloadable content, and no Bethesda.net account, so
-    /// every capability flag is false and the list comes up as New, Load
-    /// (disabled), Credits, Quit.
-    static func menuProperties(version: String) -> [AS2Value] {
-        [
-            .boolean(true), // 0  show Quit
-            .boolean(false), // 1  has saves -> no Continue, Load disabled
-            .string(version), // 2  version string
-            .boolean(false), // 3  false leaves the Press Start state
-            .boolean(false), // 4  Sky10 upsell banner
-            .boolean(false), // 5  downloadable content
-            .boolean(false), // 6  help
-            .boolean(false), // 7  mod manager
-            .boolean(false), // 8  creations
-            .boolean(true), // 9  logged in -> no login screen
-            .boolean(false), // 10 read, branch is a no-op
-            .boolean(false), // 11 PS5 transfer data
-            .boolean(false), // 12 creations icon
-            .boolean(false) // 13 creation club access
-        ]
+    /// Routes the toolkit-free engine menu event into the Flash key model.
+    /// Pointer deltas have no absolute stage position, so they remain
+    /// unsupported here and fall back to the engine selector.
+    @discardableResult
+    static func handle(_ event: MenuInputEvent, runtime: SWFMovieRuntime) -> Bool {
+        if
+            case .button(.accept) = event,
+            openSelectedSystemPage(runtime: runtime)
+        {
+            return true
+        }
+        guard let key = key(for: event) else {
+            return false
+        }
+        let down = runtime.handle(.keyDown(code: key.code, ascii: key.ascii))
+        let up = runtime.handle(.keyUp(code: key.code))
+        return down || up
     }
 
     // MARK: - Readout
@@ -137,26 +116,40 @@ nonisolated enum SystemMenuMovieBridge {
         return (tally.faultTotal, tally.missingNames.count)
     }
 
-    /// The movie's own state name (`PressStart`, `Main`, `SaveLoad`, …), which
-    /// is how the panel shows that `sendMenuProperties` actually landed.
+    /// The page brought to the front, derived from the actual System category
+    /// rows rather than a bridge-owned flag.
     static func currentState(runtime: SWFMovieRuntime) -> String? {
         guard
-            let menu = runtime.node(atPath: menuPath, from: runtime.root),
-            case let .string(state) = menu.object.lookup(stateName)?.property.value
+            let fader = runtime.node(atPath: systemFaderPath, from: runtime.root),
+            let index = fader.timeline?.frameIndex(forLabel: "forceFade"),
+            fader.currentFrame == index
         else {
             return nil
         }
-        return state
+        return "System"
     }
 
     /// The row labels the movie actually built, read back from the list's own
-    /// entry array. Empty until `activate` has run, which is exactly the
-    /// distinction the panel readout needs to show.
+    /// entry array. These prove that the expected movie loaded; `currentState`
+    /// separately proves that activation brought the System page to the front.
     static func entryLabels(runtime: SWFMovieRuntime) -> [String] {
+        entryLabels(runtime: runtime, atPath: systemCategoryListPath)
+    }
+
+    /// Settings categories reached by activating the `$SETTINGS` system row.
+    static func settingsCategoryLabels(runtime: SWFMovieRuntime) -> [String] {
+        entryLabels(runtime: runtime, atPath: settingsCategoryListPath)
+    }
+
+    // MARK: - Private
+
+    private static func entryLabels(
+        runtime: SWFMovieRuntime,
+        atPath path: String
+    ) -> [String] {
         guard
-            let menu = runtime.node(atPath: menuPath, from: runtime.root),
-            let list = menu.object.lookup("MainList")?.property.value.objectValue,
-            let entries = list.lookup(entryArrayName)?.property.value.objectValue
+            let listNode = runtime.node(atPath: path, from: runtime.root),
+            let entries = listNode.object.lookup(entryArrayName)?.property.value.objectValue
         else {
             return []
         }
@@ -179,43 +172,64 @@ nonisolated enum SystemMenuMovieBridge {
             }
     }
 
-    // MARK: - Private
+    private static func showSystemPage(runtime: SWFMovieRuntime) {
+        if
+            let menu = runtime.node(atPath: menuPath, from: runtime.root),
+            let systemPage = runtime.node(atPath: systemPagePath, from: runtime.root),
+            let categoryList = runtime.node(
+                atPath: systemCategoryListPath,
+                from: runtime.root
+            )
+        {
+            // The vanilla host normally seeds these through the tab-button
+            // group before `SwitchPageToFront`. That group has no engine data
+            // in OpenSky, so publish the same page/index pair explicitly.
+            menu.object.assign(.object(systemPage.object), for: "TopmostPage")
+            menu.object.assign(.integer(systemTabIndex), for: "iCurrentTab")
+            runtime.focusTarget = categoryList
+        }
+        for path in [questsFaderPath, statsFaderPath] {
+            runtime.callMovie("gotoAndStop", atPath: path, arguments: [.string("hide")])
+        }
+        runtime.callMovie(
+            "gotoAndStop",
+            atPath: systemFaderPath,
+            arguments: [.string("forceFade")]
+        )
+    }
 
-    private static func attachCodeObjectMethods(runtime: SWFMovieRuntime) {
+    private static func openSelectedSystemPage(runtime: SWFMovieRuntime) -> Bool {
         guard
-            let codeObject = runtime.root.object
-                .lookup(codeObjectName)?.property.value.objectValue
+            let list = runtime.node(atPath: systemCategoryListPath, from: runtime.root),
+            case let .number(selected) =
+            list.object.lookup("iSelectedIndex")?.property.value,
+            selected == Double(settingsCategoryIndex),
+            let state = runtime.runtime.registeredClass(named: "SystemPage")?
+                .lookup("SETTINGS_CATEGORY_STATE")?.property.value
         else {
-            runtime.runtime.noteMissing(codeObjectName)
-            return
+            return false
         }
-        for name in codeObjectMethods {
-            AS2Natives.method(runtime.runtime, on: codeObject, name: name) { _ in .undefined }
+        runtime.callMovie("StartState", atPath: systemPagePath, arguments: [state])
+        runtime.focusTarget = runtime.node(
+            atPath: settingsCategoryListPath,
+            from: runtime.root
+        )
+        return true
+    }
+
+    private static func key(for event: MenuInputEvent) -> (code: Int, ascii: Int)? {
+        switch event {
+        case .move(.up): (SWFKeyCode.up, 0)
+        case .move(.down): (SWFKeyCode.down, 0)
+        case .move(.left): (SWFKeyCode.left, 0)
+        case .move(.right): (SWFKeyCode.right, 0)
+        case .button(.accept): (SWFKeyCode.enter, 13)
+        case .button(.cancel): (SWFKeyCode.escape, 0)
+        case .pointer: nil
         }
     }
 
-    private static func registerActions(
-        runtime: SWFMovieRuntime,
-        onQuit: @escaping @Sendable () -> Void
-    ) {
-        for name in actionHostFunctions {
-            if name == quitHostFunction {
-                runtime.registerHostFunction(name) { _ in
-                    onQuit()
-                    return .undefined
-                }
-            } else {
-                runtime.registerHostFunction(name) { _ in .undefined }
-            }
-        }
-    }
-
-    static let codeObjectName = "CodeObj"
-
-    /// `Shared.BSScrollingList`'s backing array of row objects. The list's
-    /// `Entry0`…`Entry16` members are the reusable row clips; this is the data.
+    /// `SystemCategoriesList`'s backing array of row objects.
     static let entryArrayName = "EntriesA"
-
-    /// `StartMenu`'s own state field.
-    static let stateName = "strCurrentState"
+    static let settingsCategoryIndex = 4
 }
