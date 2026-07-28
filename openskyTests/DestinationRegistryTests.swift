@@ -460,7 +460,7 @@ struct DestinationRegistryTests {
         reset("audio", context: context)
         #expect(!providers.audioCategoryIsMuted(.music))
 
-        providers.soloedAudioCategory = .ambience
+        providers.soloedAudioCategory = .voice
         #expect(isOverridden("audio", context: context))
         reset("audio", context: context)
         #expect(providers.soloedAudioCategory == nil)

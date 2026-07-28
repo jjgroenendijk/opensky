@@ -4,7 +4,7 @@ title: Main-app UI framework + placement
 description: How OpenSky's dev/verification UI is built — destination registry, panel
   base classes, shared components, placement rules, and the accessibility-id contract.
 tags: [tool, gui, dev, ui, framework]
-timestamp: 2026-07-26T00:00:00Z
+timestamp: 2026-07-28T00:00:00Z
 ---
 
 # Main-app UI framework + placement
@@ -407,10 +407,11 @@ Accessibility identifiers are the UI-test API and never change silently.
   `PanelSection-shadows`, `-animation`, `-weather`, `-particles`,
   `-precipitation`, `-grass`, `-lod`.
 - Audio set (World > Audio, M9.1.3): `AudioEnabledControl`,
-  `AudioMasterVolumeControl`, `AudioMusicVolumeControl`,
-  `AudioEffectsVolumeControl`, `AudioAmbienceVolumeControl` (the
-  `Audio<Category>VolumeControl` family tracks the provisional
-  `AudioCategory` list), `AudioFileControl`, `AudioPlaySelectedControl`,
+  `AudioMasterVolumeControl`, `AudioEffectsVolumeControl`,
+  `AudioVoiceVolumeControl`, `AudioMusicVolumeControl`,
+  `AudioFootstepsVolumeControl` (the `Audio<Category>VolumeControl` family
+  tracks the four menu-visible vanilla SNCT categories), `AudioFileControl`,
+  `AudioPlaySelectedControl`,
   `AudioStopAllControl`; readouts `AudioStatsLabel`, `AudioSourcesStatsLabel`.
   Extended by the world sound director (M9.2.2): `AudioSfxEnabledControl`,
   `AudioAmbienceEnabledControl`, `AudioStopAmbienceControl`; readout

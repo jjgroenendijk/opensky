@@ -29,8 +29,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Grass records](/formats/grass.md) - GRAS fixed DATA controls + repeated LTEX GNAM links.
 * [Weather records](/formats/weather.md) - WTHR NAM0 color layers/FNAM fog/DATA
   wind + precipitation, CLMT weather lists + timing, REGN weather and sound areas.
-* [Sound records](/formats/sound.md) - SNDR descriptor tracks, attenuation and looping,
-  SOUN SDSC links, and canonical VFS path resolution.
+* [Sound records](/formats/sound.md) - SNDR descriptor tracks, SNCT category hierarchy,
+  SOUN SDSC links, attenuation, looping, and canonical VFS path resolution.
 * [Acoustic space (ASPC)](/formats/acoustic-space.md) - interior-ambience bridge:
   ASPC fields, the `RDAT` FormID collision with REGN's area header, and the
   interior-only region borrow.
@@ -117,7 +117,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   Scaleform Stage rectangles, events, indexed global mouse input and hit testing, the
   GameDelegate bridge, path-targeted HUD calls, missing-API tally.
 * [World audio playback](/engine/audio.md) - AVAudioEngine graph with 3D positional
-  sources, streaming WMA decode off the main thread, provisional category volumes,
+  sources, streaming WMA decode off the main thread, vanilla SNCT category volumes,
   per-category mute and solo, source budget/eviction, the per-frame audio-update
   budget, and the `World > Audio` surface plus the M9 acceptance record.
 * [World SFX + ambience](/engine/world-sfx.md) - world sound director wiring

@@ -91,7 +91,7 @@ struct WorldAudioEngineMuteSoloTests {
 
         let other = try makeRunningEngine()
         other.setMuted(true, for: .effects)
-        try play(other, category: .ambience)
+        try play(other, category: .voice)
         let otherRMS = try renderRMS(other)
 
         #expect(mutedRMS < 1e-4, "a muted category must be silent, got \(mutedRMS)")
@@ -194,12 +194,12 @@ struct WorldAudioEngineMuteSoloTests {
     @Test
     func sourceStartedWhileMutedIsSilentUntilUnmuted() throws {
         let engine = try makeRunningEngine()
-        engine.setMuted(true, for: .ambience)
-        try play(engine, category: .ambience)
+        engine.setMuted(true, for: .voice)
+        try play(engine, category: .voice)
         let source = try #require(engine.sources.first)
         #expect(source.node.volume == 0)
 
-        engine.setMuted(false, for: .ambience)
+        engine.setMuted(false, for: .voice)
         #expect(abs(source.node.volume - 1) < 1e-5)
     }
 }

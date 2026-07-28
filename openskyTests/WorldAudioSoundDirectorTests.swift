@@ -41,6 +41,25 @@ struct WorldAudioSoundDirectorTests {
         #expect(engine.sources.isEmpty)
     }
 
+    @Test func handleInteractionUsesAuthoredDescriptorCategory() throws {
+        let engine = try Fixture.makeRunningEngine()
+        let director = Fixture.makeDirector(
+            engine: engine,
+            soundStore: Fixture.makeSoundStore(
+                soundID: 0xAAA,
+                descriptorID: 0xBBB,
+                tracks: ["fx/step.xwm"],
+                category: .footsteps
+            )
+        )
+
+        director.handleInteraction(Fixture.makeInteractionEvent(
+            sounds: ModelBase.Sounds(activation: FormID(0xAAA), close: nil, loop: nil)
+        ))
+
+        #expect(engine.sources.first?.category == .footsteps)
+    }
+
     @Test func handleInteractionNoOpWhenSfxDisabled() throws {
         let engine = try Fixture.makeRunningEngine()
         let director = Fixture.makeDirector(

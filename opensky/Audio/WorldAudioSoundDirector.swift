@@ -2,10 +2,11 @@
 // streamer's interaction + ambience-context callbacks and drives the audio
 // engine accordingly:
 //
-//   - One-shot SFX (door open, activator activate) on use-key events, under
-//     the `effects` category, fired from the placed reference's position.
-//   - Continuous ambience loop set when the center cell changes, under the
-//     `ambience` category, fired from the listener position (a stopgap until
+//   - One-shot SFX (door open, activator activate) on use-key events, routed
+//     through the descriptor's SNDR.GNAM -> SNCT parent chain.
+//   - Continuous ambience loop set when the center cell changes, using the
+//     same authored category resolution, fired from the listener position
+//     (a stopgap until
 //     a non-positional bed path exists; see issue #236). Bed sources are
 //     started as loops, so they rewind in the streamer rather than ending
 //     after one pass; the panel toggle retires and restarts them live.
@@ -20,6 +21,12 @@
 import Foundation
 import OSLog
 import simd
+
+private struct ResolvedAudioFile {
+    let data: Data
+    let name: String
+    let category: AudioCategory
+}
 
 @MainActor
 final class WorldAudioSoundDirector {
@@ -112,7 +119,6 @@ final class WorldAudioSoundDirector {
         playResolved(
             id: activationID,
             at: event.target.interaction.position,
-            category: .effects,
             kind: "SFX"
         )
     }
@@ -149,9 +155,7 @@ final class WorldAudioSoundDirector {
             lastSFXError = "engine not running"
             return
         }
-        playResolved(
-            id: formID, at: position, category: .effects, kind: "SFX"
-        )
+        playResolved(id: formID, at: position, kind: "SFX")
     }
 
     /// Ambience bed the panel readout shows. Reports "none" unless at least one
@@ -171,7 +175,6 @@ final class WorldAudioSoundDirector {
     private func playResolved(
         id: FormID,
         at position: SIMD3<Float>,
-        category: AudioCategory,
         kind: String
     ) {
         guard let resolved = resolveSound(id: id) else {
@@ -185,7 +188,9 @@ final class WorldAudioSoundDirector {
             try engine.playPositional(
                 fileData: resolved.data,
                 request: AudioPlayRequest(
-                    name: resolved.name, category: category, worldPosition: position
+                    name: resolved.name,
+                    category: resolved.category,
+                    worldPosition: position
                 )
             )
             lastSFXDescription = resolved.name
@@ -210,7 +215,7 @@ final class WorldAudioSoundDirector {
                     fileData: resolved.data,
                     request: AudioPlayRequest(
                         name: resolved.name,
-                        category: .ambience,
+                        category: resolved.category,
                         worldPosition: position,
                         gain: ambienceGainPerEntry(in: bed),
                         // A bed is continuous: the streamer rewinds at end of
@@ -249,7 +254,7 @@ final class WorldAudioSoundDirector {
         ambienceSourceIDs.removeAll { !live.contains($0) }
     }
 
-    private func resolveSound(id: FormID) -> (data: Data, name: String)? {
+    private func resolveSound(id: FormID) -> ResolvedAudioFile? {
         guard let soundStore else { return nil }
         let resolved: ResolvedSound
         do {
@@ -259,6 +264,10 @@ final class WorldAudioSoundDirector {
         }
         guard let path = resolved.filePaths.first else { return nil }
         guard let data = try? fileLoader(path) else { return nil }
-        return (data, path)
+        return ResolvedAudioFile(
+            data: data,
+            name: path,
+            category: resolved.audioCategory ?? .effects
+        )
     }
 }

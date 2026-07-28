@@ -12,17 +12,23 @@ nonisolated enum SoundResolveError: Error, Equatable {
 nonisolated struct ResolvedSound {
     let sound: SoundMarker
     let descriptor: SoundDescriptor
+    let audioCategory: AudioCategory?
     let filePaths: [String]
 }
 
 nonisolated final class SoundRecordStore {
     let sounds: [UInt32: SoundMarker]
     let descriptors: [UInt32: SoundDescriptor]
+    let categories: [UInt32: SoundCategory]
 
     init(file: ESMFile) {
         sounds = Self.index(file, type: "SOUN") { try? SoundMarker(record: $0) }
         descriptors = Self.index(file, type: "SNDR") {
             try? SoundDescriptor(record: $0)
+        }
+        let localized = (try? file.pluginHeader().isLocalized) ?? false
+        categories = Self.index(file, type: "SNCT") {
+            try? SoundCategory(record: $0, localized: localized)
         }
     }
 
@@ -34,6 +40,10 @@ nonisolated final class SoundRecordStore {
         descriptors[id.rawValue]
     }
 
+    func category(_ id: FormID) -> SoundCategory? {
+        categories[id.rawValue]
+    }
+
     func resolve(sound id: FormID) throws -> ResolvedSound {
         guard let sound = sound(id) else {
             throw SoundResolveError.soundNotFound(id)
@@ -42,11 +52,7 @@ nonisolated final class SoundRecordStore {
         guard let descriptor = descriptor(descriptorID) else {
             throw SoundResolveError.descriptorNotFound(descriptorID, sound: id)
         }
-        return ResolvedSound(
-            sound: sound,
-            descriptor: descriptor,
-            filePaths: descriptor.tracks.compactMap(Self.canonicalSoundPath)
-        )
+        return resolved(sound: sound, descriptor: descriptor)
     }
 
     /// Resolves a sound reference that may target a SNDR directly or reach it
@@ -58,13 +64,45 @@ nonisolated final class SoundRecordStore {
         // Direct SNDR hit: synthesize a marker so the public shape stays
         // consistent with the SOUN path.
         if let descriptor = descriptors[id.rawValue] {
-            return ResolvedSound(
+            return resolved(
                 sound: SoundMarker(formID: id, editorID: nil, descriptor: id),
-                descriptor: descriptor,
-                filePaths: descriptor.tracks.compactMap(Self.canonicalSoundPath)
+                descriptor: descriptor
             )
         }
         return try resolve(sound: id)
+    }
+
+    /// Walks SNCT.PNAM until it reaches one of vanilla's four menu categories.
+    /// A visited set makes malformed mod cycles terminate without inventing a
+    /// category; callers choose their own fallback.
+    func audioCategory(for descriptor: SoundDescriptor) -> AudioCategory? {
+        var current = descriptor.category
+        var visited: Set<UInt32> = []
+        while let id = current, visited.insert(id.rawValue).inserted {
+            guard let category = category(id) else { return nil }
+            if
+                category.flags.contains(.shouldAppearOnMenu),
+                let audioCategory = AudioCategory(
+                    soundCategoryEditorID: category.editorID
+                )
+            {
+                return audioCategory
+            }
+            current = category.parent
+        }
+        return nil
+    }
+
+    private func resolved(
+        sound: SoundMarker,
+        descriptor: SoundDescriptor
+    ) -> ResolvedSound {
+        ResolvedSound(
+            sound: sound,
+            descriptor: descriptor,
+            audioCategory: audioCategory(for: descriptor),
+            filePaths: descriptor.tracks.compactMap(Self.canonicalSoundPath)
+        )
     }
 
     private static func index<Value>(

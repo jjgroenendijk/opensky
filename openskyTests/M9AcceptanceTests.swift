@@ -183,7 +183,7 @@ struct M9AcceptanceTests {
         let readout = try #require(harness.readout("AudioSourcesStatsLabel", in: panel))
         #expect(readout.contains("Sources: 2 / 8"))
         #expect(readout.contains("doorwoodopen.xwm [effects] 700, 0, 0 | 10.0 m | gain 1.00"))
-        #expect(readout.contains("wind.xwm [ambience] 0, 0, 0 | 0.0 m | gain 0.50"))
+        #expect(readout.contains("wind.xwm [effects] 0, 0, 0 | 0.0 m | gain 0.50"))
         #expect(!readout.contains("Play failed"))
     }
 
@@ -386,7 +386,7 @@ struct M9AcceptanceTests {
     /// A half-gain ambience loop, as the director starts a two-entry bed.
     private static let ambienceSource = AudioSourceStatsSnapshot(
         name: "sound\\fx\\amb\\wind.xwm",
-        categoryName: AudioCategory.ambience.rawValue,
+        categoryName: AudioCategory.effects.rawValue,
         isPositional: false,
         worldPosition: .zero,
         distanceMeters: 0,

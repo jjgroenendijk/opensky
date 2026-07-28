@@ -1,7 +1,6 @@
-// World > Audio > Output section: engine enable, master + provisional category
+// World > Audio > Output section: engine enable, master + vanilla SNCT category
 // volumes, per-category mute and solo (M9.2.4), and the device/format readout
-// (M9.1.3). Category names are the provisional M9.1 set (AudioCategory); 9.2.1
-// renames them from game data.
+// (M9.1.3).
 
 import AppKit
 

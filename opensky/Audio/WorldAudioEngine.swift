@@ -1,5 +1,5 @@
 // World audio playback graph (milestone 9.1.3): one AVAudioEngine with an
-// AVAudioEnvironmentNode for 3D mixing, one submix per provisional category, and
+// AVAudioEnvironmentNode for 3D mixing, one submix per vanilla menu category, and
 // the main mixer as master volume. Source lifecycle lives in
 // WorldAudioEngineSources.swift; the full graph, threading model and coordinate
 // conversion are documented in docs/engine/audio.md.

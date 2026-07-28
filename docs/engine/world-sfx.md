@@ -4,7 +4,7 @@ title: World SFX + ambience
 description: World SFX director that wires interaction events to one-shot SFX and
   per-cell context to a positional ambience bed; the M9.2.2 verification surface.
 tags: [engine, audio, sfx, ambience]
-timestamp: 2026-07-27T00:00:00Z
+timestamp: 2026-07-28T00:00:00Z
 ---
 
 # World SFX + ambience
@@ -12,7 +12,8 @@ timestamp: 2026-07-27T00:00:00Z
 Milestone 9.2.2 (issue #155): wire the [decoded sound records](/formats/sound.md)
 to the [world interaction system](/engine/interaction.md) and the streaming cell
 lifecycle. Door open SFX on use-key activation; per-cell ambient bed under the
-provisional `ambience` category. Implementation: `opensky/Audio/WorldAudioSoundDirector.swift`
+descriptor's authored `SNDR.GNAM` category. Implementation:
+`opensky/Audio/WorldAudioSoundDirector.swift`
 (director), `opensky/Audio/AmbienceCatalog.swift` (bed resolution),
 `opensky/Audio/AcousticSpaceStore.swift` (ASPC index),
 `opensky/World/CellStreamerAmbience.swift` (streamer emission), and the panel
@@ -36,10 +37,12 @@ alongside the director, not replace it.
 
 A use-key press publishes one `InteractionEvent` carrying the target's
 `PlacedInteraction.sounds` (resolved at cell-build time from
-[ModelBase sound fields](/formats/records.md)). The director plays the
-`activation` FormID under the `effects` category at the placed reference's
-position. Close and loop sounds ride along on the same struct but wait on door-
-animation wiring (issue #234).
+[ModelBase sound fields](/formats/records.md)). The director resolves the
+`activation` FormID, follows its descriptor's `SNDR.GNAM -> SNCT.PNAM` chain to
+a vanilla menu category, and plays it at the placed reference's position.
+Missing or malformed category metadata falls back to Effects. Close and loop
+sounds ride along on the same struct but wait on door-animation wiring
+(issue #234).
 
 ### Ambience bed
 
@@ -108,6 +111,11 @@ against Skyrim.esm (2026-07-26) found vanilla SSE ships zero SOUN markers on
 these records: all 497 references target SNDR directly. The hop is supported
 anyway because xEdit allows it.
 
+The resolved descriptor also supplies the runtime category. Skyrim's ambience
+nodes are children of `AudioCategorySFX`, so current vanilla SFX and ambience
+both reach the Effects factor. The same resolver already handles Footsteps,
+Voice, and Music without hardcoded FormIDs.
+
 ## Positional stopgap
 
 Ambience plays positional at the listener position when started, not as a
@@ -119,7 +127,7 @@ non-positional bed. Source lifetime is bounded by:
 
 The stopgap means a started ambience source stays at its initial position
 while the player walks away, attenuating. The fix is the planned non-positional
-bed path through the existing `categoryMixers[.ambience]` submix (issue #236);
+bed path through the resolved category submix (issue #236);
 until then the equal-weight gain split keeps N concurrent loops from summing
 to N x master.
 
@@ -215,7 +223,7 @@ nothing.
 
 Audible acceptance is a human step: open World > Audio, tick Enabled, walk a
 Whiterun exterior cell (regions carry ambient beds), press F on a door (open
-SFX under effects), enter an interior (XCAS-sourced bed under ambience).
+SFX under Effects), enter an interior (XCAS-sourced bed under Effects).
 Toggle `AudioSfxEnabledControl` to confirm SFX mute independently from the bed.
 The M9 gate asks for that route once end to end — exterior bed, door SFX,
 interior bed, and back out through the paired door — with each change confirmed
@@ -228,6 +236,5 @@ install, but the listening itself is still outstanding.
 ## Follow-ups filed
 
 * #234 — door close SFX (needs door-animation event).
-* #235 — rename `AudioCategory` from the provisional taxonomy.
 * #236 — non-positional ambience bed path through the existing submix.
 * #238 — comprehensive Cell decoder unit tests (pre-existing gap, widened by XCAS).

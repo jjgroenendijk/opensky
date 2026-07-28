@@ -190,7 +190,7 @@ struct WorldAudioEngineTests {
             buffer: makeToneBuffer(seconds: 0.02),
             request: AudioPlayRequest(
                 name: "tone",
-                category: .ambience,
+                category: .voice,
                 worldPosition: SIMD3(2 * Self.oneMeterUnits, 0, 0),
                 loops: loops
             )

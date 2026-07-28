@@ -125,7 +125,10 @@ struct WorldAudioTransitionAcceptanceTests {
 
             #expect(sound.lastSFXDescription == "sound\\fx\\dor\\doorwoodopen.xwm")
             #expect(sound.lastSFXError == nil)
-            #expect(names(of: .effects) == ["sound\\fx\\dor\\doorwoodopen.xwm"])
+            #expect(
+                names(of: .effects).filter { $0.contains("\\dor\\") }
+                    == ["sound\\fx\\dor\\doorwoodopen.xwm"]
+            )
             // The one-shot does not disturb the bed or the music.
             #expect(ambienceNames == ["sound\\fx\\amb\\exterior.xwm"])
             #expect(music.currentStateName == "exploration")
@@ -157,7 +160,7 @@ struct WorldAudioTransitionAcceptanceTests {
         /// Names of the engine's live ambience sources — what is audible now,
         /// not what the director wanted.
         private var ambienceNames: [String] {
-            names(of: .ambience)
+            names(of: .effects).filter { $0.contains("\\amb\\") }
         }
 
         private func names(of category: AudioCategory) -> [String] {
@@ -201,17 +204,33 @@ enum TransitionAudioFixture {
     /// resolve straight to SNDR (`resolveAny`), which is what vanilla door and
     /// region records do.
     static func makeSoundStore(descriptors: [(id: UInt32, track: String)]) -> SoundRecordStore {
+        let categoryID: UInt32 = 0xB00
         var bytes = Data()
         for descriptor in descriptors {
-            let fields = ESMFixture.field("ANAM", ESMFixture.zstring(descriptor.track))
+            let fields = ESMFixture.field("GNAM", uint32(categoryID))
+                + ESMFixture.field("ANAM", ESMFixture.zstring(descriptor.track))
             bytes += ESMFixture.record("SNDR", formID: descriptor.id, data: fields)
         }
-        let plugin = ESMFixture.tes4() + ESMFixture.topGroup("SNDR", contents: bytes)
+        let category = ESMFixture.field(
+            "EDID", ESMFixture.zstring(AudioCategory.effects.soundCategoryEditorID)
+        ) + ESMFixture.field("FNAM", uint32(2))
+        let plugin = ESMFixture.tes4()
+            + ESMFixture.topGroup("SNDR", contents: bytes)
+            + ESMFixture.topGroup(
+                "SNCT",
+                contents: ESMFixture.record("SNCT", formID: categoryID, data: category)
+            )
         do {
             return try SoundRecordStore(file: ESMFile(data: plugin))
         } catch {
             preconditionFailure("synthetic fixture failed: \(error)")
         }
+    }
+
+    private static func uint32(_ value: UInt32) -> Data {
+        var data = Data()
+        data.appendUInt32(value)
+        return data
     }
 
     /// One ASPC whose SNAM names the interior's direct ambient sound.

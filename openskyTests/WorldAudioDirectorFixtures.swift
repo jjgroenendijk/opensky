@@ -102,19 +102,27 @@ enum WorldAudioDirectorFixture {
     static func makeSoundStore(
         soundID: UInt32,
         descriptorID: UInt32,
-        tracks: [String]
+        tracks: [String],
+        category: AudioCategory = .effects
     ) -> SoundRecordStore {
-        var descriptorFields = Data()
+        let categoryID: UInt32 = 0xCCC
+        var descriptorFields = ESMFixture.field("GNAM", uint32(categoryID))
         for track in tracks {
             descriptorFields += ESMFixture.field("ANAM", ESMFixture.zstring(track))
         }
         let soundFields = ESMFixture.field("SDSC", uint32(descriptorID))
+        let categoryFields = ESMFixture.field(
+            "EDID", ESMFixture.zstring(category.soundCategoryEditorID)
+        ) + ESMFixture.field("FNAM", uint32(2))
         let plugin = ESMFixture.tes4()
             + ESMFixture.topGroup("SNDR", contents: ESMFixture.record(
                 "SNDR", formID: descriptorID, data: descriptorFields
             ))
             + ESMFixture.topGroup("SOUN", contents: ESMFixture.record(
                 "SOUN", formID: soundID, data: soundFields
+            ))
+            + ESMFixture.topGroup("SNCT", contents: ESMFixture.record(
+                "SNCT", formID: categoryID, data: categoryFields
             ))
         do {
             return try SoundRecordStore(file: ESMFile(data: plugin))

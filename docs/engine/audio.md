@@ -2,10 +2,10 @@
 type: Subsystem
 title: World audio playback
 description: AVAudioEngine graph with 3D positional sources, non-positional submix
-  playback, gain ramps, streaming WMA decode, provisional category volumes with mute
-  and solo, source budget, the per-frame audio budget, and the World > Audio surface.
+  playback, gain ramps, streaming WMA decode, vanilla category volumes with mute and
+  solo, source budget, the per-frame audio budget, and the World > Audio surface.
 tags: [engine, audio, playback, spatial]
-timestamp: 2026-07-27T00:00:00Z
+timestamp: 2026-07-28T00:00:00Z
 ---
 
 # World audio playback
@@ -19,7 +19,7 @@ the CLI. Consumes the [xWMA container parser](/formats/xwm.md) and the
 `WorldAudioEngineFades.swift` (gain ramps),
 `WorldAudioEngineSnapshot.swift` (published UI state),
 `AudioSourceStreamer.swift` (streaming decode), `AudioSpace.swift` (coordinate
-conversion), `AudioCategory.swift` (provisional categories),
+conversion), `AudioCategory.swift` (vanilla menu categories),
 `AudioCodecParametersXWM.swift` (extradata policy), and
 `opensky/Rendering/RendererAudio.swift` (the per-frame tick).
 
@@ -32,7 +32,7 @@ enable and handed to the renderer for the per-frame tick:
 positional AVAudioPlayerNode (mono, one per source)
     --> AVAudioEnvironmentNode --> main mixer --> output device
 non-positional AVAudioPlayerNode (stereo, one per source)
-    --> category submix AVAudioMixerNode (music/effects/ambience) --->--/
+    --> category submix AVAudioMixerNode (effects/voice/music/footsteps) --->--/
 ```
 
 * The environment node does the 3D mixing. Its inputs must be **mono** — it
@@ -204,9 +204,10 @@ distance 60 m (~one exterior cell), rolloff 1. Named provisional because the
 game-authored values arrive in M9.2 from `SNDR`/`SDSC`; these exist only to
 make the verification surface audibly distance-dependent.
 
-The category list (`AudioCategory`: music, effects, ambience) is equally
-provisional — 9.2.1 derives the real taxonomy from the game's records and
-renames this set.
+`AudioCategory` is the four vanilla [SNCT](/formats/sound.md) nodes flagged for menu
+display: Effects, Voice, Music, and Footsteps. The main mixer remains the master stage.
+World sounds follow `SNDR.GNAM -> SNCT.PNAM` to one of those nodes; unresolved or malformed
+metadata falls back to Effects. Music playlists author their own Music route.
 
 ## World > Audio surface
 
@@ -217,17 +218,16 @@ below; **SFX & Ambience** (`PanelSection-audioSfx`) is documented in
 (`PanelSection-audioMusic`) in [music playlists](/engine/music.md):
 
 * **Output** (`PanelSection-audioOutput`): `AudioEnabledControl` checkbox,
-  `AudioMasterVolumeControl` slider, `AudioMusicVolumeControl`,
-  `AudioEffectsVolumeControl`, `AudioAmbienceVolumeControl`, and per category a
-  mute checkbox and a solo checkbox — `AudioMusicMuteControl`,
-  `AudioEffectsMuteControl`, `AudioAmbienceMuteControl`,
-  `AudioMusicSoloControl`, `AudioEffectsSoloControl`,
-  `AudioAmbienceSoloControl`. Readout `AudioStatsLabel`:
+  `AudioMasterVolumeControl` slider, `AudioEffectsVolumeControl`,
+  `AudioVoiceVolumeControl`, `AudioMusicVolumeControl`,
+  `AudioFootstepsVolumeControl`, and per category a mute checkbox and a solo
+  checkbox — the corresponding `Audio<Category>MuteControl` and
+  `Audio<Category>SoloControl` families. Readout `AudioStatsLabel`:
 
   ```text
   Audio: running
   Output: 48000 Hz, 2 ch
-  Mute: Music, Effects  Solo: Ambience
+  Mute: Effects, Music  Solo: Voice
   ```
 
   The last line is always present (it reads `Mute: none  Solo: none` at
@@ -289,7 +289,7 @@ disabled`, `Audio: running`, `Output: 44100 Hz, 2 ch`,
 `Mute: Effects  Solo: Music` and `Mute: none  Solo: none` on `AudioStatsLabel`;
 `Sources: 2 / 8`, `Sources: 1 / 8`,
 `doorwoodopen.xwm [effects] 700, 0, 0 | 10.0 m | gain 1.00` and
-`wind.xwm [ambience] 0, 0, 0 | 0.0 m | gain 0.50` on `AudioSourcesStatsLabel`,
+`wind.xwm [effects] 0, 0, 0 | 0.0 m | gain 0.50` on `AudioSourcesStatsLabel`,
 with no `Play failed` line; `State: town`,
 `Music: MUSTownWhiterun — music\MUSTownWhiterun.xwm` and `Music: none` on
 `AudioMusicStatsLabel`, with no `Music error` line; and
