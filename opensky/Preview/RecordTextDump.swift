@@ -69,16 +69,18 @@ nonisolated enum RecordTextDump {
 
     private static func referenceSummary(record: ESMRecord) -> String? {
         guard let ref = try? PlacedReference(record: record) else { return nil }
-        let position = ref.placement.position
-        let rotation = ref.placement.rotation
         let teleport = ref.teleportDestination.map {
-            ", teleport \($0.door) at \($0.placement.position)"
-                + " rotation \($0.placement.rotation)"
+            ", teleport \($0.door) at \(vector($0.placement.position))"
+                + " rotation \(vector($0.placement.rotation))"
         } ?? ""
         return "decoded REFR: base \(ref.base), position "
-            + "(\(position.x), \(position.y), \(position.z)), rotation "
-            + "(\(rotation.x), \(rotation.y), \(rotation.z)), scale \(ref.scale)"
+            + "\(vector(ref.placement.position)), rotation "
+            + "\(vector(ref.placement.rotation)), scale \(ref.scale)"
             + teleport
+    }
+
+    private static func vector(_ value: SIMD3<Float>) -> String {
+        "(\(value.x), \(value.y), \(value.z))"
     }
 
     private static func weatherSummary(record: ESMRecord) -> String? {

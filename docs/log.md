@@ -4,6 +4,13 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-28
 
+* **Walk-path CLI cleanup (issue #49)**: `bench --walk-path` now rejects the sustained-only
+  `--frames` option and every fly-only footprint/build/update budget instead of parsing and
+  ignoring them. The walk benchmark configuration no longer carries an unread worldspace
+  editor ID, and the shared REFR record dump renders both the reference and teleport poses
+  as `(x, y, z)` tuples. Synthetic dump coverage and probe-level usage checks pin the
+  behavior. Documented in [CLI dev tool](/tools/cli.md).
+
 * **Stable walk-path timing policy (issue #48)**: the production route keeps its active-
   physics average at one 30 fps interval in every build and keeps Release p95 at the same
   33.33 ms ceiling. Debug p95 may occupy two intervals (66.67 ms) because the synchronous

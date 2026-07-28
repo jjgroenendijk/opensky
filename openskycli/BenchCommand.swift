@@ -4,6 +4,37 @@ import Foundation
 import Metal
 import MetalKit
 
+private struct BenchPathSpecificOptions {
+    let frames: String?
+    let footprintCapMB: String?
+    let collisionBuildBudgetMS: String?
+    let actorBuildBudgetMS: String?
+    let animationUpdateBudgetMS: String?
+    let shadowUpdateBudgetMS: String?
+
+    init(scanner: inout ArgumentScanner, walkPath: Bool) throws {
+        frames = try scanner.option("--frames")
+        footprintCapMB = try scanner.option("--footprint-cap-mb")
+        collisionBuildBudgetMS = try scanner.option("--collision-build-budget-ms")
+        actorBuildBudgetMS = try scanner.option("--actor-build-budget-ms")
+        animationUpdateBudgetMS = try scanner.option("--animation-budget-ms")
+        shadowUpdateBudgetMS = try scanner.option("--shadow-budget-ms")
+
+        guard walkPath else { return }
+        let options = [
+            ("--frames", frames),
+            ("--footprint-cap-mb", footprintCapMB),
+            ("--collision-build-budget-ms", collisionBuildBudgetMS),
+            ("--actor-build-budget-ms", actorBuildBudgetMS),
+            ("--animation-budget-ms", animationUpdateBudgetMS),
+            ("--shadow-budget-ms", shadowUpdateBudgetMS)
+        ]
+        if let option = options.first(where: { $0.1 != nil }) {
+            throw CLIError.usage("\(option.0) is not supported with --walk-path")
+        }
+    }
+}
+
 enum BenchCommand {
     /// 30 fps -> 33.33 ms per frame.
     private static let defaultBudgetMS = 1000.0 / 30.0
@@ -231,8 +262,7 @@ enum BenchCommand {
             provider: provider,
             configuration: CellStreamingWalkBenchmarkConfiguration(
                 size: options.size,
-                maxFrames: options.maxFrames,
-                worldspaceEditorID: options.worldspace
+                maxFrames: options.maxFrames
             )
         )
         reportWalkPath(
@@ -311,6 +341,7 @@ extension BenchCommand {
         guard !flyPath || !walkPath else {
             throw CLIError.usage("choose one of --fly-path or --walk-path")
         }
+        let pathSpecific = try BenchPathSpecificOptions(scanner: &scanner, walkPath: walkPath)
         let budgetOption = try scanner.option("--budget-ms")
         let budgetMS = try positiveDouble(
             budgetOption,
@@ -321,7 +352,7 @@ extension BenchCommand {
             worldspace: worldspace,
             start: CellCoordinate(x: gridX, y: gridY),
             size: RenderCommand.parseSize(scanner.option("--size")),
-            frames: frameCount(scanner.option("--frames")),
+            frames: frameCount(pathSpecific.frames),
             budgetMS: budgetMS,
             walkFrameBudget: walkFrameBudget(
                 budgetMS: budgetMS,
@@ -332,23 +363,23 @@ extension BenchCommand {
             output: scanner.option("--out"),
             maxFrames: maxFrameCount(scanner.option("--max-frames")),
             footprintCapMB: positiveDouble(
-                scanner.option("--footprint-cap-mb"),
+                pathSpecific.footprintCapMB,
                 flag: "--footprint-cap-mb", fallback: defaultFootprintCapMB
             ),
             collisionBuildBudgetMS: positiveDouble(
-                scanner.option("--collision-build-budget-ms"),
+                pathSpecific.collisionBuildBudgetMS,
                 flag: "--collision-build-budget-ms", fallback: defaultCollisionBuildBudgetMS
             ),
             actorBuildBudgetMS: positiveDouble(
-                scanner.option("--actor-build-budget-ms"),
+                pathSpecific.actorBuildBudgetMS,
                 flag: "--actor-build-budget-ms", fallback: defaultActorBuildBudgetMS
             ),
             animationUpdateBudgetMS: positiveDouble(
-                scanner.option("--animation-budget-ms"),
+                pathSpecific.animationUpdateBudgetMS,
                 flag: "--animation-budget-ms", fallback: defaultAnimationUpdateBudgetMS
             ),
             shadowUpdateBudgetMS: positiveDouble(
-                scanner.option("--shadow-budget-ms"),
+                pathSpecific.shadowUpdateBudgetMS,
                 flag: "--shadow-budget-ms", fallback: defaultShadowUpdateBudgetMS
             ),
             audioUpdateBudgetMS: positiveDouble(

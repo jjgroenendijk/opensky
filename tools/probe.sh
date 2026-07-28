@@ -41,6 +41,41 @@ run() {
   printf '[ OK ] %s\n' "$step"
 }
 
+expect_usage() {
+  step="$1"
+  expected="$2"
+  shift 2
+  if output="$("$cli" --data-root "$data_root" "$@" 2>&1)"; then
+    {
+      printf -- '--- %s\n' "$step"
+      printf '%s\n' "$output"
+    } >>"$log"
+    fail "$step accepted an invalid option combination"
+  else
+    exit_status="$?"
+  fi
+  {
+    printf -- '--- %s\n' "$step"
+    printf '%s\n' "$output"
+  } >>"$log"
+  [ "$exit_status" -eq 2 ] || fail "$step exited $exit_status instead of 2"
+  printf '%s\n' "$output" | grep -Fq -- "$expected" \
+    || fail "$step did not report the expected usage error"
+  printf '[ OK ] %s\n' "$step"
+}
+
+# Path-specific benchmark flags must fail during option parsing, before the CLI
+# opens or renders game data.
+expect_usage "walk path rejects sustained frame count" \
+  "--frames is not supported with --walk-path" \
+  bench --walk-path --frames 1
+expect_usage "walk path rejects fly footprint cap" \
+  "--footprint-cap-mb is not supported with --walk-path" \
+  bench --walk-path --footprint-cap-mb 1
+expect_usage "walk path rejects fly collision budget" \
+  "--collision-build-budget-ms is not supported with --walk-path" \
+  bench --walk-path --collision-build-budget-ms 1
+
 # vfs ls resolves archives and finds meshes.
 mesh_count="$("$cli" --data-root "$data_root" vfs ls 'meshes\*.nif' 2>>"$log" | wc -l)"
 [ "$mesh_count" -gt 0 ] || fail "vfs ls found no meshes"
