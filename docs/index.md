@@ -111,7 +111,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   switch, world-sim pause via a pausable frame clock (no time jump on resume).
 * [System menu](/engine/system-menu.md) - Resume/Settings/Quit selector, the menu-stack
   handoff that pauses the world, the data-root and audio-volume settings placeholders,
-  and the visible vanilla `startmenu.swf` presentation layer.
+  and the visible, navigable vanilla `quest_journal.swf` System and Settings pages.
 * [AS2 runtime](/engine/as2-runtime.md) - ActionScript 2 interpreter and the movie it
   drives: value model + coercions, bounded execution, display objects and timeline,
   Scaleform Stage rectangles, events, indexed global mouse input and hit testing, the

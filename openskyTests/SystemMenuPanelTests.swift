@@ -127,6 +127,7 @@ struct SystemMenuPanelTests {
 
     @Test
     func movieReadoutReportsLoadStateFaultsAndErrors() {
+        #expect(SystemMenuMovieBridge.moviePath == "interface\\quest_journal.swf")
         var snapshot = Self.snapshot(isOpen: true, movieEnabled: true)
         #expect(SystemMenuSection.movieReadout(for: snapshot) == "Movie: not loaded")
 
@@ -136,15 +137,15 @@ struct SystemMenuPanelTests {
         snapshot = Self.snapshot(
             isOpen: true, movieEnabled: true, movieLoaded: true,
             drawCalls: 144, faults: 0, missingNames: 32,
-            movieEntryTitles: ["$NEW", "$LOAD", "$QUIT"], movieState: "Main"
+            movieEntryTitles: ["$SETTINGS", "$CONTROLS", "$QUIT"], movieState: "System"
         )
         let readout = SystemMenuSection.movieReadout(for: snapshot)
         #expect(readout.contains(SystemMenuMovieBridge.moviePath))
         #expect(readout.contains("144 draws"))
         #expect(readout.contains("0 faults"))
         #expect(readout.contains("32 missing names"))
-        #expect(readout.contains("state Main"))
-        #expect(readout.contains("Movie rows: $NEW, $LOAD, $QUIT"))
+        #expect(readout.contains("state System"))
+        #expect(readout.contains("Movie rows: $SETTINGS, $CONTROLS, $QUIT"))
 
         snapshot = Self.snapshot(isOpen: true, movieEnabled: true, movieLoaded: true)
         #expect(SystemMenuSection.movieReadout(for: snapshot).contains("Movie rows: no rows"))

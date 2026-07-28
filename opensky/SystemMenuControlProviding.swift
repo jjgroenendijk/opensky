@@ -31,18 +31,16 @@ nonisolated struct SystemMenuControlSnapshot: Equatable {
     let movieDrawStats: SWFDrawStats
     let movieFaults: Int
     let movieMissingNames: Int
-    /// Row labels the vanilla movie built for itself. These are the title
-    /// screen's rows, not the engine selector's — the two menus are different
-    /// menus, and the readout shows both so that stays visible.
+    /// Row labels the vanilla movie's `SystemPage` built for itself.
     let movieEntryTitles: [String]
-    /// The movie's own state name (`Main`, `PressStart`, …).
+    /// The movie page driven to the front (`System`).
     let movieState: String?
 }
 
 @MainActor
 protocol SystemMenuControlProviding: AnyObject {
     var systemMenuIsOpen: Bool { get }
-    /// Drives the vanilla `Interface\startmenu.swf` presentation layer. Off
+    /// Drives the vanilla `Interface\quest_journal.swf` presentation layer. Off
     /// keeps the engine-side selector working with the gameplay HUD on screen.
     var systemMenuMovieEnabled: Bool { get set }
     var systemMenuMasterVolume: Float { get set }

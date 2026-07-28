@@ -1053,7 +1053,11 @@ Finally, a scope finding worth recording: `startmenu.swf` is Skyrim's **title sc
 1,674-string pool contains no `$SETTINGS`, and its rows are Continue/New/Load/Creations/
 Mods/Credits/Quit/Help. The in-game system menu is `quest_journal.swf`, whose pool carries
 `$SYSTEM`, `$SETTINGS`, `$CONTROLS`, `$SAVE`, `$LOAD`, `$QUIT`, and the whole settings
-tree. Issue #231.
+tree. Issue #231 consumed that finding: OpenSky now opens `quest_journal.swf` on
+`PageArray[2]`, routes Flash key input into its category list, and opens the named
+`SystemPage.SETTINGS_CATEGORY_STATE`. The real-data gate measures 0 faults,
+0 unimplemented opcodes, 0 unhandled bridge calls of 36, 572 draws, and an 11,951-pixel
+System-to-Settings transition. See [system menu](/engine/system-menu.md).
 
 ## Limits / next
 

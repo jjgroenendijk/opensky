@@ -3,9 +3,9 @@ type: Subsystem
 title: System menu
 description: The Resume / Settings / Quit pause menu - its toolkit-free selector, the
   menu-stack handoff that pauses world simulation, the data-root and audio-volume
-  settings placeholders, and the vanilla startmenu.swf presentation layer behind it.
+  settings placeholders, and the vanilla quest_journal.swf presentation layer behind it.
 tags: [engine, ui, menu, swf, settings]
-timestamp: 2026-07-26T00:00:00Z
+timestamp: 2026-07-28T00:00:00Z
 ---
 
 # System menu
@@ -13,10 +13,19 @@ timestamp: 2026-07-26T00:00:00Z
 Milestone 8.5.1. The first menu OpenSky actually opens, and the first real implementer
 of [menu mode](/engine/menu-mode.md)'s `MenuInputConsumer`. It carries three rows —
 Resume, Settings, Quit — surfaces the two settings placeholders the milestone names,
-and optionally presents itself through the vanilla `Interface\startmenu.swf` movie.
+and optionally presents itself through the vanilla `Interface\quest_journal.swf` movie.
 
 The subsystem is deliberately split so that the menu works with no install, no
 renderer, and no movie. Only the presentation layer needs any of those.
+
+## Contents
+
+- [The selector](#the-selector)
+- [Menu-stack handoff](#menu-stack-handoff)
+- [Settings placeholders](#settings-placeholders)
+- [Vanilla presentation layer](#vanilla-presentation-layer)
+- [Verification](#verification)
+- [Limits / next](#limits--next)
 
 | Layer | File | Target |
 |---|---|---|
@@ -33,10 +42,10 @@ the last outcome, and whether Settings has been revealed. It has no reference to
 renderer, a movie, or AppKit, so every transition is unit-tested directly
 (`openskyTests/SystemMenuModelTests.swift`).
 
-`SystemMenuEntry` is the only place a row is named, so the panel and the movie bridge
-cannot disagree about what the menu contains. Activation returns a `SystemMenuOutcome`
-rather than performing the effect, because two of the three outcomes are not state
-transitions the model can make:
+`SystemMenuEntry` is the only place an engine-side fallback row is named, so the panel and
+the fallback selector cannot disagree. The vanilla movie owns its larger System-page list.
+Activation returns a `SystemMenuOutcome` rather than performing the effect, because two of
+the three outcomes are not state transitions the model can make:
 
 | Row | Outcome | Who acts |
 |---|---|---|
@@ -87,40 +96,44 @@ the surface that already owns them.
 
 ## Vanilla presentation layer
 
-`startmenu.swf` was nominated for the 8.3.3 interactive gate and rejected on measurement.
-Two of the three stated blockers are gone, and the movie now comes up clean and populates
-its list from the engine. The full re-measurement is in
-[AS2 runtime](/engine/as2-runtime.md#startmenuswf-re-measured-at-851); the short version:
+`startmenu.swf` is Skyrim's title screen, not the in-game pause menu. Its rows are
+Continue/New/Load/Creations/Mods/Credits/Quit/Help and its 1,674-string pool has no
+`$SETTINGS`. It remains a useful AS2-runtime measurement
+([AS2 runtime](/engine/as2-runtime.md#startmenuswf-re-measured-at-851)), but issue #231
+removed it from this subsystem.
 
-- The 35 `callDepthExceeded` faults were retired by the `super` fix (issue #136). Bring-up
-  reports 0 faults and 0 unimplemented opcodes.
-- `_root.CodeObj` is not a host object. The movie's own `StartMenu` constructor creates it,
-  and all 16 names on it are Bethesda.net login calls, which the bridge answers with no-ops.
-- The save-list contract still stands, which is why the bridge reports no saves.
+The in-game movie is `quest_journal.swf`. Its placed `QuestJournalBase` owns three pages:
+Quests, General Stats, and System. The live movie measured the System page at `PageArray[2]`
+and built these category rows itself:
 
-`SystemMenuMovieBridge` therefore does three things: `prepare(runtime:)` registers the six
-outbound sinks *before* `start()` (bring-up itself makes 24 `myLog` calls, which is why
-`Renderer.startSWFRuntime` grew a `prepare` hook); `activate(runtime:version:onQuit:)`
-attaches the `CodeObj` no-ops, registers the row actions, and drives `SetPlatform`,
-`InitExtensions`, and `sendMenuProperties`; and `entryLabels` / `currentState` read the
-result back for the panel. The invoke log ends at 0 unhandled of 36.
+`$QUICKSAVE`, `$SAVE`, `$LOAD`, `$INSTALLED CONTENT`, `$SETTINGS`, `$CONTROLS`, `$HELP`,
+`$QUIT`.
 
-**The two menus are different menus.** `startmenu.swf` is Skyrim's title screen — its
-1,674-string pool has no `$SETTINGS`, and the rows it builds for OpenSky are `$NEW`,
-`$LOAD` (disabled), `$CREDITS`, `$QUIT`. Resume/Settings/Quit is the engine-side selector,
-not this movie. The panel prints both lists so the difference stays visible rather than
-being quietly conflated. Skyrim's real in-game system menu is `quest_journal.swf`.
+Activating Settings opens the movie's own category panel with `$Gameplay`, `$Display`, and
+`$Audio`; its Quit panel contains `$Main Menu` and `$Desktop`. The strings remain tokens
+because SWF translation substitution is not wired yet, but the hierarchy and transitions
+are the original movie's.
 
-`InitExtensions` installs the shared `MovieClip.Lock` helper, which positions each clip
-against Scaleform's `Stage.visibleRect` and `Stage.safeRect`. Both reads used to return
-`undefined`; numeric coercion turned their edges into zero, and
-`MenuHolder.Lock("BR")` moved the ancestor from the stage's lower-right corner to `(0, 0)`,
-leaving its negative authored children outside the viewport. `Stage` now publishes separate
-full-frame visible and safe rectangles (OpenSky has no overscan crop or safe-area inset), so
-the populated `Main` state changes 5,522 pixels over an empty frame. Arrow keys drive the
-same visible list: the focus path handed to `StartMenu.handleInput` is filtered to clips that
-define `handleInput`, so the `MainListHolder` between `Menu_mc` and `List_mc` no longer
-swallows the key (#229). The staging fix is #230.
+`SystemMenuMovieBridge.prepare(runtime:)` installs the outbound trace, sound, feature-query,
+and player-info handlers before `start()`. `activate(runtime:onClose:)` then calls
+`SetPlatform(0)`, `InitExtensions`, `ShowMenu`, and
+`SwitchPageToFront(2, true)`. The vanilla host normally seeds `TopmostPage`, `iCurrentTab`,
+and focus through a tab-button group backed by engine data; OpenSky publishes the measured
+System page/index pair and focuses its category list directly. The other two page faders
+stop at `hide`, while System stops at its authored `forceFade` label.
+
+When the movie is loaded, the same `MenuInputEvent` used by panel buttons and live keys is
+translated to Flash key down/up events. The selected `$SETTINGS` row opens
+`SystemPage.SETTINGS_CATEGORY_STATE` through its named constant and `StartState(aiState)`;
+no numeric state is hardcoded. The movie's `CloseMenu` outbound call closes the engine menu
+stack. If the movie is absent or rejects input, the engine selector handles the event.
+
+The pre-issue-#136 sweep measured 159 `callDepthExceeded` faults in
+`quest_journal.swf`, the worst of all 53 movies. The acceptance run now reports 0 faults,
+0 unimplemented opcodes, 0 unhandled invokes of 36, and 572 draws. At 1280x720, the System
+page changes 361,540 pixels over empty; moving to and opening Settings changes 11,951 pixels
+from that System frame. The ignored local captures contain the user's game content and are
+never committed.
 
 The renderer owns exactly one SWF layer. The system menu takes it over from the
 gameplay HUD while the movie is up and hands it back on Resume — the same handoff
@@ -151,16 +164,19 @@ count, fault count, and distinct missing-API count. An open menu or an enabled m
 both count as destination overrides, so the sidebar dot shows a paused world and Reset
 returns to gameplay.
 
-Tests: `SystemMenuModelTests` (selector transitions), `SystemMenuPanelTests` (control
-ids, provider round-trip, readout strings), `DestinationRegistryTests` (registry order
-and pinned ids), and `SystemMenuAcceptanceRealDataTests` — the env-gated re-measurement
-of the movie against the user's install, whose PNGs and numbers go to ignored `logs/`.
+Tests: `SystemMenuModelTests` (fallback selector transitions), `SystemMenuPanelTests`
+(control ids, provider round-trip, readout strings, and the pinned movie path),
+`DestinationRegistryTests` (registry order and pinned ids), and
+`SystemMenuAcceptanceRealDataTests` — the env-gated movie gate against the user's install.
+It asserts the System and Settings rows, keyboard transition, fault/opcode/invoke tallies,
+draws, and pixel deltas; its PNGs and report go to ignored `logs/`.
 
 ## Limits / next
 
-- Settings is a revealed panel section, not a second menu on the stack. A real settings
-  menu is later work.
-- Quit terminates immediately; there is no confirmation and no save, because there is
-  no save system.
-- The rows are not localized. The vanilla string tables land with the movie-driven
-  presentation, not with the engine-side selector.
+- The panel's data-root and master-volume controls remain engine-side placeholders. The
+  vanilla Settings panel is now visible and navigable, but its individual values and
+  mutations still need their engine data callbacks.
+- The fallback selector's Quit terminates immediately; there is no confirmation and no
+  save, because there is no save system.
+- SWF text still shows `$TOKEN` names. Translation substitution is not connected to runtime
+  edit text yet.

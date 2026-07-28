@@ -83,15 +83,8 @@ extension GameViewController {
                 return
             }
             try renderer.updateSWFRuntime { runtime in
-                SystemMenuMovieBridge.activate(
-                    runtime: runtime,
-                    version: Self.systemMenuVersionText
-                ) {
-                    // The vanilla list carries its own Quit row. Route it to
-                    // the same outcome the engine selector produces.
-                    Task { @MainActor in
-                        NSApplication.shared.terminate(nil)
-                    }
+                SystemMenuMovieBridge.activate(runtime: runtime) { [weak self] in
+                    self?.closeSystemMenu()
                 }
             }
             for _ in 0 ..< Self.systemMenuActivationTicks {
@@ -116,13 +109,9 @@ extension GameViewController {
         startHUD(renderer: renderer)
     }
 
-    /// Frames the movie needs to settle into its populated `Main` state after
-    /// `sendMenuProperties`; measured against the install, not guessed.
-    static let systemMenuActivationTicks = 30
-
-    /// The version line the movie prints. OpenSky is not Skyrim, so it says so
-    /// rather than impersonating a Bethesda build number.
-    static let systemMenuVersionText = "OpenSky"
+    /// Frames the journal's top-level fade needs to settle after `ShowMenu`;
+    /// measured against the install, not guessed.
+    static let systemMenuActivationTicks = 20
 
     private static let systemMenuLogger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
@@ -131,6 +120,13 @@ extension GameViewController {
 
     private func routeSystemMenuInput(_ event: MenuInputEvent) {
         guard systemMenu.model.isOpen else { return }
+        if
+            systemMenu.movieLoaded,
+            let runtime = renderer?.swfRuntime,
+            SystemMenuMovieBridge.handle(event, runtime: runtime)
+        {
+            return
+        }
         let outcome = systemMenu.model.handle(event)
         if let outcome {
             applySystemMenuOutcome(outcome)

@@ -125,8 +125,8 @@ final class SystemMenuSection: PanelSectionViewController {
         guard snapshot.movieLoaded else {
             return "Movie: not loaded"
         }
-        // The movie is Skyrim's title screen, so its rows are not the engine
-        // selector's rows. Printing them keeps that difference on screen.
+        // Print the actual `SystemPage` rows so the verification surface proves
+        // the correct vanilla movie was driven.
         let rows = snapshot.movieEntryTitles.isEmpty
             ? "no rows"
             : snapshot.movieEntryTitles.joined(separator: ", ")
