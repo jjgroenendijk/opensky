@@ -36,6 +36,20 @@ extension GameViewController {
         worldState.onMutation = { [weak controller] location, sequence in
             controller?.noteStateMutation(in: location, sequence: sequence)
         }
+        // Runtime global variables (issue #165). Weather-chance selection is
+        // the first consumer, so every global write hands the weather runtime a
+        // fresh resolution rather than rebuilding cells: a global changes a
+        // number, not a scene.
+        let globalStore = (provider as? GlobalDataProviding)?.globalStore
+        renderer.weather?.setGlobalResolution(
+            worldState.globalResolution(defaults: globalStore), reroll: false
+        )
+        // Weak `self` breaks what would otherwise be a cycle through the store
+        // this controller owns.
+        worldState.onGlobalMutation = { [weak self, weak renderer] _ in
+            guard let self, let weather = renderer?.weather else { return }
+            weather.setGlobalResolution(self.worldState.globalResolution(defaults: globalStore))
+        }
         renderer.onFrame = { [weak self, weak controller, weak renderer] position in
             let interactionRay = renderer.flatMap { renderer -> InteractionRay? in
                 guard renderer.movementMode == .walk else { return nil }

@@ -37,6 +37,11 @@ final class WorldStateStore {
     /// last component removes the key entirely, which is what keeps
     /// `dirtyCount` honest.
     private var deltas: [ReferenceKey: ReferenceStateDelta] = [:]
+    /// Runtime global-variable overrides (issue #165), keyed by the GLOB
+    /// record's session-stable key. A sibling map rather than a component on a
+    /// reference: a global is not placed anywhere, has no cell, and must not
+    /// drag a cell rebuild behind it when it changes.
+    private var globalValues: [ReferenceKey: GlobalValue] = [:]
     /// Dirty reference count per cell, maintained incrementally so a sidebar
     /// readout costs a dictionary lookup rather than a scan.
     private var dirtyCountsByCell: [CellSceneLocation: Int] = [:]
@@ -54,6 +59,17 @@ final class WorldStateStore {
     /// individual instances, so it needs to know only that something changed
     /// and how recently.
     var onMutation: ((CellSceneLocation?, UInt64) -> Void)?
+
+    /// Fires once per journalled global mutation with the journal sequence a
+    /// snapshot taken immediately afterwards would carry.
+    ///
+    /// Deliberately separate from `onMutation`, which rebuilds cells. A global
+    /// is not part of any cell's geometry, and a game clock ticking a global
+    /// once a frame through `onMutation` would rebuild the whole resident grid
+    /// every frame. Consumers of global values — the weather chance selection
+    /// (issue #165), conditions (#251), the clock (#164) — refresh their
+    /// `GlobalResolution` from here instead.
+    var onGlobalMutation: ((UInt64) -> Void)?
 
     /// - Parameters:
     ///   - journalCapacity: retained change-journal entries; see
@@ -177,6 +193,100 @@ final class WorldStateStore {
         }
     }
 
+    // MARK: - Global variables
+
+    /// Runtime override for a global, or nil when it still holds its plugin
+    /// default. Callers wanting the effective value — default included — go
+    /// through `globalResolution(defaults:)` instead.
+    func globalValue(for key: ReferenceKey) -> GlobalValue? {
+        globalValues[key]
+    }
+
+    /// Writes `value` to a global, coercing it onto the declared type.
+    ///
+    /// A short or long global rounds (see `Global.ValueType.coerce`), so
+    /// writing 3.7 to a short and reading it back yields 4, not 3.7. Writing
+    /// the value that is already stored is a no-op and reports `false`. Writing
+    /// a value that happens to equal the plugin default still counts as an
+    /// override, exactly as with reference components: use `resetGlobal` to go
+    /// back to the default.
+    ///
+    /// - Returns: true when the stored value changed.
+    @discardableResult
+    func setGlobal(_ value: GlobalValue, for key: ReferenceKey) -> Bool {
+        guard globalValues[key] != value else { return false }
+        let previous = globalValues[key]
+        globalValues[key] = value
+        changeJournal.recordGlobal(key: key, oldValue: previous, newValue: value)
+        onGlobalMutation?(changeJournal.nextSequence)
+        return true
+    }
+
+    /// Writes a raw number to a global of declared type `type`.
+    @discardableResult
+    func setGlobal(_ raw: Float, type: Global.ValueType, for key: ReferenceKey) -> Bool {
+        setGlobal(GlobalValue(type: type, rawValue: raw), for: key)
+    }
+
+    /// Writes a raw number to the global `id` names, taking the declared type
+    /// and the session-stable key from `defaults`.
+    ///
+    /// - Returns: false when `defaults` defines no such global, as well as when
+    ///   the write is a no-op.
+    @discardableResult
+    func setGlobal(_ raw: Float, formID id: FormID, defaults: GlobalStore) -> Bool {
+        guard let global = defaults.global(id), let key = defaults.key(for: id) else {
+            return false
+        }
+        return setGlobal(raw, type: global.valueType, for: key)
+    }
+
+    /// Drops a global's override, restoring its plugin default.
+    ///
+    /// - Returns: true when an override was actually removed.
+    @discardableResult
+    func resetGlobal(for key: ReferenceKey) -> Bool {
+        guard let previous = globalValues.removeValue(forKey: key) else { return false }
+        changeJournal.recordGlobal(key: key, oldValue: previous, newValue: nil)
+        onGlobalMutation?(changeJournal.nextSequence)
+        return true
+    }
+
+    /// Drops every global override, in `ReferenceKey` total order so the
+    /// journal stays deterministic.
+    func resetAllGlobals() {
+        for key in sortedOverriddenGlobalKeys() {
+            resetGlobal(for: key)
+        }
+    }
+
+    /// Number of globals deviating from plugin data.
+    var overriddenGlobalCount: Int {
+        globalValues.count
+    }
+
+    /// Overridden global keys in `ReferenceKey` total order.
+    func sortedOverriddenGlobalKeys() -> [ReferenceKey] {
+        globalValues.keys.sorted()
+    }
+
+    /// Retained global journal entries, oldest first.
+    var globalJournalEntries: [WorldStateGlobalJournalEntry] {
+        changeJournal.globalEntries
+    }
+
+    /// Global journal entries dropped because the window was full.
+    var droppedGlobalJournalEntryCount: Int {
+        changeJournal.droppedGlobalCount
+    }
+
+    /// The lookup seam conditions (#251), the game clock (#164) and weather
+    /// chance selection read global values through: this session's overrides
+    /// over `defaults`' plugin values.
+    func globalResolution(defaults: GlobalStore?) -> GlobalResolution {
+        GlobalResolution(defaults: defaults, overrides: globalValues)
+    }
+
     // MARK: - Restoring a saved session
 
     /// Replaces every delta in the store with `snapshot`'s entries and resumes
@@ -206,9 +316,14 @@ final class WorldStateStore {
             deltas[entry.key] = entry.delta
             adjustCellCount(entry.delta.cell, by: 1)
         }
+        globalValues = [:]
+        for entry in snapshot.globals {
+            globalValues[entry.key] = entry.value
+        }
         allocator = GeneratedReferenceAllocator(nextSequence: snapshot.nextGeneratedSequence)
         changeJournal.removeAll()
         onMutation?(nil, changeJournal.nextSequence)
+        onGlobalMutation?(changeJournal.nextSequence)
     }
 
     // MARK: - Dirty tracking
@@ -315,6 +430,10 @@ final class WorldStateStore {
                 return WorldStateSnapshotEntry(key: key, delta: delta)
             },
             nextGeneratedSequence: allocator.nextSequence,
+            globals: sortedOverriddenGlobalKeys().compactMap { key in
+                guard let value = globalValues[key] else { return nil }
+                return WorldStateGlobalSnapshotEntry(key: key, value: value)
+            },
             sequence: changeJournal.nextSequence
         )
     }

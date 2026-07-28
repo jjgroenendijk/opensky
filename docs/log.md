@@ -4,6 +4,29 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-28
 
+* **GLOB records + runtime globals (issue #165)**: `Global` decodes the GLOB record — EDID,
+  the FNAM type character (`s` short, `l` long, `f` float), FLTV, and the 0x40 constant
+  header flag — with the layout's one trap handled explicitly: FLTV is a float32 whatever
+  FNAM declares, so `GlobalValue` carries the number together with its declared type and
+  coerces on every write, rounding half away from zero for the two integer types. An
+  unreadable or undocumented FNAM leaves xEdit's Float default in place rather than costing
+  the record its value. `GlobalStore` indexes the top group by FormID, by editor ID
+  case-insensitively, and by session-stable `ReferenceKey`. Above it, `WorldStateStore`
+  gains a globals map beside its reference deltas — typed mutation, reset to the plugin
+  default, its own bounded journal window sharing the component log's sequence counter, and
+  a separate `onGlobalMutation` callback, because a global changes a number rather than a
+  scene and must not drag a cell rebuild behind it. Globals ride the snapshot and persist
+  through a new additive `GVAR` save chunk, which needs no `formatVersion` bump. The lookup
+  seam is `GlobalResolution`: override first, plugin default otherwise, nil for a FormID
+  nothing defines, with a `comparisonValue` entry point shaped for the CTDA operand the
+  #251 evaluator will hand it and a `floatValue(editorID:)` one for the #164 clock. The
+  first consumer is climate weather selection, which now honours the CLMT `WLST` chance
+  global; neither UESP nor xEdit documents what that global means, so the chosen semantics
+  (a resolving global replaces the static chance) are flagged as a choice. Documented in
+  [record decoders](/formats/records.md),
+  [runtime reference identity and world state](/engine/runtime-state.md),
+  [OpenSky native save container](/formats/opensky-save.md) and
+  [weather runtime](/engine/weather.md).
 * **Shared CTDA condition decode (issue #163)**: `Condition` and `ConditionList` in
   `opensky/Formats/ESM/Records/Condition.swift` decode the 32-byte `CTDA` payload —
   comparison operator and flag bits out of the packed first byte, a comparison value that

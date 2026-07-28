@@ -33,6 +33,14 @@ nonisolated enum OpenSkySaveEncoder {
                 writeEntry(entry, into: &payload)
             }
         }
+        writeChunk(tag: OpenSkySaveFormat.ChunkTag.globalValues, into: &writer) { payload in
+            payload.writeUInt32(UInt32(clamping: snapshot.globals.count))
+            for entry in snapshot.globals {
+                writeKey(entry.key, into: &payload)
+                payload.writeUInt8(entry.value.type.saveTag)
+                payload.writeFloat32(entry.value.value)
+            }
+        }
         return writer.data
     }
 

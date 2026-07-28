@@ -26,6 +26,34 @@ nonisolated enum OpenSkySaveEntryDecoder {
         return entries
     }
 
+    /// GVAR chunk: count, then key + declared-type tag + float32 value per
+    /// overridden global (issue #165).
+    static func decodeGlobals(_ payload: Data) throws -> [WorldStateGlobalSnapshotEntry] {
+        var reader = SaveReader(payload)
+        let count = try reader.uint32("GVAR entry count")
+        try OpenSkySaveDecoder.validate(
+            count: count,
+            minimumElementSize: OpenSkySaveFormat.minimumGlobalEntrySize,
+            remaining: reader.bytesRemaining,
+            chunk: OpenSkySaveFormat.ChunkTag.globalValues
+        )
+        var entries: [WorldStateGlobalSnapshotEntry] = []
+        entries.reserveCapacity(Int(count))
+        for _ in 0 ..< count {
+            let key = try decodeKey(&reader)
+            let tag = try reader.uint8("global value type")
+            guard let type = Global.ValueType(saveTag: tag) else {
+                throw OpenSkySaveError.invalidValue(context: "unknown global value type tag \(tag)")
+            }
+            let value = try reader.float32("global value")
+            entries.append(WorldStateGlobalSnapshotEntry(
+                key: key,
+                value: GlobalValue(type: type, rawValue: value)
+            ))
+        }
+        return entries
+    }
+
     private static func decodeEntry(_ reader: inout SaveReader) throws -> WorldStateSnapshotEntry {
         let key = try decodeKey(&reader)
         let cell = try decodeCell(&reader)

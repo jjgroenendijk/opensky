@@ -32,6 +32,9 @@ nonisolated struct ESMRecord {
         /// quest enables it (UESP record-header flag 0x800).
         static let initiallyDisabled = Flags(rawValue: 1 << 11)
         static let ignored = Flags(rawValue: 1 << 12)
+        /// GLOB: the global is constant and the Creation Kit refuses to let a
+        /// script write it (UESP GLOB record-header flag 0x40).
+        static let constantGlobal = Flags(rawValue: 1 << 6)
         /// Data is uint32 decompressedSize + zlib stream.
         static let compressed = Flags(rawValue: 1 << 18)
     }

@@ -147,7 +147,7 @@ A chunk whose declared length runs past the end of the file is
 `chunkBoundsViolation(tag:)`. A chunk whose tag this build does not know is skipped using
 that declared length, which is what makes a newer build's save loadable in an older one.
 
-Version 1 defines two chunks.
+Version 1 defines two chunks; `GVAR` was added additively afterwards.
 
 `GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
 any other size is `invalidValue`.
@@ -166,6 +166,31 @@ allocator that has handed out nothing, which is sequence 1.
 | ------ | ---------- | ----------------------------------------- |
 | uint32 | entryCount | number of entries that follow             |
 | bytes  | entries    | `entryCount` entries, layout below        |
+
+`GVAR` — runtime global-variable overrides, one entry per overridden global. Added by
+issue #165 after version 1 shipped, and deliberately **without** bumping `currentVersion`: a new
+chunk is exactly what the tag-and-length stream is tolerant of, so a build that predates it
+skips the chunk by its declared length and loads the rest of the save. The reverse direction
+is equally safe, because a file with no `GVAR` chunk means no global was overridden.
+
+| type   | field      | notes                                     |
+| ------ | ---------- | ----------------------------------------- |
+| uint32 | entryCount | number of entries that follow             |
+| bytes  | entries    | `entryCount` entries, layout below        |
+
+Each entry is a reference key (the same tagged encoding `RDLT` uses, here naming the GLOB
+record rather than a placed object), then:
+
+| type   | field     | notes                                                    |
+| ------ | --------- | -------------------------------------------------------- |
+| uint8  | valueType | declared FNAM type: 0 short, 1 long, 2 float              |
+| float32| value     | the current value, already coerced onto `valueType`       |
+
+Entries are written in `ReferenceKey` total order, so the chunk is deterministic on the same
+terms as `RDLT`. An unknown `valueType` tag is `invalidValue`: unlike an unknown chunk, a
+value whose type is unreadable cannot be skipped without silently changing what the global
+means. The declared type is stored rather than re-derived from the plugin so a save stays
+readable without the game data it was written against.
 
 The snapshot's journal `sequence` is not saved. It is session-local bookkeeping, and a
 decoded snapshot always reports sequence 0.
@@ -327,8 +352,9 @@ Compression is a deliberate non-feature for now. Saves at this stage hold deltas
 whole worlds, so they are small, and an uncompressed file is directly inspectable in a hex
 editor when a determinism test disagrees with itself.
 
-The game clock and global variables land later as their own additive chunks, which under the
-version policy above costs no `formatVersion` bump.
+Global variables landed as the additive `GVAR` chunk (issue #165) and cost no
+`formatVersion` bump, exactly as the version policy above predicts. The game clock is
+expected to follow the same route.
 
 Read-only import of a Bethesda `.ess` save is a separate item and shares nothing with this
 layout. OpenSky will never write one.
@@ -337,7 +363,8 @@ layout. OpenSky will never write one.
 
 Unit tests use synthetic in-code fixtures only; no game content is involved, and none is
 needed, because the format is entirely our own. They cover round-trip equality, byte-level
-determinism across differing mutation orders, unknown-chunk skipping, fingerprint
+determinism across differing mutation orders, unknown-chunk skipping, `GVAR` round trip and
+its rejected payloads (`openskyTests/OpenSkySaveGlobalsTests.swift`), fingerprint
 comparison including reordering and case, and one test per `OpenSkySaveError` case driven by
 a targeted corruption.
 

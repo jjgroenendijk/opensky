@@ -1,8 +1,8 @@
 ---
 type: File Format
-title: Record decoders (WRLD, CELL, REFR, STAT, ModelBase)
+title: Record decoders (WRLD, CELL, REFR, STAT, ModelBase, GLOB)
 description: Field layouts of decoded plugin records and OpenSky's engine types.
-tags: [format, plugin, records, worldspace, cell]
+tags: [format, plugin, records, worldspace, cell, globals]
 timestamp: 2026-07-28T00:00:00Z
 ---
 
@@ -198,9 +198,51 @@ CONT inventory (CNTO), ACTI water type, TREE billboard/leaf-curve fields
 (CVPA/BSNM/...), and remaining DOOR flags. `ModelBase.recordType` retains source
 record type so callers can distinguish them without redecoding.
 
+## GLOB -> Global
+
+Global variables: a named, typed number the rest of the data set reads through
+conditions, scripts and record links. Decoded by
+`opensky/Formats/ESM/Records/Global.swift`; the mutable layer above it is
+[runtime reference identity and world state](/engine/runtime-state.md).
+
+Reference: UESP "Skyrim Mod:Mod File Format/GLOB"
+(<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/GLOB>) and xEdit
+`dev-4.1.6` `wbDefinitionsTES5.pas` `wbRecord(GLOB, 'Global', ...)`.
+
+| field  | type    | decoded                                            |
+| ------ | ------- | -------------------------------------------------- |
+| EDID   | zstring | `editorID`                                          |
+| FNAM   | uint8   | `valueType`: `s` (0x73) short, `l` (0x6C) long, `f` (0x66) float |
+| FLTV   | float32 | `defaultValue.value`, coerced onto `valueType`       |
+
+Record-header flag 0x40 means the global is constant; it decodes into
+`isConstant` and is recorded rather than enforced.
+
+The layout's one trap is that **FLTV is a float32 whatever FNAM declares**. A
+short or long global is a float on disk that happens to hold an integral value,
+which is why UESP's page warns at length that a long global loses precision past
+2^24 (values there round to multiples of 2, then 4, then 8). OpenSky keeps the
+same representation — one `Float` plus the declared type in `GlobalValue` — and
+coerces on every write instead of inventing a wider integer the file cannot
+round-trip. Integer types round half away from zero; nothing is clamped to 16 or
+32 bits, because a mod can legitimately store a value the type's nominal width
+would not hold.
+
+Decode policy: a wrong-size FNAM, or a type character outside the documented
+`s`/`l`/`f` set, leaves the xEdit editor default (Float) in place rather than
+costing the record its identity, and a wrong-size or absent FLTV leaves the
+value at 0. UESP lists OBND and VMAD as vestigial on GLOB — checked for by the
+game, never present in shipped data — and both are skipped. Only a non-GLOB
+record throws.
+
+`GlobalStore` (`opensky/World/GlobalStore.swift`) indexes the GLOB top group by
+raw FormID, by editor ID (case-insensitively, because scripts and the console
+have always matched global names that way) and by session-stable `ReferenceKey`.
+
 ## Verification
 
 Unit tests: `openskyTests/RecordDecoderTests.swift`,
+`GlobalRecordTests.swift`, `GlobalStoreTests.swift`,
 `ModelBaseInteractionTests.swift`,
 `LocalizedStringsTests.swift` (synthetic fixtures). Runtime probe 2026-07-09
 against vanilla Skyrim.esm (milestone 1 acceptance): 37 worldspaces listed

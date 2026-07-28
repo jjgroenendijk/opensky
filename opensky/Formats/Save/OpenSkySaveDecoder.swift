@@ -15,6 +15,9 @@ nonisolated enum OpenSkySaveDecoder {
     /// Parsed chunk payloads, with the defaults an absent chunk implies.
     private struct Body {
         var entries: [WorldStateSnapshotEntry] = []
+        /// Absent `GVAR` chunk means no global was overridden, which is also
+        /// what a save written before that chunk existed means.
+        var globals: [WorldStateGlobalSnapshotEntry] = []
         /// Matches `GeneratedReferenceAllocator`'s starting position, so a
         /// file with no `GALC` chunk restores an allocator that has handed
         /// out nothing.
@@ -41,6 +44,7 @@ nonisolated enum OpenSkySaveDecoder {
             snapshot: WorldStateSnapshot(
                 entries: body.entries,
                 nextGeneratedSequence: body.nextGeneratedSequence,
+                globals: body.globals,
                 sequence: 0
             ),
             allocator: GeneratedReferenceAllocator(nextSequence: body.nextGeneratedSequence)
@@ -124,6 +128,8 @@ nonisolated enum OpenSkySaveDecoder {
             body.nextGeneratedSequence = try payloadReader.uint64("GALC next generated sequence")
         case OpenSkySaveFormat.ChunkTag.referenceDeltas:
             body.entries = try OpenSkySaveEntryDecoder.decodeEntries(payload)
+        case OpenSkySaveFormat.ChunkTag.globalValues:
+            body.globals = try OpenSkySaveEntryDecoder.decodeGlobals(payload)
         default:
             break // Unknown chunk: skipped by its declared length.
         }

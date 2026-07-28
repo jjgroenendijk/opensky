@@ -23,6 +23,7 @@ identity scheme, the per-cell index built from it, and the store above both.
 * Query surface
 * Ownership: where identity state lives
 * `WorldStateStore` — components, dirty tracking, reset, journal, snapshot
+* Runtime global variables and the value-lookup seam
 * Applying state during a cell build
 * Making a mutation visible: snapshot capture and cell rebuilds
 * Save and load: the snapshot through `OpenSkySaveStore`
@@ -268,6 +269,113 @@ history is deliberately absent from the snapshot — the journal is the separate
 order-dependent product of the same store. Allocator position is included, because two
 stores that minted different numbers of generated keys are not in the same end state.
 
+## Runtime global variables and the value-lookup seam
+
+Issue #165 (item 10.2.2) adds the second kind of mutable state the store holds: global
+variables. A [GLOB record](/formats/records.md) authors a name, a declared numeric type and
+a default value; a session then writes over that default, and conditions, scripts and the
+game clock must all read whatever the session last wrote.
+
+### Why globals are a sibling map, not a component
+
+A global is not placed anywhere. It has no cell, no transform and no plugin baseline that a
+cell build re-derives, so modelling it as another `WorldStateComponentKind` on a
+`ReferenceKey` would put a value with none of a reference's properties into the type that
+exists to describe them — and it would have written a new component tag into the `RDLT` save
+chunk, where an unknown tag is a hard error rather than a skip, making the change
+non-additive for older builds.
+
+The store therefore keeps `[ReferenceKey: GlobalValue]` beside `[ReferenceKey:
+ReferenceStateDelta]`. The key is still a `ReferenceKey` — the GLOB record's own,
+resolved through the defining plugin's master list — so identity, ordering and save
+encoding are shared with references and nothing new had to be invented for them.
+
+### Typed values and the rounding rule
+
+`GlobalValue` (`opensky/Formats/ESM/Records/Global.swift`) pairs a `Float` with the FNAM
+`Global.ValueType`. Every construction coerces the number onto the type, so a short or long
+global can never hold a fraction no matter who wrote it — Papyrus, a console command, or a
+decoded save. Float globals pass through untouched.
+
+The rounding rule is **half away from zero**: 3.7 becomes 4, -2.5 becomes -3. No open spec
+states which rule the original engine used, so this is OpenSky's documented choice. It was
+picked over truncation toward zero because truncation makes accumulation wrong in a way
+players notice: adding 0.6 ten times to a short global lands on 0 under truncation and on 6
+under rounding. Non-finite input to an integer type becomes 0 rather than propagating a NaN
+into comparisons that must be total, and nothing is clamped to 16 or 32 bits, because FLTV
+is a float on disk and clamping would discard values a mod can legitimately author.
+
+### Mutation, reset and the journal
+
+* `setGlobal(_:type:for:)` and `setGlobal(_:formID:defaults:)` write a value, the second
+  taking the declared type and the key from a `GlobalStore`. Writing the value already
+  stored is a no-op that reports `false`, exactly like a component write.
+* `resetGlobal(for:)` removes the override, so the global reads its plugin default again; an
+  empty map means nothing to snapshot and nothing to save. `resetAllGlobals()` clears them
+  in `ReferenceKey` order so the log stays deterministic.
+* Every write and reset records a `WorldStateGlobalJournalEntry` — sequence, key, old value,
+  new value — in its own bounded window inside `WorldStateJournal`, sharing the one
+  monotonic sequence counter with the component log. Interleaving the two logs by `sequence`
+  reproduces the real causal order, which is what Papyrus and the save layer need;
+  `WorldStateJournalEntry` itself was left exactly as it was, since its `kind` describes a
+  component slot a global does not have.
+* Global writes fire `onGlobalMutation`, **not** `onMutation`. `onMutation` drives cell
+  rebuilds, and a global changes a number rather than a scene: routing the game clock's
+  per-frame `GameHour` write through it would rebuild the whole resident grid every frame.
+
+### The lookup seam
+
+`GlobalResolution` (`opensky/World/GlobalStore.swift`) is the one place anything asks what a
+global is worth. It pairs a `GlobalStore` of plugin defaults with a set of runtime
+overrides, and its resolution order is fixed and total: this session's override wins, the
+plugin default is the answer otherwise, and `nil` means the FormID names no global the store
+knows. `WorldStateStore.globalResolution(defaults:)` builds one from the live store;
+`GlobalResolution(defaults:snapshot:)` builds an equivalent one from a `WorldStateSnapshot`,
+so a consumer running off the main actor gets the same answers without reaching into the
+store.
+
+| call | for |
+| ---- | --- |
+| `value(for:)` / `value(editorID:)` | the value with its declared type |
+| `floatValue(for:)` / `floatValue(editorID:)` | the number alone — the game clock's `TimeScale` read (issue #164) |
+| `comparisonValue(_:)` | the right-hand side of a CTDA comparison (issue #251) |
+| `isOverridden(_:)` | whether the session has written this global |
+
+`comparisonValue(_:)` takes the `Condition.ComparisonValue` the
+[CTDA decoder](/formats/conditions.md) produces: a `.value` literal passes through
+unchanged, a `.global` operand resolves through the store. A `nil` result means the
+condition references a global nothing defines, which the evaluator must treat as
+unevaluatable rather than as a comparison against zero.
+
+### First consumer: climate weather chances
+
+`WeatherSelection.climateCandidates(worldspace:store:globals:)` honours the CLMT `WLST`
+global beside each weather chance, so mutating that global visibly shifts which weather the
+deterministic pick returns. The semantics chosen and why they are a choice are documented in
+[weather runtime](/engine/weather.md). The resolver is passed in rather than stored, so
+`WeatherStore` stays immutable; `WeatherSystem.setGlobalResolution(_:)` adopts a fresh
+resolution and rerolls, and `GameViewController` hands it one on every `onGlobalMutation`.
+
+There is no `World > Runtime State` control for globals yet: the sidebar surface for the
+M10.2 work lands with the milestone acceptance item, which owns the panel changes for the
+whole of 10.2.
+
+### Global-variable tests
+
+* `GlobalRecordTests` — all three FNAM types, the constant header flag, fractional values
+  rounding onto integer types, and the malformed cases (wrong record type, wrong-size FNAM
+  and FLTV, unknown type character, a record with no fields at all).
+* `GlobalStoreTests` — FormID, editor-ID and case-insensitive lookup, session-stable key
+  resolution, and the resolution seam: plugin default, runtime override, CTDA comparison
+  values including one decoded from real CTDA bytes, and construction from a snapshot.
+* `WorldStateGlobalsTests` — typed mutation and its rounding, no-op writes, reset and
+  reset-all, journal contents and the sequence shared with the component log, the bounded
+  window, the callback split, snapshot ordering and equality, and restore.
+* `OpenSkySaveGlobalsTests` — the `GVAR` round trip, byte determinism across write orders,
+  restore into a fresh store, an absent chunk, and the rejected payloads.
+* `WeatherGlobalChanceTests` — the first consumer, listed in
+  [weather runtime](/engine/weather.md).
+
 ## Applying state during a cell build
 
 Issue #160 (item 10.1.3) is where the store stops being a ledger nobody reads. A build takes
@@ -390,6 +498,12 @@ individually meaningful mutations), and fires one unattributed `onMutation` so e
 resident cell rebuilds against the restored state — the same rebuild path described above
 for a live mutation, just triggered once for the whole world instead of per reference.
 
+Global overrides travel the same path. `snapshot()` carries them in `globals`, ordered by
+`ReferenceKey` and part of snapshot equality; the encoder writes them into the additive
+`GVAR` chunk; `restore(from:)` replaces the store's global map alongside its deltas and
+fires one `onGlobalMutation` so the weather runtime and any other consumer adopt the
+restored values.
+
 A round trip is therefore: `WorldStateStore.snapshot()` -> `OpenSkySaveStore.save` -> bytes
 on disk -> `OpenSkySaveStore.load` -> `WorldStateStore.restore(from:)` -> the same deltas,
 in a possibly different store instance, driving the same resident cells to rebuild. The
@@ -463,6 +577,11 @@ Local A/B (optional, never committed): none
 * [Interaction targeting](/engine/interaction.md) — the raw-FormID lookup pattern
   `referenceEntry(formID:)` follows, and the interior-first fallback it shares with
   `interaction(reference:)`.
+* [Record decoders](/formats/records.md) — the GLOB layout behind `GlobalStore`, and
+  [conditions](/formats/conditions.md) — the CTDA comparison operand the lookup seam
+  resolves.
+* [Weather runtime](/engine/weather.md) — the first consumer of resolved global values, and
+  the chosen CLMT WLST semantics.
 * [OpenSky native save container](/formats/opensky-save.md) — the `.osav` byte layout that
   `OpenSkySaveStore` writes and reads on behalf of the save/load section above.
 * [Main-app UI framework + placement](/tools/app-ui.md) and
