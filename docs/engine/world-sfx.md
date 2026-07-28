@@ -19,13 +19,27 @@ descriptor's authored `SNDR.GNAM` category. Implementation:
 `opensky/World/CellStreamerAmbience.swift` (streamer emission), and the panel
 section `opensky/Shell/Sections/AudioSfxSection.swift`.
 
+## Contents
+
+* [Subscriptions](#subscriptions)
+* [Threading](#threading)
+* [Sound resolution](#sound-resolution)
+* [Positional stopgap](#positional-stopgap)
+* [World > Audio > SFX & Ambience surface](#world--audio--sfx--ambience-surface)
+* [Verification](#verification)
+* [Follow-ups filed](#follow-ups-filed)
+
 ## Subscriptions
 
-The director subscribes to two `CellStreamer` callbacks. Both are no-ops until
+The director subscribes to three `CellStreamer` callbacks. All are no-ops until
 the user enables the [world audio engine](/engine/audio.md).
 
 ```text
 CellStreamer.onInteraction  -> director.handleInteraction  -> play activation SFX
+CellStreamer.onInteractionAnimation -> director.handleInteractionAnimation
+  motionStarted -> start authored loop
+  closed        -> stop loop + play close SFX
+  cancelled     -> stop loop
 CellStreamer.onAmbienceContextChanged -> director.handleAmbienceContext -> bed swap
 ```
 
@@ -40,9 +54,25 @@ A use-key press publishes one `InteractionEvent` carrying the target's
 [ModelBase sound fields](/formats/records.md)). The director resolves the
 `activation` FormID, follows its descriptor's `SNDR.GNAM -> SNCT.PNAM` chain to
 a vanilla menu category, and plays it at the placed reference's position.
-Missing or malformed category metadata falls back to Effects. Close and loop
-sounds ride along on the same struct but wait on door-animation wiring
-(issue #234).
+Missing or malformed category metadata falls back to Effects.
+
+### Door motion and close SFX
+
+An accepted player-driven door transition publishes an
+`InteractionAnimationEvent.motionStarted` boundary and retains the source
+`PlacedInteraction` across the asynchronous destination build. A successful
+build publishes `closed` immediately before replacing the source scene; a
+failed build publishes `cancelled`. Runtime-state rebuild transitions publish
+none of these player-audio events.
+
+The director starts `sounds.loop` as a positional looping source on
+`motionStarted`. It records that source ID under the placed reference so
+`closed` and `cancelled` retire exactly the movement loop without disturbing
+ambience or other effects. `closed` then resolves and plays `sounds.close` as a
+one-shot. This covers `DOOR BNAM` and `DOOR ANAM`; the same typed event accepts
+`CONT QNAM` when container animation becomes a producer. A future rendered
+door animation moves the existing phase emission to its authored boundaries;
+the audio subscription and resolution path do not change.
 
 ### Ambience bed
 
@@ -186,8 +216,10 @@ nothing.
 * `AmbienceCatalogTests` — bed resolution for exterior/interior, unknown-region
   skip, missing-ASPC, ASPC-without-direct-or-borrow.
 * `WorldAudioSoundDirectorTests` — offline-render coverage: interaction plays
-  activation sound (as a non-looping effect), force trigger, resolve-failure
-  error. Fixtures shared with the ambience suite live in
+  activation sound (as a non-looping effect), motion starts the authored loop,
+  close retires the loop and plays its one-shot, cancellation retires the loop
+  without a false close, force trigger, and resolve-failure error. Fixtures
+  shared with the ambience suite live in
   `openskyTests/WorldAudioDirectorFixtures.swift`.
 * `WorldAudioDirectorAmbienceTests` — offline-render coverage of the bed:
   start on context, retire on context change, no-op when disabled, toggle
@@ -200,8 +232,12 @@ nothing.
   while a one-shot falls silent; `AudioSourceStreamerTests` covers the
   end-of-file rewind policy itself (pure, because no WMA fixture may enter the
   repository).
+* `CellStreamerDoorTests` (under `CellStreamerTests`) — accepted player door
+  transitions publish `motionStarted` followed by `closed`; failed transitions
+  end in `cancelled`.
 * `CellStreamerAmbienceTests` (under `CellStreamerTests`) — streamer emits
-  context on cell arrival, dedups steady-state, regionless center emits empty.
+  context on cell arrival, deduplicates steady state, regionless center emits
+  empty.
 * `WorldAudioTransitionAcceptanceTests` — the M9 gate's transition sentence as
   one synthetic sequence: an exterior cell arrives and starts its region bed and
   exploration playlist, a door interaction plays its activation SFX without
@@ -235,6 +271,5 @@ install, but the listening itself is still outstanding.
 
 ## Follow-ups filed
 
-* #234 — door close SFX (needs door-animation event).
 * #236 — non-positional ambience bed path through the existing submix.
 * #238 — comprehensive Cell decoder unit tests (pre-existing gap, widened by XCAS).

@@ -43,7 +43,7 @@ nonisolated struct ModelBase {
     struct Sounds: Equatable {
         /// One-shot on use-key activation. DOOR.SNAM, ACTI.VNAM, CONT.SNAM.
         let activation: FormID?
-        /// One-shot on close (deferred: needs door animation event — issue #234).
+        /// One-shot on close.
         /// DOOR.ANAM, CONT.QNAM.
         let close: FormID?
         /// Continuous positional loop while in range. DOOR.BNAM, ACTI.SNAM.

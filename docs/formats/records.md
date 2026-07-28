@@ -3,7 +3,7 @@ type: File Format
 title: Record decoders (WRLD, CELL, REFR, STAT, ModelBase)
 description: Field layouts of decoded plugin records and OpenSky's engine types.
 tags: [format, plugin, records, worldspace, cell]
-timestamp: 2026-07-26T00:00:00Z
+timestamp: 2026-07-28T00:00:00Z
 ---
 
 # Record decoders, Skyrim SE
@@ -171,7 +171,7 @@ audio director reads one field per concept:
 | semantic | DOOR | ACTI | CONT |
 | -------- | ---- | ---- | ---- |
 | `activation` (one-shot on use-key) | `SNAM` | `VNAM` | `SNAM` |
-| `close` (one-shot on close; deferred — issue #234) | `ANAM` | — | `QNAM` |
+| `close` (one-shot on close) | `ANAM` | — | `QNAM` |
 | `loop` (continuous positional loop) | `BNAM` | `SNAM` | — |
 
 Each FormID stores either a SNDR descriptor (the modern record) or a SOUN legacy

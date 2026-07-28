@@ -4,6 +4,17 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-28
 
+* **Door motion and close SFX (issue #234)**: accepted player door transitions now publish
+  typed `motionStarted`, `closed`, and `cancelled` animation boundaries while retaining
+  the placed interaction across the asynchronous destination build. The world-audio
+  director starts `DOOR BNAM` as a positional loop, stops that exact source on completion
+  or failure, and plays `DOOR ANAM` only on a successful close. The same close event
+  consumes `CONT QNAM` when container animation gains a producer; runtime-state rebuilds
+  remain silent. Offline audio tests prove loop/close/cancellation source lifetime, and
+  streamer tests prove the success and failure event sequences. Documented in
+  [record decoders](/formats/records.md) and
+  [world SFX + ambience](/engine/world-sfx.md).
+
 * **GMST-backed movement tuning (issue #63)**: a strict decoder now derives GMST DATA type
   from the EDID prefix (`s`, `i`, `f`, or `b`) and rejects wrong sizes, invalid Booleans,
   unknown prefixes, duplicate required fields, and trailing string bytes. The targeted

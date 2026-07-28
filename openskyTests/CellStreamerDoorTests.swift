@@ -6,6 +6,65 @@ import Testing
 
 extension CellStreamerTests {
     @Test
+    func playerDoorTransitionPublishesMotionAndCloseBoundaries() {
+        let runner = ManualCellBuildRunner()
+        let streamer = Self.makeStreamer(runner: runner, radius: 0)
+        var phases: [InteractionAnimationPhase] = []
+        streamer.onInteractionAnimation = { phases.append($0.phase) }
+        streamer.update(cameraPosition: Self.center)
+        let door = Self.door(reference: 0x10, destination: 0x20, position: Self.center)
+        runner.complete(Self.coordinate(0, 0), with: .success(Self.interactiveScene(
+            location: .exterior(Self.coordinate(0, 0)),
+            door: door,
+            sounds: ModelBase.Sounds(
+                activation: FormID(0xA01),
+                close: FormID(0xA02),
+                loop: FormID(0xA03)
+            )
+        )))
+        streamer.update(cameraPosition: Self.center)
+
+        let usePosition = Self.center - SIMD3<Float>(10, 0, 0)
+        Self.activate(streamer, from: usePosition, toward: Self.center)
+        #expect(phases == [.motionStarted])
+
+        runner.completeDoorTransition(from: FormID(0x10), with: .success(DoorTransition(
+            sourceDoor: FormID(0x10),
+            destinationDoor: FormID(0x20),
+            destinationPlacement: PlacedReference.Placement(
+                position: Self.center, rotation: .zero
+            ),
+            scene: Self.cellScene(location: .interior(FormID(0x138CA)))
+        )))
+        streamer.update(cameraPosition: Self.center)
+
+        #expect(phases == [.motionStarted, .closed])
+    }
+
+    @Test
+    func failedPlayerDoorTransitionCancelsMotion() {
+        enum DoorFailure: Error { case broken }
+
+        let runner = ManualCellBuildRunner()
+        let streamer = Self.makeStreamer(runner: runner, radius: 0)
+        var phases: [InteractionAnimationPhase] = []
+        streamer.onInteractionAnimation = { phases.append($0.phase) }
+        streamer.update(cameraPosition: Self.center)
+        let door = Self.door(reference: 0x10, destination: 0x20, position: Self.center)
+        runner.complete(Self.coordinate(0, 0), with: .success(Self.interactiveScene(
+            location: .exterior(Self.coordinate(0, 0)), door: door
+        )))
+        streamer.update(cameraPosition: Self.center)
+
+        let usePosition = Self.center - SIMD3<Float>(10, 0, 0)
+        Self.activate(streamer, from: usePosition, toward: Self.center)
+        runner.completeDoorTransition(from: FormID(0x10), with: .failure(DoorFailure.broken))
+        streamer.update(cameraPosition: Self.center)
+
+        #expect(phases == [.motionStarted, .cancelled])
+    }
+
+    @Test
     func failedDoorTransitionIsCountedForAcceptance() {
         enum DoorFailure: Error { case broken }
 
@@ -89,7 +148,8 @@ extension CellStreamerTests {
 
     private static func interactiveScene(
         location: CellSceneLocation,
-        door: PlacedDoor
+        door: PlacedDoor,
+        sounds: ModelBase.Sounds? = nil
     ) -> CellScene {
         let reference = door.reference
         return cellScene(
@@ -98,7 +158,8 @@ extension CellStreamerTests {
             interactions: [
                 reference: interaction(
                     reference: reference.rawValue,
-                    position: door.position
+                    position: door.position,
+                    sounds: sounds
                 )
             ],
             staticCollision: collision(

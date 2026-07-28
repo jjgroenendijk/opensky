@@ -63,20 +63,7 @@ extension GameViewController {
         controller.onInteractionTargetChanged = { [weak self] target in
             self?.updateHUDTarget(target)
         }
-        controller.onInteraction = { [weak self] event in
-            // World SFX director subscription (M9.2.2). The director is built
-            // lazily alongside the audio engine; before that this is a no-op.
-            // Papyrus OnActivate will subscribe here alongside, not replace.
-            self?.soundDirector?.handleInteraction(event)
-        }
-        controller.onAmbienceContextChanged = { [weak self] context in
-            self?.soundDirector?.handleAmbienceContext(context)
-        }
-        // Music director subscription (M9.2.3). Same lazy-construction policy
-        // as the sound director: a no-op until audio is enabled.
-        controller.onMusicContextChanged = { [weak self] context in
-            self?.musicDirector?.handleMusicContext(context)
-        }
+        wireAudioCallbacks(controller)
         renderer.terrainSampler = { [weak controller] position in
             controller?.sampleTerrain(at: position)
         }
@@ -84,5 +71,24 @@ extension GameViewController {
             controller?.collisionCandidates(overlapping: bounds) ?? []
         }
         streamer = controller
+    }
+
+    /// World-audio directors are built lazily alongside the audio engine, so
+    /// each callback remains a no-op until audio is enabled. Papyrus
+    /// OnActivate will subscribe beside the interaction handler, not replace
+    /// this engine event.
+    private func wireAudioCallbacks(_ controller: CellStreamer) {
+        controller.onInteraction = { [weak self] event in
+            self?.soundDirector?.handleInteraction(event)
+        }
+        controller.onInteractionAnimation = { [weak self] event in
+            self?.soundDirector?.handleInteractionAnimation(event)
+        }
+        controller.onAmbienceContextChanged = { [weak self] context in
+            self?.soundDirector?.handleAmbienceContext(context)
+        }
+        controller.onMusicContextChanged = { [weak self] context in
+            self?.musicDirector?.handleMusicContext(context)
+        }
     }
 }

@@ -131,15 +131,18 @@ enum WorldAudioDirectorFixture {
         }
     }
 
-    static func makeInteractionEvent(sounds: ModelBase.Sounds?) -> InteractionEvent {
+    static func makeInteractionEvent(
+        sounds: ModelBase.Sounds?,
+        action: InteractionAction = .open
+    ) -> InteractionEvent {
         InteractionEvent(target: InteractionTarget(
             interaction: PlacedInteraction(
                 reference: FormID(1),
                 base: FormID(2),
                 position: SIMD3<Float>(10, 0, 0),
                 name: "Test",
-                action: .open,
-                actionLabel: "Open",
+                action: action,
+                actionLabel: action.defaultLabel,
                 sounds: sounds
             ),
             hitPosition: SIMD3<Float>(10, 0, 0),

@@ -12,7 +12,8 @@ extension CellStreamerTests {
         position: SIMD3<Float>,
         action: InteractionAction = .open,
         name: String = "Test Door",
-        actionLabel: String = "Open"
+        actionLabel: String = "Open",
+        sounds: ModelBase.Sounds? = nil
     ) -> PlacedInteraction {
         PlacedInteraction(
             reference: FormID(reference),
@@ -21,7 +22,7 @@ extension CellStreamerTests {
             name: name,
             action: action,
             actionLabel: actionLabel,
-            sounds: nil
+            sounds: sounds
         )
     }
 
