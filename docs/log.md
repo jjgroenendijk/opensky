@@ -2,6 +2,48 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-07-29
+
+* **CTDA condition evaluator (issue #251)**: `ConditionEvaluator` in `opensky/World/`
+  turns the decoded conditions from #163 into answers. One condition is
+  `functionReturn <operator> comparisonValue` compared as `Float`, with exact
+  equality because no open source documents a tolerance — an invented epsilon would
+  be an undocumented behavior difference hiding inside an otherwise faithful
+  comparison. A use-global right-hand side resolves through the #165
+  `GlobalResolution.comparisonValue(_:)` seam, and a global nothing defines is a
+  reason-tagged false rather than a compare against zero. OR grouping follows the
+  Creation Kit wiki's rule that the flag replaces the operator *between* condition N
+  and N+1, so consecutive OR-joined conditions form one disjunction block, blocks
+  combine with AND, and the wiki's own `A AND B OR C AND D` evaluates as
+  `(A AND (B OR C) AND D)`; a trailing OR flag has no following operator to replace,
+  so the block simply ends, which is the conservative reading of a rule that does not
+  cover that case. Run-on resolution is live for subject, target and reference (the
+  `swapSubjectAndTarget` flag applied there) and lazy, so `GetCurrentTime` still
+  answers in a context with nothing bound; every other run-on type is a reason-tagged
+  false in its own bucket rather than an error. Nothing throws: a condition OpenSky
+  cannot answer is false plus a machine-readable `ConditionFailure`, and
+  `ConditionTally` — capped name tables with uncapped totals, one bucket per reason,
+  ranked accessors — borrows the registry and coverage-tally pattern wholesale from
+  the AS2 runtime's `AS2Natives` and `AS2Tally`, which makes the missing coverage a
+  measurable result and adding functions later purely additive. Five functions are
+  registered, the ones the engine can answer honestly from state it owns:
+  `GetCurrentTime`, `GetIsID`, `GetGlobalValue`, `GetRandomPercent` and
+  `GetDayOfWeek`. Two open questions were settled by evidence rather than by
+  argument. `GetRandomPercent`'s index is xEdit's 77, not the 76 the older gib.me
+  list implies: stored index 76 is absent from `Skyrim.esm` entirely while 77 carries
+  1,203 conditions with zero parameter words in every case and comparison values
+  spanning 0.0 to 100.0, which is exactly a no-parameter percentage signature. And
+  `GetDayOfWeek` is anchored on the vanilla start date, since UESP `Skyrim:Calendar`
+  documents the 17th of Last Seed as a Sundas and the Creation Kit maps return 0 to
+  Sundas; the earlier clock-epoch anchor put the vanilla start on Tirdas and was
+  wrong by two days. The extended `ConditionRealDataTests` sweep over the retail
+  install reports the honest headline: 22,470 of 83,759 vanilla conditions (26.83%)
+  name an implemented function, from 5 of the 244 distinct indices present, with the
+  remaining 61,289 conditions ranked by index in the gitignored
+  `logs/condition-sweep.log`. Inspector exposure belongs to the M10.2 acceptance
+  gate, issue #166. Documented in [conditions](/formats/conditions.md) and
+  [runtime reference identity and world state](/engine/runtime-state.md).
+
 ## 2026-07-28
 
 * **Game clock + calendar (issue #164)**: `GameClock` replaces the scrubbed time-of-day

@@ -69,7 +69,10 @@ struct ConditionTimeFunctionTests {
     @Test func getDayOfWeekAdvancesOncePerDayAndWraps() {
         var clock = GameClock(year: 201, month: 8, day: 17, hour: 0)
         let start = ConditionFunctions.dayOfWeek(of: clock)
-        #expect((0 ... 6).contains(start))
+        // The vanilla start date is a Sundas, index 0, per UESP
+        // `Skyrim:Calendar` and the Creation Kit's GetDayOfWeek table.
+        #expect(start == ConditionFunctions.vanillaStartWeekday)
+        #expect(start == 0)
         for step in 1 ... 8 {
             // One game day at timescale 1 is 86400 wall seconds, fed in whole
             // hours so the arithmetic stays exact.

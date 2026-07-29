@@ -44,19 +44,30 @@ nonisolated extension ConditionFunctions {
         return .success(hour)
     }
 
+    /// Weekday index of the vanilla start date, 17th of Last Seed 4E 201.
+    ///
+    /// UESP `Skyrim:Calendar` documents that date as a Sundas: "the game will
+    /// usually start with your first day, the 17th of Last Seed, as Sundas"
+    /// (<https://en.uesp.net/wiki/Skyrim:Calendar>). The same page notes the
+    /// one exception, which OpenSky does not model: loading an existing save
+    /// before starting a new game carries that save's weekday over instead. A
+    /// fresh game is the case the engine answers.
+    static let vanillaStartWeekday = 0
+
     /// Day of the week, 0 = Sundas (Sunday) through 6 = Loredas (Saturday),
-    /// per the seven day names in UESP `Lore:Calendar`.
+    /// which is the Creation Kit's own return table for this function
+    /// (<https://ck.uesp.net/wiki/GetDayOfWeek>); the day names match UESP
+    /// `Lore:Calendar`.
     ///
     /// The Tamriel year is 365 days and has no leap day, so weekdays advance
     /// one per day and drift against the calendar year exactly as they do in
-    /// the lore. Which weekday the clock epoch (4E 0, 1st of Morning Star)
-    /// falls on is *not* documented on any source consulted, so OpenSky anchors
-    /// it to Sundas and flags the anchor for verification against real game
-    /// behaviour in the issue #251 sweep. Every relative answer — "two days
-    /// later is two weekdays later" — is correct regardless of the anchor.
+    /// the lore. Counting from the vanilla start rather than from the clock
+    /// epoch (4E 0, 1st of Morning Star) is what makes the answer absolute:
+    /// no source documents the epoch's own weekday, but `GameClock.daysPassed`
+    /// already measures from the start date, whose weekday is documented.
     static func dayOfWeek(of clock: GameClock) -> Int {
-        let days = Int((clock.totalGameSeconds / GameClock.secondsPerDay).rounded(.down))
-        return ((days % 7) + 7) % 7
+        let days = Int(clock.daysPassed.rounded(.down))
+        return (((days + vanillaStartWeekday) % 7) + 7) % 7
     }
 
     /// The seven day names, in `dayOfWeek(of:)` order (UESP `Lore:Calendar`).

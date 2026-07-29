@@ -1,10 +1,16 @@
 // Env-gated CTDA sweep over the user's own Skyrim SE install (read-only
 // external input, never committed — AGENTS.md Legal & IP): decodes every CTDA
-// subrecord of every record in Skyrim.esm and asserts none of them throws.
-// Groundwork for the condition-function coverage tally (issue #251), so it
-// decodes fields directly rather than through per-record wiring. Skips
-// automatically when OPENSKY_DATA_ROOT is unset/unresolvable (CI has no game
-// data). Summary printed + written to logs/.
+// subrecord of every record in Skyrim.esm, asserts none of them throws, and
+// tallies how much of that traffic `ConditionFunctionRegistry.standard` can
+// actually evaluate (issue #251). It decodes fields directly rather than
+// through per-record wiring, so a record type nobody has modelled yet still
+// contributes its conditions. Skips automatically when OPENSKY_DATA_ROOT is
+// unset/unresolvable (CI has no game data). Summary and coverage report are
+// printed and written to logs/; the coverage numbers are also asserted,
+// because print() never reaches the .xcresult.
+//
+// Coverage model and report text live in `ConditionCoverageTally.swift` and
+// `ConditionCoverageReport.swift`.
 //
 // Layout: UESP "Skyrim Mod:Mod File Format/CTDA Field" and xEdit dev
 // Core/wbDefinitionsTES5.pas `wbCTDA` (line 6889).
@@ -24,6 +30,12 @@ struct ConditionRealDataTests {
         return try? GameDataLocator.locate()
     }()
 
+    /// Raw indices the open sources disagree about, probed for their on-disk
+    /// shape. xEdit's TES5 table puts GetRandomPercent at stored 77 while the
+    /// older gib.me list implies 76; a no-parameter function compared against
+    /// values spread over 0-100 is the one that really is GetRandomPercent.
+    private static let disputedIndices: [UInt16] = [76, 77]
+
     @Test(.enabled(if: Self.dataRoot != nil))
     func sweepsEveryConditionInSkyrimESM() throws {
         let root = try #require(Self.dataRoot)
@@ -34,9 +46,65 @@ struct ConditionRealDataTests {
         #expect(stats.skipped == 0, "wrong-size CTDA payloads in Skyrim.esm")
         #expect(stats.unreadableRecords == 0, "records whose fields failed to parse")
 
-        let summary = stats.summary
+        let summary = """
+        \(stats.summary)
+        \(stats.coverage.report(probing: Self.disputedIndices))
+        """
         print(summary)
         try? summary.write(to: logURL, atomically: true, encoding: .utf8)
+        try check(coverage: stats.coverage, decoded: stats.decoded)
+    }
+
+    /// The coverage ratio is the deliverable of this sweep, so it is asserted
+    /// rather than only printed: `print()` never reaches the .xcresult, and a
+    /// number nobody checks is not evidence.
+    private func check(coverage: ConditionCoverage, decoded: Int) throws {
+        let registry = ConditionFunctionRegistry.standard
+        #expect(coverage.total == decoded, "coverage tally missed conditions")
+
+        let implemented = coverage.implementedCount(in: registry)
+        #expect(implemented > 0, "the registry answers none of Skyrim.esm's conditions")
+        let fraction = coverage.coverageFraction(in: registry)
+        #expect(fraction > 0, "coverage fraction \(fraction) is not above zero")
+        #expect(fraction < 1, "coverage fraction \(fraction) claims a complete registry")
+        #expect(
+            coverage.distinctIndices > registry.count,
+            "Skyrim.esm should use far more indices than the registry implements"
+        )
+
+        let ranked = coverage.rankedUnimplemented(in: registry)
+        let hottest = try #require(ranked.first, "no unimplemented function found")
+        #expect(hottest.conditions > 0, "the hottest miss carries no conditions")
+        #expect(registry[hottest.index] == nil, "ranked miss is actually implemented")
+        let missed = ranked.reduce(0) { $0 + $1.conditions }
+        #expect(implemented + missed == coverage.total, "conditions lost between buckets")
+        checkDisputedIndices(coverage: coverage)
+    }
+
+    /// Pins the GetRandomPercent index to what the plugin actually shows. The
+    /// function declares no parameters and returns 0-100, so whichever of the
+    /// two candidate indices is really GetRandomPercent leaves both parameter
+    /// words zero everywhere and is only ever compared against 0-100.
+    private func checkDisputedIndices(coverage: ConditionCoverage) {
+        let registry = ConditionFunctionRegistry.standard
+        let random = registry.sortedFunctions().first { $0.name == "GetRandomPercent" }
+        guard let random else { return }
+        guard let shape = coverage.shape(of: random.index) else {
+            Issue.record("GetRandomPercent raw index \(random.index) is unused")
+            return
+        }
+        #expect(
+            shape.takesNoParameters,
+            "raw \(random.index) carries parameters, so it is not GetRandomPercent"
+        )
+        #expect(
+            shape.percentRangeComparisons == shape.literalComparisons,
+            "raw \(random.index) is compared outside 0-100"
+        )
+        #expect(
+            (shape.maximumComparison ?? 0) > 1,
+            "raw \(random.index) never compares above 1, so it reads as a flag"
+        )
     }
 
     // MARK: - Sweep
@@ -55,7 +123,7 @@ struct ConditionRealDataTests {
         var operatorHistogram: [String: Int] = [:]
         var runOnHistogram: [String: Int] = [:]
         var recordTypeHistogram: [String: Int] = [:]
-        var functionIndices = Set<UInt16>()
+        var coverage = ConditionCoverage()
         var nonReferenceGarbage = 0
 
         var summary: String {
@@ -70,8 +138,8 @@ struct ConditionRealDataTests {
             [INFO] run-on histogram: \(runOns)
             [INFO] use-global comparison values: \(useGlobal); OR-flagged: \(orFlagged); \
             CIS1/CIS2 overrides: \(parameterNames)
-            [INFO] distinct raw function indices: \(functionIndices.count) \
-            (min \(functionIndices.min() ?? 0), max \(functionIndices.max() ?? 0))
+            [INFO] distinct raw function indices: \(coverage.distinctIndices) \
+            (min \(coverage.indexBounds.minimum), max \(coverage.indexBounds.maximum))
             [INFO] nonzero reference word while run-on is not Reference: \(nonReferenceGarbage)
             [INFO] records where CITC disagrees with the CTDA fields present: \
             \(countMismatches) \(ConditionStats.render(mismatchHistogram)); \
@@ -136,7 +204,7 @@ struct ConditionRealDataTests {
         for condition in list.conditions {
             stats.operatorHistogram["\(condition.comparison)", default: 0] += 1
             stats.runOnHistogram["\(condition.runOn)", default: 0] += 1
-            stats.functionIndices.insert(condition.functionIndex)
+            stats.coverage.record(condition)
             if case .global = condition.comparisonValue {
                 stats.useGlobal += 1
             }

@@ -61,8 +61,11 @@ nonisolated enum ConditionFunctions {
 
         // Index 77 per xEdit's TES5 condition-function table. gib.me's older
         // Fallout-era list numbers GetRandomPercent 4172 (stored 76), so the
-        // two open sources disagree by one; flagged for verification against
-        // real Skyrim.esm CTDA data in the sweep stage of issue #251.
+        // two open sources disagree by one. The vanilla sweep settles it for
+        // xEdit: stored index 76 never appears in Skyrim.esm, while 77 carries
+        // 1203 conditions that all leave both parameter words zero and compare
+        // against values spanning 0 to 100 — the no-parameter percentage
+        // signature. Evidence recorded in docs/formats/conditions.md.
         registry.register(ConditionFunction(
             index: 77,
             name: "GetRandomPercent"

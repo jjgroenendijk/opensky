@@ -5,7 +5,7 @@ description: Session-stable ReferenceKey identity, the per-cell RuntimeReference
   generated-object allocator, and the mutable WorldStateStore that holds every runtime
   deviation from plugin data.
 tags: [engine, world, identity, cell-scene, save-state]
-timestamp: 2026-07-28T00:00:00Z
+timestamp: 2026-07-29T00:00:00Z
 ---
 
 # Runtime reference identity and world state
@@ -354,6 +354,51 @@ clock page.
 unchanged, a `.global` operand resolves through the store. A `nil` result means the
 condition references a global nothing defines, which the evaluator must treat as
 unevaluatable rather than as a comparison against zero.
+
+### The condition evaluator above the seam
+
+Issue #251 (item 10.2.4) built that evaluator, and it is the seam's first
+non-trivial consumer. `ConditionEvaluator` (`opensky/World/ConditionEvaluator.swift`,
+with its function registry and tally in the sibling `Condition*.swift` files) takes
+the decoded [CTDA conditions](/formats/conditions.md) and answers whether a list is
+true right now. It lives under `opensky/World/` rather than beside the decoder in
+`opensky/Formats/` for the reason the split exists at all: answering a condition
+needs live state, and a format parser must not be able to reach live state.
+
+That state arrives as one value, `ConditionContext`, assembled from four things this
+page already documents plus one it does not:
+
+* `globals: GlobalResolution` — the seam above, so a condition sees this session's
+  overrides, the plugin defaults, and the clock-projected time globals in exactly
+  the order the seam defines.
+* `clock: GameClock?` — optional, because a context with no world running is a real
+  case (an inspector, a test). The time functions report a missing clock rather than
+  guessing at one.
+* `references: RuntimeReferenceIndex` — what the Reference run-on looks a raw FormID
+  up in, and where a `ReferenceKey` becomes the entry a function reads a base form
+  off.
+* `subject` and `target: ReferenceKey?` — which references the Subject and Target
+  run-ons name. The CTDA `swapSubjectAndTarget` flag is applied during that
+  resolution.
+* `random: ConditionRandom` — a seeded SplitMix64 value type, injected rather than
+  drawn from a shared generator, so `GetRandomPercent` is reproducible per session
+  and per test without a lock.
+
+`ConditionContext` is a value type and cheap to build, which is what lets a caller
+running off the main actor compose one from a `WorldStateSnapshot`-derived
+`GlobalResolution` instead of reaching into the `@MainActor` store. That is the same
+discipline the snapshot itself follows.
+
+Two properties of the evaluator matter to everything above it. First, no operation
+throws: a condition OpenSky cannot answer evaluates to false carrying a
+`ConditionFailure` that names the reason, which matches the store's own failure
+model — this is runtime state, not file parsing, and there is no malformed input to
+reject. Second, `ConditionTally` is a first-class result rather than a debug aid. It
+mirrors `AS2Tally` from the [ActionScript 2 runtime](/engine/as2-runtime.md): capped
+name tables with uncapped totals, one bucket per failure reason, and ranked
+accessors. It is how the project measures which condition functions it still owes
+the game, and it is what the vanilla coverage sweep reports; the numbers live on the
+[conditions](/formats/conditions.md) page.
 
 ### First consumer: climate weather chances
 
