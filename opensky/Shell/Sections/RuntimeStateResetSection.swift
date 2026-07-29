@@ -48,12 +48,23 @@ final class RuntimeStateResetSection: PanelSectionViewController {
         Self.resetToDefaults(provider: provider)
     }
 
+    /// Destination-level overridden-ness, which `DestinationRegistry` reads for
+    /// the sidebar dot: the union of everything under World > Runtime State
+    /// that can sit away from plugin data. It lives on this section because
+    /// this is the section whose reset is the destination's reset.
     static func isOverridden(provider: (any RuntimeStateControlProviding)?) -> Bool {
-        (provider?.runtimeStateSnapshot.dirtyReferenceCount ?? 0) > 0
+        guard let provider else { return false }
+        return provider.runtimeStateSnapshot.dirtyReferenceCount > 0
+            || RuntimeStateGlobalsSection.isOverridden(provider: provider)
+            || RuntimeStateTimeSection.isOverridden(provider: provider)
     }
 
+    /// The destination's Reset all: every reference delta, every global
+    /// override, and the timescale back to the vanilla default.
     static func resetToDefaults(provider: (any RuntimeStateControlProviding)?) {
         provider?.resetAllReferenceState()
+        RuntimeStateGlobalsSection.resetToDefaults(provider: provider)
+        RuntimeStateTimeSection.resetToDefaults(provider: provider)
     }
 
     override func makeContentViews() -> [NSView] {
@@ -68,7 +79,8 @@ final class RuntimeStateResetSection: PanelSectionViewController {
         return [
             PanelComponents.note(
                 "Reset target uses the FormID from the Change section. Reset all restores "
-                    + "every reference to plugin data and is what the sidebar's Reset "
+                    + "every reference and every global to plugin data and puts the "
+                    + "timescale back to its vanilla value; it is what the sidebar's Reset "
                     + "control runs."
             ),
             PanelComponents.buttonRow([resetTargetControl, resetAllControl]),
@@ -86,8 +98,8 @@ final class RuntimeStateResetSection: PanelSectionViewController {
     }
 
     @objc private func resetAll() {
-        provider?.resetAllReferenceState()
-        lastActionText = "Reset every reference to plugin data."
+        Self.resetToDefaults(provider: provider)
+        lastActionText = "Reset every reference and global to plugin data."
         finishInteraction()
     }
 
@@ -96,7 +108,8 @@ final class RuntimeStateResetSection: PanelSectionViewController {
             statsLabel.stringValue = "Runtime state: unavailable"
             return
         }
-        let dirty = provider.runtimeStateSnapshot.dirtyReferenceCount
-        statsLabel.stringValue = "Dirty references: \(dirty)\n\(lastActionText)"
+        let snapshot = provider.runtimeStateSnapshot
+        statsLabel.stringValue = "Dirty references: \(snapshot.dirtyReferenceCount)"
+            + "  Overridden globals: \(snapshot.overriddenGlobalCount)\n\(lastActionText)"
     }
 }

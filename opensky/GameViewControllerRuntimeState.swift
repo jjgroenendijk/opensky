@@ -32,6 +32,20 @@ struct RuntimeStateBridgeState {
     /// Invalidated by a save or a load, which are the only writes this app
     /// makes to that directory.
     var cachedSlotNames: [String]?
+    /// Session-stable global key to editor ID, so a journalled global write
+    /// reads as `TimeScale` rather than as a hexadecimal key. Built once from
+    /// the immutable `GlobalStore`, which cannot change while the app runs.
+    var globalEditorIDsByKey: [ReferenceKey: String]?
+    /// Editor IDs in the store's sorted order, cached for the panel's
+    /// completion list. The ticker asks for this twice a second and the answer
+    /// is a few thousand strings on the retail install.
+    var globalEditorIDs: [String]?
+    /// Condition-list name to the record it came from, cached for the same
+    /// reason. Built once from the immutable music record index.
+    var conditionSourceFormIDs: [String: FormID]?
+    /// Condition tally accumulated across every evaluation this session, so the
+    /// readout reports a running total rather than one list's counters.
+    var conditionTally = ConditionTally()
 }
 
 extension GameViewController: RuntimeStateControlProviding {
@@ -44,15 +58,41 @@ extension GameViewController: RuntimeStateControlProviding {
     }
 
     var runtimeStateSnapshot: RuntimeStateSnapshot {
-        let tail = worldState.journalEntries.suffix(RuntimeStateSnapshot.journalTailLimit)
-        return RuntimeStateSnapshot(
+        RuntimeStateSnapshot(
             residentReferenceCount: streamer?.residentReferenceCount ?? 0,
             dirtyReferenceCount: worldState.dirtyCount,
-            journalTail: tail.map(Self.journalLine),
-            droppedJournalEntryCount: worldState.droppedJournalEntryCount,
+            journalTail: runtimeStateJournalTail(),
+            droppedJournalEntryCount: worldState.droppedJournalEntryCount
+                + worldState.droppedGlobalJournalEntryCount,
             nextJournalSequence: worldState.nextJournalSequence,
-            currentTargetDescription: currentRuntimeStateTargetDescription
+            currentTargetDescription: currentRuntimeStateTargetDescription,
+            overriddenGlobalCount: worldState.overriddenGlobalCount
         )
+    }
+
+    /// The two journal rings interleaved by sequence (issue #166).
+    ///
+    /// Component writes and global writes are recorded in separate rings that
+    /// share one monotonic counter, so ordering by `sequence` reproduces the
+    /// exact causal order the session performed them in. Both rings are already
+    /// oldest-first, so the newest `journalTailLimit` overall can only come
+    /// from the newest `journalTailLimit` of each — the suffixes are taken
+    /// first so a full 4096-entry window is never walked on a 2 Hz readout.
+    ///
+    /// Clock scrubs appear here too: a `GameHour` write journals on the globals
+    /// ring even though it moves the clock instead of storing an override.
+    private func runtimeStateJournalTail() -> [String] {
+        let limit = RuntimeStateSnapshot.journalTailLimit
+        let names = runtimeStateGlobalNamesByKey()
+        var merged: [(sequence: UInt64, line: String)] = worldState.journalEntries
+            .suffix(limit)
+            .map { ($0.sequence, Self.journalLine($0)) }
+        merged.append(
+            contentsOf: worldState.globalJournalEntries.suffix(limit).map {
+                ($0.sequence, Self.globalJournalLine($0, name: names[$0.key] ?? $0.key.description))
+            }
+        )
+        return merged.sorted { $0.sequence < $1.sequence }.suffix(limit).map(\.line)
     }
 
     var lastSaveOutcome: RuntimeStateSaveOutcome {
@@ -221,5 +261,43 @@ extension GameViewController: RuntimeStateControlProviding {
     static func journalLine(_ entry: WorldStateJournalEntry) -> String {
         let verb = entry.isReset ? "reset" : "set"
         return "\(entry.sequence) \(verb) \(entry.kind.rawValue) \(entry.key.description)"
+    }
+
+    /// One global journal entry as a readout line, in the same shape as
+    /// `journalLine(_:)` so the interleaved tail reads as one log. `name` is the
+    /// global's editor ID when the store can supply one, which is what makes a
+    /// clock scrub recognisable as a `GameHour` write.
+    static func globalJournalLine(
+        _ entry: WorldStateGlobalJournalEntry, name: String
+    ) -> String {
+        guard let newValue = entry.newValue else {
+            return "\(entry.sequence) reset global \(name)"
+        }
+        return "\(entry.sequence) set global \(name) = \(Self.globalValueText(newValue))"
+    }
+
+    /// A global's value as authored types spell it: a short or long global
+    /// reads as an integer, a float keeps its fraction.
+    static func globalValueText(_ value: GlobalValue) -> String {
+        if let integer = value.integerValue {
+            return String(integer)
+        }
+        return String(format: "%g", value.value)
+    }
+
+    /// Editor ID for every global key, built once. The `GlobalStore` is an
+    /// immutable plugin index, so this cannot go stale within a session.
+    func runtimeStateGlobalNamesByKey() -> [ReferenceKey: String] {
+        if let cached = runtimeState.globalEditorIDsByKey {
+            return cached
+        }
+        var names: [ReferenceKey: String] = [:]
+        for global in globalStore?.sortedGlobals() ?? [] {
+            guard let editorID = global.editorID, let key = globalStore?.key(for: global.formID)
+            else { continue }
+            names[key] = editorID
+        }
+        runtimeState.globalEditorIDsByKey = names
+        return names
     }
 }
