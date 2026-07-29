@@ -149,7 +149,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   collision together, how a mutation to an already-resident cell reaches the screen
   through a streamer-driven rebuild, the runtime global-variable layer and the value-lookup
   seam conditions and the clock read through, the save/load round trip through
-  OpenSkySaveStore, and the `World > Runtime State` M10.1 acceptance record.
+  OpenSkySaveStore, and the `World > Runtime State` panel with its time, globals and
+  conditions sections, the interleaved journal tail, and the M10.1 and M10 acceptance
+  records.
 
 ## Rendering
 

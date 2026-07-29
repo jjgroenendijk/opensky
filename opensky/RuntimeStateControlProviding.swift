@@ -62,6 +62,10 @@ nonisolated struct RuntimeStateSnapshot: Equatable {
     let residentReferenceCount: Int
     /// References in the store deviating from plugin data.
     let dirtyReferenceCount: Int
+    /// Globals carrying a runtime override (issue #166). Trails the other
+    /// members and defaults to zero so the call sites written for M10.1 keep
+    /// compiling unchanged.
+    let overriddenGlobalCount: Int
     /// Preformatted journal lines, most recent last, at most
     /// `journalTailLimit` of them. Preformatted because the panel must not
     /// have to know how to render a `WorldStateJournalEntry`.
@@ -75,6 +79,27 @@ nonisolated struct RuntimeStateSnapshot: Equatable {
     /// panel can display it without formatting logic; `.currentTarget` is how
     /// it mutates that reference.
     let currentTargetDescription: String?
+
+    /// Written out rather than left to the memberwise initializer so
+    /// `overriddenGlobalCount` can trail the list with a default: the M10.1
+    /// call sites keep compiling while the M10.2 globals surface fills it in.
+    init(
+        residentReferenceCount: Int,
+        dirtyReferenceCount: Int,
+        journalTail: [String],
+        droppedJournalEntryCount: Int,
+        nextJournalSequence: UInt64,
+        currentTargetDescription: String?,
+        overriddenGlobalCount: Int = 0
+    ) {
+        self.residentReferenceCount = residentReferenceCount
+        self.dirtyReferenceCount = dirtyReferenceCount
+        self.journalTail = journalTail
+        self.droppedJournalEntryCount = droppedJournalEntryCount
+        self.nextJournalSequence = nextJournalSequence
+        self.currentTargetDescription = currentTargetDescription
+        self.overriddenGlobalCount = overriddenGlobalCount
+    }
 }
 
 /// Result of the most recent save or load the provider attempted.
@@ -141,4 +166,62 @@ protocol RuntimeStateControlProviding: AnyObject {
     /// Replaces the current world state with `slot`'s contents, reporting the
     /// result through `lastSaveOutcome`.
     func loadWorldState(slot: String)
+
+    // MARK: Game time (M10.2.1)
+
+    /// One sample of the game clock, the timescale, and the pause state.
+    var runtimeStateClock: RuntimeStateClockSnapshot { get }
+
+    /// Scrubs the hour of day, keeping the date. Values outside [0, 24) are the
+    /// clock's problem to clamp or wrap, not the panel's.
+    func setGameClockHour(_ hour: Float)
+
+    /// Scrubs the calendar, keeping the time of day. Out-of-range components
+    /// clamp rather than throw, matching `GameClock`'s own scrub behavior.
+    func setGameClockDate(day: Int, month: Int, year: Int)
+
+    /// Writes the `TimeScale` global, which is what the clock advances at.
+    ///
+    /// - Returns: false when no loaded plugin defines `TimeScale`, so the panel
+    ///   states that rather than pretending the write landed.
+    @discardableResult
+    func setGameTimescale(_ timescale: Float) -> Bool
+
+    // MARK: Global variables (M10.2.2)
+
+    /// Editor IDs of every global the loaded plugins define, in the store's
+    /// sorted order, so the panel can offer completion over them.
+    var runtimeStateGlobalEditorIDs: [String] { get }
+
+    /// Plugin default beside current runtime value for one global, or nil when
+    /// no loaded plugin defines that editor ID. Matching is case-insensitive,
+    /// exactly as `GlobalStore` matches.
+    func runtimeStateGlobal(editorID: String) -> RuntimeStateGlobalSnapshot?
+
+    /// Writes a runtime override, coerced onto the global's declared type.
+    ///
+    /// - Returns: false when no such global exists or the write is a no-op.
+    @discardableResult
+    func setGlobalValue(_ value: Float, editorID: String) -> Bool
+
+    /// Drops one global's runtime override, restoring its plugin default.
+    ///
+    /// - Returns: false when the global was already at its default.
+    @discardableResult
+    func resetGlobalValue(editorID: String) -> Bool
+
+    /// Drops every global override.
+    func resetAllGlobalOverrides()
+
+    // MARK: Conditions (M10.2.4)
+
+    /// Names of the condition lists the session can evaluate, sorted. Today
+    /// these are the music tracks carrying CTDA conditions, which is the only
+    /// decoded consumer in the engine.
+    var runtimeStateConditionSources: [String] { get }
+
+    /// Evaluates one named condition list against the live context — current
+    /// globals, current clock, current interaction target — and reports the
+    /// verdict, the per-condition reasons, and the session's tally counters.
+    func evaluateConditions(source: String) -> RuntimeStateConditionReport
 }

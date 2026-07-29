@@ -28,6 +28,7 @@ identity scheme, the per-cell index built from it, and the store above both.
 * Making a mutation visible: snapshot capture and cell rebuilds
 * Save and load: the snapshot through `OpenSkySaveStore`
 * Verification — `World > Runtime State` and the M10.1 acceptance record
+* Verification — the M10.2 panel surfaces and the M10 acceptance record
 
 ## Why raw FormID cannot be the key
 
@@ -409,9 +410,10 @@ deterministic pick returns. The semantics chosen and why they are a choice are d
 `WeatherStore` stays immutable; `WeatherSystem.setGlobalResolution(_:)` adopts a fresh
 resolution and rerolls, and `GameViewController` hands it one on every `onGlobalMutation`.
 
-There is no `World > Runtime State` control for globals yet: the sidebar surface for the
-M10.2 work lands with the milestone acceptance item, which owns the panel changes for the
-whole of 10.2.
+The sidebar surface for globals exists: the Globals section under `World > Runtime State`
+looks a GLOB up by editor ID and states its plugin default, its current resolved value, and
+whether an override is in force as three separate facts. It is described with the rest of the
+M10.2 panel work below.
 
 ### Global-variable tests
 
@@ -568,9 +570,9 @@ rather than by re-deriving the effect on a rendered cell.
 
 Issue #162 (item 10.1.5) is the milestone acceptance surface for everything above. The
 `World > Runtime State` destination (`opensky/RuntimeStatePanelViewController.swift`,
-sidebar id `runtimeState`, symbol `clock.arrow.circlepath`) is a normal sectioned panel with
-four sections, each a `PanelSectionViewController` in
-`opensky/Shell/Sections/RuntimeState*.swift`:
+sidebar id `runtimeState`, symbol `clock.arrow.circlepath`) is a normal sectioned panel whose
+sections are each a `PanelSectionViewController` in
+`opensky/Shell/Sections/RuntimeState*.swift`. M10.1 landed these four:
 
 * **Inspect** (`PanelSection-runtimeStateInspect`) — read-only live counts: resident
   reference count, dirty count, allocator position, dropped journal entries, and the tail
@@ -616,6 +618,113 @@ Destination id: Destination-runtimeState
 Controls exercised: RuntimeStateTargetControl, RuntimeStateDisableControl, RuntimeStateEnableControl, RuntimeStateNudgeControl, RuntimeStateResetTargetControl, RuntimeStateResetAllControl, RuntimeStateSlotControl, RuntimeStateSaveControl, RuntimeStateLoadControl
 Readout: RuntimeStateStatsLabel, RuntimeStateJournalStatsLabel, RuntimeStateChangeStatsLabel, RuntimeStateResetStatsLabel, RuntimeStateSaveStatsLabel
 Deterministic tests: M10StateAcceptanceTests, RuntimeStatePanelTests, DestinationRegistryTests
+Local A/B (optional, never committed): none
+```
+
+## Verification — the M10.2 panel surfaces and the M10 acceptance record
+
+Issue #166 (item 10.2.5) closes the milestone by extending the same destination rather than
+adding new ones. Time, globals and conditions all inspect and mutate the same runtime world
+state, which is the thing this destination is named for, so they became three more sections
+under it. Section order follows the order a session reaches for them: read the store, then
+time, then globals, then conditions (which read both), then the three change-and-restore
+surfaces that were already there.
+
+* **Time** (`PanelSection-runtimeStateTime`) — an hour slider (`RuntimeStateHourControl`),
+  a day field, month pop-up and year field applied together
+  (`RuntimeStateDayControl`, `RuntimeStateMonthControl`, `RuntimeStateYearControl`,
+  `RuntimeStateApplyDateControl`), and the timescale
+  (`RuntimeStateTimescaleControl`, `RuntimeStateApplyTimescaleControl`). Readout
+  `RuntimeStateTimeStatsLabel` prints the time, the date, days passed, the timescale, and
+  whether the world simulation is paused.
+* **Globals** (`PanelSection-runtimeStateGlobals`) — an editor-ID combo box completing over
+  every loaded GLOB (`RuntimeStateGlobalControl`), a value field
+  (`RuntimeStateGlobalValueControl`), and Set and Reset actions
+  (`RuntimeStateGlobalApplyControl`, `RuntimeStateGlobalResetControl`). Readout
+  `RuntimeStateGlobalsStatsLabel`.
+* **Conditions** (`PanelSection-runtimeStateConditions`) — a source combo box over the
+  condition lists the session can evaluate (`RuntimeStateConditionSourceControl`, today the
+  music tracks carrying CTDA conditions, the only decoded consumer in the engine) and an
+  Evaluate action (`RuntimeStateConditionEvaluateControl`). Two readouts:
+  `RuntimeStateConditionStatsLabel` for the verdict and the per-condition reasons, and
+  `RuntimeStateConditionTallyStatsLabel` for the session's running `ConditionTally`.
+
+Four decisions in that surface are worth stating, because each one had an obvious wrong
+answer.
+
+Pause is a readout, not a checkbox. `Renderer.worldSimPaused` is owned by
+`MenuModeController` ([menu mode](/engine/menu-mode.md)), so a panel toggle would be silently
+overwritten the next time the menu opened or closed. `World > System Menu` keeps the toggle;
+the Time section only reports what it did, because a clock that appears stuck is otherwise
+inexplicable.
+
+Timescale is not a clock property. It is the `TimeScale` GLOB, written through
+`WorldStateStore.setGlobal`, which is why it is the timescale — and not elapsed time — that
+makes the Time section overridden: a clock that has advanced is a world that has been played,
+not a knob left in a non-default position. The five projected time globals (`GameHour`,
+`GameDaysPassed`, `GameDay`, `GameMonth`, `GameYear`) store no override at all, so scrubbing
+the clock does not reroll weather on every tick.
+
+The journal tail is one log, not three. `GameViewController.runtimeStateJournalTail()`
+interleaves the component ring and the globals ring by their shared monotonic `sequence`,
+which reproduces the exact causal order the session performed the writes in. Both rings are
+already oldest-first, so the newest eight overall can only come from the newest eight of
+each, and the suffixes are taken before the sort rather than walking a full 4096-entry window
+on a 2 Hz readout. Clock scrubs appear there too: a `GameHour` write journals on the globals
+ring even though it moves the clock instead of storing an override.
+
+Per-condition reasons come from the single-condition entry point.
+`ConditionEvaluator.evaluate(_ list:)` returns one verdict and a flattened `failures` array,
+which cannot say which condition produced which failure, so
+`RuntimeStateConditionRunner.report(source:conditions:context:tally:)`
+(`opensky/RuntimeStateConditionRunner.swift`) evaluates each condition once and recombines
+the booleans in `RuntimeStateConditionRunner.combine(conditions:outcomes:)` with the same OR
+grouping the evaluator applies. Evaluating both ways instead would count every condition
+twice in the tally and draw twice from the `ConditionRandom` stream, so `GetRandomPercent`
+would disagree with itself between the verdict and the reasons. `combine` is pinned against
+`ConditionEvaluator.evaluate(_ conditions:)` across all eight truth-table shapes.
+
+Overridden-ness for the destination is the union of the three surfaces that can sit away from
+plugin data: dirty references, overridden globals, and a non-default timescale.
+`RuntimeStateResetSection.resetToDefaults(provider:)` clears all three, which is what the
+sidebar's Reset control and the View menu's Reset all run.
+
+`M10AcceptanceTests` drives the whole milestone on one provider set through the real sidebar
+and registry-built panels, reading every readout back by accessibility identifier: mutate a
+reference, mutate a global, scrub the clock, save a slot, load it into a fresh instance, and
+compare. `M10AcceptanceEngineTests` proves the same round trip with no fakes and asserts the
+journal-independent snapshot equality the gate names — `WorldStateSnapshot.==` deliberately
+excludes `sequence`, so the saved store's snapshot (`sequence == 6`) compares equal to the
+restored one (`sequence == 1`). The `CLOK` and `GVAR` chunks that carry the clock and the
+globals were additive and deliberately did not bump `OpenSkySaveFormat.currentVersion`: an
+older build skips an unknown chunk by its declared length and loads the rest
+([OpenSky native save container](/formats/opensky-save.md)).
+
+`M10AcceptanceWeatherTests` pins weather and time staying synchronized. With `TimeScale` at
+3600 — one game hour per real second — ninety steps of 0.5 real seconds elapse 45 game hours,
+starting at 08:00 on the vanilla start date and ending at 05:00 on 19 Last Seed 4E 201.
+`WeatherSystem.rerollGameHours` is 6, so seven reroll boundaries fall inside the run and no
+observed weather change may land off a 6-hour boundary. `M10AcceptanceRealDataTests`
+(env-gated on `OPENSKY_DATA_ROOT`, run with `make realtest`) repeats it against the retail
+install: 664 GLOB records decoded from `Skyrim.esm`, `TimeScale` at its plugin default of 20
+with a session override of 3600, Tamriel offering a pool of 84 selectable weathers, 45.0 game
+hours elapsed, an end state of `05:00 19 Last Seed, 4E 201` with the `GameHour` projection
+reading 5.0, and the observed weather change landing at exactly game hour 6.0.
+
+One subtlety is worth recording, because it cost a false-positive test. On real data "the
+weather changed" is not by itself proof that a reroll fired: Tamriel's authored chances are
+lopsided enough that every automatic pick across the run can legitimately return the same
+weather, and a reroll that reselects the showing weather is by design a no-op. The real-data
+test therefore forces a contrasting weather, resumes automatic selection with the counter at
+zero, and asserts the cadence structurally rather than inferring it from a visible change.
+
+```text
+Milestone: M10.2.5
+Sidebar path: World > Runtime State
+Destination id: Destination-runtimeState
+Controls exercised: RuntimeStateTargetControl, RuntimeStateDisableControl, RuntimeStateEnableControl, RuntimeStateNudgeControl, RuntimeStateResetTargetControl, RuntimeStateResetAllControl, RuntimeStateSlotControl, RuntimeStateSaveControl, RuntimeStateLoadControl, RuntimeStateHourControl, RuntimeStateDayControl, RuntimeStateMonthControl, RuntimeStateYearControl, RuntimeStateApplyDateControl, RuntimeStateTimescaleControl, RuntimeStateApplyTimescaleControl, RuntimeStateGlobalControl, RuntimeStateGlobalValueControl, RuntimeStateGlobalApplyControl, RuntimeStateGlobalResetControl, RuntimeStateConditionSourceControl, RuntimeStateConditionEvaluateControl, plus TimeOfDayControl on World > Environment > Weather
+Readout: RuntimeStateStatsLabel, RuntimeStateJournalStatsLabel, RuntimeStateChangeStatsLabel, RuntimeStateResetStatsLabel, RuntimeStateSaveStatsLabel, RuntimeStateTimeStatsLabel, RuntimeStateGlobalsStatsLabel, RuntimeStateConditionStatsLabel, RuntimeStateConditionTallyStatsLabel, TimeOfDayStatsLabel
+Deterministic tests: M10AcceptanceTests, M10StateAcceptanceTests, RuntimeStatePanelTests, RuntimeStatePanelTimeTests, RuntimeStatePanelGlobalsTests, RuntimeStatePanelConditionsTests, RuntimeStateConditionRunnerTests, GameViewControllerRuntimeStateJournalTests, DestinationRegistryTests, DestinationRegistryRuntimeStateTests
 Local A/B (optional, never committed): none
 ```
 

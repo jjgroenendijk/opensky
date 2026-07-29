@@ -180,7 +180,8 @@ struct M10StateAcceptanceTests {
         sendM10Control(panel.runtimeStateResetAllControl)
         harness.refresh(panel)
         #expect(harness.engine.resetAllCount == 1)
-        #expect(panel.resetSection.readout.contains("Reset every reference to plugin data."))
+        #expect(panel.resetSection.readout
+            .contains("Reset every reference and global to plugin data."))
         #expect(panel.resetSection.readout.contains("Dirty references: 0"))
         #expect(harness.overrideIndicatorIsVisible("runtimeState") == false)
     }

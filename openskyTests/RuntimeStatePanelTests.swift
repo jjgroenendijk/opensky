@@ -7,66 +7,6 @@ import AppKit
 @testable import opensky
 import Testing
 
-/// Records what the panel asked the engine to do, so a test can assert on the
-/// selector and slot each button carried rather than on rendered text alone.
-@MainActor
-final class FakeRuntimeStateProvider: RuntimeStateControlProviding {
-    var runtimeStateSnapshot = RuntimeStateSnapshot.empty
-    var lastSaveOutcome = RuntimeStateSaveOutcome.none
-    var runtimeStateSaveSlots: [String] = []
-
-    /// Every enable/disable the panel requested, in order.
-    private(set) var enableCalls: [(enabled: Bool, target: RuntimeStateTargetSelector)] = []
-    private(set) var nudgeCalls: [RuntimeStateTargetSelector] = []
-    private(set) var resetCalls: [RuntimeStateTargetSelector] = []
-    private(set) var resetAllCount = 0
-    private(set) var savedSlots: [String] = []
-    private(set) var loadedSlots: [String] = []
-
-    /// What the next mutation reports back; false is the "could not resolve the
-    /// reference" path the readout must state rather than swallow.
-    var mutationSucceeds = true
-
-    func setReferenceEnabled(_ enabled: Bool, target: RuntimeStateTargetSelector) -> Bool {
-        enableCalls.append((enabled, target))
-        return mutationSucceeds
-    }
-
-    func nudgeReferenceTransform(target: RuntimeStateTargetSelector) -> Bool {
-        nudgeCalls.append(target)
-        return mutationSucceeds
-    }
-
-    func resetReferenceState(target: RuntimeStateTargetSelector) -> Bool {
-        resetCalls.append(target)
-        return mutationSucceeds
-    }
-
-    /// Mirrors the engine: dropping every delta leaves nothing dirty, which is
-    /// what clears the destination's override indicator.
-    func resetAllReferenceState() {
-        resetAllCount += 1
-        runtimeStateSnapshot = RuntimeStateSnapshot(
-            residentReferenceCount: runtimeStateSnapshot.residentReferenceCount,
-            dirtyReferenceCount: 0,
-            journalTail: runtimeStateSnapshot.journalTail,
-            droppedJournalEntryCount: runtimeStateSnapshot.droppedJournalEntryCount,
-            nextJournalSequence: runtimeStateSnapshot.nextJournalSequence,
-            currentTargetDescription: runtimeStateSnapshot.currentTargetDescription
-        )
-    }
-
-    func saveWorldState(slot: String) {
-        savedSlots.append(slot)
-        lastSaveOutcome = .saved(slot: slot)
-    }
-
-    func loadWorldState(slot: String) {
-        loadedSlots.append(slot)
-        lastSaveOutcome = .loaded(slot: slot)
-    }
-}
-
 struct RuntimeStatePanelTests {
     @Test @MainActor
     func registryFactoryBuildsThePanelWithProvidersWired() throws {
@@ -281,7 +221,10 @@ struct RuntimeStatePanelTests {
 
         Self.send(panel.runtimeStateResetAllControl)
         #expect(fake.resetAllCount == 1)
-        #expect(panel.resetSection.readout.contains("Reset every reference to plugin data."))
+        #expect(
+            panel.resetSection.readout
+                .contains("Reset every reference and global to plugin data.")
+        )
         #expect(!panel.resetSection.isOverridden)
         #expect(!panel.isOverridden)
     }

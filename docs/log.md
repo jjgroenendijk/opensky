@@ -4,6 +4,71 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-29
 
+* **M10 mutable world foundation — milestone acceptance (issue #166)**: M10 set out to make
+  the world mutable, persistent, and inspectable, and this gate closes it by proving the
+  whole of it through one sidebar destination. The milestone delivered session-stable
+  `ReferenceKey` identity over plugin and generated references (#158), the `WorldStateStore`
+  of typed component deltas with a bounded change journal and a deterministic snapshot
+  (#159), snapshot application during a cell build plus streamer-driven rebuilds so a
+  mutation reaches the screen (#160), the `.osav` native save container (#161), the
+  `World > Runtime State` destination and the M10.1 acceptance (#162), decoded CTDA
+  conditions (#163), the timescale-driven `GameClock` (#164), the GLOB runtime globals layer
+  and its value-lookup seam (#165), and the condition evaluator with its function registry
+  and tally (#251). The acceptance item extended `World > Runtime State` with three sections
+  — Time, Globals and Conditions — rather than adding destinations, because all three
+  inspect and mutate the same runtime world state the destination is already named for; the
+  destination's overridden-ness became the union of dirty references, overridden globals, and
+  a non-default timescale, and its Reset all clears all three. Four decisions each had an
+  obvious wrong answer. Pause is a readout rather than a checkbox, because
+  `Renderer.worldSimPaused` is owned by `MenuModeController` and a panel toggle would be
+  overwritten on the next menu transition, so `World > System Menu` keeps the toggle and the
+  Time section only reports what it did. Timescale is not a clock property but the `TimeScale`
+  GLOB written through `WorldStateStore.setGlobal`, which is why the timescale and not
+  elapsed time is what marks the Time section overridden — a clock that has advanced is a
+  world that has been played — while the five projected time globals store no override at
+  all, so scrubbing the clock does not reroll weather every tick. The journal tail is one log
+  rather than three: the component ring and the globals ring are interleaved by the monotonic
+  `sequence` they share, which reproduces exact causal order, and clock scrubs appear there
+  because a `GameHour` write journals on the globals ring even though it moves the clock. And
+  per-condition reasons come from the single-condition entry point, because
+  `ConditionEvaluator.evaluate(_ list:)` returns only a flattened `failures` array;
+  `RuntimeStateConditionRunner` evaluates each condition once and recombines the booleans
+  with the evaluator's own OR grouping, since evaluating both ways would count every
+  condition twice in the tally and draw twice from the `ConditionRandom` stream, making
+  `GetRandomPercent` disagree with itself between the verdict and the reasons.
+  `RuntimeStateConditionRunner.combine` is pinned against
+  `ConditionEvaluator.evaluate(_ conditions:)` across all eight truth-table shapes. Evidence:
+  `M10AcceptanceTests` drives mutate reference, mutate global, scrub clock, save, and load
+  into a fresh instance through the real sidebar and registry-built panels, reading every
+  readout back by accessibility identifier; `M10AcceptanceEngineTests` repeats the round trip
+  with no fakes and asserts the journal-independent snapshot equality the gate names, since
+  `WorldStateSnapshot.==` deliberately excludes `sequence` and the saved store's snapshot
+  (`sequence == 6`) compares equal to the restored one (`sequence == 1`). The `CLOK` and
+  `GVAR` chunks carrying the clock and the globals stayed additive and deliberately did not
+  bump `OpenSkySaveFormat.currentVersion`, so an older build skips an unknown chunk by its
+  declared length and loads the rest. `M10AcceptanceWeatherTests` pins weather and time
+  synchronization: `TimeScale` 3600 — one game hour per real second — over 90 steps of 0.5
+  real seconds elapses 45 game hours from 08:00 on the vanilla start date to 05:00 on 19 Last
+  Seed 4E 201, and with `WeatherSystem.rerollGameHours` at 6 the seven boundaries inside that
+  run bound where a weather change may land. `M10AcceptanceRealDataTests` (env-gated on
+  `OPENSKY_DATA_ROOT`, `make realtest`) ran the same shape against the retail install: 664
+  GLOB records decoded from `Skyrim.esm`, `TimeScale` plugin default 20 with a session
+  override of 3600, a pool of 84 selectable weathers in Tamriel, 45.0 game hours elapsed, an
+  end state of `05:00 19 Last Seed, 4E 201` with the `GameHour` projection reading 5.0, and
+  the observed weather change landing at exactly game hour 6.0. That real-data half needed
+  one correction worth recording: "the weather changed" is not by itself proof that a reroll
+  fired, because Tamriel's authored chances are lopsided enough that every automatic pick
+  across the run can return the same weather and a reroll that reselects the showing weather
+  is by design a no-op, so the test forces a contrasting weather, resumes automatic selection
+  with the counter at zero, and asserts the cadence structurally. The milestone's honest
+  coverage headline stands as measured on 2026-07-29 against the retail Special Edition
+  install: 22,470 of 83,759 conditions (26.83%) name a function the registry implements, and
+  those five functions are 5 of the 244 distinct raw indices present in `Skyrim.esm`, whose
+  range is 0 to 726. Documented in
+  [runtime reference identity and world state](/engine/runtime-state.md),
+  [conditions](/formats/conditions.md) and
+  [sidebar verification convention](/tools/sidebar-acceptance.md).
+
 * **CTDA condition evaluator (issue #251)**: `ConditionEvaluator` in `opensky/World/`
   turns the decoded conditions from #163 into answers. One condition is
   `functionReturn <operator> comparisonValue` compared as `Float`, with exact
