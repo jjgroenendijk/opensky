@@ -2,6 +2,28 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-07-30
+
+* **PEX container decode (issue #167)**: `PexFile` and the bounded big-endian
+  decoder under `opensky/Formats/PEX/` turn Skyrim compiled Papyrus scripts
+  into typed headers, resolved strings, optional debug information, user flags,
+  objects, variables, automatic and handler-backed properties, states,
+  functions, all six value kinds, and all 36 Skyrim opcodes. Unknown opcode
+  bytes remain countable values instead of rejecting a script; malformed
+  framing, strings, indices, object spans and call argument counts throw typed
+  `PexError` values. `PexScriptLoader` adds the pure `scripts\NAME.pex` path
+  policy, injectable byte loading and VFS archive enumeration.
+  `PexInventory` keeps uncapped totals with bounded name tables and stable
+  rankings for opcodes and external object/function calls, sizing the virtual
+  machine and native registry from the installed corpus. The env-gated
+  `PexRealDataTests` sweep on the 2026-07-30 retail install decoded all 14,302
+  scripts: 56,474 functions, 310,731 instructions, 130,349 external calls,
+  zero decode failures and zero unknown opcodes. It also confirmed that the
+  base-game, DLC and Creation scripts report PEX 3.2 while retaining the
+  Skyrim layout the UESP page labels 3.0/3.1; newer Fallout 4 structures remain
+  rejected and out of scope. Documented in
+  [Papyrus compiled scripts](/formats/pex.md).
+
 ## 2026-07-29
 
 * **M10 mutable world foundation — milestone acceptance (issue #166)**: M10 set out to make
