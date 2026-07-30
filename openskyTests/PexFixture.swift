@@ -122,6 +122,62 @@ enum PexFixture {
         return out
     }
 
+    static func runtimeFile(objects: [PexObject]) -> PexFile {
+        PexFile(
+            header: PexHeader(
+                majorVersion: 3,
+                minorVersion: 2,
+                gameID: 1,
+                compilationTime: 0,
+                sourceFileName: "Synthetic.psc",
+                userName: "OpenSky tests",
+                machineName: "synthetic"
+            ),
+            strings: [],
+            debugInfo: nil,
+            userFlags: [],
+            objects: objects
+        )
+    }
+
+    static func runtimeFunction(
+        returnType: String = "None",
+        flags: PexFunctionFlags = [],
+        parameters: [PexTypedName] = [],
+        locals: [PexTypedName] = [],
+        instructions: [PexInstruction]
+    ) -> PexFunction {
+        PexFunction(
+            returnTypeName: returnType,
+            documentation: "",
+            userFlags: 0,
+            flags: flags,
+            parameters: parameters,
+            localVariables: locals,
+            instructions: instructions
+        )
+    }
+
+    static func runtimeObject(
+        name: String,
+        parent: String = "",
+        automaticState: String = "",
+        variables: [PexVariable] = [],
+        properties: [PexProperty] = [],
+        states: [PexState]
+    ) -> PexObject {
+        PexObject(
+            name: name,
+            parentClassName: parent,
+            documentation: "",
+            userFlags: 0,
+            automaticStateName: automaticState,
+            variables: variables,
+            properties: properties,
+            states: states
+        )
+    }
+
     private static func objectData(instructions: [Instruction]) -> Data {
         var out = Data()
         out.appendBigEndian(UInt16(2)) // parent
