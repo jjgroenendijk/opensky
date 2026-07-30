@@ -25,6 +25,10 @@ nonisolated enum OpenSkySaveDecoder {
         /// Absent `CLOK` chunk (issue #164) means the vanilla-start clock,
         /// which is also what a save written before that chunk existed means.
         var clock: GameClock?
+        /// Absent `PSCR` chunk (issue #171) means no script instance state was
+        /// saved, so every script starts from its compiled defaults — which is
+        /// also what a save written before that chunk existed means.
+        var scripts: [PapyrusInstanceState] = []
     }
 
     static func decode(_ data: Data) throws -> OpenSkySaveFile {
@@ -51,7 +55,8 @@ nonisolated enum OpenSkySaveDecoder {
                 sequence: 0
             ),
             allocator: GeneratedReferenceAllocator(nextSequence: body.nextGeneratedSequence),
-            clock: body.clock
+            clock: body.clock,
+            scripts: body.scripts
         )
     }
 
@@ -136,6 +141,8 @@ nonisolated enum OpenSkySaveDecoder {
             body.globals = try OpenSkySaveEntryDecoder.decodeGlobals(payload)
         case OpenSkySaveFormat.ChunkTag.clock:
             body.clock = try decodeClock(payload)
+        case OpenSkySaveFormat.ChunkTag.papyrusScripts:
+            body.scripts = try OpenSkySaveScriptDecoder.decodeScripts(payload)
         default:
             break // Unknown chunk: skipped by its declared length.
         }

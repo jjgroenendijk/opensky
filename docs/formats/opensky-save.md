@@ -3,7 +3,7 @@ type: File Format
 title: OpenSky native save container (.osav)
 description: Byte layout of OpenSky's own .osav save file, its determinism and version rules.
 tags: [format, save, io, world-state, determinism]
-timestamp: 2026-07-28T00:00:00Z
+timestamp: 2026-07-30T00:00:00Z
 ---
 
 # OpenSky native save container
@@ -147,7 +147,7 @@ A chunk whose declared length runs past the end of the file is
 `chunkBoundsViolation(tag:)`. A chunk whose tag this build does not know is skipped using
 that declared length, which is what makes a newer build's save loadable in an older one.
 
-Version 1 defines two chunks; `GVAR` and `CLOK` were added additively afterwards.
+Version 1 defines two chunks; `GVAR`, `CLOK` and `PSCR` were added additively afterwards.
 
 `GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
 any other size is `invalidValue`.
@@ -205,6 +205,60 @@ The clock's whole state is this one number — game seconds since the calendar e
 negative value is `invalidValue` rather than a clock. A file with no `CLOK` chunk — every
 pre-clock save — restores the vanilla-start clock, and an encoder given no clock writes no
 chunk, keeping pre-clock byte-equality tests valid.
+
+`PSCR` — Papyrus script instance state (issue #171), one entry per live script instance.
+Additive like `GVAR` and `CLOK`, and equally without a `currentVersion` bump. Script state
+is a new chunk rather than a new component kind inside `RDLT` for exactly the reason the
+[version policy](#version-policy) gives: a component kind is versioned by `formatVersion`,
+so putting it there would force every older build to refuse the whole file. A session with
+no instances writes no chunk at all, so a build or a session without a VM produces the same
+bytes it always did.
+
+| type   | field         | notes                                     |
+| ------ | ------------- | ----------------------------------------- |
+| uint32 | instanceCount | number of instances that follow           |
+| bytes  | instances     | `instanceCount` instances, layout below   |
+
+Each instance is a reference key — the same tagged encoding `RDLT` uses, here naming the
+reference the script is attached to — then:
+
+| type   | field         | notes                                                        |
+| ------ | ------------- | ------------------------------------------------------------ |
+| string | scriptName    | lowercased script name                                        |
+| string | activeState   | the instance's active state, spelled as the script spelled it |
+| uint8  | firedOnInit   | exactly 0 or 1; whether `OnInit` has already been delivered   |
+| uint32 | variableCount | variables that follow                                         |
+
+Each variable:
+
+| type   | field           | notes                                              |
+| ------ | --------------- | -------------------------------------------------- |
+| string | declaringScript | lowercased name of the script that declared it     |
+| string | name            | lowercased variable name                            |
+| uint8  | valueTag        | which of the five persistable value kinds follows   |
+| bytes  | value           | the tag's payload, below                            |
+
+| tag  | kind    | payload                                                       |
+| ---- | ------- | ------------------------------------------------------------- |
+| 0    | none    | nothing                                                       |
+| 1    | boolean | one byte, exactly 0 or 1                                      |
+| 2    | integer | uint32, the bit pattern of the `Int32`                        |
+| 3    | float   | uint32, the IEEE 754 binary32 bit pattern                     |
+| 4    | string  | uint16 byte length plus UTF-8 bytes                           |
+
+A `PapyrusValue` may also be an object handle or an array. Neither has a tag, because
+neither is persistable: their identity is allocated by the running VM and means nothing
+after a reload. The encoder writes both with the `none` tag, which is also what the
+[Papyrus virtual machine](/engine/papyrus-vm.md) already snapshots them as, so a restored
+script sees its compiled default rather than a handle pointing at nothing.
+
+Entries come out of `PapyrusWorldRuntime.instanceStates()` sorted by `PapyrusInstanceKey`,
+with each instance's variables sorted by `(declaringScript, name)`, so the chunk is
+deterministic on the same terms as `RDLT` and re-encoding an unchanged runtime produces
+identical bytes. Both declared counts are validated before anything reserves storage, using
+`minimumScriptEntrySize` (16 bytes: an empty plugin key, an empty script name, an empty
+state name, the flag and the variable count) and `minimumScriptVariableSize` (5 bytes: two
+empty names and a `none` tag).
 
 The snapshot's journal `sequence` is not saved. It is session-local bookkeeping, and a
 decoded snapshot always reports sequence 0.
@@ -285,6 +339,15 @@ structure being read, so callers only ever switch over one error type.
 * A byte the format defines as boolean must be exactly 0 or 1. Treating `0x7F` as `true`
   would hide a writer or decoder bug behind a plausible-looking world.
 
+One value is normalised rather than rejected, and the asymmetry is deliberate. A `PSCR`
+float whose bit pattern is NaN or infinite decodes as `0.0` and the rest of the save loads.
+Papyrus arithmetic can legitimately produce a non-finite number — a division by zero inside
+a mod script is not corruption — and refusing a whole world over one drifted script variable
+would be the worse failure. A non-finite `CLOK` value, by contrast, has no plausible
+legitimate origin, so `decodeClock` still rejects it as `invalidValue`. An unknown `PSCR`
+value tag is likewise a hard `invalidValue`: a shape this build cannot interpret at all
+cannot be normalised into anything honest.
+
 The error cases, from `OpenSkySaveError.swift`:
 
 | case                                              | meaning                                          |
@@ -337,9 +400,12 @@ building a `URL` themselves. It owns one directory — the Saves directory descr
 an injected one for tests — and every operation resolves a slot name to `<slot>.osav` inside
 it.
 
-* `save(snapshot:fingerprint:metadata:toSlot:)` encodes a `WorldStateSnapshot`, a load-order
-  fingerprint, and `SaveCreationMetadata`, then writes the result through
-  `OpenSkySaveIO.writeAtomically(_:to:)`.
+* `save(snapshot:fingerprint:metadata:clock:scripts:toSlot:)` encodes a
+  `WorldStateSnapshot`, a load-order fingerprint, and `SaveCreationMetadata`, then writes the
+  result through `OpenSkySaveIO.writeAtomically(_:to:)`. `clock` and `scripts` are defaulted,
+  so a caller with neither writes neither chunk and produces the bytes it always did;
+  `OpenSkySaveEncoder.encode` and `OpenSkySaveFile.init` carry the same defaults for the same
+  reason.
 * `load(slot:verifyingAgainst:)` reads `<slot>.osav` and decodes it; the fingerprint
   parameter is optional, so a caller can inspect a save with no install present at all, and
   when supplied it is checked with the same `verifyFingerprint(against:)` used everywhere
@@ -366,9 +432,9 @@ Compression is a deliberate non-feature for now. Saves at this stage hold deltas
 whole worlds, so they are small, and an uncompressed file is directly inspectable in a hex
 editor when a determinism test disagrees with itself.
 
-Global variables landed as the additive `GVAR` chunk (issue #165) and cost no
-`formatVersion` bump, exactly as the version policy above predicts. The game clock is
-expected to follow the same route.
+Global variables landed as the additive `GVAR` chunk (issue #165), the game clock as `CLOK`
+(issue #164), and Papyrus script state as `PSCR` (issue #171). None of the three cost a
+`formatVersion` bump, exactly as the version policy above predicts.
 
 Read-only import of a Bethesda `.ess` save is a separate item and shares nothing with this
 layout. OpenSky will never write one.
@@ -381,6 +447,12 @@ determinism across differing mutation orders, unknown-chunk skipping, `GVAR` rou
 its rejected payloads (`openskyTests/OpenSkySaveGlobalsTests.swift`), fingerprint
 comparison including reordering and case, and one test per `OpenSkySaveError` case driven by
 a targeted corruption.
+
+`openskyTests/OpenSkySavePapyrusTests.swift` covers `PSCR` on the same terms: a script-state
+round trip, byte-level determinism, an absent chunk meaning no script state, a truncated
+entry, a bogus instance count, a bogus variable count, an unknown value tag, non-finite
+floats normalising to zero, an unknown chunk written after `PSCR` still being skipped, and a
+live `PapyrusWorldRuntime`'s state surviving a save and a restore.
 
 Related: [Runtime reference identity and world state](/engine/runtime-state.md) for the
 store and snapshot this format serializes, [FormID and TES4 header](/formats/formid.md) for

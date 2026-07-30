@@ -65,6 +65,18 @@ extension Renderer {
         gameTime.clock.advance(wallDelta: delta, timescale: currentTimescale)
     }
 
+    /// Per-frame world simulation tick (issue #171). Runs immediately after
+    /// the game clock advances, so a script waking on game time sees this
+    /// frame's clock. Menu pause is honoured through the clock rather than a
+    /// branch: `worldSimClock` returns zero while paused, and the world
+    /// runtime's fixed-step accumulator treats a zero delta as no advance.
+    func updateWorldSimFromWallClock() {
+        let delta = worldSimClock.advance(
+            to: CACurrentMediaTime(), paused: worldSimPaused
+        )
+        onWorldUpdate?(delta)
+    }
+
     /// Game hours elapsed since the previous call, from the clock's own
     /// motion (advancement and forward scrubs alike). Backward scrubs count
     /// zero and a single step is capped at one day, preserving the bounds the

@@ -5,7 +5,7 @@ description: Camera position -> desired NxN exterior-cell grid, built off the ma
   on one serial queue, streamed in/out around the free-fly camera with a per-frame budget,
   and the world-state snapshot every dispatched build carries.
 tags: [engine, world, streaming, esm, concurrency]
-timestamp: 2026-07-27T00:00:00Z
+timestamp: 2026-07-30T00:00:00Z
 ---
 
 # Cell streaming
@@ -251,11 +251,37 @@ Missing game data keeps fail-loud behavior (locator alert); a provider-setup fai
 that gate logs `[ERROR]` and leaves the renderer on the synthetic `DemoScene` so the window
 is never blank forever.
 
-`Renderer.onFrame` is an optional main-thread closure invoked in `draw(in:)` after
-`advanceCamera`, passing `freeFlyCamera.position`. The streamer may call `setScene` back
-synchronously inside it -- safe, since it is the same thread and still between frames (this
-frame has not encoded yet), so the frame draws the freshly streamed scene. The offscreen /
-test render paths never set `onFrame`, so they are unchanged.
+`Renderer.onFrame` is a main-thread `CallbackFanOut<SIMD3<Float>>` invoked in `draw(in:)`
+after `advanceCamera`, passing `freeFlyCamera.position`. Handlers run in registration order,
+and the streamer registers before the HUD's `wireHUDFrameUpdates(renderer:)` so streaming
+still runs first; it became a fan-out in issue #171, when a plain optional closure meant the
+second of two assignments silently dropped the first. The streamer may call `setScene` back
+synchronously inside its handler -- safe, since it is the same thread and still between
+frames (this frame has not encoded yet), so the frame draws the freshly streamed scene. The
+offscreen / test render paths register no handler, so they are unchanged.
+
+### Script lifetime seams
+
+Issue #171 added two announcements so the [Papyrus VM](/engine/papyrus-vm.md) can follow
+cell lifetime without the streamer depending on it:
+
+```swift
+var onCellAttached: ((CellScene, Bool) -> Void)?
+var onCellDetached: ((CellSceneLocation) -> Void)?
+```
+
+The `Bool` is `firstIntegration` -- true when a cell genuinely joined the live world, false
+when a cell that never left was merely re-integrated, which is the signal not to re-fire load
+events. Emission lives in `opensky/World/CellStreamerPapyrus.swift`, and a scene without a
+`CellSceneLocation` (a door destination whose CELL identity failed to resolve) is never
+announced, since the location is the key a subscriber files instances under. Four call sites
+carry a decision: an exterior integration reads `CellStreamCore.rebuilding` before
+`integrate` clears it; staged coverage cells announce nothing until `commitCoverageTransition`
+promotes them, in sorted coordinate order, which is also why `discardStagedCells(outside:)`
+emits no detach; an interior door transition maps `isRebuild` to `firstIntegration:
+!isRebuild` and detaches the previous interior only when it is not a rebuild; and the
+exterior branch of a door arrival does not detach the scene it replaces, which shares the
+arriving scene's location.
 
 M3.4 adds one optional [distant LOD scene](/engine/distant-lod.md) to composition. Same
 runner/provider queue builds it only after desired 5x5 is fully accounted, so 100+ first-load

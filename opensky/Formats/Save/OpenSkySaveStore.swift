@@ -119,6 +119,7 @@ nonisolated struct OpenSkySaveStore {
         fingerprint: [SavePluginFingerprint],
         metadata: SaveCreationMetadata,
         clock: GameClock? = nil,
+        scripts: [PapyrusInstanceState] = [],
         toSlot slot: String
     ) throws -> URL {
         let destination = try url(forSlot: slot)
@@ -126,7 +127,8 @@ nonisolated struct OpenSkySaveStore {
             snapshot: snapshot,
             fingerprint: fingerprint,
             metadata: metadata,
-            clock: clock
+            clock: clock,
+            scripts: scripts
         )
         try OpenSkySaveIO.writeAtomically(data, to: destination)
         return destination

@@ -34,6 +34,15 @@ nonisolated final class PapyrusRuntime {
         }
     }
 
+    /// Adds a decoded file's objects to the script library, last writer wins,
+    /// which is how a lazily loaded script joins a runtime built with an empty
+    /// (or partial) file list (issue #171).
+    func register(_ file: PexFile) {
+        for object in file.objects {
+            scripts[Self.key(object.name)] = object
+        }
+    }
+
     @discardableResult
     func makeInstance(
         scriptName: String,

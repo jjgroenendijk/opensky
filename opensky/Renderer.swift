@@ -151,12 +151,19 @@ final class Renderer: NSObject {
     /// Free-fly input, drained once per `draw(in:)`; nil (offscreen/tests) ->
     /// the camera stays on its seeded pose.
     let input: CameraInputState?
-    /// Optional main-thread per-frame hook, invoked in `draw(in:)` after the
-    /// camera advances with the live free-fly position. Cell streaming drives
-    /// its per-frame `update` here (and may call `setScene` back synchronously
-    /// -- safe, same thread, still between frames). nil (offscreen/tests)
-    /// leaves the loop unchanged.
-    var onFrame: ((SIMD3<Float>) -> Void)?
+    /// Main-thread per-frame hook, invoked in `draw(in:)` after the camera
+    /// advances with the live free-fly position. Cell streaming drives its
+    /// per-frame `update` here (and may call `setScene` back synchronously
+    /// -- safe, same thread, still between frames), and the HUD refreshes
+    /// beside it. No handlers (offscreen/tests) leaves the loop unchanged.
+    let onFrame = CallbackFanOut<SIMD3<Float>>()
+    /// World simulation tick, invoked once per drawn frame after the game clock
+    /// advances. The delta is seconds, already gated by the renderer's own
+    /// `FrameSimClock`, so a paused frame delivers zero.
+    var onWorldUpdate: ((Float) -> Void)?
+    /// Wall-clock delta source for the world simulation tick (the Papyrus VM),
+    /// paused in menu mode.
+    var worldSimClock = FrameSimClock()
     /// Wall-clock delta source for camera movement, paused in menu mode.
     var cameraClock = FrameSimClock()
     var animationTime: Float = 0
@@ -302,15 +309,6 @@ final class Renderer: NSObject {
         frameStats = FrameStats(device: device)
 
         super.init()
-    }
-}
-
-extension Renderer {
-    fileprivate static func makeWalkController(
-        _ camera: FreeFlyCamera,
-        _ configuration: PlayerMovementConfiguration
-    ) -> WalkController {
-        WalkController(cameraPosition: camera.position, configuration: configuration)
     }
 }
 

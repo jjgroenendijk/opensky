@@ -5,7 +5,7 @@ description: Session-stable ReferenceKey identity, the per-cell RuntimeReference
   generated-object allocator, and the mutable WorldStateStore that holds every runtime
   deviation from plugin data.
 tags: [engine, world, identity, cell-scene, save-state]
-timestamp: 2026-07-29T00:00:00Z
+timestamp: 2026-07-30T00:00:00Z
 ---
 
 # Runtime reference identity and world state
@@ -558,6 +558,14 @@ Global overrides travel the same path. `snapshot()` carries them in `globals`, o
 `GVAR` chunk; `restore(from:)` replaces the store's global map alongside its deltas and
 fires one `onGlobalMutation` so the weather runtime and any other consumer adopt the
 restored values.
+
+Papyrus script state travels beside them, in the additive `PSCR` chunk, and is deliberately
+the last thing `loadWorldState(slot:)` restores — after the snapshot and after the game
+clock. The unattributed `onMutation` that `restore(from:)` fires only *queues* a rebuild for
+each resident cell; those rebuilds re-attach their scripts on a later streaming update and
+consult the [VM's](/engine/papyrus-vm.md) `firedOnInit` set to decide whether to enqueue
+`OnInit`. Restoring that set after the fan-out is queued, but before any rebuild attach can
+read it, is what stops every script re-running its `OnInit` on load.
 
 A round trip is therefore: `WorldStateStore.snapshot()` -> `OpenSkySaveStore.save` -> bytes
 on disk -> `OpenSkySaveStore.load` -> `WorldStateStore.restore(from:)` -> the same deltas,

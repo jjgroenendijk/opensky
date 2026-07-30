@@ -4,7 +4,7 @@ title: Game clock and calendar
 description: Timescale-driven game time over the Tamriel calendar, the clock-owns-time
   authority rule for the vanilla time globals, and the save/journal/UI integration.
 tags: [engine, world, time, calendar, save-state]
-timestamp: 2026-07-28T00:00:00Z
+timestamp: 2026-07-30T00:00:00Z
 ---
 
 # Game clock and calendar
@@ -148,8 +148,11 @@ the old `timeOfDay` float followed: written on the main thread (panel scrubs, gl
 writes, save restore) and read in `draw(in:)`, which MTKView also runs on the main thread.
 Nothing crosses actors.
 
-Per frame, `draw(in:)` calls `advanceGameClockFromWallClock()` before the weather update:
-one paused-aware wall delta, one seam read of `TimeScale`, one `advance`. Every existing
+Per frame, `draw(in:)` calls `advanceGameClockFromWallClock()` before the world-simulation
+tick and the weather update: one paused-aware wall delta, one seam read of `TimeScale`, one
+`advance`. The [Papyrus VM](/engine/papyrus-vm.md) is ticked immediately afterwards by
+`updateWorldSimFromWallClock()`, so a script waking on game time samples this frame's clock
+rather than the previous frame's. Every existing
 consumer keeps reading `Renderer.timeOfDay`, which is now a computed projection of
 `gameClock.hourOfDay`; setting it scrubs the clock's hour and keeps the date, so the
 `TimeOfDayControl` slider, the acceptance tests that set `renderer.timeOfDay = 13`, and

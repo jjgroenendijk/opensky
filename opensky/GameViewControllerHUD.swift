@@ -210,7 +210,7 @@ extension GameViewController {
     }
 
     func wireHUDFrameUpdates(renderer: Renderer) {
-        renderer.onFrame = { [weak self, weak renderer] _ in
+        renderer.onFrame.add { [weak self, weak renderer] _ in
             guard let renderer else { return }
             self?.updateHUDFrame(renderer: renderer)
         }

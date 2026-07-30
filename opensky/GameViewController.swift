@@ -54,6 +54,11 @@ final class GameViewController: NSViewController {
     /// Papyrus, inventory and quests mutate it later; the sidebar readout
     /// (issue #162) reads it.
     let worldState = WorldStateStore()
+    /// Papyrus VM for this session (issue #171), built by `wirePapyrus` when
+    /// the provider can supply compiled scripts. Cell streaming attaches and
+    /// detaches script instances on it, and the renderer's world-simulation
+    /// hook ticks it once per drawn frame. nil without game data.
+    var papyrus: PapyrusWorldRuntime?
     /// GLOB defaults of the loaded plugin, set by `wireStreaming` (issue
     /// #165). nil without game data; the time-of-day scrub then writes the
     /// renderer's clock directly instead of going through the global seam.
@@ -179,7 +184,6 @@ final class GameViewController: NSViewController {
             mtkView.delegate = newRenderer
             renderer = newRenderer
             startHUD(renderer: newRenderer)
-            wireHUDFrameUpdates(renderer: newRenderer)
             // Menu mode drives the renderer's world-sim pause and clears held
             // world input on entry so no key sticks while the menu owns input.
             menuMode.onModeChange = { [weak newRenderer, weak cameraInput] paused in
@@ -192,6 +196,10 @@ final class GameViewController: NSViewController {
                 streamerCellProvider = provider
                 startStreaming(provider: provider, renderer: newRenderer)
             }
+            // Registered after streaming so the HUD still refreshes after the
+            // streamer's per-frame update, exactly as it did when streaming
+            // owned the only `onFrame` assignment.
+            wireHUDFrameUpdates(renderer: newRenderer)
         } catch {
             show(message: "Renderer setup failed: \(error)")
         }

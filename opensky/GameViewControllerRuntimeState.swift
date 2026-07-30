@@ -156,6 +156,7 @@ extension GameViewController: RuntimeStateControlProviding {
                 fingerprint: runtimeStatePluginFingerprint(),
                 metadata: metadata,
                 clock: renderer?.gameClock,
+                scripts: papyrus?.instanceStates() ?? [],
                 toSlot: slot
             )
             runtimeState.lastSaveOutcome = .saved(slot: slot)
@@ -182,6 +183,15 @@ extension GameViewController: RuntimeStateControlProviding {
             // clock; setting `gameClock` also resets the weather's
             // elapsed-hours mark so the date jump ages no weather.
             renderer?.gameClock = file.clock ?? GameClock()
+            // Script state is restored last, after the world state, on
+            // purpose. `worldState.restore(from:)` fires one unattributed
+            // mutation, which queues a rebuild for every resident cell; those
+            // rebuilds re-attach their scripts on a later streaming update and
+            // consult `firedOnInit` to decide whether to enqueue `OnInit`.
+            // Restoring the saved instance state after the fan-out is queued
+            // guarantees the fired set is already in place when a rebuild
+            // attach reads it, so no script re-runs its `OnInit` on load.
+            papyrus?.restore(instanceStates: file.scripts)
             runtimeState.lastSaveOutcome = .loaded(slot: slot)
         } catch {
             runtimeState.lastSaveOutcome = .failed(

@@ -17,12 +17,16 @@ nonisolated enum OpenSkySaveEncoder {
     /// header region depends on `metadata`, so two saves of the same state
     /// taken at different times share an identical tail.
     /// `clock` is optional so pre-clock call sites keep compiling; nil writes
-    /// no `CLOK` chunk, which decodes as the vanilla-start clock.
+    /// no `CLOK` chunk, which decodes as the vanilla-start clock. `scripts` is
+    /// defaulted empty for the same reason, and an empty list writes no `PSCR`
+    /// chunk at all, so a session with no VM produces the same bytes it always
+    /// did.
     static func encode(
         snapshot: WorldStateSnapshot,
         fingerprint: [SavePluginFingerprint],
         metadata: SaveCreationMetadata,
-        clock: GameClock? = nil
+        clock: GameClock? = nil,
+        scripts: [PapyrusInstanceState] = []
     ) -> Data {
         var writer = BinaryWriter()
         writeHeader(metadata: metadata, into: &writer)
@@ -47,6 +51,14 @@ nonisolated enum OpenSkySaveEncoder {
         if let clock {
             writeChunk(tag: OpenSkySaveFormat.ChunkTag.clock, into: &writer) { payload in
                 payload.writeUInt64(clock.totalGameSeconds.bitPattern)
+            }
+        }
+        if !scripts.isEmpty {
+            writeChunk(tag: OpenSkySaveFormat.ChunkTag.papyrusScripts, into: &writer) { payload in
+                payload.writeUInt32(UInt32(clamping: scripts.count))
+                for state in scripts {
+                    writeScriptInstance(state, into: &payload)
+                }
             }
         }
         return writer.data
@@ -162,6 +174,58 @@ nonisolated enum OpenSkySaveEncoder {
             }
         case let .deletion(state):
             writer.writeUInt8(state.isDeleted ? 1 : 0)
+        }
+    }
+
+    // MARK: - Papyrus script instances
+
+    /// One `PSCR` instance: the reference the script is attached to, its
+    /// script name, its active state, whether `OnInit` already fired, then its
+    /// variables. Order is the caller's, which is
+    /// `PapyrusWorldRuntime.instanceStates()` sorted by `PapyrusInstanceKey`
+    /// with variables sorted by `(declaringScript, name)`, so re-encoding an
+    /// unchanged runtime produces identical bytes.
+    private static func writeScriptInstance(
+        _ state: PapyrusInstanceState,
+        into writer: inout BinaryWriter
+    ) {
+        writeKey(state.key.reference, into: &writer)
+        writeString(state.key.scriptName, into: &writer)
+        writeString(state.activeState, into: &writer)
+        writer.writeUInt8(state.hasFiredOnInit ? 1 : 0)
+        writer.writeUInt32(UInt32(clamping: state.variables.count))
+        for variable in state.variables {
+            writeString(variable.declaringScript, into: &writer)
+            writeString(variable.name, into: &writer)
+            writeScriptValue(variable.value, into: &writer)
+        }
+    }
+
+    /// A tag byte plus the value's payload. Floats go out as their IEEE
+    /// bit pattern rather than through a decimal conversion, so the byte shape
+    /// is exact and deterministic. `.object` and `.array` are written as the
+    /// `none` tag: `instanceStates()` already snapshots them that way, and
+    /// writing a runtime handle that means nothing after a reload would be
+    /// worse than writing the type's default.
+    private static func writeScriptValue(
+        _ value: PapyrusValue,
+        into writer: inout BinaryWriter
+    ) {
+        switch value {
+        case .none, .object, .array:
+            writer.writeUInt8(OpenSkySaveFormat.ValueTag.none)
+        case let .boolean(flag):
+            writer.writeUInt8(OpenSkySaveFormat.ValueTag.boolean)
+            writer.writeUInt8(flag ? 1 : 0)
+        case let .integer(number):
+            writer.writeUInt8(OpenSkySaveFormat.ValueTag.integer)
+            writer.writeUInt32(UInt32(bitPattern: number))
+        case let .float(number):
+            writer.writeUInt8(OpenSkySaveFormat.ValueTag.float)
+            writer.writeUInt32(number.bitPattern)
+        case let .string(text):
+            writer.writeUInt8(OpenSkySaveFormat.ValueTag.string)
+            writeString(text, into: &writer)
         }
     }
 

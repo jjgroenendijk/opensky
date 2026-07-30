@@ -51,6 +51,12 @@ nonisolated struct ScriptBindingTally: Equatable {
     mutating func note(_ reason: ScriptBindingSkipReason) {
         counts[reason, default: 0] += 1
     }
+
+    mutating func merge(_ other: ScriptBindingTally) {
+        for (reason, count) in other.counts {
+            counts[reason, default: 0] += count
+        }
+    }
 }
 
 nonisolated struct ScriptBinding {
