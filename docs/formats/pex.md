@@ -33,6 +33,7 @@ function and bytecode framing in `PexDecoderFunction.swift`.
 * [Decode policy](#decode-policy)
 * [VFS loading](#vfs-loading)
 * [Vanilla sweep evidence](#vanilla-sweep-evidence)
+* [Native-call census](#native-call-census)
 * [Scope](#scope)
 
 ## Observed revision
@@ -243,10 +244,25 @@ The most frequent opcodes were `callmethod` 119,282, `cast` 48,084, `assign`
 spelling and case because Papyrus source in the corpus uses several variants;
 coalescing them here would hide the surface a native registry must accept.
 
+## Native-call census
+
+`PexNativeCensus` resolves native declarations across the decoded script
+inheritance graph, then assigns a typed `(script, function)` target to method,
+parent, and static call sites. Receiver types come from parameters, locals,
+variables, automatic properties, `self`, and inherited declarations. The
+result feeds the [Papyrus native registry](/engine/papyrus-vm.md) without
+guessing from operand spelling.
+
+The M11.1 retail gate observed 686 native declarations and 65,477 typed native
+references. Those call sites name 508 distinct native pairs; 18 are present in
+the standard registry, for 3.5% coverage. Counts and case-preserving rankings
+remain evidence about the installed corpus, while dispatch lookup itself is
+case-insensitive.
+
 ## Scope
 
 This decoder is Skyrim-only. Fallout 4 additions documented on the same UESP
 page, including structs and their newer debug metadata, are deliberately
-outside M11. Execution semantics, scheduling and native function behavior are
-also outside the container parser; the measured opcode and call rankings feed
-those later milestone items.
+outside M11. Execution semantics, scheduling and native function behavior
+remain outside the container parser. The typed census is its read-only bridge
+to those consumers.

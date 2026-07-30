@@ -23,7 +23,7 @@ nonisolated final class PapyrusRuntime {
 
     init(
         files: [PexFile],
-        nativeDispatch: PapyrusNativeDispatch = PapyrusRecordingNativeDispatch(),
+        nativeDispatch: PapyrusNativeDispatch = PapyrusNativeRegistry.standard,
         limits: PapyrusLimits = .standard
     ) {
         self.limits = limits
@@ -105,9 +105,12 @@ nonisolated final class PapyrusRuntime {
 
     func resume(
         _ suspendedCall: SuspendedCall,
-        returning value: PapyrusValue
+        returning value: PapyrusValue? = nil
     ) -> PapyrusRunOutcome {
-        suspendedCall.continuation.resume(id: suspendedCall.id, returning: value)
+        suspendedCall.continuation.resume(
+            id: suspendedCall.id,
+            returning: value ?? suspendedCall.nativeCall.returnType.defaultValue
+        )
     }
 
     func script(named name: String) -> PexObject? {

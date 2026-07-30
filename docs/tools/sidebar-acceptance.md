@@ -5,7 +5,7 @@ description: The record every milestone acceptance must produce — sidebar path
   and control accessibility ids, readout, and the deterministic tests that are the evidence —
   plus the per-milestone ledger of what was actually recorded.
 tags: [app-ui, verification, acceptance, convention]
-timestamp: 2026-07-29T00:00:00Z
+timestamp: 2026-07-30T00:00:00Z
 ---
 
 # Sidebar verification convention
@@ -91,6 +91,12 @@ authoritative index.
 One row per milestone or sub-milestone that recorded a surface. "Not recorded" means no
 existing doc states it — the row is not an invitation to reconstruct one from memory.
 
+Issue #170 explicitly defines M11.1 as headless and assigns the discoverable
+`World > Scripts` surface to M11.2. Its row records that authored exception
+instead of inventing accessibility ids. `PapyrusTallySnapshot` is the durable
+headless readout for this sub-milestone; the normal UI-shaped record becomes
+mandatory again at M11.2.
+
 The UI-test column is deliberately absent: the id contract is pinned in unit tests instead,
 because the UI-test harness does not run on every machine
 ([local environment](/tools/environment.md)).
@@ -121,6 +127,7 @@ because the UI-test harness does not run on every machine
 | M9 overall acceptance | `World > Audio > Output`, `> Sources`, `> Music`, `> SFX & Ambience` | `Destination-audio` | `AudioEnabledControl`, the generated `Audio<Category>MuteControl` and `Audio<Category>SoloControl` families (`AudioEffectsMuteControl` and `AudioMusicSoloControl` are the two the gate clicks, reached as `outputSection.muteControls[.effects]` and `soloControls[.music]`), `AudioFileControl`, `AudioPlaySelectedControl`, `AudioStopAllControl`, `AudioMusicTypeControl`, `AudioStopMusicControl`, `AudioSfxEnabledControl`, `AudioStopAmbienceControl` | `AudioStatsLabel`, `AudioSourcesStatsLabel`, `AudioMusicStatsLabel`, `AudioSfxStatsLabel`, plus the `Destination-audio-OverrideIndicator` dot | `M9AcceptanceTests`, `WorldAudioTransitionAcceptanceTests`, `M9AudioAcceptanceRealDataTests` (env-gated, `make realtest`), `AudioPanelTests`, `AudioPanelMuteSoloTests`, `WorldAudioEngineMuteSoloTests`, `DestinationRegistryTests`, `AppSidebarModelTests`, `MusicRecordStoreTests`, `WorldMusicDirectorTests`, `CellStreamingFlyPathTests` (audio frame budget) | [audio](/engine/audio.md) |
 | M10.1.5 runtime state | `World > Runtime State` | `Destination-runtimeState` | `RuntimeStateTargetControl`, `RuntimeStateDisableControl`, `RuntimeStateEnableControl`, `RuntimeStateNudgeControl`, `RuntimeStateResetTargetControl`, `RuntimeStateResetAllControl`, `RuntimeStateSlotControl`, `RuntimeStateSaveControl`, `RuntimeStateLoadControl` | `RuntimeStateStatsLabel`, `RuntimeStateJournalStatsLabel`, `RuntimeStateChangeStatsLabel`, `RuntimeStateResetStatsLabel`, `RuntimeStateSaveStatsLabel` | `M10StateAcceptanceTests`, `RuntimeStatePanelTests`, `DestinationRegistryTests` | [runtime state](/engine/runtime-state.md) |
 | M10 overall acceptance | `World > Runtime State > Inspect`, `> Time`, `> Globals`, `> Conditions`, `> Change`, `> Reset`, `> Save`, plus `World > Environment > Weather` for the legacy time slider | `Destination-runtimeState`, `Destination-environment` | `RuntimeStateTargetControl`, `RuntimeStateDisableControl`, `RuntimeStateEnableControl`, `RuntimeStateNudgeControl`, `RuntimeStateResetTargetControl`, `RuntimeStateResetAllControl`, `RuntimeStateSlotControl`, `RuntimeStateSaveControl`, `RuntimeStateLoadControl`, `RuntimeStateHourControl`, `RuntimeStateDayControl`, `RuntimeStateMonthControl`, `RuntimeStateYearControl`, `RuntimeStateApplyDateControl`, `RuntimeStateTimescaleControl`, `RuntimeStateApplyTimescaleControl`, `RuntimeStateGlobalControl`, `RuntimeStateGlobalValueControl`, `RuntimeStateGlobalApplyControl`, `RuntimeStateGlobalResetControl`, `RuntimeStateConditionSourceControl`, `RuntimeStateConditionEvaluateControl`, `TimeOfDayControl` | `RuntimeStateStatsLabel`, `RuntimeStateJournalStatsLabel`, `RuntimeStateChangeStatsLabel`, `RuntimeStateResetStatsLabel`, `RuntimeStateSaveStatsLabel`, `RuntimeStateTimeStatsLabel`, `RuntimeStateGlobalsStatsLabel`, `RuntimeStateConditionStatsLabel`, `RuntimeStateConditionTallyStatsLabel`, `TimeOfDayStatsLabel`, plus the `Destination-runtimeState-OverrideIndicator` dot | `M10AcceptanceTests`, `M10StateAcceptanceTests`, `RuntimeStatePanelTests`, `RuntimeStatePanelTimeTests`, `RuntimeStatePanelGlobalsTests`, `RuntimeStatePanelConditionsTests`, `RuntimeStateConditionRunnerTests`, `GameViewControllerRuntimeStateJournalTests`, `DestinationRegistryTests`, `DestinationRegistryRuntimeStateTests`, `M10AcceptanceRealDataTests` (env-gated, `make realtest`) | [runtime state](/engine/runtime-state.md) |
+| M11.1 headless VM | Headless by issue #170; `World > Scripts` deferred to M11.2 | — | — | `PapyrusTallySnapshot` (headless result, not an accessibility id) | `M11AcceptanceTests`, `PapyrusNativeRegistryTests`, `PapyrusSchedulerTests`, `PexNativeCensusTests`, `PapyrusAcceptanceRealDataTests` (env-gated, `make realtest`) | [Papyrus virtual machine](/engine/papyrus-vm.md) |
 
 `World > World` (`Destination-world`, controls `CameraMovementModeControl`,
 `CameraCopyPoseControl`, readouts `CameraStatsLabel`, `FrameStatsLabel`,
