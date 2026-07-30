@@ -25,8 +25,9 @@ extension Renderer: MTKViewDelegate {
         let cpuStart = frameStats.beginFrame()
         advanceCamera()
         // Streaming may setScene synchronously before this frame encodes.
-        onFrame?(freeFlyCamera.position)
+        onFrame(freeFlyCamera.position)
         advanceGameClockFromWallClock()
+        updateWorldSimFromWallClock()
         updateWeatherFromWallClock()
         let particleDelta = updateAnimationsFromWallClock()
         updateParticles(deltaTime: particleDelta)

@@ -97,9 +97,15 @@ extension CellStreamer {
             let previous = interiorScene
             interiorScene = transition.scene
             interiorSourceDoor = sourceDoor ?? interiorSourceDoor
+            // A rebuild re-enters the same interior, so its scripts stay
+            // attached; only a player-driven move retires the old cell.
             if let previous {
+                if !isRebuild {
+                    emitCellDetached(previous)
+                }
                 evictUnused(previous.assets)
             }
+            emitCellAttached(transition.scene, firstIntegration: !isRebuild)
             sink(transition.scene.renderScene, camera)
         case let .exterior(coordinate):
             let previousInterior = interiorScene
@@ -109,11 +115,16 @@ extension CellStreamer {
             let replaced = composition.setCell(transition.scene, at: coordinate)
             core.seedResident(coordinate)
             if let previousInterior {
+                emitCellDetached(previousInterior)
                 evictUnused(previousInterior.assets)
             }
+            // `replaced` is the same cell rebuilt at the same coordinate, so
+            // the attach below reconciles it; detaching first would retire
+            // instances the attach immediately recreates.
             if let replaced {
                 evictUnused(replaced.assets)
             }
+            emitCellAttached(transition.scene, firstIntegration: !isRebuild)
             sink(composition.composedScene(), camera)
         case nil:
             Self.logger.warning("[WARNING] door destination scene has no CELL identity")

@@ -1,8 +1,9 @@
 ---
 type: Engine Subsystem
 title: Papyrus virtual machine
-description: Bounded headless execution of Skyrim PEX functions with explicit
-  frames, typed values, native registry, deterministic scheduling and tallies.
+description: Bounded execution of Skyrim PEX functions with explicit frames,
+  typed values, native registry, deterministic scheduling and tallies, driven
+  once per frame from the engine loop with a script event queue and save state.
 tags: [engine, papyrus, virtual-machine, bytecode]
 timestamp: 2026-07-30T00:00:00Z
 ---
@@ -10,12 +11,19 @@ timestamp: 2026-07-30T00:00:00Z
 # Papyrus virtual machine
 
 OpenSky executes the typed instructions produced by the
-[PEX decoder](/formats/pex.md) in a headless Skyrim Papyrus virtual machine.
+[PEX decoder](/formats/pex.md) in a Skyrim Papyrus virtual machine.
 `PapyrusRuntime` owns the script library, attached instances, opaque object
 handles, native registry, limits and tally. `PapyrusInterpreter` is created for
 one invocation and owns its remaining instruction budget and explicit frame
 stack. `PapyrusScheduler` advances suspended calls only from injected fixed
 steps and game-clock samples.
+
+Those three types are nonisolated and know nothing about the world. The
+main-actor `PapyrusWorldRuntime` is what puts one of them inside the engine
+loop: it owns per-reference script instances, a single FIFO event queue, and a
+budgeted fixed-step tick driven once per drawn frame. Everything from
+[World runtime and confinement](#world-runtime-and-confinement) onwards
+describes that world-side layer.
 
 Language semantics come from the Creation Kit wiki:
 
@@ -43,6 +51,12 @@ choice OpenSky makes in those gaps is listed under [Deviations](#deviations).
 * [States](#states)
 * [Bounds and faults](#bounds-and-faults)
 * [Tally](#tally)
+* [World runtime and confinement](#world-runtime-and-confinement)
+* [Frame hook and fixed step](#frame-hook-and-fixed-step)
+* [Event queue](#event-queue)
+* [Instance lifecycle over cell streaming](#instance-lifecycle-over-cell-streaming)
+* [Script state in a save](#script-state-in-a-save)
+* [Lazy script library](#lazy-script-library)
 * [Tests](#tests)
 * [M11.1 acceptance](#m111-acceptance)
 * [Deviations](#deviations)
@@ -207,7 +221,8 @@ or global random generator.
 ## Deterministic scheduler
 
 `PapyrusScheduler` accepts a fixed real-time step and sampled `GameClock`
-values. `Utility.Wait` wakes after accumulated fixed steps;
+values. `Utility.Wait` wakes after a counted whole number of fixed steps, as
+[Frame hook and fixed step](#frame-hook-and-fixed-step) explains;
 `Utility.WaitGameTime` wakes after accumulated forward game hours. The first
 game-clock sample establishes the baseline. A backward clock scrub contributes
 zero elapsed game time, while a forward jump is capped at 24 game hours per
@@ -275,6 +290,261 @@ fault tail. Totals are uncapped while every attacker-controlled name table has
 the `PapyrusLimits.tallyNames` cap. `PapyrusTallySnapshot` is an equatable,
 sendable first-class acceptance result with stable ranked accessors.
 
+## World runtime and confinement
+
+`PapyrusWorldRuntime` (`opensky/Papyrus/PapyrusWorldRuntime.swift`) is the
+`@MainActor` class that owns one `PapyrusRuntime`, one `PapyrusScheduler`, and
+the world-side bookkeeping the headless core deliberately has none of. Its
+confinement model is the same as
+[`WorldStateStore`](/engine/runtime-state.md): every field is main-actor state,
+written and read on the thread that runs `draw(in:)`, so nothing between a
+streamed cell and the script attached to it needs a lock or an actor hop. The
+M11.1 `PapyrusRuntime` was not renamed and not changed in shape; it is still
+the script library and instance table underneath.
+
+The implementation splits across satellites by concern:
+`PapyrusWorldState.swift` holds the value types,
+`PapyrusWorldEvents.swift` the tick and dispatch,
+`PapyrusWorldLifecycle.swift` cell attach and detach, and
+`PapyrusWorldPersistence.swift` the save snapshot and restore.
+
+| type | what it is |
+| --- | --- |
+| `PapyrusInstanceKey` | world identity of one instance: a `ReferenceKey` plus the lowercased script name. `Comparable`, ordering by reference then script name, which is what makes attach order, event order and save bytes deterministic |
+| `PapyrusVariableState` | one persisted variable: lowercased declaring script, lowercased name, and a `PapyrusValue` |
+| `PapyrusInstanceState` | one instance's persisted state: key, active state, sorted variables, and whether `OnInit` has fired |
+| `PapyrusScriptEvent` | one queued event: target instance, function name, arguments |
+| `PapyrusTickBudget` | per-tick ceiling, 32 events and 100,000 instructions by default |
+| `PapyrusTickReport` | what one tick did: `steps`, `dispatched`, `queued`, `resumed`, `faulted` |
+| `PapyrusWorldSkipReason` / `PapyrusWorldSkipTally` | counted, non-fatal skips, ranked the same way `ScriptBindingTally` is |
+
+The budget defaults bound one 1/30 second step rather than throughput. A cell
+attach enqueues three events per instance, so 32 events drains a ten-script
+cell in a single step while a mass attach carries over instead of hitching the
+frame. The 100,000-instruction ceiling is a tenth of
+`PapyrusLimits.instructionBudget`, so one runaway handler cannot consume more
+of a frame than a single whole invocation is allowed to consume in total.
+
+Skips are counted, never faults, because malformed or unrecognised input must
+not stop the world:
+
+| reason | raised when |
+| --- | --- |
+| `removedScript` | the VMAD entry is flagged removed |
+| `missingScript` | the script name is not in the library and cannot be loaded |
+| `instanceCreationFailed` | `makeInstance` threw |
+| `bindingFailed` | a VMAD property could not be bound onto the instance |
+| `retiredEventTarget` | an event's instance was retired before it was dispatched |
+| `undefinedEventFunction` | the script chain defines no such function |
+| `unknownSaveScript` | a `PSCR` entry names a script this session cannot instantiate |
+| `unknownSaveVariable` | a `PSCR` variable does not exist on the restored instance |
+
+## Frame hook and fixed step
+
+`Renderer.onWorldUpdate: ((Float) -> Void)?` is the engine seam, invoked once
+per drawn frame from `updateWorldSimFromWallClock()` in `RendererDraw.draw(in:)`.
+The order inside a frame is `advanceCamera()`, then `onFrame(position)` (cell
+streaming and the HUD), then `advanceGameClockFromWallClock()`, then
+`updateWorldSimFromWallClock()`, then the weather, animation, particle and
+audio updates. The world tick runs after the game clock advances on purpose, so
+a script waking on game time sees this frame's clock rather than the previous
+frame's.
+
+Wiring a second subscriber to that frame revealed a real hazard beside it.
+`Renderer.onFrame` had been a single optional closure, and both
+`GameViewControllerStreaming.swift` and `wireHUDFrameUpdates(renderer:)` wanted
+it, so the second assignment silently dropped the first. It is now a
+`CallbackFanOut<SIMD3<Float>>` (`opensky/World/CallbackFanOut.swift`): an
+ordered list of handlers delivered in registration order, with no removal, no
+identity and no thread hand-off, because every engine callback is wired once at
+setup and fired on the thread that drives `draw(in:)`. `wireHUDFrameUpdates` is
+registered after `startStreaming`, so delivery order stays streamer first and
+HUD second, exactly as it behaved when streaming owned the only assignment.
+`CellStreamer.onInteraction` was deliberately left a single-assignment closure.
+
+Menu pause reaches the VM through a clock, never through a branch around the
+call. `Renderer.worldSimClock` is a `FrameSimClock` advanced with
+`paused: worldSimPaused` (see [menu mode](/engine/menu-mode.md)), so a paused
+frame delivers a delta of exactly zero and the hook still fires. The world
+runtime itself never reads the wall clock and never inspects a pause flag.
+
+Two entry points consume that delta:
+
+```swift
+func stepFixed(gameClock: GameClock? = nil) -> PapyrusTickReport
+func advance(delta: Float, gameClock: GameClock? = nil) -> PapyrusTickReport
+```
+
+`stepFixed` advances exactly one fixed step: it ticks the scheduler, settles
+whatever woke, then drains the event queue up to the budget. It is fully
+deterministic and is what tests and the offscreen path drive.
+
+`advance` accumulates a wall delta into a fixed-step accumulator and runs whole
+steps only, so a variable frame rate never changes the simulation. A delta of
+zero or less returns immediately, having advanced nothing, which is the paused
+case. One call runs at most `PapyrusWorldRuntime.maximumStepsPerAdvance` (4)
+steps, and afterwards the accumulator is clamped to four steps' worth of
+seconds, so a multi-second stall cannot spiral into minutes of catch-up
+simulation on later frames.
+
+`RendererOffscreen` calls `onWorldUpdate?(simDelta)` with the same fixed
+`1 / 30` step it already uses for animation, inside the `advanceAnimation`
+block and subject to the same `worldSimPaused` gate. The offscreen path still
+never advances the game clock, so an offscreen bench or test drives the VM
+deterministically.
+
+`PapyrusScheduler` changed to make that fixed step exact. A real-time wake now
+records the tick it was enqueued on and compares whole ticks since
+(`Wake.realSteps(startTick:duration:)`) instead of accumulating a `realSeconds`
+double. Accumulating 1/30 thirty times drifts past 1.0, so `Utility.Wait(1.0)`
+used to wake on the 31st step; the multiplicative form
+`Double(tickCount - startTick) * fixedStepSeconds` wakes on exactly the 30th.
+`realSeconds` survives as a computed property over `tickCount`. The scheduler
+also gained an `onResume` observation seam, called after every woken call
+resumes and before its outcome is routed, which is how the world runtime tracks
+per-instance busy state across a re-suspension.
+
+## Event queue
+
+There is one event queue for the whole world: a main-actor FIFO array on
+`PapyrusWorldRuntime`. Global order is preserved — an event enqueued earlier is
+dispatched no later than one enqueued after it — and events are enqueued, never
+dispatched inline, so an attach never re-enters the VM from inside streaming.
+
+Delivery is serial per instance. An instance that suspends in a latent call is
+marked busy (`busyInstances`, maintained through
+`PapyrusWorldSuspensionTracker` and the scheduler's `onResume`), and its
+further events stay queued, in order, until the suspended handler settles.
+Other instances keep running past it. A skipped busy-instance event is put back
+ahead of the untouched tail, so the queue never reorders itself.
+
+A drain stops when the tick's event budget is spent or when the instructions
+executed since the drain began exceed the tick's instruction budget. Whatever
+is left carries over to the next tick and is reported as `queued`.
+
+Three outcomes are counted no-ops rather than faults, because none of them is a
+malformed program:
+
+* the target instance was already retired (`retiredEventTarget`);
+* the event is a repeat `OnInit` for an instance that already fired one; and
+* the script chain does not define the function at all
+  (`undefinedEventFunction`), which is the common case — most scripts implement
+  a handful of the events the engine offers.
+
+Function definition is tested through `PapyrusInterpreter.resolveMethod`, the
+same resolution the interpreter itself uses, so state priority is respected.
+
+`OnInit` fires once ever per instance. `firedOnInit` records that fact and
+persists in the save; `pendingOnInit` covers the window between enqueue and
+dispatch so a rebuild in between cannot enqueue a second one.
+
+## Instance lifecycle over cell streaming
+
+`CellStreamer` gained two engine-level announcements and no dependency on the
+VM at all:
+
+```swift
+var onCellAttached: ((CellScene, Bool) -> Void)?
+var onCellDetached: ((CellSceneLocation) -> Void)?
+```
+
+The `Bool` is `firstIntegration`: true when the cell has genuinely joined the
+live world, false when a cell that never left was merely re-integrated.
+`CellStreamerPapyrus.swift` holds the emission helpers, and a scene with no
+`CellSceneLocation` — a door destination whose CELL identity failed to resolve
+— is not announced at all, since the location is the key a subscriber files
+instances under. `GameViewControllerPapyrus.swift` is the only subscriber and
+forwards to the world runtime, so every existing streaming test still runs
+without a VM.
+
+Four streaming paths needed a decision, each recorded at its call site in
+[cell streaming](/engine/cell-streaming.md):
+
+* An exterior integration reads `CellStreamCore.rebuilding` before
+  `integrate` clears it, so a world-state rebuild attaches with
+  `firstIntegration: false` and does not re-fire load events.
+* A cell staged offscreen during a coverage transition announces nothing while
+  it is staged; `commitCoverageTransition` promotes staged cells in sorted
+  coordinate order and announces each one there, with `firstIntegration` true
+  only when it did not replace a composed scene at the same coordinate.
+  `discardStagedCells(outside:)` therefore emits no detach: a staged cell never
+  emitted an attach.
+* An interior door transition maps `CellStreamerTransitions.apply`'s `isRebuild`
+  straight to `firstIntegration: !isRebuild`, and detaches the previous
+  interior only when it is not a rebuild.
+* The exterior branch of a door arrival detaches the previous interior but not
+  the scene it replaces at the destination coordinate: that scene shares the
+  arriving scene's `CellSceneLocation`, so detaching it would retire instances
+  the attach immediately recreates.
+
+`attach(cell:references:formIDResolver:firstIntegration:)` walks
+`RuntimeReferenceIndex.sortedEntries()` for determinism and runs in two passes.
+The first creates every missing instance in the cell; the second resolves VMAD
+properties through the existing
+`AttachedScript.binding(in:formIDResolver:objectHandle:)` and applies each
+value with `PapyrusInstance.applyInitialValue(_:named:scriptChain:)`, once
+every instance in the cell exists, so an object property naming a reference in
+the same cell resolves to a live handle rather than to nothing. The
+`objectHandle` closure is backed by `referenceHandleMap()`, which gives one
+handle per reference; a reference carrying several scripts resolves to the
+instance with the lowest script name. On a first integration each instance is
+then given `OnInit` (only if it has never fired), then `OnCellAttach`, then
+`OnLoad`, in that order.
+
+`detach(cell:)` retires the cell's instances in sorted key order: the instance
+leaves the runtime, its queued events are dropped, and its suspension
+bookkeeping is forgotten.
+
+## Script state in a save
+
+`instanceStates()` returns every live instance's `PapyrusInstanceState`, sorted
+by `PapyrusInstanceKey` with variables sorted by `(declaringScript, name)`, so
+re-encoding an unchanged runtime is byte-identical.
+`restore(instanceStates:)` reads them back, creating a missing instance from
+the script library on demand, so restoring into a session that has attached no
+cell yet works. An unknown script or variable is skipped and counted rather
+than thrown.
+
+The bytes live in the additive `PSCR` chunk of the
+[OpenSky save container](/formats/opensky-save.md), which documents the
+layout. `GameViewController.saveWorldState(slot:)` passes
+`scripts: papyrus?.instanceStates() ?? []`.
+
+`loadWorldState(slot:)` restores Papyrus **last**, after
+`worldState.restore(from:)` and after the game clock. `worldState.restore`
+fires one unattributed mutation, which only queues a rebuild for every resident
+cell; those rebuilds re-attach on a later streaming update and consult
+`firedOnInit` to decide whether to enqueue `OnInit`. Putting the saved fired
+set in place before any rebuild attach can read it is exactly what stops every
+script re-running its `OnInit` on load.
+
+## Lazy script library
+
+Decoding every `.pex` in an install up front costs far more than a session ever
+uses, so the library fills in one script at a time:
+
+```swift
+var scriptProvider: ((String) -> PexFile?)?
+```
+
+`PapyrusWorldRuntime.resolveScript(named:)` asks the provider the first time an
+attach needs a name, installs the result through the new
+`PapyrusRuntime.register(_ file: PexFile)` (last writer wins), and remembers
+every failure in `unresolvableScripts`, so a missing, truncated or
+mod-authored-broken script is not re-decoded on every cell attach. A file that
+decodes but does not contain the requested object counts as a failure too.
+
+The app supplies the provider through a new `ScriptDataProviding` protocol on
+the cell-scene provider, which exposes the shared
+[`VirtualFileSystem`](/formats/vfs.md) and the master
+[`FormIDResolver`](/formats/formid.md) — the same resolver every streamed
+reference key came from, so a script and the cell it is attached to agree on
+reference identity. `GameViewController.wirePapyrus` builds a
+`PexScriptLoader` over that file system. A provider that is not
+`ScriptDataProviding`, or one with no file system (a synthetic scene), leaves
+`GameViewController.papyrus` nil rather than running a VM with an empty
+library.
+
 ## Tests
 
 All fixtures are assembled in Swift. `PexFixture` now builds direct runtime
@@ -288,6 +558,48 @@ state-resolution priorities, `GotoState`, native registry behavior, seeded
 random results, real-time and game-time wake ordering, bounded recording, a
 latent suspend/resume round trip, and the required budget, depth, bad-jump,
 type-mismatch and unknown-opcode fault matrix.
+
+The world layer is covered by its own device-free suites, all built on
+`openskyTests/PapyrusWorldFixture.swift`, which assembles synthetic REFR
+records with VMAD data, event scripts whose handlers record
+`<script>.<event>` through a probing native dispatch, and a drain helper that
+steps to quiescence:
+
+* `PapyrusWorldRuntimeTests` — key ordering including case-insensitive script
+  names, an instance-state round trip through a fresh unattached runtime that
+  does not re-fire `OnInit`, object and array values snapshotting as `.none`,
+  and a tolerant restore that counts one unknown script and one unknown
+  variable.
+* `PapyrusWorldLifecycleTests` — first-integration event order across two
+  references, a silent rebuild that keeps the same handle, a reference newly
+  appearing in a rebuild receiving only `OnInit`, detach clearing instances
+  and queued events with no second `OnInit` on re-attach, and a persistent
+  instance surviving detach with its variables intact.
+* `PapyrusWorldEventQueueTests` — budget carry-over preserving global FIFO
+  order across three ticks, per-instance serial delivery around a latent
+  suspension, `Utility.Wait(1.0)` resuming after exactly 30 fixed 1/30 steps,
+  a zero delta advancing nothing while staying safe every frame, partial
+  deltas accumulating and a ten-second hitch capping at four steps, and an
+  undefined event function counting as a no-op rather than a fault.
+* `PapyrusWorldBindingTests` — VMAD properties binding across a cell, with an
+  intra-cell object property resolving to the other reference's live handle,
+  and removed and library-missing scripts counted rather than faulted.
+* `CallbackFanOutTests` — zero handlers, delivery to every handler,
+  registration order, a tuple payload, and a late handler joining only the
+  next delivery.
+* `CellStreamerPapyrusTests` — the streamer, a `WorldStateStore` and a world
+  runtime wired exactly as `wirePapyrus` wires them, with no Metal and no game
+  data: first integration, a world-state rebuild reconciling rather than
+  recreating, unloading retiring instances, staged coverage cells attaching
+  only when the transition commits, and an interior door arrival attaching
+  where its rebuild does not.
+* `RendererWorldSimTickTests` — Metal-4-gated, no game data: a latent wait
+  resuming after the right number of fixed steps through a real `Renderer`, a
+  partial delta advancing nothing until it accumulates a step, offscreen
+  frames driving the tick, and a paused frame delivering zero so no script
+  advances.
+* `OpenSkySavePapyrusTests` — the `PSCR` chunk, described under
+  [OpenSky save container](/formats/opensky-save.md).
 
 ## M11.1 acceptance
 
@@ -349,20 +661,61 @@ choices explicitly:
 * `PlayAnimation`, `PlayAnimationAndWait`, and `PlayGamebryoAnimation` return
   true without changing a behavior graph until M14. This deliberate deviation
   is logged and tallied separately from honest native implementations.
-* `GotoState` switches immediately but does not enqueue `OnEndState` or
-  `OnBeginState`. The wiki documents those events, but this headless core has
-  no event queue; the later scheduler owns that delivery boundary.
+* `GotoState` switches immediately but still does not enqueue `OnEndState` or
+  `OnBeginState`. The wiki documents those events, and an event queue now
+  exists, but it belongs to the main-actor `PapyrusWorldRuntime` while
+  `GotoState` is an intrinsic inside the nonisolated interpreter, which has no
+  path to it. Nothing in the engine delivers either event.
 * Array find start-index normalization and the 100,000-element allocation cap
   are defensive OpenSky policy because the available opcode table does not
   document edge behavior or an allocation bound.
 
+The world layer adds its own deliberate simplifications, each a stated
+limitation rather than an oversight:
+
+* `PapyrusValue.object` and `PapyrusValue.array` are not persistable. Their
+  identity is runtime-allocated and means nothing in the world, so
+  `instanceStates()` snapshots both as `.none` and a restore leaves the
+  compiled default in their place.
+* Persistent instances — those created from a reference entry flagged
+  `isPersistent` — are never retired. They survive every `detach`, including
+  world-space transitions, for the whole session.
+* A reference that appears for the first time in a rebuilt cell gets its
+  instance and its `OnInit` (it has never fired one), but no `OnCellAttach`
+  and no `OnLoad`, because the cell did not re-attach.
+* `firedOnInit` survives retirement. A non-persistent reference that leaves a
+  cell and later re-enters it gets a fresh instance with compiled defaults but
+  no second `OnInit`.
+* A latent call whose instance was retired stays in the scheduler. When it
+  wakes, the resume faults on the missing instance and is counted. This keeps
+  retirement O(instances) instead of scanning every scheduler entry on every
+  detach.
+* A reference carrying several scripts resolves VMAD object properties to the
+  instance with the lowest script name. One reference maps to one opaque
+  handle, and picking the lowest name is deterministic where picking an
+  arbitrary one would not be.
+
 ## Scope
 
-This subsystem executes Skyrim PEX 3.x functions headlessly, dispatches the
-world-independent native foundation, and schedules real-time and game-time
-suspensions deterministically. It deliberately does not implement Fallout 4
-structs, world-object native functions, behavior graphs, event queues,
-concurrent frame scheduling, persistence, or quest runtime behavior. Its opaque
-handles, initial-values table, native registry, suspension result, scheduler
-and tally are the seams those consumers use without changing the interpreter
-core.
+This subsystem executes Skyrim PEX 3.x functions, dispatches the
+world-independent native foundation, schedules real-time and game-time
+suspensions deterministically, and runs inside the engine loop: one main-actor
+runtime per session, script instances whose lifetime follows cell streaming, a
+single FIFO event queue drained under a per-frame budget, and instance state
+that survives a save and load.
+
+It deliberately does not implement Fallout 4 structs, world-object native
+functions, behavior graphs, or quest runtime behavior. The event queue carries
+the three cell-lifecycle events the streamer can announce — `OnInit`,
+`OnCellAttach` and `OnLoad` — and nothing else; every other Papyrus event
+belongs to the subsystem that would raise it. Scheduling stays single-threaded
+by design rather than by omission: the whole VM is confined to the main actor,
+so there is no concurrent frame scheduling to reason about. Persistence covers
+the primitive variable values, the active state and the `OnInit`-fired set,
+not object or array identity.
+
+Its opaque handles, initial-values table, native registry, suspension result,
+scheduler and tally remain the seams headless consumers use without changing
+the interpreter core, and `onCellAttached`, `onCellDetached`,
+`onWorldUpdate` and `scriptProvider` are the seams the engine uses without the
+VM ever depending on the engine.

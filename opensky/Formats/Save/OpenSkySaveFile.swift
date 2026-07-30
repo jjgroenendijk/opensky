@@ -25,6 +25,10 @@ nonisolated struct OpenSkySaveFile: Equatable, Sendable {
     /// `CLOK` chunk — a pre-clock save — which restores the vanilla-start
     /// clock.
     let clock: GameClock?
+    /// Papyrus script instance state at save time (issue #171), empty when the
+    /// file carries no `PSCR` chunk — a pre-script save, or a session that ran
+    /// no VM — which restores scripts at their compiled defaults.
+    let scripts: [PapyrusInstanceState]
 
     init(
         formatVersion: UInt32,
@@ -32,7 +36,8 @@ nonisolated struct OpenSkySaveFile: Equatable, Sendable {
         fingerprint: [SavePluginFingerprint],
         snapshot: WorldStateSnapshot,
         allocator: GeneratedReferenceAllocator,
-        clock: GameClock? = nil
+        clock: GameClock? = nil,
+        scripts: [PapyrusInstanceState] = []
     ) {
         self.formatVersion = formatVersion
         self.metadata = metadata
@@ -40,6 +45,7 @@ nonisolated struct OpenSkySaveFile: Equatable, Sendable {
         self.snapshot = snapshot
         self.allocator = allocator
         self.clock = clock
+        self.scripts = scripts
     }
 
     /// Checks the saved load order against the one currently installed.

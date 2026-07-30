@@ -67,6 +67,20 @@ nonisolated protocol GlobalDataProviding {
     var globalStore: GlobalStore? { get }
 }
 
+/// Optional script-loading seam a provider can expose (issue #171). The
+/// Papyrus world runtime resolves a script name to compiled bytecode lazily
+/// through the file system, and resolves the FormIDs a VMAD property names
+/// with the same master table the cell build used, so a script and the cell
+/// it is attached to agree on reference identity.
+///
+/// Both values are immutable and thread-safe (`VirtualFileSystem` is
+/// `Sendable`; `FormIDResolver` is a value), so reading them from the main
+/// thread does not break the builder's queue confinement.
+nonisolated protocol ScriptDataProviding {
+    var scriptFileSystem: VirtualFileSystem? { get }
+    var scriptFormIDResolver: FormIDResolver { get }
+}
+
 /// Optional immutable player-movement tuning resolved from active GMST data.
 nonisolated protocol MovementConfigurationProviding {
     var movementConfiguration: PlayerMovementConfiguration { get }
@@ -88,7 +102,8 @@ nonisolated protocol AudioDataProviding {
 /// entirely on the runner's serial queue -- never touched from the main
 /// thread -- which is why they need no internal locking.
 nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding,
-    AudioDataProviding, MovementConfigurationProviding, GlobalDataProviding
+    AudioDataProviding, MovementConfigurationProviding, GlobalDataProviding,
+    ScriptDataProviding
 {
     let builder: CellSceneBuilder
     let worldspaceEditorID: String
@@ -104,6 +119,17 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     var globalStore: GlobalStore?
     /// GMST-derived walk/run values plus explicit documented fallbacks.
     var movementConfiguration: PlayerMovementConfiguration = .synthetic
+
+    /// Compiled-script source for the Papyrus world runtime; nil when the
+    /// builder was constructed without a file system (synthetic scenes).
+    var scriptFileSystem: VirtualFileSystem? {
+        builder.fileSystem
+    }
+
+    /// The same master-list resolver every streamed reference key came from.
+    var scriptFormIDResolver: FormIDResolver {
+        builder.formIDResolver
+    }
 
     func buildCell(at coordinate: CellCoordinate, state: WorldStateSnapshot) throws -> CellScene {
         try builder.buildScene(

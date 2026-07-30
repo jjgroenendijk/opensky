@@ -42,6 +42,7 @@
 				GameViewController.swift,
 				GameViewControllerAudio.swift,
 				GameViewControllerHUD.swift,
+				GameViewControllerPapyrus.swift,
 				GameViewControllerRuntimeState.swift,
 				GameViewControllerRuntimeStateConditions.swift,
 				GameViewControllerRuntimeStateTime.swift,

@@ -37,7 +37,7 @@ extension GameViewController {
             controller?.noteStateMutation(in: location, sequence: sequence)
         }
         wireGlobals(provider: provider, renderer: renderer)
-        renderer.onFrame = { [weak self, weak controller, weak renderer] position in
+        renderer.onFrame.add { [weak self, weak controller, weak renderer] position in
             let interactionRay = renderer.flatMap { renderer -> InteractionRay? in
                 guard renderer.movementMode == .walk else { return nil }
                 return InteractionRay(
@@ -50,10 +50,8 @@ extension GameViewController {
                 interactionRay: interactionRay,
                 activate: self?.cameraInput.consumeActivation() ?? false
             )
-            if let renderer {
-                self?.updateHUDFrame(renderer: renderer)
-            }
         }
+        wirePapyrus(provider: provider, renderer: renderer, streamer: controller)
         // Live XCLR region feed (M7.2.3): the streamer pushes the center cell's
         // REGN set into the weather runtime so region-weighted selection runs
         // live. Same main thread as the draw loop -> WeatherSystem stays

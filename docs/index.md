@@ -83,8 +83,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 * [OpenSky save container](/formats/opensky-save.md) - our own .osav format, not
   Bethesda's: header metadata, load-order fingerprint, tagged chunks and the
-  reference-delta and global-variable entry layouts, determinism and version rules,
-  atomic write, and the
+  reference-delta, global-variable and Papyrus script-instance entry layouts, determinism
+  and version rules, atomic write, and the
   `OpenSkySaveStore` slot façade + fingerprint builders above it.
 
 ## Engine
@@ -131,10 +131,12 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   drives: value model + coercions, bounded execution, display objects and timeline,
   Scaleform Stage rectangles, events, indexed global mouse input and hit testing, the
   GameDelegate bridge, path-targeted HUD calls, missing-API tally.
-* [Papyrus virtual machine](/engine/papyrus-vm.md) - bounded headless Skyrim PEX execution:
-  typed values, explicit frames, arrays, states, a native registry, deterministic
+* [Papyrus virtual machine](/engine/papyrus-vm.md) - bounded Skyrim PEX execution: typed
+  values, explicit frames, arrays, states, a native registry, deterministic
   real/game-time suspension scheduling, faults and coverage tallies, with
-  VMAD-supplied initial values.
+  VMAD-supplied initial values; plus the main-actor world runtime that drives it from the
+  frame loop with a FIFO script-event queue, cell-streamed instance lifetime, a lazy
+  script library, and instance state that survives a save.
 * [World audio playback](/engine/audio.md) - AVAudioEngine graph with 3D positional
   sources, streaming WMA decode off the main thread, vanilla SNCT category volumes,
   per-category mute and solo, source budget/eviction, the per-frame audio-update

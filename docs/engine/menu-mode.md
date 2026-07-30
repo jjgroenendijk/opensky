@@ -5,7 +5,7 @@ description: Engine-owned menu-mode infrastructure - a push/pop menu stack, the
   world-vs-menu input-capture switch, and the world-sim pause the renderer gates its
   per-frame time advance on.
 tags: [engine, ui, input, menu, simulation]
-timestamp: 2026-07-23T00:00:00Z
+timestamp: 2026-07-30T00:00:00Z
 ---
 
 # Menu mode
@@ -89,11 +89,15 @@ a stall never dumps a huge step. While paused it returns zero yet still moves it
 reference mark to the current time — so resuming after any pause length yields a single
 frame of delta, never the whole paused span. That is the no-time-jump guarantee.
 
-In `draw(in:)` the three wall-clock advances (`advanceCamera`,
-`updateWeatherFromWallClock`, `updateAnimationsFromWallClock`) all feed
-`worldSimPaused` into their clock; the animation delta also drives particles and
-precipitation, so a zero delta freezes game time, camera, animations, weather,
-particles, and precipitation together. The offscreen render path applies the same gate
+In `draw(in:)` the wall-clock advances (`advanceCamera`,
+`updateWorldSimFromWallClock`, `updateWeatherFromWallClock`,
+`updateAnimationsFromWallClock`) all feed `worldSimPaused` into their clock; the
+animation delta also drives particles and precipitation, so a zero delta freezes game
+time, camera, animations, weather, particles, precipitation, and the
+[Papyrus VM](/engine/papyrus-vm.md) together. The VM is the clearest case of why the
+pause is a clock rather than a branch: its per-frame hook still fires on a paused frame
+and simply receives a delta of zero, so nothing in the runtime has to know a menu is
+open. The offscreen render path applies the same gate
 to its fixed 1/30 step. The render passes themselves are untouched, so a paused frame
 still encodes, presents, and draws the [screen-space UI](/rendering/ui.md) — the world
 just holds still.

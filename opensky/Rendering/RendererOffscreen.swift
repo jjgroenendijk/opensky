@@ -171,6 +171,10 @@ extension Renderer {
         let simDelta: Float = worldSimPaused ? 0 : 1 / 30
         if advanceAnimation {
             updateAnimations(deltaTime: simDelta)
+            // World simulation (issue #171) runs on the same fixed step, so an
+            // offscreen bench or test drives the Papyrus VM deterministically.
+            // The game clock still never advances here.
+            onWorldUpdate?(simDelta)
         }
         // Weather resolves from the current time-of-day each frame; forced
         // weather (tests) stays deterministic because the offscreen path never

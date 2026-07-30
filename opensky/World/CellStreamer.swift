@@ -61,8 +61,9 @@ final class CellStreamer {
 
     /// Desired requests not yet submitted. Only one build reaches the runner
     /// at a time, so recentering can discard obsolete backlog before it does
-    /// I/O and eviction always queues ahead of the next build.
-    private var requests: [CellCoordinate] = []
+    /// I/O and eviction always queues ahead of the next build. Readable (not
+    /// writable) cross-file for the inspection satellite.
+    private(set) var requests: [CellCoordinate] = []
     /// Resident cells awaiting a world-state rebuild, oldest request first.
     /// Kept apart from `requests` so first loads keep their center-out
     /// priority; rebuilds are dispatched only once the load queue is drained.
@@ -83,8 +84,9 @@ final class CellStreamer {
     private var activeBuild: CellCoordinate?
 
     /// Finished builds drained from the runner, awaiting integration. Bounded
-    /// by the grid size: at most one entry per in-flight cell.
-    private var pending: [CellBuildResult] = []
+    /// by the grid size: at most one entry per in-flight cell. Readable (not
+    /// writable) cross-file for the inspection satellite.
+    private(set) var pending: [CellBuildResult] = []
     /// Set once the first drawable cell frames the camera; every later
     /// recompose passes a nil camera so the free-fly view is left alone.
     private var hasSeededCamera = false
@@ -111,6 +113,16 @@ final class CellStreamer {
     /// Source placement retained across an asynchronous door build. Runtime
     /// state rebuilds have no player interaction and leave this nil.
     var doorMotionInteraction: PlacedInteraction?
+    /// A cell became part of the live world (issue #171). The flag is true for
+    /// a first integration and false for a re-integration of a cell that never
+    /// left — a world-state rebuild or an interior refresh — so a subscriber
+    /// can attach scripts once without re-firing load events. A cell built
+    /// offscreen during a coverage transition fires only when it is committed.
+    /// Emission lives in the CellStreamerPapyrus satellite.
+    var onCellAttached: ((CellScene, Bool) -> Void)?
+    /// A cell left the live world: unloaded off the grid, dropped by a
+    /// coverage transition, or replaced by a door transition.
+    var onCellDetached: ((CellSceneLocation) -> Void)?
 
     /// - Parameters:
     ///   - center: grid center at launch (streaming starts on FirstRenderCell).
@@ -230,6 +242,7 @@ final class CellStreamer {
         var departed = CellAssets()
         for coordinate in coordinates {
             guard let removed = composition.removeCell(at: coordinate) else { continue }
+            emitCellDetached(removed)
             departed.meshKeys.formUnion(removed.assets.meshKeys)
             departed.textureKeys.formUnion(removed.assets.textureKeys)
         }
@@ -305,6 +318,10 @@ final class CellStreamer {
             requests.removeAll { $0 == entry.coordinate }
             switch entry.result {
             case let .success(scene):
+                // A world-state rebuild re-integrates a cell that never left,
+                // so it must not read as a fresh attach (issue #171). The core
+                // clears `rebuilding` inside `integrate`, hence the read here.
+                let isRebuild = core.rebuilding.contains(entry.coordinate)
                 let decision = core.integrate(coordinate: entry.coordinate, kind: .success)
                 if decision == .integrated {
                     requeueRebuildIfStateMoved(entry.coordinate, scene: scene)
@@ -312,11 +329,13 @@ final class CellStreamer {
                         if let replaced = stagedCells.updateValue(scene, forKey: entry.coordinate) {
                             evictUnused(replaced.assets)
                         }
+                        // Staged offscreen: announced when the transition commits.
                         return false
                     }
                     if let replaced = composition.setCell(scene, at: entry.coordinate) {
                         evictUnused(replaced.assets)
                     }
+                    emitCellAttached(scene, firstIntegration: !isRebuild)
                     return true
                 }
                 if decision == .discardedStale {
@@ -422,73 +441,5 @@ extension CellStreamer {
     /// flight, requestDistantLODIfNeeded retries until runner accepts it.
     func invalidateDistantLOD() {
         requestedLODCenter = nil
-    }
-
-    // MARK: - Inspection (streaming verification + tests)
-
-    /// Grid slots that reached a terminal state: resident + void + failed.
-    var resolvedCellCount: Int {
-        core.resident.count + core.void.count + core.failed.count
-    }
-
-    var residentCellCount: Int {
-        core.resident.count
-    }
-
-    var residentCoordinates: Set<CellCoordinate> {
-        core.resident
-    }
-
-    var voidCellCount: Int {
-        core.void.count
-    }
-
-    var failedCellCount: Int {
-        core.failed.count
-    }
-
-    var inFlightCellCount: Int {
-        core.inFlight.count
-    }
-
-    var pendingCompletionCount: Int {
-        pending.count
-    }
-
-    var queuedRequestCount: Int {
-        requests.count
-    }
-
-    /// The full grid the manager currently wants around its center.
-    var desiredCellCount: Int {
-        grid.desiredCells.count
-    }
-
-    /// Snapshot of the currently composed multi-cell scene.
-    var composedScene: RenderScene {
-        composition.composedScene()
-    }
-
-    var distantLODBlockCount: Int {
-        composition.distantLOD?.blockCount ?? 0
-    }
-
-    var composedCellCount: Int {
-        composition.cellCount
-    }
-
-    var isCoverageTransitionActive: Bool {
-        coverageTransitionActive
-    }
-
-    var isInterior: Bool {
-        interiorScene != nil
-    }
-
-    var residentCollisionStats: StaticCollisionStats {
-        if let interiorScene {
-            return interiorScene.staticCollision.stats
-        }
-        return composition.collisionStats()
     }
 }

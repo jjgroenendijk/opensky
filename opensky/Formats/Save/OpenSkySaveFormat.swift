@@ -50,6 +50,16 @@ nonisolated enum OpenSkySaveFormat {
         /// an older build skips it, and a file without it restores the
         /// vanilla-start clock.
         static let clock = "CLOK"
+        /// Papyrus script instance state (issue #171): one entry per live
+        /// script instance, with its variables. Additive like `GVAR` and
+        /// `CLOK` and deliberately does not bump `currentVersion` — an older
+        /// build skips it by its declared length and loads the rest of the
+        /// save, and a file without it restores a world whose scripts start
+        /// from their compiled defaults. Script state is a new chunk rather
+        /// than a new component kind inside `RDLT` for exactly this reason: a
+        /// component kind is versioned by `formatVersion`, so putting it there
+        /// would force every older build to refuse the file.
+        static let papyrusScripts = "PSCR"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.
@@ -65,6 +75,20 @@ nonisolated enum OpenSkySaveFormat {
         static let interior: UInt8 = 2
     }
 
+    /// Discriminator byte in front of a serialized `PapyrusValue` in `PSCR`.
+    ///
+    /// Only the five persistable kinds have a tag. `PapyrusValue.object` and
+    /// `.array` hold runtime-allocated identity with no world meaning, so the
+    /// encoder writes them as `none` rather than inventing a wire shape for a
+    /// handle that means nothing after a reload.
+    enum ValueTag {
+        static let none: UInt8 = 0
+        static let boolean: UInt8 = 1
+        static let integer: UInt8 = 2
+        static let float: UInt8 = 3
+        static let string: UInt8 = 4
+    }
+
     /// Smallest number of bytes a single `RDLT` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and a zero
     /// component count (1). Used to reject an impossible entry count before
@@ -77,6 +101,15 @@ nonisolated enum OpenSkySaveFormat {
     /// Smallest number of bytes one fingerprint plugin entry can occupy: an
     /// empty name (2) plus the three stats fields (12).
     static let minimumFingerprintEntrySize = 14
+    /// Smallest number of bytes a single `PSCR` instance entry can occupy: a
+    /// plugin key with an empty name (1 + 2 + 4), an empty script name (2), an
+    /// empty active-state name (2), the `OnInit`-fired flag (1) and a zero
+    /// variable count (4).
+    static let minimumScriptEntrySize = 16
+    /// Smallest number of bytes a single `PSCR` variable can occupy: an empty
+    /// declaring-script name (2), an empty variable name (2) and the value tag
+    /// (1), which is the whole entry when the value is `none`.
+    static let minimumScriptVariableSize = 5
 }
 
 /// On-disk tag of a component slot.

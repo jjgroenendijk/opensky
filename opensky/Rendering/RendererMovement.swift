@@ -3,6 +3,16 @@
 import QuartzCore
 
 extension Renderer {
+    /// Seeds the walk controller from the camera pose during `init`, before
+    /// `super.init()` runs, which is why it is a static factory rather than a
+    /// method. Lives here rather than in `Renderer.swift` for the file cap.
+    static func makeWalkController(
+        _ camera: FreeFlyCamera,
+        _ configuration: PlayerMovementConfiguration
+    ) -> WalkController {
+        WalkController(cameraPosition: camera.position, configuration: configuration)
+    }
+
     func reseedMovement(camera newCamera: SceneCamera) {
         freeFlyCamera = FreeFlyCamera(framing: newCamera)
         if movementMode == .walk, let feet = newCamera.walkFeetPosition {

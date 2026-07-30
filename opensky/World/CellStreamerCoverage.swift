@@ -61,11 +61,19 @@ extension CellStreamer {
         var departed = CellAssets()
         for coordinate in composition.coordinates where !core.resident.contains(coordinate) {
             guard let scene = composition.removeCell(at: coordinate) else { continue }
+            emitCellDetached(scene)
             departed.meshKeys.formUnion(scene.assets.meshKeys)
             departed.textureKeys.formUnion(scene.assets.textureKeys)
         }
-        for (coordinate, scene) in stagedCells where core.resident.contains(coordinate) {
-            if let replaced = composition.setCell(scene, at: coordinate) {
+        // Deterministic promotion order so script instantiation is reproducible.
+        let promoted = stagedCells.keys.sorted { ($0.x, $0.y) < ($1.x, $1.y) }
+        for coordinate in promoted where core.resident.contains(coordinate) {
+            guard let scene = stagedCells[coordinate] else { continue }
+            let replaced = composition.setCell(scene, at: coordinate)
+            // A staged cell that replaced a composed scene at the same
+            // coordinate never left the world, so it is not a first attach.
+            emitCellAttached(scene, firstIntegration: replaced == nil)
+            if let replaced {
                 departed.meshKeys.formUnion(replaced.assets.meshKeys)
                 departed.textureKeys.formUnion(replaced.assets.textureKeys)
             }

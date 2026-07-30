@@ -4,6 +4,48 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-30
 
+* **Papyrus VM in the engine loop (issue #171)**: the main-actor
+  `PapyrusWorldRuntime` now owns the M11.1 `PapyrusRuntime` for a session and
+  runs it once per drawn frame. `Renderer.onWorldUpdate` fires from
+  `updateWorldSimFromWallClock()` in `draw(in:)`, immediately after the game
+  clock advances and gated through a `FrameSimClock`, so a menu-paused frame
+  delivers a delta of exactly zero instead of branching around the call.
+  `advance(delta:gameClock:)` accumulates wall time into whole 1/30 s steps,
+  runs at most 4 per frame and clamps the accumulator afterwards, while
+  `stepFixed(gameClock:)` gives offscreen renders and tests one deterministic
+  step. Events go through one FIFO queue with global order preserved and
+  per-instance serial delivery around a latent suspension, drained under a
+  `PapyrusTickBudget` of 32 events and 100,000 instructions with carry-over
+  reported in `PapyrusTickReport`. `PapyrusScheduler` now counts whole ticks
+  since enqueue rather than accumulating a `realSeconds` double, so
+  `Utility.Wait(1.0)` wakes on exactly the 30th step instead of the 31st, and
+  gained an `onResume` seam. `CellStreamer` announces `onCellAttached` and
+  `onCellDetached` without depending on the VM, distinguishing a first
+  integration from a world-state rebuild, a staged coverage cell promoted at
+  commit, and an interior rebuild; `Renderer.onFrame` became a
+  `CallbackFanOut<SIMD3<Float>>`, fixing the last-writer-wins hazard between
+  the streaming and HUD wiring. The script library loads lazily through
+  `PapyrusWorldRuntime.scriptProvider` and `PapyrusRuntime.register(_:)`,
+  wired to a `PexScriptLoader` over the install's VFS by the new
+  `ScriptDataProviding` protocol, with failures remembered in
+  `unresolvableScripts`. Instance state persists in the new additive `PSCR`
+  save chunk (no `currentVersion` bump, still 1), sorted by
+  `PapyrusInstanceKey` for byte-identical re-encoding, with a non-finite float
+  normalized to zero where a corrupt `CLOK` is still rejected; a load restores
+  Papyrus last, after the world state and the clock, so no script re-runs its
+  `OnInit`. Stated simplifications: object and array values are not
+  persistable, persistent instances are never retired, `firedOnInit` survives
+  retirement, a latent call on a retired instance faults on wake, and a
+  reference with several scripts binds object properties to the lowest script
+  name. Covered by `PapyrusWorldRuntimeTests`, `PapyrusWorldLifecycleTests`,
+  `PapyrusWorldEventQueueTests`, `PapyrusWorldBindingTests`,
+  `CallbackFanOutTests`, `CellStreamerPapyrusTests`, the Metal-gated
+  `RendererWorldSimTickTests`, and `OpenSkySavePapyrusTests`. Documented in
+  [Papyrus virtual machine](/engine/papyrus-vm.md),
+  [OpenSky save container](/formats/opensky-save.md),
+  [Cell streaming](/engine/cell-streaming.md),
+  [Runtime reference identity and world state](/engine/runtime-state.md),
+  [Game clock](/engine/game-clock.md) and [Menu mode](/engine/menu-mode.md).
 * **Papyrus native dispatch and M11.1 acceptance (issue #170)**:
   `PapyrusNativeRegistry` now dispatches case-insensitive script/function
   pairs through one `.standard` installer and exposes `.empty` for isolated
