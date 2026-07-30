@@ -4,6 +4,29 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-30
 
+* **Papyrus interpreter (issue #168)**: `PapyrusRuntime` and the satellite
+  interpreter files under `opensky/Papyrus/` execute all 36 Skyrim PEX opcodes
+  headlessly over typed booleans, 32-bit integers, binary32 floats, strings,
+  opaque object handles and reference-semantic arrays. Calls use an explicit
+  frame stack with a 256-frame default cap rather than Swift recursion; the
+  shared one-million-instruction budget, bounded inheritance walks and
+  100,000-element array cap make loops, hostile call graphs and allocation
+  requests terminate as typed `PapyrusFault` values. Instances keep private
+  variables per declaring script, accept an injectable initial-values table for
+  compiler-generated property backing variables, and resolve functions by
+  derived/parent active state before derived/parent empty state.
+  `GotoState` changes later lookup without ending the current function.
+  Automatic and handler-backed properties share the same frame machinery.
+  Native and otherwise external calls route through the bounded
+  `PapyrusRecordingNativeDispatch`; its suspension result retains the frames,
+  pending destination and remaining budget for a single-use resume. The
+  runtime-owned `PapyrusTally` keeps opcode, native, suspension and fault
+  evidence across invocations. Synthetic `PexFixture` models cover every
+  opcode's happy path, the coercion and fault matrices, all state priorities,
+  injected initialization and a suspend/resume round trip without a compiler
+  or game data. Documented in
+  [Papyrus virtual machine](/engine/papyrus-vm.md).
+
 * **PEX container decode (issue #167)**: `PexFile` and the bounded big-endian
   decoder under `opensky/Formats/PEX/` turn Skyrim compiled Papyrus scripts
   into typed headers, resolved strings, optional debug information, user flags,
