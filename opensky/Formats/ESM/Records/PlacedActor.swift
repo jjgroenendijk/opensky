@@ -21,6 +21,8 @@ nonisolated struct PlacedActor {
     /// Record-header flag 0x800 (UESP): the actor stays hidden until a quest
     /// or script enables it. M5 has no script state -> explicit render skip.
     let isInitiallyDisabled: Bool
+    /// VMAD — Papyrus scripts attached directly to this placed actor.
+    let scriptData: ScriptData
 
     init(record: ESMRecord) throws {
         guard record.type == "ACHR" else {
@@ -32,6 +34,7 @@ nonisolated struct PlacedActor {
         var base: FormID?
         var placement: PlacedReference.Placement?
         var scale: Float = 1
+        var scriptData = ScriptData(ownerType: record.type)
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -53,7 +56,7 @@ nonisolated struct PlacedActor {
             case "XSCL":
                 scale = try Float(bitPattern: reader.readUInt32())
             default:
-                break
+                _ = try scriptData.decode(field: field)
             }
         }
         guard let base else {
@@ -65,5 +68,6 @@ nonisolated struct PlacedActor {
         self.base = base
         self.placement = placement
         self.scale = scale
+        self.scriptData = scriptData
     }
 }

@@ -3,7 +3,7 @@ type: File Format
 title: Actor records (ACHR, NPC_, LVLN/LVLI, RACE, ARMO, ARMA, OTFT) + resolution
 description: Actor records, appearance resolution, GPU asset assembly, and FaceGen paths.
 tags: [format, plugin, actors, achr, npc, leveled, template, race, armor, outfit, facegen]
-timestamp: 2026-07-20T00:00:00Z
+timestamp: 2026-07-30T00:00:00Z
 ---
 
 # Actor records, Skyrim SE
@@ -37,10 +37,12 @@ cell; physical position decides streamed-cell ownership (door pattern,
 | NAME  | formID   | `base` (NPC_), required                 |
 | DATA  | float[6] | `placement` pos + rot radians, required |
 | XSCL  | float    | `scale`, absent -> 1.0                  |
+| VMAD  | struct   | `scriptData` attachment accumulator     |
 
 Record-header flag 0x800 (UESP record flags) decodes to `isInitiallyDisabled`:
 actor placed but hidden until quest/script enables it -> explicit render skip
-while M5 has no script state. Skipped for now: VMAD script, XEZN encounter
+while M5 has no script state. VMAD layout and binding:
+[Papyrus attachment data](/formats/vmad.md). Skipped for now: XEZN encounter
 zone, patrol data, XRGD/XRGB ragdoll, XLCM level modifier, XESP enable parent,
 XOWN owner, XLCN/XLRL location, XLKR link (4- or 8-byte), header flag 0x200
 (starts dead).
@@ -59,6 +61,7 @@ Appearance-relevant subset:
 | WNAM  | formID  | `wornArmor` — skin ARMO; absent -> race skin   |
 | PNAM  | formID  | `headParts` (HDPT), one per repeated subrecord |
 | DOFT  | formID  | `defaultOutfit` (OTFT)                         |
+| VMAD  | struct  | `scriptData` attachment accumulator            |
 
 ACBS, 24 bytes:
 

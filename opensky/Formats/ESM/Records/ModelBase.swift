@@ -65,6 +65,8 @@ nonisolated struct ModelBase {
     /// Sound links for activator/door/container bases; nil when the record
     /// carries none of the decoded sound fields.
     let sounds: Sounds?
+    /// VMAD — Papyrus scripts attached to this activator-like base record.
+    let scriptData: ScriptData
 
     init(record: ESMRecord, localized: Bool = false) throws {
         guard Self.supportedTypes.contains(record.type) else {
@@ -75,7 +77,7 @@ nonisolated struct ModelBase {
         formID = FormID(record.formID)
         recordType = record.type
 
-        var fields = ModelBaseFields()
+        var fields = ModelBaseFields(ownerType: record.type)
         for field in try record.fields() {
             try fields.decode(field: field, recordType: record.type, localized: localized)
         }
@@ -95,6 +97,7 @@ nonisolated struct ModelBase {
             close: fields.closeSound,
             loop: fields.loopSound
         )
+        scriptData = fields.scriptData
     }
 
     /// Mutable accumulator for the field loop; keeps the switch (and its
@@ -110,10 +113,16 @@ nonisolated struct ModelBase {
         var activationSound: FormID?
         var closeSound: FormID?
         var loopSound: FormID?
+        var scriptData: ScriptData
+
+        init(ownerType: FourCC) {
+            scriptData = ScriptData(ownerType: ownerType)
+        }
 
         mutating func decode(
             field: ESMField, recordType: FourCC, localized: Bool
         ) throws {
+            guard try !scriptData.decode(field: field) else { return }
             var reader = BinaryReader(field.data)
             switch field.type {
             case "EDID":

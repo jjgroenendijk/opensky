@@ -1,0 +1,225 @@
+// Bounds-checked VMAD primary-script decoder. See ScriptData.swift for sources.
+
+import Foundation
+
+nonisolated extension ScriptData {
+    /// Consumes `field` when it is VMAD. Returns false for anything else so
+    /// record decoders can forward unmatched fields without a second switch.
+    @discardableResult
+    mutating func decode(field: ESMField) throws -> Bool {
+        guard field.type == "VMAD" else { return false }
+        do {
+            var decoder = ScriptDataDecoder(data: field.data, ownerType: ownerType)
+            let payload = try decoder.decode()
+            version = payload.version
+            objectFormat = payload.objectFormat
+            scripts.append(contentsOf: payload.scripts)
+            skipped.merge(payload.skipped)
+            return true
+        } catch let error as ScriptDataError {
+            throw error
+        } catch let error as BinaryReaderError {
+            throw ScriptDataError.binary(error)
+        }
+    }
+}
+
+nonisolated private struct ScriptDataPayload {
+    let version: Int16
+    let objectFormat: ScriptObjectFormat
+    let scripts: [AttachedScript]
+    let skipped: ScriptDataTally
+}
+
+nonisolated private struct ScriptDataDecoder {
+    private static let fragmentRecordTypes: Set<FourCC> = [
+        "INFO", "PACK", "PERK", "QUST", "SCEN"
+    ]
+
+    private var reader: BinaryReader
+    private let ownerType: FourCC?
+    private var version: Int16 = 0
+    private var objectFormat: ScriptObjectFormat = .formIDLast
+    private var skipped = ScriptDataTally()
+
+    init(data: Data, ownerType: FourCC?) {
+        reader = BinaryReader(data)
+        self.ownerType = ownerType
+    }
+
+    mutating func decode() throws -> ScriptDataPayload {
+        version = try Int16(bitPattern: reader.readUInt16())
+        guard (2 ... 5).contains(version) else {
+            throw ScriptDataError.unsupportedVersion(version)
+        }
+        let rawObjectFormat = try Int16(bitPattern: reader.readUInt16())
+        guard let format = ScriptObjectFormat(rawValue: rawObjectFormat) else {
+            throw ScriptDataError.unsupportedObjectFormat(rawObjectFormat)
+        }
+        objectFormat = format
+
+        let scriptCount = try checkedCount(
+            UInt32(reader.readUInt16()),
+            minimumSize: version >= 4 ? 5 : 4,
+            context: "scripts"
+        )
+        var scripts: [AttachedScript] = []
+        scripts.reserveCapacity(scriptCount)
+        for _ in 0 ..< scriptCount {
+            try scripts.append(decodeScript())
+        }
+        try consumeFragmentTail()
+        return ScriptDataPayload(
+            version: version,
+            objectFormat: objectFormat,
+            scripts: scripts,
+            skipped: skipped
+        )
+    }
+
+    private mutating func decodeScript() throws -> AttachedScript {
+        let name = try readString()
+        let flags = version >= 4 ? try AttachedScript.Flags(rawValue: reader.readUInt8()) : []
+        let propertyCount = try checkedCount(
+            UInt32(reader.readUInt16()),
+            minimumSize: version >= 4 ? 4 : 3,
+            context: "properties"
+        )
+        var properties: [ScriptProperty] = []
+        properties.reserveCapacity(propertyCount)
+        for _ in 0 ..< propertyCount {
+            try properties.append(decodeProperty())
+        }
+        return AttachedScript(name: name, flags: flags, properties: properties)
+    }
+
+    private mutating func decodeProperty() throws -> ScriptProperty {
+        let name = try readString()
+        let type = try reader.readUInt8()
+        let flags = version >= 4 ? try ScriptProperty.Flags(rawValue: reader.readUInt8()) : .edited
+        if flags.contains(.removed) {
+            skipped.note(.removedProperty)
+        }
+        return try ScriptProperty(
+            name: name,
+            type: type,
+            flags: flags,
+            value: decodeValue(type: type)
+        )
+    }
+
+    private mutating func decodeValue(type: UInt8) throws -> ScriptPropertyValue {
+        switch type {
+        case 0:
+            return .none
+        case 1:
+            return try .object(decodeObject())
+        case 2:
+            return try .string(readString())
+        case 3:
+            return try .integer(Int32(bitPattern: reader.readUInt32()))
+        case 4:
+            return try .float(reader.readFloat32())
+        case 5:
+            return try .boolean(reader.readUInt8() != 0)
+        case 11 ... 15:
+            guard version >= 5 else {
+                throw ScriptDataError.arrayRequiresVersionFive(type: type, version: version)
+            }
+            return try decodeArray(type: type)
+        default:
+            throw ScriptDataError.unknownPropertyType(type)
+        }
+    }
+
+    private mutating func decodeArray(type: UInt8) throws -> ScriptPropertyValue {
+        let minimumSize = switch type {
+        case 11:
+            8
+        case 12:
+            2
+        case 13, 14:
+            4
+        default:
+            1
+        }
+        let count = try checkedCount(
+            reader.readUInt32(),
+            minimumSize: minimumSize,
+            context: "property array"
+        )
+        switch type {
+        case 11:
+            return try .objects((0 ..< count).map { _ in try decodeObject() })
+        case 12:
+            return try .strings((0 ..< count).map { _ in try readString() })
+        case 13:
+            return try .integers((0 ..< count).map { _ in
+                try Int32(bitPattern: reader.readUInt32())
+            })
+        case 14:
+            return try .floats((0 ..< count).map { _ in try reader.readFloat32() })
+        default:
+            return try .booleans((0 ..< count).map { _ in try reader.readUInt8() != 0 })
+        }
+    }
+
+    private mutating func decodeObject() throws -> ScriptObjectReference {
+        let formID: FormID
+        let alias: Int16
+        let unused: UInt16
+        switch objectFormat {
+        case .formIDFirst:
+            formID = try FormID(reader.readUInt32())
+            alias = try Int16(bitPattern: reader.readUInt16())
+            unused = try reader.readUInt16()
+        case .formIDLast:
+            unused = try reader.readUInt16()
+            alias = try Int16(bitPattern: reader.readUInt16())
+            formID = try FormID(reader.readUInt32())
+        }
+        let object = ScriptObjectReference(formID: formID, alias: alias, unused: unused)
+        if object.isAlias {
+            skipped.note(.aliasObject)
+        }
+        return object
+    }
+
+    private mutating func readString() throws -> String {
+        let offset = reader.offset
+        let length = try Int(reader.readUInt16())
+        let data = try reader.read(count: length)
+        guard let value = String(data: data, encoding: .windowsCP1252) else {
+            throw ScriptDataError.invalidString(offset: offset, length: length)
+        }
+        return value
+    }
+
+    private func checkedCount(
+        _ count: UInt32,
+        minimumSize: Int,
+        context: String
+    ) throws -> Int {
+        let maximum = reader.bytesRemaining / minimumSize
+        guard count <= UInt32(maximum) else {
+            throw ScriptDataError.impossibleCount(
+                context: context,
+                count: count,
+                remaining: reader.bytesRemaining
+            )
+        }
+        return Int(count)
+    }
+
+    private mutating func consumeFragmentTail() throws {
+        guard reader.bytesRemaining > 0 else { return }
+        guard let ownerType, Self.fragmentRecordTypes.contains(ownerType) else {
+            throw ScriptDataError.unexpectedTrailingBytes(
+                recordType: ownerType,
+                count: reader.bytesRemaining
+            )
+        }
+        skipped.note(.fragments(ownerType))
+        reader.skip(reader.bytesRemaining)
+    }
+}

@@ -51,6 +51,8 @@ nonisolated struct PlacedReference {
     let lightRadius: Float?
     /// XEMI — LIGH/REGN emittance override; LIGH handled by lighting pass.
     let emittance: FormID?
+    /// VMAD — Papyrus scripts attached directly to this placed reference.
+    let scriptData: ScriptData
 
     init(record: ESMRecord) throws {
         guard record.type == "REFR" else {
@@ -64,6 +66,7 @@ nonisolated struct PlacedReference {
         var teleportDestination: TeleportDestination?
         var lightRadius: Float?
         var emittance: FormID?
+        var scriptData = ScriptData(ownerType: record.type)
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -91,7 +94,7 @@ nonisolated struct PlacedReference {
             case "XEMI":
                 emittance = try Self.decodeFormID(field.data)
             default:
-                break
+                _ = try scriptData.decode(field: field)
             }
         }
         guard let base else {
@@ -106,6 +109,7 @@ nonisolated struct PlacedReference {
         self.teleportDestination = teleportDestination
         self.lightRadius = lightRadius
         self.emittance = emittance
+        self.scriptData = scriptData
     }
 
     private static func decodeFloat(_ data: Data) throws -> Float? {

@@ -88,7 +88,9 @@ may therefore each own a private variable with the same name, and a function
 reads the scope of its declaring script. The injectable initial-values table
 uses source variable names and replaces the first child-to-parent match after
 checking the declared type. This is the VMAD property-value attachment seam;
-the interpreter itself does not know how those values were decoded.
+the interpreter itself does not know how those values were decoded. The
+[VMAD decoder and binding bridge](/formats/vmad.md) resolves direct object
+FormIDs and uses the exact automatic backing-variable name stored in PEX.
 
 The runtime exposes instance and static entry points:
 

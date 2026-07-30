@@ -54,6 +54,8 @@ nonisolated struct ActorBase {
     let headParts: [FormID]
     /// DOFT — default outfit.
     let defaultOutfit: FormID?
+    /// VMAD — Papyrus scripts attached to the NPC_ base.
+    let scriptData: ScriptData
 
     var isFemale: Bool {
         flags.contains(.female)
@@ -75,6 +77,7 @@ nonisolated struct ActorBase {
         var wornArmor: FormID?
         var headParts: [FormID] = []
         var defaultOutfit: FormID?
+        var scriptData = ScriptData(ownerType: record.type)
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -96,7 +99,7 @@ nonisolated struct ActorBase {
             case "DOFT":
                 defaultOutfit = try FormID(reader.readUInt32())
             default:
-                break
+                _ = try scriptData.decode(field: field)
             }
         }
         guard sawACBS else {
@@ -111,6 +114,7 @@ nonisolated struct ActorBase {
         self.wornArmor = wornArmor
         self.headParts = headParts
         self.defaultOutfit = defaultOutfit
+        self.scriptData = scriptData
     }
 
     /// ACBS, 24 bytes: uint32 flags, 7 stat/level words, uint16 template
