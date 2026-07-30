@@ -47,6 +47,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Papyrus compiled scripts](/formats/pex.md) - big-endian Skyrim PEX 3.2
   framing, typed objects/functions/instructions, VFS loading, defensive error
   policy, and the opcode and external-call census.
+* [Papyrus attachment data](/formats/vmad.md) - ESM VMAD script and property
+  decode, both object layouts, fragment and alias skip policy, FormID-to-
+  ReferenceKey resolution, and exact PEX backing-variable binding.
 * [Distant LOD](/formats/lod.md) - lodsettings plus BTR/BTO paths and LOD-specific NIF
   blocks, tree LST/BTT layouts, placement rules, full vanilla sweep evidence.
 * [Skyrim INI settings](/formats/ini.md) - read-only decode, file precedence, typed
@@ -130,7 +133,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   GameDelegate bridge, path-targeted HUD calls, missing-API tally.
 * [Papyrus virtual machine](/engine/papyrus-vm.md) - bounded headless Skyrim PEX execution:
   typed values and arrays, explicit frames, state dispatch, native suspension, faults and
-  coverage tally.
+  coverage tally, with VMAD-supplied initial values.
 * [World audio playback](/engine/audio.md) - AVAudioEngine graph with 3D positional
   sources, streaming WMA decode off the main thread, vanilla SNCT category volumes,
   per-category mute and solo, source budget/eviction, the per-frame audio-update

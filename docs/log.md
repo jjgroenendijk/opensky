@@ -4,6 +4,31 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-30
 
+* **VMAD decode and script binding (issue #169)**: `ScriptData` decodes the
+  common ESM `VMAD` header, script list, statuses, every scalar and array
+  property kind, and both eight-byte object word orders with typed,
+  bounds-checked failures. Fragment tails on `INFO`, `PACK`, `PERK`, `QUST`,
+  and `SCEN` and quest-alias objects skip safely into ranked tallies.
+  `PlacedReference`, `PlacedActor`, `ActorBase`, and `ModelBase` now forward
+  attachment fields into the shared accumulator. `AttachedScript.binding`
+  follows the PEX inheritance chain and applies values through the issue #168
+  initial-values seam using the decoded automatic backing-variable name,
+  while direct object values travel through
+  `FormIDResolver` -> `ReferenceKey` -> caller-owned opaque handle. Missing,
+  manual, removed, incompatible, alias, and unresolved values retain their
+  compiler defaults with reason-tagged diagnostics. Synthetic models cover
+  every value type, both object formats, version-dependent statuses, typed
+  malformed cases, an `XXXX`-expanded field above 64 KiB, record forwarding,
+  and backing names deliberately unlike `::Property_var`. The env-gated
+  retail `Skyrim.esm` sweep decoded all 16,133 VMAD fields over 869,687
+  records into 17,407 scripts and 46,493 properties with no failure, tallied
+  12,399 alias values and 6,988 fragment sections, and sampled 32 live
+  normalized reference keys. Its PEX probe loaded 4,071 distinct scripts and
+  observed 46,263 automatic attachments: all used the conventional name and
+  every stored name selected a real variable, while implementation remains
+  driven by PEX metadata. Documented in
+  [Papyrus attachment data](/formats/vmad.md).
+
 * **Papyrus interpreter (issue #168)**: `PapyrusRuntime` and the satellite
   interpreter files under `opensky/Papyrus/` execute all 36 Skyrim PEX opcodes
   headlessly over typed booleans, 32-bit integers, binary32 floats, strings,

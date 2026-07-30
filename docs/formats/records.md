@@ -3,7 +3,7 @@ type: File Format
 title: Record decoders (WRLD, CELL, REFR, STAT, ModelBase, GLOB)
 description: Field layouts of decoded plugin records and OpenSky's engine types.
 tags: [format, plugin, records, worldspace, cell, globals]
-timestamp: 2026-07-28T00:00:00Z
+timestamp: 2026-07-30T00:00:00Z
 ---
 
 # Record decoders, Skyrim SE
@@ -106,6 +106,7 @@ identity/interior status. Refs: UESP CELL page + xEdit `wbImplementation.pas`
 | XTEL  | 32 bytes | optional teleport destination              |
 | XRDS  | float32  | optional point-light radius override       |
 | XEMI  | formID   | optional LIGH/REGN emittance               |
+| VMAD  | struct   | `scriptData` attachment accumulator        |
 
 DATA: x/y/z position in game units, then x/y/z rotation in radians. Missing
 NAME or DATA throws — a reference without them cannot be placed. XTEL is exact-size:
@@ -114,6 +115,8 @@ radians, flags uint32. Flag 0x01 = no alarm. Any other size throws malformed ins
 silently shifting fields. Ownership + remaining activation fields stay skipped. Refs:
 UESP REFR page; xEdit `wbDefinitionsTES5.pas` XTEL `wbStruct`.
 XRDS/XEMI lighting policy: [interior lighting records](/formats/lighting.md).
+VMAD layout and PEX binding:
+[Papyrus attachment data](/formats/vmad.md).
 
 ## STAT -> StaticObject
 
@@ -146,6 +149,7 @@ activation metadata; M9.2.2 adds the sound links that drive activator/door/conta
 | BNAM  | formID  | DOOR loop sound                                |
 | VNAM  | formID  | ACTI activation sound                          |
 | QNAM  | formID  | CONT close sound (not ANAM — cross-record trap)|
+| VMAD  | struct  | `scriptData` attachment accumulator             |
 
 Per-type reference, all UESP "Skyrim Mod:Mod File Format":
 
