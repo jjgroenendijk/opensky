@@ -1,8 +1,4 @@
 // Native-call seam for the headless Papyrus interpreter.
-//
-// Milestone 11.1.2 deliberately has no world bindings. The default dispatcher
-// records every request and returns None. Tests may enqueue a suspension to
-// exercise the continuation contract before real latent natives arrive.
 
 import Foundation
 
@@ -18,18 +14,62 @@ nonisolated struct PapyrusNativeCall: Equatable, Sendable {
     let functionName: String
     let receiver: PapyrusObjectHandle?
     let arguments: [PapyrusValue]
+    let returnType: PapyrusType
+
+    init(
+        kind: PapyrusNativeCallKind,
+        scriptName: String,
+        functionName: String,
+        receiver: PapyrusObjectHandle?,
+        arguments: [PapyrusValue],
+        returnType: PapyrusType = .none
+    ) {
+        self.kind = kind
+        self.scriptName = scriptName
+        self.functionName = functionName
+        self.receiver = receiver
+        self.arguments = arguments
+        self.returnType = returnType
+    }
 
     var qualifiedName: String {
         "\(scriptName).\(functionName)"
     }
+
+    func returning(_ type: PapyrusType) -> PapyrusNativeCall {
+        PapyrusNativeCall(
+            kind: kind,
+            scriptName: scriptName,
+            functionName: functionName,
+            receiver: receiver,
+            arguments: arguments,
+            returnType: type
+        )
+    }
+}
+
+nonisolated enum PapyrusNativeFailure: Equatable, Sendable {
+    case unimplemented(String)
+    case invalidArguments(function: String, detail: String)
+}
+
+nonisolated enum PapyrusNativeSuspension: Equatable, Sendable {
+    case realSeconds(Double)
+    case gameHours(Double)
+}
+
+nonisolated enum PapyrusNativeDeviation: Equatable, Sendable {
+    case deferredAnimation
 }
 
 nonisolated enum PapyrusNativeResult: Equatable, Sendable {
     case returned(PapyrusValue)
-    case suspended
+    case failed(PapyrusNativeFailure)
+    case suspended(PapyrusNativeSuspension)
+    case deviated(PapyrusValue, PapyrusNativeDeviation)
 }
 
-nonisolated protocol PapyrusNativeDispatch: AnyObject {
+nonisolated protocol PapyrusNativeDispatch {
     func invoke(_ call: PapyrusNativeCall) -> PapyrusNativeResult
 }
 
@@ -54,6 +94,8 @@ nonisolated final class PapyrusRecordingNativeDispatch: PapyrusNativeDispatch {
         if calls.count > callLimit {
             calls.removeFirst(calls.count - callLimit)
         }
-        return queuedResults.isEmpty ? .returned(.none) : queuedResults.removeFirst()
+        return queuedResults.isEmpty
+            ? .returned(call.returnType.defaultValue)
+            : queuedResults.removeFirst()
     }
 }

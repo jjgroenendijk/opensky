@@ -21,6 +21,7 @@ nonisolated enum PapyrusResumeTarget {
 nonisolated struct SuspendedCall {
     let id: UInt64
     let nativeCall: PapyrusNativeCall
+    let request: PapyrusNativeSuspension
     let continuation: PapyrusContinuation
 }
 
@@ -46,7 +47,7 @@ nonisolated final class PapyrusInterpreter {
     var frames: [PapyrusFrame] = []
 
     private var remainingBudget: Int
-    private var pendingResume: (id: UInt64, target: PapyrusResumeTarget)?
+    var pendingResume: (id: UInt64, target: PapyrusResumeTarget)?
 
     init(runtime: PapyrusRuntime) {
         self.runtime = runtime
@@ -79,7 +80,8 @@ nonisolated final class PapyrusInterpreter {
                     scriptName: resolved.script.name,
                     functionName: functionName,
                     receiver: handle,
-                    arguments: arguments
+                    arguments: arguments,
+                    returnType: PapyrusType(name: resolved.function.returnTypeName)
                 )
                 return nativeOutcome(call, target: .root)
             }
@@ -119,7 +121,8 @@ nonisolated final class PapyrusInterpreter {
                     scriptName: script.name,
                     functionName: functionName,
                     receiver: nil,
-                    arguments: arguments
+                    arguments: arguments,
+                    returnType: PapyrusType(name: function.returnTypeName)
                 )
                 return nativeOutcome(call, target: .root)
             }
@@ -228,50 +231,6 @@ nonisolated final class PapyrusInterpreter {
             _ = frame.setLocalValue(converted, named: parameter.name)
         }
         frames.append(frame)
-    }
-
-    func suspend(
-        call: PapyrusNativeCall,
-        target: PapyrusResumeTarget
-    ) -> SuspendedCall {
-        let id = runtime.allocateSuspensionID()
-        pendingResume = (id, target)
-        runtime.tally.noteSuspension()
-        return SuspendedCall(
-            id: id,
-            nativeCall: call,
-            continuation: PapyrusContinuation(interpreter: self)
-        )
-    }
-
-    func nativeFlow(
-        _ call: PapyrusNativeCall,
-        destination: PexValue
-    ) throws(PapyrusFault) -> PapyrusFlow {
-        runtime.tally.noteNative(call)
-        switch runtime.nativeDispatch.invoke(call) {
-        case let .returned(value):
-            guard let frame = frames.last else {
-                return .returned(.none)
-            }
-            try write(value, to: destination, frame: frame)
-            return .next
-        case .suspended:
-            return .suspended(suspend(call: call, target: .assign(destination)))
-        }
-    }
-
-    private func nativeOutcome(
-        _ call: PapyrusNativeCall,
-        target: PapyrusResumeTarget
-    ) -> PapyrusRunOutcome {
-        runtime.tally.noteNative(call)
-        switch runtime.nativeDispatch.invoke(call) {
-        case let .returned(value):
-            return .completed(value)
-        case .suspended:
-            return .suspended(suspend(call: call, target: target))
-        }
     }
 
     private func consumeBudget(at index: Int) throws(PapyrusFault) {

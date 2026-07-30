@@ -46,7 +46,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   reason-tagged-false failure model, and the coverage tally with its vanilla sweep.
 * [Papyrus compiled scripts](/formats/pex.md) - big-endian Skyrim PEX 3.2
   framing, typed objects/functions/instructions, VFS loading, defensive error
-  policy, and the opcode and external-call census.
+  policy, opcode inventory, and typed native-call coverage census.
 * [Papyrus attachment data](/formats/vmad.md) - ESM VMAD script and property
   decode, both object layouts, fragment and alias skip policy, FormID-to-
   ReferenceKey resolution, and exact PEX backing-variable binding.
@@ -132,8 +132,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   Scaleform Stage rectangles, events, indexed global mouse input and hit testing, the
   GameDelegate bridge, path-targeted HUD calls, missing-API tally.
 * [Papyrus virtual machine](/engine/papyrus-vm.md) - bounded headless Skyrim PEX execution:
-  typed values and arrays, explicit frames, state dispatch, native suspension, faults and
-  coverage tally, with VMAD-supplied initial values.
+  typed values, explicit frames, arrays, states, a native registry, deterministic
+  real/game-time suspension scheduling, faults and coverage tallies, with
+  VMAD-supplied initial values.
 * [World audio playback](/engine/audio.md) - AVAudioEngine graph with 3D positional
   sources, streaming WMA decode off the main thread, vanilla SNCT category volumes,
   per-category mute and solo, source budget/eviction, the per-frame audio-update

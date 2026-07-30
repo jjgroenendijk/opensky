@@ -4,6 +4,33 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-30
 
+* **Papyrus native dispatch and M11.1 acceptance (issue #170)**:
+  `PapyrusNativeRegistry` now dispatches case-insensitive script/function
+  pairs through one `.standard` installer and exposes `.empty` for isolated
+  hosts. Its 22 entries cover the world-independent `Debug`, `Utility`, and
+  `Math` foundation plus three explicitly deferred `ObjectReference`
+  animation functions; unknown or invalid calls log and tally the reason, then
+  return the declared Papyrus default. `PapyrusScheduler` advances
+  `Utility.Wait` and `Utility.WaitGameTime` from injected fixed steps and
+  `GameClock` samples, preserves registration order for ties, ignores backward
+  clock scrubs, and caps one forward tick at 24 game hours. Seeded random
+  functions and bounded debug logging keep the headless result deterministic.
+  `PapyrusTallySnapshot` exposes uncapped totals with capped name tables and
+  stable rankings for unknown natives, native failures, deferred animations,
+  and fault kinds. Synthetic gates pin native values and failures, declared
+  fallback defaults, suspension and resume, same-tick wake order, scrub
+  policy, typed call-site resolution, and a deterministic M11.1 snapshot.
+  The env-gated retail corpus gate decoded 14,302 scripts and resolved 65,477
+  call sites naming 508 distinct native pairs; 18 are implemented, an honest
+  coverage headline of 3.5%. It drove 577 zero-argument lifecycle entry points
+  to terminal outcomes: 240 completed, 337 typed faults, no pending
+  continuations, 457 unknown-native calls, and 18 deferred animations. M11.1
+  is headless by issue definition, so its ledger record names
+  `PapyrusTallySnapshot` and defers the sidebar path to M11.2. Documented in
+  [Papyrus virtual machine](/engine/papyrus-vm.md),
+  [Papyrus compiled scripts](/formats/pex.md), and
+  [Papyrus attachment data](/formats/vmad.md).
+
 * **VMAD decode and script binding (issue #169)**: `ScriptData` decodes the
   common ESM `VMAD` header, script list, statuses, every scalar and array
   property kind, and both eight-byte object word orders with typed,

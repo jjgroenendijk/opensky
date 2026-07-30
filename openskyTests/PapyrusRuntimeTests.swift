@@ -129,7 +129,9 @@ struct PapyrusRuntimeTests {
     }
 
     @Test func latentNativeSuspendsAndResumesTheSameFrame() {
-        let dispatch = PapyrusRecordingNativeDispatch(queuedResults: [.suspended])
+        let dispatch = PapyrusRecordingNativeDispatch(
+            queuedResults: [.suspended(.realSeconds(0))]
+        )
         let run = function(
             returnType: "Int",
             locals: [typed("result", "Int")],
@@ -158,8 +160,14 @@ struct PapyrusRuntimeTests {
             return
         }
         #expect(call.nativeCall.qualifiedName == "SyntheticLatent.Wait")
-        #expect(Support.value(runtime.resume(call, returning: .integer(17))) == .integer(17))
-        #expect(Support.fault(runtime.resume(call, returning: .integer(18))) == .invalidResume)
+        #expect(
+            Support.value(runtime.resume(call, returning: PapyrusValue.integer(17)))
+                == .integer(17)
+        )
+        #expect(
+            Support.fault(runtime.resume(call, returning: PapyrusValue.integer(18)))
+                == .invalidResume
+        )
         #expect(runtime.tally.suspensionTotal == 1)
     }
 

@@ -215,8 +215,11 @@ skip, not a malformed VMAD field.
 
 ## Scope
 
-This layer decodes attachment data and creates one headless script instance. It
-does not schedule events, own world-object handle lifetimes, execute fragment
-tables, resolve quest aliases, or define native game functions. Those are
+This layer decodes attachment data and creates one headless script instance.
+That instance executes through the
+[Papyrus virtual machine](/engine/papyrus-vm.md), including its native registry
+and deterministic suspension scheduler. VMAD does not schedule attachment
+events, own world-object handle lifetimes, execute fragment tables, resolve
+quest aliases, or define world-dependent native game functions. Those are
 separate runtime responsibilities built on the typed attachment and binding
 seams.
