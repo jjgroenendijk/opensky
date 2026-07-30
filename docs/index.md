@@ -44,6 +44,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   function index and parameters, run-on types, and the skip-don't-throw decode policy;
   plus evaluation - the function registry, OR grouping, run-on resolution, the
   reason-tagged-false failure model, and the coverage tally with its vanilla sweep.
+* [Papyrus compiled scripts](/formats/pex.md) - big-endian Skyrim PEX 3.2
+  framing, typed objects/functions/instructions, VFS loading, defensive error
+  policy, and the opcode and external-call census.
 * [Distant LOD](/formats/lod.md) - lodsettings plus BTR/BTO paths and LOD-specific NIF
   blocks, tree LST/BTT layouts, placement rules, full vanilla sweep evidence.
 * [Skyrim INI settings](/formats/ini.md) - read-only decode, file precedence, typed
