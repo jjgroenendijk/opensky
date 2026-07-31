@@ -393,7 +393,12 @@ Accessibility identifiers are the UI-test API and never change silently.
 - Frame HUD overlay: `FrameHUDStatsLabel` (on the label inside `FrameHUDView`).
 - World set: `CameraMovementModeControl`, `CameraCopyPoseControl`; readouts
   `CameraStatsLabel`, `FrameStatsLabel`, `SceneStatsLabel`. Section headers:
-  `PanelSection-camera`, `-frame`, `-scene`.
+  `PanelSection-camera`, `-frame`, `-scene`. Extended by trigger volumes
+  (M11.2.3): `TriggerLogClearControl`; readouts `TriggerVolumeStatsLabel`,
+  `TriggerEventStatsLabel`; section header `PanelSection-triggerVolumes`. It
+  belongs here, not under a destination of its own, because occupancy is only
+  tested in walk mode and the fly/walk selector is one section above it. See
+  [static collision world](/engine/collision-world.md).
 - Environment set, so a name can be checked in one place: `SunShadowsEnabledControl`,
   `ShadowQualityControl`, `AnimationsEnabledControl`, `WeatherEnabledControl`,
   `WeatherControl`, `ClearWeatherControl`/`RainWeatherControl`/`SnowWeatherControl`,

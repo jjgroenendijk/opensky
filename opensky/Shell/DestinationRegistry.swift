@@ -30,7 +30,8 @@ typealias WorldControlProviders = AnimationControlProviding & AudioControlProvid
     & HUDControlProviding & ParticleControlProviding & PrecipitationControlProviding
     & RuntimeStateControlProviding & SWFLabControlProviding & SceneStatsProviding
     & ShadowControlProviding
-    & SystemMenuControlProviding & TerrainLODControlProviding & UILabControlProviding
+    & SystemMenuControlProviding & TerrainLODControlProviding & TriggerControlProviding
+    & UILabControlProviding
     & WeatherControlProviding
 
 /// Passed to a world-inspector factory so the panel can wire its providers.
@@ -140,6 +141,7 @@ enum DestinationRegistry {
                 panel.cameraProvider = context.providers
                 panel.frameStatsProvider = context.providers
                 panel.sceneStatsProvider = context.providers
+                panel.triggerProvider = context.providers
                 // None of the panel's own provider seams carry refocus, so the
                 // factory supplies it from the full provider set.
                 let providers = context.providers

@@ -15,6 +15,9 @@ nonisolated struct CellGeometryBuild {
     let lighting: RenderLighting?
     let pointLights: [RenderPointLight]
     let staticCollision: StaticCollisionSet
+    /// Authored trigger volumes (issue #173). `var` with a default so a build
+    /// that predates trigger collection still constructs.
+    var triggerVolumes: TriggerVolumeSet = .empty
     /// Assembled actor placements + exact accounting (5.5 actor streaming).
     let actors: CellActorBuild
     /// WRLD.ZNAM of the owning worldspace (M9.2.3 music selection). `var` with
@@ -218,6 +221,7 @@ extension CellSceneBuilder {
             terrainHeightField: geometry.terrain?.heightField,
             grassPlacements: geometry.grass?.placements ?? [],
             staticCollision: geometry.staticCollision,
+            triggerVolumes: geometry.triggerVolumes,
             references: geometry.referenceIndex,
             stateSequence: geometry.stateSequence
         )

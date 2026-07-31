@@ -3,7 +3,7 @@ type: File Format
 title: Record decoders (WRLD, CELL, REFR, STAT, ModelBase, GLOB)
 description: Field layouts of decoded plugin records and OpenSky's engine types.
 tags: [format, plugin, records, worldspace, cell, globals]
-timestamp: 2026-07-30T00:00:00Z
+timestamp: 2026-07-31T00:00:00Z
 ---
 
 # Record decoders, Skyrim SE
@@ -107,6 +107,7 @@ identity/interior status. Refs: UESP CELL page + xEdit `wbImplementation.pas`
 | XRDS  | float32  | optional point-light radius override       |
 | XEMI  | formID   | optional LIGH/REGN emittance               |
 | XLKR  | struct   | `linkedReferences`, repeating (see below)  |
+| XPRM  | 32 bytes | `primitive` volume bounds + shape (below)  |
 | VMAD  | struct   | `scriptData` attachment accumulator        |
 
 DATA: x/y/z position in game units, then x/y/z rotation in radians. Missing
@@ -167,6 +168,77 @@ instances of 4 byte struct with just a formid in Skyrim.esm"); xEdit `dev-4.1.6`
 ...), wbFormIDCk('Ref', ...)], cpNormal, False, nil, 1))`, whose trailing `1` is
 `aOptionalFromElement` (`Core/wbInterface.pas` line 4345) — that parameter is what makes the
 second FormID droppable and the 4-byte form legal.
+
+### `REFR XPRM` — primitive volume
+
+`XPRM` is the invisible volume a reference encloses: trigger boxes, activation volumes,
+portal boxes and occlusion volumes all carry one. Unlike XLKR it does not repeat — one
+reference has at most one primitive — so `PlacedReference.primitive` is an optional, nil
+when the field is absent.
+
+One payload size exists:
+
+| bytes | layout                                                          | decoded as     |
+| ----- | --------------------------------------------------------------- | -------------- |
+| 32    | float[3] bounds, float[3] color, float unknown, uint32 type       | `Primitive`    |
+
+Field by field:
+
+| offset | type      | member        | meaning                                       |
+| ------ | --------- | ------------- | --------------------------------------------- |
+| 0      | float[3]  | `halfExtents` | half the volume's size on each axis, pre-scale |
+| 12     | float[3]  | `color`       | Creation Kit wireframe color, stored 0...1     |
+| 24     | float     | `unknown`     | xEdit "Alpha"; one of four constants on disk   |
+| 28     | uint32    | `type`        | shape enum, `PrimitiveType`                    |
+
+The bounds are half-extents, not a full size: UESP labels the row "Bounds / 2" and xEdit
+displays it through a float scale of 2. `XSCL` still multiplies them at placement time, so
+the decoded values are pre-scale and in native Skyrim world units. A zero axis is legal —
+Skyrim.esm writes 129 of them — so a degenerate volume decodes instead of being rejected.
+
+`PrimitiveType` follows xEdit's `wbEnum` verbatim: 0 `none`, 1 `box`, 2 `sphere`, 3
+`portalBox`, 4 `line`. `halfExtents` reads as a box's half-size for `box` and `portalBox`
+and as a radius triple for `sphere`.
+
+Decode policy follows XTEL rather than XLKR. XPRM is one non-repeating struct of
+fixed-width members, so a payload of any other length can only be read by shifting every
+field, and a shifted read gives a trigger volume the wrong size and the wrong shape. Any
+length other than 32 throws `ESMError.malformed`, and the caller logs and skips the
+reference. An out-of-enum `type` throws for the same reason: xEdit's enumeration is closed
+at 0...4, so a value outside it means the payload is not a primitive this decoder
+understands, and guessing `box` would place a solid-looking volume of unknown shape. Both
+throws are bounded to the one reference carrying the bad field, and vanilla contains
+neither case.
+
+Real-data evidence (`PlacedReferenceXPRMRealDataTests`, `Skyrim.esm`, observed 2026-07-31):
+13668 XPRM subrecords on 13668 of 693333 REFR records — exactly one per carrying reference,
+which is what makes the non-repeating reading right. Every payload is exactly 32 bytes.
+The type histogram is box 10163, sphere 137, portal box 3135, line 233; value 0 (`none`)
+never appears and nothing falls outside the enum, so both throw paths are unreachable on
+vanilla data. Every half-extent is finite and non-negative, 129 axes are exactly zero, and
+the largest is 18027.004 units. Every color channel of every payload lies in 0...1, which
+makes UESP's "Color / 255" a Creation Kit display note rather than an on-disk scale. The
+`unknown` float takes exactly four distinct values across all 13668 payloads — 0.15, 0.2,
+0.25 and 1.0 — matching the set UESP states independently; that agreement is the strongest
+check that the field order is bounds, then color, then the unknown, then the type.
+
+Flagged uncertainty: the fourth float is named "Alpha" by xEdit's `wbFloatRGBA` and left
+unnamed by UESP, and its four observed values look more like a wireframe opacity or an
+editor draw hint than anything the runtime reads. OpenSky carries it verbatim as
+`Primitive.unknown` and interprets nothing. The `line` type is likewise unclear: xEdit names
+it, UESP lists value 4 as unknown, and how a line volume uses three half-extents is not
+established here — the 233 vanilla instances decode, but nothing downstream should assume
+box semantics for them.
+
+Refs: UESP REFR page XPRM row ("32 byte struct: float[3] - x,y,z Bounds / 2; float[3] -
+r,g,b Color / 255; float - unknown: 0.15, 0.2, 0.25, 1.0 seen, same for any given base
+object; uint32 - unknown: 1-4 seen, 1 Box, 2 Sphere, 3 Portal Box, 4 Unknown"); xEdit
+`dev-4.1.6` `Core/wbDefinitionsTES5.pas` line 9701 `wbStruct(XPRM, 'Primitive',
+[wbStruct('Bounds', [wbFloat('X', cpNormal, True, 2, 4), ...]), wbFloatRGBA,
+wbInteger('Type', itU32, wbEnum(['None', 'Box', 'Sphere', 'Portal Box', 'Line']))])`, whose
+`wbFloatRGBA` expands to Red/Green/Blue/Alpha in `Core/wbDefinitionsCommon.pas` line 6484 —
+that fourth member is what the `unknown` float actually is — and whose bounds floats carry
+`aScale = 2`, which is where the half-extent reading comes from.
 
 ## STAT -> StaticObject
 

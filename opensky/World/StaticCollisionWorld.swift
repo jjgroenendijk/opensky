@@ -48,7 +48,7 @@ nonisolated struct StaticCollisionSet {
     let shapes: [StaticCollisionShape]
     let stats: StaticCollisionStats
     var buildDurationMS: Double
-    private let index: StaticCollisionSpatialIndex
+    private let index: BoundsSpatialIndex
 
     init(
         location: CellSceneLocation?,
@@ -60,7 +60,7 @@ nonisolated struct StaticCollisionSet {
         self.shapes = shapes
         self.stats = stats
         self.buildDurationMS = buildDurationMS
-        index = StaticCollisionSpatialIndex(shapes: shapes)
+        index = BoundsSpatialIndex(bounds: shapes.map(\.bounds))
     }
 
     static let empty = StaticCollisionSet(
@@ -77,91 +77,6 @@ nonisolated struct StaticCollisionSet {
         index.query(overlapping: bounds)
             .map { shapes[$0] }
             .filter { $0.bounds.overlaps(bounds) }
-    }
-}
-
-nonisolated private struct StaticCollisionSpatialIndex {
-    private struct Node {
-        let bounds: ModelBounds
-        let left: Int?
-        let right: Int?
-        let shapeIndices: [Int]
-    }
-
-    private var nodes: [Node] = []
-    private let root: Int?
-
-    init(shapes: [StaticCollisionShape]) {
-        var builder = Builder(shapes: shapes)
-        root = builder.build(Array(shapes.indices))
-        nodes = builder.nodes
-    }
-
-    var nodeCount: Int {
-        nodes.count
-    }
-
-    func query(overlapping bounds: ModelBounds) -> [Int] {
-        guard let root else { return [] }
-        var result: [Int] = []
-        var stack = [root]
-        while let index = stack.popLast() {
-            let node = nodes[index]
-            guard node.bounds.overlaps(bounds) else { continue }
-            result.append(contentsOf: node.shapeIndices)
-            if let left = node.left {
-                stack.append(left)
-            }
-            if let right = node.right {
-                stack.append(right)
-            }
-        }
-        return result.sorted()
-    }
-
-    private struct Builder {
-        let shapes: [StaticCollisionShape]
-        var nodes: [Node] = []
-
-        mutating func build(_ indices: [Int]) -> Int? {
-            guard let first = indices.first else { return nil }
-            let bounds = indices.dropFirst().reduce(shapes[first].bounds) {
-                $0.union(shapes[$1].bounds)
-            }
-            if indices.count <= 4 {
-                nodes.append(Node(
-                    bounds: bounds,
-                    left: nil,
-                    right: nil,
-                    shapeIndices: indices.sorted()
-                ))
-                return nodes.count - 1
-            }
-
-            let extent = bounds.max - bounds.min
-            let axis = extent.x >= extent.y && extent.x >= extent.z ? 0
-                : (extent.y >= extent.z ? 1 : 2)
-            let sorted = indices.sorted {
-                centroid(of: shapes[$0].bounds, axis: axis)
-                    < centroid(of: shapes[$1].bounds, axis: axis)
-            }
-            let midpoint = sorted.count / 2
-            let placeholder = nodes.count
-            nodes.append(Node(bounds: bounds, left: nil, right: nil, shapeIndices: []))
-            let left = build(Array(sorted[..<midpoint]))
-            let right = build(Array(sorted[midpoint...]))
-            nodes[placeholder] = Node(
-                bounds: bounds,
-                left: left,
-                right: right,
-                shapeIndices: []
-            )
-            return placeholder
-        }
-
-        private func centroid(of bounds: ModelBounds, axis: Int) -> Float {
-            (bounds.min[axis] + bounds.max[axis]) * 0.5
-        }
     }
 }
 

@@ -148,6 +148,40 @@ nonisolated struct CellSceneComposition {
         cells.values.flatMap { $0.staticCollision.candidates(overlapping: bounds) }
     }
 
+    /// Trigger broadphase over the same resident cells, so a volume straddling
+    /// a streamed seam is found from either side (issue #173).
+    ///
+    /// Cells are visited in (x, y) coordinate order, unlike
+    /// `collisionCandidates` above: a trigger query drives script events, whose
+    /// dispatch order must not depend on dictionary iteration order.
+    func triggerCandidates(overlapping bounds: ModelBounds) -> [TriggerVolume] {
+        orderedCells().flatMap { $0.triggerVolumes.candidates(overlapping: bounds) }
+    }
+
+    /// Volumes the player capsule is currently inside, over every resident
+    /// cell. The per-cell narrowphase runs behind each cell's own broadphase,
+    /// and cell order matches `triggerCandidates(overlapping:)`.
+    func triggerVolumes(
+        intersecting capsule: PlayerCapsule,
+        at feetPosition: SIMD3<Float>
+    ) -> [TriggerVolume] {
+        orderedCells().flatMap {
+            $0.triggerVolumes.volumes(intersecting: capsule, at: feetPosition)
+        }
+    }
+
+    private func orderedCells() -> [CellScene] {
+        cells.sorted { lhs, rhs in
+            (lhs.key.x, lhs.key.y) < (rhs.key.x, rhs.key.y)
+        }.map(\.value)
+    }
+
+    func triggerStats() -> TriggerVolumeStats {
+        cells.values.reduce(into: TriggerVolumeStats()) {
+            $0.add($1.triggerVolumes.stats)
+        }
+    }
+
     func collisionStats() -> StaticCollisionStats {
         cells.values.reduce(into: StaticCollisionStats()) {
             $0.add($1.staticCollision.stats)

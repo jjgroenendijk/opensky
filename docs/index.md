@@ -21,7 +21,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [UI translation strings](/formats/translation-strings.md) - UTF-16
   Interface/Translations/*.txt files, $KEY token resolution, label provider.
 * [Record decoders](/formats/records.md) - WRLD/CELL/REFR/STAT/GLOB field layouts
-  and their engine types, including the GLOB float-on-disk typing trap.
+  and their engine types, including REFR XLKR linked references and the XPRM
+  primitive volume, and the GLOB float-on-disk typing trap.
 * [Interior lighting records](/formats/lighting.md) - CELL XCLL/LTMP, LGTM DATA/DALC,
   LIGH DATA/FNAM, REFR XRDS/XEMI, inheritance + decode policy.
 * [Exterior water records](/formats/water.md) - CELL XCLW/XCWT, WRLD defaults + parent
@@ -57,7 +58,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [NIF mesh](/formats/nif.md) - Gamebryo 20.2.0.7 container, scene graph,
   geometry/materials, SSE skin blocks, dynamic FaceGen + skeleton bind pose.
 * [NIF Havok collision](/formats/nif-collision.md) - bhk root/body/shape graphs,
-  compressed mesh reconstruction, unit/filter policy, Whiterun sweep evidence.
+  compressed mesh reconstruction, unit/filter policy, SkyrimLayer 12 trigger routing,
+  Whiterun sweep evidence.
 * [NIF particle systems](/formats/nif-particles.md) - NiParticleSystem/NiPSysData,
   emitter + modifier blocks, effect-shader wiring, Whiterun sweep evidence.
 * [DDS texture container](/formats/dds.md) - DDS_HEADER/DXT10 layout, BCn + 32-bit RGB,
@@ -117,7 +119,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   collide-and-slide, slope/ceiling response, bounded stairs, door pose reset, build-aware
   route timing gate.
 * [Static collision world](/engine/collision-world.md) - per-cell placed bhk shapes,
-  immutable BVH broadphase, fail-loud geometry accounting, streaming lifetime + budgets.
+  immutable BVH broadphase, fail-loud geometry accounting, streaming lifetime + budgets,
+  trigger volumes and their per-frame OnTriggerEnter/OnTriggerLeave occupancy diff.
 * [Actor idle animation](/engine/actor-animation.md) - HKX idle sampling, skeleton-world
   pose composition, NIF palette refresh, streamed lifetime, fallback accounting + budget.
 * [Living environment integration](/engine/living-environment.md) - combined M7 runtime,

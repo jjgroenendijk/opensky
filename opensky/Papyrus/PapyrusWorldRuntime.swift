@@ -97,6 +97,8 @@ final class PapyrusWorldRuntime {
     static let onCellAttachEventName = "OnCellAttach"
     static let onLoadEventName = "OnLoad"
     static let onActivateEventName = "OnActivate"
+    static let onTriggerEnterEventName = "OnTriggerEnter"
+    static let onTriggerLeaveEventName = "OnTriggerLeave"
 
     /// Marks the depth every activation queued from inside this dispatch sits
     /// at. A latent handler that resumes on a later tick has lost the depth

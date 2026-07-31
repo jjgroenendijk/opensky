@@ -35,6 +35,29 @@ extension GameViewController: FrameStatsProviding {
     }
 }
 
+/// Trigger-volume accounting and occupancy (issue #173). Without a streamer
+/// there is nothing to count, and the snapshot says so instead of reporting
+/// zeros that would read as "no cell authors a trigger".
+extension GameViewController: TriggerControlProviding {
+    var triggerStatsSnapshot: TriggerStatsSnapshot {
+        guard let streamer else { return .unavailable }
+        return TriggerStatsSnapshot(
+            streamerAvailable: true,
+            stats: streamer.triggerStats(),
+            occupiedCount: streamer.occupiedTriggers.count,
+            // Read off the renderer, the same gate
+            // `GameViewControllerStreaming.playerCapsule(of:)` tests.
+            walkModeActive: renderer?.movementMode == .walk,
+            recentTransitions: streamer.triggerLog.lines,
+            recordedTransitionCount: streamer.triggerLog.recordedCount
+        )
+    }
+
+    func clearTriggerLog() {
+        streamer?.triggerLog.clear()
+    }
+}
+
 extension GameViewController: SceneStatsProviding {
     var sceneStatsSnapshot: SceneStatsSnapshot {
         let draw = renderer?.lastDrawStats ?? SceneDrawStats()

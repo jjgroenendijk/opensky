@@ -107,7 +107,9 @@ extension CellSceneBuilder {
             refs: refs, collected: collected, state: state, counts: &counts
         )
         let effective = resolved.references
-        let staticCollision = buildStaticCollision(refs: effective, location: location)
+        // Dungeons author trigger volumes heavily, so interiors collect them on
+        // the same path exteriors do.
+        let collision = buildCollision(resolved: resolved, location: location)
         let instances = resolveInstances(refs: effective, counts: &counts)
         let actors = buildInteriorActors(
             cellChildren: found.children, localized: localized, deltas: resolved.deltas
@@ -129,7 +131,8 @@ extension CellSceneBuilder {
                 sky: nil,
                 lighting: lighting?.lighting,
                 pointLights: lighting?.pointLights ?? [],
-                staticCollision: staticCollision,
+                staticCollision: collision.staticCollision,
+                triggerVolumes: collision.triggerVolumes,
                 actors: actors,
                 referenceEntries: resolved.entries,
                 stateSequence: state.sequence

@@ -15,6 +15,7 @@ final class WorldPanelViewController: InspectorPanelViewController {
     let cameraSection = CameraSection()
     let frameSection = FrameStatsSection()
     let sceneSection = SceneStatsSection()
+    let triggerSection = TriggerVolumeSection()
 
     /// Weak: the game controller owns this panel's parent and the renderer, so
     /// the panel must not retain back.
@@ -30,8 +31,15 @@ final class WorldPanelViewController: InspectorPanelViewController {
         didSet { sceneSection.provider = sceneStatsProvider }
     }
 
+    /// Trigger-volume accounting and occupancy (issue #173). It lives here
+    /// because occupancy is a walk-mode behaviour and the fly/walk selector is
+    /// in this panel's Camera section.
+    weak var triggerProvider: (any TriggerControlProviding)? {
+        didSet { triggerSection.provider = triggerProvider }
+    }
+
     override func makeSections() -> [PanelSectionViewController] {
-        [cameraSection, frameSection, sceneSection]
+        [cameraSection, frameSection, sceneSection, triggerSection]
     }
 
     /// Control forwards for the verification-surface tests, matching the
@@ -42,5 +50,9 @@ final class WorldPanelViewController: InspectorPanelViewController {
 
     var cameraCopyPoseControl: NSButton {
         cameraSection.copyPoseControl
+    }
+
+    var triggerLogClearControl: NSButton {
+        triggerSection.clearLogControl
     }
 }
