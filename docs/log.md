@@ -4,6 +4,72 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-31
 
+* **Trigger volumes fire OnTriggerEnter and OnTriggerLeave (issue #173)**: walking into
+  an authored volume now reaches script code. Both authoring sources land in one
+  immutable per-cell `TriggerVolumeSet` on `CellScene`: SkyrimLayer 12 NIF bodies, which
+  the static collision build previously dropped as non-player-solid, and `XPRM`
+  primitives on the REFR itself. `NIFCollisionFilter.isTriggerVolume` names layer 12
+  specifically rather than negating `isPlayerSolid`, because layer 15 and the
+  no-collision flag also fail that test; `CellTriggerBuilder.swift` collects as a
+  satellite of `CellCollisionBuilder.swift` so the solid loop and its
+  `filteredBodyCount` accounting are untouched, and the mesh pass reuses the same
+  build-queue-confined `NIFCollisionLibrary` cache so no NIF decodes twice. Only `box`
+  and `sphere` primitives become volumes — `portalBox` is occlusion room-portal
+  geometry, `line` is not a volume, `none` is no shape — and the exclusions are counted
+  rather than dropped silently. The median-split AABB BVH moved out of
+  `StaticCollisionWorld.swift` into `BoundsSpatialIndex`, which indexes a flat
+  `[ModelBounds]`, so both spatial sets share one implementation and one deterministic
+  sort order; `StaticCollisionWorldTests` passing unchanged is what pins the extraction
+  as behaviour-preserving. Box, sphere and capsule narrowphases are exact for rigid
+  transforms with uniform scale, while convex hulls and triangle soups fall back to a
+  documented conservative world-AABB test that deliberately over-reports.
+  `CellStreamer` tests the player capsule against the resident set once per rendered
+  frame rather than per 120 Hz physics substep, because triggers are gameplay-rate and
+  the substep loop is a hot path, gated to walk mode exactly as the interaction ray is;
+  the authoritative feet position and capsule arrive from `WalkController` as a
+  defaulted `PlayerCapsuleState` parameter, so no existing call site changed. Diffing
+  that occupancy against the previous frame makes enter and leave edge events: entering
+  fires once, dwelling fires nothing, leaving fires once, and a teleport that clears a
+  volume between two frames fires enter followed by leave through a bounded swept
+  sampling of the travel path that costs a normal walking frame no extra queries.
+  Leaving walk mode freezes occupancy instead of clearing it, so switching to fly inside
+  a volume does not fabricate a leave. On cell unload the containment policy is explicit
+  rather than silent: `emitCellDetached(_:)` releases containment before the detach
+  retires instances, which is the only ordering that lets a surviving persistent script
+  clean up. The honest limit is that `detach` purges a retired instance's queued events,
+  so a non-persistent instance never receives its leave no matter the ordering; both
+  outcomes are tested. `PapyrusWorldRuntime.queueOnTriggerEnter/Leave` mirror
+  `queueOnActivate` at activation depth 0 with the player as `akActionRef`, iterating
+  `instancesByKey.keys.sorted()` so dispatch is deterministic, and
+  `PapyrusWorldStateBridge.handleTriggerTransition(_:)` is the streamer-to-VM seam.
+  On the parser side, `XPRM` decodes into `PlacedReference.primitive`: a 32-byte struct
+  of half-extents, Creation Kit wireframe colour, one unknown float and the shape enum.
+  The bounds are half-extents pre-`XSCL`, confirmed by xEdit's `aScale = 2` on the
+  bounds floats and UESP's "Bounds / 2" label. `XPRM` does not repeat, so decode follows
+  the `XTEL` policy rather than `XLKR`'s: any length other than 32, or a type outside
+  xEdit's closed 0...4 enum, throws `ESMError.malformed` instead of shifting fields. A
+  `Skyrim.esm` sweep pins the layout — 13668 subrecords on 13668 of 693333 references,
+  all 32 bytes, box 10163 / sphere 137 / portal box 3135 / line 233, no `none` and
+  nothing outside the enum, every colour channel inside 0...1, 129 zero half-extent axes
+  because a degenerate axis is legal, and the unknown float taking exactly the four
+  values UESP independently lists (0.15, 0.2, 0.25, 1.0), which is the strongest
+  available confirmation of field order. Neither citation pins which axis a sphere's
+  radius reads from, so the data decided it: all 137 spheres store the same value in all
+  three axes, and the sweep now asserts that so a data set breaking the assumption fails
+  loudly rather than misplacing volumes. Adding the case pushed
+  `PlacedReference.init(record:)` past the body-length and complexity limits, so the
+  optional subrecords moved into a nested `Optionals` accumulator and the new types into
+  `PlacedReferencePrimitive.swift`. The verification surface is
+  `World > World > Triggers`, reporting resident volume counts split by authoring
+  source, the excluded, degenerate and unkeyed sources that would otherwise truncate
+  silently, the walk-mode occupancy gate, and a rolling `TriggerEventLog` tail of enter
+  and leave events cleared by `TriggerLogClearControl`. NPC and actor occupancy stays
+  deferred to M16; the overlap source here is the player capsule only. See
+  [Static collision world](/engine/collision-world.md),
+  [Papyrus virtual machine](/engine/papyrus-vm.md),
+  [Record decoders](/formats/records.md) and
+  [NIF Havok collision](/formats/nif-collision.md).
+
 * **A script visibly changes the world (issue #172)**: the player's use key now
   reaches script code, and script code now writes the world. `CellStreamer.onInteraction`
   became a `CallbackFanOut<InteractionEvent>`, so the new

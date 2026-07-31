@@ -27,6 +27,7 @@ struct CellStreamerTests {
         doors: [PlacedDoor] = [],
         interactions: [FormID: PlacedInteraction] = [:],
         staticCollision: StaticCollisionSet = .empty,
+        triggerVolumes: TriggerVolumeSet = .empty,
         regions: [FormID] = [],
         acousticSpace: FormID? = nil,
         musicType: FormID? = nil,
@@ -52,25 +53,10 @@ struct CellStreamerTests {
             musicType: musicType,
             worldspaceMusicType: worldspaceMusicType,
             staticCollision: staticCollision,
+            triggerVolumes: triggerVolumes,
             references: references,
             stateSequence: stateSequence,
             assets: CellAssets(meshKeys: meshKeys, textureKeys: textureKeys)
-        )
-    }
-
-    static func door(
-        reference: UInt32,
-        destination: UInt32,
-        position: SIMD3<Float>
-    ) -> PlacedDoor {
-        PlacedDoor(
-            reference: FormID(reference),
-            position: position,
-            destination: PlacedReference.TeleportDestination(
-                door: FormID(destination),
-                placement: PlacedReference.Placement(position: position, rotation: .zero),
-                flags: []
-            )
         )
     }
 
@@ -439,5 +425,25 @@ extension CellStreamerTests {
         let dropped = runner.evictedMeshKeys.last ?? []
         #expect(!dropped.contains("actor-body-shared"), "shared actor body evicted in use")
         #expect(dropped.contains("actor-head--1_0"), "departed actor asset not evicted")
+    }
+}
+
+/// Shared synthetic door helper, kept out of the struct body so the suite
+/// stays under the strict `type_body_length` cap.
+extension CellStreamerTests {
+    static func door(
+        reference: UInt32,
+        destination: UInt32,
+        position: SIMD3<Float>
+    ) -> PlacedDoor {
+        PlacedDoor(
+            reference: FormID(reference),
+            position: position,
+            destination: PlacedReference.TeleportDestination(
+                door: FormID(destination),
+                placement: PlacedReference.Placement(position: position, rotation: .zero),
+                flags: []
+            )
+        )
     }
 }

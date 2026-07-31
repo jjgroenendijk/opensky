@@ -3,7 +3,7 @@ type: File Format
 title: NIF Havok collision
 description: Skyrim SE bhk collision graph layouts and clean engine geometry conversion.
 tags: [format, nif, havok, collision, geometry]
-timestamp: 2026-07-19T00:00:00Z
+timestamp: 2026-07-31T00:00:00Z
 ---
 
 # NIF Havok collision
@@ -55,6 +55,13 @@ system, target ref, composed transform, shapes. Player-solid policy requires bot
 outside `SKYL_TRIGGER` (12) + `SKYL_NONCOLLIDABLE` (15), neither filter's
 `No Collision` bit (`0x40`), both responses equal `RESPONSE_SIMPLE_CONTACT` (`1`). Other
 bodies remain decoded + counted but query consumers filter them.
+
+`isTriggerVolume` is the separate, narrower predicate for `SKYL_TRIGGER` (12) on either
+filter. It is not the negation of `isPlayerSolid` — layer 15, the `No Collision` bit, and a
+non-simple response also fail solidity without naming a trigger. A layer-12 body is no
+longer discarded once the solid build rejects it: it routes to the per-cell trigger set in
+[static collision world](/engine/collision-world.md), which places it and answers capsule
+overlap for `OnTriggerEnter`/`OnTriggerLeave`.
 
 ## Shape graph
 

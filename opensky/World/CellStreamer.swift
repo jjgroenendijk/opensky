@@ -124,6 +124,23 @@ final class CellStreamer {
     /// A cell left the live world: unloaded off the grid, dropped by a
     /// coverage transition, or replaced by a door transition.
     var onCellDetached: ((CellSceneLocation) -> Void)?
+    /// The player entered or left an authored trigger volume (issue #173).
+    /// Multicast because the Papyrus bridge and a later occupancy readout are
+    /// both plausible subscribers. Emission lives in the CellStreamerTriggers
+    /// satellite.
+    let onTriggerTransition = CallbackFanOut<TriggerTransitionEvent>()
+    /// Trigger volumes the player capsule was inside as of the last walk-mode
+    /// frame, keyed by the authoring REFR. The per-frame diff against this set
+    /// is what makes enter and leave edge events.
+    var occupiedTriggers: Set<ReferenceKey> = []
+    /// Feet position of the previous walk-mode trigger test, so a frame that
+    /// moved further than a capsule radius can be swept rather than sampled
+    /// only at its destination. Nil outside walk mode.
+    var lastTriggerFeetPosition: SIMD3<Float>?
+    /// Recent trigger edges for the `World > World > Triggers` readout
+    /// (issue #173). Filled by an ordinary `onTriggerTransition` subscriber
+    /// registered in `init`, so the dispatch path stays unaware of it.
+    let triggerLog = TriggerEventLog()
 
     /// - Parameters:
     ///   - center: grid center at launch (streaming starts on FirstRenderCell).
@@ -143,20 +160,22 @@ final class CellStreamer {
         )
         self.runner = runner
         self.sink = sink
-    }
-
-    func noteDoorTransitionFailure() {
-        doorTransitionFailureCount += 1
+        installTriggerLogging()
     }
 
     /// One frame's drive. Collects finished builds, re-grids around the
     /// camera (dispatching newly-needed cells, dropping cells that left the
     /// grid), integrates at most one drawable build (a swap is a full
     /// recompose), and sinks the recomposed scene when anything changed.
+    /// - Parameter playerCapsule: authoritative walk-mode capsule pose for
+    ///   this frame, or nil when the player is not walking. Trigger-volume
+    ///   occupancy is tested here, once per rendered frame, and never in the
+    ///   120 Hz substep loop (issue #173).
     func update(
         cameraPosition: SIMD3<Float>,
         interactionRay: InteractionRay? = nil,
-        activate: Bool = false
+        activate: Bool = false,
+        playerCapsule: PlayerCapsuleState? = nil
     ) {
         let completed = runner.drainCompleted()
         if !completed.isEmpty {
@@ -175,6 +194,9 @@ final class CellStreamer {
             if activate {
                 activateInteractionTarget()
             }
+            // Interiors carry most authored trigger volumes, so the test runs
+            // on this path too rather than only on the exterior tail below.
+            updateTriggerOccupancy(playerCapsule)
             return
         }
 
@@ -218,6 +240,7 @@ final class CellStreamer {
         emitCenterRegionsIfChanged()
         emitAmbienceContextIfNeeded()
         emitMusicContextIfNeeded()
+        updateTriggerOccupancy(playerCapsule)
     }
 
     /// Pushes the current exterior center cell's XCLR regions to the weather
@@ -400,6 +423,10 @@ final class CellStreamer {
 }
 
 extension CellStreamer {
+    func noteDoorTransitionFailure() {
+        doorTransitionFailureCount += 1
+    }
+
     /// One-line memory report per recompose -- the streaming footprint budget
     /// is measured, not guessed (docs/engine/cell-streaming.md memory budget).
     private func logFootprint() {

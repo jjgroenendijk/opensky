@@ -7,6 +7,38 @@ import AppKit
 @testable import opensky
 import Testing
 
+/// Records what the Triggers section asks of the live streamer (issue #173).
+/// `FakeWorldProviders` forwards its `TriggerControlProviding` conformance
+/// here, so a registry-built panel and a directly built one observe the same
+/// fake.
+@MainActor
+final class FakeTriggerProvider {
+    var snapshot = TriggerStatsSnapshot.unavailable
+    private(set) var clearCount = 0
+
+    func clear() {
+        clearCount += 1
+        snapshot = TriggerStatsSnapshot(
+            streamerAvailable: snapshot.streamerAvailable,
+            stats: snapshot.stats,
+            occupiedCount: snapshot.occupiedCount,
+            walkModeActive: snapshot.walkModeActive,
+            recentTransitions: [],
+            recordedTransitionCount: 0
+        )
+    }
+}
+
+extension FakeWorldProviders {
+    var triggerStatsSnapshot: TriggerStatsSnapshot {
+        triggers.snapshot
+    }
+
+    func clearTriggerLog() {
+        triggers.clear()
+    }
+}
+
 struct WorldPanelTests {
     @MainActor
     private func makePanel(_ providers: FakeWorldProviders) -> WorldPanelViewController {
@@ -15,8 +47,30 @@ struct WorldPanelTests {
         panel.cameraProvider = providers
         panel.frameStatsProvider = providers
         panel.sceneStatsProvider = providers
+        panel.triggerProvider = providers
         panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
         return panel
+    }
+
+    /// A resident trigger set with one dropped source of each kind, so the
+    /// readout's silent-truncation counters are all non-zero.
+    private func triggerSnapshot(
+        occupied: Int, walkMode: Bool, transitions: [String] = [], recorded: Int? = nil
+    ) -> TriggerStatsSnapshot {
+        var stats = TriggerVolumeStats()
+        stats.meshVolumeCount = 8
+        stats.primitiveVolumeCount = 4
+        stats.excludedPrimitiveCount = 3
+        stats.degenerateVolumeCount = 1
+        stats.unkeyedReferenceCount = 2
+        return TriggerStatsSnapshot(
+            streamerAvailable: true,
+            stats: stats,
+            occupiedCount: occupied,
+            walkModeActive: walkMode,
+            recentTransitions: transitions,
+            recordedTransitionCount: recorded ?? transitions.count
+        )
     }
 
     @Test @MainActor
@@ -26,7 +80,11 @@ struct WorldPanelTests {
         panel.view.frame = NSRect(x: 0, y: 0, width: 300, height: 700)
         panel.view.layoutSubtreeIfNeeded()
 
-        let controls: [NSView] = [panel.cameraMovementModeControl, panel.cameraCopyPoseControl]
+        let controls: [NSView] = [
+            panel.cameraMovementModeControl,
+            panel.cameraCopyPoseControl,
+            panel.triggerLogClearControl
+        ]
         for control in controls {
             let name = control.accessibilityIdentifier()
             #expect(!control.isHidden, "\(name) hidden")
@@ -124,5 +182,80 @@ struct WorldPanelTests {
         #expect(readout.contains("Drawn: 340"))
         #expect(readout.contains("Resident cells: 9"))
         #expect(readout.contains("Memory: 1234 MB"))
+    }
+
+    /// The accessibility ids are the UI-test contract, pinned here because the
+    /// UI-test harness does not run on every machine (docs/tools/environment.md).
+    @Test @MainActor
+    func triggerSectionPublishesItsAccessibilityIdentifiers() {
+        let panel = makePanel(FakeWorldProviders())
+        #expect(panel.triggerSection.sectionIdentifier == "triggerVolumes")
+        #expect(panel.triggerLogClearControl.accessibilityIdentifier() == "TriggerLogClearControl")
+        let labels = panel.triggerSection.view.subviews
+            .compactMap { $0.accessibilityIdentifier() }
+        #expect(labels.contains("TriggerVolumeStatsLabel"))
+    }
+
+    /// Without a streamer there is nothing to count, and a row of zeros would
+    /// read as "no cell authors a trigger".
+    @Test @MainActor
+    func triggerReadoutReportsAnAbsentStreamer() {
+        let panel = makePanel(FakeWorldProviders())
+        panel.triggerSection.refreshReadout()
+        #expect(panel.triggerSection.statsReadout == "Trigger volumes: unavailable")
+    }
+
+    @Test @MainActor
+    func triggerReadoutShowsAuthoringSourcesDroppedCountsAndWalkGate() {
+        let providers = FakeWorldProviders()
+        providers.triggers.snapshot = triggerSnapshot(occupied: 1, walkMode: true)
+        let panel = makePanel(providers)
+        panel.triggerSection.refreshReadout()
+        let readout = panel.triggerSection.statsReadout
+
+        #expect(readout.contains("Volumes: 12 resident  Occupied: 1"))
+        #expect(readout.contains("Sources: mesh 8  primitive 4"))
+        #expect(readout.contains("Dropped: excluded 3  degenerate 1  unkeyed 2"))
+        #expect(readout.contains("Occupancy: walk mode, live"))
+    }
+
+    /// Leaving walk mode freezes occupancy instead of clearing it, so the
+    /// readout has to name the gate — otherwise a stale non-zero count in fly
+    /// mode reads as a bug (docs/engine/collision-world.md).
+    @Test @MainActor
+    func triggerReadoutNamesFrozenOccupancyOutsideWalkMode() {
+        let providers = FakeWorldProviders()
+        providers.triggers.snapshot = triggerSnapshot(occupied: 2, walkMode: false)
+        let panel = makePanel(providers)
+        panel.triggerSection.refreshReadout()
+        #expect(panel.triggerSection.statsReadout.contains("Occupancy: fly mode, frozen at 2"))
+
+        providers.triggers.snapshot = triggerSnapshot(occupied: 0, walkMode: false)
+        panel.triggerSection.refreshReadout()
+        #expect(panel.triggerSection.statsReadout.contains("Occupancy: fly mode, not tested"))
+    }
+
+    @Test @MainActor
+    func triggerTransitionLogRendersItsTailAndTheClearControlEmptiesIt() {
+        let providers = FakeWorldProviders()
+        providers.triggers.snapshot = triggerSnapshot(
+            occupied: 1,
+            walkMode: true,
+            transitions: ["enter skyrim.esm:0ABCDE 0x000ABCDE", "leave skyrim.esm:0ABCDE unloaded"],
+            recorded: 5
+        )
+        let panel = makePanel(providers)
+        panel.triggerSection.refreshReadout()
+        let readout = panel.triggerSection.eventsReadout
+        #expect(readout.contains("enter skyrim.esm:0ABCDE 0x000ABCDE"))
+        #expect(readout.contains("leave skyrim.esm:0ABCDE unloaded"))
+        // Three of the five recorded transitions fell off the bounded ring.
+        #expect(readout.contains("3 older dropped"))
+
+        let control = panel.triggerLogClearControl
+        control.sendAction(control.action, to: control.target)
+        #expect(providers.triggers.clearCount == 1)
+        #expect(panel.triggerSection.eventsReadout == "No transitions recorded.")
+        #expect(providers.refocusCount == 1, "clearing must hand focus back to the world")
     }
 }

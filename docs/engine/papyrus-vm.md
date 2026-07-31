@@ -548,6 +548,33 @@ handed out keeps both handles. Both resolve to the same `ReferenceKey`, so world
 writes stay correct; only handle-identity comparison inside script code could
 notice.
 
+### `OnTriggerEnter` and `OnTriggerLeave`
+
+`PapyrusWorldRuntime.queueOnTriggerEnter(volume:actor:)` and
+`queueOnTriggerLeave(volume:actor:)` (`opensky/Papyrus/PapyrusWorldTriggers.swift`) are
+`queueOnActivate` minus the activation-depth machinery: one event per script instance
+attached to the volume's authoring reference, iterated in `PapyrusInstanceKey` order,
+argument 0 the actor as `PapyrusValue.object(handle)`, function names
+`onTriggerEnterEventName` and `onTriggerLeaveEventName`. The actor is
+`ReferenceKey.player` in M11 — actor occupancy is M16 scope.
+
+The events are queued at `activationDepth` 0 and never consume the recursion cap. A trigger
+edge is not an activation chain: occupancy comes from the streamer's per-frame capsule test,
+not from script code, so nothing inside a handler can queue another trigger edge. A volume
+whose script does not implement the handler is a counted `undefinedEventFunction` no-op, so
+queuing on every script is free and correct.
+
+`PapyrusWorldStateBridge.handleTriggerTransition(_:)` is the seam, subscribed to
+`CellStreamer.onTriggerTransition` in `GameViewController.wirePapyrus` beside
+`onInteraction`. Unlike `handleInteraction(_:)` there is no FormID to resolve: the event
+already carries a `ReferenceKey`, because the trigger build took the key from the cell's
+runtime index and skipped any volume it could not name.
+
+Where occupancy comes from — the per-frame rather than per-substep test, the walk-mode gate,
+the edge diff and its teleport-through behaviour, and the cell-unload containment policy
+with its ordering constraint against `detach` — is in
+[Static collision world](/engine/collision-world.md).
+
 ### The world bridge
 
 Native bodies are nonisolated and `@Sendable`; `WorldStateStore` and

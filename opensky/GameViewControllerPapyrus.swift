@@ -45,6 +45,12 @@ extension GameViewController {
         controller.onInteraction.add { [weak bridge] event in
             bridge?.handleInteraction(event)
         }
+        // Trigger-volume occupancy edges (issue #173). The streamer tests once
+        // per rendered frame in walk mode; each edge queues one event per
+        // script on the volume's authoring reference.
+        controller.onTriggerTransition.add { [weak bridge] event in
+            bridge?.handleTriggerTransition(event)
+        }
         world.scriptProvider = Self.scriptProvider(fileSystem: fileSystem)
         controller.onCellAttached = { [weak world] scene, firstIntegration in
             guard let world, let location = scene.location else { return }

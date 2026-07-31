@@ -96,6 +96,7 @@
 				"Shell/Sections/SystemMenuSection.swift",
 				"Shell/Sections/SystemMenuSettingsSection.swift",
 				"Shell/Sections/TerrainLODSection.swift",
+				"Shell/Sections/TriggerVolumeSection.swift",
 				"Shell/Sections/WeatherSection.swift",
 				"Shell/ShellContentViewController.swift",
 				"Shell/Theme.swift",

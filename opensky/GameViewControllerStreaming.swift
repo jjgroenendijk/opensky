@@ -38,17 +38,11 @@ extension GameViewController {
         }
         wireGlobals(provider: provider, renderer: renderer)
         renderer.onFrame.add { [weak self, weak controller, weak renderer] position in
-            let interactionRay = renderer.flatMap { renderer -> InteractionRay? in
-                guard renderer.movementMode == .walk else { return nil }
-                return InteractionRay(
-                    origin: renderer.freeFlyCamera.position,
-                    direction: renderer.freeFlyCamera.forward
-                )
-            }
             controller?.update(
                 cameraPosition: position,
-                interactionRay: interactionRay,
-                activate: self?.cameraInput.consumeActivation() ?? false
+                interactionRay: renderer.flatMap(Self.interactionRay(of:)),
+                activate: self?.cameraInput.consumeActivation() ?? false,
+                playerCapsule: renderer.flatMap(Self.playerCapsule(of:))
             )
         }
         // Live XCLR region feed (M7.2.3): the streamer pushes the center cell's
@@ -72,6 +66,28 @@ extension GameViewController {
             controller?.collisionCandidates(overlapping: bounds) ?? []
         }
         streamer = controller
+    }
+
+    /// View ray for use-key targeting, walk mode only: the fly camera is a
+    /// developer view and never picks up a target.
+    private static func interactionRay(of renderer: Renderer) -> InteractionRay? {
+        guard renderer.movementMode == .walk else { return nil }
+        return InteractionRay(
+            origin: renderer.freeFlyCamera.position,
+            direction: renderer.freeFlyCamera.forward
+        )
+    }
+
+    /// Authoritative capsule pose for this frame's trigger-volume test
+    /// (issue #173), gated on walk mode exactly as the interaction ray is.
+    /// The streamer receives the eye position, so the feet position comes from
+    /// the walk controller rather than being re-derived downstream.
+    private static func playerCapsule(of renderer: Renderer) -> PlayerCapsuleState? {
+        guard renderer.movementMode == .walk else { return nil }
+        return PlayerCapsuleState(
+            capsule: renderer.walkController.capsule,
+            feetPosition: renderer.walkController.feetPosition
+        )
     }
 
     /// Runtime global variables (issue #165) and the game clock (issue #164).

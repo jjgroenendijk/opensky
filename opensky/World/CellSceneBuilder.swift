@@ -206,7 +206,7 @@ nonisolated final class CellSceneBuilder {
             refs: refs, collected: collected, state: state, counts: &counts
         )
         let effective = resolved.references
-        let staticCollision = buildStaticCollision(refs: effective, location: location)
+        let collision = buildCollision(resolved: resolved, location: location)
         let instances = resolveInstances(refs: effective, counts: &counts)
         let actors = buildExteriorActors(
             cellChildren: found.children,
@@ -230,7 +230,8 @@ nonisolated final class CellSceneBuilder {
                 sky: environment.sky,
                 lighting: nil,
                 pointLights: [],
-                staticCollision: staticCollision,
+                staticCollision: collision.staticCollision,
+                triggerVolumes: collision.triggerVolumes,
                 actors: actors,
                 worldspaceMusicType: world.worldspace?.musicType,
                 referenceEntries: resolved.entries,

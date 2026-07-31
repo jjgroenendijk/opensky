@@ -77,6 +77,9 @@ nonisolated struct PlacedReference {
     let lightRadius: Float?
     /// XEMI — LIGH/REGN emittance override; LIGH handled by lighting pass.
     let emittance: FormID?
+    /// XPRM — the primitive volume this reference encloses, nil when absent.
+    /// Layout and decode policy live in `PlacedReferencePrimitive.swift`.
+    let primitive: Primitive?
     /// XLKR — every linked reference, in file order. The subrecord repeats,
     /// so this is an array rather than an optional; it is empty when the
     /// reference links to nothing. Read it through
@@ -107,42 +110,19 @@ nonisolated struct PlacedReference {
 
         var base: FormID?
         var placement: Placement?
-        var scale: Float = 1
-        var teleportDestination: TeleportDestination?
-        var lightRadius: Float?
-        var emittance: FormID?
-        var linkedReferences: [LinkedReference] = []
+        var optionals = Optionals()
         var scriptData = ScriptData(ownerType: record.type)
         for field in try record.fields() {
-            var reader = BinaryReader(field.data)
             switch field.type {
             case "NAME":
+                var reader = BinaryReader(field.data)
                 base = try FormID(reader.readUInt32())
             case "DATA":
-                placement = try Placement(
-                    position: SIMD3(
-                        Float(bitPattern: reader.readUInt32()),
-                        Float(bitPattern: reader.readUInt32()),
-                        Float(bitPattern: reader.readUInt32())
-                    ),
-                    rotation: SIMD3(
-                        Float(bitPattern: reader.readUInt32()),
-                        Float(bitPattern: reader.readUInt32()),
-                        Float(bitPattern: reader.readUInt32())
-                    )
-                )
-            case "XSCL":
-                scale = try Float(bitPattern: reader.readUInt32())
-            case "XTEL":
-                teleportDestination = try Self.decodeTeleport(field, reference: formID)
-            case "XRDS":
-                lightRadius = try Self.decodeFloat(field.data)
-            case "XEMI":
-                emittance = try Self.decodeFormID(field.data)
-            case "XLKR":
-                Self.appendLinkedReference(field.data, to: &linkedReferences)
+                placement = try Self.decodePlacement(field.data)
             default:
-                _ = try scriptData.decode(field: field)
+                if try !optionals.decode(field: field, reference: formID) {
+                    _ = try scriptData.decode(field: field)
+                }
             }
         }
         guard let base else {
@@ -153,12 +133,68 @@ nonisolated struct PlacedReference {
         }
         self.base = base
         self.placement = placement
-        self.scale = scale
-        self.teleportDestination = teleportDestination
-        self.lightRadius = lightRadius
-        self.emittance = emittance
-        self.linkedReferences = linkedReferences
+        scale = optionals.scale
+        teleportDestination = optionals.teleportDestination
+        lightRadius = optionals.lightRadius
+        emittance = optionals.emittance
+        primitive = optionals.primitive
+        linkedReferences = optionals.linkedReferences
         self.scriptData = scriptData
+    }
+
+    /// Accumulator for the optional REFR subrecords. It exists so the field
+    /// switch lives in its own function: `init(record:)` plus every optional
+    /// case in one body runs past the cyclomatic-complexity limit, and every
+    /// new subrecord would push it further.
+    private struct Optionals {
+        var scale: Float = 1
+        var teleportDestination: TeleportDestination?
+        var lightRadius: Float?
+        var emittance: FormID?
+        var primitive: Primitive?
+        var linkedReferences: [LinkedReference] = []
+
+        /// Decodes `field` when it is one of the optional subrecords and
+        /// reports whether it was consumed; false leaves it to `ScriptData`.
+        mutating func decode(field: ESMField, reference: FormID) throws -> Bool {
+            switch field.type {
+            case "XSCL":
+                var reader = BinaryReader(field.data)
+                scale = try Float(bitPattern: reader.readUInt32())
+            case "XTEL":
+                teleportDestination = try PlacedReference.decodeTeleport(
+                    field, reference: reference
+                )
+            case "XRDS":
+                lightRadius = try PlacedReference.decodeFloat(field.data)
+            case "XEMI":
+                emittance = try PlacedReference.decodeFormID(field.data)
+            case "XPRM":
+                primitive = try PlacedReference.decodePrimitive(field, reference: reference)
+            case "XLKR":
+                PlacedReference.appendLinkedReference(field.data, to: &linkedReferences)
+            default:
+                return false
+            }
+            return true
+        }
+    }
+
+    /// DATA: position xyz then rotation xyz, all little-endian float32.
+    private static func decodePlacement(_ data: Data) throws -> Placement {
+        var reader = BinaryReader(data)
+        return try Placement(
+            position: SIMD3(
+                Float(bitPattern: reader.readUInt32()),
+                Float(bitPattern: reader.readUInt32()),
+                Float(bitPattern: reader.readUInt32())
+            ),
+            rotation: SIMD3(
+                Float(bitPattern: reader.readUInt32()),
+                Float(bitPattern: reader.readUInt32()),
+                Float(bitPattern: reader.readUInt32())
+            )
+        )
     }
 
     private static func decodeFloat(_ data: Data) throws -> Float? {

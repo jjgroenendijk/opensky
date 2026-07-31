@@ -68,6 +68,11 @@ nonisolated struct CellScene {
     /// Immutable mesh collision + per-cell broadphase. Empty for cells built
     /// without a collision VFS (legacy synthetic tests).
     let staticCollision: StaticCollisionSet
+    /// Immutable authored trigger volumes for this cell (issue #173):
+    /// SkyrimLayer 12 NIF bodies plus `XPRM` box and sphere primitives, over
+    /// the same broadphase the solid set uses. Empty for cells built without a
+    /// collision VFS or without reference retention.
+    let triggerVolumes: TriggerVolumeSet
     /// Decoded REFR/ACHR records of this cell, addressable by session-stable
     /// `ReferenceKey` and by raw FormID (issue #158). Empty for cells built
     /// without reference retention (synthetic render tests).
@@ -94,6 +99,7 @@ nonisolated struct CellScene {
         terrainHeightField: TerrainHeightField? = nil,
         grassPlacements: [GrassPlacement] = [],
         staticCollision: StaticCollisionSet = .empty,
+        triggerVolumes: TriggerVolumeSet = .empty,
         references: RuntimeReferenceIndex = .empty,
         stateSequence: UInt64 = 0,
         assets: CellAssets = CellAssets()
@@ -111,6 +117,7 @@ nonisolated struct CellScene {
         self.terrainHeightField = terrainHeightField
         self.grassPlacements = grassPlacements
         self.staticCollision = staticCollision
+        self.triggerVolumes = triggerVolumes
         self.references = references
         self.stateSequence = stateSequence
         self.assets = assets

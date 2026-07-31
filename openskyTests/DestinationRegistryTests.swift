@@ -336,6 +336,10 @@ final class FakeWorldProviders: WorldControlProviders {
     /// `DestinationRegistryRuntimeStateTests.swift`, which keeps this file
     /// under the length limit.
     let runtimeState = FakeRuntimeStateProvider()
+
+    /// TriggerControlProviding (issue #173) is delegated the same way; the
+    /// forwarding conformance lives in `WorldPanelTests.swift`.
+    let triggers = FakeTriggerProvider()
 }
 
 struct DestinationRegistryTests {

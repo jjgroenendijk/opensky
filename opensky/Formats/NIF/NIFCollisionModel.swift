@@ -22,6 +22,13 @@ nonisolated struct NIFCollisionFilter: Equatable, Sendable {
         // CollisionFilterFlags.No Collision.
         layer != 12 && layer != 15 && flags & 0x40 == 0
     }
+
+    /// SkyrimLayer 12 (`SKYL_TRIGGER`) specifically. Not the negation of
+    /// `isPlayerSolid`: layer 15 and the `No Collision` flag also fail that
+    /// test without naming a trigger.
+    var isTriggerVolume: Bool {
+        layer == 12
+    }
 }
 
 nonisolated struct NIFCollisionBody {
@@ -42,6 +49,14 @@ nonisolated struct NIFCollisionBody {
             && rigidBodyFilter.isPlayerSolid
             && entityResponse == 1
             && rigidBodyResponse == 1
+    }
+
+    /// A body either of whose duplicate Havok filters names SkyrimLayer 12.
+    /// Either filter is enough because vanilla trigger bodies are inconsistent
+    /// about which of the two copies carries the layer. Such a body is never
+    /// player-solid, so trigger routing and solid collision stay disjoint.
+    var isTriggerVolume: Bool {
+        worldFilter.isTriggerVolume || rigidBodyFilter.isTriggerVolume
     }
 }
 
