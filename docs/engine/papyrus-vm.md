@@ -5,7 +5,7 @@ description: Bounded execution of Skyrim PEX functions with explicit frames,
   typed values, native registry, deterministic scheduling and tallies, driven
   once per frame from the engine loop with a script event queue and save state.
 tags: [engine, papyrus, virtual-machine, bytecode]
-timestamp: 2026-07-30T00:00:00Z
+timestamp: 2026-07-31T00:00:00Z
 ---
 
 # Papyrus virtual machine
@@ -55,6 +55,7 @@ choice OpenSky makes in those gaps is listed under [Deviations](#deviations).
 * [Frame hook and fixed step](#frame-hook-and-fixed-step)
 * [Event queue](#event-queue)
 * [Activation and the world bridge](#activation-and-the-world-bridge)
+* [Update timers](#update-timers)
 * [Instance lifecycle over cell streaming](#instance-lifecycle-over-cell-streaming)
 * [Script state in a save](#script-state-in-a-save)
 * [Lazy script library](#lazy-script-library)
@@ -634,6 +635,88 @@ Stated simplification: a latent handler that resumes on a later tick has lost th
 depth of the event that started it and re-enters at 0. The per-tick event budget
 still bounds what that can cost in one frame.
 
+## Update timers
+
+Issue #277 implements the `Form` update-timer family: six natives
+(`opensky/Papyrus/PapyrusNativeUpdateTimers.swift`) backed by
+`PapyrusUpdateTimerRegistry` (`opensky/Papyrus/PapyrusWorldUpdateTimers.swift`), a
+fixed-step peer of [the deterministic scheduler](#deterministic-scheduler) rather than
+part of it — a timer carries an interval and a slot, never a suspended continuation, so
+it does not fit a `PapyrusScheduler.Entry`.
+
+```papyrus
+Form.RegisterForUpdate(float afInterval) native
+Form.RegisterForSingleUpdate(float afInterval) native
+Form.RegisterForUpdateGameTime(float afInterval) native
+Form.RegisterForSingleUpdateGameTime(float afInterval) native
+Form.UnregisterForUpdate() native
+Form.UnregisterForUpdateGameTime() native
+```
+
+`RegisterForUpdate` and `RegisterForUpdateGameTime` repeat; the `Single` variants fire
+once. The two families count against different clocks — real seconds for the first pair,
+game hours for the second — and each script instance carries four independent slots:
+{real, game-time} x {repeating, single-shot}. Registering into a slot replaces whatever
+that slot held; it never stacks and never disturbs the other three slots on the same
+instance. The [`RegisterForUpdate - Form`](https://ck.uesp.net/wiki/RegisterForUpdate_-_Form)
+page states this for the real-time family — "Subsequent calls to `RegisterForUpdate` will
+override previous ones … It does not interfere with updates registered via
+`RegisterForSingleUpdate`" — and OpenSky applies the same rule to
+`RegisterForUpdateGameTime` by symmetry; the wiki does not document the game-time family
+separately.
+
+A due slot fires its zero-argument event through [the event queue](#event-queue) at
+`activationDepth: 0`, enqueued rather than dispatched inline like every other world event,
+with per-instance serial delivery and deterministic ordering among slots due the same step
+(registration order, via `PapyrusUpdateTimerRegistry`'s internal sequence counter). The
+real-time family fires `OnUpdate`, the game-time family `OnUpdateGameTime`. Both event
+pages state the identical menu-mode rule —
+["This event will not be sent if the game is in menu mode"](https://ck.uesp.net/wiki/OnUpdate_-_Form)
+(also on [`OnUpdateGameTime - Form`](https://ck.uesp.net/wiki/OnUpdateGameTime_-_Form)) —
+which OpenSky honors through the clock rather than a branch: both families advance only
+through `PapyrusWorldRuntime.advance(delta:gameClock:)`
+([frame hook and fixed step](#frame-hook-and-fixed-step)), and a paused frame delivers a
+delta of exactly zero, producing zero fixed steps, so real-time and game-time timers both
+hold. Real-time slots use the scheduler's whole-fixed-tick arithmetic
+(`Double(tickCount - startTick) * fixedStepSeconds`, the same drift-avoidance the
+scheduler itself uses); game-time slots consume capped, never-negative deltas sampled from
+`GameClock.totalGameSeconds`, the same policy `consumeElapsedGameHours()`
+(`opensky/Rendering/RendererGameClock.swift`) uses elsewhere: a backward jump contributes
+zero and re-anchors, and a forward jump's single-step contribution is capped at 24 game
+hours (`PapyrusUpdateTimerRegistry.maximumGameHoursPerStep`, matching
+`PapyrusScheduler.maximumGameHoursPerStep`). On top of that cap, each due timer fires at
+most once per fixed step regardless of how many intervals the elapsed time covered; a
+repeating timer re-anchors to "now" after firing instead of queueing one catch-up event per
+elapsed interval. Without that rule, one `SetGameHour` scrub from the
+`World > Runtime State` panel could burst-fire a month of queued timers in a single step.
+
+`UnregisterForUpdate()` clears both real-time slots (repeating and single-shot) on the
+calling instance; `UnregisterForUpdateGameTime()` clears both game-time slots. The wiki
+never states whether unregistering touches the single-shot slot of its family, so OpenSky
+resolves the ambiguity by clearing the whole family, matching the symmetry the register
+side already assumes.
+
+Registration targets the exact script instance behind the receiver handle, resolved the
+same way [the world bridge](#the-world-bridge) resolves every other native's receiver;
+an opaque handle (an unscripted reference, or the player) has no instance to deliver
+`OnUpdate` to, so registration is a no-op that still returns `None`, matching a
+registration the engine accepted but can never dispatch. A non-finite, zero, or negative
+interval clamps to zero — the wiki documents no rule for this edge — which means a
+single-shot fires on the very next fixed step and a clamped repeating timer fires once per
+step thereafter.
+
+`retire(_:)` purges a non-persistent instance's timers on cell unload, the same stated
+simplification cell detach already applies to trigger-volume state
+(the [`OnTriggerEnter` and `OnTriggerLeave`](#ontriggerenter-and-ontriggerleave) purge,
+issue #285): a script that leaves the world with
+the cell it was attached to loses its pending timers rather than carrying them forward
+invisibly. Persistent instances keep theirs, because they are never retired.
+
+Pending timers of persistent instances persist across a save in the additive `PTMR` chunk
+of the [OpenSky save container](/formats/opensky-save.md#chunks), which documents the byte
+layout; [Script state in a save](#script-state-in-a-save) below covers how it fits beside
+`PSCR`.
+
 ## Instance lifecycle over cell streaming
 
 `CellStreamer` gained two engine-level announcements and no dependency on the
@@ -713,6 +796,20 @@ cell; those rebuilds re-attach on a later streaming update and consult
 `firedOnInit` to decide whether to enqueue `OnInit`. Putting the saved fired
 set in place before any rebuild attach can read it is exactly what stops every
 script re-running its `OnInit` on load.
+
+Pending [update timers](#update-timers) save the same way, in their own additive `PTMR`
+chunk rather than as more `PSCR` bytes, because a timer is not part of an instance's
+persisted variable state. `timerStates()` snapshots every armed slot belonging to a
+persistent instance, sorted by instance key then slot, storing the delay still to run
+rather than an absolute deadline; `restore(timerStates:)` re-arms each slot anchored to
+the current tick and game-hour counters, so the wall or game time spent between save and
+load never counts toward a restored timer. A state naming an instance the runtime does
+not hold — a persistent instance the current session never attached — is skipped and
+counted as `unknownSaveTimerTarget` rather than faulted. `GameViewControllerRuntimeState`
+passes `timers: papyrus?.timerStates() ?? []` alongside `scripts:` on save, and restores
+timers after instances on load, since a restored timer names the instance it belongs to.
+The byte layout is the `PTMR` chunk of the
+[OpenSky save container](/formats/opensky-save.md#chunks).
 
 ## Lazy script library
 
@@ -796,6 +893,24 @@ steps to quiescence:
   advances.
 * `OpenSkySavePapyrusTests` — the `PSCR` chunk, described under
   [OpenSky save container](/formats/opensky-save.md).
+* `PapyrusWorldUpdateTimerTests` — single-shot firing once and never again, repeating
+  firing at its cadence over many steps, re-registering replacing a slot while the other
+  three coexist, non-positive and non-finite intervals clamping to the next step,
+  same-step firings enqueuing in registration order, and a script that only extends
+  `Form` still reaching the natives through its inheritance chain.
+* `PapyrusWorldUpdateTimerClockTests` — `UnregisterForUpdate` and
+  `UnregisterForUpdateGameTime` each clearing only their own family, paused frames
+  advancing neither family, a backward clock scrub firing nothing and re-anchoring, and a
+  capped forward scrub firing each due timer exactly once rather than bursting.
+* `PapyrusWorldUpdateTimerPersistenceTests` — `timerStates()` / `restore(timerStates:)`
+  round-tripping into a fresh runtime, and cell detach purging a non-persistent
+  instance's timers.
+* `OpenSkySaveTimerTests` — the `PTMR` chunk on the same terms `OpenSkySavePapyrusTests`
+  covers `PSCR`: a round trip, byte-level determinism, an absent chunk meaning no pending
+  timers, a truncated entry and a truncated duration, a bogus entry count, an unknown
+  slot byte, non-finite and negative durations normalizing to zero, an unknown chunk
+  written after `PTMR` still skipping cleanly, and a live `PapyrusWorldRuntime`'s timers
+  surviving a save and restore.
 
 ## M11.1 acceptance
 
@@ -955,6 +1070,29 @@ limitation rather than an oversight:
   handle, and picking the lowest name is deterministic where picking an
   arbitrary one would not be.
 
+[Update timers](#update-timers) resolve six further wiki-ambiguous edges, each a decision
+rather than a documented rule:
+
+* `UnregisterForUpdate()` clears both real-time slots (repeating and single-shot) on its
+  instance, and `UnregisterForUpdateGameTime()` clears both game-time slots. The wiki
+  never states whether unregistering reaches the single-shot slot of its family.
+* The rule that re-registering a slot replaces rather than stacks is applied to the
+  game-time family by symmetry with the real-time family, which is the only one the wiki
+  documents the rule for.
+* A non-finite, zero, or negative interval clamps to zero: a single-shot fires on the
+  next fixed step and a clamped repeating timer fires once per step thereafter. The wiki
+  documents no zero-or-negative rule for either register call.
+* A non-persistent instance's pending timers drop on cell unload, the same stated
+  simplification `retire(_:)` already applies to trigger-volume containment.
+* A due timer fires at most once per fixed step, and a repeating timer re-anchors to
+  "now" after firing rather than queueing one catch-up per elapsed interval, capped
+  further by a 24-game-hour ceiling on one step's forward contribution. This is engine
+  policy against a console clock scrub, not a documented wiki rule.
+* OpenSky pauses game-time timers exactly when it pauses real-time timers, because a
+  paused frame's `advance(delta:gameClock:)` call carries a zero delta and game time
+  itself does not advance while paused. The wiki's menu-mode statement is identical on
+  both event pages and does not distinguish the two clocks.
+
 ## Scope
 
 This subsystem executes Skyrim PEX 3.x functions, dispatches the
@@ -965,10 +1103,15 @@ single FIFO event queue drained under a per-frame budget, and instance state
 that survives a save and load.
 
 It deliberately does not implement Fallout 4 structs, world-object native
-functions, behavior graphs, or quest runtime behavior. The event queue carries
-the three cell-lifecycle events the streamer can announce — `OnInit`,
-`OnCellAttach` and `OnLoad` — and nothing else; every other Papyrus event
-belongs to the subsystem that would raise it. Scheduling stays single-threaded
+functions, behavior graphs, or quest runtime behavior. Besides the three
+cell-lifecycle events the streamer announces — `OnInit`, `OnCellAttach` and
+`OnLoad` — the event queue also carries `OnActivate`
+([activation and the world bridge](#activation-and-the-world-bridge)), `OnTriggerEnter`
+and `OnTriggerLeave`
+([`OnTriggerEnter` and `OnTriggerLeave`](#ontriggerenter-and-ontriggerleave)), and
+`OnUpdate` and `OnUpdateGameTime` ([update timers](#update-timers)); every other
+Papyrus event still belongs to the subsystem that would raise it. Scheduling stays
+single-threaded
 by design rather than by omission: the whole VM is confined to the main actor,
 so there is no concurrent frame scheduling to reason about. Persistence covers
 the primitive variable values, the active state and the `OnInit`-fired set,

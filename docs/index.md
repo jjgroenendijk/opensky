@@ -85,8 +85,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 * [OpenSky save container](/formats/opensky-save.md) - our own .osav format, not
   Bethesda's: header metadata, load-order fingerprint, tagged chunks and the
-  reference-delta, global-variable and Papyrus script-instance entry layouts, determinism
-  and version rules, atomic write, and the
+  reference-delta, global-variable, Papyrus script-instance and Papyrus update-timer
+  entry layouts, determinism and version rules, atomic write, and the
   `OpenSkySaveStore` slot façade + fingerprint builders above it.
 
 ## Engine

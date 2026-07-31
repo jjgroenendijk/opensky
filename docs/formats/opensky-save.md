@@ -3,7 +3,7 @@ type: File Format
 title: OpenSky native save container (.osav)
 description: Byte layout of OpenSky's own .osav save file, its determinism and version rules.
 tags: [format, save, io, world-state, determinism]
-timestamp: 2026-07-30T00:00:00Z
+timestamp: 2026-07-31T00:00:00Z
 ---
 
 # OpenSky native save container
@@ -147,7 +147,8 @@ A chunk whose declared length runs past the end of the file is
 `chunkBoundsViolation(tag:)`. A chunk whose tag this build does not know is skipped using
 that declared length, which is what makes a newer build's save loadable in an older one.
 
-Version 1 defines two chunks; `GVAR`, `CLOK` and `PSCR` were added additively afterwards.
+Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR` and `PTMR` were added additively
+afterwards.
 
 `GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
 any other size is `invalidValue`.
@@ -263,6 +264,54 @@ empty names and a `none` tag).
 The snapshot's journal `sequence` is not saved. It is session-local bookkeeping, and a
 decoded snapshot always reports sequence 0.
 
+`PTMR` — pending Papyrus update-timer slots (issue #277), one entry per armed slot of a
+persistent script instance. Additive like `GVAR`, `CLOK` and `PSCR`, and equally without a
+`currentVersion` bump: an older build skips the chunk by its declared length and loads the
+rest of the save, restoring a world where no script has a pending `OnUpdate` or
+`OnUpdateGameTime`. Like `PSCR`, a session that armed no timer writes no chunk at all, so
+its bytes are identical to a build that predates this chunk.
+
+| type   | field      | notes                                     |
+| ------ | ---------- | ----------------------------------------- |
+| uint32 | entryCount | number of entries that follow             |
+| bytes  | entries    | `entryCount` entries, layout below        |
+
+Each entry is a reference key — the same tagged encoding `RDLT` uses, here naming the
+instance's reference — then:
+
+| type   | field         | notes                                                              |
+| ------ | ------------- | ------------------------------------------------------------------- |
+| string | scriptName    | lowercased script name, completing the instance key                 |
+| uint8  | slot          | which of the four timer slots this entry is, table below            |
+| uint64 | interval      | the registered interval, an IEEE 754 binary64 bit pattern            |
+| uint64 | remaining     | delay still to run, same unit and encoding as `interval`             |
+
+`interval` and `remaining` are in the slot's own unit: real seconds for the two real-time
+slots, game hours for the two game-time slots. `remaining` is a delay relative to the
+moment the save was written, never an absolute deadline, so a restore re-anchors against
+whatever clock state the load establishes and the wall or game time spent between save and
+load never counts toward the timer.
+
+| slot | value | meaning                          |
+| ---- | ----- | --------------------------------- |
+| 0    | 0     | real-time, repeating              |
+| 1    | 1     | real-time, single-shot            |
+| 2    | 2     | game-time, repeating              |
+| 3    | 3     | game-time, single-shot            |
+
+The slot byte is `PapyrusUpdateTimerSlot`'s own raw value, a number the
+[Papyrus virtual machine](/engine/papyrus-vm.md#update-timers) already declares stable for
+on-disk use, so no separate tag table can drift out of sync with it. A byte outside 0...3 is
+`invalidValue`, the same treatment an unknown `PSCR` value tag gets: this is a shape the
+decoder cannot interpret at all, not a value it can normalize.
+
+Entries come out of `PapyrusWorldRuntime.timerStates()` sorted by instance key then slot,
+so re-encoding an unchanged runtime produces identical bytes, on the same terms as `PSCR`
+and `RDLT`. The declared count is validated before anything reserves storage, using
+`minimumTimerEntrySize` (26 bytes: an empty plugin key, an empty script name, the slot
+byte, and the two `Float64` bit patterns). The encoder never reads a clock; it only writes
+whatever `remaining` the runtime's `timerStates()` computed.
+
 ## `RDLT` entry layout
 
 Each entry is a reference key, a cell location, and a component list.
@@ -347,6 +396,15 @@ would be the worse failure. A non-finite `CLOK` value, by contrast, has no plaus
 legitimate origin, so `decodeClock` still rejects it as `invalidValue`. An unknown `PSCR`
 value tag is likewise a hard `invalidValue`: a shape this build cannot interpret at all
 cannot be normalised into anything honest.
+
+`PTMR`'s `interval` and `remaining` follow the same normalise-rather-than-reject rule,
+widened slightly: non-finite **or negative** decodes as `0.0`, not only non-finite. A
+timer duration has no legitimate negative value the way a script float might, and
+`PapyrusUpdateTimerRegistry` itself clamps a non-finite or non-positive interval to zero
+on registration, so a normalized `PTMR` entry decodes to exactly what the registry would
+have produced from the same input and simply fires on the next fixed step. An unknown
+`PTMR` slot byte is a hard `invalidValue`, for the same reason an unknown `PSCR` value tag
+is: it is a shape this build cannot interpret, not a value to normalize.
 
 The error cases, from `OpenSkySaveError.swift`:
 
@@ -433,8 +491,9 @@ whole worlds, so they are small, and an uncompressed file is directly inspectabl
 editor when a determinism test disagrees with itself.
 
 Global variables landed as the additive `GVAR` chunk (issue #165), the game clock as `CLOK`
-(issue #164), and Papyrus script state as `PSCR` (issue #171). None of the three cost a
-`formatVersion` bump, exactly as the version policy above predicts.
+(issue #164), Papyrus script state as `PSCR` (issue #171), and pending Papyrus update
+timers as `PTMR` (issue #277). None of the four cost a `formatVersion` bump, exactly as the
+version policy above predicts.
 
 Read-only import of a Bethesda `.ess` save is a separate item and shares nothing with this
 layout. OpenSky will never write one.
@@ -453,6 +512,13 @@ round trip, byte-level determinism, an absent chunk meaning no script state, a t
 entry, a bogus instance count, a bogus variable count, an unknown value tag, non-finite
 floats normalising to zero, an unknown chunk written after `PSCR` still being skipped, and a
 live `PapyrusWorldRuntime`'s state surviving a save and a restore.
+
+`openskyTests/OpenSkySaveTimerTests.swift` covers `PTMR` the same way: a timer-state round
+trip, byte-level determinism, an absent chunk meaning no pending timers, an empty timer
+list writing the same bytes as omitting the parameter entirely, a truncated entry, a
+truncated duration, a bogus timer count, an unknown slot byte, non-finite and negative
+durations normalising to zero, an unknown chunk written after `PTMR` still being skipped,
+and a live `PapyrusWorldRuntime`'s pending timers surviving a save and a restore.
 
 Related: [Runtime reference identity and world state](/engine/runtime-state.md) for the
 store and snapshot this format serializes, [FormID and TES4 header](/formats/formid.md) for

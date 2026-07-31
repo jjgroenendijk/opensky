@@ -4,6 +4,56 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-31
 
+* **Update timers (issue #277)**: `Form.RegisterForUpdate`, `RegisterForSingleUpdate`,
+  `RegisterForUpdateGameTime`, `RegisterForSingleUpdateGameTime`, `UnregisterForUpdate`
+  and `UnregisterForUpdateGameTime` now reach a real timer instead of returning a declared
+  default, and `OnUpdate` / `OnUpdateGameTime` fire through the world event queue at
+  `activationDepth: 0`. `PapyrusUpdateTimerRegistry`
+  (`opensky/Papyrus/PapyrusWorldUpdateTimers.swift`) is a fixed-step peer of
+  `PapyrusScheduler` rather than an extension of it — a timer carries an interval and a
+  slot, never a suspended continuation — and gives each script instance four independent
+  slots: {real, game-time} x {repeating, single-shot}. Registering a slot replaces
+  whatever it held; the Creation Kit wiki states this for the real-time family only
+  ("Subsequent calls to `RegisterForUpdate` will override previous ones … It does not
+  interfere with updates registered via `RegisterForSingleUpdate`", confirmed on
+  `RegisterForUpdate - Form` via a `web.archive.org` snapshot of `ck.uesp.net`) and OpenSky
+  extends it to the game-time family by symmetry — one of six wiki-ambiguous edges the
+  implementation resolves and records as a deviation. The other five:
+  `UnregisterForUpdate()` and `UnregisterForUpdateGameTime()` each clear both slots of
+  their family rather than only the repeating or only the single-shot one, since the wiki
+  never says which; a non-finite, zero, or negative interval clamps to zero, firing on the
+  next fixed step; a non-persistent instance's pending timers drop on cell unload, the same
+  simplification issue #285's trigger-volume purge already applies; a due timer fires at
+  most once per fixed step with a repeating timer re-anchoring to now rather than queuing
+  one catch-up per elapsed interval, capped further at 24 game hours of forward
+  contribution per step — engine policy against a console clock scrub, since without it one
+  `SetGameHour` jump from `World > Runtime State` could burst-fire a month of queued
+  timers; and OpenSky pauses game-time timers exactly when it pauses real-time ones,
+  because both families only advance through `PapyrusWorldRuntime.advance(delta:
+  gameClock:)` and a paused frame delivers a zero delta — matching the identical
+  menu-mode sentence both `OnUpdate - Form` and `OnUpdateGameTime - Form` state. Real-time
+  slots reuse the scheduler's whole-fixed-tick arithmetic; game-time slots consume capped,
+  never-negative deltas sampled from `GameClock.totalGameSeconds`, the same policy
+  `RendererGameClock.consumeElapsedGameHours()` uses elsewhere. Pending timers of
+  persistent instances now persist across a save in a new additive `PTMR` chunk
+  (`opensky/Formats/Save/OpenSkySaveDecoderTimers.swift`), sized and shaped like `PSCR`:
+  one entry per armed slot, a tagged reference key plus script name completing the
+  instance key, the slot as its stable raw-value byte, and the interval and remaining
+  delay as `Float64` bit patterns in the slot's own unit (seconds or game hours). Storing
+  remaining delay rather than an absolute deadline means a restored timer re-anchors
+  against the load-time clock, so the gap between save and load never counts toward it.
+  The chunk costs no `formatVersion` bump and an empty timer list writes nothing, so a
+  session that armed no timer produces the bytes it always did. Evidence:
+  `PapyrusWorldUpdateTimerTests`, `PapyrusWorldUpdateTimerClockTests`,
+  `PapyrusWorldUpdateTimerPersistenceTests`, and `OpenSkySaveTimerTests` (round trip,
+  determinism, absent-chunk and empty-list equivalence, truncation and bogus-count
+  rejection, an unknown slot byte rejected, non-finite and negative durations normalising
+  to zero, unknown-chunk skipping, and a live runtime's timers surviving a save and
+  restore), all green. Stated limit: a non-persistent instance's timers are not carried
+  across cell unload, matching how its other transient state already behaves. See
+  [Papyrus virtual machine](/engine/papyrus-vm.md) and
+  [OpenSky save container](/formats/opensky-save.md).
+
 * **Trigger volumes fire OnTriggerEnter and OnTriggerLeave (issue #173)**: walking into
   an authored volume now reaches script code. Both authoring sources land in one
   immutable per-cell `TriggerVolumeSet` on `CellScene`: SkyrimLayer 12 NIF bodies, which
