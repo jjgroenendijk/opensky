@@ -20,13 +20,15 @@ nonisolated enum OpenSkySaveEncoder {
     /// no `CLOK` chunk, which decodes as the vanilla-start clock. `scripts` is
     /// defaulted empty for the same reason, and an empty list writes no `PSCR`
     /// chunk at all, so a session with no VM produces the same bytes it always
-    /// did.
+    /// did. `timers` behaves the same way and writes no `PTMR` chunk when it
+    /// is empty.
     static func encode(
         snapshot: WorldStateSnapshot,
         fingerprint: [SavePluginFingerprint],
         metadata: SaveCreationMetadata,
         clock: GameClock? = nil,
-        scripts: [PapyrusInstanceState] = []
+        scripts: [PapyrusInstanceState] = [],
+        timers: [PapyrusTimerState] = []
     ) -> Data {
         var writer = BinaryWriter()
         writeHeader(metadata: metadata, into: &writer)
@@ -58,6 +60,14 @@ nonisolated enum OpenSkySaveEncoder {
                 payload.writeUInt32(UInt32(clamping: scripts.count))
                 for state in scripts {
                     writeScriptInstance(state, into: &payload)
+                }
+            }
+        }
+        if !timers.isEmpty {
+            writeChunk(tag: OpenSkySaveFormat.ChunkTag.papyrusTimers, into: &writer) { payload in
+                payload.writeUInt32(UInt32(clamping: timers.count))
+                for state in timers {
+                    writeTimer(state, into: &payload)
                 }
             }
         }
@@ -227,6 +237,30 @@ nonisolated enum OpenSkySaveEncoder {
             writer.writeUInt8(OpenSkySaveFormat.ValueTag.string)
             writeString(text, into: &writer)
         }
+    }
+
+    // MARK: - Papyrus update timers
+
+    /// One `PTMR` entry: the instance the timer belongs to, which slot of the
+    /// four it occupies, its registered interval, and the delay still to run.
+    /// Both doubles go out as their IEEE bit pattern for the same reason
+    /// script floats do — the byte shape is exact and deterministic.
+    ///
+    /// The slot goes out as its enum raw value, which is a declared on-disk
+    /// number rather than a source-order accident (see
+    /// `PapyrusUpdateTimerSlot`), so no separate tag table is needed here.
+    /// Order is the caller's, which is `PapyrusWorldRuntime.timerStates()`
+    /// sorted by instance key then slot, so re-encoding an unchanged runtime
+    /// produces identical bytes.
+    private static func writeTimer(
+        _ state: PapyrusTimerState,
+        into writer: inout BinaryWriter
+    ) {
+        writeKey(state.key.reference, into: &writer)
+        writeString(state.key.scriptName, into: &writer)
+        writer.writeUInt8(UInt8(clamping: state.slot.rawValue))
+        writer.writeUInt64(state.interval.bitPattern)
+        writer.writeUInt64(state.remaining.bitPattern)
     }
 
     // MARK: - Strings

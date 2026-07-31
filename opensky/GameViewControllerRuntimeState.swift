@@ -157,6 +157,7 @@ extension GameViewController: RuntimeStateControlProviding {
                 metadata: metadata,
                 clock: renderer?.gameClock,
                 scripts: papyrus?.instanceStates() ?? [],
+                timers: papyrus?.timerStates() ?? [],
                 toSlot: slot
             )
             runtimeState.lastSaveOutcome = .saved(slot: slot)
@@ -192,6 +193,10 @@ extension GameViewController: RuntimeStateControlProviding {
             // guarantees the fired set is already in place when a rebuild
             // attach reads it, so no script re-runs its `OnInit` on load.
             papyrus?.restore(instanceStates: file.scripts)
+            // Timers after instances, necessarily: a saved timer names the
+            // instance it belongs to, and `restore(timerStates:)` skips (and
+            // counts) any state whose instance the runtime does not hold yet.
+            papyrus?.restore(timerStates: file.timers)
             runtimeState.lastSaveOutcome = .loaded(slot: slot)
         } catch {
             runtimeState.lastSaveOutcome = .failed(
