@@ -8,6 +8,10 @@
 #
 # Invoked by `make bootstrap` and by `make ffmpeg`. Idempotent: a matching build stamp
 # short-circuits the whole script. Set OPENSKY_FFMPEG_FORCE=1 to rebuild anyway.
+#
+# The build always lands in the shared `.vendor` of the main checkout, whichever worktree
+# it was started from, because the result is identical for all of them. Linked worktrees
+# reach it through the symlink tools/ffmpeg/link-vendor.sh creates.
 set -eu
 
 FFMPEG_VERSION=8.1.2
@@ -20,8 +24,15 @@ FLAGS_REVISION=1
 ROOT=$(git rev-parse --show-toplevel)
 cd "$ROOT"
 
-PREFIX="$ROOT/.vendor/ffmpeg"
-SRC_DIR="$ROOT/.vendor/src"
+# Link this worktree at the shared prefix (a no-op in the main checkout) before deciding
+# where to build, so both this script and Xcode see the same directory.
+"$ROOT/tools/ffmpeg/link-vendor.sh"
+
+# In the main checkout this is $ROOT; in a linked worktree it is the main checkout.
+SHARED=$(cd "$(dirname "$(git rev-parse --git-common-dir)")" && pwd)
+
+PREFIX="$SHARED/.vendor/ffmpeg"
+SRC_DIR="$SHARED/.vendor/src"
 BUILD_DIR="$SRC_DIR/ffmpeg-$FFMPEG_VERSION"
 TARBALL="$SRC_DIR/ffmpeg-$FFMPEG_VERSION.tar.xz"
 STAMP="$PREFIX/opensky-build-stamp"

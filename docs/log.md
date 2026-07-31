@@ -70,6 +70,24 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   [Record decoders](/formats/records.md) and
   [NIF Havok collision](/formats/nif-collision.md).
 
+* **Linked worktrees share the vendored ffmpeg (issue #275)**: a linked git worktree
+  started with no `.vendor` at all, and Xcode resolves a build phase's declared inputs
+  before running any phase, so the missing `$(SRCROOT)/.vendor/ffmpeg/embed-inputs.xcfilelist`
+  failed the build during planning, before the `check` phase's actionable "run `make
+  bootstrap`" message could run. `tools/ffmpeg/link-vendor.sh` now symlinks a linked
+  worktree's `.vendor` to the main checkout's, found through
+  `git rev-parse --git-common-dir`, and writes empty placeholder `.xcfilelist`s when the
+  shared prefix has no `lib/` yet so Xcode finishes planning and the `check` phase wins the
+  race as intended. `tools/vendor-ffmpeg.sh` now always builds into that shared prefix, and
+  `make vendor-link` runs the linker as a dependency of `build`, `cli`, `test`, `test-one`,
+  `test-ui`, and `install`, so a fresh worktree needs no manual `make bootstrap`.
+  `make vendor-prune` (`tools/ffmpeg/prune-vendor.sh`) converts older worktrees that still
+  hold their own full copy into symlinks, refusing to act unless the shared prefix is
+  complete. [`docs/decisions/ffmpeg-audio.md`](/decisions/ffmpeg-audio.md) corrects the
+  previous, wrong claim that a missing prefix left Xcode's declared build-phase paths
+  harmlessly absent. Remaining gap: a checkout that has never had a `make` target run in it
+  and is opened straight in Xcode.app still fails, since `make` is what creates the symlink
+  and the placeholders.
 * **A script visibly changes the world (issue #172)**: the player's use key now
   reaches script code, and script code now writes the world. `CellStreamer.onInteraction`
   became a `CallbackFanOut<InteractionEvent>`, so the new
