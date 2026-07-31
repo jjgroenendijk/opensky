@@ -59,6 +59,10 @@ final class GameViewController: NSViewController {
     /// detaches script instances on it, and the renderer's world-simulation
     /// hook ticks it once per drawn frame. nil without game data.
     var papyrus: PapyrusWorldRuntime?
+    /// Seam Papyrus natives reach the world through (issue #172), built beside
+    /// `papyrus`. Retained here because it is also the `onInteraction`
+    /// subscriber that turns a use key into a recorded activation.
+    var papyrusBridge: PapyrusWorldStateBridge?
     /// GLOB defaults of the loaded plugin, set by `wireStreaming` (issue
     /// #165). nil without game data; the time-of-day scrub then writes the
     /// renderer's clock directly instead of going through the global seam.

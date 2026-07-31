@@ -36,6 +36,25 @@ nonisolated enum ReferenceKey: Hashable, Sendable {
     /// `GeneratedReferenceAllocator`.
     case generated(UInt64)
 
+    /// The player, which no plugin reference in this engine stands for.
+    ///
+    /// Decided in issue #172, because Papyrus needs a stable activator
+    /// identity long before an actor record backs the player.
+    /// `GeneratedReferenceAllocator` starts at 1 and documents 0 as reserved,
+    /// so `.generated(0)` can never collide with an allocated key, sorts after
+    /// every plugin key, round-trips through the save file's generated-key tag
+    /// unchanged, and needs no plugin to be loaded. The alternative — the
+    /// vanilla `Skyrim.esm:000014` player reference — was rejected because it
+    /// names a record OpenSky does not decode, would be wrong for any session
+    /// whose load order lacks that plugin, and would make the player look like
+    /// an ordinary streamed reference the cell builder could try to draw.
+    ///
+    /// Never write world-state components under this key expecting them to be
+    /// drawn: no `RuntimeReferenceEntry` resolves it, so it is an activator
+    /// identity and an object-handle identity, nothing more.
+    /// Documented in docs/engine/papyrus-vm.md and docs/engine/runtime-state.md.
+    static let player = ReferenceKey.generated(0)
+
     /// Normalizes the resolved plugin name to lowercase.
     init(resolved: ResolvedFormID) {
         self = .plugin(name: resolved.plugin.lowercased(), objectID: resolved.objectID)

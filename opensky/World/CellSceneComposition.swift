@@ -116,6 +116,16 @@ nonisolated struct CellSceneComposition {
         return nil
     }
 
+    /// Which resident cell holds `key`, so a runtime-state write can be
+    /// attributed to one cell instead of rebuilding every resident one
+    /// (issue #172). Nil when no resident cell knows the reference.
+    func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
+        for scene in cells.values where scene.references[key] != nil {
+            return scene.location
+        }
+        return nil
+    }
+
     func door(reference: FormID) -> PlacedDoor? {
         cells.values
             .flatMap(\.doors)

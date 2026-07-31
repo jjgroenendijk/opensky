@@ -57,6 +57,19 @@ of the same enum, not overlapping numeric ranges that could alias.
 `ReferenceKey.resolve(_:using:)` takes a raw `FormID` and a `FormIDResolver` and returns
 `nil` for the null FormID, which means "no reference."
 
+### The player key
+
+`ReferenceKey.player` is `.generated(0)`, the sentinel the allocator reserves and never
+hands out (issue #172). The player is not a plugin reference in this engine — no record is
+decoded for it — but Papyrus needs one stable identity for it, because the player is the
+activator stored in `ReferenceActivationState.lastActivator` and the `akActionRef` handed
+to script code. The reasoning behind picking the sentinel over the vanilla
+`Skyrim.esm:000014` reference is in [Papyrus virtual machine](/engine/papyrus-vm.md).
+
+Nothing resolves a `RuntimeReferenceEntry` for this key, so it never appears in a
+`RuntimeReferenceIndex` and a cell build never sees it. It is an identity for attribution
+and for object handles, not a drawable reference.
+
 ### Total order
 
 `ReferenceKey` conforms to `Comparable` with a documented total order that downstream
@@ -196,6 +209,22 @@ The initial component set:
 | `ReferenceTransformOverride` | `.transform` | a `PlacedReference.Placement` plus the uniform `scale` XSCL carries separately |
 | `ReferenceActivationState` | `.activation` | `activationCount`, the `isOpen` marker, and `lastActivator` for M11's `OnActivate` |
 | `ReferenceDeletionState` | `.deletion` | `isDeleted` at runtime, which is not the record header's `deleted` flag |
+
+`ReferenceActivationState` has a production writer since issue #172: the Papyrus activation
+bridge subscribes to `CellStreamer.onInteraction`, maps the event's `FormID` to a
+`ReferenceKey`, and writes `activated(by:togglesOpen:)` with `ReferenceKey.player` as the
+activator. `togglesOpen` is set only for a door-style `open` action, so `isOpen` tracks
+doors and containers while a plain activation only bumps the count. Papyrus natives write
+the other three components through the same seam
+(`PapyrusWorldBridge`, [Papyrus virtual machine](/engine/papyrus-vm.md)); nothing writes
+around the store, so the journal, the dirty counts and the save see every script mutation.
+
+Every one of those writes passes the reference's resident `CellSceneLocation`, which the
+bridge asks the streamer for. That narrowing matters: an attributed mutation rebuilds one
+cell, while an unattributed one rebuilds every resident cell (see
+[Making a mutation visible](#making-a-mutation-visible-snapshot-capture-and-cell-rebuilds)).
+A reference no resident cell knows stays unattributed, which is the correct fallback rather
+than a guess.
 
 Adding a component in a later milestone means adding a `WorldStateComponentKind` case, a
 conforming value type and a `WorldStateComponentValue` case. Every store operation — set,

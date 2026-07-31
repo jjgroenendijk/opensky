@@ -106,6 +106,7 @@ identity/interior status. Refs: UESP CELL page + xEdit `wbImplementation.pas`
 | XTEL  | 32 bytes | optional teleport destination              |
 | XRDS  | float32  | optional point-light radius override       |
 | XEMI  | formID   | optional LIGH/REGN emittance               |
+| XLKR  | struct   | `linkedReferences`, repeating (see below)  |
 | VMAD  | struct   | `scriptData` attachment accumulator        |
 
 DATA: x/y/z position in game units, then x/y/z rotation in radians. Missing
@@ -117,6 +118,55 @@ UESP REFR page; xEdit `wbDefinitionsTES5.pas` XTEL `wbStruct`.
 XRDS/XEMI lighting policy: [interior lighting records](/formats/lighting.md).
 VMAD layout and PEX binding:
 [Papyrus attachment data](/formats/vmad.md).
+
+### `REFR XLKR` — linked references
+
+`XLKR` is the link `ObjectReference.GetLinkedRef(akKeyword)` follows. It is a *repeating*
+subrecord, not a packed array: one field per link, and a reference may carry several.
+`PlacedReference.linkedReferences` keeps them all in file order;
+`linkedReference(keyword:)` is the read path.
+
+Two payload sizes exist:
+
+| bytes | layout                                              | decoded as              |
+| ----- | --------------------------------------------------- | ----------------------- |
+| 8     | formID keyword (0 or `KYWD`), formID linked ref      | `keyword` + `ref`       |
+| 4     | formID linked ref only                              | untagged link, `ref`    |
+
+A keyword slot holding the null FormID means the link carries no keyword, so it decodes
+identically to the 4-byte form (`keyword == nil`). Lookups therefore never mix the two:
+`linkedReference(keyword:)` matches a tagged link only on an exact keyword, and
+`linkedReference()` — the Papyrus default — matches only an untagged one.
+
+Unlike XTEL, a wrong-size XLKR payload does not throw. XLKR is an optional repeating link,
+so an unreadable payload costs one link; a wrong-size XTEL would teleport a door to the
+wrong place. Under 4 bytes the field is skipped; 5 to 7 bytes are read as the 4-byte form
+with the remainder ignored.
+
+Real-data evidence (`PlacedReferenceLinkedRefRealDataTests`, `Skyrim.esm`, observed
+2026-07-31): 12477 XLKR subrecords on 11287 of 693333 REFR records. Every payload is
+exactly 8 bytes (12467) or exactly 4 (10) — the 10 matches the count UESP's REFR page
+states independently. 10244 of the 8-byte payloads carry a null keyword slot, so the
+untagged link is the common case, not an edge case. All 56 distinct non-null keyword slots
+are `KYWD` records and no second FormID ever is, which is what pins the field order to
+keyword-then-ref rather than the reverse; the 10 four-byte FormIDs are likewise never
+keywords. No reference repeats a keyword and none carries more than one untagged link, so
+first-match and only-match agree and `linkedReference(keyword:)` needs no tiebreak rule.
+The deepest list observed is 19 links on one reference.
+
+Flagged uncertainty: xEdit types the first member `Keyword/Ref` and admits `PLYR`, `ACHR`,
+`REFR` there alongside `KYWD`, because in the 4-byte form that slot *is* the ref. Skyrim.esm
+never puts a reference in slot 0 of an 8-byte payload, so OpenSky reads an 8-byte slot 0 as
+a keyword unconditionally. A mod that broke that convention would have its link read as
+tagged with a non-keyword rather than rejected.
+
+Refs: UESP REFR page XLKR row ("8-byte struct: formid 0 or KYWD ..., formid REFR ...; 10
+instances of 4 byte struct with just a formid in Skyrim.esm"); xEdit `dev-4.1.6`
+`Core/wbDefinitionsTES5.pas` line 9910
+`wbRArray('Linked References', wbStruct(XLKR, 'Linked Reference', [wbFormIDCk('Keyword/Ref',
+...), wbFormIDCk('Ref', ...)], cpNormal, False, nil, 1))`, whose trailing `1` is
+`aOptionalFromElement` (`Core/wbInterface.pas` line 4345) — that parameter is what makes the
+second FormID droppable and the 4-byte form legal.
 
 ## STAT -> StaticObject
 

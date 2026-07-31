@@ -2,6 +2,61 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-07-31
+
+* **A script visibly changes the world (issue #172)**: the player's use key now
+  reaches script code, and script code now writes the world. `CellStreamer.onInteraction`
+  became a `CallbackFanOut<InteractionEvent>`, so the new
+  `PapyrusWorldStateBridge.handleInteraction` subscribes beside the world sound
+  director rather than replacing it; it maps the event's load-order-relative
+  `FormID` to a `ReferenceKey` through the streamer, writes
+  `ReferenceActivationState.activated(by:togglesOpen:)` — its first production
+  caller — and queues one `OnActivate` per attached script with the activator as
+  `akActionRef`. `togglesOpen` is set only for a door-style `open` action, and an
+  event for a reference no resident cell knows is dropped rather than recorded
+  under a guessed identity. The player's session-stable identity is
+  `ReferenceKey.player`, defined as `.generated(0)`, the sentinel
+  `GeneratedReferenceAllocator` already reserved; the vanilla `Skyrim.esm:000014`
+  reference was rejected because OpenSky decodes no record for it and it would be
+  wrong for a load order without that plugin. Natives reach the engine through the
+  new `PapyrusWorldBridge` protocol, exposed to the nonisolated native bodies as
+  `PapyrusNativeContext.world`, which took the standard registry from 22 to 37
+  entries across three new families: `ObjectReference`
+  (`Enable`, `Disable`, `IsEnabled`, `Delete`, the three position getters,
+  `SetPosition`, `Activate`, `GetLinkedRef`), `GlobalVariable`
+  (`GetValue`, `GetValueInt`, `SetValue`, `SetValueInt`, through
+  `Global.ValueType.coerce`), and `Game.GetPlayer`. Every mutation is one
+  `WorldStateStore` write carrying the reference's resident `CellSceneLocation`,
+  so a scripted change rebuilds one cell instead of every resident one, and a
+  headless runtime with no world behind it fails with a reason rather than
+  guessing. Script-driven activation chains are capped at
+  `PapyrusWorldRuntime.maximumActivationDepth` of 8 and tallied. `PlacedReference`
+  learned the repeating `XLKR` subrecord that `GetLinkedRef` follows, in both its
+  8-byte keyword-plus-ref and 4-byte ref-only forms, with a null keyword slot
+  decoding as untagged; a wrong-size payload costs one link instead of throwing.
+  An env-gated sweep of `Skyrim.esm` found 12,477 links on 11,287 references, all
+  8 or 4 bytes, with 10,244 untagged and all 56 distinct keyword slots being
+  `KYWD` records — which is what pins the field order. Stated gaps: `XESP`
+  enable-parent chains are still undecoded so `Enable` and `Disable` act on the
+  receiver alone, `TranslateTo` and spline motion are not installed rather than
+  stubbed, `abFadeIn`/`abFadeOut`/`abDefaultProcessingOnly` are accepted and
+  ignored, `Global.isConstant` is recorded but not enforced, and `Delete` writes
+  its delta with no reference counting behind it. The M11.2 gate is one chain in
+  `M11ScriptedWorldAcceptanceTests`: a synthetic cell where a lever's compiled
+  `OnActivate` bytecode really runs `Self.GetLinkedRef()` and then `Disable()` on
+  what came back, driven by a real `CellStreamer` raycast and use key, ending in a
+  real `CellSceneBuilder` rebuild whose `runtimeDisabledSkipCount` of 1 is the
+  device-free evidence that the door left the drawn set. Also covered by
+  `PapyrusWorldActivationTests` (including the `activationCount` and
+  `lastActivator` save round trip), `PapyrusWorldActivationSeamTests`,
+  `PapyrusNativeObjectReferenceTests`, `PapyrusNativeObjectReferenceLinkTests`,
+  `PapyrusNativeGlobalVariableTests`, `PapyrusNativeGameTests`,
+  `PlacedReferenceLinkedRefTests`, and the env-gated
+  `PlacedReferenceLinkedRefRealDataTests`. See
+  [Papyrus virtual machine](/engine/papyrus-vm.md),
+  [interaction](/engine/interaction.md), [runtime state](/engine/runtime-state.md),
+  and [record decoders](/formats/records.md).
+
 ## 2026-07-30
 
 * **Papyrus VM in the engine loop (issue #171)**: the main-actor

@@ -5,7 +5,7 @@
 //
 // Reference: UESP "Skyrim Mod:Mod File Format/REFR"
 //   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/REFR
-// XTEL struct cross-check: xEdit dev-4.1.6 wbDefinitionsTES5.pas
+// XTEL and XLKR struct cross-check: xEdit dev-4.1.6 wbDefinitionsTES5.pas
 //   https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas
 // Layout documented in docs/formats/records.md.
 
@@ -34,6 +34,32 @@ nonisolated struct PlacedReference {
         let flags: Flags
     }
 
+    /// XLKR field: one entry of the reference's linked-reference list.
+    ///
+    /// UESP REFR and xEdit both describe an 8-byte struct of `Keyword/Ref`
+    /// followed by `Ref`; the keyword slot holds FormID 0 when the link is
+    /// untagged, which decodes here as `keyword == nil`. xEdit marks the
+    /// second member optional (`aOptionalFromElement: 1`), which is the
+    /// 4-byte form, and it too decodes as an untagged link.
+    ///
+    /// Confirmed on real data by `PlacedReferenceLinkedRefRealDataTests`:
+    /// Skyrim.esm's 12477 XLKR payloads are all exactly 8 bytes (12467) or
+    /// exactly 4 (10), every non-null first FormID is a KYWD record and no
+    /// second FormID ever is, so the order really is keyword then ref.
+    ///
+    /// Uncertainty: xEdit types slot 0 as `Keyword/Ref`, admitting a REFR
+    /// there as well as a KYWD, because in the 4-byte form slot 0 *is* the
+    /// ref. Skyrim.esm never puts a reference in slot 0 of an 8-byte payload,
+    /// so OpenSky reads an 8-byte slot 0 as a keyword unconditionally. A mod
+    /// that broke that would have its link read as tagged with a non-keyword.
+    struct LinkedReference: Equatable {
+        /// KYWD tagging the link (`LinkCarryStart`, `LinkCarryEnd`, ...).
+        /// `nil` when the link carries no keyword.
+        let keyword: FormID?
+        /// The reference this REFR links to — a REFR/ACHR/PLYR in practice.
+        let ref: FormID
+    }
+
     let formID: FormID
     /// NAME — the base object this reference places.
     let base: FormID
@@ -51,8 +77,27 @@ nonisolated struct PlacedReference {
     let lightRadius: Float?
     /// XEMI — LIGH/REGN emittance override; LIGH handled by lighting pass.
     let emittance: FormID?
+    /// XLKR — every linked reference, in file order. The subrecord repeats,
+    /// so this is an array rather than an optional; it is empty when the
+    /// reference links to nothing. Read it through
+    /// `linkedReference(keyword:)` rather than by index.
+    let linkedReferences: [LinkedReference]
     /// VMAD — Papyrus scripts attached directly to this placed reference.
     let scriptData: ScriptData
+
+    /// The link `ObjectReference.GetLinkedRef(akKeyword)` resolves to: the
+    /// first entry tagged with `keyword`, or — passing `nil`, the Papyrus
+    /// default — the first entry that carries no keyword at all. Returns nil
+    /// when no entry matches, which is `GetLinkedRef` returning `None`.
+    ///
+    /// File order decides ties, but nothing in Skyrim.esm needs a tiebreak:
+    /// the sweep in `PlacedReferenceLinkedRefRealDataTests` finds no reference
+    /// that repeats a keyword and none that carries more than one untagged
+    /// link, so first-match and only-match agree on real data. The deepest
+    /// list observed is 19 links.
+    func linkedReference(keyword: FormID? = nil) -> FormID? {
+        linkedReferences.first { $0.keyword == keyword }?.ref
+    }
 
     init(record: ESMRecord) throws {
         guard record.type == "REFR" else {
@@ -66,6 +111,7 @@ nonisolated struct PlacedReference {
         var teleportDestination: TeleportDestination?
         var lightRadius: Float?
         var emittance: FormID?
+        var linkedReferences: [LinkedReference] = []
         var scriptData = ScriptData(ownerType: record.type)
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
@@ -93,6 +139,8 @@ nonisolated struct PlacedReference {
                 lightRadius = try Self.decodeFloat(field.data)
             case "XEMI":
                 emittance = try Self.decodeFormID(field.data)
+            case "XLKR":
+                Self.appendLinkedReference(field.data, to: &linkedReferences)
             default:
                 _ = try scriptData.decode(field: field)
             }
@@ -109,6 +157,7 @@ nonisolated struct PlacedReference {
         self.teleportDestination = teleportDestination
         self.lightRadius = lightRadius
         self.emittance = emittance
+        self.linkedReferences = linkedReferences
         self.scriptData = scriptData
     }
 
@@ -122,6 +171,32 @@ nonisolated struct PlacedReference {
         guard data.count >= 4 else { return nil }
         var reader = BinaryReader(data)
         return try FormID(reader.readUInt32())
+    }
+
+    /// Decodes one XLKR payload and appends it when it is readable.
+    ///
+    /// Unlike XTEL this never throws: XLKR is a repeating optional link, so a
+    /// payload of an unexpected length costs the engine one link, whereas a
+    /// wrong-size XTEL would silently teleport a door to the wrong place. A
+    /// short or unrecognised payload is therefore skipped, matching
+    /// `decodeFloat`/`decodeFormID` above.
+    ///
+    /// Layout: 8 bytes = keyword FormID then linked-reference FormID; 4 bytes
+    /// = the linked reference alone. Trailing bytes past the struct are
+    /// ignored rather than treated as a second entry, because the subrecord
+    /// repeats instead of packing an array. Skyrim.esm only ever uses 4 and 8;
+    /// every other length is a mod-quirk path.
+    private static func appendLinkedReference(
+        _ data: Data,
+        to links: inout [LinkedReference]
+    ) {
+        var reader = BinaryReader(data)
+        guard let first = try? FormID(reader.readUInt32()) else { return }
+        if data.count >= 8, let second = try? FormID(reader.readUInt32()) {
+            links.append(LinkedReference(keyword: first.isNull ? nil : first, ref: second))
+        } else {
+            links.append(LinkedReference(keyword: nil, ref: first))
+        }
     }
 
     private static func decodeTeleport(

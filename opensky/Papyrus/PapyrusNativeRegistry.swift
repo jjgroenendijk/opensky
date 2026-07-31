@@ -52,13 +52,19 @@ nonisolated final class PapyrusNativeLog {
 nonisolated final class PapyrusNativeContext {
     var random: ConditionRandom
     let log: PapyrusNativeLog
+    /// The world a native may read and mutate, or nil in a headless runtime
+    /// with no world behind it (issue #172). A native that needs the world
+    /// returns a failure rather than guessing when this is nil.
+    let world: PapyrusWorldAccess?
 
     init(
         seed: UInt64 = ConditionRandom.defaultSeed,
-        log: PapyrusNativeLog = PapyrusNativeLog()
+        log: PapyrusNativeLog = PapyrusNativeLog(),
+        world: PapyrusWorldAccess? = nil
     ) {
         random = ConditionRandom(seed: seed)
         self.log = log
+        self.world = world
     }
 }
 
@@ -68,7 +74,14 @@ nonisolated struct PapyrusNativeRegistry: PapyrusNativeDispatch {
     }
 
     static var standard: PapyrusNativeRegistry {
-        var registry = PapyrusNativeRegistry()
+        standard(context: PapyrusNativeContext())
+    }
+
+    /// The standard registry over a caller-supplied context, which is how a
+    /// world-aware session installs the same natives with
+    /// `PapyrusNativeContext.world` set (issue #172).
+    static func standard(context: PapyrusNativeContext) -> PapyrusNativeRegistry {
+        var registry = PapyrusNativeRegistry(context: context)
         PapyrusNativeFunctions.install(into: &registry)
         return registry
     }
