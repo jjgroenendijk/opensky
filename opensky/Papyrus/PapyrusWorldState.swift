@@ -59,6 +59,24 @@ nonisolated struct PapyrusScriptEvent: Equatable, Sendable {
     let target: PapyrusInstanceKey
     let functionName: String
     let arguments: [PapyrusValue]
+    /// How many script-driven activations deep this event is (issue #172). A
+    /// player use key queues `OnActivate` at depth 1; an `Activate` native
+    /// called from that handler queues at depth 2, and
+    /// `PapyrusWorldRuntime.maximumActivationDepth` stops the chain. Every
+    /// other event stays at 0.
+    let activationDepth: Int
+
+    init(
+        target: PapyrusInstanceKey,
+        functionName: String,
+        arguments: [PapyrusValue],
+        activationDepth: Int = 0
+    ) {
+        self.target = target
+        self.functionName = functionName
+        self.arguments = arguments
+        self.activationDepth = activationDepth
+    }
 }
 
 /// Per-tick dispatch ceiling.

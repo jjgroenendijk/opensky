@@ -54,11 +54,13 @@ choice OpenSky makes in those gaps is listed under [Deviations](#deviations).
 * [World runtime and confinement](#world-runtime-and-confinement)
 * [Frame hook and fixed step](#frame-hook-and-fixed-step)
 * [Event queue](#event-queue)
+* [Activation and the world bridge](#activation-and-the-world-bridge)
 * [Instance lifecycle over cell streaming](#instance-lifecycle-over-cell-streaming)
 * [Script state in a save](#script-state-in-a-save)
 * [Lazy script library](#lazy-script-library)
 * [Tests](#tests)
 * [M11.1 acceptance](#m111-acceptance)
+* [A script changing the world, end to end](#a-script-changing-the-world-end-to-end)
 * [Deviations](#deviations)
 * [Scope](#scope)
 
@@ -196,7 +198,7 @@ to queue native results and inspect a bounded call tail.
 ## Native registry
 
 `PapyrusNativeRegistry` keys functions case-insensitively by both script and
-function name. `.empty` installs nothing. `.standard` installs 22 entries in
+function name. `.empty` installs nothing. `.standard` installs 37 entries in
 one place:
 
 | family | functions | headless policy |
@@ -205,10 +207,12 @@ one place:
 | `Utility` | `Wait`, `WaitGameTime`, `RandomInt`, `RandomFloat` | suspend on the injected clock or use a seeded generator |
 | `Math` | `Abs`, `Floor`, `Ceiling`, `Sqrt`, `Pow`, `DegreesToRadians`, `RadiansToDegrees`, `Sin`, `Cos`, `Tan`, `Asin`, `Acos`, `Atan` | deterministic binary32 calculation |
 | `ObjectReference` animation | `PlayAnimation`, `PlayAnimationAndWait`, `PlayGamebryoAnimation` | return true immediately, log and tally the deferred-animation deviation |
+| `ObjectReference` world | `Enable`, `Disable`, `IsEnabled`, `Delete`, `GetPositionX`, `GetPositionY`, `GetPositionZ`, `SetPosition`, `Activate`, `GetLinkedRef` | fail with an invalid-arguments reason; the interpreter substitutes the declared default and the script continues |
+| `GlobalVariable` | `GetValue`, `GetValueInt`, `SetValue`, `SetValueInt` | same failure policy |
+| `Game` | `GetPlayer` | same failure policy |
 
-The corpus census found no string or form native that can be answered honestly
-without world context. String basics are PEX opcodes, while the ranked form
-functions require object identity, registration, or world state. They therefore
+The corpus census found no string native that can be answered honestly without
+world context, and string basics are PEX opcodes rather than natives, so they
 remain visible unknowns instead of receiving plausible-looking stubs.
 Animation graph behavior belongs to M14. Until then the three animation calls
 are the sole intentional success-without-effect family, and every occurrence is
@@ -217,6 +221,60 @@ measurable.
 `PapyrusNativeContext` owns the seeded random source and bounded debug log.
 Tests can inject a seed and assert exact sequences without reading a host clock
 or global random generator.
+
+### The three world families
+
+The last three rows are the natives that reach the world through
+[the world bridge](#the-world-bridge), and they share one policy. Each takes
+its `self` from `PapyrusNativeCall.receiver` and turns it into a
+`ReferenceKey`; a headless runtime, a receiver no world runtime handed out, or
+a missing receiver is a failure with a reason rather than a guess. Every
+mutation is one `WorldStateStore` write, attributed to the reference's resident
+cell so the rebuild fan-out stays narrow.
+
+A write never requires the reference to be resident — a script may disable
+something in a cell nobody has streamed, and the delta waits in the store. A
+read that needs the plugin baseline (`IsEnabled`, the position getters, and
+`SetPosition`, which preserves the rotation, the XSCL scale and any axis it is
+not given) does require it, because there is nothing honest to answer with
+otherwise.
+
+`GetLinkedRef` resolves the REFR's decoded `XLKR` list: with a keyword the
+first link tagged with it, with `None` the first untagged link. Every "no
+answer" case returns `PapyrusValue.none`, which is what Papyrus `None` is and
+what the interpreter would substitute for a failed object-returning call.
+Because `XLKR` stores its keyword as a load-order-relative FormID while the
+argument arrives as world identity, each candidate tag is resolved through the
+session's master-list resolver and compared as a `ReferenceKey`; a tag this
+session cannot name never matches.
+
+`Activate` is `activate(_:by:togglesOpen:)` and nothing else: it never re-runs
+the interaction raycast. The activator is argument 0, falling back to the
+player for an absent argument, for `None`, and for a handle with no world
+identity. It returns false only when the recursion cap refused the activation.
+
+`GlobalVariable` writes go through `WorldStateStore.setGlobal(_:formID:defaults:)`,
+so `Global.ValueType.coerce` rounds a short or long global on every write.
+`GetValueInt` truncates toward zero and saturates at the `Int32` bounds. The
+reads fail for a key this session defines no global for, because zero is a
+value a script would act upon; the writes do not, because in a session with no
+`GlobalStore` the first write is what creates the override.
+
+`Game.GetPlayer` answers with the opaque handle for
+[`ReferenceKey.player`](#the-players-referencekey), stable for the session, so
+the usual `akActionRef == Game.GetPlayer()` guard works.
+
+### Stated simplifications and gaps
+
+| behavior | what OpenSky does | why |
+| --- | --- | --- |
+| `Enable(abFadeIn)`, `Disable(abFadeOut)` | argument accepted and ignored | M11 has no fade; the reference appears or disappears on the next cell rebuild, and the state written is identical either way |
+| `Activate(_, abDefaultProcessingOnly)` | argument accepted and ignored | there is no built-in activation behavior on this path to restrict the call to |
+| `Activate` and `isOpen` | never toggles it | only the player's use key knows the interaction was an `open` action; a script-side `Activate` records the activation without claiming the target opened |
+| `TranslateTo`, `TranslateToRef`, `SplineTranslateTo` | not installed | interpolated motion and `OnTranslationComplete` need a mover the world runtime does not have; deferred to a later milestone rather than stubbed into looking successful |
+| `XESP` enable-parent chains | not decoded | `Enable` and `Disable` act on the receiver alone, so a reference enabled by a parent stays as the plugin authored it. A documented gap for M18+ |
+| `Global.isConstant` | recorded, not enforced | the Creation Kit's rule forbids *editing* a constant global in the editor, which is about authored data; no open documentation says the engine refuses a scripted write, so one is applied and recorded like any other |
+| `Delete` | writes the delta unconditionally | the Creation Kit documents `Delete` as taking effect only once nothing holds the reference; OpenSky has no reference counting yet |
 
 ## Deterministic scheduler
 
@@ -438,6 +496,117 @@ same resolution the interpreter itself uses, so state priority is respected.
 persists in the save; `pendingOnInit` covers the window between enqueue and
 dispatch so a rebuild in between cannot enqueue a second one.
 
+## Activation and the world bridge
+
+Issue #172 connects the player's use key to script code and opens the seam every
+world-touching native reaches the engine through. Four decisions carry it.
+
+### The player's `ReferenceKey`
+
+The player is not a plugin reference in this engine: no record is decoded for it
+and no cell streams it. It still needs one session-stable identity, because it
+is the activator recorded in `ReferenceActivationState.lastActivator` and the
+`akActionRef` script code receives.
+
+`ReferenceKey.player` is that identity, and it is `.generated(0)`.
+`GeneratedReferenceAllocator` starts at 1 and documents 0 as reserved, so the
+sentinel can never collide with an allocated key; it sorts after every plugin
+key, needs no plugin loaded, and round-trips through the save file's
+generated-key tag unchanged. Using the vanilla `Skyrim.esm:000014` player
+reference was rejected: it names a record OpenSky does not decode, it would be
+wrong for any load order without that plugin, and it would make the player look
+like an ordinary streamed reference the cell builder might try to draw. The
+constant lives on `ReferenceKey` so no call site spells the sentinel out.
+
+Nothing resolves a `RuntimeReferenceEntry` for the player, so a component
+written under this key is bookkeeping only — it is an activator identity and a
+handle identity, not something that can be drawn.
+
+### `OnActivate` and `akActionRef`
+
+`PapyrusWorldRuntime.queueOnActivate(target:activator:)` enqueues one
+`PapyrusScriptEvent` per script instance attached to the activated reference,
+iterating `instancesByKey` in `PapyrusInstanceKey` order so the queue is
+deterministic. The function name is `onActivateEventName` (`"OnActivate"`) and
+argument 0 is the activator as `PapyrusValue.object(handle)`, matching
+`OnActivate(ObjectReference akActionRef)`. A target carrying no scripts queues
+nothing and is not an error; the activation is still recorded.
+
+The activator needs a handle even when it has no script instance, which is
+exactly the player's case. `PapyrusWorldRuntime.objectHandle(for:)` answers with
+the live instance handle when the reference carries scripts — the same handle
+VMAD object properties bind to — and otherwise mints an opaque handle, cached so
+it is stable for the session. Opaque handles are allocated downwards from
+`UInt64.max` while `PapyrusRuntime` allocates instance handles upwards from 1,
+which is what keeps the two ranges apart. `referenceKey(for:)` resolves either
+kind back to a `ReferenceKey`. A handle with no instance behind it still
+dispatches natives correctly, because the interpreter takes the script name from
+the operand's declared type.
+
+Stated edge: a reference that gains a script instance after an opaque handle was
+handed out keeps both handles. Both resolve to the same `ReferenceKey`, so world
+writes stay correct; only handle-identity comparison inside script code could
+notice.
+
+### The world bridge
+
+Native bodies are nonisolated and `@Sendable`; `WorldStateStore` and
+`PapyrusWorldRuntime` are `@MainActor`. The seam that reconciles the two is in
+`opensky/Papyrus/PapyrusWorldBridge.swift`:
+
+| Type | Isolation | Role |
+| --- | --- | --- |
+| `PapyrusWorldBridge` | `@MainActor` protocol | every world operation a native may perform |
+| `PapyrusWorldStateBridge` | `@MainActor` class | the production conformer, over `WorldStateStore` |
+| `PapyrusWorldAccess` | nonisolated class | the façade a native holds, as `context.world` |
+| `PapyrusWorldReferenceSource` | nonisolated protocol | decoded references and their resident cell |
+
+The protocol covers handle-to-key and key-to-handle resolution, the resolved
+`ReferenceState`, the decoded `PlacedReference` behind a key, the cell a
+reference is resident in, one component write, global read and write, and
+`activate(_:by:togglesOpen:)`. Every mutation goes through
+`WorldStateStore.set(_:for:in:)` or `setGlobal(_:formID:defaults:)` — nothing
+writes around the store, so the journal, the dirty counts and the save all see
+it. Writes carry the reference's resident cell when the source knows it, which
+narrows the rebuild fan-out to that one cell.
+
+`PapyrusWorldAccess` mirrors the protocol one-for-one and hops with
+`MainActor.assumeIsolated`. That is an assertion rather than a suppression: a
+native reached off the main actor traps instead of racing, and native bodies are
+only ever run synchronously from the world runtime's tick, which is on the main
+actor. `@unchecked Sendable` and a global mutable were both rejected.
+
+A headless runtime leaves `PapyrusNativeContext.world` nil, so every native
+access is optional and a world-needing native fails cleanly instead of guessing.
+The world-aware session is built by `PapyrusNativeRegistry.standard(context:)`
+with a context carrying the access façade, and installed at
+`GameViewControllerPapyrus.wirePapyrus` where the runtime is constructed.
+Ownership runs one way: the registry inside the runtime owns the bridge, so the
+bridge holds the runtime and the streamer weakly.
+
+`PapyrusWorldStateBridge.handleInteraction(_:)` is the `onInteraction`
+subscriber described in [interaction](/engine/interaction.md). It maps the
+event's `FormID` to a `ReferenceKey`, records
+`ReferenceActivationState.activated(by:togglesOpen:)` with the player as
+activator — `togglesOpen` set only for a door-style `open` action — and queues
+the target's `OnActivate`. This is that method's first production caller.
+
+### The activation recursion cap
+
+A script activating a reference whose `OnActivate` activates it back would
+ping-pong forever, one round per tick, because events are queued rather than
+dispatched inline. Each `PapyrusScriptEvent` therefore carries an
+`activationDepth`: a player use key queues at depth 1, an activation performed
+while dispatching a depth-*n* event queues at depth *n+1*, and every other event
+stays at 0. `PapyrusWorldRuntime.maximumActivationDepth` is 8; past it nothing is
+queued, no activation is recorded, and `PapyrusTally.noteActivationRecursionCapped`
+increments `activationRecursionCappedTotal`, which
+`PapyrusTallySnapshot` carries.
+
+Stated simplification: a latent handler that resumes on a later tick has lost the
+depth of the event that started it and re-enters at 0. The per-tick event budget
+still bounds what that can cost in one frame.
+
 ## Instance lifecycle over cell streaming
 
 `CellStreamer` gained two engine-level announcements and no dependency on the
@@ -628,6 +797,70 @@ control, or accessibility readout. The durable acceptance result is
 `PapyrusAcceptanceRealDataTests`. M11.2 owns the discoverable
 `World > Scripts` surface. This exception is also recorded in the
 [sidebar acceptance ledger](/tools/sidebar-acceptance.md).
+
+## A script changing the world, end to end
+
+Issue #172's gate is one chain rather than a set of unit results, pinned by
+`M11ScriptedWorldAcceptanceTests` over the fixture in
+`openskyTests/M11ScriptedWorldChain.swift`. It needs no game data, and only its
+last step needs a GPU.
+
+The fixture is one synthetic exterior cell holding two references. The lever
+carries a VMAD-attached `LeverScript` and one untagged `XLKR` link naming the
+door; the door carries no script and is drawn. `LeverScript extends
+ObjectReference`, and its compiled `OnActivate` body is the three instructions a
+compiler emits for `ObjectReference linked = Self.GetLinkedRef()` followed by
+`linked.Disable()`. That bytecode really executes on the interpreter — no probe
+handler stands in for it.
+
+The base script matters, and it is the reason the chain is honest. A method call
+on a handle that has a live instance dispatches under that instance's root
+script name, so `Self.GetLinkedRef()` inside `LeverScript` would look for a
+native called `LeverScript.GetLinkedRef` and find nothing. The retail game
+solves this by shipping `ObjectReference.pex`, whose functions are `native`
+declarations with no body; `resolveMethod` walks the inheritance chain, finds
+the declaration, and dispatches under the declaring script's name. The fixture
+builds that same base object in code, which is why the natives resolve as
+`ObjectReference.GetLinkedRef` and `ObjectReference.Disable`. Remove it and the
+gate fails on `unimplementedNativeTotal`.
+
+The chain the test drives, and what each step is asserted by:
+
+1. **Use key.** The test enters at `CellStreamer.update(cameraPosition:
+   interactionRay:activate:)`, the same call the render loop makes with the use
+   key held. Everything above it is `GameViewController` key handling and an
+   `MTKView` draw callback, which a headless test cannot drive; the raycast, the
+   interaction target, the `InteractionEvent`, and the multicast fan-out are all
+   real from that call downward.
+2. **Activation recorded.** `ReferenceActivationState` on the lever with
+   `activationCount == 1` and `lastActivator == .player`, and `isOpen` still
+   false because an `activate` interaction is not a door.
+3. **`OnActivate` dispatched.** The event drains through the tick loop and the
+   handle that arrived as `akActionRef` resolves back to `ReferenceKey.player`.
+   The tally shows three native calls, no fault, no unimplemented native and no
+   native failure — evidence the bytecode ran to the end rather than degrading
+   into declared defaults.
+4. **World-state delta.** `ReferenceEnableState(isEnabled: false)` on the door,
+   written by the script and not by the test. Both writes are attributed to the
+   cell the streamer resolved: `dirtyCount(in:)` is 2 and
+   `unattributedDirtyCount` is 0, so the rebuild fan-out stays narrowed to that
+   one cell.
+5. **Off the drawn set.** The delta goes back through a real `CellSceneBuilder`
+   over a synthetic plugin whose object IDs match the session's, and the rebuilt
+   cell reports `runtimeDisabledSkipCount == 1`, one drawn reference, one render
+   instance at the lever's position, and no collision shape for the door. The
+   door stays in `CellScene.references`, because disabled is not deleted. This
+   step is gated on a Metal device; steps one through four assert
+   unconditionally, so the gate still means something on a device-less runner.
+
+Activation surviving a save is a separate assertion in
+`PapyrusWorldActivationTests`: two activations encode and decode with
+`activationCount` and `lastActivator` intact through
+[the OpenSky save container](/formats/opensky-save.md), which is what makes a
+lever that has been thrown stay thrown across a reload.
+
+The discoverable `World > Scripts` sidebar surface and the M11 milestone
+acceptance record are separate items and are not part of this gate.
 
 ## Deviations
 

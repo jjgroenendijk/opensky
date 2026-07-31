@@ -8,6 +8,9 @@ nonisolated enum PapyrusNativeFunctions {
         installUtility(into: &registry)
         installMath(into: &registry)
         installDeferredAnimation(into: &registry)
+        installObjectReference(into: &registry)
+        installGlobalVariable(into: &registry)
+        installGame(into: &registry)
     }
 
     static func failure(

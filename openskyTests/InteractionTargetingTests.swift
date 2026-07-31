@@ -47,7 +47,7 @@ extension CellStreamerTests {
         var targets: [InteractionTarget?] = []
         var events: [InteractionEvent] = []
         streamer.onInteractionTargetChanged = { targets.append($0) }
-        streamer.onInteraction = { events.append($0) }
+        streamer.onInteraction.add { events.append($0) }
 
         streamer.update(cameraPosition: Self.center)
         let position = Self.center + SIMD3<Float>(10, 0, 0)

@@ -51,7 +51,6 @@ extension GameViewController {
                 activate: self?.cameraInput.consumeActivation() ?? false
             )
         }
-        wirePapyrus(provider: provider, renderer: renderer, streamer: controller)
         // Live XCLR region feed (M7.2.3): the streamer pushes the center cell's
         // REGN set into the weather runtime so region-weighted selection runs
         // live. Same main thread as the draw loop -> WeatherSystem stays
@@ -63,6 +62,9 @@ extension GameViewController {
             self?.updateHUDTarget(target)
         }
         wireAudioCallbacks(controller)
+        // After the audio callbacks, so the engine's own interaction handling
+        // stays first in the multicast order and Papyrus runs beside it.
+        wirePapyrus(provider: provider, renderer: renderer, streamer: controller)
         renderer.terrainSampler = { [weak controller] position in
             controller?.sampleTerrain(at: position)
         }
@@ -105,10 +107,11 @@ extension GameViewController {
 
     /// World-audio directors are built lazily alongside the audio engine, so
     /// each callback remains a no-op until audio is enabled. Papyrus
-    /// OnActivate will subscribe beside the interaction handler, not replace
-    /// this engine event.
+    /// `OnActivate` subscribes beside this interaction handler through the
+    /// same `CallbackFanOut`, and does not replace this engine event
+    /// (issue #172).
     private func wireAudioCallbacks(_ controller: CellStreamer) {
-        controller.onInteraction = { [weak self] event in
+        controller.onInteraction.add { [weak self] event in
             self?.soundDirector?.handleInteraction(event)
         }
         controller.onInteractionAnimation = { [weak self] event in

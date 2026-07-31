@@ -68,6 +68,7 @@ nonisolated struct PapyrusTallySnapshot: Equatable, Sendable {
     let nativeFailureCounts: [String: Int]
     let nativeFailureTotal: Int
     let deferredAnimationTotal: Int
+    let activationRecursionCappedTotal: Int
     let suspensionTotal: Int
     let faultTotal: Int
     let faultKindCounts: [String: Int]
@@ -89,6 +90,9 @@ nonisolated final class PapyrusTally {
     private(set) var nativeFailureCounts: [String: Int] = [:]
     private(set) var nativeFailureTotal = 0
     private(set) var deferredAnimationTotal = 0
+    /// Activations refused because the chain reached
+    /// `PapyrusWorldRuntime.maximumActivationDepth` (issue #172).
+    private(set) var activationRecursionCappedTotal = 0
     private(set) var suspensionTotal = 0
     private(set) var faultTotal = 0
     private(set) var faultKindCounts: [String: Int] = [:]
@@ -127,6 +131,7 @@ nonisolated final class PapyrusTally {
             nativeFailureCounts: nativeFailureCounts,
             nativeFailureTotal: nativeFailureTotal,
             deferredAnimationTotal: deferredAnimationTotal,
+            activationRecursionCappedTotal: activationRecursionCappedTotal,
             suspensionTotal: suspensionTotal,
             faultTotal: faultTotal,
             faultKindCounts: faultKindCounts,
@@ -183,6 +188,11 @@ nonisolated final class PapyrusTally {
         case .deferredAnimation:
             deferredAnimationTotal += 1
         }
+    }
+
+    /// One `Activate` refused because the activation chain hit its depth cap.
+    func noteActivationRecursionCapped() {
+        activationRecursionCappedTotal += 1
     }
 
     func noteSuspension() {

@@ -116,9 +116,13 @@ extension PapyrusWorldRuntime {
             skips.note(.undefinedEventFunction)
             return nil
         }
-        return runtime.invoke(
-            event.functionName, on: handle, arguments: event.arguments
-        )
+        // An `Activate` native called from this handler queues its own events
+        // one level deeper, which is what bounds an activation ping-pong.
+        return withActivationDepth(event.activationDepth) {
+            runtime.invoke(
+                event.functionName, on: handle, arguments: event.arguments
+            )
+        }
     }
 
     private func definesFunction(

@@ -53,8 +53,23 @@ targeted yet.
 ## Activation
 
 Target changes publish `InteractionTarget`, containing the placed interaction, exact hit
-position, and distance. F publishes one `InteractionEvent` for the current target. This
-event is the stable seam reserved for the later Papyrus `OnActivate` subscriber.
+position, and distance. F publishes one `InteractionEvent` for the current target.
+
+That event is multicast. `CellStreamer.onInteraction` is a `CallbackFanOut<InteractionEvent>`
+rather than one optional closure, so several subscribers coexist and registration order is
+delivery order. `GameViewController` registers two: world audio first
+(`WorldAudioSoundDirector.handleInteraction`, which plays the activation sound), then the
+Papyrus activation bridge (`PapyrusWorldStateBridge.handleInteraction`, which records the
+activation and queues `OnActivate`). Papyrus subscribes beside the engine's own behavior and
+never replaces it — the raycast, the recorded activation, the door transition and the sound
+are independent consequences of the same event.
+
+The event carries a load-order-relative `FormID`, so the Papyrus subscriber maps it to a
+session-stable `ReferenceKey` through `CellStreamer.referenceEntry(formID:)` before writing
+anything; an event for a reference no resident cell knows is dropped rather than recorded
+under a guessed identity. The details of what it then writes are in
+[Papyrus virtual machine](/engine/papyrus-vm.md) and
+[runtime state](/engine/runtime-state.md).
 
 DOOR uses that same event path. When the selected interaction has action `Open`, the
 streamer requests a transition for that exact REFR. A door with XTEL follows the existing

@@ -60,9 +60,18 @@ extension CellStreamer {
         return composition.referenceEntry(key: key)
     }
 
+    /// Which resident cell holds a reference, so a Papyrus world write can be
+    /// attributed to one cell instead of every resident one (issue #172).
+    func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
+        if let interiorScene {
+            return interiorScene.references[key] == nil ? nil : interiorScene.location
+        }
+        return composition.cellLocation(of: key)
+    }
+
     func activateInteractionTarget() {
         guard let interactionTarget else { return }
-        onInteraction?(InteractionEvent(target: interactionTarget))
+        onInteraction(InteractionEvent(target: interactionTarget))
         guard interactionTarget.interaction.action == .open else { return }
         guard
             requestDoorTransition(activeDoor(reference: interactionTarget.interaction.reference))
@@ -81,3 +90,8 @@ extension CellStreamer {
         return composition.door(reference: reference)
     }
 }
+
+/// The streamer is the app's answer to "what does this reference decode to,
+/// and where is it right now" for the Papyrus world bridge (issue #172). The
+/// three members it needs already existed; the conformance only names them.
+extension CellStreamer: PapyrusWorldReferenceSource {}

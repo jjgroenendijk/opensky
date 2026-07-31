@@ -68,6 +68,18 @@ final class PapyrusWorldRuntime {
     /// Script names the provider already failed to resolve, keyed lowercased.
     var unresolvableScripts: Set<String> = []
 
+    /// Handles handed out for references that carry no script instance — the
+    /// player above all — so a native can name them (issue #172). Allocated
+    /// downwards from `UInt64.max` while `PapyrusRuntime` allocates instance
+    /// handles upwards from 1, which is what keeps the two ranges apart.
+    var opaqueHandlesByKey: [ReferenceKey: PapyrusObjectHandle] = [:]
+    var opaqueKeysByHandle: [PapyrusObjectHandle: ReferenceKey] = [:]
+    var nextOpaqueHandleValue = UInt64.max
+    /// Activation depth of the event currently being dispatched; 0 while
+    /// nothing is dispatching, which is the depth a player use-key activation
+    /// starts from. Read by `queueOnActivate(target:activator:)`.
+    private(set) var currentActivationDepth = 0
+
     let suspensionTracker: PapyrusWorldSuspensionTracker
     var accumulatorSeconds = 0.0
 
@@ -75,9 +87,29 @@ final class PapyrusWorldRuntime {
     /// snowball into a burst of catch-up simulation.
     static let maximumStepsPerAdvance = 4
 
+    /// How deep a chain of script-driven activations may go before the world
+    /// runtime refuses to queue another `OnActivate` (issue #172). Player use
+    /// keys enter at depth 0, so eight `Activate` calls may chain off one
+    /// press. Refusals are tallied as `activationRecursionCappedTotal`.
+    static let maximumActivationDepth = 8
+
     static let onInitEventName = "OnInit"
     static let onCellAttachEventName = "OnCellAttach"
     static let onLoadEventName = "OnLoad"
+    static let onActivateEventName = "OnActivate"
+
+    /// Marks the depth every activation queued from inside this dispatch sits
+    /// at. A latent handler that resumes on a later tick has lost the depth
+    /// and re-enters at 0; that is a stated simplification, and the per-tick
+    /// event budget still bounds the damage.
+    func withActivationDepth<Result>(
+        _ depth: Int, _ body: () -> Result
+    ) -> Result {
+        let previous = currentActivationDepth
+        currentActivationDepth = depth
+        defer { currentActivationDepth = previous }
+        return body()
+    }
 
     init(runtime: PapyrusRuntime, fixedStepSeconds: Double = 1.0 / 30.0) {
         self.runtime = runtime

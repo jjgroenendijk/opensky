@@ -26,9 +26,26 @@ extension GameViewController {
             let scriptSource = provider as? ScriptDataProviding,
             let fileSystem = scriptSource.scriptFileSystem
         else { return }
-        let world = PapyrusWorldRuntime(runtime: PapyrusRuntime(files: []))
-        world.scriptProvider = Self.scriptProvider(fileSystem: fileSystem)
+        let bridge = PapyrusWorldStateBridge(
+            worldState: worldState, references: controller, globals: globalStore
+        )
+        bridge.clockSource = { [weak renderer] in renderer?.gameClock }
         let resolver = scriptSource.scriptFormIDResolver
+        bridge.formIDResolver = resolver
+        let world = PapyrusWorldRuntime(runtime: PapyrusRuntime(
+            files: [],
+            nativeDispatch: PapyrusNativeRegistry.standard(
+                context: PapyrusNativeContext(world: PapyrusWorldAccess(bridge: bridge))
+            )
+        ))
+        // Closes the cycle the other way round: the registry inside `world`
+        // owns the bridge, so the bridge holds the runtime weakly.
+        bridge.world = world
+        papyrusBridge = bridge
+        controller.onInteraction.add { [weak bridge] event in
+            bridge?.handleInteraction(event)
+        }
+        world.scriptProvider = Self.scriptProvider(fileSystem: fileSystem)
         controller.onCellAttached = { [weak world] scene, firstIntegration in
             guard let world, let location = scene.location else { return }
             world.attach(

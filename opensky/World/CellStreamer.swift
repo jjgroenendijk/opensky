@@ -104,9 +104,10 @@ final class CellStreamer {
     var interactionTarget: InteractionTarget?
     /// Fires when view-ray target identity, text, or hit details change.
     var onInteractionTargetChanged: ((InteractionTarget?) -> Void)?
-    /// Engine-owned use-key event. HUD observes targets; Papyrus subscribes
-    /// here later without taking ownership of raycast or door behavior.
-    var onInteraction: ((InteractionEvent) -> Void)?
+    /// Engine-owned use-key event, multicast since issue #172: world audio and
+    /// the Papyrus activation bridge both subscribe, in registration order,
+    /// and neither takes ownership of the raycast or of door behavior.
+    let onInteraction = CallbackFanOut<InteractionEvent>()
     /// Player-driven door motion boundaries. World audio consumes these to
     /// start the authored movement loop, retire it, and play the close sound.
     var onInteractionAnimation: ((InteractionAnimationEvent) -> Void)?
