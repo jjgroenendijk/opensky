@@ -7,7 +7,10 @@ import Testing
 struct PapyrusNativeRegistryTests {
     @Test func standardInstallIsCaseInsensitiveAndEmptyIsEmpty() {
         let standard = PapyrusNativeRegistry.standard
-        #expect(standard.count == 37)
+        #expect(standard.count == 43)
+        #expect(standard.contains(
+            scriptName: "form", functionName: "REGISTERFORUPDATE"
+        ))
         #expect(standard.contains(scriptName: "utility", functionName: "WAIT"))
         #expect(standard.contains(scriptName: "math", functionName: "sqrt"))
         #expect(standard.contains(scriptName: "objectreference", functionName: "DISABLE"))

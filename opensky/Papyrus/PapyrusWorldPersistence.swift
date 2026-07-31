@@ -38,6 +38,34 @@ extension PapyrusWorldRuntime {
         }
     }
 
+    /// Pending update-timer slots of persistent instances only, sorted by
+    /// instance key then slot order so the output is byte-deterministic input
+    /// for stage B's `PTMR` save chunk. Non-persistent instances lose their
+    /// timers on cell unload, so a save never carries them.
+    func timerStates() -> [PapyrusTimerState] {
+        updateTimers.states(for: persistentKeys, stepSeconds: fixedStepSeconds)
+    }
+
+    /// Re-arms saved timer slots against the current clock. Tolerant by
+    /// design: a state naming an instance this runtime does not hold is
+    /// counted (`unknownSaveTimerTarget`), never a fault. Each restored slot
+    /// re-anchors to now with its saved remaining delay, so the game-time
+    /// difference between save and load never counts toward a timer.
+    func restore(timerStates: [PapyrusTimerState]) {
+        for state in timerStates {
+            guard instancesByKey[state.key] != nil else {
+                skips.note(.unknownSaveTimerTarget)
+                continue
+            }
+            updateTimers.restore(
+                key: state.key,
+                slot: state.slot,
+                interval: state.interval,
+                remaining: state.remaining
+            )
+        }
+    }
+
     private func restoreInstance(_ state: PapyrusInstanceState) {
         guard
             let handle = existingOrCreatedHandle(for: state.key),
