@@ -340,6 +340,10 @@ final class FakeWorldProviders: WorldControlProviders {
     /// TriggerControlProviding (issue #173) is delegated the same way; the
     /// forwarding conformance lives in `WorldPanelTests.swift`.
     let triggers = FakeTriggerProvider()
+
+    /// ScriptControlProviding (issue #278) is delegated the same way; the
+    /// forwarding conformance lives in `DestinationRegistryScriptsTests.swift`.
+    let scripts = FakeScriptProvider()
 }
 
 struct DestinationRegistryTests {
@@ -351,33 +355,22 @@ struct DestinationRegistryTests {
 
     @Test
     func registryOrderAndIdentifiers() {
-        #expect(
-            DestinationRegistry.all.map(\.id)
-                == [
-                    "world", "environment", "hudInteraction", "systemMenu",
-                    "audio", "runtimeState", "uiLab", "assetBrowser"
-                ]
-        )
+        #expect(DestinationRegistry.all.map(\.id) == [
+            "world", "environment", "hudInteraction", "systemMenu",
+            "audio", "runtimeState", "scripts", "uiLab", "assetBrowser"
+        ])
         // Accessibility identifiers are the UI-test contract; pin them literally.
-        #expect(
-            DestinationRegistry.all.map(\.sidebarIdentifier) == [
-                "Destination-world",
-                "Destination-environment",
-                "Destination-hudInteraction",
-                "Destination-systemMenu",
-                "Destination-audio",
-                "Destination-runtimeState",
-                "Destination-uiLab",
-                "Destination-assetBrowser"
-            ]
-        )
-        #expect(
-            DestinationRegistry.worldInspectors.map(\.id)
-                == [
-                    "world", "environment", "hudInteraction", "systemMenu",
-                    "audio", "runtimeState", "uiLab"
-                ]
-        )
+        #expect(DestinationRegistry.all.map(\.sidebarIdentifier) == [
+            "Destination-world", "Destination-environment",
+            "Destination-hudInteraction", "Destination-systemMenu",
+            "Destination-audio", "Destination-runtimeState",
+            "Destination-scripts", "Destination-uiLab",
+            "Destination-assetBrowser"
+        ])
+        #expect(DestinationRegistry.worldInspectors.map(\.id) == [
+            "world", "environment", "hudInteraction", "systemMenu",
+            "audio", "runtimeState", "scripts", "uiLab"
+        ])
         #expect(DestinationRegistry.defaultDestinationID == "world")
     }
 
