@@ -28,6 +28,16 @@ final class PapyrusWorldRuntime {
     let fixedStepSeconds: Double
     /// Per-tick dispatch ceiling; tests lower it to force carry-over.
     var budget: PapyrusTickBudget = .standard
+    /// Freezes the VM's own clock (issue #278). While true,
+    /// `advance(delta:gameClock:)` returns a zero report and accumulates
+    /// nothing, so unpausing never bursts through the time that passed.
+    /// `stepFixed(gameClock:)` stays callable, which is what the sidebar's
+    /// step-one-tick control drives.
+    ///
+    /// Independent of `Renderer.worldSimPaused`, which the menu-mode
+    /// controller owns: menu mode delivers delta 0 to the whole world
+    /// simulation, while this pauses only the script VM.
+    var isPaused = false
 
     // Stored state is internal rather than private because the lifecycle,
     // event, and persistence satellites live in separate files.
@@ -83,6 +93,19 @@ final class PapyrusWorldRuntime {
     /// starts from. Read by `queueOnActivate(target:activator:)`.
     private(set) var currentActivationDepth = 0
 
+    /// What the most recent tick that actually stepped did, so an inspector
+    /// can read the per-frame budget spend the callers otherwise discard.
+    /// Deliberately not overwritten by a zero-step `advance`: a paused or
+    /// sub-step frame would otherwise wipe the only sample there is.
+    private(set) var lastTickReport: PapyrusTickReport = .zero
+
+    /// Preformatted names of the most recently dispatched events, oldest
+    /// first, at most `recentEventLimit` of them. `eventQueue` holds what is
+    /// still pending, so this is the only record of what already ran.
+    private(set) var recentEvents: [String] = []
+    /// Recent-event entries pushed out of the ring by newer ones.
+    private(set) var droppedRecentEventCount = 0
+
     let suspensionTracker: PapyrusWorldSuspensionTracker
     var accumulatorSeconds = 0.0
 
@@ -95,6 +118,11 @@ final class PapyrusWorldRuntime {
     /// keys enter at depth 0, so eight `Activate` calls may chain off one
     /// press. Refusals are tallied as `activationRecursionCappedTotal`.
     static let maximumActivationDepth = 8
+
+    /// Entries `recentEvents` retains, matching
+    /// `RuntimeStateSnapshot.journalTailLimit`: both feed a sidebar readout
+    /// that shows recent history rather than a whole session.
+    static let recentEventLimit = 8
 
     static let onInitEventName = "OnInit"
     static let onCellAttachEventName = "OnCellAttach"
@@ -127,6 +155,24 @@ final class PapyrusWorldRuntime {
         suspensionTracker = tracker
         scheduler.onResume = { call, outcome in
             tracker.noteResume(of: call, outcome: outcome)
+        }
+    }
+
+    /// Keeps `report` as the latest tick sample. Lives here rather than in the
+    /// event satellite because the setter is private to this file.
+    func retainTickReport(_ report: PapyrusTickReport) {
+        lastTickReport = report
+    }
+
+    /// Appends `event` to the recent-event ring, evicting the oldest entry
+    /// and counting it once the ring is full.
+    func recordDispatchedEvent(_ event: PapyrusScriptEvent) {
+        recentEvents.append(
+            "\(event.functionName) -> \(event.target.scriptName)"
+        )
+        while recentEvents.count > Self.recentEventLimit {
+            recentEvents.removeFirst()
+            droppedRecentEventCount += 1
         }
     }
 

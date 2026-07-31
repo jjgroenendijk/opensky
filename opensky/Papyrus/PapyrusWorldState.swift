@@ -97,6 +97,12 @@ nonisolated struct PapyrusTickBudget: Equatable, Sendable {
 /// What one tick of the world runtime did, so callers and tests can assert
 /// on carry-over and latent resumes.
 nonisolated struct PapyrusTickReport: Equatable, Sendable {
+    /// A tick that did nothing: the report a paused or zero-delta `advance`
+    /// returns, and the value `PapyrusWorldRuntime.lastTickReport` starts at.
+    static let zero = PapyrusTickReport(
+        steps: 0, dispatched: 0, queued: 0, resumed: 0, faulted: 0
+    )
+
     /// Fixed steps advanced this tick.
     let steps: Int
     /// Events dispatched (consumed from the queue).

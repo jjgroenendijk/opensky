@@ -11,6 +11,11 @@ extension PapyrusWorldRuntime {
     /// Advances exactly one fixed step: resumes due latent calls, then drains
     /// queued events up to the budget. Deterministic; offscreen renders and
     /// tests drive this directly.
+    ///
+    /// Runs whether or not `isPaused` is set: this is the primitive the
+    /// sidebar's step-one-tick control drives, and stepping a paused VM is
+    /// the whole point of pausing it.
+    @discardableResult
     func stepFixed(gameClock: GameClock? = nil) -> PapyrusTickReport {
         _ = scheduler.tick(gameClock: gameClock)
         let resumes = suspensionTracker.drainStep()
@@ -21,26 +26,37 @@ extension PapyrusWorldRuntime {
         var dispatched = 0
         var faulted = resumes.faulted
         drainQueue(dispatched: &dispatched, faulted: &faulted)
-        return PapyrusTickReport(
+        let report = PapyrusTickReport(
             steps: 1,
             dispatched: dispatched,
             queued: eventQueue.count,
             resumed: resumes.resumed,
             faulted: faulted
         )
+        retainTickReport(report)
+        return report
     }
 
     /// Accumulates a wall delta and runs whole fixed steps only, capped at
     /// `maximumStepsPerAdvance` per call; the remainder carries in the
     /// accumulator. A zero delta — the paused case per `FrameSimClock`'s
     /// contract — advances zero steps, dispatches nothing, and resumes
-    /// nothing, but is safe to call every frame. This runtime never reads
-    /// the wall clock or a pause flag itself; pausing arrives as delta 0.
+    /// nothing, but is safe to call every frame. The engine's own pause —
+    /// menu mode — arrives that way, as delta 0.
+    ///
+    /// `isPaused` is the VM's separate, sidebar-driven pause (issue #278) and
+    /// is handled here rather than by the caller: a paused call returns the
+    /// same zero report and, crucially, accumulates nothing, so however long
+    /// the VM stays paused, unpausing never runs a burst of catch-up steps.
+    @discardableResult
     func advance(delta: Float, gameClock: GameClock? = nil) -> PapyrusTickReport {
         var report = PapyrusTickReport(
             steps: 0, dispatched: 0, queued: eventQueue.count,
             resumed: 0, faulted: 0
         )
+        guard !isPaused else {
+            return .zero
+        }
         guard delta > 0 else {
             return report
         }
@@ -58,6 +74,12 @@ extension PapyrusWorldRuntime {
             accumulatorSeconds,
             fixedStepSeconds * Double(Self.maximumStepsPerAdvance)
         )
+        // A frame too short to complete a step leaves the previous frame's
+        // sample in place; the alternative reports zeros for most frames at a
+        // render rate above the fixed step.
+        if report.steps > 0 {
+            retainTickReport(report)
+        }
         return report
     }
 
@@ -78,6 +100,9 @@ extension PapyrusWorldRuntime {
                 continue
             }
             dispatched += 1
+            // Recorded for every event the drain consumed, including the
+            // counted no-ops below, so the ring matches `dispatched`.
+            recordDispatchedEvent(event)
             guard let outcome = dispatch(event) else {
                 continue
             }

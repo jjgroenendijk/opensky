@@ -45,7 +45,7 @@ be able to select/force/toggle/inspect the behavior without a CLI command.
   group rows) + layered content (`ShellContentViewController`). The old
   segmented World/Asset Browser mode switch is gone.
 - Sidebar map: World: World, Environment, HUD & Interaction, System Menu, Audio,
-  Runtime State · Developer: UI Lab · Library: Asset Browser. Launch selects World
+  Runtime State, Scripts · Developer: UI Lab · Library: Asset Browser. Launch selects World
   (`DestinationRegistry.defaultDestinationID`). Sections come from
   `SidebarSection` (world, developer, library — `allCases` order); empty
   sections drop. Grouping is unit-tested via `AppSidebarModel`
@@ -193,8 +193,8 @@ state, not an override, and Reset preserves it.
 
 The sidebar dot aggregates every mutable section under its exact path:
 `World > World`, `World > Environment`, `World > HUD & Interaction`,
-`World > System Menu`, `World > Audio`, `World > Runtime State`, or
-`Developer > UI Lab`.
+`World > System Menu`, `World > Audio`, `World > Runtime State`,
+`World > Scripts`, or `Developer > UI Lab`.
 `View > Reset all overrides` invokes
 every registered destination action, including unopened destinations, and then
 resyncs cached panels.
@@ -447,6 +447,14 @@ Accessibility identifiers are the UI-test API and never change silently.
   `RuntimeStateSaveStatsLabel`. Section headers: `PanelSection-runtimeStateInspect`,
   `-runtimeStateChange`, `-runtimeStateReset`, `-runtimeStateSave`. See
   [runtime state](/engine/runtime-state.md).
+- Scripts set (World > Scripts, M11.2.5): `ScriptPauseControl`, `ScriptStepControl`,
+  `ScriptBurstControl`; readouts `ScriptInstancesStatsLabel`, `ScriptEventsStatsLabel`,
+  `ScriptSchedulerStatsLabel`, `ScriptNativeTallyStatsLabel`. Section headers:
+  `PanelSection-scriptInstances`, `-scriptEvents`, `-scriptScheduler`,
+  `-scriptNativeTally`. The scheduler section is the only mutable one, so it is the only
+  one carrying override chrome: `PanelSection-scriptScheduler-OverrideIndicator`,
+  `PanelSection-scriptScheduler-ResetControl`, and the destination dot
+  `Destination-scripts-OverrideIndicator`. See [Papyrus VM](/engine/papyrus-vm.md).
 - The convention is now uniform. The LOD and time-of-day controls used to carry
   `*Field` / `*Button` / `*Label` suffixes; they were renamed to
   `*Control` / `*StatsLabel` in one pass before the id surface grew further.

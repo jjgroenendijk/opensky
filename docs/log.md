@@ -4,6 +4,27 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-07-31
 
+* **World > Scripts destination (issue #278)**: a new sidebar destination
+  (`Destination-scripts`, M11.2.5) gives the in-world Papyrus VM the same kind of live
+  panel `World > Runtime State` gives object references — instance counts, a recent-event
+  tail, scheduler pause/step/burst controls, and ranked native-tally coverage, all sourced
+  through one `ScriptsSnapshot` seam from
+  `PapyrusWorldRuntime.scriptsSnapshot(target:targetDescription:)`
+  (`opensky/Papyrus/PapyrusWorldScriptsSnapshot.swift`) and the `ScriptControlProviding`
+  protocol `GameViewController` conforms to. The key decision is where VM pause lives:
+  `PapyrusWorldRuntime.isPaused` gates only `advance(delta:gameClock:)`, returning a zero
+  `PapyrusTickReport` and accumulating nothing while set; `stepFixed(gameClock:)` keeps
+  running so the panel's step and 20-tick burst controls still work while paused. This
+  pause is kept independent of `Renderer.worldSimPaused` rather than reusing it — the
+  rejected alternative was routing the panel's pause through the existing
+  `MenuModeController`-owned `FrameSimClock`, which `World > Runtime State` already
+  established a precedent against: a verification panel must not fight the owner of
+  world-sim pause. The two gates compose instead of conflicting. `lastTickReport` retains
+  the last report from a tick that actually stepped, and a bounded eight-entry
+  `recentEvents` ring with a dropped-event counter backs the events section. Evidence:
+  ScriptsPanelTests, DestinationRegistryScriptsTests, PapyrusWorldPauseTests, all green.
+  See [Papyrus VM](/engine/papyrus-vm.md).
+
 * **Update timers (issue #277)**: `Form.RegisterForUpdate`, `RegisterForSingleUpdate`,
   `RegisterForUpdateGameTime`, `RegisterForSingleUpdateGameTime`, `UnregisterForUpdate`
   and `UnregisterForUpdateGameTime` now reach a real timer instead of returning a declared

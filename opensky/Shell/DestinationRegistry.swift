@@ -29,7 +29,7 @@ typealias WorldControlProviders = AnimationControlProviding & AudioControlProvid
     & CameraControlProviding & FrameStatsProviding & GrassControlProviding
     & HUDControlProviding & ParticleControlProviding & PrecipitationControlProviding
     & RuntimeStateControlProviding & SWFLabControlProviding & SceneStatsProviding
-    & ShadowControlProviding
+    & ScriptControlProviding & ShadowControlProviding
     & SystemMenuControlProviding & TerrainLODControlProviding & TriggerControlProviding
     & UILabControlProviding
     & WeatherControlProviding
@@ -239,6 +239,20 @@ enum DestinationRegistry {
             overrides: runtimeStateOverrides
         ),
         DestinationDescriptor(
+            id: "scripts",
+            title: "Scripts",
+            section: .world,
+            symbolName: "curlybraces",
+            content: .worldInspector { context in
+                let panel = ScriptsPanelViewController()
+                panel.provider = context.providers
+                let providers = context.providers
+                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                return panel
+            },
+            overrides: scriptsOverrides
+        ),
+        DestinationDescriptor(
             id: "uiLab",
             title: "UI Lab",
             section: .developer,
@@ -309,6 +323,19 @@ enum DestinationRegistry {
         },
         resetToDefaults: { context in
             RuntimeStateResetSection.resetToDefaults(provider: context.providers)
+        }
+    )
+
+    /// Only the Scheduler section carries overridden-ness: a paused Papyrus VM
+    /// is the one thing under this destination that sits away from its default,
+    /// and the sidebar's reset resumes it. Stepping leaves no setting behind,
+    /// and the other three sections are read-only.
+    private static let scriptsOverrides = DestinationOverrideActions(
+        isOverridden: { context in
+            ScriptSchedulerSection.isOverridden(provider: context.providers)
+        },
+        resetToDefaults: { context in
+            ScriptSchedulerSection.resetToDefaults(provider: context.providers)
         }
     )
 

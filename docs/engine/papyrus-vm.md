@@ -59,6 +59,7 @@ choice OpenSky makes in those gaps is listed under [Deviations](#deviations).
 * [Instance lifecycle over cell streaming](#instance-lifecycle-over-cell-streaming)
 * [Script state in a save](#script-state-in-a-save)
 * [Lazy script library](#lazy-script-library)
+* [World > Scripts sidebar surface](#world--scripts-sidebar-surface)
 * [Tests](#tests)
 * [M11.1 acceptance](#m111-acceptance)
 * [A script changing the world, end to end](#a-script-changing-the-world-end-to-end)
@@ -838,6 +839,83 @@ reference identity. `GameViewController.wirePapyrus` builds a
 `GameViewController.papyrus` nil rather than running a VM with an empty
 library.
 
+## World > Scripts sidebar surface
+
+The `World > Scripts` sidebar destination (`Destination-scripts`, M11.2.5, issue #278)
+is the verification surface for everything above: a user can watch the VM run, pause it,
+and single-step it without a debugger or a CLI command. `ScriptsPanelViewController`
+hosts four sections, each backed by the `ScriptControlProviding` protocol
+(`opensky/ScriptControlProviding.swift`) that `GameViewController` conforms to in
+`opensky/GameViewControllerScripts.swift`:
+
+* `ScriptInstancesSection` (`PanelSection-scriptInstances`) shows the live instance
+  count, the current interaction target, and the scripts attached to it.
+* `ScriptEventsSection` (`PanelSection-scriptEvents`) shows a bounded tail of recent
+  events in the same journal-tail presentation `World > Runtime State` uses, plus the
+  pending and dropped event counts.
+* `ScriptSchedulerSection` (`PanelSection-scriptScheduler`) is the only mutable section
+  and the only one carrying override chrome. `ScriptPauseControl` pauses and resumes the
+  VM, `ScriptStepControl` runs exactly one fixed tick, and `ScriptBurstControl` runs a
+  fixed burst of 20 ticks. It also reports pending waits (`PapyrusScheduler.pendingCount`),
+  pending timers, the tick count, and the last tick report's budget events and
+  instructions.
+* `ScriptNativeTallySection` (`PanelSection-scriptNativeTally`) shows ranked
+  `PapyrusTally` coverage: implemented native count, native call total, and the top five
+  unimplemented native names.
+
+Each readout is built by the nonisolated `ScriptsReadout` helper, unit-tested headless,
+and refreshed at 2 Hz by the shared `InspectionTicker` — the same cadence every other
+sectioned panel uses, so this surface adds no new timer.
+
+**Pause semantics.** `PapyrusWorldRuntime.isPaused` is checked only at the top of
+`advance(delta:gameClock:)`: while set, `advance` returns a zero `PapyrusTickReport` and
+accumulates nothing, so the fixed-step accumulator described in
+[Frame hook and fixed step](#frame-hook-and-fixed-step) does not build up a backlog of
+steps to replay on resume. `stepFixed(gameClock:)` is unaffected by `isPaused` and still
+runs a full tick on request, which is what lets `ScriptStepControl` and
+`ScriptBurstControl` advance the VM one or twenty ticks at a time while the panel's own
+pause is engaged.
+
+This pause is deliberately independent of `Renderer.worldSimPaused` (owned by
+`MenuModeController`, reached through `Renderer.worldSimClock`'s `FrameSimClock` as
+described above). `World > Runtime State` already established the precedent that a
+verification panel must not fight the owner of world-sim pause: menu pause is a clock
+delivering a zero delta on every path, while VM pause is a second, independent gate a
+developer can engage without opening the system menu, and the two compose rather than
+conflict — either one alone is enough to stop script advancement, and `stepFixed`/burst
+still work under either.
+
+`PapyrusWorldRuntime.lastTickReport` retains the `PapyrusTickReport` of the last tick
+that actually stepped: a call to `advance` while paused, or a zero-delta call, leaves it
+untouched, so the scheduler section's budget readout always reflects real work rather
+than a report full of zeros. `recentEvents` is a bounded ring
+(`static let recentEventLimit = 8`, format `"OnLoad -> scriptname"`) with a
+`droppedRecentEventCount` counter for anything that aged out before it was ever inspected.
+`burst(ticks:gameClock:)` clamps its input at `static let maximumBurstTicks = 60`, so a
+scripted or fat-fingered burst request cannot run the VM unbounded from the panel.
+
+The panel's own view of the runtime comes from one seam,
+`PapyrusWorldRuntime.scriptsSnapshot(target:targetDescription:) -> ScriptsSnapshot`, in
+the satellite file `opensky/Papyrus/PapyrusWorldScriptsSnapshot.swift`. `ScriptsSnapshot`
+is a single `Equatable` value assembled once per refresh (instance count, target
+description and attached script names, recent events with dropped and pending counts, the
+paused flag, pending waits, pending timers, tick count, budget events and instructions,
+the last tick report's fields, native call total, implemented native count, unimplemented
+total, and the top five unimplemented natives), so a section never reads the runtime
+piecemeal or on a different cadence than its sibling sections.
+
+Registered in `DestinationRegistry.all` with `id: "scripts"` immediately after
+`runtimeState`. Its `DestinationOverrideActions` (`scriptsOverrides`) treat the
+destination as overridden exactly when the VM is paused; Reset unpauses it, matching the
+override contract in [Main-app UI framework + placement](/tools/app-ui.md) that override
+state always comes from the provider rather than a widget's current value.
+
+Pinned by `ScriptsPanelTests` (registry factory wiring, accessibility-identifier
+literals, sync/forward/reset) against `ScriptsPanelProviderFixture` and
+`FakeScriptProvider`, by `DestinationRegistryScriptsTests` for registry placement, and by
+`PapyrusWorldPauseTests` for the engine seam itself: the pause gate on `advance`, stepping
+while paused, the recent-event ring bound, `lastTickReport` retention, and the snapshot.
+
 ## Tests
 
 All fixtures are assembled in Swift. `PexFixture` now builds direct runtime
@@ -911,6 +989,15 @@ steps to quiescence:
   slot byte, non-finite and negative durations normalizing to zero, an unknown chunk
   written after `PTMR` still skipping cleanly, and a live `PapyrusWorldRuntime`'s timers
   surviving a save and restore.
+* `PapyrusWorldPauseTests` — covers the [World > Scripts sidebar
+  surface](#world--scripts-sidebar-surface) engine seam: `isPaused` gating `advance` to a
+  zero report while `stepFixed` keeps running, the recent-event ring's bound and dropped
+  count, `lastTickReport` retention across a paused or zero-delta call, and
+  `scriptsSnapshot(target:targetDescription:)`.
+* `ScriptsPanelTests` and `DestinationRegistryScriptsTests` — the panel side of the same
+  surface: registry factory wiring, pinned accessibility identifiers, section
+  sync/forward/reset against `ScriptsPanelProviderFixture` and `FakeScriptProvider`, and
+  the destination's placement and override behavior in `DestinationRegistry.all`.
 
 ## M11.1 acceptance
 
