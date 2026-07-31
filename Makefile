@@ -20,7 +20,8 @@ MD_GLOB         := **/*.md
 METAL_FILES     := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
 
 .DEFAULT_GOAL := help
-.PHONY: help bootstrap ffmpeg hooks format format-check lint check fix swift-format \
+.PHONY: help bootstrap ffmpeg vendor-link vendor-prune hooks format format-check lint \
+        check fix swift-format \
         swift-lint metal-format md-format md-lint sh-lint cli-boundary no-game-content \
         docs-links build cli \
         probe test \
@@ -36,6 +37,12 @@ bootstrap: ## Install toolchain (Homebrew) + wire git hooks
 
 ffmpeg: ## Build the vendored decode-only LGPL ffmpeg into .vendor/ffmpeg
 	@./tools/vendor-ffmpeg.sh
+
+vendor-link: ## Point this worktree's .vendor at the shared one (no-op in main checkout)
+	@./tools/ffmpeg/link-vendor.sh
+
+vendor-prune: ## Replace per-worktree .vendor copies with shared symlinks (run when idle)
+	@./tools/ffmpeg/prune-vendor.sh
 
 hooks: ## Point git at .githooks/hooks (idempotent)
 	@git config core.hooksPath .githooks/hooks
@@ -84,29 +91,29 @@ sh-lint: ## Shellcheck the hook + tooling scripts
 docs-links: ## Check intra-wiki links in docs/ resolve (log.md skipped)
 	@./tools/check-docs-links.sh
 
-build: ## Build the app ($(CONFIG))
+build: vendor-link ## Build the app ($(CONFIG))
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration $(CONFIG) \
 		$(XCODEBUILD_FLAGS) build
 
-cli: ## Build the openskycli dev tool ($(CONFIG))
+cli: vendor-link ## Build the openskycli dev tool ($(CONFIG))
 	@xcodebuild -project $(PROJECT) -scheme $(CLI_SCHEME) -configuration $(CONFIG) \
 		$(XCODEBUILD_FLAGS) build
 
 probe: ## CLI smoke checks against the local install (skips if absent)
 	@./tools/probe.sh
 
-test: ## Build + run unit tests (no UI tests)
+test: vendor-link ## Build + run unit tests (no UI tests)
 	@rm -rf $(TEST_RESULTS)/unit.xcresult && mkdir -p $(TEST_RESULTS)
 	@TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
 		xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
 		$(XCODEBUILD_FLAGS) -resultBundlePath $(TEST_RESULTS)/unit.xcresult \
 		-skip-testing:openskyUITests test
 
-test-ui: ## Build + run UI tests (launches the app, drives it via automation)
+test-ui: vendor-link ## Build + run UI tests (launches the app, drives it via automation)
 	@OPENSKY_RESULT_BUNDLE=$(TEST_RESULTS)/ui.xcresult ./tools/test-ui.sh \
 		$(PROJECT) $(SCHEME) '$(DESTINATION)' $(UI_TEST_SIGNING_FLAGS) $(XCODEBUILD_FLAGS)
 
-test-one: ## Run one test class/method: make test-one T=Class[/test]
+test-one: vendor-link ## Run one test class/method: make test-one T=Class[/test]
 	@test -n "$(T)" || { \
 		echo "[ERROR] usage: make test-one T=ClassName[/testName]"; \
 		echo "        bare names resolve to openskyTests/; prefix a target to override"; \
@@ -149,7 +156,7 @@ run-cli: cli ## Build + run openskycli: make run-cli ARGS="vfs ls"
 icon: ## Regenerate AppIcon PNGs from opensky/Branding/opensky-logo.svg
 	@./tools/gen-appicon.sh
 
-install: ## Build Release app (arm64) + copy to /Applications
+install: vendor-link ## Build Release app (arm64) + copy to /Applications
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration Release \
 		-derivedDataPath build/install ARCHS=arm64 $(XCODEBUILD_FLAGS) build
 	@rm -rf /Applications/opensky.app

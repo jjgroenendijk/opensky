@@ -42,6 +42,8 @@ conflict.
   app-only source (importing AppKit, Cocoa, or SwiftUI) needs a `membershipExceptions`
   entry excluding it from `openskycli`. `make cli-boundary` catches this.
 - Git hooks are the gate — never `--no-verify`.
+- Linked worktrees share the main checkout's `.vendor/ffmpeg` automatically through `make`,
+  so `make bootstrap` is not needed per worktree.
 - Facts about this machine and the outside world that will expire — CI status, missing TCC
   permissions, blocked upstream spec hosts — live in `docs/tools/environment.md` with the
   date each was observed. Record them there, never inline here or in a skill.

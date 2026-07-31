@@ -146,8 +146,51 @@ it lists. The dylib file names carry version numbers that belong to the build sc
 than to the project file, so `tools/vendor-ffmpeg.sh` emits `embed-inputs.xcfilelist` and
 `embed-outputs.xcfilelist` next to the prefix and the phase declares those. The output list
 also names the `.cstemp` sibling `codesign` writes through, without which signing is denied.
-A missing prefix makes those declared paths vanish, which Xcode tolerates, so the friendly
-`check` message still wins the race.
+A missing prefix does not make those declared paths vanish. Xcode resolves every build
+phase's declared inputs before it runs any phase, `check` included, and a missing
+`.xcfilelist` fails that resolution with a raw missing-input error instead of running the
+`check` phase's friendly message. Issue #275 is the evidence: a linked git worktree starts
+with no `.vendor` at all, so `$(SRCROOT)/.vendor/ffmpeg/embed-inputs.xcfilelist` did not
+exist and the build died during planning, before `check` ever ran.
+
+### Linked worktrees
+
+A linked worktree building the vendored prefix from scratch would produce a byte-identical
+copy of the main checkout's, since the artifact depends only on the pinned `FFMPEG_VERSION`
+and build flags, nothing in the working tree. Rebuilding it anyway would cost minutes and
+hundreds of megabytes per worktree for nothing, so linked worktrees share the one prefix the
+main checkout owns instead.
+
+`tools/ffmpeg/link-vendor.sh` finds the shared root with `git rev-parse --git-common-dir`
+and, when this checkout is a linked worktree without its own `.vendor`, symlinks
+`.vendor -> <main checkout>/.vendor`. `$(SRCROOT)/.vendor` in the Xcode project keeps working
+unmodified because the symlink makes it resolve straight through to the shared prefix. An
+existing `.vendor` is left untouched, so a worktree that deliberately holds its own copy
+(built with `OPENSKY_FFMPEG_FORCE=1`, or created before this script existed) keeps it.
+
+The placeholder `embed-inputs.xcfilelist` and `embed-outputs.xcfilelist` matter for the same
+input-resolution ordering described above: a worktree that has never run `make ffmpeg`
+follows the symlink into a shared prefix with no `lib/` yet, so the declared `.xcfilelist`
+inputs still do not exist. `link-vendor.sh` writes them empty in that case, which is enough
+for Xcode to finish planning and run the `check` phase, whose actionable "run `make
+bootstrap`" message can then win the race as intended. Both scripts only ever write the
+placeholders when the prefix has no `lib/` directory, so a real build's file lists are never
+overwritten.
+
+`make vendor-link` runs the linker directly, and `build`, `cli`, `test`, `test-one`,
+`test-ui`, and `install` all depend on it, so no manual step is needed in a fresh worktree.
+Older worktrees created before this existed, or forced to build their own copy, can still
+hold a full per-worktree `.vendor`; `make vendor-prune`
+(`tools/ffmpeg/prune-vendor.sh`) walks `git worktree list`, refuses to touch anything unless
+the shared prefix already has all three dylibs, and otherwise replaces each worktree's real
+`.vendor` with a symlink to the shared one. It is not safe to run against a worktree that is
+building at that moment, since its libraries would move mid-build and fail that one build;
+run it when the machine is idle.
+
+One case is not covered: a checkout that has never had any `make` target run in it, opened
+straight in Xcode.app without going through the Makefile first, still fails on the missing
+`.xcfilelist`. `make` is what creates both the symlink and the placeholders, so a build path
+that bypasses `make` entirely bypasses the fix too.
 
 ## Runtime failure, not build failure
 
