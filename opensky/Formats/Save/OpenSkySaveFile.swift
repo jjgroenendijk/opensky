@@ -29,6 +29,11 @@ nonisolated struct OpenSkySaveFile: Equatable, Sendable {
     /// file carries no `PSCR` chunk — a pre-script save, or a session that ran
     /// no VM — which restores scripts at their compiled defaults.
     let scripts: [PapyrusInstanceState]
+    /// Pending Papyrus update timers at save time (issue #277), empty when the
+    /// file carries no `PTMR` chunk — a pre-timer save, or a session in which
+    /// no persistent instance had a timer armed — which restores a world where
+    /// no script has a pending `OnUpdate`.
+    let timers: [PapyrusTimerState]
 
     init(
         formatVersion: UInt32,
@@ -37,7 +42,8 @@ nonisolated struct OpenSkySaveFile: Equatable, Sendable {
         snapshot: WorldStateSnapshot,
         allocator: GeneratedReferenceAllocator,
         clock: GameClock? = nil,
-        scripts: [PapyrusInstanceState] = []
+        scripts: [PapyrusInstanceState] = [],
+        timers: [PapyrusTimerState] = []
     ) {
         self.formatVersion = formatVersion
         self.metadata = metadata
@@ -46,6 +52,7 @@ nonisolated struct OpenSkySaveFile: Equatable, Sendable {
         self.allocator = allocator
         self.clock = clock
         self.scripts = scripts
+        self.timers = timers
     }
 
     /// Checks the saved load order against the one currently installed.

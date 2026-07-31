@@ -9,6 +9,7 @@ nonisolated enum PapyrusNativeFunctions {
         installMath(into: &registry)
         installDeferredAnimation(into: &registry)
         installObjectReference(into: &registry)
+        installUpdateTimers(into: &registry)
         installGlobalVariable(into: &registry)
         installGame(into: &registry)
     }

@@ -17,6 +17,7 @@ extension PapyrusWorldRuntime {
         for key in resumes.settledInstances {
             busyInstances.remove(key)
         }
+        advanceUpdateTimers(gameClock: gameClock)
         var dispatched = 0
         var faulted = resumes.faulted
         drainQueue(dispatched: &dispatched, faulted: &faulted)

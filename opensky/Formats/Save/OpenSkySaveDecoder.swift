@@ -29,6 +29,9 @@ nonisolated enum OpenSkySaveDecoder {
         /// saved, so every script starts from its compiled defaults — which is
         /// also what a save written before that chunk existed means.
         var scripts: [PapyrusInstanceState] = []
+        /// Absent `PTMR` chunk (issue #277) means no update timer was pending,
+        /// which is also what a save written before that chunk existed means.
+        var timers: [PapyrusTimerState] = []
     }
 
     static func decode(_ data: Data) throws -> OpenSkySaveFile {
@@ -56,7 +59,8 @@ nonisolated enum OpenSkySaveDecoder {
             ),
             allocator: GeneratedReferenceAllocator(nextSequence: body.nextGeneratedSequence),
             clock: body.clock,
-            scripts: body.scripts
+            scripts: body.scripts,
+            timers: body.timers
         )
     }
 
@@ -143,6 +147,8 @@ nonisolated enum OpenSkySaveDecoder {
             body.clock = try decodeClock(payload)
         case OpenSkySaveFormat.ChunkTag.papyrusScripts:
             body.scripts = try OpenSkySaveScriptDecoder.decodeScripts(payload)
+        case OpenSkySaveFormat.ChunkTag.papyrusTimers:
+            body.timers = try OpenSkySaveTimerDecoder.decodeTimers(payload)
         default:
             break // Unknown chunk: skipped by its declared length.
         }

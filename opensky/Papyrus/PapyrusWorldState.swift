@@ -133,6 +133,7 @@ nonisolated enum PapyrusWorldSkipReason: Hashable, Sendable {
     case undefinedEventFunction
     case unknownSaveScript
     case unknownSaveVariable
+    case unknownSaveTimerTarget
 
     var name: String {
         switch self {
@@ -144,6 +145,7 @@ nonisolated enum PapyrusWorldSkipReason: Hashable, Sendable {
         case .undefinedEventFunction: "event function not defined"
         case .unknownSaveScript: "saved script unknown"
         case .unknownSaveVariable: "saved variable unknown"
+        case .unknownSaveTimerTarget: "saved timer target unknown"
         }
     }
 }

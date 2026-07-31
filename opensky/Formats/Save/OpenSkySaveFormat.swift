@@ -60,6 +60,14 @@ nonisolated enum OpenSkySaveFormat {
         /// component kind is versioned by `formatVersion`, so putting it there
         /// would force every older build to refuse the file.
         static let papyrusScripts = "PSCR"
+        /// Pending Papyrus update timers (issue #277): one entry per armed
+        /// timer slot of a persistent script instance. Additive for the same
+        /// reasons `PSCR` is and likewise does not bump `currentVersion` — an
+        /// older build skips it by its declared length, and a file without it
+        /// restores a world where no script has a pending `OnUpdate`. An empty
+        /// timer list writes no chunk at all, so a session that armed no timer
+        /// produces the bytes it produced before this chunk existed.
+        static let papyrusTimers = "PTMR"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.
@@ -110,6 +118,12 @@ nonisolated enum OpenSkySaveFormat {
     /// declaring-script name (2), an empty variable name (2) and the value tag
     /// (1), which is the whole entry when the value is `none`.
     static let minimumScriptVariableSize = 5
+    /// Smallest number of bytes a single `PTMR` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4), an empty script name (2), the slot byte
+    /// (1) and the two `Float64` bit patterns (8 + 8). Nothing in the entry is
+    /// optional, so this is also the size of every entry whose names are
+    /// empty.
+    static let minimumTimerEntrySize = 26
 }
 
 /// On-disk tag of a component slot.

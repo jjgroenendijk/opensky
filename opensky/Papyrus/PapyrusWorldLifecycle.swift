@@ -194,6 +194,7 @@ extension PapyrusWorldRuntime {
         keysByHandle.removeValue(forKey: handle)
         runtime.instances.removeValue(forKey: handle)
         eventQueue.removeAll { $0.target == key }
+        updateTimers.removeAll(for: key)
         pendingOnInit.remove(key)
         busyInstances.remove(key)
         suspensionTracker.forget(instance: key)

@@ -50,6 +50,9 @@ final class PapyrusWorldRuntime {
     /// Instances with a latent call in flight. Their queued events stay
     /// queued, in order, until the suspended handler settles.
     var busyInstances: Set<PapyrusInstanceKey> = []
+    /// Update timers for `Form.RegisterForUpdate` and friends (issue #277);
+    /// advanced once per fixed step by `advanceUpdateTimers(gameClock:)`.
+    var updateTimers = PapyrusUpdateTimerRegistry()
     /// Attach, dispatch, and restore skips, for inspection and acceptance.
     var skips = PapyrusWorldSkipTally()
     /// VMAD property-binding skips aggregated across every attach.
@@ -99,6 +102,8 @@ final class PapyrusWorldRuntime {
     static let onActivateEventName = "OnActivate"
     static let onTriggerEnterEventName = "OnTriggerEnter"
     static let onTriggerLeaveEventName = "OnTriggerLeave"
+    static let onUpdateEventName = "OnUpdate"
+    static let onUpdateGameTimeEventName = "OnUpdateGameTime"
 
     /// Marks the depth every activation queued from inside this dispatch sits
     /// at. A latent handler that resumes on a later tick has lost the depth

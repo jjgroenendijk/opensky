@@ -124,6 +124,20 @@ protocol PapyrusWorldBridge: AnyObject {
         by activator: ReferenceKey,
         togglesOpen: Bool
     ) -> PapyrusActivationOutcome
+
+    /// Arms one update-timer slot on the script instance behind `handle`
+    /// (issue #277). A handle with no script instance behind it is a no-op.
+    func registerUpdateTimer(
+        handle: PapyrusObjectHandle,
+        slot: PapyrusUpdateTimerSlot,
+        interval: Double
+    )
+
+    /// Clears both of `family`'s timer slots on the instance behind `handle`.
+    func unregisterUpdateTimers(
+        handle: PapyrusObjectHandle,
+        family: PapyrusUpdateTimerFamily
+    )
 }
 
 /// Nonisolated façade over a `PapyrusWorldBridge`, held by
@@ -192,6 +206,27 @@ nonisolated final class PapyrusWorldAccess {
     ) -> PapyrusActivationOutcome {
         MainActor.assumeIsolated {
             bridge.activate(target, by: activator, togglesOpen: togglesOpen)
+        }
+    }
+
+    func registerUpdateTimer(
+        handle: PapyrusObjectHandle,
+        slot: PapyrusUpdateTimerSlot,
+        interval: Double
+    ) {
+        MainActor.assumeIsolated {
+            bridge.registerUpdateTimer(
+                handle: handle, slot: slot, interval: interval
+            )
+        }
+    }
+
+    func unregisterUpdateTimers(
+        handle: PapyrusObjectHandle,
+        family: PapyrusUpdateTimerFamily
+    ) {
+        MainActor.assumeIsolated {
+            bridge.unregisterUpdateTimers(handle: handle, family: family)
         }
     }
 }

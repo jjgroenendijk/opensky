@@ -174,6 +174,23 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
         )
     }
 
+    // MARK: - Update timers
+
+    func registerUpdateTimer(
+        handle: PapyrusObjectHandle,
+        slot: PapyrusUpdateTimerSlot,
+        interval: Double
+    ) {
+        world?.registerUpdateTimer(handle: handle, slot: slot, interval: interval)
+    }
+
+    func unregisterUpdateTimers(
+        handle: PapyrusObjectHandle,
+        family: PapyrusUpdateTimerFamily
+    ) {
+        world?.unregisterUpdateTimers(handle: handle, family: family)
+    }
+
     /// `CellStreamer.onInteraction` subscriber (issue #172): the player's
     /// use key becomes one recorded activation plus one `OnActivate` per
     /// script attached to the target.
