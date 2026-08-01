@@ -864,9 +864,8 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   are `.wav`, which no decoder here reads yet, so parts of that session cannot
   pass until a PCM `.wav` reader lands. Related issues filed while doing this
   work: #244 (walk-path p95 exceeds the 33.33 ms frame budget in Debug; resolved by the
-  build-aware timing policy above), #245
-  (`CellStreamingWalkDriver` does not mask animation and shadow samples to
-  active-physics frames), #246 (fixed here) and #247
+  build-aware timing policy above), #245 (resolved by applying the active-physics
+  frame mask to every per-frame metric), #246 (fixed here) and #247
   (`canonicalSoundPath` leading-separator rejection).
 
 ## 2026-07-26
