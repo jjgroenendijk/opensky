@@ -35,7 +35,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Weather records](/formats/weather.md) - WTHR NAM0 color layers/FNAM fog/DATA
   wind + precipitation, CLMT weather lists + timing, REGN weather and sound areas.
 * [Sound records](/formats/sound.md) - SNDR descriptor tracks, SNCT category hierarchy,
-  SOUN SDSC links, attenuation, looping, and canonical VFS path resolution.
+  SOUN SDSC links, attenuation, looping, and separator-led canonical VFS path resolution.
 * [Acoustic space (ASPC)](/formats/acoustic-space.md) - interior-ambience bridge:
   ASPC fields, the `RDAT` FormID collision with REGN's area header, and the
   interior-only region borrow.

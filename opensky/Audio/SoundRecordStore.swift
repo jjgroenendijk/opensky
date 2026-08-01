@@ -122,15 +122,16 @@ nonisolated final class SoundRecordStore {
         return values
     }
 
+    /// Normalizes an SNDR ANAM filename into a VFS key. The Creation Kit also
+    /// writes separator-led `\Data\Sound\...` paths: the leading separator is
+    /// a Windows root-relative marker, not a volume, so VFS normalization can
+    /// strip it. A remaining `:` still identifies a drive or volume, while the
+    /// normalizer rejects `.` and `..` components before this point.
     private static func canonicalSoundPath(_ track: String) -> String? {
         guard let normalized = try? VirtualFileSystem.normalize(track) else {
             return nil
         }
-        guard
-            !track.hasPrefix("/"),
-            !track.hasPrefix("\\"),
-            !normalized.contains(":")
-        else {
+        guard !normalized.contains(":") else {
             return nil
         }
         // The Creation Kit writes both Sound\... and Data\Sound\... ANAM

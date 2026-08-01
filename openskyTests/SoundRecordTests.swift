@@ -135,7 +135,7 @@ struct SoundRecordTests {
             ESMFixture.zstring("C:\\Build\\Absolute.wav")
         ) + ESMFixture.field(
             "ANAM",
-            ESMFixture.zstring("/tmp/Absolute.wav")
+            ESMFixture.zstring("/Sound/UI/ForwardRoot.wav")
         )
         let soundFields = ESMFixture.field("SDSC", uint32(0x200))
         let store = try soundStore(
@@ -153,8 +153,23 @@ struct SoundRecordTests {
             "sound\\fx\\thunder.wav",
             "sound\\ambient\\rain.xwm",
             "sound\\ui\\click.wav",
-            "sound\\fx\\wrapped.wav"
+            "sound\\fx\\wrapped.wav",
+            "sound\\ui\\forwardroot.wav"
         ])
+    }
+
+    /// Vanilla SNDR records use this Windows root-relative authoring form. The
+    /// leading separator is not a drive or volume and must not drop the track.
+    @Test func separatorLedDataRootedTrackSurvivesCanonicalization() throws {
+        let track = "\\Data\\Sound\\FX\\SeparatorLed.wav"
+        let descriptor = ESMFixture.field("ANAM", ESMFixture.zstring(track))
+        let store = try soundStore(
+            descriptors: ESMFixture.record("SNDR", formID: 0x200, data: descriptor),
+            sounds: Data()
+        )
+
+        let resolved = try store.resolveAny(FormID(0x200))
+        #expect(resolved.filePaths == ["sound\\fx\\separatorled.wav"])
     }
 
     @Test func missingSoundThrowsTypedError() throws {

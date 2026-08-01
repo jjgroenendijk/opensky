@@ -4,6 +4,16 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-01
 
+* **Separator-led sound paths (issue #247)**: `SoundRecordStore` now accepts the
+  separator-led `\Data\Sound\...` form authored by Bethesda as Windows root-relative,
+  while retaining the drive or volume `:` rejection and the VFS rejection of `.` and
+  `..` components. A read-only `Skyrim.esm` probe found 4951 `SNDR ANAM` entries: the old
+  policy retained 4641 and dropped 308 separator-led entries plus two genuine `C:` paths.
+  The 308 entries represent 291 distinct filenames. After the fix, 4949 entries
+  canonicalize and 4930 resolve through the VFS; 19 name absent development assets. A
+  synthetic ESM fixture pins the separator-led path through descriptor resolution. See
+  [sound records](/formats/sound.md#resolution-and-paths).
+
 * **Non-positional ambience beds (issue #236)**: `WorldAudioSoundDirector` now starts
   each resolved ambience entry through `WorldAudioEngine.playNonPositional`, wiring it
   directly to the descriptor's resolved vanilla category submix. Ambience therefore has
