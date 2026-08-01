@@ -200,6 +200,8 @@ gitignored `logs/`; a rendered frame embeds the user's own assets and is never c
   data is published.
 - **Favorites, hotkeys and quantity selection** are out of scope; `QuantitySlider`
   constructs but is never driven.
-- **Container and barter menus** are 12.2.3 (issue #179) and reuse this CLIK groundwork.
+- **Container and barter menus** reuse this CLIK groundwork, this bridge's list helpers
+  and this row list, one pane each side; see
+  [container and barter menus](/engine/barter.md).
 - Categories are OpenSky's own family grouping, not the vanilla `InventoryDefines` tab
   order. Reading those constants off the movie and matching the vanilla strip is open.

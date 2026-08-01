@@ -2,6 +2,23 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-02
+
+* **M12.2.3 container and barter menus with GMST pricing (issue #179)**: vanilla
+  `containermenu.swf` and `bartermenu.swf` are both driven end to end — one bridge, because
+  the two movies are two skins on one `ItemMenu` subclass sharing the list components
+  `inventorymenu.swf` imports. Each comes up with 0 faults, 0 unimplemented opcodes and 0
+  unanswered engine calls (44 and 50 invokes), publishes a real two-sided inventory into
+  `EntriesA`, and settles one transaction from each side. The price formula is quoted from
+  UESP "Skyrim:Speech" and evaluated from the load order's own `fBarterMin` and
+  `fBarterMax` at a fixed Speech of 15, which resolves from `Skyrim.esm` to a factor of
+  3.105 locally. Buying and selling go through a new `InventoryRuntime.exchange`, so the
+  item and the gold move together or not at all and both land in the world-state journal;
+  a merchant with no gold buys nothing and still sells everything. The merchant itself is a
+  container reference nominated from the new `World > Container Menu` sidebar destination,
+  which is the seam a faction-driven merchant system replaces later. See
+  [container and barter menus](/engine/barter.md).
+
 ## 2026-08-01
 
 * **System-menu keyboard repaint (issue #300)**: system-menu keys now enter the live SWF

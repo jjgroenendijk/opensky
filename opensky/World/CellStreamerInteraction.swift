@@ -84,6 +84,18 @@ extension CellStreamer {
         return simd_length_squared(actor.placement.position - position)
     }
 
+    /// Every resident container the merchant menu can be pointed at (issue
+    /// #179). An interior scene replaces the exterior composition entirely, so
+    /// it answers alone when present, exactly as it does for the lookups above.
+    func containerInteractions() -> [PlacedInteraction] {
+        if let interiorScene {
+            return interiorScene.interactions.values
+                .filter { $0.action == .search }
+                .sorted { $0.reference.rawValue < $1.reference.rawValue }
+        }
+        return composition.containerInteractions()
+    }
+
     /// Which resident cell holds a reference, so a Papyrus world write can be
     /// attributed to one cell instead of every resident one (issue #172).
     func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {

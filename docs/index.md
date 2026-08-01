@@ -139,6 +139,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Inventory menu](/engine/inventory-menu.md) - the player's item list and its categories,
   the cross-movie character import vanilla `inventorymenu.swf` needs before it has a list
   at all, the `EntriesA` data contract, and the equip/unequip/drop actions behind it.
+* [Container and barter menus](/engine/barter.md) - the two-pane transfer list shared by
+  vanilla `containermenu.swf` and `bartermenu.swf`, the cited `fBarterMin`/`fBarterMax`
+  price formula, gold-conserving merchant transactions, and the merchant nomination seam.
 * [AS2 runtime](/engine/as2-runtime.md) - ActionScript 2 interpreter and the movie it
   drives: value model + coercions, bounded execution, display objects and timeline,
   Scaleform Stage rectangles, events, indexed global mouse input and hit testing, the

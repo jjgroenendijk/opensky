@@ -189,6 +189,47 @@ struct InventoryRuntime {
         store.set(given, for: destination.key, in: destination.cell)
     }
 
+    /// Moves items in both directions at once: `first` gives `given` to
+    /// `second` and receives `taken` back.
+    ///
+    /// This is what a barter transaction is — an item one way and gold the
+    /// other — and it exists here rather than as two `transfer` calls because
+    /// two calls are not one operation. Both owners' final inventories are
+    /// computed with both movements applied before either is written, so a sale
+    /// the merchant cannot pay for leaves the item with the player rather than
+    /// handing it over and then failing to pay. Item counts and gold are
+    /// therefore conserved across the pair the same way `transfer` conserves one
+    /// movement.
+    ///
+    /// A leg whose amount is zero is skipped rather than rejected: a free item
+    /// and a worthless one are both ordinary trades, and refusing them would
+    /// make a zero-value item untradeable.
+    ///
+    /// - Throws: `InventoryError.sameHolder`, plus everything the inventory
+    ///   arithmetic throws. Nothing is written on any failure.
+    func exchange(
+        giving given: (item: FormID, amount: Int32),
+        taking taken: (item: FormID, amount: Int32),
+        from first: InventoryHolder,
+        to second: InventoryHolder
+    ) throws {
+        guard first.key != second.key else {
+            throw InventoryError.sameHolder(first.key)
+        }
+        var giver = inventory(of: first)
+        var receiver = inventory(of: second)
+        if given.amount > 0 {
+            giver = try giver.removing(given.item, count: given.amount, owner: first.key)
+            receiver = try receiver.adding(given.item, count: given.amount, owner: second.key)
+        }
+        if taken.amount > 0 {
+            receiver = try receiver.removing(taken.item, count: taken.amount, owner: second.key)
+            giver = try giver.adding(taken.item, count: taken.amount, owner: first.key)
+        }
+        store.set(giver, for: first.key, in: first.cell)
+        store.set(receiver, for: second.key, in: second.cell)
+    }
+
     // MARK: - Equipped set
 
     /// Marks `item` equipped on `holder`. Storage only — slot conflicts and
