@@ -125,13 +125,14 @@ test-ui: vendor-link ## Build + run UI tests (launches the app, drives it via au
 	@OPENSKY_RESULT_BUNDLE=$(TEST_RESULTS)/ui.xcresult ./tools/test-ui.sh \
 		$(PROJECT) $(SCHEME) '$(DESTINATION)' $(UI_TEST_SIGNING_FLAGS) $(XCODEBUILD_FLAGS)
 
-test-one: vendor-link ## Run one test class/method: make test-one T=Class[/test]
+test-one: vendor-link ## Run one test: make test-one T=Class[/method] or Target/Class/method
 	@test -n "$(T)" || { \
-		echo "[ERROR] usage: make test-one T=ClassName[/testName]"; \
-		echo "        bare names resolve to openskyTests/; prefix a target to override"; \
+		echo "[ERROR] usage: make test-one T=ClassName[/methodName]"; \
+		echo "        or: make test-one T=TargetName/ClassName/methodName"; \
+		echo "        ClassName[/methodName] resolves under openskyTests"; \
 		exit 2; }
 	@rm -rf $(TEST_RESULTS)/one.xcresult && mkdir -p $(TEST_RESULTS)
-	@case "$(T)" in */*) spec="$(T)";; *) spec="openskyTests/$(T)";; esac; \
+	@case "$(T)" in */*/*) spec="$(T)";; *) spec="openskyTests/$(T)";; esac; \
 	TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
 		xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
 		$(XCODEBUILD_DD) $(XCODEBUILD_FLAGS) -resultBundlePath $(TEST_RESULTS)/one.xcresult \
