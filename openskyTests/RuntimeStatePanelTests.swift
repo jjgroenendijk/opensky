@@ -276,12 +276,14 @@ struct RuntimeStatePanelTests {
         )
     }
 
+    @MainActor
     private static func send(_ control: NSControl) {
         control.sendAction(control.action, to: control.target)
     }
 
     /// Depth-first search for a readout label's text, mirroring the acceptance
     /// harness helper.
+    @MainActor
     private static func readout(_ identifier: String, in view: NSView) -> String? {
         if view.accessibilityIdentifier() == identifier, let field = view as? NSTextField {
             return field.stringValue

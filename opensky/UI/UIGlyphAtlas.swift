@@ -18,7 +18,7 @@ import simd
 /// Cache key: glyph source namespace + font discriminator + glyph id + integer
 /// pixel size. The namespace keeps SWF-font glyphs from colliding with system
 /// glyphs that happen to share the same numeric `fontKey`.
-struct UIGlyphKey: Hashable {
+nonisolated struct UIGlyphKey: Hashable {
     enum Source: Hashable {
         case system
         case swf
@@ -31,7 +31,7 @@ struct UIGlyphKey: Hashable {
 }
 
 /// A packed glyph's atlas placement + placement metrics, all in pixels.
-struct UIGlyphEntry: Equatable {
+nonisolated struct UIGlyphEntry: Equatable {
     /// Atlas UV of the coverage cell (top-left, bottom-right), normalized.
     let uvMin: SIMD2<Float>
     let uvMax: SIMD2<Float>
@@ -48,7 +48,7 @@ struct UIGlyphEntry: Equatable {
     }
 }
 
-final class UIGlyphAtlas {
+nonisolated final class UIGlyphAtlas {
     static let dimension = 512
     static let padding = 1
     static let whiteBlock = 4

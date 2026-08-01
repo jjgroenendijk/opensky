@@ -7,13 +7,13 @@ import CoreText
 import simd
 
 /// A border stroke on a panel.
-struct UIBorder: Equatable {
+nonisolated struct UIBorder: Equatable {
     var width: Float
     var color: SIMD4<Float>
 }
 
 /// A (optionally wrapped) run of text.
-struct UILabel: Equatable {
+nonisolated struct UILabel: Equatable {
     var text: String
     var font: UIFont
     var color: SIMD4<Float>
@@ -29,14 +29,14 @@ struct UILabel: Equatable {
 }
 
 /// A node's drawable content.
-enum UINodeContent: Equatable {
+nonisolated enum UINodeContent: Equatable {
     case panel(size: UISize, color: SIMD4<Float>, border: UIBorder?)
     case marker(size: UISize, color: SIMD4<Float>)
     case label(UILabel)
 }
 
 /// One anchored node: content positioned by anchor + point offset.
-struct UINode: Equatable {
+nonisolated struct UINode: Equatable {
     var anchor: UIAnchor
     var offset: UIPoint
     var content: UINodeContent
@@ -48,7 +48,7 @@ struct UINode: Equatable {
     }
 }
 
-struct UIScene {
+nonisolated struct UIScene {
     var nodes: [UINode]
 
     init(nodes: [UINode] = []) {

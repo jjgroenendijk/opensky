@@ -163,6 +163,7 @@ struct ActorEquipmentRealDataTests {
         #expect(allSkinned)
     }
 
+    @MainActor
     private func render(
         _ assembly: ActorAssembly<ActorRenderAsset>,
         device: MTLDevice,

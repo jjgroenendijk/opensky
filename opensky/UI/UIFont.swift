@@ -5,7 +5,7 @@
 
 import CoreText
 
-struct UIFont: Equatable {
+nonisolated struct UIFont: Equatable {
     enum Weight: Int, Equatable {
         case regular = 0
         case bold = 1

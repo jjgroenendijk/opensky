@@ -8,14 +8,14 @@ import Foundation
 
 /// One positioned glyph from a shaped line. `x`/`y` are baseline-relative
 /// positions in the shaping font's coordinate space.
-struct UIShapedGlyph: Equatable {
+nonisolated struct UIShapedGlyph: Equatable {
     let glyphID: CGGlyph
     let x: Float
     let y: Float
 }
 
 /// Vertical typographic metrics of a font, in the font's size units.
-struct UIFontMetrics {
+nonisolated struct UIFontMetrics {
     let ascent: Float
     let descent: Float
     let leading: Float
@@ -26,7 +26,7 @@ struct UIFontMetrics {
 }
 
 /// A shaped single line: its glyphs plus typographic metrics.
-struct UIShapedLine {
+nonisolated struct UIShapedLine {
     let glyphs: [UIShapedGlyph]
     let width: Float
     let metrics: UIFontMetrics
@@ -36,7 +36,7 @@ struct UIShapedLine {
     }
 }
 
-enum UITextShaper {
+nonisolated enum UITextShaper {
     /// Shapes one line with `font` (already at the desired size).
     static func shape(_ text: String, font: CTFont) -> UIShapedLine {
         // kCTFontAttributeName avoids an AppKit/UIKit import for NSAttributedString.Key.font.

@@ -5,7 +5,7 @@
 
 import simd
 
-extension UIScene {
+nonisolated extension UIScene {
     static let labSample = UIScene(nodes: [
         // Filled panel + light border, top-left.
         UINode(

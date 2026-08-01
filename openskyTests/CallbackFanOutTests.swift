@@ -5,6 +5,7 @@ import Foundation
 @testable import opensky
 import Testing
 
+@MainActor
 struct CallbackFanOutTests {
     @Test func zeroHandlersIsANoOp() {
         let fanOut = CallbackFanOut<Int>()

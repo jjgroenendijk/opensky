@@ -12,7 +12,7 @@
 import CoreGraphics
 import simd
 
-extension UIGlyphAtlas {
+nonisolated extension UIGlyphAtlas {
     /// A glyph's tight coverage cell: pixel size + the draw origin (offset that
     /// shifts the baseline-relative bbox into the cell) + the left/top bearings.
     struct GlyphBox {

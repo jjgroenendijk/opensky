@@ -6,19 +6,19 @@
 import simd
 
 /// A point in UI point space (origin top-left, y down).
-struct UIPoint: Equatable {
+nonisolated struct UIPoint: Equatable {
     var x: Float
     var y: Float
 }
 
 /// A size in UI point space. Non-negative by convention; callers clamp.
-struct UISize: Equatable {
+nonisolated struct UISize: Equatable {
     var width: Float
     var height: Float
 }
 
 /// An axis-aligned rect (origin top-left, y down).
-struct UIRect: Equatable {
+nonisolated struct UIRect: Equatable {
     var x: Float
     var y: Float
     var width: Float
@@ -52,7 +52,7 @@ struct UIRect: Equatable {
 }
 
 /// Edge padding in UI points.
-struct UIInsets: Equatable {
+nonisolated struct UIInsets: Equatable {
     var top: Float
     var left: Float
     var bottom: Float
@@ -74,7 +74,7 @@ struct UIInsets: Equatable {
 
 /// Nine-point anchoring: the named point of a child aligns to the same-named
 /// point of its container, plus an offset.
-enum UIAnchor: CaseIterable {
+nonisolated enum UIAnchor: CaseIterable {
     case topLeft, top, topRight
     case left, center, right
     case bottomLeft, bottom, bottomRight
@@ -114,7 +114,7 @@ enum UIAnchor: CaseIterable {
 /// UI points -> framebuffer pixels. Clamped to `range`; edges snap to whole
 /// pixels independently (min + max each rounded) so 1px strokes stay crisp and
 /// widths stay stable regardless of sub-pixel origin.
-struct UIScale: Equatable {
+nonisolated struct UIScale: Equatable {
     static let range: ClosedRange<Float> = 0.5 ... 4
 
     let factor: Float

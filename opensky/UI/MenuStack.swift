@@ -7,7 +7,7 @@
 /// Opaque menu name. Mirrors Scaleform's string menu identity (for example
 /// "InventoryMenu", "Console", "Dialogue Menu") without hardcoding any list;
 /// the engine only compares identity, never interprets the name.
-struct MenuIdentifier: Hashable {
+nonisolated struct MenuIdentifier: Hashable {
     let name: String
 
     init(_ name: String) {
@@ -15,7 +15,7 @@ struct MenuIdentifier: Hashable {
     }
 }
 
-extension MenuIdentifier: ExpressibleByStringLiteral {
+nonisolated extension MenuIdentifier: ExpressibleByStringLiteral {
     init(stringLiteral value: String) {
         self.init(value)
     }
@@ -24,7 +24,7 @@ extension MenuIdentifier: ExpressibleByStringLiteral {
 /// Ordered, duplicate-free stack of open menus. The top of the stack is the
 /// focused menu that receives input first. Value type so callers can snapshot
 /// and compare freely; `MenuModeController` owns the one live instance.
-struct MenuStack: Equatable {
+nonisolated struct MenuStack: Equatable {
     private(set) var identifiers: [MenuIdentifier] = []
 
     var isEmpty: Bool {

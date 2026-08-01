@@ -6,7 +6,7 @@
 import simd
 
 /// Result of applying the per-frame quad budget to a draw list.
-struct UIBudgetResult {
+nonisolated struct UIBudgetResult {
     let vertices: [UIVertex]
     let quads: Int
     let dropped: Int
@@ -29,7 +29,7 @@ nonisolated struct UIDrawStats: Equatable {
     var atlasPackFailures = 0
 }
 
-struct UIDrawList {
+nonisolated struct UIDrawList {
     /// Six vertices per quad (two triangles), no index buffer.
     static let verticesPerQuad = 6
 
