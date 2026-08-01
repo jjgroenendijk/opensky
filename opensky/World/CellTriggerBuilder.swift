@@ -25,7 +25,7 @@ nonisolated struct CellCollisionBuild {
     let triggerVolumes: TriggerVolumeSet
 }
 
-extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder {
     /// The solid set and the trigger set for one cell, from the references a
     /// build settled on after runtime state was applied.
     nonisolated func buildCollision(

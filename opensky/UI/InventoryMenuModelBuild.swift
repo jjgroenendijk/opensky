@@ -9,7 +9,7 @@
 
 import Foundation
 
-extension InventoryMenuModel {
+nonisolated extension InventoryMenuModel {
     /// Builds the list one owner presents.
     ///
     /// Rows sort by display name, case-insensitively, then by FormID so two

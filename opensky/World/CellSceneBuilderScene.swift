@@ -45,7 +45,7 @@ nonisolated struct EnvironmentBuild {
     let sky: SkyParameters?
 }
 
-extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder {
     /// Terrain + water + procedural sky (suppressed for noSky worldspaces).
     nonisolated func buildEnvironment(
         found: FoundCell,

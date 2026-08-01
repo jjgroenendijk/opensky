@@ -10,7 +10,7 @@
 
 import simd
 
-extension LocalizedLabels {
+nonisolated extension LocalizedLabels {
     /// Synthetic sample provider for the UI Lab preview. Goes through the real
     /// merge path so the preview exercises the same provider the SWF menus
     /// (issue #99) will consume.

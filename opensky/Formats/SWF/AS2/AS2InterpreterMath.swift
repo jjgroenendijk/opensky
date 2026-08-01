@@ -15,7 +15,7 @@
 
 import Foundation
 
-extension AS2Interpreter {
+nonisolated extension AS2Interpreter {
     func arithmeticOp(_ record: SWFActionRecord, frame: AS2Frame) throws(AS2Fault) -> AS2Flow? {
         switch record.code {
         case AS2Opcode.subtract:
@@ -77,7 +77,7 @@ extension AS2Interpreter {
     }
 }
 
-extension AS2Interpreter {
+nonisolated extension AS2Interpreter {
     func comparisonOp(_ record: SWFActionRecord, frame: AS2Frame) throws(AS2Fault) -> AS2Flow? {
         switch record.code {
         case AS2Opcode.not:

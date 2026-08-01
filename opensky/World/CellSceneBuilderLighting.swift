@@ -9,7 +9,7 @@ nonisolated struct InteriorLightingBuild {
     let pointLights: [RenderPointLight]
 }
 
-extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder {
     nonisolated func buildInteriorLighting(
         cell: Cell,
         references: [PlacedReference]

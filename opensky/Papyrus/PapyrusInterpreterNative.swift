@@ -2,7 +2,7 @@
 
 import Foundation
 
-extension PapyrusInterpreter {
+nonisolated extension PapyrusInterpreter {
     func suspend(
         call: PapyrusNativeCall,
         request: PapyrusNativeSuspension,

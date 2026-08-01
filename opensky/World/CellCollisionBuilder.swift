@@ -115,7 +115,7 @@ nonisolated enum CellCollisionGridProbe {
     }
 }
 
-extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder {
     /// Resolves model-bearing placements independently of render load.
     /// Collision-only NIFs stay physical when no drawable mesh uploads.
     nonisolated func resolveCollisionPlacements(

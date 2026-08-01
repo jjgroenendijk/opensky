@@ -48,7 +48,7 @@ nonisolated struct ResolvedFormID: Hashable {
     let objectID: UInt32
 }
 
-extension ResolvedFormID: CustomStringConvertible {
+nonisolated extension ResolvedFormID: CustomStringConvertible {
     var description: String {
         String(format: "%@:%06X", plugin, objectID)
     }

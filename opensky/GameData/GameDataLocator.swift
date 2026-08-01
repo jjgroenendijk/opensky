@@ -17,7 +17,7 @@ nonisolated enum GameDataError: Error, Equatable {
     case notFound(searched: [String])
 }
 
-extension GameDataError: LocalizedError {
+nonisolated extension GameDataError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case let .overrideInvalid(source, path):

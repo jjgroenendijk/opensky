@@ -214,7 +214,7 @@ nonisolated struct SWFTimelineDecoder {
     }
 }
 
-extension SWFMovieTally {
+nonisolated extension SWFMovieTally {
     /// Accumulates one parsed action stream into the action-side counters.
     mutating func record(actions block: SWFActionBlock) {
         actionBlocks += 1

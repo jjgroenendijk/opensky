@@ -14,7 +14,7 @@
 
 import Foundation
 
-extension AudioCodecParameters {
+nonisolated extension AudioCodecParameters {
     /// The six-byte WMAv2 extradata block ffmpeg's xWMA demuxer synthesizes when
     /// the container carries none (byte 4 = 31, all others zero).
     static let synthesizedWMAv2Extradata = Data([0, 0, 0, 0, 31, 0])

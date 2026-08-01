@@ -15,7 +15,7 @@
 
 import Foundation
 
-extension AS2Interpreter {
+nonisolated extension AS2Interpreter {
     /// `ActionDefineFunction` (0x9B) and `ActionDefineFunction2` (0x8E). The
     /// body is the next `bodySize` bytes of the same stream, so execution
     /// resumes after it.

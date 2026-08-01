@@ -83,7 +83,7 @@ nonisolated struct WornEquipment {
     }
 }
 
-extension ActorVisualResolver {
+nonisolated extension ActorVisualResolver {
     /// DOFT -> OTFT -> INAM entries, each an ARMO or an LVLI expanded via
     /// the deterministic entry policy. Any unusable link throws — the gate
     /// forbids silently rendering the actor naked when the chain breaks.

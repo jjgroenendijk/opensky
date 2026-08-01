@@ -11,7 +11,7 @@
 
 import Foundation
 
-extension InventoryMenuMovieBridge {
+nonisolated extension InventoryMenuMovieBridge {
     /// Delivers one menu event to a live movie through the renderer, which
     /// synchronizes the drawn command stream with whatever the movie changed.
     ///

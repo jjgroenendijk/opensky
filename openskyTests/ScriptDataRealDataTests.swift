@@ -366,7 +366,7 @@ extension ScriptDataRealDataTests {
     }
 }
 
-extension ScriptPropertyValue {
+nonisolated extension ScriptPropertyValue {
     fileprivate var objects: [ScriptObjectReference] {
         switch self {
         case let .object(value): [value]

@@ -17,7 +17,7 @@ import CoreGraphics
 import Foundation
 import ImageIO
 
-extension SWFBitmapDecoder {
+nonisolated extension SWFBitmapDecoder {
     static func decodeJPEGFamily(_ tag: SWFTag, jpegTables: Data?) throws -> SWFBitmap {
         var reader = BinaryReader(tag.body)
         let characterId = try reader.readUInt16()

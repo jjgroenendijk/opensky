@@ -15,7 +15,7 @@
 
 import Foundation
 
-extension AS2Interpreter {
+nonisolated extension AS2Interpreter {
     func controlOp(
         _ record: SWFActionRecord,
         frame: AS2Frame

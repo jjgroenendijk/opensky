@@ -15,7 +15,7 @@
 
 import Foundation
 
-extension AS2Interpreter {
+nonisolated extension AS2Interpreter {
     func variableOp(_ record: SWFActionRecord, frame: AS2Frame) throws(AS2Fault) -> AS2Flow? {
         switch record.code {
         case AS2Opcode.getVariable:

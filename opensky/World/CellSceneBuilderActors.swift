@@ -51,7 +51,7 @@ nonisolated struct CellActorBuild {
     var entries: [RuntimeReferenceEntry] = []
 }
 
-extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder {
     /// Actors for one exterior cell: local ACHRs plus worldspace-persistent
     /// ACHRs whose physical position lies in this cell, resolved + assembled.
     nonisolated func buildExteriorActors(

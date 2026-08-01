@@ -114,7 +114,7 @@ nonisolated enum SWFActionOperandDecoder {
 
 // MARK: - Field readers
 
-extension SWFActionOperandDecoder {
+nonisolated extension SWFActionOperandDecoder {
     /// One `ActionPush` `Type` byte and the value it selects (spec p. 69).
     private static func readPushValue(_ reader: inout BinaryReader) throws -> SWFActionValue {
         let type = try reader.readUInt8()

@@ -40,7 +40,7 @@ nonisolated enum WaterMeshBuilder {
     }
 }
 
-extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder {
     /// Builds at most one water plane. CELL DATA has-water gates the feature;
     /// an explicit XCLW sentinel wins over every WRLD default.
     nonisolated func buildWater(found: FoundCell, worldspace: Worldspace?) -> WaterBuild? {

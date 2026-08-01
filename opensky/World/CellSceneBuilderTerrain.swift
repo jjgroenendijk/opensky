@@ -40,7 +40,7 @@ nonisolated private struct TerrainItemBuild {
     var layerSkipCount = 0
 }
 
-extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder {
     /// Builds terrain for the cell: from its LAND record when present, else a
     /// flat fallback plane at the worldspace DNAM default land height. Returns
     /// nil (no terrain drawn) when neither is available or every upload fails —

@@ -304,7 +304,7 @@ nonisolated struct Weather {
 
 /// Named NAM0 component accessors, in an extension so they stay off the struct's
 /// body-length budget.
-extension Weather {
+nonisolated extension Weather {
     /// Layer for a named component, nil if the record omitted that index.
     func colors(for component: Component) -> Colors? {
         guard let colors, component.rawValue < colors.count else { return nil }

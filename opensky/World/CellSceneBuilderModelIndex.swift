@@ -8,7 +8,7 @@ nonisolated struct ExteriorBuildSource {
     let cell: FoundCell
 }
 
-extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder {
     nonisolated func exteriorBuildSource(
         worldspaceEditorID: String,
         gridX: Int32,

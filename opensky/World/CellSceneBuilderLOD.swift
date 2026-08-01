@@ -1,6 +1,6 @@
 // Distant LOD bridge split from CellSceneBuilder to keep core WRLD walk dense.
 
-extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder {
     nonisolated func buildDistantLOD(
         worldspaceEditorID: String,
         center: CellCoordinate,
