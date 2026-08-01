@@ -23,6 +23,7 @@ nonisolated enum CellStreamingFlyBenchmarkError: LocalizedError {
     case animationUpdateExceeded(average: Double, p95: Double, budget: Double)
     case shadowUpdateExceeded(average: Double, p95: Double, budget: Double)
     case audioUpdateExceeded(average: Double, p95: Double, budget: Double)
+    case scriptUpdateExceeded(average: Double, p95: Double, budget: Double)
     case weatherUnavailable
     case rainWeatherUnavailable
     case noWeatherRendered
@@ -85,6 +86,11 @@ nonisolated enum CellStreamingFlyBenchmarkError: LocalizedError {
         case let .audioUpdateExceeded(average, p95, budget):
             String(
                 format: "audio update avg %.2f ms / p95 %.2f ms exceeded %.2f ms budget",
+                average, p95, budget
+            )
+        case let .scriptUpdateExceeded(average, p95, budget):
+            String(
+                format: "script update avg %.2f ms / p95 %.2f ms exceeded %.2f ms budget",
                 average, p95, budget
             )
         case .weatherUnavailable: "fly path has no data-driven weather runtime"

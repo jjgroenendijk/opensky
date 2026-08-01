@@ -122,7 +122,8 @@ enum CellStreamingWalkBenchmark {
             windowSummaries: [],
             animationMS: activeSamples(render.animationMS, frameMask: frameMask),
             shadowMS: activeSamples(render.shadowMS, frameMask: frameMask),
-            audioUpdateMS: activeSamples(render.audioUpdateMS, frameMask: frameMask)
+            audioUpdateMS: activeSamples(render.audioUpdateMS, frameMask: frameMask),
+            scriptUpdateMS: activeSamples(render.scriptUpdateMS, frameMask: frameMask)
         )
     }
 

@@ -26,6 +26,52 @@ nonisolated struct ActorBuildBenchmarkSummary {
     let cellReports: [ActorCellReport]
 }
 
+nonisolated func validatedFlyUpdateBudgets(
+    render: OffscreenBenchResult,
+    configuration: CellStreamingFlyBenchmarkConfiguration
+) throws {
+    guard
+        render.animationAverageMS <= configuration.animationUpdateBudgetMS,
+        render.animationPercentileMS(95) <= configuration.animationUpdateBudgetMS
+    else {
+        throw CellStreamingFlyBenchmarkError.animationUpdateExceeded(
+            average: render.animationAverageMS,
+            p95: render.animationPercentileMS(95),
+            budget: configuration.animationUpdateBudgetMS
+        )
+    }
+    guard
+        render.shadowAverageMS <= configuration.shadowUpdateBudgetMS,
+        render.shadowPercentileMS(95) <= configuration.shadowUpdateBudgetMS
+    else {
+        throw CellStreamingFlyBenchmarkError.shadowUpdateExceeded(
+            average: render.shadowAverageMS,
+            p95: render.shadowPercentileMS(95),
+            budget: configuration.shadowUpdateBudgetMS
+        )
+    }
+    guard
+        render.audioUpdateAverageMS <= configuration.audioUpdateBudgetMS,
+        render.audioUpdatePercentileMS(95) <= configuration.audioUpdateBudgetMS
+    else {
+        throw CellStreamingFlyBenchmarkError.audioUpdateExceeded(
+            average: render.audioUpdateAverageMS,
+            p95: render.audioUpdatePercentileMS(95),
+            budget: configuration.audioUpdateBudgetMS
+        )
+    }
+    guard
+        render.scriptUpdateAverageMS <= configuration.scriptUpdateBudgetMS,
+        render.scriptUpdatePercentileMS(95) <= configuration.scriptUpdateBudgetMS
+    else {
+        throw CellStreamingFlyBenchmarkError.scriptUpdateExceeded(
+            average: render.scriptUpdateAverageMS,
+            p95: render.scriptUpdatePercentileMS(95),
+            budget: configuration.scriptUpdateBudgetMS
+        )
+    }
+}
+
 nonisolated func validatedCollisionBuildMetrics(
     runner: SerialCellBuildRunner,
     configuration: CellStreamingFlyBenchmarkConfiguration,

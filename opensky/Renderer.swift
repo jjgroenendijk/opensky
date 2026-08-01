@@ -161,6 +161,9 @@ final class Renderer: NSObject {
     /// advances. The delta is seconds, already gated by the renderer's own
     /// `FrameSimClock`, so a paused frame delivers zero.
     var onWorldUpdate: ((Float) -> Void)?
+    /// CPU wall time of the world-simulation callback, which currently owns
+    /// the per-frame Papyrus VM advance. Exactly zero when no callback is set.
+    var lastScriptUpdateMS = 0.0
     /// Wall-clock delta source for the world simulation tick (the Papyrus VM),
     /// paused in menu mode.
     var worldSimClock = FrameSimClock()

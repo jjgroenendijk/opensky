@@ -41,10 +41,15 @@ struct M11ScriptedWorldChain {
     let streamer: CellStreamer
     let recorder = M11ScriptedWorldRecorder()
 
-    init() throws {
+    init(
+        activate: Bool = true,
+        scriptName: String = "LeverScript",
+        objects: [PexObject]? = nil
+    ) throws {
         let lever = try PapyrusWorldFixture.referenceEntry(
             objectID: Self.leverID,
-            scripts: [VMADFixture.Script("LeverScript", properties: [])],
+            scripts: [VMADFixture.Script(scriptName, properties: [])],
+            isPersistent: true,
             placement: Self.leverPosition,
             // The authored XLKR link, untagged, is the only thing that tells the
             // script which reference it affects.
@@ -54,7 +59,7 @@ struct M11ScriptedWorldChain {
             objectID: Self.doorID, scripts: [], placement: Self.doorPosition
         )
         session = PapyrusWorldFixture.session(
-            objects: [Self.objectReferenceScript(), Self.leverScript()],
+            objects: objects ?? [Self.objectReferenceScript(), Self.leverScript()],
             entries: [lever, door],
             cell: Self.cell
         )
@@ -76,8 +81,10 @@ struct M11ScriptedWorldChain {
         // activation's own work is left to observe.
         PapyrusWorldFixture.drain(session.world)
 
-        Self.pressUseKey(streamer)
-        PapyrusWorldFixture.drain(session.world)
+        if activate {
+            Self.pressUseKey(streamer)
+            PapyrusWorldFixture.drain(session.world)
+        }
     }
 
     // MARK: - Entering the chain
@@ -185,6 +192,11 @@ struct M11ScriptedWorldChain {
             locals: [PexTypedName(name: "linked", typeName: "ObjectReference")],
             instructions: [
                 PapyrusTestSupport.instruction(
+                    .assign,
+                    .identifier("activationMarker"),
+                    .integer(1)
+                ),
+                PapyrusTestSupport.instruction(
                     .callStatic,
                     .identifier("Probe"),
                     .identifier("Seen"),
@@ -211,6 +223,12 @@ struct M11ScriptedWorldChain {
         return PexFixture.runtimeObject(
             name: "LeverScript",
             parent: "ObjectReference",
+            variables: [PexVariable(
+                name: "activationMarker",
+                typeName: "Int",
+                userFlags: 0,
+                initialValue: .integer(0)
+            )],
             states: [PapyrusTestSupport.state(functions: [("OnActivate", body)])]
         )
     }

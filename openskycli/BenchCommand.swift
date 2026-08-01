@@ -11,6 +11,7 @@ private struct BenchPathSpecificOptions {
     let actorBuildBudgetMS: String?
     let animationUpdateBudgetMS: String?
     let shadowUpdateBudgetMS: String?
+    let scriptUpdateBudgetMS: String?
 
     init(scanner: inout ArgumentScanner, walkPath: Bool) throws {
         frames = try scanner.option("--frames")
@@ -19,6 +20,7 @@ private struct BenchPathSpecificOptions {
         actorBuildBudgetMS = try scanner.option("--actor-build-budget-ms")
         animationUpdateBudgetMS = try scanner.option("--animation-budget-ms")
         shadowUpdateBudgetMS = try scanner.option("--shadow-budget-ms")
+        scriptUpdateBudgetMS = try scanner.option("--script-budget-ms")
 
         guard walkPath else { return }
         let options = [
@@ -27,7 +29,8 @@ private struct BenchPathSpecificOptions {
             ("--collision-build-budget-ms", collisionBuildBudgetMS),
             ("--actor-build-budget-ms", actorBuildBudgetMS),
             ("--animation-budget-ms", animationUpdateBudgetMS),
-            ("--shadow-budget-ms", shadowUpdateBudgetMS)
+            ("--shadow-budget-ms", shadowUpdateBudgetMS),
+            ("--script-budget-ms", scriptUpdateBudgetMS)
         ]
         if let option = options.first(where: { $0.1 != nil }) {
             throw CLIError.usage("\(option.0) is not supported with --walk-path")
@@ -77,6 +80,14 @@ enum BenchCommand {
     /// enough that only a real regression, per-frame work scaling with
     /// something other than the source cap, can trip it.
     private static let defaultAudioUpdateBudgetMS = 0.5
+    /// CPU cost of the per-frame Papyrus world-runtime callback, including the
+    /// fixed-step accumulator and an empty standard-registry VM tick.
+    /// Measured 2026-08-01, `bench --fly-path --size 640x360` (Debug, 6,645
+    /// stream frames, engine attached and ticking): avg 0.024 ms, p95 0.035 ms,
+    /// max 1.266 ms. The 0.5 ms ceiling is over 14 times the measured p95 while
+    /// remaining about 1.5% of the 33.33 ms frame at 30 fps. It leaves room for
+    /// normal event bursts but trips work that scales without the VM's bounds.
+    private static let defaultScriptUpdateBudgetMS = 0.5
 
     private struct Options {
         let worldspace: String
@@ -95,6 +106,7 @@ enum BenchCommand {
         let animationUpdateBudgetMS: Double
         let shadowUpdateBudgetMS: Double
         let audioUpdateBudgetMS: Double
+        let scriptUpdateBudgetMS: Double
     }
 
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
@@ -205,6 +217,7 @@ enum BenchCommand {
             movementConfiguration: .synthetic
         )
         renderer.worldAudio = benchAudioEngine()
+        wireBenchScriptRuntime(to: renderer)
         let result = try CellStreamingFlyBenchmark.run(
             renderer: renderer,
             provider: provider,
@@ -217,7 +230,8 @@ enum BenchCommand {
                 actorBuildBudgetMS: options.actorBuildBudgetMS,
                 animationUpdateBudgetMS: options.animationUpdateBudgetMS,
                 shadowUpdateBudgetMS: options.shadowUpdateBudgetMS,
-                audioUpdateBudgetMS: options.audioUpdateBudgetMS
+                audioUpdateBudgetMS: options.audioUpdateBudgetMS,
+                scriptUpdateBudgetMS: options.scriptUpdateBudgetMS
             )
         )
         reportFlyPath(
@@ -307,6 +321,17 @@ enum BenchCommand {
 }
 
 extension BenchCommand {
+    /// Attaches an empty VM so the fly path measures the fixed engine-loop
+    /// floor. The callback retains the runtime for the complete render run.
+    private static func wireBenchScriptRuntime(to renderer: Renderer) {
+        let runtime = PapyrusWorldRuntime(runtime: PapyrusRuntime(
+            files: [], nativeDispatch: PapyrusNativeRegistry.standard
+        ))
+        renderer.onWorldUpdate = { [runtime, weak renderer] delta in
+            _ = runtime.advance(delta: delta, gameClock: renderer?.gameClock)
+        }
+    }
+
     /// A world audio engine attached to the benchmark renderer so the per-frame
     /// audio update actually runs and can be measured. It is left disabled, so
     /// no output device is opened and nothing plays: the benchmark measures the
@@ -390,10 +415,8 @@ extension BenchCommand {
                 pathSpecific.shadowUpdateBudgetMS,
                 flag: "--shadow-budget-ms", fallback: defaultShadowUpdateBudgetMS
             ),
-            audioUpdateBudgetMS: positiveDouble(
-                scanner.option("--audio-budget-ms"),
-                flag: "--audio-budget-ms", fallback: defaultAudioUpdateBudgetMS
-            )
+            audioUpdateBudgetMS: audioUpdateBudget(scanner.option("--audio-budget-ms")),
+            scriptUpdateBudgetMS: scriptUpdateBudget(pathSpecific.scriptUpdateBudgetMS)
         )
         try validateCombination(options)
         try scanner.finish()
@@ -410,6 +433,22 @@ extension BenchCommand {
         return WalkBenchmarkFrameBudget.buildDefault(
             frameIntervalMS: budgetMS,
             debugBuild: isDebugBuild
+        )
+    }
+
+    private static func scriptUpdateBudget(_ value: String?) throws -> Double {
+        try positiveDouble(
+            value,
+            flag: "--script-budget-ms",
+            fallback: defaultScriptUpdateBudgetMS
+        )
+    }
+
+    private static func audioUpdateBudget(_ value: String?) throws -> Double {
+        try positiveDouble(
+            value,
+            flag: "--audio-budget-ms",
+            fallback: defaultAudioUpdateBudgetMS
         )
     }
 

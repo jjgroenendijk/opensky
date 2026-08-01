@@ -74,7 +74,21 @@ extension Renderer {
         let delta = worldSimClock.advance(
             to: CACurrentMediaTime(), paused: worldSimPaused
         )
-        onWorldUpdate?(delta)
+        updateWorldSim(deltaTime: delta)
+    }
+
+    /// Times only the world callback, excluding the renderer clock advance.
+    /// Both the live and offscreen loops use this seam so the fly benchmark
+    /// measures the same Papyrus VM work the shipping frame loop performs.
+    func updateWorldSim(deltaTime: Float) {
+        guard let onWorldUpdate else {
+            lastScriptUpdateMS = 0
+            return
+        }
+        let started = DispatchTime.now().uptimeNanoseconds
+        onWorldUpdate(deltaTime)
+        lastScriptUpdateMS =
+            Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
     }
 
     /// Game hours elapsed since the previous call, from the clock's own

@@ -138,10 +138,82 @@ struct CellStreamingFlyPathTests {
         #expect(result.shadowUpdateBudgetMS == 1.5)
     }
 
+    /// A script-update run over budget produces the same reason-tagged gate
+    /// shape as the other per-frame metrics, including its exact description.
+    @Test
+    func scriptUpdateBudgetViolationSurfacesAveragesAndBudget() {
+        let render = OffscreenBenchResult(
+            frameMS: [8, 8, 8],
+            windowSummaries: [],
+            scriptUpdateMS: [1, 2, 3]
+        )
+        let budget = 0.5
+        #expect(render.scriptUpdateAverageMS > budget)
+        #expect(render.scriptUpdatePercentileMS(95) > budget)
+        do {
+            try validatedFlyUpdateBudgets(
+                render: render,
+                configuration: Self.makeConfiguration(scriptBudgetMS: budget)
+            )
+            Issue.record("expected the script update gate to fail")
+        } catch let error as CellStreamingFlyBenchmarkError {
+            #expect(
+                error.errorDescription
+                    == "script update avg 2.00 ms / p95 3.00 ms exceeded 0.50 ms budget"
+            )
+        } catch {
+            Issue.record("expected scriptUpdateExceeded, got \(error)")
+        }
+    }
+
+    /// A renderer with no world callback records zero, and an unsampled run
+    /// also resolves to zero, so both remain under any positive budget.
+    @Test
+    func scriptUpdateWithoutCallbackStaysWithinBudget() {
+        let render = OffscreenBenchResult(
+            frameMS: [8, 8],
+            windowSummaries: [],
+            scriptUpdateMS: [0, 0]
+        )
+        #expect(render.scriptUpdateAverageMS == 0)
+        #expect(render.scriptUpdatePercentileMS(95) == 0)
+        #expect(OffscreenBenchResult(frameMS: [8], windowSummaries: [])
+            .scriptUpdateAverageMS == 0)
+        #expect(throws: Never.self) {
+            try validatedFlyUpdateBudgets(
+                render: render,
+                configuration: Self.makeConfiguration(scriptBudgetMS: 0.5)
+            )
+        }
+        #expect(throws: Never.self) {
+            try validatedFlyUpdateBudgets(
+                render: OffscreenBenchResult(frameMS: [], windowSummaries: []),
+                configuration: Self.makeConfiguration(scriptBudgetMS: 0.5)
+            )
+        }
+    }
+
+    /// The fly result carries the script budget for CLI reporting.
+    @Test
+    func resultCarriesScriptBudget() {
+        let result = CellStreamingFlyPathTests.makeResult(
+            shadowBudgetMS: 1.5,
+            shadowStats: ShadowDrawStats(
+                drawCalls: 1,
+                drawnInstances: 1,
+                culledInstances: 0,
+                cascadesRendered: 1
+            ),
+            scriptBudgetMS: 0.5
+        )
+        #expect(result.scriptUpdateBudgetMS == 0.5)
+    }
+
     private static func makeResult(
         shadowBudgetMS: Double,
         shadowStats: ShadowDrawStats,
-        audioBudgetMS: Double = 0.5
+        audioBudgetMS: Double = 0.5,
+        scriptBudgetMS: Double = 0.5
     ) -> CellStreamingFlyBenchmarkResult {
         CellStreamingFlyBenchmarkResult(
             render: OffscreenBenchResult(frameMS: [8], windowSummaries: []),
@@ -171,6 +243,7 @@ struct CellStreamingFlyPathTests {
             animationUpdateBudgetMS: 4,
             shadowUpdateBudgetMS: shadowBudgetMS,
             audioUpdateBudgetMS: audioBudgetMS,
+            scriptUpdateBudgetMS: scriptBudgetMS,
             weatherName: "Rain",
             windSpeed: 0.5,
             animationUpdatedBoneCount: 10,
@@ -180,6 +253,23 @@ struct CellStreamingFlyPathTests {
             shadowDrawStats: shadowStats,
             grassDrawStats: GrassDrawStats(drawCalls: 2, drawnInstances: 20),
             actorCellReports: []
+        )
+    }
+
+    private static func makeConfiguration(
+        scriptBudgetMS: Double
+    ) -> CellStreamingFlyBenchmarkConfiguration {
+        CellStreamingFlyBenchmarkConfiguration(
+            start: CellCoordinate(x: 0, y: 0),
+            size: (width: 1, height: 1),
+            maxFrames: 1,
+            footprintCapMB: 1,
+            collisionBuildBudgetMS: 1,
+            actorBuildBudgetMS: 1,
+            animationUpdateBudgetMS: 1,
+            shadowUpdateBudgetMS: 1,
+            audioUpdateBudgetMS: 1,
+            scriptUpdateBudgetMS: scriptBudgetMS
         )
     }
 }
