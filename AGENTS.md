@@ -178,4 +178,3 @@ matching one before starting that work rather than reconstructing the rules here
 | `writing-wiki-docs` | Adding or materially changing anything under `docs/` |
 | `probing-real-game-data` | Running engine code against the real Skyrim SE install |
 | `building-app-ui` | Adding or changing main-app UI — sidebar destinations, control panels, inspectors |
-| `delegating-to-subagents` | Splitting a task across parallel or sequential sub-agents |
