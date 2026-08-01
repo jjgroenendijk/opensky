@@ -147,7 +147,9 @@ struct OpenSkySaveRoundTripTests {
         let dawnguard = ReferenceKey.plugin(name: "dawnguard.esm", objectID: 0x000A_BCDE)
         let delta = try #require(decoded[dawnguard])
         #expect(delta.cell == OpenSkySaveFixture.whiterun)
-        #expect(delta.sortedKinds == WorldStateComponentKind.allCases)
+        // Every kind `RDLT` carries. Inventory is deliberately absent: it
+        // travels in `INVN`, which InventorySaveTests covers.
+        #expect(delta.sortedKinds == [.enableState, .transform, .activation, .deletion])
         #expect(delta.component(ReferenceEnableState.self)?.isEnabled == false)
         let transform = try #require(delta.component(ReferenceTransformOverride.self))
         #expect(transform.position == SIMD3(-1.5, 2.25, 3e10))

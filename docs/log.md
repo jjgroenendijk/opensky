@@ -14,6 +14,62 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   synthetic ESM fixture pins the separator-led path through descriptor resolution. See
   [sound records](/formats/sound.md#resolution-and-paths).
 
+* **M12.1.2 inventory state component and accounting (issue #176)**: added inventory to the
+  runtime state system as the fifth `WorldStateComponentKind`. `ReferenceInventoryState`
+  (`opensky/Inventory/InventoryComponent.swift`) holds an owner's *entire* effective
+  inventory — stacks of `(base item FormID, count)` plus the equipped set — rather than a
+  difference against the plugin baseline, because a CONT whose `CNTO` list routes through
+  an LVLI has no stable "minus one iron sword" representation while its resolved list is
+  perfectly stable. The first mutation materializes the baseline into the component; an
+  untouched owner keeps no component and re-derives. `WorldStateStore` itself needed no
+  change at all, which is the extension point M10.1.2 was designed for.
+
+  `InventoryBaselineResolver` re-derives baselines and caches nothing, the same rule
+  `ReferenceState` follows for placements: a container from its `CNTO` list, an actor from
+  the default outfit its resolved template chain supplies (reusing `ActorTemplateResolver`
+  rather than repeating template resolution), the player and generated owners from nothing.
+  Leveled entries expand **deterministically** — `LeveledList.deterministicEntry` plus the
+  `useAll` bundle flag, the policy the bind-pose milestone already uses — with a visited-set
+  cycle guard and a depth cap; rolling against player level needs a player level no
+  milestone has yet. Three more v1 approximations are recorded rather than hidden:
+  `chanceNone` is ignored, `NPC_` carries no decoded `CNTO` list so an actor baselines to
+  its outfit and not its loot, and a form no index describes stays as a plain weightless
+  stack instead of vanishing. An actor's outfit is baselined as *worn*, because otherwise
+  every NPC would start naked; slot arbitration stays with #178.
+
+  `InventoryRuntime` is a thin `@MainActor` layer beside the store rather than methods on
+  it — the store knows keys and components and deliberately not records, while inventory
+  needs item weights and baselines. `transfer` computes both resulting inventories before
+  writing either, so a transfer that cannot complete writes nothing and the total across
+  owners is conserved. Over-removal is `InventoryError.insufficientCount`, not a clamp.
+  Gold is an ordinary `MISC` stack with no separate currency field, defaulting to `Gold001`
+  `Skyrim.esm:0000000F` — confirmed with `openskycli record Gold001` against the local
+  install, not from memory — and settable, because a total conversion need not use
+  Skyrim.esm's gold.
+
+  Serialization is the one place the component model bends. Inventory is a component kind
+  in the store and is nevertheless **not** written inside `RDLT`: an `RDLT` component kind
+  is versioned by `formatVersion`, so carrying it there would force every older build to
+  refuse every save that has one. It travels in the additive `INVN` chunk instead, `RDLT`
+  omits the component and omits an entry whose only component was inventory, and the
+  decoder merges the two back into one delta per reference. An older build therefore reads
+  exactly the bytes it would have written itself, and a pre-`INVN` save loads with every
+  owner re-deriving from plugin data. `WorldStateComponentKind.saveTag` became optional to
+  express that.
+
+  UI is deliberately deferred: `World > Runtime State`'s journal readout already prints the
+  component kind, so inventory mutations surface there with no code change, and a dedicated
+  panel belongs with its first visible consumer (#177, #289, #179).
+
+  Evidence: `make check`; `make test`. Four new synthetic suites — component invariants and
+  arithmetic, baseline derivation against a synthetic plugin, the accounting API including
+  transfer conservation and its all-or-nothing failure, and the `INVN` chunk including the
+  older-build tag-rename case. Plus `make realtest
+  T='InventoryBaselineRealDataTests/sweepsEveryContainerBaseline()'`: 436 CONT and 5118
+  NPC_ baselines resolved from Skyrim.esm with zero invariant violations, and the default
+  gold form confirmed on the data as `Gold001` `0000000F`, value 1, weight 0. See
+  [runtime state](/engine/runtime-state.md) and
+  [OpenSky save container](/formats/opensky-save.md).
 * **Non-positional ambience beds (issue #236)**: `WorldAudioSoundDirector` now starts
   each resolved ambience entry through `WorldAudioEngine.playNonPositional`, wiring it
   directly to the descriptor's resolved vanilla category submix. Ambience therefore has

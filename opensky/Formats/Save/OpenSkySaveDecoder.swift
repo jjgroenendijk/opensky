@@ -32,6 +32,11 @@ nonisolated enum OpenSkySaveDecoder {
         /// Absent `PTMR` chunk (issue #277) means no update timer was pending,
         /// which is also what a save written before that chunk existed means.
         var timers: [PapyrusTimerState] = []
+        /// Absent `INVN` chunk (issue #176) means no owner's inventory deviated
+        /// from plugin data, so every container and actor re-derives its
+        /// contents from its records — which is also what a save written before
+        /// that chunk existed means.
+        var inventories: [SaveInventoryEntry] = []
     }
 
     static func decode(_ data: Data) throws -> OpenSkySaveFile {
@@ -52,7 +57,9 @@ nonisolated enum OpenSkySaveDecoder {
             metadata: metadata,
             fingerprint: fingerprint,
             snapshot: WorldStateSnapshot(
-                entries: body.entries,
+                entries: OpenSkySaveInventoryDecoder.merge(
+                    body.inventories, into: body.entries
+                ),
                 nextGeneratedSequence: body.nextGeneratedSequence,
                 globals: body.globals,
                 sequence: 0
@@ -149,6 +156,8 @@ nonisolated enum OpenSkySaveDecoder {
             body.scripts = try OpenSkySaveScriptDecoder.decodeScripts(payload)
         case OpenSkySaveFormat.ChunkTag.papyrusTimers:
             body.timers = try OpenSkySaveTimerDecoder.decodeTimers(payload)
+        case OpenSkySaveFormat.ChunkTag.inventories:
+            body.inventories = try OpenSkySaveInventoryDecoder.decodeInventories(payload)
         default:
             break // Unknown chunk: skipped by its declared length.
         }

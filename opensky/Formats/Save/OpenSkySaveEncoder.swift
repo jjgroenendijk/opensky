@@ -36,9 +36,14 @@ nonisolated enum OpenSkySaveEncoder {
         writeChunk(tag: OpenSkySaveFormat.ChunkTag.allocator, into: &writer) { payload in
             payload.writeUInt64(snapshot.nextGeneratedSequence)
         }
+        // Only entries with at least one RDLT-carried component go in RDLT: a
+        // reference whose sole delta is its inventory belongs entirely to the
+        // INVN chunk, and writing it here as a zero-component entry would make
+        // an older build restore a dirty reference with nothing in it.
+        let deltaEntries = snapshot.entries.filter { !savedKinds(of: $0.delta).isEmpty }
         writeChunk(tag: OpenSkySaveFormat.ChunkTag.referenceDeltas, into: &writer) { payload in
-            payload.writeUInt32(UInt32(clamping: snapshot.entries.count))
-            for entry in snapshot.entries {
+            payload.writeUInt32(UInt32(clamping: deltaEntries.count))
+            for entry in deltaEntries {
                 writeEntry(entry, into: &payload)
             }
         }
@@ -71,6 +76,7 @@ nonisolated enum OpenSkySaveEncoder {
                 }
             }
         }
+        writeInventories(snapshot.entries, into: &writer)
         return writer.data
     }
 
@@ -104,7 +110,7 @@ nonisolated enum OpenSkySaveEncoder {
 
     /// Writes `tag` plus the length-prefixed bytes `body` produces, so a
     /// decoder that does not know the tag can skip exactly the right amount.
-    private static func writeChunk(
+    static func writeChunk(
         tag: String,
         into writer: inout BinaryWriter,
         body: (inout BinaryWriter) -> Void
@@ -124,18 +130,28 @@ nonisolated enum OpenSkySaveEncoder {
     ) {
         writeKey(entry.key, into: &writer)
         writeCell(entry.delta.cell, into: &writer)
-        // Sorted by on-disk tag, which is the strictly ascending order the
-        // decoder requires, independent of the enum's declaration order.
-        let kinds = entry.delta.sortedKinds.sorted { $0.saveTag < $1.saveTag }
+        let kinds = savedKinds(of: entry.delta)
         writer.writeUInt8(UInt8(clamping: kinds.count))
-        for kind in kinds {
+        for (kind, tag) in kinds {
             guard let value = entry.delta[kind] else { continue }
-            writer.writeUInt8(kind.saveTag)
+            writer.writeUInt8(tag)
             writeComponent(value, into: &writer)
         }
     }
 
-    private static func writeKey(_ key: ReferenceKey, into writer: inout BinaryWriter) {
+    /// The delta's components that travel in `RDLT`, paired with their on-disk
+    /// tags and sorted by tag — the strictly ascending order the decoder
+    /// requires, independent of the enum's declaration order. A kind with no
+    /// tag (`.inventory`) is carried by its own chunk and drops out here.
+    private static func savedKinds(
+        of delta: ReferenceStateDelta
+    ) -> [(kind: WorldStateComponentKind, tag: UInt8)] {
+        delta.sortedKinds
+            .compactMap { kind in kind.saveTag.map { (kind: kind, tag: $0) } }
+            .sorted { $0.tag < $1.tag }
+    }
+
+    static func writeKey(_ key: ReferenceKey, into writer: inout BinaryWriter) {
         switch key {
         case let .plugin(name, objectID):
             writer.writeUInt8(OpenSkySaveFormat.KeyTag.plugin)
@@ -147,7 +163,7 @@ nonisolated enum OpenSkySaveEncoder {
         }
     }
 
-    private static func writeCell(_ cell: CellSceneLocation?, into writer: inout BinaryWriter) {
+    static func writeCell(_ cell: CellSceneLocation?, into writer: inout BinaryWriter) {
         switch cell {
         case .none:
             writer.writeUInt8(OpenSkySaveFormat.CellTag.absent)
@@ -184,6 +200,12 @@ nonisolated enum OpenSkySaveEncoder {
             }
         case let .deletion(state):
             writer.writeUInt8(state.isDeleted ? 1 : 0)
+        case .inventory:
+            // Unreachable: `savedKinds(of:)` drops every kind without an RDLT
+            // tag, and inventory has none — it travels in the INVN chunk. The
+            // case exists so that adding a component kind is a compile error
+            // here rather than a silently unwritten component.
+            break
         }
     }
 
@@ -268,7 +290,7 @@ nonisolated enum OpenSkySaveEncoder {
     /// UInt16 byte length + UTF-8 bytes. Strings longer than `UInt16.max`
     /// bytes are cut back to the last whole UTF-8 scalar that fits, so the
     /// decoder still sees valid text.
-    private static func writeString(_ string: String, into writer: inout BinaryWriter) {
+    static func writeString(_ string: String, into writer: inout BinaryWriter) {
         let bytes = truncatedUTF8(string)
         writer.writeUInt16(UInt16(clamping: bytes.count))
         writer.write(bytes)
