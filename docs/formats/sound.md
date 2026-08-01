@@ -3,7 +3,7 @@ type: File Format
 title: Sound records
 description: Skyrim SE SNDR, SNCT, and SOUN fields, category hierarchy, links, and paths.
 tags: [format, plugin, audio, sound]
-timestamp: 2026-07-28T00:00:00Z
+timestamp: 2026-08-01T00:00:00Z
 ---
 
 # Sound records
@@ -105,13 +105,22 @@ descriptor. Missing markers and missing linked descriptors are distinct typed er
 callers can report which part of the chain failed.
 
 Each repeated `ANAM` is resolved in record order. The Creation Kit authoring form may be
-relative to `Data\Sound` or already start at `Sound`; the store strips an outer `Data\`
-and otherwise prefixes `sound\` when needed. It then applies the
+relative to `Data\Sound`, already start at `Sound`, or carry a leading separator before
+either root. The separator is a Windows root-relative marker rather than a drive or
+volume, so the store strips it along with an outer `Data\` and otherwise prefixes
+`sound\` when needed. It then applies the
 [VFS canonical path rules](/formats/vfs.md): backslash separators, lowercase names, and
-rejection of unsafe components. Absolute authoring-machine paths are also discarded.
-Tracks that fail normalization are discarded without changing the order of valid tracks.
-The decoder and store do not start playback; later runtime integration consumes these
-resolved records.
+rejection of unsafe components. Paths carrying a `:` after normalization are discarded
+as drive or volume paths. Tracks that fail normalization are discarded without changing
+the order of valid tracks. The decoder and store do not start playback; later runtime
+integration consumes these resolved records.
+
+A read-only `Skyrim.esm` probe found 4951 `ANAM` entries. The old path policy retained
+4641: it dropped 308 separator-led entries plus two genuine `C:` authoring-machine paths.
+The separator-led entries represent 291 of the 4490 distinct filenames. With the marker
+accepted and the two volume paths still rejected, 4949 entries canonicalize and 4930
+resolve through the VFS; 19 name absent development assets. The change restores the
+systematic path-normalization loss without weakening the safety checks.
 
 ## Defensive policy
 
