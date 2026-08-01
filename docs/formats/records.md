@@ -1,9 +1,9 @@
 ---
 type: File Format
-title: Record decoders (WRLD, CELL, REFR, STAT, ModelBase, GLOB)
+title: Record decoders (WRLD, CELL, REFR, STAT, ModelBase, GLOB, inventory items)
 description: Field layouts of decoded plugin records and OpenSky's engine types.
-tags: [format, plugin, records, worldspace, cell, globals]
-timestamp: 2026-07-31T00:00:00Z
+tags: [format, plugin, records, worldspace, cell, globals, inventory, items]
+timestamp: 2026-08-01T00:00:00Z
 ---
 
 # Record decoders, Skyrim SE
@@ -15,7 +15,9 @@ build an exterior cell scene (milestone 2, widened in 3.2). TES4 decode lives in
 
 Reference: UESP "Skyrim Mod:Mod File Format" per-record pages
 (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format>, subpages `/WRLD`,
-`/CELL`, `/REFR`, `/STAT`, `/MSTT`, `/TREE`, `/FURN`, `/ACTI`, `/CONT`, `/DOOR`).
+`/CELL`, `/REFR`, `/STAT`, `/MSTT`, `/TREE`, `/FURN`, `/ACTI`, `/CONT`, `/DOOR`,
+and — for the M12.1.1 inventory families — `/MISC`, `/BOOK`, `/ALCH`, `/INGR`,
+`/WEAP`, `/AMMO`, `/ARMO`).
 Water-specific
 fields + WATR layout: [exterior water records](/formats/water.md). Impl:
 `opensky/Formats/ESM/Records/`.
@@ -108,14 +110,27 @@ identity/interior status. Refs: UESP CELL page + xEdit `wbImplementation.pas`
 | XEMI  | formID   | optional LIGH/REGN emittance               |
 | XLKR  | struct   | `linkedReferences`, repeating (see below)  |
 | XPRM  | 32 bytes | `primitive` volume bounds + shape (below)  |
+| XOWN  | formID   | `owner` — owning NPC_ or FACT (M12.1.1)    |
+| XRNK  | int32    | `ownerFactionRank` (M12.1.1)               |
+| XCNT  | int32    | `itemCount` stack size (M12.1.1)           |
 | VMAD  | struct   | `scriptData` attachment accumulator        |
 
 DATA: x/y/z position in game units, then x/y/z rotation in radians. Missing
 NAME or DATA throws — a reference without them cannot be placed. XTEL is exact-size:
 destination door REFR FormID (uint32), destination position float3, rotation float3 in
 radians, flags uint32. Flag 0x01 = no alarm. Any other size throws malformed instead of
-silently shifting fields. Ownership + remaining activation fields stay skipped. Refs:
+silently shifting fields. Remaining activation fields stay skipped. Refs:
 UESP REFR page; xEdit `wbDefinitionsTES5.pas` XTEL `wbStruct`.
+
+Ownership (M12.1.1): `XOWN` is a plain 4-byte FormID in Skyrim — xEdit's
+[`wbOwnership`](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsCommon.pas)
+only widens it to a 12-byte struct for Fallout 4 and later. A null XOWN decodes as
+unowned rather than "owned by FormID 0". `XRNK` is the faction rank the player needs to
+use the reference freely, and is meaningful only when the owner is a FACT. `XCNT` is the
+stack size of a placed inventory item; absent means one. All three degrade to nil on a
+payload shorter than four bytes rather than throwing, because losing an ownership tag is
+recoverable and refusing to place the reference is not.
+
 XRDS/XEMI lighting policy: [interior lighting records](/formats/lighting.md).
 VMAD layout and PEX binding:
 [Papyrus attachment data](/formats/vmad.md).
@@ -320,9 +335,220 @@ Probe counts (Skyrim.esm 2026-07-26):
 | CONT        | close      | 133               |
 
 Type-specific fields still skipped: remaining FURN furniture-marker/animation fields,
-CONT inventory (CNTO), ACTI water type, TREE billboard/leaf-curve fields
-(CVPA/BSNM/...), and remaining DOOR flags. `ModelBase.recordType` retains source
-record type so callers can distinguish them without redecoding.
+ACTI water type, TREE billboard/leaf-curve fields (CVPA/BSNM/...), and remaining
+DOOR flags. `ModelBase.recordType` retains source record type so callers can
+distinguish them without redecoding. CONT inventory is decoded by `Container`
+(below), which composes `ModelBase` rather than replacing it.
+
+## Shared inventory subrecords (M12.1.1)
+
+The seven carryable families below plus ARMO repeat the same run of fields, so three
+helpers decode it once. Impl: `ObjectBounds.swift`, `KeywordList.swift`,
+`InventoryItemFields.swift`.
+
+| helper                | fields                                            |
+| --------------------- | ------------------------------------------------- |
+| `ObjectBounds`        | OBND — six int16, min corner then max corner       |
+| `KeywordList`         | KSIZ uint32 count + KWDA packed KYWD FormID array  |
+| `ItemValue`           | the 8-byte DATA: int32 gold value, float32 weight  |
+| `InventoryItemFields` | EDID, FULL, MODL, OBND, KSIZ/KWDA, ICON, MICO, YNAM, ZNAM |
+
+`ObjectBounds` is the authority of xEdit `wbOBND`
+([`wbDefinitionsCommon.pas`](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsCommon.pas)
+line 8634); UESP lists the field on every placeable base record.
+
+Advisory-count policy: **KSIZ never sizes the KWDA read**, and neither does COCT for
+CNTO. The real length is the payload divided by the entry size. A plugin whose authored
+count disagrees is recorded (`KeywordList.countMismatch`,
+`Container.entryCountMismatch`) but decodes from the bytes present, so a stale count
+cannot truncate a list or run the reader past the field.
+
+DATA is deliberately *not* in `InventoryItemFields`: its layout is type-specific —
+8 bytes on MISC/INGR/ARMO, 4 on ALCH, 10 on WEAP, 16 on BOOK, 16 or 20 on AMMO — so each
+record owns that case.
+
+## MISC -> MiscItem
+
+The plain carryable object: gems, ingots, tools, gold, clutter. Nothing beyond the shared
+fields plus the 8-byte value/weight DATA. Reference: UESP
+"[Skyrim Mod:Mod File Format/MISC](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MISC)";
+xEdit `wbDefinitionsTES5.pas` line 8303. Skipped: VMAD, DEST.
+
+## BOOK -> Book
+
+| field | type     | decoded                                    |
+| ----- | -------- | ------------------------------------------ |
+| DESC  | lstring  | `text` — the book's body                    |
+| CNAM  | lstring  | `inventoryDescription` blurb                |
+| DATA  | 16 bytes | flags, kind, teaches union, value, weight   |
+
+DATA layout: uint8 flags (0x01 teaches skill, 0x02 can't be taken, 0x04 teaches spell),
+uint8 kind (0 book/tome, 255 note/scroll — always 0 since SSE), two unused bytes, a
+uint32 "teaches" word, uint32 gold value, float32 weight.
+
+The teaches word is a union read per the flags: an actor-value skill index when 0x01 is
+set, a SPEL FormID when 0x04 is set, otherwise unused. It decodes into
+`Book.Teaches` (`.nothing` / `.skill` / `.spell`) rather than being read twice, and 0x04
+wins when a mod sets both. Book body text resolves through the `.dlstrings` table, not
+`.strings` — see [string tables](/formats/strings.md).
+
+Reference: UESP
+"[.../BOOK](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/BOOK)"; xEdit
+`wbDefinitionsTES5.pas` line 4220. Skipped: VMAD, DEST, INAM inventory art.
+
+## ALCH -> Ingestible
+
+Food, drink, potions and poisons. The one carryable family whose DATA is **not** value +
+weight: DATA is a bare float32 weight and the gold value lives in ENIT. The decoder fills
+one engine-level `itemValue` from both, so consumers never special-case it.
+
+ENIT, 20 bytes: int32 value, uint32 flags (0x00001 no auto-calc, 0x00002 food,
+0x10000 medicine, 0x20000 poison), FormID addiction, float32 addiction chance, FormID
+consume SNDR.
+
+Reference: UESP
+"[.../ALCH](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/ALCH)"; xEdit
+`wbDefinitionsTES5.pas` line 4042. Skipped: DEST, ETYP.
+
+## INGR -> Ingredient
+
+Alchemy ingredients: the same MagicItem shape as ALCH, but with the ordinary 8-byte
+value/weight DATA and an 8-byte ENIT — int32 auto-calc value (distinct from the gold
+value in DATA) and uint32 flags (0x001 no auto-calc, 0x002 food, 0x100 references
+persist).
+
+Reference: UESP
+"[.../INGR](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/INGR)"; xEdit
+`wbDefinitionsTES5.pas` line 7909. Skipped: VMAD, DEST, ETYP.
+
+### Effect lists (EFID/EFIT/CTDA)
+
+ALCH and INGR carry effects as a *run* of subrecords, not a struct: EFID names the MGEF,
+the EFIT that follows carries its numbers, and any CTDA after that conditions that one
+effect. The run repeats. `MagicItemEffectList` folds it into `[MagicItemEffect]`;
+conditions decode through the shared [`ConditionList`](/formats/conditions.md) so CITC
+and CIS1/CIS2 behave as they do everywhere else.
+
+| field | type     | decoded                                    |
+| ----- | -------- | ------------------------------------------ |
+| EFID  | formID   | `effect` — the MGEF applied                 |
+| EFIT  | 12 bytes | float32 magnitude, uint32 area, uint32 duration |
+| CTDA  | 32 bytes | `conditions` on this effect                 |
+
+Scope: effects decode as **links only**. MGEF semantics and the auto-calc cost formula
+belong to the magic milestone. Degrade policy: an EFIT with no EFID before it is dropped;
+an EFID whose EFIT never arrives still yields an entry with zero magnitude, because the
+MGEF link is the part inventory needs. Neither case throws.
+
+Reference: xEdit `wbDefinitionsTES5.pas` `wbEFID` line 3832, `wbEFIT` 3834,
+`wbEffect` 4030.
+
+## WEAP -> Weapon
+
+| field | type      | decoded                                   |
+| ----- | --------- | ----------------------------------------- |
+| DATA  | 10 bytes  | uint32 value, float32 weight, uint16 damage |
+| DNAM  | 100 bytes | animation type, speed, reach, flags, skill, stagger |
+| CRDT  | 16 or 24  | critical damage, multiplier, on-death, SPEL |
+| EITM  | formID    | `enchantment` (ENCH)                        |
+| EAMT  | uint16    | `enchantmentCharge`                         |
+| ETYP  | formID    | `equipType` (EQUP)                          |
+| CNAM  | formID    | `template` — another WEAP                   |
+
+DNAM offsets read: `00` uint8 animation type (0 other, 1 one-hand sword ... 9 crossbow),
+`04` float32 speed, `08` float32 reach, `0C` uint16 flags (0x08 can't drop, 0x20 embedded,
+0x80 non-playable), `4C` int32 governing skill as an actor value (-1 = none, decoded as
+nil), `60` float32 stagger. The rest is padding, obsolete Fallout carry-over, or rumble.
+
+CRDT is the one field whose SSE layout differs from Skyrim classic, so the **payload size
+picks the layout** rather than the plugin's form version — an SSE-only engine still reads
+classic-era mod records:
+
+| bytes | layout                                                              |
+| ----- | ------------------------------------------------------------------- |
+| 16    | uint16 damage, 2 unused, float32 % mult, uint8 on-death, 3 unused, formID SPEL |
+| 24    | as above but 7 unused after on-death, SPEL at `0x10`, 4 trailing unused |
+
+Any other length decodes as no critical data rather than being force-fit.
+
+Reference: UESP
+"[.../WEAP](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/WEAP)"; xEdit
+`wbDefinitionsTES5.pas` record at line 10499, DATA 10530, DNAM 10535, CRDT 10604.
+Skipped: VMAD, DEST, MOD3 scope model, BIDS/BAMT/INAM impact links, the seven SNDR attack
+sounds, NNAM, WNAM, VNAM.
+
+## AMMO -> Ammunition
+
+DATA grew by one field in SSE, so — as with WEAP CRDT — the payload size picks the layout:
+
+| offset | type    | decoded                                              |
+| ------ | ------- | ---------------------------------------------------- |
+| 00     | formID  | `projectile` (PROJ)                                   |
+| 04     | uint32  | flags: 0x01 ignores weapon resistance, 0x02 non-playable, 0x04 non-bolt |
+| 08     | float32 | `damage`                                              |
+| 0C     | uint32  | gold value                                            |
+| 10     | float32 | weight — **SSE only**; the classic 16-byte form ends at 0x0C |
+
+A classic payload decodes with weight 0, which is what the engine would use anyway:
+vanilla SSE writes 0.1 for every arrow and the carry system treats arrows as weightless.
+
+Reference: UESP
+"[.../AMMO](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/AMMO)"; xEdit
+`wbDefinitionsTES5.pas` record at line 4087, the `IsSSE` DATA pair at 4101.
+Skipped: DEST, ONAM.
+
+## CONT contents -> Container
+
+`Container` **composes** `ModelBase` rather than replacing it: `base` is the same decode
+the cell builder and interaction path already use, and this type adds only the inventory
+half. Contents are a run, not one array:
+
+| field | type     | decoded                                       |
+| ----- | -------- | --------------------------------------------- |
+| COCT  | uint32   | `declaredEntryCount` (advisory, see above)     |
+| CNTO  | 8 bytes  | formID item + int32 count, repeating           |
+| COED  | 12 bytes | owner data for the CNTO immediately before it  |
+| DATA  | uint8+   | flags: 0x01 allow sounds, 0x02 respawns, 0x04 show owner |
+
+A CNTO item may be a carryable base *or* an LVLI, which the inventory runtime expands.
+COED's middle word is a union — a GLOB FormID when the owner is an NPC_, a required
+faction rank when it is a FACT — and resolving that needs a cross-record type lookup the
+decoder does not have, so it is carried raw as `ownerCondition`. A COED with no preceding
+CNTO is dropped; a CNTO under 8 bytes costs one entry, not the container. DATA's trailing
+float is documented as a misaligned weight that is always 0 and is not decoded.
+
+Reference: UESP
+"[.../CONT](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CONT)"; xEdit
+`wbDefinitionsTES5.pas` `wbCOED` line 2305, `wbCNTO` 2315, `wbCOCT` 2329,
+`wbRecord(CONT, ...)` 4505.
+
+## ARMO inventory fields (M12.1.1)
+
+`Armor` already decoded the appearance subset ([actor records](/formats/actors.md)).
+M12.1.1 adds the inventory-facing half so ARMO can join the item index: `DATA` (the shared
+`ItemValue` 8-byte struct), the `KSIZ`/`KWDA` keyword array, and `DNAM`, the base armor
+rating stored as rating * 100 — despite being a uint32, only the low 16 bits are used.
+Still skipped: MOD2/MOD4 ground models, EITM enchantment, TNAM template.
+
+## Item definition index -> ItemDefinitionStore
+
+`opensky/Inventory/ItemDefinitionStore.swift` indexes one plugin's carryable base records
+behind one view, so the inventory runtime resolves an item FormID without knowing which
+of the seven families it came from. Immutable, built once from an `ESMFile`, following
+the `WeatherStore` / `SoundRecordStore` convention.
+
+`ItemDefinition` exposes `formID`, `family` (ARMO, AMMO, BOOK, ALCH, INGR, MISC, WEAP),
+`editorID`, `name`, `value`, `weight` and `keywords`. Containers are indexed *separately*
+(`container(_:)`): a CONT is not carryable and has neither a gold value nor a weight, but
+its starting contents are exactly what the runtime needs. `skippedCounts` reports records
+that failed to decode per family, so the sweep can assert zero rather than silently
+indexing fewer items.
+
+**Stackability, v1**: every item stacks by base FormID (`ItemDefinition.stackKey`). That
+is correct only while no per-instance data exists. Tempering, enchanting, charge level and
+item health all make two instances of the same base FormID distinct, so the key grows into
+a compound one when per-instance data lands. The rule is provisional by design, not an
+oversight.
 
 ## GLOB -> Global
 
@@ -378,3 +604,42 @@ all carrying XCLC grids; 9 720 STAT records (9 712 with MODL); cell
 WhiterunExterior01 (0000961B, grid 4,-3) dumped 100 STAT refs with FormIDs,
 positions, rotations, scales, model paths (52 non-STAT refs skipped).
 Positions all lie inside the cell's 4096-unit grid extent.
+
+### Inventory records (M12.1.1)
+
+Unit tests, all synthetic fixtures: `InventoryRecordTests.swift` (shared subrecords, MISC,
+BOOK), `MagicItemRecordTests.swift` (ALCH, INGR, effect runs),
+`EquipmentRecordTests.swift` (WEAP, AMMO, ARMO inventory fields),
+`ContainerRecordTests.swift` (CONT contents, REFR ownership),
+`ItemDefinitionStoreTests.swift` (the index), with payload builders in
+`InventoryRecordFixtures.swift`. Every family covers the wrong-type-throws,
+truncated-field and empty-record cases.
+
+Env-gated sweep `InventoryRecordRealDataTests.swift`
+(`make realtest T='InventoryRecordRealDataTests/sweepsEveryInventoryRecord()'`), against
+vanilla Skyrim.esm on 2026-08-01:
+
+| measure | value |
+| ------- | ----- |
+| items decoded, zero throws | 6930 (ARMO 2762, WEAP 2484, BOOK 821, ALCH 363, MISC 371, INGR 94, AMMO 35) |
+| decode skips | 0 |
+| containers | 436 CONT, 9597 CNTO entries |
+| CNTO entries resolving into the item index | 6753; the rest are LVLI/KEYM/LIGH/SLGM/APPA/SCRL |
+| CNTO entries targeting an unexpected record type | 0 |
+| COCT/CNTO count mismatches | 0 |
+| value range / weight range | 0...5000 gold, 0.0...50.0 |
+| placed references with XOWN / XCNT | 7765 / 118 |
+
+The zero unexpected-target count is what pins the CNTO layout: every one of the 9597
+entries resolves to a record whose type is in the set xEdit constrains the slot to, which
+would not hold if item and count were being read in the wrong order. The sweep writes its
+summary to gitignored `logs/inventory-sweep.log`.
+
+Decoded output is reachable from both dev surfaces through
+`RecordTextDump.itemSummary` — `openskycli record <formid-or-editorid>` and the Asset
+Browser detail pane. Spot checks on 2026-08-01: `IronSword` (WEAP 00012EB7) prints value
+25, weight 9.00, damage 7, `oneHandSword`, speed 1.00, reach 1.00, critical 3;
+`SkillSmithing1` (BOOK 0001AFCE) prints teaches skill 10 with text present; `Wheat`
+(INGR 0004B0BA) prints 4 effects and auto-calc value 47; `IronArrow` (AMMO 0001397D)
+prints damage 8.0 and projectile 0003BE11; `BarrelFood01` (CONT 00000845) prints 1 entry
+and flags 0x2.

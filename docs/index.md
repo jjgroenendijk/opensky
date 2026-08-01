@@ -22,7 +22,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   Interface/Translations/*.txt files, $KEY token resolution, label provider.
 * [Record decoders](/formats/records.md) - WRLD/CELL/REFR/STAT/GLOB field layouts
   and their engine types, including REFR XLKR linked references and the XPRM
-  primitive volume, and the GLOB float-on-disk typing trap.
+  primitive volume, and the GLOB float-on-disk typing trap. Also the inventory
+  families MISC/BOOK/ALCH/INGR/WEAP/AMMO, CONT contents, REFR ownership, and the
+  `ItemDefinitionStore` index.
 * [Interior lighting records](/formats/lighting.md) - CELL XCLL/LTMP, LGTM DATA/DALC,
   LIGH DATA/FNAM, REFR XRDS/XEMI, inheritance + decode policy.
 * [Exterior water records](/formats/water.md) - CELL XCLW/XCWT, WRLD defaults + parent
