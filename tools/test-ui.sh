@@ -25,12 +25,16 @@ if [ -n "${OPENSKY_RESULT_BUNDLE:-}" ]; then
     bundle_flag="-resultBundlePath $OPENSKY_RESULT_BUNDLE"
 fi
 
+# Same build cache the Makefile uses (Makefile DERIVED_DATA).
+derived_data="${OPENSKY_DERIVED_DATA:-$PWD/DerivedData}"
+
 log="$(mktemp -t opensky-test-ui)"
 trap 'rm -f "$log"' EXIT INT TERM
 
 status=0
 # shellcheck disable=SC2086  # bundle_flag + passthrough flags are word-split on purpose
 xcodebuild -project "$project" -scheme "$scheme" -destination "$destination" \
+    -derivedDataPath "$derived_data" \
     $bundle_flag "$@" -only-testing:openskyUITests test 2>&1 | tee "$log" || status=$?
 
 if [ "$status" -ne 0 ] && grep -q "enabling automation mode" "$log"; then

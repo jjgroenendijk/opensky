@@ -41,6 +41,12 @@ conflict.
 - Filesystem-synced groups add every new file under `opensky/` to every target, so an
   app-only source (importing AppKit, Cocoa, or SwiftUI) needs a `membershipExceptions`
   entry excluding it from `openskycli`. `make cli-boundary` catches this.
+- The build cache is `DerivedData/` inside the checkout, not the Xcode default under
+  `$HOME`: this project's cache runs to tens of gigabytes and the boot volume is small
+  enough that the default location fills it mid-session. `make` passes `-derivedDataPath`
+  on every `xcodebuild` call and exports `OPENSKY_DERIVED_DATA` for the scripts under
+  `tools/`, so a new build command has to pass it too or it will silently start a second
+  cache on the boot disk. Override with `make DERIVED_DATA=... <target>`.
 - Git hooks are the gate — never `--no-verify`.
 - Linked worktrees share the main checkout's `.vendor/ffmpeg` automatically through `make`,
   so `make bootstrap` is not needed per worktree.

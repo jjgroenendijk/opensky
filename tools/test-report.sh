@@ -25,7 +25,7 @@ bundle="$(newest "$results_dir")"
 if [ -z "$bundle" ]; then
     # shellcheck disable=SC2012  # need newest-by-mtime across the DerivedData glob
     bundle="$(ls -td \
-        "$HOME"/Library/Developer/Xcode/DerivedData/opensky-*/Logs/Test/*.xcresult \
+        "${OPENSKY_DERIVED_DATA:-$PWD/DerivedData}"/Logs/Test/*.xcresult \
         2>/dev/null | head -1)"
 fi
 if [ -z "$bundle" ]; then

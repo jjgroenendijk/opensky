@@ -22,7 +22,10 @@ fi
 selector="$1"
 cap_mb="${2:-4096}"
 data_root="${OPENSKY_DATA_ROOT:-/Volumes/data/steam/steamapps/common/Skyrim Special Edition}"
-dd="$HOME/Library/Developer/Xcode/DerivedData/opensky-realtest"
+# Its own cache under the Makefile's DERIVED_DATA (see Makefile): separate from
+# the ordinary build so a real-data run never invalidates it, but on the same
+# volume, because the boot disk cannot hold either.
+dd="${OPENSKY_DERIVED_DATA:-$PWD/DerivedData}/opensky-realtest"
 result_bundle="logs/realtest-$$.xcresult"
 output_log="logs/realtest-$$.log"
 enumeration_json="logs/realtest-enumeration-$$.json"
