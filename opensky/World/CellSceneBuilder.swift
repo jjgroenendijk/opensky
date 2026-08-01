@@ -252,7 +252,7 @@ nonisolated final class CellSceneBuilder {
     }
 }
 
-extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder {
     /// The WRLD top group interleaves WRLD records with world-children groups
     /// labeled by the owning record's FormID. EDID match is exact (editor IDs
     /// are stable identifiers). A malformed WRLD is skipped — another

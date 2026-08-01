@@ -9,7 +9,7 @@ nonisolated struct FourCC: Hashable {
     let rawValue: UInt32
 }
 
-extension FourCC: ExpressibleByStringLiteral {
+nonisolated extension FourCC: ExpressibleByStringLiteral {
     /// Programmer-supplied literals only (`"WRLD"`); traps on wrong length.
     init(stringLiteral value: StringLiteralType) {
         let bytes = Array(value.utf8)

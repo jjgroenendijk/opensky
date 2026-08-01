@@ -283,11 +283,11 @@ private protocol FormIdentified {
     var formID: FormID { get }
 }
 
-extension Race: FormIdentified {}
-extension Armor: FormIdentified {}
-extension ArmorAddon: FormIdentified {}
-extension Outfit: FormIdentified {}
-extension LeveledList: FormIdentified {}
+nonisolated extension Race: FormIdentified {}
+nonisolated extension Armor: FormIdentified {}
+nonisolated extension ArmorAddon: FormIdentified {}
+nonisolated extension Outfit: FormIdentified {}
+nonisolated extension LeveledList: FormIdentified {}
 
 extension Array {
     /// Raw-FormID-keyed index (resolver convention), dropping build failures.

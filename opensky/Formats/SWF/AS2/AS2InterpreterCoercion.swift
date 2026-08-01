@@ -14,7 +14,7 @@ nonisolated enum AS2PrimitiveHint {
     case string
 }
 
-extension AS2Interpreter {
+nonisolated extension AS2Interpreter {
     /// ECMA-262 9.1. A plain object with neither usable method degrades to its
     /// string form rather than raising a `TypeError`, because ActionScript 2
     /// has no exception to raise here.

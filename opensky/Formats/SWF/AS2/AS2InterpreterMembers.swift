@@ -11,7 +11,7 @@
 
 import Foundation
 
-extension AS2Interpreter {
+nonisolated extension AS2Interpreter {
     /// Prefix the compiler gives a class property's generated getter.
     static let getterPrefix = "__get__"
     /// Prefix the compiler gives a class property's generated setter.

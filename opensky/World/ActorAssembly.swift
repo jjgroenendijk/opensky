@@ -211,7 +211,7 @@ nonisolated struct ActorRenderAsset {
     let bounds: ModelBounds?
 }
 
-extension MeshLibrary: ActorAssetProvider {
+nonisolated extension MeshLibrary: ActorAssetProvider {
     typealias Skeleton = ActorSkeletonAsset
     typealias Asset = ActorRenderAsset
 }

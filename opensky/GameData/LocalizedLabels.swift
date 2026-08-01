@@ -56,7 +56,7 @@ nonisolated final class LocalizedLabels: Sendable {
     }
 }
 
-extension LocalizedLabels {
+nonisolated extension LocalizedLabels {
     /// Directory (VFS key) that holds the translation files.
     static let translationsDirectory = "interface\\translations"
 

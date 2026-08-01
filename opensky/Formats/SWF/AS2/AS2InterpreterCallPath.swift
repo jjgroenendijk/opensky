@@ -24,7 +24,7 @@ nonisolated struct AS2CallSite {
     var base: AS2Object?
 }
 
-extension AS2Interpreter {
+nonisolated extension AS2Interpreter {
     /// Starts a call. A built-in runs immediately; a bytecode body becomes a
     /// frame the interpreter loop picks up next, and `site.completion` says
     /// where its return value goes. A non-callable object is not an error in

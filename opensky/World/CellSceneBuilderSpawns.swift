@@ -24,7 +24,7 @@ nonisolated struct SpawnedReferenceBuild {
     static let empty = SpawnedReferenceBuild(references: [], entries: [])
 }
 
-extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder {
     /// Every spawned object `state` places in `location`.
     ///
     /// Snapshot entries are already in `ReferenceKey` total order, so the

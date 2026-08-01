@@ -11,7 +11,7 @@
 
 import Foundation
 
-extension AS2Natives {
+nonisolated extension AS2Natives {
     static func installNumber(_ runtime: AS2Runtime) {
         let prototype = runtime.numberPrototype
         method(runtime, on: prototype, name: "valueOf") { context in context.thisValue }

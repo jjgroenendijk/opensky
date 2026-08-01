@@ -31,7 +31,7 @@ nonisolated struct EffectiveReferences {
     let references: [PlacedReference]
 }
 
-extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder {
     /// Keys `entries` by the FormID a placement was authored under.
     nonisolated func entriesByFormID(
         _ entries: [RuntimeReferenceEntry]

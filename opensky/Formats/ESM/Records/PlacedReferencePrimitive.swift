@@ -11,7 +11,7 @@
 import Foundation
 import simd
 
-extension PlacedReference {
+nonisolated extension PlacedReference {
     /// XPRM field: the invisible volume a reference encloses. Trigger boxes,
     /// activation volumes, portal boxes and occlusion volumes all carry one.
     nonisolated struct Primitive: Equatable, Sendable {

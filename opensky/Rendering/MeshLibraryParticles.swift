@@ -3,7 +3,7 @@
 
 import simd
 
-extension MeshLibrary {
+nonisolated extension MeshLibrary {
     nonisolated func particlePlaybacks(
         path: String,
         placementTransform: float4x4,

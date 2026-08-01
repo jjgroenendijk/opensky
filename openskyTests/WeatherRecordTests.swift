@@ -240,7 +240,7 @@ struct WeatherRecordTests {
     }
 }
 
-extension Weather {
+nonisolated extension Weather {
     /// 17-component NAM0 exposes moon glare (index 16).
     fileprivate func moonGlareIsPresent(_: [Colors]) -> Bool {
         colors(for: .moonGlare) != nil

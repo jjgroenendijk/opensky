@@ -195,7 +195,7 @@ struct CellStreamCoreTests {
     }
 }
 
-extension CellStreamCore {
+nonisolated extension CellStreamCore {
     fileprivate var inFlightCountIsZero: Bool {
         inFlight.isEmpty
     }

@@ -22,7 +22,7 @@ nonisolated struct CollectedActor {
     let isPersistent: Bool
 }
 
-extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder {
     /// REFR records from the cell's persistent + temporary children groups,
     /// each tagged with its group. LAND is handled separately (buildTerrain);
     /// other non-REFR types (NAVM, ACHR, PGRE, ...) are not static placements

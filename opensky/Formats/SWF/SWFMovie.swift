@@ -335,7 +335,7 @@ nonisolated struct SWFMovie {
     }
 }
 
-extension SWFDisplayListBuilder {
+nonisolated extension SWFDisplayListBuilder {
     /// Tally-only notes recorded by the timeline decoder alongside apply/remove.
     /// They live here because `tally` is `private(set)`, which limits its setter
     /// to this file.

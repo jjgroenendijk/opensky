@@ -8,7 +8,7 @@
 import CFFmpeg
 import Foundation
 
-extension WMADecoder {
+nonisolated extension WMADecoder {
     /// Rejects header values the decoder cannot act on before anything is allocated, so a
     /// malformed container fails cheaply and with a specific error.
     static func validate(_ parameters: AudioCodecParameters) throws {

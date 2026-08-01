@@ -7,7 +7,7 @@
 
 import Foundation
 
-extension AS2Natives {
+nonisolated extension AS2Natives {
     static func installArray(_ runtime: AS2Runtime) {
         let prototype = runtime.arrayPrototype
         prototype.markArray(length: 0)

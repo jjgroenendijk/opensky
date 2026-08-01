@@ -182,7 +182,7 @@ nonisolated struct ActorAnimationCacheKey: Hashable {
     let female: Bool
 }
 
-extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder {
     nonisolated func makeAnimationPlayback(
         assembly: ActorAssembly<ActorRenderAsset>
     ) -> Result<ActorAnimationPlayback, ActorAnimationLoadError> {

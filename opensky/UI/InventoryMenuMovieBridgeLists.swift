@@ -10,7 +10,7 @@
 
 import Foundation
 
-extension InventoryMenuMovieBridge {
+nonisolated extension InventoryMenuMovieBridge {
     // MARK: - Writing
 
     /// Replaces one list's `EntriesA` with `rows`.

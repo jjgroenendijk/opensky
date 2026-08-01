@@ -18,7 +18,7 @@ nonisolated struct DoorTransition {
     let scene: CellScene
 }
 
-extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder {
     /// Lightweight door probe over WRLD persistent refs. Their storage CELL
     /// is (0,0); physical REFR position supplies streamed-cell ownership.
     nonisolated func exteriorDoors(
@@ -195,7 +195,7 @@ extension CellSceneBuilder {
     }
 }
 
-extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder {
     /// Expected group labels are decimal ones/tens digits of low-24-bit
     /// object ID. Matching-label groups run first for normal files; all other
     /// legal groups still run, because UESP warns labels may be stale.

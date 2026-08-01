@@ -11,7 +11,7 @@ nonisolated struct GrassBuild {
     let typeSkipCount: Int
 }
 
-extension CellSceneBuilder {
+nonisolated extension CellSceneBuilder {
     nonisolated func buildGrass(
         found: FoundCell,
         worldspace: Worldspace?,
