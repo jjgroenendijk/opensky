@@ -39,7 +39,8 @@ struct WalkBenchmarkFrameBudgetTests {
             windowSummaries: ["all four frames"],
             animationMS: [10, 20, 30, 40],
             shadowMS: [100, 200, 300, 400],
-            audioUpdateMS: [1000, 2000, 3000, 4000]
+            audioUpdateMS: [1000, 2000, 3000, 4000],
+            scriptUpdateMS: [10000, 20000, 30000, 40000]
         )
 
         let active = CellStreamingWalkBenchmark.activePhysicsResult(
@@ -51,6 +52,7 @@ struct WalkBenchmarkFrameBudgetTests {
         #expect(active.animationMS == [20, 40])
         #expect(active.shadowMS == [200, 400])
         #expect(active.audioUpdateMS == [2000, 4000])
+        #expect(active.scriptUpdateMS == [20000, 40000])
         #expect(active.windowSummaries.isEmpty)
     }
 
