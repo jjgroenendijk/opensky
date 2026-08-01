@@ -27,7 +27,8 @@ enum SidebarSection: String, CaseIterable {
 /// controller conforms to all of them, so one value wires every panel.
 typealias WorldControlProviders = AnimationControlProviding & AudioControlProviding
     & CameraControlProviding & FrameStatsProviding & GrassControlProviding
-    & HUDControlProviding & ItemControlProviding & ParticleControlProviding
+    & HUDControlProviding & InventoryMenuControlProviding & ItemControlProviding
+    & ParticleControlProviding
     & PrecipitationControlProviding
     & RuntimeStateControlProviding & SWFLabControlProviding & SceneStatsProviding
     & ScriptControlProviding & ShadowControlProviding
@@ -202,6 +203,18 @@ enum DestinationRegistry {
             overrides: systemMenuOverrides
         ),
         DestinationDescriptor(
+            id: "inventoryMenu",
+            title: "Inventory Menu",
+            section: .world,
+            symbolName: "bag",
+            content: .worldInspector { context in
+                let panel = InventoryMenuPanelViewController()
+                panel.provider = context.providers
+                return panel
+            },
+            overrides: inventoryMenuOverrides
+        ),
+        DestinationDescriptor(
             id: "audio",
             title: "Audio",
             section: .world,
@@ -312,6 +325,15 @@ enum DestinationRegistry {
         resetToDefaults: { context in
             SystemMenuSection.resetToDefaults(provider: context.providers)
             SystemMenuSettingsSection.resetToDefaults(provider: context.providers)
+        }
+    )
+
+    private static let inventoryMenuOverrides = DestinationOverrideActions(
+        isOverridden: { context in
+            InventoryMenuSection.isOverridden(provider: context.providers)
+        },
+        resetToDefaults: { context in
+            InventoryMenuSection.resetToDefaults(provider: context.providers)
         }
     )
 

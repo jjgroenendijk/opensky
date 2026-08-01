@@ -758,8 +758,12 @@ twice — the [rendering layer's determinism contract](/rendering/ui.md).
   `addEventListener` (317), `invalidationIntervalID` (326), `textField` (265),
   `CLIK_loadCallback` (144), and `focusIndicator` (123) are reads that miss on components
   whose construction aborted — see the call-depth limit below.
-- **Per-menu data APIs**: `InventoryDefines`, `_CategoriesList`, `EntriesA`, and the rest
-  are phase 4, deferred to the milestones that own the data.
+- **Per-menu data APIs**: phase 4, deferred to the milestones that own the data. Two have
+  since landed there — `startmenu.swf`'s `EntriesA` at 8.5.1, and `_CategoriesList` plus
+  `EntriesA` and `iSelectedIndex` for the inventory lists at 12.2.2 (see
+  [inventory menu](/engine/inventory-menu.md)). `InventoryDefines` is still unread: the
+  inventory menu groups by OpenSky's own record families rather than by the movie's
+  category constants.
 - **Shape-level hit testing**: bounding-box only, in both `hitTest(stageTwips:)` and
   `MovieClip.hitTest`.
 - **Text input**: `Selection`'s caret and range queries answer -1, and no key event edits a
@@ -1059,11 +1063,33 @@ tree. Issue #231 consumed that finding: OpenSky now opens `quest_journal.swf` on
 0 unimplemented opcodes, 0 unhandled bridge calls of 36, 572 draws, and an 11,951-pixel
 System-to-Settings transition. See [system menu](/engine/system-menu.md).
 
+### `inventorymenu.swf` at 12.2.2
+
+The third-largest AS2 consumer, and the one this page recorded as a standing risk. Both
+halves of that risk are closed, though not where they were expected.
+
+The `callDepthExceeded` concern was already gone: the movie brings up with **0 faults and 0
+unimplemented opcodes** on the current engine, before any work specific to it. What blocked
+it was not ActionScript at all. `inventorymenu.swf` places three characters it never
+defines, and until 12.2.2 only font imports resolved, so the whole list subtree instantiated
+nothing and the movie came up as 11 display nodes with no list. Cross-movie character import
+(`SWFMovieImportMerger`, see [SWF container](/formats/swf.md)) takes it to 373 nodes and 16
+registered classes.
+
+Driven end to end — bring-up, a real inventory published into both lists, a category change
+and two row moves — the real-data gate measures 0 faults, 0 unimplemented opcodes,
+**0 unhandled bridge calls of 46**, and 142,741 changed pixels on bring-up. 53 distinct
+names remain missing (467 hits), all CLIK cosmetics headed by `_listeners` (53),
+`height`/`width` (43 each), `getLineMetrics` (42) and `invalidationIntervalID` (38); none is
+a data API. `UpdateItem3D` and `EndItem3D` are answered as no-ops because the rotating item
+preview is deferred. See [inventory menu](/engine/inventory-menu.md).
+
 ## Limits / next
 
-- The probes above are not a committed surface. Turning them into an
-  `openskycli swf action-run` sweep and a `Developer > UI Lab` readout is the app-facing
-  half of this milestone.
+- `openskycli swf action-run` is now that committed probe surface: it brings one movie up,
+  ticks it, and prints faults, unresolved placements and import-merge diagnostics, the
+  missing-API tally, registered classes, `GameDelegate` callbacks, the invoke log and the
+  display tree. A `Developer > UI Lab` readout over the same data is still open.
 - **`super` in a method the receiver owns.** When a function is an own property of the
   instance rather than of a class prototype, the frame has no class to walk up from and
   falls back to the receiver's prototype — the pre-#136 behavior, correct for one level.

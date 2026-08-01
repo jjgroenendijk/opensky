@@ -74,6 +74,20 @@ enum OpenSkyCLI {
                                   names, default 120), clip-event usage,
                                   function/structure stats, and a
                                   most-action-records movie ranking
+      swf action-run [--movie <substring>] [--ticks <n>] [--limit <n>]
+                     [--tree-depth <n>] [--dump <paths>] [--call <names>]
+                                  Bring one movie up through SWFMovieRuntime and
+                                  tick it; print faults, unresolved placements
+                                  and import-merge diagnostics, the missing-API
+                                  tally, registered classes, GameDelegate
+                                  callbacks, the invoke log and the display
+                                  tree. --dump prints one node's own AS2
+                                  properties; --call invokes callbacks first
+      swf inventory-menu [--ticks <n>] [--down <n>] [--right <n>]
+                                  Drive inventorymenu.swf through its bridge
+                                  with a seeded player inventory; print the
+                                  rows and categories the movie built, both
+                                  selections, and the bring-up diagnostics
       swf info <key>               Parse one movie; print header + tag list
       audio info <key>            Frame one .xwm file; print WAVEFORMATEX codec
                                   parameters, dpds packet table and payload

@@ -135,6 +135,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [System menu](/engine/system-menu.md) - Resume/Settings/Quit selector, the menu-stack
   handoff that pauses the world, the data-root and audio-volume settings placeholders,
   and the visible, navigable vanilla `quest_journal.swf` System and Settings pages.
+* [Inventory menu](/engine/inventory-menu.md) - the player's item list and its categories,
+  the cross-movie character import vanilla `inventorymenu.swf` needs before it has a list
+  at all, the `EntriesA` data contract, and the equip/unequip/drop actions behind it.
 * [AS2 runtime](/engine/as2-runtime.md) - ActionScript 2 interpreter and the movie it
   drives: value model + coercions, bounded execution, display objects and timeline,
   Scaleform Stage rectangles, events, indexed global mouse input and hit testing, the
