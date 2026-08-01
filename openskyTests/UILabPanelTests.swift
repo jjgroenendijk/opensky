@@ -226,6 +226,7 @@ struct UILabPanelTests {
         #expect(document.bounds.intersects(sectionFrame), "SWF runtime section outside document")
     }
 
+    @MainActor
     private static func containsIdentifier(_ identifier: String, in view: NSView) -> Bool {
         if view.accessibilityIdentifier() == identifier {
             return true

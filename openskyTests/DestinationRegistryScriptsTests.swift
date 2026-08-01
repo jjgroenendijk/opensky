@@ -62,7 +62,7 @@ struct DestinationRegistryScriptsTests {
 
     /// The destination is placed under World, between Runtime State and the
     /// Developer group, and carries its own SF Symbol.
-    @Test
+    @Test @MainActor
     func descriptorPlacementIsPinned() throws {
         let descriptor = try #require(DestinationRegistry.destination(id: "scripts"))
         #expect(descriptor.title == "Scripts")

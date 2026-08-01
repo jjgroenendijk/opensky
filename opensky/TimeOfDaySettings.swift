@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum TimeOfDaySettings {
+nonisolated enum TimeOfDaySettings {
     /// UserDefaults key holding the time-of-day hour (0-24).
     static let defaultsKey = "TimeOfDaySetting"
 

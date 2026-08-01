@@ -6,6 +6,7 @@
 @testable import opensky
 import Testing
 
+@MainActor
 private final class SpyMenuConsumer: MenuInputConsumer {
     private(set) var events: [MenuInputEvent] = []
 
@@ -14,6 +15,7 @@ private final class SpyMenuConsumer: MenuInputConsumer {
     }
 }
 
+@MainActor
 struct MenuModeControllerTests {
     @Test
     func startsInGameplay() {

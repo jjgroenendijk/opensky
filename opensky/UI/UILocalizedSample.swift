@@ -30,7 +30,7 @@ nonisolated extension LocalizedLabels {
     )
 }
 
-extension UIScene {
+nonisolated extension UIScene {
     /// The deliberately-unresolved token the preview renders verbatim.
     static let localizedSampleMissingToken = "$OPENSKY_UILAB_MISSING"
 

@@ -174,6 +174,7 @@ struct PanelFrameworkTests {
     }
 
     /// Every `CollapsibleSectionView` in `root`'s subtree, in layout order.
+    @MainActor
     private static func collapsibleSections(in root: NSView) -> [CollapsibleSectionView] {
         if let section = root as? CollapsibleSectionView {
             return [section]
@@ -253,6 +254,7 @@ struct PanelFrameworkTests {
         #expect(document.bounds.intersects(markerInDoc))
     }
 
+    @MainActor
     private static func view(identified identifier: String, in root: NSView) -> NSView? {
         if root.accessibilityIdentifier() == identifier {
             return root

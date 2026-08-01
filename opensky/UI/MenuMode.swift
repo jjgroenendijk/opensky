@@ -6,7 +6,7 @@
 // docs/engine/menu-mode.md.
 
 /// Where an input event goes this frame.
-enum InputRoute: Equatable {
+nonisolated enum InputRoute: Equatable {
     /// Gameplay: keyboard movement and mouse look drive the free-fly/walk
     /// camera.
     case world
@@ -17,7 +17,7 @@ enum InputRoute: Equatable {
 /// A menu event forwarded while menu mode is active. Deliberately small and
 /// toolkit-free: directional focus moves, accept/cancel, and raw pointer motion
 /// cover Scaleform menu navigation without binding to AppKit or a widget tree.
-enum MenuInputEvent: Equatable {
+nonisolated enum MenuInputEvent: Equatable {
     enum Direction { case up, down, left, right }
     enum Button { case accept, cancel }
 

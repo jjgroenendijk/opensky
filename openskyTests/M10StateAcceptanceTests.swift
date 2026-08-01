@@ -107,6 +107,7 @@ final class M10AcceptanceHarness {
         )
     }
 
+    @MainActor
     private static func label(_ identifier: String, in view: NSView) -> String? {
         if view.accessibilityIdentifier() == identifier, let field = view as? NSTextField {
             return field.stringValue

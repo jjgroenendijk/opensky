@@ -6,7 +6,7 @@
 
 import Foundation
 
-enum ShadowQualitySettings {
+nonisolated enum ShadowQualitySettings {
     /// UserDefaults key holding the ShadowQuality rawValue string.
     static let defaultsKey = "ShadowQualitySetting"
 

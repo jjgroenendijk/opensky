@@ -8,13 +8,13 @@ import AppKit
 import Testing
 
 struct DestinationRegistryTests {
-    @Test
+    @Test @MainActor
     func idsAreUnique() {
         let ids = DestinationRegistry.all.map(\.id)
         #expect(Set(ids).count == ids.count)
     }
 
-    @Test
+    @Test @MainActor
     func registryOrderAndIdentifiers() {
         #expect(DestinationRegistry.all.map(\.id) == [
             "world", "environment", "hudInteraction", "systemMenu",
@@ -39,7 +39,7 @@ struct DestinationRegistryTests {
 
     /// No registered destination uses `.viewport` any more — hiding the
     /// inspector column is a View-menu mode, not a sidebar row.
-    @Test
+    @Test @MainActor
     func noRegisteredDestinationUsesBareViewport() {
         for descriptor in DestinationRegistry.all {
             if case .viewport = descriptor.content {
@@ -48,7 +48,7 @@ struct DestinationRegistryTests {
         }
     }
 
-    @Test
+    @Test @MainActor
     func gameViewVisibilityPerContentKind() {
         #expect(DestinationRegistry.destination(id: "world")?.showsGameView == true)
         #expect(DestinationRegistry.destination(id: "environment")?.showsGameView == true)

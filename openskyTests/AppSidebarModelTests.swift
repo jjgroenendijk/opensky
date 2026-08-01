@@ -7,6 +7,7 @@ import AppKit
 @testable import opensky
 import Testing
 
+@MainActor
 struct AppSidebarModelTests {
     @Test
     func groupsFollowSectionAndRegistryOrder() {
@@ -44,7 +45,7 @@ struct AppSidebarModelTests {
         #expect(SidebarSection.library.title == "Library")
     }
 
-    @Test @MainActor
+    @Test
     func destinationOverrideIndicatorRefreshesWithoutChangingSelection() throws {
         let sidebar = AppSidebarViewController()
         var overridden: Set<String> = []

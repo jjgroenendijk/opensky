@@ -99,6 +99,7 @@ struct AudioPanelMuteSoloTests {
 
     /// Depth-first search for a readout label's text, mirroring the acceptance
     /// harness helper.
+    @MainActor
     private static func readout(_ identifier: String, in view: NSView) -> String? {
         if view.accessibilityIdentifier() == identifier, let field = view as? NSTextField {
             return field.stringValue
