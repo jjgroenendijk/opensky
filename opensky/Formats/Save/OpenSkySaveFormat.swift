@@ -68,6 +68,22 @@ nonisolated enum OpenSkySaveFormat {
         /// timer list writes no chunk at all, so a session that armed no timer
         /// produces the bytes it produced before this chunk existed.
         static let papyrusTimers = "PTMR"
+        /// Runtime inventories (issue #176): one entry per owner whose items
+        /// deviate from plugin data, with its stacks and its equipped set.
+        ///
+        /// Inventory is a `WorldStateComponentKind` in the store but is *not*
+        /// written inside `RDLT`, and that split is the whole point. A
+        /// component kind inside `RDLT` is versioned by `formatVersion`, so
+        /// putting inventory there would force every older build to refuse
+        /// every save that has one. As its own chunk it is additive like
+        /// `GVAR`, `CLOK`, `PSCR` and `PTMR`: an older build skips it by its
+        /// declared length and loads the rest of the world. `RDLT` therefore
+        /// omits the inventory component entirely, and omits an entry whose
+        /// only component was inventory, so an older build sees exactly the
+        /// bytes it would have written itself. The decoder merges the two back
+        /// into one delta per reference. An owner with no runtime inventory
+        /// writes nothing, and a session that touched none writes no chunk.
+        static let inventories = "INVN"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.
@@ -118,6 +134,15 @@ nonisolated enum OpenSkySaveFormat {
     /// declaring-script name (2), an empty variable name (2) and the value tag
     /// (1), which is the whole entry when the value is `none`.
     static let minimumScriptVariableSize = 5
+    /// Smallest number of bytes a single `INVN` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4), the "no cell" tag (1), a zero stack
+    /// count (4) and a zero equipped count (4).
+    static let minimumInventoryEntrySize = 16
+    /// Bytes one `INVN` stack occupies: item FormID plus count, both `UInt32`.
+    /// Fixed width, so this is the exact size rather than a lower bound.
+    static let inventoryStackSize = 8
+    /// Bytes one `INVN` equipped entry occupies: a single `UInt32` FormID.
+    static let inventoryEquippedSize = 4
     /// Smallest number of bytes a single `PTMR` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), an empty script name (2), the slot byte
     /// (1) and the two `Float64` bit patterns (8 + 8). Nothing in the entry is
@@ -126,18 +151,26 @@ nonisolated enum OpenSkySaveFormat {
     static let minimumTimerEntrySize = 26
 }
 
-/// On-disk tag of a component slot.
+/// On-disk tag of a component slot inside `RDLT`.
 ///
 /// The mapping is written out case by case rather than derived from
 /// `allCases.firstIndex(of:)`, because declaration order is a source-level
 /// detail that may change while these byte values may not.
+///
+/// Optional because not every component slot travels in `RDLT`. `.inventory`
+/// has no tag at all: it is carried by the `INVN` chunk so that an older build
+/// skips it rather than refusing the file (see `ChunkTag.inventories`). A nil
+/// tag is the encoder's instruction to leave the component out of `RDLT`, and
+/// leaving `init?(saveTag:)` without a case for it is what keeps the decoder's
+/// "an unknown component kind in `RDLT` is an error" rule intact.
 nonisolated extension WorldStateComponentKind {
-    var saveTag: UInt8 {
+    var saveTag: UInt8? {
         switch self {
         case .enableState: 0
         case .transform: 1
         case .activation: 2
         case .deletion: 3
+        case .inventory: nil
         }
     }
 

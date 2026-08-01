@@ -100,6 +100,9 @@ struct WorldStateStoreTests {
             in: whiterun
         ))
         #expect(store.set(ReferenceDeletionState.deleted, for: reference, in: whiterun))
+        // An emptied container: the fifth component kind, stored. What the
+        // component itself can hold is InventoryComponentTests' subject.
+        #expect(store.set(ReferenceInventoryState.empty, for: reference, in: whiterun))
 
         #expect(store.component(ReferenceEnableState.self, for: reference)?.isEnabled == false)
         #expect(store.component(ReferenceTransformOverride.self, for: reference) == transform(9))
@@ -108,6 +111,7 @@ struct WorldStateStoreTests {
         #expect(activation?.isOpen == true)
         #expect(activation?.lastActivator == key(0x14))
         #expect(store.component(ReferenceDeletionState.self, for: reference)?.isDeleted == true)
+        #expect(store.component(ReferenceInventoryState.self, for: reference) == .empty)
         #expect(store.delta(for: reference)?.sortedKinds == WorldStateComponentKind.allCases)
     }
 
@@ -172,6 +176,7 @@ struct WorldStateStoreTests {
         store.set(transform(3), for: reference, in: whiterun)
         store.set(ReferenceActivationState(activationCount: 1), for: reference, in: whiterun)
         store.set(ReferenceDeletionState.deleted, for: reference, in: whiterun)
+        store.set(ReferenceInventoryState.empty, for: reference, in: whiterun)
         #expect(store.reset(reference))
         #expect(store.delta(for: reference) == nil)
         #expect(store.dirtyCount == 0)

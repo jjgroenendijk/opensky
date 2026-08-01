@@ -27,6 +27,7 @@ identity scheme, the per-cell index built from it, and the store above both.
 * Applying state during a cell build
 * Making a mutation visible: snapshot capture and cell rebuilds
 * Save and load: the snapshot through `OpenSkySaveStore`
+* Inventory — the first component added after M10
 * Verification — `World > Runtime State` and the M10.1 acceptance record
 * Verification — the M10.2 panel surfaces and the M10 acceptance record
 
@@ -209,6 +210,7 @@ The initial component set:
 | `ReferenceTransformOverride` | `.transform` | a `PlacedReference.Placement` plus the uniform `scale` XSCL carries separately |
 | `ReferenceActivationState` | `.activation` | `activationCount`, the `isOpen` marker, and `lastActivator` for M11's `OnActivate` |
 | `ReferenceDeletionState` | `.deletion` | `isDeleted` at runtime, which is not the record header's `deleted` flag |
+| `ReferenceInventoryState` | `.inventory` | every item one owner holds, plus its equipped set (issue #176, M12.1.2) |
 
 `ReferenceActivationState` has a production writer since issue #172: the Papyrus activation
 bridge subscribes to `CellStreamer.onInteraction`, maps the event's `FormID` to a
@@ -229,7 +231,9 @@ than a guess.
 Adding a component in a later milestone means adding a `WorldStateComponentKind` case, a
 conforming value type and a `WorldStateComponentValue` case. Every store operation — set,
 reset, dirty tracking, journalling, snapshot — is written against the protocol and the
-erased value, so none of it changes.
+erased value, so none of it changes. Issue #176 was the first milestone to take that route
+and needed no change to `WorldStateStore` at all; see
+[Inventory](#inventory--the-first-component-added-after-m10) below.
 
 ### Failure model
 
@@ -603,6 +607,152 @@ save format's determinism guarantee (same `docs/formats/opensky-save.md` documen
 lets a test compare the restored store's `snapshot()` against the original by equality
 rather than by re-deriving the effect on a rendered cell.
 
+## Inventory — the first component added after M10
+
+Issue #176 (item 12.1.2) adds inventory on top of everything above, and the interesting
+part is how little it needed: one `WorldStateComponentKind` case, one conforming value type
+and one `WorldStateComponentValue` case. No store operation changed. Implementation:
+`opensky/Inventory/`.
+
+### The component is a full override, not a delta
+
+`ReferenceInventoryState` (`opensky/Inventory/InventoryComponent.swift`) holds the owner's
+**entire** effective inventory once anything has touched it: stacks of
+`(base item FormID, count)` plus, for an actor, the equipped set. The first mutation
+materializes the plugin baseline into the component and every later mutation edits that. An
+owner nothing has touched has no component at all and re-derives from plugin data.
+
+A full override rather than a difference, because a difference has nowhere sane to live.
+A CONT whose `CNTO` list points at an LVLI has no stable "minus one iron sword"
+representation — the list it is a difference *against* is itself a resolution — but it does
+have a stable resolved list, and once the player has opened the chest the resolved list is
+the truth. The full override also fits the at-most-one-value-per-kind delta shape without
+any special casing.
+
+Two invariants are enforced in `init` rather than checked at use sites, and both exist for
+determinism: `stacks` is sorted by item `FormID`, one entry per item, every count strictly
+positive; `equipped` is sorted and free of duplicates. That is what makes two stores which
+reached the same inventory through different mutation orders produce equal snapshots and
+identical save bytes.
+
+Stacking is by base `FormID` alone in v1, matching `ItemDefinition.stackKey`
+([record decoders](/formats/records.md)). Per-instance data — tempering, enchanting, charge
+level — will make two instances of one base distinct and turn that into a compound key.
+
+### Baselines are re-derived, never stored
+
+`InventoryBaselineResolver` (`opensky/Inventory/InventoryBaseline.swift`) is the inventory
+counterpart of `ReferenceState`: it derives a baseline from plugin data on every call and
+caches nothing, so a reset restores whatever the records now say. `InventoryOwner` says
+which record the baseline comes from, because a `ReferenceKey` cannot — the store keys state
+by identity and knows nothing about record types, so the caller holding the placement says
+what kind of owner it has.
+
+| owner | baseline |
+| --- | --- |
+| `.container(base:)` | the CONT `CNTO` list, leveled entries expanded; nothing equipped |
+| `.actor(base:)` | the default outfit the resolved template chain supplies, one of each piece; the same items are also the baseline equipped set |
+| `.player` | empty — no record describes the player in this engine |
+| `.generated` | empty — a runtime-created object such as a dropped pile (#177) or a summon |
+
+The actor case reuses `ActorTemplateResolver` ([actor records](/formats/actors.md)) rather
+than repeating template resolution: `defaultOutfit` already follows TPLT links and the ACBS
+`useInventory` flag. The outfit is baselined as worn, not merely carried, because "default
+outfit" is by definition what the actor has on when the game starts it; baselining it
+unworn would start every NPC naked. Which slot each piece occupies, and what happens when
+two claim the same one, is issue #178.
+
+Four v1 approximations are recorded deliberately, all of them narrowing rather than wrong:
+
+* Leveled entries resolve **deterministically**, through `LeveledList.deterministicEntry`
+  plus the `useAll` bundle flag — the same policy the bind-pose milestone already uses for
+  LVLN. Rolling against player level needs a player level, which no milestone has yet.
+  A cycle is caught by a visited set and a depth cap of eight.
+* `chanceNone` is ignored. Ignoring it can only ever place an item the list might have
+  skipped, and an empty container is the harder failure to notice.
+* `NPC_` does not decode a `CNTO` list yet, so an actor's baseline is its outfit and not the
+  loot it also carries.
+* A form that resolves to neither an indexed item nor a leveled list is kept as a plain
+  stack rather than dropped. It really is in the container; it simply carries no weight or
+  value here, because no loaded plugin index describes it.
+
+### Accounting
+
+`InventoryRuntime` (`opensky/Inventory/InventoryRuntime.swift`) is a thin `@MainActor` layer
+beside the store rather than methods on it: the store is the generic substrate that knows
+about keys, components, journalling and snapshots and deliberately knows nothing about
+records, while inventory needs `ItemDefinitionStore` for weights and the baseline resolver
+for baselines. It is AppKit-free and compiles into `openskycli`.
+
+An `InventoryHolder` carries the three things every mutation needs together — the
+`ReferenceKey`, the `InventoryOwner`, and the `CellSceneLocation` the mutation is attributed
+to — because passing them separately is how a mutation ends up attributed to the wrong cell.
+
+* `add(_:count:to:)` and `remove(_:count:from:)` write through
+  `WorldStateStore.set(_:for:in:)`, so every change lands in the journal, the dirty counts
+  and the save exactly like a script's `Disable()` does.
+* `transfer(_:count:from:to:)` computes **both** resulting inventories before writing
+  either, so a transfer that cannot complete writes nothing and the total count across the
+  two owners is conserved. Two journal entries come out, source then destination.
+* Removing more than an owner holds is `InventoryError.insufficientCount`, not a clamp. A
+  caller that meant "take everything" can ask how much there is; one that did not has a bug
+  worth surfacing. A count of zero or less and a stack that would leave `Int32` are typed
+  failures on the same terms.
+* `carriedWeight(of:)` and `carriedValue(of:)` sum #175's per-item weights and values. An
+  item no loaded index describes contributes nothing — guessing a weight would put a number
+  the data never authored into an encumbrance check.
+* Gold is an ordinary stack of an ordinary `MISC` record, not a separate currency field, so
+  `goldCount(of:)` is just `count(of: goldFormID)`. The default is `Gold001`,
+  `Skyrim.esm:0000000F`, confirmed against the local install with `openskycli record
+  Gold001` rather than from memory — value 1, weight 0. It is a settable property, not a
+  hardcoded constant, because a total-conversion load order need not use `Skyrim.esm`'s
+  gold.
+
+`equip`, `unequip` and `setEquipped` store and journal the equipped set and nothing more.
+Slot conflicts and ARMA arbitration are issue #178; this issue only gives that work
+somewhere to land.
+
+### Serialization
+
+Inventory is a component kind in the store and is nevertheless not written inside `RDLT`.
+It travels in its own additive `INVN` chunk, so an older build skips it by its declared
+length instead of refusing the file, which a new component kind inside `RDLT` would force it
+to do. `RDLT` omits the inventory component and omits an entry whose only component was
+inventory, so an older build reads exactly the bytes it would have written itself; the
+decoder merges the two chunks back into one delta per reference. Layout and rationale in
+full: [OpenSky native save container](/formats/opensky-save.md).
+
+### What inventory deliberately does not touch
+
+`ReferenceState` gains no inventory field. Its baseline comes from a `RuntimeReferenceEntry`
+— a placement record — while an inventory baseline needs the CONT or NPC_ base record plus
+the item and leveled-list indexes, none of which that type has or should have. Inventory is
+read through `InventoryRuntime` instead.
+
+The main-app surface is `World > Runtime State`'s existing journal readout, which prints
+`entry.kind.rawValue` and so shows `inventory` mutations with no code change. A dedicated
+inventory panel belongs with its first visible consumer — world pickup (#177) and the menus
+(#289, #179) — rather than here, per the deferral `AGENTS.md` allows infrastructure items.
+
+### Tests
+
+`openskyTests/InventoryComponentTests.swift` covers the invariants, the erasure pair and the
+stack arithmetic including both failure modes and saturation on decode.
+`InventoryBaselineTests.swift` covers each owner kind, `useAll` bundles, count
+multiplication, the cycle guard, empty lists and unresolvable forms, against the synthetic
+plugin in `InventoryBaselineFixture.swift`. `InventoryRuntimeTests.swift` covers
+materialization, reset, over-removal, transfer conservation and its all-or-nothing failure,
+carry weight, gold, the equipped set, journal old/new values, and snapshot determinism under
+mutation-order variation. `InventorySaveTests.swift` covers the `INVN` chunk.
+
+`InventoryBaselineRealDataTests.swift` is the env-gated sweep over the local install, run
+with `make realtest`. On Skyrim.esm (2026-08-01) it resolves a baseline for all 436 CONT
+records (355 non-empty, 9893 stacks, 283257 items) and all 5118 NPC_ records (4399 with an
+outfit, 12776 stacks, 15232 items) against indexes of 6930 items, 3075 LVLI and 481 OTFT,
+with zero invariant violations: every stack list sorted, deduplicated and positive, and
+every equipped set a subset of what its actor carries. It also confirms the default gold
+form on the data rather than from memory — `Gold001`, `0000000F`, value 1, weight 0.
+
 ## Verification — `World > Runtime State` and the M10.1 acceptance record
 
 Issue #162 (item 10.1.5) is the milestone acceptance surface for everything above. The
@@ -782,7 +932,11 @@ Local A/B (optional, never committed): none
 * [Weather runtime](/engine/weather.md) — the first consumer of resolved global values, and
   the chosen CLMT WLST semantics.
 * [OpenSky native save container](/formats/opensky-save.md) — the `.osav` byte layout that
-  `OpenSkySaveStore` writes and reads on behalf of the save/load section above.
+  `OpenSkySaveStore` writes and reads on behalf of the save/load section above, `INVN`
+  included.
+* [Record decoders](/formats/records.md) — the CONT, MISC, WEAP and ARMO layouts behind
+  `ItemDefinitionStore`, and [actor records](/formats/actors.md) — the OTFT and LVLI
+  decodes plus the template chain an inventory baseline resolves through.
 * [Main-app UI framework + placement](/tools/app-ui.md) and
   [Sidebar verification convention](/tools/sidebar-acceptance.md) — how `World > Runtime
   State` was registered and what its acceptance record must contain.

@@ -31,6 +31,7 @@ byte length followed by that many UTF-8 bytes. The file extension is `osav`.
 * Load-order fingerprint
 * Chunks
 * `RDLT` entry layout
+* `INVN` entry layout
 * Version policy
 * Defensive decoding
 * Where saves live and how they are written
@@ -147,8 +148,8 @@ A chunk whose declared length runs past the end of the file is
 `chunkBoundsViolation(tag:)`. A chunk whose tag this build does not know is skipped using
 that declared length, which is what makes a newer build's save loadable in an older one.
 
-Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR` and `PTMR` were added additively
-afterwards.
+Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR` and `INVN` were added
+additively afterwards.
 
 `GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
 any other size is `invalidValue`.
@@ -312,6 +313,26 @@ and `RDLT`. The declared count is validated before anything reserves storage, us
 byte, and the two `Float64` bit patterns). The encoder never reads a clock; it only writes
 whatever `remaining` the runtime's `timerStates()` computed.
 
+`INVN` — runtime inventories (issue #176), one entry per owner whose items deviate from
+plugin data. Added additively like the four before it and equally without a
+`currentVersion` bump. An owner nothing has touched has no entry, and a session that
+touched no inventory writes no chunk at all.
+
+| type   | field      | notes                                     |
+| ------ | ---------- | ----------------------------------------- |
+| uint32 | entryCount | number of entries that follow             |
+| bytes  | entries    | `entryCount` entries, layout below        |
+
+Inventory is a `WorldStateComponentKind` in the store and is nevertheless **not** written
+inside `RDLT`, which is the whole reason this chunk exists. A component kind inside `RDLT`
+is versioned by `formatVersion` (see Version policy), so carrying inventory there would
+force every older build to refuse every save that has one. As its own chunk it is skipped
+by its declared length instead. `RDLT` therefore omits the inventory component, and omits
+an entry whose only component was inventory, so the bytes an older build reads are exactly
+the ones it would have written itself. The decoder merges the two chunks back into one
+delta per reference, keyed by `ReferenceKey`, and re-sorts the result into that key's
+total order.
+
 ## `RDLT` entry layout
 
 Each entry is a reference key, a cell location, and a component list.
@@ -352,7 +373,47 @@ pass and keeps the encoder's output the only accepted spelling of a given delta.
 
 Tag values are written out case by case in the code rather than derived from the enum's
 declaration order, because declaration order is a source-level detail that may change while
-these byte values may not.
+these byte values may not. `WorldStateComponentKind.saveTag` is optional for that reason:
+`.inventory` has no tag at all, which is the encoder's instruction to leave it out of
+`RDLT` entirely, and `init?(saveTag:)` correspondingly has no case for tag 4, so a file
+claiming one is rejected as an unknown component kind.
+
+## `INVN` entry layout
+
+Each entry is a reference key and a cell location — the same tagged encodings `RDLT` uses —
+followed by the two lists:
+
+| type   | field         | notes                                                    |
+| ------ | ------------- | -------------------------------------------------------- |
+| key    | key           | the owner this inventory belongs to                       |
+| cell   | cell          | where the owner lived when it was dirtied                 |
+| uint32 | stackCount    | stacks that follow                                        |
+| bytes  | stacks        | `stackCount` stacks, 8 bytes each                         |
+| uint32 | equippedCount | equipped items that follow                                |
+| bytes  | equipped      | `equippedCount` uint32 raw `FormID` values                 |
+
+One stack:
+
+| type   | field | notes                                                            |
+| ------ | ----- | ---------------------------------------------------------------- |
+| uint32 | item  | raw `FormID` of the base item record                              |
+| uint32 | count | bit pattern of the `Int32` stack count, signed because CNTO is    |
+
+The key and the cell are repeated here rather than referring back to an `RDLT` entry by
+index, because an owner whose only delta is its inventory has no `RDLT` entry to refer to.
+Both lists arrive already sorted — stacks by item `FormID`, equipped items ascending — by
+`ReferenceInventoryState`'s own invariant, so the encoder sorts nothing and the bytes stay
+a pure function of the state.
+
+A saved stack whose count is zero or negative is dropped by
+`ReferenceInventoryState.init` rather than rejected, and two stacks of the same item merge
+with saturation instead of overflowing. That is the one place this chunk normalizes rather
+than refuses: the invariant belongs to the type, and one nonsensical stack is not a reason
+to lose a whole save. Everything structural is still hard — a stack or equipped count that
+cannot fit in the bytes remaining is `invalidCount`, checked against
+`inventoryStackSize` (8) and `inventoryEquippedSize` (4) before anything reserves storage,
+and the entry count itself against `minimumInventoryEntrySize` (16: an empty plugin key,
+the "no cell" tag, and the two zero counts).
 
 ## Version policy
 
@@ -361,7 +422,10 @@ their declared length, so an older build reading a newer save loses that chunk's
 nothing else.
 
 A bump is required for a change to an existing chunk's payload layout, for a new component
-kind, and for a changed component payload. Unknown component kinds are rejected rather than
+kind **carried inside `RDLT`**, and for a changed component payload. A component kind that
+travels in its own chunk instead — `.inventory` is the first — costs no bump, because it is
+covered by the additive-chunk rule rather than by the component rule. That is precisely why
+inventory got a chunk. Unknown component kinds are rejected rather than
 skipped, so an older build cannot degrade gracefully through one; it would have to guess how
 many bytes to step over, and guessing wrong desynchronises the rest of the entry stream.
 
@@ -492,8 +556,8 @@ editor when a determinism test disagrees with itself.
 
 Global variables landed as the additive `GVAR` chunk (issue #165), the game clock as `CLOK`
 (issue #164), Papyrus script state as `PSCR` (issue #171), and pending Papyrus update
-timers as `PTMR` (issue #277). None of the four cost a `formatVersion` bump, exactly as the
-version policy above predicts.
+timers as `PTMR` (issue #277), and runtime inventories as `INVN` (issue #176). None of the
+five cost a `formatVersion` bump, exactly as the version policy above predicts.
 
 Read-only import of a Bethesda `.ess` save is a separate item and shares nothing with this
 layout. OpenSky will never write one.
@@ -519,6 +583,16 @@ list writing the same bytes as omitting the parameter entirely, a truncated entr
 truncated duration, a bogus timer count, an unknown slot byte, non-finite and negative
 durations normalising to zero, an unknown chunk written after `PTMR` still being skipped,
 and a live `PapyrusWorldRuntime`'s pending timers surviving a save and a restore.
+
+`openskyTests/InventorySaveTests.swift` covers `INVN`: a round trip through a snapshot
+holding an owner with inventory beside other components, an owner with nothing but an
+inventory, and an owner with no inventory at all; decoded entries staying in `ReferenceKey`
+order; a decoded save restoring into a live `WorldStateStore`; byte-level determinism
+across stack orderings; the chunk being absent when nothing was touched; the older-build
+case, where renaming the tag leaves every other component intact and drops only the
+inventories; `RDLT` still rejecting an inventory component tag; bogus entry, stack and
+equipped counts; a truncated entry; and a non-positive saved stack being dropped rather
+than failing the load.
 
 Related: [Runtime reference identity and world state](/engine/runtime-state.md) for the
 store and snapshot this format serializes, [FormID and TES4 header](/formats/formid.md) for

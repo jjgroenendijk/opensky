@@ -6,7 +6,9 @@
 // blob, so a later milestone adds inventory or actor values by adding a type
 // and a `WorldStateComponentKind` case without reshaping the store: every
 // store operation is written against `WorldStateComponent` and the erased
-// `WorldStateComponentValue`, never against a fixed field list.
+// `WorldStateComponentValue`, never against a fixed field list. Issue #176
+// (inventory) was the first milestone to take that route and needed no change
+// to the store at all.
 //
 // Documented in docs/engine/runtime-state.md.
 
@@ -32,6 +34,11 @@ nonisolated enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendab
     /// Runtime deletion, which is not the same thing as the record's `deleted`
     /// header flag: this one is set while the game runs.
     case deletion
+    /// Everything one owner holds, plus its equipped set (issue #176). The
+    /// value type is `ReferenceInventoryState`, which lives in
+    /// `opensky/Inventory/InventoryComponent.swift` because it carries stack
+    /// arithmetic of its own rather than being a plain field bag.
+    case inventory
 }
 
 /// A value that can occupy one component slot.
@@ -60,6 +67,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
     case transform(ReferenceTransformOverride)
     case activation(ReferenceActivationState)
     case deletion(ReferenceDeletionState)
+    case inventory(ReferenceInventoryState)
 
     var kind: WorldStateComponentKind {
         switch self {
@@ -67,6 +75,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
         case .transform: .transform
         case .activation: .activation
         case .deletion: .deletion
+        case .inventory: .inventory
         }
     }
 }

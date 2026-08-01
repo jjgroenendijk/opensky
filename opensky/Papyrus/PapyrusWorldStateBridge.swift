@@ -104,6 +104,13 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
             return worldState.set(value, for: key, in: cell)
         case let .deletion(value):
             return worldState.set(value, for: key, in: cell)
+        case let .inventory(value):
+            // No Papyrus native reaches this yet — `AddItem` and `RemoveItem`
+            // land with the inventory natives (#178/#179) and will go through
+            // `InventoryRuntime` so the accounting rules apply. Writing it
+            // through the same seam anyway keeps the bridge total: a component
+            // the VM can hold is a component the VM can store.
+            return worldState.set(value, for: key, in: cell)
         }
     }
 
