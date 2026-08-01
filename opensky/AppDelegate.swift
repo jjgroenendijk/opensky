@@ -117,6 +117,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 let globalStore = GlobalStore(
                     file: file, pluginName: esmURL.lastPathComponent
                 )
+                // Items + containers + leveled lists (M12.1): the baseline
+                // resolver the take/drop/container runtime reads. Built once
+                // here from the same ESM as every other index above, because a
+                // baseline is re-derived on every read and must not be built
+                // per lookup.
+                let inventoryBaselines = InventoryBaselineResolver.build(from: file)
                 return BuilderCellSceneProvider(
                     builder: builder,
                     worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
@@ -125,6 +131,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     aspcStore: aspcStore,
                     musicStore: musicStore,
                     globalStore: globalStore,
+                    inventoryBaselines: inventoryBaselines,
                     movementConfiguration: movementConfiguration
                 )
             } catch {

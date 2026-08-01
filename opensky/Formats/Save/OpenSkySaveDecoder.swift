@@ -37,6 +37,10 @@ nonisolated enum OpenSkySaveDecoder {
         /// contents from its records — which is also what a save written before
         /// that chunk existed means.
         var inventories: [SaveInventoryEntry] = []
+        /// Absent `SPWN` chunk (issue #177) means the session spawned nothing,
+        /// so no dropped item or summon rejoins the world — which is also what
+        /// a save written before that chunk existed means.
+        var spawns: [SaveSpawnEntry] = []
     }
 
     static func decode(_ data: Data) throws -> OpenSkySaveFile {
@@ -57,8 +61,11 @@ nonisolated enum OpenSkySaveDecoder {
             metadata: metadata,
             fingerprint: fingerprint,
             snapshot: WorldStateSnapshot(
-                entries: OpenSkySaveInventoryDecoder.merge(
-                    body.inventories, into: body.entries
+                entries: OpenSkySaveSpawnDecoder.merge(
+                    body.spawns,
+                    into: OpenSkySaveInventoryDecoder.merge(
+                        body.inventories, into: body.entries
+                    )
                 ),
                 nextGeneratedSequence: body.nextGeneratedSequence,
                 globals: body.globals,
@@ -158,6 +165,8 @@ nonisolated enum OpenSkySaveDecoder {
             body.timers = try OpenSkySaveTimerDecoder.decodeTimers(payload)
         case OpenSkySaveFormat.ChunkTag.inventories:
             body.inventories = try OpenSkySaveInventoryDecoder.decodeInventories(payload)
+        case OpenSkySaveFormat.ChunkTag.spawnedReferences:
+            body.spawns = try OpenSkySaveSpawnDecoder.decodeSpawns(payload)
         default:
             break // Unknown chunk: skipped by its declared length.
         }

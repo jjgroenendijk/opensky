@@ -111,6 +111,12 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
             // through the same seam anyway keeps the bridge total: a component
             // the VM can hold is a component the VM can store.
             return worldState.set(value, for: key, in: cell)
+        case let .spawn(value):
+            // Same reasoning: `PlaceAtMe` is a later milestone's native, and
+            // when it arrives it writes this component. Attribution goes to the
+            // spawn's own cell rather than to `cellLocation(of:)`, which cannot
+            // answer for an object that is not in the world yet.
+            return worldState.set(value, for: key, in: value.location)
         }
     }
 

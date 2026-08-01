@@ -84,6 +84,15 @@ nonisolated enum OpenSkySaveFormat {
         /// into one delta per reference. An owner with no runtime inventory
         /// writes nothing, and a session that touched none writes no chunk.
         static let inventories = "INVN"
+        /// Spawned references (issue #177): one entry per object the running
+        /// game placed in the world, such as a dropped item.
+        ///
+        /// Additive for the same reason `INVN` is, and split out for the same
+        /// reason: a component kind inside `RDLT` is versioned by
+        /// `formatVersion`, so an older build would refuse every save that
+        /// contained one instead of loading the rest of the world without the
+        /// dropped items. A session that spawned nothing writes no chunk.
+        static let spawnedReferences = "SPWN"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.
@@ -143,6 +152,12 @@ nonisolated enum OpenSkySaveFormat {
     static let inventoryStackSize = 8
     /// Bytes one `INVN` equipped entry occupies: a single `UInt32` FormID.
     static let inventoryEquippedSize = 4
+    /// Smallest number of bytes a single `SPWN` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4), the base FormID (4), an interior cell
+    /// tag (1 + 4), six placement floats (24), the scale (4) and the count (4).
+    /// A real entry carries a generated key and may name an exterior cell, both
+    /// of which are longer, so this is a lower bound rather than the size.
+    static let minimumSpawnEntrySize = 48
     /// Smallest number of bytes a single `PTMR` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), an empty script name (2), the slot byte
     /// (1) and the two `Float64` bit patterns (8 + 8). Nothing in the entry is
@@ -158,11 +173,12 @@ nonisolated enum OpenSkySaveFormat {
 /// detail that may change while these byte values may not.
 ///
 /// Optional because not every component slot travels in `RDLT`. `.inventory`
-/// has no tag at all: it is carried by the `INVN` chunk so that an older build
-/// skips it rather than refusing the file (see `ChunkTag.inventories`). A nil
-/// tag is the encoder's instruction to leave the component out of `RDLT`, and
-/// leaving `init?(saveTag:)` without a case for it is what keeps the decoder's
-/// "an unknown component kind in `RDLT` is an error" rule intact.
+/// and `.spawn` have no tag at all: each is carried by its own chunk so that an
+/// older build skips it rather than refusing the file (see
+/// `ChunkTag.inventories` and `ChunkTag.spawnedReferences`). A nil tag is the
+/// encoder's instruction to leave the component out of `RDLT`, and leaving
+/// `init?(saveTag:)` without a case for it is what keeps the decoder's "an
+/// unknown component kind in `RDLT` is an error" rule intact.
 nonisolated extension WorldStateComponentKind {
     var saveTag: UInt8? {
         switch self {
@@ -170,7 +186,7 @@ nonisolated extension WorldStateComponentKind {
         case .transform: 1
         case .activation: 2
         case .deletion: 3
-        case .inventory: nil
+        case .inventory, .spawn: nil
         }
     }
 

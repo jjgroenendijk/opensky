@@ -24,9 +24,16 @@ localized strings. Each eligible placed reference retains:
 * typed action and label.
 
 The first actions are DOOR `Open`, CONT `Search`, ACTI `Activate`, TREE `Harvest`, and FURN
-`Activate`. ACTI `RNAM` overrides its action label. `FULL` and `RNAM` are lstrings, so a
-localized plugin resolves both through its `.strings` table. These English default verbs
-are provisional until GMST-backed localized action labels land.
+`Activate`. M12.1.3 adds `Take` for the six carryable families — `MISC`, `WEAP`, `AMMO`,
+`ALCH`, `INGR`, `BOOK` — which joined `ModelBase.supportedTypes` in the same issue, so a
+loose item reference now resolves a model, a collision shape and interaction metadata
+instead of counting as an unsupported base. ACTI `RNAM` overrides its action label. `FULL`
+and `RNAM` are lstrings, so a localized plugin resolves both through its `.strings` table.
+These English default verbs are provisional until GMST-backed localized action labels land.
+
+`ARMO` is deliberately not in that set even though it is carryable. Its world model is
+`MOD2`/`MOD3` and body pieces resolve through `ARMA` addons rather than a single `MODL`, so
+it needs the arbitration that belongs to the equipment milestone.
 
 MSTT remains non-interactive. The builder also excludes ACTI records whose header has
 `Ignore Object Interaction`, automatic DOOR records, and FURN records whose marker flags
@@ -76,6 +83,78 @@ streamer requests a transition for that exact REFR. A door with XTEL follows the
 interior/exterior transition path; a door without XTEL still emits the interaction event
 but has no built-in animation yet.
 
+## World items
+
+`WorldItemRuntime` (M12.1.3) is the third subscriber to that event, registered after audio
+and Papyrus so the activation sound and the recorded activation both land whether or not
+the take succeeds. It is headless and menu-free: taking an object is a world operation, and
+the engine performs it with no interface attached. The panel controls and the future menus
+(#289, #179) drive the same three entry points the use key does.
+
+Everything it does is one `WorldStateStore` write, so the journal, the per-cell dirty
+counts, the cell rebuild and the save see it without this layer arranging any of them:
+
+| Operation | Inventory arithmetic | World write |
+| --- | --- | --- |
+| Take | `InventoryRuntime.add` into the player | `ReferenceDeletionState` on a plugin placement, a full `reset` on a spawned one |
+| Drop | `InventoryRuntime.remove` from the player | `ReferenceSpawnState` under a freshly allocated generated key |
+| Container transfer | `InventoryRuntime.transfer` both ways | none — only the items move |
+
+Ordering inside each operation is chosen so a failure writes nothing: the throwing
+arithmetic runs first, and the world write happens only once it has succeeded. A take that
+would overflow the player's stack therefore leaves the item lying in the world rather than
+deleting it into nowhere. How many items one reference stands for is its `XCNT`, or its
+spawned stack count, or one; a non-positive `XCNT` reads as one, because a reference that is
+placed in the world is at least one item.
+
+A take on a *spawned* object resets its whole delta rather than marking it deleted. The
+object exists only because the store says so, so dropping the state is what makes it gone,
+and it leaves no tombstone to accumulate in every later save.
+
+### Container sessions
+
+`ContainerSession` is a live handle on one container reference, not a snapshot of it:
+`contents` reads through `InventoryRuntime` on every access, so a script that empties the
+chest while the session is open is visible on the next read. It offers `contents`,
+`take(_:count:)`, `takeAll()`, `deposit(_:count:)` and `close()`. Each individual transfer
+is all-or-nothing, so no count is ever lost; `takeAll()` is deliberately not atomic across
+stacks, because the only way a later stack can fail is an overflow on a player stack of over
+two billion and stopping there having moved the earlier stacks beats refusing to empty a
+chest.
+
+Open state is recorded on `ReferenceActivationState.isOpen`, written by the session and set
+explicitly rather than toggled. The Papyrus activation bridge toggles `isOpen` for doors,
+where one activation is one swing; a container's open state is the lifetime of a session,
+and only the session knows when that starts and ends.
+
+### Drop placement
+
+A dropped object lands one step in front of the camera and one standing height below it —
+`WorldItemRuntime.dropForwardOffset` and `dropHeight`, both static offsets rather than
+physics results. The forward vector is flattened onto the ground plane first, so looking at
+the sky does not throw the item over the player's head; a camera pointing straight up or
+down leaves nothing to flatten and the object lands directly below the eye. Havok-style
+settling waits for M15. Which cell the object belongs to comes from
+`CellStreamer.currentCellLocation`: the interior when one owns the view, otherwise the
+exterior grid center.
+
+What happens to the spawned object afterwards — how it is identified, how a build places it,
+and how it is saved — is [runtime state](/engine/runtime-state.md).
+
+## World > HUD & Interaction > Items
+
+The panel section is the milestone's acceptance surface. `Take target` and `Search target`
+act on whatever the walk-mode crosshair is on, exactly as the use key does; `Take all` and
+`Close container` drive the open session; `Drop` places a `FormID` from the field, or the
+player's first stack when it is blank, at the count beside it. The readout under the buttons
+states the target and whether it is takeable, the player's stacks with carry weight and gold,
+the open container's contents, how many objects the session has spawned, and the outcome of
+the last action.
+
+The section carries no override state of its own. Taking and dropping are world changes
+recorded in `WorldStateStore`, and `World > Runtime State` already owns resetting those;
+a second reset here would give the same deltas two owners.
+
 ## HUD publication
 
 M8.4.2 subscribes the vanilla `hudmenu.swf` bridge to target changes. The callback only
@@ -97,7 +176,39 @@ selection or localization failure.
 
 ## Verification
 
-Synthetic coverage exercises every supported collision primitive, transformed world
+The M12.1.3 acceptance record, in the format
+[sidebar acceptance](/tools/sidebar-acceptance.md) defines:
+
+```text
+Milestone: M12.1.3
+Sidebar path: World > HUD & Interaction > Items
+Destination id: Destination-hudInteraction
+Controls exercised: ItemsTakeControl, ItemsSearchControl, ItemsTakeAllControl,
+  ItemsCloseContainerControl, ItemsDropControl, ItemsDropFormIDField, ItemsDropCountField
+Readout: ItemsStatsLabel
+Deterministic tests: ItemsSectionTests, DestinationRegistryTests, WorldItemRuntimeTests,
+  ContainerSessionTests, CellSceneBuilderSpawnTests, CellStreamerSpawnTests,
+  WorldItemRealDataTests (env-gated, make realtest)
+Local A/B (optional, never committed): none
+```
+
+Synthetic coverage of the item path exercises the take, drop and container operations above
+the store, the accessibility-id contract and readout spelling of the section, a spawned
+object resolving a model and a collision shape at its placement through the real
+`CellSceneBuilder`, and the streaming behaviour — rebuild on drop, eviction and reload, the
+in-flight-build race, and a save/load cycle. The test classes are listed per area in
+[runtime state](/engine/runtime-state.md).
+
+`WorldItemRealDataTests.swift` is the env-gated sweep over the local install, run with
+`make realtest`. Over the 5x5 Whiterun-area exterior grid on Skyrim.esm (2026-08-01) it
+finds 50 `.take` references across 25 cells — 24 distinct names — and all 50 resolve in
+`ItemDefinitionStore`, so every loose item the widened base set exposes can be weighed,
+valued and stacked. The same build drew 1432 references in total. Numbers go to gitignored
+`logs/world-items-sweep.txt`; the record dump itself is game content and is never committed.
+`CellRenderRealDataTests` still renders the launch cell at 16 refs / 16 drawn / 0 skipped
+after the widening, so making six more base types drawable broke no existing resolution.
+
+Synthetic coverage of targeting exercises every supported collision primitive, transformed world
 distance, inside-shape exits, invalid input, range rejection, deterministic ties, target
 publication and clearing, wall occlusion, localized/inline record text, record suppression,
 action resolution, activation events, selected-door transitions, prompt mapping, and compass

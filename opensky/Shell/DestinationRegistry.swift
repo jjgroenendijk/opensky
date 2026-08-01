@@ -27,7 +27,8 @@ enum SidebarSection: String, CaseIterable {
 /// controller conforms to all of them, so one value wires every panel.
 typealias WorldControlProviders = AnimationControlProviding & AudioControlProviding
     & CameraControlProviding & FrameStatsProviding & GrassControlProviding
-    & HUDControlProviding & ParticleControlProviding & PrecipitationControlProviding
+    & HUDControlProviding & ItemControlProviding & ParticleControlProviding
+    & PrecipitationControlProviding
     & RuntimeStateControlProviding & SWFLabControlProviding & SceneStatsProviding
     & ScriptControlProviding & ShadowControlProviding
     & SystemMenuControlProviding & TerrainLODControlProviding & TriggerControlProviding
@@ -178,6 +179,7 @@ enum DestinationRegistry {
             content: .worldInspector { context in
                 let panel = HUDInteractionPanelViewController()
                 panel.provider = context.providers
+                panel.itemProvider = context.providers
                 return panel
             },
             overrides: DestinationOverrideActions(

@@ -341,6 +341,10 @@ final class FakeWorldProviders: WorldControlProviders {
     /// forwarding conformance lives in `WorldPanelTests.swift`.
     let triggers = FakeTriggerProvider()
 
+    /// ItemControlProviding (issue #177), delegated for the same reason; the
+    /// forwarding conformance lives in `ItemsSectionTests.swift`.
+    let items = FakeItemProvider()
+
     /// ScriptControlProviding (issue #278) is delegated the same way; the
     /// forwarding conformance lives in `DestinationRegistryScriptsTests.swift`.
     let scripts = FakeScriptProvider()

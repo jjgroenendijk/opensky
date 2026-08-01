@@ -59,6 +59,9 @@ extension GameViewController {
         // After the audio callbacks, so the engine's own interaction handling
         // stays first in the multicast order and Papyrus runs beside it.
         wirePapyrus(provider: provider, renderer: renderer, streamer: controller)
+        // Last in the multicast order (issue #177): the activation sound and
+        // the recorded activation both land before the item leaves the world.
+        wireWorldItems(provider: provider, streamer: controller)
         renderer.terrainSampler = { [weak controller] position in
             controller?.sampleTerrain(at: position)
         }

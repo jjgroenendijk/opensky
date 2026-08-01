@@ -7,6 +7,16 @@
 
 import AppKit
 
+extension GameViewController {
+    /// Which built-in overlay sample the UI Lab shows. Declared here rather
+    /// than on the class because only this bridge reads it; the stored
+    /// property itself has to stay on the class, since extensions cannot add
+    /// storage.
+    enum UILabSampleSelection {
+        case none, lab, localized
+    }
+}
+
 extension GameViewController: UILabControlProviding {
     var uiOverlayEnabled: Bool {
         get { renderer?.uiEnabled ?? true }

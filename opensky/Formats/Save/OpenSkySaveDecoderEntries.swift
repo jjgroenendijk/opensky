@@ -133,14 +133,14 @@ nonisolated enum OpenSkySaveEntryDecoder {
             try .activation(decodeActivation(&reader))
         case .deletion:
             try .deletion(ReferenceDeletionState(isDeleted: reader.bool("deletion state")))
-        case .inventory:
-            // Unreachable: inventory has no RDLT tag, so `init?(saveTag:)`
-            // never produces this case and tag 4 is rejected as unknown. The
-            // case is spelled out rather than defaulted so that a component
-            // kind added later fails to compile here instead of decoding as
-            // something else.
+        case .inventory, .spawn:
+            // Unreachable: neither kind has an RDLT tag, so `init?(saveTag:)`
+            // never produces these cases and tags past 3 are rejected as
+            // unknown. They are spelled out rather than defaulted so that a
+            // component kind added later fails to compile here instead of
+            // decoding as something else.
             throw OpenSkySaveError.invalidValue(
-                context: "inventory is carried by the INVN chunk, not by RDLT"
+                context: "\(kind) is carried by its own chunk, not by RDLT"
             )
         }
     }

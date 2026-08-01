@@ -175,6 +175,16 @@ nonisolated struct CellLoadSummary: Equatable {
     /// References the runtime deleted since load. Not the record header's
     /// `deleted` flag, which is filtered before a reference is ever counted.
     var runtimeDeletedSkipCount = 0
+    /// Objects the running game placed in this cell (issue #177): dropped
+    /// items today. They are outside `totalRefCount`, which counts what the
+    /// plugin authored, and inside `drawnRefCount`, which counts what the cell
+    /// drew — so the accounting identity is
+    /// `totalRefCount + spawnedRefCount == drawnRefCount + skippedRefCount`.
+    var spawnedRefCount = 0
+    /// Spawned objects with no FormID left to be addressed by. Always zero
+    /// short of 16.7 million spawns in one session; counted so that the
+    /// identity above still holds if it ever is not.
+    var spawnedUnaddressableSkipCount = 0
     /// Non-deleted ACHRs owned by this cell (local + position-mapped
     /// worldspace-persistent). Buckets below must account for each exactly
     /// once (5.5 exact-accounting rule).
@@ -197,6 +207,13 @@ nonisolated struct CellLoadSummary: Equatable {
     var skippedRefCount: Int {
         unsupportedBaseSkipCount + markerSkipCount + modelFailureSkipCount
             + malformedRefSkipCount + runtimeDisabledSkipCount + runtimeDeletedSkipCount
+            + spawnedUnaddressableSkipCount
+    }
+
+    /// Every reference the build saw — authored or spawned — landed in exactly
+    /// one bucket, drawn or skipped.
+    var referenceAccountingIsExact: Bool {
+        totalRefCount + spawnedRefCount == drawnRefCount + skippedRefCount
     }
 
     /// Every discovered actor landed in exactly one bucket.
@@ -240,6 +257,9 @@ nonisolated struct CellLoadSummary: Equatable {
         }
         if runtimeDeletedSkipCount > 0 {
             reasons.append("\(runtimeDeletedSkipCount) runtime-deleted")
+        }
+        if spawnedUnaddressableSkipCount > 0 {
+            reasons.append("\(spawnedUnaddressableSkipCount) spawn-unaddressable")
         }
         let skipped = reasons.isEmpty
             ? "\(skippedRefCount) skipped"

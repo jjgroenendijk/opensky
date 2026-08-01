@@ -24,8 +24,29 @@ import Foundation
 nonisolated struct ModelBase {
     /// Record types this decoder accepts — all carry EDID + MODL where STAT
     /// does. CellSceneBuilder indexes each of these top groups separately.
+    ///
+    /// The six carryable families joined for M12.1.3 (issue #177), which is
+    /// what makes a loose item reference resolve a model, a collision shape and
+    /// a `.take` interaction instead of counting as an unsupported base. Their
+    /// world model is a plain MODL exactly as MSTT's is, so nothing about the
+    /// decode changes; only the accepted set does.
+    ///
+    /// ARMO is deliberately absent even though it is a carryable family. Its
+    /// world model is MOD2/MOD3 and body pieces resolve through ARMA addons
+    /// rather than through a single MODL, so it needs the arbitration issue
+    /// #178 owns. A dropped cuirass is therefore not yet drawable, which the
+    /// take path reports rather than hides.
     static let supportedTypes: Set<FourCC> = [
-        "MSTT", "TREE", "FURN", "ACTI", "CONT", "DOOR"
+        "MSTT", "TREE", "FURN", "ACTI", "CONT", "DOOR",
+        "MISC", "WEAP", "AMMO", "ALCH", "INGR", "BOOK"
+    ]
+
+    /// The subset of `supportedTypes` whose references are loose world items:
+    /// activating one takes it into an inventory. Read by
+    /// `CellSceneBuilder.interactionAction(for:)` and by the take path, so both
+    /// answer from one list.
+    static let itemTypes: Set<FourCC> = [
+        "MISC", "WEAP", "AMMO", "ALCH", "INGR", "BOOK"
     ]
 
     /// Sound links carried by an activator/door/container base. Each FormID
@@ -70,8 +91,9 @@ nonisolated struct ModelBase {
 
     init(record: ESMRecord, localized: Bool = false) throws {
         guard Self.supportedTypes.contains(record.type) else {
+            let accepted = Self.supportedTypes.map(\.description).sorted().joined(separator: "/")
             throw ESMError.malformed(
-                "expected MSTT/TREE/FURN/ACTI/CONT/DOOR record, got \(record.type)"
+                "expected one of \(accepted), got \(record.type)"
             )
         }
         formID = FormID(record.formID)

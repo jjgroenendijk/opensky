@@ -87,8 +87,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 * [OpenSky save container](/formats/opensky-save.md) - our own .osav format, not
   Bethesda's: header metadata, load-order fingerprint, tagged chunks and the
-  reference-delta, global-variable, Papyrus script-instance, Papyrus update-timer and
-  runtime-inventory entry layouts, determinism and version rules, atomic write, and the
+  reference-delta, global-variable, Papyrus script-instance, Papyrus update-timer,
+  runtime-inventory and spawned-reference entry layouts, determinism and version rules,
+  atomic write, and the
   `OpenSkySaveStore` slot façade + fingerprint builders above it.
 
 ## Engine
@@ -114,7 +115,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   resolution, selected activation, camera teleport, suspended exterior streaming.
 * [Interaction targeting](/engine/interaction.md) - walk-mode view-ray selection,
   localized record names and action labels, typed activation events, HUD publication,
-  exact door dispatch.
+  exact door dispatch, and the world-item layer above it: taking a loose item, container
+  transfer sessions, dropping into the world, and the `World > HUD & Interaction > Items`
+  acceptance surface.
 * [Free-fly camera](/engine/free-fly-camera.md) - WASDQE + mouse-look input capture,
   yaw/pitch pose -> view matrix, movement speeds tuned to Skyrim scale.
 * [Terrain walk mode](/engine/walk-mode.md) - fixed-step capsule, terrain + mesh
@@ -170,7 +173,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   conditions sections, the interleaved journal tail, the M10.1 and M10 acceptance
   records, and the inventory component above all of it: full-override stacks, re-derived
   container/actor/player baselines, the add/remove/transfer accounting layer with its
-  conservation guarantees, carry weight and gold, and the additive INVN save chunk.
+  conservation guarantees, carry weight and gold, and the additive INVN save chunk; plus
+  the spawned-reference component that lets the running game place objects no plugin
+  authored, its synthesized 0xFF-prefixed FormID, and the additive SPWN save chunk.
 
 ## Rendering
 

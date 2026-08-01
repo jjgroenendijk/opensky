@@ -77,6 +77,7 @@ nonisolated enum OpenSkySaveEncoder {
             }
         }
         writeInventories(snapshot.entries, into: &writer)
+        writeSpawnedReferences(snapshot.entries, into: &writer)
         return writer.data
     }
 
@@ -200,11 +201,11 @@ nonisolated enum OpenSkySaveEncoder {
             }
         case let .deletion(state):
             writer.writeUInt8(state.isDeleted ? 1 : 0)
-        case .inventory:
+        case .inventory, .spawn:
             // Unreachable: `savedKinds(of:)` drops every kind without an RDLT
-            // tag, and inventory has none — it travels in the INVN chunk. The
-            // case exists so that adding a component kind is a compile error
-            // here rather than a silently unwritten component.
+            // tag, and neither of these has one — they travel in the INVN and
+            // SPWN chunks. The cases exist so that adding a component kind is a
+            // compile error here rather than a silently unwritten component.
             break
         }
     }

@@ -163,6 +163,31 @@ nonisolated struct PlacedReference {
         self.scriptData = scriptData
     }
 
+    /// A reference the running game created rather than a plugin (issue #177).
+    ///
+    /// No record backs it, so everything a REFR reads from file is absent: no
+    /// teleport, no light override, no primitive, no links, no owner, no
+    /// scripts. Its `formID` is synthesized by `SpawnedReferenceIdentity` from
+    /// the object's generated `ReferenceKey`, which is what lets collision
+    /// raycasts and interaction metadata address it exactly like an authored
+    /// placement. `itemCount` carries the stack size, matching the XCNT a
+    /// placed inventory item would have used.
+    init(spawn: ReferenceSpawnState, formID: FormID) {
+        self.formID = formID
+        base = spawn.base
+        placement = spawn.placement
+        scale = spawn.scale
+        teleportDestination = nil
+        lightRadius = nil
+        emittance = nil
+        primitive = nil
+        linkedReferences = []
+        owner = nil
+        ownerFactionRank = nil
+        itemCount = spawn.count
+        scriptData = ScriptData(ownerType: "REFR")
+    }
+
     /// Accumulator for the optional REFR subrecords. It exists so the field
     /// switch lives in its own function: `init(record:)` plus every optional
     /// case in one body runs past the cyclomatic-complexity limit, and every

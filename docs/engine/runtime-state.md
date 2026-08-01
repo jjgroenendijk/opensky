@@ -28,6 +28,7 @@ identity scheme, the per-cell index built from it, and the store above both.
 * Making a mutation visible: snapshot capture and cell rebuilds
 * Save and load: the snapshot through `OpenSkySaveStore`
 * Inventory — the first component added after M10
+* Spawned references — objects the running game placed
 * Verification — `World > Runtime State` and the M10.1 acceptance record
 * Verification — the M10.2 panel surfaces and the M10 acceptance record
 
@@ -211,6 +212,7 @@ The initial component set:
 | `ReferenceActivationState` | `.activation` | `activationCount`, the `isOpen` marker, and `lastActivator` for M11's `OnActivate` |
 | `ReferenceDeletionState` | `.deletion` | `isDeleted` at runtime, which is not the record header's `deleted` flag |
 | `ReferenceInventoryState` | `.inventory` | every item one owner holds, plus its equipped set (issue #176, M12.1.2) |
+| `ReferenceSpawnState` | `.spawn` | an object the running game placed: its base, cell, placement, scale and stack count (issue #177, M12.1.3) |
 
 `ReferenceActivationState` has a production writer since issue #172: the Papyrus activation
 bridge subscribes to `CellStreamer.onInteraction`, maps the event's `FormID` to a
@@ -476,10 +478,12 @@ never leaves the main actor.
 
 Application happens at exactly one point per build, in
 `opensky/World/CellSceneBuilderRuntimeState.swift`. References are collected and given their
-`ReferenceKey`s, then `effectiveReferences(refs:collected:state:counts:)` resolves each one
-through `ReferenceState.applying(_:)` and returns two things: the index entries, which keep
-every reference the plugin placed, and the *effective* references, which are what actually
-gets placed. Render instancing and collision assembly both read that one effective array, so
+`ReferenceKey`s, then `effectiveReferences(refs:collected:state:location:counts:)` resolves
+each one through `ReferenceState.applying(_:)` and returns two things: the index entries,
+which keep every reference the plugin placed, and the *effective* references, which are what
+actually gets placed. Objects the running game spawned into `location` join the input set
+before that resolution, not after it, so exactly one set of rules applies to both. Render
+instancing and collision assembly both read that one effective array, so
 a reference moved by a `ReferenceTransformOverride` cannot end up drawn in one place and
 solid in another. Doors and interaction metadata read it too, so a disabled door is not
 activatable.
@@ -498,6 +502,11 @@ activatable.
   hidden actor at runtime makes it appear.
 * The index keeps hidden references. An object a script disabled still exists, so it stays
   addressable through `CellScene.references` even though nothing drew it.
+* Spawned objects are counted in `BuildCounts.spawnedRefs` and reported as
+  `CellLoadSummary.spawnedRefCount`, which sits outside `totalRefCount` — that counts what
+  the plugin authored — and inside `drawnRefCount`. The identity
+  `totalRefCount + spawnedRefCount == drawnRefCount + skippedRefCount` is asserted by
+  `CellLoadSummary.referenceAccountingIsExact`.
 
 Deltas are looked up through `WorldStateSnapshot.deltasByKey()`, materialized once per
 build. `subscript(key:)` is a linear scan, which is right for a single probe and wrong for a
@@ -752,6 +761,87 @@ outfit, 12776 stacks, 15232 items) against indexes of 6930 items, 3075 LVLI and 
 with zero invariant violations: every stack list sorted, deduplicated and positive, and
 every equipped set a subset of what its actor carries. It also confirms the default gold
 form on the data rather than from memory — `Gold001`, `0000000F`, value 1, weight 0.
+
+## Spawned references — objects the running game placed
+
+Issue #177 (item 12.1.3) needed the world to hold objects no plugin places: a dropped item
+today, a summon or a `PlaceAtMe` result later. The representation is one more component
+rather than a list beside the store, which is what makes the whole M10 machinery absorb it
+unchanged — the journal records a spawn exactly as it records a `Disable()`, `snapshot()`
+orders it by `ReferenceKey`, the save writes it as one more additive chunk, and
+`CellStreamer.noteStateMutation` rebuilds the cell it landed in.
+
+`ReferenceSpawnState` (`opensky/World/SpawnedReference.swift`) holds the base record, the
+cell, the placement, the scale and the stack count. Unlike every other component it does not
+modify a plugin placement; it *is* the placement, and only a generated `ReferenceKey` ever
+carries it. Both normalizations in its initializer — a non-positive count becomes one, a
+scale that is not a positive finite number becomes one — exist because that initializer is
+also the save decoder's entry point, and a corrupt file must degrade rather than fail the
+whole load.
+
+The cell lives inside the component rather than being read off `ReferenceStateDelta.cell`.
+The delta's cell records where the *most recent* mutation happened and is overwritten by
+every later write, which is right for dirty-count attribution and wrong for "where does this
+object exist": moving a dropped item would otherwise be able to strand it in a cell it is no
+longer in.
+
+### Synthesized identity
+
+Everything below the runtime index — collision raycasts, interaction metadata, the render
+instance sort key — addresses a placement by raw `FormID`, so a spawned object needs one
+even though no plugin defines it. `SpawnedReferenceIdentity` maps the generated key's
+sequence number into the `0xFF` mod index: `.generated(1)` becomes `FF000001`.
+
+`0xFF` is safe by construction rather than by convention. A plugin's records are numbered by
+its position in the load order and that index is one byte, so a load order holds at most
+`0xFE` plugins and no plugin record can carry it. (Bethesda's own save format uses the same
+index for save-created references, which corroborates the reasoning without being its
+source.) A sequence past `00FFFFFF` has no FormID left, so the build drops the object and
+counts it in `BuildCounts.unaddressableSpawns` rather than aliasing two objects onto one ID;
+reaching that needs 16.7 million spawns in one session.
+
+### How a build places one
+
+`CellSceneBuilder.spawnedReferences(in:state:counts:)`
+(`opensky/World/CellSceneBuilderSpawns.swift`) walks the snapshot's entries — already in
+`ReferenceKey` total order, so no sorting is needed for determinism — keeps the ones whose
+component names this cell, and turns each into an ordinary `PlacedReference` through
+`PlacedReference.init(spawn:formID:)` plus an ordinary `RuntimeReferenceEntry`. They are
+marked persistent, because the store holds them rather than the scene: a dropped item is
+still there on the way back.
+
+From that point they are indistinguishable from authored placements. The same
+`applyRuntimeState` pass moves or hides them, the same instance resolution draws them, the
+same collision build makes them solid and the same interaction resolution makes them
+takeable. That is the whole reason drop reuses the component system instead of adding a
+parallel list of runtime objects — and it is why a dropped item's mesh and collision shape
+cannot disagree.
+
+### Serialization
+
+The `SPWN` chunk carries spawns, for the same reason `INVN` carries inventories: a component
+kind inside `RDLT` is versioned by `formatVersion`, so putting it there would force every
+older build to refuse every save containing a dropped item, while an additive chunk is
+simply skipped by its declared length. An object whose only delta is its spawn writes no
+`RDLT` entry at all; the decoder merges the two chunks back into one delta per reference by
+key. Layout in [OpenSky save container](/formats/opensky-save.md).
+
+### Tests
+
+`openskyTests/SpawnedReferenceTests.swift` covers the identity mapping in both directions,
+the component invariants and the erasure pair, the save round trip on its own and merged
+with another component, interior cells, and the two decoder refusals — an entry naming no
+cell, and a declared count past the bytes available.
+`CellSceneBuilderSpawnTests.swift` builds a synthetic plugin through the real
+`CellSceneBuilder` and proves a spawned object resolves a model, a collision shape at its
+placement and a `.take` interaction, that a spawn naming another cell is not placed here,
+and that enable and transform deltas apply to it exactly as they do to an authored
+reference. `CellStreamerSpawnTests.swift` runs the streaming seam: a drop rebuilds the cell
+it landed in, survives that cell being evicted and reloaded, resolves the in-flight-build
+race through the same `stateSequence` comparison M10 introduced, and comes back from a
+save/load cycle with its identity and the allocator position intact.
+`WorldItemRuntimeTests.swift` and `ContainerSessionTests.swift` cover the take, drop and
+container operations above the store; see [interaction](/engine/interaction.md).
 
 ## Verification — `World > Runtime State` and the M10.1 acceptance record
 

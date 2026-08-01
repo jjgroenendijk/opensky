@@ -67,6 +67,16 @@ nonisolated protocol GlobalDataProviding {
     var globalStore: GlobalStore? { get }
 }
 
+/// Optional item + container indexes a provider can expose (issue #177).
+/// `GameViewController` pairs the resolver with the session's
+/// `WorldStateStore` to build the `InventoryRuntime` that take, drop and
+/// container sessions run on. Immutable after `init` like every other `*Store`
+/// here, so reading it from the main thread does not break the builder's queue
+/// confinement.
+nonisolated protocol ItemDataProviding {
+    var inventoryBaselines: InventoryBaselineResolver? { get }
+}
+
 /// Optional script-loading seam a provider can expose (issue #171). The
 /// Papyrus world runtime resolves a script name to compiled bytecode lazily
 /// through the file system, and resolves the FormIDs a VMAD property names
@@ -103,7 +113,7 @@ nonisolated protocol AudioDataProviding {
 /// thread -- which is why they need no internal locking.
 nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding,
     AudioDataProviding, MovementConfigurationProviding, GlobalDataProviding,
-    ScriptDataProviding
+    ScriptDataProviding, ItemDataProviding
 {
     let builder: CellSceneBuilder
     let worldspaceEditorID: String
@@ -117,6 +127,9 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     var musicStore: MusicRecordStore?
     /// Global-variable index (GLOB); nil when the plugin has no GLOB records.
     var globalStore: GlobalStore?
+    /// Item/container/leveled-list indexes (issue #177); nil when the session
+    /// was built without them, which is every synthetic scene.
+    var inventoryBaselines: InventoryBaselineResolver?
     /// GMST-derived walk/run values plus explicit documented fallbacks.
     var movementConfiguration: PlayerMovementConfiguration = .synthetic
 
