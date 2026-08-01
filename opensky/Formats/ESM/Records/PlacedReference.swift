@@ -1,7 +1,16 @@
 // REFR record decoded into engine types: base object FormID + placement.
 // A REFR places one base record (STAT, TREE, DOOR, ...) at a world position.
 // Per spec only NAME and DATA are required; everything else here is optional
-// and the many activation/ownership fields are skipped for now.
+// and most of the activation fields are still skipped.
+//
+// M12.1.1 adds the reference-level ownership subrecords so a container or a
+// world item can say who it belongs to and how many of it there are:
+//   XOWN 4 bytes  owning NPC_ or FACT
+//   XRNK 4 bytes  int32 required rank, meaningful only for a faction owner
+//   XCNT 4 bytes  int32 stack count for a placed inventory item
+// xEdit models XOWN as a 12-byte struct for Fallout 4 and later only; in
+// Skyrim it is a plain FormID (`wbOwnership`, wbDefinitionsCommon.pas line
+// 8655), which is what this decodes.
 //
 // Reference: UESP "Skyrim Mod:Mod File Format/REFR"
 //   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/REFR
@@ -85,6 +94,15 @@ nonisolated struct PlacedReference {
     /// reference links to nothing. Read it through
     /// `linkedReference(keyword:)` rather than by index.
     let linkedReferences: [LinkedReference]
+    /// XOWN — the NPC_ or FACT that owns this reference; nil when unowned.
+    /// Taking an owned item is theft, and an owned container is a crime scene.
+    let owner: FormID?
+    /// XRNK — faction rank required to use the reference freely. Meaningful
+    /// only when `owner` is a FACT; nil when the field is absent.
+    let ownerFactionRank: Int32?
+    /// XCNT — how many of the base item this reference places. Nil when
+    /// absent, which means one.
+    let itemCount: Int32?
     /// VMAD — Papyrus scripts attached directly to this placed reference.
     let scriptData: ScriptData
 
@@ -139,6 +157,9 @@ nonisolated struct PlacedReference {
         emittance = optionals.emittance
         primitive = optionals.primitive
         linkedReferences = optionals.linkedReferences
+        owner = optionals.owner
+        ownerFactionRank = optionals.ownerFactionRank
+        itemCount = optionals.itemCount
         self.scriptData = scriptData
     }
 
@@ -153,6 +174,9 @@ nonisolated struct PlacedReference {
         var emittance: FormID?
         var primitive: Primitive?
         var linkedReferences: [LinkedReference] = []
+        var owner: FormID?
+        var ownerFactionRank: Int32?
+        var itemCount: Int32?
 
         /// Decodes `field` when it is one of the optional subrecords and
         /// reports whether it was consumed; false leaves it to `ScriptData`.
@@ -173,6 +197,12 @@ nonisolated struct PlacedReference {
                 primitive = try PlacedReference.decodePrimitive(field, reference: reference)
             case "XLKR":
                 PlacedReference.appendLinkedReference(field.data, to: &linkedReferences)
+            case "XOWN":
+                owner = try InventoryItemFields.optionalFormID(field)
+            case "XRNK":
+                ownerFactionRank = try PlacedReference.decodeInt32(field.data)
+            case "XCNT":
+                itemCount = try PlacedReference.decodeInt32(field.data)
             default:
                 return false
             }
@@ -201,6 +231,14 @@ nonisolated struct PlacedReference {
         guard data.count >= 4 else { return nil }
         var reader = BinaryReader(data)
         return try reader.readFloat32()
+    }
+
+    /// Reads a signed 32-bit count/rank word, or nil when the payload is too
+    /// short to hold one — an unreadable XRNK/XCNT degrades to "not set".
+    private static func decodeInt32(_ data: Data) throws -> Int32? {
+        guard data.count >= 4 else { return nil }
+        var reader = BinaryReader(data)
+        return try Int32(bitPattern: reader.readUInt32())
     }
 
     private static func decodeFormID(_ data: Data) throws -> FormID? {

@@ -16,6 +16,44 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   across distant listener-cell movement. See
   [world SFX + ambience](/engine/world-sfx.md) and
   [world audio playback](/engine/audio.md).
+* **M12.1.1 item and container record decode (issue #175)**: decoded the seven carryable
+  base families — MISC, BOOK, ALCH, INGR, WEAP, AMMO and the inventory half of ARMO —
+  plus CONT contents and reference-level ownership, and indexed them behind
+  `ItemDefinitionStore`, the read-only unified item view the inventory runtime (#176) will
+  resolve through. Three shared helpers keep the seven decoders from repeating themselves:
+  `ObjectBounds` (OBND), `KeywordList` (KSIZ/KWDA) and `InventoryItemFields` (the common
+  EDID/FULL/MODL/icon/sound run), with `ItemValue` for the 8-byte value+weight DATA.
+  `Container` **composes** `ModelBase` rather than replacing it, so the cell builder and
+  interaction path that already consume CONT keep working unchanged and only gain the
+  contents.
+
+  Two design calls worth recording. First, containers are indexed *apart* from items: a
+  CONT has no gold value and no weight, so forcing it into `ItemDefinition` would have
+  meant two dead fields on every container; `container(_:)` sits beside `definition(_:)`
+  instead. Second, stackability is deliberately provisional — v1 stacks by base FormID and
+  the doc says so, because tempering, enchanting and charge level will each make two
+  instances of one base FormID distinct and turn `stackKey` into a compound key.
+
+  Two byte-layout traps are handled by payload size rather than by the plugin's form
+  version, because an SSE-only engine still has to read classic-era mod records: WEAP CRDT
+  puts its SPEL link at 0x10 in the 24-byte SSE form and 0x0C in the 16-byte classic one,
+  and AMMO DATA gained a trailing weight float in SSE. Both are cited to xEdit's `IsSSE`
+  branches. Advisory counts (KSIZ for KWDA, COCT for CNTO) are recorded but never used to
+  size a read, so a stale count in a modded plugin cannot truncate a list. Effects decode
+  as MGEF links only; magic semantics stay out of scope.
+
+  Evidence: synthetic-fixture unit tests for every family covering the wrong-type,
+  truncated-field and empty-record cases, plus `ItemDefinitionStoreTests`. The env-gated
+  `InventoryRecordRealDataTests` swept Skyrim.esm on 2026-08-01 and decoded **6930 items
+  with zero throws and zero skips** (ARMO 2762, WEAP 2484, BOOK 821, ALCH 363, MISC 371,
+  INGR 94, AMMO 35) plus 436 containers holding 9597 CNTO entries with 0 COCT mismatches;
+  7765 placed references carry XOWN and 118 carry XCNT. The layout invariant that matters
+  is that **all 9597 CNTO targets resolve to a record whose type is in the set xEdit
+  constrains the slot to** — that would not hold if item and count were being read in the
+  wrong order. Decoded output reaches both dev surfaces through
+  `RecordTextDump.itemSummary`, verified by dumping `IronSword`, `SkillSmithing1`, `Wheat`,
+  `IronArrow` and `BarrelFood01` through `openskycli record`. Full layouts and the dated
+  sweep table: [record decoders](/formats/records.md).
 
 * **M11 Papyrus world interaction — milestone acceptance (issue #174)**: M11 set out to
   make vanilla scripts respond to interaction and mutate persistent world state, while

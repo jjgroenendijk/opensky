@@ -36,7 +36,9 @@ nonisolated enum RecordTextDump {
         case "WTHR": weatherSummary(record: record)
         case "CLMT": climateSummary(record: record)
         case "REGN": regionSummary(record: record)
-        default: nil
+        // Inventory families live in RecordTextDumpItems.swift so this switch
+        // stays inside the strict-lint complexity cap.
+        default: itemSummary(record: record, localized: localized)
         }
     }
 
