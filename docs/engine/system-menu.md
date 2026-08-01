@@ -5,7 +5,7 @@ description: The Resume / Settings / Quit pause menu - its toolkit-free selector
   menu-stack handoff that pauses world simulation, the data-root and audio-volume
   settings placeholders, and the vanilla quest_journal.swf presentation layer behind it.
 tags: [engine, ui, menu, swf, settings]
-timestamp: 2026-07-28T00:00:00Z
+timestamp: 2026-08-01T00:00:00Z
 ---
 
 # System menu
@@ -31,6 +31,7 @@ renderer, and no movie. Only the presentation layer needs any of those.
 |---|---|---|
 | Selector (rows, selection, activation) | `opensky/UI/SystemMenuModel.swift` | app + CLI |
 | Vanilla movie contract | `opensky/UI/SystemMenuMovieBridge.swift` | app + CLI |
+| Renderer-routed movie input | `opensky/UI/SystemMenuMovieBridgeInput.swift` | app + CLI |
 | Panel seam | `opensky/SystemMenuControlProviding.swift` | app + CLI |
 | Renderer + AppKit wiring | `opensky/GameViewControllerSystemMenu.swift` | app |
 | Verification surface | `opensky/SystemMenuPanelViewController.swift` and `opensky/Shell/Sections/SystemMenu*.swift` | app |
@@ -128,6 +129,14 @@ translated to Flash key down/up events. The selected `$SETTINGS` row opens
 no numeric state is hardcoded. The movie's `CloseMenu` outbound call closes the engine menu
 stack. If the movie is absent or rejects input, the engine selector handles the event.
 
+Live input enters through `SystemMenuMovieBridge.send(_:renderer:)`, which batches the
+bridge's runtime mutation through `Renderer.updateSWFRuntime`. That renderer seam pulls
+`sceneIfChanged()` and rebuilds the planned GPU command stream before returning. Calling
+`handle(_:runtime:)` directly is valid only inside another renderer-owned batch, such as a
+test that sends several keys before one synchronization; using it against
+`Renderer.swfRuntime` directly changes ActionScript selection state without repainting the
+frame.
+
 The pre-issue-#136 sweep measured 159 `callDepthExceeded` faults in
 `quest_journal.swf`, the worst of all 53 movies. The acceptance run now reports 0 faults,
 0 unimplemented opcodes, 0 unhandled invokes of 36, and 572 draws. At 1280x720, the System
@@ -167,6 +176,8 @@ returns to gameplay.
 Tests: `SystemMenuModelTests` (fallback selector transitions), `SystemMenuPanelTests`
 (control ids, provider round-trip, readout strings, and the pinned movie path),
 `DestinationRegistryTests` (registry order and pinned ids), and
+`RendererSWFInteractiveAcceptanceTests` (a synthetic key mutation repaints through the
+system-menu bridge), plus
 `SystemMenuAcceptanceRealDataTests` — the env-gated movie gate against the user's install.
 It asserts the System and Settings rows, keyboard transition, fault/opcode/invoke tallies,
 draws, and pixel deltas; its PNGs and report go to ignored `logs/`.

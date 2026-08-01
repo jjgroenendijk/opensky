@@ -172,6 +172,23 @@ struct RendererSWFInteractiveAcceptanceTests {
         #expect(changed > 50000, "the key changed only \(changed) pixels")
     }
 
+    /// Issue #300: the system-menu bridge used to mutate the live runtime
+    /// directly, leaving the renderer's planned command stream unchanged.
+    @Test(.enabled(if: Self.hasMetal4Device))
+    @MainActor
+    func systemMenuBridgeSynchronizesKeyMutationToRenderedFrame() throws {
+        let renderer = try Self.makeRenderer()
+        try renderer.setSWFMovie(SWFInteractiveFixture.scene())
+        try renderer.startSWFRuntime()
+        let closed = try Self.render(renderer)
+
+        let handled = try SystemMenuMovieBridge.send(.move(.down), renderer: renderer)
+
+        #expect(handled, "the system-menu key was not consumed")
+        let changed = try Self.changedPixels(closed, Self.render(renderer))
+        #expect(changed > 50000, "the system-menu key changed only \(changed) pixels")
+    }
+
     /// Determinism survives input: the layer moves only when something injects
     /// an event, so repeated frames between events are byte-identical.
     @Test(.enabled(if: Self.hasMetal4Device))

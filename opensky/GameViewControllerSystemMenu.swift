@@ -120,12 +120,18 @@ extension GameViewController {
 
     private func routeSystemMenuInput(_ event: MenuInputEvent) {
         guard systemMenu.model.isOpen else { return }
-        if
-            systemMenu.movieLoaded,
-            let runtime = renderer?.swfRuntime,
-            SystemMenuMovieBridge.handle(event, runtime: runtime)
-        {
-            return
+        if systemMenu.movieLoaded, let renderer {
+            do {
+                if try SystemMenuMovieBridge.send(event, renderer: renderer) {
+                    return
+                }
+            } catch {
+                systemMenu.movieError = String(describing: error)
+                Self.systemMenuLogger.error(
+                    "[ERROR] system menu input: \(String(describing: error), privacy: .public)"
+                )
+                return
+            }
         }
         let outcome = systemMenu.model.handle(event)
         if let outcome {
