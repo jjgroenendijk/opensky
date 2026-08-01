@@ -10,6 +10,18 @@ XCODEBUILD_FLAGS ?=
 UI_TEST_SIGNING_FLAGS := CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM=
 SWIFT_PATHS    := opensky openskycli openskyTests openskyUITests
 TEST_RESULTS   := build/test-results
+# Build cache lives beside the checkout, not under $HOME. The repo sits on a
+# large external volume while the boot volume is small, and an Xcode-default
+# DerivedData for this project runs to tens of gigabytes — enough to fill the
+# boot disk mid-session. Keeping it here puts the cache on the same volume as
+# the sources it describes, and `DerivedData/` is already gitignored. Every
+# xcodebuild call below passes it, and the shell tools read it from
+# OPENSKY_DERIVED_DATA, so there is exactly one place to change it.
+DERIVED_DATA   ?= $(CURDIR)/DerivedData
+XCODEBUILD_DD  := -derivedDataPath $(DERIVED_DATA)
+export OPENSKY_DERIVED_DATA := $(DERIVED_DATA)
+# Xcode's default location, kept only so `make clean` can also sweep the caches
+# a pre-DERIVED_DATA checkout (or a plain Xcode GUI build) left behind there.
 XCODE_DERIVED_DATA ?= $(HOME)/Library/Developer/Xcode/DerivedData
 
 SWIFTFORMAT_CFG := tools/format/.swiftformat
@@ -93,11 +105,11 @@ docs-links: ## Check intra-wiki links in docs/ resolve (log.md skipped)
 
 build: vendor-link ## Build the app ($(CONFIG))
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration $(CONFIG) \
-		$(XCODEBUILD_FLAGS) build
+		$(XCODEBUILD_DD) $(XCODEBUILD_FLAGS) build
 
 cli: vendor-link ## Build the openskycli dev tool ($(CONFIG))
 	@xcodebuild -project $(PROJECT) -scheme $(CLI_SCHEME) -configuration $(CONFIG) \
-		$(XCODEBUILD_FLAGS) build
+		$(XCODEBUILD_DD) $(XCODEBUILD_FLAGS) build
 
 probe: ## CLI smoke checks against the local install (skips if absent)
 	@./tools/probe.sh
@@ -106,7 +118,7 @@ test: vendor-link ## Build + run unit tests (no UI tests)
 	@rm -rf $(TEST_RESULTS)/unit.xcresult && mkdir -p $(TEST_RESULTS)
 	@TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
 		xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
-		$(XCODEBUILD_FLAGS) -resultBundlePath $(TEST_RESULTS)/unit.xcresult \
+		$(XCODEBUILD_DD) $(XCODEBUILD_FLAGS) -resultBundlePath $(TEST_RESULTS)/unit.xcresult \
 		-skip-testing:openskyUITests test
 
 test-ui: vendor-link ## Build + run UI tests (launches the app, drives it via automation)
@@ -122,7 +134,7 @@ test-one: vendor-link ## Run one test class/method: make test-one T=Class[/test]
 	@case "$(T)" in */*) spec="$(T)";; *) spec="openskyTests/$(T)";; esac; \
 	TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
 		xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
-		$(XCODEBUILD_FLAGS) -resultBundlePath $(TEST_RESULTS)/one.xcresult \
+		$(XCODEBUILD_DD) $(XCODEBUILD_FLAGS) -resultBundlePath $(TEST_RESULTS)/one.xcresult \
 		-only-testing:"$$spec" test
 
 test-report: ## Print pass/fail summary + failure detail from the newest result bundle
@@ -142,12 +154,12 @@ test-perms: ## Check/guide the one-time TCC grants that stop test permission pop
 
 app-path: ## Print built opensky.app path ($(CONFIG))
 	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration $(CONFIG) \
-		$(XCODEBUILD_FLAGS) -showBuildSettings 2>/dev/null \
+		$(XCODEBUILD_DD) $(XCODEBUILD_FLAGS) -showBuildSettings 2>/dev/null \
 		| awk '$$1 == "BUILT_PRODUCTS_DIR" {print $$3 "/opensky.app"; exit}'
 
 cli-path: ## Print built openskycli path ($(CONFIG))
 	@xcodebuild -project $(PROJECT) -scheme $(CLI_SCHEME) -configuration $(CONFIG) \
-		$(XCODEBUILD_FLAGS) -showBuildSettings 2>/dev/null \
+		$(XCODEBUILD_DD) $(XCODEBUILD_FLAGS) -showBuildSettings 2>/dev/null \
 		| awk '$$1 == "BUILT_PRODUCTS_DIR" {print $$3 "/openskycli"; exit}'
 
 run-cli: cli ## Build + run openskycli: make run-cli ARGS="vfs ls"
@@ -164,7 +176,7 @@ install: vendor-link ## Build Release app (arm64) + copy to /Applications
 	@echo "[ OK ] /Applications/opensky.app updated"
 
 clean: ## Remove OpenSky build artifacts and Xcode caches
-	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) clean
+	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) $(XCODEBUILD_DD) clean
 	@rm -rf build DerivedData
 	@if [ -d "$(XCODE_DERIVED_DATA)" ]; then \
 		find "$(XCODE_DERIVED_DATA)" -mindepth 1 -maxdepth 1 \

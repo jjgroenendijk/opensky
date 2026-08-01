@@ -6,6 +6,9 @@
 set -eu
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
+# Same build cache the Makefile uses (Makefile DERIVED_DATA): the boot volume is
+# too small to hold this project's DerivedData, so it lives beside the checkout.
+derived_data="${OPENSKY_DERIVED_DATA:-$root/DerivedData}"
 data_root="${OPENSKY_DATA_ROOT:-/Volumes/data/steam/steamapps/common/Skyrim Special Edition}"
 log_dir="$root/logs"
 log="$log_dir/probe.log"
@@ -18,9 +21,9 @@ fi
 
 echo "[INFO] building openskycli (log: $log)"
 xcodebuild -project "$root/opensky.xcodeproj" -scheme openskycli -configuration Debug \
-  build >"$log" 2>&1
+  -derivedDataPath "$derived_data" build >"$log" 2>&1
 products_dir="$(xcodebuild -project "$root/opensky.xcodeproj" -scheme openskycli \
-  -configuration Debug -showBuildSettings 2>/dev/null \
+  -configuration Debug -derivedDataPath "$derived_data" -showBuildSettings 2>/dev/null \
   | awk -F' = ' '/ BUILT_PRODUCTS_DIR =/ { print $2; exit }')"
 cli="$products_dir/openskycli"
 [ -x "$cli" ] || { echo "[ERROR] openskycli binary not found at $cli"; exit 1; }

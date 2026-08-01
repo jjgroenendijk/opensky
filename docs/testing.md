@@ -122,6 +122,13 @@ needs its own setup.
 * One xcodebuild at a time: two concurrent `xcodebuild` invocations against the
   same DerivedData (e.g. a probe while the pre-push hook builds) deadlock until
   the tool timeout. Let one finish before starting another.
+* The build cache is `DerivedData/` inside the checkout, not the Xcode default
+  under `$HOME` — the boot volume is too small to hold it. `make` passes
+  `-derivedDataPath` on every `xcodebuild` call and exports
+  `OPENSKY_DERIVED_DATA`; `make realtest` uses `DerivedData/opensky-realtest`
+  beside it, so a real-data run never invalidates the ordinary build. A hand-run
+  `xcodebuild` that omits the flag starts a second cache on the boot disk and
+  rebuilds from scratch.
 
 ## Fixtures
 
