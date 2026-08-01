@@ -88,6 +88,7 @@ nonisolated struct CellStreamingFlyBenchmarkResult {
     let animationUpdateBudgetMS: Double
     let shadowUpdateBudgetMS: Double
     let audioUpdateBudgetMS: Double
+    let scriptUpdateBudgetMS: Double
     let weatherName: String
     let windSpeed: Float
     let animationUpdatedBoneCount: Int
@@ -112,6 +113,7 @@ nonisolated struct CellStreamingFlyBenchmarkConfiguration {
     let animationUpdateBudgetMS: Double
     let shadowUpdateBudgetMS: Double
     let audioUpdateBudgetMS: Double
+    let scriptUpdateBudgetMS: Double
     var samplesPerLeg = 60
 }
 
@@ -278,6 +280,7 @@ enum CellStreamingFlyBenchmark {
                 animationUpdateBudgetMS: configuration.animationUpdateBudgetMS,
                 shadowUpdateBudgetMS: configuration.shadowUpdateBudgetMS,
                 audioUpdateBudgetMS: configuration.audioUpdateBudgetMS,
+                scriptUpdateBudgetMS: configuration.scriptUpdateBudgetMS,
                 weatherName: environment.weatherName ?? "selected rain",
                 windSpeed: environment.windSpeed,
                 animationUpdatedBoneCount: environment.animationUpdatedBoneCount,
@@ -291,40 +294,11 @@ enum CellStreamingFlyBenchmark {
         }
 
         /// Per-frame CPU update gates: animation (sample/compose/palette), then
-        /// shadow (cascade fit + caster culling + encode), then audio (listener
-        /// pose + engine tick + music director) must each hold avg AND p95
-        /// within budget, mirroring the collision/actor build-latency gates.
+        /// shadow (cascade fit + caster culling + encode), audio (listener pose
+        /// + engine tick + music director), and script VM must each hold avg
+        /// AND p95 within budget, mirroring the build-latency gates.
         private func validateUpdateBudgets(_ render: OffscreenBenchResult) throws {
-            guard
-                render.animationAverageMS <= configuration.animationUpdateBudgetMS,
-                render.animationPercentileMS(95) <= configuration.animationUpdateBudgetMS
-            else {
-                throw CellStreamingFlyBenchmarkError.animationUpdateExceeded(
-                    average: render.animationAverageMS,
-                    p95: render.animationPercentileMS(95),
-                    budget: configuration.animationUpdateBudgetMS
-                )
-            }
-            guard
-                render.shadowAverageMS <= configuration.shadowUpdateBudgetMS,
-                render.shadowPercentileMS(95) <= configuration.shadowUpdateBudgetMS
-            else {
-                throw CellStreamingFlyBenchmarkError.shadowUpdateExceeded(
-                    average: render.shadowAverageMS,
-                    p95: render.shadowPercentileMS(95),
-                    budget: configuration.shadowUpdateBudgetMS
-                )
-            }
-            guard
-                render.audioUpdateAverageMS <= configuration.audioUpdateBudgetMS,
-                render.audioUpdatePercentileMS(95) <= configuration.audioUpdateBudgetMS
-            else {
-                throw CellStreamingFlyBenchmarkError.audioUpdateExceeded(
-                    average: render.audioUpdateAverageMS,
-                    p95: render.audioUpdatePercentileMS(95),
-                    budget: configuration.audioUpdateBudgetMS
-                )
-            }
+            try validatedFlyUpdateBudgets(render: render, configuration: configuration)
         }
 
         private func moveOneSample() {

@@ -135,11 +135,10 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   Scaleform Stage rectangles, events, indexed global mouse input and hit testing, the
   GameDelegate bridge, path-targeted HUD calls, missing-API tally.
 * [Papyrus virtual machine](/engine/papyrus-vm.md) - bounded Skyrim PEX execution: typed
-  values, explicit frames, arrays, states, a native registry, deterministic
-  real/game-time suspension scheduling, faults and coverage tallies, with
-  VMAD-supplied initial values; plus the main-actor world runtime that drives it from the
-  frame loop with a FIFO script-event queue, cell-streamed instance lifetime, a lazy
-  script library, and instance state that survives a save.
+  values, explicit frames, arrays, states, a native registry, deterministic real/game-time
+  suspension scheduling, faults and coverage tallies, with VMAD-supplied initial values;
+  plus the main-actor world runtime, use-key and trigger dispatch, persistent world
+  mutation, update timers, save state, the `World > Scripts` surface, and the M11 gate.
 * [World audio playback](/engine/audio.md) - AVAudioEngine graph with 3D positional
   sources, streaming WMA decode off the main thread, vanilla SNCT category volumes,
   per-category mute and solo, source budget/eviction, the per-frame audio-update

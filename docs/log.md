@@ -2,6 +2,49 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-01
+
+* **M11 Papyrus world interaction — milestone acceptance (issue #174)**: M11 set out to
+  make vanilla scripts respond to interaction and mutate persistent world state, while
+  leaving the quest runtime to M13. It landed the PEX container decoder (#167), bounded
+  interpreter (#168), VMAD decoder and binding bridge (#169), native dispatch and M11.1
+  census (#170), engine-loop world runtime (#171), `OnActivate` and core
+  `ObjectReference` natives (#172), trigger volumes and trigger events (#173), persistent
+  update timers (#277), the `World > Scripts` destination (#278), and this overall gate
+  (#174). The acceptance surface stays at `World > Scripts`, beside the world state it
+  explains, rather than under Developer: pause, step and burst are verification controls,
+  but the instances, events and native tally are live properties of the running world.
+  The rejected alternative was a new milestone-only panel, which would duplicate the
+  permanent surface and leave no durable path after acceptance. The animation boundary is
+  also deliberate: `PlayAnimation`-family calls remain `deferredAnimation` deviations
+  until M14 instead of pretending a no-op is implemented. The dated honest coverage
+  headline is **18 of 508 distinct natives referenced by vanilla scripts implemented
+  (3.5%)**, with 18 deferred animations in the 2026-07-30 corpus acceptance run.
+
+  Evidence: `M11AcceptancePanelTests` drives the real sidebar model and registry-built
+  panel on one provider set, reads all four accessibility readouts, and exercises
+  pause/step/burst/reset; `M11AcceptanceEngineTests` activates through a real
+  `CellStreamer`, then saves and restores world state, activation metadata, a script
+  variable and a pending timer into a fresh `PapyrusRuntime` through `OpenSkySaveStore`;
+  `M11ScriptedWorldAcceptanceTests` pins use key -> dispatch -> native -> delta -> rebuild;
+  and `CellStreamingFlyPathTests` pins the new average-and-p95 script budget, its
+  reason-tagged error and zero-sample behavior. The env-gated
+  `M11AcceptanceRealDataTests` swept 25 Whiterun-area cells, attached 28 instances, drained
+  to zero pending events, and pins 5 typed faults, 9 unknown-native calls and 0 deferred
+  animations without a crash or hang. It selected VMAD-bound `TrapLinker`
+  (`Skyrim.esm:000D97F5`) and ran its retail `defaultActivateToggleLinkedRefOnce` PEX: the
+  authored link is an invisible `XMarker`, so the exact retail bytecode runs against an
+  in-code visible linked-reference proxy rather than making a false claim about the game
+  asset. One use-key dispatch makes 3 native calls with no activation fault or unknown
+  call, writes 2 world-state deltas, removes 1 reference from the rebuilt draw set and
+  changes 10 pixels. The capture remains at gitignored
+  `logs/m11-acceptance-visible.png`. A 6,645-frame Debug fly run measured the attached VM
+  update at 0.024 ms average, 0.035 ms p95 and 1.266 ms maximum; the default 0.5 ms
+  average-and-p95 ceiling is over 14 times the observed p95 and about 1.5% of a 30 fps
+  frame. See [Papyrus virtual machine](/engine/papyrus-vm.md),
+  [PEX](/formats/pex.md), [VMAD](/formats/vmad.md), and the
+  [sidebar acceptance ledger](/tools/sidebar-acceptance.md).
+
 ## 2026-07-31
 
 * **World > Scripts destination (issue #278)**: a new sidebar destination

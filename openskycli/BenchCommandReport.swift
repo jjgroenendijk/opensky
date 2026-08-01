@@ -118,7 +118,7 @@ extension BenchCommand {
         )
     }
 
-    /// The three per-frame CPU update gates, in the order the fly benchmark
+    /// The four per-frame CPU update gates, in the order the fly benchmark
     /// validates them.
     static func reportFlyUpdateBudgets(_ result: CellStreamingFlyBenchmarkResult) {
         print(String(
@@ -138,6 +138,14 @@ extension BenchCommand {
             result.shadowUpdateBudgetMS
         ))
         reportAudioUpdate(render: result.render, budget: result.audioUpdateBudgetMS)
+        print(String(
+            format: "[INFO] script update: avg %.3f ms, p95 %.3f ms, "
+                + "max %.3f ms, budget %.2f ms",
+            result.render.scriptUpdateAverageMS,
+            result.render.scriptUpdatePercentileMS(95),
+            result.render.scriptUpdateMS.max() ?? 0,
+            result.scriptUpdateBudgetMS
+        ))
     }
 
     static func reportFlyActors(_ result: CellStreamingFlyBenchmarkResult) {

@@ -29,19 +29,24 @@ nonisolated struct OffscreenBenchResult {
     /// metric. Mirrors `animationMS`; every entry is zero on a run with no
     /// audio engine attached, and the array is empty when never sampled.
     let audioUpdateMS: [Double]
+    /// CPU wall time of the world-simulation callback per frame. The callback
+    /// owns the Papyrus VM advance; every entry is zero when none is attached.
+    let scriptUpdateMS: [Double]
 
     init(
         frameMS: [Double],
         windowSummaries: [String],
         animationMS: [Double] = [],
         shadowMS: [Double] = [],
-        audioUpdateMS: [Double] = []
+        audioUpdateMS: [Double] = [],
+        scriptUpdateMS: [Double] = []
     ) {
         self.frameMS = frameMS
         self.windowSummaries = windowSummaries
         self.animationMS = animationMS
         self.shadowMS = shadowMS
         self.audioUpdateMS = audioUpdateMS
+        self.scriptUpdateMS = scriptUpdateMS
     }
 
     var averageMS: Double {
@@ -79,6 +84,14 @@ nonisolated struct OffscreenBenchResult {
 
     func audioUpdatePercentileMS(_ percentile: Double) -> Double {
         Self.percentile(audioUpdateMS, percentile: percentile)
+    }
+
+    var scriptUpdateAverageMS: Double {
+        scriptUpdateMS.isEmpty ? 0 : scriptUpdateMS.reduce(0, +) / Double(scriptUpdateMS.count)
+    }
+
+    func scriptUpdatePercentileMS(_ percentile: Double) -> Double {
+        Self.percentile(scriptUpdateMS, percentile: percentile)
     }
 
     private static func percentile(_ values: [Double], percentile: Double) -> Double {
@@ -174,7 +187,7 @@ extension Renderer {
             // World simulation (issue #171) runs on the same fixed step, so an
             // offscreen bench or test drives the Papyrus VM deterministically.
             // The game clock still never advances here.
-            onWorldUpdate?(simDelta)
+            updateWorldSim(deltaTime: simDelta)
         }
         // Weather resolves from the current time-of-day each frame; forced
         // weather (tests) stays deterministic because the offscreen path never
@@ -289,6 +302,7 @@ extension Renderer {
         var animationMS: [Double] = []
         var shadowMS: [Double] = []
         var audioUpdateMS: [Double] = []
+        var scriptUpdateMS: [Double] = []
 
         for _ in 1 ... maxFrames {
             if minimumFrameInterval > 0 {
@@ -307,13 +321,15 @@ extension Renderer {
             animationMS.append(lastAnimationUpdateMS)
             shadowMS.append(lastShadowUpdateMS)
             audioUpdateMS.append(lastAudioUpdateMS)
+            scriptUpdateMS.append(lastScriptUpdateMS)
             if settled {
                 return OffscreenBenchResult(
                     frameMS: frameMS,
                     windowSummaries: summaries,
                     animationMS: animationMS,
                     shadowMS: shadowMS,
-                    audioUpdateMS: audioUpdateMS
+                    audioUpdateMS: audioUpdateMS,
+                    scriptUpdateMS: scriptUpdateMS
                 )
             }
         }
@@ -345,6 +361,7 @@ extension Renderer {
         var animationMS: [Double] = []
         var shadowMS: [Double] = []
         var audioUpdateMS: [Double] = []
+        var scriptUpdateMS: [Double] = []
         for _ in 0 ..< frames {
             let start = DispatchTime.now().uptimeNanoseconds
             let summary = try renderOffscreenFrame(
@@ -358,13 +375,15 @@ extension Renderer {
             animationMS.append(lastAnimationUpdateMS)
             shadowMS.append(lastShadowUpdateMS)
             audioUpdateMS.append(lastAudioUpdateMS)
+            scriptUpdateMS.append(lastScriptUpdateMS)
         }
         return OffscreenBenchResult(
             frameMS: frameMS,
             windowSummaries: summaries,
             animationMS: animationMS,
             shadowMS: shadowMS,
-            audioUpdateMS: audioUpdateMS
+            audioUpdateMS: audioUpdateMS,
+            scriptUpdateMS: scriptUpdateMS
         )
     }
 }

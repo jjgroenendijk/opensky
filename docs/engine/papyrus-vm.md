@@ -5,7 +5,7 @@ description: Bounded execution of Skyrim PEX functions with explicit frames,
   typed values, native registry, deterministic scheduling and tallies, driven
   once per frame from the engine loop with a script event queue and save state.
 tags: [engine, papyrus, virtual-machine, bytecode]
-timestamp: 2026-07-31T00:00:00Z
+timestamp: 2026-08-01T00:00:00Z
 ---
 
 # Papyrus virtual machine
@@ -62,6 +62,7 @@ choice OpenSky makes in those gaps is listed under [Deviations](#deviations).
 * [World > Scripts sidebar surface](#world--scripts-sidebar-surface)
 * [Tests](#tests)
 * [M11.1 acceptance](#m111-acceptance)
+* [M11 overall acceptance](#m11-overall-acceptance)
 * [A script changing the world, end to end](#a-script-changing-the-world-end-to-end)
 * [Deviations](#deviations)
 * [Scope](#scope)
@@ -1027,6 +1028,58 @@ control, or accessibility readout. The durable acceptance result is
 `World > Scripts` surface. This exception is also recorded in the
 [sidebar acceptance ledger](/tools/sidebar-acceptance.md).
 
+## M11 overall acceptance
+
+M11 closes with the complete interaction chain in place: PEX decoding (#167), bounded VM
+execution (#168), VMAD binding (#169), native dispatch and the M11.1 census (#170), the
+engine-loop runtime (#171), scripted activation and world mutation (#172), trigger events
+(#173), update timers (#277), the `World > Scripts` panel (#278), and this overall gate
+(#174). The dated coverage headline remains **18 of 508 distinct natives referenced by
+vanilla scripts implemented (3.5%)**, with 18 `deferredAnimation` calls in the 2026-07-30
+corpus run. `PlayAnimation` remains an explicit, reason-tagged deviation until M14; treating
+it as an implemented no-op was rejected because that would overstate visible behavior.
+
+The env-gated `M11AcceptanceRealDataTests` swept the 5 by 5 grid around Whiterun on
+2026-08-01. It attached 28 script instances across 25 cells, drained the event queue with
+no crash or hang, and pins 5 typed faults, 9 unknown-native calls and 0 deferred animations
+for that grid. The selected authored activator is `TrapLinker` (`Skyrim.esm:000D97F5`) in
+cell `(5,0)`, VMAD-bound to `defaultActivateToggleLinkedRefOnce`. Its real linked target is
+an invisible `XMarker` (`Skyrim.esm:000D97F9`), so claiming pixels from the authored pair
+would be false. The render gate instead runs that exact retail PEX object through the real
+use-key, VMAD, interpreter, native and `WorldStateStore` chain against an in-code visible
+linked-reference proxy. The activation makes 3 native calls with no fault or unknown call,
+writes 2 world-state deltas, removes 1 reference from the rebuilt draw set, and changes 10
+pixels. The local capture is `logs/m11-acceptance-visible.png`; it is game-content evidence
+and remains gitignored.
+
+The fly benchmark now times the world-simulation callback on the same live and offscreen
+seam. A 2026-08-01 Debug run of `bench --fly-path --size 640x360` over 6,645 frames measured
+the attached empty VM floor at 0.024 ms average, 0.035 ms p95 and 1.266 ms maximum. The
+default 0.5 ms average-and-p95 ceiling is over 14 times the observed p95 while consuming
+about 1.5% of a 30 fps frame. `CellStreamingFlyPathTests` pins the reason-tagged failure,
+its exact error string, result propagation and the zero-sample case.
+
+`M11AcceptanceEngineTests` uses a real `PapyrusRuntime`, `WorldStateStore`, `CellStreamer`
+and `OpenSkySaveStore`: it activates once, saves, then restores into a fresh engine instance
+and compares the snapshot, `activationCount`, `lastActivator`, script variable and pending
+timer. `M11AcceptancePanelTests` walks the real sidebar model and registry-built panel on
+one provider set, reads all four readouts by accessibility identifier, pauses, steps,
+bursts, and resets the override. Together with `M11ScriptedWorldAcceptanceTests` and the
+env-gated real-data suite, those form the acceptance triad plus the existing deterministic
+render chain.
+
+The mandatory sidebar record is:
+
+```text
+Milestone: M11
+Sidebar path: World > Scripts
+Destination id: Destination-scripts
+Controls exercised: ScriptPauseControl, ScriptStepControl, ScriptBurstControl
+Readout: ScriptInstancesStatsLabel, ScriptEventsStatsLabel, ScriptSchedulerStatsLabel, ScriptNativeTallyStatsLabel
+Deterministic tests: M11AcceptancePanelTests, M11AcceptanceEngineTests, M11ScriptedWorldAcceptanceTests, CellStreamingFlyPathTests, M11AcceptanceRealDataTests (env-gated, make realtest)
+Local A/B (optional, never committed): logs/m11-acceptance-visible.png
+```
+
 ## A script changing the world, end to end
 
 Issue #172's gate is one chain rather than a set of unit results, pinned by
@@ -1088,8 +1141,8 @@ Activation surviving a save is a separate assertion in
 [the OpenSky save container](/formats/opensky-save.md), which is what makes a
 lever that has been thrown stay thrown across a reload.
 
-The discoverable `World > Scripts` sidebar surface and the M11 milestone
-acceptance record are separate items and are not part of this gate.
+The discoverable `World > Scripts` sidebar surface and the M11 milestone acceptance record
+are described under [M11 overall acceptance](#m11-overall-acceptance).
 
 ## Deviations
 
