@@ -138,6 +138,22 @@ final class FakeWorldProviders: WorldControlProviders {
     var inventoryMenuMovieEnabled = false
     var inventoryMenuLastAction: String?
 
+    /// ContainerMenuControlProviding (issue #179). The behaviour is in
+    /// `FakeWorldProvidersContainerMenu.swift`; only the state lives here,
+    /// because an extension cannot hold stored properties.
+    var containerMenuModel = ContainerMenuModel(
+        mode: .container,
+        container: FakeWorldProviders.merchantList,
+        player: FakeWorldProviders.playerList,
+        pricing: .vanilla,
+        containerName: "Test Chest"
+    )
+    var containerMenuIsOpen = false
+    var containerMenuMode = ContainerMenuModel.Mode.container
+    var containerMenuMovieEnabled = false
+    var containerMenuLastAction: String?
+    var containerMenuMerchant: FormID? = FormID(0x0300)
+
     // UILabControlProviding
     var uiOverlayEnabled = true
     var uiSampleShown = false

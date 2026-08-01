@@ -141,16 +141,19 @@ extension GameViewController {
 }
 
 extension GameViewController: MenuInputConsumer {
-    /// One consumer, two menus: the controller is the only `MenuInputConsumer`,
-    /// so it dispatches on the top of the menu stack rather than on a private
-    /// flag. Each route guards on its own menu being open, so an event that
-    /// arrives while neither is does nothing.
+    /// One consumer, four menus: the controller is the only
+    /// `MenuInputConsumer`, so it dispatches on the top of the menu stack
+    /// rather than on a private flag. Each route guards on its own menu being
+    /// open, so an event that arrives while none is does nothing.
     func handleMenuInput(_ event: MenuInputEvent) {
-        if menuMode.topMenu == Self.inventoryMenuIdentifier {
+        switch menuMode.topMenu {
+        case Self.inventoryMenuIdentifier:
             routeInventoryMenuInput(event)
-            return
+        case Self.containerMenuIdentifier, Self.barterMenuIdentifier:
+            routeContainerMenuInput(event)
+        default:
+            routeSystemMenuInput(event)
         }
-        routeSystemMenuInput(event)
     }
 }
 

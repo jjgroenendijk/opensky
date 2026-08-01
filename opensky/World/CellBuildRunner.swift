@@ -101,6 +101,15 @@ nonisolated protocol MovementConfigurationProviding {
     var movementConfiguration: PlayerMovementConfiguration { get }
 }
 
+/// Optional barter price factors resolved from active GMST data (issue #179).
+/// Separate from `MovementConfigurationProviding` for the same reason the item
+/// indexes are separate from the audio ones: a synthetic scene has no load
+/// order to read `fBarterMin` and `fBarterMax` out of, and the merchant menu
+/// then falls back to the documented vanilla defaults rather than to nothing.
+nonisolated protocol BarterDataProviding {
+    var barterPricing: BarterPricing { get }
+}
+
 /// Optional decoded audio-record stores a provider can expose (M9.2.2).
 /// GameViewController pulls these off the provider to construct the world
 /// sound director alongside the audio engine. WeatherStore arrives via
@@ -118,7 +127,7 @@ nonisolated protocol AudioDataProviding {
 /// thread -- which is why they need no internal locking.
 nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding,
     AudioDataProviding, MovementConfigurationProviding, GlobalDataProviding,
-    ScriptDataProviding, ItemDataProviding
+    ScriptDataProviding, ItemDataProviding, BarterDataProviding
 {
     let builder: CellSceneBuilder
     let worldspaceEditorID: String
@@ -140,6 +149,9 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     var equipmentCatalog: EquipmentCatalog?
     /// GMST-derived walk/run values plus explicit documented fallbacks.
     var movementConfiguration: PlayerMovementConfiguration = .synthetic
+    /// GMST-derived `fBarterMin` and `fBarterMax` at the milestone's fixed
+    /// Speech value (issue #179), defaulting to the documented vanilla numbers.
+    var barterPricing: BarterPricing = .vanilla
 
     /// Compiled-script source for the Papyrus world runtime; nil when the
     /// builder was constructed without a file system (synthetic scenes).

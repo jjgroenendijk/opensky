@@ -135,6 +135,20 @@ nonisolated struct CellSceneComposition {
             .filter { $0.placedActor != nil }
     }
 
+    /// Every resident container interaction, ordered by FormID.
+    ///
+    /// Exists for the same reason `actorEntries()` does: the merchant menu
+    /// (issue #179) has to let a developer nominate a container without knowing
+    /// its FormID, and "every chest currently loaded" is the list to pick from.
+    /// Ordering is by reference rather than by cell because that list is a menu,
+    /// and a menu whose rows reshuffle when a neighbouring cell streams in is
+    /// one a user cannot click twice.
+    func containerInteractions() -> [PlacedInteraction] {
+        cells.values
+            .flatMap { $0.interactions.values.filter { $0.action == .search } }
+            .sorted { $0.reference.rawValue < $1.reference.rawValue }
+    }
+
     func door(reference: FormID) -> PlacedDoor? {
         cells.values
             .flatMap(\.doors)

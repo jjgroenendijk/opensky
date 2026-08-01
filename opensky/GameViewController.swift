@@ -131,6 +131,11 @@ final class GameViewController: NSViewController {
     /// implementation lives in `GameViewControllerInventoryMenu.swift`; stored
     /// here because extensions cannot add state.
     var inventoryMenu = InventoryMenuRuntimeState()
+    /// Container and barter menu two-pane list, merchant nomination and
+    /// presentation state (issue #179). The implementation lives in
+    /// `GameViewControllerContainerMenu.swift`; stored here because extensions
+    /// cannot add state.
+    var containerMenu = ContainerMenuRuntimeState()
     /// World > Runtime State bridge caches (save store, plugin fingerprint,
     /// slot list). The implementation lives in
     /// `GameViewControllerRuntimeState.swift`; stored here because extensions

@@ -26,7 +26,8 @@ enum SidebarSection: String, CaseIterable {
 /// The live-renderer bridges a world inspector panel may consume. The game
 /// controller conforms to all of them, so one value wires every panel.
 typealias WorldControlProviders = AnimationControlProviding & AudioControlProviding
-    & CameraControlProviding & FrameStatsProviding & GrassControlProviding
+    & CameraControlProviding & ContainerMenuControlProviding
+    & FrameStatsProviding & GrassControlProviding
     & HUDControlProviding & InventoryMenuControlProviding & ItemControlProviding
     & ParticleControlProviding
     & PrecipitationControlProviding
@@ -215,6 +216,18 @@ enum DestinationRegistry {
             overrides: inventoryMenuOverrides
         ),
         DestinationDescriptor(
+            id: "containerMenu",
+            title: "Container Menu",
+            section: .world,
+            symbolName: "shippingbox",
+            content: .worldInspector { context in
+                let panel = ContainerMenuPanelViewController()
+                panel.provider = context.providers
+                return panel
+            },
+            overrides: containerMenuOverrides
+        ),
+        DestinationDescriptor(
             id: "audio",
             title: "Audio",
             section: .world,
@@ -314,26 +327,6 @@ enum DestinationRegistry {
             PrecipitationSection.resetToDefaults(provider: providers)
             GrassSection.resetToDefaults(provider: providers)
             TerrainLODSection.resetToDefaults(provider: providers)
-        }
-    )
-
-    private static let systemMenuOverrides = DestinationOverrideActions(
-        isOverridden: { context in
-            SystemMenuSection.isOverridden(provider: context.providers)
-                || SystemMenuSettingsSection.isOverridden(provider: context.providers)
-        },
-        resetToDefaults: { context in
-            SystemMenuSection.resetToDefaults(provider: context.providers)
-            SystemMenuSettingsSection.resetToDefaults(provider: context.providers)
-        }
-    )
-
-    private static let inventoryMenuOverrides = DestinationOverrideActions(
-        isOverridden: { context in
-            InventoryMenuSection.isOverridden(provider: context.providers)
-        },
-        resetToDefaults: { context in
-            InventoryMenuSection.resetToDefaults(provider: context.providers)
         }
     )
 

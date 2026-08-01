@@ -26,5 +26,6 @@ behavior.
 - Output is plain text, stable enough for `tools/probe.sh` to grep. Output format
   change -> update probe same commit.
 - New/changed subcommand -> same commit updates `docs/tools/cli.md`, probe coverage,
-  and usage text in `OpenSkyCLI.swift`.
+  and the usage text in `OpenSkyCLIUsage.swift` (split out of `OpenSkyCLI.swift`, which
+  now holds only dispatch).
 - Install is read-only. Writes go only where `--out` points; logs -> `logs/`.

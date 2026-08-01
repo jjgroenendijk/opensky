@@ -30,6 +30,11 @@ struct WorldItemBridgeState {
     /// Equip/unequip runtime (issue #178), built beside `runtime` when the
     /// provider can also supply an equipment catalog. nil without game data.
     var equipment: EquipmentRuntime?
+    /// Barter price factors from the load order's own `fBarterMin` and
+    /// `fBarterMax` (issue #179), captured beside the runtime because the
+    /// merchant menu needs them and the provider is not retained anywhere else.
+    /// The documented vanilla defaults until a provider supplies better.
+    var barterPricing = BarterPricing.vanilla
     var lastActionText = "No item action yet."
 }
 
@@ -51,6 +56,9 @@ extension GameViewController {
         if let catalog = (provider as? ItemDataProviding)?.equipmentCatalog {
             worldItems.equipment = EquipmentRuntime(inventory: inventory, catalog: catalog)
         }
+        if let pricing = (provider as? BarterDataProviding)?.barterPricing {
+            worldItems.barterPricing = pricing
+        }
         streamer.onInteraction.add { [weak self] event in
             self?.handleItemInteraction(event)
         }
@@ -70,7 +78,9 @@ extension GameViewController {
     }
 
     /// The interaction the crosshair is on, which every action below acts upon.
-    private var currentInteraction: PlacedInteraction? {
+    /// Internal rather than private because the container menu (issue #179)
+    /// opens on the same crosshair target this panel takes and searches.
+    var currentInteraction: PlacedInteraction? {
         hud.interactionTarget?.interaction
     }
 }

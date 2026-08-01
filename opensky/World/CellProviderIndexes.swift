@@ -13,6 +13,7 @@ nonisolated struct CellProviderIndexes {
     let inventoryBaselines: InventoryBaselineResolver
     let equipmentCatalog: EquipmentCatalog
     let movementConfiguration: PlayerMovementConfiguration
+    let barterPricing: BarterPricing
 
     init(
         root: GameDataRoot,
@@ -22,9 +23,11 @@ nonisolated struct CellProviderIndexes {
     ) throws {
         let esmURL = root.dataURL.appending(path: "Skyrim.esm")
         let file = try ESMFile(url: esmURL)
-        movementConfiguration = PlayerMovementConfiguration.resolve(
-            store: GameSettingLoader.load(root: root, baseFile: file)
-        )
+        // One GMST load for both consumers: resolving the load order twice
+        // would parse every plugin's GMST group twice for the same answer.
+        let settings = GameSettingLoader.load(root: root, baseFile: file)
+        movementConfiguration = PlayerMovementConfiguration.resolve(store: settings)
+        barterPricing = BarterPricing.resolve(store: settings)
         let textures = TextureLibrary(fileSystem: fileSystem, device: device)
         let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
         builder = CellSceneBuilder(
@@ -57,7 +60,8 @@ nonisolated struct CellProviderIndexes {
             globalStore: globalStore,
             inventoryBaselines: inventoryBaselines,
             equipmentCatalog: equipmentCatalog,
-            movementConfiguration: movementConfiguration
+            movementConfiguration: movementConfiguration,
+            barterPricing: barterPricing
         )
     }
 }

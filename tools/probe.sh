@@ -150,6 +150,18 @@ run "swf render-sweep (vanilla frame-1 display lists)" swf render-sweep --size 4
 grep 'swf render-sweep:' "$log" | tail -1 | grep -q ' 0 failed' \
   || fail "swf render-sweep reported movies that did not render"
 
+# M12.2.3 container + barter menu gate: both vanilla movies come up through
+# ContainerMenuMovieBridge, take a published two-pane inventory, and answer
+# every engine call they make. Vanilla install: 0 faults and 0 unhandled
+# invokes each, and the barter movie's own vendor-gold field carries the
+# merchant purse.
+run "swf container-menu (containermenu.swf)" swf container-menu --mode container --down 1
+grep 'swf container-menu diagnostics:' "$log" | tail -1 | grep -q ' 0 faults' \
+  || fail "containermenu.swf faulted during bring-up"
+run "swf container-menu (bartermenu.swf)" swf container-menu --mode barter --transfer 1
+grep 'swf container-menu diagnostics:' "$log" | tail -1 | grep -q ' 0 unhandled of ' \
+  || fail "bartermenu.swf made unanswered engine calls"
+
 # M8.3.1 SWF action-inventory gate: every movie's action side (DoAction,
 # DoInitAction, CLIPACTIONS) decodes with zero unexpected failures and zero
 # opcodes outside the Adobe action table. Vanilla install: 53 movies, ~3,414
