@@ -4,6 +4,14 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-01
 
+* **System-menu keyboard repaint (issue #300)**: system-menu keys now enter the live SWF
+  through `Renderer.updateSWFRuntime`, so the ActionScript selection mutation and the GPU
+  command stream synchronize as one operation. The old raw-runtime path moved the movie's
+  internal selection but left the last planned frame on screen until an unrelated renderer
+  call happened to flush it. A synthetic Metal-gated pixel test pins the bridge itself: a
+  down key is consumed and immediately changes the rendered frame. See
+  [system menu](/engine/system-menu.md#vanilla-presentation-layer).
+
 * **M12.2.2 `inventorymenu.swf` bring-up and the inventory data contract (issue #289)**:
   the vanilla inventory menu opens, lists what the player carries, filters by category and
   navigates — with zero faults and zero unanswered engine calls.
