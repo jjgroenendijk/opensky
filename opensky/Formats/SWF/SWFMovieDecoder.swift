@@ -14,6 +14,10 @@ nonisolated struct SWFMovieDecoder {
     let jpegTables: Data?
     var characters: [UInt16: SWFCharacter] = [:]
     var importedNames: [UInt16: String] = [:]
+    /// Every ImportAssets/ImportAssets2 tag with its source movie URL, in tag
+    /// order. `importedNames` loses the URL, and resolving a non-font import
+    /// needs it.
+    var imports: [SWFImportedAssets] = []
     var exportedNames: [String: UInt16] = [:]
     var initActions: [SWFDoInitAction] = []
     var timeline: SWFTimelineDecoder
@@ -58,7 +62,9 @@ nonisolated struct SWFMovieDecoder {
                 initActions.append(initAction)
             }
         } else if SWFImportedAssets.tagCodes.contains(tag.code) {
-            for asset in try SWFImportedAssets.parse(tag: tag).assets {
+            let imported = try SWFImportedAssets.parse(tag: tag)
+            imports.append(imported)
+            for asset in imported.assets {
                 importedNames[asset.characterId] = asset.name
             }
         } else if tag.code == SWFExportedAssets.tagCode {

@@ -1,0 +1,253 @@
+// World > Inventory Menu > Menu: opens the engine's menu stack on the player's
+// inventory and drives the row list (M12.2.2, issue #289). Every button routes
+// the same `MenuInputEvent` the keyboard produces in menu mode, so the panel
+// cannot diverge from live input.
+
+import AppKit
+
+final class InventoryMenuSection: PanelSectionViewController {
+    weak var provider: (any InventoryMenuControlProviding)? {
+        didSet {
+            guard isViewLoaded else { return }
+            syncControls()
+            refreshReadout()
+        }
+    }
+
+    let openControl = NSButton(title: "Open", target: nil, action: nil)
+    let closeControl = NSButton(title: "Close", target: nil, action: nil)
+    let upControl = NSButton(title: "Up", target: nil, action: nil)
+    let downControl = NSButton(title: "Down", target: nil, action: nil)
+    let previousCategoryControl = NSButton(title: "Prev category", target: nil, action: nil)
+    let nextCategoryControl = NSButton(title: "Next category", target: nil, action: nil)
+    let equipControl = NSButton(title: "Equip / unequip", target: nil, action: nil)
+    let dropControl = NSButton(title: "Drop", target: nil, action: nil)
+    let movieControl = NSButton(
+        checkboxWithTitle: "Vanilla menu movie", target: nil, action: nil
+    )
+    private let statsLabel = PanelComponents.statsLabel(identifier: "InventoryMenuStatsLabel")
+
+    var statsReadout: String {
+        statsLabel.stringValue
+    }
+
+    override var sectionTitle: String {
+        "Menu"
+    }
+
+    override var sectionIdentifier: String {
+        "inventoryMenu"
+    }
+
+    override var isOverridden: Bool {
+        Self.isOverridden(provider: provider)
+    }
+
+    override func resetToDefaults() {
+        Self.resetToDefaults(provider: provider)
+    }
+
+    /// An open menu pauses world sim, and the movie takes the SWF layer from
+    /// the gameplay HUD. Both are states a user must be able to see and clear
+    /// from the sidebar without hunting for the control that set them.
+    static func isOverridden(provider: (any InventoryMenuControlProviding)?) -> Bool {
+        guard let provider else { return false }
+        return provider.inventoryMenuIsOpen || provider.inventoryMenuMovieEnabled
+    }
+
+    static func resetToDefaults(provider: (any InventoryMenuControlProviding)?) {
+        guard let provider else { return }
+        provider.closeInventoryMenu()
+        provider.inventoryMenuMovieEnabled = false
+    }
+
+    override func makeContentViews() -> [NSView] {
+        configureControls()
+        return [
+            PanelComponents.group([
+                PanelComponents.buttonRow([openControl, closeControl]),
+                PanelComponents.buttonRow([upControl, downControl]),
+                PanelComponents.buttonRow([previousCategoryControl, nextCategoryControl]),
+                PanelComponents.buttonRow([equipControl, dropControl])
+            ]),
+            PanelComponents.group([movieControl]),
+            statsLabel
+        ]
+    }
+
+    override func syncControls() {
+        movieControl.state = provider?.inventoryMenuMovieEnabled == true ? .on : .off
+        syncEnablement()
+    }
+
+    override func refreshReadout() {
+        guard let snapshot = provider?.inventoryMenuSnapshot else {
+            statsLabel.stringValue = "Inventory menu: unavailable"
+            syncEnablement()
+            return
+        }
+        statsLabel.stringValue = Self.readout(for: snapshot)
+        // The menu also opens and closes from live keyboard input, so button
+        // enablement has to follow the readout tick, not just control actions.
+        syncEnablement()
+    }
+
+    private func syncEnablement() {
+        let isOpen = provider?.inventoryMenuIsOpen == true
+        openControl.isEnabled = provider != nil && !isOpen
+        let whileOpen: [NSControl] = [
+            closeControl, upControl, downControl, previousCategoryControl,
+            nextCategoryControl, equipControl, dropControl
+        ]
+        for control in whileOpen {
+            control.isEnabled = isOpen
+        }
+        movieControl.isEnabled = provider != nil
+    }
+
+    /// One row line. Pure and static so the movie bridge, the readout, and the
+    /// tests all format a row the same way.
+    static func line(for entry: InventoryMenuEntry) -> String {
+        let count = entry.count == 1 ? "" : " ×\(entry.count)"
+        let equipped = entry.isEquipped ? " [equipped]" : ""
+        let weight = String(format: "%.1f", entry.weight)
+        return "\(entry.name)\(count)\(equipped) · \(weight) wt · \(entry.value) gold"
+    }
+
+    /// Pure so the readout is unit-testable without AppKit state.
+    static func readout(for snapshot: InventoryMenuControlSnapshot) -> String {
+        guard snapshot.isOpen else {
+            return "Inventory menu: closed · world sim running"
+        }
+        let sim = snapshot.worldSimPaused ? "paused" : "running"
+        let stack = snapshot.openMenus.isEmpty ? "none" : snapshot.openMenus.joined(separator: ", ")
+        let weight = String(format: "%.1f", snapshot.carriedWeight)
+        let action = snapshot.lastActionText.map { "\nLast action: \($0)" } ?? ""
+        return """
+        Inventory menu: open · world sim \(sim)
+        Stack: \(stack)
+        \(categoryLine(for: snapshot))
+        \(rows(for: snapshot))
+        Carrying \(weight) · \(snapshot.gold) gold\(action)
+        \(movieReadout(for: snapshot))
+        """
+    }
+
+    static func categoryLine(for snapshot: InventoryMenuControlSnapshot) -> String {
+        guard !snapshot.categoryLabels.isEmpty else {
+            return "Categories: none"
+        }
+        let tabs = snapshot.categoryLabels.enumerated().map { index, label in
+            index == snapshot.selectedCategoryIndex ? "[\(label)]" : label
+        }.joined(separator: " ")
+        return "Categories: \(tabs)"
+    }
+
+    static func rows(for snapshot: InventoryMenuControlSnapshot) -> String {
+        guard !snapshot.entryLines.isEmpty else {
+            return "  (no items in this category)"
+        }
+        return snapshot.entryLines.enumerated().map { index, line in
+            (index == snapshot.selectedIndex ? "> " : "  ") + line
+        }.joined(separator: "\n")
+    }
+
+    static func movieReadout(for snapshot: InventoryMenuControlSnapshot) -> String {
+        guard snapshot.movieEnabled else {
+            return "Movie: off (engine-drawn row list)"
+        }
+        if let error = snapshot.movieError {
+            return "Movie: failed · \(error)"
+        }
+        guard snapshot.movieLoaded else {
+            return "Movie: not loaded"
+        }
+        // Print the rows the movie built for itself so the verification surface
+        // proves the engine's list actually crossed the bridge.
+        let rows = snapshot.movieEntryTitles.isEmpty
+            ? "no rows"
+            : snapshot.movieEntryTitles.joined(separator: ", ")
+        let tabs = snapshot.movieCategoryTitles.isEmpty
+            ? "no categories"
+            : snapshot.movieCategoryTitles.joined(separator: ", ")
+        return "Movie: \(InventoryMenuMovieBridge.moviePath) · "
+            + "\(snapshot.movieDrawStats.drawCalls) draws · "
+            + "\(snapshot.movieFaults) faults · "
+            + "\(snapshot.movieMissingNames) missing names · "
+            + "\(snapshot.movieUnhandledInvokes) unhandled invokes"
+            + "\nMovie categories: \(tabs)"
+            + "\nMovie rows: \(rows)"
+    }
+
+    private func configureControls() {
+        configure(openControl, action: #selector(openTapped), id: "InventoryMenuOpenControl")
+        configure(closeControl, action: #selector(closeTapped), id: "InventoryMenuCloseControl")
+        configure(upControl, action: #selector(upTapped), id: "InventoryMenuUpControl")
+        configure(downControl, action: #selector(downTapped), id: "InventoryMenuDownControl")
+        configure(
+            previousCategoryControl, action: #selector(previousCategoryTapped),
+            id: "InventoryMenuPreviousCategoryControl"
+        )
+        configure(
+            nextCategoryControl, action: #selector(nextCategoryTapped),
+            id: "InventoryMenuNextCategoryControl"
+        )
+        configure(equipControl, action: #selector(equipTapped), id: "InventoryMenuEquipControl")
+        configure(dropControl, action: #selector(dropTapped), id: "InventoryMenuDropControl")
+        PanelComponents.configureCheckbox(
+            movieControl, target: self, action: #selector(movieChanged),
+            identifier: "InventoryMenuMovieControl"
+        )
+    }
+
+    private func configure(_ control: NSButton, action: Selector, id: String) {
+        PanelComponents.configureButton(
+            control, target: self, action: action, identifier: id
+        )
+    }
+
+    @objc private func openTapped() {
+        provider?.openInventoryMenu()
+        finishInteraction()
+    }
+
+    @objc private func closeTapped() {
+        provider?.closeInventoryMenu()
+        finishInteraction()
+    }
+
+    @objc private func upTapped() {
+        provider?.sendInventoryMenuInput(.move(.up))
+        finishInteraction()
+    }
+
+    @objc private func downTapped() {
+        provider?.sendInventoryMenuInput(.move(.down))
+        finishInteraction()
+    }
+
+    @objc private func previousCategoryTapped() {
+        provider?.sendInventoryMenuInput(.move(.left))
+        finishInteraction()
+    }
+
+    @objc private func nextCategoryTapped() {
+        provider?.sendInventoryMenuInput(.move(.right))
+        finishInteraction()
+    }
+
+    @objc private func equipTapped() {
+        provider?.activateInventoryMenuSelection()
+        finishInteraction()
+    }
+
+    @objc private func dropTapped() {
+        provider?.dropInventoryMenuSelection()
+        finishInteraction()
+    }
+
+    @objc private func movieChanged() {
+        provider?.inventoryMenuMovieEnabled = movieControl.state == .on
+        finishInteraction()
+    }
+}

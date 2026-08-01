@@ -22,6 +22,10 @@ enum SWFCommand {
             try SWFRenderSweep.run(context: context, scanner: &scanner)
         case "action-sweep":
             try SWFActionSweep.run(context: context, scanner: &scanner)
+        case "action-run":
+            try SWFActionRunCommand.run(context: context, scanner: &scanner)
+        case "inventory-menu":
+            try SWFInventoryMenuCommand.run(context: context, scanner: &scanner)
         case "info":
             let path = try scanner.positional("path")
             try scanner.finish()

@@ -199,29 +199,45 @@ nonisolated struct SWFMovie {
     let frameRate: Float
     /// SetBackgroundColor (9); nil when the movie never sets one.
     let backgroundColor: SWFColor?
-    let characters: [UInt16: SWFCharacter]
+    /// The character dictionary. `var` because the cross-movie import merge
+    /// (`SWFMovieImportMerger`) folds imported characters in after decoding;
+    /// nothing else writes it, and the movie stays a value type.
+    var characters: [UInt16: SWFCharacter]
     /// The main timeline: every frame's control tags and DoAction blocks.
     let timeline: SWFTimeline
     /// DoInitAction (59) blocks in tag order. Each names the sprite whose first
     /// instantiation its actions precede; the spec allows at most one per
-    /// sprite, which is not enforced here.
-    let initActions: [SWFDoInitAction]
+    /// sprite, which is not enforced here. The import merge prepends the blocks
+    /// of every merged source movie, so an imported class is registered before
+    /// anything instantiates it.
+    var initActions: [SWFDoInitAction]
     /// Characters this movie imports by name (ImportAssets/ImportAssets2):
     /// character id -> export name in the source movie. Vanilla movies import
     /// their fonts this way, so an edit text's FontID often lands here rather
-    /// than in `characters`.
-    let importedNames: [UInt16: String]
+    /// than in `characters`. The import merge adds the tables of every merged
+    /// source movie, so a merged edit text still finds its font substitution.
+    var importedNames: [UInt16: String]
+    /// Every ImportAssets/ImportAssets2 tag with its source movie URL. A font
+    /// import is answered by substitution (`SWFMovieScene.resolvedFont`); a
+    /// sprite import needs the source movie itself, which is why the URL is
+    /// kept rather than folded away into `importedNames`.
+    let imports: [SWFImportedAssets]
     /// Characters this movie exports by name (ExportAssets): linkage name ->
     /// character id. `Object.registerClass` binds a class to a linkage name, so
     /// this is the table that turns a registered class into something the
-    /// display list can instantiate.
-    let exportedNames: [String: UInt16]
+    /// display list can instantiate. An imported linkage name is added by the
+    /// merge only when this movie does not already claim it.
+    var exportedNames: [String: UInt16]
     /// The same table read the other way: character id -> linkage name. A
     /// placement carries an id, so this is the direction instantiation needs.
     /// Duplicate exports of one id keep the alphabetically first name, which
-    /// makes the map deterministic.
-    let exportedIds: [UInt16: String]
+    /// makes the map deterministic. The merge also files each bound placeholder
+    /// id here under the name it was imported by.
+    var exportedIds: [UInt16: String]
     let tally: SWFMovieTally
+    /// What the cross-movie import merge did, or an empty record when the movie
+    /// imports nothing that needs merging. Counters only, never a throw.
+    var importDiagnostics = SWFImportMergeDiagnostics()
 
     /// Main-timeline display list at the first ShowFrame, depth-ascending.
     var frame1: [SWFPlacedObject] {
@@ -256,6 +272,7 @@ nonisolated struct SWFMovie {
         backgroundColor = decoder.timeline.backgroundColor
         characters = decoder.characters
         importedNames = decoder.importedNames
+        imports = decoder.imports
         exportedNames = decoder.exportedNames
         var byId: [UInt16: String] = [:]
         for name in decoder.exportedNames.keys.sorted() {

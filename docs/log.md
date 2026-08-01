@@ -4,6 +4,43 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-01
 
+* **M12.2.2 `inventorymenu.swf` bring-up and the inventory data contract (issue #289)**:
+  the vanilla inventory menu opens, lists what the player carries, filters by category and
+  navigates — with zero faults and zero unanswered engine calls.
+
+  The interesting finding was not in the ActionScript. `inventorymenu.swf` brought up clean
+  on the first probe — 0 faults, 0 unimplemented opcodes — and still had no list, because it
+  **places three characters it never defines**: `ItemCard_mc`, `InventoryLists_mc` and
+  `BottomBar_mc` come from sibling movies under `interface\inventory components\` through
+  `ImportAssets2`, and only *font* imports had ever resolved. Those placements instantiated
+  nothing, so the menu was 11 display nodes and an empty screen. The milestone's largest
+  piece turned out to be a format-layer one: `SWFMovieImportMerger` merges a source movie's
+  characters, linkage names and `DoInitAction` blocks into the importer under a uniform id
+  offset. Uniform, because shifting the whole source id space by one number means there is
+  no remap table to get wrong — and getting one id wrong is a silently wrong movie rather
+  than an error. Afterwards the same movie is 373 nodes and 16 registered classes.
+
+  Two contract details cost a measurement each and are worth recording. `InvalidateListData`
+  is a `GameDelegate` callback the movie registers for *itself*, so invoking it on a display
+  path finds nothing and lands in the unhandled count; and it resets `iSelectedIndex` to -1
+  as it rebuilds, so a selection written before the rebuild is silently discarded. Publishing
+  therefore writes rows, invalidates, then selects.
+
+  One deviation is deliberate and measured. Up and down go through the movie's own CLIK
+  focus path and the movie owns the row selection, but **category changes are engine-driven**:
+  focusing the category list and sending a key moves nothing, because the movie routes left
+  and right through `InventoryLists_mc`'s own panel-state codes rather than through focus,
+  and nothing drives that transition without a live `InputDelegate`. The engine changes
+  category and republishes instead.
+
+  Real-install gate: 373 nodes, 0 faults, 0 unimplemented opcodes, **0 unhandled of 46
+  bridge calls**, 142,741 changed pixels on bring-up. The 53 remaining missing names are all
+  CLIK cosmetics; none is a data API. Two probes were promoted to `openskycli` rather than
+  thrown away — `swf action-run` (the per-menu bring-up probe the docs had been asking for
+  since 8.3) and `swf inventory-menu` — because the real-data XCTest host is unreliable here
+  and the next menu will want both. See [inventory menu](/engine/inventory-menu.md) and
+  [SWF container](/formats/swf.md).
+
 * **M12.2.1 equipment runtime and actor visual refresh (issue #178)**: equipping now
   changes what an NPC is wearing on screen.
 

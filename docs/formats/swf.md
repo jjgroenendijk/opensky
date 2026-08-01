@@ -651,6 +651,60 @@ honored). `SWFMovie.importedNames` keeps the id -> export-name mapping and
 `SWFMovieScene.resolvedFont(for:)` resolves that name through fontconfig, the
 same path a zero-glyph placeholder font takes.
 
+### Sprite imports — cross-movie character merge
+
+Fonts were the only imports that resolved until M12.2.2. A **sprite** import
+instantiated nothing, which is not a cosmetic loss: `inventorymenu.swf` places
+`ItemCard_mc` (87), `InventoryLists_mc` (89) and `BottomBar_mc` (90) and defines
+none of them, so the menu came up as 11 display nodes with no list at all.
+
+`SWFMovieImportMerger` (`opensky/Formats/SWF/SWFMovieImportMerge.swift`, with the
+id transform in `SWFCharacterRemap.swift`) resolves them. It is a pure transform
+over `SWFMovie` values plus a resolver seam the loader supplies, so it is
+testable with no filesystem, and `SWFMovieLoader.load(path:)` runs it before font
+resolution so merged edit texts get substituted fonts too.
+
+Per distinct import URL:
+
+1. Resolve the URL against the *importing movie's own directory*, with `/`
+   normalized to `\` and lowercased — `interface\inventorymenu.swf` plus
+   `Inventory components/ItemCard.swf` is
+   `interface\inventory components\itemcard.swf`.
+2. Allocate `offset = (highest id in flight) + 1` and shift the source's **whole**
+   id space by it, so no remap table is needed and no collision is possible.
+3. Merge the remapped characters, `exportedNames`, `exportedIds`, `importedNames`
+   and `DoInitAction` blocks. Init actions are prepended, deepest import first,
+   so an imported CLIK class is registered before anything instantiates it.
+4. Bind the placeholder id to the character the source exports under the imported
+   name. The bound id also takes that linkage name in `exportedIds`, without
+   which `SWFMovieRuntime.constructRegisteredClass` finds no class for the
+   placement and no imported class ever constructs.
+
+Every character-id reference is shifted, not just the dictionary keys:
+`SWFShapeDefinition.characterId`, bitmap ids inside `SWFFillStyle.bitmap` for
+both fill styles and `SWFLineStyle.fill`, `SWFBitmap.characterId`,
+`SWFFontDefinition.fontID`, `SWFTextDefinition.characterId` and each
+`SWFTextRecord.fontID`, `SWFEditText.characterId` and `.fontID`,
+`SWFSprite.characterId`, `SWFPlacement.characterId` and `SWFRemoval.characterId`
+in every frame of every timeline, the resolved `SWFTimeline.frame1` list, and
+`SWFDoInitAction.spriteId`. A missed site is a silently wrong movie, which is why
+the list is exhaustive rather than representative. `DefineScalingGrid` (78) is
+not retained by the decoder, so it has nothing to remap.
+
+Bounds and degradation, in the project's usual shape — counters, never a throw.
+`SWFMovie.importDiagnostics` (`SWFImportMergeDiagnostics`) counts merged movies
+and characters, bound and unresolved placeholders, missing sources, skipped
+imports, depth-bound hits, cyclic imports and id-space overflows, and keeps up to
+32 merged paths. Recursion is deduped by resolved path, cycle-guarded, and capped
+at depth 4. A source whose shifted ids would leave `UInt16` is refused whole
+rather than merged partially. An import whose asset ids are never placed and never
+re-exported is skipped **without decoding the source**, which is what keeps
+`gfxfontlib.swf` out of the merge.
+
+Measured on `inventorymenu.swf`: 3 movies, 675 characters, 3 placeholders bound,
+0 unresolved, 8 skipped, and 11 display nodes become 373 with 0 faults. See
+[inventory menu](/engine/inventory-menu.md).
+
 ## Not implemented (yet)
 
 * `ZWS` (LZMA) body decompression.

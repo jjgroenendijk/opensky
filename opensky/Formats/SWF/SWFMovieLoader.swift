@@ -27,6 +27,10 @@ nonisolated final class SWFMovieLoader {
 
     private let fileSystem: VirtualFileSystem
     private var cachedFonts: FontEnvironment?
+    /// Movies decoded to answer an ImportAssets URL, kept for the loader's
+    /// lifetime: sibling menus import the same component movies, and a source
+    /// nobody can provide is cached as a miss too.
+    private var cachedSources: [String: SWFMovie?] = [:]
 
     init(fileSystem: VirtualFileSystem) {
         self.fileSystem = fileSystem
@@ -41,15 +45,39 @@ nonisolated final class SWFMovieLoader {
             .sorted()
     }
 
-    /// Decodes one movie and resolves the fonts its edit texts need. Throws
-    /// the underlying `SWFError`/parse error when the movie cannot be decoded;
-    /// unresolvable font names are recorded on the scene, never fatal.
+    /// Decodes one movie, folds in the characters it imports from other movies,
+    /// and resolves the fonts its edit texts need. Throws the underlying
+    /// `SWFError`/parse error when the movie itself cannot be decoded; a source
+    /// movie that cannot be provided and an unresolvable font name are both
+    /// recorded rather than fatal.
+    ///
+    /// The import merge runs before font resolution so an edit text that came
+    /// in with an imported sprite gets its substitution too.
     func load(path: String) throws -> SWFMovieScene {
         let file = try SWFFile(data: fileSystem.contents(forPath: path))
-        var scene = try SWFMovieScene(movie: SWFMovie(file: file))
+        let merged = try SWFMovieImportMerger.merge(
+            SWFMovie(file: file),
+            path: path,
+            resolve: { [self] source in sourceMovie(at: source) }
+        )
+        var scene = SWFMovieScene(movie: merged)
         let fonts = fontEnvironment()
         scene.resolveExternalFonts(config: fonts.config, library: fonts.library)
         return scene
+    }
+
+    /// One import source, decoded on first request. Both an unreadable file and
+    /// an undecodable movie cache as a miss, so a broken import costs one
+    /// attempt rather than one per importing movie.
+    private func sourceMovie(at path: String) -> SWFMovie? {
+        if let cached = cachedSources[path] {
+            return cached
+        }
+        let movie = (try? fileSystem.contents(forPath: path))
+            .flatMap { try? SWFFile(data: $0) }
+            .flatMap { try? SWFMovie(file: $0) }
+        cachedSources[path] = movie
+        return movie
     }
 
     /// The shared fontconfig environment, decoded on first use. A missing or
