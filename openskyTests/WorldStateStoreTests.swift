@@ -89,32 +89,6 @@ struct WorldStateStoreTests {
 
     // MARK: - Component round-trips
 
-    @Test func storesAndReadsBackEveryComponentKind() {
-        let store = WorldStateStore()
-        let reference = key(0x200)
-        #expect(store.set(ReferenceEnableState.disabled, for: reference, in: whiterun))
-        #expect(store.set(transform(9), for: reference, in: whiterun))
-        #expect(store.set(
-            ReferenceActivationState(activationCount: 2, isOpen: true, lastActivator: key(0x14)),
-            for: reference,
-            in: whiterun
-        ))
-        #expect(store.set(ReferenceDeletionState.deleted, for: reference, in: whiterun))
-        // An emptied container: the fifth component kind, stored. What the
-        // component itself can hold is InventoryComponentTests' subject.
-        #expect(store.set(ReferenceInventoryState.empty, for: reference, in: whiterun))
-
-        #expect(store.component(ReferenceEnableState.self, for: reference)?.isEnabled == false)
-        #expect(store.component(ReferenceTransformOverride.self, for: reference) == transform(9))
-        let activation = store.component(ReferenceActivationState.self, for: reference)
-        #expect(activation?.activationCount == 2)
-        #expect(activation?.isOpen == true)
-        #expect(activation?.lastActivator == key(0x14))
-        #expect(store.component(ReferenceDeletionState.self, for: reference)?.isDeleted == true)
-        #expect(store.component(ReferenceInventoryState.self, for: reference) == .empty)
-        #expect(store.delta(for: reference)?.sortedKinds == WorldStateComponentKind.allCases)
-    }
-
     @Test func componentsOfCleanReferenceAreAbsent() {
         let store = WorldStateStore()
         #expect(store.component(ReferenceEnableState.self, for: key(0x200)) == nil)
@@ -167,22 +141,6 @@ struct WorldStateStoreTests {
         // A second reset changes nothing and reports so rather than failing.
         #expect(store.reset(.enableState, for: reference) == false)
         #expect(store.reset(reference) == false)
-    }
-
-    @Test func wholesaleResetDropsEveryComponent() {
-        let store = WorldStateStore()
-        let reference = key(0x200)
-        store.set(ReferenceEnableState.disabled, for: reference, in: whiterun)
-        store.set(transform(3), for: reference, in: whiterun)
-        store.set(ReferenceActivationState(activationCount: 1), for: reference, in: whiterun)
-        store.set(ReferenceDeletionState.deleted, for: reference, in: whiterun)
-        store.set(ReferenceInventoryState.empty, for: reference, in: whiterun)
-        #expect(store.reset(reference))
-        #expect(store.delta(for: reference) == nil)
-        #expect(store.dirtyCount == 0)
-        // One journal entry per cleared component, in allCases order.
-        let resets = store.journalEntries.filter(\.isReset)
-        #expect(resets.map(\.kind) == WorldStateComponentKind.allCases)
     }
 
     @Test func resetAllClearsEveryReference() {

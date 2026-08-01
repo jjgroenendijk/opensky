@@ -44,22 +44,33 @@ extension CellSceneBuilder {
         return result
     }
 
-    /// Indexes `refs`, resolves them against `state`, and returns both halves.
-    /// Exterior and interior builds share this so runtime state applies at
-    /// exactly one point in either path.
+    /// Indexes `refs`, adds whatever the running game spawned into `location`,
+    /// resolves the union against `state`, and returns both halves. Exterior
+    /// and interior builds share this so runtime state applies at exactly one
+    /// point in either path.
+    ///
+    /// Spawned objects join *before* `applyRuntimeState` rather than being
+    /// appended to its output, so a dropped item that was later moved, disabled
+    /// or picked back up goes through the same resolution an authored
+    /// placement does instead of needing a second set of rules (issue #177).
     nonisolated func effectiveReferences(
         refs: [PlacedReference],
         collected: [CollectedReference],
         state: WorldStateSnapshot,
+        location: CellSceneLocation,
         counts: inout BuildCounts
     ) -> EffectiveReferences {
-        let entries = referenceEntries(refs: refs, collected: collected)
+        let spawned = spawnedReferences(in: location, state: state, counts: &counts)
+        let entries = referenceEntries(refs: refs, collected: collected) + spawned.entries
         let deltas = state.deltasByKey()
         return EffectiveReferences(
             entries: entries,
             deltas: deltas,
             references: applyRuntimeState(
-                refs: refs, entries: entries, deltas: deltas, counts: &counts
+                refs: refs + spawned.references,
+                entries: entries,
+                deltas: deltas,
+                counts: &counts
             )
         )
     }

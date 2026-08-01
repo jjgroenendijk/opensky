@@ -173,4 +173,16 @@ extension CellStreamer {
     var currentStateSnapshot: WorldStateSnapshot {
         stateSource()
     }
+
+    /// The cell the player is currently in, which is where anything they spawn
+    /// belongs (issue #177). An interior owns the view alone when one is
+    /// loaded, matching the precedence every other lookup here uses;
+    /// otherwise it is the exterior grid center. Nil only before the first
+    /// cell has streamed in, when there is nowhere to put anything.
+    var currentCellLocation: CellSceneLocation? {
+        if let interiorScene {
+            return interiorScene.location
+        }
+        return composition.cells[grid.center] == nil ? nil : .exterior(grid.center)
+    }
 }

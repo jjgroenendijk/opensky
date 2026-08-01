@@ -39,6 +39,12 @@ nonisolated enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendab
     /// `opensky/Inventory/InventoryComponent.swift` because it carries stack
     /// arithmetic of its own rather than being a plain field bag.
     case inventory
+    /// An object the running game placed in the world — a dropped item today,
+    /// a summon later (issue #177). The value type is `ReferenceSpawnState` in
+    /// `opensky/World/SpawnedReference.swift`. Unlike every other component
+    /// this one does not modify a plugin placement; it *is* the placement, and
+    /// only a generated `ReferenceKey` ever carries it.
+    case spawn
 }
 
 /// A value that can occupy one component slot.
@@ -68,6 +74,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
     case activation(ReferenceActivationState)
     case deletion(ReferenceDeletionState)
     case inventory(ReferenceInventoryState)
+    case spawn(ReferenceSpawnState)
 
     var kind: WorldStateComponentKind {
         switch self {
@@ -76,6 +83,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
         case .activation: .activation
         case .deletion: .deletion
         case .inventory: .inventory
+        case .spawn: .spawn
         }
     }
 }

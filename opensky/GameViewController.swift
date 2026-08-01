@@ -80,11 +80,7 @@ final class GameViewController: NSViewController {
 
     /// Which built-in overlay sample Developer > UI Lab shows (M8.1.4). Stored here
     /// because both samples share `Renderer.uiScene`; the UI Lab bridge maps it
-    /// onto the renderer.
-    enum UILabSampleSelection {
-        case none, lab, localized
-    }
-
+    /// onto the renderer and declares the enum beside itself.
     var uiLabSampleSelection: UILabSampleSelection = .none
 
     /// Builds the merged translation provider over the located install. Set by
@@ -136,6 +132,11 @@ final class GameViewController: NSViewController {
     /// `GameViewControllerRuntimeState.swift`; stored here because extensions
     /// cannot add state.
     var runtimeState = RuntimeStateBridgeState()
+    /// World items: the take/drop/container runtime and the panel's last
+    /// outcome line (issue #177). The implementation lives in
+    /// `GameViewControllerItems.swift`; stored here because extensions cannot
+    /// add state.
+    var worldItems = WorldItemBridgeState()
 
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))

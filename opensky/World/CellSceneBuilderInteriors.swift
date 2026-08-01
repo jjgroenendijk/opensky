@@ -104,7 +104,7 @@ extension CellSceneBuilder {
         let refs = collected.map(\.reference)
         let location = CellSceneLocation.interior(cellFormID)
         let resolved = effectiveReferences(
-            refs: refs, collected: collected, state: state, counts: &counts
+            refs: refs, collected: collected, state: state, location: location, counts: &counts
         )
         let effective = resolved.references
         // Dungeons author trigger volumes heavily, so interiors collect them on

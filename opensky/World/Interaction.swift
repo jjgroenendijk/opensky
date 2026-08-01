@@ -10,6 +10,12 @@ nonisolated enum InteractionAction: Equatable, Sendable {
     case search
     case harvest
     case use
+    /// A loose world item: activating it moves the reference's stack into the
+    /// activator's inventory and removes the reference (issue #177). The item's
+    /// FULL name rides on `PlacedInteraction.name` as it does for every other
+    /// action, so the HUD prompt reads "Take Iron Sword" from the same
+    /// label-plus-name composition every action uses.
+    case take
 
     var defaultLabel: String {
         switch self {
@@ -18,6 +24,7 @@ nonisolated enum InteractionAction: Equatable, Sendable {
         case .search: "Search"
         case .harvest: "Harvest"
         case .use: "Activate"
+        case .take: "Take"
         }
     }
 }

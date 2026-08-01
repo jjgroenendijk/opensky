@@ -40,6 +40,14 @@ nonisolated struct BuildCounts {
     /// References the runtime deleted since load. Distinct from the record
     /// header's `deleted` flag, which never reaches a build at all.
     var runtimeDeleted = 0
+    /// Objects the running game placed in this cell (issue #177): dropped
+    /// items today. Counted apart from `totalRefs`, which is the plugin's own
+    /// reference count and must stay comparable across builds.
+    var spawnedRefs = 0
+    /// Spawned objects dropped because their generated sequence has outrun the
+    /// 24-bit object ID a FormID can hold. Always zero in practice; counted so
+    /// that it is visible rather than silent if it ever is not.
+    var unaddressableSpawns = 0
 }
 
 /// One base record resolved to its drawable model path, regardless of
@@ -203,7 +211,7 @@ nonisolated final class CellSceneBuilder {
         counts.totalRefs = refs.count + counts.malformedRefs
         let location = CellSceneLocation.exterior(coordinate)
         let resolved = effectiveReferences(
-            refs: refs, collected: collected, state: state, counts: &counts
+            refs: refs, collected: collected, state: state, location: location, counts: &counts
         )
         let effective = resolved.references
         let collision = buildCollision(resolved: resolved, location: location)

@@ -32,6 +32,7 @@ byte length followed by that many UTF-8 bytes. The file extension is `osav`.
 * Chunks
 * `RDLT` entry layout
 * `INVN` entry layout
+* `SPWN` entry layout
 * Version policy
 * Defensive decoding
 * Where saves live and how they are written
@@ -148,7 +149,7 @@ A chunk whose declared length runs past the end of the file is
 `chunkBoundsViolation(tag:)`. A chunk whose tag this build does not know is skipped using
 that declared length, which is what makes a newer build's save loadable in an older one.
 
-Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR` and `INVN` were added
+Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR`, `INVN` and `SPWN` were added
 additively afterwards.
 
 `GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
@@ -375,8 +376,9 @@ Tag values are written out case by case in the code rather than derived from the
 declaration order, because declaration order is a source-level detail that may change while
 these byte values may not. `WorldStateComponentKind.saveTag` is optional for that reason:
 `.inventory` has no tag at all, which is the encoder's instruction to leave it out of
-`RDLT` entirely, and `init?(saveTag:)` correspondingly has no case for tag 4, so a file
-claiming one is rejected as an unknown component kind.
+`RDLT` entirely, and `init?(saveTag:)` correspondingly has no case for tag 4 or 5, so a
+file claiming one is rejected as an unknown component kind. `.spawn` is untagged for the
+same reason and travels in `SPWN`.
 
 ## `INVN` entry layout
 
@@ -414,6 +416,47 @@ cannot fit in the bytes remaining is `invalidCount`, checked against
 `inventoryStackSize` (8) and `inventoryEquippedSize` (4) before anything reserves storage,
 and the entry count itself against `minimumInventoryEntrySize` (16: an empty plugin key,
 the "no cell" tag, and the two zero counts).
+
+## `SPWN` entry layout
+
+`SPWN` — spawned references (issue #177), one entry per object the running game placed in
+the world: a dropped item today, a summon later. Additive like `INVN` and for the same
+reason — a component kind inside `RDLT` is versioned by `formatVersion`, so carrying spawns
+there would force an older build to refuse every save containing a dropped item, while an
+unknown chunk is skipped by its declared length and the rest of the world still loads. A
+session that spawned nothing writes no chunk at all.
+
+| type   | field      | notes                                     |
+| ------ | ---------- | ----------------------------------------- |
+| uint32 | entryCount | number of entries that follow             |
+| bytes  | entries    | `entryCount` entries, layout below        |
+
+Each entry:
+
+| type    | field    | notes                                                        |
+| ------- | -------- | ------------------------------------------------------------ |
+| key     | key      | the generated key the object is addressed by                  |
+| uint32  | base     | raw `FormID` of the base record being placed                  |
+| cell    | cell     | the cell the object exists in, tagged as in `RDLT`            |
+| float32 | position | x, y, z in game units                                         |
+| float32 | rotation | x, y, z in radians                                            |
+| float32 | scale    | uniform scale, matching XSCL semantics                        |
+| uint32  | count    | bit pattern of the `Int32` stack count, signed as CNTO is     |
+
+The cell written here is the component's own `location`, not the delta's attribution cell:
+the first says where the object is and the second says where it was last touched, and only
+the first belongs in the world. It is the one field this chunk refuses to normalize — an
+entry whose cell tag says "absent" is `invalidValue`, because an object with no cell is not
+in the world and inventing one would drop an item somewhere the player never stood. A
+non-positive count and a non-finite or non-positive scale are normalized to one by
+`ReferenceSpawnState.init`, on the same "the invariant belongs to the type" reasoning `INVN`
+follows. The declared entry count is validated against `minimumSpawnEntrySize` (48 bytes)
+before anything is reserved.
+
+Like `INVN`, the key is repeated rather than referring back to an `RDLT` entry: a spawned
+object usually has no other component and therefore no `RDLT` entry at all. The decoder
+merges both chunks into one delta per reference by key and re-sorts into `ReferenceKey`
+total order.
 
 ## Version policy
 
@@ -556,7 +599,8 @@ editor when a determinism test disagrees with itself.
 
 Global variables landed as the additive `GVAR` chunk (issue #165), the game clock as `CLOK`
 (issue #164), Papyrus script state as `PSCR` (issue #171), and pending Papyrus update
-timers as `PTMR` (issue #277), and runtime inventories as `INVN` (issue #176). None of the
+timers as `PTMR` (issue #277), runtime inventories as `INVN` (issue #176), and spawned
+references as `SPWN` (issue #177). None of the
 five cost a `formatVersion` bump, exactly as the version policy above predicts.
 
 Read-only import of a Bethesda `.ess` save is a separate item and shares nothing with this
@@ -583,6 +627,12 @@ list writing the same bytes as omitting the parameter entirely, a truncated entr
 truncated duration, a bogus timer count, an unknown slot byte, non-finite and negative
 durations normalising to zero, an unknown chunk written after `PTMR` still being skipped,
 and a live `PapyrusWorldRuntime`'s pending timers surviving a save and a restore.
+
+`openskyTests/SpawnedReferenceTests.swift` covers `SPWN`: a round trip through a snapshot,
+the merge with an owner's other components, an interior cell, and the two refusals — an
+entry naming no cell and a declared count past the bytes available. It also asserts that an
+owner whose only component is a spawn writes an empty `RDLT` chunk, which is the
+older-build tolerance stated above.
 
 `openskyTests/InventorySaveTests.swift` covers `INVN`: a round trip through a snapshot
 holding an owner with inventory beside other components, an owner with nothing but an

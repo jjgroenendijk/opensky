@@ -4,6 +4,53 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-01
 
+* **M12.1.3 pickup, containers and drop (issue #177)**: items now exist in the world loop.
+  The six carryable families — `MISC`, `WEAP`, `AMMO`, `ALCH`, `INGR`, `BOOK` — joined
+  `ModelBase.supportedTypes`, so a loose item reference resolves a model, a collision shape
+  and a new `.take` interaction instead of counting as an unsupported base. `ARMO` stayed
+  out on purpose: its world model is `MOD2`/`MOD3` and body pieces resolve through `ARMA`
+  addons rather than a single `MODL`, which is the arbitration #178 owns.
+
+  `WorldItemRuntime` and `ContainerSession` (`opensky/Inventory/`) are the headless,
+  menu-free operations above `InventoryRuntime`: take, drop, and a container session with
+  `contents`, `take`, `takeAll` and `deposit`. Every world change is one `WorldStateStore`
+  write, so the journal, the per-cell dirty counts, the cell rebuild and the save see it
+  without this layer arranging any of them. Ordering inside each operation puts the
+  throwing inventory arithmetic first, so a take that would overflow the player's stack
+  leaves the item lying in the world rather than deleting it into nowhere, and a transfer
+  that cannot complete writes nothing at all. A container's `isOpen` is set by the session
+  rather than toggled by the activation bridge: one activation is one door swing, but a
+  container's open state is the lifetime of a session and only the session knows that.
+
+  Drop needed genuinely new machinery, and it is one more component rather than a list
+  beside the store. `ReferenceSpawnState` (`opensky/World/SpawnedReference.swift`) holds a
+  base, a cell, a placement, a scale and a stack count under a generated `ReferenceKey`, so
+  the M10 store, journal, snapshot and save absorb it unchanged. It carries its own cell
+  instead of reading `ReferenceStateDelta.cell`, which records where the *last* mutation
+  happened and would let a moved item strand in a cell it is no longer in.
+
+  A spawned object is addressed by a FormID synthesized from the key's sequence into the
+  `0xFF` mod index. That index is safe by construction, not by convention: a plugin's
+  records are numbered by its load-order position and that index is one byte, so no plugin
+  record can carry `0xFF`. A sequence past `00FFFFFF` is dropped and counted rather than
+  aliased. `effectiveReferences` folds spawns into the input set *before*
+  `applyRuntimeState` runs, so exactly one set of rules governs authored and spawned
+  placements — the same pass moves or hides them, the same instance resolution draws them,
+  the same collision build makes them solid, and a dropped item's mesh and collision shape
+  cannot disagree. Taking a spawned object back resets its whole delta rather than marking
+  it deleted, so no tombstone accumulates in every later save.
+
+  The `SPWN` save chunk is additive for the reason `INVN` is: a component kind inside
+  `RDLT` is versioned by `formatVersion`, so an older build would refuse every save
+  containing a dropped item instead of loading the rest of the world without it. An object
+  whose only delta is its spawn writes no `RDLT` entry at all. `World > HUD & Interaction`
+  gains an `Items` section — take, search, take all, close, drop — with the acceptance
+  record in [interaction](/engine/interaction.md#verification) and a ledger row in
+  [sidebar acceptance](/tools/sidebar-acceptance.md#acceptance-ledger). See
+  [interaction](/engine/interaction.md#world-items),
+  [runtime state](/engine/runtime-state.md#spawned-references--objects-the-running-game-placed)
+  and [OpenSky save container](/formats/opensky-save.md#spwn-entry-layout).
+
 * **Separator-led sound paths (issue #247)**: `SoundRecordStore` now accepts the
   separator-led `\Data\Sound\...` form authored by Bethesda as Windows root-relative,
   while retaining the drive or volume `:` rejection and the VFS rejection of `.` and

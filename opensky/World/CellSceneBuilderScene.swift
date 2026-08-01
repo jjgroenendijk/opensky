@@ -130,7 +130,7 @@ extension CellSceneBuilder {
         case "FURN":
             .use
         default:
-            nil
+            ModelBase.itemTypes.contains(recordType) ? .take : nil
         }
     }
 
@@ -280,6 +280,8 @@ extension CellSceneBuilder {
         )
         summary.runtimeDisabledSkipCount = counts.runtimeDisabled
         summary.runtimeDeletedSkipCount = counts.runtimeDeleted
+        summary.spawnedRefCount = counts.spawnedRefs
+        summary.spawnedUnaddressableSkipCount = counts.unaddressableSpawns
         summary.actorCount = actors.counts.discovered
         summary.actorDrawnCount = actors.counts.rendered
         summary.actorDisabledSkipCount = actors.counts.disabledSkips
