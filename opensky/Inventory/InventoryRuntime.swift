@@ -58,7 +58,7 @@ struct InventoryRuntime {
     /// from memory: `openskycli record Gold001` reports
     /// `MISC 0000000F — decoded MISC: editorID Gold001, value 1, weight 0.00`.
     /// Cross-checked against UESP "Skyrim:Gold".
-    static let vanillaGoldFormID = FormID(0x0000_000F)
+    nonisolated static let vanillaGoldFormID = FormID(0x0000_000F)
 
     let store: WorldStateStore
     let baselines: InventoryBaselineResolver

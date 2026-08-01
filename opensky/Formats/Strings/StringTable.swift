@@ -19,7 +19,7 @@ nonisolated enum StringTableError: Error, Equatable {
 /// located and decoded per lookup, so a table over a mapped file stays cheap.
 nonisolated struct StringTable {
     /// Entry framing differs by file extension; the header is identical.
-    enum Kind {
+    nonisolated enum Kind {
         /// Bare zstring entries (most UI text).
         case strings
         /// uint32 byte length (terminator included) + zstring. Book text,

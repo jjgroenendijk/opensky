@@ -11,7 +11,7 @@ import QuartzCore
 /// reference mark to the current time, so resuming after any pause length yields
 /// a single frame of delta, never the whole paused span. Value type: each timed
 /// subsystem owns its own clock.
-struct FrameSimClock {
+nonisolated struct FrameSimClock {
     /// Hard cap on a single delta, in seconds. A breakpoint, the first frame
     /// after resume, or an app-nap wake must not advance the sim by the whole
     /// elapsed gap.
