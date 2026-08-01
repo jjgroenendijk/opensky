@@ -3,6 +3,7 @@
 // retiring and restarting the bed live, looping bed sources, and the readout
 // telling the truth about what is playing. See docs/engine/world-sfx.md.
 
+import AVFAudio
 @testable import opensky
 import Testing
 
@@ -10,14 +11,40 @@ import Testing
 struct WorldAudioDirectorAmbienceTests {
     private typealias Fixture = WorldAudioDirectorFixture
 
-    @Test func handleAmbienceStartsLoopsForNonEmptyBed() throws {
+    @Test func handleAmbienceRoutesNonPositionallyThroughTheCategorySubmix() throws {
         let engine = try Fixture.makeRunningEngine()
         let director = Fixture.makeAmbienceDirector(engine: engine)
 
         director.handleAmbienceContext(Fixture.regionContext)
 
+        let source = try #require(engine.sources.first)
         #expect(engine.sources.count == 1)
-        #expect(engine.sources.first?.category == .effects)
+        #expect(source.category == .effects)
+        #expect(source.routing == .nonPositional)
+        #expect(source.worldPosition == .zero)
+        #expect(source.gain == 1)
+        let mixer = try #require(engine.categoryMixers[.effects])
+        let destinations = engine.engine.outputConnectionPoints(for: source.node, outputBus: 0)
+        #expect(destinations.contains { $0.node === mixer })
+    }
+
+    /// Ambience has no world position, so moving the listener to a distant
+    /// cell must not attenuate or retire the bed through positional cleanup.
+    @Test func ambienceSurvivesListenerCellMovement() throws {
+        let engine = try Fixture.makeRunningEngine()
+        let director = Fixture.makeAmbienceDirector(engine: engine)
+
+        director.handleAmbienceContext(Fixture.regionContext)
+        let sourceID = try #require(engine.sources.first?.id)
+
+        engine.updateListener(
+            worldPosition: SIMD3<Float>(1_000_000, 1_000_000, 0), yaw: 0, pitch: 0
+        )
+        engine.tick(listenerCell: CellCoordinate(x: 250, y: 250), deltaTime: 1 / 60)
+
+        let source = try #require(engine.sources.first { $0.id == sourceID })
+        #expect(source.routing == .nonPositional)
+        #expect(engine.effectiveGain(of: source) == 1)
     }
 
     @Test func handleAmbienceRetiresPreviousBedOnContextChange() throws {

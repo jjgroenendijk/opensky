@@ -2,9 +2,9 @@
 type: Subsystem
 title: World SFX + ambience
 description: World SFX director that wires interaction events to one-shot SFX and
-  per-cell context to a positional ambience bed; the M9.2.2 verification surface.
+  per-cell context to a non-positional ambience bed; the M9.2.2 verification surface.
 tags: [engine, audio, sfx, ambience]
-timestamp: 2026-07-28T00:00:00Z
+timestamp: 2026-08-01T00:00:00Z
 ---
 
 # World SFX + ambience
@@ -24,7 +24,7 @@ section `opensky/Shell/Sections/AudioSfxSection.swift`.
 * [Subscriptions](#subscriptions)
 * [Threading](#threading)
 * [Sound resolution](#sound-resolution)
-* [Positional stopgap](#positional-stopgap)
+* [Non-positional ambience routing](#non-positional-ambience-routing)
 * [World > Audio > SFX & Ambience surface](#world--audio--sfx--ambience-surface)
 * [Verification](#verification)
 * [Follow-ups filed](#follow-ups-filed)
@@ -119,10 +119,10 @@ waiting for the next cell change), and a context that arrives while ambience is
 off is remembered rather than swallowed.
 
 The readout is derived from live sources, not from the resolved bed: ids the
-engine already stopped on its own (FIFO eviction, cell purge, a stream that
-ended) are pruned first, and `currentAmbienceDescription` reports `none` when
-nothing of this director's is still playing. It therefore cannot claim a bed is
-playing when it is not.
+engine already stopped because the graph shut down or a stream could not
+produce audio are pruned first, and `currentAmbienceDescription` reports `none`
+when nothing of this director's is still playing. It therefore cannot claim a
+bed is playing when it is not.
 
 ## Threading
 
@@ -146,20 +146,20 @@ nodes are children of `AudioCategorySFX`, so current vanilla SFX and ambience
 both reach the Effects factor. The same resolver already handles Footsteps,
 Voice, and Music without hardcoded FormIDs.
 
-## Positional stopgap
+## Non-positional ambience routing
 
-Ambience plays positional at the listener position when started, not as a
-non-positional bed. Source lifetime is bounded by:
+Each ambience entry starts through `WorldAudioEngine.playNonPositional` and
+connects directly to the submix for its descriptor's resolved vanilla category.
+Vanilla ambience resolves under Effects, but routing follows the record rather
+than hardcoding that category. The submix applies the category volume, mute and
+solo factor once to the complete bed; each player node carries only unity source
+gain and fade gain.
 
-* the engine's existing FIFO cap (`maxConcurrentSources = 8`)
-* the engine's existing cell-purge (3-ring Chebyshev distance)
-* the director's own retire-on-context-change
-
-The stopgap means a started ambience source stays at its initial position
-while the player walks away, attenuating. The fix is the planned non-positional
-bed path through the resolved category submix (issue #236);
-until then the equal-weight gain split keeps N concurrent loops from summing
-to N x master.
+The bed has no world position, panning or distance attenuation. Moving the
+listener therefore cannot make ambience fade away from the position where the
+context began. Non-positional sources are outside the positional FIFO budget
+and cell purge; the director owns their lifetime and retires them on context
+change, through the ambience toggle, or when the user presses Stop ambience.
 
 ## World > Audio > SFX & Ambience surface
 
@@ -222,7 +222,8 @@ nothing.
   shared with the ambience suite live in
   `openskyTests/WorldAudioDirectorFixtures.swift`.
 * `WorldAudioDirectorAmbienceTests` — offline-render coverage of the bed:
-  start on context, retire on context change, no-op when disabled, toggle
+  category-submix routing with no world position, survival across distant
+  listener-cell movement, retire on context change, no-op when disabled, toggle
   retires and restarts, a context resolved while disabled starts on enable,
   bed sources are looping, retiring the bed leaves a concurrent one-shot SFX
   alive (`stopSource(id:)` selectivity), and the readout falls back to `none`
@@ -271,5 +272,4 @@ install, but the listening itself is still outstanding.
 
 ## Follow-ups filed
 
-* #236 — non-positional ambience bed path through the existing submix.
 * #238 — comprehensive Cell decoder unit tests (pre-existing gap, widened by XCAS).

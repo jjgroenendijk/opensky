@@ -6,12 +6,12 @@
 //
 // Graph:
 //   positional AVAudioPlayerNode (mono) --> environment node --> main mixer
-//   category submix mixers (2D beds, future use) ----------->--/
+//   category submix mixers (music and ambience beds) ------>--/
 // Positional inputs must be mono — the environment node passes stereo through
 // without spatializing — so streamers downmix. Category volume for a positional
 // source is applied at its player node (effective gain = master x category x
-// source); the submix mixers carry the same category volumes for future
-// non-positional beds, so the two paths cannot disagree.
+// source); the submix mixers carry the same category volumes for music and
+// ambience beds, so the two paths cannot disagree.
 //
 // Threading: this class is main-actor only. Decode work runs on `decodeQueue`
 // (see AudioSourceStreamer); the audio render thread runs no OpenSky code.
