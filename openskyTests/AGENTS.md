@@ -33,7 +33,8 @@ heavy real-data test without that watchdog once ran the machine out of memory.
 - `print()` appears in the live `xcodebuild` console but is not in the `.xcresult`, so
   `make test-report` and any backgrounded run lose it. To capture a result, assert on the
   value or write an artifact to gitignored `logs/`.
-- `make test-one T=Class[/test]` runs one class or method; `make test-report` extracts
-  failure names and messages from the newest result bundle.
+- `make test-one T=Class[/method]` runs one class or method in `openskyTests`; use
+  `T=Target/Class/method` for an explicitly qualified selector. `make test-report`
+  extracts failure names and messages from the newest result bundle.
 - `make test-ui` is TCC-blocked on this machine, so accessibility ids are pinned as literal
   assertions here (`DestinationRegistryTests`) rather than exercised through the UI target.
