@@ -80,11 +80,14 @@ enum PanelComponents {
         return row
     }
 
-    /// Caption + trailing field row (fixed caption width for column alignment).
+    /// Caption + trailing control row (fixed caption width for column
+    /// alignment). `field` is an `NSView` rather than an `NSTextField` so a
+    /// segmented picker can share the same column alignment as the text fields
+    /// above it; every existing caller passes a field and is unaffected.
     static func labeledFieldRow(
         caption text: String,
         captionWidth: CGFloat,
-        field: NSTextField
+        field: NSView
     ) -> NSStackView {
         let caption = NSTextField(labelWithString: text)
         caption.widthAnchor.constraint(equalToConstant: captionWidth).isActive = true

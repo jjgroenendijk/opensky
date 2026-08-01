@@ -10,9 +10,12 @@
 //
 //   0x00_000F  MISC Gold001        (vanilla gold's real form, weight 0)
 //   0x00_0100  MISC Lockpick       (weight 0)
-//   0x00_0200  WEAP IronSword      (weight 9, value 25)
-//   0x00_0300  ARMO IronCuirass    (weight 30, value 125)
-//   0x00_0400  ARMO IronHelmet     (weight 5, value 60)
+//   0x00_0200  WEAP IronSword      (weight 9, value 25; one-hand, right hand)
+//   0x00_0210  WEAP IronGreatsword (two-hand, both hands)
+//   0x00_0300  ARMO IronCuirass    (weight 30, value 125; slot 32 body)
+//   0x00_0400  ARMO IronHelmet     (weight 5, value 60; slot 30 head)
+//   0x00_0410  ARMO LeatherCuirass (slot 32 body — contests IronCuirass)
+//   0x00_0420  ARMO IronGauntlets  (slot 33 hands — contests nothing)
 //   0x00_1000  LVLI single pick    -> IronSword at level 1, IronCuirass at 5
 //   0x00_1010  LVLI useAll bundle  -> IronCuirass + IronHelmet
 //   0x00_1020  LVLI self-referring -> itself, for the cycle guard
@@ -33,8 +36,11 @@ enum InventoryBaselineFixture {
     static let gold = FormID(0x0000_000F)
     static let lockpick = FormID(0x0000_0100)
     static let sword = FormID(0x0000_0200)
+    static let greatsword = FormID(0x0000_0210)
     static let cuirass = FormID(0x0000_0300)
     static let helmet = FormID(0x0000_0400)
+    static let leatherCuirass = FormID(0x0000_0410)
+    static let gauntlets = FormID(0x0000_0420)
 
     static let singlePickList = FormID(0x0000_1000)
     static let bundleList = FormID(0x0000_1010)
@@ -75,17 +81,63 @@ enum InventoryBaselineFixture {
             + item("MISC", formID: lockpick.rawValue, editorID: "Lockpick", value: 5, weight: 0)
     }
 
+    /// Two weapons whose DNAM animation types straddle the one-hand /
+    /// two-hand split `EquipmentCatalog.hands(for:)` keys on, each with a MODL
+    /// so the hand attachment has a path to load (issue #178).
     private static func weaponRecord() -> Data {
-        var fields = ESMFixture.field("EDID", ESMFixture.zstring("IronSword"))
-        fields += ESMFixture.field(
-            "DATA", InventoryFixture.weaponData(value: 25, weight: 9, damage: 7)
+        weapon(
+            formID: sword.rawValue, editorID: "IronSword", damage: 7,
+            animation: 1, model: "weapons\\iron\\sword.nif"
         )
-        return ESMFixture.record("WEAP", formID: sword.rawValue, data: fields)
+            + weapon(
+                formID: greatsword.rawValue, editorID: "IronGreatsword", damage: 15,
+                animation: 5, model: "weapons\\iron\\greatsword.nif"
+            )
     }
 
+    private static func weapon(
+        formID: UInt32,
+        editorID: String,
+        damage: UInt16,
+        animation: UInt8,
+        model: String
+    ) -> Data {
+        var fields = ESMFixture.field("EDID", ESMFixture.zstring(editorID))
+        fields += ESMFixture.field("MODL", ESMFixture.zstring(model))
+        fields += ESMFixture.field(
+            "DATA", InventoryFixture.weaponData(value: 25, weight: 9, damage: damage)
+        )
+        fields += ESMFixture.field("DNAM", InventoryFixture.weaponDNAM(
+            animation: animation, speed: 1, reach: 1, flags: 0, skill: -1
+        ))
+        return ESMFixture.record("WEAP", formID: formID, data: fields)
+    }
+
+    /// Body slots follow nif.xml bit numbering (bit N == biped slot 30 + N):
+    /// body is slot 32, head slot 30, hands slot 33.
     private static func armorRecords() -> Data {
-        item("ARMO", formID: cuirass.rawValue, editorID: "IronCuirass", value: 125, weight: 30)
-            + item("ARMO", formID: helmet.rawValue, editorID: "IronHelmet", value: 60, weight: 5)
+        armor(cuirass.rawValue, "IronCuirass", value: 125, weight: 30, slots: 1 << 2)
+            + armor(helmet.rawValue, "IronHelmet", value: 60, weight: 5, slots: 1 << 0)
+            + armor(leatherCuirass.rawValue, "LeatherCuirass", value: 40, weight: 8, slots: 1 << 2)
+            + armor(gauntlets.rawValue, "IronGauntlets", value: 25, weight: 5, slots: 1 << 3)
+    }
+
+    private static func armor(
+        _ formID: UInt32,
+        _ editorID: String,
+        value: Int32,
+        weight: Float,
+        slots: UInt32
+    ) -> Data {
+        var fields = ESMFixture.field("EDID", ESMFixture.zstring(editorID))
+        var bod2 = Data()
+        bod2.appendUInt32(slots)
+        bod2.appendUInt32(2) // clothing
+        fields += ESMFixture.field("BOD2", bod2)
+        fields += ESMFixture.field(
+            "DATA", InventoryFixture.valueWeightData(value: value, weight: weight)
+        )
+        return ESMFixture.record("ARMO", formID: formID, data: fields)
     }
 
     /// A record whose whole payload is EDID plus the 8-byte value+weight DATA,

@@ -12,6 +12,11 @@
 // whose slots overlap the mask is hidden — covered skin never renders under
 // clothes, so no duplicate geometry.
 //
+// Runtime equipment (issue #178) enters here as an optional equipped-FormID
+// set that *replaces* the DOFT chain for that actor. The masking machinery
+// above is reused untouched; see ActorVisualResolutionEquipment.swift for the
+// override and for ARMA DNAM draw ordering.
+//
 // Failure policy per the milestone gate: a broken chain (dangling FormID,
 // empty/cyclic leveled list, missing race/skin/outfit record) throws — never
 // a silent naked fallback. Missing optional parts degrade to reason-tagged
@@ -56,6 +61,9 @@ nonisolated struct AppearanceSkip: Equatable {
         case duplicateArmature
         /// ARMO carries no BOD2/BODT — contributes nothing to the mask.
         case missingBodySlots
+        /// A runtime-equipped item is neither a known ARMO nor a weapon with a
+        /// model, so it contributes no geometry.
+        case unrenderableEquipment
     }
 
     /// The record the skip is about (ARMA, ARMO, or RACE FormID).
@@ -79,6 +87,23 @@ nonisolated struct ResolvedBodyPart: Equatable {
     let slots: BodySlots
 }
 
+/// One rigid model hung off a named skeleton bone rather than skinned to the
+/// whole rig — a drawn weapon in the actor's hand (issue #178).
+///
+/// `bone` is a Havok rig bone name, because that is the space the per-frame
+/// pose is sampled in (`ActorAnimationClip.namedWorldTransforms`). The vanilla
+/// character rig spells the drawn-weapon node `Weapon`, parented to
+/// `NPC R Hand [RHnd]`; the matching NIF node is `WEAPON`. Both names are
+/// observed from the install, never assumed — see docs/formats/actors.md.
+nonisolated struct ResolvedAttachment: Equatable {
+    /// The equipped base record the model came from (a WEAP).
+    let item: FormID
+    /// WEAP MODL path, relative to Data/.
+    let modelPath: String
+    /// Havok rig bone the model rides.
+    let bone: String
+}
+
 /// Everything milestone 5.2 resolves for one placed actor.
 nonisolated struct ResolvedActorVisual: Equatable {
     let appearance: ResolvedActorAppearance
@@ -89,6 +114,11 @@ nonisolated struct ResolvedActorVisual: Equatable {
     /// Union of equipped outfit ARMO body slots — the skin mask.
     let equippedSlots: BodySlots
     let parts: [ResolvedBodyPart]
+    /// Rigid bone attachments — drawn weapons. Empty unless a runtime equipped
+    /// set supplied one.
+    let attachments: [ResolvedAttachment]
+    /// True when a runtime equipped set replaced the plugin `defaultOutfit`.
+    let usesRuntimeEquipment: Bool
     /// Nil when the race does not use baked FaceGen heads (RACE DATA flag
     /// 0x2 clear — creature races like cow/dog/bear have no facegeom files).
     let faceGenMeshPath: String?
@@ -126,6 +156,27 @@ nonisolated struct ActorVisualResolver {
     let leveledItems: [UInt32: LeveledList]
     /// Maps record FormIDs to (defining plugin, objectID) for FaceGen.
     let formIDResolver: FormIDResolver
+    /// Slot and model data for runtime-equipped items (issue #178). Empty in
+    /// the fixtures that only exercise the plugin `defaultOutfit` path.
+    let equipment: EquipmentCatalog
+
+    init(
+        races: [UInt32: Race],
+        armors: [UInt32: Armor],
+        armorAddons: [UInt32: ArmorAddon],
+        outfits: [UInt32: Outfit],
+        leveledItems: [UInt32: LeveledList],
+        formIDResolver: FormIDResolver,
+        equipment: EquipmentCatalog = EquipmentCatalog(items: [:])
+    ) {
+        self.races = races
+        self.armors = armors
+        self.armorAddons = armorAddons
+        self.outfits = outfits
+        self.leveledItems = leveledItems
+        self.formIDResolver = formIDResolver
+        self.equipment = equipment
+    }
 
     /// Indexes every decodable RACE/ARMO/ARMA/OTFT/LVLI top-group record.
     /// Undecodable records drop out and later resolve as dangling.
@@ -141,7 +192,8 @@ nonisolated struct ActorVisualResolver {
             armorAddons: index(file, "ARMA") { try ArmorAddon(record: $0) },
             outfits: index(file, "OTFT") { try Outfit(record: $0) },
             leveledItems: index(file, "LVLI") { try LeveledList(record: $0) },
-            formIDResolver: FormIDResolver(pluginName: pluginName, masters: masters)
+            formIDResolver: FormIDResolver(pluginName: pluginName, masters: masters),
+            equipment: EquipmentCatalog.build(from: file)
         )
     }
 
@@ -161,7 +213,17 @@ nonisolated struct ActorVisualResolver {
         return values
     }
 
-    func resolve(appearance: ResolvedActorAppearance) throws -> ResolvedActorVisual {
+    /// One actor's renderable inputs.
+    ///
+    /// - Parameters:
+    ///   - appearance: the template-resolved actor.
+    ///   - equipped: a runtime equipped set that replaces the plugin
+    ///     `defaultOutfit` chain wholesale. Nil — the normal case for an actor
+    ///     nothing has touched — resolves through DOFT exactly as before.
+    func resolve(
+        appearance: ResolvedActorAppearance,
+        equipped: [FormID]? = nil
+    ) throws -> ResolvedActorVisual {
         guard
             let raceID = appearance.race.value,
             let race = races[raceID.rawValue]
@@ -175,26 +237,16 @@ nonisolated struct ActorVisualResolver {
             skips.append(AppearanceSkip(subject: race.formID, reason: .noSkeletonForGender))
         }
 
-        let outfitArmors = try outfitPieces(of: appearance)
-        var equippedSlots = BodySlots()
-        for armor in outfitArmors {
-            if let slots = armor.bodyTemplate?.slots {
-                equippedSlots.formUnion(slots)
-            } else {
-                skips.append(AppearanceSkip(subject: armor.formID, reason: .missingBodySlots))
-            }
+        let worn: WornEquipment = if let equipped {
+            wornEquipment(equipped: equipped, skips: &skips)
+        } else {
+            try WornEquipment(armors: outfitPieces(of: appearance))
         }
-
-        var parts: [ResolvedBodyPart] = []
+        let equippedSlots = Self.slotMask(of: worn.armors, skips: &skips)
         var seenArmatures: Set<UInt32> = []
-        for armor in outfitArmors {
-            let selection = PartSelection(
-                origin: .outfit(armor.formID), race: raceID, female: female, mask: nil
-            )
-            parts += bodyParts(
-                of: armor, selection: selection, seen: &seenArmatures, skips: &skips
-            )
-        }
+        var parts = wornParts(
+            worn.armors, race: raceID, female: female, seen: &seenArmatures, skips: &skips
+        )
 
         let skinID = appearance.wornArmor.value ?? race.defaultSkin
         guard let skinID, let skin = armors[skinID.rawValue] else {
@@ -203,9 +255,13 @@ nonisolated struct ActorVisualResolver {
         let skinSelection = PartSelection(
             origin: .skin(skin.formID), race: raceID, female: female, mask: equippedSlots
         )
+        // Skin armatures append after the ordered worn parts rather than
+        // sorting among them: the naked body is priority 0, so ordering would
+        // put it first, and what actually decides whether covered skin renders
+        // at all is the equipped-slot mask above.
         parts += bodyParts(
             of: skin, selection: skinSelection, seen: &seenArmatures, skips: &skips
-        )
+        ).map(\.part)
 
         // FaceGen assets belong to the NPC_ that provides character-gen data
         // — the traits source (head parts ride the traits flag). Gated on
@@ -220,86 +276,55 @@ nonisolated struct ActorVisualResolver {
             skin: skinID,
             equippedSlots: equippedSlots,
             parts: parts,
+            attachments: worn.attachments,
+            usesRuntimeEquipment: equipped != nil,
             faceGenMeshPath: face.map(FaceGenPaths.mesh(for:)),
             faceGenTintPath: face.map(FaceGenPaths.tint(for:)),
             skips: skips
         )
     }
 
-    /// DOFT -> OTFT -> INAM entries, each an ARMO or an LVLI expanded via
-    /// the deterministic entry policy. Any unusable link throws — the gate
-    /// forbids silently rendering the actor naked when the chain breaks.
-    private func outfitPieces(of appearance: ResolvedActorAppearance) throws -> [Armor] {
-        guard let outfitID = appearance.defaultOutfit.value else { return [] }
-        guard let outfit = outfits[outfitID.rawValue] else {
-            throw ActorVisualError.brokenOutfitChain(
-                outfit: outfitID, item: nil, reason: .missingOutfitRecord
-            )
+    /// The union of worn ARMO body slots — the mask that hides covered skin.
+    /// An ARMO with no BOD2/BODT contributes nothing and says so.
+    private static func slotMask(
+        of armors: [Armor],
+        skips: inout [AppearanceSkip]
+    ) -> BodySlots {
+        var mask = BodySlots()
+        for armor in armors {
+            if let slots = armor.bodyTemplate?.slots {
+                mask.formUnion(slots)
+            } else {
+                skips.append(AppearanceSkip(subject: armor.formID, reason: .missingBodySlots))
+            }
         }
-        var pieces: [Armor] = []
-        for item in outfit.items {
-            var ancestors: Set<UInt32> = []
-            try appendPieces(
-                item: item, outfit: outfitID, ancestors: &ancestors, into: &pieces
-            )
-        }
-        return pieces
+        return mask
     }
 
-    /// One INAM entry: an ARMO directly, or an LVLI — a `useAll` list is a
-    /// bundle (every entry equips, e.g. ArmorStormcloakSet), any other list
-    /// picks its deterministic entry. `ancestors` tracks only the active
-    /// chain so duplicate siblings stay legal while cycles throw.
-    private func appendPieces(
-        item: FormID,
-        outfit: FormID,
-        ancestors: inout Set<UInt32>,
-        into pieces: inout [Armor]
-    ) throws {
-        if let armor = armors[item.rawValue] {
-            pieces.append(armor)
-            return
-        }
-        guard let list = leveledItems[item.rawValue] else {
-            throw ActorVisualError.brokenOutfitChain(
-                outfit: outfit, item: item, reason: .danglingItem
+    /// Every worn piece's race-compatible armatures, in ARMA DNAM draw order.
+    private func wornParts(
+        _ armors: [Armor],
+        race: FormID,
+        female: Bool,
+        seen: inout Set<UInt32>,
+        skips: inout [AppearanceSkip]
+    ) -> [ResolvedBodyPart] {
+        var candidates: [PrioritizedPart] = []
+        for armor in armors {
+            let selection = PartSelection(
+                origin: .outfit(armor.formID), race: race, female: female, mask: nil
+            )
+            candidates += bodyParts(
+                of: armor, selection: selection, seen: &seen, skips: &skips
             )
         }
-        guard ancestors.insert(item.rawValue).inserted else {
-            throw ActorVisualError.brokenOutfitChain(
-                outfit: outfit, item: item, reason: .leveledListCycle
-            )
-        }
-        defer { ancestors.remove(item.rawValue) }
-        if list.flags.contains(.useAll) {
-            guard !list.entries.isEmpty else {
-                throw ActorVisualError.brokenOutfitChain(
-                    outfit: outfit, item: item, reason: .emptyLeveledList
-                )
-            }
-            for entry in list.entries {
-                try appendPieces(
-                    item: entry.reference, outfit: outfit,
-                    ancestors: &ancestors, into: &pieces
-                )
-            }
-        } else {
-            guard let entry = list.deterministicEntry else {
-                throw ActorVisualError.brokenOutfitChain(
-                    outfit: outfit, item: item, reason: .emptyLeveledList
-                )
-            }
-            try appendPieces(
-                item: entry.reference, outfit: outfit,
-                ancestors: &ancestors, into: &pieces
-            )
-        }
+        return Self.inDrawOrder(candidates)
     }
 
     /// Selection inputs shared by every armature of one ARMO. `mask`
     /// non-nil marks skin resolution: armatures overlapping the equipped
     /// slots are hidden instead of emitted.
-    private struct PartSelection {
+    struct PartSelection {
         let origin: ResolvedBodyPart.Origin
         let race: FormID
         let female: Bool
@@ -307,14 +332,14 @@ nonisolated struct ActorVisualResolver {
     }
 
     /// Race-compatible armatures of one ARMO resolved to gendered model
-    /// paths.
-    private func bodyParts(
+    /// paths, each tagged with the ARMA DNAM draw priority arbitration needs.
+    func bodyParts(
         of armor: Armor,
         selection: PartSelection,
         seen: inout Set<UInt32>,
         skips: inout [AppearanceSkip]
-    ) -> [ResolvedBodyPart] {
-        var parts: [ResolvedBodyPart] = []
+    ) -> [PrioritizedPart] {
+        var parts: [PrioritizedPart] = []
         var anyCompatible = false
         for armatureID in armor.armatures {
             guard let armature = armorAddons[armatureID.rawValue] else {
@@ -350,9 +375,13 @@ nonisolated struct ActorVisualResolver {
                 skips.append(AppearanceSkip(subject: armatureID, reason: .noModel))
                 continue
             }
-            parts.append(ResolvedBodyPart(
-                origin: selection.origin, armature: armatureID,
-                modelPath: path, slots: slots
+            parts.append(PrioritizedPart(
+                part: ResolvedBodyPart(
+                    origin: selection.origin, armature: armatureID,
+                    modelPath: path, slots: slots
+                ),
+                owner: armor.formID,
+                priority: armature.priority(female: selection.female)
             ))
         }
         if !anyCompatible {

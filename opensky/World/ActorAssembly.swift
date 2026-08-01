@@ -21,11 +21,22 @@ nonisolated protocol ActorAssetProvider {
         path: String,
         skeleton: Skeleton?
     ) -> Result<Asset, ActorAssetFailure>
+    /// A rigid model rewritten to ride one named skeleton bone (issue #178).
+    /// Separate from `loadActorModel` because the result is a different asset
+    /// even for the same path — the bone is part of the geometry — and so must
+    /// cache under its own key.
+    func loadActorAttachment(
+        path: String,
+        bone: String,
+        skeleton: Skeleton?
+    ) -> Result<Asset, ActorAssetFailure>
 }
 
 nonisolated enum ActorModelRole: Equatable {
     case body(ResolvedBodyPart)
     case faceGenHead(tintPath: String?)
+    /// A drawn weapon riding a hand bone.
+    case attachment(ResolvedAttachment)
 }
 
 nonisolated struct ActorAssemblySkip: Equatable {
@@ -96,11 +107,20 @@ nonisolated struct ActorAssembler<Provider: ActorAssetProvider> {
                 skips: &skips
             )
         }
+        // Core geometry is decided before attachments join: a floating sword
+        // over an actor with no body is exactly as wrong as the floating
+        // skeleton-only actor this check already rejects.
         if models.isEmpty {
             skips.append(ActorAssemblySkip(
                 subject: .actor(actor.formID),
                 reason: .noCoreGeometry
             ))
+        } else {
+            for attachment in visual.attachments {
+                appendAttachment(
+                    attachment, skeleton: skeleton, models: &models, skips: &skips
+                )
+            }
         }
         return ActorAssembly(
             actor: actor.formID,
@@ -151,6 +171,28 @@ nonisolated struct ActorAssembler<Provider: ActorAssetProvider> {
         }
     }
 
+    private func appendAttachment(
+        _ attachment: ResolvedAttachment,
+        skeleton: Provider.Skeleton?,
+        models: inout [AssembledActorModel<Provider.Asset>],
+        skips: inout [ActorAssemblySkip]
+    ) {
+        let role = ActorModelRole.attachment(attachment)
+        switch provider.loadActorAttachment(
+            path: attachment.modelPath, bone: attachment.bone, skeleton: skeleton
+        ) {
+        case let .success(asset):
+            models.append(
+                AssembledActorModel(role: role, path: attachment.modelPath, asset: asset)
+            )
+        case let .failure(failure):
+            skips.append(ActorAssemblySkip(
+                subject: .model(role: role, path: attachment.modelPath),
+                reason: reason(for: failure)
+            ))
+        }
+    }
+
     private func reason(for failure: ActorAssetFailure) -> ActorAssemblySkip.Reason {
         switch failure {
         case .missing: .missingAsset
@@ -180,13 +222,30 @@ nonisolated extension ActorAssembly where Asset == ActorRenderAsset {
             RenderPlacement(
                 model: $0.asset.model,
                 transform: transform,
-                bounds: $0.asset.bounds?.transformed(by: transform)
+                bounds: Self.isAttachment($0.role)
+                    ? nil
+                    : $0.asset.bounds?.transformed(by: transform)
             )
         }
     }
 
     var worldBounds: ModelBounds? {
-        models.compactMap { $0.asset.bounds?.transformed(by: transform) }
+        models.filter { !Self.isAttachment($0.role) }
+            .compactMap { $0.asset.bounds?.transformed(by: transform) }
             .reduce(nil) { result, bounds in result.map { $0.union(bounds) } ?? bounds }
+    }
+
+    /// An attachment's model bounds sit at the weapon's own origin, not where
+    /// the hand bone carries it, so pushing them through the actor transform
+    /// would name a box the geometry is never in. Culling attachments on it
+    /// would blink a drawn weapon out at the wrong moment, and folding it into
+    /// the actor's world bounds would move the actor's box. Nil bounds means
+    /// never culled, which for one small mesh per armed actor is the right
+    /// trade until attachment bounds follow the pose (M15 draw/sheath).
+    private static func isAttachment(_ role: ActorModelRole) -> Bool {
+        if case .attachment = role {
+            return true
+        }
+        return false
     }
 }

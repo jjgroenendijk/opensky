@@ -43,6 +43,16 @@ final class FakeItemProvider: ItemControlProviding {
     }
 
     @discardableResult
+    func equipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String {
+        record("equip \(item?.description ?? "first") on \(target)")
+    }
+
+    @discardableResult
+    func unequipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String {
+        record("unequip \(item?.description ?? "first") on \(target)")
+    }
+
+    @discardableResult
     private func record(_ action: String) -> String {
         actions.append(action)
         return action
@@ -81,6 +91,16 @@ extension FakeWorldProviders {
     func dropPlayerItem(_ item: FormID?, count: Int32) -> String {
         items.dropPlayerItem(item, count: count)
     }
+
+    @discardableResult
+    func equipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String {
+        items.equipItem(item, on: target)
+    }
+
+    @discardableResult
+    func unequipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String {
+        items.unequipItem(item, on: target)
+    }
 }
 
 @MainActor
@@ -96,7 +116,10 @@ struct ItemsSectionTests {
         playerStacks: [ItemStackReadout] = [],
         containerName: String? = nil,
         containerStacks: [ItemStackReadout] = [],
-        spawned: Int = 0
+        spawned: Int = 0,
+        playerEquipped: [EquippedItemReadout] = [],
+        nearestActorName: String? = nil,
+        nearestActorEquipped: [EquippedItemReadout] = []
     ) -> ItemControlSnapshot {
         ItemControlSnapshot(
             isAvailable: true,
@@ -109,8 +132,19 @@ struct ItemsSectionTests {
             containerName: containerName,
             containerStacks: containerStacks,
             spawnedObjectCount: spawned,
-            lastActionText: "Took 1 × Iron Sword."
+            lastActionText: "Took 1 × Iron Sword.",
+            playerEquipped: playerEquipped,
+            nearestActorName: nearestActorName,
+            nearestActorEquipped: nearestActorEquipped
         )
+    }
+
+    private static func worn(
+        _ raw: UInt32,
+        _ name: String,
+        _ occupancy: String
+    ) -> EquippedItemReadout {
+        EquippedItemReadout(item: FormID(raw), name: name, occupancy: occupancy)
     }
 
     /// Loads the section's view so `makeContentViews` has run and the controls
@@ -138,6 +172,12 @@ struct ItemsSectionTests {
         #expect(section.dropControl.accessibilityIdentifier() == "ItemsDropControl")
         #expect(section.dropFormIDField.accessibilityIdentifier() == "ItemsDropFormIDField")
         #expect(section.dropCountField.accessibilityIdentifier() == "ItemsDropCountField")
+        #expect(section.equipControl.accessibilityIdentifier() == "ItemsEquipControl")
+        #expect(section.unequipControl.accessibilityIdentifier() == "ItemsUnequipControl")
+        #expect(section.equipFormIDField.accessibilityIdentifier() == "ItemsEquipFormIDField")
+        #expect(
+            section.equipTargetControl.accessibilityIdentifier() == "ItemsEquipTargetControl"
+        )
     }
 
     // MARK: - Controls reach the engine
@@ -150,7 +190,59 @@ struct ItemsSectionTests {
         section.takeAllControl.performClick(nil)
         section.closeControl.performClick(nil)
         section.dropControl.performClick(nil)
-        #expect(provider.actions == ["take", "search", "takeAll", "close", "drop first×1"])
+        section.equipControl.performClick(nil)
+        section.unequipControl.performClick(nil)
+        #expect(provider.actions == [
+            "take", "search", "takeAll", "close", "drop first×1",
+            // The target picker defaults to the NPC, which is the one an equip
+            // is visible on.
+            "equip first on nearestActor", "unequip first on nearestActor"
+        ])
+    }
+
+    /// The picker chooses the owner, and the FormID field names the item.
+    @Test func equipReadsTheTargetPickerAndFormIDField() {
+        let provider = FakeItemProvider()
+        let section = Self.loadedSection(provider)
+        section.equipTargetControl.selectedSegment = 0
+        section.equipFormIDField.stringValue = "0x0001A5B0"
+        section.equipControl.performClick(nil)
+        section.equipTargetControl.selectedSegment = 1
+        section.equipFormIDField.stringValue = ""
+        section.unequipControl.performClick(nil)
+        #expect(provider.actions == [
+            "equip 0001A5B0 on player", "unequip first on nearestActor"
+        ])
+    }
+
+    @Test func readoutStatesWhatEachOwnerIsWearing() {
+        let provider = FakeItemProvider()
+        let section = Self.loadedSection(provider)
+        provider.itemControlSnapshot = Self.snapshot(
+            playerEquipped: [Self.worn(0x300, "Iron Cuirass", "body")],
+            nearestActorName: "skyrim.esm:0BAD (base 00000800)",
+            nearestActorEquipped: [
+                Self.worn(0x200, "Iron Sword", "right hand"),
+                Self.worn(0x400, "Iron Helmet", "head")
+            ]
+        )
+        section.refreshReadout()
+
+        #expect(section.readout.contains("Player wears"))
+        #expect(section.readout.contains("Iron Cuirass · body"))
+        #expect(section.readout.contains("Nearest NPC: skyrim.esm:0BAD (base 00000800)"))
+        #expect(section.readout.contains("Iron Sword · right hand"))
+        #expect(section.readout.contains("Iron Helmet · head"))
+    }
+
+    @Test func readoutSaysSoWhenNothingIsWornOrNoActorIsResident() {
+        let provider = FakeItemProvider()
+        let section = Self.loadedSection(provider)
+        provider.itemControlSnapshot = Self.snapshot()
+        section.refreshReadout()
+
+        #expect(section.readout.contains("Player wears: nothing"))
+        #expect(section.readout.contains("Nearest NPC: none resident"))
     }
 
     /// A FormID in the field targets that item; the count field floors at one,

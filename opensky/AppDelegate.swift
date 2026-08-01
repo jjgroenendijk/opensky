@@ -123,6 +123,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 // baseline is re-derived on every read and must not be built
                 // per lookup.
                 let inventoryBaselines = InventoryBaselineResolver.build(from: file)
+                // Equip slots (M12.2): ARMO body templates + WEAP hands, from
+                // the same ESM, for the same reason — a slot lookup happens per
+                // equip and must not re-scan the plugin each time.
+                let equipmentCatalog = EquipmentCatalog.build(from: file)
                 return BuilderCellSceneProvider(
                     builder: builder,
                     worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
@@ -132,6 +136,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     musicStore: musicStore,
                     globalStore: globalStore,
                     inventoryBaselines: inventoryBaselines,
+                    equipmentCatalog: equipmentCatalog,
                     movementConfiguration: movementConfiguration
                 )
             } catch {

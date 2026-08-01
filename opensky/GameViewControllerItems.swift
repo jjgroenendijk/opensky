@@ -27,6 +27,9 @@ struct WorldItemBridgeState {
     /// Display name of the open container, captured when the session opened
     /// because the cell holding it may be evicted while it is still open.
     var sessionName: String?
+    /// Equip/unequip runtime (issue #178), built beside `runtime` when the
+    /// provider can also supply an equipment catalog. nil without game data.
+    var equipment: EquipmentRuntime?
     var lastActionText = "No item action yet."
 }
 
@@ -42,11 +45,12 @@ extension GameViewController {
         guard let baselines = (provider as? ItemDataProviding)?.inventoryBaselines else {
             return
         }
-        let runtime = WorldItemRuntime(
-            inventory: InventoryRuntime(store: worldState, baselines: baselines),
-            references: streamer
-        )
+        let inventory = InventoryRuntime(store: worldState, baselines: baselines)
+        let runtime = WorldItemRuntime(inventory: inventory, references: streamer)
         worldItems.runtime = runtime
+        if let catalog = (provider as? ItemDataProviding)?.equipmentCatalog {
+            worldItems.equipment = EquipmentRuntime(inventory: inventory, catalog: catalog)
+        }
         streamer.onInteraction.add { [weak self] event in
             self?.handleItemInteraction(event)
         }
@@ -87,7 +91,10 @@ extension GameViewController: ItemControlProviding {
             containerName: session == nil ? nil : worldItems.sessionName,
             containerStacks: readout(session?.contents ?? []),
             spawnedObjectCount: spawnedObjectCount,
-            lastActionText: worldItems.lastActionText
+            lastActionText: worldItems.lastActionText,
+            playerEquipped: equippedReadout(on: .player),
+            nearestActorName: nearestActorHolder().map { name(ofActor: $0) },
+            nearestActorEquipped: equippedReadout(on: .nearestActor)
         )
     }
 
@@ -201,7 +208,7 @@ extension GameViewController: ItemControlProviding {
         }
     }
 
-    private func readout(_ stacks: [InventoryStack]) -> [ItemStackReadout] {
+    func readout(_ stacks: [InventoryStack]) -> [ItemStackReadout] {
         stacks.map {
             ItemStackReadout(item: $0.item, count: $0.count, name: name(of: $0.item))
         }
@@ -209,7 +216,7 @@ extension GameViewController: ItemControlProviding {
 
     /// FULL name, else editor ID, else the FormID — never empty, so a readout
     /// line always names something even for a form no index describes.
-    private func name(of item: FormID) -> String {
+    func name(of item: FormID) -> String {
         guard let definition = worldItems.runtime?.inventory.baselines.items.definition(item) else {
             return item.description
         }

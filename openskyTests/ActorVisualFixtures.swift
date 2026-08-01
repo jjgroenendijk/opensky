@@ -16,7 +16,9 @@ func makeResolver(
     feetMaleModel: String? = "feet_m.nif",
     feetFemaleModel: String? = "feet_f.nif",
     altSkinArmatures: [UInt32] = [0x210],
-    outfitItems: [UInt32] = [0x300]
+    outfitItems: [UInt32] = [0x300],
+    clothesPriority: UInt8 = 0,
+    robesPriority: UInt8 = 0
 ) -> ActorVisualResolver {
     let races = [
         try? race(
@@ -28,7 +30,8 @@ func makeResolver(
         try? armor(formID: 0x200, race: 0x19, slots: 0, armatures: [0x210, 0x211, 0x212]),
         try? armor(formID: 0x201, race: 0x19, slots: 0, armatures: altSkinArmatures),
         try? armor(formID: 0x300, race: 0x19, slots: 0b0100, armatures: [0x310]),
-        try? armor(formID: 0x320, race: 0x19, slots: 0b0100, armatures: [0x321])
+        try? armor(formID: 0x320, race: 0x19, slots: 0b0100, armatures: [0x321]),
+        try? armor(formID: 0x330, race: 0x19, slots: 0b10000, armatures: [0x331])
     ]
     let addons = [
         try? arma(
@@ -45,11 +48,15 @@ func makeResolver(
         ),
         try? arma(
             formID: 0x310, race: 0x19, additional: [0x100], slots: 0b0100,
-            models: ("clothes_m.nif", "clothes_f.nif")
+            models: ("clothes_m.nif", "clothes_f.nif"), priority: clothesPriority
         ),
         try? arma(
             formID: 0x321, race: 0x19, additional: [0x100], slots: 0b0100,
-            models: ("robes_m.nif", "robes_f.nif")
+            models: ("robes_m.nif", "robes_f.nif"), priority: robesPriority
+        ),
+        try? arma(
+            formID: 0x331, race: 0x19, additional: [0x100], slots: 0b10000,
+            models: ("gloves_m.nif", "gloves_f.nif")
         )
     ]
     let outfits = [
@@ -69,7 +76,51 @@ func makeResolver(
         armorAddons: addons.keyed(),
         outfits: outfits.keyed(),
         leveledItems: lists.keyed(),
-        formIDResolver: FormIDResolver(pluginName: "Follower.esp", masters: ["Skyrim.esm"])
+        formIDResolver: FormIDResolver(pluginName: "Follower.esp", masters: ["Skyrim.esm"]),
+        equipment: makeEquipmentCatalog()
+    )
+}
+
+/// Slot data matching the ARMO/ARMA fixtures above, plus two weapons: a
+/// one-handed sword (right hand) and a two-handed greatsword (both hands).
+///
+/// Built by hand rather than through `EquipmentCatalog.build(from:)`, because
+/// these fixtures are decoded records rather than an `ESMFile` — the builder is
+/// covered separately against synthetic plugin bytes.
+func makeEquipmentCatalog(
+    swordModel: String? = "sword.nif",
+    extra: [UInt32: EquippableItem] = [:]
+) -> EquipmentCatalog {
+    var items: [UInt32: EquippableItem] = [
+        // Torso clothes and robes both claim slot 32, so equipping one
+        // displaces the other. Gloves claim slot 34 and coexist with both.
+        0x300: equippable(0x300, slots: 0b0100),
+        0x320: equippable(0x320, slots: 0b0100),
+        0x330: equippable(0x330, slots: 0b10000),
+        0x600: EquippableItem(
+            formID: FormID(0x600),
+            occupancy: EquipmentOccupancy(hands: .rightHand),
+            modelPath: swordModel
+        ),
+        0x610: EquippableItem(
+            formID: FormID(0x610),
+            occupancy: EquipmentOccupancy(hands: .bothHands),
+            modelPath: "greatsword.nif"
+        ),
+        // A potion: carryable, occupies nothing, never equippable.
+        0x700: EquippableItem(
+            formID: FormID(0x700), occupancy: .none, modelPath: nil
+        )
+    ]
+    items.merge(extra) { _, new in new }
+    return EquipmentCatalog(items: items)
+}
+
+private func equippable(_ raw: UInt32, slots: UInt32) -> EquippableItem {
+    EquippableItem(
+        formID: FormID(raw),
+        occupancy: EquipmentOccupancy(slots: BodySlots(rawValue: slots)),
+        modelPath: nil
     )
 }
 
@@ -110,6 +161,15 @@ private func formIDField(_ type: String, _ value: UInt32) -> Data {
     var data = Data()
     data.appendUInt32(value)
     return ESMFixture.field(type, data)
+}
+
+/// ARMA DNAM, 12 bytes: male priority, female priority, four bytes of weight
+/// slider flags, detection sound, one unused byte, then the weapon-adjust
+/// float (UESP + xEdit; see ArmorAddon.swift).
+func dnamField(male: UInt8, female: UInt8, weaponAdjust: Float = 0) -> Data {
+    var data = Data([male, female, 0, 0, 0, 0, 0, 0])
+    data.appendFloat32(weaponAdjust)
+    return ESMFixture.field("DNAM", data)
 }
 
 private func bod2Field(slots: UInt32) -> Data {
@@ -167,9 +227,13 @@ private func arma(
     race: UInt32,
     additional: [UInt32],
     slots: UInt32,
-    models: (male: String?, female: String?)
+    models: (male: String?, female: String?),
+    priority: UInt8 = 0
 ) throws -> ArmorAddon {
     var fields = bod2Field(slots: slots) + formIDField("RNAM", race)
+    if priority > 0 {
+        fields += dnamField(male: priority, female: priority)
+    }
     if let male = models.male {
         fields += ESMFixture.field("MOD2", ESMFixture.zstring(male))
     }
@@ -230,4 +294,35 @@ extension Array {
     fileprivate func keyed<Value: FormIdentified>() -> [UInt32: Value] where Element == Value? {
         Dictionary(uniqueKeysWithValues: compactMap(\.self).map { ($0.formID.rawValue, $0) })
     }
+}
+
+/// One ACHR placement, shared by the assembly suites.
+func placedActor(
+    position: SIMD3<Float> = .zero,
+    rotation: SIMD3<Float> = .zero,
+    scale: Float = 1
+) throws -> PlacedActor {
+    var name = Data()
+    name.appendUInt32(0x1000)
+    var placement = Data()
+    for value in [
+        position.x, position.y, position.z,
+        rotation.x, rotation.y, rotation.z
+    ] {
+        placement.appendFloat32(value)
+    }
+    var xscl = Data()
+    xscl.appendFloat32(scale)
+    let bytes = ESMFixture.record(
+        "ACHR",
+        formID: 0x9000,
+        data: ESMFixture.field("NAME", name)
+            + ESMFixture.field("DATA", placement)
+            + ESMFixture.field("XSCL", xscl)
+    )
+    let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
+    guard case let .record(record)? = children.first else {
+        throw ESMError.malformed("actor fixture did not produce a record")
+    }
+    return try PlacedActor(record: record)
 }

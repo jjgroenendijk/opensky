@@ -41,6 +41,7 @@
 				GameMetalView.swift,
 				GameViewController.swift,
 				GameViewControllerAudio.swift,
+				GameViewControllerEquipment.swift,
 				GameViewControllerHUD.swift,
 				GameViewControllerItems.swift,
 				GameViewControllerPapyrus.swift,

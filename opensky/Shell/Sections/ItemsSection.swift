@@ -29,6 +29,12 @@ final class ItemsSection: PanelSectionViewController {
     let dropControl = NSButton(title: "Drop", target: nil, action: nil)
     let dropFormIDField = NSTextField(string: "")
     let dropCountField = NSTextField(string: "1")
+    let equipControl = NSButton(title: "Equip", target: nil, action: nil)
+    let unequipControl = NSButton(title: "Unequip", target: nil, action: nil)
+    let equipFormIDField = NSTextField(string: "")
+    let equipTargetControl = NSSegmentedControl(
+        labels: ["Player", "Nearest NPC"], trackingMode: .selectOne, target: nil, action: nil
+    )
 
     private let statsLabel = PanelComponents.statsLabel(identifier: "ItemsStatsLabel")
 
@@ -91,8 +97,45 @@ final class ItemsSection: PanelSectionViewController {
                     caption: "Count", captionWidth: 60, field: dropCountField
                 )
             ]),
-            PanelComponents.buttonRow([dropControl]),
-            statsLabel
+            PanelComponents.buttonRow([dropControl])
+        ] + makeEquipmentViews() + [statsLabel]
+    }
+
+    /// The equipment half (issue #178), split out so `makeContentViews` stays
+    /// inside the strict-lint function-body cap.
+    private func makeEquipmentViews() -> [NSView] {
+        PanelComponents.configureButton(
+            equipControl, target: self, action: #selector(equip),
+            identifier: "ItemsEquipControl"
+        )
+        PanelComponents.configureButton(
+            unequipControl, target: self, action: #selector(unequip),
+            identifier: "ItemsUnequipControl"
+        )
+        PanelComponents.configureTextField(
+            equipFormIDField, identifier: "ItemsEquipFormIDField", width: 150,
+            placeholder: "first equippable"
+        )
+        equipTargetControl.setAccessibilityIdentifier("ItemsEquipTargetControl")
+        equipTargetControl.selectedSegment = 1
+        return [
+            PanelComponents.note(
+                "Equip takes the owner's item into its equipped set, unequipping whatever "
+                    + "claims the same body slot or hand. Leave the FormID blank to equip the "
+                    + "first equippable thing the owner is carrying. The player has no "
+                    + "rendered body yet, so equipping on the player changes state only — "
+                    + "pick Nearest NPC to see an equip on screen, which rebuilds that "
+                    + "actor's cell."
+            ),
+            PanelComponents.group([
+                PanelComponents.labeledFieldRow(
+                    caption: "FormID", captionWidth: 60, field: equipFormIDField
+                ),
+                PanelComponents.labeledFieldRow(
+                    caption: "On", captionWidth: 60, field: equipTargetControl
+                )
+            ]),
+            PanelComponents.buttonRow([equipControl, unequipControl])
         ]
     }
 
@@ -123,6 +166,22 @@ final class ItemsSection: PanelSectionViewController {
         finishInteraction()
     }
 
+    @objc private func equip() {
+        provider?.equipItem(Self.parseFormID(equipFormIDField.stringValue), on: equipTarget)
+        finishInteraction()
+    }
+
+    @objc private func unequip() {
+        provider?.unequipItem(Self.parseFormID(equipFormIDField.stringValue), on: equipTarget)
+        finishInteraction()
+    }
+
+    /// Which owner the two equipment buttons act on. Defaults to the NPC,
+    /// because that is the one that shows something.
+    var equipTarget: EquipmentTargetSelector {
+        equipTargetControl.selectedSegment == 0 ? .player : .nearestActor
+    }
+
     /// The count field, floored at one: dropping zero or minus three of
     /// something is never what the field meant.
     private var dropCount: Int32 {
@@ -151,10 +210,34 @@ final class ItemsSection: PanelSectionViewController {
             Self.targetLine(snapshot),
             Self.carriedLine(snapshot),
             Self.stackLines("Carried", snapshot.playerStacks),
+            Self.equippedLines("Player wears", snapshot.playerEquipped),
+            Self.actorLine(snapshot),
             Self.containerLine(snapshot),
             "Spawned objects: \(snapshot.spawnedObjectCount)",
             snapshot.lastActionText
         ].joined(separator: "\n")
+    }
+
+    private static func actorLine(_ snapshot: ItemControlSnapshot) -> String {
+        guard let name = snapshot.nearestActorName else { return "Nearest NPC: none resident" }
+        return "Nearest NPC: \(name)\n"
+            + equippedLines("Wears", snapshot.nearestActorEquipped)
+    }
+
+    /// One indented line per equipped item, with the slots it occupies —
+    /// which is what makes a conflict readable when an equip displaces
+    /// something.
+    private static func equippedLines(
+        _ title: String,
+        _ items: [EquippedItemReadout]
+    ) -> String {
+        guard !items.isEmpty else { return "  \(title): nothing" }
+        var lines = ["  \(title):"]
+        lines += items.prefix(listedStackLimit).map { "  \($0.name) · \($0.occupancy)" }
+        if items.count > listedStackLimit {
+            lines.append("  … \(items.count - listedStackLimit) more")
+        }
+        return lines.joined(separator: "\n")
     }
 
     private static func targetLine(_ snapshot: ItemControlSnapshot) -> String {

@@ -9,8 +9,9 @@
 import Foundation
 
 nonisolated extension RecordTextDump {
-    /// Decoded view for CONT, MISC, BOOK, ALCH, INGR, WEAP and AMMO. Nil for
-    /// anything else, so the caller falls through to the raw field list.
+    /// Decoded view for CONT, MISC, BOOK, ALCH, INGR, WEAP, AMMO, ARMO and
+    /// ARMA. Nil for anything else, so the caller falls through to the raw
+    /// field list.
     static func itemSummary(record: ESMRecord, localized: Bool) -> String? {
         switch record.type {
         case "CONT": containerSummary(record: record, localized: localized)
@@ -20,8 +21,34 @@ nonisolated extension RecordTextDump {
         case "INGR": ingredientSummary(record: record, localized: localized)
         case "WEAP": weaponSummary(record: record, localized: localized)
         case "AMMO": ammunitionSummary(record: record, localized: localized)
+        case "ARMO": armorSummary(record: record, localized: localized)
+        case "ARMA": armorAddonSummary(record: record)
         default: nil
         }
+    }
+
+    private static func armorSummary(record: ESMRecord, localized: Bool) -> String? {
+        guard let armor = try? Armor(record: record, localized: localized) else { return nil }
+        let slots = armor.bodyTemplate.map { "0x\(String($0.slots.rawValue, radix: 16))" } ?? "-"
+        return "decoded ARMO: editorID \(armor.editorID ?? "-"), "
+            + "value \(armor.itemValue.value), "
+            + "weight \(String(format: "%.2f", armor.itemValue.weight)), "
+            + "slots \(slots), rating \(armor.armorRating), "
+            + "\(armor.armatures.count) armatures"
+    }
+
+    /// ARMA's draw priorities are what equip-slot arbitration compares
+    /// (issue #178), so they are the point of this line — inspecting them on a
+    /// real record is how the DNAM layout was confirmed.
+    private static func armorAddonSummary(record: ESMRecord) -> String? {
+        guard let addon = try? ArmorAddon(record: record) else { return nil }
+        let slots = addon.bodyTemplate.map { "0x\(String($0.slots.rawValue, radix: 16))" } ?? "-"
+        return "decoded ARMA: editorID \(addon.editorID ?? "-"), "
+            + "slots \(slots), race \(addon.primaryRace?.description ?? "-"), "
+            + "+\(addon.additionalRaces.count) races, "
+            + "priority male \(addon.malePriority) female \(addon.femalePriority), "
+            + "weapon adjust \(String(format: "%.2f", addon.weaponAdjust)), "
+            + "male model \(addon.maleModelPath ?? "-")"
     }
 
     private static func containerSummary(record: ESMRecord, localized: Bool) -> String? {

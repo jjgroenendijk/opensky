@@ -20,6 +20,27 @@ nonisolated struct ItemStackReadout: Equatable, Sendable {
     let name: String
 }
 
+/// Who an equip or unequip applies to (issue #178).
+///
+/// Two selectors, for the two things a session actually wants to do. The
+/// player is where state and carry-weight accounting are checked; the nearest
+/// actor is where the *visual* is checked, because the player has no rendered
+/// body until M14 and an NPC is the only thing an equip can be seen on.
+nonisolated enum EquipmentTargetSelector: Equatable, Sendable {
+    case player
+    /// The resident ACHR closest to the player.
+    case nearestActor
+}
+
+/// One equipped item as the panel spells it.
+nonisolated struct EquippedItemReadout: Equatable, Sendable {
+    let item: FormID
+    let name: String
+    /// Biped slots and hands it occupies, preformatted — the panel has no
+    /// business knowing how to render a `BodySlots` bitfield.
+    let occupancy: String
+}
+
 /// One observation of the world-item runtime.
 nonisolated struct ItemControlSnapshot: Equatable, Sendable {
     /// False when no inventory runtime is attached — no game data, or a demo
@@ -45,8 +66,50 @@ nonisolated struct ItemControlSnapshot: Equatable, Sendable {
     /// Objects the running game has spawned and not yet taken back — dropped
     /// items, across every cell whether resident or not.
     let spawnedObjectCount: Int
+    /// What the player is wearing (issue #178). State only: the player has no
+    /// rendered body this milestone.
+    let playerEquipped: [EquippedItemReadout]
+    /// How the nearest resident ACHR is named, or nil when none is loaded.
+    let nearestActorName: String?
+    /// What that actor is wearing — the set an equip is actually visible on.
+    let nearestActorEquipped: [EquippedItemReadout]
     /// Human-readable result of the last panel action.
     let lastActionText: String
+
+    /// Written out rather than left to the memberwise initializer so the
+    /// equipment members can trail the list with defaults, keeping the M12.1.3
+    /// call sites compiling unchanged.
+    init(
+        isAvailable: Bool,
+        targetName: String?,
+        targetIsTakeable: Bool,
+        targetIsContainer: Bool,
+        playerStacks: [ItemStackReadout],
+        playerWeight: Float,
+        playerGold: Int32,
+        containerName: String?,
+        containerStacks: [ItemStackReadout],
+        spawnedObjectCount: Int,
+        lastActionText: String,
+        playerEquipped: [EquippedItemReadout] = [],
+        nearestActorName: String? = nil,
+        nearestActorEquipped: [EquippedItemReadout] = []
+    ) {
+        self.isAvailable = isAvailable
+        self.targetName = targetName
+        self.targetIsTakeable = targetIsTakeable
+        self.targetIsContainer = targetIsContainer
+        self.playerStacks = playerStacks
+        self.playerWeight = playerWeight
+        self.playerGold = playerGold
+        self.containerName = containerName
+        self.containerStacks = containerStacks
+        self.spawnedObjectCount = spawnedObjectCount
+        self.lastActionText = lastActionText
+        self.playerEquipped = playerEquipped
+        self.nearestActorName = nearestActorName
+        self.nearestActorEquipped = nearestActorEquipped
+    }
 
     /// The reading with no runtime attached.
     static let unavailable = ItemControlSnapshot(
@@ -92,4 +155,17 @@ protocol ItemControlProviding: AnyObject {
     /// knowing a FormID.
     @discardableResult
     func dropPlayerItem(_ item: FormID?, count: Int32) -> String
+
+    /// Equips `item` on `target`, unequipping whatever it conflicts with
+    /// (issue #178). A nil `item` equips the target's first *equippable*
+    /// unequipped stack, so the control works without knowing a FormID.
+    ///
+    /// - Returns: a human-readable outcome naming what was displaced.
+    @discardableResult
+    func equipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String
+
+    /// Unequips `item` on `target`. A nil `item` unequips the first thing the
+    /// target is wearing.
+    @discardableResult
+    func unequipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String
 }

@@ -4,6 +4,52 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-01
 
+* **M12.2.1 equipment runtime and actor visual refresh (issue #178)**: equipping now
+  changes what an NPC is wearing on screen.
+
+  ARMA `DNAM` is decoded — it was deliberately skipped since M5.2 with a note to restore it
+  "when equip-slot priority resolution lands". The first reading of it here was wrong and
+  the correction is the useful part of this entry. Priority looked like a visibility rule:
+  when two armatures claim a slot, hide the lower one. Probing the install killed that.
+  `OrcishCuirassAA` is priority 5 over `body|forearms|calves`; `OrcishBootsAA` is priority
+  10 over `feet|calves`. They share the calves slot, so hiding the loser would delete the
+  Orcish cuirass entirely — one armature covers the torso *and* the calves. Vanilla draws
+  both. The Creation Kit wiki says the same thing once read precisely: priority
+  "determine[s] the order of the ArmorAddons", naked body 0, torso 5, gloves over sleeves
+  10. So OpenSky sorts worn parts by ascending priority and hides nothing on that basis;
+  hiding stays the equipped-slot mask's job, which has an ARMO's own `BOD2` behind it.
+
+  `EquipmentCatalog` and `EquipmentRuntime` (`opensky/Inventory/`) are the runtime.
+  Occupancy has two disjoint halves because the game does: biped slots from ARMO
+  `BOD2`/`BODT`, and hands from the WEAP `DNAM` animation type. There is no biped bit
+  meaning "right hand" — slot 39 is the shield's *armour*, not the hand holding it.
+  Equipping displaces everything overlapping in either half, computed whole before anything
+  is written, so a refused equip leaves the store untouched and an accepted one is a single
+  journal entry however much it displaces. Equipping what the owner does not hold, or
+  something with no slots at all, are typed refusals rather than accommodations.
+
+  Visual resolution takes an optional equipped set that *replaces* the `DOFT` chain, not
+  merges with it — the baseline equipped set already is the default outfit, so merging
+  would re-dress an actor the moment anything undressed it. Everything downstream is
+  untouched: same masking, same ARMA selection, same reason-tagged skips. Refresh is the
+  M10 `noteStateMutation` cell rebuild, no patching path.
+
+  The hand attachment needed a mechanism that did not exist. `RenderScene` bakes placement
+  transforms into draw instances at build time and cell scenes are built on the streaming
+  queue, so a weapon cannot be a placement with a fixed transform and follow a hand. The
+  one per-frame transform channel that already exists is GPU skinning, so `RigidAttachment`
+  rewrites a weapon model as a skinned mesh with exactly one bone named after the
+  attachment node, and the pose the actor's clip already computes moves it — no new
+  per-frame code and no second update path to keep in sync. Bone names came from
+  `openskycli skeleton` over the vanilla rig, never from memory: `Weapon` (bone 43) parents
+  to `NPC R Hand [RHnd]`, and the matching NIF node is spelled `WEAPON`, so the bind lookup
+  folds case. A mid-clip swap resumes rather than restarts, because the animation clock is
+  renderer-owned and a rebuild never touches it.
+
+  Verified on the install: Heimskr resolved before and after an equip that swaps his monk
+  robes for an iron cuirass and puts a sword in his hand — robes gone, cuirass on, uncovered
+  skin back, weapon at the rig's hand node. Frames in gitignored `logs/`.
+
 * **M12.1.3 pickup, containers and drop (issue #177)**: items now exist in the world loop.
   The six carryable families — `MISC`, `WEAP`, `AMMO`, `ALCH`, `INGR`, `BOOK` — joined
   `ModelBase.supportedTypes`, so a loose item reference resolves a model, a collision shape

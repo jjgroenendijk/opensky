@@ -126,6 +126,15 @@ nonisolated struct CellSceneComposition {
         return nil
     }
 
+    /// Every resident ACHR entry, in `ReferenceKey` order within each cell and
+    /// grid order across cells — deterministic, because "the nearest actor" has
+    /// to answer the same way twice when two actors are equidistant.
+    func actorEntries() -> [RuntimeReferenceEntry] {
+        cells.sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
+            .flatMap { $0.value.references.sortedEntries() }
+            .filter { $0.placedActor != nil }
+    }
+
     func door(reference: FormID) -> PlacedDoor? {
         cells.values
             .flatMap(\.doors)

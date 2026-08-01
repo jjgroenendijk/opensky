@@ -224,3 +224,89 @@ struct ArmorInventoryFieldTests {
         #expect(armor.keywords.keywords == [FormID(0x0006_BBD2), FormID(0x0008_F958)])
     }
 }
+
+/// ARMA decode, including the DNAM draw priorities equip-slot resolution
+/// compares (issue #178). Split out of `AppearanceRecordDecodeTests` when that
+/// suite outgrew the strict-lint type-body cap; the ARMA record is equipment
+/// data, so this is also where it belongs.
+struct ArmorAddonRecordTests {
+    @Test func decodesArmorAddon() throws {
+        var fields = ESMFixture.field("EDID", ESMFixture.zstring("IronCuirassAA"))
+        var bod2 = Data()
+        bod2.appendUInt32(0b0100) // body
+        bod2.appendUInt32(1)
+        fields += ESMFixture.field("BOD2", bod2)
+        fields += armaFormID("RNAM", 0x19)
+        fields += dnamField(male: 5, female: 7, weaponAdjust: 0.8)
+        fields += ESMFixture.field("MOD2", ESMFixture.zstring("armor\\iron\\m.nif"))
+        fields += ESMFixture.field("MOD3", ESMFixture.zstring("armor\\iron\\f.nif"))
+        fields += armaFormID("MODL", 0x0001_D4D4)
+        fields += armaFormID("MODL", 0x0001_E5E5)
+        let addon = try ArmorAddon(
+            record: InventoryFixture.record(ESMFixture.record("ARMA", formID: 0x6000, data: fields))
+        )
+        #expect(addon.formID == FormID(0x6000))
+        #expect(addon.editorID == "IronCuirassAA")
+        #expect(addon.bodyTemplate?.slots == [.body])
+        #expect(addon.primaryRace == FormID(0x19))
+        #expect(addon.maleModelPath == "armor\\iron\\m.nif")
+        #expect(addon.femaleModelPath == "armor\\iron\\f.nif")
+        #expect(addon.additionalRaces == [FormID(0x0001_D4D4), FormID(0x0001_E5E5)])
+        #expect(addon.malePriority == 5)
+        #expect(addon.femalePriority == 7)
+        #expect(addon.weaponAdjust == 0.8)
+        #expect(addon.priority(female: false) == 5)
+        #expect(addon.priority(female: true) == 7)
+    }
+
+    @Test func armorAddonOptionalFieldsNilWhenAbsent() throws {
+        let fields = ESMFixture.field("EDID", ESMFixture.zstring("BareAA"))
+        let addon = try ArmorAddon(
+            record: InventoryFixture.record(ESMFixture.record("ARMA", formID: 1, data: fields))
+        )
+        #expect(addon.primaryRace == nil)
+        #expect(addon.maleModelPath == nil)
+        #expect(addon.femaleModelPath == nil)
+        #expect(addon.additionalRaces.isEmpty)
+        #expect(addon.bodyTemplate == nil)
+        // No DNAM reads as the naked-body priority, which is what the data
+        // means: a DNAM-less armature layers below everything authored.
+        #expect(addon.malePriority == 0)
+        #expect(addon.femalePriority == 0)
+        #expect(addon.weaponAdjust == 0)
+    }
+
+    /// A DNAM shorter than the documented 12 bytes decodes as far as it
+    /// reaches. Refusing the record would drop an armature that renders fine
+    /// over a field that only affects layering.
+    @Test func armorAddonTruncatedDNAMDegradesRatherThanThrowing() throws {
+        var fields = ESMFixture.field("EDID", ESMFixture.zstring("ShortAA"))
+        fields += ESMFixture.field("DNAM", Data([3, 4]))
+        let addon = try ArmorAddon(
+            record: InventoryFixture.record(ESMFixture.record("ARMA", formID: 2, data: fields))
+        )
+        #expect(addon.malePriority == 3)
+        #expect(addon.femalePriority == 4)
+        #expect(addon.weaponAdjust == 0)
+
+        var empty = ESMFixture.field("EDID", ESMFixture.zstring("EmptyDNAMAA"))
+        empty += ESMFixture.field("DNAM", Data())
+        let bare = try ArmorAddon(
+            record: InventoryFixture.record(ESMFixture.record("ARMA", formID: 3, data: empty))
+        )
+        #expect(bare.malePriority == 0)
+    }
+
+    @Test func armorAddonRejectsOtherRecordTypes() throws {
+        let bytes = ESMFixture.record("ARMO", formID: 1, data: Data())
+        #expect(throws: ESMError.self) {
+            _ = try ArmorAddon(record: InventoryFixture.record(bytes))
+        }
+    }
+}
+
+private func armaFormID(_ type: String, _ value: UInt32) -> Data {
+    var data = Data()
+    data.appendUInt32(value)
+    return ESMFixture.field(type, data)
+}
