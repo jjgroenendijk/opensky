@@ -80,65 +80,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// closure: World shows the in-window configuration message instead.
     private func makeCellProviderFactory() -> ((MTLDevice) -> (any CellSceneProvider)?)? {
         guard let root = gameDataRoot, let vfs = virtualFileSystem else { return nil }
-        let esmURL = root.dataURL.appending(path: "Skyrim.esm")
         let configurationStore = terrainLODConfigurationStore
         return { device in
             do {
-                let file = try ESMFile(url: esmURL)
-                let movementConfiguration = PlayerMovementConfiguration.resolve(
-                    store: GameSettingLoader.load(root: root, baseFile: file)
-                )
-                let textures = TextureLibrary(fileSystem: vfs, device: device)
-                let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
-                let builder = CellSceneBuilder(
-                    file: file,
-                    meshes: meshes,
-                    textures: textures,
+                let indexes = try CellProviderIndexes(
+                    root: root,
                     fileSystem: vfs,
+                    device: device,
                     terrainLODConfigurationStore: configurationStore
                 )
-                // Weather runtime built once from the same ESM (WTHR/CLMT/REGN
-                // + WRLD CNAM); nil when the plugin carries no weather data.
-                let weather = WeatherSystem(
-                    file: file,
-                    worldspaceEditorID: FirstRenderCell.worldspaceEditorID
-                )
-                // World SFX + ambience (M9.2.2): SOUN/SNDR + ASPC indices,
-                // built once from the same ESM. Cheap to build; consumed by
-                // the sound director only when the user enables audio.
-                let soundStore = SoundRecordStore(file: file)
-                let aspcStore = AcousticSpaceStore(file: file)
-                // Music playlists (M9.2.3): MUSC/MUST index from the same ESM.
-                let musicStore = MusicRecordStore(file: file)
-                // Global variables (M10.2.2): GLOB defaults from the same ESM,
-                // paired with the session's runtime overrides by the view
-                // controller. The plugin file name is needed for the
-                // session-stable keys the runtime layer and saves use.
-                let globalStore = GlobalStore(
-                    file: file, pluginName: esmURL.lastPathComponent
-                )
-                // Items + containers + leveled lists (M12.1): the baseline
-                // resolver the take/drop/container runtime reads. Built once
-                // here from the same ESM as every other index above, because a
-                // baseline is re-derived on every read and must not be built
-                // per lookup.
-                let inventoryBaselines = InventoryBaselineResolver.build(from: file)
-                // Equip slots (M12.2): ARMO body templates + WEAP hands, from
-                // the same ESM, for the same reason — a slot lookup happens per
-                // equip and must not re-scan the plugin each time.
-                let equipmentCatalog = EquipmentCatalog.build(from: file)
-                return BuilderCellSceneProvider(
-                    builder: builder,
-                    worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
-                    weatherSystem: weather,
-                    soundStore: soundStore,
-                    aspcStore: aspcStore,
-                    musicStore: musicStore,
-                    globalStore: globalStore,
-                    inventoryBaselines: inventoryBaselines,
-                    equipmentCatalog: equipmentCatalog,
-                    movementConfiguration: movementConfiguration
-                )
+                return indexes.makeProvider()
             } catch {
                 let reason = String(describing: error)
                 Self.logger.error(
