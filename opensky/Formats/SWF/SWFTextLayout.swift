@@ -167,7 +167,7 @@ nonisolated enum SWFTextLayout {
 /// Vertical/horizontal font metrics scaled from glyph units to twips.
 /// Fallback ratios (fractions of the EM square) apply when a font carries no
 /// layout block; 96 of vanilla's 97 fonts have one, so they rarely do.
-private struct FontScaledMetrics {
+nonisolated private struct FontScaledMetrics {
     private static let fallbackAscentRatio: Float = 0.8
     private static let fallbackDescentRatio: Float = 0.2
     private static let fallbackAdvanceRatio: Float = 0.6
@@ -210,7 +210,7 @@ private struct FontScaledMetrics {
 
 /// One shaped glyph before line placement: pen x within its line plus its own
 /// advance (kerning folded into the preceding glyph's effective advance).
-private struct ShapedGlyph {
+nonisolated private struct ShapedGlyph {
     let glyphIndex: Int
     var x: Float
     let advance: Float
@@ -218,7 +218,7 @@ private struct ShapedGlyph {
     let isSpace: Bool
 }
 
-private struct ShapedLine {
+nonisolated private struct ShapedLine {
     var glyphs: [ShapedGlyph] = []
 
     var width: Float {
@@ -227,7 +227,7 @@ private struct ShapedLine {
 }
 
 /// Maps characters to glyph indices and accumulates pen advances + kerning.
-private struct LineShaper {
+nonisolated private struct LineShaper {
     let metrics: FontScaledMetrics
     private(set) var missingGlyphs = 0
 
