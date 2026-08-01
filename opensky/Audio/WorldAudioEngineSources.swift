@@ -85,8 +85,8 @@ nonisolated struct AudioPlayRequest {
     /// not.
     var loops = false
 
-    /// Request for a source with no world position — music beds and other 2D
-    /// material routed straight into a category submix.
+    /// Request for a source with no world position — music, ambience and other
+    /// 2D material routed straight into a category submix.
     static func nonPositional(
         name: String,
         category: AudioCategory,
@@ -163,7 +163,7 @@ extension WorldAudioEngine {
 
     /// Starts a non-positional streamed source from framed `.xwm` bytes: the
     /// file's own channel layout (no mono downmix), wired into the category
-    /// submix instead of the environment node. This is the music path — it
+    /// submix instead of the environment node. This is the 2D-bed path — it
     /// never pans, never attenuates with distance, and is exempt from both the
     /// concurrent-source cap and the cell purge.
     @discardableResult
@@ -248,8 +248,8 @@ extension WorldAudioEngine {
 
     /// Stops sources bound to cells the world streamed away from (Chebyshev
     /// ring distance beyond `radius`). Non-positional sources have no
-    /// meaningful cell, so they are exempt: a music bed must survive the world
-    /// streaming around it.
+    /// meaningful cell, so they are exempt: music and ambience beds must
+    /// survive the world streaming around them.
     func purgeSources(fartherThan radius: Int32, fromCell center: CellCoordinate) {
         for source in sources where source.isPositional {
             let distance = max(
@@ -333,7 +333,7 @@ extension WorldAudioEngine {
     /// order). Oldest-first is predictable, cheap, and matches how short
     /// one-shot effects naturally expire; a priority scheme waits for
     /// game-authored data in M9.2. Non-positional sources are outside the
-    /// budget entirely — a music bed must not be evicted by a burst of SFX.
+    /// budget entirely — a 2D bed must not be evicted by a burst of SFX.
     private func makeRoomForNewSource() {
         while
             sources.count(where: \.isPositional) >= Self.maxConcurrentSources,

@@ -4,6 +4,19 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-01
 
+* **Non-positional ambience beds (issue #236)**: `WorldAudioSoundDirector` now starts
+  each resolved ambience entry through `WorldAudioEngine.playNonPositional`, wiring it
+  directly to the descriptor's resolved vanilla category submix. Ambience therefore has
+  no fixed start position, panning or distance attenuation, and it is exempt from the
+  positional FIFO budget and cell purge. The director remains the lifetime owner and
+  retires its source ids on context changes and user controls. The former equal-weight
+  per-entry gain split is gone; the category factor is applied once at the shared submix,
+  while each player node carries only source and fade gain. Synthetic offline tests pin
+  the category mixer connection, non-positional routing, unity source gain and survival
+  across distant listener-cell movement. See
+  [world SFX + ambience](/engine/world-sfx.md) and
+  [world audio playback](/engine/audio.md).
+
 * **M11 Papyrus world interaction — milestone acceptance (issue #174)**: M11 set out to
   make vanilla scripts respond to interaction and mutate persistent world state, while
   leaving the quest runtime to M13. It landed the PEX container decoder (#167), bounded

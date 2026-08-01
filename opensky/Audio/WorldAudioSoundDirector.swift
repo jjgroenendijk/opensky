@@ -5,11 +5,10 @@
 //   - One-shot SFX (door open, activator activate) on use-key events, routed
 //     through the descriptor's SNDR.GNAM -> SNCT parent chain.
 //   - Continuous ambience loop set when the center cell changes, using the
-//     same authored category resolution, fired from the listener position
-//     (a stopgap until
-//     a non-positional bed path exists; see issue #236). Bed sources are
-//     started as loops, so they rewind in the streamer rather than ending
-//     after one pass; the panel toggle retires and restarts them live.
+//     same authored category resolution and routed non-positionally through
+//     that category's submix. Bed sources are started as loops, so they rewind
+//     in the streamer rather than ending after one pass; the panel toggle
+//     retires and restarts them live.
 //
 // Main-actor only (the engine + streamer are main-actor); decode work runs
 // inside WorldAudioEngine's decode queue. Defensive: an absent engine, store,
@@ -256,19 +255,14 @@ final class WorldAudioSoundDirector {
     }
 
     private func startAmbience(bed: AmbienceBed) {
-        // Stopgap: ambience plays positional at the listener. A future
-        // non-positional bed path (issue #236) replaces this.
-        let position = engine.listenerWorldPosition
         for entry in bed.entries {
             guard let resolved = resolveSound(id: entry.sound) else { continue }
             do {
-                let sourceID = try engine.playPositional(
+                let sourceID = try engine.playNonPositional(
                     fileData: resolved.data,
-                    request: AudioPlayRequest(
+                    request: .nonPositional(
                         name: resolved.name,
                         category: resolved.category,
-                        worldPosition: position,
-                        gain: ambienceGainPerEntry(in: bed),
                         // A bed is continuous: the streamer rewinds at end of
                         // file instead of letting the engine retire it.
                         loops: true
@@ -282,13 +276,6 @@ final class WorldAudioSoundDirector {
                 )
             }
         }
-    }
-
-    /// Splits unity across the bed entries so N concurrent loops do not sum to
-    /// N x master. Equal-weight today; the RDSA.Chance field (issue pending
-    /// probe) will refine this.
-    private func ambienceGainPerEntry(in bed: AmbienceBed) -> Float {
-        bed.entries.isEmpty ? 1 : 1 / Float(bed.entries.count)
     }
 
     private func retireAmbience() {

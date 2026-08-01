@@ -140,13 +140,14 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   plus the main-actor world runtime, use-key and trigger dispatch, persistent world
   mutation, update timers, save state, the `World > Scripts` surface, and the M11 gate.
 * [World audio playback](/engine/audio.md) - AVAudioEngine graph with 3D positional
-  sources, streaming WMA decode off the main thread, vanilla SNCT category volumes,
-  per-category mute and solo, source budget/eviction, the per-frame audio-update
-  budget, and the `World > Audio` surface plus the M9 acceptance record.
+  sources and non-positional music/ambience beds, streaming WMA decode off the main
+  thread, vanilla SNCT category volumes, per-category mute and solo, source
+  budget/eviction, the per-frame audio-update budget, and the `World > Audio` surface
+  plus the M9 acceptance record.
 * [World SFX + ambience](/engine/world-sfx.md) - world sound director wiring
   activation and animation events to one-shot and movement-loop SFX, per-cell
-  ASPC/REGN ambience bed resolution, and the `World > Audio > SFX & Ambience`
-  verification surface.
+  ASPC/REGN ambience bed resolution into category submixes, and the
+  `World > Audio > SFX & Ambience` verification surface.
 * [Music playlists](/engine/music.md) - MUSC/MUST playlist selection through the
   CELL/REGN/WRLD precedence chain, the derived exploration/town/interior states,
   palette expansion and flag handling, the shipped-file `.xwm` resolution the

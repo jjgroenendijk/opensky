@@ -5,7 +5,7 @@ description: AVAudioEngine graph with 3D positional sources, non-positional subm
   playback, gain ramps, streaming WMA decode, vanilla category volumes with mute and
   solo, source budget, the per-frame audio budget, and the World > Audio surface.
 tags: [engine, audio, playback, spatial]
-timestamp: 2026-07-28T00:00:00Z
+timestamp: 2026-08-01T00:00:00Z
 ---
 
 # World audio playback
@@ -135,17 +135,18 @@ panel is the Equatable `AudioStatsSnapshot`, read at 2 Hz by the
   playing positional source first (FIFO by start order). Predictable and
   matches how one-shot effects naturally expire; a priority scheme waits for
   game-authored data.
-* **Non-positional exemption**: a music bed is outside the budget and outside
-  the cell purge. It is never evicted by a burst of effects and never stopped
-  because the world streamed away — it has no meaningful cell. Only an explicit
-  stop, a completed fade-out, or the engine shutting down ends one.
+* **Non-positional exemption**: music and ambience beds are outside the budget
+  and outside the cell purge. They are never evicted by a burst of effects and
+  never stopped because the world streamed away — they have no meaningful cell.
+  Only an explicit stop, a completed fade-out, an unusable stream, or the engine
+  shutting down ends one.
 * **Retirement**: a streamer that played its last buffer sets its finished
   flag; the next tick stops and detaches the node.
-* **Looping**: `AudioPlayRequest.loops` starts a continuous source (the
-  [ambience bed](/engine/world-sfx.md) is the only caller today). At end of
+* **Looping**: `AudioPlayRequest.loops` starts a continuous source (including an
+  [ambience bed](/engine/world-sfx.md)). At end of
   file its streamer resets the decoder, rewinds to the first packet and keeps
   scheduling, so it never sets the finished flag and the tick never retires
-  it; only an explicit stop, the FIFO cap or the cell purge ends it. A pass
+  it; only the cleanup rules for its routing path end it. A pass
   that decoded no PCM ends the source instead of rewinding, so a file the
   decoder cannot use can never spin the decode queue. The buffer-backed test
   seam expresses the same request through `AVAudioPlayerNode`'s own `.loops`

@@ -181,8 +181,8 @@ nonisolated struct AudioSourceStatsSnapshot: Equatable {
     /// VFS path of the playing file.
     let name: String
     let categoryName: String
-    /// False for a non-positional source (music beds routed to a category
-    /// submix): its position and distance are not meaningful.
+    /// False for a non-positional source (music or ambience routed to a
+    /// category submix): its position and distance are not meaningful.
     let isPositional: Bool
     /// World position in native Skyrim units. Zero when not positional.
     let worldPosition: SIMD3<Float>
