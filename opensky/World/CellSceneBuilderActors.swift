@@ -190,35 +190,17 @@ extension CellSceneBuilder {
             }
             do {
                 let appearance = try resolvers.template.resolve(base: actor.base)
-                let visual = try resolvers.visual.resolve(appearance: appearance)
-                let assembly = assembler.assemble(placed: actor, visual: visual)
-                if assembly.isRenderable {
-                    build.counts.rendered += 1
-                    build.placements.append(contentsOf: assembly.renderPlacements)
-                    switch makeAnimationPlayback(assembly: assembly) {
-                    case let .success(playback):
-                        build.counts.animated += 1
-                        build.animations.append(playback)
-                    case let .failure(error):
-                        build.counts.animationFailures += 1
-                        build.counts.animationFailureReasons.append(
-                            "ACHR \(id): \(error.localizedDescription)"
-                        )
-                    }
-                } else {
-                    build.counts.failures += 1
-                    let reasons = assembly.skips.map { String(describing: $0.reason) }
-                        .joined(separator: ", ")
-                    build.counts.failureReasons.append(
-                        "ACHR \(id): no renderable geometry (\(reasons))"
+                let visual = try resolvers.visual.resolve(
+                    appearance: appearance,
+                    equipped: runtimeEquipment(
+                        entry: indexed[actor.formID], deltas: deltas
                     )
-                    Self.logger.warning(
-                        """
-                        ACHR \(id, privacy: .public): no renderable geometry \
-                        (\(reasons, privacy: .public)), failed
-                        """
-                    )
-                }
+                )
+                record(
+                    assembler.assemble(placed: actor, visual: visual),
+                    id: id,
+                    into: &build
+                )
             } catch {
                 build.counts.failures += 1
                 let reason = String(describing: error)
@@ -231,6 +213,59 @@ extension CellSceneBuilder {
                 )
             }
         }
+    }
+
+    /// Buckets one assembled actor: drawn plus its animation outcome, or a
+    /// counted failure with its reason. Split out of `resolveActors` so both
+    /// stay inside the strict-lint function-body cap.
+    nonisolated private func record(
+        _ assembly: ActorAssembly<ActorRenderAsset>,
+        id: String,
+        into build: inout CellActorBuild
+    ) {
+        guard assembly.isRenderable else {
+            build.counts.failures += 1
+            let reasons = assembly.skips.map { String(describing: $0.reason) }
+                .joined(separator: ", ")
+            build.counts.failureReasons.append(
+                "ACHR \(id): no renderable geometry (\(reasons))"
+            )
+            Self.logger.warning(
+                """
+                ACHR \(id, privacy: .public): no renderable geometry \
+                (\(reasons, privacy: .public)), failed
+                """
+            )
+            return
+        }
+        build.counts.rendered += 1
+        build.placements.append(contentsOf: assembly.renderPlacements)
+        switch makeAnimationPlayback(assembly: assembly) {
+        case let .success(playback):
+            build.counts.animated += 1
+            build.animations.append(playback)
+        case let .failure(error):
+            build.counts.animationFailures += 1
+            build.counts.animationFailureReasons.append(
+                "ACHR \(id): \(error.localizedDescription)"
+            )
+        }
+    }
+
+    /// The equipped set a dirty actor renders from, or nil when nothing has
+    /// touched its inventory and the plugin `defaultOutfit` still describes it
+    /// (issue #178).
+    ///
+    /// The component is the whole answer: `InventoryBaselineResolver` baselines
+    /// an actor's equipped set to its default outfit, so the first equip
+    /// materializes the outfit *and* the new piece together and this override
+    /// never undresses an actor by accident.
+    nonisolated private func runtimeEquipment(
+        entry: RuntimeReferenceEntry?,
+        deltas: [ReferenceKey: ReferenceStateDelta]
+    ) -> [FormID]? {
+        guard let entry, let delta = deltas[entry.key] else { return nil }
+        return delta.component(ReferenceInventoryState.self)?.equipped
     }
 
     /// Why this actor is not drawn, or nil when it should be.

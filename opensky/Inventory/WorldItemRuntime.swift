@@ -111,6 +111,32 @@ final class WorldItemRuntime {
         self.references = references
     }
 
+    /// The inventory holder for one resident ACHR, or nil when nothing
+    /// resident is that reference or it is not an actor (issue #178).
+    ///
+    /// An actor's holder needs all three of its key, its NPC_ base — which is
+    /// where `InventoryBaselineResolver` reads the default outfit from — and
+    /// its cell, so that an equip is attributed to the cell whose rebuild makes
+    /// it visible. Only the entry knows all three, which is why this lives
+    /// beside the other holder-building call sites rather than at the UI.
+    func actorHolder(formID: FormID) -> InventoryHolder? {
+        guard
+            let entry = references?.referenceEntry(formID: formID),
+            let actor = entry.placedActor
+        else { return nil }
+        return actorHolder(entry: entry, base: actor.base)
+    }
+
+    /// The same holder for an entry already in hand, so a caller that resolved
+    /// one (the nearest-actor lookup) does not resolve it twice.
+    func actorHolder(entry: RuntimeReferenceEntry, base: FormID) -> InventoryHolder {
+        InventoryHolder(
+            key: entry.key,
+            owner: .actor(base: base),
+            cell: references?.cellLocation(of: entry.key)
+        )
+    }
+
     // MARK: - Take
 
     /// Moves the item behind `interaction` into the player's inventory and

@@ -28,6 +28,7 @@ identity scheme, the per-cell index built from it, and the store above both.
 * Making a mutation visible: snapshot capture and cell rebuilds
 * Save and load: the snapshot through `OpenSkySaveStore`
 * Inventory — the first component added after M10
+* Equipment — slot conflicts and what an equip makes visible
 * Spawned references — objects the running game placed
 * Verification — `World > Runtime State` and the M10.1 acceptance record
 * Verification — the M10.2 panel surfaces and the M10 acceptance record
@@ -718,8 +719,7 @@ to — because passing them separately is how a mutation ends up attributed to t
   gold.
 
 `equip`, `unequip` and `setEquipped` store and journal the equipped set and nothing more.
-Slot conflicts and ARMA arbitration are issue #178; this issue only gives that work
-somewhere to land.
+Slot conflicts are `EquipmentRuntime`'s, below.
 
 ### Serialization
 
@@ -761,6 +761,77 @@ outfit, 12776 stacks, 15232 items) against indexes of 6930 items, 3075 LVLI and 
 with zero invariant violations: every stack list sorted, deduplicated and positive, and
 every equipped set a subset of what its actor carries. It also confirms the default gold
 form on the data rather than from memory — `Gold001`, `0000000F`, value 1, weight 0.
+
+## Equipment — slot conflicts and what an equip makes visible
+
+Issue #178 (item 12.2.1) turns "wear this" into one journalled write.
+`EquipmentRuntime` (`opensky/Inventory/EquipmentRuntime.swift`) sits over
+`InventoryRuntime` for the same reason that one sits over `WorldStateStore`: equipping
+needs slot data the inventory layer has no business holding.
+
+### What an item occupies
+
+`EquipmentCatalog` (`opensky/Inventory/EquipmentSlots.swift`) indexes the ARMO and WEAP top
+groups into `EquipmentOccupancy`, which has two disjoint halves because the game has two
+disjoint kinds of slot:
+
+| half    | source                     | why not the other half                                     |
+| ------- | -------------------------- | ---------------------------------------------------------- |
+| `slots` | ARMO `BOD2`/`BODT`         | the biped-object bitfield the appearance pass already masks skin against |
+| `hands` | WEAP `DNAM` animation type | no bit of the biped bitfield means "right hand" — slot 39 is the shield's *armour*, not the hand holding it |
+
+Two-handed swords and axes, bows and crossbows take both hands; everything else, staves and
+the `other` catch-all included, takes the right hand — the hand the skeleton's `Weapon`
+attach node hangs off. Hands come from the animation type rather than the `ETYP` link
+because no EQUP decoder exists yet; when one lands it replaces `hands(for:)` alone.
+
+The catalog is separate from `ItemDefinitionStore` deliberately: that store's
+`ItemDefinition` is the *inventory* view — value, weight, name — and widening it would put
+armour layout data on every potion.
+
+### Conflict resolution
+
+`equip(_:on:)` computes the whole resulting equipped set before writing anything, so a
+refused equip leaves the store untouched and an accepted one is a single journal entry
+rather than one per displaced piece. An incoming item unequips everything whose occupancy
+overlaps its own in either half. The equipped set is therefore always internally
+consistent: no two members ever claim the same biped slot or the same hand.
+
+Two rules the API refuses rather than works around:
+
+* Equipping something the owner does not hold is `EquipmentError.notHeld`. Silently
+  equipping an item out of nowhere is how a duplication bug hides; give the item first.
+* Equipping something with no slots at all is `EquipmentError.notEquippable`. A potion
+  conflicts with nothing, so it would otherwise accumulate in the equipped set forever and
+  never be taken back out by any conflict.
+
+Unequipping something not worn is *not* an error: the caller asked for a state and that
+state already holds.
+
+### What an equip changes, and what it does not
+
+Equipping moves nothing between owners, so carry weight and carried value are unchanged —
+worn armour is still carried armour. The write is attributed to the owner's cell, which is
+what makes `noteStateMutation` rebuild that one cell and no other; the rebuilt actor then
+resolves its appearance from the equipped set instead of its plugin default outfit. See
+[actor records](/formats/actors.md) for the resolution and hand-attachment halves.
+
+The player goes through the same API. It mutates the player's equipped set and accounting
+and has no render target this milestone: the player is a physics capsule plus a camera, and
+the third-person body arrives with M14 player locomotion.
+
+### Tests
+
+`openskyTests/EquipmentRuntimeTests.swift` covers the catalog built from plugin bytes, the
+slot-conflict matrix (torso against torso, two-hander against one-hander, armour against
+weapon, disjoint slots), the round-trips, both typed refusals, the one-write-per-equip
+journal rule, cell attribution, and that carry weight does not move.
+`ActorEquipmentVisualTests.swift` covers the resolver override and DNAM draw ordering;
+`CellSceneBuilderEquipmentTests.swift` drives a whole cell build from a snapshot;
+`RigidAttachmentTests.swift` and `ActorEquipmentSwapTests.swift` cover the attachment
+palette maths and the resume-not-restart swap. `ActorEquipmentRealDataTests.swift` is the
+env-gated probe: it resolves Heimskr before and after an equip and writes both frames to
+gitignored `logs/`.
 
 ## Spawned references — objects the running game placed
 

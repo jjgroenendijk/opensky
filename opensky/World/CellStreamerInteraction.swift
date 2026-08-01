@@ -60,6 +60,30 @@ extension CellStreamer {
         return composition.referenceEntry(key: key)
     }
 
+    /// The resident ACHR closest to `position`, or nil when none is loaded.
+    ///
+    /// Exists so the equipment sidebar can name an NPC without the user
+    /// knowing a FormID (issue #178): the player has no rendered body this
+    /// milestone, so "equip on the nearest actor" is what makes an equip
+    /// visible. Linear over resident actors, which is tens of records, and
+    /// deterministic on ties through `actorEntries()`.
+    func nearestActorEntry(to position: SIMD3<Float>) -> RuntimeReferenceEntry? {
+        let entries = interiorScene.map {
+            $0.references.sortedEntries().filter { $0.placedActor != nil }
+        } ?? composition.actorEntries()
+        return entries.min { lhs, rhs in
+            distanceSquared(lhs, position) < distanceSquared(rhs, position)
+        }
+    }
+
+    private func distanceSquared(
+        _ entry: RuntimeReferenceEntry,
+        _ position: SIMD3<Float>
+    ) -> Float {
+        guard let actor = entry.placedActor else { return .greatestFiniteMagnitude }
+        return simd_length_squared(actor.placement.position - position)
+    }
+
     /// Which resident cell holds a reference, so a Papyrus world write can be
     /// attributed to one cell instead of every resident one (issue #172).
     func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {

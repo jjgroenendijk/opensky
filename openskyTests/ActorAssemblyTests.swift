@@ -25,6 +25,16 @@ private struct FakeActorAssets: ActorAssetProvider {
         result(path)
     }
 
+    /// Attachments key on path plus bone, so a test can tell an attachment
+    /// asset apart from the same model loaded as ordinary geometry.
+    func loadActorAttachment(
+        path: String,
+        bone: String,
+        skeleton _: String?
+    ) -> Result<String, ActorAssetFailure> {
+        failures[path].map(Result.failure) ?? .success("\(path)@\(bone)")
+    }
+
     private func result(_ path: String) -> Result<String, ActorAssetFailure> {
         failures[path].map(Result.failure) ?? .success(path)
     }
@@ -130,34 +140,4 @@ struct ActorAssemblyTests {
         }
         #expect(assembly.transform.columns.3 == SIMD4(position, 1))
     }
-}
-
-private func placedActor(
-    position: SIMD3<Float> = .zero,
-    rotation: SIMD3<Float> = .zero,
-    scale: Float = 1
-) throws -> PlacedActor {
-    var name = Data()
-    name.appendUInt32(0x1000)
-    var placement = Data()
-    for value in [
-        position.x, position.y, position.z,
-        rotation.x, rotation.y, rotation.z
-    ] {
-        placement.appendFloat32(value)
-    }
-    var xscl = Data()
-    xscl.appendFloat32(scale)
-    let bytes = ESMFixture.record(
-        "ACHR",
-        formID: 0x9000,
-        data: ESMFixture.field("NAME", name)
-            + ESMFixture.field("DATA", placement)
-            + ESMFixture.field("XSCL", xscl)
-    )
-    let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-    guard case let .record(record)? = children.first else {
-        throw ESMError.malformed("actor fixture did not produce a record")
-    }
-    return try PlacedActor(record: record)
 }

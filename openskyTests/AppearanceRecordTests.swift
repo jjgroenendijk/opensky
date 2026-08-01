@@ -194,51 +194,6 @@ struct AppearanceRecordDecodeTests {
         }
     }
 
-    // MARK: - ARMA
-
-    @Test func decodesArmorAddon() throws {
-        var fields = ESMFixture.field("EDID", ESMFixture.zstring("IronCuirassAA"))
-        var bod2 = Data()
-        bod2.appendUInt32(0b0100) // body
-        bod2.appendUInt32(1)
-        fields += ESMFixture.field("BOD2", bod2)
-        fields += formIDField("RNAM", 0x19)
-        fields += ESMFixture.field("DNAM", Data(count: 12)) // skipped
-        fields += ESMFixture.field("MOD2", ESMFixture.zstring("armor\\iron\\m.nif"))
-        fields += ESMFixture.field("MOD3", ESMFixture.zstring("armor\\iron\\f.nif"))
-        fields += formIDField("MODL", 0x0001_D4D4)
-        fields += formIDField("MODL", 0x0001_E5E5)
-        let addon = try ArmorAddon(
-            record: record(ESMFixture.record("ARMA", formID: 0x6000, data: fields))
-        )
-        #expect(addon.formID == FormID(0x6000))
-        #expect(addon.editorID == "IronCuirassAA")
-        #expect(addon.bodyTemplate?.slots == [.body])
-        #expect(addon.primaryRace == FormID(0x19))
-        #expect(addon.maleModelPath == "armor\\iron\\m.nif")
-        #expect(addon.femaleModelPath == "armor\\iron\\f.nif")
-        #expect(addon.additionalRaces == [FormID(0x0001_D4D4), FormID(0x0001_E5E5)])
-    }
-
-    @Test func armorAddonOptionalFieldsNilWhenAbsent() throws {
-        let fields = ESMFixture.field("EDID", ESMFixture.zstring("BareAA"))
-        let addon = try ArmorAddon(
-            record: record(ESMFixture.record("ARMA", formID: 1, data: fields))
-        )
-        #expect(addon.primaryRace == nil)
-        #expect(addon.maleModelPath == nil)
-        #expect(addon.femaleModelPath == nil)
-        #expect(addon.additionalRaces.isEmpty)
-        #expect(addon.bodyTemplate == nil)
-    }
-
-    @Test func armorAddonRejectsOtherRecordTypes() throws {
-        let bytes = ESMFixture.record("ARMO", formID: 1, data: Data())
-        #expect(throws: ESMError.self) {
-            _ = try ArmorAddon(record: record(bytes))
-        }
-    }
-
     // MARK: - OTFT
 
     @Test func decodesOutfit() throws {

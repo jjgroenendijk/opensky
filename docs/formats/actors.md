@@ -152,20 +152,60 @@ ARMO MODL is a 4-byte ARMA FormID, never a path (probed: SkinNaked carries
 ## ARMA -> ArmorAddon
 
 How a piece displays on a body: per-gender models + applicable races.
-MOD4/MOD5 first-person models, texture swaps (NAM0-3), DNAM priorities, and
-MODT hashes are skipped.
+MOD4/MOD5 first-person models, texture swaps (NAM0-3), and MODT hashes are
+skipped.
 
 | field     | type    | decoded                                       |
 | --------- | ------- | --------------------------------------------- |
 | EDID      | zstring | `editorID`                                    |
 | BOD2/BODT | struct  | `bodyTemplate` — slots the armature covers    |
 | RNAM      | formID  | `primaryRace`                                 |
+| DNAM      | struct  | draw priorities + weapon adjust (below)       |
 | MODL      | formID  | `additionalRaces[]` (base + vampire variants) |
 | MOD2      | zstring | `maleModelPath` (3rd person)                  |
 | MOD3      | zstring | `femaleModelPath` (3rd person)                |
 
 Probed: ARMA records at form version 40 emit 12-byte BODT while ARMO/RACE at
 44 emit 8-byte BOD2 — the shared decoder accepts both.
+
+### DNAM, 12 bytes
+
+```text
+00 uint8   male draw priority
+01 uint8   female draw priority
+02 4 bytes weight-slider flags (xEdit) / one unknown uint32 (UESP)
+06 uint8   detection sound value
+07 1 byte  unused
+08 float32 weapon adjust
+```
+
+UESP and xEdit name bytes 2-5 differently and agree on every offset. Only the
+two priorities and `weaponAdjust` are carried; detection sound is stealth and
+the weight sliders are body morphs, neither of which this engine has. A
+payload shorter than 12 bytes decodes as far as it reaches rather than
+throwing — a missing priority degrades to the same reading as no DNAM, while
+refusing the record would drop an armature that renders fine.
+
+**Priority is a draw order, not a visibility rule.** The Creation Kit wiki
+"ArmorAddon" page: priority "is used to determine the order of the
+ArmorAddons. The base naked body (for all parts) is always 0. The armor for a
+torso would then be 5 and gloves that you want to draw over the ends of
+sleeves, for example, would be 10." Probed, and this is the case that settles
+it:
+
+```text
+openskycli record OrcishCuirassAA
+  -> slots 0x114 (body|forearms|calves), priority male 5 female 5
+openskycli record OrcishBootsAA
+  -> slots 0x180 (feet|calves),          priority male 10 female 10
+```
+
+The two share the calves slot and the boots outrank the cuirass there. Were
+priority a visibility rule, equipping Orcish boots would delete the Orcish
+cuirass, because one armature covers body, forearms *and* calves and hiding
+it for losing one slot takes the torso with it. Vanilla draws both. So
+OpenSky sorts worn parts by ascending priority and hides nothing on that
+basis; hiding stays the equipped-slot mask's job.
 
 ## OTFT -> Outfit
 
@@ -237,7 +277,95 @@ Failure policy (milestone gate): broken chains throw typed
 cyclic leveled lists. Never a silent naked fallback. Missing optional parts
 degrade to reason-tagged `AppearanceSkip`s (dangling armature, no compatible
 armature, no model, masked by outfit, duplicate armature, missing skeleton
-or body slots) so accounting stays exact.
+or body slots, unrenderable equipment) so accounting stays exact.
+
+## Runtime equipment (M12.2.1)
+
+`resolve(appearance:equipped:)` takes an optional equipped-FormID set that
+*replaces* the DOFT chain for that actor. Nil — an actor nothing has touched —
+resolves through DOFT exactly as before.
+
+Replacement rather than merge, because the baseline equipped set already *is*
+the default outfit (`InventoryBaselineResolver.actorBaseline`); merging the
+two would re-dress an actor the moment anything undressed it. An empty
+equipped set therefore means a stripped actor, and the skin the outfit was
+hiding comes back.
+
+Each equipped FormID resolves to one of three things:
+
+* a known ARMO -> a worn piece, through the same ARMA selection and slot
+  masking the outfit path uses;
+* an equippable WEAP with a MODL -> a `ResolvedAttachment` (below);
+* anything else -> an `AppearanceSkip` tagged `unrenderableEquipment`.
+
+A runtime equipped set never throws. A broken DOFT chain is malformed plugin
+data and the gate says throw; an equipped FormID naming nothing renderable is
+ordinary runtime state — a mod item, a script equipping a token — and
+degrades to a tagged skip.
+
+Where the set comes from: `CellSceneBuilderActors` reads the actor's
+`ReferenceInventoryState` out of the build's `WorldStateSnapshot`. Refresh is
+the ordinary `noteStateMutation` cell rebuild (see
+[runtime state](/engine/runtime-state.md)); there is no patching path.
+
+## Weapon hand attachment (M12.2.1)
+
+A drawn weapon is a rigid model hung off a named skeleton bone. Bone names are
+observed from the install, never assumed — `openskycli skeleton` over
+`meshes\actors\character\character assets\skeleton.hkx`:
+
+| rig bone      | parent                | meaning                        |
+| ------------- | --------------------- | ------------------------------ |
+| `Weapon` (43) | `NPC R Hand [RHnd]`   | drawn right-hand weapon        |
+| `Shield` (42) | `NPC L Hand [LHnd]`   | drawn left-hand shield         |
+| `Quiver` (60) | spine                 | quiver                         |
+| `WeaponSword`, `WeaponAxe`, `WeaponDagger`, `WeaponMace` | pelvis | sheathed |
+| `WeaponBack`, `WeaponBow` | spine     | sheathed on the back           |
+
+OpenSky uses `Weapon`. The sheathed nodes belong to draw/sheath, which is M15.
+The matching node in `skeleton.nif` is spelled `WEAPON` (uppercase) while the
+Havok rig spells it `Weapon`, so `NIFSkeleton.transform(forBoneNamed:)` folds
+case; skin bone names match exactly and take the fast path.
+
+`RenderScene` bakes every placement's transform into its draw instances when
+the scene is built, and cell scenes are built on the streaming queue rather
+than per frame — so an attachment cannot be a placement with a fixed
+transform. The one per-frame transform channel that already exists is GPU
+skinning, so `RigidAttachment` rewrites the weapon model as a skinned mesh
+with exactly one bone, named after the attachment node. The pose the actor's
+clip already computes for `Weapon` then moves it, with no new per-frame code.
+
+Given the shader's `world = modelMatrix * (bone * v)` and
+`modelMatrix = actorTransform * meshLocal`, the palette halves are:
+
+```text
+rootParentToSkin   = meshLocal⁻¹
+skinToBoneMatrices = [meshLocal]
+bindPoseMatrices   = [meshLocal⁻¹ · restTransform · meshLocal]
+
+world = actorTransform · meshLocal · meshLocal⁻¹ · boneWorld · meshLocal · v
+      = actorTransform · boneWorld · (meshLocal · v)
+```
+
+which is the weapon's own geometry placed at the bone, in the actor's space.
+The bind matrix uses the skeleton's rest transform for the node, so a model
+that is never animated still hangs in the right place instead of collapsing
+to the origin.
+
+Attachment placements carry nil bounds (never culled): the model's own bounds
+sit at the weapon's origin, not where the hand carries it, so pushing them
+through the actor transform would name a box the geometry is never in.
+
+A mid-clip swap **resumes**, it does not restart. `Renderer.animationTime` is
+a monotonic clock a cell rebuild never touches, and
+`RenderScene.updateAnimations(at:)` samples every resident actor from it, so
+the playback a rebuild produces is sampled at the same world time as the one
+it replaced. No bind-pose frame appears because `Renderer.draw` poses before
+it encodes.
+
+Out of scope here: draw/sheath animations (M15), shields-on-back and
+dual-wield placement, ARMA texture swaps, and the DNAM `weaponAdjust` float,
+which is decoded but not yet applied to the attachment offset.
 
 ## FaceGen paths
 

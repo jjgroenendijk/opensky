@@ -85,7 +85,7 @@ nonisolated enum MeshLibraryError: Error, Equatable {
 }
 
 nonisolated final class MeshLibrary {
-    private let fileSystem: VirtualFileSystem
+    let fileSystem: VirtualFileSystem
     let device: MTLDevice
     let textures: TextureLibrary
     private var cache: [String: RenderModel] = [:]
@@ -94,7 +94,7 @@ nonisolated final class MeshLibrary {
     private var skippedShapes: [String: Int] = [:]
     /// Model-space AABB per loaded path — captured at parse time because the
     /// vertex data is gone from the CPU after upload (see ModelBounds).
-    private var modelBounds: [String: ModelBounds] = [:]
+    var modelBounds: [String: ModelBounds] = [:]
     /// Texture keys captured when each cached model was first uploaded.
     private var modelTextureKeys: [String: Set<String>] = [:]
     /// Immutable particle definitions decoded beside each normal model. A
@@ -104,9 +104,13 @@ nonisolated final class MeshLibrary {
     /// Mesh keys resolved since the last drain, so a cell build can record its
     /// mesh working set (for eviction keep-sets). Build-queue confined.
     private var touchedKeys: Set<String> = []
-    private var cachedCharacterSkeleton: NIFSkeleton?
-    private var triedCharacterSkeleton = false
-    private var actorSkeletons: [String: NIFSkeleton] = [:]
+    // Internal rather than private: the actor-facing loaders live in
+    // MeshLibraryActors.swift (split for the type-body length cap) and a Swift
+    // extension in another file cannot reach `private` members. Still
+    // build-queue confined; nothing outside this type writes them.
+    var cachedCharacterSkeleton: NIFSkeleton?
+    var triedCharacterSkeleton = false
+    var actorSkeletons: [String: NIFSkeleton] = [:]
 
     /// Distinct mesh paths successfully parsed + uploaded.
     private(set) var loadedCount = 0
@@ -135,29 +139,17 @@ nonisolated final class MeshLibrary {
         try loadModel(path: path, terrainLODClipMask: terrainLODClipMask)
     }
 
-    private func loadModel(
-        path: String,
-        terrainLODClipMask: TerrainLODClipMask?,
-        actorSkeleton: ActorSkeletonAsset? = nil,
-        explicitActorSkeleton: Bool = false
-    ) throws -> RenderModel {
-        let pathKey = try meshKey(for: path)
-        let key = cacheKey(
-            path: pathKey,
-            terrainLODClipMask: terrainLODClipMask,
-            actorSkeletonKey: explicitActorSkeleton ? actorSkeleton?.pathKey ?? "none" : nil
-        )
-        touchedKeys.insert(key)
-        if let hit = cache[key] {
-            textures.markTouched(modelTextureKeys[key] ?? [])
-            return hit
-        }
-
+    /// The NIF behind one normalized key, flattened. Skeleton choice: an
+    /// explicit actor skeleton when the caller supplied one, otherwise the
+    /// shared character rig for skinned character meshes, otherwise none.
+    private func decode(
+        pathKey: String,
+        actorSkeleton: ActorSkeletonAsset?,
+        explicitActorSkeleton: Bool
+    ) throws -> (model: Model, particles: [ParticleSystemDefinition]) {
         guard let data = try? fileSystem.contents(forPath: pathKey) else {
             throw MeshLibraryError.fileNotFound(path: pathKey)
         }
-        let sourceModel: Model
-        let decodedParticles: [ParticleSystemDefinition]
         do {
             let file = try NIFFile(data: data)
             let skeleton: NIFSkeleton?
@@ -168,13 +160,50 @@ nonisolated final class MeshLibrary {
                     && file.blocks.contains { $0.typeName == "NiSkinData" }
                 skeleton = usesCharacterSkeleton ? characterSkeleton() : nil
             }
-            sourceModel = try file.model(skeleton: skeleton)
-            decodedParticles = try file.particleSystems()
+            return try (file.model(skeleton: skeleton), file.particleSystems())
+        } catch let error as MeshLibraryError {
+            throw error
         } catch {
             throw MeshLibraryError.parseFailed(path: pathKey, reason: String(describing: error))
         }
-        let model = terrainLODClipMask.map { TerrainLODClipper.clipped(sourceModel, to: $0) }
-            ?? sourceModel
+    }
+
+    func loadModel(
+        path: String,
+        terrainLODClipMask: TerrainLODClipMask?,
+        actorSkeleton: ActorSkeletonAsset? = nil,
+        explicitActorSkeleton: Bool = false,
+        attachmentBone: String? = nil
+    ) throws -> RenderModel {
+        let pathKey = try meshKey(for: path)
+        let key = cacheKey(
+            path: pathKey,
+            terrainLODClipMask: terrainLODClipMask,
+            actorSkeletonKey: explicitActorSkeleton ? actorSkeleton?.pathKey ?? "none" : nil,
+            attachmentBone: attachmentBone
+        )
+        touchedKeys.insert(key)
+        if let hit = cache[key] {
+            textures.markTouched(modelTextureKeys[key] ?? [])
+            return hit
+        }
+
+        let decoded = try decode(
+            pathKey: pathKey,
+            actorSkeleton: actorSkeleton,
+            explicitActorSkeleton: explicitActorSkeleton
+        )
+        let decodedParticles = decoded.particles
+        var model = terrainLODClipMask
+            .map { TerrainLODClipper.clipped(decoded.model, to: $0) } ?? decoded.model
+        if let attachmentBone {
+            model = RigidAttachment.skinned(
+                model,
+                to: attachmentBone,
+                restTransform: actorSkeleton?.skeleton
+                    .transform(forBoneNamed: attachmentBone) ?? matrix_identity_float4x4
+            )
+        }
         guard !model.meshes.isEmpty else { throw MeshLibraryError.emptyModel(path: key) }
 
         let render: RenderModel
@@ -196,68 +225,6 @@ nonisolated final class MeshLibrary {
         modelBounds[key] = ModelBounds.containing(model: model)
         loadedCount += 1
         return render
-    }
-
-    func loadActorSkeleton(path: String) -> Result<ActorSkeletonAsset, ActorAssetFailure> {
-        let pathKey: String
-        do {
-            pathKey = try meshKey(for: path)
-        } catch {
-            return .failure(.missing)
-        }
-        if let skeleton = actorSkeletons[pathKey] {
-            return .success(ActorSkeletonAsset(pathKey: pathKey, skeleton: skeleton))
-        }
-        guard let data = try? fileSystem.contents(forPath: pathKey) else {
-            return .failure(.missing)
-        }
-        do {
-            let skeleton = try NIFSkeleton(file: NIFFile(data: data))
-            actorSkeletons[pathKey] = skeleton
-            return .success(ActorSkeletonAsset(pathKey: pathKey, skeleton: skeleton))
-        } catch {
-            return .failure(.invalid)
-        }
-    }
-
-    func loadActorModel(
-        path: String,
-        skeleton: ActorSkeletonAsset?
-    ) -> Result<ActorRenderAsset, ActorAssetFailure> {
-        do {
-            let model = try loadModel(
-                path: path,
-                terrainLODClipMask: nil,
-                actorSkeleton: skeleton,
-                explicitActorSkeleton: true
-            )
-            let pathKey = try meshKey(for: path)
-            let key = cacheKey(
-                path: pathKey,
-                terrainLODClipMask: nil,
-                actorSkeletonKey: skeleton?.pathKey ?? "none"
-            )
-            return .success(ActorRenderAsset(model: model, bounds: modelBounds[key]))
-        } catch MeshLibraryError.fileNotFound {
-            return .failure(.missing)
-        } catch {
-            return .failure(.invalid)
-        }
-    }
-
-    private func characterSkeleton() -> NIFSkeleton? {
-        if triedCharacterSkeleton {
-            return cachedCharacterSkeleton
-        }
-        triedCharacterSkeleton = true
-        let path = "meshes\\actors\\character\\character assets\\skeleton.nif"
-        guard
-            let data = try? fileSystem.contents(forPath: path),
-            let file = try? NIFFile(data: data),
-            let skeleton = try? NIFSkeleton(file: file)
-        else { return nil }
-        cachedCharacterSkeleton = skeleton
-        return skeleton
     }
 
     /// Uploads an engine-built terrain patch: the quadrant mesh plus its
@@ -396,7 +363,8 @@ nonisolated final class MeshLibrary {
     func cacheKey(
         path: String,
         terrainLODClipMask: TerrainLODClipMask?,
-        actorSkeletonKey: String? = nil
+        actorSkeletonKey: String? = nil,
+        attachmentBone: String? = nil
     ) -> String {
         var key = path
         if let terrainLODClipMask {
@@ -404,6 +372,9 @@ nonisolated final class MeshLibrary {
         }
         if let actorSkeletonKey {
             key += "|actor-skeleton:" + actorSkeletonKey
+        }
+        if let attachmentBone {
+            key += "|attach:" + attachmentBone
         }
         return key
     }

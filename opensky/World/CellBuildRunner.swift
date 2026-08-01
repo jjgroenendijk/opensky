@@ -75,6 +75,11 @@ nonisolated protocol GlobalDataProviding {
 /// confinement.
 nonisolated protocol ItemDataProviding {
     var inventoryBaselines: InventoryBaselineResolver? { get }
+    /// Slot and model data for equippable items (issue #178), paired with the
+    /// baselines above to build the session's `EquipmentRuntime`. Separate
+    /// from the baseline resolver because equipping needs body templates the
+    /// inventory view deliberately does not carry.
+    var equipmentCatalog: EquipmentCatalog? { get }
 }
 
 /// Optional script-loading seam a provider can expose (issue #171). The
@@ -130,6 +135,9 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     /// Item/container/leveled-list indexes (issue #177); nil when the session
     /// was built without them, which is every synthetic scene.
     var inventoryBaselines: InventoryBaselineResolver?
+    /// Equippable-item slot index (issue #178); nil on the same synthetic
+    /// scenes, and then equipping reports itself unavailable.
+    var equipmentCatalog: EquipmentCatalog?
     /// GMST-derived walk/run values plus explicit documented fallbacks.
     var movementConfiguration: PlayerMovementConfiguration = .synthetic
 

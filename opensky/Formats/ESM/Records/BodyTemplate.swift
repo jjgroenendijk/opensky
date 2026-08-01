@@ -46,6 +46,21 @@ nonisolated struct BodySlots: OptionSet, Equatable {
     func overlaps(_ other: BodySlots) -> Bool {
         !isDisjoint(with: other)
     }
+
+    /// The named bits above, paired with their nif.xml names, so a readout can
+    /// spell a slot mask without a switch at the call site (issue #178). Slots
+    /// with no name here stay reachable through `rawValue`, and a caller that
+    /// prints this list is responsible for saying so — see
+    /// `GameViewController.describe(_:)`, which appends the unnamed remainder
+    /// rather than dropping it.
+    static let namedSlots: [(name: String, slots: BodySlots)] = [
+        ("head", .head), ("hair", .hair), ("body", .body), ("hands", .hands),
+        ("forearms", .forearms), ("amulet", .amulet), ("ring", .ring),
+        ("feet", .feet), ("calves", .calves), ("shield", .shield),
+        ("tail", .tail), ("long hair", .longHair), ("circlet", .circlet),
+        ("ears", .ears), ("decapitated head", .decapitatedHead),
+        ("decapitate", .decapitate), ("fx01", .fx01)
+    ]
 }
 
 /// Armor material class (BOD2/BODT trailing word). Unknown values decode to
