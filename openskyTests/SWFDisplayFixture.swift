@@ -180,6 +180,21 @@ enum SWFDisplayFixture {
         return SWFFixture.Tag(code: 56, body: writer.bytes())
     }
 
+    /// ImportAssets2 (71): URL STRING, two reserved bytes, Count UI16, then
+    /// (CharacterId UI16, Name STRING) pairs (spec v19 p. 286).
+    static func importAssets2Tag(url: String, assets: [(UInt16, String)]) -> SWFFixture.Tag {
+        var writer = SWFBitWriter()
+        writeString(&writer, url)
+        writer.appendByte(1)
+        writer.appendByte(0)
+        writer.appendUInt16LE(UInt16(assets.count))
+        for asset in assets {
+            writer.appendUInt16LE(asset.0)
+            writeString(&writer, asset.1)
+        }
+        return SWFFixture.Tag(code: 71, body: writer.bytes())
+    }
+
     /// DefineSprite (39): id + frame count + nested control tags + End.
     static func spriteTag(
         characterId: UInt16,
