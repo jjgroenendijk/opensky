@@ -117,6 +117,32 @@ enum ESMFixture {
         Data(string.utf8) + Data([0])
     }
 
+    /// Full 92-byte CELL XCLL / LGTM DATA lighting payload.
+    static func cellLightingData(inherits: UInt32) -> Data {
+        var data = Data()
+        appendRGBX(10, 20, 30, to: &data)
+        appendRGBX(40, 50, 60, to: &data)
+        appendRGBX(70, 80, 90, to: &data)
+        data.appendFloat32(100)
+        data.appendFloat32(900)
+        data.appendUInt32(UInt32(bitPattern: 180))
+        data.appendUInt32(UInt32(bitPattern: -45))
+        data.appendFloat32(0.8)
+        data.appendFloat32(2000)
+        data.appendFloat32(1.5)
+        for value: UInt8 in 1 ... 6 {
+            appendRGBX(value, value + 1, value + 2, to: &data)
+        }
+        appendRGBX(7, 8, 9, to: &data) // unused specular color
+        data.appendFloat32(1) // unused Fresnel power
+        appendRGBX(91, 92, 93, to: &data)
+        data.appendFloat32(0.75)
+        data.appendFloat32(250)
+        data.appendFloat32(750)
+        data.appendUInt32(inherits)
+        return data
+    }
+
     /// Full RFC 1950 zlib stream: 2-byte header, deflate payload, adler32.
     static func zlibStream(_ payload: Data) -> Data {
         let capacity = payload.count + 256
@@ -149,5 +175,14 @@ enum ESMFixture {
         }
         Swift.withUnsafeBytes(of: ((s2 << 16) | s1).bigEndian) { out.append(contentsOf: $0) }
         return out
+    }
+
+    private static func appendRGBX(
+        _ red: UInt8,
+        _ green: UInt8,
+        _ blue: UInt8,
+        to data: inout Data
+    ) {
+        data.append(contentsOf: [red, green, blue, 0])
     }
 }
