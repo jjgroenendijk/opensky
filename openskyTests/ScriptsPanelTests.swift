@@ -34,6 +34,7 @@ struct ScriptsPanelTests {
         let panel = ScriptsPanelViewController()
         panel.loadViewIfNeeded()
         #expect(panel.instancesSection.sectionIdentifier == "scriptInstances")
+        #expect(panel.questsSection.sectionIdentifier == "scriptQuests")
         #expect(panel.eventsSection.sectionIdentifier == "scriptEvents")
         #expect(panel.schedulerSection.sectionIdentifier == "scriptScheduler")
         #expect(panel.nativeTallySection.sectionIdentifier == "scriptNativeTally")
@@ -43,7 +44,7 @@ struct ScriptsPanelTests {
         #expect(panel.scriptBurstControl.accessibilityIdentifier() == "ScriptBurstControl")
 
         for identifier in [
-            "ScriptInstancesStatsLabel", "ScriptEventsStatsLabel",
+            "ScriptInstancesStatsLabel", "ScriptQuestsStatsLabel", "ScriptEventsStatsLabel",
             "ScriptSchedulerStatsLabel", "ScriptNativeTallyStatsLabel"
         ] {
             #expect(scriptsReadout(identifier, in: panel.view) != nil, "\(identifier) is missing")

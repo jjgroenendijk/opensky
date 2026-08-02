@@ -106,6 +106,7 @@
 				"Shell/Sections/ScriptEventsSection.swift",
 				"Shell/Sections/ScriptInstancesSection.swift",
 				"Shell/Sections/ScriptNativeTallySection.swift",
+				"Shell/Sections/ScriptQuestsSection.swift",
 				"Shell/Sections/ScriptSchedulerSection.swift",
 				"Shell/Sections/ScriptSchedulerSectionInput.swift",
 				"Shell/Sections/SWFRuntimeSection.swift",

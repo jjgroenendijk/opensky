@@ -140,6 +140,9 @@ nonisolated enum PapyrusWorldSkipReason: Hashable, Sendable {
     case unknownSaveScript
     case unknownSaveVariable
     case unknownSaveTimerTarget
+    /// A stage fragment named a script the quest holds no live instance of,
+    /// so there was nothing to send the fragment function to (issue #322).
+    case missingQuestFragmentInstance
 
     var name: String {
         switch self {
@@ -152,6 +155,7 @@ nonisolated enum PapyrusWorldSkipReason: Hashable, Sendable {
         case .unknownSaveScript: "saved script unknown"
         case .unknownSaveVariable: "saved variable unknown"
         case .unknownSaveTimerTarget: "saved timer target unknown"
+        case .missingQuestFragmentInstance: "quest fragment instance missing"
         }
     }
 }

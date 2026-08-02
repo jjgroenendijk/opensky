@@ -18,14 +18,19 @@ extension GameViewController: ScriptControlProviding {
         guard let papyrus else {
             return .empty
         }
+        let running = papyrusBridge?.questRuntime?.runningQuests().count ?? 0
         guard let target = hud.interactionTarget else {
-            return papyrus.scriptsSnapshot()
+            return papyrus.scriptsSnapshot(runningQuestCount: running)
         }
         let formID = target.interaction.reference
         guard let entry = streamer?.referenceEntry(formID: formID) else {
-            return papyrus.scriptsSnapshot(targetDescription: formID.description)
+            return papyrus.scriptsSnapshot(
+                targetDescription: formID.description, runningQuestCount: running
+            )
         }
-        return papyrus.scriptsSnapshot(target: entry.key)
+        return papyrus.scriptsSnapshot(
+            target: entry.key, runningQuestCount: running
+        )
     }
 
     /// Freezes the VM's own tick. Deliberately not `Renderer.worldSimPaused`:

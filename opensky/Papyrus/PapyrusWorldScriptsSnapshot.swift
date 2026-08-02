@@ -18,15 +18,25 @@ extension PapyrusWorldRuntime {
     ///   - targetDescription: display text for `target`; defaults to the
     ///     key's own description. Callers that resolved a FormID the streamer
     ///     could not attribute pass their own text instead.
+    ///   - runningQuestCount: quests the session's `QuestRuntime` reports as
+    ///     running. Passed in rather than read here because quest *state* is
+    ///     the world store's, not the VM's; the VM only knows which quests it
+    ///     holds instances for.
     func scriptsSnapshot(
         target: ReferenceKey? = nil,
-        targetDescription: String? = nil
+        targetDescription: String? = nil,
+        runningQuestCount: Int = 0
     ) -> ScriptsSnapshot {
         let tally = runtime.tally
         return ScriptsSnapshot(
             instanceCount: instancesByKey.count,
             targetDescription: targetDescription ?? target?.description,
             targetScripts: scriptNames(attachedTo: target),
+            questInstanceCount: questInstanceKeys.count,
+            questCount: questCount,
+            runningQuestCount: runningQuestCount,
+            questFragmentsQueued: questFragmentsQueued,
+            lastQuestFragment: lastQuestFragment,
             recentEvents: recentEvents,
             droppedRecentEventCount: droppedRecentEventCount,
             pendingEventCount: eventQueue.count,

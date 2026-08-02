@@ -974,10 +974,13 @@ Deliberately **not** modelled in v1, and recorded here rather than left implicit
 real start machinery. Skyrim starts quests through story-manager events (the QUST `ENAM`
 event and the SMEN/SMQN/SMBN node tree), through the seven-day repopulation timer, and
 through dialogue — none of which OpenSky has. A quest that vanilla would start from an event
-therefore stays dormant here until something calls `startQuest`. Alias fill is #183, the
-journal UI is #184, quest script instances and stage fragment execution are #322, and HUD
-quest markers stay undriven: the `HUDMovieBridge` compass cases exist but nothing in this
-issue feeds them.
+therefore stays dormant here until something calls `startQuest`. Quest script instances,
+the `Quest` natives and stage fragment execution landed with #322 and are documented in
+[Papyrus virtual machine](/engine/papyrus-vm.md); that layer is what gives `startQuest`,
+`setStage` and the objective setters a script-side caller, and it is where the session
+builds the `QuestStore` these mutations validate against. Alias fill is #183, the journal
+UI is #184, and HUD quest markers stay undriven: the `HUDMovieBridge` compass cases exist
+but nothing feeds them.
 
 ### The mutation API
 

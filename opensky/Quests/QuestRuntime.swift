@@ -82,6 +82,22 @@ struct QuestRuntime {
         }
     }
 
+    /// Every quest whose effective state is running — runtime states over
+    /// plugin baselines — paired with the key its state is filed under, in
+    /// editor-ID order.
+    ///
+    /// This is the set the Papyrus side instantiates scripts for (issue #322):
+    /// at session wire-up it is the start-game-enabled quests, and after a
+    /// save is restored it is whatever that save recorded.
+    func runningQuests() -> [(quest: Quest, key: ReferenceKey)] {
+        quests.sortedQuests().compactMap { quest in
+            guard let key = quests.key(for: quest.formID) else { return nil }
+            let state = store.component(QuestRuntimeState.self, for: key)
+                ?? QuestRuntimeState.baseline(for: quest)
+            return state.isRunning ? (quest: quest, key: key) : nil
+        }
+    }
+
     /// The seam condition functions read quest state through: this session's
     /// runtime states over the plugin baselines.
     func resolution() -> QuestResolution {

@@ -19,6 +19,11 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// Plugin GLOB defaults. Nil in a synthetic session, where only overrides
     /// already recorded in the store are visible.
     var globals: GlobalStore?
+    /// Quest mutation API the `Quest` natives run through (issue #322). Nil in
+    /// a session with no QUST index, where every quest native fails with
+    /// `PapyrusQuestBridgeError.noQuestData` rather than inventing state.
+    /// Conformance lives in `PapyrusWorldStateBridgeQuests.swift`.
+    var questRuntime: QuestRuntime?
     /// Game clock the five time globals project from, matching how every other
     /// consumer builds a `GlobalResolution`.
     var clockSource: (() -> GameClock?)?

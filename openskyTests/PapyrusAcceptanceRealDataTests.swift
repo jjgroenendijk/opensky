@@ -38,23 +38,27 @@ struct PapyrusAcceptanceRealDataTests {
         #expect(census.declarationTotal == 686)
         #expect(census.referenceTotal == 65477)
         #expect(census.distinctReferencedTotal == 508)
-        #expect(coverage == PexNativeCoverage(implemented: 18, referenced: 508))
+        #expect(coverage == PexNativeCoverage(implemented: 47, referenced: 508))
         #expect(run.entryPoints == 577)
         #expect(run.pending == 0)
         #expect(run.terminalOutcomes == 577)
         #expect(run.completed == 240)
         #expect(runtime.tally.faultTotal == 337)
         #expect(runtime.tally.nativeCallTotal == 536)
-        #expect(runtime.tally.unimplementedNativeTotal == 457)
-        #expect(runtime.tally.nativeFailureTotal == 0)
+        #expect(runtime.tally.unimplementedNativeTotal == 349)
+        // The `Quest` family (issue #322) is registered but needs a world, and
+        // this acceptance runs the corpus headless: its calls now reach a
+        // native that refuses honestly instead of falling through to the
+        // unimplemented tally, which is where these 108 moved from.
+        #expect(runtime.tally.nativeFailureTotal == 108)
         #expect(runtime.tally.deferredAnimationTotal == 18)
         #expect(runtime.tally.rankedFaultKinds.map(\.name) == [
             "typeMismatch", "invalidJump", "invalidOperand"
         ])
         #expect(runtime.tally.rankedFaultKinds.map(\.count) == [231, 93, 13])
         #expect(runtime.tally.rankedUnimplementedNatives.first?.name
-            == "ObjectReference.GetLinkedRef")
-        #expect(runtime.tally.rankedUnimplementedNatives.first?.count == 45)
+            == "ReferenceAlias.AddInventoryEventFilter")
+        #expect(runtime.tally.rankedUnimplementedNatives.first?.count == 41)
 
         let report = Self.report(
             paths: paths,

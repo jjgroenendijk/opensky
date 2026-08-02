@@ -15,6 +15,7 @@ import AppKit
 
 final class ScriptsPanelViewController: InspectorPanelViewController {
     let instancesSection = ScriptInstancesSection()
+    let questsSection = ScriptQuestsSection()
     let eventsSection = ScriptEventsSection()
     let schedulerSection = ScriptSchedulerSection()
     let nativeTallySection = ScriptNativeTallySection()
@@ -24,6 +25,7 @@ final class ScriptsPanelViewController: InspectorPanelViewController {
     weak var provider: (any ScriptControlProviding)? {
         didSet {
             instancesSection.provider = provider
+            questsSection.provider = provider
             eventsSection.provider = provider
             schedulerSection.provider = provider
             nativeTallySection.provider = provider
@@ -31,7 +33,7 @@ final class ScriptsPanelViewController: InspectorPanelViewController {
     }
 
     override func makeSections() -> [PanelSectionViewController] {
-        [instancesSection, eventsSection, schedulerSection, nativeTallySection]
+        [instancesSection, questsSection, eventsSection, schedulerSection, nativeTallySection]
     }
 
     /// Control forwards for the verification-surface tests, mirroring

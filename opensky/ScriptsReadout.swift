@@ -28,6 +28,22 @@ nonisolated enum ScriptsReadout {
         """
     }
 
+    /// Quest script instances, the quests behind them, and stage-fragment
+    /// dispatch (issue #322).
+    ///
+    /// Running quests and quests with instances are two different numbers on
+    /// purpose: a quest that carries no scripts runs perfectly well without
+    /// any, so the gap between them is information rather than an error.
+    static func questsText(for snapshot: ScriptsSnapshot) -> String {
+        [
+            "Running quests: \(snapshot.runningQuestCount)"
+                + "  Scripted: \(snapshot.questCount)",
+            "Quest instances: \(snapshot.questInstanceCount)"
+                + "  Stage fragments queued: \(snapshot.questFragmentsQueued)",
+            "Last fragment: \(snapshot.lastQuestFragment ?? "none")"
+        ].joined(separator: "\n")
+    }
+
     /// Queue depth plus the dispatched-event tail, oldest first, in the same
     /// most-recent-last presentation the Runtime State journal uses.
     static func eventsText(for snapshot: ScriptsSnapshot) -> String {

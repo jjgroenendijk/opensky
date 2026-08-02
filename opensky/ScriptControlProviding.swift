@@ -33,6 +33,11 @@ nonisolated struct ScriptsSnapshot: Equatable {
         instanceCount: 0,
         targetDescription: nil,
         targetScripts: [],
+        questInstanceCount: 0,
+        questCount: 0,
+        runningQuestCount: 0,
+        questFragmentsQueued: 0,
+        lastQuestFragment: nil,
         recentEvents: [],
         droppedRecentEventCount: 0,
         pendingEventCount: 0,
@@ -67,6 +72,23 @@ nonisolated struct ScriptsSnapshot: Equatable {
     /// is targeted and when the target carries no scripts; the panel tells
     /// those apart by `targetDescription` being nil.
     let targetScripts: [String]
+
+    // MARK: Quests
+
+    /// Script instances belonging to a quest rather than to a placed
+    /// reference (issue #322). A subset of `instanceCount`.
+    let questInstanceCount: Int
+    /// Quests holding at least one of those instances.
+    let questCount: Int
+    /// Quests the session's state reports as running, scripted or not. Zero
+    /// when the session has no quest index at all, which is also what a
+    /// synthetic scene shows.
+    let runningQuestCount: Int
+    /// Stage fragments enqueued this session.
+    let questFragmentsQueued: Int
+    /// Newest stage fragment enqueued, worded like a recent-event entry. Nil
+    /// until a stage carrying a fragment is set.
+    let lastQuestFragment: String?
 
     // MARK: Events
 

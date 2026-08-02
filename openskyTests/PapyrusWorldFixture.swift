@@ -224,15 +224,19 @@ enum PapyrusWorldFixture {
     ///
     /// The attach leaves `OnInit`/`OnCellAttach`/`OnLoad` queued; call
     /// `drain(_:)` first when a test only cares about later events.
+    ///
+    /// - Parameter worldState: pass an existing store to build a second
+    ///   session over state a first one wrote, which is what a save/load test
+    ///   does.
     @MainActor
     static func session(
         objects: [PexObject],
         entries: [RuntimeReferenceEntry],
         cell: CellSceneLocation? = cell,
         globals: GlobalStore? = nil,
+        worldState: WorldStateStore = WorldStateStore(),
         attach: Bool = true
     ) -> Session {
-        let worldState = WorldStateStore()
         let references = PapyrusWorldFixtureReferences(entries: entries, cell: cell)
         let bridge = PapyrusWorldStateBridge(
             worldState: worldState, references: references, globals: globals

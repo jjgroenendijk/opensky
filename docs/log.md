@@ -4,6 +4,44 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-02
 
+* **Quest script instances, the `Quest` natives and stage fragments (issue #322, roadmap
+  13.3)**: quests are scriptable. At session wire-up every quest the #182 state reports as
+  running gets its VMAD scripts and its generated `QF_` fragment script instantiated, keyed
+  by the QUST record's session-stable `ReferenceKey` plus the script name — the same shape
+  a placed reference uses, so `PSCR` persistence, `firedOnInit` and the update timers all
+  applied with no change. Quest instances belong to no cell and are in no cell's attached
+  set, so nothing a cell does can reach them; `Stop` is the only thing that retires one.
+* The `Quest` native class is new: `IsRunning`, `IsCompleted`, `GetCurrentStageID`,
+  `IsStageDone`, `Start`, `Stop`, `CompleteQuest`, `SetCurrentStageID`, the three objective
+  setters, and the `GetStage`/`GetStageDone`/`SetStage` wrapper spellings shipped
+  `Quest.psc` declares. Every one runs through `QuestRuntime`, so the stage and objective
+  rules stay in item 13.2 and the natives add none of their own; `Reset`,
+  `IsStarting`/`IsStopping` and the alias getters are left to the unimplemented tally
+  rather than stubbed, because OpenSky cannot compute them honestly yet.
+* Setting a stage looks the stage up in the #181 fragment table and enqueues its fragment
+  functions on the normal event queue, so budget bounding, per-instance serialization and
+  global order apply to fragments like every other event. The deviations are stated rather
+  than hidden: `SetStage` and `Start` are latent in the real engine and immediate here, a
+  fragment runs on the transition into a stage only, and a shut-down stage keeps its
+  instances alive so the fragment it just queued still runs.
+* One general fix fell out of this: a method call on a receiver that has a script instance
+  dispatches under the script the function is *declared* in, so `resolveScript` now loads a
+  script's ancestors with it. Without the parent chain every inherited native — the whole
+  `ObjectReference` family included — arrived under the child script's name and missed the
+  registry. Headless native coverage over the vanilla corpus moved from 18 to 47 of 508
+  referenced natives, and 108 calls moved out of the unimplemented tally into honest
+  "needs a world" failures.
+* Wiring: the provider seam gained `QuestDataProviding`, so a session finally builds a
+  `QuestStore`; that also gave the four quest condition functions the index they had been
+  missing, and `World > Runtime State > Conditions` no longer reports "unresolved quest".
+  `World > Scripts` gained a Quests section showing running quests, scripted quests, quest
+  instances, fragments queued and the newest fragment.
+* Evidence: `PapyrusWorldQuestTests` and `PapyrusNativeQuestTests` over synthetic fixtures,
+  including a save taken mid-quest restoring into a fresh runtime with equal instance
+  states, and the env-gated `QuestScriptRealDataTests`, which starts the census-chosen
+  target quest `MGRArniel01` against the real install and runs its stage-10 fragment with
+  zero faults and zero unimplemented natives.
+
 * **Quest runtime state, its mutation API, the `GetStage` family and the `QSTS` save chunk
   (issue #182, roadmap 13.2)**: quests now have session state. `QuestRuntimeState` is one
   more `WorldStateComponent`, keyed by the QUST base record's session-stable

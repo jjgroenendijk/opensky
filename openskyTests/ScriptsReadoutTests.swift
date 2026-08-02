@@ -25,6 +25,34 @@ struct ScriptsReadoutTests {
         #expect(text.contains("Target scripts: none"))
     }
 
+    /// Running quests and scripted quests are separate numbers: a quest with no
+    /// scripts is normal, not a failure, so the readout shows both.
+    @Test
+    func questsTextSeparatesRunningQuestsFromScriptedOnes() {
+        let text = ScriptsReadout.questsText(
+            for: makeScriptsSnapshot(
+                questInstanceCount: 4,
+                questCount: 2,
+                runningQuestCount: 7,
+                questFragmentsQueued: 3,
+                lastQuestFragment: "Fragment_5 -> qf_openskyprobequest_00000700"
+            )
+        )
+        #expect(text.contains("Running quests: 7"))
+        #expect(text.contains("Scripted: 2"))
+        #expect(text.contains("Quest instances: 4"))
+        #expect(text.contains("Stage fragments queued: 3"))
+        #expect(text.contains("Last fragment: Fragment_5 -> qf_openskyprobequest_00000700"))
+    }
+
+    /// A session that has run no fragment says so, rather than leaving the line
+    /// blank.
+    @Test
+    func questsTextStatesAnAbsentFragment() {
+        let text = ScriptsReadout.questsText(for: makeScriptsSnapshot())
+        #expect(text.contains("Last fragment: none"))
+    }
+
     @Test
     func instancesTextListsAttachedScripts() {
         let text = ScriptsReadout.instancesText(
