@@ -291,6 +291,7 @@ nonisolated extension CellSceneBuilder {
         summary.actorAnimatedCount = actors.counts.animated
         summary.actorAnimationFailureCount = actors.counts.animationFailures
         summary.actorAnimationFailureReasons = actors.counts.animationFailureReasons
+        summary.actorAppearanceSkipReasons = actors.counts.appearanceSkipReasons
         return summary
     }
 }

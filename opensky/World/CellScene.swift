@@ -203,6 +203,12 @@ nonisolated struct CellLoadSummary: Equatable {
     var actorAnimatedCount = 0
     var actorAnimationFailureCount = 0
     var actorAnimationFailureReasons: [String] = []
+    /// Reason-tagged appearance skips, per actor, as
+    /// "ACHR <id>: <reason> (<subject>)" (issue #180). A rendered actor can
+    /// carry these — a masked skin part is a resolution decision, not a
+    /// failure — so this list is outside the accounting identities above and
+    /// is read by the `World > Inventory & Equipment` equipment inspection.
+    var actorAppearanceSkipReasons: [String] = []
 
     var skippedRefCount: Int {
         unsupportedBaseSkipCount + markerSkipCount + modelFailureSkipCount

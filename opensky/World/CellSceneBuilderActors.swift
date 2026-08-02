@@ -37,6 +37,16 @@ nonisolated struct ActorBuildCounts {
     var animated = 0
     var animationFailures = 0
     var animationFailureReasons: [String] = []
+    /// Every `AppearanceSkip` the visual resolution reported, per actor, as
+    /// "ACHR <id>: <reason> (<subject>)" (issue #180).
+    ///
+    /// Not an error bucket and deliberately outside the exact-accounting
+    /// identity above: an actor whose skin torso is masked by its equipped
+    /// cuirass renders perfectly and still reports a skip. The list exists so
+    /// the `World > Inventory & Equipment` panel can say why a piece of an
+    /// equipped set contributed no geometry, instead of leaving a missing
+    /// gauntlet looking like an equip that silently did nothing.
+    var appearanceSkipReasons: [String] = []
 }
 
 /// Assembled actor render data handed to makeScene beside static instances.
@@ -223,6 +233,7 @@ nonisolated extension CellSceneBuilder {
         id: String,
         into build: inout CellActorBuild
     ) {
+        build.counts.appearanceSkipReasons += Self.appearanceSkipLines(assembly, id: id)
         guard assembly.isRenderable else {
             build.counts.failures += 1
             let reasons = assembly.skips.map { String(describing: $0.reason) }
@@ -249,6 +260,22 @@ nonisolated extension CellSceneBuilder {
             build.counts.animationFailureReasons.append(
                 "ACHR \(id): \(error.localizedDescription)"
             )
+        }
+    }
+
+    /// The assembly's `AppearanceSkip` entries as readable lines, one per skip.
+    ///
+    /// Only the `.appearance` subject is taken: the other `ActorAssemblySkip`
+    /// subjects are asset-loading outcomes, which the failure buckets above
+    /// already own, and mixing the two would make a missing NIF read as a
+    /// resolution decision.
+    nonisolated private static func appearanceSkipLines(
+        _ assembly: ActorAssembly<ActorRenderAsset>,
+        id: String
+    ) -> [String] {
+        assembly.skips.compactMap { skip in
+            guard case let .appearance(appearance) = skip.subject else { return nil }
+            return "ACHR \(id): \(appearance.reason) (\(appearance.subject))"
         }
     }
 

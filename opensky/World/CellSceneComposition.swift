@@ -135,6 +135,14 @@ nonisolated struct CellSceneComposition {
             .filter { $0.placedActor != nil }
     }
 
+    /// Every resident cell's load summary, in the same grid order
+    /// `actorEntries()` uses, so a per-actor lookup across the composition is
+    /// deterministic (issue #180).
+    func actorSummaries() -> [CellLoadSummary] {
+        cells.sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
+            .map(\.value.summary)
+    }
+
     /// Every resident container interaction, ordered by FormID.
     ///
     /// Exists for the same reason `actorEntries()` does: the merchant menu

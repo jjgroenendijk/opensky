@@ -28,7 +28,8 @@ enum SidebarSection: String, CaseIterable {
 typealias WorldControlProviders = AnimationControlProviding & AudioControlProviding
     & CameraControlProviding & ContainerMenuControlProviding
     & FrameStatsProviding & GrassControlProviding
-    & HUDControlProviding & InventoryMenuControlProviding & ItemControlProviding
+    & HUDControlProviding & InventoryEquipmentControlProviding
+    & InventoryMenuControlProviding & ItemControlProviding
     & ParticleControlProviding
     & PrecipitationControlProviding
     & RuntimeStateControlProviding & SWFLabControlProviding & SceneStatsProviding
@@ -226,6 +227,20 @@ enum DestinationRegistry {
                 return panel
             },
             overrides: containerMenuOverrides
+        ),
+        DestinationDescriptor(
+            id: "inventoryEquipment",
+            title: "Inventory & Equipment",
+            section: .world,
+            symbolName: "backpack",
+            content: .worldInspector { context in
+                let panel = InventoryEquipmentPanelViewController()
+                panel.provider = context.providers
+                let providers = context.providers
+                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                return panel
+            },
+            overrides: inventoryEquipmentOverrides
         ),
         DestinationDescriptor(
             id: "audio",

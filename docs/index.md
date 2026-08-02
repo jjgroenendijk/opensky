@@ -142,6 +142,10 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Container and barter menus](/engine/barter.md) - the two-pane transfer list shared by
   vanilla `containermenu.swf` and `bartermenu.swf`, the cited `fBarterMin`/`fBarterMax`
   price formula, gold-conserving merchant transactions, and the merchant nomination seam.
+* [Inventory and equipment gate](/engine/inventory-equipment.md) - the M12 milestone gate:
+  the take/transfer/equip/buy/sell/drop/save/load loop proved end to end with conservation
+  at every step, the `World > Inventory & Equipment` destination, dev item grants, `XOWN`
+  ownership reporting, and per-actor appearance-skip accounting.
 * [AS2 runtime](/engine/as2-runtime.md) - ActionScript 2 interpreter and the movie it
   drives: value model + coercions, bounded execution, display objects and timeline,
   Scaleform Stage rectangles, events, indexed global mouse input and hit testing, the

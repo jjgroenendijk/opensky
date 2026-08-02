@@ -96,6 +96,24 @@ extension CellStreamer {
         return composition.containerInteractions()
     }
 
+    /// The appearance skips the last build of the resident cells reported for
+    /// one ACHR (issue #180).
+    ///
+    /// Matched on the "ACHR <id>: " prefix the builder writes, because the
+    /// summary keeps these as readable lines rather than as a per-actor map:
+    /// a cell holds a handful of actors and a rebuild rewrites the whole list,
+    /// so an index would be a second thing to keep in step for no gain. Empty
+    /// both when the actor resolved cleanly and when its cell is not resident;
+    /// the panel distinguishes those by whether the actor was found at all.
+    func appearanceSkipReasons(forActor formID: FormID) -> [String] {
+        let prefix = "ACHR \(formID): "
+        let summaries = interiorScene.map { [$0.summary] } ?? composition.actorSummaries()
+        return summaries
+            .flatMap(\.actorAppearanceSkipReasons)
+            .filter { $0.hasPrefix(prefix) }
+            .map { String($0.dropFirst(prefix.count)) }
+    }
+
     /// Which resident cell holds a reference, so a Papyrus world write can be
     /// attributed to one cell instead of every resident one (issue #172).
     func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {

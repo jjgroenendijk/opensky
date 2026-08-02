@@ -18,22 +18,22 @@ struct DestinationRegistryTests {
     func registryOrderAndIdentifiers() {
         #expect(DestinationRegistry.all.map(\.id) == [
             "world", "environment", "hudInteraction", "systemMenu",
-            "inventoryMenu", "containerMenu", "audio", "runtimeState", "scripts",
-            "uiLab", "assetBrowser"
+            "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
+            "runtimeState", "scripts", "uiLab", "assetBrowser"
         ])
         // Accessibility identifiers are the UI-test contract; pin them literally.
         #expect(DestinationRegistry.all.map(\.sidebarIdentifier) == [
             "Destination-world", "Destination-environment",
             "Destination-hudInteraction", "Destination-systemMenu",
             "Destination-inventoryMenu", "Destination-containerMenu",
-            "Destination-audio", "Destination-runtimeState",
-            "Destination-scripts", "Destination-uiLab",
-            "Destination-assetBrowser"
+            "Destination-inventoryEquipment", "Destination-audio",
+            "Destination-runtimeState", "Destination-scripts",
+            "Destination-uiLab", "Destination-assetBrowser"
         ])
         #expect(DestinationRegistry.worldInspectors.map(\.id) == [
             "world", "environment", "hudInteraction", "systemMenu",
-            "inventoryMenu", "containerMenu", "audio", "runtimeState", "scripts",
-            "uiLab"
+            "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
+            "runtimeState", "scripts", "uiLab"
         ])
         #expect(DestinationRegistry.defaultDestinationID == "world")
     }

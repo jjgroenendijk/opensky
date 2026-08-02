@@ -36,6 +36,14 @@ struct WorldItemBridgeState {
     /// The documented vanilla defaults until a provider supplies better.
     var barterPricing = BarterPricing.vanilla
     var lastActionText = "No item action yet."
+    /// Which owner `World > Inventory & Equipment` inspects (issue #180). The
+    /// NPC by default, because the player has no rendered body until M14 and an
+    /// actor is the only owner an equip is visible on.
+    var inspectionTarget = EquipmentTargetSelector.nearestActor
+    /// Result of the last grant from that panel, kept apart from
+    /// `lastActionText` so a grant does not overwrite the take/drop readout on
+    /// a different destination.
+    var lastGrantText = "No grant yet."
 }
 
 extension GameViewController {
