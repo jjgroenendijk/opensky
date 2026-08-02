@@ -154,6 +154,12 @@ final class FakeWorldProviders: WorldControlProviders {
     var containerMenuLastAction: String?
     var containerMenuMerchant: FormID? = FormID(0x0300)
 
+    /// InventoryEquipmentControlProviding (issue #180). One stored value rather
+    /// than seven, because this class is at the lint type-length cap; the
+    /// behaviour and the type itself are in
+    /// `FakeWorldProvidersInventoryEquipment.swift`.
+    var inventoryEquipment = FakeInventoryEquipmentState()
+
     // UILabControlProviding
     var uiOverlayEnabled = true
     var uiSampleShown = false

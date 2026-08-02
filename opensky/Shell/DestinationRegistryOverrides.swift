@@ -30,6 +30,22 @@ extension DestinationRegistry {
         }
     )
 
+    /// Only the Equipment section carries overridden-ness, and only through its
+    /// owner selector (issue #180). Granting, and the ownership readout, change
+    /// no setting: a grant is a world change, which `World > Runtime State`
+    /// already owns resetting, and giving the same delta two owners is exactly
+    /// what the reset contract forbids. Inspecting the player instead of the
+    /// nearest NPC is the one thing here that sits away from a documented
+    /// default, and the sidebar's reset puts it back.
+    static let inventoryEquipmentOverrides = DestinationOverrideActions(
+        isOverridden: { context in
+            EquipmentInspectionSection.isOverridden(provider: context.providers)
+        },
+        resetToDefaults: { context in
+            EquipmentInspectionSection.resetToDefaults(provider: context.providers)
+        }
+    )
+
     /// Only the Menu section carries overridden-ness: the Merchant section
     /// nominates a target rather than setting a value, and closing the menu
     /// leaves that nomination alone so reopening lands on the same chest.

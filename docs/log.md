@@ -4,6 +4,27 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-02
 
+* **M12 milestone acceptance (issue #180)**: the first repeatable gameplay loop runs end to
+  end and has a sidebar path. `M12AcceptanceTests` walks grant, take, transfer, equip, buy,
+  sell, drop, save and load in one scripted run over a synthetic plugin, asserting the
+  accounting at every step rather than only that the call returned: after the grant — the
+  one step that creates items, and it says so — nothing is created or destroyed, gold is
+  conserved across every trade, and a brand-new store restored from a real save file is in
+  the identical end state, allocator position included. `M12AcceptanceRenderTests` supplies
+  the pixel evidence: a taken cell comes back byte-identical to a cell that never held the
+  item, a dropped one byte-identical to a cell whose plugin placed it, and an equipped
+  actor's silhouette changes with re-equipping its own outfit piece as the control. The new
+  `World > Inventory & Equipment` destination covers the three things the milestone left
+  without a surface — dev item grants, `XOWN`/`XRNK` ownership reporting for the crosshair
+  target, and the inspected actor's equipped set with its appearance skips. Those skips are
+  new accounting: `AppearanceSkip` previously reached a log line only for actors that failed
+  to render at all, which made a masked or unrenderable equipped piece indistinguishable
+  from an equip that silently did nothing. Budgets extend the shipping validators rather
+  than adding a second mechanism. Take, drop and equip stay under
+  `World > HUD & Interaction > Items` and buying and selling under `World > Container Menu`;
+  the acceptance record names all three paths rather than duplicating a control. See
+  [inventory and equipment gate](/engine/inventory-equipment.md).
+
 * **M12.2.3 container and barter menus with GMST pricing (issue #179)**: vanilla
   `containermenu.swf` and `bartermenu.swf` are both driven end to end — one bridge, because
   the two movies are two skins on one `ItemMenu` subclass sharing the list components
