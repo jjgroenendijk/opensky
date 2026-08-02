@@ -36,6 +36,16 @@ extension CellStreamer {
         onInteractionTargetChanged?(target)
     }
 
+    /// FULL name of a resident reference, or nil when nothing loaded names it.
+    ///
+    /// The journal's alias substitution reads this (issue #184): a `<Alias=...>`
+    /// tag stands for the display name of whatever fills the alias, and an
+    /// interaction is the only place a placed reference's resolved name is
+    /// already sitting.
+    func interactionName(reference: FormID) -> String? {
+        activeInteraction(reference: reference)?.name
+    }
+
     private func activeInteraction(reference: FormID) -> PlacedInteraction? {
         if let interiorScene {
             return interiorScene.interactions[reference]

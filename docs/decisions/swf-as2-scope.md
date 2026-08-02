@@ -385,6 +385,11 @@ The counter-example is worth stating. `quest_journal.swf` (33,692 records),
 consumers, and all three are poor first targets: they are large, and each is gated on a
 phase 4 data contract that does not exist yet. Size ranking is not target ranking.
 
+All three phase 4 contracts have since landed with the milestones that owned their data:
+`inventorymenu.swf` at 12.2.2 ([inventory menu](/engine/inventory-menu.md)), the
+`quest_journal.swf` System page at 8.5.1 and its Quests page at 13.5
+([quest journal](/engine/journal.md)). `modmanager.swf` has no owning milestone yet.
+
 `hudmenu.swf` (15,364 records, 42 `DoInitAction`) is not an interactive target — a HUD does
 not navigate — but it is the natural second phase 3 target because milestone 8.4.2 needs it
 and it exercises the engine-to-movie direction of the bridge in isolation.

@@ -2,6 +2,50 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-03
+
+* **Journal UI: the `quest_journal.swf` Quests page (issue #184, roadmap 13.5)**: quests are
+  now visible to the player. The movie was already open — it has been the in-game system menu
+  since issue #231 — but only its System page had ever been driven, and `swf-as2-scope.md`
+  named the Quests page the deferred phase-4 contract that would land with its data. It
+  lands: `World > Quests & Journal` starts a quest, sets a stage, shows an objective, and the
+  vanilla page fills with the plugin's own title, objective line and journal paragraphs.
+* Measuring that contract needed two additions to the committed probe, for a structural
+  reason worth recording: an AS2 class publishes its methods on a prototype, and a CLIK list
+  inherits most of its contract from a base class the movie never registers, so neither is
+  reachable from a display-node dump. `openskycli swf action-run --dump-class` prints a
+  registered class's constructor and prototype, `--dump-proto` walks a node's whole prototype
+  chain. Together they reported `QuestJournalBase.PAGE_QUEST`, `QuestsPage`'s thirty methods,
+  and the list base's `EntriesA` / `entryList` / `iSelectedIndex` / `InvalidateData` /
+  `ClearList` / `SetEntry`.
+* Two details would not have been right if they had been reasoned about instead of driven.
+  `InvalidateData` rebuilds only as many entry clips as there are rows, so an emptied list
+  keeps showing the previous quest's first objective until `ClearList` hides the surplus —
+  and it hides them rather than blanking them, which is why the frame readout counts visible
+  clips only. And an objective's display state rides on plain `completed` and `failed`
+  booleans on the row: publishing them is what moves the entry clip off its `Normal` frame,
+  which `swf quest-journal --objective-state` demonstrates one state at a time.
+* Which string table a journal field lives in is measured rather than assumed:
+  `swf quest-journal --text` resolves each field out of all three tables and prints what each
+  answered. On vanilla `Skyrim.esm` the quest `FULL` and the objective `NNAM` come from
+  `.strings` and the stage `CNAM` paragraph from `.dlstrings`, matching the short-name versus
+  body-text rule the records page already states.
+* Alias text substitution ships with its syntax confirmed from observed data rather than from
+  memory: `<Alias=QuestNameLocation>` is a resolved vanilla string, and the Creation Kit
+  documents the family under text replacement. An unresolvable tag survives exactly as
+  written, because a visible `<Alias=Prisoner>` says "this fill is missing" where deleting it
+  would leave a sentence with a hole in it. The M13 target quest carries no tags, so this is
+  machinery for the corpus rather than for the gate.
+* `J` in world mode is the first key that opens a menu from gameplay. It is wired as an
+  accelerator for the panel's own Open control, not a behaviour of its own, which is what
+  keeps it inside the app-ui rule against unadvertised keystrokes.
+* The real-data gate reports 0 faults, 0 unimplemented opcodes and 0 unhandled invokes of 52
+  on the driven page, at 506 draws and 375,575 changed pixels on bring-up. 81 names remain
+  unresolved and are listed with their counts; two of them shape the frame rather than the
+  data — with no `textField` an entry clip cannot draw its own row text, and with no `height`
+  a field keeps its authored size, so a long journal paragraph overlaps the objective list
+  beneath it. Both are AS2-runtime gaps, not journal ones.
+
 ## 2026-08-02
 
 * **Quest alias resolution (issue #183, roadmap 13.4)**: a running quest now knows which world

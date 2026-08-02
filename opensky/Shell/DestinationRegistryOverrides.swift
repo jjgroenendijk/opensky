@@ -57,4 +57,40 @@ extension DestinationRegistry {
             ContainerMenuSection.resetToDefaults(provider: context.providers)
         }
     )
+
+    /// Only the Page section carries overridden-ness: an open journal sits on
+    /// the menu stack and pauses world simulation, and the sidebar's reset
+    /// closes it. Starting or advancing a quest is world state rather than a
+    /// panel setting, so "Reset all" deliberately leaves it alone.
+    static let journalOverrides = DestinationOverrideActions(
+        isOverridden: { context in
+            JournalPageSection.isOverridden(provider: context.providers)
+        },
+        resetToDefaults: { context in
+            JournalPageSection.resetToDefaults(provider: context.providers)
+        }
+    )
+
+    static let environmentOverrides = DestinationOverrideActions(
+        isOverridden: { context in
+            let providers = context.providers
+            return ShadowSection.isOverridden(provider: providers)
+                || AnimationSection.isOverridden(provider: providers)
+                || WeatherSection.isOverridden(provider: providers)
+                || ParticlesSection.isOverridden(provider: providers)
+                || PrecipitationSection.isOverridden(provider: providers)
+                || GrassSection.isOverridden(provider: providers)
+                || TerrainLODSection.isOverridden(provider: providers)
+        },
+        resetToDefaults: { context in
+            let providers = context.providers
+            ShadowSection.resetToDefaults(provider: providers)
+            AnimationSection.resetToDefaults(provider: providers)
+            WeatherSection.resetToDefaults(provider: providers)
+            ParticlesSection.resetToDefaults(provider: providers)
+            PrecipitationSection.resetToDefaults(provider: providers)
+            GrassSection.resetToDefaults(provider: providers)
+            TerrainLODSection.resetToDefaults(provider: providers)
+        }
+    )
 }

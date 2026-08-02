@@ -19,7 +19,7 @@ struct DestinationRegistryTests {
         #expect(DestinationRegistry.all.map(\.id) == [
             "world", "environment", "hudInteraction", "systemMenu",
             "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
-            "runtimeState", "scripts", "uiLab", "assetBrowser"
+            "runtimeState", "scripts", "journal", "uiLab", "assetBrowser"
         ])
         // Accessibility identifiers are the UI-test contract; pin them literally.
         #expect(DestinationRegistry.all.map(\.sidebarIdentifier) == [
@@ -28,12 +28,12 @@ struct DestinationRegistryTests {
             "Destination-inventoryMenu", "Destination-containerMenu",
             "Destination-inventoryEquipment", "Destination-audio",
             "Destination-runtimeState", "Destination-scripts",
-            "Destination-uiLab", "Destination-assetBrowser"
+            "Destination-journal", "Destination-uiLab", "Destination-assetBrowser"
         ])
         #expect(DestinationRegistry.worldInspectors.map(\.id) == [
             "world", "environment", "hudInteraction", "systemMenu",
             "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
-            "runtimeState", "scripts", "uiLab"
+            "runtimeState", "scripts", "journal", "uiLab"
         ])
         #expect(DestinationRegistry.defaultDestinationID == "world")
     }

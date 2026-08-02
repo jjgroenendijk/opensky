@@ -30,6 +30,7 @@ typealias WorldControlProviders = AnimationControlProviding & AudioControlProvid
     & FrameStatsProviding & GrassControlProviding
     & HUDControlProviding & InventoryEquipmentControlProviding
     & InventoryMenuControlProviding & ItemControlProviding
+    & JournalControlProviding
     & ParticleControlProviding
     & PrecipitationControlProviding
     & RuntimeStateControlProviding & SWFLabControlProviding & SceneStatsProviding
@@ -296,6 +297,20 @@ enum DestinationRegistry {
             overrides: scriptsOverrides
         ),
         DestinationDescriptor(
+            id: "journal",
+            title: "Quests & Journal",
+            section: .world,
+            symbolName: "book.closed",
+            content: .worldInspector { context in
+                let panel = JournalPanelViewController()
+                panel.provider = context.providers
+                let providers = context.providers
+                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                return panel
+            },
+            overrides: journalOverrides
+        ),
+        DestinationDescriptor(
             id: "uiLab",
             title: "UI Lab",
             section: .developer,
@@ -321,29 +336,6 @@ enum DestinationRegistry {
             }
         )
     ]
-
-    private static let environmentOverrides = DestinationOverrideActions(
-        isOverridden: { context in
-            let providers = context.providers
-            return ShadowSection.isOverridden(provider: providers)
-                || AnimationSection.isOverridden(provider: providers)
-                || WeatherSection.isOverridden(provider: providers)
-                || ParticlesSection.isOverridden(provider: providers)
-                || PrecipitationSection.isOverridden(provider: providers)
-                || GrassSection.isOverridden(provider: providers)
-                || TerrainLODSection.isOverridden(provider: providers)
-        },
-        resetToDefaults: { context in
-            let providers = context.providers
-            ShadowSection.resetToDefaults(provider: providers)
-            AnimationSection.resetToDefaults(provider: providers)
-            WeatherSection.resetToDefaults(provider: providers)
-            ParticlesSection.resetToDefaults(provider: providers)
-            PrecipitationSection.resetToDefaults(provider: providers)
-            GrassSection.resetToDefaults(provider: providers)
-            TerrainLODSection.resetToDefaults(provider: providers)
-        }
-    )
 
     /// Only the Reset section carries overridden-ness: a dirty reference is the
     /// world deviating from plugin data, which is this destination's notion of

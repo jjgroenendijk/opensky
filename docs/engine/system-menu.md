@@ -79,7 +79,9 @@ The menu therefore has no opening keystroke. That is deliberate: the
 [app-ui rules](/tools/app-ui.md) forbid dev behaviour reachable only by an unadvertised
 key, and binding `Esc` to open would collide with capture release. The menu opens from
 its panel; once open, the live keys drive it through the same path the panel buttons
-use.
+use. `J` opens the [quest journal](/engine/journal.md) — the first world-mode menu-open
+binding, and an accelerator for that panel's own Open control rather than a behaviour of its
+own.
 
 ## Settings placeholders
 
@@ -104,7 +106,10 @@ Continue/New/Load/Creations/Mods/Credits/Quit/Help and its 1,674-string pool has
 removed it from this subsystem.
 
 The in-game movie is `quest_journal.swf`. Its placed `QuestJournalBase` owns three pages:
-Quests, General Stats, and System. The live movie measured the System page at `PageArray[2]`
+Quests, General Stats, and System. The Quests page is driven separately by the
+[quest journal](/engine/journal.md) as of M13.5 — same movie, same `prepare()` registration,
+same input path, so opening one and opening the other are two pages of one bring-up, and the
+two menus cannot be open at once. The live movie measured the System page at `PageArray[2]`
 and built these category rows itself:
 
 `$QUICKSAVE`, `$SAVE`, `$LOAD`, `$INSTALLED CONTENT`, `$SETTINGS`, `$CONTROLS`, `$HELP`,
