@@ -43,7 +43,7 @@ struct ScriptDataBindingTests {
     func preservesDefaultsForSkippedObjects() throws {
         for (object, expectedReason) in [
             (VMADFixture.object(0x0000_1234), "unresolved object reference"),
-            (VMADFixture.object(0x0000_1234, alias: 3), "quest-alias object")
+            (VMADFixture.object(0x0000_1234, alias: 3), "unfilled quest alias")
         ] {
             let runtime = makeRuntime()
             let attached = try script(properties: [.init("Target", .object(object))])
@@ -59,6 +59,48 @@ struct ScriptDataBindingTests {
             #expect(bound.binding.initialValues.isEmpty)
             #expect(bound.binding.skipped.ranked.first?.name == expectedReason)
         }
+    }
+
+    /// A filled alias binds like any other object property (issue #183): the
+    /// seam turns the quest FormID plus the alias slot into a world reference,
+    /// and the `aliasObject` skip is gone for that property.
+    @Test("a filled quest alias binds to its world reference")
+    @MainActor
+    func bindsFilledAliasObjects() throws {
+        let runtime = makeRuntime()
+        let quest = try QuestFixture.quest(
+            formID: 0x0000_1200,
+            fields: QuestFixture.editorID("AliasBindingQuest")
+                + QuestFixture.general(flags: 1)
+                + QuestFixture.marker("ANAM")
+                + QuestFixture.alias(
+                    id: 3,
+                    name: "Target",
+                    fill: QuestFixture.word("ALFR", 0x0000_1234)
+                )
+        )
+        let store = QuestStore(quests: [quest], resolver: resolver)
+        let quests = QuestRuntime(store: WorldStateStore(), quests: store)
+        try quests.startQuest(quest.formID)
+
+        let attached = try script(properties: [
+            .init("Target", .object(VMADFixture.object(0x0000_1200, alias: 3)))
+        ])
+        // Master index 0 of this resolver is Skyrim.esm, so both the quest and
+        // the reference it forces resolve into that plugin's key space.
+        let key = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x1234)
+        let worldHandle = PapyrusObjectHandle(901)
+        let bound = try attached.makeInstance(
+            in: runtime,
+            formIDResolver: resolver,
+            aliases: quests.aliasResolution()
+        ) { $0 == key ? worldHandle : nil }
+
+        let instance = try #require(runtime.instance(for: bound.handle))
+        #expect(instance.value(named: "::opaque_backing_17", declaredBy: "BoundScript")
+            == .object(worldHandle))
+        #expect(bound.binding.resolvedReferences == [key])
+        #expect(bound.binding.skipped.total == 0)
     }
 
     @Test("removed and unknown VMAD properties preserve PEX defaults")

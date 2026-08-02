@@ -110,6 +110,16 @@ nonisolated enum QuestError: Error, Equatable {
     case unknownObjective(quest: FormID, objective: UInt16)
     /// A mutation that only means something on a running quest.
     case questNotRunning(FormID)
+    /// The quest could not start because one or more non-optional aliases
+    /// stayed empty (issue #183). Carries the alias IDs in list order.
+    ///
+    /// The Creation Kit is explicit that this is game semantics rather than an
+    /// engine gap: "Optional: If checked, the quest is not required to fill
+    /// this in order to start. If unchecked, the quest will fail to start if it
+    /// cannot fill this alias." (<https://ck.uesp.net/wiki/Alias>) An alias
+    /// left empty because OpenSky does not implement its fill type is *not*
+    /// reported here; see `QuestAliasFiller`.
+    case aliasFillFailed(quest: FormID, aliases: [UInt32])
 }
 
 /// Everything the runtime records about one quest.

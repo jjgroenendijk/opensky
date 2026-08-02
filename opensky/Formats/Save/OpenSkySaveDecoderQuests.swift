@@ -17,6 +17,12 @@ nonisolated struct SaveQuestEntry: Equatable, Sendable {
     let state: QuestRuntimeState
 }
 
+/// One quest's saved alias table (issue #183), likewise pre-merge.
+nonisolated struct SaveQuestAliasEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let state: QuestAliasState
+}
+
 nonisolated enum OpenSkySaveQuestDecoder {
     static func decodeQuestStates(_ payload: Data) throws -> [SaveQuestEntry] {
         var reader = SaveReader(payload)
@@ -60,7 +66,73 @@ nonisolated enum OpenSkySaveQuestDecoder {
         }
     }
 
+    /// `QALS` (issue #183): the filled alias tables, decoded on their own and
+    /// merged the same way the quest states are.
+    static func decodeQuestAliases(_ payload: Data) throws -> [SaveQuestAliasEntry] {
+        var reader = SaveReader(payload)
+        let count = try reader.uint32("QALS entry count")
+        try OpenSkySaveDecoder.validate(
+            count: count,
+            minimumElementSize: OpenSkySaveFormat.minimumQuestAliasEntrySize,
+            remaining: reader.bytesRemaining,
+            chunk: OpenSkySaveFormat.ChunkTag.questAliases
+        )
+        var entries: [SaveQuestAliasEntry] = []
+        entries.reserveCapacity(Int(count))
+        for _ in 0 ..< count {
+            try entries.append(decodeAliasEntry(&reader))
+        }
+        return entries
+    }
+
+    /// Lays each saved alias table over the matching delta, exactly as
+    /// `merge(_:into:)` does for quest state.
+    static func mergeAliases(
+        _ aliases: [SaveQuestAliasEntry],
+        into entries: [WorldStateSnapshotEntry]
+    ) -> [WorldStateSnapshotEntry] {
+        guard !aliases.isEmpty else { return entries }
+        var deltasByKey: [ReferenceKey: ReferenceStateDelta] = [:]
+        deltasByKey.reserveCapacity(entries.count + aliases.count)
+        for entry in entries {
+            deltasByKey[entry.key] = entry.delta
+        }
+        for entry in aliases {
+            var delta = deltasByKey[entry.key] ?? ReferenceStateDelta()
+            delta.set(entry.state.erased)
+            deltasByKey[entry.key] = delta
+        }
+        return deltasByKey.keys.sorted().compactMap { key in
+            guard let delta = deltasByKey[key] else { return nil }
+            return WorldStateSnapshotEntry(key: key, delta: delta)
+        }
+    }
+
     // MARK: - Private
+
+    /// Duplicate or unsorted alias IDs are collapsed and sorted by
+    /// `QuestAliasState.init` rather than rejected here, for the same reason
+    /// the stage list is: the invariant belongs to the type.
+    private static func decodeAliasEntry(
+        _ reader: inout SaveReader
+    ) throws -> SaveQuestAliasEntry {
+        let key = try OpenSkySaveEntryDecoder.decodeKey(&reader)
+        let count = try reader.uint32("QALS fill count")
+        try OpenSkySaveDecoder.validate(
+            count: count,
+            minimumElementSize: OpenSkySaveFormat.minimumQuestAliasFillSize,
+            remaining: reader.bytesRemaining,
+            chunk: OpenSkySaveFormat.ChunkTag.questAliases
+        )
+        var fills: [QuestAliasFill] = []
+        fills.reserveCapacity(Int(count))
+        for _ in 0 ..< count {
+            let aliasID = try reader.uint32("QALS alias ID")
+            let reference = try OpenSkySaveEntryDecoder.decodeKey(&reader)
+            fills.append(QuestAliasFill(aliasID: aliasID, reference: reference))
+        }
+        return SaveQuestAliasEntry(key: key, state: QuestAliasState(fills: fills))
+    }
 
     private static func decodeEntry(_ reader: inout SaveReader) throws -> SaveQuestEntry {
         let key = try OpenSkySaveEntryDecoder.decodeKey(&reader)

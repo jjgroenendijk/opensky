@@ -4,6 +4,50 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-02
 
+* **Quest alias resolution (issue #183, roadmap 13.4)**: a running quest now knows which world
+  references its aliases stand for. `QuestAliasState` is the eighth `WorldStateComponent`,
+  keyed by the same QUST `ReferenceKey` the quest state uses but kept as a slot of its own,
+  because the two have different lifetimes: stages survive a `Stop` and the alias table does
+  not. The Creation Kit is explicit that "the aliases are not actually 'filled' until the
+  quest starts running", so `startQuest` fills, `stopQuest` clears, and a start-up stage does
+  both on the same rule.
+* The fill pass is a pure function of a record plus a `FormIDResolver`, which is what made
+  every documented rule testable on its own: aliases fill in list order (there is no priority
+  between fill *types* — the priority is positional), a non-optional alias that will not fill
+  refuses the quest start with `QuestError.aliasFillFailed` and writes nothing, a Force Into
+  Alias target takes the value of the *last* source that fills it, and reuse of one reference
+  across two aliases of one quest is refused unless the second says Allow Reuse.
+* The honest half is which failures are the game's and which are OpenSky's. Specific
+  Reference (ALFR) is the only fill type implemented, and an unimplemented one is a counted
+  skip that never fails a start — refusing a quest because OpenSky cannot run a Find Matching
+  Reference search would dress an engine gap as game semantics. The reuse refusal is likewise
+  not a start failure: the wiki says the rule "is not required for all fill types" without
+  saying which, and enforcing it would refuse thirteen quests `Skyrim.esm` ships that way.
+  Location aliases, "Reserves Reference" and any liveness check on a filled reference are
+  recorded deferrals rather than guesses.
+* The sweep puts numbers on each of those: 12,891 aliases across 1607 quests, 2688 filled, no
+  quest blocked from starting. The biggest deferrals are Unique Actor (2900 aliases, 22.5%),
+  Location Alias Reference (2036, 15.8%), From Event (1771, 13.7%) and aliases with no fill
+  subrecord at all (1678, 13.0%).
+* Three consumers were waiting on the table and now read it through one `Sendable`
+  `QuestAliasResolution` seam shaped like the globals and quest seams. Condition run-on 5
+  (Quest Alias) resolves live, taking its alias index from CTDA parameter #3 and its quest
+  from a new `ConditionContext.aliasQuest`, because a CTDA never names one — the record it
+  came from does. The CIS1/CIS2 name override resolves to the named alias's ID for a filled
+  alias and stays a reason-tagged `unresolvedParameter` for an empty one. Alias-typed VMAD
+  object properties bind to the filled reference, so the `aliasObject` binding skip now means
+  "unfilled quest alias" and nothing more.
+* Alias scripts are the one part of a quest's script set that is not keyed by the quest: a
+  `ReferenceAlias` script runs on the reference in its alias, so its instance is keyed there
+  and `questAliasInstanceKeys` remembers which quest owns it so a `Stop` still retires exactly
+  its own. Fills travel in their own additive `QALS` save chunk rather than as new fields on
+  `QSTS`, because `QSTS` entries carry no per-entry length and an appended field would make an
+  older build misparse the whole chunk instead of skipping the new part.
+* `World > Scripts > Quests` gained the alias half: filled-alias and alias-instance counts, the
+  wire-up fill-failure count, the newest fill, and an inspector that lists every alias a quest
+  declares with its fill type, its Optional flag and the reference in it — so an empty alias
+  and an unimplemented fill type are told apart on screen rather than both reading as blank.
+
 * **Quest script instances, the `Quest` natives and stage fragments (issue #322, roadmap
   13.3)**: quests are scriptable. At session wire-up every quest the #182 state reports as
   running gets its VMAD scripts and its generated `QF_` fragment script instantiated, keyed

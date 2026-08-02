@@ -18,6 +18,39 @@ nonisolated struct ScriptsNativeCount: Equatable, Sendable {
     let count: Int
 }
 
+/// One reference alias of a quest, as the Quests section shows it (issue
+/// #183): what the record authored, and what the session filled it with.
+nonisolated struct ScriptQuestAliasRow: Equatable, Sendable {
+    /// ALST/ALLS number scripts and conditions address the alias by.
+    let aliasID: UInt32
+    /// ALID, the authoring name. Empty when the record carried none.
+    let name: String
+    /// `Quest.Alias.FillType.name`, so the readout states *how* an alias is
+    /// meant to fill and not only whether it did.
+    let fillType: String
+    /// Optional aliases may legitimately stay empty; a non-optional one that
+    /// does stops its quest from starting.
+    let isOptional: Bool
+    /// `ReferenceKey.description` of the filled reference, or nil when the
+    /// alias holds nothing.
+    let reference: String?
+}
+
+/// One quest's alias table for the Quests section.
+nonisolated struct ScriptQuestAliasInspection: Equatable, Sendable {
+    let editorID: String
+    let formIDText: String
+    /// Aliases are filled only while a quest runs, so a stopped quest showing
+    /// every row empty is correct rather than broken.
+    let isRunning: Bool
+    /// Every alias the record declares, in the file order they fill in.
+    let rows: [ScriptQuestAliasRow]
+
+    var filledCount: Int {
+        rows.count { $0.reference != nil }
+    }
+}
+
 /// Everything the Scripts readout shows, captured in one value.
 ///
 /// A struct rather than a set of individual protocol properties, for the same
@@ -38,6 +71,11 @@ nonisolated struct ScriptsSnapshot: Equatable {
         runningQuestCount: 0,
         questFragmentsQueued: 0,
         lastQuestFragment: nil,
+        questAliasInstanceCount: 0,
+        filledAliasCount: 0,
+        aliasQuestCount: 0,
+        questAliasFillFailures: 0,
+        lastQuestAliasFill: nil,
         recentEvents: [],
         droppedRecentEventCount: 0,
         pendingEventCount: 0,
@@ -89,6 +127,23 @@ nonisolated struct ScriptsSnapshot: Equatable {
     /// Newest stage fragment enqueued, worded like a recent-event entry. Nil
     /// until a stage carrying a fragment is set.
     let lastQuestFragment: String?
+    /// Script instances belonging to a filled quest alias (issue #183). Keyed
+    /// by the filled reference rather than by the quest, so these are *not* a
+    /// subset of `questInstanceCount`, though they are one of `instanceCount`.
+    let questAliasInstanceCount: Int
+    /// Aliases filled across every quest this session.
+    let filledAliasCount: Int
+    /// Quests holding at least one filled alias. Lower than `runningQuestCount`
+    /// whenever a running quest declares no alias, or declares only ones whose
+    /// fill type OpenSky does not implement.
+    let aliasQuestCount: Int
+    /// Quests whose alias fill failed while their scripts were attached at
+    /// wire-up. Nonzero means a start-game-enabled quest is running with an
+    /// empty table it should have refused to start with.
+    let questAliasFillFailures: Int
+    /// Newest alias filled, worded like a recent-event entry. Nil until a quest
+    /// with a fillable alias starts.
+    let lastQuestAliasFill: String?
 
     // MARK: Events
 
@@ -161,4 +216,13 @@ protocol ScriptControlProviding: AnyObject {
     /// Values below one do nothing; the implementation caps the count so a
     /// stray value cannot hang the frame.
     func stepScripts(ticks: Int)
+
+    /// Editor IDs of every quest that declares at least one alias, sorted.
+    /// Empty when the session has no quest index. Quests without aliases are
+    /// left out because the inspector would have nothing to say about them.
+    var questAliasQuestEditorIDs: [String] { get }
+
+    /// One quest's alias table, or nil when no loaded plugin defines a quest
+    /// with that editor ID.
+    func questAliasTable(editorID: String) -> ScriptQuestAliasInspection?
 }

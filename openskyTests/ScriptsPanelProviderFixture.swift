@@ -52,6 +52,11 @@ nonisolated func makeScriptsSnapshot(
     runningQuestCount: Int = 0,
     questFragmentsQueued: Int = 0,
     lastQuestFragment: String? = nil,
+    questAliasInstanceCount: Int = 0,
+    filledAliasCount: Int = 0,
+    aliasQuestCount: Int = 0,
+    questAliasFillFailures: Int = 0,
+    lastQuestAliasFill: String? = nil,
     pendingWaitCount: Int = 0,
     pendingTimerCount: Int = 0,
     tickCount: Int = 0,
@@ -76,6 +81,11 @@ nonisolated func makeScriptsSnapshot(
         runningQuestCount: runningQuestCount,
         questFragmentsQueued: questFragmentsQueued,
         lastQuestFragment: lastQuestFragment,
+        questAliasInstanceCount: questAliasInstanceCount,
+        filledAliasCount: filledAliasCount,
+        aliasQuestCount: aliasQuestCount,
+        questAliasFillFailures: questAliasFillFailures,
+        lastQuestAliasFill: lastQuestAliasFill,
         recentEvents: recentEvents,
         droppedRecentEventCount: droppedRecentEventCount,
         pendingEventCount: pendingEventCount,
@@ -119,6 +129,17 @@ final class FakeScriptProvider: ScriptControlProviding {
         stepCalls.append(ticks)
     }
 
+    /// Alias tables the fake serves, keyed by editor ID (issue #183).
+    var questAliasTables: [String: ScriptQuestAliasInspection] = [:]
+
+    var questAliasQuestEditorIDs: [String] {
+        questAliasTables.keys.sorted()
+    }
+
+    func questAliasTable(editorID: String) -> ScriptQuestAliasInspection? {
+        questAliasTables[editorID]
+    }
+
     /// Rebuilds a snapshot with a new pause flag, keeping everything else.
     private static func withPaused(
         _ snapshot: ScriptsSnapshot, _ paused: Bool
@@ -131,6 +152,16 @@ final class FakeScriptProvider: ScriptControlProviding {
             droppedRecentEventCount: snapshot.droppedRecentEventCount,
             pendingEventCount: snapshot.pendingEventCount,
             isPaused: paused,
+            questInstanceCount: snapshot.questInstanceCount,
+            questCount: snapshot.questCount,
+            runningQuestCount: snapshot.runningQuestCount,
+            questFragmentsQueued: snapshot.questFragmentsQueued,
+            lastQuestFragment: snapshot.lastQuestFragment,
+            questAliasInstanceCount: snapshot.questAliasInstanceCount,
+            filledAliasCount: snapshot.filledAliasCount,
+            aliasQuestCount: snapshot.aliasQuestCount,
+            questAliasFillFailures: snapshot.questAliasFillFailures,
+            lastQuestAliasFill: snapshot.lastQuestAliasFill,
             pendingWaitCount: snapshot.pendingWaitCount,
             pendingTimerCount: snapshot.pendingTimerCount,
             tickCount: snapshot.tickCount,

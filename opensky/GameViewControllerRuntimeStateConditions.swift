@@ -59,11 +59,18 @@ extension GameViewController {
     /// Before the quest layer was wired the four quest condition functions had
     /// no index to resolve against and every one of them reported "unresolved
     /// quest"; they now read the same state the `Quest` natives write.
+    ///
+    /// The alias seam is wired the same way (issue #183), and `aliasQuest` is
+    /// deliberately left nil: the lists this panel evaluates are MUST record
+    /// conditions, which belong to no quest, so an alias run-on in one has no
+    /// quest to resolve against and reports that rather than borrowing a
+    /// nearby quest's table.
     private func runtimeStateConditionContext() -> ConditionContext {
         let entry = runtimeStateEntry(for: .currentTarget)
         return ConditionContext(
             globals: runtimeStateGlobalResolution(),
             quests: papyrusBridge?.questRuntime?.resolution() ?? .empty,
+            aliases: papyrusBridge?.questRuntime?.aliasResolution() ?? .empty,
             clock: renderer?.gameClock,
             references: entry.map { RuntimeReferenceIndex(entries: [$0]) } ?? .empty,
             subject: entry?.key,

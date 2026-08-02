@@ -24,6 +24,14 @@ extension FakeWorldProviders {
     func stepScripts(ticks: Int) {
         scripts.stepScripts(ticks: ticks)
     }
+
+    var questAliasQuestEditorIDs: [String] {
+        scripts.questAliasQuestEditorIDs
+    }
+
+    func questAliasTable(editorID: String) -> ScriptQuestAliasInspection? {
+        scripts.questAliasTable(editorID: editorID)
+    }
 }
 
 struct DestinationRegistryScriptsTests {

@@ -24,6 +24,11 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// `PapyrusQuestBridgeError.noQuestData` rather than inventing state.
     /// Conformance lives in `PapyrusWorldStateBridgeQuests.swift`.
     var questRuntime: QuestRuntime?
+    /// Quests whose alias fill failed while their scripts were being attached
+    /// at session wire-up (issue #183). Counted rather than thrown, because a
+    /// quest that reads as running straight off its DNAM flag was never
+    /// `Start`ed and so has no call to refuse; see `attachRunningQuestScripts`.
+    var questAliasFillFailures = 0
     /// Game clock the five time globals project from, matching how every other
     /// consumer builds a `GlobalResolution`.
     var clockSource: (() -> GameClock?)?
@@ -127,6 +132,12 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
             // when they arrive they go through `QuestRuntime` so the stage and
             // objective rules apply. A quest belongs to no cell, so this write
             // is unattributed rather than attributed to the caller's cell.
+            return worldState.set(value, for: key)
+        case let .questAliases(value):
+            // Alias tables are written by `QuestRuntime` at quest start rather
+            // than by any native — no script function replaces a whole table —
+            // but the seam stays total, and a quest belongs to no cell here for
+            // the same reason its state does.
             return worldState.set(value, for: key)
         }
     }

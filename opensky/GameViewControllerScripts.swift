@@ -19,17 +19,62 @@ extension GameViewController: ScriptControlProviding {
             return .empty
         }
         let running = papyrusBridge?.questRuntime?.runningQuests().count ?? 0
+        let failures = papyrusBridge?.questAliasFillFailures ?? 0
         guard let target = hud.interactionTarget else {
-            return papyrus.scriptsSnapshot(runningQuestCount: running)
+            return papyrus.scriptsSnapshot(
+                runningQuestCount: running, questAliasFillFailures: failures
+            )
         }
         let formID = target.interaction.reference
         guard let entry = streamer?.referenceEntry(formID: formID) else {
             return papyrus.scriptsSnapshot(
-                targetDescription: formID.description, runningQuestCount: running
+                targetDescription: formID.description,
+                runningQuestCount: running,
+                questAliasFillFailures: failures
             )
         }
         return papyrus.scriptsSnapshot(
-            target: entry.key, runningQuestCount: running
+            target: entry.key,
+            runningQuestCount: running,
+            questAliasFillFailures: failures
+        )
+    }
+
+    /// Quests worth inspecting: the ones that declare at least one alias.
+    var questAliasQuestEditorIDs: [String] {
+        guard let quests = papyrusBridge?.questRuntime?.quests else { return [] }
+        return quests.sortedQuests()
+            .filter { !$0.aliases.isEmpty }
+            .compactMap(\.editorID)
+    }
+
+    /// One quest's authored aliases beside what the session filled them with.
+    ///
+    /// Every alias the record declares is listed, not only the filled ones: an
+    /// alias that stayed empty is the interesting case, and dropping it would
+    /// make an unimplemented fill type invisible.
+    func questAliasTable(editorID: String) -> ScriptQuestAliasInspection? {
+        guard
+            let runtime = papyrusBridge?.questRuntime,
+            let quest = runtime.quests.quest(editorID: editorID)
+        else {
+            return nil
+        }
+        let filled = (try? runtime.aliasState(of: quest.formID)) ?? .empty
+        let state = try? runtime.state(of: quest.formID)
+        return ScriptQuestAliasInspection(
+            editorID: quest.editorID ?? quest.formID.description,
+            formIDText: quest.formID.description,
+            isRunning: state?.isRunning ?? false,
+            rows: quest.aliases.map { alias in
+                ScriptQuestAliasRow(
+                    aliasID: alias.id,
+                    name: alias.name ?? "",
+                    fillType: alias.fillType.name,
+                    isOptional: alias.flags.contains(.optional),
+                    reference: filled.reference(forAlias: alias.id)?.description
+                )
+            }
         )
     }
 

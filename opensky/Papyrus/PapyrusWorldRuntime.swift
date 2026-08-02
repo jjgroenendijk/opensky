@@ -59,6 +59,21 @@ final class PapyrusWorldRuntime {
     /// (issue #322). They are in no cell's set, so only `detachQuest(key:)`
     /// retires them. See `PapyrusWorldQuests.swift`.
     var questInstanceKeys: Set<PapyrusInstanceKey> = []
+    /// Script instances belonging to one quest's filled aliases (issue #183),
+    /// keyed by the *quest* so `detachQuest(key:)` can retire them, while the
+    /// instances themselves are keyed by the filled reference — a
+    /// `ReferenceAlias` script runs on the reference in the alias, not on the
+    /// quest. See `PapyrusWorldQuests.swift`.
+    var questAliasInstanceKeys: [ReferenceKey: Set<PapyrusInstanceKey>] = [:]
+    /// Filled quest aliases every VMAD binding pass resolves alias-typed
+    /// object properties through (issue #183). A value rather than a callback
+    /// into the session, so binding stays nonisolated; the bridge refreshes it
+    /// whenever a fill changes it. `.empty` in a session with no quest layer,
+    /// where every alias property keeps its compiler default.
+    var aliasResolution: QuestAliasResolution = .empty
+    /// Newest alias filled and bound, worded like a `recentEvents` entry, for
+    /// the Scripts readout. Nil until a quest with an alias starts.
+    var lastQuestAliasFill: String?
     /// Stage fragments enqueued this session, for the Scripts readout.
     var questFragmentsQueued = 0
     /// Newest fragment enqueued, worded like a `recentEvents` entry. Nil until

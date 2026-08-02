@@ -74,10 +74,13 @@ struct ConditionFunctionTests {
     // MARK: - Run-on fallbacks
 
     @Test func unsupportedRunOnTypesAreTaggedFalse() throws {
+        // Quest Alias (5) is deliberately absent: issue #183 made it a
+        // supported run-on that resolves through the filled alias table, so an
+        // empty one is `unresolvedReference` and is covered by
+        // `QuestAliasConditionTests`.
         let cases: [(raw: UInt32, runOn: Condition.RunOnType)] = [
             (3, .combatTarget),
             (4, .linkedReference),
-            (5, .questAlias),
             (6, .packageData),
             (7, .eventData),
             (99, .unknown(99))
@@ -92,8 +95,14 @@ struct ConditionFunctionTests {
         #expect(evaluator.tally.unsupportedRunOnTotal == cases.count)
         #expect(evaluator.tally.rankedUnsupportedRunOns.map(\.name) == [
             "combatTarget", "eventData", "linkedReference",
-            "packageData", "questAlias", "unknown(99)"
+            "packageData", "unknown(99)"
         ])
+        // A context with no quest scope cannot answer an alias run-on, but the
+        // reason is that the alias named nothing, not that the run-on is
+        // unknown.
+        let aliasCondition = try ConditionEvaluatorFixture.isID(Self.subjectBase, runOn: 5)
+        #expect(evaluator.evaluate(aliasCondition).failures
+            == [.unresolvedReference(.questAlias)])
         #expect(evaluator.tally.rankedUnsupportedRunOns.allSatisfy { $0.count == 1 })
     }
 

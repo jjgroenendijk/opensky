@@ -14,6 +14,10 @@ nonisolated enum ScriptBindingSkipReason: Hashable {
     case missingProperty
     case manualProperty
     case missingBackingVariable
+    /// An alias-typed object property whose alias holds nothing: the quest is
+    /// not running, its fill type is one OpenSky does not implement, or the
+    /// session has no alias seam at all (issue #183). A *filled* alias binds
+    /// like any other object property and is not counted here.
     case aliasObject
     case unresolvedReference
     case typeMismatch
@@ -24,7 +28,7 @@ nonisolated enum ScriptBindingSkipReason: Hashable {
         case .missingProperty: "property missing from PEX"
         case .manualProperty: "non-automatic property"
         case .missingBackingVariable: "automatic property without backing variable"
-        case .aliasObject: "quest-alias object"
+        case .aliasObject: "unfilled quest alias"
         case .unresolvedReference: "unresolved object reference"
         case .typeMismatch: "VMAD/PEX type mismatch"
         }
@@ -75,18 +79,20 @@ nonisolated struct BoundScriptInstance {
 nonisolated extension AttachedScript {
     /// Creates one instance through the issue #168 initial-values seam.
     ///
-    /// Alias objects and direct references with no live opaque handle leave
-    /// the PEX compiler default intact. The caller owns world-reference handle
-    /// allocation; M11.2 supplies that lifecycle.
+    /// An unfilled alias object and a direct reference with no live opaque
+    /// handle leave the PEX compiler default intact. The caller owns
+    /// world-reference handle allocation; M11.2 supplies that lifecycle.
     func makeInstance(
         in runtime: PapyrusRuntime,
         handle: PapyrusObjectHandle? = nil,
         formIDResolver: FormIDResolver,
+        aliases: QuestAliasResolution = .empty,
         objectHandle: @escaping (ReferenceKey) -> PapyrusObjectHandle?
     ) throws -> BoundScriptInstance {
         let binding = try binding(
             in: runtime,
             formIDResolver: formIDResolver,
+            aliases: aliases,
             objectHandle: objectHandle
         )
         let instanceHandle = try runtime.makeInstance(
@@ -100,6 +106,7 @@ nonisolated extension AttachedScript {
     func binding(
         in runtime: PapyrusRuntime,
         formIDResolver: FormIDResolver,
+        aliases: QuestAliasResolution = .empty,
         objectHandle: @escaping (ReferenceKey) -> PapyrusObjectHandle?
     ) throws -> ScriptBinding {
         guard !isRemoved else {
@@ -112,6 +119,7 @@ nonisolated extension AttachedScript {
         var builder = ScriptBindingBuilder(
             scriptName: name,
             formIDResolver: formIDResolver,
+            aliases: aliases,
             objectHandle: objectHandle
         )
         for property in properties {
@@ -129,6 +137,9 @@ nonisolated private struct ScriptBindingBuilder {
 
     let scriptName: String
     let formIDResolver: FormIDResolver
+    /// Filled quest aliases this session holds (issue #183). `.empty` in a
+    /// headless binding, where every alias-typed property keeps its default.
+    let aliases: QuestAliasResolution
     let objectHandle: (ReferenceKey) -> PapyrusObjectHandle?
     var initialValues: [String: PapyrusValue] = [:]
     var resolvedReferences: [ReferenceKey] = []
@@ -270,13 +281,27 @@ nonisolated private struct ScriptBindingBuilder {
         )
     }
 
+    /// One object property to a live handle.
+    ///
+    /// An alias-typed reference (`alias != -1`) names a slot on the quest its
+    /// FormID identifies rather than a form, so it resolves through the fill
+    /// seam; an alias that holds nothing keeps the compiler default and is
+    /// counted as `.aliasObject` exactly as every alias was before issue #183.
     private mutating func resolve(
         _ value: ScriptObjectReference,
         propertyName: String
     ) -> ResolvedScriptValue? {
-        guard !value.isAlias else {
-            skip(.aliasObject, property: propertyName)
-            return nil
+        if value.isAlias {
+            guard
+                value.alias >= 0,
+                let key = aliases.reference(
+                    alias: UInt32(value.alias), in: value.formID
+                )
+            else {
+                skip(.aliasObject, property: propertyName)
+                return nil
+            }
+            return handleValue(for: key, propertyName: propertyName)
         }
         guard !value.formID.isNull else {
             return ResolvedScriptValue(value: .none)
@@ -285,6 +310,15 @@ nonisolated private struct ScriptBindingBuilder {
             skip(.unresolvedReference, property: propertyName)
             return nil
         }
+        return handleValue(for: key, propertyName: propertyName)
+    }
+
+    /// The live opaque handle for one resolved key, or a counted skip when the
+    /// session has none for it.
+    private mutating func handleValue(
+        for key: ReferenceKey,
+        propertyName: String
+    ) -> ResolvedScriptValue? {
         guard let handle = objectHandle(key) else {
             skip(.unresolvedReference, property: propertyName)
             return nil

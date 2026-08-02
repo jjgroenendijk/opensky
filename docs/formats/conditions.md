@@ -128,6 +128,14 @@ parameter #2 of the immediately preceding `CTDA`. When one is present the
 corresponding raw parameter word in the `CTDA` is arbitrary and carries no
 meaning.
 
+The string names a quest alias, so it resolves against the alias table of
+`ConditionContext.aliasQuest` (issue #183). `ConditionCall.parameter1` returns the
+named alias's *ID* — the number every other alias-typed parameter on disk carries
+— for a filled alias, and nil for an empty one, an alias name the quest does not
+declare, or a context with no quest scope; the function then reports
+`ConditionFailure.unresolvedParameter`. Name matching is case-insensitive, as the
+Creation Kit has always treated alias names.
+
 ## Decode policy
 
 Plugin data from mods is not trustworthy, so the decoder degrades instead of
@@ -207,20 +215,27 @@ than over whatever prefix happened to settle it.
 
 ### Run-on resolution
 
-The run-on word selects the object the function runs against. Only three of the
-eight types have a live resolution today, and the two failure modes are kept
-apart on purpose:
+The run-on word selects the object the function runs against. Four of the eight
+types have a live resolution today, and the two failure modes are kept apart on
+purpose:
 
 * Subject, target and reference resolve through `ConditionContext`. Subject and
   target come from the `subject` and `target` keys the caller bound; reference
   looks the raw FormID at offset 24 up in the `RuntimeReferenceIndex`. The
   `swapSubjectAndTarget` flag (`0x10`) is honoured here, which is the only place
   it can matter.
-* Combat target, linked reference, quest alias, package data, event data and any
-  unknown value fail up front as `ConditionFailure.unsupportedRunOn`, with their
-  own tally bucket. This is a missing subsystem, not a missing binding.
+* Quest alias (5) resolves through the filled alias table issue #183 added. Its
+  alias index is parameter #3 at offset 28 — the field UESP calls the quest-alias
+  index — and the quest it belongs to is `ConditionContext.aliasQuest`, because a
+  `CTDA` never names one: the record the condition was read from does. A QUST's
+  own condition runs are evaluated with that quest; a list belonging to no quest,
+  such as a `MUST` record's, leaves it nil and every alias path then reports
+  rather than borrowing a nearby quest's table.
+* Combat target, linked reference, package data, event data and any unknown value
+  fail up front as `ConditionFailure.unsupportedRunOn`, with their own tally
+  bucket. This is a missing subsystem, not a missing binding.
 * A supported run-on that names a reference the context cannot produce — no
-  subject bound, or a key the index does not hold — is
+  subject bound, a key the index does not hold, or an alias holding nothing — is
   `ConditionFailure.unresolvedReference`, a different bucket, because the fix is
   a caller supplying a better context rather than OpenSky implementing more
   engine.
@@ -319,7 +334,9 @@ Nothing in the evaluator throws. A condition it cannot answer evaluates to
 false and carries a machine-readable `ConditionFailure` saying why:
 `.unknownFunction`, `.unresolvedGlobal`, `.unresolvedQuest`,
 `.unsupportedRunOn`, `.unresolvedReference`, `.unknownOperator`,
-`.unresolvedParameter`, or `.unavailableClock`. A QUST parameter naming no quest
+`.unresolvedParameter`, or `.unavailableClock`. `.unresolvedParameter` today
+means a `CIS1`/`CIS2` alias name that resolved to no filled alias. A QUST
+parameter naming no quest
 is `.unresolvedQuest` rather than a stopped quest at stage zero: "this quest does
 not exist" and "this quest has not started" are different answers, and only one
 of them is real. `ConditionOutcome` pairs the `isTrue` a caller needs with

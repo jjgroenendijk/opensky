@@ -64,6 +64,44 @@ nonisolated extension OpenSkySaveEncoder {
         }
     }
 
+    /// The `QALS` chunk (issue #183): every snapshot entry carrying a non-empty
+    /// alias table, in the snapshot's `ReferenceKey` order. A session whose
+    /// quests filled nothing writes no chunk, so its bytes match what this
+    /// encoder produced before the chunk existed.
+    ///
+    /// An empty table is deliberately not written. It is the state a quest has
+    /// before a start and after a stop, and the decoder restores exactly that
+    /// for a quest the chunk does not mention.
+    static func writeQuestAliases(
+        _ entries: [WorldStateSnapshotEntry],
+        into writer: inout BinaryWriter
+    ) {
+        let saved = entries.compactMap { entry -> (key: ReferenceKey, state: QuestAliasState)? in
+            guard
+                let state = entry.delta.component(QuestAliasState.self),
+                !state.isEmpty
+            else {
+                return nil
+            }
+            return (key: entry.key, state: state)
+        }
+        guard !saved.isEmpty else { return }
+        writeChunk(tag: OpenSkySaveFormat.ChunkTag.questAliases, into: &writer) { payload in
+            payload.writeUInt32(UInt32(clamping: saved.count))
+            for each in saved {
+                writeKey(each.key, into: &payload)
+                payload.writeUInt32(UInt32(clamping: each.state.fills.count))
+                // The fills arrive sorted by alias ID from the component's own
+                // invariant, so nothing is sorted here and the bytes stay a
+                // pure function of the state.
+                for fill in each.state.fills {
+                    payload.writeUInt32(fill.aliasID)
+                    writeKey(fill.reference, into: &payload)
+                }
+            }
+        }
+    }
+
     private static func objectiveFlags(_ objective: QuestObjectiveState) -> UInt8 {
         var flags: UInt8 = 0
         if objective.isDisplayed {

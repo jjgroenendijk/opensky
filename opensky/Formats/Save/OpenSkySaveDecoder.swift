@@ -45,6 +45,10 @@ nonisolated enum OpenSkySaveDecoder {
         /// data, so every quest re-derives its baseline from its DNAM flags —
         /// which is also what a save written before that chunk existed means.
         var quests: [SaveQuestEntry] = []
+        /// Absent `QALS` chunk (issue #183) means no quest had a filled alias
+        /// table, so every running quest restores with empty aliases — which is
+        /// also what a save written before that chunk existed means.
+        var questAliases: [SaveQuestAliasEntry] = []
     }
 
     static func decode(_ data: Data) throws -> OpenSkySaveFile {
@@ -65,12 +69,15 @@ nonisolated enum OpenSkySaveDecoder {
             metadata: metadata,
             fingerprint: fingerprint,
             snapshot: WorldStateSnapshot(
-                entries: OpenSkySaveQuestDecoder.merge(
-                    body.quests,
-                    into: OpenSkySaveSpawnDecoder.merge(
-                        body.spawns,
-                        into: OpenSkySaveInventoryDecoder.merge(
-                            body.inventories, into: body.entries
+                entries: OpenSkySaveQuestDecoder.mergeAliases(
+                    body.questAliases,
+                    into: OpenSkySaveQuestDecoder.merge(
+                        body.quests,
+                        into: OpenSkySaveSpawnDecoder.merge(
+                            body.spawns,
+                            into: OpenSkySaveInventoryDecoder.merge(
+                                body.inventories, into: body.entries
+                            )
                         )
                     )
                 ),
@@ -176,6 +183,8 @@ nonisolated enum OpenSkySaveDecoder {
             body.spawns = try OpenSkySaveSpawnDecoder.decodeSpawns(payload)
         case OpenSkySaveFormat.ChunkTag.questStates:
             body.quests = try OpenSkySaveQuestDecoder.decodeQuestStates(payload)
+        case OpenSkySaveFormat.ChunkTag.questAliases:
+            body.questAliases = try OpenSkySaveQuestDecoder.decodeQuestAliases(payload)
         default:
             break // Unknown chunk: skipped by its declared length.
         }

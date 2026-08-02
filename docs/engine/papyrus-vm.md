@@ -58,6 +58,7 @@ choice OpenSky makes in those gaps is listed under [Deviations](#deviations).
 * [Update timers](#update-timers)
 * [Instance lifecycle over cell streaming](#instance-lifecycle-over-cell-streaming)
 * [Quest script instances and stage fragments](#quest-script-instances-and-stage-fragments)
+* [Quest aliases in scripts](#quest-aliases-in-scripts)
 * [Script state in a save](#script-state-in-a-save)
 * [Lazy script library](#lazy-script-library)
 * [World > Scripts sidebar surface](#world--scripts-sidebar-surface)
@@ -867,13 +868,39 @@ in `PapyrusWorldStateBridgeQuests.swift`:
   guessing would run fragments twice.
 * A shut-down stage stops the quest but does not retire its instances, so the
   fragment that stage just queued still runs. Only `Stop` retires them.
-* Alias-typed VMAD properties on a quest script keep the recorded
-  `ScriptBindingSkipReason.aliasObject` skip and their compiler defaults until
-  alias resolution lands (#183). On `MGRArniel01` that is one alias property and
-  four unresolved reference properties, and the stage-10 fragment runs anyway.
 * Quests start from start-game-enabled, `Start` or a start-up stage only. The
   story manager is not modelled; that deferral is recorded here rather than in
   an issue comment.
+
+## Quest aliases in scripts
+
+Alias resolution (issue #183) reaches the VM in two places. What fills an alias, and when,
+is [runtime state](/engine/runtime-state.md); this section is only what the VM does with a
+filled one.
+
+**Alias-typed property binding.** A VMAD object property whose `alias` word is not -1 names a
+slot on the quest its FormID identifies rather than a form. `ScriptDataBinding` takes a
+`QuestAliasResolution` and resolves such a property to the filled reference's live handle, so
+an alias property binds exactly like a direct one. An alias holding nothing — the quest is
+not running, or its fill type is one OpenSky does not implement — keeps the PEX compiler
+default and is counted as `ScriptBindingSkipReason.aliasObject`, whose readout name is now
+"unfilled quest alias". `PapyrusWorldRuntime.aliasResolution` holds the value every binding
+pass uses; the session bridge refreshes it whenever a fill or a `Stop` changes it, which
+keeps binding nonisolated rather than calling back into a main-actor session.
+
+**Alias scripts.** The alias-script sections of the QUST VMAD tail (decoded in 13.1) become
+instances during `attachQuest`, with one deliberate difference from every other quest script:
+they are keyed by the *filled reference*, not by the quest. A `ReferenceAlias` script runs on
+the reference in its alias, so keying it there gives it the same `Self` identity and the same
+entry in the handle map as the reference's own scripts, and stops two aliases carrying the
+same script name from collapsing onto one instance. `questAliasInstanceKeys` remembers which
+quest owns which alias instances so a `Stop` still retires exactly its own; like quest
+instances they are persistent and in no cell's attached set, so no detach reaches them. An
+alias holding nothing contributes no instance at all, and an alias-script section naming a
+different quest is skipped, since filling that quest's alias needs that quest's table.
+
+A save restores the fills with the world state, and the session re-attaches running quests'
+scripts afterwards, so alias scripts come back bound to the restored fills.
 
 ## Script state in a save
 
@@ -956,7 +983,12 @@ hosts five sections, each backed by the `ScriptControlProviding` protocol
   and the newest fragment. Running quests and scripted quests are two numbers on purpose:
   a quest with no scripts runs perfectly well, so the gap between them is information
   rather than an error. Quest *state* — which quest is on which stage — is the journal's
-  surface (#184), not this one.
+  surface (#184), not this one. Issue #183 added the alias half: the filled-alias count
+  across quests, the alias script instance count, the wire-up fill-failure count, the
+  newest fill, and an inspector — `ScriptQuestAliasControl` picks a quest by editor ID and
+  `ScriptQuestAliasStatsLabel` lists every alias it declares with its fill type, its
+  Optional flag and the reference in it, so an empty alias and an unimplemented fill type
+  are told apart on screen.
 * `ScriptEventsSection` (`PanelSection-scriptEvents`) shows a bounded tail of recent
   events in the same journal-tail presentation `World > Runtime State` uses, plus the
   pending and dropped event counts.

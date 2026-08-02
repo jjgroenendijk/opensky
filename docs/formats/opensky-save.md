@@ -34,6 +34,7 @@ byte length followed by that many UTF-8 bytes. The file extension is `osav`.
 * `INVN` entry layout
 * `SPWN` entry layout
 * `QSTS` entry layout
+* `QALS` entry layout
 * Version policy
 * Defensive decoding
 * Where saves live and how they are written
@@ -150,8 +151,8 @@ A chunk whose declared length runs past the end of the file is
 `chunkBoundsViolation(tag:)`. A chunk whose tag this build does not know is skipped using
 that declared length, which is what makes a newer build's save loadable in an older one.
 
-Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR`, `INVN`, `SPWN` and `QSTS` were
-added additively afterwards.
+Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR`, `INVN`, `SPWN`, `QSTS` and
+`QALS` were added additively afterwards.
 
 `GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
 any other size is `invalidValue`.
@@ -502,6 +503,49 @@ objective count against `questObjectiveSize` (3).
 Like `INVN` and `SPWN`, the key is repeated rather than referring back to an `RDLT` entry: a
 quest carries no other component and therefore has no `RDLT` entry at all. The decoder merges
 the chunks into one delta per reference by key and re-sorts into `ReferenceKey` total order.
+
+## `QALS` entry layout
+
+`QALS` — filled quest aliases (issue #183), one entry per quest whose alias table is not
+empty. Additive like `QSTS`, and a *sibling* of it rather than an extension: `QSTS` entries
+are a flat positional layout with no per-entry length, so appending a field to them would
+make an older build misparse the whole chunk instead of skipping the new part, which is the
+exact failure the chunk stream exists to avoid. A session whose quests filled nothing writes
+no chunk at all, so its bytes match what the encoder produced before the chunk existed.
+
+| type   | field      | notes                                     |
+| ------ | ---------- | ----------------------------------------- |
+| uint32 | entryCount | number of entries that follow             |
+| bytes  | entries    | `entryCount` entries, layout below        |
+
+Each entry:
+
+| type   | field     | notes                                                      |
+| ------ | --------- | ---------------------------------------------------------- |
+| key    | key       | the QUST record's key, tagged as in `RDLT`                  |
+| uint32 | fillCount | number of filled aliases that follow                        |
+| bytes  | fills     | `fillCount` records, layout below                           |
+
+Each fill:
+
+| type   | field     | notes                                                      |
+| ------ | --------- | ---------------------------------------------------------- |
+| uint32 | aliasID   | the `ALST`/`ALLS` alias number                              |
+| key    | reference | the filled reference's key, tagged as in `RDLT`             |
+
+The target is stored as a session-stable key rather than as a FormID, for the reason every
+other key in this container is: a FormID is load-order relative and would name a different
+object after the plugin list changes.
+
+Fills arrive sorted by alias ID from `QuestAliasState`'s own invariant, so nothing is sorted
+during encoding and the bytes stay a pure function of the state. Duplicate or unsorted alias
+IDs in a file are collapsed and sorted by `QuestAliasState.init` rather than rejected — the
+invariant belongs to the type. Both counts are validated before storage is reserved: the
+entry count against `minimumQuestAliasEntrySize` (11 bytes) and the fill count against
+`minimumQuestAliasFillSize` (11).
+
+An empty table is deliberately never written, and a quest the chunk does not mention restores
+with empty aliases — which is exactly the state a quest that has not started has.
 
 ## Version policy
 
