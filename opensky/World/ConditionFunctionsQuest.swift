@@ -90,9 +90,9 @@ nonisolated extension ConditionFunctions {
     /// The quest parameter 1 names, or the reason it could not be read.
     ///
     /// Two different failures live here and stay distinct: a CIS1 name override
-    /// means the parameter itself is unreadable (`unresolvedParameter`, since
-    /// the alias table is not resolved yet), while a readable FormID that names
-    /// no quest is `unresolvedQuest`.
+    /// that names no filled alias of the context's quest leaves the parameter
+    /// unreadable (`unresolvedParameter`, issue #183), while a readable FormID
+    /// that names no quest is `unresolvedQuest`.
     static func questState(
         _ call: ConditionCall,
         index: UInt16

@@ -24,8 +24,9 @@
 //   block there. An empty condition list is true.
 //
 //   Run-on (UESP "CTDA Field", offset 20) selects the object the function runs
-//   against. Subject, Target and Reference resolve live through
-//   `ConditionContext`; every other type is a reason-tagged false with its own
+//   against. Subject, Target, Reference and Quest Alias resolve live through
+//   `ConditionContext` — the last of those through the filled alias table
+//   issue #183 added; every other type is a reason-tagged false with its own
 //   tally bucket, never an error.
 //
 // References:
@@ -60,9 +61,10 @@ nonisolated enum ConditionFailure: Equatable, Error, Sendable {
     case unresolvedReference(Condition.RunOnType)
     /// Operator bits 6 or 7, which are undefined on disk.
     case unknownOperator(UInt8)
-    /// The named function needs a parameter it cannot read — today that means a
-    /// CIS1/CIS2 name override, which needs the quest-alias table OpenSky does
-    /// not resolve yet. Carries the raw function index.
+    /// The named function needs a parameter it cannot read. Today that means a
+    /// CIS1/CIS2 alias-name override that named no alias of the context's
+    /// quest, or named one nothing has filled (issue #183). Carries the raw
+    /// function index.
     case unresolvedParameter(UInt16)
     /// The function needs game time and the context carries no clock.
     case unavailableClock
@@ -142,6 +144,20 @@ nonisolated struct ConditionContext: Sendable {
     /// the globals seam: a value resolving overrides over plugin baselines, so
     /// the quest functions never reach into `WorldStateStore`.
     var quests: QuestResolution
+    /// The one seam filled quest aliases come through (issue #183). Separate
+    /// from `quests` because the two answer different questions and a caller
+    /// may legitimately have one and not the other.
+    var aliases: QuestAliasResolution
+    /// Quest whose alias table a `questAlias` run-on and a CIS1/CIS2 name
+    /// override are resolved against.
+    ///
+    /// Alias references are only meaningful relative to an owning quest, and a
+    /// CTDA does not carry one: the record the condition was read from does.
+    /// A QUST's own condition runs are evaluated with that quest here; a
+    /// dialogue or package condition is evaluated with the quest that owns the
+    /// topic. Nil means the caller had no quest scope, which makes every alias
+    /// path a reason-tagged failure rather than a wrong answer.
+    var aliasQuest: FormID?
     /// Game clock the time functions read. Nil in a context with no world
     /// running, which makes those functions reason-tagged false rather than
     /// wrong.
@@ -157,6 +173,8 @@ nonisolated struct ConditionContext: Sendable {
     init(
         globals: GlobalResolution = .empty,
         quests: QuestResolution = .empty,
+        aliases: QuestAliasResolution = .empty,
+        aliasQuest: FormID? = nil,
         clock: GameClock? = nil,
         references: RuntimeReferenceIndex = .empty,
         subject: ReferenceKey? = nil,
@@ -165,6 +183,8 @@ nonisolated struct ConditionContext: Sendable {
     ) {
         self.globals = globals
         self.quests = quests
+        self.aliases = aliases
+        self.aliasQuest = aliasQuest
         self.clock = clock
         self.references = references
         self.subject = subject
@@ -181,14 +201,40 @@ nonisolated struct ConditionCall: Sendable {
     var context: ConditionContext
 
     /// Parameter #1, with CIS1 taking precedence when the record carried one.
-    /// The name form is not resolvable yet (it needs the quest-alias table), so
-    /// a named parameter reports as nil rather than as a wrong FormID.
+    ///
+    /// A CIS1 string names a quest alias rather than a form, so the resolved
+    /// parameter is that alias's *ID* — the number every other alias-typed
+    /// parameter on disk carries — and a caller wanting the reference behind it
+    /// asks `aliasReference(_:)`. A name that matches no alias of the context's
+    /// quest, or one nothing has filled, reports nil, and the function turns
+    /// that into `ConditionFailure.unresolvedParameter` (issue #183).
     var parameter1: Condition.Parameter? {
-        condition.parameter1Name == nil ? condition.parameter1 : nil
+        guard let name = condition.parameter1Name else { return condition.parameter1 }
+        return aliasParameter(named: name)
     }
 
     var parameter2: Condition.Parameter? {
-        condition.parameter2Name == nil ? condition.parameter2 : nil
+        guard let name = condition.parameter2Name else { return condition.parameter2 }
+        return aliasParameter(named: name)
+    }
+
+    /// Reference filling the alias `parameter` names on the context's quest, or
+    /// nil when there is no quest scope, no such alias, or nothing in it.
+    func aliasReference(_ parameter: Condition.Parameter) -> ReferenceKey? {
+        guard let quest = context.aliasQuest else { return nil }
+        return context.aliases.reference(alias: parameter.rawValue, in: quest)
+    }
+
+    /// One authored alias name as a parameter word, filled aliases only.
+    private func aliasParameter(named name: String) -> Condition.Parameter? {
+        guard
+            let quest = context.aliasQuest,
+            let aliasID = context.aliases.aliasID(named: name, in: quest),
+            context.aliases.reference(alias: aliasID, in: quest) != nil
+        else {
+            return nil
+        }
+        return Condition.Parameter(rawValue: aliasID)
     }
 
     /// The reference this condition's run-on names.
@@ -199,6 +245,11 @@ nonisolated struct ConditionCall: Sendable {
     /// fails as `.unresolvedReference`. Only functions that actually need a
     /// reference ask for one, so a time function still answers under a run-on
     /// OpenSky cannot resolve.
+    ///
+    /// Quest Alias (run-on 5) resolves through the filled table (issue #183).
+    /// Its alias number is parameter #3 at CTDA offset 28, "the quest-alias /
+    /// package-data index" — see `Condition` — and the quest it belongs to is
+    /// the context's `aliasQuest`, because a CTDA does not name one.
     func reference() -> Result<RuntimeReferenceEntry, ConditionFailure> {
         let runOn = condition.runOn
         let swapped = condition.flags.contains(.swapSubjectAndTarget)
@@ -212,9 +263,27 @@ nonisolated struct ConditionCall: Sendable {
                 return .failure(.unresolvedReference(runOn))
             }
             return .success(entry)
+        case .questAlias:
+            return entry(forKey: questAliasKey(), runOn: runOn)
         default:
             return .failure(.unsupportedRunOn(runOn))
         }
+    }
+
+    /// The reference filling the alias this condition's run-on names, or nil
+    /// when the index is the unused -1, there is no quest scope, or the alias
+    /// is empty. All three are one `.unresolvedReference` — the run-on itself
+    /// is supported now, so `.unsupportedRunOn` would be the wrong reason.
+    private func questAliasKey() -> ReferenceKey? {
+        guard
+            condition.parameter3 >= 0,
+            let quest = context.aliasQuest
+        else {
+            return nil
+        }
+        return context.aliases.reference(
+            alias: UInt32(bitPattern: condition.parameter3), in: quest
+        )
     }
 
     /// The game clock, or `.unavailableClock`.

@@ -116,25 +116,38 @@ struct QuestRuntime {
 
     // MARK: - Running state
 
-    /// Starts the quest. Starting one that already runs is a no-op that still
-    /// materializes nothing new, because the write is skipped when the state is
-    /// unchanged.
+    /// Starts the quest, filling its aliases first. Starting one that already
+    /// runs is a no-op that still materializes nothing new, because the write
+    /// is skipped when the state is unchanged.
     ///
+    /// The alias fill comes first and can refuse the start outright: a quest
+    /// whose non-optional alias will not fill "will fail to start" (issue
+    /// #183, `QuestAliasFiller`), and a half-started quest whose scripts hold
+    /// empty aliases is the state that rule exists to prevent.
+    ///
+    /// - Throws: `QuestError.aliasFillFailed` when a non-optional alias stayed
+    ///   empty, in which case neither the table nor the running flag is written.
     /// - Returns: the state as stored afterwards.
     @discardableResult
     func startQuest(_ id: FormID) throws -> QuestRuntimeState {
-        try apply(to: id) { $0.starting() }
+        let resolved = try resolve(id)
+        try fillAliases(of: resolved.quest, key: resolved.key)
+        return try apply(to: id) { $0.starting() }
     }
 
     /// Stops the quest, keeping its reached stages and its completed flag:
-    /// stopping is not resetting. Stopping a quest that is not running is a
-    /// no-op rather than a failure — unlike the mutations that only mean
-    /// something while it runs, "stop this" is already satisfied.
+    /// stopping is not resetting. Its alias table is *not* kept — an alias is a
+    /// live pointer into the world, and the Creation Kit fills one only while
+    /// the quest runs. Stopping a quest that is not running is a no-op rather
+    /// than a failure — unlike the mutations that only mean something while it
+    /// runs, "stop this" is already satisfied.
     ///
     /// - Returns: the state as stored afterwards.
     @discardableResult
     func stopQuest(_ id: FormID) throws -> QuestRuntimeState {
-        try apply(to: id) { $0.stopping() }
+        let resolved = try resolve(id)
+        clearAliases(key: resolved.key)
+        return try apply(to: id) { $0.stopping() }
     }
 
     /// Flags the quest completed, leaving it running: `CompleteQuest()` is
@@ -183,6 +196,9 @@ struct QuestRuntime {
             guard flags.contains(.startUpStage) else {
                 throw QuestError.questNotRunning(id)
             }
+            // A start-up stage starts the quest, so it fills the aliases too,
+            // and refuses the whole call the same way `startQuest` does.
+            try fillAliases(of: resolved.quest, key: resolved.key)
             state = state.starting()
         }
         state = state.reachingStage(index)
@@ -239,11 +255,15 @@ struct QuestRuntime {
     /// Drops the quest's runtime state, so it re-derives from plugin data
     /// again. The component-level counterpart of `WorldStateStore.reset(_:)`.
     ///
+    /// The alias table goes with it: a quest re-deriving from plugin data has
+    /// not started, and an alias holds nothing before a start.
+    ///
     /// - Returns: true when runtime state was actually removed.
     @discardableResult
     func reset(_ id: FormID) -> Bool {
         guard let key = quests.key(for: id) else { return false }
-        return store.reset(.quest, for: key)
+        let clearedAliases = clearAliases(key: key)
+        return store.reset(.quest, for: key) || clearedAliases
     }
 
     // MARK: - Private

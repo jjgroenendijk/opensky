@@ -52,6 +52,12 @@ nonisolated enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendab
     /// `ReferenceKey`, the same way `GlobalStore` keys a GLOB override, because
     /// a quest is not placed anywhere and belongs to no cell.
     case quest
+    /// One quest's filled reference aliases (issue #183). The value type is
+    /// `QuestAliasState` in `opensky/Quests/QuestAliasComponent.swift`, keyed
+    /// by the same QUST `ReferenceKey` the `quest` slot uses. It is a slot of
+    /// its own because the two have different lifetimes: stage and objective
+    /// state survives a stop, while the alias table is cleared by one.
+    case questAliases
 }
 
 /// A value that can occupy one component slot.
@@ -83,6 +89,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
     case inventory(ReferenceInventoryState)
     case spawn(ReferenceSpawnState)
     case quest(QuestRuntimeState)
+    case questAliases(QuestAliasState)
 
     var kind: WorldStateComponentKind {
         switch self {
@@ -93,6 +100,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
         case .inventory: .inventory
         case .spawn: .spawn
         case .quest: .quest
+        case .questAliases: .questAliases
         }
     }
 }

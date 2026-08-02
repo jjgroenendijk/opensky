@@ -40,8 +40,46 @@ nonisolated enum ScriptsReadout {
                 + "  Scripted: \(snapshot.questCount)",
             "Quest instances: \(snapshot.questInstanceCount)"
                 + "  Stage fragments queued: \(snapshot.questFragmentsQueued)",
-            "Last fragment: \(snapshot.lastQuestFragment ?? "none")"
+            "Last fragment: \(snapshot.lastQuestFragment ?? "none")",
+            "Aliases filled: \(snapshot.filledAliasCount)"
+                + " across \(snapshot.aliasQuestCount) quests"
+                + "  Alias instances: \(snapshot.questAliasInstanceCount)",
+            "Fill failures: \(snapshot.questAliasFillFailures)"
+                + "  Last fill: \(snapshot.lastQuestAliasFill ?? "none")"
         ].joined(separator: "\n")
+    }
+
+    /// One quest's alias table (issue #183), one line per alias in the order
+    /// the quest fills them.
+    ///
+    /// An empty alias reads as "empty" beside the fill type that was supposed
+    /// to fill it, so an unimplemented fill type and a fill that genuinely
+    /// found nothing are told apart on screen rather than both reading as a
+    /// blank. A quest that is not running shows every alias empty, which is
+    /// what the Creation Kit describes rather than a fault.
+    static func questAliasText(
+        for table: ScriptQuestAliasInspection?,
+        editorID: String
+    ) -> String {
+        guard let table else {
+            return editorID.isEmpty
+                ? "No quest selected."
+                : "No loaded plugin defines \(editorID)."
+        }
+        let header = "\(table.editorID) (\(table.formIDText))"
+            + "  \(table.isRunning ? "running" : "not running")"
+            + "  filled \(table.filledCount)/\(table.rows.count)"
+        guard !table.rows.isEmpty else {
+            return "\(header)\nThis quest declares no aliases."
+        }
+        return ([header] + table.rows.map(line)).joined(separator: "\n")
+    }
+
+    private static func line(_ row: ScriptQuestAliasRow) -> String {
+        let name = row.name.isEmpty ? "unnamed" : row.name
+        let optional = row.isOptional ? ", optional" : ""
+        return "  [\(row.aliasID)] \(name) (\(row.fillType)\(optional))"
+            + " -> \(row.reference ?? "empty")"
     }
 
     /// Queue depth plus the dispatched-event tail, oldest first, in the same

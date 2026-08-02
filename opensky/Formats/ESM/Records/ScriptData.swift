@@ -34,8 +34,10 @@ nonisolated struct ScriptObjectReference: Equatable {
     let formID: FormID
     /// -1 means a direct FormID. Any other value selects an alias on the quest
     /// identified by `formID`. M13.1 decodes the alias definitions those slots
-    /// name (`Quest.Alias`); filling them at runtime is issue #183, so an
-    /// alias object still resolves to no direct world reference here.
+    /// name (`Quest.Alias`) and M13.4 fills them at runtime, but the fill is a
+    /// world fact rather than a record one: resolving an alias slot to a
+    /// reference needs the running quest's table, which is why nothing here
+    /// answers it and `ScriptDataBinding` takes a seam for it.
     let alias: Int16
     let unused: UInt16
 

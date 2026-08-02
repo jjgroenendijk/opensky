@@ -75,6 +75,9 @@ extension PapyrusWorldStateBridge: PapyrusWorldQuestBridge {
         let resolved = try resolveQuest(key)
         try resolved.runtime.stopQuest(resolved.quest.formID)
         world?.detachQuest(key: key)
+        // The table went with the stop, so the binding seam must not keep
+        // handing the old fills to the next attach.
+        world?.aliasResolution = resolved.runtime.aliasResolution()
     }
 
     func completeQuest(for key: ReferenceKey) throws {
@@ -139,12 +142,27 @@ extension PapyrusWorldStateBridge: PapyrusWorldQuestBridge {
     /// running, which is what a session does once at wire-up and again after a
     /// save is restored.
     ///
+    /// Aliases are filled first for a quest that has none yet — a start-game-
+    /// enabled quest reaches "running" straight off its DNAM flag without
+    /// anything ever calling `Start`, and a restored save may predate the
+    /// `QALS` chunk. A quest whose fill *fails* is the one place OpenSky
+    /// deviates from the documented "the quest will fail to start" rule: its
+    /// running flag came from plugin data rather than from a `Start` call, so
+    /// the failure is counted in `questAliasFillFailures` and the quest keeps
+    /// running with an empty table rather than being un-started behind the
+    /// player's back.
+    ///
     /// - Returns: instances created.
     @discardableResult
     func attachRunningQuestScripts() -> Int {
         guard let questRuntime else { return 0 }
         var created = 0
         for entry in questRuntime.runningQuests() {
+            do {
+                try questRuntime.fillAliases(of: entry.quest, key: entry.key)
+            } catch {
+                questAliasFillFailures += 1
+            }
             created += attachQuestScripts(entry.quest, key: entry.key)
         }
         return created
@@ -177,11 +195,23 @@ extension PapyrusWorldStateBridge: PapyrusWorldQuestBridge {
     /// reference path takes.
     @discardableResult
     private func attachQuestScripts(_ quest: Quest, key: ReferenceKey) -> Int {
-        world?.attachQuest(
+        guard let world else { return 0 }
+        let aliases = questRuntime.flatMap { try? $0.aliasState(of: quest.formID) } ?? .empty
+        // The binding seam is refreshed before the attach rather than after,
+        // because the properties bound during it are exactly the alias-typed
+        // ones this quest just filled.
+        world.aliasResolution = questRuntime?.aliasResolution() ?? .empty
+        if let newest = aliases.fills.last {
+            world.lastQuestAliasFill =
+                "\(quest.editorID ?? quest.formID.description)"
+                    + "[\(newest.aliasID)] -> \(newest.reference.description)"
+        }
+        return world.attachQuest(
             quest,
             key: key,
             formIDResolver: formIDResolver
-                ?? FormIDResolver(pluginName: "", masters: [])
-        ) ?? 0
+                ?? FormIDResolver(pluginName: "", masters: []),
+            aliases: aliases
+        )
     }
 }

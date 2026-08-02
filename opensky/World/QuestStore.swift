@@ -28,6 +28,11 @@ nonisolated final class QuestStore: Sendable {
     /// script handle resolves to — and has to name the QUST record behind it
     /// before `QuestRuntime` can be asked anything (issue #322).
     private let formIDsByKey: [ReferenceKey: UInt32]
+    /// Master-list resolver of the plugin these records came from, retained
+    /// because alias filling (issue #183) has to resolve FormIDs the QUST
+    /// records *point at* — an ALFR reference — and not only the quest
+    /// FormIDs the index already keyed.
+    let resolver: FormIDResolver
     /// QUST records in the top group that failed to decode. Zero in vanilla
     /// data; a sweep asserts it rather than silently indexing fewer quests.
     let skippedRecordCount: Int
@@ -87,6 +92,7 @@ nonisolated final class QuestStore: Sendable {
             inverse[key] = raw
         }
         formIDsByKey = inverse
+        self.resolver = resolver
         self.skippedRecordCount = skippedRecordCount
     }
 

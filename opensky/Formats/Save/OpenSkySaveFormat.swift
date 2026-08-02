@@ -103,6 +103,19 @@ nonisolated enum OpenSkySaveFormat {
         /// world. A session that touched no quest writes no chunk, so its bytes
         /// match what this encoder produced before the chunk existed.
         static let questStates = "QSTS"
+        /// Filled quest aliases (issue #183): one entry per quest whose alias
+        /// table is non-empty, and inside it one fill per filled alias.
+        ///
+        /// A sibling of `QSTS` rather than an extension of it, decided here
+        /// because the two answer to different rules. `QSTS` entries are a flat
+        /// positional layout with no per-entry length, so appending a field to
+        /// them would make every older build misparse the *whole* chunk rather
+        /// than skip the new part — the exact failure the chunk stream exists
+        /// to avoid. As its own chunk the fills are additive like `INVN` and
+        /// `SPWN`: an older build skips them by the declared length and
+        /// restores a world whose quests run with empty aliases, and a session
+        /// that filled none writes no chunk at all.
+        static let questAliases = "QALS"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.
@@ -200,6 +213,14 @@ nonisolated enum OpenSkySaveFormat {
     /// Bytes one `QSTS` objective occupies: a `UInt16` index plus its flag
     /// byte. Fixed width, like the stage entry.
     static let questObjectiveSize = 3
+    /// Smallest number of bytes a single `QALS` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4) naming the quest, and a zero fill count
+    /// (4).
+    static let minimumQuestAliasEntrySize = 11
+    /// Smallest number of bytes one `QALS` fill can occupy: the alias ID (4)
+    /// and a plugin key with an empty name (1 + 2 + 4). A generated key is
+    /// longer, so this is a lower bound rather than the size.
+    static let minimumQuestAliasFillSize = 11
 }
 
 /// On-disk tag of a component slot inside `RDLT`.
@@ -209,10 +230,10 @@ nonisolated enum OpenSkySaveFormat {
 /// detail that may change while these byte values may not.
 ///
 /// Optional because not every component slot travels in `RDLT`. `.inventory`,
-/// `.spawn` and `.quest` have no tag at all: each is carried by its own chunk
-/// so that an older build skips it rather than refusing the file (see
-/// `ChunkTag.inventories`, `ChunkTag.spawnedReferences` and
-/// `ChunkTag.questStates`). A nil tag is the
+/// `.spawn`, `.quest` and `.questAliases` have no tag at all: each is carried
+/// by its own chunk so that an older build skips it rather than refusing the
+/// file (see `ChunkTag.inventories`, `ChunkTag.spawnedReferences`,
+/// `ChunkTag.questStates` and `ChunkTag.questAliases`). A nil tag is the
 /// encoder's instruction to leave the component out of `RDLT`, and leaving
 /// `init?(saveTag:)` without a case for it is what keeps the decoder's "an
 /// unknown component kind in `RDLT` is an error" rule intact.
@@ -223,7 +244,7 @@ nonisolated extension WorldStateComponentKind {
         case .transform: 1
         case .activation: 2
         case .deletion: 3
-        case .inventory, .spawn, .quest: nil
+        case .inventory, .spawn, .quest, .questAliases: nil
         }
     }
 

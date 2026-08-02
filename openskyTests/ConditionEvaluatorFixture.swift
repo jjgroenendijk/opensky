@@ -44,7 +44,8 @@ enum ConditionEvaluatorFixture {
         parameter1: UInt32 = 0,
         parameter2: UInt32 = 0,
         runOn: UInt32 = 0,
-        reference: UInt32 = 0
+        reference: UInt32 = 0,
+        parameter3: Int32 = -1
     ) throws -> Condition {
         let payload = field(
             operatorBits: operatorBits,
@@ -54,7 +55,8 @@ enum ConditionEvaluatorFixture {
             parameter1: parameter1,
             parameter2: parameter2,
             runOn: runOn,
-            reference: reference
+            reference: reference,
+            parameter3: parameter3
         )
         guard let condition = try Condition(ctda: payload) else {
             throw ESMError.malformed("fixture CTDA did not decode")

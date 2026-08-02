@@ -17,6 +17,13 @@
 //   `OnCellAttach` and `OnLoad` are deliberately never enqueued: neither
 //   event means anything for an object that is in no cell.
 //
+// Alias scripts (issue #183) join the same attach. They are the one part of a
+// quest's script set that is *not* keyed by the quest: a `ReferenceAlias`
+// script runs on the reference filling its alias, so its instance is keyed by
+// that reference and `questAliasInstanceKeys` remembers which quest owns it so
+// a `Stop` still retires exactly its own. An alias that holds nothing
+// contributes no instance, which is why the attach takes the filled table.
+//
 // Which scripts a quest carries: the QUST VMAD primary script list, plus the
 // generated fragment script named by the VMAD tail's file name
 // ("QF_<editorID>_<formID>"). The tail's script is included even though
@@ -51,7 +58,8 @@ extension PapyrusWorldRuntime {
     func attachQuest(
         _ quest: Quest,
         key: ReferenceKey,
-        formIDResolver: FormIDResolver
+        formIDResolver: FormIDResolver,
+        aliases: QuestAliasState = .empty
     ) -> Int {
         let plan = questAttachPlan(quest, key: key)
         var created: Set<PapyrusInstanceKey> = []
@@ -62,8 +70,16 @@ extension PapyrusWorldRuntime {
                 created.insert(item.key)
             }
         }
-        bind(plan: plan, created: created, formIDResolver: formIDResolver)
-        for item in plan where created.contains(item.key) {
+        let aliasPlan = questAliasAttachPlan(quest, key: key, aliases: aliases)
+        for item in aliasPlan {
+            persistentKeys.insert(item.key)
+            questAliasInstanceKeys[key, default: []].insert(item.key)
+            if instancesByKey[item.key] == nil, instantiate(item) {
+                created.insert(item.key)
+            }
+        }
+        bind(plan: plan + aliasPlan, created: created, formIDResolver: formIDResolver)
+        for item in plan + aliasPlan where created.contains(item.key) {
             enqueueOnInitIfNeeded(item.key)
         }
         return created.count
@@ -81,8 +97,10 @@ extension PapyrusWorldRuntime {
     /// - Returns: instances retired.
     @discardableResult
     func detachQuest(key: ReferenceKey) -> Int {
-        let keys = questInstanceKeys.filter { $0.reference == key }.sorted()
-        for instanceKey in keys {
+        var keys = questInstanceKeys.filter { $0.reference == key }
+        let aliasKeys = questAliasInstanceKeys.removeValue(forKey: key) ?? []
+        keys.formUnion(aliasKeys)
+        for instanceKey in keys.sorted() {
             retire(instanceKey)
             persistentKeys.remove(instanceKey)
             questInstanceKeys.remove(instanceKey)
@@ -130,6 +148,64 @@ extension PapyrusWorldRuntime {
     /// Quests holding at least one live script instance.
     var questCount: Int {
         Set(questInstanceKeys.map(\.reference)).count
+    }
+
+    /// Alias script instances live across every running quest.
+    var questAliasInstanceCount: Int {
+        questAliasInstanceKeys.values.reduce(0) { $0 + $1.count }
+    }
+
+    /// Scripts the quest's *filled* aliases carry, from the alias-script
+    /// sections of the VMAD tail (issue #181), each instantiated on the
+    /// reference in that alias.
+    ///
+    /// Keying on the filled reference rather than on the quest is what makes
+    /// these `ReferenceAlias` scripts behave like the reference scripts they
+    /// sit beside — the same `Self` identity, the same handle in the map a
+    /// binding resolves object properties through — and it is also what keeps
+    /// two aliases carrying the same script name from collapsing onto one
+    /// instance. `questAliasInstanceKeys` remembers which quest owns them so a
+    /// `Stop` can still retire exactly its own.
+    ///
+    /// An alias section naming a *different* quest is skipped: the decoder
+    /// carries the object rather than assuming the owner (`QuestAliasScripts`),
+    /// and filling another quest's alias from here would need that quest's
+    /// table, which this call does not have.
+    private func questAliasAttachPlan(
+        _ quest: Quest,
+        key: ReferenceKey,
+        aliases: QuestAliasState
+    ) -> [PapyrusAttachItem] {
+        var plan: [PapyrusAttachItem] = []
+        var seen: Set<PapyrusInstanceKey> = []
+        for section in quest.aliasScripts {
+            guard
+                section.object.formID == quest.formID,
+                let aliasID = section.aliasID,
+                aliasID >= 0,
+                let reference = aliases.reference(forAlias: UInt32(aliasID))
+            else {
+                continue
+            }
+            for script in section.scripts {
+                guard !script.isRemoved else {
+                    skips.note(.removedScript)
+                    continue
+                }
+                guard resolveScript(named: script.name) else {
+                    skips.note(.missingScript)
+                    continue
+                }
+                let instanceKey = PapyrusInstanceKey(
+                    reference: reference, scriptName: script.name
+                )
+                guard seen.insert(instanceKey).inserted else { continue }
+                plan.append(PapyrusAttachItem(
+                    key: instanceKey, script: script, isPersistent: true
+                ))
+            }
+        }
+        return plan
     }
 
     /// Deterministic plan for one quest's scripts: the primary VMAD list in

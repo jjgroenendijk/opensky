@@ -22,10 +22,13 @@ extension PapyrusWorldRuntime {
     ///     running. Passed in rather than read here because quest *state* is
     ///     the world store's, not the VM's; the VM only knows which quests it
     ///     holds instances for.
+    ///   - questAliasFillFailures: quests whose alias fill failed at wire-up,
+    ///     which the bridge counts rather than the VM (issue #183).
     func scriptsSnapshot(
         target: ReferenceKey? = nil,
         targetDescription: String? = nil,
-        runningQuestCount: Int = 0
+        runningQuestCount: Int = 0,
+        questAliasFillFailures: Int = 0
     ) -> ScriptsSnapshot {
         let tally = runtime.tally
         return ScriptsSnapshot(
@@ -37,6 +40,11 @@ extension PapyrusWorldRuntime {
             runningQuestCount: runningQuestCount,
             questFragmentsQueued: questFragmentsQueued,
             lastQuestFragment: lastQuestFragment,
+            questAliasInstanceCount: questAliasInstanceCount,
+            filledAliasCount: aliasResolution.filledAliasCount,
+            aliasQuestCount: aliasResolution.filledQuestCount,
+            questAliasFillFailures: questAliasFillFailures,
+            lastQuestAliasFill: lastQuestAliasFill,
             recentEvents: recentEvents,
             droppedRecentEventCount: droppedRecentEventCount,
             pendingEventCount: eventQueue.count,

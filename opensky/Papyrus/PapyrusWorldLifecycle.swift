@@ -152,7 +152,8 @@ extension PapyrusWorldRuntime {
         do {
             let binding = try item.script.binding(
                 in: runtime,
-                formIDResolver: formIDResolver
+                formIDResolver: formIDResolver,
+                aliases: aliasResolution
             ) { handles[$0] }
             bindingSkips.merge(binding.skipped)
             for (name, value) in binding.initialValues.sorted(by: { $0.key < $1.key })

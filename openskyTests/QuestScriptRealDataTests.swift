@@ -75,14 +75,18 @@ struct QuestScriptRealDataTests {
         #expect(world.eventQueue.isEmpty)
 
         // The one attach skip is the `OnInit` a generated fragment script does
-        // not declare, which is counted rather than faulted. The binding skips
-        // are the alias-typed and reference-typed properties #183 resolves;
-        // they leave the compiler defaults in place, which is why the fragment
-        // still runs.
+        // not declare, which is counted rather than faulted. Every binding skip
+        // is now `unresolvedReference`: issue #183 fills the quest's one alias,
+        // so its property resolves to a world reference, but this session loads
+        // no cell and therefore holds no live handle for any of the five. They
+        // leave the compiler defaults in place, which is why the fragment still
+        // runs. The `aliasObject` bucket is empty, which is the alias fill
+        // showing up in the tally.
         #expect(world.skips.total == 1)
         #expect(world.skips.counts[.undefinedEventFunction] == 1)
-        #expect(world.bindingSkips.counts[.unresolvedReference] == 4)
-        #expect(world.bindingSkips.counts[.aliasObject] == 1)
+        #expect(world.bindingSkips.counts[.unresolvedReference] == 5)
+        #expect(world.bindingSkips.counts[.aliasObject] == nil)
+        #expect(world.aliasResolution.filledAliasCount == 1)
 
         let report = Self.report(
             quest: quest,

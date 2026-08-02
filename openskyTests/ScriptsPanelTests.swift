@@ -42,10 +42,15 @@ struct ScriptsPanelTests {
         #expect(panel.scriptPauseControl.accessibilityIdentifier() == "ScriptPauseControl")
         #expect(panel.scriptStepControl.accessibilityIdentifier() == "ScriptStepControl")
         #expect(panel.scriptBurstControl.accessibilityIdentifier() == "ScriptBurstControl")
+        #expect(
+            panel.questsSection.questAliasControl.accessibilityIdentifier()
+                == "ScriptQuestAliasControl"
+        )
 
         for identifier in [
             "ScriptInstancesStatsLabel", "ScriptQuestsStatsLabel", "ScriptEventsStatsLabel",
-            "ScriptSchedulerStatsLabel", "ScriptNativeTallyStatsLabel"
+            "ScriptSchedulerStatsLabel", "ScriptNativeTallyStatsLabel",
+            "ScriptQuestAliasStatsLabel"
         ] {
             #expect(scriptsReadout(identifier, in: panel.view) != nil, "\(identifier) is missing")
         }
@@ -180,6 +185,74 @@ struct ScriptsPanelTests {
         #expect(panel.schedulerSection.readout.contains("Ticks: 120"))
         #expect(panel.nativeTallySection.readout.contains("Native calls: 4210"))
         #expect(panel.nativeTallySection.readout.contains("1. Game.GetPlayer 8"))
+    }
+
+    /// The alias inspector is the sidebar path for issue #183: picking a quest
+    /// shows every alias it declares, what should fill it, and what did.
+    @Test @MainActor
+    func questAliasInspectorShowsFilledAndEmptyAliases() {
+        let panel = ScriptsPanelViewController()
+        panel.loadViewIfNeeded()
+        let fake = FakeScriptProvider()
+        fake.scriptsSnapshot = makeScriptsSnapshot(
+            runningQuestCount: 2,
+            questAliasInstanceCount: 1,
+            filledAliasCount: 3,
+            aliasQuestCount: 2,
+            lastQuestAliasFill: "MGRArniel01[1] -> skyrim.esm:0123AB"
+        )
+        fake.questAliasTables = ["MGRArniel01": ScriptQuestAliasInspection(
+            editorID: "MGRArniel01",
+            formIDText: "skyrim.esm:06A086",
+            isRunning: true,
+            rows: [
+                ScriptQuestAliasRow(
+                    aliasID: 0,
+                    name: "Arniel",
+                    fillType: "specific reference",
+                    isOptional: false,
+                    reference: "skyrim.esm:0123AB"
+                ),
+                ScriptQuestAliasRow(
+                    aliasID: 1,
+                    name: "Book",
+                    fillType: "find matching reference",
+                    isOptional: true,
+                    reference: nil
+                )
+            ]
+        )]
+        panel.provider = fake
+        panel.questsSection.questAliasControl.stringValue = "MGRArniel01"
+        panel.startInspecting()
+        defer { panel.stopInspecting() }
+
+        #expect(panel.questsSection.readout.contains("Aliases filled: 3 across 2 quests"))
+        #expect(panel.questsSection.readout.contains("Alias instances: 1"))
+        #expect(
+            panel.questsSection.readout.contains("Last fill: MGRArniel01[1] -> skyrim.esm:0123AB")
+        )
+        let aliases = panel.questsSection.aliasReadout
+        #expect(aliases.contains("MGRArniel01 (skyrim.esm:06A086)  running  filled 1/2"))
+        #expect(aliases.contains("[0] Arniel (specific reference) -> skyrim.esm:0123AB"))
+        #expect(aliases.contains("[1] Book (find matching reference, optional) -> empty"))
+        #expect(panel.questsSection.aliasEditorID == "MGRArniel01")
+    }
+
+    /// A name nothing defines says so rather than reading as "no selection".
+    @Test @MainActor
+    func questAliasInspectorNamesAnUnknownQuest() {
+        let panel = ScriptsPanelViewController()
+        panel.loadViewIfNeeded()
+        // Held in a local: the panel's provider reference is weak, so a
+        // temporary would be gone before the first refresh.
+        let fake = FakeScriptProvider()
+        panel.provider = fake
+        panel.questsSection.questAliasControl.stringValue = "NoSuchQuest"
+        panel.startInspecting()
+        defer { panel.stopInspecting() }
+
+        #expect(panel.questsSection.aliasReadout == "No loaded plugin defines NoSuchQuest.")
     }
 
     /// A session with no VM states that, rather than showing zeros that would
