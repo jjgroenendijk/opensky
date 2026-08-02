@@ -117,6 +117,12 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
             // spawn's own cell rather than to `cellLocation(of:)`, which cannot
             // answer for an object that is not in the world yet.
             return worldState.set(value, for: key, in: value.location)
+        case let .quest(value):
+            // Same reasoning again: the `Quest` natives are issue #322, and
+            // when they arrive they go through `QuestRuntime` so the stage and
+            // objective rules apply. A quest belongs to no cell, so this write
+            // is unattributed rather than attributed to the caller's cell.
+            return worldState.set(value, for: key)
         }
     }
 

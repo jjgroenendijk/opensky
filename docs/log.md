@@ -4,6 +4,53 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-02
 
+* **Quest runtime state, its mutation API, the `GetStage` family and the `QSTS` save chunk
+  (issue #182, roadmap 13.2)**: quests now have session state. `QuestRuntimeState` is one
+  more `WorldStateComponent`, keyed by the QUST base record's session-stable
+  `ReferenceKey` the same way a GLOB override is, so the whole M10 substrate absorbed it
+  without a change: the journal records a `SetStage` exactly as it records a `Disable()`,
+  `snapshot()` orders it, and the save writes it as one more additive chunk. Its two sort
+  invariants — reached stages ascending and unique, objectives by index with untouched
+  entries dropped — are what make two stores that reached the same end state encode
+  byte-identically.
+* The semantics came from the Creation Kit wiki rather than from memory, and two of them
+  are not what an intuition about "current stage" would produce. The current stage is the
+  *highest* reached, so setting stage 30 after stage 60 leaves it at 60; and a stage is
+  done only if it was explicitly visited, so reaching 60 says nothing about 10, 30 or 50.
+  That is why the component stores a set of visited stages rather than a high-water mark,
+  and why `setStage` is idempotent for free. Completing a quest deliberately does not stop
+  it, because `CompleteQuest()` is documented as flagging completion and nothing else.
+* `QuestRuntime` is the headless mutation API beside the store, following the M12 inventory
+  precedent: the store stays generic and record-blind, and this layer holds the `QuestStore`
+  every mutation validates against. Unknown quest, unknown stage, unknown objective and
+  mutating a stopped quest are typed `QuestError` failures that write nothing, never clamps
+  — each is a caller bug that a silent no-op would hide inside a quest that simply never
+  advances. Stage record flags are honoured because they are plain data: a `startUpStage`
+  starts the quest and is the only way to advance a stopped one, a `shutDownStage` stops it.
+  A start-game-enabled quest reports running straight off its DNAM flag with no state
+  stored at all; vanilla's story-manager and seven-day start machinery is recorded as
+  deferred rather than half-implemented.
+* Four condition functions came off the #251 demand list with the state to answer them:
+  `GetQuestRunning` (56), `GetStage` (58), `GetStageDone` (59) and `GetQuestCompleted`
+  (543), reading a `QuestResolution` seam on `ConditionContext` shaped exactly like the
+  globals seam. A QUST parameter naming no quest is the reason-tagged `unresolvedQuest`
+  with its own tally bucket, never a throw and never a compare against zero.
+  `GetQuestCompleted` implements the behaviour the 1.9.32 patch fixed rather than the
+  documented bug where it always returned 0. Re-running the real-data sweep moved
+  condition coverage of `Skyrim.esm` from 22,470 of 83,759 conditions (26.83%) to 35,460
+  (42.34%): the two stage functions alone are 14.6% of every condition in the game, which
+  is why quest state was the largest single thing the evaluator could not answer.
+* The `QSTS` chunk is additive like `INVN` and `SPWN` and for the same reason — a component
+  kind inside `RDLT` is versioned by `formatVersion`, so putting quest state there would
+  force every older build to refuse every save with a started quest. Older builds skip it
+  by its declared length, saves predating it restore every quest from its baseline, and a
+  session that touched no quest writes bytes identical to what the encoder produced before
+  the chunk existed. It carries no cell byte, because a quest belongs to no cell.
+* No sidebar surface yet, deliberately: nothing in the app session builds a `QuestStore`,
+  so quest conditions evaluated in `World > Runtime State > Conditions` honestly report
+  `unresolved quest` for now. The journal UI (#184) is the milestone's visible consumer and
+  wires the store in; alias fill is #183, quest script instances and stage fragments are
+  #322, and HUD quest markers stay undriven.
 * **QUST record decode and quest VMAD fragments (issue #181, roadmap 13.1)**: quests are
   now decoded records rather than a record type nothing reads. QUST is the most
   order-dependent layout in the format — a marker subrecord opens a group and every

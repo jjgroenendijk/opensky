@@ -21,14 +21,15 @@ struct ConditionFunctionTests {
 
     @Test func registryDescribesTheImplementedFunctions() {
         let registry = ConditionFunctionRegistry.standard
-        #expect(registry.indices == [18, 72, 74, 77, 170])
-        #expect(registry.count == 5)
+        #expect(registry.indices == [18, 56, 58, 59, 72, 74, 77, 170, 543])
+        #expect(registry.count == 9)
         #expect(registry.sortedFunctions().map(\.name) == [
-            "GetCurrentTime", "GetIsID", "GetGlobalValue", "GetRandomPercent", "GetDayOfWeek"
+            "GetCurrentTime", "GetQuestRunning", "GetStage", "GetStageDone", "GetIsID",
+            "GetGlobalValue", "GetRandomPercent", "GetDayOfWeek", "GetQuestCompleted"
         ])
         // The Creation Kit spells every index 4096 higher than the plugin does.
         #expect(registry.sortedFunctions().map(\.creationKitIndex) == [
-            4114, 4168, 4170, 4173, 4266
+            4114, 4152, 4154, 4155, 4168, 4170, 4173, 4266, 4639
         ])
         #expect(registry[Self.getIsID]?.parameter1 == .formID)
         #expect(registry[Self.getIsID]?.parameter2 == .unused)

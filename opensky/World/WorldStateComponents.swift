@@ -45,6 +45,13 @@ nonisolated enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendab
     /// this one does not modify a plugin placement; it *is* the placement, and
     /// only a generated `ReferenceKey` ever carries it.
     case spawn
+    /// One quest's running, stage and objective state (issue #182). The value
+    /// type is `QuestRuntimeState` in
+    /// `opensky/Quests/QuestStateComponent.swift`. Like `spawn` this one does
+    /// not modify a placement: it is keyed by a QUST base record's
+    /// `ReferenceKey`, the same way `GlobalStore` keys a GLOB override, because
+    /// a quest is not placed anywhere and belongs to no cell.
+    case quest
 }
 
 /// A value that can occupy one component slot.
@@ -75,6 +82,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
     case deletion(ReferenceDeletionState)
     case inventory(ReferenceInventoryState)
     case spawn(ReferenceSpawnState)
+    case quest(QuestRuntimeState)
 
     var kind: WorldStateComponentKind {
         switch self {
@@ -84,6 +92,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
         case .deletion: .deletion
         case .inventory: .inventory
         case .spawn: .spawn
+        case .quest: .quest
         }
     }
 }

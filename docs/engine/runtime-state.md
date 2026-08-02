@@ -5,7 +5,7 @@ description: Session-stable ReferenceKey identity, the per-cell RuntimeReference
   generated-object allocator, and the mutable WorldStateStore that holds every runtime
   deviation from plugin data.
 tags: [engine, world, identity, cell-scene, save-state]
-timestamp: 2026-07-30T00:00:00Z
+timestamp: 2026-08-02T00:00:00Z
 ---
 
 # Runtime reference identity and world state
@@ -30,6 +30,7 @@ identity scheme, the per-cell index built from it, and the store above both.
 * Inventory — the first component added after M10
 * Equipment — slot conflicts and what an equip makes visible
 * Spawned references — objects the running game placed
+* Quest state — running flags, stages and objectives
 * Verification — `World > Runtime State` and the M10.1 acceptance record
 * Verification — the M10.2 panel surfaces and the M10 acceptance record
 
@@ -913,6 +914,128 @@ race through the same `stateSequence` comparison M10 introduced, and comes back 
 save/load cycle with its identity and the allocator position intact.
 `WorldItemRuntimeTests.swift` and `ContainerSessionTests.swift` cover the take, drop and
 container operations above the store; see [interaction](/engine/interaction.md).
+
+## Quest state — running flags, stages and objectives
+
+Issue #182 (item 13.2) gives quests runtime state. A quest is a QUST base record rather than
+a placed reference, which the store does not care about: state is keyed by the record's
+session-stable `ReferenceKey`, the same way [global variables](#runtime-global-variables-and-the-value-lookup-seam)
+are keyed, so journalling, snapshot ordering, the mutation callbacks and the save all apply
+unchanged. Quest mutations are never attributed to a cell, because a quest is in none.
+
+### The component
+
+`QuestRuntimeState` (`opensky/Quests/QuestStateComponent.swift`) holds four things: the
+running flag, the completed flag, the set of stage indices ever reached, and a table of
+per-objective display state (`QuestObjectiveState`: displayed, completed, failed). Its
+initializer enforces two invariants, which is what makes two stores that reached the same
+end state snapshot and encode identically:
+
+* `stagesReached` is sorted ascending and free of duplicates.
+* `objectives` is sorted by index, holds one entry per index, and never holds an entry whose
+  three flags are all false — that is the state an objective has before anything touches it,
+  so storing it would make two equal worlds compare unequal.
+
+The model is a full override, like inventory: an untouched quest has no component at all and
+re-derives from plugin data, and the first mutation materializes that baseline.
+
+### Semantics, and where they come from
+
+Every rule below is from the Creation Kit wiki, cited at the implementation site; none of it
+is from model memory.
+
+* **Current stage is the highest reached, not the last set.** `GetCurrentStageID` "obtains
+  the highest completed stage in this quest", and the `GetStage` condition function
+  documents the same by example: with stages 10, 30 and 75 reached it returns 75 "even when
+  stage 30 is completed after stage 75".
+* **A stage is done only if explicitly visited.** After setting 0, 40, 20 and 60,
+  `IsStageDone` "returns false for stages 10, 30 and 50 ... because these stages have not
+  yet been visited". A lower-numbered stage is never implied by a higher one, which is why
+  the reached stages are a set rather than a high-water mark.
+* **`SetStage` is idempotent for this state.** Setting a stage already reached changes
+  nothing, and setting a lower stage afterwards leaves the current stage where it was while
+  making the lower stage report done.
+* **Completing does not stop.** `CompleteQuest()` "flags this quest as completed" and says
+  nothing about running, so `completeQuest` leaves the running flag alone; a quest is
+  normally stopped afterwards by a shut-down stage.
+* **The three objective flags are independent.** `SetObjectiveDisplayed`,
+  `SetObjectiveCompleted` and `SetObjectiveFailed` are three natives each taking its own
+  Bool, and none of them clears another.
+
+### Baselines
+
+`QuestRuntimeState.baseline(for:)` derives one thing from plugin data: a quest whose DNAM
+carries the `startGameEnabled` flag reports running without ever being touched, and stays
+clean while it does. The `completed` and `failed` bits in the same DNAM field are authoring
+state the Creation Kit writes about the quest's design rather than about a session, so a
+fresh game starts every quest uncompleted.
+
+Deliberately **not** modelled in v1, and recorded here rather than left implicit: vanilla's
+real start machinery. Skyrim starts quests through story-manager events (the QUST `ENAM`
+event and the SMEN/SMQN/SMBN node tree), through the seven-day repopulation timer, and
+through dialogue — none of which OpenSky has. A quest that vanilla would start from an event
+therefore stays dormant here until something calls `startQuest`. Alias fill is #183, the
+journal UI is #184, quest script instances and stage fragment execution are #322, and HUD
+quest markers stay undriven: the `HUDMovieBridge` compass cases exist but nothing in this
+issue feeds them.
+
+### The mutation API
+
+`QuestRuntime` (`opensky/Quests/QuestRuntime.swift`) is a thin layer beside the store,
+following the M12 inventory precedent: the store stays the generic substrate that knows
+nothing about records, and this layer holds the `QuestStore` every mutation validates
+against. It is headless, so it compiles into `openskycli` and is testable without a window.
+
+| Operation | Effect | Typed failures |
+| --- | --- | --- |
+| `startQuest` / `stopQuest` | Moves the running flag only; stopping keeps reached stages and the completed flag | `unknownQuest`, `unresolvedQuestKey` |
+| `completeQuest` | Flags completion, leaves the quest running | plus `questNotRunning` |
+| `setStage` | Records the stage as reached; a `startUpStage` starts the quest, a `shutDownStage` stops it | plus `unknownStage`, `questNotRunning` |
+| `setObjectiveDisplayed` / `setObjectiveCompleted` / `setObjectiveFailed` | Sets one objective flag | plus `unknownObjective`, `questNotRunning` |
+| `reset` | Drops the runtime state, so the quest re-derives from plugin data | none; reports `false` |
+
+Every failure writes nothing at all. They are failures rather than clamps because each is a
+caller bug that a silent no-op would hide inside a quest that simply never advances. The one
+place OpenSky is knowingly stricter than vanilla is `setStage` on a stopped quest: Papyrus's
+`SetCurrentStageID` is latent and waits for the quest to start, while here only a stage
+flagged `startUpStage` may advance a stopped quest and anything else is `questNotRunning`.
+Stage flags are honoured because they are plain record data; a stage index may legally repeat
+within a QUST, so the flags of every matching stage are unioned rather than taken from the
+first.
+
+### Reading it back
+
+`QuestResolution` (`opensky/Quests/QuestResolution.swift`) is the seam consumers read quest
+state through, shaped exactly like `GlobalResolution`: a session override wins, the plugin
+baseline is the answer otherwise, and nil means the FormID names no quest. It can be built
+from the live store (`QuestRuntime.resolution()`) or from a `WorldStateSnapshot`, so a
+condition evaluated off the main actor never reaches into the store.
+
+### Condition functions
+
+Four CTDA functions read that seam, through the `quests` field added to `ConditionContext`.
+Indices, parameters and returns are in [CTDA conditions](/formats/conditions.md); a QUST
+parameter naming no quest is the reason-tagged `ConditionFailure.unresolvedQuest` with its
+own `ConditionTally` bucket, never a throw and never a comparison against zero.
+
+### Serialization
+
+The `QSTS` chunk carries quest state, additive for the same reason `INVN` and `SPWN` are, and
+split out of `RDLT` for the same reason: a component kind inside `RDLT` is versioned by
+`formatVersion`, so putting it there would force every older build to refuse every save with
+a started quest. Layout in [OpenSky save container](/formats/opensky-save.md).
+
+### Tests
+
+`openskyTests/QuestRuntimeTests.swift` covers the baselines, materialization on first
+mutation, the running and completed flags, the documented stage rules including idempotence
+and the start-up/shut-down flags, the independent objective flags, all five typed failures
+with the write-nothing guarantee, the journal's old and new values, snapshot determinism
+under mutation-order variation, reset, and the resolution seam over both a live store and a
+snapshot. `QuestConditionFunctionTests.swift` evaluates each of the four functions against
+synthetic quest state, including the unresolvable-quest failure path and the empty seam.
+`QuestSaveTests.swift` covers the `QSTS` round trip, order and determinism, the
+older-build unknown-tag skip, a file predating the chunk, and three decoder refusals.
 
 ## Verification — `World > Runtime State` and the M10.1 acceptance record
 

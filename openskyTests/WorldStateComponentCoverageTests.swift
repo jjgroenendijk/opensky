@@ -33,6 +33,11 @@ struct WorldStateComponentCoverageTests {
         )
     }
 
+    /// One started quest, stage 10 reached.
+    private var questState: QuestRuntimeState {
+        QuestRuntimeState(isRunning: true, stagesReached: [10])
+    }
+
     @Test func storesAndReadsBackEveryComponentKind() {
         let store = WorldStateStore()
         let reference = key(0x200)
@@ -51,6 +56,10 @@ struct WorldStateComponentCoverageTests {
         // SpawnedReferenceTests. Nothing stops a plugin reference carrying one
         // — the store is generic over kinds — so the fixture reuses this key.
         #expect(store.set(spawn, for: reference, in: whiterun))
+        // A started quest: the seventh kind, whose own subject is
+        // QuestRuntimeTests. A quest is normally keyed by a QUST record rather
+        // than by a placement, which the store likewise does not care about.
+        #expect(store.set(questState, for: reference, in: whiterun))
 
         #expect(store.component(ReferenceEnableState.self, for: reference)?.isEnabled == false)
         #expect(store.component(ReferenceTransformOverride.self, for: reference) == transform(9))
@@ -61,6 +70,7 @@ struct WorldStateComponentCoverageTests {
         #expect(store.component(ReferenceDeletionState.self, for: reference)?.isDeleted == true)
         #expect(store.component(ReferenceInventoryState.self, for: reference) == .empty)
         #expect(store.component(ReferenceSpawnState.self, for: reference) == spawn)
+        #expect(store.component(QuestRuntimeState.self, for: reference) == questState)
         #expect(store.delta(for: reference)?.sortedKinds == WorldStateComponentKind.allCases)
     }
 
@@ -73,6 +83,7 @@ struct WorldStateComponentCoverageTests {
         store.set(ReferenceDeletionState.deleted, for: reference, in: whiterun)
         store.set(ReferenceInventoryState.empty, for: reference, in: whiterun)
         store.set(spawn, for: reference, in: whiterun)
+        store.set(questState, for: reference, in: whiterun)
         #expect(store.reset(reference))
         #expect(store.delta(for: reference) == nil)
         #expect(store.dirtyCount == 0)

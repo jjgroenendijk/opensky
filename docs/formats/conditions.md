@@ -5,7 +5,7 @@ description: The shared 32-byte CTDA condition payload, its sibling count and st
   subrecords, the skip-don't-throw decode policy, and the function registry and
   evaluator that answer a condition list at runtime.
 tags: [format, plugin, conditions]
-timestamp: 2026-07-29T00:00:00Z
+timestamp: 2026-08-02T00:00:00Z
 ---
 
 # Conditions (CTDA, CITC, CIS1, CIS2)
@@ -232,9 +232,10 @@ touches it.
 
 ### The evaluation context
 
-`ConditionContext` is a value type composed of `globals: GlobalResolution`, an
-optional `clock: GameClock`, a `references: RuntimeReferenceIndex`, the
-`subject` and `target` `ReferenceKey`s, and `random: ConditionRandom`. Building
+`ConditionContext` is a value type composed of `globals: GlobalResolution`,
+`quests: QuestResolution`, an optional `clock: GameClock`, a
+`references: RuntimeReferenceIndex`, the `subject` and `target` `ReferenceKey`s,
+and `random: ConditionRandom`. Building
 one is cheap, so a caller evaluating off the main actor builds its own from a
 snapshot instead of reaching into the live stores.
 
@@ -246,7 +247,7 @@ replays the same sequence of draws.
 
 ### Implemented functions
 
-Five functions are registered, chosen because the engine can answer them
+Nine functions are registered, chosen because the engine can answer them
 honestly from state it already owns. The stored index is the raw on-disk value;
 the Creation Kit spells each one 4096 higher
 (`ConditionFunctionRegistry.creationKitOffset`).
@@ -254,12 +255,16 @@ the Creation Kit spells each one 4096 higher
 | stored | Creation Kit | name | parameters | returns |
 | --- | --- | --- | --- | --- |
 | 18 | 4114 | `GetCurrentTime` | none | current game time as a decimal hour, 0 to 24 — 4:30 am is 4.5 |
+| 56 | 4152 | `GetQuestRunning` | #1 `QUST` FormID | 1 when the quest is running, 0 otherwise |
+| 58 | 4154 | `GetStage` | #1 `QUST` FormID | the highest stage the quest has reached, 0 when it has reached none |
+| 59 | 4155 | `GetStageDone` | #1 `QUST` FormID, #2 stage index | 1 when that stage was explicitly visited, 0 otherwise |
 | 72 | 4168 | `GetIsID` | #1 base-object FormID | 1 when the run-on reference's base form matches the parameter, 0 otherwise |
 | 74 | 4170 | `GetGlobalValue` | #1 `GLOB` FormID | the named global's current value |
 | 77 | 4173 | `GetRandomPercent` | none | an integer 0 to 99 inclusive |
 | 170 | 4266 | `GetDayOfWeek` | none | 0 for Sundas through 6 for Loredas |
+| 543 | 4639 | `GetQuestCompleted` | #1 `QUST` FormID | 1 when the quest is flagged completed, 0 otherwise |
 
-Two of these carry a recorded decision.
+Several of these carry a recorded decision.
 
 `GetCurrentTime` reads the game clock when the context has one and falls back to
 the `GameHour` global when it does not. That fallback is an OpenSky choice, not
@@ -283,6 +288,22 @@ drift against the calendar year exactly as the lore says they do. UESP notes one
 exception OpenSky does not model: loading an existing save before starting a new
 game carries that save's weekday over.
 
+The four quest functions (issue #182) read the `quests` seam and nothing else,
+so they answer without a world, a clock or a reference. Their state semantics —
+"highest reached" for `GetStage`, "explicitly visited" for `GetStageDone` — are
+documented on [runtime state](/engine/runtime-state.md) with their Creation Kit
+citations. Two edge choices are OpenSky's:
+
+* `GetStageDone` with a stage index outside the uint16 range answers 0 rather
+  than failing. Stage indices are uint16 on disk, so no such stage can exist,
+  and "not done" is a real answer instead of a coverage gap.
+* `GetQuestCompleted` implements the *fixed* behaviour. The Creation Kit wiki
+  records that the original engine returned 0 unconditionally until patch
+  1.9.32, and suggests `GetStageDone` on the last stage as the workaround. A
+  plugin authored around the bug still evaluates correctly here; one that
+  relied on the broken return does not. Reproducing a documented, patched bug
+  would make every correct condition wrong.
+
 `ConditionFunction` carries `index`, `name`, `parameter1` and `parameter2` as
 `ConditionParameterType` (`.unused`, `.formID`, `.integer`, `.float`), and
 `creationKitIndex`. The registry (`ConditionFunctionRegistry.standard`, with
@@ -296,9 +317,12 @@ functions is registration rather than surgery.
 
 Nothing in the evaluator throws. A condition it cannot answer evaluates to
 false and carries a machine-readable `ConditionFailure` saying why:
-`.unknownFunction`, `.unresolvedGlobal`, `.unsupportedRunOn`,
-`.unresolvedReference`, `.unknownOperator`, `.unresolvedParameter`, or
-`.unavailableClock`. `ConditionOutcome` pairs the `isTrue` a caller needs with
+`.unknownFunction`, `.unresolvedGlobal`, `.unresolvedQuest`,
+`.unsupportedRunOn`, `.unresolvedReference`, `.unknownOperator`,
+`.unresolvedParameter`, or `.unavailableClock`. A QUST parameter naming no quest
+is `.unresolvedQuest` rather than a stopped quest at stage zero: "this quest does
+not exist" and "this quest has not started" are different answers, and only one
+of them is real. `ConditionOutcome` pairs the `isTrue` a caller needs with
 the `failures` that explain it and an `isConclusive` flag that is true only when
 the answer came from real evaluation rather than from a fallback. A caller that
 wants a Bool never has to write an error path; a caller that cares about honesty
@@ -310,7 +334,7 @@ rather than a debug aid. It answers "which condition functions does OpenSky
 still owe Skyrim, and how much do they matter?", which is the question that
 ranks the next milestone's work. Its buckets are `unknownFunctions` with
 `unknownFunctionTotal` and `unnamedUnknownFunctions` beside it,
-`unresolvedGlobals`, `unsupportedRunOns` keyed by run-on name,
+`unresolvedGlobals`, `unresolvedQuests`, `unsupportedRunOns` keyed by run-on name,
 `unresolvedReferences`, `unknownOperators`, `unresolvedParameters` and
 `unavailableClock`, plus the volume counters `conditionsEvaluated` and
 `listsEvaluated`, the derived `failureTotal` and `isClean`, and ranked
@@ -326,7 +350,10 @@ those answerable, and nothing already written changes.
 
 There is no inspector surface for evaluation yet. Evaluate-and-show plus the
 tally readout land with the M10.2 acceptance gate, issue #166, which owns the
-panel changes for the whole sub-milestone.
+panel changes for the whole sub-milestone. That panel's context carries an empty
+quest seam, because nothing in the app session builds a `QuestStore` yet; quest
+conditions evaluated there are therefore honestly reported as
+`unresolved quest` until the journal UI (#184) wires one in.
 
 ### Evaluator tests
 
@@ -335,9 +362,12 @@ panel changes for the whole sub-milestone.
   case, OR grouping against the documented example and the trailing-OR case, the
   empty list, run-on selection with and without the swap flag, and the tally
   buckets each failure lands in.
-* `ConditionFunctionTests` — the five registered functions against synthetic
+* `ConditionFunctionTests` — the identity and global functions against synthetic
   contexts, the registry's index and naming surface, and the seeded determinism
   of `ConditionRandom` including its 0-99 bound.
+* `QuestConditionFunctionTests` — the four quest functions against synthetic
+  quest state, both from a runtime override and from a plugin baseline, plus the
+  unresolvable-quest failure path and an empty quest seam.
 * `ConditionTimeFunctionTests` — `GetCurrentTime` from a clock and from the
   `GameHour` fallback, and `GetDayOfWeek` against the documented vanilla start
   weekday across a year boundary.
@@ -380,39 +410,47 @@ because mods may.
 
 ## Coverage sweep
 
-`ConditionRealDataTests` was extended to run the registry over every condition
-the decode sweep finds, counting what the evaluator could name and what it could
-not. Observed 2026-07-29 against the retail Special Edition install: **22,470 of
-83,759 conditions (26.83%) name a function the registry implements**. Those five
-functions are 5 of the 244 distinct raw indices present in the file, whose range
-is 0 to 726.
+`ConditionRealDataTests` runs the registry over every condition the decode sweep
+finds, counting what the evaluator could name and what it could not. Observed
+2026-08-02 against the retail Special Edition install, after the four quest
+functions landed: **35,460 of 83,759 conditions (42.34%) name a function the
+registry implements**. Those nine functions are 9 of the 244 distinct raw
+indices present in the file, whose range is 0 to 726.
 
 | stored | Creation Kit | function | conditions |
 | --- | --- | --- | --- |
 | 72 | 4168 | `GetIsID` | 19,169 |
+| 58 | 4154 | `GetStage` | 8,029 |
+| 59 | 4155 | `GetStageDone` | 4,175 |
 | 74 | 4170 | `GetGlobalValue` | 1,579 |
 | 77 | 4173 | `GetRandomPercent` | 1,203 |
 | 18 | 4114 | `GetCurrentTime` | 518 |
+| 543 | 4639 | `GetQuestCompleted` | 470 |
+| 56 | 4152 | `GetQuestRunning` | 316 |
 | 170 | 4266 | `GetDayOfWeek` | 1 |
 
-Five functions covering better than a quarter of the file is the shape a long
-tail has: `GetIsID` alone is 22.9% of every condition in the game.
+Nine functions covering better than two fifths of the file is the shape a long
+tail has: `GetIsID` alone is 22.9% of every condition in the game, and the two
+quest-stage functions are another 14.6% between them. The earlier sweep, run on
+2026-07-29 with only the first five functions registered, measured 22,470
+conditions (26.83%) — quest state was the single largest thing the evaluator
+could not answer, which is why #251 named it the top of the demand list.
 
-The remaining 239 indices carry 61,289 conditions. The ten heaviest, by stored
+The remaining 235 indices carry 48,299 conditions. The ten heaviest, by stored
 index and the Creation Kit number 4096 above it:
 
 | stored | Creation Kit | conditions |
 | --- | --- | --- |
-| 58 | 4154 | 8,029 |
 | 71 | 4167 | 6,904 |
 | 426 | 4522 | 6,584 |
 | 566 | 4662 | 5,504 |
 | 629 | 4725 | 4,584 |
-| 59 | 4155 | 4,175 |
 | 560 | 4656 | 1,943 |
 | 359 | 4455 | 1,058 |
 | 46 | 4142 | 1,028 |
 | 448 | 4544 | 1,022 |
+| 67 | 4163 | 919 |
+| 550 | 4646 | 799 |
 
 These are indices, not names. The sweep measured what the plugin stores, and it
 stores numbers; naming them from memory is exactly the kind of confident guess
