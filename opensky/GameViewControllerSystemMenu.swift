@@ -151,6 +151,8 @@ extension GameViewController: MenuInputConsumer {
             routeInventoryMenuInput(event)
         case Self.containerMenuIdentifier, Self.barterMenuIdentifier:
             routeContainerMenuInput(event)
+        case Self.journalIdentifier:
+            routeJournalInput(event)
         default:
             routeSystemMenuInput(event)
         }

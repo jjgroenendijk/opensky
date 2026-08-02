@@ -24,6 +24,8 @@ enum SWFActionRunCommand {
             ?? defaultTreeDepth
         let callName = try scanner.option("--call")
         let dumpPath = try scanner.option("--dump")
+        let dumpClass = try scanner.option("--dump-class")
+        let dumpProto = try scanner.option("--dump-proto")
         try scanner.finish()
 
         let vfs = context.makeFileSystem()
@@ -57,6 +59,12 @@ enum SWFActionRunCommand {
         )
         for target in dumpPath?.split(separator: ",") ?? [] {
             printDump(runtime, path: String(target))
+        }
+        for target in dumpClass?.split(separator: ",") ?? [] {
+            printClassDump(runtime, symbol: String(target))
+        }
+        for target in dumpProto?.split(separator: ",") ?? [] {
+            printProtoDump(runtime, path: String(target))
         }
     }
 
@@ -224,6 +232,50 @@ extension SWFActionRunCommand {
         for name in names.sorted() {
             let value = node.object.lookup(name)?.property.value
             print("[INFO]   \(name) = \(describe(value))")
+        }
+    }
+
+    /// The members of one `Object.registerClass` symbol: the constructor's own
+    /// properties and, more usefully, its prototype's — the method names a page
+    /// class actually publishes, which no display-node dump reaches because a
+    /// method lives on the prototype rather than on the instance.
+    private static func printClassDump(_ runtime: SWFMovieRuntime, symbol: String) {
+        guard let constructor = runtime.runtime.registeredClass(named: symbol) else {
+            print("[INFO] swf action-run dump-class \(symbol): not registered")
+            return
+        }
+        printMembers(of: constructor, label: "dump-class \(symbol)")
+        guard
+            let prototype = constructor.lookup("prototype")?.property.value.objectValue
+        else {
+            return
+        }
+        printMembers(of: prototype, label: "dump-class \(symbol).prototype")
+    }
+
+    /// One display node's prototype chain, level by level. An AS2 class built
+    /// by `Object.registerClass` publishes its methods on the prototype, and a
+    /// list widget inherits most of its contract from an unregistered base
+    /// class, so neither `--dump` nor `--dump-class` reaches those names.
+    private static func printProtoDump(_ runtime: SWFMovieRuntime, path: String) {
+        guard let node = runtime.node(atPath: path, from: runtime.root) else {
+            print("[INFO] swf action-run dump-proto \(path): no such node")
+            return
+        }
+        var current = node.object.prototype
+        var level = 1
+        while let object = current, level <= AS2Object.prototypeChainLimit {
+            printMembers(of: object, label: "dump-proto \(path) level \(level)")
+            current = object.prototype
+            level += 1
+        }
+    }
+
+    private static func printMembers(of object: AS2Object, label: String) {
+        let names = object.ownPropertyNames
+        print("[INFO] swf action-run \(label): \(names.count) own properties")
+        for name in names.sorted() {
+            print("[INFO]   \(name) = \(describe(object.lookup(name)?.property.value))")
         }
     }
 

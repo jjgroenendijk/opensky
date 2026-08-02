@@ -117,6 +117,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             controller.swfMovieLoaderFactory = { SWFMovieLoader(fileSystem: vfs) }
             // World > Audio picker + playback source (M9.1.3).
             controller.audioFileSystem = vfs
+            // Journal quest, objective and log text (issue #184). Skyrim.esm is
+            // the only plugin the session indexes quests from, so its tables
+            // are the ones the journal resolves through.
+            controller.localizedStringsLoader = {
+                LocalizedStrings(vfs: vfs, pluginName: "Skyrim.esm")
+            }
         }
         return controller
     }

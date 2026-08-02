@@ -20,6 +20,15 @@ final class GameMetalView: MTKView {
     /// path, exactly as before menu mode existed.
     var menuMode: MenuModeController?
 
+    /// World-mode journal key (issue #184). Set by `GameViewController`; nil
+    /// leaves J unmapped, exactly as it was before the journal existed.
+    ///
+    /// This is the first key that opens a menu from gameplay. It is an
+    /// accelerator for `World > Quests & Journal > Page > Open journal` rather
+    /// than a behaviour of its own, which is what keeps it inside the app-ui
+    /// rule against unadvertised keystrokes.
+    var onJournalKey: (() -> Void)?
+
     private var captured = false
 
     /// US ANSI virtual key codes (Carbon `kVK_*`). Physical layout, not
@@ -33,6 +42,7 @@ final class GameMetalView: MTKView {
         static let keyE: UInt16 = 14
         static let keyF: UInt16 = 3
         static let keyG: UInt16 = 5
+        static let keyJ: UInt16 = 38
         static let escape: UInt16 = 53
         static let returnKey: UInt16 = 36
         static let keypadEnter: UInt16 = 76
@@ -75,6 +85,10 @@ final class GameMetalView: MTKView {
         }
         if event.keyCode == KeyCode.keyG {
             input?.requestWalkToggle()
+            return
+        }
+        if event.keyCode == KeyCode.keyJ {
+            onJournalKey?()
             return
         }
         guard let key = Self.moveKey(for: event.keyCode) else {

@@ -352,6 +352,10 @@ final class FakeWorldProviders: WorldControlProviders {
     /// ScriptControlProviding (issue #278) is delegated the same way; the
     /// forwarding conformance lives in `DestinationRegistryScriptsTests.swift`.
     let scripts = FakeScriptProvider()
+
+    /// JournalControlProviding (issue #184), delegated for the same reason; the
+    /// forwarding conformance lives in `DestinationRegistryJournalTests.swift`.
+    let journal = FakeJournalProvider()
 }
 
 /// The inventory-menu half of the fake, in an extension so the class body

@@ -26,6 +26,8 @@ enum SWFCommand {
             try SWFActionRunCommand.run(context: context, scanner: &scanner)
         case "inventory-menu":
             try SWFInventoryMenuCommand.run(context: context, scanner: &scanner)
+        case "quest-journal":
+            try SWFQuestJournalCommand.run(context: context, scanner: &scanner)
         case "container-menu":
             try SWFContainerMenuCommand.run(context: context, scanner: &scanner)
         case "info":

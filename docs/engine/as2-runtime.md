@@ -1084,6 +1084,38 @@ names remain missing (467 hits), all CLIK cosmetics headed by `_listeners` (53),
 a data API. `UpdateItem3D` and `EndItem3D` are answered as no-ops because the rotating item
 preview is deferred. See [inventory menu](/engine/inventory-menu.md).
 
+### The `quest_journal.swf` Quests page at 13.5
+
+The last deferred page of the movie OpenSky already opens. Its System page was driven at
+8.5.1; its Quests page had never been, and [AS2 scope](/decisions/swf-as2-scope.md) named it
+the phase-4 contract that would land with its data.
+
+Measuring it needed two additions to the committed probe, because an AS2 class publishes its
+methods on a prototype and a widget inherits most of its contract from a base class the
+movie never registers — neither of which a display-node dump reaches.
+`openskycli swf action-run --dump-class QuestsPage` prints a registered class's constructor
+and prototype; `--dump-proto <path>` walks a node's whole prototype chain, level by level.
+Together they reported `QuestsPage`'s 30 methods, `QuestJournalBase`'s `PAGE_QUEST`/
+`PAGE_STATS`/`PAGE_SYSTEM` constants, and the shared list base carrying `EntriesA`,
+`entryList`, `iSelectedIndex`, `InvalidateData`, `ClearList` and `SetEntry`.
+
+Two contract details were measured by driving rather than by reading. `InvalidateData`
+rebuilds only as many entry clips as there are rows and leaves the rest holding the previous
+publish, so an emptied list needs `ClearList`, which hides the surplus clips rather than
+blanking them. And an objective row's state is carried by plain `completed` and `failed`
+booleans: publishing them moves the entry clip from its `Normal` frame to `Completed` or
+`Failed`, which `openskycli swf quest-journal --objective-state` demonstrates directly.
+
+Driven end to end — bring-up, 151 running quests and the target quest's objective and
+journal paragraphs published, a page switch to System and back — the real-data gate measures
+0 faults, 0 unimplemented opcodes, **0 unhandled bridge calls of 52**, 506 draws, and 375,575
+changed pixels on bring-up. 81 distinct names remain missing, headed by `_listeners` (327),
+`invalidationIntervalID` (270), `textField` (167) and `height`/`width` (77 each). None is a
+data API, but two shape the frame: with no `textField` on an entry clip a row's text cannot
+be drawn by the clip that owns it, and with no `height` a text field keeps its authored size,
+so a long journal paragraph overlaps the objective list beneath it. See
+[quest journal](/engine/journal.md).
+
 ## Limits / next
 
 - `openskycli swf action-run` is now that committed probe surface: it brings one movie up,

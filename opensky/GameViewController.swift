@@ -95,6 +95,12 @@ final class GameViewController: NSViewController {
     var installLocalizedLabels: LocalizedLabels?
     var installLocalizedLabelsResolved = false
 
+    /// Builds the plugin's string tables over the located install (issue
+    /// #184). Set by the AppDelegate; nil when game data is missing, and the
+    /// journal then falls back to editor IDs. Invoked once, lazily, by the
+    /// journal bridge, because constructing it walks the VFS.
+    var localizedStringsLoader: (() -> LocalizedStrings)?
+
     /// Builds the SWF movie loader over the located install (M8.2.5). Set by
     /// the AppDelegate; nil when game data is missing. The UI Lab SWF bridge
     /// invokes it once, lazily, into `swfLab`.
@@ -135,6 +141,10 @@ final class GameViewController: NSViewController {
     /// implementation lives in `GameViewControllerInventoryMenu.swift`; stored
     /// here because extensions cannot add state.
     var inventoryMenu = InventoryMenuRuntimeState()
+    /// Journal page model and presentation state (issue #184). The
+    /// implementation lives in `GameViewControllerJournal.swift`; stored here
+    /// because extensions cannot add state.
+    var journal = JournalRuntimeState()
     /// Container and barter menu two-pane list, merchant nomination and
     /// presentation state (issue #179). The implementation lives in
     /// `GameViewControllerContainerMenu.swift`; stored here because extensions
@@ -155,6 +165,7 @@ final class GameViewController: NSViewController {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))
         gameView.input = cameraInput
         gameView.menuMode = menuMode
+        gameView.onJournalKey = { [weak self] in self?.openJournal() }
         view = gameView
     }
 
