@@ -57,6 +57,7 @@ choice OpenSky makes in those gaps is listed under [Deviations](#deviations).
 * [Activation and the world bridge](#activation-and-the-world-bridge)
 * [Update timers](#update-timers)
 * [Instance lifecycle over cell streaming](#instance-lifecycle-over-cell-streaming)
+* [Quest script instances and stage fragments](#quest-script-instances-and-stage-fragments)
 * [Script state in a save](#script-state-in-a-save)
 * [Lazy script library](#lazy-script-library)
 * [World > Scripts sidebar surface](#world--scripts-sidebar-surface)
@@ -776,6 +777,104 @@ then given `OnInit` (only if it has never fired), then `OnCellAttach`, then
 leaves the runtime, its queued events are dropped, and its suspension
 bookkeeping is forgotten.
 
+## Quest script instances and stage fragments
+
+Issue #322 (roadmap item 13.3) makes quests scriptable. Quest state itself —
+which quest runs, which stages it reached, which objectives it shows — is
+[runtime state](/engine/runtime-state.md)'s `QuestRuntimeState` and item 13.2;
+this section is the Papyrus half that reads and writes it.
+
+**Instances.** A quest is a base record, not a placed reference, so it never
+attaches or detaches with a cell. `PapyrusWorldQuests.swift` therefore reuses
+the cell lifecycle's `instantiate`, `bind` and `retire` and supplies its own
+membership rule: `attachQuest(_:key:formIDResolver:)` keys every instance by the
+QUST record's session-stable `ReferenceKey` plus the script name, records it in
+`questInstanceKeys` and in `persistentKeys`, and leaves it out of every cell's
+`attachedByCell` set. Nothing a cell does can reach it, including a world-space
+transition. Because the key has the same shape a placed reference's key has,
+`PSCR` persistence, `firedOnInit` and the update-timer registry apply unchanged.
+
+The scripts a quest carries are its QUST VMAD primary list plus the generated
+fragment script the VMAD tail names (`QF_<editorID>_<formID>`). Shipped data
+normally lists that script in both places and the two spellings collapse onto
+one `PapyrusInstanceKey`; on the M13 target quest `MGRArniel01` the primary list
+holds nothing else, so the quest runs on one instance. `OnInit` is enqueued for
+each newly created instance and fires once ever. `OnCellAttach` and `OnLoad` are
+deliberately never enqueued: neither means anything for an object in no cell.
+
+Which quests get instances is the #182 state's answer, never this layer's.
+`PapyrusWorldStateBridge.attachRunningQuestScripts()` walks
+`QuestRuntime.runningQuests()` — the start-game-enabled quests at wire-up, and
+whatever a save recorded after a load — and `Start`/`Stop` maintain the set
+afterwards. `Stop` is the one thing that retires a quest's instances, and it
+clears their `firedOnInit` marks too, so a later `Start` runs `OnInit` on fresh
+instances rather than resuming half a script.
+
+**The `Quest` native class.** `PapyrusNativeQuest.swift` registers `IsRunning`,
+`IsCompleted`, `GetCurrentStageID`, `IsStageDone`, `Start`, `Stop`,
+`CompleteQuest`, `SetCurrentStageID`, `SetObjectiveDisplayed`,
+`SetObjectiveCompleted` and `SetObjectiveFailed`, plus the wrapper spellings
+`GetStage`, `GetStageDone` and `SetStage` that shipped `Quest.psc` declares
+around three of them. Each is one hop through `PapyrusWorldQuestBridge`
+(`PapyrusWorldQuestBridge.swift`), whose production conformance
+(`PapyrusWorldStateBridgeQuests.swift`) runs every mutation through
+`QuestRuntime`, so the stage and objective rules live in one place and a native
+adds none of its own. A thrown `QuestError` becomes a native failure, which the
+interpreter turns into the call's declared default — `false` for `SetStage`,
+matching the documented "returns false and the stage is unchanged" — while the
+tally still records that something asked.
+
+Absent on purpose, and left to the unimplemented tally rather than stubbed:
+`Reset`, `IsObjectiveDisplayed`/`IsObjectiveCompleted`, `IsStarting`/`IsStopping`,
+`GetAlias`/`GetAliasedRef` and `SetActive`. The first three need alias fill
+(#183) or a latent window OpenSky does not have; the registry policy is to
+register only what the engine can honestly compute.
+
+**Fragment dispatch.** The Creation Kit compiles each stage fragment into a
+numbered function on the generated script, and the QUST VMAD tail's fragment
+table is the only record of which stage a numbered function belongs to
+([record formats](/formats/records.md)). When `setQuestStage` sees a stage move
+from not-reached to reached, it looks the stage up in that table and enqueues
+each matching function on the fragment script's instance through the ordinary
+FIFO, so the per-tick budget, per-instance serialization and global event order
+apply to fragments exactly as to `OnActivate`. A fragment naming a script the
+quest holds no instance of is counted as `missingQuestFragmentInstance`; a
+function the script does not define is counted by the dispatcher as
+`undefinedEventFunction`. Neither is a fault.
+
+**Inherited natives now resolve.** A method call on a receiver that has a script
+instance dispatches under the script the function is *declared* in, so
+`someQuest.SetStage(10)` only reaches the `Quest` family when `Quest.pex` is in
+the library. `resolveScript(named:)` therefore loads a script's ancestors with
+it. Without that, every inherited native would arrive under the child's name and
+miss the registry — a family of false unimplemented tallies rather than a family
+of missing behaviours.
+
+**Deviations from the documented semantics**, cited at the implementation site
+in `PapyrusWorldStateBridgeQuests.swift`:
+
+* `SetStage` and `Start` are latent in the real engine and wait for the quest to
+  start and for its fragments to finish. OpenSky writes the state, enqueues the
+  fragments and returns; they run on a later tick. A script that reads state
+  back expecting its own fragment to have run already sees the pre-fragment
+  value, and `IsRunning` is true immediately after `Start` rather than after the
+  start-up stage's fragments end.
+* A fragment runs on the transition into a stage only. Setting a stage that is
+  already reached runs nothing, because 13.2's `setStage` is
+  documented-idempotent and there is nothing to observe a repeat by. The QUST
+  `allowRepeatedStages` flag is decoded and deliberately not consulted: no open
+  documentation states what the engine does with it at `SetStage` time, and
+  guessing would run fragments twice.
+* A shut-down stage stops the quest but does not retire its instances, so the
+  fragment that stage just queued still runs. Only `Stop` retires them.
+* Alias-typed VMAD properties on a quest script keep the recorded
+  `ScriptBindingSkipReason.aliasObject` skip and their compiler defaults until
+  alias resolution lands (#183). On `MGRArniel01` that is one alias property and
+  four unresolved reference properties, and the stage-10 fragment runs anyway.
+* Quests start from start-game-enabled, `Start` or a start-up stage only. The
+  story manager is not modelled; that deferral is recorded here rather than in
+  an issue comment.
+
 ## Script state in a save
 
 `instanceStates()` returns every live instance's `PapyrusInstanceState`, sorted
@@ -845,12 +944,19 @@ library.
 The `World > Scripts` sidebar destination (`Destination-scripts`, M11.2.5, issue #278)
 is the verification surface for everything above: a user can watch the VM run, pause it,
 and single-step it without a debugger or a CLI command. `ScriptsPanelViewController`
-hosts four sections, each backed by the `ScriptControlProviding` protocol
+hosts five sections, each backed by the `ScriptControlProviding` protocol
 (`opensky/ScriptControlProviding.swift`) that `GameViewController` conforms to in
 `opensky/GameViewControllerScripts.swift`:
 
 * `ScriptInstancesSection` (`PanelSection-scriptInstances`) shows the live instance
   count, the current interaction target, and the scripts attached to it.
+* `ScriptQuestsSection` (`PanelSection-scriptQuests`, readout `ScriptQuestsStatsLabel`,
+  issue #322) shows the running-quest count beside the number of quests holding script
+  instances, the quest instance count, how many stage fragments the session has enqueued,
+  and the newest fragment. Running quests and scripted quests are two numbers on purpose:
+  a quest with no scripts runs perfectly well, so the gap between them is information
+  rather than an error. Quest *state* — which quest is on which stage — is the journal's
+  surface (#184), not this one.
 * `ScriptEventsSection` (`PanelSection-scriptEvents`) shows a bounded tail of recent
   events in the same journal-tail presentation `World > Runtime State` uses, plus the
   pending and dropped event counts.
@@ -896,11 +1002,13 @@ than a report full of zeros. `recentEvents` is a bounded ring
 scripted or fat-fingered burst request cannot run the VM unbounded from the panel.
 
 The panel's own view of the runtime comes from one seam,
-`PapyrusWorldRuntime.scriptsSnapshot(target:targetDescription:) -> ScriptsSnapshot`, in
+`PapyrusWorldRuntime.scriptsSnapshot(target:targetDescription:runningQuestCount:) ->
+ScriptsSnapshot`, in
 the satellite file `opensky/Papyrus/PapyrusWorldScriptsSnapshot.swift`. `ScriptsSnapshot`
 is a single `Equatable` value assembled once per refresh (instance count, target
 description and attached script names, recent events with dropped and pending counts, the
-paused flag, pending waits, pending timers, tick count, budget events and instructions,
+paused flag, the quest instance and fragment counters, pending waits, pending timers,
+tick count, budget events and instructions,
 the last tick report's fields, native call total, implemented native count, unimplemented
 total, and the top five unimplemented natives), so a section never reads the runtime
 piecemeal or on a different cadence than its sibling sections.

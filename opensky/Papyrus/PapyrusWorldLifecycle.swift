@@ -3,12 +3,18 @@
 // The API takes plain data — a cell location, the cell's reference index, and
 // a resolver — so it is testable with synthetic fixtures and carries no
 // `CellStreamer` dependency; stage C wires it to streaming.
+//
+// `PapyrusAttachItem`, `instantiate`, `bind` and `retire` are internal rather
+// than private because quest script instances (issue #322,
+// `PapyrusWorldQuests.swift`) are created and retired by exactly these rules
+// while belonging to no cell. Everything that decides *which* scripts a cell
+// attach covers stays private here.
 
 import Foundation
 
 /// One script slated for instantiation during an attach, in deterministic
 /// `sortedEntries()` × VMAD-script order.
-nonisolated private struct PapyrusAttachItem {
+nonisolated struct PapyrusAttachItem {
     let key: PapyrusInstanceKey
     let script: AttachedScript
     let isPersistent: Bool
@@ -102,7 +108,7 @@ extension PapyrusWorldRuntime {
             ?? []
     }
 
-    private func instantiate(_ item: PapyrusAttachItem) -> Bool {
+    func instantiate(_ item: PapyrusAttachItem) -> Bool {
         do {
             let handle = try runtime.makeInstance(scriptName: item.script.name)
             instancesByKey[item.key] = handle
@@ -116,7 +122,7 @@ extension PapyrusWorldRuntime {
 
     /// Second attach pass: bind VMAD properties once every instance in the
     /// cell exists, so intra-cell object properties resolve to live handles.
-    private func bind(
+    func bind(
         plan: [PapyrusAttachItem],
         created: Set<PapyrusInstanceKey>,
         formIDResolver: FormIDResolver
@@ -187,7 +193,7 @@ extension PapyrusWorldRuntime {
         }
     }
 
-    private func retire(_ key: PapyrusInstanceKey) {
+    func retire(_ key: PapyrusInstanceKey) {
         guard let handle = instancesByKey.removeValue(forKey: key) else {
             return
         }

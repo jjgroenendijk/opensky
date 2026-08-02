@@ -52,12 +52,18 @@ extension GameViewController {
         return report
     }
 
-    /// Live evaluation context: current globals, current clock, and the
-    /// reference the crosshair is on as both subject and target.
+    /// Live evaluation context: current globals, current quest state, current
+    /// clock, and the reference the crosshair is on as both subject and target.
+    ///
+    /// The quest resolution is this session's `QuestRuntime` (issue #322).
+    /// Before the quest layer was wired the four quest condition functions had
+    /// no index to resolve against and every one of them reported "unresolved
+    /// quest"; they now read the same state the `Quest` natives write.
     private func runtimeStateConditionContext() -> ConditionContext {
         let entry = runtimeStateEntry(for: .currentTarget)
         return ConditionContext(
             globals: runtimeStateGlobalResolution(),
+            quests: papyrusBridge?.questRuntime?.resolution() ?? .empty,
             clock: renderer?.gameClock,
             references: entry.map { RuntimeReferenceIndex(entries: [$0]) } ?? .empty,
             subject: entry?.key,

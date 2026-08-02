@@ -23,6 +23,11 @@ nonisolated final class QuestStore: Sendable {
     /// plugin's master list so runtime state and saves never key off a
     /// load-order-relative number.
     private let keysByFormID: [UInt32: ReferenceKey]
+    /// The inverse of `keysByFormID`, which is what the Papyrus side needs:
+    /// a `Quest` native arrives holding a `ReferenceKey` — the identity every
+    /// script handle resolves to — and has to name the QUST record behind it
+    /// before `QuestRuntime` can be asked anything (issue #322).
+    private let formIDsByKey: [ReferenceKey: UInt32]
     /// QUST records in the top group that failed to decode. Zero in vanilla
     /// data; a sweep asserts it rather than silently indexing fewer quests.
     let skippedRecordCount: Int
@@ -73,6 +78,15 @@ nonisolated final class QuestStore: Sendable {
         questsByFormID = byFormID
         formIDsByEditorID = byEditorID
         keysByFormID = keys
+        // Built by accumulation rather than by `Dictionary(uniqueKeysWithValues:)`
+        // because that traps on a collision, and a plugin listing the same
+        // master twice can hand two FormIDs the same key. The lowest FormID
+        // wins so the inverse is deterministic whatever the dictionary order.
+        var inverse: [ReferenceKey: UInt32] = [:]
+        for (raw, key) in keys where raw < (inverse[key] ?? UInt32.max) {
+            inverse[key] = raw
+        }
+        formIDsByKey = inverse
         self.skippedRecordCount = skippedRecordCount
     }
 
@@ -101,6 +115,18 @@ nonisolated final class QuestStore: Sendable {
     /// save file address it. Nil for a FormID this plugin does not define.
     func key(for id: FormID) -> ReferenceKey? {
         keysByFormID[id.rawValue]
+    }
+
+    /// FormID behind a session-stable key, the direction the Papyrus natives
+    /// read (issue #322). Nil for a key that names no quest this session
+    /// loaded.
+    func formID(for key: ReferenceKey) -> FormID? {
+        formIDsByKey[key].map(FormID.init)
+    }
+
+    /// The QUST record a session-stable key names, or nil when it names none.
+    func quest(key: ReferenceKey) -> Quest? {
+        formIDsByKey[key].flatMap { questsByFormID[$0] }
     }
 
     func key(editorID: String) -> ReferenceKey? {

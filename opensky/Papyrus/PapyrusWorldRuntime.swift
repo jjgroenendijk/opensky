@@ -55,6 +55,15 @@ final class PapyrusWorldRuntime {
     /// Instances created from an `isPersistent` reference entry; these
     /// survive `detach`.
     var persistentKeys: Set<PapyrusInstanceKey> = []
+    /// Instances belonging to a quest rather than to a placed reference
+    /// (issue #322). They are in no cell's set, so only `detachQuest(key:)`
+    /// retires them. See `PapyrusWorldQuests.swift`.
+    var questInstanceKeys: Set<PapyrusInstanceKey> = []
+    /// Stage fragments enqueued this session, for the Scripts readout.
+    var questFragmentsQueued = 0
+    /// Newest fragment enqueued, worded like a `recentEvents` entry. Nil until
+    /// a stage with a fragment is set.
+    var lastQuestFragment: String?
     /// The single main-actor FIFO event queue; global order is preserved.
     var eventQueue: [PapyrusScriptEvent] = []
     /// Instances with a latent call in flight. Their queued events stay
@@ -196,7 +205,32 @@ final class PapyrusWorldRuntime {
     /// True once `name` is in the script library, loading it through
     /// `scriptProvider` on first need. A provider miss is remembered, so the
     /// second attach naming a missing script costs a set lookup.
+    ///
+    /// The script's ancestors are loaded with it (issue #322). A method call on
+    /// a receiver that *has* a script instance dispatches under the script the
+    /// function is declared in, so a call the child does not define is only
+    /// named correctly — `Quest.SetStage` rather than
+    /// `QF_SomeQuest_0001E2F0.SetStage` — when the parent that declares it is
+    /// in the library. Without the chain every inherited native would arrive
+    /// under the child's name and miss the registry, which is a family of false
+    /// unimplemented tallies rather than a family of missing behaviours.
     func resolveScript(named name: String) -> Bool {
+        guard resolveScriptFile(named: name) else { return false }
+        var parent = runtime.script(named: name)?.parentClassName ?? ""
+        var visited: Set<String> = [PapyrusRuntime.key(name)]
+        while
+            !parent.isEmpty,
+            visited.insert(PapyrusRuntime.key(parent)).inserted,
+            resolveScriptFile(named: parent)
+        {
+            parent = runtime.script(named: parent)?.parentClassName ?? ""
+        }
+        return true
+    }
+
+    /// One script file into the library, with no chain walk. A provider miss is
+    /// remembered so the next attach naming it costs a set lookup.
+    private func resolveScriptFile(named name: String) -> Bool {
         if runtime.script(named: name) != nil {
             return true
         }

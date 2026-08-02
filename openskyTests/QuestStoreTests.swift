@@ -55,6 +55,27 @@ struct QuestStoreTests {
         #expect(store.journalQuests().map(\.editorID) == ["Shown"])
     }
 
+    /// The Papyrus side arrives holding a `ReferenceKey` and has to name the
+    /// record behind it, so the key index reads both ways (issue #322).
+    @Test("session-stable keys resolve back to their quest")
+    func resolvesKeysBackToQuests() throws {
+        let store = try QuestFixture.store(
+            QuestFixture.record(
+                formID: 0x0100,
+                fields: QuestFixture.editorID("MQ101") + QuestFixture.general()
+            )
+                + QuestFixture.record(
+                    formID: 0x0200,
+                    fields: QuestFixture.editorID("FreeformRiften") + QuestFixture.general()
+                )
+        )
+        let key = try #require(store.key(editorID: "mq101"))
+        #expect(store.formID(for: key) == FormID(0x0100))
+        #expect(store.quest(key: key)?.editorID == "MQ101")
+        #expect(store.quest(key: GlobalFixture.key(0x9999)) == nil)
+        #expect(store.formID(for: GlobalFixture.key(0x9999)) == nil)
+    }
+
     @Test("an empty plugin yields an empty store")
     func handlesEmptyPlugin() throws {
         let store = try QuestFixture.store(Data())

@@ -192,6 +192,13 @@ extension GameViewController: RuntimeStateControlProviding {
             // Restoring the saved instance state after the fan-out is queued
             // guarantees the fired set is already in place when a rebuild
             // attach reads it, so no script re-runs its `OnInit` on load.
+            // Quest instances before the saved variables, because the restore
+            // needs somewhere to put them: the loaded state names a different
+            // set of running quests than the session started with, and only
+            // this call creates instances for the quests that just started
+            // being running (issue #322). It is idempotent for the ones the
+            // session already holds.
+            papyrusBridge?.attachRunningQuestScripts()
             papyrus?.restore(instanceStates: file.scripts)
             // Timers after instances, necessarily: a saved timer names the
             // instance it belongs to, and `restore(timerStates:)` skips (and

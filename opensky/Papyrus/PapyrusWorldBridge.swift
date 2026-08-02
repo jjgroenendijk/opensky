@@ -63,8 +63,11 @@ nonisolated protocol PapyrusWorldReferenceSource: AnyObject {
 /// `Game.GetPlayer`. Nothing here writes around `WorldStateStore`: every
 /// mutation is one `set(_:for:in:)` or `setGlobal(_:formID:defaults:)` call,
 /// so the journal, the dirty counts, and the save see it.
+/// The quest operations are declared separately, in
+/// `PapyrusWorldQuestBridge.swift` (issue #322), and refined in here so a
+/// native reaches all of it through the one `context.world` façade.
 @MainActor
-protocol PapyrusWorldBridge: AnyObject {
+protocol PapyrusWorldBridge: PapyrusWorldQuestBridge {
     /// Session-stable identity of the player; see `ReferenceKey.player`.
     var playerKey: ReferenceKey { get }
 
@@ -148,7 +151,10 @@ protocol PapyrusWorldBridge: AnyObject {
 /// traps if a native ever runs off the main actor, and only a world-aware
 /// runtime installs one of these.
 nonisolated final class PapyrusWorldAccess {
-    private let bridge: any PapyrusWorldBridge
+    /// Internal rather than private so the quest hops can live in
+    /// `PapyrusWorldQuestBridge.swift` beside the protocol they mirror. Only
+    /// this type's own extensions touch it.
+    let bridge: any PapyrusWorldBridge
 
     init(bridge: any PapyrusWorldBridge) {
         self.bridge = bridge

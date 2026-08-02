@@ -67,6 +67,10 @@ final class GameViewController: NSViewController {
     /// #165). nil without game data; the time-of-day scrub then writes the
     /// renderer's clock directly instead of going through the global seam.
     var globalStore: GlobalStore?
+    /// QUST index of the loaded plugin, set by `wirePapyrus` (issue #322). nil
+    /// without game data, and then the `Quest` natives report themselves
+    /// unavailable rather than inventing quest state.
+    var questStore: QuestStore?
     /// Free-fly input shared with the renderer; the view writes it from
     /// NSEvents, the renderer drains it each frame (todo 2.8).
     let cameraInput = CameraInputState()

@@ -67,6 +67,14 @@ nonisolated protocol GlobalDataProviding {
     var globalStore: GlobalStore? { get }
 }
 
+/// Optional QUST index a provider can expose (issue #322). `GameViewController`
+/// pairs it with the session's `WorldStateStore` to build the `QuestRuntime`
+/// the `Quest` natives mutate and the quest script instances are started from.
+/// Immutable after `init` like every other `*Store` here.
+nonisolated protocol QuestDataProviding {
+    var questStore: QuestStore? { get }
+}
+
 /// Optional item + container indexes a provider can expose (issue #177).
 /// `GameViewController` pairs the resolver with the session's
 /// `WorldStateStore` to build the `InventoryRuntime` that take, drop and
@@ -127,7 +135,7 @@ nonisolated protocol AudioDataProviding {
 /// thread -- which is why they need no internal locking.
 nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding,
     AudioDataProviding, MovementConfigurationProviding, GlobalDataProviding,
-    ScriptDataProviding, ItemDataProviding, BarterDataProviding
+    ScriptDataProviding, ItemDataProviding, BarterDataProviding, QuestDataProviding
 {
     let builder: CellSceneBuilder
     let worldspaceEditorID: String
@@ -141,6 +149,9 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     var musicStore: MusicRecordStore?
     /// Global-variable index (GLOB); nil when the plugin has no GLOB records.
     var globalStore: GlobalStore?
+    /// Quest index (QUST); nil when the plugin has no QUST records, and then
+    /// every `Quest` native reports itself unavailable rather than guessing.
+    var questStore: QuestStore?
     /// Item/container/leveled-list indexes (issue #177); nil when the session
     /// was built without them, which is every synthetic scene.
     var inventoryBaselines: InventoryBaselineResolver?

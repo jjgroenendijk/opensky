@@ -52,6 +52,7 @@ extension GameViewController {
             bridge?.handleTriggerTransition(event)
         }
         world.scriptProvider = Self.scriptProvider(fileSystem: fileSystem)
+        wireQuests(provider: provider, bridge: bridge)
         controller.onCellAttached = { [weak world] scene, firstIntegration in
             guard let world, let location = scene.location else { return }
             world.attach(
@@ -71,6 +72,31 @@ extension GameViewController {
             _ = world.advance(delta: delta, gameClock: renderer?.gameClock)
         }
         papyrus = world
+    }
+
+    /// Gives the session its quest layer and starts the quests that are
+    /// already running (issue #322).
+    ///
+    /// Which quests those are is the #182 state's answer, not this file's: at
+    /// wire-up it is every quest whose DNAM says start-game-enabled, and after
+    /// a save is restored it is whatever that save recorded. Their scripts are
+    /// instantiated once here; `Start` and `Stop` maintain the set afterwards.
+    ///
+    /// A provider with no QUST index leaves `questRuntime` nil, and every
+    /// `Quest` native then fails with `PapyrusQuestBridgeError.noQuestData`.
+    private func wireQuests(
+        provider: any CellSceneProvider,
+        bridge: PapyrusWorldStateBridge
+    ) {
+        guard let store = (provider as? QuestDataProviding)?.questStore else {
+            return
+        }
+        questStore = store
+        bridge.questRuntime = QuestRuntime(store: worldState, quests: store)
+        let started = bridge.attachRunningQuestScripts()
+        Self.papyrusLogger.info(
+            "[INFO] quest scripts instantiated: \(started, privacy: .public)"
+        )
     }
 
     /// Decodes one `.pex` on demand. A script that fails to load is logged
