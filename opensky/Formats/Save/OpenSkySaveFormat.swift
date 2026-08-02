@@ -93,6 +93,16 @@ nonisolated enum OpenSkySaveFormat {
         /// contained one instead of loading the rest of the world without the
         /// dropped items. A session that spawned nothing writes no chunk.
         static let spawnedReferences = "SPWN"
+        /// Quest runtime state (issue #182): one entry per quest whose running,
+        /// stage or objective state deviates from plugin data.
+        ///
+        /// Additive for the same reason `INVN` and `SPWN` are, and split out of
+        /// `RDLT` for the same reason: a component kind inside `RDLT` is
+        /// versioned by `formatVersion`, so an older build would refuse every
+        /// save containing quest state instead of loading the rest of the
+        /// world. A session that touched no quest writes no chunk, so its bytes
+        /// match what this encoder produced before the chunk existed.
+        static let questStates = "QSTS"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.
@@ -120,6 +130,22 @@ nonisolated enum OpenSkySaveFormat {
         static let integer: UInt8 = 2
         static let float: UInt8 = 3
         static let string: UInt8 = 4
+    }
+
+    /// Bits of a `QSTS` entry's quest-level flag byte. Ours, not Bethesda's:
+    /// the DNAM bits a QUST record carries describe what the plugin authored,
+    /// while these two describe what the session did.
+    enum QuestFlag {
+        static let running: UInt8 = 1 << 0
+        static let completed: UInt8 = 1 << 1
+    }
+
+    /// Bits of a `QSTS` objective's flag byte, in the order the three Papyrus
+    /// natives are usually called: displayed, completed, failed.
+    enum QuestObjectiveFlag {
+        static let displayed: UInt8 = 1 << 0
+        static let completed: UInt8 = 1 << 1
+        static let failed: UInt8 = 1 << 2
     }
 
     /// Smallest number of bytes a single `RDLT` entry can occupy: a plugin key
@@ -164,6 +190,16 @@ nonisolated enum OpenSkySaveFormat {
     /// optional, so this is also the size of every entry whose names are
     /// empty.
     static let minimumTimerEntrySize = 26
+    /// Smallest number of bytes a single `QSTS` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4), the running/completed flag byte (1), a
+    /// zero stage count (4) and a zero objective count (4).
+    static let minimumQuestEntrySize = 16
+    /// Bytes one `QSTS` reached stage occupies: a single `UInt16` index. Fixed
+    /// width, so this is the exact size rather than a lower bound.
+    static let questStageSize = 2
+    /// Bytes one `QSTS` objective occupies: a `UInt16` index plus its flag
+    /// byte. Fixed width, like the stage entry.
+    static let questObjectiveSize = 3
 }
 
 /// On-disk tag of a component slot inside `RDLT`.
@@ -172,10 +208,11 @@ nonisolated enum OpenSkySaveFormat {
 /// `allCases.firstIndex(of:)`, because declaration order is a source-level
 /// detail that may change while these byte values may not.
 ///
-/// Optional because not every component slot travels in `RDLT`. `.inventory`
-/// and `.spawn` have no tag at all: each is carried by its own chunk so that an
-/// older build skips it rather than refusing the file (see
-/// `ChunkTag.inventories` and `ChunkTag.spawnedReferences`). A nil tag is the
+/// Optional because not every component slot travels in `RDLT`. `.inventory`,
+/// `.spawn` and `.quest` have no tag at all: each is carried by its own chunk
+/// so that an older build skips it rather than refusing the file (see
+/// `ChunkTag.inventories`, `ChunkTag.spawnedReferences` and
+/// `ChunkTag.questStates`). A nil tag is the
 /// encoder's instruction to leave the component out of `RDLT`, and leaving
 /// `init?(saveTag:)` without a case for it is what keeps the decoder's "an
 /// unknown component kind in `RDLT` is an error" rule intact.
@@ -186,7 +223,7 @@ nonisolated extension WorldStateComponentKind {
         case .transform: 1
         case .activation: 2
         case .deletion: 3
-        case .inventory, .spawn: nil
+        case .inventory, .spawn, .quest: nil
         }
     }
 

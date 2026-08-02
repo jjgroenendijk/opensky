@@ -3,7 +3,7 @@ type: File Format
 title: OpenSky native save container (.osav)
 description: Byte layout of OpenSky's own .osav save file, its determinism and version rules.
 tags: [format, save, io, world-state, determinism]
-timestamp: 2026-07-31T00:00:00Z
+timestamp: 2026-08-02T00:00:00Z
 ---
 
 # OpenSky native save container
@@ -33,6 +33,7 @@ byte length followed by that many UTF-8 bytes. The file extension is `osav`.
 * `RDLT` entry layout
 * `INVN` entry layout
 * `SPWN` entry layout
+* `QSTS` entry layout
 * Version policy
 * Defensive decoding
 * Where saves live and how they are written
@@ -149,8 +150,8 @@ A chunk whose declared length runs past the end of the file is
 `chunkBoundsViolation(tag:)`. A chunk whose tag this build does not know is skipped using
 that declared length, which is what makes a newer build's save loadable in an older one.
 
-Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR`, `INVN` and `SPWN` were added
-additively afterwards.
+Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR`, `INVN`, `SPWN` and `QSTS` were
+added additively afterwards.
 
 `GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
 any other size is `invalidValue`.
@@ -457,6 +458,50 @@ Like `INVN`, the key is repeated rather than referring back to an `RDLT` entry: 
 object usually has no other component and therefore no `RDLT` entry at all. The decoder
 merges both chunks into one delta per reference by key and re-sorts into `ReferenceKey`
 total order.
+
+## `QSTS` entry layout
+
+`QSTS` — quest runtime state (issue #182), one entry per quest whose running, stage or
+objective state deviates from plugin data. Additive like `INVN` and `SPWN` and for the same
+reason: a component kind inside `RDLT` is versioned by `formatVersion`, so carrying quest
+state there would force an older build to refuse every save with a started quest, while an
+unknown chunk is skipped by its declared length and the rest of the world still loads. A
+session that touched no quest writes no chunk at all.
+
+| type   | field      | notes                                     |
+| ------ | ---------- | ----------------------------------------- |
+| uint32 | entryCount | number of entries that follow             |
+| bytes  | entries    | `entryCount` entries, layout below        |
+
+Each entry:
+
+| type   | field          | notes                                                     |
+| ------ | -------------- | --------------------------------------------------------- |
+| key    | key            | the QUST record's key, tagged as in `RDLT`                 |
+| uint8  | flags          | bit 0 running, bit 1 completed                             |
+| uint32 | stageCount     | number of reached stage indices that follow                |
+| uint16 | stage          | one per `stageCount`, ascending                            |
+| uint32 | objectiveCount | number of objectives that follow                           |
+| bytes  | objectives     | `objectiveCount` records of uint16 index + uint8 flags     |
+
+An objective's flag byte is bit 0 displayed, bit 1 completed, bit 2 failed. The two flag
+bytes are OpenSky's own: the DNAM bits a QUST record carries describe what the plugin
+authored, while these describe what the session did.
+
+No cell travels with an entry, unlike `INVN`. A quest is a base record that belongs to no
+cell, so its delta's cell is always absent and the tag byte could only ever hold one value.
+
+Tolerance follows the same "the invariant belongs to the type" rule the other chunks use.
+Duplicate or unsorted stage indices are collapsed and sorted by `QuestRuntimeState.init`
+rather than rejected, and an unknown bit in an objective's flag byte is ignored rather than
+refused — a newer build may add a fourth flag, and losing it beats refusing the file. Both
+declared counts are validated before anything is reserved: the entry count against
+`minimumQuestEntrySize` (16 bytes), the stage count against `questStageSize` (2) and the
+objective count against `questObjectiveSize` (3).
+
+Like `INVN` and `SPWN`, the key is repeated rather than referring back to an `RDLT` entry: a
+quest carries no other component and therefore has no `RDLT` entry at all. The decoder merges
+the chunks into one delta per reference by key and re-sorts into `ReferenceKey` total order.
 
 ## Version policy
 

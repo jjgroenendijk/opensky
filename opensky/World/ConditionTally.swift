@@ -32,6 +32,11 @@ nonisolated struct ConditionTally: Equatable, Sendable {
     private(set) var unresolvedGlobalTotal = 0
     private(set) var unnamedUnresolvedGlobals = 0
 
+    /// QUST FormID -> times a quest function could not resolve it (issue #182).
+    private(set) var unresolvedQuests: [FormID: Int] = [:]
+    private(set) var unresolvedQuestTotal = 0
+    private(set) var unnamedUnresolvedQuests = 0
+
     /// Run-on bucket name -> times that run-on type has no live resolution.
     /// Keyed by `ConditionTally.runOnName(_:)` so the report reads as
     /// `combatTarget`, `questAlias`, `unknown(9)`, and so on.
@@ -84,6 +89,8 @@ nonisolated struct ConditionTally: Equatable, Sendable {
             noteUnimplemented(functionIndex: index)
         case let .unresolvedGlobal(id):
             noteUnresolvedGlobal(id)
+        case let .unresolvedQuest(id):
+            noteUnresolvedQuest(id)
         case let .unsupportedRunOn(runOn):
             unsupportedRunOnTotal += 1
             Self.bump(&unsupportedRunOns, Self.runOnName(runOn), limit: limit)
@@ -122,6 +129,15 @@ nonisolated struct ConditionTally: Equatable, Sendable {
         }
     }
 
+    mutating func noteUnresolvedQuest(_ id: FormID) {
+        unresolvedQuestTotal += 1
+        if unresolvedQuests[id] != nil || unresolvedQuests.count < nameLimit {
+            unresolvedQuests[id, default: 0] += 1
+        } else {
+            unnamedUnresolvedQuests += 1
+        }
+    }
+
     private static func bump<Key: Hashable>(
         _ table: inout [Key: Int],
         _ key: Key,
@@ -141,9 +157,9 @@ nonisolated struct ConditionTally: Equatable, Sendable {
 
     /// Every reason-tagged false, across all buckets.
     var failureTotal: Int {
-        unknownFunctionTotal + unresolvedGlobalTotal + unsupportedRunOnTotal
-            + unresolvedReferenceTotal + unknownOperatorTotal + unresolvedParameterTotal
-            + unavailableClock
+        unknownFunctionTotal + unresolvedGlobalTotal + unresolvedQuestTotal
+            + unsupportedRunOnTotal + unresolvedReferenceTotal + unknownOperatorTotal
+            + unresolvedParameterTotal + unavailableClock
     }
 
     /// Unknown function indices ranked by count, ties broken by index so the
@@ -160,6 +176,13 @@ nonisolated struct ConditionTally: Equatable, Sendable {
     /// Unresolved globals ranked by count, ties broken by FormID.
     var rankedUnresolvedGlobals: [(name: String, count: Int)] {
         unresolvedGlobals
+            .sorted { ($0.value, $1.key.rawValue) > ($1.value, $0.key.rawValue) }
+            .map { ($0.key.description, $0.value) }
+    }
+
+    /// Unresolved quests ranked by count, ties broken by FormID.
+    var rankedUnresolvedQuests: [(name: String, count: Int)] {
+        unresolvedQuests
             .sorted { ($0.value, $1.key.rawValue) > ($1.value, $0.key.rawValue) }
             .map { ($0.key.description, $0.value) }
     }

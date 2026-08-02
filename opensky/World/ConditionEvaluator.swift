@@ -49,6 +49,11 @@ nonisolated enum ConditionFailure: Equatable, Error, Sendable {
     /// A `use global` comparison value, or a GLOB parameter, that resolves to
     /// no global. Deliberately not treated as zero.
     case unresolvedGlobal(FormID)
+    /// A QUST parameter that resolves to no quest (issue #182). Deliberately
+    /// not treated as a stopped quest at stage zero: "this quest does not
+    /// exist" and "this quest has not started" are different answers, and only
+    /// one of them is a real one.
+    case unresolvedQuest(FormID)
     /// A run-on type OpenSky does not resolve live yet.
     case unsupportedRunOn(Condition.RunOnType)
     /// A supported run-on that named a reference the context cannot produce.
@@ -133,6 +138,10 @@ nonisolated struct ConditionRandom: Equatable, Sendable {
 nonisolated struct ConditionContext: Sendable {
     /// The one seam global values come through (`GlobalResolution`).
     var globals: GlobalResolution
+    /// The one seam quest state comes through (issue #182), shaped exactly like
+    /// the globals seam: a value resolving overrides over plugin baselines, so
+    /// the quest functions never reach into `WorldStateStore`.
+    var quests: QuestResolution
     /// Game clock the time functions read. Nil in a context with no world
     /// running, which makes those functions reason-tagged false rather than
     /// wrong.
@@ -147,6 +156,7 @@ nonisolated struct ConditionContext: Sendable {
 
     init(
         globals: GlobalResolution = .empty,
+        quests: QuestResolution = .empty,
         clock: GameClock? = nil,
         references: RuntimeReferenceIndex = .empty,
         subject: ReferenceKey? = nil,
@@ -154,6 +164,7 @@ nonisolated struct ConditionContext: Sendable {
         random: ConditionRandom = ConditionRandom()
     ) {
         self.globals = globals
+        self.quests = quests
         self.clock = clock
         self.references = references
         self.subject = subject
@@ -218,6 +229,14 @@ nonisolated struct ConditionCall: Sendable {
             return .failure(.unresolvedGlobal(id))
         }
         return .success(value)
+    }
+
+    /// Current state of the quest `id` names, or `.unresolvedQuest`.
+    func quest(_ id: FormID) -> Result<QuestRuntimeState, ConditionFailure> {
+        guard let state = context.quests.state(for: id) else {
+            return .failure(.unresolvedQuest(id))
+        }
+        return .success(state)
     }
 
     mutating func randomPercent() -> Int {

@@ -1,9 +1,9 @@
 // The implemented CTDA condition functions (issue #251).
 //
-// Five to start, chosen because the engine can already answer them honestly
-// from state it owns: the game clock, the globals seam, and the runtime
-// reference index. Anything else stays unregistered and is counted by
-// `ConditionTally` rather than guessed at.
+// Every function here is one the engine can answer honestly from state it owns:
+// the game clock, the globals seam, the runtime reference index, and — since
+// issue #182 — the quest seam. Anything else stays unregistered and is counted
+// by `ConditionTally` rather than guessed at.
 //
 // Indices below are the raw stored numbers; the Creation Kit spells each 4096
 // higher. Sources: UESP "Skyrim Mod:Mod File Format/CTDA Field" for the
@@ -17,6 +17,7 @@ nonisolated enum ConditionFunctions {
         installTime(&registry)
         installReference(&registry)
         installGlobals(&registry)
+        installQuest(&registry)
     }
 
     // MARK: - Reference identity

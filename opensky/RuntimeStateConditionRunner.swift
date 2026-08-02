@@ -123,6 +123,8 @@ nonisolated enum RuntimeStateConditionRunner {
             "unimplemented function \(Int(index) + ConditionFunctionRegistry.creationKitOffset)"
         case let .unresolvedGlobal(id):
             "unresolved global \(id)"
+        case let .unresolvedQuest(id):
+            "unresolved quest \(id)"
         case let .unsupportedRunOn(runOn):
             "unsupported run-on \(ConditionTally.runOnName(runOn))"
         case let .unresolvedReference(runOn):
@@ -148,6 +150,7 @@ nonisolated enum RuntimeStateConditionRunner {
         ]
         lines.append(contentsOf: ranked("Unimplemented", tally.rankedUnknownFunctions()))
         lines.append(contentsOf: ranked("Unresolved globals", tally.rankedUnresolvedGlobals))
+        lines.append(contentsOf: ranked("Unresolved quests", tally.rankedUnresolvedQuests))
         lines.append(contentsOf: ranked("Unsupported run-ons", tally.rankedUnsupportedRunOns))
         lines.append(
             contentsOf: ranked("Unresolved references", tally.rankedUnresolvedReferences)

@@ -133,8 +133,8 @@ nonisolated enum OpenSkySaveEntryDecoder {
             try .activation(decodeActivation(&reader))
         case .deletion:
             try .deletion(ReferenceDeletionState(isDeleted: reader.bool("deletion state")))
-        case .inventory, .spawn:
-            // Unreachable: neither kind has an RDLT tag, so `init?(saveTag:)`
+        case .inventory, .spawn, .quest:
+            // Unreachable: none of these kinds has an RDLT tag, so `init?(saveTag:)`
             // never produces these cases and tags past 3 are rejected as
             // unknown. They are spelled out rather than defaulted so that a
             // component kind added later fails to compile here instead of

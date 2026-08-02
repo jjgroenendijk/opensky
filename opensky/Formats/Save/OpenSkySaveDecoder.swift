@@ -41,6 +41,10 @@ nonisolated enum OpenSkySaveDecoder {
         /// so no dropped item or summon rejoins the world — which is also what
         /// a save written before that chunk existed means.
         var spawns: [SaveSpawnEntry] = []
+        /// Absent `QSTS` chunk (issue #182) means no quest deviated from plugin
+        /// data, so every quest re-derives its baseline from its DNAM flags —
+        /// which is also what a save written before that chunk existed means.
+        var quests: [SaveQuestEntry] = []
     }
 
     static func decode(_ data: Data) throws -> OpenSkySaveFile {
@@ -61,10 +65,13 @@ nonisolated enum OpenSkySaveDecoder {
             metadata: metadata,
             fingerprint: fingerprint,
             snapshot: WorldStateSnapshot(
-                entries: OpenSkySaveSpawnDecoder.merge(
-                    body.spawns,
-                    into: OpenSkySaveInventoryDecoder.merge(
-                        body.inventories, into: body.entries
+                entries: OpenSkySaveQuestDecoder.merge(
+                    body.quests,
+                    into: OpenSkySaveSpawnDecoder.merge(
+                        body.spawns,
+                        into: OpenSkySaveInventoryDecoder.merge(
+                            body.inventories, into: body.entries
+                        )
                     )
                 ),
                 nextGeneratedSequence: body.nextGeneratedSequence,
@@ -167,6 +174,8 @@ nonisolated enum OpenSkySaveDecoder {
             body.inventories = try OpenSkySaveInventoryDecoder.decodeInventories(payload)
         case OpenSkySaveFormat.ChunkTag.spawnedReferences:
             body.spawns = try OpenSkySaveSpawnDecoder.decodeSpawns(payload)
+        case OpenSkySaveFormat.ChunkTag.questStates:
+            body.quests = try OpenSkySaveQuestDecoder.decodeQuestStates(payload)
         default:
             break // Unknown chunk: skipped by its declared length.
         }
