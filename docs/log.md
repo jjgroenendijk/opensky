@@ -4,6 +4,51 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-02
 
+* **QUST record decode and quest VMAD fragments (issue #181, roadmap 13.1)**: quests are
+  now decoded records rather than a record type nothing reads. QUST is the most
+  order-dependent layout in the format — a marker subrecord opens a group and every
+  following subrecord belongs to it until the next marker — so `Quest` keeps explicit
+  open-group state across three stacked sequences (stages with their journal log entries,
+  objectives with their compass targets, and alias definitions) instead of the flat field
+  switch every other record decoder uses. Two separator fields carry the rest: `NEXT`
+  splits the quest's own dialogue conditions from its story-manager conditions, and `ANAM`
+  ends the objective run and opens the alias run, which is also what disambiguates the two
+  meanings of `NNAM` and of `QSTA`. Inside an alias the field names shadow quest-level ones
+  outright — `FNAM`, `CTDA`, `KSIZ`/`KWDA`, `COCT`/`CNTO` all mean something else there —
+  so alias fields are routed to the open alias before the quest-level switch ever sees
+  them. An alias's "fill type" is not written down anywhere: the Creation Kit implies it
+  from which of a dozen mutually exclusive subrecords appear, so each slot decodes into its
+  own property and `Alias.fillType` reports the choice afterwards rather than the parser
+  guessing intent mid-stream. Every failure costs one subrecord and is counted in
+  `QuestTally`; only a non-QUST record throws.
+* The QUST tail of `VMAD` graduated from "recorded and skipped" to decoded. A quest's stage
+  scripts are not attached scripts — the Creation Kit compiles them into one generated
+  `QF_<editorID>_<formID>` script with functions named `Fragment_<n>` numbered in authoring
+  order, and this table is the *only* record of which stage and log entry a numbered
+  fragment belongs to. The alias-script sections next to it restate their own version and
+  object format, which are honoured rather than assumed. A malformed tail rewinds and falls
+  back to the old recorded skip, so a quest with a broken fragment table still delivers its
+  primary scripts. INFO, PACK, PERK and SCEN keep the skip unchanged.
+* The vanilla sweep decoded all 1811 QUST records in `Skyrim.esm` with zero throws: 5220
+  stages, 5294 log entries, 1452 objectives, 12,891 aliases, and 856 fragment tables
+  holding 5108 stage fragments and 2149 alias script sections, with no tail lost. The 53
+  skipped subrecords are exactly the vestigial SCHR/SCTX/QNAM trio xEdit marks unused. What
+  actually proves the grouping is right is not the totals but three link invariants that
+  cross the group boundaries: every objective target names an alias its own quest declares,
+  every fragment names a stage its own quest declares, and every alias script section names
+  its own quest — zero misses on all three, which could not hold if a marker were being
+  grouped under the wrong parent.
+* The same sweep is the milestone's target-quest evidence, written to gitignored
+  `logs/quest-census.log`. 62 quests need no condition function outside
+  `ConditionFunctionRegistry.standard`, show journal text, and carry stage fragments; the
+  cheapest is `MGRArniel01` (0006A086) at 2 stages, 1 objective, 1 forced-reference alias
+  and no conditions at all. Quest conditions overall are 11,427 over 90 distinct raw
+  indices, 32.7% of which the registry can already answer, so the shortlist is a real
+  constraint rather than a formality.
+* The M11 VMAD census moved with it. Alias scripts are ordinary script entries and are now
+  counted and PEX-bound alongside the primary list, raising scripts to 19,936 and
+  properties to 51,145, and the `QUST fragments` skip bucket is empty. `QuestStore` indexes
+  the top group the way `GlobalStore` does; quest *state* stays with the runtime (#182).
 * **M12 milestone acceptance (issue #180)**: the first repeatable gameplay loop runs end to
   end and has a sidebar path. `M12AcceptanceTests` walks grant, take, transfer, equip, buy,
   sell, drop, save and load in one scripted run over a synthetic plugin, asserting the

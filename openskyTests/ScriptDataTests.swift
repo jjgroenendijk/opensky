@@ -70,12 +70,14 @@ struct ScriptDataTests {
         #expect(data.scripts.first?.properties.first?.flags == .edited)
     }
 
+    /// QUST tails are decoded instead (QuestFragmentTests); the other four
+    /// carriers still record one reason-tagged skip and consume the remainder.
     @Test("fragment carriers skip and rank their bounded tail")
     func skipsFragmentTail() throws {
-        var data = ScriptData(ownerType: "QUST")
+        var data = ScriptData(ownerType: "SCEN")
         let payload = VMADFixture.payload(scripts: [], tail: Data([2, 0, 0, 0]))
         #expect(try data.decode(field: ESMField(type: "VMAD", data: payload)))
-        #expect(data.skipped.ranked.first?.name == "QUST fragments")
+        #expect(data.skipped.ranked.first?.name == "SCEN fragments")
         #expect(data.skipped.total == 1)
     }
 
