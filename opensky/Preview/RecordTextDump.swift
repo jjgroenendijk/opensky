@@ -36,6 +36,7 @@ nonisolated enum RecordTextDump {
         case "WTHR": weatherSummary(record: record)
         case "CLMT": climateSummary(record: record)
         case "REGN": regionSummary(record: record)
+        case "QUST": questSummary(record: record, localized: localized)
         // Inventory families live in RecordTextDumpItems.swift so this switch
         // stays inside the strict-lint complexity cap.
         default: itemSummary(record: record, localized: localized)
@@ -117,6 +118,25 @@ nonisolated enum RecordTextDump {
         return "decoded REGN: editorID \(region.editorID ?? "-"), "
             + "worldspace \(worldspace), \(region.weatherList.count) weathers, "
             + "weather priority \(priority)"
+    }
+
+    private static func questSummary(record: ESMRecord, localized: Bool) -> String? {
+        guard let quest = try? Quest(record: record, localized: localized) else { return nil }
+        let name = switch quest.name {
+        case let .inline(text): "\"\(text)\""
+        case let .tableID(id): "string #\(id)"
+        case nil: "-"
+        }
+        let skips = quest.skipped.isEmpty
+            ? ""
+            : ", skipped " + quest.skipped.ranked.map { "\($0.name):\($0.count)" }
+            .joined(separator: " ")
+        return "decoded QUST: editorID \(quest.editorID ?? "-"), name \(name), "
+            + "\(quest.kind.name), priority \(quest.priority), "
+            + "flags 0x\(String(quest.flags.rawValue, radix: 16)), "
+            + "\(quest.stages.count) stages, \(quest.objectives.count) objectives, "
+            + "\(quest.aliases.count) aliases, \(quest.fragments.count) fragments"
+            + skips
     }
 
     private static func fieldLines(record: ESMRecord) -> [String] {

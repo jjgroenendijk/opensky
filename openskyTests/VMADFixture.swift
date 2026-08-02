@@ -76,6 +76,19 @@ enum VMADFixture {
         var data = Data()
         data.appendUInt16(UInt16(bitPattern: version))
         data.appendUInt16(UInt16(bitPattern: objectFormat.rawValue))
+        data.append(scriptArray(scripts, version: version, objectFormat: objectFormat))
+        data.append(tail)
+        return data
+    }
+
+    /// uint16 count followed by that many script entries — the shape used both
+    /// by the primary list and by each quest alias section in the VMAD tail.
+    static func scriptArray(
+        _ scripts: [Script],
+        version: Int16 = 5,
+        objectFormat: ScriptObjectFormat = .formIDLast
+    ) -> Data {
+        var data = Data()
         data.appendUInt16(UInt16(scripts.count))
         for script in scripts {
             data.appendVMADString(script.name)
@@ -92,7 +105,6 @@ enum VMADFixture {
                 data.append(property.value, objectFormat: objectFormat)
             }
         }
-        data.append(tail)
         return data
     }
 }

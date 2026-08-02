@@ -49,34 +49,39 @@ struct ScriptDataRealDataTests {
     private func checkExactSkyrimCounts(_ stats: VMADStats) {
         #expect(stats.records == 869_687)
         #expect(stats.vmadFields == 16133)
-        #expect(stats.scripts == 17407)
-        #expect(stats.properties == 46493)
+        #expect(stats.scripts == 19936)
+        #expect(stats.properties == 51145)
         #expect(stats.versions == [4: 2561, 5: 13572])
         #expect(stats.objectFormats == [1: 2705, 2: 13428])
         #expect(stats.propertyTypes == [
-            1: 39644, 2: 178, 3: 2846, 4: 613, 5: 3210, 15: 2
+            1: 42885, 2: 179, 3: 3820, 4: 634, 5: 3625, 15: 2
         ])
+        // No "QUST fragments" entry: M13.1 decodes that tail instead of
+        // skipping it, which is also why the alias-object count rose — the
+        // object properties inside quest alias scripts are now visible.
         #expect(stats.skipped.ranked.map(\.count) == [
-            12399, 5257, 856, 557, 313, 7, 5
+            12896, 5257, 557, 313, 7, 5
         ])
         #expect(stats.skipped.ranked.map(\.name) == [
             "alias object",
             "INFO fragments",
-            "QUST fragments",
             "SCEN fragments",
             "PACK fragments",
             "removed property",
             "PERK fragments"
         ])
-        #expect(stats.directObjects == 27044)
-        #expect(stats.nullObjects == 201)
-        #expect(stats.danglingObjects == 38)
-        #expect(stats.backing.scriptLoads == 4071)
+        #expect(stats.questFragmentSections == 856)
+        #expect(stats.questFragments == 5108)
+        #expect(stats.questAliasScriptSections == 2149)
+        #expect(stats.directObjects == 29787)
+        #expect(stats.nullObjects == 202)
+        #expect(stats.danglingObjects == 39)
+        #expect(stats.backing.scriptLoads == 4450)
         #expect(stats.backing.missingScripts == 0)
         #expect(stats.backing.missingProperties == 24)
         #expect(stats.backing.manualProperties == 199)
-        #expect(stats.backing.inspectedAutomatic == 46263)
-        #expect(stats.backing.conventionalNames == 46263)
+        #expect(stats.backing.inspectedAutomatic == 50915)
+        #expect(stats.backing.conventionalNames == 50915)
         #expect(stats.backing.otherNames == 0)
     }
 
@@ -124,6 +129,12 @@ struct ScriptDataRealDataTests {
         var objectFormats: [Int16: Int] = [:]
         var propertyTypes: [UInt8: Int] = [:]
         var carriers: [String: Int] = [:]
+        /// QUST tails, which M13.1 decodes instead of skipping. Their alias
+        /// scripts are ordinary script entries and are counted in `scripts`,
+        /// `properties` and the PEX probe alongside the primary list.
+        var questFragmentSections = 0
+        var questFragments = 0
+        var questAliasScriptSections = 0
         var skipped = ScriptDataTally()
         var decodeFailures: [String: Int] = [:]
         var directObjects = 0
@@ -146,10 +157,25 @@ struct ScriptDataRealDataTests {
                 objectFormats[format.rawValue, default: 0] += 1
             }
             carriers["\(carrier)", default: 0] += 1
-            scripts += data.scripts.count
-            attachedScripts.append(contentsOf: data.scripts)
             skipped.merge(data.skipped)
-            for script in data.scripts {
+            record(scripts: data.scripts, resolver: resolver, recordIDs: recordIDs)
+            guard let section = data.questFragments else { return }
+            questFragmentSections += 1
+            questFragments += section.fragments.count
+            questAliasScriptSections += section.aliasScripts.count
+            for alias in section.aliasScripts {
+                record(scripts: alias.scripts, resolver: resolver, recordIDs: recordIDs)
+            }
+        }
+
+        mutating func record(
+            scripts entries: [AttachedScript],
+            resolver: FormIDResolver,
+            recordIDs: Set<UInt32>
+        ) {
+            scripts += entries.count
+            attachedScripts.append(contentsOf: entries)
+            for script in entries {
                 properties += script.properties.count
                 for property in script.properties {
                     propertyTypes[property.type, default: 0] += 1
@@ -199,7 +225,7 @@ struct ScriptDataRealDataTests {
                 .map { "\($0.key):\($0.value)" }.joined(separator: " ")
             let samples = sampledKeys.map(\.description).joined(separator: " ")
             return """
-            VMAD sweep observed 2026-07-30
+            VMAD sweep observed 2026-08-02
             records\t\(records)
             unreadable records\t\(unreadableRecords)
             VMAD fields\t\(vmadFields)
@@ -209,6 +235,9 @@ struct ScriptDataRealDataTests {
             object formats\t\(formats)
             property types\t\(types)
             carriers\t\(carriers)
+            QUST fragment sections\t\(questFragmentSections)
+            QUST stage fragments\t\(questFragments)
+            QUST alias script sections\t\(questAliasScriptSections)
             skipped\t\(skips)
             decode failures\t\(failures)
             direct objects\t\(directObjects)

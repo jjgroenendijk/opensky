@@ -14,6 +14,7 @@ nonisolated extension ScriptData {
             version = payload.version
             objectFormat = payload.objectFormat
             scripts.append(contentsOf: payload.scripts)
+            questFragments = payload.questFragments ?? questFragments
             skipped.merge(payload.skipped)
             return true
         } catch let error as ScriptDataError {
@@ -24,23 +25,31 @@ nonisolated extension ScriptData {
     }
 }
 
-nonisolated private struct ScriptDataPayload {
+nonisolated struct ScriptDataPayload {
     let version: Int16
     let objectFormat: ScriptObjectFormat
     let scripts: [AttachedScript]
+    let questFragments: QuestFragmentSection?
     let skipped: ScriptDataTally
 }
 
-nonisolated private struct ScriptDataDecoder {
+/// Not `private`: the QUST fragment tail is decoded by an extension in
+/// ScriptDataQuestFragmentDecoder.swift, which needs the reader and the
+/// primary script, property and object readers this type owns.
+nonisolated struct ScriptDataDecoder {
+    /// Carriers whose VMAD may end in a record-specific fragment tail. QUST is
+    /// decoded (`ScriptDataQuestFragments.swift`); the other four are still
+    /// recorded and skipped, so they stay in the set.
     private static let fragmentRecordTypes: Set<FourCC> = [
         "INFO", "PACK", "PERK", "QUST", "SCEN"
     ]
 
-    private var reader: BinaryReader
-    private let ownerType: FourCC?
-    private var version: Int16 = 0
-    private var objectFormat: ScriptObjectFormat = .formIDLast
-    private var skipped = ScriptDataTally()
+    var reader: BinaryReader
+    let ownerType: FourCC?
+    var version: Int16 = 0
+    var objectFormat: ScriptObjectFormat = .formIDLast
+    var questFragments: QuestFragmentSection?
+    var skipped = ScriptDataTally()
 
     init(data: Data, ownerType: FourCC?) {
         reader = BinaryReader(data)
@@ -73,11 +82,12 @@ nonisolated private struct ScriptDataDecoder {
             version: version,
             objectFormat: objectFormat,
             scripts: scripts,
+            questFragments: questFragments,
             skipped: skipped
         )
     }
 
-    private mutating func decodeScript() throws -> AttachedScript {
+    mutating func decodeScript() throws -> AttachedScript {
         let name = try readString()
         let flags = version >= 4 ? try AttachedScript.Flags(rawValue: reader.readUInt8()) : []
         let propertyCount = try checkedCount(
@@ -164,7 +174,10 @@ nonisolated private struct ScriptDataDecoder {
         }
     }
 
-    private mutating func decodeObject() throws -> ScriptObjectReference {
+    /// - Parameter notingAlias: false for the object that opens a quest-alias
+    ///   script section, where an alias slot is the whole point rather than a
+    ///   deferred resolution the tally exists to count.
+    mutating func decodeObject(notingAlias: Bool = true) throws -> ScriptObjectReference {
         let formID: FormID
         let alias: Int16
         let unused: UInt16
@@ -179,13 +192,13 @@ nonisolated private struct ScriptDataDecoder {
             formID = try FormID(reader.readUInt32())
         }
         let object = ScriptObjectReference(formID: formID, alias: alias, unused: unused)
-        if object.isAlias {
+        if notingAlias, object.isAlias {
             skipped.note(.aliasObject)
         }
         return object
     }
 
-    private mutating func readString() throws -> String {
+    mutating func readString() throws -> String {
         let offset = reader.offset
         let length = try Int(reader.readUInt16())
         let data = try reader.read(count: length)
@@ -195,7 +208,7 @@ nonisolated private struct ScriptDataDecoder {
         return value
     }
 
-    private func checkedCount(
+    func checkedCount(
         _ count: UInt32,
         minimumSize: Int,
         context: String
@@ -218,6 +231,9 @@ nonisolated private struct ScriptDataDecoder {
                 recordType: ownerType,
                 count: reader.bytesRemaining
             )
+        }
+        if ownerType == "QUST", decodeQuestFragmentTail() {
+            return
         }
         skipped.note(.fragments(ownerType))
         reader.skip(reader.bytesRemaining)

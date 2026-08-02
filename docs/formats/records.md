@@ -1,9 +1,9 @@
 ---
 type: File Format
-title: Record decoders (WRLD, CELL, REFR, STAT, ModelBase, GLOB, inventory items)
+title: Record decoders (WRLD, CELL, REFR, STAT, ModelBase, GLOB, inventory items, QUST)
 description: Field layouts of decoded plugin records and OpenSky's engine types.
-tags: [format, plugin, records, worldspace, cell, globals, inventory, items]
-timestamp: 2026-08-01T00:00:00Z
+tags: [format, plugin, records, worldspace, cell, globals, inventory, items, quests]
+timestamp: 2026-08-02T00:00:00Z
 ---
 
 # Record decoders, Skyrim SE
@@ -591,6 +591,95 @@ record throws.
 raw FormID, by editor ID (case-insensitively, because scripts and the console
 have always matched global names that way) and by session-stable `ReferenceKey`.
 
+## QUST -> Quest
+
+Quests: journal stages, objectives, and the alias slots a quest resolves world objects
+through. Decoded by `opensky/Formats/ESM/Records/Quest.swift` and its three satellites
+(`QuestComponents.swift`, `QuestDecoder.swift`, `QuestDecoderGroups.swift`,
+`QuestAliasDecoder.swift`). The stage *scripts* are not in the record: they live in the
+QUST tail of VMAD, decoded into `QuestFragmentSection`
+([Papyrus attachment data](/formats/vmad.md)).
+
+Reference: UESP
+"[.../QUST](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/QUST)"; xEdit
+`dev-4.1.6` `wbDefinitionsTES5.pas` `wbRecord(QUST, 'Quest', ...)` line 8759 — DNAM 8763,
+stages 8797, objectives 8840, reference aliases 8869, location aliases 8971.
+
+QUST is the most **order-dependent** record in the format. Almost nothing in it is a
+self-describing struct; a marker subrecord opens a group and every following subrecord
+belongs to that group until the next marker. Three such sequences stack up, and two
+separator fields drive the rest.
+
+| field | type | decoded |
+| ----- | ---- | ------- |
+| EDID  | zstring | `editorID` |
+| VMAD  | VMAD | `script`, including the decoded quest fragment tail |
+| FULL  | lstring | `name` |
+| DNAM  | 12 bytes | `uint16` flags, `uint8` priority, `uint8` form version, 4 unused, `uint32` type |
+| ENAM  | char[4] | `event`, the story-manager event short name |
+| QTGL  | formid | `textDisplayGlobals`, repeating |
+| FLTR  | zstring | `objectWindowFilter`, Creation Kit folder path |
+| CTDA  | struct[32] | `dialogueConditions` before NEXT, `storyManagerConditions` after |
+| NEXT  | empty | separator between those two condition runs |
+| INDX  | 4 bytes | opens a `Stage`: `uint16` index, `uint8` flags, 1 unused |
+| QSDT  | uint8 | opens a `LogEntry` in the open stage; flags 0x01 complete, 0x02 fail |
+| CNAM  | lstring | the open log entry's journal text |
+| NAM0  | formid | the open log entry's next quest |
+| QOBJ  | uint16 | opens an `Objective` and ends the stage run |
+| FNAM  | uint32 | the open objective's flags (0x01 ORed with previous) |
+| NNAM  | lstring | the open objective's display text — see below |
+| QSTA  | 8 bytes | opens a `Target`: `int32` alias, `uint8` ignores locks, 3 unused |
+| ANAM  | uint32 | `nextAliasID`; ends the objective run and opens the alias run |
+| ALST / ALLS | uint32 | opens a reference / location `Alias` |
+| ALED  | empty | closes the open alias |
+
+Inside an alias, the field names shadow quest-level ones: `FNAM` is alias flags, `CTDA` is
+the alias's own match conditions, and `KSIZ`/`KWDA` and `COCT`/`CNTO` are the keywords and
+items given to the alias target for the quest's duration. The decoder therefore routes
+every field to the open alias first, which is what keeps the two readings apart.
+
+`NNAM` is the one genuinely ambiguous spelling: it is an lstring objective display text
+inside the objective run and a plain zstring quest description (`questDescription`) after
+ANAM has ended that run. `QSTA` is similarly re-read after ANAM as a record-level legacy
+target whose word is a reference FormID rather than an alias ID (`legacyTargets`); vanilla
+`Skyrim.esm` writes none.
+
+### Alias fill types
+
+The Creation Kit presents an alias as having exactly one "fill type", but on disk that
+choice is implied by which of a dozen mutually exclusive subrecords appear. Rather than
+guess the intent while parsing, each slot decodes into its own property and
+`Alias.fillType` reports the choice afterwards, in the Creation Kit's own union order.
+
+| fill type | subrecords | applies to |
+| --------- | ---------- | ---------- |
+| specific reference | ALFR | Ref |
+| unique actor | ALUA | Ref |
+| specific location | ALFL | Loc |
+| location alias reference | ALFA + ALRT | Ref |
+| reference alias location | ALFA + KNAM | Loc |
+| external alias | ALEQ + ALEA | Loc/Ref |
+| create reference to object | ALCO + ALCA + ALCL | Ref |
+| near alias | ALNA + ALNT | Ref |
+| from event | ALFE + ALFD | Loc/Ref |
+| none | — | filled by script, by ALFI, or on conditions alone |
+
+### Decode policy
+
+A wrong-size subrecord costs its own entry, a subrecord arriving with no group open costs
+itself, an alias cut off without its ALED terminator is kept and recorded, and an unknown
+or later-game subrecord is skipped. All four are counted in `QuestTally` so a sweep can
+assert against them rather than discover the loss silently. Only a non-QUST record throws.
+
+`QuestStore` (`opensky/World/QuestStore.swift`) indexes the QUST top group by raw FormID,
+by editor ID (case-insensitively, for the same reason `GlobalStore` does) and by
+session-stable `ReferenceKey`, following the same immutable-index convention. Quest
+*state* belongs to the runtime (issue #182) and deliberately does not live there.
+
+`RecordTextDump.questSummary` puts the decode on both dev surfaces:
+`openskycli record --type QUST` and the Asset Browser detail pane print name, type,
+priority, flags, and the stage, objective, alias and fragment counts.
+
 ## Verification
 
 Unit tests: `openskyTests/RecordDecoderTests.swift`,
@@ -643,3 +732,51 @@ Browser detail pane. Spot checks on 2026-08-01: `IronSword` (WEAP 00012EB7) prin
 (INGR 0004B0BA) prints 4 effects and auto-calc value 47; `IronArrow` (AMMO 0001397D)
 prints damage 8.0 and projectile 0003BE11; `BarrelFood01` (CONT 00000845) prints 1 entry
 and flags 0x2.
+
+### Quests (M13.1)
+
+Unit tests, all synthetic fixtures (`QuestFixture.swift`): `QuestRecordTests.swift`
+(header, both condition runs, stage grouping, objective/target pairing, wrong-type-throws,
+truncated-field and empty-record cases), `QuestAliasRecordTests.swift` (alias open and
+terminate, alias-level field shadowing, every fill type),
+`QuestFragmentTests.swift` (fragment table, alias script sections, both object formats,
+malformed tail) and `QuestStoreTests.swift` (the index).
+
+Env-gated sweep `QuestRealDataTests.swift`
+(`make realtest T='QuestRealDataTests/sweepsEveryQuestInSkyrimESM()'`), against vanilla
+`Skyrim.esm` on 2026-08-02:
+
+| measure | value |
+| ------- | ----- |
+| quests decoded, zero throws | 1811 |
+| stages / with journal text | 5220 / 726 |
+| log entries / with CNAM text | 5294 / 771 |
+| objectives / objective targets | 1452 / 1808 |
+| record-level legacy targets | 0 |
+| aliases (reference / location) | 12,891 (11,999 / 892) |
+| duplicate alias IDs within a quest | 0 |
+| fragment tables / stage fragments / alias script sections | 856 / 5108 / 2149 |
+| fragment tails lost to a malformed layout | 0 |
+| subrecords skipped | 53, all vestigial SCHR/SCTX/QNAM |
+| conditions / distinct raw function indices | 11,427 / 90 |
+| condition traffic the standard registry answers | 32.7% |
+
+Alias fill types used: unique actor 2900, specific reference 2687, from event 2065, none
+2062, location alias reference 2036, create reference to object 630, near alias 218,
+specific location 162, external alias 83, reference alias location 48. Every fill type the
+decoder models is exercised by vanilla data, which is what pins the union to xEdit's
+reading of it.
+
+Three link invariants are asserted rather than printed, and they are the real proof the
+grouping state machine attributes each subrecord to the right parent: every objective
+target names an alias its own quest declares (0 misses), every fragment names a stage its
+own quest declares (0 misses), and every alias script section names its own quest
+(0 misses). The 53 skipped subrecords are exactly the three the Creation Kit wrote in an
+earlier version and xEdit marks unused (`wbUnused(SCHR/SCTX/QNAM)` under 'Log Entry').
+
+The sweep doubles as the M13 target-quest shortlist and writes it to gitignored
+`logs/quest-census.log`: 62 quests need no condition function outside
+`ConditionFunctionRegistry.standard`, show journal text, and carry stage fragments. The
+cheapest are `MGRArniel01` (0006A086, 2 stages, 1 objective, 1 forced-reference alias, 2
+fragments, no conditions), `DBEviction` (0006F9A5) and `TGCrownMisc` (0006D585). The
+milestone picks from that list, against real data rather than memory.

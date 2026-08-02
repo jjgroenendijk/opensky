@@ -4,7 +4,7 @@ title: Papyrus attachment data (VMAD)
 description: Skyrim ESM script attachments, typed property values, object
   references, fragment skip policy, and PEX backing-variable binding.
 tags: [format, plugin, papyrus, vmad, formid]
-timestamp: 2026-07-30T00:00:00Z
+timestamp: 2026-08-02T00:00:00Z
 ---
 
 # Papyrus attachment data (VMAD)
@@ -34,6 +34,7 @@ aggregate counts in the repository.
 * [Properties](#properties)
 * [Object references](#object-references)
 * [Fragments and aliases](#fragments-and-aliases)
+  * [The QUST tail](#the-qust-tail)
 * [Record integration](#record-integration)
 * [PEX binding](#pex-binding)
 * [Defensive decode policy](#defensive-decode-policy)
@@ -113,16 +114,67 @@ and increments the matching reason tally.
 ## Fragments and aliases
 
 `INFO`, `PACK`, `PERK`, `QUST`, and `SCEN` append record-specific fragment
-structures after the common script list. M11.1 does not execute those
-fragments. Once the primary list is decoded, `ScriptData` recognizes those
-five carriers, records one reason-tagged fragment-section skip, and consumes
+structures after the common script list. `QUST` is decoded (M13.1, issue #181);
+the other four still record one reason-tagged fragment-section skip and consume
 the bounded field remainder. A remainder on any other record type is a typed
 error rather than guessed framing.
 
-Quest alias script sections are likewise not modeled. Object values that name
-an alias are retained as `ScriptObjectReference`, counted as alias skips, and
-never collapsed into a direct world reference. Both decisions keep later
-fragment and quest-alias work additive.
+### The QUST tail
+
+A quest's stage scripts are not attached scripts. The Creation Kit compiles
+every stage fragment into one generated script named `QF_<editorID>_<formID>`
+and gives each fragment a function named `Fragment_<n>`, numbered in authoring
+order rather than by stage. This table is the only record of which stage and
+which log entry a numbered fragment belongs to, which is why the quest runtime
+cannot run stage scripts without it.
+
+| offset | type | meaning |
+| --- | --- | --- |
+| 0 | `int8` | extra bind data version, always 2 |
+| 1 | `uint16` | fragment count |
+| 3 | wstring | file name of the generated `QF_` script, no extension |
+| .. | fragment[count] | the stage fragment table, below |
+| .. | `uint16` | alias count |
+| .. | alias[count] | alias script sections, below |
+
+One fragment:
+
+| offset | type | meaning |
+| --- | --- | --- |
+| 0 | `uint16` | quest stage index, the same number `QUST` `INDX` carries |
+| 2 | `int16` | unused, always 0 |
+| 4 | `int32` | log-entry index within that stage |
+| 8 | `int8` | unused, always 1 |
+| 9 | wstring | script name, normally the file name |
+| .. | wstring | fragment function name, e.g. `Fragment_5` |
+
+One alias section:
+
+| type | meaning |
+| --- | --- |
+| object (8 bytes) | quest and alias the scripts attach to, read with the **primary** object format |
+| `int16` | version, restated for this alias |
+| `int16` | object format, restated for this alias |
+| `uint16` | script count, then that many ordinary script entries |
+
+xEdit reads the stage index and the log-entry index as two `uint32` words where
+UESP splits each into a value plus an always-constant half. The two agree byte
+for byte on little-endian; the split spelling is what
+`ScriptDataQuestFragmentDecoder.swift` uses, because it names the halves the
+constants sit in.
+
+The version and object format an alias restates are honoured rather than
+assumed: the script entries after them are read with whatever that alias
+declares, then the primary values are restored. Vanilla data never disagrees.
+
+A malformed tail is not fatal. The decoder rewinds, records the same
+`QUST fragments` skip the other carriers use, and consumes the remainder, so a
+quest with a broken fragment table still delivers its primary scripts.
+
+Object values that name an alias are still retained as
+`ScriptObjectReference` and counted as alias skips: M13.1 decodes the alias
+*definitions* ([`Quest.Alias`](/formats/records.md)), while filling an alias at
+runtime is issue #183.
 
 ## Record integration
 
@@ -183,7 +235,7 @@ than 64 KiB through the normal `REFR` decoder.
 
 ## Vanilla sweep evidence
 
-`ScriptDataRealDataTests` ran through `make realtest` on 2026-07-30 against the
+`ScriptDataRealDataTests` ran through `make realtest` on 2026-08-02 against the
 retail `Skyrim.esm`. It decoded every field, asserted the exact census below,
 sampled 32 direct values whose normalized keys name records present in the
 plugin, and wrote those local key samples to gitignored
@@ -194,20 +246,31 @@ plugin, and wrote those local key samples to gitignored
 | records walked | 869,687 |
 | unreadable records | 0 |
 | VMAD fields / decode failures | 16,133 / 0 |
-| attached scripts / properties | 17,407 / 46,493 |
+| attached scripts / properties | 19,936 / 51,145 |
 | version 4 / version 5 fields | 2,561 / 13,572 |
 | object format 1 / format 2 fields | 2,705 / 13,428 |
-| direct / null / dangling object values | 27,044 / 201 / 38 |
-| alias object skips | 12,399 |
+| direct / null / dangling object values | 29,787 / 202 / 39 |
+| alias object skips | 12,896 |
 | removed property skips | 7 |
-| fragmented field sections | 6,988 |
+| fragmented field sections skipped | 6,132 |
+| QUST fragment sections decoded | 856 |
+| QUST stage fragments / alias script sections | 5,108 / 2,149 |
+
+Script and property counts include the scripts inside those 2,149 alias
+sections, which is what raised them from the M11 figures of 17,407 / 46,493:
+an alias script is an ordinary script entry and is bound the same way. The
+alias-object skip count rose for the same reason — the object properties inside
+quest alias scripts are now visible to the tally.
 
 The only array type present was boolean array, in two properties; the synthetic
-matrix remains the evidence for every other array representation. Fragment
-skips were 5,257 `INFO`, 856 `QUST`, 557 `SCEN`, 313 `PACK`, and 5 `PERK`.
+matrix remains the evidence for every other array representation. Remaining
+fragment skips were 5,257 `INFO`, 557 `SCEN`, 313 `PACK`, and 5 `PERK`. No
+`QUST` tail failed to decode, so the `QUST fragments` bucket is now empty; the
+per-quest view of the same 856 tables is in
+[record decoders](/formats/records.md).
 
-The PEX half loaded 4,071 distinct script objects while following inheritance.
-It found 46,263 automatic attachment properties, 199 manual properties, 24
+The PEX half loaded 4,450 distinct script objects while following inheritance.
+It found 50,915 automatic attachment properties, 199 manual properties, 24
 names absent from the available PEX chain, no missing script files, no missing
 automatic backing names, and no backing name that failed to select a decoded
 variable. An absent or incompatible property is intentionally a default-value
@@ -219,7 +282,7 @@ This layer decodes attachment data and creates one headless script instance.
 That instance executes through the
 [Papyrus virtual machine](/engine/papyrus-vm.md), including its native registry
 and deterministic suspension scheduler. VMAD does not schedule attachment
-events, own world-object handle lifetimes, execute fragment tables, resolve
-quest aliases, or define world-dependent native game functions. Those are
+events, own world-object handle lifetimes, execute the decoded fragment table,
+fill quest aliases, or define world-dependent native game functions. Those are
 separate runtime responsibilities built on the typed attachment and binding
 seams.

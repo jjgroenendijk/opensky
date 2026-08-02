@@ -6,9 +6,11 @@
 // https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas
 // https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/VMAD_Field
 //
-// Fragment carriers have record-specific tails. M11 records that a tail is
-// present and skips the bounded remainder; quest/scene execution models those
-// payloads later.
+// Fragment carriers have record-specific tails. INFO, PACK, PERK and SCEN
+// still record that a tail is present and skip the bounded remainder; QUST
+// decodes its tail into `QuestFragmentSection` (see
+// ScriptDataQuestFragments.swift), because the quest runtime needs the
+// stage-to-fragment mapping and the alias script sections.
 
 import Foundation
 
@@ -30,8 +32,10 @@ nonisolated enum ScriptObjectFormat: Int16, Equatable {
 
 nonisolated struct ScriptObjectReference: Equatable {
     let formID: FormID
-    /// -1 means a direct FormID. Any other value selects an alias on the
-    /// quest identified by `formID` and remains deferred to M13.
+    /// -1 means a direct FormID. Any other value selects an alias on the quest
+    /// identified by `formID`. M13.1 decodes the alias definitions those slots
+    /// name (`Quest.Alias`); filling them at runtime is issue #183, so an
+    /// alias object still resolves to no direct world reference here.
     let alias: Int16
     let unused: UInt16
 
@@ -141,6 +145,10 @@ nonisolated struct ScriptData: Equatable {
     var version: Int16?
     var objectFormat: ScriptObjectFormat?
     var scripts: [AttachedScript] = []
+    /// Decoded QUST tail. Nil for every other carrier, and also for a QUST
+    /// whose tail failed to decode — that case keeps the primary scripts and
+    /// records one `.fragments("QUST")` tally entry instead.
+    var questFragments: QuestFragmentSection?
     var skipped = ScriptDataTally()
 
     init(ownerType: FourCC? = nil) {
@@ -148,6 +156,6 @@ nonisolated struct ScriptData: Equatable {
     }
 
     var isEmpty: Bool {
-        scripts.isEmpty
+        scripts.isEmpty && questFragments == nil
     }
 }
