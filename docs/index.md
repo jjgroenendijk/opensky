@@ -79,6 +79,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [HKX behavior graph objects](/formats/hkx-behavior.md) - shared object-graph pointer,
   array and string resolution; hkRootLevelContainer, hkbBehaviorGraph, graph/string data,
   variable value set, project + character string data, file role, vanilla census.
+* [HKX behavior node classes](/formats/hkx-behavior-nodes.md) - byte layouts of every
+  node, modifier, condition and Bethesda extension class the vanilla player behavior
+  files contain, the class registry keyed by class name, and the graph walk on it.
 * [SWF container](/formats/swf.md) - FWS/CWS signature + compression, bit-packed
   FrameSize RECT, tag stream framing, standard tag-name table (Scaleform UI);
   DefineShape-DefineShape4 decode + tessellation, lossless/JPEG bitmap tags,

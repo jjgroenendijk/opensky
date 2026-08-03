@@ -144,7 +144,7 @@ test-one: vendor-link ## Run one test: make test-one T=Class[/method] or Target/
 test-report: ## Print pass/fail summary + failure detail from the newest result bundle
 	@./tools/test-report.sh $(TEST_RESULTS)
 
-realtest: ## Run one env-gated real-data test under the RSS watchdog: make realtest T=Class/method() [CAP=MB]
+realtest: vendor-link ## Run one env-gated real-data test under the RSS watchdog: make realtest T=Class/method() [CAP=MB]
 	@test -n "$(T)" || { \
 		echo "[ERROR] usage: make realtest T='Class/method()' [CAP=MB]"; \
 		echo "        selector must resolve to exactly one test (fully qualified)"; \
