@@ -591,6 +591,47 @@ record throws.
 raw FormID, by editor ID (case-insensitively, because scripts and the console
 have always matched global names that way) and by session-stable `ReferenceKey`.
 
+## MOVT -> MovementType
+
+Movement types: how fast an actor using this gait moves in each direction. Decoded by
+`opensky/Formats/ESM/Records/MovementType.swift`; the player's four gaits feed
+`PlayerMovementConfiguration` and through it the locomotion bridge of
+[walk mode](/engine/walk-mode.md).
+
+Reference: UESP "Skyrim Mod:Mod File Format/MOVT"
+(<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MOVT>) and xEdit `dev-4.1.6`
+`wbDefinitionsTES5.pas` `wbRecord(MOVT, ...)`.
+
+| field | type | decoded |
+| ----- | ---- | ------- |
+| EDID | zstring | `editorID`, the name the index is keyed by |
+| MNAM | zstring | `name`, the Creation Kit and behavior-graph name |
+| SPED | 11 x float32 | `speeds`, the directional speed struct |
+| INAM | 3 x float32 | skipped; directional-change thresholds nothing reads yet |
+
+SPED is a fixed struct with no count field. Its order is the one xEdit names — left walk,
+left run, right walk, right run, forward walk, forward run, back walk, back run, rotate in
+place walk, rotate in place run, rotate while moving run — and the shipped data corroborates
+it: `NPC_Sprinting_MT` is `0` in every lateral slot and `500` in the forward pair, which is
+only consistent with forward sitting at float indices 4 and 5. The first eight are units per
+second; the last three are radians per second.
+
+A SPED shorter than 11 floats is dropped whole rather than zero-padded, because a
+half-decoded speed reads as a legitimate "this actor cannot move".
+
+`MovementTypeStore` indexes the MOVT top group across the active load order, keyed by
+lowercased editor ID, later plugin winning — the same override rule `GameSettingStore`
+applies to GMSTs, over the shared load-order walk in `ActivePluginFiles`.
+
+Observed in `Skyrim.esm` on 2026-08-03, forward walk / forward run in units per second:
+
+| Editor ID | MNAM | Forward walk | Forward run |
+| --- | --- | --- | --- |
+| `NPC_Default_MT` | `NPCDefault` | 80.1 | 370.0 |
+| `NPC_Sneaking_MT` | `NPCSneaking` | 47.2 | 222.0 |
+| `NPC_Sprinting_MT` | `NPCSprinting` | 0.0 | 500.0 |
+| `NPC_Swimming_MT` | `NPCSwimming` | 80.1 | 370.0 |
+
 ## QUST -> Quest
 
 Quests: journal stages, objectives, and the alias slots a quest resolves world objects

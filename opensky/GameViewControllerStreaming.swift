@@ -68,6 +68,9 @@ extension GameViewController {
         renderer.collisionQuery = { [weak controller] bounds in
             controller?.collisionCandidates(overlapping: bounds) ?? []
         }
+        renderer.locomotion.sampleWater = { [weak controller] position in
+            controller?.sampleWaterHeight(at: position)
+        }
         streamer = controller
     }
 

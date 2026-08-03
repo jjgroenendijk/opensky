@@ -32,6 +32,7 @@ typealias WorldControlProviders = AnimationControlProviding & AudioControlProvid
     & InventoryMenuControlProviding & ItemControlProviding
     & JournalControlProviding
     & ParticleControlProviding
+    & PlayerLocomotionControlProviding
     & PrecipitationControlProviding
     & RuntimeStateControlProviding & SWFLabControlProviding & SceneStatsProviding
     & ScriptControlProviding & ShadowControlProviding

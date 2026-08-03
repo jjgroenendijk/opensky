@@ -62,6 +62,11 @@ nonisolated struct CellScene {
     /// CPU collision surface for exterior LAND/DNAM terrain. nil for
     /// interiors or cells with no drawable terrain.
     let terrainHeightField: TerrainHeightField?
+    /// Flat water-surface height for this cell, resolved from CELL XCLW over
+    /// the worldspace default the same way the drawn plane is (issue #188).
+    /// nil where the cell has no water. One height per cell, because vanilla
+    /// authors one plane per cell.
+    let waterHeight: Float?
     /// Deterministic cell-owned CPU instances retained for inspection +
     /// accounting; matching GPU grass batches live in renderScene.
     let grassPlacements: [GrassPlacement]
@@ -97,6 +102,7 @@ nonisolated struct CellScene {
         musicType: FormID? = nil,
         worldspaceMusicType: FormID? = nil,
         terrainHeightField: TerrainHeightField? = nil,
+        waterHeight: Float? = nil,
         grassPlacements: [GrassPlacement] = [],
         staticCollision: StaticCollisionSet = .empty,
         triggerVolumes: TriggerVolumeSet = .empty,
@@ -115,6 +121,7 @@ nonisolated struct CellScene {
         self.musicType = musicType
         self.worldspaceMusicType = worldspaceMusicType
         self.terrainHeightField = terrainHeightField
+        self.waterHeight = waterHeight
         self.grassPlacements = grassPlacements
         self.staticCollision = staticCollision
         self.triggerVolumes = triggerVolumes

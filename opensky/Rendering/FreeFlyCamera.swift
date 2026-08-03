@@ -22,8 +22,15 @@ nonisolated struct CameraInput {
     var lookRight: Float = 0
     /// Pointer delta, points, +y = pointer moved up (view looks up).
     var lookUp: Float = 0
-    /// Shift held -> speed boost.
+    /// Shift held -> speed boost. In walk mode this is run rather than walk.
     var boost = false
+    /// Sprint key held (issue #188). Walk mode only; fly mode ignores it.
+    var sprint = false
+    /// Sneak mode, a toggle rather than a held key, so the value is the state
+    /// the toggle currently sits in and not an edge.
+    var sneak = false
+    /// One-shot jump request, latched by the input state until a frame drains it.
+    var jump = false
     /// One-shot fly/walk mode toggle.
     var toggleWalkMode = false
     /// Seconds elapsed since the previous update.
