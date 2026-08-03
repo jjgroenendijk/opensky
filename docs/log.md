@@ -4,6 +4,67 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-03
 
+* **M13 milestone acceptance (issue #185, roadmap 13.6)**: quests are a gameplay loop, not
+  five landed parts. The gate proves one quest end to end — running, advanced by a real world
+  event through script code, its stage fragment executing and mutating `WorldStateStore`, its
+  alias resolved, its title, objective and journal paragraphs on the vanilla page, and a
+  mid-quest save resuming into a fresh engine at the same stage. The five parts it stands on
+  are #181 (QUST decode and quest VMAD fragments), #182 (quest state component and the
+  stage/objective runtime), #322 (quest script instances, `Quest` natives, stage fragments),
+  #183 (alias resolution) and #184 (the journal page and the `World > Quests & Journal`
+  destination). No new engine behaviour landed here; this issue wired, verified and recorded.
+* The synthetic half is the only place the chain is real from end to end, and that is a
+  deliberate trade. `M13AcceptanceChain` builds a lever whose compiled `OnActivate` calls
+  `SetStage` on a VMAD quest property, and drives it with a raycast use-key press through
+  `CellStreamer` — the same entry point `M11ScriptedWorldChain` uses, one call below the app.
+  A vanilla quest cannot do that yet: every candidate advances through dialogue.
+* **Decision: the real-data gate sets stages from outside rather than through a dialogue
+  INFO.** The issue asked for that negotiation to happen here, and the rejected alternative
+  was a minimal INFO slice to make one vanilla quest self-advance. It was declined because a
+  slice large enough to fire a `SetStage` fragment from dialogue is a dialogue system with a
+  quest gate's name on it, and it would have made M13's evidence depend on an undecoded
+  record family. The census is what settles it rather than a hunch: 72 quests qualify as
+  journal-visible with fragments and no unimplemented condition, and not one of them
+  progresses without dialogue.
+* **Decision: the quest is started before the lever's cell attaches.** A VMAD object property
+  binds to a live handle or to nothing, so a lever naming a dormant quest binds to nothing.
+  The rejected alternative was rebinding properties after a quest starts, which would mean a
+  second binding pass over every attached reference on every `Start`. Bringing quests up at
+  session wire-up and streaming cells in afterwards is what the app already does, so the gate
+  does it in that order and says why.
+* **Decision: whole-snapshot equality is the synthetic gate's claim, not the real one.** On
+  real data `attachRunningQuestScripts` fills the aliases of every start-game-enabled quest
+  in `Skyrim.esm`, so a restored store legitimately holds tables the saved one never had. The
+  real-data suite compares the quest's own `QuestRuntimeState` and `QuestAliasState` and its
+  rendered page instead; the synthetic suite, with exactly one quest defined, keeps the
+  stronger assertion including the generated-key allocator position.
+* **Evidence:** `M13AcceptanceTests` (the scripted loop, its accounting and the save/load
+  resume, no device and no install), `M13AcceptancePanelTests` (one uninterrupted run through
+  the real sidebar and the registry-built panel, every readout by accessibility id),
+  `M13AcceptanceBudgetTests` (stage fragments inside `PapyrusTickBudget`, quest conditions
+  executing no bytecode, the shipping fly-path update validators),
+  `M13AcceptanceRealDataTests` (`MGRArniel01` walked end to end with pinned tallies) and
+  `M13AcceptanceRenderTests` (the page before and after a stage advance). The real run
+  reports 1 quest script instance, 2 fragments queued, 1 alias filled, 1 native call with 0
+  unimplemented, 5 `unresolvedReference` binding skips, 1 journal row with 1 objective and 2
+  paragraphs, and 14,917 changed pixels on the stage advance — with the advanced page
+  byte-identical to a page walked straight to that stage.
+* The honest number is the one fault. A headless session loads no cell, so the fragment
+  script's five object properties keep their compiler defaults and calling a method on one is
+  a call on `None` — `typeMismatch(expected: "Object", actual: "None")`. It is pinned as
+  exactly one fault of exactly that kind rather than tolerated as a threshold, and the
+  synthetic gate, which does attach a cell, faults zero times.
+* **Coverage headline, 2026-08-03, against `Skyrim.esm`.** 1,811 QUST records decode with 0
+  failures and 53 skipped subrecords, all three of them the fields xEdit marks unused. 5,220
+  stages, of which 726 carry journal text; 5,294 log entries, 771 with CNAM text; 1,452
+  objectives over 1,808 targets; 12,891 aliases. Quest scripts: 856 of 1,811 quests (47%)
+  carry a fragment table, 5,108 fragments over 847 distinct QF scripts and 259 distinct
+  function names. Alias fills: 1 of the 10 fill types the decoder models is implemented, and
+  it covers 2,687 of 12,891 aliases (21%) — `unique actor` at 2,900 is the largest gap.
+  Conditions: the registry answers 36.2% of the 11,427 conditions quests demand, over 90
+  distinct raw indices, with `GetItemCount` (raw 71, 2,136 uses) the hottest miss. Journal
+  quests are a minority of the corpus by design: 1,271 of the 1,811 records are type 0, which
+  keeps them out of the journal entirely.
 * **Journal UI: the `quest_journal.swf` Quests page (issue #184, roadmap 13.5)**: quests are
   now visible to the player. The movie was already open — it has been the in-game system menu
   since issue #231 — but only its System page had ever been driven, and `swf-as2-scope.md`
