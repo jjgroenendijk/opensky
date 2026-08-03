@@ -4,6 +4,54 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-03
 
+* **Havok behavior node classes (issue #329, roadmap 14.2)**: the node tree below the
+  root generator, decoded. Fifty new class decoders — state machines and their state,
+  transition and event-property arrays; clip, blender, selector, modifier-wrapper and
+  behavior-reference generators; the blending transition effect; conditions and expression
+  arrays; thirteen stock modifiers; and the twelve Bethesda `BS*` extension classes —
+  each a `nonisolated struct` declaring its own offsets through the 14.1 cursor, with no
+  reflection and no class-layout system. `HKBClassRegistry` maps a class name to its
+  decoder so the 14.3 evaluator and the CLI walk a graph generically, and
+  `HKBGraphTopology` plus `HKBDecodeReport` are the two views on it. See
+  [HKX behavior node classes](/formats/hkx-behavior-nodes.md).
+* **The full-graph rule now has teeth.** The milestone decided that a census class without
+  a decoder is a failed sweep, not a tolerated tally entry, and
+  `HKBNodeDecodeRealDataTests` asserts exactly that: across the 35 vanilla player behavior
+  files, 31,719 objects decode, no class lacks a decoder, no object fails, and every one of
+  the 55 classes the census reported is covered. Unresolved fields: 58,076 `noFixup` —
+  absent optionals, which is what Havok writes for a null pointer — and not one
+  `outOfBounds`, `sectionMissing`, `negativeCount`, or `undecodableString`. That zero is
+  the evidence the offsets are right, and it is the same shape of evidence 14.1 used.
+* **Writing the truncated-object test found a real bug in the 14.1 helper.**
+  `HKXObjectCursor.pointer(at:)` resolved a fixup without first bounds-checking the
+  member's own eight bytes, so a pointer running off the end of a short object reported
+  `noFixup` — indistinguishable from a legitimately null optional — rather than
+  `outOfBounds`. Since the whole sweep assertion above rests on that distinction, the
+  helper was wrong in precisely the way the assertion exists to catch. It bounds-checks
+  first now. Worth recording because the bug was invisible against well-formed vanilla
+  data and only a deliberately malformed synthetic fixture exposed it.
+* **Per-class synthetic coverage is table-driven, not sampled.** `HKBNodeClassTests` runs
+  three cases against every class in the registry: a zero-filled object of the class's
+  declared Havok size must decode with no miss worse than `noFixup` (so no decoder reads
+  past its own class), a 16-byte-truncated object must still decode and report
+  out-of-bounds members rather than trap, and a pointer patched to an undefined section
+  must report `sectionMissing`. The table's size column is the same one the docs publish,
+  and a separate test asserts the table and the registry describe the same set, so a new
+  decoder cannot land without its three cases.
+* **`openskycli hkx` now prints graph topology.** Below the census it lists the whole-file
+  decode histogram and then walks the node tree — state machines with their state counts
+  and start modes, clip generators with their animation paths, blender children with their
+  weights, transition effects with their durations. `tools/probe.sh` gates on it
+  (`mt_behavior.hkx`: 5,115 objects decoded, no class without a decoder, 5,110 nodes
+  reached, root state machine `MT_RootBehavior`). The walk reaching exactly five fewer
+  nodes than the file has objects is the arithmetic that shows it misses nothing: the root
+  container, behavior graph, graph data, string data and variable value set are the five
+  that sit above the node tree. Sidebar UI is deferred under the AGENTS.md parser
+  exception to 14.5, the first item with a visible consumer — a player the graph drives.
+  See [CLI](/tools/cli.md).
+* **`make realtest` was missing its `vendor-link` prerequisite**, so the target failed at
+  build time in a fresh linked worktree, where `.vendor` is a symlink `make` creates. Every
+  other build target already depended on it.
 * **Havok behavior object graph and behavior census (issue #186, roadmap 14.1)**: M14's
   first item, and the one that turns the 2026-07-20 "reimplement Havok Behavior graphs"
   line into a scoped decision with measurements behind it. Three parts landed together.

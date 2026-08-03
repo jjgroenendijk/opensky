@@ -28,6 +28,7 @@ enum HKXCommand {
         printClassNames(file)
         printObjects(file)
         printCensus(file)
+        HKXTopologyDump.print(file: file)
     }
 
     /// Behavior census (todo 14.1): the same role, variable, event, and
