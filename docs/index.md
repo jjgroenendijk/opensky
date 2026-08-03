@@ -139,8 +139,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   System and Settings pages.
 * [Quest journal](/engine/journal.md) - the Quests page of vanilla `quest_journal.swf`
   driven from quest state: the measured list contract, the row model and its string tables,
-  `<Alias=...>` text substitution, the world-mode `J` key, and the
-  `World > Quests & Journal` surface.
+  `<Alias=...>` text substitution, the world-mode `J` key, the
+  `World > Quests & Journal` surface, and the M13 gate that drives a quest end to end
+  through it.
 * [Inventory menu](/engine/inventory-menu.md) - the player's item list and its categories,
   the cross-movie character import vanilla `inventorymenu.swf` needs before it has a list
   at all, the `EntriesA` data contract, and the equip/unequip/drop actions behind it.

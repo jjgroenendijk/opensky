@@ -29,6 +29,7 @@ milestone that owns its data". M13 owns it.
 - [Alias text substitution](#alias-text-substitution)
 - [Opening the journal](#opening-the-journal)
 - [Verification](#verification)
+- [The M13 gate](#the-m13-gate)
 - [Limits / next](#limits--next)
 
 ## Layers
@@ -270,6 +271,99 @@ Readout: JournalPageStatsLabel
 Deterministic tests: JournalPanelTests, DestinationRegistryJournalTests,
   QuestJournalMovieBridgeTests, JournalMenuModelTests, JournalAcceptanceRealDataTests
 Local A/B (optional, never committed): logs/journal-published.png
+```
+
+## The M13 gate
+
+M13.5 proved the page. The milestone gate (issue #185) proves the loop that fills it: a
+quest running, a real world event driving `SetStage` through script code, the stage fragment
+executing and mutating `WorldStateStore`, the alias resolving, the page growing, and a
+mid-quest save resuming into a fresh engine at the same stage.
+
+Five suites, each answering a different question.
+
+`M13AcceptanceTests` is the deterministic half, over one synthetic journal-visible quest
+built in code (`M13AcceptanceChain`, `M13AcceptanceFixture`). It is the only place the whole
+chain is real end to end, because a synthetic world can carry a lever the gate is allowed to
+pull:
+
+```text
+CellStreamer raycast -> InteractionEvent -> PapyrusWorldStateBridge -> OnActivate
+-> Quest.SetStage native -> QuestRuntime -> stage fragment
+-> Quest.SetObjectiveDisplayed native -> QuestRuntime -> JournalMenuModel
+```
+
+The one place it enters below the app is the use-key press,
+`CellStreamer.update(cameraPosition:interactionRay:activate:)` — the call the render loop
+makes every frame — because everything above it is key handling and a draw callback. That is
+the same entry point `M11ScriptedWorldChain` uses. The lever reaches its quest through an
+automatic VMAD property, which is why the gate starts the quest *before* attaching the
+lever's cell: an object property can only bind to a handle that already exists, and quests
+come up at session wire-up while cells stream in afterwards. The run ends with a real
+`OpenSkySaveStore` slot restored into a brand-new store, runtime and quest layer, asserting
+snapshot equality including the generated-key allocator position.
+
+`M13AcceptancePanelTests` runs the sidebar surface as one destination: the real
+`AppSidebarModel`, the registry factory, every readout read back by accessibility id, the
+quest transport, the page controls, and the override policy — an open journal is the
+override, a running quest is not, and `Reset all` closes the page without undoing a single
+quest mutation.
+
+`M13AcceptanceRealDataTests` walks `MGRArniel01` end to end against the user's install and
+pins the tallies. `M13AcceptanceRenderTests` renders the page before and after a stage
+advance and asserts both the changed-pixel delta and that the advanced page is byte-identical
+to a page walked straight to that stage. `M13AcceptanceBudgetTests` holds quest work to the
+budgets that already exist: stage fragments go through the same per-tick FIFO every other
+script event uses, so `PapyrusTickBudget` bounds them unchanged, and quest conditions execute
+no bytecode at all.
+
+### What the real quest run reports
+
+Numbers from `make realtest`, 2026-08-03, against `Skyrim.esm`. The report goes to ignored
+`logs/m13-acceptance.log` and carries counts and editor IDs only.
+
+| Measure | Value |
+|---|---|
+| Quest | `MGRArniel01`, mages guild, 2 stages, 1 objective, 1 alias, 2 fragments |
+| Declared conditions | 0 |
+| Stages reached / current | 2 / 200, completed |
+| Quest script instances / alias instances | 1 / 0 |
+| Fragments queued | 2 |
+| Aliases filled | 1 |
+| Native calls / unimplemented | 1 / 0 |
+| Faults | 1 (`typeMismatch`) |
+| Binding skips | 5 (`unresolvedReference`) |
+| Journal rows / objective rows / paragraphs | 1 / 1 / 2 |
+| Changed pixels on the stage advance | 14,917 |
+
+The one fault is worth stating plainly rather than rounding to zero. The real-data session
+loads no cell, so the five object properties on the quest's fragment script resolve to no
+live handle and keep their compiler defaults; calling a method on one of them is a call on
+`None`, which faults at the first instruction of the second fragment. It is the absence of a
+world, not a quest bug — the synthetic gate, which does attach a cell, faults zero times.
+
+The stages of the real quest are set from outside rather than by a dialogue INFO. That is
+this milestone's scope decision: `MGRArniel01` advances through dialogue, no quest on the
+issue-#181 shortlist progresses without it, and a minimal INFO slice would be a dialogue
+system wearing a quest gate's name. The synthetic half is what proves a *world event* can
+drive the same path, and dialogue stays a later milestone.
+
+### Acceptance record
+
+```text
+Milestone: M13
+Sidebar path: World > Quests & Journal > Quests, > Quest Controls, > Page
+Destination id: Destination-journal
+Controls exercised: JournalQuestControl, JournalStartQuestControl, JournalStopQuestControl,
+  JournalStageControl, JournalSetStageControl, JournalObjectiveControl,
+  JournalShowObjectiveControl, JournalHideObjectiveControl, JournalOpenControl,
+  JournalCloseControl, JournalUpControl, JournalDownControl, JournalActivateControl,
+  JournalShowCompletedControl
+Readout: JournalPageStatsLabel
+Deterministic tests: M13AcceptanceTests, M13AcceptancePanelTests, M13AcceptanceBudgetTests,
+  M13AcceptanceRealDataTests, M13AcceptanceRenderTests, JournalPanelTests,
+  DestinationRegistryJournalTests
+Local A/B (optional, never committed): logs/m13-journal-advanced.png
 ```
 
 ## Limits / next
