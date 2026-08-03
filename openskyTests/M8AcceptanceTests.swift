@@ -130,12 +130,12 @@ struct M8AcceptanceTests {
         let panel = try #require(harness.select("world") as? WorldPanelViewController)
         #expect(harness.overrideIndicatorIsVisible("world") == false)
 
-        panel.cameraMovementModeControl.selectItem(withTitle: "Walk")
+        panel.cameraMovementModeControl.selectItem(withTitle: "Walk (first person)")
         send(panel.cameraMovementModeControl)
 
         #expect(harness.providers.movementMode == .walk)
         harness.refresh(panel)
-        #expect(panel.cameraMovementModeControl.titleOfSelectedItem == "Walk")
+        #expect(panel.cameraMovementModeControl.titleOfSelectedItem == "Walk (first person)")
         #expect(harness.overrideIndicatorIsVisible("world") == true)
         #expect(harness.readout("CameraStatsLabel", in: panel)?.isEmpty == false)
     }
@@ -237,7 +237,7 @@ struct M8AcceptanceTests {
 
         let world = try #require(harness.select("world") as? WorldPanelViewController)
         #expect(harness.selectedDestinationID == "world")
-        world.cameraMovementModeControl.selectItem(withTitle: "Walk")
+        world.cameraMovementModeControl.selectItem(withTitle: "Walk (first person)")
         send(world.cameraMovementModeControl)
         #expect(harness.providers.movementMode == .walk)
 

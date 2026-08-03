@@ -30,6 +30,21 @@ nonisolated enum SkeletonPoseMath {
             }
             local[sample.boneIndex] = sample.pose
         }
+        return try worldMatrices(skeleton: skeleton, localPoses: local)
+    }
+
+    /// Composes a dense local pose — one TRS per skeleton bone, which is what a
+    /// behavior graph produces (`BehaviorPose.bones`) — through the parent
+    /// chain. Bones past the end of `localPoses` keep their reference pose, so a
+    /// graph bound to a rig with fewer bones than the skeleton still composes.
+    static func worldMatrices(
+        skeleton: HKASkeleton,
+        localPoses: [HKABonePose]
+    ) throws -> [float4x4] {
+        var local = skeleton.referencePose
+        for index in local.indices where localPoses.indices.contains(index) {
+            local[index] = localPoses[index]
+        }
         var world = [float4x4?](repeating: nil, count: local.count)
         var visiting = Set<Int>()
 

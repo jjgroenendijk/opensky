@@ -322,8 +322,11 @@ nonisolated extension CellSceneBuilder {
 
     /// Template + visual resolver pair over the plugin's NPC_/LVLN and
     /// RACE/ARMO/ARMA/OTFT/LVLI top groups, built once and reused across
-    /// every cell build (shared like statIndex).
-    nonisolated private func actorResolversBuildingIfNeeded(
+    /// every cell build (shared like statIndex). Internal rather than private
+    /// because the player body resolves through the same pair
+    /// (CellSceneBuilderPlayer.swift) and must not force a second copy of two
+    /// plugin-wide indexes into memory.
+    nonisolated func actorResolversBuildingIfNeeded(
         localized: Bool
     ) -> (template: ActorTemplateResolver, visual: ActorVisualResolver) {
         if let template = actorTemplateResolver, let visual = actorVisualResolver {

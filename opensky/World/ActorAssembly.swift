@@ -84,6 +84,32 @@ nonisolated struct ActorAssembler<Provider: ActorAssetProvider> {
         placed actor: PlacedActor,
         visual: ResolvedActorVisual
     ) -> ActorAssembly<Provider.Asset> {
+        assemble(
+            actor: actor.formID,
+            base: actor.base,
+            transform: MatrixMath.placement(
+                position: actor.placement.position,
+                rotation: actor.placement.rotation,
+                scale: actor.scale
+            ),
+            visual: visual
+        )
+    }
+
+    /// Assembles an actor that has no ACHR behind it.
+    ///
+    /// The player is the case that needs this (issue #189): it is not a placed
+    /// reference — `ReferenceKey.player` deliberately names no plugin record —
+    /// and its transform comes from the character controller rather than from a
+    /// record's position and rotation. Everything past the transform is the
+    /// same path a streamed NPC takes, which is the point: one assembly, one
+    /// masking rule, one equipment attachment.
+    func assemble(
+        actor: FormID,
+        base: FormID,
+        transform: float4x4,
+        visual: ResolvedActorVisual
+    ) -> ActorAssembly<Provider.Asset> {
         var skips = visual.skips.map {
             ActorAssemblySkip(subject: .appearance($0), reason: .appearance)
         }
@@ -112,7 +138,7 @@ nonisolated struct ActorAssembler<Provider: ActorAssetProvider> {
         // skeleton-only actor this check already rejects.
         if models.isEmpty {
             skips.append(ActorAssemblySkip(
-                subject: .actor(actor.formID),
+                subject: .actor(actor),
                 reason: .noCoreGeometry
             ))
         } else {
@@ -123,14 +149,10 @@ nonisolated struct ActorAssembler<Provider: ActorAssetProvider> {
             }
         }
         return ActorAssembly(
-            actor: actor.formID,
-            base: actor.base,
+            actor: actor,
+            base: base,
             visual: visual,
-            transform: MatrixMath.placement(
-                position: actor.placement.position,
-                rotation: actor.placement.rotation,
-                scale: actor.scale
-            ),
+            transform: transform,
             models: models,
             skips: skips
         )
@@ -218,6 +240,13 @@ nonisolated extension MeshLibrary: ActorAssetProvider {
 
 nonisolated extension ActorAssembly where Asset == ActorRenderAsset {
     var renderPlacements: [RenderPlacement] {
+        renderPlacements(at: transform)
+    }
+
+    /// The same placements at a transform supplied from outside the assembly.
+    /// The player body is assembled once and moves every frame (issue #189), so
+    /// its transform cannot be the one baked in at assembly time.
+    func renderPlacements(at transform: float4x4) -> [RenderPlacement] {
         models.map {
             RenderPlacement(
                 model: $0.asset.model,

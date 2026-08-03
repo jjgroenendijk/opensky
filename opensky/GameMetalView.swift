@@ -86,7 +86,7 @@ final class GameMetalView: MTKView {
             return
         }
         if event.keyCode == KeyCode.keyG {
-            input?.requestWalkToggle()
+            input?.requestCameraModeCycle()
             return
         }
         if event.keyCode == KeyCode.keyJ {

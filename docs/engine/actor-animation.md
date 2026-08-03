@@ -2,18 +2,25 @@
 type: Subsystem
 title: Actor idle animation
 description: Direct HKX idle sampling, skeleton-world composition, NIF palette refresh,
-  streamed playback ownership, fallback accounting, and frame budget.
-tags: [engine, actors, animation, hkx, skinning, streaming]
-timestamp: 2026-07-20T00:00:00Z
+  streamed playback ownership, fallback accounting, frame budget, and the graph-driven
+  player path that shares the same composition.
+tags: [engine, actors, animation, hkx, skinning, streaming, locomotion, milestone-14]
+timestamp: 2026-08-04T00:00:00Z
 ---
 
 # Actor idle animation
 
-Milestone 6 adds direct idle-clip playback to streamed human actors. Scope stops before
-behavior graphs, animation state machines, locomotion, AI, and root motion. Container,
-skeleton, binding, and spline layouts come from the clean-room format work in
+Milestone 6 adds direct idle-clip playback to streamed human actors. Container, skeleton,
+binding, and spline layouts come from the clean-room format work in
 [HKX container](/formats/hkx-container.md), [hkaSkeleton](/formats/hka-skeleton.md), and
 [hkaSplineCompressedAnimation](/formats/hka-animation.md).
+
+Milestone 14 item 14.6 moved the boundary that used to sit at "before behavior graphs".
+The *player* is now posed by a running
+[behavior graph](/engine/behavior-runtime.md) through the same composition and the same
+palette formula; NPCs keep the single-clip path below unchanged. Graph-driven NPC
+locomotion is deferred to M16 AI, because an NPC's graph needs a package to tell it where
+to walk and nothing supplies one yet.
 
 ## Playback path
 
@@ -34,6 +41,46 @@ skin transforms flow from `NIFModel` into `MeshSkinning`; `RenderMesh` owns the 
 palette. GPU palette storage has one slot per frame in flight. Renderer copies the current
 CPU palette into the active slot immediately before draw encoding, preventing updates from
 overwriting matrices used by an older GPU frame.
+
+## The graph-driven player path
+
+`PlayerAnimationPlayback` conforms to the same `RenderAnimation` protocol as
+`ActorAnimationPlayback` and ends in the same `RenderMesh.updateSkinningPose(_:)`. Three
+things differ, and only three:
+
+* **The pose source.** A `PlayerPoseBuffer` carries the dense
+  [behavior-graph](/engine/behavior-runtime.md) pose across from the locomotion bridge.
+  `SkeletonPoseMath.worldMatrices(skeleton:localPoses:)` composes a dense per-bone pose
+  through the same parent graph the sparse sample overload uses, so the two agree on what
+  an unanimated bone is.
+* **The clock.** The graph is stepped by `LocomotionBridge.plan` on the *simulation* clock —
+  the fixed 120 Hz substeps `Renderer.advanceCamera` drives — not on the renderer's
+  wall-clock animation clock. That is deliberate: the graph is part of movement, it consumes
+  the same `Speed` and `Direction` the capsule moves by, and a graph advanced on a second
+  clock could report a state the capsule was never in. The wall-clock animation pass only
+  publishes the pose the simulation already produced, which is why `update(at:)` ignores
+  its time argument and why an unchanged pose revision costs one comparison.
+* **The ownership.** The player body is not cell-owned, so it is not in
+  `RenderScene.animations` — everything there is evicted with its cell. The renderer holds
+  it directly; see [Terrain walk mode](/engine/walk-mode.md).
+
+The `World > Environment > Actor animation` A/B toggle covers the player exactly as it
+covers an NPC: off restores the bind palette, on recomposes.
+
+### Open defect: composed poses tear the mesh
+
+Writing *any* composed pose into a skinned actor's palette currently tears the mesh into
+shards, while the same body drawn from its NIF bind palette renders correctly. This is a
+property of the composition-to-palette path, not of the behavior graph: the graph's pose
+and `mt_idle.hkx`'s pose agree to within 5 world units on all 99 rig bones and both render
+torn, and composing the rig's own reference pose — no animation at all — tears it too. That
+last point localizes it: `skeleton.hkx`'s reference pose and `skeleton.nif`'s bind pose are
+supposed to be the same pose, and a palette built from the reference pose should therefore
+come out as the bind palette. It does not.
+
+The defect predates milestone 14 and applies to streamed NPCs through
+`ActorAnimationPlayback` as well; the M6 render gate only asserts that two frames differ,
+which a torn mesh satisfies. Tracked separately with the evidence and the places to look.
 
 ## Streaming lifecycle + fallback
 

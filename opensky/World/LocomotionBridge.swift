@@ -82,11 +82,16 @@ nonisolated final class LocomotionBridge {
     let configuration: PlayerMovementConfiguration
     /// The graph this bridge feeds, or nil. A nil graph is a supported
     /// configuration and not a degraded one: locomotion still resolves, and
-    /// every write and event is dropped rather than queued, so item 14.6 can
-    /// attach a real graph without changing anything here.
-    let graph: BehaviorGraphInstance?
+    /// every write and event is dropped rather than queued, which is why item
+    /// 14.6 can attach a real graph mid-session with nothing to replay.
+    private(set) var graph: BehaviorGraphInstance?
     /// Water surface height at a world XY, or nil where the cell has no water.
     var sampleWater: ((SIMD2<Float>) -> Float?)?
+    /// The pose the last graph update produced, for whoever is drawing the
+    /// body (issue #189). Published here rather than sampled elsewhere because
+    /// this is the only place the graph is stepped, and the graph steps on the
+    /// simulation clock: see PlayerAnimationPlayback.swift.
+    let pose = PlayerPoseBuffer()
 
     /// This frame's intent. The renderer writes it once per frame; every fixed
     /// step in that frame reads the same value.
@@ -177,6 +182,15 @@ nonisolated final class LocomotionBridge {
         return plan
     }
 
+    /// Attaches (or detaches) the graph this bridge feeds, resetting the edge
+    /// state so the newly attached graph is not told about transitions that
+    /// happened before it existed (issue #189). The app calls this once, when
+    /// the install's own `0_master.hkx` has loaded.
+    func attach(graph: BehaviorGraphInstance?) {
+        self.graph = graph
+        reset()
+    }
+
     /// Forgets the edge state so the next step raises no stale transition.
     /// Called when walk mode is entered or the player is teleported.
     func reset() {
@@ -190,6 +204,7 @@ nonisolated final class LocomotionBridge {
         pendingJump = false
         intent = .still
         status = LocomotionStatus(graphAvailable: graph != nil)
+        pose.clear()
     }
 
     // MARK: - Resolution
@@ -219,17 +234,6 @@ nonisolated final class LocomotionBridge {
             return .sprint
         }
         return intent.run ? .run : .walk
-    }
-
-    /// Speed of one gait, units per second.
-    func speed(of gait: LocomotionGait) -> Float {
-        switch gait {
-        case .walk: configuration.walkSpeed.value
-        case .run: configuration.runSpeed.value
-        case .sprint: configuration.sprintSpeed.value
-        case .sneak: configuration.sneakSpeed.value
-        case .swim: configuration.swimSpeed.value
-        }
     }
 
     /// Level world-space movement direction, unit length or shorter.
@@ -294,6 +298,7 @@ nonisolated final class LocomotionBridge {
         guard let graph else { return nil }
         let result = graph.update(deltaTime: deltaTime)
         status.noteGraphUpdate(events: result.firedEvents)
+        pose.publish(result.bones)
         return result.rootMotion
     }
 
@@ -370,25 +375,5 @@ nonisolated final class LocomotionBridge {
         } else if !grounded, wasGrounded, !jumping {
             raise(LocomotionGraphNames.jumpFall)
         }
-    }
-
-    // MARK: - Math
-
-    /// Movement direction as the graph wants it: radians away from facing,
-    /// positive to the left, zero straight ahead, and zero when standing still.
-    static func graphDirection(of direction: SIMD2<Float>, yaw: Float) -> Float {
-        guard direction != SIMD2<Float>() else { return 0 }
-        return shortestAngle(from: yaw, to: atan2f(direction.y, direction.x))
-    }
-
-    /// Signed angle from one heading to another, in (-pi, pi].
-    static func shortestAngle(from start: Float, to end: Float) -> Float {
-        var delta = (end - start).truncatingRemainder(dividingBy: 2 * .pi)
-        if delta > .pi {
-            delta -= 2 * .pi
-        } else if delta <= -.pi {
-            delta += 2 * .pi
-        }
-        return delta
     }
 }

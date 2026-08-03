@@ -50,6 +50,7 @@
 				GameViewControllerContainerMenu.swift,
 				GameViewControllerContainerMenuActions.swift,
 				GameViewControllerPapyrus.swift,
+				GameViewControllerPlayerBody.swift,
 				GameViewControllerRuntimeState.swift,
 				GameViewControllerRuntimeStateConditions.swift,
 				GameViewControllerRuntimeStateTime.swift,

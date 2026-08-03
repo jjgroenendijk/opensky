@@ -31,8 +31,9 @@ nonisolated struct CameraInput {
     var sneak = false
     /// One-shot jump request, latched by the input state until a frame drains it.
     var jump = false
-    /// One-shot fly/walk mode toggle.
-    var toggleWalkMode = false
+    /// One-shot request to advance the camera mode one step around the
+    /// fly -> walk -> third-person cycle (issue #189).
+    var cycleCameraMode = false
     /// Seconds elapsed since the previous update.
     var dt: Float = 0
 }
