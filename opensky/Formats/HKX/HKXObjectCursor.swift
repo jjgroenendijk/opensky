@@ -61,6 +61,10 @@ nonisolated struct HKXObjectCursor {
         scalar(at: field, size: 2) { try Int(Int16(bitPattern: $0.readUInt16())) }
     }
 
+    mutating func uint16(at field: HKXField) -> Int? {
+        scalar(at: field, size: 2) { try Int($0.readUInt16()) }
+    }
+
     mutating func int32(at field: HKXField) -> Int? {
         scalar(at: field, size: 4) { try Int(Int32(bitPattern: $0.readUInt32())) }
     }
@@ -75,6 +79,23 @@ nonisolated struct HKXObjectCursor {
 
     mutating func float32(at field: HKXField) -> Float? {
         scalar(at: field, size: 4) { try $0.readFloat32() }
+    }
+
+    /// Reads a Havok `hkBool`, which occupies one byte with any non-zero value
+    /// meaning true.
+    mutating func bool(at field: HKXField) -> Bool? {
+        uint8(at: field).map { $0 != 0 }
+    }
+
+    /// Reads an `hkVector4` or `hkQuaternion`: four consecutive floats, 16-byte
+    /// aligned in every class layout that carries one.
+    mutating func vector4(at field: HKXField) -> SIMD4<Float>? {
+        scalar(at: field, size: 16) { reader in
+            try SIMD4(
+                reader.readFloat32(), reader.readFloat32(),
+                reader.readFloat32(), reader.readFloat32()
+            )
+        }
     }
 
     /// Reads one fixed-width value at `base + field.offset`, recording an
@@ -102,8 +123,17 @@ nonisolated struct HKXObjectCursor {
     /// Resolves an 8-byte pointer member through the local fixups first, then
     /// the global ones. Local wins because a same-section patch is the common
     /// case and no observed file registers both for one source offset.
+    ///
+    /// The member's own 8 bytes are bounds-checked before the fixup lookup, so
+    /// a pointer that runs off the end of a truncated object reports
+    /// `outOfBounds` rather than the `noFixup` an absent optional produces —
+    /// the two mean opposite things to the real-data sweep.
     mutating func pointer(at field: HKXField) -> HKXPointerTarget? {
         let source = base + field.offset
+        guard containsSectionRange(source, Self.pointerStride) else {
+            recordMiss(field, .outOfBounds)
+            return nil
+        }
         if let local = graph.localTarget(section: sectionIndex, from: source) {
             return HKXPointerTarget(sectionIndex: sectionIndex, dataOffset: local)
         }

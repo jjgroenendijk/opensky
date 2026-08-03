@@ -12,8 +12,8 @@ timestamp: 2026-08-03T00:00:00Z
 
 The [HKX packfile container](/formats/hkx-container.md) locates objects; this page covers
 the graph-level objects a Havok *behavior* packfile carries, and the shared helpers every
-object decoder now resolves its pointers through. Node and modifier classes — the tree the
-graph's root generator heads — are a separate item and are not documented here yet.
+object decoder now resolves its pointers through. The tree the graph's root generator heads
+is [HKX behavior node classes](/formats/hkx-behavior-nodes.md).
 
 Parsers: `opensky/Formats/HKX/HKXObjectGraph.swift`, `HKXObjectCursor.swift`,
 `HKXObjectCursorArrays.swift` (shared resolution); `HKBRootLevelContainer.swift`,

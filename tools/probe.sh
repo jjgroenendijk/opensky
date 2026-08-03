@@ -245,6 +245,27 @@ if printf '%s\n' "$behavior_hkx" | grep -q '^unresolved fields:'; then
   fail "hkx behavior reported unresolved members"
 fi
 
+# M14.2 node decode gate: the same dump now decodes every registered object via
+# the class registry and walks the node tree below the root generator. The
+# full-graph rule means a class with no decoder is a failure, not a tally, so
+# the "objects with no decoder" line must be absent entirely. The walk reaches
+# five fewer nodes than the file has objects: the root container, the behavior
+# graph, its data, its string data, and its variable value set sit above the
+# node tree rather than inside it.
+printf '%s\n' "$behavior_hkx" | grep -q '^decoded objects: 5115' \
+  || fail "hkx behavior decoded object count differs from verified vanilla graph"
+if printf '%s\n' "$behavior_hkx" | grep -q '^objects with no decoder:'; then
+  fail "hkx behavior reported a class with no decoder"
+fi
+if printf '%s\n' "$behavior_hkx" | grep -q '^objects that failed to decode:'; then
+  fail "hkx behavior reported an object that failed to decode"
+fi
+printf '%s\n' "$behavior_hkx" \
+  | grep -q '^graph nodes reached from the root generator: 5110' \
+  || fail "hkx behavior node-tree walk differs from verified vanilla graph"
+printf '%s\n' "$behavior_hkx" | grep -q 'hkbStateMachine "MT_RootBehavior"' \
+  || fail "hkx behavior did not name the root state machine"
+
 # M6.3 idle decode gate: shared hkaSplineCompressedAnimation decoder samples
 # every stored frame over full mt_idle duration. Parser rejects unknown codec
 # variants, malformed blocks, non-finite transforms, and values outside its
