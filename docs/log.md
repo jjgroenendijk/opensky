@@ -4,6 +4,34 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-03
 
+* **Headless behavior graph evaluation (issue #187)**: milestone 14 item 14.3. A decoded
+  Havok Behavior graph now runs. `opensky/Behavior/` holds `BehaviorGraphInstance` —
+  variable storage seeded from `hkbVariableValueSet`, a two-phase event queue,
+  `hkbVariableBindingSet` application, implicit node activation, and a fixed update order —
+  plus clip evaluation over the existing spline-sampling seam, normalized-weight blending,
+  selector and modifier semantics, and `BehaviorTally`, the ranked honest-coverage ledger
+  in the shape of `ConditionTally`. See [Behavior graph runtime](/engine/behavior-runtime.md).
+* **The binding member paths in the vanilla files carry no `m_` prefix.** The authored data
+  spells them `blendParameter`, `startStateId`, `selectedGeneratorIndex`, while the
+  decoders name their fields after the Havok members, which do. The first version of the
+  evaluator resolved every binding correctly and then looked all of them up under the wrong
+  key; the probe's new applied-bindings ledger is what surfaced it, and paths now normalize
+  on both sides. Measurement over the install, not a guess.
+* **Blender flags are decoded but not acted on, on purpose.** `blendParameter` is the
+  most-bound member in the player graph, so parametric blending is the largest piece of
+  locomotion still owed — but the local decode's flag bit map is not confirmed against an
+  independent source, and writing the parametric path against an unverified map would be
+  the invented-internals mistake AGENTS.md forbids. Authored weights are used directly and
+  every such blender costs one `blenderParametricAsWeights` tally entry.
+* **State machines run their start state and nothing else**, which keeps the probe
+  meaningful without stepping on item 14.4 (#330): transitions, transition effects, and
+  synchronization stay there, and every start-state run is tallied.
+* The env-gated probe over the install stepped all 35 vanilla player behavior files, third
+  person and first person, 60 updates each: 37,620 generator evaluations, 2,602 events
+  fired, 82 clips loaded, zero unresolved clips, zero undecodable objects, zero generator
+  classes without a route. `HKASplineAnimationFixture` moved to its own file so the clip
+  tests can advance and loop a real decoded spline animation rather than a stand-in.
+
 * **Swift 6 language mode across every target, with a toolchain gate (issue #314)**: the
   last step of the #310 migration. The app and CLI configurations moved from
   `SWIFT_VERSION = 5.0` to `6.0`, joining the test targets #313 had already moved, so all

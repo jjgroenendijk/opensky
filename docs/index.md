@@ -135,6 +135,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   trigger volumes and their per-frame OnTriggerEnter/OnTriggerLeave occupancy diff.
 * [Actor idle animation](/engine/actor-animation.md) - HKX idle sampling, skeleton-world
   pose composition, NIF palette refresh, streamed lifetime, fallback accounting + budget.
+* [Behavior graph runtime](/engine/behavior-runtime.md) - headless Havok Behavior
+  evaluation: instance model, fixed update order, variables, events, bindings, clip time
+  and triggers, weighted blends, root-motion extraction, and the honest-coverage tally.
 * [Living environment integration](/engine/living-environment.md) - combined M7 runtime,
   app A/B controls, exterior/interior evidence + frame/build/footprint gate.
 * [Menu mode](/engine/menu-mode.md) - push/pop menu stack, world-vs-menu input-capture
