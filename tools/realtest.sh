@@ -22,12 +22,14 @@ fi
 selector="$1"
 cap_mb="${2:-4096}"
 data_root="${OPENSKY_DATA_ROOT:-/Volumes/data/steam/steamapps/common/Skyrim Special Edition}"
+root="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=/dev/null
+. "$root/tools/xcodebuild-lib.sh"
 # Its own cache under the Makefile's DERIVED_DATA (see Makefile): separate from
 # the ordinary build so a real-data run never invalidates it, but on the same
 # volume, because the boot disk cannot hold either.
-dd="${OPENSKY_DERIVED_DATA:-$PWD/DerivedData}/opensky-realtest"
+dd="$OPENSKY_DERIVED_DATA/opensky-realtest"
 result_bundle="logs/realtest-$$.xcresult"
-output_log="logs/realtest-$$.log"
 enumeration_json="logs/realtest-enumeration-$$.json"
 
 mkdir -p logs
@@ -44,8 +46,9 @@ if [ ! -e "$data_root/Data/Skyrim.esm" ] && [ ! -e "$data_root/Skyrim.esm" ]; th
 fi
 
 echo "[INFO] build-for-testing -> $dd"
-xcodebuild build-for-testing -project opensky.xcodeproj -scheme opensky \
-    -derivedDataPath "$dd" -destination 'platform=macOS' >/dev/null
+"$root/tools/xcodebuild-run.sh" "realtest-build-$$" \
+    xcodebuild build-for-testing -project opensky.xcodeproj -scheme opensky \
+    -derivedDataPath "$dd" -destination 'platform=macOS'
 
 xctestrun=$(find "$dd/Build/Products" -maxdepth 1 -name '*.xctestrun' | head -1)
 if [ -z "$xctestrun" ]; then
@@ -103,11 +106,14 @@ guard_pid=$!
 
 echo "[INFO] test-without-building: $selector"
 status=0
-xcodebuild test-without-building -xctestrun "$xctestrun" -derivedDataPath "$dd" \
+# Through the shared runner (Makefile XCB_RUN): full transcript to
+# logs/realtest-<pid>.log, stdout filtered on a green run, whole log printed
+# when the run fails.
+"$root/tools/xcodebuild-run.sh" "realtest-$$" \
+    xcodebuild test-without-building -xctestrun "$xctestrun" -derivedDataPath "$dd" \
     -only-testing:"$selector" -destination 'platform=macOS' \
     -parallel-testing-enabled NO -maximum-parallel-testing-workers 1 \
-    -resultBundlePath "$result_bundle" >"$output_log" 2>&1 || status=$?
-cat "$output_log"
+    -resultBundlePath "$result_bundle" || status=$?
 
 kill "$guard_pid" 2>/dev/null || true
 guard_pid=""

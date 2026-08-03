@@ -23,8 +23,9 @@ files.
 
 ## Entrypoints
 
-* `make test` — unit tests only (`-skip-testing:openskyUITests`). Writes a fixed
-  result bundle at `build/test-results/unit.xcresult`.
+* `make test` — unit tests only (`-only-testing:openskyTests`). Writes a fixed
+  result bundle at `build/test-results/unit.xcresult`. xcodebuild still compiles
+  `openskyUITests` either way; see [Build system](/tools/build-system.md).
 * `make test-one T=Class[/test]` — one class or method. Bare names resolve to
   `openskyTests/`. Bundle: `build/test-results/one.xcresult`.
 * `make test-report` — pass/fail summary plus each failing test's name and

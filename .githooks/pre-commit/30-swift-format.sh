@@ -8,9 +8,11 @@ files="$(staged_matching '\.swift$')"
 [ -n "$files" ] || { hook_ok "no Swift changes to format"; exit 0; }
 
 require_tool swiftformat
-printf '%s\n' "$files" | while IFS= read -r f; do
-  [ -n "$f" ] || continue
-  swiftformat --config "$ROOT/tools/format/.swiftformat" "$f"
-  git add -- "$f"
-done
+# One swiftformat and one `git add` for the whole staged set, not one pair per
+# file: each swiftformat start-up re-reads the config and costs more than the
+# formatting itself on a multi-file commit. NUL separators so paths with spaces
+# survive xargs.
+printf '%s\n' "$files" | tr '\n' '\0' \
+  | xargs -0 swiftformat --config "$ROOT/tools/format/.swiftformat"
+printf '%s\n' "$files" | tr '\n' '\0' | xargs -0 git add --
 hook_ok "SwiftFormat applied + re-staged"

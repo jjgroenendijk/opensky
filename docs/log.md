@@ -4,6 +4,25 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-03
 
+* **One shared xcodebuild invocation (issue #344)**: `build`, `cli`, `test`, `test-one`,
+  `install`, `app-path`, and `cli-path` had each spelled out their own command line and had
+  already drifted — `install` cold-built into a private `build/install` cache, `test` passed
+  no configuration. They now all expand one `xcb` define, and `tools/probe.sh`,
+  `tools/realtest.sh`, and `tools/test-ui.sh` share the same values through the new
+  `tools/xcodebuild-lib.sh`. Every xcodebuild run goes through
+  `tools/xcodebuild-run.sh`, which keeps the whole transcript in `logs/<name>.log` and
+  prints only diagnostics, failures, and the closing status — a green `make build` is two
+  lines against a 1,300-line transcript. `app-path`/`cli-path` derive the products
+  directory instead of paying seconds for `-showBuildSettings`, `install` reuses the main
+  cache, `clean` no longer runs `xcodebuild clean` on a directory it then deletes, and the
+  SwiftFormat pre-commit hook formats and re-stages in one invocation each. See
+  [Build system](/tools/build-system.md).
+* **`-only-testing:openskyTests` does not stop the UI bundle from building.** The
+  expectation behind the change was that it would; a from-scratch `make test` still
+  compiles `openskyUITests`, because xcodebuild builds every buildable in the scheme's Test
+  action before it consults the selectors. The flag is kept for its clearer intent, and the
+  build cost stays for checked-in test plans (issue #346) to remove.
+
 * **State machines, transitions, and clip synchronization (issue #330)**: milestone 14 item
   14.4. `hkbStateMachine` now runs for real — start-state selection across all three
   `m_startStateMode` values, enter and exit notify events, event-driven transitions from a

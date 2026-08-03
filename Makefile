@@ -24,6 +24,28 @@ export OPENSKY_DERIVED_DATA := $(DERIVED_DATA)
 # a pre-DERIVED_DATA checkout (or a plain Xcode GUI build) left behind there.
 XCODE_DERIVED_DATA ?= $(HOME)/Library/Developer/Xcode/DerivedData
 
+# Every xcodebuild below runs through this wrapper: it keeps the whole
+# transcript in logs/<name>.log and prints only diagnostics, failures, and the
+# closing counts, which is the difference between a few dozen lines and a few
+# thousand for a green build or test run. OPENSKY_XCODEBUILD_RAW=1 prints
+# everything; a failing run does that on its own.
+XCB_RUN        := ./tools/xcodebuild-run.sh
+# The one xcodebuild invocation every target below shares: $(1) is the scheme,
+# $(2) the configuration. A target adds only its action and the flags specific
+# to it, so project, cache location, and the caller's escape hatch cannot drift
+# apart again. The tools/ scripts rebuild the same core in shell from
+# tools/xcodebuild-lib.sh.
+xcb = xcodebuild -project $(PROJECT) -scheme $(1) -configuration $(2) \
+	$(XCODEBUILD_DD) $(XCODEBUILD_FLAGS)
+XCB_APP     := $(call xcb,$(SCHEME),$(CONFIG))
+XCB_CLI     := $(call xcb,$(CLI_SCHEME),$(CONFIG))
+XCB_RELEASE := $(call xcb,$(SCHEME),Release)
+XCB_TEST    := $(XCB_APP) -destination '$(DESTINATION)'
+# xcodebuild puts a macOS scheme's products at this fixed path under the derived
+# data root. Reading it back with -showBuildSettings costs several seconds per
+# call, which `run-cli` used to pay twice, so derive it instead.
+PRODUCTS       = $(DERIVED_DATA)/Build/Products/$(CONFIG)
+
 SWIFTFORMAT_CFG := tools/format/.swiftformat
 SWIFTLINT_CFG   := tools/lint/.swiftlint.yml
 CLANGFORMAT_CFG := tools/format/.clang-format
@@ -107,22 +129,24 @@ docs-links: ## Check intra-wiki links in docs/ resolve (log.md skipped)
 	@./tools/check-docs-links.sh
 
 build: vendor-link ## Build the app ($(CONFIG))
-	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration $(CONFIG) \
-		$(XCODEBUILD_DD) $(XCODEBUILD_FLAGS) build
+	@$(XCB_RUN) build $(XCB_APP) build
 
 cli: vendor-link ## Build the openskycli dev tool ($(CONFIG))
-	@xcodebuild -project $(PROJECT) -scheme $(CLI_SCHEME) -configuration $(CONFIG) \
-		$(XCODEBUILD_DD) $(XCODEBUILD_FLAGS) build
+	@$(XCB_RUN) cli $(XCB_CLI) build
 
 probe: ## CLI smoke checks against the local install (skips if absent)
 	@./tools/probe.sh
 
+# -only-testing names the target we want instead of subtracting the one we do
+# not, so a future third test target stays out by default. It does not save the
+# UI bundle's build: xcodebuild builds every buildable in the scheme's Test
+# action before it looks at the selectors, and measurably still compiles
+# openskyUITests here. Dropping that cost needs test plans (issue #346).
 test: vendor-link ## Build + run unit tests (no UI tests)
 	@rm -rf $(TEST_RESULTS)/unit.xcresult && mkdir -p $(TEST_RESULTS)
 	@TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
-		xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
-		$(XCODEBUILD_DD) $(XCODEBUILD_FLAGS) -resultBundlePath $(TEST_RESULTS)/unit.xcresult \
-		-skip-testing:openskyUITests test
+		$(XCB_RUN) test $(XCB_TEST) -resultBundlePath $(TEST_RESULTS)/unit.xcresult \
+		-only-testing:openskyTests test
 
 test-ui: vendor-link ## Build + run UI tests (launches the app, drives it via automation)
 	@OPENSKY_RESULT_BUNDLE=$(TEST_RESULTS)/ui.xcresult ./tools/test-ui.sh \
@@ -137,8 +161,7 @@ test-one: vendor-link ## Run one test: make test-one T=Class[/method] or Target/
 	@rm -rf $(TEST_RESULTS)/one.xcresult && mkdir -p $(TEST_RESULTS)
 	@case "$(T)" in */*/*) spec="$(T)";; *) spec="openskyTests/$(T)";; esac; \
 	TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
-		xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DESTINATION)' \
-		$(XCODEBUILD_DD) $(XCODEBUILD_FLAGS) -resultBundlePath $(TEST_RESULTS)/one.xcresult \
+		$(XCB_RUN) test-one $(XCB_TEST) -resultBundlePath $(TEST_RESULTS)/one.xcresult \
 		-only-testing:"$$spec" test
 
 test-report: ## Print pass/fail summary + failure detail from the newest result bundle
@@ -157,30 +180,30 @@ test-perms: ## Check/guide the one-time TCC grants that stop test permission pop
 	@./tools/test-perms.sh
 
 app-path: ## Print built opensky.app path ($(CONFIG))
-	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration $(CONFIG) \
-		$(XCODEBUILD_DD) $(XCODEBUILD_FLAGS) -showBuildSettings 2>/dev/null \
-		| awk '$$1 == "BUILT_PRODUCTS_DIR" {print $$3 "/opensky.app"; exit}'
+	@echo "$(PRODUCTS)/opensky.app"
 
 cli-path: ## Print built openskycli path ($(CONFIG))
-	@xcodebuild -project $(PROJECT) -scheme $(CLI_SCHEME) -configuration $(CONFIG) \
-		$(XCODEBUILD_DD) $(XCODEBUILD_FLAGS) -showBuildSettings 2>/dev/null \
-		| awk '$$1 == "BUILT_PRODUCTS_DIR" {print $$3 "/openskycli"; exit}'
+	@echo "$(PRODUCTS)/openskycli"
 
 run-cli: cli ## Build + run openskycli: make run-cli ARGS="vfs ls"
-	@"$$($(MAKE) --no-print-directory cli-path)" $(ARGS)
+	@"$(PRODUCTS)/openskycli" $(ARGS)
 
 icon: ## Regenerate AppIcon PNGs from opensky/Branding/opensky-logo.svg
 	@./tools/gen-appicon.sh
 
+# Release shares the main derived-data tree with Debug (xcodebuild keeps the two
+# configurations in separate product and intermediate directories), so a repeat
+# install is incremental instead of the cold build a private build/install cache
+# forced every time.
 install: vendor-link ## Build Release app (arm64) + copy to /Applications
-	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration Release \
-		-derivedDataPath build/install ARCHS=arm64 $(XCODEBUILD_FLAGS) build
+	@$(XCB_RUN) install $(XCB_RELEASE) ARCHS=arm64 build
 	@rm -rf /Applications/opensky.app
-	@ditto build/install/Build/Products/Release/opensky.app /Applications/opensky.app
+	@ditto $(DERIVED_DATA)/Build/Products/Release/opensky.app /Applications/opensky.app
 	@echo "[ OK ] /Applications/opensky.app updated"
 
+# No `xcodebuild clean` first: it takes seconds to empty the same directory the
+# rm below deletes outright.
 clean: ## Remove OpenSky build artifacts and Xcode caches
-	@xcodebuild -project $(PROJECT) -scheme $(SCHEME) $(XCODEBUILD_DD) clean
 	@rm -rf build DerivedData
 	@if [ -d "$(XCODE_DERIVED_DATA)" ]; then \
 		find "$(XCODE_DERIVED_DATA)" -mindepth 1 -maxdepth 1 \
