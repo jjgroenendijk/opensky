@@ -16,7 +16,7 @@ extension OpenSkyCLI {
                                   substring); prints "path<TAB>archive"
       vfs cat <key> --out <file>  Extract one resource to a file
       record <formid-or-editorid> Dump one Skyrim.esm record (decoded + fields)
-      gmst movement              Print resolved walk/run/step values + sources
+      gmst movement              Print resolved gait/step/jump values + sources
       cell [--worldspace <edid>] [--x <n>] [--y <n>] [--refs]
                                   Summarize an exterior cell's references
       actor [--worldspace <edid>] [--x <n>] [--y <n>] [--radius <n>]

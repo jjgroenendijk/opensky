@@ -20,7 +20,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   .ilstrings layout, lenient encoding policy, lstring lookup wiring.
 * [UI translation strings](/formats/translation-strings.md) - UTF-16
   Interface/Translations/*.txt files, $KEY token resolution, label provider.
-* [Record decoders](/formats/records.md) - WRLD/CELL/REFR/STAT/GLOB field layouts
+* [Record decoders](/formats/records.md) - WRLD/CELL/REFR/STAT/GLOB/MOVT field layouts
   and their engine types, including REFR XLKR linked references and the XPRM
   primitive volume, and the GLOB float-on-disk typing trap. Also the inventory
   families MISC/BOOK/ALCH/INGR/WEAP/AMMO, CONT contents, REFR ownership, the

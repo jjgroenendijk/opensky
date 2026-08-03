@@ -219,6 +219,7 @@ nonisolated extension CellSceneBuilder {
             musicType: found.cell.musicType,
             worldspaceMusicType: geometry.worldspaceMusicType,
             terrainHeightField: geometry.terrain?.heightField,
+            waterHeight: geometry.water?.height,
             grassPlacements: geometry.grass?.placements ?? [],
             staticCollision: geometry.staticCollision,
             triggerVolumes: geometry.triggerVolumes,

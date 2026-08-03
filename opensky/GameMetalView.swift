@@ -43,6 +43,8 @@ final class GameMetalView: MTKView {
         static let keyF: UInt16 = 3
         static let keyG: UInt16 = 5
         static let keyJ: UInt16 = 38
+        static let keyC: UInt16 = 8
+        static let space: UInt16 = 49
         static let escape: UInt16 = 53
         static let returnKey: UInt16 = 36
         static let keypadEnter: UInt16 = 76
@@ -91,6 +93,19 @@ final class GameMetalView: MTKView {
             onJournalKey?()
             return
         }
+        // Locomotion keys (issue #188). Space is the vanilla jump binding; C
+        // stands in for the vanilla sneak toggle because macOS reserves
+        // Control-click as the secondary click. Both are walk-mode gameplay
+        // input rather than dev configuration, and both are listed on the
+        // `World > Player & Locomotion` panel.
+        if event.keyCode == KeyCode.space {
+            input?.requestJump()
+            return
+        }
+        if event.keyCode == KeyCode.keyC {
+            input?.toggleSneak()
+            return
+        }
         guard let key = Self.moveKey(for: event.keyCode) else {
             super.keyDown(with: event)
             return
@@ -130,6 +145,8 @@ final class GameMetalView: MTKView {
 
     override func flagsChanged(with event: NSEvent) {
         input?.setBoost(event.modifierFlags.contains(.shift))
+        // Option is the vanilla sprint modifier (Alt on a PC keyboard).
+        input?.setSprint(event.modifierFlags.contains(.option))
         super.flagsChanged(with: event)
     }
 

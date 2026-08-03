@@ -6,11 +6,14 @@ extension Renderer {
     /// Seeds the walk controller from the camera pose during `init`, before
     /// `super.init()` runs, which is why it is a static factory rather than a
     /// method. Lives here rather than in `Renderer.swift` for the file cap.
-    static func makeWalkController(
+    static func makeMovement(
         _ camera: FreeFlyCamera,
         _ configuration: PlayerMovementConfiguration
-    ) -> WalkController {
-        WalkController(cameraPosition: camera.position, configuration: configuration)
+    ) -> (WalkController, LocomotionBridge) {
+        (
+            WalkController(cameraPosition: camera.position, configuration: configuration),
+            LocomotionBridge(configuration: configuration)
+        )
     }
 
     func reseedMovement(camera newCamera: SceneCamera) {
@@ -20,6 +23,10 @@ extension Renderer {
                 + SIMD3<Float>(0, 0, walkController.capsule.eyeHeight)
         }
         walkController.reset(cameraPosition: freeFlyCamera.position)
+        // A reseed is a teleport: the bridge's edge state describes a place the
+        // player is no longer in, so it must not raise a landing or a swim exit
+        // on the next step.
+        locomotion.reset()
     }
 
     /// Advances active movement mode by one input frame. First frame makes no
@@ -34,17 +41,20 @@ extension Renderer {
             movementMode = movementMode == .fly ? .walk : .fly
             if movementMode == .walk {
                 walkController.reset(cameraPosition: freeFlyCamera.position)
+                locomotion.reset()
             }
         }
         switch movementMode {
         case .fly:
             freeFlyCamera.update(frameInput)
         case .walk:
+            locomotion.acceptFrame(frameInput)
             walkController.update(
                 camera: &freeFlyCamera,
                 input: frameInput,
                 sampleGround: terrainSampler ?? { _ in nil },
-                collisionQuery: collisionQuery ?? { _ in [] }
+                collisionQuery: collisionQuery ?? { _ in [] },
+                plan: { [locomotion] state in locomotion.plan(state) }
             )
         }
     }

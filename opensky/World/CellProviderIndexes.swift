@@ -27,7 +27,10 @@ nonisolated struct CellProviderIndexes {
         // One GMST load for both consumers: resolving the load order twice
         // would parse every plugin's GMST group twice for the same answer.
         let settings = GameSettingLoader.load(root: root, baseFile: file)
-        movementConfiguration = PlayerMovementConfiguration.resolve(store: settings)
+        movementConfiguration = PlayerMovementConfiguration.resolve(
+            store: settings,
+            movementTypes: MovementTypeLoader.load(root: root, baseFile: file)
+        )
         barterPricing = BarterPricing.resolve(store: settings)
         let textures = TextureLibrary(fileSystem: fileSystem, device: device)
         let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)

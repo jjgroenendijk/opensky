@@ -119,21 +119,7 @@ final class FakeWorldProviders: WorldControlProviders {
     }
 
     /// InventoryMenuControlProviding
-    var inventoryMenuModel = InventoryMenuModel(
-        allEntries: [
-            InventoryMenuEntry(
-                item: FormID(0x0200), name: "IronSword", count: 1, weight: 9, value: 25,
-                isEquipped: false, family: .weapon
-            ),
-            InventoryMenuEntry(
-                item: FormID(0x0100), name: "Lockpick", count: 3, weight: 0, value: 5,
-                isEquipped: false, family: .miscellaneous
-            )
-        ],
-        categories: InventoryMenuCategory.engineOrder,
-        carriedWeight: 9,
-        gold: 42
-    )
+    var inventoryMenuModel = FakeWorldProviders.makeInventoryMenuModel()
     var inventoryMenuIsOpen = false
     var inventoryMenuMovieEnabled = false
     var inventoryMenuLastAction: String?
@@ -356,6 +342,10 @@ final class FakeWorldProviders: WorldControlProviders {
     /// JournalControlProviding (issue #184), delegated for the same reason; the
     /// forwarding conformance lives in `DestinationRegistryJournalTests.swift`.
     let journal = FakeJournalProvider()
+
+    /// PlayerLocomotionControlProviding (issue #188) state; the conformance
+    /// lives in `FakeWorldProvidersLocomotion.swift`.
+    var locomotion = FakeLocomotionState()
 }
 
 /// The inventory-menu half of the fake, in an extension so the class body

@@ -12,22 +12,25 @@ enum GMSTCommand {
         }
         let file = try context.loadSkyrimESM()
         let store = GameSettingLoader.load(root: context.root, baseFile: file)
-        let configuration = PlayerMovementConfiguration.resolve(store: store)
-        print(Self.line(
-            name: "fMoveCharWalkBase",
-            setting: configuration.walkSpeed,
-            units: "units/s"
-        ))
-        print(Self.line(
-            name: "fMoveCharRunBase",
-            setting: configuration.runSpeed,
-            units: "units/s"
-        ))
-        print(Self.line(
-            name: "stepHeight",
-            setting: configuration.stepHeight,
-            units: "units"
-        ))
+        let configuration = PlayerMovementConfiguration.resolve(
+            store: store,
+            movementTypes: MovementTypeLoader.load(root: context.root, baseFile: file)
+        )
+        for row in [
+            (name: "fMoveCharWalkBase", setting: configuration.walkSpeed, units: "units/s"),
+            (name: "fMoveCharRunBase", setting: configuration.runSpeed, units: "units/s"),
+            (name: "sprintSpeed", setting: configuration.sprintSpeed, units: "units/s"),
+            (name: "sneakSpeed", setting: configuration.sneakSpeed, units: "units/s"),
+            (name: "swimSpeed", setting: configuration.swimSpeed, units: "units/s"),
+            (name: "stepHeight", setting: configuration.stepHeight, units: "units"),
+            (
+                name: "jumpTakeoffSpeed",
+                setting: configuration.jumpTakeoffSpeed,
+                units: "units/s"
+            )
+        ] {
+            print(Self.line(name: row.name, setting: row.setting, units: row.units))
+        }
     }
 
     private static func line(name: String, setting: MovementSetting, units: String) -> String {

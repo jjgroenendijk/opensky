@@ -95,6 +95,8 @@ final class Renderer: NSObject {
     /// Resident static collision broadphase, wired beside terrain by
     /// GameViewController. Empty in renderer-only paths.
     var collisionQuery: WalkController.CollisionQuery?
+    /// Behavior-graph locomotion bridge, issue #188 (docs/engine/walk-mode.md).
+    var locomotion: LocomotionBridge
     /// Game clock + its pause-aware wall-delta source + the seam TimeScale is
     /// read through (issue #164). `timeOfDay` is now a projection of this
     /// clock; see RendererGameClock.swift.
@@ -284,7 +286,7 @@ final class Renderer: NSObject {
         let resolvedCamera = camera ?? .demo
         self.camera = resolvedCamera
         freeFlyCamera = FreeFlyCamera(framing: resolvedCamera)
-        walkController = Self.makeWalkController(freeFlyCamera, movementConfiguration)
+        (walkController, locomotion) = Self.makeMovement(freeFlyCamera, movementConfiguration)
         (gameTime, self.input) = (RendererGameTime(clock: GameClock(hour: timeOfDay)), input)
         frameUniformBuffer = try Self.makeFrameUniformBuffer(device: device)
         let rings = try Self.makeSceneRings(device: device, scene: self.scene)
