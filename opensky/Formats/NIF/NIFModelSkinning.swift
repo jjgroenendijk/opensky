@@ -211,7 +211,7 @@ nonisolated extension NIFFile.Flattener {
 
 /// Merges each partition's per-vertex influences into shared global arrays,
 /// honouring both SSE index spaces and detecting shared-vertex conflicts.
-private struct InfluenceAccumulator {
+nonisolated private struct InfluenceAccumulator {
     var boneIndices: [SIMD4<UInt16>?]
     var weights: [SIMD4<Float>?]
     let arrays: NIFTriShape.VertexArrays

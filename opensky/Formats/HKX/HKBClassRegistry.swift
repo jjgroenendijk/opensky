@@ -17,12 +17,16 @@ import Foundation
 nonisolated enum HKBClassRegistry {
     /// Decodes the object registered at `target`, or nil when the bytes are
     /// unreadable. Never throws: a malformed object costs that object.
-    typealias Decoder = (HKXPointerTarget, HKXObjectGraph) -> (any HKBClass)?
+    ///
+    /// `@Sendable` so the `decoders` table below can be a `static let`: under
+    /// Swift 6 a stored table of plain closures reads as shared mutable state.
+    /// Every entry is a static decode function that captures nothing.
+    typealias Decoder = @Sendable (HKXPointerTarget, HKXObjectGraph) -> (any HKBClass)?
 
     /// Builds a type-erased decoder for one class, so the table below stays a
     /// list of class names rather than a list of closures.
     private static func entry<Value: HKBClass>(
-        _ decode: @escaping (HKXPointerTarget, HKXObjectGraph) -> Value?
+        _ decode: @escaping @Sendable (HKXPointerTarget, HKXObjectGraph) -> Value?
     ) -> (String, Decoder) {
         (Value.className, { target, graph in decode(target, graph) })
     }

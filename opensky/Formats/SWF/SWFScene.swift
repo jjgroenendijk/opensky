@@ -69,7 +69,7 @@ nonisolated struct SWFScene: Equatable {
 }
 
 /// Depth-ordered walk with an active-clip stack per timeline scope.
-private struct SceneBuilder {
+nonisolated private struct SceneBuilder {
     let movie: SWFMovie
     var commands: [SWFSceneCommand] = []
     var skipped = 0

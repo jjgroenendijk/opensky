@@ -170,7 +170,10 @@ final class RuntimeStateGlobalsSection: PanelSectionViewController {
 
     /// The selected global as three separately stated facts. A name nothing
     /// defines reads as that, not as a blank line.
-    static func describe(_ global: RuntimeStateGlobalSnapshot?, editorID: String) -> String {
+    nonisolated static func describe(
+        _ global: RuntimeStateGlobalSnapshot?,
+        editorID: String
+    ) -> String {
         guard let global else {
             return editorID.isEmpty
                 ? "No global selected."

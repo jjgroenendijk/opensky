@@ -16,7 +16,7 @@ import CFFmpeg
 import Foundation
 
 /// Sole owner of the ffmpeg allocations backing one decoder.
-private final class FFmpegDecodeResources {
+nonisolated private final class FFmpegDecodeResources {
     var context: UnsafeMutablePointer<AVCodecContext>?
     var packet: UnsafeMutablePointer<AVPacket>?
     var frame: UnsafeMutablePointer<AVFrame>?

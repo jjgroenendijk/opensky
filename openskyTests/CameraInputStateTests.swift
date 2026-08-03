@@ -4,6 +4,9 @@
 @testable import opensky
 import Testing
 
+/// `CameraInputState` is main-actor state by design — the view writes it and
+/// the renderer drains it, both on the main thread — so the suite runs there.
+@MainActor
 struct CameraInputStateTests {
     @Test
     func heldKeysMapToAxes() {

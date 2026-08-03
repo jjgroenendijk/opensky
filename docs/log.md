@@ -4,6 +4,35 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-03
 
+* **Swift 6 language mode across every target, with a toolchain gate (issue #314)**: the
+  last step of the #310 migration. The app and CLI configurations moved from
+  `SWIFT_VERSION = 5.0` to `6.0`, joining the test targets #313 had already moved, so all
+  eight configurations now compile under strict concurrency checking with no command-line
+  override. `tools/lint/swift-baseline.sh` (`make swift-baseline`) asserts both halves —
+  Apple Swift 6.3.3 or newer, and every `SWIFT_VERSION` reading `6.0` — and runs from
+  `make check`, the pre-commit hook, and the CI `build-test` job. See
+  [Swift toolchain and language mode](/tools/swift-toolchain.md).
+* **The remaining errors were all one shape: a helper beside a nonisolated type that had
+  quietly inherited the target's main-actor default.** Isolation is per declaration, so a
+  `private struct` under a `nonisolated struct` is main-actor isolated unless it says
+  otherwise. `MusicFieldReader`, `InfluenceAccumulator`, `FFmpegDecodeResources`, the SWF
+  parser walkers, `ShadowCascade` and `UIVerticalStack` were all that; each is now
+  `nonisolated`, which is what they always were in fact.
+* **Two seams needed more than an annotation.** `PapyrusWorldAccess` could not carry its
+  bridge across `MainActor.assumeIsolated` until `PapyrusWorldQuestBridge` declared
+  `Sendable` (every conformer is a `@MainActor` class and so already was one; only the
+  existential needed to say so), and the inventory/container movie bridges now decode an
+  `AS2` call into a menu action *before* hopping, because the call itself is not
+  `Sendable`. `QuestAliasDecoder`'s four key-path tables went behind one
+  `@unchecked Sendable` wrapper with the reason written down, rather than four
+  suppressions or four dictionaries rebuilt per subrecord.
+* **The interesting failure was a runtime one, not a compile error.** Swift 5 mode let
+  nonisolated tests call `SystemMenuSection.readout(for:)` and friends; Swift 6 compiled
+  the same call but inserted an isolation check, and the whole test bundle crashed on it.
+  Those helpers are documented as pure so they can be tested without AppKit, so the fix
+  was to mark the pure section readouts `nonisolated` — not to move the tests onto the
+  main actor. `RuntimeStateChangeSection.describe` stayed isolated, because it really does
+  read a main-actor provider.
 * **Havok behavior node classes (issue #329, roadmap 14.2)**: the node tree below the
   root generator, decoded. Fifty new class decoders — state machines and their state,
   transition and event-property arrays; clip, blender, selector, modifier-wrapper and

@@ -135,9 +135,10 @@ nonisolated enum InventoryMenuMovieBridge {
     ) {
         for name in actionHostFunctions {
             runtime.registerHostFunction(name) { call in
-                MainActor.assumeIsolated {
-                    onAction(action(named: name, arguments: call.arguments))
-                }
+                // Resolve before the hop: `call` is not Sendable, so the
+                // decoded action is what crosses onto the main actor.
+                let resolved = action(named: name, arguments: call.arguments)
+                MainActor.assumeIsolated { onAction(resolved) }
                 return .undefined
             }
         }

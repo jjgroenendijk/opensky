@@ -44,6 +44,13 @@ jobs:
             echo "::warning::Xcode $major < 26 on runner; build/test skipped." \
               "Local pre-push hook and a future macos-26 runner cover this gate."
           fi
+      - name: Swift baseline (>= 6.3.3, Swift 6 language mode)
+        # Gated with the rest of this job: a runner too old for Xcode 26 is also
+        # too old for the compiler baseline, and skipping is already the policy
+        # there. The same script runs unconditionally in the local pre-commit
+        # hook and in `make check`.
+        if: ${{ steps.xcode.outputs.major >= 26 }}
+        run: make swift-baseline
       - name: Install Metal Toolchain
         if: ${{ steps.xcode.outputs.major >= 26 }}
         run: xcodebuild -downloadComponent MetalToolchain

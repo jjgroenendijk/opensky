@@ -97,7 +97,7 @@ final class SystemMenuSection: PanelSectionViewController {
     }
 
     /// Pure so the readout is unit-testable without AppKit state.
-    static func readout(for snapshot: SystemMenuControlSnapshot) -> String {
+    nonisolated static func readout(for snapshot: SystemMenuControlSnapshot) -> String {
         guard snapshot.isOpen else {
             return "System menu: closed · world sim running"
         }
@@ -115,7 +115,7 @@ final class SystemMenuSection: PanelSectionViewController {
         """
     }
 
-    static func movieReadout(for snapshot: SystemMenuControlSnapshot) -> String {
+    nonisolated static func movieReadout(for snapshot: SystemMenuControlSnapshot) -> String {
         guard snapshot.movieEnabled else {
             return "Movie: off (engine-drawn selector)"
         }

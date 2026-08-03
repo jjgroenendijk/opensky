@@ -12,7 +12,7 @@ import AppKit
 
 final class RuntimeStateSaveSection: PanelSectionViewController {
     /// Slot the field starts on, so the acceptance round trip needs no typing.
-    static let defaultSlotName = "quick"
+    nonisolated static let defaultSlotName = "quick"
 
     weak var provider: (any RuntimeStateControlProviding)? {
         didSet {
@@ -97,7 +97,7 @@ final class RuntimeStateSaveSection: PanelSectionViewController {
         ].joined(separator: "\n")
     }
 
-    static func outcomeText(_ outcome: RuntimeStateSaveOutcome) -> String {
+    nonisolated static func outcomeText(_ outcome: RuntimeStateSaveOutcome) -> String {
         switch outcome {
         case .none:
             "Nothing saved or loaded this session."

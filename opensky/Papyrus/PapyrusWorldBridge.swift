@@ -150,7 +150,7 @@ protocol PapyrusWorldBridge: PapyrusWorldQuestBridge {
 /// `MainActor.assumeIsolated`, which is an assertion, not a suppression: it
 /// traps if a native ever runs off the main actor, and only a world-aware
 /// runtime installs one of these.
-nonisolated final class PapyrusWorldAccess {
+nonisolated final class PapyrusWorldAccess: Sendable {
     /// Internal rather than private so the quest hops can live in
     /// `PapyrusWorldQuestBridge.swift` beside the protocol they mirror. Only
     /// this type's own extensions touch it.

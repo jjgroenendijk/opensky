@@ -253,6 +253,10 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Sidebar verification convention](/tools/sidebar-acceptance.md) - the record every
   milestone acceptance writes (path, destination id, control ids, readout, covering
   tests), what counts as evidence, and the per-milestone ledger.
+* [Swift toolchain and language mode](/tools/swift-toolchain.md) - the Apple Swift 6.3.3
+  baseline, Swift 6 language mode across every target, the `make swift-baseline` gate that
+  enforces both, default main-actor isolation, and the isolation patterns the migration
+  settled on.
 * [Local environment and external state](/tools/environment.md) - dated record of
   machine-specific and third-party facts skills must not hardcode: TCC permissions,
   CI suspension, upstream spec-host quirks, each with the condition that retires it.

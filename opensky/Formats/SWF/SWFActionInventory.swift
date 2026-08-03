@@ -37,7 +37,7 @@ nonisolated struct SWFActionMovieSummary: Equatable {
 /// Accumulates the action-side inventory across every movie `record(_:path:)`
 /// is called with. A pure value type: no I/O, no printing — `openskycli`
 /// formats and prints what this collects.
-struct SWFActionInventory {
+nonisolated struct SWFActionInventory {
     private(set) var movies: [SWFActionMovieSummary] = []
     private(set) var opcodeCounts: [UInt8: Int] = [:]
     private(set) var opcodeMovies: [UInt8: Set<String>] = [:]
@@ -211,7 +211,7 @@ struct SWFActionInventory {
 /// Walks a timeline's frames once, counting DoAction blocks and collecting
 /// every CLIPACTIONS handler record so clip-event usage and block-kind counts
 /// can be tallied without re-walking the movie.
-private struct SWFActionTimelineWalk {
+nonisolated private struct SWFActionTimelineWalk {
     private(set) var doActionBlockCount = 0
     private(set) var clipRecords: [SWFClipActionRecord] = []
 

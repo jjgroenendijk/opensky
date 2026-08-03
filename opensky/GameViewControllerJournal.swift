@@ -103,15 +103,22 @@ extension GameViewController {
     private func journalAliasNaming(runtime: QuestRuntime) -> QuestAliasNaming {
         let aliases = runtime.aliasResolution()
         return QuestAliasNaming { [weak self] quest, aliasID in
-            guard
-                let key = aliases.reference(alias: aliasID, in: quest),
-                let entry = self?.streamer?.referenceEntry(key: key),
-                let name = self?.streamer?.interactionName(reference: entry.formID),
-                !name.isEmpty
-            else {
-                return nil
+            // `QuestAliasNaming` carries a `@Sendable` closure, but the only
+            // thing that ever calls it is the journal model build, which runs
+            // on the main actor beside the streamer this reads. Assert that
+            // rather than hide the streamer behind a snapshot copy: it traps if
+            // a future caller moves the build off the main actor.
+            MainActor.assumeIsolated {
+                guard
+                    let key = aliases.reference(alias: aliasID, in: quest),
+                    let entry = self?.streamer?.referenceEntry(key: key),
+                    let name = self?.streamer?.interactionName(reference: entry.formID),
+                    !name.isEmpty
+                else {
+                    return nil
+                }
+                return name
             }
-            return name
         }
     }
 }

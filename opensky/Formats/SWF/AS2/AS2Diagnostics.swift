@@ -106,5 +106,11 @@ nonisolated struct AS2ExecutionResult: Equatable {
         fault == nil
     }
 
-    static let empty = AS2ExecutionResult(value: .undefined, actionsExecuted: 0, fault: nil)
+    /// Computed rather than stored: `AS2Value.object` carries a mutable
+    /// `AS2Object` reference, so the type is not `Sendable` and a stored static
+    /// would be shared mutable state under Swift 6. Building the `.undefined`
+    /// case per access costs nothing.
+    static var empty: AS2ExecutionResult {
+        AS2ExecutionResult(value: .undefined, actionsExecuted: 0, fault: nil)
+    }
 }

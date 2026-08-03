@@ -216,7 +216,7 @@ nonisolated struct MusicTrack {
 
 /// Shared fixed-width field readers for the music records. Each one returns nil
 /// on an unexpected payload width rather than shifting the read.
-private enum MusicFieldReader {
+nonisolated private enum MusicFieldReader {
     static func float(_ data: Data) throws -> Float? {
         guard data.count == 4 else { return nil }
         var reader = BinaryReader(data)

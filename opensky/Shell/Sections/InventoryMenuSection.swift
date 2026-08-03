@@ -107,7 +107,7 @@ final class InventoryMenuSection: PanelSectionViewController {
 
     /// One row line. Pure and static so the movie bridge, the readout, and the
     /// tests all format a row the same way.
-    static func line(for entry: InventoryMenuEntry) -> String {
+    nonisolated static func line(for entry: InventoryMenuEntry) -> String {
         let count = entry.count == 1 ? "" : " ×\(entry.count)"
         let equipped = entry.isEquipped ? " [equipped]" : ""
         let weight = String(format: "%.1f", entry.weight)
@@ -115,7 +115,7 @@ final class InventoryMenuSection: PanelSectionViewController {
     }
 
     /// Pure so the readout is unit-testable without AppKit state.
-    static func readout(for snapshot: InventoryMenuControlSnapshot) -> String {
+    nonisolated static func readout(for snapshot: InventoryMenuControlSnapshot) -> String {
         guard snapshot.isOpen else {
             return "Inventory menu: closed · world sim running"
         }
@@ -133,7 +133,7 @@ final class InventoryMenuSection: PanelSectionViewController {
         """
     }
 
-    static func categoryLine(for snapshot: InventoryMenuControlSnapshot) -> String {
+    nonisolated static func categoryLine(for snapshot: InventoryMenuControlSnapshot) -> String {
         guard !snapshot.categoryLabels.isEmpty else {
             return "Categories: none"
         }
@@ -143,7 +143,7 @@ final class InventoryMenuSection: PanelSectionViewController {
         return "Categories: \(tabs)"
     }
 
-    static func rows(for snapshot: InventoryMenuControlSnapshot) -> String {
+    nonisolated static func rows(for snapshot: InventoryMenuControlSnapshot) -> String {
         guard !snapshot.entryLines.isEmpty else {
             return "  (no items in this category)"
         }
@@ -152,7 +152,7 @@ final class InventoryMenuSection: PanelSectionViewController {
         }.joined(separator: "\n")
     }
 
-    static func movieReadout(for snapshot: InventoryMenuControlSnapshot) -> String {
+    nonisolated static func movieReadout(for snapshot: InventoryMenuControlSnapshot) -> String {
         guard snapshot.movieEnabled else {
             return "Movie: off (engine-drawn row list)"
         }

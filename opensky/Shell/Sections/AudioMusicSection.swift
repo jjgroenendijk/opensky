@@ -17,7 +17,7 @@ final class AudioMusicSection: PanelSectionViewController {
 
     /// First picker entry: hands selection back to the director's precedence
     /// chain rather than naming a playlist.
-    static let automaticTitle = "None (automatic)"
+    nonisolated static let automaticTitle = "None (automatic)"
 
     let musicEnabledControl = NSButton(
         checkboxWithTitle: "Music playback",

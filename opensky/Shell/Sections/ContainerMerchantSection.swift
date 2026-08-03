@@ -104,12 +104,12 @@ final class ContainerMerchantSection: PanelSectionViewController {
 
     /// A popup row names the container, what it holds and what it can pay with,
     /// because "which chest" is not a useful question when four say "Chest".
-    static func title(for option: ContainerMenuMerchantOption) -> String {
+    nonisolated static func title(for option: ContainerMenuMerchantOption) -> String {
         "\(option.name) · \(option.itemCount) items · \(option.gold) gold "
             + "· \(option.reference)"
     }
 
-    static func readout(for snapshot: ContainerMenuControlSnapshot) -> String {
+    nonisolated static func readout(for snapshot: ContainerMenuControlSnapshot) -> String {
         guard !snapshot.merchantOptions.isEmpty else {
             return "Merchant: no resident containers.\n"
                 + "Load a cell holding one, or look at a chest and use the button."

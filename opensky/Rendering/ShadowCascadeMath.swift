@@ -8,7 +8,7 @@ import simd
 
 /// One sun-shadow cascade: orthographic light-space transform plus the
 /// view-space depth range of the camera-frustum slice it covers.
-struct ShadowCascade {
+nonisolated struct ShadowCascade {
     var viewProjection: simd_float4x4
     var splitNear: Float
     var splitFar: Float

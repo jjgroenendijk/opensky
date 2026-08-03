@@ -58,46 +58,46 @@ nonisolated struct ShadowResources {
 }
 
 extension Renderer {
-    static var nearPlane: Float {
+    nonisolated static var nearPlane: Float {
         10
     }
 
-    static var farPlane: Float {
+    nonisolated static var farPlane: Float {
         65536
     }
 
     /// Sun-shadow far bound (high quality): 3 exterior cells (4096 units each),
     /// matching the resident streaming grid. Casters beyond it are un-shadowed
     /// by design.
-    static var shadowDistance: Float {
+    nonisolated static var shadowDistance: Float {
         12288
     }
 
     /// Low-quality sun-shadow far bound: 2 exterior cells. Shorter range +
     /// fewer cascades (see shadowCascadeCount) trade shadow reach for cost.
-    static var shadowDistanceLow: Float {
+    nonisolated static var shadowDistanceLow: Float {
         8192
     }
 
     /// Light near plane extended backwards (toward the sun) by this many world
     /// units so casters between the sun and a cascade slice still render.
-    static var shadowCasterBackup: Float {
+    nonisolated static var shadowCasterBackup: Float {
         12288
     }
 
     /// Blend between uniform + logarithmic cascade splits (0 = uniform).
-    static var shadowSplitLambda: Float {
+    nonisolated static var shadowSplitLambda: Float {
         0.7
     }
 
     /// Raster depth bias for the shadow pre-pass: constant + slope-scaled,
     /// no clamp. Trades a little peter-panning for acne removal; tune against
     /// the real install if either shows.
-    static var shadowDepthBias: Float {
+    nonisolated static var shadowDepthBias: Float {
         2
     }
 
-    static var shadowSlopeScale: Float {
+    nonisolated static var shadowSlopeScale: Float {
         3
     }
 
@@ -125,7 +125,7 @@ extension Renderer {
         return try device.makeArgumentTable(descriptor: descriptor)
     }
 
-    static func makeUniformBuffer(
+    nonisolated static func makeUniformBuffer(
         device: MTLDevice,
         length: Int,
         label: String

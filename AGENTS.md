@@ -148,9 +148,14 @@ tuple cap, introduce a struct.
 ## Conventions
 
 - Swift-to-Metal shared structs go in `ShaderTypes.h` with explicit `simd`-aligned layout.
+- Every target is in Swift 6 language mode on Apple Swift 6.3.3 or newer;
+  `make swift-baseline` enforces both and `docs/tools/swift-toolchain.md` explains the
+  isolation patterns to reach for. Do not build with a `SWIFT_VERSION` override.
 - With `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, extensions of a `nonisolated` type
   must also be declared `nonisolated extension` unless the extension deliberately names a
   global actor. The type's isolation does not carry into a separately declared extension.
+  Isolation is per declaration, not per file: a `private` helper below a `nonisolated`
+  type is main-actor isolated until it says otherwise.
 - `throws` plus typed errors for parse and load failures; malformed input must not crash.
 - Anything repeatable becomes a `make` target or a git hook, never a documented manual
   procedure. Local hooks and CI mirror each other, so changing one gate changes both — keep

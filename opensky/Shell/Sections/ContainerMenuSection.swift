@@ -112,7 +112,7 @@ final class ContainerMenuSection: PanelSectionViewController {
     }
 
     /// Pure so the readout is unit-testable without AppKit state.
-    static func readout(for snapshot: ContainerMenuControlSnapshot) -> String {
+    nonisolated static func readout(for snapshot: ContainerMenuControlSnapshot) -> String {
         guard snapshot.isOpen else {
             return "Container menu: closed · \(snapshot.mode.rawValue) mode · world sim running"
         }
@@ -129,13 +129,13 @@ final class ContainerMenuSection: PanelSectionViewController {
         """
     }
 
-    static func sideLine(for snapshot: ContainerMenuControlSnapshot) -> String {
+    nonisolated static func sideLine(for snapshot: ContainerMenuControlSnapshot) -> String {
         let container = snapshot.containerName ?? "no container"
         let side = snapshot.side == .container ? container : "Player"
         return "Showing: \(side) · \(snapshot.transferLabel) moves the selected row"
     }
 
-    static func rows(for snapshot: ContainerMenuControlSnapshot) -> String {
+    nonisolated static func rows(for snapshot: ContainerMenuControlSnapshot) -> String {
         guard !snapshot.entryLines.isEmpty else {
             return "  (this side is empty)"
         }
@@ -146,7 +146,7 @@ final class ContainerMenuSection: PanelSectionViewController {
 
     /// Both purses plus the price of the selected row, which is the number a
     /// barter run is actually verified against.
-    static func goldLine(for snapshot: ContainerMenuControlSnapshot) -> String {
+    nonisolated static func goldLine(for snapshot: ContainerMenuControlSnapshot) -> String {
         let purses = "Gold: player \(snapshot.playerGold) · "
             + "\(snapshot.containerName ?? "container") \(snapshot.containerGold)"
         guard let price = snapshot.selectedPrice else {
@@ -156,7 +156,7 @@ final class ContainerMenuSection: PanelSectionViewController {
         return purses + "\n\(snapshot.transferLabel) price: \(price) gold\(affordable)"
     }
 
-    static func movieReadout(for snapshot: ContainerMenuControlSnapshot) -> String {
+    nonisolated static func movieReadout(for snapshot: ContainerMenuControlSnapshot) -> String {
         guard snapshot.movieEnabled else {
             return "Movie: off (engine-drawn row list)"
         }
