@@ -120,7 +120,7 @@ struct BehaviorGeneratorTests {
         )
     }
 
-    @Test func aStateMachineRunsItsStartStateAndSaysSo() {
+    @Test func aStateMachineRunsItsStartState() {
         var table = BehaviorObjectTable()
         let clip = table.add(
             BehaviorFixture.clipGenerator("idle", animationName: "right"), at: 0x100
@@ -147,7 +147,7 @@ struct BehaviorGeneratorTests {
             clips: BehaviorFixture.staticClipPair(left: 0, right: 10)
         )
         #expect(graph.update(deltaTime: 1 / 30).bones[1].translation.x == 10)
-        #expect(graph.tally.featureGaps["stateMachineStartStateOnly"] == 1)
+        #expect(graph.activeStates.map(\.stateName) == ["Idle"])
     }
 
     // MARK: - Helpers

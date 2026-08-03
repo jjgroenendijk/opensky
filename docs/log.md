@@ -4,6 +4,40 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-03
 
+* **State machines, transitions, and clip synchronization (issue #330)**: milestone 14 item
+  14.4. `hkbStateMachine` now runs for real — start-state selection across all three
+  `m_startStateMode` values, enter and exit notify events, event-driven transitions from a
+  state's own array and from the machine's wildcards, `hkbBlendingTransitionEffect`
+  crossfades, nested machines, and the four machine-level event ids. Driving the vanilla
+  `mt_behavior.hkx` with the events it declares walks `MT_Standing_State` to
+  `MT_LocomotionType_State` and back. See
+  [Behavior graph runtime](/engine/behavior-runtime.md).
+* **The transition flag map was confirmed against the install, not assumed.** The strongest
+  piece: `0x100` is set on exactly the 3,340 transitions with a null `m_condition` and
+  clear on the 429 that carry one, which is what `FLAG_DISABLE_CONDITION` means. The
+  wildcard bits appear only inside wildcard arrays, and `FLAG_TO_NESTED_STATE_ID_IS_VALID`
+  only where the id names a state of the nested machine. Bits `0x8`, `0x40`, `0x80`, and
+  `0x4000` are never set in the vanilla player graph.
+* **Transition conditions are a real little language, and it was recovered from the data.**
+  429 authored strings, all fitting one grammar of comparisons, `&&`, `||`, `!`, and
+  parentheses over float-valued variables and literals — including variable-against-
+  variable (`Speed >= fMinSpeed`) and leading-dot literals (`.25`). A string that will not
+  parse, or that names a variable the graph does not declare, blocks its transition and is
+  tallied rather than defaulting to true: an animation that does not start reads as a bug,
+  while one that starts wrongly reads as engine behaviour.
+* **Clip synchronization keys off `m_indexOfSyncMasterChild`, not off a flag bit.** An index
+  into a child array cannot mean anything but "these children follow that one", while the
+  blender flag bit map is still unconfirmed — so the mechanism that keeps a walk clip and a
+  run clip of different lengths in phase is driven by the unambiguous member. 28 blenders
+  in the vanilla player graph name one.
+* **Two decisions are recorded as decisions.** Transition selection order is priority, then
+  own-before-wildcard, then array order, because Havok's tie-break is undocumented in the
+  sources consulted and a total order is what makes two instances agree. An interrupted
+  crossfade is dropped rather than nested inside the new one, and every drop is tallied.
+* The env-gated sweep over all 35 vanilla player behavior files still reports zero
+  undecodable objects and zero unevaluated generator classes, and the 8,880
+  `stateMachineStartStateOnly` entries item 14.3 recorded are gone.
+
 * **Headless behavior graph evaluation (issue #187)**: milestone 14 item 14.3. A decoded
   Havok Behavior graph now runs. `opensky/Behavior/` holds `BehaviorGraphInstance` —
   variable storage seeded from `hkbVariableValueSet`, a two-phase event queue,
