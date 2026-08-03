@@ -4,7 +4,7 @@
 import AppKit
 
 final class HUDElementsSection: PanelSectionViewController {
-    static let scalePresets: [(title: String, value: Float)] = [
+    nonisolated static let scalePresets: [(title: String, value: Float)] = [
         ("50%", 0.5), ("75%", 0.75), ("100%", 1), ("125%", 1.25),
         ("150%", 1.5), ("200%", 2)
     ]

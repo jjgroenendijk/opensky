@@ -33,7 +33,7 @@ METAL_FILES     := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
 
 .DEFAULT_GOAL := help
 .PHONY: help bootstrap ffmpeg vendor-link vendor-prune hooks format format-check lint \
-        check fix swift-format \
+        check fix swift-format swift-baseline \
         swift-lint metal-format md-format md-lint sh-lint cli-boundary no-game-content \
         docs-links build cli \
         probe test \
@@ -71,9 +71,12 @@ format-check: ## Fail if anything is unformatted (no writes) — for CI
 
 lint: swift-lint md-lint sh-lint cli-boundary no-game-content ## Run all linters (strict)
 
-check: format-check lint docs-links ## Format + lint gate without building
+check: swift-baseline format-check lint docs-links ## Format + lint gate without building
 
 fix: format lint ## Autoformat, then strict lint — one-shot dev gate
+
+swift-baseline: ## Toolchain is >= Apple Swift 6.3.3 and every target is in Swift 6 mode
+	@./tools/lint/swift-baseline.sh
 
 swift-format: ## Autoformat Swift
 	@swiftformat --config $(SWIFTFORMAT_CFG) $(SWIFT_PATHS)

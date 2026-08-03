@@ -250,7 +250,7 @@ nonisolated enum SWFShapeParser {
 /// arrays (StateNewStyles appends a new generation and rebases the indices).
 /// `version == nil` is glyph mode: no style arrays exist, indices pass
 /// through, and StateNewStyles is an error.
-private struct ShapeRecordWalker {
+nonisolated private struct ShapeRecordWalker {
     var bits: SWFBitReader
     let version: SWFShapeVersion?
     var fillStyles: [SWFFillStyle] = []

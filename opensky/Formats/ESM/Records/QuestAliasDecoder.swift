@@ -9,9 +9,27 @@
 
 import Foundation
 
+/// An immutable subrecord-to-slot table. `WritableKeyPath` is not `Sendable`
+/// under Swift 6 language mode, so a `static let` dictionary of key paths reads
+/// to the compiler as shared mutable state. A key path value is in fact an
+/// immutable descriptor — the mutation happens through it, on the caller's own
+/// `Root` — so the tables are safe to share, and wrapping them here keeps them
+/// as constants instead of rebuilding four dictionaries per subrecord.
+nonisolated private struct AliasSlotTable<Value>: @unchecked Sendable {
+    private let slots: [FourCC: WritableKeyPath<Quest.Alias, Value>]
+
+    init(_ slots: [FourCC: WritableKeyPath<Quest.Alias, Value>]) {
+        self.slots = slots
+    }
+
+    subscript(code: FourCC) -> WritableKeyPath<Quest.Alias, Value>? {
+        slots[code]
+    }
+}
+
 nonisolated extension Quest.Alias {
     /// Subrecords carrying exactly one FormID.
-    private static let formIDSlots: [FourCC: WritableKeyPath<Self, FormID?>] = [
+    private static let formIDSlots = AliasSlotTable<FormID?>([
         "ALFR": \.forcedReference,
         "ALUA": \.uniqueActor,
         "ALFL": \.forcedLocation,
@@ -25,32 +43,32 @@ nonisolated extension Quest.Alias {
         "OCOR": \.observeDeadBodyOverride,
         "GWOR": \.guardWarnOverride,
         "ECOR": \.combatOverride
-    ]
+    ])
 
     /// Subrecords carrying one signed alias ID. xEdit types these int32 and
     /// spells -1 as "no alias".
-    private static let aliasIDSlots: [FourCC: WritableKeyPath<Self, Int32?>] = [
+    private static let aliasIDSlots = AliasSlotTable<Int32?>([
         "ALFI": \.forceIntoAlias,
         "ALFA": \.aliasReference,
         "ALEA": \.externalAlias,
         "ALNA": \.nearAlias
-    ]
+    ])
 
     /// Subrecords carrying one unsigned enumeration or packed word.
-    private static let wordSlots: [FourCC: WritableKeyPath<Self, UInt32?>] = [
+    private static let wordSlots = AliasSlotTable<UInt32?>([
         "ALCA": \.createAt,
         "ALCL": \.createLevel,
         "ALNT": \.nearType,
         "ALFE": \.fromEvent,
         "ALFD": \.eventData
-    ]
+    ])
 
     /// Subrecords that repeat, each adding one FormID to a list.
-    private static let formIDLists: [FourCC: WritableKeyPath<Self, [FormID]>] = [
+    private static let formIDLists = AliasSlotTable<[FormID]>([
         "ALSP": \.spells,
         "ALFC": \.factions,
         "ALPC": \.packages
-    ]
+    ])
 
     /// Consumes one subrecord of the open alias group. Every failure costs the
     /// subrecord and nothing more; the caller keeps the alias either way.

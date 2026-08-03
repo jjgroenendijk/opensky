@@ -40,7 +40,7 @@ final class AppSidebarViewController: NSViewController {
 
         init(group: AppSidebarModel.Group) {
             self.group = group
-            children = group.destinations.map(DestinationItem.init)
+            children = group.destinations.map { DestinationItem(descriptor: $0) }
         }
     }
 
@@ -56,7 +56,7 @@ final class AppSidebarViewController: NSViewController {
         let overrideIndicator = NSTextField(labelWithString: "●")
     }
 
-    private lazy var groups = AppSidebarModel.groups().map(GroupItem.init)
+    private lazy var groups = AppSidebarModel.groups().map { GroupItem(group: $0) }
 
     override func loadView() {
         let scroll = NSScrollView()

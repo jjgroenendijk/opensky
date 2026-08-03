@@ -22,11 +22,11 @@ final class SWFRuntimeSection: PanelSectionViewController {
     /// animations are each about twenty frames long (measured on
     /// `tweenmenu.swf`: menu frame 0 to 10 to open, 10 to 19 to close), so a
     /// single-tick-only surface would be unusable for the acceptance sequence.
-    static let burstTicks = 20
+    nonisolated static let burstTicks = 20
 
     /// Keys the section can inject, as ActionScript `Key` class codes. The
     /// navigation set is what a vanilla menu's `handleInput` acts on.
-    static let keyChoices: [(title: String, code: Int)] = [
+    nonisolated static let keyChoices: [(title: String, code: Int)] = [
         ("Left", SWFKeyCode.left), ("Up", SWFKeyCode.up),
         ("Right", SWFKeyCode.right), ("Down", SWFKeyCode.down),
         ("Enter", SWFKeyCode.enter), ("Escape", SWFKeyCode.escape),

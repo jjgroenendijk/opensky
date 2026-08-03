@@ -127,7 +127,7 @@ final class RuntimeStateConditionsSection: PanelSectionViewController {
 
     /// Verdict first, then one line per condition. A report carrying a message
     /// shows only that message: there is no verdict to state.
-    static func reportText(_ report: RuntimeStateConditionReport) -> String {
+    nonisolated static func reportText(_ report: RuntimeStateConditionReport) -> String {
         if let message = report.message {
             return message
         }
@@ -139,7 +139,7 @@ final class RuntimeStateConditionsSection: PanelSectionViewController {
         return lines.joined(separator: "\n")
     }
 
-    static func lineText(_ line: RuntimeStateConditionLine) -> String {
+    nonisolated static func lineText(_ line: RuntimeStateConditionLine) -> String {
         "\(line.index). \(line.text) -> \(line.isTrue) [\(line.reason)]"
     }
 }

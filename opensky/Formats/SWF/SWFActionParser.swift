@@ -56,7 +56,7 @@ nonisolated enum SWFActionParser {
 /// Sequential ACTIONRECORD framer. Kept as a small mutable value type so the
 /// per-record steps stay short enough to read and each failure has exactly one
 /// place to record its warning.
-private struct Framer {
+nonisolated private struct Framer {
     let data: Data
     private var reader: BinaryReader
     private var records: [SWFActionRecord] = []

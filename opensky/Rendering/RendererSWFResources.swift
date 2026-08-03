@@ -78,7 +78,8 @@ nonisolated final class SWFPassResources {
 
 extension Renderer {
     /// 256-byte-aligned per-draw slot in the SWF uniform ring.
-    static let alignedSWFUniformsSize = (MemoryLayout<SWFDrawUniforms>.size + 0xFF) & -0x100
+    nonisolated static let alignedSWFUniformsSize = (MemoryLayout<SWFDrawUniforms>.size + 0xFF) &
+        -0x100
 
     static func makeSWFPassResources(
         device: MTLDevice,

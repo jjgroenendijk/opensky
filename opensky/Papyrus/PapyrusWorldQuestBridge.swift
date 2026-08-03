@@ -31,8 +31,12 @@ nonisolated enum PapyrusQuestBridgeError: Error, Equatable {
 }
 
 /// Quest state and mutations a Papyrus native may perform.
+///
+/// `Sendable` so `PapyrusWorldAccess` can carry the existential across its
+/// `MainActor.assumeIsolated` hops. Every conformer is a `@MainActor` class and
+/// is therefore already `Sendable`; only the existential needed to say so.
 @MainActor
-protocol PapyrusWorldQuestBridge: AnyObject {
+protocol PapyrusWorldQuestBridge: AnyObject, Sendable {
     /// Effective state of the quest `key` names: its runtime component when it
     /// has one, its plugin baseline when it does not.
     func questState(for key: ReferenceKey) throws -> QuestRuntimeState

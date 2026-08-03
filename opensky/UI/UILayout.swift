@@ -2,12 +2,12 @@
 // Metal, no text — stacks pre-measured item sizes down a container rect.
 
 /// Cross-axis alignment for a vertical stack.
-enum UIStackAlignment {
+nonisolated enum UIStackAlignment {
     case leading, center, trailing
 }
 
 /// Lays out a column of items top-to-bottom within a container rect.
-struct UIVerticalStack {
+nonisolated struct UIVerticalStack {
     var spacing: Float
     var alignment: UIStackAlignment
 

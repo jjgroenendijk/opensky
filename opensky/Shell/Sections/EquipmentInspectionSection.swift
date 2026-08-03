@@ -98,7 +98,7 @@ final class EquipmentInspectionSection: PanelSectionViewController {
 
     /// The documented default: the nearest NPC, which is the owner an equip is
     /// visible on.
-    static let defaultTarget = EquipmentTargetSelector.nearestActor
+    nonisolated static let defaultTarget = EquipmentTargetSelector.nearestActor
 
     override var isOverridden: Bool {
         provider.map { Self.isOverridden(provider: $0) } ?? false

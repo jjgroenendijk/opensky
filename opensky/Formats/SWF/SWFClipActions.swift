@@ -83,7 +83,7 @@ nonisolated enum SWFClipActionsParser {
 /// Sequential CLIPACTIONRECORD reader. `base` is the byte offset of the block
 /// inside the place tag body, so a warning names a position in the tag rather
 /// than in the slice.
-private struct ClipActionsDecoder {
+nonisolated private struct ClipActionsDecoder {
     let base: Int
     let version: UInt8
     private var allEvents = SWFClipEventFlags(rawValue: 0)

@@ -190,7 +190,7 @@ final class ItemsSection: PanelSectionViewController {
 
     /// Hexadecimal FormID, with or without a `0x` prefix. Blank or unparseable
     /// is nil, which the provider reads as "the first stack the player has".
-    static func parseFormID(_ text: String) -> FormID? {
+    nonisolated static func parseFormID(_ text: String) -> FormID? {
         var trimmed = text.trimmingCharacters(in: .whitespaces).lowercased()
         if trimmed.hasPrefix("0x") {
             trimmed = String(trimmed.dropFirst(2))
