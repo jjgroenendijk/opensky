@@ -4,6 +4,43 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-03
 
+* **Havok behavior object graph and behavior census (issue #186, roadmap 14.1)**: M14's
+  first item, and the one that turns the 2026-07-20 "reimplement Havok Behavior graphs"
+  line into a scoped decision with measurements behind it. Three parts landed together.
+  Shared object-graph resolution (`HKXObjectGraph`, `HKXObjectCursor`) replaces the fixup
+  dictionaries `hkaSkeleton`, `hkaSplineCompressedAnimation`, and `hkaAnimationBinding`
+  each rebuilt privately; all three were reworked onto it with no behaviour change and
+  their tests unchanged, which is what proves the API. The graph-level classes
+  (`hkRootLevelContainer`, `hkbBehaviorGraph`, `hkbBehaviorGraphData`,
+  `hkbBehaviorGraphStringData`, `hkbVariableValueSet`, plus project and character string
+  data) decode the naming and entry points everything downstream keys on. And the census
+  sweeps the install. See [HKX behavior graph objects](/formats/hkx-behavior.md) and
+  [Havok behavior scope](/decisions/havok-behavior-scope.md).
+* **The census is the point, not the parsers.** 2,654 `.hkx` files under the character
+  actor folder, zero container parse failures, every one a 64-bit `hk_2010.2.0-r1`
+  packfile — so the feared tagfile among the behavior files does not exist and no second
+  container parser is needed. 35 behavior files (18 third-person, 17 first-person), 55
+  distinct object classes, 301 distinct variable names, 1,985 distinct event names. Every
+  one of the 35 graphs is rooted at an `hkbStateMachine`, without exception. That class
+  list is what item 14.2 (#329) owes and the name surface is what 14.5 binds to; both are
+  now measured rather than guessed.
+* **Twelve of the 55 classes are Bethesda's own `BS*` extensions.** A decoder set covering
+  only stock Havok classes would leave holes in the middle of the vanilla player graph, so
+  the 14.2 class registry has to carry `BS*` as first-class entries.
+* **Resolution records misses instead of throwing them.** An unresolvable field yields nil
+  plus a reason (`noFixup`, `sectionMissing`, `outOfBounds`, `negativeCount`,
+  `undecodableString`); a caller that needs the field converts that into its own typed
+  error. `noFixup` is Havok's null optional and is expected — vanilla produces exactly two,
+  both `m_ragdollName` on the first-person character files, which have no ragdoll. Every
+  other reason means a decoder read the wrong bytes, and the sweep asserts there are none
+  across the whole install. That is the evidence the documented offsets are right.
+* Scope decided here and binding on the rest of M14: full-graph evaluation over the
+  measured class set rather than a native state machine, swim inside the milestone rather
+  than deferred to a water one, and first person with full arms rather than a camera mode
+  — the install ships a complete parallel first-person behavior set, so the cost is running
+  the evaluator twice, not writing a second system.
+* `openskycli hkx` now prints the same census fields for one file, so any behavior file is
+  inspectable without the test suite.
 * **M13 milestone acceptance (issue #185, roadmap 13.6)**: quests are a gameplay loop, not
   five landed parts. The gate proves one quest end to end — running, advanced by a real world
   event through script code, its stage fragment executing and mutating `WorldStateStore`, its

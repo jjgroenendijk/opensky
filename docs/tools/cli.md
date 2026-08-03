@@ -51,7 +51,7 @@ only where `--out` points (AGENTS.md Legal & IP).
 | `interior --out <file> [--worldspace/--x/--y] [--radius n]` | scan exterior doors near target for exterior -> interior -> paired exterior round trip, render exact XTEL arrival pose to PNG; default radius 16 |
 | `nif <key>` | container stats + named node/shape rows + flattened model summary (meshes, verts/tris, bounds, materials with texture paths) |
 | `dds <key>` | header + mip chain (size, BCn format, sRGB declaration) |
-| `hkx <key>` | Havok packfile container: header (version string, fileVersion, pointer size, section count, resolved root class), section table (name, data start/size, local/global/virtual fixup counts), class-name table (signature hex + name), object inventory (total, per-class histogram, first 8 offset/class rows + truncation count); unresolved root class warns on stderr |
+| `hkx <key>` | Havok packfile container: header (version string, fileVersion, pointer size, section count, resolved root class), section table (name, data start/size, local/global/virtual fixup counts), class-name table (signature hex + name), object inventory (total, per-class histogram, first 8 offset/class rows + truncation count); then the behavior census — file role, root-container variant classes, behavior graph name + root generator class, and the variable (with declared type), event, character-property, content-path and referenced behavior/character/animation inventories, each as a total plus the first 12 names, ending with any unresolved members and their reason; unresolved root class warns on stderr |
 | `skeleton <hkx-key> [--nif <nif-key>]` | decode every hkaSkeleton in a Havok packfile: per object name, bone count, root count, first 12 bones with parent index; `--nif` name-maps the rig (most bones) onto the NIF skeleton NiNode names — `M of N matched` plus one reason-tagged `unmatched hkx bone`/`unmatched nif node` line per mismatch, both directions |
 | `animation <hkx-key>` | decode every hkaSplineCompressedAnimation + matching hkaAnimationBinding, sample every stored frame as bone-indexed local transforms, report frame/track/block/mapping counts + max translation/scale + normalized-quaternion range; malformed/unbound/non-finite/unbounded sample exits 1 |
 | `lod [--worldspace edid]` | parse lodsettings + sweep every worldspace BTR/BTO and tree LST/BTT through production decoders; any failed container/type reference exits 1 |
@@ -172,11 +172,14 @@ Implementation notes:
   decoded frames with 0 frame-count mismatches, 347.0 declared minutes. See
   [xWMA container](/formats/xwm.md) and
   [World audio playback](/engine/audio.md).
-* `hkx` is M6.1's container probe. It parses the Havok packfile via shared `HKXFile`
-  (header + section table + class-name table + fixup-derived object inventory) and only
-  prints; object internals stay later milestones (needs class reflection). CLI parses/
-  prints only; a bad magic/layout/section index exits 1. See
-  [HKX container](/formats/hkx-container.md).
+* `hkx` is M6.1's container probe, extended at M14.1 with the behavior census. It parses
+  the Havok packfile via shared `HKXFile` (header + section table + class-name table +
+  fixup-derived object inventory), then summarises it via shared `HKBBehaviorCensus` —
+  the same code the env-gated sweep runs, so any behavior file is inspectable without the
+  test suite. Node internals stay item 14.2. CLI parses/prints only; a bad
+  magic/layout/section index exits 1, while a census failure is a stderr warning that
+  leaves the container dump standing. See [HKX container](/formats/hkx-container.md) and
+  [HKX behavior graph objects](/formats/hkx-behavior.md).
 * `skeleton` is M6.2's hkaSkeleton probe. It decodes bones/parents/reference pose via
   shared `HKASkeleton.skeletons(in:)` and, with `--nif`, name-maps the rig onto
   `NIFSkeleton.boneTransforms` via `SkeletonBoneMap`. CLI parses/prints only; a decode
@@ -228,7 +231,9 @@ summary; `actor` requires zero unresolved ACHR template+visual chains in the def
 `collision --radius 2` gates placed 5x5 collision; `nif`/`dds` inspect first listed
 assets; `hkx` dumps the container inventory for `skeleton.hkx` (must show
 `hk_2010.2.0-r1`, `__classnames__`/`__data__` sections, an `hkaSkeleton` class) and a
-human idle `.hkx` (must show `hkaSplineCompressedAnimation`); `animation` decodes
+human idle `.hkx` (must show `hkaSplineCompressedAnimation`), and censuses
+`mt_behavior.hkx` (M14.1 gate: role `behavior`, root generator `hkbStateMachine`, 67
+variables, 931 events, no unresolved members); `animation` decodes
 male `mt_idle.hkx` + samples all 275 frames x 99 tracks over full duration (M6.3 gate:
 99-sample identity bone mapping, finite + bounded); `skeleton` decodes the
 human rig `skeleton.hkx` name-mapped onto `skeleton.nif` (M6.2 gate: rig reports 99

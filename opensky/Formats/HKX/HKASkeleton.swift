@@ -87,16 +87,11 @@ nonisolated struct HKASkeleton {
     /// ragdoll in vanilla skeleton.hkx). Objects located via the container's
     /// virtual fixups; a malformed one throws rather than corrupting the set.
     static func skeletons(in file: HKXFile) throws -> [HKASkeleton] {
+        let graph = try HKXObjectGraph(file: file)
         var result: [HKASkeleton] = []
-        for object in file.objects where object.className == className {
-            guard file.sections.indices.contains(object.sectionIndex) else { continue }
-            let payload = try file.sectionData(at: object.sectionIndex)
-            let fixups = file.sections[object.sectionIndex].localFixups
-            try result.append(decode(
-                payload: payload,
-                base: object.dataOffset,
-                localFixups: fixups
-            ))
+        for object in graph.objects(ofClass: className) {
+            guard var cursor = graph.cursor(at: object) else { continue }
+            try result.append(decode(cursor: &cursor))
         }
         return result
     }
@@ -107,29 +102,20 @@ nonisolated struct HKASkeleton {
     // Only members needed for skinning are decoded; m_referenceFloats,
     // m_floatSlots, m_localFrames are read past (skeleton bind pose needs
     // none of them).
-    private static let nameField = 0x10 // m_name hkStringPtr
-    private static let parentIndicesField = 0x18 // m_parentIndices hkArray<hkInt16>
-    private static let bonesField = 0x28 // m_bones hkArray<hkaBone>, inline stride 16
-    private static let referencePoseField = 0x38 // m_referencePose hkArray<hkQsTransform>
+    private static let nameField = HKXField(0x10, "m_name") // hkStringPtr
+    private static let parentIndicesField = HKXField(0x18, "m_parentIndices")
+    private static let bonesField = HKXField(0x28, "m_bones") // inline stride 16
+    private static let referencePoseField = HKXField(0x38, "m_referencePose")
     private static let boneStride = 16
     private static let qsTransformStride = 48 // float4 translation + quat + float4 scale
+    private static let boneNameField = HKXField(0x00, "hkaBone::m_name")
+    private static let boneLockField = HKXField(0x08, "hkaBone::m_lockTranslation")
 
-    private static func decode(
-        payload: Data,
-        base: Int,
-        localFixups: [HKXLocalFixup]
-    ) throws -> HKASkeleton {
-        let fixupMap = Dictionary(
-            localFixups.map { ($0.fromOffset, $0.toOffset) },
-            uniquingKeysWith: { first, _ in first }
-        )
-
-        let name = try fixupMap[base + nameField].map {
-            try readString(payload, at: $0)
-        }
-        let parents = try readParentIndices(payload, base: base, fixupMap: fixupMap)
-        let bones = try readBones(payload, base: base, fixupMap: fixupMap)
-        let poses = try readReferencePose(payload, base: base, fixupMap: fixupMap)
+    private static func decode(cursor: inout HKXObjectCursor) throws -> HKASkeleton {
+        let name = cursor.string(at: nameField)
+        let parents = try readParentIndices(cursor: &cursor)
+        let bones = try readBones(cursor: &cursor)
+        let poses = try readReferencePose(cursor: &cursor)
 
         guard parents.count == bones.count, poses.count == bones.count else {
             throw HKASkeletonError.countMismatch(
@@ -157,138 +143,125 @@ nonisolated struct HKASkeleton {
 
     // MARK: - Members
 
-    private static func readParentIndices(
-        _ payload: Data,
-        base: Int,
-        fixupMap: [Int: Int]
-    ) throws -> [Int] {
-        let (count, dataOffset) = try arrayDescriptor(
-            payload, base: base, field: parentIndicesField, fixupMap: fixupMap,
-            name: "m_parentIndices"
-        )
+    private static func readParentIndices(cursor: inout HKXObjectCursor) throws -> [Int] {
+        let count = try count(at: parentIndicesField, cursor: &cursor)
         guard count > 0 else { return [] }
-        guard let dataOffset else {
-            throw HKASkeletonError.missingArrayData(field: "m_parentIndices", count: count)
+        guard let parents = cursor.int16Array(at: parentIndicesField) else {
+            throw HKASkeletonError.missingArrayData(field: parentIndicesField.name, count: count)
         }
-        try requireBounds(dataOffset, count * 2, payload.count, field: "m_parentIndices")
-        var reader = BinaryReader(payload, offset: dataOffset)
-        return try (0 ..< count).map { _ in try Int(Int16(bitPattern: reader.readUInt16())) }
+        return parents
     }
 
-    private static func readBones(
-        _ payload: Data,
-        base: Int,
-        fixupMap: [Int: Int]
-    ) throws -> [HKABone] {
-        let (count, dataOffset) = try arrayDescriptor(
-            payload, base: base, field: bonesField, fixupMap: fixupMap, name: "m_bones"
-        )
+    private static func readBones(cursor: inout HKXObjectCursor) throws -> [HKABone] {
+        let count = try count(at: bonesField, cursor: &cursor)
         guard count > 0 else { return [] }
-        guard let dataOffset else {
-            throw HKASkeletonError.missingArrayData(field: "m_bones", count: count)
+        guard let view = cursor.array(at: bonesField) else {
+            throw HKASkeletonError.missingArrayData(field: bonesField.name, count: count)
         }
-        try requireBounds(dataOffset, count * boneStride, payload.count, field: "m_bones")
         var bones: [HKABone] = []
         bones.reserveCapacity(count)
         for index in 0 ..< count {
-            let boneBase = dataOffset + index * boneStride
-            // hkaBone.m_name hkStringPtr sits at element offset 0 -> its fixup
-            // fromOffset equals the element start.
-            guard let nameOffset = fixupMap[boneBase] else {
+            guard
+                var element = cursor.graph.element(
+                    of: view, index: index, stride: boneStride
+                )
+            else {
+                throw HKASkeletonError.arrayOutOfBounds(
+                    field: bonesField.name,
+                    offset: view.dataOffset,
+                    needed: count * boneStride,
+                    available: cursor.payload.count
+                )
+            }
+            // hkaBone.m_name hkStringPtr sits at element offset 0, and a bone
+            // without a name is not usable for skinning.
+            guard let name = element.string(at: boneNameField) else {
                 throw HKASkeletonError.boneNameMissing(index: index)
             }
-            let name = try readString(payload, at: nameOffset)
-            var lockReader = BinaryReader(payload, offset: boneBase + 8)
-            let lock = try lockReader.readUInt8() != 0
-            bones.append(HKABone(name: name, lockTranslation: lock))
+            bones.append(HKABone(
+                name: name,
+                lockTranslation: (element.uint8(at: boneLockField) ?? 0) != 0
+            ))
+            cursor.absorb(element)
         }
         return bones
     }
 
     private static func readReferencePose(
-        _ payload: Data,
-        base: Int,
-        fixupMap: [Int: Int]
+        cursor: inout HKXObjectCursor
     ) throws -> [HKABonePose] {
-        let (count, dataOffset) = try arrayDescriptor(
-            payload, base: base, field: referencePoseField, fixupMap: fixupMap,
-            name: "m_referencePose"
-        )
+        let count = try count(at: referencePoseField, cursor: &cursor)
         guard count > 0 else { return [] }
-        guard let dataOffset else {
-            throw HKASkeletonError.missingArrayData(field: "m_referencePose", count: count)
+        guard let view = cursor.array(at: referencePoseField) else {
+            throw HKASkeletonError.missingArrayData(field: referencePoseField.name, count: count)
         }
-        try requireBounds(
-            dataOffset,
-            count * qsTransformStride,
-            payload.count,
-            field: "m_referencePose"
-        )
         var poses: [HKABonePose] = []
         poses.reserveCapacity(count)
         for index in 0 ..< count {
-            var reader = BinaryReader(payload, offset: dataOffset + index * qsTransformStride)
-            // hkQsTransform: translation float4, rotation quat, scale float4.
-            // The w lane of translation/scale is junk padding -> not validated.
-            let tx = try reader.readFloat32(), ty = try reader.readFloat32()
-            let tz = try reader.readFloat32()
-            reader.skip(4)
-            let qx = try reader.readFloat32(), qy = try reader.readFloat32()
-            let qz = try reader.readFloat32(), qw = try reader.readFloat32()
-            let sx = try reader.readFloat32(), sy = try reader.readFloat32()
-            let sz = try reader.readFloat32()
-            let used = [tx, ty, tz, qx, qy, qz, qw, sx, sy, sz]
-            guard used.allSatisfy(\.isFinite) else {
+            guard
+                var element = cursor.graph.element(
+                    of: view, index: index, stride: qsTransformStride
+                ),
+                let pose = pose(from: &element)
+            else {
+                throw HKASkeletonError.arrayOutOfBounds(
+                    field: referencePoseField.name,
+                    offset: view.dataOffset,
+                    needed: count * qsTransformStride,
+                    available: cursor.payload.count
+                )
+            }
+            guard pose.isFinite else {
                 throw HKASkeletonError.nonFiniteTransform(boneIndex: index)
             }
-            poses.append(HKABonePose(
-                translation: SIMD3(tx, ty, tz),
-                rotation: simd_quatf(ix: qx, iy: qy, iz: qz, r: qw),
-                scale: SIMD3(sx, sy, sz)
-            ))
+            poses.append(pose.value)
+            cursor.absorb(element)
         }
         return poses
     }
 
-    // MARK: - hkArray + string helpers
+    /// hkQsTransform: translation float4, rotation quat, scale float4. The w
+    /// lane of translation and scale is junk padding, so it is neither read
+    /// into the pose nor validated.
+    private static func pose(
+        from element: inout HKXObjectCursor
+    ) -> (value: HKABonePose, isFinite: Bool)? {
+        var lanes: [Float] = []
+        for offset in stride(from: 0, to: qsTransformStride, by: 4) {
+            guard let lane = element.float32(at: HKXField(offset, "hkQsTransform")) else {
+                return nil
+            }
+            lanes.append(lane)
+        }
+        let used = [
+            lanes[0], lanes[1], lanes[2],
+            lanes[4], lanes[5], lanes[6], lanes[7],
+            lanes[8], lanes[9], lanes[10]
+        ]
+        let pose = HKABonePose(
+            translation: SIMD3(lanes[0], lanes[1], lanes[2]),
+            rotation: simd_quatf(ix: lanes[4], iy: lanes[5], iz: lanes[6], r: lanes[7]),
+            scale: SIMD3(lanes[8], lanes[9], lanes[10])
+        )
+        return (pose, used.allSatisfy(\.isFinite))
+    }
 
     /// hkArray = { ptr(8, null on disk), i32 size @+8, u32 capacityAndFlags
-    /// @+12 }. Element data located only via the local fixup whose fromOffset
-    /// equals the array field's pointer offset; capacityAndFlags bit31 is a
-    /// Havok flag, so the size field (not capacity) drives element counts. A
-    /// size-0 array carries a null pointer and no fixup — dataOffset stays nil.
-    private static func arrayDescriptor(
-        _ payload: Data,
-        base: Int,
-        field: Int,
-        fixupMap: [Int: Int],
-        name: String
-    ) throws -> (count: Int, dataOffset: Int?) {
-        var reader = BinaryReader(payload, offset: base + field + 8)
-        let size = try Int(Int32(bitPattern: reader.readUInt32()))
-        guard size >= 0 else {
+    /// @+12 }; capacityAndFlags bit 31 is a Havok flag, so the size field (not
+    /// capacity) drives element counts. A negative or unreadable size is a
+    /// malformed descriptor, distinct from a well-formed empty array.
+    private static func count(
+        at field: HKXField,
+        cursor: inout HKXObjectCursor
+    ) throws -> Int {
+        guard let size = cursor.arrayCount(at: field) else {
             throw HKASkeletonError.arrayOutOfBounds(
-                field: name, offset: base + field, needed: size, available: payload.count
+                field: field.name,
+                offset: cursor.base + field.offset,
+                needed: 4,
+                available: cursor.payload.count
             )
         }
-        return (size, fixupMap[base + field])
-    }
-
-    private static func readString(_ payload: Data, at offset: Int) throws -> String {
-        var reader = BinaryReader(payload, offset: offset)
-        return try reader.readZString(encoding: .ascii)
-    }
-
-    private static func requireBounds(
-        _ offset: Int,
-        _ length: Int,
-        _ available: Int,
-        field: String
-    ) throws {
-        guard offset >= 0, length >= 0, offset + length <= available else {
-            throw HKASkeletonError.arrayOutOfBounds(
-                field: field, offset: offset, needed: length, available: available
-            )
-        }
+        return size
     }
 }
