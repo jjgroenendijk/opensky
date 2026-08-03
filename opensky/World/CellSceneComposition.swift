@@ -173,6 +173,16 @@ nonisolated struct CellSceneComposition {
         return cells[coordinate]?.terrainHeightField?.sample(at: position)
     }
 
+    /// Water-surface height over resident full cells, by the same ownership
+    /// rule as `sampleTerrain(at:)` (issue #188). nil where the owning cell is
+    /// not resident or authors no water.
+    func sampleWaterHeight(at position: SIMD2<Float>) -> Float? {
+        let coordinate = CellGridManager.cellCoordinate(
+            for: SIMD3<Float>(position.x, position.y, 0)
+        )
+        return cells[coordinate]?.waterHeight
+    }
+
     /// Broadphase over resident per-cell BVHs. Cross-cell capsule queries can
     /// touch both sides of a seam; each cell remains independently evictable.
     func collisionCandidates(overlapping bounds: ModelBounds) -> [StaticCollisionShape] {

@@ -4,6 +4,28 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-03
 
+* **Character-controller bridge (issue #188)**: milestone 14 item 14.5. `LocomotionBridge`
+  couples player input and the behavior graph to the M4 capsule controller. Sprint (Option),
+  sneak (C, a toggle), and jump (Space) join the input path; the bridge writes the census
+  variables and raises the census events into the graph each fixed step, and the controller
+  hands back position, vertical velocity, and grounded state on the next one. Movement
+  authority is a stated rule: one horizontal source per step chosen by the bridge, vertical
+  forces owned by the controller, never both on one axis. Jump, surface swimming with
+  hysteresis, and the paused-frame no-op land with it. See
+  [walk mode](/engine/walk-mode.md) and [behavior graph runtime](/engine/behavior-runtime.md).
+* **Vanilla Skyrim locomotion carries no root motion, and that is measured rather than
+  assumed.** Not one of the 2,654 HKX files under `meshes\actors\character\` contains an
+  `hkaAnimatedReferenceFrame`, and every locomotion clip leaves
+  `hkaAnimation::m_extractedMotion` null; three seconds of driving `mt_behavior.hkx`
+  accumulates 0.04 units of root travel. The clips animate in place and the engine supplies
+  the travel, so the bridge's default horizontal source is the resolved gait speed, with the
+  root-motion branch reserved for data that does animate travel.
+* **MOVT decoded so the new gaits have provenance (issue #188)**: no GMST states a sprint,
+  sneak, or swim speed, so they come from the movement types the player's gaits are authored
+  in — `NPC_Sprinting_MT` 500, `NPC_Sneaking_MT` 47.2, `NPC_Swimming_MT` 80.1 units/s — and
+  jump takeoff is derived from `fJumpHeightMin` over the controller's gravity rather than
+  hand-tuned. `gmst movement` reports all seven values with their sources. See
+  [record decoding](/formats/records.md).
 * **State machines, transitions, and clip synchronization (issue #330)**: milestone 14 item
   14.4. `hkbStateMachine` now runs for real — start-state selection across all three
   `m_startStateMode` values, enter and exit notify events, event-driven transitions from a

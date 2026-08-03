@@ -15,6 +15,9 @@ final class CameraInputState {
 
     private var pressed: Set<MoveKey> = []
     private var boost = false
+    private var sprinting = false
+    private var sneaking = false
+    private var jumpRequested = false
     private var pendingLookRight: Float = 0
     private var pendingLookUp: Float = 0
     private var activationRequested = false
@@ -30,6 +33,33 @@ final class CameraInputState {
 
     func setBoost(_ enabled: Bool) {
         boost = enabled
+    }
+
+    /// Sprint is held, like boost (issue #188): the locomotion bridge reads the
+    /// level each fixed step rather than an edge.
+    func setSprint(_ enabled: Bool) {
+        sprinting = enabled
+    }
+
+    var isSprinting: Bool {
+        sprinting
+    }
+
+    /// Flips sneak. Vanilla sneak is a toggle, not a held key, so the state
+    /// survives the key-up that follows it.
+    func toggleSneak() {
+        sneaking.toggle()
+    }
+
+    var isSneaking: Bool {
+        sneaking
+    }
+
+    /// Latches one jump key-down until the next frame drains it, so a jump can
+    /// never be lost between two rendered frames or applied twice from one
+    /// press.
+    func requestJump() {
+        jumpRequested = true
     }
 
     /// Accumulates pointer motion (points) until the next frame drains it.
@@ -55,10 +85,14 @@ final class CameraInputState {
     }
 
     /// Clears all held state — call on capture loss / focus loss so keys do not
-    /// stick after the window stops receiving key-up events.
+    /// stick after the window stops receiving key-up events. Sneak is a mode
+    /// rather than a held key, so it deliberately survives: releasing capture
+    /// must not stand the player up.
     func releaseAll() {
         pressed.removeAll()
         boost = false
+        sprinting = false
+        jumpRequested = false
         pendingLookRight = 0
         pendingLookUp = 0
         activationRequested = false
@@ -75,11 +109,15 @@ final class CameraInputState {
             lookRight: pendingLookRight,
             lookUp: pendingLookUp,
             boost: boost,
+            sprint: sprinting,
+            sneak: sneaking,
+            jump: jumpRequested,
             toggleWalkMode: walkToggleRequested,
             dt: dt
         )
         pendingLookRight = 0
         pendingLookUp = 0
+        jumpRequested = false
         walkToggleRequested = false
         return input
     }

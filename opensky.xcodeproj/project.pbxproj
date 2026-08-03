@@ -54,6 +54,7 @@
 				GameViewControllerRuntimeStateConditions.swift,
 				GameViewControllerRuntimeStateTime.swift,
 				GameViewControllerJournal.swift,
+				GameViewControllerLocomotion.swift,
 				GameViewControllerJournalSnapshot.swift,
 				GameViewControllerScripts.swift,
 				HUDInteractionPanelViewController.swift,

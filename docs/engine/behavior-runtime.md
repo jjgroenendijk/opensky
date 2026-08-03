@@ -41,6 +41,7 @@ different failure modes.
 * [Blending and pose math](#blending-and-pose-math)
 * [Modifiers](#modifiers)
 * [Output contract](#output-contract)
+* [The locomotion bridge](#the-locomotion-bridge)
 * [The tally](#the-tally)
 * [Flagged assumptions](#flagged-assumptions)
 * [Verification](#verification)
@@ -404,6 +405,46 @@ as a foot in a plausible but invented position.
 * `firedEvents` — every event the update saw, in raise order.
 * `time` — seconds of graph time this instance has run.
 
+## The locomotion bridge
+
+Item 14.5 (`LocomotionBridge`, `opensky/World/`) is the graph's first engine consumer. Its
+half of the contract is documented with the character controller in
+[walk mode](/engine/walk-mode.md); what belongs here is what it does to a graph instance.
+
+Once per fixed 1/120 s controller step, in this order: write the engine's state into graph
+variables, raise the transitions the step crossed, `update(deltaTime:)` the graph, then read
+`rootMotion` and the fired events back out. A zero-length step does none of it.
+
+Every name it binds comes from the census of the install's own behavior files
+([HKX behavior graph objects](/formats/hkx-behavior.md)), not from memory — `0_master.hkx`
+alone declares 230 variables and 1,217 events, and a merely plausible name resolves to
+nothing at all:
+
+| Variable | Type | Written as |
+| --- | --- | --- |
+| `Speed`, `SpeedSampled` | real | resolved gait speed, or 0 when standing |
+| `Direction` | real | radians away from facing, positive left, 0 straight ahead |
+| `TurnDelta` | real | yaw change over the step |
+| `IsSprinting`, `IsSneaking` | bool | resolved gait |
+| `iIsInSneak` | int32 | the same sneak state in its int spelling |
+| `bInJumpState` | bool | true while off the ground |
+| `SpeedWalk`, `SpeedRun` | real | the configuration's own gait speeds |
+
+Events: `moveStart`/`moveStop`, `SprintStart`/`SprintStop`, `SneakStart`/`SneakStop`,
+`SwimStart`/`SwimStop`, and `JumpUp`, `JumpFall`, `JumpLand`. All are raised on edges only,
+in a fixed order, so a step that changes several things at once produces the same sequence on
+every run.
+
+`setVariable` and `raiseEvent` both answer whether the graph declares the name, and the
+bridge records both answers in `LocomotionStatus` rather than dropping a write silently. A
+graph that spells something differently — a mod, or a non-player graph — shows up as a named
+miss in the readout instead of as motion that quietly does nothing. Driving the vanilla
+`0_master.hkx` produces zero misses for all ten variables and all eleven events.
+
+A nil graph is a supported configuration rather than a degraded one: locomotion still
+resolves and the writes are dropped, so the app has working sprint, sneak, and jump before
+item 14.6 attaches a real graph to the player.
+
 ## The tally
 
 `BehaviorTally` is the same ranked honest-coverage ledger as `ConditionTally` and
@@ -431,9 +472,12 @@ These are guesses marked as guesses, in the sense AGENTS.md "How agents work her
   are used as weights directly and every such blender costs one
   `blenderParametricAsWeights` entry.
 * **Root motion is measured in the root bone's own local frame**, as the difference of two
-  samples of that bone. Whether Skyrim's root travel needs an additional
-  world-from-model term is an item 14.5 question, once a character controller exists to
-  disagree with.
+  samples of that bone. Item 14.5 answered the question this raised, and the answer was that
+  vanilla data has no root motion to measure: not one of the 2,654 HKX files under
+  `meshes\actors\character\` carries an `hkaAnimatedReferenceFrame`, and the locomotion
+  clips leave `hkaAnimation::m_extractedMotion` null. Skyrim animates locomotion in place and
+  the engine supplies the travel. The extracted-motion class is therefore not decoded, and
+  the root-bone difference is kept for the data sets that do animate travel.
 * **The root bone is bone 0.** True of every vanilla Skyrim rig (`NPC Root [Root]`), and
   `BehaviorSkeleton.rootBoneIndex` is configurable rather than hardcoded, but nothing
   reads the index out of the character file yet.

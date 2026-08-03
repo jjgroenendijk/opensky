@@ -9,6 +9,14 @@ extension CellStreamer {
         return composition.sampleTerrain(at: position)
     }
 
+    /// Water-surface height for the locomotion bridge's swim test (issue #188).
+    /// Interiors report none: a vanilla interior authors its water as placed
+    /// geometry rather than as the cell-wide plane XCLW describes.
+    func sampleWaterHeight(at position: SIMD2<Float>) -> Float? {
+        guard interiorScene == nil else { return nil }
+        return composition.sampleWaterHeight(at: position)
+    }
+
     func collisionCandidates(
         overlapping bounds: ModelBounds
     ) -> [StaticCollisionShape] {

@@ -95,4 +95,40 @@ struct CameraInputStateTests {
         #expect(state.makeInput(dt: 0.016).toggleWalkMode)
         #expect(!state.makeInput(dt: 0.016).toggleWalkMode)
     }
+
+    @Test
+    func jumpLatchesUntilOneFrameDrainsIt() {
+        let state = CameraInputState()
+        state.requestJump()
+        #expect(state.makeInput(dt: 0.016).jump)
+        #expect(!state.makeInput(dt: 0.016).jump)
+    }
+
+    @Test
+    func sprintFollowsTheHeldKey() {
+        let state = CameraInputState()
+        state.setSprint(true)
+        #expect(state.makeInput(dt: 0.016).sprint)
+        state.setSprint(false)
+        #expect(!state.makeInput(dt: 0.016).sprint)
+    }
+
+    @Test
+    func sneakIsAToggleThatSurvivesCaptureLoss() {
+        let state = CameraInputState()
+        state.toggleSneak()
+        #expect(state.makeInput(dt: 0.016).sneak)
+        // Sneak is a mode, not a held key: releasing capture must not stand the
+        // player up, while sprint and a pending jump are dropped.
+        state.setSprint(true)
+        state.requestJump()
+        state.releaseAll()
+        let input = state.makeInput(dt: 0.016)
+        #expect(input.sneak)
+        #expect(!input.sprint)
+        #expect(!input.jump)
+
+        state.toggleSneak()
+        #expect(!state.makeInput(dt: 0.016).sneak)
+    }
 }

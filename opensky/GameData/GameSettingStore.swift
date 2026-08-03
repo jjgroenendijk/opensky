@@ -3,7 +3,6 @@
 // Deleted or malformed records do not erase the last valid value.
 
 import Foundation
-import OSLog
 
 nonisolated struct ResolvedGameSetting: Equatable {
     let setting: GameSetting
@@ -40,32 +39,7 @@ nonisolated struct GameSettingStore {
 }
 
 nonisolated enum GameSettingLoader {
-    private static let logger = Logger(
-        subsystem: "nl.jjgroenendijk.opensky",
-        category: "GMST"
-    )
-
     static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> GameSettingStore {
-        let entries = PluginLoadOrder.resolve(root: root)
-        let plugins = entries.compactMap { entry -> (name: String, file: ESMFile)? in
-            if
-                entry.name.caseInsensitiveCompare("Skyrim.esm") == .orderedSame,
-                let baseFile
-            {
-                return (entry.name, baseFile)
-            }
-            do {
-                return try (entry.name, ESMFile(url: entry.url))
-            } catch {
-                logger.error(
-                    """
-                    Cannot read active plugin \(entry.name, privacy: .public): \
-                    \(String(describing: error), privacy: .public)
-                    """
-                )
-                return nil
-            }
-        }
-        return GameSettingStore(plugins: plugins)
+        GameSettingStore(plugins: ActivePluginFiles.load(root: root, baseFile: baseFile))
     }
 }
