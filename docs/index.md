@@ -76,6 +76,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   reference pose decode + name-map onto the NIF skeleton nodes skinning uses.
 * [hkaSplineCompressedAnimation](/formats/hka-animation.md) - idle-clip metadata,
   spline blocks, 16-bit vector/40-bit quaternion decode + local-transform sampling.
+* [HKX behavior graph objects](/formats/hkx-behavior.md) - shared object-graph pointer,
+  array and string resolution; hkRootLevelContainer, hkbBehaviorGraph, graph/string data,
+  variable value set, project + character string data, file role, vanilla census.
 * [SWF container](/formats/swf.md) - FWS/CWS signature + compression, bit-packed
   FrameSize RECT, tag stream framing, standard tag-name table (Scaleform UI);
   DefineShape-DefineShape4 decode + tessellation, lossless/JPEG bitmap tags,
@@ -226,6 +229,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [AS2 runtime scope](/decisions/swf-as2-scope.md) - implement the closed 56-opcode
   set vanilla menus use in full; phase the open-ended host API behind a logged
   no-op plus tally.
+* [Havok behavior scope](/decisions/havok-behavior-scope.md) - full-graph evaluation over
+  the 55 classes the vanilla player files use; swim in, first person with full arms,
+  clean-room sourcing rule.
 * [App logo + icon pipeline](/decisions/app-logo.md) - original "North Peak" SVG mark,
   `make icon` renders AppIcon set via rsvg-convert; legal rationale.
 * [ffmpeg for audio decode](/decisions/ffmpeg-audio.md) - vendored decode-only LGPL build

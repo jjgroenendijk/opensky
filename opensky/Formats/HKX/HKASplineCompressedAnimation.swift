@@ -48,17 +48,11 @@ nonisolated struct HKASplineCompressedAnimation {
 
     /// Every spline-compressed animation object in inventory order.
     static func animations(in file: HKXFile) throws -> [HKASplineCompressedAnimation] {
+        let graph = try HKXObjectGraph(file: file)
         var result: [HKASplineCompressedAnimation] = []
-        for object in file.objects where object.className == className {
-            guard file.sections.indices.contains(object.sectionIndex) else { continue }
-            let payload = try file.sectionData(at: object.sectionIndex)
-            let fixups = file.sections[object.sectionIndex].localFixups
-            try result.append(HKASplineObjectDecoder.decode(
-                payload: payload,
-                base: object.dataOffset,
-                sectionIndex: object.sectionIndex,
-                localFixups: fixups
-            ))
+        for object in graph.objects(ofClass: className) {
+            guard var cursor = graph.cursor(at: object) else { continue }
+            try result.append(HKASplineObjectDecoder.decode(cursor: &cursor))
         }
         return result
     }
@@ -123,37 +117,34 @@ nonisolated private struct HKASplineTables {
 }
 
 nonisolated private enum HKASplineObjectDecoder {
-    private static let animationTypeField = 0x10
-    private static let durationField = 0x14
-    private static let transformTrackCountField = 0x18
-    private static let floatTrackCountField = 0x1C
-    private static let frameCountField = 0x38
-    private static let blockCountField = 0x3C
-    private static let maxFramesPerBlockField = 0x40
-    private static let maskAndQuantizationSizeField = 0x44
-    private static let blockDurationField = 0x48
-    private static let blockInverseDurationField = 0x4C
-    private static let frameDurationField = 0x50
-    private static let blockOffsetsField = 0x58
-    private static let floatBlockOffsetsField = 0x68
-    private static let transformOffsetsField = 0x78
-    private static let floatOffsetsField = 0x88
-    private static let dataField = 0x98
-    private static let endianField = 0xA8
+    private static let animationTypeField = HKXField(0x10, "m_type")
+    private static let durationField = HKXField(0x14, "m_duration")
+    private static let transformTrackCountField = HKXField(0x18, "m_numberOfTransformTracks")
+    private static let floatTrackCountField = HKXField(0x1C, "m_numberOfFloatTracks")
+    private static let frameCountField = HKXField(0x38, "m_numFrames")
+    private static let blockCountField = HKXField(0x3C, "m_numBlocks")
+    private static let maxFramesPerBlockField = HKXField(0x40, "m_maxFramesPerBlock")
+    private static let maskAndQuantizationSizeField = HKXField(
+        0x44, "m_maskAndQuantizationSize"
+    )
+    private static let blockDurationField = HKXField(0x48, "m_blockDuration")
+    private static let blockInverseDurationField = HKXField(0x4C, "m_blockInverseDuration")
+    private static let frameDurationField = HKXField(0x50, "m_frameDuration")
+    private static let blockOffsetsField = HKXField(0x58, "m_blockOffsets")
+    private static let floatBlockOffsetsField = HKXField(0x68, "m_floatBlockOffsets")
+    private static let transformOffsetsField = HKXField(0x78, "m_transformOffsets")
+    private static let floatOffsetsField = HKXField(0x88, "m_floatOffsets")
+    private static let dataField = HKXField(0x98, "m_data")
+    private static let endianField = HKXField(0xA8, "m_endian")
 
     static func decode(
-        payload: Data,
-        base: Int,
-        sectionIndex: Int,
-        localFixups: [HKXLocalFixup]
+        cursor: inout HKXObjectCursor
     ) throws -> HKASplineCompressedAnimation {
-        let fixups = Dictionary(
-            localFixups.map { ($0.fromOffset, $0.toOffset) },
-            uniquingKeysWith: { first, _ in first }
-        )
-        let metadata = try readMetadata(payload, base: base)
+        let sectionIndex = cursor.sectionIndex
+        let base = cursor.base
+        let metadata = try readMetadata(cursor: &cursor)
         try validate(metadata)
-        let tables = try readTables(payload, base: base, fixups: fixups)
+        let tables = try readTables(cursor: &cursor)
         guard tables.blockOffsets.count == metadata.blockCount else {
             throw mismatch(
                 "m_blockOffsets", metadata.blockCount, tables.blockOffsets.count
@@ -177,21 +168,23 @@ nonisolated private enum HKASplineObjectDecoder {
         )
     }
 
-    private static func readMetadata(_ data: Data, base: Int) throws -> HKASplineMetadata {
-        let animationType = try readInt(data, at: base + animationTypeField)
-        guard animationType == 5 else { throw invalid("m_type", animationType) }
+    private static func readMetadata(
+        cursor: inout HKXObjectCursor
+    ) throws -> HKASplineMetadata {
+        let animationType = try readInt(at: animationTypeField, cursor: &cursor)
+        guard animationType == 5 else { throw invalid(animationTypeField.name, animationType) }
         return try HKASplineMetadata(
-            duration: readFloat(data, at: base + durationField),
-            frameDuration: readFloat(data, at: base + frameDurationField),
-            frameCount: readInt(data, at: base + frameCountField),
-            blockCount: readInt(data, at: base + blockCountField),
-            maxFramesPerBlock: readInt(data, at: base + maxFramesPerBlockField),
-            transformTrackCount: readInt(data, at: base + transformTrackCountField),
-            floatTrackCount: readInt(data, at: base + floatTrackCountField),
-            maskSize: readInt(data, at: base + maskAndQuantizationSizeField),
-            storedBlockDuration: readFloat(data, at: base + blockDurationField),
-            blockInverseDuration: readFloat(data, at: base + blockInverseDurationField),
-            endian: readInt(data, at: base + endianField)
+            duration: readFloat(at: durationField, cursor: &cursor),
+            frameDuration: readFloat(at: frameDurationField, cursor: &cursor),
+            frameCount: readInt(at: frameCountField, cursor: &cursor),
+            blockCount: readInt(at: blockCountField, cursor: &cursor),
+            maxFramesPerBlock: readInt(at: maxFramesPerBlockField, cursor: &cursor),
+            transformTrackCount: readInt(at: transformTrackCountField, cursor: &cursor),
+            floatTrackCount: readInt(at: floatTrackCountField, cursor: &cursor),
+            maskSize: readInt(at: maskAndQuantizationSizeField, cursor: &cursor),
+            storedBlockDuration: readFloat(at: blockDurationField, cursor: &cursor),
+            blockInverseDuration: readFloat(at: blockInverseDurationField, cursor: &cursor),
+            endian: readInt(at: endianField, cursor: &cursor)
         )
     }
 
@@ -234,33 +227,17 @@ nonisolated private enum HKASplineObjectDecoder {
         guard metadata.endian == 0 else { throw invalid("m_endian", metadata.endian) }
     }
 
-    private static func readTables(
-        _ payload: Data,
-        base: Int,
-        fixups: [Int: Int]
-    ) throws -> HKASplineTables {
-        let blockOffsets = try readUInt32Array(
-            payload, base: base, field: blockOffsetsField,
-            fixups: fixups, name: "m_blockOffsets"
-        )
-        let floatBlockOffsets = try readUInt32Array(
-            payload, base: base, field: floatBlockOffsetsField,
-            fixups: fixups, name: "m_floatBlockOffsets"
-        )
-        _ = try readUInt32Array(
-            payload, base: base, field: transformOffsetsField,
-            fixups: fixups, name: "m_transformOffsets"
-        )
-        _ = try readUInt32Array(
-            payload, base: base, field: floatOffsetsField,
-            fixups: fixups, name: "m_floatOffsets"
-        )
+    private static func readTables(cursor: inout HKXObjectCursor) throws -> HKASplineTables {
+        let blockOffsets = try readUInt32Array(at: blockOffsetsField, cursor: &cursor)
+        let floatBlockOffsets = try readUInt32Array(at: floatBlockOffsetsField, cursor: &cursor)
+        // Read for their bounds checks: a file whose per-track offset tables do
+        // not resolve is malformed even though block decoding does not use them.
+        _ = try readUInt32Array(at: transformOffsetsField, cursor: &cursor)
+        _ = try readUInt32Array(at: floatOffsetsField, cursor: &cursor)
         return try HKASplineTables(
             blockOffsets: blockOffsets,
             floatBlockOffsets: floatBlockOffsets,
-            bytes: readByteArray(
-                payload, base: base, field: dataField, fixups: fixups, name: "m_data"
-            )
+            bytes: readByteArray(at: dataField, cursor: &cursor)
         )
     }
 
@@ -289,78 +266,66 @@ nonisolated private enum HKASplineObjectDecoder {
     }
 
     private static func readUInt32Array(
-        _ payload: Data,
-        base: Int,
-        field: Int,
-        fixups: [Int: Int],
-        name: String
+        at field: HKXField,
+        cursor: inout HKXObjectCursor
     ) throws -> [UInt32] {
-        let (count, offset) = try arrayDescriptor(
-            payload, base: base, field: field, fixups: fixups, name: name
-        )
+        let count = try arrayCount(at: field, cursor: &cursor)
         guard count > 0 else { return [] }
-        guard let offset else {
-            throw HKASplineAnimationError.missingArrayData(field: name, count: count)
+        guard let values = cursor.uint32Array(at: field) else {
+            throw HKASplineAnimationError.missingArrayData(field: field.name, count: count)
         }
-        try requireBounds(offset, count * 4, payload.count, field: name)
-        var reader = BinaryReader(payload, offset: offset)
-        return try (0 ..< count).map { _ in try reader.readUInt32() }
+        return values
     }
 
     private static func readByteArray(
-        _ payload: Data,
-        base: Int,
-        field: Int,
-        fixups: [Int: Int],
-        name: String
+        at field: HKXField,
+        cursor: inout HKXObjectCursor
     ) throws -> Data {
-        let (count, offset) = try arrayDescriptor(
-            payload, base: base, field: field, fixups: fixups, name: name
-        )
+        let count = try arrayCount(at: field, cursor: &cursor)
         guard count > 0 else { return Data() }
-        guard let offset else {
-            throw HKASplineAnimationError.missingArrayData(field: name, count: count)
+        guard let bytes = cursor.byteArray(at: field) else {
+            throw HKASplineAnimationError.missingArrayData(field: field.name, count: count)
         }
-        try requireBounds(offset, count, payload.count, field: name)
-        var reader = BinaryReader(payload, offset: offset)
-        return try reader.read(count: count)
+        return bytes
     }
 
-    private static func arrayDescriptor(
-        _ payload: Data,
-        base: Int,
-        field: Int,
-        fixups: [Int: Int],
-        name: String
-    ) throws -> (count: Int, offset: Int?) {
-        let count = try readInt(payload, at: base + field + 8)
-        guard count >= 0 else { throw invalid(name, count) }
-        return (count, fixups[base + field])
-    }
-
-    private static func readInt(_ data: Data, at offset: Int) throws -> Int {
-        try requireBounds(offset, 4, data.count, field: "object metadata")
-        var reader = BinaryReader(data, offset: offset)
-        return try Int(Int32(bitPattern: reader.readUInt32()))
-    }
-
-    private static func readFloat(_ data: Data, at offset: Int) throws -> Float {
-        try requireBounds(offset, 4, data.count, field: "object metadata")
-        var reader = BinaryReader(data, offset: offset)
-        return try reader.readFloat32()
-    }
-
-    private static func requireBounds(
-        _ offset: Int,
-        _ length: Int,
-        _ available: Int,
-        field: String
-    ) throws {
-        guard offset >= 0, length >= 0, offset <= available - length else {
-            throw HKASplineAnimationError.arrayOutOfBounds(
-                field: field, offset: offset, needed: length, available: available
-            )
+    private static func arrayCount(
+        at field: HKXField,
+        cursor: inout HKXObjectCursor
+    ) throws -> Int {
+        guard let count = cursor.arrayCount(at: field) else {
+            throw invalid(field.name, "unreadable")
         }
+        return count
+    }
+
+    private static func readInt(at field: HKXField, cursor: inout HKXObjectCursor) throws -> Int {
+        guard let value = cursor.int32(at: field) else {
+            throw outOfBounds(field, cursor)
+        }
+        return value
+    }
+
+    private static func readFloat(
+        at field: HKXField,
+        cursor: inout HKXObjectCursor
+    ) throws -> Float {
+        guard let value = cursor.float32(at: field) else {
+            throw outOfBounds(field, cursor)
+        }
+        return value
+    }
+
+    private static func outOfBounds(
+        _ field: HKXField,
+        _ cursor: HKXObjectCursor
+    ) -> HKASplineAnimationError {
+        .arrayOutOfBounds(
+            field: "object metadata",
+            offset: cursor.base + field.offset,
+            needed: 4,
+            available: cursor.payload.count
+        )
     }
 
     private static func invalid(

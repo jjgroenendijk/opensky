@@ -9,6 +9,9 @@ enum HKXCommand {
     /// First N objects listed verbatim; the rest collapse into a truncation
     /// note so a big packfile stays greppable, not a wall of offsets.
     private static let objectListLimit = 8
+    /// Same idea for the census name inventories, which run to hundreds of
+    /// entries on the master behavior graph.
+    private static let nameListLimit = 12
 
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
         let key = try scanner.positional("key")
@@ -24,6 +27,68 @@ enum HKXCommand {
         printSections(file)
         printClassNames(file)
         printObjects(file)
+        printCensus(file)
+    }
+
+    /// Behavior census (todo 14.1): the same role, variable, event, and
+    /// referenced-file fields the env-gated sweep reports, for one file, so any
+    /// behavior file is inspectable without the test suite. A census failure is
+    /// a warning: the container-level dump above still stands on its own.
+    private static func printCensus(_ file: HKXFile) {
+        let census: HKBBehaviorCensus
+        do {
+            census = try HKBBehaviorCensus.census(of: file)
+        } catch {
+            printError("[WARNING] census unavailable: \(String(describing: error))")
+            return
+        }
+        print("role: \(census.role.rawValue)")
+        if !census.rootVariantClassNames.isEmpty {
+            print("root variants: \(census.rootVariantClassNames.joined(separator: ", "))")
+        }
+        if let name = census.graphName {
+            let root = census.rootGeneratorClassName ?? "<unresolved>"
+            print("behavior graph: \(name), root generator \(root)")
+        }
+        printNames("variables", census.variables.map { variable in
+            variable.name
+                .map { "\($0) : \(variable.type?.description ?? "raw \(variable.rawType)")" }
+        })
+        printNames("events", census.eventNames)
+        printNames("character properties", census.characterPropertyNames)
+        printNames("content paths", census.contentPaths)
+        printNames("referenced behaviors", census.referencedBehaviorFiles)
+        printNames("referenced characters", census.referencedCharacterFiles)
+        printNames("referenced animations", census.referencedAnimationFiles)
+        if !census.unresolved.isEmpty {
+            print("unresolved fields: \(census.unresolved.count)")
+            for reference in census.unresolved.prefix(nameListLimit) {
+                print("  \(reference.field) at 0x"
+                    + String(format: "%x", reference.objectOffset)
+                    + " — \(reference.miss.rawValue)")
+            }
+        }
+    }
+
+    /// One inventory line: total plus the first `nameListLimit` names, so a
+    /// graph with hundreds of variables stays greppable.
+    private static func printNames(_ label: String, _ names: [String?]) {
+        // Vanilla project files store empty strings for their content paths;
+        // listing blank lines would read as a decode failure.
+        let resolved = names.compactMap(\.self).filter { !$0.isEmpty }
+        guard !names.isEmpty else { return }
+        print("\(label): \(names.count)")
+        for name in resolved.prefix(nameListLimit) {
+            print("  \(name)")
+        }
+        let hidden = resolved.count - min(resolved.count, nameListLimit)
+        if hidden > 0 {
+            print("  ... \(hidden) more")
+        }
+    }
+
+    private static func printNames(_ label: String, _ names: [String]) {
+        printNames(label, names.map { Optional($0) })
     }
 
     /// Header line + root-class resolution (unresolved -> stderr warning, not

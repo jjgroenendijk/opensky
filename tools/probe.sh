@@ -227,6 +227,24 @@ awk '/^--- hkx idle/{f=1;next} /^--- /{f=0} f' "$log" \
   | grep -q 'hkaSplineCompressedAnimation' \
   || fail "hkx idle missing hkaSplineCompressedAnimation class"
 
+# M14.1 behavior census gate: the same `hkx` command reports role, graph name,
+# root generator class, and the variable/event inventories for a behavior file.
+# mt_behavior.hkx is the third-person movement graph; like every vanilla player
+# graph it is rooted at an hkbStateMachine.
+run "hkx behavior" hkx 'meshes\actors\character\behaviors\mt_behavior.hkx'
+behavior_hkx="$(awk '/^--- hkx behavior/{f=1;next} /^--- /{f=0} f' "$log")"
+printf '%s\n' "$behavior_hkx" | grep -q '^role: behavior' \
+  || fail "hkx behavior did not report the behavior role"
+printf '%s\n' "$behavior_hkx" | grep -q 'root generator hkbStateMachine' \
+  || fail "hkx behavior root generator is not an hkbStateMachine"
+printf '%s\n' "$behavior_hkx" | grep -q '^variables: 67' \
+  || fail "hkx behavior variable count differs from verified vanilla graph"
+printf '%s\n' "$behavior_hkx" | grep -q '^events: 931' \
+  || fail "hkx behavior event count differs from verified vanilla graph"
+if printf '%s\n' "$behavior_hkx" | grep -q '^unresolved fields:'; then
+  fail "hkx behavior reported unresolved members"
+fi
+
 # M6.3 idle decode gate: shared hkaSplineCompressedAnimation decoder samples
 # every stored frame over full mt_idle duration. Parser rejects unknown codec
 # variants, malformed blocks, non-finite transforms, and values outside its
