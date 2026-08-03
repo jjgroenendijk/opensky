@@ -258,6 +258,10 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Sidebar verification convention](/tools/sidebar-acceptance.md) - the record every
   milestone acceptance writes (path, destination id, control ids, readout, covering
   tests), what counts as evidence, and the per-milestone ledger.
+* [Build system and xcodebuild invocation](/tools/build-system.md) - the one xcodebuild
+  command line every make target and tools/ script shares: knobs and their defaults,
+  `-quiet` versus the transcripts kept in `logs/`, the derived built-products path, and
+  what `-only-testing` does not save.
 * [Swift toolchain and language mode](/tools/swift-toolchain.md) - the Apple Swift 6.3.3
   baseline, Swift 6 language mode across every target, the `make swift-baseline` gate that
   enforces both, default main-actor isolation, and the isolation patterns the migration

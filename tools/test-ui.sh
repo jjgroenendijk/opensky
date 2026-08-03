@@ -26,16 +26,21 @@ if [ -n "${OPENSKY_RESULT_BUNDLE:-}" ]; then
 fi
 
 # Same build cache the Makefile uses (Makefile DERIVED_DATA).
-derived_data="${OPENSKY_DERIVED_DATA:-$PWD/DerivedData}"
+root="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=/dev/null
+. "$root/tools/xcodebuild-lib.sh"
+derived_data="$OPENSKY_DERIVED_DATA"
 
-log="$(mktemp -t opensky-test-ui)"
-trap 'rm -f "$log"' EXIT INT TERM
-
+# Through the shared runner (Makefile XCB_RUN), so the transcript lands in
+# logs/test-ui.log and stdout stays readable; the runner prints the whole log
+# when the run fails, which is also where the grep below reads from.
+log="$root/logs/test-ui.log"
 status=0
 # shellcheck disable=SC2086  # bundle_flag + passthrough flags are word-split on purpose
-xcodebuild -project "$project" -scheme "$scheme" -destination "$destination" \
+"$root/tools/xcodebuild-run.sh" test-ui \
+    xcodebuild -project "$project" -scheme "$scheme" -destination "$destination" \
     -derivedDataPath "$derived_data" \
-    $bundle_flag "$@" -only-testing:openskyUITests test 2>&1 | tee "$log" || status=$?
+    $bundle_flag "$@" -only-testing:openskyUITests test || status=$?
 
 if [ "$status" -ne 0 ] && grep -q "enabling automation mode" "$log"; then
     cat >&2 <<'MSG'
