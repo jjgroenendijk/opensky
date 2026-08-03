@@ -67,6 +67,11 @@ nonisolated struct BehaviorNodeState: Equatable {
     /// the same as `isActivated`: activation marks the node reachable, seeding
     /// is what each class does with its first update.
     var hasSeeded = false
+    /// `localTime` as a fraction of the clip window, for a clip generator. This
+    /// is what clip synchronization reads and writes, and it is kept beside
+    /// `localTime` rather than derived because the window length lives in the
+    /// generator rather than in the state.
+    var phase: Float = 0
 }
 
 /// What one update produced: the pose, the root travel kept beside it, and the
@@ -109,6 +114,31 @@ nonisolated final class BehaviorGraphInstance {
     /// Per-node runtime state, and which nodes the update in progress reached.
     var nodeStates: [HKXPointerTarget: BehaviorNodeState] = [:]
     var reachedThisUpdate: Set<HKXPointerTarget> = []
+
+    /// Per-state-machine runtime state (issue #330). Deliberately not cleared
+    /// by `deactivate()`: `m_startStateMode` 2 re-enters the state that was
+    /// current when the machine stopped, so the id has to outlive the node.
+    var machineStates: [HKXPointerTarget: BehaviorMachineState] = [:]
+    /// Update index at which each event id was last active, so a transition's
+    /// trigger and initiate intervals can be read as event windows.
+    var eventLastSeen: [Int: Int] = [:]
+    /// Parsed transition conditions, keyed by the condition object. The
+    /// optional is stored so a string that will not parse is parsed once.
+    var conditionCache: [HKXPointerTarget: BehaviorConditionExpression?] = [:]
+    /// The playback phase a sync master or a synchronizing transition is
+    /// imposing on the clips below the node being evaluated. `seedOnly` marks
+    /// a transition's one-shot alignment apart from a blender's continuous one.
+    var pendingClipPhase: (value: Float, seedOnly: Bool)?
+    /// The state id a transition asks the next nested machine to start in,
+    /// consumed by the first machine that enters below it.
+    var pendingNestedStateId: Int?
+
+    /// What every state machine the last update reached is doing, in walk
+    /// order. This is the state path items 14.5 and 14.6 read, and what the
+    /// real-data test asserts against the census state names.
+    private(set) var activeStates: [BehaviorActiveState] = []
+    /// The list being built by the update in progress.
+    var activeStatesThisUpdate: [BehaviorActiveState] = []
 
     /// Decoded objects, cached so a DAG node shared by ten parents decodes
     /// once. The optional is stored so a miss is remembered as a miss.
@@ -190,6 +220,7 @@ nonisolated final class BehaviorGraphInstance {
         guard isActive else { return }
         deactivateNodes(Set(nodeStates.keys))
         nodeStates = [:]
+        activeStates = []
         isActive = false
     }
 
@@ -214,12 +245,18 @@ nonisolated final class BehaviorGraphInstance {
         }
         let step = deltaTime.isFinite ? max(deltaTime, 0) : 0
         tally.noteUpdate()
-        events.beginUpdate()
+        for event in events.beginUpdate() {
+            eventLastSeen[event.id] = tally.updatesRun
+        }
         time += step
 
         let previouslyReached = reachedThisUpdate
         reachedThisUpdate = []
+        activeStatesThisUpdate = []
+        pendingClipPhase = nil
+        pendingNestedStateId = nil
         let pose = evaluateGenerator(at: root, depth: 0, deltaTime: step)
+        activeStates = activeStatesThisUpdate
         deactivateNodes(previouslyReached.subtracting(reachedThisUpdate))
 
         var bones = pose.bones

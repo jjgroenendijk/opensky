@@ -16,78 +16,6 @@ import Foundation
 @testable import opensky
 import Testing
 
-/// Loads clips out of the install on demand, so only the clips the graphs
-/// actually reach are read. Capped, because a graph that reaches thousands of
-/// clips would otherwise pull the whole animation set into memory.
-private final class InstallClipSource: BehaviorClipSource, @unchecked Sendable {
-    private let fileSystem: VirtualFileSystem
-    /// Lowercased file name -> archive path, for every clip under the character
-    /// animation folders.
-    private let pathsByName: [String: String]
-    private let limit: Int
-    private var cache: [String: (any BehaviorClip)?] = [:]
-    private(set) var loadedCount = 0
-    private(set) var missCount = 0
-
-    init(fileSystem: VirtualFileSystem, paths: [String], limit: Int = 512) {
-        self.fileSystem = fileSystem
-        self.limit = limit
-        var byName: [String: String] = [:]
-        for path in paths {
-            guard let name = path.split(separator: "\\").last else { continue }
-            let key = String(name).lowercased()
-            if byName[key] == nil {
-                byName[key] = path
-            }
-        }
-        pathsByName = byName
-    }
-
-    func clip(named name: String?, bindingIndex _: Int) -> (any BehaviorClip)? {
-        guard let name else { return nil }
-        let key = (name.split(separator: "\\").last.map(String.init) ?? name).lowercased()
-        if let cached = cache[key] {
-            return cached
-        }
-        guard cache.count < limit, let path = pathsByName[key] else {
-            missCount += 1
-            return nil
-        }
-        let clip = load(path)
-        cache[key] = clip
-        if clip != nil {
-            loadedCount += 1
-        } else {
-            missCount += 1
-        }
-        return clip
-    }
-
-    private func load(_ path: String) -> (any BehaviorClip)? {
-        guard
-            let data = try? fileSystem.contents(forPath: path),
-            let file = try? HKXFile(data: data),
-            let binding = (try? HKAAnimationBinding.bindings(in: file))?.first,
-            let animations = try? HKASplineCompressedAnimation.animations(in: file)
-        else {
-            return nil
-        }
-        let animation = animations.first {
-            binding.animationTarget == HKXPointerTarget(
-                sectionIndex: $0.objectSectionIndex, dataOffset: $0.objectDataOffset
-            )
-        } ?? animations.first
-        guard
-            let animation,
-            (try? binding.boneIndices(transformTrackCount: animation.transformTrackCount))
-            != nil
-        else {
-            return nil
-        }
-        return SplineBehaviorClip(animation: animation, binding: binding)
-    }
-}
-
 /// One graph's run: where it came from and what stepping it produced.
 private struct BehaviorRunRow {
     let path: String
@@ -97,6 +25,8 @@ private struct BehaviorRunRow {
     let firedEventCount: Int
     let posedBoneCount: Int
     let movedRoot: Bool
+    /// How many state machines the last update reached (issue #330).
+    let activeStateCount: Int
 }
 
 struct BehaviorEvaluatorRealDataTests {
@@ -129,7 +59,7 @@ struct BehaviorEvaluatorRealDataTests {
         let skeleton = try #require(
             loadSkeleton(vfs), "no hkaSkeleton in \(Self.skeletonPath)"
         )
-        let clips = InstallClipSource(
+        let clips = InstallBehaviorClipSource(
             fileSystem: vfs,
             paths: paths.filter { $0.contains("\\animations\\") }
         )
@@ -158,7 +88,7 @@ struct BehaviorEvaluatorRealDataTests {
         path: String,
         vfs: VirtualFileSystem,
         skeleton: BehaviorSkeleton,
-        clips: InstallClipSource
+        clips: InstallBehaviorClipSource
     ) throws -> BehaviorRunRow? {
         let file = try HKXFile(data: vfs.contents(forPath: path))
         let objectGraph = try HKXObjectGraph(file: file)
@@ -172,10 +102,12 @@ struct BehaviorEvaluatorRealDataTests {
         var firedEvents = 0
         var movedRoot = false
         var posedBones = 0
+        var activeStates = 0
         for _ in 0 ..< Self.updateCount {
             let result = instance.update(deltaTime: Self.timestep)
             firedEvents += result.firedEvents.count
             posedBones = result.bones.count
+            activeStates = max(activeStates, instance.activeStates.count)
             if result.rootMotion.translation != .zero {
                 movedRoot = true
             }
@@ -188,7 +120,8 @@ struct BehaviorEvaluatorRealDataTests {
             updates: Self.updateCount,
             firedEventCount: firedEvents,
             posedBoneCount: posedBones,
-            movedRoot: movedRoot
+            movedRoot: movedRoot,
+            activeStateCount: activeStates
         )
     }
 
@@ -222,12 +155,10 @@ struct BehaviorEvaluatorRealDataTests {
                 "\(row.path) hit \(row.tally.undecodableObjectTotal) undecodable: \(undecodable)"
             )
         }
-        // Every player behavior file is rooted in a state machine, so the
-        // start-state shortcut is the one gap that must be present until
-        // issue #330 lands. Its absence would mean the walk stopped early.
-        let withoutStateMachine = rows.filter {
-            $0.tally.featureGaps["stateMachineStartStateOnly"] == nil
-        }
+        // Every player behavior file is rooted in a state machine, and since
+        // issue #330 a machine reports the state it is in rather than tallying
+        // a shortcut. A graph reporting none means the walk stopped early.
+        let withoutStateMachine = rows.filter { $0.activeStateCount == 0 }
         #expect(
             withoutStateMachine.isEmpty,
             "graphs that reached no state machine: \(withoutStateMachine.map(\.path).prefix(5))"
@@ -236,7 +167,7 @@ struct BehaviorEvaluatorRealDataTests {
 
     // MARK: - Report
 
-    private func report(_ rows: [BehaviorRunRow], clips: InstallClipSource) -> String {
+    private func report(_ rows: [BehaviorRunRow], clips: InstallBehaviorClipSource) -> String {
         var merged = BehaviorTally()
         for row in rows {
             merged.merge(row.tally)

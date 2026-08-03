@@ -13,13 +13,22 @@
 // silently approximated: `docs/engine/behavior-runtime.md` lists every entry
 // this file can produce and what it will take to clear it.
 //
-// State machines are deliberately shallow here. Item 14.4 (#330) owns
-// transitions, transition effects, and synchronization; what this file does is
-// run the start state so that the tree below a state machine is exercised at
-// all, and tally `stateMachineStartStateOnly` every time.
+// State machines are routed from here into
+// `BehaviorStateMachineEvaluation.swift`, which item 14.4 (#330) added: states,
+// event-driven transitions, crossfades, and nesting.
 
 import Foundation
 import simd
+
+/// One evaluated `hkbBlenderGeneratorChild`: its pose and the two weights the
+/// blender mixes it with. The pose blend uses `m_weight`; the root travel uses
+/// `m_worldFromModelWeight`, which is the member whose whole purpose is to let
+/// a child drive motion without driving the pose.
+nonisolated struct BehaviorBlendChild {
+    let pose: BehaviorPose
+    let weight: Float
+    let motionWeight: Float
+}
 
 nonisolated extension BehaviorGraphInstance {
     /// The pose of the generator at `target`, or the reference pose when there
@@ -80,7 +89,7 @@ nonisolated extension BehaviorGraphInstance {
             return applyModifier(at: wrapper.modifier, to: pose, deltaTime: deltaTime)
         case let machine as HKBStateMachine:
             return evaluateStateMachine(
-                machine, bound: bound, depth: next, deltaTime: deltaTime
+                machine, at: target, bound: bound, depth: next, deltaTime: deltaTime
             )
         default:
             return evaluateBethesda(
@@ -120,9 +129,8 @@ nonisolated extension BehaviorGraphInstance {
                 at: offset.defaultGenerator, depth: depth, deltaTime: deltaTime
             )
         case let synced as BSSynchronizedClipGenerator:
-            tally.notePartialGenerator(BSSynchronizedClipGenerator.className)
-            return evaluateGenerator(
-                at: synced.clipGenerator, depth: depth, deltaTime: deltaTime
+            return evaluateSynchronizedClip(
+                synced, depth: depth, deltaTime: deltaTime
             )
         case is HKBBehaviorReferenceGenerator:
             tally.note(.unresolvedBehaviorReference)
@@ -155,34 +163,80 @@ nonisolated extension BehaviorGraphInstance {
             or: blender
                 .referencePoseWeightThreshold
         )
-        var weighted: [(pose: BehaviorPose, weight: Float)] = []
-        var motions: [(pose: BehaviorPose, weight: Float)] = []
-        for childTarget in blender.children.compactMap(\.self) {
-            guard let child = object(at: childTarget, as: HKBBlenderGeneratorChild.self)
-            else { continue }
-            markReached(childTarget)
-            let childBound = boundValues(of: child)
-            let weight = childBound.float("m_weight", or: child.weight)
-            guard weight > threshold else { continue }
-            if child.boneWeights != nil {
-                tally.note(.blenderBoneWeights)
-            }
-            let pose = evaluateGenerator(
-                at: child.generator, depth: depth, deltaTime: deltaTime
-            )
-            weighted.append((pose, weight))
-            motions.append((
-                pose,
-                childBound.float("m_worldFromModelWeight", or: child.worldFromModelWeight)
-            ))
-        }
+        let children = blendChildren(
+            blender, threshold: threshold, depth: depth, deltaTime: deltaTime
+        )
         var blended = BehaviorPoseMath.blend(
-            children: weighted, fallback: skeleton.restPose
+            children: children.map { ($0.pose, $0.weight) }, fallback: skeleton.restPose
         )
         blended.rootMotion = BehaviorPoseMath
-            .blend(children: motions, fallback: skeleton.restPose)
+            .blend(
+                children: children.map { ($0.pose, $0.motionWeight) },
+                fallback: skeleton.restPose
+            )
             .rootMotion
         return blended
+    }
+
+    /// Evaluates every contributing child, sync master first.
+    ///
+    /// `m_indexOfSyncMasterChild` names the child whose playback phase the rest
+    /// follow, which is what keeps a walk clip and a run clip of different
+    /// lengths in step as the blend weight moves between them. The master is
+    /// evaluated before its siblings so its phase is current when they read it,
+    /// and its result is slotted back at its own index so the blend still folds
+    /// in declared order.
+    private func blendChildren(
+        _ blender: HKBBlenderFields,
+        threshold: Float,
+        depth: Int,
+        deltaTime: Float
+    ) -> [BehaviorBlendChild] {
+        let targets = blender.children.compactMap(\.self)
+        var results = [BehaviorBlendChild?](repeating: nil, count: targets.count)
+        let master = blender.indexOfSyncMasterChild
+        if targets.indices.contains(master) {
+            results[master] = blendChild(
+                at: targets[master], threshold: threshold, depth: depth, deltaTime: deltaTime
+            )
+            pendingClipPhase = continuousClipPhase(
+                of: object(at: targets[master], as: HKBBlenderGeneratorChild.self)?.generator
+            )
+        }
+        for (index, target) in targets.enumerated() where index != master {
+            results[index] = blendChild(
+                at: target, threshold: threshold, depth: depth, deltaTime: deltaTime
+            )
+        }
+        pendingClipPhase = nil
+        return results.compactMap(\.self)
+    }
+
+    /// One `hkbBlenderGeneratorChild`, or nil when it is not one or its weight
+    /// leaves it out of the blend.
+    private func blendChild(
+        at target: HKXPointerTarget,
+        threshold: Float,
+        depth: Int,
+        deltaTime: Float
+    ) -> BehaviorBlendChild? {
+        guard let child = object(at: target, as: HKBBlenderGeneratorChild.self) else {
+            return nil
+        }
+        markReached(target)
+        let bound = boundValues(of: child)
+        let weight = bound.float("m_weight", or: child.weight)
+        guard weight > threshold else { return nil }
+        if child.boneWeights != nil {
+            tally.note(.blenderBoneWeights)
+        }
+        return BehaviorBlendChild(
+            pose: evaluateGenerator(at: child.generator, depth: depth, deltaTime: deltaTime),
+            weight: weight,
+            motionWeight: bound.float(
+                "m_worldFromModelWeight", or: child.worldFromModelWeight
+            )
+        )
     }
 
     private func noteBlendGaps(_ blender: HKBBlenderFields) {
@@ -219,50 +273,5 @@ nonisolated extension BehaviorGraphInstance {
         return evaluateGenerator(
             at: selector.generators[index], depth: depth, deltaTime: deltaTime
         )
-    }
-
-    // MARK: - State machines (start state only, issue #330)
-
-    /// Runs the state machine's start state and nothing else. Transitions,
-    /// wildcard transitions, transition effects, and event-driven state changes
-    /// are item 14.4's, so every call here costs one
-    /// `stateMachineStartStateOnly` tally entry.
-    ///
-    /// `m_startStateMode` 1 reads the start state id from `m_syncVariableIndex`,
-    /// which is cheap and honest, so it is honoured. Mode 2 re-enters whatever
-    /// was current at deactivation, which needs the transition history this
-    /// item does not keep, so it falls back to `m_startStateId`.
-    func evaluateStateMachine(
-        _ machine: HKBStateMachine,
-        bound: [String: BehaviorVariableValue],
-        depth: Int,
-        deltaTime: Float
-    ) -> BehaviorPose {
-        tally.note(.stateMachineStartStateOnly)
-        // `m_startStateId` is the most-bound member in the vanilla player
-        // graph after `blendParameter`: binding it is how the authored data
-        // picks a state without a transition.
-        var stateId = bound.int("startStateId", or: machine.startStateId)
-        if
-            machine.startStateMode == 1,
-            let synced = variables.value(at: machine.syncVariableIndex)
-        {
-            stateId = synced.intValue
-        }
-        let states = machine.states.compactMap(\.self)
-        for stateTarget in states {
-            guard
-                let info = object(at: stateTarget, as: HKBStateMachineStateInfo.self),
-                info.stateId == stateId, info.enable
-            else {
-                continue
-            }
-            markReached(stateTarget)
-            return evaluateGenerator(
-                at: info.generator, depth: depth, deltaTime: deltaTime
-            )
-        }
-        tally.note(.stateMachineNoStartState)
-        return skeleton.restPose
     }
 }

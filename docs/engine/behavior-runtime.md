@@ -2,7 +2,8 @@
 type: Subsystem
 title: Behavior graph runtime
 description: Evaluating a decoded Havok Behavior graph headlessly - the instance model,
-  the fixed update order, generator and modifier semantics, the pose and root-motion
+  the fixed update order, generator and modifier semantics, state machines with
+  event-driven transitions and crossfades, clip synchronization, the pose and root-motion
   output contract, and the honest-coverage tally of everything still owed.
 tags: [engine, animation, havok, hkx, behavior, locomotion, milestone-14]
 timestamp: 2026-08-03T00:00:00Z
@@ -10,13 +11,14 @@ timestamp: 2026-08-03T00:00:00Z
 
 # Behavior graph runtime
 
-Milestone 14 item 14.3 turns the decoded behavior graph of
+Milestone 14 items 14.3 and 14.4 turn the decoded behavior graph of
 [HKX behavior graph objects](/formats/hkx-behavior.md) and
 [HKX behavior nodes](/formats/hkx-behavior-nodes.md) into something that runs: variables,
-events, bindings, generator lifecycle, clip sampling, and blends, stepped headlessly and
-deterministically. Nothing here is wired to the renderer or to input. Item 14.5 supplies
-engine state, item 14.6 replaces the hardcoded idle path of
-[Actor idle animation](/engine/actor-animation.md), and item 14.4 adds the state machine.
+events, bindings, generator lifecycle, clip sampling, blends, and the state machines that
+move a character between locomotion states, stepped headlessly and deterministically.
+Nothing here is wired to the renderer or to input. Item 14.5 supplies engine state and
+item 14.6 replaces the hardcoded idle path of
+[Actor idle animation](/engine/actor-animation.md).
 
 The code lives under `opensky/Behavior/`, deliberately apart from the format parsers in
 `opensky/Formats/HKX/`: decoding a packfile and running a graph are different jobs with
@@ -30,6 +32,11 @@ different failure modes.
 * [Events](#events)
 * [Bindings](#bindings)
 * [Generators](#generators)
+* [State machines](#state-machines)
+* [Transitions](#transitions)
+* [Transition conditions](#transition-conditions)
+* [Crossfades](#crossfades)
+* [Clip synchronization](#clip-synchronization)
 * [Clips](#clips)
 * [Blending and pose math](#blending-and-pose-math)
 * [Modifiers](#modifiers)
@@ -134,22 +141,192 @@ rather than guessed at.
 | `hkbManualSelectorGenerator` | Runs the child at `selectedGeneratorIndex`; out of range is the reference pose |
 | `hkbModifierGenerator` | Runs its child, then its modifier over the result |
 | `hkbPoseMatchingGenerator` | Runs as its blender base; tallies `poseMatchingAsBlender` |
-| `hkbStateMachine` | Start state only; tallies `stateMachineStartStateOnly` |
+| `hkbStateMachine` | Full: see [State machines](#state-machines) |
 | `BSiStateTaggingGenerator` | Runs its default generator |
 | `BSBoneSwitchGenerator` | Default generator only, per-bone children ignored; tallied partial |
 | `BSCyclicBlendTransitionGenerator` | Wrapped blender only; tallied partial |
 | `BSOffsetAnimationGenerator` | Default generator only, offset clip ignored; tallied partial |
-| `BSSynchronizedClipGenerator` | Wrapped clip only, marker sync ignored; tallied partial |
+| `BSSynchronizedClipGenerator` | Wrapped clip, phase-synchronized; marker alignment tallied |
 | `hkbBehaviorReferenceGenerator` | Reference pose; tallies `unresolvedBehaviorReference` |
 | anything else | Reference pose; named in `unevaluatedGenerators` |
 
-The state machine is deliberately shallow. Transitions, wildcard transitions, transition
-effects, and event-driven state changes are item 14.4's. What this item does is find the
-state whose `m_stateId` matches `m_startStateId` — honouring a binding on `startStateId`,
-which the vanilla data uses heavily, and `m_startStateMode` 1's read from
-`m_syncVariableIndex` — and run its generator, so the tree below a state machine is
-exercised at all. Mode 2 re-enters whatever was current at deactivation, which needs
-transition history this item does not keep, so it falls back to `m_startStateId`.
+## State machines
+
+A machine holds one current state and at most one transition in flight.
+`BehaviorMachineState` is deliberately not `BehaviorNodeState`: it outlives deactivation,
+because `m_startStateMode` 2 re-enters whatever was current when the machine stopped, and
+121 of the 1,963 machines in the vanilla player graph are authored that way.
+
+Entering picks the start state in this order, first match wins:
+
+1. The state id a transition named through `FLAG_TO_NESTED_STATE_ID_IS_VALID`, which is how
+   a parent machine drops the machine nested under its destination state into a particular
+   state rather than into that machine's own start state.
+2. `m_startStateMode` 2's remembered id.
+3. `m_startStateMode` 1's read from the variable at `m_syncVariableIndex`.
+4. `m_startStateId`, honouring a binding on `startStateId` — the vanilla data leans on that
+   binding heavily.
+
+Entering raises the state's `m_enterNotifyEvents` and the machine's
+`m_eventToSendWhenStateOrTransitionChanges`. Leaving raises `m_exitNotifyEvents`, and so
+does deactivation: a machine that stops being reached leaves the state it was in.
+
+Nesting is ordinary recursion. A state whose generator is another `hkbStateMachine` runs it
+through the same path, and `BehaviorGraphInstance.activeStates` publishes every machine the
+last update reached, in walk order, outermost first — machine name, state name, and the
+crossfade weight. That readout is what the real-data test asserts a state path against and
+what items 14.5 and 14.6 read.
+
+`hkbBehaviorReferenceGenerator` still produces the reference pose and tallies
+`unresolvedBehaviorReference`: resolving a named behavior file into a second loaded graph
+needs the multi-file loader item 14.5 brings.
+
+## Transitions
+
+Candidates come from two places: the current state's own
+`hkbStateMachineTransitionInfoArray`, then the machine's `m_wildcardTransitions`, which
+apply from any state. A candidate fires when all of these hold:
+
+* `FLAG_DISABLED` is clear.
+* Its `m_eventId` is in the active event set — so an event raised during an update moves
+  the machine on the *next* one, in step with the rest of the update order.
+* Its `m_toStateId` names an enabled state, and either differs from the current state or
+  carries `FLAG_ALLOW_SELF_TRANSITION_BY_TRANSITION_INFO`.
+* Its trigger and initiate intervals, if `FLAG_USE_TRIGGER_INTERVAL` or
+  `FLAG_USE_INITIATE_INTERVAL` asks for them, are open. A window opens when its
+  `m_enterEventId` is raised and closes when its `m_exitEventId` is; the time bounds are
+  zero on every transition in the vanilla player graph, so a non-zero one is tallied.
+* Its condition holds — see [Transition conditions](#transition-conditions).
+
+Of the eligible candidates, the winner is the one with the highest `m_priority`; at equal
+priority a state's own transition beats a wildcard; at equal priority and kind, array order
+wins. **Havok's own tie-break is not documented in any source consulted here, so this
+ordering is a decision**, made because a total order is what keeps two instances stepping
+identically.
+
+The state change happens when the transition *starts*: `currentStateId` becomes the
+destination, exit and enter events fire, and the effect only fades the outgoing pose away.
+That is why `FLAG_DELAY_STATE_CHANGE` exists as a separate authored flag — the default is
+not delayed. It is set on 14 of the 3,769 transitions in the vanilla player graph and is
+tallied rather than honoured.
+
+An event arriving while a transition is still blending starts a new transition from
+wherever the machine has got to, and the older blend is dropped rather than nested inside
+the new one; each drop costs one `stateMachineTransitionInterrupted` entry. A transition
+carrying `FLAG_UNINTERRUPTIBLE_WHILE_PLAYING` or `FLAG_UNINTERRUPTIBLE_WHILE_BLENDING`
+refuses the new candidate outright.
+
+The four machine-level event ids are checked only when no transition-info candidate fired.
+`m_returnToPreviousStateEventId` goes back one state,
+`m_transitionToNextHigherStateEventId` and `m_transitionToNextLowerStateEventId` step
+through the sorted state ids honouring `m_wrapAroundStateId`, and
+`m_randomTransitionEventId` picks the enabled state with the highest `m_probability`, ties
+broken by the lowest id, and tallies `stateMachineRandomTransitionFixed` — an engine that
+decides animation from an unseeded random source cannot be stepped twice with the same
+result. Of 530 machines in the two `mt_behavior` files, four name a random-transition event
+and none name the other three.
+
+### The flag map, and how it was checked
+
+`hkbStateMachineTransitionInfo::TransitionFlags` comes from the same open-source lineage as
+the byte layouts (see [Havok behavior scope](/decisions/havok-behavior-scope.md)), and
+every bit acted on was then confirmed against the local install rather than taken on faith:
+
+| Bit | Name | Evidence in the vanilla player graph |
+| --- | --- | --- |
+| `0x1` | `USE_TRIGGER_INTERVAL` | 24 uses |
+| `0x2` | `USE_INITIATE_INTERVAL` | 144 uses, each with an event pair |
+| `0x4` | `UNINTERRUPTIBLE_WHILE_PLAYING` | 70 uses |
+| `0x8` | `UNINTERRUPTIBLE_WHILE_BLENDING` | never set |
+| `0x10` | `DELAY_STATE_CHANGE` | 14 uses |
+| `0x20` | `DISABLED` | 2 uses |
+| `0x100` | `DISABLE_CONDITION` | 3,340 uses, on exactly the transitions with a null `m_condition` |
+| `0x200` | `ALLOW_SELF_TRANSITION` | 75 uses |
+| `0x400` | `IS_GLOBAL_WILDCARD` | 729 uses, only inside wildcard arrays |
+| `0x800` | `IS_LOCAL_WILDCARD` | 1,167 uses, only inside wildcard arrays |
+| `0x1000` | `FROM_NESTED_STATE_ID_IS_VALID` | 24 uses; tallied, not acted on |
+| `0x2000` | `TO_NESTED_STATE_ID_IS_VALID` | 642 uses, only where the id names a nested state |
+
+`0x40`, `0x80`, and `0x4000` are never set. The `0x100` correlation is the strongest single
+piece of evidence in the table: a bit that is set on every transition without a condition
+object and clear on every transition with one is not plausibly anything but
+"do not evaluate the condition".
+
+## Transition conditions
+
+`hkbExpressionCondition` and `hkbStringCondition` carry their test as authored text; Havok
+compiles it at load into a `SERIALIZE_IGNORED` member, so the packfile holds the source and
+nothing else. The grammar was recovered from the strings the vanilla files carry — 429 of
+the 3,769 transitions name a condition, and every one of them fits:
+
+```text
+or         := and ( "||" and )*
+and        := comparison ( "&&" comparison )*
+comparison := unary ( ( "==" | "!=" | ">=" | "<=" | ">" | "<" ) unary )?
+unary      := "!" unary | primary
+primary    := number | variable | "(" or ")"
+```
+
+Observed forms include `IsFirstPerson == 0`,
+`(IsNPC == 0) && (iLeftHandType != 7) && (iLeftHandType != 12)`,
+`(iWantBlock == 0) || (iLeftHandType == 7)`, `!bIsSynced && !bIsRiding`,
+`Speed >= fMinSpeed` (variable against variable), and
+`(staggerDirection < .25) || (staggerDirection > .75)` (leading-dot literal). There are no
+string literals, no arithmetic, no function calls, and no assignment.
+
+Every value is a float and a bare variable is true when it is non-zero, which is how
+`!bBlendOutSlow` reads. A string that does not parse, or one that names a variable the
+graph does not declare, **blocks the transition** and is tallied
+(`transitionConditionUnparsed`, `transitionConditionUnresolved`). Blocking rather than
+defaulting is the choice that fails visibly: a wrong answer here fires a wrong transition,
+and an animation that does not start reads as a bug where an animation that starts wrongly
+reads as engine behaviour.
+
+## Crossfades
+
+`hkbBlendingTransitionEffect` fades the outgoing state's pose into the incoming one over
+`m_duration`, shaped by `hkbBlendCurveUtils::BlendCurve`. The vanilla player graph uses two
+curves — 389 smooth against 8 linear — so those are the two with a formula here: smooth is
+`3t^2 - 2t^3`, linear is `t`. Any other curve falls back to smooth and is tallied, because
+writing a formula for a curve no authored file uses would be inventing it.
+
+A null `m_transition` pointer and a zero `m_duration` both mean an instant cut; 198 of the
+397 blending effects in the vanilla player graph carry a zero duration. The clock runs
+after selection, so a transition that starts on an update already shows one step of its
+crossfade, and one that reaches its duration is dropped rather than posed at a weight of
+exactly 1.
+
+Of the `FlagBits`, only the sync bit is acted on (see
+[Clip synchronization](#clip-synchronization)). The others say how root motion crosses the
+blend, which item 14.5 owns once a character controller exists to disagree with it.
+
+## Clip synchronization
+
+Two mechanisms feed one seam, `BehaviorGraphInstance.pendingClipPhase`, which clip
+evaluation reads after it has advanced local time.
+
+A `hkbBlenderGenerator` whose `m_indexOfSyncMasterChild` names a child publishes that
+child's playback phase — local time as a fraction of its own clip window — onto every other
+child, every update. That is what stops a walk clip and a run clip of different lengths
+from drifting apart as the blend weight moves between them: a 2-second master at phase 0.3
+holds a 4-second follower at 1.2 seconds. The master is evaluated before its siblings so
+its phase is current when they read it, and its result is slotted back at its own index so
+the blend still folds in declared order. 28 blenders in the vanilla player graph name one.
+
+A `hkbBlendingTransitionEffect` with the sync bit set publishes the outgoing state's phase
+onto the incoming one, seed-only: applied when the incoming clip activates and never again,
+because a destination clip permanently welded to the state it came from would never advance
+on its own.
+
+A clip forced onto another clip's phase reports no root motion for that update. It did not
+walk there, so the difference between the two samples is not travel the character made.
+
+`BSSynchronizedClipGenerator` runs the clip it wraps and takes part in phase
+synchronization like any other clip, because the wrapped generator is an ordinary
+`hkbClipGenerator`. What is still owed is the half that needs a second character:
+`m_SyncAnimPrefix` names the partner's half of a paired animation and `m_fGetToMarkTime`
+says how long this character has to reach the shared marker. Every evaluation costs one
+`synchronizedClipMarkerIgnored` entry rather than an invented alignment.
 
 ## Clips
 
@@ -266,10 +443,35 @@ These are guesses marked as guesses, in the sense AGENTS.md "How agents work her
 * **Update order is a decision, not an observation.** Havok's own visibility rules for an
   event raised mid-update are not documented in any source consulted here; deferring to
   the next update is the choice that makes traversal order irrelevant to the result.
+* **Transition selection order is a decision.** Priority, then own-before-wildcard, then
+  array order. Havok's tie-break is undocumented in the sources consulted; a total order is
+  what makes two instances agree.
+* **An interrupted crossfade is dropped, not nested.** Havok's own model allows transition
+  effects to stack. Here the new transition blends from the state the machine had already
+  switched to, so an interruption can pop by whatever fraction of the old blend was still
+  running. Each one is tallied, so the probe says how often it happens.
+* **A state machine does not write its current state back to `m_syncVariableIndex`.**
+  `m_startStateMode` 1 reads the variable, and in the vanilla data that variable is an
+  engine input — writing it back would clobber the input on the next update. Whether Havok
+  keeps the variable synced in both directions is not settled by any source consulted here.
+* **The transition-effect flag bits other than sync are not acted on.** The local decode
+  reads bit 0 as ignore-from-generator, bit 2 as ignore-world-from-model, and bit 3 as
+  ignore-to-generator, but that reading is not confirmed against an independent source and
+  every one of them changes how root motion crosses a blend. Item 14.5 owns that question.
 
 ## Verification
 
-Unit tests, all synthetic and all in code: `BehaviorPoseMathTests` (blends against
+Unit tests, all synthetic and all in code: `BehaviorStateMachineTests` (transition on
+event, an event no transition names, wildcard transitions, priority and own-before-wildcard
+tie-breaks, self-transition refusal, disabled transitions, condition gating, the smooth and
+linear crossfade curves against hand-computed values, instant cuts, interruption and
+uninterruptibility, exit-then-enter event order, start-state mode 2),
+`BehaviorStateMachineNestingTests` (a nested machine's own start state, a transition naming
+the nested start state, outer-before-inner enter order, exit events on deactivation,
+loop-phase sync of a 2-second and a 4-second clip, and two nested instances stepped through
+a transition producing identical poses, state paths, and event logs),
+`BehaviorConditionExpressionTests` (the grammar, operator precedence, leading-dot literals,
+unknown variables, and the text the grammar refuses), `BehaviorPoseMathTests` (blends against
 hand-computed values, shortest-arc rotation, degenerate quaternions, root-motion
 concatenation), `BehaviorEvaluatorTests` (variable seeding and coercion, instance
 independence, binding application, the enable binding, event ordering and one-update
@@ -293,10 +495,26 @@ and produces bones, and that every graph reaches a state machine. The report goe
 gitignored `logs/behavior-evaluator-probe.log` — counts, class names, and archive paths
 only, never sample data.
 
+The second env-gated test is
+`make realtest T='BehaviorStateMachineRealDataTests/walksThePlayerLocomotionStatePath()'`.
+It loads `mt_behavior.hkx`, steps it, and raises the locomotion events the file itself
+declares, asserting the state path by the names the file declares:
+`MT_Default_Behavior` sits in `MT_Standing_State`; `moveStart` moves it to
+`MT_LocomotionType_State` and brings `MT_Locomotion_Behavior` — two levels of nesting
+below — into reach; `moveStop` returns it and takes that machine back out; `SneakStart` and
+`SneakStop` swing `MTIdleTurnTypeBehavior` between `MTIdleTurnState` and
+`SneakIdleTurnState`. It pins the tally against the documented gap list, so a new gap name
+fails the test until it is written down here. The report goes to gitignored
+`logs/behavior-state-path.log`.
+
 Run on 2026-08-03 against the local install: 35 graphs, 37,620 generator evaluations,
-5,880 modifier evaluations, 2,602 events fired, 82 clips loaded, zero clip lookups missed,
+5,880 modifier evaluations, 2,651 events fired, 82 clips loaded, zero clip lookups missed,
 zero undecodable objects, zero unevaluated generator classes. The ranked gaps were
-`stateMachineStartStateOnly` 8,880, `blenderParametricAsWeights` 4,560,
-`blenderBoneWeights` 1,200, `BSEventOnFalseToTrueModifier` 960,
-`hkbEvaluateExpressionModifier` 840, `BSIsActiveModifier` 720. That list is the worklist
-for items 14.4 through 14.6.
+`blenderParametricAsWeights` 4,560, `blenderBoneWeights` 1,200,
+`unresolvedBehaviorReference` 480, `BSEventOnFalseToTrueModifier` 960,
+`hkbEvaluateExpressionModifier` 840, `BSIsActiveModifier` 720,
+`BSCyclicBlendTransitionGenerator` 480, `stateMachineNoStartState` 4. That list is the
+worklist for items 14.5 and 14.6. The 8,880 `stateMachineStartStateOnly` entries item 14.3
+reported are gone: every machine now runs its transitions, and stepping the graphs with no
+input produces the same generator count it did before, because with no events raised there
+is nothing to transition to.

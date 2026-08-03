@@ -55,20 +55,26 @@ nonisolated extension BehaviorGraphInstance {
         guard window.length > 0 else { return skeleton.restPose }
 
         var state = markReached(target)
+        let wasSeeded = state.hasSeeded
         seedIfNeeded(&state, clip: clip, window: window, generator: generator)
         let advance = step(generator, bound: bound, window: window, deltaTime: deltaTime)
         state.previousLocalTime = state.localTime
-        let wrapped = advanceTime(
+        var wrapped = advanceTime(
             &state, by: advance, window: window, bound: bound, generator: generator
         )
+        let jumped = applySyncPhase(&state, window: window, justSeeded: !wasSeeded)
+        if jumped {
+            wrapped = false
+        }
+        state.phase = state.localTime / window.length
 
         let samples = clip.samples(at: window.start + state.localTime)
         var pose = BehaviorPose(
             bones: BehaviorPoseMath.applying(samples, to: skeleton.referencePose)
         )
-        pose.rootMotion = rootMotion(
-            &state, samples: samples, wrapped: wrapped
-        )
+        pose.rootMotion = jumped
+            ? resetRootMotion(&state, samples: samples)
+            : rootMotion(&state, samples: samples, wrapped: wrapped)
         fireTriggers(generator, state: state, window: window, wrapped: wrapped)
         nodeStates[target] = state
         return pose
@@ -157,7 +163,40 @@ nonisolated extension BehaviorGraphInstance {
         }
     }
 
+    // MARK: - Synchronization
+
+    /// Forces the clip onto the phase a sync master or a synchronizing
+    /// transition published (issue #330), and reports whether that moved it.
+    ///
+    /// A blender's sync master publishes continuously, so its siblings are
+    /// re-aligned every update and stay locked whatever their own lengths are.
+    /// A transition publishes seed-only, so the incoming clip starts where the
+    /// outgoing one was and then runs on its own.
+    private func applySyncPhase(
+        _ state: inout BehaviorNodeState,
+        window: BehaviorClipWindow,
+        justSeeded: Bool
+    ) -> Bool {
+        guard let pending = pendingClipPhase, pending.value.isFinite else { return false }
+        guard !pending.seedOnly || justSeeded else { return false }
+        let target = min(max(pending.value, 0), 1) * window.length
+        guard target != state.localTime else { return false }
+        state.localTime = target
+        return true
+    }
+
     // MARK: - Root motion
+
+    /// Drops the travel across a phase jump. A clip forced onto another clip's
+    /// phase did not walk there, so the difference between the two samples is
+    /// not motion the character made.
+    private func resetRootMotion(
+        _ state: inout BehaviorNodeState,
+        samples: [HKABoneTransformSample]
+    ) -> BehaviorRootMotion {
+        state.previousRootPose = rootPose(of: samples) ?? state.previousRootPose
+        return .identity
+    }
 
     /// The root travel between the previous sample and this one, with the
     /// across-the-seam run added when the clip wrapped.

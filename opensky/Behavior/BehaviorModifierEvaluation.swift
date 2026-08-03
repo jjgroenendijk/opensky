@@ -168,10 +168,14 @@ nonisolated extension BehaviorGraphInstance {
 
     // MARK: - Deactivation
 
-    /// Runs the deactivation half of a node's lifecycle. Only
-    /// `BSEventOnDeactivateModifier` has one; every other class is silent, so
-    /// this is a hook rather than a dispatch table.
-    func noteDeactivation(of object: any HKBClass, at _: HKXPointerTarget) {
+    /// Runs the deactivation half of a node's lifecycle. Two classes have one:
+    /// `BSEventOnDeactivateModifier` raises its event, and `hkbStateMachine`
+    /// leaves the state it was in (issue #330).
+    func noteDeactivation(of object: any HKBClass, at target: HKXPointerTarget) {
+        if let machine = object as? HKBStateMachine {
+            noteMachineDeactivation(of: machine, at: target)
+            return
+        }
         guard
             let modifier = object as? BSEventOnDeactivateModifier,
             modifier.modifier.enable

@@ -63,8 +63,8 @@ nonisolated struct BehaviorTally: Equatable, Sendable {
 
     /// Named feature slug -> times the evaluator took a documented shortcut
     /// rather than the full semantics. Slugs are the `Gap` cases below, so the
-    /// report reads as `stateMachineStartStateOnly`, `clipPingPongAsLoop`, and
-    /// so on.
+    /// report reads as `transitionConditionUnresolved`, `clipPingPongAsLoop`,
+    /// and so on.
     private(set) var featureGaps: [String: Int] = [:]
     private(set) var featureGapTotal = 0
 
@@ -79,11 +79,40 @@ nonisolated struct BehaviorTally: Equatable, Sendable {
     /// A documented shortcut the evaluator takes. Each case is a worklist entry
     /// for a later issue, named in `docs/engine/behavior-runtime.md`.
     enum Gap: String, Sendable {
-        /// A `hkbStateMachine` ran its start state and nothing else: no
-        /// transitions, no wildcards, no transition effects. Issue #330.
-        case stateMachineStartStateOnly
         /// A state machine's start state could not be located by id.
         case stateMachineNoStartState
+        /// A transition fired while another was still blending, and the older
+        /// blend was dropped rather than nested inside the new one.
+        case stateMachineTransitionInterrupted
+        /// `m_randomTransitionEventId` fired and the destination was chosen by
+        /// highest `m_probability` rather than at random, because an unseeded
+        /// random source cannot be stepped deterministically.
+        case stateMachineRandomTransitionFixed
+        /// A transition's condition string did not fit the authored expression
+        /// grammar, so the transition was blocked.
+        case transitionConditionUnparsed
+        /// A transition's condition named a variable this graph does not
+        /// declare, so the transition was blocked.
+        case transitionConditionUnresolved
+        /// A transition named a `hkbTransitionEffect` that is not a
+        /// `hkbBlendingTransitionEffect`, and was run as an instant cut.
+        case transitionEffectUnevaluated
+        /// A transition effect asked for a blend curve with no formula here,
+        /// and was run as the smooth curve.
+        case transitionBlendCurveApproximated
+        /// `FLAG_DELAY_STATE_CHANGE` was set and the state change was made
+        /// immediately anyway.
+        case transitionStateChangeNotDelayed
+        /// `m_fromNestedStateId` was marked valid and ignored.
+        case transitionFromNestedStateIgnored
+        /// A trigger or initiate interval carried a non-zero time bound, which
+        /// is read as an event window only.
+        case transitionTimeIntervalIgnored
+        /// `m_toGeneratorStartTimeFraction` was non-zero and ignored.
+        case transitionStartFractionIgnored
+        /// A `BSSynchronizedClipGenerator` ran its wrapped clip without the
+        /// marker alignment, which needs the partner character item 14.5 adds.
+        case synchronizedClipMarkerIgnored
         /// `hkbClipGenerator` ping-pong playback was run as a plain loop.
         case clipPingPongAsLoop
         /// `hkbClipGenerator` user-controlled playback was run from
