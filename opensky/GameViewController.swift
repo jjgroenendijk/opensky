@@ -160,6 +160,10 @@ final class GameViewController: NSViewController {
     /// `GameViewControllerItems.swift`; stored here because extensions cannot
     /// add state.
     var worldItems = WorldItemBridgeState()
+    /// Player behavior graph + rendered body state (issue #189). The
+    /// implementation lives in `GameViewControllerPlayerBody.swift`; stored
+    /// here because extensions cannot add state.
+    var playerBodyBridge = PlayerBodyBridgeState()
 
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))

@@ -6,11 +6,16 @@ extension Renderer {
     func updateAnimations(deltaTime: Float) {
         animationTime += max(deltaTime, 0)
         let started = DispatchTime.now().uptimeNanoseconds
-        lastAnimationUpdatedBoneCount = if actorAnimationsEnabled {
+        let sceneBones = if actorAnimationsEnabled {
             scene.updateAnimations(at: animationTime)
         } else {
             scene.resetAnimationsToBindPose()
         }
+        // The player's own animation is stepped by the simulation, not by this
+        // clock; the call publishes the pose it already produced and honours the
+        // same A/B toggle (issue #189, PlayerAnimationPlayback.swift).
+        lastAnimationUpdatedBoneCount = sceneBones
+            + updatePlayerBodyAnimation(enabled: actorAnimationsEnabled)
         lastAnimationUpdateMS =
             Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
     }

@@ -14,8 +14,9 @@
 // `m_isAnnotation` set, so decoding `hkaAnnotationTrack` separately is not
 // needed for the vanilla player graph: an annotation and an authored trigger
 // arrive through the same array and fire through the same code below. A
-// trigger flagged `m_relativeToEndOfClip` is measured back from the window end,
-// and one flagged `m_acyclic` fires on the first cycle only.
+// trigger flagged `m_relativeToEndOfClip` carries an offset from the window end
+// rather than from its start — vanilla writes it negative, so it adds — and one
+// flagged `m_acyclic` fires on the first cycle only.
 
 import Foundation
 import simd
@@ -249,8 +250,15 @@ nonisolated extension BehaviorGraphInstance {
         markReached(arrayTarget)
         for trigger in array.triggers {
             guard !trigger.acyclic || state.cycleCount == 0 else { continue }
+            // `m_relativeToEndOfClip` measures `m_localTime` *from* the end,
+            // and vanilla writes it negative: `MT_JumpLand`'s `JumpLandEnd`
+            // trigger carries -0.8, meaning 0.8 seconds before the clip ends.
+            // The absolute time is therefore the window length plus a negative
+            // offset, not minus it — subtracting put the trigger past the end
+            // of the clip, where nothing ever crossed it, which is what parked
+            // the player graph in `JumpLandState` forever (issue #189).
             let at = trigger.relativeToEndOfClip
-                ? window.length - trigger.localTime
+                ? window.length + trigger.localTime
                 : trigger.localTime
             guard crossed(at, state: state, window: window, wrapped: wrapped) else {
                 continue

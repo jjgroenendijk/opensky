@@ -2,6 +2,44 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-04
+
+* **Third-person player body and camera (issue #189)**: milestone 14 item 14.6. The player
+  gets a rendered third-person body, assembled from `Skyrim.esm` `NPC_ 00000007` through the
+  same template and visual resolvers a streamed ACHR uses, held by the renderer rather than
+  by a cell so it survives every scene swap, and posed by the vanilla `0_master.hkx` behavior
+  graph through a `RenderAnimation` conformer that runs on the simulation clock rather than
+  the wall clock. `CameraMovementMode` gains `thirdPerson`; `G` cycles fly, first person, and
+  third person, and the `World > Camera` selector lists the same three. The orbit framing is
+  derived from the measured player capsule and the renderer's field of view, because the
+  install declares no camera settings of its own — no `fOverShoulder*` GMST, no `[Camera]`
+  section in `Skyrim_Default.ini` — and the zoom collides through the same
+  `CapsuleWorldCollider` seam the character does. See
+  [Terrain walk mode](/engine/walk-mode.md) and
+  [Actor idle animation](/engine/actor-animation.md).
+* **Behavior references resolve (issue #189)**: `0_master.hkx` is a shell whose locomotion
+  branches are `hkbBehaviorReferenceGenerator` nodes naming other behavior files.
+  `BehaviorReferenceSource` follows them into their own graph instances, sharing the
+  skeleton and clip source and coupling variables and events by name. See
+  [Behavior graph runtime](/engine/behavior-runtime.md).
+* **Clip triggers relative to the end of a clip had the wrong sign.**
+  `m_relativeToEndOfClip` carries an offset *from* the end and the vanilla data writes it
+  negative — `MT_JumpLand` places `JumpLandEnd` at -0.8 — so the absolute time adds rather
+  than subtracts. Subtracting put the trigger past the end of the clip, where nothing
+  crossed it, and that one sign parked the whole vanilla player graph in `JumpLandState`:
+  the root machine entered it on the first ungrounded step and never saw the event that
+  leaves. With it fixed the graph reaches its real locomotion states and loads 22 clips
+  where it had loaded 4.
+* **Blender children are masked per bone.** `hkbBoneWeightArray` scales a child's weight
+  bone by bone, which is what an upper-body layer needs; blending Skyrim's arm layers
+  without it averages three unrelated poses over the whole skeleton.
+* **Composed poses tear skinned actors (issue #354).** Writing any composed pose into a
+  skinned actor's palette shards the mesh, while the NIF bind palette renders it correctly —
+  including the rig's own reference pose, with no animation involved. The defect is in the
+  composition-to-palette path and predates milestone 14, so streamed NPCs are affected
+  through `ActorAnimationPlayback` as well. Recorded in
+  [Actor idle animation](/engine/actor-animation.md) and tracked separately.
+
 ## 2026-08-03
 
 * **One shared xcodebuild invocation (issue #344)**: `build`, `cli`, `test`, `test-one`,

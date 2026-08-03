@@ -2,10 +2,12 @@
 type: Subsystem
 title: Terrain walk mode
 description: Fixed-step player capsule over streamed terrain and static mesh collision with
-  gravity, collide-and-slide, slope limits, bounded step response, and the movement-authority
-  split that lets a behavior graph drive it.
-tags: [engine, world, terrain, collision, movement, streaming, locomotion, milestone-14]
-timestamp: 2026-08-03T00:00:00Z
+  gravity, collide-and-slide, slope limits, bounded step response, the movement-authority
+  split that lets a behavior graph drive it, and the third-person camera and rendered player
+  body that make it visible.
+tags: [engine, world, terrain, collision, movement, streaming, locomotion, camera,
+  milestone-14]
+timestamp: 2026-08-04T00:00:00Z
 ---
 
 # Terrain walk mode
@@ -16,7 +18,9 @@ mouse-look and WASD/Shift input. Q/E vertical input applies only in fly mode.
 
 Milestone 14 item 14.5 adds the other half: sprint, sneak, jump, and swim, and the rule that
 decides who moves the capsule once a
-[behavior graph](/engine/behavior-runtime.md) is attached to it.
+[behavior graph](/engine/behavior-runtime.md) is attached to it. Item 14.6 makes it visible:
+a third camera mode that watches the player from behind, and a rendered body driven by that
+graph.
 
 ## Contents
 
@@ -27,6 +31,9 @@ decides who moves the capsule once a
 * [Gaits](#gaits)
 * [Jump](#jump)
 * [Swim](#swim)
+* [Camera modes](#camera-modes)
+* [Third-person camera](#third-person-camera)
+* [The player body](#the-player-body)
 * [Response](#response)
 * [Scope boundary](#scope-boundary)
 * [Verification](#verification)
@@ -101,7 +108,7 @@ therefore stays on the authored number if either the setting or the gravity cons
 | Option (hold) | Sprint | Alt |
 | C | Sneak, a toggle rather than a held key | Ctrl |
 | Space | Jump | same |
-| G | Fly/walk toggle | OpenSky dev control |
+| G | Cycle camera mode: fly -> first person -> third person | OpenSky dev control; vanilla uses F for first/third |
 | F | Activate | E |
 
 Sneak deviates because macOS reserves Control-click as the secondary click, so Control cannot
@@ -181,6 +188,103 @@ capsule is driven toward the depth that puts its eye at the surface, or up and d
 swimmer's request (jump ascends, sneak descends), all clamped to 200 units/s. A swimmer
 resting on a shallow bottom still reports grounded, which is what lets it walk back out.
 
+## Camera modes
+
+`CameraMovementMode` has three cases and `G` cycles them: `fly`, `walk` (first person), and
+`thirdPerson`. The `World > Camera` selector lists the same three in the same order, so
+neither the key nor the panel can reach a mode the other cannot, which is what keeps the key
+an accelerator rather than the only way in (`docs/tools/app-ui.md`).
+
+`walk` and `thirdPerson` are the same simulated player: one capsule, one `LocomotionBridge`,
+one behavior graph. Only where the eye ends up differs. Everything gated on "the player
+exists" — the interaction ray, the trigger-volume capsule, the locomotion readout — tests
+`isPlayerControlled` rather than comparing against `.walk`, so a third-person session keeps
+all of it.
+
+Switching between the two player modes does not move the capsule. Only entering from fly
+re-seats it under the current eye; re-seating on every camera keypress would teleport the
+player by the orbit distance each time.
+
+## Third-person camera
+
+`ThirdPersonCamera` is pure math over the capsule pose and the look angles the shared
+`FreeFlyCamera` already owns. It integrates nothing, so switching modes changes where the eye
+is and nothing about where the player is looking.
+
+Every distance is derived from something OpenSky can measure, because the numbers vanilla's
+own camera uses are not in the data. That is a probe result, not an assumption: `Skyrim.esm`
+declares no `fOverShoulder*`, `fVanityMode*`, or `fMouseWheelZoom*` game setting, and the
+install's shipped `Skyrim_Default.ini` carries no `[Camera]` section at all. Those values
+live in the retail executable and in a user's own `My Games` profile, neither of which
+OpenSky reads. So the framing comes from the player capsule and the vertical field of view
+the renderer projects with:
+
+| Quantity | Value | Where it comes from |
+| --- | --- | --- |
+| Pivot height | 112 units | The capsule's own eye height — the point first person looks from |
+| Fill fraction | 0.6 | Chosen, not measured: the one taste decision, made once |
+| Orbit distance | ~167 units | `(height / 2 / fill) / tan(fov / 2)` at a 128-unit capsule and a 65-degree vertical fov |
+| Shoulder offset | 24 units | One capsule radius: the shoulder line of the measured capsule |
+| Collision radius | 8 units | A third of the capsule radius: thin enough to follow into a doorway, wide enough to clear the 10-unit near plane |
+| Minimum distance | 24 units | The shoulder offset, so a fully squeezed camera still sits outside the capsule silhouette |
+
+Sharing the pivot with first person is what makes the two modes agree about what is at the
+centre of the screen. The orbit is a sphere rather than a ring: pitch raises the eye and
+shortens its horizontal reach, at a constant radius.
+
+Collision-aware zoom goes through the same `CapsuleWorldCollider` seam the character
+controller collides with, so the camera sees exactly the shapes the player does and no second
+collision world exists to disagree with the first. A small probe capsule is swept from the
+pivot along the offset line; the answer is read back as a *distance* and re-applied to the
+original direction, because collide-and-slide can push the probe sideways and the camera only
+ever moves along its own line. A teleport resets the zoom, so the readout never reports the
+squeeze of the place the player just left.
+
+## The player body
+
+The player resolves through `ActorTemplateResolver` and `ActorVisualResolver` exactly as a
+streamed ACHR does, so slot masking, FaceGen, and the M12 equipment attachment path apply to
+it without a second implementation. Two things differ, and only two: the base record is named
+directly — `Skyrim.esm` `NPC_ 00000007`, editor ID `Player`, which `openskycli actor --npc
+00000007` resolves to a skeleton, an iron outfit, and a FaceGen head — because the player has
+no ACHR to read it from, and the transform comes from the character controller rather than
+from a record.
+
+The body is streaming-independent. `Renderer.setScene` replaces every cell-owned draw list
+several times a minute and the player is not owned by a cell; it is the thing the cells move
+around. So the body is held by the renderer directly, its draw groups are appended to the
+scene's at encode time for both the scene pass and the shadow pass, and its GPU allocations
+join the residency set once and stay.
+
+It moves every frame, and skinned geometry is placed twice: once by the draw's model matrix
+and once by the bone palette. The palette is pose-in-rig-space, so the world placement rides
+the model matrix, which means the draw groups are rebuilt when the transform changes rather
+than baked once. That rebuild is group accumulation over the handful of meshes one actor
+carries — no allocation, no upload — and it runs through `RenderScene(instances:)` so the
+player is grouped by exactly the rule every other placement is grouped by. A standing player
+costs one matrix comparison per frame.
+
+The world transform is `translation(feet) * rotationZ(yaw - pi/2)`. The quarter turn is the
+actor convention rather than a fudge: a Skyrim ACHR's `angleZ` is measured clockwise from
+north and `MatrixMath.placement` applies it as `rotationZ(-angleZ)`, so an actor placed at
+`angleZ` 0 stands unrotated and faces +Y — the character meshes are authored facing +Y —
+while walk-mode yaw is measured counterclockwise from +X.
+
+First person deliberately does not draw the body: the eye is inside its head, and the
+first-person body and arms are item 14.7. Fly mode does draw it, so a developer can fly
+around the character and look at it.
+
+The pose comes from the behavior graph through `PlayerAnimationPlayback`; the clock split and
+the open skinning defect are in [Actor idle animation](/engine/actor-animation.md).
+
+The player's graph is the vanilla `0_master.hkx`, loaded by `PlayerBehaviorGraph` with the
+character rig from `skeleton.hkx` and an on-demand clip source over the archived animation
+folder. It is attached to the already-running `LocomotionBridge` once the scene provider
+exists; a bridge with no graph stays a supported configuration and queues nothing, so there
+is nothing to replay at attach. The body is reassembled when the player's equipped set
+changes, whichever of the panel, a container menu, or a Papyrus script changed it — the
+wiring watches the resulting set rather than any one call site.
+
 ## Response
 
 ### Terrain response
@@ -255,6 +359,38 @@ Synthetic tests:
   two seconds of walking into a wall never integrating past it.
 * `MovementTypeRecordTests`: MOVT decode, truncated SPED dropped whole, load-order override,
   and the gait speeds and jump takeoff resolving with their sources.
+* `ThirdPersonCameraTests`: the three-mode cycle and which modes simulate a player, the
+  orbit distance recomputed from the capsule and the fov, the framing fov matching the
+  projection fov, the pivot equalling the first-person eye, the offset sitting behind and off
+  the shoulder, pitch orbiting at constant radius, open space leaving the camera at the orbit
+  distance, a wall behind the player pulling it in along its own line without passing
+  through, the minimum distance holding against a wall pressed to the player's back, and
+  reset restoring the orbit.
+* `PlayerBodyAnimationTests`: dense local poses composing through the parent chain, a short
+  pose keeping the reference for the rest, the conformer writing the composed matrices into
+  the palette, the simulation clock rather than the wall clock driving it, the bind-pose
+  reset being reversible, the bridge publishing a pose every step and dropping it on reset,
+  a bridge with no graph publishing nothing, and the body facing the camera yaw and standing
+  on the capsule feet across a full turn.
+
+Env-gated player drive (`make realtest
+T='PlayerBodyRealDataTests/drivesEveryLocomotionStateWithABody()'`): the vanilla graph, the
+vanilla player body, and a scripted route through idle, walk, run, sprint, sneak, jump, land,
+and swim over the launch cell's real terrain, asserting each gait resolves, each poses bones,
+and jump, land, and swim raise their events. The launch cell is dry land, so the swim leg
+runs against an injected water surface and the trace says so. Observed 2026-08-04: 22 clips
+loaded with zero misses, `mt_behavior.hkx` resolved through the behavior reference, and the
+state path reaching `MT_Locomotion_State`, `Sprint_State`, `MT_Sneak_Locomotion_State`, and
+`MTIdleTurnState`. Trace in gitignored `logs/player-locomotion-drive.log`.
+
+Env-gated render (`make realtest
+T='PlayerBodyRenderRealDataTests/drawsTheBodyInThirdPersonOnly()'`): the body drawn in the
+real launch cell from the resolved third-person camera. It asserts that the body draws in
+third person, that it does not draw in first person against the identical camera pose, that a
+locomotion state change moves pixels, and the M12/M13 cross-check that a reassembled body at
+the same pose is byte-identical. Observed 2026-08-04: 80,693 changed pixels against a
+no-body frame, 97,997 across a state change, and 0 across reassembly. Captures in gitignored
+`logs/`.
 
 Env-gated real-data drive (`make realtest
 T='LocomotionBridgeRealDataTests/drivesTheVanillaGraphThroughACell()'`): the vanilla
@@ -300,6 +436,23 @@ Read-only real-install acceptance at 640x360: 1,065 active physics frames, avg 1
 (62.9 fps), p95 29.69 ms, max 58.28 ms; exterior stair gain 22.82 units; interior crossing
 160.34 units; paired return feet `(31233.67, -9784.47, -4059.53)`. No clip, fall-through,
 unresolved penetration, destination mismatch, or build error.
+
+## Third-person acceptance surface
+
+Milestone: M14 player locomotion, item 14.6 (issue #189)
+Sidebar path: World > World > Camera
+Destination id: Destination-world
+Controls exercised: CameraMovementModeControl
+Readout: CameraStatsLabel
+Deterministic tests: ThirdPersonCameraTests, PlayerBodyAnimationTests, WorldPanelTests,
+M8AcceptanceTests, CameraInputStateTests, BehaviorClipTests
+Local A/B (optional, never committed): `logs/player-body-third-person.png` and
+`logs/player-body-bind-pose.png` from
+`make realtest T='PlayerBodyRenderRealDataTests/drawsTheBodyInThirdPersonOnly()'`
+
+The selector now offers Fly, Walk (first person), and Walk (third person), and
+`CameraStatsLabel` names the live mode so a bug report carries the camera that produced the
+frame. `G` cycles the same three.
 
 ## Movement-tuning acceptance surface
 

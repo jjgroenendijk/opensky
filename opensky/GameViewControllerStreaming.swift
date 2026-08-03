@@ -62,6 +62,9 @@ extension GameViewController {
         // Last in the multicast order (issue #177): the activation sound and
         // the recorded activation both land before the item leaves the world.
         wireWorldItems(provider: provider, streamer: controller)
+        // After the item runtime, which owns the equipped set the body is
+        // assembled from (issue #189).
+        wirePlayerBody(provider: provider, renderer: renderer)
         renderer.terrainSampler = { [weak controller] position in
             controller?.sampleTerrain(at: position)
         }
@@ -74,10 +77,12 @@ extension GameViewController {
         streamer = controller
     }
 
-    /// View ray for use-key targeting, walk mode only: the fly camera is a
-    /// developer view and never picks up a target.
+    /// View ray for use-key targeting, simulated-player modes only: the fly
+    /// camera is a developer view and never picks up a target. Third person
+    /// targets along the same view direction as first person; the eye it starts
+    /// from is the orbit position, which is what the user is aiming with.
     private static func interactionRay(of renderer: Renderer) -> InteractionRay? {
-        guard renderer.movementMode == .walk else { return nil }
+        guard renderer.movementMode.isPlayerControlled else { return nil }
         return InteractionRay(
             origin: renderer.freeFlyCamera.position,
             direction: renderer.freeFlyCamera.forward
@@ -85,11 +90,12 @@ extension GameViewController {
     }
 
     /// Authoritative capsule pose for this frame's trigger-volume test
-    /// (issue #173), gated on walk mode exactly as the interaction ray is.
+    /// (issue #173), gated on the simulated-player modes exactly as the
+    /// interaction ray is.
     /// The streamer receives the eye position, so the feet position comes from
     /// the walk controller rather than being re-derived downstream.
     private static func playerCapsule(of renderer: Renderer) -> PlayerCapsuleState? {
-        guard renderer.movementMode == .walk else { return nil }
+        guard renderer.movementMode.isPlayerControlled else { return nil }
         return PlayerCapsuleState(
             capsule: renderer.walkController.capsule,
             feetPosition: renderer.walkController.feetPosition

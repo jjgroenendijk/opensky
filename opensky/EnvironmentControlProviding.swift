@@ -114,15 +114,26 @@ nonisolated struct CameraPoseSnapshot: Equatable {
     var pitchDegrees: Float {
         pitch * 180 / .pi
     }
+
+    /// Short, stable name for one camera mode, used by the pasteable pose line
+    /// so a bug report says which camera produced a frame.
+    static func name(of mode: CameraMovementMode) -> String {
+        switch mode {
+        case .fly: "fly"
+        case .walk: "walk"
+        case .thirdPerson: "third person"
+        }
+    }
 }
 
 @MainActor
 protocol CameraControlProviding: AnyObject {
     var cameraPose: CameraPoseSnapshot { get }
     var movementConfiguration: PlayerMovementConfiguration { get }
-    /// Settable so fly/walk is reachable from the sidebar. The `G` key stays as
-    /// an accelerator over the same renderer state, per docs/tools/app-ui.md:
-    /// no dev behaviour reachable only by an unadvertised keystroke.
+    /// Settable so every camera mode is reachable from the sidebar. The `G`
+    /// key stays as an accelerator over the same renderer state, per
+    /// docs/tools/app-ui.md: no dev behaviour reachable only by an unadvertised
+    /// keystroke.
     var movementMode: CameraMovementMode { get set }
     /// One-line pose summary meant to be pasted into a bug report.
     var cameraPoseDescription: String { get }
@@ -141,7 +152,7 @@ extension CameraControlProviding {
         return String(
             format: "camera %@ | position %.1f, %.1f, %.1f | yaw %.1f deg | "
                 + "pitch %.1f deg | cell %d, %d",
-            pose.movementMode == .walk ? "walk" : "fly",
+            CameraPoseSnapshot.name(of: pose.movementMode),
             pose.position.x, pose.position.y, pose.position.z,
             pose.yawDegrees, pose.pitchDegrees, pose.cell.x, pose.cell.y
         )

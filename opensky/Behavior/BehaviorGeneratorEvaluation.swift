@@ -20,14 +20,18 @@
 import Foundation
 import simd
 
-/// One evaluated `hkbBlenderGeneratorChild`: its pose and the two weights the
-/// blender mixes it with. The pose blend uses `m_weight`; the root travel uses
-/// `m_worldFromModelWeight`, which is the member whose whole purpose is to let
-/// a child drive motion without driving the pose.
+/// One evaluated `hkbBlenderGeneratorChild`: its pose and the weights the
+/// blender mixes it with. The pose blend uses `m_weight` scaled per bone by
+/// `m_boneWeights`; the root travel uses `m_worldFromModelWeight`, which is the
+/// member whose whole purpose is to let a child drive motion without driving
+/// the pose.
 nonisolated struct BehaviorBlendChild {
     let pose: BehaviorPose
     let weight: Float
     let motionWeight: Float
+    /// One weight per skeleton bone, or nil for a child that contributes at
+    /// full weight everywhere.
+    let boneWeights: [Float]?
 }
 
 nonisolated extension BehaviorGraphInstance {
@@ -132,9 +136,8 @@ nonisolated extension BehaviorGraphInstance {
             return evaluateSynchronizedClip(
                 synced, depth: depth, deltaTime: deltaTime
             )
-        case is HKBBehaviorReferenceGenerator:
-            tally.note(.unresolvedBehaviorReference)
-            return skeleton.restPose
+        case let reference as HKBBehaviorReferenceGenerator:
+            return evaluateBehaviorReference(reference, deltaTime: deltaTime)
         default:
             _ = bound
             tally.noteUnevaluatedGenerator(object.className)
@@ -167,7 +170,12 @@ nonisolated extension BehaviorGraphInstance {
             blender, threshold: threshold, depth: depth, deltaTime: deltaTime
         )
         var blended = BehaviorPoseMath.blend(
-            children: children.map { ($0.pose, $0.weight) }, fallback: skeleton.restPose
+            masked: children.map {
+                BehaviorPoseMath.MaskedChild(
+                    pose: $0.pose, weight: $0.weight, boneWeights: $0.boneWeights
+                )
+            },
+            fallback: skeleton.restPose
         )
         blended.rootMotion = BehaviorPoseMath
             .blend(
@@ -227,16 +235,26 @@ nonisolated extension BehaviorGraphInstance {
         let bound = boundValues(of: child)
         let weight = bound.float("m_weight", or: child.weight)
         guard weight > threshold else { return nil }
-        if child.boneWeights != nil {
-            tally.note(.blenderBoneWeights)
-        }
         return BehaviorBlendChild(
             pose: evaluateGenerator(at: child.generator, depth: depth, deltaTime: deltaTime),
             weight: weight,
             motionWeight: bound.float(
                 "m_worldFromModelWeight", or: child.worldFromModelWeight
-            )
+            ),
+            boneWeights: boneWeights(at: child.boneWeights)
         )
+    }
+
+    /// The decoded per-bone mask at `target`, honouring a binding on it, or nil
+    /// when the child carries none.
+    private func boneWeights(at target: HKXPointerTarget?) -> [Float]? {
+        guard
+            let target,
+            let array = object(at: target, as: HKBBoneWeightArray.self),
+            !array.boneWeights.isEmpty
+        else { return nil }
+        markReached(target)
+        return array.boneWeights
     }
 
     private func noteBlendGaps(_ blender: HKBBlenderFields) {

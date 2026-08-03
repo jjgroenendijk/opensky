@@ -39,6 +39,7 @@ different failure modes.
 * [Clip synchronization](#clip-synchronization)
 * [Clips](#clips)
 * [Blending and pose math](#blending-and-pose-math)
+* [Behavior references](#behavior-references)
 * [Modifiers](#modifiers)
 * [Output contract](#output-contract)
 * [The locomotion bridge](#the-locomotion-bridge)
@@ -138,7 +139,7 @@ rather than guessed at.
 | Class | What it does here |
 | --- | --- |
 | `hkbClipGenerator` | Full: see [Clips](#clips) |
-| `hkbBlenderGenerator` | Weighted blend of every child; see [Blending](#blending-and-pose-math) |
+| `hkbBlenderGenerator` | Weighted blend of every child, masked per bone; see [Blending](#blending-and-pose-math) |
 | `hkbManualSelectorGenerator` | Runs the child at `selectedGeneratorIndex`; out of range is the reference pose |
 | `hkbModifierGenerator` | Runs its child, then its modifier over the result |
 | `hkbPoseMatchingGenerator` | Runs as its blender base; tallies `poseMatchingAsBlender` |
@@ -148,7 +149,7 @@ rather than guessed at.
 | `BSCyclicBlendTransitionGenerator` | Wrapped blender only; tallied partial |
 | `BSOffsetAnimationGenerator` | Default generator only, offset clip ignored; tallied partial |
 | `BSSynchronizedClipGenerator` | Wrapped clip, phase-synchronized; marker alignment tallied |
-| `hkbBehaviorReferenceGenerator` | Reference pose; tallies `unresolvedBehaviorReference` |
+| `hkbBehaviorReferenceGenerator` | Full: see [Behavior references](#behavior-references) |
 | anything else | Reference pose; named in `unevaluatedGenerators` |
 
 ## State machines
@@ -178,9 +179,8 @@ last update reached, in walk order, outermost first — machine name, state name
 crossfade weight. That readout is what the real-data test asserts a state path against and
 what items 14.5 and 14.6 read.
 
-`hkbBehaviorReferenceGenerator` still produces the reference pose and tallies
-`unresolvedBehaviorReference`: resolving a named behavior file into a second loaded graph
-needs the multi-file loader item 14.5 brings.
+A state whose generator is a `hkbBehaviorReferenceGenerator` runs another behavior file
+entirely; see [Behavior references](#behavior-references).
 
 ## Transitions
 
@@ -349,9 +349,19 @@ are baked into `hkbClipTriggerArray` at export with `m_isAnnotation` set, so dec
 `hkaAnnotationTrack` separately is not needed for the vanilla player graph: an annotation
 and an authored trigger arrive through the same array and fire through the same code. A
 trigger fires when the update steps over it, on the half-open interval
-`(previous, current]`; `m_relativeToEndOfClip` measures back from the window end, and
-`m_acyclic` fires on the first cycle only. Clip-done events are these, not a separate
-mechanism.
+`(previous, current]`; `m_acyclic` fires on the first cycle only. Clip-done events are
+these, not a separate mechanism.
+
+`m_relativeToEndOfClip` carries an offset *from* the end rather than a distance back from
+it, and the vanilla data writes that offset negative: `0_master.hkx`'s `MT_JumpLand` clip
+places its `JumpLandEnd` trigger at `m_localTime` -0.8, meaning 0.8 seconds before the clip
+finishes. The absolute time is therefore `window.length + m_localTime`. Subtracting instead
+put the trigger 0.8 seconds *past* the end of the clip, where nothing ever crossed it, and
+that one sign parked the whole vanilla player graph: the root machine entered
+`JumpLandState` on the first ungrounded step and never saw the `JumpLandEnd` that leaves it,
+so the locomotion states below it were unreachable. A positive offset from the end names a
+time outside the clip and is refused rather than folded back inside — a trigger outside its
+own clip is malformed data, and guessing at it would fire an event the author never placed.
 
 ## Blending and pose math
 
@@ -377,6 +387,50 @@ the reference pose instead of a divide by zero.
 
 The pose blend uses `m_weight`; the root travel uses `m_worldFromModelWeight`, which is
 the member whose whole purpose is to let a child drive motion without driving the pose.
+
+A child's `m_boneWeights` (`hkbBoneWeightArray`) scales its weight bone by bone, and the
+fold above runs once per bone with that scaling applied. This is what an upper-body layer
+needs: Skyrim's player graph blends a full-body locomotion pose with a left-arm pose and a
+right-arm pose, and each arm child masks itself to its own arm. Blending them without the
+mask averages three unrelated poses over the whole skeleton. A mask shorter than the
+skeleton contributes at full weight past its end rather than at zero, because a short mask
+is ordinary in modded data and reading the tail as zero would silently drop every bone the
+author did not reach.
+
+## Behavior references
+
+`0_master.hkx` is a shell. Its jump, movement, combat, and magic branches are
+`hkbBehaviorReferenceGenerator` nodes that name another behavior file — `mt_behavior.hkx`,
+`1hm_behavior.hkx`, and the rest of the 18 files beside it — rather than pointing at a
+subtree, and every locomotion state the player has lives behind one of them.
+
+A reference resolves through `BehaviorReferenceSource`, which the engine answers from the
+archives (`InstallBehaviorReferenceSource`) and a test answers from a table built in code.
+The referenced file becomes its own `BehaviorGraphInstance` over its own decode, with the
+parent's skeleton and the parent's clip source, because it has its own variables, its own
+events, and its own per-node state exactly as Havok's `hkbBehaviorGraph` does.
+
+The two instances are coupled by name and nothing else:
+
+* Variables cross parent to child before every child update, for every name the child
+  declares that the parent also declares. Names the child alone declares keep whatever its
+  own file initialized them to, which is what a sub-behavior's private state is.
+* Events cross both ways. The parent's active set is raised on the child before its update;
+  what the child fires is raised back on the parent, visible on the parent's next update —
+  the same one-update latency every event in this evaluator already has.
+* The child's `activeStates` are appended to the parent's, so the published state path runs
+  through the reference without a seam.
+* A reference reached twice in one parent update is evaluated once. Without the memo the
+  child would advance its clock once per reach and run fast.
+* A child that references one of its own ancestors is refused by name. Cycles cannot be
+  ruled out in modded data, and refusing by name rather than by recursion depth means a
+  legitimate deep nesting is not mistaken for one.
+
+Lookup is on the file name alone, case-insensitively, against the folder the root behavior
+was loaded from. That keeps the first-person set under
+`meshes\actors\character\_1stperson\behaviors\` and the third-person set apart without
+either having to be named, which is what item 14.7 needs when it runs both at once. A name
+no source can supply still costs one `unresolvedBehaviorReference` entry.
 
 ## Modifiers
 
@@ -558,7 +612,10 @@ zero undecodable objects, zero unevaluated generator classes. The ranked gaps we
 `unresolvedBehaviorReference` 480, `BSEventOnFalseToTrueModifier` 960,
 `hkbEvaluateExpressionModifier` 840, `BSIsActiveModifier` 720,
 `BSCyclicBlendTransitionGenerator` 480, `stateMachineNoStartState` 4. That list is the
-worklist for items 14.5 and 14.6. The 8,880 `stateMachineStartStateOnly` entries item 14.3
+worklist for items 14.5 and 14.6. Item 14.6 cleared two of its entries — behavior
+references now resolve and blender bone masks are applied — so a rerun no longer reports
+`blenderBoneWeights` at all and reports `unresolvedBehaviorReference` only for a name the
+source cannot supply. The 8,880 `stateMachineStartStateOnly` entries item 14.3
 reported are gone: every machine now runs its transitions, and stepping the graphs with no
 input produces the same generator count it did before, because with no events raised there
 is nothing to transition to.

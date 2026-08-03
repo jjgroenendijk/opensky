@@ -1,6 +1,9 @@
-// World > Camera section: the live pose readout plus the fly/walk selector.
-// Movement mode used to be reachable only by pressing `G`; the selector is the
+// World > Camera section: the live pose readout plus the camera-mode selector.
+// Camera mode used to be reachable only by pressing `G`; the selector is the
 // visible, settable surface the key now accelerates (docs/tools/app-ui.md).
+// The key cycles fly -> walk -> third person and the popup lists the same three
+// in the same order, so neither can offer a mode the other cannot reach
+// (issue #189).
 // "Copy pose" puts the shared one-line pose description on the pasteboard so a
 // bug report can carry the exact camera that produced a frame.
 
@@ -18,7 +21,7 @@ final class CameraSection: PanelSectionViewController {
     let movementModeControl = NSPopUpButton(frame: .zero, pullsDown: false)
     let copyPoseControl = NSButton(title: "Copy pose", target: nil, action: nil)
     private let statsLabel = PanelComponents.statsLabel(identifier: "CameraStatsLabel")
-    private let modes: [CameraMovementMode] = [.fly, .walk]
+    private let modes = CameraMovementMode.allCases
 
     override var sectionTitle: String {
         "Camera"
@@ -89,12 +92,14 @@ final class CameraSection: PanelSectionViewController {
             Position: %.1f, %.1f, %.1f
             Yaw: %.1f deg  Pitch: %.1f deg
             Cell: %d, %d
+            Camera: %@
             Walk: %.1f units/s (%@)
             Run: %.1f units/s (%@)
             Step: %.1f units (%@)
             """,
             pose.position.x, pose.position.y, pose.position.z,
             pose.yawDegrees, pose.pitchDegrees, pose.cell.x, pose.cell.y,
+            Self.title(for: pose.movementMode),
             movement.walkSpeed.value, movement.walkSpeed.source,
             movement.runSpeed.value, movement.runSpeed.source,
             movement.stepHeight.value, movement.stepHeight.source
@@ -119,7 +124,8 @@ final class CameraSection: PanelSectionViewController {
     private static func title(for mode: CameraMovementMode) -> String {
         switch mode {
         case .fly: "Fly"
-        case .walk: "Walk"
+        case .walk: "Walk (first person)"
+        case .thirdPerson: "Walk (third person)"
         }
     }
 }

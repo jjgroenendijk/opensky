@@ -125,12 +125,10 @@ nonisolated struct BehaviorTally: Equatable, Sendable {
         case blenderParametricAsWeights
         /// A blender subtracted-last-child blend was run as an ordinary blend.
         case blenderSubtractLastChild
-        /// A blender child's per-bone weight mask was ignored.
-        case blenderBoneWeights
         /// `hkbPoseMatchingGenerator` was run as its blender base.
         case poseMatchingAsBlender
-        /// A `hkbBehaviorReferenceGenerator` names a behavior file this
-        /// instance does not hold. Issue #190 resolves these.
+        /// A `hkbBehaviorReferenceGenerator` names a behavior file no source
+        /// could supply (`BehaviorReferenceSource`).
         case unresolvedBehaviorReference
         /// A generator's `m_enable`-equivalent binding disabled it, which the
         /// evaluator honours by returning the reference pose.

@@ -100,7 +100,27 @@ nonisolated final class BehaviorGraphInstance {
 
     private let source: any BehaviorObjectSource
     private let clips: any BehaviorClipSource
-    private let root: HKXPointerTarget?
+    let root: HKXPointerTarget?
+
+    /// Where `hkbBehaviorReferenceGenerator` names resolve (issue #189). Nil
+    /// leaves every reference unresolved and tallied, which is what items 14.3
+    /// and 14.4 ran with.
+    var references: (any BehaviorReferenceSource)?
+    /// Child instances by reference key, built on first reach. The optional is
+    /// stored so a name that will not resolve is looked up once.
+    var referencedGraphs: [String: BehaviorGraphInstance?] = [:]
+    /// What each referenced graph produced during the update in progress, so a
+    /// reference reached twice advances its child's clock once.
+    var referencedResults: [String: BehaviorUpdateResult] = [:]
+    /// Reference keys of this instance and everything above it, so a modded
+    /// graph that references its own ancestor is refused by name rather than
+    /// recursed into.
+    var referenceAncestry: Set<String> = []
+
+    /// The clip source, shared with any graph this one references.
+    var clipSource: any BehaviorClipSource {
+        clips
+    }
 
     private(set) var variables: BehaviorVariableStore
     /// The event queue and the tally are internal rather than `private(set)`
@@ -253,6 +273,7 @@ nonisolated final class BehaviorGraphInstance {
         let previouslyReached = reachedThisUpdate
         reachedThisUpdate = []
         activeStatesThisUpdate = []
+        referencedResults = [:]
         pendingClipPhase = nil
         pendingNestedStateId = nil
         let pose = evaluateGenerator(at: root, depth: 0, deltaTime: step)

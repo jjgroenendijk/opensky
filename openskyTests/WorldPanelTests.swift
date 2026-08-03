@@ -108,7 +108,7 @@ struct WorldPanelTests {
         panel.startInspecting()
         defer { panel.stopInspecting() }
 
-        #expect(panel.cameraMovementModeControl.titleOfSelectedItem == "Walk")
+        #expect(panel.cameraMovementModeControl.titleOfSelectedItem == "Walk (first person)")
 
         panel.cameraMovementModeControl.selectItem(withTitle: "Fly")
         let control = panel.cameraMovementModeControl

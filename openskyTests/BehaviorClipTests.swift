@@ -86,11 +86,18 @@ struct BehaviorClipTests {
         #expect(graph.update(deltaTime: 0.1).firedEvents.isEmpty)
     }
 
-    @Test func aTriggerRelativeToTheEndIsMeasuredBackFromIt() throws {
+    /// `m_relativeToEndOfClip` carries an offset *from* the end, and vanilla
+    /// writes it negative: `0_master.hkx`'s `MT_JumpLand` clip carries its
+    /// `JumpLandEnd` trigger at -0.8, meaning 0.8 seconds before the clip ends.
+    /// So the absolute time is the window length plus the offset. Subtracting
+    /// it instead put the trigger past the end of the clip, where nothing ever
+    /// crossed it, and parked the vanilla player graph in `JumpLandState`
+    /// forever (issue #189).
+    @Test func aTriggerRelativeToTheEndIsOffsetFromIt() throws {
         let (graph, _) = try splineGraph(
             mode: 1,
             triggers: [BehaviorTriggerSpec(
-                localTime: 0.2,
+                localTime: -0.2,
                 eventId: 0,
                 relativeToEnd: true,
                 acyclic: false
@@ -102,6 +109,28 @@ struct BehaviorClipTests {
         // 0.5 + 0.4 = 0.9, which steps over the 0.8 mark.
         graph.update(deltaTime: 0.3)
         #expect(graph.update(deltaTime: 0.05).firedEvents.map(\.name) == ["mark"])
+    }
+
+    /// A positive offset from the end names a time past the clip, which nothing
+    /// can cross. Refused rather than folded back inside, because a trigger
+    /// outside its own clip is malformed data and guessing at it would fire an
+    /// event the author never placed.
+    @Test func aTriggerPastTheEndOfTheClipNeverFires() throws {
+        let (graph, _) = try splineGraph(
+            mode: 1,
+            triggers: [BehaviorTriggerSpec(
+                localTime: 0.2,
+                eventId: 0,
+                relativeToEnd: true,
+                acyclic: false
+            )],
+            events: ["mark"]
+        )
+        var fired = 0
+        for _ in 0 ..< 60 {
+            fired += graph.update(deltaTime: 0.1).firedEvents.count
+        }
+        #expect(fired == 0)
     }
 
     @Test func anAcyclicTriggerFiresOnTheFirstCycleOnly() throws {

@@ -151,8 +151,8 @@ extension Renderer {
         lastShadowDrawStats = ShadowDrawStats()
 
         guard shadowRenders else { return true }
-        let hasCasters = scene.opaque.contains(where: \.castsShadows)
-            || scene.alphaTested.contains(where: \.castsShadows)
+        let hasCasters = opaqueDrawGroups.contains(where: \.castsShadows)
+            || alphaTestedDrawGroups.contains(where: \.castsShadows)
             || !scene.terrain.isEmpty
         guard hasCasters else { return true }
 
@@ -202,8 +202,12 @@ extension Renderer {
                 slot: state.slot,
                 encoder: encoder
             )
-            encodeCasterGroups(scene.opaque, alphaTested: false, in: context, state: &state)
-            encodeCasterGroups(scene.alphaTested, alphaTested: true, in: context, state: &state)
+            encodeCasterGroups(
+                opaqueDrawGroups, alphaTested: false, in: context, state: &state
+            )
+            encodeCasterGroups(
+                alphaTestedDrawGroups, alphaTested: true, in: context, state: &state
+            )
             encodeShadowTerrain(in: context, state: &state)
             // MTL4 does not auto-track cross-encoder hazards: without a barrier
             // the scene pass may sample the shadow map before these depth

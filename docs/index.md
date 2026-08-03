@@ -129,17 +129,19 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   yaw/pitch pose -> view matrix, movement speeds tuned to Skyrim scale.
 * [Terrain walk mode](/engine/walk-mode.md) - fixed-step capsule, terrain + mesh
   collide-and-slide, slope/ceiling response, bounded stairs, door pose reset, build-aware
-  route timing gate.
+  route timing gate, the three camera modes, the third-person orbit camera with
+  collision-aware zoom, and the rendered player body.
 * [Static collision world](/engine/collision-world.md) - per-cell placed bhk shapes,
   immutable BVH broadphase, fail-loud geometry accounting, streaming lifetime + budgets,
   trigger volumes and their per-frame OnTriggerEnter/OnTriggerLeave occupancy diff.
 * [Actor idle animation](/engine/actor-animation.md) - HKX idle sampling, skeleton-world
-  pose composition, NIF palette refresh, streamed lifetime, fallback accounting + budget.
+  pose composition, NIF palette refresh, streamed lifetime, fallback accounting + budget,
+  the graph-driven player path and its simulation clock.
 * [Behavior graph runtime](/engine/behavior-runtime.md) - headless Havok Behavior
   evaluation: instance model, fixed update order, variables, events, bindings, clip time
   and triggers, weighted blends, state machines with event-driven transitions, crossfades
   and nesting, the transition-condition language, clip phase synchronization, root-motion
-  extraction, and the honest-coverage tally.
+  extraction, multi-file behavior references, and the honest-coverage tally.
 * [Living environment integration](/engine/living-environment.md) - combined M7 runtime,
   app A/B controls, exterior/interior evidence + frame/build/footprint gate.
 * [Menu mode](/engine/menu-mode.md) - push/pop menu stack, world-vs-menu input-capture

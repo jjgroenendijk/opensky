@@ -11,7 +11,7 @@ extension GameViewController: PlayerLocomotionControlProviding {
         let bridge = renderer.locomotion
         return PlayerLocomotionSnapshot(
             rendererAvailable: true,
-            walkModeActive: renderer.movementMode == .walk,
+            walkModeActive: renderer.movementMode.isPlayerControlled,
             status: bridge.status,
             bindings: locomotionBindings(),
             configuration: bridge.configuration

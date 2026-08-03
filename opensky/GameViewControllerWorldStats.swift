@@ -21,7 +21,7 @@ extension GameViewController: CameraControlProviding {
 
     var movementMode: CameraMovementMode {
         get { renderer?.movementMode ?? .fly }
-        set { renderer?.movementMode = newValue }
+        set { renderer?.setMovementMode(newValue) }
     }
 
     var movementConfiguration: PlayerMovementConfiguration {
@@ -47,7 +47,7 @@ extension GameViewController: TriggerControlProviding {
             occupiedCount: streamer.occupiedTriggers.count,
             // Read off the renderer, the same gate
             // `GameViewControllerStreaming.playerCapsule(of:)` tests.
-            walkModeActive: renderer?.movementMode == .walk,
+            walkModeActive: renderer?.movementMode.isPlayerControlled ?? false,
             recentTransitions: streamer.triggerLog.lines,
             recordedTransitionCount: streamer.triggerLog.recordedCount
         )

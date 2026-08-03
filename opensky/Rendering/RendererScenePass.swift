@@ -411,14 +411,14 @@ extension Renderer {
         encoder.setDepthStencilState(depthState)
         var state = ScenePassState(encoder: encoder, slot: slot, frustum: frustum)
         encode(
-            groups: scene.opaque,
+            groups: opaqueDrawGroups,
             staticPipeline: opaquePipeline,
             skinnedPipeline: skinnedOpaquePipeline,
             state: &state
         )
         encodeTerrain(items: scene.terrain, state: &state)
         encode(
-            groups: scene.alphaTested,
+            groups: alphaTestedDrawGroups,
             staticPipeline: alphaTestPipeline,
             skinnedPipeline: skinnedAlphaTestPipeline,
             state: &state

@@ -165,6 +165,86 @@ nonisolated enum BehaviorPoseMath {
         return result
     }
 
+    /// One child of a per-bone blend: its pose, its whole-pose weight, and the
+    /// per-bone mask that scales that weight bone by bone (`hkbBoneWeightArray`).
+    /// A nil mask means the child contributes at full weight everywhere.
+    nonisolated struct MaskedChild {
+        let pose: BehaviorPose
+        let weight: Float
+        let boneWeights: [Float]?
+
+        /// This child's effective weight on one bone. Bones past the end of the
+        /// mask contribute at full weight: a mask shorter than the skeleton is
+        /// ordinary in modded data, and treating the tail as zero would silently
+        /// drop every bone the author did not reach.
+        func weight(ofBone index: Int) -> Float {
+            guard let boneWeights, boneWeights.indices.contains(index) else {
+                return weight
+            }
+            return weight * boneWeights[index]
+        }
+    }
+
+    /// Weight blend of any number of children, each masked per bone.
+    ///
+    /// This is what a vanilla upper-body blend needs: Skyrim's player graph
+    /// blends a full-body locomotion pose with a left-arm pose and a right-arm
+    /// pose, and each of the arm children carries an `hkbBoneWeightArray` that
+    /// is 1 on its own arm and 0 everywhere else. Blending them without the
+    /// mask averages three unrelated poses over the whole skeleton, which pulls
+    /// limbs apart rather than layering them (issue #189).
+    ///
+    /// The fold is the same left-to-right normalized one
+    /// `blend(children:fallback:)` performs, run once per bone, so a child with
+    /// no mask produces exactly the unmasked result.
+    static func blend(masked children: [MaskedChild], fallback: BehaviorPose)
+        -> BehaviorPose
+    {
+        let contributing = children.filter { $0.weight > 0 && $0.weight.isFinite }
+        guard !contributing.isEmpty else { return fallback }
+        let boneCount = contributing.map(\.pose.bones.count).max() ?? 0
+        guard boneCount > 0 else { return fallback }
+        var bones = fallback.bones
+        if bones.count < boneCount {
+            bones += Array(repeating: bones.last ?? identityPose, count: boneCount - bones.count)
+        }
+        for index in 0 ..< boneCount {
+            if let blended = blend(bone: index, of: contributing) {
+                bones[index] = blended
+            }
+        }
+        return BehaviorPose(bones: bones, rootMotion: fallback.rootMotion)
+    }
+
+    /// One bone folded across the children that reach it, or nil when none do.
+    private static func blend(bone index: Int, of children: [MaskedChild]) -> HKABonePose? {
+        var result: HKABonePose?
+        var total: Float = 0
+        for child in children {
+            guard child.pose.bones.indices.contains(index) else { continue }
+            let weight = child.weight(ofBone: index)
+            guard weight > 0, weight.isFinite else { continue }
+            guard let current = result else {
+                result = child.pose.bones[index]
+                total = weight
+                continue
+            }
+            let next = total + weight
+            guard next > 0 else { continue }
+            result = blend(current, child.pose.bones[index], weight: weight / next)
+            total = next
+        }
+        return result
+    }
+
+    /// A bone at rest, used only to pad a fallback pose shorter than the
+    /// children being blended over it.
+    private static let identityPose = HKABonePose(
+        translation: SIMD3<Float>(),
+        rotation: identityRotation,
+        scale: SIMD3<Float>(repeating: 1)
+    )
+
     /// Overwrites the bones a clip sampled onto a copy of `base`, dropping
     /// samples that name a bone the skeleton does not have.
     static func applying(
