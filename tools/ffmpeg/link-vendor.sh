@@ -9,12 +9,17 @@
 # deliberately holds its own copy keeps it.
 #
 # The placeholder .xcfilelist files matter for the same reason. The Xcode project declares
-# `$(SRCROOT)/.vendor/ffmpeg/embed-inputs.xcfilelist` as a build input of the "Embed
-# vendored ffmpeg" phase, and Xcode resolves build inputs before it runs any phase. With
-# the file absent the build dies on an unresolvable input, which says nothing useful; with
-# an empty file present, planning finishes and the "Check vendored ffmpeg" phase runs and
-# reports that the prefix needs `make bootstrap`. Placeholders are only ever written when
-# the prefix has no `lib/` directory, so a real build is never overwritten.
+# `$(SRCROOT)/.vendor/ffmpeg/embed-inputs.xcfilelist` as a build input of all three ffmpeg
+# phases, and Xcode resolves build inputs before it runs any phase. With the file absent the
+# build dies on an unresolvable input, which says nothing useful; with an empty file
+# present, planning finishes and the "Check vendored ffmpeg" phase runs and reports that the
+# prefix needs `make bootstrap`. Placeholders are only ever written when the prefix has no
+# `lib/` directory, so a real build is never overwritten.
+#
+# Truncating the list is also what makes a vanished prefix re-run the check phases at all.
+# They are no longer declared alwaysOutOfDate and skip themselves once their stamp file
+# exists, so the list file is declared as an input in its own right and this rewrite of it
+# is the change Xcode notices.
 #
 # Invoked by `make vendor-link`, by every xcodebuild-driving make target, and by
 # tools/vendor-ffmpeg.sh. Idempotent, and silent when there is nothing to do.

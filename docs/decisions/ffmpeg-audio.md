@@ -4,7 +4,7 @@ title: ffmpeg for audio decode
 description: Vendor a minimal decode-only LGPL ffmpeg built from source, link it through a
   system-library module map, and embed the three dylibs in the app bundle.
 tags: [decision, audio, dependency, licensing, ffmpeg]
-timestamp: 2026-07-25T00:00:00Z
+timestamp: 2026-08-04T00:00:00Z
 ---
 
 # ffmpeg for audio decode
@@ -152,6 +152,43 @@ phase's declared inputs before it runs any phase, `check` included, and a missin
 `check` phase's friendly message. Issue #275 is the evidence: a linked git worktree starts
 with no `.vendor` at all, so `$(SRCROOT)/.vendor/ffmpeg/embed-inputs.xcfilelist` did not
 exist and the build died during planning, before `check` ever ran.
+
+### Staying out of the way of an incremental build
+
+All three phases were originally declared `alwaysOutOfDate = 1`, which told Xcode to run
+them on every build no matter what had changed. That made every no-op `make build` re-copy
+and re-sign the three dylibs, dirty `Contents/Frameworks`, and so force Xcode to re-sign the
+whole app bundle. Issue #338 removed the flag from all three and gave each phase real
+dependency tracking instead.
+
+The `embed` phase already declared the right inputs and outputs through its two
+`.xcfilelist` files; dropping the flag simply lets them do their job. The `check` phases
+declared no outputs at all, and a script phase with no declared outputs is out of date by
+definition, so each gained a stamp file:
+
+```text
+outputPaths = (
+    "$(DERIVED_FILE_DIR)/ffmpeg-check-$(TARGET_NAME).stamp",
+);
+```
+
+with `touch "$SCRIPT_OUTPUT_FILE_0"` appended to the script. A clean build has no stamp, so
+the validation still runs before anything can fail on a missing library.
+
+All three phases previously listed the directory `$(SRCROOT)/.vendor/ffmpeg/lib` as an
+input. Xcode compares modification times, and a directory's mtime changes only when entries
+are added or removed, so a dylib rebuilt in place would not have re-triggered the phase.
+Each phase now declares `embed-inputs.xcfilelist`, which names the resolved, version-numbered
+dylibs, both as an `inputFileListPaths` entry (so the dylibs themselves are tracked) and as a
+plain `inputPaths` entry (so the list file's own contents are tracked). That second entry is
+what preserves the friendly missing-prefix message: `tools/ffmpeg/link-vendor.sh` truncates
+the list to a placeholder whenever the prefix has no `lib/` directory, which changes the
+file's mtime and re-runs `check` even though its stamp survives from an earlier build.
+
+Verified against the real build: a clean build embeds and validates; touching a dylib under
+`.vendor/ffmpeg/lib` re-runs both `check` and `embed`; a second `make build` or `make cli`
+runs no script phase and no `CodeSign` step; and removing the prefix still fails with
+`error: vendored ffmpeg missing at ... run 'make bootstrap'`.
 
 ### Linked worktrees
 
