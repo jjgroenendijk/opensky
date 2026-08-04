@@ -54,13 +54,21 @@ struct AppSidebarModelTests {
         _ = sidebar.view
         sidebar.select(id: "world")
 
-        #expect(try #require(sidebar.overrideIndicatorIsVisible(destinationID: "world")) == false)
+        /// `as Bool?` is load-bearing: given a `Bool?`, `#require` cannot tell
+        /// "unwrap this optional" from "check this boolean is true" and reports
+        /// the requirement as ambiguous. Spelling the optional out picks the
+        /// unwrapping overload.
+        func indicatorIsVisible() throws -> Bool {
+            try #require(sidebar.overrideIndicatorIsVisible(destinationID: "world") as Bool?)
+        }
+
+        #expect(try indicatorIsVisible() == false)
         overridden.insert("world")
         sidebar.refreshOverrideIndicators()
-        #expect(try #require(sidebar.overrideIndicatorIsVisible(destinationID: "world")) == true)
+        #expect(try indicatorIsVisible() == true)
 
         overridden.remove("world")
         sidebar.refreshOverrideIndicators()
-        #expect(try #require(sidebar.overrideIndicatorIsVisible(destinationID: "world")) == false)
+        #expect(try indicatorIsVisible() == false)
     }
 }

@@ -54,14 +54,15 @@ enum SWFInventoryMenuCommand {
     /// to the install; the inventory lives in an in-memory `WorldStateStore`.
     @MainActor
     private static func makeModel(context: CLIContext) throws -> InventoryMenuModel {
-        let baselines = try InventoryBaselineResolver.build(from: context.loadSkyrimESM())
+        let file = try context.loadSkyrimESM()
+        let baselines = InventoryBaselineResolver.build(from: file)
         let inventory = InventoryRuntime(store: WorldStateStore(), baselines: baselines)
         for family in ItemDefinition.Family.allCases {
             for definition in baselines.items.definitions(of: family).prefix(3) {
-                try? inventory.add(definition.formID, count: 2, to: .player)
+                _ = try? inventory.add(definition.formID, count: 2, to: .player)
             }
         }
-        try? inventory.add(InventoryRuntime.vanillaGoldFormID, count: 137, to: .player)
+        _ = try? inventory.add(InventoryRuntime.vanillaGoldFormID, count: 137, to: .player)
         return InventoryMenuModel.build(holder: .player, runtime: inventory)
     }
 

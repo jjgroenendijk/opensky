@@ -25,7 +25,11 @@ nonisolated enum HKBClassRegistry {
 
     /// Builds a type-erased decoder for one class, so the table below stays a
     /// list of class names rather than a list of closures.
-    private static func entry<Value: HKBClass>(
+    ///
+    /// `Value` is constrained to `Sendable` because the erasing closure below
+    /// implicitly captures `Value.Type`, and a metatype is only `Sendable` when
+    /// its type is.
+    private static func entry<Value: HKBClass & Sendable>(
         _ decode: @escaping @Sendable (HKXPointerTarget, HKXObjectGraph) -> Value?
     ) -> (String, Decoder) {
         (Value.className, { target, graph in decode(target, graph) })
