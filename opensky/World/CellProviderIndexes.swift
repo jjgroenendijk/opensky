@@ -7,6 +7,7 @@ nonisolated struct CellProviderIndexes {
     let builder: CellSceneBuilder
     let weatherSystem: WeatherSystem?
     let soundStore: SoundRecordStore
+    let footstepStore: FootstepStore
     let aspcStore: AcousticSpaceStore
     let musicStore: MusicRecordStore
     let globalStore: GlobalStore
@@ -46,6 +47,7 @@ nonisolated struct CellProviderIndexes {
             worldspaceEditorID: FirstRenderCell.worldspaceEditorID
         )
         soundStore = SoundRecordStore(file: file)
+        footstepStore = FootstepStore(file: file)
         aspcStore = AcousticSpaceStore(file: file)
         musicStore = MusicRecordStore(file: file)
         globalStore = GlobalStore(file: file, pluginName: esmURL.lastPathComponent)
@@ -60,6 +62,7 @@ nonisolated struct CellProviderIndexes {
             worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
             weatherSystem: weatherSystem,
             soundStore: soundStore,
+            footstepStore: footstepStore,
             aspcStore: aspcStore,
             musicStore: musicStore,
             globalStore: globalStore,

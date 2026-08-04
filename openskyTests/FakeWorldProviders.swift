@@ -320,6 +320,11 @@ final class FakeWorldProviders: WorldControlProviders {
     var currentMusicTrackName: String?
     var lastMusicError: String?
 
+    /// Footstep director bridges (issue #352), delegated to the shared fake so
+    /// both panel fakes record the same way; the forwarding conformance lives
+    /// in `FakeFootstepControls.swift`.
+    let footsteps = FakeFootstepControls()
+
     /// RuntimeStateControlProviding (M10.1.5) is delegated to the panel tests'
     /// fake so both suites record mutations through one implementation. The
     /// forwarding conformance lives in the satellite

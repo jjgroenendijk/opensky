@@ -22,6 +22,21 @@ nonisolated extension LocomotionBridge {
         }
     }
 
+    /// This frame's intent as a level world-space movement direction, unit
+    /// length or shorter. The yaw basis is OpenSky's own — forward is
+    /// `(cos yaw, sin yaw)` and right is a quarter turn clockwise from it — so
+    /// this is where a stick or a key pair becomes a world heading.
+    func intentDirection(yaw: Float) -> SIMD2<Float> {
+        let forward = SIMD2<Float>(cosf(yaw), sinf(yaw))
+        let right = SIMD2<Float>(sinf(yaw), -cosf(yaw))
+        var direction = forward * intent.moveForward + right * intent.moveRight
+        let magnitude = simd_length(direction)
+        if magnitude > 1 {
+            direction /= magnitude
+        }
+        return direction
+    }
+
     /// Movement direction as the graph wants it: radians away from facing,
     /// positive to the left, zero straight ahead, and zero when standing still.
     static func graphDirection(of direction: SIMD2<Float>, yaw: Float) -> Float {

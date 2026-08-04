@@ -124,13 +124,13 @@ struct InventoryMenuPanelTests {
     }
 
     @Test @MainActor
-    func anEmptyCategorySaysSoRatherThanShowingNothing() {
+    func anEmptyCategorySaysSoRatherThanShowingNothing() throws {
         let provider = FakeWorldProviders()
         provider.openInventoryMenu()
-        let books = try? #require(
+        let books = try #require(
             provider.inventoryMenuModel.categoryLabels.firstIndex(of: "Books")
         )
-        provider.inventoryMenuModel.selectCategory(books ?? 0)
+        provider.inventoryMenuModel.selectCategory(books)
         let readout = InventoryMenuSection.readout(for: provider.inventoryMenuSnapshot)
         #expect(readout.contains("(no items in this category)"))
     }

@@ -198,6 +198,22 @@ Verified against the install 2026-07-25 by the decode column of
 `openskycli audio sweep`: all 269 vanilla files decode, each to exactly the
 frame count its `dpds` table declares (0 mismatches, 0 failures).
 
+## Decode policy (RIFF/WAVE -> PCM buffer)
+
+Sound effects are not `.xwm`. Music and voice are; every effect in the install — all 5,978
+of them — is a plain RIFF/WAVE file of uncompressed linear PCM. Until issue #352 the
+engine could only play `.xwm`, so the door and activator SFX the world sound director
+resolved were reaching a player that had no reader for them.
+
+`WorldAudioEngine.playPositional(fileData:)` and its non-positional twin now peek at the
+RIFF form type at byte 8 and pick a path: `XWMA` streams through `AudioSourceStreamer` as
+before, `WAVE` is read whole into one `AVAudioPCMBuffer` by
+[`WAVFile`](/formats/wav.md) and scheduled once. An effect is a fraction of a second — a
+footstep file is around 26 KB — so streaming it would add a decode-queue hop and a
+three-buffer lookahead for nothing. Buffer-backed one-shots retire themselves through the
+scheduling completion handler, so `retireFinishedSources` reclaims them the same frame
+they finish rather than leaving them for FIFO eviction.
+
 ## Attenuation defaults (provisional)
 
 `ProvisionalAttenuation`: inverse model, reference distance 2 m, maximum
@@ -210,11 +226,45 @@ display: Effects, Voice, Music, and Footsteps. The main mixer remains the master
 World sounds follow `SNDR.GNAM -> SNCT.PNAM` to one of those nodes; unresolved or malformed
 metadata falls back to Effects. Music playlists author their own Music route.
 
+## Footstep director (issue #352)
+
+The player's footsteps are played by `WorldAudioFootstepDirector`, the third director
+beside the SFX and music ones. It contains no step timer, and that is the design rather
+than an omission: the vanilla locomotion clips carry their own footstep triggers —
+`0_master.hkx` declares `FootLeft` and `FootRight` as the first two of its 1,217 events —
+so the behavior graph already says when a foot lands, at the phase the animation actually
+plants it. A cadence derived from speed would drift against the animation the player is
+watching. See [terrain walk mode](/engine/walk-mode.md) for the event source.
+
+The route, once per frame:
+
+1. `LocomotionBridge` queues the third-person graph's fired events as each fixed step runs
+   (`LocomotionGraphEventQueue`). Only the third-person graph feeds it: both graphs run
+   the same locomotion clips and fire the same triggers, so draining both would play every
+   footstep twice.
+2. `Renderer.updateAudio` drains the queue and hands the names to the director with the
+   current gait and the capsule's feet position. Draining happens even outside walk mode
+   and with no director attached, so a queue nobody is listening to cannot flush all at
+   once when audio is switched on. The whole tick is skipped while the world sim is
+   paused, and a paused frame plans no step and fires nothing, so the two agree.
+3. The director offers each name to the current gait's footstep list and plays whatever
+   resolves. Names the list has no tag for — the graph fires plenty, from combat to
+   magic — cost one string comparison and are dropped.
+
+Footsteps are positional and placed at the feet, not at the listener, which is what makes
+third person sound right. The set the player walks with comes from `ARMA.SNDD` on the
+armature occupying the feet slot of the assembled body, falling back to
+`DefaultFootstepSet`; worn parts precede skin parts in a resolved visual, so boots outrank
+the bare foot they cover without the director ranking them. Record layouts, the chain from
+tag to sound file, and the surface-material gap are in
+[footstep records](/formats/footstep.md).
+
 ## World > Audio surface
 
 Sidebar path for acceptance: **World > Audio** (`Destination-audio`).
-`AudioPanelViewController` composes four sections. The two this page owns are
-below; **SFX & Ambience** (`PanelSection-audioSfx`) is documented in
+`AudioPanelViewController` composes five sections. The two this page owns are
+below, plus **Footsteps** (`PanelSection-audioFootsteps`); **SFX & Ambience**
+(`PanelSection-audioSfx`) is documented in
 [world SFX + ambience](/engine/world-sfx.md) and **Music**
 (`PanelSection-audioMusic`) in [music playlists](/engine/music.md):
 
@@ -244,9 +294,29 @@ below; **SFX & Ambience** (`PanelSection-audioSfx`) is documented in
   file, category, world position, listener distance in meters, effective
   gain — plus the cap and any trigger failure).
 
+* **Footsteps** (`PanelSection-audioFootsteps`): `AudioFootstepsEnabledControl`
+  checkbox, `AudioFootstepTagControl` popup listing the tags the current
+  footstep set answers to *for the gait the player is in*,
+  `AudioPlayFootstepControl`, readout `AudioFootstepsStatsLabel`:
+
+  ```text
+  Set: FSTBarefootFootstepSet
+  Tags: FootScuffRight, FootScuffLeft, JumpUp, JumpDown, FootLeft, FootRight
+  Routed 24, played 24
+  Last: FootLeft: sound\fx\fst\npc\stonesolid\walk\l\fst_npc_stonesolid_walk_01.wav
+  ```
+
+  The picker is rebuilt on every sync because the gait changes as the player
+  moves, and a selection that survives the rebuild is kept. Routed and played
+  are reported separately: they differ by the tags the set has no footstep for,
+  which is normal vanilla data rather than a fault. The play button fires one
+  footstep at the player's feet without walking, so the whole chain — set, tag,
+  impact, sound file, positional source — is verifiable standing still.
+
 The trigger places the source 700 units (~10 m) straight ahead of the camera
 under the `effects` category, so turning or strafing immediately pans it.
-Ids are pinned in `AudioPanelTests` and `DestinationRegistryTests`.
+Ids are pinned in `AudioPanelTests`, `AudioFootstepsPanelTests` and
+`DestinationRegistryTests`.
 
 ### Acceptance record
 

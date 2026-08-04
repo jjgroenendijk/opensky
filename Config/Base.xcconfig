@@ -10,6 +10,7 @@ MACOSX_DEPLOYMENT_TARGET = 26.0
 // Swift language mode and the concurrency posture the codebase is written against.
 // tools/lint/swift-baseline.sh asserts SWIFT_VERSION here stays at 6.0.
 SWIFT_VERSION = 6.0
+SWIFT_TREAT_WARNINGS_AS_ERRORS = YES
 SWIFT_APPROACHABLE_CONCURRENCY = YES
 SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES
 

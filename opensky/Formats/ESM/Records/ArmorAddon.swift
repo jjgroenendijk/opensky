@@ -71,6 +71,13 @@ nonisolated struct ArmorAddon {
     /// on an actor wearing this armature. Decoded now because the field is
     /// read here anyway; the hand attachment does not apply it yet.
     let weaponAdjust: Float
+    /// SNDD — the FSTS footstep set an actor wearing this armature walks with
+    /// (issue #352). xEdit dev-4.1.6 names it `wbFormIDCk(SNDD, 'Footstep
+    /// Sound', [FSTS, NULL])` at line 4216. Only the boot armatures carry one:
+    /// vanilla's `NakedFeet*` armatures point at `FSTBarefootFootstepSet`,
+    /// light boots at `FSTArmorLightFootstepSet`, and heavy boots at
+    /// `FSTArmorHeavyFootstepSet`. Nil when absent or null.
+    let footstepSound: FormID?
 
     /// The draw priority that applies to one gender.
     func priority(female: Bool) -> UInt8 {
@@ -97,6 +104,7 @@ nonisolated struct ArmorAddon {
         var additionalRaces: [FormID] = []
         var models = ModelPaths()
         var priorities = DrawPriorities()
+        var footstepSound: FormID?
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -113,6 +121,10 @@ nonisolated struct ArmorAddon {
                 try additionalRaces.append(FormID(reader.readUInt32()))
             case "DNAM":
                 priorities = try DrawPriorities(field: field)
+            case "SNDD":
+                guard field.data.count == 4 else { break }
+                let id = try FormID(reader.readUInt32())
+                footstepSound = id.isNull ? nil : id
             default:
                 // The four MOD2/MOD3/MOD4/MOD5 model paths, gathered by
                 // `ModelPaths` so this switch stays inside the complexity cap.
@@ -130,6 +142,7 @@ nonisolated struct ArmorAddon {
         malePriority = priorities.male
         femalePriority = priorities.female
         weaponAdjust = priorities.weaponAdjust
+        self.footstepSound = footstepSound
     }
 
     /// The four model paths an ARMA can declare, gathered so the field loop

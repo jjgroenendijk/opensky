@@ -311,7 +311,7 @@ struct SkeletonBoneMapTests {
         #expect(map.unmatchedNIF.isEmpty)
     }
 
-    @Test func partialMatchTagsBothDirections() {
+    @Test func partialMatchTagsBothDirections() throws {
         let map = SkeletonBoneMap(
             hkxBoneNames: ["Root", "Spine", "WeaponAttach"],
             nifNodeNames: ["Root", "Spine", "MeshOnlyNode"]
@@ -319,13 +319,13 @@ struct SkeletonBoneMapTests {
         #expect(map.matchedCount == 2)
         #expect(map.matched == ["Root", "Spine"])
 
-        let hkxOnly = try? #require(map.unmatchedHKX.first)
-        #expect(hkxOnly?.name == "WeaponAttach")
-        #expect(hkxOnly?.reason.isEmpty == false)
+        let hkxOnly = try #require(map.unmatchedHKX.first)
+        #expect(hkxOnly.name == "WeaponAttach")
+        #expect(hkxOnly.reason.isEmpty == false)
 
-        let nifOnly = try? #require(map.unmatchedNIF.first)
-        #expect(nifOnly?.name == "MeshOnlyNode")
-        #expect(nifOnly?.reason.isEmpty == false)
+        let nifOnly = try #require(map.unmatchedNIF.first)
+        #expect(nifOnly.name == "MeshOnlyNode")
+        #expect(nifOnly.reason.isEmpty == false)
     }
 
     @Test func everyMismatchCarriesReason() {

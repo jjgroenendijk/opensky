@@ -108,6 +108,11 @@ nonisolated final class LocomotionBridge {
     var intent: LocomotionIntent = .still
 
     private(set) var status: LocomotionStatus
+    /// Third-person graph events awaiting a consumer (issue #352). Only the
+    /// third-person graph feeds it: both graphs run the same locomotion clips
+    /// and therefore fire the same triggers, so draining both would play every
+    /// footstep twice. See LocomotionGraphEventQueue.swift.
+    let graphEvents = LocomotionGraphEventQueue()
     private var previousYaw: Float?
     private var wasMoving = false
     private var wasSprinting = false
@@ -222,6 +227,7 @@ nonisolated final class LocomotionBridge {
         wasGrounded = true
         isAirborneFromJump = false
         pendingJump = false
+        graphEvents.clear()
         intent = .still
         status = LocomotionStatus(
             graphAvailable: graph != nil,
@@ -269,18 +275,6 @@ nonisolated final class LocomotionBridge {
             return .sprint
         }
         return intent.run ? .run : .walk
-    }
-
-    /// Level world-space movement direction, unit length or shorter.
-    private func intentDirection(yaw: Float) -> SIMD2<Float> {
-        let forward = SIMD2<Float>(cosf(yaw), sinf(yaw))
-        let right = SIMD2<Float>(sinf(yaw), -cosf(yaw))
-        var direction = forward * intent.moveForward + right * intent.moveRight
-        let magnitude = simd_length(direction)
-        if magnitude > 1 {
-            direction /= magnitude
-        }
-        return direction
     }
 
     /// The one-shot takeoff impulse, or nil. A jump needs solid ground: it is
@@ -343,6 +337,7 @@ nonisolated final class LocomotionBridge {
         guard let graph else { return nil }
         let result = graph.update(deltaTime: deltaTime)
         status.noteGraphUpdate(events: result.firedEvents)
+        graphEvents.enqueue(result.firedEvents)
         pose.publish(result.bones)
         return result.rootMotion
     }

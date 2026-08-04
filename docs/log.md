@@ -18,6 +18,21 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   checked-in template, defaulting to the ad-hoc signing CI already passes, and a linked
   worktree copies the main checkout's file so a dev-signed setup does not silently become
   ad-hoc. See [Build system and xcodebuild invocation](/tools/build-system.md).
+* **Swift warnings are build errors now (issue #350)**: the test targets had accumulated
+  about a hundred compiler warnings, and since a warning is signal the `make test` output
+  filter keeps, a run that recompiled them buried the result in diagnostics nobody read.
+  Every one is fixed — `try` on calls that do not throw, discarded `try?` and `map`
+  results, two `SystemMenuPanelTests` cases missing `@MainActor`, and `#require` nested in
+  a comparison, which the testing macro cannot disambiguate. Turning the setting on
+  surfaced five more in `openskycli`, which `make test` never compiles. Three sat in
+  `opensky/`
+  rather than in the test targets, all of them dead code that computed the right answer
+  the long way round: `PlayerBodyError` fell back on a `??` whose left side could not be
+  nil, `PapyrusWorldEvents` compared an already-unwrapped value to `nil`, and
+  `HKBClassRegistry.entry` erased its decoder through a closure that implicitly captured a
+  metatype the compiler could not prove `Sendable`. Nothing changed behaviorally. With the
+  count at zero, `SWIFT_TREAT_WARNINGS_AS_ERRORS` is on in both project-level
+  configurations so it cannot grow back. See [build system](/tools/build-system.md).
 * **NIF `Matrix33` is a row-vector rotation (issue #354)**: every decoded NIF rotation was
   the transpose of the rotation it means, because the format multiplies row vectors and
   OpenSky's matrices multiply column vectors. Vanilla statics hid it — their `NiNode`
@@ -32,6 +47,27 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   hand-built matrices, and the real-data render gate now bounds a posed body's silhouette
   against the bind-pose body's rather than only asserting that two frames differ. See
   [NIF](/formats/nif.md) and [actor animation](/engine/actor-animation.md).
+* **Footstep audio events (issue #352)**: deferred from item 14.5 and now landed. The
+  locomotion bridge already stepped the vanilla player graph and the vanilla locomotion
+  clips already carry their own footstep triggers, so this is routing rather than a step
+  timer: `LocomotionGraphEventQueue` hands the third-person graph's fired events to
+  `WorldAudioFootstepDirector` once per frame, and the director walks the tag through the
+  footstep set on the player's feet to a positional source placed at the capsule bottom.
+  New record decoders for `FSTP`, `FSTS`, `IPDS` and `IPCT`, plus `ARMA.SNDD`, which is
+  what makes barefoot, light boots and heavy boots sound different without the engine
+  choosing anything. Two findings worth keeping: an `FSTS` lists its `XCNT` counts
+  walk-first and lays out the `DATA` arrays those counts size **swim-first**, which
+  `NPCWerewolfFootstepSet` settles on its own; and the chain ends at a `.wav`, not an
+  `.xwm`, so the M9 engine could not have played a footstep — or any door or activator
+  effect — no matter how well it was routed. See [footstep records](/formats/footstep.md),
+  [world audio playback](/engine/audio.md) and [terrain walk mode](/engine/walk-mode.md).
+* **Sound effects are RIFF/WAVE, not xWMA (issue #352)**: all 5,978 `.wav` files in the
+  install are uncompressed linear PCM, and a 62-file sweep across the archives found
+  `wFormatTag` 1 at 16 bits per sample in every one. `WAVFile` reads them and
+  `WorldAudioEngine` picks its playback path by peeking at the RIFF form type: `XWMA`
+  streams as before, `WAVE` is scheduled as one buffer and retires itself when it has
+  played out. See [RIFF/WAVE container](/formats/wav.md).
+
 * **First-person arms (issue #190)**: milestone 14 item 14.7. The player gets a first-person
   rig — the `_1stperson` skeleton and arm meshes, assembled through the same `ActorAssembler`
   path the third-person body uses and anchored to the eye through the `Camera1st [Cam1]` bone

@@ -34,12 +34,14 @@ graph.
 * [Camera modes](#camera-modes)
 * [Third-person camera](#third-person-camera)
 * [The player body](#the-player-body)
+* [Footstep events](#footstep-events)
 * [Response](#response)
 * [Scope boundary](#scope-boundary)
 * [Verification](#verification)
 * [Milestone acceptance route](#milestone-acceptance-route)
 * [First-person acceptance surface](#first-person-acceptance-surface)
 * [Third-person acceptance surface](#third-person-acceptance-surface)
+* [Footstep acceptance surface](#footstep-acceptance-surface)
 * [Movement-tuning acceptance surface](#movement-tuning-acceptance-surface)
 
 ## Terrain collision surface
@@ -291,6 +293,35 @@ is nothing to replay at attach. The body is reassembled when the player's equipp
 changes, whichever of the panel, a container menu, or a Papyrus script changed it — the
 wiring watches the resulting set rather than any one call site.
 
+## Footstep events
+
+The bridge does not decide when a foot lands, and nothing downstream should either. The
+vanilla locomotion clips carry their own footstep triggers, baked into
+`hkbClipTriggerArray` at export, so the graph raises `FootLeft` and `FootRight` — the
+first two of `0_master.hkx`'s 1,217 declared events — at the exact phase the animation
+plants each foot. A cadence derived from speed would drift against the animation the
+player is watching, and it would have to be re-tuned for every gait the graph already
+handles.
+
+So the bridge only reports. `LocomotionBridge` queues the third-person graph's fired
+events in `LocomotionGraphEventQueue`, a bounded FIFO drained once per frame by the
+renderer's audio tick. Three properties matter and each is pinned by
+`LocomotionBridgeEventDrainTests`:
+
+* **Consumed exactly once.** Distinct from `LocomotionStatus.recentGraphEvents`, which is
+  a readout the panel reads repeatedly and never consumes. A consumer that *acts* on an
+  event must not see it twice.
+* **Third person only.** Both graphs run the same clips and fire the same triggers, so
+  queuing both would play every footstep twice.
+* **Bounded, newest kept.** A consumer that stops draining — audio off, a long build
+  stall — costs a fixed amount of memory, and coming back does not flush a minute of
+  stale steps.
+
+A zero-length step plans nothing and fires nothing, so a paused frame queues nothing; a
+reset (walk-mode entry, a teleport) clears the queue, because the footsteps of the place
+the player just left must not sound in the new one. What plays them is the
+[footstep director](/engine/audio.md).
+
 ## Response
 
 ### Terrain response
@@ -336,8 +367,9 @@ real-data route + render/physics acceptance gate.
 
 Item 14.5 adds jump, sneak, sprint, and surface swimming, and leaves out of scope: the
 rendered player body and third-person camera (items 14.6 and 14.7), NPC locomotion (M16),
-combat and weapon-drawn movement (M15), underwater diving and swim camera effects beyond
-surface locomotion, and footstep audio events.
+combat and weapon-drawn movement (M15), and underwater diving and swim camera effects
+beyond surface locomotion. Footstep audio was deferred from that item and landed
+separately as issue #352; see [footstep events](#footstep-events).
 
 ## Verification
 
@@ -470,6 +502,29 @@ Local A/B (optional, never committed): `logs/player-body-third-person.png` and
 The selector now offers Fly, Walk (first person), and Walk (third person), and
 `CameraStatsLabel` names the live mode so a bug report carries the camera that produced the
 frame. `G` cycles the same three.
+
+## Footstep acceptance surface
+
+Milestone: M14 player locomotion, footstep audio (issue #352)
+Sidebar path: World > Audio > Footsteps
+Destination id: Destination-audio
+Controls exercised: AudioFootstepsEnabledControl, AudioFootstepTagControl,
+AudioPlayFootstepControl, AudioEnabledControl (the engine the director needs),
+CameraMovementModeControl (the walk mode that fires the events)
+Readout: AudioFootstepsStatsLabel
+Deterministic tests: AudioFootstepsPanelTests, WorldAudioFootstepDirectorTests,
+FootstepStoreTests, FootstepRecordTests, WAVFileTests,
+LocomotionBridgeEventDrainTests, DestinationRegistryTests,
+FootstepRealDataTests (env-gated, `make realtest`)
+Local A/B (optional, never committed): none — footsteps are audible rather than visible,
+so a rendered frame would prove nothing. The chain's real-data evidence is
+`openskycli footstep`, gated in `tools/probe.sh`.
+
+The panel controls live under World > Audio rather than under World > World because the
+subsystem they verify is the audio director, not the locomotion bridge; the bridge's half
+is the event queue above, which has no knob of its own. What the record does not claim is
+that anyone has heard it — the deterministic suites prove the routing, the resolution and
+the readout, and the audible half is a human step.
 
 ## Movement-tuning acceptance surface
 

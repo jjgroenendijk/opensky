@@ -89,7 +89,7 @@ struct LocomotionBridgeTests {
         let bridge = LocomotionBridge(configuration: .synthetic, graph: graph)
         bridge.intent = LocomotionIntent(moveForward: 1, run: true)
 
-        bridge.plan(Self.state())
+        _ = bridge.plan(Self.state())
 
         #expect(
             graph.variable(named: LocomotionGraphNames.speed)
@@ -108,12 +108,12 @@ struct LocomotionBridgeTests {
         let graph = Self.graph()
         let bridge = LocomotionBridge(configuration: .synthetic, graph: graph)
         bridge.intent = LocomotionIntent(moveForward: 1)
-        bridge.plan(Self.state())
-        bridge.plan(Self.state())
+        _ = bridge.plan(Self.state())
+        _ = bridge.plan(Self.state())
         #expect(Self.raised(bridge, LocomotionGraphNames.moveStart) == 1)
 
         bridge.intent = .still
-        bridge.plan(Self.state())
+        _ = bridge.plan(Self.state())
         #expect(Self.raised(bridge, LocomotionGraphNames.moveStop) == 1)
     }
 
@@ -122,13 +122,13 @@ struct LocomotionBridgeTests {
         let graph = Self.graph()
         let bridge = LocomotionBridge(configuration: .synthetic, graph: graph)
         bridge.intent = LocomotionIntent(sneak: true)
-        bridge.plan(Self.state())
-        bridge.plan(Self.state())
+        _ = bridge.plan(Self.state())
+        _ = bridge.plan(Self.state())
         #expect(Self.raised(bridge, LocomotionGraphNames.sneakStart) == 1)
         #expect(graph.variable(named: LocomotionGraphNames.isSneaking) == .bool(true))
 
         bridge.intent = .still
-        bridge.plan(Self.state())
+        _ = bridge.plan(Self.state())
         #expect(Self.raised(bridge, LocomotionGraphNames.sneakStop) == 1)
         #expect(graph.variable(named: LocomotionGraphNames.isSneaking) == .bool(false))
     }
