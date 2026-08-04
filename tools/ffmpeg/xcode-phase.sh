@@ -7,7 +7,10 @@
 #          so /Applications/opensky.app is self-contained and immune to Homebrew churn.
 #
 # Both modes need SRCROOT; embed additionally needs BUILT_PRODUCTS_DIR and
-# FRAMEWORKS_FOLDER_PATH. See docs/decisions/ffmpeg-audio.md.
+# FRAMEWORKS_FOLDER_PATH. Neither phase is declared alwaysOutOfDate, so an incremental
+# build with an unchanged prefix skips both: the check phases write a stamp file into
+# DERIVED_FILE_DIR from the build phase itself, and the embed phase is tracked by the two
+# .xcfilelist files. See docs/decisions/ffmpeg-audio.md.
 set -eu
 
 mode=${1:-}

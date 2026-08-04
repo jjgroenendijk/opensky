@@ -395,24 +395,6 @@
 /* Begin PBXShellScriptBuildPhase section */
 		5AFF000130001093001700B1 /* Check vendored ffmpeg */ = {
 			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/tools/ffmpeg/xcode-phase.sh",
-				"$(SRCROOT)/.vendor/ffmpeg/lib",
-			);
-			name = "Check vendored ffmpeg";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"$SRCROOT/tools/ffmpeg/xcode-phase.sh\" check\n";
-		};
-		5AFF000130001093001700B2 /* Embed vendored ffmpeg */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -421,7 +403,27 @@
 			);
 			inputPaths = (
 				"$(SRCROOT)/tools/ffmpeg/xcode-phase.sh",
-				"$(SRCROOT)/.vendor/ffmpeg/lib",
+				"$(SRCROOT)/.vendor/ffmpeg/embed-inputs.xcfilelist",
+			);
+			name = "Check vendored ffmpeg";
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/ffmpeg-check-$(TARGET_NAME).stamp",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SRCROOT/tools/ffmpeg/xcode-phase.sh\" check\ntouch \"$SCRIPT_OUTPUT_FILE_0\"\n";
+		};
+		5AFF000130001093001700B2 /* Embed vendored ffmpeg */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"$(SRCROOT)/.vendor/ffmpeg/embed-inputs.xcfilelist",
+			);
+			inputPaths = (
+				"$(SRCROOT)/tools/ffmpeg/xcode-phase.sh",
+				"$(SRCROOT)/.vendor/ffmpeg/embed-inputs.xcfilelist",
 			);
 			name = "Embed vendored ffmpeg";
 			outputFileListPaths = (
@@ -436,20 +438,23 @@
 		};
 		5AFF000130001093001700B3 /* Check vendored ffmpeg */ = {
 			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
+			inputFileListPaths = (
+				"$(SRCROOT)/.vendor/ffmpeg/embed-inputs.xcfilelist",
+			);
 			inputPaths = (
 				"$(SRCROOT)/tools/ffmpeg/xcode-phase.sh",
-				"$(SRCROOT)/.vendor/ffmpeg/lib",
+				"$(SRCROOT)/.vendor/ffmpeg/embed-inputs.xcfilelist",
 			);
 			name = "Check vendored ffmpeg";
 			outputPaths = (
+				"$(DERIVED_FILE_DIR)/ffmpeg-check-$(TARGET_NAME).stamp",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"$SRCROOT/tools/ffmpeg/xcode-phase.sh\" check\n";
+			shellScript = "\"$SRCROOT/tools/ffmpeg/xcode-phase.sh\" check\ntouch \"$SCRIPT_OUTPUT_FILE_0\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

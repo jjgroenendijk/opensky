@@ -4,6 +4,21 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-04
 
+* **No-op builds are no-ops again (issue #338)**: the three ffmpeg shell script phases were
+  declared `alwaysOutOfDate = 1`, so every build re-validated the vendored prefix, re-copied
+  and re-signed the three dylibs into `Contents/Frameworks`, and thereby dirtied the bundle
+  enough that Xcode re-signed the whole app — on builds where nothing had changed. The flag
+  is gone from all three. The embed phase now runs off the `.xcfilelist` inputs and outputs
+  it already declared, and each check phase writes a
+  `$(DERIVED_FILE_DIR)/ffmpeg-check-$(TARGET_NAME).stamp` so it has an output to be up to
+  date against. All three also stopped listing the directory `.vendor/ffmpeg/lib` as an
+  input, since a directory's mtime does not move when a dylib inside it is rebuilt in place;
+  they declare `embed-inputs.xcfilelist` instead, which names the resolved dylibs and whose
+  own rewrite by `tools/ffmpeg/link-vendor.sh` is what still surfaces the friendly
+  missing-prefix error. Verified: clean build embeds and validates, touching a dylib re-runs
+  both phases, a second `make build` or `make cli` runs no script phase and no `CodeSign`,
+  and deleting the prefix still fails with the `run 'make bootstrap'` message. See
+  [ffmpeg for audio decode](/decisions/ffmpeg-audio.md).
 * **Build settings moved to `Config/*.xcconfig`, signing out of shared config (issue
   #343)**: the five build-configuration lists in the pbxproj duplicated Swift mode,
   concurrency flags, ffmpeg search paths, linker flags, deployment target, and signing
