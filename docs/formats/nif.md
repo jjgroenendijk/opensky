@@ -113,13 +113,34 @@ BS 83/100: uint32 flags since BS > 26, no property list since BS > 34):
 | int32          | controller    | animation, skipped (M2)                   |
 | uint32         | flags         |                                           |
 | float x 3      | translation   |                                           |
-| float x 9      | rotation      | Matrix33, column-major: m11 m21 m31 m12 … |
+| float x 9      | rotation      | Matrix33: m11 m21 m31 m12 … (see below)   |
 | float          | scale         | uniform only                              |
 | int32          | collision ref | bhk object, recorded not followed (M2)    |
 
 Junk name index -> nil, lenient (same exporter-garbage rationale as header
 strings). Local transform composes `T * R * S`, column vectors — matches
 `docs/decisions/coordinates.md`. Impl: `NIFObject.swift`.
+
+### Matrix33 is a row-vector rotation
+
+NIF multiplies row vectors (`v * M`), OpenSky multiplies column vectors
+(`M * v`), so every decoded `Matrix33` is transposed on read. The nine floats
+arrive in the order `m11 m21 m31 | m12 m22 m32 | m13 m23 m33`, one column of
+the matrix as indexed per group of three; reading those groups as *rows*
+produces the transpose in one step, which is what both `NIFObject` and
+`NIFTransform` do.
+
+Nothing in a vanilla static catches the difference — their `NiNode` rotations
+are overwhelmingly identity, and a lone rotated sub-part reads as decoration
+rather than as an error. A skeleton's rotations are not identity. Without the
+transpose, a bind pose composed from `skeleton.nif`'s node chain disagrees with
+that same file's `NiSkinData` inverse-bind transforms bone by bone (up to ~10
+world units on a thigh), and with `skeleton.hkx`'s reference pose by up to 61.9
+world units over the 96 bones the two files share. With it, both agree: the rig
+reproduces the NIF bind pose to 5.3e-5, and `rootParentToSkin * boneWorld *
+skinToBone` comes out as the identity to 8e-6 for every bone of a vanilla body
+shape. Probed on the local install 2026-08-04 (issue #354); consequences for
+skinned actors in [actor animation](/engine/actor-animation.md).
 
 ## NiNode
 

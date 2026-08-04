@@ -31,6 +31,9 @@ UESP Skyrim Mod:Mod File Format/REFR (DATA = 6 floats, radians).
 - `simd` `float4x4`, column-major, column vectors: transform = `M * v`.
 - Composition right-to-left: `world = T * R * S`, `clip = P * V * M * v`.
 - All MatrixMath helpers follow this; anything else is a bug.
+- A format that multiplies row vectors is converted at its decoder, never
+  carried inward. NIF is one: its `Matrix33` is transposed on read
+  ([NIF](/formats/nif.md)). Havok needs no conversion.
 
 ## View + projection (basis change lives here)
 

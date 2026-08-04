@@ -6,7 +6,11 @@
 // Three things are proved with pixels rather than with numbers:
 //
 // * The body actually draws in third person and actually does not draw in first
-//   person, against the same scene and the same camera pose.
+//   person, against the same scene and the same camera pose — leaving only the
+//   shadow it goes on casting there (issue #356).
+// * A posed body is still a standing figure: its silhouette stays within a
+//   bound of the bind-pose body's, which a mesh torn apart by a mismatched
+//   skinning convention cannot pass (issue #354).
 // * A locomotion state change changes the frame — a bound-but-inert graph would
 //   leave it byte-identical.
 // * The M12/M13 cross-check: a body reassembled at a pose is byte-identical to
@@ -107,12 +111,29 @@ struct PlayerBodyRenderRealDataTests {
         report.append("third person vs no body: \(bodyPixels) changed pixels")
         #expect(bodyPixels > 0, "the player body drew nothing in third person")
 
+        try Self.assertPosedBodyIsStillAFigure(
+            renderer, empty: empty, posed: thirdPerson, report: &report
+        )
+
         // First person must not draw it: the eye is inside the head until 14.7.
         // The camera pose is left exactly where it is, so the two frames differ
-        // only in whether the body drew.
+        // only in whether the body drew. They are not byte-identical, though:
+        // since #356 a body the camera cannot see still rasterizes into the
+        // shadow map (`PlayerRigVisibility.castsBodyShadow` holds for every
+        // player-controlled mode), so the body's own shadow still darkens the
+        // ground it stands on. What must not survive into the frame is the
+        // body, which covers far more of it than its shadow does.
         renderer.movementMode = .walk
         let firstPerson = try Self.frame(renderer)
-        #expect(firstPerson == empty, "the body drew in first person")
+        let shadowPixels = Self.changedPixels(empty, firstPerson)
+        report.append("first person vs no body: \(shadowPixels) changed pixels")
+        // The shadow alone measures about 0.27 of the body on this cell, and a
+        // drawn body would put the ratio at or above 1. Half is the midpoint
+        // that separates them without pinning either number.
+        #expect(
+            shadowPixels * 2 < bodyPixels,
+            "first person changed \(shadowPixels) pixels against the body's \(bodyPixels)"
+        )
 
         renderer.movementMode = .thirdPerson
         let stage = Stage(
@@ -128,15 +149,50 @@ struct PlayerBodyRenderRealDataTests {
             report.joined(separator: "\n") + "\n", to: "player-body-render.log"
         )
         try Self.writePNG(thirdPerson, name: "player-body-third-person.png")
-        // The bind-pose capture beside it is what makes the open skinning
-        // defect visible to a human reviewer: the same body, the same camera,
-        // the animation pass off (issue #354).
-        renderer.actorAnimationsEnabled = false
-        try Self.writePNG(Self.frame(renderer), name: "player-body-bind-pose.png")
-        renderer.actorAnimationsEnabled = true
     }
 
     // MARK: - Assertions
+
+    /// The bound a torn mesh cannot pass (issue #354).
+    ///
+    /// A body posed by the idle graph and the same body drawn from its NIF
+    /// bind palette are the same figure standing in the same place: the pose
+    /// moves limbs, so the two frames are not identical, but the silhouette
+    /// covers roughly the same ground. A mesh skinned through a mismatched
+    /// convention does not fail quietly — it throws long flat shards across
+    /// the frame, and its coverage runs to several times the bind-pose body's.
+    /// Bounding the ratio therefore catches the whole family of composition
+    /// faults without pinning an exact pose, which a crossfading graph could
+    /// not promise anyway.
+    ///
+    /// Both captures go to gitignored `logs/` for human review; a rendered
+    /// frame embeds the user's own assets and is never committed.
+    @MainActor
+    private static func assertPosedBodyIsStillAFigure(
+        _ renderer: Renderer,
+        empty: [UInt8],
+        posed: [UInt8],
+        report: inout [String]
+    ) throws {
+        renderer.actorAnimationsEnabled = false
+        let bindPose = try frame(renderer)
+        renderer.actorAnimationsEnabled = true
+        try writePNG(bindPose, name: "player-body-bind-pose.png")
+
+        let bindPixels = changedPixels(empty, bindPose)
+        let posedPixels = changedPixels(empty, posed)
+        let moved = changedPixels(bindPose, posed)
+        report.append("bind pose vs no body: \(bindPixels) changed pixels")
+        report.append("posed vs bind pose: \(moved) changed pixels")
+        #expect(bindPixels > 0, "the bind-pose body drew nothing")
+
+        let coverage = Float(posedPixels) / Float(max(bindPixels, 1))
+        report.append("posed/bind coverage ratio: \(coverage)")
+        #expect(
+            coverage > 0.6 && coverage < 1.6,
+            "posed body covers \(posedPixels) pixels against the bind pose's \(bindPixels)"
+        )
+    }
 
     /// Walking is not idling. Driving the graph with a held forward key for a
     /// second and re-posing the body has to move pixels.
