@@ -151,7 +151,7 @@ struct SystemMenuPanelTests {
         #expect(SystemMenuSection.movieReadout(for: snapshot).contains("Movie rows: no rows"))
     }
 
-    @Test
+    @Test @MainActor
     func dataRootReadoutNamesThePathAndTheSource() {
         var snapshot = Self.snapshot(isOpen: false)
         #expect(SystemMenuSettingsSection
@@ -165,7 +165,7 @@ struct SystemMenuPanelTests {
         #expect(readout.contains("(source: Steam default)"))
     }
 
-    @Test
+    @Test @MainActor
     func settingsReadoutTracksTheRevealedState() {
         let hidden = Self.snapshot(isOpen: true)
         #expect(SystemMenuSettingsSection.readout(for: hidden).contains("not revealed"))

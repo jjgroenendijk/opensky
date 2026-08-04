@@ -612,6 +612,7 @@
 					"$(SRCROOT)/.vendor/ffmpeg/include",
 				);
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
 			};
 			name = Debug;
 		};
@@ -673,6 +674,7 @@
 					"$(SRCROOT)/.vendor/ffmpeg/include",
 				);
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;

@@ -34,7 +34,7 @@ nonisolated enum PlayerBodyError: LocalizedError, Equatable {
         case let .noRenderableGeometry(reasons):
             "player base resolved to no renderable geometry (\(reasons.joined(separator: ", ")))"
         case let .behavior(error):
-            error.localizedDescription ?? "behavior graph unavailable"
+            error.errorDescription ?? "behavior graph unavailable"
         }
     }
 }

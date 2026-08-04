@@ -191,11 +191,11 @@ struct InventoryMenuAcceptanceRealDataTests {
     @MainActor
     private func makeModel(root: GameDataRoot) throws -> InventoryMenuModel {
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        let baselines = try InventoryBaselineResolver.build(from: file)
+        let baselines = InventoryBaselineResolver.build(from: file)
         let inventory = InventoryRuntime(store: WorldStateStore(), baselines: baselines)
         for family in ItemDefinition.Family.allCases {
             for definition in baselines.items.definitions(of: family).prefix(3) {
-                try? inventory.add(definition.formID, count: 2, to: .player)
+                _ = try? inventory.add(definition.formID, count: 2, to: .player)
             }
         }
         try inventory.add(InventoryRuntime.vanillaGoldFormID, count: 137, to: .player)

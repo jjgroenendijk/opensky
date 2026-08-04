@@ -274,6 +274,7 @@ final class OpenSkyUITests: XCTestCase {
         try write(window.screenshot(), name: "app-asset-browser.png")
     }
 
+    @MainActor
     private func write(_ screenshot: XCUIScreenshot, name: String) throws {
         // UI-test runner is containerized and cannot write into repo logs/.
         // Host verification copies these logged temp paths after the run.

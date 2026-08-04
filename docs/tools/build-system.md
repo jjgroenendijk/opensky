@@ -2,10 +2,10 @@
 type: Tool
 title: Build system and xcodebuild invocation
 description: How the Makefile and the tools/ scripts agree on one xcodebuild invocation -
-  scheme, configuration, derived-data cache, output filtering, products path - and what
-  each knob overrides.
+  scheme, configuration, derived-data cache, output filtering, warnings-as-errors, products
+  path - and what each knob overrides.
 tags: [tool, build, make, xcodebuild]
-timestamp: 2026-08-03T00:00:00Z
+timestamp: 2026-08-04T00:00:00Z
 ---
 
 # Build system and xcodebuild invocation
@@ -20,6 +20,7 @@ volume cannot drift apart per target. The scripts under `tools/` run their own
 
 * The shared invocation
 * Output volume and the transcripts in logs/
+* Swift warnings are errors
 * Built-products path
 * tools/xcodebuild-lib.sh
 * Known limits
@@ -69,6 +70,22 @@ and script that runs `xcodebuild` for its output goes through the wrapper instea
 `tools/realtest.sh`. `tools/probe.sh` keeps its own `logs/probe.log` because the CLI
 output it greps is the point of the run, not the build.
 
+## Swift warnings are errors
+
+`SWIFT_TREAT_WARNINGS_AS_ERRORS = YES` sits in both project-level build configurations,
+next to the `MTL_TREAT_WARNINGS_AS_ERRORS` that has always governed the shaders, so it
+covers `opensky`, `openskycli`, `openskyTests`, and `openskyUITests` at once rather than
+per target. SwiftLint never sees a compiler diagnostic, so before this setting nothing
+stopped warnings from accumulating: the test targets had drifted to about a hundred of
+them, and because a warning is signal the output filter keeps, a `make test` that
+recompiled them printed roughly a hundred lines instead of the three an incremental run
+prints (issue #350).
+
+The consequence to expect is that a toolchain upgrade which adds a deprecation warning
+breaks the build outright rather than adding a line to the transcript. That is the same
+trade the project already accepts for SwiftLint and for the Metal compiler, and the fix is
+to fix the diagnostic. Do not switch the setting off to get a build through.
+
 ## Built-products path
 
 `xcodebuild -showBuildSettings` takes several seconds, and `app-path`, `cli-path`, and
@@ -100,9 +117,6 @@ because the boot disk cannot hold either. See [Testing setup](/testing.md).
   compiling `openskyUITests`: the tool builds every buildable in the scheme's Test action
   before it consults the selectors. Removing that build cost needs checked-in test plans
   (issue #346), not a flag.
-* The test targets currently compile with warnings, and warnings are signal the filter
-  keeps, so a `make test` that recompiles them prints roughly a hundred lines rather than
-  the three an incremental run prints. Tracked as issue #350.
 * Two concurrent `xcodebuild` invocations against the same derived-data tree deadlock
   until the tool timeout. Let one finish before starting another
   ([Testing setup](/testing.md)).

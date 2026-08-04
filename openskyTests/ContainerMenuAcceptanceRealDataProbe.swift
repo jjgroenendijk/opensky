@@ -43,7 +43,7 @@ extension ContainerMenuAcceptanceRealDataTests {
     @MainActor
     func makeShop(root: GameDataRoot, mode: ContainerMenuModel.Mode) throws -> ProbeShop {
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        let baselines = try InventoryBaselineResolver.build(from: file)
+        let baselines = InventoryBaselineResolver.build(from: file)
         let inventory = InventoryRuntime(store: WorldStateStore(), baselines: baselines)
         let items = WorldItemRuntime(inventory: inventory)
         let container = InventoryHolder(
@@ -51,8 +51,8 @@ extension ContainerMenuAcceptanceRealDataTests {
         )
         for family in ItemDefinition.Family.allCases {
             for definition in baselines.items.definitions(of: family).prefix(3) {
-                try? inventory.add(definition.formID, count: 2, to: .player)
-                try? inventory.add(definition.formID, count: 2, to: container)
+                _ = try? inventory.add(definition.formID, count: 2, to: .player)
+                _ = try? inventory.add(definition.formID, count: 2, to: container)
             }
         }
         try inventory.add(InventoryRuntime.vanillaGoldFormID, count: 5000, to: .player)

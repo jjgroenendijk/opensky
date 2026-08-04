@@ -46,7 +46,7 @@ struct PluginHeaderTests {
             + ESMFixture.topGroup("GMST", contents: ESMFixture.record("GMST", data: Data()))
         let file = try ESMFile(data: data)
         let children = try #require(file.topGroup(of: "GMST")).children()
-        guard case let .record(gmst)? = try children.first else {
+        guard case let .record(gmst)? = children.first else {
             Issue.record("expected a record child")
             return
         }

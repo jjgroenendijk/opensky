@@ -208,7 +208,9 @@ struct M10AcceptanceRealDataTests {
         var result = RunResult()
         system.update(deltaTime: 100, hour: session.clock.hourOfDay)
         var weather = system.currentWeatherID
-        weather.map { result.observedWeatherIDs.insert($0) }
+        if let weather {
+            result.observedWeatherIDs.insert(weather)
+        }
         for _ in 0 ..< M10AcceptanceTests.steps {
             let elapsed = session.advance(timescale)
             result.elapsedGameHours += elapsed
@@ -220,7 +222,9 @@ struct M10AcceptanceRealDataTests {
             )
             guard system.currentWeatherID != weather else { continue }
             weather = system.currentWeatherID
-            weather.map { result.observedWeatherIDs.insert($0) }
+            if let weather {
+                result.observedWeatherIDs.insert(weather)
+            }
             result.changePoints.append(result.elapsedGameHours)
         }
         return result

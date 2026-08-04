@@ -95,7 +95,7 @@ enum SWFContainerMenuCommand {
         mode: ContainerMenuModel.Mode
     ) throws -> ProbeWorld {
         let file = try context.loadSkyrimESM()
-        let baselines = try InventoryBaselineResolver.build(from: file)
+        let baselines = InventoryBaselineResolver.build(from: file)
         let inventory = InventoryRuntime(store: WorldStateStore(), baselines: baselines)
         let items = WorldItemRuntime(inventory: inventory)
         // `.generated` rather than `.container(base:)`: the probe's merchant is
@@ -136,8 +136,8 @@ enum SWFContainerMenuCommand {
     ) throws {
         for family in ItemDefinition.Family.allCases {
             for definition in baselines.items.definitions(of: family).prefix(seedPerFamily) {
-                try? inventory.add(definition.formID, count: seedCount, to: .player)
-                try? inventory.add(definition.formID, count: seedCount, to: container)
+                _ = try? inventory.add(definition.formID, count: seedCount, to: .player)
+                _ = try? inventory.add(definition.formID, count: seedCount, to: container)
             }
         }
         try inventory.add(InventoryRuntime.vanillaGoldFormID, count: playerSeedGold, to: .player)

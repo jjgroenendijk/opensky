@@ -4,6 +4,21 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-04
 
+* **Swift warnings are build errors now (issue #350)**: the test targets had accumulated
+  about a hundred compiler warnings, and since a warning is signal the `make test` output
+  filter keeps, a run that recompiled them buried the result in diagnostics nobody read.
+  Every one is fixed — `try` on calls that do not throw, discarded `try?` and `map`
+  results, two `SystemMenuPanelTests` cases missing `@MainActor`, and `#require` nested in
+  a comparison, which the testing macro cannot disambiguate. Turning the setting on
+  surfaced five more in `openskycli`, which `make test` never compiles. Three sat in
+  `opensky/`
+  rather than in the test targets, all of them dead code that computed the right answer
+  the long way round: `PlayerBodyError` fell back on a `??` whose left side could not be
+  nil, `PapyrusWorldEvents` compared an already-unwrapped value to `nil`, and
+  `HKBClassRegistry.entry` erased its decoder through a closure that implicitly captured a
+  metatype the compiler could not prove `Sendable`. Nothing changed behaviorally. With the
+  count at zero, `SWIFT_TREAT_WARNINGS_AS_ERRORS` is on in both project-level
+  configurations so it cannot grow back. See [build system](/tools/build-system.md).
 * **NIF `Matrix33` is a row-vector rotation (issue #354)**: every decoded NIF rotation was
   the transpose of the rotation it means, because the format multiplies row vectors and
   OpenSky's matrices multiply column vectors. Vanilla statics hid it — their `NiNode`

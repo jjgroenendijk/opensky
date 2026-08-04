@@ -91,7 +91,7 @@ struct M13AcceptanceBudgetTests {
         PapyrusWorldFixture.drain(session.world)
 
         let runtime = try #require(session.bridge.questRuntime)
-        let context = try ConditionContext(quests: runtime.resolution())
+        let context = ConditionContext(quests: runtime.resolution())
         var evaluator = ConditionEvaluator(context: context)
         let floor = session.world.runtime.tally.instructionsExecuted
 
