@@ -75,6 +75,12 @@ engine subsystems under `opensky/` by domain, and keep format parsers separate f
 rendering. Skills live in `.AGENTS/skills/` (`.claude/skills` symlinks there). `logs/` and
 `.vendor/` are gitignored. `docs/index.md` maps the wiki — trust it over globbing.
 
+Run output is per-run, not per-name: a script that writes a transcript, a capture, or a
+result bundle puts it in `logs/<script>/<UTC timestamp>/` (or the same shape under
+`build/test-results/`) through `tools/run-dir.sh`, prints that directory, and points
+`latest` at it. Link the run directory, never a loose file. `make prune` deletes stale
+worktree `DerivedData/` and aged-out runs; `docs/tools/run-output.md` has the rules.
+
 ## Build, run, test
 
 `make help` lists every target. `make fix` (autoformat plus strict lint) before committing;

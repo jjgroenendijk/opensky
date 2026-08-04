@@ -42,6 +42,25 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   both phases, a second `make build` or `make cli` runs no script phase and no `CodeSign`,
   and deleting the prefix still fails with the `run 'make bootstrap'` message. See
   [ffmpeg for audio decode](/decisions/ffmpeg-audio.md).
+* **`make prune` plus a run-directory retention convention (issue #347)**: run output had
+  no owner. Each linked worktree carries its own tens-of-gigabytes `DerivedData/`, and the
+  worktree for a merged branch leaves it behind — 24 such trees, 51 GB, were sitting under
+  `.claude/worktrees/` when this landed — while `tools/probe.sh`, `tools/test-ui.sh`, and
+  `tools/realtest.sh` each dropped loose files into `logs/` under their own naming, so a
+  stale capture read exactly like the current one. Every writing script now allocates one
+  directory per run through `tools/run-dir.sh` — `logs/<script>/<UTC timestamp>/` with a
+  `latest` symlink, and `.xcresult` bundles in the same shape under `build/test-results/`
+  — prints it, and passes it down to nested scripts through `OPENSKY_RUN_DIR` so one run
+  of `make realtest` keeps both transcripts, its enumeration, and its bundle together.
+  Timestamped names sort in time order, which is how `make prune` decides both "newest
+  run" and "past the retention age" without trusting modification times. `make prune`
+  deletes the `DerivedData/`, `build/`, and `logs/` of any checkout under
+  `.claude/worktrees/` that `git worktree list` no longer names, plus `build/install`,
+  aged-out runs (keeping the newest per script so `latest` resolves), and pre-convention
+  leftovers; it prints the whole plan with sizes and reasons before deleting, reports the
+  space freed, and `make prune DRY_RUN=1` stops after the plan. The old ad-hoc
+  `rm -rf build/test-results/*.xcresult` in `make test` and `make test-one` is gone. See
+  [Run output layout and make prune](/tools/run-output.md).
 * **Build settings moved to `Config/*.xcconfig`, signing out of shared config (issue
   #343)**: the five build-configuration lists in the pbxproj duplicated Swift mode,
   concurrency flags, ffmpeg search paths, linker flags, deployment target, and signing

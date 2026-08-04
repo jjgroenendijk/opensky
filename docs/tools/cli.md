@@ -256,6 +256,9 @@ p95, exact actor/animation accounting, reason-tagged failures, 4 ms animation-up
   explained failures, asserts the `shadow culling` line reports culled casters, and
   requires nonzero `grass instancing` draws with zero budget drops);
 `bench --walk-path` runs M4's 640x360 physics/route gate with the build-aware default frame
-budgets + writes `logs/probe-walk-path.png`. Before touching game data, the harness also
+budgets + writes `probe-walk-path.png`. Before touching game data, the harness also
 checks that `--walk-path` rejects `--frames`, `--footprint-cap-mb`, and
-`--collision-build-budget-ms` with exit status 2. Full output -> `logs/probe.log`.
+`--collision-build-budget-ms` with exit status 2. Every capture and the full output
+(`probe.log`) go to the run directory the probe prints, `logs/probe/<UTC timestamp>/`,
+with `logs/probe/latest` pointing at the newest run
+([run output layout](/tools/run-output.md)).

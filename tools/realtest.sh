@@ -29,14 +29,9 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 # the ordinary build so a real-data run never invalidates it, but on the same
 # volume, because the boot disk cannot hold either.
 dd="$OPENSKY_DERIVED_DATA/opensky-realtest"
-result_bundle="logs/realtest-$$.xcresult"
-enumeration_json="logs/realtest-enumeration-$$.json"
 
-mkdir -p logs
 cleanup() {
     kill "${guard_pid:-}" 2>/dev/null || true
-    rm -rf "$result_bundle"
-    rm -f "$enumeration_json"
 }
 trap cleanup EXIT INT TERM
 
@@ -45,8 +40,17 @@ if [ ! -e "$data_root/Data/Skyrim.esm" ] && [ ! -e "$data_root/Skyrim.esm" ]; th
     exit 1
 fi
 
+# One run, one directory (issue #347): both xcodebuild transcripts and the
+# selector enumeration land here, and `logs/realtest/latest` points at it.
+run_dir="$("$root/tools/run-dir.sh" realtest)"
+OPENSKY_RUN_DIR="$run_dir"
+export OPENSKY_RUN_DIR
+printf '[INFO] run directory: %s\n' "$run_dir"
+result_bundle="$("$root/tools/run-dir.sh" -b build/test-results realtest)/realtest.xcresult"
+enumeration_json="$run_dir/enumeration.json"
+
 echo "[INFO] build-for-testing -> $dd"
-"$root/tools/xcodebuild-run.sh" "realtest-build-$$" \
+"$root/tools/xcodebuild-run.sh" realtest-build \
     xcodebuild build-for-testing -project opensky.xcodeproj -scheme opensky \
     -derivedDataPath "$dd" -destination 'platform=macOS'
 
@@ -106,10 +110,10 @@ guard_pid=$!
 
 echo "[INFO] test-without-building: $selector"
 status=0
-# Through the shared runner (Makefile XCB_RUN): full transcript to
-# logs/realtest-<pid>.log, stdout filtered on a green run, whole log printed
-# when the run fails.
-"$root/tools/xcodebuild-run.sh" "realtest-$$" \
+# Through the shared runner (Makefile XCB_RUN): full transcript into the run
+# directory, stdout filtered on a green run, whole log printed when the run
+# fails.
+"$root/tools/xcodebuild-run.sh" realtest \
     xcodebuild test-without-building -xctestrun "$xctestrun" -derivedDataPath "$dd" \
     -only-testing:"$selector" -destination 'platform=macOS' \
     -parallel-testing-enabled NO -maximum-parallel-testing-workers 1 \

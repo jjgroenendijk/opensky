@@ -151,7 +151,8 @@ the state that causes repeated prompts.
 Per-file compile lines and the one line per passing test are the bulk of what a build or
 test run prints and carry nothing a green run needs; they are exactly what you want when
 something breaks. `tools/xcodebuild-run.sh` resolves that: it takes a log name and a full
-xcodebuild command line, tees the entire transcript to `logs/<name>.log`, and passes
+xcodebuild command line, tees the entire transcript to
+`logs/<name>/<UTC timestamp>/<name>.log`, and passes
 stdout through `xcodebuild_summary` — diagnostics, tests that did not pass, and the
 closing status line. A failing run then prints the whole log, so a failure message can
 never exist only in a file. A green `make build` prints two lines against a transcript of
@@ -161,8 +162,12 @@ roughly 1,300.
 leaving no complete copy anywhere, and it also drops `** TEST SUCCEEDED **`. Every target
 and script that runs `xcodebuild` for its output goes through the wrapper instead —
 `build`, `cli`, `test`, `test-one`, `install`, `tools/test-ui.sh`, and
-`tools/realtest.sh`. `tools/probe.sh` keeps its own `logs/probe.log` because the CLI
+`tools/realtest.sh`. `tools/probe.sh` keeps its own `probe.log` because the CLI
 output it greps is the point of the run, not the build.
+
+Where that transcript lands, how a wrapper script keeps a whole run's output in one
+directory, and how `make prune` ages it out are the run-output convention:
+[Run output layout and make prune](/tools/run-output.md).
 
 ## Swift warnings are errors
 
