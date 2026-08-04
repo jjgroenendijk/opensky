@@ -50,9 +50,9 @@ struct NIFModelTests {
                 children: [1]
             )),
             .init("NiNode", NIFFixture.niNode(
-                prefix: NIFFixture.avObjectPrefix(rotationColumns: [
-                    cosf(theta), sinf(theta), 0,
-                    -sinf(theta), cosf(theta), 0,
+                prefix: NIFFixture.avObjectPrefix(rotationRows: [
+                    cosf(theta), -sinf(theta), 0,
+                    sinf(theta), cosf(theta), 0,
                     0, 0, 1
                 ]),
                 children: [2]

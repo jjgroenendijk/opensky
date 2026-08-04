@@ -4,6 +4,20 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-04
 
+* **NIF `Matrix33` is a row-vector rotation (issue #354)**: every decoded NIF rotation was
+  the transpose of the rotation it means, because the format multiplies row vectors and
+  OpenSky's matrices multiply column vectors. Vanilla statics hid it — their `NiNode`
+  rotations are overwhelmingly identity — and a skinned mesh's bind palette hid it too,
+  since it is built from two halves of the same file that cancel the error. Every pose
+  composed on top of that palette inherited it, so feeding a skinned actor any composed
+  skeleton pose tore it into long flat shards, on the M6 clip path as much as on the M14
+  player. Reading the nine floats as rows fixes it: `skeleton.hkx`'s reference pose now
+  reproduces `skeleton.nif`'s bind pose to 5.3e-5 world units over the 96 bones the two
+  files share, where it was off by up to 61.9. The palette composition moved out of
+  `RenderMesh` into a Metal-free `SkinningPalette` so the round trip is unit-tested against
+  hand-built matrices, and the real-data render gate now bounds a posed body's silhouette
+  against the bind-pose body's rather than only asserting that two frames differ. See
+  [NIF](/formats/nif.md) and [actor animation](/engine/actor-animation.md).
 * **First-person arms (issue #190)**: milestone 14 item 14.7. The player gets a first-person
   rig — the `_1stperson` skeleton and arm meshes, assembled through the same `ActorAssembler`
   path the third-person body uses and anchored to the eye through the `Camera1st [Cam1]` bone

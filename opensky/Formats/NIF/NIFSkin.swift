@@ -25,9 +25,11 @@ nonisolated struct NIFTransform: Equatable {
     }
 
     init(reader: inout BinaryReader) throws {
-        rotation = try simd_float3x3(columns: (
+        // Nine floats in nif.xml Matrix33 order, transposed into the engine's
+        // column-vector convention — see `NIFObject.localTransform`.
+        rotation = try simd_float3x3(rows: [
             reader.readVector3(), reader.readVector3(), reader.readVector3()
-        ))
+        ])
         translation = try reader.readVector3()
         scale = try reader.readFloat32()
         guard

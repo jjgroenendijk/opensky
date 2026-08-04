@@ -248,18 +248,11 @@ nonisolated final class RenderMesh {
                 byteCount: skinning.bindPoseMatrices.count * MemoryLayout<float4x4>.stride
             )
         }
-        var palette: SkinningPalette?
-        let hasPaletteMetadata = skinning.boneNames.count == boneCount
-            && skinning.skinToBoneMatrices.count == boneCount
-        if hasPaletteMetadata {
-            palette = SkinningPalette(
-                boneNames: skinning.boneNames,
-                rootParentToSkin: skinning.rootParentToSkin,
-                skinToBoneMatrices: skinning.skinToBoneMatrices,
-                bindPoseMatrices: skinning.bindPoseMatrices
-            )
-        }
-        return SkinBuffers(attributes: attributes, matrices: matrices, palette: palette)
+        return SkinBuffers(
+            attributes: attributes,
+            matrices: matrices,
+            palette: SkinningPalette(skinning)
+        )
     }
 
     /// Refreshes CPU palette from an animated skeleton world pose. Unmatched
@@ -267,17 +260,9 @@ nonisolated final class RenderMesh {
     @discardableResult
     func updateSkinningPose(_ transformsByName: [String: float4x4]) -> Int {
         guard let palette = skinningPalette else { return 0 }
-        var updated = palette.bindPoseMatrices
-        var matchCount = 0
-        for index in palette.boneNames.indices {
-            guard let current = transformsByName[palette.boneNames[index]] else { continue }
-            updated[index] = palette.rootParentToSkin
-                * current
-                * palette.skinToBoneMatrices[index]
-            matchCount += 1
-        }
-        currentBoneMatrices = updated
-        return matchCount
+        let posed = palette.posed(by: transformsByName)
+        currentBoneMatrices = posed.matrices
+        return posed.matchedBoneCount
     }
 
     /// Restores verified NIF bind matrices for actor-animation A/B. Returns
@@ -302,11 +287,4 @@ nonisolated final class RenderMesh {
     func boneMatrixOffset(slot: Int) -> Int {
         slot * currentBoneMatrices.count * MemoryLayout<float4x4>.stride
     }
-}
-
-nonisolated private struct SkinningPalette {
-    let boneNames: [String]
-    let rootParentToSkin: float4x4
-    let skinToBoneMatrices: [float4x4]
-    let bindPoseMatrices: [float4x4]
 }

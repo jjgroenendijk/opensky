@@ -18,7 +18,9 @@ struct NIFNodeTests {
                 nameIndex: 1,
                 flags: 0x8000E,
                 translation: SIMD3(10, -20, 30),
-                rotationColumns: [0, 1, 0, -1, 0, 0, 0, 0, 1],
+                // Rows of the quarter turn about z the assertions below read
+                // back as columns — NIF stores rotations for row vectors.
+                rotationRows: [0, -1, 0, 1, 0, 0, 0, 0, 1],
                 scale: 2,
                 collisionRef: 7
             ),
@@ -67,15 +69,15 @@ struct NIFNodeTests {
     }
 
     @Test func localTransformComposesTranslationRotationScale() throws {
-        // Rotation columns = MatrixMath.rotationZ(θ) upper 3x3, so the
+        // Rotation rows = MatrixMath.rotationZ(θ) upper 3x3, so the
         // composed local transform must equal T * Rz(θ) * S.
         let theta = MatrixMath.radians(fromDegrees: 30)
         let node = try NIFNode(
             data: NIFFixture.niNode(prefix: NIFFixture.avObjectPrefix(
                 translation: SIMD3(5, 6, 7),
-                rotationColumns: [
-                    cosf(theta), sinf(theta), 0,
-                    -sinf(theta), cosf(theta), 0,
+                rotationRows: [
+                    cosf(theta), -sinf(theta), 0,
+                    sinf(theta), cosf(theta), 0,
                     0, 0, 1
                 ],
                 scale: 3

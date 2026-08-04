@@ -101,14 +101,15 @@ enum NIFFixture {
     /// NiObjectNET + NiAVObject prefix bytes shared by node + shape payload
     /// builders (Skyrim stream: uint32 flags, no property list). Rotation is
     /// nine floats in file order m11 m21 m31 | m12 m22 m32 | m13 m23 m33
-    /// (nif.xml Matrix33, column-major).
+    /// (nif.xml Matrix33). NIF multiplies row vectors, so each group of three
+    /// is one *row* of the engine-convention rotation the decoder produces.
     static func avObjectPrefix(
         nameIndex: UInt32 = 0xFFFF_FFFF,
         extraDataRefs: [Int32] = [],
         controllerRef: Int32 = -1,
         flags: UInt32 = 0xE,
         translation: SIMD3<Float> = .zero,
-        rotationColumns: [Float] = [1, 0, 0, 0, 1, 0, 0, 0, 1],
+        rotationRows: [Float] = [1, 0, 0, 0, 1, 0, 0, 0, 1],
         scale: Float = 1,
         collisionRef: Int32 = -1
     ) -> Data {
@@ -123,7 +124,7 @@ enum NIFFixture {
         out.appendFloat32(translation.x)
         out.appendFloat32(translation.y)
         out.appendFloat32(translation.z)
-        for element in rotationColumns {
+        for element in rotationRows {
             out.appendFloat32(element)
         }
         out.appendFloat32(scale)
@@ -151,14 +152,15 @@ extension NIFFixture {
         return out
     }
 
-    /// nif.xml NiTransform: column-major Matrix33, translation, scale.
+    /// nif.xml NiTransform: Matrix33, translation, scale. Row-vector rotation,
+    /// same as `avObjectPrefix`.
     static func niTransform(
         translation: SIMD3<Float> = .zero,
-        rotationColumns: [Float] = [1, 0, 0, 0, 1, 0, 0, 0, 1],
+        rotationRows: [Float] = [1, 0, 0, 0, 1, 0, 0, 0, 1],
         scale: Float = 1
     ) -> Data {
         var out = Data()
-        for element in rotationColumns {
+        for element in rotationRows {
             out.appendFloat32(element)
         }
         out.appendFloat32(translation.x)

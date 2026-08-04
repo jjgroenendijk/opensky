@@ -67,20 +67,41 @@ things differ, and only three:
 The `World > Environment > Actor animation` A/B toggle covers the player exactly as it
 covers an NPC: off restores the bind palette, on recomposes.
 
-### Open defect: composed poses tear the mesh
+### Why composed poses used to tear the mesh
 
-Writing *any* composed pose into a skinned actor's palette currently tears the mesh into
-shards, while the same body drawn from its NIF bind palette renders correctly. This is a
-property of the composition-to-palette path, not of the behavior graph: the graph's pose
-and `mt_idle.hkx`'s pose agree to within 5 world units on all 99 rig bones and both render
-torn, and composing the rig's own reference pose — no animation at all — tears it too. That
-last point localizes it: `skeleton.hkx`'s reference pose and `skeleton.nif`'s bind pose are
-supposed to be the same pose, and a palette built from the reference pose should therefore
-come out as the bind palette. It does not.
+Writing any composed pose into a skinned actor's palette tore the mesh into long flat
+shards, while the same body drawn from its NIF bind palette rendered correctly. The
+behavior graph was never involved: composing the rig's own reference pose — no animation at
+all — tore it the same way, and that is the useful measurement, because `skeleton.hkx`'s
+reference pose and `skeleton.nif`'s bind pose are the same pose. A palette built from the
+reference pose therefore has to come out as the bind palette, and it did not.
 
-The defect predates milestone 14 and applies to streamed NPCs through
-`ActorAnimationPlayback` as well; the M6 render gate only asserts that two frames differ,
-which a torn mesh satisfies. Tracked separately with the evidence and the places to look.
+The two files disagreed about which way a bone turns. NIF stores its rotations for row
+vectors and OpenSky's matrices multiply column vectors, so a `Matrix33` has to be
+transposed on the way in ([NIF](/formats/nif.md)); it was not being transposed. Havok needs
+no such correction, so the same bone came out of the two files as transposes of each other.
+Nothing before this had noticed, for two reasons. Vanilla statics rotate almost nothing at
+the `NiNode` level, so the world rendered the same either way. And a skinned mesh's *bind*
+palette cancels the error — it is built as `rootParentToSkin * boneBind * skinToBone` with
+both halves read from the same file — so the bind pose looked right while every pose
+composed on top of it inherited the disagreement.
+
+Measured on the local install (2026-08-04): before the transpose, composing the reference
+pose missed `skeleton.nif`'s bind transforms by up to 61.9 world units over the 96 bones the
+two files share, and `rootParentToSkin * boneBind * skinToBone` on a vanilla body shape came
+out about 10 units away from the identity on a thigh. After it, the rig reproduces the NIF
+bind pose to 5.3e-5 and the palette identity holds to 8e-6.
+
+The defect predated milestone 14 and applied to streamed NPCs through
+`ActorAnimationPlayback` identically, which the M6 render gate missed: it only asserts that
+two frames differ, and a torn mesh satisfies that. The real-data gate
+(`PlayerBodyRenderRealDataTests`) now also bounds how much of the frame a posed body covers
+against how much the bind-pose body covers. Shards spray across the frame, so their coverage
+runs to several times a standing figure's; the bound is what a torn mesh cannot pass.
+
+`SkinningPalette` holds the composition itself, away from Metal, so the round trip is
+checked against hand-built matrices with no device in the way
+(`SkinningPaletteBindPoseTests`).
 
 ## Streaming lifecycle + fallback
 

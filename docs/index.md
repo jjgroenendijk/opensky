@@ -59,7 +59,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Skyrim INI settings](/formats/ini.md) - read-only decode, file precedence, typed
   terrain-distance values, and OpenSky override policy.
 * [NIF mesh](/formats/nif.md) - Gamebryo 20.2.0.7 container, scene graph,
-  geometry/materials, SSE skin blocks, dynamic FaceGen + skeleton bind pose.
+  row-vector `Matrix33` convention, geometry/materials, SSE skin blocks,
+  dynamic FaceGen + skeleton bind pose.
 * [NIF Havok collision](/formats/nif-collision.md) - bhk root/body/shape graphs,
   compressed mesh reconstruction, unit/filter policy, SkyrimLayer 12 trigger routing,
   Whiterun sweep evidence.
