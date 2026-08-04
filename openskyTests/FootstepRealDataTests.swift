@@ -1,0 +1,165 @@
+// Env-gated footstep chain over the user's own Skyrim SE install (read-only
+// external input, never committed — AGENTS.md "Legal & IP"), issue #352.
+//
+// The synthetic suites prove the decoders and the routing in isolation. The
+// claim they cannot make is the one that matters: that walking the *vanilla*
+// player graph fires tags the *vanilla* footstep sets answer to, and that those
+// tags reach real audio files. Both ends have to come from the install or the
+// whole feature is a well-tested no-op.
+//
+// Skips automatically when OPENSKY_DATA_ROOT is unset. Run with
+// `make realtest T='FootstepRealDataTests/vanillaGraphFiresTagsTheVanillaSetAnswers()'`.
+
+import Foundation
+@testable import opensky
+import simd
+import Testing
+
+struct FootstepRealDataTests {
+    private static let dataRoot: GameDataRoot? = {
+        let environment = ProcessInfo.processInfo.environment
+        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
+        else { return nil }
+        return try? GameDataLocator.locate()
+    }()
+
+    private static let behaviorPath =
+        "meshes\\actors\\character\\behaviors\\0_master.hkx"
+    private static let skeletonPath =
+        "meshes\\actors\\character\\character assets\\skeleton.hkx"
+    private static let animationPrefix = "meshes\\actors\\character\\animations\\"
+
+    /// The vanilla humanoid sets, and the number of footsteps each carries per
+    /// non-swimming gait. Probed 2026-08-04 through `openskycli footstep`; a
+    /// load order that changes them is a real difference worth failing on.
+    private static let humanoidSets = [
+        "DefaultFootstepSet", "FSTBarefootFootstepSet",
+        "FSTArmorLightFootstepSet", "FSTArmorHeavyFootstepSet"
+    ]
+
+    @Test(.enabled(if: Self.dataRoot != nil))
+    func vanillaSetsResolveTheirTagsToRealAudioFiles() throws {
+        let root = try #require(Self.dataRoot)
+        let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
+        let store = FootstepStore(file: file)
+        let sounds = SoundRecordStore(file: file)
+        let vfs = VirtualFileSystem(root: root)
+
+        for editorID in Self.humanoidSets {
+            let set = try #require(
+                store.sets.values.first { $0.editorID == editorID },
+                "\(editorID) is missing from this load order"
+            )
+            // Swimming is empty in every vanilla humanoid set, so a swimming
+            // player is silent underfoot in the data as well as in OpenSky.
+            #expect(set.footsteps(for: .swimming).isEmpty)
+            for gait in [FootstepGait.walking, .running, .sprinting, .sneaking] {
+                let tags = store.tags(for: gait, in: set)
+                #expect(!tags.isEmpty, "\(editorID) \(gait) carries no tags")
+                for tag in tags {
+                    let resolved = try #require(
+                        store.resolve(tag: tag, gait: gait, in: set),
+                        "\(editorID) \(gait) \(tag) resolves to no sound"
+                    )
+                    let path = try #require(
+                        try sounds.resolveAny(resolved.sound).filePaths.first,
+                        "\(editorID) \(gait) \(tag) reaches a SNDR with no track"
+                    )
+                    let data = try vfs.contents(forPath: path)
+                    // The chain ends at RIFF/WAVE, not xWMA — the finding that
+                    // made issue #352 need a PCM reader at all.
+                    #expect(WorldAudioEngine.isWAV(data), "\(path) is not RIFF/WAVE")
+                    _ = try WorldAudioEngine.makeBuffer(wav: data, downmixToMono: true)
+                }
+            }
+        }
+    }
+
+    /// The player's own outfit decides the set: vanilla `Player` (`NPC_
+    /// 00000007`) wears iron boots, whose `ARMA.SNDD` names the heavy-armor set.
+    @Test(.enabled(if: Self.dataRoot != nil))
+    func thePlayersBootsSelectTheirFootstepSet() throws {
+        let root = try #require(Self.dataRoot)
+        let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
+        let store = FootstepStore(file: file)
+        let appearance = try ActorTemplateResolver.build(from: file, localized: true)
+            .resolve(base: PlayerBody.baseFormID)
+        let visual = try ActorVisualResolver.build(
+            from: file,
+            localized: true,
+            pluginName: "Skyrim.esm"
+        ).resolve(appearance: appearance)
+
+        let feet = visual.parts.filter { $0.slots.contains(.feet) }.map(\.armature)
+        #expect(!feet.isEmpty, "the player resolved no armature on its feet")
+        let set = try #require(store.set(forArmatures: feet))
+        #expect(set.editorID == "FSTArmorHeavyFootstepSet")
+    }
+
+    /// Drives the real graph through a second of walking and checks that at
+    /// least one of the tags the vanilla default set answers to came back
+    /// through the drain. This is the whole feature's load-bearing claim.
+    @Test(.enabled(if: Self.dataRoot != nil))
+    func vanillaGraphFiresTagsTheVanillaSetAnswers() throws {
+        let root = try #require(Self.dataRoot)
+        let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
+        let store = FootstepStore(file: file)
+        let set = try #require(store.defaultSet)
+        let answerable = Set(store.tags(for: .walking, in: set))
+        #expect(!answerable.isEmpty)
+
+        let bridge = try Self.drivenBridge(root: root)
+        let fired = Set(bridge.graphEvents.drain())
+
+        #expect(!fired.isEmpty, "the vanilla graph fired no named events at all")
+        let footsteps = fired.intersection(answerable)
+        let detail = "walking fired \(fired.sorted()), none of which "
+            + "\(set.editorID ?? "the set") answers to (\(answerable.sorted()))"
+        #expect(!footsteps.isEmpty, "\(detail)")
+    }
+
+    // MARK: - Loading
+
+    /// A bridge over the real graph and the launch cell's real terrain, walked
+    /// forward for a second of fixed steps with its event queue undrained.
+    private static func drivenBridge(root: GameDataRoot) throws -> LocomotionBridge {
+        let vfs = VirtualFileSystem(root: root)
+        let graph = try instance(vfs)
+        let configuration = PlayerMovementConfiguration.resolve(
+            store: GameSettingLoader.load(root: root),
+            movementTypes: MovementTypeLoader.load(root: root)
+        )
+        let terrain = try #require(LocomotionRealTerrain.terrainField(root: root))
+        let harness = LocomotionDriveHarness(
+            bridge: LocomotionBridge(configuration: configuration, graph: graph),
+            terrain: terrain,
+            start: LocomotionRealTerrain.startPosition(on: terrain)
+        )
+        graph.activate()
+        // The queue is bounded, so a long walk would drop the earliest steps;
+        // one second at 120 Hz stays well inside it.
+        _ = harness.run(
+            input: CameraInput(moveForward: 1, dt: LocomotionDriveHarness.step),
+            steps: LocomotionDriveHarness.secondOfSteps,
+            label: "footsteps"
+        )
+        return harness.bridge
+    }
+
+    private static func instance(_ vfs: VirtualFileSystem) throws -> BehaviorGraphInstance {
+        let file = try HKXFile(data: vfs.contents(forPath: behaviorPath))
+        let objectGraph = try HKXObjectGraph(file: file)
+        let behavior = try #require(HKBBehaviorGraph.graphs(in: objectGraph).first)
+        let skeletonData = try vfs.contents(forPath: skeletonPath)
+        let rig = try #require(try HKASkeleton.skeletons(in: HKXFile(data: skeletonData)).first)
+        let paths = vfs.archiveEntries()
+            .map(\.path)
+            .filter { $0.hasPrefix(animationPrefix) && $0.hasSuffix(".hkx") }
+        return BehaviorGraphInstance(
+            graph: behavior,
+            in: objectGraph,
+            skeleton: BehaviorSkeleton(rig),
+            clips: InstallBehaviorClipSource(fileSystem: vfs, paths: paths)
+        )
+    }
+}

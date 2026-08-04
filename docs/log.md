@@ -18,6 +18,27 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   hand-built matrices, and the real-data render gate now bounds a posed body's silhouette
   against the bind-pose body's rather than only asserting that two frames differ. See
   [NIF](/formats/nif.md) and [actor animation](/engine/actor-animation.md).
+* **Footstep audio events (issue #352)**: deferred from item 14.5 and now landed. The
+  locomotion bridge already stepped the vanilla player graph and the vanilla locomotion
+  clips already carry their own footstep triggers, so this is routing rather than a step
+  timer: `LocomotionGraphEventQueue` hands the third-person graph's fired events to
+  `WorldAudioFootstepDirector` once per frame, and the director walks the tag through the
+  footstep set on the player's feet to a positional source placed at the capsule bottom.
+  New record decoders for `FSTP`, `FSTS`, `IPDS` and `IPCT`, plus `ARMA.SNDD`, which is
+  what makes barefoot, light boots and heavy boots sound different without the engine
+  choosing anything. Two findings worth keeping: an `FSTS` lists its `XCNT` counts
+  walk-first and lays out the `DATA` arrays those counts size **swim-first**, which
+  `NPCWerewolfFootstepSet` settles on its own; and the chain ends at a `.wav`, not an
+  `.xwm`, so the M9 engine could not have played a footstep — or any door or activator
+  effect — no matter how well it was routed. See [footstep records](/formats/footstep.md),
+  [world audio playback](/engine/audio.md) and [terrain walk mode](/engine/walk-mode.md).
+* **Sound effects are RIFF/WAVE, not xWMA (issue #352)**: all 5,978 `.wav` files in the
+  install are uncompressed linear PCM, and a 62-file sweep across the archives found
+  `wFormatTag` 1 at 16 bits per sample in every one. `WAVFile` reads them and
+  `WorldAudioEngine` picks its playback path by peeking at the RIFF form type: `XWMA`
+  streams as before, `WAVE` is scheduled as one buffer and retires itself when it has
+  played out. See [RIFF/WAVE container](/formats/wav.md).
+
 * **First-person arms (issue #190)**: milestone 14 item 14.7. The player gets a first-person
   rig — the `_1stperson` skeleton and arm meshes, assembled through the same `ActorAssembler`
   path the third-person body uses and anchored to the eye through the `Camera1st [Cam1]` bone

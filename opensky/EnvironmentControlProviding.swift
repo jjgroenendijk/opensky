@@ -290,4 +290,27 @@ protocol AudioControlProviding: AnyObject {
     var currentMusicTrackName: String? { get }
     /// Most recent music failure reason; nil when the last start succeeded.
     var lastMusicError: String? { get }
+
+    // Footstep director controls (issue #352). Same lazy-construction policy
+    // again: these read their defaults and no-op until audio is enabled.
+
+    /// Footstep events fired by the player's behavior graph play the sound the
+    /// current footstep set resolves. Off leaves the player silent underfoot
+    /// without touching SFX, ambience, or music.
+    var footstepsEnabled: Bool { get set }
+    /// Editor ID of the FSTS the player's feet resolved to, or a reason there
+    /// is none.
+    var currentFootstepSetDescription: String { get }
+    /// The tags the current set answers to for the gait the player is in, in
+    /// record order. Empty when there is no set or the gait's list is.
+    var currentFootstepTags: [String] { get }
+    /// Most recent footstep the director played, as "tag: path".
+    var lastFootstepDescription: String? { get }
+    /// Most recent footstep failure reason; nil when the last one succeeded.
+    var lastFootstepError: String? { get }
+    /// Events routed and footsteps played since the director was built.
+    var footstepCounts: (routed: Int, played: Int) { get }
+    /// Forces one footstep for the named tag at the player's feet, so the
+    /// chain can be verified without walking.
+    func forcePlayFootstep(tag: String) -> String?
 }

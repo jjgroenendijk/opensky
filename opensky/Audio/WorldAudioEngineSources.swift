@@ -36,9 +36,16 @@ final class ActiveAudioSource {
     /// Continuous source: it restarts at the beginning instead of ending.
     let loops: Bool
     let node: AVAudioPlayerNode
-    /// nil for buffer-backed test sources; streamed sources own their decoder
+    /// nil for buffer-backed sources; streamed sources own their decoder
     /// through this.
     let streamer: AudioSourceStreamer?
+    /// Set when a buffer-backed source's scheduled buffer has played out.
+    /// Buffer sources have no streamer to report completion, so without this
+    /// a one-shot `.wav` effect would sit in `sources` until the FIFO budget
+    /// evicted it — a leak the moment footsteps started arriving twice a
+    /// second (issue #352). Written from the main actor by the completion
+    /// handler's hop; read by `retireFinishedSources`.
+    var bufferFinished = false
     /// Fade multiplier in [0, 1], folded into the node volume on top of `gain`.
     /// Owned by WorldAudioEngineFades.swift (internal because that file is a
     /// satellite of this one).
@@ -106,6 +113,15 @@ extension WorldAudioEngine {
     @discardableResult
     func playPositional(fileData: Data, request: AudioPlayRequest) throws -> Int {
         guard isRunning else { throw AudioEngineError.notRunning }
+        if Self.isWAV(fileData) {
+            // Sound effects — footsteps, doors, activators — ship as plain
+            // RIFF/WAVE, which needs no decoder and no streaming; see
+            // WorldAudioEngineWAV.swift.
+            return try playPositional(
+                buffer: Self.makeBuffer(wav: fileData, downmixToMono: true),
+                request: request
+            )
+        }
         let file = try XWMFile(data: fileData)
         // Positional inputs must be mono: the environment node spatializes
         // mono and passes stereo through flat.
@@ -154,9 +170,7 @@ extension WorldAudioEngine {
             streamer: nil
         )
         adoptSource(source)
-        node.scheduleBuffer(
-            buffer, at: nil, options: request.loops ? .loops : [], completionHandler: nil
-        )
+        schedule(buffer, on: node, for: source, loops: request.loops)
         node.play()
         return source.id
     }
@@ -169,6 +183,12 @@ extension WorldAudioEngine {
     @discardableResult
     func playNonPositional(fileData: Data, request: AudioPlayRequest) throws -> Int {
         guard isRunning else { throw AudioEngineError.notRunning }
+        if Self.isWAV(fileData) {
+            return try playNonPositional(
+                buffer: Self.makeBuffer(wav: fileData, downmixToMono: false),
+                request: request
+            )
+        }
         let file = try XWMFile(data: fileData)
         let channels = AVAudioChannelCount(file.codec.channelCount)
         guard
@@ -215,11 +235,33 @@ extension WorldAudioEngine {
             streamer: nil
         )
         adoptSource(source)
-        node.scheduleBuffer(
-            buffer, at: nil, options: request.loops ? .loops : [], completionHandler: nil
-        )
+        schedule(buffer, on: node, for: source, loops: request.loops)
         node.play()
         return source.id
+    }
+
+    /// Schedules one buffer and, for a one-shot, arranges for the source to be
+    /// retired once it has played out.
+    ///
+    /// The completion handler fires on an AVFAudio-internal thread, so it hops
+    /// to the main actor before touching the source. A looping request gets no
+    /// handler at all: it never finishes on its own and is retired by whoever
+    /// started it.
+    private func schedule(
+        _ buffer: AVAudioPCMBuffer,
+        on node: AVAudioPlayerNode,
+        for source: ActiveAudioSource,
+        loops: Bool
+    ) {
+        guard !loops else {
+            node.scheduleBuffer(buffer, at: nil, options: .loops, completionHandler: nil)
+            return
+        }
+        node.scheduleBuffer(buffer, at: nil, options: []) {
+            Task { @MainActor in
+                source.bufferFinished = true
+            }
+        }
     }
 
     func stopAllSources() {
@@ -241,7 +283,7 @@ extension WorldAudioEngine {
     /// Detaches sources whose stream reported completion. Called from the
     /// per-frame audio tick.
     func retireFinishedSources() {
-        for source in sources where source.streamer?.isFinished == true {
+        for source in sources where source.streamer?.isFinished == true || source.bufferFinished {
             stop(source)
         }
     }

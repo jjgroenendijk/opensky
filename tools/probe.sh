@@ -101,6 +101,16 @@ printf '%s\n' "$movement" | grep -q '^fMoveCharRunBase = .* units/s \[.*\]$' \
 printf '%s\n' "$movement" | grep -q '^stepHeight = .* units \[.*\]$' \
   || fail "movement probe did not report step value and source"
 
+# Footstep chain (issue #352): the default set's walking list must reach a real
+# sound file, which is the end-to-end evidence that FSTS/FSTP/IPDS/IPCT decode
+# and that the tag the behavior graph raises resolves to something playable.
+run "footstep chain (DefaultFootstepSet)" footstep
+footstep="$(awk '/^--- footstep chain/{f=1;next} /^--- /{f=0} f' "$log")"
+printf '%s\n' "$footstep" | grep -q '^set: DefaultFootstepSet ' \
+  || fail "footstep probe did not resolve the default set"
+printf '%s\n' "$footstep" | grep -q '^  FootLeft: .* -> .* -> sound' \
+  || fail "footstep probe did not resolve FootLeft to a sound file"
+
 run "cell summary (first-render cell)" cell
 run "collision grid (5x5 around first-render cell)" collision --radius 2
 
