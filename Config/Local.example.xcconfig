@@ -1,0 +1,20 @@
+// Per-developer signing. tools/config-local.sh copies this file to
+// Config/Local.xcconfig (gitignored) on the first build, and Config/Base.xcconfig
+// includes that copy if it exists. Edit the copy, never this template.
+//
+// The defaults below are ad-hoc signing, the same thing CI passes on the command line.
+// They build and run every target on the machine that produced them, so a fresh
+// checkout works without any setup.
+//
+// Ad-hoc signing gives the binary a new code signature on every build, so macOS treats
+// each build as a new application and re-asks for the permissions the UI tests and the
+// screenshot tooling need. Signing with a real Apple Development identity keeps those
+// grants across builds. To do that, set both values below: the identity exactly as
+// `security find-identity -v -p codesigning` prints it, and your ten-character Team ID
+// from https://developer.apple.com/account (Membership details).
+//
+//   OPENSKY_CODE_SIGN_IDENTITY = Apple Development
+//   OPENSKY_DEVELOPMENT_TEAM = ABCDE12345
+
+OPENSKY_CODE_SIGN_IDENTITY = -
+OPENSKY_DEVELOPMENT_TEAM =

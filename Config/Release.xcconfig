@@ -1,0 +1,8 @@
+// Project-level Release configuration: optimized, whole-module, with a dSYM.
+#include "Base.xcconfig"
+
+SWIFT_COMPILATION_MODE = wholemodule
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
+MTL_ENABLE_DEBUG_INFO = NO
+ENABLE_NS_ASSERTIONS = NO
+VALIDATE_PRODUCT = YES

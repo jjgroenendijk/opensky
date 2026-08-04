@@ -1,0 +1,12 @@
+// Target-level settings for openskyUITests, shared by Debug and Release. The runner is
+// ad-hoc signed on purpose: it is never distributed, and pinning it to `-` keeps the UI
+// test run independent of whether a developer identity is configured, which is why this
+// file does not include Signing.xcconfig.
+CODE_SIGN_IDENTITY = -
+
+PRODUCT_BUNDLE_IDENTIFIER = nl.jjgroenendijk.openskyUITests
+TEST_TARGET_NAME = opensky
+
+GENERATE_INFOPLIST_FILE = YES
+STRING_CATALOG_GENERATE_SYMBOLS = NO
+SWIFT_EMIT_LOC_STRINGS = NO

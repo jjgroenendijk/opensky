@@ -4,6 +4,20 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-04
 
+* **Build settings moved to `Config/*.xcconfig`, signing out of shared config (issue
+  #343)**: the five build-configuration lists in the pbxproj duplicated Swift mode,
+  concurrency flags, ffmpeg search paths, linker flags, deployment target, and signing
+  across every Debug/Release pair, so a settings experiment meant pbxproj surgery and the
+  file was the top merge-conflict surface between parallel worktrees. All ten
+  configurations now carry an empty `buildSettings` block and a `baseConfigurationReference`
+  into `Config/`: `Base` plus `Debug`/`Release` at the project level, one file per target
+  above them. `xcodebuild -showBuildSettings` is unchanged for all four targets in both
+  configurations apart from the two `OPENSKY_*` variables the signing indirection adds.
+  `CODE_SIGN_IDENTITY` and `DEVELOPMENT_TEAM` are no longer checked in: they resolve from
+  a gitignored `Config/Local.xcconfig` that `tools/config-local.sh` creates from a
+  checked-in template, defaulting to the ad-hoc signing CI already passes, and a linked
+  worktree copies the main checkout's file so a dev-signed setup does not silently become
+  ad-hoc. See [Build system and xcodebuild invocation](/tools/build-system.md).
 * **Swift warnings are build errors now (issue #350)**: the test targets had accumulated
   about a hundred compiler warnings, and since a warning is signal the `make test` output
   filter keeps, a run that recompiled them buried the result in diagnostics nobody read.

@@ -45,6 +45,10 @@ else
   fi
 fi
 
+# Per-developer signing lives in a gitignored Config/Local.xcconfig; create it now so a
+# fresh checkout builds and there is a file to put a real identity in.
+./tools/config-local.sh
+
 echo "[INFO] Wiring git hooks (.githooks/hooks)..."
 git config core.hooksPath .githooks/hooks
 find .githooks -type f \( -name '*.sh' -o -path '*/hooks/*' \) -exec chmod +x {} +
