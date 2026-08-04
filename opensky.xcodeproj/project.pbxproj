@@ -89,6 +89,7 @@
 				"Shell/PanelSectionViewController.swift",
 				"Shell/ScreenshotCoordinator.swift",
 				"Shell/Sections/AnimationSection.swift",
+				"Shell/Sections/AudioFootstepsSection.swift",
 				"Shell/Sections/AudioMusicSection.swift",
 				"Shell/Sections/AudioOutputSection.swift",
 				"Shell/Sections/AudioSfxSection.swift",

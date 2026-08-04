@@ -17,6 +17,12 @@ extension OpenSkyCLI {
       vfs cat <key> --out <file>  Extract one resource to a file
       record <formid-or-editorid> Dump one Skyrim.esm record (decoded + fields)
       gmst movement              Print resolved gait/step/jump values + sources
+      footstep [--set <edid>] [--armature <formid-or-edid>]
+                                  Walk the footstep chain: per gait, every
+                                  FSTP tag in the set and the IPCT + sound
+                                  file it resolves to. Defaults to
+                                  DefaultFootstepSet; --armature reads the
+                                  set off an ARMA's SNDD
       cell [--worldspace <edid>] [--x <n>] [--y <n>] [--refs]
                                   Summarize an exterior cell's references
       actor [--worldspace <edid>] [--x <n>] [--y <n>] [--radius <n>]

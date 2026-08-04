@@ -138,6 +138,11 @@ final class Renderer: NSObject {
     /// Music director (M9.2.3), ticked from the same paused-aware audio hook so
     /// a playlist advance freezes with the world sim. nil until audio is on.
     var musicDirector: WorldMusicDirector?
+    /// Footstep director (issue #352), fed from the same paused-aware audio
+    /// hook: it drains the locomotion bridge's fired graph events, so a paused
+    /// frame — which plans no step and fires nothing — leaves the queue alone.
+    /// nil until audio is on.
+    var footstepDirector: WorldAudioFootstepDirector?
     /// Wall-clock delta source for the audio tick, paused in menu mode.
     var audioClock = FrameSimClock()
     let precipitation: PrecipitationVolume

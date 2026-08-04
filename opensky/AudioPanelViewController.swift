@@ -11,6 +11,7 @@ final class AudioPanelViewController: InspectorPanelViewController {
     let sourcesSection = AudioSourcesSection()
     let sfxSection = AudioSfxSection()
     let musicSection = AudioMusicSection()
+    let footstepsSection = AudioFootstepsSection()
 
     /// Live audio bridge. Weak: the game controller owns this panel's parent
     /// and the engine, so the panel must not retain back.
@@ -20,11 +21,12 @@ final class AudioPanelViewController: InspectorPanelViewController {
             sourcesSection.provider = provider
             sfxSection.provider = provider
             musicSection.provider = provider
+            footstepsSection.provider = provider
         }
     }
 
     override func makeSections() -> [PanelSectionViewController] {
-        [outputSection, sourcesSection, sfxSection, musicSection]
+        [outputSection, sourcesSection, sfxSection, musicSection, footstepsSection]
     }
 
     /// Control forwards for the verification-surface tests, mirroring
@@ -59,5 +61,17 @@ final class AudioPanelViewController: InspectorPanelViewController {
 
     var audioStopMusicControl: NSButton {
         musicSection.stopMusicControl
+    }
+
+    var audioFootstepsEnabledControl: NSButton {
+        footstepsSection.footstepsEnabledControl
+    }
+
+    var audioFootstepTagControl: NSPopUpButton {
+        footstepsSection.footstepTagControl
+    }
+
+    var audioPlayFootstepControl: NSButton {
+        footstepsSection.playFootstepControl
     }
 }

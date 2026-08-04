@@ -48,6 +48,7 @@ extension Renderer {
         // retirements: a track that reached its end is already gone from
         // `sources`, which is how the playlist knows to advance.
         defer { musicDirector?.tick(deltaTime: deltaTime) }
+        defer { routeFootstepEvents() }
         worldAudio.updateListener(
             worldPosition: freeFlyCamera.position,
             yaw: freeFlyCamera.yaw,
@@ -56,6 +57,24 @@ extension Renderer {
         worldAudio.tick(
             listenerCell: CellGridManager.cellCoordinate(for: freeFlyCamera.position),
             deltaTime: deltaTime
+        )
+    }
+
+    /// Drains the locomotion bridge's fired graph events into the footstep
+    /// director (issue #352).
+    ///
+    /// Draining unconditionally — even with no director and outside walk
+    /// mode — is deliberate: the queue must not accumulate events from a mode
+    /// where nothing is listening and then flush them all at once the moment
+    /// audio is switched on. Footsteps are heard at the capsule's feet rather
+    /// than at the listener, which is what makes third person sound right.
+    private func routeFootstepEvents() {
+        let events = locomotion.graphEvents.drain()
+        guard movementMode.isPlayerControlled else { return }
+        footstepDirector?.handleGraphEvents(
+            events,
+            gait: locomotion.status.gait,
+            position: walkController.feetPosition
         )
     }
 }

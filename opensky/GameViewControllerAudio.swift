@@ -23,6 +23,7 @@ extension GameViewController: AudioControlProviding {
                 renderer?.worldAudio = engine
                 buildSoundDirectorIfNeeded(engine: engine)
                 buildMusicDirectorIfNeeded(engine: engine)
+                buildFootstepDirectorIfNeeded(engine: engine)
             }
             worldAudio?.isEnabled = newValue
         }
@@ -62,6 +63,38 @@ extension GameViewController: AudioControlProviding {
         )
         musicDirector = director
         renderer?.musicDirector = director
+    }
+
+    /// Same policy as the other two directors, plus one extra step: the player
+    /// body is usually already assembled by the time audio is switched on, so
+    /// the freshly built director is told which footstep set that body's feet
+    /// resolve to instead of waiting for the next equip change.
+    private func buildFootstepDirectorIfNeeded(engine: WorldAudioEngine) {
+        guard footstepDirector == nil else { return }
+        let provider = streamerCellProvider
+        let director = WorldAudioFootstepDirector(
+            engine: engine,
+            footstepStore: (provider as? AudioDataProviding)?.footstepStore,
+            soundStore: (provider as? AudioDataProviding)?.soundStore,
+            fileSystem: audioFileSystem
+        )
+        footstepDirector = director
+        renderer?.footstepDirector = director
+        if let body = renderer?.playerBody {
+            updateFootstepSet(from: body)
+        }
+    }
+
+    /// Points the footstep director at the set the armature on the player's
+    /// feet declares. Worn parts precede skin parts in a resolved visual, so
+    /// boots outrank the bare foot they cover without this having to rank
+    /// them; an actor wearing nothing on its feet lands on the naked-feet
+    /// armature, which is exactly what vanilla points at the barefoot set.
+    func updateFootstepSet(from body: PlayerBody) {
+        let armatures = body.assembly.visual.parts
+            .filter { $0.slots.contains(.feet) }
+            .map(\.armature)
+        footstepDirector?.updateFootstepSet(feetArmatures: armatures)
     }
 
     var audioMasterVolume: Float {
@@ -199,5 +232,44 @@ extension GameViewController: AudioControlProviding {
 
     var lastMusicError: String? {
         musicDirector?.lastMusicError
+    }
+
+    // MARK: - Footstep director bridges (issue #352)
+
+    var footstepsEnabled: Bool {
+        get { footstepDirector?.footstepsEnabled ?? true }
+        set { footstepDirector?.footstepsEnabled = newValue }
+    }
+
+    var currentFootstepSetDescription: String {
+        footstepDirector?.footstepSetDescription ?? "none"
+    }
+
+    var currentFootstepTags: [String] {
+        guard let footstepDirector, let renderer else { return [] }
+        return footstepDirector.tags(for: renderer.locomotion.status.gait)
+    }
+
+    var lastFootstepDescription: String? {
+        footstepDirector?.lastFootstepDescription
+    }
+
+    var lastFootstepError: String? {
+        footstepDirector?.lastFootstepError
+    }
+
+    var footstepCounts: (routed: Int, played: Int) {
+        guard let footstepDirector else { return (0, 0) }
+        return (footstepDirector.routedEventCount, footstepDirector.playedFootstepCount)
+    }
+
+    func forcePlayFootstep(tag: String) -> String? {
+        guard let footstepDirector else { return "audio is not enabled" }
+        guard let renderer else { return "no renderer" }
+        return footstepDirector.forcePlayFootstep(
+            tag: tag,
+            gait: renderer.locomotion.status.gait,
+            position: renderer.walkController.feetPosition
+        )
     }
 }

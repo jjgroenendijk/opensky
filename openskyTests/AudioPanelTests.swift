@@ -36,6 +36,11 @@ final class FakeAudioProvider: AudioControlProviding {
     var currentMusicTrackName: String?
     var lastMusicError: String?
 
+    /// Footstep director bridges (issue #352), delegated to the shared fake so
+    /// both panel fakes record the same way; the forwarding conformance lives
+    /// in `FakeFootstepControls.swift`.
+    let footsteps = FakeFootstepControls()
+
     func audioVolume(for category: AudioCategory) -> Float {
         categoryVolumes[category] ?? 1
     }

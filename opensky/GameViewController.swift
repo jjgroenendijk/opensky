@@ -120,6 +120,11 @@ final class GameViewController: NSViewController {
     /// Subscribed to the streamer's music-context callback and ticked by the
     /// renderer; lives in `opensky/Audio/WorldMusicDirector.swift`.
     var musicDirector: WorldMusicDirector?
+    /// Footstep director (issue #352), built beside the engine on first
+    /// enable. Fed by the renderer's audio tick from the locomotion bridge's
+    /// fired graph events; lives in
+    /// `opensky/Audio/WorldAudioFootstepDirector.swift`.
+    var footstepDirector: WorldAudioFootstepDirector?
     /// Cell provider the audio bridge reads sound/aspc stores off when it
     /// constructs the SFX director (M9.2.2). Held weakly because the build
     /// runner (and through it the streamer) already retains the provider.

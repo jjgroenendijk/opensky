@@ -103,6 +103,10 @@ enum OpenSkyCLI {
             try RecordCommand.run(
                 context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
             )
+        case "footstep":
+            try FootstepCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
         case "gmst":
             try GMSTCommand.run(
                 context: .resolve(dataRootOverride: dataRoot), scanner: &scanner

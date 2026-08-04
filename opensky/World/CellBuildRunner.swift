@@ -125,6 +125,9 @@ nonisolated protocol BarterDataProviding {
 nonisolated protocol AudioDataProviding {
     var soundStore: SoundRecordStore? { get }
     var aspcStore: AcousticSpaceStore? { get }
+    /// Footstep record index (FSTS/FSTP/IPDS/IPCT), added in issue #352 for
+    /// the footstep director.
+    var footstepStore: FootstepStore? { get }
     /// Music record index (MUSC/MUST), added in M9.2.3 for the music director.
     var musicStore: MusicRecordStore? { get }
 }
@@ -143,6 +146,9 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     var weatherSystem: WeatherSystem?
     /// Sound record index (SOUN/SNDR); nil when the plugin has no sound data.
     var soundStore: SoundRecordStore?
+    /// Footstep index (FSTS/FSTP/IPDS/IPCT); nil when the session was built
+    /// without one, which is every synthetic scene.
+    var footstepStore: FootstepStore?
     /// Acoustic-space index (ASPC); nil when the plugin has no ASPC records.
     var aspcStore: AcousticSpaceStore?
     /// Music record index (MUSC/MUST); nil when the plugin has no music data.
