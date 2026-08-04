@@ -6,13 +6,9 @@ import QuartzCore
 
 extension Renderer: MTKViewDelegate {
     func mtkView(_: MTKView, drawableSizeWillChange size: CGSize) {
-        let aspect = Float(size.width) / Float(size.height)
-        projectionMatrix = MatrixMath.perspective(
-            fovYRadians: MatrixMath.radians(fromDegrees: 65),
-            aspectRatio: aspect,
-            nearZ: Self.nearPlane,
-            farZ: Self.farPlane
-        )
+        guard size.height > 0 else { return }
+        drawableAspectRatio = Float(size.width) / Float(size.height)
+        rebuildProjection()
     }
 
     func draw(in view: MTKView) {

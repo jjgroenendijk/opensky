@@ -33,6 +33,13 @@ nonisolated enum LocomotionGraphNames {
     static let isInSneak = "iIsInSneak"
     /// True while off the ground. Bool.
     static let inJumpState = "bInJumpState"
+    /// Which perspective the instance is running as (issue #190). Declared as
+    /// a bool initialised to false by both vanilla `0_master.hkx` files, the
+    /// third-person one and the `_1stperson` one, and read by their own
+    /// transition conditions. Not in `variables` below: it is seeded once per
+    /// instance rather than written every step, and its value differs between
+    /// the two graphs where every other input is identical.
+    static let isFirstPerson = "IsFirstPerson"
 
     /// Every variable the bridge writes, in write order.
     static let variables = [
@@ -69,6 +76,8 @@ nonisolated enum LocomotionGraphNames {
 nonisolated struct LocomotionStatus: Equatable, Sendable {
     /// Whether a behavior graph is attached at all.
     var graphAvailable = false
+    /// Whether the first-person graph is attached beside it (issue #190).
+    var firstPersonGraphAvailable = false
     var gait: LocomotionGait = .walk
     var lastPlan: LocomotionStepPlan = .still
     /// Capsule bottom after the last planned step.
@@ -87,12 +96,22 @@ nonisolated struct LocomotionStatus: Equatable, Sendable {
     var missingEvents: [String] = []
     /// Names the graph reported back on the most recent update, newest last.
     var recentGraphEvents: [String] = []
+    /// The same four tallies for the first-person graph, kept apart so a name
+    /// the `_1stperson` set spells differently is visible as a first-person
+    /// miss rather than blending into the third-person one (issue #190).
+    var firstPersonGraphUpdates = 0
+    var firstPersonBoundVariables: [String] = []
+    var firstPersonMissingVariables: [String] = []
+    var firstPersonRaisedEvents: [String] = []
+    var firstPersonMissingEvents: [String] = []
+    var firstPersonRecentGraphEvents: [String] = []
 
     /// How many recent graph events are kept for the readout.
     static let recentEventLimit = 12
 
-    init(graphAvailable: Bool = false) {
+    init(graphAvailable: Bool = false, firstPersonGraphAvailable: Bool = false) {
         self.graphAvailable = graphAvailable
+        self.firstPersonGraphAvailable = firstPersonGraphAvailable
     }
 
     var isSwimming: Bool {
@@ -140,6 +159,32 @@ nonisolated struct LocomotionStatus: Equatable, Sendable {
 
     mutating func noteEventMissing(_ name: String) {
         Self.insert(name, into: &missingEvents)
+    }
+
+    mutating func noteFirstPersonGraphUpdate(events: [BehaviorEvent]) {
+        firstPersonGraphUpdates += 1
+        guard !events.isEmpty else { return }
+        firstPersonRecentGraphEvents += events.map { $0.name ?? "event \($0.id)" }
+        let overflow = firstPersonRecentGraphEvents.count - Self.recentEventLimit
+        if overflow > 0 {
+            firstPersonRecentGraphEvents.removeFirst(overflow)
+        }
+    }
+
+    mutating func noteFirstPersonVariableWritten(_ name: String) {
+        Self.insert(name, into: &firstPersonBoundVariables)
+    }
+
+    mutating func noteFirstPersonVariableMissing(_ name: String) {
+        Self.insert(name, into: &firstPersonMissingVariables)
+    }
+
+    mutating func noteFirstPersonEventRaised(_ name: String) {
+        Self.insert(name, into: &firstPersonRaisedEvents)
+    }
+
+    mutating func noteFirstPersonEventMissing(_ name: String) {
+        Self.insert(name, into: &firstPersonMissingEvents)
     }
 
     private static func insert(_ name: String, into names: inout [String]) {

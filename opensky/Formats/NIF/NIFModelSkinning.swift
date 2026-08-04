@@ -134,11 +134,21 @@ nonisolated extension NIFFile.Flattener {
         }
     }
 
+    /// Normalizes one vertex's four influences.
+    ///
+    /// A vertex whose influences still sum to zero after both index spaces
+    /// have been consulted keeps its zero weights instead of failing the file.
+    /// That is what the hardware does with such a vertex — every influence
+    /// contributes nothing, so the skinned position collapses onto the
+    /// skeleton root and the triangles using it degenerate to a point — and it
+    /// is a far better answer than dropping a mesh that otherwise renders. A
+    /// non-finite sum is a different thing, a corrupt file, and still refuses.
     private static func normalizedWeights(_ value: SIMD4<Float>) throws -> SIMD4<Float> {
         let sum = value.x + value.y + value.z + value.w
-        guard sum.isFinite, sum > .ulpOfOne else {
-            throw NIFError.malformed("drawn skin vertex has zero total weight")
+        guard sum.isFinite else {
+            throw NIFError.malformed("drawn skin vertex has a non-finite total weight")
         }
+        guard sum > .ulpOfOne else { return .zero }
         return value / sum
     }
 
@@ -241,7 +251,18 @@ nonisolated private struct InfluenceAccumulator {
             let global = Int(globalIndex)
             let mapped: SIMD4<UInt16>
             let vertexWeights: SIMD4<Float>
-            if hasGlobalInfluences {
+            // The two index spaces do not always agree, and where they
+            // disagree the one carrying weight is the one to believe. Six of
+            // the 468 vertices of the vanilla first-person iron cuirass
+            // (`Armor\Iron\Male\1stPersonCuirassLight_1.nif`, block 26) sum
+            // to zero weight in the top-level SSE stream while their partition
+            // entries carry real influences; reading only the global stream
+            // there loses the whole mesh (issue #190). The third-person
+            // `CuirassLight_1.nif` beside it has none, so this is a property of
+            // the individual file rather than of first-person meshes.
+            let globalIsEmpty = hasGlobalInfluences
+                && Self.isEmpty(arrays.boneWeights[global])
+            if hasGlobalInfluences, !(globalIsEmpty && hasLocalInfluences) {
                 mapped = try Self.validateGlobalBoneIndices(
                     arrays.boneIndices[global],
                     boneCount: boneCount
@@ -268,6 +289,12 @@ nonisolated private struct InfluenceAccumulator {
             boneIndices[global] = mapped
             weights[global] = vertexWeights
         }
+    }
+
+    /// Whether one vertex's four influences carry no weight at all.
+    private static func isEmpty(_ value: SIMD4<Float>) -> Bool {
+        let sum = value.x + value.y + value.z + value.w
+        return !sum.isFinite || sum <= .ulpOfOne
     }
 
     /// Validates already-global influence indices from the top-level SSE

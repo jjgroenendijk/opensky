@@ -16,6 +16,7 @@ extension Renderer {
         // same A/B toggle (issue #189, PlayerAnimationPlayback.swift).
         lastAnimationUpdatedBoneCount = sceneBones
             + updatePlayerBodyAnimation(enabled: actorAnimationsEnabled)
+            + updatePlayerFirstPersonAnimation(enabled: actorAnimationsEnabled)
         lastAnimationUpdateMS =
             Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
     }

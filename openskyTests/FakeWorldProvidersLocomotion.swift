@@ -59,3 +59,26 @@ extension FakeWorldProviders {
         locomotion.jumpRequests += 1
     }
 }
+
+/// The first-person half of the fake's stored state (issue #190).
+struct FakeFirstPersonState {
+    var armsEnabled = true
+    var fovYDegrees = FirstPersonCamera.defaultFOVYDegrees
+    var snapshot = FirstPersonSnapshot.unavailable
+}
+
+extension FakeWorldProviders {
+    var firstPersonSnapshot: FirstPersonSnapshot {
+        firstPerson.snapshot
+    }
+
+    var firstPersonFOVYDegrees: Float {
+        get { firstPerson.fovYDegrees }
+        set { firstPerson.fovYDegrees = newValue }
+    }
+
+    var firstPersonArmsEnabled: Bool {
+        get { firstPerson.armsEnabled }
+        set { firstPerson.armsEnabled = newValue }
+    }
+}

@@ -262,6 +262,18 @@ indices. Vanilla bodies (`malebody_1.nif`) carry identity palettes, which masked
 Observed global-VB byte is 0 on every SabreCat partition, so it does not gate the index
 space — stream presence does. Impl: `NIFModelSkinning.swift` (`InfluenceAccumulator`).
 
+A vertex can be present in both spaces yet carry influences in only one. Probed
+`Armor\Iron\Male\1stPersonCuirassLight_1.nif` 2026-08-04 (read-only): 6 of its 468
+top-level `BSVertexDataSSE` records have all four weight lanes zero while the same
+vertices' per-partition weights are non-zero. The third-person `CuirassLight_1.nif` has
+none. So the rule is per vertex, not per shape: an empty top-level entry defers to the
+partition entry whenever the partition has influences at all, and only the top-level
+stream's presence still decides the index space for every other vertex. A vertex empty in
+both spaces keeps zero weights — it collapses onto the skeleton root and its triangles
+degenerate, which is what the hardware does with it and is a better answer than refusing a
+mesh whose other hundreds of vertices are fine. A non-finite weight total is a different
+thing, a corrupt file, and is still refused.
+
 Vanilla quirk: later `malebody_1.nif` partitions contain values outside local vertex
 count in redundant primary faces, despite nif.xml describing local faces. Mandatory
 global triangle copies match drawable geometry; primary faces are bounded + skipped.

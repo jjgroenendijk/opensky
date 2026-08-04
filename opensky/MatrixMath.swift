@@ -19,6 +19,12 @@ nonisolated enum MatrixMath {
         degrees / 180 * .pi
     }
 
+    /// The inverse, for a control that presents an angle in degrees over a
+    /// value the engine keeps in radians (issue #190).
+    static func degrees(fromRadians radians: Float) -> Float {
+        radians / .pi * 180
+    }
+
     /// Rodrigues rotation about an arbitrary axis.
     static func rotation(radians: Float, axis: SIMD3<Float>) -> float4x4 {
         let unit = simd_normalize(axis)

@@ -110,6 +110,16 @@ final class Renderer: NSObject {
     /// rings and manages residency; assigning it directly would draw from
     /// buffers the GPU has not been told about.
     var playerBody: PlayerBody?
+    /// The player's rendered first-person arms, held for the same reason and
+    /// on the same terms as `playerBody` (issue #190,
+    /// RendererFirstPersonArms.swift). Set through `setPlayerFirstPersonRig`.
+    var playerFirstPersonRig: PlayerFirstPersonRig?
+    /// First-person field of view and the depth policy the arms are drawn
+    /// under. Pure settings; holds no pose (issue #190).
+    var firstPersonCamera = FirstPersonCamera()
+    /// A/B toggle for the arms, so a capture can separate "the arms are wrong"
+    /// from "the world behind them is wrong" (issue #190).
+    var firstPersonArmsEnabled = true
     /// Game clock + its pause-aware wall-delta source + the seam TimeScale is
     /// read through (issue #164). `timeOfDay` is now a projection of this
     /// clock; see RendererGameClock.swift.
@@ -235,6 +245,10 @@ final class Renderer: NSObject {
 
     var frameIndex: Int
     var projectionMatrix = matrix_identity_float4x4
+    /// The drawable's aspect ratio, kept so the projection can be rebuilt
+    /// without waiting for the next resize. Camera mode and the first-person
+    /// field of view both change it mid-session (issue #190).
+    var drawableAspectRatio: Float = 1
     /// Culling/draw counts of the last encoded frame (see SceneDrawStats).
     /// Written only by encodeScenePass (RendererScenePass.swift).
     var lastDrawStats = SceneDrawStats()

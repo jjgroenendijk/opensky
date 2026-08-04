@@ -43,6 +43,7 @@ different failure modes.
 * [Modifiers](#modifiers)
 * [Output contract](#output-contract)
 * [The locomotion bridge](#the-locomotion-bridge)
+* [First person](#first-person)
 * [The tally](#the-tally)
 * [Flagged assumptions](#flagged-assumptions)
 * [Verification](#verification)
@@ -499,6 +500,88 @@ A nil graph is a supported configuration rather than a degraded one: locomotion 
 resolves and the writes are dropped, so the app has working sprint, sneak, and jump before
 item 14.6 attaches a real graph to the player.
 
+## First person
+
+Item 14.7 gives the player a first-person rig: the `_1stperson` arms, drawn from the eye,
+driven by a second evaluator instance. The install ships the first-person set as a peer of
+the third-person one rather than as a variant of it — its own `0_master.hkx` under
+`meshes\\actors\\character\\_1stperson\\behaviors\\`, its own 99-bone
+`skeletonfirst.hkx`, its own `skeleton.nif` — so OpenSky runs it as a peer too.
+
+**Two instances, one bridge.** `LocomotionBridge` holds an optional
+`firstPersonGraph` beside the third-person one and fans every write, every raised event, and
+every `update(deltaTime:)` out to both, in the same order, within the same fixed step. The
+two share only the immutable decode; per-node state is keyed by `HKXPointerTarget`, so
+neither can see the other's clip phase or crossfade. Whichever inputs the third-person graph
+got, the first-person graph got identically — the pair is not a master and a follower.
+
+Root motion read from the first-person graph is dropped. The character controller has one
+authority over the capsule ([walk mode](/engine/walk-mode.md)), and it is the third-person
+graph; a second graph moving the player would double every step.
+
+The one input that deliberately differs is `IsFirstPerson`, seeded false on the third-person
+instance and true on the first-person one at attach and again on every `reset()`. It is a
+name the vanilla files declare and it is the only variable the bridge writes per-instance,
+which is why it is not in the shared `LocomotionGraphNames.variables` list. Every other name
+is written to both, and a miss on either side is tallied separately in `LocomotionStatus`
+(`firstPersonMissingVariables`, `firstPersonMissingEvents`) — the two sets are not assumed
+to match, because the first-person files are free to spell things their own way.
+
+**Anchoring.** The first-person skeleton has one bone the third-person skeleton does not:
+`Camera1st [Cam1]`. Probed on the local install 2026-08-04, it sits at rig-space
+`(0, 0, 121)` with identity rotation and a spread of 0.0 across a stepped locomotion cycle,
+so vanilla's locomotion graph does not animate it. The rig is nonetheless anchored through
+it — `eyeMatrix * cameraBone.inverse`, so the bone lands exactly on the eye whatever pose it
+is in. That is what item 14.7's view-motion scope reduces to on this data: no bob is
+synthesized, because the census shows none authored, and a future set that does animate the
+bone moves the view for free rather than needing new code. A rig with no camera bone, or a
+singular one, falls back to a constant 121-unit drop from the eye.
+
+**Visibility.** `PlayerRigVisibility.resolve(mode:hasBody:hasArms:armsEnabled:)` is the whole
+matrix as one value, so a mode never disagrees with itself:
+
+| Camera mode | Body drawn | Body casts | Arms drawn | Arms cast |
+| --- | --- | --- | --- | --- |
+| First person | no | yes | yes | no |
+| Third person | yes | yes | no | no |
+| Free fly | yes | yes | no | no |
+
+Exactly one rig is drawn in each player-controlled mode. The shadow policy is a stated
+policy, not an observation: vanilla's shadow pass is in its renderer and is not readable from
+the install. The body casts in first person because a player who casts no shadow when they
+look down at their own hands reads as a bug, and the arms never cast because they are the
+same limbs the body already casts and a second copy of them, floating at the eye, would
+double the silhouette.
+
+**Depth.** The arms sit 15 to 45 units in front of the eye while the player capsule's own
+radius is 24, so a player standing against a wall has world geometry nearer than their own
+hands. This is a **deliberate deviation**: vanilla's own answer lives in its renderer and is
+not observable, so OpenSky states its own. The arms are encoded last, with the same
+projection and the same pipelines as everything else, into a viewport whose depth range is
+compressed to `[0, FirstPersonCamera.depthSlice]` (0.02). The viewport transform is linear
+and monotonic, so ordering *within* the arms is untouched and a hand behind a forearm is
+still behind it; against the world, every arm fragment lands nearer than any world fragment
+further than `nearPlane / (1 - depthSlice)`, about 10.2 units with the 10-unit near plane,
+which is well inside the capsule and so unreachable by world geometry. The alternative of a
+second pass with a cleared depth attachment costs an encoder and a full-target depth clear
+per frame for the same result; the alternative of disabling the depth test costs correct
+self-occlusion, which is the one thing the arms genuinely need.
+
+**Field of view.** The install declares no first-person field of view that OpenSky can read:
+no `fDefault1stPersonFOV`-style GMST in `Skyrim.esm`, and no matching key in
+`Skyrim_Default.ini` (probed 2026-08-04, the same probe that found no camera settings for
+item 14.6). So it is an OpenSky setting, defaulting to the renderer's existing 65 degrees and
+clamped to 30-120, exposed under `World > First person` and applied to the whole frame rather
+than to the arms alone — vanilla's is a comfort setting, not a lens on the hands.
+
+**Equipment.** The arms are assembled through the same `ActorAssembler` path as the body,
+from the same resolved visual projected onto the first-person rig, so the M12 runtime
+equipment override reaches them without a second resolution. Pieces are swapped to their
+MOD4/MOD5 models ([actor records](/formats/actors.md)); a piece declaring none is dropped
+with reason `noFirstPersonModel`, which is why vanilla iron gauntlets show nothing on the
+arms while the cuirass and the hands do. That is a flagged consequence of the rule below,
+not a defect in the assembler.
+
 ## The tally
 
 `BehaviorTally` is the same ranked honest-coverage ledger as `ConditionTally` and
@@ -556,6 +639,13 @@ These are guesses marked as guesses, in the sense AGENTS.md "How agents work her
   reads bit 0 as ignore-from-generator, bit 2 as ignore-world-from-model, and bit 3 as
   ignore-to-generator, but that reading is not confirmed against an independent source and
   every one of them changes how root motion crosses a blend. Item 14.5 owns that question.
+* **A piece with no MOD4/MOD5 is dropped from the first-person rig rather than falling
+  back to its third-person model.** The third-person mesh is skinned to the third-person
+  skeleton, whose bones the 99-bone first-person rig does not all have, so the fallback
+  would be a mesh bound to bones that do not exist. Whether vanilla instead hides the
+  piece, substitutes something, or never lets the case arise is not settled by anything
+  readable in the install. Each drop is reason-tagged and counted in the
+  `World > First person` readout.
 
 ## Verification
 
@@ -619,3 +709,26 @@ source cannot supply. The 8,880 `stateMachineStartStateOnly` entries item 14.3
 reported are gone: every machine now runs its transitions, and stepping the graphs with no
 input produces the same generator count it did before, because with no events raised there
 is nothing to transition to.
+
+Item 14.7's own unit tests, also synthetic: `LocomotionBridgeFirstPersonTests` (the
+perspective seeding and its re-seeding on reset, identical inputs reaching both graphs, one
+update each per fixed step and neither on a zero-length one, separate miss tallies, a solo
+third-person graph producing the same poses, events, and plan as a paired one, separate pose
+buffers, the first-person graph being unable to move the capsule, and a nil first-person
+graph staying supported), `PlayerRigVisibilityTests` (the matrix above pinned cell by cell,
+exactly one rig per player mode, the shadow policy, arms never casting, unattached rigs never
+drawn, and the arms toggle touching nothing else), `FirstPersonCameraTests` (the default
+field of view agreeing with the world projection, clamping, reset and override, the eye
+basis and pitch, the camera bone landing on the eye and carrying its rotation, the degenerate
+and absent-bone fallbacks, and the depth slice clearing every reachable world distance
+recomputed from the near plane rather than restated), `ActorVisualResolutionFirstPersonTests`
+with `ArmorAddonFirstPersonModelTests` (MOD4/MOD5 decode and cross-gender fallback, the model
+swap, the reason-tagged drop, attachments kept and FaceGen dropped, equipped state carried),
+and `FirstPersonPanelTests` for the panel.
+
+The env-gated render check is
+`make realtest T='FirstPersonRenderRealDataTests/drawsTheArmsInFirstPersonOnly()'`. It asserts
+the assembled rig carries `Camera1st [Cam1]`, that the arms change the frame in first person
+and not in the others, that idle, walk, and sprint differ from each other, that a
+first-to-third-to-first mode switch returns a byte-identical frame, and that an equipped
+weapon reaches the arms. Captures go to gitignored `logs/`.

@@ -158,12 +158,15 @@ extension Renderer {
         return descriptor
     }
 
-    private static func offscreenProjection(width: Int, height: Int) -> float4x4 {
+    /// The offscreen projection, built from the same mode-aware field of view
+    /// the live view uses (`activeFOVYRadians`, issue #190) so a verification
+    /// capture frames what the window frames.
+    private func offscreenProjection(width: Int, height: Int) -> float4x4 {
         MatrixMath.perspective(
-            fovYRadians: MatrixMath.radians(fromDegrees: 65),
+            fovYRadians: activeFOVYRadians,
             aspectRatio: Float(width) / Float(height),
-            nearZ: nearPlane,
-            farZ: farPlane
+            nearZ: Self.nearPlane,
+            farZ: Self.farPlane
         )
     }
 
@@ -248,7 +251,7 @@ extension Renderer {
         }
         try renderOffscreenFrame(
             descriptor: Self.offscreenPassDescriptor(color: color, depth: depth),
-            projection: Self.offscreenProjection(width: width, height: height)
+            projection: offscreenProjection(width: width, height: height)
         )
         return color
     }
@@ -268,7 +271,7 @@ extension Renderer {
         }
         try renderOffscreenFrame(
             descriptor: Self.offscreenPassDescriptor(color: color, depth: depth),
-            projection: Self.offscreenProjection(width: width, height: height),
+            projection: offscreenProjection(width: width, height: height),
             advanceAnimation: false
         )
         return color
@@ -295,7 +298,7 @@ extension Renderer {
             residencySet.commit()
         }
         let descriptor = Self.offscreenPassDescriptor(color: color, depth: depth)
-        let projection = Self.offscreenProjection(width: width, height: height)
+        let projection = offscreenProjection(width: width, height: height)
         var frameMS: [Double] = []
         frameMS.reserveCapacity(maxFrames)
         var summaries: [String] = []
@@ -353,7 +356,7 @@ extension Renderer {
             residencySet.commit()
         }
         let descriptor = Self.offscreenPassDescriptor(color: color, depth: depth)
-        let projection = Self.offscreenProjection(width: width, height: height)
+        let projection = offscreenProjection(width: width, height: height)
 
         var frameMS: [Double] = []
         frameMS.reserveCapacity(frames)

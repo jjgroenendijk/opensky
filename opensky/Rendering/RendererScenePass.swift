@@ -201,7 +201,10 @@ extension Renderer {
     /// the group's base offset ([[instance_id]] starts at 0 per draw), and
     /// draw once with the visible instanceCount. All-culled groups encode
     /// nothing and consume no uniform slot.
-    private func encode(
+    /// Internal rather than private: the first-person arms are encoded through
+    /// this same path, from `RendererFirstPersonArms.swift`, so they cull,
+    /// light, and bind exactly as every other skinned actor does.
+    func encode(
         groups: [DrawGroup],
         staticPipeline: MTLRenderPipelineState,
         skinnedPipeline: MTLRenderPipelineState,
@@ -431,6 +434,7 @@ extension Renderer {
             enabled: precipitationEnabled,
             state: &state
         )
+        encodeFirstPersonArms(descriptor: descriptor, state: &state)
         // SWF layer before the dev UI overlay so stats/readouts stay on top.
         encodeSWF(descriptor: descriptor, state: &state)
         encodeUI(descriptor: descriptor, state: &state)

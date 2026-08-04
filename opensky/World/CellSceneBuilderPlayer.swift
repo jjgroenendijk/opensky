@@ -51,6 +51,14 @@ nonisolated protocol PlayerBodyProviding {
         pose: PlayerPoseBuffer,
         equipped: [FormID]?
     ) -> Result<PlayerBody, PlayerBodyError>
+
+    /// Assembles the first-person arms from the same equipped set, over the
+    /// first-person rig and the first-person graph's pose (issue #190).
+    func makePlayerFirstPersonRig(
+        skeleton: HKASkeleton,
+        pose: PlayerPoseBuffer,
+        equipped: [FormID]?
+    ) -> Result<PlayerFirstPersonRig, PlayerBodyError>
 }
 
 nonisolated extension CellSceneBuilder: PlayerBodyProviding {
@@ -63,17 +71,64 @@ nonisolated extension CellSceneBuilder: PlayerBodyProviding {
         pose: PlayerPoseBuffer,
         equipped: [FormID]?
     ) -> Result<PlayerBody, PlayerBodyError> {
+        assemblePlayer(equipped: equipped, firstPerson: false, label: "player body")
+            .map { assembly in
+                PlayerBody(
+                    assembly: assembly,
+                    animation: PlayerAnimationPlayback(
+                        skeleton: skeleton,
+                        pose: pose,
+                        models: assembly.models.map(\.asset.model)
+                    )
+                )
+            }
+    }
+
+    func makePlayerFirstPersonRig(
+        skeleton: HKASkeleton,
+        pose: PlayerPoseBuffer,
+        equipped: [FormID]?
+    ) -> Result<PlayerFirstPersonRig, PlayerBodyError> {
+        assemblePlayer(equipped: equipped, firstPerson: true, label: "player arms")
+            .map { assembly in
+                PlayerFirstPersonRig(
+                    assembly: assembly,
+                    animation: PlayerAnimationPlayback(
+                        skeleton: skeleton,
+                        pose: pose,
+                        models: assembly.models.map(\.asset.model)
+                    )
+                )
+            }
+    }
+
+    /// Resolves the player's appearance and assembles it, once for each rig.
+    ///
+    /// One resolve, two projections: the first-person arms are the
+    /// third-person answer put through `firstPersonProjection`, so the equipped
+    /// set, the slot mask, and the M12 attachment path cannot disagree between
+    /// the two rigs (`ActorVisualResolutionFirstPerson.swift`).
+    private func assemblePlayer(
+        equipped: [FormID]?,
+        firstPerson: Bool,
+        label: String
+    ) -> Result<ActorAssembly<ActorRenderAsset>, PlayerBodyError> {
         let resolvers = actorResolversBuildingIfNeeded(localized: pluginLocalized)
         let assembly: ActorAssembly<ActorRenderAsset>
         do {
             let appearance = try resolvers.template.resolve(base: PlayerBody.baseFormID)
-            let visual = try resolvers.visual.resolve(appearance: appearance, equipped: equipped)
+            var visual = try resolvers.visual.resolve(appearance: appearance, equipped: equipped)
+            if firstPerson {
+                visual = visual.firstPersonProjection(
+                    skeletonPath: PlayerBehaviorGraph.firstPersonRigPath
+                )
+            }
             assembly = ActorAssembler(provider: meshes).assemble(
                 actor: PlayerBody.actorFormID,
                 base: PlayerBody.baseFormID,
-                // Identity: `PlayerBody.place` supplies the live transform every
-                // frame, and a stale one baked in here would place the first
-                // frame at the world origin.
+                // Identity: `place` supplies the live transform every frame,
+                // and a stale one baked in here would place the first frame at
+                // the world origin.
                 transform: matrix_identity_float4x4,
                 visual: visual
             )
@@ -87,16 +142,9 @@ nonisolated extension CellSceneBuilder: PlayerBodyProviding {
         }
         for skip in assembly.skips {
             Self.logger.info(
-                "player body skip: \(String(describing: skip), privacy: .public)"
+                "\(label, privacy: .public) skip: \(String(describing: skip), privacy: .public)"
             )
         }
-        return .success(PlayerBody(
-            assembly: assembly,
-            animation: PlayerAnimationPlayback(
-                skeleton: skeleton,
-                pose: pose,
-                models: assembly.models.map(\.asset.model)
-            )
-        ))
+        return .success(assembly)
     }
 }

@@ -27,6 +27,7 @@ enum SidebarSection: String, CaseIterable {
 /// controller conforms to all of them, so one value wires every panel.
 typealias WorldControlProviders = AnimationControlProviding & AudioControlProviding
     & CameraControlProviding & ContainerMenuControlProviding
+    & FirstPersonControlProviding
     & FrameStatsProviding & GrassControlProviding
     & HUDControlProviding & InventoryEquipmentControlProviding
     & InventoryMenuControlProviding & ItemControlProviding
@@ -145,6 +146,7 @@ enum DestinationRegistry {
             content: .worldInspector { context in
                 let panel = WorldPanelViewController()
                 panel.cameraProvider = context.providers
+                panel.firstPersonProvider = context.providers
                 panel.frameStatsProvider = context.providers
                 panel.sceneStatsProvider = context.providers
                 panel.triggerProvider = context.providers
@@ -155,8 +157,14 @@ enum DestinationRegistry {
                 return panel
             },
             overrides: DestinationOverrideActions(
-                isOverridden: { CameraSection.isOverridden(provider: $0.providers) },
-                resetToDefaults: { CameraSection.resetToDefaults(provider: $0.providers) }
+                isOverridden: {
+                    CameraSection.isOverridden(provider: $0.providers)
+                        || FirstPersonSection.isOverridden(provider: $0.providers)
+                },
+                resetToDefaults: {
+                    CameraSection.resetToDefaults(provider: $0.providers)
+                    FirstPersonSection.resetToDefaults(provider: $0.providers)
+                }
             )
         ),
         DestinationDescriptor(

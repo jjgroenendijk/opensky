@@ -85,6 +85,12 @@ nonisolated final class LocomotionBridge {
     /// every write and event is dropped rather than queued, which is why item
     /// 14.6 can attach a real graph mid-session with nothing to replay.
     private(set) var graph: BehaviorGraphInstance?
+    /// The first-person graph, run beside the third-person one over the
+    /// install's `_1stperson` behavior set (issue #190). Nil until the app
+    /// attaches it, and nil forever on an install that ships no first-person
+    /// files, both of which are supported rather than degraded: the arms are
+    /// then simply not drawn. See LocomotionBridgeFirstPerson.swift.
+    private(set) var firstPersonGraph: BehaviorGraphInstance?
     /// Water surface height at a world XY, or nil where the cell has no water.
     var sampleWater: ((SIMD2<Float>) -> Float?)?
     /// The pose the last graph update produced, for whoever is drawing the
@@ -92,6 +98,10 @@ nonisolated final class LocomotionBridge {
     /// this is the only place the graph is stepped, and the graph steps on the
     /// simulation clock: see PlayerAnimationPlayback.swift.
     let pose = PlayerPoseBuffer()
+    /// The same, for the first-person rig. A separate buffer because the two
+    /// graphs pose two different skeletons and a shared one would hand the
+    /// arms the body's bones.
+    let firstPersonPose = PlayerPoseBuffer()
 
     /// This frame's intent. The renderer writes it once per frame; every fixed
     /// step in that frame reads the same value.
@@ -116,6 +126,7 @@ nonisolated final class LocomotionBridge {
         self.graph = graph
         self.sampleWater = sampleWater
         status = LocomotionStatus(graphAvailable: graph != nil)
+        seedPerspectiveVariables()
     }
 
     /// Takes this frame's intent from the drained camera input. Jump is latched
@@ -191,6 +202,15 @@ nonisolated final class LocomotionBridge {
         reset()
     }
 
+    /// Attaches (or detaches) the first-person graph. Separate from `attach`
+    /// because the two load independently: an install can ship a usable
+    /// third-person set and a broken `_1stperson` one, and that has to leave
+    /// the player walking rather than take the whole graph down.
+    func attachFirstPerson(graph: BehaviorGraphInstance?) {
+        firstPersonGraph = graph
+        reset()
+    }
+
     /// Forgets the edge state so the next step raises no stale transition.
     /// Called when walk mode is entered or the player is teleported.
     func reset() {
@@ -203,8 +223,23 @@ nonisolated final class LocomotionBridge {
         isAirborneFromJump = false
         pendingJump = false
         intent = .still
-        status = LocomotionStatus(graphAvailable: graph != nil)
+        status = LocomotionStatus(
+            graphAvailable: graph != nil,
+            firstPersonGraphAvailable: firstPersonGraph != nil
+        )
         pose.clear()
+        firstPersonPose.clear()
+        seedPerspectiveVariables()
+    }
+
+    /// Lends a write of the status snapshot to the satellite file.
+    ///
+    /// `private(set)` is scoped to this file, and the first-person half of the
+    /// bridge lives in `LocomotionBridgeFirstPerson.swift`. Lending one
+    /// narrow mutation is what keeps the setter closed to everyone else rather
+    /// than widening it for the whole module.
+    func updateStatus(_ change: (inout LocomotionStatus) -> Void) {
+        change(&status)
     }
 
     // MARK: - Resolution
@@ -294,7 +329,17 @@ nonisolated final class LocomotionBridge {
 
     // MARK: - Graph
 
+    /// Steps every attached graph and answers with the third-person one's root
+    /// travel.
+    ///
+    /// Only the third-person graph can move the character. The first-person
+    /// graph is stepped with the same inputs and publishes its own pose, but
+    /// its root motion is deliberately dropped: two graphs both allowed to
+    /// drive the capsule would integrate the same axis twice, and the arms are
+    /// a view of the movement rather than a source of it (see the file
+    /// comment's movement-authority rule).
     private func advanceGraph(deltaTime: Float) -> BehaviorRootMotion? {
+        advanceFirstPersonGraph(deltaTime: deltaTime)
         guard let graph else { return nil }
         let result = graph.update(deltaTime: deltaTime)
         status.noteGraphUpdate(events: result.firedEvents)
@@ -324,7 +369,11 @@ nonisolated final class LocomotionBridge {
         write(.real(configuration.runSpeed.value), to: LocomotionGraphNames.speedRun)
     }
 
+    /// Writes one variable to every attached graph. Both see identical inputs
+    /// by construction: there is one call site per variable and it fans out
+    /// here, so the two graphs cannot be fed different state.
     private func write(_ value: BehaviorVariableValue, to name: String) {
+        writeToFirstPersonGraph(value, to: name)
         guard let graph else { return }
         if graph.setVariable(value, named: name) {
             status.noteVariableWritten(name)
@@ -334,6 +383,7 @@ nonisolated final class LocomotionBridge {
     }
 
     private func raise(_ name: String) {
+        raiseOnFirstPersonGraph(name)
         guard let graph else { return }
         if graph.raiseEvent(named: name) {
             status.noteEventRaised(name)

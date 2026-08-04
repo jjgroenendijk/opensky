@@ -346,6 +346,9 @@ final class FakeWorldProviders: WorldControlProviders {
     /// PlayerLocomotionControlProviding (issue #188) state; the conformance
     /// lives in `FakeWorldProvidersLocomotion.swift`.
     var locomotion = FakeLocomotionState()
+    /// FirstPersonControlProviding (issue #190) state; the conformance lives
+    /// beside the locomotion one.
+    var firstPerson = FakeFirstPersonState()
 }
 
 /// The inventory-menu half of the fake, in an extension so the class body
