@@ -151,9 +151,8 @@ ARMO MODL is a 4-byte ARMA FormID, never a path (probed: SkinNaked carries
 
 ## ARMA -> ArmorAddon
 
-How a piece displays on a body: per-gender models + applicable races.
-MOD4/MOD5 first-person models, texture swaps (NAM0-3), and MODT hashes are
-skipped.
+How a piece displays on a body: per-gender models + applicable races. Texture
+swaps (NAM0-3) and MODT hashes are skipped.
 
 | field     | type    | decoded                                       |
 | --------- | ------- | --------------------------------------------- |
@@ -164,6 +163,17 @@ skipped.
 | MODL      | formID  | `additionalRaces[]` (base + vampire variants) |
 | MOD2      | zstring | `maleModelPath` (3rd person)                  |
 | MOD3      | zstring | `femaleModelPath` (3rd person)                |
+| MOD4      | zstring | `maleFirstPersonModelPath` (1st person)       |
+| MOD5      | zstring | `femaleFirstPersonModelPath` (1st person)     |
+
+MOD4/MOD5 are the models drawn on the first-person arms
+([behavior graph runtime](/engine/behavior-runtime.md), "First person"), and they
+are declared far less often than MOD2/MOD3: probed on the local install
+2026-08-04, of the ARMA records reachable from vanilla iron armour only the torso
+and hand armatures carry one. `firstPersonModelPath(female:)` falls back across
+genders exactly as the third-person accessor does, and returns nil rather than the
+third-person path when neither gender declares one — a third-person cuirass on a
+first-person rig would be skinned to a skeleton that does not have its bones.
 
 Probed: ARMA records at form version 40 emit 12-byte BODT while ARMO/RACE at
 44 emit 8-byte BOD2 — the shared decoder accepts both.
@@ -271,13 +281,19 @@ Turns a template-resolved appearance into renderable inputs:
 * Gendered model: MOD2 male / MOD3 female with cross-gender fallback —
   vanilla ships male-only ARMAs worn by both genders (probed:
   `StormCloakBootsAA`); skip only when neither model exists.
+* First-person model: every resolved part also carries its MOD4/MOD5 path
+  when the ARMA declares one, so `firstPersonProjection(skeletonPath:)` can
+  swap a whole resolved visual onto the `_1stperson` rig without re-walking
+  any chain. A part with no first-person model is dropped there with reason
+  `noFirstPersonModel` rather than falling back to its third-person mesh.
 
 Failure policy (milestone gate): broken chains throw typed
 `ActorVisualError`s — dangling race/skin/outfit/item FormIDs, empty or
 cyclic leveled lists. Never a silent naked fallback. Missing optional parts
 degrade to reason-tagged `AppearanceSkip`s (dangling armature, no compatible
 armature, no model, masked by outfit, duplicate armature, missing skeleton
-or body slots, unrenderable equipment) so accounting stays exact.
+or body slots, unrenderable equipment, no first-person model) so
+accounting stays exact.
 
 ## Runtime equipment (M12.2.1)
 

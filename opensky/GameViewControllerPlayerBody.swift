@@ -17,11 +17,20 @@ struct PlayerBodyBridgeState {
     /// The running graph, held so it stays alive for the session and so the
     /// readout can name it.
     var graph: PlayerBehaviorGraph?
+    /// The first-person graph and rig (issue #190). Held beside the
+    /// third-person pair rather than replacing it: both run every step and the
+    /// camera mode decides which is drawn.
+    var firstPersonGraph: PlayerBehaviorGraph?
     /// The equipped set the current body was assembled from, so a change can be
     /// detected without rebuilding every frame.
     var equipped: [FormID]?
     /// Why there is no body, when there is none. Empty once one is attached.
     var failureReason: String?
+    /// Why there are no arms, when there are none. Kept apart from
+    /// `failureReason` because an install can have a working third-person set
+    /// and a broken `_1stperson` one, and reporting one as the other would
+    /// send a reader to the wrong files.
+    var firstPersonFailureReason: String?
 }
 
 extension GameViewController {
@@ -47,6 +56,7 @@ extension GameViewController {
             // (LocomotionBridge.attach): every write and event was being
             // dropped until now, and nothing was queued to replay.
             renderer.locomotion.attach(graph: graph.instance)
+            wireFirstPersonGraph(fileSystem: fileSystem, renderer: renderer)
             rebuildPlayerBody(provider: bodyProvider, renderer: renderer)
         } catch let error as PlayerBehaviorGraphError {
             playerBodyBridge.failureReason =
@@ -68,7 +78,35 @@ extension GameViewController {
         }
     }
 
-    /// Assembles a body for the player's current equipped set and attaches it.
+    /// Loads the `_1stperson` graph and hands it to the bridge (issue #190).
+    ///
+    /// Failure here is recorded and survived rather than propagated: an
+    /// install whose first-person set is missing or malformed still walks,
+    /// still renders a third-person body, and simply has no arms — which the
+    /// panel says in as many words.
+    private func wireFirstPersonGraph(fileSystem: VirtualFileSystem, renderer: Renderer) {
+        do {
+            let graph = try PlayerBehaviorGraph.load(
+                fileSystem: fileSystem,
+                behaviorPath: PlayerBehaviorGraph.firstPersonBehaviorPath,
+                skeletonPath: PlayerBehaviorGraph.firstPersonSkeletonPath
+            )
+            playerBodyBridge.firstPersonGraph = graph
+            renderer.locomotion.attachFirstPerson(graph: graph.instance)
+        } catch let error as PlayerBehaviorGraphError {
+            playerBodyBridge.firstPersonFailureReason =
+                PlayerBodyError.behavior(error).localizedDescription
+            Self.logger.error(
+                "[ERROR] first-person graph: \(String(describing: error), privacy: .public)"
+            )
+        } catch {
+            playerBodyBridge.firstPersonFailureReason = String(describing: error)
+        }
+    }
+
+    /// Assembles a body for the player's current equipped set and attaches it,
+    /// then does the same for the first-person arms from the same set — which
+    /// is what makes an equip change reach both rigs (issue #190).
     func rebuildPlayerBody(provider: any PlayerBodyProviding, renderer: Renderer) {
         guard let graph = playerBodyBridge.graph else { return }
         let equipped = playerEquippedSet()
@@ -92,6 +130,37 @@ extension GameViewController {
             playerBodyBridge.failureReason = error.localizedDescription
             Self.logger.warning(
                 "player body: \(String(describing: error), privacy: .public)"
+            )
+        }
+        rebuildFirstPersonRig(provider: provider, renderer: renderer, equipped: equipped)
+    }
+
+    private func rebuildFirstPersonRig(
+        provider: any PlayerBodyProviding,
+        renderer: Renderer,
+        equipped: [FormID]?
+    ) {
+        guard let graph = playerBodyBridge.firstPersonGraph else { return }
+        switch provider.makePlayerFirstPersonRig(
+            skeleton: graph.skeleton,
+            pose: renderer.locomotion.firstPersonPose,
+            equipped: equipped
+        ) {
+        case let .success(rig):
+            playerBodyBridge.firstPersonFailureReason = nil
+            do {
+                try renderer.setPlayerFirstPersonRig(rig)
+            } catch {
+                let text = String(describing: error)
+                playerBodyBridge.firstPersonFailureReason = text
+                Self.logger.error(
+                    "[ERROR] first-person arms attach: \(text, privacy: .public)"
+                )
+            }
+        case let .failure(error):
+            playerBodyBridge.firstPersonFailureReason = error.localizedDescription
+            Self.logger.warning(
+                "first-person arms: \(String(describing: error), privacy: .public)"
             )
         }
     }

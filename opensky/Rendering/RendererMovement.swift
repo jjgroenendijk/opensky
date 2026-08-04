@@ -48,6 +48,7 @@ extension Renderer {
             advancePlayer(frameInput)
         }
         updatePlayerBodyPose()
+        updatePlayerFirstPersonPose()
     }
 
     /// Switches camera mode, re-seating the capsule under the current eye when
@@ -58,6 +59,9 @@ extension Renderer {
         let wasPlayerControlled = movementMode.isPlayerControlled
         movementMode = mode
         thirdPersonCamera.reset()
+        // The field of view is per mode (issue #190), so the projection has to
+        // follow the mode rather than wait for the next resize.
+        rebuildProjection()
         guard mode.isPlayerControlled else { return }
         // Coming from fly, the eye is wherever the developer left it and the
         // capsule has to be placed under it. Switching between the two player

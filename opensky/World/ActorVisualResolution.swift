@@ -64,6 +64,10 @@ nonisolated struct AppearanceSkip: Equatable {
         /// A runtime-equipped item is neither a known ARMO nor a weapon with a
         /// model, so it contributes no geometry.
         case unrenderableEquipment
+        /// The armature declares no MOD4/MOD5, so it contributes nothing to the
+        /// first-person rig (issue #190). Only ever produced by the
+        /// first-person projection; the third-person resolve never emits it.
+        case noFirstPersonModel
     }
 
     /// The record the skip is about (ARMA, ARMO, or RACE FormID).
@@ -84,6 +88,11 @@ nonisolated struct ResolvedBodyPart: Equatable {
     let armature: FormID
     /// ARMA MOD2 (male) / MOD3 (female) path, relative to Data/.
     let modelPath: String
+    /// ARMA MOD4 (male) / MOD5 (female) path — what this piece shows on the
+    /// player's own arms, or nil when the armature declares no first-person
+    /// geometry at all (issue #190). Carried here rather than looked up later
+    /// so the first-person projection needs no second pass over the ARMA index.
+    let firstPersonModelPath: String?
     let slots: BodySlots
 }
 
@@ -378,7 +387,11 @@ nonisolated struct ActorVisualResolver {
             parts.append(PrioritizedPart(
                 part: ResolvedBodyPart(
                     origin: selection.origin, armature: armatureID,
-                    modelPath: path, slots: slots
+                    modelPath: path,
+                    firstPersonModelPath: armature.firstPersonModelPath(
+                        female: selection.female
+                    ),
+                    slots: slots
                 ),
                 owner: armor.formID,
                 priority: armature.priority(female: selection.female)

@@ -26,9 +26,11 @@ extension Renderer {
         // the new rings have to cover (issue #189).
         let newDraw = try regrownDrawRing(
             for: newScene.drawCount + (playerBody?.render.drawCount ?? 0)
+                + (playerFirstPersonRig?.render.drawCount ?? 0)
         )
         let newInstance = try regrownInstanceRing(
             for: newScene.instanceCount + (playerBody?.render.instanceCount ?? 0)
+                + (playerFirstPersonRig?.render.instanceCount ?? 0)
         )
         // Old scene allocations retire as a whole; anything the new scene
         // shares is filtered out at purge time (live-set check), not here.

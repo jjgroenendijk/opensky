@@ -38,6 +38,9 @@ graph.
 * [Scope boundary](#scope-boundary)
 * [Verification](#verification)
 * [Milestone acceptance route](#milestone-acceptance-route)
+* [First-person acceptance surface](#first-person-acceptance-surface)
+* [Third-person acceptance surface](#third-person-acceptance-surface)
+* [Movement-tuning acceptance surface](#movement-tuning-acceptance-surface)
 
 ## Terrain collision surface
 
@@ -270,9 +273,12 @@ north and `MatrixMath.placement` applies it as `rotationZ(-angleZ)`, so an actor
 `angleZ` 0 stands unrotated and faces +Y — the character meshes are authored facing +Y —
 while walk-mode yaw is measured counterclockwise from +X.
 
-First person deliberately does not draw the body: the eye is inside its head, and the
-first-person body and arms are item 14.7. Fly mode does draw it, so a developer can fly
-around the character and look at it.
+First person deliberately does not draw the body: the eye is inside its head. It draws the
+`_1stperson` arms instead, on a second rig anchored to the eye and driven by a second graph
+instance — the visibility matrix, the depth policy, the shadow policy, and the first-person
+field of view are all in [behavior graph runtime](/engine/behavior-runtime.md), "First
+person". Fly mode draws the body, so a developer can fly around the character and look at it.
+The body keeps casting its shadow in every player mode, first person included.
 
 The pose comes from the behavior graph through `PlayerAnimationPlayback`; the clock split and
 the open skinning defect are in [Actor idle animation](/engine/actor-animation.md).
@@ -436,6 +442,17 @@ Read-only real-install acceptance at 640x360: 1,065 active physics frames, avg 1
 (62.9 fps), p95 29.69 ms, max 58.28 ms; exterior stair gain 22.82 units; interior crossing
 160.34 units; paired return feet `(31233.67, -9784.47, -4059.53)`. No clip, fall-through,
 unresolved penetration, destination mismatch, or build error.
+
+## First-person acceptance surface
+
+`World > First person` (`Destination-world`, `PanelSection-first-person`) carries the arms
+toggle `FirstPersonArmsEnabledControl`, the field-of-view slider `FirstPersonFOVControl`, and
+the readout `FirstPersonStatsLabel`. The readout is the part a frame cannot supply: whether
+the `_1stperson` graph loaded and how many updates it has run, how many arm meshes survived
+the MOD4/MOD5 projection, how many pieces were dropped for declaring none, whether the rig
+has a camera bone and at what height, the active field of view, and any variable or event
+name the first-person graph does not declare. Covered by `FirstPersonPanelTests` and
+`DestinationRegistryTests`.
 
 ## Third-person acceptance surface
 

@@ -1,7 +1,15 @@
 // ARMA record decoded into engine types: armature data — how an ARMO piece is
-// displayed on a body. Holds the per-gender biped models and the races the
-// armature applies to. First-person models (MOD4/MOD5), texture-swap lists,
-// and MODT hashes are skipped.
+// displayed on a body. Holds the per-gender biped models, the per-gender
+// first-person models, and the races the armature applies to. Texture-swap
+// lists and MODT hashes are skipped.
+//
+// MOD4 and MOD5 are the male and female first-person models — the geometry the
+// vanilla player sees on its own arms, skinned to the separate first-person rig
+// under `meshes\actors\character\_1stperson\`. Both are optional and most
+// armatures carry neither: only the pieces an arm can show (skin hands, the
+// skin torso, gauntlets, rings) declare one, which is why item 14.7 treats a
+// missing first-person model as "this piece is not on the arms" rather than as
+// a failure. See docs/engine/behavior-runtime.md, "First person".
 //
 // DNAM (12 bytes) is decoded for equip-slot priority resolution (issue #178):
 //   00 uint8   male draw priority
@@ -50,6 +58,11 @@ nonisolated struct ArmorAddon {
     let maleModelPath: String?
     /// MOD3 — female biped model path.
     let femaleModelPath: String?
+    /// MOD4 — male first-person model path; nil when the armature shows
+    /// nothing on the player's own arms.
+    let maleFirstPersonModelPath: String?
+    /// MOD5 — female first-person model path.
+    let femaleFirstPersonModelPath: String?
     /// DNAM male draw priority; 0 when the record carries no DNAM.
     let malePriority: UInt8
     /// DNAM female draw priority; 0 when the record carries no DNAM.
@@ -64,6 +77,14 @@ nonisolated struct ArmorAddon {
         female ? femalePriority : malePriority
     }
 
+    /// The first-person model for one gender, with the same cross-gender
+    /// fallback the third-person selection uses: an armature that declares only
+    /// MOD4 shows it on both genders rather than showing nothing.
+    func firstPersonModelPath(female: Bool) -> String? {
+        let preferred = female ? femaleFirstPersonModelPath : maleFirstPersonModelPath
+        return preferred ?? maleFirstPersonModelPath ?? femaleFirstPersonModelPath
+    }
+
     init(record: ESMRecord) throws {
         guard record.type == "ARMA" else {
             throw ESMError.malformed("expected ARMA record, got \(record.type)")
@@ -74,8 +95,7 @@ nonisolated struct ArmorAddon {
         var bodyTemplate: BodyTemplate?
         var primaryRace: FormID?
         var additionalRaces: [FormID] = []
-        var maleModelPath: String?
-        var femaleModelPath: String?
+        var models = ModelPaths()
         var priorities = DrawPriorities()
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
@@ -91,25 +111,46 @@ nonisolated struct ArmorAddon {
             case "MODL":
                 guard field.data.count == 4 else { break }
                 try additionalRaces.append(FormID(reader.readUInt32()))
-            case "MOD2":
-                maleModelPath = try reader.readZString()
-            case "MOD3":
-                femaleModelPath = try reader.readZString()
             case "DNAM":
                 priorities = try DrawPriorities(field: field)
             default:
-                break
+                // The four MOD2/MOD3/MOD4/MOD5 model paths, gathered by
+                // `ModelPaths` so this switch stays inside the complexity cap.
+                try models.read(field: field, reader: &reader)
             }
         }
         self.editorID = editorID
         self.bodyTemplate = bodyTemplate
         self.primaryRace = primaryRace
         self.additionalRaces = additionalRaces
-        self.maleModelPath = maleModelPath
-        self.femaleModelPath = femaleModelPath
+        maleModelPath = models.male
+        femaleModelPath = models.female
+        maleFirstPersonModelPath = models.maleFirstPerson
+        femaleFirstPersonModelPath = models.femaleFirstPerson
         malePriority = priorities.male
         femalePriority = priorities.female
         weaponAdjust = priorities.weaponAdjust
+    }
+
+    /// The four model paths an ARMA can declare, gathered so the field loop
+    /// keeps one local instead of four.
+    private struct ModelPaths {
+        var male: String?
+        var female: String?
+        var maleFirstPerson: String?
+        var femaleFirstPerson: String?
+
+        /// Reads `field` when it is one of the four model paths, and ignores
+        /// every other field type.
+        mutating func read(field: ESMField, reader: inout BinaryReader) throws {
+            switch field.type {
+            case "MOD2": male = try reader.readZString()
+            case "MOD3": female = try reader.readZString()
+            case "MOD4": maleFirstPerson = try reader.readZString()
+            case "MOD5": femaleFirstPerson = try reader.readZString()
+            default: break
+            }
+        }
     }
 
     /// The three DNAM members the engine keeps, with the all-zero reading a

@@ -151,8 +151,8 @@ extension Renderer {
         lastShadowDrawStats = ShadowDrawStats()
 
         guard shadowRenders else { return true }
-        let hasCasters = opaqueDrawGroups.contains(where: \.castsShadows)
-            || alphaTestedDrawGroups.contains(where: \.castsShadows)
+        let hasCasters = shadowOpaqueDrawGroups.contains(where: \.castsShadows)
+            || shadowAlphaTestedDrawGroups.contains(where: \.castsShadows)
             || !scene.terrain.isEmpty
         guard hasCasters else { return true }
 
@@ -202,11 +202,13 @@ extension Renderer {
                 slot: state.slot,
                 encoder: encoder
             )
+            // The shadow lists, not the camera lists: a first-person player
+            // is hidden from the eye and still casts (RendererPlayerBody).
             encodeCasterGroups(
-                opaqueDrawGroups, alphaTested: false, in: context, state: &state
+                shadowOpaqueDrawGroups, alphaTested: false, in: context, state: &state
             )
             encodeCasterGroups(
-                alphaTestedDrawGroups, alphaTested: true, in: context, state: &state
+                shadowAlphaTestedDrawGroups, alphaTested: true, in: context, state: &state
             )
             encodeShadowTerrain(in: context, state: &state)
             // MTL4 does not auto-track cross-encoder hazards: without a barrier

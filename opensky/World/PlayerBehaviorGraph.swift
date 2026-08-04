@@ -33,6 +33,21 @@ nonisolated enum PlayerBehaviorGraphError: LocalizedError, Equatable {
 nonisolated struct PlayerBehaviorGraph {
     static let behaviorPath = "meshes\\actors\\character\\behaviors\\0_master.hkx"
     static let skeletonPath = "meshes\\actors\\character\\character assets\\skeleton.hkx"
+    /// The first-person set (issue #190). A peer of the third-person one rather
+    /// than a subset: its own `0_master.hkx` over its own 17 behavior files,
+    /// its own 99-bone rig, and its own NIF skeleton for the arm meshes to skin
+    /// against. All three paths are read off the install's own archive listing
+    /// (`openskycli vfs ls _1stperson`), never spelled from memory, and the
+    /// folder is `characterassets` with no space where the third-person one is
+    /// `character assets` with one.
+    static let firstPersonBehaviorPath =
+        "meshes\\actors\\character\\_1stperson\\behaviors\\0_master.hkx"
+    static let firstPersonSkeletonPath =
+        "meshes\\actors\\character\\_1stperson\\characterassets\\skeletonfirst.hkx"
+    /// The NIF rig the first-person arm meshes skin against. RACE names only
+    /// the third-person skeleton (ANAM), so this one is a constant here — the
+    /// install ships exactly one and no record points at it.
+    static let firstPersonRigPath = "meshes\\actors\\character\\_1stperson\\skeleton.nif"
 
     let instance: BehaviorGraphInstance
     /// The Havok rig, kept rather than only its `BehaviorSkeleton` projection:
@@ -44,11 +59,19 @@ nonisolated struct PlayerBehaviorGraph {
     /// a readout can report how many behavior files the folder offered.
     let referenceSource: InstallBehaviorReferenceSource
 
-    /// Loads the vanilla player graph. Throws rather than degrading: a missing
-    /// or malformed `0_master.hkx` is a fact about the install the caller has to
-    /// report, and silently running with no graph would look like an animation
-    /// bug rather than a load failure (AGENTS.md "Missing -> fail loud").
-    static func load(fileSystem: VirtualFileSystem) throws -> PlayerBehaviorGraph {
+    /// Loads a player graph and the rig it poses. Defaults name the
+    /// third-person set; item 14.7 passes the `_1stperson` pair, and the two
+    /// calls produce two instances that share nothing (see the file comment).
+    ///
+    /// Throws rather than degrading: a missing or malformed `0_master.hkx` is a
+    /// fact about the install the caller has to report, and silently running
+    /// with no graph would look like an animation bug rather than a load
+    /// failure (AGENTS.md "Missing -> fail loud").
+    static func load(
+        fileSystem: VirtualFileSystem,
+        behaviorPath: String = Self.behaviorPath,
+        skeletonPath: String = Self.skeletonPath
+    ) throws -> PlayerBehaviorGraph {
         let behaviorFile = try read(behaviorPath, from: fileSystem)
         guard let objectGraph = try? HKXObjectGraph(file: behaviorFile) else {
             throw PlayerBehaviorGraphError.invalid(behaviorPath)

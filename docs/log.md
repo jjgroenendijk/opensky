@@ -4,6 +4,29 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-04
 
+* **First-person arms (issue #190)**: milestone 14 item 14.7. The player gets a first-person
+  rig — the `_1stperson` skeleton and arm meshes, assembled through the same `ActorAssembler`
+  path the third-person body uses and anchored to the eye through the `Camera1st [Cam1]` bone
+  the first-person skeleton alone carries — driven by a second `BehaviorGraphInstance` over
+  the first-person `0_master.hkx` that `LocomotionBridge` feeds the same variables and events
+  as the third-person one, differing only in `IsFirstPerson` and in having its root motion
+  dropped. `PlayerRigVisibility` states the whole per-mode matrix as one value: first person
+  draws the arms and hides the body, third person and fly do the reverse, the body casts its
+  shadow in every player mode, and the arms never cast. Equipment reaches the arms through
+  ARMA MOD4/MOD5, which the record decoder now reads; a piece declaring no first-person model
+  is dropped with a reason rather than falling back to a mesh skinned to bones the 99-bone
+  first-person rig does not have. The arms are encoded into a compressed viewport depth
+  slice so they cannot push through world geometry standing against a wall — a deliberate
+  deviation, since vanilla's answer lives in its renderer — and the first-person field of
+  view is an OpenSky setting, because the install declares none that OpenSky can read. See
+  [behavior graph runtime](/engine/behavior-runtime.md) and
+  [terrain walk mode](/engine/walk-mode.md).
+* **A skinned vertex can be empty in one index space and not the other (issue #190)**:
+  6 of the 468 top-level vertices in `1stPersonCuirassLight_1.nif` carry no influence in the
+  global `BSVertexDataSSE` stream while the same vertices' partition-local weights are
+  populated, which threw the whole file away and left the first-person cuirass invisible.
+  An empty global entry now defers to the partition entry, and a vertex empty in both keeps
+  zero weights instead of failing the mesh. See [NIF](/formats/nif.md).
 * **Third-person player body and camera (issue #189)**: milestone 14 item 14.6. The player
   gets a rendered third-person body, assembled from `Skyrim.esm` `NPC_ 00000007` through the
   same template and visual resolvers a streamed ACHR uses, held by the renderer rather than

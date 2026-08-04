@@ -13,6 +13,7 @@ import AppKit
 
 final class WorldPanelViewController: InspectorPanelViewController {
     let cameraSection = CameraSection()
+    let firstPersonSection = FirstPersonSection()
     let frameSection = FrameStatsSection()
     let sceneSection = SceneStatsSection()
     let triggerSection = TriggerVolumeSection()
@@ -21,6 +22,13 @@ final class WorldPanelViewController: InspectorPanelViewController {
     /// the panel must not retain back.
     weak var cameraProvider: (any CameraControlProviding)? {
         didSet { cameraSection.provider = cameraProvider }
+    }
+
+    /// The first-person arms, field of view, and their readout (issue #190).
+    /// Wired here because first person is a camera mode this panel already
+    /// selects.
+    weak var firstPersonProvider: (any FirstPersonControlProviding)? {
+        didSet { firstPersonSection.provider = firstPersonProvider }
     }
 
     weak var frameStatsProvider: (any FrameStatsProviding)? {
@@ -39,7 +47,7 @@ final class WorldPanelViewController: InspectorPanelViewController {
     }
 
     override func makeSections() -> [PanelSectionViewController] {
-        [cameraSection, frameSection, sceneSection, triggerSection]
+        [cameraSection, firstPersonSection, frameSection, sceneSection, triggerSection]
     }
 
     /// Control forwards for the verification-surface tests, matching the
@@ -50,6 +58,14 @@ final class WorldPanelViewController: InspectorPanelViewController {
 
     var cameraCopyPoseControl: NSButton {
         cameraSection.copyPoseControl
+    }
+
+    var firstPersonArmsEnabledControl: NSButton {
+        firstPersonSection.armsEnabledControl
+    }
+
+    var firstPersonFOVControl: NSSlider {
+        firstPersonSection.fovControl
     }
 
     var triggerLogClearControl: NSButton {

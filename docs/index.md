@@ -130,7 +130,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Terrain walk mode](/engine/walk-mode.md) - fixed-step capsule, terrain + mesh
   collide-and-slide, slope/ceiling response, bounded stairs, door pose reset, build-aware
   route timing gate, the three camera modes, the third-person orbit camera with
-  collision-aware zoom, and the rendered player body.
+  collision-aware zoom, the rendered player body, and the first-person acceptance surface.
 * [Static collision world](/engine/collision-world.md) - per-cell placed bhk shapes,
   immutable BVH broadphase, fail-loud geometry accounting, streaming lifetime + budgets,
   trigger volumes and their per-frame OnTriggerEnter/OnTriggerLeave occupancy diff.
@@ -141,7 +141,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   evaluation: instance model, fixed update order, variables, events, bindings, clip time
   and triggers, weighted blends, state machines with event-driven transitions, crossfades
   and nesting, the transition-condition language, clip phase synchronization, root-motion
-  extraction, multi-file behavior references, and the honest-coverage tally.
+  extraction, multi-file behavior references, the first-person rig and its second graph
+  instance, and the honest-coverage tally.
 * [Living environment integration](/engine/living-environment.md) - combined M7 runtime,
   app A/B controls, exterior/interior evidence + frame/build/footprint gate.
 * [Menu mode](/engine/menu-mode.md) - push/pop menu stack, world-vs-menu input-capture

@@ -54,13 +54,15 @@ extension Renderer {
             : playerBody.animation.resetToBindPose()
     }
 
-    /// Scene opaque groups plus the player's, so one list feeds both passes and
-    /// neither can forget the body.
+    /// Scene opaque groups plus the player's, so one list feeds the scene pass
+    /// and it cannot forget the body.
     ///
     /// The player draws last within its own list. Order between groups is a
     /// draw-call ordering only — depth testing decides what is visible — so this
     /// is about keeping the scene's grouping stable across frames rather than
-    /// about correctness.
+    /// about correctness. The first-person arms are *not* here: they are
+    /// encoded after everything else into their own depth slice
+    /// (`RendererFirstPersonArms.swift`).
     var opaqueDrawGroups: [DrawGroup] {
         guard let playerBody, isPlayerBodyVisible else { return scene.opaque }
         return scene.opaque + playerBody.render.opaque
@@ -71,15 +73,33 @@ extension Renderer {
         return scene.alphaTested + playerBody.render.alphaTested
     }
 
-    /// Whether the body is drawn this frame.
-    ///
-    /// First person deliberately does not draw it: the M14 body is the
-    /// third-person one, and drawing it with the eye inside its head would fill
-    /// the frame with the inside of a skull. The first-person body and arms are
-    /// item 14.7 (#190), which is where that gets its own answer. Fly mode draws
-    /// it, so a developer can fly around the character and look at it.
+    /// What this frame draws and casts, from the one policy value that owns
+    /// the whole matrix (`PlayerRigVisibility`, issue #190).
+    var rigVisibility: PlayerRigVisibility {
+        PlayerRigVisibility.resolve(
+            mode: movementMode,
+            hasBody: playerBody != nil,
+            hasArms: playerFirstPersonRig != nil,
+            armsEnabled: firstPersonArmsEnabled
+        )
+    }
+
+    /// What the shadow pass rasterizes: the scene plus the player's body in
+    /// every mode a player exists in, whether or not the eye can see it. The
+    /// reasoning is on `PlayerRigVisibility`.
+    var shadowOpaqueDrawGroups: [DrawGroup] {
+        guard let playerBody, rigVisibility.castsBodyShadow else { return scene.opaque }
+        return scene.opaque + playerBody.render.opaque
+    }
+
+    var shadowAlphaTestedDrawGroups: [DrawGroup] {
+        guard let playerBody, rigVisibility.castsBodyShadow else { return scene.alphaTested }
+        return scene.alphaTested + playerBody.render.alphaTested
+    }
+
+    /// Whether the third-person body is drawn to the camera this frame.
     var isPlayerBodyVisible: Bool {
-        movementMode != .walk
+        rigVisibility.drawsBody
     }
 
     /// Grows the draw and instance rings to cover the scene plus the body. The

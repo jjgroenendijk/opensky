@@ -20,6 +20,10 @@ enum PlayerBodyFixture {
         let body: PlayerBody
         let bridge: LocomotionBridge
         let builder: CellSceneBuilder
+        /// The `_1stperson` graph and the arms it poses (issue #190), attached
+        /// to the same bridge so both graphs see the same step.
+        let firstPersonGraph: PlayerBehaviorGraph
+        let arms: PlayerFirstPersonRig
     }
 
     /// How deep below the surface the injected swim plane sits. The launch cell
@@ -31,7 +35,11 @@ enum PlayerBodyFixture {
     static let swimSurfaceDepth = LocomotionBridge.swimEnterDepth + 20
 
     @MainActor
-    static func assemble(device: MTLDevice, root: GameDataRoot) throws -> Assembled {
+    static func assemble(
+        device: MTLDevice,
+        root: GameDataRoot,
+        equipped: [FormID]? = nil
+    ) throws -> Assembled {
         let vfs = VirtualFileSystem(root: root)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let textures = TextureLibrary(fileSystem: vfs, device: device)
@@ -45,16 +53,45 @@ enum PlayerBodyFixture {
             ),
             graph: graph.instance
         )
-        let result = builder.makePlayerBody(
-            skeleton: graph.skeleton,
-            pose: bridge.pose,
-            equipped: nil
+        let firstPersonGraph = try PlayerBehaviorGraph.load(
+            fileSystem: vfs,
+            behaviorPath: PlayerBehaviorGraph.firstPersonBehaviorPath,
+            skeletonPath: PlayerBehaviorGraph.firstPersonSkeletonPath
         )
+        bridge.attachFirstPerson(graph: firstPersonGraph.instance)
+        let body = try unwrap(
+            builder.makePlayerBody(
+                skeleton: graph.skeleton, pose: bridge.pose, equipped: equipped
+            ),
+            what: "player body"
+        )
+        let arms = try unwrap(
+            builder.makePlayerFirstPersonRig(
+                skeleton: firstPersonGraph.skeleton,
+                pose: bridge.firstPersonPose,
+                equipped: equipped
+            ),
+            what: "first-person arms"
+        )
+        return Assembled(
+            graph: graph,
+            body: body,
+            bridge: bridge,
+            builder: builder,
+            firstPersonGraph: firstPersonGraph,
+            arms: arms
+        )
+    }
+
+    private static func unwrap<Value>(
+        _ result: Result<Value, PlayerBodyError>,
+        what: String
+    ) throws -> Value {
         switch result {
-        case let .success(body):
-            return Assembled(graph: graph, body: body, bridge: bridge, builder: builder)
+        case let .success(value):
+            return value
         case let .failure(error):
-            Issue.record("player body did not assemble: \(error.localizedDescription)")
+            Issue.record("\(what) did not assemble: \(error.localizedDescription)")
             throw error
         }
     }
@@ -62,7 +99,15 @@ enum PlayerBodyFixture {
     /// Every skinned mesh's current bone palette, flattened, so two poses can be
     /// compared exactly.
     static func palettes(of body: PlayerBody) -> [float4x4] {
-        body.assembly.models
+        palettes(of: body.assembly)
+    }
+
+    static func palettes(of rig: PlayerFirstPersonRig) -> [float4x4] {
+        palettes(of: rig.assembly)
+    }
+
+    private static func palettes(of assembly: ActorAssembly<ActorRenderAsset>) -> [float4x4] {
+        assembly.models
             .flatMap(\.asset.model.meshes)
             .filter(\.isSkinned)
             .flatMap(\.currentBoneMatrices)
