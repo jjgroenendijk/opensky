@@ -1,0 +1,82 @@
+// Settings every target and configuration shares. Included by Debug.xcconfig and
+// Release.xcconfig, which the project-level build configurations point at, so these
+// values sit below both the project and every target in the build setting hierarchy.
+// See docs/tools/build-system.md for the layering.
+
+// Platform. macOS 26 (Tahoe) and newer only; no Intel or older-macOS paths.
+SDKROOT = macosx
+MACOSX_DEPLOYMENT_TARGET = 26.0
+
+// Swift language mode and the concurrency posture the codebase is written against.
+// tools/lint/swift-baseline.sh asserts SWIFT_VERSION here stays at 6.0.
+SWIFT_VERSION = 6.0
+SWIFT_APPROACHABLE_CONCURRENCY = YES
+SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES
+
+// The vendored decode-only ffmpeg (make ffmpeg) and its module map.
+SWIFT_INCLUDE_PATHS = $(inherited) $(SRCROOT)/tools/ffmpeg $(SRCROOT)/.vendor/ffmpeg/include
+
+// Versioning and product naming, identical for every target.
+CURRENT_PROJECT_VERSION = 1
+MARKETING_VERSION = 1.0
+PRODUCT_NAME = $(TARGET_NAME)
+
+// Signing inputs. The concrete CODE_SIGN_IDENTITY and DEVELOPMENT_TEAM live in
+// Config/Signing.xcconfig, which the code-signed targets include; these two are the
+// values a developer overrides. The defaults are ad-hoc signing, which is what CI
+// uses, so a checkout with no Config/Local.xcconfig still builds and tests.
+// Config/Local.xcconfig is gitignored and created by tools/config-local.sh.
+OPENSKY_CODE_SIGN_IDENTITY = -
+OPENSKY_DEVELOPMENT_TEAM =
+#include? "Local.xcconfig"
+CODE_SIGN_STYLE = Automatic
+
+// Metal. Shader warnings are errors, same as the Swift lint gate.
+MTL_FAST_MATH = YES
+MTL_TREAT_WARNINGS_AS_ERRORS = YES
+
+// Localization.
+LOCALIZATION_PREFERS_STRING_CATALOGS = YES
+ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES
+
+// Build hygiene and the clang/GCC warning set Xcode 26 creates a project with.
+ALWAYS_SEARCH_USER_PATHS = NO
+COPY_PHASE_STRIP = NO
+ENABLE_STRICT_OBJC_MSGSEND = YES
+ENABLE_USER_SCRIPT_SANDBOXING = YES
+GCC_C_LANGUAGE_STANDARD = gnu17
+GCC_NO_COMMON_BLOCKS = YES
+CLANG_ANALYZER_NONNULL = YES
+CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE
+CLANG_CXX_LANGUAGE_STANDARD = gnu++20
+CLANG_ENABLE_MODULES = YES
+CLANG_ENABLE_OBJC_ARC = YES
+CLANG_ENABLE_OBJC_WEAK = YES
+CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES
+CLANG_WARN_BOOL_CONVERSION = YES
+CLANG_WARN_COMMA = YES
+CLANG_WARN_CONSTANT_CONVERSION = YES
+CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES
+CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR
+CLANG_WARN_DOCUMENTATION_COMMENTS = YES
+CLANG_WARN_EMPTY_BODY = YES
+CLANG_WARN_ENUM_CONVERSION = YES
+CLANG_WARN_INFINITE_RECURSION = YES
+CLANG_WARN_INT_CONVERSION = YES
+CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES
+CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES
+CLANG_WARN_OBJC_LITERAL_CONVERSION = YES
+CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR
+CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES
+CLANG_WARN_RANGE_LOOP_ANALYSIS = YES
+CLANG_WARN_STRICT_PROTOTYPES = YES
+CLANG_WARN_SUSPICIOUS_MOVE = YES
+CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE
+CLANG_WARN_UNREACHABLE_CODE = YES
+CLANG_WARN__DUPLICATE_METHOD_MATCH = YES
+GCC_WARN_64_TO_32_BIT_CONVERSION = YES
+GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR
+GCC_WARN_UNDECLARED_SELECTOR = YES
+GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE
+GCC_WARN_UNUSED_FUNCTION = YES
+GCC_WARN_UNUSED_VARIABLE = YES

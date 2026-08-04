@@ -10,6 +10,11 @@
 #   2. The language mode. Every Xcode build configuration must stay on Swift 6.
 #      A single configuration slipping back to 5.0 disables strict concurrency
 #      checking for a whole target without failing any other gate.
+#
+# Build settings now live in Config/*.xcconfig (issue #343) with only structural
+# entries left in the pbxproj, so the language-mode scan reads both: the xcconfig
+# layer is where SWIFT_VERSION is set today, and a setting reintroduced in the
+# project file would silently override it.
 set -eu
 
 cd "$(git rev-parse --show-toplevel)"
@@ -77,24 +82,32 @@ if [ ! -f "$pbxproj" ]; then
   exit 1
 fi
 
-modes="$(grep -c 'SWIFT_VERSION = ' "$pbxproj" || true)"
+# Every place a build setting can be declared. Config/Local.xcconfig is gitignored
+# and only carries signing, so the glob covering it costs nothing.
+sources="$(ls Config/*.xcconfig 2>/dev/null || true)"
+# shellcheck disable=SC2086 # sources is a newline-separated file list, not one path.
+modes="$(awk '/SWIFT_VERSION = /{ n++ } END { print n + 0 }' "$pbxproj" $sources)"
 if [ "$modes" -eq 0 ]; then
-  printf '[FAIL] no SWIFT_VERSION build settings in %s\n' "$pbxproj" >&2
+  printf '[FAIL] no SWIFT_VERSION build setting in %s or Config/*.xcconfig\n' \
+    "$pbxproj" >&2
   exit 1
 fi
 
-stale="$(grep -n 'SWIFT_VERSION = ' "$pbxproj" \
-  | grep -v "SWIFT_VERSION = $required_language_mode;" || true)"
+# The pbxproj spells settings with a trailing semicolon, xcconfig files without one.
+# shellcheck disable=SC2086 # sources is a newline-separated file list, not one path.
+stale="$(grep -n 'SWIFT_VERSION = ' "$pbxproj" $sources \
+  | grep -v "SWIFT_VERSION = $required_language_mode;" \
+  | grep -v "SWIFT_VERSION = $required_language_mode\$" || true)"
 if [ -n "$stale" ]; then
   {
     printf '[FAIL] build configurations not in Swift %s language mode:\n' \
       "$required_language_mode"
     printf '%s\n' "$stale" | sed 's/^/       /'
-    printf '       Every SWIFT_VERSION in %s must read %s.\n' \
+    printf '       Every SWIFT_VERSION in %s and Config/*.xcconfig must read %s.\n' \
       "$pbxproj" "$required_language_mode"
   } >&2
   exit 1
 fi
 
-printf '[ OK ] Apple Swift %s (baseline %s), %s configurations in Swift %s mode\n' \
+printf '[ OK ] Apple Swift %s (baseline %s), %s declaration(s) in Swift %s mode\n' \
   "$found" "$required" "$modes" "$required_language_mode"

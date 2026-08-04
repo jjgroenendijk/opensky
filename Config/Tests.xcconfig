@@ -1,0 +1,12 @@
+// Target-level settings for openskyTests, shared by Debug and Release. The bundle is
+// app-hosted: it loads into a built, signed opensky.app, which is why it needs the same
+// signing inputs as the app itself.
+#include "Signing.xcconfig"
+
+PRODUCT_BUNDLE_IDENTIFIER = nl.jjgroenendijk.openskyTests
+TEST_HOST = $(BUILT_PRODUCTS_DIR)/opensky.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/opensky
+BUNDLE_LOADER = $(TEST_HOST)
+
+GENERATE_INFOPLIST_FILE = YES
+STRING_CATALOG_GENERATE_SYMBOLS = NO
+SWIFT_EMIT_LOC_STRINGS = NO

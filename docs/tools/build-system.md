@@ -19,6 +19,8 @@ volume cannot drift apart per target. The scripts under `tools/` run their own
 ## Contents
 
 * The shared invocation
+* Build settings: the Config/ xcconfig layer
+* Signing and Config/Local.xcconfig
 * Output volume and the transcripts in logs/
 * Built-products path
 * tools/xcodebuild-lib.sh
@@ -50,6 +52,75 @@ still holds.
 | `DERIVED_DATA` | `$(CURDIR)/DerivedData` | Build cache; exported to the scripts as `OPENSKY_DERIVED_DATA`. |
 | `XCODEBUILD_FLAGS` | empty | Extra flags or build settings, e.g. CI's `CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM=`. |
 | `OPENSKY_XCODEBUILD_RAW` | unset | `=1` prints the whole transcript instead of the filtered stream. |
+
+## Build settings: the Config/ xcconfig layer
+
+Every build setting lives in a text file under `Config/`, and the ten build
+configurations in `opensky.xcodeproj/project.pbxproj` hold an empty `buildSettings` block
+plus a `baseConfigurationReference` naming one of them. Changing a setting is a one-line
+diff in a file a review can read, and the pbxproj — the worst merge-conflict surface in a
+repository that runs parallel linked worktrees — no longer carries five near-identical
+copies of the same values.
+
+```text
+Config/
+├── Base.xcconfig            deployment target, SDK, Swift mode, warnings, versioning
+├── Debug.xcconfig           #include Base + -Onone, dwarf, testability
+├── Release.xcconfig         #include Base + wholemodule, dSYM, VALIDATE_PRODUCT
+├── Signing.xcconfig         CODE_SIGN_IDENTITY and DEVELOPMENT_TEAM indirection
+├── App.xcconfig             opensky: bundle id, Info.plist keys, ffmpeg link + rpath
+├── CLI.xcconfig             openskycli: bridging header, ffmpeg link + rpath
+├── Tests.xcconfig           openskyTests: TEST_HOST, BUNDLE_LOADER
+├── UITests.xcconfig         openskyUITests: TEST_TARGET_NAME, ad-hoc signing
+└── Local.example.xcconfig   template for the gitignored Config/Local.xcconfig
+```
+
+The two levels do different jobs. `Debug.xcconfig` and `Release.xcconfig` are the
+project's base configurations, so they cover every target; the four target files sit above
+them in the setting hierarchy and each applies to both configurations of one target,
+because no target here wants a different bundle identifier or link line in Debug than in
+Release. A per-configuration target setting, if one is ever needed, is the one case that
+still belongs in the pbxproj — target build settings are the only level above the target
+xcconfig.
+
+The move preserved every effective value: `xcodebuild -showBuildSettings` for all four
+targets in both configurations differs only by the two new `OPENSKY_*` variables the
+signing indirection introduces.
+
+`tools/lint/swift-baseline.sh` reads `SWIFT_VERSION` from `Config/*.xcconfig` as well as
+from the pbxproj, so the Swift 6 language-mode gate still fails on a configuration that
+slips back. See [Swift toolchain and language mode](/tools/swift-toolchain.md).
+
+## Signing and Config/Local.xcconfig
+
+No signing identity is checked in. `Base.xcconfig` declares the two inputs, defaults them
+to ad-hoc signing, then optionally includes a per-developer file:
+
+```text
+OPENSKY_CODE_SIGN_IDENTITY = -
+OPENSKY_DEVELOPMENT_TEAM =
+#include? "Local.xcconfig"
+```
+
+`Signing.xcconfig` maps those onto `CODE_SIGN_IDENTITY` and `DEVELOPMENT_TEAM` and is
+included by the app, the CLI, and the unit test bundle. The UI test runner pins itself to
+`-` instead and does not include it. `#include?` is the optional form, so a checkout
+without `Config/Local.xcconfig` builds ad-hoc and silently rather than failing on a
+missing file, which is the same signing CI passes on the command line. A command-line
+build setting still wins over both layers.
+
+`tools/config-local.sh` creates `Config/Local.xcconfig` when it is absent: `make
+bootstrap` runs it, and so does every make target that drives `xcodebuild`, next to
+`vendor-link`. A linked worktree copies the main checkout's file rather than the template,
+so a dev-signed setup does not quietly become ad-hoc in a new worktree. A missing
+`Config/Local.example.xcconfig` is the one hard failure, since it means the checkout is
+broken.
+
+The unit test bundle is app-hosted (`TEST_HOST` points at the built `opensky.app`), so
+`make test` depends on the app being signed with something. Ad-hoc satisfies that. Signing
+with a real Apple Development identity is still worth setting up locally: ad-hoc gives the
+binary a new code signature on every build, and macOS then re-asks for the TCC grants the
+UI tests and the screenshot tooling need.
 
 ## Output volume and the transcripts in logs/
 

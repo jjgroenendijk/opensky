@@ -1,0 +1,16 @@
+// Target-level settings for the openskycli dev tool, shared by Debug and Release.
+#include "Signing.xcconfig"
+
+SUPPORTED_PLATFORMS = macosx
+
+// The CLI compiles the same engine sources as the app, so it needs the same isolation
+// default and the same bridging header. It builds from opensky/ rather than from a
+// folder named after the target, so the path is spelled out.
+SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor
+SWIFT_OBJC_BRIDGING_HEADER = opensky/ShaderTypes.h
+
+// The vendored decode-only ffmpeg. A command-line tool has no bundle to embed into, so
+// it loads the dylibs straight from .vendor at run time.
+LD_RUNPATH_SEARCH_PATHS = $(inherited) $(SRCROOT)/.vendor/ffmpeg/lib
+LIBRARY_SEARCH_PATHS = $(inherited) $(SRCROOT)/.vendor/ffmpeg/lib
+OTHER_LDFLAGS = $(inherited) -lavcodec -lavutil -lswresample
