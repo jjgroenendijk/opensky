@@ -7,6 +7,23 @@ import simd
 nonisolated struct CapsuleCollisionContact {
     let normal: SIMD3<Float>
     let depth: Float
+    /// The MATT material of the shape that produced this contact (issue #358),
+    /// so the surface the player is standing on can be named. Nil where the
+    /// shape carries none.
+    let material: FormID?
+
+    init(normal: SIMD3<Float>, depth: Float, material: FormID? = nil) {
+        self.normal = normal
+        self.depth = depth
+        self.material = material
+    }
+
+    /// The same contact attributed to a shape's material. Narrowphase works in
+    /// geometry and has no shape to ask, so the material is attached once,
+    /// where the shape is still in hand.
+    func naming(_ material: FormID?) -> CapsuleCollisionContact {
+        CapsuleCollisionContact(normal: normal, depth: depth, material: material)
+    }
 }
 
 nonisolated struct CapsuleMoveResult {
@@ -108,7 +125,10 @@ nonisolated struct CapsuleWorldCollider {
         shapes: [StaticCollisionShape]
     ) -> [CapsuleCollisionContact] {
         let segment = capsuleSegment(at: feet)
-        return shapes.flatMap { contacts(segment: segment, motion: motion, shape: $0) }
+        return shapes.flatMap { shape in
+            contacts(segment: segment, motion: motion, shape: shape)
+                .map { $0.naming(shape.material) }
+        }
     }
 
     private func capsuleSegment(

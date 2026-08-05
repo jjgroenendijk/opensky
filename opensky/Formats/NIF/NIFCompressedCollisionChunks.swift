@@ -8,7 +8,8 @@ nonisolated extension NIFCompressedCollisionMesh {
     static func readChunks(
         reader: inout BinaryReader,
         transforms: [ChunkTransform],
-        scale: SIMD3<Float>
+        scale: SIMD3<Float>,
+        materials: [UInt32]
     ) throws -> [Soup] {
         let count = try Int(reader.readUInt32())
         guard count <= reader.bytesRemaining / 40 else {
@@ -20,7 +21,8 @@ nonisolated extension NIFCompressedCollisionMesh {
             try chunks.append(readChunk(
                 reader: &reader,
                 transforms: transforms,
-                scale: scale
+                scale: scale,
+                materials: materials
             ))
         }
         return chunks
@@ -29,10 +31,11 @@ nonisolated extension NIFCompressedCollisionMesh {
     private static func readChunk(
         reader: inout BinaryReader,
         transforms: [ChunkTransform],
-        scale: SIMD3<Float>
+        scale: SIMD3<Float>,
+        materials: [UInt32]
     ) throws -> Soup {
         let translation = try reader.readVector4().xyz
-        _ = try reader.readUInt32() // material index
+        let material = try material(at: Int(reader.readUInt32()), in: materials)
         let reference = try reader.readUInt16()
         let transformIndex = try reader.readUInt16()
         guard reference == .max else {
@@ -63,7 +66,8 @@ nonisolated extension NIFCompressedCollisionMesh {
         reader.skip(weldingCount * 2)
         return try Soup(
             vertices: vertices,
-            indices: triangles(source: sourceIndices, strips: strips, vertexCount: vertexCount)
+            indices: triangles(source: sourceIndices, strips: strips, vertexCount: vertexCount),
+            material: material
         )
     }
 

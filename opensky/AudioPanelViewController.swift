@@ -71,6 +71,10 @@ final class AudioPanelViewController: InspectorPanelViewController {
         footstepsSection.footstepTagControl
     }
 
+    var audioFootstepMaterialControl: NSPopUpButton {
+        footstepsSection.footstepMaterialControl
+    }
+
     var audioPlayFootstepControl: NSButton {
         footstepsSection.playFootstepControl
     }

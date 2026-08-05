@@ -3,22 +3,35 @@
 
 import simd
 
+/// A surface the capsule can step up onto: the height it sits at, and what it
+/// is made of (issue #358) so a step onto a wooden stair sounds like one.
+nonisolated struct CapsuleStepSupport: Equatable {
+    let height: Float
+    let material: FormID?
+}
+
 nonisolated extension CapsuleWorldCollider {
-    func stepSupportHeight(
+    func stepSupport(
         at position: SIMD2<Float>,
         minimumHeight: Float,
         maximumHeight: Float,
         query: CandidateQuery
-    ) -> Float? {
+    ) -> CapsuleStepSupport? {
         let epsilon: Float = 0.01
         let bounds = ModelBounds(
             min: SIMD3(position.x - epsilon, position.y - epsilon, minimumHeight),
             max: SIMD3(position.x + epsilon, position.y + epsilon, maximumHeight)
         )
         return query(bounds)
-            .compactMap { $0.walkableSupportHeight(at: position) }
-            .filter { $0 >= minimumHeight - epsilon && $0 <= maximumHeight + epsilon }
-            .max()
+            .compactMap { shape in
+                shape.walkableSupportHeight(at: position).map {
+                    CapsuleStepSupport(height: $0, material: shape.material)
+                }
+            }
+            .filter {
+                $0.height >= minimumHeight - epsilon && $0.height <= maximumHeight + epsilon
+            }
+            .max { $0.height < $1.height }
     }
 }
 

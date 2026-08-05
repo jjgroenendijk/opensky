@@ -64,6 +64,26 @@ nonisolated struct NIFCollisionShape {
     /// Body-local wrapper/chunk transform. Translation is in engine units.
     let transform: float4x4
     let geometry: NIFCollisionGeometry
+    /// NifTools `SkyrimHavokMaterial`: the hash of the surface's Creation Kit
+    /// material name (issue #358). Nil where the block carries no material, and
+    /// left raw here because a NIF has no way to resolve it — turning it into a
+    /// MATT record needs the plugin, which is `MaterialTypeIndex`'s job.
+    ///
+    /// One shape carries one material. Where a block stores several — a
+    /// compressed mesh's chunks, a packed strip shape's sub-shapes — the
+    /// decoder emits one shape per material rather than a per-triangle table,
+    /// because those blocks already partition their geometry that way.
+    let material: UInt32?
+
+    init(
+        transform: float4x4,
+        geometry: NIFCollisionGeometry,
+        material: UInt32? = nil
+    ) {
+        self.transform = transform
+        self.geometry = geometry
+        self.material = material
+    }
 }
 
 nonisolated enum NIFCollisionGeometry {
@@ -104,6 +124,18 @@ nonisolated struct NIFCollisionModel {
                     return shapeTotal
                 }
                 return shapeTotal + indices.count / 3
+            }
+        }
+    }
+
+    /// Havok material value -> how many decoded shapes name it. The probe's
+    /// evidence that meshes carry materials at all, and that the values they
+    /// carry are ones a MATT hashes to.
+    var shapeMaterials: [UInt32: Int] {
+        bodies.reduce(into: [:]) { counts, body in
+            for shape in body.shapes {
+                guard let material = shape.material else { continue }
+                counts[material, default: 0] += 1
             }
         }
     }

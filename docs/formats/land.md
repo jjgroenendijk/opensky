@@ -87,10 +87,16 @@ drives splat blend order. Sparse: only painted vertices appear in VTXT.
 | ----- | ------- | -------------------------------------------- |
 | EDID  | zstring | `editorID`                                   |
 | TNAM  | formID  | `textureSet` — the TXST it draws from        |
+| MNAM  | formID  | `materialType` — the MATT ground here is made of |
 | GNAM  | formID  | repeated `grasses` entries — GRAS references |
 
 GNAM feeds [procedural grass placement](/engine/grass.md); repeated fields keep
-record order. Skipped for now: MNAM (material type), HNAM (havok
+record order. MNAM is the terrain half of the footstep material chain
+(issue #358): exterior ground is LAND rather than a collision mesh, so it names
+its surface here instead of through a Havok material value. `TerrainSurfaceMaterials`
+resolves the heaviest-weighted texture per terrain vertex into one MATT and the
+height field reports it with each ground sample; see
+[material types](/formats/material-type.md). Skipped for now: HNAM (havok
 friction/restitution), SNAM (specular exponent), and INAM (SSE snow flag).
 
 ## TXST -> TextureSet

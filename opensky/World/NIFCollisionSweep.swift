@@ -12,6 +12,9 @@ nonisolated struct NIFCollisionAssetReport {
     let triangleCount: Int
     let filteredBodyCount: Int
     let unsupportedReachableBlocks: [String: Int]
+    /// Havok material value -> how many shapes name it (issue #358). Shapes
+    /// carrying no material are absent rather than counted under zero.
+    let shapeMaterials: [UInt32: Int]
     let decodeFailures: [NIFCollisionFailure]
     let collisionBounds: ModelBounds?
     let renderBounds: ModelBounds?
@@ -75,6 +78,7 @@ nonisolated enum NIFCollisionSweep {
                 triangleCount: collision.triangleCount,
                 filteredBodyCount: collision.filteredBodyCount,
                 unsupportedReachableBlocks: collision.unsupportedReachableBlocks,
+                shapeMaterials: collision.shapeMaterials,
                 decodeFailures: collision.decodeFailures,
                 collisionBounds: collision.bounds,
                 renderBounds: renderBounds,
@@ -89,6 +93,7 @@ nonisolated enum NIFCollisionSweep {
                 triangleCount: 0,
                 filteredBodyCount: 0,
                 unsupportedReachableBlocks: [:],
+                shapeMaterials: [:],
                 decodeFailures: [],
                 collisionBounds: nil,
                 renderBounds: nil,

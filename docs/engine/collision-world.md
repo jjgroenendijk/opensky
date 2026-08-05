@@ -37,7 +37,15 @@ increments decode failures too. A wholly degenerate shape contributes neither a 
 shape nor estimated bytes; valid sibling leaves of a partially malformed large soup remain
 available while each dropped leaf makes grid acceptance fail.
 
-`StaticCollisionShape` retains decoded geometry + final transform + world AABB + source REFR.
+`StaticCollisionShape` retains decoded geometry + final transform + world AABB + source REFR
+
++ the MATT material of its surface. The NIF carries a Havok material value, which is a hash
+of a Creation Kit material name; the build resolves it through `MaterialTypeIndex` so that
+nothing downstream has to know that (issue #358, [material types](/formats/material-type.md)).
+Partitioning is spatial, and a NIF shape carries one material for all of its geometry, so
+every broadphase leaf inherits its shape's material. A capsule contact and a step-support
+probe both report the material of the shape they touched, which is how
+[walk mode](/engine/walk-mode.md) can say what the player is standing on.
 Triangle soups keep shared model arrays; repeated placements copy array headers, not vertex
 storage. Primitive bounds cover convex vertices, box, sphere, capsule. `StaticCollisionStats`
 accounts model refs, collision-bearing refs, bodies, filtered bodies, shapes, triangles,
@@ -332,11 +340,11 @@ remains avg + p95 <= 33.33 ms; physical footprint cap remains 1,024 MB + plateau
 
 Real read-only Tamriel probe, 2026-07-19:
 
-- 5x5 `(4...8,-4...0)`: 1,795 placed shapes, 161,427 triangles, 137 filtered bodies,
++ 5x5 `(4...8,-4...0)`: 1,795 placed shapes, 161,427 triangles, 137 filtered bodies,
   zero load/decode/unsupported failures. Estimated live geometry payload ~4.6 MiB.
-- Production center -> east -> north fly path: 35 unique builds; 2,393 shapes, 230,034
++ Production center -> east -> north fly path: 35 unique builds; 2,393 shapes, 230,034
   triangles processed; collision avg 112.78 ms, p95 464.63 ms, max 725.69 ms.
-- Waypoint footprint 484 -> 537 -> 526 MB, peak 593 MB / 1,024 MB cap. 4,727 frames:
++ Waypoint footprint 484 -> 537 -> 526 MB, peak 593 MB / 1,024 MB cap. 4,727 frames:
   render avg 3.12 ms, p95 5.77 ms, max 16.65 ms.
 
 ## Verification

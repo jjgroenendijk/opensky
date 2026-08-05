@@ -86,6 +86,19 @@ nonisolated extension CellSceneBuilder {
         return index
     }
 
+    /// MATT index over the plugin's MATT and LTEX top groups, built on first
+    /// use. A plugin with no MATT group yields the empty index rather than nil,
+    /// so a synthetic scene resolves every surface to no material instead of
+    /// rebuilding the index per cell.
+    nonisolated func materialTypeIndexBuildingIfNeeded() -> MaterialTypeIndex {
+        if let materialTypeIndex {
+            return materialTypeIndex
+        }
+        let index = MaterialTypeIndex(file: file)
+        materialTypeIndex = index
+        return index
+    }
+
     nonisolated func resolveBase(
         formID: UInt32,
         statIndex: [UInt32: StaticObject],

@@ -139,7 +139,11 @@ nonisolated extension CellSceneBuilder {
                 let field = TerrainHeightField(
                     coordinate: coordinate,
                     heights: heights,
-                    hiddenQuadrants: quadFlags
+                    hiddenQuadrants: quadFlags,
+                    surfaceMaterials: TerrainSurfaceMaterials.build(
+                        land: land,
+                        materialTypes: materialTypeIndexBuildingIfNeeded()
+                    )
                 )
                 if let field {
                     return (

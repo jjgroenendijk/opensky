@@ -118,6 +118,79 @@ struct FootstepRealDataTests {
         #expect(!footsteps.isEmpty, "\(detail)")
     }
 
+    /// The material half of the chain (issue #358) against the real plugin:
+    /// every vanilla `MATT` is reachable from a collision mesh by its hash, the
+    /// landscape textures name materials, and naming one takes the same tag to a
+    /// different sound than the representative fallback does.
+    @Test(.enabled(if: Self.dataRoot != nil))
+    func vanillaMaterialsResolveAndChangeTheSound() throws {
+        let root = try #require(Self.dataRoot)
+        let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
+        let materials = MaterialTypeIndex(file: file)
+        let store = FootstepStore(file: file)
+        let sounds = SoundRecordStore(file: file)
+
+        #expect(!materials.isEmpty, "this load order carries no MATT records")
+        // A material with no MNAM could never be reached from a mesh; vanilla
+        // names every one of them.
+        #expect(materials.hashedMaterialCount == materials.materials.count)
+        let snow = try #require(
+            materials.materials.values.first { $0.editorID == "MaterialSnow" },
+            "MaterialSnow is missing from this load order"
+        )
+        let havok = try #require(snow.havokMaterial)
+        #expect(materials.material(forHavokMaterial: havok) == snow.formID)
+
+        let set = try #require(store.defaultSet)
+        let fallback = try #require(store.resolve(tag: "FootLeft", gait: .walking, in: set))
+        let onSnow = try #require(
+            store.resolve(tag: "FootLeft", gait: .walking, in: set, material: snow.formID)
+        )
+        #expect(onSnow.impact.formID != fallback.impact.formID)
+        let path = try #require(try sounds.resolveAny(onSnow.sound).filePaths.first)
+        #expect(path.lowercased().contains("snow"), "snow resolved to \(path)")
+        _ = try WorldAudioEngine.makeBuffer(
+            wav: VirtualFileSystem(root: root).contents(forPath: path),
+            downmixToMono: true
+        )
+    }
+
+    /// Exterior ground names its material through `LTEX.MNAM` rather than
+    /// through Havok, so the landscape textures have to resolve too — and a
+    /// snowy one has to reach a snow material, or terrain footsteps would be
+    /// resolvable but wrong.
+    @Test(.enabled(if: Self.dataRoot != nil))
+    func landscapeTexturesNameTheirMaterials() throws {
+        let root = try #require(Self.dataRoot)
+        let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
+        let materials = MaterialTypeIndex(file: file)
+        let group = try #require(file.topGroup(of: "LTEX"))
+
+        var textures: [LandTexture] = []
+        for case let .record(record) in try group.children()
+            where record.type == "LTEX" && !record.isDeleted
+        {
+            if let texture = try? LandTexture(record: record) {
+                textures.append(texture)
+            }
+        }
+        #expect(!textures.isEmpty, "this load order carries no LTEX records")
+
+        let named = textures.count { materials.material(forLandTexture: $0.formID) != nil }
+        #expect(named > 0, "no LTEX in this load order names a MATT")
+
+        // Skyrim is a snowy province, so at least one landscape texture has to
+        // reach a snow material. A chain that resolved every texture to the
+        // same material would pass the count above and fail this.
+        let snowy = textures.contains { texture in
+            guard let material = materials.material(forLandTexture: texture.formID) else {
+                return false
+            }
+            return materials.describe(material).lowercased().contains("snow")
+        }
+        #expect(snowy, "no landscape texture reaches a snow material")
+    }
+
     // MARK: - Loading
 
     /// A bridge over the real graph and the launch cell's real terrain, walked

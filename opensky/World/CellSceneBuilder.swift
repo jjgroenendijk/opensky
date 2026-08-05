@@ -143,6 +143,10 @@ nonisolated final class CellSceneBuilder {
     var grassIndex: [UInt32: Grass]?
     var lightingTemplateIndex: [UInt32: LightingTemplate]?
     var lightIndex: [UInt32: LightRecord]?
+    /// MATT materials plus the Havok-hash and LTEX lookups into them
+    /// (issue #358), built on first use like the indexes above. Collision and
+    /// terrain both resolve their surface material through it at build time.
+    var materialTypeIndex: MaterialTypeIndex?
 
     init(
         file: ESMFile,

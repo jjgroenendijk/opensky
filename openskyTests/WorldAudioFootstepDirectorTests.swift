@@ -33,6 +33,52 @@ struct WorldAudioFootstepDirectorTests {
         #expect(director.lastFootstepError == nil)
     }
 
+    /// Issue #358 end to end at this seam: the material the ground contact
+    /// reports picks the impact, so the same tag on two surfaces takes two
+    /// paths through the table.
+    @Test func theGroundMaterialSelectsTheImpact() throws {
+        let engine = try Fixture.makeRunningEngine()
+        let director = makeDirector(engine: engine)
+
+        director.handleGraphEvents(
+            ["FootLeft"], gait: .walk, position: .zero, material: Self.stone
+        )
+        #expect(engine.sources.count == 1)
+        #expect(director.groundMaterial == Self.stone)
+
+        director.handleGraphEvents(
+            ["FootLeft"], gait: .walk, position: .zero, material: Self.snow
+        )
+        #expect(engine.sources.count == 1, "the snow impact names a sound the store lacks")
+        #expect(director.lastFootstepError != nil)
+        #expect(director.groundMaterial == Self.snow)
+    }
+
+    @Test func noMaterialStillResolvesThroughTheRepresentativeImpact() throws {
+        let engine = try Fixture.makeRunningEngine()
+        let director = makeDirector(engine: engine)
+
+        director.handleGraphEvents(["FootLeft"], gait: .walk, position: .zero)
+
+        #expect(engine.sources.count == 1)
+        #expect(director.groundMaterial == nil)
+        #expect(director.materialDescription == "none")
+    }
+
+    @Test func aPinnedMaterialOverridesTheGroundContact() throws {
+        let engine = try Fixture.makeRunningEngine()
+        let director = makeDirector(engine: engine)
+        director.forcedMaterial = Self.snow
+
+        director.handleGraphEvents(
+            ["FootLeft"], gait: .walk, position: .zero, material: Self.stone
+        )
+
+        #expect(engine.sources.isEmpty, "the pinned snow impact names a missing sound")
+        #expect(director.activeMaterial == Self.snow)
+        #expect(director.materialDescription.hasSuffix("(forced)"))
+    }
+
     @Test func eventsTheSetHasNoTagForAreDroppedSilently() throws {
         let engine = try Fixture.makeRunningEngine()
         let director = makeDirector(engine: engine)
@@ -191,6 +237,10 @@ struct WorldAudioFootstepDirectorTests {
         )
     }
 
+    /// Two MATT materials the fixture table pairs with different impacts.
+    private static let stone = FormID(0x501)
+    private static let snow = FormID(0x502)
+
     private static func makeFootstepStore() -> FootstepStore {
         let lists: [FootstepGait: [FormID]] = [
             .walking: [FormID(0x100)],
@@ -214,11 +264,21 @@ struct WorldAudioFootstepDirectorTests {
                     formID: FormID(0x200),
                     editorID: nil,
                     entries: [
-                        ImpactDataSet.Entry(material: FormID(1), impact: FormID(0x300))
+                        ImpactDataSet.Entry(material: FormID(1), impact: FormID(0x300)),
+                        ImpactDataSet.Entry(material: stone, impact: FormID(0x300)),
+                        ImpactDataSet.Entry(material: snow, impact: FormID(0x301))
                     ]
                 )
             ],
-            impacts: [decodeImpact(0x300, sound: 0xAAA)],
+            // 0x301's sound is not in the sound store, so a footstep that
+            // reaches it is audibly different from one that reaches 0x300:
+            // nothing plays and the readout says why. That is what makes the
+            // material's effect on the chain observable without a second
+            // descriptor fixture.
+            impacts: [
+                decodeImpact(0x300, sound: 0xAAA),
+                decodeImpact(0x301, sound: 0xBBB)
+            ],
             armatureSets: [FormID(0x900): FormID(0x11)]
         )
     }

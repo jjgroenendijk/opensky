@@ -251,13 +251,19 @@ The route, once per frame:
    resolves. Names the list has no tag for — the graph fires plenty, from combat to
    magic — cost one string comparison and are dropped.
 
+The feet position is not the only thing the tick carries: `WalkController.groundMaterial`
+rides along with it (issue #358), and the impact table is keyed by exactly that. Snow, wood,
+grass and gravel select different `IPCT` records and therefore different sounds. The
+director keeps the last reported material for the readout and lets the panel pin one in its
+place, so a surface can be heard deliberately rather than by walking to it.
+
 Footsteps are positional and placed at the feet, not at the listener, which is what makes
 third person sound right. The set the player walks with comes from `ARMA.SNDD` on the
 armature occupying the feet slot of the assembled body, falling back to
 `DefaultFootstepSet`; worn parts precede skin parts in a resolved visual, so boots outrank
-the bare foot they cover without the director ranking them. Record layouts, the chain from
-tag to sound file, and the surface-material gap are in
-[footstep records](/formats/footstep.md).
+the bare foot they cover without the director ranking them. Record layouts and the chain
+from tag to sound file are in [footstep records](/formats/footstep.md); how a surface names
+its material is in [material types](/formats/material-type.md).
 
 ## World > Audio surface
 
@@ -297,21 +303,29 @@ below, plus **Footsteps** (`PanelSection-audioFootsteps`); **SFX & Ambience**
 * **Footsteps** (`PanelSection-audioFootsteps`): `AudioFootstepsEnabledControl`
   checkbox, `AudioFootstepTagControl` popup listing the tags the current
   footstep set answers to *for the gait the player is in*,
-  `AudioPlayFootstepControl`, readout `AudioFootstepsStatsLabel`:
+  `AudioFootstepMaterialControl` popup, `AudioPlayFootstepControl`, readout
+  `AudioFootstepsStatsLabel`:
 
   ```text
   Set: FSTBarefootFootstepSet
+  Material: MaterialSnow
   Tags: FootScuffRight, FootScuffLeft, JumpUp, JumpDown, FootLeft, FootRight
   Routed 24, played 24
-  Last: FootLeft: sound\fx\fst\npc\stonesolid\walk\l\fst_npc_stonesolid_walk_01.wav
+  Last: FootLeft: sound\fx\fst\npc\snow\walk\l\fst_npc_snow_walk_01.wav
   ```
 
-  The picker is rebuilt on every sync because the gait changes as the player
+  The tag picker is rebuilt on every sync because the gait changes as the player
   moves, and a selection that survives the rebuild is kept. Routed and played
   are reported separately: they differ by the tags the set has no footstep for,
   which is normal vanilla data rather than a fault. The play button fires one
   footstep at the player's feet without walking, so the whole chain — set, tag,
-  impact, sound file, positional source — is verifiable standing still.
+  material, impact, sound file, positional source — is verifiable standing still.
+
+  The material picker's first entry is **Ground contact**, the default: the
+  surface the walk controller reports underfoot. Picking a MATT instead pins it,
+  the readout appends `(forced)`, and both the routed events and the play button
+  resolve against it — which is how a user hears snow while standing on stone.
+  A pinned material counts as an override, so the section's reset clears it.
 
 The trigger places the source 700 units (~10 m) straight ahead of the camera
 under the `effects` category, so turning or strafing immediately pans it.

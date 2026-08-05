@@ -65,16 +65,16 @@ enum NIFCollisionFixture {
         return data
     }
 
-    static func sphere(radius: Float) -> Data {
+    static func sphere(radius: Float, material: UInt32 = 0) -> Data {
         var data = Data()
-        data.appendUInt32(0)
+        data.appendUInt32(material)
         data.appendFloat32(radius)
         return data
     }
 
-    static func box(_ halfExtents: SIMD3<Float>) -> Data {
+    static func box(_ halfExtents: SIMD3<Float>, material: UInt32 = 0) -> Data {
         var data = Data()
-        data.appendUInt32(0)
+        data.appendUInt32(material)
         data.appendFloat32(0.05)
         data.append(Data(count: 8))
         data.appendVector3(halfExtents)
@@ -85,10 +85,11 @@ enum NIFCollisionFixture {
     static func capsule(
         first: SIMD3<Float>,
         second: SIMD3<Float>,
-        radius: Float
+        radius: Float,
+        material: UInt32 = 0
     ) -> Data {
         var data = Data()
-        data.appendUInt32(0)
+        data.appendUInt32(material)
         data.appendFloat32(0.05)
         data.append(Data(count: 8))
         data.appendVector3(first)
@@ -100,10 +101,11 @@ enum NIFCollisionFixture {
 
     static func convexVertices(
         _ vertices: [SIMD3<Float>],
-        normals: [SIMD4<Float>] = []
+        normals: [SIMD4<Float>] = [],
+        material: UInt32 = 0
     ) -> Data {
         var data = Data()
-        data.appendUInt32(0)
+        data.appendUInt32(material)
         data.appendFloat32(0.05)
         data.append(Data(count: 24))
         data.appendUInt32(UInt32(vertices.count))
@@ -141,7 +143,11 @@ enum NIFCollisionFixture {
         return data
     }
 
-    static func compressedData() -> Data {
+    static func compressedData(
+        materials: [UInt32] = [0],
+        bigTriangleMaterialIndex: UInt32 = 0,
+        chunkMaterialIndex: UInt32 = 0
+    ) -> Data {
         var data = Data()
         data.appendUInt32(17)
         data.appendUInt32(18)
@@ -154,9 +160,11 @@ enum NIFCollisionFixture {
         data.appendUInt32(0)
         data.appendUInt32(0)
         data.appendUInt32(0)
-        data.appendUInt32(1)
-        data.appendUInt32(0)
-        data.appendFilter(layer: 1)
+        data.appendUInt32(UInt32(materials.count))
+        for material in materials {
+            data.appendUInt32(material)
+            data.appendFilter(layer: 1)
+        }
         data.appendUInt32(0) // named materials
         data.appendUInt32(0) // transforms
 
@@ -171,12 +179,12 @@ enum NIFCollisionFixture {
         data.appendUInt16(0)
         data.appendUInt16(1)
         data.appendUInt16(2)
-        data.appendUInt32(0)
+        data.appendUInt32(bigTriangleMaterialIndex)
         data.appendUInt16(0)
 
         data.appendUInt32(1) // chunks
         data.appendVector4(SIMD4<Float>(1, 2, 3, 0))
-        data.appendUInt32(0)
+        data.appendUInt32(chunkMaterialIndex)
         data.appendUInt16(.max)
         data.appendUInt16(.max)
         let vertices: [SIMD3<UInt16>] = [
@@ -201,97 +209,35 @@ enum NIFCollisionFixture {
         data.appendUInt32(0) // convex pieces
         return data
     }
-
-    static func packedShape(dataRef: Int32) -> Data {
-        var data = Data(count: 16)
-        data.appendVector4(SIMD4<Float>(1, 1, 1, 0))
-        data.appendFloat32(0.1)
-        data.appendVector4(SIMD4<Float>(1, 1, 1, 0))
-        data.appendRef(dataRef)
-        return data
-    }
-
-    static func packedData() -> Data {
-        var data = Data()
-        data.appendUInt32(1)
-        data.appendUInt16(0)
-        data.appendUInt16(1)
-        data.appendUInt16(2)
-        data.appendUInt16(0)
-        data.appendUInt32(3)
-        data.append(0) // uncompressed
-        data.appendVector3(SIMD3(0, 0, 0))
-        data.appendVector3(SIMD3(1, 0, 0))
-        data.appendVector3(SIMD3(0, 1, 0))
-        data.appendUInt16(1)
-        data.appendFilter(layer: 1)
-        data.appendUInt32(3)
-        data.appendUInt32(0)
-        return data
-    }
-
-    static func niTriStripsShape(dataRef: Int32) -> Data {
-        var data = Data()
-        data.appendUInt32(0)
-        data.appendFloat32(0.1)
-        data.append(Data(count: 20))
-        data.appendUInt32(1)
-        data.appendVector4(SIMD4<Float>(1, 1, 1, 0))
-        data.appendUInt32(1)
-        data.appendRef(dataRef)
-        return data
-    }
-
-    static func niTriStripsData() -> Data {
-        var data = Data()
-        data.appendUInt32(0)
-        data.appendUInt16(4)
-        data.append(contentsOf: [0, 0, 1])
-        data.appendVector3(SIMD3(0, 0, 0))
-        data.appendVector3(SIMD3(1, 0, 0))
-        data.appendVector3(SIMD3(1, 1, 0))
-        data.appendVector3(SIMD3(0, 1, 0))
-        data.appendUInt16(0)
-        data.appendUInt32(0)
-        data.append(0)
-        data.appendVector4(.zero)
-        data.append(0)
-        data.appendUInt32(0)
-        data.appendRef(-1)
-        data.appendUInt16(2)
-        data.appendUInt16(1)
-        data.appendUInt16(4)
-        data.append(1)
-        [UInt16(0), 1, 2, 3].forEach { data.appendUInt16($0) }
-        return data
-    }
 }
 
+/// Internal rather than fileprivate: NIFCollisionStripFixture.swift builds the
+/// packed-strips payloads with the same primitives.
 extension Data {
-    fileprivate mutating func appendRef(_ value: Int32) {
+    mutating func appendRef(_ value: Int32) {
         appendUInt32(UInt32(bitPattern: value))
     }
 
-    fileprivate mutating func appendFilter(layer: UInt8, flags: UInt8 = 0, group: UInt16 = 0) {
+    mutating func appendFilter(layer: UInt8, flags: UInt8 = 0, group: UInt16 = 0) {
         append(layer)
         append(flags)
         appendUInt16(group)
     }
 
-    fileprivate mutating func appendVector3(_ value: SIMD3<Float>) {
+    mutating func appendVector3(_ value: SIMD3<Float>) {
         appendFloat32(value.x)
         appendFloat32(value.y)
         appendFloat32(value.z)
     }
 
-    fileprivate mutating func appendVector4(_ value: SIMD4<Float>) {
+    mutating func appendVector4(_ value: SIMD4<Float>) {
         appendFloat32(value.x)
         appendFloat32(value.y)
         appendFloat32(value.z)
         appendFloat32(value.w)
     }
 
-    fileprivate mutating func appendMatrix(translation: SIMD3<Float>) {
+    mutating func appendMatrix(translation: SIMD3<Float>) {
         appendVector4(SIMD4(1, 0, 0, 0))
         appendVector4(SIMD4(0, 1, 0, 0))
         appendVector4(SIMD4(0, 0, 1, 0))

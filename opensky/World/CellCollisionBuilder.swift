@@ -56,6 +56,14 @@ nonisolated struct CellCollisionPartitionCache {
     }
 }
 
+/// Where one decoded shape lands in the world, bundled so the placement call
+/// stays inside the strict parameter cap.
+nonisolated struct ShapePlacement {
+    let key: CellCollisionPartitionKey
+    let transform: float4x4
+    let reference: FormID
+}
+
 nonisolated struct CellCollisionGridEntry {
     let coordinate: CellCoordinate
     let collision: StaticCollisionSet?
@@ -207,6 +215,7 @@ nonisolated extension CellSceneBuilder {
             )
         }
         let started = DispatchTime.now().uptimeNanoseconds
+        let materialTypes = materialTypeIndexBuildingIfNeeded()
         var shapes: [StaticCollisionShape] = []
         var stats = StaticCollisionStats()
         stats.modelReferenceCount = placements.count
@@ -228,23 +237,17 @@ nonisolated extension CellSceneBuilder {
             let modelKey = collisionModels.canonicalKey(for: placement.modelPath)
             for (bodyIndex, body) in model.bodies.enumerated() where body.isPlayerSolid {
                 for (shapeIndex, shape) in body.shapes.enumerated() {
-                    let transform = placement.transform * body.transform * shape.transform
-                    let key = CellCollisionPartitionKey(modelKey, bodyIndex, shapeIndex)
-                    let partitioning = collisionPartitionCache.partitions(
-                        key: key,
-                        geometry: shape.geometry
+                    place(
+                        shape: shape,
+                        placement: ShapePlacement(
+                            key: CellCollisionPartitionKey(modelKey, bodyIndex, shapeIndex),
+                            transform: placement.transform * body.transform * shape.transform,
+                            reference: placement.reference
+                        ),
+                        materialTypes: materialTypes,
+                        into: &shapes,
+                        stats: &stats
                     )
-                    stats.decodeFailureCount += partitioning.failureCount
-                    guard !partitioning.partitions.isEmpty else { continue }
-                    let placed = StaticCollisionShape.placed(
-                        reference: placement.reference,
-                        transform: transform,
-                        partitions: partitioning.partitions
-                    )
-                    shapes.append(contentsOf: placed)
-                    stats.shapeCount += 1
-                    stats.triangleCount += placed.reduce(0) { $0 + $1.triangleCount }
-                    stats.estimatedBytes += Self.estimatedBytes(of: shape.geometry)
                 }
             }
         }
@@ -256,6 +259,35 @@ nonisolated extension CellSceneBuilder {
             stats: stats,
             buildDurationMS: duration
         )
+    }
+
+    /// Places one decoded shape into the cell's shape list: its broadphase
+    /// partitions through the cache, its world transform, and the MATT its
+    /// Havok material resolves to (issue #358). One logical shape stays one
+    /// stats entry however many broadphase leaves it splits into.
+    nonisolated private func place(
+        shape: NIFCollisionShape,
+        placement: ShapePlacement,
+        materialTypes: MaterialTypeIndex,
+        into shapes: inout [StaticCollisionShape],
+        stats: inout StaticCollisionStats
+    ) {
+        let partitioning = collisionPartitionCache.partitions(
+            key: placement.key,
+            geometry: shape.geometry
+        )
+        stats.decodeFailureCount += partitioning.failureCount
+        guard !partitioning.partitions.isEmpty else { return }
+        let placed = StaticCollisionShape.placed(
+            reference: placement.reference,
+            transform: placement.transform,
+            partitions: partitioning.partitions,
+            material: shape.material.flatMap(materialTypes.material(forHavokMaterial:))
+        )
+        shapes.append(contentsOf: placed)
+        stats.shapeCount += 1
+        stats.triangleCount += placed.reduce(0) { $0 + $1.triangleCount }
+        stats.estimatedBytes += Self.estimatedBytes(of: shape.geometry)
     }
 
     nonisolated func evictCollisionPartitions(dropping keys: Set<String>) {

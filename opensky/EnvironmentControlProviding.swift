@@ -310,6 +310,15 @@ protocol AudioControlProviding: AnyObject {
     var lastFootstepError: String? { get }
     /// Events routed and footsteps played since the director was built.
     var footstepCounts: (routed: Int, played: Int) { get }
+    /// The MATT footsteps currently resolve against (issue #358): what the
+    /// ground contact reports, or the pinned material and that it is pinned.
+    var currentFootstepMaterialDescription: String { get }
+    /// Every MATT the load order carries, by FormID and display name, for the
+    /// material selector.
+    var footstepMaterialOptions: [(id: FormID, name: String)] { get }
+    /// A material pinned in place of the ground contact's, for hearing one
+    /// surface deliberately. Nil follows the ground.
+    var forcedFootstepMaterial: FormID? { get set }
     /// Forces one footstep for the named tag at the player's feet, so the
     /// chain can be verified without walking.
     func forcePlayFootstep(tag: String) -> String?

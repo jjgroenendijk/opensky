@@ -130,6 +130,9 @@ nonisolated protocol AudioDataProviding {
     var footstepStore: FootstepStore? { get }
     /// Music record index (MUSC/MUST), added in M9.2.3 for the music director.
     var musicStore: MusicRecordStore? { get }
+    /// MATT index (issue #358), so the footstep readout can name the surface
+    /// the ground contact reported rather than print a bare FormID.
+    var materialTypes: MaterialTypeIndex? { get }
 }
 
 /// Adapts `CellSceneBuilder` to the provider seam, pinning the worldspace so
@@ -149,6 +152,9 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     /// Footstep index (FSTS/FSTP/IPDS/IPCT); nil when the session was built
     /// without one, which is every synthetic scene.
     var footstepStore: FootstepStore?
+    /// MATT index (issue #358); nil on a synthetic scene, and then the footstep
+    /// readout names a material by FormID.
+    var materialTypes: MaterialTypeIndex?
     /// Acoustic-space index (ASPC); nil when the plugin has no ASPC records.
     var aspcStore: AcousticSpaceStore?
     /// Music record index (MUSC/MUST); nil when the plugin has no music data.

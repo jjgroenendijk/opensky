@@ -41,6 +41,26 @@ struct FootstepStoreTests {
         #expect(store.resolve(tag: "FootLeft", gait: .swimming, in: Self.walkSet) == nil)
     }
 
+    /// The whole point of issue #358: the same tag on two surfaces resolves to
+    /// two impacts, and a surface the table does not list falls back to the
+    /// representative entry rather than to silence.
+    @Test func theMaterialSelectsTheImpact() {
+        let store = Self.store()
+
+        #expect(store.resolve(
+            tag: "FootLeft", gait: .walking, in: Self.walkSet, material: Self.snow
+        )?.sound == FormID(0x402))
+        #expect(store.resolve(
+            tag: "FootLeft", gait: .walking, in: Self.walkSet, material: Self.stone
+        )?.sound == FormID(0x400))
+        #expect(store.resolve(
+            tag: "FootLeft", gait: .walking, in: Self.walkSet, material: FormID(0x999)
+        )?.sound == FormID(0x400))
+        #expect(store.resolve(
+            tag: "FootLeft", gait: .walking, in: Self.walkSet
+        )?.sound == FormID(0x400))
+    }
+
     @Test func tagsReportTheGaitListInRecordOrder() {
         let store = Self.store()
 
@@ -104,7 +124,8 @@ struct FootstepStoreTests {
             ],
             impacts: [
                 impact(0x300, sound: 0x400),
-                impact(0x301, sound: 0x401)
+                impact(0x301, sound: 0x401),
+                impact(0x302, sound: 0x402)
             ],
             armatureSets: [FormID(0x900): FormID(0x10)]
         )
@@ -123,11 +144,23 @@ struct FootstepStoreTests {
         } build: { try Footstep(record: $0) } id: { id }
     }
 
+    /// The two MATT materials the walking table pairs: stone twice, so it is
+    /// also the representative entry, and snow once.
+    static let stone = FormID(0x501)
+    static let snow = FormID(0x502)
+
+    /// A table pairing the given impact with stone twice and 0x302 with snow.
+    /// Stone is therefore both an exact answer and the representative one, so
+    /// the two paths are told apart by the snow case rather than by luck.
     private static func dataSet(_ id: UInt32, impact: UInt32) -> ImpactDataSet {
         ImpactDataSet(
             formID: FormID(id),
             editorID: nil,
-            entries: [ImpactDataSet.Entry(material: FormID(1), impact: FormID(impact))]
+            entries: [
+                ImpactDataSet.Entry(material: stone, impact: FormID(impact)),
+                ImpactDataSet.Entry(material: FormID(1), impact: FormID(impact)),
+                ImpactDataSet.Entry(material: snow, impact: FormID(0x302))
+            ]
         )
     }
 

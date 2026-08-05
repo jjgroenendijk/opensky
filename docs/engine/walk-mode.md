@@ -35,6 +35,7 @@ graph.
 * [Third-person camera](#third-person-camera)
 * [The player body](#the-player-body)
 * [Footstep events](#footstep-events)
+* [What the player is standing on](#what-the-player-is-standing-on)
 * [Response](#response)
 * [Scope boundary](#scope-boundary)
 * [Verification](#verification)
@@ -59,6 +60,13 @@ north triangle, shared diagonal SW->NE. `sample(at:)` selects triangle, barycent
 interpolates height, derives face normal from same CCW vertices. It never uses bilinear
 interpolation. This matters on saddle quads: rendered diagonal can be height 0 where bilinear
 center would be 50.
+
+A ground sample also names the material of the ground it found (issue #358). Each exterior
+cell resolves its LAND textures into one MATT per terrain vertex — the heaviest-weighted
+texture at that vertex, from the same ordered lerps the terrain fragment shader runs — and
+`sample(at:)` reports the material at the nearest of the quad's four corners. Height
+interpolates across a face; a material does not, because a surface is one material or the
+other rather than half of each. See [material types](/formats/material-type.md).
 
 `CellSceneComposition.sampleTerrain(at:)` maps world XY to resident cell via floor division,
 same as `CellGridManager`. Exact east/north border belongs to neighbor; negative coordinates
@@ -322,6 +330,28 @@ reset (walk-mode entry, a teleport) clears the queue, because the footsteps of t
 the player just left must not sound in the new one. What plays them is the
 [footstep director](/engine/audio.md).
 
+## What the player is standing on
+
+`WalkController.groundMaterial` is the MATT of the surface underfoot, and it is the argument
+the footstep chain used to be missing (issue #358). It is nil while airborne, and nil on a
+surface that names no material.
+
+Three paths set it, matching the three ways the controller becomes grounded:
+
+* **Ground snap onto terrain** — the material the ground sampler reported. Terrain wins over
+  a mesh contact here, because this branch is the one that put the feet down: the capsule is
+  standing on the landscape whatever else it was brushing against.
+* **A walkable capsule contact** — the material of the *flattest* walkable contact. Several
+  shapes can touch the capsule at once, a floor and the wall beside it, and only the floor is
+  what is being stood on. A contact naming no material is skipped rather than winning, so a
+  material-less decoration touching the foot does not silence the step.
+* **Step support** — the material of the shape the step probe landed on, so stepping onto a
+  wooden stair sounds like one.
+
+`WalkControllerGroundMaterialTests` pins each of those, including the wall case and the
+airborne case. The renderer's audio tick reads the property once per frame and hands it to
+the [footstep director](/engine/audio.md).
+
 ## Response
 
 ### Terrain response
@@ -505,15 +535,17 @@ frame. `G` cycles the same three.
 
 ## Footstep acceptance surface
 
-Milestone: M14 player locomotion, footstep audio (issue #352)
+Milestone: M14 player locomotion, footstep audio (issues #352 and #358)
 Sidebar path: World > Audio > Footsteps
 Destination id: Destination-audio
 Controls exercised: AudioFootstepsEnabledControl, AudioFootstepTagControl,
-AudioPlayFootstepControl, AudioEnabledControl (the engine the director needs),
-CameraMovementModeControl (the walk mode that fires the events)
+AudioFootstepMaterialControl, AudioPlayFootstepControl, AudioEnabledControl (the engine the
+director needs), CameraMovementModeControl (the walk mode that fires the events)
 Readout: AudioFootstepsStatsLabel
 Deterministic tests: AudioFootstepsPanelTests, WorldAudioFootstepDirectorTests,
-FootstepStoreTests, FootstepRecordTests, WAVFileTests,
+FootstepStoreTests, FootstepRecordTests, WAVFileTests, MaterialTypeTests,
+HavokMaterialHashTests, NIFCollisionMaterialTests, TerrainSurfaceMaterialsTests,
+WalkControllerGroundMaterialTests,
 LocomotionBridgeEventDrainTests, DestinationRegistryTests,
 FootstepRealDataTests (env-gated, `make realtest`)
 Local A/B (optional, never committed): none — footsteps are audible rather than visible,

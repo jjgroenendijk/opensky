@@ -14,8 +14,10 @@ enum CollisionCommand {
         let radius = try gridRadius(scanner.option("--radius"))
         try scanner.finish()
 
+        let esm = try context.loadSkyrimESM()
+        let materials = MaterialTypeIndex(file: esm)
         let result = try NIFCollisionSweep.run(
-            file: context.loadSkyrimESM(),
+            file: esm,
             fileSystem: context.makeFileSystem(),
             worldspaceEditorID: worldspace,
             gridX: gridX,
@@ -24,7 +26,7 @@ enum CollisionCommand {
         print("[INFO] collision sweep \(worldspace) (\(gridX),\(gridY)): "
             + "\(result.modelPaths.count) unique models")
         for report in result.reports {
-            printReport(report)
+            printReport(report, materials: materials)
         }
         print("[INFO] \(result.collisionBearingModelCount) collision-bearing models; "
             + (result.passesAcceptance ? "acceptance passed" : "acceptance failed"))
@@ -39,12 +41,15 @@ enum CollisionCommand {
             throw CLIError.failure("no Metal 4 GPU available")
         }
         let builder = try RenderCommand.makeBuilder(context: context, device: device)
-        let grid = try CellCollisionGridProbe.run(
+        try printGrid(CellCollisionGridProbe.run(
             builder: builder,
             worldspaceEditorID: worldspace,
             center: CellCoordinate(x: gridX, y: gridY),
             radius: radius
-        )
+        ))
+    }
+
+    private static func printGrid(_ grid: CellCollisionGridResult) throws {
         for entry in grid.entries {
             let label = "cell (\(entry.coordinate.x),\(entry.coordinate.y))"
             guard let collision = entry.collision else {
@@ -86,7 +91,10 @@ enum CollisionCommand {
         return radius
     }
 
-    private static func printReport(_ report: NIFCollisionAssetReport) {
+    private static func printReport(
+        _ report: NIFCollisionAssetReport,
+        materials: MaterialTypeIndex
+    ) {
         print("model \(report.path)")
         if let failure = report.loadFailure {
             print("  load failure: \(failure)")
@@ -100,8 +108,26 @@ enum CollisionCommand {
         for failure in report.decodeFailures {
             print("    block \(failure.block): \(failure.message)")
         }
+        print("  materials: \(materialSummary(report.shapeMaterials, in: materials))")
         print("  collision bounds: \(bounds(report.collisionBounds))")
         print("  render bounds: \(bounds(report.renderBounds))")
+    }
+
+    /// Each Havok material the model's shapes name, resolved to the MATT it
+    /// hashes to (issue #358). A value no MATT hashes to prints raw, so an
+    /// unresolvable surface is visible rather than silently absent.
+    private static func materialSummary(
+        _ counts: [UInt32: Int],
+        in materials: MaterialTypeIndex
+    ) -> String {
+        guard !counts.isEmpty else { return "none" }
+        return counts.sorted { $0.key < $1.key }
+            .map { value, count in
+                let name = materials.material(forHavokMaterial: value)
+                    .map(materials.describe) ?? "unresolved \(value)"
+                return "\(name) \(count)"
+            }
+            .joined(separator: ", ")
     }
 
     private static func histogram(_ values: [String: Int]) -> String {

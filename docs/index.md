@@ -40,6 +40,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Acoustic space (ASPC)](/formats/acoustic-space.md) - interior-ambience bridge:
   ASPC fields, the `RDAT` FormID collision with REGN's area header, and the
   interior-only region borrow.
+* [Material types](/formats/material-type.md) - MATT fields, the CRC32 of the Creation Kit
+  material name that a NIF collision shape stores, and the Havok-value and LTEX.MNAM lookups
+  that turn any surface into the MATT an impact table is keyed by.
 * [Footstep records](/formats/footstep.md) - FSTP tags + IPDS links, FSTS per-gait
   lists and the reversed XCNT/DATA ordering, IPDS material pairs, IPCT sound links,
   ARMA.SNDD, and the tag-to-sound chain the footstep director walks.
