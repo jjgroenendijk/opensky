@@ -82,8 +82,8 @@ if [ ! -f "$pbxproj" ]; then
   exit 1
 fi
 
-# Every place a build setting can be declared. Config/Local.xcconfig is gitignored
-# and only carries signing, so the glob covering it costs nothing.
+# Every place a build setting can be declared. An optional gitignored
+# Config/Local.xcconfig only carries signing, so the glob covering it costs nothing.
 sources="$(ls Config/*.xcconfig 2>/dev/null || true)"
 # shellcheck disable=SC2086 # sources is a newline-separated file list, not one path.
 modes="$(awk '/SWIFT_VERSION = /{ n++ } END { print n + 0 }' "$pbxproj" $sources)"

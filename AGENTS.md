@@ -67,9 +67,10 @@ conflict.
 ## Where things live
 
 The repo root holds only this document, `Makefile`, the Xcode project, `Config/`, and
-dotfiles. Every build setting lives in `Config/*.xcconfig`, not in the pbxproj, and the
-signing identity comes from a gitignored `Config/Local.xcconfig` that
-`tools/config-local.sh` creates (`docs/tools/build-system.md`). Group
+dotfiles. Every build setting lives in `Config/*.xcconfig`, not in the pbxproj, signing
+included: `Config/Signing.xcconfig` names one Apple Development identity for every target,
+because macOS ties permission grants to the code signature and ad-hoc signing re-asks on
+every build (`docs/tools/build-system.md`). Group
 engine subsystems under `opensky/` by domain, and keep format parsers separate from
 rendering. Skills live in `.AGENTS/skills/` (`.claude/skills` symlinks there). `logs/` and
 `.vendor/` are gitignored. `docs/index.md` maps the wiki — trust it over globbing.

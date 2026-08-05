@@ -20,7 +20,7 @@ volume cannot drift apart per target. The scripts under `tools/` run their own
 
 * The shared invocation
 * Build settings: the Config/ xcconfig layer
-* Signing and Config/Local.xcconfig
+* Signing
 * Output volume and the transcripts in logs/
 * Swift warnings are errors
 * Built-products path
@@ -68,12 +68,11 @@ Config/
 ├── Base.xcconfig            deployment target, SDK, Swift mode, warnings, versioning
 ├── Debug.xcconfig           #include Base + -Onone, dwarf, testability
 ├── Release.xcconfig         #include Base + wholemodule, dSYM, VALIDATE_PRODUCT
-├── Signing.xcconfig         CODE_SIGN_IDENTITY and DEVELOPMENT_TEAM indirection
+├── Signing.xcconfig         CODE_SIGN_IDENTITY and DEVELOPMENT_TEAM, one identity
 ├── App.xcconfig             opensky: bundle id, Info.plist keys, ffmpeg link + rpath
 ├── CLI.xcconfig             openskycli: bridging header, ffmpeg link + rpath
 ├── Tests.xcconfig           openskyTests: TEST_HOST, BUNDLE_LOADER
-├── UITests.xcconfig         openskyUITests: TEST_TARGET_NAME, ad-hoc signing
-└── Local.example.xcconfig   template for the gitignored Config/Local.xcconfig
+└── UITests.xcconfig         openskyUITests: TEST_TARGET_NAME
 ```
 
 The two levels do different jobs. `Debug.xcconfig` and `Release.xcconfig` are the
@@ -92,55 +91,56 @@ signing indirection introduces.
 from the pbxproj, so the Swift 6 language-mode gate still fails on a configuration that
 slips back. See [Swift toolchain and language mode](/tools/swift-toolchain.md).
 
-## Signing and Config/Local.xcconfig
+## Signing
 
-No signing identity is checked in. `Base.xcconfig` declares the two inputs, defaults them
-to ad-hoc signing, then optionally includes a per-developer file:
+`Config/Signing.xcconfig` names the identity and team, and every target that produces a
+bundle includes it: the app, the CLI, the app-hosted unit test bundle, and the UI test
+runner.
 
 ```text
-OPENSKY_CODE_SIGN_IDENTITY = -
-OPENSKY_DEVELOPMENT_TEAM =
+CODE_SIGN_IDENTITY = Apple Development
+DEVELOPMENT_TEAM = 92X872A57T
 #include? "Local.xcconfig"
 ```
 
-`Signing.xcconfig` maps those onto `CODE_SIGN_IDENTITY` and `DEVELOPMENT_TEAM` and is
-included by the app, the CLI, and the unit test bundle. The UI test runner pins itself to
-`-` instead and does not include it. `#include?` is the optional form, so a checkout
-without `Config/Local.xcconfig` builds ad-hoc and silently rather than failing on a
-missing file, which is the same signing CI passes on the command line. A command-line
-build setting still wins over both layers.
+The identity is checked in on purpose, and ad-hoc is not the default. macOS keys TCC
+grants to a binary's code signature, and ad-hoc signing produces a *different* signature
+on every build, so an ad-hoc build is a new application every time. Every grant the test
+surface depends on is then requested again, interactively, mid-run:
 
-`tools/config-local.sh` creates `Config/Local.xcconfig` when it is absent: `make
-bootstrap` runs it, and so does every make target that drives `xcodebuild`, next to
-`vendor-link`. It resolves the contents in this order:
+* `openskyUITests-Runner.app` is the process that asks to drive the app, so `make test-ui`
+  stops on an Automation dialog ("opensky would like to access data from other apps") on
+  every run.
+* Screen Recording, which the screenshot tooling needs.
+* Access to the external volume holding the game install, which shows up as a real-data
+  test host parked in `open()` while the same path lists instantly from a shell.
 
-1. A linked worktree copies the main checkout's file, so a dev-signed setup does not
-   quietly become ad-hoc in a new worktree.
-2. Otherwise it reads the first `Apple Development` identity out of the login keychain
-   (`security find-identity -v -p codesigning`) and that certificate's `OU` field as the
-   Team ID (`security find-certificate -c ... | openssl x509 -noout -subject`), and writes
-   both. Reading the team off the certificate beats asking anyone to copy it out of the
-   developer portal, and it is the value Xcode matches against.
-3. Only with no identity, or an identity whose team cannot be read, does it fall back to
-   copying the ad-hoc template. `CODE_SIGN_STYLE` is `Automatic`, and a real identity
-   without a team fails to resolve a provisioning profile rather than degrading to ad-hoc,
-   so the two values are written together or not at all.
+`make test-ui` used to pass `CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM=` of its own accord, and
+a command-line build setting wins over every xcconfig, so the UI test run signed ad-hoc no
+matter what the configuration said — the one target where a stable signature matters most.
+That override is gone; `make test-ui` now signs like every other target.
 
-The file is written once and never regenerated, so editing it sticks. A missing
-`Config/Local.example.xcconfig` is the one hard failure, since it means the checkout is
-broken.
+Deriving the identity per machine instead was tried and reverted: it has the same failure
+mode whenever the derivation comes up empty, and it makes the signature depend on machine
+state that nothing in the repository can check. One identity in shared configuration means
+a checkout builds, and keeps its permissions, with no local setup.
 
-Ad-hoc is a fallback, not the intended local setup. The unit test bundle is app-hosted
-(`TEST_HOST` points at the built `opensky.app`) and the UI tests drive the real app, so
-both depend on the app's signature. Ad-hoc signing produces a *different* signature on
-every build, and macOS keys TCC grants to it: each build reads as a new application, so
-Automation ("opensky would like to access data from other apps"), the screenshot
-permissions, and access to the external volume the game install sits on are all requested
-again, interactively, mid-run. A real Apple Development identity gives the app a stable
-designated requirement and the grants persist. Verify what a build actually got with:
+A machine without that certificate, and CI, override on the command line, which wins over
+every xcconfig layer:
+
+```sh
+make test XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
+```
+
+A gitignored `Config/Local.xcconfig` is the persistent form of the same override. Nothing
+creates it; write one by hand, assigning `CODE_SIGN_IDENTITY` and `DEVELOPMENT_TEAM`
+directly, and the `#include?` at the end of `Signing.xcconfig` picks it up.
+
+Check what a build actually got:
 
 ```sh
 codesign -dv --verbose=2 DerivedData/Build/Products/Debug/opensky.app
+codesign -dv --verbose=2 DerivedData/Build/Products/Debug/openskyUITests-Runner.app
 ```
 
 `Authority=Apple Development: ...` with a `TeamIdentifier` is right; `Signature=adhoc` is
