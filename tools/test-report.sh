@@ -16,9 +16,11 @@ set -eu
 results_dir="${1:-build/test-results}"
 
 newest() {
-    # Newest *.xcresult under $1 by mtime, or empty.
-    # shellcheck disable=SC2012  # bundle names are controlled; need mtime sort
-    ls -td "$1"/*.xcresult 2>/dev/null | head -1
+    # Newest *.xcresult under $1 by mtime, or empty. Bundles sit one run
+    # directory deep (build/test-results/<name>/<timestamp>/*.xcresult, issue
+    # #347); `latest` symlinks are not followed, so no bundle is seen twice.
+    find "$1" -maxdepth 3 -name '*.xcresult' -prune -exec stat -f '%m %N' {} + \
+        2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-
 }
 
 bundle="$(newest "$results_dir")"

@@ -1,8 +1,11 @@
-// Target-level settings for openskyUITests, shared by Debug and Release. The runner is
-// ad-hoc signed on purpose: it is never distributed, and pinning it to `-` keeps the UI
-// test run independent of whether a developer identity is configured, which is why this
-// file does not include Signing.xcconfig.
-CODE_SIGN_IDENTITY = -
+// Target-level settings for openskyUITests, shared by Debug and Release. The runner takes
+// the same signing inputs as everything else: `openskyUITests-Runner.app` is the process
+// that asks macOS for permission to drive the app, and macOS keys that grant to the
+// runner's code signature. Ad-hoc signing gives it a new signature on every build, so the
+// approval never sticks and every `make test-ui` run stops on a dialog. The values still
+// default to ad-hoc through Base.xcconfig on a machine with no developer identity, so
+// pinning `-` here bought nothing that Signing.xcconfig does not already give.
+#include "Signing.xcconfig"
 
 PRODUCT_BUNDLE_IDENTIFIER = nl.jjgroenendijk.openskyUITests
 TEST_TARGET_NAME = opensky

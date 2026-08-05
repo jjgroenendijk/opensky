@@ -7,7 +7,6 @@ CLI_SCHEME     := openskycli
 CONFIG         ?= Debug
 DESTINATION    ?= platform=macOS
 XCODEBUILD_FLAGS ?=
-UI_TEST_SIGNING_FLAGS := CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM=
 SWIFT_PATHS    := opensky openskycli openskyTests openskyUITests
 TEST_RESULTS   := build/test-results
 # Build cache lives beside the checkout, not under $HOME. The repo sits on a
@@ -30,6 +29,13 @@ XCODE_DERIVED_DATA ?= $(HOME)/Library/Developer/Xcode/DerivedData
 # thousand for a green build or test run. OPENSKY_XCODEBUILD_RAW=1 prints
 # everything; a failing run does that on its own.
 XCB_RUN        := ./tools/xcodebuild-run.sh
+# Run output is per-run, not per-name: every script that writes something a
+# human reads later allocates <base>/<name>/<UTC timestamp>/ through this and
+# repoints <base>/<name>/latest at it, so `make prune` can age a whole run out
+# and a stale capture cannot be mistaken for the current one (issue #347).
+RUN_DIR        := ./tools/run-dir.sh
+# Retention for `make prune`, in days. Overridable: make prune PRUNE_DAYS=2.
+PRUNE_DAYS     ?= 14
 # The one xcodebuild invocation every target below shares: $(1) is the scheme,
 # $(2) the configuration. A target adds only its action and the flags specific
 # to it, so project, cache location, and the caller's escape hatch cannot drift
@@ -54,13 +60,13 @@ MD_GLOB         := **/*.md
 METAL_FILES     := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
 
 .DEFAULT_GOAL := help
-.PHONY: help bootstrap ffmpeg vendor-link vendor-prune config-local hooks format format-check lint \
+.PHONY: help bootstrap ffmpeg vendor-link vendor-prune hooks format format-check lint \
         check fix swift-format swift-baseline \
         swift-lint metal-format md-format md-lint sh-lint cli-boundary no-game-content \
         docs-links build cli \
         probe test \
         test-ui test-one test-report realtest test-perms app-path cli-path run-cli \
-        install clean icon
+        install clean prune icon
 
 help: ## List available targets
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -77,9 +83,6 @@ vendor-link: ## Point this worktree's .vendor at the shared one (no-op in main c
 
 vendor-prune: ## Replace per-worktree .vendor copies with shared symlinks (run when idle)
 	@./tools/ffmpeg/prune-vendor.sh
-
-config-local: ## Create the gitignored Config/Local.xcconfig (signing) if it is absent
-	@./tools/config-local.sh
 
 hooks: ## Point git at .githooks/hooks (idempotent)
 	@git config core.hooksPath .githooks/hooks
@@ -131,10 +134,10 @@ sh-lint: ## Shellcheck the hook + tooling scripts
 docs-links: ## Check intra-wiki links in docs/ resolve (log.md skipped)
 	@./tools/check-docs-links.sh
 
-build: vendor-link config-local ## Build the app ($(CONFIG))
+build: vendor-link ## Build the app ($(CONFIG))
 	@$(XCB_RUN) build $(XCB_APP) build
 
-cli: vendor-link config-local ## Build the openskycli dev tool ($(CONFIG))
+cli: vendor-link ## Build the openskycli dev tool ($(CONFIG))
 	@$(XCB_RUN) cli $(XCB_CLI) build
 
 probe: ## CLI smoke checks against the local install (skips if absent)
@@ -145,32 +148,32 @@ probe: ## CLI smoke checks against the local install (skips if absent)
 # UI bundle's build: xcodebuild builds every buildable in the scheme's Test
 # action before it looks at the selectors, and measurably still compiles
 # openskyUITests here. Dropping that cost needs test plans (issue #346).
-test: vendor-link config-local ## Build + run unit tests (no UI tests)
-	@rm -rf $(TEST_RESULTS)/unit.xcresult && mkdir -p $(TEST_RESULTS)
-	@TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
-		$(XCB_RUN) test $(XCB_TEST) -resultBundlePath $(TEST_RESULTS)/unit.xcresult \
+test: vendor-link ## Build + run unit tests (no UI tests)
+	@bundle="$$($(RUN_DIR) -b $(TEST_RESULTS) unit)/unit.xcresult"; \
+		TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
+		$(XCB_RUN) test $(XCB_TEST) -resultBundlePath "$$bundle" \
 		-only-testing:openskyTests test
 
-test-ui: vendor-link config-local ## Build + run UI tests (launches the app, drives it via automation)
-	@OPENSKY_RESULT_BUNDLE=$(TEST_RESULTS)/ui.xcresult ./tools/test-ui.sh \
-		$(PROJECT) $(SCHEME) '$(DESTINATION)' $(UI_TEST_SIGNING_FLAGS) $(XCODEBUILD_FLAGS)
+test-ui: vendor-link ## Build + run UI tests (launches the app, drives it via automation)
+	@./tools/test-ui.sh \
+		$(PROJECT) $(SCHEME) '$(DESTINATION)' $(XCODEBUILD_FLAGS)
 
-test-one: vendor-link config-local ## Run one test: make test-one T=Class[/method] or Target/Class/method
+test-one: vendor-link ## Run one test: make test-one T=Class[/method] or Target/Class/method
 	@test -n "$(T)" || { \
 		echo "[ERROR] usage: make test-one T=ClassName[/methodName]"; \
 		echo "        or: make test-one T=TargetName/ClassName/methodName"; \
 		echo "        ClassName[/methodName] resolves under openskyTests"; \
 		exit 2; }
-	@rm -rf $(TEST_RESULTS)/one.xcresult && mkdir -p $(TEST_RESULTS)
 	@case "$(T)" in */*/*) spec="$(T)";; *) spec="openskyTests/$(T)";; esac; \
+	bundle="$$($(RUN_DIR) -b $(TEST_RESULTS) one)/one.xcresult"; \
 	TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
-		$(XCB_RUN) test-one $(XCB_TEST) -resultBundlePath $(TEST_RESULTS)/one.xcresult \
+		$(XCB_RUN) test-one $(XCB_TEST) -resultBundlePath "$$bundle" \
 		-only-testing:"$$spec" test
 
 test-report: ## Print pass/fail summary + failure detail from the newest result bundle
 	@./tools/test-report.sh $(TEST_RESULTS)
 
-realtest: vendor-link config-local ## Run one env-gated real-data test under the RSS watchdog: make realtest T=Class/method() [CAP=MB]
+realtest: vendor-link ## Run one env-gated real-data test under the RSS watchdog: make realtest T=Class/method() [CAP=MB]
 	@test -n "$(T)" || { \
 		echo "[ERROR] usage: make realtest T='Class/method()' [CAP=MB]"; \
 		echo "        selector must resolve to exactly one test (fully qualified)"; \
@@ -198,11 +201,17 @@ icon: ## Regenerate AppIcon PNGs from opensky/Branding/opensky-logo.svg
 # configurations in separate product and intermediate directories), so a repeat
 # install is incremental instead of the cold build a private build/install cache
 # forced every time.
-install: vendor-link config-local ## Build Release app (arm64) + copy to /Applications
+install: vendor-link ## Build Release app (arm64) + copy to /Applications
 	@$(XCB_RUN) install $(XCB_RELEASE) ARCHS=arm64 build
 	@rm -rf /Applications/opensky.app
 	@ditto $(DERIVED_DATA)/Build/Products/Release/opensky.app /Applications/opensky.app
 	@echo "[ OK ] /Applications/opensky.app updated"
+
+# `clean` empties this checkout; `prune` is the one that reaches the caches no
+# checkout owns any more — chiefly the DerivedData a removed worktree left
+# behind, which is where the data volume actually fills up.
+prune: ## Delete stale worktree caches + aged-out run output (PRUNE_DAYS=14, DRY_RUN=1)
+	@./tools/prune.sh --days $(PRUNE_DAYS) $(if $(DRY_RUN),--dry-run,)
 
 # No `xcodebuild clean` first: it takes seconds to empty the same directory the
 # rm below deletes outright.

@@ -53,7 +53,7 @@ Destination id: Destination-hudInteraction
 Controls exercised: HUDLayerEnabledControl, HUDCrosshairControl, HUDScaleControl
 Readout: HUDElementsStatsLabel
 Deterministic tests: HUDInteractionPanelTests, DestinationRegistryTests
-Local A/B (optional, never committed): logs/hud-elements-ab.png
+Local A/B (optional, never committed): logs/probe/20260804T191739Z/hud-elements-ab.png
 ```
 
 Field rules:
@@ -72,7 +72,10 @@ Field rules:
   A record with no readout is incomplete: without it there is nothing for a later session
   to re-check.
 - **Deterministic tests** — the test classes that pin the above. These are the evidence.
-- **Local A/B** — optional. A path under `logs/` or the word `none`.
+- **Local A/B** — optional. A path under a run directory in `logs/` (the convention in
+  [Run output layout and make prune](/tools/run-output.md)) or the word `none`. `make
+  prune` ages those directories out, so a record whose capture has expired keeps its
+  deterministic tests as the evidence.
 
 ## Where the record goes
 

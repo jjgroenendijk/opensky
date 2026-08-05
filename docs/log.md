@@ -27,6 +27,26 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   [footstep records](/formats/footstep.md), [NIF collision](/formats/nif-collision.md),
   [terrain records](/formats/land.md), [collision world](/engine/collision-world.md),
   [terrain walk mode](/engine/walk-mode.md), and [audio engine](/engine/audio.md).
+* **One checked-in signing identity, for every target including the UI test runner (issue
+  #364)**: moving signing out of the pbxproj (issue #343) replaced a checked-in
+  `CODE_SIGN_IDENTITY = "Apple Development"` and `DEVELOPMENT_TEAM` with a gitignored
+  `Config/Local.xcconfig` that nobody had filled in, so every build after that commit
+  signed ad-hoc. Ad-hoc signing produces a different signature each build and macOS keys
+  TCC grants to the signature, so each build read as a new application: `make test-ui`
+  asked for Automation every run, and the real-data unit tests hung in `open()` waiting on
+  an access prompt for the external volume the game install sits on. Deriving the identity
+  from the keychain was tried first and reverted — it has the same failure mode whenever
+  the derivation comes up empty, and it makes the signature depend on machine state
+  nothing in the repository can check. `Config/Signing.xcconfig` now names the identity
+  and team outright, and `Config/UITests.xcconfig` includes it instead of pinning `-`:
+  `openskyUITests-Runner.app` is the process that asks for permission to drive the app, so
+  leaving it ad-hoc kept the dialog coming back even after the app itself was signed. The
+  `make test-ui` recipe also passed `CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM=` on the command
+  line, which wins over every xcconfig layer, so that override is gone too.
+  `tools/config-local.sh`, `Config/Local.example.xcconfig`, and the `config-local` make
+  target are gone; an override is a hand-written `Config/Local.xcconfig`, still gitignored,
+  or `XCODEBUILD_FLAGS` on the command line, which is what CI uses. See
+  [Build system and xcodebuild invocation](/tools/build-system.md).
 
 ## 2026-08-04
 
@@ -45,6 +65,25 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   both phases, a second `make build` or `make cli` runs no script phase and no `CodeSign`,
   and deleting the prefix still fails with the `run 'make bootstrap'` message. See
   [ffmpeg for audio decode](/decisions/ffmpeg-audio.md).
+* **`make prune` plus a run-directory retention convention (issue #347)**: run output had
+  no owner. Each linked worktree carries its own tens-of-gigabytes `DerivedData/`, and the
+  worktree for a merged branch leaves it behind — 24 such trees, 51 GB, were sitting under
+  `.claude/worktrees/` when this landed — while `tools/probe.sh`, `tools/test-ui.sh`, and
+  `tools/realtest.sh` each dropped loose files into `logs/` under their own naming, so a
+  stale capture read exactly like the current one. Every writing script now allocates one
+  directory per run through `tools/run-dir.sh` — `logs/<script>/<UTC timestamp>/` with a
+  `latest` symlink, and `.xcresult` bundles in the same shape under `build/test-results/`
+  — prints it, and passes it down to nested scripts through `OPENSKY_RUN_DIR` so one run
+  of `make realtest` keeps both transcripts, its enumeration, and its bundle together.
+  Timestamped names sort in time order, which is how `make prune` decides both "newest
+  run" and "past the retention age" without trusting modification times. `make prune`
+  deletes the `DerivedData/`, `build/`, and `logs/` of any checkout under
+  `.claude/worktrees/` that `git worktree list` no longer names, plus `build/install`,
+  aged-out runs (keeping the newest per script so `latest` resolves), and pre-convention
+  leftovers; it prints the whole plan with sizes and reasons before deleting, reports the
+  space freed, and `make prune DRY_RUN=1` stops after the plan. The old ad-hoc
+  `rm -rf build/test-results/*.xcresult` in `make test` and `make test-one` is gone. See
+  [Run output layout and make prune](/tools/run-output.md).
 * **Build settings moved to `Config/*.xcconfig`, signing out of shared config (issue
   #343)**: the five build-configuration lists in the pbxproj duplicated Swift mode,
   concurrency flags, ffmpeg search paths, linker flags, deployment target, and signing

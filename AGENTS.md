@@ -67,12 +67,19 @@ conflict.
 ## Where things live
 
 The repo root holds only this document, `Makefile`, the Xcode project, `Config/`, and
-dotfiles. Every build setting lives in `Config/*.xcconfig`, not in the pbxproj, and the
-signing identity comes from a gitignored `Config/Local.xcconfig` that
-`tools/config-local.sh` creates (`docs/tools/build-system.md`). Group
+dotfiles. Every build setting lives in `Config/*.xcconfig`, not in the pbxproj, signing
+included: `Config/Signing.xcconfig` names one Apple Development identity for every target,
+because macOS ties permission grants to the code signature and ad-hoc signing re-asks on
+every build (`docs/tools/build-system.md`). Group
 engine subsystems under `opensky/` by domain, and keep format parsers separate from
 rendering. Skills live in `.AGENTS/skills/` (`.claude/skills` symlinks there). `logs/` and
 `.vendor/` are gitignored. `docs/index.md` maps the wiki — trust it over globbing.
+
+Run output is per-run, not per-name: a script that writes a transcript, a capture, or a
+result bundle puts it in `logs/<script>/<UTC timestamp>/` (or the same shape under
+`build/test-results/`) through `tools/run-dir.sh`, prints that directory, and points
+`latest` at it. Link the run directory, never a loose file. `make prune` deletes stale
+worktree `DerivedData/` and aged-out runs; `docs/tools/run-output.md` has the rules.
 
 ## Build, run, test
 

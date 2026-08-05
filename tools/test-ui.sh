@@ -10,7 +10,8 @@
 # alternative rather than leaving a bare non-zero exit.
 #
 # Usage: tools/test-ui.sh PROJECT SCHEME DESTINATION [extra xcodebuild args...]
-# Env:   OPENSKY_RESULT_BUNDLE  optional -resultBundlePath target
+# Env:   OPENSKY_RESULT_BUNDLE  optional -resultBundlePath target, overriding
+#                               the run directory under build/test-results
 set -eu
 
 project="$1"
@@ -18,23 +19,34 @@ scheme="$2"
 destination="$3"
 shift 3
 
-bundle_flag=""
-if [ -n "${OPENSKY_RESULT_BUNDLE:-}" ]; then
-    rm -rf "$OPENSKY_RESULT_BUNDLE"
-    mkdir -p "$(dirname "$OPENSKY_RESULT_BUNDLE")"
-    bundle_flag="-resultBundlePath $OPENSKY_RESULT_BUNDLE"
-fi
-
 # Same build cache the Makefile uses (Makefile DERIVED_DATA).
 root="$(cd "$(dirname "$0")/.." && pwd)"
 # shellcheck source=/dev/null
 . "$root/tools/xcodebuild-lib.sh"
 derived_data="$OPENSKY_DERIVED_DATA"
 
-# Through the shared runner (Makefile XCB_RUN), so the transcript lands in
-# logs/test-ui.log and stdout stays readable; the runner prints the whole log
+# One run, one directory (issue #347): the transcript below and the runner's
+# own output land in it, and `logs/test-ui/latest` points at this run.
+run_dir="$("$root/tools/run-dir.sh" test-ui)"
+OPENSKY_RUN_DIR="$run_dir"
+export OPENSKY_RUN_DIR
+printf '[INFO] run directory: %s\n' "$run_dir"
+
+# The result bundle is a separate tree because xcresult bundles are large and
+# `make test-report` looks for the newest one; it follows the same shape.
+bundle="${OPENSKY_RESULT_BUNDLE:-}"
+if [ -z "$bundle" ]; then
+    bundle="$("$root/tools/run-dir.sh" -b build/test-results test-ui)/ui.xcresult"
+else
+    rm -rf "$bundle"
+    mkdir -p "$(dirname "$bundle")"
+fi
+bundle_flag="-resultBundlePath $bundle"
+
+# Through the shared runner (Makefile XCB_RUN), so the transcript lands in the
+# run directory and stdout stays readable; the runner prints the whole log
 # when the run fails, which is also where the grep below reads from.
-log="$root/logs/test-ui.log"
+log="$run_dir/test-ui.log"
 status=0
 # shellcheck disable=SC2086  # bundle_flag + passthrough flags are word-split on purpose
 "$root/tools/xcodebuild-run.sh" test-ui \

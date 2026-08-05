@@ -36,6 +36,15 @@ screenshot-based verification is unavailable too.
   (`DestinationRegistryTests`) and keep `openskyUITests` correct so it passes wherever the
   permission exists.
 
+Updated 2026-08-05. A grant only sticks if the binary keeps the same code signature. The UI
+test runner signed ad-hoc from the start, and the app joined it when issue #343 moved
+signing into a per-developer file nobody filled in, so every build asked again — for
+Automation, and for reading the game install off `/Volumes/data`, which manifested as a
+real-data test host parked in `open()`. `Config/Signing.xcconfig` now names one Apple
+Development identity for every target including the runner, so an approval survives
+rebuilds. When the prompts come back, `codesign -dv --verbose=2` on the built app and on
+`openskyUITests-Runner.app` is the first thing to check: `Signature=adhoc` is the cause.
+
 Retires when `make test-ui` reaches the first test case on this machine.
 
 ## Real-data XCTest host hangs

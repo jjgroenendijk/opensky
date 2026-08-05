@@ -33,8 +33,14 @@ the user's game assets, so it is never committed.
 
 1. `Renderer.renderOffscreen` from a scratch test class — deterministic pixel assertions
    first, with an optional local temp capture for human review (`RendererOffscreenTests`).
-2. `make run-cli ARGS="render --out logs/frame.png ..."`.
+2. `make run-cli ARGS="render --out logs/<run dir>/frame.png ..."`.
 3. Ask the user to look at the running app; they see launched apps.
+
+Output belongs to one run, not to `logs/` at large: allocate a run directory with
+`tools/run-dir.sh <name>` (or write into the one a script already printed, such as
+`logs/probe/latest`) and link that directory from the pull request, so a reviewer cannot
+mistake an older capture for this run's. `make prune` ages those directories out. The
+convention is `docs/tools/run-output.md`.
 
 Screenshot and UI-test automation are not usable on every machine; check
 `docs/tools/environment.md` before reaching for them.
