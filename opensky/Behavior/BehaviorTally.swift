@@ -120,6 +120,10 @@ nonisolated struct BehaviorTally: Equatable, Sendable {
         case clipUserControlled
         /// `hkbClipGenerator::ClipFlags` mirroring was ignored.
         case clipMirrored
+        /// A clip carries an `hkaAnimatedReferenceFrame`, and its travel was
+        /// approximated by differencing the root bone rather than by decoding
+        /// that reference frame. No file in a vanilla install reaches this.
+        case clipExtractedMotionApproximated
         /// A blender's cyclic or parametric blend flags were ignored and the
         /// authored child weights were used directly.
         case blenderParametricAsWeights

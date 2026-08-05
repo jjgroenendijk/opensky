@@ -75,7 +75,7 @@ At each hkaSplineCompressedAnimation virtual-fixup offset in `__data__`:
 | 0x14 | 4 | m_duration | seconds |
 | 0x18 | 4 | m_numberOfTransformTracks | 99 |
 | 0x1C | 4 | m_numberOfFloatTracks | 4; skipped by 6.3 |
-| 0x20 | 8 | m_extractedMotion ptr | fixup-managed; skipped |
+| 0x20 | 8 | m_extractedMotion ptr | fixup-managed; read for presence only |
 | 0x28 | 16 | m_annotationTracks hkArray | skipped |
 | 0x38 | 4 | m_numFrames | 275 |
 | 0x3C | 4 | m_numBlocks | 2 |
@@ -95,6 +95,26 @@ At each hkaSplineCompressedAnimation virtual-fixup offset in `__data__`:
 
 hkArray uses same pointer/fixup descriptor documented under
 [hkaSkeleton](/formats/hka-skeleton.md#hkarray-descriptor).
+
+### m_extractedMotion
+
+`m_extractedMotion` at 0x20 points at an `hkaAnimatedReferenceFrame`: the authored travel
+of the character over the clip, held apart from the bone tracks. The parser reads whether
+the pointer resolves and exposes that as
+`HKASplineCompressedAnimation.carriesExtractedMotion`; the reference frame's own contents
+are not decoded, because no clip in a vanilla Skyrim SE install carries one. Every
+`hkaSplineCompressedAnimation` under `meshes\actors\character\` leaves it null, and none
+of the 2,654 HKX files there contains an `hkaAnimatedReferenceFrame` object at all.
+
+The presence flag matters even so, because it is the only honest way to tell an in-place
+clip from a root-motion one. A vanilla clip's root bone is not still: the authored curve
+wanders by a fraction of a unit between samples, which at a 1/120 s simulation step reads
+as a double-digit speed. Any threshold over that difference misclassifies some steps.
+[Walk mode](/engine/walk-mode.md) covers what the engine does with the answer.
+
+The member is read through `HKXObjectCursor.optionalPointer(at:)` rather than
+`pointer(at:)`, so a null does not enter the unresolved-reference log — an absent optional
+and a fixup that failed to resolve mean opposite things to the real-data sweep.
 
 ## Binding layout (72 bytes, 8-byte pointers)
 

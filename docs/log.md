@@ -4,6 +4,27 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-05
 
+* **Movement authority follows `m_extractedMotion` rather than a speed threshold (issue
+  #370)**: the bridge used to hand a step to the graph's own root travel whenever that
+  travel exceeded 10 units per second, a floor set against an *average* vanilla clip jitter
+  of about 1 unit per second. The average was the wrong statistic — the test runs per step
+  at 1/120 s, where a root bone moving 0.09 units reads as 10.8 units per second — so a few
+  hundred steps of the M14 acceptance route took the root-motion branch on jitter alone, and
+  one of them moved the capsule backwards along the walk direction. The two units of travel
+  it contributed were never visible, but the classification was wrong in kind: a vanilla clip
+  animates in place and can carry no travel at all. The parser now reads whether
+  `hkaAnimation.m_extractedMotion` resolves, the clip evaluator reports the identity for
+  every clip that does not carry one, and `BehaviorRootMotion.isExtracted` is what the bridge
+  branches on — a property of the file rather than of a measured distance, so an
+  extracted-motion clip that stands still for a step keeps authority and an in-place clip
+  never gains it. The acceptance route now asserts `rootMotionDistance == 0` and a monotone
+  forward walk leg rather than a small bound, and the panel's Root Motion readout states the
+  rule beside the two totals so a zero reads as the expected answer. A clip that does carry a
+  reference frame still has its travel approximated from the root bone, because
+  `hkaAnimatedReferenceFrame` itself is undecoded; that is now tallied
+  (`clipExtractedMotionApproximated`) rather than silent. See
+  [walk mode](/engine/walk-mode.md) and
+  [hkaSplineCompressedAnimation](/formats/hka-animation.md).
 * **M14 accepted — the player walks, runs, sprints, jumps, sneaks and swims, in both
   perspectives (issue #191)**: the milestone gate wires, verifies and records what the other
   seven items built. The route is one continuous drive through every locomotion state, and

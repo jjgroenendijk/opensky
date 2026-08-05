@@ -160,9 +160,27 @@ Skyrim's locomotion clips animate in place and the engine supplies the travel; t
 consumer of `Speed` and `Direction`, not the source of movement. Driving `mt_behavior.hkx`
 for three seconds of walking accumulates 0.04 units of root-bone travel in total — jitter,
 not locomotion. The root-motion branch stays because a data set that does carry extracted
-motion must drive the capsule from it rather than be silently ignored; the threshold between
-the two is 10 units per second, an order of magnitude above the measured jitter and two
-orders below the walk gait.
+motion must drive the capsule from it rather than be silently ignored.
+
+Which branch a step takes is read straight off that measurement. The clip evaluator reports
+root travel only for a clip whose file carries extracted motion
+(`HKASplineCompressedAnimation.carriesExtractedMotion`, see
+[hkaSplineCompressedAnimation](/formats/hka-animation.md)), flags it as
+`BehaviorRootMotion.isExtracted`, and reports the identity for every clip that does not.
+The bridge branches on that flag. Authority is therefore a property of the data, not of the
+distance measured on a step: an extracted-motion clip that stands still for one step keeps
+authority and reports no travel, and an in-place clip never gains it however far its root
+bone drifts. Both survive a blend — mixing an extracted-motion clip with an in-place one
+leaves the pose under the data's authority at the blended weight.
+
+Before issue #370 the branch was a speed threshold over the differenced root bone instead,
+set at 10 units per second against a measured *average* jitter of about 1 unit per second.
+The average was the wrong statistic: the test runs per step at 1/120 s, so a single step
+whose root bone moves 0.09 units reads as 10.8 units per second and takes the root-motion
+branch. A few hundred vanilla steps of the M14 acceptance route did, contributing about two
+units of travel against several hundred, and one of them moved the capsule backwards along
+the walk direction. The route now travels under the configured gait alone
+(`rootMotionDistance == 0`), and its walk leg is monotone forward.
 
 A paused frame (`dt == 0`, menu mode — see [menu mode](/engine/menu-mode.md)) is a total
 no-op: no variable write, no event, no graph update, no jump latch consumed, no capsule

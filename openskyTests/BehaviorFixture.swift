@@ -374,8 +374,13 @@ enum BehaviorFixture {
     /// whose translation.x ramps 0 to 30, bound onto `boneIndex`. Bone 1 by
     /// default, because bone 0 is the root and its travel is extracted rather
     /// than posed.
-    static func splineClip(boneIndex: Int = 1) throws -> SplineBehaviorClip {
-        let file = try HKXFile(data: HKASplineAnimationFixture().build())
+    static func splineClip(
+        boneIndex: Int = 1,
+        carriesExtractedMotion: Bool = false
+    ) throws -> SplineBehaviorClip {
+        var fixture = HKASplineAnimationFixture()
+        fixture.carriesExtractedMotion = carriesExtractedMotion
+        let file = try HKXFile(data: fixture.build())
         let animations = try HKASplineCompressedAnimation.animations(in: file)
         guard let animation = animations.first else {
             throw BehaviorFixtureError.noSplineAnimation

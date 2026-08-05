@@ -129,6 +129,26 @@ nonisolated struct HKXObjectCursor {
     /// `outOfBounds` rather than the `noFixup` an absent optional produces —
     /// the two mean opposite things to the real-data sweep.
     mutating func pointer(at field: HKXField) -> HKXPointerTarget? {
+        resolvePointer(at: field, recordingNull: true)
+    }
+
+    /// The same resolution for a member Havok is entitled to leave null, with
+    /// the null itself not logged as a miss.
+    ///
+    /// `hkaAnimation.m_extractedMotion` is the member this exists for: every
+    /// clip in a vanilla install leaves it null, so treating each one as an
+    /// unresolved reference would bury the misses that mean something under
+    /// thousands that do not. Everything else still reports:
+    /// `outOfBounds` on a truncated object, `sectionMissing` on a fixup into a
+    /// section the file does not carry.
+    mutating func optionalPointer(at field: HKXField) -> HKXPointerTarget? {
+        resolvePointer(at: field, recordingNull: false)
+    }
+
+    private mutating func resolvePointer(
+        at field: HKXField,
+        recordingNull: Bool
+    ) -> HKXPointerTarget? {
         let source = base + field.offset
         guard containsSectionRange(source, Self.pointerStride) else {
             recordMiss(field, .outOfBounds)
@@ -138,7 +158,9 @@ nonisolated struct HKXObjectCursor {
             return HKXPointerTarget(sectionIndex: sectionIndex, dataOffset: local)
         }
         guard let global = graph.globalTarget(section: sectionIndex, from: source) else {
-            recordMiss(field, .noFixup)
+            if recordingNull {
+                recordMiss(field, .noFixup)
+            }
             return nil
         }
         guard graph.payload(ofSection: global.sectionIndex) != nil else {

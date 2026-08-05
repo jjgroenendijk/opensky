@@ -85,13 +85,12 @@ struct M14AcceptanceRealDataTests {
         let walked = harness.run(
             input: CameraInput(moveForward: 1, dt: step), steps: secondOfSteps, label: "walk"
         )
-        // Distance rather than monotonicity, deliberately. A vanilla clip's
-        // root bone jitters, and a step whose jitter crosses
-        // `LocomotionBridge.rootMotionSpeedFloor` is driven by the clip for
-        // that one step and can move the capsule backwards by a fraction of a
-        // unit. Over this whole route that path contributes about two units
-        // against several hundred — see the root-motion assertion below, and
-        // issue #370 for the floor itself.
+        // Monotone as well as bounded: every step of the walk leg moves the
+        // capsule forward. It did not always — a vanilla clip's root bone
+        // jitters, and while movement authority was decided by a per-step
+        // speed threshold the jitter crossed it often enough to push a few
+        // steps backwards (issue #370).
+        #expect(walked.isMonotoneForward)
         #expect(walked.distance <= configuration.walkSpeed.value + 1)
         #expect(walked.distance > configuration.walkSpeed.value / 2)
 
@@ -151,13 +150,13 @@ struct M14AcceptanceRealDataTests {
         #expect(status.graphUpdates > 0)
         #expect(status.firstPersonGraphUpdates == status.graphUpdates)
         // Vanilla locomotion clips animate in place, so the route is the
-        // configured gait driving the capsule: the install's clips carry no
-        // extracted motion, which is the #188 measurement. What root motion
-        // does contribute is clip jitter on the handful of steps that cross
-        // the speed floor — under half a percent of the travel, reported here
-        // as a bound rather than assumed away, and filed as issue #370.
+        // configured gait driving the capsule and nothing else: the install's
+        // clips leave `m_extractedMotion` null, which is the #188 measurement,
+        // and a clip that carries no extracted motion cannot take movement
+        // authority at all. Exactly zero rather than a small bound — the bound
+        // was root-bone jitter crossing a speed threshold (issue #370).
         #expect(status.configuredSpeedDistance > 0)
-        #expect(status.rootMotionDistance < status.configuredSpeedDistance * 0.005)
+        #expect(status.rootMotionDistance == 0)
     }
 
     /// The full-graph rule, as the route exercises it: nothing the graph

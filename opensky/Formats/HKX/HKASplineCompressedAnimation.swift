@@ -38,6 +38,16 @@ nonisolated struct HKASplineCompressedAnimation {
     let maxFramesPerBlock: Int
     let transformTrackCount: Int
     let floatTrackCount: Int
+    /// True when `hkaAnimation.m_extractedMotion` points at an
+    /// `hkaAnimatedReferenceFrame`, which is Havok's statement that this clip
+    /// carries authored travel rather than animating in place.
+    ///
+    /// Only the presence is read. The reference frame's own contents are not
+    /// decoded, because no file in a vanilla Skyrim SE install carries one:
+    /// the flag exists so a consumer can tell an in-place clip from a
+    /// root-motion clip without inferring it from how far the root bone
+    /// happens to drift. See docs/engine/walk-mode.md.
+    let carriesExtractedMotion: Bool
     let blocks: [HKASplineBlock]
 
     var blockCount: Int {
@@ -121,6 +131,7 @@ nonisolated private enum HKASplineObjectDecoder {
     private static let durationField = HKXField(0x14, "m_duration")
     private static let transformTrackCountField = HKXField(0x18, "m_numberOfTransformTracks")
     private static let floatTrackCountField = HKXField(0x1C, "m_numberOfFloatTracks")
+    private static let extractedMotionField = HKXField(0x20, "m_extractedMotion")
     private static let frameCountField = HKXField(0x38, "m_numFrames")
     private static let blockCountField = HKXField(0x3C, "m_numBlocks")
     private static let maxFramesPerBlockField = HKXField(0x40, "m_maxFramesPerBlock")
@@ -144,6 +155,10 @@ nonisolated private enum HKASplineObjectDecoder {
         let base = cursor.base
         let metadata = try readMetadata(cursor: &cursor)
         try validate(metadata)
+        // Read through `optionalPointer` because a null here is the ordinary
+        // case rather than an unresolved reference: an in-place clip is what
+        // every vanilla locomotion animation is.
+        let extractedMotion = cursor.optionalPointer(at: extractedMotionField) != nil
         let tables = try readTables(cursor: &cursor)
         guard tables.blockOffsets.count == metadata.blockCount else {
             throw mismatch(
@@ -164,6 +179,7 @@ nonisolated private enum HKASplineObjectDecoder {
             maxFramesPerBlock: metadata.maxFramesPerBlock,
             transformTrackCount: metadata.transformTrackCount,
             floatTrackCount: metadata.floatTrackCount,
+            carriesExtractedMotion: extractedMotion,
             blocks: decodeBlocks(metadata: metadata, tables: tables)
         )
     }

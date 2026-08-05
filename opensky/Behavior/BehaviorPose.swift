@@ -26,13 +26,35 @@ import simd
 nonisolated struct BehaviorRootMotion: Equatable, Sendable {
     var translation: SIMD3<Float>
     var rotation: simd_quatf
+    /// True when this travel came from a clip whose data carries extracted
+    /// motion, and therefore when the graph — not the resolved gait — is what
+    /// moves the character this step.
+    ///
+    /// This is a statement about the *data*, not about the magnitude, and it
+    /// is what `LocomotionBridge` branches on. An extracted-motion clip that
+    /// happens to stand still for a step still holds movement authority and
+    /// still reports zero travel; an in-place clip never holds it however far
+    /// its root bone drifts (issue #370).
+    var isExtracted: Bool
+
+    init(
+        translation: SIMD3<Float>,
+        rotation: simd_quatf,
+        isExtracted: Bool = false
+    ) {
+        self.translation = translation
+        self.rotation = rotation
+        self.isExtracted = isExtracted
+    }
 
     static let identity = BehaviorRootMotion(
         translation: SIMD3<Float>(), rotation: simd_quatf(ix: 0, iy: 0, iz: 0, r: 1)
     )
 
     static func == (lhs: BehaviorRootMotion, rhs: BehaviorRootMotion) -> Bool {
-        lhs.translation == rhs.translation && lhs.rotation.vector == rhs.rotation.vector
+        lhs.translation == rhs.translation
+            && lhs.rotation.vector == rhs.rotation.vector
+            && lhs.isExtracted == rhs.isExtracted
     }
 }
 
@@ -136,7 +158,11 @@ nonisolated enum BehaviorPoseMath {
         let amount = clamped(weight)
         return BehaviorRootMotion(
             translation: mix(lhs.translation, rhs.translation, amount),
-            rotation: slerp(lhs.rotation, rhs.rotation, amount)
+            rotation: slerp(lhs.rotation, rhs.rotation, amount),
+            // Authority survives a blend: a pose mixing an extracted-motion
+            // clip with an in-place one is still being driven by the data, at
+            // the blended weight, and the in-place side contributes zero.
+            isExtracted: lhs.isExtracted || rhs.isExtracted
         )
     }
 
@@ -261,12 +287,19 @@ nonisolated enum BehaviorPoseMath {
     /// The travel between two samples of the same root bone, expressed in the
     /// earlier sample's frame: `rotation` is the turn from `previous` to
     /// `current`, `translation` their difference.
-    static func rootMotion(from previous: HKABonePose, to current: HKABonePose)
-        -> BehaviorRootMotion
-    {
+    ///
+    /// `isExtracted` is the caller's to state, because this is arithmetic over
+    /// two poses and cannot know whether the clip they came from carries a
+    /// reference frame.
+    static func rootMotion(
+        from previous: HKABonePose,
+        to current: HKABonePose,
+        isExtracted: Bool = false
+    ) -> BehaviorRootMotion {
         BehaviorRootMotion(
             translation: current.translation - previous.translation,
-            rotation: normalized(previous.rotation.inverse * current.rotation)
+            rotation: normalized(previous.rotation.inverse * current.rotation),
+            isExtracted: isExtracted
         )
     }
 
@@ -279,7 +312,8 @@ nonisolated enum BehaviorPoseMath {
     ) -> BehaviorRootMotion {
         BehaviorRootMotion(
             translation: first.translation + first.rotation.act(next.translation),
-            rotation: normalized(first.rotation * next.rotation)
+            rotation: normalized(first.rotation * next.rotation),
+            isExtracted: first.isExtracted || next.isExtracted
         )
     }
 
