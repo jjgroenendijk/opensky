@@ -20,6 +20,10 @@ check a hypothesis is a different job: load the `probe` skill for that.
 Gate on `GameDataLocator.environmentKey` being set, and deliberately do not consult the
 Steam-default fallback, so a machine without `OPENSKY_DATA_ROOT` skips deterministically.
 
+The env var is the only way in: `GameDataLocator` withholds the persisted `OpenSkyDataRoot`
+default and the Steam fallback inside the test host, so a test that forgets its gate cannot
+quietly reach a real install (issue #362).
+
 Plain `xcodebuild test` does not forward `OPENSKY_DATA_ROOT` to the unit-test host, so an
 env-gated test silently skips under it. Use `make realtest T='Class/method()'`, which
 injects the data root the reliable way and runs under the RSS watchdog

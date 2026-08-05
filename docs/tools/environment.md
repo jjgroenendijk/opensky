@@ -5,7 +5,7 @@ description: Dated record of machine-specific and third-party facts that skills 
   must not hardcode — TCC permissions, CI suspension, upstream spec-host quirks — each with
   the condition that retires it.
 tags: [environment, tooling, ci, gotchas]
-timestamp: 2026-07-26T00:00:00Z
+timestamp: 2026-08-05T00:00:00Z
 ---
 
 # Local environment and external state
@@ -20,7 +20,6 @@ entry whose condition is met gets deleted, not amended.
 ## Contents
 
 - Screen Recording and automation permissions (TCC)
-- Real-data XCTest host hangs
 - Continuous integration suspended
 - Upstream spec hosts
 - Memory watchdog for heavy real-data tests
@@ -46,15 +45,6 @@ rebuilds. When the prompts come back, `codesign -dv --verbose=2` on the built ap
 `openskyUITests-Runner.app` is the first thing to check: `Signature=adhoc` is the cause.
 
 Retires when `make test-ui` reaches the first test case on this machine.
-
-## Real-data XCTest host hangs
-
-Observed 2026-07-20. A real-data XCTest host sometimes hangs at 0% CPU before running any
-test. Killing and retrying does not clear it. See `docs/testing.md` for the diagnosis.
-
-Workaround: move the one-off check into `openskycli` and drive it with `make run-cli`.
-
-Retires when the host launches reliably.
 
 ## Continuous integration suspended
 

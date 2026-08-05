@@ -25,6 +25,27 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   (`clipExtractedMotionApproximated`) rather than silent. See
   [walk mode](/engine/walk-mode.md) and
   [hkaSplineCompressedAnimation](/formats/hka-animation.md).
+* **`make test` no longer inherits the machine's persisted data root (issue #362)**: the
+  unit-test host is the app bundle, so it read the app's own defaults domain and found
+  `OpenSkyDataRoot` pointing at the retail install. A panel-reset test then asked
+  `TerrainLODSettings` to read `Skyrim_Default.ini` off an external volume and the host
+  parked in `open()` for good — several thousand cases in, at 0.1% CPU, taking the pre-push
+  hook with it. `TEST_RUNNER_OPENSKY_DATA_ROOT=""` never prevented this, because it clears
+  only the environment variable. `GameDataLocator.locate` now takes its persisted defaults
+  and its Steam fallback as optionals and withholds both inside a test host
+  (`XCTestConfigurationFilePath`, the signal the headless host already uses), so a unit test
+  reaches an install only through `OPENSKY_DATA_ROOT`. Withholding beats special-casing the
+  one caller: it makes "unit tests are install-independent" structural rather than a rule
+  each new call site has to remember, and it matches what the real-data suites already do by
+  hand. Explicitly injected sources are untouched, so every existing resolution-order test
+  reads the same; the only visible change is `notFound(searched: [])`, whose message now
+  says no fallback location was consulted. The environment note recording the old hang is
+  deleted rather than amended — its cause is gone. *Evidence:* `GameDataLocatorTests`
+  (withholding asserted from inside the host, env var still winning with both sources nil,
+  the empty-searched message), and `make test` passing on this machine with the persisted
+  `OpenSkyDataRoot` still in place, which is exactly the configuration that used to hang.
+  Docs: [game data locator](/engine/game-data-locator.md), [testing setup](/testing.md).
+
 * **M14 accepted — the player walks, runs, sprints, jumps, sneaks and swims, in both
   perspectives (issue #191)**: the milestone gate wires, verifies and records what the other
   seven items built. The route is one continuous drive through every locomotion state, and

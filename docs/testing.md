@@ -4,7 +4,7 @@ title: Testing setup
 description: Test targets, make entrypoints, real-data suites, result reporting,
   the RSS watchdog, and this machine's known test-environment quirks.
 tags: [testing, tooling, process]
-timestamp: 2026-07-23T00:00:00Z
+timestamp: 2026-08-05T00:00:00Z
 ---
 
 # Testing setup
@@ -103,6 +103,16 @@ Consequence: nothing app-lifecycle-dependent runs in unit tests — no delegate,
 window, no Metal device wired up. Code touching those belongs in the UI target or
 needs its own setup.
 
+Hosting in the app bundle also means the host reads the app's own defaults domain
+and home directory, so `GameDataLocator` withholds both persistent data-root
+sources under the same `XCTestConfigurationFilePath` signal — a unit test reaches
+the install only through `OPENSKY_DATA_ROOT`. See
+[game data locator](/engine/game-data-locator.md). Before that, a machine where
+the app had been pointed at an install on an external volume ran `make test` into
+an indefinite block inside `open()`, which also hung the pre-push hook
+(issue #362). `TEST_RUNNER_OPENSKY_DATA_ROOT=""` did not prevent it, because it
+clears only the environment variable.
+
 ## Known test-environment quirks (this machine)
 
 * test-ui on this machine: `make test-ui` reliably dies at harness init with
@@ -111,12 +121,13 @@ needs its own setup.
   (via `tools/test-ui.sh`) instead of hanging to timeout, and points at
   `make test-perms`. Until the grant is in place, verify UI/render behavior with
   `Renderer.renderOffscreen` unit tests or `make run-cli ARGS="render ..."`.
-* Permission popups: the app is ad-hoc signed (`"-"`), so its identity changes
-  every rebuild and per-app TCC grants to it never persist. Grant Full Disk
+* Permission popups: a TCC grant sticks only while the binary keeps one code
+  signature, so `Config/Signing.xcconfig` names a real Apple Development identity
+  for every target ([build system](/tools/build-system.md)). Granting Full Disk
   Access + Automation to the stable parent you launch tests from (Terminal /
-  iTerm / Xcode) instead — child test hosts inherit it. `make test-perms` guides
-  and opens the right pane; TCC is SIP-protected, so the actual grant is one
-  manual click (it cannot be scripted).
+  iTerm / Xcode) still helps, since child test hosts inherit it. `make test-perms`
+  guides and opens the right pane; TCC is SIP-protected, so the actual grant is
+  one manual click (it cannot be scripted).
 * Stale `testmanagerd`: a days-old XCTest daemon can wedge a fresh run (or the
   pre-push hook) at 0% CPU. If a test host hangs before running, recycle it:
   `killall testmanagerd`, then retry (no `--no-verify` bypass).

@@ -6,6 +6,8 @@
 //   1. OPENSKY_DATA_ROOT environment variable (tests, CLI runs)
 //   2. UserDefaults key "OpenSkyDataRoot" (persistent per-machine setting)
 //   3. Default Steam library path under ~/Library/Application Support
+//
+// Inside an XCTest host only source 1 applies: see `persistedRootDefaults`.
 
 import Foundation
 
@@ -29,9 +31,11 @@ nonisolated extension GameDataError: LocalizedError {
             return "Configured game data root (\(origin)) is not a Skyrim SE install: \(path). "
                 + "Expected a folder containing Data/Skyrim.esm (or Skyrim.esm itself)."
         case let .notFound(searched):
-            return "Skyrim Special Edition install not found. Searched: "
-                + searched.joined(separator: ", ")
-                + ". Set the \(GameDataLocator.defaultsKey) default or the "
+            let scope = searched.isEmpty
+                ? "No fallback location was consulted."
+                : "Searched: " + searched.joined(separator: ", ") + "."
+            return "Skyrim Special Edition install not found. \(scope) "
+                + "Set the \(GameDataLocator.defaultsKey) default or the "
                 + "\(GameDataLocator.environmentKey) environment variable to the install folder."
         }
     }
@@ -78,24 +82,54 @@ nonisolated enum GameDataLocator {
             .appending(path: "Skyrim Special Edition")
     }
 
-    /// Resolves and validates the game data root. Every parameter is injectable
-    /// for tests; production callers use the defaults.
+    /// True inside a unit-test host. The host is the app bundle itself, so it
+    /// inherits the developer's app settings and home directory (issue #362).
+    static var isRunningInTestHost: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
+
+    /// Defaults `locate` consults for a persisted root, or nil when no source
+    /// applies. A test host withholds it: the host shares the app's defaults
+    /// domain, so a machine where the app has been pointed at a real install
+    /// would feed that install to unit tests meant to be install-independent —
+    /// which is how `make test` came to block in `open()` on an external
+    /// volume. Real-data suites gate on the environment variable instead.
+    static var persistedRootDefaults: UserDefaults? {
+        isRunningInTestHost ? nil : settingsDefaults
+    }
+
+    /// Fallback install `locate` consults, or nil when no source applies.
+    /// Withheld in a test host for the same reason as `persistedRootDefaults`:
+    /// on a machine with a stock Steam library it is the developer's real
+    /// install.
+    static var defaultInstallCandidate: URL? {
+        isRunningInTestHost ? nil : defaultSteamInstallURL
+    }
+
+    /// Resolves and validates the game data root. Every source is injectable
+    /// for tests; production callers use the defaults. A nil `userDefaults` or
+    /// `defaultInstall` skips that source entirely.
     static func locate(
         environment: [String: String] = ProcessInfo.processInfo.environment,
-        userDefaults: UserDefaults = settingsDefaults,
-        defaultInstall: URL = defaultSteamInstallURL,
+        userDefaults: UserDefaults? = persistedRootDefaults,
+        defaultInstall: URL? = defaultInstallCandidate,
         fileManager: FileManager = .default
     ) throws -> GameDataRoot {
         if let path = environment[environmentKey], !path.isEmpty {
             return try validated(path: path, source: .environment, fileManager: fileManager)
         }
-        if let path = userDefaults.string(forKey: defaultsKey), !path.isEmpty {
+        if let path = userDefaults?.string(forKey: defaultsKey), !path.isEmpty {
             return try validated(path: path, source: .userDefaults, fileManager: fileManager)
         }
-        if let root = root(at: defaultInstall, source: .steamDefault, fileManager: fileManager) {
+        if
+            let defaultInstall,
+            let root = root(at: defaultInstall, source: .steamDefault, fileManager: fileManager)
+        {
             return root
         }
-        throw GameDataError.notFound(searched: [defaultInstall.path(percentEncoded: false)])
+        throw GameDataError.notFound(
+            searched: defaultInstall.map { [$0.path(percentEncoded: false)] } ?? []
+        )
     }
 
     /// Persists a user-chosen install path (Settings UI). Validated first;
