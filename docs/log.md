@@ -4,6 +4,55 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-05
 
+* **M14 accepted — the player walks, runs, sprints, jumps, sneaks and swims, in both
+  perspectives (issue #191)**: the milestone gate wires, verifies and records what the other
+  seven items built. The route is one continuous drive through every locomotion state, and
+  it enters the engine where a player does: real key events reach a real `GameMetalView`,
+  which fills the shipping `CameraInputState`, which each frame becomes a `CameraInput` for
+  `LocomotionBridge.acceptFrame` and `WalkController.update` — the order
+  `Renderer.advanceCamera` runs them in. The world under it is synthetic and closed-form
+  (flat ground, a 20-degree slope, a basin 156 units under water, a streaming boundary, a
+  load door), the graph over it is an eight-state machine wired to the events the bridge
+  itself raises, and the whole thing runs headless with no device and no install. Decisions
+  worth the record: the gate evaluates the *whole* graph rather than tallying a subgraph,
+  because a state the route cannot reach is a state nothing proves; swimming stayed in the
+  gate rather than being deferred with the water rendering, because the gait, the hysteresis
+  and the swim clips are all M14's; the first-person half is a second graph reaching the same
+  states from the same input rather than a camera-only change, which is what
+  `M14AcceptanceTests` asserts state by state; and the movement-authority split — one
+  horizontal source per fixed step, vertical motion the controller's alone — is now visible
+  rather than merely documented, as two running totals on the panel that cannot both grow on
+  one step. Writing the route turned up two engine facts. A reset used to hand the graph a
+  `JumpFall` and a `JumpLand` for the single step a freshly-seated `WalkController` spends
+  deciding it is standing on something, so every door transition reported a landing the
+  player never took; ground events now start once the capsule is standing. And the
+  root-motion speed floor is marginal against per-step vanilla clip jitter, which is issue
+  #370 rather than a fix here. The new surface is `World > Player & Locomotion`
+  (`Destination-playerLocomotion`): live graph, bindings, camera mode, root-motion trace, and
+  the forced-state and event dev controls, so the loop is drivable without knowing a key.
+  *Evidence:* `M14AcceptanceTests` (the route, and its exact repetition),
+  `M14AcceptancePanelTests` (the destination as one surface on one provider set),
+  `M14AcceptanceBudgetTests` (the shipping `validatedFlyUpdateBudgets` over the same
+  benchmark configuration, plus the stalled-frame and zero-length-frame bounds),
+  `PlayerLocomotionPanelTests` and `DestinationRegistryLocomotionTests` (the id and registry
+  contracts), `M14AcceptanceRealDataTests` (env-gated, device-free) and
+  `M14AcceptanceRenderTests` (env-gated and device-gated). Honest coverage on the local
+  install, 2026-08-05: 684 updates over the vanilla `0_master.hkx` and its `_1stperson` peer;
+  6,836 generator and 4,870 modifier evaluations third person, 6,836 and 5,554 first person;
+  zero unevaluated generators, zero partial generators, zero unresolved clips, zero unapplied
+  bindings, zero undecodable objects, and zero missing variable or event names on either
+  perspective. What is still owed is semantics rather than decode: pass-through modifiers
+  `BSSpeedSamplerModifier` 684, `hkbKeyframeBonesModifier` 684,
+  `hkbRigidBodyRagdollControlsModifier` 684, `BSIsActiveModifier` 80, `BSModifyOnceModifier`
+  1, `hkbTwistModifier` 684 (first person only), and the feature gaps `clipUserControlled`
+  79 and `stateMachineTransitionInterrupted` 61. Pixels, same run: the body drew 41,274
+  changed pixels, a sprint moved 43,605 against idle, a second player driven through the
+  identical input reproduced the sprint frame exactly, first person differed from third by
+  381,016, and a mode round trip returned a byte-identical frame. See
+  [behavior graph runtime](/engine/behavior-runtime.md),
+  [terrain walk mode](/engine/walk-mode.md), and the
+  [sidebar acceptance ledger](/tools/sidebar-acceptance.md).
+
 * **Footsteps use the ground's real material (issue #358)**: `FootstepStore.resolve` always
   took a `MATT` material and nothing could ever supply one, so every footstep fell back to
   the impact table's representative entry — stone-solid for the vanilla humanoid sets — and

@@ -71,6 +71,25 @@ nonisolated enum LocomotionGraphNames {
     ]
 }
 
+/// One entry of the root-motion trace: the step at which the resolved gait or
+/// the motion source last changed, and where the capsule was when it did
+/// (issue #191).
+///
+/// The trace records changes rather than steps. A step is 1/120 s, so keeping
+/// one sample per step would be twelve hundredths of a second of history and
+/// would allocate on every fixed step; keeping one sample per change covers a
+/// whole route and costs nothing while the player keeps walking.
+nonisolated struct LocomotionMotionSample: Equatable, Sendable {
+    let gait: LocomotionGait
+    let source: LocomotionMotionSource
+    /// Capsule bottom when the change happened.
+    let feetPosition: SIMD3<Float>
+    /// Horizontal displacement the step that changed it asked for.
+    let displacement: SIMD2<Float>
+    let isGrounded: Bool
+    let isSwimming: Bool
+}
+
 /// What the bridge did, for the `World > Player & Locomotion` readout and for
 /// the tests. Value type, snapshot-per-read, like the other panel bridges.
 nonisolated struct LocomotionStatus: Equatable, Sendable {
@@ -106,8 +125,20 @@ nonisolated struct LocomotionStatus: Equatable, Sendable {
     var firstPersonMissingEvents: [String] = []
     var firstPersonRecentGraphEvents: [String] = []
 
+    /// Where each motion source has carried the capsule so far, world units.
+    /// Two running totals rather than one, because "the graph drove the
+    /// character" and "the configured gait drove it" are the two answers the
+    /// movement-authority rule allows and a readout that summed them could not
+    /// tell them apart.
+    var rootMotionDistance: Float = 0
+    var configuredSpeedDistance: Float = 0
+    /// Where the resolved gait or the motion source last changed, oldest first.
+    var motionTrace: [LocomotionMotionSample] = []
+
     /// How many recent graph events are kept for the readout.
     static let recentEventLimit = 12
+    /// How many motion-trace samples are kept.
+    static let motionTraceLimit = 16
 
     init(graphAvailable: Bool = false, firstPersonGraphAvailable: Bool = false) {
         self.graphAvailable = graphAvailable
@@ -128,12 +159,45 @@ nonisolated struct LocomotionStatus: Equatable, Sendable {
         state: LocomotionStepState,
         waterSurface: Float?
     ) {
+        let changed = gait != self.gait || plan.motionSource != lastPlan.motionSource
         self.gait = gait
         lastPlan = plan
         feetPosition = state.feetPosition
         verticalVelocity = state.verticalVelocity
         isGrounded = state.isGrounded
         waterSurfaceHeight = waterSurface
+        recordMotion(plan: plan, changed: changed || motionTrace.isEmpty)
+    }
+
+    /// Adds the step's travel to its source's total and, when the step changed
+    /// what is driving the character, appends a trace sample.
+    private mutating func recordMotion(plan: LocomotionStepPlan, changed: Bool) {
+        let travelled = simd_length(plan.horizontalDisplacement)
+        switch plan.motionSource {
+        case .rootMotion: rootMotionDistance += travelled
+        case .configuredSpeed: configuredSpeedDistance += travelled
+        case .idle: break
+        }
+        guard changed else { return }
+        motionTrace.append(LocomotionMotionSample(
+            gait: gait,
+            source: plan.motionSource,
+            feetPosition: feetPosition,
+            displacement: plan.horizontalDisplacement,
+            isGrounded: isGrounded,
+            isSwimming: plan.isSwimming
+        ))
+        if motionTrace.count > Self.motionTraceLimit {
+            motionTrace.removeFirst(motionTrace.count - Self.motionTraceLimit)
+        }
+    }
+
+    /// Empties the trace and both totals without disturbing anything the
+    /// player can feel, which is what the panel's own clear control does.
+    mutating func clearMotionTrace() {
+        motionTrace = []
+        rootMotionDistance = 0
+        configuredSpeedDistance = 0
     }
 
     mutating func noteGraphUpdate(events: [BehaviorEvent]) {

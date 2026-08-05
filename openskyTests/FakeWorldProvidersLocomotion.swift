@@ -13,6 +13,16 @@ struct FakeLocomotionState {
     var sneaking = false
     var jumpRequests = 0
     var status = LocomotionStatus()
+    var forcedGait: LocomotionGait?
+    var activeStates: [BehaviorActiveState] = []
+    var firstPersonActiveStates: [BehaviorActiveState] = []
+    var variables: [LocomotionVariableSnapshot] = []
+    var tally: BehaviorTally?
+    /// Event names the fake's graph declares. A raise of anything else is
+    /// answered false, exactly as a real graph answers it.
+    var declaredEvents = Set(LocomotionGraphNames.events)
+    var raisedEvents: [String] = []
+    var traceClearCount = 0
 }
 
 extension FakeWorldProviders {
@@ -39,14 +49,22 @@ extension FakeWorldProviders {
     var playerLocomotionSnapshot: PlayerLocomotionSnapshot {
         PlayerLocomotionSnapshot(
             rendererAvailable: true,
-            walkModeActive: movementMode == .walk,
+            walkModeActive: movementMode.isPlayerControlled,
             status: locomotion.status,
             bindings: [
+                LocomotionBindingSnapshot(
+                    id: "run", label: "Run", key: "Shift (hold)", isActive: false
+                ),
                 LocomotionBindingSnapshot(
                     id: "sneak", label: "Sneak", key: "C (toggle)", isActive: locomotion.sneaking
                 )
             ],
-            configuration: movementConfiguration
+            configuration: movementConfiguration,
+            activeStates: locomotion.activeStates,
+            firstPersonActiveStates: locomotion.firstPersonActiveStates,
+            variables: locomotion.variables,
+            forcedGait: locomotion.forcedGait,
+            tally: locomotion.tally
         )
     }
 
@@ -55,8 +73,24 @@ extension FakeWorldProviders {
         set { locomotion.sneaking = newValue }
     }
 
+    var forcedLocomotionGait: LocomotionGait? {
+        get { locomotion.forcedGait }
+        set { locomotion.forcedGait = newValue }
+    }
+
     func requestJump() {
         locomotion.jumpRequests += 1
+    }
+
+    @discardableResult
+    func raiseLocomotionEvent(named name: String) -> Bool {
+        locomotion.raisedEvents.append(name)
+        return locomotion.declaredEvents.contains(name)
+    }
+
+    func clearLocomotionTrace() {
+        locomotion.traceClearCount += 1
+        locomotion.status.clearMotionTrace()
     }
 }
 

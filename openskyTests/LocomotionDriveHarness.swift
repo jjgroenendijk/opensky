@@ -103,6 +103,12 @@ final class LocomotionDriveHarness {
                 leftGround = true
             } else if leftGround {
                 landed = true
+                // One more step, because the controller resolves the landing
+                // and the bridge is told about it on the step after: the
+                // grounded flag a step plans against is the one the previous
+                // step left behind. Without it the caller sees a capsule on the
+                // ground and no `JumpLand` yet.
+                advance(input: CameraInput(dt: Self.step))
                 break
             }
         }

@@ -10,6 +10,34 @@
 import AppKit
 
 extension DestinationRegistry {
+    /// The launch destination's two settable sections: the camera mode and the
+    /// first-person controls beside it.
+    static let worldOverrides = DestinationOverrideActions(
+        isOverridden: {
+            CameraSection.isOverridden(provider: $0.providers)
+                || FirstPersonSection.isOverridden(provider: $0.providers)
+        },
+        resetToDefaults: {
+            CameraSection.resetToDefaults(provider: $0.providers)
+            FirstPersonSection.resetToDefaults(provider: $0.providers)
+        }
+    )
+
+    /// Only the Dev Controls section carries overridden-ness (issue #191): a
+    /// held gait is the one thing under `World > Player & Locomotion` that sits
+    /// away from its default, and the sidebar's reset releases it. Camera mode
+    /// is `World > World`'s override and is deliberately not claimed twice;
+    /// sneaking, jumping and raising an event are world actions rather than
+    /// settings, so none of them lights the dot.
+    static let playerLocomotionOverrides = DestinationOverrideActions(
+        isOverridden: { context in
+            LocomotionDevSection.isOverridden(provider: context.providers)
+        },
+        resetToDefaults: { context in
+            LocomotionDevSection.resetToDefaults(provider: context.providers)
+        }
+    )
+
     static let systemMenuOverrides = DestinationOverrideActions(
         isOverridden: { context in
             SystemMenuSection.isOverridden(provider: context.providers)
