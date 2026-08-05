@@ -36,6 +36,13 @@ screenshot-based verification is unavailable too.
   (`DestinationRegistryTests`) and keep `openskyUITests` correct so it passes wherever the
   permission exists.
 
+Updated 2026-08-05. A grant only sticks if the binary keeps the same code signature. Between
+issue #343 landing and this note the app signed ad-hoc, so every build asked again — for
+Automation, and for reading the game install off `/Volumes/data`, which manifested as a
+real-data test host parked in `open()`. `tools/config-local.sh` now derives a real Apple
+Development identity, and `codesign -dv` on the built app is the first thing to check when
+the prompts come back.
+
 Retires when `make test-ui` reaches the first test case on this machine.
 
 ## Real-data XCTest host hangs

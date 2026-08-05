@@ -2,6 +2,22 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-05
+
+* **`tools/config-local.sh` derives a real signing identity instead of defaulting to
+  ad-hoc**: moving signing out of the pbxproj (issue #343) replaced a checked-in
+  `CODE_SIGN_IDENTITY = "Apple Development"` and `DEVELOPMENT_TEAM` with a gitignored
+  `Config/Local.xcconfig` that nobody had filled in, so every build after that commit
+  signed ad-hoc. Ad-hoc signing produces a different signature each build and macOS keys
+  TCC grants to the signature, so each build read as a new application: `make test-ui`
+  asked for Automation every run, and the real-data unit tests hung in `open()` waiting on
+  an access prompt for the external volume the game install sits on. `tools/config-local.sh`
+  now reads the first `Apple Development` identity from the keychain and that
+  certificate's `OU` as the Team ID, writes both, and falls back to the ad-hoc template
+  only when there is no identity — the two values are written together, since automatic
+  signing with an identity but no team fails to resolve a profile. See
+  [Build system and xcodebuild invocation](/tools/build-system.md).
+
 ## 2026-08-04
 
 * **No-op builds are no-ops again (issue #338)**: the three ffmpeg shell script phases were
