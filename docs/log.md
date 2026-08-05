@@ -4,18 +4,25 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-05
 
-* **`tools/config-local.sh` derives a real signing identity instead of defaulting to
-  ad-hoc**: moving signing out of the pbxproj (issue #343) replaced a checked-in
+* **One checked-in signing identity, for every target including the UI test runner (issue
+  #364)**: moving signing out of the pbxproj (issue #343) replaced a checked-in
   `CODE_SIGN_IDENTITY = "Apple Development"` and `DEVELOPMENT_TEAM` with a gitignored
   `Config/Local.xcconfig` that nobody had filled in, so every build after that commit
   signed ad-hoc. Ad-hoc signing produces a different signature each build and macOS keys
   TCC grants to the signature, so each build read as a new application: `make test-ui`
   asked for Automation every run, and the real-data unit tests hung in `open()` waiting on
-  an access prompt for the external volume the game install sits on. `tools/config-local.sh`
-  now reads the first `Apple Development` identity from the keychain and that
-  certificate's `OU` as the Team ID, writes both, and falls back to the ad-hoc template
-  only when there is no identity — the two values are written together, since automatic
-  signing with an identity but no team fails to resolve a profile. See
+  an access prompt for the external volume the game install sits on. Deriving the identity
+  from the keychain was tried first and reverted — it has the same failure mode whenever
+  the derivation comes up empty, and it makes the signature depend on machine state
+  nothing in the repository can check. `Config/Signing.xcconfig` now names the identity
+  and team outright, and `Config/UITests.xcconfig` includes it instead of pinning `-`:
+  `openskyUITests-Runner.app` is the process that asks for permission to drive the app, so
+  leaving it ad-hoc kept the dialog coming back even after the app itself was signed. The
+  `make test-ui` recipe also passed `CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM=` on the command
+  line, which wins over every xcconfig layer, so that override is gone too.
+  `tools/config-local.sh`, `Config/Local.example.xcconfig`, and the `config-local` make
+  target are gone; an override is a hand-written `Config/Local.xcconfig`, still gitignored,
+  or `XCODEBUILD_FLAGS` on the command line, which is what CI uses. See
   [Build system and xcodebuild invocation](/tools/build-system.md).
 
 ## 2026-08-04

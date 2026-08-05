@@ -17,8 +17,8 @@ xcuserdata/
 /.vendor/
 
 # ── Per-developer build settings ──────────────────────────────────────────────
-# Signing identity and team, created from Config/Local.example.xcconfig by
-# tools/config-local.sh. Never shared: it names one developer's certificate.
+# Optional signing override, included by Config/Signing.xcconfig when present. Nothing
+# creates it; write one by hand to sign with something other than the checked-in identity.
 /Config/Local.xcconfig
 
 # ── SwiftPM ───────────────────────────────────────────────────────────────────

@@ -22,14 +22,8 @@ CURRENT_PROJECT_VERSION = 1
 MARKETING_VERSION = 1.0
 PRODUCT_NAME = $(TARGET_NAME)
 
-// Signing inputs. The concrete CODE_SIGN_IDENTITY and DEVELOPMENT_TEAM live in
-// Config/Signing.xcconfig, which the code-signed targets include; these two are the
-// values a developer overrides. The defaults are ad-hoc signing, which is what CI
-// uses, so a checkout with no Config/Local.xcconfig still builds and tests.
-// Config/Local.xcconfig is gitignored and created by tools/config-local.sh.
-OPENSKY_CODE_SIGN_IDENTITY = -
-OPENSKY_DEVELOPMENT_TEAM =
-#include? "Local.xcconfig"
+// Signing. CODE_SIGN_IDENTITY and DEVELOPMENT_TEAM live in Config/Signing.xcconfig,
+// which every target that produces a bundle includes.
 CODE_SIGN_STYLE = Automatic
 
 // Metal. Shader warnings are errors, same as the Swift lint gate.

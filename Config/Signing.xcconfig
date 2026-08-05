@@ -1,7 +1,24 @@
-// Code signing for the targets that ship a signed binary: the app, the CLI, and the
-// app-hosted unit test bundle. The values come from Config/Base.xcconfig, where a
-// developer's gitignored Config/Local.xcconfig overrides them, so no identity or team
-// is hard-coded in shared configuration. A command-line override still wins over both
-// (CI runs `make test XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='`).
-CODE_SIGN_IDENTITY = $(OPENSKY_CODE_SIGN_IDENTITY)
-DEVELOPMENT_TEAM = $(OPENSKY_DEVELOPMENT_TEAM)
+// Code signing, checked in and identical for every target that produces a bundle: the
+// app, the CLI, the app-hosted unit test bundle, and the UI test runner.
+//
+// The identity is hard-coded on purpose. macOS keys TCC grants to a binary's code
+// signature, and ad-hoc signing produces a new signature on every build, so an ad-hoc
+// build is a new application every time: Automation, screen recording, and access to the
+// external volume the game install sits on are all requested again, interactively, in the
+// middle of a test run. Deriving the identity per machine had the same failure mode
+// whenever the derivation came up empty. One identity in shared configuration means a
+// checkout builds, and keeps its permissions, with no local setup at all.
+//
+// A machine without this certificate installed, and CI, override on the command line,
+// which wins over every xcconfig layer:
+//
+//   make test XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
+//
+// `Apple Development` resolves against whichever development certificate the keychain
+// holds for the team; the team is the certificate's OU field.
+CODE_SIGN_IDENTITY = Apple Development
+DEVELOPMENT_TEAM = 92X872A57T
+
+// Optional, gitignored, and nothing creates it: assign CODE_SIGN_IDENTITY and
+// DEVELOPMENT_TEAM here to sign with something else. A later assignment wins.
+#include? "Local.xcconfig"
