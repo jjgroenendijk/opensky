@@ -44,6 +44,7 @@ different failure modes.
 * [Output contract](#output-contract)
 * [The locomotion bridge](#the-locomotion-bridge)
 * [First person](#first-person)
+* [The Player and Locomotion destination](#the-player-and-locomotion-destination)
 * [The tally](#the-tally)
 * [Flagged assumptions](#flagged-assumptions)
 * [Verification](#verification)
@@ -582,6 +583,51 @@ with reason `noFirstPersonModel`, which is why vanilla iron gauntlets show nothi
 arms while the cuirass and the hands do. That is a flagged consequence of the rule below,
 not a defect in the assembler.
 
+## The Player and Locomotion destination
+
+`World > Player & Locomotion` (`Destination-playerLocomotion`) is the milestone's
+verification surface: everything above is inspectable there, and everything the player can
+do with a key is reachable from a control. Five sections, in the order a session reaches for
+them.
+
+**State** — where the capsule is, which gait resolved, which source moved it, and the
+resolved gait speeds with their provenance. `LocomotionCameraModeControl` is the same
+three-mode selector `World > World > Camera` carries, repeated here because the capsule and
+both graphs are only simulated outside fly mode: a panel that showed frozen values with no
+way to unfreeze them from the same screen would fail the app-ui rule. Readout
+`LocomotionStateStatsLabel`.
+
+**Behavior Graph** — read-only: the active state path (machine, state, and the state being
+blended out of with its weight), every variable the bridge writes with the value the graph
+holds, the events raised, the events that came back, the names the graph declared no home
+for, and the tally's own coverage line. A variable the graph does not declare is listed as
+`<not declared by the graph>` rather than dropped, which is the whole point: a spelling
+mismatch has to look like a failure and not like a no-op. Readout
+`LocomotionGraphStatsLabel`.
+
+**Bindings** — every gameplay key this milestone added, with its live state.
+`LocomotionSneakControl` is a toggle because sneak is one; `LocomotionJumpControl` requests
+exactly one jump, the same latch the space bar sets. Run and sprint are held modifiers with
+nothing to latch, so they are listed and reported live: hold the key and the row turns
+active. Readout `LocomotionBindingsStatsLabel`.
+
+**Root Motion** — the movement-authority rule made visible. Two running totals that cannot
+both grow on one step, and a trace of the steps at which the answer changed.
+`LocomotionTraceClearControl` empties both. Readout `LocomotionMotionStatsLabel`.
+
+**Dev Controls** — `LocomotionForcedGaitControl` holds one gait regardless of input, and
+`LocomotionEventControl` plus `LocomotionRaiseEventControl` raise one graph event by name.
+A forced gait writes the graph's own inputs and the resolved gait speed and touches nothing
+else: the capsule keeps its gravity, its grounding and its collision, so a forced swim shows
+the swim clips on dry land rather than pretending the world changed. Raising an event goes
+through the same `raise` the bridge's edges use and answers whether the graph declared the
+name. Readout `LocomotionDevStatsLabel`.
+
+A held gait is the destination's one overridden-ness — the sidebar dot lights for it and
+"Reset all" releases it. Camera mode belongs to `World > World` and is deliberately not
+claimed twice; sneaking, jumping and raising an event are world actions rather than
+settings, so none of them lights the dot.
+
 ## The tally
 
 `BehaviorTally` is the same ranked honest-coverage ledger as `ConditionTally` and
@@ -732,3 +778,69 @@ the assembled rig carries `Camera1st [Cam1]`, that the arms change the frame in 
 and not in the others, that idle, walk, and sprint differ from each other, that a
 first-to-third-to-first mode switch returns a byte-identical frame, and that an equipped
 weapon reaches the arms. Captures go to gitignored `logs/`.
+
+### The M14 acceptance gate
+
+Item 14.8 (#191) is one continuous route through every locomotion state, driven by key
+events rather than by calls into the engine. `M14AcceptanceChain` sends real `NSEvent` key
+presses to a real `GameMetalView`, which fills the shipping `CameraInputState`; each frame
+drains it into a `CameraInput` and runs `LocomotionBridge.acceptFrame` and
+`WalkController.update` in the order `Renderer.advanceCamera` runs them. The world under it
+(`M14AcceptanceWorld`) is flat ground, a 20-degree slope, a basin with water 156 units deep,
+and a cell boundary, all as closed-form functions of x; the graph over it
+(`M14AcceptanceFixture`) is an eight-state machine, one state per locomotion state, whose
+transitions are wildcards on the events the bridge itself raises. `Run` is the one exception:
+running is a gait rather than an edge, so `moveStart` carries two transitions and the
+conditioned one, `Speed >= 270`, outranks its plain sibling.
+
+`M14AcceptanceTests` walks it: idle, walk, run up the slope, sprint, a standing jump and its
+landing, a swim across the basin, a cell-boundary crossing that changes neither the capsule
+nor the graph state, a sneak, a door round trip that comes back to the same position with the
+sneak toggle intact, and a run of zero-length frames that advances nothing. It also asserts
+the first-person graph took the identical state path from the identical input, and that the
+route repeats exactly.
+
+Two engine findings came out of writing it. A reset — and a door transition is a reset —
+used to hand the graph a `JumpFall` and a `JumpLand` for the single step a freshly-seated
+`WalkController` spends deciding it is standing on something; ground events now start once
+the capsule is standing, so a teleport no longer reports a landing the player never took. And
+the root-motion speed floor is marginal against per-step clip jitter: see issue #370.
+
+`M14AcceptanceBudgetTests` holds the route to the shipping fly-path budgets through
+`validatedFlyUpdateBudgets` and the same `CellStreamingFlyBenchmarkConfiguration`
+`openskycli bench --fly-path` uses — both graphs are animation work and are counted against
+the one `animationUpdateBudgetMS` — and pins the two ends of the fixed-step rule: a stalled
+frame drives at most `maximumFrameTime / fixedTimeStep` graph updates, and a zero-length
+frame drives none.
+
+`M14AcceptancePanelTests` runs the destination above as one surface on a single provider set:
+start the simulation from the camera control, read all five readouts back by accessibility
+id, drive the bindings, force a gait, and let the sidebar's own reset release it.
+`PlayerLocomotionPanelTests` and `DestinationRegistryLocomotionTests` cover the sections and
+the registry contract on their own.
+
+The env-gated half is
+`make realtest T='M14AcceptanceRealDataTests/drivesTheWholeRouteThroughTheVanillaPlayerGraph()'`,
+which drives the same gaits over the vanilla `0_master.hkx`, its `_1stperson` peer, and the
+launch cell's real `LAND` heights, device-free. Run on 2026-08-05 against the local install:
+684 updates, 6,836 generator evaluations and 4,870 modifier evaluations on the third-person
+graph and 6,836 and 5,554 on the first-person one; zero unevaluated generators, zero partial
+generators, zero unresolved clips, zero unapplied bindings, zero undecodable objects, and
+zero missing variable or event names on either perspective. The 2,273 third-person and 2,957
+first-person gap entries are all semantics still owed rather than failures: pass-through
+modifiers `BSSpeedSamplerModifier` 684, `hkbKeyframeBonesModifier` 684,
+`hkbRigidBodyRagdollControlsModifier` 684, `BSIsActiveModifier` 80, `BSModifyOnceModifier` 1,
+plus `hkbTwistModifier` 684 on the first-person graph only, and the feature gaps
+`clipUserControlled` 79 and `stateMachineTransitionInterrupted` 61. The report goes to
+gitignored `logs/m14-acceptance-route.log`.
+
+The device-gated half is
+`make realtest T='M14AcceptanceRenderTests/drawsThePlayerFollowingItsLocomotionState()'`.
+On the same run: the body drew 41,274 pixels against an empty frame, a sprint moved 43,605
+pixels against idle, a second player driven through the identical input sequence from a fresh
+graph reproduced the sprint frame with 0 pixels different, first person differed from third
+by 381,016 pixels, and a third-to-first-to-third mode round trip returned a byte-identical
+frame. The cross-check is a second player rather than a return to idle because a locomotion
+clip is still playing while the player stands still: two idle frames a second apart are two
+phases of one animation and are legitimately different pictures. Captures go to gitignored
+`logs/`.

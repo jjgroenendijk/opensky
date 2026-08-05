@@ -156,16 +156,22 @@ enum DestinationRegistry {
                 panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
                 return panel
             },
-            overrides: DestinationOverrideActions(
-                isOverridden: {
-                    CameraSection.isOverridden(provider: $0.providers)
-                        || FirstPersonSection.isOverridden(provider: $0.providers)
-                },
-                resetToDefaults: {
-                    CameraSection.resetToDefaults(provider: $0.providers)
-                    FirstPersonSection.resetToDefaults(provider: $0.providers)
-                }
-            )
+            overrides: worldOverrides
+        ),
+        DestinationDescriptor(
+            id: "playerLocomotion",
+            title: "Player & Locomotion",
+            section: .world,
+            symbolName: "figure.walk",
+            content: .worldInspector { context in
+                let panel = PlayerLocomotionPanelViewController()
+                panel.provider = context.providers
+                panel.cameraProvider = context.providers
+                let providers = context.providers
+                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                return panel
+            },
+            overrides: playerLocomotionOverrides
         ),
         DestinationDescriptor(
             id: "environment",

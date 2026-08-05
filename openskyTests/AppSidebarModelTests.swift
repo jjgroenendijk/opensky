@@ -16,7 +16,7 @@ struct AppSidebarModelTests {
         #expect(
             groups[0].destinations.map(\.id)
                 == [
-                    "world", "environment", "hudInteraction", "systemMenu",
+                    "world", "playerLocomotion", "environment", "hudInteraction", "systemMenu",
                     "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
                     "runtimeState", "scripts", "journal"
                 ]

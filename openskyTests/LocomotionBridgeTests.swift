@@ -177,6 +177,10 @@ struct LocomotionBridgeTests {
         // reach roughly that height and come back.
         #expect(apex > 60)
         #expect(abs(controller.feetPosition.z) < 1e-3)
+        // One more step, because the controller resolves the landing and the
+        // bridge is told about it on the step after: the grounded flag a step
+        // plans against is the one the previous step left behind.
+        Self.advance(&controller, camera: &camera, bridge: bridge, steps: 1)
         #expect(Self.raised(bridge, LocomotionGraphNames.jumpLand) == 1)
     }
 

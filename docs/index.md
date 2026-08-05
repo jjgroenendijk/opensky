@@ -153,7 +153,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   and triggers, weighted blends, state machines with event-driven transitions, crossfades
   and nesting, the transition-condition language, clip phase synchronization, root-motion
   extraction, multi-file behavior references, the first-person rig and its second graph
-  instance, and the honest-coverage tally.
+  instance, the `World > Player & Locomotion` destination, and the honest-coverage tally.
 * [Living environment integration](/engine/living-environment.md) - combined M7 runtime,
   app A/B controls, exterior/interior evidence + frame/build/footprint gate.
 * [Menu mode](/engine/menu-mode.md) - push/pop menu stack, world-vs-menu input-capture

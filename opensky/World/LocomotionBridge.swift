@@ -107,6 +107,20 @@ nonisolated final class LocomotionBridge {
     /// step in that frame reads the same value.
     var intent: LocomotionIntent = .still
 
+    /// A gait held regardless of what the player is pressing, or nil for the
+    /// ordinary resolution (issue #191). This is the dev control behind
+    /// `World > Player & Locomotion > Dev Controls`, and it exists so a state
+    /// the route is awkward to reach — sprinting up a slope, swimming clips on
+    /// dry land — can be inspected without staging the world for it.
+    ///
+    /// It forces the graph's inputs and the resolved gait speed, and nothing
+    /// else: it does not put the capsule in water, and the controller's own
+    /// gravity, grounding and collision are untouched. Forcing `swim` therefore
+    /// shows the swim clips and the swim speed while the player still walks on
+    /// the floor, which is what a dev control should do rather than pretending
+    /// the world changed.
+    var forcedGait: LocomotionGait?
+
     private(set) var status: LocomotionStatus
     /// Third-person graph events awaiting a consumer (issue #352). Only the
     /// third-person graph feeds it: both graphs run the same locomotion clips
@@ -118,7 +132,24 @@ nonisolated final class LocomotionBridge {
     private var wasSprinting = false
     private var wasSneaking = false
     private var wasSwimming = false
+    /// The swim edge the graph was last told about. Kept apart from
+    /// `wasSwimming`, which drives the water-depth hysteresis: a forced swim
+    /// gait must reach the graph without also telling `resolveSwim` that the
+    /// capsule is already in water and may leave at the shallower threshold.
+    private var wasGraphSwimming = false
     private var wasGrounded = true
+    /// False until a step has seen the capsule standing on something.
+    ///
+    /// A ground transition is an edge between two samples, and a reset throws
+    /// the earlier one away: `WalkController.reset(cameraPosition:)` leaves
+    /// `isGrounded` false and the next step decides whether the capsule is
+    /// standing. Reporting that first change would tell the graph the player
+    /// had fallen and landed on every teleport — and a door transition is a
+    /// teleport — so ground events start once the capsule is standing rather
+    /// than at the reset. A player reseated in mid-air therefore gets no
+    /// landing event for the drop the teleport caused, which is the intended
+    /// reading: the drop is the reset's, not the player's (issue #191).
+    private var hasGroundSample = false
     private var isAirborneFromJump = false
     private var pendingJump = false
 
@@ -170,8 +201,8 @@ nonisolated final class LocomotionBridge {
 
         writeVariables(state: state, gait: gait, direction: direction, moving: moving)
         raiseEdgeEvents(
-            moving: moving, gait: gait, swimming: swim != nil, jumping: jumpImpulse != nil,
-            grounded: state.isGrounded
+            moving: moving, gait: gait, swimming: swim != nil || gait == .swim,
+            jumping: jumpImpulse != nil, grounded: state.isGrounded
         )
         let rootMotion = advanceGraph(deltaTime: state.dt)
 
@@ -191,9 +222,11 @@ nonisolated final class LocomotionBridge {
         previousYaw = state.yaw
         wasMoving = moving
         wasSprinting = gait == .sprint
-        wasSneaking = intent.sneak
+        wasSneaking = isSneakingNow
         wasSwimming = swim != nil
+        wasGraphSwimming = swim != nil || gait == .swim
         wasGrounded = state.isGrounded
+        hasGroundSample = hasGroundSample || state.isGrounded
         status.update(gait: gait, plan: plan, state: state, waterSurface: swim)
         return plan
     }
@@ -224,7 +257,9 @@ nonisolated final class LocomotionBridge {
         wasSprinting = false
         wasSneaking = false
         wasSwimming = false
+        wasGraphSwimming = false
         wasGrounded = true
+        hasGroundSample = false
         isAirborneFromJump = false
         pendingJump = false
         graphEvents.clear()
@@ -265,6 +300,9 @@ nonisolated final class LocomotionBridge {
     }
 
     private func resolveGait(swimming: Bool) -> LocomotionGait {
+        if let forcedGait {
+            return forcedGait
+        }
         if swimming {
             return .swim
         }
@@ -364,29 +402,6 @@ nonisolated final class LocomotionBridge {
         write(.real(configuration.runSpeed.value), to: LocomotionGraphNames.speedRun)
     }
 
-    /// Writes one variable to every attached graph. Both see identical inputs
-    /// by construction: there is one call site per variable and it fans out
-    /// here, so the two graphs cannot be fed different state.
-    private func write(_ value: BehaviorVariableValue, to name: String) {
-        writeToFirstPersonGraph(value, to: name)
-        guard let graph else { return }
-        if graph.setVariable(value, named: name) {
-            status.noteVariableWritten(name)
-        } else {
-            status.noteVariableMissing(name)
-        }
-    }
-
-    private func raise(_ name: String) {
-        raiseOnFirstPersonGraph(name)
-        guard let graph else { return }
-        if graph.raiseEvent(named: name) {
-            status.noteEventRaised(name)
-        } else {
-            status.noteEventMissing(name)
-        }
-    }
-
     /// Raises the transitions this step crossed, in a fixed order so a step
     /// that changes several things at once still produces the same event
     /// sequence on every run.
@@ -404,20 +419,21 @@ nonisolated final class LocomotionBridge {
         if sprinting != wasSprinting {
             raise(sprinting ? LocomotionGraphNames.sprintStart : LocomotionGraphNames.sprintStop)
         }
-        if intent.sneak != wasSneaking {
-            raise(intent.sneak ? LocomotionGraphNames.sneakStart : LocomotionGraphNames.sneakStop)
+        let sneaking = isSneakingNow
+        if sneaking != wasSneaking {
+            raise(sneaking ? LocomotionGraphNames.sneakStart : LocomotionGraphNames.sneakStop)
         }
-        if swimming != wasSwimming {
+        if swimming != wasGraphSwimming {
             raise(swimming ? LocomotionGraphNames.swimStart : LocomotionGraphNames.swimStop)
         }
         if jumping {
             raise(LocomotionGraphNames.jumpUp)
-        } else if grounded, !wasGrounded {
+        } else if hasGroundSample, grounded, !wasGrounded {
             // Landing is the controller's observation, not the graph's: the
             // graph is told that the capsule arrived.
             isAirborneFromJump = false
             raise(LocomotionGraphNames.jumpLand)
-        } else if !grounded, wasGrounded, !jumping {
+        } else if hasGroundSample, !grounded, wasGrounded {
             raise(LocomotionGraphNames.jumpFall)
         }
     }
