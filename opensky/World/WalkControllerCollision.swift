@@ -17,25 +17,25 @@ nonisolated extension WalkController {
             collisionQuery: collisionQuery
         )
         if let maintained {
-            return HorizontalMove(result: direct, supportHeight: maintained)
+            return HorizontalMove(result: direct, support: maintained)
         }
         guard isGrounded, isHorizontallyBlocked(direct, start: start, desired: displacement) else {
-            return HorizontalMove(result: direct, supportHeight: nil)
+            return HorizontalMove(result: direct, support: nil)
         }
         guard
-            let supportHeight = stepSupport(
+            let support = stepSupport(
                 from: start,
                 displacement: displacement,
                 collider: collider,
                 collisionQuery: collisionQuery
-            ) else { return HorizontalMove(result: direct, supportHeight: nil) }
+            ) else { return HorizontalMove(result: direct, support: nil) }
         let raised = collider.move(
             from: start,
             displacement: SIMD3<Float>(0, 0, configuration.stepHeight.value),
             query: collisionQuery
         )
         guard raised.position.z >= start.z + configuration.stepHeight.value - 0.05 else {
-            return HorizontalMove(result: direct, supportHeight: nil)
+            return HorizontalMove(result: direct, support: nil)
         }
         let across = collider.move(
             from: raised.position,
@@ -43,18 +43,22 @@ nonisolated extension WalkController {
             query: collisionQuery
         )
         guard horizontalProgress(across.position - start, along: displacement) > 0 else {
-            return HorizontalMove(result: direct, supportHeight: nil)
+            return HorizontalMove(result: direct, support: nil)
         }
         var steppedPosition = across.position
-        steppedPosition.z = supportHeight
+        steppedPosition.z = support.height
         return HorizontalMove(
             result: CapsuleMoveResult(
                 position: steppedPosition,
-                contacts: [CapsuleCollisionContact(normal: SIMD3(0, 0, 1), depth: 0)],
+                contacts: [CapsuleCollisionContact(
+                    normal: SIMD3(0, 0, 1),
+                    depth: 0,
+                    material: support.material
+                )],
                 hasUnresolvedPenetration: raised.hasUnresolvedPenetration
                     || across.hasUnresolvedPenetration
             ),
-            supportHeight: supportHeight
+            support: support
         )
     }
 
@@ -63,13 +67,13 @@ nonisolated extension WalkController {
         displacement: SIMD3<Float>,
         collider: CapsuleWorldCollider,
         collisionQuery: CollisionQuery
-    ) -> Float? {
-        guard let activeStepSupportHeight else { return nil }
+    ) -> CapsuleStepSupport? {
+        guard let activeStepSupport else { return nil }
         let center = SIMD2<Float>(start.x + displacement.x, start.y + displacement.y)
-        let centerSupport = collider.stepSupportHeight(
+        let centerSupport = collider.stepSupport(
             at: center,
-            minimumHeight: activeStepSupportHeight - 0.1,
-            maximumHeight: activeStepSupportHeight + 0.1,
+            minimumHeight: activeStepSupport.height - 0.1,
+            maximumHeight: activeStepSupport.height + 0.1,
             query: collisionQuery
         )
         if let centerSupport {
@@ -88,13 +92,13 @@ nonisolated extension WalkController {
         displacement: SIMD3<Float>,
         collider: CapsuleWorldCollider,
         collisionQuery: CollisionQuery
-    ) -> Float? {
+    ) -> CapsuleStepSupport? {
         let horizontal = SIMD2<Float>(displacement.x, displacement.y)
         let length = simd_length(horizontal)
         guard length > Float.ulpOfOne else { return nil }
         let direction = horizontal / length
         let point = SIMD2<Float>(start.x, start.y) + direction * (capsule.radius + length)
-        return collider.stepSupportHeight(
+        return collider.stepSupport(
             at: point,
             minimumHeight: start.z + 0.05,
             maximumHeight: start.z + configuration.stepHeight.value,
@@ -122,6 +126,18 @@ nonisolated extension WalkController {
 
     func hasWalkableContact(_ contacts: [CapsuleCollisionContact]) -> Bool {
         contacts.contains { isWalkable($0.normal) }
+    }
+
+    /// The material of the flattest walkable contact, which is the one the
+    /// weight is on: several shapes can touch the capsule at once — a floor and
+    /// the wall beside it — and only the floor is what is being stood on.
+    /// Contacts that name no material are skipped rather than winning, so a
+    /// material-less decoration touching the foot does not silence the step.
+    func walkableMaterial(_ contacts: [CapsuleCollisionContact]) -> FormID? {
+        contacts
+            .filter { isWalkable($0.normal) && $0.material != nil }
+            .max { $0.normal.z < $1.normal.z }?
+            .material
     }
 
     func isWalkable(_ normal: SIMD3<Float>) -> Bool {

@@ -18,6 +18,17 @@ nonisolated enum NIFCompressedCollisionMesh {
     struct Soup {
         let vertices: [SIMD3<Float>]
         let indices: [UInt32]
+        /// `SkyrimHavokMaterial` from the block's chunk-material table
+        /// (issue #358). Nil where the table is empty or the chunk indexes
+        /// past it, which is malformed data rather than a reason to drop the
+        /// geometry: a surface with no material still stops the player.
+        let material: UInt32?
+
+        init(vertices: [SIMD3<Float>], indices: [UInt32], material: UInt32? = nil) {
+            self.vertices = vertices
+            self.indices = indices
+            self.material = material
+        }
     }
 
     struct ChunkTransform {
@@ -35,21 +46,25 @@ nonisolated enum NIFCompressedCollisionMesh {
         try skipIntegerArray(reader: &reader, label: "32-bit materials")
         try skipIntegerArray(reader: &reader, label: "16-bit materials")
         try skipIntegerArray(reader: &reader, label: "8-bit materials")
-        try skipChunkMaterials(reader: &reader)
+        let materials = try readChunkMaterials(reader: &reader)
         _ = try reader.readUInt32() // named material count; array is not serialized
         let transforms = try readTransforms(reader: &reader)
         let bigVertices = try readBigVertices(reader: &reader, scale: shapeScale)
-        let bigIndices = try readBigTriangles(reader: &reader, vertexCount: bigVertices.count)
+        let bigTriangles = try readBigTriangles(
+            reader: &reader,
+            vertexCount: bigVertices.count,
+            materials: materials
+        )
         let chunks = try readChunks(
             reader: &reader,
             transforms: transforms,
-            scale: shapeScale
+            scale: shapeScale,
+            materials: materials
         )
         _ = try reader.readUInt32() // unused Num Convex Piece A
 
-        var soups: [Soup] = []
-        if !bigIndices.isEmpty {
-            soups.append(Soup(vertices: bigVertices, indices: bigIndices))
+        var soups = bigTriangles.map {
+            Soup(vertices: bigVertices, indices: $0.indices, material: $0.material)
         }
         soups.append(contentsOf: chunks)
         return soups
@@ -79,13 +94,24 @@ nonisolated enum NIFCompressedCollisionMesh {
         reader.skip(count * 4)
     }
 
-    private static func skipChunkMaterials(reader: inout BinaryReader) throws {
+    /// The block's `Chunk Materials` table: one `SkyrimHavokMaterial` plus the
+    /// `HavokFilter` beside it, per entry. Chunks and big triangles both name
+    /// their surface by indexing into this.
+    private static func readChunkMaterials(
+        reader: inout BinaryReader
+    ) throws -> [UInt32] {
         let count = try checkedCount(
             reader: &reader,
             stride: 8,
             label: "chunk materials"
         )
-        reader.skip(count * 8) // Skyrim material uint32 + HavokFilter
+        var materials: [UInt32] = []
+        materials.reserveCapacity(count)
+        for _ in 0 ..< count {
+            try materials.append(reader.readUInt32())
+            reader.skip(4) // HavokFilter: layer/flags/group, not a material
+        }
+        return materials
     }
 
     private static func readTransforms(
@@ -127,24 +153,45 @@ nonisolated enum NIFCompressedCollisionMesh {
         return vertices
     }
 
+    /// Big triangles grouped by the material each names, in first-appearance
+    /// order. A chunk carries one material for all of its geometry, but the
+    /// big-triangle array is per triangle, so grouping is what keeps one
+    /// material per emitted soup without a per-triangle table downstream.
     private static func readBigTriangles(
         reader: inout BinaryReader,
-        vertexCount: Int
-    ) throws -> [UInt32] {
+        vertexCount: Int,
+        materials: [UInt32]
+    ) throws -> [(material: UInt32?, indices: [UInt32])] {
         let count = try checkedCount(reader: &reader, stride: 12, label: "big triangles")
-        var indices: [UInt32] = []
-        indices.reserveCapacity(count * 3)
+        var groups: [(material: UInt32?, indices: [UInt32])] = []
+        var groupIndexes: [Int: Int] = [:]
         for _ in 0 ..< count {
             let triangle = try [
                 reader.readUInt16(),
                 reader.readUInt16(),
                 reader.readUInt16()
             ]
-            _ = try reader.readUInt32() // material table index
+            let materialIndex = try Int(reader.readUInt32())
             _ = try reader.readUInt16() // welding info
+            var indices: [UInt32] = []
             try appendValidated(triangle, vertexCount: vertexCount, into: &indices)
+            if let existing = groupIndexes[materialIndex] {
+                groups[existing].indices.append(contentsOf: indices)
+            } else {
+                groupIndexes[materialIndex] = groups.count
+                groups.append((material(at: materialIndex, in: materials), indices))
+            }
         }
-        return indices
+        return groups
+    }
+
+    /// One entry of the chunk-material table, or nil when the index is out of
+    /// range. nif.xml types a big triangle's material as a bare `uint` without
+    /// saying it is a table index; every vanilla value observed is in range for
+    /// the table, and the alternative reading — a raw `SkyrimHavokMaterial` —
+    /// would have to be a value no material hashes to.
+    static func material(at index: Int, in materials: [UInt32]) -> UInt32? {
+        materials.indices.contains(index) ? materials[index] : nil
     }
 
     static func checkedCount(

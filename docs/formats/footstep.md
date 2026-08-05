@@ -33,7 +33,7 @@ line 4216) and against a read-only `Skyrim.esm` probe on 2026-08-04.
 - `IPCT` impact
 - `ARMA.SNDD` — which set an actor walks with
 - What vanilla actually holds
-- Surface material, and what OpenSky does without one
+- Surface material
 
 ## The chain
 
@@ -148,19 +148,31 @@ reaches `sound\fx\fst\npc\stonesolid\walk\l\fst_npc_stonesolid_walk_01.wav`. Tha
 issue #352 also added the [WAVE reader](/formats/wav.md) — the chain resolved cleanly to a
 container the audio engine could not play.
 
-## Surface material, and what OpenSky does without one
+## Surface material
 
-The `IPDS` table is indexed by `MATT` material type, and OpenSky's collision world carries
-no per-triangle Havok material yet, so no caller can name the surface under the foot.
-`ImpactDataSet.impact(for:)` therefore answers a nil material with the table's
-*representative* impact: the most frequently paired `IPCT`, ties broken by record order.
+The `IPDS` table is indexed by `MATT` material type, and the surface under the foot supplies
+it (issue #358). The chain that produces it is documented in
+[material types](/formats/material-type.md); the short version is that a collision mesh
+names its material by hashing the Creation Kit name, exterior ground names it through the
+winning `LTEX`'s `MNAM`, and both resolve to one `MATT` FormID at cell-build time.
 
-That is a measurement of what the authored table mostly says rather than a hardcoded
-material, and for a set whose entries all agree — the common vanilla case, and what UESP
-means by "generally the same for all" — it returns that one impact exactly. In practice
-the representative entry for the vanilla humanoid sets is the stone-solid impact. Passing
-a real material through the same call is a one-argument change once the collision world
-carries one; that work is issue #358.
+`WalkController.groundMaterial` is where it surfaces: the material of the flattest walkable
+contact, or of the terrain vertex the capsule was snapped to. The renderer's audio tick
+hands it to `WorldAudioFootstepDirector.handleGraphEvents`, which passes it to
+`FootstepStore.resolve(tag:gait:in:material:)`. Snow, wood, grass and gravel are four
+different sounds because they are four different `PNAM` pairs.
+
+`ImpactDataSet.impact(for:)` still answers a nil material with the table's *representative*
+impact: the most frequently paired `IPCT`, ties broken by record order. That path is no
+longer the normal case but it is not dead — an airborne player, a mesh carrying a material
+value no `MATT` hashes to, and a landscape texture with no `MNAM` all reach it. It is a
+measurement of what the authored table mostly says rather than a hardcoded material, and
+for a set whose entries all agree — what UESP means by "generally the same for all" — it
+returns that one impact exactly. For the vanilla humanoid sets it is the stone-solid impact.
+
+A material the table has no pair for falls back the same way. Vanilla `IPDS` tables carry a
+pair per material the Creation Kit knows about, so this is rare; walking the `MATT` `PNAM`
+parent chain to find a broader match would be the next refinement, and nothing does it yet.
 
 `FootstepRealDataTests` is the env-gated evidence that the whole chain holds against the
 install: every tag in every non-swimming gait of the four humanoid sets resolves to a

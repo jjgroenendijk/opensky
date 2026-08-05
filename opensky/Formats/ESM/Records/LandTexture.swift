@@ -14,6 +14,11 @@ nonisolated struct LandTexture {
     let editorID: String?
     /// TNAM — the TXST texture set this landscape texture draws from.
     let textureSet: FormID?
+    /// MNAM — the MATT material type ground painted with this texture is made
+    /// of (issue #358). This is the terrain half of the footstep material
+    /// chain: exterior ground is LAND rather than a collision mesh, so it names
+    /// its material here instead of through a Havok material value.
+    let materialType: FormID?
     /// Repeated GNAM fields — GRAS records eligible where this LTEX contributes.
     let grasses: [FormID]
 
@@ -25,6 +30,7 @@ nonisolated struct LandTexture {
 
         var editorID: String?
         var textureSet: FormID?
+        var materialType: FormID?
         var grasses: [FormID] = []
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
@@ -33,16 +39,21 @@ nonisolated struct LandTexture {
                 editorID = try reader.readZString()
             case "TNAM":
                 textureSet = try FormID(reader.readUInt32())
+            case "MNAM":
+                guard field.data.count == 4 else { break }
+                let id = try FormID(reader.readUInt32())
+                materialType = id.isNull ? nil : id
             case "GNAM":
                 try grasses.append(FormID(reader.readUInt32()))
-            // Skipped: MNAM (material type), HNAM (havok friction/
-            // restitution), SNAM (texture specular), INAM (SSE snow flag).
+            // Skipped: HNAM (havok friction/restitution), SNAM (texture
+            // specular), INAM (SSE snow flag).
             default:
                 break
             }
         }
         self.editorID = editorID
         self.textureSet = textureSet
+        self.materialType = materialType
         self.grasses = grasses
     }
 }

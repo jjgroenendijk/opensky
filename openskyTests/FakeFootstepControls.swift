@@ -13,6 +13,20 @@ final class FakeFootstepControls {
     var lastFootstepDescription: String?
     var lastFootstepError: String?
     var footstepCounts: (routed: Int, played: Int) = (0, 0)
+    /// Materials the section can pin (issue #358), and the pinned one.
+    var footstepMaterialOptions: [(id: FormID, name: String)] = []
+    var forcedFootstepMaterial: FormID?
+    /// What the ground contact reports when nothing is pinned.
+    var groundFootstepMaterialDescription = "none"
+
+    var currentFootstepMaterialDescription: String {
+        guard let forcedFootstepMaterial else { return groundFootstepMaterialDescription }
+        let name = footstepMaterialOptions
+            .first { $0.id == forcedFootstepMaterial }?.name
+            ?? forcedFootstepMaterial.description
+        return "\(name) (forced)"
+    }
+
     /// Tags the Footsteps section forced, in order.
     private(set) var forcedFootstepTags: [String] = []
     /// Failure the next `forcePlayFootstep(tag:)` reports; nil means success.
@@ -56,6 +70,19 @@ extension FakeAudioProvider {
         footsteps.footstepCounts
     }
 
+    var currentFootstepMaterialDescription: String {
+        footsteps.currentFootstepMaterialDescription
+    }
+
+    var footstepMaterialOptions: [(id: FormID, name: String)] {
+        footsteps.footstepMaterialOptions
+    }
+
+    var forcedFootstepMaterial: FormID? {
+        get { footsteps.forcedFootstepMaterial }
+        set { footsteps.forcedFootstepMaterial = newValue }
+    }
+
     func forcePlayFootstep(tag: String) -> String? {
         footsteps.forcePlayFootstep(tag: tag)
     }
@@ -85,6 +112,19 @@ extension FakeWorldProviders {
 
     var footstepCounts: (routed: Int, played: Int) {
         footsteps.footstepCounts
+    }
+
+    var currentFootstepMaterialDescription: String {
+        footsteps.currentFootstepMaterialDescription
+    }
+
+    var footstepMaterialOptions: [(id: FormID, name: String)] {
+        footsteps.footstepMaterialOptions
+    }
+
+    var forcedFootstepMaterial: FormID? {
+        get { footsteps.forcedFootstepMaterial }
+        set { footsteps.forcedFootstepMaterial = newValue }
     }
 
     func forcePlayFootstep(tag: String) -> String? {

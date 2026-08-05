@@ -1,5 +1,7 @@
 // Alternate NIF collision triangle stores used by
-// bhkPackedNiTriStripsShape and bhkNiTriStripsShape.
+// bhkPackedNiTriStripsShape and bhkNiTriStripsShape. The second of those two
+// lives in NIFCollisionTriStrips.swift; the shared `Soup` and the bounds
+// helpers at the bottom of this file are what they have in common.
 //
 // Reference: NifTools nif.xml (hkPackedNiTriStripsData,
 // bhkPackedNiTriStripsShape, bhkNiTriStripsShape, NiTriStripsData).
@@ -12,9 +14,29 @@ nonisolated enum NIFCollisionTriangleCollections {
     struct Soup {
         let vertices: [SIMD3<Float>]
         let indices: [UInt32]
+        /// `SkyrimHavokMaterial` for this soup's surface (issue #358), from the
+        /// sub-shape the triangles belong to. Nil when the block declares no
+        /// sub-shapes to take it from.
+        let material: UInt32?
+
+        init(vertices: [SIMD3<Float>], indices: [UInt32], material: UInt32? = nil) {
+            self.vertices = vertices
+            self.indices = indices
+            self.material = material
+        }
     }
 
-    static func decodePacked(data: Data, scale: SIMD3<Float>) throws -> Soup {
+    /// One `hkSubPartData`: the material plus the run of vertices it covers.
+    private struct SubShape {
+        let material: UInt32
+        let vertexCount: Int
+    }
+
+    /// A packed strip shape partitions its vertices between sub-shapes, and
+    /// each sub-shape names its own material. The soups this returns are that
+    /// partition: one per sub-shape that any triangle actually falls in, in
+    /// sub-shape order, sharing the block's single vertex array.
+    static func decodePacked(data: Data, scale: SIMD3<Float>) throws -> [Soup] {
         var reader = BinaryReader(data)
         let triangleCount = try checkedCount(
             reader: &reader,
@@ -54,148 +76,74 @@ nonisolated enum NIFCollisionTriangleCollections {
             vertices.append(point * scale * unitScale)
         }
 
-        let subShapeCount = try Int(reader.readUInt16())
-        guard subShapeCount <= reader.bytesRemaining / 12 else {
-            throw NIFError.malformed(
-                "packed sub-shape count \(subShapeCount) exceeds block size"
-            )
-        }
-        reader.skip(subShapeCount * 12)
-
-        var indices: [UInt32] = []
-        indices.reserveCapacity(triangleCount * 3)
-        for triangle in rawTriangles {
-            try appendValidated(triangle, vertexCount: vertexCount, into: &indices)
-        }
-        return Soup(vertices: vertices, indices: indices)
-    }
-
-    static func decodeTriStrips(data: Data, scale: SIMD3<Float>) throws -> Soup {
-        var reader = BinaryReader(data)
-        _ = try reader.readUInt32() // group ID
-        let vertexCount = try Int(reader.readUInt16())
-        _ = try reader.readUInt8() // keep flags
-        _ = try reader.readUInt8() // compress flags
-        let vertices = try readTriStripVertices(
-            reader: &reader,
-            count: vertexCount,
-            scale: scale
+        let subShapes = try readSubShapes(reader: &reader)
+        return try partitioned(
+            triangles: rawTriangles,
+            vertices: vertices,
+            subShapes: subShapes
         )
-        try skipTriStripAttributes(reader: &reader, vertexCount: vertexCount)
-        let declaredTriangleCount = try Int(reader.readUInt16())
-        let (points, lengths) = try readTriStripPoints(reader: &reader)
-        let indices = try stripTriangles(
-            points: points,
-            lengths: lengths,
-            vertexCount: vertexCount
-        )
-        guard indices.count / 3 == declaredTriangleCount else {
-            throw NIFError.malformed(
-                "NiTriStrips declares \(declaredTriangleCount) triangles, decoded "
-                    + "\(indices.count / 3)"
-            )
-        }
-        return Soup(vertices: vertices, indices: indices)
     }
 
-    private static func readTriStripVertices(
-        reader: inout BinaryReader,
-        count: Int,
-        scale: SIMD3<Float>
-    ) throws -> [SIMD3<Float>] {
-        guard try reader.readUInt8() != 0 else {
-            throw NIFError.malformed("NiTriStripsData has no vertices")
-        }
-        guard count <= reader.bytesRemaining / 12 else {
-            throw NIFError.malformed("strip vertex count \(count) exceeds block size")
-        }
-        let unitScale = NIFCollisionModel.havokToEngineScale
-        var vertices: [SIMD3<Float>] = []
-        vertices.reserveCapacity(count)
-        for _ in 0 ..< count {
-            try vertices.append(reader.readVector3() * scale * unitScale)
-        }
-        return vertices
-    }
-
-    private static func skipTriStripAttributes(
-        reader: inout BinaryReader,
-        vertexCount: Int
-    ) throws {
-        let dataFlags = try reader.readUInt16()
-        _ = try reader.readUInt32() // material CRC
-        if try reader.readUInt8() != 0 {
-            try skip(reader: &reader, count: vertexCount, stride: 12, label: "normals")
-            if dataFlags & 0x1000 != 0 {
-                try skip(reader: &reader, count: vertexCount, stride: 24, label: "tangents")
-            }
-        }
-        reader.skip(16) // NiBound
-        if try reader.readUInt8() != 0 {
-            try skip(reader: &reader, count: vertexCount, stride: 16, label: "colors")
-        }
-        try skip(
-            reader: &reader,
-            count: vertexCount * Int(dataFlags & 1),
-            stride: 8,
-            label: "UVs"
-        )
-        reader.skip(8) // ConsistencyType + additional data ref
-    }
-
-    private static func readTriStripPoints(
+    private static func readSubShapes(
         reader: inout BinaryReader
-    ) throws -> ([UInt16], [Int]) {
-        let stripCount = try Int(reader.readUInt16())
-        guard stripCount <= reader.bytesRemaining / 2 else {
-            throw NIFError.malformed("NiTriStrips strip count \(stripCount) exceeds block size")
+    ) throws -> [SubShape] {
+        let count = try Int(reader.readUInt16())
+        guard count <= reader.bytesRemaining / 12 else {
+            throw NIFError.malformed("packed sub-shape count \(count) exceeds block size")
         }
-        var lengths: [Int] = []
-        lengths.reserveCapacity(stripCount)
-        for _ in 0 ..< stripCount {
-            try lengths.append(Int(reader.readUInt16()))
+        var subShapes: [SubShape] = []
+        subShapes.reserveCapacity(count)
+        for _ in 0 ..< count {
+            reader.skip(4) // HavokFilter: layer/flags/group, not a material
+            let vertexCount = try Int(reader.readUInt32())
+            try subShapes.append(SubShape(
+                material: reader.readUInt32(),
+                vertexCount: vertexCount
+            ))
         }
-        guard try reader.readUInt8() != 0 else {
-            throw NIFError.malformed("NiTriStripsData has no point arrays")
-        }
-        let pointCount = lengths.reduce(0, +)
-        guard pointCount <= reader.bytesRemaining / 2 else {
-            throw NIFError.malformed("NiTriStrips point count \(pointCount) exceeds block size")
-        }
-        var points: [UInt16] = []
-        points.reserveCapacity(pointCount)
-        for _ in 0 ..< pointCount {
-            try points.append(reader.readUInt16())
-        }
-        return (points, lengths)
+        return subShapes
     }
 
-    private static func stripTriangles(
-        points: [UInt16],
-        lengths: [Int],
-        vertexCount: Int
-    ) throws -> [UInt32] {
-        var output: [UInt32] = []
-        var cursor = 0
-        for length in lengths {
-            guard length >= 3 else {
-                throw NIFError.malformed("NiTriStrips length \(length) is below 3")
+    /// Splits the triangle list by the sub-shape its first vertex falls in. A
+    /// vanilla triangle never straddles two sub-shapes; one that did would be
+    /// assigned by that first vertex rather than dropped, because a surface
+    /// with a debatable material still has to stop the player.
+    private static func partitioned(
+        triangles: [[UInt16]],
+        vertices: [SIMD3<Float>],
+        subShapes: [SubShape]
+    ) throws -> [Soup] {
+        guard !subShapes.isEmpty else {
+            var indices: [UInt32] = []
+            indices.reserveCapacity(triangles.count * 3)
+            for triangle in triangles {
+                try appendValidated(triangle, vertexCount: vertices.count, into: &indices)
             }
-            for triangle in 0 ..< length - 2 {
-                let first = points[cursor + triangle]
-                let second = points[cursor + triangle + 1]
-                let third = points[cursor + triangle + 2]
-                let ordered = triangle.isMultiple(of: 2)
-                    ? [first, second, third]
-                    : [first, third, second]
-                try appendValidated(ordered, vertexCount: vertexCount, into: &output)
-            }
-            cursor += length
+            return indices.isEmpty ? [] : [Soup(vertices: vertices, indices: indices)]
         }
-        return output
+        var bounds: [Int] = []
+        var total = 0
+        for subShape in subShapes {
+            total += max(subShape.vertexCount, 0)
+            bounds.append(total)
+        }
+        var grouped = [[UInt32]](repeating: [], count: subShapes.count)
+        for triangle in triangles {
+            var indices: [UInt32] = []
+            try appendValidated(triangle, vertexCount: vertices.count, into: &indices)
+            let owner = bounds.firstIndex { Int(indices[0]) < $0 } ?? subShapes.count - 1
+            grouped[owner].append(contentsOf: indices)
+        }
+        return zip(subShapes, grouped).compactMap { subShape, indices in
+            indices.isEmpty ? nil : Soup(
+                vertices: vertices,
+                indices: indices,
+                material: subShape.material
+            )
+        }
     }
 
-    private static func appendValidated(
+    static func appendValidated(
         _ triangle: [UInt16],
         vertexCount: Int,
         into output: inout [UInt32]
@@ -206,7 +154,7 @@ nonisolated enum NIFCollisionTriangleCollections {
         output.append(contentsOf: triangle.map(UInt32.init))
     }
 
-    private static func skip(
+    static func skip(
         reader: inout BinaryReader,
         count: Int,
         stride: Int,
@@ -218,7 +166,7 @@ nonisolated enum NIFCollisionTriangleCollections {
         reader.skip(count * stride)
     }
 
-    private static func checkedCount(
+    static func checkedCount(
         reader: inout BinaryReader,
         stride: Int,
         label: String

@@ -113,6 +113,20 @@ printf '%s\n' "$footstep" | grep -q '^set: DefaultFootstepSet ' \
   || fail "footstep probe did not resolve the default set"
 printf '%s\n' "$footstep" | grep -q '^  FootLeft: .* -> .* -> sound' \
   || fail "footstep probe did not resolve FootLeft to a sound file"
+printf '%s\n' "$footstep" | grep -q '^materials: [0-9]* MATT, [0-9]* reachable' \
+  || fail "footstep probe did not report the MATT index"
+
+# Surface material (issue #358): naming a real MATT must take the same tag down
+# a different branch of the IPDS table, which is the end-to-end evidence that
+# the material half of the chain is wired rather than always falling back.
+run "footstep chain on snow" footstep --material MaterialSnow
+snow="$(awk '/^--- footstep chain on snow/{f=1;next} /^--- /{f=0} f' "$log")"
+printf '%s\n' "$snow" | grep -q '^material: MaterialSnow$' \
+  || fail "footstep probe did not resolve the snow material"
+snow_step="$(printf '%s\n' "$snow" | grep -m1 '^  FootLeft: ')"
+stone_step="$(printf '%s\n' "$footstep" | grep -m1 '^  FootLeft: ')"
+[ -n "$snow_step" ] && [ "$snow_step" != "$stone_step" ] \
+  || fail "footstep probe resolved the same sound with and without a material"
 
 run "cell summary (first-render cell)" cell
 run "collision grid (5x5 around first-render cell)" collision --radius 2

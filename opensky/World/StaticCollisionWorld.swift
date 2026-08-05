@@ -10,6 +10,25 @@ nonisolated struct StaticCollisionShape {
     let transform: float4x4
     let geometry: NIFCollisionGeometry
     let bounds: ModelBounds
+    /// The MATT material type this surface is made of (issue #358), already
+    /// resolved from the NIF's Havok material value at build time so that
+    /// nothing downstream has to know a mesh names its surface by hash. Nil
+    /// where the mesh carries no material or names one no MATT hashes to.
+    let material: FormID?
+
+    init(
+        reference: FormID,
+        transform: float4x4,
+        geometry: NIFCollisionGeometry,
+        bounds: ModelBounds,
+        material: FormID? = nil
+    ) {
+        self.reference = reference
+        self.transform = transform
+        self.geometry = geometry
+        self.bounds = bounds
+        self.material = material
+    }
 
     var triangleCount: Int {
         guard case let .triangleSoup(_, indices) = geometry else { return 0 }

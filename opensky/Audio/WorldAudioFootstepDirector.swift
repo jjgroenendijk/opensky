@@ -27,10 +27,22 @@ final class WorldAudioFootstepDirector {
     private let footstepStore: FootstepStore?
     private let soundStore: SoundRecordStore?
     private let fileLoader: (String) throws -> Data
+    /// MATT index, for naming the ground material in the readout. Empty in a
+    /// synthetic session, and then a material is reported by FormID.
+    var materialTypes = MaterialTypeIndex.empty
 
     /// Footstep playback. On by default, like the SFX and ambience beds; the
     /// World > Audio panel writes back here.
     var footstepsEnabled = true
+
+    /// The MATT the last routed frame reported under the player's feet
+    /// (issue #358), nil while airborne or on a surface that names none.
+    private(set) var groundMaterial: FormID?
+
+    /// A material the panel pins in place of the ground contact's, for
+    /// verifying that a chosen surface really does select a different sound.
+    /// Nil — the default — follows the ground.
+    var forcedMaterial: FormID?
 
     /// The set the player currently walks with. Starts at the store's default
     /// set and is replaced when the player's feet armature resolves to one.
@@ -90,12 +102,15 @@ final class WorldAudioFootstepDirector {
     /// list has no tag for — the graph fires plenty, from combat to magic — are
     /// dropped without a lookup past the tag comparison. `position` is the
     /// player's feet, so the step is heard where it is made rather than at the
-    /// listener.
+    /// listener, and `material` is the MATT the ground contact reported there,
+    /// which is what makes snow and wood sound different (issue #358).
     func handleGraphEvents(
         _ names: [String],
         gait: LocomotionGait,
-        position: SIMD3<Float>
+        position: SIMD3<Float>,
+        material: FormID? = nil
     ) {
+        groundMaterial = material
         guard footstepsEnabled, engine.isRunning, !names.isEmpty else { return }
         guard let footstepStore, let footstepSet else { return }
         for name in names {
@@ -103,7 +118,8 @@ final class WorldAudioFootstepDirector {
                 let resolved = footstepStore.resolve(
                     tag: name,
                     gait: Self.footstepGait(for: gait),
-                    in: footstepSet
+                    in: footstepSet,
+                    material: activeMaterial
                 )
             else { continue }
             routedEventCount += 1
@@ -143,17 +159,38 @@ final class WorldAudioFootstepDirector {
             let resolved = footstepStore.resolve(
                 tag: tag,
                 gait: Self.footstepGait(for: gait),
-                in: footstepSet
+                in: footstepSet,
+                material: activeMaterial
             )
         else { return "\(tag) resolves to no sound in \(describe(footstepSet))" }
         routedEventCount += 1
         return play(resolved, tag: tag, at: position)
     }
 
+    /// The material every resolution is made against: the panel's pinned one
+    /// when it has pinned one, else the ground contact's.
+    var activeMaterial: FormID? {
+        forcedMaterial ?? groundMaterial
+    }
+
     /// How the panel names the current set.
     var footstepSetDescription: String {
         guard let footstepSet else { return "none" }
         return describe(footstepSet)
+    }
+
+    /// How the panel names the surface footsteps currently resolve against.
+    var materialDescription: String {
+        guard let material = activeMaterial else { return "none" }
+        let name = materialTypes.describe(material)
+        return forcedMaterial == nil ? name : "\(name) (forced)"
+    }
+
+    /// Every material the panel can pin, ordered by name so the menu is stable.
+    var selectableMaterials: [(id: FormID, name: String)] {
+        materialTypes.materials.values
+            .map { (id: $0.formID, name: materialTypes.describe($0.formID)) }
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
     private func describe(_ set: FootstepSet) -> String {

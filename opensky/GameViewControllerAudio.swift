@@ -78,6 +78,7 @@ extension GameViewController: AudioControlProviding {
             soundStore: (provider as? AudioDataProviding)?.soundStore,
             fileSystem: audioFileSystem
         )
+        director.materialTypes = (provider as? AudioDataProviding)?.materialTypes ?? .empty
         footstepDirector = director
         renderer?.footstepDirector = director
         if let body = renderer?.playerBody {
@@ -261,6 +262,22 @@ extension GameViewController: AudioControlProviding {
     var footstepCounts: (routed: Int, played: Int) {
         guard let footstepDirector else { return (0, 0) }
         return (footstepDirector.routedEventCount, footstepDirector.playedFootstepCount)
+    }
+
+    /// The surface footsteps currently resolve against (issue #358).
+    var currentFootstepMaterialDescription: String {
+        footstepDirector?.materialDescription ?? "none"
+    }
+
+    /// Every MATT the panel can pin, for the material selector.
+    var footstepMaterialOptions: [(id: FormID, name: String)] {
+        footstepDirector?.selectableMaterials ?? []
+    }
+
+    /// The pinned material, or nil to follow the ground contact.
+    var forcedFootstepMaterial: FormID? {
+        get { footstepDirector?.forcedMaterial }
+        set { footstepDirector?.forcedMaterial = newValue }
     }
 
     func forcePlayFootstep(tag: String) -> String? {

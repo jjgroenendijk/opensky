@@ -107,11 +107,11 @@ nonisolated final class FootstepStore {
 
     /// Walks one graph event name to the sound it should play.
     ///
-    /// `material` is the MATT type of the surface under the foot when the
-    /// caller knows it. Nothing knows it yet — OpenSky's collision world
-    /// carries no per-triangle Havok material, which is issue #358 — so the
-    /// impact table answers with its representative entry
-    /// (`ImpactDataSet.impact(for:)`).
+    /// `material` is the MATT type of the surface under the foot, which the
+    /// walk controller's ground contact reports (issue #358). Nil where the
+    /// surface names none — an airborne player, a mesh with no Havok material,
+    /// a landscape texture with no MNAM — and then the impact table answers
+    /// with its representative entry (`ImpactDataSet.impact(for:)`).
     func resolve(
         tag: String,
         gait: FootstepGait,

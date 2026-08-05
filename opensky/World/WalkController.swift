@@ -76,12 +76,23 @@ nonisolated struct WalkController {
     /// True while the last step resolved in water deep enough to swim. Gravity,
     /// ground snap, and step support are all suspended there.
     private(set) var isSwimming = false
+    /// The MATT material of whatever the capsule is currently standing on
+    /// (issue #358): the terrain texture under the feet, or the material of the
+    /// collision shape it rests against. Nil while airborne, and nil on a
+    /// surface that names no material. This is the argument the footstep chain
+    /// was missing — the impact table is keyed by it.
+    private(set) var groundMaterial: FormID?
     private var accumulatedTime: Float = 0
-    var activeStepSupportHeight: Float?
+    var activeStepSupport: CapsuleStepSupport?
+
+    /// The height the capsule is held at while stepping up, when it is.
+    var activeStepSupportHeight: Float? {
+        activeStepSupport?.height
+    }
 
     struct HorizontalMove {
         let result: CapsuleMoveResult
-        let supportHeight: Float?
+        let support: CapsuleStepSupport?
     }
 
     init(
@@ -104,8 +115,9 @@ nonisolated struct WalkController {
         isGrounded = false
         hasUnresolvedPenetration = false
         isSwimming = false
+        groundMaterial = nil
         accumulatedTime = 0
-        activeStepSupportHeight = nil
+        activeStepSupport = nil
     }
 
     /// Integrates look once per frame, then translation through fixed 120 Hz
@@ -180,13 +192,14 @@ nonisolated struct WalkController {
         )
         let horizontalResult = horizontalMove.result
         feetPosition = horizontalResult.position
-        activeStepSupportHeight = plan.isSwimming ? nil : horizontalMove.supportHeight
+        activeStepSupport = plan.isSwimming ? nil : horizontalMove.support
         hasUnresolvedPenetration = horizontalResult.hasUnresolvedPenetration
 
         if let impulse = plan.jumpImpulse, impulse > 0 {
             verticalVelocity = impulse
             isGrounded = false
-            activeStepSupportHeight = nil
+            groundMaterial = nil
+            activeStepSupport = nil
         }
         isSwimming = plan.isSwimming
         if let surface = plan.swimSurfaceHeight {
@@ -257,6 +270,7 @@ nonisolated struct WalkController {
         // A swimmer resting on a shallow bottom is still grounded, which is
         // what lets it walk back out; nothing snaps it there.
         isGrounded = hasWalkableContact(result.contacts)
+        groundMaterial = isGrounded ? walkableMaterial(result.contacts) : nil
     }
 
     private mutating func resolveVerticalMovement(
@@ -265,10 +279,11 @@ nonisolated struct WalkController {
         sampleGround: GroundSampler,
         collisionQuery: CollisionQuery
     ) {
-        if let supportHeight = activeStepSupportHeight {
-            feetPosition.z = supportHeight
+        if let support = activeStepSupport {
+            feetPosition.z = support.height
             verticalVelocity = 0
             isGrounded = true
+            groundMaterial = support.material
             return
         }
         verticalVelocity -= Self.gravity * dt
@@ -281,6 +296,7 @@ nonisolated struct WalkController {
         hasUnresolvedPenetration = hasUnresolvedPenetration
             || verticalResult.hasUnresolvedPenetration
         var grounded = hasWalkableContact(verticalResult.contacts)
+        var material = walkableMaterial(verticalResult.contacts)
         let hitCeiling = verticalResult.contacts.contains { $0.normal.z < -0.1 }
         if grounded, verticalVelocity <= 0 {
             verticalVelocity = 0
@@ -297,6 +313,10 @@ nonisolated struct WalkController {
                 feetPosition.z = ground.height
                 verticalVelocity = 0
                 grounded = true
+                // Terrain wins over a mesh contact here because this branch is
+                // the one that put the feet on the ground: the capsule is
+                // standing on the landscape, whatever else it was brushing.
+                material = ground.material
             }
         }
         if !grounded, wasGrounded, verticalVelocity <= 0 {
@@ -309,10 +329,12 @@ nonisolated struct WalkController {
                 feetPosition = snap.position
                 verticalVelocity = 0
                 grounded = true
+                material = walkableMaterial(snap.contacts)
                 hasUnresolvedPenetration = hasUnresolvedPenetration
                     || snap.hasUnresolvedPenetration
             }
         }
         isGrounded = grounded
+        groundMaterial = grounded ? material : nil
     }
 }

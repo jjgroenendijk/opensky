@@ -52,7 +52,8 @@ nonisolated extension NIFCollisionDecoder {
         ).map {
             NIFCollisionShape(
                 transform: parent,
-                geometry: .triangleSoup(vertices: $0.vertices, indices: $0.indices)
+                geometry: .triangleSoup(vertices: $0.vertices, indices: $0.indices),
+                material: $0.material
             )
         }
     }
@@ -72,14 +73,16 @@ nonisolated extension NIFCollisionDecoder {
         else {
             throw NIFError.malformed("packed strips data ref is missing or wrong type")
         }
-        let soup = try NIFCollisionTriangleCollections.decodePacked(
+        return try NIFCollisionTriangleCollections.decodePacked(
             data: dataBlock.data,
             scale: scale
-        )
-        return [NIFCollisionShape(
-            transform: parent,
-            geometry: .triangleSoup(vertices: soup.vertices, indices: soup.indices)
-        )]
+        ).map {
+            NIFCollisionShape(
+                transform: parent,
+                geometry: .triangleSoup(vertices: $0.vertices, indices: $0.indices),
+                material: $0.material
+            )
+        }
     }
 
     private func decodeNiTriStripsShape(
@@ -87,7 +90,8 @@ nonisolated extension NIFCollisionDecoder {
         parent: float4x4
     ) throws -> [NIFCollisionShape] {
         var reader = BinaryReader(block.data)
-        reader.skip(32) // material, radius, padding, grow-by
+        let material = try reader.readUInt32()
+        reader.skip(28) // radius, padding, grow-by
         let scale = try reader.readVector4().xyz
         let count = try Int(reader.readUInt32())
         guard count <= reader.bytesRemaining / 4 else {
@@ -107,9 +111,14 @@ nonisolated extension NIFCollisionDecoder {
                 data: dataBlock.data,
                 scale: scale
             )
+            // The material lives on the shape rather than on the strips data:
+            // NiTriStripsData's own material CRC names a render material, not a
+            // Havok surface, so every strips block under one shape is the same
+            // surface.
             shapes.append(NIFCollisionShape(
                 transform: parent,
-                geometry: .triangleSoup(vertices: soup.vertices, indices: soup.indices)
+                geometry: .triangleSoup(vertices: soup.vertices, indices: soup.indices),
+                material: material
             ))
         }
         return shapes
@@ -120,7 +129,8 @@ nonisolated extension NIFCollisionDecoder {
         parent: float4x4
     ) throws -> NIFCollisionShape {
         var reader = BinaryReader(block.data)
-        reader.skip(32) // material, radius, vertex/normal properties
+        let material = try reader.readUInt32()
+        reader.skip(28) // radius, vertex/normal properties
         let count = try Int(reader.readUInt32())
         guard count <= reader.bytesRemaining / 16 else {
             throw NIFError.malformed("convex vertex count \(count) exceeds block size")
@@ -150,7 +160,8 @@ nonisolated extension NIFCollisionDecoder {
                     vertices: vertices,
                     planes: planes
                 )
-            )
+            ),
+            material: material
         )
     }
 
@@ -159,9 +170,14 @@ nonisolated extension NIFCollisionDecoder {
         parent: float4x4
     ) throws -> NIFCollisionShape {
         var reader = BinaryReader(block.data)
-        reader.skip(16) // material, shell radius, padding
+        let material = try reader.readUInt32()
+        reader.skip(12) // shell radius, padding
         let halfExtents = try reader.readVector3() * NIFCollisionModel.havokToEngineScale
-        return NIFCollisionShape(transform: parent, geometry: .box(halfExtents: halfExtents))
+        return NIFCollisionShape(
+            transform: parent,
+            geometry: .box(halfExtents: halfExtents),
+            material: material
+        )
     }
 
     private func decodeSphere(
@@ -169,9 +185,13 @@ nonisolated extension NIFCollisionDecoder {
         parent: float4x4
     ) throws -> NIFCollisionShape {
         var reader = BinaryReader(block.data)
-        reader.skip(4) // material
+        let material = try reader.readUInt32()
         let radius = try reader.readFloat32() * NIFCollisionModel.havokToEngineScale
-        return NIFCollisionShape(transform: parent, geometry: .sphere(radius: radius))
+        return NIFCollisionShape(
+            transform: parent,
+            geometry: .sphere(radius: radius),
+            material: material
+        )
     }
 
     private func decodeCapsule(
@@ -179,7 +199,8 @@ nonisolated extension NIFCollisionDecoder {
         parent: float4x4
     ) throws -> NIFCollisionShape {
         var reader = BinaryReader(block.data)
-        reader.skip(16) // material, shell radius, padding
+        let material = try reader.readUInt32()
+        reader.skip(12) // shell radius, padding
         let scale = NIFCollisionModel.havokToEngineScale
         let first = try reader.readVector3() * scale
         let radius1 = try reader.readFloat32() * scale
@@ -191,7 +212,8 @@ nonisolated extension NIFCollisionDecoder {
                 first: first,
                 second: second,
                 radius: max(radius1, radius2)
-            )
+            ),
+            material: material
         )
     }
 }

@@ -23,6 +23,10 @@ struct AudioFootstepsPanelTests {
                 == "AudioFootstepTagControl"
         )
         #expect(
+            panel.audioFootstepMaterialControl.accessibilityIdentifier()
+                == "AudioFootstepMaterialControl"
+        )
+        #expect(
             panel.audioPlayFootstepControl.accessibilityIdentifier()
                 == "AudioPlayFootstepControl"
         )
@@ -37,6 +41,7 @@ struct AudioFootstepsPanelTests {
         for control in [
             panel.audioFootstepsEnabledControl,
             panel.audioFootstepTagControl,
+            panel.audioFootstepMaterialControl,
             panel.audioPlayFootstepControl
         ] as [NSView] {
             #expect(!control.isHidden)
@@ -114,6 +119,46 @@ struct AudioFootstepsPanelTests {
         panel.footstepsSection.refreshReadout()
         readout = Self.readout(in: panel.view) ?? ""
         #expect(readout.contains("Footstep error: engine not running"))
+    }
+
+    /// The material selector (issue #358): ground contact first, then every
+    /// MATT the session carries, and picking one pins it on the provider.
+    @Test func materialPickerPinsAMaterialAndResetClearsIt() {
+        let fake = FakeAudioProvider()
+        let panel = Self.panel(provider: fake)
+        #expect(!panel.audioFootstepMaterialControl.isEnabled)
+
+        fake.footsteps.footstepMaterialOptions = [
+            (id: FormID(0x101), name: "MaterialSnow"),
+            (id: FormID(0x102), name: "MaterialStone")
+        ]
+        panel.footstepsSection.syncControls()
+        #expect(panel.audioFootstepMaterialControl.itemTitles == [
+            "Ground contact", "MaterialSnow", "MaterialStone"
+        ])
+        #expect(panel.audioFootstepMaterialControl.indexOfSelectedItem == 0)
+
+        panel.audioFootstepMaterialControl.selectItem(withTitle: "MaterialStone")
+        panel.audioFootstepMaterialControl.sendAction(
+            panel.audioFootstepMaterialControl.action,
+            to: panel.audioFootstepMaterialControl.target
+        )
+        #expect(fake.forcedFootstepMaterial == FormID(0x102))
+        #expect(AudioFootstepsSection.isOverridden(provider: fake))
+
+        AudioFootstepsSection.resetToDefaults(provider: fake)
+        panel.footstepsSection.syncControls()
+        #expect(fake.forcedFootstepMaterial == nil)
+        #expect(panel.audioFootstepMaterialControl.indexOfSelectedItem == 0)
+    }
+
+    @Test func readoutNamesTheSurfaceMaterial() {
+        let fake = FakeAudioProvider()
+        let panel = Self.panel(provider: fake)
+        fake.footsteps.groundFootstepMaterialDescription = "MaterialSnow"
+        panel.footstepsSection.refreshReadout()
+
+        #expect(Self.readout(in: panel.view)?.contains("Material: MaterialSnow") == true)
     }
 
     @Test func readoutSaysUnavailableWithoutAProvider() {

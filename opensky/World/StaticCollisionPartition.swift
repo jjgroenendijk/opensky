@@ -20,26 +20,32 @@ nonisolated extension StaticCollisionShape {
     static func placed(
         reference: FormID,
         transform: float4x4,
-        geometry: NIFCollisionGeometry
+        geometry: NIFCollisionGeometry,
+        material: FormID? = nil
     ) -> [StaticCollisionShape] {
         placed(
             reference: reference,
             transform: transform,
-            partitions: partitions(for: geometry).partitions
+            partitions: partitions(for: geometry).partitions,
+            material: material
         )
     }
 
+    /// Partitioning is spatial, and a NIF shape carries one material for all of
+    /// its geometry, so every leaf a shape splits into inherits that material.
     static func placed(
         reference: FormID,
         transform: float4x4,
-        partitions: [StaticCollisionPartition]
+        partitions: [StaticCollisionPartition],
+        material: FormID? = nil
     ) -> [StaticCollisionShape] {
         partitions.map { partition in
             StaticCollisionShape(
                 reference: reference,
                 transform: transform,
                 geometry: partition.geometry,
-                bounds: partition.localBounds.transformed(by: transform)
+                bounds: partition.localBounds.transformed(by: transform),
+                material: material
             )
         }
     }

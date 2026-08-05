@@ -74,7 +74,8 @@ extension Renderer {
         footstepDirector?.handleGraphEvents(
             events,
             gait: locomotion.status.gait,
-            position: walkController.feetPosition
+            position: walkController.feetPosition,
+            material: walkController.groundMaterial
         )
     }
 }

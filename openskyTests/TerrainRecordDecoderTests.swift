@@ -219,15 +219,28 @@ struct TerrainRecordDecoderTests {
     @Test func decodesLandTexture() throws {
         var tnam = Data()
         tnam.appendUInt32(0x0001_0A5C)
+        var mnam = Data()
+        mnam.appendUInt32(0x0002_0B01)
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("LandscapeDirt01"))
             + ESMFixture.field("TNAM", tnam)
-            + ESMFixture.field("MNAM", Data(count: 4)) // skipped
+            + ESMFixture.field("MNAM", mnam)
         let ltex = try LandTexture(
             record: record(ESMFixture.record("LTEX", formID: 0x5A, data: fields))
         )
         #expect(ltex.formID == FormID(0x5A))
         #expect(ltex.editorID == "LandscapeDirt01")
         #expect(ltex.textureSet == FormID(0x0001_0A5C))
+        // MNAM is the terrain half of the footstep material chain (issue #358).
+        #expect(ltex.materialType == FormID(0x0002_0B01))
+    }
+
+    @Test func landTextureWithoutAMaterialNamesNone() throws {
+        let fields = ESMFixture.field("EDID", ESMFixture.zstring("LandscapeDirt01"))
+            + ESMFixture.field("MNAM", Data(count: 4)) // null FormID
+        let ltex = try LandTexture(
+            record: record(ESMFixture.record("LTEX", formID: 0x5A, data: fields))
+        )
+        #expect(ltex.materialType == nil)
     }
 
     @Test func landTextureRejectsWrongRecordType() {

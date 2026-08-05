@@ -8,6 +8,17 @@ import simd
 nonisolated struct TerrainGroundSample: Equatable {
     let height: Float
     let normal: SIMD3<Float>
+    /// The MATT material of the ground here (issue #358), from the landscape
+    /// texture painted heaviest at the nearest terrain vertex. Nil where the
+    /// cell carries no resolved material — a LAND-less fallback plane, or a
+    /// texture whose LTEX names no MATT.
+    let material: FormID?
+
+    init(height: Float, normal: SIMD3<Float>, material: FormID? = nil) {
+        self.height = height
+        self.normal = normal
+        self.material = material
+    }
 }
 
 /// Immutable height field retained beside one streamed exterior CellScene.
@@ -16,12 +27,20 @@ nonisolated struct TerrainHeightField: Equatable {
     let coordinate: CellCoordinate
     let heights: [Float]
     let hiddenQuadrants: UInt32
+    /// Per-vertex ground material, or nil when the cell resolved none.
+    let surfaceMaterials: TerrainSurfaceMaterials?
 
-    init?(coordinate: CellCoordinate, heights: [Float], hiddenQuadrants: UInt32 = 0) {
+    init?(
+        coordinate: CellCoordinate,
+        heights: [Float],
+        hiddenQuadrants: UInt32 = 0,
+        surfaceMaterials: TerrainSurfaceMaterials? = nil
+    ) {
         guard heights.count == Land.vertexCount else { return nil }
         self.coordinate = coordinate
         self.heights = heights
         self.hiddenQuadrants = hiddenQuadrants
+        self.surfaceMaterials = surfaceMaterials
     }
 
     /// Samples a world XY point. Each 128-unit quad is split SW->NE exactly
@@ -54,6 +73,13 @@ nonisolated struct TerrainHeightField: Equatable {
         let northWest = height(column: column, row: row + 1)
         let northEast = height(column: column + 1, row: row + 1)
 
+        // The material is per vertex while the height is interpolated across
+        // the face, so it snaps to the nearest corner of the quad rather than
+        // blending: a surface is one material or the other, never half of each.
+        let material = surfaceMaterials?.material(
+            column: column + (fractionX >= 0.5 ? 1 : 0),
+            row: row + (fractionY >= 0.5 ? 1 : 0)
+        )
         if fractionY <= fractionX {
             let height = southWest * (1 - fractionX)
                 + southEast * (fractionX - fractionY)
@@ -65,7 +91,8 @@ nonisolated struct TerrainHeightField: Equatable {
                     eastOrNorthEast: southEast,
                     northOrNorthEast: northEast,
                     secondAxisIsNorth: false
-                )
+                ),
+                material: material
             )
         }
         let height = southWest * (1 - fractionY)
@@ -78,7 +105,8 @@ nonisolated struct TerrainHeightField: Equatable {
                 eastOrNorthEast: northEast,
                 northOrNorthEast: northWest,
                 secondAxisIsNorth: true
-            )
+            ),
+            material: material
         )
     }
 

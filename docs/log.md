@@ -4,6 +4,29 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-05
 
+* **Footsteps use the ground's real material (issue #358)**: `FootstepStore.resolve` always
+  took a `MATT` material and nothing could ever supply one, so every footstep fell back to
+  the impact table's representative entry — stone-solid for the vanilla humanoid sets — and
+  the player sounded identical on snow, wood, grass and gravel. The three missing pieces
+  landed together. First, the collision world now carries a material: every `bhk` shape kind
+  keeps the `SkyrimHavokMaterial` it names, and the two block kinds that store several
+  (a compressed mesh's chunk table, a packed strip shape's sub-shapes) emit one shape per
+  material instead of a per-triangle table. Second, `MaterialTypeIndex` turns that value into
+  a `MATT` record: the value is a CRC32 of the Creation Kit material name, so the index
+  hashes every `MATT.MNAM` and looks the mesh's value up. `nif.xml` names the rule but not
+  the CRC parameters, and the ones it implements — reflected `0xEDB88320`, zero initial
+  register, no final complement — are pinned against 32 of the enum's documented values in
+  `HavokMaterialHashTests`. Third, terrain, which has no Havok material at all: each cell
+  resolves its `LAND` splat stack into one `MATT` per terrain vertex through `LTEX.MNAM`, so
+  a ground sample names what it found. `WalkController.groundMaterial` reports whichever
+  applies — terrain when the snap put the feet down, else the flattest walkable contact, else
+  the step-support surface — and the renderer's audio tick hands it to the footstep director.
+  World > Audio > Footsteps gained `AudioFootstepMaterialControl`, which pins a material in
+  place of the ground contact so one surface can be heard deliberately, and a `Material:`
+  readout line. See [material types](/formats/material-type.md),
+  [footstep records](/formats/footstep.md), [NIF collision](/formats/nif-collision.md),
+  [terrain records](/formats/land.md), [collision world](/engine/collision-world.md),
+  [terrain walk mode](/engine/walk-mode.md), and [audio engine](/engine/audio.md).
 * **One checked-in signing identity, for every target including the UI test runner (issue
   #364)**: moving signing out of the pbxproj (issue #343) replaced a checked-in
   `CODE_SIGN_IDENTITY = "Apple Development"` and `DEVELOPMENT_TEAM` with a gitignored
