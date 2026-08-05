@@ -162,6 +162,9 @@ struct PlayerLocomotionPanelTests {
         #expect(readout.contains("Travel: root motion 0.0 u"))
         #expect(readout.contains("configured speed 3.0 u"))
         #expect(readout.contains("run via configured speed"))
+        // The rule the split is made by, so a zero root-motion total reads as
+        // the expected answer rather than as a missing feature (issue #370).
+        #expect(readout.contains("only for a clip whose data carries extracted motion"))
     }
 
     // MARK: - Controls

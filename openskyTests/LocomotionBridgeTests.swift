@@ -133,18 +133,41 @@ struct LocomotionBridgeTests {
         #expect(graph.variable(named: LocomotionGraphNames.isSneaking) == .bool(false))
     }
 
+    /// An in-place clip never takes movement authority, however far its root
+    /// bone wanders. Authority follows `m_extractedMotion`, not the size of a
+    /// per-step difference — which a single jittery step could cross under the
+    /// speed threshold this replaced (issue #370).
     @Test
-    func vanillaShapedRootMotionIsTooSmallToTakeAuthority() {
-        // A graph whose root barely jitters — what an in-place vanilla clip
-        // produces — must not become the movement source.
-        let bridge = LocomotionBridge(configuration: .synthetic)
+    func anInPlaceClipNeverTakesMovementAuthority() throws {
+        let bridge = try LocomotionBridge(
+            configuration: .synthetic, graph: Self.rampGraph(carriesExtractedMotion: false)
+        )
+        bridge.intent = LocomotionIntent(moveForward: 1)
+        for _ in 0 ..< 4 {
+            let plan = bridge.plan(Self.state())
+            #expect(plan.motionSource == .configuredSpeed)
+            #expect(
+                abs(simd_length(plan.horizontalDisplacement)
+                    - PlayerMovementConfiguration.synthetic.walkSpeed.value * Self.step) < 1e-4
+            )
+        }
+        #expect(bridge.status.rootMotionDistance == 0)
+    }
+
+    /// The other half of the same rule: a clip whose data does carry travel
+    /// drives the capsule from it, and the configured gait stands down.
+    @Test
+    func anExtractedMotionClipDrivesTheCapsule() throws {
+        let bridge = try LocomotionBridge(
+            configuration: .synthetic, graph: Self.rampGraph(carriesExtractedMotion: true)
+        )
         bridge.intent = LocomotionIntent(moveForward: 1)
         let plan = bridge.plan(Self.state())
-        #expect(plan.motionSource == .configuredSpeed)
+        #expect(plan.motionSource == .rootMotion)
         #expect(
-            abs(simd_length(plan.horizontalDisplacement)
-                - PlayerMovementConfiguration.synthetic.walkSpeed.value * Self.step) < 1e-4
+            abs(simd_length(plan.horizontalDisplacement) - Self.rampTravelPerStep) < 1e-3
         )
+        #expect(bridge.status.configuredSpeedDistance == 0)
     }
 
     // MARK: - Jump

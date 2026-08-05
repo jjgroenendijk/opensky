@@ -54,6 +54,32 @@ extension LocomotionBridgeTests {
         )
     }
 
+    /// A graph running one clip whose root bone ramps 30 units along +X per
+    /// second — an order of magnitude more drift than a vanilla clip's jitter,
+    /// so a test that passes here would have failed under any speed threshold.
+    /// `carriesExtractedMotion` is the only thing that differs between the two
+    /// clips this builds.
+    static func rampGraph(carriesExtractedMotion: Bool) throws -> BehaviorGraphInstance {
+        let clip = try BehaviorFixture.splineClip(
+            boneIndex: 0, carriesExtractedMotion: carriesExtractedMotion
+        )
+        var table = BehaviorObjectTable()
+        let root = table.add(
+            BehaviorFixture.clipGenerator("walk", animationName: "walk"), at: 0x10
+        )
+        return BehaviorFixture.instance(
+            root: root,
+            table: table,
+            data: BehaviorFixture.graphData(
+                variables: [], events: LocomotionGraphNames.events
+            ),
+            clips: BehaviorClipTable(byName: ["walk": clip])
+        )
+    }
+
+    /// How far the ramp clip's root bone travels over one fixed step.
+    static let rampTravelPerStep: Float = 30 * WalkController.fixedTimeStep
+
     static func raised(_ bridge: LocomotionBridge, _ name: String) -> Int {
         bridge.status.raisedEvents.filter { $0 == name }.count
     }

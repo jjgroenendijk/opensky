@@ -17,6 +17,10 @@ struct HKASplineAnimationFixture {
     var descendingKnots = false
     var transformByteCountOverride: Int?
     var omitDataFixup = false
+    /// Registers a fixup for `m_extractedMotion`, so the decoded animation
+    /// reports `carriesExtractedMotion`. What it points at is a placeholder:
+    /// the parser reads the presence of the pointer and never follows it.
+    var carriesExtractedMotion = false
 
     private static let objectSize = 176
 
@@ -33,6 +37,10 @@ struct HKASplineAnimationFixture {
         payload.appendUInt32(UInt32(transformByteCount))
         let dataOffset = payload.count
         payload.append(block)
+        let referenceFrameOffset = payload.count
+        if carriesExtractedMotion {
+            payload.append(Data(repeating: 0, count: 16))
+        }
 
         var fixture = HKXFixture()
         fixture.classNames = [(0x1234_ABCD, "hkaSplineCompressedAnimation")]
@@ -47,6 +55,11 @@ struct HKASplineAnimationFixture {
         ]
         if !omitDataFixup {
             fixture.localFixups.append(.init(from: 0x98, toOffset: UInt32(dataOffset)))
+        }
+        if carriesExtractedMotion {
+            fixture.localFixups.append(
+                .init(from: 0x20, toOffset: UInt32(referenceFrameOffset))
+            )
         }
         fixture.virtualFixups = [.init(
             dataOffset: 0,

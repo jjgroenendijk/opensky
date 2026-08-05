@@ -25,6 +25,19 @@ nonisolated protocol BehaviorClip {
     /// clip by the implementation. Never throws: a sampling failure comes back
     /// as an empty sample list, which leaves every bone at the reference pose.
     func samples(at time: Float) -> [HKABoneTransformSample]
+    /// True when the clip's own data says it carries authored travel
+    /// (`hkaAnimation.m_extractedMotion`). False means the clip animates in
+    /// place, and the evaluator reports no root motion for it at all rather
+    /// than differencing a root bone that only jitters.
+    var carriesExtractedMotion: Bool { get }
+}
+
+nonisolated extension BehaviorClip {
+    /// In place unless the clip says otherwise. A clip built in code carries no
+    /// reference frame, and neither does any vanilla animation.
+    var carriesExtractedMotion: Bool {
+        false
+    }
 }
 
 /// Where a clip generator's animation comes from. One instance is shared by
@@ -54,6 +67,10 @@ nonisolated struct SplineBehaviorClip: BehaviorClip {
 
     var duration: Float {
         animation.duration
+    }
+
+    var carriesExtractedMotion: Bool {
+        animation.carriesExtractedMotion
     }
 
     func samples(at time: Float) -> [HKABoneTransformSample] {

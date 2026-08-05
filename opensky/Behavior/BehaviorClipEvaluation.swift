@@ -73,9 +73,9 @@ nonisolated extension BehaviorGraphInstance {
         var pose = BehaviorPose(
             bones: BehaviorPoseMath.applying(samples, to: skeleton.referencePose)
         )
-        pose.rootMotion = jumped
-            ? resetRootMotion(&state, samples: samples)
-            : rootMotion(&state, samples: samples, wrapped: wrapped)
+        pose.rootMotion = rootMotion(
+            &state, clip: clip, samples: samples, wrapped: wrapped, jumped: jumped
+        )
         fireTriggers(generator, state: state, window: window, wrapped: wrapped)
         nodeStates[target] = state
         return pose
@@ -188,41 +188,54 @@ nonisolated extension BehaviorGraphInstance {
 
     // MARK: - Root motion
 
-    /// Drops the travel across a phase jump. A clip forced onto another clip's
-    /// phase did not walk there, so the difference between the two samples is
-    /// not motion the character made.
-    private func resetRootMotion(
-        _ state: inout BehaviorNodeState,
-        samples: [HKABoneTransformSample]
-    ) -> BehaviorRootMotion {
-        state.previousRootPose = rootPose(of: samples) ?? state.previousRootPose
-        return .identity
-    }
-
-    /// The root travel between the previous sample and this one, with the
-    /// across-the-seam run added when the clip wrapped.
+    /// The root travel this update produced, or the identity when there is
+    /// none to report.
+    ///
+    /// Two things zero it. A clip that carries no `m_extractedMotion` animates
+    /// in place, so its root bone is decoration: differencing it reports the
+    /// fraction of a unit the authored curve wanders between two samples, and
+    /// at a 1/120 s step that fraction reads as a double-digit speed. Feeding
+    /// it forward moved the capsule — backwards, on the steps where the wander
+    /// ran against the walk direction (issue #370). A phase jump zeroes it for
+    /// the other reason: a clip forced onto another clip's phase did not walk
+    /// there, so the difference between its two samples is not motion the
+    /// character made.
+    ///
+    /// The previous root pose is tracked in both cases, so a clip that starts
+    /// reporting travel measures it from where it actually is.
     private func rootMotion(
         _ state: inout BehaviorNodeState,
+        clip: any BehaviorClip,
         samples: [HKABoneTransformSample],
-        wrapped: Bool
+        wrapped: Bool,
+        jumped: Bool
     ) -> BehaviorRootMotion {
         guard
             let current = rootPose(of: samples),
             let previous = state.previousRootPose
         else {
+            state.previousRootPose = rootPose(of: samples) ?? state.previousRootPose
             return .identity
         }
         defer { state.previousRootPose = current }
+        guard clip.carriesExtractedMotion else { return .identity }
+        // A clip that does carry a reference frame has its travel approximated
+        // from the root bone, because `hkaAnimatedReferenceFrame` itself is not
+        // decoded. Tallied so the approximation is visible rather than assumed.
+        tally.note(.clipExtractedMotionApproximated)
+        guard !jumped else { return .identity }
         guard
             wrapped,
             let windowEnd = state.windowEndRootPose,
             let windowStart = state.windowStartRootPose
         else {
-            return BehaviorPoseMath.rootMotion(from: previous, to: current)
+            return BehaviorPoseMath.rootMotion(
+                from: previous, to: current, isExtracted: true
+            )
         }
         return BehaviorPoseMath.concatenating(
-            BehaviorPoseMath.rootMotion(from: previous, to: windowEnd),
-            BehaviorPoseMath.rootMotion(from: windowStart, to: current)
+            BehaviorPoseMath.rootMotion(from: previous, to: windowEnd, isExtracted: true),
+            BehaviorPoseMath.rootMotion(from: windowStart, to: current, isExtracted: true)
         )
     }
 

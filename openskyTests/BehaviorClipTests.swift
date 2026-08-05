@@ -154,35 +154,64 @@ struct BehaviorClipTests {
     // MARK: - Root motion
 
     @Test func rootMotionIsExtractedAndKeptOutOfThePose() throws {
-        let clip = try BehaviorFixture.splineClip(boneIndex: 0)
-        var table = BehaviorObjectTable()
-        let root = table.add(
-            BehaviorFixture.clipGenerator("walk", animationName: "walk"), at: 0x100
-        )
-        let graph = BehaviorFixture.instance(
-            root: root, table: table, clips: BehaviorClipTable(byName: ["walk": clip])
-        )
+        let graph = try rootMotionGraph(carriesExtractedMotion: true)
         let result = graph.update(deltaTime: 0.5)
         // Half a second of the ramp is 15 units of travel on the root bone...
         #expect(abs(result.rootMotion.translation.x - 15) < tolerance)
+        #expect(result.rootMotion.isExtracted)
         // ...and the pose's root bone stays at the skeleton's reference pose.
         #expect(result.bones[0] == BehaviorFixture.skeleton().referencePose[0])
     }
 
     @Test func rootMotionAcrossALoopSeamAddsBothRuns() throws {
-        let clip = try BehaviorFixture.splineClip(boneIndex: 0)
-        var table = BehaviorObjectTable()
-        let root = table.add(
-            BehaviorFixture.clipGenerator("walk", animationName: "walk"), at: 0x100
-        )
-        let graph = BehaviorFixture.instance(
-            root: root, table: table, clips: BehaviorClipTable(byName: ["walk": clip])
-        )
+        let graph = try rootMotionGraph(carriesExtractedMotion: true)
         graph.update(deltaTime: 0.8)
         // 0.8 to 1.0 is 6 units, then 0.0 to 0.1 is another 3: 9 in total, not
         // the -21 a naive difference of samples would report.
         let wrapped = graph.update(deltaTime: 0.3)
         #expect(abs(wrapped.rootMotion.translation.x - 9) < tolerance)
+        #expect(wrapped.rootMotion.isExtracted)
+    }
+
+    /// The same ramp clip with `m_extractedMotion` left null — which is what
+    /// every vanilla animation is — reports no travel at all, however far its
+    /// root bone moves (issue #370).
+    @Test func anInPlaceClipReportsNoRootMotion() throws {
+        let graph = try rootMotionGraph(carriesExtractedMotion: false)
+        let result = graph.update(deltaTime: 0.5)
+        #expect(result.rootMotion == .identity)
+        #expect(!result.rootMotion.isExtracted)
+        // The pose is untouched by the rule: only the travel is dropped.
+        #expect(result.bones[0] == BehaviorFixture.skeleton().referencePose[0])
+    }
+
+    /// Approximating an extracted-motion clip's travel from the root bone is
+    /// tallied, because `hkaAnimatedReferenceFrame` itself is not decoded.
+    @Test func extractedMotionApproximationIsTallied() throws {
+        let extracted = try rootMotionGraph(carriesExtractedMotion: true)
+        extracted.update(deltaTime: 0.5)
+        let gap = BehaviorTally.Gap.clipExtractedMotionApproximated.rawValue
+        #expect(extracted.tally.featureGaps[gap] != nil)
+
+        let inPlace = try rootMotionGraph(carriesExtractedMotion: false)
+        inPlace.update(deltaTime: 0.5)
+        #expect(inPlace.tally.featureGaps[gap] == nil)
+    }
+
+    /// One clip generator over the ramp clip, bound to the root bone.
+    private func rootMotionGraph(
+        carriesExtractedMotion: Bool
+    ) throws -> BehaviorGraphInstance {
+        let clip = try BehaviorFixture.splineClip(
+            boneIndex: 0, carriesExtractedMotion: carriesExtractedMotion
+        )
+        var table = BehaviorObjectTable()
+        let root = table.add(
+            BehaviorFixture.clipGenerator("walk", animationName: "walk"), at: 0x100
+        )
+        return BehaviorFixture.instance(
+            root: root, table: table, clips: BehaviorClipTable(byName: ["walk": clip])
+        )
     }
 
     // MARK: - Helpers

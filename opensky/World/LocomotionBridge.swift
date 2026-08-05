@@ -22,7 +22,15 @@
 // engine supplies the travel; the graph is a consumer of `Speed` and
 // `Direction`, not the source of movement. The root-motion branch stays because
 // a data set that does carry extracted motion has to drive the capsule from it
-// rather than be silently ignored. See docs/engine/walk-mode.md.
+// rather than be silently ignored.
+//
+// Which branch a step takes is read off that measurement directly:
+// `BehaviorRootMotion.isExtracted` says the clip's file carries travel, and the
+// evaluator reports no travel at all for a clip that does not. The branch used
+// to be a speed threshold over the differenced root bone instead, which an
+// in-place clip's own jitter could cross on a single 1/120 s step and push the
+// capsule a fraction of a unit the wrong way (issue #370).
+// See docs/engine/walk-mode.md.
 
 import simd
 
@@ -58,17 +66,6 @@ nonisolated enum LocomotionGait: String, Equatable, Sendable {
 }
 
 nonisolated final class LocomotionBridge {
-    /// How much horizontal root travel per second counts as the graph actually
-    /// driving the character.
-    ///
-    /// In-place vanilla clips still jitter the root bone by a fraction of a
-    /// unit per step; a 3-second drive of `mt_behavior.hkx` accumulated 0.04
-    /// units of travel in total, about 1 unit/s at its noisiest step. Ten
-    /// units per second sits an order of magnitude above that jitter and two
-    /// orders below the 100 unit/s walk gait, so it separates the two cases
-    /// without being sensitive to where the threshold sits.
-    static let rootMotionSpeedFloor: Float = 10
-
     /// How far the capsule bottom must sit below the water surface before
     /// swimming starts, and how far it must rise before it stops. The enter
     /// depth is most of the capsule (128 units tall, eye at 112): the player
@@ -344,16 +341,17 @@ nonisolated final class LocomotionBridge {
         gait: LocomotionGait,
         state: LocomotionStepState
     ) -> (displacement: SIMD2<Float>, source: LocomotionMotionSource) {
-        if let rootMotion {
+        // `isExtracted`, not a speed threshold: the question is whether the
+        // clip's own data carries travel, and that is a property of the file
+        // rather than of how far the root bone moved this step (issue #370).
+        if let rootMotion, rootMotion.isExtracted {
             let local = SIMD2<Float>(rootMotion.translation.x, rootMotion.translation.y)
-            if simd_length(local) / state.dt >= Self.rootMotionSpeedFloor {
-                // Root travel is in the character's own frame; the character
-                // faces the level camera yaw, so it rotates by the same angle
-                // the input direction is built from.
-                let forward = SIMD2<Float>(cosf(state.yaw), sinf(state.yaw))
-                let right = SIMD2<Float>(sinf(state.yaw), -cosf(state.yaw))
-                return (forward * local.y + right * local.x, .rootMotion)
-            }
+            // Root travel is in the character's own frame; the character faces
+            // the level camera yaw, so it rotates by the same angle the input
+            // direction is built from.
+            let forward = SIMD2<Float>(cosf(state.yaw), sinf(state.yaw))
+            let right = SIMD2<Float>(sinf(state.yaw), -cosf(state.yaw))
+            return (forward * local.y + right * local.x, .rootMotion)
         }
         guard direction != SIMD2<Float>() else { return (SIMD2<Float>(), .idle) }
         return (direction * speed(of: gait) * state.dt, .configuredSpeed)

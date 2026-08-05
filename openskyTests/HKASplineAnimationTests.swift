@@ -101,6 +101,17 @@ struct HKASplineAnimationTests {
         #expect(abs(end.translation.x - 30) < 0.001)
     }
 
+    /// `m_extractedMotion` at 0x20 is read for presence only: null means the
+    /// clip animates in place, a fixup means it carries authored travel. The
+    /// distinction is what decides whether the clip may drive the character
+    /// (issue #370).
+    @Test func readsWhetherTheClipCarriesExtractedMotion() throws {
+        #expect(try !firstAnimation(HKASplineAnimationFixture()).carriesExtractedMotion)
+        var withReferenceFrame = HKASplineAnimationFixture()
+        withReferenceFrame.carriesExtractedMotion = true
+        #expect(try firstAnimation(withReferenceFrame).carriesExtractedMotion)
+    }
+
     @Test func clampsSampleTimeToClip() throws {
         let animation = try firstAnimation(HKASplineAnimationFixture())
         #expect(try animation.localTransforms(at: -10).first?.translation.x == 0)

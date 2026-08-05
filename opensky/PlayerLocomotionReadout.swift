@@ -95,11 +95,17 @@ nonisolated enum PlayerLocomotionReadout {
         let status = snapshot.status
         var header = "Travel: root motion \(format(status.rootMotionDistance)) u"
         header += "  configured speed \(format(status.configuredSpeedDistance)) u"
+        // States the rule the two totals are split by, so a reader can tell a
+        // zero root-motion total from a broken one. Every vanilla animation
+        // leaves `m_extractedMotion` null, so on an unmodded install the first
+        // total stays at zero for the whole session (issue #370).
+        let rule = "Root motion drives the capsule only for a clip whose data carries "
+            + "extracted motion; vanilla clips animate in place, so the gait drives it."
         guard !status.motionTrace.isEmpty else {
-            return "\(header)\nNo step has planned motion yet."
+            return "\(header)\n\(rule)\nNo step has planned motion yet."
         }
         let rows = status.motionTrace.map(traceLine)
-        return ([header, "Changes (oldest first):"] + rows).joined(separator: "\n")
+        return ([header, rule, "Changes (oldest first):"] + rows).joined(separator: "\n")
     }
 
     private static func traceLine(_ sample: LocomotionMotionSample) -> String {
