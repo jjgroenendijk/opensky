@@ -128,6 +128,48 @@ struct GameDataLocatorTests {
         }
     }
 
+    @Test func hostWithholdsPersistentSources() {
+        // Issue #362: the test host is the app bundle, so consulting the app's
+        // defaults domain or the stock Steam path would point install-independent
+        // unit tests at the developer's real install — where a blocking read once
+        // parked `make test` in `open()` forever.
+        #expect(GameDataLocator.isRunningInTestHost)
+        #expect(GameDataLocator.persistedRootDefaults == nil)
+        #expect(GameDataLocator.defaultInstallCandidate == nil)
+    }
+
+    @Test func withheldSourcesResolveToNotFound() {
+        // Same call the app makes, minus the environment variable: with both
+        // persistent sources withheld there is nothing left to search.
+        #expect(throws: GameDataError.notFound(searched: [])) {
+            try GameDataLocator.locate(
+                environment: [:],
+                userDefaults: GameDataLocator.persistedRootDefaults,
+                defaultInstall: GameDataLocator.defaultInstallCandidate
+            )
+        }
+    }
+
+    @Test func environmentStillWinsWithSourcesWithheld() throws {
+        // Real-data suites gate on the env var and then call `locate()`, so the
+        // withholding must not disturb them.
+        let install = try makeInstall(named: "withheld-env")
+        defer { try? FileManager.default.removeItem(at: install) }
+
+        let root = try GameDataLocator.locate(
+            environment: [GameDataLocator.environmentKey: install.path(percentEncoded: false)],
+            userDefaults: nil,
+            defaultInstall: nil
+        )
+        #expect(root.source == .environment)
+    }
+
+    @Test func notFoundWithoutSearchedPathsStillExplainsRemedy() {
+        let message = GameDataError.notFound(searched: []).errorDescription
+        #expect(message?.contains("No fallback location was consulted.") == true)
+        #expect(message?.contains(GameDataLocator.environmentKey) == true)
+    }
+
     @Test func saveUserChoicePersistsValidInstall() throws {
         let install = try makeInstall(named: "choice")
         defer { try? FileManager.default.removeItem(at: install) }
