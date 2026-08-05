@@ -12,6 +12,14 @@
 # every worktree of this repository signs with the same identity, and re-deriving it per
 # worktree would silently downgrade a dev-signed build to ad-hoc.
 #
+# When there is nothing to copy, the file is generated around whatever Apple Development
+# identity the login keychain holds, and only falls back to the ad-hoc template when there
+# is none. Ad-hoc signing produces a different code signature on every build, so macOS
+# sees each build as a new application and re-asks for Automation and for access to the
+# volume the game install sits on. That turns `make test-ui` and every real-data test into
+# a sequence of permission dialogs, which is not something a developer should have to
+# discover by being interrupted.
+#
 # Invoked by `make bootstrap` and by every xcodebuild-driving make target. Idempotent,
 # and silent when there is nothing to do.
 set -eu
@@ -43,8 +51,55 @@ if [ "$root" != "$shared" ] && [ -f "$shared/Config/Local.xcconfig" ]; then
   exit 0
 fi
 
-cp "$template" "$local_config"
-echo "  [INFO] created Config/Local.xcconfig from Config/Local.example.xcconfig."
-echo "         It signs ad-hoc. Set OPENSKY_CODE_SIGN_IDENTITY and"
-echo "         OPENSKY_DEVELOPMENT_TEAM there to sign with your Apple Development"
-echo "         identity instead; the file is gitignored."
+# The common name of the first Apple Development identity in the keychain, empty when
+# there is none. `security find-identity -v -p codesigning` prints one indented line per
+# identity, `  1) <sha1> "<common name>"`.
+identity_name=$(
+  security find-identity -v -p codesigning 2>/dev/null \
+    | sed -n 's/^ *[0-9]*) [0-9A-F]* "\(Apple Development: [^"]*\)"$/\1/p' \
+    | head -1
+)
+
+# The Team ID is the OU of that certificate. Reading it beats asking a developer to copy
+# it out of the developer portal, and it is the value Xcode itself matches against.
+team=""
+if [ -n "$identity_name" ]; then
+  team=$(
+    security find-certificate -c "$identity_name" -p 2>/dev/null \
+      | openssl x509 -noout -subject 2>/dev/null \
+      | tr ',/' '\n' \
+      | sed -n 's/^ *OU=\([A-Z0-9]\{10\}\)$/\1/p' \
+      | head -1
+  )
+fi
+
+# Both halves or neither: CODE_SIGN_STYLE is Automatic, and a real identity without a team
+# fails to resolve a provisioning profile instead of quietly signing ad-hoc.
+if [ -z "$identity_name" ] || [ -z "$team" ]; then
+  cp "$template" "$local_config"
+  echo "  [INFO] created Config/Local.xcconfig from Config/Local.example.xcconfig."
+  echo "         No Apple Development identity was found in the keychain, so it signs"
+  echo "         ad-hoc and macOS re-asks for permissions on every build. Set"
+  echo "         OPENSKY_CODE_SIGN_IDENTITY and OPENSKY_DEVELOPMENT_TEAM there once you"
+  echo "         have an identity; the file is gitignored."
+  exit 0
+fi
+
+cat >"$local_config" <<CONFIG
+// Per-developer signing, gitignored, written by tools/config-local.sh from the Apple
+// Development identity in this machine's keychain. Edit it freely; it is never
+// regenerated once it exists.
+//
+// Signing with a real identity keeps this machine's TCC grants (Automation, Files and
+// Folders, access to the volume the game install sits on) across builds. Ad-hoc signing
+// gives the binary a new signature every build, so macOS treats each build as a new
+// application and asks again.
+//
+// Set OPENSKY_CODE_SIGN_IDENTITY to - and clear OPENSKY_DEVELOPMENT_TEAM to sign ad-hoc,
+// which is what CI does.
+
+OPENSKY_CODE_SIGN_IDENTITY = Apple Development
+OPENSKY_DEVELOPMENT_TEAM = $team
+CONFIG
+
+echo "  [ OK ] created Config/Local.xcconfig signing with \"$identity_name\" (team $team)."

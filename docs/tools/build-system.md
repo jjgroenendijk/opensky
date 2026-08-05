@@ -112,16 +112,39 @@ build setting still wins over both layers.
 
 `tools/config-local.sh` creates `Config/Local.xcconfig` when it is absent: `make
 bootstrap` runs it, and so does every make target that drives `xcodebuild`, next to
-`vendor-link`. A linked worktree copies the main checkout's file rather than the template,
-so a dev-signed setup does not quietly become ad-hoc in a new worktree. A missing
+`vendor-link`. It resolves the contents in this order:
+
+1. A linked worktree copies the main checkout's file, so a dev-signed setup does not
+   quietly become ad-hoc in a new worktree.
+2. Otherwise it reads the first `Apple Development` identity out of the login keychain
+   (`security find-identity -v -p codesigning`) and that certificate's `OU` field as the
+   Team ID (`security find-certificate -c ... | openssl x509 -noout -subject`), and writes
+   both. Reading the team off the certificate beats asking anyone to copy it out of the
+   developer portal, and it is the value Xcode matches against.
+3. Only with no identity, or an identity whose team cannot be read, does it fall back to
+   copying the ad-hoc template. `CODE_SIGN_STYLE` is `Automatic`, and a real identity
+   without a team fails to resolve a provisioning profile rather than degrading to ad-hoc,
+   so the two values are written together or not at all.
+
+The file is written once and never regenerated, so editing it sticks. A missing
 `Config/Local.example.xcconfig` is the one hard failure, since it means the checkout is
 broken.
 
-The unit test bundle is app-hosted (`TEST_HOST` points at the built `opensky.app`), so
-`make test` depends on the app being signed with something. Ad-hoc satisfies that. Signing
-with a real Apple Development identity is still worth setting up locally: ad-hoc gives the
-binary a new code signature on every build, and macOS then re-asks for the TCC grants the
-UI tests and the screenshot tooling need.
+Ad-hoc is a fallback, not the intended local setup. The unit test bundle is app-hosted
+(`TEST_HOST` points at the built `opensky.app`) and the UI tests drive the real app, so
+both depend on the app's signature. Ad-hoc signing produces a *different* signature on
+every build, and macOS keys TCC grants to it: each build reads as a new application, so
+Automation ("opensky would like to access data from other apps"), the screenshot
+permissions, and access to the external volume the game install sits on are all requested
+again, interactively, mid-run. A real Apple Development identity gives the app a stable
+designated requirement and the grants persist. Verify what a build actually got with:
+
+```sh
+codesign -dv --verbose=2 DerivedData/Build/Products/Debug/opensky.app
+```
+
+`Authority=Apple Development: ...` with a `TeamIdentifier` is right; `Signature=adhoc` is
+the state that causes repeated prompts.
 
 ## Output volume and the transcripts in logs/
 
