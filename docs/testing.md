@@ -130,13 +130,18 @@ needs its own setup.
   beside it, so a real-data run never invalidates the ordinary build. A hand-run
   `xcodebuild` that omits the flag starts a second cache on the boot disk and
   rebuilds from scratch.
+* Disk fills from caches nobody owns: each linked worktree keeps its own
+  `DerivedData/`, and removing the worktree usually leaves it behind. `make
+  prune` deletes those, along with result bundles and run output past the
+  retention age ([run output layout](/tools/run-output.md)).
 
 ## Fixtures
 
 * Built in code (`BSAFixture`, `ESMFixture`, `NIFFixture`, `StringTableFixture`)
   or tiny synthetic files the test generates. Never checked-in game assets.
 * Rendering checks prefer deterministic assertions (buffer contents, transform
-  math) + human review of a capture written to `logs/` (gitignored). `print()`
+  math) + human review of a capture written to a run directory under `logs/`
+  (gitignored, see [run output layout](/tools/run-output.md)). `print()`
   shows in the live xcodebuild console but is NOT in the `.xcresult`, so a
   backgrounded/polled run loses it — assert on a value or write an artifact.
 * Full-path render checks go through `Renderer.renderOffscreen`

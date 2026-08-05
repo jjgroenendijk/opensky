@@ -13,14 +13,17 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 . "$root/tools/xcodebuild-lib.sh"
 derived_data="$OPENSKY_DERIVED_DATA"
 data_root="${OPENSKY_DATA_ROOT:-/Volumes/data/steam/steamapps/common/Skyrim Special Edition}"
-log_dir="$root/logs"
-log="$log_dir/probe.log"
-mkdir -p "$log_dir"
 
 if [ ! -f "$data_root/Data/Skyrim.esm" ] && [ ! -f "$data_root/Skyrim.esm" ]; then
   echo "[INFO] no Skyrim SE install at $data_root — skipping probe"
   exit 0
 fi
+
+# One run, one directory (issue #347): the transcript and every capture this
+# probe renders land here, and `logs/probe/latest` points at the newest run.
+log_dir="$("$root/tools/run-dir.sh" probe)"
+log="$log_dir/probe.log"
+echo "[INFO] run directory: $log_dir"
 
 echo "[INFO] building openskycli (log: $log)"
 xcodebuild -project "$root/opensky.xcodeproj" -scheme openskycli -configuration Debug \
@@ -310,7 +313,7 @@ missing_reason="$(printf '%s\n' "$unmatched" | grep -vc ' -> ' || true)"
   || fail "skeleton name-map has $missing_reason mismatch lines without a reason tag"
 echo "[ OK ] skeleton name-map (99-bone rig, 93/99 matched, all mismatches reason-tagged)"
 
-# Offscreen screenshot of the first-render cell -> logs/probe-screenshot.png.
+# Offscreen screenshot of the first-render cell -> probe-screenshot.png.
 png="$log_dir/probe-screenshot.png"
 run "offscreen screenshot" screenshot --out "$png"
 [ -s "$png" ] || fail "screenshot wrote no PNG"

@@ -8,14 +8,13 @@
 # reference docs that existed when written (e.g. decisions/ui-approach.md,
 # removed 2026-07-23). Everything else must resolve.
 #
-# Report -> stdout/stderr; full run log -> logs/docs-links.log.
+# Report -> stdout/stderr; full run log -> logs/docs-links/<timestamp>/.
 set -eu
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 docs="$root/docs"
-log_dir="$root/logs"
+log_dir="$("$root/tools/run-dir.sh" docs-links)"
 log="$log_dir/docs-links.log"
-mkdir -p "$log_dir"
 
 # Every "](/...)" occurrence, one per line as "file:line:target"; anchors
 # (#section) stripped. grep exits 1 on files without links -> mask with true.

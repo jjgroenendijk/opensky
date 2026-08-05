@@ -36,7 +36,9 @@ SRC_DIR="$SHARED/.vendor/src"
 BUILD_DIR="$SRC_DIR/ffmpeg-$FFMPEG_VERSION"
 TARBALL="$SRC_DIR/ffmpeg-$FFMPEG_VERSION.tar.xz"
 STAMP="$PREFIX/opensky-build-stamp"
-LOG="$ROOT/logs/vendor-ffmpeg.log"
+# Filled in below, once the stamp check decides this run actually builds: a
+# short-circuited run must not open a log run directory it never writes to.
+LOG=""
 WANT_STAMP="ffmpeg $FFMPEG_VERSION flags $FLAGS_REVISION"
 
 fail() {
@@ -51,8 +53,11 @@ if [ "${OPENSKY_FFMPEG_FORCE:-0}" != "1" ] && [ -f "$STAMP" ] &&
   exit 0
 fi
 
-mkdir -p "$SRC_DIR" "$ROOT/logs"
+mkdir -p "$SRC_DIR"
+RUN_DIR="$("$ROOT/tools/run-dir.sh" vendor-ffmpeg)"
+LOG="$RUN_DIR/vendor-ffmpeg.log"
 : >"$LOG"
+echo "  [INFO] run directory: $RUN_DIR"
 
 echo "  [INFO] building vendored ffmpeg $FFMPEG_VERSION (decode-only, LGPL) -> $PREFIX"
 
