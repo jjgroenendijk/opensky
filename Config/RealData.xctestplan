@@ -24,6 +24,7 @@
         "CellRenderRealDataTests",
         "ConditionRealDataTests",
         "ContainerMenuAcceptanceRealDataTests",
+        "DynamicBodyRealDataTests",
         "FirstPersonRenderRealDataTests",
         "FootstepRealDataTests",
         "GrassRealDataTests",

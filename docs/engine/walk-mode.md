@@ -409,9 +409,16 @@ view ray within 192 units; fly mode neither targets nor activates.
 ## Scope boundary
 
 4.4 connects terrain + [static collision world](/engine/collision-world.md) to production
-walk input for exterior and interior scenes. Static geometry blocks the player; actors,
-dynamic rigid bodies, and moving platforms stay out of scope. M4.5 supplies the fixed
-real-data route + render/physics acceptance gate.
+walk input for exterior and interior scenes. Static geometry blocks the player; actors and
+moving platforms stay out of scope. M4.5 supplies the fixed real-data route +
+render/physics acceptance gate.
+
+Item 15.2 lifted dynamic rigid bodies out of that exclusion without changing the controller.
+Movable clutter hands the collision query ordinary placed shapes at its current pose, so the
+capsule collides with a crate through the code it already ran, and the shove going the other
+way is applied outside the controller by
+[dynamic rigid bodies](/engine/dynamic-bodies.md): the capsule has no mass, so the push is
+modelled from how far it walked rather than solved as a contact.
 
 Item 14.5 adds jump, sneak, sprint, and surface swimming, and leaves out of scope: the
 rendered player body and third-person camera (items 14.6 and 14.7), NPC locomotion (M16),

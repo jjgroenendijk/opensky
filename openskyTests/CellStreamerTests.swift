@@ -33,7 +33,8 @@ struct CellStreamerTests {
         musicType: FormID? = nil,
         worldspaceMusicType: FormID? = nil,
         references: RuntimeReferenceIndex = .empty,
-        stateSequence: UInt64 = 0
+        stateSequence: UInt64 = 0,
+        dynamicBodies: [DynamicBodyPlacement] = []
     ) -> CellScene {
         CellScene(
             renderScene: RenderScene(instances: []),
@@ -54,6 +55,7 @@ struct CellStreamerTests {
             worldspaceMusicType: worldspaceMusicType,
             staticCollision: staticCollision,
             triggerVolumes: triggerVolumes,
+            dynamicBodies: dynamicBodies,
             references: references,
             stateSequence: stateSequence,
             assets: CellAssets(meshKeys: meshKeys, textureKeys: textureKeys)

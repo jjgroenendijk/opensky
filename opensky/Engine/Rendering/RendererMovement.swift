@@ -37,6 +37,7 @@ extension Renderer {
         // Menu mode pauses the sim: dt goes to zero so the camera holds its pose
         // while the clock keeps its mark fresh (resume carries no time jump).
         let dt = cameraClock.advance(to: CACurrentMediaTime(), paused: worldSimPaused)
+        lastCameraDelta = min(max(dt, 0), WalkController.maximumFrameTime)
         let frameInput = input.makeInput(dt: dt)
         if frameInput.cycleCameraMode {
             setMovementMode(movementMode.next)

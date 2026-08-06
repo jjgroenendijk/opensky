@@ -7,6 +7,26 @@ import Foundation
 import OSLog
 
 extension CellStreamer {
+    /// Drops unloaded cells from the composition and schedules eviction of the
+    /// assets they used that no remaining resident cell needs. Drop-set (the
+    /// departed cells' keys minus the resident union) so in-flight builds for
+    /// the new grid keep their freshly-loaded assets (docs/engine/cell-streaming.md
+    /// eviction). Eviction runs on the build queue -- confinement holds.
+    ///
+    /// Lives beside the coverage transition rather than in CellStreamer.swift
+    /// because both answer the same question — what happens to a cell that has
+    /// stopped being resident — and because the class is at its length limit.
+    func unload(_ coordinates: [CellCoordinate]) {
+        var departed = CellAssets()
+        for coordinate in coordinates {
+            guard let removed = composition.removeCell(at: coordinate) else { continue }
+            emitCellDetached(removed)
+            departed.meshKeys.formUnion(removed.assets.meshKeys)
+            departed.textureKeys.formUnion(removed.assets.textureKeys)
+        }
+        evictUnused(departed)
+    }
+
     /// Requests the distant ring for the current center once the near grid has
     /// settled.
     func requestDistantLODIfNeeded() {

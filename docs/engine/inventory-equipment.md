@@ -189,6 +189,8 @@ tests above are the evidence
   operation and its appearance-skip list is empty by construction rather than by omission.
 - A merchant is still a nominated container. Faction-linked vendor chests need `VENDR`-style
   data that is not decoded.
-- Dropped objects do not settle. A drop places an object at a plausible resting height with
-  no motion; Havok dynamics are M15.
+- A dropped object whose mesh carries a simulated Havok body now settles under
+  [dynamic rigid bodies](/engine/dynamic-bodies.md) (issue #193): `dropHeight` became the
+  release pose rather than the resting one. An object whose mesh carries no dynamic body
+  still rests where the drop placed it.
 - Carry weight is computed and shown but nothing is encumbered by it.

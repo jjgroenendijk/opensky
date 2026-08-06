@@ -212,7 +212,10 @@ nonisolated struct NIFCollisionModel {
         return result
     }
 
-    private static func bounds(of geometry: NIFCollisionGeometry) -> ModelBounds? {
+    /// Local-space AABB of one decoded shape. Internal because the dynamic
+    /// body world (issue #193) needs the same box for a shape it re-places
+    /// every step.
+    static func bounds(of geometry: NIFCollisionGeometry) -> ModelBounds? {
         switch geometry {
         case let .triangleSoup(vertices, _), let .convexVertices(vertices, _):
             return ModelBounds.containing(vertices)

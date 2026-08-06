@@ -378,3 +378,10 @@ ceiling response, ramp grounding, and bounded step offset. Static world remains 
 all transient contacts/controller state live outside streamed cells.
 
 M4 route evidence + exact gate live in [terrain walk mode](/engine/walk-mode.md).
+
+Milestone 15 item 15.2 layers movement over this immutable set rather than changing it. A
+player-solid body whose Havok data says it is movable leaves the static set at build time
+and is simulated by [dynamic rigid bodies](/engine/dynamic-bodies.md), which hands its
+shapes back to this layer's queries at their current pose. Everything above the query seam —
+capsule response, interaction ray, shape sweeps — therefore sees one shape list and does not
+need to know which half a shape came from.

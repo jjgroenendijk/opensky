@@ -78,6 +78,12 @@ nonisolated struct CellScene {
     /// the same broadphase the solid set uses. Empty for cells built without a
     /// collision VFS or without reference retention.
     let triggerVolumes: TriggerVolumeSet
+    /// Rigid bodies this cell places into the dynamic world (issue #193): the
+    /// movable clutter its references carry, already inertially described and
+    /// posed. Empty for a cell built without a collision VFS or without
+    /// reference retention, because a simulated body is registered under a
+    /// `ReferenceKey`.
+    let dynamicBodies: [DynamicBodyPlacement]
     /// Decoded REFR/ACHR records of this cell, addressable by session-stable
     /// `ReferenceKey` and by raw FormID (issue #158). Empty for cells built
     /// without reference retention (synthetic render tests).
@@ -106,6 +112,7 @@ nonisolated struct CellScene {
         grassPlacements: [GrassPlacement] = [],
         staticCollision: StaticCollisionSet = .empty,
         triggerVolumes: TriggerVolumeSet = .empty,
+        dynamicBodies: [DynamicBodyPlacement] = [],
         references: RuntimeReferenceIndex = .empty,
         stateSequence: UInt64 = 0,
         assets: CellAssets = CellAssets()
@@ -125,6 +132,7 @@ nonisolated struct CellScene {
         self.grassPlacements = grassPlacements
         self.staticCollision = staticCollision
         self.triggerVolumes = triggerVolumes
+        self.dynamicBodies = dynamicBodies
         self.references = references
         self.stateSequence = stateSequence
         self.assets = assets

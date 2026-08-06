@@ -72,13 +72,20 @@ nonisolated struct DropPlacement: Equatable, Sendable {
 /// Takes, drops and container sessions on top of `InventoryRuntime`.
 @MainActor
 final class WorldItemRuntime {
-    /// How far below the camera a dropped object is placed, in game units.
+    /// How far below the camera a dropped object is released, in game units.
     ///
-    /// A static offset, not a physics result: the issue puts settling in M15
-    /// with the rest of Havok, so a dropped object gets a plausible resting
-    /// height and no motion. Roughly the distance from a standing actor's eye
-    /// to the ground, so an item dropped on flat ground lands at the player's
-    /// feet rather than floating at eye level or sinking into the terrain.
+    /// Roughly the distance from a standing actor's eye to the ground, so an
+    /// item dropped on flat ground starts at the player's feet rather than at
+    /// eye level or inside the terrain.
+    ///
+    /// This is the *release* pose, not necessarily the resting one. Since issue
+    /// #193 a dropped object whose mesh carries a simulated Havok body becomes a
+    /// dynamic rigid body on the next build of its cell and settles from here
+    /// under gravity — the drop writes a `ReferenceSpawnState` and the ordinary
+    /// collision build does the rest, so nothing in this file knows about
+    /// physics. An object whose mesh carries no dynamic body still comes to rest
+    /// exactly here, which is why the offset is a plausible resting height
+    /// rather than an arm's length.
     static let dropHeight: Float = 100
     /// How far in front of the camera a dropped object is placed, so it does
     /// not land inside the player capsule and immediately re-target itself.

@@ -126,6 +126,37 @@ nonisolated enum MatrixMath {
             * Self.scale(uniform: scale)
     }
 
+    /// The inverse of `placement`'s rotation: the Bethesda euler triple whose
+    /// `Rz(-z) * Ry(-y) * Rx(-x)` reproduces `orientation`.
+    ///
+    /// A simulated rigid body integrates an orientation quaternion but persists
+    /// through `ReferenceTransformOverride`, which stores the record's own euler
+    /// angles (issue #193). Without this the two representations could not be
+    /// the same rotation, and a settled object would be found rotated after a
+    /// save and reload.
+    ///
+    /// The middle angle is recovered through `asin`, so it comes back in
+    /// `-pi/2 ... pi/2`. That names the same rotation as any other triple for it.
+    /// Straight up or straight down leaves the outer two angles degenerate; the
+    /// X angle is pinned to zero there and the whole rotation is carried by Z,
+    /// which is the conventional resolution.
+    static func eulerAngles(of orientation: simd_quatf) -> SIMD3<Float> {
+        let matrix = float3x3(orientation)
+        // matrix[column][row]; the derivation below reads row-major.
+        let row2Column0 = matrix[0][2]
+        let pitch = asinf(Swift.min(Swift.max(-row2Column0, -1), 1))
+        let yaw: Float
+        let roll: Float
+        if abs(row2Column0) < 0.999_99 {
+            yaw = atan2f(matrix[0][1], matrix[0][0])
+            roll = atan2f(matrix[1][2], matrix[2][2])
+        } else {
+            yaw = atan2f(-matrix[1][0], matrix[1][1])
+            roll = 0
+        }
+        return SIMD3<Float>(-roll, -pitch, -yaw)
+    }
+
     /// Normal-transform matrix: inverse-transpose of `matrix`, correct for
     /// world-space normals under non-uniform scale. Multiply with w = 0
     /// vectors and take xyz. Singular input (zero scale — pathological

@@ -106,6 +106,17 @@ nonisolated final class CellSceneBuilder {
     let fileSystem: VirtualFileSystem?
     let collisionModels: NIFCollisionLibrary?
     var collisionPartitionCache = CellCollisionPartitionCache()
+    /// Whether movable clutter leaves the immutable collision set and joins the
+    /// dynamic world (issue #193). Off by default, deliberately.
+    ///
+    /// The simulation itself is complete and unit-tested, but the real-data
+    /// probe against a vanilla farmhouse still has clutter that fails to settle
+    /// and a step cost far above its budget, both recorded in
+    /// docs/engine/dynamic-bodies.md. Routing by default would trade a world
+    /// where a barrel is reliably solid for one where it sometimes sinks through
+    /// a shelf, which is a worse world. The probe and the build tests turn it
+    /// on; production leaves it off until the narrowphase earns it.
+    var simulatesDynamicBodies = false
     let distantLODBuilder: DistantLODBuilder?
     /// FormID -> STAT over the STAT top group, built on first use.
     var statIndex: [UInt32: StaticObject]?
@@ -193,9 +204,7 @@ nonisolated final class CellSceneBuilder {
         // Clear any stale working set so this build's touched keys are exactly
         // this cell's mesh + texture set (recorded onto the CellScene for
         // unload eviction — docs/engine/cell-streaming.md).
-        _ = meshes.drainTouchedKeys()
-        _ = textures.drainTouchedKeys()
-        _ = collisionModels?.drainTouchedKeys()
+        resetTouchedAssets()
         let source = try exteriorBuildSource(
             worldspaceEditorID: worldspaceEditorID,
             gridX: gridX,
@@ -244,6 +253,7 @@ nonisolated final class CellSceneBuilder {
                 pointLights: [],
                 staticCollision: collision.staticCollision,
                 triggerVolumes: collision.triggerVolumes,
+                dynamicBodies: collision.dynamicBodies,
                 actors: actors,
                 worldspaceMusicType: world.worldspace?.musicType,
                 referenceEntries: resolved.entries,
