@@ -231,6 +231,38 @@ to the sub-shape its first vertex falls in and emits one soup per sub-shape that
 normals/tangents/colors/UVs by validated flags, then expands
 each strip with alternating winding. Declared triangle count must match emitted triangles.
 
+The prefix in field order, since one wrong width silently walks every later field
+(`nif.xml` `NiGeometryData` -> `NiTriBasedGeomData` -> `NiTriStripsData`):
+
+| field | width | note |
+| --- | --- | --- |
+| Group ID | uint32 | |
+| Num Vertices | uint16 | |
+| Keep Flags, Compress Flags | byte each | |
+| Has Vertices | byte | zero here is malformed for a collision shape |
+| Vertices | 12 bytes each | |
+| BS Vector Flags | uint16 | bit 0 = one UV set, bit 12 = tangents |
+| Material CRC | uint32 | a render material name, not a Havok surface |
+| Has Normals | byte | normals 12 bytes each, then tangents + bitangents 24 each |
+| Bounding sphere | 16 bytes | `NiBound`: center + radius |
+| Has Vertex Colors | byte | colors 16 bytes each |
+| UV set | 8 bytes each | present once when bit 0 is set |
+| Consistency Flags | uint16 | a `ConsistencyType` enum, **not** a uint32 |
+| Additional Data | ref | |
+| Num Triangles | uint16 | |
+| Num Strips, strip lengths | uint16 each | |
+| Has Points | byte | |
+| Points | uint16 each | `sum(strip lengths)` of them |
+
+Reading Consistency Flags four bytes wide put the strip table two bytes late, which cost the
+three vanilla meshes that use `bhkNiTriStripsShape` their collision root
+(`clutter\coffins\nordiccoffinstatic03`, `clutter\goatskin\goatpeltstatic`,
+`clutter\nightmother\nmbody01` — issue #376). They are the only blocks in the install that
+reach this decoder at all, so no other asset covered the mistake and the census sweep is what
+surfaced it. The synthetic fixture had the same width, so the unit tests agreed with the bug;
+`NIFCollisionFixture.niTriStripsDataFullPrefix()` now builds a block carrying every optional
+array, which is the shape the vanilla blocks have.
+
 ## Production probe
 
 `openskycli collision` resolves every unique model used by target exterior cell, loads via

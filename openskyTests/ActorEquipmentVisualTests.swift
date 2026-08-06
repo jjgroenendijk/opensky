@@ -155,6 +155,19 @@ struct ActorEquipmentResolutionTests {
         #expect(visual.parts.map(\.modelPath) == ["clothes_m.nif", "robes_m.nif", "feet_m.nif"])
     }
 
+    /// Draw order applies to the plugin `defaultOutfit` chain too, and it
+    /// reorders armatures *within* one ARMO — the case issue #384 caught, where
+    /// vanilla `ClothesMonkRobesHooded` lists MonkRobesAA (priority 15) ahead of
+    /// MonkHoodAA (priority 10) and the resolve has to emit the hood first.
+    /// Covered synthetically here because the real-data suite that found it
+    /// cannot run in CI.
+    @Test func priorityReordersArmaturesWithinOnePluginOutfitPiece() throws {
+        let resolver = makeResolver(outfitItems: [0x340])
+        let visual = try resolver.resolve(appearance: appearance(outfit: 0x400))
+
+        #expect(visual.parts.map(\.modelPath) == ["hood_m.nif", "hoodedrobes_m.nif", "feet_m.nif"])
+    }
+
     @Test func skinIsNotSortedAmongTheWornParts() throws {
         // Feet skin has priority 0 and would sort first if it took part.
         let resolver = makeResolver(clothesPriority: 5)
