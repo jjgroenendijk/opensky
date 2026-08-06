@@ -22,6 +22,31 @@ nonisolated extension BinaryReader {
         )
     }
 
+    /// A Havok position stored as `Vector4`: XYZ converted to engine units,
+    /// W discarded (nif.xml keeps it only for 16-byte alignment).
+    mutating func readHavokPoint() throws -> SIMD3<Float> {
+        try readVector4().xyz * NIFCollisionModel.havokToEngineScale
+    }
+
+    /// A Havok direction stored as `Vector4`: unitless, so no conversion.
+    mutating func readHavokAxis() throws -> SIMD3<Float> {
+        try readVector4().xyz
+    }
+
+    /// nif.xml `bool` is one byte from stream 4.1.0.1 on, which covers every
+    /// Skyrim NIF. Any non-zero byte is true.
+    mutating func readHavokBool() throws -> Bool {
+        try readUInt8() != 0
+    }
+
+    /// nif.xml `hkMatrix3`: three rows of four floats, the fourth of each
+    /// unused. Transposed on read so the result applies to column vectors,
+    /// matching `NIFObjectPrefix.rotation` and MatrixMath.
+    mutating func readHavokMatrix3() throws -> float3x3 {
+        let rows = try (readVector4().xyz, readVector4().xyz, readVector4().xyz)
+        return float3x3(rows: [rows.0, rows.1, rows.2])
+    }
+
     mutating func readCollisionMatrix() throws -> float4x4 {
         var columns = try (
             readVector4(),

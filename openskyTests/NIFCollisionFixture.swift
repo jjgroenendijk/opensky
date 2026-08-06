@@ -5,6 +5,33 @@ import Foundation
 import simd
 
 enum NIFCollisionFixture {
+    /// The inertial tail of `bhkRigidBodyCInfo2010`, so a test names only the
+    /// fields it cares about. Values are in the file's own units: metres,
+    /// kilograms, radians.
+    struct Dynamics {
+        var linearVelocity: SIMD3<Float> = .zero
+        var angularVelocity: SIMD3<Float> = .zero
+        /// Rows in nif.xml order: m11 m12 m13 | m21 m22 m23 | m31 m32 m33.
+        var inertiaRows: [SIMD3<Float>] = [
+            SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(0, 0, 1)
+        ]
+        var center: SIMD3<Float> = .zero
+        var mass: Float = 0
+        var linearDamping: Float = 0
+        var angularDamping: Float = 0
+        var timeFactor: Float = 1
+        var gravityFactor: Float = 1
+        var friction: Float = 0
+        var rollingFrictionMultiplier: Float = 0
+        var restitution: Float = 0
+        var maxLinearVelocity: Float = 0
+        var maxAngularVelocity: Float = 0
+        var penetrationDepth: Float = 0
+        var deactivatorType: UInt8 = 1
+        var solverDeactivation: UInt8 = 1
+        var qualityType: UInt8 = 1
+    }
+
     static func collisionObject(
         target: Int32 = 0,
         flags: UInt16 = 0x81,
@@ -14,6 +41,19 @@ enum NIFCollisionFixture {
         data.appendRef(target)
         data.appendUInt16(flags)
         data.appendRef(body)
+        return data
+    }
+
+    /// `bhkBlendCollisionObject` inherits `bhkCollisionObject` and appends two
+    /// blend-gain floats (nif.xml).
+    static func blendCollisionObject(
+        target: Int32 = 0,
+        flags: UInt16 = 0x89,
+        body: Int32
+    ) -> Data {
+        var data = collisionObject(target: target, flags: flags, body: body)
+        data.appendFloat32(1)
+        data.appendFloat32(1)
         return data
     }
 
@@ -27,7 +67,11 @@ enum NIFCollisionFixture {
         rigidResponse: UInt8 = 1,
         translation: SIMD3<Float> = .zero,
         rotation: SIMD4<Float> = SIMD4(0, 0, 0, 1),
-        motionSystem: UInt8 = 7
+        motionSystem: UInt8 = 7,
+        dynamics: Dynamics = Dynamics(),
+        constraints: [Int32] = [],
+        constraintCountOverride: UInt32? = nil,
+        bodyFlags: UInt16 = 0
     ) -> Data {
         var data = Data()
         data.appendRef(shape)
@@ -45,16 +89,39 @@ enum NIFCollisionFixture {
         data.appendUInt16(0xFFFF)
         data.appendVector4(SIMD4(translation, 0))
         data.appendVector4(rotation)
-        data.append(Data(count: 96)) // velocities, inertia, center
-        for _ in 0 ..< 11 {
-            data.appendFloat32(0)
-        }
-        data.append(motionSystem)
-        data.append(contentsOf: [1, 1, 1]) // deactivator, solver, quality
+        data.append(inertialTail(dynamics, motionSystem: motionSystem))
         data.append(contentsOf: [0, 0, 3, 0])
         data.append(Data(count: 12))
-        data.appendUInt32(0) // constraints
-        data.appendUInt16(0) // body flags: BS stream >= 76
+        data.appendUInt32(constraintCountOverride ?? UInt32(constraints.count))
+        constraints.forEach { data.appendRef($0) }
+        data.appendUInt16(bodyFlags) // BS stream >= 76 stores this as a ushort
+        return data
+    }
+
+    private static func inertialTail(
+        _ dynamics: Dynamics,
+        motionSystem: UInt8
+    ) -> Data {
+        var data = Data()
+        data.appendVector4(SIMD4(dynamics.linearVelocity, 0))
+        data.appendVector4(SIMD4(dynamics.angularVelocity, 0))
+        for row in dynamics.inertiaRows {
+            data.appendVector4(SIMD4(row, 0))
+        }
+        data.appendVector4(SIMD4(dynamics.center, 0))
+        for value in [
+            dynamics.mass, dynamics.linearDamping, dynamics.angularDamping,
+            dynamics.timeFactor, dynamics.gravityFactor, dynamics.friction,
+            dynamics.rollingFrictionMultiplier, dynamics.restitution,
+            dynamics.maxLinearVelocity, dynamics.maxAngularVelocity,
+            dynamics.penetrationDepth
+        ] {
+            data.appendFloat32(value)
+        }
+        data.append(motionSystem)
+        data.append(dynamics.deactivatorType)
+        data.append(dynamics.solverDeactivation)
+        data.append(dynamics.qualityType)
         return data
     }
 
