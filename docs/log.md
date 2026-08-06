@@ -4,6 +4,25 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-06
 
+* **`NiTriStripsData`'s Consistency Flags is a ushort, and the three clutter meshes that
+  said so decode again (issue #376)**: the collision strips decoder skipped eight bytes for
+  Consistency Flags plus the additional-data ref where `nif.xml` has six, so every field
+  after it was read two bytes late. The strip table then produced a triangle count that did
+  not match the declared one, or point indices past the vertex array, and the whole collision
+  root was dropped for `clutter\coffins\nordiccoffinstatic03.nif`,
+  `clutter\goatskin\goatpeltstatic.nif` and `clutter\nightmother\nmbody01.nif`. Those are the
+  only three assets in the install that reach this decoder — every other collision mesh is a
+  packed or compressed shape — so nothing had ever exercised it against real bytes until the
+  dynamics census swept the whole clutter tree, and the synthetic fixture repeated the same
+  wrong width, which is why the unit tests were green throughout. A probe over the three
+  files settled it before any change: with a six-byte skip all five strips blocks read to
+  exactly their last byte with every point index inside the vertex array and the declared
+  triangle count matching, and with eight neither held. Both checks stay — a mismatch is
+  still a tallied failure rather than whatever geometry falls out. The fixture now also has
+  a `niTriStripsDataFullPrefix()` variant carrying normals, tangents, vertex colors and a UV
+  set, since the minimal one skipped the arrays where a width can be wrong, and the clutter
+  and skeleton census sweeps now assert zero decode failures the way the exterior sweep
+  already did.
 * **The unit tests run under sanitizers: `Config/Sanitizers.xctestplan` and
   `make test-sanitize` (issue #383)**: nothing in the repo had ever run under a runtime
   sanitizer, in a codebase that reaches ffmpeg across a C boundary, slices

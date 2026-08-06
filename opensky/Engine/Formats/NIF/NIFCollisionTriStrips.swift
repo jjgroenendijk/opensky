@@ -81,7 +81,15 @@ nonisolated extension NIFCollisionTriangleCollections {
             stride: 8,
             label: "UVs"
         )
-        reader.skip(8) // ConsistencyType + additional data ref
+        // NiGeometryData's tail: Consistency Flags is a ConsistencyType, which
+        // nif.xml stores as a ushort rather than a uint, then the
+        // AbstractAdditionalGeometryData ref. Reading it as four bytes put
+        // every field after it two bytes late, which is what made the three
+        // vanilla `bhkNiTriStripsShape` meshes fail to decode (issue #376) —
+        // the only shape class in the install that reaches this code, so
+        // nothing else covered the mistake.
+        reader.skip(2) // Consistency Flags
+        reader.skip(4) // Additional Data ref
     }
 
     private static func readTriStripPoints(
