@@ -62,10 +62,12 @@ METAL_FILES     := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
 .DEFAULT_GOAL := help
 .PHONY: help bootstrap ffmpeg vendor-link vendor-prune hooks format format-check lint \
         check fix swift-format swift-baseline \
-        swift-lint metal-format md-format md-lint sh-lint cli-boundary no-game-content \
+        swift-lint metal-format md-format md-lint sh-lint cli-boundary \
+        realdata-plan no-game-content \
         docs-links build cli \
         probe test \
-        test-ui test-one test-report realtest test-perms app-path cli-path run-cli \
+        test-ui test-one test-report realtest realtest-all test-perms app-path \
+        cli-path run-cli \
         install clean prune icon
 
 help: ## List available targets
@@ -97,7 +99,7 @@ format-check: ## Fail if anything is unformatted (no writes) — for CI
 		--dry-run --Werror $(METAL_FILES)
 	@markdownlint-cli2 --config $(MD_CFG) "$(MD_GLOB)"
 
-lint: swift-lint md-lint sh-lint cli-boundary no-game-content ## Run all linters (strict)
+lint: swift-lint md-lint sh-lint cli-boundary realdata-plan no-game-content ## Run all linters (strict)
 
 check: swift-baseline format-check lint docs-links ## Format + lint gate without building
 
@@ -124,6 +126,9 @@ md-lint: ## Strict Markdown lint
 
 cli-boundary: ## No AppKit imports under opensky/Engine (openskycli builds it)
 	@./tools/lint/cli-boundary.sh && echo "[ OK ] CLI target boundary clean"
+
+realdata-plan: ## Config/RealData.xctestplan selects every env-gated suite
+	@./tools/lint/realdata-plan.sh && echo "[ OK ] RealData plan matches the suites"
 
 no-game-content: ## No extracted game assets or rendered captures are tracked
 	@./tools/lint/no-game-content.sh && echo "[ OK ] no tracked game content"
@@ -184,9 +189,16 @@ realtest: vendor-link ## Run one env-gated real-data test under the RSS watchdog
 		echo "[ERROR] usage: make realtest T='Class/method()' [CAP=MB]"; \
 		echo "        selector must resolve to exactly one test (fully qualified)"; \
 		echo "        e.g. make realtest T='CellRenderRealDataTests/streamsFiveByFiveGridToCompletion()'"; \
+		echo "        whole set: make realtest-all"; \
 		exit 2; }
 	@case "$(T)" in openskyTests/*) spec="$(T)";; *) spec="openskyTests/$(T)";; esac; \
-	OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" ./tools/realtest.sh "$$spec" $(CAP)
+	./tools/realtest.sh -t "$$spec" $(if $(CAP),-c $(CAP),)
+
+# The counterpart to `realtest`: the same plan, the same watchdog, no selector.
+# Run it on demand and before a milestone acceptance, never on push -- it needs
+# the local install, which CI does not have and must never be given.
+realtest-all: vendor-link ## Run the whole RealData test plan under the RSS watchdog [CAP=MB]
+	@./tools/realtest.sh $(if $(CAP),-c $(CAP),)
 
 test-perms: ## Check/guide the one-time TCC grants that stop test permission popups
 	@./tools/test-perms.sh

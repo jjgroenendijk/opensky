@@ -72,10 +72,11 @@ The repo root holds only this document, `Makefile`, the Xcode project, `Config/`
 dotfiles. Every build setting lives in `Config/*.xcconfig`, not in the pbxproj, signing
 included: `Config/Signing.xcconfig` names one Apple Development identity for every target,
 because macOS ties permission grants to the code signature and ad-hoc signing re-asks on
-every build (`docs/tools/build-system.md`). `Config/` also holds the two checked-in test
-plans, `UnitTests.xctestplan` and `AllTests.xctestplan`, for the same reason: which bundles
-a run touches is reviewable configuration, not a flag. `opensky/` splits by target
-membership:
+every build (`docs/tools/build-system.md`). `Config/` also holds the three checked-in test
+plans, for the same reason: which bundles a run touches is reviewable configuration, not a
+flag. `UnitTests.xctestplan` lists `openskyTests` alone, `AllTests.xctestplan` lists both
+bundles, and `RealData.xctestplan` names the env-gated real-data suites and carries the data
+root into the test host (`docs/testing.md`). `opensky/` splits by target membership:
 `opensky/App/` holds the AppKit and SwiftUI shell, view controllers, panels, and
 `Assets.xcassets`; `opensky/Engine/` holds everything CLI-safe; `opensky/SharedHeaders/`
 holds `ShaderTypes.h`. Group engine subsystems under `opensky/Engine/` by domain, and keep
@@ -98,6 +99,11 @@ worktree `DerivedData/` and aged-out runs; `docs/tools/run-output.md` has the ru
 A green build does not prove a triangle appeared. Confirm rendering work by driving the app
 or an offscreen render. Unit-test every format parser and math routine, with synthetic
 fixtures built in code. Every pushed commit is green.
+
+`make test` never runs the env-gated real-data suites — they skip without a data root, which
+`xcodebuild test` does not forward. Run `make realtest T='Class/method()'` for one of them
+and `make realtest-all` for the whole set, on demand and before a milestone acceptance.
+Neither can run in CI, so the pre-push gate stays `make test` plus `make cli`.
 
 ## Loading game data (runtime, never repo)
 

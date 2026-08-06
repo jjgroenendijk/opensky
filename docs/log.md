@@ -4,6 +4,41 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-06
 
+* **The real-data suites run as a set: `Config/RealData.xctestplan` and `make realtest-all`
+  (issue #381)**: 48 env-gated suites skip in every `make test` run, and the only way to run
+  one was `make realtest T=...`, which deliberately runs exactly one — so the highest-value
+  integration coverage in the repo was never executed as a set by anyone. `RealData` joins
+  `UnitTests` and `AllTests` as the scheme's third checked-in test plan — the real-data
+  variant the plan split (issue #346) predicted, landed the same day — and
+  `make realtest-all` runs it under the memory watchdog, failing if any test
+  fails or if zero executed. Measuring the plan mechanism first, as the issue asked,
+  answered three questions and reshaped `tools/realtest.sh` around the answers. A plan's
+  `environmentVariableEntries` **does** reach the unit-test host, which is what issue #82
+  needed and could not find: the `build-for-testing` / rewrite the generated `.xctestrun`
+  with `plistlib` / `test-without-building` sequence is gone, replaced by an ordinary
+  `xcodebuild test -testPlan RealData`, and the separate `DerivedData/opensky-realtest`
+  cache it existed to protect went with it. A plan environment value is **not**
+  macro-expanded, so `$(OPENSKY_DATA_ROOT)` arrives at the host as a literal 21-character
+  string; the plan therefore holds a literal path and is now the one place the data root is
+  configured, with the script reading it back out and refusing to run against a conflicting
+  exported `OPENSKY_DATA_ROOT` instead of silently testing an install the plan does not
+  name. And a plan's `selectedTests` **does not match Swift Testing tests** at all — the
+  identifiers reach the runner as `OnlyTestIdentifiers` and select nothing, which showed up
+  as a green run that executed zero tests — so the script reads the plan's list and passes
+  one `-only-testing` per suite, which does work. The plan stays the named, diffable
+  declaration of the set either way, and the new `make realdata-plan` lint (in `make lint`)
+  asserts it is exactly the suites that declare `dataRoot: GameDataRoot?` and carry a
+  `@Test`, so adding a real-data suite and forgetting the plan is a lint failure rather than
+  silent coverage loss. `make realtest T=...` keeps its exactly-one enumeration guard, which
+  is about selector typos and not about the set. Neither target runs on push: they need an
+  install CI does not have and must never be given. The first full run executed 62 tests
+  across 48 suites in 12 minutes and found two failures that reproduce on their own
+  (issues #384 and #385) — which is the point of the target, since neither test had been
+  re-run since it landed. It also found that `make test-report` printed "no failing tests"
+  for every bundle: its walk recursed on `children`, and the root object holds the tree
+  under `testNodes`, so it never reached a single node. The counts above it were always
+  right; the per-failure detail was never printed.
+
 * **Checked-in test plans replace the auto-created one (issue #346)**: the `opensky` scheme
   carried `shouldAutocreateTestPlan = "YES"` and no `.xctestplan`, so there was nowhere
   reviewable to say "unit only" — that logic lived as `-only-testing` and `-skip-testing`

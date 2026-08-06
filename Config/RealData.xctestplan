@@ -1,0 +1,77 @@
+{
+  "configurations" : [
+    {
+      "id" : "9E1D0A00-0000-4000-A000-00000000D002",
+      "name" : "Configuration 1",
+      "options" : {}
+    }
+  ],
+  "defaultOptions" : {
+    "environmentVariableEntries" : [
+      {
+        "key" : "OPENSKY_DATA_ROOT",
+        "value" : "/Volumes/data/steam/steamapps/common/Skyrim Special Edition"
+      }
+    ]
+  },
+  "testTargets" : [
+    {
+      "selectedTests" : [
+        "ActorAssemblyRealDataTests",
+        "ActorEquipmentRealDataTests",
+        "BehaviorEvaluatorRealDataTests",
+        "BehaviorStateMachineRealDataTests",
+        "CellRenderRealDataTests",
+        "ConditionRealDataTests",
+        "ContainerMenuAcceptanceRealDataTests",
+        "FirstPersonRenderRealDataTests",
+        "FootstepRealDataTests",
+        "GrassRealDataTests",
+        "GrassRenderingAcceptanceRealDataTests",
+        "HKBBehaviorCensusRealDataTests",
+        "HKBNodeDecodeRealDataTests",
+        "HUDAcceptanceRealDataTests",
+        "InventoryBaselineRealDataTests",
+        "InventoryMenuAcceptanceRealDataTests",
+        "InventoryRecordRealDataTests",
+        "JournalAcceptanceRealDataTests",
+        "LandRealDataTests",
+        "LivingEnvironmentAcceptanceRealDataTests",
+        "LocomotionBridgeRealDataTests",
+        "M10AcceptanceRealDataTests",
+        "M10StateAcceptanceRealDataTests",
+        "M11AcceptanceRealDataTests",
+        "M13AcceptanceRealDataTests",
+        "M13AcceptanceRenderTests",
+        "M14AcceptanceRealDataTests",
+        "M14AcceptanceRenderTests",
+        "M9AudioAcceptanceRealDataTests",
+        "NIFDynamicsCensusRealDataTests",
+        "PapyrusAcceptanceRealDataTests",
+        "ParticlePlaybackRealDataTests",
+        "ParticleRealDataTests",
+        "PexRealDataTests",
+        "PlacedReferenceLinkedRefRealDataTests",
+        "PlacedReferenceXPRMRealDataTests",
+        "PlayerBodyRealDataTests",
+        "PlayerBodyRenderRealDataTests",
+        "PrecipitationAcceptanceRealDataTests",
+        "PreviewRealDataTests",
+        "QuestAliasRealDataTests",
+        "QuestRealDataTests",
+        "QuestScriptRealDataTests",
+        "ScriptDataRealDataTests",
+        "SystemMenuAcceptanceRealDataTests",
+        "WeatherAcceptanceRealDataTests",
+        "WeatherRealDataTests",
+        "WorldItemRealDataTests"
+      ],
+      "target" : {
+        "containerPath" : "container:opensky.xcodeproj",
+        "identifier" : "5A3BAE183000109300177F95",
+        "name" : "openskyTests"
+      }
+    }
+  ],
+  "version" : 1
+}

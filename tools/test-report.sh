@@ -83,7 +83,11 @@ def walk(node):
                 if child.get("nodeType") == "Failure Message"
             ]
             fails.append((name, msgs))
-        for child in node.get("children", []):
+        # The root object holds the tree under "testNodes", every node below it
+        # under "children". Recursing on "children" alone walked nothing at all,
+        # so this printed "no failing tests" for every bundle including failing
+        # ones (issue #381).
+        for child in node.get("children", []) + node.get("testNodes", []):
             walk(child)
     elif isinstance(node, list):
         for child in node:

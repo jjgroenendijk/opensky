@@ -25,10 +25,17 @@ default and the Steam fallback inside the test host, so a test that forgets its 
 quietly reach a real install (issue #362).
 
 Plain `xcodebuild test` does not forward `OPENSKY_DATA_ROOT` to the unit-test host, so an
-env-gated test silently skips under it. Use `make realtest T='Class/method()'`, which
-injects the data root the reliable way and runs under the RSS watchdog
-(`tools/realtest.sh`); the selector must resolve to exactly one fully-qualified test. A
-heavy real-data test without that watchdog once ran the machine out of memory.
+env-gated test silently skips under it — including in every `make test` run. Use
+`make realtest T='Class/method()'` for one of them and `make realtest-all` for the whole
+set. Both run the `RealData` test plan, which does carry the data root into the host, under
+the RSS watchdog (`tools/realtest.sh`); the single-test selector must resolve to exactly one
+fully-qualified test. A heavy real-data test without that watchdog once ran the machine out
+of memory.
+
+A new env-gated suite must be listed in `Config/RealData.xctestplan` or `make realtest-all`
+never runs it, and `make lint` fails if it is missing: the plan's `selectedTests` has to be
+exactly the suites that declare `dataRoot: GameDataRoot?` and carry a `@Test`. Keep one such
+suite per file, named after the file, which is the shape that check assumes.
 
 ## Fixtures and output
 
