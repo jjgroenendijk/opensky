@@ -294,6 +294,6 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 * [Testing setup](/testing.md) - test targets, make entrypoints, the RealData
   test plan behind `make realtest` and `make realtest-all`, the watchdog,
-  result reporting, machine-specific quirks.
+  result reporting, code coverage, machine-specific quirks.
 * Roadmap - not in this wiki. Open work lives in GitHub issues and milestones, where
   milestone `#n` is OpenSky milestone `Mn`. See AGENTS.md "Roadmap and open work".

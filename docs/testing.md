@@ -30,9 +30,10 @@ files.
 * `make test-one T=Class[/test]` — one class or method. Bare names resolve to
   `openskyTests/`. Bundle: `build/test-results/one.xcresult`.
 * `make test-report` — pass/fail summary plus each failing test's name and
-  message, read from the newest fixed bundle (falls back to the DerivedData
-  glob). It waits for the bundle to finalize, so it no longer misreports a
-  half-written `.xcresult` as a failure.
+  message, plus the code coverage percentage, read from the newest fixed bundle
+  (falls back to the DerivedData glob). It waits for the bundle to finalize, so
+  it no longer misreports a half-written `.xcresult` as a failure. See
+  [Code coverage](#code-coverage).
 * `make realtest T='Class/method()' [CAP=MB]` — run one real-data test against
   the install (see next section).
 * `make realtest-all [CAP=MB]` — run the whole real-data set the same way. On
@@ -64,16 +65,52 @@ Which bundles a run touches is a checked-in test plan, not a flag (issue #346). 
 plan does: the plan decides what gets built. `xcodebuild -scheme opensky -showTestPlans`
 lists them.
 
-The plans are where per-suite parallelization lives, and they are where a sanitizer variant
-should go when one is wanted — as an additional plan configuration, diffable in review,
-rather than another flag combination in the `Makefile`. `RealData` is the real-data variant
-that pattern predicted; what it can and cannot carry is below.
+The plans are where per-suite parallelization lives, they are where code coverage is
+switched on (next section), and they are where a sanitizer variant should go when one is
+wanted — as an additional plan configuration, diffable in review, rather than another flag
+combination in the `Makefile`. `RealData` is the real-data variant that pattern predicted;
+what it can and cannot carry is below.
 
 Two selectors still ride on top of a plan. `make test-one T=...` adds `-only-testing` for
 the one class or method, and switches from the unit plan to `AllTests` when the selector
 names `openskyUITests`, because the unit plan cannot select a test it does not list.
 `make test-ui` runs `AllTests` with `-only-testing:openskyUITests`, since that plan carries
 both bundles.
+
+## Code coverage
+
+`UnitTests.xctestplan` and `AllTests.xctestplan` gather line coverage for the
+`opensky` target alone (issue #382), so the number describes engine code and not
+the test bundles measuring it. There is no separate entrypoint and no
+`-enableCodeCoverage` flag anywhere: `make test` gathers it and `make test-report`
+prints it under the pass/fail counts, overall and per target.
+
+It is on by default, with no `make test-coverage` beside `make test`, because
+measuring the cost found there was none to pay: coverage was already being
+gathered on every single run and thrown away. `ENABLE_CODE_COVERAGE` defaults to
+`YES` in Xcode and no `Config/*.xcconfig` overrides it, so a `.xcresult` from
+before this change already answers `xcrun xccov view --report` — unscoped, which
+is why it reported a meaningless 86.68% for `openskyTests.xctest` and 0/0 for
+`openskyUITests.xctest` next to the number anyone actually wants. Adding
+`-enableCodeCoverage YES` to a warm `make test` recompiled nothing (zero compile
+lines in either transcript) and moved the wall clock from 37.5s to 35.5s, which
+is to say inside the run-to-run noise, and the plan option measured the same at
+35.6s. What the plan entry changes is not whether the number exists but whether
+it is scoped and reviewable; what `make test-report` changes is whether anyone
+ever sees it.
+
+That leaves nothing to defer behind a separate target, which matters because
+`make test` is on the pre-push path for every commit. If a cost ever does show
+up, the shape to move to is a target passing `-enableCodeCoverage YES`, which
+does override the plan.
+
+There is deliberately no threshold gate and no coverage number in CI. The value
+is finding defensive branches in the parsers that no test ever takes — the
+malformed-input paths that AGENTS.md's "malformed input must not crash" is
+about — not defending a percentage. A floor gets argued from a baseline, the
+same discipline the perf budgets below already require.
+
+Baseline at the time it landed: 80.31% of lines (57543/71652).
 
 ## Real-data suites and the data root
 
