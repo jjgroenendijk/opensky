@@ -31,18 +31,47 @@ nonisolated struct NIFCollisionFilter: Equatable, Sendable {
     }
 }
 
+/// Which collision-object class carried the body. Static world geometry hangs
+/// off `bhkCollisionObject`; the per-bone bodies of a character skeleton hang
+/// off `bhkBlendCollisionObject`, which inherits it and appends two blend-gain
+/// floats this decoder does not read.
+nonisolated enum NIFCollisionCarrier: String, Sendable {
+    case collisionObject = "bhkCollisionObject"
+    case blendCollisionObject = "bhkBlendCollisionObject"
+}
+
 nonisolated struct NIFCollisionBody {
     let targetBlock: Int32
+    /// Name of the target `NiAVObject`. On a character skeleton this is the
+    /// bone the body belongs to, which is the only mapping the file carries
+    /// between ragdoll bodies and the animation skeleton.
+    let targetName: String?
+    /// Block index of the `bhkRigidBody`/`bhkRigidBodyT` itself, so a
+    /// constraint's entity pointers can name the bodies they bind.
+    let bodyBlock: Int
+    let carrier: NIFCollisionCarrier
     let collisionObjectFlags: UInt16
     let worldFilter: NIFCollisionFilter
     let rigidBodyFilter: NIFCollisionFilter
     /// NifTools hkResponseType raw values from bhkEntity + rigid-body CInfo.
     let entityResponse: UInt8
     let rigidBodyResponse: UInt8
-    let motionSystem: UInt8
+    /// Mass, inertia, damping, friction, and motion classification.
+    let dynamics: NIFRigidBodyDynamics
+    /// Joints this body names. A joint binds two bodies and both list it, so
+    /// the same block appears twice in a model; `NIFCollisionModel.constraints`
+    /// is the de-duplicated view.
+    let constraints: [NIFCollisionConstraint]
+    /// nif.xml `Body Flags`: bit 1 means the body responds to wind.
+    let bodyFlags: UInt16
     /// Model-local target transform composed with bhkRigidBodyT transform.
     let transform: float4x4
     let shapes: [NIFCollisionShape]
+
+    /// Raw `hkMotionType` byte. `dynamics.motionSystem` names it.
+    var motionSystem: UInt8 {
+        dynamics.rawMotionSystem
+    }
 
     var isPlayerSolid: Bool {
         worldFilter.isPlayerSolid
@@ -142,6 +171,30 @@ nonisolated struct NIFCollisionModel {
 
     var filteredBodyCount: Int {
         bodies.count(where: { !$0.isPlayerSolid })
+    }
+
+    /// Every joint in the model, once. A joint binds two bodies and both of
+    /// them list it, so the per-body arrays double-count.
+    var constraints: [NIFCollisionConstraint] {
+        var seen: Set<Int> = []
+        return bodies.flatMap(\.constraints).filter { seen.insert($0.block).inserted }
+    }
+
+    /// Rigid-body block index -> the name of the scene object it hangs off.
+    /// On a character skeleton that is the bone name.
+    var bodyNamesByBlock: [Int: String] {
+        bodies.reduce(into: [:]) { names, body in
+            names[body.bodyBlock] = body.targetName
+        }
+    }
+
+    /// The two bone names a joint binds, nil where the end points outside the
+    /// decoded bodies or at an unnamed node.
+    func boneNames(
+        of constraint: NIFCollisionConstraint
+    ) -> (a: String?, b: String?) {
+        let names = bodyNamesByBlock
+        return (names[Int(constraint.entityA)], names[Int(constraint.entityB)])
     }
 
     /// Model-space AABB after composing scene-target, rigid-body, wrapper,

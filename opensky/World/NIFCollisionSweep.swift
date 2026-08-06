@@ -71,7 +71,7 @@ nonisolated enum NIFCollisionSweep {
             return NIFCollisionAssetReport(
                 path: path,
                 collisionRootCount: file.blocks.count(where: {
-                    $0.typeName == "bhkCollisionObject"
+                    NIFCollisionCarrier(rawValue: $0.typeName) != nil
                 }),
                 bodyCount: collision.bodies.count,
                 shapeCount: collision.shapeCount,
