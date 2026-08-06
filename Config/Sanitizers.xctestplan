@@ -19,7 +19,15 @@
     }
   ],
   "defaultOptions" : {
-
+    "codeCoverage" : {
+      "targets" : [
+        {
+          "containerPath" : "container:opensky.xcodeproj",
+          "identifier" : "5A3BAE003000109100177F95",
+          "name" : "opensky"
+        }
+      ]
+    }
   },
   "testTargets" : [
     {

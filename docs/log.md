@@ -20,7 +20,9 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   `-only-test-configuration Thread` still builds the ASan variant, so `SAN=Thread` narrows
   what executes and not what compiles. `tools/test-sanitize.sh` runs it under the memory
   watchdog at 12288 MB, well above the real-data caps, because sanitizer shadow memory
-  multiplies resident size.
+  multiplies resident size. The plan carries the same `opensky`-scoped `codeCoverage` entry
+  the other two unit plans grew in issue #382, so a sanitized bundle reports the same
+  engine-scoped number rather than an unscoped one.
 * **First sanitizer baseline: clean under TSan, one real crash under ASan (issue #383)**:
   3129 tests across both configurations, 3069 passed, 59 skipped on the usual Metal and
   data-root gates, one failure. Thread Sanitizer reported nothing at all across the whole
@@ -32,6 +34,26 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   reject a malformed mesh does not protect a parse running on a small-stack thread. Filed as
   issue #388 rather than fixed here, so `make test-sanitize` is red on that one test until it
   lands; every other test in the bundle is green under both sanitizers.
+* **Code coverage was already being measured and thrown away (issue #382)**: nothing in the
+  repo reported coverage, so there was no way to answer "is this parser actually covered, or
+  does it just have a test file next to it?" across 49 format parsers other than by reading
+  both. Measuring the cost before making it unconditional, as the issue asked, found there
+  was no cost: `ENABLE_CODE_COVERAGE` defaults to `YES` in Xcode and no `Config/*.xcconfig`
+  overrides it, so every `.xcresult` the repo has ever written already answers
+  `xcrun xccov view --report`. Nobody had run the command. Adding
+  `-enableCodeCoverage YES` to a warm `make test` recompiled nothing and moved the wall
+  clock from 37.5s to 35.5s — inside the noise, because it turned on something already on.
+  So there is no `make test-coverage` to remember and no flag: `codeCoverage` is a
+  `defaultOptions` entry on `UnitTests.xctestplan` and `AllTests.xctestplan`, scoped to the
+  `opensky` target, and `make test-report` prints the percentage under the pass/fail counts.
+  The scoping is the part the plan entry actually buys — an unscoped report puts a
+  meaningless 86.68% for `openskyTests.xctest` and a 0/0 for `openskyUITests.xctest` beside
+  the number anyone wants, which is the engine's. Baseline: **80.31% of lines
+  (57543/71652)**, at 3070 passed and 59 skipped. No threshold gate and no number in CI in
+  this pass, deliberately: the value is finding the defensive branches in the parsers that
+  no test ever takes, which is exactly the code "malformed input must not crash" is about,
+  not defending a percentage. A floor gets argued from a baseline, the same discipline the
+  perf budgets already require.
 * **The real-data suites run as a set: `Config/RealData.xctestplan` and `make realtest-all`
   (issue #381)**: 48 env-gated suites skip in every `make test` run, and the only way to run
   one was `make realtest T=...`, which deliberately runs exactly one — so the highest-value

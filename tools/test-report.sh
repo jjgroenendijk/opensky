@@ -105,3 +105,44 @@ if fails:
 else:
     print("\n[INFO] no failing tests in this bundle")
 PY
+
+# Coverage (issue #382). The UnitTests and AllTests plans gather it for the
+# `opensky` target, so every bundle from `make test` carries it and the
+# percentage arrives through the same command as the pass/fail counts rather
+# than out of a hand-parsed .xcresult. A bundle from a run that gathered none
+# still has to report as a missing number rather than a failure, so a non-zero
+# xccov exit prints one line and moves on.
+coverage_json="$(mktemp -t opensky-coverage-report)"
+trap 'rm -f "$tests_json" "$coverage_json"' EXIT INT TERM
+if xcrun xccov view --report --json "$bundle" >"$coverage_json" 2>/dev/null; then
+    python3 - "$coverage_json" <<'PY'
+import json
+import sys
+
+try:
+    with open(sys.argv[1], encoding="utf-8") as stream:
+        report = json.load(stream)
+except (OSError, json.JSONDecodeError, ValueError):
+    sys.exit(0)
+
+
+def line(label, node):
+    covered = node.get("coveredLines", 0)
+    executable = node.get("executableLines", 0)
+    percent = 100.0 * node.get("lineCoverage", 0.0)
+    print(f"{label} {percent:6.2f}%  ({covered}/{executable} lines)")
+
+
+targets = report.get("targets", [])
+print("\n[INFO] code coverage:")
+line("  overall            ", report)
+# The plans scope coverage to the one app target, so the per-target breakdown
+# repeats the overall line verbatim and is only worth printing once a second
+# target is in scope.
+if len(targets) > 1:
+    for target in targets:
+        line(f"  {target.get('name', '<unknown>'):<19}", target)
+PY
+else
+    printf '\n[INFO] no coverage data in this bundle\n'
+fi
