@@ -143,21 +143,26 @@ cli: vendor-link ## Build the openskycli dev tool ($(CONFIG))
 probe: ## CLI smoke checks against the local install (skips if absent)
 	@./tools/probe.sh
 
-# -only-testing names the target we want instead of subtracting the one we do
-# not, so a future third test target stays out by default. It does not save the
-# UI bundle's build: xcodebuild builds every buildable in the scheme's Test
-# action before it looks at the selectors, and measurably still compiles
-# openskyUITests here. Dropping that cost needs test plans (issue #346).
+# Which bundles a run touches is a checked-in test plan (issue #346), not a
+# pile of -only-testing/-skip-testing flags: UnitTests lists openskyTests
+# alone, AllTests lists both. Selecting the unit plan is what actually drops
+# the UI bundle's compile and link — xcodebuild builds every buildable in the
+# Test action before it looks at selectors, so a selector alone never did.
+UNIT_PLAN   := -testPlan UnitTests
+ALL_PLAN    := -testPlan AllTests
+
 test: vendor-link ## Build + run unit tests (no UI tests)
 	@bundle="$$($(RUN_DIR) -b $(TEST_RESULTS) unit)/unit.xcresult"; \
 		TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
 		$(XCB_RUN) test $(XCB_TEST) -resultBundlePath "$$bundle" \
-		-only-testing:openskyTests test
+		$(UNIT_PLAN) test
 
 test-ui: vendor-link ## Build + run UI tests (launches the app, drives it via automation)
 	@./tools/test-ui.sh \
 		$(PROJECT) $(SCHEME) '$(DESTINATION)' $(XCODEBUILD_FLAGS)
 
+# The unit plan cannot select a UI test, so a selector naming openskyUITests
+# switches to the plan that lists it. Every other selector keeps the default.
 test-one: vendor-link ## Run one test: make test-one T=Class[/method] or Target/Class/method
 	@test -n "$(T)" || { \
 		echo "[ERROR] usage: make test-one T=ClassName[/methodName]"; \
@@ -165,10 +170,11 @@ test-one: vendor-link ## Run one test: make test-one T=Class[/method] or Target/
 		echo "        ClassName[/methodName] resolves under openskyTests"; \
 		exit 2; }
 	@case "$(T)" in */*/*) spec="$(T)";; *) spec="openskyTests/$(T)";; esac; \
+	case "$$spec" in openskyUITests/*) plan="$(ALL_PLAN)";; *) plan="$(UNIT_PLAN)";; esac; \
 	bundle="$$($(RUN_DIR) -b $(TEST_RESULTS) one)/one.xcresult"; \
 	TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
 		$(XCB_RUN) test-one $(XCB_TEST) -resultBundlePath "$$bundle" \
-		-only-testing:"$$spec" test
+		$$plan -only-testing:"$$spec" test
 
 test-report: ## Print pass/fail summary + failure detail from the newest result bundle
 	@./tools/test-report.sh $(TEST_RESULTS)
