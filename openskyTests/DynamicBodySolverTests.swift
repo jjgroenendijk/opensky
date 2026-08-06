@@ -127,18 +127,20 @@ struct DynamicBodySolverTests {
         let shelf = StaticCollisionShape(
             reference: FormID(2),
             transform: MatrixMath.translation(SIMD3(0, 0, 100)),
-            geometry: .box(halfExtents: SIMD3(200, 200, 2)),
-            bounds: ModelBounds(min: SIMD3(-200, -200, 98), max: SIMD3(200, 200, 102))
+            geometry: .box(halfExtents: SIMD3(200, 200, 8)),
+            bounds: ModelBounds(min: SIMD3(-200, -200, 92), max: SIMD3(200, 200, 108))
         )
         let world = DynamicStepWorld(
             staticCandidates: DynamicBodyScene.query([DynamicBodyScene.floor(), shelf])
         )
-        // Bottom at 98, four units inside the shelf's top face at 102.
-        var bodies = [DynamicBodyScene.cube(key: .generated(1), center: SIMD3(0, 0, 108))]
+        // Bottom at 105, three units inside the board's top face at 108 and
+        // thirteen above its underside — the way vanilla authors clutter, and
+        // the case the nearest-surface rule has to read as "climb out upward".
+        var bodies = [DynamicBodyScene.cube(key: .generated(1), center: SIMD3(0, 0, 115))]
 
         DynamicBodyScene.run(bodies: &bodies, world: world, steps: 600)
 
-        #expect(bodies[0].position.z > 102, "the body sank through the shelf")
+        #expect(bodies[0].position.z > 108, "the body sank through the shelf")
         #expect(bodies[0].isSleeping)
     }
 

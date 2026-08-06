@@ -1,6 +1,7 @@
 # ── Build products & Xcode cruft ──────────────────────────────────────────────
 build/
 DerivedData/
+DerivedData-optimized/
 .build/
 *.xcuserstate
 xcuserdata/

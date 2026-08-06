@@ -4,6 +4,47 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-06
 
+* **Dynamic clutter settles and fits its frame budget; routing is on by default
+  (issue #392)**: item 15.2 shipped with two of its acceptance criteria unmet, and this
+  closes both. Against Chillfurrow Farm the probe went from 13 of 51 references coming to
+  rest — with 20 of the other 38 falling more than twenty thousand units out of the world —
+  and a 247 ms fixed step, to **51 of 51 asleep** with a largest drop of 137 units and a
+  step of well under a millisecond. `CellSceneBuilder.simulatesDynamicBodies` now defaults to
+  true and the probe asserts both claims instead of printing them.
+
+  Four rules were wrong, and each was invisible to the synthetic suites because each needs
+  geometry those fixtures did not have. **A surface faces the way it is wound**, not toward
+  the body's centre of mass: vanilla ships a model whose decoded centre of mass sits below
+  every vertex of its own collider, so the old rule read the shelf it stood on as facing down
+  and drove it through. Skyrim's collision soups are consistently wound front face outward,
+  measured over a whole interior; a box and a convex hull are the exception, because this
+  engine derives their connectivity itself and so orients them away from an interior point.
+  **A shape's nearest face vetoes its far ones**: a body hovering three units over a shelf
+  board was finding the board's underside twenty units away and being told it was twenty units
+  inside the board, so the narrowphase now ranks by distance whether or not a face reports a
+  penetration. **One penetration is corrected once**: a sample generates a contact per placed
+  shape it is near, and applying each in turn moved a body by the sum of a dozen identical
+  corrections — 118 units through a farmhouse floor in a single step — so corrections
+  accumulate per body against what that body has already been moved, capped per substep.
+  **Sleep is measured with hysteresis, at the body's own scale, and disturbed only by
+  motion**: a body at rest on triangle-soup geometry twitches as its samples cross triangle
+  edges, so a tally that zeroes on any twitch never reaches sixty; and because a step adds
+  gravity before contacts resolve, testing a neighbour's *velocity* made every awake body look
+  busy and left settled pairs waking each other forever, one sleeping on step 61 and woken on
+  step 62.
+
+  The step also got 24x cheaper from work that is now correct rather than merely faster:
+  one substep instead of eight (nothing is flying any more), sleeping bodies costing nothing,
+  per-triangle work hoisted out of the per-sample loop into `DynamicSurfaceTriangle`, an exact
+  plane-distance bound that dismisses a triangle before the closest-point query, and a
+  recovery depth scaled to the body rather than a flat 48 units.
+
+  The perf gate needs an optimized build to mean anything — a step is a few hundred
+  microseconds of tight `simd` arithmetic, which `-Onone` costs around 24x — so
+  `make realtest-perf` builds this suite with `-O` into its own derived-data tree and holds it
+  to the real 2 ms budget, while a default `make realtest` still gates at an unoptimized
+  ceiling. `docs/engine/dynamic-bodies.md` loses its "what is not done yet" section.
+
 * **Movable clutter simulates: fixed-step rigid bodies, shape sweeps, and settling drops
   (issue #193)**: collision had been static-only since 4.3, and item 15.1 decoded the
   inertial tail without anything consuming it. The cell build now splits each player-solid

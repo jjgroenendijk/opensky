@@ -30,25 +30,34 @@
 # once reached ~30 GB and locked the machine. See docs/engine/cell-streaming.md
 # (memory budget) and docs/testing.md (real-data suites).
 #
-# Usage: tools/realtest.sh [-t SELECTOR] [-c CAP_MB] [-s GUARD_SECONDS]
+# Usage: tools/realtest.sh [-t SELECTOR] [-c CAP_MB] [-s GUARD_SECONDS] [-O]
 #   -t  -only-testing selector; must resolve to exactly one test. Omit to run
 #       the whole plan.
 #   -c  watchdog kill threshold in MB (default 4096 for one test, 6144 for the
 #       set: one host process runs every suite in turn and keeps their caches).
 #   -s  watchdog lifetime in seconds (default 900 for one test, 7200 for the
 #       set).
+#   -O  build the suites optimized, for a perf gate that measures the engine
+#       rather than the compiler (issue #392). The Debug configuration is kept
+#       because `@testable import` needs ENABLE_TESTABILITY, which Release turns
+#       off; only the optimization level and one compilation condition change,
+#       and a run announces itself to the tests through OPENSKY_OPTIMIZED. The
+#       products go in their own derived-data tree, because otherwise every
+#       alternation between `make test` and this would rebuild the whole engine.
 set -eu
 
 selector=""
 cap_mb=""
 guard_seconds=""
-while getopts "t:c:s:" opt; do
+optimized=""
+while getopts "t:c:s:O" opt; do
     case "$opt" in
         t) selector="$OPTARG" ;;
         c) cap_mb="$OPTARG" ;;
         s) guard_seconds="$OPTARG" ;;
+        O) optimized="yes" ;;
         *)
-            echo "[ERROR] usage: tools/realtest.sh [-t SELECTOR] [-c MB] [-s SECONDS]" >&2
+            echo "[ERROR] usage: tools/realtest.sh [-t SELECTOR] [-c MB] [-s SECONDS] [-O]" >&2
             exit 2
             ;;
     esac
@@ -139,10 +148,19 @@ result_bundle="$("$root/tools/run-dir.sh" -b build/test-results realtest)/realte
 # under. Parallel testing off keeps xcodebuild to one test host, which is what
 # makes the watchdog's per-process cap meaningful; Swift Testing still runs its
 # own tests concurrently inside that host.
+derived_data="$OPENSKY_DERIVED_DATA"
+if [ -n "$optimized" ]; then
+    derived_data="$OPENSKY_DERIVED_DATA-optimized"
+    printf '[INFO] optimized build, derived data: %s\n' "$derived_data"
+fi
 set -- xcodebuild -project "$root/opensky.xcodeproj" -scheme opensky \
-    -configuration Debug -derivedDataPath "$OPENSKY_DERIVED_DATA" \
+    -configuration Debug -derivedDataPath "$derived_data" \
     -destination 'platform=macOS' -testPlan RealData \
     -parallel-testing-enabled NO -maximum-parallel-testing-workers 1
+if [ -n "$optimized" ]; then
+    set -- "$@" SWIFT_OPTIMIZATION_LEVEL=-O GCC_OPTIMIZATION_LEVEL=s \
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS="DEBUG OPENSKY_OPTIMIZED"
+fi
 if [ -n "$selector" ]; then
     set -- "$@" -only-testing:"$selector"
 else

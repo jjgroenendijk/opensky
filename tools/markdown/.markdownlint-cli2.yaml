@@ -24,6 +24,7 @@ ignores:
   - .build
   - build
   - DerivedData
+  - DerivedData-optimized   # the optimized real-data perf build's own cache
   - logs            # gitignored scratch output; agents drop free-form notes here
   - .vendor         # vendored upstream sources built by make bootstrap, not ours to lint
   - "**/._*"        # macOS AppleDouble junk on this volume

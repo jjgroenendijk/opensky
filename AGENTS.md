@@ -103,7 +103,10 @@ fixtures built in code. Every pushed commit is green.
 `make test` never runs the env-gated real-data suites — they skip without a data root, which
 `xcodebuild test` does not forward. Run `make realtest T='Class/method()'` for one of them
 and `make realtest-all` for the whole set, on demand and before a milestone acceptance.
-Neither can run in CI, so the pre-push gate stays `make test` plus `make cli`.
+`make realtest-perf` is the same machinery built optimized, for the one budget that is
+meaningless unoptimized; it caches in `DerivedData-optimized/` so it does not evict the
+Debug tree. None of them can run in CI, so the pre-push gate stays `make test` plus
+`make cli`.
 
 ## Loading game data (runtime, never repo)
 

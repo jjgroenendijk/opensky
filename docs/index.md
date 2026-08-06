@@ -147,9 +147,10 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   immutable BVH broadphase, fail-loud geometry accounting, streaming lifetime + budgets,
   trigger volumes and their per-frame OnTriggerEnter/OnTriggerLeave occupancy diff.
 * [Dynamic rigid bodies](/engine/dynamic-bodies.md) - which Havok bodies simulate, the
-  convex collider and signed narrowphase, the fixed-step integrator with its tunneling
-  guard and sleep rules, sphere and capsule sweeps, the player's shove, and the streaming
-  and resting-transform lifecycle.
+  convex collider and the narrowphase that reads a surface's facing off its own winding,
+  the fixed-step integrator with its tunneling guard, penetration recovery and sleep rules,
+  sphere and capsule sweeps, the player's shove, the streaming and resting-transform
+  lifecycle, and the optimized perf gate.
 * [Actor idle animation](/engine/actor-animation.md) - HKX idle sampling, skeleton-world
   pose composition, NIF palette refresh, streamed lifetime, fallback accounting + budget,
   the graph-driven player path and its simulation clock.

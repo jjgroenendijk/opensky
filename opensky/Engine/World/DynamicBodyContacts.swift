@@ -29,6 +29,62 @@ nonisolated struct PlacedTriangleSoup {
     let transform: float4x4
 }
 
+/// One body's contact samples moved into a placed shape's own local space,
+/// together with the box that bounds every one of them at its full reach.
+///
+/// The box is what makes the triangle pass affordable. A body carries a couple
+/// of dozen samples and a candidate shape a few dozen triangles, so the pass is
+/// a product of the two unless something cuts it: testing each triangle against
+/// the *whole sample set* first turns twenty-odd rejects into one, and only the
+/// few triangles that survive are prepared at all. `recovery` is what sizes the
+/// box, which is why it is capped to the body rather than left at a flat
+/// `recoveryDepth` — see `DynamicBodyContacts.recoveryDepth(of:)`.
+nonisolated struct DynamicLocalSamples {
+    let points: [SIMD3<Float>]
+    /// Each sample's skin, with `contactMargin` added and the shape's scale
+    /// divided out, so every length below is in the shape's own units.
+    let radii: [Float]
+    /// How this shape's triangles are turned into surface normals, in the same
+    /// local space the samples are in.
+    let orientation: DynamicSurfaceOrientation
+    /// `recoveryDepth` in the shape's units.
+    let recovery: Float
+    /// Sample AABB grown by the largest sample reach.
+    let lower: SIMD3<Float>
+    let upper: SIMD3<Float>
+
+    /// Nil where the shape's placement will not invert or a sample does not
+    /// survive the transform, which leaves the shape contributing no contact
+    /// rather than a nonsense one.
+    init?(
+        samples: [(point: SIMD3<Float>, radius: Float)],
+        shape: StaticCollisionShape,
+        recovery worldRecovery: Float
+    ) {
+        let determinant = simd_determinant(shape.transform)
+        let scale = DynamicCollisionMath.maximumScale(of: shape.transform)
+        guard
+            determinant.isFinite, abs(determinant) > 1e-9, scale > Float.ulpOfOne,
+            !samples.isEmpty
+        else { return nil }
+        let inverse = shape.transform.inverse
+        points = samples.map { DynamicCollisionMath.transform($0.point, by: inverse) }
+        radii = samples.map { ($0.radius + DynamicBodyContacts.contactMargin) / scale }
+        orientation = DynamicSurfaceOrientation.of(shape.geometry)
+        recovery = worldRecovery / scale
+        guard points.allSatisfy(\.isFiniteVector) else { return nil }
+        let reach = (radii.max() ?? 0) + recovery
+        var low = points[0]
+        var high = points[0]
+        for point in points.dropFirst() {
+            low = simd_min(low, point)
+            high = simd_max(high, point)
+        }
+        lower = low - SIMD3(repeating: reach)
+        upper = high + SIMD3(repeating: reach)
+    }
+}
+
 /// One body with its contact samples already taken, so the sampling is paid for
 /// once per substep rather than once per query.
 nonisolated struct DynamicBodySamples {
@@ -72,6 +128,20 @@ nonisolated enum DynamicBodyContacts {
     /// to a deep penetration of this one.
     static let recoveryDepth: Float = 48
 
+    /// The same bound for one body, which is the smaller of `recoveryDepth` and
+    /// the body's own reach.
+    ///
+    /// A sample cannot be meaningfully further inside a surface than the body it
+    /// belongs to is big — past that the whole body would be buried, which is
+    /// not a state vanilla authoring produces. Scaling the bound down for small
+    /// clutter is also the single largest saving in the step: the bound inflates
+    /// the box every triangle of a candidate shape is tested against, and a flat
+    /// 48 units around a tankard let nearly half of a room's triangles through
+    /// to the exact query.
+    static func recoveryDepth(of body: DynamicBody) -> Float {
+        min(recoveryDepth, max(contactMargin * 4, body.definition.boundingRadius))
+    }
+
     /// Contacts between `body` and the placed static shapes `shapes`.
     ///
     /// Shapes are visited in the order the broadphase returned them, which is
@@ -91,7 +161,7 @@ nonisolated enum DynamicBodyContacts {
             // which is the difference between an affordable step and an
             // unaffordable one on real interior geometry.
             for (sample, hit) in penetrations(
-                of: samples, shape: shape, center: body.previousPosition
+                of: samples, shape: shape, recovery: recoveryDepth(of: body)
             ) {
                 let radius = sample.radius + contactMargin
                 result.append(DynamicContact(
@@ -122,28 +192,36 @@ nonisolated enum DynamicBodyContacts {
     private static func penetrations(
         of samples: [(point: SIMD3<Float>, radius: Float)],
         shape: StaticCollisionShape,
-        center: SIMD3<Float>
+        recovery: Float
     ) -> [(sample: (point: SIMD3<Float>, radius: Float), hit: DynamicPenetration)] {
         var deepest = [DynamicPenetration?](repeating: nil, count: samples.count)
         switch shape.geometry {
         case let .triangleSoup(vertices, indices),
              let .convexVertices(vertices, indices):
+            guard
+                let local = DynamicLocalSamples(
+                    samples: samples, shape: shape, recovery: recovery
+                )
+            else { break }
             accumulate(
                 soup: (vertices: vertices, indices: indices),
-                against: samples,
+                against: local,
                 shape: shape,
-                center: center,
                 into: &deepest
             )
         case let .box(halfExtents):
+            guard
+                let local = DynamicLocalSamples(
+                    samples: samples, shape: shape, recovery: recovery
+                )
+            else { break }
             accumulate(
                 soup: (
                     vertices: CapsuleWorldCollider.boxVertices(halfExtents),
                     indices: CapsuleWorldCollider.boxIndices
                 ),
-                against: samples,
+                against: local,
                 shape: shape,
-                center: center,
                 into: &deepest
             )
         case .sphere, .capsule:
@@ -151,8 +229,7 @@ nonisolated enum DynamicBodyContacts {
                 deepest[index] = penetration(
                     of: sample.point,
                     radius: sample.radius + contactMargin,
-                    shape: shape,
-                    center: center
+                    shape: shape
                 )
             }
         }
@@ -162,36 +239,19 @@ nonisolated enum DynamicBodyContacts {
     }
 
     /// One pass over a shape's own triangles, deepening every sample's answer as
-    /// it goes. Samples arrive in world space and are moved into the shape's
-    /// space here; the answers are moved back before they are returned.
+    /// it goes. The samples arrive already in the shape's space; the answers are
+    /// moved back to the world before they are returned.
     private static func accumulate(
         soup: (vertices: [SIMD3<Float>], indices: [UInt32]),
-        against samples: [(point: SIMD3<Float>, radius: Float)],
+        against local: DynamicLocalSamples,
         shape: StaticCollisionShape,
-        center: SIMD3<Float>,
         into deepest: inout [DynamicPenetration?]
     ) {
-        let determinant = simd_determinant(shape.transform)
-        let scale = DynamicCollisionMath.maximumScale(of: shape.transform)
-        guard determinant.isFinite, abs(determinant) > 1e-9, scale > Float.ulpOfOne else {
-            return
-        }
-        let inverse = shape.transform.inverse
-        let localCenter = DynamicCollisionMath.transform(center, by: inverse)
-        let local = samples.map {
-            (
-                point: DynamicCollisionMath.transform($0.point, by: inverse),
-                radius: ($0.radius + contactMargin) / scale
-            )
-        }
-        guard localCenter.isFiniteVector, local.allSatisfy(\.point.isFiniteVector) else {
-            return
-        }
         let vertices = soup.vertices
         let indices = soup.indices
         let end = indices.count - indices.count % 3
-        var localNearest = [(penetration: DynamicPenetration, distance: Float)?](
-            repeating: nil, count: samples.count
+        var localNearest = [(distance: Float, penetration: DynamicPenetration?)?](
+            repeating: nil, count: local.points.count
         )
         for offset in stride(from: 0, to: end, by: 3) {
             let first = Int(indices[offset])
@@ -200,22 +260,23 @@ nonisolated enum DynamicBodyContacts {
             guard first < vertices.count, second < vertices.count, third < vertices.count else {
                 continue
             }
-            let triangle = CollisionTriangle(
-                first: vertices[first], second: vertices[second], third: vertices[third]
-            )
-            for (index, sample) in local.enumerated() {
-                guard
-                    let hit = trianglePenetration(
-                        of: sample.point,
-                        radius: sample.radius,
-                        triangle: triangle,
-                        center: localCenter,
-                        recovery: recoveryDepth / scale
-                    ), hit.distance < (localNearest[index]?.distance ?? .greatestFiniteMagnitude)
-                else { continue }
-                localNearest[index] = hit
-            }
+            let corners = (vertices[first], vertices[second], vertices[third])
+            // One reject for the whole body before the triangle is prepared at
+            // all. Most of a room-sized soup is nowhere near a single piece of
+            // clutter, and this is the test that decides whether anything else
+            // about the triangle is paid for.
+            let low = simd_min(simd_min(corners.0, corners.1), corners.2)
+            let high = simd_max(simd_max(corners.0, corners.1), corners.2)
+            guard
+                all(low .<= local.upper), all(high .>= local.lower),
+                let surface = DynamicSurfaceTriangle(
+                    CollisionTriangle(first: corners.0, second: corners.1, third: corners.2),
+                    orientation: local.orientation
+                )
+            else { continue }
+            accumulate(surface: surface, local: local, into: &localNearest)
         }
+        let scale = DynamicCollisionMath.maximumScale(of: shape.transform)
         for index in localNearest.indices {
             guard let hit = localNearest[index]?.penetration else { continue }
             let direction = shape.transform * SIMD4<Float>(hit.normal, 0)
@@ -227,6 +288,29 @@ nonisolated enum DynamicBodyContacts {
             if converted.depth > (deepest[index]?.depth ?? -.greatestFiniteMagnitude) {
                 deepest[index] = converted
             }
+        }
+    }
+
+    /// Every sample against one surviving triangle, keeping each sample's
+    /// nearest surface — whether or not that surface reported a penetration, so
+    /// a near face saying "outside" still vetoes a far one. The sample's
+    /// incumbent distance goes in, which lets the triangle dismiss itself on a
+    /// dot product rather than a closest-point query.
+    private static func accumulate(
+        surface: DynamicSurfaceTriangle,
+        local: DynamicLocalSamples,
+        into nearest: inout [(distance: Float, penetration: DynamicPenetration?)?]
+    ) {
+        for index in local.points.indices {
+            guard
+                let hit = surface.surface(
+                    of: local.points[index],
+                    radius: local.radii[index],
+                    recovery: local.recovery,
+                    nearerThan: nearest[index]?.distance ?? .greatestFiniteMagnitude
+                )
+            else { continue }
+            nearest[index] = hit
         }
     }
 

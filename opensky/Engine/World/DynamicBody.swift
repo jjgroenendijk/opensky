@@ -291,16 +291,6 @@ nonisolated struct DynamicBody: Sendable {
     let cell: CellSceneLocation
     let definition: DynamicBodyDefinition
     var position: SIMD3<Float>
-    /// Centre of mass before the current substep integrated it.
-    ///
-    /// The static narrowphase needs a point it can trust to be on the outside of
-    /// a surface when it decides which way that surface pushes. The current
-    /// centre is not that point: a body that has just dipped below a floor would
-    /// orient the floor's normal downward and be expelled through it, faster
-    /// every substep. The real-data probe found exactly that — half a farmhouse's
-    /// clutter accelerating out of the world. Where the body was before it moved
-    /// is the point that had not crossed yet.
-    var previousPosition: SIMD3<Float>
     var orientation: simd_quatf
     var linearVelocity: SIMD3<Float> = .zero
     var angularVelocity: SIMD3<Float> = .zero
@@ -323,7 +313,6 @@ nonisolated struct DynamicBody: Sendable {
         self.definition = definition
         self.orientation = orientation
         position = originPosition + orientation.act(definition.centerOfMass)
-        previousPosition = position
     }
 
     /// Where the reference's own origin sits, which is what a transform

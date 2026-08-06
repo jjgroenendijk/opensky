@@ -19,7 +19,8 @@
 //    under the sleep threshold. Moving the correction to position keeps the
 //    recovery and lets a settled body actually stop.
 // 4. A body that stays under both sleep thresholds long enough stops being
-//    integrated at all.
+//    integrated at all, and is woken again by an impulse or by contact from a
+//    body that is still moving.
 //
 // Determinism is a requirement, not a happy accident: bodies arrive already
 // sorted by `ReferenceKey`, contacts are generated in body order, and the
@@ -72,13 +73,36 @@ nonisolated enum DynamicBodySolver {
     /// substep. Below one so a deep recovery is spread over several substeps
     /// rather than snapping.
     static let correctionRate: Float = 0.4
+    /// Ceiling on how far one substep may move a body to recover penetration,
+    /// in engine units. Vanilla authors clutter *inside* the shelf it stands on,
+    /// so a body's first contacts are routinely tens of units deep; without a
+    /// ceiling the recovery reads as a launch and the body leaves the world.
+    static let maximumCorrectionDistance: Float = 1.5
     /// Below this closing speed a contact is treated as resting and gets no
     /// bounce, whatever the body's restitution. Engine units per second.
     static let restitutionThreshold: Float = 120
-    /// Sleep thresholds, and how many consecutive steps under them it takes.
+    /// Sleep thresholds, and how many steps under them it takes.
+    ///
+    /// The linear one is a speed in engine units. The angular one is derived
+    /// from it per body rather than being a constant, because one angular speed
+    /// does not mean the same motion on a bowl and on a dining table: what a
+    /// viewer sees is how fast the body's *surface* moves, so the threshold is
+    /// the spin at which the outermost point of the collider travels at
+    /// `sleepLinearSpeed`. A fixed constant was either too tight for clutter the
+    /// size of a cup or too loose for furniture.
     static let sleepLinearSpeed: Float = 6
-    static let sleepAngularSpeed: Float = 0.12
+    /// Ceiling on the derived angular threshold, so a body with an implausibly
+    /// small collider is not allowed to sleep while visibly spinning.
+    static let maximumSleepAngularSpeed: Float = 0.7
     static let sleepStepCount = 60
+
+    /// The spin at which the farthest point of `body`'s collider moves at
+    /// `sleepLinearSpeed`.
+    static func sleepAngularSpeed(of body: DynamicBody) -> Float {
+        let radius = body.definition.boundingRadius
+        guard radius > Float.ulpOfOne else { return maximumSleepAngularSpeed }
+        return min(sleepLinearSpeed / radius, maximumSleepAngularSpeed)
+    }
 
     /// Advances every body by one fixed step.
     @discardableResult
@@ -136,7 +160,6 @@ nonisolated enum DynamicBodySolver {
     ) {
         let previousPosition = body.position
         let previousOrientation = body.orientation
-        body.previousPosition = previousPosition
         body.position += body.linearVelocity * dt
         let spin = simd_quatf(
             real: 0,
@@ -227,12 +250,24 @@ nonisolated enum DynamicBodySolver {
 
     // MARK: - Sleep
 
+    /// A step under the thresholds counts toward sleep and a step over them
+    /// counts back down, rather than starting the tally over.
+    ///
+    /// A body at rest on real triangle-soup geometry twitches. Its samples cross
+    /// triangle edges, so the contact set is not identical from one substep to
+    /// the next, and the sequential-impulse solver distributes an unchanging
+    /// load slightly differently each time it changes. Zeroing the tally on any
+    /// twitch means a body that is at rest fifty-nine steps out of sixty never
+    /// sleeps, and never sleeping is also never persisted: the real-data probe
+    /// measured twenty of a farmhouse's fifty-one references sitting still with
+    /// their tally stuck in the fifties. Counting down keeps a body that is
+    /// genuinely moving awake while letting a settled one through.
     private static func updateSleep(_ body: inout DynamicBody) {
         guard !body.isSleeping else { return }
         let atRest = simd_length(body.linearVelocity) <= sleepLinearSpeed
-            && simd_length(body.angularVelocity) <= sleepAngularSpeed
+            && simd_length(body.angularVelocity) <= sleepAngularSpeed(of: body)
         guard atRest else {
-            body.restingSteps = 0
+            body.restingSteps = max(0, body.restingSteps - 1)
             return
         }
         body.restingSteps += 1

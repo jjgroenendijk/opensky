@@ -107,16 +107,17 @@ nonisolated final class CellSceneBuilder {
     let collisionModels: NIFCollisionLibrary?
     var collisionPartitionCache = CellCollisionPartitionCache()
     /// Whether movable clutter leaves the immutable collision set and joins the
-    /// dynamic world (issue #193). Off by default, deliberately.
+    /// dynamic world (issues #193 and #392).
     ///
-    /// The simulation itself is complete and unit-tested, but the real-data
-    /// probe against a vanilla farmhouse still has clutter that fails to settle
-    /// and a step cost far above its budget, both recorded in
-    /// docs/engine/dynamic-bodies.md. Routing by default would trade a world
-    /// where a barrel is reliably solid for one where it sometimes sinks through
-    /// a shelf, which is a worse world. The probe and the build tests turn it
-    /// on; production leaves it off until the narrowphase earns it.
-    var simulatesDynamicBodies = false
+    /// On by default since #392: the real-data probe now has every one of a
+    /// vanilla farmhouse's fifty-one simulated references coming to rest where
+    /// it was authored, inside a step cost the frame can afford. It stayed off
+    /// through #193 because neither held — half that clutter left the geometry
+    /// it started in and fell out of the world — and a barrel that sometimes
+    /// sinks through a shelf is a worse world than one that never moves. It
+    /// remains a setting rather than a constant so a build that only wants the
+    /// immutable collision set, such as `openskycli collision`, can say so.
+    var simulatesDynamicBodies = true
     let distantLODBuilder: DistantLODBuilder?
     /// FormID -> STAT over the STAT top group, built on first use.
     var statIndex: [UInt32: StaticObject]?
