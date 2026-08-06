@@ -1,0 +1,27 @@
+{
+  "configurations" : [
+    {
+      "id" : "9E1D0A00-0000-4000-A000-00000000D001",
+      "name" : "Configuration 1",
+      "options" : {}
+    }
+  ],
+  "defaultOptions" : {},
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:opensky.xcodeproj",
+        "identifier" : "5A3BAE183000109300177F95",
+        "name" : "openskyTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:opensky.xcodeproj",
+        "identifier" : "5A3BAE223000109300177F95",
+        "name" : "openskyUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

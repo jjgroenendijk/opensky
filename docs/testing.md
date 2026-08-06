@@ -4,7 +4,7 @@ title: Testing setup
 description: Test targets, make entrypoints, real-data suites, result reporting,
   the RSS watchdog, and this machine's known test-environment quirks.
 tags: [testing, tooling, process]
-timestamp: 2026-08-05T00:00:00Z
+timestamp: 2026-08-06T00:00:00Z
 ---
 
 # Testing setup
@@ -34,6 +34,9 @@ files.
   half-written `.xcresult` as a failure.
 * `make realtest T='Class/method()' [CAP=MB]` — run one real-data test against
   the install (see next section).
+* `make realtest-all [CAP=MB]` — run the whole real-data set the same way. On
+  demand and before a milestone acceptance; never on push, because it needs an
+  install CI does not have.
 * `make test-ui` — UI smoke tests. See "test-ui on this machine" below.
 * `make test-perms` — one-time TCC setup that stops permission popups.
 
@@ -46,34 +49,77 @@ Xcode's filesystem-synced groups silently pull into the `openskycli` target).
 
 ## Real-data suites and the data root
 
-12 `*RealDataTests` suites exercise the parser/renderer stack against a real
-Skyrim SE install. They gate on the `OPENSKY_DATA_ROOT` env var
-(`GameDataLocator.environmentKey`, `opensky/Engine/GameData/GameDataLocator.swift`):
+The `*RealDataTests` suites exercise the parser/renderer stack against a real
+Skyrim SE install — the highest-value integration coverage in the repo, and the
+only tests that touch a real install at all. They gate on the `OPENSKY_DATA_ROOT`
+env var (`GameDataLocator.environmentKey`,
+`opensky/Engine/GameData/GameDataLocator.swift`):
 `@Test(.enabled(if: dataRoot != nil))`, so machines without it skip
 deterministically. Metal-dependent tests also gate on
 `device.supportsFamily(.metal4)`.
 
-Plain `xcodebuild test` does NOT forward `OPENSKY_DATA_ROOT` into the unit-test
-host (proven: the host sees `<nil>`), so exporting the var in your shell is not
-enough — the gated tests silently skip. `make realtest` does it the reliable way
-(`tools/realtest.sh`): `build-for-testing`, inject the data root into the
-generated `.xctestrun`, then `test-without-building`. The selector must resolve
-to exactly one fully-qualified test, e.g.:
+Plain `xcodebuild test` does NOT forward an exported `OPENSKY_DATA_ROOT` into the
+unit-test host (proven: the host sees `<nil>`, issue #82), so exporting the var
+in your shell is not enough — the gated tests silently skip, and they skip in
+every `make test` run. Both entrypoints go through `tools/realtest.sh` instead,
+which runs the `RealData` test plan under the watchdog:
 
 ```sh
 make realtest T='CellRenderRealDataTests/streamsFiveByFiveGridToCompletion()'
+make realtest-all
 ```
 
-The underlying xcodebuild gap is tracked as issue #82.
+`make realtest` still validates that the selector resolves to exactly one test
+before running it (`-only-testing` accepts a misspelled Swift Testing method and
+exits 0 after running nothing), then asserts the result bundle says one test
+passed. `make realtest-all` has no selector to misspell, so it asserts instead
+that at least one test executed and none failed. Skips remain legal for the set,
+because some of these suites also need a Metal 4 device.
+
+### What the RealData test plan does and does not do
+
+`Config/RealData.xctestplan` (one of two plans on the `opensky` scheme, alongside
+`Config/Default.xctestplan`, which is what `make test` runs) is where the set is
+written down. Three measured xcodebuild behaviors shape it — dates and the
+conditions that retire them are in
+[local environment](/tools/environment.md):
+
+* A plan **environment entry does** reach the unit-test host. That is what
+  replaced issue #82's workaround — `build-for-testing`, rewrite the generated
+  `.xctestrun` with `plistlib`, `test-without-building` — with an ordinary
+  `xcodebuild test -testPlan RealData`.
+* A plan environment value is **not** macro-expanded: `$(OPENSKY_DATA_ROOT)`
+  arrives at the host as those literal 21 characters. So the plan carries a
+  literal install path, and that entry is the single place the data root is
+  configured — `tools/realtest.sh` reads the root back out of the plan and
+  refuses to run when a conflicting `OPENSKY_DATA_ROOT` is exported, rather than
+  testing an install the plan does not name. Point the suite at a different
+  install by editing the plan.
+* A plan's **`selectedTests` does not match Swift Testing tests**. The
+  identifiers do reach the runner (they show up as `OnlyTestIdentifiers` in the
+  generated `.xctestrun`) but select nothing, so running the plan straight
+  through executes zero tests — as does `skippedTests`, at suite level or at
+  method level. Command-line `-only-testing` does work and replaces the plan's
+  selection, so `tools/realtest.sh` reads the plan's `selectedTests` and passes
+  one `-only-testing` per suite.
+
+Because the plan's list is only as good as its spelling, `make realdata-plan`
+(part of `make lint`) asserts it is exactly the set of env-gated suites in
+`openskyTests` — every file that declares `dataRoot: GameDataRoot?` and has a
+`@Test`. Adding a real-data suite and forgetting the plan is a lint failure, not
+silent coverage loss.
 
 ## RSS watchdog (mandatory for heavy real-data tests)
 
 A cell-streaming test once ran away to ~30 GB RSS and locked the machine (BSA
 `.mappedIfSafe` on an external APFS volume can fall back to full reads). Every
-`make realtest` run has `tools/memguard.sh` polling the process tree and killing
-it past a cap (`CAP` MB, default 4096) before it can wedge the machine. Do not
-run a heavy real-data test with a raw `xcodebuild` invocation that bypasses the
-watchdog — go through `make realtest`.
+`make realtest` and `make realtest-all` run has `tools/memguard.sh` polling the
+process tree and killing it past a cap (`CAP` MB) before it can wedge the
+machine. The default is 4096 for one test and 6144 for the whole set, since one
+host process runs every suite in turn and keeps their caches; the watchdog's own
+lifetime scales the same way (15 minutes against 2 hours). Do not run a heavy
+real-data test with a raw `xcodebuild` invocation that bypasses the watchdog —
+go through `make realtest`.
 
 ## Result reporting and perf gates
 
@@ -137,10 +183,12 @@ clears only the environment variable.
 * The build cache is `DerivedData/` inside the checkout, not the Xcode default
   under `$HOME` — the boot volume is too small to hold it. `make` passes
   `-derivedDataPath` on every `xcodebuild` call and exports
-  `OPENSKY_DERIVED_DATA`; `make realtest` uses `DerivedData/opensky-realtest`
-  beside it, so a real-data run never invalidates the ordinary build. A hand-run
-  `xcodebuild` that omits the flag starts a second cache on the boot disk and
-  rebuilds from scratch.
+  `OPENSKY_DERIVED_DATA`. `make realtest` shares that one cache: it kept a
+  separate `DerivedData/opensky-realtest` tree only because it rewrote the
+  generated `.xctestrun`, and selecting a test plan changes no build setting, so
+  the second tens-of-gigabytes tree bought nothing. A hand-run `xcodebuild` that
+  omits the flag starts a second cache on the boot disk and rebuilds from
+  scratch.
 * Disk fills from caches nobody owns: each linked worktree keeps its own
   `DerivedData/`, and removing the worktree usually leaves it behind. `make
   prune` deletes those, along with result bundles and run output past the
