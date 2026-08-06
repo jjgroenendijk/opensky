@@ -4,6 +4,34 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-06
 
+* **The unit tests run under sanitizers: `Config/Sanitizers.xctestplan` and
+  `make test-sanitize` (issue #383)**: nothing in the repo had ever run under a runtime
+  sanitizer, in a codebase that reaches ffmpeg across a C boundary, slices
+  `UnsafeRawBufferPointer` over memory-mapped archives, and does most of its concurrency in
+  the `nonisolated` declarations that opt out of what Swift 6 checks statically. `Sanitizers`
+  joins `UnitTests`, `AllTests`, and `RealData` as the scheme's fourth checked-in plan, with
+  one configuration per sanitizer because Thread and Address cannot be enabled in the same
+  build: `threadSanitizerEnabled` for `Thread`, `addressSanitizer.enabled` plus
+  `undefinedBehaviorSanitizerEnabled` for `Address`. It is a separate plan rather than two
+  more configurations on `UnitTests` because xcodebuild builds *and* runs every configuration
+  in a plan, so `make test` — the pre-push gate on every commit — would have paid for both
+  sanitized builds. Measured while wiring it: each configuration lands in its own
+  `Variant-TSan` and `Variant-ASan-UBSan` products directory, and
+  `-only-test-configuration Thread` still builds the ASan variant, so `SAN=Thread` narrows
+  what executes and not what compiles. `tools/test-sanitize.sh` runs it under the memory
+  watchdog at 12288 MB, well above the real-data caps, because sanitizer shadow memory
+  multiplies resident size.
+* **First sanitizer baseline: clean under TSan, one real crash under ASan (issue #383)**:
+  3129 tests across both configurations, 3069 passed, 59 skipped on the usual Metal and
+  data-root gates, one failure. Thread Sanitizer reported nothing at all across the whole
+  bundle, which is the more surprising half of the result. Address Sanitizer crashed the test
+  host on `NIFModelTests/absurdDepthIsMalformed()` — not a poisoned-memory report but a
+  stack-guard hit inside `NIFNodeHierarchy.Builder.visit(ref:parent:depth:)`, whose 64-level
+  depth cap is a plausibility limit on scene-graph depth rather than a measured stack budget.
+  The recursion reaches the guard page before the cap fires, so the check that exists to
+  reject a malformed mesh does not protect a parse running on a small-stack thread. Filed as
+  issue #388 rather than fixed here, so `make test-sanitize` is red on that one test until it
+  lands; every other test in the bundle is green under both sanitizers.
 * **The real-data suites run as a set: `Config/RealData.xctestplan` and `make realtest-all`
   (issue #381)**: 48 env-gated suites skip in every `make test` run, and the only way to run
   one was `make realtest T=...`, which deliberately runs exactly one — so the highest-value

@@ -38,6 +38,9 @@ files.
 * `make realtest-all [CAP=MB]` — run the whole real-data set the same way. On
   demand and before a milestone acceptance; never on push, because it needs an
   install CI does not have.
+* `make test-sanitize [SAN=Thread|Address] [CAP=MB]` — run `openskyTests` under
+  the runtime sanitizers (see [Sanitizers](#sanitizers)). On demand and before a
+  milestone, never on push.
 * `make test-ui` — UI smoke tests. See "test-ui on this machine" below.
 * `make test-perms` — one-time TCC setup that stops permission popups.
 
@@ -51,13 +54,14 @@ Xcode's filesystem-synced groups silently pull into the `openskycli` target).
 ## Test plans
 
 Which bundles a run touches is a checked-in test plan, not a flag (issue #346). The
-`opensky` scheme references three, all under `Config/` beside the xcconfigs:
+`opensky` scheme references four, all under `Config/` beside the xcconfigs:
 
 | Plan | Test targets | Used by |
 | --- | --- | --- |
 | `UnitTests.xctestplan` | `openskyTests` | `make test`, `make test-one`; the scheme default |
 | `AllTests.xctestplan` | `openskyTests`, `openskyUITests` | `make test-ui`, and any full run |
 | `RealData.xctestplan` | `openskyTests`, plus the data root | `make realtest`, `make realtest-all` |
+| `Sanitizers.xctestplan` | `openskyTests`, one configuration per sanitizer | `make test-sanitize` |
 
 `xcodebuild` builds every buildable in a scheme's Test action before it looks at
 `-only-testing`, so a selector never saved the UI bundle's compile and link. Selecting a
@@ -65,9 +69,9 @@ plan does: the plan decides what gets built. `xcodebuild -scheme opensky -showTe
 lists them.
 
 The plans are where per-suite parallelization lives, and they are where a sanitizer variant
-should go when one is wanted — as an additional plan configuration, diffable in review,
-rather than another flag combination in the `Makefile`. `RealData` is the real-data variant
-that pattern predicted; what it can and cannot carry is below.
+goes — as plan configurations, diffable in review, rather than another flag combination in
+the `Makefile`. `RealData` and `Sanitizers` are the two variants that pattern predicted;
+what `RealData` can and cannot carry is below, and `Sanitizers` has its own section.
 
 Two selectors still ride on top of a plan. `make test-one T=...` adds `-only-testing` for
 the one class or method, and switches from the unit plan to `AllTests` when the selector
@@ -136,6 +140,49 @@ Because the plan's list is only as good as its spelling, `make realdata-plan`
 `@Test`. Adding a real-data suite and forgetting the plan is a lint failure, not
 silent coverage loss.
 
+## Sanitizers
+
+`make test-sanitize` runs `openskyTests` under the runtime sanitizers through
+`Config/Sanitizers.xctestplan` and `tools/test-sanitize.sh` (issue #383). Three
+properties of this codebase make it worth the wall-clock: the decode-only ffmpeg
+is reached across a C boundary where Swift's safety guarantees stop, the format
+parsers slice `UnsafeRawBufferPointer` over memory-mapped archives where an
+out-of-range read lands in mapped memory instead of tripping a bounds check, and
+most of the engine's concurrency lives in the `nonisolated` declarations that opt
+out of what Swift 6 checks statically.
+
+The plan carries two configurations, because the two sanitizers cannot be
+enabled in one build:
+
+| Configuration | Plan options | Build |
+| --- | --- | --- |
+| `Thread` | `threadSanitizerEnabled` | `DerivedData/Build/Products/Variant-TSan/` |
+| `Address` | `addressSanitizer.enabled`, `undefinedBehaviorSanitizerEnabled` | `.../Variant-ASan-UBSan/` |
+
+Each configuration builds into its own `Variant-<sanitizer>` products directory,
+and `xcodebuild` builds every configuration in the plan whether or not it runs
+them: `-only-test-configuration Thread` was measured (2026-08-06, Xcode 26.5)
+still producing `Variant-ASan-UBSan` alongside `Variant-TSan`. So
+`make test-sanitize SAN=Thread` narrows what executes while iterating on a
+finding, not what compiles.
+
+That is also why this is a fourth plan rather than two more configurations on
+`UnitTests`: there the sanitized builds would be compiled and run on every
+`make test`, which is the pre-push gate for every commit. The first run of each
+configuration recompiles the whole app and test bundle and takes far longer than
+`make test` — a periodic and pre-milestone check, in the same category as
+`make realtest-all`, deliberately not on the pre-push path.
+The run goes through the memory watchdog below at a higher cap than the real-data
+runs use, because sanitizer shadow memory multiplies resident size.
+
+A sanitizer report surfaces as a failing test, so `make test-report` reads the
+run like any other. A finding that turns out to be real becomes its own GitHub
+issue rather than an inline fix. The first baseline (2026-08-06, recorded in
+[the change log](/log.md)) was clean under Thread Sanitizer across the whole
+bundle and produced one Address Sanitizer crash — the NIF scene-graph recursion
+reaching the stack guard before its own depth cap fires, issue #388 — so
+`make test-sanitize` is red on that single test until that lands.
+
 ## RSS watchdog (mandatory for heavy real-data tests)
 
 A cell-streaming test once ran away to ~30 GB RSS and locked the machine (BSA
@@ -144,9 +191,11 @@ A cell-streaming test once ran away to ~30 GB RSS and locked the machine (BSA
 process tree and killing it past a cap (`CAP` MB) before it can wedge the
 machine. The default is 4096 for one test and 6144 for the whole set, since one
 host process runs every suite in turn and keeps their caches; the watchdog's own
-lifetime scales the same way (15 minutes against 2 hours). Do not run a heavy
-real-data test with a raw `xcodebuild` invocation that bypasses the watchdog —
-go through `make realtest`.
+lifetime scales the same way (15 minutes against 2 hours). `make test-sanitize`
+runs under the same watchdog at 12288 MB for 3 hours, because a sanitized host
+carries shadow memory on top of everything it would otherwise allocate. Do not
+run a heavy real-data test with a raw `xcodebuild` invocation that bypasses the
+watchdog — go through `make realtest`.
 
 ## Result reporting and perf gates
 
