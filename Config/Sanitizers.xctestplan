@@ -1,0 +1,43 @@
+{
+  "configurations" : [
+    {
+      "id" : "3C7A5E10-0000-4000-B000-00000000C001",
+      "name" : "Thread",
+      "options" : {
+        "threadSanitizerEnabled" : true
+      }
+    },
+    {
+      "id" : "3C7A5E10-0000-4000-B000-00000000C002",
+      "name" : "Address",
+      "options" : {
+        "addressSanitizer" : {
+          "enabled" : true
+        },
+        "undefinedBehaviorSanitizerEnabled" : true
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : {
+      "targets" : [
+        {
+          "containerPath" : "container:opensky.xcodeproj",
+          "identifier" : "5A3BAE003000109100177F95",
+          "name" : "opensky"
+        }
+      ]
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:opensky.xcodeproj",
+        "identifier" : "5A3BAE183000109300177F95",
+        "name" : "openskyTests"
+      }
+    }
+  ],
+  "version" : 1
+}

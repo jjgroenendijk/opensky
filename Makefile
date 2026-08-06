@@ -66,7 +66,8 @@ METAL_FILES     := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
         realdata-plan no-game-content \
         docs-links build cli \
         probe test \
-        test-ui test-one test-report realtest realtest-all test-perms app-path \
+        test-ui test-one test-report realtest realtest-all test-sanitize \
+        test-perms app-path \
         cli-path run-cli \
         install clean prune icon
 
@@ -199,6 +200,14 @@ realtest: vendor-link ## Run one env-gated real-data test under the RSS watchdog
 # the local install, which CI does not have and must never be given.
 realtest-all: vendor-link ## Run the whole RealData test plan under the RSS watchdog [CAP=MB]
 	@./tools/realtest.sh $(if $(CAP),-c $(CAP),)
+
+# The runtime counterpart to the static gates: openskyTests under TSan, then
+# under ASan with UBSan (issue #383). Two plan configurations rather than one
+# setting, because the two sanitizers are mutually exclusive in a build. Not on
+# the pre-push gate -- a sanitized build recompiles the world and runs several
+# times slower, so this is periodic and pre-milestone, like realtest-all.
+test-sanitize: vendor-link ## Run unit tests under TSan and ASan/UBSan [SAN=Thread|Address] [CAP=MB]
+	@./tools/test-sanitize.sh $(if $(SAN),-o $(SAN),) $(if $(CAP),-c $(CAP),)
 
 test-perms: ## Check/guide the one-time TCC grants that stop test permission popups
 	@./tools/test-perms.sh

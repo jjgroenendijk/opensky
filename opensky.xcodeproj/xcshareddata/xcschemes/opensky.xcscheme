@@ -38,6 +38,9 @@
          <TestPlanReference
             reference = "container:Config/RealData.xctestplan">
          </TestPlanReference>
+         <TestPlanReference
+            reference = "container:Config/Sanitizers.xctestplan">
+         </TestPlanReference>
       </TestPlans>
    </TestAction>
    <LaunchAction
