@@ -52,7 +52,7 @@ status=0
 "$root/tools/xcodebuild-run.sh" test-ui \
     xcodebuild -project "$project" -scheme "$scheme" -destination "$destination" \
     -derivedDataPath "$derived_data" \
-    $bundle_flag "$@" -only-testing:openskyUITests test || status=$?
+    $bundle_flag "$@" -testPlan AllTests -only-testing:openskyUITests test || status=$?
 
 if [ "$status" -ne 0 ] && grep -q "enabling automation mode" "$log"; then
     cat >&2 <<'MSG'

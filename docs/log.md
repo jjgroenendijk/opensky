@@ -7,9 +7,10 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 * **The real-data suites run as a set: `Config/RealData.xctestplan` and `make realtest-all`
   (issue #381)**: 48 env-gated suites skip in every `make test` run, and the only way to run
   one was `make realtest T=...`, which deliberately runs exactly one — so the highest-value
-  integration coverage in the repo was never executed as a set by anyone. The scheme now
-  carries two test plans (`Default`, which `make test` runs, and `RealData`), and
-  `make realtest-all` runs the second one under the memory watchdog, failing if any test
+  integration coverage in the repo was never executed as a set by anyone. `RealData` joins
+  `UnitTests` and `AllTests` as the scheme's third checked-in test plan — the real-data
+  variant the plan split (issue #346) predicted, landed the same day — and
+  `make realtest-all` runs it under the memory watchdog, failing if any test
   fails or if zero executed. Measuring the plan mechanism first, as the issue asked,
   answered three questions and reshaped `tools/realtest.sh` around the answers. A plan's
   `environmentVariableEntries` **does** reach the unit-test host, which is what issue #82
@@ -38,6 +39,35 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   under `testNodes`, so it never reached a single node. The counts above it were always
   right; the per-failure detail was never printed.
 
+* **Checked-in test plans replace the auto-created one (issue #346)**: the `opensky` scheme
+  carried `shouldAutocreateTestPlan = "YES"` and no `.xctestplan`, so there was nowhere
+  reviewable to say "unit only" — that logic lived as `-only-testing` and `-skip-testing`
+  flags spread across the `Makefile` and `tools/test-ui.sh`. Two plans now sit in `Config/`
+  beside the xcconfigs, for the same reason those live there: `UnitTests.xctestplan` lists
+  `openskyTests` alone and is the scheme default, `AllTests.xctestplan` lists both bundles.
+  Selecting the plan is what actually drops the UI bundle's compile and link, which the
+  selector never did — `xcodebuild` builds every buildable in a scheme's Test action before
+  it consults `-only-testing`. Measured directly: touching `openskyUITests/` and running
+  `make test` used to recompile the bundle and now does not mention it at all, at an
+  unchanged 3282 passed and 59 skipped. `make test`, `make test-one`, and
+  `tools/realtest.sh` take the unit plan; `make test-ui` takes `AllTests` because it needs
+  a plan that carries the UI bundle. Two selectors still ride on top of a plan: `test-one`
+  keeps `-only-testing` for the single class or method and switches to `AllTests` when the
+  selector names `openskyUITests`, since the unit plan cannot select a test it does not
+  list. `realtest.sh` now finds its `.xctestrun` by the plan-qualified name, because a tree
+  built before this change still has the planless one beside it and `find` order is not
+  sorted. A sanitizer or real-data variant becomes another plan configuration from here
+  rather than another flag combination.
+* **The stale-`testmanagerd` remedy needed `kill -9`, not `killall`**: verifying the test
+  plans ran into a wedged XCTest daemon two days old, which failed `make test` and
+  `make realtest` alike with `The test runner hung before establishing connection`. On
+  `make realtest` it surfaced first as the selector-validation step reporting the target
+  root instead of the one test, because `-enumerate-tests` hangs the same way. The remedy
+  in [Testing setup](/testing.md) said `killall testmanagerd`; the wedged daemon ignored
+  SIGTERM and stayed up through two of them. `kill -9` on the pid cleared it and both
+  entrypoints went green immediately, `make test` back to its unchanged 3282 passed. The
+  bullet now names the symptom, says to check the daemon's start date, and says to escalate
+  to `-9`.
 * **`opensky/` split into `App/`, `Engine/`, and `SharedHeaders/` (issue #336)**: target
   membership was a hand-maintained list of 111 path strings — the
   `PBXFileSystemSynchronizedBuildFileExceptionSet` that kept app-only sources out of

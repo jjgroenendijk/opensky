@@ -42,7 +42,7 @@ XCB_TEST    := $(XCB_APP) -destination '$(DESTINATION)'
 
 A target then adds only its action and the flags specific to it: `build` is
 `$(XCB_RUN) build $(XCB_APP) build`, `test` adds `-resultBundlePath` and
-`-only-testing:openskyTests`, `install` adds `ARCHS=arm64`. `make -n build cli test
+`-testPlan UnitTests`, `install` adds `ARCHS=arm64`. `make -n build cli test
 install` shows the shared prefix on every line, which is the check that the consolidation
 still holds.
 
@@ -72,8 +72,14 @@ Config/
 ├── App.xcconfig             opensky: bundle id, Info.plist keys, ffmpeg link + rpath
 ├── CLI.xcconfig             openskycli: bridging header, ffmpeg link + rpath
 ├── Tests.xcconfig           openskyTests: TEST_HOST, BUNDLE_LOADER
-└── UITests.xcconfig         openskyUITests: TEST_TARGET_NAME
+├── UITests.xcconfig         openskyUITests: TEST_TARGET_NAME
+├── UnitTests.xctestplan     scheme default: openskyTests alone
+└── AllTests.xctestplan      openskyTests + openskyUITests
 ```
+
+The two test plans sit here for the same reason as the xcconfigs: they are checked-in,
+reviewable configuration the scheme points at, rather than settings buried in the project
+file or flags spread across the `Makefile`. See [Testing setup](/testing.md).
 
 The two levels do different jobs. `Debug.xcconfig` and `Release.xcconfig` are the
 project's base configurations, so they cover every target; the four target files sit above
@@ -211,11 +217,6 @@ because the boot disk cannot hold either. See [Testing setup](/testing.md).
 
 ## Known limits
 
-* `make test` passes `-only-testing:openskyTests`, which names the unit-test target
-  explicitly instead of subtracting the UI one. It does not stop `xcodebuild` from
-  compiling `openskyUITests`: the tool builds every buildable in the scheme's Test action
-  before it consults the selectors. Removing that build cost needs checked-in test plans
-  (issue #346), not a flag.
 * Two concurrent `xcodebuild` invocations against the same derived-data tree deadlock
   until the tool timeout. Let one finish before starting another
   ([Testing setup](/testing.md)).
