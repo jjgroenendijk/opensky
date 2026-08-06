@@ -18,6 +18,9 @@ nonisolated struct CellGeometryBuild {
     /// Authored trigger volumes (issue #173). `var` with a default so a build
     /// that predates trigger collection still constructs.
     var triggerVolumes: TriggerVolumeSet = .empty
+    /// Simulated rigid bodies this cell places (issue #193). Same defaulting
+    /// reason as the trigger set above.
+    var dynamicBodies: [DynamicBodyPlacement] = []
     /// Assembled actor placements + exact accounting (5.5 actor streaming).
     let actors: CellActorBuild
     /// WRLD.ZNAM of the owning worldspace (M9.2.3 music selection). `var` with
@@ -143,6 +146,12 @@ nonisolated extension CellSceneBuilder {
 
     /// The mesh + texture keys the cell just touched, drained so streaming
     /// unload can keep the union over resident cells and evict the rest.
+    /// Empties the libraries' touched sets so the next `drainTouchedAssets`
+    /// reports exactly one cell's working set. Every build path starts with it.
+    nonisolated func resetTouchedAssets() {
+        _ = drainTouchedAssets()
+    }
+
     nonisolated func drainTouchedAssets() -> CellAssets {
         CellAssets(
             meshKeys: meshes.drainTouchedKeys()
@@ -223,6 +232,7 @@ nonisolated extension CellSceneBuilder {
             grassPlacements: geometry.grass?.placements ?? [],
             staticCollision: geometry.staticCollision,
             triggerVolumes: geometry.triggerVolumes,
+            dynamicBodies: geometry.dynamicBodies,
             references: geometry.referenceIndex,
             stateSequence: geometry.stateSequence
         )

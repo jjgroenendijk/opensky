@@ -199,6 +199,14 @@ final class Renderer: NSObject {
     var worldSimClock = FrameSimClock()
     /// Wall-clock delta source for camera movement, paused in menu mode.
     var cameraClock = FrameSimClock()
+    /// The delta `advanceCamera` last ran with, clamped exactly as the walk
+    /// controller clamps it. The dynamic-body world steps on the same clock as
+    /// the player capsule (issue #193), and reading the value the capsule
+    /// actually used is what keeps the two from drifting apart in menu mode or
+    /// after a stall.
+    /// Set by `advanceCamera` in the RendererMovement satellite, which is why
+    /// it is not `private(set)`.
+    var lastCameraDelta: Float = 0
     var animationTime: Float = 0
     /// World > Environment actor-animation A/B. Off restores bind palettes;
     /// global time still advances so grass/particle effects stay independent.

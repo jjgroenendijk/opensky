@@ -32,7 +32,10 @@ nonisolated struct CapsuleMoveResult {
     let hasUnresolvedPenetration: Bool
 }
 
-nonisolated private struct CollisionTriangle {
+/// Three world-space points. Shared with the dynamic-body narrowphase
+/// (issue #193), which runs the same closest-point query against the same
+/// placed static geometry.
+nonisolated struct CollisionTriangle {
     let first: SIMD3<Float>
     let second: SIMD3<Float>
     let third: SIMD3<Float>
@@ -388,7 +391,7 @@ nonisolated extension CapsuleWorldCollider {
         return u >= 0 && v >= 0 && u + v <= 1
     }
 
-    fileprivate static func closestPoint(
+    static func closestPoint(
         on triangle: CollisionTriangle,
         to point: SIMD3<Float>
     ) -> SIMD3<Float> {

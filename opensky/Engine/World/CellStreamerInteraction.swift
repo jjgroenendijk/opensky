@@ -17,7 +17,25 @@ extension CellStreamer {
         return composition.sampleWaterHeight(at: position)
     }
 
+    /// Every collision candidate overlapping `bounds`: the immutable per-cell
+    /// geometry plus the simulated bodies at their current pose (issue #193).
+    ///
+    /// A dynamic body is deliberately not a second kind of thing here. It hands
+    /// over ordinary placed shapes, so the player capsule collides with a crate,
+    /// the interaction ray targets it, and a shape sweep stops on it, all
+    /// through the query they already ran. The static half comes first so the
+    /// world a body cannot move stays ahead of it in every deterministic
+    /// tie-break.
     func collisionCandidates(
+        overlapping bounds: ModelBounds
+    ) -> [StaticCollisionShape] {
+        staticCollisionCandidates(overlapping: bounds)
+            + dynamicBodies.placedShapes(overlapping: bounds)
+    }
+
+    /// The immutable half alone, which is what the dynamic solver collides its
+    /// bodies against — a body must not be handed itself as an obstacle.
+    func staticCollisionCandidates(
         overlapping bounds: ModelBounds
     ) -> [StaticCollisionShape] {
         if let interiorScene {

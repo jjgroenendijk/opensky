@@ -58,6 +58,25 @@ extension GameViewController: TriggerControlProviding {
     }
 }
 
+/// Dynamic rigid-body counts and the freeze/reset controls (issue #193). The
+/// `World > Combat & Physics` panel that reads this ships with item 15.9; the
+/// seam is specified and conformed here so the simulation is inspectable the
+/// moment the panel exists. Without a streamer there are no bodies, and the
+/// snapshot's zeros are then the truth rather than a missing reading.
+extension GameViewController: PhysicsControlProviding {
+    var dynamicBodyStatsSnapshot: DynamicBodyStatsSnapshot {
+        streamer?.dynamicBodies.statsSnapshot ?? DynamicBodyStatsSnapshot()
+    }
+
+    func setPhysicsFrozen(_ frozen: Bool) {
+        streamer?.dynamicBodies.isFrozen = frozen
+    }
+
+    func resetDynamicBodies() {
+        streamer?.dynamicBodies.reset()
+    }
+}
+
 extension GameViewController: SceneStatsProviding {
     var sceneStatsSnapshot: SceneStatsSnapshot {
         let draw = renderer?.lastDrawStats ?? SceneDrawStats()

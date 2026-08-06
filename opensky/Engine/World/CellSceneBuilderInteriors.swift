@@ -92,9 +92,7 @@ nonisolated extension CellSceneBuilder {
         cellFormID: FormID,
         state: WorldStateSnapshot = .empty
     ) throws -> CellScene {
-        _ = meshes.drainTouchedKeys()
-        _ = textures.drainTouchedKeys()
-        _ = collisionModels?.drainTouchedKeys()
+        resetTouchedAssets()
         let localized = (try? file.pluginHeader().isLocalized) ?? false
         guard let found = findInteriorCell(formID: cellFormID, localized: localized) else {
             throw CellSceneError.interiorCellNotFound(formID: cellFormID)
@@ -133,6 +131,7 @@ nonisolated extension CellSceneBuilder {
                 pointLights: lighting?.pointLights ?? [],
                 staticCollision: collision.staticCollision,
                 triggerVolumes: collision.triggerVolumes,
+                dynamicBodies: collision.dynamicBodies,
                 actors: actors,
                 referenceEntries: resolved.entries,
                 stateSequence: state.sequence

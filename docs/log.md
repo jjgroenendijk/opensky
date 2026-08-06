@@ -4,6 +4,40 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-06
 
+* **Movable clutter simulates: fixed-step rigid bodies, shape sweeps, and settling drops
+  (issue #193)**: collision had been static-only since 4.3, and item 15.1 decoded the
+  inertial tail without anything consuming it. The cell build now splits each player-solid
+  `bhkRigidBody` in two — `NIFRigidBodyDynamics.isSimulated` bodies with a runtime key go to
+  `CellScene.dynamicBodies`, everything else stays in `StaticCollisionSet` — and the split
+  follows the dynamics census rather than the motion byte, which on vanilla data would have
+  made 1027 immovable bodies dynamic. `DynamicBodySolver` steps them on the same 1/120 tick
+  the player capsule runs on. Two findings shaped it. The narrowphase has to be *signed*
+  against a triangle: an unsigned distance flips the push direction the moment a corner
+  passes through a floor, so the sign comes from the triangle plane oriented toward the
+  body's centre of mass, which is stable because a convex body's centre is always outside a
+  surface it rests on. And penetration recovery has to move *positions*, not velocities: the
+  textbook Baumgarte velocity bias — what the first draft used — leaves a resting body with a
+  standing upward velocity fighting gravity forever, so it never reaches the sleep threshold
+  and never settles. A moving body hands the rest of the engine ordinary
+  `StaticCollisionShape` values at its current pose, so the capsule, the interaction ray, and
+  the new sphere and capsule sweeps see clutter through queries that already existed.
+  Streaming reconciles bodies against residency once per frame rather than being pushed at,
+  which makes coverage transitions, door transitions, and world-state rebuilds all correct
+  without any of them knowing physics exists; a settled body persists through the existing
+  `.transform` component. `docs/engine/dynamic-bodies.md` is new.
+
+  Routing clutter out of the static set is **off by default**
+  (`CellSceneBuilder.simulatesDynamicBodies`). The real-data probe found two things the
+  synthetic suites cannot see: about half of a vanilla farmhouse's clutter is authored
+  *intersecting* the shelf it stands on and is not reliably expelled from it, and the step
+  costs roughly 230 ms against a 2 ms budget. Three narrowphase rules were corrected while
+  chasing the first — orient a contact from the pre-substep centre, rank a shape's triangles
+  by nearest surface rather than deepest penetration, and keep a model's non-simulated bodies
+  static — and two structural wins landed on the second, and neither is closed. Turning the
+  flag on by default would trade a world where a barrel is reliably solid for one where it
+  sometimes sinks through a shelf, so it stays off and issue #392 carries the two remaining
+  items with their measurements.
+
 * **`NiTriStripsData`'s Consistency Flags is a ushort, and the three clutter meshes that
   said so decode again (issue #376)**: the collision strips decoder skipped eight bytes for
   Consistency Flags plus the additional-data ref where `nif.xml` has six, so every field

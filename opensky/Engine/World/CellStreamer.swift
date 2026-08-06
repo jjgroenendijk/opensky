@@ -141,6 +141,13 @@ final class CellStreamer {
     /// (issue #173). Filled by an ordinary `onTriggerTransition` subscriber
     /// registered in `init`, so the dispatch path stays unaware of it.
     let triggerLog = TriggerEventLog()
+    /// Simulated rigid bodies of the resident world (issue #193). Reconciled
+    /// against residency once per frame by the CellStreamerPhysics satellite.
+    var dynamicBodies = DynamicBodyWorld()
+    /// A body came to rest and its transform should be persisted under the
+    /// reference's `.transform` component. The store is not reachable from
+    /// here, so the app wires this to `WorldStateStore.set`.
+    var onBodySettled: ((ReferenceKey, ReferenceTransformOverride) -> Void)?
 
     /// - Parameters:
     ///   - center: grid center at launch (streaming starts on FirstRenderCell).
@@ -175,7 +182,8 @@ final class CellStreamer {
         cameraPosition: SIMD3<Float>,
         interactionRay: InteractionRay? = nil,
         activate: Bool = false,
-        playerCapsule: PlayerCapsuleState? = nil
+        playerCapsule: PlayerCapsuleState? = nil,
+        frameTime: Float = 0
     ) {
         let completed = runner.drainCompleted()
         if !completed.isEmpty {
@@ -197,6 +205,7 @@ final class CellStreamer {
             // Interiors carry most authored trigger volumes, so the test runs
             // on this path too rather than only on the exterior tail below.
             updateTriggerOccupancy(playerCapsule)
+            advancePhysics(frameTime: frameTime, player: playerCapsule)
             return
         }
 
@@ -241,6 +250,7 @@ final class CellStreamer {
         emitAmbienceContextIfNeeded()
         emitMusicContextIfNeeded()
         updateTriggerOccupancy(playerCapsule)
+        advancePhysics(frameTime: frameTime, player: playerCapsule)
     }
 
     /// Pushes the current exterior center cell's XCLR regions to the weather
@@ -255,22 +265,6 @@ final class CellStreamer {
         guard regions != lastEmittedRegions else { return }
         lastEmittedRegions = regions
         onCenterRegionsChanged?(regions)
-    }
-
-    /// Drops unloaded cells from the composition and schedules eviction of the
-    /// assets they used that no remaining resident cell needs. Drop-set (the
-    /// departed cells' keys minus the resident union) so in-flight builds for
-    /// the new grid keep their freshly-loaded assets (docs/engine/cell-streaming.md
-    /// eviction). Eviction runs on the build queue -- confinement holds.
-    private func unload(_ coordinates: [CellCoordinate]) {
-        var departed = CellAssets()
-        for coordinate in coordinates {
-            guard let removed = composition.removeCell(at: coordinate) else { continue }
-            emitCellDetached(removed)
-            departed.meshKeys.formUnion(removed.assets.meshKeys)
-            departed.textureKeys.formUnion(removed.assets.textureKeys)
-        }
-        evictUnused(departed)
     }
 
     /// Schedules only keys no resident cell owns. With one submitted build,

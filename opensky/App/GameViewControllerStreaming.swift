@@ -36,13 +36,20 @@ extension GameViewController {
         worldState.onMutation = { [weak controller] location, sequence in
             controller?.noteStateMutation(in: location, sequence: sequence)
         }
+        // A settled rigid body persists as an ordinary transform override
+        // (issue #193), so a dropped bowl is where it rolled to after a save and
+        // reload, and the cell that owns it is the one whose rebuild redraws it.
+        controller.onBodySettled = { [weak controller] key, transform in
+            worldState.set(transform, for: key, in: controller?.cellLocation(of: key))
+        }
         wireGlobals(provider: provider, renderer: renderer)
         renderer.onFrame.add { [weak self, weak controller, weak renderer] position in
             controller?.update(
                 cameraPosition: position,
                 interactionRay: renderer.flatMap(Self.interactionRay(of:)),
                 activate: self?.cameraInput.consumeActivation() ?? false,
-                playerCapsule: renderer.flatMap(Self.playerCapsule(of:))
+                playerCapsule: renderer.flatMap(Self.playerCapsule(of:)),
+                frameTime: renderer?.lastCameraDelta ?? 0
             )
         }
         // Live XCLR region feed (M7.2.3): the streamer pushes the center cell's

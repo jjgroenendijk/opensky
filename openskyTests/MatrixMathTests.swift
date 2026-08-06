@@ -149,4 +149,37 @@ struct MatrixMathTests {
         #expect(abs(near.z / near.w) < 1e-5)
         #expect(abs(far.z / far.w - 1) < 1e-4)
     }
+
+    /// A simulated rigid body integrates a quaternion and persists a Bethesda
+    /// euler triple (issue #193), so the two have to name the same rotation.
+    @Test func eulerAnglesRoundTripThroughThePlacementRotation() {
+        let triples: [SIMD3<Float>] = [
+            .zero,
+            SIMD3(0, 0, .pi / 3),
+            SIMD3(0.4, -0.7, 1.2),
+            SIMD3(-1.1, 0.3, -2.4)
+        ]
+        for angles in triples {
+            let matrix = MatrixMath.placement(position: .zero, rotation: angles, scale: 1)
+            let recovered = MatrixMath.eulerAngles(of: simd_quatf(matrix))
+            let rebuilt = MatrixMath.placement(position: .zero, rotation: recovered, scale: 1)
+            for column in 0 ..< 3 {
+                #expect(simd_length(matrix[column] - rebuilt[column]) < 1e-4)
+            }
+        }
+    }
+
+    /// Straight up leaves the outer two angles degenerate; the convention is
+    /// that X takes zero and Z carries the whole rotation.
+    @Test func eulerAnglesResolveTheStraightUpDegeneracyOntoZ() {
+        let matrix = MatrixMath.placement(
+            position: .zero, rotation: SIMD3(0, -.pi / 2, 0.8), scale: 1
+        )
+        let recovered = MatrixMath.eulerAngles(of: simd_quatf(matrix))
+        #expect(recovered.x == 0)
+        let rebuilt = MatrixMath.placement(position: .zero, rotation: recovered, scale: 1)
+        for column in 0 ..< 3 {
+            #expect(simd_length(matrix[column] - rebuilt[column]) < 1e-3)
+        }
+    }
 }

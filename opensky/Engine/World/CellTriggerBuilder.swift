@@ -23,6 +23,10 @@ import simd
 nonisolated struct CellCollisionBuild {
     let staticCollision: StaticCollisionSet
     let triggerVolumes: TriggerVolumeSet
+    /// Bodies of this cell the dynamic world simulates (issue #193). Empty for
+    /// a build with no reference retention, because a simulated body needs the
+    /// `ReferenceKey` the entries carry.
+    var dynamicBodies: [DynamicBodyPlacement] = []
 }
 
 nonisolated extension CellSceneBuilder {
@@ -32,13 +36,19 @@ nonisolated extension CellSceneBuilder {
         resolved: EffectiveReferences,
         location: CellSceneLocation
     ) -> CellCollisionBuild {
-        CellCollisionBuild(
-            staticCollision: buildStaticCollision(
-                refs: resolved.references, location: location
-            ),
+        let products = buildCollisionProducts(
+            refs: resolved.references,
+            location: location,
+            keys: resolved.entries.reduce(into: [:]) { keys, entry in
+                keys[entry.formID] = entry.key
+            }
+        )
+        return CellCollisionBuild(
+            staticCollision: products.collision,
             triggerVolumes: buildTriggerVolumes(
                 refs: resolved.references, entries: resolved.entries, location: location
-            )
+            ),
+            dynamicBodies: products.dynamicBodies
         )
     }
 
