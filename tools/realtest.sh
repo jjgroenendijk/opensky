@@ -50,13 +50,18 @@ result_bundle="$("$root/tools/run-dir.sh" -b build/test-results realtest)/realte
 enumeration_json="$run_dir/enumeration.json"
 
 echo "[INFO] build-for-testing -> $dd"
+# The unit plan (Config/UnitTests.xctestplan, issue #346) — a real-data test is
+# always a unit test, and the plan keeps the UI bundle out of this build.
 "$root/tools/xcodebuild-run.sh" realtest-build \
     xcodebuild build-for-testing -project opensky.xcodeproj -scheme opensky \
-    -derivedDataPath "$dd" -destination 'platform=macOS'
+    -testPlan UnitTests -derivedDataPath "$dd" -destination 'platform=macOS'
 
-xctestrun=$(find "$dd/Build/Products" -maxdepth 1 -name '*.xctestrun' | head -1)
+# Named for the plan, not a bare glob: a tree built before issue #346 still has
+# the planless opensky_macosx*.xctestrun beside this one, and find's order is
+# not sorted, so a glob could pick the stale file that still lists the UI bundle.
+xctestrun=$(find "$dd/Build/Products" -maxdepth 1 -name 'opensky_UnitTests_*.xctestrun' | head -1)
 if [ -z "$xctestrun" ]; then
-    echo "[ERROR] no .xctestrun produced" >&2
+    echo "[ERROR] no UnitTests .xctestrun produced" >&2
     exit 1
 fi
 

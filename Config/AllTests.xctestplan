@@ -1,0 +1,33 @@
+{
+  "configurations" : [
+    {
+      "id" : "4E9F1C20-0002-4A00-9B00-000000000002",
+      "name" : "All",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:opensky.xcodeproj",
+        "identifier" : "5A3BAE183000109300177F95",
+        "name" : "openskyTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:opensky.xcodeproj",
+        "identifier" : "5A3BAE223000109300177F95",
+        "name" : "openskyUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

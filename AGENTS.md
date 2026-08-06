@@ -72,7 +72,10 @@ The repo root holds only this document, `Makefile`, the Xcode project, `Config/`
 dotfiles. Every build setting lives in `Config/*.xcconfig`, not in the pbxproj, signing
 included: `Config/Signing.xcconfig` names one Apple Development identity for every target,
 because macOS ties permission grants to the code signature and ad-hoc signing re-asks on
-every build (`docs/tools/build-system.md`). `opensky/` splits by target membership:
+every build (`docs/tools/build-system.md`). `Config/` also holds the two checked-in test
+plans, `UnitTests.xctestplan` and `AllTests.xctestplan`, for the same reason: which bundles
+a run touches is reviewable configuration, not a flag. `opensky/` splits by target
+membership:
 `opensky/App/` holds the AppKit and SwiftUI shell, view controllers, panels, and
 `Assets.xcassets`; `opensky/Engine/` holds everything CLI-safe; `opensky/SharedHeaders/`
 holds `ShaderTypes.h`. Group engine subsystems under `opensky/Engine/` by domain, and keep

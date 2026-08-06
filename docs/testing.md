@@ -23,9 +23,10 @@ files.
 
 ## Entrypoints
 
-* `make test` — unit tests only (`-only-testing:openskyTests`). Writes a fixed
-  result bundle at `build/test-results/unit.xcresult`. xcodebuild still compiles
-  `openskyUITests` either way; see [Build system](/tools/build-system.md).
+* `make test` — unit tests only, through the `UnitTests` test plan
+  (`-testPlan UnitTests`). Writes a fixed result bundle at
+  `build/test-results/unit.xcresult`. The plan lists `openskyTests` alone, so
+  `openskyUITests` is not compiled at all; see [Test plans](#test-plans).
 * `make test-one T=Class[/test]` — one class or method. Bare names resolve to
   `openskyTests/`. Bundle: `build/test-results/one.xcresult`.
 * `make test-report` — pass/fail summary plus each failing test's name and
@@ -43,6 +44,31 @@ There is no required CI status right now: GitHub Actions is quota-suspended
 `make test` then `make cli` (the CLI build catches app-only source files that
 Xcode's filesystem-synced groups silently pull into the `openskycli` target).
 `OPENSKY_SKIP_BUILD=1` skips the gate for bootstrap/emergency only.
+
+## Test plans
+
+Which bundles a run touches is a checked-in test plan, not a flag (issue #346). The
+`opensky` scheme references two, both under `Config/` beside the xcconfigs:
+
+| Plan | Test targets | Used by |
+| --- | --- | --- |
+| `UnitTests.xctestplan` | `openskyTests` | `make test`, `make test-one`, `tools/realtest.sh`; the scheme default |
+| `AllTests.xctestplan` | `openskyTests`, `openskyUITests` | `make test-ui`, and any full run |
+
+`xcodebuild` builds every buildable in a scheme's Test action before it looks at
+`-only-testing`, so a selector never saved the UI bundle's compile and link. Selecting a
+plan does: the plan decides what gets built. `xcodebuild -scheme opensky -showTestPlans`
+lists them.
+
+The plans are where per-suite parallelization lives, and they are where a sanitizer or
+real-data variant should go when one is wanted — as an additional plan configuration,
+diffable in review, rather than another flag combination in the `Makefile`.
+
+Two selectors still ride on top of a plan. `make test-one T=...` adds `-only-testing` for
+the one class or method, and switches from the unit plan to `AllTests` when the selector
+names `openskyUITests`, because the unit plan cannot select a test it does not list.
+`make test-ui` runs `AllTests` with `-only-testing:openskyUITests`, since that plan carries
+both bundles.
 
 ## Real-data suites and the data root
 
@@ -64,7 +90,8 @@ to exactly one fully-qualified test, e.g.:
 make realtest T='CellRenderRealDataTests/streamsFiveByFiveGridToCompletion()'
 ```
 
-The underlying xcodebuild gap is tracked as issue #82.
+The underlying xcodebuild gap is tracked as issue #82. `realtest.sh` builds through the
+`UnitTests` plan and finds its `.xctestrun` by that plan-qualified name.
 
 ## RSS watchdog (mandatory for heavy real-data tests)
 
@@ -129,8 +156,17 @@ clears only the environment variable.
   guides and opens the right pane; TCC is SIP-protected, so the actual grant is
   one manual click (it cannot be scripted).
 * Stale `testmanagerd`: a days-old XCTest daemon can wedge a fresh run (or the
-  pre-push hook) at 0% CPU. If a test host hangs before running, recycle it:
-  `killall testmanagerd`, then retry (no `--no-verify` bypass).
+  pre-push hook) at 0% CPU. The symptom is
+  `The test runner hung before establishing connection` plus
+  `Timed out after 120.0s while initiating control session with daemon`, and it
+  hits `make test` and `make realtest` alike — `make realtest` shows it first as
+  a selector that "must resolve to exactly one test", because the enumeration
+  step hangs the same way. Recycle the daemon and retry (no `--no-verify`
+  bypass). `killall testmanagerd` is not always enough: a wedged daemon ignores
+  SIGTERM and stays up, so check `ps -eo pid,lstart,command | grep testmanagerd`
+  for its start date and `kill -9` the pid if it survived. `launchd` respawns it
+  on the next run. Observed 2026-08-06: a daemon two days old failed every test
+  entrypoint until it was killed with `-9`; both went green immediately after.
 * One xcodebuild at a time: two concurrent `xcodebuild` invocations against the
   same DerivedData (e.g. a probe while the pre-push hook builds) deadlock until
   the tool timeout. Let one finish before starting another.
