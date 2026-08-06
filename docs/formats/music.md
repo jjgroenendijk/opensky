@@ -38,7 +38,7 @@ something, the table says so.
 
 ## MUSC — music type
 
-Decoder: `MusicType` in `opensky/Formats/ESM/Records/MusicRecords.swift`.
+Decoder: `MusicType` in `opensky/Engine/Formats/ESM/Records/MusicRecords.swift`.
 
 | field | on-disk type | decoded value | source |
 | --- | --- | --- | --- |

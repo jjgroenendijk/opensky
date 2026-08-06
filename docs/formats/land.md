@@ -16,7 +16,7 @@ references. First half of milestone 3.1 — feeds the terrain mesh + splat build
 Reference: UESP "Skyrim Mod:Mod File Format" subpages `/LAND`, `/LTEX`, `/TXST`
 (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format>). Cross-checked against
 xEdit dev-4.1.6 `wbDefinitionsCommon.pas` (wbLAND / wbLTEX / wbTXST). Impl:
-`opensky/Formats/ESM/Records/{Land,LandTexture,TextureSet}.swift`.
+`opensky/Engine/Formats/ESM/Records/{Land,LandTexture,TextureSet}.swift`.
 
 Decode policy (same as [other records](/formats/records.md)): loop over fields,
 pick known types, skip the rest — unknown modder fields are never an error.

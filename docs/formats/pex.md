@@ -20,7 +20,7 @@ The page is the source for the big-endian byte order, field widths, flags,
 value encodings and opcode table. No Bethesda code or compiled script bytes are
 copied into the repository.
 
-Decoder: `opensky/Formats/PEX/PexFile.swift`, with the byte reader and top-level
+Decoder: `opensky/Engine/Formats/PEX/PexFile.swift`, with the byte reader and top-level
 framing in `PexDecoder.swift`, object framing in `PexDecoderObject.swift`, and
 function and bytecode framing in `PexDecoderFunction.swift`.
 

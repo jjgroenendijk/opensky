@@ -16,7 +16,7 @@ its TES4 header. This page covers both.
 References: UESP "Skyrim Mod:Mod File Format" — TES4 record
 (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format>), UESP "Skyrim Mod:FormIDs"
 (<https://en.uesp.net/wiki/Skyrim_Mod:FormIDs>).
-Impl: `opensky/Formats/ESM/PluginHeader.swift`, `FormID.swift`.
+Impl: `opensky/Engine/Formats/ESM/PluginHeader.swift`, `FormID.swift`.
 
 ## TES4 record fields
 

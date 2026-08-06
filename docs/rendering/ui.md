@@ -15,7 +15,7 @@ precipitation) -> drawable + offscreen render paths get the overlay automaticall
 no extra pass. Game-UI direction is a vanilla SWF port (issue #99); this layer
 remains the screen-space compositing foundation it renders through.
 
-## Model (`opensky/UI/`)
+## Model (`opensky/Engine/UI/`)
 
 - Geometry: `UIPoint/UISize/UIRect/UIInsets`, 9-point `UIAnchor` (corners/edges/
   center). `UIVerticalStack` stacks rects with spacing + alignment. Pure float math,
@@ -316,9 +316,9 @@ and the accessibility-id set: [system menu](/engine/system-menu.md).
 (M8.1.4), the M8.2 SWF static-render acceptance surface (M8.2.5), and the M8.3.3
 AS2 runtime acceptance surface, talking to the engine through
 `UILabControlProviding` and `SWFLabControlProviding` on `GameViewController`
-(bridges split to `opensky/GameViewControllerUILab.swift`,
-`opensky/GameViewControllerSWFLab.swift`, and
-`opensky/GameViewControllerSWFRuntime.swift` for the file-size limit;
+(bridges split to `opensky/App/GameViewControllerUILab.swift`,
+`opensky/App/GameViewControllerSWFLab.swift`, and
+`opensky/App/GameViewControllerSWFRuntime.swift` for the file-size limit;
 weak-provider pattern shared with the Environment panel):
 
 - Overlay enable (`UIOverlayEnabledControl`), lab-sample toggle
@@ -351,7 +351,7 @@ weak-provider pattern shared with the Environment panel):
   restores the gameplay HUD when the renderer is available (and otherwise
   clears the layer). Bridge:
   `SWFLabControlProviding` on `GameViewController`
-  (`opensky/GameViewControllerSWFLab.swift`), readout text built by the
+  (`opensky/App/GameViewControllerSWFLab.swift`), readout text built by the
   device-free `SWFLabReadout`. The loader and the movie list resolve once,
   lazily, because enumerating movies walks every archive index and the 2 Hz
   ticker must not repeat it. No install, an undecodable movie, or a failing GPU
@@ -359,7 +359,7 @@ weak-provider pattern shared with the Environment panel):
   control action.
 - **SWF runtime driver (M8.3.3)**, a second hosted child section titled
   **SWF runtime** (`PanelSection-swfRuntime`,
-  `opensky/Shell/Sections/SWFRuntimeSection.swift` plus its
+  `opensky/App/Shell/Sections/SWFRuntimeSection.swift` plus its
   `SWFRuntimeSectionInput.swift` action satellite). It runs the movie the
   selector above assigned, so the two sections are ordered selector then
   runtime. Controls, all disabled until they can do something — Start needs an
@@ -386,7 +386,7 @@ weak-provider pattern shared with the Environment panel):
     `callMovie` reaches through its fallback.
   - Readouts, the three the M8.3.3 gate names, all built by the device-free
     `SWFLabReadout` from a `SWFLabRuntimeSnapshot`
-    (`opensky/SWFLabRuntimeReadout.swift`) at 2 Hz:
+    (`opensky/Engine/SWFLabRuntimeReadout.swift`) at 2 Hz:
     `SWFRuntimeStatsLabel` (started/loaded, tick count, root playhead and frame
     count, node count, root child count, focus target path, pointer/key event
     counts, last key code, live timers, and dropped instantiations / frame
@@ -397,13 +397,13 @@ weak-provider pattern shared with the Environment panel):
     with ranked kinds, stack underflows, ranked unimplemented opcodes, ranked
     missing host-API names, and the last `trace` message). Every clipped list
     keeps its total beside it, so a truncated readout never reads as complete.
-  - Bridge implementation: `opensky/GameViewControllerSWFRuntime.swift`. Like
+  - Bridge implementation: `opensky/App/GameViewControllerSWFRuntime.swift`. Like
     the selector, no control action throws — a start with no movie, a tick
     before Start, a blank callback name, a missing Metal 4 device, and a GPU
     failure inside a push all land in the same `loadError` the selector's
     readout shows.
 
-`UIScene.localizedSample` (`opensky/UI/UILocalizedSample.swift`) is the
+`UIScene.localizedSample` (`opensky/Engine/UI/UILocalizedSample.swift`) is the
 localized preview content: invented `$KEY` fixtures merged through the real
 `TranslationFile` -> `LocalizedLabels` path, rendered via `label(for:)` — a
 wrapped long paragraph (`maxWidth` 312 pt), an unwrapped line that clips past

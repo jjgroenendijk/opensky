@@ -28,8 +28,8 @@ References used (open sources only):
 * [Microsoft WAVEFORMATEX](https://learn.microsoft.com/en-us/windows/win32/api/mmeapi/ns-mmeapi-waveformatex)
   — field order and widths of the `fmt` chunk.
 
-Impl: `opensky/Formats/WAV/WAVFile.swift`; playback in
-`opensky/Audio/WorldAudioEngineWAV.swift`.
+Impl: `opensky/Engine/Formats/WAV/WAVFile.swift`; playback in
+`opensky/Engine/Audio/WorldAudioEngineWAV.swift`.
 
 ## Layout
 

@@ -9,7 +9,7 @@ timestamp: 2026-07-09T00:00:00Z
 # Virtual file system
 
 One lookup layer over the game data root (`VirtualFileSystem` +
-`ArchiveLoadOrder`, `opensky/GameData/`). Callers ask for game-style resource
+`ArchiveLoadOrder`, `opensky/Engine/GameData/`). Callers ask for game-style resource
 paths (`meshes\clutter\cup.nif`); VFS finds the bytes in loose files or BSA
 archives. These are OpenSky's own rules, chosen to match observed game/modding
 behavior; archive-load background from UESP "Skyrim Mod:Archive File Format"

@@ -15,7 +15,7 @@ blocks, vector/quaternion quantization, B-spline sampling. Packfile container/fi
 [HKX container](/formats/hkx-container.md). Skeleton/bind pose:
 [hkaSkeleton](/formats/hka-skeleton.md).
 
-Parser: `opensky/Formats/HKX/HKASplineCompressedAnimation.swift` +
+Parser: `opensky/Engine/Formats/HKX/HKASplineCompressedAnimation.swift` +
 `HKASplineBlock.swift`. Entry point:
 `HKASplineCompressedAnimation.animations(in:)` + `HKAAnimationBinding.bindings(in:)`;
 bone-indexed sampling: `boneLocalTransforms(at:binding:)`. CLI gate:

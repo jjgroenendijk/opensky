@@ -13,11 +13,11 @@ Milestone 9.2.2 (issue #155): wire the [decoded sound records](/formats/sound.md
 to the [world interaction system](/engine/interaction.md) and the streaming cell
 lifecycle. Door open SFX on use-key activation; per-cell ambient bed under the
 descriptor's authored `SNDR.GNAM` category. Implementation:
-`opensky/Audio/WorldAudioSoundDirector.swift`
-(director), `opensky/Audio/AmbienceCatalog.swift` (bed resolution),
-`opensky/Audio/AcousticSpaceStore.swift` (ASPC index),
-`opensky/World/CellStreamerAmbience.swift` (streamer emission), and the panel
-section `opensky/Shell/Sections/AudioSfxSection.swift`.
+`opensky/Engine/Audio/WorldAudioSoundDirector.swift`
+(director), `opensky/Engine/Audio/AmbienceCatalog.swift` (bed resolution),
+`opensky/Engine/Audio/AcousticSpaceStore.swift` (ASPC index),
+`opensky/Engine/World/CellStreamerAmbience.swift` (streamer emission), and the panel
+section `opensky/App/Shell/Sections/AudioSfxSection.swift`.
 
 ## Contents
 

@@ -122,7 +122,7 @@ md-format: ## Autofix Markdown
 md-lint: ## Strict Markdown lint
 	@markdownlint-cli2 --config $(MD_CFG) "$(MD_GLOB)"
 
-cli-boundary: ## AppKit files under opensky/ must be excluded from openskycli
+cli-boundary: ## No AppKit imports under opensky/Engine (openskycli builds it)
 	@./tools/lint/cli-boundary.sh && echo "[ OK ] CLI target boundary clean"
 
 no-game-content: ## No extracted game assets or rendered captures are tracked
@@ -194,7 +194,7 @@ cli-path: ## Print built openskycli path ($(CONFIG))
 run-cli: cli ## Build + run openskycli: make run-cli ARGS="vfs ls"
 	@"$(PRODUCTS)/openskycli" $(ARGS)
 
-icon: ## Regenerate AppIcon PNGs from opensky/Branding/opensky-logo.svg
+icon: ## Regenerate AppIcon PNGs from opensky/App/Branding/opensky-logo.svg
 	@./tools/gen-appicon.sh
 
 # Release shares the main derived-data tree with Debug (xcodebuild keeps the two

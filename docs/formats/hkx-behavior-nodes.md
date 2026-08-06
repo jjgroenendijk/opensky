@@ -20,7 +20,7 @@ full-graph decode. Every class the census reports in those files has a decoder; 
 class without one is a failed sweep assertion, not a tolerated tally entry. Nothing here
 evaluates anything — what a modifier does to a pose is a later item.
 
-Parsers: `opensky/Formats/HKX/HKBClass.swift` (the shared protocol and the inherited
+Parsers: `opensky/Engine/Formats/HKX/HKBClass.swift` (the shared protocol and the inherited
 headers), `HKBBindables.swift`, `HKBStateMachine.swift`,
 `HKBStateMachineTransitions.swift`, `HKBClipGenerator.swift`, `HKBBlenderGenerator.swift`,
 `HKBSelectorGenerators.swift`, `HKBConditions.swift`, `HKBModifiers.swift`,

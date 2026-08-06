@@ -33,13 +33,13 @@ is [inventory menu](/engine/inventory-menu.md)'s, the transfers are
 
 | Layer | File | Target |
 |---|---|---|
-| Price formula | `opensky/Inventory/BarterPricing.swift` | app + CLI |
-| Transactions | `opensky/Inventory/BarterSession.swift` | app + CLI |
-| Two-pane list | `opensky/UI/ContainerMenuModel.swift` | app + CLI |
-| Vanilla movie contract | `opensky/UI/ContainerMenuMovieBridge*.swift` | app + CLI |
-| Panel seam | `opensky/ContainerMenuControlProviding.swift` | app + CLI |
-| Renderer + AppKit wiring | `opensky/GameViewControllerContainerMenu*.swift` | app |
-| Verification surface | `opensky/ContainerMenuPanelViewController.swift` and `opensky/Shell/Sections/ContainerMenu*.swift` | app |
+| Price formula | `opensky/Engine/Inventory/BarterPricing.swift` | app + CLI |
+| Transactions | `opensky/Engine/Inventory/BarterSession.swift` | app + CLI |
+| Two-pane list | `opensky/Engine/UI/ContainerMenuModel.swift` | app + CLI |
+| Vanilla movie contract | `opensky/Engine/UI/ContainerMenuMovieBridge*.swift` | app + CLI |
+| Panel seam | `opensky/Engine/ContainerMenuControlProviding.swift` | app + CLI |
+| Renderer + AppKit wiring | `opensky/App/GameViewControllerContainerMenu*.swift` | app |
+| Verification surface | `opensky/App/ContainerMenuPanelViewController.swift` and `opensky/App/Shell/Sections/ContainerMenu*.swift` | app |
 
 ## The price formula
 

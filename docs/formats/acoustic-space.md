@@ -42,7 +42,7 @@ the borrowed region's `RDSA` entries through the
 
 ## Resolution
 
-`AcousticSpaceStore` (`opensky/Audio/AcousticSpaceStore.swift`) indexes ASPC
+`AcousticSpaceStore` (`opensky/Engine/Audio/AcousticSpaceStore.swift`) indexes ASPC
 records by FormID at app launch, mirroring the `SoundRecordStore` shape. The
 world SFX director's bed resolver (`AmbienceCatalog`) follows the chain
 `CELL.XCAS -> ASPC.SNAM` plus `ASPC.RDAT -> REGN` for the borrowed area.

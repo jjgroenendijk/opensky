@@ -35,10 +35,10 @@ while a World destination is frontmost: asset previews already render individual
 the detail pane. Capture failure appears as an action-scoped error sheet. App + CLI
 share `FrameScreenshot` for BGRA readback + PNG encoding.
 
-App-only AppKit shells live under `opensky/` (`PreviewViewController`,
+App-only AppKit shells live under `opensky/App/` (`PreviewViewController`,
 `PreviewDetailBuilder`, `SettingsWindowController`, and the shell + panel framework
-under `opensky/Shell/`) and are excluded from `openskycli` by its synchronized-group
-exception set. Browse/preview model stays AppKit-free under `opensky/Preview/`. The
+under `opensky/App/Shell/`); `openskycli` does not synchronize that folder, so they never
+enter the CLI build. Browse/preview model stays AppKit-free under `opensky/Engine/Preview/`. The
 sidebar destinations + control panels are built on the shared UI framework — see
 [app-ui](/tools/app-ui.md).
 
@@ -72,7 +72,7 @@ destination is frontmost. Current catalog drops, new catalog loads off-main;
 catalog-load generation drops stale in-flight work (same pattern as filtering). Failed
 re-locate -> in-window message in every destination, no modal alert or relaunch needed.
 
-Browse logic is AppKit-free in `opensky/Preview/` so it unit-tests without a
+Browse logic is AppKit-free in `opensky/Engine/Preview/` so it unit-tests without a
 window (`PreviewCatalogTests`, `RecordTextDumpTests`,
 `TexturePreviewSceneTests`):
 
@@ -89,7 +89,7 @@ window (`PreviewCatalogTests`, `RecordTextDumpTests`,
   summary). The CLI `record` command prints the same string — single impl.
 * `AssetInfoText` — NIF container/model summary + DDS header/mip chain text
   (same content the CLI `nif`/`dds` commands print).
-* `ESMWalk` moved `openskycli/` -> `opensky/Formats/ESM/` (shared by CLI +
+* `ESMWalk` moved `openskycli/` -> `opensky/Engine/Formats/ESM/` (shared by CLI +
   preview; malformed-group warning now goes to os_log instead of stderr).
 
 ## Preview pipeline

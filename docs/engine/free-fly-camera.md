@@ -12,11 +12,11 @@ timestamp: 2026-07-26T00:00:00Z
 Todo 2.8. Fly through the rendered cell with keyboard + mouse. Three parts, split by
 layer so the math stays AppKit-free + unit-tested:
 
-- `opensky/Rendering/FreeFlyCamera.swift` — pure pose (position/yaw/pitch) -> view
+- `opensky/Engine/Rendering/FreeFlyCamera.swift` — pure pose (position/yaw/pitch) -> view
   matrix + per-frame integration. No AppKit.
-- `opensky/Rendering/CameraInputState.swift` — shared logical input state (pressed keys,
+- `opensky/Engine/Rendering/CameraInputState.swift` — shared logical input state (pressed keys,
   pointer deltas, boost). AppKit-free -> testable.
-- `opensky/GameMetalView.swift` — `MTKView` subclass, the only AppKit piece: NSEvents ->
+- `opensky/App/GameMetalView.swift` — `MTKView` subclass, the only AppKit piece: NSEvents ->
   `CameraInputState`, pointer capture.
 
 ## Input model

@@ -9,7 +9,7 @@ timestamp: 2026-07-22T00:00:00Z
 
 # Terrain mesh build
 
-`opensky/World/TerrainMeshBuilder.swift` turns a decoded [LAND](/formats/land.md) record into
+`opensky/Engine/World/TerrainMeshBuilder.swift` turns a decoded [LAND](/formats/land.md) record into
 terrain `Patch` values — quadrant sub-mesh + BTXT base FormID + ATXT layers with dense-baked
 VTXT opacities. `CellSceneBuilder.buildTerrain` resolves the textures, packs the splat
 weights, and emits `TerrainDrawItem`s drawn by the dedicated splat pipeline
@@ -132,7 +132,7 @@ transitions visible under the M2 walls, no flat single-texture quadrants.
 `openskycli render --neighbors` (docs/tools/cli.md) builds the target cell plus its 8 grid
 neighbors off one shared `MeshLibrary`/`TextureLibrary`/`CellSceneBuilder` — dedups residency
 and the STAT index across cells — and composes the 9 `CellScene`s with `RenderScene(merging:)`
-(`opensky/Rendering/RenderScene.swift`: flat concat of the opaque/alpha-tested/terrain draw
+(`opensky/Engine/Rendering/RenderScene.swift`: flat concat of the opaque/alpha-tested/terrain draw
 lists, no re-transform needed since each cell's items already carry absolute world matrices).
 The framing camera generalizes `SceneCamera.framing` to the union of all 9 cells' bounds.
 

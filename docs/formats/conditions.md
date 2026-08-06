@@ -36,12 +36,12 @@ issue #251 added on top of the decoder and which this page documents from
 * [See also](#see-also)
 
 Decoder: `Condition` and `ConditionList` in
-`opensky/Formats/ESM/Records/Condition.swift`. `MusicTrack` is the first
+`opensky/Engine/Formats/ESM/Records/Condition.swift`. `MusicTrack` is the first
 consumer; other record types adopt the same accumulator as they land.
 
 Evaluator: `ConditionEvaluator`, `ConditionFunctionRegistry`,
 `ConditionFunctions`, `ConditionFunctionsTime` and `ConditionTally`, all in
-`opensky/World/`.
+`opensky/Engine/World/`.
 
 ## CTDA payload
 
@@ -161,8 +161,8 @@ the `CTDA` fields actually decoded, for the reason in the next section.
 ## Function registry and evaluation
 
 Issue #251 (milestone M10.2, item 10.2.4) added the layer that answers "is this
-condition list true right now?". It lives under `opensky/World/` rather than
-beside the decoder under `opensky/Formats/`, because answering a condition needs
+condition list true right now?". It lives under `opensky/Engine/World/` rather than
+beside the decoder under `opensky/Engine/Formats/`, because answering a condition needs
 runtime state a format parser must never reach for: the global-value seam, the
 game clock, and the per-cell runtime reference index
 ([runtime reference identity and world state](/engine/runtime-state.md)).

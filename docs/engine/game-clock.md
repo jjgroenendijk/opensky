@@ -13,7 +13,7 @@ Issue #164 (milestone M10.2, item 10.2.3) replaces the scrubbed time-of-day floa
 real game clock: game seconds advanced as wall delta times timescale, with hour, day,
 month and year derived from the Tamriel calendar. It drives the renderer's time of day and
 the weather runtime now, and AI schedules (M16) later. Impl:
-`opensky/World/GameClock.swift` (value type), `opensky/Rendering/RendererGameClock.swift`
+`opensky/Engine/World/GameClock.swift` (value type), `opensky/Engine/Rendering/RendererGameClock.swift`
 (per-frame advance and the `timeOfDay` projection).
 
 ## Contents

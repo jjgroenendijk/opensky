@@ -16,7 +16,7 @@ cd "$(git rev-parse --show-toplevel)"
 
 FORBIDDEN_EXT_RE='\.(bsa|ba2|esm|esp|esl|nif|dds|hkx|hkc|pex|psc|bik|fuz|xwm|lip|tri|btr|bto|btt)$'
 RENDERED_IMAGE_RE='\.(png|jpg|jpeg|gif|webp|tga|bmp|tif|tiff)$'
-ALLOWED_IMAGE_PATH_RE='^opensky/Assets\.xcassets/'
+ALLOWED_IMAGE_PATH_RE='^opensky/App/Assets\.xcassets/'
 
 indent() { while IFS= read -r line; do printf '  %s\n' "$line"; done; }
 

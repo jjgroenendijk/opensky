@@ -20,8 +20,8 @@ Nothing here is wired to the renderer or to input. Item 14.5 supplies engine sta
 item 14.6 replaces the hardcoded idle path of
 [Actor idle animation](/engine/actor-animation.md).
 
-The code lives under `opensky/Behavior/`, deliberately apart from the format parsers in
-`opensky/Formats/HKX/`: decoding a packfile and running a graph are different jobs with
+The code lives under `opensky/Engine/Behavior/`, deliberately apart from the format parsers in
+`opensky/Engine/Formats/HKX/`: decoding a packfile and running a graph are different jobs with
 different failure modes.
 
 ## Contents
@@ -463,7 +463,7 @@ as a foot in a plausible but invented position.
 
 ## The locomotion bridge
 
-Item 14.5 (`LocomotionBridge`, `opensky/World/`) is the graph's first engine consumer. Its
+Item 14.5 (`LocomotionBridge`, `opensky/Engine/World/`) is the graph's first engine consumer. Its
 half of the contract is documented with the character controller in
 [walk mode](/engine/walk-mode.md); what belongs here is what it does to a graph instance.
 

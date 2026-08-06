@@ -2,6 +2,35 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-06
+
+* **`opensky/` split into `App/`, `Engine/`, and `SharedHeaders/` (issue #336)**: target
+  membership was a hand-maintained list of 111 path strings — the
+  `PBXFileSystemSynchronizedBuildFileExceptionSet` that kept app-only sources out of
+  `openskycli`. Filesystem-synced groups put every new file under `opensky/` into both
+  executables, so an AppKit import broke the CLI build until someone remembered the
+  exception, and the list itself was constant project-file churn and a merge-conflict magnet
+  across worktrees. Membership now comes from the filesystem: the app target synchronizes
+  `App/` plus `Engine/` plus `SharedHeaders/`, `openskycli` synchronizes `Engine/` plus
+  `SharedHeaders/` plus `openskycli/`, and the exception set is gone entirely. The split is
+  exactly the old list — `App/` holds the AppKit and SwiftUI shell, the view controllers,
+  the panels, `Shell/`, `Branding/`, and `Assets.xcassets`; `Engine/` holds every CLI-safe
+  source including `Shaders.metal`; `SharedHeaders/` holds `ShaderTypes.h` alone, because
+  both targets pin their bridging header at it. `MTL_HEADER_SEARCH_PATHS` now names
+  `opensky/SharedHeaders` so `Shaders.metal` still resolves its `#import` from its new
+  sibling folder. `tools/lint/cli-boundary.sh` no longer parses the project file; it greps
+  `opensky/Engine/` for AppKit, Cocoa, and SwiftUI imports and fails on any hit, which is
+  both cheaper and states the rule directly.
+* **Stage 2 of issue #336 (a shared engine target) is not justified by measurement**: the
+  premise was that roughly 550 engine sources compiling once per executable makes the
+  pre-push `make cli` an expensive second engine build. A cold `make cli` into a fresh
+  derived-data path measures 25 s wall on this machine (2026-08-06), which is not a
+  demonstrable drag, and the trade-off on the other side is real: a module boundary blocks
+  cross-module inlining under whole-module optimization in renderer hot paths unless
+  cross-module optimization or `@inlinable` is adopted. Left undone deliberately. The other
+  motivation — letting `openskyTests` test the engine directly instead of being app-hosted
+  through `TEST_HOST` — stands on its own and would need its own issue.
+
 ## 2026-08-05
 
 * **Movement authority follows `m_extractedMotion` rather than a speed threshold (issue

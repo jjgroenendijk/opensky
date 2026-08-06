@@ -16,7 +16,7 @@ version with user 11). File = header + block payloads back to back + footer.
 Reference: NifTools `nif.xml`
 (<https://github.com/niftools/nifxml/blob/develop/nif.xml>) — structs
 `Header`, `BSStreamHeader`, `ExportString`, `SizedString`, `Footer`; NifSkope
-as ground truth viewer. Impl: `opensky/Formats/NIF/`. All integers
+as ground truth viewer. Impl: `opensky/Engine/Formats/NIF/`. All integers
 little-endian (header enforces the endian byte).
 
 Doc grows with milestone 2: container (this page), scene graph + geometry

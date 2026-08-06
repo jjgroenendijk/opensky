@@ -9,7 +9,7 @@ timestamp: 2026-07-18T00:00:00Z
 
 # Cell scene build
 
-`opensky/World/CellSceneBuilder.swift` + `CellScene.swift` (todo 2.7 scene build).
+`opensky/Engine/World/CellSceneBuilder.swift` + `CellScene.swift` (todo 2.7 scene build).
 `CellSceneBuilder.buildScene(worldspaceEditorID:gridX:gridY:)` turns one exterior cell of
 one plugin into a `CellScene`: an opaque-first `RenderScene`, a `CellLoadSummary`, and a
 world-space AABB for camera placement. Inputs: `ESMFile` + `MeshLibrary` +
@@ -130,7 +130,7 @@ wrapped in `BuilderCellSceneProvider` -- cheap setup only (ESM is memory-mapped,
 headers only). The renderer starts on an empty scene; a `CellStreamer` centered on
 `FirstRenderCell` builds cells off the main thread and streams them in, framing the camera
 on the first arrival ([cell streaming](/engine/cell-streaming.md)). Target cell constants
-live in one place: `opensky/FirstRenderCell.swift` (`Tamriel`, (6,-2) —
+live in one place: `opensky/Engine/FirstRenderCell.swift` (`Tamriel`, (6,-2) —
 [decision](/decisions/first-render-cell.md)).
 
 Robustness: missing data already fail-louds via the locator alert; past that gate, a

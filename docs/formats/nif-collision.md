@@ -19,7 +19,7 @@ types `bhkNiCollisionObject`, `bhkWorldObject`, `bhkEntity`,
 `bhkQsTransform`, `hkPackedNiTriStripsData`, `NiTriStripsData`. Compressed-chunk
 dequantization + strip interpretation cross-checked against open-source
 [PyNifly/nifly](https://github.com/BadDogSkyrim/PyNifly/blob/main/NiflyDLL/NiflyWrapper.cpp).
-Impl: `opensky/Formats/NIF/NIFCollision*.swift`.
+Impl: `opensky/Engine/Formats/NIF/NIFCollision*.swift`.
 
 ## Units + transforms
 

@@ -13,7 +13,7 @@ version 105; LE used 104 (16-byte folder records, zlib) — not supported.
 
 Reference: UESP "Skyrim Mod:Archive File Format"
 (<https://en.uesp.net/wiki/Skyrim_Mod:Archive_File_Format>).
-Impl: `opensky/Formats/BSA/BSAArchive.swift`. All integers little-endian.
+Impl: `opensky/Engine/Formats/BSA/BSAArchive.swift`. All integers little-endian.
 Strings windows-1252 (vanilla is ASCII; mods carry high bytes).
 
 ## Header — 36 bytes at offset 0
@@ -70,7 +70,7 @@ At each record's offset, `packedSize` bytes total:
 2. Uncompressed entry -> raw payload.
 3. Compressed entry -> uint32 decompressedSize, then an LZ4 *frame*
    (magic 0x184D2204). OpenSky parses the frame descriptor and blocks itself
-   (`opensky/Formats/LZ4.swift`, using the public lz4 Block/Frame format
+   (`opensky/Engine/Formats/LZ4.swift`, using the public lz4 Block/Frame format
    specifications). Independent raw blocks (`FLG` bit 5 set) decode through
    Apple's `COMPRESSION_LZ4_RAW`; linked blocks retain the clean-room Swift
    decoder so matches can reach any prior output byte. The `BD` block-maximum

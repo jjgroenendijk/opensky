@@ -12,7 +12,7 @@ Static decode of Skyrim particle blocks: capacity, emitter shapes, modifier
 chain, shader/alpha refs. Runtime consumes these definitions through
 [particle playback](/rendering/particles.md). Container + scene graph are
 [NIF mesh](/formats/nif.md); this page covers only the particle blocks that hang off it. Impl:
-`opensky/Formats/NIF/NIFParticle*.swift`, engine types in
+`opensky/Engine/Formats/NIF/NIFParticle*.swift`, engine types in
 `ParticleSystemDefinition.swift`.
 
 Reference: NifTools `nif.xml`

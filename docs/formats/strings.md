@@ -16,7 +16,7 @@ uint32 string ID ("lstring") pointing into per-language tables at
 
 Reference: UESP "Skyrim Mod:String Table File Format"
 (<https://en.uesp.net/wiki/Skyrim_Mod:String_Table_File_Format>).
-Impl: `opensky/Formats/Strings/StringTable.swift`.
+Impl: `opensky/Engine/Formats/Strings/StringTable.swift`.
 
 ## File layout
 

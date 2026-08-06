@@ -15,7 +15,7 @@ get own pages as decoders land.
 
 Reference: UESP "Skyrim Mod:Mod File Format"
 (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format>).
-Impl: `opensky/Formats/ESM/` (`ESMFile`, `ESMGroup`, `ESMRecord`, `ESMField`).
+Impl: `opensky/Engine/Formats/ESM/` (`ESMFile`, `ESMGroup`, `ESMRecord`, `ESMField`).
 All integers little-endian. Type codes are 4 ASCII bytes (`FourCC.swift`).
 
 ## File shape

@@ -9,7 +9,7 @@ timestamp: 2026-07-19T00:00:00Z
 # Interior lighting records
 
 M3.7 inputs for interior forward lighting. Impl:
-`opensky/Formats/ESM/Records/CellLighting.swift`, `LightRecord.swift`, and
+`opensky/Engine/Formats/ESM/Records/CellLighting.swift`, `LightRecord.swift`, and
 `PlacedReference.swift`.
 
 Sources:

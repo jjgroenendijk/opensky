@@ -21,9 +21,9 @@ Reference: UESP "Skyrim Mod:Mod File Format" subpages `/ACHR`, `/NPC_`,
 xEdit dev-4.1.6 `wbDefinitionsTES5.pas` (template flag masks) +
 `wbDefinitionsCommon.pas` (`wbLeveledListEntry`); CK wiki "Template Data"
 (flag -> tab coverage); NifTools `nif.xml` `BSDismemberBodyPartType`
-(biped slot numbering). Impl: `opensky/Formats/ESM/Records/` +
-`opensky/World/ActorResolution.swift` +
-`opensky/World/ActorVisualResolution.swift` + `opensky/World/ActorAssembly.swift`.
+(biped slot numbering). Impl: `opensky/Engine/Formats/ESM/Records/` +
+`opensky/Engine/World/ActorResolution.swift` +
+`opensky/Engine/World/ActorVisualResolution.swift` + `opensky/Engine/World/ActorAssembly.swift`.
 
 ## ACHR -> PlacedActor
 
