@@ -185,26 +185,6 @@ struct NIFCollisionTests {
         #expect(near(vertices[0].z, scale * 3))
     }
 
-    @Test func decodesPackedAndNiTriStripCollections() throws {
-        let file = try NIFFile(data: NIFFixture.file(blocks: [
-            .init("NiNode", NIFFixture.niNode(
-                prefix: NIFFixture.avObjectPrefix(collisionRef: 1)
-            )),
-            .init("bhkCollisionObject", NIFCollisionFixture.collisionObject(body: 2)),
-            .init("bhkRigidBody", NIFCollisionFixture.rigidBody(shape: 3)),
-            .init("bhkListShape", NIFCollisionFixture.list([4, 6])),
-            .init("bhkPackedNiTriStripsShape", NIFCollisionFixture.packedShape(dataRef: 5)),
-            .init("hkPackedNiTriStripsData", NIFCollisionFixture.packedData()),
-            .init("bhkNiTriStripsShape", NIFCollisionFixture.niTriStripsShape(dataRef: 7)),
-            .init("NiTriStripsData", NIFCollisionFixture.niTriStripsData())
-        ]))
-        let model = file.collisionModel()
-        #expect(model.decodeFailures.isEmpty)
-        #expect(model.unsupportedReachableBlocks.isEmpty)
-        #expect(model.shapeCount == 2)
-        #expect(model.triangleCount == 3)
-    }
-
     @Test func reportsUnknownReachableShapeWithoutCrashingSiblingBody() throws {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(

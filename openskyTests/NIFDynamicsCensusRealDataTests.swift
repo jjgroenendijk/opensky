@@ -123,6 +123,13 @@ struct NIFDynamicsCensusRealDataTests {
     private func assertClutter(_ census: NIFDynamicsCensus) {
         #expect(census.modelCount > 0, "no clutter meshes found under \(Self.clutterPrefix)")
         #expect(census.loadFailures.isEmpty, "load failures: \(census.loadFailures.prefix(5))")
+        // Every clutter mesh decodes: the three that did not were the only
+        // `bhkNiTriStripsShape` users in the install, and their prefix was
+        // being read two bytes wide (issue #376).
+        #expect(
+            census.decodeFailureCount == 0,
+            "decode failures: \(census.decodeFailures.prefix(5))"
+        )
         #expect(census.simulatedBodyCount > 0, "no simulated bodies in clutter")
         #expect(census.mass.bodyCount > 0, "no clutter body carries a mass")
         #expect(census.mass.minimum > 0)
@@ -134,6 +141,10 @@ struct NIFDynamicsCensusRealDataTests {
     private func assertSkeletons(_ census: NIFDynamicsCensus) {
         #expect(census.modelCount > 0, "no actor skeletons found")
         #expect(census.loadFailures.isEmpty, "load failures: \(census.loadFailures.prefix(5))")
+        #expect(
+            census.decodeFailureCount == 0,
+            "decode failures: \(census.decodeFailures.prefix(5))"
+        )
         #expect(!census.constraintTypeCounts.isEmpty, "no constraints on any skeleton")
         #expect(
             census.bonePairs.keys.contains { $0.bodyA != "<unbound>" && $0.bodyB != "<unbound>" },
