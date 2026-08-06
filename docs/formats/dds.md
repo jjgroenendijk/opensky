@@ -10,8 +10,8 @@ timestamp: 2026-07-21T00:00:00Z
 
 DirectDraw Surface — every Skyrim SE texture (`textures/**/*.dds` inside the texture
 BSAs, plus loose overrides). OpenSky reads 2D BC1-BC5/BC7 plus legacy 32-bit xRGB8888,
-RGBA8888, and BGRA8888. Parser: `opensky/Formats/DDS/DDSFile.swift`. GPU upload: `MTLTexture` via
-native BCn/BGRA8/RGBA8 pixel formats.
+RGBA8888, and BGRA8888. Parser: `opensky/Engine/Formats/DDS/DDSFile.swift`. GPU upload:
+`MTLTexture` via native BCn/BGRA8/RGBA8 pixel formats.
 
 Reference: Microsoft DDS programming guide + struct pages —
 `DDS_HEADER`, `DDS_PIXELFORMAT`, `DDS_HEADER_DXT10`, dxgiformat.h.

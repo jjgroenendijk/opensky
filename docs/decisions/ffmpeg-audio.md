@@ -27,7 +27,7 @@ what happens when it is absent.
 * Treat ffmpeg as a hard build requirement. A missing prefix fails the build with a
   message naming `make bootstrap`, and the app bundle carries its own copies of the three
   dylibs so the installed app is self-contained.
-* Keep every ffmpeg type behind `opensky/Audio/WMADecoder.swift`. Callers pass container
+* Keep every ffmpeg type behind `opensky/Engine/Audio/WMADecoder.swift`. Callers pass container
   metadata and `Data`, and receive interleaved 32-bit float PCM or a typed error. The
   static `decode(packets:parameters:)` comes in two overloads: an accumulating one that
   returns the whole track as one `[Float]`, and a streaming one that hands each non-empty

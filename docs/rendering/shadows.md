@@ -15,7 +15,7 @@ samples it with PCF and darkens only the direct sun term. Standard cascaded
 shadow maps ([LearnOpenGL CSM](https://learnopengl.com/Guest-Articles/2021/CSM),
 Microsoft "Cascaded Shadow Maps" technique article) — no Bethesda code consulted.
 
-## Cascade fit — `ShadowCascadeMath` (`opensky/Rendering/ShadowCascadeMath.swift`)
+## Cascade fit — `ShadowCascadeMath` (`opensky/Engine/Rendering/ShadowCascadeMath.swift`)
 
 * `splitDistances(near:far:count:lambda:)` — practical split scheme:
   `lambda * log + (1 - lambda) * uniform` per split, strictly increasing, last

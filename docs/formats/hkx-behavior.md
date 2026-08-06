@@ -15,7 +15,7 @@ the graph-level objects a Havok *behavior* packfile carries, and the shared help
 object decoder now resolves its pointers through. The tree the graph's root generator heads
 is [HKX behavior node classes](/formats/hkx-behavior-nodes.md).
 
-Parsers: `opensky/Formats/HKX/HKXObjectGraph.swift`, `HKXObjectCursor.swift`,
+Parsers: `opensky/Engine/Formats/HKX/HKXObjectGraph.swift`, `HKXObjectCursor.swift`,
 `HKXObjectCursorArrays.swift` (shared resolution); `HKBRootLevelContainer.swift`,
 `HKBBehaviorGraph.swift`, `HKBBehaviorStrings.swift`, `HKBFileStringData.swift` (classes);
 `HKBBehaviorCensus.swift` (the summary). CLI dump: `openskycli hkx <key>`

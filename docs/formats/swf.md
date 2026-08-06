@@ -24,7 +24,7 @@ framed and named, and PlaceObject2/3 CLIPACTIONS event handlers decoded. Nothing
 in that bytecode is executed yet — 8.3.2 builds the interpreter on top.
 
 Reference: Adobe SWF File Format Specification, version 19 (public Adobe
-document). Impl: `opensky/Formats/SWF/`. All byte-aligned integers are
+document). Impl: `opensky/Engine/Formats/SWF/`. All byte-aligned integers are
 little-endian; the FrameSize RECT is bit-packed most-significant-bit first.
 
 ## Header — first 8 bytes, uncompressed
@@ -40,7 +40,7 @@ The three signatures select body compression:
 * `FWS` — uncompressed. The body follows the header verbatim.
 * `CWS` — the body (everything after byte 8) is one zlib stream (RFC 1950, with
   the CMF/FLG header). Introduced with SWF 6. Its decompressed size is
-  `FileLength - 8`. OpenSky decodes it through `opensky/Formats/Zlib.swift`,
+  `FileLength - 8`. OpenSky decodes it through `opensky/Engine/Formats/Zlib.swift`,
   which validates CMF/FLG and the output length.
 * `ZWS` — LZMA-compressed body (SWF 13+). Recognized but not decoded at this
   stage; it raises `SWFError.unsupportedCompression`.
@@ -95,7 +95,7 @@ decoding them is out of scope for the container milestone.
 ## Shape tags — DefineShape (2), DefineShape2 (22), DefineShape3 (32), DefineShape4 (83)
 
 Reference: spec chapter 6 "Shapes" (pp. 119-133) and chapter 7 "Gradients"
-(pp. 134-136). Impl: `opensky/Formats/SWF/SWFShape.swift` (tag layout,
+(pp. 134-136). Impl: `opensky/Engine/Formats/SWF/SWFShape.swift` (tag layout,
 `SWFShapeDefinition.parse(tag:)`), `SWFShapeParser.swift` (bit-level
 structures), `SWFShapeTypes.swift` (style value types).
 
@@ -147,7 +147,7 @@ rule with zero failures.
 
 ## Shape tessellation
 
-Impl: `opensky/Formats/SWF/SWFShapeTessellator.swift`. Output is
+Impl: `opensky/Engine/Formats/SWF/SWFShapeTessellator.swift`. Output is
 `SWFShapeMesh`: a twip-space triangle list (`[SIMD2<Float>]`, three vertices
 per triangle) with `FillRun` ranges grouping triangles per fill style index.
 `SWFShapeCache` memoizes the mesh per shape character id; 8.2.4's renderer
@@ -175,7 +175,7 @@ consumes this cache. GPU upload is out of scope for 8.2.2.
 ## Font tags — DefineFont2 (48), DefineFont3 (75)
 
 Reference: spec chapter 10 "Fonts and Text" (pp. 176-182). Impl:
-`opensky/Formats/SWF/SWFFont.swift` (value types),
+`opensky/Engine/Formats/SWF/SWFFont.swift` (value types),
 `SWFFontParser.swift` (DefineFont2/3), `SWFFontCompanionParser.swift`
 (companion tags).
 
@@ -223,7 +223,7 @@ path, so the FlashType hinting is parsed-and-ignored:
 
 ## Glyph rasterization
 
-Impl: `opensky/Formats/SWF/SWFGlyphPath.swift`, plus
+Impl: `opensky/Engine/Formats/SWF/SWFGlyphPath.swift`, plus
 `UIGlyphAtlas.swfEntry(...)` — see [Screen-space UI layer](/rendering/ui.md) for
 the atlas side. `SWFGlyphPath.makePath(segments:unitsPerEM:emPixelSize:)` builds
 a CoreGraphics `CGPath` from a glyph's straight + quadratic edges, scaled by
@@ -234,7 +234,7 @@ SWF glyph semantics. An empty glyph (no segments) yields nil, drawing no quad.
 ## Static text tags — DefineText (11), DefineText2 (33), DefineEditText (37)
 
 Reference: spec chapter 10 (pp. 173-177). Impl:
-`opensky/Formats/SWF/SWFText.swift` (DefineText/2),
+`opensky/Engine/Formats/SWF/SWFText.swift` (DefineText/2),
 `SWFEditText.swift` (DefineEditText).
 
 DefineText/DefineText2 body: `CharacterID` UI16, `TextBounds` RECT, `TextMatrix`
@@ -267,7 +267,7 @@ tags decode cleanly under this rule.
 
 ## fontconfig.txt (Scaleform GFx font mapping)
 
-Impl: `opensky/Formats/SWF/SWFFontConfig.swift` (parser),
+Impl: `opensky/Engine/Formats/SWF/SWFFontConfig.swift` (parser),
 `SWFFontLibrary.swift` (resolver). The game ships `Interface/fontconfig.txt`,
 read via the VFS (`vfs.contents(forPath: "interface\\fontconfig.txt")`). It maps
 logical font aliases to font names defined inside fontlib movies.
@@ -299,7 +299,7 @@ are tried.
 ## Bitmap tags
 
 Reference: spec chapter 8 "Bitmaps" (pp. 137-143). Impl:
-`opensky/Formats/SWF/SWFBitmap.swift` (lossless) and `SWFBitmapJPEG.swift`
+`opensky/Engine/Formats/SWF/SWFBitmap.swift` (lossless) and `SWFBitmapJPEG.swift`
 (JPEG family via ImageIO/CoreGraphics — Apple frameworks, no third-party
 codec). All decoders produce `SWFBitmap`: RGBA8 row-major pixels, dimensions,
 a `premultipliedAlpha` flag, and the detected source format.
@@ -334,7 +334,7 @@ CoreGraphics context and are flagged accordingly.
 ## Display-list tags
 
 Reference: spec chapter 3 "The display list" (pp. 31-39) plus DefineSprite in
-chapter 13 (p. 233). Impl: `opensky/Formats/SWF/SWFDisplayList.swift` (tag
+chapter 13 (p. 233). Impl: `opensky/Engine/Formats/SWF/SWFDisplayList.swift` (tag
 decode), `SWFMovie.swift` (dictionary + frame-1 list), `SWFScene.swift`
 (flattening to draw commands), `SWFTransform.swift` / `SWFColorTransform.swift`
 (the affine and color algebra).
@@ -431,7 +431,7 @@ Reference: spec chapter 5 "Actions" — "DoAction" and "ACTIONRECORD" (p. 63),
 "DoInitAction" (p. 108), and the per-action field tables in the SWF 3 action
 model (pp. 64-66), SWF 4 action model (pp. 68-88), SWF 5 action model
 (pp. 89-107), SWF 6 action model (pp. 108-110), and SWF 7 action model
-(pp. 111-116). Impl: `opensky/Formats/SWF/SWFActionParser.swift` (framing),
+(pp. 111-116). Impl: `opensky/Engine/Formats/SWF/SWFActionParser.swift` (framing),
 `SWFActionOperands.swift` (typed operands), `SWFAction.swift` (model types),
 `SWFActionName.swift` (opcode table), `SWFTimeline.swift` (which frame a block
 belongs to), `SWFMovieDecoder.swift` (tag routing).
@@ -551,7 +551,7 @@ list and edit-text parsers use.
 
 Reference: spec chapter 3 "The display list" — the CLIPACTIONS and
 CLIPACTIONRECORD tables under "PlaceObject2" (pp. 36-37) and "ClipEventFlags"
-(pp. 48-49). Impl: `opensky/Formats/SWF/SWFClipActions.swift`, attached to a
+(pp. 48-49). Impl: `opensky/Engine/Formats/SWF/SWFClipActions.swift`, attached to a
 placement by `SWFDisplayList.swift`.
 
 `PlaceFlagHasClipActions` (0x80 of the first flag byte) closes a PlaceObject2 or
@@ -592,7 +592,7 @@ placements carrying the flag, exactly as before (122 install-wide, unchanged).
 ## FrameLabel (43)
 
 Reference: spec chapter 3 "The display list" — the "FrameLabel" control tag.
-Impl: `opensky/Formats/SWF/SWFFrameLabel.swift`, attached to a frame by
+Impl: `opensky/Engine/Formats/SWF/SWFFrameLabel.swift`, attached to a frame by
 `SWFTimeline.swift`.
 
 | field       | type   | notes                                                  |
@@ -616,7 +616,7 @@ never the frame.
 
 Reference: spec chapter 14 "Sharing fonts and other assets" — "ExportAssets",
 the tag immediately preceding ImportAssets. Impl:
-`opensky/Formats/SWF/SWFExportAssets.swift`.
+`opensky/Engine/Formats/SWF/SWFExportAssets.swift`.
 
 Body: `Count` UI16, then `Count` pairs of `CharacterId` UI16 + `Name` STRING —
 ImportAssets' body without the leading URL.
@@ -637,7 +637,7 @@ ImportAssets, whose failure loses a font the renderer needs.
 
 Reference: spec chapter 14 "Sharing fonts and other assets" — ImportAssets (57,
 p. 285) and ImportAssets2 (71, p. 286). Impl:
-`opensky/Formats/SWF/SWFImportAssets.swift`.
+`opensky/Engine/Formats/SWF/SWFImportAssets.swift`.
 
 Body: `URL` STRING, then (ImportAssets2 only) two reserved bytes (1 and 0),
 `Count` UI16, and `Count` pairs of `CharacterId` UI16 + `Name` STRING. The
@@ -658,7 +658,7 @@ instantiated nothing, which is not a cosmetic loss: `inventorymenu.swf` places
 `ItemCard_mc` (87), `InventoryLists_mc` (89) and `BottomBar_mc` (90) and defines
 none of them, so the menu came up as 11 display nodes with no list at all.
 
-`SWFMovieImportMerger` (`opensky/Formats/SWF/SWFMovieImportMerge.swift`, with the
+`SWFMovieImportMerger` (`opensky/Engine/Formats/SWF/SWFMovieImportMerge.swift`, with the
 id transform in `SWFCharacterRemap.swift`) resolves them. It is a pure transform
 over `SWFMovie` values plus a resolver seam the loader supplies, so it is
 testable with no filesystem, and `SWFMovieLoader.load(path:)` runs it before font
@@ -785,7 +785,7 @@ in `SWFMovieRuntimeTests`, `SWFRuntimePropertyTests`, and
 
 `openskycli swf action-sweep` (milestone 8.3.1 stage 2) is the committed,
 reproducible version of that inventory: `SWFActionInventory`
-(`opensky/Formats/SWF/SWFActionInventory.swift`) walks every action block
+(`opensky/Engine/Formats/SWF/SWFActionInventory.swift`) walks every action block
 `SWFMovie.actionBlocks` exposes plus every CLIPACTIONS handler, tallying opcode
 frequency, unknown opcodes, a structurally-resolved host/GFx API name surface,
 clip-event usage, and function/structure stats; `openskycli/SWFActionSweep.swift`

@@ -7,7 +7,11 @@ SUPPORTED_PLATFORMS = macosx
 // The app is written main-actor-by-default; ShaderTypes.h carries the structs shared
 // with Metal.
 SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor
-SWIFT_OBJC_BRIDGING_HEADER = $(TARGET_NAME)/ShaderTypes.h
+SWIFT_OBJC_BRIDGING_HEADER = $(TARGET_NAME)/SharedHeaders/ShaderTypes.h
+
+// Shaders.metal lives in opensky/Engine and imports ShaderTypes.h from the sibling
+// SharedHeaders folder.
+MTL_HEADER_SEARCH_PATHS = $(inherited) $(SRCROOT)/opensky/SharedHeaders
 
 // Generated Info.plist keys.
 GENERATE_INFOPLIST_FILE = YES

@@ -355,7 +355,7 @@ sendable first-class acceptance result with stable ranked accessors.
 
 ## World runtime and confinement
 
-`PapyrusWorldRuntime` (`opensky/Papyrus/PapyrusWorldRuntime.swift`) is the
+`PapyrusWorldRuntime` (`opensky/Engine/Papyrus/PapyrusWorldRuntime.swift`) is the
 `@MainActor` class that owns one `PapyrusRuntime`, one `PapyrusScheduler`, and
 the world-side bookkeeping the headless core deliberately has none of. Its
 confinement model is the same as
@@ -417,7 +417,7 @@ Wiring a second subscriber to that frame revealed a real hazard beside it.
 `Renderer.onFrame` had been a single optional closure, and both
 `GameViewControllerStreaming.swift` and `wireHUDFrameUpdates(renderer:)` wanted
 it, so the second assignment silently dropped the first. It is now a
-`CallbackFanOut<SIMD3<Float>>` (`opensky/World/CallbackFanOut.swift`): an
+`CallbackFanOut<SIMD3<Float>>` (`opensky/Engine/World/CallbackFanOut.swift`): an
 ordered list of handlers delivered in registration order, with no removal, no
 identity and no thread hand-off, because every engine callback is wired once at
 setup and fired on the thread that drives `draw(in:)`. `wireHUDFrameUpdates` is
@@ -556,7 +556,7 @@ notice.
 ### `OnTriggerEnter` and `OnTriggerLeave`
 
 `PapyrusWorldRuntime.queueOnTriggerEnter(volume:actor:)` and
-`queueOnTriggerLeave(volume:actor:)` (`opensky/Papyrus/PapyrusWorldTriggers.swift`) are
+`queueOnTriggerLeave(volume:actor:)` (`opensky/Engine/Papyrus/PapyrusWorldTriggers.swift`) are
 `queueOnActivate` minus the activation-depth machinery: one event per script instance
 attached to the volume's authoring reference, iterated in `PapyrusInstanceKey` order,
 argument 0 the actor as `PapyrusValue.object(handle)`, function names
@@ -584,7 +584,7 @@ with its ordering constraint against `detach` — is in
 
 Native bodies are nonisolated and `@Sendable`; `WorldStateStore` and
 `PapyrusWorldRuntime` are `@MainActor`. The seam that reconciles the two is in
-`opensky/Papyrus/PapyrusWorldBridge.swift`:
+`opensky/Engine/Papyrus/PapyrusWorldBridge.swift`:
 
 | Type | Isolation | Role |
 | --- | --- | --- |
@@ -642,8 +642,8 @@ still bounds what that can cost in one frame.
 ## Update timers
 
 Issue #277 implements the `Form` update-timer family: six natives
-(`opensky/Papyrus/PapyrusNativeUpdateTimers.swift`) backed by
-`PapyrusUpdateTimerRegistry` (`opensky/Papyrus/PapyrusWorldUpdateTimers.swift`), a
+(`opensky/Engine/Papyrus/PapyrusNativeUpdateTimers.swift`) backed by
+`PapyrusUpdateTimerRegistry` (`opensky/Engine/Papyrus/PapyrusWorldUpdateTimers.swift`), a
 fixed-step peer of [the deterministic scheduler](#deterministic-scheduler) rather than
 part of it — a timer carries an interval and a slot, never a suspended continuation, so
 it does not fit a `PapyrusScheduler.Entry`.
@@ -685,7 +685,7 @@ hold. Real-time slots use the scheduler's whole-fixed-tick arithmetic
 (`Double(tickCount - startTick) * fixedStepSeconds`, the same drift-avoidance the
 scheduler itself uses); game-time slots consume capped, never-negative deltas sampled from
 `GameClock.totalGameSeconds`, the same policy `consumeElapsedGameHours()`
-(`opensky/Rendering/RendererGameClock.swift`) uses elsewhere: a backward jump contributes
+(`opensky/Engine/Rendering/RendererGameClock.swift`) uses elsewhere: a backward jump contributes
 zero and re-anchors, and a forward jump's single-step contribution is capped at 24 game
 hours (`PapyrusUpdateTimerRegistry.maximumGameHoursPerStep`, matching
 `PapyrusScheduler.maximumGameHoursPerStep`). On top of that cap, each due timer fires at
@@ -972,8 +972,8 @@ The `World > Scripts` sidebar destination (`Destination-scripts`, M11.2.5, issue
 is the verification surface for everything above: a user can watch the VM run, pause it,
 and single-step it without a debugger or a CLI command. `ScriptsPanelViewController`
 hosts five sections, each backed by the `ScriptControlProviding` protocol
-(`opensky/ScriptControlProviding.swift`) that `GameViewController` conforms to in
-`opensky/GameViewControllerScripts.swift`:
+(`opensky/Engine/ScriptControlProviding.swift`) that `GameViewController` conforms to in
+`opensky/App/GameViewControllerScripts.swift`:
 
 * `ScriptInstancesSection` (`PanelSection-scriptInstances`) shows the live instance
   count, the current interaction target, and the scripts attached to it.
@@ -1036,7 +1036,7 @@ scripted or fat-fingered burst request cannot run the VM unbounded from the pane
 The panel's own view of the runtime comes from one seam,
 `PapyrusWorldRuntime.scriptsSnapshot(target:targetDescription:runningQuestCount:) ->
 ScriptsSnapshot`, in
-the satellite file `opensky/Papyrus/PapyrusWorldScriptsSnapshot.swift`. `ScriptsSnapshot`
+the satellite file `opensky/Engine/Papyrus/PapyrusWorldScriptsSnapshot.swift`. `ScriptsSnapshot`
 is a single `Equatable` value assembled once per refresh (instance count, target
 description and attached script names, recent events with dropped and pending counts, the
 paused flag, the quest instance and fragment counters, pending waits, pending timers,

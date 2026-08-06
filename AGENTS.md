@@ -38,9 +38,11 @@ conflict.
   `git mv`, and AppleDouble `._*` files are ignored.
 - Xcode 26 ships without the Metal Toolchain. `make bootstrap`, once per checkout,
   downloads it.
-- Filesystem-synced groups add every new file under `opensky/` to every target, so an
-  app-only source (importing AppKit, Cocoa, or SwiftUI) needs a `membershipExceptions`
-  entry excluding it from `openskycli`. `make cli-boundary` catches this.
+- Target membership under `opensky/` follows the folder split, not a list in the project
+  file: `App/` builds only into the app, `Engine/` and `SharedHeaders/` build into both the
+  app and `openskycli`. An app-only source (importing AppKit, Cocoa, or SwiftUI) belongs
+  under `App/`; leaving it under `Engine/` breaks the CLI build. `make cli-boundary`
+  catches this.
 - The build cache is `DerivedData/` inside the checkout, not the Xcode default under
   `$HOME`: this project's cache runs to tens of gigabytes and the boot volume is small
   enough that the default location fills it mid-session. `make` passes `-derivedDataPath`
@@ -70,10 +72,13 @@ The repo root holds only this document, `Makefile`, the Xcode project, `Config/`
 dotfiles. Every build setting lives in `Config/*.xcconfig`, not in the pbxproj, signing
 included: `Config/Signing.xcconfig` names one Apple Development identity for every target,
 because macOS ties permission grants to the code signature and ad-hoc signing re-asks on
-every build (`docs/tools/build-system.md`). Group
-engine subsystems under `opensky/` by domain, and keep format parsers separate from
-rendering. Skills live in `.AGENTS/skills/` (`.claude/skills` symlinks there). `logs/` and
-`.vendor/` are gitignored. `docs/index.md` maps the wiki — trust it over globbing.
+every build (`docs/tools/build-system.md`). `opensky/` splits by target membership:
+`opensky/App/` holds the AppKit and SwiftUI shell, view controllers, panels, and
+`Assets.xcassets`; `opensky/Engine/` holds everything CLI-safe; `opensky/SharedHeaders/`
+holds `ShaderTypes.h`. Group engine subsystems under `opensky/Engine/` by domain, and keep
+format parsers separate from rendering. Skills live in `.AGENTS/skills/` (`.claude/skills`
+symlinks there). `logs/` and `.vendor/` are gitignored. `docs/index.md` maps the wiki —
+trust it over globbing.
 
 Run output is per-run, not per-name: a script that writes a transcript, a capture, or a
 result bundle puts it in `logs/<script>/<UTC timestamp>/` (or the same shape under

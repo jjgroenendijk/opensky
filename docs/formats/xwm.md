@@ -37,8 +37,8 @@ transcribed):
   RIFF framing: a four-character chunk id, a little-endian `uint32` size that
   excludes the 8-byte chunk header, and bodies padded to an even byte count.
 
-Impl: `opensky/Formats/XWM/XWMFile.swift` (codec policy and derived values) plus
-`opensky/Formats/XWM/XWMChunkScan.swift` (the RIFF walk). All integers are
+Impl: `opensky/Engine/Formats/XWM/XWMFile.swift` (codec policy and derived values) plus
+`opensky/Engine/Formats/XWM/XWMChunkScan.swift` (the RIFF walk). All integers are
 little-endian.
 
 ## File header — first 12 bytes

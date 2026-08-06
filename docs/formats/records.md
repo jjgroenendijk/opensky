@@ -20,7 +20,7 @@ and — for the M12.1.1 inventory families — `/MISC`, `/BOOK`, `/ALCH`, `/INGR
 `/WEAP`, `/AMMO`, `/ARMO`).
 Water-specific
 fields + WATR layout: [exterior water records](/formats/water.md). Impl:
-`opensky/Formats/ESM/Records/`.
+`opensky/Engine/Formats/ESM/Records/`.
 
 Decode policy: loop over fields, pick known types, skip the rest — unknown
 modder fields are never an error. Decoders throw `ESMError.malformed` only on
@@ -268,7 +268,7 @@ models skipped until the NIF/LOD work needs them.
 
 ## MSTT/TREE/FURN/ACTI/CONT/DOOR -> ModelBase
 
-One shared `ModelBase` (`opensky/Formats/ESM/Records/ModelBase.swift`) decodes six
+One shared `ModelBase` (`opensky/Engine/Formats/ESM/Records/ModelBase.swift`) decodes six
 placeable base types beyond STAT. M3.6 added DOOR draw coverage; M8.4.1 adds display and
 activation metadata; M9.2.2 adds the sound links that drive activator/door/container SFX
 (issue #155).
@@ -532,7 +532,7 @@ Still skipped: MOD2/MOD4 ground models, EITM enchantment, TNAM template.
 
 ## Item definition index -> ItemDefinitionStore
 
-`opensky/Inventory/ItemDefinitionStore.swift` indexes one plugin's carryable base records
+`opensky/Engine/Inventory/ItemDefinitionStore.swift` indexes one plugin's carryable base records
 behind one view, so the inventory runtime resolves an item FormID without knowing which
 of the seven families it came from. Immutable, built once from an `ESMFile`, following
 the `WeatherStore` / `SoundRecordStore` convention.
@@ -554,7 +554,7 @@ oversight.
 
 Global variables: a named, typed number the rest of the data set reads through
 conditions, scripts and record links. Decoded by
-`opensky/Formats/ESM/Records/Global.swift`; the mutable layer above it is
+`opensky/Engine/Formats/ESM/Records/Global.swift`; the mutable layer above it is
 [runtime reference identity and world state](/engine/runtime-state.md).
 
 Reference: UESP "Skyrim Mod:Mod File Format/GLOB"
@@ -587,14 +587,14 @@ value at 0. UESP lists OBND and VMAD as vestigial on GLOB — checked for by the
 game, never present in shipped data — and both are skipped. Only a non-GLOB
 record throws.
 
-`GlobalStore` (`opensky/World/GlobalStore.swift`) indexes the GLOB top group by
+`GlobalStore` (`opensky/Engine/World/GlobalStore.swift`) indexes the GLOB top group by
 raw FormID, by editor ID (case-insensitively, because scripts and the console
 have always matched global names that way) and by session-stable `ReferenceKey`.
 
 ## MOVT -> MovementType
 
 Movement types: how fast an actor using this gait moves in each direction. Decoded by
-`opensky/Formats/ESM/Records/MovementType.swift`; the player's four gaits feed
+`opensky/Engine/Formats/ESM/Records/MovementType.swift`; the player's four gaits feed
 `PlayerMovementConfiguration` and through it the locomotion bridge of
 [walk mode](/engine/walk-mode.md).
 
@@ -635,7 +635,7 @@ Observed in `Skyrim.esm` on 2026-08-03, forward walk / forward run in units per 
 ## QUST -> Quest
 
 Quests: journal stages, objectives, and the alias slots a quest resolves world objects
-through. Decoded by `opensky/Formats/ESM/Records/Quest.swift` and its three satellites
+through. Decoded by `opensky/Engine/Formats/ESM/Records/Quest.swift` and its three satellites
 (`QuestComponents.swift`, `QuestDecoder.swift`, `QuestDecoderGroups.swift`,
 `QuestAliasDecoder.swift`). The stage *scripts* are not in the record: they live in the
 QUST tail of VMAD, decoded into `QuestFragmentSection`
@@ -712,7 +712,7 @@ itself, an alias cut off without its ALED terminator is kept and recorded, and a
 or later-game subrecord is skipped. All four are counted in `QuestTally` so a sweep can
 assert against them rather than discover the loss silently. Only a non-QUST record throws.
 
-`QuestStore` (`opensky/World/QuestStore.swift`) indexes the QUST top group by raw FormID,
+`QuestStore` (`opensky/Engine/World/QuestStore.swift`) indexes the QUST top group by raw FormID,
 by editor ID (case-insensitively, for the same reason `GlobalStore` does) and by
 session-stable `ReferenceKey`, following the same immutable-index convention. Quest
 *state* belongs to the runtime (issue #182) and deliberately does not live there.

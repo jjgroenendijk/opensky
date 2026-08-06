@@ -31,8 +31,8 @@ Vanilla Skyrim menus are class-registration code. The measured inventory (milest
 running a vanilla movie's bytecode is not a frame — it is the set of constructors left in
 `_global` and handed to `Object.registerClass`. Both are readable from `AS2Runtime`.
 
-The interpreter lives in `opensky/Formats/SWF/AS2/` and the display runtime in
-`opensky/Formats/SWF/Runtime/`. The prefixes mark the boundary: `SWF*` types parse bytes
+The interpreter lives in `opensky/Engine/Formats/SWF/AS2/` and the display runtime in
+`opensky/Engine/Formats/SWF/Runtime/`. The prefixes mark the boundary: `SWF*` types parse bytes
 off disk, `AS2*` types execute the bytecode those parsers framed, and the two never share
 a type. The `Runtime/` files are the one deliberate meeting point — they are named `SWF*`
 because they are made of decoded characters and timelines, and they are the only place that

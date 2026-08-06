@@ -14,7 +14,7 @@ Milestone 3.2. Two halves: a pure grid manager (`CellGridManager`) decides which
 camera wants; an async controller (`CellStreamer`) builds them off main and streams them
 into renderer.
 
-`opensky/World/CellGridManager.swift` maps a camera's world position to the set of
+`opensky/Engine/World/CellGridManager.swift` maps a camera's world position to the set of
 exterior cells that should be loaded around it, and diffs that desired set against
 whatever the caller currently has resident. Pure `simd`-only value type -- no AppKit, no
 Metal, no I/O, no async -- so the mapping, grid contents, diffing and hysteresis are all
@@ -116,7 +116,7 @@ to that cell.
 
 ## Streaming controller
 
-`opensky/World/CellStreamer.swift` is the live controller. It owns the grid manager, a
+`opensky/Engine/World/CellStreamer.swift` is the live controller. It owns the grid manager, a
 `CellSceneComposition` (resident cells by coordinate), a bookkeeping core
 (`CellStreamCore`), and a build runner. One main-thread entry point:
 
@@ -272,7 +272,7 @@ var onCellDetached: ((CellSceneLocation) -> Void)?
 
 The `Bool` is `firstIntegration` -- true when a cell genuinely joined the live world, false
 when a cell that never left was merely re-integrated, which is the signal not to re-fire load
-events. Emission lives in `opensky/World/CellStreamerPapyrus.swift`, and a scene without a
+events. Emission lives in `opensky/Engine/World/CellStreamerPapyrus.swift`, and a scene without a
 `CellSceneLocation` (a door destination whose CELL identity failed to resolve) is never
 announced, since the location is the key a subscriber files instances under. Four call sites
 carry a decision: an exterior integration reads `CellStreamCore.rebuilding` before

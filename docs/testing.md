@@ -48,7 +48,7 @@ Xcode's filesystem-synced groups silently pull into the `openskycli` target).
 
 12 `*RealDataTests` suites exercise the parser/renderer stack against a real
 Skyrim SE install. They gate on the `OPENSKY_DATA_ROOT` env var
-(`GameDataLocator.environmentKey`, `opensky/GameData/GameDataLocator.swift`):
+(`GameDataLocator.environmentKey`, `opensky/Engine/GameData/GameDataLocator.swift`):
 `@Test(.enabled(if: dataRoot != nil))`, so machines without it skip
 deterministically. Metal-dependent tests also gate on
 `device.supportsFamily(.metal4)`.

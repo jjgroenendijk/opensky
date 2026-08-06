@@ -14,13 +14,16 @@ skip in the CLI reproduces the renderer's behavior exactly.
 
 ## Target sharing
 
-`openskycli` is a macOS command-line tool target in `opensky.xcodeproj`. It lists the
-`opensky/` `PBXFileSystemSynchronizedRootGroup` in its `fileSystemSynchronizedGroups`
-with a `PBXFileSystemSynchronizedBuildFileExceptionSet` excluding app-only files
-(`OpenSkyApp.swift`, `AppDelegate.swift`, `GameViewController.swift`,
-`Assets.xcassets`) -> one source tree, no framework split, no duplication. CLI entry
+`openskycli` is a macOS command-line tool target in `opensky.xcodeproj`. Target
+membership follows the folder split under `opensky/` (issue #336): the app target
+synchronizes `App/`, `Engine/`, and `SharedHeaders/`, while `openskycli` synchronizes
+`Engine/`, `SharedHeaders/`, and `openskycli/`. App-only code (`OpenSkyApp.swift`,
+`AppDelegate.swift`, `GameViewController.swift`, `Assets.xcassets`, the whole shell and
+panel framework) lives under `opensky/App/` and is therefore invisible to the CLI, with
+no `PBXFileSystemSynchronizedBuildFileExceptionSet` to hand-maintain -> one source tree,
+no framework split, no duplication. CLI entry
 code lives in `openskycli/` (own synchronized root group). Bridging header pinned to
-`opensky/ShaderTypes.h`; `Shaders.metal` compiles into `default.metallib` next to the
+`opensky/SharedHeaders/ShaderTypes.h`; `Shaders.metal` compiles into `default.metallib` next to the
 tool binary, so `device.makeDefaultLibrary()` works without an app bundle. Shared
 scheme `openskycli`; build via `make cli`.
 
@@ -73,7 +76,7 @@ only where `--out` points (AGENTS.md Legal & IP).
 
 `cell`/`screenshot`/`render` default to the first-render cell
 ([decision](/decisions/first-render-cell.md), constants in
-`opensky/FirstRenderCell.swift`). Exit codes: 0 ok, 1 failure, 2 usage.
+`opensky/Engine/FirstRenderCell.swift`). Exit codes: 0 ok, 1 failure, 2 usage.
 
 Implementation notes:
 
@@ -83,7 +86,7 @@ Implementation notes:
 * Editor-ID lookup scans EDID fields of every record (whole-file decompression):
   ~6 s worst case on Skyrim.esm, fine for a dev tool.
 * `record` prints the shared `RecordTextDump` string; walk helpers live in
-  `opensky/Formats/ESM/ESMWalk.swift` (shared with the
+  `opensky/Engine/Formats/ESM/ESMWalk.swift` (shared with the
   [main-app asset browser](/tools/preview-gui.md) since 2.10). Decoded REFR rows include
   placement rotation + XTEL destination pose, used to establish fixed clean-engine routes.
 * `cell` mirrors the [cell scene build](/engine/cell-scene.md) WRLD walk read-only
@@ -152,7 +155,7 @@ Implementation notes:
   vanilla hides most frame-1 content behind a zero-alpha CXFORM and reveals it
   from ActionScript. See [screen-space UI layer](/rendering/ui.md).
 * `swf action-sweep` is the milestone 8.3.1 stage-2 gate probe: `SWFActionInventory`
-  (`opensky/Formats/SWF/SWFActionInventory.swift`) walks every movie's
+  (`opensky/Engine/Formats/SWF/SWFActionInventory.swift`) walks every movie's
   `SWFMovie.actionBlocks` plus every placement's CLIPACTIONS handlers, tallying
   opcode frequency, the host/GFx API surface (resolved from the record
   immediately preceding `ActionGetMember`/`ActionSetMember`/`ActionCallMethod`/

@@ -10,7 +10,7 @@ timestamp: 2026-07-18T00:00:00Z
 
 Milestone 3.5 decodes only fields needed for a flat exterior-cell water surface. Container
 framing follows [ESM/ESP plugin container](/formats/esm.md). Engine mapping lives in
-`opensky/Formats/ESM/Records/` + `opensky/World/CellSceneBuilderWater.swift`.
+`opensky/Engine/Formats/ESM/Records/` + `opensky/Engine/World/CellSceneBuilderWater.swift`.
 
 Sources:
 

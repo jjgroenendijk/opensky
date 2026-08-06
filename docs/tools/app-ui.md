@@ -13,7 +13,7 @@ Rules + framework for the OpenSky app's own interface — the dev/verification U
 (sidebar destinations, control panels, inspectors). Not the in-game Scaleform UI
 (the vanilla SWF port, issue #99). Codifies the AGENTS.md "Main-app verification
 surface" rule so new knobs stop each inventing their own pattern. Framework lives
-in `opensky/Shell/` (issue #98).
+in `opensky/App/Shell/` (issue #98).
 
 Load this before adding or changing any app-shell UI.
 
@@ -221,7 +221,7 @@ is free.
 ## How to register a destination
 
 One `DestinationDescriptor` in `DestinationRegistry.all`
-(`opensky/Shell/DestinationRegistry.swift`) — id, title, section, SF Symbol,
+(`opensky/App/Shell/DestinationRegistry.swift`) — id, title, section, SF Symbol,
 content. Never touch the shell view controllers to add a destination.
 
 - A `worldInspector` factory receives a `WorldPanelContext` and wires the
@@ -236,8 +236,9 @@ content. Never touch the shell view controllers to add a destination.
 - A `fullContent` factory receives a `FullContentContext` (data root + startup
   error). Conform the controller to `FullContentReloadable` so a Settings
   reload reaches the cached instance in place instead of rebuilding it.
-- Add every new `Shell/` file to the `openskycli` membership-exception set in
-  `opensky.xcodeproj/project.pbxproj` (app-only AppKit, excluded from the CLI).
+- Every new `Shell/` file goes under `opensky/App/Shell/`. The app target is the only one
+  that synchronizes `opensky/App/`, so app-only AppKit code stays out of `openskycli` with
+  no project-file edit (issue #336).
 
 ## Building panels
 
@@ -340,7 +341,7 @@ key-only trigger would break the no-unadvertised-keystroke rule. See
 ## Theme
 
 The shell is a committed dark, Skyrim-inspired design (owner request
-2026-07-23). All tokens live in `opensky/Shell/Theme.swift`; the app forces
+2026-07-23). All tokens live in `opensky/App/Shell/Theme.swift`; the app forces
 dark appearance at launch (`AppDelegate`), so system controls sit on the same
 palette in every environment.
 

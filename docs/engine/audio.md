@@ -14,14 +14,14 @@ Milestone 9.1.3: the runtime that turns a decoded `.xwm` payload into an
 audible, positioned sound, plus the sidebar surface that verifies it without
 the CLI. Consumes the [xWMA container parser](/formats/xwm.md) and the
 [vendored ffmpeg WMA decoder](/decisions/ffmpeg-audio.md). Implementation:
-`opensky/Audio/WorldAudioEngine.swift` (graph, volumes),
+`opensky/Engine/Audio/WorldAudioEngine.swift` (graph, volumes),
 `WorldAudioEngineSources.swift` (source lifecycle),
 `WorldAudioEngineFades.swift` (gain ramps),
 `WorldAudioEngineSnapshot.swift` (published UI state),
 `AudioSourceStreamer.swift` (streaming decode), `AudioSpace.swift` (coordinate
 conversion), `AudioCategory.swift` (vanilla menu categories),
 `AudioCodecParametersXWM.swift` (extradata policy), and
-`opensky/Rendering/RendererAudio.swift` (the per-frame tick).
+`opensky/Engine/Rendering/RendererAudio.swift` (the per-frame tick).
 
 ## Graph
 
@@ -360,7 +360,7 @@ Local A/B (optional, never committed): none
 
 The two mute and solo ids are generated at runtime as
 `"Audio\(category.identifierFragment)MuteControl"` and `...SoloControl` in
-`opensky/Shell/Sections/AudioOutputSection.swift`, so grepping for the full id
+`opensky/App/Shell/Sections/AudioOutputSection.swift`, so grepping for the full id
 finds nothing; `M9AcceptanceTests` reaches them as
 `outputSection.muteControls[.effects]` and `soloControls[.music]`, which is why
 they are named as a family here. `CellStreamingFlyPathTests` is listed because

@@ -16,7 +16,7 @@ skeleton (`Ragdoll_NPC COM [COM ]`, 18 bones). This page covers the object
 internals only; the packfile container that locates them (header, sections,
 fixups, class-name + object inventory) is [HKX container](/formats/hkx-container.md).
 
-Parser: `opensky/Formats/HKX/HKASkeleton.swift` — `HKASkeleton.skeletons(in:)`
+Parser: `opensky/Engine/Formats/HKX/HKASkeleton.swift` — `HKASkeleton.skeletons(in:)`
 walks the container's virtual-fixup object inventory, decodes each
 `hkaSkeleton`. Name-map: `SkeletonBoneMap.swift`. CLI dump:
 `openskycli skeleton <hkx-key> [--nif <nif-key>]` ([CLI](/tools/cli.md)). Tests:

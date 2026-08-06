@@ -19,7 +19,7 @@ a description of someone else's. There is no external reference to cite. OpenSky
 writes a Bethesda save file; read-only import of an existing `.ess` is a separate,
 far-future item and shares none of the layout below.
 
-Implementation: `opensky/Formats/Save/`. All integers are little-endian, floats are IEEE
+Implementation: `opensky/Engine/Formats/Save/`. All integers are little-endian, floats are IEEE
 754 single precision written as their little-endian bit pattern, and strings are a `UInt16`
 byte length followed by that many UTF-8 bytes. The file extension is `osav`.
 
@@ -648,7 +648,7 @@ litter behind.
 
 ## The slot store — `OpenSkySaveStore`
 
-Issue #161 (item 10.1.4) adds `OpenSkySaveStore` (`opensky/Formats/Save/OpenSkySaveStore.swift`),
+Issue #161 (item 10.1.4) adds `OpenSkySaveStore` (`opensky/Engine/Formats/Save/OpenSkySaveStore.swift`),
 a slot façade over the codec above so callers name a save by a short slot name rather than
 building a `URL` themselves. It owns one directory — the Saves directory described above, or
 an injected one for tests — and every operation resolves a slot name to `<slot>.osav` inside

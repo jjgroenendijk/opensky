@@ -126,7 +126,7 @@ the solid path treats as touching a surface also counts as inside a coincident t
 ### The two authored sources
 
 `CellSceneBuilder.buildTriggerVolumes(refs:entries:location:)`
-(`opensky/World/CellTriggerBuilder.swift`, a satellite of `CellCollisionBuilder.swift`)
+(`opensky/Engine/World/CellTriggerBuilder.swift`, a satellite of `CellCollisionBuilder.swift`)
 collects both sources into one set:
 
 | source | what it is | how it is placed |

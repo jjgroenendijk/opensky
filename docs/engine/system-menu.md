@@ -29,12 +29,12 @@ renderer, and no movie. Only the presentation layer needs any of those.
 
 | Layer | File | Target |
 |---|---|---|
-| Selector (rows, selection, activation) | `opensky/UI/SystemMenuModel.swift` | app + CLI |
-| Vanilla movie contract | `opensky/UI/SystemMenuMovieBridge.swift` | app + CLI |
-| Renderer-routed movie input | `opensky/UI/SystemMenuMovieBridgeInput.swift` | app + CLI |
-| Panel seam | `opensky/SystemMenuControlProviding.swift` | app + CLI |
-| Renderer + AppKit wiring | `opensky/GameViewControllerSystemMenu.swift` | app |
-| Verification surface | `opensky/SystemMenuPanelViewController.swift` and `opensky/Shell/Sections/SystemMenu*.swift` | app |
+| Selector (rows, selection, activation) | `opensky/Engine/UI/SystemMenuModel.swift` | app + CLI |
+| Vanilla movie contract | `opensky/Engine/UI/SystemMenuMovieBridge.swift` | app + CLI |
+| Renderer-routed movie input | `opensky/Engine/UI/SystemMenuMovieBridgeInput.swift` | app + CLI |
+| Panel seam | `opensky/Engine/SystemMenuControlProviding.swift` | app + CLI |
+| Renderer + AppKit wiring | `opensky/App/GameViewControllerSystemMenu.swift` | app |
+| Verification surface | `opensky/App/SystemMenuPanelViewController.swift` and `opensky/App/Shell/Sections/SystemMenu*.swift` | app |
 
 ## The selector
 

@@ -16,8 +16,8 @@ Primary layout source: xEdit dev-4.1.5
 [`wbDefinitionsTES5.pas`](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.5/Core/wbDefinitionsTES5.pas)
 (`wbGRAS`, including water-rule enum and flags). Field meanings cross-checked
 against Creation Kit [Grass](https://ck.uesp.net/wiki/Grass). Impl:
-`opensky/Formats/ESM/Records/Grass.swift` and
-`opensky/Formats/ESM/Records/LandTexture.swift`.
+`opensky/Engine/Formats/ESM/Records/Grass.swift` and
+`opensky/Engine/Formats/ESM/Records/LandTexture.swift`.
 
 ## GRAS -> Grass
 

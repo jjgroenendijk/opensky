@@ -13,7 +13,7 @@ weather core (milestone 7.2.1): weather visuals (WTHR), climate weather
 lists + timing (CLMT), region weather overrides (REGN). Decode policy follows
 [record decoders](/formats/records.md): loop fields, pick known types, skip
 the rest; `ESMError.malformed` only on structurally unusable input; unknown
-field sizes -> nil/skip, never guess. Impl: `opensky/Formats/ESM/Records/`
+field sizes -> nil/skip, never guess. Impl: `opensky/Engine/Formats/ESM/Records/`
 (`Weather.swift`, `Climate.swift`, `Region.swift`).
 
 Reference: UESP "Skyrim Mod:Mod File Format" subpages `/WTHR`, `/CLMT`,

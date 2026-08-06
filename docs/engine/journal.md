@@ -39,15 +39,15 @@ Only the presentation layer needs any of those.
 
 | Layer | File | Target |
 |---|---|---|
-| Row model (rows, selection, active/completed) | `opensky/UI/JournalMenuModel.swift` | app + CLI |
-| Model builder over quest state | `opensky/UI/JournalMenuModelBuild.swift` | app + CLI |
-| Alias text substitution | `opensky/UI/JournalAliasText.swift` | app + CLI |
-| Measured movie contract | `opensky/UI/QuestJournalMovieBridge.swift` | app + CLI |
-| List and text-field plumbing | `opensky/UI/QuestJournalMovieBridgeLists.swift` | app + CLI |
-| Panel seam | `opensky/JournalControlProviding.swift` | app + CLI |
-| Readout wording | `opensky/JournalReadout.swift` | app + CLI |
-| Renderer + AppKit wiring | `opensky/GameViewControllerJournal.swift` and `...JournalSnapshot.swift` | app |
-| Verification surface | `opensky/JournalPanelViewController.swift` and `opensky/Shell/Sections/Journal*.swift` | app |
+| Row model (rows, selection, active/completed) | `opensky/Engine/UI/JournalMenuModel.swift` | app + CLI |
+| Model builder over quest state | `opensky/Engine/UI/JournalMenuModelBuild.swift` | app + CLI |
+| Alias text substitution | `opensky/Engine/UI/JournalAliasText.swift` | app + CLI |
+| Measured movie contract | `opensky/Engine/UI/QuestJournalMovieBridge.swift` | app + CLI |
+| List and text-field plumbing | `opensky/Engine/UI/QuestJournalMovieBridgeLists.swift` | app + CLI |
+| Panel seam | `opensky/Engine/JournalControlProviding.swift` | app + CLI |
+| Readout wording | `opensky/Engine/JournalReadout.swift` | app + CLI |
+| Renderer + AppKit wiring | `opensky/App/GameViewControllerJournal.swift` and `...JournalSnapshot.swift` | app |
+| Verification surface | `opensky/App/JournalPanelViewController.swift` and `opensky/App/Shell/Sections/Journal*.swift` | app |
 | CLI probe | `openskycli/SWFQuestJournalCommand.swift` | CLI |
 
 ## The row model

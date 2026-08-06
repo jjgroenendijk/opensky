@@ -17,7 +17,7 @@ falls back to the synthetic `DemoScene` with its `.demo` camera (tests, missing 
 data). Per-draw uniform ring is sized off the injected scene's `drawCount`. Command flow
 adapted from Apple's Xcode Metal 4 game template (structure, not copied game code).
 
-## Scene types (`opensky/Rendering/`)
+## Scene types (`opensky/Engine/Rendering/`)
 
 * `StaticVertexLayout` — single source of truth for the interleaved vertex layout:
   float3 position (0), float3 normal (12), float2 texcoord (24), float4 color (32),
@@ -316,7 +316,7 @@ bounds equal source bounds within 0.01 units, lit pixels >1%.
 * The snapshot reaches the app through `FrameStatsProviding`, alongside
   `CameraControlProviding` (pose, cell, fly/walk mode, `cameraPoseDescription`) and
   `SceneStatsProviding` (`SceneDrawStats` + resident cell count + process footprint) in
-  `opensky/EnvironmentControlProviding.swift`. `GameViewController` implements all three
+  `opensky/Engine/EnvironmentControlProviding.swift`. `GameViewController` implements all three
   in `GameViewControllerWorldStats.swift`, degrading to the documented empty snapshots
   with no renderer or streamer. Every consumer polls the same snapshot, so two readouts of
   one frame cannot disagree.

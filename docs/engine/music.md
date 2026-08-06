@@ -11,9 +11,9 @@ timestamp: 2026-07-26T00:00:00Z
 
 Milestone 9.2.3 (issue #156): turn the [decoded music records](/formats/music.md)
 into playing music that follows the streamed world. Implementation:
-`opensky/Audio/MusicCatalog.swift` (selection, pure value logic),
-`opensky/Audio/WorldMusicDirector.swift` (runtime state machine),
-`opensky/World/CellStreamerMusic.swift` (context emission), and the
+`opensky/Engine/Audio/MusicCatalog.swift` (selection, pure value logic),
+`opensky/Engine/Audio/WorldMusicDirector.swift` (runtime state machine),
+`opensky/Engine/World/CellStreamerMusic.swift` (context emission), and the
 non-positional playback plus gain ramps described in
 [world audio playback](/engine/audio.md).
 
@@ -199,7 +199,7 @@ pure `nonisolated` value logic, which is why its tests need no engine at all.
 
 ## World > Audio > Music surface
 
-`AudioMusicSection` (`opensky/Shell/Sections/AudioMusicSection.swift`) is the
+`AudioMusicSection` (`opensky/App/Shell/Sections/AudioMusicSection.swift`) is the
 `Music` section of the existing `World > Audio` destination, registered through
 `AudioPanelViewController.makeSections()` — a fourth section beside Output,
 Sources and SFX & Ambience rather than a new top-level sidebar item, per the

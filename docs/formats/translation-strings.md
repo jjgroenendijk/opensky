@@ -26,8 +26,8 @@ authoring; confirmed against the community mirrors below):
 * ScaleformTranslationPP (<https://github.com/VersuchDrei/ScaleformTranslationPP>):
   "Scaleform parses keys case-sensitively".
 
-Impl: `opensky/Formats/Strings/TranslationFile.swift` (parser),
-`opensky/GameData/LocalizedLabels.swift` (provider + discovery).
+Impl: `opensky/Engine/Formats/Strings/TranslationFile.swift` (parser),
+`opensky/Engine/GameData/LocalizedLabels.swift` (provider + discovery).
 
 ## File layout
 

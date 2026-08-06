@@ -8,7 +8,7 @@ timestamp: 2026-08-05T00:00:00Z
 
 # Game data locator
 
-`opensky/GameData/GameDataLocator.swift`. Resolves + validates the Skyrim SE install at
+`opensky/Engine/GameData/GameDataLocator.swift`. Resolves + validates the Skyrim SE install at
 launch. Install is read-only external input — never bundled, cached, or copied
 (AGENTS.md Legal & IP).
 

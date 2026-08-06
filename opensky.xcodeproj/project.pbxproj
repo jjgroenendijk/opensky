@@ -39,133 +39,20 @@
 		5ACF160130001093001700B9 /* Local.example.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Local.example.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		5AC1000130001093001700A6 /* Exceptions for "opensky" folder in "openskycli" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				AppDelegate.swift,
-				Assets.xcassets,
-				AudioPanelViewController.swift,
-				EnvironmentPanelViewController.swift,
-				GameMetalView.swift,
-				GameViewController.swift,
-				GameViewControllerAudio.swift,
-				GameViewControllerEnvironment.swift,
-				GameViewControllerEquipment.swift,
-				GameViewControllerFirstPerson.swift,
-				GameViewControllerHUD.swift,
-				GameViewControllerItems.swift,
-				GameViewControllerInventoryMenu.swift,
-				GameViewControllerInventoryEquipment.swift,
-				GameViewControllerContainerMenu.swift,
-				GameViewControllerContainerMenuActions.swift,
-				GameViewControllerPapyrus.swift,
-				GameViewControllerPlayerBody.swift,
-				GameViewControllerRuntimeState.swift,
-				GameViewControllerRuntimeStateConditions.swift,
-				GameViewControllerRuntimeStateTime.swift,
-				GameViewControllerJournal.swift,
-				GameViewControllerLocomotion.swift,
-				GameViewControllerJournalSnapshot.swift,
-				GameViewControllerScripts.swift,
-				HUDInteractionPanelViewController.swift,
-				GameViewControllerSWFLab.swift,
-				GameViewControllerSystemMenu.swift,
-				GameViewControllerSWFRuntime.swift,
-				GameViewControllerStreaming.swift,
-				GameViewControllerUILab.swift,
-				GameViewControllerWorldStats.swift,
-				OpenSkyApp.swift,
-				PreviewDetailBuilder.swift,
-				PreviewViewController.swift,
-				RuntimeStatePanelViewController.swift,
-				JournalPanelViewController.swift,
-				PlayerLocomotionPanelViewController.swift,
-				ScriptsPanelViewController.swift,
-				SettingsWindowController.swift,
-				SystemMenuPanelViewController.swift,
-				InventoryMenuPanelViewController.swift,
-				ContainerMenuPanelViewController.swift,
-				InventoryEquipmentPanelViewController.swift,
-				"Shell/AppShellViewController.swift",
-				"Shell/AppSidebarViewController.swift",
-				"Shell/CollapsibleSectionView.swift",
-				"Shell/DestinationRegistry.swift",
-				"Shell/DestinationRegistryOverrides.swift",
-				"Shell/FrameHUDView.swift",
-				"Shell/InspectorPanel.swift",
-				"Shell/InspectorPanelViewController.swift",
-				"Shell/PanelComponents.swift",
-				"Shell/PanelSectionViewController.swift",
-				"Shell/ScreenshotCoordinator.swift",
-				"Shell/Sections/AnimationSection.swift",
-				"Shell/Sections/AudioFootstepsSection.swift",
-				"Shell/Sections/AudioMusicSection.swift",
-				"Shell/Sections/AudioOutputSection.swift",
-				"Shell/Sections/AudioSfxSection.swift",
-				"Shell/Sections/AudioSourcesSection.swift",
-				"Shell/Sections/CameraSection.swift",
-				"Shell/Sections/FirstPersonSection.swift",
-				"Shell/Sections/FrameStatsSection.swift",
-				"Shell/Sections/GrassSection.swift",
-				"Shell/Sections/HUDElementsSection.swift",
-				"Shell/Sections/HUDTargetSection.swift",
-				"Shell/Sections/ItemsSection.swift",
-				"Shell/Sections/JournalPageSection.swift",
-				"Shell/Sections/JournalQuestControlsSection.swift",
-				"Shell/Sections/JournalQuestsSection.swift",
-				"Shell/Sections/LocomotionBindingsSection.swift",
-				"Shell/Sections/LocomotionDevSection.swift",
-				"Shell/Sections/LocomotionGraphSection.swift",
-				"Shell/Sections/LocomotionMotionSection.swift",
-				"Shell/Sections/LocomotionStateSection.swift",
-				"Shell/Sections/ParticlesSection.swift",
-				"Shell/Sections/PrecipitationSection.swift",
-				"Shell/Sections/RuntimeStateChangeSection.swift",
-				"Shell/Sections/RuntimeStateConditionsSection.swift",
-				"Shell/Sections/RuntimeStateGlobalsSection.swift",
-				"Shell/Sections/RuntimeStateInspectSection.swift",
-				"Shell/Sections/RuntimeStateResetSection.swift",
-				"Shell/Sections/RuntimeStateSaveSection.swift",
-				"Shell/Sections/RuntimeStateTimeSection.swift",
-				"Shell/Sections/SWFMovieSection.swift",
-				"Shell/Sections/ScriptEventsSection.swift",
-				"Shell/Sections/ScriptInstancesSection.swift",
-				"Shell/Sections/ScriptNativeTallySection.swift",
-				"Shell/Sections/ScriptQuestsSection.swift",
-				"Shell/Sections/ScriptSchedulerSection.swift",
-				"Shell/Sections/ScriptSchedulerSectionInput.swift",
-				"Shell/Sections/SWFRuntimeSection.swift",
-				"Shell/Sections/SWFRuntimeSectionInput.swift",
-				"Shell/Sections/SceneStatsSection.swift",
-				"Shell/Sections/ShadowSection.swift",
-				"Shell/Sections/InventoryMenuSection.swift",
-				"Shell/Sections/ContainerMenuSection.swift",
-				"Shell/Sections/ContainerMerchantSection.swift",
-				"Shell/Sections/InventoryGrantsSection.swift",
-				"Shell/Sections/ItemOwnershipSection.swift",
-				"Shell/Sections/EquipmentInspectionSection.swift",
-				"Shell/Sections/SystemMenuSection.swift",
-				"Shell/Sections/SystemMenuSettingsSection.swift",
-				"Shell/Sections/TerrainLODSection.swift",
-				"Shell/Sections/TriggerVolumeSection.swift",
-				"Shell/Sections/WeatherSection.swift",
-				"Shell/ShellContentViewController.swift",
-				"Shell/Theme.swift",
-				UILabPanelViewController.swift,
-				WorldPanelViewController.swift,
-			);
-			target = 5AC1000130001093001700A1 /* openskycli */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		5A3BAE033000109100177F95 /* opensky */ = {
+		5A3BAE033000109100177F96 /* App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				5AC1000130001093001700A6 /* Exceptions for "opensky" folder in "openskycli" target */,
-			);
-			path = opensky;
+			path = App;
+			sourceTree = "<group>";
+		};
+		5A3BAE033000109100177F95 /* Engine */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Engine;
+			sourceTree = "<group>";
+		};
+		5A3BAE033000109100177F97 /* SharedHeaders */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SharedHeaders;
 			sourceTree = "<group>";
 		};
 		5AC1000130001093001700A5 /* openskycli */ = {
@@ -229,12 +116,22 @@
 			isa = PBXGroup;
 			children = (
 				5ACF160130001093001700BA /* Config */,
-				5A3BAE033000109100177F95 /* opensky */,
+				5A3BAE033000109100177F94 /* opensky */,
 				5AC1000130001093001700A5 /* openskycli */,
 				5A3BAE1C3000109300177F95 /* openskyTests */,
 				5A3BAE263000109300177F95 /* openskyUITests */,
 				5A3BAE023000109100177F95 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		5A3BAE033000109100177F94 /* opensky */ = {
+			isa = PBXGroup;
+			children = (
+				5A3BAE033000109100177F96 /* App */,
+				5A3BAE033000109100177F95 /* Engine */,
+				5A3BAE033000109100177F97 /* SharedHeaders */,
+			);
+			path = opensky;
 			sourceTree = "<group>";
 		};
 		5A3BAE023000109100177F95 /* Products */ = {
@@ -264,7 +161,9 @@
 			buildRules = (
 			);
 			fileSystemSynchronizedGroups = (
-				5A3BAE033000109100177F95 /* opensky */,
+				5A3BAE033000109100177F96 /* App */,
+				5A3BAE033000109100177F95 /* Engine */,
+				5A3BAE033000109100177F97 /* SharedHeaders */,
 			);
 			name = opensky;
 			productName = opensky;
@@ -324,7 +223,8 @@
 			buildRules = (
 			);
 			fileSystemSynchronizedGroups = (
-				5A3BAE033000109100177F95 /* opensky */,
+				5A3BAE033000109100177F95 /* Engine */,
+				5A3BAE033000109100177F97 /* SharedHeaders */,
 				5AC1000130001093001700A5 /* openskycli */,
 			);
 			name = openskycli;
