@@ -30,6 +30,29 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   cross-module optimization or `@inlinable` is adopted. Left undone deliberately. The other
   motivation — letting `openskyTests` test the engine directly instead of being app-hosted
   through `TEST_HOST` — stands on its own and would need its own issue.
+* **Havok dynamics data: the inertial tail, constraints, and a real-data census (issue
+  #192)**: the collision decoder had been skipping 140 bytes in the middle of every
+  `bhkRigidBodyCInfo2010` — mass, inertia tensor, center of mass, damping, friction,
+  restitution, the velocity ceilings, and the deactivator/solver/quality bytes — because
+  the query path only ever needed the filters and the motion system. All of it is now
+  decoded into `NIFRigidBodyDynamics`, and the constraint refs and body flags that follow
+  it are read too. Seven `bhkConstraint` classes decode (ball and socket, hinge, limited
+  hinge, prismatic, ragdoll, stiff spring, and the malleable wrapper around any of them),
+  each with its pivots, frames, angular limits, and the three motor variants. The ragdoll
+  carrier turned out not to be a container class at all: the per-bone bodies hang off
+  `bhkBlendCollisionObject` and the bone mapping is the name of the `NiNode` each one
+  targets, so scene traversal now records target names alongside transforms and
+  `boneNames(of:)` resolves a joint's entity pointers into the bone pair it binds.
+  The census over the install decided two things the spec could not. First, the motion
+  system byte does not separate movable from static: 1027 immovable bodies read
+  `MO_SYS_BOX_STABILIZED` with zero mass, the exporter's default, so mass and layer are
+  the discriminators and `isSimulated` tests both. Second, vanilla ragdolls use exactly two
+  constraint classes — 624 ragdoll cones and 512 limited hinges across 751 distinct bone
+  pairs, every end bound — which is the list item 15.6 has to instantiate. Masses land
+  between 0.1 and 750 kg with both distributions peaking in the 1-10 kg decade, which is
+  the evidence that the tail is read at the right offset. The sweep also surfaced three
+  vanilla clutter meshes whose triangle-strip collision has never decoded (issue #376);
+  that predates this work and is filed rather than fixed here.
 
 ## 2026-08-05
 

@@ -68,8 +68,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   row-vector `Matrix33` convention, geometry/materials, SSE skin blocks,
   dynamic FaceGen + skeleton bind pose.
 * [NIF Havok collision](/formats/nif-collision.md) - bhk root/body/shape graphs,
+  rigid-body inertial tail, ragdoll and hinge constraints, blend-collision bone carriers,
   compressed mesh reconstruction, unit/filter policy, SkyrimLayer 12 trigger routing,
-  Whiterun sweep evidence.
+  Whiterun sweep and dynamics census evidence.
 * [NIF particle systems](/formats/nif-particles.md) - NiParticleSystem/NiPSysData,
   emitter + modifier blocks, effect-shader wiring, Whiterun sweep evidence.
 * [DDS texture container](/formats/dds.md) - DDS_HEADER/DXT10 layout, BCn + 32-bit RGB,

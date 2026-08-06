@@ -1,25 +1,43 @@
 ---
 type: File Format
 title: NIF Havok collision
-description: Skyrim SE bhk collision graph layouts and clean engine geometry conversion.
-tags: [format, nif, havok, collision, geometry]
-timestamp: 2026-07-31T00:00:00Z
+description: Skyrim SE bhk collision graph layouts, rigid-body dynamics and constraints,
+  and clean engine geometry conversion.
+tags: [format, nif, havok, collision, geometry, physics, ragdoll]
+timestamp: 2026-08-06T00:00:00Z
 ---
 
 # NIF Havok collision
 
-Static Skyrim NIFs attach Havok data to scene objects through a collision-object ref.
-OpenSky follows each `bhkCollisionObject` root into rigid-body metadata + shape graph,
-then emits engine-unit triangle soups or convex primitives. Disk refs, padding, MOPP
-bytecode, material tables, quantized chunks stay inside `Formats/NIF/`.
+Skyrim NIFs attach Havok data to scene objects through a collision-object ref. OpenSky
+follows each collision-object root into rigid-body metadata + shape graph, then emits
+engine-unit triangle soups or convex primitives. Disk refs, padding, MOPP bytecode,
+material tables, quantized chunks stay inside `Formats/NIF/`.
 
 Primary spec: NifTools [`nif.xml`](https://github.com/niftools/nifxml/blob/develop/nif.xml),
 types `bhkNiCollisionObject`, `bhkWorldObject`, `bhkEntity`,
-`bhkRigidBodyCInfo2010`, shape types below, `bhkCMSChunk`, `bhkCMSBigTri`,
+`bhkRigidBodyCInfo2010`, `bhkConstraint` and its per-type CInfo structs, shape types
+below, `bhkCMSChunk`, `bhkCMSBigTri`,
 `bhkQsTransform`, `hkPackedNiTriStripsData`, `NiTriStripsData`. Compressed-chunk
 dequantization + strip interpretation cross-checked against open-source
 [PyNifly/nifly](https://github.com/BadDogSkyrim/PyNifly/blob/main/NiflyDLL/NiflyWrapper.cpp).
-Impl: `opensky/Engine/Formats/NIF/NIFCollision*.swift`.
+Impl: `opensky/Engine/Formats/NIF/NIFCollision*.swift`,
+`NIFRigidBody*.swift`, `NIFConstraintDecoder.swift`, `NIFDynamicsCensus.swift`.
+
+## Contents
+
+* Units + transforms
+* Root + rigid body
+* Rigid-body dynamics
+* Constraints
+* Ragdoll carriers
+* Shape graph
+* Compressed mesh
+* Alternate triangle collections
+* Production probe
+* Dynamics census
+* Current boundary
+* Surface material
 
 ## Units + transforms
 
@@ -47,11 +65,15 @@ Resolved SSE field order:
 | block | fields consumed |
 | --- | --- |
 | `bhkCollisionObject` | target ref, uint16 object flags, rigid-body ref |
-| `bhkRigidBody`/`T` | shape ref, `HavokFilter`, 20-byte world-info tail, entity response + callback bytes, `bhkRigidBodyCInfo2010` filter/response/transform prefix, motion system |
+| `bhkBlendCollisionObject` | the same three fields; two trailing blend-gain floats unread |
+| `bhkRigidBody`/`T` | shape ref, `HavokFilter`, 20-byte world-info tail, entity response + callback bytes, the whole `bhkRigidBodyCInfo2010`, constraint refs, uint16 body flags |
 | `HavokFilter` | uint8 layer, uint8 flags, uint16 group |
 
-Engine body preserves object flags, both serialized filters, both response types, motion
-system, target ref, composed transform, shapes. Player-solid policy requires both layers
+Engine body preserves object flags, both serialized filters, both response types, the
+inertial tail, joints, body flags, target ref and name, composed transform, and shapes.
+Only `bhkRigidBodyT` applies its serialized translation and rotation; a plain
+`bhkRigidBody` stores the same fields and ignores them.
+Player-solid policy requires both layers
 outside `SKYL_TRIGGER` (12) + `SKYL_NONCOLLIDABLE` (15), neither filter's
 `No Collision` bit (`0x40`), both responses equal `RESPONSE_SIMPLE_CONTACT` (`1`). Other
 bodies remain decoded + counted but query consumers filter them.
@@ -62,6 +84,96 @@ non-simple response also fail solidity without naming a trigger. A layer-12 body
 longer discarded once the solid build rejects it: it routes to the per-cell trigger set in
 [static collision world](/engine/collision-world.md), which places it and answers capsule
 overlap for `OnTriggerEnter`/`OnTriggerLeave`.
+
+## Rigid-body dynamics
+
+Skyrim streams take the `bhkRigidBodyCInfo2010` branch; the `550_660` and `2014` variants
+belong to pre-Skyrim and Fallout 4 and are not read. Field order after the response and
+callback bytes, all little-endian:
+
+| field | bytes | notes |
+| --- | --- | --- |
+| translation, rotation | 16 + 16 | `Vector4` + `hkQuaternion`; the `T` transform |
+| linear, angular velocity | 16 + 16 | `Vector4`, W unused |
+| inertia tensor | 48 | `hkMatrix3`: three rows of four floats, fourth unused |
+| center of mass | 16 | `Vector4`, W unused |
+| mass, linear damping, angular damping | 4 each | |
+| time factor, gravity factor | 4 each | |
+| friction, rolling friction multiplier, restitution | 4 each | |
+| max linear velocity, max angular velocity, penetration depth | 4 each | |
+| motion system, deactivator, solver deactivation, quality | 1 each | `hkMotionType`, `hkDeactivatorType`, `hkSolverDeactivation`, `hkQualityType` |
+| auto remove level, response modifier flags, shape keys, force-collided flag | 1 each | unread |
+| unused tail | 12 | |
+| constraint count + refs | 4 + 4 each | count capped at 256 and against block size |
+| body flags | 2 | uint16 for BS stream >= 76; bit 1 = responds to wind |
+
+Units are mixed deliberately and `NIFRigidBodyDynamics` says which each field is. Positions
+— the center of mass, like every constraint pivot — convert to engine units through the
+same `69.99125` factor. Mass in kilograms, inertia in kg m^2, the velocity ceilings in
+m/s and rad/s, and damping as a per-second fraction all stay in the file's own SI units,
+because the integrator picks its own working units and a half-converted body is worse than
+an unconverted one. The inertia tensor is stored in rows and transposed on read, so it
+applies to column vectors like every other rotation here.
+
+The four enum bytes are kept raw as well as named, so an unknown or modded value survives
+to the census instead of being clamped. `NIFRigidBodyDynamics.isSimulated` is the
+conservative predicate: a *known* simulated motion system with a positive finite mass. The
+census below is why it also tests the mass — the motion byte alone does not separate
+movable from static in shipped data.
+
+## Constraints
+
+A `bhkRigidBody` lists refs to the joints it takes part in. A joint binds two bodies and
+both of them list it, so the same block appears twice in a model;
+`NIFCollisionModel.constraints` is the de-duplicated view and `boneNames(of:)` resolves
+each end's `Ptr` back to the target node name.
+
+Every constraint block opens with `bhkConstraintCInfo` — entity count (hardcoded 2, read
+and discarded), two entity pointers, `ConstraintPriority` — then the per-type payload in
+the Fallout 3 and later field order (`since="20.2.0.7"`), which is the branch Skyrim takes.
+The Oblivion-era orders in `nif.xml` are deliberately not implemented.
+
+| block | payload |
+| --- | --- |
+| `bhkBallAndSocketConstraint` | pivot A, pivot B |
+| `bhkStiffSpringConstraint` | pivot A, pivot B, length |
+| `bhkHingeConstraint` | per body: axis, two perpendicular axes, pivot |
+| `bhkLimitedHingeConstraint` | the same two frames, then min angle, max angle, max friction, motor |
+| `bhkPrismaticConstraint` | per body: sliding axis, rotation axis, plane normal, pivot; then min distance, max distance, friction, motor |
+| `bhkRagdollConstraint` | per body: twist axis, plane normal, motor axis, pivot; then cone max, plane min/max, twist min/max, max friction, motor |
+| `bhkMalleableConstraint` | wrapped `hkConstraintType`, a repeated constraint info, the wrapped payload, strength |
+
+Each frame's vectors are `Vector4` with an unused W. Axes are unit-length and unitless;
+pivots, lengths and prismatic distances are positions and convert to engine units; angles
+are radians. A ragdoll's cone *minimum* angle is not stored — `nif.xml` records it as the
+negation of the maximum.
+
+`bhkConstraintMotorCInfo` is a leading `hkMotorType` byte selecting one of three payloads:
+position (six floats plus an enabled flag), velocity (four floats plus two flags), spring
+damper (four floats plus a flag). Type 0 stores nothing further. An unknown motor type
+throws rather than guessing a payload length, because the rest of the block would be
+unreadable either way.
+
+Malleable's repeated constraint info is skipped: the outer block already bound the same two
+bodies, and honoring a disagreeing copy would leave two answers for one joint.
+`NIFConstraintData.unwrapped` reaches the joint under any number of wrappers.
+
+A joint that fails to decode costs only that joint — the body and its sibling joints
+survive, because a ragdoll missing one limb is more useful than no ragdoll. A constraint
+*class* the decoder does not read is tallied in `unsupportedReachableBlocks`; malformed
+bytes in a class it does read are recorded as a decode failure and deliberately leave that
+tally alone, so "unsupported" keeps meaning missing coverage.
+
+## Ragdoll carriers
+
+There is no dedicated ragdoll container class in a Skyrim skeleton NIF. The per-bone bodies
+hang off `bhkBlendCollisionObject`, which inherits `bhkCollisionObject` and appends two
+blend-gain floats, and the bone mapping is simply the name of the `NiNode` each carrier
+targets. Scene traversal records that name next to the transform, so
+`NIFCollisionBody.targetName` is the bone and `NIFCollisionModel.boneNames(of:)` turns a
+joint's entity pointers into the bone pair it binds. Confirmed against the install by the
+census below, not assumed: 1193 of the 1196 skeleton bodies swept hang off
+`bhkBlendCollisionObject`, and all 1136 skeleton joints name a bone on both ends.
 
 ## Shape graph
 
@@ -138,11 +250,58 @@ seven are `MaterialStone` throughout; `mineoreiron04.nif` comes out as one `Mate
 shape plus one `MaterialStone` shape, which is the compressed-mesh per-material split
 working on real data rather than only on a fixture.
 
+## Dynamics census
+
+`NIFDynamicsCensusRealDataTests` sweeps three populations against the user's own install
+and writes counts, names, and paths to gitignored `logs/nif-dynamics-census.log`. Run with
+`make realtest T='NIFDynamicsCensusRealDataTests/censusesHavokDynamics()'`. Headline
+numbers, 2026-08-06, six Tamriel cells around `(6,-2)` plus every `meshes\clutter\` mesh
+and every actor skeleton:
+
+| sweep | models | bodies | simulated | joints |
+| --- | --- | --- | --- | --- |
+| exterior cell models | 54 | 44 | 0 | 0 |
+| clutter meshes | 1746 | 1781 | 754 | 146 |
+| actor skeletons | 72 | 1196 | 1193 | 1136 |
+
+Four findings that fix decisions above this layer:
+
+* **The motion byte does not separate movable from static.** Every exterior body and 975 of
+  the clutter bodies read `MO_SYS_BOX_STABILIZED` with `MO_QUAL_INVALID` and zero mass —
+  the vanilla exporter's default, not a statement of intent. Mass and collision layer are
+  the discriminators; a consumer that trusts the motion system alone treats 1027 immovable
+  bodies as dynamic.
+* **Four motion systems appear at all**: box and sphere stabilized, box and sphere inertia.
+  Nothing in the sweep uses `MO_SYS_DYNAMIC`, `MO_SYS_KEYFRAMED`, `MO_SYS_FIXED`,
+  `MO_SYS_THIN_BOX`, or `MO_SYS_CHARACTER`.
+* **Masses are plausible and bounded.** Clutter runs 0.1 to 700 kg over 754 bodies
+  (mean 13.9); skeleton bodies run 0.2 to 750 kg over 1193 (mean 20.0). Both distributions
+  peak in the 1-10 kg decade, which is the direct evidence that the inertial tail is being
+  read at the right offset.
+* **Two constraint classes carry the ragdolls**, and only two: 624 `bhkRagdollConstraint`
+  and 512 `bhkLimitedHingeConstraint` across 751 distinct bone pairs, zero unbound ends.
+  The pairs are anatomically coherent — `Bip01 L Calf -> Bip01 L Thigh` and
+  `Bip01 L Forearm -> Bip01 L UpperArm` are limited hinges, shoulders and hips are ragdoll
+  cones. Clutter adds 141 limited hinges, 3 hinges, and 2 ragdolls on hanging props.
+  `bhkBallAndSocketConstraint`, `bhkStiffSpringConstraint`, `bhkPrismaticConstraint`, and
+  `bhkMalleableConstraint` decode but appear nowhere in the sweep.
+
+Three clutter meshes fail to decode, all in triangle-strip geometry that predates this
+work and none of it rigid-body or constraint data:
+`nordiccoffinstatic03.nif`, `goatpeltstatic.nif`, `nmbody01.nif` (issue #376).
+
 ## Current boundary
 
 Decoder does not execute MOPP bytecode; MOPP child geometry is authoritative. Per-cell
 spatial index lives above format layer in [collision world](/engine/collision-world.md).
 Welding metadata is still validated and skipped: nothing consumes it.
+
+The dynamics fields are decoded, not simulated: integrating a body is item 15.2 and
+instantiating a ragdoll from these joints is item 15.6. `bhkBreakableConstraint` and
+`bhkBallSocketConstraintChain` are the two constraint classes still unread — neither
+appears in the census, and both would be tallied as unsupported if a mod introduced one.
+The rigid body's auto-remove level, response modifier flags, contact-point shape key count,
+and force-collided flag are skipped: nothing consumes them.
 
 ## Surface material
 
