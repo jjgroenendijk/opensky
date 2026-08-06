@@ -43,11 +43,12 @@ struct ActorAssemblyRealDataTests {
 
         let appearance = try ActorTemplateResolver.build(from: file, localized: true)
             .resolve(base: actor.base)
-        let visual = try ActorVisualResolver.build(
+        let resolver = ActorVisualResolver.build(
             from: file,
             localized: true,
             pluginName: "Skyrim.esm"
-        ).resolve(appearance: appearance)
+        )
+        let visual = try resolver.resolve(appearance: appearance)
 
         let vfs = VirtualFileSystem(root: root)
         let textures = TextureLibrary(fileSystem: vfs, device: device)
@@ -59,20 +60,55 @@ struct ActorAssemblyRealDataTests {
 
         let expectedPaths = [
             "clothes\\monk\\monkboots_1.nif",
-            "clothes\\monk\\monkrobes_1.nif",
             "clothes\\monk\\monkhood_1.nif",
+            "clothes\\monk\\monkrobes_1.nif",
             "actors\\character\\character assets\\malehands_1.nif",
             "meshes\\actors\\character\\facegendata\\facegeom\\skyrim.esm\\00013bac.nif"
         ]
         #expect(assembly.isRenderable)
         #expect(assembly.models.map { $0.path.lowercased() } == expectedPaths)
+        expectWornPartsAreInDrawOrder(visual, resolver: resolver)
         #expect(assembly.skips.allSatisfy { $0.reason == .appearance })
         #expect(assembly.transform.columns.3 == SIMD4(249.9946, -69.73085, 68, 1))
         #expect(abs(actor.scale - 1) < 1e-6)
 
+        try renderAndCapture(assembly, device: device, minimumDraws: expectedPaths.count)
+    }
+
+    /// Worn-part order is a contract, not an accident: `ActorVisualResolver`
+    /// sorts every worn armature by ascending ARMA DNAM draw priority, so the
+    /// snapshot above is asserted alongside the rule that produces it.
+    ///
+    /// Measured against the retail install on 2026-08-06 with
+    /// `openskycli record`: `MonkBootsAA` (000BAD02) and `MonkHoodAA`
+    /// (000BAD03) are priority 10, `MonkRobesAA` (000BAD04) is priority 15.
+    /// The hood therefore precedes the robes even though the owning ARMO
+    /// `ClothesMonkRobesHooded` (00107106) lists its armatures the other way
+    /// round — which is exactly what issue #384 read as nondeterminism. Five
+    /// consecutive `openskycli actor --npc Heimskr` runs produce this order.
+    private func expectWornPartsAreInDrawOrder(
+        _ visual: ResolvedActorVisual,
+        resolver: ActorVisualResolver
+    ) {
+        let priorities = visual.parts.compactMap { part -> UInt8? in
+            guard case .outfit = part.origin else { return nil }
+            return resolver.armorAddons[part.armature.rawValue]?.priority(female: false)
+        }
+        #expect(priorities == [10, 10, 15])
+    }
+
+    /// Renders the assembly offscreen and writes the frame to gitignored
+    /// `logs/`. A rendered frame embeds the user's own assets, so it never
+    /// leaves that directory (AGENTS.md "Legal & IP boundary").
+    @MainActor
+    private func renderAndCapture(
+        _ assembly: ActorAssembly<ActorRenderAsset>,
+        device: MTLDevice,
+        minimumDraws: Int
+    ) throws {
         let bounds = try #require(assembly.worldBounds)
         let scene = RenderScene(instances: assembly.renderPlacements)
-        #expect(scene.drawCount > expectedPaths.count)
+        #expect(scene.drawCount > minimumDraws)
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: 800, height: 800),
             device: device

@@ -31,9 +31,50 @@ func makeResolver(
         try? armor(formID: 0x201, race: 0x19, slots: 0, armatures: altSkinArmatures),
         try? armor(formID: 0x300, race: 0x19, slots: 0b0100, armatures: [0x310]),
         try? armor(formID: 0x320, race: 0x19, slots: 0b0100, armatures: [0x321]),
-        try? armor(formID: 0x330, race: 0x19, slots: 0b10000, armatures: [0x331])
+        try? armor(formID: 0x330, race: 0x19, slots: 0b10000, armatures: [0x331]),
+        // Hooded robes: one ARMO whose two armatures are listed in the
+        // opposite order to their DNAM draw priority, the shape vanilla
+        // ClothesMonkRobesHooded has (issue #384).
+        try? armor(formID: 0x340, race: 0x19, slots: 0b0100, armatures: [0x342, 0x341])
     ]
-    let addons = [
+    let addons = makeArmorAddons(
+        feetMaleModel: feetMaleModel,
+        feetFemaleModel: feetFemaleModel,
+        clothesPriority: clothesPriority,
+        robesPriority: robesPriority
+    )
+    let outfits = [
+        try? outfit(formID: 0x400, items: outfitItems),
+        try? outfit(formID: 0x410, items: [0x500]),
+        try? outfit(formID: 0x420, items: [0x530])
+    ]
+    let lists = [
+        try? lvli(formID: 0x500, entries: [(1, 0x300), (5, 0x320)]),
+        try? lvli(formID: 0x510, entries: [(1, 0x510)]),
+        try? lvli(formID: 0x520, entries: []),
+        try? lvli(formID: 0x530, flags: 0x04, entries: [(1, 0x300), (1, 0x320)])
+    ]
+    return ActorVisualResolver(
+        races: races.keyed(),
+        armors: armors.keyed(),
+        armorAddons: addons.keyed(),
+        outfits: outfits.keyed(),
+        leveledItems: lists.keyed(),
+        formIDResolver: FormIDResolver(pluginName: "Follower.esp", masters: ["Skyrim.esm"]),
+        equipment: makeEquipmentCatalog()
+    )
+}
+
+/// The armatures the ARMOs above point at: skin torso/feet plus one foreign-race
+/// armature that never resolves, the clothes and robes pieces the priority tests
+/// vary, gloves, and the hood + robes pair that shares one ARMO.
+private func makeArmorAddons(
+    feetMaleModel: String?,
+    feetFemaleModel: String?,
+    clothesPriority: UInt8,
+    robesPriority: UInt8
+) -> [ArmorAddon?] {
+    [
         try? arma(
             formID: 0x210, race: 0x19, additional: [0x100], slots: 0b0100,
             models: ("torso_m.nif", "torso_f.nif")
@@ -57,28 +98,17 @@ func makeResolver(
         try? arma(
             formID: 0x331, race: 0x19, additional: [0x100], slots: 0b10000,
             models: ("gloves_m.nif", "gloves_f.nif")
+        ),
+        // Vanilla MonkHoodAA and MonkRobesAA priorities (issue #384).
+        try? arma(
+            formID: 0x341, race: 0x19, additional: [0x100], slots: 0b0010,
+            models: ("hood_m.nif", "hood_f.nif"), priority: 10
+        ),
+        try? arma(
+            formID: 0x342, race: 0x19, additional: [0x100], slots: 0b0100,
+            models: ("hoodedrobes_m.nif", "hoodedrobes_f.nif"), priority: 15
         )
     ]
-    let outfits = [
-        try? outfit(formID: 0x400, items: outfitItems),
-        try? outfit(formID: 0x410, items: [0x500]),
-        try? outfit(formID: 0x420, items: [0x530])
-    ]
-    let lists = [
-        try? lvli(formID: 0x500, entries: [(1, 0x300), (5, 0x320)]),
-        try? lvli(formID: 0x510, entries: [(1, 0x510)]),
-        try? lvli(formID: 0x520, entries: []),
-        try? lvli(formID: 0x530, flags: 0x04, entries: [(1, 0x300), (1, 0x320)])
-    ]
-    return ActorVisualResolver(
-        races: races.keyed(),
-        armors: armors.keyed(),
-        armorAddons: addons.keyed(),
-        outfits: outfits.keyed(),
-        leveledItems: lists.keyed(),
-        formIDResolver: FormIDResolver(pluginName: "Follower.esp", masters: ["Skyrim.esm"]),
-        equipment: makeEquipmentCatalog()
-    )
 }
 
 /// Slot data matching the ARMO/ARMA fixtures above, plus two weapons: a

@@ -217,6 +217,16 @@ it for losing one slot takes the torso with it. Vanilla draws both. So
 OpenSky sorts worn parts by ascending priority and hides nothing on that
 basis; hiding stays the equipped-slot mask's job.
 
+The sort covers the whole worn set, so it also reorders armatures *within* one
+ARMO rather than only between pieces, and it applies to the plugin
+`defaultOutfit` chain exactly as it does to a runtime equipped set. Heimskr is
+the case that shows it (2026-08-06, `openskycli record`):
+`ClothesMonkRobesHooded` `00107106` lists `MonkRobesAA` `000BAD04` (priority 15)
+ahead of `MonkHoodAA` `000BAD03` (priority 10), so the resolve emits the hood
+first and the robes after it. The sort is stable — ties keep resolution order,
+because `inDrawOrder` supplies the index as the tie-break rather than trusting
+`sorted(by:)` — and the order is therefore a contract, reproducible run to run.
+
 ## OTFT -> Outfit
 
 | field | type    | decoded                                          |
@@ -453,9 +463,10 @@ so `actor --npc <formid-or-edid>` resolves bases directly: Heimskr,
 Belethor, Ysolda, Nazeem, AdrianneAvenicci, Ulfberth all resolve skeleton,
 parts, slots + FaceGen paths matching files confirmed present in the BSAs.
 M5.4 offscreen probe: Heimskr NPC_ `00013BAC`, ACHR `0001A682` at
-`(249.9946, -69.73085, 68)`, XSCL 1. Deterministic models = monk boots, robes, hood,
-visible male hands + 6-mesh FaceGen head. Production assembly rendered 10.8%
-non-background at 800x800; visual check confirmed clothed body + complete head at one pose.
+`(249.9946, -69.73085, 68)`, XSCL 1. Deterministic models = monk boots, hood,
+robes (ARMA DNAM draw order, above), visible male hands + 6-mesh FaceGen head.
+Production assembly rendered 10.8% non-background at 800x800; visual check
+confirmed clothed body + complete head at one pose.
 Synthetic fixtures: `openskyTests/ActorRecordTests.swift`,
 `openskyTests/AppearanceRecordTests.swift`,
 `openskyTests/ActorVisualResolutionTests.swift`, `openskyTests/ActorAssemblyTests.swift`.
