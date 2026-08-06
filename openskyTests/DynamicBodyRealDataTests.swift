@@ -14,7 +14,9 @@
 // nothing extracted from the install enters the repository.
 //
 // Skips automatically when OPENSKY_DATA_ROOT is unset. Run with
-// `make realtest T='DynamicBodyRealDataTests/settlesAndPushesVanillaClutter()'`.
+// `make realtest T='DynamicBodyRealDataTests/settlesAndPushesVanillaClutter()'`,
+// or `make realtest-perf` to hold the step to the budget an optimized build is
+// held to rather than the unoptimized ceiling.
 
 import Foundation
 import Metal
@@ -36,22 +38,47 @@ struct DynamicBodyRealDataTests {
         dataRoot != nil && (device?.supportsFamily(.metal4) ?? false)
     }
 
-    /// The eventual perf budget for one physics step, in milliseconds: a 1/120
-    /// step has 8.33 ms of wall clock and the solver must not become the frame's
-    /// critical path.
+    /// The perf budget for one physics step, in milliseconds: a 1/120 step has
+    /// 8.33 ms of wall clock and the solver must not become the frame's critical
+    /// path. Measured 0.37 ms average over this cell when this landed, so the
+    /// budget carries the margin `docs/testing.md` asks a perf gate to carry.
     ///
-    /// It is reported, not asserted. The measured cost against this cell is two
-    /// orders of magnitude above it and the narrowphase needs work this item does
-    /// not contain, so gating on the budget here would mean a red pre-push gate
-    /// rather than a useful signal. The number and the shortfall are recorded in
-    /// docs/engine/dynamic-bodies.md and tracked as their own issue; that is the
-    /// perf-gate rule in docs/testing.md applied honestly rather than by picking
-    /// a budget the current code happens to meet.
+    /// It applies to an *optimized* build, which is the one that ships. A step
+    /// is a few hundred microseconds of `simd` arithmetic in tight loops, and
+    /// that is exactly the code Swift's `-Onone` treats worst: the same run
+    /// measures around twenty-four times slower unoptimized, so holding a plain
+    /// `make realtest` to 2 ms would be measuring the compiler rather than the
+    /// engine. `make realtest-perf` builds this suite with `-O` and the gate
+    /// below is the real one; a default `make realtest` still gates, at the
+    /// unoptimized ceiling, so a regression cannot hide there either.
     private static let stepBudgetMS = 2.0
+
+    /// The same gate for an unoptimized build: the measured 8.9 ms with room for
+    /// the noise a Debug run carries. Loose on purpose — it exists to catch a
+    /// regression of the *kind* this issue fixed, not to certify performance.
+    private static let unoptimizedStepBudgetMS = 20.0
+
+    /// Whichever of the two the running build is held to.
+    private static var budgetMS: Double {
+        #if OPENSKY_OPTIMIZED
+            stepBudgetMS
+        #else
+            unoptimizedStepBudgetMS
+        #endif
+    }
+
+    /// How far below its start pose a settled body may end up, in engine units.
+    /// The farmhouse's rooms are under 200 units tall, so anything past this is
+    /// a body that left the geometry it was authored in rather than one that
+    /// fell onto the floor beneath it.
+    private static let maximumSettledDropUnits: Float = 512
 
     /// How long the probe simulates, in fixed steps. Five seconds of world
     /// time, which is past the point vanilla clutter stops moving.
     private static let settleSteps = 600
+
+    /// How many settled bodies the shove phase walks into, in key order.
+    private static let shovedBodyCount = 8
 
     @Test(.enabled(if: Self.canRun))
     func settlesAndPushesVanillaClutter() throws {
@@ -81,21 +108,29 @@ struct DynamicBodyRealDataTests {
             scene: scene, start: start, settle: settle, shove: shove, world: world
         ))
 
-        // What holds today, and is therefore asserted: the simulation runs over
-        // real Havok data without producing a non-finite pose or needing a body
-        // reset, bodies do come to rest, and a shove moves things.
         #expect(settle.nonFiniteCount == 0, "a body integrated to a non-finite pose")
         #expect(settle.recoveredBodyCount == 0, "a body had to be reset mid-step")
-        #expect(settle.sleepingCount > 0, "no body ever came to rest")
+        // Every reference the cell simulates comes to rest inside five seconds
+        // of world time, and comes to rest near where it was authored rather
+        // than at the bottom of the world. Those two together are item 15.2's
+        // settle criterion (issue #392): before it was met, half this cell's
+        // clutter left the geometry it started in and fell tens of thousands of
+        // units, while the rest sat still without ever sleeping, so neither a
+        // count of sleepers alone nor a finite-pose check alone would have
+        // caught it.
+        #expect(
+            settle.sleepingCount == world.bodyCount,
+            "\(world.bodyCount - settle.sleepingCount) of \(world.bodyCount) never came to rest"
+        )
+        #expect(
+            settle.maximumDrop < Self.maximumSettledDropUnits,
+            "a body fell \(settle.maximumDrop) units out of the geometry it was authored in"
+        )
         #expect(shove.movedBodyCount > 0, "a shove moved nothing")
-        // What does not hold yet is reported rather than asserted, so the gate
-        // stays green while the shortfall stays visible: clutter that never
-        // settles, and the step cost against its budget. Both are in the log and
-        // in docs/engine/dynamic-bodies.md.
-        print(String(
-            format: "[WARNING] physics step avg %.2f ms against a %.2f ms budget",
-            settle.averageStepMS, Self.stepBudgetMS
-        ))
+        #expect(
+            settle.averageStepMS <= Self.budgetMS,
+            "physics step averaged \(settle.averageStepMS) ms against a \(Self.budgetMS) ms budget"
+        )
     }
 
     // MARK: - Phases
@@ -149,21 +184,32 @@ struct DynamicBodyRealDataTests {
         return result
     }
 
-    /// Walks a capsule through the middle of the settled clutter and counts what
-    /// moved. The capsule is placed at the average body position so the probe
-    /// does not depend on a hand-picked route through a particular house.
+    /// Walks a capsule into settled clutter and counts what moved.
+    ///
+    /// The capsule is placed just outside each of the first `shovedBodyCount`
+    /// bodies in key order and walked into it, rather than at the average of
+    /// every body's position. The average is where this probe used to stand, and
+    /// it only ever worked because half the clutter was falling through the
+    /// world at the time: now that every reference settles where it was
+    /// authored, the centroid of a farmhouse's clutter is a point in mid-air in
+    /// the middle of a room and a capsule there touches nothing. Key order keeps
+    /// the choice deterministic and independent of which house this is.
     private static func shove(world: inout DynamicBodyWorld, scene: CellScene) -> ShoveResult {
         guard !world.bodies.isEmpty else { return ShoveResult() }
         let before = Dictionary(
             world.bodies.map { ($0.key, $0.position) }, uniquingKeysWith: { first, _ in first }
         )
-        let center = world.bodies.reduce(SIMD3<Float>.zero) { $0 + $1.position }
-            / Float(world.bodies.count)
-        world.push(
-            capsule: .standard,
-            feetPosition: SIMD3(center.x, center.y, center.z - PlayerCapsule.standard.height / 2),
-            velocity: SIMD3(400, 400, 0)
-        )
+        let capsule = PlayerCapsule.standard
+        let walk = SIMD3<Float>(320, 0, 0)
+        for body in world.bodies.prefix(shovedBodyCount) {
+            let reach = capsule.radius + body.definition.boundingRadius - 1
+            let feet = SIMD3(
+                body.position.x - reach,
+                body.position.y,
+                body.position.z - capsule.height / 2
+            )
+            world.push(capsule: capsule, feetPosition: feet, velocity: walk)
+        }
         var result = ShoveResult()
         result.wokenBodyCount = world.bodies.count(where: { !$0.isSleeping })
         let step = DynamicStepWorld(staticCandidates: { bounds in
@@ -200,7 +246,7 @@ struct DynamicBodyRealDataTests {
         lines.append("## Settle (\(settleSteps) fixed steps)")
         lines.append(String(
             format: "step time: avg %.4f ms, max %.4f ms (budget %.2f ms)",
-            settle.averageStepMS, settle.maximumStepMS, stepBudgetMS
+            settle.averageStepMS, settle.maximumStepMS, budgetMS
         ))
         lines.append("asleep at end: \(settle.sleepingCount) of \(world.bodyCount)")
         lines.append("resting transforms recorded: \(settle.settledTransformCount)")

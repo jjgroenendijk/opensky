@@ -136,6 +136,7 @@ which runs the `RealData` test plan under the watchdog:
 ```sh
 make realtest T='CellRenderRealDataTests/streamsFiveByFiveGridToCompletion()'
 make realtest-all
+make realtest-perf
 ```
 
 `make realtest` still validates that the selector resolves to exactly one test
@@ -144,6 +145,22 @@ exits 0 after running nothing), then asserts the result bundle says one test
 passed. `make realtest-all` has no selector to misspell, so it asserts instead
 that at least one test executed and none failed. Skips remain legal for the set,
 because some of these suites also need a Metal 4 device.
+
+`make realtest-perf` is the one real-data entrypoint that builds **optimized**
+(`tools/realtest.sh -O`), and it exists because the dynamic-body step budget is
+otherwise unmeasurable: a physics step is a few hundred microseconds of tight
+`simd` arithmetic, which is exactly the code `-Onone` costs an order of magnitude
+on, so the same run measures around twenty-four times slower unoptimized. Holding
+it to the shipped 2 ms there would be measuring the compiler. The optimized run
+keeps the **Debug configuration** — `@testable import` needs
+`ENABLE_TESTABILITY`, which Release turns off, so a Release test build fails to
+resolve the `opensky` module at all — and overrides only the optimization level
+plus the `OPENSKY_OPTIMIZED` compilation condition, which is how the test knows
+which budget it is held to. Its products go in `DerivedData-optimized/`, because
+sharing the Debug tree would make every alternation between `make test` and this
+rebuild the whole engine. A default `make realtest` still gates the same suite,
+at a looser unoptimized ceiling. Details in
+[dynamic rigid bodies](/engine/dynamic-bodies.md).
 
 ### What the RealData test plan does and does not do
 

@@ -179,7 +179,6 @@ nonisolated enum ShapeSweeper {
         let offset = query.normalizedDirection * travel
         let first = query.first + offset
         let second = query.second + offset
-        let center = (first + second) * 0.5
         let samples = first == second ? [first] : [first, second]
         var best: SweepOverlap?
         var bestDepth = Float.zero
@@ -187,7 +186,7 @@ nonisolated enum ShapeSweeper {
             for sample in samples {
                 guard
                     let hit = DynamicBodyContacts.penetration(
-                        of: sample, radius: query.radius, shape: shape, center: center
+                        of: sample, radius: query.radius, shape: shape
                     ), hit.depth > epsilon
                 else { continue }
                 let replaces = best.map { current in

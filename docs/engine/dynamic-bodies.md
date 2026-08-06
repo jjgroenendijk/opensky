@@ -27,7 +27,6 @@ walking player, and persists where it comes to rest.
 * Streaming and persistence
 * Panel seam
 * Verification and budgets
-* What is not done yet
 * Current boundary
 
 ## Which bodies simulate
@@ -40,10 +39,14 @@ system **and** a positive finite mass. Four motion systems appear in the install
 box and sphere stabilized, box and sphere inertia — and an unknown byte degrades to static
 rather than to nonsense.
 
-**The split is off by default.** `CellSceneBuilder.simulatesDynamicBodies` gates it, and
-production leaves it false — see [what is not done yet](#what-is-not-done-yet). With the flag
-off the immutable collision set is exactly what it was before this item, so nothing about the
-world a player walks through changed. The unit tests and the real-data probe turn it on.
+**The split is on by default** since issue #392. `CellSceneBuilder.simulatesDynamicBodies`
+still gates it, because a build that only wants the immutable set — `openskycli collision`,
+`buildStaticCollision` — needs to be able to say so, and because a reference with no runtime
+key contributes static shapes whatever the flag says. It shipped false through item 15.2:
+the real-data probe had roughly half a farmhouse's clutter leaving the geometry it was
+authored in and falling out of the world, and a barrel that sometimes sinks through a shelf
+is a worse world than one where nothing moves. Both faults are fixed and measured; the
+[verification section](#verification-and-budgets) has the numbers.
 
 `CellSceneBuilder.buildCollisionProducts` runs the split during the cell build. Each
 player-solid `bhkRigidBody` goes to exactly one of two places:
@@ -115,14 +118,39 @@ separated face plane for a hull, the closest point on the segment for a radial o
 
 Against a triangle the answer has to be *signed*. An unsigned distance flips the push
 direction the moment a corner passes through a floor, which sends the body further through
-it. The sign comes from the triangle's own plane oriented toward the body's centre of mass as
-it was *before* the substep moved it — the pre-substep centre is the point that had not
-crossed the surface yet, and using the current one lets a body that has just dipped below a
-floor orient that floor downward and be expelled through it.
+it. Three rules make that sign trustworthy, and each of them replaced one that real data
+disproved (issue #392).
 
-Among the triangles of one shape the **nearest** surface wins, not the deepest. Ranking by
-depth picks the far face of anything a sample is inside, which expels clutter authored just
-inside a shelf top downward through the shelf.
+**A surface faces the way it is wound, not the way the body lies.** `DynamicSurfaceOrientation`
+takes a decoded triangle soup's normal straight from its winding, which vanilla authors front
+face outward — confirmed over a whole interior's architecture and furniture. The rule this
+replaced oriented the normal toward the body's centre of mass, on the premise that a convex
+body resting on a surface has its centre on the outside of it. Real clutter does not honour
+that premise: the probe found a vanilla model whose decoded centre of mass sits *below every
+vertex of its own collider*, so it read the shelf it stood on as facing down, was driven
+through the shelf, and accelerated out of the world. Any body thin enough to sink past its own
+half-thickness flips the same way. A `bhkBoxShape` and a `bhkConvexVerticesShape` are the
+exception: their triangle connectivity is derived by this engine rather than authored, so they
+carry no winding worth trusting and are oriented away from an interior point instead — the
+box's own origin, and the hull's point-cloud centroid, both of which are exact for a convex
+shape.
+
+**The nearest surface of a shape decides, in both directions.** Ranking by depth picks the far
+face of anything a sample is inside, which expels clutter authored just inside a shelf top
+downward through the shelf. Ranking by distance is only half of it: a near face that reports
+"outside" has to *veto* a far one that reports "deep inside", or a shape answers as a set of
+loose faces rather than as a solid. Without the veto a body hovering three units over a shelf
+board found the board's underside twenty units away, was told it was twenty units inside the
+board, and was pushed down through it. `DynamicSurfaceTriangle.surface` therefore returns the
+distance whether or not there is a penetration, and the caller keeps the nearest answer of
+either kind.
+
+**A triangle is prepared once, not once per sample.** `DynamicSurfaceTriangle` holds the cross
+product, the normalisation, the facing decision and the bounds, because a step asks the same
+triangle about every sample of every nearby body. Its per-sample query then dismisses a
+triangle on a dot product — the distance to the triangle's *plane* is a lower bound on the
+distance to the triangle, so one that cannot beat the incumbent never reaches the
+closest-point query. The pruning is exact.
 
 The triangle work runs in the shape's own local space. A placed shape carries far more
 vertices than a body carries samples, so pushing a handful of samples through one inverse
@@ -136,7 +164,11 @@ Two constants bound the result:
   interpenetrating, and would jitter between touching and free.
 * `recoveryDepth` (48 units) is how far behind a surface a contact is still believed. Past
   it the sample belongs to different geometry, so a body standing above a floor in one room
-  is not dragged by a triangle in the room below.
+  is not dragged by a triangle in the room below. It is capped per body at that body's own
+  reach (`recoveryDepth(of:)`): a sample cannot be meaningfully further inside a surface than
+  the body it belongs to is big, and the bound inflates the box every candidate triangle is
+  tested against, so a flat 48 units around a tankard let nearly half a room's triangles
+  through to the exact query. Scaling it to the body halved the step.
 
 ## Integration and contact solving
 
@@ -157,9 +189,44 @@ the clutter around it advance on the same clock. Inside a step:
    standing upward velocity fighting gravity forever, so the body never falls under the
    sleep threshold. Moving the correction to position keeps the recovery and lets a settled
    body actually stop.
-5. A body under both sleep thresholds for `sleepStepCount` consecutive steps stops being
-   integrated. An impulse wakes it, and so does contact from a body that is still awake,
-   which is what makes a shoved crate knock over the one beside it.
+5. A body under both sleep thresholds for `sleepStepCount` steps stops being integrated. An
+   impulse wakes it, and so does contact from a body that is still *moving*, which is what
+   makes a shoved crate knock over the one beside it.
+
+Points 4 and 5 each carry a rule that real data forced (issue #392).
+
+**One penetration is corrected once.** The corrections are accumulated per body and each
+contact is measured against what its body has already been moved. A sample generates a
+contact per placed shape it is near, so a hull corner resting in a shelf routinely produces a
+dozen contacts carrying the same normal and the same depth; applying each in turn moved the
+body a dozen times the penetration it actually had. The probe caught a crate leaving a shelf
+at six units a substep and a second shot 118 units through the farmhouse floor in a single
+step, after which both fell out of the world. `maximumCorrectionDistance` (1.5 units) then
+bounds what one substep may recover, so clutter vanilla authored deep inside its shelf climbs
+out over several steps rather than being launched. Recovery is paced, not lost.
+
+**Sleep is measured with hysteresis, at the body's own scale, and disturbed only by motion.**
+Three separate things, all of which the probe measured stuck:
+
+* The angular threshold is derived per body rather than being a constant: it is the spin at
+  which the outermost point of the collider travels at `sleepLinearSpeed`, because one
+  angular speed does not mean the same motion on a bowl and on a dining table.
+* A step under the thresholds counts toward sleep and a step over them counts back *down*
+  rather than starting the tally over. A body at rest on real triangle-soup geometry
+  twitches — its samples cross triangle edges, so the contact set is not identical from one
+  substep to the next — and zeroing the tally on any twitch means a body at rest fifty-nine
+  steps out of sixty never sleeps.
+* Waking a neighbour tests the toucher's resting tally, not its velocity. A step begins by
+  adding gravity to every awake body, so at the moment contacts resolve *every* awake body is
+  moving at a twelfth of gravity whatever it is really doing; the tally is the same
+  measurement taken at the end of the previous step, after contacts had cancelled that
+  gravity. Testing velocity there made a settled pair alternate forever, one sleeping on step
+  61 and woken on step 62, over and over. Nothing in that pair could ever be persisted,
+  because a resting pose is only recorded the step a body falls asleep.
+
+A sleeping body is also skipped by the impulse and the position correction. Velocity written
+into a body that is not integrated is never spent; it sits there and fires the moment
+something wakes the body for an unrelated reason.
 
 Determinism is a requirement rather than an accident. Bodies live in an array sorted by
 `ReferenceKey` — not a dictionary, whose iteration order depends on hashing — contacts are
@@ -258,48 +325,52 @@ Synthetic suites, no game asset:
 * `CellSceneBuilderDynamicBodyTests` — a movable body leaving the static set, a massless one
   staying in it whatever its motion system says, and a keyless reference keeping its static
   shapes.
+* `DynamicNarrowphaseTests` — the rules issue #392 turned over, each pinned by the case that
+  broke before it: a surface facing the way it is wound rather than the way the body lies, a
+  box facing away from its own centre, a sample clear of a slab getting no contact from the
+  slab's far face, redundant contacts correcting once rather than once per contact, the
+  angular sleep threshold following the collider size, and a settled pair both sleeping.
 * `MatrixMathTests` — `MatrixMath.eulerAngles(of:)` round-trips through the placement
   rotation, including the straight-up degeneracy, because a body integrates a quaternion and
   persists a Bethesda euler triple.
 
 `DynamicBodyRealDataTests` is the env-gated probe (`make realtest
 T='DynamicBodyRealDataTests/settlesAndPushesVanillaClutter()'`). It builds a vanilla
-clutter-heavy interior with the routing flag on, simulates five seconds of world time, shoves
-the result with a player capsule, and writes counts, per-body drops and timings to gitignored
+clutter-heavy interior with the routing flag on, simulates five seconds of world time, walks a
+capsule into the settled result, and writes counts, per-body drops and timings to gitignored
 `logs/dynamic-body-probe.log`.
 
-It asserts what holds: no non-finite pose, no body needing a mid-step reset, bodies do come to
-rest, and the shove moves things. The eventual perf budget — **average physics step <= 2.0 ms**
-against the 8.33 ms a 1/120 step has — and the settle rate are *reported* rather than
-asserted, because the measured values are far outside them and gating on a budget the code
-cannot meet would turn the pre-push gate red rather than informative. That is the perf-gate
-rule in [testing](/testing.md) applied honestly; the shortfall is under
-[what is not done yet](#what-is-not-done-yet).
+It asserts item 15.2's acceptance rather than reporting it (issue #392):
 
-## What is not done yet
+| claim | measured against Chillfurrow Farm |
+| --- | --- |
+| every simulated reference comes to rest | 51 of 51 asleep inside five seconds |
+| each comes to rest where it was authored | largest drop 137 units, gate at 512 |
+| no non-finite pose, no mid-step reset | zero of each |
+| a walked capsule shoves clutter | 8 of the 8 bodies walked into moved |
+| average step within budget | 0.3-0.7 ms against 2.00 ms |
 
-Two of item 15.2's acceptance criteria are **not met**, which is why
-`CellSceneBuilder.simulatesDynamicBodies` defaults to false. Both were found by the real-data
-probe and neither is visible from the synthetic suites, which all pass.
+Before this the same cell had roughly half its references leaving the geometry they were
+authored in and falling more than twenty thousand units, the rest sitting still without ever
+sleeping, and a step costing 247 ms.
 
-* **Clutter that does not settle.** In Chillfurrow Farm, 51 references simulate and roughly
-  half never come to rest: they leave the geometry they were authored inside and fall out of
-  the world. Vanilla authors clutter *intersecting* the shelf it stands on — the probe's
-  downward sweep reports `overlapping` for nearly every body — and the expulsion of a deeply
-  embedded sample out of a partitioned triangle soup is not yet reliable. Three narrowphase
-  rules were corrected while chasing it (the pre-substep orientation reference, nearest-face
-  ranking, and keeping a model's non-simulated bodies static); none of them closed it.
-* **Step cost.** The same cell measures roughly 230 ms per fixed step against the 2 ms budget
-  the frame can afford — two orders of magnitude out. Two structural wins are already in
-  (samples taken once per substep, triangle work in shape-local space) and were not enough.
-  The remaining cost is the sample-versus-triangle product itself, which needs a real
-  broadphase per body rather than a per-cell BVH query plus a linear scan.
+The capsule is walked into each of the first few bodies in key order rather than parked at the
+average body position. The average is where the probe used to stand, and it only ever worked
+because half the clutter was falling through the world: now that every reference settles where
+it was authored, the centroid of a farmhouse's clutter is a point in mid-air and a capsule
+there touches nothing.
 
-Routing by default would trade a world where a barrel is reliably solid for one where it
-sometimes sinks through a shelf, so the flag stays off until both are fixed. Both are tracked
-as issue #392, which carries the measurements and the next step for each. Everything else
-in this page — the solver, the colliders, the sweeps, the registry, the streaming and
-persistence lifecycle, the panel seam — is complete and covered by the synthetic suites.
+**The perf gate needs an optimized build, which `make realtest-perf` builds.** A step is a few
+hundred microseconds of tight `simd` arithmetic, and that is exactly the code Swift's `-Onone`
+treats worst: the same run measures around twenty-four times slower unoptimized, so holding a
+plain `make realtest` to 2 ms would be measuring the compiler rather than the engine. The
+optimized run keeps the Debug *configuration*, because `@testable import` needs
+`ENABLE_TESTABILITY` and Release turns it off; it overrides the optimization level, announces
+itself to the test through the `OPENSKY_OPTIMIZED` compilation condition, and builds into its
+own derived-data tree so it does not evict the ordinary Debug cache. A default `make realtest`
+still gates the step, at the unoptimized ceiling — loose on purpose, because it exists to
+catch a regression of this kind rather than to certify performance. That is the perf-gate rule
+in [testing](/testing.md) applied to a budget the code now meets.
 
 ## Current boundary
 

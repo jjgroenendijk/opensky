@@ -8,6 +8,7 @@ excluded:
   - .build
   - build
   - DerivedData
+  - DerivedData-optimized
   - Pods
   - "**/*.generated.swift"
 

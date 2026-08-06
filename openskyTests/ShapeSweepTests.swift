@@ -51,8 +51,8 @@ struct ShapeSweepTests {
             maximumDistance: 200
         )
         let panel = DynamicBodyScene.quad(
-            SIMD3(100, -50, 100), SIMD3(100, 50, 100),
-            SIMD3(100, 50, 200), SIMD3(100, -50, 200),
+            SIMD3(100, -50, 100), SIMD3(100, -50, 200),
+            SIMD3(100, 50, 200), SIMD3(100, 50, 100),
             reference: FormID(7)
         )
         let hit = try #require(ShapeSweeper.firstHit(query: query, shapes: [panel]))

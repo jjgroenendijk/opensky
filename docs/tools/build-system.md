@@ -211,9 +211,13 @@ Sourced, never executed. It is the shell half of the same agreement: it defaults
 `OPENSKY_DERIVED_DATA` for a script run outside `make`, and provides
 `xcodebuild_products_dir` and the `xcodebuild_summary` stdin filter.
 
-`tools/realtest.sh` keeps its own cache at `$OPENSKY_DERIVED_DATA/opensky-realtest`, so a
-real-data run never invalidates the ordinary build tree, but stays on the same volume
-because the boot disk cannot hold either. See [Testing setup](/testing.md).
+`tools/realtest.sh` shares the ordinary `$OPENSKY_DERIVED_DATA` tree: selecting a test plan
+changes no build setting, so the separate tree it once kept bought nothing. Its `-O` mode is
+the exception. That one *does* change a build setting — the optimization level, for the
+physics perf gate — so it builds into `$OPENSKY_DERIVED_DATA-optimized` rather than making
+every alternation with `make test` rebuild the engine. Both stay on this volume, because the
+boot disk cannot hold either, and `make prune` removes both from a departed worktree. See
+[Testing setup](/testing.md).
 
 ## Known limits
 

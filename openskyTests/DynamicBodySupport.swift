@@ -18,11 +18,16 @@ enum DynamicBodyScene {
     /// A wall in the plane `x == at`, facing back along -x.
     static func wall(at x: Float, extent: Float = 400) -> StaticCollisionShape {
         quad(
-            SIMD3(x, -extent, -extent), SIMD3(x, extent, -extent),
-            SIMD3(x, extent, extent), SIMD3(x, -extent, extent)
+            SIMD3(x, -extent, -extent), SIMD3(x, -extent, extent),
+            SIMD3(x, extent, extent), SIMD3(x, extent, -extent)
         )
     }
 
+    /// A quad whose winding decides which way it faces: the narrowphase reads a
+    /// triangle soup's surface normal straight off its winding, the way vanilla
+    /// authored it (issue #392), so a fixture wound the other way is a
+    /// back-facing surface rather than a two-sided one. `first -> second ->
+    /// third` counter-clockwise seen from the front.
     static func quad(
         _ first: SIMD3<Float>,
         _ second: SIMD3<Float>,

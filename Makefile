@@ -66,7 +66,7 @@ METAL_FILES     := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
         realdata-plan no-game-content \
         docs-links build cli \
         probe test \
-        test-ui test-one test-report realtest realtest-all test-sanitize \
+        test-ui test-one test-report realtest realtest-perf realtest-all test-sanitize \
         test-perms app-path \
         cli-path run-cli \
         install clean prune icon
@@ -194,6 +194,18 @@ realtest: vendor-link ## Run one env-gated real-data test under the RSS watchdog
 		exit 2; }
 	@case "$(T)" in openskyTests/*) spec="$(T)";; *) spec="openskyTests/$(T)";; esac; \
 	./tools/realtest.sh -t "$$spec" $(if $(CAP),-c $(CAP),)
+
+# The physics perf gate, and the only real-data entry point that builds the
+# suites optimized (issue #392). A physics step is a few hundred microseconds of
+# tight `simd` arithmetic, which is exactly what `-Onone` costs an order of
+# magnitude on, so measuring the shipped budget needs an optimized build; the
+# suite still gates on a looser ceiling under a plain `make realtest`. Its
+# products live in their own derived-data tree so this does not evict the
+# ordinary Debug build.
+realtest-perf: vendor-link ## Run the dynamic-body perf gate against an optimized build
+	@./tools/realtest.sh -O \
+		-t 'openskyTests/DynamicBodyRealDataTests/settlesAndPushesVanillaClutter()' \
+		$(if $(CAP),-c $(CAP),)
 
 # The counterpart to `realtest`: the same plan, the same watchdog, no selector.
 # Run it on demand and before a milestone acceptance, never on push -- it needs
