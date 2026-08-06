@@ -34,6 +34,24 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   reject a malformed mesh does not protect a parse running on a small-stack thread. Filed as
   issue #388 rather than fixed here, so `make test-sanitize` is red on that one test until it
   lands; every other test in the bundle is green under both sanitizers.
+* **Heimskr's model order was never nondeterministic — the assertion was stale (issue
+  #384)**: `ActorAssemblyRealDataTests.rendersHeimskrAtACHRWorldPose()` expected monk boots,
+  robes, hood and got boots, hood, robes, which read as an unordered collection somewhere in
+  the resolve. It is not. Five consecutive `openskycli actor --npc Heimskr` runs produce
+  byte-identical part lists, and the probe says why: `ClothesMonkRobesHooded` `00107106`
+  lists `MonkRobesAA` `000BAD04` (DNAM priority 15) ahead of `MonkHoodAA` `000BAD03`
+  (priority 10), and `ActorVisualResolver.inDrawOrder` sorts every worn armature by ascending
+  priority. The assertion landed 2026-07-20 with the assembler; the priority sort landed
+  2026-08-01 with equipment (issue #299), and nobody re-ran this single test in between. So
+  the order is a contract and the expectation was simply twelve days out of date. Fixing the
+  snapshot alone would leave it just as able to rot, so the test now also asserts the rule
+  that produces it — the worn parts' DNAM priorities, read back through the resolver, must be
+  `[10, 10, 15]` — and a synthetic test covers the specific shape that caught nobody's eye,
+  priority reordering two armatures *within a single ARMO* on the plugin `defaultOutfit`
+  path. The existing draw-order tests only ever exercised the runtime equipped-set path
+  across separate pieces. Verification: the real-data test green three runs in a row, and the
+  suite green under `make realtest-all`.
+
 * **Code coverage was already being measured and thrown away (issue #382)**: nothing in the
   repo reported coverage, so there was no way to answer "is this parser actually covered, or
   does it just have a test file next to it?" across 49 format parsers other than by reading
