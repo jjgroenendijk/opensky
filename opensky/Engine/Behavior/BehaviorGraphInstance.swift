@@ -112,6 +112,11 @@ nonisolated final class BehaviorGraphInstance {
     /// What each referenced graph produced during the update in progress, so a
     /// reference reached twice advances its child's clock once.
     var referencedResults: [String: BehaviorUpdateResult] = [:]
+    /// Event names pulled up out of each referenced graph on the last update
+    /// that reached it, so pushing the parent's active set back down does not
+    /// hand a child its own event a second time (see
+    /// BehaviorReferenceResolution.swift).
+    var pulledEventNames: [String: Set<String>] = [:]
     /// Reference keys of this instance and everything above it, so a modded
     /// graph that references its own ancestor is refused by name rather than
     /// recursed into.
@@ -241,6 +246,7 @@ nonisolated final class BehaviorGraphInstance {
         deactivateNodes(Set(nodeStates.keys))
         nodeStates = [:]
         activeStates = []
+        pulledEventNames = [:]
         isActive = false
     }
 

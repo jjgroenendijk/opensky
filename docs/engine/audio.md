@@ -230,11 +230,14 @@ metadata falls back to Effects. Music playlists author their own Music route.
 
 The player's footsteps are played by `WorldAudioFootstepDirector`, the third director
 beside the SFX and music ones. It contains no step timer, and that is the design rather
-than an omission: the vanilla locomotion clips carry their own footstep triggers —
-`0_master.hkx` declares `FootLeft` and `FootRight` as the first two of its 1,217 events —
-so the behavior graph already says when a foot lands, at the phase the animation actually
-plants it. A cadence derived from speed would drift against the animation the player is
-watching. See [terrain walk mode](/engine/walk-mode.md) for the event source.
+than an omission: the vanilla locomotion clips carry their own footstep marks — annotations
+in the animation files, raised as events by the graph, and `0_master.hkx` declares
+`FootLeft` and `FootRight` as the first two of its 1,217 — so the behavior graph already
+says when a foot lands, at the phase the animation actually plants it. A cadence derived
+from speed would drift against the animation the player is watching. See
+[terrain walk mode](/engine/walk-mode.md) for the event source and
+[behavior graph runtime](/engine/behavior-runtime.md#clip-triggers-and-annotations) for
+where the marks live.
 
 The route, once per frame:
 

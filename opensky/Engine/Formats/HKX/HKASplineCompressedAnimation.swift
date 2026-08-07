@@ -48,10 +48,22 @@ nonisolated struct HKASplineCompressedAnimation {
     /// root-motion clip without inferring it from how far the root bone
     /// happens to drift. See docs/engine/walk-mode.md.
     let carriesExtractedMotion: Bool
+    /// `hkaAnimation.m_annotationTracks`. Havok exports one track per transform
+    /// track and vanilla Skyrim leaves all but the first empty, so consumers
+    /// read `annotations` rather than indexing this.
+    let annotationTracks: [HKAAnnotationTrack]
     let blocks: [HKASplineBlock]
 
     var blockCount: Int {
         blocks.count
+    }
+
+    /// Every annotation of every track, earliest first. This is what carries
+    /// the footstep tags: `FootLeft` and `FootRight` are annotations on the
+    /// locomotion clips, not triggers on the behavior file's clip generators
+    /// (see HKAAnnotationTrack.swift).
+    var annotations: [HKAAnnotation] {
+        annotationTracks.flatMap(\.annotations).sorted { $0.time < $1.time }
     }
 
     static let className = "hkaSplineCompressedAnimation"
@@ -159,6 +171,7 @@ nonisolated private enum HKASplineObjectDecoder {
         // case rather than an unresolved reference: an in-place clip is what
         // every vanilla locomotion animation is.
         let extractedMotion = cursor.optionalPointer(at: extractedMotionField) != nil
+        let annotationTracks = HKAAnnotationTrack.tracks(cursor: &cursor)
         let tables = try readTables(cursor: &cursor)
         guard tables.blockOffsets.count == metadata.blockCount else {
             throw mismatch(
@@ -180,6 +193,7 @@ nonisolated private enum HKASplineObjectDecoder {
             transformTrackCount: metadata.transformTrackCount,
             floatTrackCount: metadata.floatTrackCount,
             carriesExtractedMotion: extractedMotion,
+            annotationTracks: annotationTracks,
             blocks: decodeBlocks(metadata: metadata, tables: tables)
         )
     }

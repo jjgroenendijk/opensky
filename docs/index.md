@@ -83,7 +83,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [hkaSkeleton object](/formats/hka-skeleton.md) - bone names, parent indices,
   reference pose decode + name-map onto the NIF skeleton nodes skinning uses.
 * [hkaSplineCompressedAnimation](/formats/hka-animation.md) - idle-clip metadata,
-  spline blocks, 16-bit vector/40-bit quaternion decode + local-transform sampling.
+  spline blocks, 16-bit vector/40-bit quaternion decode + local-transform sampling,
+  and the `hkaAnnotationTrack` marks that carry the footstep tags.
 * [HKX behavior graph objects](/formats/hkx-behavior.md) - shared object-graph pointer,
   array and string resolution; hkRootLevelContainer, hkbBehaviorGraph, graph/string data,
   variable value set, project + character string data, file role, vanilla census.

@@ -376,10 +376,14 @@ enum BehaviorFixture {
     /// than posed.
     static func splineClip(
         boneIndex: Int = 1,
-        carriesExtractedMotion: Bool = false
+        carriesExtractedMotion: Bool = false,
+        annotations: [(time: Float, text: String)] = []
     ) throws -> SplineBehaviorClip {
         var fixture = HKASplineAnimationFixture()
         fixture.carriesExtractedMotion = carriesExtractedMotion
+        if !annotations.isEmpty {
+            fixture.annotationTracks = [(name: "NPC Root [Root]", annotations: annotations)]
+        }
         let file = try HKXFile(data: fixture.build())
         let animations = try HKASplineCompressedAnimation.animations(in: file)
         guard let animation = animations.first else {

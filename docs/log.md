@@ -4,6 +4,34 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-07
 
+* **The vanilla player graph fires its footstep tags (issues #385, #394)**: walking the real
+  locomotion graph for a second fired `moveStart` and `IdleStop` and nothing a footstep set
+  answers to, so the whole footstep chain — set selection, material, tag resolution, PCM
+  playback, all of it separately tested and all of it correct — was fed by an event stream
+  that never carried a footstep. Three faults stacked, and each hid the next.
+
+  **The animation carries the marks, not the behavior file.** `FootLeft` and `FootRight` are
+  `hkaAnnotationTrack` annotations inside `mt_walkforward.hkx`, at 0.2333 s and 0.8 s of its
+  cycle. The clip evaluator read only `hkbClipTriggerArray`, on the documented belief that
+  Havok bakes annotations into it at export with `m_isAnnotation` set — which the vanilla
+  data flatly contradicts: every locomotion `hkbClipGenerator` in `mt_behavior.hkx` carries
+  an *empty* `m_triggers`. `hkaAnimation.m_annotationTracks` at 0x28 is now decoded and its
+  marks fire through the same crossing test the authored triggers use.
+
+  **Events echoed forever across a behavior reference.** The parent raised the child's
+  `firedEvents` — its *active* set, which already held everything the parent had pushed down
+  the update before — back onto itself, so every crossing event bounced between `0_master`
+  and `mt_behavior` once per update without end. The pull now reads the child's `pending`
+  queue, which is what the child's own nodes raised, and the push skips the names just
+  pulled from that same child.
+
+  **The real-data test built a graph the engine never builds.** It assembled the instance by
+  hand and left `references` nil, so `0_master.hkx` ran as the shell it is with no locomotion
+  behind it. It goes through `PlayerBehaviorGraph.load` now, the same loader the app uses.
+
+  The echo mattered because `LocomotionGraphEventQueue` is bounded at 64: three events per
+  step across 120 steps left the drain holding twenty updates of the same echoing names, so
+  even after the annotations fired they were evicted before an audio frame read them.
 * **Run directories are allocated atomically (issue #306)**: `tools/run-dir.sh` picked its
   collision suffix by testing `[ -e ]` and then calling `mkdir -p`, which is check-then-act.
   Two runs starting inside the same second both saw the name free, both succeeded, and

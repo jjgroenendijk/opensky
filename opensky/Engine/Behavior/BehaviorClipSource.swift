@@ -30,6 +30,11 @@ nonisolated protocol BehaviorClip {
     /// place, and the evaluator reports no root motion for it at all rather
     /// than differencing a root bone that only jitters.
     var carriesExtractedMotion: Bool { get }
+    /// The clip's own annotations, earliest first, in seconds from clip start.
+    /// Each one names an event the evaluator raises as playback passes it —
+    /// which is where Skyrim's `FootLeft` and `FootRight` come from, so a clip
+    /// that drops these is silent underfoot (see HKAAnnotationTrack.swift).
+    var annotations: [HKAAnnotation] { get }
 }
 
 nonisolated extension BehaviorClip {
@@ -37,6 +42,12 @@ nonisolated extension BehaviorClip {
     /// reference frame, and neither does any vanilla animation.
     var carriesExtractedMotion: Bool {
         false
+    }
+
+    /// Unannotated unless the clip says otherwise, so a test clip built in code
+    /// stays a bone source and nothing else.
+    var annotations: [HKAAnnotation] {
+        []
     }
 }
 
@@ -71,6 +82,10 @@ nonisolated struct SplineBehaviorClip: BehaviorClip {
 
     var carriesExtractedMotion: Bool {
         animation.carriesExtractedMotion
+    }
+
+    var annotations: [HKAAnnotation] {
+        animation.annotations
     }
 
     func samples(at time: Float) -> [HKABoneTransformSample] {
