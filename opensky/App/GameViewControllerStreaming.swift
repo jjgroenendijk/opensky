@@ -42,6 +42,12 @@ extension GameViewController {
         controller.onBodySettled = { [weak controller] key, transform in
             worldState.set(transform, for: key, in: controller?.cellLocation(of: key))
         }
+        // And until it settles, the mesh follows the body rather than waiting
+        // for that rebuild. Published inside the frame's own update, below, so
+        // the poses the pass uploads are the ones this frame simulated.
+        controller.onDynamicPosesChanged = { [weak renderer] deltas in
+            renderer?.dynamicInstanceDeltas = deltas
+        }
         wireGlobals(provider: provider, renderer: renderer)
         renderer.onFrame.add { [weak self, weak controller, weak renderer] position in
             controller?.update(

@@ -153,7 +153,10 @@ extension Renderer {
         let stride = MemoryLayout<InstanceTransform>.stride
         let base = state.slot * instanceSlotCapacity + state.instanceCursor
         var written = 0
-        for instance in group.instances {
+        for placed in group.instances {
+            // The live pose of a reference a rigid body owns, and the baked one
+            // for everything else (RendererDynamicPose.swift).
+            let instance = drawn(placed)
             if let bounds = instance.bounds, !state.frustum.intersects(bounds) {
                 state.stats.culledInstances += 1
                 continue

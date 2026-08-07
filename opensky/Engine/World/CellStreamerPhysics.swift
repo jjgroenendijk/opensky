@@ -30,6 +30,11 @@ extension CellStreamer {
         for settled in dynamicBodies.drainSettledTransforms() {
             onBodySettled?(settled.key, settled.transform)
         }
+        // Published every tick rather than only when something moved: a body
+        // that has settled away from where its cell drew it keeps a delta until
+        // the rebuild bakes it in, so "no movement this frame" is not "no
+        // displacement to draw".
+        onDynamicPosesChanged?(dynamicBodies.instanceDeltas)
     }
 
     /// Adds the bodies of every newly resident or rebuilt cell and drops the

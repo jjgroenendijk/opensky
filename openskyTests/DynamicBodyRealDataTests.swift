@@ -97,6 +97,18 @@ struct DynamicBodyRealDataTests {
 
         let placements = scene.dynamicBodies
         #expect(!placements.isEmpty, "the vanilla farmhouse placed no simulated body")
+        // The drawn half of the same claim (issue #193): a reference the solver
+        // moves has to carry its identity into the draw list, or the pose
+        // produced below never reaches the screen and the clutter simulates
+        // invisibly. Asserted on real placements because the tagging is done
+        // against the cell build's own resolved instances.
+        let drawn = Set(
+            (scene.renderScene.opaque + scene.renderScene.alphaTested)
+                .flatMap(\.instances)
+                .map(\.referenceFormID)
+        )
+        let untagged = placements.filter { !drawn.contains($0.reference.rawValue) }
+        #expect(untagged.isEmpty, "\(untagged.count) simulated references draw untagged")
         var world = DynamicBodyWorld()
         world.setCell(.interior(WalkPathRoute.farmInterior), placements: placements)
         let start = world.bodies.map { (key: $0.key, position: $0.position) }
@@ -127,6 +139,10 @@ struct DynamicBodyRealDataTests {
             "a body fell \(settle.maximumDrop) units out of the geometry it was authored in"
         )
         #expect(shove.movedBodyCount > 0, "a shove moved nothing")
+        // And what the renderer would be handed after all that is non-empty:
+        // clutter that settled away from where the plugin authored it is drawn
+        // by its live pose until a rebuild bakes it in.
+        #expect(!world.instanceDeltas.isEmpty, "no body published a pose to draw by")
         #expect(
             settle.averageStepMS <= Self.budgetMS,
             "physics step averaged \(settle.averageStepMS) ms against a \(Self.budgetMS) ms budget"

@@ -114,6 +114,12 @@ final class Renderer: NSObject {
     /// on the same terms as `playerBody` (issue #190,
     /// RendererFirstPersonArms.swift). Set through `setPlayerFirstPersonRig`.
     var playerFirstPersonRig: PlayerFirstPersonRig?
+    /// Where the simulated rigid bodies have moved since their cells were
+    /// built, keyed by REFR FormID (issue #193). Published once per frame by
+    /// the streaming controller's physics tick, read by the two passes that
+    /// upload instance transforms. Empty in every path that runs no physics,
+    /// which is what leaves those passes unchanged there.
+    var dynamicInstanceDeltas: [UInt32: float4x4] = [:]
     /// First-person field of view and the depth policy the arms are drawn
     /// under. Pure settings; holds no pose (issue #190).
     var firstPersonCamera = FirstPersonCamera()

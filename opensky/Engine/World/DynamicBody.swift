@@ -334,6 +334,28 @@ nonisolated struct DynamicBody: Sendable {
         MatrixMath.translation(position) * float4x4(orientation)
     }
 
+    /// How far this body has moved from the pose its cell build drew it at, as
+    /// the rigid transform that carries the one onto the other (issue #193).
+    ///
+    /// A cell build bakes `T(position) * R(rotation) * S(scale)` into every
+    /// instance matrix, and a body's own placed pose is the same translation
+    /// and rotation without the scale. So `delta * baked` is the live matrix
+    /// for every mesh of the reference, whatever the scale and whatever local
+    /// transform the mesh carries, and no draw call has to know which is which.
+    /// Nil when nothing has moved, which is the resting case and keeps the map
+    /// the renderer consults empty in a world that is standing still.
+    func instanceDelta(
+        fromPlacedPosition placed: SIMD3<Float>,
+        orientation placedOrientation: simd_quatf
+    ) -> float4x4? {
+        let origin = originPosition
+        guard origin != placed || orientation != placedOrientation else { return nil }
+        let rotation = orientation * placedOrientation.inverse
+        return MatrixMath.translation(origin)
+            * float4x4(rotation)
+            * MatrixMath.translation(-placed)
+    }
+
     /// The body's shapes as ordinary placed collision shapes at the current
     /// pose, so the player capsule, the interaction ray, and the shape sweeps
     /// see moving clutter through exactly the query they already use for the

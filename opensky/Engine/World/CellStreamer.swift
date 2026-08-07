@@ -148,6 +148,11 @@ final class CellStreamer {
     /// reference's `.transform` component. The store is not reachable from
     /// here, so the app wires this to `WorldStateStore.set`.
     var onBodySettled: ((ReferenceKey, ReferenceTransformOverride) -> Void)?
+    /// Where the simulated bodies have moved since their cells were built,
+    /// published once per physics tick so the draw that follows places them
+    /// live (issue #193). The renderer is not reachable from here either, so
+    /// the app wires this to `Renderer.dynamicInstanceDeltas`.
+    var onDynamicPosesChanged: (([UInt32: float4x4]) -> Void)?
 
     /// - Parameters:
     ///   - center: grid center at launch (streaming starts on FirstRenderCell).
