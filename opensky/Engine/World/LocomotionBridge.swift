@@ -158,6 +158,10 @@ nonisolated final class LocomotionBridge {
     /// queue changed to add it, which is what item 15.4's promotion from
     /// drain-once bought.
     let archeryEventConsumer: LocomotionGraphEventQueue.Consumer
+    /// The ragdoll runtime's cursor (issue #197), the fourth. Nothing about the
+    /// queue changed to add it either.
+    let ragdollEventConsumer: LocomotionGraphEventQueue.Consumer
+
     private var previousYaw: Float?
     private var wasMoving = false
     private var wasSprinting = false
@@ -194,6 +198,7 @@ nonisolated final class LocomotionBridge {
         footstepEventConsumer = events.addConsumer()
         meleeEventConsumer = events.addConsumer()
         archeryEventConsumer = events.addConsumer()
+        ragdollEventConsumer = events.addConsumer()
         self.configuration = configuration
         self.graph = graph
         self.sampleWater = sampleWater
@@ -368,17 +373,6 @@ nonisolated final class LocomotionBridge {
         guard state.isGrounded, !swimming else { return nil }
         isAirborneFromJump = true
         return configuration.jumpTakeoffSpeed.value
-    }
-
-    /// Ascend on jump, descend on sneak, hold depth otherwise. Both keys are
-    /// already bound, so swimming needs no third binding.
-    private func swimVerticalVelocity(swimming: Bool) -> Float {
-        guard swimming else { return 0 }
-        let rate = configuration.swimSpeed.value * 0.5
-        if intent.jump {
-            return rate
-        }
-        return intent.sneak ? -rate : 0
     }
 
     /// The step's horizontal displacement and where it came from.

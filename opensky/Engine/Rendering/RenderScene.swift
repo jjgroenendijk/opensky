@@ -224,6 +224,16 @@ nonisolated struct RenderScene {
     let particles: [ParticlePlayback]
     /// Cell-owned actor playback objects; references disappear on cell eviction.
     let animations: [any RenderAnimation]
+    /// Simulated bone poses, keyed by the ACHR each ragdoll stands for (issue
+    /// #197, roadmap item 15.6).
+    ///
+    /// The ragdoll writes into the same `[String: float4x4]` shape a clip
+    /// samples, and it is laid over that clip's pose here rather than in a
+    /// second draw path — a corpse reaches the skinning palette through exactly
+    /// the call an idle animation does, and the renderer needs to know nothing
+    /// about physics. Bones the ragdoll does not simulate keep the animated
+    /// pose, which is why a corpse still has hands.
+    var ragdollPoses: [UInt32: [String: float4x4]] = [:]
 
     init(
         instances: [RenderPlacement],
@@ -338,7 +348,10 @@ nonisolated struct RenderScene {
                 failedClips.insert(key)
                 continue
             }
-            updated += actor.apply(pose, updating: &updatedMeshes)
+            let posed = ragdollPoses[actor.actor.rawValue].map {
+                pose.merging($0) { _, simulated in simulated }
+            } ?? pose
+            updated += actor.apply(posed, updating: &updatedMeshes)
         }
         return updated
     }

@@ -153,6 +153,12 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   sphere and capsule sweeps, the player's shove, the per-instance delta that draws a body
   where the solver has it, the streaming and resting-transform lifecycle, and the optimized
   perf gate.
+* [Death and constraint-solved ragdoll](/engine/ragdoll.md) - how a zero-health actor dies
+  and hands its skeleton to the physics, the ragdoll built from the skeleton NIF's per-bone
+  bodies and joints, what the authored constraint angles were measured to mean, the
+  sequential-impulse joint solver and the position-based one it beat, the
+  animated-to-simulated blend and the pose write-back, whole-ragdoll settling, persistent
+  death and its stated visual cost, and corpse looting.
 * [Actor idle animation](/engine/actor-animation.md) - HKX idle sampling, skeleton-world
   pose composition, NIF palette refresh, streamed lifetime, fallback accounting + budget,
   the graph-driven player path and its simulation clock.
@@ -300,7 +306,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   command line every make target and tools/ script shares: knobs and their defaults,
   `-quiet` versus the transcripts kept in `logs/`, Swift warnings as build errors, the
   derived built-products path, the `Config/*.xcconfig` layer that holds every build
-  setting, and what `-only-testing` does not save.
+  setting, the compilation cache and the flows it does and does not speed up, and what
+  `-only-testing` does not save.
 * [Run output layout and make prune](/tools/run-output.md) - one timestamped run
   directory per run under `logs/` and `build/test-results/` with a `latest` symlink, which
   script writes where, and the `make prune` rules that delete stale worktree DerivedData

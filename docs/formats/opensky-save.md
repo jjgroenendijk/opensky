@@ -36,6 +36,7 @@ byte length followed by that many UTF-8 bytes. The file extension is `osav`.
 * `QSTS` entry layout
 * `QALS` entry layout
 * `AVAL` entry layout
+* `DETH` entry layout
 * Version policy
 * Defensive decoding
 * Where saves live and how they are written
@@ -153,7 +154,7 @@ A chunk whose declared length runs past the end of the file is
 that declared length, which is what makes a newer build's save loadable in an older one.
 
 Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR`, `INVN`, `SPWN`, `QSTS`,
-`QALS` and `AVAL` were added additively afterwards.
+`QALS`, `AVAL` and `DETH` were added additively afterwards.
 
 `GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
 any other size is `invalidValue`.
@@ -584,6 +585,38 @@ surface in the subsystem uses. A non-finite or negative value on disk is normali
 by `ActorValueState.init` rather than rejected — the invariant belongs to the type, and one
 nonsensical float is not a reason to lose a whole save. The entry count is validated against
 `minimumActorValueEntrySize` (20 bytes) before storage is reserved.
+
+## `DETH` entry layout
+
+`DETH` — deaths (issue #197), one entry per actor recorded dead. Additive and split out of
+`RDLT` for the same reason `AVAL` is, and a session in which nothing died writes no chunk at
+all.
+
+| type   | field      | notes                              |
+| ------ | ---------- | ---------------------------------- |
+| uint32 | entryCount | number of entries that follow      |
+| bytes  | entries    | `entryCount` entries, layout below |
+
+Each entry:
+
+| type   | field     | notes                                                        |
+| ------ | --------- | ------------------------------------------------------------ |
+| key    | key       | the actor's key, tagged as in `RDLT`                          |
+| cell   | cell      | attribution cell, tagged as in `RDLT`                         |
+| uint8  | isDead    | non-zero when the actor is dead                               |
+| uint8  | wasLooted | non-zero once its corpse has been searched                    |
+| uint8  | present   | non-zero when a resting transform follows                     |
+| bytes  | resting   | position, rotation and scale, only when `present` is non-zero |
+
+The resting transform is optional in the bytes as well as in the type: a corpse still
+falling when the save was written has none, and writing a mid-flight pose would put the body
+back in the air on reload. When present it uses the same field order and float encoding a
+`RDLT` transform override does, so the two read the same way in a hex dump.
+
+**The root transform only.** Persisting the whole per-bone pose is the choice item 15.6
+declined and documented — a reloaded corpse lies where it fell in the skeleton's rest pose
+rather than in the tangle it died in
+([death and constraint-solved ragdoll](/engine/ragdoll.md)).
 
 ## Version policy
 

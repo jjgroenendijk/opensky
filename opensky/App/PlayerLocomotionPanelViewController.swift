@@ -23,6 +23,7 @@ final class PlayerLocomotionPanelViewController: InspectorPanelViewController {
     let bindingsSection = LocomotionBindingsSection()
     let meleeSection = LocomotionMeleeSection()
     let archerySection = LocomotionArcherySection()
+    let ragdollSection = LocomotionRagdollSection()
     let motionSection = LocomotionMotionSection()
     let devSection = LocomotionDevSection()
 
@@ -55,10 +56,16 @@ final class PlayerLocomotionPanelViewController: InspectorPanelViewController {
         didSet { archerySection.provider = archeryProvider }
     }
 
+    /// The ragdoll runtime rides its own seam, which only the Death & Ragdoll
+    /// section reads (issue #197).
+    weak var ragdollProvider: (any RagdollControlProviding)? {
+        didSet { ragdollSection.provider = ragdollProvider }
+    }
+
     override func makeSections() -> [PanelSectionViewController] {
         [
             stateSection, graphSection, bindingsSection,
-            meleeSection, archerySection, motionSection, devSection
+            meleeSection, archerySection, ragdollSection, motionSection, devSection
         ]
     }
 

@@ -190,3 +190,34 @@ extension FakeWorldProviders {
         archery.lastActionText = "Cleared the shot trace."
     }
 }
+
+/// RagdollControlProviding (issue #197, roadmap item 15.6) state.
+struct FakeRagdollState {
+    var snapshot = RagdollStatsSnapshot()
+    var triggerRequests = 0
+    /// What `triggerRagdoll()` answers, so a panel test can drive the
+    /// no-actor-selected case as well as the working one.
+    var triggerSucceeds = true
+    var clearRequests = 0
+}
+
+extension FakeWorldProviders {
+    var ragdollStatsSnapshot: RagdollStatsSnapshot {
+        ragdoll.snapshot
+    }
+
+    @discardableResult
+    func triggerRagdoll() -> Bool {
+        ragdoll.triggerRequests += 1
+        return ragdoll.triggerSucceeds
+    }
+
+    func setRagdollFrozen(_ frozen: Bool) {
+        ragdoll.snapshot.isFrozen = frozen
+    }
+
+    func clearRagdolls() {
+        ragdoll.clearRequests += 1
+        ragdoll.snapshot = RagdollStatsSnapshot(isFrozen: ragdoll.snapshot.isFrozen)
+    }
+}

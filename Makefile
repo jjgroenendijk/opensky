@@ -263,8 +263,27 @@ prune: ## Delete stale worktree caches + aged-out run output (PRUNE_DAYS=14, DRY
 
 # No `xcodebuild clean` first: it takes seconds to empty the same directory the
 # rm below deletes outright.
-clean: ## Remove OpenSky build artifacts and Xcode caches
-	@rm -rf build DerivedData
+#
+# CompilationCache.noindex survives, because it is the one thing under
+# DerivedData that a clean has no reason to discard: entries are keyed on the
+# full compile command line and its inputs (Config/Base.xcconfig), so replaying
+# one cannot produce a different answer than compiling would, and the stale
+# incremental state a clean exists to clear lives in the build system, which the
+# cache takes no part in. Keeping it is what makes the Debug rebuild after a
+# clean take about eighteen seconds instead of forty-five (issue #341). `make
+# clean DEEP=1`
+# removes it too, for measuring a genuinely cold build.
+clean: ## Remove build artifacts and Xcode caches (DEEP=1 also drops the compilation cache)
+	@rm -rf build
+	@for dd in "$(DERIVED_DATA)" "$(DERIVED_DATA)-optimized"; do \
+		[ -d "$$dd" ] || continue; \
+		if [ -n "$(DEEP)" ]; then \
+			rm -rf "$$dd"; \
+		else \
+			find "$$dd" -mindepth 1 -maxdepth 1 \
+				! -name 'CompilationCache.noindex' -exec rm -rf {} +; \
+		fi; \
+	done
 	@if [ -d "$(XCODE_DERIVED_DATA)" ]; then \
 		find "$(XCODE_DERIVED_DATA)" -mindepth 1 -maxdepth 1 \
 			-type d -name 'opensky-*' -exec rm -rf {} +; \

@@ -41,3 +41,29 @@ nonisolated extension LocomotionBridge {
         }
     }
 }
+
+nonisolated extension LocomotionBridge {
+    /// Ascend on jump, descend on sneak, hold depth otherwise. Both keys are
+    /// already bound, so swimming needs no third binding.
+    ///
+    /// In this satellite rather than in the class body, which is at the
+    /// strict-lint length cap.
+    func swimVerticalVelocity(swimming: Bool) -> Float {
+        guard swimming else { return 0 }
+        let rate = configuration.swimSpeed.value * 0.5
+        if intent.jump {
+            return rate
+        }
+        return intent.sneak ? -rate : 0
+    }
+
+    /// The blend the graph's `hkbRigidBodyRagdollControlsModifier` asks for, or
+    /// nil where no evaluated graph has run one (issue #197, roadmap item 15.6).
+    ///
+    /// Read straight off the instance rather than mirrored, so it is the graph's
+    /// number and not a copy of it that can go stale. In an extension because
+    /// the class body is at the strict-lint length cap.
+    var ragdollBlendDuration: Float? {
+        graph?.ragdollBlendDuration
+    }
+}

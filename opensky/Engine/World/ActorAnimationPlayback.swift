@@ -79,15 +79,41 @@ nonisolated final class ActorAnimationClip {
     let skeleton: HKASkeleton
     let animation: HKASplineCompressedAnimation
     let binding: HKAAnimationBinding
+    /// The `.nif` this rig's skeleton came from, which is also where its
+    /// ragdoll bodies and joints live (issue #197). Carried here rather than
+    /// re-derived because the clip is the only thing that already knows which
+    /// skeleton an actor is using.
+    let skeletonMeshPath: String
 
     init(
         skeleton: HKASkeleton,
         animation: HKASplineCompressedAnimation,
-        binding: HKAAnimationBinding
+        binding: HKAAnimationBinding,
+        skeletonMeshPath: String = ""
     ) {
         self.skeleton = skeleton
         self.animation = animation
         self.binding = binding
+        self.skeletonMeshPath = skeletonMeshPath
+    }
+
+    /// The rig's bind pose as skeleton-world matrices, in bone order. The frame
+    /// a ragdoll's bodies are authored against.
+    var bindWorldMatrices: [float4x4] {
+        (try? SkeletonPoseMath.worldMatrices(
+            skeleton: skeleton, localPoses: skeleton.referencePose
+        )) ?? []
+    }
+
+    /// The pose at `time` as skeleton-world matrices in bone order, which is
+    /// what a ragdoll hand-off reads. Nil where the clip cannot be sampled, the
+    /// same condition `namedWorldTransforms(at:)` returns nil on.
+    func orderedWorldTransforms(at time: Float) -> [float4x4]? {
+        guard let named = namedWorldTransforms(at: time) else { return nil }
+        let bind = bindWorldMatrices
+        return skeleton.boneNames.enumerated().map { index, name in
+            named[name] ?? (bind.indices.contains(index) ? bind[index] : matrix_identity_float4x4)
+        }
     }
 
     func namedWorldTransforms(at time: Float) -> [String: float4x4]? {
@@ -277,7 +303,8 @@ nonisolated extension CellSceneBuilder {
         return ActorAnimationClip(
             skeleton: skeleton,
             animation: animation,
-            binding: binding
+            binding: binding,
+            skeletonMeshPath: key.skeletonPath
         )
     }
 

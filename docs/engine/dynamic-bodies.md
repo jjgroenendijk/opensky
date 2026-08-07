@@ -16,6 +16,12 @@ capsule already runs on, collides against the immutable
 [static collision world](/engine/collision-world.md) and against each other, is pushed by a
 walking player, and persists where it comes to rest.
 
+`DynamicBodySolver.step` also carries a ragdoll's joints when the body list it is handed is
+one actor's bones: the joint solver runs inside each substep straight after the contact
+solver, over the same velocities, and a non-empty joint list switches body-to-body contacts
+off for that list. Both rules and the reasoning behind them are in
+[death and constraint-solved ragdoll](/engine/ragdoll.md) (item 15.6).
+
 ## Contents
 
 * Which bodies simulate

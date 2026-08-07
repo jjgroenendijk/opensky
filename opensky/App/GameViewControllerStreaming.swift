@@ -85,6 +85,9 @@ extension GameViewController {
         // After melee, so the two runtimes register their graph-event cursors
         // in a fixed order and a trace read from either is reproducible.
         wireArchery(provider: provider, renderer: renderer)
+        // After both, for the same reason: a fixed cursor-registration order
+        // keeps every runtime's view of the graph event stream reproducible.
+        wireRagdoll(renderer: renderer)
         renderer.terrainSampler = { [weak controller] position in
             controller?.sampleTerrain(at: position)
         }

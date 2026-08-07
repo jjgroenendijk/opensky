@@ -360,6 +360,12 @@ the first-person arms run a different clip from the body.
 
 ## Known gaps
 
+- `hkbRigidBodyRagdollControlsModifier` is no longer a pass-through: item 15.6 implements
+  its hand-off semantics and reads `m_durationToBlend` as the animated-to-simulated blend
+  ([death and constraint-solved ragdoll](/engine/ragdoll.md)). `m_bones` stays unread —
+  the ragdoll that engine spawns is every bone the skeleton NIF carries a body for.
+  `hkbPoweredRagdollControlsModifier` and `BSRagdollContactListenerModifier` remain
+  pass-through.
 - `hkbRigidBodyRagdollControlsModifier::m_controlData` embeds a 48-byte
   `hkaKeyFrameHierarchyUtilityControlData`, an hka physics class rather than an hkb
   behavior one. Its members are not confirmed against the local files, so OpenSky decodes
