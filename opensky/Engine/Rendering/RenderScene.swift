@@ -61,6 +61,11 @@ nonisolated struct RenderPlacement {
     /// large billboard batches out of the per-fragment point-light loop.
     let receivesPointLights: Bool
     let receivesShadows: Bool
+    /// The REFR this placement draws, but only when a simulated rigid body
+    /// moves it every frame (issue #193). Zero everywhere else, which is every
+    /// placement the world has ever had: `transform` is then the whole answer
+    /// and nothing looks the reference up. See `DrawInstance.referenceFormID`.
+    let referenceFormID: UInt32
 
     init(
         model: RenderModel,
@@ -68,7 +73,8 @@ nonisolated struct RenderPlacement {
         bounds: ModelBounds? = nil,
         castsShadows: Bool = true,
         receivesPointLights: Bool = true,
-        receivesShadows: Bool = true
+        receivesShadows: Bool = true,
+        referenceFormID: UInt32 = 0
     ) {
         self.model = model
         self.transform = transform
@@ -76,6 +82,7 @@ nonisolated struct RenderPlacement {
         self.castsShadows = castsShadows
         self.receivesPointLights = receivesPointLights
         self.receivesShadows = receivesShadows
+        self.referenceFormID = referenceFormID
     }
 }
 
@@ -91,6 +98,18 @@ nonisolated struct DrawInstance {
     let castsShadows: Bool
     let receivesPointLights: Bool
     let receivesShadows: Bool
+    /// The REFR a simulated rigid body moves, or zero for the ordinary case of
+    /// a placement that stays where its cell build put it (issue #193).
+    ///
+    /// A cell build bakes world matrices once, so a body that moves between
+    /// builds would otherwise be drawn at the pose the plugin authored until
+    /// the cell was rebuilt — a pushed barrel that does not move until it
+    /// settles. Carrying the identity here lets the two passes that upload
+    /// instance transforms substitute the live pose for the baked one
+    /// (`Renderer.drawn(_:)`), which is cheaper and far less invasive than
+    /// rebuilding draw groups every frame: the grouping key is mesh plus
+    /// material, and moving an instance changes neither.
+    var referenceFormID: UInt32 = 0
 }
 
 /// One instanced draw call (todo 3.2): every instance shares the mesh +
@@ -233,7 +252,8 @@ nonisolated struct RenderScene {
                     bounds: placement.bounds,
                     castsShadows: placement.castsShadows,
                     receivesPointLights: placement.receivesPointLights,
-                    receivesShadows: placement.receivesShadows
+                    receivesShadows: placement.receivesShadows,
+                    referenceFormID: placement.referenceFormID
                 )
                 if material.alphaTestThreshold == nil {
                     opaque.add(mesh: mesh, material: material, instance: instance)

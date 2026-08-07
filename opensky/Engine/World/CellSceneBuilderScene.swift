@@ -186,12 +186,17 @@ nonisolated extension CellSceneBuilder {
     ) -> CellScene {
         let actors = geometry.actors
         let particles = makeParticlePlaybacks(instances: instances)
+        // A reference the dynamic world simulates is drawn by its live pose
+        // rather than by the matrix baked here (issue #193), so it is the one
+        // kind of placement that carries its identity into the draw list.
+        let simulated = Set(geometry.dynamicBodies.map(\.reference.rawValue))
         let placed = instances.map { instance in
             RenderPlacement(
                 model: instance.model,
                 transform: instance.transform,
                 bounds: meshes.bounds(forPath: instance.modelPath)?
-                    .transformed(by: instance.transform)
+                    .transformed(by: instance.transform),
+                referenceFormID: simulated.contains(instance.formID) ? instance.formID : 0
             )
         }
         let bounds = unionedBounds(

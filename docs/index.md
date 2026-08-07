@@ -150,8 +150,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Dynamic rigid bodies](/engine/dynamic-bodies.md) - which Havok bodies simulate, the
   convex collider and the narrowphase that reads a surface's facing off its own winding,
   the fixed-step integrator with its tunneling guard, penetration recovery and sleep rules,
-  sphere and capsule sweeps, the player's shove, the streaming and resting-transform
-  lifecycle, and the optimized perf gate.
+  sphere and capsule sweeps, the player's shove, the per-instance delta that draws a body
+  where the solver has it, the streaming and resting-transform lifecycle, and the optimized
+  perf gate.
 * [Actor idle animation](/engine/actor-animation.md) - HKX idle sampling, skeleton-world
   pose composition, NIF palette refresh, streamed lifetime, fallback accounting + budget,
   the graph-driven player path and its simulation clock.

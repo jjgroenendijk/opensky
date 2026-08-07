@@ -23,6 +23,7 @@ walking player, and persists where it comes to rest.
 * Narrowphase
 * Integration and contact solving
 * Shape sweeps
+* Drawing a moving body
 * Player push and dropped items
 * Streaming and persistence
 * Panel seam
@@ -250,6 +251,51 @@ and hulls, so a sweep may report a hit marginally early and never late — the s
 for both consumers. Ties break exactly as `InteractionRaycaster` breaks them: nearest first,
 then the lower reference FormID.
 
+## Drawing a moving body
+
+A cell build bakes one world matrix per draw instance and a cell is rebuilt only when its
+runtime state changes, which is the right answer for a world whose geometry is authored in
+place and the reason `CellStreamerRuntimeState` says whole-cell rebuilds are the intended
+v1. A simulated body breaks that assumption once per frame. Left alone, the simulation is
+invisible: a shoved barrel collides, rolls and settles while its mesh stands where the
+plugin put it, then jumps to the resting pose when the settle triggers a rebuild.
+
+So the baked matrix stays and the *difference* is applied where instance transforms are
+uploaded. `DynamicBody.instanceDelta(fromPlacedPosition:orientation:)` is the rigid
+transform carrying the pose the build drew the reference at onto the pose the solver has it
+at, and `delta * baked` is the live matrix for every mesh of that reference. Because the
+delta is applied on the left of a matrix that already contains the reference's XSCL scale
+and the mesh's own local transform, neither has to be recovered or even known.
+
+`DynamicBodyWorld.instanceDeltas` collects them per frame, keyed by REFR FormID, and
+`CellStreamer.advancePhysics` publishes the map through `onDynamicPosesChanged` to
+`Renderer.dynamicInstanceDeltas`. `Renderer.drawn(_:)` performs the substitution in the two
+places instance transforms reach the GPU — the scene pass and the shadow pass — so a moving
+body's shadow travels with it. The culling AABB is carried through the same delta, so a body
+that has left the bounds its build baked is still drawn.
+
+Three properties keep the cost where it belongs:
+
+* A `DrawInstance` carries `referenceFormID` only when a body owns it, and zero otherwise,
+  which is every placement the world has ever had. An untagged instance costs one integer
+  comparison and never touches the dictionary.
+* A body resting exactly where it was placed is *absent* from the map rather than present
+  with an identity, so settled clutter costs what static clutter costs and a world standing
+  still publishes nothing.
+* The draw group an instance belongs to is keyed by mesh and material, neither of which a
+  move changes, so nothing regroups and no buffer is reallocated.
+
+The player body took the other road — it rebuilds its draw groups whenever it moves
+(`RendererPlayerBody`) — because skinned geometry is placed by its bone palette as well as
+by its model matrix, and the palette is in rig space. Rigid clutter carries no such
+constraint.
+
+The placed pose the delta is measured against is refreshed on every `setCell`, not only when
+a body is new. A rebuild that bakes a settled pose into the scene has to move the reference
+point with it, or the object would be drawn displaced twice over; the same refresh is what
+makes the panel's reset return a body to the pose the current build drew rather than to the
+one the plugin authored.
+
 ## Player push and dropped items
 
 The player capsule is a character controller with no mass, so the shove is modelled rather
@@ -323,13 +369,21 @@ Synthetic suites, no game asset:
   body, and the collision query unioning static shapes with moving bodies while the solver
   is handed only the static half.
 * `CellSceneBuilderDynamicBodyTests` — a movable body leaving the static set, a massless one
-  staying in it whatever its motion system says, and a keyless reference keeping its static
-  shapes.
+  staying in it whatever its motion system says, a keyless reference keeping its static
+  shapes, and a simulated reference tagging the draw instances it places while an
+  unsimulated build of the same cell leaves them at zero.
 * `DynamicNarrowphaseTests` — the rules issue #392 turned over, each pinned by the case that
   broke before it: a surface facing the way it is wound rather than the way the body lies, a
   box facing away from its own centre, a sample clear of a slab getting no contact from the
   slab's far face, redundant contacts correcting once rather than once per contact, the
   angular sleep threshold following the collider size, and a settled pair both sleeping.
+* `DynamicBodyRenderPoseTests` — the delta carrying a scaled placement matrix onto the live
+  pose, an unmoved body publishing nothing, the map keyed by REFR FormID, a rebuild that
+  bakes the resting pose collapsing the delta and moving the reset target with it, and a
+  draw instance carrying both its matrices and its culling bounds through a move.
+* `RendererDynamicPoseTests` — pixel evidence through the real render loop: a tagged crate
+  leaves the pixels its cell build baked and appears where the published delta puts it, in
+  one instanced draw call, and its culling bounds travel with it.
 * `MatrixMathTests` — `MatrixMath.eulerAngles(of:)` round-trips through the placement
   rotation, including the straight-up degeneracy, because a body integrates a quaternion and
   persists a Bethesda euler triple.

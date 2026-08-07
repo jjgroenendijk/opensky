@@ -118,6 +118,14 @@ nonisolated struct DynamicBodyWorld {
         installedCells[location] = sequence
         var retained = bodies.filter { $0.cell != location }
         for placement in placements {
+            // The placed pose is refreshed whether or not the body is new. It
+            // is what this build *drew* the reference at, so a rebuild that
+            // bakes a settled pose into the scene has to move the reset target
+            // and the render delta with it, or the object would be drawn twice
+            // displaced by the distance it had already fallen.
+            placedPoses[placement.key] = (
+                position: placement.originPosition, orientation: placement.orientation
+            )
             if let existing = bodies.first(where: { $0.key == placement.key }) {
                 retained.append(existing)
                 continue
@@ -130,9 +138,6 @@ nonisolated struct DynamicBodyWorld {
                 originPosition: placement.originPosition,
                 orientation: placement.orientation
             ))
-            placedPoses[placement.key] = (
-                position: placement.originPosition, orientation: placement.orientation
-            )
         }
         bodies = retained.sorted { $0.key < $1.key }
     }
@@ -259,6 +264,27 @@ nonisolated struct DynamicBodyWorld {
         bodies.filter { $0.worldBounds.overlaps(bounds) }
             .flatMap { $0.placedShapes() }
             .filter { $0.bounds.overlaps(bounds) }
+    }
+
+    /// Where every moved body is now, relative to where its cell build drew it,
+    /// keyed by the REFR the draw instances carry (issue #193).
+    ///
+    /// Bodies that have not moved are absent rather than present with an
+    /// identity, so a world whose clutter is all standing still hands the
+    /// renderer an empty map and costs it nothing. Rebuilt per frame rather
+    /// than cached: fifty-odd entries is a few microseconds, and a cache here
+    /// would have to be invalidated by every lifecycle path in this type.
+    var instanceDeltas: [UInt32: float4x4] {
+        var deltas: [UInt32: float4x4] = [:]
+        for body in bodies {
+            guard let placed = placedPoses[body.key] else { continue }
+            guard
+                let delta = body.instanceDelta(
+                    fromPlacedPosition: placed.position, orientation: placed.orientation
+                ) else { continue }
+            deltas[body.reference.rawValue] = delta
+        }
+        return deltas
     }
 
     func body(for key: ReferenceKey) -> DynamicBody? {

@@ -4,6 +4,31 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-07
 
+* **Simulated clutter is drawn where the solver has it (issue #193)**: the dynamic
+  rigid-body world was complete and invisible. Collision, sweeps, the player's shove and the
+  resting-transform persistence all ran on live poses, but the drawn mesh came from the
+  matrix its cell build baked, so a shoved barrel rolled and settled without moving on
+  screen and then jumped to its resting pose when the settle triggered a cell rebuild.
+
+  Rebuilding a cell per frame is not an option and rebuilding draw groups per frame is the
+  player body's answer, which it needs only because skinned geometry is placed by its bone
+  palette as well as by its model matrix. Rigid clutter needs neither. What ships instead is
+  a per-instance delta: `DynamicBody.instanceDelta(fromPlacedPosition:orientation:)` is the
+  rigid transform from the pose the build drew a reference at to the pose the body is at,
+  `DynamicBodyWorld.instanceDeltas` collects them per frame keyed by REFR FormID, and
+  `Renderer.drawn(_:)` substitutes `delta * baked` in the two places instance transforms
+  reach the GPU. Applying it on the left of the baked matrix means the reference's XSCL
+  scale and the mesh's own local transform never have to be recovered, and the shadow pass
+  gets the same substitution, so a moving body's shadow travels with it.
+
+  A `DrawInstance` carries a `referenceFormID` only when a body owns it, so every other
+  placement in the world costs one integer comparison; a body resting where it was placed is
+  absent from the map rather than present with an identity, so settled clutter costs what
+  static clutter costs. The placed pose the delta is measured from is now refreshed on every
+  `setCell` rather than only for new bodies — a rebuild that bakes a settled pose has to move
+  the reference point with it, which also fixes the panel's reset returning a body to the
+  plugin's pose instead of the current build's.
+
 * **NIF graph walks spend heap instead of call frames (issue #388)**: the first sanitizer
   baseline crashed `NIFModelTests.absurdDepthIsMalformed()` under Address Sanitizer with a
   stack-guard hit rather than a poisoned-memory report — the 70-node chain the test builds
