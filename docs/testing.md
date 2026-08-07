@@ -245,8 +245,9 @@ run like any other. A finding that turns out to be real becomes its own GitHub
 issue rather than an inline fix. The first baseline (2026-08-06, recorded in
 [the change log](/log.md)) was clean under Thread Sanitizer across the whole
 bundle and produced one Address Sanitizer crash — the NIF scene-graph recursion
-reaching the stack guard before its own depth cap fires, issue #388 — so
-`make test-sanitize` is red on that single test until that lands.
+reaching the stack guard before its own depth cap fires, issue #388. That fix
+landed on 2026-08-07 and both configurations are green, so a new report is a
+regression rather than a known finding.
 
 ## RSS watchdog (mandatory for heavy real-data tests)
 

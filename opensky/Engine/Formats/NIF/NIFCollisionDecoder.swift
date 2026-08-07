@@ -23,7 +23,6 @@ nonisolated struct NIFCollisionDecoder {
     let file: NIFFile
     var unsupported: [String: Int] = [:]
     var failures: [NIFCollisionFailure] = []
-    var shapePath: Set<Int> = []
 
     mutating func decode() -> NIFCollisionModel {
         let scene = sceneTargets()
@@ -82,12 +81,7 @@ nonisolated struct NIFCollisionDecoder {
         let bodyTransform = bodyBlock.typeName == "bhkRigidBodyT"
             ? targetTransform * record.localTransform
             : targetTransform
-        shapePath.removeAll(keepingCapacity: true)
-        let shapes = try decodeShape(
-            ref: record.shapeRef,
-            parent: matrix_identity_float4x4,
-            depth: 0
-        )
+        let shapes = try decodeShapeGraph(root: record.shapeRef)
         return NIFCollisionBody(
             targetBlock: targetRef,
             targetName: targetRef >= 0 ? scene.names[Int(targetRef)] : nil,
@@ -140,80 +134,68 @@ nonisolated struct NIFCollisionDecoder {
         return constraints
     }
 
-    private mutating func decodeShape(
-        ref: Int32,
-        parent: float4x4,
-        depth: Int
-    ) throws -> [NIFCollisionShape] {
-        guard let (index, block) = try resolvedBlock(ref) else { return [] }
-        guard depth <= Self.maxShapeDepth else {
-            throw NIFError.malformed("collision shape graph exceeds \(Self.maxShapeDepth)")
+    /// Walks one rigid body's shape graph into a flat list of leaf shapes, in
+    /// the pre-order a recursive descent would produce.
+    private mutating func decodeShapeGraph(root: Int32) throws -> [NIFCollisionShape] {
+        var shapes: [NIFCollisionShape] = []
+        var stack = NIFGraphStack(root: root)
+        while let visit = stack.next() {
+            guard let (index, block) = try resolvedBlock(visit.ref) else { continue }
+            guard visit.depth <= Self.maxShapeDepth else {
+                throw NIFError.malformed(
+                    "collision shape graph exceeds \(Self.maxShapeDepth)"
+                )
+            }
+            guard stack.enter(index) else {
+                throw NIFError.malformed("collision shape cycle at block \(index)")
+            }
+            do {
+                try shapes.append(contentsOf: expandShape(
+                    block: block,
+                    visit: visit,
+                    stack: &stack
+                ))
+            } catch let NIFError.unsupported(message) {
+                unsupported[block.typeName, default: 0] += 1
+                failures.append(NIFCollisionFailure(block: index, message: message))
+            }
         }
-        guard shapePath.insert(index).inserted else {
-            throw NIFError.malformed("collision shape cycle at block \(index)")
-        }
-        defer { shapePath.remove(index) }
-
-        do {
-            return try decodeShapePayload(
-                block: block,
-                parent: parent,
-                depth: depth
-            )
-        } catch let NIFError.unsupported(message) {
-            unsupported[block.typeName, default: 0] += 1
-            failures.append(NIFCollisionFailure(block: index, message: message))
-            return []
-        }
+        return shapes
     }
 
-    private mutating func decodeShapePayload(
+    /// Decodes one shape block: a leaf yields geometry, a container queues its
+    /// children on `stack` and yields nothing itself.
+    private mutating func expandShape(
         block: NIFFile.Block,
-        parent: float4x4,
-        depth: Int
+        visit: NIFGraphStack.Pending,
+        stack: inout NIFGraphStack
     ) throws -> [NIFCollisionShape] {
+        let childDepth = visit.depth + 1
         switch block.typeName {
         case "bhkMoppBvTreeShape":
             var reader = BinaryReader(block.data)
-            return try decodeShape(
-                ref: reader.readNIFRef(),
-                parent: parent,
-                depth: depth + 1
-            )
+            let child = try reader.readNIFRef()
+            stack.push(children: [child], parent: visit.parent, depth: childDepth)
         case "bhkTransformShape", "bhkConvexTransformShape":
-            return try decodeTransformShape(
-                block: block,
-                parent: parent,
-                depth: depth
+            var reader = BinaryReader(block.data)
+            let child = try reader.readNIFRef()
+            reader.skip(16) // material, radius, eight padding bytes
+            let transform = try reader.readCollisionMatrix()
+            stack.push(
+                children: [child],
+                parent: visit.parent * transform,
+                depth: childDepth
             )
         case "bhkListShape":
-            return try decodeListShape(block: block, parent: parent, depth: depth)
+            let children = try listShapeRefs(block)
+            stack.push(children: children, parent: visit.parent, depth: childDepth)
         default:
-            return try decodeLeafShape(block: block, parent: parent)
+            return try decodeLeafShape(block: block, parent: visit.parent)
         }
+        return []
     }
 
-    private mutating func decodeTransformShape(
-        block: NIFFile.Block,
-        parent: float4x4,
-        depth: Int
-    ) throws -> [NIFCollisionShape] {
-        var reader = BinaryReader(block.data)
-        let child = try reader.readNIFRef()
-        reader.skip(16) // material, radius, eight padding bytes
-        let transform = try reader.readCollisionMatrix()
-        return try decodeShape(
-            ref: child,
-            parent: parent * transform,
-            depth: depth + 1
-        )
-    }
-
-    private mutating func decodeListShape(
-        block: NIFFile.Block,
-        parent: float4x4,
-        depth: Int
-    ) throws -> [NIFCollisionShape] {
+    private func listShapeRefs(_ block: NIFFile.Block) throws -> [Int32] {
         var reader = BinaryReader(block.data)
         let count = try Int(reader.readUInt32())
         guard count <= 256, count <= reader.bytesRemaining / 4 else {
@@ -224,15 +206,7 @@ nonisolated struct NIFCollisionDecoder {
         for _ in 0 ..< count {
             try refs.append(reader.readNIFRef())
         }
-        var shapes: [NIFCollisionShape] = []
-        for child in refs {
-            try shapes.append(contentsOf: decodeShape(
-                ref: child,
-                parent: parent,
-                depth: depth + 1
-            ))
-        }
-        return shapes
+        return refs
     }
 
     func resolvedBlock(_ ref: Int32) throws -> (Int, NIFFile.Block)? {
@@ -249,11 +223,7 @@ nonisolated struct NIFCollisionDecoder {
     private func sceneTargets() -> SceneTargets {
         var visitor = CollisionTargetTransformVisitor(file: file)
         for root in file.roots {
-            try? visitor.visit(
-                ref: root,
-                parent: matrix_identity_float4x4,
-                depth: 0
-            )
+            try? visitor.walk(from: root)
         }
         return SceneTargets(transforms: visitor.transforms, names: visitor.names)
     }
@@ -271,24 +241,35 @@ nonisolated private struct CollisionTargetTransformVisitor {
     var transforms: [Int: float4x4] = [:]
     /// Block index -> node name. The bone name on a character skeleton.
     var names: [Int: String] = [:]
-    var path: Set<Int> = []
 
-    mutating func visit(ref: Int32, parent: float4x4, depth: Int) throws {
-        guard ref >= 0 else { return }
-        let index = Int(ref)
-        guard index < file.blocks.count, depth <= 64, path.insert(index).inserted else {
+    mutating func walk(from root: Int32) throws {
+        var stack = NIFGraphStack(root: root)
+        while let visit = stack.next() {
+            try step(visit, stack: &stack)
+        }
+    }
+
+    private mutating func step(
+        _ visit: NIFGraphStack.Pending,
+        stack: inout NIFGraphStack
+    ) throws {
+        guard visit.ref >= 0 else { return }
+        let index = Int(visit.ref)
+        guard index < file.blocks.count, visit.depth <= 64, stack.enter(index) else {
             return
         }
-        defer { path.remove(index) }
+        let parent = visit.parent
         let block = file.blocks[index]
         if NIFNode.traversedTypes.contains(block.typeName) {
             let node = try NIFNode(data: block.data, header: file.header)
             let world = parent * node.object.localTransform
             transforms[index] = world
             names[index] = node.object.name
-            for child in node.children {
-                try visit(ref: child, parent: world, depth: depth + 1)
-            }
+            stack.push(
+                children: node.children,
+                parent: world,
+                depth: visit.depth + 1
+            )
         } else if block.typeName == "BSTriShape" {
             let shape = try NIFTriShape(data: block.data, header: file.header)
             transforms[index] = parent * shape.object.localTransform

@@ -30,7 +30,7 @@ nonisolated extension NIFFile {
     func particleSystems() throws -> [ParticleSystemDefinition] {
         var walker = ParticleWalker(file: self)
         for root in roots {
-            try walker.visit(ref: root, parent: matrix_identity_float4x4, depth: 0)
+            try walker.walk(from: root)
         }
         return walker.systems
     }
@@ -38,40 +38,41 @@ nonisolated extension NIFFile {
     fileprivate struct ParticleWalker {
         let file: NIFFile
         var systems: [ParticleSystemDefinition] = []
-        /// Recursion stack for cycle detection; a set because legit graphs may
-        /// reuse a subtree under two parents.
-        var pathStack: Set<Int> = []
 
-        mutating func visit(ref: Int32, parent: float4x4, depth: Int) throws {
-            guard ref >= 0 else { return } // -1 = null ref
-            let index = Int(ref)
-            guard index < file.blocks.count else {
-                throw NIFError.malformed(
-                    "block ref \(ref) out of range (\(file.blocks.count) blocks)"
-                )
-            }
-            guard depth <= NIFFile.maxParticleGraphDepth else {
-                throw NIFError.malformed(
-                    "scene graph deeper than \(NIFFile.maxParticleGraphDepth)"
-                )
-            }
-            guard pathStack.insert(index).inserted else {
-                throw NIFError.malformed("scene graph cycle at block \(index)")
-            }
-            defer { pathStack.remove(index) }
-
-            let block = file.blocks[index]
-            if NIFNode.traversedTypes.contains(block.typeName) {
-                let node = try NIFNode(data: block.data, header: file.header)
-                let world = parent * node.object.localTransform
-                for child in node.children {
-                    try visit(ref: child, parent: world, depth: depth + 1)
+        mutating func walk(from root: Int32) throws {
+            var stack = NIFGraphStack(root: root)
+            while let visit = stack.next() {
+                guard visit.ref >= 0 else { continue } // -1 = null ref
+                let index = Int(visit.ref)
+                guard index < file.blocks.count else {
+                    throw NIFError.malformed(
+                        "block ref \(visit.ref) out of range (\(file.blocks.count) blocks)"
+                    )
                 }
-            } else if NIFFile.particleSystemTypes.contains(block.typeName) {
-                try systems.append(decodeSystem(block: block, parent: parent))
+                guard visit.depth <= NIFFile.maxParticleGraphDepth else {
+                    throw NIFError.malformed(
+                        "scene graph deeper than \(NIFFile.maxParticleGraphDepth)"
+                    )
+                }
+                guard stack.enter(index) else {
+                    throw NIFError.malformed("scene graph cycle at block \(index)")
+                }
+
+                let block = file.blocks[index]
+                if NIFNode.traversedTypes.contains(block.typeName) {
+                    let node = try NIFNode(data: block.data, header: file.header)
+                    let world = visit.parent * node.object.localTransform
+                    stack.push(
+                        children: node.children,
+                        parent: world,
+                        depth: visit.depth + 1
+                    )
+                } else if NIFFile.particleSystemTypes.contains(block.typeName) {
+                    try systems.append(decodeSystem(block: block, parent: visit.parent))
+                }
+                // Any other type is a leaf we do not collect (geometry, shader
+                // properties, controllers…): subtree ends.
             }
-            // Any other type is a leaf we do not collect (geometry, shader
-            // properties, controllers…): subtree ends.
         }
 
         private func decodeSystem(
