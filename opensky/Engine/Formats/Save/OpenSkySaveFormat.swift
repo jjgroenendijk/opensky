@@ -116,6 +116,20 @@ nonisolated enum OpenSkySaveFormat {
         /// restores a world whose quests run with empty aliases, and a session
         /// that filled none writes no chunk at all.
         static let questAliases = "QALS"
+        /// Actor values (issue #194): one entry per actor whose current
+        /// health, magicka or stamina deviates from a full baseline.
+        ///
+        /// Additive and split out of `RDLT` for the same reason `INVN`, `SPWN`,
+        /// `QSTS` and `QALS` are: a component kind inside `RDLT` is versioned
+        /// by `formatVersion`, so an older build would refuse every save
+        /// containing a wounded actor instead of loading the rest of the world
+        /// with everyone at full health. A session in which nothing took damage
+        /// writes no chunk at all.
+        ///
+        /// Current values only. The maximums are a pure function of the RACE,
+        /// CLAS and NPC_ records, so writing them would let a save carry a
+        /// number a changed load order no longer authors.
+        static let actorValues = "AVAL"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.
@@ -221,6 +235,11 @@ nonisolated enum OpenSkySaveFormat {
     /// and a plugin key with an empty name (1 + 2 + 4). A generated key is
     /// longer, so this is a lower bound rather than the size.
     static let minimumQuestAliasFillSize = 11
+    /// Smallest number of bytes a single `AVAL` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and the three
+    /// current-value floats (12). A generated key or a named cell is longer, so
+    /// this is a lower bound.
+    static let minimumActorValueEntrySize = 20
 }
 
 /// On-disk tag of a component slot inside `RDLT`.
@@ -230,13 +249,14 @@ nonisolated enum OpenSkySaveFormat {
 /// detail that may change while these byte values may not.
 ///
 /// Optional because not every component slot travels in `RDLT`. `.inventory`,
-/// `.spawn`, `.quest` and `.questAliases` have no tag at all: each is carried
-/// by its own chunk so that an older build skips it rather than refusing the
-/// file (see `ChunkTag.inventories`, `ChunkTag.spawnedReferences`,
-/// `ChunkTag.questStates` and `ChunkTag.questAliases`). A nil tag is the
-/// encoder's instruction to leave the component out of `RDLT`, and leaving
-/// `init?(saveTag:)` without a case for it is what keeps the decoder's "an
-/// unknown component kind in `RDLT` is an error" rule intact.
+/// `.spawn`, `.quest`, `.questAliases` and `.actorValues` have no tag at all:
+/// each is carried by its own chunk so that an older build skips it rather than
+/// refusing the file (see `ChunkTag.inventories`, `ChunkTag.spawnedReferences`,
+/// `ChunkTag.questStates`, `ChunkTag.questAliases` and
+/// `ChunkTag.actorValues`). A nil tag is the encoder's instruction to leave the
+/// component out of `RDLT`, and leaving `init?(saveTag:)` without a case for it
+/// is what keeps the decoder's "an unknown component kind in `RDLT` is an
+/// error" rule intact.
 nonisolated extension WorldStateComponentKind {
     var saveTag: UInt8? {
         switch self {
@@ -244,7 +264,7 @@ nonisolated extension WorldStateComponentKind {
         case .transform: 1
         case .activation: 2
         case .deletion: 3
-        case .inventory, .spawn, .quest, .questAliases: nil
+        case .inventory, .spawn, .quest, .questAliases, .actorValues: nil
         }
     }
 

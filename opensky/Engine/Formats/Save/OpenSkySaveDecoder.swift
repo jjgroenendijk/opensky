@@ -49,6 +49,11 @@ nonisolated enum OpenSkySaveDecoder {
         /// table, so every running quest restores with empty aliases — which is
         /// also what a save written before that chunk existed means.
         var questAliases: [SaveQuestAliasEntry] = []
+        /// Absent `AVAL` chunk (issue #194) means no actor's values deviated
+        /// from a full baseline, so everyone re-derives their maximums from
+        /// records and starts full — which is also what a save written before
+        /// that chunk existed means.
+        var actorValues: [SaveActorValueEntry] = []
     }
 
     static func decode(_ data: Data) throws -> OpenSkySaveFile {
@@ -69,14 +74,17 @@ nonisolated enum OpenSkySaveDecoder {
             metadata: metadata,
             fingerprint: fingerprint,
             snapshot: WorldStateSnapshot(
-                entries: OpenSkySaveQuestDecoder.mergeAliases(
-                    body.questAliases,
-                    into: OpenSkySaveQuestDecoder.merge(
-                        body.quests,
-                        into: OpenSkySaveSpawnDecoder.merge(
-                            body.spawns,
-                            into: OpenSkySaveInventoryDecoder.merge(
-                                body.inventories, into: body.entries
+                entries: OpenSkySaveActorValueDecoder.merge(
+                    body.actorValues,
+                    into: OpenSkySaveQuestDecoder.mergeAliases(
+                        body.questAliases,
+                        into: OpenSkySaveQuestDecoder.merge(
+                            body.quests,
+                            into: OpenSkySaveSpawnDecoder.merge(
+                                body.spawns,
+                                into: OpenSkySaveInventoryDecoder.merge(
+                                    body.inventories, into: body.entries
+                                )
                             )
                         )
                     )
@@ -177,6 +185,23 @@ nonisolated enum OpenSkySaveDecoder {
             body.scripts = try OpenSkySaveScriptDecoder.decodeScripts(payload)
         case OpenSkySaveFormat.ChunkTag.papyrusTimers:
             body.timers = try OpenSkySaveTimerDecoder.decodeTimers(payload)
+        default:
+            // The gameplay-state chunks, in their own pass: the switch above is
+            // at the strict cyclomatic-complexity limit, and a new chunk tag
+            // belongs beside its siblings rather than pushing this one over.
+            try applyGameplay(tag: tag, payload: payload, to: &body)
+        }
+    }
+
+    /// The per-subsystem chunks that hang off `WorldStateSnapshot` entries.
+    /// An unknown tag falls through here and is skipped by its declared length,
+    /// which is the whole tolerance rule the chunk stream exists to provide.
+    private static func applyGameplay(
+        tag: String,
+        payload: Data,
+        to body: inout Body
+    ) throws {
+        switch tag {
         case OpenSkySaveFormat.ChunkTag.inventories:
             body.inventories = try OpenSkySaveInventoryDecoder.decodeInventories(payload)
         case OpenSkySaveFormat.ChunkTag.spawnedReferences:
@@ -185,6 +210,8 @@ nonisolated enum OpenSkySaveDecoder {
             body.quests = try OpenSkySaveQuestDecoder.decodeQuestStates(payload)
         case OpenSkySaveFormat.ChunkTag.questAliases:
             body.questAliases = try OpenSkySaveQuestDecoder.decodeQuestAliases(payload)
+        case OpenSkySaveFormat.ChunkTag.actorValues:
+            body.actorValues = try OpenSkySaveActorValueDecoder.decodeActorValues(payload)
         default:
             break // Unknown chunk: skipped by its declared length.
         }

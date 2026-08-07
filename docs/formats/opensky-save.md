@@ -35,6 +35,7 @@ byte length followed by that many UTF-8 bytes. The file extension is `osav`.
 * `SPWN` entry layout
 * `QSTS` entry layout
 * `QALS` entry layout
+* `AVAL` entry layout
 * Version policy
 * Defensive decoding
 * Where saves live and how they are written
@@ -151,8 +152,8 @@ A chunk whose declared length runs past the end of the file is
 `chunkBoundsViolation(tag:)`. A chunk whose tag this build does not know is skipped using
 that declared length, which is what makes a newer build's save loadable in an older one.
 
-Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR`, `INVN`, `SPWN`, `QSTS` and
-`QALS` were added additively afterwards.
+Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR`, `INVN`, `SPWN`, `QSTS`,
+`QALS` and `AVAL` were added additively afterwards.
 
 `GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
 any other size is `invalidValue`.
@@ -546,6 +547,43 @@ entry count against `minimumQuestAliasEntrySize` (11 bytes) and the fill count a
 
 An empty table is deliberately never written, and a quest the chunk does not mention restores
 with empty aliases — which is exactly the state a quest that has not started has.
+
+## `AVAL` entry layout
+
+`AVAL` — actor values (issue #194), one entry per actor whose current health, magicka or
+stamina deviates from a full baseline. Additive and split out of `RDLT` for the same reason
+`INVN`, `SPWN`, `QSTS` and `QALS` are: an older build would otherwise refuse every save
+containing a wounded actor instead of loading the rest of the world with everyone at full
+health. A session in which nothing took damage writes no chunk at all.
+
+| type   | field      | notes                              |
+| ------ | ---------- | ---------------------------------- |
+| uint32 | entryCount | number of entries that follow      |
+| bytes  | entries    | `entryCount` entries, layout below |
+
+Each entry:
+
+| type    | field   | notes                                              |
+| ------- | ------- | -------------------------------------------------- |
+| key     | key     | the actor's key, tagged as in `RDLT`                |
+| cell    | cell    | attribution cell, tagged as in `RDLT`               |
+| float32 | health  | current value                                       |
+| float32 | magicka | current value                                       |
+| float32 | stamina | current value                                       |
+
+The cell travels with each entry, unlike a quest entry: an actor is a placed reference, and
+its cell is what the store's per-cell dirty counts are keyed by.
+
+**Current values only.** The maximums are a pure function of the RACE, CLAS and NPC_ records
+(see [actor values](/engine/actor-values.md)), so writing them would let a save carry a
+number a changed load order no longer authors. A restored actor re-derives its maximums and
+keeps its stored current value, which the first mutation clamps into the new range.
+
+The three floats are written in `ActorValueKind` order, which is the order every other
+surface in the subsystem uses. A non-finite or negative value on disk is normalized to zero
+by `ActorValueState.init` rather than rejected — the invariant belongs to the type, and one
+nonsensical float is not a reason to lose a whole save. The entry count is validated against
+`minimumActorValueEntrySize` (20 bytes) before storage is reserved.
 
 ## Version policy
 

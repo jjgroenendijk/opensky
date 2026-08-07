@@ -32,6 +32,7 @@ identity scheme, the per-cell index built from it, and the store above both.
 * Spawned references — objects the running game placed
 * Quest state — running flags, stages and objectives
 * Quest aliases — filling, lifetime, and the seams that read them
+* Actor values — current health, magicka and stamina
 * Verification — `World > Runtime State` and the M10.1 acceptance record
 * Verification — the M10.2 panel surfaces and the M10 acceptance record
 
@@ -216,6 +217,9 @@ The initial component set:
 | `ReferenceDeletionState` | `.deletion` | `isDeleted` at runtime, which is not the record header's `deleted` flag |
 | `ReferenceInventoryState` | `.inventory` | every item one owner holds, plus its equipped set (issue #176, M12.1.2) |
 | `ReferenceSpawnState` | `.spawn` | an object the running game placed: its base, cell, placement, scale and stack count (issue #177, M12.1.3) |
+| `QuestRuntimeState` | `.quest` | one quest's running and completed flags, reached stages and objective display state (issue #182, M13.2) |
+| `QuestAliasState` | `.questAliases` | one quest's filled reference aliases (issue #183, M13.2) |
+| `ActorValueState` | `.actorValues` | one actor's current health, magicka and stamina; the maximums re-derive from records (issue #194, item 15.3) |
 
 `ReferenceActivationState` has a production writer since issue #172: the Papyrus activation
 bridge subscribes to `CellStreamer.onInteraction`, maps the event's `FormID` to a
@@ -1150,6 +1154,21 @@ failure, and the save round trip with rebinding. The env-gated
 `QuestAliasRealDataTests.swift` fills the target quest `MGRArniel01` against the real install
 and writes the corpus census to gitignored `logs/`.
 
+## Actor values — current health, magicka and stamina
+
+`ActorValueState` (issue #194, roadmap item 15.3) is the ninth component and the third to
+follow the full-override model inventory established: an untouched actor has no component at
+all and reads a full baseline; the first mutation materializes that baseline and everything
+afterwards edits it.
+
+It holds **current values only**. The maximums are a pure function of the RACE, CLAS and
+NPC_ records, so storing them would let a save keep a number a changed load order no longer
+authors — the same rule the inventory baseline and the quest baseline already follow. That
+is also why it travels in its own `AVAL` save chunk rather than inside `RDLT`.
+
+The derivation, the regeneration step, the HUD binding and the panel seam are all documented
+on their own page: [actor values](/engine/actor-values.md).
+
 ## Verification — `World > Runtime State` and the M10.1 acceptance record
 
 Issue #162 (item 10.1.5) is the milestone acceptance surface for everything above. The
@@ -1334,6 +1353,8 @@ Local A/B (optional, never committed): none
 * [Record decoders](/formats/records.md) — the CONT, MISC, WEAP and ARMO layouts behind
   `ItemDefinitionStore`, and [actor records](/formats/actors.md) — the OTFT and LVLI
   decodes plus the template chain an inventory baseline resolves through.
+* [Actor values](/engine/actor-values.md) — the ninth component, its derivation from RACE,
+  CLAS and NPC_ records, and the `AVAL` chunk that persists it.
 * [Main-app UI framework + placement](/tools/app-ui.md) and
   [Sidebar verification convention](/tools/sidebar-acceptance.md) — how `World > Runtime
   State` was registered and what its acceptance record must contain.

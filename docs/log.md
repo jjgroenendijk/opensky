@@ -4,6 +4,54 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-07
 
+* **Actors have health, magicka and stamina, and the HUD bars are live (issue #194)**: the
+  M8 meters had been a static placeholder driven once at startup with `.full`, because
+  nothing in the engine knew what an actor's health was. Item 15.3 supplies it end to end.
+
+  The derivation is the part worth recording. The Creation Kit wiki gives the shape — base
+  is "determined by their Race, Class, and Level" and calculated is "Base + Offset" — and
+  UESP CLAS gives the arithmetic, including the exact apportionment method for the per-level
+  points: complete sets first, then the leftover one at a time in decreasing weight order
+  with ties going to stamina, magicka, health. The two constants are the `iAVDhmsLevelUp`
+  and `fNPCHealthLevelBonus` GMSTs, read from the load order rather than hardcoded.
+  `ActorBase` now decodes the ACBS stat words it had been skipping, `Race` decodes the DATA
+  starting attributes and regen floats, and a new `CharacterClass` decodes CLAS attribute
+  weights.
+
+  Citations were not taken on trust. The Creation Kit bakes its own calculated triple into
+  every NPC_'s DNAM, so the real-data test derives values for all 4297 auto-calc records in
+  `Skyrim.esm` and compares against them: 4271 match exactly. That census is also what
+  settled an undocumented question. When `useTraits` and `useStats` resolve to different
+  records, which race feeds the starting attributes? Neither source says. With the traits
+  race, 61 records disagreed with their own DNAM; with the stats record's race, 26 — and
+  every one of those 26 inherits from `EncBandit04TemplateMelee`, whose DNAM contradicts its
+  own ACBS while its sibling `EncBandit03TemplateMelee` matches the formula exactly. The
+  Creation Kit documents that a baked value goes stale when an offset changes without the
+  Stats tab being refreshed, so the formula is right and one vanilla record is not. The test
+  pins the count at 26 rather than tolerating a range.
+
+  The runtime side follows the inventory and quest precedent exactly: `ActorValueState` is a
+  ninth `WorldStateComponentKind` holding **current values only**, because the maximums are
+  a pure function of the records and persisting them would let a save carry a number a
+  changed load order no longer authors. It travels in its own additive `AVAL` save chunk for
+  the reason every gameplay chunk since `INVN` has: a component kind inside `RDLT` is
+  versioned by `formatVersion`, so an older build would refuse the whole save instead of
+  loading the world with everyone at full health. `hasZeroHealth`, which item 15.6 consumes,
+  is derived rather than stored — a stored flag and a stored health can disagree, and after
+  a round trip nothing could say which was right.
+
+  Regeneration is percent-of-maximum per second straight off RACE DATA, on a 1/60 s fixed
+  step chained onto the same `Renderer.onWorldUpdate` closure the Papyrus VM uses. That is
+  what makes the menu-pause rule apply for free: a paused frame delivers delta 0, and a zero
+  delta advances nothing. Health deliberately does not regenerate at zero, because whether a
+  dead actor comes back is 15.6's decision and not this layer's.
+
+  No SWF work was needed for the meters. `HUDMeterBinding` is an engine type that turns
+  current values plus maximums into the existing `HUDMeterValues` and gates on change, so
+  the acceptance test drives player damage and watches the bars move with no window and no
+  SWF runtime in the picture. `ActorValueControlProviding` specifies the panel seam now; the
+  panel ships with the M15 gate. New probe: `openskycli actor-values`.
+
 * **Simulated clutter is drawn where the solver has it (issue #193)**: the dynamic
   rigid-body world was complete and invisible. Collision, sweeps, the player's shove and the
   resting-transform persistence all ran on live poses, but the drawn mesh came from the

@@ -36,6 +36,13 @@ extension OpenSkyCLI {
                                   FaceGen paths, reason-tagged skips.
                                   --npc resolves one base NPC_ directly
                                   (no ACHR needed)
+      actor-values (--npc <formid-or-edid> | --race <formid-or-edid>)
+                   [--player-level <n>]
+                                  Derive base health/magicka/stamina for one
+                                  NPC_ through its template chain, or report
+                                  one RACE's starting attributes and regen
+                                  rates. --player-level scales PC-level-mult
+                                  actors
       collision [--worldspace <edid>] [--x <n>] [--y <n>] [--radius <n>]
                                   Sweep embedded NIF collision for every unique
                                   model used by center cell; report placed

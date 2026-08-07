@@ -58,6 +58,13 @@ nonisolated enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendab
     /// its own because the two have different lifetimes: stage and objective
     /// state survives a stop, while the alias table is cleared by one.
     case questAliases
+    /// One actor's current health, magicka and stamina (issue #194). The value
+    /// type is `ActorValueState` in
+    /// `opensky/Actors/ActorValueComponent.swift`. Current values only: the
+    /// maximums re-derive from the RACE, CLAS and NPC_ records through
+    /// `ActorValueResolver`, exactly as an inventory baseline re-derives from
+    /// its CNTO list.
+    case actorValues
 }
 
 /// A value that can occupy one component slot.
@@ -90,6 +97,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
     case spawn(ReferenceSpawnState)
     case quest(QuestRuntimeState)
     case questAliases(QuestAliasState)
+    case actorValues(ActorValueState)
 
     var kind: WorldStateComponentKind {
         switch self {
@@ -101,6 +109,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
         case .spawn: .spawn
         case .quest: .quest
         case .questAliases: .questAliases
+        case .actorValues: .actorValues
         }
     }
 }
