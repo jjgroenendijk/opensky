@@ -103,7 +103,7 @@ struct FootstepRealDataTests {
         #expect(!answerable.isEmpty)
 
         let bridge = try Self.drivenBridge(root: root)
-        let fired = Set(bridge.graphEvents.drain())
+        let fired = Set(bridge.graphEvents.drain(bridge.footstepEventConsumer))
 
         #expect(!fired.isEmpty, "the vanilla graph fired no named events at all")
         let footsteps = fired.intersection(answerable)

@@ -116,3 +116,37 @@ extension FakeWorldProviders {
         set { firstPerson.armsEnabled = newValue }
     }
 }
+
+/// The melee half of the fake's stored state (issue #195). Held beside the
+/// locomotion state because the Melee section sits under the same destination
+/// and both are driven by the same fake in the registry tests.
+struct FakeMeleeState {
+    var snapshot = MeleeCombatSnapshot.unavailable
+    var isWeaponDrawn = false
+    var attackRequests = 0
+    var traceClearCount = 0
+    var lastActionText = "No melee action yet."
+}
+
+extension FakeWorldProviders {
+    var meleeCombatSnapshot: MeleeCombatSnapshot {
+        melee.snapshot
+    }
+
+    var isWeaponDrawn: Bool {
+        get { melee.isWeaponDrawn }
+        set { melee.isWeaponDrawn = newValue }
+    }
+
+    @discardableResult
+    func requestMeleeAttack() -> String {
+        melee.attackRequests += 1
+        melee.lastActionText = "Requested one swing."
+        return melee.lastActionText
+    }
+
+    func clearMeleeTrace() {
+        melee.traceClearCount += 1
+        melee.lastActionText = "Cleared the hit trace."
+    }
+}

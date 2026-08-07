@@ -79,6 +79,15 @@ nonisolated final class ItemDefinitionStore {
     let definitions: [UInt32: ItemDefinition]
     /// CONT decodes, keyed by raw FormID.
     let containers: [UInt32: Container]
+    /// WEAP decodes, keyed by raw FormID (issue #195).
+    ///
+    /// Kept beside the unified views rather than folded into them: melee
+    /// combat needs DNAM `reach`, `speed` and `stagger` and the INAM impact
+    /// link, and `ItemDefinition` deliberately carries only what every family
+    /// has in common. A second dictionary over the same records costs one
+    /// pointer per weapon and keeps the common view from growing a
+    /// weapon-shaped hole every other family fills with nil.
+    let weapons: [UInt32: Weapon]
 
     /// Records that failed to decode, by family — surfaced so the real-data
     /// sweep can assert zero rather than silently indexing fewer items.
@@ -108,6 +117,9 @@ nonisolated final class ItemDefinitionStore {
         containers = Self.records(of: "CONT", in: file)
             .compactMap { try? Container(record: $0, localized: localized) }
             .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
+        weapons = Self.records(of: "WEAP", in: file)
+            .compactMap { try? Weapon(record: $0, localized: localized) }
+            .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
     }
 
     func definition(_ id: FormID) -> ItemDefinition? {
@@ -116,6 +128,12 @@ nonisolated final class ItemDefinitionStore {
 
     func container(_ id: FormID) -> Container? {
         containers[id.rawValue]
+    }
+
+    /// The decoded WEAP behind an equipped item, or nil when the item is not a
+    /// weapon.
+    func weapon(_ id: FormID) -> Weapon? {
+        weapons[id.rawValue]
     }
 
     /// Every definition of one family, in FormID order — a stable listing for

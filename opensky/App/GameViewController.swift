@@ -175,6 +175,12 @@ final class GameViewController: NSViewController {
     /// extensions cannot add state.
     var actorValues = ActorValueBridgeState()
 
+    /// Melee combat: the swing runtime, the WEAP index it reads combat data
+    /// out of, and the panel's last outcome line (issue #195). The
+    /// implementation lives in `GameViewControllerMelee.swift`; stored here
+    /// because extensions cannot add state.
+    var melee = MeleeBridgeState()
+
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))
         gameView.input = cameraInput

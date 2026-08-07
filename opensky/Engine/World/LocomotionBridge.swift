@@ -104,6 +104,14 @@ nonisolated final class LocomotionBridge {
     /// step in that frame reads the same value.
     var intent: LocomotionIntent = .still
 
+    /// This frame's melee intent, split out of `intent` because nothing in the
+    /// fixed step reads it (issue #195). Attacking does not move the capsule —
+    /// the graph does that, if its attack clips carry travel — so the melee
+    /// runtime consumes this at frame rate and the locomotion step never sees
+    /// it. Published here rather than routed separately so there is still one
+    /// input path from `CameraInputState` to the world.
+    private(set) var meleeIntent: MeleeIntent = .still
+
     /// A gait held regardless of what the player is pressing, or nil for the
     /// ordinary resolution (issue #191). This is the dev control behind
     /// `World > Player & Locomotion > Dev Controls`, and it exists so a state
@@ -123,7 +131,21 @@ nonisolated final class LocomotionBridge {
     /// third-person graph feeds it: both graphs run the same locomotion clips
     /// and therefore fire the same triggers, so draining both would play every
     /// footstep twice. See LocomotionGraphEventQueue.swift.
-    let graphEvents = LocomotionGraphEventQueue()
+    let graphEvents: LocomotionGraphEventQueue
+    /// The footstep director's cursor into `graphEvents`, and the melee
+    /// runtime's (issue #195). Two named cursors rather than one shared drain,
+    /// because both consumers act on the same stream and a drain-once queue
+    /// would give whichever ran first the whole batch.
+    ///
+    /// Registered in `init` rather than lazily, and owned by the bridge rather
+    /// than by the consumers. Eagerly, because the queue drops what no
+    /// registered cursor can ever read, so a cursor created on first drain
+    /// would find the queue already empty. Owned here, because the renderer
+    /// holds the bridge as a settable property and a cursor stored beside it
+    /// would silently point into the previous bridge's queue after a
+    /// reassignment.
+    let footstepEventConsumer: LocomotionGraphEventQueue.Consumer
+    let meleeEventConsumer: LocomotionGraphEventQueue.Consumer
     private var previousYaw: Float?
     private var wasMoving = false
     private var wasSprinting = false
@@ -155,6 +177,10 @@ nonisolated final class LocomotionBridge {
         graph: BehaviorGraphInstance? = nil,
         sampleWater: ((SIMD2<Float>) -> Float?)? = nil
     ) {
+        let events = LocomotionGraphEventQueue()
+        graphEvents = events
+        footstepEventConsumer = events.addConsumer()
+        meleeEventConsumer = events.addConsumer()
         self.configuration = configuration
         self.graph = graph
         self.sampleWater = sampleWater
@@ -173,6 +199,11 @@ nonisolated final class LocomotionBridge {
             sprint: input.sprint,
             sneak: input.sneak,
             jump: input.jump
+        )
+        meleeIntent = MeleeIntent(
+            attack: input.attack,
+            block: input.block,
+            toggleWeaponDrawn: input.toggleWeaponDrawn
         )
         if input.jump {
             pendingJump = true
@@ -261,6 +292,7 @@ nonisolated final class LocomotionBridge {
         pendingJump = false
         graphEvents.clear()
         intent = .still
+        meleeIntent = .still
         status = LocomotionStatus(
             graphAvailable: graph != nil,
             firstPersonGraphAvailable: firstPersonGraph != nil

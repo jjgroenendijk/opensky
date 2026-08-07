@@ -69,7 +69,7 @@ extension Renderer {
     /// audio is switched on. Footsteps are heard at the capsule's feet rather
     /// than at the listener, which is what makes third person sound right.
     private func routeFootstepEvents() {
-        let events = locomotion.graphEvents.drain()
+        let events = locomotion.graphEvents.drain(locomotion.footstepEventConsumer)
         guard movementMode.isPlayerControlled else { return }
         footstepDirector?.handleGraphEvents(
             events,

@@ -59,7 +59,7 @@ nonisolated extension CellSceneProvider {
 nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding,
     AudioDataProviding, MovementConfigurationProviding, GlobalDataProviding,
     ScriptDataProviding, ItemDataProviding, BarterDataProviding, QuestDataProviding,
-    ActorValueDataProviding
+    ActorValueDataProviding, CombatDataProviding
 {
     let builder: CellSceneBuilder
     let worldspaceEditorID: String
@@ -96,6 +96,9 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     /// GMST-derived `fBarterMin` and `fBarterMax` at the milestone's fixed
     /// Speech value (issue #179), defaulting to the documented vanilla numbers.
     var barterPricing: BarterPricing = .vanilla
+    /// GMST-derived combat distance and block factors (issue #195),
+    /// defaulting to the documented vanilla numbers on a synthetic scene.
+    var combatSettings: CombatSettings = .synthetic
 
     /// Compiled-script source for the Papyrus world runtime; nil when the
     /// builder was constructed without a file system (synthetic scenes).

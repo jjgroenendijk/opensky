@@ -32,6 +32,7 @@ typealias WorldControlProviders = AnimationControlProviding & AudioControlProvid
     & HUDControlProviding & InventoryEquipmentControlProviding
     & InventoryMenuControlProviding & ItemControlProviding
     & JournalControlProviding
+    & MeleeCombatControlProviding
     & ParticleControlProviding
     & PlayerLocomotionControlProviding
     & PrecipitationControlProviding
@@ -167,6 +168,7 @@ enum DestinationRegistry {
                 let panel = PlayerLocomotionPanelViewController()
                 panel.provider = context.providers
                 panel.cameraProvider = context.providers
+                panel.meleeProvider = context.providers
                 let providers = context.providers
                 panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
                 return panel

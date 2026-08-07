@@ -454,6 +454,8 @@ Reference: xEdit `wbDefinitionsTES5.pas` `wbEFID` line 3832, `wbEFIT` 3834,
 | EAMT  | uint16    | `enchantmentCharge`                         |
 | ETYP  | formID    | `equipType` (EQUP)                          |
 | CNAM  | formID    | `template` — another WEAP                   |
+| INAM  | formID    | `impactDataSet` (IPDS) — normal swing impact |
+| BIDS  | formID    | `blockBashImpactDataSet` (IPDS) — block bash |
 
 DNAM offsets read: `00` uint8 animation type (0 other, 1 one-hand sword ... 9 crossbow),
 `04` float32 speed, `08` float32 reach, `0C` uint16 flags (0x08 can't drop, 0x20 embedded,
@@ -474,7 +476,16 @@ Any other length decodes as no critical data rather than being force-fit.
 Reference: UESP
 "[.../WEAP](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/WEAP)"; xEdit
 `wbDefinitionsTES5.pas` record at line 10499, DATA 10530, DNAM 10535, CRDT 10604.
-Skipped: VMAD, DEST, MOD3 scope model, BIDS/BAMT/INAM impact links, the seven SNDR attack
+DNAM `reach` is a multiplier, not a distance: UESP states the melee reach formula as
+`fCombatDistance * NPCScale * WeaponReach`, which is what
+[melee combat](/engine/melee-combat.md) resolves it through.
+
+INAM and BIDS are the two IPDS links a landed hit resolves its impact sound through, added
+by roadmap item 15.4. UESP names INAM "Normal weapon swing impact set" and BIDS "Block bash
+impact data set", so an ordinary swing reads INAM and only a shield bash reads BIDS; a null
+link means the weapon names no set and the hit is silent, which is normal vanilla data.
+
+Skipped: VMAD, DEST, MOD3 scope model, BAMT bash material, the seven SNDR attack
 sounds, NNAM, WNAM, VNAM.
 
 ## AMMO -> Ammunition
