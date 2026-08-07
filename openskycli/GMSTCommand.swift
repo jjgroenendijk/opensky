@@ -15,6 +15,8 @@ enum GMSTCommand {
             try runMovement(context: context)
         case "combat":
             try runCombat(context: context)
+        case "archery":
+            try runArchery(context: context)
         default:
             throw CLIError.usage("unknown gmst subject: \(subject)")
         }
@@ -26,6 +28,16 @@ enum GMSTCommand {
         let file = try context.loadSkyrimESM()
         let store = GameSettingLoader.load(root: context.root, baseFile: file)
         for row in CombatSettings.resolve(store: store).report {
+            print(Self.line(name: row.editorID, setting: row.setting, units: ""))
+        }
+    }
+
+    /// The three settings `ArcherySettings` resolves (issue #196), with the
+    /// plugin or the UESP-documented fallback each came from.
+    private static func runArchery(context: CLIContext) throws {
+        let file = try context.loadSkyrimESM()
+        let store = GameSettingLoader.load(root: context.root, baseFile: file)
+        for row in ArcherySettings.resolve(store: store).report {
             print(Self.line(name: row.editorID, setting: row.setting, units: ""))
         }
     }

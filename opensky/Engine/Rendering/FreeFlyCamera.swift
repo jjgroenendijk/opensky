@@ -37,6 +37,10 @@ nonisolated struct CameraInput {
     /// One-shot attack request, latched like jump (issue #195). Walk mode
     /// only; fly mode ignores it.
     var attack = false
+    /// The same button as a *level* rather than an edge (issue #196). A melee
+    /// swing is a press and a bow draw is a hold, so the same binding has to
+    /// report both: melee reads `attack`, archery reads this.
+    var attackHeld = false
     /// Block key held, a level rather than an edge — the melee runtime raises
     /// `blockStart` and `blockStop` on the changes.
     var block = false

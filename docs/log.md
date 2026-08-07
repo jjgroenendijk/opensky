@@ -4,6 +4,87 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-07
 
+* **Archery and projectiles (issue #196)**: a shot from the held mouse button to the arrow
+  standing in the wall. `PROJ` is parsed — the milestone's one new ESM record — a bow is
+  drawn and loosed through census-named graph events, and the arrow it launches flies on the
+  same fixed step every dynamic body does, sweeps what it passes through, takes health off
+  what it hits, and is left standing there.
+
+  **What PROJ `gravity` means was measured, not assumed.** Neither UESP nor xEdit states the
+  member's unit, and the two candidate readings — a dimensionless multiplier over world
+  gravity, or an acceleration in units per second squared — are distinguishable by looking at
+  the data. Censusing all 134 PROJ records in `Skyrim.esm` by DATA `type` gives, for the 20
+  of type `arrow`, `gravity` bounded by 1 (min 0.000, max 0.350, mean 0.332, 19 of 20
+  non-zero) beside a `speed` running to the thousands (min 1000, max 15000, mean 3960). A
+  member bounded by one next to a member in the thousands is a scale, not an acceleration.
+  The arithmetic agrees outright: the vanilla iron arrow drops 18.90 world units over 1,000
+  units of level flight on the multiplier reading and 0.0135 units on the acceleration
+  reading — no drop at all, and a shipped record does not carry a member that does nothing on
+  every projectile it has. The whole-set figures deliberately do *not* show this and are
+  recorded anyway, because a handful of `missile` records carry values into the thousands
+  and drag the all-types mean to 149; the finding is about arrows.
+
+* **None of archery's three GMSTs is a GMST on this install.** `f1PArrowTiltUpAngle`,
+  `f3PArrowTiltUpAngle` and `fVisibleNavmeshMoveDist` resolve to the UESP-documented default
+  across the whole active load order, and neither `Skyrim_Default.ini` nor the four quality
+  presets beside it names any of them. They are engine defaults rather than data, so the
+  source string each reports is "UESP-documented default" — the truth rather than a degraded
+  answer — and the resolution is kept so a mod that does add the GMST wins and the readout
+  says which plugin did it. Two cross-checks fall out of the same page: UESP's "a weapon with
+  a reach of 1 has a reach of 141 distance units" is the same `fCombatDistance` melee
+  resolves to 141.000, and its note that projectile ranges run "in the tens of thousands" is
+  confirmed by every vanilla arrow carrying `range` 60000 — so `fVisibleNavmeshMoveDist` is
+  what actually bounds a shot, not the record.
+
+* **The flight model is exact rather than approximate, and that is deliberate.** With no drag
+  the motion under constant acceleration has a closed form, and `ProjectileFlight.step` is
+  that form over one `dt`. Semi-implicit Euler — what the dynamic-body solver uses — would
+  accumulate a half-a-dt-squared error per step, which is fine for a crate settling on a
+  floor and is not fine for a trajectory whose apex and impact point the acceptance gate
+  pins. The runtime accumulates frame time and advances on `WalkController.fixedTimeStep`, so
+  a shot fired from a given pose lands in the same place at 60 Hz as at 240 Hz.
+
+* **The impact query is split, and the split is the answer to the issue's open choice.**
+  Static geometry gets the 15.2 sphere sweep, because PROJ carries a `collisionRadius` and an
+  arrow is not infinitely thin; actor capsules get `MeleeHitDetector.closestApproach`, which
+  is exact against a capsule and costs one closed-form solve per actor per step. Each capsule
+  is tested against the whole step segment rather than at sampled points along it, so a thin
+  actor cannot slip between two samples of an arrow covering 30 units per substep. One impact
+  per projectile is enforced by the projectile ceasing to exist rather than by a filter.
+
+* **Stuck arrows ride the dropped-item channel.** A landed arrow is a `ReferenceSpawnState`
+  of its own AMMO at the impact transform — the one runtime-object channel this engine has —
+  capped at UESP's own vanilla number ("only 15 missed arrows or bolts can be present at
+  once, once a 16th has been fired the first one fired will despawn") and reconciled against
+  the streamer's resident set each frame, so an unloading cell takes its arrows with it.
+  In-flight projectiles are removed by any reset without resolving, which is what makes them
+  something a save/load does not persist. The honest limitation: the arrow is spawned at a
+  world transform rather than attached to an actor's bone, so an actor that walks away leaves
+  it where it landed.
+
+* **Damage is the documented combination.** UESP "Skyrim:Archery" gives
+  `(bow damage + arrow damage)` and the three-branch draw-time curve, and "Skyrim:Weapons"
+  gives the `(1 + skill/200)` term; the perk, enchantment and potion terms are M18's and
+  enter as one multiplier defaulting to 1. The page marks the middle draw branch approximate
+  and that caveat is carried rather than smoothed over. The draw fraction scales the launch
+  speed as well as the damage, so a snap shot is slower and drops further as well as hitting
+  softer.
+
+* **The left mouse button now reports an edge and a level.** Melee acts on the press and
+  archery on the hold; the view sets both from one mouse-down and clears only the level on
+  the mouse-up and on capture loss, so a button released outside the window cannot leave a
+  bow drawn forever. Which of the two acts is decided by WEAP DNAM `animationType == .bow`.
+  `LocomotionGraphEventQueue` gained its third cursor with no change to the queue, which is
+  what item 15.4's promotion from drain-once bought.
+
+  The vanilla player graph declares a home for all ten archery event names and for
+  `bBowDrawn`, with zero misses. What it does with a raised `bowDrawStart` is bounded by the
+  same unresolved `iRightHandType` encoding item 15.4 documented (issue #403), so until that
+  is settled the graph-driven path raises correctly and receives nothing back, and the
+  sidebar's Fire control is the way to put an arrow in the air. Both go through the same
+  `ArcheryRuntime.loose`. New sidebar section `World > Player & Locomotion > Archery`; new
+  CLI subjects `gmst archery` and `archery [--census]`.
+
 * **Melee: draw and sheath, attack and block, hit volumes, damage (issue #195)**: a swing
   from the key press to the health that comes off. The rule the whole item is built on is
   that the *graph* decides and the engine only asks: the engine raises `attackStart`, and

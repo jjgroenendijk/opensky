@@ -357,6 +357,7 @@ final class FakeWorldProviders: WorldControlProviders {
     /// MeleeCombatControlProviding (issue #195) state; the conformance lives
     /// beside the locomotion one.
     var melee = FakeMeleeState()
+    var archery = FakeArcheryState()
 }
 
 /// The inventory-menu half of the fake, in an extension so the class body

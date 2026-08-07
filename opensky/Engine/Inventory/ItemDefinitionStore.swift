@@ -88,6 +88,19 @@ nonisolated final class ItemDefinitionStore {
     /// pointer per weapon and keeps the common view from growing a
     /// weapon-shaped hole every other family fills with nil.
     let weapons: [UInt32: Weapon]
+    /// AMMO decodes, keyed by raw FormID (issue #196).
+    ///
+    /// Beside the unified views for the same reason the WEAP decodes are:
+    /// archery needs DATA `damage` and the PROJ link, and `ItemDefinition`
+    /// carries only what every family has in common.
+    let ammunition: [UInt32: Ammunition]
+    /// PROJ decodes, keyed by raw FormID (issue #196).
+    ///
+    /// PROJ is not a carryable family and has no `ItemDefinition` view at all,
+    /// but the record an arrow points at is exactly what a shot needs next, so
+    /// it is indexed here rather than in a second store that would have to be
+    /// built from the same file and handed around beside this one.
+    let projectiles: [UInt32: Projectile]
 
     /// Records that failed to decode, by family — surfaced so the real-data
     /// sweep can assert zero rather than silently indexing fewer items.
@@ -120,6 +133,12 @@ nonisolated final class ItemDefinitionStore {
         weapons = Self.records(of: "WEAP", in: file)
             .compactMap { try? Weapon(record: $0, localized: localized) }
             .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
+        ammunition = Self.records(of: "AMMO", in: file)
+            .compactMap { try? Ammunition(record: $0, localized: localized) }
+            .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
+        projectiles = Self.records(of: "PROJ", in: file)
+            .compactMap { try? Projectile(record: $0) }
+            .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
     }
 
     func definition(_ id: FormID) -> ItemDefinition? {
@@ -134,6 +153,24 @@ nonisolated final class ItemDefinitionStore {
     /// weapon.
     func weapon(_ id: FormID) -> Weapon? {
         weapons[id.rawValue]
+    }
+
+    /// The arrow `id` names, as everything a shot needs from it: its AMMO
+    /// damage and the flight profile of the PROJ it launches (issue #196).
+    ///
+    /// Nil when `id` is not ammunition, or when the PROJ it names is missing
+    /// or is not something the flight model can integrate — a hitscan record,
+    /// or one with no launch speed. An arrow that cannot fly is better
+    /// reported as no arrow than as a projectile that stands still where the
+    /// bow is.
+    func archeryAmmunition(_ id: FormID) -> ArcheryAmmunition? {
+        guard
+            let ammo = ammunition[id.rawValue],
+            let link = ammo.projectile,
+            let projectile = projectiles[link.rawValue],
+            projectile.isBallistic
+        else { return nil }
+        return ArcheryAmmunition(ammunition: ammo, projectile: projectile)
     }
 
     /// Every definition of one family, in FormID order — a stable listing for

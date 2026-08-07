@@ -82,6 +82,9 @@ extension GameViewController {
         // so both systems advance on the same simulated delta (issue #194).
         wireActorValues(provider: provider, renderer: renderer)
         wireMelee(provider: provider, renderer: renderer)
+        // After melee, so the two runtimes register their graph-event cursors
+        // in a fixed order and a trace read from either is reproducible.
+        wireArchery(provider: provider, renderer: renderer)
         renderer.terrainSampler = { [weak controller] position in
             controller?.sampleTerrain(at: position)
         }

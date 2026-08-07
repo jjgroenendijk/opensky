@@ -104,6 +104,19 @@ printf '%s\n' "$movement" | grep -q '^fMoveCharRunBase = .* units/s \[.*\]$' \
 printf '%s\n' "$movement" | grep -q '^stepHeight = .* units \[.*\]$' \
   || fail "movement probe did not report step value and source"
 
+# Archery chain (issue #196): the AMMO -> PROJ walk has to reach a flyable
+# record and report the flight numbers a shot inherits. Numbers are not pinned —
+# an active user plugin may intentionally override them — but the shape is, and
+# the census line is what the `gravity` reading rests on.
+run "archery chain (iron arrow)" archery --census --ammo IronArrow
+archery="$(awk '/^--- archery chain/{f=1;next} /^--- / {f=0} f' "$log")"
+printf '%s\n' "$archery" | grep -q '^fVisibleNavmeshMoveDist = .* \[.*\]$' \
+  || fail "archery probe did not report the visible-move distance and source"
+printf '%s\n' "$archery" | grep -q '^arrow: n [0-9]*, gravity min' \
+  || fail "archery probe did not census the arrow-type PROJ band"
+printf '%s\n' "$archery" | grep -q '^IronArrow: damage .* speed .* gravity .* range ' \
+  || fail "archery probe did not walk IronArrow to its PROJ"
+
 # Footstep chain (issue #352): the default set's walking list must reach a real
 # sound file, which is the end-to-end evidence that FSTS/FSTP/IPDS/IPCT decode
 # and that the tag the behavior graph raises resolves to something playable.

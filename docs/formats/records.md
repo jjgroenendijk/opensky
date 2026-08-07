@@ -508,6 +508,59 @@ Reference: UESP
 `wbDefinitionsTES5.pas` record at line 4087, the `IsSSE` DATA pair at 4101.
 Skipped: DEST, ONAM.
 
+## PROJ -> Projectile
+
+The record an AMMO launches, added by roadmap item 15.5. Everything the flight
+model needs is in one DATA struct, and UESP and xEdit agree on it member for
+member. Vanilla writes 92 bytes:
+
+| offset | type    | decoded                                       |
+| ------ | ------- | --------------------------------------------- |
+| 00     | uint16  | `flags` — 0x01 hitscan, 0x02 explosion, 0x04 alt. trigger, 0x08 muzzle flash, 0x20 can be disabled, 0x40 can be picked up, 0x80 supersonic, 0x100 pins limbs, 0x200 pass through small transparent, 0x400 disable combat aim correction, 0x800 rotation |
+| 02     | uint16  | `kind` — 0x01 missile, 0x02 lobber, 0x04 beam, 0x08 flame, 0x10 cone, 0x20 barrier, 0x40 arrow |
+| 04     | float32 | `gravityFactor` — a **multiplier** over world gravity, not an acceleration |
+| 08     | float32 | `speed` — launch speed, world units per second |
+| 0C     | float32 | `range` — travel past which the projectile is given up on |
+| 10, 14 | formID  | LIGH light, LIGH muzzle-flash light — skipped |
+| 18-20  | float32 | tracer chance, explosion proximity, explosion timer — skipped |
+| 24     | formID  | `explosion` (EXPL)                             |
+| 28     | formID  | `sound` (SNDR), played in flight               |
+| 2C, 30 | float32 | muzzle-flash duration, fade duration — skipped |
+| 34     | float32 | `impactForce`                                  |
+| 38     | formID  | countdown sound (SNDR) — skipped               |
+| 3C     | formID  | `disableSound` (SNDR)                          |
+| 40     | formID  | default weapon source (WEAP) — skipped         |
+| 44     | float32 | cone spread — skipped                          |
+| 48     | float32 | `collisionRadius`                              |
+| 4C     | float32 | `lifetime`, seconds                            |
+| 50     | float32 | relaunch interval — skipped                    |
+| 54, 58 | formID  | TXST decal data, COLL collision layer — **optional**, skipped |
+
+The two trailing FormIDs are the only optional members: xEdit marks the DATA
+struct "optional from element 22", which is the decal link, so an 84-byte payload
+is as valid as the full 92. The decoder therefore reads what the payload carries
+rather than demanding one size, and accepts anything from 16 bytes — flags
+through `range`, the whole flight model — upward.
+
+One member the two sources spell differently: UESP calls offset 0x3C "uint32
+always 0" where xEdit names it `Sound - Disable`, a SNDR link. The offsets are
+identical either way, so nothing downstream shifts; xEdit's reading is carried
+because "always 0" is an observation about vanilla data rather than a statement
+about the field.
+
+`gravity` has no documented unit and is settled by measurement rather than
+assumption — over the 20 arrow-type PROJ in `Skyrim.esm` it is bounded by 1 while
+`speed` runs to the thousands, which is a dimensionless scale. The full census
+and the arithmetic behind the reading are in
+[archery and projectiles](/engine/archery.md).
+
+Reference: UESP
+"[.../PROJ](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/PROJ)"; xEdit
+`wbDefinitionsTES5.pas` `wbRecord(PROJ, ...)` at line 5449, DATA at 5454 with
+member offsets in its own comments.
+Skipped: FULL, DEST, NAM1/NAM2 muzzle-flash model, VNAM is decoded as
+`soundLevel`.
+
 ## CONT contents -> Container
 
 `Container` **composes** `ModelBase` rather than replacing it: `base` is the same decode

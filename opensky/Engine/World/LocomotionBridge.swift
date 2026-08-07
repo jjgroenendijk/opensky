@@ -112,6 +112,14 @@ nonisolated final class LocomotionBridge {
     /// input path from `CameraInputState` to the world.
     private(set) var meleeIntent: MeleeIntent = .still
 
+    /// This frame's archery intent, published beside `meleeIntent` and for the
+    /// same reason (issue #196): drawing a bow does not move the capsule, so
+    /// the archery runtime consumes this at frame rate and the locomotion step
+    /// never sees it. `hasBowEquipped` is left false here — the bridge does not
+    /// know what is in the player's hands — and the app fills it in from the
+    /// equipped set before handing the value on.
+    private(set) var archeryIntent: ArcheryIntent = .still
+
     /// A gait held regardless of what the player is pressing, or nil for the
     /// ordinary resolution (issue #191). This is the dev control behind
     /// `World > Player & Locomotion > Dev Controls`, and it exists so a state
@@ -133,7 +141,7 @@ nonisolated final class LocomotionBridge {
     /// footstep twice. See LocomotionGraphEventQueue.swift.
     let graphEvents: LocomotionGraphEventQueue
     /// The footstep director's cursor into `graphEvents`, and the melee
-    /// runtime's (issue #195). Two named cursors rather than one shared drain,
+    /// runtime's (issue #195). Named cursors rather than one shared drain,
     /// because both consumers act on the same stream and a drain-once queue
     /// would give whichever ran first the whole batch.
     ///
@@ -146,6 +154,10 @@ nonisolated final class LocomotionBridge {
     /// reassignment.
     let footstepEventConsumer: LocomotionGraphEventQueue.Consumer
     let meleeEventConsumer: LocomotionGraphEventQueue.Consumer
+    /// The archery runtime's cursor (issue #196), the third. Nothing about the
+    /// queue changed to add it, which is what item 15.4's promotion from
+    /// drain-once bought.
+    let archeryEventConsumer: LocomotionGraphEventQueue.Consumer
     private var previousYaw: Float?
     private var wasMoving = false
     private var wasSprinting = false
@@ -181,6 +193,7 @@ nonisolated final class LocomotionBridge {
         graphEvents = events
         footstepEventConsumer = events.addConsumer()
         meleeEventConsumer = events.addConsumer()
+        archeryEventConsumer = events.addConsumer()
         self.configuration = configuration
         self.graph = graph
         self.sampleWater = sampleWater
@@ -205,6 +218,7 @@ nonisolated final class LocomotionBridge {
             block: input.block,
             toggleWeaponDrawn: input.toggleWeaponDrawn
         )
+        archeryIntent = ArcheryIntent(drawing: input.attackHeld, deltaTime: input.dt)
         if input.jump {
             pendingJump = true
         }
@@ -293,6 +307,7 @@ nonisolated final class LocomotionBridge {
         graphEvents.clear()
         intent = .still
         meleeIntent = .still
+        archeryIntent = .still
         status = LocomotionStatus(
             graphAvailable: graph != nil,
             firstPersonGraphAvailable: firstPersonGraph != nil

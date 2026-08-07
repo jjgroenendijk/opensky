@@ -93,9 +93,27 @@ struct LocomotionGraphEventFanOutTests {
         #expect(queue.drain(consumer) == ["HitFrame"])
     }
 
-    @Test func theBridgeRegistersBothCursorsAtConstruction() {
+    /// Footsteps, melee, and archery (issue #196) — registered eagerly at
+    /// construction, because the queue drops what no registered cursor can
+    /// ever read and a cursor created on first drain would find it empty.
+    @Test func theBridgeRegistersEveryCursorAtConstruction() {
         let bridge = LocomotionBridge(configuration: .synthetic)
-        #expect(bridge.graphEvents.consumerCount == 2)
+        #expect(bridge.graphEvents.consumerCount == 3)
+    }
+
+    /// The third consumer must not displace either of the first two: each sees
+    /// every name exactly once, whatever order they drain in.
+    @Test func theArcheryCursorSeesTheSameStreamAsTheOtherTwo() {
+        let bridge = LocomotionBridge(configuration: .synthetic)
+        bridge.graphEvents.enqueue([Self.event("arrowRelease"), Self.event("HitFrame")])
+
+        let archery = bridge.graphEvents.drain(bridge.archeryEventConsumer)
+        let melee = bridge.graphEvents.drain(bridge.meleeEventConsumer)
+        let footsteps = bridge.graphEvents.drain(bridge.footstepEventConsumer)
+
+        #expect(archery == ["arrowRelease", "HitFrame"])
+        #expect(melee == archery)
+        #expect(footsteps == archery)
     }
 
     private static func event(_ name: String) -> BehaviorEvent {

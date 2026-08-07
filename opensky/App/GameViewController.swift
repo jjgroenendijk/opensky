@@ -181,6 +181,12 @@ final class GameViewController: NSViewController {
     /// because extensions cannot add state.
     var melee = MeleeBridgeState()
 
+    /// Archery: the shot and projectile runtimes, the AMMO/PROJ index they
+    /// read flight data out of, and the panel's last outcome line (issue
+    /// #196). The implementation lives in `GameViewControllerArchery.swift`;
+    /// stored here because extensions cannot add state.
+    var archery = ArcheryBridgeState()
+
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))
         gameView.input = cameraInput

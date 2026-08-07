@@ -95,6 +95,11 @@ nonisolated protocol BarterDataProviding {
 /// to the UESP-documented numbers rather than to nothing.
 nonisolated protocol CombatDataProviding {
     var combatSettings: CombatSettings { get }
+    /// The archery GMSTs (issue #196), on the same terms. Same protocol rather
+    /// than a second one because both are resolved from one GMST load and both
+    /// are read at the same moment in session wire-up; splitting them would
+    /// only let a provider supply one and not the other.
+    var archerySettings: ArcherySettings { get }
 }
 
 /// Optional decoded audio-record stores a provider can expose (M9.2.2).
