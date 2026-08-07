@@ -47,5 +47,8 @@ suite per file, named after the file, which is the shape that check assumes.
 - `make test-one T=Class[/method]` runs one class or method in `openskyTests`; use
   `T=Target/Class/method` for an explicitly qualified selector. `make test-report`
   extracts failure names and messages from the newest result bundle.
-- `make test-ui` is TCC-blocked on this machine, so accessibility ids are pinned as literal
-  assertions here (`DestinationRegistryTests`) rather than exercised through the UI target.
+- Accessibility ids are pinned as literal assertions here (`DestinationRegistryTests`) *and*
+  exercised through `openskyUITests`. The two catch different things: a unit assertion pins
+  the id string, and only a UI test proves the id is reachable in the built view hierarchy.
+  Every sidebar row assertion passed here for months while
+  `outlines["AppSidebar"].cells[...]` matched nothing in the running app (issue #380).

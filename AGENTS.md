@@ -74,9 +74,11 @@ included: `Config/Signing.xcconfig` names one Apple Development identity for eve
 because macOS ties permission grants to the code signature and ad-hoc signing re-asks on
 every build (`docs/tools/build-system.md`). `Config/` also holds the three checked-in test
 plans, for the same reason: which bundles a run touches is reviewable configuration, not a
-flag. `UnitTests.xctestplan` lists `openskyTests` alone, `AllTests.xctestplan` lists both
-bundles, and `RealData.xctestplan` names the env-gated real-data suites and carries the data
-root into the test host (`docs/testing.md`). `opensky/` splits by target membership:
+flag. `UnitTests.xctestplan` lists `openskyTests` alone, `UITests.xctestplan` lists
+`openskyUITests` alone — no plan lists both, because an app-hosted unit bundle deadlocks
+the UI runner it shares a session with — and `RealData.xctestplan` names the env-gated
+real-data suites and carries the data root into the test host (`docs/testing.md`).
+`opensky/` splits by target membership:
 `opensky/App/` holds the AppKit and SwiftUI shell, view controllers, panels, and
 `Assets.xcassets`; `opensky/Engine/` holds everything CLI-safe; `opensky/SharedHeaders/`
 holds `ShaderTypes.h`. Group engine subsystems under `opensky/Engine/` by domain, and keep

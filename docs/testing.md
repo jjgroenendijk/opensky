@@ -42,8 +42,10 @@ files.
 * `make test-sanitize [SAN=Thread|Address] [CAP=MB]` — run `openskyTests` under
   the runtime sanitizers (see [Sanitizers](#sanitizers)). On demand and before a
   milestone, never on push.
-* `make test-ui` — UI smoke tests. See "test-ui on this machine" below.
-* `make test-perms` — one-time TCC setup that stops permission popups.
+* `make test-ui` — UI smoke tests, driving the real app through XCUITest. Runs
+  the `UITests` plan; on demand, never on push, because it needs the
+  Accessibility grant below.
+* `make test-perms` — checks the one-time TCC grants that stop permission popups.
 
 There is no required CI status right now: GitHub Actions is quota-suspended
 (issue #70), so `ci.yml` is manual-dispatch only. The pre-push hook
@@ -60,7 +62,7 @@ Which bundles a run touches is a checked-in test plan, not a flag (issue #346). 
 | Plan | Test targets | Used by |
 | --- | --- | --- |
 | `UnitTests.xctestplan` | `openskyTests` | `make test`, `make test-one`; the scheme default |
-| `AllTests.xctestplan` | `openskyTests`, `openskyUITests` | `make test-ui`, and any full run |
+| `UITests.xctestplan` | `openskyUITests` | `make test-ui` |
 | `RealData.xctestplan` | `openskyTests`, plus the data root | `make realtest`, `make realtest-all` |
 | `Sanitizers.xctestplan` | `openskyTests`, one configuration per sanitizer | `make test-sanitize` |
 
@@ -75,15 +77,24 @@ configurations, diffable in review, rather than another flag combination in the 
 `RealData` and `Sanitizers` are the two variants that pattern predicted; what `RealData` can
 and cannot carry is below, and `Sanitizers` has its own section.
 
-Two selectors still ride on top of a plan. `make test-one T=...` adds `-only-testing` for
-the one class or method, and switches from the unit plan to `AllTests` when the selector
-names `openskyUITests`, because the unit plan cannot select a test it does not list.
-`make test-ui` runs `AllTests` with `-only-testing:openskyUITests`, since that plan carries
-both bundles.
+`make test-one T=...` rides on top of a plan: it adds `-only-testing` for the one class or
+method, and switches from the unit plan to `UITests` when the selector names
+`openskyUITests`, because the unit plan cannot select a test it does not list.
+
+No plan lists both bundles, and that is deliberate (issue #380). `openskyTests` is
+app-hosted — its test host *is* `opensky.app`. Put it in the same test session as the UI
+runner and `xcodebuild` stands the app up as a test host, injecting
+`libXCTestBundleInject.dylib`, so the app waits in
+`-[XCTestDriver _prepareTestConfigurationAndIDESession]` for an IDE session that belongs to
+the runner, while the runner waits for the app to enter automation mode. Neither moves, and
+XCTest gives up after 60 seconds with `Timed out while enabling automation mode`. That
+error names a permission, which is what sent four issues looking for a missing TCC grant,
+but it is a deadlock. `-only-testing:openskyUITests` does not avoid it: a selector filters
+which tests run, not which targets the session stands up. Only the plan does.
 
 ## Code coverage
 
-`UnitTests.xctestplan`, `AllTests.xctestplan`, and `Sanitizers.xctestplan` gather
+`UnitTests.xctestplan`, `UITests.xctestplan`, and `Sanitizers.xctestplan` gather
 line coverage for the `opensky` target alone (issue #382), so the number describes
 engine code and not the test bundles measuring it. There is no separate entrypoint and no
 `-enableCodeCoverage` flag anywhere: `make test` gathers it and `make test-report`
@@ -165,7 +176,7 @@ at a looser unoptimized ceiling. Details in
 ### What the RealData test plan does and does not do
 
 `Config/RealData.xctestplan` — the third plan on the `opensky` scheme, alongside
-`UnitTests` and `AllTests` above — is where the set is written down. Three
+`UnitTests` and `UITests` above — is where the set is written down. Three
 measured xcodebuild behaviors shape it; dates and the conditions that retire
 them are in [local environment](/tools/environment.md):
 
@@ -275,6 +286,13 @@ focus steal). `NSApplication` still runs so the injected bundle executes.
 XCUITest-launched app instances lack that variable -> full app path. The smoke
 test asserts that, so a broken guard shows up in `make test-ui`.
 
+This is also why the two bundles cannot share a test session. Standing the app up
+as a test host is what sets `XCTestConfigurationFilePath` in the first place, and
+a host launched that way blocks in
+`-[XCTestDriver _prepareTestConfigurationAndIDESession]` waiting to be told which
+tests to run. Do that while the UI runner is trying to drive the same app and
+neither side ever proceeds — see the test plan section above (issue #380).
+
 Consequence: nothing app-lifecycle-dependent runs in unit tests — no delegate, no
 window, no Metal device wired up. Code touching those belongs in the UI target or
 needs its own setup.
@@ -291,19 +309,20 @@ clears only the environment variable.
 
 ## Known test-environment quirks (this machine)
 
-* test-ui on this machine: `make test-ui` reliably dies at harness init with
-  "Timed out while enabling automation mode" — a TCC/automation-permission gap,
-  not a code fault. `make test-ui` now surfaces that as an actionable message
-  (via `tools/test-ui.sh`) instead of hanging to timeout, and points at
-  `make test-perms`. Until the grant is in place, verify UI/render behavior with
-  `Renderer.renderOffscreen` unit tests or `make run-cli ARGS="render ..."`.
 * Permission popups: a TCC grant sticks only while the binary keeps one code
   signature, so `Config/Signing.xcconfig` names a real Apple Development identity
-  for every target ([build system](/tools/build-system.md)). Granting Full Disk
-  Access + Automation to the stable parent you launch tests from (Terminal /
-  iTerm / Xcode) still helps, since child test hosts inherit it. `make test-perms`
-  guides and opens the right pane; TCC is SIP-protected, so the actual grant is
-  one manual click (it cannot be scripted).
+  for every target ([build system](/tools/build-system.md)). The grants are to
+  the built products, not to the terminal that launches them: Accessibility for
+  `openskyUITests-Runner.app`, which is what XCTest asks for when it enables
+  automation mode, and file access for `opensky.app`, which macOS treats as a
+  binary on a removable volume because `DerivedData/` sits in a checkout on an
+  external disk. Each is one click per signature. `make test-perms` verifies what
+  is checkable — that the data root is readable, and that both bundles carry a
+  real identity rather than an ad-hoc signature, which is what makes a grant
+  evaporate — and opens the right pane for the rest. TCC is SIP-protected, so the
+  grant itself cannot be scripted, and `kTCCServiceAccessibility` lives in the
+  root-owned system database, so a check cannot read it back without Full Disk
+  Access of its own.
 * Stale `testmanagerd`: a days-old XCTest daemon can wedge a fresh run (or the
   pre-push hook) at 0% CPU. The symptom is
   `The test runner hung before establishing connection` plus

@@ -74,7 +74,7 @@ Config/
 ├── Tests.xcconfig           openskyTests: TEST_HOST, BUNDLE_LOADER
 ├── UITests.xcconfig         openskyUITests: TEST_TARGET_NAME
 ├── UnitTests.xctestplan     scheme default: openskyTests alone
-└── AllTests.xctestplan      openskyTests + openskyUITests
+└── UITests.xctestplan       openskyUITests alone
 ```
 
 The two test plans sit here for the same reason as the xcconfigs: they are checked-in,

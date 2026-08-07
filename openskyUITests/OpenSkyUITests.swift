@@ -41,6 +41,26 @@ final class OpenSkyUITests: XCTestCase {
         return app
     }
 
+    /// Selects a sidebar destination by its registered accessibility id.
+    ///
+    /// The rows are `NSTableCellView`s, which AppKit publishes to the
+    /// accessibility hierarchy as groups rather than `AXCell`s, so
+    /// `outlines["AppSidebar"].cells[...]` never matches one however correct the
+    /// identifier is. Matching on the identifier alone is what actually reaches
+    /// the row, and is the assertion `DestinationRegistryTests` cannot make: it
+    /// pins the id string, not its reachability in the built hierarchy.
+    @MainActor
+    private func selectDestination(_ identifier: String, in app: XCUIApplication) {
+        let sidebar = app.outlines["AppSidebar"]
+        XCTAssertTrue(sidebar.waitForExistence(timeout: 5))
+        let row = sidebar.descendants(matching: .any)[identifier].firstMatch
+        XCTAssertTrue(
+            row.waitForExistence(timeout: 5),
+            "sidebar row \(identifier) is registered but not reachable"
+        )
+        row.click()
+    }
+
     @MainActor
     func testAppLaunchesAndShowsWindow() throws {
         let app = try launchApp()
@@ -57,9 +77,7 @@ final class OpenSkyUITests: XCTestCase {
     @MainActor
     func testWorldDestinationShowsCameraAndStats() throws {
         let app = try launchApp()
-        let sidebar = app.outlines["AppSidebar"]
-        XCTAssertTrue(sidebar.waitForExistence(timeout: 5))
-        sidebar.cells["Destination-world"].firstMatch.click()
+        selectDestination("Destination-world", in: app)
 
         let mode = app.popUpButtons["CameraMovementModeControl"]
         XCTAssertTrue(mode.waitForExistence(timeout: 5))
@@ -76,9 +94,7 @@ final class OpenSkyUITests: XCTestCase {
     @MainActor
     func testWorldSidebarEnvironmentShadowQuality() throws {
         let app = try launchApp()
-        let sidebar = app.outlines["AppSidebar"]
-        XCTAssertTrue(sidebar.waitForExistence(timeout: 5))
-        sidebar.cells["Destination-environment"].firstMatch.click()
+        selectDestination("Destination-environment", in: app)
 
         let quality = app.popUpButtons["ShadowQualityControl"]
         XCTAssertTrue(quality.waitForExistence(timeout: 5))
@@ -114,9 +130,7 @@ final class OpenSkyUITests: XCTestCase {
     @MainActor
     func testHUDInteractionControlsAndReadouts() throws {
         let app = try launchApp()
-        let sidebar = app.outlines["AppSidebar"]
-        XCTAssertTrue(sidebar.waitForExistence(timeout: 5))
-        sidebar.cells["Destination-hudInteraction"].firstMatch.click()
+        selectDestination("Destination-hudInteraction", in: app)
 
         XCTAssertTrue(app.checkBoxes["HUDLayerEnabledControl"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.checkBoxes["HUDCrosshairControl"].exists)
@@ -135,9 +149,7 @@ final class OpenSkyUITests: XCTestCase {
     @MainActor
     func testSystemMenuControlsAndReadouts() throws {
         let app = try launchApp()
-        let sidebar = app.outlines["AppSidebar"]
-        XCTAssertTrue(sidebar.waitForExistence(timeout: 5))
-        sidebar.cells["Destination-systemMenu"].firstMatch.click()
+        selectDestination("Destination-systemMenu", in: app)
 
         let open = app.buttons["SystemMenuOpenControl"]
         XCTAssertTrue(open.waitForExistence(timeout: 5))
@@ -165,9 +177,7 @@ final class OpenSkyUITests: XCTestCase {
     @MainActor
     func testWorldSidebarUILabControls() throws {
         let app = try launchApp()
-        let sidebar = app.outlines["AppSidebar"]
-        XCTAssertTrue(sidebar.waitForExistence(timeout: 5))
-        sidebar.cells["Destination-uiLab"].firstMatch.click()
+        selectDestination("Destination-uiLab", in: app)
 
         XCTAssertTrue(app.checkBoxes["UIOverlayEnabledControl"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.checkBoxes["UILabSampleControl"].exists)
@@ -183,16 +193,29 @@ final class OpenSkyUITests: XCTestCase {
         // Menu-mode preview round trip: push pauses world sim, clear resumes.
         app.buttons["UIMenuPushControl"].click()
         let menuStats = app.staticTexts["UIMenuStatsLabel"]
-        XCTAssertTrue(menuStats.label.contains("paused") || waitForPause(menuStats))
+        XCTAssertTrue(
+            waitForPause(menuStats),
+            "UI Lab menu readout never reported the world sim paused"
+        )
         app.buttons["UIMenuClearControl"].click()
+    }
+
+    /// The readouts are `NSTextField` wrapping labels, and AppKit publishes a
+    /// static text field's string as the element's accessibility value, leaving
+    /// its label empty — so reading `.label` alone finds nothing however correct
+    /// the readout is.
+    @MainActor
+    private func readoutText(_ element: XCUIElement) -> String {
+        let value = element.value as? String ?? ""
+        return value.isEmpty ? element.label : value
     }
 
     /// The 2 Hz readout ticker may lag one interaction; poll briefly.
     @MainActor
     private func waitForPause(_ label: XCUIElement) -> Bool {
-        let deadline = Date().addingTimeInterval(3)
+        let deadline = Date().addingTimeInterval(5)
         while Date() < deadline {
-            if label.label.contains("paused") {
+            if readoutText(label).contains("paused") {
                 return true
             }
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
@@ -205,9 +228,7 @@ final class OpenSkyUITests: XCTestCase {
     @MainActor
     func testSidebarShowsAssetBrowser() throws {
         let app = try launchApp()
-        let sidebar = app.outlines["AppSidebar"]
-        XCTAssertTrue(sidebar.waitForExistence(timeout: 5))
-        sidebar.cells["Destination-assetBrowser"].firstMatch.click()
+        selectDestination("Destination-assetBrowser", in: app)
         XCTAssertTrue(app.popUpButtons["AssetCategory"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.searchFields["AssetFilter"].exists)
         XCTAssertTrue(app.tables["AssetTable"].exists)
@@ -263,7 +284,7 @@ final class OpenSkyUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 5)
         try write(window.screenshot(), name: "app-world.png")
 
-        app.outlines["AppSidebar"].cells["Destination-assetBrowser"].firstMatch.click()
+        selectDestination("Destination-assetBrowser", in: app)
         let table = app.tables["AssetTable"]
         XCTAssertTrue(table.waitForExistence(timeout: 5))
         XCTAssertTrue(table.tableRows.firstMatch.waitForExistence(timeout: 30))
