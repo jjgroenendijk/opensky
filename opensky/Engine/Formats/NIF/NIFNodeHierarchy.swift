@@ -16,11 +16,7 @@ nonisolated struct NIFNodeHierarchy {
     init(file: NIFFile) throws {
         var builder = Builder(file: file)
         for root in file.roots {
-            try builder.visit(
-                ref: root,
-                parent: matrix_identity_float4x4,
-                depth: 0
-            )
+            try builder.walk(from: root)
         }
         worldTransforms = builder.worldTransforms
         parentTransforms = builder.parentTransforms
@@ -28,42 +24,50 @@ nonisolated struct NIFNodeHierarchy {
     }
 
     private struct Builder {
+        /// Plausibility limit on how deeply a real skeleton nests. Depth costs
+        /// heap rather than call frames, so this stays a policy choice instead
+        /// of standing in for the thread's stack budget (issue #388).
+        static let maxDepth = 64
+
         let file: NIFFile
         var worldTransforms: [Int: float4x4] = [:]
         var parentTransforms: [Int: float4x4] = [:]
         var names: [Int: String] = [:]
-        var path: Set<Int> = []
 
-        mutating func visit(ref: Int32, parent: float4x4, depth: Int) throws {
-            guard ref >= 0 else { return }
-            let index = Int(ref)
-            guard index < file.blocks.count else {
-                throw NIFError.malformed(
-                    "block ref \(ref) out of range (\(file.blocks.count) blocks)"
+        mutating func walk(from root: Int32) throws {
+            var stack = NIFGraphStack(root: root)
+            while let visit = stack.next() {
+                guard visit.ref >= 0 else { continue }
+                let index = Int(visit.ref)
+                guard index < file.blocks.count else {
+                    throw NIFError.malformed(
+                        "block ref \(visit.ref) out of range (\(file.blocks.count) blocks)"
+                    )
+                }
+                guard visit.depth <= Self.maxDepth else {
+                    throw NIFError.malformed("scene graph deeper than \(Self.maxDepth)")
+                }
+                let block = file.blocks[index]
+                guard NIFNode.traversedTypes.contains(block.typeName) else { continue }
+                guard stack.enter(index) else {
+                    throw NIFError.malformed("node hierarchy cycle at block \(index)")
+                }
+
+                // A shared node has no unique parent-space bind transform. Keep
+                // first occurrence; scene flatten may still draw shared subtrees.
+                guard worldTransforms[index] == nil else { continue }
+                let node = try Self.decodeNode(block, header: file.header)
+                let world = visit.parent * node.object.localTransform
+                parentTransforms[index] = visit.parent
+                worldTransforms[index] = world
+                if let name = node.object.name {
+                    names[index] = name
+                }
+                stack.push(
+                    children: node.children,
+                    parent: world,
+                    depth: visit.depth + 1
                 )
-            }
-            guard depth <= 64 else {
-                throw NIFError.malformed("scene graph deeper than 64")
-            }
-            let block = file.blocks[index]
-            guard NIFNode.traversedTypes.contains(block.typeName) else { return }
-            guard path.insert(index).inserted else {
-                throw NIFError.malformed("node hierarchy cycle at block \(index)")
-            }
-            defer { path.remove(index) }
-
-            // A shared node has no unique parent-space bind transform. Keep
-            // first occurrence; scene flatten may still draw shared subtrees.
-            guard worldTransforms[index] == nil else { return }
-            let node = try Self.decodeNode(block, header: file.header)
-            let world = parent * node.object.localTransform
-            parentTransforms[index] = parent
-            worldTransforms[index] = world
-            if let name = node.object.name {
-                names[index] = name
-            }
-            for child in node.children {
-                try visit(ref: child, parent: world, depth: depth + 1)
             }
         }
 

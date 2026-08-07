@@ -223,6 +223,25 @@ struct NIFModelTests {
         }
     }
 
+    @Test func chainAtDepthCapFlattensOnASmallStack() throws {
+        // The depth cap is a policy limit on scene graphs, not a stand-in for
+        // the caller's stack budget: a chain right at the cap has to flatten on
+        // a 64 KB thread stack, well under the 512 KB a secondary thread gets
+        // by default (issue #388). A recursive walk exhausts that stack and
+        // takes the whole process down on a guard-page hit.
+        let depthCap = 64
+        let blocks = (0 ... depthCap).map { index in
+            NIFFixture.Block("NiNode", NIFFixture.niNode(
+                children: index < depthCap ? [Int32(index + 1)] : []
+            ))
+        }
+        let data = NIFFixture.file(blocks: blocks)
+        let meshCount = try onSmallStack {
+            try? NIFFile(data: data).model().meshes.count
+        }
+        #expect(meshCount == 0)
+    }
+
     @Test func negativeRootsAndEmptyFilesYieldEmptyModels() throws {
         let file = try NIFFile(data: NIFFixture.file(
             blocks: [.init("NiNode", NIFFixture.niNode())],
@@ -232,4 +251,28 @@ struct NIFModelTests {
         #expect(model.meshes.isEmpty)
         #expect(model.materials.isEmpty)
     }
+}
+
+/// Runs `work` on a thread with a deliberately small stack and hands back its
+/// result, so a test can show that a parser walk does not spend one call frame
+/// per graph level.
+nonisolated private func onSmallStack<T: Sendable>(
+    _ work: @escaping @Sendable () -> T
+) throws -> T {
+    let result = SmallStackResult<T>()
+    let finished = DispatchSemaphore(value: 0)
+    let thread = Thread {
+        result.value = work()
+        finished.signal()
+    }
+    thread.stackSize = 64 * 1024
+    thread.start()
+    finished.wait()
+    return try #require(result.value)
+}
+
+/// Hand-off slot for `onSmallStack`. The semaphore orders the single write
+/// before the single read; the compiler cannot see that, hence `@unchecked`.
+nonisolated private final class SmallStackResult<T: Sendable>: @unchecked Sendable {
+    var value: T?
 }

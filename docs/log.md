@@ -29,6 +29,28 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   the reference point with it, which also fixes the panel's reset returning a body to the
   plugin's pose instead of the current build's.
 
+* **NIF graph walks spend heap instead of call frames (issue #388)**: the first sanitizer
+  baseline crashed `NIFModelTests.absurdDepthIsMalformed()` under Address Sanitizer with a
+  stack-guard hit rather than a poisoned-memory report — the 70-node chain the test builds
+  exhausted the thread stack before the depth-64 cap could reject it. ASan only shortened a
+  margin that was already thin: one `visit` frame carries a decoded `NIFNode` and a
+  `float4x4`, the block decoder sits on top of it, and a NIF is attacker-shaped input that
+  any secondary thread parses on a 512 KB stack rather than the main thread's 8 MB. The cap
+  was never measured against a frame size, so it was standing in for a stack budget it did
+  not know.
+
+  All five NIF graph walks — the bind hierarchy, the mesh flatten, the particle collect,
+  the collision scene-target visitor, and the collision shape graph — now descend through
+  one shared explicit work stack, `NIFGraphStack`. It queues `enter` steps in reverse child
+  order so `next()` yields the same pre-order a recursive descent produced, and pushes a
+  `leave` sentinel behind a node's children in place of the `defer` that used to pop the
+  cycle-detection path. Each walk keeps its own range, depth, and cycle diagnostics, so the
+  error text and the skip-versus-throw behavior are unchanged.
+
+  Depth is now a heap cost, which makes each cap a plausibility policy on scene graphs
+  again rather than a proxy for the caller's stack. `NIFModelTests` flattens a chain sitting
+  exactly at the cap on a thread with a 64 KB stack, and `make test-sanitize` is clean under
+  both configurations.
 * **The vanilla player graph fires its footstep tags (issues #385, #394)**: walking the real
   locomotion graph for a second fired `moveStart` and `IdleStop` and nothing a footstep set
   answers to, so the whole footstep chain — set selection, material, tag resolution, PCM

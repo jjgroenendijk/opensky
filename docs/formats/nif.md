@@ -428,9 +428,16 @@ types (`Geometry/Mesh.swift`) decoupled from disk layout:
   partition attributes + node reference pose. Empty shapes are counted in
   `Model.skippedShapeCount`; all non-drawable leaf types (collision,
   controllers) end the subtree silently.
-+ Defense: out-of-range ref, ref cycle (recursion-stack set, so legitimate
++ Defense: out-of-range ref, ref cycle (active-path set, so legitimate
   subtree reuse under two parents still works), depth > 64 -> `malformed`;
   caller skips the asset.
++ Every scene walk — bind hierarchy, mesh flatten, particle collect, collision
+  scene targets — descends through the shared explicit work stack in
+  `NIFGraphStack.swift` rather than through call frames, so graph depth costs
+  heap. Recursion made the real limit the calling thread's stack instead of the
+  advertised cap: a 512 KB secondary-thread stack, or a main-thread stack under
+  Address Sanitizer's widened frames, hit the guard page before depth 64 was
+  reached (issue #388). The cap is a plausibility policy on scene graphs again.
 
 ## Observed in vanilla (probe, 2026-07-10)
 

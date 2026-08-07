@@ -24,11 +24,7 @@ nonisolated extension NIFFile {
     func model(skeleton: NIFSkeleton? = nil) throws -> Model {
         var flattener = try Flattener(file: self, skeleton: skeleton)
         for root in roots {
-            try flattener.visit(
-                ref: root,
-                parent: matrix_identity_float4x4,
-                depth: 0
-            )
+            try flattener.walk(from: root)
         }
         return Model(
             meshes: flattener.meshes,
@@ -51,9 +47,11 @@ nonisolated extension NIFFile {
         var materials: [Material] = []
         var slotIndexes: [SlotKey: Int] = [:]
         var skippedShapeCount = 0
-        /// Recursion stack for cycle detection. A set, not a visited list:
-        /// legitimate graphs may reuse a subtree under two parents.
-        var pathStack: Set<Int> = []
+
+        /// Types that carry drawable geometry rather than children.
+        static let shapeTypes: Set = [
+            "BSTriShape", "BSSubIndexTriShape", "BSDynamicTriShape"
+        ]
 
         init(file: NIFFile, skeleton: NIFSkeleton?) throws {
             self.file = file
@@ -61,50 +59,54 @@ nonisolated extension NIFFile {
             self.skeleton = skeleton
         }
 
-        mutating func visit(ref: Int32, parent: float4x4, depth: Int) throws {
-            guard ref >= 0 else { return } // -1 = null ref
-            let index = Int(ref)
-            guard index < file.blocks.count else {
-                throw NIFError.malformed(
-                    "block ref \(ref) out of range (\(file.blocks.count) blocks)"
-                )
-            }
-            guard depth <= NIFFile.maxSceneGraphDepth else {
-                throw NIFError.malformed(
-                    "scene graph deeper than \(NIFFile.maxSceneGraphDepth)"
-                )
-            }
-            guard pathStack.insert(index).inserted else {
-                throw NIFError.malformed("scene graph cycle at block \(index)")
-            }
-            defer { pathStack.remove(index) }
+        mutating func walk(from root: Int32) throws {
+            var stack = NIFGraphStack(root: root)
+            while let visit = stack.next() {
+                guard visit.ref >= 0 else { continue } // -1 = null ref
+                let index = Int(visit.ref)
+                guard index < file.blocks.count else {
+                    throw NIFError.malformed(
+                        "block ref \(visit.ref) out of range (\(file.blocks.count) blocks)"
+                    )
+                }
+                guard visit.depth <= NIFFile.maxSceneGraphDepth else {
+                    throw NIFError.malformed(
+                        "scene graph deeper than \(NIFFile.maxSceneGraphDepth)"
+                    )
+                }
+                guard stack.enter(index) else {
+                    throw NIFError.malformed("scene graph cycle at block \(index)")
+                }
 
-            let block = file.blocks[index]
-            let isShape = ["BSTriShape", "BSSubIndexTriShape", "BSDynamicTriShape"]
-                .contains(block.typeName)
-            if NIFNode.traversedTypes.contains(block.typeName) {
-                let node: NIFNode
-                if block.typeName == "BSMultiBoundNode" {
-                    let multi = try NIFMultiBoundNode(data: block.data, header: file.header)
-                    // Terrain LOD stores water in a sibling subtree. Water
-                    // gets its own pipeline in milestone 3.5; drawing it as
-                    // opaque geometry would cover land.
-                    if multi.object.name?.uppercased() == "WATER" {
-                        return
-                    }
-                    node = NIFNode(object: multi.object, children: multi.children)
-                } else {
-                    node = try NIFNode(data: block.data, header: file.header)
+                let block = file.blocks[index]
+                if NIFNode.traversedTypes.contains(block.typeName) {
+                    guard let node = try drawableNode(block) else { continue }
+                    let world = visit.parent * node.object.localTransform
+                    stack.push(
+                        children: node.children,
+                        parent: world,
+                        depth: visit.depth + 1
+                    )
+                } else if Self.shapeTypes.contains(block.typeName) {
+                    try appendShape(block: block, parent: visit.parent)
                 }
-                let world = parent * node.object.localTransform
-                for child in node.children {
-                    try visit(ref: child, parent: world, depth: depth + 1)
-                }
-            } else if isShape {
-                try appendShape(block: block, parent: parent)
+                // Any other type is a leaf we do not draw (collision, shader
+                // properties, controllers…): subtree ends.
             }
-            // Any other type is a leaf we do not draw (collision, shader
-            // properties, controllers…): subtree ends.
+        }
+
+        /// The node a traversed block contributes, or `nil` for a subtree the
+        /// flatten deliberately drops.
+        private func drawableNode(_ block: NIFFile.Block) throws -> NIFNode? {
+            guard block.typeName == "BSMultiBoundNode" else {
+                return try NIFNode(data: block.data, header: file.header)
+            }
+            let multi = try NIFMultiBoundNode(data: block.data, header: file.header)
+            // Terrain LOD stores water in a sibling subtree. Water gets its own
+            // pipeline in milestone 3.5; drawing it as opaque geometry would
+            // cover land.
+            guard multi.object.name?.uppercased() != "WATER" else { return nil }
+            return NIFNode(object: multi.object, children: multi.children)
         }
 
         private mutating func appendShape(
