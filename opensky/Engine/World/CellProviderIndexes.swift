@@ -19,6 +19,7 @@ nonisolated struct CellProviderIndexes {
     let movementConfiguration: PlayerMovementConfiguration
     let barterPricing: BarterPricing
     let combatSettings: CombatSettings
+    let archerySettings: ArcherySettings
 
     init(
         root: GameDataRoot,
@@ -37,6 +38,7 @@ nonisolated struct CellProviderIndexes {
         )
         barterPricing = BarterPricing.resolve(store: settings)
         combatSettings = CombatSettings.resolve(store: settings)
+        archerySettings = ArcherySettings.resolve(store: settings)
         let textures = TextureLibrary(fileSystem: fileSystem, device: device)
         let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
         builder = CellSceneBuilder(
@@ -85,7 +87,8 @@ nonisolated struct CellProviderIndexes {
             actorValueBaselines: actorValueBaselines,
             movementConfiguration: movementConfiguration,
             barterPricing: barterPricing,
-            combatSettings: combatSettings
+            combatSettings: combatSettings,
+            archerySettings: archerySettings
         )
     }
 }

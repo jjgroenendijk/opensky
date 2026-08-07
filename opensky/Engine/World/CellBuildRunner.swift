@@ -99,6 +99,9 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     /// GMST-derived combat distance and block factors (issue #195),
     /// defaulting to the documented vanilla numbers on a synthetic scene.
     var combatSettings: CombatSettings = .synthetic
+    /// GMST-derived arrow tilt-up angles and visible-move distance (issue
+    /// #196), defaulting to the UESP-documented numbers on a synthetic scene.
+    var archerySettings: ArcherySettings = .synthetic
 
     /// Compiled-script source for the Papyrus world runtime; nil when the
     /// builder was constructed without a file system (synthetic scenes).

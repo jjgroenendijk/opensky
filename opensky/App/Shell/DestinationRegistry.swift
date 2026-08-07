@@ -25,7 +25,8 @@ enum SidebarSection: String, CaseIterable {
 
 /// The live-renderer bridges a world inspector panel may consume. The game
 /// controller conforms to all of them, so one value wires every panel.
-typealias WorldControlProviders = AnimationControlProviding & AudioControlProviding
+typealias WorldControlProviders = AnimationControlProviding
+    & ArcheryControlProviding & AudioControlProviding
     & CameraControlProviding & ContainerMenuControlProviding
     & FirstPersonControlProviding
     & FrameStatsProviding & GrassControlProviding
@@ -169,6 +170,7 @@ enum DestinationRegistry {
                 panel.provider = context.providers
                 panel.cameraProvider = context.providers
                 panel.meleeProvider = context.providers
+                panel.archeryProvider = context.providers
                 let providers = context.providers
                 panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
                 return panel

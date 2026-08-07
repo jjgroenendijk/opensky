@@ -150,3 +150,43 @@ extension FakeWorldProviders {
         melee.lastActionText = "Cleared the hit trace."
     }
 }
+
+/// The archery half of the fake's stored state (issue #196). Beside the melee
+/// state for the same reason: the Archery section sits under the same
+/// destination and the same fake drives both in the registry tests.
+struct FakeArcheryState {
+    var snapshot = ArcherySnapshot.unavailable
+    var spawnRequests = 0
+    var despawnRequests = 0
+    var stuckClearRequests = 0
+    var traceClearCount = 0
+    var lastActionText = "No shot taken yet."
+}
+
+extension FakeWorldProviders {
+    var archerySnapshot: ArcherySnapshot {
+        archery.snapshot
+    }
+
+    @discardableResult
+    func spawnDevProjectile() -> String {
+        archery.spawnRequests += 1
+        archery.lastActionText = "Fired projectile #\(archery.spawnRequests)."
+        return archery.lastActionText
+    }
+
+    func despawnProjectiles() {
+        archery.despawnRequests += 1
+        archery.lastActionText = "Despawned everything in flight."
+    }
+
+    func clearStuckProjectiles() {
+        archery.stuckClearRequests += 1
+        archery.lastActionText = "Pulled every stuck arrow back out."
+    }
+
+    func clearProjectileTrace() {
+        archery.traceClearCount += 1
+        archery.lastActionText = "Cleared the shot trace."
+    }
+}

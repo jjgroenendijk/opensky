@@ -185,10 +185,20 @@ final class GameMetalView: MTKView {
         // driven by pointer motion rather than by the button, so nothing is
         // lost by giving the button to combat.
         if captured {
+            // Both signals from one press: melee latches on the edge, archery
+            // draws for as long as the level stays up (issue #196).
             input?.requestAttack()
+            input?.setAttackHeld(true)
         } else {
             captureCursor()
         }
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        // Dropped unconditionally rather than only while captured: a button
+        // that went down inside the view and came up outside it must not leave
+        // a bow drawn forever.
+        input?.setAttackHeld(false)
     }
 
     override func rightMouseDown(with event: NSEvent) {

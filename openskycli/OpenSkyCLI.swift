@@ -111,6 +111,10 @@ enum OpenSkyCLI {
             try GMSTCommand.run(
                 context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
             )
+        case "archery":
+            try ArcheryCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
         case "cell":
             try CellCommand.run(
                 context: .resolve(dataRootOverride: dataRoot), scanner: &scanner

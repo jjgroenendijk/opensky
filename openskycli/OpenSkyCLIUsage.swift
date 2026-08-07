@@ -19,6 +19,15 @@ extension OpenSkyCLI {
       gmst movement              Print resolved gait/step/jump values + sources
       gmst combat                Print resolved melee reach and block settings
                                   + sources
+      gmst archery               Print resolved arrow tilt-up angles and the
+                                  visible-move distance + sources
+      archery [--census] [--ammo <substring>]
+                                  Walk the AMMO -> PROJ flight chain: the
+                                  archery GMSTs, then one row per arrow with
+                                  its PROJ speed, gravity and range and the
+                                  drop each reading of `gravity` predicts.
+                                  --census adds the PROJ-wide distribution
+                                  that settles which reading is right
       footstep [--set <edid>] [--armature <formid-or-edid>]
                [--material <edid-or-formid>]
                                   Walk the footstep chain: per gait, every

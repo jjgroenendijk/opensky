@@ -22,6 +22,7 @@ final class PlayerLocomotionPanelViewController: InspectorPanelViewController {
     let graphSection = LocomotionGraphSection()
     let bindingsSection = LocomotionBindingsSection()
     let meleeSection = LocomotionMeleeSection()
+    let archerySection = LocomotionArcherySection()
     let motionSection = LocomotionMotionSection()
     let devSection = LocomotionDevSection()
 
@@ -48,8 +49,17 @@ final class PlayerLocomotionPanelViewController: InspectorPanelViewController {
         didSet { meleeSection.provider = meleeProvider }
     }
 
+    /// The archery runtime rides its own seam, which only the Archery section
+    /// reads (issue #196).
+    weak var archeryProvider: (any ArcheryControlProviding)? {
+        didSet { archerySection.provider = archeryProvider }
+    }
+
     override func makeSections() -> [PanelSectionViewController] {
-        [stateSection, graphSection, bindingsSection, meleeSection, motionSection, devSection]
+        [
+            stateSection, graphSection, bindingsSection,
+            meleeSection, archerySection, motionSection, devSection
+        ]
     }
 
     /// Control forwards for the verification-surface tests, mirroring
@@ -76,6 +86,10 @@ final class PlayerLocomotionPanelViewController: InspectorPanelViewController {
 
     var attackControl: NSButton {
         meleeSection.attackControl
+    }
+
+    var archerySpawnControl: NSButton {
+        archerySection.spawnControl
     }
 
     var forcedGaitControl: NSPopUpButton {

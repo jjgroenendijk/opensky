@@ -23,8 +23,31 @@ nonisolated extension RecordTextDump {
         case "AMMO": ammunitionSummary(record: record, localized: localized)
         case "ARMO": armorSummary(record: record, localized: localized)
         case "ARMA": armorAddonSummary(record: record)
+        case "PROJ": projectileSummary(record: record)
         default: nil
         }
+    }
+
+    /// PROJ is not carryable and so does not share the inventory prefix; it is
+    /// summarized here anyway because the record an arrow points at is the one
+    /// a reader chasing an AMMO's `projectile` link wants next (issue #196).
+    private static func projectileSummary(record: ESMRecord) -> String? {
+        guard let projectile = try? Projectile(record: record) else { return nil }
+        let kind = projectile.kind.map { "\($0)" } ?? "unknown"
+        return String(
+            format: """
+            decoded PROJ: editorID %@, %@, speed %.1f, gravity %.3f, range %.1f, \
+            lifetime %.2f, radius %.1f, flags 0x%04X
+            """,
+            projectile.editorID ?? "-",
+            kind,
+            projectile.speed,
+            projectile.gravityFactor,
+            projectile.range,
+            projectile.lifetime,
+            projectile.collisionRadius,
+            projectile.flags.rawValue
+        )
     }
 
     private static func armorSummary(record: ESMRecord, localized: Bool) -> String? {

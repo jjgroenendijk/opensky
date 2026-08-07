@@ -231,6 +231,12 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   the census against every auto-calc record's baked DNAM, the current-values-only runtime
   component, percent-per-second regeneration on the menu-pause-safe fixed step, the live
   HUD meter binding, the additive AVAL save chunk, and the panel provider seam.
+* [Archery and projectiles](/engine/archery.md) - the PROJ flight record, the measurement
+  that settles `gravity` as a multiplier rather than an acceleration, the census-named bow
+  draw and release events, the exact closed-form flight model on the fixed step, the
+  documented bow-plus-arrow damage combination and draw-time curve, the split sweep an
+  impact uses, stuck arrows under the vanilla count cap and the streaming lifecycle, and
+  the panel provider seam.
 * [Melee combat](/engine/melee-combat.md) - draw and sheath on the clip annotation, attack
   and block through census-named graph events, the multi-consumer graph-event seam, the
   documented `fCombatDistance` reach formula and the swept-capsule hit volume, target

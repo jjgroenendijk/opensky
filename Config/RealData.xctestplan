@@ -59,6 +59,7 @@
         "PlayerBodyRealDataTests",
         "PlayerBodyRenderRealDataTests",
         "PrecipitationAcceptanceRealDataTests",
+        "ProjectileRealDataTests",
         "PreviewRealDataTests",
         "QuestAliasRealDataTests",
         "QuestRealDataTests",

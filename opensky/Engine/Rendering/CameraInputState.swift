@@ -19,6 +19,7 @@ final class CameraInputState {
     private var sneaking = false
     private var jumpRequested = false
     private var attackRequested = false
+    private var attackHeld = false
     private var blocking = false
     private var weaponToggleRequested = false
     private var pendingLookRight: Float = 0
@@ -70,6 +71,18 @@ final class CameraInputState {
     /// still reach a fixed step, and must reach it exactly once.
     func requestAttack() {
         attackRequested = true
+    }
+
+    /// Holds the attack button down (issue #196). The same binding as
+    /// `requestAttack()` and deliberately not the same signal: melee acts on
+    /// the press and archery on the hold, so the view sets both from one
+    /// mouse-down and only this one is cleared by the mouse-up.
+    func setAttackHeld(_ enabled: Bool) {
+        attackHeld = enabled
+    }
+
+    var isAttackHeld: Bool {
+        attackHeld
     }
 
     /// Block is held, like boost and sprint: the melee runtime reads the level
@@ -125,6 +138,7 @@ final class CameraInputState {
         sprinting = false
         jumpRequested = false
         attackRequested = false
+        attackHeld = false
         blocking = false
         weaponToggleRequested = false
         pendingLookRight = 0
@@ -148,6 +162,7 @@ final class CameraInputState {
             jump: jumpRequested,
             cycleCameraMode: cameraModeCycleRequested,
             attack: attackRequested,
+            attackHeld: attackHeld,
             block: blocking,
             toggleWeaponDrawn: weaponToggleRequested,
             dt: dt
