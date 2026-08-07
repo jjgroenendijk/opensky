@@ -54,6 +54,10 @@ nonisolated enum OpenSkySaveDecoder {
         /// records and starts full — which is also what a save written before
         /// that chunk existed means.
         var actorValues: [SaveActorValueEntry] = []
+        /// Absent `DETH` chunk (issue #197) means nothing died in the session,
+        /// so every actor restores alive — which is also what a save written
+        /// before that chunk existed means.
+        var deaths: [SaveDeathEntry] = []
     }
 
     static func decode(_ data: Data) throws -> OpenSkySaveFile {
@@ -74,21 +78,7 @@ nonisolated enum OpenSkySaveDecoder {
             metadata: metadata,
             fingerprint: fingerprint,
             snapshot: WorldStateSnapshot(
-                entries: OpenSkySaveActorValueDecoder.merge(
-                    body.actorValues,
-                    into: OpenSkySaveQuestDecoder.mergeAliases(
-                        body.questAliases,
-                        into: OpenSkySaveQuestDecoder.merge(
-                            body.quests,
-                            into: OpenSkySaveSpawnDecoder.merge(
-                                body.spawns,
-                                into: OpenSkySaveInventoryDecoder.merge(
-                                    body.inventories, into: body.entries
-                                )
-                            )
-                        )
-                    )
-                ),
+                entries: mergedEntries(of: body),
                 nextGeneratedSequence: body.nextGeneratedSequence,
                 globals: body.globals,
                 sequence: 0
@@ -98,6 +88,22 @@ nonisolated enum OpenSkySaveDecoder {
             scripts: body.scripts,
             timers: body.timers
         )
+    }
+
+    /// The `RDLT` entries with every side-chunk laid back over them.
+    ///
+    /// One statement per chunk rather than one nested expression: each of these
+    /// merges is independent of the others — they touch different component
+    /// slots and each re-sorts into `ReferenceKey` order — so the order below is
+    /// the order the chunks were added, and a seventh chunk adds a line rather
+    /// than a level of nesting.
+    private static func mergedEntries(of body: Body) -> [WorldStateSnapshotEntry] {
+        var entries = OpenSkySaveInventoryDecoder.merge(body.inventories, into: body.entries)
+        entries = OpenSkySaveSpawnDecoder.merge(body.spawns, into: entries)
+        entries = OpenSkySaveQuestDecoder.merge(body.quests, into: entries)
+        entries = OpenSkySaveQuestDecoder.mergeAliases(body.questAliases, into: entries)
+        entries = OpenSkySaveActorValueDecoder.merge(body.actorValues, into: entries)
+        return OpenSkySaveDeathDecoder.merge(body.deaths, into: entries)
     }
 
     // MARK: - Header
@@ -212,6 +218,8 @@ nonisolated enum OpenSkySaveDecoder {
             body.questAliases = try OpenSkySaveQuestDecoder.decodeQuestAliases(payload)
         case OpenSkySaveFormat.ChunkTag.actorValues:
             body.actorValues = try OpenSkySaveActorValueDecoder.decodeActorValues(payload)
+        case OpenSkySaveFormat.ChunkTag.deaths:
+            body.deaths = try OpenSkySaveDeathDecoder.decodeDeaths(payload)
         default:
             break // Unknown chunk: skipped by its declared length.
         }

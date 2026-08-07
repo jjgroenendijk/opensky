@@ -36,7 +36,7 @@ typealias WorldControlProviders = AnimationControlProviding
     & MeleeCombatControlProviding
     & ParticleControlProviding
     & PlayerLocomotionControlProviding
-    & PrecipitationControlProviding
+    & PrecipitationControlProviding & RagdollControlProviding
     & RuntimeStateControlProviding & SWFLabControlProviding & SceneStatsProviding
     & ScriptControlProviding & ShadowControlProviding
     & SystemMenuControlProviding & TerrainLODControlProviding & TriggerControlProviding
@@ -171,6 +171,7 @@ enum DestinationRegistry {
                 panel.cameraProvider = context.providers
                 panel.meleeProvider = context.providers
                 panel.archeryProvider = context.providers
+                panel.ragdollProvider = context.providers
                 let providers = context.providers
                 panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
                 return panel

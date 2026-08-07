@@ -64,6 +64,7 @@
         "QuestAliasRealDataTests",
         "QuestRealDataTests",
         "QuestScriptRealDataTests",
+        "RagdollRealDataTests",
         "ScriptDataRealDataTests",
         "SystemMenuAcceptanceRealDataTests",
         "WeatherAcceptanceRealDataTests",

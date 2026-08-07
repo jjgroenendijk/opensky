@@ -82,6 +82,9 @@ nonisolated extension BehaviorGraphInstance {
         case let counter as BSEventEveryNEventsModifier:
             applyEventCounter(counter, at: target)
             return pose
+        case let controls as HKBRigidBodyRagdollControlsModifier:
+            applyRagdollControls(controls)
+            return pose
         default:
             tally.notePassthroughModifier(object.className)
             return pose
@@ -164,6 +167,29 @@ nonisolated extension BehaviorGraphInstance {
             )
         }
         nodeStates[target] = state
+    }
+
+    /// `hkbRigidBodyRagdollControlsModifier`: hands the skeleton to the physics
+    /// (issue #197, roadmap item 15.6).
+    ///
+    /// The modifier does not edit the pose, so this is not a pass-through that
+    /// happens to be silent — it is the whole of what the class does at this
+    /// layer. What it *carries* is the hand-off's terms: how long the
+    /// animated-to-simulated blend takes. Publishing that on the instance is
+    /// what lets `RagdollRuntime` blend over the duration vanilla authored
+    /// rather than over a constant this engine picked. The bone list at
+    /// `m_bones` is deliberately not read: the ragdoll this engine spawns is
+    /// every bone the skeleton NIF carries a body for, which is the same set on
+    /// every vanilla character and is resolved from the physics data rather than
+    /// from the graph's index array.
+    ///
+    /// `hkbPoweredRagdollControlsModifier` stays a pass-through. It drives a
+    /// ragdoll toward the animated pose with motors, which is a live actor's
+    /// behaviour rather than a corpse's, and item 15.6 scopes non-death ragdolls
+    /// out. `BSRagdollContactListenerModifier` likewise: activation needs no
+    /// contact events from it.
+    private func applyRagdollControls(_ controls: HKBRigidBodyRagdollControlsModifier) {
+        ragdollBlendDuration = controls.durationToBlend
     }
 
     // MARK: - Deactivation

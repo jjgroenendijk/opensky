@@ -65,6 +65,13 @@ nonisolated enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendab
     /// `ActorValueResolver`, exactly as an inventory baseline re-derives from
     /// its CNTO list.
     case actorValues
+    /// One actor's death and the resting transform its ragdoll settled at
+    /// (issue #197). The value type is `ActorDeathState` in
+    /// `opensky/Actors/ActorDeathComponent.swift`. A slot of its own rather than
+    /// a field on `actorValues` because the two have different lifetimes: a
+    /// current-health float is rewritten every regeneration step, while death is
+    /// a latch nothing but a resurrection clears.
+    case death
 }
 
 /// A value that can occupy one component slot.
@@ -98,6 +105,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
     case quest(QuestRuntimeState)
     case questAliases(QuestAliasState)
     case actorValues(ActorValueState)
+    case death(ActorDeathState)
 
     var kind: WorldStateComponentKind {
         switch self {
@@ -110,6 +118,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
         case .quest: .quest
         case .questAliases: .questAliases
         case .actorValues: .actorValues
+        case .death: .death
         }
     }
 }

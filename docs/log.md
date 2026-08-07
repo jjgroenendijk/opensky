@@ -4,6 +4,62 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-07
 
+* **Death and constraint-solved ragdoll (issue #197)**: an actor whose health reaches zero
+  raises the death events its graph declares, hands its skeleton to the physics on the
+  graph's own hand-off frame, and collapses under a joint solver running inside the 15.2
+  fixed step. The simulated bones write back through the pose path the skinning palette
+  already reads, the corpse settles, its resting transform persists across a save, and
+  activating it opens a container over its inventory.
+
+  **The solver is sequential impulse, and position-based dynamics was the alternative it
+  beat.** XPBD is more forgiving of a stiff eighteen-bone chain at low iteration counts and
+  was seriously considered; it lost because the contact solver 15.2 shipped is already
+  sequential-impulse with position-level recovery, and a ragdoll bone is in contact with the
+  floor and jointed to its neighbour in the same substep. Two solver families over one set
+  of velocities means each undoes part of the other's work every iteration.
+
+  **Two readings of the authored constraint angles were settled by measuring the vanilla
+  humanoid at its bind pose, not by reasoning.** The direction the roll is measured in runs
+  from body B's reference axis to body A's: that puts all four hinge kinds inside their
+  authored ranges — knee -0.054 in `[-1.920, 0]`, ankle -0.498 in `[-0.596, 0.063]`, elbow
+  +0.019 in `[0, 1.920]`, wrist -0.060 in `[-0.087, 0.349]` — where the opposite direction
+  puts three of the four outside, the ankle by 0.44 radians. And `maxFriction` is read as a
+  rate rather than a torque, because the humanoid authors exactly two values across its
+  seventeen joints (10.0 on every cone, 0.01 on every hinge) and there is no distribution to
+  infer a unit from. The bind pose is otherwise very nearly satisfied — every cone and plane
+  angle under 0.08 radians, pivots coincident on fourteen of seventeen joints — which is the
+  evidence the frame mapping is right; the other three carry authored slack, symmetric left
+  and right.
+
+  **Three stability findings, each from the real-data probe rather than from taste.** A
+  restoring bias on an angular limit is the Baumgarte term the contact solver already
+  refuses, and it pumped a corpse from 20 to 52 engine units a second over thirty seconds
+  with one ankle violation growing from 0.27 to 1.77 radians; recovery moved to the poses.
+  The pose corrections need several passes to propagate down a six-link chain — with one
+  pass the knees sat seven units apart forever — but must accumulate and be applied once,
+  because applying each pass in turn spends the whole clamp budget several times over and
+  does work against gravity. And a ragdoll's bones cannot collide with each other: eighteen
+  capsules of eighteen-unit radius on twenty-unit bones overlap by construction, and a
+  corpse lying still carried thirty to forty-five contacts and jittered forever until
+  self-collision came out.
+
+  **A ragdoll settles on displacement, not velocity.** 15.2's per-body sleep test never
+  fires on a jointed chain: a corpse that has visibly stopped still carries thirty to fifty
+  units a second in its hands and feet, and a corpse that never sleeps is never persisted.
+  The root travelling less than three units in a second now sleeps the whole ragdoll, which
+  is what a viewer means by stopped. The residual itself is issue #407.
+
+  **Persistence records the resting root transform and not the per-bone pose**, in its own
+  additive `DETH` save chunk. The visual cost is stated rather than hidden: a corpse reloads
+  lying where it came to rest in the skeleton's rest pose, not in the tangle it died in.
+
+  `hkbRigidBodyRagdollControlsModifier` stops being a pass-through and publishes its
+  `m_durationToBlend` as the hand-off's blend; `hkbPoweredRagdollControlsModifier` and
+  `BSRagdollContactListenerModifier` stay pass-through, both out of this item's scope.
+  Real data: the vanilla humanoid resolves 18 bones and 17 joints with nothing skipped, and
+  collapses onto a floor and settles with every constraint resolved.
+  [Death and constraint-solved ragdoll](/engine/ragdoll.md).
+
 * **Archery and projectiles (issue #196)**: a shot from the held mouse button to the arrow
   standing in the wall. `PROJ` is parsed — the milestone's one new ESM record — a bow is
   drawn and loosed through census-named graph events, and the arrow it launches flies on the

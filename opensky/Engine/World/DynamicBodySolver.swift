@@ -57,6 +57,11 @@ nonisolated struct DynamicStepStats: Equatable, Sendable {
     /// Bodies whose integrated pose came back non-finite and were reset. Always
     /// zero on well-formed input; a non-zero value is a bug, not a tolerance.
     var recoveredBodyCount = 0
+    /// Joint limits still violated after the last constraint iteration of the
+    /// last substep (issue #197). Zero means the ragdoll's joints converged;
+    /// a persistently non-zero value is what the panel's convergence readout
+    /// shows and what the stability gate asserts stays bounded.
+    var jointViolationCount = 0
 }
 
 nonisolated enum DynamicBodySolver {
@@ -105,11 +110,39 @@ nonisolated enum DynamicBodySolver {
     }
 
     /// Advances every body by one fixed step.
+    ///
+    /// `joints` is empty for ordinary clutter and holds a ragdoll's constraints
+    /// when the body list is one actor's bones (issue #197, item 15.6). A
+    /// non-empty list therefore means "these bodies are one ragdoll", and it
+    /// changes the step in two ways.
+    ///
+    /// The joint solver runs inside each substep straight after the contact
+    /// solver, over the same velocities, which is what lets a bone resting on
+    /// the floor and hanging off its neighbour satisfy both at once.
+    ///
+    /// And the bones do not collide with each other. A vanilla humanoid ragdoll
+    /// is eighteen capsules whose radii run to eighteen engine units on bones
+    /// about twenty long, so they overlap heavily by construction — not just at
+    /// the joints, but left thigh against right thigh at the pelvis and upper
+    /// arm against spine at the shoulder. Left switched on, the real-data probe
+    /// measured a corpse lying still on a floor carrying thirty to forty-five
+    /// contacts and jittering at twenty-five engine units a second forever,
+    /// because every one of those overlaps pushes and every joint pulls back;
+    /// it never fell under the sleep threshold and so never came to rest and
+    /// was never persisted. Switched off, the same corpse settles.
+    ///
+    /// The visible cost is stated rather than hidden: a limb can pass through
+    /// the torso, which is the classic ragdoll self-intersection. Havok avoids
+    /// it with a per-biped-part collision filter whose semantics this engine has
+    /// not confirmed against an open source; reading `NIFCollisionFilter`'s
+    /// biped bits correctly is the honest way to get self-collision back, and it
+    /// is a later item's, not a guess this one makes.
     @discardableResult
     static func step(
         bodies: inout [DynamicBody],
         world: DynamicStepWorld,
-        dt: Float
+        dt: Float,
+        joints: [RagdollJointDefinition] = []
     ) -> DynamicStepStats {
         var stats = DynamicStepStats()
         guard dt > 0, dt.isFinite, !bodies.isEmpty else {
@@ -122,13 +155,26 @@ nonisolated enum DynamicBodySolver {
         let substeps = substepCount(bodies: bodies, dt: dt)
         stats.substepCount = substeps
         let substepTime = dt / Float(substeps)
+        let isRagdoll = !joints.isEmpty
         for _ in 0 ..< substeps {
             for index in bodies.indices where !bodies[index].isSleeping {
                 integratePose(&bodies[index], dt: substepTime, stats: &stats)
             }
-            let contacts = gatherContacts(bodies: bodies, world: world)
+            let contacts = gatherContacts(
+                bodies: bodies, world: world, pairContacts: !isRagdoll
+            )
             stats.contactCount = max(stats.contactCount, contacts.count)
             resolve(contacts: contacts, bodies: &bodies)
+            // A ragdoll whose every bone is asleep is not solved at all. Its
+            // joints are as satisfied as they are going to get, nothing is
+            // moving them, and running the pass anyway both costs a settled
+            // corpse solver time forever and reports its sub-degree residual to
+            // the panel as work still outstanding.
+            if isRagdoll, bodies.contains(where: { !$0.isSleeping }) {
+                stats.jointViolationCount = RagdollConstraintSolver.solve(
+                    joints: joints, bodies: &bodies, dt: substepTime
+                )
+            }
         }
         for index in bodies.indices {
             updateSleep(&bodies[index])
@@ -203,7 +249,8 @@ nonisolated enum DynamicBodySolver {
 
     private static func gatherContacts(
         bodies: [DynamicBody],
-        world: DynamicStepWorld
+        world: DynamicStepWorld,
+        pairContacts: Bool = true
     ) -> [DynamicContact] {
         // Sampling a body's collider allocates, and every body is asked for its
         // samples once against the static world and once per neighbour. Doing it
@@ -220,7 +267,7 @@ nonisolated enum DynamicBodySolver {
                 shapes: world.staticCandidates(body.worldBounds)
             )
         }
-        for first in bodies.indices {
+        for first in bodies.indices where pairContacts {
             for second in bodies.indices where second > first {
                 guard !bodies[first].isSleeping || !bodies[second].isSleeping else { continue }
                 // Bounding spheres reject a pair before any AABB is built, which

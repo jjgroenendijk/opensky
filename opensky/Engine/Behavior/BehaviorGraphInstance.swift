@@ -158,6 +158,14 @@ nonisolated final class BehaviorGraphInstance {
     /// consumed by the first machine that enters below it.
     var pendingNestedStateId: Int?
 
+    /// Seconds the animated-to-simulated blend takes, from the most recently
+    /// evaluated `hkbRigidBodyRagdollControlsModifier` (issue #197, item 15.6).
+    /// Nil until one has run, which is the honest state for a graph that carries
+    /// no ragdoll controls at all. Internal rather than `private(set)` for the
+    /// same reason `events` and `tally` are: the modifier evaluation that writes
+    /// it is an extension in another file.
+    var ragdollBlendDuration: Float?
+
     /// What every state machine the last update reached is doing, in walk
     /// order. This is the state path items 14.5 and 14.6 read, and what the
     /// real-data test asserts against the census state names.
