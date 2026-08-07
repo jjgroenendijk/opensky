@@ -65,7 +65,9 @@ extension GameViewController {
             renderer.locomotion.meleeEventConsumer
         )
         guard renderer.movementMode.isPlayerControlled else { return }
-        runtime.weapon = equippedWeaponProfile()
+        let hands = equippedHands()
+        runtime.weapon = hands.weapon
+        runtime.offHand = hands.offHand
         runtime.acceptFrame(renderer.locomotion.meleeIntent)
         runtime.handleGraphEvents(events)
     }
@@ -77,14 +79,44 @@ extension GameViewController {
     /// world-state write that can happen from the sidebar, from a script, or
     /// from a container, and a cache would need invalidating from all three.
     func equippedWeaponProfile() -> MeleeWeaponProfile {
+        equippedHands().weapon
+    }
+
+    /// Both hands as the behavior graph counts them (issue #403): the swing
+    /// profile for the right hand and one hand type for the left.
+    ///
+    /// Three readings, in the order vanilla resolves them. A two-handed weapon
+    /// fills both hands and reports its own type on each, which is how
+    /// `1hm_behavior.hkx` refuses a block while a bow is out. A second equipped
+    /// WEAP is the off-hand one. A shield is any equipped ARMO whose body
+    /// template takes slot 39.
+    ///
+    /// Torches are not read here: a torch is a LIGH, which the equipment
+    /// catalog does not index, so a lit hand still reports empty. Dual-wield
+    /// and torch handling are M18's, and both need the equipment runtime to
+    /// track *which* hand an item went into rather than only that it is worn.
+    func equippedHands() -> (weapon: MeleeWeaponProfile, offHand: CombatHandType) {
         guard let equipment = worldItems.equipment, let weapons = melee.weapons else {
-            return .unarmed
+            return (.unarmed, .handToHand)
         }
+        var profiles: [MeleeWeaponProfile] = []
+        var hasShield = false
         for item in equipment.equipped(on: .player) {
             if let weapon = weapons.weapon(item) {
-                return MeleeWeaponProfile(weapon: weapon)
+                profiles.append(MeleeWeaponProfile(weapon: weapon))
+            } else if equipment.occupancy(of: item).slots.contains(.shield) {
+                hasShield = true
             }
         }
-        return .unarmed
+        guard let right = profiles.first else {
+            return (.unarmed, hasShield ? .shield : .handToHand)
+        }
+        if right.handType.occupiesBothHands {
+            return (right, right.handType)
+        }
+        if profiles.count > 1 {
+            return (right, profiles[1].handType)
+        }
+        return (right, hasShield ? .shield : .handToHand)
     }
 }

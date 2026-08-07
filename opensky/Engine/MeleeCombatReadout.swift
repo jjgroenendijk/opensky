@@ -40,6 +40,19 @@ nonisolated enum MeleeCombatReadout {
         )
     }
 
+    /// The hands line: what the graph is being told each hand holds, which is
+    /// what picks the equip and attack animation sets.
+    static func handsText(for snapshot: MeleeCombatSnapshot) -> String {
+        guard snapshot.isAvailable else { return "Hands: unavailable" }
+        return String(
+            format: "Hands: right %@ (%d), left %@ (%d)",
+            snapshot.rightHandType.displayName,
+            snapshot.rightHandType.rawValue,
+            snapshot.leftHandType.displayName,
+            snapshot.leftHandType.rawValue
+        )
+    }
+
     /// The trace line: the swing and hit counts plus the newest hit, which is
     /// the one a user has just made and wants to read.
     static func traceText(for snapshot: MeleeCombatSnapshot) -> String {

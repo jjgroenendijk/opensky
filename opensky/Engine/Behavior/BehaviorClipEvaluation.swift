@@ -84,7 +84,9 @@ nonisolated extension BehaviorGraphInstance {
             &state, clip: clip, samples: samples, wrapped: wrapped, jumped: jumped
         )
         fireTriggers(generator, state: state, window: window, wrapped: wrapped)
-        fireAnnotations(clip, state: state, window: window, wrapped: wrapped)
+        fireAnnotations(
+            clip, state: state, window: window, wrapped: wrapped, justSeeded: !wasSeeded
+        )
         nodeStates[target] = state
         return pose
     }
@@ -303,15 +305,29 @@ nonisolated extension BehaviorGraphInstance {
     /// annotation is a mark on an animation, and the same animation is played
     /// by behavior files that care about different marks. `raise(named:)`
     /// answers false and nothing happens.
+    ///
+    /// The update that seeded the clip covers the closed interval from the
+    /// start time rather than the half-open one every later update covers
+    /// (issue #403). Vanilla authors annotations *at* the first frame and means
+    /// them: `1HM_Equip.hkx` carries `BeginWeaponDraw` at 0.0, and with the
+    /// half-open rule that mark could never fire, which left the weapon on the
+    /// sheathed node for the whole draw. Later updates stay half-open so a mark
+    /// the previous update already crossed does not fire twice.
     private func fireAnnotations(
         _ clip: any BehaviorClip,
         state: BehaviorNodeState,
         window: BehaviorClipWindow,
-        wrapped: Bool
+        wrapped: Bool,
+        justSeeded: Bool
     ) {
         for annotation in clip.annotations {
             let at = annotation.time - window.start
-            guard crossed(at, state: state, window: window, wrapped: wrapped) else {
+            guard
+                crossed(
+                    at, state: state, window: window,
+                    wrapped: wrapped, includingStart: justSeeded
+                )
+            else {
                 continue
             }
             events.raise(named: annotation.text)
@@ -319,17 +335,24 @@ nonisolated extension BehaviorGraphInstance {
     }
 
     /// True when `point` lies in the interval the update covered.
+    ///
+    /// `includingStart` closes the interval's left edge, which only the update
+    /// that seeded the clip asks for.
     private func crossed(
         _ point: Float,
         state: BehaviorNodeState,
         window: BehaviorClipWindow,
-        wrapped: Bool
+        wrapped: Bool,
+        includingStart: Bool = false
     ) -> Bool {
         guard point.isFinite, point >= 0, point <= window.length else { return false }
+        let afterStart = includingStart
+            ? point >= state.previousLocalTime
+            : point > state.previousLocalTime
         guard wrapped else {
-            return point > state.previousLocalTime && point <= state.localTime
+            return afterStart && point <= state.localTime
         }
-        return point > state.previousLocalTime || point <= state.localTime
+        return afterStart || point <= state.localTime
     }
 
     /// The string an event payload carries, if it carries one.

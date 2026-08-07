@@ -183,6 +183,22 @@ struct BehaviorClipTests {
         #expect(fired == 3)
     }
 
+    /// An annotation authored *at* the clip's first frame fires on the update
+    /// that started the clip, and only that one (issue #403). Vanilla means
+    /// those marks: `1HM_Equip.hkx` carries `BeginWeaponDraw` at 0.0, and with
+    /// a half-open interval on the seeding update it could never fire, which
+    /// left a drawn sword still hanging on the sheathed node.
+    @Test func anAnnotationAtTheClipsFirstFrameFiresOnceWhenTheClipStarts() throws {
+        let (graph, _) = try annotatedGraph(
+            annotations: [(time: 0, text: "BeginWeaponDraw")], events: ["BeginWeaponDraw"]
+        )
+        #expect(graph.update(deltaTime: 0.1).firedEvents.isEmpty)
+        #expect(
+            graph.update(deltaTime: 0.1).firedEvents.map(\.name) == ["BeginWeaponDraw"]
+        )
+        #expect(graph.update(deltaTime: 0.1).firedEvents.isEmpty)
+    }
+
     /// A graph that declares no event by the annotation's name is not an error.
     /// One animation is played by behavior files that care about different
     /// marks, so an unmatched name is dropped rather than tallied.

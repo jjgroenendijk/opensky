@@ -38,6 +38,18 @@ nonisolated enum CombatGraphNames {
     /// them; both names are declared by `0_master.hkx` itself.
     static let weaponDraw = "weaponDraw"
     static let weaponSheathe = "weaponSheathe"
+    /// The equip events `0_master.hkx` actually transitions on (issue #403).
+    ///
+    /// `weaponDraw` above is declared by the graph but named by no transition
+    /// in any file under `meshes\actors\character\behaviors\`, which is why
+    /// raising it alone moved nothing: in vanilla the engine decides *what* is
+    /// being drawn and raises the matching equip event. `Default_Behavior` in
+    /// `0_master.hkx` carries `MT_Behavior_State -[WeapEquip]-> Weap_Equip_State`,
+    /// `-[Magic_Equip]-> Magic_Equip_State`, and `Weap_Readied_State -[Unequip]->
+    /// Weap_Unequip_State`, so these three are the ones that move the graph.
+    static let weapEquip = "WeapEquip"
+    static let magicEquip = "Magic_Equip"
+    static let unequip = "Unequip"
     /// Swing start and the release that ends a held power attack. Power-attack
     /// direction variants (`attackPowerStartForward` and its seven siblings)
     /// exist in the census and are M18's, not this item's.
@@ -56,6 +68,7 @@ nonisolated enum CombatGraphNames {
     /// edges in.
     static let raisedEvents = [
         weaponDraw, weaponSheathe,
+        weapEquip, magicEquip, unequip,
         attackStart, attackRelease, attackStop,
         blockStart, blockStop,
         staggerStart, staggerStop
@@ -69,6 +82,12 @@ nonisolated enum CombatGraphNames {
     /// animation's own phase instead of at the key press.
     static let beginWeaponDraw = "BeginWeaponDraw"
     static let beginWeaponSheathe = "BeginWeaponSheathe"
+    /// The graph's own answer that the equip finished: the events
+    /// `0_master.hkx` transitions into `Weap_Readied_State` and back out of
+    /// `Weap_Unequip_State` on. Observed alongside the two annotations above,
+    /// because five of the vanilla equip clips carry no annotation (issue #403).
+    static let weapEquipOut = "WeapEquip_Out"
+    static let unequipOut = "Unequip_Out"
     /// The swing's audible start, ahead of any contact.
     static let weaponSwing = "weaponSwing"
     /// The frame before contact, which opens the hit window.
@@ -82,6 +101,7 @@ nonisolated enum CombatGraphNames {
     /// Every event the melee state machine acts on when the graph fires it.
     static let observedEvents = [
         beginWeaponDraw, beginWeaponSheathe,
+        weapEquipOut, unequipOut,
         weaponSwing, preHitFrame, hitFrame,
         attackStart, attackStop, blockStart, blockStop,
         staggerStart, staggerStop, blockHitStart
@@ -99,18 +119,18 @@ nonisolated enum CombatGraphNames {
     static let staggerMagnitude = "staggerMagnitude"
     /// The WEAP `speed` multiplier the attack clips scale their rate by. Real.
     static let weaponSpeedMult = "weaponSpeedMult"
+    /// What each hand is holding, `int32`. These pick the animation set: the
+    /// equip selectors in `weapequip.hkx` index their child list straight off
+    /// them, and most of the combat transitions in `1hm_behavior.hkx` are
+    /// conditioned on them. `CombatHandType` is the encoding and records where
+    /// it was read from (issue #403).
+    static let rightHandType = "iRightHandType"
+    static let leftHandType = "iLeftHandType"
 
     /// Every variable the melee runtime writes, in write order.
-    ///
-    /// `iRightHandType` and `iLeftHandType` are deliberately absent. The
-    /// census gives their names and their `int32` type but not the encoding —
-    /// which integer means "one-handed sword" is a mapping no open source
-    /// consulted here states, and guessing it would silently select the wrong
-    /// attack animation set. They stay unwritten until a probe settles the
-    /// encoding, which leaves the graph on its own defaults rather than on a
-    /// wrong number.
     static let variables = [
         isAttacking, isBlocking, isStaggering,
-        staggerMagnitude, weaponSpeedMult
+        staggerMagnitude, weaponSpeedMult,
+        rightHandType, leftHandType
     ]
 }

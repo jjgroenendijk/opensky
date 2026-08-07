@@ -74,9 +74,13 @@ struct MeleeCombatRealDataTests {
     ///
     /// What this pins is the loop rather than a particular animation: the
     /// request leaves through the input path, the vanilla graph acts on it, and
-    /// what comes back is a stream of names the melee runtime reads. Asserting
-    /// that `BeginWeaponDraw` specifically arrives would pin the graph's own
-    /// clip timing, which is `weapequip.hkx`'s business and not this item's.
+    /// what comes back is a stream of names the melee runtime reads.
+    ///
+    /// It also pins the outcome now that issue #403 has settled the hand-type
+    /// encoding: with `iRightHandType` written, the graph runs the equip clip
+    /// for that weapon, the weapon reaches the hand, and the swing that follows
+    /// reaches a contact frame. Before #403 both variables were unwritten and
+    /// this test asserted the stuck `.drawing` state instead.
     @Test(.enabled(if: Self.dataRoot != nil))
     @MainActor
     func drawAndAttackDriveTheVanillaGraphThroughTheShippingInputPath() throws {
@@ -87,17 +91,30 @@ struct MeleeCombatRealDataTests {
             settings: CombatSettings.resolve(store: GameSettingLoader.load(root: root)),
             world: world
         )
+        // A one-handed sword rather than the unarmed default, so the graph is
+        // asked for the animation set whose encoding #403 settled: writing
+        // `iRightHandType` is what makes `weapequip.hkx` select `1HM_Equip.hkx`.
+        runtime.weapon = MeleeWeaponProfile(damage: 8, reach: 1, handType: .sword)
 
         // Draw, then a second of graph time, then attack. The input arrives as
         // a `CameraInput` exactly as the view layer produces it.
         let afterDraw = Self.drive(
             bridge: bridge, runtime: runtime, input: Self.input(toggleWeaponDrawn: true)
         )
+        // A second of quiet in between: the equip clip runs for about a second
+        // and `1hm_behavior.hkx` is only reached once `0_master.hkx` has
+        // transitioned into `Weap_Readied_State`, so a swing asked for while
+        // the equip is still playing has no attack state to enter yet.
+        Self.drive(bridge: bridge, runtime: runtime, input: Self.input())
         let afterAttack = Self.drive(
             bridge: bridge, runtime: runtime, input: Self.input(attack: true)
         )
 
         #expect(world.raised.contains(CombatGraphNames.weaponDraw))
+        // `weaponDraw` is the intent; `WeapEquip` is the event `0_master.hkx`
+        // actually transitions on, and raising only the first is what left the
+        // graph standing still before #403.
+        #expect(world.raised.contains(CombatGraphNames.weapEquip))
         #expect(
             !afterDraw.isEmpty,
             "the vanilla graph fired nothing back after a draw request"
@@ -106,21 +123,22 @@ struct MeleeCombatRealDataTests {
         // the claim the synthetic suites cannot make.
         #expect(bridge.status.missingEvents.isEmpty)
         // What the vanilla graph does with the request, probed on the local
-        // install 2026-08-07: it accepts `weaponDraw` and moves — the drained
-        // batch is `weaponDraw, MTState, arrowDetach, tailMTState,
-        // HeadTrackingOn, IdleStop, tailMTIdle` — but it does not reach the
-        // `BeginWeaponDraw` annotation, and the state stays `.drawing`. The
-        // equip sub-behavior branches on `iRightHandType`, whose integer
-        // encoding the census gives no reading for, so OpenSky deliberately
-        // leaves it unwritten rather than guessing which value means "one-handed
-        // sword" (see `CombatGraphNames.variables`). That is recorded here as an
-        // expectation rather than as prose, so settling the encoding turns this
-        // assertion red and the reader is sent to the right place.
-        #expect(runtime.state.drawState == .drawing)
-        // And because the graph never reported the weapon in hand, the attack
-        // is dropped rather than queued: no swing resolves from a state the
-        // graph never entered.
-        #expect(runtime.swingCount == 0)
+        // install 2026-08-07: it runs `1HM_Equip.hkx`, whose `BeginWeaponDraw`
+        // annotation sits at time 0.0, and reports the weapon in hand within
+        // the first second.
+        #expect(
+            afterDraw.contains(CombatGraphNames.beginWeaponDraw),
+            "the equip clip never reported the weapon reaching the hand"
+        )
+        #expect(runtime.state.drawState == .drawn)
+        // And with the weapon in hand the swing is no longer dropped: the
+        // graph enters an attack state and fires the contact frame the sweep
+        // runs on.
+        #expect(
+            afterAttack.contains(CombatGraphNames.hitFrame),
+            "the vanilla graph fired no contact frame for the swing"
+        )
+        #expect(runtime.swingCount == 1)
         #expect(afterAttack.allSatisfy { !$0.isEmpty })
     }
 

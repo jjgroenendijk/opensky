@@ -108,6 +108,8 @@ struct PlayerLocomotionMeleePanelTests {
             weaponDamage: 7,
             weaponReachMultiplier: 0.7,
             weaponSpeed: 1,
+            rightHandType: .sword,
+            leftHandType: .shield,
             reach: 98.7,
             swingCount: 2,
             hitCount: 1,

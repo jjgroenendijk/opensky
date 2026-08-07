@@ -96,6 +96,7 @@ final class LocomotionMeleeSection: PanelSectionViewController {
         statsLabel.stringValue = [
             MeleeCombatReadout.stateText(for: snapshot),
             MeleeCombatReadout.weaponText(for: snapshot),
+            MeleeCombatReadout.handsText(for: snapshot),
             MeleeCombatReadout.traceText(for: snapshot)
         ].joined(separator: "\n")
     }

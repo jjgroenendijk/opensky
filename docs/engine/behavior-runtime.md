@@ -372,6 +372,13 @@ crossing test. An annotation outside the window is one the crop cut away and nev
 graph that declares no event by the annotation's name drops it silently and is not an
 error: one animation is played by behavior files that care about different marks.
 
+One exception to the half-open interval, for annotations only: the update that *seeds* a
+clip covers the closed interval from its start time (issue #403). Vanilla authors marks at
+the first frame and means them — `1HM_Equip.hkx` carries `BeginWeaponDraw` at 0.0 — and
+under the half-open rule such a mark could never fire, which left
+[melee combat](/engine/melee-combat.md) unable to see a drawn weapon reach the hand. Later
+updates stay half-open, so a mark the previous update already crossed does not fire twice.
+
 `m_relativeToEndOfClip` applies to authored triggers only.
 
 `m_relativeToEndOfClip` carries an offset *from* the end rather than a distance back from
