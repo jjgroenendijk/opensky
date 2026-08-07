@@ -49,16 +49,31 @@ parent="$root/$base/$name"
 # Timestamps sort lexicographically, which is what `make prune` compares
 # against its retention cutoff and how "newest run" is decided.
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
-# Two runs can start inside the same second (a make target that chains
-# scripts); the second one must not land on top of the first.
+
+# Two runs can start inside the same second — a make target that chains scripts,
+# or two agents running targeted tests in one checkout, which is now the normal
+# way work happens here. The second must not land on top of the first.
+#
+# `mkdir` without -p is the whole mechanism (issue #306): it fails when the
+# directory already exists, and creating a directory is atomic, so exactly one
+# racing caller can win a given name. Testing with [ -e ] and then calling
+# `mkdir -p` looks equivalent and is not — both callers can see the name free
+# before either creates it, both then succeed, and the two runs share a
+# directory. That is invisible until they write the same file into it, which is
+# how this last surfaced: two overlapping `make test-one` runs collided on
+# one.xcresult and xcodebuild reported "Existing file at -resultBundlePath",
+# reading like a stale-file problem rather than contention.
+mkdir -p "$parent"
 suffix=""
 attempt=1
-while [ -e "$parent/$stamp$suffix" ]; do
+until mkdir "$parent/$stamp$suffix" 2>/dev/null; do
+    if [ "$attempt" -gt 100 ]; then
+        echo "[ERROR] could not allocate a run directory under $parent" >&2
+        exit 1
+    fi
     suffix="-$attempt"
     attempt=$((attempt + 1))
 done
-
-mkdir -p "$parent/$stamp$suffix"
 # Relative target, so the tree survives the checkout being moved.
 ln -sfn "$stamp$suffix" "$parent/latest"
 printf '%s\n' "$parent/$stamp$suffix"

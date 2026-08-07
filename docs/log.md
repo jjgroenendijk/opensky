@@ -4,6 +4,18 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-07
 
+* **Run directories are allocated atomically (issue #306)**: `tools/run-dir.sh` picked its
+  collision suffix by testing `[ -e ]` and then calling `mkdir -p`, which is check-then-act.
+  Two runs starting inside the same second both saw the name free, both succeeded, and
+  shared a directory — then collided on the file they each wrote into it, surfacing as
+  `xcodebuild` reporting `Existing file at -resultBundlePath` and reading like a stale file
+  rather than contention. A bare `mkdir` retried on failure fixes it, because creating a
+  directory is atomic and exactly one racing caller can win a name. Measured with 40
+  concurrent callers: the old code handed out 10 distinct directories, the new code 40.
+  The original report was against `make test-one`'s hardcoded bundle path, which the
+  per-run directories of issue #347 had already retired; this closes the race that survived
+  it.
+
 * **`make test-ui` runs, and it was never a permissions problem (issue #380)**: the UI
   target had compiled and never once executed, dying at harness init with `Timed out while
   enabling automation mode`. Four issues read that string as a missing TCC grant and chased
