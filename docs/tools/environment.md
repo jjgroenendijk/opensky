@@ -19,33 +19,10 @@ entry whose condition is met gets deleted, not amended.
 
 ## Contents
 
-- Screen Recording and automation permissions (TCC)
 - Continuous integration suspended
 - Upstream spec hosts
 - Memory watchdog for heavy real-data tests
 - Test plans, environment entries, and Swift Testing
-
-## Screen Recording and automation permissions (TCC)
-
-Observed 2026-07-20. `make test-ui` blocks at XCTest harness initialization, and UI tests
-stall on "enabling automation mode". Screen Recording is not granted to the test runner, so
-screenshot-based verification is unavailable too.
-
-- Try `make test-perms` once per machine; it requests the permissions the harness needs.
-- Until it succeeds, pin accessibility ids as literal assertions in unit tests
-  (`DestinationRegistryTests`) and keep `openskyUITests` correct so it passes wherever the
-  permission exists.
-
-Updated 2026-08-05. A grant only sticks if the binary keeps the same code signature. The UI
-test runner signed ad-hoc from the start, and the app joined it when issue #343 moved
-signing into a per-developer file nobody filled in, so every build asked again — for
-Automation, and for reading the game install off `/Volumes/data`, which manifested as a
-real-data test host parked in `open()`. `Config/Signing.xcconfig` now names one Apple
-Development identity for every target including the runner, so an approval survives
-rebuilds. When the prompts come back, `codesign -dv --verbose=2` on the built app and on
-`openskyUITests-Runner.app` is the first thing to check: `Signature=adhoc` is the cause.
-
-Retires when `make test-ui` reaches the first test case on this machine.
 
 ## Continuous integration suspended
 
