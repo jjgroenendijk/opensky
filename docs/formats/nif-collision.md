@@ -191,9 +191,11 @@ census below, not assumed: 1193 of the 1196 skeleton bodies swept hang off
 | `bhkCapsuleShape` | preserve endpoints + max of serialized radii |
 
 Reachable unknown shape types are counted by block type. One malformed collision root adds
-a block-indexed failure; sibling roots continue decoding. Recursion depth caps at 64;
+a block-indexed failure; sibling roots continue decoding. Shape-graph depth caps at 64;
 active-path set rejects cycles; every ref, count, vertex index, strip partition, transform
-index, and declared triangle total validates before allocation/output.
+index, and declared triangle total validates before allocation/output. The shape walk and
+the scene-target walk both descend through the shared explicit work stack described in
+[NIF](/formats/nif.md), so depth costs heap rather than call frames (issue #388).
 
 Convex plane XYZ is unitless exterior normal; W is signed plane distance and receives Havok
 unit conversion. Face derivation groups vertices on each serialized half-space, orders each
