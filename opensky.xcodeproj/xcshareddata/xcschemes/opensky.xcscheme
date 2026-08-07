@@ -33,7 +33,7 @@
             default = "YES">
          </TestPlanReference>
          <TestPlanReference
-            reference = "container:Config/AllTests.xctestplan">
+            reference = "container:Config/UITests.xctestplan">
          </TestPlanReference>
          <TestPlanReference
             reference = "container:Config/RealData.xctestplan">

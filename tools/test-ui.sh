@@ -1,13 +1,23 @@
 #!/bin/sh
-# Run the UI test target, but turn the machine's known TCC failure mode into an
+# Run the UI test target, turning a missing Accessibility grant into an
 # actionable message instead of an opaque multi-minute hang.
 #
-# On this machine `make test-ui` reliably dies at harness init with "Timed out
-# while enabling automation mode" (a TCC/automation-permission gap, not a code
-# fault — see docs/testing.md). Sessions burned minutes rediscovering that each
-# time. This wrapper runs the tests, and if that specific failure appears it
-# prints the one-time remedy (`make test-perms`) and the offscreen-render
-# alternative rather than leaving a bare non-zero exit.
+# The plan selection is load-bearing (issue #380). `openskyTests` is app-hosted:
+# its test host *is* opensky.app. Put it in the same test session as the UI
+# runner and xcodebuild stands the app up as a test host, injecting
+# libXCTestBundleInject.dylib, so the app sits in
+# -[XCTestDriver _prepareTestConfigurationAndIDESession] waiting for an IDE
+# session that belongs to the runner while the runner waits for the app to enter
+# automation mode. Neither moves and XCTest gives up after 60s with "Timed out
+# while enabling automation mode" — which reads like a permission failure but is
+# a deadlock, and is why `make test-ui` never once reached a test case.
+# `-only-testing:` does not avoid it: it filters which tests run, not which
+# targets the session stands up. The UITests plan, which lists openskyUITests
+# alone, does.
+#
+# With that fixed the runner really does request kTCCServiceAccessibility, and a
+# missing grant produces the same error string for a genuine reason. That case
+# points at `make test-perms`.
 #
 # Usage: tools/test-ui.sh PROJECT SCHEME DESTINATION [extra xcodebuild args...]
 # Env:   OPENSKY_RESULT_BUNDLE  optional -resultBundlePath target, overriding
@@ -52,16 +62,20 @@ status=0
 "$root/tools/xcodebuild-run.sh" test-ui \
     xcodebuild -project "$project" -scheme "$scheme" -destination "$destination" \
     -derivedDataPath "$derived_data" \
-    $bundle_flag "$@" -testPlan AllTests -only-testing:openskyUITests test || status=$?
+    $bundle_flag "$@" -testPlan UITests test || status=$?
 
 if [ "$status" -ne 0 ] && grep -q "enabling automation mode" "$log"; then
     cat >&2 <<'MSG'
 
 [WARNING] UI tests failed at harness init: "enabling automation mode" timed out.
-          This is the known TCC/automation gap on this machine, not a test fault.
-          Fix once:   make test-perms   (grants Automation + Full Disk Access)
-          Meanwhile:  verify render behavior via Renderer.renderOffscreen unit
-                      tests or `make run-cli ARGS="render ..."` (see docs/testing.md).
+          The runner asked macOS for Accessibility and did not get an answer.
+          Fix once:   make test-perms
+          Then grant: System Settings > Privacy & Security > Accessibility >
+                      openskyUITests-Runner.app
+          The grant is keyed to the runner's code signature, so it is one click
+          per signature, not per run. Meanwhile, verify render behavior via
+          Renderer.renderOffscreen unit tests or `make run-cli ARGS="render ..."`
+          (see docs/testing.md).
 MSG
     exit 3
 fi

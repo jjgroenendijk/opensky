@@ -32,6 +32,52 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   The echo mattered because `LocomotionGraphEventQueue` is bounded at 64: three events per
   step across 120 steps left the drain holding twenty updates of the same echoing names, so
   even after the annotations fired they were evicted before an audio frame read them.
+* **Run directories are allocated atomically (issue #306)**: `tools/run-dir.sh` picked its
+  collision suffix by testing `[ -e ]` and then calling `mkdir -p`, which is check-then-act.
+  Two runs starting inside the same second both saw the name free, both succeeded, and
+  shared a directory — then collided on the file they each wrote into it, surfacing as
+  `xcodebuild` reporting `Existing file at -resultBundlePath` and reading like a stale file
+  rather than contention. A bare `mkdir` retried on failure fixes it, because creating a
+  directory is atomic and exactly one racing caller can win a name. Measured with 40
+  concurrent callers: the old code handed out 10 distinct directories, the new code 40.
+  The original report was against `make test-one`'s hardcoded bundle path, which the
+  per-run directories of issue #347 had already retired; this closes the race that survived
+  it.
+
+* **`make test-ui` runs, and it was never a permissions problem (issue #380)**: the UI
+  target had compiled and never once executed, dying at harness init with `Timed out while
+  enabling automation mode`. Four issues read that string as a missing TCC grant and chased
+  it — #364 found ad-hoc signing, #365 and #366 pinned one Apple Development identity, and
+  `tools/test-perms.sh` grew to point at Automation and Full Disk Access for the terminal.
+  The signing work was right for its own reasons and changed nothing here.
+
+  Streaming `tccd` across a failing run settled it: **zero** `kTCCServiceAccessibility`
+  requests in the whole ninety seconds, the only line naming the runner a `syspolicyd`
+  Gatekeeper check. Nothing was ever denied because nothing ever asked. Sampling the app
+  under test showed where it actually sat — `libXCTestBundleInject.dylib` →
+  `-[XCTestDriver _prepareTestConfigurationAndIDESession]`. `openskyTests` is app-hosted, so
+  a plan carrying both bundles makes `xcodebuild` stand `opensky.app` up as a *unit-test
+  host* in the same session the UI runner is trying to drive it in. The app waits for an IDE
+  session that belongs to the runner; the runner waits for the app to enter automation mode;
+  XCTest times out after sixty seconds. `-only-testing:openskyUITests` never helped because
+  a selector filters which tests run, not which targets the session stands up.
+
+  `Config/UITests.xctestplan` lists `openskyUITests` alone and `make test-ui` selects it.
+  `AllTests.xctestplan` is deleted rather than left as a footgun: it *is* the deadlock, and
+  nothing else used it. With the harness alive the runner does now request Accessibility, so
+  the grant is real — one click per code signature, against
+  `openskyUITests-Runner.app` rather than the terminal, which is what `test-perms.sh` should
+  have said all along.
+
+  Reaching the first test case then exposed what the target had been hiding. Six of nine
+  tests failed on `outlines["AppSidebar"].cells[...]`, which matches nothing: the rows are
+  `NSTableCellView`s, published to the accessibility hierarchy as groups, so the ids are
+  reachable only by matching the identifier without constraining the element type. A seventh
+  failed reading `.label` on a readout whose text AppKit exposes as the element's `value`.
+  Both had been green in `DestinationRegistryTests` the entire time, which is precisely the
+  gap the issue predicted — a unit test pins the id string, only a UI test proves the id is
+  reachable. `make test-ui` is now 9 passed, 1 skipped, 0 failed, and the standing
+  `environment.md` entry is retired by its own stated condition.
 
 ## 2026-08-06
 

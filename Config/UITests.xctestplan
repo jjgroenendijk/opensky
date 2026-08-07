@@ -1,8 +1,8 @@
 {
   "configurations" : [
     {
-      "id" : "4E9F1C20-0002-4A00-9B00-000000000002",
-      "name" : "All",
+      "id" : "4E9F1C20-0005-4A00-9B00-000000000005",
+      "name" : "UI",
       "options" : {
 
       }
@@ -21,15 +21,7 @@
   },
   "testTargets" : [
     {
-      "parallelizable" : true,
-      "target" : {
-        "containerPath" : "container:opensky.xcodeproj",
-        "identifier" : "5A3BAE183000109300177F95",
-        "name" : "openskyTests"
-      }
-    },
-    {
-      "parallelizable" : true,
+      "parallelizable" : false,
       "target" : {
         "containerPath" : "container:opensky.xcodeproj",
         "identifier" : "5A3BAE223000109300177F95",

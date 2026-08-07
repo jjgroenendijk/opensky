@@ -57,6 +57,13 @@ Two rules follow from this and matter when adding a script:
   the thing this convention exists to avoid.
 
 Collisions inside the same second get a `-1`, `-2` suffix rather than sharing a directory.
+The allocation is a bare `mkdir` retried on failure, not a `[ -e ]` test followed by
+`mkdir -p` (issue #306). Creating a directory is atomic, so exactly one racing caller can
+win a name; testing first and creating after lets two callers both see the name free and
+both succeed, which hands them the same directory. That matters because concurrent runs in
+one checkout are normal here — two agents running targeted tests used to collide on
+`one.xcresult`, and `xcodebuild` reported it as `Existing file at -resultBundlePath`, which
+reads like a stale file rather than contention.
 
 ## Which scripts write where
 

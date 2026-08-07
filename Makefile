@@ -151,11 +151,18 @@ probe: ## CLI smoke checks against the local install (skips if absent)
 
 # Which bundles a run touches is a checked-in test plan (issue #346), not a
 # pile of -only-testing/-skip-testing flags: UnitTests lists openskyTests
-# alone, AllTests lists both. Selecting the unit plan is what actually drops
-# the UI bundle's compile and link — xcodebuild builds every buildable in the
-# Test action before it looks at selectors, so a selector alone never did.
+# alone, UITests lists openskyUITests alone. Selecting the unit plan is what
+# actually drops the UI bundle's compile and link — xcodebuild builds every
+# buildable in the Test action before it looks at selectors, so a selector alone
+# never did.
+#
+# The two bundles never share a session (issue #380). openskyTests is app-hosted
+# on opensky.app, so a plan carrying both makes xcodebuild stand the app up as a
+# test host at the same moment the UI runner tries to drive it, and the two
+# deadlock until XCTest times out "enabling automation mode". There is
+# deliberately no plan listing both.
 UNIT_PLAN   := -testPlan UnitTests
-ALL_PLAN    := -testPlan AllTests
+UI_PLAN     := -testPlan UITests
 
 test: vendor-link ## Build + run unit tests (no UI tests)
 	@bundle="$$($(RUN_DIR) -b $(TEST_RESULTS) unit)/unit.xcresult"; \
@@ -168,7 +175,9 @@ test-ui: vendor-link ## Build + run UI tests (launches the app, drives it via au
 		$(PROJECT) $(SCHEME) '$(DESTINATION)' $(XCODEBUILD_FLAGS)
 
 # The unit plan cannot select a UI test, so a selector naming openskyUITests
-# switches to the plan that lists it. Every other selector keeps the default.
+# switches to the UI plan. Every other selector keeps the default. Selecting the
+# UI-only plan also keeps a single-test UI run clear of the app-hosted unit
+# bundle it would otherwise deadlock against (issue #380).
 test-one: vendor-link ## Run one test: make test-one T=Class[/method] or Target/Class/method
 	@test -n "$(T)" || { \
 		echo "[ERROR] usage: make test-one T=ClassName[/methodName]"; \
@@ -176,7 +185,7 @@ test-one: vendor-link ## Run one test: make test-one T=Class[/method] or Target/
 		echo "        ClassName[/methodName] resolves under openskyTests"; \
 		exit 2; }
 	@case "$(T)" in */*/*) spec="$(T)";; *) spec="openskyTests/$(T)";; esac; \
-	case "$$spec" in openskyUITests/*) plan="$(ALL_PLAN)";; *) plan="$(UNIT_PLAN)";; esac; \
+	case "$$spec" in openskyUITests/*) plan="$(UI_PLAN)";; *) plan="$(UNIT_PLAN)";; esac; \
 	bundle="$$($(RUN_DIR) -b $(TEST_RESULTS) one)/one.xcresult"; \
 	TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
 		$(XCB_RUN) test-one $(XCB_TEST) -resultBundlePath "$$bundle" \
