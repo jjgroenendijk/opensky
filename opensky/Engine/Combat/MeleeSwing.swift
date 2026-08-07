@@ -49,6 +49,9 @@ nonisolated struct MeleeWeaponProfile: Equatable, Sendable {
     let weapon: FormID?
     /// BIDS — the impact data set the hit resolves its sound through.
     let impactDataSet: FormID?
+    /// Which animation set the graph plays for this weapon, written to
+    /// `iRightHandType` (issue #403).
+    let handType: CombatHandType
 
     init(
         damage: Float,
@@ -56,7 +59,8 @@ nonisolated struct MeleeWeaponProfile: Equatable, Sendable {
         speed: Float = 1,
         stagger: Float = 0,
         weapon: FormID? = nil,
-        impactDataSet: FormID? = nil
+        impactDataSet: FormID? = nil,
+        handType: CombatHandType = .handToHand
     ) {
         self.damage = damage
         self.reach = reach
@@ -64,6 +68,7 @@ nonisolated struct MeleeWeaponProfile: Equatable, Sendable {
         self.stagger = stagger
         self.weapon = weapon
         self.impactDataSet = impactDataSet
+        self.handType = handType
     }
 
     /// The profile of a bare-handed swing on a session with no unarmed WEAP
@@ -79,7 +84,8 @@ nonisolated struct MeleeWeaponProfile: Equatable, Sendable {
             speed: record.speed.isFinite && record.speed > 0 ? record.speed : 1,
             stagger: record.stagger.isFinite ? max(0, record.stagger) : 0,
             weapon: record.formID,
-            impactDataSet: record.impactDataSet
+            impactDataSet: record.impactDataSet,
+            handType: CombatHandType(weapon: record.animationType)
         )
     }
 }

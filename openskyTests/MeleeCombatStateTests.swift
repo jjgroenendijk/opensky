@@ -39,6 +39,34 @@ struct MeleeCombatStateTests {
         #expect(state.drawState == .sheathed)
     }
 
+    /// Five of the vanilla equip clips carry no `BeginWeaponDraw` at all, so
+    /// the graph's own end-of-equip transition has to move the state too
+    /// (issue #403).
+    @Test func theGraphsOwnEquipTransitionAlsoReportsTheWeaponInHand() {
+        var state = MeleeCombatState()
+        state.handle(CombatGraphNames.weaponDraw)
+
+        let moved = state.handle(CombatGraphNames.weapEquipOut)
+        #expect(moved?.drawState == .drawn)
+        #expect(moved?.movedAttachment == true)
+
+        state.handle(CombatGraphNames.weaponSheathe)
+        let sheathed = state.handle(CombatGraphNames.unequipOut)
+        #expect(sheathed?.drawState == .sheathed)
+        #expect(sheathed?.movedAttachment == true)
+    }
+
+    /// The annotation is the early one and the transition the late one, so a
+    /// clip that fires both must move the attachment exactly once.
+    @Test func aClipThatFiresBothDrawEventsMovesTheAttachmentOnce() {
+        var state = MeleeCombatState()
+        state.handle(CombatGraphNames.weaponDraw)
+
+        #expect(state.handle(CombatGraphNames.beginWeaponDraw)?.movedAttachment == true)
+        #expect(state.handle(CombatGraphNames.weapEquipOut)?.movedAttachment == false)
+        #expect(state.drawState == .drawn)
+    }
+
     @Test func attackPhaseFollowsTheFiredEvents() {
         var state = drawn()
 

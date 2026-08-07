@@ -4,6 +4,39 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-07
 
+* **The hand-type encoding, settled from the install (issue #403)**: `iRightHandType` and
+  `iLeftHandType` are now written, so drawing a sword plays the sword's own equip animation
+  and the attack states behind it become reachable.
+
+  **The encoding was read, not guessed.** The M14 census gave both variables their names and
+  their `int32` type and nothing else, so item 15.4 deliberately left them unwritten rather
+  than pick a number. Three independent readings out of
+  `meshes\actors\character\behaviors\` agree on the thirteen values: `weapequip.hkx` binds
+  `hkbManualSelectorGenerator::m_selectedGeneratorIndex` straight to the variable, so the
+  child list of `Weap_Equip_MSG` is the encoding in order (1 `1HM_Equip.hkx`, 2
+  `Dag_Equip.hkx`, 3 `Axe_Equip.hkx`, 4 `Mac_Equip.hkx`, 5 `2HC_Equip.hkx`, 6
+  `2HW_Equip.hkx`, 7 `Bow_Equip.hkx`, 8 `Stf_Equip.hkx`, 12 `DLC01\CrossBow_Equip.hkx`);
+  `0_master.hkx` names the same values as the state ids of its `MT_LeftHandOverride` machine,
+  which is where 9 spell, 10 shield and 11 torch come from; and the transition conditions in
+  `1hm_behavior.hkx` and `magicbehavior.hkx` agree wherever they overlap. It is **not** the
+  WEAP DNAM animation type: DNAM spells crossbow 9 and the graph spells spell 9 and crossbow
+  12, so `CombatHandType.init(weapon:)` is a conversion rather than a cast.
+
+  **Two other things had to be true before the draw ran.** `weaponDraw` is declared by the
+  graph but named by no transition in any character behavior file — in vanilla it is the
+  intent and the engine decides what it equips — so the runtime now raises `WeapEquip`,
+  `Magic_Equip` or `Unequip` beside it, which is what `0_master.hkx` actually transitions on.
+  And an annotation authored at a clip's first frame could never fire, because the crossing
+  test was half-open on the update that seeded the clip; `1HM_Equip.hkx` carries
+  `BeginWeaponDraw` at 0.0, so that update now covers the closed interval. Five of the equip
+  clips carry no such annotation at all, so `WeapEquip_Out` and `Unequip_Out` are observed as
+  the backstop.
+
+  Verified headless against the local install: the graph runs `1HM_Equip.hkx`, fires
+  `BeginWeaponDraw`, reaches `Weap_Readied_State`, and answers `attackStart` with a
+  `HitFrame` the sweep runs on. The `World > Player & Locomotion > Melee` readout gained a
+  hands line naming each hand and its number.
+  [Melee combat](/engine/melee-combat.md), [behavior graph runtime](/engine/behavior-runtime.md).
 * **Death and constraint-solved ragdoll (issue #197)**: an actor whose health reaches zero
   raises the death events its graph declares, hands its skeleton to the physics on the
   graph's own hand-off frame, and collapses under a joint solver running inside the 15.2

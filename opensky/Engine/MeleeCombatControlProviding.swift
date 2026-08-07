@@ -47,6 +47,11 @@ nonisolated struct MeleeCombatSnapshot: Equatable, Sendable {
     let weaponDamage: Float
     let weaponReachMultiplier: Float
     let weaponSpeed: Float
+    /// What each hand is holding, as the graph counts it. These are the two
+    /// numbers `iRightHandType` and `iLeftHandType` carry, shown so a wrong
+    /// animation set can be traced to the hand it came from (issue #403).
+    let rightHandType: CombatHandType
+    let leftHandType: CombatHandType
     /// The resolved reach in world units, after `fCombatDistance` and scale.
     let reach: Float
     /// Swings that reached a contact frame, and hits those swings landed.
@@ -68,6 +73,8 @@ nonisolated struct MeleeCombatSnapshot: Equatable, Sendable {
         weaponDamage: 0,
         weaponReachMultiplier: 0,
         weaponSpeed: 0,
+        rightHandType: .handToHand,
+        leftHandType: .handToHand,
         reach: 0,
         swingCount: 0,
         hitCount: 0,

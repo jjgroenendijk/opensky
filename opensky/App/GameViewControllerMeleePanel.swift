@@ -30,6 +30,8 @@ extension GameViewController: MeleeCombatControlProviding {
             weaponDamage: weapon.damage,
             weaponReachMultiplier: weapon.reach,
             weaponSpeed: weapon.speed,
+            rightHandType: weapon.handType,
+            leftHandType: runtime.offHand,
             reach: runtime.currentReach,
             swingCount: runtime.swingCount,
             hitCount: runtime.hitCount,

@@ -139,10 +139,20 @@ nonisolated struct MeleeCombatState: Equatable, Sendable {
             // A sheath cancels whatever swing was in flight; the graph takes
             // the attack state away at the same moment.
             attackPhase = .idle
-        case CombatGraphNames.beginWeaponDraw:
+        // Two names for each edge, because vanilla only annotates some of the
+        // equip clips. `1HM_Equip.hkx` and `Bow_Equip.hkx` carry
+        // `BeginWeaponDraw`; `Dag_Equip.hkx`, `Axe_Equip.hkx`, `Mac_Equip.hkx`,
+        // `2HC_Equip.hkx` and `2HW_Equip.hkx` carry no such mark at all. The
+        // graph's own `WeapEquip_Out` — the transition `0_master.hkx` takes
+        // into `Weap_Readied_State` — fires for every one of them, so it is the
+        // backstop that keeps a dagger from being stuck mid-draw forever. It
+        // arrives at the end of the clip rather than at the frame the hand
+        // reaches the hilt, so the annotation wins whenever there is one
+        // (issue #403).
+        case CombatGraphNames.beginWeaponDraw, CombatGraphNames.weapEquipOut:
             moved = !drawState.isWeaponInHand
             drawState = .drawn
-        case CombatGraphNames.beginWeaponSheathe:
+        case CombatGraphNames.beginWeaponSheathe, CombatGraphNames.unequipOut:
             moved = drawState.isWeaponInHand
             drawState = .sheathed
             attackPhase = .idle

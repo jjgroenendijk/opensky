@@ -44,8 +44,16 @@ final class MeleeCombatRuntime {
     private(set) var hitCount = 0
 
     /// The weapon the player is swinging. Written when equipment resolves; the
-    /// unarmed profile until then.
+    /// unarmed profile until then. Its `handType` is what `iRightHandType`
+    /// reports, so the graph plays that weapon's own equip and attack clips.
     var weapon = MeleeWeaponProfile.unarmed
+
+    /// What the left hand is holding, written to `iLeftHandType`. Separate from
+    /// `weapon` because the left hand holds things a `MeleeWeaponProfile`
+    /// cannot describe — a shield, a torch, a readied spell — and because a
+    /// two-handed weapon occupies both hands while still being one profile.
+    /// Empty until equipment resolves one.
+    var offHand = CombatHandType.handToHand
 
     /// Resolves the IPCT chain for a landed hit. Nil in a synthetic session,
     /// and then hits are silent rather than absent.
@@ -93,8 +101,12 @@ final class MeleeCombatRuntime {
         if intent.toggleWeaponDrawn {
             requestWeaponToggle()
         }
-        raiseIntentEvents(blocking: intent.block || panelBlocking)
+        // Variables before events, the same write-then-raise order the stagger
+        // path uses: the equip event a draw raises is acted on against the hand
+        // types, so a frame that equips a sword and draws it in one go must not
+        // let the graph read the previous hand's number.
         writeVariables()
+        raiseIntentEvents(blocking: intent.block || panelBlocking)
     }
 
     /// Latches one swing. What the panel's Attack button calls; the mouse
@@ -178,11 +190,7 @@ final class MeleeCombatRuntime {
         guard let world else { return }
         if pendingToggle {
             pendingToggle = false
-            let sheathing = state.drawState.isWeaponInHand
-            world.raiseCombatEvent(
-                sheathing ? CombatGraphNames.weaponSheathe : CombatGraphNames.weaponDraw,
-                on: nil
-            )
+            raiseEquipEvents(sheathing: state.drawState.isWeaponInHand, world: world)
         }
         if blocking != wasBlocking {
             wasBlocking = blocking
@@ -202,6 +210,33 @@ final class MeleeCombatRuntime {
         }
     }
 
+    /// Raises the pair of events one draw or sheath request implies.
+    ///
+    /// Two events rather than one, because the vanilla graph splits the job in
+    /// two and only reads one of them. `weaponDraw` and `weaponSheathe` are
+    /// declared but named by no transition in any character behavior file: they
+    /// are the *intent*, and vanilla's engine, not its graph, decides what that
+    /// intent equips. The second event is that decision, and it is the one
+    /// `0_master.hkx` transitions on (issue #403).
+    private func raiseEquipEvents(sheathing: Bool, world: any MeleeCombatWorld) {
+        world.raiseCombatEvent(
+            sheathing ? CombatGraphNames.weaponSheathe : CombatGraphNames.weaponDraw,
+            on: nil
+        )
+        if sheathing {
+            // One name for both branches: `Weap_Readied_State` and
+            // `Magic_Behavior_State` each carry an `Unequip` transition.
+            world.raiseCombatEvent(CombatGraphNames.unequip, on: nil)
+        } else {
+            world.raiseCombatEvent(
+                weapon.handType.drawsAsMagic
+                    ? CombatGraphNames.magicEquip
+                    : CombatGraphNames.weapEquip,
+                on: nil
+            )
+        }
+    }
+
     /// Publishes the melee state into the graph variables the census names.
     private func writeVariables() {
         guard let world else { return }
@@ -216,6 +251,12 @@ final class MeleeCombatRuntime {
         )
         world.writeCombatVariable(
             .real(weapon.speed), named: CombatGraphNames.weaponSpeedMult
+        )
+        world.writeCombatVariable(
+            weapon.handType.graphValue, named: CombatGraphNames.rightHandType
+        )
+        world.writeCombatVariable(
+            offHand.graphValue, named: CombatGraphNames.leftHandType
         )
     }
 

@@ -111,12 +111,56 @@ struct MeleeCombatRuntimeTests {
         let world = FakeMeleeWorld()
         let runtime = Self.runtime(world: world, damage: 10)
 
+        // Two events per request, in this order (issue #403): the intent the
+        // player expressed, then the equip event `0_master.hkx` transitions on.
         runtime.acceptFrame(MeleeIntent(toggleWeaponDrawn: true))
-        #expect(world.raised.last == CombatGraphNames.weaponDraw)
+        #expect(
+            world.raised.suffix(2)
+                == [CombatGraphNames.weaponDraw, CombatGraphNames.weapEquip]
+        )
 
         runtime.handleGraphEvents(Self.drawEvents)
         runtime.acceptFrame(MeleeIntent(toggleWeaponDrawn: true))
-        #expect(world.raised.last == CombatGraphNames.weaponSheathe)
+        #expect(
+            world.raised.suffix(2)
+                == [CombatGraphNames.weaponSheathe, CombatGraphNames.unequip]
+        )
+    }
+
+    @Test func drawingASpellRaisesTheMagicEquipInsteadOfTheWeaponOne() {
+        let world = FakeMeleeWorld()
+        let runtime = Self.runtime(world: world, damage: 10)
+        runtime.weapon = MeleeWeaponProfile(damage: 10, reach: 1, handType: .spell)
+
+        runtime.acceptFrame(MeleeIntent(toggleWeaponDrawn: true))
+
+        #expect(world.raised.contains(CombatGraphNames.magicEquip))
+        #expect(!world.raised.contains(CombatGraphNames.weapEquip))
+    }
+
+    @Test func bothHandTypesArePublishedToTheGraphVariables() {
+        let world = FakeMeleeWorld()
+        let runtime = Self.runtime(world: world, damage: 10)
+        runtime.weapon = MeleeWeaponProfile(damage: 10, reach: 1, handType: .mace)
+        runtime.offHand = .shield
+
+        runtime.acceptFrame(MeleeIntent())
+
+        #expect(world.variables[CombatGraphNames.rightHandType] == .int(4))
+        #expect(world.variables[CombatGraphNames.leftHandType] == .int(10))
+    }
+
+    @Test func theHandTypesAreWrittenBeforeTheEquipEventIsRaised() {
+        let world = FakeMeleeWorld()
+        let runtime = Self.runtime(world: world, damage: 10)
+        runtime.weapon = MeleeWeaponProfile(damage: 10, reach: 1, handType: .bow)
+
+        runtime.acceptFrame(MeleeIntent(toggleWeaponDrawn: true))
+
+        // The graph selects the equip clip off `iRightHandType` when it acts on
+        // `WeapEquip`, so a frame that equips and draws at once must write the
+        // number first or the previous weapon's clip plays.
+        #expect(world.writesBeforeFirstRaise.contains(CombatGraphNames.rightHandType))
     }
 
     @Test func blockRaisesOnItsEdgesOnly() {
@@ -233,6 +277,9 @@ final class FakeMeleeWorld: MeleeCombatWorld {
     private(set) var raisedOnTarget: [ReferenceKey: [String]] = [:]
     private(set) var variables: [String: BehaviorVariableValue] = [:]
     private(set) var impacts: [ResolvedMeleeImpact] = []
+    /// Variable names written before the first event of the session was
+    /// raised, so a test can pin the write-then-raise order.
+    private(set) var writesBeforeFirstRaise: Set<String> = []
 
     var meleeAttacker: MeleeAttacker {
         attacker
@@ -272,5 +319,8 @@ final class FakeMeleeWorld: MeleeCombatWorld {
 
     func writeCombatVariable(_ value: BehaviorVariableValue, named name: String) {
         variables[name] = value
+        if raised.isEmpty, raisedOnTarget.isEmpty {
+            writesBeforeFirstRaise.insert(name)
+        }
     }
 }

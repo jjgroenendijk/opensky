@@ -25,6 +25,7 @@ and its two satellites. The graph underneath:
 * [The rule: the graph decides, the engine asks](#the-rule-the-graph-decides-the-engine-asks)
 * [The event seam, now multi-consumer](#the-event-seam-now-multi-consumer)
 * [Census-named events and variables](#census-named-events-and-variables)
+* [Hand types: what each hand is holding](#hand-types-what-each-hand-is-holding)
 * [Draw and sheath](#draw-and-sheath)
 * [Attack phase](#attack-phase)
 * [Reach and the hit volume](#reach-and-the-hit-volume)
@@ -100,6 +101,7 @@ uses each name on, not a property of the data.
 | Raised into the graph | Meaning |
 | --- | --- |
 | `weaponDraw`, `weaponSheathe` | unsheathe and sheathe requests |
+| `WeapEquip`, `Magic_Equip`, `Unequip` | the equip events the graph transitions on |
 | `attackStart`, `attackRelease`, `attackStop` | swing start, held-power release, swing end |
 | `blockStart`, `blockStop` | guard up and down |
 | `staggerStart`, `staggerStop` | the stagger a landed hit inflicts, on the *target's* graph |
@@ -107,20 +109,79 @@ uses each name on, not a property of the data.
 | Fired back by the graph | Meaning |
 | --- | --- |
 | `BeginWeaponDraw`, `BeginWeaponSheathe` | the clip annotations where the weapon changes nodes |
+| `WeapEquip_Out`, `Unequip_Out` | the graph's own end-of-equip transitions |
 | `weaponSwing` | the swing's audible start, ahead of contact |
 | `preHitFrame` | the frame before contact |
 | `HitFrame` | the contact frame, which runs the sweep |
 | `blockHitStart` | a block absorbed a hit |
 
 Variables written: `IsAttacking`, `IsBlocking`, `IsStaggering`,
-`staggerMagnitude`, `weaponSpeedMult`.
+`staggerMagnitude`, `weaponSpeedMult`, `iRightHandType`, `iLeftHandType`.
 
-`iRightHandType` and `iLeftHandType` are deliberately **not** written. The
-census gives their names and their `int32` type but not the encoding — which
-integer means "one-handed sword" is stated by no open source consulted here, and
-guessing it would silently select the wrong attack animation set. See
-[what the vanilla graph actually does](#what-the-vanilla-graph-actually-does)
-for what that costs and issue #403 for settling it.
+`weaponDraw` is the odd one in the raised list: the graph declares it but no
+transition in any file under `meshes\actors\character\behaviors\` names it. In
+vanilla it is the *intent*, and the engine — not the graph — decides what that
+intent equips and raises the matching equip event. OpenSky raises both, in that
+order, so the intent is still on the wire for anything listening and the graph
+gets the event it acts on. `Magic_Equip` replaces `WeapEquip` when the right
+hand holds a readied spell; `Unequip` covers both branches on the way back.
+
+Variables are written before events are raised, the same order the stagger path
+uses: the graph picks the equip clip off `iRightHandType` when it acts on
+`WeapEquip`, so a frame that equips a sword and draws it at once must write the
+number first.
+
+## Hand types: what each hand is holding
+
+`iRightHandType` and `iLeftHandType` are `int32` and they select the animation
+set. The equip selectors in `weapequip.hkx` index their child list straight off
+them, and most of the combat transitions in `1hm_behavior.hkx` are conditioned
+on them, so an unwritten pair leaves both hands reading zero — empty — and the
+graph plays the hand-to-hand branch for a drawn sword.
+
+The M14 census gave the two names and their type but not the encoding. Issue #403
+settled it by reading the install rather than guessing, and `CombatHandType`
+carries both the numbers and the citation:
+
+| Value | Holding | Read from |
+| --- | --- | --- |
+| 0 | nothing (hand-to-hand) | `Weap_Equip_MSG` child 0, `MT_H2H_State` |
+| 1 | one-handed sword | `1HM_Equip.hkx`, `MT_1HM_State` |
+| 2 | dagger | `Dag_Equip.hkx`, `MT_Dagger_State` |
+| 3 | war axe | `Axe_Equip.hkx`, `MT_Axe_State` |
+| 4 | mace | `Mac_Equip.hkx`, `MT_Mace_State` |
+| 5 | greatsword | `2HC_Equip.hkx`, `MT_2HM_State` |
+| 6 | battleaxe or warhammer | `2HW_Equip.hkx`, `MT_2HW_State` |
+| 7 | bow | `Bow_Equip.hkx`, `MT_BowState` |
+| 8 | staff | `Stf_Equip.hkx`, `MT_Staff_State` |
+| 9 | readied spell | `MagicForceEquipBlend`, `MT_Magic_State` |
+| 10 | shield | `MRh_and_Shield_ForceEquipBlend`, `MT_Shield_State` |
+| 11 | torch | `MRh_Equip_TorchBlend`, `MT_Torch_State` |
+| 12 | crossbow | `DLC01\CrossBow_Equip.hkx`, `MT_CrossBowState` |
+
+Three independent readings agree on it. `weapequip.hkx` binds
+`hkbManualSelectorGenerator::m_selectedGeneratorIndex` to the variable, so the
+selector's child list *is* the encoding in order. `0_master.hkx` names the same
+thirteen values as the state ids of its `MT_LeftHandOverride` machine. And the
+transition conditions agree where they overlap: `1hm_behavior.hkx` takes
+`bowAttackStart` only on `iRightHandType == 7`, bashes with a bow or crossbow on
+`(iRightHandType == 7) || (iRightHandType == 12)`, dual-wields only when both
+hands sit in `1...4`, and `magicbehavior.hkx` shouts on `(iRightHandType == 8)
+|| (iRightHandType == 9)`.
+
+This is **not** the WEAP DNAM animation type, which is the trap: the two agree
+on 0 through 8 and then diverge, because DNAM spells crossbow 9 while the graph
+spells spell 9 and crossbow 12, and the graph carries three values (spell,
+shield, torch) that no WEAP record can hold. `CombatHandType.init(weapon:)` is
+that conversion and is the only place the two enums meet.
+
+The left hand is resolved from the equipped set in
+`GameViewController.equippedHands()`: a two-handed weapon fills both hands and
+reports its own type on each, a second equipped WEAP is the off-hand one, and a
+shield is any equipped ARMO taking biped slot 39. A torch is a LIGH, which the
+equipment catalog does not index, so a lit hand still reports empty; torches and
+real dual-wield need the equipment runtime to track *which* hand an item went
+into, which is M18's.
 
 ## Draw and sheath
 
@@ -138,6 +199,21 @@ puts the state in `drawing` and the weapon stays where it was; `BeginWeaponDraw`
 arrives when the hand has reached it, and that is the frame the model changes
 nodes. Sheathing is the mirror. The node names are in
 [actor records](/formats/actors.md); `RigidAttachment` does the rewrite.
+
+Not every equip clip carries that annotation. `1HM_Equip.hkx`, `Bow_Equip.hkx`
+and `CrossBow_Equip.hkx` do, at time 0.0; `Dag_Equip.hkx`, `Axe_Equip.hkx`,
+`Mac_Equip.hkx`, `2HC_Equip.hkx` and `2HW_Equip.hkx` carry no such mark at all
+and only tag `weaponDraw` mid-clip, which is ambiguous with the engine's own
+raise of the same name. So the graph's `WeapEquip_Out` — the transition
+`0_master.hkx` takes into `Weap_Readied_State` — is observed as a second way in,
+and `Unequip_Out` as the mirror. The annotation is the early one and wins when a
+clip has it; the transition is the backstop that keeps a dagger from being stuck
+mid-draw forever. Whichever arrives first moves the attachment, once.
+
+An annotation authored *at* the clip's first frame is the reason
+[clip annotations](/engine/behavior-runtime.md) now cover a closed interval on
+the update that seeds a clip: under the half-open rule every later update uses,
+`BeginWeaponDraw` at 0.0 could never fire.
 
 ## Attack phase
 
@@ -344,17 +420,18 @@ delta is zero.
 Probed on the local install 2026-08-07 through
 `MeleeCombatRealDataTests`, headless, no window:
 
-* Every one of the nine raised event names and the five written variable names
-  resolves on the vanilla player graph — zero misses.
-* Every one of the eleven observed event names is declared too.
-* Raising `weaponDraw` through the shipping input path moves the graph: the
-  drained batch is `weaponDraw, MTState, arrowDetach, tailMTState,
-  HeadTrackingOn, IdleStop, tailMTIdle`.
-* It does **not** reach `BeginWeaponDraw`, so the state stays `drawing` and the
-  attachment never moves to the hand. `weapequip.hkx` branches on
-  `iRightHandType`, which OpenSky leaves unwritten rather than guess. The
-  real-data test asserts the `drawing` outcome, so settling the encoding
-  (issue #403) turns it red and sends the reader here.
+* Every raised event name and every written variable name resolves on the
+  vanilla player graph — zero misses. Every observed name is declared too.
+* Raising `weaponDraw` alone moved the graph but never reached an equip state,
+  because no transition names it. Raising `WeapEquip` after it does: with
+  `iRightHandType` set to 1, `weapequip.hkx` selects `1HM_Equip.hkx`, whose
+  `BeginWeaponDraw` annotation arrives in the first drained batch, and the state
+  reaches `drawn`.
+* About a second later the graph fires `WeapEquip_Out` and enters
+  `Weap_Readied_State`, which is what makes `1hm_behavior.hkx` reachable. A
+  swing asked for before that has no attack state to enter and is dropped.
+* From `Weap_Readied_State`, `attackStart` reaches an attack state and the graph
+  fires `HitFrame`, so the sweep runs on the vanilla contact frame.
 
 Every melee WEAP in the load order resolves a positive reach, and the INAM chain
 reaches a real playable `.wav` for at least one of them.
@@ -368,7 +445,7 @@ reaches a real playable `.wav` for at least one of them.
 | Weapon drawn | `MeleeWeaponDrawnControl` | raises the draw or sheath event |
 | Attack | `MeleeAttackControl` | requests exactly one swing |
 | Clear hit trace | `MeleeClearTraceControl` | empties the trace and both counts |
-| Readout | `LocomotionMeleeStatsLabel` | state, weapon and reach, last-hit trace |
+| Readout | `LocomotionMeleeStatsLabel` | state, weapon and reach, both hand types, last-hit trace |
 
 Block is a held modifier with nothing to latch — a checkbox would assert it for
 a single frame and read as broken — so it is reported live in the state line
@@ -377,6 +454,10 @@ The section is not overridable: a drawn weapon is world state, not a panel
 setting, and a "Reset all" that sheathed it would undo something the user did on
 purpose.
 
-Covering tests: `MeleeCombatStateTests`, `MeleeHitDetectionTests`,
+The hands line names each hand and prints its number, so a wrong animation set
+can be traced to the hand it came from rather than guessed at.
+
+Covering tests: `MeleeCombatStateTests`, `CombatHandTypeTests`,
+`MeleeHitDetectionTests`,
 `MeleeDamageTests`, `MeleeCombatRuntimeTests`,
 `LocomotionGraphEventFanOutTests`, and env-gated `MeleeCombatRealDataTests`.
