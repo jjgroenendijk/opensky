@@ -112,6 +112,38 @@ struct HKASplineAnimationTests {
         #expect(try firstAnimation(withReferenceFrame).carriesExtractedMotion)
     }
 
+    /// `m_annotationTracks` at 0x28 is where Skyrim's footstep tags live: the
+    /// locomotion clip generators in `mt_behavior.hkx` carry an empty
+    /// `m_triggers`, so an animation whose annotations are dropped can never
+    /// fire `FootLeft` (issues #385, #394).
+    @Test func readsAnnotationTracksAndTheirMarks() throws {
+        var fixture = HKASplineAnimationFixture()
+        fixture.annotationTracks = [
+            (name: "NPC Root [Root]", annotations: [
+                (time: 0.8, text: "FootRight"), (time: 0.25, text: "FootLeft")
+            ]),
+            (name: "NPC Spine [Spn0]", annotations: [])
+        ]
+        let animation = try firstAnimation(fixture)
+
+        #expect(animation.annotationTracks.count == 2)
+        #expect(animation.annotationTracks.first?.name == "NPC Root [Root]")
+        #expect(animation.annotationTracks.last?.annotations.isEmpty == true)
+        // `annotations` merges every track and sorts by time, because Havok
+        // exports one track per transform track and the consumer wants the
+        // clip's marks in the order playback reaches them.
+        #expect(animation.annotations == [
+            HKAAnnotation(time: 0.25, text: "FootLeft"),
+            HKAAnnotation(time: 0.8, text: "FootRight")
+        ])
+    }
+
+    /// An animation with no annotation tracks is the ordinary case, and the
+    /// null array it writes must not be read as an unresolved reference.
+    @Test func anUnannotatedAnimationDecodesWithNoMarks() throws {
+        #expect(try firstAnimation(HKASplineAnimationFixture()).annotations.isEmpty)
+    }
+
     @Test func clampsSampleTimeToClip() throws {
         let animation = try firstAnimation(HKASplineAnimationFixture())
         #expect(try animation.localTransforms(at: -10).first?.translation.x == 0)

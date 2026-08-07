@@ -76,7 +76,7 @@ At each hkaSplineCompressedAnimation virtual-fixup offset in `__data__`:
 | 0x18 | 4 | m_numberOfTransformTracks | 99 |
 | 0x1C | 4 | m_numberOfFloatTracks | 4; skipped by 6.3 |
 | 0x20 | 8 | m_extractedMotion ptr | fixup-managed; read for presence only |
-| 0x28 | 16 | m_annotationTracks hkArray | skipped |
+| 0x28 | 16 | m_annotationTracks hkArray | one track per transform track; see below |
 | 0x38 | 4 | m_numFrames | 275 |
 | 0x3C | 4 | m_numBlocks | 2 |
 | 0x40 | 4 | m_maxFramesPerBlock | 256 |
@@ -115,6 +115,38 @@ as a double-digit speed. Any threshold over that difference misclassifies some s
 The member is read through `HKXObjectCursor.optionalPointer(at:)` rather than
 `pointer(at:)`, so a null does not enter the unresolved-reference log — an absent optional
 and a fixup that failed to resolve mean opposite things to the real-data sweep.
+
+### m_annotationTracks
+
+`m_annotationTracks` at 0x28 is an `hkArray<hkaAnnotationTrack>`, and it is where Skyrim
+keeps its footstep marks. An annotation is a time inside the animation and a short piece of
+text a runtime turns into an event: `mt_walkforward.hkx` carries `FootLeft` at 0.2333 s and
+`FootRight` at 0.8 s, which are exactly the tags the vanilla `FSTS` footstep sets answer to
+([footstep records](/formats/footstep.md)).
+
+| off | size | field | observed / meaning |
+| --- | --- | --- | --- |
+| 0x00 | 8 | hkaAnnotationTrack.m_trackName ptr | local fixup -> bone name, or null |
+| 0x08 | 16 | m_annotations hkArray\<Annotation\> | empty on all but the first track |
+
+`hkaAnnotationTrack` is 24 bytes, so the array strides by 24. Each `Annotation` is 16:
+
+| off | size | field | observed / meaning |
+| --- | --- | --- | --- |
+| 0x00 | 4 | m_time | seconds from clip start |
+| 0x04 | 4 | pad | the string pointer aligns to 8 |
+| 0x08 | 8 | m_text ptr | local fixup -> `FootLeft`, `FootRight`, ... |
+
+Havok exports one track per transform track and vanilla leaves all but the first empty, so
+`HKASplineCompressedAnimation.annotations` merges every track and sorts by time. The
+decode never throws: an unreadable element is skipped and recorded as a cursor miss,
+because a clip with no annotations is the ordinary case and an animation still poses bones
+without them.
+
+The behavior runtime raises each annotation as playback crosses it — which is the only way
+a Skyrim footstep ever fires, because the locomotion `hkbClipGenerator`s in
+`mt_behavior.hkx` carry an *empty* `m_triggers`. See
+[behavior graph runtime](/engine/behavior-runtime.md#clip-triggers-and-annotations).
 
 ## Binding layout (72 bytes, 8-byte pointers)
 

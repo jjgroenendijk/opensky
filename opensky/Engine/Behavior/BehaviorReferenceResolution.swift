@@ -20,10 +20,23 @@
 //   the same authored names (`Speed`, `Direction`, `bIsSprinting`) and read the
 //   values the character wrote on the root graph.
 // * Events cross both ways by name: the parent's active set is raised on the
-//   child before its update, and what the child fires is raised back on the
-//   parent for the parent's next update. A transition in `mt_behavior` that
-//   `0_master` needs to see therefore arrives one update later, which is the
-//   same one-update latency every event in this evaluator already has.
+//   child before its update, and what the child *raised during* its update is
+//   raised back on the parent for the parent's next update. A transition in
+//   `mt_behavior` that `0_master` needs to see therefore arrives one update
+//   later, which is the same one-update latency every event in this evaluator
+//   already has.
+// * What comes back up is the child's `pending` queue, not the `firedEvents`
+//   its update returned, and each direction refuses what the other just sent.
+//   `firedEvents` is the child's *active* set, which by construction already
+//   holds everything the parent pushed in on the previous update: raising that
+//   back on the parent made every crossing event echo between the two graphs
+//   forever, one copy per update each way. The player graph therefore re-fired
+//   `moveStart` and `IdleStop` on every single update, which saturated the
+//   bounded drain in `LocomotionGraphEventQueue` and pushed the real footstep
+//   tags out of it before an audio frame could read them (issues #385, #394).
+//   `pending` holds exactly what the child's own nodes raised, and skipping the
+//   names just pulled from a child when pushing back into it keeps a child's
+//   own event from being delivered to it a second time.
 // * A reference reached twice in one parent update is evaluated once. Without
 //   the memo the child would advance its clock once per reach and run fast.
 //
@@ -63,11 +76,12 @@ nonisolated extension BehaviorGraphInstance {
         if let memo = referencedResults[name] {
             return BehaviorPose(bones: memo.bones, rootMotion: memo.rootMotion)
         }
+        let key = Self.referenceKey(name)
         pushVariables(into: child)
-        pushEvents(into: child)
+        pushEvents(into: child, key: key)
         let result = child.update(deltaTime: deltaTime)
         referencedResults[name] = result
-        pullEvents(from: result)
+        pullEvents(from: child, key: key)
         activeStatesThisUpdate += child.activeStates
         return BehaviorPose(bones: result.bones, rootMotion: result.rootMotion)
     }
@@ -104,21 +118,32 @@ nonisolated extension BehaviorGraphInstance {
         }
     }
 
-    /// Raises the parent's currently active events on the child.
-    private func pushEvents(into child: BehaviorGraphInstance) {
+    /// Raises the parent's currently active events on the child, minus the ones
+    /// this same child raised on the update the parent pulled from. Those are
+    /// already queued on the child by its own raise, so pushing them back would
+    /// deliver one event to the child twice.
+    private func pushEvents(into child: BehaviorGraphInstance, key: String) {
+        let echoed = pulledEventNames[key] ?? []
         for event in events.active {
-            guard let name = event.name else { continue }
+            guard let name = event.name, !echoed.contains(name) else { continue }
             child.raiseEvent(named: name, payload: event.payload)
         }
     }
 
-    /// Raises what the child fired back on the parent, visible to the parent's
-    /// next update.
-    private func pullEvents(from result: BehaviorUpdateResult) {
-        for event in result.firedEvents {
+    /// Raises what the child's own nodes raised during its update back on the
+    /// parent, visible to the parent's next update.
+    ///
+    /// The child's `pending` queue, not the `firedEvents` its update returned:
+    /// see the echo note in this file's header comment.
+    private func pullEvents(from child: BehaviorGraphInstance, key: String) {
+        var raised: Set<String> = []
+        for event in child.events.pending {
             guard let name = event.name else { continue }
-            events.raise(named: name, payload: event.payload)
+            if events.raise(named: name, payload: event.payload) {
+                raised.insert(name)
+            }
         }
+        pulledEventNames[key] = raised
     }
 
     /// Behavior names are compared case-insensitively on the file name alone,

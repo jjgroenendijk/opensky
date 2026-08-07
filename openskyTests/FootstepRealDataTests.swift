@@ -23,12 +23,6 @@ struct FootstepRealDataTests {
         return try? GameDataLocator.locate()
     }()
 
-    private static let behaviorPath =
-        "meshes\\actors\\character\\behaviors\\0_master.hkx"
-    private static let skeletonPath =
-        "meshes\\actors\\character\\character assets\\skeleton.hkx"
-    private static let animationPrefix = "meshes\\actors\\character\\animations\\"
-
     /// The vanilla humanoid sets, and the number of footsteps each carries per
     /// non-swimming gait. Probed 2026-08-04 through `openskycli footstep`; a
     /// load order that changes them is a real difference worth failing on.
@@ -197,7 +191,14 @@ struct FootstepRealDataTests {
     /// forward for a second of fixed steps with its event queue undrained.
     private static func drivenBridge(root: GameDataRoot) throws -> LocomotionBridge {
         let vfs = VirtualFileSystem(root: root)
-        let graph = try instance(vfs)
+        // `PlayerBehaviorGraph.load` rather than a hand-built instance, because
+        // it is what wires `references`: `0_master.hkx` is a shell whose
+        // locomotion branch is a `hkbBehaviorReferenceGenerator` naming
+        // `mt_behavior.hkx`, and the `FootLeft`/`FootRight` clip triggers live
+        // in that referenced file. A graph built without a reference source
+        // reaches only `0_master`'s own states, so it fires transition events
+        // such as `MTState` and never a footstep tag (issues #385 and #394).
+        let graph = try PlayerBehaviorGraph.load(fileSystem: vfs).instance
         let configuration = PlayerMovementConfiguration.resolve(
             store: GameSettingLoader.load(root: root),
             movementTypes: MovementTypeLoader.load(root: root)
@@ -217,22 +218,5 @@ struct FootstepRealDataTests {
             label: "footsteps"
         )
         return harness.bridge
-    }
-
-    private static func instance(_ vfs: VirtualFileSystem) throws -> BehaviorGraphInstance {
-        let file = try HKXFile(data: vfs.contents(forPath: behaviorPath))
-        let objectGraph = try HKXObjectGraph(file: file)
-        let behavior = try #require(HKBBehaviorGraph.graphs(in: objectGraph).first)
-        let skeletonData = try vfs.contents(forPath: skeletonPath)
-        let rig = try #require(try HKASkeleton.skeletons(in: HKXFile(data: skeletonData)).first)
-        let paths = vfs.archiveEntries()
-            .map(\.path)
-            .filter { $0.hasPrefix(animationPrefix) && $0.hasSuffix(".hkx") }
-        return BehaviorGraphInstance(
-            graph: behavior,
-            in: objectGraph,
-            skeleton: BehaviorSkeleton(rig),
-            clips: InstallBehaviorClipSource(fileSystem: vfs, paths: paths)
-        )
     }
 }

@@ -151,6 +151,52 @@ struct BehaviorClipTests {
         #expect(fired == 1)
     }
 
+    // MARK: - Annotations
+
+    /// The clip's own `hkaAnnotationTrack` marks fire as playback crosses them,
+    /// by the name the annotation spells. This is the whole footstep chain:
+    /// Skyrim's locomotion clip generators carry an empty `m_triggers`, so
+    /// without this a walking player fires no `FootLeft` (issues #385, #394).
+    @Test func aClipAnnotationFiresOnTheUpdateThatStepsOverIt() throws {
+        let (graph, _) = try annotatedGraph(
+            annotations: [(time: 0.5, text: "FootLeft")], events: ["FootLeft"]
+        )
+        // Raised during the first update, so visible to the second — the same
+        // one-update latency every event in this evaluator has.
+        #expect(graph.update(deltaTime: 0.6).firedEvents.isEmpty)
+        #expect(graph.update(deltaTime: 0.1).firedEvents.map(\.name) == ["FootLeft"])
+        #expect(graph.update(deltaTime: 0.1).firedEvents.isEmpty)
+    }
+
+    /// An annotation is a mark on the animation, so it comes round on every
+    /// loop rather than once. A walk cycle that fired one footstep and then
+    /// went quiet would pass the test above and still be wrong.
+    @Test func aClipAnnotationFiresAgainOnEveryLoop() throws {
+        let (graph, _) = try annotatedGraph(
+            annotations: [(time: 0.5, text: "FootLeft")], events: ["FootLeft"]
+        )
+        var fired = 0
+        // Three seconds of a one-second looping clip: three crossings.
+        for _ in 0 ..< 30 {
+            fired += graph.update(deltaTime: 0.1).firedEvents.count
+        }
+        #expect(fired == 3)
+    }
+
+    /// A graph that declares no event by the annotation's name is not an error.
+    /// One animation is played by behavior files that care about different
+    /// marks, so an unmatched name is dropped rather than tallied.
+    @Test func anAnnotationTheGraphDoesNotDeclareIsDropped() throws {
+        let (graph, _) = try annotatedGraph(
+            annotations: [(time: 0.5, text: "FootLeft")], events: ["somethingElse"]
+        )
+        var fired = 0
+        for _ in 0 ..< 30 {
+            fired += graph.update(deltaTime: 0.1).firedEvents.count
+        }
+        #expect(fired == 0)
+    }
+
     // MARK: - Root motion
 
     @Test func rootMotionIsExtractedAndKeptOutOfThePose() throws {
@@ -218,6 +264,27 @@ struct BehaviorClipTests {
 
     /// A clip generator over the shared synthetic spline clip, with optional
     /// triggers, ready to step.
+    /// The same one-clip graph as `splineGraph`, over a clip whose animation
+    /// carries annotation tracks rather than a trigger array.
+    private func annotatedGraph(
+        annotations: [(time: Float, text: String)],
+        events: [String]
+    ) throws -> (BehaviorGraphInstance, HKXPointerTarget) {
+        let clip = try BehaviorFixture.splineClip(annotations: annotations)
+        var table = BehaviorObjectTable()
+        let root = table.add(
+            BehaviorFixture.clipGenerator("walk", animationName: "walk", mode: 1),
+            at: 0x100
+        )
+        let graph = BehaviorFixture.instance(
+            root: root,
+            table: table,
+            data: BehaviorFixture.graphData(events: events),
+            clips: BehaviorClipTable(byName: ["walk": clip])
+        )
+        return (graph, root)
+    }
+
     private func splineGraph(
         mode: Int,
         playbackSpeed: Float = 1,

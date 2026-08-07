@@ -9,14 +9,21 @@
 // when positive, time-scales the window so it takes exactly that many seconds
 // whatever the clip's own length is; `m_playbackSpeed` scales it again.
 //
-// Triggers are how a clip tells the rest of the graph where it is. Havok's
-// annotation tracks are baked into `hkbClipTriggerArray` at export with
-// `m_isAnnotation` set, so decoding `hkaAnnotationTrack` separately is not
-// needed for the vanilla player graph: an annotation and an authored trigger
-// arrive through the same array and fire through the same code below. A
-// trigger flagged `m_relativeToEndOfClip` carries an offset from the window end
-// rather than from its start — vanilla writes it negative, so it adds — and one
-// flagged `m_acyclic` fires on the first cycle only.
+// Triggers are how a clip tells the rest of the graph where it is, and they
+// reach a generator two ways. `hkbClipTriggerArray` holds the authored ones,
+// each raised as playback crosses its time; a trigger flagged
+// `m_relativeToEndOfClip` carries an offset from the window end rather than
+// from its start — vanilla writes it negative, so it adds — and one flagged
+// `m_acyclic` fires on the first cycle only.
+//
+// The other way is the animation's own `hkaAnnotationTrack`s, and they are not
+// the same thing however much the `m_isAnnotation` flag suggests they might be.
+// Skyrim's locomotion clip generators carry an *empty* `m_triggers`: the
+// footstep tags `FootLeft` and `FootRight` are annotations inside
+// `mt_walkforward.hkx` and its siblings, so a runtime that reads only the
+// trigger array walks in perfect silence (issues #385, #394). Both sources fire
+// through the same crossing test below, and both are cyclic — an annotation is
+// a mark on the animation, so it comes round again every loop.
 
 import Foundation
 import simd
@@ -77,6 +84,7 @@ nonisolated extension BehaviorGraphInstance {
             &state, clip: clip, samples: samples, wrapped: wrapped, jumped: jumped
         )
         fireTriggers(generator, state: state, window: window, wrapped: wrapped)
+        fireAnnotations(clip, state: state, window: window, wrapped: wrapped)
         nodeStates[target] = state
         return pose
     }
@@ -280,6 +288,33 @@ nonisolated extension BehaviorGraphInstance {
                 id: trigger.event.id,
                 payload: payload(at: trigger.event.payload)
             )
+        }
+    }
+
+    /// Raises every annotation of the clip itself that the update stepped over,
+    /// by the name the annotation spells.
+    ///
+    /// Annotation times are measured in the animation, and every other time
+    /// here is measured in the clip window, so the window start comes off
+    /// first. An annotation outside the window is one the crop cut away, and
+    /// `crossed` drops it for being out of range.
+    ///
+    /// A graph that declares no event by that name is not an error: an
+    /// annotation is a mark on an animation, and the same animation is played
+    /// by behavior files that care about different marks. `raise(named:)`
+    /// answers false and nothing happens.
+    private func fireAnnotations(
+        _ clip: any BehaviorClip,
+        state: BehaviorNodeState,
+        window: BehaviorClipWindow,
+        wrapped: Bool
+    ) {
+        for annotation in clip.annotations {
+            let at = annotation.time - window.start
+            guard crossed(at, state: state, window: window, wrapped: wrapped) else {
+                continue
+            }
+            events.raise(named: annotation.text)
         }
     }
 

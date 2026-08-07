@@ -322,12 +322,14 @@ wiring watches the resulting set rather than any one call site.
 ## Footstep events
 
 The bridge does not decide when a foot lands, and nothing downstream should either. The
-vanilla locomotion clips carry their own footstep triggers, baked into
-`hkbClipTriggerArray` at export, so the graph raises `FootLeft` and `FootRight` — the
-first two of `0_master.hkx`'s 1,217 declared events — at the exact phase the animation
-plants each foot. A cadence derived from speed would drift against the animation the
-player is watching, and it would have to be re-tuned for every gait the graph already
-handles.
+vanilla locomotion clips carry their own footstep marks — `hkaAnnotationTrack` entries in
+the animation files themselves, at 0.2333 s and 0.8 s of `mt_walkforward.hkx`'s cycle, not
+triggers on the behavior file's clip generators — so the graph raises `FootLeft` and
+`FootRight`, the first two of `0_master.hkx`'s 1,217 declared events, at the exact phase
+the animation plants each foot. A cadence derived from speed would drift against the
+animation the player is watching, and it would have to be re-tuned for every gait the graph
+already handles. Where the marks live and how they fire is in
+[behavior graph runtime](/engine/behavior-runtime.md#clip-triggers-and-annotations).
 
 So the bridge only reports. `LocomotionBridge` queues the third-person graph's fired
 events in `LocomotionGraphEventQueue`, a bounded FIFO drained once per frame by the

@@ -38,6 +38,7 @@ different failure modes.
 * [Crossfades](#crossfades)
 * [Clip synchronization](#clip-synchronization)
 * [Clips](#clips)
+  * [Clip triggers and annotations](#clip-triggers-and-annotations)
 * [Blending and pose math](#blending-and-pose-math)
 * [Behavior references](#behavior-references)
 * [Modifiers](#modifiers)
@@ -346,13 +347,32 @@ time below is measured inside that window.
   the seam that already existed, reached through the `BehaviorClip` protocol so the
   evaluator does not care who loads the bytes.
 
-Triggers are how a clip tells the rest of the graph where it is. Havok's annotation tracks
-are baked into `hkbClipTriggerArray` at export with `m_isAnnotation` set, so decoding
-`hkaAnnotationTrack` separately is not needed for the vanilla player graph: an annotation
-and an authored trigger arrive through the same array and fire through the same code. A
-trigger fires when the update steps over it, on the half-open interval
-`(previous, current]`; `m_acyclic` fires on the first cycle only. Clip-done events are
-these, not a separate mechanism.
+### Clip triggers and annotations
+
+Triggers are how a clip tells the rest of the graph where it is, and they reach a generator
+two ways.
+
+`hkbClipTriggerArray` holds the authored ones. A trigger fires when the update steps over
+it, on the half-open interval `(previous, current]`; `m_acyclic` fires on the first cycle
+only. Clip-done events are these, not a separate mechanism.
+
+The animation's own `hkaAnnotationTrack`s are the other way, and they are not the same
+thing however much the `m_isAnnotation` flag suggests they might be. Skyrim's locomotion
+clip generators carry an *empty* `m_triggers`: `FootLeft` and `FootRight` are annotations
+inside `mt_walkforward.hkx` and its siblings, at 0.2333 s and 0.8 s of a walk cycle
+([byte layout](/formats/hka-animation.md#m_annotationtracks)). A runtime that reads only
+the trigger array therefore walks in perfect silence, which is what issues #385 and #394
+were: every other half of the footstep chain worked, and the tags the sets answer to were
+never fired at all.
+
+Both sources fire through the same crossing test. An annotation is a mark on the animation
+rather than on the generator, so it is always cyclic — it comes round again on every loop —
+and its time is measured in the animation, so the window start comes off before the
+crossing test. An annotation outside the window is one the crop cut away and never fires. A
+graph that declares no event by the annotation's name drops it silently and is not an
+error: one animation is played by behavior files that care about different marks.
+
+`m_relativeToEndOfClip` applies to authored triggers only.
 
 `m_relativeToEndOfClip` carries an offset *from* the end rather than a distance back from
 it, and the vanilla data writes that offset negative: `0_master.hkx`'s `MT_JumpLand` clip
@@ -417,9 +437,20 @@ The two instances are coupled by name and nothing else:
 * Variables cross parent to child before every child update, for every name the child
   declares that the parent also declares. Names the child alone declares keep whatever its
   own file initialized them to, which is what a sub-behavior's private state is.
-* Events cross both ways. The parent's active set is raised on the child before its update;
-  what the child fires is raised back on the parent, visible on the parent's next update —
-  the same one-update latency every event in this evaluator already has.
+* Events cross both ways, once each way. The parent's active set is raised on the child
+  before its update; what the child's own nodes raised *during* its update is raised back on
+  the parent, visible on the parent's next update — the same one-update latency every event
+  in this evaluator already has. Each direction refuses what the other just sent: the pull
+  reads the child's `pending` queue rather than the `firedEvents` its update returned, and
+  the push skips the names just pulled from that same child.
+
+  The distinction is load-bearing. `firedEvents` is the child's *active* set, which by
+  construction already holds everything the parent pushed in on the previous update, so
+  raising it back made every crossing event echo between the two graphs forever, one copy
+  per update each way. The vanilla player graph re-fired `moveStart` and `IdleStop` on all
+  120 steps of a walked second, which saturated the bounded queue in
+  `LocomotionGraphEventQueue` and pushed the real footstep tags out of it before an audio
+  frame could read them (issues #385, #394).
 * The child's `activeStates` are appended to the parent's, so the published state path runs
   through the reference without a seam.
 * A reference reached twice in one parent update is evaluated once. Without the memo the
