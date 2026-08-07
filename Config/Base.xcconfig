@@ -14,6 +14,17 @@ SWIFT_TREAT_WARNINGS_AS_ERRORS = YES
 SWIFT_APPROACHABLE_CONCURRENCY = YES
 SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES
 
+// Compilation caching. Every compile task is keyed on its full command line and
+// inputs and its result replayed from a content-addressed store, which takes a
+// Debug rebuild of a state this checkout has compiled before, with the
+// intermediates gone, from about forty-five seconds to ten or twenty. The store
+// defaults to
+// $(DERIVED_DATA)/CompilationCache.noindex, so it lands on the same external
+// volume as the build cache with nothing further to configure, and `make clean`
+// keeps it while removing everything else. See docs/tools/build-system.md for
+// the measured numbers and the flows it does not help.
+COMPILATION_CACHE_ENABLE_CACHING = YES
+
 // The vendored decode-only ffmpeg (make ffmpeg) and its module map.
 SWIFT_INCLUDE_PATHS = $(inherited) $(SRCROOT)/tools/ffmpeg $(SRCROOT)/.vendor/ffmpeg/include
 

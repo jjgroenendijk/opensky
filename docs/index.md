@@ -306,7 +306,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   command line every make target and tools/ script shares: knobs and their defaults,
   `-quiet` versus the transcripts kept in `logs/`, Swift warnings as build errors, the
   derived built-products path, the `Config/*.xcconfig` layer that holds every build
-  setting, and what `-only-testing` does not save.
+  setting, the compilation cache and the flows it does and does not speed up, and what
+  `-only-testing` does not save.
 * [Run output layout and make prune](/tools/run-output.md) - one timestamped run
   directory per run under `logs/` and `build/test-results/` with a `latest` symlink, which
   script writes where, and the `make prune` rules that delete stale worktree DerivedData

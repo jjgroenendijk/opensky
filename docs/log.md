@@ -59,6 +59,22 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   Real data: the vanilla humanoid resolves 18 bones and 17 joints with nothing skipped, and
   collapses onto a floor and settles with every constraint resolved.
   [Death and constraint-solved ragdoll](/engine/ragdoll.md).
+* **Compilation caching is on (issue #341)**: `COMPILATION_CACHE_ENABLE_CACHING = YES` in
+  `Config/Base.xcconfig`, adopted on measurement rather than on the feature description. It
+  pays for exactly one flow, and pays for it well: a Debug rebuild of a state this checkout
+  has compiled before with the intermediates gone drops from 45.1 to 9.8 seconds, with 106
+  cache hits and no misses, and the same rebuild in Release — `make install` after a
+  `make clean` — drops from 779.8 seconds to 29.5, since a whole-module compile has nothing
+  incremental to fall back on. It buys nothing on a branch switch in place, nothing for `make cli`
+  after `make build`, and nothing measurable on an ordinary one-file edit; a cold populating
+  build costs one to two percent more. A second worktree pointed at a warm store hits only
+  SDK module builds, because a project source task's key embeds its absolute path and Xcode
+  emits no prefix mapping, so the store is deliberately not shared between worktrees. The
+  store lands in `DerivedData/CompilationCache.noindex` on its own, which is already the
+  external volume, and `make clean` now keeps that directory while removing the rest —
+  without which the fast flow would never occur, since a clean was the main reason the
+  intermediates ever disappeared. `make clean DEEP=1` drops it too. Full table of measured
+  flows in [Build system and xcodebuild invocation](/tools/build-system.md).
 
 * **Archery and projectiles (issue #196)**: a shot from the held mouse button to the arrow
   standing in the wall. `PROJ` is parsed — the milestone's one new ESM record — a bow is
