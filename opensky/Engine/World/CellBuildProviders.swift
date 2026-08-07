@@ -87,6 +87,16 @@ nonisolated protocol BarterDataProviding {
     var barterPricing: BarterPricing { get }
 }
 
+/// Optional combat GMSTs resolved from active game data (issue #195).
+///
+/// Separate from `MovementConfigurationProviding` for the same reason
+/// `BarterDataProviding` is: a synthetic scene has no load order to read
+/// `fCombatDistance` and the block settings out of, and melee then falls back
+/// to the UESP-documented numbers rather than to nothing.
+nonisolated protocol CombatDataProviding {
+    var combatSettings: CombatSettings { get }
+}
+
 /// Optional decoded audio-record stores a provider can expose (M9.2.2).
 /// GameViewController pulls these off the provider to construct the world
 /// sound director alongside the audio engine. WeatherStore arrives via

@@ -81,6 +81,7 @@ extension GameViewController {
         // After `wirePapyrus`, whose `onWorldUpdate` closure this chains onto
         // so both systems advance on the same simulated delta (issue #194).
         wireActorValues(provider: provider, renderer: renderer)
+        wireMelee(provider: provider, renderer: renderer)
         renderer.terrainSampler = { [weak controller] position in
             controller?.sampleTerrain(at: position)
         }

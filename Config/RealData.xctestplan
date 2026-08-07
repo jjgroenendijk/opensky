@@ -37,6 +37,7 @@
         "InventoryMenuAcceptanceRealDataTests",
         "InventoryRecordRealDataTests",
         "JournalAcceptanceRealDataTests",
+        "MeleeCombatRealDataTests",
         "LandRealDataTests",
         "LivingEnvironmentAcceptanceRealDataTests",
         "LocomotionBridgeRealDataTests",

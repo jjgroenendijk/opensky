@@ -332,18 +332,23 @@ already handles. Where the marks live and how they fire is in
 [behavior graph runtime](/engine/behavior-runtime.md#clip-triggers-and-annotations).
 
 So the bridge only reports. `LocomotionBridge` queues the third-person graph's fired
-events in `LocomotionGraphEventQueue`, a bounded FIFO drained once per frame by the
-renderer's audio tick. Three properties matter and each is pinned by
-`LocomotionBridgeEventDrainTests`:
+events in `LocomotionGraphEventQueue`, a bounded stream drained once per frame by the
+renderer's audio tick. Four properties matter and each is pinned by
+`LocomotionBridgeEventDrainTests` and `LocomotionGraphEventFanOutTests`:
 
-* **Consumed exactly once.** Distinct from `LocomotionStatus.recentGraphEvents`, which is
-  a readout the panel reads repeatedly and never consumes. A consumer that *acts* on an
-  event must not see it twice.
+* **Consumed exactly once, per consumer.** Distinct from
+  `LocomotionStatus.recentGraphEvents`, which is a readout the panel reads repeatedly and
+  never consumes. A consumer that *acts* on an event must not see it twice.
+* **One cursor per consumer** (issue #195). Item 15.4 gave the queue a second consumer, the
+  melee runtime, and a drain-once queue cannot have two: whichever drained first would take
+  the whole batch. The bridge registers `footstepEventConsumer` and `meleeEventConsumer` in
+  `init`, and each sees every fired name exactly once in fire order whatever order they
+  drain in. See [melee combat](/engine/melee-combat.md).
 * **Third person only.** Both graphs run the same clips and fire the same triggers, so
   queuing both would play every footstep twice.
-* **Bounded, newest kept.** A consumer that stops draining — audio off, a long build
-  stall — costs a fixed amount of memory, and coming back does not flush a minute of
-  stale steps.
+* **Bounded, newest kept.** The 64-name bound is over *undrained* names, so a consumer that
+  stops draining — audio off, a long build stall — costs a fixed amount of memory, costs
+  the other consumer nothing, and coming back does not flush a minute of stale steps.
 
 A zero-length step plans nothing and fires nothing, so a paused frame queues nothing; a
 reset (walk-mode entry, a teleport) clears the queue, because the footsteps of the place

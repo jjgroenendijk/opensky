@@ -436,7 +436,11 @@ observed from the install, never assumed — `openskycli skeleton` over
 | `WeaponSword`, `WeaponAxe`, `WeaponDagger`, `WeaponMace` | pelvis | sheathed |
 | `WeaponBack`, `WeaponBow` | spine     | sheathed on the back           |
 
-OpenSky uses `Weapon`. The sheathed nodes belong to draw/sheath, which is M15.
+OpenSky uses `Weapon`. The sheathed nodes belong to draw/sheath, which roadmap item 15.4
+tracks: `MeleeCombatState` moves the attachment between the sheathed node and the hand node
+on the `BeginWeaponDraw` and `BeginWeaponSheathe` clip annotations rather than on the key
+press, so the model changes nodes at the animation's own phase. See
+[melee combat](/engine/melee-combat.md).
 The matching node in `skeleton.nif` is spelled `WEAPON` (uppercase) while the
 Havok rig spells it `Weapon`, so `NIFSkeleton.transform(forBoneNamed:)` folds
 case; skin bone names match exactly and take the fast path.
@@ -477,7 +481,8 @@ the playback a rebuild produces is sampled at the same world time as the one
 it replaced. No bind-pose frame appears because `Renderer.draw` poses before
 it encodes.
 
-Out of scope here: draw/sheath animations (M15), shields-on-back and
+Out of scope here: draw/sheath animations ([melee combat](/engine/melee-combat.md)),
+shields-on-back and
 dual-wield placement, ARMA texture swaps, and the DNAM `weaponAdjust` float,
 which is decoded but not yet applied to the attachment offset.
 

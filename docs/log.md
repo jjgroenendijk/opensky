@@ -4,6 +4,60 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-07
 
+* **Melee: draw and sheath, attack and block, hit volumes, damage (issue #195)**: a swing
+  from the key press to the health that comes off. The rule the whole item is built on is
+  that the *graph* decides and the engine only asks: the engine raises `attackStart`, and
+  the behavior graph decides whether an attack state was entered, how long the windup lasts,
+  and which frame connects. Every melee state is read off the events the graph fires back
+  rather than timed beside it, which is the same rule the footstep director follows and
+  which means there is no engine-side swing timer for a stagger to have to cancel.
+
+  Every event and variable name comes from the M14 census over the install, never from
+  memory, and the vanilla player graph accepts all fourteen of them with zero misses. Two it
+  does *not* get: `iRightHandType` and `iLeftHandType` are `int32` variables the census
+  names but gives no encoding for, so OpenSky leaves them unwritten rather than guess which
+  integer means "one-handed sword" and silently select the wrong animation set. The cost is
+  visible and recorded — raising `weaponDraw` moves the vanilla graph but never reaches the
+  `BeginWeaponDraw` annotation, so the state stays `drawing` — and the real-data test
+  asserts that outcome, so settling the encoding (issue #403) turns it red.
+
+* **The graph-event seam is multi-consumer now.** `LocomotionGraphEventQueue` was
+  drain-once with one consumer, and a drain-once queue cannot have two: whichever drained
+  first would take the whole batch. It now holds one cursor per registered consumer, with
+  positions in a monotonic sequence rather than indices into the storage, so trimming the
+  front cannot rewind anybody. The 64-name bound is over *undrained* names, so a consumer
+  that stops draining costs the other nothing but its own lost tail. With no consumer
+  registered the buffer is dropped outright, which is why the bridge registers both cursors
+  in `init` rather than lazily — a cursor created on first drain would find the queue
+  already empty.
+
+* **The install disagrees with UESP about the block settings, and the install wins.** UESP
+  "Skyrim:Block" writes both block formulas in percentage points with a 30 weapon base, an
+  85% cap and a 1.5 skill weight. Reading `Skyrim.esm` through the new `openskycli gmst
+  combat` gives fractions instead, and two different values: `fBlockWeaponBase` 0.300,
+  `fBlockMax` 0.700, `fBlockSkillMult` 2.000. What UESP still supplies is the shape — which
+  term multiplies which — and that shape reconciles with the fractions on exactly one
+  reading: the base terms and the cap are fractions, the scaling terms are percentage points
+  per unit, so each scaling term carries a `/ 100`. Every fallback in `CombatSettings` is now
+  the install's value rather than the printed one, and says so in its source string.
+
+* **Both M14 feature tallies turned out to be observability rather than gaps.** The issue
+  asked whether attack states need `clipUserControlled` (79 evaluations) and
+  `stateMachineTransitionInterrupted` (61) implemented. Read against the evaluator, both
+  already are: clip mode 2 reads `m_userControlledTimeFraction` through the variable-bound
+  member map, and an interrupted transition already restarts from wherever the machine has
+  got to and drops the older blend, which is exactly what attack cancel needs. The coverage
+  delta is zero and the tallies count real events rather than skipped ones.
+
+* **`ItemDefinitionStore` keeps the decoded WEAP records beside the unified item views**, and
+  `Weapon` decodes the INAM and BIDS impact links it had been skipping. Melee needs DNAM
+  reach, speed and stagger and the INAM impact set, and `ItemDefinition` deliberately carries
+  only what every item family has in common; a second dictionary costs one pointer per weapon
+  and keeps the common view from growing a weapon-shaped hole every other family fills with
+  nil. The hit-impact chain is then the footstep chain with one link changed —
+  `HitFrame -> WEAP INAM -> IPDS -> IPCT for the material -> SNDR` — so it reuses
+  `FootstepStore`'s indexes rather than loading a second copy.
+
 * **Actors have health, magicka and stamina, and the HUD bars are live (issue #194)**: the
   M8 meters had been a static placeholder driven once at startup with `.full`, because
   nothing in the engine knew what an actor's health was. Item 15.3 supplies it end to end.

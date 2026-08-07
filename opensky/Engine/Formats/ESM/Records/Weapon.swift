@@ -26,9 +26,16 @@
 //                      SPEL FormID at offset 0x10, then 4 more unused
 // Anything else decodes as no critical data rather than being force-fit.
 //
-// Skipped: VMAD, DEST, MOD3 scope model, the impact-data/material links
-// (BIDS/BAMT/INAM), the seven SNDR attack-sound links, NNAM embedded-weapon
-// node, WNAM first-person model, VNAM detection level.
+// INAM and BIDS, 4 bytes each — the two IPDS links a landed hit resolves its
+// impact sound through (issue #195). UESP names INAM "Normal weapon swing
+// impact set. Points to a IPDS" and BIDS "Block bash impact data set. Points to
+// a IPDS", so the ordinary swing reads INAM and only a shield bash reads BIDS.
+// Both are ordinary optional FormID subrecords; a null one means the weapon
+// names no set and the hit is silent, which is normal vanilla data.
+//
+// Skipped: VMAD, DEST, MOD3 scope model, BAMT bash material, the seven SNDR
+// attack-sound links, NNAM embedded-weapon node, WNAM first-person model, VNAM
+// detection level.
 //
 // References:
 //   UESP "Skyrim Mod:Mod File Format/WEAP"
@@ -104,6 +111,12 @@ nonisolated struct Weapon {
     let equipType: FormID?
     /// CNAM — the WEAP this record templates from, nil when standalone.
     let template: FormID?
+    /// INAM — the IPDS an ordinary swing's impact resolves through; nil when
+    /// the weapon names none.
+    let impactDataSet: FormID?
+    /// BIDS — the IPDS a shield bash resolves through; nil when unset. Not the
+    /// swing's set: UESP names the two separately and only bashing reads this.
+    let blockBashImpactDataSet: FormID?
 
     init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "WEAP" else {
@@ -134,6 +147,8 @@ nonisolated struct Weapon {
         enchantmentCharge = payload.enchantmentCharge
         equipType = payload.equipType
         template = payload.template
+        impactDataSet = payload.impactDataSet
+        blockBashImpactDataSet = payload.blockBashImpactDataSet
     }
 
     /// Accumulator for the WEAP-specific subrecords; exists so the field
@@ -154,6 +169,8 @@ nonisolated struct Weapon {
         var enchantmentCharge: UInt16?
         var equipType: FormID?
         var template: FormID?
+        var impactDataSet: FormID?
+        var blockBashImpactDataSet: FormID?
 
         mutating func decode(field: ESMField, localized: Bool) throws {
             switch field.type {
@@ -175,6 +192,10 @@ nonisolated struct Weapon {
                 equipType = try InventoryItemFields.optionalFormID(field)
             case "CNAM":
                 template = try InventoryItemFields.optionalFormID(field)
+            case "INAM":
+                impactDataSet = try InventoryItemFields.optionalFormID(field)
+            case "BIDS":
+                blockBashImpactDataSet = try InventoryItemFields.optionalFormID(field)
             default:
                 break
             }

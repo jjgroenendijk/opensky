@@ -17,6 +17,8 @@ extension OpenSkyCLI {
       vfs cat <key> --out <file>  Extract one resource to a file
       record <formid-or-editorid> Dump one Skyrim.esm record (decoded + fields)
       gmst movement              Print resolved gait/step/jump values + sources
+      gmst combat                Print resolved melee reach and block settings
+                                  + sources
       footstep [--set <edid>] [--armature <formid-or-edid>]
                [--material <edid-or-formid>]
                                   Walk the footstep chain: per gait, every

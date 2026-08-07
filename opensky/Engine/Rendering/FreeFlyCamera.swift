@@ -34,6 +34,15 @@ nonisolated struct CameraInput {
     /// One-shot request to advance the camera mode one step around the
     /// fly -> walk -> third-person cycle (issue #189).
     var cycleCameraMode = false
+    /// One-shot attack request, latched like jump (issue #195). Walk mode
+    /// only; fly mode ignores it.
+    var attack = false
+    /// Block key held, a level rather than an edge — the melee runtime raises
+    /// `blockStart` and `blockStop` on the changes.
+    var block = false
+    /// One-shot draw/sheath request. One binding for both directions, because
+    /// vanilla binds one key and the graph knows which way it is going.
+    var toggleWeaponDrawn = false
     /// Seconds elapsed since the previous update.
     var dt: Float = 0
 }

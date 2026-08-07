@@ -231,6 +231,11 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   the census against every auto-calc record's baked DNAM, the current-values-only runtime
   component, percent-per-second regeneration on the menu-pause-safe fixed step, the live
   HUD meter binding, the additive AVAL save chunk, and the panel provider seam.
+* [Melee combat](/engine/melee-combat.md) - draw and sheath on the clip annotation, attack
+  and block through census-named graph events, the multi-consumer graph-event seam, the
+  documented `fCombatDistance` reach formula and the swept-capsule hit volume, target
+  filtering and one hit per swing, the install's own block GMSTs and how they differ from
+  the secondary source, stagger, and the WEAP INAM impact-sound chain.
 
 ## Rendering
 

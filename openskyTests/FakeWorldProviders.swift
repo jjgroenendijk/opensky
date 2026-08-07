@@ -354,6 +354,9 @@ final class FakeWorldProviders: WorldControlProviders {
     /// FirstPersonControlProviding (issue #190) state; the conformance lives
     /// beside the locomotion one.
     var firstPerson = FakeFirstPersonState()
+    /// MeleeCombatControlProviding (issue #195) state; the conformance lives
+    /// beside the locomotion one.
+    var melee = FakeMeleeState()
 }
 
 /// The inventory-menu half of the fake, in an extension so the class body

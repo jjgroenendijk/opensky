@@ -21,6 +21,7 @@ final class PlayerLocomotionPanelViewController: InspectorPanelViewController {
     let stateSection = LocomotionStateSection()
     let graphSection = LocomotionGraphSection()
     let bindingsSection = LocomotionBindingsSection()
+    let meleeSection = LocomotionMeleeSection()
     let motionSection = LocomotionMotionSection()
     let devSection = LocomotionDevSection()
 
@@ -41,8 +42,14 @@ final class PlayerLocomotionPanelViewController: InspectorPanelViewController {
         didSet { stateSection.cameraProvider = cameraProvider }
     }
 
+    /// The melee runtime rides its own seam, which only the Melee section
+    /// reads.
+    weak var meleeProvider: (any MeleeCombatControlProviding)? {
+        didSet { meleeSection.provider = meleeProvider }
+    }
+
     override func makeSections() -> [PanelSectionViewController] {
-        [stateSection, graphSection, bindingsSection, motionSection, devSection]
+        [stateSection, graphSection, bindingsSection, meleeSection, motionSection, devSection]
     }
 
     /// Control forwards for the verification-surface tests, mirroring
@@ -61,6 +68,14 @@ final class PlayerLocomotionPanelViewController: InspectorPanelViewController {
 
     var clearTraceControl: NSButton {
         motionSection.clearTraceControl
+    }
+
+    var weaponDrawnControl: NSButton {
+        meleeSection.weaponDrawnControl
+    }
+
+    var attackControl: NSButton {
+        meleeSection.attackControl
     }
 
     var forcedGaitControl: NSPopUpButton {

@@ -17,6 +17,7 @@ struct PlayerLocomotionPanelTests {
         let panel = try Self.panel(providers: providers)
         #expect(panel.provider === providers)
         #expect(panel.stateSection.cameraProvider === providers)
+        #expect(panel.meleeSection.provider === providers)
     }
 
     /// Accessibility ids are the UI-test API (docs/tools/app-ui.md); pin the

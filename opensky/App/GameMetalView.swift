@@ -44,6 +44,7 @@ final class GameMetalView: MTKView {
         static let keyG: UInt16 = 5
         static let keyJ: UInt16 = 38
         static let keyC: UInt16 = 8
+        static let keyR: UInt16 = 15
         static let space: UInt16 = 49
         static let escape: UInt16 = 53
         static let returnKey: UInt16 = 36
@@ -104,6 +105,14 @@ final class GameMetalView: MTKView {
         }
         if event.keyCode == KeyCode.keyC {
             input?.toggleSneak()
+            return
+        }
+        // Melee keys (issue #195). R is the vanilla draw/sheath binding and is
+        // free on macOS; the mouse buttons below carry attack and block, which
+        // is also where vanilla puts them. All three are listed on the
+        // `World > Player & Locomotion > Melee` section.
+        if event.keyCode == KeyCode.keyR {
+            input?.requestWeaponToggle()
             return
         }
         guard let key = Self.moveKey(for: event.keyCode) else {
@@ -171,11 +180,29 @@ final class GameMetalView: MTKView {
             menuMode?.routeMenuInput(.button(.accept))
             return
         }
+        // The first click captures the cursor; every click after that is the
+        // attack binding (issue #195), which is where vanilla puts it. Look is
+        // driven by pointer motion rather than by the button, so nothing is
+        // lost by giving the button to combat.
         if captured {
-            handleLook(event)
+            input?.requestAttack()
         } else {
             captureCursor()
         }
+    }
+
+    override func rightMouseDown(with event: NSEvent) {
+        // Block is held, so it is a button-down/up pair rather than a latch.
+        // Menu mode swallows it; a menu has no guard to raise.
+        guard menuMode?.isMenuMode != true, captured else {
+            super.rightMouseDown(with: event)
+            return
+        }
+        input?.setBlocking(true)
+    }
+
+    override func rightMouseUp(with event: NSEvent) {
+        input?.setBlocking(false)
     }
 
     override func mouseMoved(with event: NSEvent) {
@@ -183,6 +210,10 @@ final class GameMetalView: MTKView {
     }
 
     override func mouseDragged(with event: NSEvent) {
+        handleLook(event)
+    }
+
+    override func rightMouseDragged(with event: NSEvent) {
         handleLook(event)
     }
 

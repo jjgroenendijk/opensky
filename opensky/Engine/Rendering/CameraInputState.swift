@@ -18,6 +18,9 @@ final class CameraInputState {
     private var sprinting = false
     private var sneaking = false
     private var jumpRequested = false
+    private var attackRequested = false
+    private var blocking = false
+    private var weaponToggleRequested = false
     private var pendingLookRight: Float = 0
     private var pendingLookUp: Float = 0
     private var activationRequested = false
@@ -62,6 +65,30 @@ final class CameraInputState {
         jumpRequested = true
     }
 
+    /// Latches one attack press until the next frame drains it (issue #195),
+    /// on the same terms as jump: a click between two rendered frames must
+    /// still reach a fixed step, and must reach it exactly once.
+    func requestAttack() {
+        attackRequested = true
+    }
+
+    /// Block is held, like boost and sprint: the melee runtime reads the level
+    /// each frame and raises `blockStart`/`blockStop` on its edges.
+    func setBlocking(_ enabled: Bool) {
+        blocking = enabled
+    }
+
+    var isBlocking: Bool {
+        blocking
+    }
+
+    /// Latches one draw/sheath press. A toggle rather than two bindings,
+    /// because vanilla binds one key to both and the graph already knows which
+    /// way it is going.
+    func requestWeaponToggle() {
+        weaponToggleRequested = true
+    }
+
     /// Accumulates pointer motion (points) until the next frame drains it.
     /// `right` = pointer moved right, `up` = pointer moved up.
     func addLook(right: Float, up: Float) {
@@ -88,12 +115,18 @@ final class CameraInputState {
     /// Clears all held state — call on capture loss / focus loss so keys do not
     /// stick after the window stops receiving key-up events. Sneak is a mode
     /// rather than a held key, so it deliberately survives: releasing capture
-    /// must not stand the player up.
+    /// must not stand the player up. Whether the weapon is drawn survives for
+    /// the same reason — it is world state the player set on purpose — but the
+    /// guard drops, because a block held through a lost mouse-up would stay up
+    /// forever.
     func releaseAll() {
         pressed.removeAll()
         boost = false
         sprinting = false
         jumpRequested = false
+        attackRequested = false
+        blocking = false
+        weaponToggleRequested = false
         pendingLookRight = 0
         pendingLookUp = 0
         activationRequested = false
@@ -114,12 +147,17 @@ final class CameraInputState {
             sneak: sneaking,
             jump: jumpRequested,
             cycleCameraMode: cameraModeCycleRequested,
+            attack: attackRequested,
+            block: blocking,
+            toggleWeaponDrawn: weaponToggleRequested,
             dt: dt
         )
         pendingLookRight = 0
         pendingLookUp = 0
         jumpRequested = false
         cameraModeCycleRequested = false
+        attackRequested = false
+        weaponToggleRequested = false
         return input
     }
 

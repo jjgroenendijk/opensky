@@ -16,12 +16,12 @@ struct LocomotionBridgeEventDrainTests {
         var fired: [String] = []
         for _ in 0 ..< 60 {
             _ = bridge.plan(Self.state())
-            fired += bridge.graphEvents.drain()
+            fired += bridge.graphEvents.drain(bridge.footstepEventConsumer)
         }
 
         #expect(fired.contains(Self.triggerEvent))
         // The second drain of the same steps returns nothing: draining consumes.
-        #expect(bridge.graphEvents.drain().isEmpty)
+        #expect(bridge.graphEvents.drain(bridge.footstepEventConsumer).isEmpty)
     }
 
     @Test func drainedEventsMatchTheStatusReadoutWithoutRepeating() throws {
@@ -31,11 +31,11 @@ struct LocomotionBridgeEventDrainTests {
             _ = bridge.plan(Self.state())
         }
 
-        let drained = bridge.graphEvents.drain()
+        let drained = bridge.graphEvents.drain(bridge.footstepEventConsumer)
         #expect(!drained.isEmpty)
         // The bounded readout still holds its copy — it is not consumed.
         #expect(bridge.status.recentGraphEvents.contains(Self.triggerEvent))
-        #expect(bridge.graphEvents.drain().isEmpty)
+        #expect(bridge.graphEvents.drain(bridge.footstepEventConsumer).isEmpty)
     }
 
     @Test func undrainedEventsStayBoundedAndKeepTheNewest() throws {
@@ -45,7 +45,7 @@ struct LocomotionBridgeEventDrainTests {
             _ = bridge.plan(Self.state())
         }
 
-        let drained = bridge.graphEvents.drain()
+        let drained = bridge.graphEvents.drain(bridge.footstepEventConsumer)
         #expect(drained.count <= LocomotionGraphEventQueue.limit)
         #expect(!drained.isEmpty)
     }
@@ -59,7 +59,7 @@ struct LocomotionBridgeEventDrainTests {
 
         bridge.reset()
 
-        #expect(bridge.graphEvents.drain().isEmpty)
+        #expect(bridge.graphEvents.drain(bridge.footstepEventConsumer).isEmpty)
     }
 
     @Test func pausedFrameQueuesNothing() throws {
@@ -70,7 +70,7 @@ struct LocomotionBridgeEventDrainTests {
             _ = bridge.plan(Self.state(dt: 0))
         }
 
-        #expect(bridge.graphEvents.drain().isEmpty)
+        #expect(bridge.graphEvents.drain(bridge.footstepEventConsumer).isEmpty)
     }
 
     @Test func detachedGraphQueuesNothing() {
@@ -80,7 +80,7 @@ struct LocomotionBridgeEventDrainTests {
             _ = bridge.plan(Self.state())
         }
 
-        #expect(bridge.graphEvents.drain().isEmpty)
+        #expect(bridge.graphEvents.drain(bridge.footstepEventConsumer).isEmpty)
     }
 
     // MARK: - Fixture
