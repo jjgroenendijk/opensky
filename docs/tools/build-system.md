@@ -2,10 +2,10 @@
 type: Tool
 title: Build system and xcodebuild invocation
 description: How the Makefile and the tools/ scripts agree on one xcodebuild invocation -
-  scheme, configuration, derived-data cache, output filtering, warnings-as-errors, products
-  path - and what each knob overrides.
+  scheme, configuration, derived-data cache, compilation caching, output filtering,
+  warnings-as-errors, products path - and what each knob overrides.
 tags: [tool, build, make, xcodebuild]
-timestamp: 2026-08-04T00:00:00Z
+timestamp: 2026-08-07T00:00:00Z
 ---
 
 # Build system and xcodebuild invocation
@@ -20,6 +20,7 @@ volume cannot drift apart per target. The scripts under `tools/` run their own
 
 * The shared invocation
 * Build settings: the Config/ xcconfig layer
+* Compilation caching
 * Signing
 * Output volume and the transcripts in logs/
 * Swift warnings are errors
@@ -96,6 +97,86 @@ signing indirection introduces.
 `tools/lint/swift-baseline.sh` reads `SWIFT_VERSION` from `Config/*.xcconfig` as well as
 from the pbxproj, so the Swift 6 language-mode gate still fails on a configuration that
 slips back. See [Swift toolchain and language mode](/tools/swift-toolchain.md).
+
+## Compilation caching
+
+`COMPILATION_CACHE_ENABLE_CACHING = YES` in `Config/Base.xcconfig` turns on the compilation
+caching Xcode 26 ships opt-in. Every compile task is keyed on its full command line and its
+inputs, the result is stored in a content-addressed store, and a later task with the same
+key replays that result instead of running the compiler. Explicit modules, which the cache
+needs to key module builds separately from the sources that import them, are already on by
+default here: `-showBuildSettings` reports `CLANG_ENABLE_EXPLICIT_MODULES = YES` and
+`SWIFT_ENABLE_EXPLICIT_MODULES = YES` with nothing in `Config/` setting either.
+
+The store needs no configuration to land in the right place. `COMPILATION_CACHE_CAS_PATH`
+defaults to `$(DERIVED_DATA)/CompilationCache.noindex`, so it follows the
+`-derivedDataPath` every `make` target passes and sits on the external volume beside the
+build cache it belongs to, not on the boot disk. `make clean` keeps that one directory and
+removes everything else under `DerivedData/`; `make clean DEEP=1` removes it too. `make
+prune` needs no rule of its own, because it deletes a departed worktree's whole
+`DerivedData/`.
+
+Measured on this machine at Xcode 26.6, wall clock from `/usr/bin/time`, `make build` in
+Debug unless the row says otherwise (issue #341):
+
+| Flow | Caching off | Caching on | Cache hits |
+| --- | --- | --- | --- |
+| Cold build, empty store | 45.1 s | 46.0 s | 0, populating |
+| Rebuild after the build tree is deleted, store warm | 45.1 s | 9.8 s | 106 hits, 0 misses |
+| Rebuild after `make clean` | 45.1 s | 18.2 s | populated by earlier builds |
+| `make install` (Release), cold, empty store | | 779.8 s | 0, populating |
+| `make install` (Release) after `make clean` | 779.8 s | 29.5 s | populated by the run above |
+| An edit reverted back to a state already built | n/a | 16.7 s | |
+| Branch switch away (three commits) | 40.1 s | 43.0 s | 1 |
+| Branch switch back | 22.7 s | 23.0 s | 2 |
+| `make cli` straight after `make build` | 25.7 s | 29.5 s | 1 |
+| One-file edit, rebuild | 43.8 s, 77.7 s | 29.8 s, 76.2 s | |
+
+The one flow it transforms is a rebuild of a state this checkout has compiled before with
+the intermediates gone. In Debug that is about four and a half times faster with every
+compile task hit; in Release it is the difference between thirteen minutes and half a
+minute, because Release compiles the whole module as one task and there is nothing
+incremental about redoing it. The rest of the table is the reason the setting is worth
+understanding rather than assuming.
+
+* **A branch switch gains nothing.** Switching in place leaves `DerivedData/Build` intact,
+  so the build system's own incremental state already decides what to recompile and the
+  cache is asked almost nothing.
+* **`make cli` does not reuse `make build`.** `opensky/Engine/` compiles into a different
+  module for `openskycli`, so the command line differs and so does every key. That run is
+  slower with caching on, by roughly the cost of writing its own results into the store.
+* **An ordinary incremental edit is unaffected.** Repeated samples of the same one-file
+  edit ranged from 30 to 78 seconds either way, which is machine noise swamping any
+  difference. This matches how Apple positions the feature: it is for rebuilding previously
+  compiled states, not for the edit-build loop.
+* **A second worktree cannot share the store.** Pointing a fresh worktree's
+  `COMPILATION_CACHE_CAS_PATH` at a warm store built in another one hit 72 entries and took
+  45.2 s against a 45.1 s baseline. The hits are all SDK module builds, whose command lines
+  name only SDK paths; every project source task missed, because its key embeds the
+  absolute source path and no `-file-prefix-map` or `-cache-replay-prefix-map` appears in
+  the compile commands Xcode generates. Sharing a store the way `.vendor/ffmpeg` is shared
+  would buy no wall clock, so nothing does it.
+
+The cost is disk. The store reached 363 MB after one Debug app build and 1.1 GB after
+roughly fifteen builds across two commits, per worktree, and it is not visibly bounded:
+`COMPILATION_CACHE_LIMIT_SIZE` and `COMPILATION_CACHE_LIMIT_PERCENT` exist as build
+settings, but setting `COMPILATION_CACHE_LIMIT_SIZE` to 100 MB against a 1.1 GB store
+shrank nothing over a build, so neither is relied on here. `make clean DEEP=1` and `make
+prune` are the two things that reclaim it.
+
+`COMPILATION_CACHE_ENABLE_DIAGNOSTIC_REMARKS = YES` makes each cached task report its key
+and whether it replayed. It is not checked in, because it adds several lines per task to
+every transcript; pass it when measuring:
+
+```sh
+make build XCODEBUILD_FLAGS='COMPILATION_CACHE_ENABLE_DIAGNOSTIC_REMARKS=YES'
+grep -c 'Cache hit' logs/build/latest/build.log
+```
+
+CI gets the setting too, since it comes from the xcconfig, and gains nothing from it: a
+runner starts with an empty store every time and pays the one to two percent a populating
+build costs. That is small enough not to be worth a CI-only override, which would be one
+more way for `ci.yml` and the local gate to drift.
 
 ## Signing
 
