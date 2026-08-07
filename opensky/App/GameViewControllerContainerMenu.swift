@@ -84,10 +84,10 @@ extension GameViewController {
         if containerMenu.container != nil {
             return true
         }
-        guard let interaction = currentInteraction, interaction.action == .search else {
-            return false
+        if let interaction = currentInteraction, interaction.action == .search {
+            return nominateContainerMenuMerchant(interaction)
         }
-        return nominateContainerMenuMerchant(interaction)
+        return nominateNearestCorpse()
     }
 
     /// Re-reads both inventories and, when the movie is up, pushes them across

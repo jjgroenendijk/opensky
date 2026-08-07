@@ -145,6 +145,13 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
             // `ActorValueRuntime` so the clamping applies. An actor is a placed
             // reference, so this write is attributed to its cell.
             return worldState.set(value, for: key, in: cell)
+        case let .death(value):
+            // Same reasoning: `Kill` and `Resurrect` are a later milestone's
+            // natives, and when they arrive they go through `RagdollRuntime` so
+            // the death events are raised and the ragdoll is handed off. An
+            // actor is a placed reference, so this write is attributed to its
+            // cell.
+            return worldState.set(value, for: key, in: cell)
         }
     }
 

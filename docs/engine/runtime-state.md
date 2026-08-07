@@ -220,6 +220,7 @@ The initial component set:
 | `QuestRuntimeState` | `.quest` | one quest's running and completed flags, reached stages and objective display state (issue #182, M13.2) |
 | `QuestAliasState` | `.questAliases` | one quest's filled reference aliases (issue #183, M13.2) |
 | `ActorValueState` | `.actorValues` | one actor's current health, magicka and stamina; the maximums re-derive from records (issue #194, item 15.3) |
+| `ActorDeathState` | `.death` | one actor's death, the resting root transform its ragdoll settled at, and whether its corpse was searched (issue #197, item 15.6) |
 
 `ReferenceActivationState` has a production writer since issue #172: the Papyrus activation
 bridge subscribes to `CellStreamer.onInteraction`, maps the event's `FormID` to a
@@ -1169,6 +1170,19 @@ is also why it travels in its own `AVAL` save chunk rather than inside `RDLT`.
 The derivation, the regeneration step, the HUD binding and the panel seam are all documented
 on their own page: [actor values](/engine/actor-values.md).
 
+### `ActorDeathState` — the tenth component
+
+Death is a slot of its own beside the actor's values rather than a field inside them,
+because the two have different lifetimes: a current-health float is rewritten by every
+regeneration step, while death is a one-way latch nothing but a resurrection clears. It
+travels in its own additive `DETH` chunk for the same reason `AVAL` does.
+
+It records the resting **root** transform and not the per-bone pose, which is a deliberate
+choice with a visible consequence — a corpse reloads lying where it came to rest in the
+skeleton's rest pose rather than in the tangle it died in. The reasoning, and the whole
+route from zero health to a settled corpse, is on its own page:
+[death and constraint-solved ragdoll](/engine/ragdoll.md).
+
 ## Verification — `World > Runtime State` and the M10.1 acceptance record
 
 Issue #162 (item 10.1.5) is the milestone acceptance surface for everything above. The
@@ -1355,6 +1369,8 @@ Local A/B (optional, never committed): none
   decodes plus the template chain an inventory baseline resolves through.
 * [Actor values](/engine/actor-values.md) — the ninth component, its derivation from RACE,
   CLAS and NPC_ records, and the `AVAL` chunk that persists it.
+* [Death and constraint-solved ragdoll](/engine/ragdoll.md) — the tenth component, the
+  `DETH` chunk that persists it, and what a reloaded corpse does and does not remember.
 * [Main-app UI framework + placement](/tools/app-ui.md) and
   [Sidebar verification convention](/tools/sidebar-acceptance.md) — how `World > Runtime
   State` was registered and what its acceptance record must contain.

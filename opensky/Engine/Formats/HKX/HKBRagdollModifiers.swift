@@ -240,6 +240,13 @@ nonisolated struct HKBRigidBodyRagdollControlsModifier: HKBClass, Equatable {
 
     static let className = "hkbRigidBodyRagdollControlsModifier"
 
+    /// The blend `0_master.hkx` authors on its one instance of this class,
+    /// `DriveRagdollRB`, read off the local install through
+    /// `openskycli hkx meshes\actors\character\behaviors\0_master.hkx`. It is
+    /// what a session with no evaluated graph falls back to (issue #197), so
+    /// that the fallback is vanilla's own number rather than an invented one.
+    static let vanillaBlendDuration: Float = 0.5
+
     private static let durationToBlendField = HKXField(
         0x80, "m_controlData.m_durationToBlend"
     )

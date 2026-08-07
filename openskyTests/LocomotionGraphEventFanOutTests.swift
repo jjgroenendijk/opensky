@@ -93,12 +93,26 @@ struct LocomotionGraphEventFanOutTests {
         #expect(queue.drain(consumer) == ["HitFrame"])
     }
 
-    /// Footsteps, melee, and archery (issue #196) — registered eagerly at
-    /// construction, because the queue drops what no registered cursor can
-    /// ever read and a cursor created on first drain would find it empty.
+    /// Footsteps, melee, archery (issue #196) and ragdoll (issue #197) —
+    /// registered eagerly at construction, because the queue drops what no
+    /// registered cursor can ever read and a cursor created on first drain
+    /// would find it empty.
     @Test func theBridgeRegistersEveryCursorAtConstruction() {
         let bridge = LocomotionBridge(configuration: .synthetic)
-        #expect(bridge.graphEvents.consumerCount == 3)
+        #expect(bridge.graphEvents.consumerCount == 4)
+    }
+
+    /// The fourth consumer must not displace the first three either.
+    @Test func theRagdollCursorSeesTheSameStreamAsTheOtherThree() {
+        let bridge = LocomotionBridge(configuration: .synthetic)
+        bridge.graphEvents.enqueue([
+            Self.event(RagdollGraphNames.addRagdollToWorld), Self.event("HitFrame")
+        ])
+
+        let ragdoll = bridge.graphEvents.drain(bridge.ragdollEventConsumer)
+        let melee = bridge.graphEvents.drain(bridge.meleeEventConsumer)
+        #expect(ragdoll == [RagdollGraphNames.addRagdollToWorld, "HitFrame"])
+        #expect(melee == ragdoll)
     }
 
     /// The third consumer must not displace either of the first two: each sees

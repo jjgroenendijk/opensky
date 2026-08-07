@@ -153,6 +153,12 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   sphere and capsule sweeps, the player's shove, the per-instance delta that draws a body
   where the solver has it, the streaming and resting-transform lifecycle, and the optimized
   perf gate.
+* [Death and constraint-solved ragdoll](/engine/ragdoll.md) - how a zero-health actor dies
+  and hands its skeleton to the physics, the ragdoll built from the skeleton NIF's per-bone
+  bodies and joints, what the authored constraint angles were measured to mean, the
+  sequential-impulse joint solver and the position-based one it beat, the
+  animated-to-simulated blend and the pose write-back, whole-ragdoll settling, persistent
+  death and its stated visual cost, and corpse looting.
 * [Actor idle animation](/engine/actor-animation.md) - HKX idle sampling, skeleton-world
   pose composition, NIF palette refresh, streamed lifetime, fallback accounting + budget,
   the graph-driven player path and its simulation clock.

@@ -332,8 +332,10 @@ Welding metadata is still validated and skipped: nothing consumes it.
 
 The rigid-body dynamics fields are consumed by
 [dynamic rigid bodies](/engine/dynamic-bodies.md) (item 15.2), which is also where the
-census's mass-not-motion-byte finding is acted on. The constraints are decoded but not
-solved: instantiating a ragdoll from these joints is item 15.6. `bhkBreakableConstraint` and
+census's mass-not-motion-byte finding is acted on. The constraints are decoded and
+solved: instantiating a ragdoll from these joints is item 15.6,
+[death and constraint-solved ragdoll](/engine/ragdoll.md), which also records what the
+authored cone, plane, twist and friction values were measured to mean. `bhkBreakableConstraint` and
 `bhkBallSocketConstraintChain` are the two constraint classes still unread — neither
 appears in the census, and both would be tallied as unsupported if a mod introduced one.
 The rigid body's auto-remove level, response modifier flags, contact-point shape key count,

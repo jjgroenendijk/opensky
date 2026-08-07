@@ -187,6 +187,12 @@ final class GameViewController: NSViewController {
     /// stored here because extensions cannot add state.
     var archery = ArcheryBridgeState()
 
+    /// Death and ragdoll: the runtime, the per-skeleton ragdoll definitions it
+    /// spawns from, and the panel's last outcome line (issue #197). The
+    /// implementation lives in `GameViewControllerRagdoll.swift`; stored here
+    /// because extensions cannot add state.
+    var ragdoll = RagdollBridgeState()
+
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))
         gameView.input = cameraInput
