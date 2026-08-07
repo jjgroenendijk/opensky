@@ -1,6 +1,7 @@
 // NPC_ record decoded into engine types: the appearance-relevant subset for
-// the bind-pose milestone. Stats, factions, AI, spells, perks, and inventory
-// items are skipped deliberately; ACBS carries the gender flag + the
+// the bind-pose milestone, plus the ACBS/CNAM stat inputs the actor-value
+// derivation needs (issue #194). Factions, AI, spells, perks, and inventory
+// items are still skipped deliberately; ACBS carries the gender flag + the
 // template-inheritance flags that drive per-field resolution.
 //
 // Reference: UESP "Skyrim Mod:Mod File Format/NPC_"
@@ -10,12 +11,51 @@
 import Foundation
 
 nonisolated struct ActorBase {
-    /// ACBS uint32 flags — only the appearance-relevant bits are named.
+    /// ACBS uint32 flags — only the bits this engine consumes are named.
     struct Flags: OptionSet, Equatable {
         let rawValue: UInt32
 
         static let female = Flags(rawValue: 0x0000_0001)
+        /// "Auto calc stats": the actor's health/magicka/stamina come from
+        /// race + class + level rather than from race plus the ACBS offsets
+        /// alone (UESP NPC_ ACBS; CK "Stats Tab").
+        static let autoCalcStats = Flags(rawValue: 0x0000_0010)
         static let unique = Flags(rawValue: 0x0000_0020)
+        /// "PC Level Mult": the level word holds a multiplier x1000 against
+        /// the player's level instead of a fixed level. The Creation Kit
+        /// forces auto-calc on whenever this is set (CK "Stats Tab").
+        static let pcLevelMult = Flags(rawValue: 0x0000_0080)
+    }
+
+    /// The ACBS words the actor-value derivation reads, kept together because
+    /// they are one authoring surface (the Creation Kit's Stats tab) and one
+    /// template-flag group (`useStats`).
+    ///
+    /// The three offsets are signed: the Creation Kit calls them "an amount to
+    /// add or subtract from the calculated value" and vanilla records use
+    /// negative offsets freely.
+    struct Stats: Equatable {
+        /// ACBS 0x08. A fixed level when `pcLevelMult` is clear, otherwise the
+        /// player-level multiplier scaled by 1000.
+        var levelWord: UInt16 = 1
+        /// ACBS 0x0A / 0x0C, the clamp applied to a `pcLevelMult` level.
+        var calcMinLevel: UInt16 = 0
+        var calcMaxLevel: UInt16 = 0
+        /// ACBS 0x14 / 0x04 / 0x06.
+        var healthOffset: Int16 = 0
+        var magickaOffset: Int16 = 0
+        var staminaOffset: Int16 = 0
+        /// CNAM — the CLAS whose attribute weights spread an auto-calc actor's
+        /// per-level points.
+        var characterClass: FormID?
+        /// DNAM's three baked uint16 values, which the Creation Kit writes for
+        /// an auto-calc actor and leaves as junk otherwise (UESP NPC_ DNAM:
+        /// "if auto-calc stats is on, otherwise seems to be random"). Never an
+        /// input to the derivation — kept only so a probe can compare what
+        /// OpenSky derives against what the editor baked.
+        var bakedHealth: Int16?
+        var bakedMagicka: Int16?
+        var bakedStamina: Int16?
     }
 
     /// ACBS template-data flags: when a bit is set and TPLT is present, the
@@ -54,11 +94,21 @@ nonisolated struct ActorBase {
     let headParts: [FormID]
     /// DOFT — default outfit.
     let defaultOutfit: FormID?
+    /// ACBS/CNAM/DNAM stat inputs (issue #194).
+    let stats: Stats
     /// VMAD — Papyrus scripts attached to the NPC_ base.
     let scriptData: ScriptData
 
     var isFemale: Bool {
         flags.contains(.female)
+    }
+
+    /// Whether stats derive from race + class + level rather than from race
+    /// plus the ACBS offsets alone. `pcLevelMult` implies it: "Note that if PC
+    /// Level Mult is checked, Auto Calc Stats will always be checked."
+    /// (<https://ck.uesp.net/wiki/Stats_Tab>)
+    var autoCalculatesStats: Bool {
+        flags.contains(.autoCalcStats) || flags.contains(.pcLevelMult)
     }
 
     init(record: ESMRecord, localized: Bool) throws {
@@ -72,11 +122,8 @@ nonisolated struct ActorBase {
         var flags = Flags()
         var templateFlags = TemplateFlags()
         var sawACBS = false
-        var template: FormID?
-        var race: FormID?
-        var wornArmor: FormID?
-        var headParts: [FormID] = []
-        var defaultOutfit: FormID?
+        var references = References()
+        var stats = Stats()
         var scriptData = ScriptData(ownerType: record.type)
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
@@ -86,20 +133,21 @@ nonisolated struct ActorBase {
             case "FULL":
                 name = try LString(field: field, localized: localized)
             case "ACBS":
-                (flags, templateFlags) = try Self.decodeACBS(field, npc: formID)
+                (flags, templateFlags) = try Self.decodeACBS(field, npc: formID, stats: &stats)
                 sawACBS = true
-            case "TPLT":
-                template = try FormID(reader.readUInt32())
-            case "RNAM":
-                race = try FormID(reader.readUInt32())
-            case "WNAM":
-                wornArmor = try FormID(reader.readUInt32())
-            case "PNAM":
-                try headParts.append(FormID(reader.readUInt32()))
-            case "DOFT":
-                defaultOutfit = try FormID(reader.readUInt32())
+            case "CNAM":
+                stats.characterClass = try FormID(reader.readUInt32())
+            case "DNAM":
+                Self.decodeDNAM(field, stats: &stats)
             default:
-                _ = try scriptData.decode(field: field)
+                // The FormID-valued appearance fields and the VMAD fallthrough
+                // live in their own pass, which is what keeps this switch inside
+                // the strict cyclomatic-complexity limit.
+                try Self.decodeReference(
+                    field,
+                    into: &references,
+                    scriptData: &scriptData
+                )
             }
         }
         guard sawACBS else {
@@ -109,19 +157,61 @@ nonisolated struct ActorBase {
         self.name = name
         self.flags = flags
         self.templateFlags = templateFlags
-        self.template = template
-        self.race = race
-        self.wornArmor = wornArmor
-        self.headParts = headParts
-        self.defaultOutfit = defaultOutfit
+        template = references.template
+        race = references.race
+        wornArmor = references.wornArmor
+        headParts = references.headParts
+        defaultOutfit = references.defaultOutfit
+        self.stats = stats
         self.scriptData = scriptData
+    }
+
+    /// The FormID-valued fields, gathered so the decode pass that fills them
+    /// stays inside the strict parameter-count limit.
+    private struct References {
+        var template: FormID?
+        var race: FormID?
+        var wornArmor: FormID?
+        var headParts: [FormID] = []
+        var defaultOutfit: FormID?
+    }
+
+    /// The FormID-valued fields, plus the VMAD accumulator every unrecognized
+    /// field falls through to.
+    private static func decodeReference(
+        _ field: ESMField,
+        into references: inout References,
+        scriptData: inout ScriptData
+    ) throws {
+        var reader = BinaryReader(field.data)
+        switch field.type {
+        case "TPLT":
+            references.template = try FormID(reader.readUInt32())
+        case "RNAM":
+            references.race = try FormID(reader.readUInt32())
+        case "WNAM":
+            references.wornArmor = try FormID(reader.readUInt32())
+        case "PNAM":
+            try references.headParts.append(FormID(reader.readUInt32()))
+        case "DOFT":
+            references.defaultOutfit = try FormID(reader.readUInt32())
+        default:
+            _ = try scriptData.decode(field: field)
+        }
     }
 
     /// ACBS, 24 bytes: uint32 flags, 7 stat/level words, uint16 template
     /// flags at offset 0x12, 2 tail words (layout: docs/formats/actors.md).
+    ///
+    /// The 20-byte floor is what the appearance decode has always required, so
+    /// a short-but-usable ACBS keeps resolving; the two words past the template
+    /// flags are read only when they are actually there, leaving the health
+    /// offset at its zero default otherwise. That is the defensive-parse rule:
+    /// a truncated subrecord loses a field, it does not fail the record.
     private static func decodeACBS(
         _ field: ESMField,
-        npc: FormID
+        npc: FormID,
+        stats: inout Stats
     ) throws -> (Flags, TemplateFlags) {
         guard field.data.count >= 20 else {
             throw ESMError.malformed(
@@ -130,8 +220,31 @@ nonisolated struct ActorBase {
         }
         var reader = BinaryReader(field.data)
         let flags = try Flags(rawValue: reader.readUInt32())
-        reader.skip(14)
+        stats.magickaOffset = try Int16(bitPattern: reader.readUInt16())
+        stats.staminaOffset = try Int16(bitPattern: reader.readUInt16())
+        stats.levelWord = try reader.readUInt16()
+        stats.calcMinLevel = try reader.readUInt16()
+        stats.calcMaxLevel = try reader.readUInt16()
+        reader.skip(4) // speed multiplier, disposition base — not consumed yet.
         let templateFlags = try TemplateFlags(rawValue: reader.readUInt16())
+        if field.data.count >= 22 {
+            stats.healthOffset = try Int16(bitPattern: reader.readUInt16())
+        }
         return (flags, templateFlags)
+    }
+
+    /// DNAM, 52 bytes: 18 base skills, 18 skill mods, then the three baked
+    /// uint16 attribute values at 0x24 / 0x26 / 0x28 (UESP NPC_ DNAM). Only the
+    /// three attributes are read; the skill bytes wait for M18.
+    ///
+    /// Nothing throws here. DNAM is a cross-check rather than an input, so a
+    /// short one simply leaves the baked values absent.
+    private static func decodeDNAM(_ field: ESMField, stats: inout Stats) {
+        guard field.data.count >= 0x2A else { return }
+        var reader = BinaryReader(field.data)
+        reader.skip(0x24)
+        stats.bakedHealth = (try? reader.readUInt16()).map { Int16(bitPattern: $0) }
+        stats.bakedMagicka = (try? reader.readUInt16()).map { Int16(bitPattern: $0) }
+        stats.bakedStamina = (try? reader.readUInt16()).map { Int16(bitPattern: $0) }
     }
 }

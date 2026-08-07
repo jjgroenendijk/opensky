@@ -119,6 +119,25 @@ enum OpenSkyCLI {
             try ActorCommand.run(
                 context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
             )
+        case "actor-values":
+            try ActorValueCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
+        default:
+            // The scene and media commands, in their own pass: this switch is at
+            // the strict cyclomatic-complexity limit, and a new command belongs
+            // beside its siblings rather than pushing it over.
+            return try runSceneCommand(command, dataRoot: dataRoot, scanner: &scanner)
+        }
+        return true
+    }
+
+    private static func runSceneCommand(
+        _ command: String,
+        dataRoot: String?,
+        scanner: inout ArgumentScanner
+    ) throws -> Bool {
+        switch command {
         case "collision":
             try CollisionCommand.run(
                 context: .resolve(dataRootOverride: dataRoot), scanner: &scanner

@@ -104,12 +104,22 @@ extension CellStreamer {
     /// visible. Linear over resident actors, which is tens of records, and
     /// deterministic on ties through `actorEntries()`.
     func nearestActorEntry(to position: SIMD3<Float>) -> RuntimeReferenceEntry? {
-        let entries = interiorScene.map {
-            $0.references.sortedEntries().filter { $0.placedActor != nil }
-        } ?? composition.actorEntries()
-        return entries.min { lhs, rhs in
+        residentActorEntries().min { lhs, rhs in
             distanceSquared(lhs, position) < distanceSquared(rhs, position)
         }
+    }
+
+    /// Every resident ACHR, deterministically ordered (issue #194).
+    ///
+    /// The set actor-value regeneration advances: an actor in a cell that is
+    /// not loaded is not simulated at all in this engine, so regenerating one
+    /// would be work nobody can observe. An interior scene replaces the
+    /// exterior composition entirely, exactly as it does for every other lookup
+    /// here.
+    func residentActorEntries() -> [RuntimeReferenceEntry] {
+        interiorScene.map {
+            $0.references.sortedEntries().filter { $0.placedActor != nil }
+        } ?? composition.actorEntries()
     }
 
     private func distanceSquared(

@@ -15,6 +15,7 @@ nonisolated struct CellProviderIndexes {
     let questStore: QuestStore
     let inventoryBaselines: InventoryBaselineResolver
     let equipmentCatalog: EquipmentCatalog
+    let actorValueBaselines: ActorValueBaselineResolver
     let movementConfiguration: PlayerMovementConfiguration
     let barterPricing: BarterPricing
 
@@ -56,6 +57,13 @@ nonisolated struct CellProviderIndexes {
         questStore = QuestStore(file: file, pluginName: esmURL.lastPathComponent)
         inventoryBaselines = InventoryBaselineResolver.build(from: file)
         equipmentCatalog = EquipmentCatalog.build(from: file)
+        actorValueBaselines = ActorValueBaselineResolver(
+            resolver: ActorValueResolver.build(
+                from: file,
+                localized: (try? file.pluginHeader().isLocalized) ?? false,
+                settings: ActorValueLevelSettings.resolve(store: settings)
+            )
+        )
     }
 
     func makeProvider() -> BuilderCellSceneProvider {
@@ -72,6 +80,7 @@ nonisolated struct CellProviderIndexes {
             questStore: questStore,
             inventoryBaselines: inventoryBaselines,
             equipmentCatalog: equipmentCatalog,
+            actorValueBaselines: actorValueBaselines,
             movementConfiguration: movementConfiguration,
             barterPricing: barterPricing
         )

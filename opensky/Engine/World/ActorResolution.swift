@@ -47,6 +47,49 @@ nonisolated struct ResolvedActorAppearance: Equatable {
     let defaultOutfit: ActorSourcedField<FormID?>
 }
 
+/// Stat-relevant fields of one actor after template resolution (issue #194).
+///
+/// A sibling of `ResolvedActorAppearance` rather than more fields on it,
+/// because the two answer to different template flags and have different
+/// consumers: appearance rides `useTraits` and feeds the renderer, stats ride
+/// `useStats` and feed `ActorValueDerivation`. The race is resolved here too,
+/// through `useTraits` exactly as the appearance resolves it, because the
+/// starting attributes come from the race and the derivation would otherwise
+/// have to reach back into the appearance for one field.
+nonisolated struct ResolvedActorStats: Equatable {
+    let base: FormID
+    let chain: [ActorChainLink]
+    /// RNAM, resolved through `useTraits` — the Creation Kit puts race on the
+    /// Traits tab, not the Stats tab.
+    let race: ActorSourcedField<FormID?>
+    /// RNAM of the record that supplies the stats, which is the race the
+    /// *starting attributes* come from.
+    ///
+    /// Not the same field as `race`, and the difference is observed rather than
+    /// documented anywhere. Neither UESP nor the Creation Kit wiki says which
+    /// race feeds the base attributes when `useTraits` and `useStats` resolve to
+    /// different records; the wiki only says base health is "determined by their
+    /// Race, Class, and Level" (<https://ck.uesp.net/wiki/Stats_Tab>). Probing
+    /// `Skyrim.esm` settles it: with the traits race, 61 of 4297 auto-calc
+    /// records disagree with the values the editor itself baked into their DNAM;
+    /// with the stats record's race, 26 do, and every remaining one is the same
+    /// stale template (see `ActorValueRealDataTests`). The skeleton, draugr and
+    /// creature records that flip are exactly the ones whose traits and stats
+    /// resolve to different races.
+    ///
+    /// The renderer still skins an actor with `race`. This field only feeds
+    /// `ActorValueDerivation`.
+    let statsRace: ActorSourcedField<FormID?>
+    /// ACBS stat words plus CNAM, resolved through `useStats`: "Use stats
+    /// (Stats tab, including level, autocalc, skills, health/magicka/stamina,
+    /// speed, bleedout, class)" (UESP NPC_ ACBS template data flags).
+    let stats: ActorSourcedField<ActorBase.Stats>
+    /// The ACBS auto-calc and PC-level-mult bits, which sit on the Stats tab
+    /// and therefore ride `useStats` with the words beside them.
+    let autoCalculatesStats: ActorSourcedField<Bool>
+    let usesPlayerLevelMultiplier: ActorSourcedField<Bool>
+}
+
 /// Resolves template chains against pre-built single-plugin record indexes
 /// (raw-FormID keys, matching CellSceneBuilder's convention).
 nonisolated struct ActorTemplateResolver {
@@ -92,6 +135,31 @@ nonisolated struct ActorTemplateResolver {
             },
             defaultOutfit: resolveField(in: npcs, flag: .useInventory) {
                 ActorSourcedField(value: $0.defaultOutfit, source: $0.formID)
+            }
+        )
+    }
+
+    /// The same chain walk as `resolve(base:)`, resolving the stat fields
+    /// instead of the appearance fields (issue #194).
+    func resolveStats(base: FormID) throws -> ResolvedActorStats {
+        let (npcs, chain) = try resolveChain(base: base)
+        return ResolvedActorStats(
+            base: base,
+            chain: chain,
+            race: resolveField(in: npcs, flag: .useTraits) {
+                ActorSourcedField(value: $0.race, source: $0.formID)
+            },
+            statsRace: resolveField(in: npcs, flag: .useStats) {
+                ActorSourcedField(value: $0.race, source: $0.formID)
+            },
+            stats: resolveField(in: npcs, flag: .useStats) {
+                ActorSourcedField(value: $0.stats, source: $0.formID)
+            },
+            autoCalculatesStats: resolveField(in: npcs, flag: .useStats) {
+                ActorSourcedField(value: $0.autoCalculatesStats, source: $0.formID)
+            },
+            usesPlayerLevelMultiplier: resolveField(in: npcs, flag: .useStats) {
+                ActorSourcedField(value: $0.flags.contains(.pcLevelMult), source: $0.formID)
             }
         )
     }

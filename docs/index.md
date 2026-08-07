@@ -75,7 +75,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   emitter + modifier blocks, effect-shader wiring, Whiterun sweep evidence.
 * [DDS texture container](/formats/dds.md) - DDS_HEADER/DXT10 layout, BCn + 32-bit RGB,
   mip chain math, color-space policy.
-* [Actor records](/formats/actors.md) - ACHR/NPC_/LVLN/LVLI/RACE/ARMO/ARMA/OTFT
+* [Actor records](/formats/actors.md) - ACHR/NPC_/LVLN/LVLI/RACE/CLAS/ARMO/ARMA/OTFT
   layouts, TPLT chain + visual appearance resolution (skin/outfit/slot
   masking), FaceGen path convention + actor GPU assembly.
 * [HKX packfile container](/formats/hkx-container.md) - Havok hk_2010 packfile
@@ -226,6 +226,11 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   conservation guarantees, carry weight and gold, and the additive INVN save chunk; plus
   the spawned-reference component that lets the running game place objects no plugin
   authored, its synthesized 0xFF-prefixed FormID, and the additive SPWN save chunk.
+* [Actor values](/engine/actor-values.md) - health, magicka and stamina end to end: the
+  cited race-plus-offset-plus-class-per-level derivation and its exact apportionment rule,
+  the census against every auto-calc record's baked DNAM, the current-values-only runtime
+  component, percent-per-second regeneration on the menu-pause-safe fixed step, the live
+  HUD meter binding, the additive AVAL save chunk, and the panel provider seam.
 
 ## Rendering
 

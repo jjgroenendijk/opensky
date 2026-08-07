@@ -1,6 +1,8 @@
 // RACE record decoded into engine types: the appearance subset needed to skin
-// an actor. Stats (DATA, 128+ bytes), spell lists, keywords, body-part data,
-// tinting, and face morphs are skipped deliberately.
+// an actor, plus the DATA starting-attribute and regeneration floats the
+// actor-value derivation needs (issue #194). Spell lists, keywords, body-part
+// data, tinting, and face morphs are skipped deliberately, as are the DATA
+// skill bonuses (M18) and the movement floats.
 //
 // Per-gender skeleton: RACE gates gendered model blocks with 0-length MNAM
 // (male) / FNAM (female) markers; the skeletal-model block that follows the
@@ -34,6 +36,25 @@ nonisolated struct Race {
         static let faceGenHead = Flags(rawValue: 0x0000_0002)
     }
 
+    /// The DATA floats a level-1 actor of this race starts with, and the
+    /// regeneration rates that refill them.
+    ///
+    /// Semantics from the Creation Kit's Race page, quoted rather than
+    /// inferred: "Starting Health: Health for Level 1 actors of this race",
+    /// and "Health Regen: The percentage of total Health that is regenerated
+    /// each second" (<https://ck.uesp.net/wiki/Race>). The regen fields are
+    /// therefore percentages, not fractions — vanilla `NordRace` stores 0.7,
+    /// meaning 0.7% of maximum health per second.
+    struct Stats: Equatable {
+        var startingHealth: Float = 0
+        var startingMagicka: Float = 0
+        var startingStamina: Float = 0
+        /// Percent of the maximum restored per second.
+        var healthRegenPercent: Float = 0
+        var magickaRegenPercent: Float = 0
+        var staminaRegenPercent: Float = 0
+    }
+
     let formID: FormID
     let editorID: String?
     /// FULL — display name; localized plugins store a string-table ID.
@@ -44,6 +65,9 @@ nonisolated struct Race {
     let bodyTemplate: BodyTemplate?
     /// DATA flags; empty when DATA is absent or too short.
     let flags: Flags
+    /// DATA starting attributes and regen rates; all-zero when DATA is absent
+    /// or too short to reach them.
+    let stats: Stats
     /// ANAM under the male (MNAM) skeleton block.
     let maleSkeletonPath: String?
     /// ANAM under the female (FNAM) skeleton block.
@@ -60,6 +84,7 @@ nonisolated struct Race {
         var defaultSkin: FormID?
         var bodyTemplate: BodyTemplate?
         var flags = Flags()
+        var stats = Stats()
         var maleSkeletonPath: String?
         var femaleSkeletonPath: String?
         var gender: Gender?
@@ -78,6 +103,7 @@ nonisolated struct Race {
                 bodyTemplate = try BodyTemplate(bodt: field)
             case "DATA":
                 flags = Self.decodeFlags(field) ?? flags
+                stats = Self.decodeStats(field) ?? stats
             case "MNAM":
                 gender = .male
             case "FNAM":
@@ -101,18 +127,45 @@ nonisolated struct Race {
         self.defaultSkin = defaultSkin
         self.bodyTemplate = bodyTemplate
         self.flags = flags
+        self.stats = stats
         self.maleSkeletonPath = maleSkeletonPath
         self.femaleSkeletonPath = femaleSkeletonPath
     }
 
     /// DATA: skill boosts (14 bytes + 2 pad) then male/female height +
-    /// weight floats; flags live at 0x20 (UESP RACE DATA). The stat payload
-    /// before/after stays undecoded for now; too-short DATA -> nil.
+    /// weight floats; flags live at 0x20 (UESP RACE DATA). The skill payload
+    /// stays undecoded until M18; too-short DATA -> nil.
     private static func decodeFlags(_ field: ESMField) -> Flags? {
         guard field.data.count >= 0x24 else { return nil }
         var reader = BinaryReader(field.data)
         reader.skip(0x20)
         return try? Flags(rawValue: reader.readUInt32())
+    }
+
+    /// DATA continued (UESP RACE DATA, 128-byte v40 / 164-byte v43 struct):
+    /// starting health / magicka / stamina are the three floats at 0x24, and
+    /// health / magicka / stamina regen are the three at 0x54, after base
+    /// carry weight, base mass, the two movement rates, size, and the head /
+    /// hair / injured-health / shield fields.
+    ///
+    /// Read as two independent windows rather than one long walk, so a DATA
+    /// long enough for the starting attributes but not the regen block still
+    /// yields the attributes. Vanilla ships neither shape, but a mod may.
+    private static func decodeStats(_ field: ESMField) -> Stats? {
+        guard field.data.count >= 0x30 else { return nil }
+        var stats = Stats()
+        var reader = BinaryReader(field.data)
+        reader.skip(0x24)
+        stats.startingHealth = (try? reader.readFloat32()) ?? 0
+        stats.startingMagicka = (try? reader.readFloat32()) ?? 0
+        stats.startingStamina = (try? reader.readFloat32()) ?? 0
+        guard field.data.count >= 0x60 else { return stats }
+        var regen = BinaryReader(field.data)
+        regen.skip(0x54)
+        stats.healthRegenPercent = (try? regen.readFloat32()) ?? 0
+        stats.magickaRegenPercent = (try? regen.readFloat32()) ?? 0
+        stats.staminaRegenPercent = (try? regen.readFloat32()) ?? 0
+        return stats
     }
 
     /// Routes a skeleton ANAM path to the gender named by the most recent

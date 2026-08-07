@@ -1,5 +1,5 @@
 // Every-component-kind coverage for `WorldStateStore` (issues #159, #176,
-// #177). Split from `WorldStateStoreTests`, which sits at the strict-lint
+// #177, #194). Split from `WorldStateStoreTests`, which sits at the strict-lint
 // type-length cap, and kept together because these two tests are the ones that
 // have to be updated whenever a component kind is added: both assert against
 // `WorldStateComponentKind.allCases`, so a new kind fails here until it is
@@ -43,6 +43,11 @@ struct WorldStateComponentCoverageTests {
         QuestAliasState(fills: [QuestAliasFill(aliasID: 1, reference: key(0x300))])
     }
 
+    /// One wounded actor.
+    private var actorValues: ActorValueState {
+        ActorValueState(current: ActorValues(health: 42, magicka: 7, stamina: 13))
+    }
+
     @Test func storesAndReadsBackEveryComponentKind() {
         let store = WorldStateStore()
         let reference = key(0x200)
@@ -68,6 +73,9 @@ struct WorldStateComponentCoverageTests {
         // That quest's filled aliases: the eighth kind, whose own subject is
         // QuestAliasTests. It is keyed by the same QUST record the seventh is.
         #expect(store.set(questAliases, for: reference, in: whiterun))
+        // A wounded actor: the ninth kind, whose own subject is
+        // ActorValueRuntimeTests.
+        #expect(store.set(actorValues, for: reference, in: whiterun))
 
         #expect(store.component(ReferenceEnableState.self, for: reference)?.isEnabled == false)
         #expect(store.component(ReferenceTransformOverride.self, for: reference) == transform(9))
@@ -80,6 +88,7 @@ struct WorldStateComponentCoverageTests {
         #expect(store.component(ReferenceSpawnState.self, for: reference) == spawn)
         #expect(store.component(QuestRuntimeState.self, for: reference) == questState)
         #expect(store.component(QuestAliasState.self, for: reference) == questAliases)
+        #expect(store.component(ActorValueState.self, for: reference) == actorValues)
         #expect(store.delta(for: reference)?.sortedKinds == WorldStateComponentKind.allCases)
     }
 
@@ -94,6 +103,7 @@ struct WorldStateComponentCoverageTests {
         store.set(spawn, for: reference, in: whiterun)
         store.set(questState, for: reference, in: whiterun)
         store.set(questAliases, for: reference, in: whiterun)
+        store.set(actorValues, for: reference, in: whiterun)
         #expect(store.reset(reference))
         #expect(store.delta(for: reference) == nil)
         #expect(store.dirtyCount == 0)

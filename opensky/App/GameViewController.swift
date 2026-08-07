@@ -169,6 +169,11 @@ final class GameViewController: NSViewController {
     /// implementation lives in `GameViewControllerPlayerBody.swift`; stored
     /// here because extensions cannot add state.
     var playerBodyBridge = PlayerBodyBridgeState()
+    /// Actor values: the damage/restore/regeneration runtime, the HUD meter
+    /// gate and the panel's last outcome line (issue #194). The implementation
+    /// lives in `GameViewControllerActorValues.swift`; stored here because
+    /// extensions cannot add state.
+    var actorValues = ActorValueBridgeState()
 
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))

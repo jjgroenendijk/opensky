@@ -139,6 +139,12 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
             // but the seam stays total, and a quest belongs to no cell here for
             // the same reason its state does.
             return worldState.set(value, for: key)
+        case let .actorValues(value):
+            // Same reasoning: `DamageActorValue` and `RestoreActorValue` are a
+            // later milestone's natives, and when they arrive they go through
+            // `ActorValueRuntime` so the clamping applies. An actor is a placed
+            // reference, so this write is attributed to its cell.
+            return worldState.set(value, for: key, in: cell)
         }
     }
 

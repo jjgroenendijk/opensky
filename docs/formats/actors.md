@@ -1,22 +1,26 @@
 ---
 type: File Format
-title: Actor records (ACHR, NPC_, LVLN/LVLI, RACE, ARMO, ARMA, OTFT) + resolution
-description: Actor records, appearance resolution, GPU asset assembly, and FaceGen paths.
-tags: [format, plugin, actors, achr, npc, leveled, template, race, armor, outfit, facegen]
-timestamp: 2026-07-30T00:00:00Z
+title: Actor records (ACHR, NPC_, LVLN/LVLI, RACE, CLAS, ARMO, ARMA, OTFT) + resolution
+description: Actor records, appearance and stat resolution, GPU asset assembly, and FaceGen
+  paths.
+tags: [format, plugin, actors, achr, npc, leveled, template, race, class, armor, outfit,
+  facegen]
+timestamp: 2026-08-07T00:00:00Z
 ---
 
 # Actor records, Skyrim SE
 
-Milestones 5.1, 5.2 + 5.4 subset: enough decode to place actors, resolve who they
-look like, and assemble GPU skeleton/body/FaceGen assets at world pose — no stats,
-AI, factions, spells, or carried inventory yet. Container framing:
+Milestones 5.1, 5.2 + 5.4 subset plus item 15.3's stat inputs: enough decode to
+place actors, resolve who they look like, assemble GPU skeleton/body/FaceGen
+assets at world pose, and derive their health, magicka and stamina — no AI,
+factions, spells, skills, or carried inventory yet. What the stat fields feed:
+[actor values](/engine/actor-values.md). Container framing:
 [ESM/ESP plugin container](/formats/esm.md); decode
 policy (skip unknown fields, `ESMError.malformed` only on structurally
 unusable input): [record decoders](/formats/records.md).
 
 Reference: UESP "Skyrim Mod:Mod File Format" subpages `/ACHR`, `/NPC_`,
-`/LVLN`, `/LVLI`, `/RACE`, `/ARMO`, `/ARMA`, `/OTFT`
+`/LVLN`, `/LVLI`, `/RACE`, `/CLAS`, `/ARMO`, `/ARMA`, `/OTFT`
 (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format>);
 xEdit dev-4.1.6 `wbDefinitionsTES5.pas` (template flag masks) +
 `wbDefinitionsCommon.pas` (`wbLeveledListEntry`); CK wiki "Template Data"
@@ -49,35 +53,54 @@ XOWN owner, XLCN/XLRL location, XLKR link (4- or 8-byte), header flag 0x200
 
 ## NPC_ -> ActorBase
 
-Appearance-relevant subset:
+Appearance fields plus the stat inputs the actor-value derivation reads
+(issue #194); factions, AI, spells, perks and carried items stay skipped.
 
-| field | type    | decoded                                        |
-| ----- | ------- | ---------------------------------------------- |
-| EDID  | zstring | `editorID`                                     |
-| FULL  | lstring | `name`                                         |
-| ACBS  | struct  | `flags`, `templateFlags` (below), required     |
-| TPLT  | formID  | `template` — NPC_ or LVLN, absent -> no chain  |
-| RNAM  | formID  | `race` (RACE), required by spec                |
-| WNAM  | formID  | `wornArmor` — skin ARMO; absent -> race skin   |
-| PNAM  | formID  | `headParts` (HDPT), one per repeated subrecord |
-| DOFT  | formID  | `defaultOutfit` (OTFT)                         |
-| VMAD  | struct  | `scriptData` attachment accumulator            |
+| field | type    | decoded                                          |
+| ----- | ------- | ------------------------------------------------ |
+| EDID  | zstring | `editorID`                                       |
+| FULL  | lstring | `name`                                           |
+| ACBS  | struct  | `flags`, `templateFlags`, `stats` (below), req'd |
+| CNAM  | formID  | `stats.characterClass` (CLAS)                    |
+| DNAM  | struct  | `stats.baked*` — the editor's own calculated HMS |
+| TPLT  | formID  | `template` — NPC_ or LVLN, absent -> no chain    |
+| RNAM  | formID  | `race` (RACE), required by spec                  |
+| WNAM  | formID  | `wornArmor` — skin ARMO; absent -> race skin     |
+| PNAM  | formID  | `headParts` (HDPT), one per repeated subrecord   |
+| DOFT  | formID  | `defaultOutfit` (OTFT)                           |
+| VMAD  | struct  | `scriptData` attachment accumulator              |
 
-ACBS, 24 bytes:
+ACBS, 24 bytes. Every word below is decoded except the two marked skipped:
 
-| offset | type   | field                                      |
-| ------ | ------ | ------------------------------------------ |
-| 0x00   | uint32 | flags (0x01 female, 0x20 unique, ...)      |
-| 0x04   | int16  | magicka offset (skipped)                   |
-| 0x06   | int16  | stamina offset (skipped)                   |
-| 0x08   | uint16 | level or PC-level-mult x1000 (skipped)     |
-| 0x0A   | uint16 | calc min level (skipped)                   |
-| 0x0C   | uint16 | calc max level (skipped)                   |
-| 0x0E   | uint16 | speed multiplier (skipped)                 |
-| 0x10   | uint16 | disposition base (skipped)                 |
-| 0x12   | uint16 | template data flags                        |
-| 0x14   | int16  | health offset (skipped)                    |
-| 0x16   | uint16 | bleedout override (skipped)                |
+| offset | type   | field                                   |
+| ------ | ------ | --------------------------------------- |
+| 0x00   | uint32 | flags (below)                           |
+| 0x04   | int16  | `stats.magickaOffset`                   |
+| 0x06   | int16  | `stats.staminaOffset`                   |
+| 0x08   | uint16 | `stats.levelWord` — level or mult x1000 |
+| 0x0A   | uint16 | `stats.calcMinLevel`                    |
+| 0x0C   | uint16 | `stats.calcMaxLevel`                    |
+| 0x0E   | uint16 | speed multiplier (skipped)              |
+| 0x10   | uint16 | disposition base (skipped)              |
+| 0x12   | uint16 | template data flags                     |
+| 0x14   | int16  | `stats.healthOffset`                    |
+| 0x16   | uint16 | bleedout override (skipped, item 15.6)  |
+
+ACBS flags decoded: 0x01 female, 0x10 auto calc stats, 0x20 unique, 0x80 PC
+level mult. A truncated ACBS is tolerated down to 20 bytes, which is what the
+appearance decode has always required; the health offset then keeps its zero
+default rather than the record failing.
+
+DNAM, 52 bytes: 18 base skill bytes, 18 skill-mod bytes, then three int16
+attribute words at 0x24, 0x26 and 0x28. Only those three are decoded, as
+`stats.bakedHealth` / `bakedMagicka` / `bakedStamina`, and they are **never** an
+input to the derivation. UESP calls them "calculated health (if auto-calc stats
+is on, otherwise seems to be random)", so they are the editor's independent
+statement of the answer — useful only for cross-checking, which
+`ActorValueRealDataTests` does across every auto-calc record in `Skyrim.esm`.
+They are read as signed: a creature with a negative magicka offset stores a
+negative sum here, which the comparison floors at zero the way the derivation
+does.
 
 Template data flags: 0x0001 traits, 0x0002 stats, 0x0004 factions, 0x0008
 spell list, 0x0010 AI data, 0x0020 AI packages, 0x0040 model/animation
@@ -109,8 +132,9 @@ data (own subrecord after an LVLO) + OBND/LLCT/MODL are skipped.
 
 ## RACE -> Race
 
-Appearance subset only; DATA stats, spell lists, keywords, body-part/tint
-data, and morphs stay undecoded.
+Appearance subset plus the DATA starting attributes and regen rates
+(issue #194); the DATA skill bonuses, movement floats, spell lists, keywords,
+body-part/tint data, and morphs stay undecoded.
 
 | field     | type    | decoded                                             |
 | --------- | ------- | --------------------------------------------------- |
@@ -118,13 +142,61 @@ data, and morphs stay undecoded.
 | FULL      | lstring | `name`                                              |
 | WNAM      | formID  | `defaultSkin` — ARMO worn when the NPC_ has no WNAM |
 | BOD2/BODT | struct  | `bodyTemplate` (shared decode, below)               |
-| DATA      | struct  | `flags` — uint32 at offset 0x20 only                |
+| DATA      | struct  | `flags` plus `stats` (below)                        |
 | MNAM/FNAM | marker  | 0-byte gender markers gating model blocks           |
 | ANAM      | zstring | `maleSkeletonPath` / `femaleSkeletonPath`           |
+
+DATA is a 128-byte struct (v40) or 164-byte one (v43); OpenSky reads four
+windows out of it and nothing else:
+
+| offset | type    | field                                              |
+| ------ | ------- | -------------------------------------------------- |
+| 0x00   | uint8   | 7 skill/bonus byte pairs + uint16 pad (skipped)    |
+| 0x10   | float   | male/female height + weight (skipped)              |
+| 0x20   | uint32  | `flags`                                            |
+| 0x24   | float   | `stats.startingHealth` / `Magicka` / `Stamina`     |
+| 0x30   | float   | carry weight, mass, accel, decel, size (skipped)   |
+| 0x54   | float   | `stats.healthRegenPercent` / `magicka` / `stamina` |
+| 0x60   | float   | unarmed damage/reach onward (skipped)              |
 
 DATA flags (UESP RACE): 0x1 playable, 0x2 FaceGen head. Probed values:
 playable races carry 0x2, creature races (cow/dog/bear) do not — this bit
 gates FaceGen path emission.
+
+The two stat windows are read independently, so a DATA long enough for the
+starting attributes but not the regen block still yields the attributes.
+Regen is a *percentage of the maximum per second*, quoted from the Creation
+Kit: "Health Regen: The percentage of total Health that is regenerated each
+second" (<https://ck.uesp.net/wiki/Race>). Probed: every playable vanilla race
+authors 50/50/50 starting and 0.7/3/5 percent per second, which is where the
+familiar 0.7%/s out-of-combat health regeneration comes from.
+
+## CLAS -> CharacterClass
+
+Attribute weights only; the 18 skill weights and the trainer fields wait for
+M18. Named `CharacterClass` because `Class` reads badly at every use site.
+
+| field | type    | decoded                                    |
+| ----- | ------- | ------------------------------------------ |
+| EDID  | zstring | `editorID`                                 |
+| FULL  | lstring | `name`                                     |
+| DATA  | struct  | `attributeWeights`, `bleedoutDefault`      |
+
+DATA, 36 bytes (UESP CLAS):
+
+| offset | type   | field                                      |
+| ------ | ------ | ------------------------------------------ |
+| 0x00   | uint32 | unknown, "possibly flags" (skipped)        |
+| 0x04   | uint8  | trainer skill + level (skipped)            |
+| 0x06   | uint8  | 18 skill weights (skipped, M18)            |
+| 0x18   | float  | `bleedoutDefault` — read for item 15.6     |
+| 0x1C   | uint32 | voice points (skipped)                     |
+| 0x20   | uint8  | `attributeWeights.health` / `magicka` / `stamina` |
+| 0x23   | uint8  | flags, "0x1 seems to indicate guard" (skipped)    |
+
+A short DATA yields zero weights rather than a thrown error: a class that
+spreads no per-level points is a usable answer, and refusing the record would
+take every actor that names it down too.
 
 Gendered skeleton block ordering (probed on NordRace): `MNAM`(0 bytes) ->
 male `ANAM` + `MODT`, then `FNAM`(0 bytes) -> female `ANAM` + `MODT`. Later
@@ -256,6 +328,22 @@ TPLT + template flags control which record supplies each field group
 * inventory (0x0100): outfits (DOFT) + carried items, not the death item.
 * base data (0x0080): name + essential/protected/respawn-style flag bits
   (not yet consumed by the bind-pose milestone).
+* stats (0x0002): the whole CK Stats tab — level, auto-calc, the
+  health/magicka/stamina offsets, speed, bleedout and class. Item 15.3's
+  `resolveStats(base:)` resolves the ACBS stat words, the auto-calc and
+  PC-level-mult bits, and CNAM through this flag.
+
+One field is resolved twice, through different flags, and the difference is
+observed rather than documented. `ResolvedActorStats.race` is the traits-resolved
+race the renderer skins the actor with; `statsRace` is the RNAM of the record
+that supplied the stats, and it is the race the *starting attributes* come from.
+Neither UESP nor the Creation Kit says which applies when the two resolve to
+different records. Probing `Skyrim.esm` settles it: with the traits race, 61 of
+4297 auto-calc records disagree with the values the editor baked into their own
+DNAM; with the stats record's race, 26 do, and every one of those traces to a
+single stale template (see [actor values](/engine/actor-values.md)). The records
+that flip are exactly the skeleton, draugr and creature ones whose traits and
+stats resolve to different races.
 
 Chain walk: follow TPLT unconditionally (flags select per-field, not
 per-link); an LVLN hop picks its entry deterministically for the bind-pose

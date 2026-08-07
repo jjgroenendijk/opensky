@@ -44,6 +44,12 @@ Observed 2026-07-20. Quirks that cost time on every format-parser session:
   Wayback Machine (`web.archive.org`).
 - The `TES5Edit/TES5Edit` default branch is `dev-4.1.6`, not `main` or `dev`; raw-file URLs
   return 404 on the wrong branch. Confirm with `gh api repos/TES5Edit/TES5Edit`.
+- Observed 2026-08-07: `www.creationkit.com` serves an XWiki "down for backend maintenance"
+  page for every path, and the Wayback Machine redirects its snapshots to that same live
+  page. The `ck.uesp.net` mirror of the same wiki does answer through Wayback
+  (`https://web.archive.org/web/2023/https://ck.uesp.net/wiki/<Page>`), which is how the
+  Stats Tab, Class and Race pages were read for issue #194. Retires when
+  `creationkit.com` comes back.
 
 Retires per bullet when the host or repository changes behaviour.
 
