@@ -59,6 +59,11 @@ nonisolated struct ConditionTally: Equatable, Sendable {
     /// Conditions that needed a game clock in a context that has none.
     private(set) var unavailableClock = 0
 
+    /// Conditions that needed actor state the context carries none of (issue
+    /// #375): an unknown actor, or one whose weapon draw state nothing
+    /// observes.
+    private(set) var unavailableActorState = 0
+
     private(set) var conditionsEvaluated = 0
     private(set) var listsEvaluated = 0
 
@@ -105,6 +110,8 @@ nonisolated struct ConditionTally: Equatable, Sendable {
             Self.bump(&unresolvedParameters, index, limit: limit)
         case .unavailableClock:
             unavailableClock += 1
+        case .unavailableActorState:
+            unavailableActorState += 1
         }
     }
 
@@ -159,7 +166,7 @@ nonisolated struct ConditionTally: Equatable, Sendable {
     var failureTotal: Int {
         unknownFunctionTotal + unresolvedGlobalTotal + unresolvedQuestTotal
             + unsupportedRunOnTotal + unresolvedReferenceTotal + unknownOperatorTotal
-            + unresolvedParameterTotal + unavailableClock
+            + unresolvedParameterTotal + unavailableClock + unavailableActorState
     }
 
     /// Unknown function indices ranked by count, ties broken by index so the

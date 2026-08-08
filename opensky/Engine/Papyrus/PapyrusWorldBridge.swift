@@ -64,10 +64,11 @@ nonisolated protocol PapyrusWorldReferenceSource: AnyObject {
 /// mutation is one `set(_:for:in:)` or `setGlobal(_:formID:defaults:)` call,
 /// so the journal, the dirty counts, and the save see it.
 /// The quest operations are declared separately, in
-/// `PapyrusWorldQuestBridge.swift` (issue #322), and refined in here so a
-/// native reaches all of it through the one `context.world` façade.
+/// `PapyrusWorldQuestBridge.swift` (issue #322), the actor operations in
+/// `PapyrusWorldActorBridge.swift` (issue #375), and both are refined in here
+/// so a native reaches all of it through the one `context.world` façade.
 @MainActor
-protocol PapyrusWorldBridge: PapyrusWorldQuestBridge {
+protocol PapyrusWorldBridge: PapyrusWorldQuestBridge, PapyrusWorldActorBridge {
     /// Session-stable identity of the player; see `ReferenceKey.player`.
     var playerKey: ReferenceKey { get }
 

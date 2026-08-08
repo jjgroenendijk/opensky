@@ -13,6 +13,7 @@ nonisolated enum PapyrusNativeFunctions {
         installGlobalVariable(into: &registry)
         installGame(into: &registry)
         installQuest(into: &registry)
+        installActor(into: &registry)
     }
 
     static func failure(

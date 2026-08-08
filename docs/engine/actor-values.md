@@ -30,6 +30,7 @@ and `opensky/App/GameViewControllerActorValues.swift`. Record layouts:
 * HUD meters
 * Persistence
 * Panel seam
+* Naming an actor value
 * Out of scope
 
 ## Shape of the subsystem
@@ -246,9 +247,40 @@ the M15 acceptance gate (item 15.9). Writing the conformance now is what proves
 the runtime can answer the questions a panel asks: every field is a plain read
 off `ActorValueRuntime`, with no accounting invented at the UI.
 
+## Naming an actor value
+
+Two surfaces address actor values by *vanilla identity* rather than by
+`ActorValueKind`, and they spell that identity differently: a CTDA parameter
+carries a signed index, and a Papyrus native carries a name string.
+`opensky/Engine/Actors/ActorValueIdentity.swift` (issue #375, item 15.8) holds
+the one mapping both use.
+
+The table is xEdit's `wbActorValueEnum`, dev-4.1.6 `Core/wbDefinitionsTES5.pas`,
+reproduced verbatim: 0 `Aggression` through 163 `Reflect Damage`, with -1 spelled
+`None`. The `Unknown NN` placeholders xEdit carries for the indices Skyrim leaves
+unnamed are kept, because a table that renumbered around a gap would put every
+later index one off. Health is 24, magicka 25 and stamina 26 because that file
+says so, not because anything here recalled it.
+
+Names are matched with every non-alphanumeric character removed and the rest
+lowercased, so xEdit's `One-Handed`, Papyrus's `OneHanded` and a script's
+`"one handed"` are one name. Papyrus does use a few *different* words for the
+same value — `Marksman` for index 8, which xEdit spells `Archery` — and those are
+deliberately not aliased: none of them names a value this subsystem stores, so an
+alias table would only change which unimplemented bucket the miss lands in.
+
+`kind(at:)` and `kind(named:)` answer nil for all 161 entries this subsystem has
+no store for, and for an index outside the table alike. Callers turn that nil
+into their own documented miss — a reason-tagged false and a `ConditionTally`
+bucket on the condition side, a tallied native failure and the call's declared
+default on the Papyrus side — so an unstored actor value is a measurable gap
+rather than a convincing zero. That tally is the list of what to store next.
+
 ## Out of scope
 
-Weapon damage application (items 15.4, 15.5), death and ragdoll (15.6), Papyrus
-and condition exposure (15.8), skills and leveling (M18+). The bleedout ratio is
+Weapon damage application (items 15.4, 15.5), death and ragdoll (15.6), skills
+and leveling (M18+). Papyrus and condition exposure landed with item 15.8 — see
+[the Papyrus VM](/engine/papyrus-vm.md) and
+[conditions](/formats/conditions.md). The bleedout ratio is
 decoded off CLAS already so 15.6 does not have to re-open the record; nothing in
 this item reads it.

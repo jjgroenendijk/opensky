@@ -87,6 +87,15 @@ extension CombatLoopRuntime {
             settings: settings
         )
         world.applyCombatDamage(damage.applied, to: player)
+        // The other direction of the same dispatch the player's own swing
+        // makes (issue #375): a script attached to the player takes `OnHit`
+        // with the dev target as `akAggressor`.
+        world.reportScriptHit(ScriptHitEvent(
+            target: player,
+            aggressor: actor.key,
+            source: devTargetWeapon.weapon,
+            isBlocked: damage.wasBlocked
+        ))
         // The magnitude is written before the event so the recoil behavior
         // reads this blow's number rather than the previous one's, which is the
         // same write-then-raise order the melee runtime uses for a stagger.

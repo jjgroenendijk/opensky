@@ -55,7 +55,9 @@ final class ProjectileRuntime {
     /// and then impacts are silent rather than absent.
     var impacts: MeleeImpactResolver?
 
-    private weak var world: (any ProjectileWorld)?
+    /// `private(set)` rather than `private` so the satellite files can read it
+    /// while only `attach(world:)` in this file can write it.
+    private(set) weak var world: (any ProjectileWorld)?
     private var nextID = 1
     private var accumulatedTime: Float = 0
 
@@ -254,6 +256,17 @@ final class ProjectileRuntime {
             world.applyProjectileDamage(projectile.damage.applied, to: target)
         {
             applied = projectile.damage.applied
+            // After the damage, for the reason the melee path reports after
+            // its own (issue #375). `akProjectile` is filled in because this
+            // runtime knows which PROJ struck; the wiki records vanilla
+            // leaving it `None` for an actor target, which a handler that
+            // checks for `None` first still tolerates.
+            world.reportScriptHit(ScriptHitEvent(
+                target: target,
+                aggressor: projectile.shooter,
+                source: projectile.weapon,
+                projectile: projectile.profile.projectile
+            ))
         }
         let sound = playImpact(at: impact.position)
         let didStick = stick(projectile, at: impact)
@@ -266,24 +279,6 @@ final class ProjectileRuntime {
             sound: sound,
             stuck: didStick
         )
-    }
-
-    /// The IPCT chain for a hit, played where the world can play it.
-    private func playImpact(at position: SIMD3<Float>) -> FormID? {
-        guard let world, let impacts else { return nil }
-        // An arrow resolves its impact through the *ammunition's* chain rather
-        // than a bow's: item 15.4 built the resolver around a
-        // `MeleeWeaponProfile`, and an arrow has no INAM of its own, so the
-        // unarmed profile's nil data set is what an arrow honestly carries
-        // until AMMO grows an impact link. The lookup is left in place so that
-        // adding one is a one-line change rather than a new chain.
-        guard
-            let resolved = impacts.resolve(
-                weapon: .unarmed, material: world.projectileMaterial(at: position)
-            )
-        else { return nil }
-        world.playProjectileImpact(resolved, at: position)
-        return resolved.sound
     }
 
     /// Leaves the arrow standing in what it hit, evicting the oldest when the
@@ -310,17 +305,6 @@ final class ProjectileRuntime {
             removeStuckArrows(Array(stuck.indices.prefix(stuck.count - Self.stuckLimit)))
         }
         return true
-    }
-
-    /// Drops stuck arrows whose cell is no longer resident, so an unloading
-    /// cell takes them with it.
-    private func evictUnloadedStuckArrows() {
-        guard let world, !stuck.isEmpty else { return }
-        let resident = world.residentProjectileCells()
-        guard !resident.isEmpty else { return }
-        removeStuckArrows(
-            stuck.indices.filter { !resident.contains(stuck[$0].arrow.location) }
-        )
     }
 
     /// Removes the stuck arrows at `indices` from the world and from the

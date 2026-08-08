@@ -38,19 +38,22 @@ struct PapyrusAcceptanceRealDataTests {
         #expect(census.declarationTotal == 686)
         #expect(census.referenceTotal == 65477)
         #expect(census.distinctReferencedTotal == 508)
-        #expect(coverage == PexNativeCoverage(implemented: 47, referenced: 508))
+        // 47 before the `Actor` family (issue #375); all nine of its natives
+        // are referenced by the vanilla corpus.
+        #expect(coverage == PexNativeCoverage(implemented: 56, referenced: 508))
         #expect(run.entryPoints == 577)
         #expect(run.pending == 0)
         #expect(run.terminalOutcomes == 577)
         #expect(run.completed == 240)
         #expect(runtime.tally.faultTotal == 337)
         #expect(runtime.tally.nativeCallTotal == 536)
-        #expect(runtime.tally.unimplementedNativeTotal == 349)
-        // The `Quest` family (issue #322) is registered but needs a world, and
-        // this acceptance runs the corpus headless: its calls now reach a
-        // native that refuses honestly instead of falling through to the
-        // unimplemented tally, which is where these 108 moved from.
-        #expect(runtime.tally.nativeFailureTotal == 108)
+        #expect(runtime.tally.unimplementedNativeTotal == 340)
+        // The `Quest` family (issue #322) and the `Actor` family (issue #375)
+        // are registered but need a world, and this acceptance runs the corpus
+        // headless: their calls reach a native that refuses honestly instead of
+        // falling through to the unimplemented tally, which is where these 117
+        // moved from. 108 of them before the `Actor` family landed.
+        #expect(runtime.tally.nativeFailureTotal == 117)
         #expect(runtime.tally.deferredAnimationTotal == 18)
         #expect(runtime.tally.rankedFaultKinds.map(\.name) == [
             "typeMismatch", "invalidJump", "invalidOperand"
@@ -160,7 +163,7 @@ struct PapyrusAcceptanceRealDataTests {
             .map { "\($0.count)\t\($0.name)" }
             .joined(separator: "\n")
         return """
-        Papyrus M11.1 acceptance observed 2026-07-30
+        Papyrus M11.1 acceptance, native coverage last re-measured 2026-08-08
         scripts decoded\t\(paths.count)
         native declarations\t\(census.declarationTotal)
         native references\t\(census.referenceTotal)

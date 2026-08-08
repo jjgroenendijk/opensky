@@ -75,4 +75,13 @@ extension GameViewController: RagdollWorldSeam {
     func deathState(of key: ReferenceKey) -> ActorDeathState? {
         worldState.component(ActorDeathState.self, for: key)
     }
+
+    /// The script half of a death (issue #375). A session with no VM — a
+    /// synthetic scene, an install whose archives carry no `scripts\` entries —
+    /// queues nothing and reports zero, which is the honest count rather than a
+    /// silent no-op.
+    @discardableResult
+    func queueActorDeathEvents(for key: ReferenceKey, killer: ReferenceKey?) -> Int {
+        papyrus?.queueActorDeath(actor: key, killer: killer) ?? 0
+    }
 }

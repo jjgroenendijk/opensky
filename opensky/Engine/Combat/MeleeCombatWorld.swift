@@ -77,7 +77,7 @@ nonisolated struct MeleeHitRecord: Equatable, Sendable {
 
 /// Everything `MeleeCombatRuntime` needs from the session around it.
 @MainActor
-protocol MeleeCombatWorld: AnyObject {
+protocol MeleeCombatWorld: ScriptHitReporting {
     /// Where the player is standing and which way they face, this frame.
     var meleeAttacker: MeleeAttacker { get }
 

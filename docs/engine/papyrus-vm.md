@@ -55,6 +55,7 @@ choice OpenSky makes in those gaps is listed under [Deviations](#deviations).
 * [Frame hook and fixed step](#frame-hook-and-fixed-step)
 * [Event queue](#event-queue)
 * [Activation and the world bridge](#activation-and-the-world-bridge)
+* [Actor natives, hits and deaths](#actor-natives-hits-and-deaths)
 * [Update timers](#update-timers)
 * [Instance lifecycle over cell streaming](#instance-lifecycle-over-cell-streaming)
 * [Quest script instances and stage fragments](#quest-script-instances-and-stage-fragments)
@@ -203,7 +204,7 @@ to queue native results and inspect a bounded call tail.
 ## Native registry
 
 `PapyrusNativeRegistry` keys functions case-insensitively by both script and
-function name. `.empty` installs nothing. `.standard` installs 37 entries in
+function name. `.empty` installs nothing. `.standard` installs 66 entries in
 one place:
 
 | family | functions | headless policy |
@@ -215,6 +216,8 @@ one place:
 | `ObjectReference` world | `Enable`, `Disable`, `IsEnabled`, `Delete`, `GetPositionX`, `GetPositionY`, `GetPositionZ`, `SetPosition`, `Activate`, `GetLinkedRef` | fail with an invalid-arguments reason; the interpreter substitutes the declared default and the script continues |
 | `GlobalVariable` | `GetValue`, `GetValueInt`, `SetValue`, `SetValueInt` | same failure policy |
 | `Game` | `GetPlayer` | same failure policy |
+| `Quest` | see [quest script instances](#quest-script-instances-and-stage-fragments) | same failure policy |
+| `Actor` | `GetActorValue`, `GetBaseActorValue`, `GetActorValuePercentage`, `DamageActorValue`, `RestoreActorValue`, `IsDead`, `IsInCombat`, `IsWeaponDrawn`, `Kill` | same failure policy |
 
 The corpus census found no string native that can be answered honestly without
 world context, and string basics are PEX opcodes rather than natives, so they
@@ -639,6 +642,100 @@ Stated simplification: a latent handler that resumes on a later tick has lost th
 depth of the event that started it and re-enters at 0. The per-tick event budget
 still bounds what that can cost in one frame.
 
+## Actor natives, hits and deaths
+
+Issue #375 (roadmap item 15.8) puts the scripting surface on top of the actor
+subsystems M15 built: 15.3's actor values, 15.6's death latch and 15.7's
+hostility. Nine natives, three events, and one bridge half.
+
+### The `Actor` family
+
+`opensky/Engine/Papyrus/PapyrusNativeActor.swift` registers nine functions
+against the `Actor` script, reached through
+`PapyrusWorldActorBridge` — a protocol of its own that `PapyrusWorldBridge`
+refines, exactly as the quest half is, with its conformance in
+`PapyrusWorldStateBridgeActors.swift`.
+
+| native | what it reads or does | source |
+| --- | --- | --- |
+| `float GetActorValue(string)` | the current value | [GetActorValue - Actor](https://www.creationkit.com/index.php?title=GetActorValue_-_Actor) |
+| `float GetBaseActorValue(string)` | the re-derived maximum | [GetBaseActorValue - Actor](https://www.creationkit.com/index.php?title=GetBaseActorValue_-_Actor) |
+| `float GetActorValuePercentage(string)` | current over maximum, 0 to 1 | [GetActorValuePercentage - Actor](https://www.creationkit.com/index.php?title=GetActorValuePercentage_-_Actor) |
+| `DamageActorValue(string, float)` | takes the magnitude off, floored at 0 | [DamageActorValue - Actor](https://www.creationkit.com/index.php?title=DamageActorValue_-_Actor) |
+| `RestoreActorValue(string, float)` | adds the magnitude, capped at the maximum | [RestoreActorValue - Actor](https://www.creationkit.com/index.php?title=RestoreActorValue_-_Actor) |
+| `bool IsDead()` | the death latch, not health | [IsDead - Actor](https://www.creationkit.com/index.php?title=IsDead_-_Actor) |
+| `bool IsInCombat()` | 15.7's stored hostility | [IsInCombat - Actor](https://www.creationkit.com/index.php?title=IsInCombat_-_Actor) |
+| `bool IsWeaponDrawn()` | the melee runtime's draw state | [IsWeaponDrawn - Actor](https://www.creationkit.com/index.php?title=IsWeaponDrawn_-_Actor) |
+| `Kill(Actor akKiller = None)` | empties health, then kills | [Kill - Actor](https://www.creationkit.com/index.php?title=Kill_-_Actor) |
+
+Both value writes take the magnitude of their argument, because both wiki pages
+state that "Negative numbers will be converted to positive so -100 and 100 will
+have the same effect". Both go through `ActorValueRuntime`, so a script's damage
+lands in the journal, the dirty counts and the save exactly as a sword's does.
+
+`GetAV`, `GetBaseAV`, `GetAVPercentage`, `DamageAV` and `RestoreAV` need no
+registration: the wiki gives each as a Papyrus-level wrapper whose body calls the
+native, so a compiled script reaches the native by itself.
+
+Actor values are named by the vanilla table, which
+`opensky/Engine/Actors/ActorValueIdentity.swift` carries with its xEdit citation.
+15.3 stores three of the 164 — health at index 24, magicka at 25, stamina at 26 —
+and a name outside those three is a tallied failure naming the value it could not
+read, never a zero. That tally is the list of what to store next.
+
+### Stated gaps in the family
+
+| behavior | what OpenSky does | why |
+| --- | --- | --- |
+| `SetActorValue` | not installed | the wiki is explicit that it sets the **base** value and leaves modifiers intact. OpenSky re-derives maximums from RACE, CLAS and NPC_ on every read and has no base-override store, so the only thing it could write is the current value — which is `ForceActorValue`'s job. Registering it against the wrong store would turn every "buff this NPC's max health" script into a silent current-health move |
+| `ModActorValue`, `ForceActorValue` | not installed | same missing store, plus the magic-effect layer they belong with (M18) |
+| `Resurrect` | not installed | nothing clears the death latch, so a corpse stays a corpse. `RestoreActorValue` on a dead actor writes the health and leaves it dead rather than half-reviving it |
+| `StartCombat`, `StopCombat` | not installed | hostility is read but never written from script. The AI with a reason to call them is M16's |
+| `Game.GetPlayer().IsInCombat()` | reads false in a fight | hostility is stored per NPC and describes how that NPC regards the player. Whether the *player* is in a fight is `CombatLoopState.isPlayerInCombat`, derived from every resident actor rather than stored on one |
+| `IsWeaponDrawn()` on an NPC | tallied failure | only the player carries a behavior graph that tracks a draw state (item 14.6). "Sheathed" would be an invented fact |
+
+### `OnHit`
+
+`PapyrusWorldRuntime.queueOnHit(_:)` queues
+`OnHit(akAggressor, akSource, akProjectile, abPowerAttack, abSneakAttack,
+abBashAttack, abHitBlocked)` on every script attached to the target, in the same
+deterministic instance order `OnActivate` uses, at activation depth 0 — a hit is
+not an activation chain, so it never spends the recursion cap.
+
+Three runtimes report through it, all via one `ScriptHitReporting.reportScriptHit`
+method with a do-nothing default: `MeleeCombatRuntime` for the player's swing,
+`ProjectileRuntime` for an arrow, and `CombatLoopRuntimeTarget` for the dev
+target hitting back. Each reports *after* applying the damage, so a script
+reading the target's health inside the handler sees the blow that caused the
+event.
+
+`akAggressor` is world identity and becomes an ordinary handle. `akSource` and
+`akProjectile` name base records rather than placed references: a handle minted
+for one names the record and resolves to no script instance, so a handler may
+compare and log it but cannot call a method on it. That is more than the `None`
+the parameter would otherwise carry, and it is stated rather than hidden.
+`abPowerAttack`, `abSneakAttack` and `abBashAttack` are always false: none of
+those three attack kinds exists in this engine yet.
+
+### `OnDying` and `OnDeath`
+
+`queueActorDeath(actor:killer:)` queues both, in that order, on every script
+attached to the actor. Both from one call: the Creation Kit distinguishes them by
+*when* they fire — "when the actor begins dying" against "when the actor finishes
+dying" — and this engine has one death moment, the latch. Firing them a variable
+number of frames apart would mean inventing a dying duration the ragdoll hand-off
+does not define.
+
+Exactly-once is the latch's, not a second set kept beside it.
+`RagdollRuntime.noteZeroHealth(of:killer:)` writes `ActorDeathState` only for an
+actor not already recorded dead and raises the pair from inside that guard, so
+the per-frame zero-health sweep, a fatal sword blow, a sidebar kill and a
+script's `Kill` between them produce one `OnDying` and one `OnDeath`. `Kill`
+empties health first and then takes that same path, so `GetActorValue("Health")`
+and `IsDead()` can never disagree about the same actor and a corpse is never
+drawn over a full HUD bar. `akKiller` is `None` for a death nothing attributed,
+which is what the wiki documents the default to be.
+
 ## Update timers
 
 Issue #277 implements the `Form` update-timer family: six natives
@@ -1002,6 +1099,16 @@ hosts five sections, each backed by the `ScriptControlProviding` protocol
   `PapyrusTally` coverage: implemented native count, native call total, and the top five
   unimplemented native names.
 
+Item 15.8 needs no new sidebar surface, and that is a deliberate reading rather
+than a deferral: its two outputs already have discoverable homes. The `Actor`
+family raises `ScriptNativeTallySection`'s implemented-native count and, when a
+script asks for an actor value this engine does not store, names the miss in the
+same ranked list. The five new condition functions and the combat-target run-on
+are evaluated from `World > Runtime State`, whose context now carries every
+resident actor's values, death, hostility, draw state and combat target rather
+than only the crosshair's reference. The record for the milestone as a whole is
+item 15.9's, under `World > Combat & Physics`.
+
 Each readout is built by the nonisolated `ScriptsReadout` helper, unit-tested headless,
 and refreshed at 2 Hz by the shared `InspectionTicker` — the same cadence every other
 sectioned panel uses, so this surface adds no new timer.
@@ -1112,6 +1219,14 @@ steps to quiescence:
   advances.
 * `OpenSkySavePapyrusTests` — the `PSCR` chunk, described under
   [OpenSky save container](/formats/opensky-save.md).
+* `PapyrusNativeActorTests` — the nine `Actor` natives against a synthetic ACHR
+  with a real `ActorValueRuntime` and a real `RagdollRuntime` behind it: the
+  three reads agreeing with the store, the magnitude and clamping rules on both
+  writes, an unstored actor value and a non-actor receiver failing rather than
+  answering, `IsWeaponDrawn` answering only for an observed actor, the
+  damage-to-zero and `Kill` death chains raising `OnDying` then `OnDeath`
+  exactly once each, and `OnHit` reaching a scripted target and not an
+  unscripted one.
 * `PapyrusWorldUpdateTimerTests` — single-shot firing once and never again, repeating
   firing at its cadence over many steps, re-registering replacing a slot while the other
   three coexist, non-positive and non-finite intervals clamping to the next step,
@@ -1145,19 +1260,31 @@ steps to quiescence:
 `PapyrusAcceptanceRealDataTests` ran through `make realtest` on 2026-07-30
 against the user's read-only retail script corpus. It decoded 14,302 scripts,
 resolved 65,477 typed native call sites from 686 native declarations, and
-found 508 distinct referenced native pairs. The standard registry implements
-18 of those 508 referenced pairs: **3.5% native coverage**. Four of its 22
-entries are valid but not referenced by this corpus.
+found 508 distinct referenced native pairs. Those three census numbers have not
+moved since; the coverage over them has, and was last re-measured on 2026-08-08
+after the `Actor` family landed. The standard registry now implements **56 of
+those 508 referenced pairs: 11.0% native coverage**, against 47 (9.3%) before
+item 15.8 and 18 (3.5%) at the original M11.1 gate. All nine `Actor` natives are
+referenced by the vanilla corpus, which is why the whole family moved the
+number.
 
 The same gate invoked all zero-argument `OnInit`, `OnLoad`, and
 `OnPlayerLoadGame` functions in the empty state. All 577 entry points reached a
 terminal outcome: 240 completed and 337 produced typed faults, with no pending
-continuation or native argument failure. The run made 536 native calls,
-returned declared defaults for 457 unknown calls, and recorded 18 deferred
-animation deviations. Faults ranked as 231 `typeMismatch`, 93 `invalidJump`,
-and 13 `invalidOperand`; the leading unknown was
-`ObjectReference.GetLinkedRef` with 45 calls. The aggregate report is written
-only to gitignored `logs/papyrus-m11-acceptance.log`.
+continuation. The run made 536 native calls and recorded 18 deferred animation
+deviations. Faults ranked as 231 `typeMismatch`, 93 `invalidJump`, and 13
+`invalidOperand`.
+
+The split of those 536 calls between "no such native" and "the native exists and
+refused" is what each new family moves, and the 2026-08-08 re-run reads 340
+unimplemented against 117 native-argument failures — 349 and 108 before item
+15.8. Nine calls crossed the line, which is the `Actor` family becoming
+registered: headless, every one of them refuses honestly for want of a world
+instead of falling through to the unimplemented tally. The leading unimplemented
+native is `ReferenceAlias.AddInventoryEventFilter` with 41 calls;
+`Actor.SetActorValue` is still on that list with 3, which is the deliberate gap
+recorded above. The aggregate report is written only to gitignored
+`logs/papyrus-m11-acceptance.log`.
 
 M11.1 is explicitly headless in issue #170, so it has no sidebar destination,
 control, or accessibility readout. The durable acceptance result is
@@ -1174,10 +1301,11 @@ M11 closes with the complete interaction chain in place: PEX decoding (#167), bo
 execution (#168), VMAD binding (#169), native dispatch and the M11.1 census (#170), the
 engine-loop runtime (#171), scripted activation and world mutation (#172), trigger events
 (#173), update timers (#277), the `World > Scripts` panel (#278), and this overall gate
-(#174). The dated coverage headline remains **18 of 508 distinct natives referenced by
-vanilla scripts implemented (3.5%)**, with 18 `deferredAnimation` calls in the 2026-07-30
-corpus run. `PlayAnimation` remains an explicit, reason-tagged deviation until M14; treating
-it as an implemented no-op was rejected because that would overstate visible behavior.
+(#174). The coverage headline as of 2026-08-08 is **56 of 508 distinct natives referenced
+by vanilla scripts implemented (11.0%)**, up from the 18 (3.5%) this milestone closed on;
+the 18 `deferredAnimation` calls in the corpus run are unchanged. `PlayAnimation` remains
+an explicit, reason-tagged deviation until M14; treating it as an implemented no-op was
+rejected because that would overstate visible behavior.
 
 The env-gated `M11AcceptanceRealDataTests` swept the 5 by 5 grid around Whiterun on
 2026-08-01. It attached 28 script instances across 25 cells, drained the event queue with

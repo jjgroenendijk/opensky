@@ -87,6 +87,16 @@ final class PapyrusWorldRuntime {
     /// Update timers for `Form.RegisterForUpdate` and friends (issue #277);
     /// advanced once per fixed step by `advanceUpdateTimers(gameClock:)`.
     var updateTimers = PapyrusUpdateTimerRegistry()
+    /// Master-list resolver the most recent attach carried (issue #375), so an
+    /// event argument naming a base record — `OnHit`'s `akSource` and
+    /// `akProjectile` — can be turned into world identity without the caller
+    /// resolving it first. Nil until the first attach; a base form is then
+    /// Papyrus `None` rather than a guessed identity.
+    ///
+    /// One resolver covers the session, which is the same single-resolver
+    /// assumption `PapyrusWorldStateBridge.referenceKey(forFormID:)` and the
+    /// cell builder already make, not a new one.
+    private(set) var formIDResolver: FormIDResolver?
     /// Attach, dispatch, and restore skips, for inspection and acceptance.
     var skips = PapyrusWorldSkipTally()
     /// VMAD property-binding skips aggregated across every attach.
@@ -156,6 +166,9 @@ final class PapyrusWorldRuntime {
     static let onTriggerLeaveEventName = "OnTriggerLeave"
     static let onUpdateEventName = "OnUpdate"
     static let onUpdateGameTimeEventName = "OnUpdateGameTime"
+    static let onHitEventName = "OnHit"
+    static let onDyingEventName = "OnDying"
+    static let onDeathEventName = "OnDeath"
 
     /// Marks the depth every activation queued from inside this dispatch sits
     /// at. A latent handler that resumes on a later tick has lost the depth
@@ -180,6 +193,13 @@ final class PapyrusWorldRuntime {
         scheduler.onResume = { call, outcome in
             tracker.noteResume(of: call, outcome: outcome)
         }
+    }
+
+    /// Keeps the attach's master-list resolver for later event arguments.
+    /// Lives here rather than in the lifecycle satellite because the setter is
+    /// private to this file.
+    func retainFormIDResolver(_ resolver: FormIDResolver) {
+        formIDResolver = resolver
     }
 
     /// Keeps `report` as the latest tick sample. Lives here rather than in the

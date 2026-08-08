@@ -130,7 +130,7 @@ nonisolated struct StuckProjectile: Equatable, Sendable {
 
 /// Everything the archery runtimes need from the session around them.
 @MainActor
-protocol ProjectileWorld: AnyObject {
+protocol ProjectileWorld: ScriptHitReporting {
     /// Where the player is aiming from, this frame.
     var projectileShooter: ProjectileShooter { get }
 

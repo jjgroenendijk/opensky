@@ -296,6 +296,16 @@ final class MeleeCombatRuntime {
             settings: settings
         )
         world.applyMeleeDamage(damage.applied, to: hit.target)
+        // After the damage, so a script that reads the target's health inside
+        // `OnHit` sees the blow that caused the event rather than the state
+        // before it (issue #375). The block term is what the damage formula
+        // already resolved, so `abHitBlocked` cannot disagree with the number.
+        world.reportScriptHit(ScriptHitEvent(
+            target: hit.target,
+            aggressor: world.meleeAttacker.key,
+            source: weapon.weapon,
+            isBlocked: damage.wasBlocked
+        ))
         let staggered = stagger(hit.target, damage: damage, world: world)
         let impact = impacts?.resolve(
             weapon: weapon, material: world.meleeMaterial(at: hit.position)

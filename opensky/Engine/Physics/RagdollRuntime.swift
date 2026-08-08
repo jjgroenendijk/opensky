@@ -101,6 +101,27 @@ protocol RagdollWorldSeam: AnyObject {
     /// Reads back what was written, so the runtime never keeps its own copy of
     /// a fact the store owns.
     func deathState(of key: ReferenceKey) -> ActorDeathState?
+
+    /// Queues `OnDying(akKiller)` and `OnDeath(akKiller)` on the scripts
+    /// attached to `key` (issue #375).
+    ///
+    /// Called from inside the death latch, so the "exactly once" guarantee the
+    /// Creation Kit's own documentation implies is the latch's rather than a
+    /// second set this runtime would have to keep. A session with no script VM
+    /// answers 0, which is the honest count and not an error.
+    ///
+    /// - Returns: how many events were queued.
+    @discardableResult
+    func queueActorDeathEvents(for key: ReferenceKey, killer: ReferenceKey?) -> Int
+}
+
+nonisolated extension RagdollWorldSeam {
+    /// A world with no script layer behind it queues nothing, which is what
+    /// every acceptance fake and every synthetic scene genuinely is.
+    @discardableResult
+    func queueActorDeathEvents(for key: ReferenceKey, killer: ReferenceKey?) -> Int {
+        0
+    }
 }
 
 @MainActor
@@ -111,6 +132,12 @@ final class RagdollRuntime {
     /// How many deaths the graph drove, and how many the fallback had to.
     private(set) var graphDrivenDeathCount = 0
     private(set) var fallbackDeathCount = 0
+    /// `OnDying` and `OnDeath` events this runtime's deaths queued (issue
+    /// #375), counted together. Zero in a session with no script VM and zero
+    /// for a corpse carrying no scripts, which are two different reasons for
+    /// the same honest number — the panel reads it beside the death counts so
+    /// the pair can be compared.
+    private(set) var deathEventsQueued = 0
 
     /// The blend the controlling `hkbRigidBodyRagdollControlsModifier` asks for,
     /// published by the behavior evaluator when it runs one. Vanilla's
@@ -139,12 +166,22 @@ final class RagdollRuntime {
     /// call this from a per-frame sweep over every resident actor without
     /// tracking edges itself.
     ///
+    /// This is the one death path (issue #375). A sword, an arrow, a sidebar
+    /// control and a script's `Kill` all arrive here, and the latch above is
+    /// what makes `OnDying` and `OnDeath` fire exactly once however many of
+    /// them reach the same corpse.
+    ///
+    /// - Parameter killer: who to attribute the death to, or nil when nothing
+    ///   named one. A per-frame sweep cannot know, and `None` is what the
+    ///   Creation Kit documents `akKiller` to default to.
+    ///
     /// - Returns: true when this call is what killed the actor.
     @discardableResult
-    func noteZeroHealth(of key: ReferenceKey) -> Bool {
+    func noteZeroHealth(of key: ReferenceKey, killer: ReferenceKey? = nil) -> Bool {
         guard let seam, seam.deathState(of: key)?.isDead != true else { return false }
         guard let actor = seam.ragdollActor(for: key) else { return false }
         seam.writeDeathState(.justDied, for: key, in: actor.cell)
+        deathEventsQueued += seam.queueActorDeathEvents(for: key, killer: killer)
         var accepted = false
         for name in RagdollGraphNames.deathEvents {
             accepted = seam.raiseRagdollEvent(name, on: key) || accepted
@@ -285,5 +322,6 @@ final class RagdollRuntime {
         pendingHandOffs.removeAll()
         graphDrivenDeathCount = 0
         fallbackDeathCount = 0
+        deathEventsQueued = 0
     }
 }

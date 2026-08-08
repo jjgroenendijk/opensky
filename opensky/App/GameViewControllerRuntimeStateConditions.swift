@@ -65,16 +65,97 @@ extension GameViewController {
     /// conditions, which belong to no quest, so an alias run-on in one has no
     /// quest to resolve against and reports that rather than borrowing a
     /// nearby quest's table.
+    /// Item 15.8 widened the reference index from the crosshair's one entry to
+    /// that entry plus every resident actor. A combat-target run-on resolves to
+    /// an actor the crosshair is deliberately *not* on, so a function that needs
+    /// the decoded placement — `GetIsID` — would have reported an unresolved
+    /// reference for every one of them. Resident actors are tens of entries, not
+    /// the few thousand the whole cell holds. The actor functions themselves
+    /// need only identity and go through `ConditionCall.referenceKey()`, which
+    /// is why the player answers despite having no plugin record.
     private func runtimeStateConditionContext() -> ConditionContext {
         let entry = runtimeStateEntry(for: .currentTarget)
         return ConditionContext(
             globals: runtimeStateGlobalResolution(),
             quests: papyrusBridge?.questRuntime?.resolution() ?? .empty,
             aliases: papyrusBridge?.questRuntime?.aliasResolution() ?? .empty,
+            actors: runtimeStateActorResolution(),
             clock: renderer?.gameClock,
-            references: entry.map { RuntimeReferenceIndex(entries: [$0]) } ?? .empty,
+            references: runtimeStateConditionReferences(crosshair: entry),
             subject: entry?.key,
             target: entry?.key
+        )
+    }
+
+    /// The crosshair's reference and every resident actor, deduplicated by the
+    /// index itself.
+    private func runtimeStateConditionReferences(
+        crosshair: RuntimeReferenceEntry?
+    ) -> RuntimeReferenceIndex {
+        var entries = crosshair.map { [$0] } ?? []
+        for observation in combatActors() {
+            guard
+                let entry = streamer?.referenceEntry(key: observation.key),
+                entry.key != crosshair?.key
+            else { continue }
+            entries.append(entry)
+        }
+        return RuntimeReferenceIndex(entries: entries)
+    }
+
+    /// The five actor condition functions' seam (issue #375): every resident
+    /// actor plus the player, with the fight the combat loop derived filled in
+    /// both directions.
+    func runtimeStateActorResolution() -> ActorStateResolution {
+        guard let values = actorValues.runtime else { return .empty }
+        var states: [ReferenceKey: ActorConditionState] = [
+            .player: actorConditionState(holder: .player, values: values)
+        ]
+        for observation in combatActors() {
+            guard let holder = runtimeStateActorHolder(for: observation.key) else {
+                continue
+            }
+            states[observation.key] = actorConditionState(
+                holder: holder, values: values, isDead: observation.isDead
+            )
+        }
+        return ActorStateResolution.fight(
+            states: states,
+            playerKey: .player,
+            playerTarget: combat.runtime?.state.target
+        )
+    }
+
+    /// One actor's values, death, hostility and draw state as a condition reads
+    /// them. Only the player has a graph tracking a draw state, so every other
+    /// actor carries nil and `IsWeaponOut` reports the gap.
+    private func actorConditionState(
+        holder: ActorValueHolder,
+        values: ActorValueRuntime,
+        isDead: Bool = false
+    ) -> ActorConditionState {
+        ActorConditionState(
+            current: values.current(of: holder),
+            maximums: values.baseline(of: holder).maximums,
+            isDead: isDead,
+            hostility: combatHostility(of: holder.key),
+            weaponDrawState: holder.key == .player
+                ? melee.runtime?.state.drawState
+                : nil
+        )
+    }
+
+    /// The actor-value holder behind a resident actor, or nil when nothing
+    /// resident answers to the key.
+    private func runtimeStateActorHolder(for key: ReferenceKey) -> ActorValueHolder? {
+        guard
+            let streamer,
+            let actor = streamer.referenceEntry(key: key)?.placedActor
+        else { return nil }
+        return ActorValueHolder(
+            key: key,
+            subject: .actor(base: actor.base),
+            cell: streamer.cellLocation(of: key)
         )
     }
 
