@@ -55,6 +55,52 @@ struct DynamicBodyWorldTests {
         #expect(world.bodies.map(\.key) == [.generated(2)])
     }
 
+    @Test
+    func aBodyRebinsAcrossAnExteriorBoundaryAndFollowsOccupiedResidency() throws {
+        let placing = CellSceneLocation.exterior(CellCoordinate(x: 0, y: 0))
+        let occupied = CellSceneLocation.exterior(CellCoordinate(x: 1, y: 0))
+        var world = DynamicBodyWorld()
+        world.setCell(placing, placements: [
+            Self.placement(key: .generated(1), at: SIMD3(4090, 0, 100))
+        ])
+        world.setCell(occupied, placements: [])
+        let center = try #require(world.body(for: .generated(1))?.position)
+        world.applyImpulse(SIMD3(4000, 0, 0), at: center, to: .generated(1))
+
+        world.advance(by: 0.1, world: DynamicStepWorld(staticCandidates: { _ in [] }))
+
+        #expect(world.body(for: .generated(1))?.placingCell == placing)
+        #expect(world.body(for: .generated(1))?.occupiedCell == occupied)
+        #expect(world.instanceDeltas[0x200] != nil)
+        let crossed = try #require(world.body(for: .generated(1))?.position.x)
+
+        world.removeCell(placing)
+        world.advance(by: 0.1, world: DynamicStepWorld(staticCandidates: { _ in [] }))
+
+        #expect(world.body(for: .generated(1))?.position.x ?? 0 > crossed)
+        world.retainBodies(occupying: [placing])
+        #expect(world.bodyCount == 0)
+    }
+
+    @Test
+    func aRebinnedBodyPersistsInItsPlacingCellsWorldFrame() throws {
+        let placing = CellSceneLocation.exterior(CellCoordinate(x: 0, y: 0))
+        var world = DynamicBodyWorld()
+        world.setCell(placing, placements: [
+            Self.placement(key: .generated(1), at: SIMD3(4100, 0, 60))
+        ])
+        let wideFloor = DynamicStepWorld(staticCandidates: DynamicBodyScene.query([
+            DynamicBodyScene.floor(extent: 5000)
+        ]))
+        for _ in 0 ..< 60 {
+            world.advance(by: 1.0 / 60, world: wideFloor)
+        }
+
+        let settled = try #require(world.drainSettledTransforms().first)
+        #expect(settled.placingCell == placing)
+        #expect(abs(settled.transform.position.x - 4100) < 0.1)
+    }
+
     /// A rebuild of a cell the player never left must not teleport a body that
     /// has already rolled somewhere: the live pose wins over the placed one.
     @Test

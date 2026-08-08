@@ -116,7 +116,7 @@ struct DynamicBodyRealDataTests {
         let settle = try Self.settle(world: &world, scene: scene)
         let shove = Self.shove(world: &world, scene: scene)
 
-        try Self.write(report: Self.report(
+        try Self.write(name: "interior", report: Self.report(
             scene: scene, start: start, settle: settle, shove: shove, world: world
         ))
 
@@ -148,7 +148,95 @@ struct DynamicBodyRealDataTests {
             "physics step averaged \(settle.averageStepMS) ms against a \(Self.budgetMS) ms budget"
         )
     }
+}
 
+extension DynamicBodyRealDataTests {
+    /// Issue #401's exterior acceptance: use a vanilla dynamic placement and
+    /// its tagged draw, push it across a real adjacent-cell boundary, then
+    /// remove the placing cell while the occupied cell remains.
+    @Test(.enabled(if: Self.canRun))
+    func rebinsVanillaExteriorClutterAcrossResidentCells() throws {
+        let root = try #require(Self.dataRoot)
+        let device = try #require(Self.device)
+        let fileSystem = VirtualFileSystem(root: root)
+        let textures = TextureLibrary(fileSystem: fileSystem, device: device)
+        let builder = try CellSceneBuilder(
+            file: ESMFile(url: root.dataURL.appending(path: "Skyrim.esm")),
+            meshes: MeshLibrary(fileSystem: fileSystem, device: device, textures: textures),
+            textures: textures,
+            fileSystem: fileSystem
+        )
+        builder.simulatesDynamicBodies = true
+        try Self.runExteriorProbe(builder: builder)
+    }
+
+    private static func runExteriorProbe(builder: CellSceneBuilder) throws {
+        let pair = try Self.exteriorPair(builder: builder)
+        let placement = pair.source.dynamicBodies[0]
+        let sourceLocation = CellSceneLocation.exterior(pair.sourceCoordinate)
+        let destinationLocation = CellSceneLocation.exterior(pair.destinationCoordinate)
+        var world = DynamicBodyWorld()
+        world.setCell(sourceLocation, placements: [placement])
+        world.setCell(destinationLocation, placements: [])
+        let start = try #require(world.body(for: placement.key)?.position)
+        let direction = Self.direction(
+            from: pair.sourceCoordinate, to: pair.destinationCoordinate
+        )
+        Self.push(body: placement.key, direction: direction, world: &world)
+
+        let emptyWorld = DynamicStepWorld(staticCandidates: { _ in [] })
+        for _ in 0 ..< 600 where world.body(for: placement.key)?.occupiedCell == sourceLocation {
+            world.advance(by: WalkController.fixedTimeStep, world: emptyWorld)
+        }
+        let crossed = try #require(world.body(for: placement.key))
+        #expect(crossed.occupiedCell == destinationLocation, "body did not cross the boundary")
+        #expect(world.instanceDeltas[placement.reference.rawValue] != nil)
+
+        var composition = CellSceneComposition()
+        composition.setCell(pair.source, at: pair.sourceCoordinate)
+        composition.setCell(pair.destination, at: pair.destinationCoordinate)
+        _ = composition.setDynamicDrawOwnership(world.exteriorDrawOwnership)
+        let beforeDraws = Self.drawCount(
+            reference: placement.reference, in: composition.composedScene()
+        )
+        composition.removeCell(at: pair.sourceCoordinate)
+        world.removeCell(sourceLocation)
+        let afterSourceUnload = Self.drawCount(
+            reference: placement.reference, in: composition.composedScene()
+        )
+        let beforeContinuation = try #require(world.body(for: placement.key)?.position)
+        world.advance(by: WalkController.fixedTimeStep, world: emptyWorld)
+
+        #expect(world.body(for: placement.key) != nil)
+        #expect(world.body(for: placement.key)?.position != beforeContinuation)
+        #expect(beforeDraws > 0, "vanilla dynamic reference had no tagged draw")
+        #expect(afterSourceUnload == beforeDraws, "draw duplicated or vanished on handoff")
+
+        composition.removeCell(at: pair.destinationCoordinate)
+        world.removeCell(destinationLocation)
+        let afterDestinationUnload = Self.drawCount(
+            reference: placement.reference, in: composition.composedScene()
+        )
+        #expect(world.body(for: placement.key) == nil)
+        #expect(afterDestinationUnload == 0)
+        try Self.write(name: "exterior-rebin", report: """
+        OpenSky exterior dynamic-body re-bin probe
+
+        placing cell: \(pair.sourceCoordinate)
+        occupied cell: \(pair.destinationCoordinate)
+        reference: \(placement.reference)
+        start: \(start)
+        crossed: \(crossed.position)
+        draw instances before unload: \(beforeDraws)
+        draw instances after placing-cell unload: \(afterSourceUnload)
+        draw instances after occupied-cell unload: \(afterDestinationUnload)
+        simulated after placing-cell unload: yes
+        retired after occupied-cell unload: yes
+        """)
+    }
+}
+
+extension DynamicBodyRealDataTests {
     // MARK: - Phases
 
     private struct SettleResult {
@@ -311,15 +399,17 @@ struct DynamicBodyRealDataTests {
         return hit.startsOverlapping ? "overlapping" : String(format: "%.1f", hit.distance)
     }
 
-    private static func write(report: String) throws {
-        let directory = URL(fileURLWithPath: #filePath)
+    private static func write(name: String, report: String) throws {
+        let environment = ProcessInfo.processInfo.environment
+        let repository = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
-            .appending(path: "logs")
+        let directory = environment["OPENSKY_RUN_DIR"].map(URL.init(fileURLWithPath:))
+            ?? repository.appending(path: "logs/realtest/latest").resolvingSymlinksInPath()
         try FileManager.default.createDirectory(
             at: directory, withIntermediateDirectories: true
         )
-        let url = directory.appending(path: "dynamic-body-probe.log")
+        let url = directory.appending(path: "dynamic-body-\(name).log")
         try report.write(to: url, atomically: true, encoding: .utf8)
         print("[INFO] dynamic-body probe: \(url.path)")
     }

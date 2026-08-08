@@ -76,6 +76,14 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   three reaction clips decode against a real character skeleton, and one fixed step over 32
   resident actors costs **0.0380 ms** against a 0.1 ms budget
   (`logs/combat-loop-budget.log`, 2026-08-08).
+* **Dynamic bodies follow the exterior cell they occupy (issue #401)**: each body now keeps
+  its immutable placing cell beside a fixed-step-updated occupied cell. Residency retires
+  it with the latter, so clutter pushed across a boundary continues simulating after its
+  source cell unloads. The cell composition detaches that reference's tagged draw instances
+  and merges them exactly once under the occupied cell without retaining the source cell's
+  terrain or other geometry. Resting transforms remain world-space and are journalled under
+  the authoritative placing cell, including while that cell is absent.
+  [Dynamic rigid bodies](/engine/dynamic-bodies.md).
 
 ## 2026-08-07
 

@@ -16,6 +16,15 @@ struct CellSceneCompositionTests {
         device != nil
     }
 
+    private static func texture(device: MTLDevice) throws -> MTLTexture {
+        let descriptor = MTLTextureDescriptor()
+        descriptor.width = 1
+        descriptor.height = 1
+        descriptor.pixelFormat = .rgba8Unorm
+        descriptor.usage = .shaderRead
+        return try #require(device.makeTexture(descriptor: descriptor))
+    }
+
     private static func emptyCellScene(
         bounds: (min: SIMD3<Float>, max: SIMD3<Float>)? = nil
     ) -> CellScene {
@@ -83,12 +92,7 @@ struct CellSceneCompositionTests {
 
     @Test(.enabled(if: Self.hasDevice)) func recomposeReflectsAddAndRemove() throws {
         let device = try #require(Self.device)
-        let descriptor = MTLTextureDescriptor()
-        descriptor.width = 1
-        descriptor.height = 1
-        descriptor.pixelFormat = .rgba8Unorm
-        descriptor.usage = .shaderRead
-        let texture = try #require(device.makeTexture(descriptor: descriptor))
+        let texture = try Self.texture(device: device)
         let mesh = Mesh(
             name: nil,
             transform: matrix_identity_float4x4,
@@ -136,6 +140,70 @@ struct CellSceneCompositionTests {
         composition.removeCell(at: CellCoordinate(x: 1, y: 0))
         composition.removeCell(at: CellCoordinate(x: 2, y: 0))
         #expect(composition.composedScene().drawCount == 0)
+        #expect(composition.composedScene().instanceCount == 0)
+    }
+
+    @Test(.enabled(if: Self.hasDevice))
+    func aRebinnedReferenceDrawOutlivesOnlyItsOccupiedCell() throws {
+        let device = try #require(Self.device)
+        let texture = try Self.texture(device: device)
+        let mesh = Mesh(
+            name: nil,
+            transform: matrix_identity_float4x4,
+            positions: [SIMD3(0, 0, 0), SIMD3(1, 0, 0), SIMD3(0, 1, 0)],
+            normals: [],
+            tangents: [],
+            bitangents: [],
+            uvs: [],
+            colors: [],
+            indices: [0, 1, 2],
+            materialSlot: 0
+        )
+        let model = Model(meshes: [mesh], materials: [.fallback], skippedShapeCount: 0)
+        let render = try RenderModel(device: device, model: model) { _, _ in texture }
+        let reference = FormID(0x200)
+        let volume = try #require(DynamicCollisionVolume.box(
+            halfExtents: SIMD3(repeating: 10)
+        ))
+        let placement = DynamicBodyPlacement(
+            key: .generated(1),
+            reference: reference,
+            definition: DynamicBodyDefinition(volumes: [volume], mass: 20),
+            originPosition: SIMD3(4100, 0, 100),
+            orientation: .identityRotation
+        )
+        let source = CellCoordinate(x: 0, y: 0)
+        let destination = CellCoordinate(x: 1, y: 0)
+        let template = Self.emptyCellScene()
+        let sourceScene = CellScene(
+            renderScene: RenderScene(instances: [RenderPlacement(
+                model: render,
+                transform: MatrixMath.translation(placement.originPosition),
+                referenceFormID: reference.rawValue
+            )]),
+            summary: template.summary,
+            bounds: template.bounds,
+            location: .exterior(source),
+            dynamicBodies: [placement]
+        )
+        let destinationScene = CellScene(
+            renderScene: RenderScene(instances: []),
+            summary: template.summary,
+            bounds: template.bounds,
+            location: .exterior(destination)
+        )
+        var composition = CellSceneComposition()
+        composition.setCell(sourceScene, at: source)
+        composition.setCell(destinationScene, at: destination)
+
+        let ownershipChanged = composition.setDynamicDrawOwnership([
+            reference.rawValue: destination
+        ])
+        #expect(ownershipChanged)
+        #expect(composition.composedScene().instanceCount == 1)
+        composition.removeCell(at: source)
+        #expect(composition.composedScene().instanceCount == 1)
+        composition.removeCell(at: destination)
         #expect(composition.composedScene().instanceCount == 0)
     }
 }

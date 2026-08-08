@@ -3,9 +3,10 @@
 // advance on, and the lifecycle rules that tie them to cell residency and to
 // persisted world state.
 //
-// A body exists only while the cell that placed it is resident. Streaming adds
-// a cell's bodies when its scene lands and drops them when it leaves, so the
-// registry never outgrows the loaded world. What survives is the resting
+// A body exists only while the exterior cell it currently occupies is
+// resident. Streaming adds bodies from their placing scene, re-bins them as
+// they move, and drops them when their occupied cell leaves. What survives is
+// the resting
 // transform: once a body sleeps, its pose is written to the reference's
 // `.transform` component, which is what a save records and what the next build
 // of that cell places the object by. A body that is still moving when its cell
@@ -42,6 +43,12 @@ nonisolated struct DynamicBodyStatsSnapshot: Equatable, Sendable {
     var recoveredBodyCount = 0
     /// True while stepping is suspended by the panel's freeze control.
     var isFrozen = false
+}
+
+nonisolated struct SettledDynamicBodyTransform: Sendable {
+    let key: ReferenceKey
+    let transform: ReferenceTransformOverride
+    let placingCell: CellSceneLocation
 }
 
 /// The panel seam for `World > Combat & Physics` (issue #193 scope point 7).
@@ -116,7 +123,7 @@ nonisolated struct DynamicBodyWorld {
         sequence: UInt64 = 0
     ) {
         installedCells[location] = sequence
-        var retained = bodies.filter { $0.cell != location }
+        var retained = bodies.filter { $0.placingCell != location }
         for placement in placements {
             // The placed pose is refreshed whether or not the body is new. It
             // is what this build *drew* the reference at, so a rebuild that
@@ -140,17 +147,31 @@ nonisolated struct DynamicBodyWorld {
             ))
         }
         bodies = retained.sorted { $0.key < $1.key }
+        rebinExteriorBodies()
     }
 
-    /// Drops every body a cell placed. Called when the cell leaves residency.
+    /// Drops every body currently occupying a departing cell. A body that was
+    /// placed there but crossed into a resident neighbour keeps simulating.
     mutating func removeCell(_ location: CellSceneLocation) {
-        let departing = bodies.filter { $0.cell == location }
+        let departing = bodies.filter { $0.occupiedCell == location }
         for body in departing {
             placedPoses.removeValue(forKey: body.key)
             wasSleeping.remove(body.key)
         }
-        bodies.removeAll { $0.cell == location }
+        bodies.removeAll { $0.occupiedCell == location }
         installedCells.removeValue(forKey: location)
+    }
+
+    /// Retires bodies that crossed beyond the resident composition. Unlike
+    /// `removeCell`, this also covers an occupied cell that was never loaded and
+    /// therefore never appears in `installedCells`.
+    mutating func retainBodies(occupying resident: Set<CellSceneLocation>) {
+        let departing = bodies.filter { !resident.contains($0.occupiedCell) }
+        for body in departing {
+            placedPoses.removeValue(forKey: body.key)
+            wasSleeping.remove(body.key)
+        }
+        bodies.removeAll { !resident.contains($0.occupiedCell) }
     }
 
     mutating func removeAll() {
@@ -177,6 +198,7 @@ nonisolated struct DynamicBodyWorld {
             position: placement.originPosition, orientation: placement.orientation
         )
         bodies.sort { $0.key < $1.key }
+        rebinExteriorBodies()
     }
 
     /// Forces bodies to sleep where they stand until at most `limit` are awake
@@ -213,7 +235,7 @@ nonisolated struct DynamicBodyWorld {
             bodies[index] = DynamicBody(
                 key: bodies[index].key,
                 reference: bodies[index].reference,
-                cell: bodies[index].cell,
+                cell: bodies[index].placingCell,
                 definition: bodies[index].definition,
                 originPosition: pose.position,
                 orientation: pose.orientation
@@ -223,6 +245,7 @@ nonisolated struct DynamicBodyWorld {
         settled.removeAll()
         accumulatedTime = 0
         lastStats = DynamicStepStats()
+        rebinExteriorBodies()
     }
 
     // MARK: - Stepping
@@ -246,11 +269,24 @@ nonisolated struct DynamicBodyWorld {
             stats = DynamicBodySolver.step(
                 bodies: &bodies, world: world, dt: WalkController.fixedTimeStep
             )
+            rebinExteriorBodies()
             accumulatedTime -= WalkController.fixedTimeStep
         }
         recordSettled()
         lastStats = stats
         return stats
+    }
+
+    /// Updates exterior ownership inside the fixed-step loop. `bodies` is
+    /// already in `ReferenceKey` order, so a boundary crossing cannot make
+    /// lifecycle or draw ownership depend on dictionary iteration.
+    private mutating func rebinExteriorBodies() {
+        for index in bodies.indices {
+            guard case .exterior = bodies[index].occupiedCell else { continue }
+            bodies[index].occupiedCell = .exterior(
+                CellGridManager.cellCoordinate(for: bodies[index].originPosition)
+            )
+        }
     }
 
     /// Records the resting transform of every body that fell asleep since the
@@ -272,12 +308,15 @@ nonisolated struct DynamicBodyWorld {
     /// Hands over the resting transforms recorded since the last call, so the
     /// caller can write them to `WorldStateStore` under the `.transform`
     /// component. Ordered by key, because a journal has to be reproducible.
-    mutating func drainSettledTransforms() -> [(
-        key: ReferenceKey,
-        transform: ReferenceTransformOverride
-    )] {
+    mutating func drainSettledTransforms() -> [SettledDynamicBodyTransform] {
         let drained = settled.sorted { $0.key < $1.key }
-            .map { (key: $0.key, transform: $0.value) }
+            .compactMap { key, transform in
+                bodies.first(where: { $0.key == key }).map {
+                    SettledDynamicBodyTransform(
+                        key: key, transform: transform, placingCell: $0.placingCell
+                    )
+                }
+            }
         settled.removeAll()
         return drained
     }
@@ -312,6 +351,17 @@ nonisolated struct DynamicBodyWorld {
             deltas[body.reference.rawValue] = delta
         }
         return deltas
+    }
+
+    /// Current exterior draw owner by REFR FormID. The placing cell remains
+    /// separate so persistence can rebuild the authoritative reference later.
+    var exteriorDrawOwnership: [UInt32: CellCoordinate] {
+        var ownership: [UInt32: CellCoordinate] = [:]
+        for body in bodies {
+            guard case let .exterior(coordinate) = body.occupiedCell else { continue }
+            ownership[body.reference.rawValue] = coordinate
+        }
+        return ownership
     }
 
     func body(for key: ReferenceKey) -> DynamicBody? {

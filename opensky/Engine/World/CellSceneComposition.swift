@@ -10,8 +10,17 @@ import simd
 /// add/remove mirror the streaming controller's load/unload; composedScene
 /// rebuilds the drawable union after each change.
 nonisolated struct CellSceneComposition {
+    private struct DynamicDraw {
+        let placingCell: CellCoordinate
+        var occupiedCell: CellCoordinate?
+        var scene: RenderScene
+    }
+
     private(set) var cells: [CellCoordinate: CellScene] = [:]
     private(set) var distantLOD: DistantLODScene?
+    /// Per-reference draw data detached from the placing cell's bulk scene.
+    /// It can therefore outlive that cell while its occupied cell is resident.
+    private var dynamicDraws: [UInt32: DynamicDraw] = [:]
 
     var cellCount: Int {
         cells.count
@@ -25,12 +34,52 @@ nonisolated struct CellSceneComposition {
 
     @discardableResult
     mutating func setCell(_ scene: CellScene, at coordinate: CellCoordinate) -> CellScene? {
-        cells.updateValue(scene, forKey: coordinate)
+        let references = Set(scene.dynamicBodies.map(\.reference.rawValue))
+        dynamicDraws = dynamicDraws.filter { reference, draw in
+            draw.placingCell != coordinate || references.contains(reference)
+        }
+        for reference in references.sorted() {
+            let occupied = dynamicDraws[reference]?.occupiedCell ?? coordinate
+            dynamicDraws[reference] = DynamicDraw(
+                placingCell: coordinate,
+                occupiedCell: occupied,
+                scene: scene.renderScene.dynamicReferenceScene(reference)
+            )
+        }
+        return cells.updateValue(scene, forKey: coordinate)
     }
 
     @discardableResult
     mutating func removeCell(at coordinate: CellCoordinate) -> CellScene? {
-        cells.removeValue(forKey: coordinate)
+        let removed = cells.removeValue(forKey: coordinate)
+        for reference in dynamicDraws.keys.sorted() {
+            guard var draw = dynamicDraws[reference] else { continue }
+            if draw.occupiedCell == coordinate {
+                draw.occupiedCell = nil
+            }
+            if draw.placingCell == coordinate, draw.occupiedCell == nil {
+                dynamicDraws.removeValue(forKey: reference)
+            } else {
+                dynamicDraws[reference] = draw
+            }
+        }
+        return removed
+    }
+
+    /// Moves each live dynamic draw under the exterior cell its body occupies.
+    /// Returns true only when a scene recomposition is necessary.
+    mutating func setDynamicDrawOwnership(_ ownership: [UInt32: CellCoordinate]) -> Bool {
+        var changed = false
+        for reference in dynamicDraws.keys.sorted() {
+            guard var draw = dynamicDraws[reference] else { continue }
+            let occupied = ownership[reference]
+            if draw.occupiedCell != occupied {
+                draw.occupiedCell = occupied
+                dynamicDraws[reference] = draw
+                changed = true
+            }
+        }
+        return changed
     }
 
     /// Union of the resident cells' draw lists via RenderScene(merging:) —
@@ -42,7 +91,16 @@ nonisolated struct CellSceneComposition {
         let ordered = cells.sorted { lhs, rhs in
             (lhs.key.x, lhs.key.y) < (rhs.key.x, rhs.key.y)
         }
-        var scenes = ordered.map(\.value.renderScene)
+        var scenes: [RenderScene] = []
+        for (coordinate, cell) in ordered {
+            let detached = Set(dynamicDraws.compactMap { reference, draw in
+                draw.placingCell == coordinate ? reference : nil
+            })
+            scenes.append(cell.renderScene.excludingDynamicReferences(detached))
+            scenes.append(contentsOf: dynamicDraws.sorted { $0.key < $1.key }.compactMap {
+                $0.value.occupiedCell == coordinate ? $0.value.scene : nil
+            })
+        }
         if let distantLOD {
             scenes.append(distantLOD.renderScene)
         }

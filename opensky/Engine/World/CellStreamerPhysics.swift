@@ -27,8 +27,15 @@ extension CellStreamer {
                 self?.staticCollisionCandidates(overlapping: bounds) ?? []
             })
         )
+        dynamicBodies.retainBodies(occupying: Set(residentDynamicBodyScenes().keys))
         for settled in dynamicBodies.drainSettledTransforms() {
-            onBodySettled?(settled.key, settled.transform)
+            onBodySettled?(settled.key, settled.transform, settled.placingCell)
+        }
+        if composition.setDynamicDrawOwnership(dynamicBodies.exteriorDrawOwnership) {
+            // Draw ownership changes only at a cell boundary. Recompose once
+            // there so the occupied cell can outlive the placing cell without
+            // rebuilding either cell's baked scene.
+            sink(composition.composedScene(), nil)
         }
         // Published every tick rather than only when something moved: a body
         // that has settled away from where its cell drew it keeps a delta until
@@ -40,15 +47,8 @@ extension CellStreamer {
     /// Adds the bodies of every newly resident or rebuilt cell and drops the
     /// bodies of every cell that left.
     func reconcileDynamicBodies() {
-        var resident: [CellSceneLocation: CellScene] = [:]
-        if let interiorScene, let location = interiorScene.location {
-            resident[location] = interiorScene
-        } else {
-            for scene in composition.cells.values {
-                guard let location = scene.location else { continue }
-                resident[location] = scene
-            }
-        }
+        let resident = residentDynamicBodyScenes()
+        dynamicBodies.retainBodies(occupying: Set(resident.keys))
         for location in dynamicBodies.installedCells.keys where resident[location] == nil {
             dynamicBodies.removeCell(location)
         }
@@ -62,6 +62,19 @@ extension CellStreamer {
                 location, placements: scene.dynamicBodies, sequence: scene.stateSequence
             )
         }
+    }
+
+    private func residentDynamicBodyScenes() -> [CellSceneLocation: CellScene] {
+        var resident: [CellSceneLocation: CellScene] = [:]
+        if let interiorScene, let location = interiorScene.location {
+            resident[location] = interiorScene
+        } else {
+            for scene in composition.cells.values {
+                guard let location = scene.location else { continue }
+                resident[location] = scene
+            }
+        }
+        return resident
     }
 
     /// The player's shove, from how far the capsule moved since the last frame.

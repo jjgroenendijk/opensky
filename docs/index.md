@@ -151,8 +151,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   convex collider and the narrowphase that reads a surface's facing off its own winding,
   the fixed-step integrator with its tunneling guard, penetration recovery and sleep rules,
   sphere and capsule sweeps, the player's shove, the per-instance delta that draws a body
-  where the solver has it, the streaming and resting-transform lifecycle, and the optimized
-  perf gate.
+  where the solver has it, deterministic exterior re-binning with draw handoff, the
+  streaming and resting-transform lifecycle, and the optimized perf gate.
 * [Death and constraint-solved ragdoll](/engine/ragdoll.md) - how a zero-health actor dies
   and hands its skeleton to the physics, the ragdoll built from the skeleton NIF's per-bone
   bodies and joints, what the authored constraint angles were measured to mean, the
