@@ -23,6 +23,7 @@ entry whose condition is met gets deleted, not amended.
 - Upstream spec hosts
 - Memory watchdog for heavy real-data tests
 - Test plans, environment entries, and Swift Testing
+- build-for-testing and test-without-building
 
 ## Continuous integration suspended
 
@@ -84,3 +85,37 @@ Observed 2026-08-06 on Xcode 26.5 (build 25F70), measured while wiring
 Retires when a later Xcode matches plan-level selection against Swift Testing identifiers,
 at which point `tools/realtest.sh` can stop translating the plan's list into
 `-only-testing` flags.
+
+## build-for-testing and test-without-building
+
+Observed 2026-08-08 on Xcode 26.6 / macOS 26.6.1, measured while wiring
+`tools/test-fast.sh` for issue #417:
+
+- `build-for-testing` writes one `.xctestrun` per test plan under
+  `Build/Products/`, named `opensky_<Plan>_macosx26.5-arm64.xctestrun` — the
+  version segment is the SDK, not the OS, so it moves with Xcode updates and
+  the tooling resolves it by glob. FormatVersion 2: everything interesting
+  lives under `TestConfigurations[0].TestTargets[0]`, not at the top level.
+- The RealData plan's `OPENSKY_DATA_ROOT` entry lands in the `.xctestrun`
+  verbatim under `EnvironmentVariables`, and `test-without-building` forwards
+  it into the app-hosted test host — a gated test passes, not skips, with no
+  injection anywhere.
+- Command-line `-only-testing` **overrides** the `.xctestrun`'s baked
+  `OnlyTestIdentifiers` (the RealData plan's dead `selectedTests`), and a
+  misspelled Swift Testing selector still runs zero tests and exits 0 —
+  identical to `xcodebuild test`, so the post-run result-bundle count stays
+  the guard.
+- `-enumerate-tests` **rejects `-derivedDataPath`** with a usage error (exit
+  64) in any argument position, so an enumeration against an `.xctestrun`
+  cannot be pointed at the checkout's cache and drops a small session-log
+  directory under Xcode's default DerivedData; `tools/test-fast-suggest.sh`
+  removes exactly the directories a run creates. Enumeration also **refuses an
+  existing `-test-enumeration-output-path` file** with the same exit 64 —
+  `mktemp` pre-creating the file is enough to trip it.
+- Plain `test-without-building` does accept `-derivedDataPath`, and without it
+  the session logs land on the boot volume, so the flag stays mandatory there
+  (AGENTS.md derived-data gotcha).
+
+Retires if a later Xcode lets `-enumerate-tests` take `-derivedDataPath`, at
+which point the snapshot-and-remove dance in `tools/test-fast-suggest.sh` can
+go.

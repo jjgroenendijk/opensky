@@ -12,6 +12,17 @@ fi
 [ -d "$ROOT/opensky.xcodeproj" ] || { hook_warn "no Xcode project -> skipping build/test"; exit 0; }
 
 require_tool xcodebuild
+
+# Skip the gate when this exact tree content already passed it (issue #417):
+# `make test` and `make cli` stamp their green runs with the tested tree hash,
+# and the common flow — run both, commit, push — would otherwise pay the whole
+# gate a second time for an identical tree. Dirty tree, missing stamp, or any
+# content change falls through to the full gate.
+if sh "$ROOT/tools/green-stamp.sh" check test cli 2>/dev/null; then
+  hook_ok "gate already green for this exact tree -> skipping build/test"
+  exit 0
+fi
+
 hook_info "build + test before push (set OPENSKY_SKIP_BUILD=1 to skip)"
 make -C "$ROOT" test
 # Build the CLI too: app-only source files silently entering the openskycli

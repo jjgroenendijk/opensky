@@ -27,8 +27,17 @@ files.
   (`-testPlan UnitTests`). Writes a fixed result bundle at
   `build/test-results/unit.xcresult`. The plan lists `openskyTests` alone, so
   `openskyUITests` is not compiled at all; see [Test plans](#test-plans).
+* `make test-fast [T='Suite/test()'] [B=1]` — the iteration loop (issue #417):
+  `build-for-testing` once, then `test-without-building` against the cached
+  `.xctestrun`, which skips the build system entirely. `tools/test-fast.sh`
+  regenerates the products when any source, `Config/` file, project file, or
+  vendored input is newer than the `.xctestrun`; `B=1` forces that. Bundle:
+  `build/test-results/fast/<run>/fast.xcresult`. See
+  [The fast loop](#the-fast-loop-and-what-guards-it).
 * `make test-one T=Class[/test]` — one class or method. Bare names resolve to
-  `openskyTests/`. Bundle: `build/test-results/one.xcresult`.
+  `openskyTests/`. Bundle: `build/test-results/one.xcresult`. Prefer
+  `make test-fast T=...` while iterating — `test-one` pays a full build-system
+  pass per run for the same selection.
 * `make test-report` — pass/fail summary plus each failing test's name and
   message, plus the code coverage percentage, read from the newest fixed bundle
   (falls back to the DerivedData glob). It waits for the bundle to finalize, so
@@ -54,6 +63,18 @@ There is no required CI status right now: GitHub Actions is quota-suspended
 Xcode's filesystem-synced groups silently pull into the `openskycli` target).
 `OPENSKY_SKIP_BUILD=1` skips the gate for bootstrap/emergency only.
 
+The hook short-circuits when the pushed tree already passed (issue #417): green
+`make test` and `make cli` runs write the tested tree hash (`git stash create`,
+so a dirty tree stamps the content actually tested) to
+`DerivedData/green-stamps/` through `tools/green-stamp.sh`, and the hook skips
+its rebuild only when the working tree is clean and both stamps equal
+`HEAD^{tree}`. A skip can only ever skip work that already passed on
+byte-identical content; a dirty tree, a missing stamp, or any content change
+runs the full gate, and `make clean` sweeps the stamps with the rest of the
+build state. Only the canonical configuration stamps — a run with `CONFIG` or
+`XCODEBUILD_FLAGS` overridden does not, and `make test-fast`, `make test-one`,
+and `make realtest` never do.
+
 ## Test plans
 
 Which bundles a run touches is a checked-in test plan, not a flag (issue #346). The
@@ -61,7 +82,7 @@ Which bundles a run touches is a checked-in test plan, not a flag (issue #346). 
 
 | Plan | Test targets | Used by |
 | --- | --- | --- |
-| `UnitTests.xctestplan` | `openskyTests` | `make test`, `make test-one`; the scheme default |
+| `UnitTests.xctestplan` | `openskyTests` | `make test`, `make test-fast`, `make test-one`; the scheme default |
 | `UITests.xctestplan` | `openskyUITests` | `make test-ui` |
 | `RealData.xctestplan` | `openskyTests`, plus the data root | `make realtest`, `make realtest-all` |
 | `Sanitizers.xctestplan` | `openskyTests`, one configuration per sanitizer | `make test-sanitize` |
@@ -91,6 +112,54 @@ XCTest gives up after 60 seconds with `Timed out while enabling automation mode`
 error names a permission, which is what sent four issues looking for a missing TCC grant,
 but it is a deadlock. `-only-testing:openskyUITests` does not avoid it: a selector filters
 which tests run, not which targets the session stands up. Only the plan does.
+
+## The fast loop, and what guards it
+
+The dominant cost of a warm `make test` or `make realtest` is not the tests: it
+is the build system standing up, resolving the scheme and plan, and re-checking
+the whole graph, every invocation. Session mining across ten agent sessions
+(issue #417) measured `make realtest` at 85 s average per run while the median
+testing-elapsed inside it was 4.9 s, with the same single test re-run four to
+eleven times while iterating.
+
+`tools/test-fast.sh` splits the two halves. `xcodebuild build-for-testing`
+compiles the products and writes one `.xctestrun` per test plan under
+`DerivedData/Build/Products/` (`opensky_<Plan>_macosx<sdk>-arm64.xctestrun`);
+`xcodebuild test-without-building -xctestrun` then runs against those products
+with no build system involved at all. The `.xctestrun` is regenerated only when
+an input is newer than it — sources, `Config/` (xcconfigs and plans both, since
+the RealData root is baked in), the project file, `.vendor/ffmpeg` — an mtime
+sweep that costs a fraction of a second where even a no-op `build-for-testing`
+costs tens of seconds. `make test-fast B=1` (or `make realtest B=1`) forces the
+rebuild when in doubt.
+
+What issue #82 retired — `build-for-testing`, rewrite the `.xctestrun`,
+`test-without-building` — comes back here *without* the rewrite step, which was
+the part that made it fragile: a plan environment entry lands in the generated
+`.xctestrun` verbatim, so the RealData root needs no injection, and
+`tools/test-fast.sh` reads the root back out of the `.xctestrun` it is about to
+run, checking exactly the value the host will see.
+
+Measured on this machine, 2026-08-08, Xcode 26.6, warm products, wall clock
+from `/usr/bin/time`:
+
+| Run | Through the build system | Fast path |
+| --- | --- | --- |
+| One unit test, warm, no edits | ~79 s (`make test-one`, session average) | 4.2–4.9 s |
+| One real-data test, warm, no edits | 85 s (session average, incl. the enumeration pre-pass) | 12–17 s |
+| One test after editing one test file | — | 35 s (one incremental `build-for-testing`), then fast again |
+| Full unit plan (3576 tests) | 189 s (`make test`, first run in a fresh worktree) | 125 s |
+
+The remaining floor of a fast run is xcodebuild session startup plus
+`xcresulttool`; the real-data row also carries the watchdog and one 8 s test.
+
+Two properties are non-negotiable and carried over from `tools/realtest.sh`:
+the RSS watchdog wraps every RealData run, and the result-bundle count
+assertion runs after every run, because `-only-testing` with a selector that
+matches nothing runs zero tests and exits 0 — under `test-without-building`
+exactly as under `test`. The fast loop is for iteration; it never writes a
+pre-push green stamp, so the full `make test` remains the gate a push relies
+on.
 
 ## Code coverage
 
@@ -141,8 +210,8 @@ deterministically. Metal-dependent tests also gate on
 Plain `xcodebuild test` does NOT forward an exported `OPENSKY_DATA_ROOT` into the
 unit-test host (proven: the host sees `<nil>`, issue #82), so exporting the var
 in your shell is not enough — the gated tests silently skip, and they skip in
-every `make test` run. Both entrypoints go through `tools/realtest.sh` instead,
-which runs the `RealData` test plan under the watchdog:
+every `make test` run. The real-data entrypoints run the `RealData` test plan
+under the watchdog instead:
 
 ```sh
 make realtest T='CellRenderRealDataTests/streamsFiveByFiveGridToCompletion()'
@@ -150,12 +219,24 @@ make realtest-all
 make realtest-perf
 ```
 
-`make realtest` still validates that the selector resolves to exactly one test
-before running it (`-only-testing` accepts a misspelled Swift Testing method and
-exits 0 after running nothing), then asserts the result bundle says one test
-passed. `make realtest-all` has no selector to misspell, so it asserts instead
-that at least one test executed and none failed. Skips remain legal for the set,
-because some of these suites also need a Metal 4 device.
+`make realtest` goes through the fast path (`tools/test-fast.sh -p RealData`,
+issue #417): the plan's `OPENSKY_DATA_ROOT` entry is baked into the generated
+`.xctestrun` as an `EnvironmentVariables` value, so `test-without-building`
+forwards it with no injection, and a warm rerun pays only the test plus
+xcodebuild startup. `make realtest-all` and `make realtest-perf` stay on
+`tools/realtest.sh` — the whole-set run rebuilds rarely enough not to matter,
+and the `-O` overlay build cannot be represented in a cached `.xctestrun`.
+
+Every single-selector run asserts afterwards that the result bundle says
+exactly one test passed — `-only-testing` accepts a misspelled Swift Testing
+method and exits 0 after running nothing, so the post-run count is the guard.
+On a zero-test run, `tools/test-fast-suggest.sh` prints near-matches from a
+cached flat enumeration (regenerated only when the `.xctestrun` changes). The
+per-run `-enumerate-tests` validation pass that used to precede every
+single-test run is gone; it cost an entire extra xcodebuild invocation on the
+hot path. `make realtest-all` has no selector to misspell, so it asserts
+instead that at least one test executed and none failed. Skips remain legal
+for the set, because some of these suites also need a Metal 4 device.
 
 `make realtest-perf` is the one real-data entrypoint that builds **optimized**
 (`tools/realtest.sh -O`), and it exists because the dynamic-body step budget is

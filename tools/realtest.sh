@@ -143,11 +143,9 @@ export OPENSKY_RUN_DIR
 printf '[INFO] run directory: %s\n' "$run_dir"
 result_bundle="$("$root/tools/run-dir.sh" -b build/test-results realtest)/realtest.xcresult"
 
-# Shared by the enumeration pass and the run itself, so a selector can never be
-# validated against a different plan or destination than the one it executes
-# under. Parallel testing off keeps xcodebuild to one test host, which is what
-# makes the watchdog's per-process cap meaningful; Swift Testing still runs its
-# own tests concurrently inside that host.
+# Parallel testing off keeps xcodebuild to one test host, which is what makes
+# the watchdog's per-process cap meaningful; Swift Testing still runs its own
+# tests concurrently inside that host.
 derived_data="$OPENSKY_DERIVED_DATA"
 if [ -n "$optimized" ]; then
     derived_data="$OPENSKY_DERIVED_DATA-optimized"
@@ -170,35 +168,6 @@ else
     for suite in $(plan_query suites); do
         set -- "$@" -only-testing:"$suite"
     done
-fi
-
-# `-only-testing` accepts a misspelled Swift Testing method and exits 0 after
-# running zero tests, so a single-test run is only trustworthy if the selector
-# is enumerated first. The whole-plan run needs no such guard -- it has no
-# selector to misspell, and it asserts on the result-bundle counts below.
-if [ -n "$selector" ]; then
-    enumeration_json="$run_dir/enumeration.json"
-    echo "[INFO] validating exact selector: $selector"
-    "$@" -enumerate-tests -test-enumeration-style flat \
-        -test-enumeration-format json \
-        -test-enumeration-output-path "$enumeration_json" test >/dev/null
-    SELECTOR="$selector" python3 - "$enumeration_json" <<'PY'
-import json, os, sys
-with open(sys.argv[1], "rb") as stream:
-    data = json.load(stream)
-enabled = [
-    test.get("identifier")
-    for value in data.get("values", [])
-    for test in value.get("enabledTests", [])
-]
-expected = os.environ["SELECTOR"]
-if data.get("errors") or enabled != [expected]:
-    print(
-        f"[ERROR] selector must resolve to exactly one test: {expected}; got {enabled}",
-        file=sys.stderr,
-    )
-    raise SystemExit(1)
-PY
 fi
 
 echo "[INFO] starting watchdog (cap ${cap_mb} MB, ${guard_seconds}s)"
@@ -239,6 +208,15 @@ printf '[INFO] total %s, passed %s, skipped %s, failed %s\n' $summary
 if [ -n "$selector" ]; then
     if [ "$summary" != "1 1 0 0" ]; then
         echo "[ERROR] exact test did not pass once ($summary): $selector" >&2
+        # A misspelled Swift Testing selector runs zero tests and exits 0, so
+        # this assertion is the guard (issue #417 dropped the enumeration
+        # pre-pass that used to cost a whole extra xcodebuild run per test).
+        total="$(echo "$summary" | awk '{print $1}')"
+        if [ "$total" = "0" ]; then
+            xctestrun="$(xcodebuild_xctestrun RealData)"
+            [ -z "$xctestrun" ] || \
+                "$root/tools/test-fast-suggest.sh" "$xctestrun" "$selector" >&2 || true
+        fi
         exit 1
     fi
     echo "[INFO] selector executed exactly one test"
