@@ -438,6 +438,9 @@ extension Renderer {
             state: &state
         )
         encodeFirstPersonArms(descriptor: descriptor, state: &state)
+        // World-space diagnostics remain depth-tested and sit below every
+        // screen-space layer.
+        encodeWorldOverlay(state: &state)
         // SWF layer before the dev UI overlay so stats/readouts stay on top.
         encodeSWF(descriptor: descriptor, state: &state)
         encodeUI(descriptor: descriptor, state: &state)

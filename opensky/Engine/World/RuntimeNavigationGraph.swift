@@ -220,3 +220,89 @@ nonisolated struct RuntimeNavigationGraph: Sendable {
         return candidate.triangle < current.triangle
     }
 }
+
+nonisolated extension RuntimeNavigationGraph {
+    /// Appends the resident navmesh fill and latest valid path using the same
+    /// graph the pathfinder queries. A small Z lift prevents coplanar floor
+    /// geometry from producing unstable depth ties.
+    func appendWorldOverlay(
+        context: WorldOverlayFrameContext,
+        path: NavigationPath?,
+        to list: inout WorldOverlayDrawList
+    ) {
+        if context.navmeshOverlayEnabled {
+            appendResidentNavmeshes(to: &list)
+        }
+        if
+            context.pathOverlayEnabled,
+            let path,
+            pathIsCurrent(path, target: path.target)
+        {
+            appendPath(path, to: &list)
+        }
+    }
+
+    private func appendResidentNavmeshes(to list: inout WorldOverlayDrawList) {
+        let meshes = navmeshes.values.sorted { left, right in
+            if left.cell != right.cell {
+                return CellSceneLocation.isOrderedBefore(left.cell, right.cell)
+            }
+            return left.formID.rawValue < right.formID.rawValue
+        }
+        for mesh in meshes {
+            let color = Self.cellColor(mesh.cell)
+            for triangle in mesh.triangles
+                where !triangle.isDegenerate && !triangle.flags.contains(.deleted)
+            {
+                list.addTriangle(
+                    Self.lift(triangle.vertices.first),
+                    Self.lift(triangle.vertices.second),
+                    Self.lift(triangle.vertices.third),
+                    color: color
+                )
+            }
+        }
+    }
+
+    private func appendPath(_ path: NavigationPath, to list: inout WorldOverlayDrawList) {
+        let corridorColor = SIMD4<Float>(1, 0.28, 0.04, 0.42)
+        for identifier in path.corridor {
+            guard let triangle = triangle(identifier), !triangle.isDegenerate else { continue }
+            list.addTriangle(
+                Self.lift(triangle.vertices.first, amount: 8),
+                Self.lift(triangle.vertices.second, amount: 8),
+                Self.lift(triangle.vertices.third, amount: 8),
+                color: corridorColor
+            )
+        }
+        list.addPolyline(
+            path.waypoints.map { Self.lift($0, amount: 12) },
+            color: SIMD4(1, 0.95, 0.12, 1)
+        )
+    }
+
+    private static func lift(_ position: SIMD3<Float>, amount: Float = 4) -> SIMD3<Float> {
+        position + SIMD3(0, 0, amount)
+    }
+
+    /// Eight high-contrast translucent fills, selected by a deterministic
+    /// cell-identity hash. Every navmesh in one cell receives the same color.
+    private static func cellColor(_ cell: CellSceneLocation) -> SIMD4<Float> {
+        let palette: [SIMD3<Float>] = [
+            SIMD3(0.12, 0.78, 1), SIMD3(0.28, 1, 0.45),
+            SIMD3(0.82, 0.42, 1), SIMD3(1, 0.62, 0.12),
+            SIMD3(0.08, 0.92, 0.78), SIMD3(1, 0.3, 0.52),
+            SIMD3(0.55, 0.72, 1), SIMD3(0.78, 1, 0.18)
+        ]
+        let index: Int
+        switch cell {
+        case let .exterior(coordinate):
+            let x = UInt32(bitPattern: coordinate.x)
+            let y = UInt32(bitPattern: coordinate.y)
+            index = Int((x &* 1_664_525 &+ y &* 1_013_904_223) % UInt32(palette.count))
+        case let .interior(formID):
+            index = Int(formID.rawValue % UInt32(palette.count))
+        }
+        return SIMD4(palette[index], 0.22)
+    }
+}

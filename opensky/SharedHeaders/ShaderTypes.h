@@ -44,6 +44,10 @@ typedef NS_ENUM(EnumBackingType, BufferIndex)
     /// Per-draw SWF uniforms (SWFDrawUniforms), one 256-byte-aligned slot per
     /// display-list draw.
     BufferIndexSWFUniforms = 12,
+    /// World-space debug-overlay vertex stream (OverlayVertex), indexed by
+    /// [[vertex_id]]; the existing FrameUniforms supplies its world-to-clip
+    /// transform.
+    BufferIndexOverlayVertices = 13,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)
@@ -294,6 +298,15 @@ typedef struct
 {
     vector_float2 viewportSize;
 } UIFrameUniforms;
+
+/// One world-space debug-overlay vertex. Position stays in engine coordinates
+/// and FrameUniforms.viewProjectionMatrix maps it to clip space. Color is
+/// straight RGBA; the fragment shader premultiplies before blending.
+typedef struct
+{
+    vector_float3 position;
+    vector_float4 color;
+} OverlayVertex;
 
 /// How the SWF fragment shader resolves a draw's color (M8.2.4).
 typedef NS_ENUM(EnumBackingType, SWFFillMode)

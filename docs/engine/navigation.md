@@ -1,9 +1,9 @@
 ---
 type: Subsystem
 title: Runtime navigation
-description: Resident navmesh graph, bounded projection, deterministic triangle A-star,
-  radius-aware funnel paths, doors, and budgeted invalidation.
-tags: [engine, world, navigation, navmesh, streaming, pathfinding]
+description: Resident navmesh graph, deterministic pathfinding, and the world-space
+  navmesh and path debug overlay.
+tags: [engine, world, navigation, navmesh, streaming, pathfinding, rendering, overlay]
 timestamp: 2026-08-09T00:00:00Z
 ---
 
@@ -68,6 +68,23 @@ order; `CellStreamer.maximumNavigationRepathsPerFrame` limits work to two replac
 frame. Immediate `findPath` and projection calls remain available for user-driven queries
 and inspection.
 
+## World-space debug overlay
+
+`Renderer.worldOverlaySources` is a stable-order registry of per-frame builders. A source
+receives the renderer's navmesh and path toggle state and appends per-vertex-color triangles,
+line segments, or polylines to a pure `WorldOverlayDrawList`; replacing a source identifier
+keeps its position, and removing it needs no renderer change. The navigation source reads the
+same resident graph used for queries. It fills valid triangles with a deterministic color per
+cell, highlights the latest current corridor, and draws its waypoint polyline. A small Z lift
+avoids unstable coplanar depth ties. Both toggles default off.
+
+`RendererOverlayPass` groups triangles before lines in one upload and draws them through one
+premultiplied-alpha pipeline with read-only `lessEqual` depth. It runs after the 3D scene and
+before SWF/UI in both drawable and `renderOffscreen` paths. The hard cap is 65,536 primitives
+per frame; `WorldOverlayDrawStats` reports submitted, drawn, triangle, line, dropped, draw-call,
+and truncation state. `AIOverlayControlProviding` exposes both toggles and that snapshot for
+the M16 gate panel. `openskycli screenshot --navmesh-overlay` supplies real-data captures.
+
 ## Evidence and remaining gaps
 
 Synthetic tests cover a deterministic 2x2 grid, a two-cell edge link that disappears on
@@ -79,6 +96,5 @@ probe measured the named Whiterun-hold launch to Chillfurrow Farm route at 4,471
 door crossing. The numeric report remains locally under the gitignored `logs/navigation/`.
 
 Actor following and recovery are [issue #423](https://github.com/jjgroenendijk/opensky/issues/423).
-The main-app navmesh and path overlay is
-[issue #422](https://github.com/jjgroenendijk/opensky/issues/422). Dynamic obstacle
-avoidance, jumping, swimming, and general off-mesh traversal are not part of this graph yet.
+Dynamic obstacle avoidance, jumping, swimming, and general off-mesh traversal are not part of
+this graph yet.

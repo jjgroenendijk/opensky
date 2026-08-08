@@ -126,7 +126,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   the world-state snapshot every dispatched build carries.
 * [Runtime navigation](/engine/navigation.md) - resident NAVM graph, bounded feet
   projection, deterministic triangle A-star, radius-aware funnel paths, door crossings,
-  and budgeted invalidation.
+  budgeted invalidation, and the depth-tested navmesh/path debug overlay.
 * [Terrain mesh build](/engine/terrain.md) - LAND -> per-quadrant meshes under the cell's
   objects: grid topology, base textures, XCLC quad-hiding, DNAM fallback plane, placement.
 * [Procedural grass](/engine/grass.md) - deterministic LAND-driven placement, cell-owned

@@ -4,6 +4,16 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-09
 
+* **World-space debug overlay (issue #422)**: the renderer now accepts stable, pluggable
+  per-frame sources of colored triangles and polylines, uploads one capped vertex list, and
+  draws it through a translucent read-only-depth Metal pass on both drawable and offscreen
+  paths. The first source colors resident navmeshes per cell and highlights the latest valid
+  path corridor plus waypoint line behind independent default-off toggles. Exact submitted,
+  drawn and truncated primitive counts feed the future M16 panel seam. Pure builder tests pin
+  vertex colors, topology grouping, registry replacement and cap enforcement; a synthetic
+  Metal test proves an offscreen pixel delta. `openskycli screenshot --navmesh-overlay`
+  supplies the real-install capture path. Updated page: [runtime navigation](/engine/navigation.md).
+
 * **Resident navmesh pathfinding (issue #200)**: cell scenes now carry their decoded NAVM
   geometry into a streamer-reconciled runtime graph. Bounded feet projection feeds a
   deterministic triangle A-star; radius-reduced portals feed the funnel; paired XTEL doors
