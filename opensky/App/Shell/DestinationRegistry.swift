@@ -25,9 +25,9 @@ enum SidebarSection: String, CaseIterable {
 
 /// The live-renderer bridges a world inspector panel may consume. The game
 /// controller conforms to all of them, so one value wires every panel.
-typealias WorldControlProviders = AnimationControlProviding
+typealias WorldControlProviders = ActorValueControlProviding & AnimationControlProviding
     & ArcheryControlProviding & AudioControlProviding
-    & CameraControlProviding & ContainerMenuControlProviding
+    & CameraControlProviding & CombatLoopControlProviding & ContainerMenuControlProviding
     & FirstPersonControlProviding
     & FrameStatsProviding & GrassControlProviding
     & HUDControlProviding & InventoryEquipmentControlProviding
@@ -35,6 +35,7 @@ typealias WorldControlProviders = AnimationControlProviding
     & JournalControlProviding
     & MeleeCombatControlProviding
     & ParticleControlProviding
+    & PhysicsControlProviding
     & PlayerLocomotionControlProviding
     & PrecipitationControlProviding & RagdollControlProviding
     & RuntimeStateControlProviding & SWFLabControlProviding & SceneStatsProviding
@@ -169,14 +170,30 @@ enum DestinationRegistry {
                 let panel = PlayerLocomotionPanelViewController()
                 panel.provider = context.providers
                 panel.cameraProvider = context.providers
-                panel.meleeProvider = context.providers
-                panel.archeryProvider = context.providers
-                panel.ragdollProvider = context.providers
                 let providers = context.providers
                 panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
                 return panel
             },
             overrides: playerLocomotionOverrides
+        ),
+        DestinationDescriptor(
+            id: "combatPhysics",
+            title: "Combat & Physics",
+            section: .world,
+            symbolName: "shield.lefthalf.filled",
+            content: .worldInspector { context in
+                let panel = CombatPhysicsPanelViewController()
+                panel.actorValueProvider = context.providers
+                panel.meleeProvider = context.providers
+                panel.archeryProvider = context.providers
+                panel.ragdollProvider = context.providers
+                panel.combatProvider = context.providers
+                panel.physicsProvider = context.providers
+                let providers = context.providers
+                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                return panel
+            },
+            overrides: combatPhysicsOverrides
         ),
         DestinationDescriptor(
             id: "environment",
@@ -358,43 +375,6 @@ enum DestinationRegistry {
             }
         )
     ]
-
-    /// Only the Reset section carries overridden-ness: a dirty reference is the
-    /// world deviating from plugin data, which is this destination's notion of
-    /// a non-default value, and "Reset all" is what restores it. Inspecting and
-    /// saving change no setting.
-    private static let runtimeStateOverrides = DestinationOverrideActions(
-        isOverridden: { context in
-            RuntimeStateResetSection.isOverridden(provider: context.providers)
-        },
-        resetToDefaults: { context in
-            RuntimeStateResetSection.resetToDefaults(provider: context.providers)
-        }
-    )
-
-    /// Only the Scheduler section carries overridden-ness: a paused Papyrus VM
-    /// is the one thing under this destination that sits away from its default,
-    /// and the sidebar's reset resumes it. Stepping leaves no setting behind,
-    /// and the other three sections are read-only.
-    private static let scriptsOverrides = DestinationOverrideActions(
-        isOverridden: { context in
-            ScriptSchedulerSection.isOverridden(provider: context.providers)
-        },
-        resetToDefaults: { context in
-            ScriptSchedulerSection.resetToDefaults(provider: context.providers)
-        }
-    )
-
-    private static let uiLabOverrides = DestinationOverrideActions(
-        isOverridden: { context in
-            UILabControlsSection.isOverridden(provider: context.providers)
-                || SWFMovieSection.isOverridden(provider: context.providers)
-        },
-        resetToDefaults: { context in
-            UILabControlsSection.resetToDefaults(provider: context.providers)
-            SWFMovieSection.resetToDefaults(provider: context.providers)
-        }
-    )
 
     /// World-inspector destinations, in order.
     static var worldInspectors: [DestinationDescriptor] {

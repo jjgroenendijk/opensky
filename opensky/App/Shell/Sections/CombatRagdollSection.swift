@@ -17,7 +17,7 @@
 
 import AppKit
 
-final class LocomotionRagdollSection: PanelSectionViewController {
+final class CombatRagdollSection: PanelSectionViewController {
     weak var provider: (any RagdollControlProviding)? {
         didSet {
             guard isViewLoaded else { return }
@@ -36,7 +36,7 @@ final class LocomotionRagdollSection: PanelSectionViewController {
     )
 
     private let statsLabel = PanelComponents.statsLabel(
-        identifier: "LocomotionRagdollStatsLabel"
+        identifier: "CombatRagdollStatsLabel"
     )
 
     override var sectionTitle: String {
@@ -44,7 +44,7 @@ final class LocomotionRagdollSection: PanelSectionViewController {
     }
 
     override var sectionIdentifier: String {
-        "locomotionRagdoll"
+        "combatRagdoll"
     }
 
     var readout: String {

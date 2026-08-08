@@ -1,5 +1,6 @@
-// The Melee section of `World > Player & Locomotion` (issue #195, roadmap item
-// 15.4), split out of `PlayerLocomotionPanelTests.swift` for the strict-lint
+// The Melee section of `World > Combat & Physics` (issue #195, roadmap item
+// 15.4), split out of `PlayerLocomotionPanelTests.swift (issue #198 moved it here)` for the
+// strict-lint
 // type-body cap. Same panel, same fake, same three questions the other sections
 // are asked: does the readout describe the engine, does it say so when there is
 // no engine, and does every control reach the provider.
@@ -8,17 +9,17 @@ import AppKit
 @testable import opensky
 import Testing
 
-struct PlayerLocomotionMeleePanelTests {
+struct CombatMeleePanelTests {
     /// Accessibility ids are the UI-test API (docs/tools/app-ui.md); pin the
     /// melee set literally, and check every control is laid out and visible.
     @Test @MainActor
     func accessibilityIdentifiersArePinnedAndControlsAreVisible() throws {
-        let panel = PlayerLocomotionPanelViewController()
+        let panel = CombatPhysicsPanelViewController()
         let scrollView = try #require(panel.view as? NSScrollView)
         panel.view.frame = NSRect(x: 0, y: 0, width: 300, height: 1400)
         panel.view.layoutSubtreeIfNeeded()
 
-        #expect(panel.meleeSection.sectionIdentifier == "locomotionMelee")
+        #expect(panel.meleeSection.sectionIdentifier == "combatMelee")
         #expect(
             panel.weaponDrawnControl.accessibilityIdentifier() == "MeleeWeaponDrawnControl"
         )
@@ -27,7 +28,7 @@ struct PlayerLocomotionMeleePanelTests {
             panel.meleeSection.clearTraceControl.accessibilityIdentifier()
                 == "MeleeClearTraceControl"
         )
-        #expect(scriptsReadout("LocomotionMeleeStatsLabel", in: panel.view) != nil)
+        #expect(scriptsReadout("CombatMeleeStatsLabel", in: panel.view) != nil)
 
         for control: NSView in [
             panel.weaponDrawnControl, panel.attackControl,
@@ -49,7 +50,7 @@ struct PlayerLocomotionMeleePanelTests {
         panel.startInspecting()
         defer { panel.stopInspecting() }
 
-        let readout = try #require(scriptsReadout("LocomotionMeleeStatsLabel", in: panel.view))
+        let readout = try #require(scriptsReadout("CombatMeleeStatsLabel", in: panel.view))
         #expect(readout.contains("weapon drawn"))
         #expect(readout.contains("attack contact"))
         #expect(readout.contains("blocking"))
@@ -69,7 +70,7 @@ struct PlayerLocomotionMeleePanelTests {
         panel.startInspecting()
         defer { panel.stopInspecting() }
 
-        let readout = try #require(scriptsReadout("LocomotionMeleeStatsLabel", in: panel.view))
+        let readout = try #require(scriptsReadout("CombatMeleeStatsLabel", in: panel.view))
         #expect(readout.contains("Melee: unavailable"))
     }
 
@@ -129,21 +130,21 @@ struct PlayerLocomotionMeleePanelTests {
     @MainActor
     private static func panel(
         providers: FakeWorldProviders
-    ) throws -> PlayerLocomotionPanelViewController {
-        let descriptor = try #require(DestinationRegistry.destination(id: "playerLocomotion"))
+    ) throws -> CombatPhysicsPanelViewController {
+        let descriptor = try #require(DestinationRegistry.destination(id: "combatPhysics"))
         guard case let .worldInspector(makePanel) = descriptor.content else {
-            Issue.record("playerLocomotion is not a world inspector")
-            throw PlayerLocomotionMeleePanelTestError.notAWorldInspector
+            Issue.record("combatPhysics is not a world inspector")
+            throw CombatMeleePanelTestError.notAWorldInspector
         }
         let panel = try #require(
             makePanel(WorldPanelContext(providers: providers))
-                as? PlayerLocomotionPanelViewController
+                as? CombatPhysicsPanelViewController
         )
         panel.loadViewIfNeeded()
         return panel
     }
 }
 
-private enum PlayerLocomotionMeleePanelTestError: Error {
+private enum CombatMeleePanelTestError: Error {
     case notAWorldInspector
 }

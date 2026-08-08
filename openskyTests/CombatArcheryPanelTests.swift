@@ -1,4 +1,4 @@
-// The Archery section of `World > Player & Locomotion` (issue #196, roadmap
+// The Archery section of `World > Combat & Physics` (issue #196, roadmap
 // item 15.5, scope point 6). Same panel and same fake as the Melee section
 // beside it, asked the same three questions: does the readout describe the
 // engine, does it say so when there is no engine, and does every control reach
@@ -8,17 +8,17 @@ import AppKit
 @testable import opensky
 import Testing
 
-struct PlayerLocomotionArcheryPanelTests {
+struct CombatArcheryPanelTests {
     /// Accessibility ids are the UI-test API (docs/tools/app-ui.md); pin the
     /// archery set literally, and check every control is laid out and visible.
     @Test @MainActor
     func accessibilityIdentifiersArePinnedAndControlsAreVisible() throws {
-        let panel = PlayerLocomotionPanelViewController()
+        let panel = CombatPhysicsPanelViewController()
         let scrollView = try #require(panel.view as? NSScrollView)
         panel.view.frame = NSRect(x: 0, y: 0, width: 300, height: 1800)
         panel.view.layoutSubtreeIfNeeded()
 
-        #expect(panel.archerySection.sectionIdentifier == "locomotionArchery")
+        #expect(panel.archerySection.sectionIdentifier == "combatArchery")
         #expect(panel.archerySpawnControl.accessibilityIdentifier() == "ArcherySpawnControl")
         #expect(
             panel.archerySection.despawnControl.accessibilityIdentifier()
@@ -32,7 +32,7 @@ struct PlayerLocomotionArcheryPanelTests {
             panel.archerySection.clearTraceControl.accessibilityIdentifier()
                 == "ArcheryClearTraceControl"
         )
-        #expect(scriptsReadout("LocomotionArcheryStatsLabel", in: panel.view) != nil)
+        #expect(scriptsReadout("CombatArcheryStatsLabel", in: panel.view) != nil)
 
         for control: NSView in [
             panel.archerySpawnControl,
@@ -57,7 +57,7 @@ struct PlayerLocomotionArcheryPanelTests {
         panel.startInspecting()
         defer { panel.stopInspecting() }
 
-        let readout = try #require(scriptsReadout("LocomotionArcheryStatsLabel", in: panel.view))
+        let readout = try #require(scriptsReadout("CombatArcheryStatsLabel", in: panel.view))
         #expect(readout.contains("shot drawn"))
         #expect(readout.contains("arrow nocked"))
         #expect(readout.contains("LongBow"))
@@ -81,7 +81,7 @@ struct PlayerLocomotionArcheryPanelTests {
         panel.startInspecting()
         defer { panel.stopInspecting() }
 
-        let readout = try #require(scriptsReadout("LocomotionArcheryStatsLabel", in: panel.view))
+        let readout = try #require(scriptsReadout("CombatArcheryStatsLabel", in: panel.view))
         #expect(readout.contains("Archery: unavailable"))
     }
 
@@ -149,21 +149,21 @@ struct PlayerLocomotionArcheryPanelTests {
     @MainActor
     private static func panel(
         providers: FakeWorldProviders
-    ) throws -> PlayerLocomotionPanelViewController {
-        let descriptor = try #require(DestinationRegistry.destination(id: "playerLocomotion"))
+    ) throws -> CombatPhysicsPanelViewController {
+        let descriptor = try #require(DestinationRegistry.destination(id: "combatPhysics"))
         guard case let .worldInspector(makePanel) = descriptor.content else {
-            Issue.record("playerLocomotion is not a world inspector")
-            throw PlayerLocomotionArcheryPanelTestError.notAWorldInspector
+            Issue.record("combatPhysics is not a world inspector")
+            throw CombatArcheryPanelTestError.notAWorldInspector
         }
         let panel = try #require(
             makePanel(WorldPanelContext(providers: providers))
-                as? PlayerLocomotionPanelViewController
+                as? CombatPhysicsPanelViewController
         )
         panel.loadViewIfNeeded()
         return panel
     }
 }
 
-private enum PlayerLocomotionArcheryPanelTestError: Error {
+private enum CombatArcheryPanelTestError: Error {
     case notAWorldInspector
 }

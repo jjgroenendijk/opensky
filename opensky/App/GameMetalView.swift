@@ -29,6 +29,39 @@ final class GameMetalView: MTKView {
     /// rule against unadvertised keystrokes.
     var onJournalKey: (() -> Void)?
 
+    /// The cursor side effects of pointer capture, injectable so a headless
+    /// route can drive clicks (issue #198).
+    ///
+    /// Capture hides the system cursor and detaches it from the pointer, which
+    /// is right for a captured game window and wrong for a test process: an
+    /// acceptance route that clicks to attack would freeze the machine's own
+    /// cursor for the length of the run, and leave it frozen if the run failed
+    /// between the capture and the release. Swapping in `.none` lets a route
+    /// take the same code path through `mouseDown` without touching the
+    /// machine. The default is the real behaviour and every shipping caller
+    /// gets it.
+    struct PointerCapture {
+        let engage: () -> Void
+        let release: () -> Void
+
+        /// Hide the cursor and read raw deltas — what a captured window does.
+        static let system = PointerCapture(
+            engage: {
+                NSCursor.hide()
+                CGAssociateMouseAndMouseCursorPosition(0)
+            },
+            release: {
+                CGAssociateMouseAndMouseCursorPosition(1)
+                NSCursor.unhide()
+            }
+        )
+
+        /// Track capture state and leave the cursor alone.
+        static let none = PointerCapture(engage: {}, release: {})
+    }
+
+    var pointerCapture = PointerCapture.system
+
     private var captured = false
 
     /// US ANSI virtual key codes (Carbon `kVK_*`). Physical layout, not
@@ -249,17 +282,15 @@ final class GameMetalView: MTKView {
         captured = true
         window?.acceptsMouseMovedEvents = true
         window?.makeFirstResponder(self)
-        NSCursor.hide()
-        // Detach the hardware cursor from the pointer so we read pure deltas
-        // and the cursor cannot leave the window.
-        CGAssociateMouseAndMouseCursorPosition(0)
+        // Hides the cursor and detaches it from the pointer so we read pure
+        // deltas and the cursor cannot leave the window.
+        pointerCapture.engage()
     }
 
     private func releaseCapture() {
         guard captured else { return }
         captured = false
-        CGAssociateMouseAndMouseCursorPosition(1)
-        NSCursor.unhide()
+        pointerCapture.release()
         window?.acceptsMouseMovedEvents = false
         // Drop held keys/deltas so nothing sticks while uncaptured.
         input?.releaseAll()

@@ -40,6 +40,7 @@ The pieces it ties together: [melee combat](/engine/melee-combat.md),
 * [Measured cost](#measured-cost)
 * [Persistence](#persistence)
 * [Panel seam](#panel-seam)
+* [Verification surface](#verification-surface)
 * [Limits](#limits)
 
 ## What this is not: AI
@@ -314,9 +315,61 @@ incoming-hit trace, the damage-flash value, and the live transient counts agains
 their ceilings. The readout lines are formatted by `CombatLoopReadout` in the
 engine target, where a unit test can reach them without a window.
 
-The `World > Combat & Physics` destination that reads this ships with the M15
-acceptance gate (item 15.9), on the same reading items 15.3 to 15.6 made for
-their own seams.
+## Verification surface
+
+`World > Combat & Physics` (`Destination-combatPhysics`) is the M15 milestone's
+verification surface, and the gate's own record. Six sections, in the order a
+fight happens in: what the actors are worth, what the player swings, what the
+player shoots, what dies, who is angry, and what the physics is carrying while
+all of it runs. Melee, Archery and Death & Ragdoll moved here from
+`World > Player & Locomotion` with item 15.9, which is what items 15.4, 15.5 and
+15.6 each said would decide their home once the combat surface outgrew that
+panel.
+
+The Combat Loop section is this page's own:
+
+| Control | Id | Does |
+| --- | --- | --- |
+| Selected actor is hostile | `CombatHostilityControl` | writes the nearest resident actor's regard for the player |
+| Spawn dev target | `CombatSpawnDevTargetControl` | designates that actor and starts its attack clock |
+| Reset dev target | `CombatResetDevTargetControl` | stops the clock, calms it and forgets it |
+| Clear hit trace | `CombatClearTraceControl` | empties the incoming trace and its count |
+| Readout | `CombatLoopStatsLabel` | combat state and target, dev-target phase and counts, hostility, hits taken, live transients against their ceilings |
+
+The other five sections are documented on their own pages:
+[actor values](/engine/actor-values.md), [melee combat](/engine/melee-combat.md),
+[archery](/engine/archery.md), [ragdoll](/engine/ragdoll.md) and
+[dynamic bodies](/engine/dynamic-bodies.md).
+
+A frozen physics simulation is the destination's one overridden-ness — the
+sidebar dot lights for it and "Reset all" releases it. A damaged actor, an angry
+opponent, a corpse on the floor and a shoved crate are world state a user made on
+purpose, so none of them lights the dot and no reset undoes them.
+
+### The M15 acceptance record
+
+The record `docs/tools/sidebar-acceptance.md` requires, in the shape it fixes:
+
+```text
+Milestone: M15
+Sidebar path: World > Combat & Physics > Actor Values, > Melee, > Archery,
+  > Death & Ragdoll, > Combat Loop, > Physics
+Destination id: Destination-combatPhysics
+Controls exercised: ActorValueTargetControl, ActorValueKindControl,
+  ActorValueAmountControl, ActorValueDamageControl, MeleeWeaponDrawnControl,
+  MeleeAttackControl, ArcherySpawnControl, RagdollTriggerControl,
+  CombatHostilityControl, CombatSpawnDevTargetControl,
+  CombatResetDevTargetControl, PhysicsFreezeControl, PhysicsResetControl
+Readout: CombatLoopStatsLabel (plus CombatActorValuesStatsLabel,
+  CombatMeleeStatsLabel, CombatArcheryStatsLabel, CombatRagdollStatsLabel,
+  CombatPhysicsStatsLabel)
+Deterministic tests: M15AcceptanceTests, M15AcceptancePanelTests,
+  M15AcceptanceBudgetTests, M15AcceptanceRealDataTests (env-gated),
+  M15AcceptanceRenderTests (env-gated and device-gated), CombatPhysicsPanelTests,
+  DestinationRegistryTests, AppSidebarModelTests
+Local A/B (optional, never committed): logs/m15-weapon-drawn.png,
+  logs/m15-mid-swing.png
+```
 
 ## Limits
 

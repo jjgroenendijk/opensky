@@ -19,7 +19,7 @@
 
 import AppKit
 
-final class LocomotionMeleeSection: PanelSectionViewController {
+final class CombatMeleeSection: PanelSectionViewController {
     weak var provider: (any MeleeCombatControlProviding)? {
         didSet {
             guard isViewLoaded else { return }
@@ -35,7 +35,7 @@ final class LocomotionMeleeSection: PanelSectionViewController {
     let clearTraceControl = NSButton(title: "Clear hit trace", target: nil, action: nil)
 
     private let statsLabel = PanelComponents.statsLabel(
-        identifier: "LocomotionMeleeStatsLabel"
+        identifier: "CombatMeleeStatsLabel"
     )
 
     override var sectionTitle: String {
@@ -43,7 +43,7 @@ final class LocomotionMeleeSection: PanelSectionViewController {
     }
 
     override var sectionIdentifier: String {
-        "locomotionMelee"
+        "combatMelee"
     }
 
     var readout: String {

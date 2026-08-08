@@ -242,10 +242,35 @@ mutation clamps it into the new range.
 live readouts for the player and the nearest resident actor — current, maximums,
 regen rates, level, whether auto-calc applied, and the zero-health flag — plus
 damage, restore, refill and reset controls with a player / nearest-actor target
-selector. `GameViewController` conforms to it now; the panel itself ships with
-the M15 acceptance gate (item 15.9). Writing the conformance now is what proves
-the runtime can answer the questions a panel asks: every field is a plain read
-off `ActorValueRuntime`, with no accounting invented at the UI.
+selector. `GameViewController` conforms to it, and every field is a plain read
+off `ActorValueRuntime` with no accounting invented at the UI.
+
+## Verification surface
+
+`World > Combat & Physics > Actor Values` (`Destination-combatPhysics`,
+`PanelSection-combatActorValues`), shipped with the M15 acceptance gate
+(issue #198).
+
+| Control | Id | Does |
+| --- | --- | --- |
+| Target | `ActorValueTargetControl` | picks the player or the nearest resident actor |
+| Value | `ActorValueKindControl` | picks health, magicka or stamina |
+| Amount | `ActorValueAmountControl` | the number the two buttons apply |
+| Damage | `ActorValueDamageControl` | takes that amount off the selected value |
+| Restore | `ActorValueRestoreControl` | adds it back, capped at the derived maximum |
+| Refill | `ActorValueRefillControl` | returns every bar to its maximum |
+| Reset to records | `ActorValueResetControl` | drops the runtime state so the actor derives from records again |
+| Readout | `CombatActorValuesStatsLabel` | both actors' three bars, the derivation that produced the maximums, and the last action |
+
+The amount is a text field rather than a slider because a gate that damages an
+actor by exactly 40 has to be able to ask for exactly 40, and a field holding
+something that is not a number falls back to the documented default rather than
+sending a NaN into the runtime. The section is not overridable: a damaged actor
+is world state, and "Reset to records" is the deliberate way back rather than a
+sidebar reset that would refill every bar in the cell.
+
+Readout lines are formatted by `ActorValueControlReadout` in the engine target,
+where a unit test can reach them without a window.
 
 ## Naming an actor value
 

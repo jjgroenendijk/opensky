@@ -14,6 +14,13 @@
 // about where the eye is rather than what the player is doing. The camera-mode
 // popup appears on both, deliberately: it is the switch that starts the
 // simulation these readouts describe.
+//
+// Melee, Archery and Death & Ragdoll sat here through items 15.4, 15.5 and
+// 15.6, each noting that the M15 gate panel was where a `Combat & Physics`
+// destination belonged if the surface outgrew this one. Item 15.9 is that gate
+// and the surface did outgrow it — six combat and physics sections against this
+// panel's five locomotion ones — so the three moved to
+// `World > Combat & Physics` and this panel is locomotion again.
 
 import AppKit
 
@@ -21,9 +28,6 @@ final class PlayerLocomotionPanelViewController: InspectorPanelViewController {
     let stateSection = LocomotionStateSection()
     let graphSection = LocomotionGraphSection()
     let bindingsSection = LocomotionBindingsSection()
-    let meleeSection = LocomotionMeleeSection()
-    let archerySection = LocomotionArcherySection()
-    let ragdollSection = LocomotionRagdollSection()
     let motionSection = LocomotionMotionSection()
     let devSection = LocomotionDevSection()
 
@@ -44,29 +48,8 @@ final class PlayerLocomotionPanelViewController: InspectorPanelViewController {
         didSet { stateSection.cameraProvider = cameraProvider }
     }
 
-    /// The melee runtime rides its own seam, which only the Melee section
-    /// reads.
-    weak var meleeProvider: (any MeleeCombatControlProviding)? {
-        didSet { meleeSection.provider = meleeProvider }
-    }
-
-    /// The archery runtime rides its own seam, which only the Archery section
-    /// reads (issue #196).
-    weak var archeryProvider: (any ArcheryControlProviding)? {
-        didSet { archerySection.provider = archeryProvider }
-    }
-
-    /// The ragdoll runtime rides its own seam, which only the Death & Ragdoll
-    /// section reads (issue #197).
-    weak var ragdollProvider: (any RagdollControlProviding)? {
-        didSet { ragdollSection.provider = ragdollProvider }
-    }
-
     override func makeSections() -> [PanelSectionViewController] {
-        [
-            stateSection, graphSection, bindingsSection,
-            meleeSection, archerySection, ragdollSection, motionSection, devSection
-        ]
+        [stateSection, graphSection, bindingsSection, motionSection, devSection]
     }
 
     /// Control forwards for the verification-surface tests, mirroring
@@ -85,18 +68,6 @@ final class PlayerLocomotionPanelViewController: InspectorPanelViewController {
 
     var clearTraceControl: NSButton {
         motionSection.clearTraceControl
-    }
-
-    var weaponDrawnControl: NSButton {
-        meleeSection.weaponDrawnControl
-    }
-
-    var attackControl: NSButton {
-        meleeSection.attackControl
-    }
-
-    var archerySpawnControl: NSButton {
-        archerySection.spawnControl
     }
 
     var forcedGaitControl: NSPopUpButton {

@@ -1,4 +1,4 @@
-// The Death & Ragdoll section of `World > Player & Locomotion` (issue #197,
+// The Death & Ragdoll section of `World > Combat & Physics` (issue #197,
 // roadmap item 15.6, scope point 7). Same panel and same fake as the Melee and
 // Archery sections beside it, asked the same three questions: does the readout
 // describe the engine, does it say so when there is no engine, and does every
@@ -8,17 +8,17 @@ import AppKit
 @testable import opensky
 import Testing
 
-struct PlayerLocomotionRagdollPanelTests {
+struct CombatRagdollPanelTests {
     /// Accessibility ids are the UI-test API (docs/tools/app-ui.md); pin the
     /// ragdoll set literally, and check every control is laid out and visible.
     @Test @MainActor
     func accessibilityIdentifiersArePinnedAndControlsAreVisible() throws {
-        let panel = PlayerLocomotionPanelViewController()
+        let panel = CombatPhysicsPanelViewController()
         let scrollView = try #require(panel.view as? NSScrollView)
         panel.view.frame = NSRect(x: 0, y: 0, width: 300, height: 2200)
         panel.view.layoutSubtreeIfNeeded()
 
-        #expect(panel.ragdollSection.sectionIdentifier == "locomotionRagdoll")
+        #expect(panel.ragdollSection.sectionIdentifier == "combatRagdoll")
         #expect(
             panel.ragdollSection.triggerControl.accessibilityIdentifier()
                 == "RagdollTriggerControl"
@@ -35,7 +35,7 @@ struct PlayerLocomotionRagdollPanelTests {
             panel.ragdollSection.selfCollisionControl.accessibilityIdentifier()
                 == "RagdollSelfCollisionControl"
         )
-        #expect(scriptsReadout("LocomotionRagdollStatsLabel", in: panel.view) != nil)
+        #expect(scriptsReadout("CombatRagdollStatsLabel", in: panel.view) != nil)
 
         for control: NSView in [
             panel.ragdollSection.triggerControl,
@@ -69,7 +69,7 @@ struct PlayerLocomotionRagdollPanelTests {
         panel.startInspecting()
         defer { panel.stopInspecting() }
 
-        let readout = try #require(scriptsReadout("LocomotionRagdollStatsLabel", in: panel.view))
+        let readout = try #require(scriptsReadout("CombatRagdollStatsLabel", in: panel.view))
         #expect(readout.contains("Ragdolls: 3 (1 active, 2 settled)"))
         #expect(readout.contains("Bone bodies: 54 over 51 joints"))
         #expect(readout.contains("\(RagdollConstraintSolver.iterationCount) iterations/substep"))
@@ -87,7 +87,7 @@ struct PlayerLocomotionRagdollPanelTests {
         panel.startInspecting()
         defer { panel.stopInspecting() }
 
-        let readout = try #require(scriptsReadout("LocomotionRagdollStatsLabel", in: panel.view))
+        let readout = try #require(scriptsReadout("CombatRagdollStatsLabel", in: panel.view))
         #expect(readout.contains("converged"))
         #expect(!readout.contains("still violated"))
     }
@@ -101,7 +101,7 @@ struct PlayerLocomotionRagdollPanelTests {
         panel.startInspecting()
         defer { panel.stopInspecting() }
 
-        let readout = try #require(scriptsReadout("LocomotionRagdollStatsLabel", in: panel.view))
+        let readout = try #require(scriptsReadout("CombatRagdollStatsLabel", in: panel.view))
         #expect(readout.contains("Ragdolls: none"))
     }
 
@@ -138,21 +138,21 @@ struct PlayerLocomotionRagdollPanelTests {
     @MainActor
     private static func panel(
         providers: FakeWorldProviders
-    ) throws -> PlayerLocomotionPanelViewController {
-        let descriptor = try #require(DestinationRegistry.destination(id: "playerLocomotion"))
+    ) throws -> CombatPhysicsPanelViewController {
+        let descriptor = try #require(DestinationRegistry.destination(id: "combatPhysics"))
         guard case let .worldInspector(makePanel) = descriptor.content else {
-            Issue.record("playerLocomotion is not a world inspector")
-            throw PlayerLocomotionRagdollPanelTestError.notAWorldInspector
+            Issue.record("combatPhysics is not a world inspector")
+            throw CombatRagdollPanelTestError.notAWorldInspector
         }
         let panel = try #require(
             makePanel(WorldPanelContext(providers: providers))
-                as? PlayerLocomotionPanelViewController
+                as? CombatPhysicsPanelViewController
         )
         panel.loadViewIfNeeded()
         return panel
     }
 }
 
-private enum PlayerLocomotionRagdollPanelTestError: Error {
+private enum CombatRagdollPanelTestError: Error {
     case notAWorldInspector
 }

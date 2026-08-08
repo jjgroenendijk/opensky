@@ -364,8 +364,22 @@ because a crate should not be found in mid-air after a reload.
 `PhysicsControlProviding` is the bridge for `World > Combat & Physics`: one `Equatable`
 `DynamicBodyStatsSnapshot` out — body, active, sleeping, contact and substep counts —
 plus `setPhysicsFrozen(_:)` and `resetDynamicBodies()`. `GameViewController` conforms it.
-The panel itself ships with the milestone gate, item 15.9; the seam is specified and
-conformed here so the simulation is inspectable the moment the panel exists.
+
+The panel shipped with the milestone gate (issue #198):
+`World > Combat & Physics > Physics` (`Destination-combatPhysics`,
+`PanelSection-combatPhysics`).
+
+| Control | Id | Does |
+| --- | --- | --- |
+| Freeze body stepping | `PhysicsFreezeControl` | suspends integration with everything where it is |
+| Reset bodies | `PhysicsResetControl` | returns every body to the pose its cell placed it at and clears its velocity |
+| Readout | `CombatPhysicsStatsLabel` | body, awake and asleep counts, the last step's contacts and substeps, and pose recoveries |
+
+The freeze is the destination's one overridden-ness: a session left with the physics
+frozen looks broken and reads as a bug in the simulation rather than as a control someone
+left on, so the sidebar dot lights for it and "Reset all" releases it. Where a crate has
+fallen to is world state a player put it in, so the reset button is deliberate rather than
+automatic. Readout lines are formatted by `PhysicsReadout` in the engine target.
 
 ## Verification and budgets
 
