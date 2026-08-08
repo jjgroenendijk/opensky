@@ -4,6 +4,24 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-08
 
+* **The test loop got its overhead back (issue #417)**: `make test-fast` and the rewired
+  `make realtest` split `build-for-testing` from `test-without-building`, so a warm rerun of
+  one test costs 4–17 s instead of the ~80–85 s that session mining measured per invocation
+  — overhead that was the single largest wall-clock cost of fixing an issue, with the same
+  test re-run four to eleven times while iterating. The `.xctestrun` regenerates off an
+  mtime sweep of sources, `Config/`, the project file, and `.vendor/ffmpeg`; the RealData
+  root rides in it verbatim, so a gated test passes with no env injection. The per-run
+  `-enumerate-tests` selector validation is gone — an entire extra xcodebuild invocation per
+  single-test run — replaced by the post-run result-bundle count plus near-match suggestions
+  from a cached enumeration on the failure path only. The pre-push hook now skips its
+  `make test` + `make cli` rerun when both stamped the byte-identical tree green
+  (`tools/green-stamp.sh`); a dirty tree or any content change runs the full gate. What
+  issue #82 retired comes back without the fragile part: no `.xctestrun` rewriting, because
+  plan environment entries land in it already. Follow-up filed as issue #418 (move the
+  real-data suites to their own target). Updated pages: [testing](/testing.md),
+  [local environment](/tools/environment.md) (Xcode 26.6 `-enumerate-tests` flag limits,
+  `.xctestrun` naming and layout).
+
 * **Ragdoll self-collision is back, from the biped filter bits (issue #413, split from
   #407)**: a corpse's arms no longer pass through its own torso. Updated pages:
   [ragdoll](/engine/ragdoll.md), [NIF collision](/formats/nif-collision.md).

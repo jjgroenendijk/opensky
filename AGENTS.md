@@ -208,6 +208,16 @@ hedging. Optimize for the reader, not for brevity.
   GitHub issue (`gh issue create`) rather than an inline fix. One issue per idea; the title
   states the win, the body states where and why.
 - Commits carry no AI or co-author attribution trailers. The commit-msg hook enforces this.
+- Iterate on tests with `make test-fast [T='Suite/test()']` (or `make realtest T=...`, which
+  shares the same fast path): both reuse the last built products, so a warm rerun costs
+  seconds where `make test` costs over a minute. Batch several edits into one rerun instead
+  of rerunning per edit. Run the full `make test` once before pushing — it also stamps the
+  pre-push gate green, so the push does not rebuild what just passed.
+- Long runs — `make realtest-all`, `make test-sanitize`, `make install`, the first build in
+  a fresh worktree — go in a background shell, never a foreground call that can hit the
+  tool timeout, and never a synchronous `until grep` poll of a log.
+- One xcodebuild per derived-data tree at a time (two deadlock); start nothing until the
+  background run reports done.
 
 ## Skills — load before the matching work
 
