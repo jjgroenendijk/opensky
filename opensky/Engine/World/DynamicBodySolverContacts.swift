@@ -20,6 +20,61 @@ nonisolated extension DynamicBodySolver {
         bodies: inout [DynamicBody]
     ) {
         guard !contacts.isEmpty else { return }
+        wakeSleepingBodies(in: contacts, bodies: &bodies)
+        var accumulated = [Float](repeating: 0, count: contacts.count)
+        for _ in 0 ..< iterationCount {
+            solveContactVelocityIteration(
+                contacts: contacts, accumulated: &accumulated, bodies: &bodies
+            )
+        }
+        correctPositions(contacts: contacts, bodies: &bodies)
+    }
+
+    /// Solves a ragdoll's floor contacts and joints as one constraint set.
+    /// Alternating their order avoids giving either family the last word on
+    /// every iteration, while the shared accumulated impulses let both
+    /// converge across the entire substep.
+    static func resolveRagdoll(
+        contacts: [DynamicContact],
+        joints: [RagdollJointDefinition],
+        bodies: inout [DynamicBody],
+        dt: Float
+    ) -> Int {
+        wakeSleepingBodies(in: contacts, bodies: &bodies)
+        var contactImpulses = [Float](repeating: 0, count: contacts.count)
+        var jointState = RagdollConstraintSolver.VelocityState(jointCount: joints.count)
+        var violations = 0
+        let iterationTime = dt / Float(RagdollConstraintSolver.iterationCount)
+        for iteration in 0 ..< RagdollConstraintSolver.iterationCount {
+            if iteration.isMultiple(of: 2) {
+                solveContactVelocityIteration(
+                    contacts: contacts, accumulated: &contactImpulses, bodies: &bodies
+                )
+            }
+            violations = RagdollConstraintSolver.solveVelocityIteration(
+                joints: joints,
+                bodies: &bodies,
+                iterationTime: iterationTime,
+                state: &jointState
+            )
+            if !iteration.isMultiple(of: 2) {
+                solveContactVelocityIteration(
+                    contacts: contacts, accumulated: &contactImpulses, bodies: &bodies
+                )
+            }
+        }
+        RagdollConstraintSolver.correctPoses(joints: joints, bodies: &bodies)
+        // Leave contacts satisfied at the substep boundary. Joint drift
+        // recovery can otherwise push a bone back into the floor after contact
+        // recovery has finished, manufacturing the next substep's impulse.
+        correctPositions(contacts: contacts, bodies: &bodies)
+        return violations
+    }
+
+    private static func wakeSleepingBodies(
+        in contacts: [DynamicContact],
+        bodies: inout [DynamicBody]
+    ) {
         // A sleeping body touched by a *moving* one rejoins the simulation,
         // which is what makes a shoved crate knock over the one beside it.
         //
@@ -44,18 +99,21 @@ nonisolated extension DynamicBodySolver {
                 bodies[other].wake()
             }
         }
-        var accumulated = [Float](repeating: 0, count: contacts.count)
-        for _ in 0 ..< iterationCount {
-            for (index, contact) in contacts.enumerated() {
-                accumulated[index] = applyNormalImpulse(
-                    contact,
-                    accumulated: accumulated[index],
-                    bodies: &bodies
-                )
-                applyFrictionImpulse(contact, normalImpulse: accumulated[index], bodies: &bodies)
-            }
+    }
+
+    private static func solveContactVelocityIteration(
+        contacts: [DynamicContact],
+        accumulated: inout [Float],
+        bodies: inout [DynamicBody]
+    ) {
+        for (index, contact) in contacts.enumerated() {
+            accumulated[index] = applyNormalImpulse(
+                contact,
+                accumulated: accumulated[index],
+                bodies: &bodies
+            )
+            applyFrictionImpulse(contact, normalImpulse: accumulated[index], bodies: &bodies)
         }
-        correctPositions(contacts: contacts, bodies: &bodies)
     }
 
     /// Pushes leftover penetration out of the positions, split between two

@@ -143,14 +143,10 @@ nonisolated struct RagdollInstance: Sendable {
     /// How long the whole-ragdoll settling test watches for, in seconds, and how
     /// far the root may travel in that time and still count as at rest.
     ///
-    /// A ragdoll needs a settling test of its own because 15.2's per-body one
-    /// never fires on a jointed chain. Measured on the vanilla humanoid: a
-    /// corpse that has visibly stopped still carries thirty to fifty engine
-    /// units a second in its hands and feet, far above `sleepLinearSpeed`, as
-    /// the joint and contact solvers trade a small residual back and forth. The
-    /// per-bone test therefore never lets the corpse sleep, and a corpse that
-    /// never sleeps is also never persisted (issue #407 tracks shrinking that
-    /// residual).
+    /// The interleaved constraint solver lets each bone reach 15.2's ordinary
+    /// sleep threshold. This whole-ragdoll test remains the coordinated view:
+    /// an uneven floor must not leave one marginal bone delaying persistence
+    /// after the corpse as a whole has stopped travelling.
     ///
     /// So the question asked here is the one a viewer actually asks — has the
     /// body stopped *going* anywhere — and it is asked of displacement rather
@@ -159,6 +155,8 @@ nonisolated struct RagdollInstance: Sendable {
     /// it again exactly as it wakes any 15.2 body.
     static let settleWindow: Float = 1
     static let settleDistance: Float = 3
+    static let settleJointSeparation: Float = 2
+    static let settleAngularViolation: Float = 0.06
 
     /// Advances the ragdoll by one fixed step of the 15.2 clock.
     @discardableResult
@@ -185,10 +183,29 @@ nonisolated struct RagdollInstance: Sendable {
         settleElapsed = 0
         settleReference = root
         guard simd_distance(root, reference) < Self.settleDistance else { return }
+        guard constraintsAreSettled else { return }
         for index in bodies.indices {
             bodies[index].isSleeping = true
             bodies[index].linearVelocity = .zero
             bodies[index].angularVelocity = .zero
+        }
+        RagdollConstraintSolver.correctPoses(
+            joints: definition.joints, bodies: &bodies, includeSleeping: true
+        )
+    }
+
+    /// Prevents the coordinated fallback from freezing a visibly unfinished
+    /// joint merely because the root has stopped travelling.
+    private var constraintsAreSettled: Bool {
+        definition.joints.allSatisfy { joint in
+            let anchors = joint.anchors(in: bodies)
+            guard simd_distance(anchors.a, anchors.b) < Self.settleJointSeparation else {
+                return false
+            }
+            let frames = joint.worldFrames(in: bodies)
+            return RagdollJointLimitPass.passes(of: joint, frames: frames).allSatisfy {
+                $0.error < Self.settleAngularViolation
+            }
         }
     }
 

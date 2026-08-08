@@ -147,6 +147,14 @@ Three rules keep it bounded, and each was put there by a measurement rather than
   units apart forever. But applying each pass in turn lets one substep spend the whole
   correction budget several times over, which is a teleport rather than a correction — and a
   teleport does work against gravity. Accumulate, clamp once, apply once.
+* **Contacts and joints are one velocity solve.** Ordinary clutter still takes four contact
+  iterations. A ragdoll takes sixteen combined iterations, alternating whether the contact or
+  joint rows run first. Their accumulated impulses survive for the whole substep, so the
+  floor and the chain converge together instead of four contact passes handing their answer
+  to eight joint passes that always overwrite it last. Pose recovery restores joint drift
+  first and floor penetration last, so it cannot manufacture the next substep's contact.
+  The synthetic chain and vanilla humanoid both reach the ordinary per-body sleep thresholds
+  through this path.
 * **Every impulse is finite-checked and every effective mass is checked for magnitude before
   it divides anything.** A degenerate joint contributes nothing rather than a NaN.
 
@@ -167,21 +175,26 @@ The cost is the classic ragdoll self-intersection: a limb can pass through the t
 avoids it with a per-biped-part collision filter whose semantics this engine has not
 confirmed against an open source. Reading `NIFCollisionFilter`'s biped bits correctly is the
 honest way to get self-collision back, and it is tracked on
-[issue #407](https://github.com/jjgroenendijk/opensky/issues/407) rather than guessed at
+[issue #413](https://github.com/jjgroenendijk/opensky/issues/413) rather than guessed at
 here.
 
 ## Settling
 
-A ragdoll needs a settling test of its own, because 15.2's per-body one never fires on a
-jointed chain: a corpse that has visibly stopped still carries thirty to fifty engine units
-a second in its hands and feet, far above `DynamicBodySolver.sleepLinearSpeed`, as the joint
-and contact passes trade a small residual back and forth (issue #407).
+A ragdoll's interleaved constraint solve lets every bone reach 15.2's ordinary per-body
+sleep thresholds. Before issue #407, the separate passes traded a thirty-to-fifty-unit-per-
+second residual back and forth: the contact pass satisfied the floor, the joint pass always
+ran last and reopened that solution, and the corpse crept about a unit a second.
 
-So `RagdollInstance` asks the question a viewer actually asks — has the body stopped *going*
-anywhere — and asks it of displacement rather than velocity. The root travelling less than
-`settleDistance` over `settleWindow` puts every bone to sleep. It cannot fire mid-fall:
-gravity moves a falling body hundreds of units in that window. An impulse wakes the ragdoll
-again exactly as it wakes any 15.2 body.
+`RagdollInstance` still carries a coordinated settling test. It asks the question a viewer
+actually asks — has the body stopped *going* anywhere — and asks it of displacement rather
+than the noisiest individual bone. The root travelling less than `settleDistance` over
+`settleWindow` puts every bone to sleep together, so an uneven floor cannot let one marginal
+bone delay persistence after the corpse has stopped. It cannot fire mid-fall: gravity moves
+a falling body hundreds of units in that window. It also waits until every pivot is within
+two engine units and every angular limit within 0.06 radians, so the coordination cannot
+freeze an unfinished pose merely because the root stopped first. It then makes one final
+pose-only joint projection after sleeping the bones; no velocity is derived from that move.
+An impulse wakes the ragdoll again exactly as it wakes any 15.2 body.
 
 A sleeping ragdoll is not solved at all — the joint pass is skipped along with the
 integration. So a settled corpse costs nothing, and it keeps the pose it settled into
@@ -305,10 +318,8 @@ implementation of it.
 
 ## Known limits
 
-* **Bones keep a residual after the corpse has stopped** — thirty to fifty engine units a
-  second, bounded but not zero, with a creep of about a unit a second until the settling
-  test fires. [Issue #407](https://github.com/jjgroenendijk/opensky/issues/407).
-* **No self-collision within a ragdoll**, as above. Same issue.
+* **No self-collision within a ragdoll**, as above. Tracked by
+  [issue #413](https://github.com/jjgroenendijk/opensky/issues/413).
 * **Ragdolls do not collide with each other.** Two corpses in a pile would need the solver
   to arbitrate between two constraint sets at once, which is more than this item takes on.
 * **Only the player's graph can be raised on**, so every NPC death takes the fallback route.

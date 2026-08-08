@@ -45,10 +45,7 @@ struct RagdollRealDataTests {
         let definition = try #require(Self.definition(vfs: vfs), "no ragdoll built")
 
         // Every body resolved onto a bone and every joint onto two of them.
-        #expect(definition.skipped.isEmpty, "skipped: \(definition.skipped)")
-        #expect(definition.boneCount == Self.expectedBoneCount)
-        #expect(definition.jointCount == Self.expectedJointCount)
-        #expect(Set(definition.bones.map(\.boneName)).count == definition.boneCount)
+        Self.verifyDefinitionShape(definition)
 
         let bind = try Self.bindMatrices(vfs: vfs)
         var instance = try #require(RagdollInstance(
@@ -61,6 +58,14 @@ struct RagdollRealDataTests {
             key: .generated(1)
         ))
 
+        // Drive the shared solver directly before `RagdollInstance` can apply
+        // its whole-corpse displacement fallback. This is the regression for
+        // issue #407: every vanilla bone must reach 15.2's ordinary sleep test.
+        let ordinarySleepStep = Self.ordinarySleepStep(
+            bodies: instance.bodies, joints: definition.joints
+        )
+        #expect(ordinarySleepStep != nil, "per-body sleep never settled every vanilla bone")
+
         // The joints start close to satisfied: a ragdoll handed off from the
         // bind pose is not already fighting its own limits.
         //
@@ -69,10 +74,7 @@ struct RagdollRealDataTests {
         // 2.6, the neck by 1.4, symmetrically left and right, which is authored
         // data rather than a decode error. The bound is above the worst of
         // those and far below a bone length.
-        for joint in definition.joints {
-            let separation = RagdollFixture.separation(of: joint, in: instance)
-            #expect(separation < 6, "joint starts \(separation) units apart")
-        }
+        Self.verifyInitialJointAlignment(definition: definition, instance: instance)
 
         let world = RagdollFixture.floorWorld()
         var settledStep: Int?
@@ -126,6 +128,7 @@ struct RagdollRealDataTests {
                 definition: definition,
                 instance: instance,
                 settledStep: settledStep,
+                ordinarySleepStep: ordinarySleepStep,
                 worstSeparation: worstSeparation
             )
         )
@@ -154,6 +157,42 @@ struct RagdollRealDataTests {
     }
 
     // MARK: - Fixture
+
+    private static func verifyDefinitionShape(_ definition: RagdollDefinition) {
+        #expect(definition.skipped.isEmpty, "skipped: \(definition.skipped)")
+        #expect(definition.boneCount == expectedBoneCount)
+        #expect(definition.jointCount == expectedJointCount)
+        #expect(Set(definition.bones.map(\.boneName)).count == definition.boneCount)
+    }
+
+    private static func verifyInitialJointAlignment(
+        definition: RagdollDefinition,
+        instance: RagdollInstance
+    ) {
+        for joint in definition.joints {
+            let separation = RagdollFixture.separation(of: joint, in: instance)
+            #expect(separation < 6, "joint starts \(separation) units apart")
+        }
+    }
+
+    private static func ordinarySleepStep(
+        bodies initialBodies: [DynamicBody],
+        joints: [RagdollJointDefinition]
+    ) -> Int? {
+        var bodies = initialBodies
+        for step in 0 ..< 3600 {
+            DynamicBodySolver.step(
+                bodies: &bodies,
+                world: RagdollFixture.floorWorld(),
+                dt: WalkController.fixedTimeStep,
+                joints: joints
+            )
+            if bodies.allSatisfy(\.isSleeping) {
+                return step
+            }
+        }
+        return nil
+    }
 
     private static func definition(vfs: VirtualFileSystem) -> RagdollDefinition? {
         guard
@@ -191,6 +230,7 @@ struct RagdollRealDataTests {
         definition: RagdollDefinition,
         instance: RagdollInstance,
         settledStep: Int?,
+        ordinarySleepStep: Int?,
         worstSeparation: Float
     ) -> String {
         var lines = ["# Vanilla humanoid ragdoll (issue #197, item 15.6)", ""]
@@ -199,6 +239,8 @@ struct RagdollRealDataTests {
         lines.append("skipped: \(definition.skipped.count)")
         let settled = settledStep.map { "step \($0)" } ?? "never"
         lines.append("settled: \(settled)")
+        let ordinarySleep = ordinarySleepStep.map { "step \($0)" } ?? "never"
+        lines.append("ordinary per-body sleep: \(ordinarySleep)")
         lines.append(String(format: "worst joint separation: %.3f units", worstSeparation))
         lines.append("joint violations at rest: \(instance.lastStats.jointViolationCount)")
         lines.append("pose recoveries: \(instance.lastStats.recoveredBodyCount)")
