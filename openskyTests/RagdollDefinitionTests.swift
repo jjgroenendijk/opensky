@@ -10,10 +10,6 @@ import simd
 import Testing
 
 struct RagdollDefinitionTests {
-    /// A two-bone skeleton: bones a spacing apart along x, each with a capsule
-    /// body centred on its bone, joined by a ragdoll cone at the midpoint.
-    private static let spacing: Float = 30
-
     @Test
     func resolvesBodiesOntoBonesByName() throws {
         let model = Self.model(boneNames: ["Root", "Limb"])
@@ -42,7 +38,10 @@ struct RagdollDefinitionTests {
         // separately, rather than the bone's loss standing in for both.
         #expect(definition.skipped == [
             .unresolvedBoneName("NotOnThisSkeleton"),
-            .unresolvedJointEnd(block: 100 * 1000 + 101)
+            .unresolvedJointEnd(block: RagdollSkeletonFixture.coneBlock(
+                entityA: RagdollSkeletonFixture.block(of: 0),
+                entityB: RagdollSkeletonFixture.block(of: 1)
+            ))
         ])
         #expect(definition.joints.isEmpty)
     }
@@ -114,113 +113,14 @@ struct RagdollDefinitionTests {
 
     // MARK: - Fixture
 
-    /// Bind matrices for `count` bones spaced along x.
-    private static func bindMatrices(count: Int) -> [float4x4] {
-        (0 ..< count).map { MatrixMath.translation(SIMD3(Float($0) * spacing, 0, 0)) }
-    }
-
-    /// One collision body per named bone, plus a ragdoll cone joining each
-    /// consecutive pair at the midpoint between them.
-    ///
-    /// The pivots are authored in each body's own entity space, exactly as a
-    /// NIF authors them: the joint sits at `+spacing/2` from the first body and
-    /// `-spacing/2` from the second.
+    /// The skeleton itself is `RagdollSkeletonFixture`'s, which
+    /// `RagdollSelfCollisionTests` builds on too. This suite says nothing about
+    /// collision filters, so it takes the fixture's inert static default.
     private static func model(boneNames: [String]) -> NIFCollisionModel {
-        var bodies: [NIFCollisionBody] = []
-        for (index, name) in boneNames.enumerated() {
-            let block = 100 + index
-            var constraints: [NIFCollisionConstraint] = []
-            if index > 0 {
-                constraints.append(cone(entityA: block - 1, entityB: block))
-            }
-            if index + 1 < boneNames.count {
-                constraints.append(cone(entityA: block, entityB: block + 1))
-            }
-            bodies.append(body(name: name, block: block, index: index, constraints: constraints))
-        }
-        return NIFCollisionModel(
-            bodies: bodies, unsupportedReachableBlocks: [:], decodeFailures: []
-        )
+        RagdollSkeletonFixture.model(boneNames: boneNames)
     }
 
-    private static func body(
-        name: String,
-        block: Int,
-        index: Int,
-        constraints: [NIFCollisionConstraint]
-    ) -> NIFCollisionBody {
-        let filter = NIFCollisionFilter(layer: 1, flags: 0, group: 0)
-        return NIFCollisionBody(
-            targetBlock: Int32(block),
-            targetName: name,
-            bodyBlock: block,
-            carrier: .blendCollisionObject,
-            collisionObjectFlags: 0,
-            worldFilter: filter,
-            rigidBodyFilter: filter,
-            entityResponse: 1,
-            rigidBodyResponse: 1,
-            dynamics: dynamics,
-            constraints: constraints,
-            bodyFlags: 0,
-            transform: MatrixMath.translation(SIMD3(Float(index) * spacing, 0, 0)),
-            shapes: [NIFCollisionShape(
-                transform: matrix_identity_float4x4,
-                geometry: .sphere(radius: 6)
-            )]
-        )
-    }
-
-    private static var dynamics: NIFRigidBodyDynamics {
-        NIFRigidBodyDynamics(
-            mass: 8,
-            inertiaTensor: matrix_identity_float3x3,
-            centerOfMass: .zero,
-            linearVelocity: .zero,
-            angularVelocity: .zero,
-            linearDamping: 0.1,
-            angularDamping: 0.05,
-            timeFactor: 1,
-            gravityFactor: 1,
-            friction: 0.5,
-            rollingFrictionMultiplier: 0,
-            restitution: 0.3,
-            maxLinearVelocity: 100,
-            maxAngularVelocity: 30,
-            penetrationDepth: 0,
-            rawMotionSystem: NIFMotionSystem.boxInertia.rawValue,
-            rawDeactivatorType: 0,
-            rawSolverDeactivation: 0,
-            rawQualityType: 0
-        )
-    }
-
-    private static func cone(entityA: Int, entityB: Int) -> NIFCollisionConstraint {
-        NIFCollisionConstraint(
-            block: entityA * 1000 + entityB,
-            entityA: Int32(entityA),
-            entityB: Int32(entityB),
-            priority: 1,
-            data: .ragdoll(NIFRagdollConstraint(
-                frameA: frame(pivot: SIMD3(spacing / 2, 0, 0)),
-                frameB: frame(pivot: SIMD3(-spacing / 2, 0, 0)),
-                coneMaxAngle: 0.5,
-                planeMinAngle: -0.4,
-                planeMaxAngle: 0.4,
-                twistMinAngle: -0.3,
-                twistMaxAngle: 0.3,
-                maxFriction: 10,
-                motor: .none
-            ))
-        )
-    }
-
-    private static func frame(pivot: SIMD3<Float>) -> NIFConstraintRagdollFrame {
-        NIFConstraintRagdollFrame(
-            twist: SIMD3(1, 0, 0),
-            plane: SIMD3(0, 0, 1),
-            motor: SIMD3(0, 1, 0),
-            pivot: pivot
-        )
+    private static func bindMatrices(count: Int) -> [float4x4] {
+        RagdollSkeletonFixture.bindMatrices(count: count)
     }
 }

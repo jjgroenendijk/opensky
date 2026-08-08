@@ -31,6 +31,9 @@ final class LocomotionRagdollSection: PanelSectionViewController {
     let freezeControl = NSButton(
         checkboxWithTitle: "Freeze ragdoll stepping", target: nil, action: nil
     )
+    let selfCollisionControl = NSButton(
+        checkboxWithTitle: "Bones collide with each other", target: nil, action: nil
+    )
 
     private let statsLabel = PanelComponents.statsLabel(
         identifier: "LocomotionRagdollStatsLabel"
@@ -61,6 +64,10 @@ final class LocomotionRagdollSection: PanelSectionViewController {
             freezeControl, target: self, action: #selector(toggleFreeze),
             identifier: "RagdollFreezeControl"
         )
+        PanelComponents.configureCheckbox(
+            selfCollisionControl, target: self, action: #selector(toggleSelfCollision),
+            identifier: "RagdollSelfCollisionControl"
+        )
         return [
             PanelComponents.note(
                 "An actor whose health reaches zero raises the death events its behavior "
@@ -72,17 +79,27 @@ final class LocomotionRagdollSection: PanelSectionViewController {
             ),
             PanelComponents.group([
                 PanelComponents.buttonRow([triggerControl, clearControl]),
-                freezeControl
+                freezeControl,
+                selfCollisionControl
             ]),
+            PanelComponents.note(
+                "Bones collide with each other only in the pairs the skeleton's own Havok "
+                    + "biped part numbers admit, which is what stops an arm passing through "
+                    + "the torso. Switching it off reverts to every bone ignoring every "
+                    + "other, and wakes the corpses so the difference is visible on the "
+                    + "ones already lying down."
+            ),
             statsLabel
         ]
     }
 
     override func syncControls() {
-        for control in [triggerControl, clearControl, freezeControl] {
+        for control in [triggerControl, clearControl, freezeControl, selfCollisionControl] {
             control.isEnabled = provider != nil
         }
-        freezeControl.state = provider?.ragdollStatsSnapshot.isFrozen == true ? .on : .off
+        let snapshot = provider?.ragdollStatsSnapshot
+        freezeControl.state = snapshot?.isFrozen == true ? .on : .off
+        selfCollisionControl.state = snapshot?.isSelfCollisionEnabled == true ? .on : .off
     }
 
     override func refreshReadout() {
@@ -95,6 +112,7 @@ final class LocomotionRagdollSection: PanelSectionViewController {
             RagdollReadout.ragdollText(for: snapshot),
             RagdollReadout.boneBodyText(for: snapshot),
             RagdollReadout.solverText(for: snapshot),
+            RagdollReadout.selfCollisionText(for: snapshot),
             RagdollReadout.recoveryText(for: snapshot)
         ].joined(separator: "\n")
     }
@@ -111,6 +129,11 @@ final class LocomotionRagdollSection: PanelSectionViewController {
 
     @objc private func toggleFreeze() {
         provider?.setRagdollFrozen(freezeControl.state == .on)
+        finishInteraction()
+    }
+
+    @objc private func toggleSelfCollision() {
+        provider?.setRagdollSelfCollision(selfCollisionControl.state == .on)
         finishInteraction()
     }
 }

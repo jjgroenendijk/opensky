@@ -87,7 +87,11 @@ nonisolated extension RagdollDefinition {
                 boneName: name,
                 boneIndex: boneIndex,
                 body: definition,
-                bindBoneMatrix: bindMatrices[boneIndex]
+                bindBoneMatrix: bindMatrices[boneIndex],
+                // Nil on a body whose filter switched collision off outright, so
+                // such a bone is admitted into no pair at all rather than into
+                // the ones its part number would otherwise allow.
+                bipedPart: body.hasNoCollision ? nil : body.bipedPart
             ))
         }
         return resolved

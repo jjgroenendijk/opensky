@@ -70,9 +70,15 @@ enum RagdollFixture {
 
     /// A definition whose bones carry no skeleton mapping, for the solver suites
     /// that only exercise the physics.
+    ///
+    /// `parts` are the biped part numbers the bones' source filters would have
+    /// carried, index-aligned with the bones. Nil throughout — the default —
+    /// means no bone carries one, which admits no self-collision pair at all and
+    /// is the behaviour every suite written before issue #413 assumes.
     static func definition(
         boneCount: Int,
-        joints: [RagdollJointDefinition]
+        joints: [RagdollJointDefinition],
+        parts: [UInt8?] = []
     ) -> RagdollDefinition {
         let volume = DynamicCollisionVolume.radial(
             first: SIMD3(-boneHalfLength, 0, 0),
@@ -86,7 +92,8 @@ enum RagdollFixture {
                 body: DynamicBodyDefinition(volumes: [volume], mass: boneMass),
                 bindBoneMatrix: MatrixMath.translation(
                     SIMD3(Float(index) * boneHalfLength * 2, 0, 0)
-                )
+                ),
+                bipedPart: parts.indices.contains(index) ? parts[index] : nil
             )
         }
         return RagdollDefinition(bones: bones, joints: joints)

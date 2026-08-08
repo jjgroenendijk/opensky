@@ -53,6 +53,10 @@ nonisolated struct DynamicStepStats: Equatable, Sendable {
     var activeBodyCount = 0
     var sleepingBodyCount = 0
     var contactCount = 0
+    /// Contacts between two dynamic bodies rather than against static geometry.
+    /// On a ragdoll that is bone against bone, which is what the self-collision
+    /// filter decides the set of (issue #413).
+    var pairContactCount = 0
     var substepCount = 0
     /// Bodies whose integrated pose came back non-finite and were reset. Always
     /// zero on well-formed input; a non-zero value is a bug, not a tolerance.
@@ -120,29 +124,28 @@ nonisolated enum DynamicBodySolver {
     /// solver, over the same velocities, which is what lets a bone resting on
     /// the floor and hanging off its neighbour satisfy both at once.
     ///
-    /// And the bones do not collide with each other. A vanilla humanoid ragdoll
-    /// is eighteen capsules whose radii run to eighteen engine units on bones
-    /// about twenty long, so they overlap heavily by construction — not just at
-    /// the joints, but left thigh against right thigh at the pelvis and upper
-    /// arm against spine at the shoulder. Left switched on, the real-data probe
-    /// measured a corpse lying still on a floor carrying thirty to forty-five
-    /// contacts and jittering at twenty-five engine units a second forever,
-    /// because every one of those overlaps pushes and every joint pulls back;
-    /// it never fell under the sleep threshold and so never came to rest and
-    /// was never persisted. Switched off, the same corpse settles.
+    /// And the bones collide with each other only where `selfCollision` says
+    /// they may. A vanilla humanoid ragdoll is eighteen capsules whose radii run
+    /// to eighteen engine units on bones about twenty long, so neighbouring
+    /// bones overlap heavily by construction — not just at the joints, but left
+    /// thigh against right thigh at the pelvis and upper arm against spine at
+    /// the shoulder. With every pair switched on, the real-data probe measured a
+    /// corpse lying still on a floor carrying thirty to forty-five contacts and
+    /// jittering at twenty-five engine units a second forever, because every one
+    /// of those overlaps pushes and every joint pulls back. `RagdollSelfCollision`
+    /// admits only the pairs the bodies' own biped part numbers and joint graph
+    /// leave apart (issue #413), which on the vanilla humanoid is every pair that
+    /// does not already overlap at the bind pose.
     ///
-    /// The visible cost is stated rather than hidden: a limb can pass through
-    /// the torso, which is the classic ragdoll self-intersection. Havok avoids
-    /// it with a per-biped-part collision filter whose semantics this engine has
-    /// not confirmed against an open source; reading `NIFCollisionFilter`'s
-    /// biped bits correctly is the honest way to get self-collision back, and it
-    /// is a later item's, not a guess this one makes.
+    /// The default is the empty set, so a caller that says nothing gets the
+    /// bones-do-not-touch behaviour rather than an unfiltered pile of contacts.
     @discardableResult
     static func step(
         bodies: inout [DynamicBody],
         world: DynamicStepWorld,
         dt: Float,
-        joints: [RagdollJointDefinition] = []
+        joints: [RagdollJointDefinition] = [],
+        selfCollision: RagdollSelfCollision = .disabled
     ) -> DynamicStepStats {
         var stats = DynamicStepStats()
         guard dt > 0, dt.isFinite, !bodies.isEmpty else {
@@ -161,9 +164,14 @@ nonisolated enum DynamicBodySolver {
                 integratePose(&bodies[index], dt: substepTime, stats: &stats)
             }
             let contacts = gatherContacts(
-                bodies: bodies, world: world, pairContacts: !isRagdoll
+                bodies: bodies,
+                world: world,
+                selfCollision: isRagdoll ? selfCollision : nil
             )
             stats.contactCount = max(stats.contactCount, contacts.count)
+            stats.pairContactCount = max(
+                stats.pairContactCount, contacts.count(where: { $0.other != nil })
+            )
             // A ragdoll whose every bone is asleep is not solved at all. Its
             // joints are as satisfied as they are going to get, nothing is
             // moving them, and running the pass anyway both costs a settled
@@ -251,10 +259,12 @@ nonisolated enum DynamicBodySolver {
 
     // MARK: - Contacts
 
+    /// `selfCollision` is nil for ordinary clutter, where every pair of bodies
+    /// may touch, and the admitted set for a ragdoll, where most may not.
     private static func gatherContacts(
         bodies: [DynamicBody],
         world: DynamicStepWorld,
-        pairContacts: Bool = true
+        selfCollision: RagdollSelfCollision? = nil
     ) -> [DynamicContact] {
         // Sampling a body's collider allocates, and every body is asked for its
         // samples once against the static world and once per neighbour. Doing it
@@ -271,8 +281,11 @@ nonisolated enum DynamicBodySolver {
                 shapes: world.staticCandidates(body.worldBounds)
             )
         }
-        for first in bodies.indices where pairContacts {
+        for first in bodies.indices {
             for second in bodies.indices where second > first {
+                if let selfCollision, !selfCollision.admits(first, second) {
+                    continue
+                }
                 guard !bodies[first].isSleeping || !bodies[second].isSleeping else { continue }
                 // Bounding spheres reject a pair before any AABB is built, which
                 // is most pairs in a scene where clutter is spread around a room.

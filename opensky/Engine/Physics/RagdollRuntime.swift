@@ -304,6 +304,13 @@ final class RagdollRuntime {
         set { world.isFrozen = newValue }
     }
 
+    /// Whether a ragdoll's own bones may touch each other, which is what the
+    /// panel's self-collision control drives (issue #413).
+    var isSelfCollisionEnabled: Bool {
+        get { world.isSelfCollisionEnabled }
+        set { world.isSelfCollisionEnabled = newValue }
+    }
+
     /// Stops simulating the oldest corpses until at most `limit` remain, which
     /// is the combat loop's transient cap reaching the registry (issue #374).
     /// The deaths themselves are the store's and survive; what a trimmed corpse
