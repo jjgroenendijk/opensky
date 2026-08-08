@@ -39,8 +39,8 @@ extension GameViewController {
         // A settled rigid body persists as an ordinary transform override
         // (issue #193), so a dropped bowl is where it rolled to after a save and
         // reload, and the cell that owns it is the one whose rebuild redraws it.
-        controller.onBodySettled = { [weak controller] key, transform in
-            worldState.set(transform, for: key, in: controller?.cellLocation(of: key))
+        controller.onBodySettled = { key, transform, placingCell in
+            worldState.set(transform, for: key, in: placingCell)
         }
         // And until it settles, the mesh follows the body rather than waiting
         // for that rebuild. Published inside the frame's own update, below, so

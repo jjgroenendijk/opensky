@@ -44,7 +44,9 @@ struct CellStreamerPhysicsTests {
         ))
 
         #expect(streamer.dynamicBodies.bodyCount == 1)
-        #expect(streamer.dynamicBodies.body(for: .generated(1))?.cell == .exterior(coordinate))
+        #expect(
+            streamer.dynamicBodies.body(for: .generated(1))?.occupiedCell == .exterior(coordinate)
+        )
 
         // Walk far enough that the one-cell grid recenters and drops it.
         streamer.update(

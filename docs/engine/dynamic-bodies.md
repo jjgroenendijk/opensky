@@ -5,7 +5,7 @@ description: Fixed-step rigid-body simulation for movable clutter - which bodies
   the convex collider, the integrator and contact solver, shape sweeps, the player's shove,
   and the streaming and persistence lifecycle.
 tags: [engine, world, physics, havok, collision, streaming]
-timestamp: 2026-08-06T00:00:00Z
+timestamp: 2026-08-08T00:00:00Z
 ---
 
 # Dynamic rigid bodies
@@ -333,16 +333,31 @@ coverage transition, a door transition, and a world-state rebuild therefore all 
 right answer without any of them knowing physics exists. Cells are visited in a stable
 order, so two runs of a session install bodies identically.
 
-A body already registered under the same key keeps its live pose and velocity through a
-rebuild: a runtime-state write unrelated to physics must not teleport a crate back to where
-the plugin put it.
+A body carries two cell identities. `placingCell` is immutable: it names the scene and
+world-state bucket that authored the REFR. `occupiedCell` is the exterior cell containing
+the live reference origin. The fixed-step loop recomputes the latter after every solver
+step, in the bodies' existing `ReferenceKey` order, with the same floor-division rule the
+streaming grid uses. Interiors keep their single identity. Removing a cell retires bodies
+whose `occupiedCell` matches it, so a barrel that crossed into a resident neighbour keeps
+simulating after its placing cell unloads and disappears when the neighbour unloads.
+
+The draw follows the occupied cell without retaining the placing cell's whole scene.
+`CellSceneComposition` detaches each tagged dynamic reference's draw instances from its
+cell-wide render scene. The detached instances keep the same baked matrices and per-frame
+`instanceDelta`; only their residency owner changes. They are merged exactly once under
+the occupied cell, survive removal of the placing cell, and are removed with the occupied
+cell. Terrain, lighting, animations, and untagged instances remain with their original
+scene. A body already registered under the same key keeps its live pose, velocity, and draw
+owner through a rebuild: a runtime-state write unrelated to physics cannot teleport it.
 
 Persistence is the existing `.transform` component and nothing new. The step a body falls
 asleep, its resting pose is recorded; `drainSettledTransforms` hands those to the streamer's
-`onBodySettled`, which the app wires to `WorldStateStore.set`. A save records it, and the
-next build of that cell places the object there. A body still moving when its cell unloads
-keeps its last written resting pose rather than its mid-flight one, because a crate should
-not be found in mid-air after a reload.
+`onBodySettled`, which the app wires to `WorldStateStore.set`. The callback carries the
+immutable placing cell even when that cell is no longer resident. The transform itself is
+world-space, so the next build of the authoritative placing cell can draw the reference at
+the resting pose without changing its plugin cell assignment. A body still moving when its
+occupied cell unloads keeps its last written resting pose rather than its mid-flight one,
+because a crate should not be found in mid-air after a reload.
 
 ## Panel seam
 
@@ -368,9 +383,12 @@ Synthetic suites, no game asset:
 * `ShapeSweepTests` — a clear sweep, a sphere cast stopping short of a wall by its radius, a
   capsule blocked by geometry only its far end reaches, an already-overlapping start, the
   lower-FormID tie-break, and rejected implausible queries.
-* `DynamicBodyWorldTests` — key ordering, cell lifecycle, a rebuild keeping a live pose, the
-  once-only settled-transform drain, freeze, reset, the shove and its direction test, and a
-  body presenting its shapes to the ordinary collision query.
+* `DynamicBodyWorldTests` — key ordering, occupied-cell lifecycle across an exterior
+  boundary, placing-cell persistence, a rebuild keeping a live pose, the once-only
+  settled-transform drain, freeze, reset, the shove and its direction test, and a body
+  presenting its shapes to the ordinary collision query.
+* `CellSceneCompositionTests` — a re-binned reference remains exactly one draw after its
+  placing cell leaves and disappears when its occupied cell leaves.
 * `CellStreamerPhysicsTests` — bodies following residency, a rebuild not resetting a fallen
   body, and the collision query unioning static shapes with moving bodies while the solver
   is handed only the static half.
@@ -398,7 +416,13 @@ Synthetic suites, no game asset:
 T='DynamicBodyRealDataTests/settlesAndPushesVanillaClutter()'`). It builds a vanilla
 clutter-heavy interior with the routing flag on, simulates five seconds of world time, walks a
 capsule into the settled result, and writes counts, per-body drops and timings to gitignored
-`logs/dynamic-body-probe.log`.
+`logs/realtest/<run>/dynamic-body-interior.log`.
+
+`DynamicBodyRealDataTests/rebinsVanillaExteriorClutterAcrossResidentCells()` scans the
+launch grid in stable order for a vanilla simulated reference with a buildable neighbouring
+cell, pushes it across the nearest such boundary, and removes the two cells in turn. Its
+per-run report records the placing and occupied coordinates, live poses, draw-instance
+counts, and the simulation lifecycle after each unload.
 
 It asserts item 15.2's acceptance rather than reporting it (issue #392):
 

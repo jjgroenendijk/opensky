@@ -287,8 +287,12 @@ nonisolated struct DynamicBody: Sendable {
     let key: ReferenceKey
     /// The placed reference this body stands for, for query attribution.
     let reference: FormID
-    /// The cell that owns it, so streaming can drop a cell's bodies wholesale.
-    let cell: CellSceneLocation
+    /// The cell whose record placed this reference. It remains authoritative
+    /// for rebuilds and persistence even after the body crosses a boundary.
+    let placingCell: CellSceneLocation
+    /// The cell containing the live origin. Exterior integration updates this
+    /// at the end of every fixed step; interiors never re-bin.
+    var occupiedCell: CellSceneLocation
     let definition: DynamicBodyDefinition
     var position: SIMD3<Float>
     var orientation: simd_quatf
@@ -309,7 +313,8 @@ nonisolated struct DynamicBody: Sendable {
     ) {
         self.key = key
         self.reference = reference
-        self.cell = cell
+        placingCell = cell
+        occupiedCell = cell
         self.definition = definition
         self.orientation = orientation
         position = originPosition + orientation.act(definition.centerOfMass)
