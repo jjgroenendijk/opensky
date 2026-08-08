@@ -7,33 +7,6 @@ import AppKit
 @testable import opensky
 import Testing
 
-/// Forwards the Papyrus seam to the panel tests' recorder rather than
-/// duplicating it, so a registry-level reset and a panel-level checkbox click
-/// are observed through the same fake. The conformance itself comes from
-/// `WorldControlProviders`, which the class already declares; restating it here
-/// would be redundant.
-extension FakeWorldProviders {
-    var scriptsSnapshot: ScriptsSnapshot {
-        scripts.scriptsSnapshot
-    }
-
-    func setScriptsPaused(_ paused: Bool) {
-        scripts.setScriptsPaused(paused)
-    }
-
-    func stepScripts(ticks: Int) {
-        scripts.stepScripts(ticks: ticks)
-    }
-
-    var questAliasQuestEditorIDs: [String] {
-        scripts.questAliasQuestEditorIDs
-    }
-
-    func questAliasTable(editorID: String) -> ScriptQuestAliasInspection? {
-        scripts.questAliasTable(editorID: editorID)
-    }
-}
-
 struct DestinationRegistryScriptsTests {
     /// A paused VM is what "overridden" means for this destination — running is
     /// the documented default — and the sidebar's reset resumes it. A fresh

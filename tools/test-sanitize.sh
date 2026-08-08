@@ -1,5 +1,6 @@
 #!/bin/sh
-# Run openskyTests under the runtime sanitizers (issue #383).
+# Run openskyTests -- the synthetic unit bundle alone, not the real-data one -- under
+# the runtime sanitizers (issue #383).
 #
 # `Config/Sanitizers.xctestplan` carries two configurations, because Thread and
 # Address Sanitizer cannot be enabled in the same build:

@@ -3,6 +3,10 @@
 // out-of-order completion tolerance, and first-cell-only camera reseed. Driven
 // through a manual build runner + synthetic CellScenes -- no Metal, no game
 // data (AGENTS.md testing rule).
+//
+// The fixture half -- the type itself, the synthetic built cell and the streamer
+// factory -- is `openskyTestSupport/CellStreamerFixture.swift`, shared with the
+// real-data streaming suites (issue #418).
 
 import Foundation
 @testable import opensky
@@ -12,69 +16,7 @@ import Testing
 private enum FakeBuildError: Error { case broken }
 
 @MainActor
-struct CellStreamerTests {
-    static func coordinate(_ x: Int32, _ y: Int32) -> CellCoordinate {
-        CellCoordinate(x: x, y: y)
-    }
-
-    /// Synthetic built cell: empty draw list, optional bounds (so the first
-    /// integrated cell can frame a camera) and asset keys (for eviction tests).
-    static func cellScene(
-        bounds: (min: SIMD3<Float>, max: SIMD3<Float>)? = (SIMD3(0, 0, 0), SIMD3(10, 10, 10)),
-        meshKeys: Set<String> = [],
-        textureKeys: Set<String> = [],
-        location: CellSceneLocation? = nil,
-        doors: [PlacedDoor] = [],
-        interactions: [FormID: PlacedInteraction] = [:],
-        staticCollision: StaticCollisionSet = .empty,
-        triggerVolumes: TriggerVolumeSet = .empty,
-        regions: [FormID] = [],
-        acousticSpace: FormID? = nil,
-        musicType: FormID? = nil,
-        worldspaceMusicType: FormID? = nil,
-        references: RuntimeReferenceIndex = .empty,
-        stateSequence: UInt64 = 0,
-        dynamicBodies: [DynamicBodyPlacement] = []
-    ) -> CellScene {
-        CellScene(
-            renderScene: RenderScene(instances: []),
-            summary: CellLoadSummary(
-                cellName: "test", gridX: 0, gridY: 0,
-                totalRefCount: 0, drawnRefCount: 0,
-                unsupportedBaseSkipCount: 0, markerSkipCount: 0,
-                modelFailureSkipCount: 0, malformedRefSkipCount: 0,
-                modelCount: 0, textureCount: 0, missingTextureCount: 0
-            ),
-            bounds: bounds,
-            location: location,
-            doors: doors,
-            interactions: interactions,
-            regions: regions,
-            acousticSpace: acousticSpace,
-            musicType: musicType,
-            worldspaceMusicType: worldspaceMusicType,
-            staticCollision: staticCollision,
-            triggerVolumes: triggerVolumes,
-            dynamicBodies: dynamicBodies,
-            references: references,
-            stateSequence: stateSequence,
-            assets: CellAssets(meshKeys: meshKeys, textureKeys: textureKeys)
-        )
-    }
-
-    /// World center of cell (0,0); keeps the grid centered without recentering.
-    static let center = CellGridManager.cellCenter(of: coordinate(0, 0))
-
-    static func makeStreamer(
-        runner: ManualCellBuildRunner,
-        radius: Int32 = 1,
-        sink: @escaping CellStreamer.SceneSink = { _, _ in }
-    ) -> CellStreamer {
-        CellStreamer(
-            center: coordinate(0, 0), radius: radius, runner: runner, sink: sink
-        )
-    }
-
+extension CellStreamerTests {
     // MARK: - Request dedupe
 
     @Test

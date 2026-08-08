@@ -7,35 +7,36 @@ check a hypothesis is a different job: load the `probe` skill for that.
 
 - A test touching `Renderer`, `MTKView`, or any AppKit or MetalKit API must be marked
   `@MainActor`. Omitting it is the historical top compile error here (`error: main
-  actor`). Patterns to copy: `RendererOffscreenTests`, `CellRenderRealDataTests`.
+  actor`). Patterns to copy: `RendererOffscreenTests`, `RendererUITests`.
 - A Metal test gates on `device.supportsFamily(.metal4)`, like
-  `CellRenderRealDataTests.device`, so machines without a Metal 4 device skip instead of
+  `CellSceneBuilderTests.hasDevice`, so machines without a Metal 4 device skip instead of
   failing.
 - Everything parsing external data throws, so use `try` with `#require` rather than a
   force-unwrap, which is a hard lint error.
 
-## Real-data tests
+## Real-data tests live in another target
 
-`CellRenderRealDataTests.swift` is the canonical env-gated real-data test — copy its shape.
-Gate on `GameDataLocator.environmentKey` being set, and deliberately do not consult the
-Steam-default fallback, so a machine without `OPENSKY_DATA_ROOT` skips deterministically.
+A suite that reads the user's own install belongs in `openskyRealDataTests/`, not here, and
+`make lint` fails when one is written here instead: it would never run. `make realtest-all`
+runs that bundle and only that bundle, and inside `make test` an env-gated suite silently
+skips, because a plain `xcodebuild test` does not forward `OPENSKY_DATA_ROOT` into the host.
+`openskyRealDataTests/AGENTS.md` has the shape to copy.
 
-The env var is the only way in: `GameDataLocator` withholds the persisted `OpenSkyDataRoot`
-default and the Steam fallback inside the test host, so a test that forgets its gate cannot
-quietly reach a real install (issue #362).
+Nothing here reads a real install: `GameDataLocator` withholds the persisted
+`OpenSkyDataRoot` default and the Steam fallback inside a test host, so a unit test cannot
+quietly reach one even by accident (issue #362).
 
-Plain `xcodebuild test` does not forward `OPENSKY_DATA_ROOT` to the unit-test host, so an
-env-gated test silently skips under it — including in every `make test` run. Use
-`make realtest T='Class/method()'` for one of them and `make realtest-all` for the whole
-set. Both run the `RealData` test plan, which does carry the data root into the host, under
-the RSS watchdog (`tools/realtest.sh`); the single-test selector must resolve to exactly one
-fully-qualified test. A heavy real-data test without that watchdog once ran the machine out
-of memory.
+## Support shared with the real-data target
 
-A new env-gated suite must be listed in `Config/RealData.xctestplan` or `make realtest-all`
-never runs it, and `make lint` fails if it is missing: the plan's `selectedTests` has to be
-exactly the suites that declare `dataRoot: GameDataRoot?` and carry a `@Test`. Keep one such
-suite per file, named after the file, which is the shape that check assumes.
+`openskyTestSupport/` is compiled into both unit-test bundles, and that is where a fixture
+both a synthetic suite and a real-data suite need has to live — the two targets are separate
+modules and cannot import each other. Support only this target uses stays here.
+
+Three types are split across that seam: the fixture halves of `CellSceneBuilderTests`,
+`CellStreamerTests` and `PapyrusWorldActivationTests` are declared in `openskyTestSupport/`,
+and the `@Test` methods are extensions of the same type here. So a
+file here can extend a type it does not declare, and a `private` member of such a fixture is
+not reachable from this half. `openskyTestSupport/AGENTS.md` has the rule.
 
 ## Fixtures and output
 
@@ -45,7 +46,8 @@ suite per file, named after the file, which is the shape that check assumes.
   `make test-report` and any backgrounded run lose it. To capture a result, assert on the
   value or write an artifact to gitignored `logs/`.
 - `make test-one T=Class[/method]` runs one class or method in `openskyTests`; use
-  `T=Target/Class/method` for an explicitly qualified selector. `make test-report`
+  `T=Target/Class/method` for an explicitly qualified selector, which is how a class in
+  another test target is reached. `make test-report`
   extracts failure names and messages from the newest result bundle.
 - Accessibility ids are pinned as literal assertions here (`DestinationRegistryTests`) *and*
   exercised through `openskyUITests`. The two catch different things: a unit assertion pins

@@ -70,28 +70,6 @@ extension CellSceneBuilderTests {
         #expect(collision.stats.estimatedBytes == 0)
     }
 
-    func collisionRenderNIF() -> Data {
-        NIFFixture.file(blocks: [
-            .init("NiNode", NIFFixture.niNode(
-                prefix: NIFFixture.avObjectPrefix(collisionRef: 2),
-                children: [1]
-            )),
-            .init("BSTriShape", NIFFixture.bsTriShape(
-                attributes: Self.staticAttributes,
-                strideDwords: Self.staticStrideDwords,
-                vertexRecords: [
-                    SIMD3<Float>(0, 0, 0),
-                    SIMD3<Float>(1, 0, 0),
-                    SIMD3<Float>(0, 1, 1)
-                ].map(vertexRecord(position:)),
-                triangles: [0, 1, 2]
-            )),
-            .init("bhkCollisionObject", NIFCollisionFixture.collisionObject(body: 3)),
-            .init("bhkRigidBody", NIFCollisionFixture.rigidBody(shape: 4)),
-            .init("bhkSphereShape", NIFCollisionFixture.sphere(radius: 1))
-        ])
-    }
-
     func degenerateCollisionNIF() -> Data {
         NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(

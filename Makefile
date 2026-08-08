@@ -7,7 +7,8 @@ CLI_SCHEME     := openskycli
 CONFIG         ?= Debug
 DESTINATION    ?= platform=macOS
 XCODEBUILD_FLAGS ?=
-SWIFT_PATHS    := opensky openskycli openskyTests openskyUITests
+SWIFT_PATHS    := opensky openskycli openskyTests openskyRealDataTests \
+                  openskyTestSupport openskyUITests
 TEST_RESULTS   := build/test-results
 # Build cache lives beside the checkout, not under $HOME. The repo sits on a
 # large external volume while the boot volume is small, and an Xcode-default
@@ -128,8 +129,9 @@ md-lint: ## Strict Markdown lint
 cli-boundary: ## No AppKit imports under opensky/Engine (openskycli builds it)
 	@./tools/lint/cli-boundary.sh && echo "[ OK ] CLI target boundary clean"
 
-realdata-plan: ## Config/RealData.xctestplan selects every env-gated suite
-	@./tools/lint/realdata-plan.sh && echo "[ OK ] RealData plan matches the suites"
+realdata-plan: ## Every env-gated suite is in openskyRealDataTests, which the plan selects
+	@./tools/lint/realdata-plan.sh \
+		&& echo "[ OK ] real-data suites and the RealData plan line up"
 
 no-game-content: ## No extracted game assets or rendered captures are tracked
 	@./tools/lint/no-game-content.sh && echo "[ OK ] no tracked game content"
@@ -153,16 +155,18 @@ probe: ## CLI smoke checks against the local install (skips if absent)
 
 # Which bundles a run touches is a checked-in test plan (issue #346), not a
 # pile of -only-testing/-skip-testing flags: UnitTests lists openskyTests
-# alone, UITests lists openskyUITests alone. Selecting the unit plan is what
-# actually drops the UI bundle's compile and link — xcodebuild builds every
+# alone, UITests lists openskyUITests alone, and RealData lists
+# openskyRealDataTests alone (issue #418). Selecting the unit plan is what
+# actually drops the other bundles' compile and link — xcodebuild builds every
 # buildable in the Test action before it looks at selectors, so a selector alone
 # never did.
 #
-# The two bundles never share a session (issue #380). openskyTests is app-hosted
-# on opensky.app, so a plan carrying both makes xcodebuild stand the app up as a
-# test host at the same moment the UI runner tries to drive it, and the two
-# deadlock until XCTest times out "enabling automation mode". There is
-# deliberately no plan listing both.
+# The UI bundle never shares a session with an app-hosted unit bundle
+# (issue #380). openskyTests and openskyRealDataTests are both hosted on
+# opensky.app, so a plan carrying either of them beside openskyUITests makes
+# xcodebuild stand the app up as a test host at the same moment the UI runner
+# tries to drive it, and the two deadlock until XCTest times out "enabling
+# automation mode". There is deliberately no such plan.
 UNIT_PLAN   := -testPlan UnitTests
 UI_PLAN     := -testPlan UITests
 
@@ -222,7 +226,8 @@ realtest: vendor-link ## Run one env-gated real-data test under the RSS watchdog
 		echo "        e.g. make realtest T='CellRenderRealDataTests/streamsFiveByFiveGridToCompletion()'"; \
 		echo "        whole set: make realtest-all"; \
 		exit 2; }
-	@case "$(T)" in openskyTests/*) spec="$(T)";; *) spec="openskyTests/$(T)";; esac; \
+	@case "$(T)" in openskyRealDataTests/*) spec="$(T)";; \
+		*) spec="openskyRealDataTests/$(T)";; esac; \
 	./tools/test-fast.sh -p RealData -t "$$spec" \
 		$(if $(CAP),-c $(CAP),) $(if $(B),-B,)
 
@@ -235,7 +240,7 @@ realtest: vendor-link ## Run one env-gated real-data test under the RSS watchdog
 # ordinary Debug build.
 realtest-perf: vendor-link ## Run the dynamic-body perf gate against an optimized build
 	@./tools/realtest.sh -O \
-		-t 'openskyTests/DynamicBodyRealDataTests/settlesAndPushesVanillaClutter()' \
+		-t 'openskyRealDataTests/DynamicBodyRealDataTests/settlesAndPushesVanillaClutter()' \
 		$(if $(CAP),-c $(CAP),)
 
 # The counterpart to `realtest`: the same plan, the same watchdog, no selector.

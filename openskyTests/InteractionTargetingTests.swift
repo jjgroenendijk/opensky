@@ -6,40 +6,6 @@ import simd
 import Testing
 
 extension CellStreamerTests {
-    static func interaction(
-        reference: UInt32,
-        base: UInt32 = 0x100,
-        position: SIMD3<Float>,
-        action: InteractionAction = .open,
-        name: String = "Test Door",
-        actionLabel: String = "Open",
-        sounds: ModelBase.Sounds? = nil
-    ) -> PlacedInteraction {
-        PlacedInteraction(
-            reference: FormID(reference),
-            base: FormID(base),
-            position: position,
-            name: name,
-            action: action,
-            actionLabel: actionLabel,
-            sounds: sounds
-        )
-    }
-
-    static func collision(
-        reference: UInt32,
-        position: SIMD3<Float>
-    ) -> StaticCollisionSet {
-        collisionSet(shapes: [collisionShape(reference: reference, position: position)])
-    }
-
-    static func interactionRay(
-        from origin: SIMD3<Float>,
-        to target: SIMD3<Float>
-    ) -> InteractionRay? {
-        InteractionRay(origin: origin, direction: target - origin)
-    }
-
     @Test
     func viewRayPublishesTargetAndGenericActivationEvent() {
         let runner = ManualCellBuildRunner()
@@ -113,30 +79,5 @@ extension CellStreamerTests {
         )
 
         #expect(streamer.interactionTarget == nil)
-    }
-
-    private static func collisionShape(
-        reference: UInt32,
-        position: SIMD3<Float>
-    ) -> StaticCollisionShape {
-        let extent = SIMD3<Float>(repeating: 1)
-        return StaticCollisionShape(
-            reference: FormID(reference),
-            transform: MatrixMath.translation(position),
-            geometry: .box(halfExtents: extent),
-            bounds: ModelBounds(min: position - extent, max: position + extent)
-        )
-    }
-
-    private static func collisionSet(
-        shapes: [StaticCollisionShape]
-    ) -> StaticCollisionSet {
-        var stats = StaticCollisionStats()
-        stats.shapeCount = shapes.count
-        return StaticCollisionSet(
-            location: nil,
-            shapes: shapes,
-            stats: stats
-        )
     }
 }

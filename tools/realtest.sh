@@ -2,29 +2,28 @@
 # Run the env-gated real-data tests under the physical-footprint watchdog:
 # either the whole RealData test plan, or exactly one test from it.
 #
-# `Config/RealData.xctestplan` does two jobs. It names the suites, so the
-# real-data set is one diffable list instead of one selector per test, and it
-# carries OPENSKY_DATA_ROOT as a plan environment entry -- which xcodebuild
-# *does* forward into the unit-test host (measured, issue #381). That replaces
-# the build-for-testing / rewrite the .xctestrun / test-without-building dance
-# issue #82 needed: an ordinary `xcodebuild test -testPlan RealData` is enough.
+# `Config/RealData.xctestplan` does two jobs. It selects the
+# `openskyRealDataTests` target, which since issue #418 *is* the real-data set --
+# every env-gated suite lives in that bundle and nothing else does -- and it
+# carries OPENSKY_DATA_ROOT as a plan environment entry, which xcodebuild *does*
+# forward into the unit-test host (measured, issue #381). That replaces the
+# build-for-testing / rewrite the .xctestrun / test-without-building dance issue
+# #82 needed: an ordinary `xcodebuild test -testPlan RealData` is enough.
 #
-# Two measured limits of test plans shape the rest (Xcode 26.5, see
-# docs/tools/environment.md):
+# Target-level selection is deliberate. A plan's own `selectedTests` does not
+# match Swift Testing tests (measured, issue #381: the identifiers arrive as
+# `OnlyTestIdentifiers` and select nothing), so while the suites shared a bundle
+# with the unit tests this script had to read the plan's list and re-emit one
+# `-only-testing` per suite. Selecting a whole target is the one plan mechanism
+# that does work, so the list, the loop, and the lint that kept them honest are
+# all gone.
 #
-#   * Plan environment values are copied through verbatim, with no `$(SETTING)`
-#     expansion, so the plan holds a literal path. A caller whose install lives
-#     somewhere else edits the plan; this script refuses to run against a
-#     conflicting OPENSKY_DATA_ROOT rather than silently testing an install the
-#     plan does not point at.
-#   * A plan's own `selectedTests` does not match Swift Testing tests: the
-#     identifiers reach the runner as `OnlyTestIdentifiers` and select nothing,
-#     so running the plan straight through executes zero tests. `-only-testing`
-#     on the command line does work, and replaces the plan's selection, so this
-#     script reads the plan's list and passes it that way. The plan stays the
-#     one place the set is written down; tools/lint/realdata-plan.sh keeps it
-#     matching the suites in openskyTests, which is also what stops a misspelled
-#     entry from silently selecting nothing.
+# One measured limit of test plans still shapes this script (Xcode 26.5, see
+# docs/tools/environment.md): plan environment values are copied through
+# verbatim, with no `$(SETTING)` expansion, so the plan holds a literal path. A
+# caller whose install lives somewhere else edits the plan; this script refuses
+# to run against a conflicting OPENSKY_DATA_ROOT rather than silently testing an
+# install the plan does not point at.
 #
 # tools/memguard.sh runs alongside either mode, because a heavy real-data test
 # once reached ~30 GB and locked the machine. See docs/engine/cell-streaming.md
@@ -87,35 +86,21 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-# Everything this script needs to know comes out of the plan: `root` prints the
-# data root, `suites` prints one fully-qualified suite selector per line. The
-# script used to carry its own copy of the data root and the two could drift.
-plan_query() {
-    python3 - "$plan" "$1" <<'PY'
+# The data root comes out of the plan rather than being written down twice; the
+# script used to carry its own copy and the two could drift.
+data_root="$(python3 - "$plan" <<'PY'
 import json, sys
 
 with open(sys.argv[1], "rb") as stream:
     plan = json.load(stream)
-
-if sys.argv[2] == "root":
-    entries = plan.get("defaultOptions", {}).get("environmentVariableEntries", [])
-    values = [e.get("value") for e in entries if e.get("key") == "OPENSKY_DATA_ROOT"]
-    if len(values) != 1 or not values[0]:
-        print("[ERROR] plan has no single OPENSKY_DATA_ROOT entry", file=sys.stderr)
-        raise SystemExit(1)
-    print(values[0])
-else:
-    target = plan["testTargets"][0]
-    selected = target.get("selectedTests", [])
-    if not selected:
-        print("[ERROR] plan selects no tests", file=sys.stderr)
-        raise SystemExit(1)
-    for name in selected:
-        print(f"{target['target']['name']}/{name}")
+entries = plan.get("defaultOptions", {}).get("environmentVariableEntries", [])
+values = [e.get("value") for e in entries if e.get("key") == "OPENSKY_DATA_ROOT"]
+if len(values) != 1 or not values[0]:
+    print("[ERROR] plan has no single OPENSKY_DATA_ROOT entry", file=sys.stderr)
+    raise SystemExit(1)
+print(values[0])
 PY
-}
-
-data_root="$(plan_query root)"
+)"
 
 if [ -n "${OPENSKY_DATA_ROOT:-}" ] && [ "$OPENSKY_DATA_ROOT" != "$data_root" ]; then
     {
@@ -159,15 +144,10 @@ if [ -n "$optimized" ]; then
     set -- "$@" SWIFT_OPTIMIZATION_LEVEL=-O GCC_OPTIMIZATION_LEVEL=s \
         SWIFT_ACTIVE_COMPILATION_CONDITIONS="DEBUG OPENSKY_OPTIMIZED"
 fi
+# No selector means the whole plan, which is the whole openskyRealDataTests
+# bundle: the plan selects that target and nothing narrows it further.
 if [ -n "$selector" ]; then
     set -- "$@" -only-testing:"$selector"
-else
-    # The plan's own selection selects nothing (see the header), so the set is
-    # requested the way that works. Suite names never contain whitespace, so
-    # the default field splitting over the plan's list is safe here.
-    for suite in $(plan_query suites); do
-        set -- "$@" -only-testing:"$suite"
-    done
 fi
 
 echo "[INFO] starting watchdog (cap ${cap_mb} MB, ${guard_seconds}s)"

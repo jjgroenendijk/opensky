@@ -67,7 +67,8 @@ xcodebuild_xctestrun_stale() {
     xctestrun="$1"
     root="$2"
     [ -f "$xctestrun" ] || return 0
-    [ -n "$(find -H "$root/opensky" "$root/openskyTests" "$root/openskycli" \
+    [ -n "$(find -H "$root/opensky" "$root/openskyTests" \
+        "$root/openskyRealDataTests" "$root/openskyTestSupport" "$root/openskycli" \
         "$root/Config" "$root/opensky.xcodeproj/project.pbxproj" \
         "$root/.vendor/ffmpeg" \
         -newer "$xctestrun" -print 2>/dev/null | head -n 1)" ]
