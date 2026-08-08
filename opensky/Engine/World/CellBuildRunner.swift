@@ -59,7 +59,7 @@ nonisolated extension CellSceneProvider {
 nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding,
     AudioDataProviding, MovementConfigurationProviding, GlobalDataProviding,
     ScriptDataProviding, ItemDataProviding, BarterDataProviding, QuestDataProviding,
-    ActorValueDataProviding, CombatDataProviding
+    DialogueDataProviding, ActorValueDataProviding, CombatDataProviding
 {
     let builder: CellSceneBuilder
     let worldspaceEditorID: String
@@ -82,6 +82,8 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     /// Quest index (QUST); nil when the plugin has no QUST records, and then
     /// every `Quest` native reports itself unavailable rather than guessing.
     var questStore: QuestStore?
+    /// Topic, response and voice-type records for the dialogue runtime.
+    var dialogueStore: DialogueStore?
     /// Item/container/leveled-list indexes (issue #177); nil when the session
     /// was built without them, which is every synthetic scene.
     var inventoryBaselines: InventoryBaselineResolver?

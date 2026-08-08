@@ -42,6 +42,8 @@ nonisolated struct ResolvedActorAppearance: Equatable {
     let chain: [ActorChainLink]
     let isFemale: ActorSourcedField<Bool>
     let race: ActorSourcedField<FormID?>
+    /// VTCK, inherited through `useTraits` with the other Traits-tab fields.
+    let voiceType: ActorSourcedField<FormID?>
     let wornArmor: ActorSourcedField<FormID?>
     let headParts: ActorSourcedField<[FormID]>
     let defaultOutfit: ActorSourcedField<FormID?>
@@ -126,6 +128,9 @@ nonisolated struct ActorTemplateResolver {
             },
             race: resolveField(in: npcs, flag: .useTraits) {
                 ActorSourcedField(value: $0.race, source: $0.formID)
+            },
+            voiceType: resolveField(in: npcs, flag: .useTraits) {
+                ActorSourcedField(value: $0.voiceType, source: $0.formID)
             },
             wornArmor: resolveField(in: npcs, flag: .useTraits) {
                 ActorSourcedField(value: $0.wornArmor, source: $0.formID)

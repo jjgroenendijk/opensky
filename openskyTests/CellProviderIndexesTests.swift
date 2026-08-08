@@ -38,6 +38,7 @@ struct CellProviderIndexesTests {
         #expect(provider.aspcStore != nil)
         #expect(provider.musicStore != nil)
         #expect(provider.globalStore != nil)
+        #expect(provider.dialogueStore != nil)
         #expect(provider.inventoryBaselines != nil)
         #expect(provider.equipmentCatalog != nil)
         #expect(provider.movementConfiguration.walkSpeed.value == 100)
