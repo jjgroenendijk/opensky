@@ -127,7 +127,7 @@ column-0 row carry and *8 scaling, VNML/VCLR decode, BTXT/ATXT/VTXT pairing +
 quadrant/position bounds, compressed-LAND round-trip, LTEX->TNAM + repeated
 GNAM, TXST TX00/TX01, wrong-record-type + malformed-size rejection.
 
-Real-data sweep: `openskyTests/LandRealDataTests.swift` (env-gated on
+Real-data sweep: `openskyRealDataTests/LandRealDataTests.swift` (env-gated on
 `OPENSKY_DATA_ROOT`, self-skips when absent). Every LAND in the Tamriel
 worldspace of vanilla Skyrim.esm, 2026-07-18:
 

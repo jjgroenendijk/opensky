@@ -4,6 +4,31 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-08
 
+* **The real-data suites are their own test target (issue #418)**: `openskyRealDataTests`
+  now holds every env-gated suite and nothing else, so `Config/RealData.xctestplan` selects
+  it the one way plan-level selection actually works — by target. That deleted the plan's
+  57-entry `selectedTests` list, the loop in `tools/realtest.sh` that re-emitted it as one
+  `-only-testing` flag per suite, and the lint that kept the list spelled right, all of which
+  existed only because a plan cannot select Swift Testing tests. The unit compile lost 56
+  files and 14 820 lines it was paying for on every `make test` and every incremental
+  `make test-fast` rebuild, for suites that skip without a data root. What replaces the list
+  is `openskyTestSupport/`, a folder compiled into both unit bundles, holding the 38 shared
+  fixtures — the same mechanism that shares `opensky/Engine/` between the app and
+  `openskycli`. Updated pages: [testing setup](/testing.md).
+
+  **Three fixtures were split, not renamed.** `CellSceneBuilderTests`, `CellStreamerTests`
+  and `PapyrusWorldActivationTests` were suites doubling as fixtures, extended across ten to
+  nineteen files each, and the real-data suites reach them. The alternative — renaming the
+  fixture half — would have touched every call site and changed the test identifiers of
+  suites that have nothing to do with this change. Instead the type declaration and its
+  reusable members moved to `openskyTestSupport/` and the `@Test` methods stayed behind as an
+  extension of the same type, which is a shape the files were already written in. No call
+  site moved and no test identifier changed. The one member `private` inside the old single
+  file had to widen, which is the seam the new `openskyTestSupport/AGENTS.md` warns about.
+  `M10AcceptanceTests` needed less: its shared part was six constants, so they became
+  `M10AcceptanceClock` and the suite was left alone — a suite type cannot be the `enum`
+  SwiftFormat rewrites an all-static `struct` into.
+
 * **M15 accepted — the player fights, kills, loots and reloads (issue #198)**: the milestone
   gate wires, verifies and records what the other eight items built. The route is one
   continuous fight and it enters the engine where a player does — real key *and mouse* events

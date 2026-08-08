@@ -34,12 +34,12 @@ extension M10AcceptanceTests {
     @Test @MainActor
     func weatherRerollsOnGameHourBoundariesWhileTheClockRunsFast() throws {
         let defaults = try Self.weatherTimeGlobals()
-        var clock = GameClock(hour: Self.startHour)
+        var clock = GameClock(hour: M10AcceptanceClock.startHour)
         let timescale = try #require(
             GlobalResolution(defaults: defaults, clock: clock)
                 .floatValue(editorID: GameClock.timescaleEditorID)
         )
-        #expect(timescale == Self.fastTimescale)
+        #expect(timescale == M10AcceptanceClock.fastTimescale)
 
         let system = try WeatherSystem(store: Self.weatherStore(), worldspaceFormID: 0x500)
         system.update(deltaTime: 100, hour: clock.hourOfDay) // settle the initial pick
@@ -49,15 +49,16 @@ extension M10AcceptanceTests {
         var changePoints: [Float] = []
         var elapsedTotal: Float = 0
         var lastResolvedHour = clock.hourOfDay
-        for _ in 0 ..< Self.steps {
+        for _ in 0 ..< M10AcceptanceClock.steps {
             let before = clock.totalGameSeconds
-            clock.advance(wallDelta: Self.wallStep, timescale: timescale)
+            clock.advance(wallDelta: M10AcceptanceClock.wallStep, timescale: timescale)
             let elapsed = Float((clock.totalGameSeconds - before) / GameClock.secondsPerHour)
-            #expect(elapsed == Self.gameHoursPerStep)
+            #expect(elapsed == M10AcceptanceClock.gameHoursPerStep)
             elapsedTotal += elapsed
             lastResolvedHour = clock.hourOfDay
             system.update(
-                deltaTime: Self.wallStep, hour: lastResolvedHour, elapsedGameHours: elapsed
+                deltaTime: M10AcceptanceClock.wallStep, hour: lastResolvedHour,
+                elapsedGameHours: elapsed
             )
             if system.currentWeatherID != weather {
                 weather = system.currentWeatherID
@@ -65,7 +66,7 @@ extension M10AcceptanceTests {
             }
         }
 
-        #expect(elapsedTotal == Self.totalGameHours)
+        #expect(elapsedTotal == M10AcceptanceClock.totalGameHours)
         #expect(!changePoints.isEmpty, "no weather ever changed, so no reroll can be observed")
         for point in changePoints {
             #expect(
@@ -86,11 +87,11 @@ extension M10AcceptanceTests {
         let device = try #require(RendererShadowTests.device)
         let renderer = try RendererShadowTests.makeRenderer(device: device)
         let defaults = try Self.weatherTimeGlobals()
-        renderer.gameClock = GameClock(hour: Self.startHour)
+        renderer.gameClock = GameClock(hour: M10AcceptanceClock.startHour)
         renderer.gameTime.globalResolution = GlobalResolution(
             defaults: defaults, clock: renderer.gameClock
         )
-        #expect(renderer.currentTimescale == Self.fastTimescale)
+        #expect(renderer.currentTimescale == M10AcceptanceClock.fastTimescale)
 
         // Setting the clock wholesale clears the elapsed-hours mark, so the
         // first read is zero: a restored save must not age months of weather.
@@ -101,15 +102,16 @@ extension M10AcceptanceTests {
         var weather = system.currentWeatherID
         var changePoints: [Float] = []
         var elapsedTotal: Float = 0
-        for _ in 0 ..< Self.steps {
+        for _ in 0 ..< M10AcceptanceClock.steps {
             renderer.gameTime.clock.advance(
-                wallDelta: Self.wallStep, timescale: renderer.currentTimescale
+                wallDelta: M10AcceptanceClock.wallStep, timescale: renderer.currentTimescale
             )
             let elapsed = renderer.consumeElapsedGameHours()
-            #expect(elapsed == Self.gameHoursPerStep)
+            #expect(elapsed == M10AcceptanceClock.gameHoursPerStep)
             elapsedTotal += elapsed
             system.update(
-                deltaTime: Self.wallStep, hour: renderer.timeOfDay, elapsedGameHours: elapsed
+                deltaTime: M10AcceptanceClock.wallStep, hour: renderer.timeOfDay,
+                elapsedGameHours: elapsed
             )
             if system.currentWeatherID != weather {
                 weather = system.currentWeatherID
@@ -117,7 +119,7 @@ extension M10AcceptanceTests {
             }
         }
 
-        #expect(elapsedTotal == Self.totalGameHours)
+        #expect(elapsedTotal == M10AcceptanceClock.totalGameHours)
         #expect(!changePoints.isEmpty)
         for point in changePoints {
             #expect(point.truncatingRemainder(dividingBy: WeatherSystem.rerollGameHours) == 0)
@@ -135,14 +137,21 @@ extension M10AcceptanceTests {
     @Test @MainActor
     func aPausedWorldElapsesNoGameHoursSoWeatherNeverRerolls() throws {
         let system = try WeatherSystem(store: Self.weatherStore(), worldspaceFormID: 0x500)
-        system.update(deltaTime: 100, hour: Self.startHour)
+        system.update(deltaTime: 100, hour: M10AcceptanceClock.startHour)
         let settled = system.currentWeatherID
         var clock = FrameSimClock()
         var elapsedTotal: Float = 0
-        for step in 1 ... Self.steps {
-            let delta = clock.advance(to: Double(step) * Double(Self.wallStep), paused: true)
+        for step in 1 ... M10AcceptanceClock.steps {
+            let delta = clock.advance(
+                to: Double(step) * Double(M10AcceptanceClock.wallStep),
+                paused: true
+            )
             #expect(delta == 0)
-            system.update(deltaTime: Self.wallStep, hour: Self.startHour, elapsedGameHours: delta)
+            system.update(
+                deltaTime: M10AcceptanceClock.wallStep,
+                hour: M10AcceptanceClock.startHour,
+                elapsedGameHours: delta
+            )
             elapsedTotal += delta
         }
         #expect(elapsedTotal == 0)
@@ -159,7 +168,7 @@ extension M10AcceptanceTests {
     static func expectClockAgreement(
         _ clock: GameClock, defaults: GlobalStore, resolvedHour: Float
     ) throws {
-        #expect(clock.hourOfDay == endHour)
+        #expect(clock.hourOfDay == M10AcceptanceClock.endHour)
         #expect(resolvedHour == clock.hourOfDay)
         let resolution = GlobalResolution(defaults: defaults, clock: clock)
         #expect(resolution.floatValue(editorID: GameClock.TimeGlobal.gameHour.editorID)
@@ -169,7 +178,7 @@ extension M10AcceptanceTests {
         panel.loadViewIfNeeded()
         let engine = FakeRuntimeStateProvider()
         engine.runtimeStateClock = RuntimeStateClockSnapshot(
-            clock: clock, timescale: Self.fastTimescale, isPaused: false
+            clock: clock, timescale: M10AcceptanceClock.fastTimescale, isPaused: false
         )
         panel.provider = engine
         panel.startInspecting()
@@ -183,24 +192,16 @@ extension M10AcceptanceTests {
 
     // MARK: Synthetic engine state
 
-    /// One game hour per real second, so a half-second frame is exactly half a
-    /// game hour and the reroll cadence is reached in twelve steps.
-    static let fastTimescale: Float = 3600
-    static let wallStep: Float = 0.5
-    static let gameHoursPerStep: Float = 0.5
-    static let steps = 90
-    static let totalGameHours: Float = 45
-    static let startHour: Float = 8
-    /// Forty-five hours past 08:00 on the vanilla start date is 05:00, two days
-    /// later — 19 Last Seed rather than 17.
-    static let endHour: Float = 5
+    // The clock plan these steps run on — timescale, step size and start hour — is
+    // shared with the real-data half, so it lives in `M10AcceptanceClock`
+    // (`openskyTestSupport/M10AcceptanceFixture.swift`).
 
     /// `TimeScale` at 3600 plus the five clock-owned time globals. Invented
     /// FormIDs; the editor IDs are the vanilla spellings the engine matches on.
     static func weatherTimeGlobals() throws -> GlobalStore {
         var records = GlobalFixture.record(
             formID: 0x0900, editorID: GameClock.timescaleEditorID, type: .float,
-            value: fastTimescale
+            value: M10AcceptanceClock.fastTimescale
         )
         for (index, timeGlobal) in GameClock.TimeGlobal.allCases.enumerated() {
             records += GlobalFixture.record(

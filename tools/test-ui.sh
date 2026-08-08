@@ -2,8 +2,9 @@
 # Run the UI test target, turning a missing Accessibility grant into an
 # actionable message instead of an opaque multi-minute hang.
 #
-# The plan selection is load-bearing (issue #380). `openskyTests` is app-hosted:
-# its test host *is* opensky.app. Put it in the same test session as the UI
+# The plan selection is load-bearing (issue #380). `openskyTests` and
+# `openskyRealDataTests` are both app-hosted: their test host *is* opensky.app.
+# Put either in the same test session as the UI
 # runner and xcodebuild stands the app up as a test host, injecting
 # libXCTestBundleInject.dylib, so the app sits in
 # -[XCTestDriver _prepareTestConfigurationAndIDESession] waiting for an IDE

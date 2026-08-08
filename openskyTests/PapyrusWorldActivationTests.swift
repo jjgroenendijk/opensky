@@ -5,6 +5,10 @@
 //
 // Everything is synthetic — REFR bytes and PEX objects built in code — so the
 // whole file runs with no game data and no GPU.
+//
+// The fixtures live in `openskyTestSupport/PapyrusWorldActivationFixture.swift`,
+// which declares the type: the M11 and M13 scripted-world chains reuse them and
+// are compiled into openskyRealDataTests too (issue #418).
 
 import Foundation
 @testable import opensky
@@ -12,71 +16,7 @@ import simd
 import Testing
 
 @MainActor
-struct PapyrusWorldActivationTests {
-    // MARK: - Fixtures
-
-    private static let doorID: UInt32 = 0x21
-    private static let leverID: UInt32 = 0x22
-
-    private static func key(_ objectID: UInt32) -> ReferenceKey {
-        .plugin(name: PapyrusWorldFixture.pluginName, objectID: objectID)
-    }
-
-    static func interaction(
-        reference: UInt32,
-        action: InteractionAction
-    ) -> PlacedInteraction {
-        PlacedInteraction(
-            reference: FormID(reference),
-            base: FormID(0x100),
-            position: .zero,
-            name: "Test Object",
-            action: action,
-            actionLabel: action == .open ? "Open" : "Activate",
-            sounds: nil
-        )
-    }
-
-    private static func event(
-        reference: UInt32,
-        action: InteractionAction = .open
-    ) -> InteractionEvent {
-        InteractionEvent(target: InteractionTarget(
-            interaction: interaction(reference: reference, action: action),
-            hitPosition: .zero,
-            distance: 1
-        ))
-    }
-
-    /// `OnActivate(ObjectReference akActionRef)` forwarding its activator to
-    /// `Probe.Seen`, so a test can watch the exact handle script code sees.
-    static func onActivateScript(_ name: String) -> PexObject {
-        let body = PexFixture.runtimeFunction(
-            parameters: [PexTypedName(name: "akActionRef", typeName: "ObjectReference")],
-            instructions: [PapyrusTestSupport.instruction(
-                .callStatic,
-                .identifier("Probe"),
-                .identifier("Seen"),
-                .identifier("::nonevar"),
-                .integer(1),
-                .identifier("akActionRef")
-            )]
-        )
-        return PapyrusWorldFixture.eventScript(name, events: [("OnActivate", body)])
-    }
-
-    private static func doorSession(
-        scripts: [String]
-    ) throws -> PapyrusWorldFixture.Session {
-        try PapyrusWorldFixture.session(
-            objects: scripts.map { onActivateScript($0) },
-            entries: [PapyrusWorldFixture.referenceEntry(
-                objectID: doorID,
-                scripts: scripts.map { .init($0, properties: []) }
-            )]
-        )
-    }
-
+extension PapyrusWorldActivationTests {
     // MARK: - Recording an activation
 
     @Test("an interaction event records an activation by the player")

@@ -82,9 +82,12 @@ Observed 2026-08-06 on Xcode 26.5 (build 25F70), measured while wiring
   target-qualified spellings all behave the same way. Command-line `-only-testing` does
   work, and replaces the plan's selection entirely.
 
+  Selecting a whole **target** in a plan does work, which is what
+  `Config/RealData.xctestplan` does since issue #418; nothing translates a plan's test list
+  into `-only-testing` flags any more.
+
 Retires when a later Xcode matches plan-level selection against Swift Testing identifiers,
-at which point `tools/realtest.sh` can stop translating the plan's list into
-`-only-testing` flags.
+at which point a plan could narrow a run to individual suites again.
 
 ## build-for-testing and test-without-building
 
@@ -100,8 +103,8 @@ Observed 2026-08-08 on Xcode 26.6 / macOS 26.6.1, measured while wiring
   verbatim under `EnvironmentVariables`, and `test-without-building` forwards
   it into the app-hosted test host — a gated test passes, not skips, with no
   injection anywhere.
-- Command-line `-only-testing` **overrides** the `.xctestrun`'s baked
-  `OnlyTestIdentifiers` (the RealData plan's dead `selectedTests`), and a
+- Command-line `-only-testing` **overrides** any `OnlyTestIdentifiers` baked into the
+  `.xctestrun` by a plan's own (inert) test selection, and a
   misspelled Swift Testing selector still runs zero tests and exits 0 —
   identical to `xcodebuild test`, so the post-run result-bundle count stays
   the guard.

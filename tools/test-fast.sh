@@ -27,7 +27,8 @@
 #                           [-c CAP_MB] [-s GUARD_SECONDS]
 #   -p  test plan (default UnitTests). RealData runs under tools/memguard.sh
 #       with parallel testing off, like tools/realtest.sh.
-#   -t  -only-testing selector, fully qualified (openskyTests/Suite/test()).
+#   -t  -only-testing selector, fully qualified — openskyTests/Suite/test()
+#       under the unit plan, openskyRealDataTests/Suite/test() under RealData.
 #   -B  force build-for-testing even when nothing looks stale.
 #   -c  watchdog kill threshold in MB (RealData only, default 4096).
 #   -s  watchdog lifetime in seconds (RealData only, default 900).

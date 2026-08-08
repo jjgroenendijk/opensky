@@ -9,17 +9,26 @@ timestamp: 2026-08-06T00:00:00Z
 
 # Testing setup
 
-Two test targets, driven through `make`. Fixture rules in `openskyTests/AGENTS.md` and
-AGENTS.md "Legal & IP boundary" — synthetic data built in code only, never extracted game
-files.
+Three test targets, driven through `make`. Fixture rules in `openskyTests/AGENTS.md`,
+`openskyRealDataTests/AGENTS.md`, `openskyTestSupport/AGENTS.md` and AGENTS.md
+"Legal & IP boundary" — synthetic data built in code only, never extracted game files.
 
 ## Targets
 
 * `openskyTests` — unit tests (Swift Testing, `@testable import opensky`).
-  Format parsers, math, VFS, and the renderer via offscreen paths. This includes
-  the env-gated real-data suites (see below), which skip without a data root.
+  Format parsers, math, VFS, and the renderer via offscreen paths. Everything
+  here runs with no game data at all.
+* `openskyRealDataTests` — the env-gated real-data suites, which read the user's
+  own install and skip without a data root (issue #418). Same app host and the
+  same fixture rules; a separate bundle so `make test` does not compile them and
+  the `RealData` plan can select them by target.
 * `openskyUITests` — XCUITest smoke tests: app launches, main window appears, no
   game-data alert.
+
+`openskyTestSupport/` is not a target. It is the folder both unit-test bundles
+compile — the shared fixtures and fakes, the way `opensky/Engine/` is shared by
+the app and `openskycli`. It carries no `@Test`, because a test there would run
+in both bundles.
 
 ## Entrypoints
 
@@ -48,7 +57,7 @@ files.
 * `make realtest-all [CAP=MB]` — run the whole real-data set the same way. On
   demand and before a milestone acceptance; never on push, because it needs an
   install CI does not have.
-* `make test-sanitize [SAN=Thread|Address] [CAP=MB]` — run `openskyTests` under
+* `make test-sanitize [SAN=Thread|Address] [CAP=MB]` — run `openskyTests` alone under
   the runtime sanitizers (see [Sanitizers](#sanitizers)). On demand and before a
   milestone, never on push.
 * `make test-ui` — UI smoke tests, driving the real app through XCUITest. Runs
@@ -84,7 +93,7 @@ Which bundles a run touches is a checked-in test plan, not a flag (issue #346). 
 | --- | --- | --- |
 | `UnitTests.xctestplan` | `openskyTests` | `make test`, `make test-fast`, `make test-one`; the scheme default |
 | `UITests.xctestplan` | `openskyUITests` | `make test-ui` |
-| `RealData.xctestplan` | `openskyTests`, plus the data root | `make realtest`, `make realtest-all` |
+| `RealData.xctestplan` | `openskyRealDataTests`, plus the data root | `make realtest`, `make realtest-all` |
 | `Sanitizers.xctestplan` | `openskyTests`, one configuration per sanitizer | `make test-sanitize` |
 
 `xcodebuild` builds every buildable in a scheme's Test action before it looks at
@@ -102,9 +111,10 @@ and cannot carry is below, and `Sanitizers` has its own section.
 method, and switches from the unit plan to `UITests` when the selector names
 `openskyUITests`, because the unit plan cannot select a test it does not list.
 
-No plan lists both bundles, and that is deliberate (issue #380). `openskyTests` is
-app-hosted — its test host *is* `opensky.app`. Put it in the same test session as the UI
-runner and `xcodebuild` stands the app up as a test host, injecting
+No plan lists the UI bundle beside an app-hosted unit bundle, and that is deliberate
+(issue #380). `openskyTests` and `openskyRealDataTests` are both app-hosted — their test
+host *is* `opensky.app`. Put either in the same test session as the UI runner and
+`xcodebuild` stands the app up as a test host, injecting
 `libXCTestBundleInject.dylib`, so the app waits in
 `-[XCTestDriver _prepareTestConfigurationAndIDESession]` for an IDE session that belongs to
 the runner, while the runner waits for the app to enter automation mode. Neither moves, and
@@ -198,8 +208,8 @@ Baseline at the time it landed: 80.31% of lines (57543/71652).
 
 ## Real-data suites and the data root
 
-The `*RealDataTests` suites exercise the parser/renderer stack against a real
-Skyrim SE install — the highest-value integration coverage in the repo, and the
+The `openskyRealDataTests` bundle exercises the parser/renderer stack against a
+real Skyrim SE install — the highest-value integration coverage in the repo, and the
 only tests that touch a real install at all. They gate on the `OPENSKY_DATA_ROOT`
 env var (`GameDataLocator.environmentKey`,
 `opensky/Engine/GameData/GameDataLocator.swift`):
@@ -218,6 +228,8 @@ make realtest T='CellRenderRealDataTests/streamsFiveByFiveGridToCompletion()'
 make realtest-all
 make realtest-perf
 ```
+
+A bare `T=` selector resolves under `openskyRealDataTests/`.
 
 `make realtest` goes through the fast path (`tools/test-fast.sh -p RealData`,
 issue #417): the plan's `OPENSKY_DATA_ROOT` entry is baked into the generated
@@ -276,15 +288,39 @@ them are in [local environment](/tools/environment.md):
   identifiers do reach the runner (they show up as `OnlyTestIdentifiers` in the
   generated `.xctestrun`) but select nothing, so running the plan straight
   through executes zero tests — as does `skippedTests`, at suite level or at
-  method level. Command-line `-only-testing` does work and replaces the plan's
-  selection, so `tools/realtest.sh` reads the plan's `selectedTests` and passes
-  one `-only-testing` per suite.
+  method level. Selecting a whole **target** is the one plan-level selection
+  that does work, which is why the suites now live in their own bundle.
 
-Because the plan's list is only as good as its spelling, `make realdata-plan`
-(part of `make lint`) asserts it is exactly the set of env-gated suites in
-`openskyTests` — every file that declares `dataRoot: GameDataRoot?` and has a
-`@Test`. Adding a real-data suite and forgetting the plan is a lint failure, not
-silent coverage loss.
+### Why the suites are their own target
+
+Until issue #418 the real-data suites shared `openskyTests`, and both costs of
+that were paid on every run. `make test` compiled all of them even though they
+skip without a data root, and because a plan cannot select Swift Testing tests,
+`Config/RealData.xctestplan` carried a 57-entry `selectedTests` list that existed
+only for `tools/realtest.sh` to re-emit as one `-only-testing` flag per suite,
+kept spelled right by a lint that parsed the suites out of the source.
+
+Moving them into `openskyRealDataTests` replaced all of that with target-level
+selection: the plan names the target, `tools/realtest.sh` runs the plan as-is,
+and the list, the re-emission loop, and most of the lint are gone. Measured on
+this checkout, the unit compile lost 56 files and 14 820 lines (579 files /
+110 413 lines before, 523 / 95 593 after, counting `openskyTests` plus the
+shared `openskyTestSupport`), which every `make test` and every incremental
+`make test-fast` rebuild had been paying for suites it never ran.
+
+The shared support is the trade: 38 files compile into both bundles rather than
+one. Three types that mixed a reusable fixture with `@Test` methods were split down
+that seam — the fixture half in `openskyTestSupport/`, the tests in an extension
+of the same type under `openskyTests/` — so no call site moved and no test
+identifier changed. `openskyTestSupport/AGENTS.md` has the rule.
+
+What replaces the plan lint is structural: `make realdata-plan` (part of
+`make lint`) asserts that every file declaring `dataRoot: GameDataRoot?` with a
+`@Test` lives in `openskyRealDataTests/` rather than in the unit folders, that
+the plan selects that target and nothing narrows it, and that no plan lists an
+app-hosted bundle beside `openskyUITests`. A gated suite in the wrong folder is
+still silent coverage loss — `make realtest-all` would not reach it and
+`make test` would skip it — so it is still a lint failure.
 
 ## Sanitizers
 

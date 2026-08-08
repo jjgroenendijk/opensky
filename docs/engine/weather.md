@@ -187,7 +187,7 @@ the game view for first responder).
 ## Acceptance evidence (M7.2.3)
 
 `WeatherAcceptanceRealDataTests` (env-gated, one @Test, run via
-`sh tools/realtest.sh openskyTests/WeatherAcceptanceRealDataTests/\
+`sh tools/realtest.sh openskyRealDataTests/WeatherAcceptanceRealDataTests/\
 forcedWeathersTransitionsAndTimeProduceDistinctFrames()`) renders the FirstRenderCell exterior
 scene offscreen (1280x720) against the real Skyrim.esm and asserts pairwise pixel deltas above
 1000 changed pixels. Observed (921600 px total):

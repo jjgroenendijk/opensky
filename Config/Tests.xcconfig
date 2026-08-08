@@ -1,9 +1,13 @@
-// Target-level settings for openskyTests, shared by Debug and Release. The bundle is
-// app-hosted: it loads into a built, signed opensky.app, which is why it needs the same
-// signing inputs as the app itself.
+// Target-level settings for the two unit-test bundles — openskyTests and
+// openskyRealDataTests — shared by Debug and Release. Both are app-hosted: each loads into
+// a built, signed opensky.app, which is why they need the same signing inputs as the app
+// itself.
+//
+// The bundle identifier is derived from the target name rather than written out, so the two
+// bundles cannot end up sharing one identifier when a third test target appears.
 #include "Signing.xcconfig"
 
-PRODUCT_BUNDLE_IDENTIFIER = nl.jjgroenendijk.openskyTests
+PRODUCT_BUNDLE_IDENTIFIER = nl.jjgroenendijk.$(PRODUCT_NAME:rfc1034identifier)
 TEST_HOST = $(BUILT_PRODUCTS_DIR)/opensky.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/opensky
 BUNDLE_LOADER = $(TEST_HOST)
 

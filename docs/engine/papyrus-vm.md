@@ -1179,7 +1179,7 @@ latent suspend/resume round trip, and the required budget, depth, bad-jump,
 type-mismatch and unknown-opcode fault matrix.
 
 The world layer is covered by its own device-free suites, all built on
-`openskyTests/PapyrusWorldFixture.swift`, which assembles synthetic REFR
+`openskyTestSupport/PapyrusWorldFixture.swift`, which assembles synthetic REFR
 records with VMAD data, event scripts whose handlers record
 `<script>.<event>` through a probing native dispatch, and a drain helper that
 steps to quiescence:
@@ -1352,7 +1352,7 @@ Local A/B (optional, never committed): logs/m11-acceptance-visible.png
 
 Issue #172's gate is one chain rather than a set of unit results, pinned by
 `M11ScriptedWorldAcceptanceTests` over the fixture in
-`openskyTests/M11ScriptedWorldChain.swift`. It needs no game data, and only its
+`openskyTestSupport/M11ScriptedWorldChain.swift`. It needs no game data, and only its
 last step needs a GPU.
 
 The fixture is one synthetic exterior cell holding two references. The lever

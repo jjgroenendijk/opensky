@@ -121,7 +121,7 @@ can weld neighbor cells by dropping one cell's shared row/col instead of averagi
 - `openskyTests/TerrainSplatRenderTests.swift` — GPU offscreen render of a synthetic
   two-texture terrain quad: west (weight 0) pixels read the base, east (weight 1) pixels
   read the layer — VTXT-driven blending proven at pixel level.
-- `openskyTests/LandRealDataTests.swift` — env-gated edge-overlap probe (above).
+- `openskyRealDataTests/LandRealDataTests.swift` — env-gated edge-overlap probe (above).
 
 Real-data visual check (2026-07-18, M1): `openskycli render` of WhiterunExterior06 (Tamriel
 6,-2) — 4 terrain quads, 14 splat layers resolved, 0 missing textures; dirt/grass/rock/snow

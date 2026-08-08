@@ -62,12 +62,12 @@ struct M10AcceptanceRealDataTests {
             session.resolution().floatValue(editorID: GameClock.timescaleEditorID)
         )
         #expect(session.world.setGlobal(
-            M10AcceptanceTests.fastTimescale, formID: timescaleID, defaults: defaults
+            M10AcceptanceClock.fastTimescale, formID: timescaleID, defaults: defaults
         ))
         let overriddenTimescale = try #require(
             session.resolution().floatValue(editorID: GameClock.timescaleEditorID)
         )
-        #expect(overriddenTimescale == M10AcceptanceTests.fastTimescale)
+        #expect(overriddenTimescale == M10AcceptanceClock.fastTimescale)
 
         let system = try #require(
             WeatherSystem(file: file, worldspaceEditorID: FirstRenderCell.worldspaceEditorID),
@@ -77,7 +77,7 @@ struct M10AcceptanceRealDataTests {
         try Self.showAContrastingWeather(system)
         let run = Self.run(system, session: session, timescale: overriddenTimescale)
 
-        #expect(run.elapsedGameHours == M10AcceptanceTests.totalGameHours)
+        #expect(run.elapsedGameHours == M10AcceptanceClock.totalGameHours)
         #expect(!run.changePoints.isEmpty, "Tamriel's weather never changed across the run")
         for point in run.changePoints {
             #expect(
@@ -88,7 +88,7 @@ struct M10AcceptanceRealDataTests {
 
         // The three readings the gate names, on real records.
         let clock = session.clock
-        #expect(clock.hourOfDay == M10AcceptanceTests.endHour)
+        #expect(clock.hourOfDay == M10AcceptanceClock.endHour)
         #expect(run.lastResolvedHour == clock.hourOfDay)
         let projected = try #require(
             session.resolution().floatValue(editorID: GameClock.TimeGlobal.gameHour.editorID)
@@ -122,7 +122,7 @@ struct M10AcceptanceRealDataTests {
     /// the six-game-hour boundary.
     @MainActor
     private static func showAContrastingWeather(_ system: WeatherSystem) throws {
-        system.update(deltaTime: 100, hour: M10AcceptanceTests.startHour)
+        system.update(deltaTime: 100, hour: M10AcceptanceClock.startHour)
         let automatic = try #require(system.currentWeatherID, "no automatic pick for Tamriel")
         let contrast = try #require(
             system.store.selectableWeathers().first { $0.formID != automatic },
@@ -143,8 +143,8 @@ struct M10AcceptanceRealDataTests {
         """
         [INFO] Tamriel weather pool: \(system.store.selectableWeathers().count) selectable \
         weathers; \(run.observedWeatherIDs.count) distinct weathers observed across the run
-        [INFO] clock: \(M10AcceptanceTests.steps) steps of \
-        \(M10AcceptanceTests.wallStep) real seconds = \(run.elapsedGameHours) game hours; \
+        [INFO] clock: \(M10AcceptanceClock.steps) steps of \
+        \(M10AcceptanceClock.wallStep) real seconds = \(run.elapsedGameHours) game hours; \
         \(sample.timeText) \(sample.dateText), GameHour projection \(projection)
         [INFO] weather changes at game hours: \
         \(run.changePoints.map { String($0) }.joined(separator: ", ")) \
@@ -164,7 +164,7 @@ struct M10AcceptanceRealDataTests {
         init(defaults: GlobalStore) {
             self.defaults = defaults
             let holder = box
-            holder.clock = GameClock(hour: M10AcceptanceTests.startHour)
+            holder.clock = GameClock(hour: M10AcceptanceClock.startHour)
             world.onTimeGlobalWrite = { timeGlobal, value in
                 let previous = holder.clock.projectedValue(timeGlobal)
                 holder.clock.setProjectedValue(value, for: timeGlobal)
@@ -178,7 +178,7 @@ struct M10AcceptanceRealDataTests {
 
         func advance(_ timescale: Float) -> Float {
             let before = box.clock.totalGameSeconds
-            box.clock.advance(wallDelta: M10AcceptanceTests.wallStep, timescale: timescale)
+            box.clock.advance(wallDelta: M10AcceptanceClock.wallStep, timescale: timescale)
             return Float((box.clock.totalGameSeconds - before) / GameClock.secondsPerHour)
         }
 
@@ -211,12 +211,12 @@ struct M10AcceptanceRealDataTests {
         if let weather {
             result.observedWeatherIDs.insert(weather)
         }
-        for _ in 0 ..< M10AcceptanceTests.steps {
+        for _ in 0 ..< M10AcceptanceClock.steps {
             let elapsed = session.advance(timescale)
             result.elapsedGameHours += elapsed
             result.lastResolvedHour = session.clock.hourOfDay
             system.update(
-                deltaTime: M10AcceptanceTests.wallStep,
+                deltaTime: M10AcceptanceClock.wallStep,
                 hour: result.lastResolvedHour,
                 elapsedGameHours: elapsed
             )

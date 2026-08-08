@@ -72,12 +72,18 @@ The repo root holds only this document, `Makefile`, the Xcode project, `Config/`
 dotfiles. Every build setting lives in `Config/*.xcconfig`, not in the pbxproj, signing
 included: `Config/Signing.xcconfig` names one Apple Development identity for every target,
 because macOS ties permission grants to the code signature and ad-hoc signing re-asks on
-every build (`docs/tools/build-system.md`). `Config/` also holds the three checked-in test
+every build (`docs/tools/build-system.md`). `Config/` also holds the four checked-in test
 plans, for the same reason: which bundles a run touches is reviewable configuration, not a
 flag. `UnitTests.xctestplan` lists `openskyTests` alone, `UITests.xctestplan` lists
-`openskyUITests` alone — no plan lists both, because an app-hosted unit bundle deadlocks
-the UI runner it shares a session with — and `RealData.xctestplan` names the env-gated
-real-data suites and carries the data root into the test host (`docs/testing.md`).
+`openskyUITests` alone, and `RealData.xctestplan` lists `openskyRealDataTests` alone and
+carries the data root into the test host — no plan lists the UI bundle beside an app-hosted
+unit bundle, because such a bundle deadlocks the UI runner it shares a session with
+(`docs/testing.md`).
+Test sources split by target membership the same way `opensky/` does: `openskyTests/` holds
+the synthetic unit suites, `openskyRealDataTests/` holds every env-gated suite that reads the
+user's install, `openskyTestSupport/` holds the fixtures both bundles compile, and
+`openskyUITests/` holds the XCUITest smoke tests. A gated suite written outside
+`openskyRealDataTests/` fails `make lint`, because nothing would ever run it.
 `opensky/` splits by target membership:
 `opensky/App/` holds the AppKit and SwiftUI shell, view controllers, panels, and
 `Assets.xcassets`; `opensky/Engine/` holds everything CLI-safe; `opensky/SharedHeaders/`
@@ -103,7 +109,8 @@ or an offscreen render. Unit-test every format parser and math routine, with syn
 fixtures built in code. Every pushed commit is green.
 
 `make test` never runs the env-gated real-data suites — they skip without a data root, which
-`xcodebuild test` does not forward. Run `make realtest T='Class/method()'` for one of them
+`xcodebuild test` does not forward, and it no longer compiles them either: they are their own
+target. Run `make realtest T='Class/method()'` for one of them
 and `make realtest-all` for the whole set, on demand and before a milestone acceptance.
 `make realtest-perf` is the same machinery built optimized, for the one budget that is
 meaningless unoptimized; it caches in `DerivedData-optimized/` so it does not evict the

@@ -46,10 +46,10 @@ if [ ! -f "$cache" ] || [ "$xctestrun" -nt "$cache" ]; then
         printf '%s\n' "$before" | grep -qxF "$entry" \
             || rm -rf "${xcode_dd:?}/$entry"
     done
-    # disabledTests included deliberately: an .xctestrun with baked
-    # OnlyTestIdentifiers (the RealData plan's dead selectedTests) reports every
-    # Swift Testing test as disabled, and those are exactly the identifiers a
-    # typo should be corrected against.
+    # disabledTests included deliberately: an .xctestrun carrying baked
+    # OnlyTestIdentifiers -- what a plan's own (inert) test selection leaves
+    # behind -- reports every Swift Testing test as disabled, and those are
+    # exactly the identifiers a typo should be corrected against.
     python3 - "$json" <<'PY' >"$cache"
 import json, sys
 with open(sys.argv[1], "rb") as stream:
