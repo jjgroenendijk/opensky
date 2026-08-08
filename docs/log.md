@@ -4,6 +4,48 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-08
 
+* **NAVM and NAVI navmesh decode (issue #199)**: the first item of M16 (AI). `NVNM`
+  geometry — vertices, triangles with per-edge neighbours and flags, edge links into
+  neighbouring navmeshes, and door links — plus the `NAVI` index map that says which
+  navmeshes exist, where each one is, and which link to which. New page:
+  [navmesh records](/formats/navmesh.md); also updated
+  [record decoders](/formats/records.md).
+
+  **The parent-cell union needed settling between the two sources.** The four bytes after
+  the parent worldspace are either a CELL FormID or a pair of grid coordinates, and UESP
+  says the switch is the worldspace equalling `0x0000003C` while xEdit switches on the
+  worldspace being null. UESP's rule cannot generalise past Tamriel, so the decoder
+  implements xEdit's, and the census probe checks it three ways on real data: the parent
+  the payload decodes to against the CELL the record was found under, and against the NVMI
+  entry NAVI holds for the same navmesh. All three agree across the Whiterun target area.
+
+  **Geometry is not in the store.** `NavmeshIndex` holds the NAVI side only — FormID to
+  entry, location to navmeshes, the NVSI deletion set — and is built once in
+  `CellProviderIndexes` beside the other record indexes. A navmesh's vertices and triangles
+  come from its own cell through `CellSceneBuilder.collectNavmeshes`, which is the other
+  half of the deliberate NAVM skip in `collectTaggedReferences` and stays off the scene
+  build path: nothing rendered or collided reads a navmesh, so the streamer should not pay
+  the whole payload on every cell build. The pathing graph (16.2, issue #200) pairs the two.
+
+  **Out-of-range is a decode error, not a later crash.** Every count is checked against the
+  bytes actually remaining before it sizes an allocation, and every local vertex, triangle,
+  door, cover and grid index is range-checked at decode time — including the case where a
+  triangle's edge flag redirects its neighbour value from the triangle array to the
+  edge-link array. Cover data, the navmesh-grid squares, the NVMI island block and NAVI's
+  NVPP are skipped, each named and tallied rather than silently dropped.
+
+  **The census corrected the decoder once.** An edge link's triangle index is not a local
+  triangle: range-checking it against the mesh carrying the link rejected more than half the
+  vanilla navmeshes in the target area, always on that field, with values far past the local
+  count. It indexes the navmesh the link names instead — xEdit agrees by omission, giving
+  the door link's triangle a `wbTriangleLinksTo` callback and this one none — so nothing
+  local can check it and the decoder no longer tries. Everything else in the target area
+  decoded clean on the first pass.
+
+  Nothing draws a navmesh yet (16.3, issue #422); the verification surface for now is the
+  Asset Browser detail pane and `openskycli record`, which print a decoded summary for
+  `NAVM` and `NAVI` like they already do for the other decoded record types.
+
 * **The real-data suites are their own test target (issue #418)**: `openskyRealDataTests`
   now holds every env-gated suite and nothing else, so `Config/RealData.xctestplan` selects
   it the one way plan-level selection actually works — by target. That deleted the plan's

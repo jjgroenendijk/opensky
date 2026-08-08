@@ -37,6 +37,8 @@ nonisolated enum RecordTextDump {
         case "CLMT": climateSummary(record: record)
         case "REGN": regionSummary(record: record)
         case "QUST": questSummary(record: record, localized: localized)
+        case "NAVM": navmeshSummary(record: record)
+        case "NAVI": navmeshIndexSummary(record: record)
         // Inventory families live in RecordTextDumpItems.swift so this switch
         // stays inside the strict-lint complexity cap.
         default: itemSummary(record: record, localized: localized)
@@ -137,6 +139,35 @@ nonisolated enum RecordTextDump {
             + "\(quest.stages.count) stages, \(quest.objectives.count) objectives, "
             + "\(quest.aliases.count) aliases, \(quest.fragments.count) fragments"
             + skips
+    }
+
+    /// The navmesh inspector surface (issue #199): selecting a NAVM in the
+    /// Asset Browser, or `openskycli record --type NAVM`, shows the decoded
+    /// mesh without anything having to draw it yet (16.3, issue #422).
+    private static func navmeshSummary(record: ESMRecord) -> String? {
+        guard let navmesh = try? Navmesh(record: record) else { return nil }
+        let geometry = navmesh.geometry
+        let location = switch geometry.location {
+        case let .interior(cell): "interior cell \(cell)"
+        case let .exterior(world, x, y): "worldspace \(world) grid (\(x),\(y))"
+        }
+        return "decoded NAVM: editorID \(navmesh.editorID ?? "-"), \(location), "
+            + "version \(geometry.version), \(geometry.vertices.count) vertices, "
+            + "\(geometry.triangles.count) triangles, \(geometry.edgeLinks.count) edge links, "
+            + "\(geometry.doorLinks.count) door links, "
+            + "\(geometry.coverTriangleCount) cover triangles (skipped), "
+            + "grid divisor \(geometry.gridDivisor)"
+    }
+
+    private static func navmeshIndexSummary(record: ESMRecord) -> String? {
+        guard let map = try? NavmeshInfoMap(record: record) else { return nil }
+        let islands = map.infos.count { $0.flags.contains(.isIsland) }
+        return "decoded NAVI: editorID \(map.editorID ?? "-"), version \(map.version), "
+            + "\(map.infos.count) navmeshes (\(islands) islands, "
+            + "\(map.malformedInfoCount) malformed), "
+            + "\(map.deletedNavmeshes.count) deleted, "
+            + "\(map.precomputedPathCount) preferred paths and "
+            + "\(map.roadMarkerCount) road markers (skipped)"
     }
 
     private static func fieldLines(record: ESMRecord) -> [String] {

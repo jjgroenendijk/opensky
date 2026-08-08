@@ -9,6 +9,10 @@ nonisolated struct CellProviderIndexes {
     let soundStore: SoundRecordStore
     let footstepStore: FootstepStore
     let materialTypes: MaterialTypeIndex
+    /// NAVI decoded once (issue #199). Not passed to the provider: nothing in
+    /// the scene build reads a navmesh yet, and the pathing graph that will
+    /// (16.2, issue #200) takes it from here directly.
+    let navmeshes: NavmeshIndex
     let aspcStore: AcousticSpaceStore
     let musicStore: MusicRecordStore
     let globalStore: GlobalStore
@@ -55,6 +59,7 @@ nonisolated struct CellProviderIndexes {
         soundStore = SoundRecordStore(file: file)
         footstepStore = FootstepStore(file: file)
         materialTypes = MaterialTypeIndex(file: file)
+        navmeshes = NavmeshIndex(file: file)
         aspcStore = AcousticSpaceStore(file: file)
         musicStore = MusicRecordStore(file: file)
         globalStore = GlobalStore(file: file, pluginName: esmURL.lastPathComponent)
