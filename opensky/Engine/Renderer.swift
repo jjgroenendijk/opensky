@@ -51,6 +51,9 @@ final class Renderer: NSObject {
     /// triple-buffered vertex + uniform rings, and the CPU shelf-packed glyph
     /// atlas backing the texture. Encode + resolve live in RendererUIPass.swift.
     let uiResources: UIResources
+    /// Depth-tested world-space debug overlay: blended pipeline, read-only
+    /// depth state and fixed per-frame vertex ring (RendererOverlayPass.swift).
+    let worldOverlayResources: WorldOverlayResources
     /// Atlas revision last copied into the atlas texture; re-upload on change.
     var uiUploadedAtlasRevision = -1
     /// SWF display-list layer (M8.2.4): content/mask pipelines + counting
@@ -164,6 +167,14 @@ final class Renderer: NSObject {
     var grassWindScale: Float = 1
     /// Test/diagnostic override stays bounded by production hard cap.
     var grassInstanceBudget = GrassRenderPolicy.maximumInstancesPerFrame
+    /// World-space AI/debug overlays default off and are independently gated.
+    /// Their source closures remain registered while disabled, so a toggle does
+    /// not rebuild subsystem plumbing.
+    var navmeshOverlayEnabled = false
+    var pathOverlayEnabled = false
+    let worldOverlaySources = WorldOverlaySourceRegistry()
+    /// Submitted/drawn accounting from the most recently encoded overlay.
+    var lastWorldOverlayDrawStats = WorldOverlayDrawStats()
     /// Screen-space UI A/B toggle. Off -> the UI pass encodes zero draws and
     /// the frame matches a never-enabled baseline exactly.
     var uiEnabled = true
@@ -324,9 +335,8 @@ final class Renderer: NSObject {
         depthState = try Self.makeDepthState(device: device)
         waterDepthState = try Self.makeWaterDepthState(device: device)
         sampler = try Self.makeSampler(device: device)
-        shadow = try Self.makeShadowResources(device: device)
-        uiResources = try Self.makeUIResources(device: device, view: view)
-        swf = try Self.makeSWFPassResources(device: device, view: view)
+        ((shadow, uiResources), (worldOverlayResources, swf)) =
+            try Self.makeAuxiliaryResources(device: device, view: view)
 
         (self.scene, precipitation) = try Self.makeInitialScene(device: device, requested: scene)
         let resolvedCamera = camera ?? .demo
@@ -350,7 +360,8 @@ final class Renderer: NSObject {
                 frameUniformBuffer, drawUniformBuffer, pointLightBuffer,
                 instanceTransformBuffer, shadowDrawUniformBuffer, shadowInstanceBuffer,
                 shadow.map, uiResources.atlasTexture, uiResources.vertexBuffer,
-                uiResources.uniformBuffer, swf.whiteTexture, swf.fallbackRamp
+                uiResources.uniformBuffer, worldOverlayResources.vertexBuffer,
+                swf.whiteTexture, swf.fallbackRamp
             ]
                 + self.scene.residencyAllocations + precipitation.residencyAllocations
         )

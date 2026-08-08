@@ -110,13 +110,34 @@ extension Renderer {
         }
     }
 
+    /// Long-lived resources for passes outside the base scene pipelines.
+    /// Grouping their factories keeps Renderer.init below the strict body cap.
+    static func makeAuxiliaryResources(
+        device: MTLDevice,
+        view: MTKView
+    ) throws -> (
+        shadowAndUI: (ShadowResources, UIResources),
+        overlayAndSWF: (WorldOverlayResources, SWFPassResources)
+    ) {
+        try (
+            (
+                makeShadowResources(device: device),
+                makeUIResources(device: device, view: view)
+            ),
+            (
+                makeWorldOverlayResources(device: device, view: view),
+                makeSWFPassResources(device: device, view: view)
+            )
+        )
+    }
+
     /// Argument table sized for the whole scene pass. Buffers: vertices,
     /// frame + draw uniforms, terrain weights, instance transforms, particles.
     /// Textures: base diffuse + the terrain layer array.
     static func makeArgumentTable(device: MTLDevice) throws -> MTL4ArgumentTable {
         let descriptor = MTL4ArgumentTableDescriptor()
-        // Highest buffer index is the SWF per-draw uniforms slot (M8.2.4).
-        descriptor.maxBufferBindCount = BufferIndex.swfUniforms.rawValue + 1
+        // Highest buffer index is the world-overlay vertex stream (#422).
+        descriptor.maxBufferBindCount = BufferIndex.overlayVertices.rawValue + 1
         // Base diffuse + terrain layer array + sun-shadow cascade array + the
         // UI glyph/solid atlas + the SWF bitmap and gradient-ramp slots.
         descriptor.maxTextureBindCount = TextureIndex.swfGradient.rawValue + 1

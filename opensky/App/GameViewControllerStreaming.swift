@@ -26,6 +26,7 @@ extension GameViewController {
                 }
             }
         )
+        wireStreamingSources(provider: provider, renderer: renderer, streamer: controller)
         // Runtime world state (issue #160). Every dispatched build snapshots the
         // store on the main thread, and every journalled mutation tells the
         // streamer which cell to rebuild so the change is visible without a
@@ -48,7 +49,6 @@ extension GameViewController {
         controller.onDynamicPosesChanged = { [weak renderer] deltas in
             renderer?.dynamicInstanceDeltas = deltas
         }
-        wireGlobals(provider: provider, renderer: renderer)
         renderer.onFrame.add { [weak self, weak controller, weak renderer] position in
             controller?.update(
                 cameraPosition: position,
@@ -102,6 +102,15 @@ extension GameViewController {
             controller?.sampleWaterHeight(at: position)
         }
         streamer = controller
+    }
+
+    private func wireStreamingSources(
+        provider: any CellSceneProvider,
+        renderer: Renderer,
+        streamer: CellStreamer
+    ) {
+        wireAIOverlay(renderer: renderer, streamer: streamer)
+        wireGlobals(provider: provider, renderer: renderer)
     }
 
     /// View ray for use-key targeting, simulated-player modes only: the fly

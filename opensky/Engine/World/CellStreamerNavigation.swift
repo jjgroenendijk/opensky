@@ -9,6 +9,8 @@ struct CellStreamerNavigationState {
     var graph = RuntimeNavigationGraph()
     var repathRequests: [NavigationRepathRequest] = []
     var onRepath: ((NavigationRepathResponse) -> Void)?
+    /// Most recently completed path, retained only as the debug-overlay source.
+    var lastPath: NavigationPath?
 }
 
 extension CellStreamer {
@@ -28,7 +30,9 @@ extension CellStreamer {
     /// use the queued repath surface below so a crowd cannot spike one frame.
     func findPath(_ query: NavigationPathQuery) -> NavigationPathResult {
         reconcileNavigation()
-        return navigationState.graph.findPath(query)
+        let result = navigationState.graph.findPath(query)
+        rememberNavigationPath(from: result)
+        return result
     }
 
     func navigationPathIsCurrent(
@@ -80,9 +84,11 @@ extension CellStreamer {
         let requests = Array(navigationState.repathRequests.prefix(count))
         navigationState.repathRequests.removeFirst(count)
         for request in requests {
+            let result = navigationState.graph.findPath(request.query)
+            rememberNavigationPath(from: result)
             navigationState.onRepath?(NavigationRepathResponse(
                 identifier: request.identifier,
-                result: navigationState.graph.findPath(request.query)
+                result: result
             ))
         }
     }
@@ -111,5 +117,14 @@ extension CellStreamer {
             }
         }
         return resident
+    }
+
+    private func rememberNavigationPath(from result: NavigationPathResult) {
+        switch result {
+        case let .path(path):
+            navigationState.lastPath = path
+        case .miss:
+            navigationState.lastPath = nil
+        }
     }
 }

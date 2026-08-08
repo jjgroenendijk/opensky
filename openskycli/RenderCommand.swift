@@ -26,6 +26,7 @@ enum RenderCommand {
         let timeOfDay = try parseTimeOfDay(scanner.option("--time-of-day"))
         let neighbors = scanner.flag("--neighbors")
         let uiSample = scanner.flag("--ui-sample")
+        let navmeshOverlay = scanner.flag("--navmesh-overlay")
         try scanner.finish()
 
         guard
@@ -56,6 +57,7 @@ enum RenderCommand {
             worldspace: worldspace,
             center: CellCoordinate(x: gridX, y: gridY)
         )
+        let navigationGraph = navmeshOverlay ? makeNavigationGraph(cellScenes) : nil
 
         let render = try renderOffscreen(
             device: device,
@@ -63,25 +65,15 @@ enum RenderCommand {
             camera: zoomed(SceneCamera.framing(bounds: bounds), zoom: zoom),
             size: size,
             timeOfDay: timeOfDay,
-            uiScene: uiSample ? .labSample : .empty
+            uiScene: uiSample ? .labSample : .empty,
+            navigationOverlayGraph: navigationGraph
         )
-        if uiSample {
-            printUIOverlayStats(render.uiStats)
-        }
-        // Instancing evidence (3.2): draw calls collapse below draw-item
-        // count only via culling; instances >> draw calls means repeated
-        // models actually batched.
-        print(
-            "[INFO] draw calls: \(render.stats.drawCalls) "
-                + "(\(scene.drawCount) draw items, \(scene.instanceCount) instances, "
-                + "\(render.stats.culledInstances) culled)"
+        try report(
+            render,
+            scene: scene,
+            output: output,
+            overlays: (ui: uiSample, navmesh: navmeshOverlay)
         )
-        let pixels = readPixels(texture: render.texture)
-        let percent = String(format: "%.1f", nonBackgroundFraction(pixels: pixels) * 100)
-        print("[INFO] non-background pixels: \(percent)%")
-        let url = URL(filePath: output)
-        try FrameScreenshot.write(texture: render.texture, to: url)
-        print("[INFO] wrote frame -> \(url.path(percentEncoded: false))")
     }
 
     private static func buildCellScenes(
@@ -108,6 +100,15 @@ enum RenderCommand {
                 return nil
             }
         }
+    }
+
+    private static func makeNavigationGraph(_ scenes: [CellScene]) -> RuntimeNavigationGraph {
+        var graph = RuntimeNavigationGraph()
+        for scene in scenes {
+            guard let location = scene.location else { continue }
+            graph.setCell(location, scene: scene)
+        }
+        return graph
     }
 
     private static func sceneWithLOD(
@@ -254,33 +255,5 @@ enum RenderCommand {
             fileSystem: fileSystem,
             terrainLODConfigurationStore: context.makeTerrainLODConfigurationStore()
         )
-    }
-
-    /// BGRA readback of the whole offscreen target.
-    private static func readPixels(texture: MTLTexture) -> [UInt8] {
-        var pixels = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
-        pixels.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return } // non-empty
-            texture.getBytes(
-                base,
-                bytesPerRow: texture.width * 4,
-                from: MTLRegionMake2D(0, 0, texture.width, texture.height),
-                mipmapLevel: 0
-            )
-        }
-        return pixels
-    }
-
-    /// Fraction of pixels not the black clear color (any channel above a
-    /// small noise floor) — quick "did anything draw" signal.
-    private static func nonBackgroundFraction(pixels: [UInt8]) -> Double {
-        var lit = 0
-        for pixel in stride(from: 0, to: pixels.count, by: 4) {
-            let dark = pixels[pixel] <= 8 && pixels[pixel + 1] <= 8 && pixels[pixel + 2] <= 8
-            if !dark {
-                lit += 1
-            }
-        }
-        return Double(lit) / Double(pixels.count / 4)
     }
 }

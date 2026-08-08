@@ -593,6 +593,34 @@ fragment void shadowAlphaTestFragment(
     }
 }
 
+// Depth-tested world-space debug overlay. Triangles and line segments share
+// one vertex/color pipeline; CPU submission groups the two topologies into
+// adjacent ranges of the same per-frame upload.
+
+typedef struct
+{
+    float4 position [[position]];
+    float4 color;
+} OverlayVertexOut;
+
+vertex OverlayVertexOut overlayVertex(
+    uint vertexID [[vertex_id]],
+    const device OverlayVertex *vertices [[buffer(BufferIndexOverlayVertices)]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]])
+{
+    const device OverlayVertex &in = vertices[vertexID];
+    OverlayVertexOut out;
+    out.position = frame.viewProjectionMatrix * float4(in.position, 1.0);
+    out.color = in.color;
+    return out;
+}
+
+fragment float4 overlayFragment(OverlayVertexOut in [[stage_in]])
+{
+    float alpha = saturate(in.color.a);
+    return float4(in.color.rgb * alpha, alpha);
+}
+
 // Screen-space 2D UI overlay (M8.1.1): drawn last, depth off. Vertices arrive
 // in framebuffer pixels (origin top-left, y down) as a device pointer indexed
 // by vertex_id (no vertex descriptor, like the particle path). One pipeline

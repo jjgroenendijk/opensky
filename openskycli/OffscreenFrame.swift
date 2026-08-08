@@ -10,6 +10,7 @@ struct OffscreenFrame {
     let texture: MTLTexture
     let stats: SceneDrawStats
     let uiStats: UIDrawStats
+    let worldOverlayStats: WorldOverlayDrawStats
 }
 
 extension RenderCommand {
@@ -21,6 +22,16 @@ extension RenderCommand {
         )
     }
 
+    static func printWorldOverlayStats(_ stats: WorldOverlayDrawStats) {
+        print(
+            "[INFO] world overlay: submitted \(stats.submittedPrimitiveCount), "
+                + "drawn \(stats.drawnPrimitiveCount) "
+                + "(\(stats.triangleCount) triangles, \(stats.lineSegmentCount) lines), "
+                + "dropped \(stats.droppedPrimitiveCount), "
+                + "truncated \(stats.wasTruncated ? "yes" : "no")"
+        )
+    }
+
     /// Headless MTKView (never shown, no window) carries the pixel-format
     /// config Renderer reads; renderOffscreen never touches its drawable.
     static func renderOffscreen(
@@ -29,7 +40,8 @@ extension RenderCommand {
         camera: SceneCamera,
         size: (width: Int, height: Int),
         timeOfDay: Float,
-        uiScene: UIScene = .empty
+        uiScene: UIScene = .empty,
+        navigationOverlayGraph: RuntimeNavigationGraph? = nil
     ) throws -> OffscreenFrame {
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: size.width, height: size.height),
@@ -44,11 +56,22 @@ extension RenderCommand {
             timeOfDay: timeOfDay
         )
         renderer.uiScene = uiScene
+        if let navigationOverlayGraph {
+            renderer.navmeshOverlayEnabled = true
+            renderer.worldOverlaySources.register(identifier: "cli-navigation") { context, list in
+                navigationOverlayGraph.appendWorldOverlay(
+                    context: context,
+                    path: nil,
+                    to: &list
+                )
+            }
+        }
         let texture = try renderer.renderOffscreen(width: size.width, height: size.height)
         return OffscreenFrame(
             texture: texture,
             stats: renderer.lastDrawStats,
-            uiStats: renderer.lastUIDrawStats
+            uiStats: renderer.lastUIDrawStats,
+            worldOverlayStats: renderer.lastWorldOverlayDrawStats
         )
     }
 }
