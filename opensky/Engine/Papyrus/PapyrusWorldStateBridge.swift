@@ -32,6 +32,17 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// Game clock the five time globals project from, matching how every other
     /// consumer builds a `GlobalResolution`.
     var clockSource: (() -> GameClock?)?
+    /// The three collaborators the `Actor` natives run through (issue #375),
+    /// held as closures rather than as references so the session may wire them
+    /// in any order and a test may supply one without the others. Nil, or a
+    /// closure answering nil, makes every actor native a tallied failure rather
+    /// than a convincing zero. Conformance lives in
+    /// `PapyrusWorldStateBridgeActors.swift`.
+    var actorValueRuntime: (() -> ActorValueRuntime?)?
+    var ragdollRuntime: (() -> RagdollRuntime?)?
+    /// Where one actor's weapon is, or nil when this session observes no draw
+    /// state for it — which is every actor but the player today.
+    var weaponDrawState: ((ReferenceKey) -> WeaponDrawState?)?
     /// Master-list resolver for the FormIDs written inside decoded records —
     /// XLKR links and their keywords. Nil in a synthetic session, which falls
     /// back to the reference index.
@@ -140,15 +151,18 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
             // the same reason its state does.
             return worldState.set(value, for: key)
         case let .actorValues(value):
-            // Same reasoning: `DamageActorValue` and `RestoreActorValue` are a
-            // later milestone's natives, and when they arrive they go through
-            // `ActorValueRuntime` so the clamping applies. An actor is a placed
-            // reference, so this write is attributed to its cell.
+            // `DamageActorValue` and `RestoreActorValue` never reach this case:
+            // they go through `ActorValueRuntime` so the clamping applies (see
+            // `PapyrusWorldStateBridgeActors.swift`). The seam stays total
+            // anyway — a component the VM can hold is a component the VM can
+            // store. An actor is a placed reference, so this write is
+            // attributed to its cell.
             return worldState.set(value, for: key, in: cell)
         case let .death(value):
-            // Same reasoning: `Kill` and `Resurrect` are a later milestone's
-            // natives, and when they arrive they go through `RagdollRuntime` so
-            // the death events are raised and the ragdoll is handed off. An
+            // `Kill` never reaches this case either: it goes through
+            // `RagdollRuntime.noteZeroHealth(of:killer:)` so the death events
+            // are raised and the ragdoll is handed off. `Resurrect` is the one
+            // that would clear this component, and it is not implemented. An
             // actor is a placed reference, so this write is attributed to its
             // cell.
             return worldState.set(value, for: key, in: cell)

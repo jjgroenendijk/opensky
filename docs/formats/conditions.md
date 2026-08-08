@@ -231,9 +231,16 @@ purpose:
   own condition runs are evaluated with that quest; a list belonging to no quest,
   such as a `MUST` record's, leaves it nil and every alias path then reports
   rather than borrowing a nearby quest's table.
-* Combat target, linked reference, package data, event data and any unknown value
-  fail up front as `ConditionFailure.unsupportedRunOn`, with their own tally
-  bucket. This is a missing subsystem, not a missing binding.
+* Combat target (3) resolves through the actor seam issue #375 added. It asks
+  about the combat target of the object *the condition runs against*, not about
+  one session-wide fight, so it is a lookup of the subject in
+  `ActorStateResolution` rather than a read of `CombatLoopState.target`. 15.7's
+  model gives both directions: the player fights the nearest hostile living
+  actor, and every hostile living actor fights the player. A dead actor is
+  fighting nobody.
+* Linked reference, package data, event data and any unknown value fail up front
+  as `ConditionFailure.unsupportedRunOn`, with their own tally bucket. This is a
+  missing subsystem, not a missing binding.
 * A supported run-on that names a reference the context cannot produce — no
   subject bound, a key the index does not hold, or an alias holding nothing — is
   `ConditionFailure.unresolvedReference`, a different bucket, because the fix is
@@ -245,10 +252,20 @@ Resolution is lazy. A function asks for a reference only if it needs one, so
 run-on type OpenSky cannot resolve does not poison a condition that never
 touches it.
 
+Resolution is also two-step, and the two steps are different questions.
+`ConditionCall.referenceKey()` answers "which world identity does this run-on
+name", and `reference()` builds on it to answer "and what decoded record stands
+behind it". `GetIsID` needs the second, because it compares base forms; the
+actor functions need only the first. That split is what lets an actor condition
+about the player answer at all: the player has a `ReferenceKey` and no plugin
+record, so asking for the record first would have reported an unresolved
+reference with nothing wrong behind it.
+
 ### The evaluation context
 
 `ConditionContext` is a value type composed of `globals: GlobalResolution`,
-`quests: QuestResolution`, an optional `clock: GameClock`, a
+`quests: QuestResolution`, `aliases: QuestAliasResolution`,
+`actors: ActorStateResolution`, an optional `clock: GameClock`, a
 `references: RuntimeReferenceIndex`, the `subject` and `target` `ReferenceKey`s,
 and `random: ConditionRandom`. Building
 one is cheap, so a caller evaluating off the main actor builds its own from a
@@ -260,16 +277,28 @@ specifically so it stays `Sendable` and seed-deterministic without a lock: the
 engine seeds it once per session and a test seeds it per test, and the same seed
 replays the same sequence of draws.
 
+`ActorStateResolution` (issue #375) is the same shape as the globals and quest
+seams: a resolved snapshot the main actor builds from `ActorValueRuntime`,
+`ActorDeathState`, `ActorCombatState` and the melee runtime's draw state, so a
+condition evaluated off the main actor reads actor state as easily as the live
+session does. One `ActorConditionState` carries current values, re-derived
+maximums, the death latch, hostility, an *optional* weapon draw state and the
+combat target. The draw state is optional because only the player has a graph
+that tracks one; an actor whose draw state nothing observes reports the gap
+rather than answering "sheathed".
+
 ### Implemented functions
 
-Nine functions are registered, chosen because the engine can answer them
+Fourteen functions are registered, chosen because the engine can answer them
 honestly from state it already owns. The stored index is the raw on-disk value;
 the Creation Kit spells each one 4096 higher
 (`ConditionFunctionRegistry.creationKitOffset`).
 
 | stored | Creation Kit | name | parameters | returns |
 | --- | --- | --- | --- | --- |
+| 14 | 4110 | `GetActorValue` | #1 actor-value index | the run-on actor's current value |
 | 18 | 4114 | `GetCurrentTime` | none | current game time as a decimal hour, 0 to 24 — 4:30 am is 4.5 |
+| 46 | 4142 | `GetDead` | none | 1 when the run-on actor is recorded dead, 0 otherwise |
 | 56 | 4152 | `GetQuestRunning` | #1 `QUST` FormID | 1 when the quest is running, 0 otherwise |
 | 58 | 4154 | `GetStage` | #1 `QUST` FormID | the highest stage the quest has reached, 0 when it has reached none |
 | 59 | 4155 | `GetStageDone` | #1 `QUST` FormID, #2 stage index | 1 when that stage was explicitly visited, 0 otherwise |
@@ -277,7 +306,10 @@ the Creation Kit spells each one 4096 higher
 | 74 | 4170 | `GetGlobalValue` | #1 `GLOB` FormID | the named global's current value |
 | 77 | 4173 | `GetRandomPercent` | none | an integer 0 to 99 inclusive |
 | 170 | 4266 | `GetDayOfWeek` | none | 0 for Sundas through 6 for Loredas |
+| 263 | 4359 | `IsWeaponOut` | none | 0 with nothing drawn, 2 with a weapon in either hand |
+| 323 | 4419 | `GetCombatState` | none | 0 not in combat, 1 in combat |
 | 543 | 4639 | `GetQuestCompleted` | #1 `QUST` FormID | 1 when the quest is flagged completed, 0 otherwise |
+| 640 | 4736 | `GetActorValuePercent` | #1 actor-value index | current over maximum, 0 to 1 |
 
 Several of these carry a recorded decision.
 
@@ -319,6 +351,35 @@ citations. Two edge choices are OpenSky's:
   relied on the broken return does not. Reproducing a documented, patched bug
   would make every correct condition wrong.
 
+The five actor functions (issue #375) read the `actors` seam and nothing else,
+so they answer without a world, a clock or a store. Three points are OpenSky's
+own and are stated rather than assumed:
+
+* `IsWeaponOut` documents three returns, not a bool: "0 - If the Actor does not
+  have a weapon drawn. 1 - If the Actor has only his fists out. 2 - If the Actor
+  has a weapon in either hand." OpenSky returns 0 and 2 and never 1, because the
+  melee runtime tracks *where the weapon is* rather than whether the actor is
+  unarmed while it is out. An unarmed actor with its hands up therefore reads as
+  2. An actor whose draw state nothing observes is a reason-tagged false, not a
+  0: "sheathed" is a fact about an actor, and nothing here knows it.
+* `GetCombatState` documents 0 "Not in combat", 1 "In combat" and 2 "Searching".
+  Searching needs perception, which is M16's, so this engine never returns 2. A
+  dead actor is not in combat whatever hostility it died carrying, which is the
+  same rule `CombatLoopState.derive` applies.
+* `GetDead` reads the death latch rather than health, following the Creation Kit
+  wiki's own reason for preferring it: "This is more accurate than checking the
+  actor's health because there are circumstances when the actor can die without
+  losing all of their health."
+
+`GetActorValue` and `GetActorValuePercent` take an actor-value *index* rather
+than a FormID (xEdit types the parameter `ptActorValue`).
+`ActorValueIdentity` carries the vanilla table with its citation; 15.3 stores
+three of its 164 entries, and an index naming any of the other 161 — or naming
+nothing at all — is `ConditionFailure.unresolvedParameter` keyed by function
+index. That keeps two misses apart on purpose: ranking the unresolved parameters
+says which actor values to store next, while `.unavailableActorState` says the
+evaluation context was not wired with an actor seam at all.
+
 `ConditionFunction` carries `index`, `name`, `parameter1` and `parameter2` as
 `ConditionParameterType` (`.unused`, `.formID`, `.integer`, `.float`), and
 `creationKitIndex`. The registry (`ConditionFunctionRegistry.standard`, with
@@ -334,8 +395,9 @@ Nothing in the evaluator throws. A condition it cannot answer evaluates to
 false and carries a machine-readable `ConditionFailure` saying why:
 `.unknownFunction`, `.unresolvedGlobal`, `.unresolvedQuest`,
 `.unsupportedRunOn`, `.unresolvedReference`, `.unknownOperator`,
-`.unresolvedParameter`, or `.unavailableClock`. `.unresolvedParameter` today
-means a `CIS1`/`CIS2` alias name that resolved to no filled alias. A QUST
+`.unresolvedParameter`, `.unavailableClock`, or `.unavailableActorState`.
+`.unresolvedParameter` means either a `CIS1`/`CIS2` alias name that resolved to
+no filled alias or an actor-value index this engine has no store for. A QUST
 parameter naming no quest
 is `.unresolvedQuest` rather than a stopped quest at stage zero: "this quest does
 not exist" and "this quest has not started" are different answers, and only one
@@ -352,8 +414,8 @@ still owe Skyrim, and how much do they matter?", which is the question that
 ranks the next milestone's work. Its buckets are `unknownFunctions` with
 `unknownFunctionTotal` and `unnamedUnknownFunctions` beside it,
 `unresolvedGlobals`, `unresolvedQuests`, `unsupportedRunOns` keyed by run-on name,
-`unresolvedReferences`, `unknownOperators`, `unresolvedParameters` and
-`unavailableClock`, plus the volume counters `conditionsEvaluated` and
+`unresolvedReferences`, `unknownOperators`, `unresolvedParameters`,
+`unavailableClock` and `unavailableActorState`, plus the volume counters `conditionsEvaluated` and
 `listsEvaluated`, the derived `failureTotal` and `isClean`, and ranked
 accessors for reporting. Each name table is capped at `nameLimit` (64 by
 default) so a pathological plugin cannot grow the tally without bound, while
@@ -388,6 +450,13 @@ conditions evaluated there are therefore honestly reported as
 * `ConditionTimeFunctionTests` — `GetCurrentTime` from a clock and from the
   `GameHour` fallback, and `GetDayOfWeek` against the documented vanilla start
   weekday across a year boundary.
+* `ConditionActorFunctionTests` — the five actor functions against a synthetic
+  fight, both directions of the combat-target run-on including the swap flag,
+  the unstored-actor-value parameter miss, the unobserved-draw-state miss, and
+  an empty actor seam.
+* `ActorValueIdentityTests` — the three stored indices, the table length, and
+  the anchors on either side of each `Unknown NN` run, which is what would catch
+  a transcription slip that renumbered everything after it.
 
 Every fixture is built in code (`ConditionEvaluatorFixture`); no game bytes are
 committed. The real-data sweep in `ConditionRealDataTests` is the separate,
@@ -429,9 +498,9 @@ because mods may.
 
 `ConditionRealDataTests` runs the registry over every condition the decode sweep
 finds, counting what the evaluator could name and what it could not. Observed
-2026-08-02 against the retail Special Edition install, after the four quest
-functions landed: **35,460 of 83,759 conditions (42.34%) name a function the
-registry implements**. Those nine functions are 9 of the 244 distinct raw
+2026-08-08 against the retail Special Edition install, after the five actor
+functions landed: **37,104 of 83,759 conditions (44.30%) name a function the
+registry implements**. Those fourteen functions are 14 of the 244 distinct raw
 indices present in the file, whose range is 0 to 726.
 
 | stored | Creation Kit | function | conditions |
@@ -441,19 +510,41 @@ indices present in the file, whose range is 0 to 726.
 | 59 | 4155 | `GetStageDone` | 4,175 |
 | 74 | 4170 | `GetGlobalValue` | 1,579 |
 | 77 | 4173 | `GetRandomPercent` | 1,203 |
+| 46 | 4142 | `GetDead` | 1,028 |
+| 14 | 4110 | `GetActorValue` | 543 |
 | 18 | 4114 | `GetCurrentTime` | 518 |
 | 543 | 4639 | `GetQuestCompleted` | 470 |
 | 56 | 4152 | `GetQuestRunning` | 316 |
+| 640 | 4736 | `GetActorValuePercent` | 64 |
+| 263 | 4359 | `IsWeaponOut` | 8 |
 | 170 | 4266 | `GetDayOfWeek` | 1 |
+| 323 | 4419 | `GetCombatState` | 1 |
 
-Nine functions covering better than two fifths of the file is the shape a long
-tail has: `GetIsID` alone is 22.9% of every condition in the game, and the two
-quest-stage functions are another 14.6% between them. The earlier sweep, run on
-2026-07-29 with only the first five functions registered, measured 22,470
-conditions (26.83%) — quest state was the single largest thing the evaluator
-could not answer, which is why #251 named it the top of the demand list.
+Fourteen functions covering better than two fifths of the file is the shape a
+long tail has: `GetIsID` alone is 22.9% of every condition in the game, and the
+two quest-stage functions are another 14.6% between them. The sweep run on
+2026-08-02 with the first nine registered measured 35,460 conditions (42.34%),
+and the one on 2026-07-29 with only five measured 22,470 (26.83%) — quest state
+was the single largest thing the evaluator could not answer, which is why #251
+named it the top of the demand list.
 
-The remaining 235 indices carry 48,299 conditions. The ten heaviest, by stored
+The 1.96-point step the actor functions added is worth reading honestly.
+`GetDead` carries it almost alone at 1,028 conditions; `GetActorValue` adds 543
+and `GetActorValuePercent` 64, while `IsWeaponOut` appears 8 times and
+`GetCombatState` exactly once. Those last two were implemented because they are
+part of the combat-condition surface M16 will be written against, not because
+vanilla leans on them. The run-on histogram tells the same story from the other
+side: 419 of the 83,759 conditions use run-on 3, which had been unresolvable
+since #251 and now resolves — `subject` remains overwhelmingly dominant at
+77,007.
+
+Note that not every condition naming an implemented function *answers*: an
+actor-value parameter outside the three values 15.3 stores is a tallied
+parameter miss. The coverage number counts functions the registry holds, which
+is what makes it comparable across sweeps; per-run answerability is
+`ConditionTally.isClean`.
+
+The remaining 230 indices carry 46,655 conditions. The ten heaviest, by stored
 index and the Creation Kit number 4096 above it:
 
 | stored | Creation Kit | conditions |
@@ -464,10 +555,10 @@ index and the Creation Kit number 4096 above it:
 | 629 | 4725 | 4,584 |
 | 560 | 4656 | 1,943 |
 | 359 | 4455 | 1,058 |
-| 46 | 4142 | 1,028 |
 | 448 | 4544 | 1,022 |
 | 67 | 4163 | 919 |
 | 550 | 4646 | 799 |
+| 606 | 4702 | 781 |
 
 These are indices, not names. The sweep measured what the plugin stores, and it
 stores numbers; naming them from memory is exactly the kind of confident guess
@@ -497,8 +588,12 @@ so the registry uses 77.
   The OR-flag grouping rule and its `A AND B OR C AND D` example come from here.
 * Creation Kit wiki, the individual function pages under
   <https://ck.uesp.net/wiki/>: `GetCurrentTime`, `GetIsID`, `GetGlobalValue`,
-  `GetRandomPercent` and `GetDayOfWeek`, for each function's return value,
-  parameter typing and value range.
+  `GetRandomPercent`, `GetDayOfWeek`, `GetDead`, `GetActorValue` and
+  `GetActorValuePercent`, for each function's return value, parameter typing and
+  value range. `IsWeaponOut` and `GetCombatState` were read from the
+  `creationkit.com` mirror through the Wayback Machine, which is where their
+  documented return values come from — see `docs/tools/environment.md` on that
+  host.
 * UESP, "Skyrim:Calendar" — <https://en.uesp.net/wiki/Skyrim:Calendar>. The
   vanilla start date and its weekday, which anchor `GetDayOfWeek`.
 

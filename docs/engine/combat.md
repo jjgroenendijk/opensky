@@ -34,6 +34,7 @@ The pieces it ties together: [melee combat](/engine/melee-combat.md),
 * [The dev target](#the-dev-target)
 * [Reactions in both directions](#reactions-in-both-directions)
 * [Reaction clips](#reaction-clips)
+* [Script events from a fight](#script-events-from-a-fight)
 * [Transient caps](#transient-caps)
 * [Combat music](#combat-music)
 * [Measured cost](#measured-cost)
@@ -183,6 +184,36 @@ class. The one-handed small stagger is therefore what an unarmed stand-in plays.
 All of these ride the same character rig, so the clip binds. It is a
 substitution, and it is written down rather than silently made.
 
+## Script events from a fight
+
+Issue #375 (roadmap item 15.8) gives a fight its scripting surface. Three seams —
+`MeleeCombatWorld`, `ProjectileWorld` and `CombatLoopWorld` — all refine
+`ScriptHitReporting`, whose single `reportScriptHit(_:)` method carries a
+do-nothing default so every acceptance fake keeps compiling and a session with no
+script VM honestly reports zero queued events.
+
+`ScriptHitEvent` carries exactly the seven `OnHit` parameters the Creation Kit
+documents, in its vocabulary rather than the melee runtime's, so the world
+runtime turns it straight into event arguments. Each runtime reports *after*
+applying the damage, so a script that reads the target's health inside its
+handler sees the blow that caused the event. Three of the seven are always false:
+power attacks, sneak attacks and bashing do not exist in this engine yet.
+
+Deaths take the same shape from the other end.
+`RagdollWorldSeam.queueActorDeathEvents(for:killer:)` is called from inside
+`RagdollRuntime`'s death latch, which is what makes `OnDying` and `OnDeath` fire
+exactly once whether the corpse was made by a sword, an arrow, a sidebar control
+or a script's `Kill`. `RagdollRuntime.deathEventsQueued` counts them beside the
+graph-driven and fallback death counts, so "the scripts were told" and "the graph
+drove it" are two readable numbers rather than one assumption.
+
+The condition side of the same state is
+[conditions](/formats/conditions.md): `GetCombatState`, `GetDead`, `IsWeaponOut`
+and the two actor-value functions read a snapshot of exactly this, and CTDA
+run-on type 3 resolves against the fight described in
+[combat state is derived](#combat-state-is-derived) — the player fights the
+nearest hostile living actor and every hostile living actor fights the player.
+
 ## Transient caps
 
 Four populations grow while a fight runs and none shrinks on its own. Left alone,
@@ -301,3 +332,8 @@ Everything below is a known gap with a home, not an oversight:
   target is designated at a time.
 * **No power attacks and no bashing.** The census names both; they are M18's
   alongside perks and enchantments.
+* **`OnHit` never reports a power, sneak or bash attack**, and its `akSource`
+  and `akProjectile` handles name base records that resolve to no script
+  instance: a handler may compare and log them but cannot call a method on one.
+* **Scripts cannot start or stop a fight.** `StartCombat` and `StopCombat` are
+  M16's, with the AI that would have a reason to call them.

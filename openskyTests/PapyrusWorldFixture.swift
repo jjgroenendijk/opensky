@@ -139,6 +139,33 @@ enum PapyrusWorldFixture {
         )
     }
 
+    /// The same thing as an ACHR rather than a REFR (issue #375), which is what
+    /// the `Actor` natives need: only a placed actor carries the NPC_ base an
+    /// `ActorValueHolder` derives its baseline from.
+    static func actorEntry(
+        objectID: UInt32,
+        base: UInt32,
+        scripts: [VMADFixture.Script],
+        isPersistent: Bool = false
+    ) throws -> RuntimeReferenceEntry {
+        var name = Data()
+        name.appendUInt32(base)
+        let fields = ESMFixture.field("NAME", name)
+            + ESMFixture.field("DATA", Data(count: 24))
+            + ESMFixture.field("VMAD", VMADFixture.payload(scripts: scripts))
+        let bytes = ESMFixture.record("ACHR", formID: objectID, data: fields)
+        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
+        guard case let .record(record)? = children.first else {
+            throw ESMError.malformed("fixture did not produce an ACHR record")
+        }
+        return try RuntimeReferenceEntry(
+            key: .plugin(name: pluginName, objectID: objectID),
+            formID: FormID(objectID),
+            isPersistent: isPersistent,
+            record: .actor(PlacedActor(record: record))
+        )
+    }
+
     static func index(_ entries: [RuntimeReferenceEntry]) -> RuntimeReferenceIndex {
         RuntimeReferenceIndex(entries: entries)
     }

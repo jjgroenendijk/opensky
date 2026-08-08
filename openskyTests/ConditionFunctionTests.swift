@@ -21,15 +21,20 @@ struct ConditionFunctionTests {
 
     @Test func registryDescribesTheImplementedFunctions() {
         let registry = ConditionFunctionRegistry.standard
-        #expect(registry.indices == [18, 56, 58, 59, 72, 74, 77, 170, 543])
-        #expect(registry.count == 9)
+        // Nine before the actor family (issue #375) added five.
+        #expect(registry.indices == [
+            14, 18, 46, 56, 58, 59, 72, 74, 77, 170, 263, 323, 543, 640
+        ])
+        #expect(registry.count == 14)
         #expect(registry.sortedFunctions().map(\.name) == [
-            "GetCurrentTime", "GetQuestRunning", "GetStage", "GetStageDone", "GetIsID",
-            "GetGlobalValue", "GetRandomPercent", "GetDayOfWeek", "GetQuestCompleted"
+            "GetActorValue", "GetCurrentTime", "GetDead", "GetQuestRunning", "GetStage",
+            "GetStageDone", "GetIsID", "GetGlobalValue", "GetRandomPercent", "GetDayOfWeek",
+            "IsWeaponOut", "GetCombatState", "GetQuestCompleted", "GetActorValuePercent"
         ])
         // The Creation Kit spells every index 4096 higher than the plugin does.
         #expect(registry.sortedFunctions().map(\.creationKitIndex) == [
-            4114, 4152, 4154, 4155, 4168, 4170, 4173, 4266, 4639
+            4110, 4114, 4142, 4152, 4154, 4155, 4168, 4170, 4173, 4266,
+            4359, 4419, 4639, 4736
         ])
         #expect(registry[Self.getIsID]?.parameter1 == .formID)
         #expect(registry[Self.getIsID]?.parameter2 == .unused)
@@ -77,9 +82,10 @@ struct ConditionFunctionTests {
         // Quest Alias (5) is deliberately absent: issue #183 made it a
         // supported run-on that resolves through the filled alias table, so an
         // empty one is `unresolvedReference` and is covered by
-        // `QuestAliasConditionTests`.
+        // `QuestAliasConditionTests`. Combat Target (3) left this list for the
+        // same reason at issue #375, and is covered by
+        // `ConditionActorFunctionTests`.
         let cases: [(raw: UInt32, runOn: Condition.RunOnType)] = [
-            (3, .combatTarget),
             (4, .linkedReference),
             (6, .packageData),
             (7, .eventData),
@@ -94,8 +100,7 @@ struct ConditionFunctionTests {
         }
         #expect(evaluator.tally.unsupportedRunOnTotal == cases.count)
         #expect(evaluator.tally.rankedUnsupportedRunOns.map(\.name) == [
-            "combatTarget", "eventData", "linkedReference",
-            "packageData", "unknown(99)"
+            "eventData", "linkedReference", "packageData", "unknown(99)"
         ])
         // A context with no quest scope cannot answer an alias run-on, but the
         // reason is that the alias named nothing, not that the run-on is

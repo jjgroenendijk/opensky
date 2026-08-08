@@ -4,6 +4,60 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-08
 
+* **Scripts can now ask an actor how it is doing (issue #375, roadmap item 15.8)**: nine
+  `Actor` natives, three script events, five condition functions, and the CTDA combat-target
+  run-on that had been unresolvable since #251. Updated pages:
+  [Papyrus VM](/engine/papyrus-vm.md), [conditions](/formats/conditions.md),
+  [combat loop](/engine/combat.md), [actor values](/engine/actor-values.md).
+
+  **Two surfaces, one death path.** The acceptance gate asks that `DamageActorValue` kill at
+  zero, that `Kill` route the same way, and that `OnDeath` fire exactly once. The tempting
+  shape — have the natives write `ActorDeathState` themselves — would have produced a second
+  death path that never spawns a ragdoll and never raises the census-named graph events,
+  while the 15.6 per-frame sweep silently stopped noticing corpses it had not made. So both
+  natives empty health through `ActorValueRuntime` and then call
+  `RagdollRuntime.noteZeroHealth(of:killer:)`, which is where the latch already lived.
+  Exactly-once falls out of that latch rather than out of a second set kept beside it, and a
+  sword, an arrow, a sidebar button and a script now make identical corpses. `Kill` empties
+  health *before* killing for a reason a player can see: a corpse at full health would draw
+  a live HUD bar over a body and make `GetActorValue("Health")` disagree with `IsDead()`.
+
+  **`SetActorValue` is not implemented, on purpose.** The Creation Kit wiki is explicit that
+  it sets the *base* value and leaves modifiers intact, and that "While GetActorValue returns
+  the current value, SetActorValue sets the base value." OpenSky re-derives maximums from
+  RACE, CLAS and NPC_ on every read precisely so a save cannot carry a number a changed load
+  order no longer authors, so there is no base-override store to write. The only thing it
+  could have written is the current value, which is `ForceActorValue`'s job — every "buff
+  this NPC's max health" script would silently have moved its current health instead. It
+  stays an unimplemented native, counted by name in the tally, until a base override exists.
+  `ModActorValue`, `ForceActorValue`, `Resurrect`, `StartCombat` and `StopCombat` are absent
+  for their own stated reasons.
+
+  **The actor-value table was copied, not remembered.** Both new surfaces address actor
+  values by vanilla identity — a signed index in a CTDA parameter, a name string in a
+  Papyrus argument — so `ActorValueIdentity` holds xEdit's `wbActorValueEnum` verbatim,
+  `Unknown NN` placeholders included, because renumbering around a gap would put every later
+  index one off. Health is 24, magicka 25 and stamina 26 because dev-4.1.6
+  `Core/wbDefinitionsTES5.pas` says so. 15.3 stores three of the 164 entries; the other 161
+  are real actor values with no store, and each miss is tallied by name rather than answered
+  with a zero, which makes the tally the list of what to store next.
+
+  **`IsWeaponOut` is not a bool.** The Creation Kit wiki documents three returns — 0 nothing
+  drawn, 1 fists only, 2 a weapon in either hand — and OpenSky produces 0 and 2 and never 1,
+  because the melee runtime tracks where the weapon *is* rather than whether the actor is
+  unarmed while it is out. An actor whose draw state nothing observes, which is every actor
+  but the player, reports the gap instead of answering "sheathed": that is a fact about an
+  actor and nothing in this engine knows it. `GetCombatState` is the same shape — 2
+  "Searching" needs perception, so M16 will make it reachable and until then it is stated
+  rather than faked.
+
+  **Run-on type 3 resolves per subject, not per session.** The obvious reading — "the combat
+  target is `CombatLoopState.target`" — would give an NPC's condition the *player's* target.
+  A CTDA asks about the combat target of the object it runs against, so the actor seam
+  carries one per actor and 15.7's model fills both directions: the player fights the nearest
+  hostile living actor, and every hostile living actor fights the player. Both sides of a
+  fight therefore evaluate, and a corpse fights nobody.
+
 * **The pieces became a fight (issue #374, roadmap item 15.7)**: hostility, derived combat
   state, an opponent that attacks back, reactions in both directions, bounds on everything a
   fight spawns, and the combat-music edge M9 left a seam for. New page:

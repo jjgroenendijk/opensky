@@ -39,6 +39,7 @@ extension PapyrusWorldRuntime {
         formIDResolver: FormIDResolver,
         firstIntegration: Bool
     ) {
+        retainFormIDResolver(formIDResolver)
         let plan = collectAttachPlan(references: references)
         var attached = attachedByCell[cell] ?? []
         var created: Set<PapyrusInstanceKey> = []

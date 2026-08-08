@@ -1,0 +1,129 @@
+// `PapyrusWorldActorBridge` conformance (issue #375, roadmap item 15.8): where
+// the `Actor` natives meet 15.3's actor values, 15.6's death latch and 15.7's
+// hostility.
+//
+// Split out of `PapyrusWorldStateBridge.swift` for the reason the quest half is
+// split out: that file is already at its size shape, and a reader chasing "what
+// does `DamageActorValue` really do" should land on one screen that says so.
+//
+// ## Nothing here writes around the subsystems that own the state
+//
+// Values go through `ActorValueRuntime`, so the clamp, the journal, the dirty
+// counts and the save see a script's damage exactly as they see a sword's.
+// Deaths go through `RagdollRuntime.noteZeroHealth(of:killer:)`, so a scripted
+// kill raises the same census-named graph events, spawns the same ragdoll and
+// fires the same `OnDeath` as a fatal blow. Hostility is read straight off
+// `ActorCombatState` and is not written at all: `StartCombat` and `StopCombat`
+// are M16's, with the AI that would have a reason to call them.
+//
+// ## Why the collaborators are closures
+//
+// The actor-value runtime and the ragdoll runtime are built by their own
+// wiring steps, and the order those steps run in is the controller's business
+// rather than this bridge's. Holding a closure instead of a reference means the
+// bridge is correct whichever order the session wires, and means a test can
+// supply one subsystem without standing up the other.
+//
+// Documented in docs/engine/papyrus-vm.md.
+
+import Foundation
+
+extension PapyrusWorldStateBridge {
+    // MARK: - Reading
+
+    func actorState(for key: ReferenceKey) -> PapyrusActorState? {
+        guard let values = actorValueRuntime?(), let holder = actorHolder(for: key) else {
+            return nil
+        }
+        return PapyrusActorState(
+            current: values.current(of: holder),
+            maximums: values.baseline(of: holder).maximums,
+            isDead: worldState.component(ActorDeathState.self, for: key)?.isDead ?? false,
+            isInCombat: isActorInCombat(key),
+            weaponDrawState: weaponDrawState?(key)
+        )
+    }
+
+    // MARK: - Writing
+
+    @discardableResult
+    func damageActorValue(
+        _ kind: ActorValueKind, by amount: Float, on key: ReferenceKey
+    ) -> PapyrusActorState? {
+        guard let values = actorValueRuntime?(), let holder = actorHolder(for: key) else {
+            return nil
+        }
+        let state = values.damage(kind, by: amount, on: holder)
+        // The zero-health check is here rather than in the native because this
+        // is the layer that can act on it: a blow that empties the bar has to
+        // become a death on the same call, or a script that damages and then
+        // asks `IsDead()` reads a live actor lying on the floor.
+        if kind == .health, state.hasZeroHealth {
+            ragdollRuntime?()?.noteZeroHealth(of: key)
+        }
+        return actorState(for: key)
+    }
+
+    @discardableResult
+    func restoreActorValue(
+        _ kind: ActorValueKind, by amount: Float, on key: ReferenceKey
+    ) -> PapyrusActorState? {
+        guard let values = actorValueRuntime?(), let holder = actorHolder(for: key) else {
+            return nil
+        }
+        values.restore(kind, by: amount, on: holder)
+        return actorState(for: key)
+    }
+
+    @discardableResult
+    func killActor(_ key: ReferenceKey, killer: ReferenceKey?) -> Bool {
+        guard let values = actorValueRuntime?(), let holder = actorHolder(for: key) else {
+            return false
+        }
+        // Health first, then the death, in that order and through the same two
+        // calls a fatal sword blow makes. A corpse at full health would make
+        // `GetActorValue("Health")` and `IsDead()` disagree about the same
+        // actor, and the HUD meter would show a live bar over a body.
+        values.set(.health, to: 0, on: holder)
+        guard let ragdoll = ragdollRuntime?() else { return false }
+        return ragdoll.noteZeroHealth(of: key, killer: killer)
+    }
+
+    // MARK: - Private
+
+    /// `key`'s stored regard for the player, with the same
+    /// dead-actors-do-not-fight rule `CombatLoopState.derive` applies.
+    ///
+    /// The player is never "in combat" by this reading, because hostility is
+    /// stored per NPC and describes how that NPC regards the player. Whether
+    /// the *player* is in a fight is `CombatLoopState.isPlayerInCombat`, which
+    /// is derived from every resident actor rather than stored on one, and
+    /// answering it here would mean holding the combat runtime as well.
+    /// `Game.GetPlayer().IsInCombat()` therefore reads false in a fight, which
+    /// is a stated gap rather than a hidden one — see docs/engine/papyrus-vm.md.
+    private func isActorInCombat(_ key: ReferenceKey) -> Bool {
+        guard
+            worldState.component(ActorDeathState.self, for: key)?.isDead != true,
+            let combat = worldState.component(ActorCombatState.self, for: key)
+        else { return false }
+        return combat.hostility == .hostile
+    }
+
+    /// The actor-value holder behind a reference: the player, or a resident
+    /// ACHR resolved through the reference source. Nil for anything that is not
+    /// an actor, which is what makes an `Actor` native called on a crate a
+    /// tallied failure rather than a write to a crate's health.
+    private func actorHolder(for key: ReferenceKey) -> ActorValueHolder? {
+        if key == playerKey {
+            return .player
+        }
+        guard let actor = references?.referenceEntry(key: key)?.placedActor else {
+            return nil
+        }
+        return ActorValueHolder(
+            key: key,
+            subject: .actor(base: actor.base),
+            cell: cellLocation(of: key)
+        )
+    }
+}

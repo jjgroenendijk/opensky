@@ -65,6 +65,17 @@ extension GameViewController: MeleeCombatWorld {
         return true
     }
 
+    /// One landed blow reaches the scripts attached to its target (issue #375).
+    ///
+    /// Implemented once here and inherited by the archery and combat-loop
+    /// conformances, which are the same controller: all three seams refine
+    /// `ScriptHitReporting`, so a hit from any of them takes this one path into
+    /// the VM. A session with no VM queues nothing and says so.
+    @discardableResult
+    func reportScriptHit(_ hit: ScriptHitEvent) -> Int {
+        papyrus?.queueOnHit(hit) ?? 0
+    }
+
     func playMeleeImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
         guard
             let engine = renderer?.worldAudio, engine.isRunning,

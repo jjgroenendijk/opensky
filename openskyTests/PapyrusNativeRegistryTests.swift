@@ -7,7 +7,8 @@ import Testing
 struct PapyrusNativeRegistryTests {
     @Test func standardInstallIsCaseInsensitiveAndEmptyIsEmpty() {
         let standard = PapyrusNativeRegistry.standard
-        #expect(standard.count == 57)
+        // 57 before the `Actor` family (issue #375) added nine.
+        #expect(standard.count == 66)
         #expect(standard.contains(
             scriptName: "form", functionName: "REGISTERFORUPDATE"
         ))
@@ -17,6 +18,12 @@ struct PapyrusNativeRegistryTests {
         #expect(standard.contains(scriptName: "globalvariable", functionName: "setvalue"))
         #expect(standard.contains(scriptName: "GAME", functionName: "getplayer"))
         #expect(standard.contains(scriptName: "quest", functionName: "SETSTAGE"))
+        #expect(standard.contains(scriptName: "ACTOR", functionName: "getactorvalue"))
+        #expect(standard.contains(scriptName: "actor", functionName: "KILL"))
+        // `SetActorValue` sets the *base* value and OpenSky has no base
+        // override store, so it stays deliberately unimplemented and tallied
+        // (see PapyrusNativeActor.swift).
+        #expect(!standard.contains(scriptName: "Actor", functionName: "SetActorValue"))
         #expect(!PapyrusNativeRegistry.empty.contains(
             scriptName: "Utility",
             functionName: "Wait"

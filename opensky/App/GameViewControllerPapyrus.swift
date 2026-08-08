@@ -30,6 +30,19 @@ extension GameViewController {
             worldState: worldState, references: controller, globals: globalStore
         )
         bridge.clockSource = { [weak renderer] in renderer?.gameClock }
+        // The `Actor` natives' collaborators (issue #375). Closures rather than
+        // references, so this wiring step does not have to run after the ones
+        // that build them: `wireActorValues` needs a provider and `wireRagdoll`
+        // needs a renderer, and neither is ordered against this file.
+        bridge.actorValueRuntime = { [weak self] in self?.actorValues.runtime }
+        bridge.ragdollRuntime = { [weak self] in self?.ragdoll.runtime }
+        // Only the player carries a behavior graph that tracks a draw state, so
+        // every other actor answers nil and `IsWeaponDrawn` fails with a reason
+        // rather than claiming sheathed.
+        bridge.weaponDrawState = { [weak self] key in
+            guard key == .player else { return nil }
+            return self?.melee.runtime?.state.drawState
+        }
         let resolver = scriptSource.scriptFormIDResolver
         bridge.formIDResolver = resolver
         let world = PapyrusWorldRuntime(runtime: PapyrusRuntime(
