@@ -14,9 +14,9 @@
 // rather than every body sharing one. Ragdolls do not collide with each other:
 // two corpses in a pile is a case the joint solver would have to arbitrate
 // between two constraint sets at once, and the honest version of that is more
-// than this item takes on. Each ragdoll collides with the static world and with
-// itself, and the limitation is stated in docs/engine/ragdoll.md rather than
-// hidden.
+// than this item takes on. Each ragdoll collides with the static world, and with
+// those of its own bones that `RagdollSelfCollision` admits; the limitation is
+// stated in docs/engine/ragdoll.md rather than hidden.
 //
 // Ordering is by `ReferenceKey` throughout, for the reason the dynamic body
 // registry sorts: the solver's iteration order, and therefore the trajectories,
@@ -44,6 +44,14 @@ nonisolated struct RagdollStatsSnapshot: Equatable, Sendable {
     /// Bodies whose integrated pose came back non-finite. Always zero; a
     /// non-zero value is the stability gate failing in the open.
     var recoveredBodyCount = 0
+    /// Bone pairs the biped filter admits, summed over every live ragdoll: the
+    /// size of the set self-collision is allowed to work over (issue #413).
+    var selfCollisionPairCount = 0
+    /// Bone-against-bone contacts at the last solve, summed the same way. Zero
+    /// on a vanilla humanoid standing at its bind pose, and non-zero once a limb
+    /// has fallen across the torso.
+    var selfContactCount = 0
+    var isSelfCollisionEnabled = true
     var isFrozen = false
 }
 
@@ -61,6 +69,9 @@ protocol RagdollControlProviding: AnyObject {
     func triggerRagdoll() -> Bool
     /// Suspends and resumes ragdoll stepping without discarding the corpses.
     func setRagdollFrozen(_ frozen: Bool)
+    /// Switches self-collision between a ragdoll's own bones on and off, waking
+    /// every corpse so the change is visible on the ones already lying down.
+    func setRagdollSelfCollision(_ enabled: Bool)
     /// Drops every live ragdoll. The corpses stay dead; they stop simulating and
     /// fall back to their recorded resting pose.
     func clearRagdolls()
@@ -85,13 +96,30 @@ nonisolated struct RagdollWorld {
     private var spawnOrder: [ReferenceKey] = []
     private var accumulatedTime: Float = 0
     var isFrozen = false
+    /// Whether a ragdoll's bones may touch each other at all. The admitted pairs
+    /// are per-definition; this is the one switch over all of them, so a viewer
+    /// can watch the same collapse both ways (issue #413).
+    var isSelfCollisionEnabled = true {
+        didSet {
+            guard isSelfCollisionEnabled != oldValue else { return }
+            for index in ragdolls.indices {
+                ragdolls[index].instance.isSelfCollisionEnabled = isSelfCollisionEnabled
+                // A corpse that has already settled would otherwise keep the
+                // pose it settled into under the old rule, which reads as the
+                // switch having done nothing.
+                ragdolls[index].instance.wake()
+            }
+        }
+    }
 
     var ragdollCount: Int {
         ragdolls.count
     }
 
     var statsSnapshot: RagdollStatsSnapshot {
-        var snapshot = RagdollStatsSnapshot(isFrozen: isFrozen)
+        var snapshot = RagdollStatsSnapshot(
+            isSelfCollisionEnabled: isSelfCollisionEnabled, isFrozen: isFrozen
+        )
         snapshot.ragdollCount = ragdolls.count
         for entry in ragdolls {
             if entry.instance.isSettled {
@@ -103,6 +131,8 @@ nonisolated struct RagdollWorld {
             snapshot.jointCount += entry.instance.definition.jointCount
             snapshot.jointViolationCount += entry.instance.lastStats.jointViolationCount
             snapshot.recoveredBodyCount += entry.instance.lastStats.recoveredBodyCount
+            snapshot.selfCollisionPairCount += entry.instance.definition.selfCollision.pairCount
+            snapshot.selfContactCount += entry.instance.lastStats.pairContactCount
         }
         return snapshot
     }
@@ -115,6 +145,8 @@ nonisolated struct RagdollWorld {
         for key: ReferenceKey,
         in cell: CellSceneLocation
     ) {
+        var instance = instance
+        instance.isSelfCollisionEnabled = isSelfCollisionEnabled
         ragdolls.removeAll { $0.key == key }
         ragdolls.append((key: key, instance: instance))
         ragdolls.sort { $0.key < $1.key }

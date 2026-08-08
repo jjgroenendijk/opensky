@@ -68,6 +68,7 @@
         "QuestRealDataTests",
         "QuestScriptRealDataTests",
         "RagdollRealDataTests",
+        "RagdollSelfCollisionRealDataTests",
         "ScriptDataRealDataTests",
         "SystemMenuAcceptanceRealDataTests",
         "WeatherAcceptanceRealDataTests",

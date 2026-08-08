@@ -100,6 +100,58 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   `M15AcceptanceTests` instead — the arrow's whole trajectory, and the ragdoll's spawn, settle
   and resting pose — which is what the sidebar-acceptance convention makes pixel evidence
   optional for.
+* **The test loop got its overhead back (issue #417)**: `make test-fast` and the rewired
+  `make realtest` split `build-for-testing` from `test-without-building`, so a warm rerun of
+  one test costs 4–17 s instead of the ~80–85 s that session mining measured per invocation
+  — overhead that was the single largest wall-clock cost of fixing an issue, with the same
+  test re-run four to eleven times while iterating. The `.xctestrun` regenerates off an
+  mtime sweep of sources, `Config/`, the project file, and `.vendor/ffmpeg`; the RealData
+  root rides in it verbatim, so a gated test passes with no env injection. The per-run
+  `-enumerate-tests` selector validation is gone — an entire extra xcodebuild invocation per
+  single-test run — replaced by the post-run result-bundle count plus near-match suggestions
+  from a cached enumeration on the failure path only. The pre-push hook now skips its
+  `make test` + `make cli` rerun when both stamped the byte-identical tree green
+  (`tools/green-stamp.sh`); a dirty tree or any content change runs the full gate. What
+  issue #82 retired comes back without the fragile part: no `.xctestrun` rewriting, because
+  plan environment entries land in it already. Follow-up filed as issue #418 (move the
+  real-data suites to their own target). Updated pages: [testing](/testing.md),
+  [local environment](/tools/environment.md) (Xcode 26.6 `-enumerate-tests` flag limits,
+  `.xctestrun` naming and layout).
+
+* **Ragdoll self-collision is back, from the biped filter bits (issue #413, split from
+  #407)**: a corpse's arms no longer pass through its own torso. Updated pages:
+  [ragdoll](/engine/ragdoll.md), [NIF collision](/formats/nif-collision.md).
+
+  **The bits are a reading, not a guess.** nif.xml's `CollisionFilterFlags` puts a
+  `BipedPart` in the low five bits of the `HavokFilter` flags byte and says they mean a part
+  only on layers 8, 32 and 33. The vanilla humanoid confirms it rather than merely permitting
+  it: all eighteen bodies are on layer 8 in group 0, and every part number lands on the
+  anatomically correct enum name — `P_HEAD` on the head, `P_L_CALF` on the left calf,
+  `P_R_FOOT` on the right foot, through all sixteen distinct values. A mask read at the wrong
+  width or offset would still produce numbers; it would not produce that anatomy, and
+  `RagdollSelfCollisionRealDataTests` asserts it bone by bone.
+
+  **What Havok does with the parts is stated, because Havok does not publish it.** A pair is
+  admitted when both bodies carry a part, neither is `No Collision`, the parts differ, and
+  the two are more than two joints apart in the ragdoll's own joint graph. The third rule
+  earns its place on real data — `NPC COM` and `NPC Spine` both read `P_BODY` and are the
+  second-deepest overlap in the skeleton. The fourth is a graph distance rather than a
+  hard-coded humanoid table on purpose: one hop is what a constraint means, two hops is the
+  pair a shared parent holds together, and deriving it from the constraint data means a
+  dragon or a mod's creature is filtered without anyone writing its anatomy down. The result
+  is 116 of 153 pairs admitted and **none of the 24 that already overlap at the bind pose**,
+  which is why the thirty-to-forty-five standing contacts that made 15.6 switch the whole
+  thing off cannot occur.
+
+  **It exposed a settling gap that predates it.** A ragdoll reaches rest by either the
+  coordinated route, which checks every joint first, or 15.2's ordinary per-body sleep, which
+  asks nothing about them — and once every bone is asleep nothing solves a joint again. With
+  bones ignoring each other there was never anything left to hold one open at the end of a
+  fall; a self-collision contact can, and the vanilla left elbow rested three units and six
+  degrees open. `RagdollInstance` now makes its final pose-only projection on arrival at rest
+  by either route, repeating until every joint is inside half the settling thresholds. That
+  elbow now rests at 0.14 units and 1.7 degrees, and the sixty-collapse stability gate is
+  unchanged.
 
 * **Scripts can now ask an actor how it is doing (issue #375, roadmap item 15.8)**: nine
   `Actor` natives, three script events, five condition functions, and the CTDA combat-target

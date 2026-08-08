@@ -65,7 +65,7 @@ METAL_FILES     := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
         swift-lint metal-format md-format md-lint sh-lint cli-boundary \
         realdata-plan no-game-content \
         docs-links build cli \
-        probe test \
+        probe test test-fast \
         test-ui test-one test-report realtest realtest-perf realtest-all test-sanitize \
         test-perms app-path \
         cli-path run-cli \
@@ -145,6 +145,8 @@ build: vendor-link ## Build the app ($(CONFIG))
 
 cli: vendor-link ## Build the openskycli dev tool ($(CONFIG))
 	@$(XCB_RUN) cli $(XCB_CLI) build
+	@if [ "$(CONFIG)" = "Debug" ] && [ -z "$(XCODEBUILD_FLAGS)" ]; then \
+		./tools/green-stamp.sh write cli; fi
 
 probe: ## CLI smoke checks against the local install (skips if absent)
 	@./tools/probe.sh
@@ -169,6 +171,21 @@ test: vendor-link ## Build + run unit tests (no UI tests)
 		TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
 		$(XCB_RUN) test $(XCB_TEST) -resultBundlePath "$$bundle" \
 		$(UNIT_PLAN) test
+	@if [ "$(CONFIG)" = "Debug" ] && [ -z "$(XCODEBUILD_FLAGS)" ]; then \
+		./tools/green-stamp.sh write test; fi
+
+# The iteration loop (issue #417): build-for-testing once, then
+# test-without-building against the cached .xctestrun, which skips the build
+# system entirely — a warm rerun costs seconds where `make test` costs ~80.
+# tools/test-fast.sh regenerates the products when a source, Config/, project,
+# or vendored input is newer than the .xctestrun; B=1 forces it. Never writes a
+# green stamp: the full `make test` stays the pre-push gate.
+test-fast: vendor-link ## Iterate without rebuilding: make test-fast [T='Suite/test()'] [B=1]
+	@case "$(T)" in \
+		"") ./tools/test-fast.sh $(if $(B),-B,) ;; \
+		openskyTests/*) ./tools/test-fast.sh $(if $(B),-B,) -t "$(T)" ;; \
+		*) ./tools/test-fast.sh $(if $(B),-B,) -t "openskyTests/$(T)" ;; \
+	esac
 
 test-ui: vendor-link ## Build + run UI tests (launches the app, drives it via automation)
 	@./tools/test-ui.sh \
@@ -194,7 +211,11 @@ test-one: vendor-link ## Run one test: make test-one T=Class[/method] or Target/
 test-report: ## Print pass/fail summary + failure detail from the newest result bundle
 	@./tools/test-report.sh $(TEST_RESULTS)
 
-realtest: vendor-link ## Run one env-gated real-data test under the RSS watchdog: make realtest T=Class/method() [CAP=MB]
+# Single-selector runs go through the fast path (issue #417): the RealData
+# .xctestrun carries OPENSKY_DATA_ROOT, so a warm rerun skips the build system
+# and pays only the test itself plus xcodebuild startup. The watchdog and the
+# exactly-one-test result assertion are unchanged from tools/realtest.sh.
+realtest: vendor-link ## Run one env-gated real-data test under the RSS watchdog: make realtest T=Class/method() [CAP=MB] [B=1]
 	@test -n "$(T)" || { \
 		echo "[ERROR] usage: make realtest T='Class/method()' [CAP=MB]"; \
 		echo "        selector must resolve to exactly one test (fully qualified)"; \
@@ -202,7 +223,8 @@ realtest: vendor-link ## Run one env-gated real-data test under the RSS watchdog
 		echo "        whole set: make realtest-all"; \
 		exit 2; }
 	@case "$(T)" in openskyTests/*) spec="$(T)";; *) spec="openskyTests/$(T)";; esac; \
-	./tools/realtest.sh -t "$$spec" $(if $(CAP),-c $(CAP),)
+	./tools/test-fast.sh -p RealData -t "$$spec" \
+		$(if $(CAP),-c $(CAP),) $(if $(B),-B,)
 
 # The physics perf gate, and the only real-data entry point that builds the
 # suites optimized (issue #392). A physics step is a few hundred microseconds of

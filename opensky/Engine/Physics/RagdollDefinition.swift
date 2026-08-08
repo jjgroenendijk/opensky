@@ -46,17 +46,24 @@ nonisolated struct RagdollBoneDefinition: Sendable {
     /// `bindBoneMatrix.inverse`, kept rather than recomputed because the
     /// hand-off multiplies by it once per bone per activation.
     let bindBoneInverse: float4x4
+    /// The `BipedPart` the source body's `HavokFilter` named, which is what
+    /// decides who this bone may collide with (`RagdollSelfCollision`). Nil on a
+    /// body whose filter names no biped layer, and nil by default so a synthetic
+    /// fixture that says nothing about parts self-collides with nothing.
+    let bipedPart: UInt8?
 
     init(
         boneName: String,
         boneIndex: Int,
         body: DynamicBodyDefinition,
-        bindBoneMatrix: float4x4
+        bindBoneMatrix: float4x4,
+        bipedPart: UInt8? = nil
     ) {
         self.boneName = boneName
         self.boneIndex = boneIndex
         self.body = body
         self.bindBoneMatrix = bindBoneMatrix
+        self.bipedPart = bipedPart
         bindBoneInverse = bindBoneMatrix.inverse
     }
 }
@@ -173,6 +180,11 @@ nonisolated struct RagdollDefinition: Sendable {
     let joints: [RagdollJointDefinition]
     /// Everything the build dropped, in the order it was dropped.
     let skipped: [RagdollBuildSkip]
+    /// Which of this ragdoll's own bones may touch each other, from the biped
+    /// part numbers the bodies carry and the joint graph they form (issue #413).
+    /// Derived once here rather than per step, because it depends on nothing
+    /// that moves.
+    let selfCollision: RagdollSelfCollision
 
     var boneCount: Int {
         bones.count
@@ -190,5 +202,6 @@ nonisolated struct RagdollDefinition: Sendable {
         self.bones = bones
         self.joints = joints
         self.skipped = skipped
+        selfCollision = RagdollSelfCollision(bones: bones, joints: joints)
     }
 }

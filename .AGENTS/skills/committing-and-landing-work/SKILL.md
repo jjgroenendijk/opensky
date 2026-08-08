@@ -70,3 +70,8 @@ human `Signed-off-by:`. Enforced by `.githooks/commit-msg/20-no-ai-trailers.sh`.
 `.githooks/`, wired by `make bootstrap`: pre-commit guards, formats, and lints; commit-msg
 runs the Conventional Commit check; pre-push builds and tests. `--no-verify` is for
 bootstrap and emergencies only, never routine.
+
+The pre-push gate skips itself when green `make test` and `make cli` runs already stamped
+the byte-identical tree (issue #417, `tools/green-stamp.sh`), so running both right before
+`git push` makes the push near-instant instead of repeating the gate. Any content change or
+dirty file runs the full gate again.
