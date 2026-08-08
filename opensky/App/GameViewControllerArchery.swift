@@ -87,7 +87,9 @@ extension GameViewController {
             runtime.handleGraphEvents(events)
         }
         // Outside the gate on purpose; see the file comment.
-        runtime.advanceProjectiles(by: frameTime)
+        // An arrow that struck an actor provokes it, for the same reason a
+        // landed swing does (issue #374).
+        noteCombatProjectileHits(runtime.advanceProjectiles(by: frameTime))
     }
 
     /// The player's equipped bow as a swing profile, or the unarmed profile

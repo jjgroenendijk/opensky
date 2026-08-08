@@ -193,6 +193,12 @@ final class GameViewController: NSViewController {
     /// because extensions cannot add state.
     var ragdoll = RagdollBridgeState()
 
+    /// The combat loop: hostility, the derived combat state, the dev target's
+    /// attack clock and the reaction clips it plays (issue #374). The
+    /// implementation lives in `GameViewControllerCombat.swift`; stored here
+    /// because extensions cannot add state.
+    var combat = CombatBridgeState()
+
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))
         gameView.input = cameraInput

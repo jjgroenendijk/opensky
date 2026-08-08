@@ -23,6 +23,7 @@
         "BehaviorEvaluatorRealDataTests",
         "BehaviorStateMachineRealDataTests",
         "CellRenderRealDataTests",
+        "CombatLoopRealDataTests",
         "ConditionRealDataTests",
         "ContainerMenuAcceptanceRealDataTests",
         "DynamicBodyRealDataTests",

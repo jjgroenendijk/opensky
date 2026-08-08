@@ -152,6 +152,13 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
             // actor is a placed reference, so this write is attributed to its
             // cell.
             return worldState.set(value, for: key, in: cell)
+        case let .combat(value):
+            // Same reasoning: `StartCombat` and `StopCombat` are a later
+            // milestone's natives, and when they arrive they go through
+            // `CombatLoopRuntime` so the combat state and the music hook follow
+            // the write. An actor is a placed reference, so this write is
+            // attributed to its cell.
+            return worldState.set(value, for: key, in: cell)
         }
     }
 

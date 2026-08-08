@@ -248,6 +248,12 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   documented `fCombatDistance` reach formula and the swept-capsule hit volume, target
   filtering and one hit per swing, the install's own block GMSTs and how they differ from
   the secondary source, stagger, and the WEAP INAM impact-sound chain.
+* [Combat loop](/engine/combat.md) - persistent hostility as its own component and its
+  additive CBTS save chunk, combat state derived every step rather than stored, the
+  scripted dev target that is explicitly a clock and not an AI, census-named recoil
+  reactions in both directions, bounded reaction clips on the single-clip NPC playback,
+  the four transient caps and what a trim costs, the combat-music edge, and the panel
+  provider seam.
 
 ## Rendering
 

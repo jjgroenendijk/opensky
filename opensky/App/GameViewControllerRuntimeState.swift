@@ -146,6 +146,11 @@ extension GameViewController: RuntimeStateControlProviding {
     // MARK: Save and load
 
     func saveWorldState(slot: String) {
+        // Arrows in flight and corpses still falling are dropped before the
+        // snapshot is taken: neither survives a reload, and a save that
+        // recorded them would restore a world with an arrow frozen in the air
+        // (issue #374).
+        combat.runtime?.prepareForPersistence()
         do {
             let metadata = SaveCreationMetadata(
                 creationTimestamp: UInt64(max(0, Date().timeIntervalSince1970)),
@@ -204,6 +209,11 @@ extension GameViewController: RuntimeStateControlProviding {
             // instance it belongs to, and `restore(timerStates:)` skips (and
             // counts) any state whose instance the runtime does not hold yet.
             papyrus?.restore(timerStates: file.timers)
+            // The same clean-up on the way in: whatever the session had in the
+            // air before the load has nothing to do with the world it just
+            // became (issue #374). Hostility and actor values are components
+            // and were restored above.
+            combat.runtime?.prepareForPersistence()
             runtimeState.lastSaveOutcome = .loaded(slot: slot)
         } catch {
             runtimeState.lastSaveOutcome = .failed(

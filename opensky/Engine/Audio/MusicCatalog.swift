@@ -74,12 +74,21 @@ nonisolated enum MusicState: String, Equatable, Sendable, CaseIterable {
     case town
     /// Every other exterior, including one with no playlist at all.
     case exploration
+    /// The player is in combat (issue #374, roadmap item 15.7).
+    ///
+    /// The case this enum was shaped to grow. Unlike the other three it is not
+    /// derived from the streamer's context at all: combat is a game-system
+    /// state, so `WorldMusicDirector.setCombatActive(_:)` selects a MUSC
+    /// directly and the context chain below it is left untouched, which is what
+    /// lets leaving combat restore the selection it interrupted.
+    case combat
 
     var displayName: String {
         switch self {
         case .interior: "interior"
         case .town: "town"
         case .exploration: "exploration"
+        case .combat: "combat"
         }
     }
 }
@@ -144,6 +153,21 @@ nonisolated struct MusicSelection: Equatable, Sendable {
             tracks: [],
             advance: .stopAfterOne,
             crossfadeSeconds: defaultCrossfadeSeconds
+        )
+    }
+
+    /// This selection relabelled with another state, which is how a MUSC
+    /// resolved through the ordinary chain becomes the combat selection: the
+    /// tracks, the advance policy and the crossfade are the record's, and only
+    /// the state — a game-system fact, not a record one — is imposed.
+    func labelled(_ state: MusicState) -> MusicSelection {
+        MusicSelection(
+            state: state,
+            musicType: musicType,
+            editorID: editorID,
+            tracks: tracks,
+            advance: advance,
+            crossfadeSeconds: crossfadeSeconds
         )
     }
 
@@ -233,6 +257,14 @@ nonisolated struct MusicSelection: Equatable, Sendable {
     /// exploration ones are `MUSExplore...`. There is no authored "town" bit
     /// anywhere in the records, so the editor id is the only signal available.
     private static let townEditorIDPrefix = "mustown"
+
+    /// Bethesda's combat playlists are all named `MUSCombat<Something>`, the
+    /// same naming convention the town branch above relies on and with the same
+    /// limits: it is a convention, not data, so a load order that renames them
+    /// selects nothing and the director leaves the music where it was rather
+    /// than guessing (issue #374). The observation that these records exist in
+    /// vanilla is M9's, recorded in docs/engine/music.md.
+    static let combatEditorIDPrefix = "muscombat"
 
     private static func derivedState(isInterior: Bool, editorID: String?) -> MusicState {
         if isInterior {

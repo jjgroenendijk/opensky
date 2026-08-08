@@ -144,6 +144,19 @@ nonisolated enum OpenSkySaveFormat {
         /// where it fell in the skeleton's rest pose rather than in the tangle
         /// it died in (see docs/engine/ragdoll.md).
         static let deaths = "DETH"
+
+        /// Hostility (issue #374, roadmap item 15.7): one entry per actor whose
+        /// regard for the player deviates from neutral.
+        ///
+        /// Additive and split out of `RDLT` for the same reason `AVAL` and
+        /// `DETH` are. A session in which nothing was provoked writes no chunk
+        /// at all, so its bytes match what this encoder produced before the
+        /// chunk existed.
+        ///
+        /// Hostility only. Whether the *player* is in combat is derived from
+        /// which resident actors are hostile and alive, so writing it would let
+        /// a save carry a fact that contradicts the world it was loaded into.
+        static let combatStates = "CBTS"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.
@@ -260,6 +273,11 @@ nonisolated enum OpenSkySaveFormat {
     /// key, a named cell or a recorded transform is longer, so this is a lower
     /// bound.
     static let minimumDeathEntrySize = 11
+    /// Smallest number of bytes a single `CBTS` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and the hostility
+    /// byte (1). A generated key or a named cell is longer, so this is a lower
+    /// bound.
+    static let minimumCombatStateEntrySize = 9
 }
 
 /// On-disk tag of a component slot inside `RDLT`.
@@ -269,11 +287,13 @@ nonisolated enum OpenSkySaveFormat {
 /// detail that may change while these byte values may not.
 ///
 /// Optional because not every component slot travels in `RDLT`. `.inventory`,
-/// `.spawn`, `.quest`, `.questAliases`, `.actorValues` and `.death` have no tag
+/// `.spawn`, `.quest`, `.questAliases`, `.actorValues`, `.death` and `.combat`
+/// have no tag
 /// at all: each is carried by its own chunk so that an older build skips it
 /// rather than refusing the file (see `ChunkTag.inventories`,
 /// `ChunkTag.spawnedReferences`, `ChunkTag.questStates`, `ChunkTag.questAliases`,
-/// `ChunkTag.actorValues` and `ChunkTag.deaths`). A nil tag is the encoder's
+/// `ChunkTag.actorValues`, `ChunkTag.deaths` and `ChunkTag.combatStates`). A
+/// nil tag is the encoder's
 /// instruction to leave the
 /// component out of `RDLT`, and leaving `init?(saveTag:)` without a case for it
 /// is what keeps the decoder's "an unknown component kind in `RDLT` is an
@@ -285,7 +305,8 @@ nonisolated extension WorldStateComponentKind {
         case .transform: 1
         case .activation: 2
         case .deletion: 3
-        case .inventory, .spawn, .quest, .questAliases, .actorValues, .death: nil
+        case .inventory, .spawn, .quest, .questAliases, .actorValues, .death,
+             .combat: nil
         }
     }
 

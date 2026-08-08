@@ -41,6 +41,9 @@ final class WorldMusicDirector {
     /// not it is playing. Diffed against a fresh context to skip no-op
     /// restarts, and re-used as what to start when music is switched back on.
     private var desiredSelection = MusicSelection.silent(state: .exploration)
+    /// The selection combat interrupted, held for as long as the fight lasts.
+    /// Non-nil is also what "combat music is playing" means (issue #374).
+    private var preCombatSelection: MusicSelection?
     /// Index into `desiredSelection.tracks` of the track that should sound.
     private var trackIndex = 0
     /// The one source this director considers current. Nil while silent.
@@ -98,6 +101,12 @@ final class WorldMusicDirector {
         let selection = MusicSelection.resolve(
             context: context, musicStore: musicStore, weatherStore: weatherStore
         )
+        // A cell crossed mid-fight updates what leaving combat will return to
+        // rather than interrupting the fight's own music (issue #374).
+        guard preCombatSelection == nil else {
+            preCombatSelection = selection
+            return
+        }
         adopt(selection)
     }
 
@@ -168,6 +177,71 @@ final class WorldMusicDirector {
     /// resolves a fresh selection and starts it again.
     func stopMusic() {
         handleMusicContext(.empty)
+    }
+
+    // MARK: - Combat (issue #374)
+
+    /// Switches the combat playlist on and off, which is the seam this page has
+    /// been holding open since M9 (docs/engine/music.md).
+    ///
+    /// Entering combat selects a `MUSCombat...` record directly, bypassing the
+    /// context precedence chain, and remembers the selection it interrupted.
+    /// Leaving combat restores exactly that selection rather than re-resolving,
+    /// so a fight that started in a town ends back in the town's playlist even
+    /// if the streamer never published a context in between.
+    ///
+    /// A load order with no combat playlist leaves the music alone: nothing to
+    /// select is not a reason to go silent mid-fight.
+    ///
+    /// - Returns: nil on success, or a short reason the selection did not
+    ///   change.
+    @discardableResult
+    func setCombatActive(_ active: Bool) -> String? {
+        guard active else { return leaveCombat() }
+        guard preCombatSelection == nil else { return nil }
+        guard let musicStore else {
+            lastMusicError = "no music data"
+            return lastMusicError
+        }
+        guard let combat = Self.combatMusicType(in: musicStore) else {
+            lastMusicError = "no combat music type in the load order"
+            return lastMusicError
+        }
+        let selection = MusicSelection
+            .resolve(musicType: combat, musicStore: musicStore)
+            .labelled(.combat)
+        guard !selection.isSilent else {
+            lastMusicError = "no playable combat track"
+            return lastMusicError
+        }
+        preCombatSelection = desiredSelection
+        adopt(selection, force: true)
+        lastMusicError = nil
+        return nil
+    }
+
+    /// Whether the combat playlist is the current selection.
+    var isCombatMusicActive: Bool {
+        preCombatSelection != nil
+    }
+
+    /// Restores the selection combat interrupted.
+    private func leaveCombat() -> String? {
+        guard let previous = preCombatSelection else { return nil }
+        preCombatSelection = nil
+        adopt(previous, force: true)
+        return nil
+    }
+
+    /// The first MUSC whose editor id follows the combat naming convention, by
+    /// FormID so the choice is the same on every run.
+    private static func combatMusicType(in store: MusicRecordStore) -> FormID? {
+        store.musicTypes.values
+            .filter {
+                $0.editorID?.lowercased().hasPrefix(MusicSelection.combatEditorIDPrefix) == true
+            }
+            .min { $0.formID.rawValue < $1.formID.rawValue }?
+            .formID
     }
 
     /// What the panel readout shows. Derived from live engine sources: the id

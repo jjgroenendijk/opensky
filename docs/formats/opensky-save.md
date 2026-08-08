@@ -37,6 +37,7 @@ byte length followed by that many UTF-8 bytes. The file extension is `osav`.
 * `QALS` entry layout
 * `AVAL` entry layout
 * `DETH` entry layout
+* `CBTS` entry layout
 * Version policy
 * Defensive decoding
 * Where saves live and how they are written
@@ -154,7 +155,7 @@ A chunk whose declared length runs past the end of the file is
 that declared length, which is what makes a newer build's save loadable in an older one.
 
 Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR`, `INVN`, `SPWN`, `QSTS`,
-`QALS`, `AVAL` and `DETH` were added additively afterwards.
+`QALS`, `AVAL`, `DETH` and `CBTS` were added additively afterwards.
 
 `GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
 any other size is `invalidValue`.
@@ -617,6 +618,40 @@ back in the air on reload. When present it uses the same field order and float e
 declined and documented — a reloaded corpse lies where it fell in the skeleton's rest pose
 rather than in the tangle it died in
 ([death and constraint-solved ragdoll](/engine/ragdoll.md)).
+
+## `CBTS` entry layout
+
+`CBTS` — hostility (issue #374), one entry per actor whose regard for the player deviates
+from plugin data. Additive and split out of `RDLT` for the same reason `AVAL` and `DETH`
+are, and a session in which nothing was provoked writes no chunk at all.
+
+| type   | field      | notes                              |
+| ------ | ---------- | ---------------------------------- |
+| uint32 | entryCount | number of entries that follow      |
+| bytes  | entries    | `entryCount` entries, layout below |
+
+Each entry:
+
+| type  | field     | notes                                       |
+| ----- | --------- | ------------------------------------------- |
+| key   | key       | the actor's key, tagged as in `RDLT`         |
+| cell  | cell      | attribution cell, tagged as in `RDLT`        |
+| uint8 | hostility | `0` neutral, `1` hostile (`ActorHostility`)  |
+
+An actor explicitly returned to neutral is written like any other. Neutral is what an
+untouched actor reads by default, but omitting a calmed actor would make a reload find it
+angry again.
+
+An unrecognised hostility byte decodes as neutral rather than throwing. A future build may
+add a third regard, and a save that carries one should load with that actor calm rather than
+refuse to load at all — the same tolerance the chunk stream provides one level up.
+
+**Hostility only.** Whether the *player* is in combat is derived from which resident actors
+are hostile and alive, so writing it would let a save carry a fact that contradicts the world
+it was loaded into ([combat loop](/engine/combat.md)).
+
+The entry count is validated against `minimumCombatStateEntrySize` (9 bytes) before storage
+is reserved.
 
 ## Version policy
 

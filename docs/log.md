@@ -2,6 +2,81 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-08
+
+* **The pieces became a fight (issue #374, roadmap item 15.7)**: hostility, derived combat
+  state, an opponent that attacks back, reactions in both directions, bounds on everything a
+  fight spawns, and the combat-music edge M9 left a seam for. New page:
+  [combat loop](/engine/combat.md).
+
+  **The opponent is a clock, and the code says so.** NPCs are render-only with single-clip
+  playback and carry no behavior graph, so a real opponent — perception, packages, pathing —
+  is M16's. `DevTargetDriver` is therefore a fixed-interval phase machine that attacks from
+  wherever it stands at whatever is in front of it, and `CombatLoopRuntimeTarget.swift` is
+  named as the file M16 replaces. What it does do is go through the shipping paths: the 15.4
+  swept-capsule hit volume, the 15.4 block-and-damage formula, and the 15.3 actor-value
+  store, so everything downstream of "an opponent hit the player" is already the real thing.
+  Two stand-in behaviours are written down rather than hidden — it turns to face the player
+  at the contact step, because a placement facing points where the level designer aimed it
+  and never at whoever walked in, and it never moves, so a player who steps back is safe
+  permanently.
+
+  **Combat state is derived, not stored.** "In combat" is *some resident actor is hostile
+  and alive*, recomputed every fixed step from the same actor list the fight runs over; the
+  current target is the nearest of those, ties broken on the lower `ReferenceKey`. A stored
+  flag would have to be cleared by a death, a cell unload and a panel toggle, and the one
+  that was forgotten would leave the player permanently in combat with a corpse. Hostility
+  itself *is* stored, as its own `ActorCombatState` component with a `neutral`/`hostile`
+  enum and no `dead` case — death is already `ActorDeathState.isDead` and a second spelling
+  of one fact is a second thing to keep in agreement. It persists in a new additive `CBTS`
+  save chunk, split out of `RDLT` for the reason `AVAL` and `DETH` were: a component kind
+  inside `RDLT` is versioned by `formatVersion`, so an older build would refuse every save
+  containing a fight rather than load the rest of the world.
+
+  **The hit reaction was read, not guessed.** The census over the user's own install was
+  re-run for this item; the third-person `0_master.hkx` declares `recoilStart`, `recoilStop`
+  and `recoilLargeStart` as events and `IsRecoiling` and `recoilMagnitude` as variables, so
+  a blow on the player writes the magnitude and then raises `recoilStart`, in that order.
+  `recoilLargeStart` stays unraised: which magnitude selects the heavier variant is a
+  threshold no open source states. The same census supplied the three reaction clip paths,
+  and settled one substitution honestly — there is no unarmed stagger clip anywhere in the
+  set, every `staggerback` variant being prefixed by a weapon class, so an unarmed stand-in
+  plays `1hm_staggerbacksmall.hkx`. `ActorAnimationPlayback` grew a bounded clip override to
+  play any of them and return to idle, and its loader moved to
+  `ActorAnimationClipLoader` where a second caller can reach it.
+
+  **Everything a fight spawns is now bounded.** Arrows in flight (12), arrows standing (32),
+  corpses simulating (8) and dynamic bodies awake (64), each enforced every step. The
+  numbers are OpenSky's — vanilla's live in its code, not in any record — and are taken from
+  what the 15.2 clutter stress and the 15.6 collapse stress actually carry. Trim order
+  differs per population because only two of the three registries know what "oldest" means:
+  projectiles and ragdolls are appended to in spawn order, while a dynamic body is placed by
+  its cell build and carries no spawn time, so the awake cap sleeps them in `ReferenceKey`
+  order. No cap deletes what a player is looking at — a trimmed corpse keeps the resting
+  transform its death state recorded and a slept body keeps its pose, so the cap costs
+  motion, not position.
+
+  **Combat music took the seam M9 shaped for it.** `MusicState` gained its `combat` case and
+  is the one state not derived from the streamer's context: entering combat selects the
+  first `MUSCombat...` record directly, by FormID for determinism, and remembers the
+  selection it interrupted; leaving restores exactly that rather than re-resolving, so a
+  fight that started in a town ends in the town's playlist. A cell crossed mid-fight updates
+  the return target instead of interrupting the fight, and a load order with no combat
+  playlist leaves the music alone and says why.
+
+  Evidence: `CombatLoopRuntimeTests` drives the whole synthetic fight headless — provoking,
+  the opponent's blow, the blocked blow against the pinned formula, the out-of-reach miss,
+  the magnitude-before-recoil order, the death that ends combat, the music edge, the caps,
+  and what a save drops — plus `DevTargetDriverTests` on the phase machine and its
+  determinism, `CombatLoopStateTests` and `CombatTransientLimitsTests` on the pure values,
+  `CombatHostilitySaveTests` on the `CBTS` round trip and its older-build tolerance, and
+  `WorldMusicCombatTests` on the music edge. `HKBBehaviorCensusRealDataTests` was re-run
+  against the install for the event and clip names, and `CombatLoopRealDataTests` closes the
+  loop on the install itself: the vanilla player graph declares all four recoil names, all
+  three reaction clips decode against a real character skeleton, and one fixed step over 32
+  resident actors costs **0.0380 ms** against a 0.1 ms budget
+  (`logs/combat-loop-budget.log`, 2026-08-08).
+
 ## 2026-08-07
 
 * **The hand-type encoding, settled from the install (issue #403)**: `iRightHandType` and

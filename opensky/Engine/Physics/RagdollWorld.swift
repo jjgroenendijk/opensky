@@ -77,6 +77,12 @@ nonisolated struct RagdollWorld {
     /// Which ragdolls had already settled at the last step, so a corpse is
     /// recorded the step it comes to rest rather than on every step after.
     private var wasSettled: Set<ReferenceKey> = []
+    /// Keys in the order they were added, oldest first. `ragdolls` itself is
+    /// sorted by `ReferenceKey` so the solver's iteration order cannot depend
+    /// on hashing, which means the array carries no notion of age; the cap in
+    /// `trim(to:)` needs one, so it is tracked here rather than by re-sorting
+    /// the thing whose order is load-bearing (issue #374).
+    private var spawnOrder: [ReferenceKey] = []
     private var accumulatedTime: Float = 0
     var isFrozen = false
 
@@ -114,12 +120,35 @@ nonisolated struct RagdollWorld {
         ragdolls.sort { $0.key < $1.key }
         cells[key] = cell
         wasSettled.remove(key)
+        spawnOrder.removeAll { $0 == key }
+        spawnOrder.append(key)
     }
 
     mutating func remove(_ key: ReferenceKey) {
         ragdolls.removeAll { $0.key == key }
         cells.removeValue(forKey: key)
         wasSettled.remove(key)
+        spawnOrder.removeAll { $0 == key }
+    }
+
+    /// Stops simulating the oldest corpses until at most `limit` remain
+    /// (issue #374).
+    ///
+    /// A trimmed corpse is not deleted and is not resurrected: it stops being
+    /// stepped and falls back to the resting transform `ActorDeathState`
+    /// recorded, which is exactly what happens to a corpse whose cell unloads.
+    /// The body a player is looking at therefore stays on the floor; what it
+    /// loses is the last of its motion.
+    ///
+    /// - Returns: how many stopped simulating.
+    @discardableResult
+    mutating func trim(to limit: Int) -> Int {
+        let excess = ragdolls.count - max(0, limit)
+        guard excess > 0 else { return 0 }
+        for key in Array(spawnOrder.prefix(excess)) {
+            remove(key)
+        }
+        return excess
     }
 
     /// Drops every ragdoll a cell owns. Called when the cell leaves residency.
@@ -134,6 +163,7 @@ nonisolated struct RagdollWorld {
         ragdolls.removeAll()
         cells.removeAll()
         wasSettled.removeAll()
+        spawnOrder.removeAll()
         settled.removeAll()
         accumulatedTime = 0
     }
