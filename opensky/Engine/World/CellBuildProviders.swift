@@ -35,6 +35,12 @@ nonisolated protocol QuestDataProviding {
     var questStore: QuestStore? { get }
 }
 
+/// Optional DIAL/INFO/VTYP index a provider can expose (issue #204). The
+/// dialogue runtime consumes this in 17.2; synthetic scenes leave it nil.
+nonisolated protocol DialogueDataProviding {
+    var dialogueStore: DialogueStore? { get }
+}
+
 /// Optional item + container indexes a provider can expose (issue #177).
 /// `GameViewController` pairs the resolver with the session's
 /// `WorldStateStore` to build the `InventoryRuntime` that take, drop and

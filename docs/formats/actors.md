@@ -65,6 +65,7 @@ Appearance fields plus the stat inputs the actor-value derivation reads
 | DNAM  | struct  | `stats.baked*` — the editor's own calculated HMS |
 | TPLT  | formID  | `template` — NPC_ or LVLN, absent -> no chain    |
 | RNAM  | formID  | `race` (RACE), required by spec                  |
+| VTCK  | formID  | `voiceType` (VTYP)                               |
 | WNAM  | formID  | `wornArmor` — skin ARMO; absent -> race skin     |
 | PNAM  | formID  | `headParts` (HDPT), one per repeated subrecord   |
 | DOFT  | formID  | `defaultOutfit` (OTFT)                           |
@@ -107,6 +108,10 @@ spell list, 0x0010 AI data, 0x0020 AI packages, 0x0040 model/animation
 (UESP: "unused?"; xEdit names it, CK omits it — do not rely on it), 0x0080
 base data, 0x0100 inventory, 0x0200 script, 0x0400 def pack list, 0x0800
 attack data, 0x1000 keywords.
+
+VTCK resolves through `useTraits` with gender, race, skin and head parts. The resolved
+appearance carries it as `ActorSourcedField<FormID?>`, preserving the NPC_ that supplied
+the voice type for the dialogue runtime.
 
 ## LVLN / LVLI -> LeveledList
 

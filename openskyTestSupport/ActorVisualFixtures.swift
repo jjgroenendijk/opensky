@@ -158,6 +158,7 @@ private func equippable(_ raw: UInt32, slots: UInt32) -> EquippableItem {
 func appearance(
     female: Bool = false,
     race: UInt32? = 0x100,
+    voiceType: UInt32? = nil,
     wornArmor: UInt32? = nil,
     headParts: [UInt32] = [0x2000],
     headSource: UInt32 = 0x1000,
@@ -169,6 +170,7 @@ func appearance(
         chain: [.npc(base)],
         isFemale: ActorSourcedField(value: female, source: base),
         race: ActorSourcedField(value: race.map(FormID.init), source: base),
+        voiceType: ActorSourcedField(value: voiceType.map(FormID.init), source: base),
         wornArmor: ActorSourcedField(value: wornArmor.map(FormID.init), source: base),
         headParts: ActorSourcedField(
             value: headParts.map(FormID.init), source: FormID(headSource)

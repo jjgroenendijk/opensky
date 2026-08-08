@@ -26,6 +26,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   families MISC/BOOK/ALCH/INGR/WEAP/AMMO, CONT contents, REFR ownership, the
   `ItemDefinitionStore` index, and the order-dependent QUST record - stages, log
   entries, objectives, alias fill types, and the `QuestStore` index.
+* [Dialogue records](/formats/dialogue.md) - DIAL topics, ordered INFO response runs,
+  VTYP voice-directory identities, NPC_ VTCK inheritance, and the `DialogueStore` index.
 * [Interior lighting records](/formats/lighting.md) - CELL XCLL/LTMP, LGTM DATA/DALC,
   LIGH DATA/FNAM, REFR XRDS/XEMI, inheritance + decode policy.
 * [Exterior water records](/formats/water.md) - CELL XCLW/XCWT, WRLD defaults + parent

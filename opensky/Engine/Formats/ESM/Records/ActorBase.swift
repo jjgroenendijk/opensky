@@ -88,6 +88,9 @@ nonisolated struct ActorBase {
     let template: FormID?
     /// RNAM — race, required by spec.
     let race: FormID?
+    /// VTCK — voice type. It belongs to the ACBS `useTraits` inheritance
+    /// group with race, gender and appearance (UESP NPC_ template flags).
+    let voiceType: FormID?
     /// WNAM — worn armor (naked skin override); race skin when absent.
     let wornArmor: FormID?
     /// PNAM — head parts, one FormID per repeated subrecord.
@@ -159,6 +162,7 @@ nonisolated struct ActorBase {
         self.templateFlags = templateFlags
         template = references.template
         race = references.race
+        voiceType = references.voiceType
         wornArmor = references.wornArmor
         headParts = references.headParts
         defaultOutfit = references.defaultOutfit
@@ -171,6 +175,7 @@ nonisolated struct ActorBase {
     private struct References {
         var template: FormID?
         var race: FormID?
+        var voiceType: FormID?
         var wornArmor: FormID?
         var headParts: [FormID] = []
         var defaultOutfit: FormID?
@@ -189,6 +194,8 @@ nonisolated struct ActorBase {
             references.template = try FormID(reader.readUInt32())
         case "RNAM":
             references.race = try FormID(reader.readUInt32())
+        case "VTCK":
+            references.voiceType = try FormID(reader.readUInt32())
         case "WNAM":
             references.wornArmor = try FormID(reader.readUInt32())
         case "PNAM":

@@ -81,6 +81,7 @@ struct ActorRecordDecodeTests {
             templateFlags: 0x0101,
             template: 0x0001_B0B0,
             race: 0x0001_3746,
+            voiceType: 0x0001_3AE1,
             wornArmor: 0x0009_BAAC,
             headParts: [0x0005_1111, 0x0005_2222],
             defaultOutfit: 0x000C_BE2E
@@ -91,6 +92,7 @@ struct ActorRecordDecodeTests {
         #expect(actor.templateFlags == [.useTraits, .useInventory])
         #expect(actor.template == FormID(0x0001_B0B0))
         #expect(actor.race == FormID(0x0001_3746))
+        #expect(actor.voiceType == FormID(0x0001_3AE1))
         #expect(actor.wornArmor == FormID(0x0009_BAAC))
         #expect(actor.headParts == [FormID(0x0005_1111), FormID(0x0005_2222)])
         #expect(actor.defaultOutfit == FormID(0x000C_BE2E))
@@ -187,6 +189,7 @@ struct ActorTemplateResolverTests {
             formID: 0x200,
             flags: 0x0000_0001,
             race: 0xA2,
+            voiceType: 0xE2,
             wornArmor: 0xB2,
             headParts: [0xC2],
             defaultOutfit: 0xD2
@@ -196,6 +199,7 @@ struct ActorTemplateResolverTests {
             templateFlags: 0x0001, // useTraits
             template: 0x200,
             race: 0xA1,
+            voiceType: 0xE1,
             wornArmor: 0xB1,
             headParts: [0xC1],
             defaultOutfit: 0xD1
@@ -204,6 +208,8 @@ struct ActorTemplateResolverTests {
         // Traits (gender, race, skin, head parts) come from the template.
         #expect(resolved.isFemale == ActorSourcedField(value: true, source: FormID(0x200)))
         #expect(resolved.race == ActorSourcedField(value: FormID(0xA2), source: FormID(0x200)))
+        #expect(resolved.voiceType
+            == ActorSourcedField(value: FormID(0xE2), source: FormID(0x200)))
         #expect(resolved.wornArmor.source == FormID(0x200))
         #expect(resolved.headParts.value == [FormID(0xC2)])
         // Inventory (outfit) stays local: useInventory is clear.
@@ -378,6 +384,7 @@ private func npc(
     templateFlags: UInt16 = 0,
     template: UInt32? = nil,
     race: UInt32? = nil,
+    voiceType: UInt32? = nil,
     wornArmor: UInt32? = nil,
     headParts: [UInt32] = [],
     defaultOutfit: UInt32? = nil
@@ -392,6 +399,9 @@ private func npc(
     }
     if let race {
         fields += formIDField("RNAM", race)
+    }
+    if let voiceType {
+        fields += formIDField("VTCK", voiceType)
     }
     if let wornArmor {
         fields += formIDField("WNAM", wornArmor)

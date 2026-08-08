@@ -13,6 +13,16 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   vertex colors, topology grouping, registry replacement and cap enforcement; a synthetic
   Metal test proves an offscreen pixel delta. `openskycli screenshot --navmesh-overlay`
   supplies the real-install capture path. Updated page: [runtime navigation](/engine/navigation.md).
+* **Dialogue records and store (issue #204)**: DIAL topics now retain priority, owning
+  quest/branch, category and authoritative SNAM subtype; marker-opened INFO response runs
+  carry flags, links, conditions, subtitles and animation references in file order; VTYP
+  supplies voice directory IDs and flags. NPC_ VTCK resolves through the `useTraits`
+  template chain, and the group-descending `DialogueStore` indexes topics, INFOs and voice
+  types for M17's runtime. The vanilla sweep pinned 19,844 DIAL, 41,188 INFO and 183 VTYP
+  records across the five masters with zero decode failures. It also corrected the issue
+  pointer: shipped INFO NAM1 subtitles resolve through ILSTRINGS, matching UESP, not
+  DLSTRINGS. New page: [dialogue records](/formats/dialogue.md); updated
+  [actor records](/formats/actors.md).
 
 * **Resident navmesh pathfinding (issue #200)**: cell scenes now carry their decoded NAVM
   geometry into a streamer-reconciled runtime graph. Bounded feet projection feeds a

@@ -1,8 +1,9 @@
 // Resolves LStrings for one plugin: loads the plugin's per-language string
 // tables (Strings/<plugin>_<language>.{strings,dlstrings,ilstrings}) through
 // the VFS on first use and answers lookups. Which of the three tables an ID
-// points into depends on the record field (FULL -> .strings, DESC/book text
-// -> .dlstrings, dialogue -> .ilstrings), so callers pass the kind.
+// points into depends on the record field (FULL -> .strings, journal and book
+// entries -> .dlstrings, subtitled conversations -> .ilstrings), so callers
+// pass the kind.
 //
 // Missing or malformed tables are logged once and yield nil lookups — a
 // plugin without shipped tables must not take the engine down (mod-quirk
