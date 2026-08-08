@@ -58,6 +58,18 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   hostile living actor, and every hostile living actor fights the player. Both sides of a
   fight therefore evaluate, and a corpse fights nobody.
 
+* **Settled ragdolls stop moving at the solver (issue #407)**: a ragdoll's floor contacts
+  and joints now run as one sixteen-iteration velocity solve, alternating their order while
+  keeping both families' accumulated impulses for the whole substep. The old four-contact-
+  then-eight-joint order always let the joints reopen the floor solution, leaving hands,
+  feet, and the head at thirty to fifty engine units a second and creeping the corpse until
+  the whole-body settling window intervened. Both the synthetic limb and the vanilla
+  humanoid now reach the ordinary per-body sleep thresholds without that workaround.
+  Sleeping bones also refuse later joint impulses and pose corrections, matching the
+  contact solver's existing invariant. The coordinated whole-ragdoll settling check remains
+  as a persistence safety net for uneven geometry, but now waits for the documented pivot
+  and angular-limit bounds before freezing the pose. Biped-filtered self-collision is separate
+  follow-up [issue #413](https://github.com/jjgroenendijk/opensky/issues/413).
 * **The pieces became a fight (issue #374, roadmap item 15.7)**: hostility, derived combat
   state, an opponent that attacks back, reactions in both directions, bounds on everything a
   fight spawns, and the combat-music edge M9 left a seam for. New page:

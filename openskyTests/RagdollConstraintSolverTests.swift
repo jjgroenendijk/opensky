@@ -138,6 +138,30 @@ struct RagdollConstraintSolverTests {
         #expect(instance.phase == .settled)
     }
 
+    /// The ordinary per-body sleep test must now be enough. This drives the
+    /// dynamic solver directly so `RagdollInstance`'s whole-corpse displacement
+    /// fallback cannot zero the velocities and hide a contact/joint residual.
+    @Test
+    func interleavedContactsLetEveryBoneSleep() {
+        let instance = RagdollFixture.limb(origin: SIMD3(0, 0, 20))
+        let joints = instance.definition.joints
+        var bodies = instance.bodies
+        for _ in 0 ..< 2400 {
+            DynamicBodySolver.step(
+                bodies: &bodies,
+                world: RagdollFixture.floorWorld(),
+                dt: WalkController.fixedTimeStep,
+                joints: joints
+            )
+        }
+        let everyBoneSleeps = bodies.allSatisfy(\.isSleeping)
+        let linearVelocityIsZero = bodies.allSatisfy { $0.linearVelocity == .zero }
+        let angularVelocityIsZero = bodies.allSatisfy { $0.angularVelocity == .zero }
+        #expect(everyBoneSleeps)
+        #expect(linearVelocityIsZero)
+        #expect(angularVelocityIsZero)
+    }
+
     /// A degenerate joint — one whose bodies do not exist — is skipped rather
     /// than crashing or writing a NaN.
     @Test

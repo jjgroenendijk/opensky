@@ -51,7 +51,7 @@ nonisolated enum RagdollConstraintSolver {
     /// the contact solver's four because a joint chain propagates a correction
     /// one link per iteration, and a humanoid ragdoll is six links from pelvis
     /// to hand.
-    static let iterationCount = 8
+    static let iterationCount = 16
     /// Passes the position and orientation corrections make over the joint list
     /// before anything is actually moved.
     ///
@@ -105,28 +105,17 @@ nonisolated enum RagdollConstraintSolver {
         dt: Float
     ) -> Int {
         guard !joints.isEmpty, dt > 0, dt.isFinite else { return 0 }
-        var accumulated = [RagdollLimitImpulses](
-            repeating: RagdollLimitImpulses(), count: joints.count
-        )
+        var state = VelocityState(jointCount: joints.count)
         var violations = 0
-        for iteration in 0 ..< iterationCount {
-            violations = 0
-            for (index, joint) in joints.enumerated() {
-                guard joint.isResolvable(in: bodies) else { continue }
-                applyFriction(joint, bodies: &bodies, dt: dt / Float(iterationCount))
-                solvePoint(joint, bodies: &bodies)
-                violations += solveLimits(
-                    joint, accumulated: &accumulated[index], bodies: &bodies
-                )
-            }
-            // Only the last pass's tally is reported; the earlier ones describe
-            // a state the solver has already moved on from.
-            if iteration < iterationCount - 1 {
-                violations = 0
-            }
+        for _ in 0 ..< iterationCount {
+            violations = solveVelocityIteration(
+                joints: joints,
+                bodies: &bodies,
+                iterationTime: dt / Float(iterationCount),
+                state: &state
+            )
         }
-        correctLimits(joints: joints, bodies: &bodies)
-        correctPositions(joints: joints, bodies: &bodies)
+        correctPoses(joints: joints, bodies: &bodies)
         return violations
     }
 
@@ -146,7 +135,7 @@ nonisolated enum RagdollConstraintSolver {
     /// It cannot destabilize anything, whatever the unit turns out to be. The
     /// impulse only ever opposes the existing relative motion and is clamped to
     /// at most all of it, so friction takes energy out and never puts any in.
-    private static func applyFriction(
+    static func applyFriction(
         _ joint: RagdollJointDefinition,
         bodies: inout [DynamicBody],
         dt: Float
@@ -176,7 +165,7 @@ nonisolated enum RagdollConstraintSolver {
     /// world inverse inertia. Inverting it directly rather than iterating three
     /// scalar rows is what makes one visit remove the whole relative motion
     /// instead of a third of it.
-    private static func solvePoint(
+    static func solvePoint(
         _ joint: RagdollJointDefinition,
         bodies: inout [DynamicBody]
     ) {
@@ -245,7 +234,7 @@ nonisolated enum RagdollConstraintSolver {
     /// Solves whatever angular limits the joint carries.
     ///
     /// - Returns: how many of them were found violated.
-    private static func solveLimits(
+    static func solveLimits(
         _ joint: RagdollJointDefinition,
         accumulated: inout RagdollLimitImpulses,
         bodies: inout [DynamicBody]
@@ -314,9 +303,10 @@ nonisolated enum RagdollConstraintSolver {
     /// turned three times for the one misalignment it has. The share each body
     /// takes is its inverse inertia about the limit's own axis, so a heavy
     /// torso turns less than the arm hanging off it.
-    private static func correctLimits(
+    static func correctLimits(
         joints: [RagdollJointDefinition],
-        bodies: inout [DynamicBody]
+        bodies: inout [DynamicBody],
+        includeSleeping: Bool = false
     ) {
         var turns = [SIMD3<Float>](repeating: .zero, count: bodies.count)
         for joint in joints where joint.isResolvable(in: bodies) {
@@ -338,6 +328,7 @@ nonisolated enum RagdollConstraintSolver {
         }
 
         for index in bodies.indices {
+            guard includeSleeping || !bodies[index].isSleeping else { continue }
             let turn = clampedTurn(turns[index])
             guard turn != .zero else { continue }
             let angle = simd_length(turn)
@@ -366,9 +357,10 @@ nonisolated enum RagdollConstraintSolver {
     /// Accumulated per body and applied once, exactly as the contact solver's
     /// recovery is: a bone with three joints on it would otherwise be moved
     /// three times for the one displacement it actually has.
-    private static func correctPositions(
+    static func correctPositions(
         joints: [RagdollJointDefinition],
-        bodies: inout [DynamicBody]
+        bodies: inout [DynamicBody],
+        includeSleeping: Bool = false
     ) {
         var moves = [SIMD3<Float>](repeating: .zero, count: bodies.count)
         for _ in 0 ..< positionIterationCount {
@@ -392,6 +384,7 @@ nonisolated enum RagdollConstraintSolver {
             }
         }
         for index in bodies.indices {
+            guard includeSleeping || !bodies[index].isSleeping else { continue }
             let move = DynamicBodySolver.clamped(moves[index], to: maximumPositionCorrection)
             guard move != .zero, move.isFiniteVector else { continue }
             bodies[index].position += move
@@ -408,6 +401,7 @@ nonisolated enum RagdollConstraintSolver {
         to body: inout DynamicBody,
         at point: SIMD3<Float>
     ) {
+        guard !body.isSleeping else { return }
         body.linearVelocity += impulse * body.definition.inverseMass
         body.angularVelocity += body.worldInverseInertia
             * simd_cross(point - body.position, impulse)
@@ -418,6 +412,7 @@ nonisolated enum RagdollConstraintSolver {
         _ impulse: SIMD3<Float>,
         to body: inout DynamicBody
     ) {
+        guard !body.isSleeping else { return }
         body.angularVelocity += body.worldInverseInertia * impulse
         clampVelocities(of: &body)
     }

@@ -164,16 +164,20 @@ nonisolated enum DynamicBodySolver {
                 bodies: bodies, world: world, pairContacts: !isRagdoll
             )
             stats.contactCount = max(stats.contactCount, contacts.count)
-            resolve(contacts: contacts, bodies: &bodies)
             // A ragdoll whose every bone is asleep is not solved at all. Its
             // joints are as satisfied as they are going to get, nothing is
             // moving them, and running the pass anyway both costs a settled
             // corpse solver time forever and reports its sub-degree residual to
             // the panel as work still outstanding.
             if isRagdoll, bodies.contains(where: { !$0.isSleeping }) {
-                stats.jointViolationCount = RagdollConstraintSolver.solve(
-                    joints: joints, bodies: &bodies, dt: substepTime
+                stats.jointViolationCount = resolveRagdoll(
+                    contacts: contacts,
+                    joints: joints,
+                    bodies: &bodies,
+                    dt: substepTime
                 )
+            } else {
+                resolve(contacts: contacts, bodies: &bodies)
             }
         }
         for index in bodies.indices {
