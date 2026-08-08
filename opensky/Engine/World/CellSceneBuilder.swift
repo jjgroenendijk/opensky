@@ -255,6 +255,7 @@ nonisolated final class CellSceneBuilder {
                 staticCollision: collision.staticCollision,
                 triggerVolumes: collision.triggerVolumes,
                 dynamicBodies: collision.dynamicBodies,
+                navmeshes: Self.collectNavmeshes(in: found.children),
                 actors: actors,
                 worldspaceMusicType: world.worldspace?.musicType,
                 referenceEntries: resolved.entries,

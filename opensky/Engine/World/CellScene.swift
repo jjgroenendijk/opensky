@@ -84,6 +84,11 @@ nonisolated struct CellScene {
     /// reference retention, because a simulated body is registered under a
     /// `ReferenceKey`.
     let dynamicBodies: [DynamicBodyPlacement]
+    /// Immutable authored walkable surfaces for this cell (issue #200).
+    /// The streamer installs them into its resident navigation graph and
+    /// removes them with the scene; an empty array means the cell has no
+    /// usable NAVM records.
+    let navmeshes: [Navmesh]
     /// Decoded REFR/ACHR records of this cell, addressable by session-stable
     /// `ReferenceKey` and by raw FormID (issue #158). Empty for cells built
     /// without reference retention (synthetic render tests).
@@ -113,6 +118,7 @@ nonisolated struct CellScene {
         staticCollision: StaticCollisionSet = .empty,
         triggerVolumes: TriggerVolumeSet = .empty,
         dynamicBodies: [DynamicBodyPlacement] = [],
+        navmeshes: [Navmesh] = [],
         references: RuntimeReferenceIndex = .empty,
         stateSequence: UInt64 = 0,
         assets: CellAssets = CellAssets()
@@ -133,6 +139,7 @@ nonisolated struct CellScene {
         self.staticCollision = staticCollision
         self.triggerVolumes = triggerVolumes
         self.dynamicBodies = dynamicBodies
+        self.navmeshes = navmeshes
         self.references = references
         self.stateSequence = stateSequence
         self.assets = assets

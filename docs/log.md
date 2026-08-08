@@ -2,6 +2,19 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-09
+
+* **Resident navmesh pathfinding (issue #200)**: cell scenes now carry their decoded NAVM
+  geometry into a streamer-reconciled runtime graph. Bounded feet projection feeds a
+  deterministic triangle A-star; radius-reduced portals feed the funnel; paired XTEL doors
+  split it into explicit crossings with reference and waypoint index. Corridor cell
+  sequences and target tolerance invalidate stale results, while the named two-per-frame
+  budget bounds queued replacement work. Synthetic coverage includes grids, cross-cell
+  links, doors, malformed geometry, misses, unloads and repeatability. A real-install probe
+  found the named Whiterun-hold-to-Chillfurrow route and the exterior-to-interior farm door
+  route, including the expected `0001633D` crossing. New page:
+  [runtime navigation](/engine/navigation.md).
+
 ## 2026-08-08
 
 * **NAVM and NAVI navmesh decode (issue #199)**: the first item of M16 (AI). `NVNM`

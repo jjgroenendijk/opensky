@@ -21,6 +21,8 @@ nonisolated struct CellGeometryBuild {
     /// Simulated rigid bodies this cell places (issue #193). Same defaulting
     /// reason as the trigger set above.
     var dynamicBodies: [DynamicBodyPlacement] = []
+    /// Decoded NAVM records built beside the rest of the cell-owned geometry.
+    var navmeshes: [Navmesh] = []
     /// Assembled actor placements + exact accounting (5.5 actor streaming).
     let actors: CellActorBuild
     /// WRLD.ZNAM of the owning worldspace (M9.2.3 music selection). `var` with
@@ -238,6 +240,7 @@ nonisolated extension CellSceneBuilder {
             staticCollision: geometry.staticCollision,
             triggerVolumes: geometry.triggerVolumes,
             dynamicBodies: geometry.dynamicBodies,
+            navmeshes: geometry.navmeshes,
             references: geometry.referenceIndex,
             stateSequence: geometry.stateSequence
         )

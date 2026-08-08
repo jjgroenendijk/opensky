@@ -5,11 +5,9 @@
 // `collectTaggedReferences` skips them by type. This is the other half of that
 // skip: the walk that picks NAVM out of the same group and decodes it.
 //
-// Kept off the scene-build path on purpose. Decoding a navmesh costs the whole
-// vertex and triangle payload, which nothing in the render or collision path
-// reads, so the streamer does not pay for it on every cell build. The pathing
-// graph (16.2, issue #200) calls this for the cell it needs and pairs the
-// result with `NavmeshIndex` for everything outside that cell.
+// Decoded beside the rest of the cell's immutable geometry. That keeps NAVM
+// I/O on the existing off-main build queue and gives the streamer the same
+// scene-owned lifetime it already reconciles for collision and rigid bodies.
 
 import Foundation
 import OSLog
@@ -20,9 +18,8 @@ nonisolated extension CellSceneBuilder {
     /// fails to decode is logged and skipped, so one bad navmesh does not cost
     /// the cell its others.
     ///
-    /// Static because it reads nothing but the group handed to it — the
-    /// pathing graph can ask for a cell's navmeshes without a built scene, a
-    /// mesh library or a Metal device behind it.
+    /// Static because it reads nothing but the group handed to it; tests and
+    /// probes can decode a synthetic cell without a mesh library or device.
     nonisolated static func collectNavmeshes(in cellChildren: ESMGroup?) -> [Navmesh] {
         guard let cellChildren, let children = try? cellChildren.children() else {
             if cellChildren != nil {
