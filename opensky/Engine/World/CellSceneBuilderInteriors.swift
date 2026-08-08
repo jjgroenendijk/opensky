@@ -132,6 +132,7 @@ nonisolated extension CellSceneBuilder {
                 staticCollision: collision.staticCollision,
                 triggerVolumes: collision.triggerVolumes,
                 dynamicBodies: collision.dynamicBodies,
+                navmeshes: Self.collectNavmeshes(in: found.children),
                 actors: actors,
                 referenceEntries: resolved.entries,
                 stateSequence: state.sequence

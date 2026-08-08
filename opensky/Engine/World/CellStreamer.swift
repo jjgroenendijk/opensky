@@ -155,6 +155,8 @@ final class CellStreamer {
     /// live (issue #193). The renderer is not reachable from here either, so
     /// the app wires this to `Renderer.dynamicInstanceDeltas`.
     var onDynamicPosesChanged: (([UInt32: float4x4]) -> Void)?
+    /// Resident graph, repath backlog and completion sink (issue #200).
+    var navigationState = CellStreamerNavigationState()
 
     /// - Parameters:
     ///   - center: grid center at launch (streaming starts on FirstRenderCell).
@@ -212,7 +214,7 @@ final class CellStreamer {
             // Interiors carry most authored trigger volumes, so the test runs
             // on this path too rather than only on the exterior tail below.
             updateTriggerOccupancy(playerCapsule)
-            advancePhysics(frameTime: frameTime, player: playerCapsule)
+            advanceWorldSystems(frameTime: frameTime, player: playerCapsule)
             return
         }
 
@@ -257,7 +259,7 @@ final class CellStreamer {
         emitAmbienceContextIfNeeded()
         emitMusicContextIfNeeded()
         updateTriggerOccupancy(playerCapsule)
-        advancePhysics(frameTime: frameTime, player: playerCapsule)
+        advanceWorldSystems(frameTime: frameTime, player: playerCapsule)
     }
 
     /// Pushes the current exterior center cell's XCLR regions to the weather
