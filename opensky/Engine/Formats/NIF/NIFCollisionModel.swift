@@ -17,10 +17,35 @@ nonisolated struct NIFCollisionFilter: Equatable, Sendable {
     let flags: UInt8
     let group: UInt16
 
+    /// nif.xml `CollisionFilterFlags` is a bitfield over one byte: bits 0-4 are
+    /// a `BipedPart`, bit 5 is `MOPP Scaled`, bit 6 is `No Collision`, bit 7 is
+    /// `Linked Group`.
+    static let bipedPartMask: UInt8 = 0x1F
+    static let noCollisionFlag: UInt8 = 0x40
+
+    /// The layers nif.xml says the biped part field is meaningful on: "Used
+    /// only if the Layer is 8 (or 32/33 for Skyrim and later)" — `SKYL_BIPED`,
+    /// `SKYL_DEADBIP` and `SKYL_BIPED_NO_CC`.
+    static let bipedLayers: Set<UInt8> = [8, 32, 33]
+
     var isPlayerSolid: Bool {
-        // SkyrimLayer 12 = trigger, 15 = non-collidable. Flag 0x40 is
-        // CollisionFilterFlags.No Collision.
-        layer != 12 && layer != 15 && flags & 0x40 == 0
+        // SkyrimLayer 12 = trigger, 15 = non-collidable.
+        layer != 12 && layer != 15 && !hasNoCollision
+    }
+
+    var hasNoCollision: Bool {
+        flags & Self.noCollisionFlag != 0
+    }
+
+    /// Which `BipedPart` of a character this body is, or nil on a layer where
+    /// those bits mean nothing.
+    ///
+    /// Nil rather than zero for the non-biped case, because zero is itself a
+    /// part — `P_OTHER`, which the vanilla humanoid puts on `NPC Neck` — so a
+    /// consumer that read the bits unconditionally could not tell a neck from a
+    /// crate. Only the layer says whether the bits are a part at all.
+    var bipedPart: UInt8? {
+        Self.bipedLayers.contains(layer) ? flags & Self.bipedPartMask : nil
     }
 
     /// SkyrimLayer 12 (`SKYL_TRIGGER`) specifically. Not the negation of
@@ -86,6 +111,22 @@ nonisolated struct NIFCollisionBody {
     /// player-solid, so trigger routing and solid collision stay disjoint.
     var isTriggerVolume: Bool {
         worldFilter.isTriggerVolume || rigidBodyFilter.isTriggerVolume
+    }
+
+    /// Which `BipedPart` of a character this body stands for, from whichever of
+    /// the two duplicate filters names a biped layer, and nil on a body that is
+    /// not part of a character at all.
+    ///
+    /// Either filter for the reason `isTriggerVolume` takes either: the two
+    /// copies are not guaranteed to agree. On the vanilla humanoid skeleton
+    /// they do, on all eighteen bodies, and both name `SKYL_BIPED`.
+    var bipedPart: UInt8? {
+        worldFilter.bipedPart ?? rigidBodyFilter.bipedPart
+    }
+
+    /// Whether either filter switched this body's collision off outright.
+    var hasNoCollision: Bool {
+        worldFilter.hasNoCollision || rigidBodyFilter.hasNoCollision
     }
 }
 

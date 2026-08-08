@@ -49,6 +49,13 @@ extension GameViewController: RagdollControlProviding {
             ? "Froze ragdoll stepping." : "Resumed ragdoll stepping."
     }
 
+    func setRagdollSelfCollision(_ enabled: Bool) {
+        ragdoll.runtime?.isSelfCollisionEnabled = enabled
+        ragdoll.lastActionText = enabled
+            ? "Bones collide in the pairs the biped filter admits."
+            : "Bones ignore each other."
+    }
+
     func clearRagdolls() {
         ragdoll.runtime?.reset()
         renderer?.scene.ragdollPoses.removeAll()

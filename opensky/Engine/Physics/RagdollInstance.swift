@@ -61,12 +61,21 @@ nonisolated struct RagdollInstance: Sendable {
     /// modifier's `m_durationToBlend`. Zero means an instant hand-off, which is
     /// what the `RagdollInstant` event asks for.
     let blendDuration: Float
+    /// Whether the bones may touch each other at all this step. The pairs are
+    /// the definition's; this is the switch the sidebar throws over them, so a
+    /// viewer can see the same collapse with and without a torso its arms
+    /// cannot pass through (issue #413).
+    var isSelfCollisionEnabled = true
     private(set) var blendElapsed: Float = 0
     private(set) var lastStats = DynamicStepStats()
     /// Where the root bone was when the current settle window opened, and how
     /// long that window has been running.
     private var settleReference: SIMD3<Float>?
     private var settleElapsed: Float = 0
+    /// Whether the one final joint projection has already been made for this
+    /// spell of rest. Cleared by `wake()`, so a corpse that is hit and comes to
+    /// rest again is projected again.
+    private var hasProjectedAtRest = false
 
     var phase: RagdollPhase {
         if bodies.allSatisfy(\.isSleeping) {
@@ -157,6 +166,24 @@ nonisolated struct RagdollInstance: Sendable {
     static let settleDistance: Float = 3
     static let settleJointSeparation: Float = 2
     static let settleAngularViolation: Float = 0.06
+    /// Pose-only projections made on arrival at rest.
+    ///
+    /// One is not enough: a pass moves a body by at most
+    /// `RagdollConstraintSolver.maximumPositionCorrection` and turns it by the
+    /// angular equivalent, and takes a fixed fraction of the remaining error, so
+    /// a joint several units open at the moment of rest closes geometrically
+    /// rather than at once. Measured on the vanilla humanoid's worst joint —
+    /// the left elbow, left 3.11 units and 0.113 radians open by a self-collision
+    /// contact during the fall — eight passes reach 0.59 units and 0.058
+    /// radians, and thirty-two reach 0.10 and 0.024. It is paid once per corpse
+    /// per spell of rest, over seventeen joints, so buying the tight answer
+    /// costs nothing worth measuring.
+    static let restProjectionCount = 32
+    /// How far inside the settling thresholds the projection drives the joints
+    /// before it stops. Half, so a corpse rests clear of the boundary rather
+    /// than on it: the vanilla humanoid's worst joint stops at 0.024 radians
+    /// against a 0.06 threshold instead of at 0.058.
+    static let restProjectionMargin: Float = 0.5
 
     /// Advances the ragdoll by one fixed step of the 15.2 clock.
     @discardableResult
@@ -164,15 +191,36 @@ nonisolated struct RagdollInstance: Sendable {
         guard dt > 0, dt.isFinite else { return lastStats }
         blendElapsed = min(blendElapsed + dt, max(blendDuration, 0))
         lastStats = DynamicBodySolver.step(
-            bodies: &bodies, world: world, dt: dt, joints: definition.joints
+            bodies: &bodies,
+            world: world,
+            dt: dt,
+            joints: definition.joints,
+            selfCollision: isSelfCollisionEnabled ? definition.selfCollision : .disabled
         )
         updateSettling(dt: dt)
         return lastStats
     }
 
-    /// Puts the whole ragdoll to sleep once its root has stopped travelling.
+    /// Puts the whole ragdoll to sleep once its root has stopped travelling, and
+    /// makes the one final pose-only joint projection either route to rest ends
+    /// with.
+    ///
+    /// Either route, because there are two. The coordinated one below waits for
+    /// the whole corpse to stop travelling *and* for every joint to be nearly
+    /// satisfied. But a ragdoll can also reach rest the ordinary way, every bone
+    /// falling under 15.2's own sleep thresholds independently, and that route
+    /// asks nothing about the joints: a bone can stop moving while the joint
+    /// holding it is still stretched, and once every bone is asleep nothing
+    /// solves it again. Before issue #413 that was invisible, because a corpse
+    /// whose bones ignored each other had nothing left to push a joint open at
+    /// the end of a fall; a self-collision contact during the collapse can leave
+    /// one, and the vanilla humanoid's left elbow rested three engine units and
+    /// six degrees open because of it. Projecting on arrival at rest, whichever
+    /// route got there, closes it.
     private mutating func updateSettling(dt: Float) {
-        guard !isSettled, let root = bodies.first?.position else { return }
+        guard !hasProjectedAtRest else { return }
+        guard !isSettled else { return projectAtRest() }
+        guard let root = bodies.first?.position else { return }
         guard let reference = settleReference else {
             settleReference = root
             settleElapsed = 0
@@ -184,27 +232,55 @@ nonisolated struct RagdollInstance: Sendable {
         settleReference = root
         guard simd_distance(root, reference) < Self.settleDistance else { return }
         guard constraintsAreSettled else { return }
+        projectAtRest()
+    }
+
+    /// Sleeps every bone and makes one pose-only joint projection over the
+    /// sleeping bodies. No velocity is derived from the move: this is the pose a
+    /// corpse keeps, not a push it is given.
+    ///
+    /// The projection runs more than once, because one pass moves each body by
+    /// at most `maximumPositionCorrection` and a joint left several units open
+    /// at the moment of rest needs more than that. It stops as soon as every
+    /// joint is inside `restProjectionMargin` of the settling thresholds — not
+    /// merely inside them, so a corpse does not come to rest sitting exactly on
+    /// the boundary the settling test just cleared. A pose that arrived nearly
+    /// satisfied therefore still pays about the single pass it always did, and
+    /// only one the per-body route left open pays for more.
+    private mutating func projectAtRest() {
         for index in bodies.indices {
             bodies[index].isSleeping = true
             bodies[index].linearVelocity = .zero
             bodies[index].angularVelocity = .zero
         }
-        RagdollConstraintSolver.correctPoses(
-            joints: definition.joints, bodies: &bodies, includeSleeping: true
-        )
+        for _ in 0 ..< Self.restProjectionCount {
+            RagdollConstraintSolver.correctPoses(
+                joints: definition.joints, bodies: &bodies, includeSleeping: true
+            )
+            guard !constraintsAreWithin(Self.restProjectionMargin) else { break }
+        }
+        hasProjectedAtRest = true
     }
 
     /// Prevents the coordinated fallback from freezing a visibly unfinished
     /// joint merely because the root has stopped travelling.
     private var constraintsAreSettled: Bool {
+        constraintsAreWithin(1)
+    }
+
+    /// Whether every joint is inside `fraction` of the settling thresholds.
+    private func constraintsAreWithin(_ fraction: Float) -> Bool {
         definition.joints.allSatisfy { joint in
             let anchors = joint.anchors(in: bodies)
-            guard simd_distance(anchors.a, anchors.b) < Self.settleJointSeparation else {
+            guard
+                simd_distance(anchors.a, anchors.b)
+                < Self.settleJointSeparation * fraction
+            else {
                 return false
             }
             let frames = joint.worldFrames(in: bodies)
             return RagdollJointLimitPass.passes(of: joint, frames: frames).allSatisfy {
-                $0.error < Self.settleAngularViolation
+                $0.error < Self.settleAngularViolation * fraction
             }
         }
     }
@@ -216,6 +292,7 @@ nonisolated struct RagdollInstance: Sendable {
         }
         settleReference = nil
         settleElapsed = 0
+        hasProjectedAtRest = false
     }
 
     /// Applies an impulse to the bone nearest `point`, waking the whole ragdoll

@@ -33,6 +33,18 @@ nonisolated enum RagdollReadout {
         return "Solver: \(snapshot.solverIterationCount) iterations/substep, \(converged)"
     }
 
+    /// What the biped filter admitted and what is touching right now (issue
+    /// #413). The pair count is the size of the set self-collision may work
+    /// over, so a reader can tell "nothing is touching" from "nothing was ever
+    /// allowed to".
+    static func selfCollisionText(for snapshot: RagdollStatsSnapshot) -> String {
+        guard snapshot.isSelfCollisionEnabled else {
+            return "Self-collision: off"
+        }
+        return "Self-collision: \(snapshot.selfCollisionPairCount) bone pairs admitted, "
+            + "\(snapshot.selfContactCount) touching"
+    }
+
     /// Non-finite recoveries. Always zero on a healthy run, so the line names
     /// the healthy case rather than printing a bare zero.
     static func recoveryText(for snapshot: RagdollStatsSnapshot) -> String {

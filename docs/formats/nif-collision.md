@@ -78,6 +78,15 @@ outside `SKYL_TRIGGER` (12) + `SKYL_NONCOLLIDABLE` (15), neither filter's
 `No Collision` bit (`0x40`), both responses equal `RESPONSE_SIMPLE_CONTACT` (`1`). Other
 bodies remain decoded + counted but query consumers filter them.
 
+The flags byte is nif.xml's `CollisionFilterFlags` bitfield, not a flat set of flags: bits
+0-4 are a `BipedPart`, bit 5 is `MOPP Scaled`, bit 6 `No Collision`, bit 7 `Linked Group`.
+`NIFCollisionFilter.bipedPart` reads those low five bits, and returns nil unless the layer is
+one nif.xml says they mean a part on — `SKYL_BIPED` (8), `SKYL_DEADBIP` (32),
+`SKYL_BIPED_NO_CC` (33). Nil rather than zero for the non-biped case, because zero is itself
+a part (`P_OTHER`, which vanilla puts on `NPC Neck`). Every body of the vanilla humanoid
+`skeleton.nif` sits on layer 8 in group 0 with the anatomically correct part number, which is
+what [ragdoll self-collision](/engine/ragdoll.md#self-collision) consumes.
+
 `isTriggerVolume` is the separate, narrower predicate for `SKYL_TRIGGER` (12) on either
 filter. It is not the negation of `isPlayerSolid` — layer 15, the `No Collision` bit, and a
 non-simple response also fail solidity without naming a trigger. A layer-12 body is no

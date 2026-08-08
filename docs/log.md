@@ -4,6 +4,41 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-08
 
+* **Ragdoll self-collision is back, from the biped filter bits (issue #413, split from
+  #407)**: a corpse's arms no longer pass through its own torso. Updated pages:
+  [ragdoll](/engine/ragdoll.md), [NIF collision](/formats/nif-collision.md).
+
+  **The bits are a reading, not a guess.** nif.xml's `CollisionFilterFlags` puts a
+  `BipedPart` in the low five bits of the `HavokFilter` flags byte and says they mean a part
+  only on layers 8, 32 and 33. The vanilla humanoid confirms it rather than merely permitting
+  it: all eighteen bodies are on layer 8 in group 0, and every part number lands on the
+  anatomically correct enum name — `P_HEAD` on the head, `P_L_CALF` on the left calf,
+  `P_R_FOOT` on the right foot, through all sixteen distinct values. A mask read at the wrong
+  width or offset would still produce numbers; it would not produce that anatomy, and
+  `RagdollSelfCollisionRealDataTests` asserts it bone by bone.
+
+  **What Havok does with the parts is stated, because Havok does not publish it.** A pair is
+  admitted when both bodies carry a part, neither is `No Collision`, the parts differ, and
+  the two are more than two joints apart in the ragdoll's own joint graph. The third rule
+  earns its place on real data — `NPC COM` and `NPC Spine` both read `P_BODY` and are the
+  second-deepest overlap in the skeleton. The fourth is a graph distance rather than a
+  hard-coded humanoid table on purpose: one hop is what a constraint means, two hops is the
+  pair a shared parent holds together, and deriving it from the constraint data means a
+  dragon or a mod's creature is filtered without anyone writing its anatomy down. The result
+  is 116 of 153 pairs admitted and **none of the 24 that already overlap at the bind pose**,
+  which is why the thirty-to-forty-five standing contacts that made 15.6 switch the whole
+  thing off cannot occur.
+
+  **It exposed a settling gap that predates it.** A ragdoll reaches rest by either the
+  coordinated route, which checks every joint first, or 15.2's ordinary per-body sleep, which
+  asks nothing about them — and once every bone is asleep nothing solves a joint again. With
+  bones ignoring each other there was never anything left to hold one open at the end of a
+  fall; a self-collision contact can, and the vanilla left elbow rested three units and six
+  degrees open. `RagdollInstance` now makes its final pose-only projection on arrival at rest
+  by either route, repeating until every joint is inside half the settling thresholds. That
+  elbow now rests at 0.14 units and 1.7 degrees, and the sixty-collapse stability gate is
+  unchanged.
+
 * **Scripts can now ask an actor how it is doing (issue #375, roadmap item 15.8)**: nine
   `Actor` natives, three script events, five condition functions, and the CTDA combat-target
   run-on that had been unresolvable since #251. Updated pages:

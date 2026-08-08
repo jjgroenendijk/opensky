@@ -244,6 +244,23 @@ struct RagdollRealDataTests {
         lines.append(String(format: "worst joint separation: %.3f units", worstSeparation))
         lines.append("joint violations at rest: \(instance.lastStats.jointViolationCount)")
         lines.append("pose recoveries: \(instance.lastStats.recoveredBodyCount)")
+        lines.append("self-collision pairs admitted: \(definition.selfCollision.pairCount)")
+        lines.append("bone-against-bone contacts at rest: \(instance.lastStats.pairContactCount)")
+        lines.append("")
+        lines.append("## Joints at rest")
+        for joint in definition.joints {
+            let separation = RagdollFixture.separation(of: joint, in: instance)
+            let worst = RagdollJointLimitPass.passes(
+                of: joint, frames: joint.worldFrames(in: instance.bodies)
+            ).map(\.error).max() ?? 0
+            lines.append(String(
+                format: "  %@ -> %@: %.2f units, %.3f radians",
+                definition.bones[joint.bodyA].boneName,
+                definition.bones[joint.bodyB].boneName,
+                separation,
+                worst
+            ))
+        }
         lines.append("")
         lines.append("## Bones and their resting height")
         for (index, bone) in definition.bones.enumerated() {

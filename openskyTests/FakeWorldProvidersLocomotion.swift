@@ -216,8 +216,15 @@ extension FakeWorldProviders {
         ragdoll.snapshot.isFrozen = frozen
     }
 
+    func setRagdollSelfCollision(_ enabled: Bool) {
+        ragdoll.snapshot.isSelfCollisionEnabled = enabled
+    }
+
     func clearRagdolls() {
         ragdoll.clearRequests += 1
-        ragdoll.snapshot = RagdollStatsSnapshot(isFrozen: ragdoll.snapshot.isFrozen)
+        ragdoll.snapshot = RagdollStatsSnapshot(
+            isSelfCollisionEnabled: ragdoll.snapshot.isSelfCollisionEnabled,
+            isFrozen: ragdoll.snapshot.isFrozen
+        )
     }
 }

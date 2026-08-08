@@ -31,12 +31,17 @@ struct PlayerLocomotionRagdollPanelTests {
             panel.ragdollSection.freezeControl.accessibilityIdentifier()
                 == "RagdollFreezeControl"
         )
+        #expect(
+            panel.ragdollSection.selfCollisionControl.accessibilityIdentifier()
+                == "RagdollSelfCollisionControl"
+        )
         #expect(scriptsReadout("LocomotionRagdollStatsLabel", in: panel.view) != nil)
 
         for control: NSView in [
             panel.ragdollSection.triggerControl,
             panel.ragdollSection.clearControl,
-            panel.ragdollSection.freezeControl
+            panel.ragdollSection.freezeControl,
+            panel.ragdollSection.selfCollisionControl
         ] {
             #expect(!control.isHidden)
             #expect(control.frame.height > 0)
@@ -56,7 +61,9 @@ struct PlayerLocomotionRagdollPanelTests {
             settledRagdollCount: 2,
             boneBodyCount: 54,
             jointCount: 51,
-            jointViolationCount: 2
+            jointViolationCount: 2,
+            selfCollisionPairCount: 96,
+            selfContactCount: 3
         )
         let panel = try Self.panel(providers: providers)
         panel.startInspecting()
@@ -67,6 +74,7 @@ struct PlayerLocomotionRagdollPanelTests {
         #expect(readout.contains("Bone bodies: 54 over 51 joints"))
         #expect(readout.contains("\(RagdollConstraintSolver.iterationCount) iterations/substep"))
         #expect(readout.contains("2 limits still violated"))
+        #expect(readout.contains("Self-collision: 96 bone pairs admitted, 3 touching"))
         #expect(readout.contains("no pose recovery needed"))
     }
 
@@ -115,6 +123,14 @@ struct PlayerLocomotionRagdollPanelTests {
         panel.ragdollSection.freezeControl.state = .off
         sendScriptsControl(panel.ragdollSection.freezeControl)
         #expect(!providers.ragdoll.snapshot.isFrozen)
+
+        panel.ragdollSection.selfCollisionControl.state = .off
+        sendScriptsControl(panel.ragdollSection.selfCollisionControl)
+        #expect(!providers.ragdoll.snapshot.isSelfCollisionEnabled)
+
+        panel.ragdollSection.selfCollisionControl.state = .on
+        sendScriptsControl(panel.ragdollSection.selfCollisionControl)
+        #expect(providers.ragdoll.snapshot.isSelfCollisionEnabled)
     }
 
     // MARK: - Fixture

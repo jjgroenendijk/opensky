@@ -40,6 +40,7 @@ persists, and activating it opens a container over its inventory.
 | File | What it holds |
 | --- | --- |
 | `opensky/Engine/Physics/RagdollDefinition.swift` | The immutable ragdoll: bones, joints, limits, bind frames |
+| `opensky/Engine/Physics/RagdollSelfCollision.swift` | Which of a ragdoll's own bones may touch, from the biped filter bits |
 | `opensky/Engine/Physics/RagdollDefinitionBuilder.swift` | Resolving a decoded `skeleton.nif` onto an animation skeleton |
 | `opensky/Engine/Physics/RagdollJointGeometry.swift` | Anchors and angular violations; what the authored angles mean |
 | `opensky/Engine/Physics/RagdollConstraintSolver.swift` | The sequential-impulse joint solver |
@@ -164,19 +165,84 @@ numbers. Two identical runs produce bit-identical poses.
 
 ## Self-collision
 
-**A ragdoll's bones do not collide with each other.** A vanilla humanoid is eighteen
-capsules whose radii run to eighteen engine units on bones about twenty long, so they
-overlap heavily by construction — not just at the joints, but left thigh against right thigh
-at the pelvis and upper arm against spine at the shoulder. Left switched on, the real-data
-probe measured a corpse lying still on a floor carrying thirty to forty-five contacts and
-jittering forever, because every overlap pushes and every joint pulls back.
+**A ragdoll's bones collide with each other in the pairs the skeleton's own Havok biped
+filter admits, and in no others** (`RagdollSelfCollision`).
 
-The cost is the classic ragdoll self-intersection: a limb can pass through the torso. Havok
-avoids it with a per-biped-part collision filter whose semantics this engine has not
-confirmed against an open source. Reading `NIFCollisionFilter`'s biped bits correctly is the
-honest way to get self-collision back, and it is tracked on
-[issue #413](https://github.com/jjgroenendijk/opensky/issues/413) rather than guessed at
-here.
+Item 15.6 shipped with self-collision off wholesale. A vanilla humanoid is eighteen capsules
+whose radii run to eighteen engine units on bones about twenty long, so neighbouring bones
+overlap heavily by construction — not just at the joints, but left thigh against right thigh
+at the pelvis and upper arm against spine at the shoulder. Measured at the bind pose, 24 of
+the 153 possible pairs are already interpenetrating before anything moves, the deepest by 12
+engine units, and with every pair switched on a corpse lying still on a floor carried thirty
+to forty-five contacts and jittered forever. The cost of switching it off was the classic
+ragdoll self-intersection: a limb passing through the torso.
+
+### What the file says
+
+nif.xml's `CollisionFilterFlags` is a bitfield over the `HavokFilter`'s one flags byte: bits
+0-4 are a `BipedPart`, bit 5 `MOPP Scaled`, bit 6 `No Collision`, bit 7 `Linked Group`. The
+part number is documented as meaningful "only if the Layer is 8 (or 32/33 for Skyrim and
+later)" — `SKYL_BIPED`, `SKYL_DEADBIP`, `SKYL_BIPED_NO_CC`
+([nif.xml](https://github.com/niftools/nifxml/blob/develop/nif.xml)).
+
+The vanilla humanoid confirms the reading rather than merely being consistent with it. All
+eighteen bodies sit on layer 8, in group 0, with no `No Collision` bit and both duplicate
+filters agreeing, and every part number lands on the anatomically correct `BipedPart` name:
+
+| Bone | Part | Bone | Part |
+| --- | --- | --- | --- |
+| `NPC Neck` | 0 `P_OTHER` | `NPC L Thigh` | 8 `P_L_THIGH` |
+| `NPC Head` | 1 `P_HEAD` | `NPC L Calf` | 9 `P_L_CALF` |
+| `NPC COM` | 2 `P_BODY` | `NPC L Foot` | 10 `P_L_FOOT` |
+| `NPC Spine` | 2 `P_BODY` | `NPC R UpperArm` | 11 `P_R_UPPER_ARM` |
+| `NPC Spine1` | 3 `P_SPINE1` | `NPC R Forearm` | 12 `P_R_FOREARM` |
+| `NPC Spine2` | 4 `P_SPINE2` | `NPC R Hand` | 13 `P_R_HAND` |
+| `NPC L UpperArm` | 5 `P_L_UPPER_ARM` | `NPC R Thigh` | 14 `P_R_THIGH` |
+| `NPC L Forearm` | 6 `P_L_FOREARM` | `NPC R Calf` | 15 `P_R_CALF` |
+| `NPC L Hand` | 7 `P_L_HAND` | `NPC R Foot` | 16 `P_R_FOOT` |
+
+That anatomy could not line up by accident with a mask read at the wrong width or offset,
+which is what makes this a reading rather than a guess. `RagdollRealDataTests` asserts it
+bone by bone.
+
+### Which pairs are admitted
+
+Havok does not publish its biped pair table, so what the parts are *used for* is stated
+rather than assumed. A pair is admitted when all four hold:
+
+1. **Both bodies carry a part number at all.** A body on a non-biped layer says nothing
+   about biped self-collision, so nothing is admitted for it.
+2. **Neither carries `No Collision`.** The one bit in the byte whose meaning is unambiguous.
+3. **The two part numbers differ.** Two bodies sharing a part are the same anatomical part
+   modelled twice, and vanilla does exactly that: `NPC COM` and `NPC Spine` are both
+   `P_BODY`, and they are the second-deepest overlap in the skeleton.
+4. **The two bodies are more than two joints apart** in the ragdoll's own joint graph. One
+   hop is what a constraint means — a joint holds two capsules together at a shared pivot,
+   so they necessarily overlap there. Two hops is the pair a shared parent holds together:
+   left thigh against right thigh at the pelvis, upper arm against spine at the shoulder,
+   head against spine through the neck.
+
+Rule 4 is a graph distance rather than a hard-coded anatomical table over the part numbers,
+deliberately. It is derived from the same file the bodies came out of, so a skeleton that is
+not a biped — a dragon, a spider, a mod's creature — gets the same treatment without anyone
+writing its anatomy down, and it cannot admit a pair the constraint data says is jointed.
+
+**The measured result on the vanilla humanoid: 116 of 153 pairs admitted, and none of the 24
+that overlap at the bind pose among them.** So the corpse gets a torso its arms cannot pass
+through, and the solver never sees the standing contacts that made 15.6 switch the whole
+thing off. `RagdollSelfCollisionRealDataTests` is that statement as a gate.
+
+### What it cost the settle
+
+Nothing at rest — a settled vanilla corpse carries zero bone-against-bone contacts — but it
+exposed an existing gap. A ragdoll reaches rest by either of two routes: the coordinated one
+below, which checks every joint before sleeping anything, or 15.2's ordinary per-body sleep,
+which asks nothing about joints. A self-collision contact during a fall can leave a joint
+open at the moment the last bone stops moving, and nothing solves it again; the vanilla
+humanoid's left elbow rested three engine units and six degrees open. `RagdollInstance` now
+makes its final pose-only projection on arrival at rest by *either* route, repeating it until
+every joint is inside half the settling thresholds, which brings that elbow to 0.14 units and
+1.7 degrees.
 
 ## Settling
 
@@ -192,9 +258,10 @@ than the noisiest individual bone. The root travelling less than `settleDistance
 bone delay persistence after the corpse has stopped. It cannot fire mid-fall: gravity moves
 a falling body hundreds of units in that window. It also waits until every pivot is within
 two engine units and every angular limit within 0.06 radians, so the coordination cannot
-freeze an unfinished pose merely because the root stopped first. It then makes one final
-pose-only joint projection after sleeping the bones; no velocity is derived from that move.
-An impulse wakes the ragdoll again exactly as it wakes any 15.2 body.
+freeze an unfinished pose merely because the root stopped first. It then makes the final
+pose-only joint projection described under [self-collision](#self-collision) after sleeping
+the bones; no velocity is derived from that move. An impulse wakes the ragdoll again exactly
+as it wakes any 15.2 body.
 
 A sleeping ragdoll is not solved at all — the joint pass is skipped along with the
 integration. So a settled corpse costs nothing, and it keeps the pose it settled into
@@ -309,7 +376,8 @@ Combat & Physics destination belongs if the surface outgrows this.
 | Ragdoll selected actor | `RagdollTriggerControl` | Kills and hands off the crosshair target, else the nearest resident actor |
 | Clear ragdolls | `RagdollClearControl` | Drops every live ragdoll; the deaths stand |
 | Freeze ragdoll stepping | `RagdollFreezeControl` | Suspends the solver with the corpses where they are |
-| Readout | `LocomotionRagdollStatsLabel` | Live and settled counts, bone bodies over joints, solver iterations and violations, pose recoveries |
+| Bones collide with each other | `RagdollSelfCollisionControl` | Switches self-collision over the admitted pairs, waking every corpse so the change shows |
+| Readout | `LocomotionRagdollStatsLabel` | Live and settled counts, bone bodies over joints, solver iterations and violations, admitted pairs and bones touching, pose recoveries |
 
 The trigger goes through the same `RagdollRuntime.trigger(_:)` a zero-health death reaches,
 so a collapse requested from the sidebar is indistinguishable downstream from one a fight
@@ -318,8 +386,9 @@ implementation of it.
 
 ## Known limits
 
-* **No self-collision within a ragdoll**, as above. Tracked by
-  [issue #413](https://github.com/jjgroenendijk/opensky/issues/413).
+* **Self-collision is per-pair, not per-shape.** An admitted pair collides with its
+  neighbour's whole capsule; nothing subdivides a bone. A limb can still pass through a bone
+  it is two joints away from, which on a humanoid is a forearm through its own shoulder.
 * **Ragdolls do not collide with each other.** Two corpses in a pile would need the solver
   to arbitrate between two constraint sets at once, which is more than this item takes on.
 * **Only the player's graph can be raised on**, so every NPC death takes the fallback route.
@@ -337,4 +406,6 @@ implementation of it.
 | `RagdollRuntimeTests` | Death raises the events, the hand-off spawns bodies, the fallback fires, settling persists, looting is recorded |
 | `RagdollDeathSaveTests` | The `DETH` chunk round-trips and an older build skips it |
 | `PlayerLocomotionRagdollPanelTests` | The sidebar ids and the readout |
+| `RagdollSelfCollisionTests` | The filter bits against nif.xml, the four admission rules, and the solver acting on them |
 | `RagdollRealDataTests` | The vanilla humanoid: 18 bones, 17 joints, nothing skipped, collapses onto a floor and settles with every constraint resolved |
+| `RagdollSelfCollisionRealDataTests` | The vanilla humanoid's biped parts by name, and that no admitted pair overlaps at the bind pose |
