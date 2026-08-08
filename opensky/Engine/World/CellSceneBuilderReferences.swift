@@ -27,8 +27,9 @@ nonisolated extension CellSceneBuilder {
     /// each tagged with its group. LAND is handled separately (buildTerrain);
     /// other non-REFR types (NAVM, ACHR, PGRE, ...) are not static placements
     /// — ignored deliberately and not counted (skip taxonomy,
-    /// docs/engine/cell-scene.md). Deleted REFRs place nothing -> also
-    /// ignored. A REFR that fails to decode is malformed.
+    /// docs/engine/cell-scene.md). NAVM has its own walk over the same groups
+    /// in `collectNavmeshes`, off the build path. Deleted REFRs place nothing
+    /// -> also ignored. A REFR that fails to decode is malformed.
     nonisolated func collectTaggedReferences(
         in cellChildren: ESMGroup?,
         counts: inout BuildCounts

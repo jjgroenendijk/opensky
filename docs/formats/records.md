@@ -696,6 +696,30 @@ Observed in `Skyrim.esm` on 2026-08-03, forward walk / forward run in units per 
 | `NPC_Sprinting_MT` | `NPCSprinting` | 0.0 | 500.0 |
 | `NPC_Swimming_MT` | `NPCSwimming` | 80.1 | 370.0 |
 
+## NAVM/NAVI -> Navmesh, NavmeshInfoMap
+
+The walkable surface, and the plugin-wide index over it. NAVM is a cell child like LAND
+and REFR are, carrying one oversized `NVNM` payload; NAVI is a single top-level record
+listing every navmesh with its location and its links. Both have their own page —
+[navmesh records](/formats/navmesh.md) — because the layout is large and the parent-cell
+union needed settling between two disagreeing sources.
+
+| record | field | decoded |
+| ------ | ----- | ------- |
+| NAVM   | NVNM  | `NavmeshGeometry`: version, parent cell or grid, vertices, triangles with per-edge neighbours and flags, edge links, door links |
+| NAVI   | NVER  | `version` |
+| NAVI   | NVMI  | `NavmeshInfo` per navmesh: flags, approximate centre, edge links, door links, location |
+| NAVI   | NVSI  | `deletedNavmeshes` |
+
+Skipped: `NAVM` ONAM/PNAM/NNAM, the cover-triangle and navmesh-grid lists, the NVMI island
+block, and NAVI's NVPP — each tallied rather than silently dropped, and each listed with its
+reason on the navmesh page.
+
+`CellSceneBuilder.collectNavmeshes` picks NAVM out of a cell's children groups; it is the
+other half of the deliberate NAVM skip in `collectTaggedReferences`, and stays off the scene
+build path because nothing rendered or collided reads a navmesh. `NavmeshIndex` is the NAVI
+store, built once in `CellProviderIndexes`.
+
 ## QUST -> Quest
 
 Quests: journal stages, objectives, and the alias slots a quest resolves world objects

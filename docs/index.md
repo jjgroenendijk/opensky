@@ -40,6 +40,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Acoustic space (ASPC)](/formats/acoustic-space.md) - interior-ambience bridge:
   ASPC fields, the `RDAT` FormID collision with REGN's area header, and the
   interior-only region borrow.
+* [Navmesh records (NAVM, NAVI)](/formats/navmesh.md) - NVNM vertices, triangles, edge and
+  door links, the null-worldspace parent-cell union, and the NAVI index map that says which
+  navmeshes exist and which link to which.
 * [Material types](/formats/material-type.md) - MATT fields, the CRC32 of the Creation Kit
   material name that a NIF collision shape stores, and the Havok-value and LTEX.MNAM lookups
   that turn any surface into the MATT an impact table is keyed by.
