@@ -299,17 +299,18 @@ character and is resolved from the physics data rather than from the graph's ind
 
 ## Sidebar and readouts
 
-Sidebar path `World > Player & Locomotion > Death & Ragdoll`, beside Melee and Archery. A
-section rather than a destination, on the reading items 15.4 and 15.5 made: three controls
-on a subsystem that panel already describes, and the M15 gate panel is where a
-Combat & Physics destination belongs if the surface outgrows this.
+Sidebar path `World > Combat & Physics > Death & Ragdoll` (`Destination-combatPhysics`,
+`PanelSection-combatRagdoll`), beside Melee and Archery. The section shipped under
+`World > Player & Locomotion` and moved with the M15 gate (issue #198): the surface did
+outgrow that panel, which is exactly what items 15.4, 15.5 and 15.6 each said would decide
+it.
 
 | Control | Accessibility id | What it does |
 | --- | --- | --- |
 | Ragdoll selected actor | `RagdollTriggerControl` | Kills and hands off the crosshair target, else the nearest resident actor |
 | Clear ragdolls | `RagdollClearControl` | Drops every live ragdoll; the deaths stand |
 | Freeze ragdoll stepping | `RagdollFreezeControl` | Suspends the solver with the corpses where they are |
-| Readout | `LocomotionRagdollStatsLabel` | Live and settled counts, bone bodies over joints, solver iterations and violations, pose recoveries |
+| Readout | `CombatRagdollStatsLabel` | Live and settled counts, bone bodies over joints, solver iterations and violations, pose recoveries |
 
 The trigger goes through the same `RagdollRuntime.trigger(_:)` a zero-health death reaches,
 so a collapse requested from the sidebar is indistinguishable downstream from one a fight

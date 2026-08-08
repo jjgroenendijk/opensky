@@ -121,4 +121,56 @@ extension DestinationRegistry {
             TerrainLODSection.resetToDefaults(provider: providers)
         }
     )
+
+    /// Only the Physics section carries overridden-ness: a frozen simulation is
+    /// the one thing under this destination that sits away from its default,
+    /// and the sidebar's reset resumes it. A damaged actor, an angry opponent,
+    /// a corpse on the floor and a shoved crate are all world state a user made
+    /// on purpose, and a "Reset all" that undid any of them would be undoing
+    /// the fight rather than a setting.
+    static let combatPhysicsOverrides = DestinationOverrideActions(
+        isOverridden: { context in
+            CombatPhysicsSection.isOverridden(provider: context.providers)
+        },
+        resetToDefaults: { context in
+            CombatPhysicsSection.resetToDefaults(provider: context.providers)
+        }
+    )
+
+    /// Only the Reset section carries overridden-ness: a dirty reference is the
+    /// world deviating from plugin data, which is this destination's notion of
+    /// a non-default value, and "Reset all" is what restores it. Inspecting and
+    /// saving change no setting.
+    static let runtimeStateOverrides = DestinationOverrideActions(
+        isOverridden: { context in
+            RuntimeStateResetSection.isOverridden(provider: context.providers)
+        },
+        resetToDefaults: { context in
+            RuntimeStateResetSection.resetToDefaults(provider: context.providers)
+        }
+    )
+
+    /// Only the Scheduler section carries overridden-ness: a paused Papyrus VM
+    /// is the one thing under this destination that sits away from its default,
+    /// and the sidebar's reset resumes it. Stepping leaves no setting behind,
+    /// and the other three sections are read-only.
+    static let scriptsOverrides = DestinationOverrideActions(
+        isOverridden: { context in
+            ScriptSchedulerSection.isOverridden(provider: context.providers)
+        },
+        resetToDefaults: { context in
+            ScriptSchedulerSection.resetToDefaults(provider: context.providers)
+        }
+    )
+
+    static let uiLabOverrides = DestinationOverrideActions(
+        isOverridden: { context in
+            UILabControlsSection.isOverridden(provider: context.providers)
+                || SWFMovieSection.isOverridden(provider: context.providers)
+        },
+        resetToDefaults: { context in
+            UILabControlsSection.resetToDefaults(provider: context.providers)
+            SWFMovieSection.resetToDefaults(provider: context.providers)
+        }
+    )
 }

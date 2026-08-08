@@ -20,7 +20,7 @@
 
 import AppKit
 
-final class LocomotionArcherySection: PanelSectionViewController {
+final class CombatArcherySection: PanelSectionViewController {
     weak var provider: (any ArcheryControlProviding)? {
         didSet {
             guard isViewLoaded else { return }
@@ -35,7 +35,7 @@ final class LocomotionArcherySection: PanelSectionViewController {
     let clearTraceControl = NSButton(title: "Clear shot trace", target: nil, action: nil)
 
     private let statsLabel = PanelComponents.statsLabel(
-        identifier: "LocomotionArcheryStatsLabel"
+        identifier: "CombatArcheryStatsLabel"
     )
 
     override var sectionTitle: String {
@@ -43,7 +43,7 @@ final class LocomotionArcherySection: PanelSectionViewController {
     }
 
     override var sectionIdentifier: String {
-        "locomotionArchery"
+        "combatArchery"
     }
 
     var readout: String {

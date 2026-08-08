@@ -49,6 +49,8 @@
         "M13AcceptanceRenderTests",
         "M14AcceptanceRealDataTests",
         "M14AcceptanceRenderTests",
+        "M15AcceptanceRealDataTests",
+        "M15AcceptanceRenderTests",
         "M9AudioAcceptanceRealDataTests",
         "NIFDynamicsCensusRealDataTests",
         "PapyrusAcceptanceRealDataTests",

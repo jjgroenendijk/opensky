@@ -361,6 +361,12 @@ final class FakeWorldProviders: WorldControlProviders {
     /// RagdollControlProviding (issue #197) state; the conformance lives beside
     /// the locomotion one.
     var ragdoll = FakeRagdollState()
+    /// ActorValueControlProviding (issue #194), CombatLoopControlProviding
+    /// (issue #374) and PhysicsControlProviding (issue #193) state; all three
+    /// conformances live in `FakeWorldProvidersCombat.swift`.
+    var actorValues = FakeActorValueState()
+    var combatLoop = FakeCombatLoopState()
+    var physics = FakePhysicsState()
 }
 
 /// The inventory-menu half of the fake, in an extension so the class body

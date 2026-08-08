@@ -14,7 +14,7 @@ import Foundation
 import simd
 
 /// nif.xml `hkConstraintType`. Values 3-5 and 9-12 are unused by the format.
-nonisolated enum NIFConstraintType: UInt32, Sendable {
+nonisolated enum NIFConstraintType: UInt32, CaseIterable, Sendable {
     case ballAndSocket = 0
     case hinge = 1
     case limitedHinge = 2

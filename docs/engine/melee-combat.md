@@ -438,14 +438,18 @@ reaches a real playable `.wav` for at least one of them.
 
 ## Verification surface
 
-`World > Player & Locomotion > Melee` (`PanelSection-locomotionMelee`).
+`World > Combat & Physics > Melee` (`Destination-combatPhysics`,
+`PanelSection-combatMelee`). The section shipped under
+`World > Player & Locomotion` and moved with the M15 gate (issue #198), which is
+what that item's own note said would happen once the combat surface outgrew the
+locomotion panel.
 
 | Control | Id | Does |
 | --- | --- | --- |
 | Weapon drawn | `MeleeWeaponDrawnControl` | raises the draw or sheath event |
 | Attack | `MeleeAttackControl` | requests exactly one swing |
 | Clear hit trace | `MeleeClearTraceControl` | empties the trace and both counts |
-| Readout | `LocomotionMeleeStatsLabel` | state, weapon and reach, both hand types, last-hit trace |
+| Readout | `CombatMeleeStatsLabel` | state, weapon and reach, both hand types, last-hit trace |
 
 Block is a held modifier with nothing to latch — a checkbox would assert it for
 a single frame and read as broken — so it is reported live in the state line

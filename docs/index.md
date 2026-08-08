@@ -252,8 +252,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   additive CBTS save chunk, combat state derived every step rather than stored, the
   scripted dev target that is explicitly a clock and not an AI, census-named recoil
   reactions in both directions, bounded reaction clips on the single-clip NPC playback,
-  the four transient caps and what a trim costs, the combat-music edge, and the panel
-  provider seam.
+  the four transient caps and what a trim costs, the combat-music edge, the panel
+  provider seam, and the `World > Combat & Physics` destination that is M15's
+  verification surface and acceptance record.
 
 ## Rendering
 

@@ -418,7 +418,9 @@ is indistinguishable downstream from one the graph released.
 
 ## Verification surface
 
-`World > Player & Locomotion > Archery` (`PanelSection-locomotionArchery`).
+`World > Combat & Physics > Archery` (`Destination-combatPhysics`,
+`PanelSection-combatArchery`). The section shipped under
+`World > Player & Locomotion` and moved with the M15 gate (issue #198).
 
 | Control | Id | Does |
 | --- | --- | --- |
@@ -426,7 +428,7 @@ is indistinguishable downstream from one the graph released.
 | Despawn in flight | `ArcheryDespawnControl` | removes everything in the air, resolving nothing |
 | Clear stuck arrows | `ArcheryClearStuckControl` | pulls every stuck arrow back out of the world |
 | Clear shot trace | `ArcheryClearTraceControl` | empties the trace and the counts |
-| Readout | `LocomotionArcheryStatsLabel` | shot state, bow and arrow, PROJ flight numbers, live count, last trajectory |
+| Readout | `CombatArcheryStatsLabel` | shot state, bow and arrow, PROJ flight numbers, live count, last trajectory |
 
 The readout's last line carries the three things the item asks for — spawn point,
 impact point and flight time — plus the travelled distance and the drop.

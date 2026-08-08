@@ -4,6 +4,103 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-08
 
+* **M15 accepted — the player fights, kills, loots and reloads (issue #198)**: the milestone
+  gate wires, verifies and records what the other eight items built. The route is one
+  continuous fight and it enters the engine where a player does — real key *and mouse* events
+  reach a real `GameMetalView`, which fills the shipping `CameraInputState`, which each frame
+  becomes a `CameraInput` for `LocomotionBridge.acceptFrame`, `WalkController.update` and the
+  four combat runtimes, in the order `Renderer.advanceCamera` and the `GameViewController`
+  satellites run them. The arena under it is synthetic (a floor, a wall, one crate of movable
+  clutter), the graph over it is an eleven-state machine wired to the census names the three
+  name sets declare, and the whole thing runs headless with no device and no install.
+  Sub-issues: [#192](https://github.com/jjgroenendijk/opensky/issues/192) Havok dynamics data
+  and the census, [#193](https://github.com/jjgroenendijk/opensky/issues/193) dynamic
+  rigid-body simulation, [#194](https://github.com/jjgroenendijk/opensky/issues/194) the actor
+  gameplay entity and actor values, [#195](https://github.com/jjgroenendijk/opensky/issues/195)
+  melee, [#196](https://github.com/jjgroenendijk/opensky/issues/196) archery and projectiles,
+  [#197](https://github.com/jjgroenendijk/opensky/issues/197) death and the constraint-solved
+  ragdoll, [#374](https://github.com/jjgroenendijk/opensky/issues/374) the combat loop and dev
+  target, [#375](https://github.com/jjgroenendijk/opensky/issues/375) the Papyrus `Actor`
+  natives and combat conditions. Updated pages: [combat loop](/engine/combat.md),
+  [actor values](/engine/actor-values.md), [melee combat](/engine/melee-combat.md),
+  [archery](/engine/archery.md), [ragdoll](/engine/ragdoll.md),
+  [dynamic bodies](/engine/dynamic-bodies.md),
+  [sidebar acceptance](/tools/sidebar-acceptance.md).
+
+  **The graph fires the fight, not the test.** Every contact frame, nock, release and ragdoll
+  hand-off in the route is a *clip trigger* coming back out of a behavior graph on its own
+  clock, exactly as a vanilla annotation does. The rejected alternative was handing the
+  runtimes the event names directly, which is what the per-item suites do and is right there:
+  it proves each runtime and proves nothing about the seam between them and the animation.
+  Writing it the other way turned the gate into an integration of eight items rather than
+  eight unit tests run in a row, and it immediately made a documented engine rule load-bearing
+  — one update fires one transition, so an event raised on the very frame another transition
+  completes is dropped. A combat route presses far more often than a locomotion one, so every
+  step now lets the previous clip hand back before it presses anything (`settleGraph`). That
+  is the route being deterministic about a known rule, not a workaround for a defect.
+
+  **Two graphs, because an event has to reach the right actor.** The player's graph is
+  attached to the bridge and the opponent's is stepped beside it. A stagger raised on the
+  opponent has to be taken by the opponent and by nobody else, and that is a claim only a
+  second graph can carry; the route asserts the player never enters the stagger or the death
+  state. The rejected alternative — one graph and a target parameter — would have made the
+  seam untestable in exactly the place it matters.
+
+  **Decisions worth the record.** Full constraint-solved ragdolls over a simplified
+  spring-per-bone approximation, because the vanilla skeletons carry real `bhkRagdollConstraint`
+  and `bhkLimitedHingeConstraint` limits and an approximation would have thrown away data
+  already decoded. The dev target over early AI, because perception, packages and pathing are
+  M16's and half an AI here would have put a second, worse decision layer in the engine for
+  M16 to remove. A sequential-impulse solver on the same fixed step the walk controller uses,
+  rather than a second clock, so a stalled frame has one clamp and not four. And the
+  transient-persistence policy: hostility and death are components and survive a save, while
+  arrows in flight and corpses still falling are dropped on the way out, because a fight saved
+  mid-swing has to reload consistently rather than reload with an arrow frozen in the air.
+
+  **The surface is `World > Combat & Physics`** (`Destination-combatPhysics`): actor values
+  with damage and restore controls, weapon and attack state with the hit trace, projectile
+  spawn and trajectory readouts, the ragdoll trigger, hostility and dev-target controls, and
+  physics freeze and reset with body counts — the whole loop drivable without knowing a key or
+  a CLI command. Melee, Archery and Death & Ragdoll moved here from
+  `World > Player & Locomotion`, which is what items 15.4, 15.5 and 15.6 each said would decide
+  their home once the combat surface outgrew that panel; their readout ids moved with them
+  (`LocomotionMeleeStatsLabel` to `CombatMeleeStatsLabel`, and its two siblings), and the
+  ledger rows are rewritten rather than left pointing at a path that no longer exists.
+
+  *Evidence:* `M15AcceptanceTests` (the fight, its exact repetition, and the paused frame that
+  advances no part of it), `M15AcceptancePanelTests` (the destination as one surface on one
+  provider set), `M15AcceptanceBudgetTests` (the shipping `validatedFlyUpdateBudgets` over the
+  same benchmark configuration, the four fixed-step clocks' stall bounds, and the 15.2 clutter
+  and 15.6 repeated-collapse stresses), `CombatPhysicsPanelTests`, `CombatMeleePanelTests`,
+  `CombatArcheryPanelTests`, `CombatRagdollPanelTests`, `DestinationRegistryTests` and
+  `AppSidebarModelTests` (the id and registry contracts), `M15AcceptanceRealDataTests`
+  (env-gated, device-free) and `M15AcceptanceRenderTests` (env-gated and device-gated).
+
+  **Honest coverage on the local install, 2026-08-08.** Over the vanilla `0_master.hkx`: all
+  44 combat, archery and ragdoll event names and all 8 variables declared, zero unresolved;
+  361 updates driving 3,062 generator and 3,219 modifier evaluations; zero unevaluated
+  generators, zero partial generators, zero unresolved clips, zero unapplied bindings, zero
+  undecodable objects, zero feature gaps and zero crashes. What is still owed is semantics
+  rather than decode: pass-through modifiers `BSSpeedSamplerModifier` 361,
+  `hkbKeyframeBonesModifier` 361 and `hkbEvaluateExpressionModifier` 173. The M14 close-out
+  named two modifiers as M15's to implement rather than tally; one of them,
+  `hkbRigidBodyRagdollControlsModifier`, now records zero pass-throughs because item 15.6
+  reads its `m_durationToBlend`, and the other, `hkbKeyframeBonesModifier`, is still a
+  pass-through and is stated as such rather than quietly closed. Condition functions
+  implemented: 14. Motion systems simulated: `dynamic`, `sphereInertia`, `sphereStabilized`,
+  `boxInertia`, `boxStabilized`, `thinBox`; not simulated: `invalid`, `keyframed`, `fixed`,
+  `character`. Constraint classes decoded: all seven `bhk` classes the census names. Pixels,
+  same run: drawing the weapon moved 44,872 changed pixels against idle, the swing moved
+  48,002 against the drawn stance, and a second player driven through the identical sequence
+  from a fresh graph drew a byte-identical frame (0 changed pixels). Two of the four pixel axes
+  the issue names are *not* covered and the reason is the engine rather than the suite: an
+  arrow in flight has no drawn representation (only the stuck arrow it becomes does, through a
+  cell rebuild), and a ragdoll collapse reaches the renderer through `RenderScene.ragdollPoses`
+  keyed by an ACHR, which the player rig is not. Both are covered by numbers in
+  `M15AcceptanceTests` instead — the arrow's whole trajectory, and the ragdoll's spawn, settle
+  and resting pose — which is what the sidebar-acceptance convention makes pixel evidence
+  optional for.
+
 * **Scripts can now ask an actor how it is doing (issue #375, roadmap item 15.8)**: nine
   `Actor` natives, three script events, five condition functions, and the CTDA combat-target
   run-on that had been unresolvable since #251. Updated pages:
