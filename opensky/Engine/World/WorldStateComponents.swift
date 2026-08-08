@@ -72,6 +72,12 @@ nonisolated enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendab
     /// current-health float is rewritten every regeneration step, while death is
     /// a latch nothing but a resurrection clears.
     case death
+    /// One actor's hostility toward the player (issue #374). The value type is
+    /// `ActorCombatState` in `opensky/Actors/ActorCombatComponent.swift`. A slot
+    /// of its own beside `actorValues` and `death` for the same lifetime reason
+    /// those two are separate: hostility changes on a handful of events, while
+    /// the values beside it are rewritten sixty times a second.
+    case combat
 }
 
 /// A value that can occupy one component slot.
@@ -106,6 +112,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
     case questAliases(QuestAliasState)
     case actorValues(ActorValueState)
     case death(ActorDeathState)
+    case combat(ActorCombatState)
 
     var kind: WorldStateComponentKind {
         switch self {
@@ -119,6 +126,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
         case .questAliases: .questAliases
         case .actorValues: .actorValues
         case .death: .death
+        case .combat: .combat
         }
     }
 }

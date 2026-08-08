@@ -56,11 +56,25 @@ authored anywhere in the records, so the derivation is explicit:
 | `town` | Exterior whose selected MUSC editor id starts with `MUSTown` (case-insensitive). | A naming convention, not data. A record renamed by a mod, or one whose EDID is absent, reads as `exploration`. Interior town music (`MUSTownInterior...`) never reaches this branch. |
 | `exploration` | Every other exterior, including one with no playlist. | The catch-all; it is not evidence that an exploration playlist was authored. |
 
-There is no combat, dungeon or special state: those exist in the vanilla data as
-further `MUSC` records (`MUSCombat...`, `MUSDungeon...`) but are triggered by
-game systems OpenSky does not have yet, so inventing a state for them would be a
-guess. When a combat system exists it selects a MUSC directly and the state enum
-grows a case; the precedence chain above does not change.
+| `combat` | The combat loop said so (issue #374). | Not derived from context; see below. |
+
+`combat` is the case this enum was shaped to grow, and roadmap item 15.7 grew it.
+It is the one state that is **not** derived from the streamer's context:
+`WorldMusicDirector.setCombatActive(_:)` selects the first MUSC whose editor id
+starts with `MUSCombat` (case-insensitive) directly, by FormID so the choice is
+the same on every run, and remembers the selection it interrupted. Leaving combat
+restores exactly that selection rather than re-resolving, so a fight that started
+in a town ends back in the town's playlist even if the streamer never published a
+context in between; a cell crossed mid-fight updates what leaving combat will
+return to instead of interrupting the fight's music. A load order with no combat
+playlist leaves the music where it was and says why — nothing to select is not a
+reason to go silent mid-fight. The `MUSCombat` prefix is a naming convention with
+exactly the limits `town`'s is. The precedence chain above is untouched. See
+[combat loop](/engine/combat.md).
+
+There is still no dungeon or special state: those exist in the vanilla data as
+further `MUSC` records (`MUSDungeon...`) but are triggered by game systems
+OpenSky does not have yet, so inventing a state for them would be a guess.
 
 ## Playlists and flags
 

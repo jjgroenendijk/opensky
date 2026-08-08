@@ -69,7 +69,10 @@ extension GameViewController {
         runtime.weapon = hands.weapon
         runtime.offHand = hands.offHand
         runtime.acceptFrame(renderer.locomotion.meleeIntent)
-        runtime.handleGraphEvents(events)
+        // Every landed hit is also what turns its target hostile and interrupts
+        // the dev target's own attack, so the combat loop is told here rather
+        // than sweeping the trace for new entries (issue #374).
+        noteCombatHits(runtime.handleGraphEvents(events))
     }
 
     /// The player's equipped weapon as a swing profile, or the unarmed profile

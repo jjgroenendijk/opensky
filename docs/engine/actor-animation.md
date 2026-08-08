@@ -22,10 +22,19 @@ palette formula; NPCs keep the single-clip path below unchanged. Graph-driven NP
 locomotion is deferred to M16 AI, because an NPC's graph needs a package to tell it where
 to walk and nothing supplies one yet.
 
+Milestone 15 item 15.7 kept that boundary and widened the single-clip path by exactly one
+notch: `ActorAnimationPlayback` now takes a **bounded clip override** and returns to the idle
+clip when it expires, which is what lets the dev target play an attack, a stagger and a hit
+reaction without a behavior graph. The override is sampled from its own frame zero rather
+than from the shared clock, so a clip started mid-session starts at its beginning. Which
+clips, and where their paths were read from, is in [combat loop](/engine/combat.md).
+
 ## Playback path
 
 `ActorAnimationPlayback` samples the gender-specific character `mt_idle.hkx` at renderer
-time modulo clip duration. Binding resolves tracks to skeleton bone indices. Missing tracks
+time modulo clip duration. `ActorAnimationClipLoader` does the decoding, taking the animation
+path as a parameter so the same loader serves both the idle clip and the combat reactions.
+Binding resolves tracks to skeleton bone indices. Missing tracks
 retain `hkaSkeleton.referencePose`; local translation-rotation-scale matrices compose through
 the parent graph into skeleton-world transforms. Invalid indices or parent cycles fail the
 update safely.

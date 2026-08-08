@@ -63,6 +63,17 @@ nonisolated enum CombatGraphNames {
     /// `staggerbehavior.hkx` reads `staggerMagnitude` alongside it.
     static let staggerStart = "staggerStart"
     static let staggerStop = "staggerStop"
+    /// The hit reaction a blow that did not stagger produces, raised on the
+    /// graph of whoever was struck (issue #374).
+    ///
+    /// Read out of the same census as everything else here: the third-person
+    /// `0_master.hkx` declares `recoilStart`, `recoilStop` and
+    /// `recoilLargeStart` as events, and `IsRecoiling : bool` and
+    /// `recoilMagnitude : real` as variables. `recoilLargeStart` is the heavier
+    /// variant and is left unraised — which magnitude selects it is a threshold
+    /// no open source states, and guessing it would play the wrong reaction.
+    static let recoilStart = "recoilStart"
+    static let recoilStop = "recoilStop"
 
     /// Every event the melee runtime raises, in the order the bridge raises
     /// edges in.
@@ -71,7 +82,8 @@ nonisolated enum CombatGraphNames {
         weapEquip, magicEquip, unequip,
         attackStart, attackRelease, attackStop,
         blockStart, blockStop,
-        staggerStart, staggerStop
+        staggerStart, staggerStop,
+        recoilStart, recoilStop
     ]
 
     // MARK: - Events observed coming back out
@@ -117,6 +129,11 @@ nonisolated enum CombatGraphNames {
     static let isStaggering = "IsStaggering"
     /// How hard the stagger is. Real, 0...1 in vanilla authoring.
     static let staggerMagnitude = "staggerMagnitude"
+    /// Whether a hit reaction is playing, and how hard the blow was. Bool and
+    /// real, both declared by `0_master.hkx` beside the `recoilStart` event
+    /// (issue #374).
+    static let isRecoiling = "IsRecoiling"
+    static let recoilMagnitude = "recoilMagnitude"
     /// The WEAP `speed` multiplier the attack clips scale their rate by. Real.
     static let weaponSpeedMult = "weaponSpeedMult"
     /// What each hand is holding, `int32`. These pick the animation set: the

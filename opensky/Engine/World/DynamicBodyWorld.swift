@@ -179,6 +179,33 @@ nonisolated struct DynamicBodyWorld {
         bodies.sort { $0.key < $1.key }
     }
 
+    /// Forces bodies to sleep where they stand until at most `limit` are awake
+    /// (issue #374).
+    ///
+    /// The order is ascending `ReferenceKey`, which is this registry's order
+    /// everywhere else and is stated rather than described as "oldest": a body
+    /// is placed by its cell build and carries no spawn time, so age is not
+    /// something the registry knows. What it does guarantee is that two runs
+    /// that reach the same over-budget state put the same bodies to sleep.
+    ///
+    /// A slept body keeps its pose and is persisted by the ordinary settled
+    /// drain, so the cap costs motion rather than position — a crate stops
+    /// mid-tumble instead of vanishing.
+    ///
+    /// - Returns: how many were put to sleep.
+    @discardableResult
+    mutating func sleepExcessBodies(over limit: Int) -> Int {
+        let awake = bodies.indices.filter { !bodies[$0].isSleeping }
+        let excess = awake.count - max(0, limit)
+        guard excess > 0 else { return 0 }
+        for index in awake.prefix(excess) {
+            bodies[index].isSleeping = true
+            bodies[index].linearVelocity = .zero
+            bodies[index].angularVelocity = .zero
+        }
+        return excess
+    }
+
     /// Returns every body to its placed pose, at rest and awake.
     mutating func reset() {
         for index in bodies.indices {

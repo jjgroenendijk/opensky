@@ -267,6 +267,17 @@ final class RagdollRuntime {
         set { world.isFrozen = newValue }
     }
 
+    /// Stops simulating the oldest corpses until at most `limit` remain, which
+    /// is the combat loop's transient cap reaching the registry (issue #374).
+    /// The deaths themselves are the store's and survive; what a trimmed corpse
+    /// loses is its remaining motion.
+    ///
+    /// - Returns: how many stopped simulating.
+    @discardableResult
+    func trim(to limit: Int) -> Int {
+        world.trim(to: limit)
+    }
+
     /// Forgets every live ragdoll and every pending hand-off. The deaths
     /// themselves are the store's and survive.
     func reset() {

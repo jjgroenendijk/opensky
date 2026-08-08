@@ -183,21 +183,60 @@ nonisolated extension RenderAnimation {
 
 nonisolated final class ActorAnimationPlayback: RenderAnimation {
     let actor: FormID
-    let clip: ActorAnimationClip
+    /// The clip currently sounding: the idle one, or a bounded override a
+    /// combat reaction asked for (issue #374).
+    private(set) var clip: ActorAnimationClip
+    /// The clip this actor returns to when an override ends.
+    private let idleClip: ActorAnimationClip
+    /// Animation time the override started at, so it is sampled from its own
+    /// frame zero rather than from wherever the shared clock happened to be.
+    private var overrideStart: Float = 0
+    /// Animation time the override ends at. Zero when none is playing.
+    private var overrideEnd: Float = 0
     private let meshes: [RenderMesh]
 
     init(actor: FormID, clip: ActorAnimationClip, models: [RenderModel]) {
         self.actor = actor
         self.clip = clip
+        idleClip = clip
         var seen = Set<ObjectIdentifier>()
         meshes = models.flatMap(\.meshes).filter {
             $0.isSkinned && seen.insert(ObjectIdentifier($0)).inserted
         }
     }
 
+    /// Plays `clip` for `seconds`, then returns to the idle one (issue #374).
+    ///
+    /// A second request replaces the first rather than queueing: a stagger that
+    /// interrupts an attack has to take the attack's clip away, which is the
+    /// same rule the player's graph follows.
+    func play(_ clip: ActorAnimationClip, startingAt time: Float, forSeconds seconds: Float) {
+        guard seconds > 0, seconds.isFinite else { return }
+        self.clip = clip
+        overrideStart = time
+        overrideEnd = time + seconds
+    }
+
+    /// Whether a bounded override is playing as of `time`.
+    func isOverriding(at time: Float) -> Bool {
+        overrideEnd > 0 && time < overrideEnd
+    }
+
+    /// The pose to draw at `time`, with an expired override already retired.
+    /// The one place the override's own clock is applied, so every consumer —
+    /// skinning here, the ragdoll hand-off in the app — reads the same pose.
+    func pose(at time: Float) -> [String: float4x4]? {
+        if overrideEnd > 0, time >= overrideEnd {
+            clip = idleClip
+            overrideEnd = 0
+            overrideStart = 0
+        }
+        return clip.namedWorldTransforms(at: overrideEnd > 0 ? time - overrideStart : time)
+    }
+
     @discardableResult
     func update(at time: Float) -> Int {
-        guard let transforms = clip.namedWorldTransforms(at: time) else { return 0 }
+        guard let transforms = pose(at: time) else { return 0 }
         var updatedMeshes = Set<ObjectIdentifier>()
         return apply(transforms, updating: &updatedMeshes)
     }
@@ -265,46 +304,10 @@ nonisolated extension CellSceneBuilder {
     nonisolated private func loadAnimationClip(
         key: ActorAnimationCacheKey
     ) throws -> ActorAnimationClip {
-        let characterRoot = "meshes\\actors\\character\\"
-        guard key.skeletonPath.hasPrefix(characterRoot) else {
-            throw ActorAnimationLoadError.unsupportedSkeleton(key.skeletonPath)
-        }
-        guard key.skeletonPath.hasSuffix(".nif") else {
-            throw ActorAnimationLoadError.unsupportedSkeleton(key.skeletonPath)
-        }
-        let skeletonPath = String(key.skeletonPath.dropLast(4)) + ".hkx"
-        let gender = key.female ? "female" : "male"
-        let animationPath = characterRoot + "animations\\\(gender)\\mt_idle.hkx"
-        let skeletonFile = try readHKX(path: skeletonPath)
-        let animationFile = try readHKX(path: animationPath)
-
-        let bindings = try HKAAnimationBinding.bindings(in: animationFile)
-        guard let binding = bindings.first else {
-            throw ActorAnimationLoadError.noBinding(animationPath)
-        }
-        let animations = try HKASplineCompressedAnimation.animations(in: animationFile)
-        let animation = animations.first { candidate in
-            binding.animationTarget == HKXPointerTarget(
-                sectionIndex: candidate.objectSectionIndex,
-                dataOffset: candidate.objectDataOffset
-            )
-        } ?? animations.first
-        guard let animation else {
-            throw ActorAnimationLoadError.noClip(animationPath)
-        }
-        let skeletons = try HKASkeleton.skeletons(in: skeletonFile)
-        let skeleton = skeletons.first {
-            binding.originalSkeletonName == nil || $0.name == binding.originalSkeletonName
-        } ?? skeletons.first
-        guard let skeleton else {
-            throw ActorAnimationLoadError.noRig(skeletonPath)
-        }
-        _ = try binding.boneIndices(transformTrackCount: animation.transformTrackCount)
-        return ActorAnimationClip(
-            skeleton: skeleton,
-            animation: animation,
-            binding: binding,
-            skeletonMeshPath: key.skeletonPath
+        try ActorAnimationClipLoader.clip(
+            skeletonMeshPath: key.skeletonPath,
+            animationPath: ActorAnimationClipLoader.idleAnimationPath(female: key.female),
+            readHKX: readHKX
         )
     }
 

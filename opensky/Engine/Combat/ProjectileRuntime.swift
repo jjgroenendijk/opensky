@@ -168,6 +168,13 @@ final class ProjectileRuntime {
         removeStuckArrows(Array(stuck.indices))
     }
 
+    /// Drops the first `count` live projectiles without recording anything.
+    /// Internal for `ProjectileRuntimeBounds.swift`, which records them itself
+    /// before calling this; `live` stays `private(set)` so nothing else can.
+    func removeOldestLive(_ count: Int) {
+        live.removeFirst(min(max(0, count), live.count))
+    }
+
     // MARK: - Private
 
     /// One fixed step over every live projectile.
@@ -318,7 +325,10 @@ final class ProjectileRuntime {
 
     /// Removes the stuck arrows at `indices` from the world and from the
     /// registry.
-    private func removeStuckArrows(_ indices: [Int]) {
+    /// Internal rather than private so `ProjectileRuntimeBounds.swift` can
+    /// reach it: the transient caps live there because this type is at its
+    /// body-length limit (issue #374).
+    func removeStuckArrows(_ indices: [Int]) {
         guard !indices.isEmpty else { return }
         let doomed = Set(indices)
         for index in indices.sorted() {
@@ -329,8 +339,9 @@ final class ProjectileRuntime {
     }
 
     /// Files one finished projectile in the trace.
+    /// Internal for the same reason `removeStuckArrows(_:)` is.
     @discardableResult
-    private func record(
+    func record(
         _ projectile: LiveProjectile,
         outcome: ProjectileOutcome,
         at position: SIMD3<Float>,

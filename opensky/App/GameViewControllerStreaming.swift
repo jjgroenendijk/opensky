@@ -88,6 +88,10 @@ extension GameViewController {
         // After both, for the same reason: a fixed cursor-registration order
         // keeps every runtime's view of the graph event stream reproducible.
         wireRagdoll(renderer: renderer)
+        // Last of the combat systems: the loop reads what melee, archery and
+        // the ragdolls did this frame, so it has to advance after all three
+        // (issue #374).
+        wireCombat(provider: provider, renderer: renderer)
         renderer.terrainSampler = { [weak controller] position in
             controller?.sampleTerrain(at: position)
         }
