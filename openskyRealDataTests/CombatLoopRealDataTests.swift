@@ -1,5 +1,6 @@
 // Env-gated combat loop over the user's own Skyrim SE install (read-only
-// external input, never committed — AGENTS.md "Legal & IP"), issue #374.
+// external input, never committed — AGENTS.md "Legal & IP"), issues #374 and
+// #424.
 //
 // The synthetic suites prove the loop's arithmetic against a fake world, and
 // every name and path they use is quoted from the census. The claims they cannot
@@ -13,17 +14,21 @@
 //    one-handed stagger for the unarmed one vanilla does not ship;
 // 3. the loop's own per-step cost, measured against the install's real combat
 //    GMSTs and a crowd of actors, so item 15.9 has a number to put beside the
-//    15.2 physics gate rather than an assumption.
+//    15.2 physics gate rather than an assumption;
+// 4. item 16.7's own acceptance line — a real Whiterun-area hostile running the
+//    whole loop against the player over the real city geometry, offscreen, with
+//    the per-step cost recorded.
 //
-// What this deliberately does *not* do is stream a vanilla interior and fight in
-// it. That route is the milestone gate's (item 15.9, issue #198), which drives
-// the shipping entry points end to end; duplicating half of it here would give
-// two partial answers instead of one whole one.
+// What this deliberately does *not* do is drive the app's shipping entry points
+// end to end. That route is the milestone gate's (item 15.9, issue #198, and
+// item 16.8 for M16); duplicating half of it here would give two partial answers
+// instead of one whole one.
 //
 // Skips automatically when OPENSKY_DATA_ROOT is unset. Run with
 // `make realtest T='CombatLoopRealDataTests/vanillaGraphAcceptsTheCensusNamedRecoilNames()'`.
 
 import Foundation
+import Metal
 @testable import opensky
 import simd
 import Testing
@@ -34,6 +39,14 @@ struct CombatLoopRealDataTests {
         guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
         else { return nil }
         return try? GameDataLocator.locate()
+    }()
+
+    /// The device the Whiterun cell is built with. Nil on a machine with no
+    /// Metal 4 GPU, which skips the one case that needs geometry.
+    private static let device: MTLDevice? = {
+        guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4)
+        else { return nil }
+        return device
     }()
 
     /// Actors the budget measurement runs over. More than a room holds, so the
@@ -131,10 +144,8 @@ struct CombatLoopRealDataTests {
         // session that never loaded game data.
         #expect(settings.combatDistance.source != "vanilla Skyrim.esm value")
 
-        let world = CrowdedCombatWorld(count: Self.crowdSize)
+        let world = Self.crowd(count: Self.crowdSize)
         let runtime = CombatLoopRuntime(settings: settings, world: world)
-        runtime.devTargetWeapon = MeleeWeaponProfile(damage: 10, reach: 1)
-        _ = runtime.spawnDevTarget()
 
         let start = Date()
         for _ in 0 ..< Self.budgetSteps {
@@ -150,7 +161,98 @@ struct CombatLoopRealDataTests {
         try Self.report(perStepMS: perStepMS, hits: runtime.incomingHitCount)
     }
 
+    // MARK: - The whole loop, on a real hostile
+
+    /// Item 16.7's acceptance line: a Whiterun-area hostile runs the loop
+    /// against the player — detect, engage, attack for real damage, lose the
+    /// player, search, give up and be handed back to its package — offscreen,
+    /// over the real city geometry and the install's own GMSTs, with the frame
+    /// budget recorded.
+    ///
+    /// The two runtimes are wired the way the session wires them: perception is
+    /// advanced first over the real static collision, and what it concluded is
+    /// what the fight is told. Nothing is asserted about *when* a transition
+    /// falls — that depends on where this install's guard is standing — only
+    /// that the whole sequence happens and in that order.
+    ///
+    /// The mover is deliberately absent. This is the decision layer's evidence,
+    /// and 16.4 has its own; a refused path is the honest answer here, and the
+    /// guard fights from where the level designer put it while the player walks
+    /// in. The approach commands it issued are counted and printed rather than
+    /// ignored.
+    @Test(.enabled(if: Self.dataRoot != nil && Self.device != nil))
+    @MainActor
+    func aWhiterunHostileRunsTheWholeLoopAgainstThePlayer() throws {
+        let root = try #require(Self.dataRoot)
+        let scene = try WhiterunGuardFixture.buildCell(
+            root: root, device: #require(Self.device)
+        )
+        let located = try #require(
+            WhiterunGuardFixture.locate(
+                in: scene, templates: WhiterunGuardFixture.templates(root: root)
+            ),
+            Comment(rawValue: "no \(WhiterunGuardFixture.editorIDPrefix) ACHR in "
+                + "\(WhiterunGuardFixture.worldspace)")
+        )
+        let store = GameSettingLoader.load(root: root)
+        let fight = WhiterunFight(located: located, scene: scene, store: store)
+
+        let start = DispatchTime.now().uptimeNanoseconds
+        fight.walkIn()
+        fight.hide()
+        let elapsed = Double(DispatchTime.now().uptimeNanoseconds - start) / 1_000_000
+
+        #expect(fight.phases.first == .idle)
+        #expect(fight.phases.contains(.approaching), "the guard never engaged")
+        #expect(fight.phases.contains(.contact), "the guard never landed a contact frame")
+        #expect(fight.phases.contains(.searching), "the guard never searched")
+        #expect(fight.phases.last == .disengaged, "the guard never gave up")
+        #expect(fight.combatWorld.damage[.player, default: 0] > 0)
+        #expect(fight.combatWorld.packageResumes.contains(located.key))
+        #expect(!fight.combat.state.isPlayerInCombat)
+
+        let perStepMS = elapsed / Double(fight.steps)
+        #expect(
+            perStepMS < Self.stepBudgetMS,
+            "combat loop step \(perStepMS) ms over the \(Self.stepBudgetMS) ms budget"
+        )
+        let order = fight.phases.map(\.rawValue).joined(separator: " -> ")
+        print("[INFO] \(located.editorID) (\(located.key)) at \(located.actor.placement.position)")
+        print("[INFO] phases \(order) over \(fight.steps) fixed steps, "
+            + "\(String(format: "%.4f", perStepMS)) ms per step offscreen")
+        print("[INFO] \(fight.combatWorld.damage[.player, default: 0]) damage taken, "
+            + "\(fight.combatWorld.moveRequests.count) path requests refused")
+        try Self.report(
+            perStepMS: perStepMS,
+            hits: fight.combat.incomingHitCount,
+            actors: 1,
+            steps: fight.steps,
+            file: "combat-whiterun-fight.log"
+        )
+    }
+
     // MARK: - Helpers
+
+    /// The crowd the budget measurement runs over: a line of hostile actors
+    /// that have all seen the player, the nearest inside reach so the number
+    /// includes the blow-landing path rather than only the idle one.
+    @MainActor
+    private static func crowd(count: Int) -> FakeCombatWorld {
+        let world = FakeCombatWorld()
+        world.actors = (0 ..< count).map { index in
+            CombatActorObservation(
+                key: .generated(UInt64(index + 1)),
+                feet: SIMD3(60 + Float(index) * 40, 0, 0),
+                name: "actor \(index)"
+            )
+        }
+        for actor in world.actors {
+            world.hostility[actor.key] = .hostile
+            world.awareness[actor.key] = .detected(at: world.player.feet)
+            world.weapons[actor.key] = MeleeWeaponProfile(damage: 10, reach: 1)
+        }
+        return world
+    }
 
     private static func bridge(root: GameDataRoot) throws -> LocomotionBridge {
         let graph = try PlayerBehaviorGraph.load(
@@ -169,12 +271,18 @@ struct CombatLoopRealDataTests {
 
     /// Writes the measurement where a PR can link it. Gitignored, per
     /// AGENTS.md: a run artefact is never committed.
-    private static func report(perStepMS: Double, hits: Int) throws {
+    private static func report(
+        perStepMS: Double,
+        hits: Int,
+        actors: Int = crowdSize,
+        steps: Int = budgetSteps,
+        file: String = "combat-loop-budget.log"
+    ) throws {
         let text = """
-        OpenSky combat loop budget (issue #374)
+        OpenSky combat loop budget (issues #374 and #424)
 
-        actors:          \(crowdSize)
-        steps:           \(budgetSteps)
+        actors:          \(actors)
+        steps:           \(steps)
         per-step:        \(String(format: "%.4f", perStepMS)) ms
         budget:          \(stepBudgetMS) ms
         blows landed:    \(hits)
@@ -182,83 +290,6 @@ struct CombatLoopRealDataTests {
         // Through the shared helper rather than a relative path: the test host's
         // working directory is not the checkout, so `logs/...` resolves to the
         // filesystem root and the write fails.
-        try PlayerBodyFixture.write(text, to: "combat-loop-budget.log")
+        try PlayerBodyFixture.write(text, to: file)
     }
-}
-
-/// A world with a crowd standing around the player, for the budget measurement.
-///
-/// Deliberately not the app's own conformance: the number wanted here is the
-/// loop's own cost — the state derivation and the attack clock — and running it
-/// through a streamer would measure the streamer.
-@MainActor
-private final class CrowdedCombatWorld: CombatLoopWorld {
-    let actors: [CombatActorObservation]
-    private var hostility: [ReferenceKey: ActorHostility] = [:]
-
-    init(count: Int) {
-        actors = (0 ..< count).map { index in
-            CombatActorObservation(
-                key: .generated(UInt64(index + 1)),
-                // A ring around the player, one of them inside reach so the
-                // measurement includes the blow-landing path rather than only
-                // the idle one.
-                feet: SIMD3(60 + Float(index) * 40, 0, 0),
-                name: "actor \(index)"
-            )
-        }
-    }
-
-    var combatPlayer: MeleeAttacker {
-        MeleeAttacker(key: .player, feet: SIMD3<Float>(), facing: 0)
-    }
-
-    func combatActors() -> [CombatActorObservation] {
-        actors
-    }
-
-    func combatHostility(of key: ReferenceKey) -> ActorHostility {
-        hostility[key] ?? .neutral
-    }
-
-    @discardableResult
-    func setCombatHostility(_ value: ActorHostility, on key: ReferenceKey) -> Bool {
-        guard hostility[key] != value else { return false }
-        hostility[key] = value
-        return true
-    }
-
-    @discardableResult
-    func applyCombatDamage(_ amount: Float, to key: ReferenceKey) -> Bool {
-        amount > 0
-    }
-
-    func combatBlock(of key: ReferenceKey) -> MeleeBlockKind? {
-        nil
-    }
-
-    @discardableResult
-    func raiseCombatEvent(_ name: String, on target: ReferenceKey?) -> Bool {
-        target == nil
-    }
-
-    func writeCombatVariable(_ value: BehaviorVariableValue, named name: String) {}
-
-    @discardableResult
-    func playCombatClip(_ clip: CombatActorClip, on key: ReferenceKey) -> Bool {
-        true
-    }
-
-    var combatTransients: CombatTransientCounts {
-        .none
-    }
-
-    @discardableResult
-    func trimCombatTransients(to limits: CombatTransientLimits) -> CombatTransientCounts {
-        .none
-    }
-
-    func despawnCombatTransients() {}
-
-    func setCombatMusicActive(_ active: Bool) {}
 }

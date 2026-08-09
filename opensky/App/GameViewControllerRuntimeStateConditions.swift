@@ -140,6 +140,7 @@ extension GameViewController {
             maximums: values.baseline(of: holder).maximums,
             isDead: isDead,
             hostility: combatHostility(of: holder.key),
+            combatActivity: combat.runtime?.activity(of: holder.key) ?? .notFighting,
             weaponDrawState: holder.key == .player
                 ? melee.runtime?.state.drawState
                 : nil

@@ -129,14 +129,11 @@ struct M15AcceptancePanelTests {
         sendScriptsControl(panel.hostilityControl)
         #expect(providers.selectedActorIsHostile)
 
-        sendScriptsControl(panel.spawnDevTargetControl)
-        #expect(providers.combatLoop.spawnRequests == 1)
-
         sendScriptsControl(panel.ragdollTriggerControl)
         #expect(providers.ragdoll.triggerRequests == 1)
 
-        sendScriptsControl(panel.loopSection.resetControl)
-        #expect(providers.combatLoop.resetRequests == 1)
+        sendScriptsControl(panel.clearCombatTraceControl)
+        #expect(providers.combatLoop.traceClearCount == 1)
     }
 
     /// Step 4 — the destination's override policy: a fight is not an override,
@@ -265,11 +262,21 @@ struct M15AcceptancePanelTests {
         targetDistance: 120,
         hostileCount: 1,
         deadCount: 0,
-        devTargetName: "Bandit",
-        devTargetPhase: .windup,
-        devTargetIsRunning: true,
-        devTargetAttackCount: 2,
-        devTargetContactCount: 1,
+        engagedCount: 1,
+        searchingCount: 0,
+        actors: [CombatActorReadout(
+            key: .generated(1),
+            name: "Bandit",
+            phase: .windup,
+            awareness: .detected,
+            distance: 120,
+            healthFraction: 0.75,
+            attackCount: 2,
+            contactCount: 1,
+            blockCount: 0,
+            searchCount: 0
+        )],
+        crowdedOutCount: 0,
         selectedActorName: "Bandit",
         selectedActorIsHostile: true,
         incomingHitCount: 1,
@@ -280,7 +287,7 @@ struct M15AcceptancePanelTests {
         ),
         limits: .standard,
         trimmedTransients: .none,
-        lastActionText: "Dev target: Bandit is now hostile and attacking."
+        lastActionText: "Hostility: Bandit is now hostile."
     )
 
     private static let physics = DynamicBodyStatsSnapshot(

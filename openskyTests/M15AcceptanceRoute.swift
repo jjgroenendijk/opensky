@@ -55,18 +55,20 @@ extension M15AcceptanceTests {
         )
     }
 
-    /// Step 3 — the opponent is designated and starts swinging back. This is
-    /// the same call `World > Combat & Physics > Combat Loop`'s spawn control
-    /// makes; the panel half drives it through the button.
+    /// Step 3 — the opponent is angered and starts swinging back. This is the
+    /// same call `World > Combat & Physics > Combat Loop`'s hostility checkbox
+    /// makes; the panel half drives it through the control.
+    ///
+    /// Since 16.7 that is the whole of it: hostility plus the opponent noticing
+    /// the player is the fight, and there is no designation step in between.
     static func angerTheOpponent(_ chain: Chain) throws {
-        let outcome = chain.combat.spawnDevTarget()
-        #expect(!outcome.contains("no living actor"), "\(outcome)")
-        #expect(chain.combat.devTarget == Chain.opponent)
+        chain.combat.setHostility(.hostile, on: Chain.opponent)
         #expect(chain.combatHostility(of: Chain.opponent) == .hostile)
 
         chain.run(frames: 4)
         #expect(chain.combat.state.isPlayerInCombat)
         #expect(chain.combat.state.target == Chain.opponent)
+        #expect(chain.combat.phase(of: Chain.opponent)?.isEngaged == true)
     }
 
     /// Step 4 — one click. The melee runtime raises `attackStart`, the graph

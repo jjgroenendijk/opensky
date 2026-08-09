@@ -1,5 +1,5 @@
-// `CombatLoopWorld` conformance (issue #374, roadmap item 15.7): the twelve
-// answers the combat loop needs from the session around it.
+// `CombatLoopWorld` conformance (issues #374 and #424, roadmap items 15.7 and
+// 16.7): the answers the combat loop needs from the session around it.
 //
 // Every one is a plain read off something that already exists — the walk
 // controller's capsule pose, the streamer's resident actors, the world-state
@@ -8,14 +8,17 @@
 // director. Nothing here invents an accounting of its own, which is what keeps
 // the runtime's behaviour the same under test as it is in the app.
 //
-// Two answers are honest non-answers and are worth stating rather than papering
-// over, both for the reason `GameViewControllerMeleeWorld.swift` gives:
+// Item 16.7 paid one of the two debts this file used to record.
+// `combatBlock(of:)` now answers for every actor: an NPC's guard is its combat
+// behavior machine's `blocking` phase rather than a graph state, so a blocked
+// hit resolves through the same pinned 15.4 formula in both directions.
 //
-// * `raiseCombatEvent(_:on:)` can only reach the player's graph. Item 14.6
-//   attached a behavior graph to the player and to nobody else, so a reaction
-//   raised on an NPC answers false and the readout records it as not played.
-// * `combatBlock(of:)` can only answer for the player, because only the player
-//   has a guard to raise. An NPC that blocks back needs the graph M16 brings.
+// The other debt stands and is worth restating rather than papering over:
+// `raiseCombatEvent(_:on:)` can only reach the player's graph. Item 14.6
+// attached a behavior graph to the player and to nobody else, so a reaction
+// raised on an NPC answers false and the readout records it as not played.
+// NPC reactions go through `playCombatClip(_:on:)` instead, which is single-clip
+// playback and says so.
 
 import AppKit
 import simd
@@ -63,6 +66,47 @@ extension GameViewController: CombatLoopWorld {
 
     func combatBlock(of key: ReferenceKey) -> MeleeBlockKind? {
         meleeBlock(of: key)
+    }
+
+    func combatAwareness(
+        of observer: ReferenceKey, toward target: ReferenceKey
+    ) -> CombatAwareness {
+        guard let runtime = perception.runtime else { return .unaware }
+        let pair = runtime.state(observer: observer, target: target)
+        return CombatAwareness(state: pair.state, lastKnownPosition: pair.lastKnownPosition)
+    }
+
+    func combatHealthFraction(of key: ReferenceKey) -> Float {
+        guard
+            let runtime = actorValues.runtime,
+            let holder = actorValueHolder(for: key)
+        else { return 1 }
+        let maximum = runtime.baseline(of: holder).maximums.health
+        guard maximum > 0 else { return 1 }
+        return min(1, max(0, runtime.current(of: holder).health / maximum))
+    }
+
+    func combatWeapon(of key: ReferenceKey) -> MeleeWeaponProfile {
+        // Unarmed for every actor, and stated rather than hidden: nothing in
+        // this engine resolves an NPC's equipped WEAP into a swing profile yet.
+        // Item 15.5 equips the *player* from the inventory layer, and an NPC's
+        // equipment is resolved for drawing only (`ActorVisualResolutionEquipment`).
+        // Reporting the model's sword as a swing profile would be inventing a
+        // damage number from a mesh. Listed in docs/engine/combat.md.
+        .unarmed
+    }
+
+    @discardableResult
+    func moveCombatActor(_ key: ReferenceKey, to point: SIMD3<Float>) -> Bool {
+        streamer?.moveActor(key, to: point) == .started
+    }
+
+    func stopCombatMovement(of key: ReferenceKey) {
+        streamer?.stopActor(key)
+    }
+
+    func resumeCombatPackage(for key: ReferenceKey) {
+        resumePackage(for: key)
     }
 
     @discardableResult

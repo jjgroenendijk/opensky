@@ -1,31 +1,29 @@
-// The fight, as one object (issue #374, roadmap item 15.7).
+// The fight, as one object (issues #374 and #424, roadmap items 15.7 and 16.7).
 //
 // Items 15.3 through 15.6 built the pieces: values that can be taken off, a
 // swing that takes them, an arrow that flies, a corpse that falls and can be
-// looted. Each of them is complete on its own and none of them makes a fight,
-// because nothing decided who was fighting whom or hit back. This runtime is
-// that decision layer, and it is deliberately the smallest one that produces a
-// loop:
+// looted. Item 15.7 made those into a loop with a stand-in opponent — a clock
+// that attacked on a fixed interval from wherever it stood. Item 16.7 deletes
+// the clock and puts a mind in its place:
 //
-//   * hostility, one enum per actor, entered by the player's own blow or by the
-//     panel toggle (`ActorCombatState`);
-//   * combat state, derived every step from who is hostile and alive
-//     (`CombatLoopState`);
-//   * an opponent that attacks back on a clock (`DevTargetDriver`), through the
-//     15.4 hit volume and the 15.4 damage formula;
-//   * reactions in both directions — the target staggers, the player recoils;
-//   * bounds on everything the fight spawns (`CombatTransientLimits`);
-//   * and the combat-music edge the music page has been holding a seam for.
-//
-// What it is not is AI. There is no perception, no pathing, no faction and no
-// crime; the opponent is a stand-in and `DevTargetDriver` says so at length.
-// Everything downstream of "someone hit someone" is nevertheless the shipping
-// path, so M16 replaces the clock and keeps the rest.
+//   * hostility, one enum per actor, entered by the player's own blow, the panel
+//     toggle or a script (`ActorCombatState`);
+//   * a combat behavior machine per hostile actor (`CombatBehaviorMachine`),
+//     which approaches through 16.4 movement, attacks through the shipping
+//     windup-contact-recovery path, blocks, breaks off at low health, searches
+//     the last place it perceived its target and gives up;
+//   * combat state, derived every step from who is *engaged* rather than from
+//     who is angry (`CombatLoopState`);
+//   * reactions in both directions — the actor staggers, the player recoils;
+//   * bounds on everything the fight spawns (`CombatTransientLimits`) and on how
+//     many actors may fight at once;
+//   * and the combat-music edge, which now falls the moment the last opponent
+//     gives up rather than when it is finally killed.
 //
 // Main-actor, like the other directors, and advanced from the same paused-aware
-// world delta the actor-value runtime and the ragdolls take. Everything it
-// touches the world with goes through `CombatLoopWorld`, so the whole runtime is
-// testable against a fake.
+// world delta the actor-value runtime, the perception pass and the ragdolls
+// take. Everything it touches the world with goes through `CombatLoopWorld`, so
+// the whole runtime is testable against a fake.
 //
 // Documented in docs/engine/combat.md.
 
@@ -34,14 +32,23 @@ import simd
 
 @MainActor
 final class CombatLoopRuntime {
-    /// Step the fight advances on, matching the actor-value runtime's so a
-    /// frame drives regeneration and combat the same way. 1/60 s.
+    /// Step the fight advances on, matching the actor-value runtime's and the
+    /// perception pass's so a frame drives all three the same way. 1/60 s.
     static let fixedStepSeconds: Float = 1.0 / 60
 
     /// Most whole steps one `advance(by:)` runs, so a multi-second stall cannot
     /// spend a minute of fighting in a single frame. Same cap, same reason as
     /// `ActorValueRuntime.maximumStepsPerAdvance`.
     static let maximumStepsPerAdvance = 8
+
+    /// Most actors that may hold a behavior machine at once (scope point 7).
+    ///
+    /// Deliberately `NPCMovementRuntime.maximumSimultaneousMovers`: every
+    /// engaged actor asks the mover for a path, so a ninth fighter would be one
+    /// whose approach silently never started. Past the cap the nearest actors
+    /// win and `crowdedOutCount` says how many did not, because a silent
+    /// truncation would read as "nobody else was fighting".
+    static let maximumEngagedActors = NPCMovementRuntime.maximumSimultaneousMovers
 
     /// How many incoming hits the trace keeps.
     static let traceLimit = 16
@@ -53,15 +60,14 @@ final class CombatLoopRuntime {
     let settings: CombatSettings
     /// Ceilings on everything the fight spawns.
     var limits = CombatTransientLimits.standard
-    /// The profile the dev target swings with. Written when its equipment
-    /// resolves; the unarmed profile until then, which is a fight the player
-    /// can survive long enough to watch.
-    var devTargetWeapon = MeleeWeaponProfile.unarmed
+    /// The cadence, block, flee and search numbers every machine runs on.
+    var behaviorSettings = CombatBehaviorSettings.standard
 
     private(set) var state = CombatLoopState.calm
-    private(set) var driver = DevTargetDriver()
-    /// The designated opponent, or nil when none is spawned.
-    private(set) var devTarget: ReferenceKey?
+    /// One machine per actor that is fighting or has fought, keyed by actor.
+    private(set) var behaviors: [ReferenceKey: CombatBehaviorMachine] = [:]
+    /// Hostile living actors the cap refused a machine at the last step.
+    private(set) var crowdedOutCount = 0
     /// Blows the player has taken, oldest first.
     private(set) var incomingTrace: [CombatIncomingHit] = []
     private(set) var incomingHitCount = 0
@@ -70,12 +76,19 @@ final class CombatLoopRuntime {
     private(set) var playerDamageFlash: Float = 0
     /// Transients removed by the caps since construction, cumulative.
     private(set) var trimmedTransients = CombatTransientCounts()
-    /// Human-readable result of the last panel action.
+    /// Human-readable result of the last panel or script action.
     var lastActionText = "No fight yet."
 
     private weak var world: (any CombatLoopWorld)?
     private var accumulator: Double = 0
     private var attackID = 0
+    /// Targets `StartCombat` named, which engage without waiting to perceive
+    /// anything and stay engaged while they cannot.
+    private var forcedTargets: [ReferenceKey: ReferenceKey] = [:]
+    /// Actors the player has struck that have not turned around yet. Cleared as
+    /// soon as the machine is engaged, so a blow is a one-off shove into the
+    /// fight rather than a standing override.
+    private var provoked: Set<ReferenceKey> = []
     /// Combat state at the previous step, so music switches on the edge rather
     /// than being re-selected every step.
     private var wasInCombat = false
@@ -106,17 +119,17 @@ final class CombatLoopRuntime {
     func setHostility(_ hostility: ActorHostility, on key: ReferenceKey) -> Bool {
         guard let world else { return false }
         let changed = world.setCombatHostility(hostility, on: key)
-        if hostility == .neutral, key == devTarget {
-            driver.park()
+        if hostility == .neutral {
+            endFight(of: key, world: world)
         }
         return changed
     }
 
-    /// Makes `key` hostile because the player hurt it, which is the only way
-    /// hostility is entered outside the panel.
+    /// Makes `key` hostile because the player hurt it, which is one of the three
+    /// ways hostility is entered.
     ///
     /// Idempotent, so the several places a blow lands — a swing, an arrow, a
-    /// dev control — can all call it without checking first.
+    /// script — can all call it without checking first.
     ///
     /// - Returns: true when this call is what turned the actor hostile.
     @discardableResult
@@ -125,63 +138,92 @@ final class CombatLoopRuntime {
         return setHostility(.hostile, on: key)
     }
 
-    /// Every landed melee hit the player's swing produced: provokes each target
-    /// and interrupts the dev target's own attack when it was the one struck.
+    /// Every landed melee hit the player's swing produced: provokes each target,
+    /// puts it in the fight, and interrupts whatever it was doing.
     func notePlayerHits(_ targets: [ReferenceKey]) {
-        for target in targets {
+        for target in targets where target != .player {
             provoke(target)
+            provoked.insert(target)
             noteStagger(of: target)
         }
     }
 
-    /// Interrupts `key`'s attack if it is the dev target, and plays its stagger
-    /// clip.
+    /// Interrupts `key`'s attack and plays its stagger clip.
     func noteStagger(of key: ReferenceKey) {
-        guard key == devTarget, driver.stagger() else { return }
+        var machine = behaviors[key] ?? CombatBehaviorMachine(
+            settings: behaviorSettings, seed: CombatBehaviorMachine.seed(for: key)
+        )
+        guard machine.stagger() else { return }
+        behaviors[key] = machine
         world?.playCombatClip(.stagger, on: key)
     }
 
-    // MARK: - The dev target
+    // MARK: - Script control (scope point 6)
 
-    /// Designates the nearest living actor as the opponent, turns it hostile
-    /// and starts its attack clock.
+    /// `StartCombat`: makes `actor` fight `target` at once, without waiting for
+    /// it to perceive anything.
     ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
+    /// - Returns: true when the actor is now fighting. False for the player as
+    ///   the aggressor, for an actor this session does not track, and for a
+    ///   target other than the player — the fight this engine runs is against
+    ///   the player, so naming anybody else would be a fight nothing simulates.
     @discardableResult
-    func spawnDevTarget() -> String {
-        guard let world else {
-            return record("Dev target unavailable: no combat world attached.")
-        }
-        let player = world.combatPlayer.feet
-        let candidates = world.combatActors().filter { !$0.isDead }
-        guard
-            let nearest = candidates.min(by: {
-                (simd_distance($0.feet, player), $0.key)
-                    < (simd_distance($1.feet, player), $1.key)
-            })
-        else {
-            return record("Dev target unavailable: no living actor is resident.")
-        }
-        devTarget = nearest.key
-        driver.reset()
-        driver.isEnabled = true
-        setHostility(.hostile, on: nearest.key)
-        return record("Dev target: \(nearest.name) is now hostile and attacking.")
+    func startCombat(_ actor: ReferenceKey, with target: ReferenceKey) -> Bool {
+        guard let world, actor != .player, target == .player else { return false }
+        guard world.combatActors().contains(where: { $0.key == actor && !$0.isDead })
+        else { return false }
+        forcedTargets[actor] = target
+        setHostility(.hostile, on: actor)
+        record("Combat: a script started \(actor.description) fighting the player.")
+        return true
     }
 
-    /// Stops the opponent's clock, calms it, and forgets it.
+    /// `StopCombat`: ends `actor`'s fight and hands it back to its package,
+    /// leaving its stored hostility alone — the wiki's `StopCombat` stops the
+    /// fighting, and `SetRelationshipRank` is what changes how somebody feels.
     ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
+    /// - Returns: true when there was a fight to stop.
     @discardableResult
-    func resetDevTarget() -> String {
-        guard let key = devTarget else {
-            return record("Dev target: none was spawned.")
+    func stopCombat(_ actor: ReferenceKey) -> Bool {
+        guard let world, behaviors[actor]?.isEngaged == true else {
+            forcedTargets.removeValue(forKey: actor)
+            return false
         }
-        setHostility(.neutral, on: key)
-        devTarget = nil
-        driver.isEnabled = false
-        driver.reset()
-        return record("Dev target: cleared.")
+        endFight(of: actor, world: world)
+        record("Combat: a script stopped \(actor.description) fighting.")
+        return true
+    }
+
+    // MARK: - Reading
+
+    /// Where `key` is in a fight, or nil when it has no machine.
+    func phase(of key: ReferenceKey) -> CombatBehaviorPhase? {
+        behaviors[key]?.phase
+    }
+
+    /// What `key` is blocking with, or nil when its guard is down. The answer
+    /// `combatBlock(of:)` gives for every actor that is not the player.
+    func blockKind(of key: ReferenceKey) -> MeleeBlockKind? {
+        behaviors[key]?.blockKind
+    }
+
+    /// `key`'s combat state as `GetCombatState` and `IsInCombat` read it.
+    func activity(of key: ReferenceKey) -> ActorCombatActivity {
+        guard let phase = behaviors[key]?.phase, phase.isEngaged else { return .notFighting }
+        return phase == .searching ? .searching : .fighting
+    }
+
+    /// Who `key` is fighting, which is the player unless a script said
+    /// otherwise.
+    func target(of key: ReferenceKey) -> ReferenceKey {
+        forcedTargets[key] ?? .player
+    }
+
+    /// Whether `key` engages without having to perceive its target: a script
+    /// called `StartCombat`, or the player hit it and it has not turned around
+    /// yet.
+    func engagesWithoutPerceiving(_ key: ReferenceKey) -> Bool {
+        forcedTargets[key] != nil || provoked.contains(key)
     }
 
     // MARK: - Frames
@@ -218,11 +260,15 @@ final class CombatLoopRuntime {
     ///
     /// Hostility and actor values are untouched: those are components and the
     /// save carries them. What goes is the in-flight transients — arrows in the
-    /// air, corpses still falling — and the opponent's attack phase, which
-    /// restarts from the interval rather than resuming mid-windup.
+    /// air, corpses still falling — and every machine's phase, which restarts
+    /// from "not fighting" rather than resuming mid-windup. An actor that is
+    /// still hostile and can still perceive the player re-engages on the first
+    /// step after the load, which is the same route it took the first time.
     func prepareForPersistence() {
         world?.despawnCombatTransients()
-        driver.park()
+        for key in behaviors.keys {
+            behaviors[key]?.park()
+        }
         playerDamageFlash = 0
         accumulator = 0
     }
@@ -230,12 +276,14 @@ final class CombatLoopRuntime {
     /// Forgets every live fight without touching stored hostility.
     func reset() {
         state = .calm
-        driver = DevTargetDriver()
-        devTarget = nil
+        behaviors = [:]
+        forcedTargets = [:]
+        provoked = []
+        crowdedOutCount = 0
         incomingTrace = []
         incomingHitCount = 0
         playerDamageFlash = 0
-        trimmedTransients = .none
+        trimmedTransients = CombatTransientCounts()
         accumulator = 0
         attackID = 0
         wasInCombat = false
@@ -249,6 +297,44 @@ final class CombatLoopRuntime {
 
     // MARK: - Internal, for the satellite
 
+    /// Advances one actor's machine by exactly one fixed step, creating it the
+    /// first time that actor fights.
+    ///
+    /// Here rather than in the satellite because `behaviors` is `private(set)`
+    /// and that is per file: the satellite decides what to tell a machine but
+    /// must not be able to rewrite its phase behind the runtime's back.
+    func stepBehavior(
+        of key: ReferenceKey, inputs: CombatBehaviorInputs
+    ) -> CombatBehaviorStep {
+        var machine = behaviors[key] ?? CombatBehaviorMachine(
+            settings: behaviorSettings, seed: CombatBehaviorMachine.seed(for: key)
+        )
+        let step = machine.step(seconds: Self.fixedStepSeconds, inputs: inputs)
+        behaviors[key] = machine
+        if machine.isEngaged {
+            provoked.remove(key)
+        }
+        return step
+    }
+
+    /// Parks one machine without losing its counts, for an actor that died or
+    /// whose cell unloaded.
+    func parkBehavior(of key: ReferenceKey) {
+        behaviors[key]?.park()
+    }
+
+    /// Forgets one machine outright, for an actor that is no longer resident.
+    func retireBehavior(of key: ReferenceKey) {
+        behaviors.removeValue(forKey: key)
+        forcedTargets.removeValue(forKey: key)
+        provoked.remove(key)
+    }
+
+    /// Records how many hostile living actors the engagement cap refused.
+    func noteCrowdedOut(_ count: Int) {
+        crowdedOutCount = count
+    }
+
     /// Appends one incoming hit to the trace, trimming to the limit.
     func append(_ hit: CombatIncomingHit) {
         incomingHitCount += 1
@@ -257,20 +343,6 @@ final class CombatLoopRuntime {
             incomingTrace.removeFirst(incomingTrace.count - Self.traceLimit)
         }
         playerDamageFlash = 1
-    }
-
-    /// Advances the opponent's clock by exactly one fixed step.
-    ///
-    /// Here rather than in the satellite because `driver` is `private(set)` and
-    /// that is per file: the satellite drives the opponent but must not be able
-    /// to rewrite its phase behind the runtime's back.
-    func stepDevTargetDriver() -> DevTargetStep {
-        driver.step(seconds: Self.fixedStepSeconds)
-    }
-
-    /// Parks the opponent's clock, for the same reason and with the same rule.
-    func parkDevTargetDriver() {
-        driver.park()
     }
 
     /// The next attack's identity, so two hits from one attack read as one.
@@ -288,14 +360,26 @@ final class CombatLoopRuntime {
 
     // MARK: - Private
 
-    /// One fixed step: the opponent acts, the state is re-derived, music
+    /// Ends one actor's fight: parks its machine, stops it walking, drops any
+    /// script override, and hands it back to its package.
+    private func endFight(of key: ReferenceKey, world: any CombatLoopWorld) {
+        forcedTargets.removeValue(forKey: key)
+        provoked.remove(key)
+        guard behaviors[key] != nil else { return }
+        behaviors[key]?.park()
+        world.stopCombatMovement(of: key)
+        world.resumeCombatPackage(for: key)
+    }
+
+    /// One fixed step: every engaged actor acts, the state is re-derived, music
     /// follows the edge, the flash decays, and the caps are enforced.
     private func step() {
         guard let world else { return }
-        driveDevTarget(world: world)
+        driveBehaviors(world: world)
         state = CombatLoopState.derive(
             actors: world.combatActors(),
             hostility: { [weak world] key in world?.combatHostility(of: key) ?? .neutral },
+            phase: { [weak self] key in self?.behaviors[key]?.phase },
             playerFeet: world.combatPlayer.feet
         )
         if state.isPlayerInCombat != wasInCombat {
@@ -317,5 +401,31 @@ final class CombatLoopRuntime {
             activeRagdolls: trimmedTransients.activeRagdolls + removed.activeRagdolls,
             awakeBodies: trimmedTransients.awakeBodies + removed.awakeBodies
         )
+    }
+}
+
+/// What one actor is doing about a fight, as `GetCombatState` spells it.
+///
+/// Three cases because the Creation Kit wiki documents three returns, and 16.7
+/// is what makes the third reachable: an actor that lost its target and is
+/// looking for it is neither out of combat nor fighting.
+nonisolated enum ActorCombatActivity: UInt8, Equatable, Sendable, CaseIterable {
+    /// Not fighting. `GetCombatState` 0.
+    ///
+    /// Spelled `notFighting` rather than `none`, because `.none` on an
+    /// `Optional` of this type would mean "no answer" and read identically at
+    /// every call site that chains through one.
+    case notFighting = 0
+    /// Fighting. `GetCombatState` 1.
+    case fighting = 1
+    /// Searching for a target it lost. `GetCombatState` 2.
+    case searching = 2
+
+    var displayName: String {
+        switch self {
+        case .notFighting: "not in combat"
+        case .fighting: "in combat"
+        case .searching: "searching"
+        }
     }
 }

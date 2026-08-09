@@ -36,6 +36,9 @@ extension GameViewController {
         // needs a renderer, and neither is ordered against this file.
         bridge.actorValueRuntime = { [weak self] in self?.actorValues.runtime }
         bridge.ragdollRuntime = { [weak self] in self?.ragdoll.runtime }
+        // The combat loop, which `StartCombat`, `StopCombat` and `IsInCombat`
+        // reach through (issue #424).
+        bridge.combatRuntime = { [weak self] in self?.combat.runtime }
         // Only the player carries a behavior graph that tracks a draw state, so
         // every other actor answers nil and `IsWeaponDrawn` fails with a reason
         // rather than claiming sheathed.

@@ -26,18 +26,22 @@ struct PapyrusNativeActorTests {
     /// baseline, which is 100 of each (`vanillaPlayerStartingValues`).
     private static let fullHealth: Float = 100
 
-    private struct Fixture {
+    struct Fixture {
         let session: PapyrusWorldFixture.Session
         let registry: PapyrusNativeRegistry
         let receiver: PapyrusObjectHandle
         let key: ReferenceKey
         let ragdoll: RagdollRuntime
         let ragdollWorld: FakeRagdollWorld
+        /// The live combat loop `StartCombat`, `StopCombat` and `IsInCombat`
+        /// reach through (issue #424), over a recording world.
+        let combat: CombatLoopRuntime
+        let combatWorld: FakeCombatWorld
     }
 
     /// A scripted actor whose `OnDying` and `OnDeath` record a note, wired to a
     /// real value runtime and a real ragdoll runtime.
-    private static func fixture(
+    static func fixture(
         weaponDrawState: WeaponDrawState? = nil
     ) throws -> Fixture {
         let entry = try PapyrusWorldFixture.actorEntry(
@@ -72,19 +76,28 @@ struct PapyrusNativeActorTests {
         session.bridge.actorValueRuntime = { values }
         session.bridge.ragdollRuntime = { [weak ragdoll] in ragdoll }
         session.bridge.weaponDrawState = { _ in weaponDrawState }
+        // A real combat loop over a recording world, so a scripted fight is the
+        // same fight the player can walk into rather than a flag this test set.
+        let combatWorld = FakeCombatWorld()
+        combatWorld.actors = [CombatActorObservation(key: entry.key, feet: SIMD3(60, 0, 0))]
+        combatWorld.awareness[entry.key] = .detected(at: SIMD3<Float>())
+        let combat = CombatLoopRuntime(settings: .synthetic, world: combatWorld)
+        session.bridge.combatRuntime = { [weak combat] in combat }
         return Fixture(
             session: session,
             registry: PapyrusWorldFixture.registry(for: session),
             receiver: session.world.objectHandle(for: entry.key),
             key: entry.key,
             ragdoll: ragdoll,
-            ragdollWorld: ragdollWorld
+            ragdollWorld: ragdollWorld,
+            combat: combat,
+            combatWorld: combatWorld
         )
     }
 
     /// The one ragdoll a fake seam needs: no bodies, so nothing simulates, but
     /// enough for `noteZeroHealth` to accept the death.
-    private static func ragdollActor(key: ReferenceKey) -> RagdollActor {
+    static func ragdollActor(key: ReferenceKey) -> RagdollActor {
         RagdollActor(
             key: key,
             cell: PapyrusWorldFixture.cell,
@@ -96,7 +109,7 @@ struct PapyrusNativeActorTests {
     }
 
     @discardableResult
-    private func call(
+    func call(
         _ functionName: String,
         _ fixture: Fixture,
         receiver: PapyrusObjectHandle?,
@@ -250,23 +263,6 @@ struct PapyrusNativeActorTests {
     }
 
     // MARK: - Combat and weapon state
-
-    @Test func isInCombatReadsTheStoredHostilityAndNotACorpse() throws {
-        let fixture = try Self.fixture()
-        #expect(call(
-            "IsInCombat", fixture, receiver: fixture.receiver, returnType: .boolean
-        ) == .returned(.boolean(false)))
-        fixture.session.worldState.set(
-            ActorCombatState.hostile, for: fixture.key, in: PapyrusWorldFixture.cell
-        )
-        #expect(call(
-            "IsInCombat", fixture, receiver: fixture.receiver, returnType: .boolean
-        ) == .returned(.boolean(true)))
-        call("Kill", fixture, receiver: fixture.receiver)
-        #expect(call(
-            "IsInCombat", fixture, receiver: fixture.receiver, returnType: .boolean
-        ) == .returned(.boolean(false)))
-    }
 
     @Test func isWeaponDrawnAnswersOnlyForAnObservedActor() throws {
         let unobserved = try Self.fixture()

@@ -1,6 +1,11 @@
-// Main-app combat-loop inspection seam (issue #374, roadmap item 15.7, scope
-// point 7): the hostility toggle, the combat-state and target readouts, the
-// dev-target spawn and reset controls, and the transient-object counts.
+// Main-app combat-loop inspection seam (issues #374 and #424, roadmap items
+// 15.7 and 16.7): the hostility toggle, the combat-state and target readouts,
+// the per-actor combat readout, and the transient-object counts.
+//
+// Item 16.7 deleted the dev-target spawn and reset controls along with the clock
+// they drove. What a user does instead is make an actor hostile and let it
+// notice them, which is the shipping path rather than a developer shortcut into
+// it, and what the panel shows instead is one line per fighting actor.
 //
 // One snapshot value rather than a bag of protocol properties, for the reason
 // `MeleeCombatSnapshot` and `ArcherySnapshot` are one: the readout has to be a
@@ -30,14 +35,14 @@ nonisolated struct CombatLoopSnapshot: Equatable, Sendable {
     /// Resident actors that are hostile and alive, and those recorded dead.
     let hostileCount: Int
     let deadCount: Int
-    /// The designated opponent's name, or "—" when none is spawned, and where
-    /// its attack clock currently is.
-    let devTargetName: String
-    let devTargetPhase: DevTargetPhase
-    let devTargetIsRunning: Bool
-    /// Attacks it has started and contact steps it has reached.
-    let devTargetAttackCount: Int
-    let devTargetContactCount: Int
+    /// Resident actors currently engaged, and how many of those are searching.
+    let engagedCount: Int
+    let searchingCount: Int
+    /// One line's worth of state per actor with a combat machine, nearest
+    /// first.
+    let actors: [CombatActorReadout]
+    /// Hostile living actors the engagement cap refused a machine.
+    let crowdedOutCount: Int
     /// Whether the *selected* actor — the one the hostility toggle acts on — is
     /// hostile right now, and what it is called.
     let selectedActorName: String
@@ -62,11 +67,10 @@ nonisolated struct CombatLoopSnapshot: Equatable, Sendable {
         targetDistance: 0,
         hostileCount: 0,
         deadCount: 0,
-        devTargetName: "—",
-        devTargetPhase: .idle,
-        devTargetIsRunning: false,
-        devTargetAttackCount: 0,
-        devTargetContactCount: 0,
+        engagedCount: 0,
+        searchingCount: 0,
+        actors: [],
+        crowdedOutCount: 0,
         selectedActorName: "—",
         selectedActorIsHostile: false,
         incomingHitCount: 0,
@@ -87,19 +91,6 @@ protocol CombatLoopControlProviding: AnyObject {
     /// resident one — regards the player as an enemy. Settable, which is the
     /// hostility toggle scope point 7 asks for.
     var selectedActorIsHostile: Bool { get set }
-
-    /// Designates the nearest living actor as the opponent and starts its
-    /// attack clock.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
-    @discardableResult
-    func spawnCombatDevTarget() -> String
-
-    /// Stops the opponent's clock, calms it and forgets it.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
-    @discardableResult
-    func resetCombatDevTarget() -> String
 
     /// Empties the incoming-hit trace and its count, without disturbing the
     /// fight.

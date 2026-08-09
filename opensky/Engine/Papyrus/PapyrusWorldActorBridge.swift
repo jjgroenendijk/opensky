@@ -36,8 +36,11 @@ nonisolated struct PapyrusActorState: Equatable, Sendable {
     let maximums: ActorValues
     /// Whether `ActorDeathState` has latched.
     let isDead: Bool
-    /// Whether the actor is fighting the player, per 15.7's hostility.
+    /// Whether the actor is actually in a fight, per 16.7's behavior phase.
+    /// Searching counts; being hostile without having noticed anybody does not.
     let isInCombat: Bool
+    /// The same answer at `GetCombatState`'s three-value resolution.
+    let combatActivity: ActorCombatActivity
     /// Where the actor's weapon is, or nil when nothing in this session
     /// observes a draw state for it. Only the player carries a behavior graph
     /// that tracks one today, so every other actor answers nil and
@@ -49,12 +52,14 @@ nonisolated struct PapyrusActorState: Equatable, Sendable {
         maximums: ActorValues,
         isDead: Bool = false,
         isInCombat: Bool = false,
+        combatActivity: ActorCombatActivity = .notFighting,
         weaponDrawState: WeaponDrawState? = nil
     ) {
         self.current = current
         self.maximums = maximums
         self.isDead = isDead
         self.isInCombat = isInCombat
+        self.combatActivity = combatActivity
         self.weaponDrawState = weaponDrawState
     }
 }
@@ -94,6 +99,24 @@ protocol PapyrusWorldActorBridge: AnyObject, Sendable {
         _ kind: ActorValueKind, by amount: Float, on key: ReferenceKey
     ) -> PapyrusActorState?
 
+    /// Starts `key` fighting `target` at once, without waiting for it to
+    /// perceive anything (issue #424). Writes hostility through the world-state
+    /// store on the way, so a scripted fight is saved exactly as one the player
+    /// started.
+    ///
+    /// - Returns: true when the actor is now fighting. False for an actor this
+    ///   session does not track and for a target other than the player, which
+    ///   is a fight nothing in this engine simulates.
+    @discardableResult
+    func startActorCombat(_ key: ReferenceKey, target: ReferenceKey) -> Bool
+
+    /// Ends `key`'s fight and hands it back to its package, leaving its stored
+    /// hostility alone.
+    ///
+    /// - Returns: true when there was a fight to stop.
+    @discardableResult
+    func stopActorCombat(_ key: ReferenceKey) -> Bool
+
     /// Kills `key` outright, attributing it to `killer` when the script named
     /// one. Health is emptied first, so a corpse never reads as dead at full
     /// health and the death takes the same route a fatal blow does.
@@ -130,6 +153,16 @@ nonisolated extension PapyrusWorldAccess {
         MainActor.assumeIsolated {
             bridge.restoreActorValue(kind, by: amount, on: key)
         }
+    }
+
+    @discardableResult
+    func startActorCombat(_ key: ReferenceKey, target: ReferenceKey) -> Bool {
+        MainActor.assumeIsolated { bridge.startActorCombat(key, target: target) }
+    }
+
+    @discardableResult
+    func stopActorCombat(_ key: ReferenceKey) -> Bool {
+        MainActor.assumeIsolated { bridge.stopActorCombat(key) }
     }
 
     @discardableResult

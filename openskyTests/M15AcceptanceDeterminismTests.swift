@@ -32,7 +32,7 @@ extension M15AcceptanceTests {
         chain.capturePointer()
         chain.press(.keyR)
         chain.run(frames: 60) { chain.melee.state.drawState == .drawn }
-        _ = chain.combat.spawnDevTarget()
+        chain.combat.setHostility(.hostile, on: Chain.opponent)
         chain.clickAttack()
         chain.run(frames: 90)
         chain.run(frames: 600) { chain.crateBody?.isSleeping == true }
@@ -57,7 +57,7 @@ extension M15AcceptanceTests {
         chain.capturePointer()
         chain.press(.keyR)
         chain.run(frames: 60) { chain.melee.state.drawState == .drawn }
-        _ = chain.combat.spawnDevTarget()
+        chain.combat.setHostility(.hostile, on: Chain.opponent)
         chain.run(frames: 30)
 
         let updates = chain.graph.tally.updatesRun

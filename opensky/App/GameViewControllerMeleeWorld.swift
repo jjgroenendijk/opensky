@@ -53,10 +53,12 @@ extension GameViewController: MeleeCombatWorld {
     }
 
     func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind? {
-        // Only the player has a graph to raise `blockStart` on, so only the
-        // player can be blocking. An NPC that blocks back is item 15.7's.
-        guard target == .player, melee.runtime?.state.isBlocking == true else { return nil }
-        return .weapon
+        // The player answers from the graph state `blockStart` drives. Every
+        // other actor answers from its 16.7 combat behavior machine, which is
+        // how an NPC blocks the player's swing through the same formula the
+        // player's guard reduces an NPC's blow with.
+        guard target == .player else { return combat.runtime?.blockKind(of: target) }
+        return melee.runtime?.state.isBlocking == true ? .weapon : nil
     }
 
     @discardableResult
@@ -120,7 +122,7 @@ extension GameViewController: MeleeCombatWorld {
     /// The actor-value holder for a hit target: the player, or a resident ACHR
     /// resolved through the streamer. Nil when nothing resident answers to the
     /// key, which is a hit on an actor that was evicted mid-swing.
-    private func actorValueHolder(for key: ReferenceKey) -> ActorValueHolder? {
+    func actorValueHolder(for key: ReferenceKey) -> ActorValueHolder? {
         if key == .player {
             return .player
         }

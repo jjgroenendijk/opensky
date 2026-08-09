@@ -268,12 +268,14 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   filtering and one hit per swing, the install's own block GMSTs and how they differ from
   the secondary source, stagger, and the WEAP INAM impact-sound chain.
 * [Combat loop](/engine/combat.md) - persistent hostility as its own component and its
-  additive CBTS save chunk, combat state derived every step rather than stored, the
-  scripted dev target that is explicitly a clock and not an AI, census-named recoil
-  reactions in both directions, bounded reaction clips on the single-clip NPC playback,
-  the four transient caps and what a trim costs, the combat-music edge, the panel
-  provider seam, and the `World > Combat & Physics` destination that is M15's
-  verification surface and acceptance record.
+  additive CBTS save chunk, combat state derived every step from who is engaged rather than
+  stored, the per-actor combat behavior machine that perceives, approaches, attacks, blocks,
+  breaks off at low health, searches the last place it saw the player and gives up, every
+  cadence and threshold stated as OpenSky's own, the `StartCombat` and `StopCombat` natives,
+  census-named recoil reactions in both directions, bounded reaction clips on the
+  single-clip NPC playback, the four transient caps and the eight-fighter engagement cap,
+  the combat-music edge, the panel provider seam, and the `World > Combat & Physics`
+  destination that is M15's verification surface and acceptance record.
 
 ## Rendering
 

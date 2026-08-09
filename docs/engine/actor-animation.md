@@ -31,7 +31,7 @@ keep direct idle playback and allocate no movement controller.
 
 Milestone 15 item 15.7 kept that boundary and widened the single-clip path by exactly one
 notch: `ActorAnimationPlayback` now takes a **bounded clip override** and returns to the idle
-clip when it expires, which is what lets the dev target play an attack, a stagger and a hit
+clip when it expires, which is what lets a fighting NPC play an attack, a stagger and a hit
 reaction without a behavior graph. The override is sampled from its own frame zero rather
 than from the shared clock, so a clip started mid-session starts at its beginning. Which
 clips, and where their paths were read from, is in [combat loop](/engine/combat.md).

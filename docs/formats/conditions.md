@@ -371,12 +371,14 @@ own and are stated rather than assumed:
   unarmed while it is out. An unarmed actor with its hands up therefore reads as
   2. An actor whose draw state nothing observes is a reason-tagged false, not a
   0: "sheathed" is a fact about an actor, and nothing here knows it.
-* `GetCombatState` documents 0 "Not in combat", 1 "In combat" and 2 "Searching".
-  Searching needs perception. Item 16.6 built the perception half — the state
-  exists as `DetectionState.suspicious` — and wiring it into combat state is
-  16.7's, so this engine still never returns 2. A
-  dead actor is not in combat whatever hostility it died carrying, which is the
-  same rule `CombatLoopState.derive` applies.
+* `GetCombatState` documents 0 "Not in combat", 1 "In combat" and 2 "Searching",
+  and as of item 16.7 (issue #424) all three are reachable. It reads the actor's
+  combat behavior phase rather than its stored hostility: 0 for an actor that
+  hates the player and has not noticed them, or that searched and gave up; 1
+  while it is fighting; 2 while it is hunting for a target 16.6 detection lost.
+  A dead actor is not in combat whatever hostility it died carrying, which is the
+  same rule `CombatLoopState.derive` applies. See
+  [the combat loop](/engine/combat.md).
 * `GetDead` reads the death latch rather than health, following the Creation Kit
   wiki's own reason for preferring it: "This is more accurate than checking the
   actor's health because there are circumstances when the actor can die without
@@ -547,8 +549,8 @@ The 1.96-point step the actor functions added is worth reading honestly.
 `GetDead` carries it almost alone at 1,028 conditions; `GetActorValue` adds 543
 and `GetActorValuePercent` 64, while `IsWeaponOut` appears 8 times and
 `GetCombatState` exactly once. Those last two were implemented because they are
-part of the combat-condition surface M16 will be written against, not because
-vanilla leans on them. The run-on histogram tells the same story from the other
+part of the combat-condition surface M16 is written against, not because vanilla
+leans on them. The run-on histogram tells the same story from the other
 side: 419 of the 83,759 conditions use run-on 3, which had been unresolvable
 since #251 and now resolves — `subject` remains overwhelmingly dominant at
 77,007.

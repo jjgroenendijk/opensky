@@ -61,10 +61,11 @@ reach is skipped before the ray is cast, since the attenuation would multiply ev
 zero anyway.
 
 **Who observes.** The session's filter, not the runtime's: an actor is an observer when it
-is hostile to the player, when it is the dev target, or when the package runtime has
-selected a package for it. Those are exactly the actors something in this engine is already
-simulating. **Who is observed** is the player and nobody else — NPC-versus-NPC perception is
-out of 16.6's scope beyond what 16.7's combat needs, and the target seam is a list precisely
+is hostile to the player, when its 16.7 combat behavior machine has it engaged, or when
+the package runtime has selected a package for it. Those are exactly the actors something
+in this engine is already simulating. **Who is observed** is the player and nobody else —
+NPC-versus-NPC perception is out of 16.6's scope beyond what 16.7's combat needs, and the
+target seam is a list precisely
 so 16.7 can widen it without touching the pass.
 
 ## The formula
@@ -257,9 +258,11 @@ detected" — an untracked pair is not an undetected one, and only one of those 
 answer. The failure has its own `ConditionTally` bucket. See
 [conditions](/formats/conditions.md).
 
-`GetCombatState`'s third return, 2 "Searching", still is not produced: the state exists here
-as `DetectionState.suspicious`, and wiring it into combat state is 16.7's, together with the
-music runtime's matching seam.
+`GetCombatState`'s third return, 2 "Searching", is produced as of item 16.7 (issue #424):
+losing a target this pass was tracking is what sends a fighting actor to the remembered
+investigate position, and that phase is what the condition reads. The music runtime's
+matching seam came with it — a searching actor is still in the fight, so the combat playlist
+keeps playing until it gives up. See [the combat loop](/engine/combat.md).
 
 ## Surfaces
 

@@ -60,8 +60,8 @@ extension GameViewController: PerceptionWorld {
         return combatActors().compactMap { actor in
             guard !actor.isDead else { return nil }
             guard
-                actor.key == combat.runtime?.devTarget
-                || combatHostility(of: actor.key) == .hostile
+                combatHostility(of: actor.key) == .hostile
+                || combat.runtime?.phase(of: actor.key)?.isEngaged == true
                 || packaged.contains(actor.key)
             else { return nil }
             return PerceptionObserver(

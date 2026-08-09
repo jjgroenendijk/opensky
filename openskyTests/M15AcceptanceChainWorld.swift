@@ -207,7 +207,57 @@ extension M15AcceptanceChain: CombatLoopWorld {
     }
 
     func combatBlock(of key: ReferenceKey) -> MeleeBlockKind? {
-        key == Self.player && melee.state.isBlocking ? .weapon : nil
+        guard key == Self.player else { return combat.blockKind(of: key) }
+        return melee.state.isBlocking ? .weapon : nil
+    }
+
+    /// The opponent stands three feet in front of the player, facing them, in a
+    /// lit arena with nothing between the two. What a perception pass would say
+    /// about that pair is "detected", so the chain says it rather than standing
+    /// up 16.6's whole formula to be told the same thing — and says nothing at
+    /// all until the actor is hostile, which is what keeps the entry edge real.
+    func combatAwareness(
+        of observer: ReferenceKey, toward target: ReferenceKey
+    ) -> CombatAwareness {
+        guard combatHostility(of: observer) == .hostile else { return .unaware }
+        return .detected(at: meleeAttacker.feet)
+    }
+
+    /// Against the health the chain *started* the actor at, not the derived
+    /// maximum.
+    ///
+    /// The route deliberately gives the opponent 40 health so that one swing
+    /// and one arrow are the whole fight, while the record-derived maximum is
+    /// 100. Dividing by the maximum would put the opponent under the flee
+    /// threshold after the first blow, and the gate would be measuring an actor
+    /// running away rather than the fight it is about. Full is what the chain
+    /// set, which is the honest reading of "how hurt is it".
+    func combatHealthFraction(of key: ReferenceKey) -> Float {
+        let holder = key == Self.player ? ActorValueHolder.player : opponentHolder
+        let full = key == Self.player ? Self.playerHealth : Self.opponentHealth
+        guard full > 0 else { return 1 }
+        return min(1, max(0, actorValues.current(of: holder).health / full))
+    }
+
+    func combatWeapon(of key: ReferenceKey) -> MeleeWeaponProfile {
+        MeleeWeaponProfile(damage: Self.opponentDamage, reach: 1)
+    }
+
+    /// The arena carries no navmesh, so no combat path is ever found. The
+    /// opponent starts inside its own reach, which is the fight the gate is
+    /// about; a refused move is the honest answer and the machine survives it.
+    @discardableResult
+    func moveCombatActor(_ key: ReferenceKey, to point: SIMD3<Float>) -> Bool {
+        combatMoveRequests.append(point)
+        return false
+    }
+
+    func stopCombatMovement(of key: ReferenceKey) {
+        combatStopRequests += 1
+    }
+
+    func resumeCombatPackage(for key: ReferenceKey) {
+        combatPackageResumes += 1
     }
 
     @discardableResult

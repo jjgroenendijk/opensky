@@ -51,6 +51,31 @@ extension GameViewController {
         packages.runtime = runtime
     }
 
+    /// Re-selects `actor`'s package immediately (issue #424).
+    ///
+    /// Combat suspends nothing — an actor that starts fighting simply stops
+    /// acting on its package's movement, because the combat machine owns its
+    /// mover from then on. What ending a pursuit needs is therefore not a
+    /// resume of a saved procedure but a fresh selection: the world has moved on
+    /// by however long the fight lasted, and the package the schedule names now
+    /// is the one the actor should be doing. That is exactly
+    /// `forceReevaluate(actor:clock:context:)`, which the package runtime
+    /// already exposes for the gate panel.
+    func resumePackage(for actor: ReferenceKey) {
+        guard
+            var runtime = packages.runtime,
+            let streamer,
+            let renderer,
+            packages.registeredActors[actor] != nil
+        else { return }
+        runtime.forceReevaluate(
+            actor: actor,
+            clock: renderer.gameClock,
+            context: packageConditionContext(streamer: streamer, clock: renderer.gameClock)
+        )
+        packages.runtime = runtime
+    }
+
     /// Current state seam for issue #203's panel.
     func packageReadouts() -> [PackageActorReadout] {
         packages.runtime?.readouts() ?? []

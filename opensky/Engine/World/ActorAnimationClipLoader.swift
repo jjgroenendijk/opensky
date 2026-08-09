@@ -62,13 +62,16 @@ nonisolated enum ActorAnimationClipLoader {
     ///
     /// OpenSky numbers: the clip's own duration is readable only after it has
     /// been decoded, and an NPC in this milestone has no behavior graph to end
-    /// the state for it. Each is chosen to match the phase it accompanies in
-    /// `DevTargetDriver`, so the animation and the hit land together.
+    /// the state for it. Each is taken from the phase it accompanies in
+    /// `CombatBehaviorSettings.standard`, so the animation and the hit land
+    /// together. The shipping settings rather than a live machine's, because a
+    /// clip is decoded once per skeleton and held for every actor that plays it.
     static func holdSeconds(for clip: CombatActorClip) -> Float {
+        let combat = CombatBehaviorSettings.standard
         switch clip {
-        case .attack: DevTargetDriver.windupSeconds + DevTargetDriver.recoverySeconds
-        case .stagger: DevTargetDriver.staggerSeconds
-        case .hitReaction: 0.4
+        case .attack: return combat.windupSeconds + combat.recoverySeconds
+        case .stagger: return combat.staggerSeconds
+        case .hitReaction: return 0.4
         }
     }
 

@@ -27,6 +27,12 @@ extension NPCMover {
     }
 
     var readout: NPCMovementReadout {
+        readout(as: state)
+    }
+
+    /// The same readout with the state overridden, for a mover the crowd
+    /// registry stopped rather than one that ran to its own conclusion.
+    func readout(as state: NPCMovementState) -> NPCMovementReadout {
         NPCMovementReadout(
             actor: actor,
             state: state,

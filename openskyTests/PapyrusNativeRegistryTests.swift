@@ -7,8 +7,9 @@ import Testing
 struct PapyrusNativeRegistryTests {
     @Test func standardInstallIsCaseInsensitiveAndEmptyIsEmpty() {
         let standard = PapyrusNativeRegistry.standard
-        // 57 before the `Actor` family (issue #375) added nine.
-        #expect(standard.count == 66)
+        // 57 before the `Actor` family (issue #375) added nine, and 66 before
+        // 16.7 (issue #424) added `StartCombat` and `StopCombat`.
+        #expect(standard.count == 68)
         #expect(standard.contains(
             scriptName: "form", functionName: "REGISTERFORUPDATE"
         ))

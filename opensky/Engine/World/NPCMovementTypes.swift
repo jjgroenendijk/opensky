@@ -9,11 +9,15 @@ nonisolated enum NPCMovementState: String, Equatable, Sendable {
     case awaitingRepath
     case arrived
     case gaveUp
+    /// Stopped on request before reaching the target, which is what an actor
+    /// that came into weapon range or gave up a chase does (issue #424).
+    case halted
 }
 
 nonisolated enum NPCMovementSettleReason: String, Equatable, Sendable {
     case arrival
     case giveUp
+    case halt
     case cellHandoff
     case save
 }
@@ -59,5 +63,15 @@ nonisolated enum NPCMoveCommandResult: Equatable, Sendable {
 protocol MoveToPointControl: AnyObject {
     @discardableResult
     func moveActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> NPCMoveCommandResult
+
+    /// Stops one actor where it stands (issue #424). Combat's "hold": reaching
+    /// weapon range, raising a guard and giving up a chase all end in an actor
+    /// that should stop walking through the movement authority rather than by
+    /// having its last request quietly expire.
+    ///
+    /// - Returns: true when there was a live mover to stop.
+    @discardableResult
+    func stopActor(_ actor: ReferenceKey) -> Bool
+
     func npcMovementReadouts() -> [NPCMovementReadout]
 }
