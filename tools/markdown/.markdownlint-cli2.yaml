@@ -17,8 +17,9 @@ config:
     style: consistent
   MD033: false           # allow inline HTML (autolinks like <https://...>)
   MD041: false           # first line need not be H1 (OKF frontmatter precedes it)
-globs:
-  - "**/*.md"
+# Callers choose the scope: make supplies **/*.md, while the pre-commit hook
+# supplies only staged paths. A config-level glob would widen every staged-file
+# invocation back to the whole repository.
 ignores:
   - node_modules
   - .build
@@ -27,5 +28,6 @@ ignores:
   - DerivedData-optimized   # the optimized real-data perf build's own cache
   - logs            # gitignored scratch output; agents drop free-form notes here
   - .vendor         # vendored upstream sources built by make bootstrap, not ours to lint
+  - .claude/worktrees  # linked worktrees nested below the main checkout
   - "**/._*"        # macOS AppleDouble junk on this volume
   - "._*"
