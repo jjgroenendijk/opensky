@@ -12,6 +12,13 @@ import AppKit
 final class FakeWorldProviders: WorldControlProviders {
     var refocusCount = 0
 
+    /// AI and navigation (issues #422, #202, #203). The behaviour is in
+    /// `FakeWorldProvidersAI.swift`; only the state lives here, because an
+    /// extension cannot hold stored properties.
+    var aiOverlay = FakeAIOverlayState()
+    var perception = FakePerceptionState()
+    var aiNavigation = FakeAINavigationState()
+
     // ShadowControlProviding
     var sunShadowsEnabled = true
     var shadowQuality: ShadowQuality = .high

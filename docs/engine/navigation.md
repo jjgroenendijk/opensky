@@ -24,6 +24,7 @@ consumer: capped NPC capsule movement over those corridors.
 * [Locomotion drive and cap](#locomotion-drive-and-cap)
 * [World-space debug overlay](#world-space-debug-overlay)
 * [Evidence and remaining gaps](#evidence-and-remaining-gaps)
+* [Verification surface](#verification-surface)
 
 ## Resident graph
 
@@ -175,3 +176,27 @@ of offscreen wall time in the 2026-08-09 ordinary real-data run.
 
 NPC movers now consume both routes. Dynamic obstacle avoidance between movers, jumping,
 swimming, and general off-mesh traversal are not part of this graph yet.
+
+## Verification surface
+
+`World > AI & Navigation` (`Destination-aiNavigation`) is the sidebar surface for
+everything on this page. Its Overlays section carries `AINavmeshOverlayControl` and
+`AIPathOverlayControl` over `AIOverlayStatsLabel`, which reports what the overlay pass
+submitted, drew, and dropped. Its Actor section selects which actor the rest of the
+destination answers for, through `AIActorSelectControl` or `AIActorCrosshairControl` over
+`AIActorStatsLabel`. Its Movement section sends that actor somewhere with
+`AIMoveToCrosshairControl`, stops it with `AIMoveStopControl`, and reports its mover state,
+waypoint, gait, and repath count in `AIMovementStatsLabel`.
+
+The move control's point is the crosshair's own raycast hit, projected onto the nearest
+walkable triangle by the path query rather than by the panel. It reaches 4,096 units and is
+not gated on a player-controlled camera, unlike the HUD's use-key target: picking a
+destination for an actor across a market is an inspection, and the use key's arm's-length
+reach would only ever send an actor to its own feet. It is no longer than it needs to be,
+because the ray's bounds are what the collision broad phase searches and they grow with it,
+and the result is cached against the camera pose it was taken from — six sections read the
+snapshot twice a second, and a session inspecting a stationary scene should pay for one
+raycast rather than a dozen.
+
+The acceptance records for items 16.1 through 16.4 are rows in
+[the sidebar acceptance ledger](/tools/sidebar-acceptance.md).

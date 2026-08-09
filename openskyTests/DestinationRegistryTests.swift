@@ -17,7 +17,7 @@ struct DestinationRegistryTests {
     @Test @MainActor
     func registryOrderAndIdentifiers() {
         #expect(DestinationRegistry.all.map(\.id) == [
-            "world", "playerLocomotion", "combatPhysics", "environment",
+            "world", "playerLocomotion", "combatPhysics", "aiNavigation", "environment",
             "hudInteraction", "systemMenu",
             "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
             "runtimeState", "scripts", "journal", "uiLab", "assetBrowser"
@@ -25,7 +25,8 @@ struct DestinationRegistryTests {
         // Accessibility identifiers are the UI-test contract; pin them literally.
         #expect(DestinationRegistry.all.map(\.sidebarIdentifier) == [
             "Destination-world", "Destination-playerLocomotion",
-            "Destination-combatPhysics", "Destination-environment",
+            "Destination-combatPhysics", "Destination-aiNavigation",
+            "Destination-environment",
             "Destination-hudInteraction", "Destination-systemMenu",
             "Destination-inventoryMenu", "Destination-containerMenu",
             "Destination-inventoryEquipment", "Destination-audio",
@@ -33,7 +34,7 @@ struct DestinationRegistryTests {
             "Destination-journal", "Destination-uiLab", "Destination-assetBrowser"
         ])
         #expect(DestinationRegistry.worldInspectors.map(\.id) == [
-            "world", "playerLocomotion", "combatPhysics", "environment",
+            "world", "playerLocomotion", "combatPhysics", "aiNavigation", "environment",
             "hudInteraction", "systemMenu",
             "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
             "runtimeState", "scripts", "journal", "uiLab"

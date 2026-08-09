@@ -137,6 +137,23 @@ extension DestinationRegistry {
         }
     )
 
+    /// Only the Overlays section carries overridden-ness (issue #203): three
+    /// debug overlays that default off are the one thing under this destination
+    /// that sits away from a documented default, and the sidebar's reset
+    /// switches them back off. Which actor a session is following is a
+    /// nomination rather than a setting; where an actor has walked to, which
+    /// package its clock selected and whether it regards the player as an enemy
+    /// are all world state a user produced on purpose, and a "Reset all" that
+    /// undid any of them would be undoing the demonstration rather than a knob.
+    static let aiNavigationOverrides = DestinationOverrideActions(
+        isOverridden: { context in
+            AIOverlaySection.isOverridden(provider: context.providers)
+        },
+        resetToDefaults: { context in
+            AIOverlaySection.resetToDefaults(provider: context.providers)
+        }
+    )
+
     /// Only the Reset section carries overridden-ness: a dirty reference is the
     /// world deviating from plugin data, which is this destination's notion of
     /// a non-default value, and "Reset all" is what restores it. Inspecting and

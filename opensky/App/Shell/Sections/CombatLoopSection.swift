@@ -61,7 +61,7 @@ final class CombatLoopSection: PanelSectionViewController {
                 "The selected actor is the nearest resident one, which is also what the "
                     + "Actor Values controls act on. Making it hostile does not by itself "
                     + "start a fight: the actor has to notice the player first, which is "
-                    + "the detection pass under World > Perception. Once it does, it walks "
+                    + "the detection pass under World > AI & Navigation. Once it does, it walks "
                     + "over, swings, blocks, breaks off at low health, hunts for a player "
                     + "who broke line of sight and eventually gives up and goes back to its "
                     + "schedule. The Fighters lines below say which of those each actor is "

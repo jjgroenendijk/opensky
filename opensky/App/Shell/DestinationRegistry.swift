@@ -25,7 +25,8 @@ enum SidebarSection: String, CaseIterable {
 
 /// The live-renderer bridges a world inspector panel may consume. The game
 /// controller conforms to all of them, so one value wires every panel.
-typealias WorldControlProviders = ActorValueControlProviding & AnimationControlProviding
+typealias WorldControlProviders = AINavigationControlProviding
+    & AIOverlayControlProviding & ActorValueControlProviding & AnimationControlProviding
     & ArcheryControlProviding & AudioControlProviding
     & CameraControlProviding & CombatLoopControlProviding & ContainerMenuControlProviding
     & FirstPersonControlProviding
@@ -35,6 +36,7 @@ typealias WorldControlProviders = ActorValueControlProviding & AnimationControlP
     & JournalControlProviding
     & MeleeCombatControlProviding
     & ParticleControlProviding
+    & PerceptionControlProviding
     & PhysicsControlProviding
     & PlayerLocomotionControlProviding
     & PrecipitationControlProviding & RagdollControlProviding
@@ -140,7 +142,15 @@ enum DestinationRegistry {
     /// Selected on launch: the live render plus its camera/frame/scene readouts.
     static let defaultDestinationID = "world"
 
-    static let all: [DestinationDescriptor] = [
+    /// The registered destinations, in sidebar order. The three menu
+    /// destinations are spliced in from `DestinationRegistryMenus.swift` at the
+    /// position they occupy in the sidebar; the registry is still the single
+    /// registration point, and the split exists only because this enum body is
+    /// at the strict-lint type-length cap.
+    static let all: [DestinationDescriptor] = simulationDestinations
+        + menuDestinations + sessionDestinations
+
+    private static let simulationDestinations: [DestinationDescriptor] = [
         DestinationDescriptor(
             id: "world",
             title: "World",
@@ -196,6 +206,23 @@ enum DestinationRegistry {
             overrides: combatPhysicsOverrides
         ),
         DestinationDescriptor(
+            id: "aiNavigation",
+            title: "AI & Navigation",
+            section: .world,
+            symbolName: "point.topleft.down.to.point.bottomright.curvepath",
+            content: .worldInspector { context in
+                let panel = AINavigationPanelViewController()
+                panel.overlayProvider = context.providers
+                panel.navigationProvider = context.providers
+                panel.perceptionProvider = context.providers
+                panel.combatProvider = context.providers
+                let providers = context.providers
+                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                return panel
+            },
+            overrides: aiNavigationOverrides
+        ),
+        DestinationDescriptor(
             id: "environment",
             title: "Environment",
             section: .world,
@@ -229,43 +256,12 @@ enum DestinationRegistry {
                     HUDElementsSection.resetToDefaults(provider: context.providers)
                 }
             )
-        ),
-        DestinationDescriptor(
-            id: "systemMenu",
-            title: "System Menu",
-            section: .world,
-            symbolName: "list.bullet.rectangle",
-            content: .worldInspector { context in
-                let panel = SystemMenuPanelViewController()
-                panel.provider = context.providers
-                return panel
-            },
-            overrides: systemMenuOverrides
-        ),
-        DestinationDescriptor(
-            id: "inventoryMenu",
-            title: "Inventory Menu",
-            section: .world,
-            symbolName: "bag",
-            content: .worldInspector { context in
-                let panel = InventoryMenuPanelViewController()
-                panel.provider = context.providers
-                return panel
-            },
-            overrides: inventoryMenuOverrides
-        ),
-        DestinationDescriptor(
-            id: "containerMenu",
-            title: "Container Menu",
-            section: .world,
-            symbolName: "shippingbox",
-            content: .worldInspector { context in
-                let panel = ContainerMenuPanelViewController()
-                panel.provider = context.providers
-                return panel
-            },
-            overrides: containerMenuOverrides
-        ),
+        )
+    ]
+
+    /// Everything after the three menu destinations: what a session carries,
+    /// what it saved, what it is running, and the library.
+    private static let sessionDestinations: [DestinationDescriptor] = [
         DestinationDescriptor(
             id: "inventoryEquipment",
             title: "Inventory & Equipment",
