@@ -112,6 +112,10 @@ nonisolated protocol CombatDataProviding {
     /// are read at the same moment in session wire-up; splitting them would
     /// only let a provider supply one and not the other.
     var archerySettings: ArcherySettings { get }
+    /// The detection GMSTs (issue #202), on the same terms again. All three
+    /// families come out of one GMST load at one moment in session wire-up, and
+    /// splitting them would only let a provider supply some and not others.
+    var detectionSettings: DetectionSettings { get }
 }
 
 /// Optional decoded audio-record stores a provider can expose (M9.2.2).

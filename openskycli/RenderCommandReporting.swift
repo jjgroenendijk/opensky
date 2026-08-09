@@ -9,12 +9,12 @@ extension RenderCommand {
         _ render: OffscreenFrame,
         scene: RenderScene,
         output: String,
-        overlays: (ui: Bool, navmesh: Bool)
+        overlays: (ui: Bool, world: Bool)
     ) throws {
         if overlays.ui {
             printUIOverlayStats(render.uiStats)
         }
-        if overlays.navmesh {
+        if overlays.world {
             printWorldOverlayStats(render.worldOverlayStats)
         }
         // Instancing evidence (3.2): draw calls collapse below draw-item count

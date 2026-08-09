@@ -19,6 +19,7 @@ nonisolated enum ConditionFunctions {
         installGlobals(&registry)
         installQuest(&registry)
         installActor(&registry)
+        installDetection(&registry)
     }
 
     // MARK: - Reference identity

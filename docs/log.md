@@ -4,6 +4,27 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-09
 
+* **Perception and detection (issue #202)**: resident actors the AI drives now look and
+  listen. A fixed-step, capped, time-sliced pass runs a view cone, an exact line-of-sight
+  ray against static collision, and a gait-based noise term for every observer-target pair,
+  and accumulates the resulting detection value into a level that reads as unaware,
+  suspicious or detected with a remembered investigate position. The formula's shape and its
+  ten `fSneak*` constants come from UESP "Skyrim:Sneak" and the install — read with the new
+  `openskycli gmst list --prefix`, which settled that UESP's
+  `fSneakDistanceAttenuationExponent` and the two equipped-weight settings do not exist as
+  GMSTs — while the view cone, the crouch and sprint gait weights, and the accumulation
+  rates are stated as OpenSky's own. Light level, muffle, action sounds and both skill
+  levels are pinned at documented neutral values and listed as gaps rather than
+  approximated. `GetDistance`, `GetLineOfSight` and `GetDetected` register at xEdit's
+  indices 1, 27 and 45 over a new `DetectionResolution` seam, with `unavailableDetection` as
+  its own tally bucket so an untracked pair never reads as an undetected one. A depth-tested
+  cone-and-memory-line overlay joins the 16.3 registry, and the panel seam
+  (`DetectionStatsLabel`) waits for the M16 gate. The Skyrim.esm gate pins every load-order
+  setting resolving from a plugin and a real `GuardWhiterun*` ACHR moving through all three
+  states as the player walks 2800 units toward it across real Whiterun collision. New page:
+  [perception and detection](/engine/detection.md); updated
+  [conditions](/formats/conditions.md) and [the CLI reference](/tools/cli.md).
+
 * **Actor packages and schedules (issue #201)**: NPC_ records now retain ordered PKID
   stacks and resolve `useAIPackages` through template chains. The bounded PACK decoder reads
   general data, calendar schedules, header conditions, template/public inputs, and

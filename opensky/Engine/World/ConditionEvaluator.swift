@@ -76,6 +76,13 @@ nonisolated enum ConditionFailure: Equatable, Error, Sendable {
     /// neutral, living, sheathed actor — that is a different answer from "this
     /// engine does not know", and only one of them is a real one.
     case unavailableActorState
+    /// The function needs perception the context carries none of (issue #202):
+    /// no `DetectionResolution` entry for the pair the run-on and the parameter
+    /// name, or no position for one of them. Deliberately not treated as an
+    /// undetected actor with a clear line of sight — that is a different answer
+    /// from "this engine is not watching that pair", and only one of them is a
+    /// real one.
+    case unavailableDetection
 }
 
 /// The answer to one condition or one condition list.

@@ -15,19 +15,44 @@ enum RenderCommand {
         (-2 ... 2).map { x in (Int32(x), Int32(y)) }
     }
 
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let worldspace = try scanner.option("--worldspace")
-            ?? FirstRenderCell.worldspaceEditorID
-        let gridX = try int32(scanner.option("--x"), name: "--x") ?? FirstRenderCell.gridX
-        let gridY = try int32(scanner.option("--y"), name: "--y") ?? FirstRenderCell.gridY
-        let output = try scanner.requiredOption("--out")
-        let size = try parseSize(scanner.option("--size"))
-        let zoom = try parseZoom(scanner.option("--zoom"))
-        let timeOfDay = try parseTimeOfDay(scanner.option("--time-of-day"))
-        let neighbors = scanner.flag("--neighbors")
-        let uiSample = scanner.flag("--ui-sample")
-        let navmeshOverlay = scanner.flag("--navmesh-overlay")
+    /// Everything `render` takes off the command line, parsed once. A value
+    /// rather than a dozen locals because the command body has a strict length
+    /// cap and every new overlay flag would otherwise eat into it.
+    struct Options {
+        let worldspace: String
+        let gridX: Int32
+        let gridY: Int32
+        let output: String
+        let size: (width: Int, height: Int)
+        let zoom: Float
+        let timeOfDay: Float
+        let neighbors: Bool
+        let uiSample: Bool
+        let navmeshOverlay: Bool
+        let detectionOverlay: Bool
+    }
+
+    static func parseOptions(_ scanner: inout ArgumentScanner) throws -> Options {
+        let options = try Options(
+            worldspace: scanner.option("--worldspace")
+                ?? FirstRenderCell.worldspaceEditorID,
+            gridX: int32(scanner.option("--x"), name: "--x") ?? FirstRenderCell.gridX,
+            gridY: int32(scanner.option("--y"), name: "--y") ?? FirstRenderCell.gridY,
+            output: scanner.requiredOption("--out"),
+            size: parseSize(scanner.option("--size")),
+            zoom: parseZoom(scanner.option("--zoom")),
+            timeOfDay: parseTimeOfDay(scanner.option("--time-of-day")),
+            neighbors: scanner.flag("--neighbors"),
+            uiSample: scanner.flag("--ui-sample"),
+            navmeshOverlay: scanner.flag("--navmesh-overlay"),
+            detectionOverlay: scanner.flag("--detection-overlay")
+        )
         try scanner.finish()
+        return options
+    }
+
+    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
+        let options = try parseOptions(&scanner)
 
         guard
             let device = MTLCreateSystemDefaultDevice(),
@@ -40,10 +65,10 @@ enum RenderCommand {
         let builder = try makeBuilder(context: context, device: device)
         let cellScenes = buildCellScenes(
             builder: builder,
-            worldspace: worldspace,
-            gridX: gridX,
-            gridY: gridY,
-            neighbors: neighbors
+            worldspace: options.worldspace,
+            gridX: options.gridX,
+            gridY: options.gridY,
+            neighbors: options.neighbors
         )
         guard !cellScenes.isEmpty else {
             throw CLIError.failure("no cells built")
@@ -54,25 +79,34 @@ enum RenderCommand {
         let scene = try sceneWithLOD(
             builder: builder,
             cellScenes: cellScenes,
-            worldspace: worldspace,
-            center: CellCoordinate(x: gridX, y: gridY)
+            worldspace: options.worldspace,
+            center: CellCoordinate(x: options.gridX, y: options.gridY)
         )
-        let navigationGraph = navmeshOverlay ? makeNavigationGraph(cellScenes) : nil
-
+        let detection = options.detectionOverlay
+            ? warmedDetection(cellScenes, context: context)
+            : nil
         let render = try renderOffscreen(
             device: device,
             scene: scene,
-            camera: zoomed(SceneCamera.framing(bounds: bounds), zoom: zoom),
-            size: size,
-            timeOfDay: timeOfDay,
-            uiScene: uiSample ? .labSample : .empty,
-            navigationOverlayGraph: navigationGraph
+            camera: zoomed(SceneCamera.framing(bounds: bounds), zoom: options.zoom),
+            size: options.size,
+            timeOfDay: options.timeOfDay,
+            uiScene: options.uiSample ? .labSample : .empty,
+            navigationOverlayGraph: options.navmeshOverlay
+                ? makeNavigationGraph(cellScenes) : nil,
+            detectionOverlay: detection?.runtime
         )
+        if let detection {
+            printDetectionStats(detection.runtime)
+        }
         try report(
             render,
             scene: scene,
-            output: output,
-            overlays: (ui: uiSample, navmesh: navmeshOverlay)
+            output: options.output,
+            overlays: (
+                ui: options.uiSample,
+                world: options.navmeshOverlay || options.detectionOverlay
+            )
         )
     }
 

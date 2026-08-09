@@ -138,6 +138,8 @@ nonisolated enum RuntimeStateConditionRunner {
             "no game clock in the evaluation context"
         case .unavailableActorState:
             "no actor state in the evaluation context"
+        case .unavailableDetection:
+            "no perception for that pair in the evaluation context"
         }
     }
 
@@ -165,6 +167,9 @@ nonisolated enum RuntimeStateConditionRunner {
         }
         if tally.unavailableClock > 0 {
             lines.append("Clock unavailable: \(tally.unavailableClock)")
+        }
+        if tally.unavailableDetection > 0 {
+            lines.append("Perception unavailable: \(tally.unavailableDetection)")
         }
         if tally.unavailableActorState > 0 {
             lines.append("Actor state unavailable: \(tally.unavailableActorState)")

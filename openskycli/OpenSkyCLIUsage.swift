@@ -21,6 +21,14 @@ extension OpenSkyCLI {
                                   + sources
       gmst archery               Print resolved arrow tilt-up angles and the
                                   visible-move distance + sources
+      gmst detection             Print resolved detection ranges, noise
+                                  weights and thresholds + sources
+      gmst list --prefix <s>     Print every resolved GMST whose editor ID
+                                  starts with <s>, with its value and source
+      render/screenshot --detection-overlay
+                                  Add the perception view cones and investigate
+                                  lines for every ACHR in the built cells,
+                                  against a stand-in target at the framed centre
       archery [--census] [--ammo <substring>]
                                   Walk the AMMO -> PROJ flight chain: the
                                   archery GMSTs, then one row per arrow with

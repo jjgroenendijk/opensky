@@ -80,6 +80,7 @@ extension GameViewController {
             quests: papyrusBridge?.questRuntime?.resolution() ?? .empty,
             aliases: papyrusBridge?.questRuntime?.aliasResolution() ?? .empty,
             actors: runtimeStateActorResolution(),
+            detection: perceptionResolution(),
             clock: renderer?.gameClock,
             references: runtimeStateConditionReferences(crosshair: entry),
             subject: entry?.key,

@@ -202,6 +202,11 @@ final class GameViewController: NSViewController {
     var npcMovementBridge = NPCMovementBridgeState()
     /// Live resident-actor package selection (issue #201).
     var packages = PackageBridgeState()
+    /// The perception pass: view cones, line of sight, and per-pair detection
+    /// levels (issue #202). The implementation lives in
+    /// `GameViewControllerPerception.swift`; stored here because extensions
+    /// cannot add state.
+    var perception = PerceptionBridgeState()
 
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))

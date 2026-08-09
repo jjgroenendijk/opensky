@@ -64,6 +64,10 @@ nonisolated struct ConditionTally: Equatable, Sendable {
     /// observes.
     private(set) var unavailableActorState = 0
 
+    /// Conditions that needed perception the context carries none of (issue
+    /// #202): a pair the pass is not watching, or a reference it cannot place.
+    private(set) var unavailableDetection = 0
+
     private(set) var conditionsEvaluated = 0
     private(set) var listsEvaluated = 0
 
@@ -112,6 +116,8 @@ nonisolated struct ConditionTally: Equatable, Sendable {
             unavailableClock += 1
         case .unavailableActorState:
             unavailableActorState += 1
+        case .unavailableDetection:
+            unavailableDetection += 1
         }
     }
 
@@ -167,6 +173,7 @@ nonisolated struct ConditionTally: Equatable, Sendable {
         unknownFunctionTotal + unresolvedGlobalTotal + unresolvedQuestTotal
             + unsupportedRunOnTotal + unresolvedReferenceTotal + unknownOperatorTotal
             + unresolvedParameterTotal + unavailableClock + unavailableActorState
+            + unavailableDetection
     }
 
     /// Unknown function indices ranked by count, ties broken by index so the

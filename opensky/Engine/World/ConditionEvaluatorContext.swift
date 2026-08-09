@@ -35,6 +35,11 @@ nonisolated struct ConditionContext: Sendable {
     /// context with no world running, which makes every actor function a
     /// reason-tagged false rather than a convincing zero.
     var actors: ActorStateResolution
+    /// The one seam the perception pass comes through (issue #202), shaped
+    /// exactly like the four above. Empty in a context with no world running,
+    /// which makes every detection function a reason-tagged false rather than a
+    /// convincing "not detected".
+    var detection: DetectionResolution
     /// Runtime enable overrides for `GetDisabled`. When absent for a key, the
     /// function falls back to the placement record's initial flag.
     var referenceEnable: ReferenceEnableResolution
@@ -65,6 +70,7 @@ nonisolated struct ConditionContext: Sendable {
         quests: QuestResolution = .empty,
         aliases: QuestAliasResolution = .empty,
         actors: ActorStateResolution = .empty,
+        detection: DetectionResolution = .empty,
         referenceEnable: ReferenceEnableResolution = .empty,
         aliasQuest: FormID? = nil,
         clock: GameClock? = nil,
@@ -77,6 +83,7 @@ nonisolated struct ConditionContext: Sendable {
         self.quests = quests
         self.aliases = aliases
         self.actors = actors
+        self.detection = detection
         self.referenceEnable = referenceEnable
         self.aliasQuest = aliasQuest
         self.clock = clock

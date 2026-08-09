@@ -66,6 +66,7 @@ extension GameViewController {
             quests: papyrusBridge?.questRuntime?.resolution() ?? .empty,
             aliases: papyrusBridge?.questRuntime?.aliasResolution() ?? .empty,
             actors: runtimeStateActorResolution(),
+            detection: perceptionResolution(),
             referenceEnable: ReferenceEnableResolution(snapshot: snapshot),
             clock: clock,
             references: streamer.residentReferenceIndex()

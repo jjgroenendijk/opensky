@@ -107,6 +107,9 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     /// GMST-derived arrow tilt-up angles and visible-move distance (issue
     /// #196), defaulting to the UESP-documented numbers on a synthetic scene.
     var archerySettings: ArcherySettings = .synthetic
+    /// GMST-derived detection ranges, noise weights and thresholds (issue
+    /// #202), defaulting to the documented numbers on a synthetic scene.
+    var detectionSettings: DetectionSettings = .synthetic
 
     /// Compiled-script source for the Papyrus world runtime; nil when the
     /// builder was constructed without a file system (synthetic scenes).

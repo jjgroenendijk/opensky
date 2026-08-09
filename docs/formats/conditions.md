@@ -290,16 +290,19 @@ rather than answering "sheathed".
 
 ### Implemented functions
 
-Fifteen functions are registered, chosen because the engine can answer them
+Eighteen functions are registered, chosen because the engine can answer them
 honestly from state it already owns. The stored index is the raw on-disk value;
 the Creation Kit spells each one 4096 higher
 (`ConditionFunctionRegistry.creationKitOffset`).
 
 | stored | Creation Kit | name | parameters | returns |
 | --- | --- | --- | --- | --- |
+| 1 | 4097 | `GetDistance` | #1 reference | world units between the run-on and the parameter |
 | 14 | 4110 | `GetActorValue` | #1 actor-value index | the run-on actor's current value |
 | 18 | 4114 | `GetCurrentTime` | none | current game time as a decimal hour, 0 to 24 — 4:30 am is 4.5 |
+| 27 | 4123 | `GetLineOfSight` | #1 reference | 1 when the run-on's sight line to the parameter is clear |
 | 35 | 4131 | `GetDisabled` | none | 1 when the run-on reference is currently disabled, 0 otherwise |
+| 45 | 4141 | `GetDetected` | #1 actor | 1 when the run-on actor has detected the parameter actor |
 | 46 | 4142 | `GetDead` | none | 1 when the run-on actor is recorded dead, 0 otherwise |
 | 56 | 4152 | `GetQuestRunning` | #1 `QUST` FormID | 1 when the quest is running, 0 otherwise |
 | 58 | 4154 | `GetStage` | #1 `QUST` FormID | the highest stage the quest has reached, 0 when it has reached none |
@@ -369,7 +372,9 @@ own and are stated rather than assumed:
   2. An actor whose draw state nothing observes is a reason-tagged false, not a
   0: "sheathed" is a fact about an actor, and nothing here knows it.
 * `GetCombatState` documents 0 "Not in combat", 1 "In combat" and 2 "Searching".
-  Searching needs perception, which is M16's, so this engine never returns 2. A
+  Searching needs perception. Item 16.6 built the perception half — the state
+  exists as `DetectionState.suspicious` — and wiring it into combat state is
+  16.7's, so this engine still never returns 2. A
   dead actor is not in combat whatever hostility it died carrying, which is the
   same rule `CombatLoopState.derive` applies.
 * `GetDead` reads the death latch rather than health, following the Creation Kit
@@ -401,7 +406,7 @@ Nothing in the evaluator throws. A condition it cannot answer evaluates to
 false and carries a machine-readable `ConditionFailure` saying why:
 `.unknownFunction`, `.unresolvedGlobal`, `.unresolvedQuest`,
 `.unsupportedRunOn`, `.unresolvedReference`, `.unknownOperator`,
-`.unresolvedParameter`, `.unavailableClock`, or `.unavailableActorState`.
+`.unresolvedParameter`, `.unavailableClock`, `.unavailableActorState`, or `.unavailableDetection`.
 `.unresolvedParameter` means either a `CIS1`/`CIS2` alias name that resolved to
 no filled alias or an actor-value index this engine has no store for. A QUST
 parameter naming no quest
@@ -421,7 +426,8 @@ ranks the next milestone's work. Its buckets are `unknownFunctions` with
 `unknownFunctionTotal` and `unnamedUnknownFunctions` beside it,
 `unresolvedGlobals`, `unresolvedQuests`, `unsupportedRunOns` keyed by run-on name,
 `unresolvedReferences`, `unknownOperators`, `unresolvedParameters`,
-`unavailableClock` and `unavailableActorState`, plus the volume counters `conditionsEvaluated` and
+`unavailableClock`, `unavailableActorState` and `unavailableDetection`, plus the
+volume counters `conditionsEvaluated` and
 `listsEvaluated`, the derived `failureTotal` and `isClean`, and ranked
 accessors for reporting. Each name table is capped at `nameLimit` (64 by
 default) so a pathological plugin cannot grow the tally without bound, while
@@ -456,6 +462,9 @@ conditions evaluated there are therefore honestly reported as
 * `ConditionTimeFunctionTests` — `GetCurrentTime` from a clock and from the
   `GameHour` fallback, and `GetDayOfWeek` against the documented vanilla start
   weekday across a year boundary.
+* `ConditionDetectionFunctionTests` — the three perception functions at their
+  xEdit indices, both directions of a pair, an empty seam, a parameter naming no
+  reference, and an unplaced reference.
 * `ConditionActorFunctionTests` — the five actor functions against a synthetic
   fight, both directions of the combat-target run-on including the swap flag,
   the unstored-actor-value parameter miss, the unobserved-draw-state miss, and
