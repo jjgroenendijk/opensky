@@ -15,6 +15,7 @@ nonisolated extension ScriptData {
             objectFormat = payload.objectFormat
             scripts.append(contentsOf: payload.scripts)
             questFragments = payload.questFragments ?? questFragments
+            infoFragments = payload.infoFragments ?? infoFragments
             skipped.merge(payload.skipped)
             return true
         } catch let error as ScriptDataError {
@@ -30,6 +31,7 @@ nonisolated struct ScriptDataPayload {
     let objectFormat: ScriptObjectFormat
     let scripts: [AttachedScript]
     let questFragments: QuestFragmentSection?
+    let infoFragments: TopicInfoFragmentSection?
     let skipped: ScriptDataTally
 }
 
@@ -37,8 +39,9 @@ nonisolated struct ScriptDataPayload {
 /// ScriptDataQuestFragmentDecoder.swift, which needs the reader and the
 /// primary script, property and object readers this type owns.
 nonisolated struct ScriptDataDecoder {
-    /// Carriers whose VMAD may end in a record-specific fragment tail. QUST is
-    /// decoded (`ScriptDataQuestFragments.swift`); the other four are still
+    /// Carriers whose VMAD may end in a record-specific fragment tail. QUST
+    /// (`ScriptDataQuestFragments.swift`) and INFO
+    /// (`ScriptDataInfoFragments.swift`) are decoded; the other three are still
     /// recorded and skipped, so they stay in the set.
     private static let fragmentRecordTypes: Set<FourCC> = [
         "INFO", "PACK", "PERK", "QUST", "SCEN"
@@ -49,6 +52,7 @@ nonisolated struct ScriptDataDecoder {
     var version: Int16 = 0
     var objectFormat: ScriptObjectFormat = .formIDLast
     var questFragments: QuestFragmentSection?
+    var infoFragments: TopicInfoFragmentSection?
     var skipped = ScriptDataTally()
 
     init(data: Data, ownerType: FourCC?) {
@@ -83,6 +87,7 @@ nonisolated struct ScriptDataDecoder {
             objectFormat: objectFormat,
             scripts: scripts,
             questFragments: questFragments,
+            infoFragments: infoFragments,
             skipped: skipped
         )
     }
@@ -233,6 +238,9 @@ nonisolated struct ScriptDataDecoder {
             )
         }
         if ownerType == "QUST", decodeQuestFragmentTail() {
+            return
+        }
+        if ownerType == "INFO", decodeInfoFragmentTail() {
             return
         }
         skipped.note(.fragments(ownerType))

@@ -22,23 +22,27 @@ struct ConditionFunctionTests {
     @Test func registryDescribesTheImplementedFunctions() {
         let registry = ConditionFunctionRegistry.standard
         // Nine before the actor family (issue #375) added five; package
-        // schedules (issue #201) add GetDisabled, and perception (issue #202)
-        // adds GetDistance, GetLineOfSight and GetDetected.
+        // schedules (issue #201) add GetDisabled, perception (issue #202) adds
+        // GetDistance, GetLineOfSight and GetDetected, and the dialogue runtime
+        // (issue #426) adds IsInDialogueWithPlayer, GetIsVoiceType and
+        // GetIsAliasRef.
         #expect(registry.indices == [
-            1, 14, 18, 27, 35, 45, 46, 56, 58, 59, 72, 74, 77, 170, 263, 323, 543, 640
+            1, 14, 18, 27, 35, 45, 46, 56, 58, 59, 72, 74, 77, 170, 249, 263, 323, 426,
+            543, 566, 640
         ])
-        #expect(registry.count == 18)
+        #expect(registry.count == 21)
         #expect(registry.sortedFunctions().map(\.name) == [
             "GetDistance", "GetActorValue", "GetCurrentTime", "GetLineOfSight",
             "GetDisabled", "GetDetected", "GetDead", "GetQuestRunning",
             "GetStage", "GetStageDone", "GetIsID", "GetGlobalValue", "GetRandomPercent",
-            "GetDayOfWeek", "IsWeaponOut", "GetCombatState", "GetQuestCompleted",
+            "GetDayOfWeek", "IsInDialogueWithPlayer", "IsWeaponOut", "GetCombatState",
+            "GetIsVoiceType", "GetQuestCompleted", "GetIsAliasRef",
             "GetActorValuePercent"
         ])
         // The Creation Kit spells every index 4096 higher than the plugin does.
         #expect(registry.sortedFunctions().map(\.creationKitIndex) == [
             4097, 4110, 4114, 4123, 4131, 4141, 4142, 4152, 4154, 4155, 4168, 4170, 4173,
-            4266, 4359, 4419, 4639, 4736
+            4266, 4345, 4359, 4419, 4522, 4639, 4662, 4736
         ])
         #expect(registry[Self.getIsID]?.parameter1 == .formID)
         #expect(registry[Self.getIsID]?.parameter2 == .unused)

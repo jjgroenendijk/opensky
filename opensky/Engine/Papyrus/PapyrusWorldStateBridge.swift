@@ -178,6 +178,12 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
             // the write. An actor is a placed reference, so this write is
             // attributed to its cell.
             return worldState.set(value, for: key, in: cell)
+        case let .dialogue(value):
+            // Said-state is written by `DialogueRuntime.choose` rather than by
+            // any native — no script function marks a response as said — but
+            // the seam stays total, and an INFO belongs to no cell for the same
+            // reason a quest does, so this write is unattributed.
+            return worldState.set(value, for: key)
         }
     }
 

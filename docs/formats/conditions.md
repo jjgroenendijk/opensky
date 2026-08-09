@@ -315,6 +315,9 @@ the Creation Kit spells each one 4096 higher
 | 323 | 4419 | `GetCombatState` | none | 0 not in combat, 1 in combat |
 | 543 | 4639 | `GetQuestCompleted` | #1 `QUST` FormID | 1 when the quest is flagged completed, 0 otherwise |
 | 640 | 4736 | `GetActorValuePercent` | #1 actor-value index | current over maximum, 0 to 1 |
+| 249 | 4345 | `IsInDialogueWithPlayer` | none | 1 when the run-on actor is the one the player is talking to |
+| 426 | 4522 | `GetIsVoiceType` | #1 `VTYP` FormID | 1 when the run-on actor's VTCK is that voice type |
+| 566 | 4662 | `GetIsAliasRef` | #1 alias number | 1 when the run-on reference fills that alias of the context's quest |
 
 Several of these carry a recorded decision.
 
@@ -408,7 +411,8 @@ Nothing in the evaluator throws. A condition it cannot answer evaluates to
 false and carries a machine-readable `ConditionFailure` saying why:
 `.unknownFunction`, `.unresolvedGlobal`, `.unresolvedQuest`,
 `.unsupportedRunOn`, `.unresolvedReference`, `.unknownOperator`,
-`.unresolvedParameter`, `.unavailableClock`, `.unavailableActorState`, or `.unavailableDetection`.
+`.unresolvedParameter`, `.unavailableClock`, `.unavailableActorState`,
+`.unavailableDetection`, or `.unavailableDialogue`.
 `.unresolvedParameter` means either a `CIS1`/`CIS2` alias name that resolved to
 no filled alias or an actor-value index this engine has no store for. A QUST
 parameter naming no quest
@@ -428,8 +432,8 @@ ranks the next milestone's work. Its buckets are `unknownFunctions` with
 `unknownFunctionTotal` and `unnamedUnknownFunctions` beside it,
 `unresolvedGlobals`, `unresolvedQuests`, `unsupportedRunOns` keyed by run-on name,
 `unresolvedReferences`, `unknownOperators`, `unresolvedParameters`,
-`unavailableClock`, `unavailableActorState` and `unavailableDetection`, plus the
-volume counters `conditionsEvaluated` and
+`unavailableClock`, `unavailableActorState`, `unavailableDetection` and
+`unavailableDialogue`, plus the volume counters `conditionsEvaluated` and
 `listsEvaluated`, the derived `failureTotal` and `isClean`, and ranked
 accessors for reporting. Each name table is capped at `nameLimit` (64 by
 default) so a pathological plugin cannot grow the tally without bound, while
@@ -439,7 +443,10 @@ it stopped naming.
 Because an unknown index is a counted false rather than an error, adding
 functions later is purely additive. M12 registers its inventory checks, M16 its
 detection checks and M17 its dialogue checks alongside the subsystems that make
-those answerable, and nothing already written changes.
+those answerable, and nothing already written changes. The three M17.2 added —
+`IsInDialogueWithPlayer`, `GetIsVoiceType` and `GetIsAliasRef` — came off the
+measured demand list of the INFO records rather than off a guess about what
+dialogue needs; see [dialogue runtime](/engine/dialogue.md).
 
 There is no inspector surface for evaluation yet. Evaluate-and-show plus the
 tally readout land with the M10.2 acceptance gate, issue #166, which owns the
@@ -464,6 +471,9 @@ conditions evaluated there are therefore honestly reported as
 * `ConditionTimeFunctionTests` — `GetCurrentTime` from a clock and from the
   `GameHour` fallback, and `GetDayOfWeek` against the documented vanilla start
   weekday across a year boundary.
+* `DialogueConditionFunctionTests` — the three dialogue functions against
+  synthetic voice types, a filled quest alias and an open conversation, plus the
+  two failure paths that keep a coverage gap distinct from a real mismatch.
 * `ConditionDetectionFunctionTests` — the three perception functions at their
   xEdit indices, both directions of a pair, an empty seam, a parameter naming no
   reference, and an unplaced reference.

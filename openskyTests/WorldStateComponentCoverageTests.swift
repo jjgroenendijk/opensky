@@ -1,5 +1,5 @@
 // Every-component-kind coverage for `WorldStateStore` (issues #159, #176,
-// #177, #194, #197, #374). Split from `WorldStateStoreTests`, which sits at the strict-lint
+// #177, #194, #197, #374, #426). Split from `WorldStateStoreTests`, which sits at the strict-lint
 // type-length cap, and kept together because these two tests are the ones that
 // have to be updated whenever a component kind is added: both assert against
 // `WorldStateComponentKind.allCases`, so a new kind fails here until it is
@@ -89,6 +89,10 @@ struct WorldStateComponentCoverageTests {
         // An angry actor: the eleventh kind, whose own subject is
         // CombatLoopRuntimeTests.
         #expect(store.set(ActorCombatState.hostile, for: reference, in: whiterun))
+        // A spoken response: the twelfth kind, whose own subject is
+        // DialogueRuntimeTests. It is keyed by an INFO record rather than by a
+        // placement, which the store likewise does not care about.
+        #expect(store.set(DialogueRuntimeState(saidCount: 1), for: reference, in: whiterun))
 
         #expect(store.component(ReferenceEnableState.self, for: reference)?.isEnabled == false)
         #expect(store.component(ReferenceTransformOverride.self, for: reference) == transform(9))
@@ -104,6 +108,7 @@ struct WorldStateComponentCoverageTests {
         #expect(store.component(ActorValueState.self, for: reference) == actorValues)
         #expect(store.component(ActorDeathState.self, for: reference) == death)
         #expect(store.component(ActorCombatState.self, for: reference) == .hostile)
+        #expect(store.component(DialogueRuntimeState.self, for: reference)?.saidCount == 1)
         #expect(store.delta(for: reference)?.sortedKinds == WorldStateComponentKind.allCases)
     }
 
@@ -121,6 +126,7 @@ struct WorldStateComponentCoverageTests {
         store.set(actorValues, for: reference, in: whiterun)
         store.set(death, for: reference, in: whiterun)
         store.set(ActorCombatState.hostile, for: reference, in: whiterun)
+        store.set(DialogueRuntimeState(saidCount: 1), for: reference, in: whiterun)
         #expect(store.reset(reference))
         #expect(store.delta(for: reference) == nil)
         #expect(store.dirtyCount == 0)

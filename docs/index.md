@@ -238,6 +238,13 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   Tamriel calendar: the deterministic GameClock value, the clock-owns-time authority rule
   for the vanilla time globals, weather's elapsed-game-hours feed, the CLOK save chunk,
   and the fixed-clock offscreen/CLI story.
+* [Dialogue runtime](/engine/dialogue.md) - topic selection over quest state and CTDA
+  conditions: the owning-quest gate, file order as selection order, say-once, the HELO
+  greeting, DIAL priority ordering, and the per-response trace the acceptance panel reads;
+  said-state as a world-state component keyed by INFO with its additive DLGS save chunk;
+  what choosing a response does, including result-fragment dispatch through the Papyrus
+  runtime and the route a quest-stage result takes to `QuestRuntime.setStage`; the three
+  dialogue condition functions; and the fidelity gaps this version leaves open.
 * [Runtime reference identity and world state](/engine/runtime-state.md) - session-stable
   ReferenceKey identity over plugin and generated references, the per-cell
   RuntimeReferenceIndex, and the mutable WorldStateStore above it: typed component deltas,

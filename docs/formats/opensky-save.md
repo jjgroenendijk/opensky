@@ -38,6 +38,7 @@ byte length followed by that many UTF-8 bytes. The file extension is `osav`.
 * `AVAL` entry layout
 * `DETH` entry layout
 * `CBTS` entry layout
+* `DLGS` entry layout
 * Version policy
 * Defensive decoding
 * Where saves live and how they are written
@@ -155,7 +156,7 @@ A chunk whose declared length runs past the end of the file is
 that declared length, which is what makes a newer build's save loadable in an older one.
 
 Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR`, `INVN`, `SPWN`, `QSTS`,
-`QALS`, `AVAL`, `DETH` and `CBTS` were added additively afterwards.
+`QALS`, `AVAL`, `DETH`, `CBTS` and `DLGS` were added additively afterwards.
 
 `GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
 any other size is `invalidValue`.
@@ -652,6 +653,41 @@ it was loaded into ([combat loop](/engine/combat.md)).
 
 The entry count is validated against `minimumCombatStateEntrySize` (9 bytes) before storage
 is reserved.
+
+## `DLGS` entry layout
+
+`DLGS` — dialogue said-state (issue #426), one entry per `INFO` a speaker has actually said.
+Additive and split out of `RDLT` for the same reason `QSTS` and `CBTS` are, and a session in
+which nobody spoke writes no chunk at all.
+
+| type   | field      | notes                              |
+| ------ | ---------- | ---------------------------------- |
+| uint32 | entryCount | number of entries that follow      |
+| bytes  | entries    | `entryCount` entries, layout below |
+
+Each entry:
+
+| type   | field     | notes                                            |
+| ------ | --------- | ------------------------------------------------ |
+| key    | key       | the `INFO` record's key, tagged as in `RDLT`     |
+| uint32 | saidCount | how often the response has been said             |
+
+No cell travels with an entry. An `INFO` is a base record that belongs to no cell, so the
+tag could only ever hold one value — the same reasoning `QSTS` applies to a quest.
+
+The untouched baseline is never written. An unsaid response is what every `INFO` is before a
+conversation touches it, and the decoder restores exactly that for one the chunk does not
+mention, so writing a zero would only make the file bigger and two equal worlds compare
+unequal. An entry whose count decodes as zero — which this encoder never produces — is
+dropped on the way back in for the same reason.
+
+**Said-state only.** Which topics a speaker offers is a pure function of the plugin records,
+the quest state `QSTS` already carries and this chunk, so writing the offered list would let
+a save carry a menu a changed load order no longer authors
+([dialogue runtime](/engine/dialogue.md)).
+
+The entry count is validated against `minimumDialogueEntrySize` (11 bytes) before storage is
+reserved.
 
 ## Version policy
 

@@ -2,6 +2,10 @@
 // It decodes every matching record in Skyrim.esm and the three DLC masters,
 // pins the record totals after the probe, and records every deliberately
 // skipped field category in a gitignored per-run report.
+//
+// Since issue #426 the INFO VMAD fragment tail is decoded rather than skipped,
+// so the `script INFO fragments` bucket is gone from the pinned tally and the
+// sweep counts the decoded result scripts instead.
 
 import Foundation
 @testable import opensky
@@ -32,7 +36,6 @@ struct DialogueRealDataTests {
     ]
 
     private static let expectedSkips = [
-        "script INFO fragments": 7661,
         "script alias object": 1365,
         "unknown NEXT": 861,
         "unknown QNAM": 1662,
@@ -53,7 +56,9 @@ struct DialogueRealDataTests {
             pluginReports.append(sweep.report(name: pluginName))
             #expect(sweep.records == Self.expectedRecords[pluginName], "\(pluginName) count drift")
 
-            let store = DialogueStore(file: file, localized: localized)
+            let store = DialogueStore(
+                file: file, pluginName: pluginName, localized: localized
+            )
             #expect(store.skippedRecordCount == 0, "\(pluginName) store skipped records")
             if pluginName == "Skyrim.esm" {
                 try checkDialogueStringTable(file: file, root: root)
@@ -65,6 +70,10 @@ struct DialogueRealDataTests {
         #expect(total.records["INFO", default: 0] > 0)
         #expect(total.records["VTYP", default: 0] > 0)
         #expect(total.skips == Self.expectedSkips, "dialogue skip tally drift")
+        // Every tail the sweep used to skip now decodes, and each carries one
+        // or two result-script fragments (issue #426).
+        #expect(total.fragmentTails == 7661, "INFO fragment tail drift")
+        #expect(total.fragments == 8009, "INFO fragment drift")
 
         let report = (pluginReports + [total.report(name: "TOTAL")])
             .joined(separator: "\n\n") + "\n"
@@ -76,8 +85,14 @@ struct DialogueRealDataTests {
         var records: [String: Int] = [:]
         var skips: [String: Int] = [:]
         var failures = 0
+        /// INFO records whose VMAD fragment tail decoded (issue #426).
+        var fragmentTails = 0
+        /// Result-script fragments across those tails.
+        var fragments = 0
 
         mutating func merge(_ other: Sweep) {
+            fragmentTails += other.fragmentTails
+            fragments += other.fragments
             for (name, count) in other.records {
                 records[name, default: 0] += count
             }
@@ -106,6 +121,7 @@ struct DialogueRealDataTests {
                 .map { "\($0.key):\($0.value)" }.joined(separator: ", ")
             return """
             [INFO] \(name): \(decoded); failures:\(failures)
+            [INFO] INFO fragment tails:\(fragmentTails) fragments:\(fragments)
             [INFO] skipped: \(skipped.isEmpty ? "none" : skipped)
             """
         }
@@ -148,6 +164,10 @@ struct DialogueRealDataTests {
             let info = try TopicInfo(record: record, localized: localized)
             sweep.add(info.skipped)
             sweep.add(info.script.skipped)
+            if info.script.infoFragments != nil {
+                sweep.fragmentTails += 1
+            }
+            sweep.fragments += info.fragments.count
         } catch {
             sweep.failures += 1
         }

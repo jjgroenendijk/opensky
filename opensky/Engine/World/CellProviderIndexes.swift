@@ -68,7 +68,7 @@ nonisolated struct CellProviderIndexes {
         musicStore = MusicRecordStore(file: file)
         globalStore = GlobalStore(file: file, pluginName: esmURL.lastPathComponent)
         questStore = QuestStore(file: file, pluginName: esmURL.lastPathComponent)
-        dialogueStore = DialogueStore(file: file)
+        dialogueStore = DialogueStore(file: file, pluginName: esmURL.lastPathComponent)
         packageStore = PackageStore(file: file)
         inventoryBaselines = InventoryBaselineResolver.build(from: file)
         equipmentCatalog = EquipmentCatalog.build(from: file)

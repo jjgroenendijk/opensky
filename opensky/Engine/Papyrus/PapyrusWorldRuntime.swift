@@ -74,6 +74,16 @@ final class PapyrusWorldRuntime {
     /// Newest alias filled and bound, worded like a `recentEvents` entry, for
     /// the Scripts readout. Nil until a quest with an alias starts.
     var lastQuestAliasFill: String?
+    /// Script instances belonging to a dialogue response rather than to a
+    /// placed reference (issue #426). They are in no cell's set and nothing
+    /// retires them; see `PapyrusWorldDialogue.swift`.
+    var dialogueInstanceKeys: Set<PapyrusInstanceKey> = []
+    /// Dialogue result fragments enqueued this session, for the Scripts
+    /// readout.
+    var dialogueFragmentsQueued = 0
+    /// Newest dialogue result fragment enqueued, worded like a `recentEvents`
+    /// entry. Nil until a response with a result script is chosen.
+    var lastDialogueFragment: String?
     /// Stage fragments enqueued this session, for the Scripts readout.
     var questFragmentsQueued = 0
     /// Newest fragment enqueued, worded like a `recentEvents` entry. Nil until

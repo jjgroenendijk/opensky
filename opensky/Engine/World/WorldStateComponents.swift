@@ -78,6 +78,13 @@ nonisolated enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendab
     /// those two are separate: hostility changes on a handful of events, while
     /// the values beside it are rewritten sixty times a second.
     case combat
+    /// One dialogue response's said-state (issue #426). The value type is
+    /// `DialogueRuntimeState` in
+    /// `opensky/Engine/Dialogue/DialogueStateComponent.swift`. Like `quest` it
+    /// modifies no placement: it is keyed by an INFO base record's
+    /// `ReferenceKey`, because a response is not placed anywhere and belongs to
+    /// no cell.
+    case dialogue
 }
 
 /// A value that can occupy one component slot.
@@ -113,6 +120,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
     case actorValues(ActorValueState)
     case death(ActorDeathState)
     case combat(ActorCombatState)
+    case dialogue(DialogueRuntimeState)
 
     var kind: WorldStateComponentKind {
         switch self {
@@ -127,6 +135,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
         case .actorValues: .actorValues
         case .death: .death
         case .combat: .combat
+        case .dialogue: .dialogue
         }
     }
 }

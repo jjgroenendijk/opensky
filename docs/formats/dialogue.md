@@ -11,8 +11,9 @@ timestamp: 2026-08-09T00:00:00Z
 
 Issue #204 supplies the plugin-side half of dialogue: DIAL topics, their ordered INFO
 children, VTYP voice-directory identities, and NPC_ voice links. Topic selection,
-condition evaluation, said-state, scenes, result fragments, audio paths and lip data are
-later M17 work.
+condition evaluation, said-state and result-fragment dispatch are issue #426, the
+[dialogue runtime](/engine/dialogue.md); scenes, audio paths and lip data are later M17
+work.
 
 Container framing: [ESM/ESP plugin container](/formats/esm.md). Shared condition layout:
 [conditions](/formats/conditions.md). Actor template chains:
@@ -86,7 +87,7 @@ requires post-processing, audio-output override and spends favor points.
 | field | type | decoded |
 | --- | --- | --- |
 | EDID | zstring | `editorID` |
-| VMAD | struct | attached scripts; INFO fragment tail stays tallied and skipped |
+| VMAD | struct | attached scripts plus the decoded INFO result-fragment tail |
 | DATA/ENAM | struct | flags, legacy tab and normalized reset hours |
 | TPIC | formID | `previousTopic` |
 | PNAM | formID | `previousInfo` |
@@ -136,8 +137,10 @@ INFOs by FormID, and VTYPs by FormID and case-insensitive editor ID. Structurall
 unreadable records increment `skippedRecordCount`.
 
 `CellProviderIndexes` builds the store beside `QuestStore`, and
-`BuilderCellSceneProvider` exposes it through `DialogueDataProviding`. No runtime reads it
-until issue #426.
+`BuilderCellSceneProvider` exposes it through `DialogueDataProviding`. Since issue #426 the
+store also resolves every INFO to a session-stable `ReferenceKey` — said-state is filed per
+response and a save must not key it off a load-order-relative FormID — which is why the
+initializer takes the plugin's file name the way `QuestStore`'s does.
 
 ## Defensive decode and vanilla sweep
 
@@ -158,8 +161,9 @@ The env-gated `DialogueRealDataTests` sweep decoded the five vanilla masters on
 | Dragonborn.esm | 2197 | 4421 | 19 |
 | total | 19844 | 41188 | 183 |
 
-The pinned skip tally is 7,661 bounded INFO fragment tails, 1,365 alias-object script
-properties, and Skyrim.esm's legacy script fields: 861 NEXT, 1,662 QNAM and 1,722 SCHR.
-INFO fragments remain intentionally out of scope for issue #204; the legacy fields are
-recorded rather than interpreted. The report is under the gitignored local run directory
-`logs/dialogue-sweep/2026-08-08T233200Z/`.
+The pinned skip tally is 1,365 alias-object script properties and Skyrim.esm's legacy script
+fields: 861 NEXT, 1,662 QNAM and 1,722 SCHR, all recorded rather than interpreted. The 7,661
+INFO fragment tails the sweep skipped for issue #204 are decoded since issue #426 and are
+counted rather than skipped: 7,661 tails carrying 8,009 result-script fragments, layout in
+[Papyrus attachment data](/formats/vmad.md). The report is under the gitignored local run
+directory `logs/dialogue-sweep/<stamp>/`.

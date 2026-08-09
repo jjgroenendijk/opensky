@@ -40,6 +40,11 @@ nonisolated struct ConditionContext: Sendable {
     /// which makes every detection function a reason-tagged false rather than a
     /// convincing "not detected".
     var detection: DetectionResolution
+    /// The one seam dialogue facts come through (issue #426), shaped exactly
+    /// like the five above: an actor's voice type and who the player is talking
+    /// to. Empty in a context with no world running, which makes every dialogue
+    /// function a reason-tagged false rather than a convincing "no voice type".
+    var dialogue: DialogueResolution
     /// Runtime enable overrides for `GetDisabled`. When absent for a key, the
     /// function falls back to the placement record's initial flag.
     var referenceEnable: ReferenceEnableResolution
@@ -71,6 +76,7 @@ nonisolated struct ConditionContext: Sendable {
         aliases: QuestAliasResolution = .empty,
         actors: ActorStateResolution = .empty,
         detection: DetectionResolution = .empty,
+        dialogue: DialogueResolution = .empty,
         referenceEnable: ReferenceEnableResolution = .empty,
         aliasQuest: FormID? = nil,
         clock: GameClock? = nil,
@@ -84,6 +90,7 @@ nonisolated struct ConditionContext: Sendable {
         self.aliases = aliases
         self.actors = actors
         self.detection = detection
+        self.dialogue = dialogue
         self.referenceEnable = referenceEnable
         self.aliasQuest = aliasQuest
         self.clock = clock

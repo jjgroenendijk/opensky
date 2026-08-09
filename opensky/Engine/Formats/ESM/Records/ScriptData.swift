@@ -6,11 +6,13 @@
 // https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas
 // https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/VMAD_Field
 //
-// Fragment carriers have record-specific tails. INFO, PACK, PERK and SCEN
-// still record that a tail is present and skip the bounded remainder; QUST
-// decodes its tail into `QuestFragmentSection` (see
-// ScriptDataQuestFragments.swift), because the quest runtime needs the
-// stage-to-fragment mapping and the alias script sections.
+// Fragment carriers have record-specific tails. PACK, PERK and SCEN still
+// record that a tail is present and skip the bounded remainder. QUST decodes
+// its tail into `QuestFragmentSection` (see ScriptDataQuestFragments.swift),
+// because the quest runtime needs the stage-to-fragment mapping and the alias
+// script sections, and INFO decodes its tail into `TopicInfoFragmentSection`
+// (see ScriptDataInfoFragments.swift), because the dialogue runtime needs the
+// begin/end result scripts of a chosen response.
 
 import Foundation
 
@@ -23,6 +25,10 @@ nonisolated enum ScriptDataError: Error, Equatable {
     case arrayRequiresVersionFive(type: UInt8, version: Int16)
     case unknownPropertyType(UInt8)
     case unexpectedTrailingBytes(recordType: FourCC?, count: Int)
+    /// A fragment tail whose count is a flag population declared a bit outside
+    /// the documented set, so no phase can be paired with an entry (issue
+    /// #426). The tail is refused; the primary scripts survive.
+    case unknownFragmentFlags(recordType: FourCC?, flags: UInt8)
 }
 
 nonisolated enum ScriptObjectFormat: Int16, Equatable {
@@ -151,6 +157,10 @@ nonisolated struct ScriptData: Equatable {
     /// whose tail failed to decode — that case keeps the primary scripts and
     /// records one `.fragments("QUST")` tally entry instead.
     var questFragments: QuestFragmentSection?
+    /// Decoded INFO tail (issue #426). Nil for every other carrier, and also
+    /// for an INFO whose tail failed to decode — that case keeps the primary
+    /// scripts and records one `.fragments("INFO")` tally entry instead.
+    var infoFragments: TopicInfoFragmentSection?
     var skipped = ScriptDataTally()
 
     init(ownerType: FourCC? = nil) {
@@ -158,6 +168,6 @@ nonisolated struct ScriptData: Equatable {
     }
 
     var isEmpty: Bool {
-        scripts.isEmpty && questFragments == nil
+        scripts.isEmpty && questFragments == nil && infoFragments == nil
     }
 }
