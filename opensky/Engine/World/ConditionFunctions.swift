@@ -24,6 +24,15 @@ nonisolated enum ConditionFunctions {
     // MARK: - Reference identity
 
     static func installReference(_ registry: inout ConditionFunctionRegistry) {
+        // xEdit TES5 condition table: index 35, `GetDisabled`, no parameters.
+        // Creation Kit semantics: 1 when the run-on reference is disabled.
+        registry.register(ConditionFunction(
+            index: 35,
+            name: "GetDisabled"
+        ) { call in
+            call.referenceIsDisabled().map(Self.isTrue)
+        })
+
         registry.register(ConditionFunction(
             index: 72,
             name: "GetIsID",

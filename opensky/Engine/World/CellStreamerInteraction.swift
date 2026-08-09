@@ -122,6 +122,14 @@ extension CellStreamer {
         } ?? composition.actorEntries()
     }
 
+    /// Snapshot index for live package-condition evaluation. Unlike the actor
+    /// list, this includes disabled REFRs that an explicit run-on may name.
+    func residentReferenceIndex() -> RuntimeReferenceIndex {
+        RuntimeReferenceIndex(entries: interiorScene.map {
+            $0.references.sortedEntries()
+        } ?? composition.referenceEntries())
+    }
+
     private func distanceSquared(
         _ entry: RuntimeReferenceEntry,
         _ position: SIMD3<Float>

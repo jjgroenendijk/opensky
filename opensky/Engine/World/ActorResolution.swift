@@ -92,6 +92,13 @@ nonisolated struct ResolvedActorStats: Equatable {
     let usesPlayerLevelMultiplier: ActorSourcedField<Bool>
 }
 
+/// Ordered AI package stack after `useAIPackages` template inheritance.
+nonisolated struct ResolvedActorPackages: Equatable {
+    let base: FormID
+    let chain: [ActorChainLink]
+    let packages: ActorSourcedField<[FormID]>
+}
+
 /// Resolves template chains against pre-built single-plugin record indexes
 /// (raw-FormID keys, matching CellSceneBuilder's convention).
 nonisolated struct ActorTemplateResolver {
@@ -165,6 +172,19 @@ nonisolated struct ActorTemplateResolver {
             },
             usesPlayerLevelMultiplier: resolveField(in: npcs, flag: .useStats) {
                 ActorSourcedField(value: $0.flags.contains(.pcLevelMult), source: $0.formID)
+            }
+        )
+    }
+
+    /// Resolves only the package-list field group. A local empty list remains
+    /// authoritative unless `useAIPackages` explicitly delegates it.
+    func resolvePackages(base: FormID) throws -> ResolvedActorPackages {
+        let (npcs, chain) = try resolveChain(base: base)
+        return ResolvedActorPackages(
+            base: base,
+            chain: chain,
+            packages: resolveField(in: npcs, flag: .useAIPackages) {
+                ActorSourcedField(value: $0.packages, source: $0.formID)
             }
         )
     }

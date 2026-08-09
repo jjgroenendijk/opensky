@@ -59,7 +59,8 @@ nonisolated extension CellSceneProvider {
 nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding,
     AudioDataProviding, MovementConfigurationProviding, GlobalDataProviding,
     ScriptDataProviding, ItemDataProviding, BarterDataProviding, QuestDataProviding,
-    DialogueDataProviding, ActorValueDataProviding, CombatDataProviding
+    DialogueDataProviding, ActorValueDataProviding, CombatDataProviding,
+    PackageDataProviding
 {
     let builder: CellSceneBuilder
     let worldspaceEditorID: String
@@ -84,6 +85,8 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     var questStore: QuestStore?
     /// Topic, response and voice-type records for the dialogue runtime.
     var dialogueStore: DialogueStore?
+    /// PACK records plus resolved NPC_ package lists (issue #201).
+    var packageStore: PackageStore?
     /// Item/container/leveled-list indexes (issue #177); nil when the session
     /// was built without them, which is every synthetic scene.
     var inventoryBaselines: InventoryBaselineResolver?

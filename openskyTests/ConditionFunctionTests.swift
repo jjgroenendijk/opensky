@@ -21,20 +21,22 @@ struct ConditionFunctionTests {
 
     @Test func registryDescribesTheImplementedFunctions() {
         let registry = ConditionFunctionRegistry.standard
-        // Nine before the actor family (issue #375) added five.
+        // Nine before the actor family (issue #375) added five; package
+        // schedules (issue #201) add GetDisabled.
         #expect(registry.indices == [
-            14, 18, 46, 56, 58, 59, 72, 74, 77, 170, 263, 323, 543, 640
+            14, 18, 35, 46, 56, 58, 59, 72, 74, 77, 170, 263, 323, 543, 640
         ])
-        #expect(registry.count == 14)
+        #expect(registry.count == 15)
         #expect(registry.sortedFunctions().map(\.name) == [
-            "GetActorValue", "GetCurrentTime", "GetDead", "GetQuestRunning", "GetStage",
-            "GetStageDone", "GetIsID", "GetGlobalValue", "GetRandomPercent", "GetDayOfWeek",
-            "IsWeaponOut", "GetCombatState", "GetQuestCompleted", "GetActorValuePercent"
+            "GetActorValue", "GetCurrentTime", "GetDisabled", "GetDead", "GetQuestRunning",
+            "GetStage", "GetStageDone", "GetIsID", "GetGlobalValue", "GetRandomPercent",
+            "GetDayOfWeek", "IsWeaponOut", "GetCombatState", "GetQuestCompleted",
+            "GetActorValuePercent"
         ])
         // The Creation Kit spells every index 4096 higher than the plugin does.
         #expect(registry.sortedFunctions().map(\.creationKitIndex) == [
-            4110, 4114, 4142, 4152, 4154, 4155, 4168, 4170, 4173, 4266,
-            4359, 4419, 4639, 4736
+            4110, 4114, 4131, 4142, 4152, 4154, 4155, 4168, 4170, 4173,
+            4266, 4359, 4419, 4639, 4736
         ])
         #expect(registry[Self.getIsID]?.parameter1 == .formID)
         #expect(registry[Self.getIsID]?.parameter2 == .unused)

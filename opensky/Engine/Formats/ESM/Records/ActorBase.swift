@@ -97,6 +97,8 @@ nonisolated struct ActorBase {
     let headParts: [FormID]
     /// DOFT — default outfit.
     let defaultOutfit: FormID?
+    /// PKID — ordered AI package stack. The first matching entry wins.
+    let packages: [FormID]
     /// ACBS/CNAM/DNAM stat inputs (issue #194).
     let stats: Stats
     /// VMAD — Papyrus scripts attached to the NPC_ base.
@@ -166,6 +168,7 @@ nonisolated struct ActorBase {
         wornArmor = references.wornArmor
         headParts = references.headParts
         defaultOutfit = references.defaultOutfit
+        packages = references.packages
         self.stats = stats
         self.scriptData = scriptData
     }
@@ -179,6 +182,7 @@ nonisolated struct ActorBase {
         var wornArmor: FormID?
         var headParts: [FormID] = []
         var defaultOutfit: FormID?
+        var packages: [FormID] = []
     }
 
     /// The FormID-valued fields, plus the VMAD accumulator every unrecognized
@@ -202,6 +206,8 @@ nonisolated struct ActorBase {
             try references.headParts.append(FormID(reader.readUInt32()))
         case "DOFT":
             references.defaultOutfit = try FormID(reader.readUInt32())
+        case "PKID":
+            try references.packages.append(FormID(reader.readUInt32()))
         default:
             _ = try scriptData.decode(field: field)
         }

@@ -41,6 +41,12 @@ nonisolated protocol DialogueDataProviding {
     var dialogueStore: DialogueStore? { get }
 }
 
+/// Optional PACK/NPC_ schedule index (issue #201). The M16 gate panel pulls
+/// this seam from the real provider; synthetic scenes leave it nil.
+nonisolated protocol PackageDataProviding {
+    var packageStore: PackageStore? { get }
+}
+
 /// Optional item + container indexes a provider can expose (issue #177).
 /// `GameViewController` pairs the resolver with the session's
 /// `WorldStateStore` to build the `InventoryRuntime` that take, drop and
