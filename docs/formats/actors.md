@@ -5,15 +5,16 @@ description: Actor records, appearance and stat resolution, GPU asset assembly, 
   paths.
 tags: [format, plugin, actors, achr, npc, leveled, template, race, class, armor, outfit,
   facegen]
-timestamp: 2026-08-07T00:00:00Z
+timestamp: 2026-08-09T00:00:00Z
 ---
 
 # Actor records, Skyrim SE
 
 Milestones 5.1, 5.2 + 5.4 subset plus item 15.3's stat inputs: enough decode to
 place actors, resolve who they look like, assemble GPU skeleton/body/FaceGen
-assets at world pose, and derive their health, magicka and stamina — no AI,
-factions, spells, skills, or carried inventory yet. What the stat fields feed:
+assets at world pose, derive their health, magicka and stamina, and resolve
+their ordered AI-package stack — no factions, spells, skills, or carried inventory yet.
+What the stat fields feed:
 [actor values](/engine/actor-values.md). Container framing:
 [ESM/ESP plugin container](/formats/esm.md); decode
 policy (skip unknown fields, `ESMError.malformed` only on structurally
@@ -69,6 +70,7 @@ Appearance fields plus the stat inputs the actor-value derivation reads
 | WNAM  | formID  | `wornArmor` — skin ARMO; absent -> race skin     |
 | PNAM  | formID  | `headParts` (HDPT), one per repeated subrecord   |
 | DOFT  | formID  | `defaultOutfit` (OTFT)                           |
+| PKID  | formID  | one entry in ordered `packages`, repeated         |
 | VMAD  | struct  | `scriptData` attachment accumulator              |
 
 ACBS, 24 bytes. Every word below is decoded except the two marked skipped:
@@ -108,6 +110,11 @@ spell list, 0x0010 AI data, 0x0020 AI packages, 0x0040 model/animation
 (UESP: "unused?"; xEdit names it, CK omits it — do not rely on it), 0x0080
 base data, 0x0100 inventory, 0x0200 script, 0x0400 def pack list, 0x0800
 attack data, 0x1000 keywords.
+
+`useAIPackages` delegates the whole ordered PKID array through the same NPC_/LVLN chain as
+appearance and stats. It is field-group inheritance: a local empty array remains the answer
+when the bit is clear. Selection and PACK template resolution are documented under
+[actor package schedules](/engine/package-schedules.md).
 
 VTCK resolves through `useTraits` with gender, race, skin and head parts. The resolved
 appearance carries it as `ActorSourcedField<FormID?>`, preserving the NPC_ that supplied

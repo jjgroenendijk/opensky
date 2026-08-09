@@ -35,6 +35,9 @@ nonisolated struct ConditionContext: Sendable {
     /// context with no world running, which makes every actor function a
     /// reason-tagged false rather than a convincing zero.
     var actors: ActorStateResolution
+    /// Runtime enable overrides for `GetDisabled`. When absent for a key, the
+    /// function falls back to the placement record's initial flag.
+    var referenceEnable: ReferenceEnableResolution
     /// Quest whose alias table a `questAlias` run-on and a CIS1/CIS2 name
     /// override are resolved against.
     ///
@@ -62,6 +65,7 @@ nonisolated struct ConditionContext: Sendable {
         quests: QuestResolution = .empty,
         aliases: QuestAliasResolution = .empty,
         actors: ActorStateResolution = .empty,
+        referenceEnable: ReferenceEnableResolution = .empty,
         aliasQuest: FormID? = nil,
         clock: GameClock? = nil,
         references: RuntimeReferenceIndex = .empty,
@@ -73,6 +77,7 @@ nonisolated struct ConditionContext: Sendable {
         self.quests = quests
         self.aliases = aliases
         self.actors = actors
+        self.referenceEnable = referenceEnable
         self.aliasQuest = aliasQuest
         self.clock = clock
         self.references = references
@@ -145,6 +150,26 @@ nonisolated struct ConditionCall: Sendable {
                 return .failure(.unresolvedReference(condition.runOn))
             }
             return .success(entry)
+        }
+    }
+
+    /// Whether this condition's run-on reference is disabled right now.
+    /// Runtime state wins; otherwise the REFR/ACHR header's initial flag is the
+    /// plugin baseline. A missing placement is not treated as disabled.
+    func referenceIsDisabled() -> Result<Bool, ConditionFailure> {
+        referenceKey().flatMap { key in
+            if let state = context.referenceEnable[key] {
+                return .success(!state.isEnabled)
+            }
+            guard let entry = context.references[key] else {
+                return .failure(.unresolvedReference(condition.runOn))
+            }
+            switch entry.record {
+            case let .reference(reference):
+                return .success(reference.isInitiallyDisabled)
+            case let .actor(actor):
+                return .success(actor.isInitiallyDisabled)
+            }
         }
     }
 

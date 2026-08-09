@@ -193,6 +193,13 @@ nonisolated struct CellSceneComposition {
             .filter { $0.placedActor != nil }
     }
 
+    /// Every resident placement, ordered by cell and then stable reference
+    /// identity. Package conditions may name a disabled non-actor REFR.
+    func referenceEntries() -> [RuntimeReferenceEntry] {
+        cells.sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
+            .flatMap { $0.value.references.sortedEntries() }
+    }
+
     /// Every resident cell's load summary, in the same grid order
     /// `actorEntries()` uses, so a per-actor lookup across the composition is
     /// deterministic (issue #180).

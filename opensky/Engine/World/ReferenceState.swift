@@ -33,13 +33,8 @@ nonisolated struct ReferenceState: Equatable, Sendable {
 
     /// The plugin baseline for `entry`, re-derived from its decoded record.
     ///
-    /// Two gaps are deliberate and belong to issue #160, which is where deltas
-    /// start being applied at build time:
-    ///
-    /// * `PlacedReference` does not decode the record header, so a REFR's
-    ///   `initiallyDisabled` flag is not visible here and every REFR baselines
-    ///   as enabled. `PlacedActor` does carry the flag and is honoured.
-    /// * Neither placement type carries the header's `deleted` flag, so the
+    /// One gap remains deliberate: neither placement type carries the
+    /// header's `deleted` flag, so the
     ///   deletion baseline is always "not deleted". That flag means the plugin
     ///   removed the record, which is a load-time concern rather than a runtime
     ///   one.
@@ -47,7 +42,7 @@ nonisolated struct ReferenceState: Equatable, Sendable {
         key = entry.key
         switch entry.record {
         case let .reference(reference):
-            enableState = .enabled
+            enableState = ReferenceEnableState(isEnabled: !reference.isInitiallyDisabled)
             transform = ReferenceTransformOverride(
                 placement: reference.placement,
                 scale: reference.scale

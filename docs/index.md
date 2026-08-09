@@ -59,6 +59,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   function index and parameters, run-on types, and the skip-don't-throw decode policy;
   plus evaluation - the function registry, OR grouping, run-on resolution, the
   reason-tagged-false failure model, and the coverage tally with its vanilla sweep.
+* [AI packages (PACK, PKID)](/formats/packages.md) - general data, calendar schedules,
+  header conditions, public location/target inputs, template links, procedure names, and
+  the Whiterun resident census.
 * [Papyrus compiled scripts](/formats/pex.md) - big-endian Skyrim PEX 3.2
   framing, typed objects/functions/instructions, VFS loading, defensive error
   policy, opcode inventory, and typed native-call coverage census.
@@ -130,6 +133,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   projection, deterministic triangle A-star, radius-aware funnel paths, door crossings,
   budgeted invalidation, capped NPC capsule following with sparse persistence and actor
   triggers, and the depth-tested navmesh/path debug overlay.
+* [Actor package schedules](/engine/package-schedules.md) - ordered PKID selection,
+  template inheritance, bounded/event-driven reevaluation, current-state inspection, and
+  deterministic travel, wander, sandbox, sleep, and eat procedure machines.
 * [Terrain mesh build](/engine/terrain.md) - LAND -> per-quadrant meshes under the cell's
   objects: grid topology, base textures, XCLC quad-hiding, DNAM fallback plane, placement.
 * [Procedural grass](/engine/grass.md) - deterministic LAND-driven placement, cell-owned

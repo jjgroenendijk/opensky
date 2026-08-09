@@ -91,7 +91,7 @@ extension GameViewController {
         // Last of the combat systems: the loop reads what melee, archery and
         // the ragdolls did this frame, so it has to advance after all three
         // (issue #374).
-        wireCombat(provider: provider, renderer: renderer)
+        wireLateWorldSystems(provider: provider, renderer: renderer)
         renderer.terrainSampler = { [weak controller] position in
             controller?.sampleTerrain(at: position)
         }
@@ -112,6 +112,16 @@ extension GameViewController {
         wireAIOverlay(renderer: renderer, streamer: streamer)
         wireGlobals(provider: provider, renderer: renderer)
         wireNPCMovement(renderer: renderer, streamer: streamer)
+    }
+
+    private func wireLateWorldSystems(
+        provider: any CellSceneProvider,
+        renderer: Renderer
+    ) {
+        wireCombat(provider: provider, renderer: renderer)
+        // Package conditions observe the live quest, actor and reference state,
+        // so selection advances after those runtimes in the same world tick.
+        wirePackages(provider: provider, renderer: renderer)
     }
 
     /// View ray for use-key targeting, simulated-player modes only: the fly

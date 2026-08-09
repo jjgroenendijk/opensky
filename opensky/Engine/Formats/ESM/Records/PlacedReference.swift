@@ -70,6 +70,8 @@ nonisolated struct PlacedReference {
     }
 
     let formID: FormID
+    /// Record-header flag 0x800: hidden until a script or quest enables it.
+    let isInitiallyDisabled: Bool
     /// NAME — the base object this reference places.
     let base: FormID
     /// DATA placement as decoded. `var` because a cell build lays a runtime
@@ -125,6 +127,7 @@ nonisolated struct PlacedReference {
             throw ESMError.malformed("expected REFR record, got \(record.type)")
         }
         formID = FormID(record.formID)
+        isInitiallyDisabled = record.isInitiallyDisabled
 
         var base: FormID?
         var placement: Placement?
@@ -174,6 +177,7 @@ nonisolated struct PlacedReference {
     /// placed inventory item would have used.
     init(spawn: ReferenceSpawnState, formID: FormID) {
         self.formID = formID
+        isInitiallyDisabled = false
         base = spawn.base
         placement = spawn.placement
         scale = spawn.scale

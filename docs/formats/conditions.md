@@ -5,7 +5,7 @@ description: The shared 32-byte CTDA condition payload, its sibling count and st
   subrecords, the skip-don't-throw decode policy, and the function registry and
   evaluator that answer a condition list at runtime.
 tags: [format, plugin, conditions]
-timestamp: 2026-08-02T00:00:00Z
+timestamp: 2026-08-09T00:00:00Z
 ---
 
 # Conditions (CTDA, CITC, CIS1, CIS2)
@@ -265,7 +265,8 @@ reference with nothing wrong behind it.
 
 `ConditionContext` is a value type composed of `globals: GlobalResolution`,
 `quests: QuestResolution`, `aliases: QuestAliasResolution`,
-`actors: ActorStateResolution`, an optional `clock: GameClock`, a
+`actors: ActorStateResolution`, `referenceEnable: ReferenceEnableResolution`, an optional
+`clock: GameClock`, a
 `references: RuntimeReferenceIndex`, the `subject` and `target` `ReferenceKey`s,
 and `random: ConditionRandom`. Building
 one is cheap, so a caller evaluating off the main actor builds its own from a
@@ -289,7 +290,7 @@ rather than answering "sheathed".
 
 ### Implemented functions
 
-Fourteen functions are registered, chosen because the engine can answer them
+Fifteen functions are registered, chosen because the engine can answer them
 honestly from state it already owns. The stored index is the raw on-disk value;
 the Creation Kit spells each one 4096 higher
 (`ConditionFunctionRegistry.creationKitOffset`).
@@ -298,6 +299,7 @@ the Creation Kit spells each one 4096 higher
 | --- | --- | --- | --- | --- |
 | 14 | 4110 | `GetActorValue` | #1 actor-value index | the run-on actor's current value |
 | 18 | 4114 | `GetCurrentTime` | none | current game time as a decimal hour, 0 to 24 — 4:30 am is 4.5 |
+| 35 | 4131 | `GetDisabled` | none | 1 when the run-on reference is currently disabled, 0 otherwise |
 | 46 | 4142 | `GetDead` | none | 1 when the run-on actor is recorded dead, 0 otherwise |
 | 56 | 4152 | `GetQuestRunning` | #1 `QUST` FormID | 1 when the quest is running, 0 otherwise |
 | 58 | 4154 | `GetStage` | #1 `QUST` FormID | the highest stage the quest has reached, 0 when it has reached none |
@@ -312,6 +314,10 @@ the Creation Kit spells each one 4096 higher
 | 640 | 4736 | `GetActorValuePercent` | #1 actor-value index | current over maximum, 0 to 1 |
 
 Several of these carry a recorded decision.
+
+`GetDisabled` reads a runtime enable-state snapshot first and falls back to the REFR or ACHR
+record-header initially-disabled flag. A missing placement is reason-tagged unresolved, not
+treated as enabled. The first consumer is [actor package schedules](/engine/package-schedules.md).
 
 `GetCurrentTime` reads the game clock when the context has one and falls back to
 the `GameHour` global when it does not. That fallback is an OpenSky choice, not
@@ -587,7 +593,7 @@ so the registry uses 77.
 * Creation Kit wiki, Conditions category — <https://ck.uesp.net/wiki/Category:Conditions>.
   The OR-flag grouping rule and its `A AND B OR C AND D` example come from here.
 * Creation Kit wiki, the individual function pages under
-  <https://ck.uesp.net/wiki/>: `GetCurrentTime`, `GetIsID`, `GetGlobalValue`,
+  <https://ck.uesp.net/wiki/>: `GetCurrentTime`, `GetDisabled`, `GetIsID`, `GetGlobalValue`,
   `GetRandomPercent`, `GetDayOfWeek`, `GetDead`, `GetActorValue` and
   `GetActorValuePercent`, for each function's return value, parameter typing and
   value range. `IsWeaponOut` and `GetCombatState` were read from the

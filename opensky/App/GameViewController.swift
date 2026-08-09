@@ -200,6 +200,8 @@ final class GameViewController: NSViewController {
     var combat = CombatBridgeState()
     /// Kinematic NPC gait clips and failed clip keys (issue #423).
     var npcMovementBridge = NPCMovementBridgeState()
+    /// Live resident-actor package selection (issue #201).
+    var packages = PackageBridgeState()
 
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))

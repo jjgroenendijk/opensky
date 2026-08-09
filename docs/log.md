@@ -4,6 +4,19 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-09
 
+* **Actor packages and schedules (issue #201)**: NPC_ records now retain ordered PKID
+  stacks and resolve `useAIPackages` through template chains. The bounded PACK decoder reads
+  general data, calendar schedules, header conditions, template/public inputs, and
+  procedure names without absorbing branch-local CTDAs. Resident actors select the first
+  scheduled true package on exact boundaries or within 15 game minutes; `GetDisabled`
+  resolves runtime enable overrides over plugin baselines. Deterministic travel, wander,
+  sandbox, sleep, and eat machines emit movement/loop commands, with readable current state
+  for the future M16 panel. Synthetic tests include a real path query over generated NAVM
+  geometry; the Skyrim.esm gate pins 21 reachable packages and four Whiterun residents over
+  a full day. New pages: [AI packages](/formats/packages.md) and
+  [actor package schedules](/engine/package-schedules.md); updated
+  [actor records](/formats/actors.md) and [conditions](/formats/conditions.md).
+
 * **NPC locomotion and path following (issue #423)**: active NPCs now own capped,
   fixed-clock `WalkController` capsules over streamed navmesh corridors, steer and select a
   walk or run gait, cross paired door waypoints, repath once after a bounded stall, and then
