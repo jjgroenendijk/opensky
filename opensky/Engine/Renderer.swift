@@ -123,6 +123,7 @@ final class Renderer: NSObject {
     /// upload instance transforms. Empty in every path that runs no physics,
     /// which is what leaves those passes unchanged there.
     var dynamicInstanceDeltas: [UInt32: float4x4] = [:]
+    var npcInstanceDeltas: [UInt32: float4x4] = [:]
     /// First-person field of view and the depth policy the arms are drawn
     /// under. Pure settings; holds no pose (issue #190).
     var firstPersonCamera = FirstPersonCamera()

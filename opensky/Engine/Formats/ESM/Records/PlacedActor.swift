@@ -24,6 +24,19 @@ nonisolated struct PlacedActor {
     /// VMAD — Papyrus scripts attached directly to this placed actor.
     let scriptData: ScriptData
 
+    init(
+        copying actor: PlacedActor,
+        placement: PlacedReference.Placement,
+        scale: Float
+    ) {
+        formID = actor.formID
+        base = actor.base
+        self.placement = placement
+        self.scale = scale
+        isInitiallyDisabled = actor.isInitiallyDisabled
+        scriptData = actor.scriptData
+    }
+
     init(record: ESMRecord) throws {
         guard record.type == "ACHR" else {
             throw ESMError.malformed("expected ACHR record, got \(record.type)")

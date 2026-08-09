@@ -183,11 +183,13 @@ nonisolated extension RenderAnimation {
 
 nonisolated final class ActorAnimationPlayback: RenderAnimation {
     let actor: FormID
+    let female: Bool
     /// The clip currently sounding: the idle one, or a bounded override a
     /// combat reaction asked for (issue #374).
     private(set) var clip: ActorAnimationClip
     /// The clip this actor returns to when an override ends.
     private let idleClip: ActorAnimationClip
+    private var locomotionClip: ActorAnimationClip
     /// Animation time the override started at, so it is sampled from its own
     /// frame zero rather than from wherever the shared clock happened to be.
     private var overrideStart: Float = 0
@@ -195,10 +197,17 @@ nonisolated final class ActorAnimationPlayback: RenderAnimation {
     private var overrideEnd: Float = 0
     private let meshes: [RenderMesh]
 
-    init(actor: FormID, clip: ActorAnimationClip, models: [RenderModel]) {
+    init(
+        actor: FormID,
+        clip: ActorAnimationClip,
+        models: [RenderModel],
+        female: Bool = false
+    ) {
         self.actor = actor
+        self.female = female
         self.clip = clip
         idleClip = clip
+        locomotionClip = clip
         var seen = Set<ObjectIdentifier>()
         meshes = models.flatMap(\.meshes).filter {
             $0.isSkinned && seen.insert(ObjectIdentifier($0)).inserted
@@ -217,6 +226,15 @@ nonisolated final class ActorAnimationPlayback: RenderAnimation {
         overrideEnd = time + seconds
     }
 
+    /// Selects the in-place gait clip a kinematic NPC drive resolved. Combat
+    /// overrides remain authoritative until their bounded hold expires.
+    func setLocomotionClip(_ clip: ActorAnimationClip?) {
+        locomotionClip = clip ?? idleClip
+        if overrideEnd == 0 {
+            self.clip = locomotionClip
+        }
+    }
+
     /// Whether a bounded override is playing as of `time`.
     func isOverriding(at time: Float) -> Bool {
         overrideEnd > 0 && time < overrideEnd
@@ -227,7 +245,7 @@ nonisolated final class ActorAnimationPlayback: RenderAnimation {
     /// skinning here, the ragdoll hand-off in the app — reads the same pose.
     func pose(at time: Float) -> [String: float4x4]? {
         if overrideEnd > 0, time >= overrideEnd {
-            clip = idleClip
+            clip = locomotionClip
             overrideEnd = 0
             overrideStart = 0
         }
@@ -297,7 +315,8 @@ nonisolated extension CellSceneBuilder {
         return .success(ActorAnimationPlayback(
             actor: assembly.actor,
             clip: clip,
-            models: assembly.models.map(\.asset.model)
+            models: assembly.models.map(\.asset.model),
+            female: assembly.visual.appearance.isFemale.value
         ))
     }
 

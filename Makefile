@@ -67,7 +67,7 @@ METAL_FILES     := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
         realdata-plan no-game-content \
         docs-links build cli \
         probe test test-fast \
-        test-ui test-one test-report realtest realtest-perf realtest-all test-sanitize \
+        test-ui test-one test-report realtest realtest-perf realtest-npc-perf realtest-all test-sanitize \
         test-perms app-path \
         cli-path run-cli \
         install clean prune icon
@@ -241,6 +241,11 @@ realtest: vendor-link ## Run one env-gated real-data test under the RSS watchdog
 realtest-perf: vendor-link ## Run the dynamic-body perf gate against an optimized build
 	@./tools/realtest.sh -O \
 		-t 'openskyRealDataTests/DynamicBodyRealDataTests/settlesAndPushesVanillaClutter()' \
+		$(if $(CAP),-c $(CAP),)
+
+realtest-npc-perf: vendor-link ## Measure vanilla NPC graphs at the mover cap optimized
+	@./tools/realtest.sh -O \
+		-t 'openskyRealDataTests/NPCMovementRealDataTests/measuresVanillaGraphsAtMoverCap()' \
 		$(if $(CAP),-c $(CAP),)
 
 # The counterpart to `realtest`: the same plan, the same watchdog, no selector.

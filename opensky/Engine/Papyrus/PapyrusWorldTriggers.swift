@@ -64,11 +64,12 @@ extension PapyrusWorldStateBridge {
     @discardableResult
     func handleTriggerTransition(_ event: TriggerTransitionEvent) -> Int {
         guard let world else { return 0 }
+        let actor = event.actor ?? playerKey
         switch event.phase {
         case .enter:
-            return world.queueOnTriggerEnter(volume: event.reference, actor: playerKey)
+            return world.queueOnTriggerEnter(volume: event.reference, actor: actor)
         case .leave:
-            return world.queueOnTriggerLeave(volume: event.reference, actor: playerKey)
+            return world.queueOnTriggerLeave(volume: event.reference, actor: actor)
         }
     }
 }

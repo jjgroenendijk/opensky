@@ -4,6 +4,18 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-09
 
+* **NPC locomotion and path following (issue #423)**: active NPCs now own capped,
+  fixed-clock `WalkController` capsules over streamed navmesh corridors, steer and select a
+  walk or run gait, cross paired door waypoints, repath once after a bounded stall, and then
+  record a give-up. Live actor transforms feed rendering and combat; arrival, give-up, cell
+  handoff, and save are the only transform-journal boundaries. Actor capsules now fire the
+  existing Papyrus trigger events with their own identity. The app uses observed in-place
+  gait clips behind a graph-agnostic drive seam, and `MoveToPointControl` plus readouts form
+  the M16 panel contract. Synthetic tests pin corridor, door, trigger, recovery, persistence,
+  and cap behavior; real-install tests cover the Chillfurrow exterior-to-interior route and
+  the graph-cost decision. Updated pages: [runtime navigation](/engine/navigation.md),
+  [actor animation](/engine/actor-animation.md), and [Papyrus VM](/engine/papyrus-vm.md).
+
 * **World-space debug overlay (issue #422)**: the renderer now accepts stable, pluggable
   per-frame sources of colored triangles and polylines, uploads one capped vertex list, and
   draws it through a translucent read-only-depth Metal pass on both drawable and offscreen

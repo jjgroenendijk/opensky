@@ -29,10 +29,12 @@ extension GameViewController: CombatLoopWorld {
         guard let streamer else { return [] }
         return streamer.residentActorEntries().compactMap { entry in
             guard let actor = entry.placedActor else { return nil }
+            let moved = streamer.npcTransform(for: entry.key)
+                ?? worldState.component(ReferenceTransformOverride.self, for: entry.key)
             return CombatActorObservation(
                 key: entry.key,
-                feet: actor.placement.position,
-                facing: actor.placement.rotation.z,
+                feet: moved?.position ?? actor.placement.position,
+                facing: moved?.rotation.z ?? actor.placement.rotation.z,
                 scale: actor.scale,
                 isDead: worldState.component(ActorDeathState.self, for: entry.key)?.isDead
                     ?? false,

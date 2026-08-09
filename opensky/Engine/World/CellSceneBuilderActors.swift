@@ -206,8 +206,13 @@ nonisolated extension CellSceneBuilder {
                         entry: indexed[actor.formID], deltas: deltas
                     )
                 )
+                let placed = actorApplyingRuntimeTransform(
+                    actor,
+                    entry: indexed[actor.formID],
+                    deltas: deltas
+                )
                 record(
-                    assembler.assemble(placed: actor, visual: visual),
+                    assembler.assemble(placed: placed, visual: visual),
                     id: id,
                     into: &build
                 )
@@ -223,6 +228,22 @@ nonisolated extension CellSceneBuilder {
                 )
             }
         }
+    }
+
+    nonisolated private func actorApplyingRuntimeTransform(
+        _ actor: PlacedActor,
+        entry: RuntimeReferenceEntry?,
+        deltas: [ReferenceKey: ReferenceStateDelta]
+    ) -> PlacedActor {
+        guard
+            let entry,
+            let transform = deltas[entry.key]?.component(ReferenceTransformOverride.self)
+        else { return actor }
+        return PlacedActor(
+            copying: actor,
+            placement: transform.placement,
+            scale: transform.scale
+        )
     }
 
     /// Buckets one assembled actor: drawn plus its animation outcome, or a

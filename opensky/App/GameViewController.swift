@@ -198,6 +198,8 @@ final class GameViewController: NSViewController {
     /// implementation lives in `GameViewControllerCombat.swift`; stored here
     /// because extensions cannot add state.
     var combat = CombatBridgeState()
+    /// Kinematic NPC gait clips and failed clip keys (issue #423).
+    var npcMovementBridge = NPCMovementBridgeState()
 
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))

@@ -181,6 +181,11 @@ nonisolated struct RuntimeNavigationGraph: Sendable {
         doorTriangles[reference.rawValue] ?? []
     }
 
+    func cell(at point: SIMD3<Float>) -> CellSceneLocation? {
+        guard case let .hit(projection) = projection(of: point) else { return nil }
+        return mesh(containing: projection.triangle)?.cell
+    }
+
     mutating func findPath(_ query: NavigationPathQuery) -> NavigationPathResult {
         var workspace = NavigationQueryScratch()
         swap(&workspace, &scratch)

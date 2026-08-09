@@ -40,6 +40,9 @@ nonisolated struct TriggerTransitionEvent: Equatable, Sendable {
 
     let reference: ReferenceKey
     let phase: Phase
+    /// The occupying actor. Nil preserves the player-capsule event surface;
+    /// NPC movers name themselves so Papyrus receives the correct activator.
+    var actor: ReferenceKey?
 }
 
 extension CellStreamer {

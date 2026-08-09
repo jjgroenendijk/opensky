@@ -5,7 +5,7 @@ description: Bounded execution of Skyrim PEX functions with explicit frames,
   typed values, native registry, deterministic scheduling and tallies, driven
   once per frame from the engine loop with a script event queue and save state.
 tags: [engine, papyrus, virtual-machine, bytecode]
-timestamp: 2026-08-01T00:00:00Z
+timestamp: 2026-08-09T00:00:00Z
 ---
 
 # Papyrus virtual machine
@@ -563,8 +563,9 @@ notice.
 `queueOnActivate` minus the activation-depth machinery: one event per script instance
 attached to the volume's authoring reference, iterated in `PapyrusInstanceKey` order,
 argument 0 the actor as `PapyrusValue.object(handle)`, function names
-`onTriggerEnterEventName` and `onTriggerLeaveEventName`. The actor is
-`ReferenceKey.player` in M11 — actor occupancy is M16 scope.
+`onTriggerEnterEventName` and `onTriggerLeaveEventName`. Player occupancy leaves the event's
+actor nil and resolves to `ReferenceKey.player`; an M16 NPC mover names its own stable key,
+so the same bridge passes that actor as `akActionRef`.
 
 The events are queued at `activationDepth` 0 and never consume the recursion cap. A trigger
 edge is not an activation chain: occupancy comes from the streamer's per-frame capsule test,
