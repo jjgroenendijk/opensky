@@ -39,7 +39,12 @@ extension GameViewController: MeleeCombatWorld {
         guard let streamer else { return [] }
         return streamer.residentActorEntries().compactMap { entry in
             guard let actor = entry.placedActor else { return nil }
-            return MeleeTarget(key: entry.key, feet: actor.placement.position)
+            let moved = streamer.npcTransform(for: entry.key)
+                ?? worldState.component(ReferenceTransformOverride.self, for: entry.key)
+            return MeleeTarget(
+                key: entry.key,
+                feet: moved?.position ?? actor.placement.position
+            )
         }
     }
 

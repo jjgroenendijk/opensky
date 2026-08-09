@@ -157,6 +157,8 @@ final class CellStreamer {
     var onDynamicPosesChanged: (([UInt32: float4x4]) -> Void)?
     /// Resident graph, repath backlog and completion sink (issue #200).
     var navigationState = CellStreamerNavigationState()
+    /// Active NPC capsules, their drive, and app callbacks (issue #423).
+    var npcMovementState = CellStreamerNPCMovementState()
 
     /// - Parameters:
     ///   - center: grid center at launch (streaming starts on FirstRenderCell).

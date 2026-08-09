@@ -146,6 +146,7 @@ extension GameViewController: RuntimeStateControlProviding {
     // MARK: Save and load
 
     func saveWorldState(slot: String) {
+        streamer?.persistNPCMovementForSave()
         // Arrows in flight and corpses still falling are dropped before the
         // snapshot is taken: neither survives a reload, and a save that
         // recorded them would restore a world with an arrow frozen in the air

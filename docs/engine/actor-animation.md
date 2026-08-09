@@ -5,10 +5,17 @@ description: Direct HKX idle sampling, skeleton-world composition, NIF palette r
   streamed playback ownership, fallback accounting, frame budget, and the graph-driven
   player path that shares the same composition.
 tags: [engine, actors, animation, hkx, skinning, streaming, locomotion, milestone-14]
-timestamp: 2026-08-04T00:00:00Z
+timestamp: 2026-08-09T00:00:00Z
 ---
 
 # Actor idle animation
+
+## Contents
+
+* [Playback path](#playback-path)
+* [The graph-driven player path](#the-graph-driven-player-path)
+* [Streaming lifecycle and fallback](#streaming-lifecycle--fallback)
+* [Timing and acceptance](#timing--acceptance)
 
 Milestone 6 adds direct idle-clip playback to streamed human actors. Container, skeleton,
 binding, and spline layouts come from the clean-room format work in
@@ -18,9 +25,9 @@ binding, and spline layouts come from the clean-room format work in
 Milestone 14 item 14.6 moved the boundary that used to sit at "before behavior graphs".
 The *player* is now posed by a running
 [behavior graph](/engine/behavior-runtime.md) through the same composition and the same
-palette formula; NPCs keep the single-clip path below unchanged. Graph-driven NPC
-locomotion is deferred to M16 AI, because an NPC's graph needs a package to tell it where
-to walk and nothing supplies one yet.
+palette formula. M16 item 16.4 gives moving NPCs a kinematic locomotion drive: the capsule
+owns travel while `ActorAnimationPlayback` selects an in-place walk or run clip. Parked NPCs
+keep direct idle playback and allocate no movement controller.
 
 Milestone 15 item 15.7 kept that boundary and widened the single-clip path by exactly one
 notch: `ActorAnimationPlayback` now takes a **bounded clip override** and returns to the idle
@@ -33,7 +40,7 @@ clips, and where their paths were read from, is in [combat loop](/engine/combat.
 
 `ActorAnimationPlayback` samples the gender-specific character `mt_idle.hkx` at renderer
 time modulo clip duration. `ActorAnimationClipLoader` does the decoding, taking the animation
-path as a parameter so the same loader serves both the idle clip and the combat reactions.
+path as a parameter so the same loader serves idle, walk, run, and combat reactions.
 Binding resolves tracks to skeleton bone indices. Missing tracks
 retain `hkaSkeleton.referencePose`; local translation-rotation-scale matrices compose through
 the parent graph into skeleton-world transforms. Invalid indices or parent cycles fail the
@@ -118,6 +125,11 @@ checked against hand-built matrices with no device in the way
 Every rendered actor gets a cell-owned `ActorAnimationPlayback`; composing resident scenes
 composes those playback objects. Cell eviction drops its playback objects with its
 `RenderScene`, while reusable clip data can remain cache-hot.
+
+`setLocomotionClip(_:)` changes the base clip beneath bounded combat overrides. A reaction
+that is already playing keeps its own clock and returns to the most recent gait rather than
+always returning to idle. The gait files and skeleton binding use the same decoded-clip
+cache shape as reactions.
 
 One render update samples each unique clip once, then refreshes each shared `RenderMesh`
 palette once. Actor instances that share body assets also share the resulting pose, avoiding

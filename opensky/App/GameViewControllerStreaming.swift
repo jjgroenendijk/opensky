@@ -111,6 +111,7 @@ extension GameViewController {
     ) {
         wireAIOverlay(renderer: renderer, streamer: streamer)
         wireGlobals(provider: provider, renderer: renderer)
+        wireNPCMovement(renderer: renderer, streamer: streamer)
     }
 
     /// View ray for use-key targeting, simulated-player modes only: the fly

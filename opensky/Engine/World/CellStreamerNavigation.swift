@@ -71,6 +71,7 @@ extension CellStreamer {
 
     func advanceWorldSystems(frameTime: Float, player: PlayerCapsuleState?) {
         advancePhysics(frameTime: frameTime, player: player)
+        advanceNPCMovement(frameTime: frameTime)
         advanceNavigation()
     }
 

@@ -51,7 +51,8 @@ extension Renderer {
     func drawn(_ instance: DrawInstance) -> DrawInstance {
         guard
             instance.referenceFormID != 0,
-            let delta = dynamicInstanceDeltas[instance.referenceFormID]
+            let delta = npcInstanceDeltas[instance.referenceFormID]
+            ?? dynamicInstanceDeltas[instance.referenceFormID]
         else { return instance }
         return instance.moved(by: delta)
     }

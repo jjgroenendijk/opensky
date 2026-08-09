@@ -38,6 +38,21 @@ nonisolated enum ActorAnimationClipLoader {
         characterRoot + "animations\\\(female ? "female" : "male")\\mt_idle.hkx"
     }
 
+    /// Direct gait clips named by the vanilla behavior graph census. They are
+    /// in-place; the NPC capsule remains the sole movement authority.
+    static func gaitAnimationPath(_ gait: LocomotionGait, female: Bool) -> String? {
+        let fileName: String
+        switch gait {
+        case .walk:
+            fileName = "mt_walkforward.hkx"
+        case .run, .sprint:
+            fileName = "mt_runforward.hkx"
+        case .sneak, .swim:
+            return nil
+        }
+        return characterRoot + "animations\\\(female ? "female" : "male")\\" + fileName
+    }
+
     /// The clip one combat reaction plays, as a canonical VFS path.
     static func animationPath(for clip: CombatActorClip) -> String {
         characterRoot + "animations\\" + fileName(for: clip)
