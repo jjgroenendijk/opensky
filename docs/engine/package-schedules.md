@@ -91,3 +91,21 @@ The env-gated Skyrim.esm test follows 21 PACK records reachable from Ysolda, Bel
 Hulda, and Heimskr. It pins the raw subrecord census and header-function tally, then selects
 each actor at every integer hour of a full pre-siege day. Game data is read in place and no
 record bytes or captures are written into the repository.
+
+## Verification surface
+
+`World > AI & Navigation > Package` (`Destination-aiNavigation`) shows the selected actor's
+current package, its editor ID, its resolved procedure and its authored schedule, spelled as
+a start time and a duration rather than as the row of signed bytes PSDT carries, in
+`AIPackageStatsLabel`. Which actor it answers for comes from the destination's own Actor
+section.
+
+`AIPackageReevaluateControl` is the one control, and it is deliberately the only one.
+Selection is driven by the game clock and by the conditions the stack carries, so a panel
+that set a package directly would be showing a state the schedule never produced. The way to
+watch the schedule decide is to scrub the clock under `World > Runtime State > Time` and
+press Reevaluate, which runs `forceReevaluate(actor:clock:context:)` rather than waiting out
+the fifteen-game-minute interval.
+
+The acceptance record for item 16.5 is a row in
+[the sidebar acceptance ledger](/tools/sidebar-acceptance.md).

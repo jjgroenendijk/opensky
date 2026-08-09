@@ -4,6 +4,44 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-09
 
+* **M16 milestone acceptance (issue #203)**: the AI has a sidebar. `World > AI &
+  Navigation` (`Destination-aiNavigation`) is the milestone's verification surface and its
+  fourth world destination: six sections in the order a session uses them — switch on the
+  navmesh, path and detection overlays; choose an actor from a resident-actor popup or by
+  pointing the crosshair at one; send it somewhere through 16.4's mover and stop it again;
+  read the package its schedule selected and force a re-selection; read every detection pair
+  it is part of beside the provenance of every constant in the formula; and make it hostile
+  and watch which phase its combat machine is in. One explicit selection binds all six,
+  which is what `World > Combat & Physics` cannot do: that panel acts on the nearest
+  resident actor, which is right for one opponent in front of you and useless for following
+  one named guard through a market. The move control's destination is the crosshair's own
+  raycast hit at up to 8,192 units, projected onto the navmesh by the path query — an
+  inspection rather than a use key, so it is not gated on a player-controlled camera. Three
+  debug overlays that default off are the destination's only overridden-ness; a walked-to
+  position, a selected package and an angry actor are world state a user produced on purpose
+  and no reset undoes them. The gate itself is one guard living one day through the four
+  real runtimes wired in the app's own order: a schedule selects a package off the game
+  clock, the destination becomes a navmesh corridor, the mover walks it out of a market and
+  through a door into an inn, the perception pass notices a player running at it, the combat
+  machine closes and swings to a contact step, loses the player and searches, gives up into a
+  *fresh* package selection — the evening one, because the clock moved while it fought — and
+  then re-engages the same quarrel and runs at a tenth of its health. Against the install the
+  same chain runs over Ysolda's own stack (five distinct packages over twenty-four hours),
+  the real Chillfurrow corridor through door `0001633D` (four waypoints, four triangles,
+  eight expansions, 31.17 ms offscreen) and detection constants of which ten of twenty-three
+  come from plugins rather than OpenSky defaults. The overlay pixel evidence is the real
+  navmesh over the user's own cell: 24,178 changed pixels from 545 triangles, and 333 more
+  from the corridor's three line segments. The AI adds no frame budget of its own — item
+  16.4's 2 ms mover slice is asserted to fit inside the shipping `animationUpdateBudgetMS`
+  rather than sitting beside it, which is the constraint M13 set and M14 and M15 honoured.
+  Adding the destination took `DestinationRegistry`'s enum body past the type-length cap, so
+  the three menu destinations moved to `DestinationRegistryMenus.swift`; the registry is
+  still the single registration point. Updated [runtime navigation](/engine/navigation.md),
+  [actor package schedules](/engine/package-schedules.md),
+  [perception and detection](/engine/detection.md), [the combat loop](/engine/combat.md),
+  [the main-app UI framework](/tools/app-ui.md) and
+  [the sidebar acceptance ledger](/tools/sidebar-acceptance.md). M16 is closed.
+
 * **Combat AI (issue #424)**: the opponent is no longer a clock. `DevTargetDriver` and
   `CombatLoopRuntimeTarget` are deleted, and `CombatBehaviorMachine` decides instead — one
   fixed-step, per-actor machine that engages when 16.6 detection reports the player,

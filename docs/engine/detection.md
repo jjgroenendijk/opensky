@@ -274,11 +274,18 @@ keeps playing until it gives up. See [the combat loop](/engine/combat.md).
   line to its investigate position, so "it heard something over there" is visible as a thing
   pointing somewhere rather than as a state name. The pass is depth-tested, so a cone
   disappears behind the wall that blocks it.
-* **Panel seam.** `PerceptionControlProviding` supplies the readout and the settings with
-  their provenance; the controls that show them arrive with the M16 gate panel (issue #203)
-  under the accessibility identifier `DetectionStatsLabel`.
-  `DetectionPairReadout.summaryLine` *is* that line, so the panel prints one string rather
-  than re-deriving a format the tests would then have to know twice.
+* **Panel.** `World > AI & Navigation > Detection` (`Destination-aiNavigation`) prints the
+  pass's own totals and then one line per tracked pair the selected actor is on either side
+  of, under `DetectionStatsLabel`. `DetectionPairReadout.summaryLine` *is* that line, so the
+  panel prints one string rather than re-deriving a format the tests would then have to know
+  twice. Beneath it, `DetectionSettingsStatsLabel` lists every resolved constant beside the
+  plugin, documented fallback, or OpenSky constant it came from, so no number in the formula
+  is unattributed. The section is read-only by design: a level accumulates from distance,
+  light, sound and line of sight on a fixed step, and a control that set one directly would
+  show a number the formula never produced. The way to be noticed is to walk into a cone,
+  and the cones are drawn by `AIDetectionOverlayControl` in the same destination's Overlays
+  section. The acceptance record for item 16.6 is a row in
+  [the sidebar acceptance ledger](/tools/sidebar-acceptance.md).
 * **CLI.** `openskycli gmst detection` prints every resolved setting with its source, and
   `openskycli gmst list --prefix <s>` prints any GMST family — the probe the tables above
   were read with. See [the CLI reference](/tools/cli.md).

@@ -207,6 +207,11 @@ final class GameViewController: NSViewController {
     /// `GameViewControllerPerception.swift`; stored here because extensions
     /// cannot add state.
     var perception = PerceptionBridgeState()
+    /// The M16 gate panel's shared actor selection and its last outcome line
+    /// (issue #203). The implementation lives in
+    /// `GameViewControllerAINavigation.swift`; stored here because extensions
+    /// cannot add state.
+    var aiNavigation = AINavigationBridgeState()
 
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))

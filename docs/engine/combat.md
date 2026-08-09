@@ -553,8 +553,8 @@ The Combat Loop section is this page's own:
 
 Hostility alone no longer starts a fight — the actor has to notice the player
 first, which is [detection](/engine/detection.md)'s job and is inspectable under
-`World > Perception`. That is the shipping path rather than a developer shortcut
-into it, which is why the shortcut is gone.
+`World > AI & Navigation > Detection`. That is the shipping path rather than a
+developer shortcut into it, which is why the shortcut is gone.
 
 The other five sections are documented on their own pages:
 [actor values](/engine/actor-values.md), [melee combat](/engine/melee-combat.md),
@@ -565,6 +565,17 @@ A frozen physics simulation is the destination's one overridden-ness — the
 sidebar dot lights for it and "Reset all" releases it. A damaged actor, an angry
 opponent, a corpse on the floor and a shoved crate are world state a user made on
 purpose, so none of them lights the dot and no reset undoes them.
+
+`World > AI & Navigation > Combat Behavior` (`Destination-aiNavigation`) is the
+second surface over the same machine, added by the M16 gate. It carries a second
+hostility checkbox, `AIHostilityControl`, and that is deliberate rather than an
+oversight: the one above acts on the nearest resident actor, which is right when
+one opponent is standing in front of you and useless when the point is to follow
+one named guard through a market. Both drive the same `ActorCombatState`
+component, so the two panels never disagree about who is angry — they disagree
+only about whom the checkbox is aimed at, and each says so. Its readout,
+`AICombatStatsLabel`, lifts the selected actor's own line out of the fighter list
+so the actor that destination is following is legible without reading a crowd.
 
 ### The M15 acceptance record
 
@@ -595,6 +606,28 @@ Item 16.7 edited that record rather than leaving it standing: the two dev-target
 controls it named no longer exist, so the record now names the two the same
 section actually exposes. The M15 gate still passes — the fight it drives is the
 same fight, with a mind rather than a clock swinging.
+
+### The M16 acceptance record
+
+Item 16.7's own record, in the same shape. The M16 gate's whole-destination
+record is the ledger row in `docs/tools/sidebar-acceptance.md`; this one is the
+combat slice of it.
+
+```text
+Milestone: M16.7
+Sidebar path: World > AI & Navigation > Combat Behavior, and
+  World > Combat & Physics > Combat Loop
+Destination id: Destination-aiNavigation, Destination-combatPhysics
+Controls exercised: AIActorSelectControl, AIHostilityControl,
+  CombatHostilityControl, CombatClearTraceControl
+Readout: AICombatStatsLabel, CombatLoopStatsLabel
+Deterministic tests: CombatBehaviorMachineTests, CombatBehaviorRetreatTests,
+  CombatLoopRuntimeTests, CombatLoopDisengageTests, CombatLoopStateTests,
+  M16AcceptanceTests, M16AcceptancePanelTests, CombatPhysicsPanelTests,
+  DestinationRegistryTests, CombatLoopRealDataTests (env-gated),
+  M16AcceptanceRealDataTests (env-gated)
+Local A/B (optional, never committed): none
+```
 
 ## Limits
 

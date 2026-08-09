@@ -224,6 +224,15 @@ One `DestinationDescriptor` in `DestinationRegistry.all`
 (`opensky/App/Shell/DestinationRegistry.swift`) — id, title, section, SF Symbol,
 content. Never touch the shell view controllers to add a destination.
 
+`all` is assembled from three arrays rather than written as one literal, because
+adding the M16 gate's destination (issue #203) took the enum body past the
+strict-lint type-length cap: `simulationDestinations` and `sessionDestinations`
+stay in that file, and `menuDestinations` — the System, Inventory and Container
+menus — lives in `DestinationRegistryMenus.swift` beside the override actions
+that were split out for the same reason. The three concatenate in sidebar order,
+and the registry is still the single registration point: nothing outside those
+two files registers a destination.
+
 - A `worldInspector` factory receives a `WorldPanelContext` and wires the
   panel's providers from `context.providers` (the game controller conforms to
   every `*ControlProviding` protocol via `WorldControlProviders`). Downward:
