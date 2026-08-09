@@ -9,6 +9,7 @@ import Foundation
 enum GMSTCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
         let subject = try scanner.positional("subject")
+        let prefix = try scanner.option("--prefix") ?? ""
         try scanner.finish()
         switch subject {
         case "movement":
@@ -17,8 +18,50 @@ enum GMSTCommand {
             try runCombat(context: context)
         case "archery":
             try runArchery(context: context)
+        case "detection":
+            try runDetection(context: context)
+        case "list":
+            try runList(context: context, prefix: prefix)
         default:
             throw CLIError.usage("unknown gmst subject: \(subject)")
+        }
+    }
+
+    /// The settings `DetectionSettings` resolves (issue #202), with the plugin
+    /// or the documented fallback each came from.
+    private static func runDetection(context: CLIContext) throws {
+        let file = try context.loadSkyrimESM()
+        let store = GameSettingLoader.load(root: context.root, baseFile: file)
+        for row in DetectionSettings.resolve(store: store).report {
+            print(Self.line(name: row.editorID, setting: row.setting, units: ""))
+        }
+    }
+
+    /// Every resolved GMST whose editor ID starts with `prefix`, in editor-ID
+    /// order. The provenance probe behind every settings table above: reading a
+    /// family off the install is how a fallback constant is checked against the
+    /// number the shipped game actually carries, rather than against a wiki's
+    /// transcription of it.
+    private static func runList(context: CLIContext, prefix: String) throws {
+        let file = try context.loadSkyrimESM()
+        let store = GameSettingLoader.load(root: context.root, baseFile: file)
+        let needle = prefix.lowercased()
+        let matches = store.values
+            .filter { needle.isEmpty || $0.key.hasPrefix(needle) }
+            .sorted { $0.key < $1.key }
+        for match in matches {
+            print("\(match.value.setting.editorID) = "
+                + "\(Self.text(match.value.setting.value)) [\(match.value.sourcePlugin)]")
+        }
+        print("[INFO] \(matches.count) settings matched \"\(prefix)\"")
+    }
+
+    private static func text(_ value: GameSetting.Value) -> String {
+        switch value {
+        case let .string(string): String(describing: string)
+        case let .integer(integer): String(integer)
+        case let .float(float): String(format: "%.6g", float)
+        case let .boolean(boolean): boolean ? "true" : "false"
         }
     }
 

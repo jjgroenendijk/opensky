@@ -12,10 +12,16 @@ extension GameViewController: AIOverlayControlProviding {
         set { renderer?.pathOverlayEnabled = newValue }
     }
 
+    var detectionOverlayEnabled: Bool {
+        get { renderer?.detectionOverlayEnabled ?? false }
+        set { renderer?.detectionOverlayEnabled = newValue }
+    }
+
     var aiOverlaySnapshot: AIOverlayControlSnapshot {
         AIOverlayControlSnapshot(
             navmeshOverlayEnabled: navmeshOverlayEnabled,
             pathOverlayEnabled: pathOverlayEnabled,
+            detectionOverlayEnabled: detectionOverlayEnabled,
             stats: renderer?.lastWorldOverlayDrawStats ?? WorldOverlayDrawStats()
         )
     }

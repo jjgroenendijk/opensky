@@ -1,0 +1,233 @@
+// Real-install perception evidence (issue #202, roadmap item 16.6): the
+// detection GMSTs as the shipped game carries them, and a real Whiterun guard
+// picking up a player who walks toward it across the real city geometry.
+//
+// No game bytes or frames leave the read-only install; the guard's identity,
+// the state transitions and the timings are printed into the realtest run.
+
+import Foundation
+import Metal
+@testable import opensky
+import simd
+import Testing
+
+@MainActor
+struct PerceptionRealDataTests {
+    /// Whiterun's own worldspace, and the cell the vanilla guard posts stand in
+    /// — the numbers `openskycli actor --worldspace WhiterunWorld --x 6 --y 0`
+    /// reports on this install.
+    private static let whiterunWorldspace = "WhiterunWorld"
+    private static let guardCell = CellCoordinate(x: 6, y: 0)
+    /// Every vanilla Whiterun guard's base record is named this way, which is
+    /// how one is found without pinning a FormID that a patch could move.
+    private static let guardEditorIDPrefix = "GuardWhiterun"
+
+    /// How far out the approach starts and how far each stride carries it,
+    /// world units. Twenty-eight strides from 2800 units closes to inside a
+    /// guard's own reach.
+    private static let approachStart: Float = 2800
+    private static let approachStride: Float = 100
+    /// Fixed steps spent standing at each stride, which is what turns an
+    /// approach into a sequence of states rather than one jump.
+    private static let stepsPerStride = 20
+
+    nonisolated private static let dataRoot: GameDataRoot? = {
+        let environment = ProcessInfo.processInfo.environment
+        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
+        else { return nil }
+        return try? GameDataLocator.locate()
+    }()
+
+    nonisolated private static let device: MTLDevice? = {
+        guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4)
+        else { return nil }
+        return device
+    }()
+
+    // MARK: - Provenance
+
+    @Test(.enabled(if: Self.dataRoot != nil))
+    func everyVanillaDetectionSettingResolvesFromTheLoadOrder() throws {
+        let root = try #require(Self.dataRoot)
+        let settings = DetectionSettings.resolve(
+            store: GameSettingLoader.load(root: root)
+        )
+        // The ten load-order settings must come from a plugin, not from the
+        // fallback: a fallback here would mean the formula is running on
+        // numbers this install does not actually carry.
+        let vanilla = settings.report.prefix(10)
+        for row in vanilla {
+            let source = row.setting.source.lowercased()
+            #expect(
+                source.hasSuffix(".esm") || source.hasSuffix(".esp"),
+                Comment(rawValue: "\(row.editorID) fell back to \(row.setting.source)")
+            )
+        }
+        // And the values are the ones the formula was written against.
+        #expect(settings.sneakBaseValue.value == -15)
+        #expect(settings.maxDistance.value == 2500)
+        #expect(settings.exteriorDistanceMult.value == 2.1)
+        #expect(settings.soundLosMult.value == 0.3)
+        // Everything after those ten is ours and says so, which is the honesty
+        // rule the docs page states.
+        let ours = settings.report.dropFirst(10)
+        #expect(ours.allSatisfy { $0.setting.source == "OpenSky constant" })
+        for row in settings.report {
+            print("[INFO] detection \(row.editorID) = \(row.setting.value) "
+                + "[\(row.setting.source)]")
+        }
+    }
+
+    // MARK: - The guard
+
+    @Test(.enabled(if: Self.dataRoot != nil && Self.device != nil))
+    func aWhiterunGuardDetectsTheApproachingPlayer() throws {
+        let root = try #require(Self.dataRoot)
+        let scene = try Self.buildGuardCell(root: root, device: #require(Self.device))
+        let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
+        let templates = ActorTemplateResolver.build(
+            from: file, localized: (try? file.pluginHeader().isLocalized) ?? false
+        )
+        let located = try #require(
+            Self.guard(in: scene, templates: templates),
+            Comment(rawValue: "no \(Self.guardEditorIDPrefix) ACHR in "
+                + "\(Self.whiterunWorldspace) (\(Self.guardCell.x),\(Self.guardCell.y))")
+        )
+        #expect(!scene.staticCollision.shapes.isEmpty)
+
+        let observer = PerceptionObserver(
+            key: located.key,
+            feet: located.actor.placement.position,
+            facing: located.actor.placement.rotation.z,
+            isExterior: true,
+            name: located.editorID
+        )
+        let world = FakePerceptionWorld(observers: [observer])
+        world.blocked = Self.lineOfSight(against: scene.staticCollision)
+        let runtime = PerceptionRuntime(
+            settings: DetectionSettings.resolve(
+                store: GameSettingLoader.load(root: root, baseFile: file)
+            ),
+            world: world
+        )
+
+        let startedAt = DispatchTime.now().uptimeNanoseconds
+        let walk = Self.approach(runtime: runtime, world: world, observer: observer)
+        let elapsed = Double(DispatchTime.now().uptimeNanoseconds - startedAt) / 1_000_000
+
+        // The states arrive in order and end in detection. Only the order is
+        // pinned, not the exact stride each transition falls on: that depends
+        // on where the guard is standing, and this test is evidence that the
+        // pass works on real geometry rather than a second copy of the
+        // synthetic thresholds.
+        #expect(walk.states == [.unaware, .suspicious, .detected])
+        let final = runtime.state(observer: located.key, target: .player)
+        #expect(final.lastKnownPosition != nil)
+        #expect(final.hasLineOfSight)
+        let order = walk.states.map(\.rawValue).joined(separator: " -> ")
+        let position = "(\(observer.feet.x), \(observer.feet.y), \(observer.feet.z))"
+        print("[INFO] \(located.editorID) (\(located.key)) at \(position)")
+        print("[INFO] states \(order) over \(Self.approachStart) units, "
+            + "\(runtime.lineOfSightQueryCount) rays, \(elapsed) ms offscreen")
+        print("[INFO] DetectionStatsLabel: \(walk.lastLine)")
+    }
+
+    // MARK: - The approach
+
+    /// The guard's own cell, built through the production path so the collision
+    /// the sight line is traced against is the real thing.
+    private static func buildGuardCell(
+        root: GameDataRoot,
+        device: MTLDevice
+    ) throws -> CellScene {
+        let fileSystem = VirtualFileSystem(root: root)
+        let textures = TextureLibrary(fileSystem: fileSystem, device: device)
+        let builder = try CellSceneBuilder(
+            file: ESMFile(url: root.dataURL.appending(path: "Skyrim.esm")),
+            meshes: MeshLibrary(fileSystem: fileSystem, device: device, textures: textures),
+            textures: textures,
+            fileSystem: fileSystem
+        )
+        return try builder.buildScene(
+            worldspaceEditorID: whiterunWorldspace,
+            gridX: guardCell.x,
+            gridY: guardCell.y
+        )
+    }
+
+    /// The blocked predicate `FakePerceptionWorld` takes, over real geometry.
+    private static func lineOfSight(
+        against collision: StaticCollisionSet
+    ) -> (SIMD3<Float>, SIMD3<Float>) -> Bool {
+        { origin, destination in
+            let offset = destination - origin
+            guard
+                simd_length(offset) > 0,
+                let ray = InteractionRay(
+                    origin: origin,
+                    direction: offset,
+                    maximumDistance: simd_length(offset)
+                )
+            else { return false }
+            return InteractionRaycaster.nearestHit(
+                ray: ray, shapes: collision.candidates(overlapping: ray.bounds)
+            ) != nil
+        }
+    }
+
+    /// Walks the target in along the guard's facing, returning the distinct
+    /// states it passed through and the last readout line.
+    private static func approach(
+        runtime: PerceptionRuntime,
+        world: FakePerceptionWorld,
+        observer: PerceptionObserver
+    ) -> (states: [DetectionState], lastLine: String) {
+        let heading = SIMD3<Float>(observer.heading.x, observer.heading.y, 0)
+        var states: [DetectionState] = []
+        var lastLine = ""
+        var distance = approachStart
+        while distance > 0 {
+            world.targets = [PerceptionTarget(
+                key: .player,
+                feet: observer.feet + heading * distance,
+                gait: .walk,
+                name: "Player"
+            )]
+            for _ in 0 ..< stepsPerStride {
+                runtime.advance(by: PerceptionRuntime.fixedStepSeconds)
+            }
+            let pair = runtime.state(observer: observer.key, target: .player)
+            if states.last != pair.state {
+                states.append(pair.state)
+            }
+            lastLine = runtime.readout().pairs.first?.summaryLine ?? lastLine
+            distance -= approachStride
+        }
+        return (states, lastLine)
+    }
+
+    // MARK: - Locating one guard
+
+    private struct LocatedGuard {
+        let key: ReferenceKey
+        let actor: PlacedActor
+        let editorID: String
+    }
+
+    /// The lowest-keyed ACHR in `scene` whose resolved base NPC_ is named like
+    /// a Whiterun guard. Lowest-keyed so a rebuild picks the same one.
+    private static func `guard`(
+        in scene: CellScene,
+        templates: ActorTemplateResolver
+    ) -> LocatedGuard? {
+        for entry in scene.references.sortedEntries() {
+            guard
+                let actor = entry.placedActor,
+                let editorID = templates.actors[actor.base.rawValue]?.editorID,
+                editorID.hasPrefix(guardEditorIDPrefix)
+            else { continue }
+            return LocatedGuard(key: entry.key, actor: actor, editorID: editorID)
+        }
+        return nil
+    }
+}

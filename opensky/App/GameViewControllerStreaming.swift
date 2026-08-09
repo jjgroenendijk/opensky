@@ -122,6 +122,7 @@ extension GameViewController {
         // Package conditions observe the live quest, actor and reference state,
         // so selection advances after those runtimes in the same world tick.
         wirePackages(provider: provider, renderer: renderer)
+        wirePerception(provider: provider, renderer: renderer)
     }
 
     /// View ray for use-key targeting, simulated-player modes only: the fly

@@ -5,6 +5,7 @@
 nonisolated struct AIOverlayControlSnapshot: Equatable {
     let navmeshOverlayEnabled: Bool
     let pathOverlayEnabled: Bool
+    let detectionOverlayEnabled: Bool
     let stats: WorldOverlayDrawStats
 }
 
@@ -12,5 +13,6 @@ nonisolated struct AIOverlayControlSnapshot: Equatable {
 protocol AIOverlayControlProviding: AnyObject {
     var navmeshOverlayEnabled: Bool { get set }
     var pathOverlayEnabled: Bool { get set }
+    var detectionOverlayEnabled: Bool { get set }
     var aiOverlaySnapshot: AIOverlayControlSnapshot { get }
 }

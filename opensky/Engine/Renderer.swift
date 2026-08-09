@@ -173,6 +173,7 @@ final class Renderer: NSObject {
     /// not rebuild subsystem plumbing.
     var navmeshOverlayEnabled = false
     var pathOverlayEnabled = false
+    var detectionOverlayEnabled = false
     let worldOverlaySources = WorldOverlaySourceRegistry()
     /// Submitted/drawn accounting from the most recently encoded overlay.
     var lastWorldOverlayDrawStats = WorldOverlayDrawStats()

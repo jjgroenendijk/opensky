@@ -147,6 +147,18 @@ nonisolated struct WorldOverlayDrawList {
 nonisolated struct WorldOverlayFrameContext: Equatable, Sendable {
     let navmeshOverlayEnabled: Bool
     let pathOverlayEnabled: Bool
+    /// Perception view cones and investigate positions (issue #202).
+    let detectionOverlayEnabled: Bool
+
+    init(
+        navmeshOverlayEnabled: Bool = false,
+        pathOverlayEnabled: Bool = false,
+        detectionOverlayEnabled: Bool = false
+    ) {
+        self.navmeshOverlayEnabled = navmeshOverlayEnabled
+        self.pathOverlayEnabled = pathOverlayEnabled
+        self.detectionOverlayEnabled = detectionOverlayEnabled
+    }
 }
 
 /// Stable-order registry. Re-registering an identifier replaces its closure

@@ -133,6 +133,10 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   projection, deterministic triangle A-star, radius-aware funnel paths, door crossings,
   budgeted invalidation, capped NPC capsule following with sparse persistence and actor
   triggers, and the depth-tested navmesh/path debug overlay.
+* [Perception and detection](/engine/detection.md) - fixed-step observer-target pass: view
+  cone, exact line-of-sight ray, gait-based noise, the cited detection value with its stated
+  gaps, accumulation into unaware/suspicious/detected, the investigate position, the three
+  perception condition functions, and the view-cone debug overlay.
 * [Actor package schedules](/engine/package-schedules.md) - ordered PKID selection,
   template inheritance, bounded/event-driven reevaluation, current-state inspection, and
   deterministic travel, wander, sandbox, sleep, and eat procedure machines.

@@ -96,7 +96,8 @@ extension Renderer {
     func encodeWorldOverlay(state: inout ScenePassState) {
         let context = WorldOverlayFrameContext(
             navmeshOverlayEnabled: navmeshOverlayEnabled,
-            pathOverlayEnabled: pathOverlayEnabled
+            pathOverlayEnabled: pathOverlayEnabled,
+            detectionOverlayEnabled: detectionOverlayEnabled
         )
         let list = worldOverlaySources.makeDrawList(context: context)
         let budgeted = list.budgeted(maxPrimitives: Self.worldOverlayPrimitiveBudget)
