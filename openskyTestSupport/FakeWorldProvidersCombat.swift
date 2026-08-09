@@ -61,8 +61,6 @@ extension FakeWorldProviders {
 struct FakeCombatLoopState {
     var snapshot = CombatLoopSnapshot.unavailable
     var isHostile = false
-    var spawnRequests = 0
-    var resetRequests = 0
     var traceClearCount = 0
 }
 
@@ -74,18 +72,6 @@ extension FakeWorldProviders {
     var selectedActorIsHostile: Bool {
         get { combatLoop.isHostile }
         set { combatLoop.isHostile = newValue }
-    }
-
-    @discardableResult
-    func spawnCombatDevTarget() -> String {
-        combatLoop.spawnRequests += 1
-        return "Spawned dev target #\(combatLoop.spawnRequests)."
-    }
-
-    @discardableResult
-    func resetCombatDevTarget() -> String {
-        combatLoop.resetRequests += 1
-        return "Reset the dev target."
     }
 
     func clearCombatTrace() {

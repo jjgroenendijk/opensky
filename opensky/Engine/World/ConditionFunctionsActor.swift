@@ -94,8 +94,8 @@ nonisolated extension ConditionFunctions {
         // "Gets the actor's current combat state ... 0: Not in combat, 1: In
         // combat, 2: Searching."
         // (<https://www.creationkit.com/index.php?title=GetCombatState>)
-        // Searching needs perception, which is M16's, so this engine never
-        // returns 2.
+        // All three are reachable as of 16.7: searching is the phase a fighting
+        // actor enters when 16.6 detection loses the target.
         registry.register(ConditionFunction(
             index: 323,
             name: "GetCombatState"

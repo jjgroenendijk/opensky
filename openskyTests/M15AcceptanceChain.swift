@@ -75,6 +75,10 @@ final class M15AcceptanceChain {
     static let weaponDamage: Float = 24
     static let arrowDamage: Float = 40
     static let bowDamage: Float = 6
+    /// What the opponent swings with. The dev target's old profile, kept so the
+    /// gate's arithmetic is unchanged now that a mind rather than a clock
+    /// swings it (issue #424).
+    static let opponentDamage: Float = 6
 
     // MARK: - Wiring
 
@@ -110,6 +114,11 @@ final class M15AcceptanceChain {
     var deathStates: [ReferenceKey: ActorDeathState] = [:]
     /// Stuck arrows the projectile runtime asked the world to spawn.
     var stuckArrows: [(key: ReferenceKey, arrow: StuckProjectile)] = []
+    /// What the opponent's combat machine asked the (absent) mover for, and how
+    /// often it asked to stop or be handed back to a package (issue #424).
+    var combatMoveRequests: [SIMD3<Float>] = []
+    var combatStopRequests = 0
+    var combatPackageResumes = 0
     /// Every state the player's graph entered, newest last, deduplicated.
     private(set) var visitedStates: [String] = []
     private(set) var opponentVisitedStates: [String] = []
@@ -174,7 +183,10 @@ final class M15AcceptanceChain {
         archery.attach(world: self)
         ragdolls.attach(seam: self)
         combat.attach(world: self)
-        combat.devTargetWeapon = MeleeWeaponProfile(damage: 6, reach: 1)
+        // The block roll is pinned off, so the gate's fight is the cadence it
+        // asserts on rather than one that spent a gap with its guard up. The
+        // block half of the loop is `CombatLoopRuntimeTests`'.
+        combat.behaviorSettings = CombatBehaviorSettings(blockChance: 0)
         melee.weapon = MeleeWeaponProfile(
             damage: Self.weaponDamage, reach: 1, stagger: 0.5, handType: .sword
         )

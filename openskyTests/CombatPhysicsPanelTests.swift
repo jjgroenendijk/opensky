@@ -50,9 +50,7 @@ struct CombatPhysicsPanelTests {
             (panel.actorValuesSection.refillControl, "ActorValueRefillControl"),
             (panel.actorValuesSection.resetControl, "ActorValueResetControl"),
             (panel.hostilityControl, "CombatHostilityControl"),
-            (panel.spawnDevTargetControl, "CombatSpawnDevTargetControl"),
-            (panel.loopSection.resetControl, "CombatResetDevTargetControl"),
-            (panel.loopSection.clearTraceControl, "CombatClearTraceControl"),
+            (panel.clearCombatTraceControl, "CombatClearTraceControl"),
             (panel.physicsFreezeControl, "PhysicsFreezeControl"),
             (panel.physicsResetControl, "PhysicsResetControl")
         ]
@@ -161,7 +159,9 @@ struct CombatPhysicsPanelTests {
 
         let readout = try #require(scriptsReadout("CombatLoopStatsLabel", in: panel.view))
         #expect(readout.contains("Combat: in combat with Bandit"))
-        #expect(readout.contains("Dev target: Bandit, windup"))
+        #expect(readout.contains("Fighters: 1"))
+        #expect(readout.contains("Bandit: windup, detected"))
+        #expect(readout.contains("2 contact frames"))
         #expect(readout.contains("Hostility: Bandit is hostile"))
         #expect(readout.contains("Hits taken: 2"))
         #expect(readout.contains("arrows in flight 1/"))
@@ -179,11 +179,7 @@ struct CombatPhysicsPanelTests {
         sendScriptsControl(panel.hostilityControl)
         #expect(!providers.selectedActorIsHostile)
 
-        sendScriptsControl(panel.spawnDevTargetControl)
-        #expect(providers.combatLoop.spawnRequests == 1)
-        sendScriptsControl(panel.loopSection.resetControl)
-        #expect(providers.combatLoop.resetRequests == 1)
-        sendScriptsControl(panel.loopSection.clearTraceControl)
+        sendScriptsControl(panel.clearCombatTraceControl)
         #expect(providers.combatLoop.traceClearCount == 1)
     }
 
@@ -216,7 +212,7 @@ struct CombatPhysicsPanelTests {
         let overrides = try #require(descriptor.overrides)
         let context = WorldPanelContext(providers: providers)
 
-        sendScriptsControl(panel.spawnDevTargetControl)
+        sendScriptsControl(panel.clearCombatTraceControl)
         sendScriptsControl(panel.physicsResetControl)
         #expect(!overrides.isOverridden(context), "an action must not light the dot")
         #expect(providers.physics.resetCount == 1)
@@ -228,9 +224,9 @@ struct CombatPhysicsPanelTests {
 
         overrides.resetToDefaults(context)
         #expect(!overrides.isOverridden(context))
-        // The dev target the user spawned survived the reset, which is the
-        // whole point of keeping world actions out of the override.
-        #expect(providers.combatLoop.spawnRequests == 1)
+        // The trace the user cleared stayed cleared across the reset, which is
+        // the whole point of keeping world actions out of the override.
+        #expect(providers.combatLoop.traceClearCount == 1)
     }
 
     // MARK: - Fixtures
@@ -270,11 +266,21 @@ struct CombatPhysicsPanelTests {
             targetDistance: 96,
             hostileCount: 1,
             deadCount: 0,
-            devTargetName: "Bandit",
-            devTargetPhase: .windup,
-            devTargetIsRunning: true,
-            devTargetAttackCount: 3,
-            devTargetContactCount: 2,
+            engagedCount: 1,
+            searchingCount: 0,
+            actors: [CombatActorReadout(
+                key: .generated(1),
+                name: "Bandit",
+                phase: .windup,
+                awareness: .detected,
+                distance: 96,
+                healthFraction: 0.5,
+                attackCount: 3,
+                contactCount: 2,
+                blockCount: 1,
+                searchCount: 0
+            )],
+            crowdedOutCount: 0,
             selectedActorName: "Bandit",
             selectedActorIsHostile: true,
             incomingHitCount: 2,
@@ -285,7 +291,7 @@ struct CombatPhysicsPanelTests {
             ),
             limits: .standard,
             trimmedTransients: .none,
-            lastActionText: "Spawned dev target Bandit."
+            lastActionText: "Bandit is now hostile."
         )
     }
 

@@ -67,14 +67,14 @@ struct M15AcceptanceBudgetTests {
         chain.capturePointer()
         chain.press(.keyR)
         chain.run(frames: 60) { chain.melee.state.drawState == .drawn }
-        _ = chain.combat.spawnDevTarget()
+        chain.combat.setHostility(.hostile, on: Chain.opponent)
         chain.settleGraph()
 
         let graphCap = Int(
             (WalkController.maximumFrameTime / WalkController.fixedTimeStep).rounded(.down)
         )
         let updates = chain.graph.tally.updatesRun
-        let contacts = chain.combat.driver.contactCount
+        let contacts = chain.combat.behaviors[Chain.opponent]?.contactCount ?? 0
 
         // A full second of stall, ten times the walk controller's clamp.
         chain.frame(dt: 1)
@@ -85,7 +85,7 @@ struct M15AcceptanceBudgetTests {
         // The combat loop's own cap is the tighter of the two, and it is the
         // one that decides how many blows one stalled frame can land.
         #expect(
-            chain.combat.driver.contactCount - contacts
+            (chain.combat.behaviors[Chain.opponent]?.contactCount ?? 0) - contacts
                 <= CombatLoopRuntime.maximumStepsPerAdvance
         )
     }

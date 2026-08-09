@@ -75,6 +75,12 @@ extension CellStreamer: MoveToPointControl {
         return started ? .started : .moverCapReached
     }
 
+    @discardableResult
+    func stopActor(_ actor: ReferenceKey) -> Bool {
+        bindNPCMovementCallbacks()
+        return npcMovement.stop(actor)
+    }
+
     func npcMovementReadouts() -> [NPCMovementReadout] {
         npcMovement.readouts()
     }
@@ -113,7 +119,7 @@ extension CellStreamer: MoveToPointControl {
         return navigationState.graph.cell(at: position)
     }
 
-    private func bindNPCMovementCallbacks() {
+    func bindNPCMovementCallbacks() {
         npcMovement.onDrive = { [weak self] update in
             self?.onNPCLocomotionDrive?(update)
         }

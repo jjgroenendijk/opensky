@@ -1,12 +1,12 @@
-// `CombatLoopControlProviding` conformance (issue #374, roadmap item 15.7,
-// scope point 7): the live readouts and dev controls a Combat & Physics panel
-// is written against.
+// `CombatLoopControlProviding` conformance (issues #374 and #424, roadmap items
+// 15.7 and 16.7): the live readouts and the hostility control the Combat &
+// Physics panel is written against.
 //
-// The protocol and this conformance ship now; the panel itself ships with the
-// M15 acceptance gate (item 15.9), which is what the issue asks for. Writing
-// the conformance now is what proves the runtime can answer the questions a
-// panel asks — every field below is a plain read off `CombatLoopRuntime`, with
-// no accounting invented at the UI.
+// Every field below is a plain read off `CombatLoopRuntime`, with no accounting
+// invented at the UI. Item 16.7 removed the dev-target spawn and reset actions
+// along with the clock they drove, and added the per-actor readout that replaced
+// them: one entry per actor with a behavior machine, nearest first, carrying the
+// phase, the awareness, the distance, the health and the four counts.
 //
 // The hostility toggle acts on the *selected* actor, which is the nearest
 // resident one. That is the same selector the actor-value controls use
@@ -15,6 +15,7 @@
 // think about two different notions of "this one".
 
 import Foundation
+import simd
 
 extension GameViewController: CombatLoopControlProviding {
     var combatLoopSnapshot: CombatLoopSnapshot {
@@ -27,11 +28,10 @@ extension GameViewController: CombatLoopControlProviding {
             targetDistance: runtime.state.targetDistance,
             hostileCount: runtime.state.hostileCount,
             deadCount: runtime.state.deadCount,
-            devTargetName: combatActorName(runtime.devTarget),
-            devTargetPhase: runtime.driver.phase,
-            devTargetIsRunning: runtime.devTarget != nil,
-            devTargetAttackCount: runtime.driver.attackCount,
-            devTargetContactCount: runtime.driver.contactCount,
+            engagedCount: runtime.state.engagedCount,
+            searchingCount: runtime.state.searchingCount,
+            actors: combatActorReadouts(runtime: runtime),
+            crowdedOutCount: runtime.crowdedOutCount,
             selectedActorName: combatActorName(selected),
             selectedActorIsHostile: selected.map { runtime.hostility(of: $0) == .hostile }
                 ?? false,
@@ -66,23 +66,36 @@ extension GameViewController: CombatLoopControlProviding {
         }
     }
 
-    @discardableResult
-    func spawnCombatDevTarget() -> String {
-        combat.runtime?.spawnDevTarget()
-            ?? "Combat unavailable: no game data loaded."
-    }
-
-    @discardableResult
-    func resetCombatDevTarget() -> String {
-        combat.runtime?.resetDevTarget()
-            ?? "Combat unavailable: no game data loaded."
-    }
-
     func clearCombatTrace() {
         combat.runtime?.clearTrace()
     }
 
     // MARK: - Private
+
+    /// One readout line per actor with a behavior machine, nearest first.
+    ///
+    /// Built from the same `combatActors()` observation the runtime stepped
+    /// against, so the distance in the readout is the distance the fight used
+    /// rather than one sampled a frame later.
+    private func combatActorReadouts(runtime: CombatLoopRuntime) -> [CombatActorReadout] {
+        let player = combatPlayer.feet
+        return combatActors().compactMap { actor in
+            guard let machine = runtime.behaviors[actor.key] else { return nil }
+            return CombatActorReadout(
+                key: actor.key,
+                name: actor.name,
+                phase: machine.phase,
+                awareness: combatAwareness(of: actor.key, toward: .player).state,
+                distance: simd_distance(actor.feet, player),
+                healthFraction: combatHealthFraction(of: actor.key),
+                attackCount: machine.attackCount,
+                contactCount: machine.contactCount,
+                blockCount: machine.blockCount,
+                searchCount: machine.searchCount
+            )
+        }
+        .sorted { ($0.distance, $0.key) < ($1.distance, $1.key) }
+    }
 
     /// The actor the hostility toggle acts on: the nearest resident one.
     private func selectedCombatActor() -> ReferenceKey? {

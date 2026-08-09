@@ -55,6 +55,29 @@ struct NPCMovementRuntime {
         return true
     }
 
+    /// Stops one actor where it stands, parking its pose so a later read still
+    /// finds it there.
+    ///
+    /// The combat layer's "hold": an actor that reached weapon range, raised its
+    /// guard or gave up should stop walking, and it must stop through the
+    /// movement authority rather than by having its request quietly ignored.
+    ///
+    /// - Returns: true when there was a live mover to stop.
+    @discardableResult
+    mutating func stop(_ actor: ReferenceKey) -> Bool {
+        guard let mover = movers.removeValue(forKey: actor) else { return false }
+        parked[actor] = NPCParkedMovement(
+            readout: mover.readout(as: .halted), transform: mover.transform
+        )
+        onPersist?(mover.persistence(reason: .halt))
+        // The same still-drive a mover publishes when it finishes on its own,
+        // so the gait clip stops rather than looping on a standing actor.
+        onDrive?(NPCLocomotionDriveUpdate(
+            actor: actor, intent: .still, gait: .walk, yaw: mover.yaw, deltaTime: 0
+        ))
+        return true
+    }
+
     mutating func advance(by frameTime: Float, world: NPCMovementWorld) {
         for key in movers.keys.sorted() {
             guard var mover = movers[key] else { continue }

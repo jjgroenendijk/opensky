@@ -13,15 +13,6 @@ import Testing
 
 @MainActor
 struct PerceptionRealDataTests {
-    /// Whiterun's own worldspace, and the cell the vanilla guard posts stand in
-    /// — the numbers `openskycli actor --worldspace WhiterunWorld --x 6 --y 0`
-    /// reports on this install.
-    private static let whiterunWorldspace = "WhiterunWorld"
-    private static let guardCell = CellCoordinate(x: 6, y: 0)
-    /// Every vanilla Whiterun guard's base record is named this way, which is
-    /// how one is found without pinning a FormID that a patch could move.
-    private static let guardEditorIDPrefix = "GuardWhiterun"
-
     /// How far out the approach starts and how far each stride carries it,
     /// world units. Twenty-eight strides from 2800 units closes to inside a
     /// guard's own reach.
@@ -83,15 +74,17 @@ struct PerceptionRealDataTests {
     @Test(.enabled(if: Self.dataRoot != nil && Self.device != nil))
     func aWhiterunGuardDetectsTheApproachingPlayer() throws {
         let root = try #require(Self.dataRoot)
-        let scene = try Self.buildGuardCell(root: root, device: #require(Self.device))
-        let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        let templates = ActorTemplateResolver.build(
-            from: file, localized: (try? file.pluginHeader().isLocalized) ?? false
+        let scene = try WhiterunGuardFixture.buildCell(
+            root: root, device: #require(Self.device)
         )
+        let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let located = try #require(
-            Self.guard(in: scene, templates: templates),
-            Comment(rawValue: "no \(Self.guardEditorIDPrefix) ACHR in "
-                + "\(Self.whiterunWorldspace) (\(Self.guardCell.x),\(Self.guardCell.y))")
+            WhiterunGuardFixture.locate(
+                in: scene, templates: WhiterunGuardFixture.templates(root: root)
+            ),
+            Comment(rawValue: "no \(WhiterunGuardFixture.editorIDPrefix) ACHR in "
+                + "\(WhiterunGuardFixture.worldspace) "
+                + "(\(WhiterunGuardFixture.cell.x),\(WhiterunGuardFixture.cell.y))")
         )
         #expect(!scene.staticCollision.shapes.isEmpty)
 
@@ -103,7 +96,7 @@ struct PerceptionRealDataTests {
             name: located.editorID
         )
         let world = FakePerceptionWorld(observers: [observer])
-        world.blocked = Self.lineOfSight(against: scene.staticCollision)
+        world.blocked = WhiterunGuardFixture.blockedPredicate(against: scene.staticCollision)
         let runtime = PerceptionRuntime(
             settings: DetectionSettings.resolve(
                 store: GameSettingLoader.load(root: root, baseFile: file)
@@ -134,47 +127,6 @@ struct PerceptionRealDataTests {
 
     // MARK: - The approach
 
-    /// The guard's own cell, built through the production path so the collision
-    /// the sight line is traced against is the real thing.
-    private static func buildGuardCell(
-        root: GameDataRoot,
-        device: MTLDevice
-    ) throws -> CellScene {
-        let fileSystem = VirtualFileSystem(root: root)
-        let textures = TextureLibrary(fileSystem: fileSystem, device: device)
-        let builder = try CellSceneBuilder(
-            file: ESMFile(url: root.dataURL.appending(path: "Skyrim.esm")),
-            meshes: MeshLibrary(fileSystem: fileSystem, device: device, textures: textures),
-            textures: textures,
-            fileSystem: fileSystem
-        )
-        return try builder.buildScene(
-            worldspaceEditorID: whiterunWorldspace,
-            gridX: guardCell.x,
-            gridY: guardCell.y
-        )
-    }
-
-    /// The blocked predicate `FakePerceptionWorld` takes, over real geometry.
-    private static func lineOfSight(
-        against collision: StaticCollisionSet
-    ) -> (SIMD3<Float>, SIMD3<Float>) -> Bool {
-        { origin, destination in
-            let offset = destination - origin
-            guard
-                simd_length(offset) > 0,
-                let ray = InteractionRay(
-                    origin: origin,
-                    direction: offset,
-                    maximumDistance: simd_length(offset)
-                )
-            else { return false }
-            return InteractionRaycaster.nearestHit(
-                ray: ray, shapes: collision.candidates(overlapping: ray.bounds)
-            ) != nil
-        }
-    }
-
     /// Walks the target in along the guard's facing, returning the distinct
     /// states it passed through and the last readout line.
     private static func approach(
@@ -204,30 +156,5 @@ struct PerceptionRealDataTests {
             distance -= approachStride
         }
         return (states, lastLine)
-    }
-
-    // MARK: - Locating one guard
-
-    private struct LocatedGuard {
-        let key: ReferenceKey
-        let actor: PlacedActor
-        let editorID: String
-    }
-
-    /// The lowest-keyed ACHR in `scene` whose resolved base NPC_ is named like
-    /// a Whiterun guard. Lowest-keyed so a rebuild picks the same one.
-    private static func `guard`(
-        in scene: CellScene,
-        templates: ActorTemplateResolver
-    ) -> LocatedGuard? {
-        for entry in scene.references.sortedEntries() {
-            guard
-                let actor = entry.placedActor,
-                let editorID = templates.actors[actor.base.rawValue]?.editorID,
-                editorID.hasPrefix(guardEditorIDPrefix)
-            else { continue }
-            return LocatedGuard(key: entry.key, actor: actor, editorID: editorID)
-        }
-        return nil
     }
 }

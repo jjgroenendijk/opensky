@@ -217,7 +217,7 @@ one place:
 | `GlobalVariable` | `GetValue`, `GetValueInt`, `SetValue`, `SetValueInt` | same failure policy |
 | `Game` | `GetPlayer` | same failure policy |
 | `Quest` | see [quest script instances](#quest-script-instances-and-stage-fragments) | same failure policy |
-| `Actor` | `GetActorValue`, `GetBaseActorValue`, `GetActorValuePercentage`, `DamageActorValue`, `RestoreActorValue`, `IsDead`, `IsInCombat`, `IsWeaponDrawn`, `Kill` | same failure policy |
+| `Actor` | `GetActorValue`, `GetBaseActorValue`, `GetActorValuePercentage`, `DamageActorValue`, `RestoreActorValue`, `IsDead`, `IsInCombat`, `IsWeaponDrawn`, `Kill`, `StartCombat`, `StopCombat` | same failure policy |
 
 The corpus census found no string native that can be answered honestly without
 world context, and string basics are PEX opcodes rather than natives, so they
@@ -647,11 +647,11 @@ still bounds what that can cost in one frame.
 
 Issue #375 (roadmap item 15.8) puts the scripting surface on top of the actor
 subsystems M15 built: 15.3's actor values, 15.6's death latch and 15.7's
-hostility. Nine natives, three events, and one bridge half.
+hostility. Eleven natives, three events, and one bridge half.
 
 ### The `Actor` family
 
-`opensky/Engine/Papyrus/PapyrusNativeActor.swift` registers nine functions
+`opensky/Engine/Papyrus/PapyrusNativeActor.swift` registers eleven functions
 against the `Actor` script, reached through
 `PapyrusWorldActorBridge` — a protocol of its own that `PapyrusWorldBridge`
 refines, exactly as the quest half is, with its conformance in
@@ -665,7 +665,9 @@ refines, exactly as the quest half is, with its conformance in
 | `DamageActorValue(string, float)` | takes the magnitude off, floored at 0 | [DamageActorValue - Actor](https://www.creationkit.com/index.php?title=DamageActorValue_-_Actor) |
 | `RestoreActorValue(string, float)` | adds the magnitude, capped at the maximum | [RestoreActorValue - Actor](https://www.creationkit.com/index.php?title=RestoreActorValue_-_Actor) |
 | `bool IsDead()` | the death latch, not health | [IsDead - Actor](https://www.creationkit.com/index.php?title=IsDead_-_Actor) |
-| `bool IsInCombat()` | 15.7's stored hostility | [IsInCombat - Actor](https://www.creationkit.com/index.php?title=IsInCombat_-_Actor) |
+| `bool IsInCombat()` | 16.7's combat behavior phase, searching included | [IsInCombat - Actor](https://www.creationkit.com/index.php?title=IsInCombat_-_Actor) |
+| `StartCombat(Actor akTarget)` | engages the actor against the player at once | [StartCombat - Actor](https://www.creationkit.com/index.php?title=StartCombat_-_Actor) |
+| `StopCombat()` | ends the fight, leaving hostility alone | [StopCombat - Actor](https://www.creationkit.com/index.php?title=StopCombat_-_Actor) |
 | `bool IsWeaponDrawn()` | the melee runtime's draw state | [IsWeaponDrawn - Actor](https://www.creationkit.com/index.php?title=IsWeaponDrawn_-_Actor) |
 | `Kill(Actor akKiller = None)` | empties health, then kills | [Kill - Actor](https://www.creationkit.com/index.php?title=Kill_-_Actor) |
 
@@ -691,8 +693,9 @@ read, never a zero. That tally is the list of what to store next.
 | `SetActorValue` | not installed | the wiki is explicit that it sets the **base** value and leaves modifiers intact. OpenSky re-derives maximums from RACE, CLAS and NPC_ on every read and has no base-override store, so the only thing it could write is the current value — which is `ForceActorValue`'s job. Registering it against the wrong store would turn every "buff this NPC's max health" script into a silent current-health move |
 | `ModActorValue`, `ForceActorValue` | not installed | same missing store, plus the magic-effect layer they belong with (M18) |
 | `Resurrect` | not installed | nothing clears the death latch, so a corpse stays a corpse. `RestoreActorValue` on a dead actor writes the health and leaves it dead rather than half-reviving it |
-| `StartCombat`, `StopCombat` | not installed | hostility is read but never written from script. The AI with a reason to call them is M16's |
-| `Game.GetPlayer().IsInCombat()` | reads false in a fight | hostility is stored per NPC and describes how that NPC regards the player. Whether the *player* is in a fight is `CombatLoopState.isPlayerInCombat`, derived from every resident actor rather than stored on one |
+| `StartCombat` with a target other than the player | tallied failure | this engine simulates no actor-versus-actor combat. `ActorHostility` has two cases and both are about the player, so a fight between two NPCs would be one nothing steps. Stated rather than silently not happening |
+| `SetRelationshipRank` and the faction natives | not installed | there is no relationship or faction store to write. 16.7 kept `ActorHostility`'s two cases |
+| `Game.GetPlayer().IsInCombat()` | reads false in a fight | a combat behavior machine belongs to an NPC and describes what *it* is doing. Whether the *player* is in a fight is `CombatLoopState.isPlayerInCombat`, derived from every resident actor rather than stored on one |
 | `IsWeaponDrawn()` on an NPC | tallied failure | only the player carries a behavior graph that tracks a draw state (item 14.6). "Sheathed" would be an invented fact |
 
 ### `OnHit`
@@ -705,8 +708,8 @@ not an activation chain, so it never spends the recursion cap.
 
 Three runtimes report through it, all via one `ScriptHitReporting.reportScriptHit`
 method with a do-nothing default: `MeleeCombatRuntime` for the player's swing,
-`ProjectileRuntime` for an arrow, and `CombatLoopRuntimeTarget` for the dev
-target hitting back. Each reports *after* applying the damage, so a script
+`ProjectileRuntime` for an arrow, and `CombatLoopRuntimeBehavior` for an NPC
+hitting back. Each reports *after* applying the damage, so a script
 reading the target's health inside the handler sees the blow that caused the
 event.
 
@@ -1262,12 +1265,12 @@ steps to quiescence:
 against the user's read-only retail script corpus. It decoded 14,302 scripts,
 resolved 65,477 typed native call sites from 686 native declarations, and
 found 508 distinct referenced native pairs. Those three census numbers have not
-moved since; the coverage over them has, and was last re-measured on 2026-08-08
-after the `Actor` family landed. The standard registry now implements **56 of
-those 508 referenced pairs: 11.0% native coverage**, against 47 (9.3%) before
-item 15.8 and 18 (3.5%) at the original M11.1 gate. All nine `Actor` natives are
-referenced by the vanilla corpus, which is why the whole family moved the
-number.
+moved since; the coverage over them has, and was last re-measured on 2026-08-09
+after `StartCombat` and `StopCombat` landed with the combat AI. The standard
+registry now implements **58 of those 508 referenced pairs: 11.4% native
+coverage**, against 56 (11.0%) after item 15.8, 47 (9.3%) before it, and 18
+(3.5%) at the original M11.1 gate. All eleven `Actor` natives are referenced by
+the vanilla corpus, which is why the whole family moved the number.
 
 The same gate invoked all zero-argument `OnInit`, `OnLoad`, and
 `OnPlayerLoadGame` functions in the empty state. All 577 entry points reached a
@@ -1277,11 +1280,12 @@ deviations. Faults ranked as 231 `typeMismatch`, 93 `invalidJump`, and 13
 `invalidOperand`.
 
 The split of those 536 calls between "no such native" and "the native exists and
-refused" is what each new family moves, and the 2026-08-08 re-run reads 340
-unimplemented against 117 native-argument failures — 349 and 108 before item
-15.8. Nine calls crossed the line, which is the `Actor` family becoming
-registered: headless, every one of them refuses honestly for want of a world
-instead of falling through to the unimplemented tally. The leading unimplemented
+refused" is what each new family moves, and the 2026-08-09 re-run reads 339
+unimplemented against 118 native-argument failures — 340 and 117 after item 15.8,
+and 349 and 108 before it. Ten calls have crossed the line in total, nine with
+the `Actor` family and one with `StartCombat`: headless, every one of them
+refuses honestly for want of a world instead of falling through to the
+unimplemented tally. The leading unimplemented
 native is `ReferenceAlias.AddInventoryEventFilter` with 41 calls;
 `Actor.SetActorValue` is still on that list with 3, which is the deliberate gap
 recorded above. The aggregate report is written only to gitignored
@@ -1302,8 +1306,8 @@ M11 closes with the complete interaction chain in place: PEX decoding (#167), bo
 execution (#168), VMAD binding (#169), native dispatch and the M11.1 census (#170), the
 engine-loop runtime (#171), scripted activation and world mutation (#172), trigger events
 (#173), update timers (#277), the `World > Scripts` panel (#278), and this overall gate
-(#174). The coverage headline as of 2026-08-08 is **56 of 508 distinct natives referenced
-by vanilla scripts implemented (11.0%)**, up from the 18 (3.5%) this milestone closed on;
+(#174). The coverage headline as of 2026-08-09 is **58 of 508 distinct natives referenced
+by vanilla scripts implemented (11.4%)**, up from the 18 (3.5%) this milestone closed on;
 the 18 `deferredAnimation` calls in the corpus run are unchanged. `PlayAnimation` remains
 an explicit, reason-tagged deviation until M14; treating it as an implemented no-op was
 rejected because that would overstate visible behavior.

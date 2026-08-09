@@ -42,8 +42,13 @@ struct ConditionActorFunctionTests {
         playerHealth: Float = 50,
         playerDraw: WeaponDrawState? = .drawn,
         banditIsDead: Bool = false,
-        banditHostility: ActorHostility = .hostile
+        banditHostility: ActorHostility = .hostile,
+        banditActivity: ActorCombatActivity? = nil
     ) throws -> ConditionContext {
+        // A hostile bandit is fighting unless a case says otherwise, which is
+        // what an actor that has perceived the player is doing (issue #424).
+        let activity = banditActivity
+            ?? (banditHostility == .hostile ? ActorCombatActivity.fighting : .notFighting)
         var context = try ConditionEvaluatorFixture.populatedContext()
         context.actors = ActorStateResolution.fight(
             states: [
@@ -56,13 +61,15 @@ struct ConditionActorFunctionTests {
                     current: ActorValues(repeating: 100),
                     maximums: ActorValues(repeating: 100),
                     isDead: banditIsDead,
-                    hostility: banditHostility
+                    hostility: banditHostility,
+                    combatActivity: activity
                 )
             ],
             playerKey: playerKey,
             // The player is fighting the bandit only while the bandit is both
-            // alive and hostile, which is what `CombatLoopState.derive` says.
-            playerTarget: banditIsDead || banditHostility != .hostile ? nil : banditKey
+            // alive and actually engaged, which is what `CombatLoopState.derive`
+            // says since item 16.7.
+            playerTarget: banditIsDead || activity == .notFighting ? nil : banditKey
         )
         return context
     }
@@ -164,6 +171,20 @@ struct ConditionActorFunctionTests {
         #expect(!result.outcome.isTrue)
         #expect(result.outcome.failures == [.unavailableActorState])
         #expect(result.tally.unavailableActorState == 1)
+    }
+
+    /// Item 16.7 made all three documented returns reachable, and moved the
+    /// read from stored hostility to what the actor is actually doing.
+    @Test func getCombatStateIsTwoWhileSearchingAndOneWhileFighting() throws {
+        let searching = try Self.fightContext(banditActivity: .searching)
+        #expect(try Self.evaluate(
+            Self.getCombatState, 0, 2, runOn: 1, context: searching
+        ).outcome == .true)
+        // A hostile actor that has not noticed the player is not in combat.
+        let unaware = try Self.fightContext(banditActivity: .notFighting)
+        #expect(try Self.evaluate(
+            Self.getCombatState, 0, 0, runOn: 1, context: unaware
+        ).outcome == .true)
     }
 
     @Test func getCombatStateIsOneForALivingHostileAndZeroOtherwise() throws {

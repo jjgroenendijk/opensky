@@ -4,6 +4,33 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-09
 
+* **Combat AI (issue #424)**: the opponent is no longer a clock. `DevTargetDriver` and
+  `CombatLoopRuntimeTarget` are deleted, and `CombatBehaviorMachine` decides instead — one
+  fixed-step, per-actor machine that engages when 16.6 detection reports the player,
+  approaches to weapon reach through the 16.4 mover, attacks on the shipping
+  windup-contact-recovery path, spends a gap with its guard up on a seeded roll, breaks off
+  at a fifth of its health and runs along a path away from the player, hunts the position
+  detection remembered when it loses them, and gives up into a fresh 16.5 package
+  selection. The machine asks for movement and never performs it: 16.4 stays the movement
+  authority, and a point no navmesh reaches is a refused request rather than a slide. Combat
+  state now derives from who is *engaged* rather than from who is angry, so the music stops
+  when a fight ends instead of when the last hostile is killed; `combatBlock(of:)` answers
+  for every actor, so an NPC's guard reduces the player's hit through the same pinned 15.4
+  formula; `GetCombatState` returns 2 while searching, which is the third documented value
+  and the first time it has been reachable; and `StartCombat` and `StopCombat` are installed
+  as `Actor` natives, routed through the loop, with a target other than the player a tallied
+  failure because this engine simulates no actor-versus-actor fight. Eight actors fight at
+  once — the mover's own crowd cap — and what the cap refused is counted rather than
+  dropped. Every cadence, probability, threshold and distance is stated as OpenSky's own in
+  `CombatBehaviorSettings`, because no record carries one. The `World > Combat & Physics >
+  Combat Loop` section lost its spawn and reset buttons with the clock and gained one
+  readout line per fighting actor. The Skyrim.esm gate runs a real `GuardWhiterun*` ACHR
+  through the whole loop against the player over real Whiterun collision, offscreen, with
+  the per-step cost recorded. Updated [the combat loop](/engine/combat.md),
+  [the Papyrus VM](/engine/papyrus-vm.md), [conditions](/formats/conditions.md),
+  [perception and detection](/engine/detection.md) and
+  [the sidebar acceptance ledger](/tools/sidebar-acceptance.md).
+
 * **Perception and detection (issue #202)**: resident actors the AI drives now look and
   listen. A fixed-step, capped, time-sliced pass runs a view cone, an exact line-of-sight
   ray against static collision, and a gait-based noise term for every observer-target pair,

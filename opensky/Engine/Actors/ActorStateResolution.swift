@@ -37,6 +37,10 @@ nonisolated struct ActorConditionState: Equatable, Sendable {
     var isDead: Bool
     /// The actor's stored regard for the player.
     var hostility: ActorHostility
+    /// What the actor is actually doing about a fight, which is what
+    /// `GetCombatState` reports (issue #424). Hostility says how an actor feels;
+    /// this says whether it is currently acting on it.
+    var combatActivity: ActorCombatActivity
     /// Where this actor's weapon is, or nil when nothing in this session
     /// observes a draw state for it.
     var weaponDrawState: WeaponDrawState?
@@ -48,6 +52,7 @@ nonisolated struct ActorConditionState: Equatable, Sendable {
         maximums: ActorValues,
         isDead: Bool = false,
         hostility: ActorHostility = .neutral,
+        combatActivity: ActorCombatActivity = .notFighting,
         weaponDrawState: WeaponDrawState? = nil,
         combatTarget: ReferenceKey? = nil
     ) {
@@ -55,19 +60,25 @@ nonisolated struct ActorConditionState: Equatable, Sendable {
         self.maximums = maximums
         self.isDead = isDead
         self.hostility = hostility
+        self.combatActivity = combatActivity
         self.weaponDrawState = weaponDrawState
         self.combatTarget = combatTarget
     }
 
     /// This actor's combat state as `GetCombatState` spells it.
     ///
-    /// Two of the three documented values are reachable. The Creation Kit wiki
-    /// lists 0 "Not in combat", 1 "In combat" and 2 "Searching"; searching is a
-    /// perception state, and perception is M16's, so no actor in this engine is
-    /// ever in it. A dead actor is not in combat whatever its stored hostility
-    /// says, which is the same rule `CombatLoopState.derive` applies.
+    /// All three documented values are reachable as of 16.7. The Creation Kit
+    /// wiki lists 0 "Not in combat", 1 "In combat" and 2 "Searching"; searching
+    /// is the phase an actor enters when 16.6 detection loses the target it was
+    /// fighting, and it is read *before* fighting because a searching actor is
+    /// also engaged. A dead actor is not in combat whatever else it carries,
+    /// which is the same rule `CombatLoopState.derive` applies.
+    ///
+    /// Read from the behavior phase rather than from stored hostility: an actor
+    /// that hates the player but has not perceived them yet, and one that
+    /// searched and gave up, are both hostile and neither is in a fight.
     var combatStateValue: Float {
-        !isDead && hostility == .hostile ? 1 : 0
+        isDead ? 0 : Float(combatActivity.rawValue)
     }
 
     /// This actor's `IsWeaponOut` value, or nil when no draw state is observed.
@@ -100,15 +111,19 @@ nonisolated struct ActorStateResolution: Sendable {
         self.states = states
     }
 
-    /// `states` with 15.7's two directions of one fight filled in: the player
-    /// fights `playerTarget`, and every hostile living actor fights the player.
+    /// `states` with both directions of one fight filled in: the player fights
+    /// `playerTarget`, and every *engaged* living actor fights the player.
     ///
     /// That second half is not an assumption bolted on here — it is the whole
-    /// of 15.7's model, where hostility means "this actor fights the player"
-    /// and nothing else. Filling both directions is what lets a combat-target
-    /// run-on evaluate from either side of a fight; leaving the NPC side out
-    /// would make half the conditions in a vanilla combat package fail for a
-    /// reason that has nothing to do with the package.
+    /// of the engine's model, where a fight is against the player and nothing
+    /// else. Filling both directions is what lets a combat-target run-on
+    /// evaluate from either side of a fight; leaving the NPC side out would make
+    /// half the conditions in a vanilla combat package fail for a reason that
+    /// has nothing to do with the package.
+    ///
+    /// Engaged rather than hostile since 16.7: an actor that is angry but has
+    /// not started fighting has no combat target, exactly as `GetCombatState`
+    /// reports 0 for it.
     ///
     /// A dead actor is given no target, matching `CombatLoopState.derive`: a
     /// corpse is not fighting anybody, whatever hostility it died carrying.
@@ -122,7 +137,7 @@ nonisolated struct ActorStateResolution: Sendable {
             guard !state.isDead else { continue }
             if key == playerKey {
                 resolved[key]?.combatTarget = playerTarget
-            } else if state.hostility == .hostile {
+            } else if state.combatActivity != .notFighting {
                 resolved[key]?.combatTarget = playerKey
             }
         }

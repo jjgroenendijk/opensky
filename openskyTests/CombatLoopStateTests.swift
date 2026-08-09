@@ -24,15 +24,48 @@ struct CombatLoopStateTests {
         )
     }
 
+    /// Derives with every hostile actor also *engaged*, which is what a fight
+    /// with a perception pass under it looks like. The engagement half is
+    /// varied on its own in `hostilityWithoutEngagementIsNotCombat`.
     private static func derive(
         _ actors: [CombatActorObservation],
-        hostile: Set<ReferenceKey>
+        hostile: Set<ReferenceKey>,
+        engaged: Set<ReferenceKey>? = nil
     ) -> CombatLoopState {
-        CombatLoopState.derive(
+        let fighting = engaged ?? hostile
+        return CombatLoopState.derive(
             actors: actors,
             hostility: { hostile.contains($0) ? .hostile : .neutral },
+            phase: { fighting.contains($0) ? .approaching : .idle },
             playerFeet: SIMD3<Float>()
         )
+    }
+
+    /// Item 16.7 moved the combat edge from "somebody is angry" to "somebody is
+    /// fighting". A hostile actor that has not perceived the player yet is not
+    /// a fight, which is what makes the music stop when the fight ends rather
+    /// than when the actor is finally killed or calmed.
+    @Test func hostilityWithoutEngagementIsNotCombat() {
+        let state = Self.derive(
+            [Self.actor(1, at: 300)], hostile: [.generated(1)], engaged: []
+        )
+        #expect(state.hostileCount == 1)
+        #expect(state.engagedCount == 0)
+        #expect(!state.isPlayerInCombat)
+        // The player's target is still the nearest hostile, engaged or not.
+        #expect(state.target == .generated(1))
+    }
+
+    @Test func aSearchingActorIsCountedAndIsStillCombat() {
+        let state = CombatLoopState.derive(
+            actors: [Self.actor(1, at: 300)],
+            hostility: { _ in .hostile },
+            phase: { _ in .searching },
+            playerFeet: SIMD3<Float>()
+        )
+        #expect(state.isPlayerInCombat)
+        #expect(state.engagedCount == 1)
+        #expect(state.searchingCount == 1)
     }
 
     @Test func aWorldOfNeutralActorsIsNotCombat() {

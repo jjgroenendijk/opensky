@@ -1,6 +1,6 @@
-// The `Actor` family (issue #375, roadmap item 15.8): the scripting-facing
-// surface of 15.3's actor values and 15.7's combat state, so M16's AI starts
-// with its hooks already in place.
+// The `Actor` family (issues #375 and #424, roadmap items 15.8 and 16.7): the
+// scripting-facing surface of 15.3's actor values and of the fights 16.7's
+// combat AI runs.
 //
 // Policy is the `ObjectReference` family's, unchanged: `self` arrives as
 // `PapyrusNativeCall.receiver` and becomes a `ReferenceKey`; a headless runtime,
@@ -26,6 +26,10 @@
 // override exists. `ModActorValue` and `ForceActorValue` are absent for the
 // same reason and are M18's with the magic-effect layer.
 //
+// `SetRelationshipRank` and the faction natives are absent with the factions
+// themselves: 16.7 keeps `ActorHostility`'s two cases and adds no relationship
+// store for them to write.
+//
 // `GetActorValuePercentage` is spelled with the long suffix here because that
 // is the native; `GetAVPercentage` is a Papyrus-level wrapper around it, as are
 // `GetAV`, `GetBaseAV`, `DamageAV` and `RestoreAV`, so they need no
@@ -38,6 +42,62 @@ nonisolated extension PapyrusNativeFunctions {
         installActorValueReads(into: &registry)
         installActorValueWrites(into: &registry)
         installActorStatus(into: &registry)
+        installActorCombat(into: &registry)
+    }
+
+    /// `StartCombat(Actor akTarget)` and `StopCombat()`.
+    ///
+    /// "Starts combat between this actor and the target actor."
+    /// (<https://www.creationkit.com/index.php?title=StartCombat_-_Actor>)
+    /// "Stops this actor from fighting."
+    /// (<https://www.creationkit.com/index.php?title=StopCombat_-_Actor>)
+    ///
+    /// Both were deliberately unregistered through M15, because hostility was
+    /// read and never written from script and no AI had a reason to call them.
+    /// They route through `CombatLoopRuntime` rather than writing
+    /// `ActorCombatState` directly, so a script's fight enters by the same door
+    /// the player's does: hostility through the world-state store, the same
+    /// behavior machine engaged, and the same hand-back to the 16.5 package when
+    /// it stops.
+    ///
+    /// `StartCombat` names a target, and OpenSky accepts only the player.
+    /// Actor-versus-actor combat is out of 16.7's scope — `ActorHostility` has
+    /// two cases and both are about the player — so a script that names anybody
+    /// else takes a tallied failure naming the reason rather than a fight that
+    /// silently does not happen. `StopCombat` takes no argument.
+    private static func installActorCombat(into registry: inout PapyrusNativeRegistry) {
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Actor",
+            functionName: "StartCombat"
+        ) { call, context in
+            guard let actor = actorTarget(call, context) else {
+                return needsActor(call)
+            }
+            guard
+                let handle = objectArgument(call, at: 0),
+                let target = actor.world.referenceKey(for: handle)
+            else {
+                return failure(call, "StartCombat needs a target actor")
+            }
+            guard actor.world.startActorCombat(actor.key, target: target) else {
+                return failure(
+                    call,
+                    "StartCombat fights the player alone; OpenSky simulates no "
+                        + "actor-versus-actor combat"
+                )
+            }
+            return .returned(.none)
+        })
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Actor",
+            functionName: "StopCombat"
+        ) { call, context in
+            guard let actor = actorTarget(call, context) else {
+                return needsActor(call)
+            }
+            actor.world.stopActorCombat(actor.key)
+            return .returned(.none)
+        })
     }
 
     /// `float GetActorValue(string)`, `float GetBaseActorValue(string)` and
@@ -140,8 +200,9 @@ nonisolated extension PapyrusNativeFunctions {
     ///
     /// "Is this actor currently in combat?"
     /// (<https://www.creationkit.com/index.php?title=IsInCombat_-_Actor>) is
-    /// 15.7's hostility: an actor fights the player or it does not, and a dead
-    /// one never does.
+    /// 16.7's behavior phase rather than stored hostility: an actor that hates
+    /// the player but has not noticed them is not in a fight, an actor still
+    /// searching for a target it lost is, and a dead one never is.
     ///
     /// "Has this actor drawn his weapon and/or spell?"
     /// (<https://www.creationkit.com/index.php?title=IsWeaponDrawn_-_Actor>)

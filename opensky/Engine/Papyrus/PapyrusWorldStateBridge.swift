@@ -32,7 +32,8 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// Game clock the five time globals project from, matching how every other
     /// consumer builds a `GlobalResolution`.
     var clockSource: (() -> GameClock?)?
-    /// The three collaborators the `Actor` natives run through (issue #375),
+    /// The collaborators the `Actor` natives run through (issues #375 and
+    /// #424),
     /// held as closures rather than as references so the session may wire them
     /// in any order and a test may supply one without the others. Nil, or a
     /// closure answering nil, makes every actor native a tallied failure rather
@@ -40,6 +41,10 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// `PapyrusWorldStateBridgeActors.swift`.
     var actorValueRuntime: (() -> ActorValueRuntime?)?
     var ragdollRuntime: (() -> RagdollRuntime?)?
+    /// The combat loop, which `StartCombat`, `StopCombat` and `IsInCombat` reach
+    /// through (issue #424). Nil leaves all three tallied failures rather than
+    /// letting a script claim it started a fight nothing simulates.
+    var combatRuntime: (() -> CombatLoopRuntime?)?
     /// Where one actor's weapon is, or nil when this session observes no draw
     /// state for it — which is every actor but the player today.
     var weaponDrawState: ((ReferenceKey) -> WeaponDrawState?)?

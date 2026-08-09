@@ -1,5 +1,5 @@
-// The world seam the combat loop drives through (issue #374, roadmap item
-// 15.7), and the values on either side of it.
+// The world seam the combat loop drives through (issues #374 and #424, roadmap
+// items 15.7 and 16.7), and the values on either side of it.
 //
 // One protocol rather than a bag of closures, for the reason `MeleeCombatWorld`
 // is one: every question here is something the session already knows how to
@@ -29,7 +29,7 @@ nonisolated struct CombatActorObservation: Equatable, Sendable {
     let feet: SIMD3<Float>
     let capsule: PlayerCapsule
     /// Facing yaw in radians, in the locomotion bridge's convention. Used to
-    /// aim the dev target's own hit volume.
+    /// aim its own hit volume.
     let facing: Float
     /// The actor's scale, which multiplies its reach.
     let scale: Float
@@ -58,14 +58,14 @@ nonisolated struct CombatActorObservation: Equatable, Sendable {
         self.name = name
     }
 
-    /// This actor as a melee target, so the dev target's swing runs through the
-    /// same 15.4 detector the player's does.
+    /// This actor as a melee target, so an NPC's swing runs through the same
+    /// 15.4 detector the player's does.
     var meleeTarget: MeleeTarget {
         MeleeTarget(key: key, feet: feet, capsule: capsule)
     }
 }
 
-/// Which single-clip animation the dev target should play.
+/// Which single-clip animation a fighting actor should play.
 ///
 /// Three cases rather than a free-form clip name because NPC playback in this
 /// milestone is one clip at a time (`ActorAnimationPlayback`) and the engine
@@ -108,15 +108,57 @@ protocol CombatLoopWorld: ScriptHitReporting {
     func setCombatHostility(_ hostility: ActorHostility, on key: ReferenceKey) -> Bool
 
     /// Takes `amount` off `key`'s health, reporting whether it landed. The same
-    /// call melee and archery make, so the dev target's blows and the player's
-    /// reach health by one path.
+    /// call melee and archery make, so an NPC's blows and the player's reach
+    /// health by one path.
     @discardableResult
     func applyCombatDamage(_ amount: Float, to key: ReferenceKey) -> Bool
 
-    /// What `key` is blocking with, or nil when it is not blocking. The player
-    /// answers from the melee runtime's own guard state, which is what makes a
-    /// blocked incoming hit go through the pinned 15.4 formula.
+    /// What `key` is blocking with, or nil when it is not blocking.
+    ///
+    /// The player answers from the melee runtime's own guard state. Every other
+    /// actor answers from its combat behavior machine, which is 16.7's second
+    /// scope point: a blocked hit in either direction goes through the same
+    /// pinned 15.4 formula, and neither side has a damage path of its own.
     func combatBlock(of key: ReferenceKey) -> MeleeBlockKind?
+
+    /// What `observer` currently makes of `target`, projected from 16.6's
+    /// detection pair state.
+    ///
+    /// The seam is observer-and-target rather than "is the player detected",
+    /// because `StartCombat` may name a target that is not the player and the
+    /// machine has to be told the truth about whichever one it was given.
+    func combatAwareness(
+        of observer: ReferenceKey, toward target: ReferenceKey
+    ) -> CombatAwareness
+
+    /// `key`'s current health over its re-derived maximum, 0 through 1.
+    ///
+    /// A fraction rather than the two numbers, because the one decision that
+    /// reads it — whether to break off — is stated as a fraction and computing
+    /// it at the call site would let two callers disagree about the same actor.
+    func combatHealthFraction(of key: ReferenceKey) -> Float
+
+    /// The profile `key` swings with, which sizes its reach and its damage.
+    func combatWeapon(of key: ReferenceKey) -> MeleeWeaponProfile
+
+    /// Sends `key` walking to `point` through the 16.4 mover, which owns the
+    /// path, the capsule and the persistence.
+    ///
+    /// - Returns: true when a path was found and the mover took the request.
+    ///   False is the honest answer for a point no navmesh reaches or for a
+    ///   crowd already at the mover cap, and the machine asks again with a
+    ///   different point rather than sliding there anyway.
+    @discardableResult
+    func moveCombatActor(_ key: ReferenceKey, to point: SIMD3<Float>) -> Bool
+
+    /// Stops `key` where it stands, which is what an actor does when it is in
+    /// reach, blocking, staggered or done fighting.
+    func stopCombatMovement(of key: ReferenceKey)
+
+    /// Hands `key` back to its 16.5 package, re-selecting one immediately rather
+    /// than at the next scheduled boundary. Called on the step pursuit ends,
+    /// which is the milestone gate's "resume" line.
+    func resumeCombatPackage(for key: ReferenceKey)
 
     /// Raises one census-named event on a graph: the player's when `target` is
     /// nil, otherwise that actor's.

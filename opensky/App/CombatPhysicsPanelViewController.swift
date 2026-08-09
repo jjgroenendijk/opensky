@@ -82,8 +82,8 @@ final class CombatPhysicsPanelViewController: InspectorPanelViewController {
         loopSection.hostilityControl
     }
 
-    var spawnDevTargetControl: NSButton {
-        loopSection.spawnControl
+    var clearCombatTraceControl: NSButton {
+        loopSection.clearTraceControl
     }
 
     var physicsFreezeControl: NSButton {
