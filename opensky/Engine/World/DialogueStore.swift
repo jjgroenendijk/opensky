@@ -1,6 +1,11 @@
 // Immutable DIAL/INFO/VTYP index. Unlike flat record stores, DIAL owns a
 // type-7 child group and INFO file order is selection-significant, so this
 // walks the top group's direct record/group sequence.
+//
+// Since issue #426 the index also resolves each INFO to a session-stable
+// `ReferenceKey`, exactly as `QuestStore` resolves each QUST. Said-state is
+// runtime state filed per INFO record, and a save must not key it off a
+// load-order-relative FormID.
 
 import Foundation
 
@@ -9,16 +14,35 @@ nonisolated final class DialogueStore: Sendable {
     private let topicFormIDsByEditorID: [String: UInt32]
     private let infosByTopicFormID: [UInt32: [TopicInfo]]
     private let infosByFormID: [UInt32: TopicInfo]
+    private let topicFormIDsByInfoFormID: [UInt32: UInt32]
     private let voicesByFormID: [UInt32: VoiceType]
     private let voiceFormIDsByEditorID: [String: UInt32]
+    /// Raw INFO FormID -> session-stable identity, resolved once through the
+    /// plugin's master list so said-state and saves never key off a
+    /// load-order-relative number.
+    private let keysByInfoFormID: [UInt32: ReferenceKey]
+    /// The inverse, which is what the save decoder and the Papyrus fragment
+    /// dispatcher read: a key arrives and the INFO record behind it is needed.
+    private let infoFormIDsByKey: [ReferenceKey: UInt32]
+    /// Master-list resolver of the plugin these records came from, retained so
+    /// a caller can resolve the FormIDs the records *point at*.
+    let resolver: FormIDResolver
 
     /// DIAL, INFO or VTYP records whose field container could not be decoded.
     let skippedRecordCount: Int
 
-    static let empty = DialogueStore(topics: [], infosByTopic: [:], voiceTypes: [])
+    static let empty = DialogueStore(
+        topics: [],
+        infosByTopic: [:],
+        voiceTypes: [],
+        resolver: FormIDResolver(pluginName: "", masters: [])
+    )
 
-    convenience init(file: ESMFile, localized: Bool? = nil) {
-        let isLocalized = localized ?? ((try? file.pluginHeader().isLocalized) ?? false)
+    /// - Parameter pluginName: file name of `file`, needed because a plugin
+    ///   does not record its own name and `ReferenceKey` is built from it.
+    convenience init(file: ESMFile, pluginName: String, localized: Bool? = nil) {
+        let header = try? file.pluginHeader()
+        let isLocalized = localized ?? (header?.isLocalized ?? false)
         var topics: [DialogueTopic] = []
         var infosByTopic: [UInt32: [TopicInfo]] = [:]
         var voiceTypes: [VoiceType] = []
@@ -61,6 +85,7 @@ nonisolated final class DialogueStore: Sendable {
             topics: topics,
             infosByTopic: infosByTopic,
             voiceTypes: voiceTypes,
+            resolver: FormIDResolver(pluginName: pluginName, masters: header?.masters ?? []),
             skippedRecordCount: skipped
         )
     }
@@ -69,6 +94,7 @@ nonisolated final class DialogueStore: Sendable {
         topics: [DialogueTopic],
         infosByTopic: [UInt32: [TopicInfo]],
         voiceTypes: [VoiceType],
+        resolver: FormIDResolver,
         skippedRecordCount: Int = 0
     ) {
         var topicsByFormID: [UInt32: DialogueTopic] = [:]
@@ -80,9 +106,15 @@ nonisolated final class DialogueStore: Sendable {
             }
         }
         var infosByFormID: [UInt32: TopicInfo] = [:]
-        for infos in infosByTopic.values {
+        var owningTopics: [UInt32: UInt32] = [:]
+        var infoKeys: [UInt32: ReferenceKey] = [:]
+        for (topicFormID, infos) in infosByTopic {
             for info in infos {
                 infosByFormID[info.formID.rawValue] = info
+                owningTopics[info.formID.rawValue] = topicFormID
+                if let key = ReferenceKey.resolve(info.formID, using: resolver) {
+                    infoKeys[info.formID.rawValue] = key
+                }
             }
         }
         var voicesByFormID: [UInt32: VoiceType] = [:]
@@ -97,8 +129,20 @@ nonisolated final class DialogueStore: Sendable {
         topicFormIDsByEditorID = topicIDs
         infosByTopicFormID = infosByTopic
         self.infosByFormID = infosByFormID
+        topicFormIDsByInfoFormID = owningTopics
         self.voicesByFormID = voicesByFormID
         voiceFormIDsByEditorID = voiceIDs
+        keysByInfoFormID = infoKeys
+        // Built by accumulation rather than by `Dictionary(uniqueKeysWithValues:)`
+        // because that traps on a collision, and a plugin listing the same
+        // master twice can hand two FormIDs the same key. The lowest FormID
+        // wins so the inverse is deterministic whatever the dictionary order.
+        var inverse: [ReferenceKey: UInt32] = [:]
+        for (raw, key) in infoKeys where raw < (inverse[key] ?? UInt32.max) {
+            inverse[key] = raw
+        }
+        infoFormIDsByKey = inverse
+        self.resolver = resolver
         self.skippedRecordCount = skippedRecordCount
     }
 
@@ -132,6 +176,30 @@ nonisolated final class DialogueStore: Sendable {
 
     func info(_ id: FormID) -> TopicInfo? {
         infosByFormID[id.rawValue]
+    }
+
+    /// The DIAL record whose child group holds `id`, or nil when no loaded
+    /// plugin declares that INFO.
+    func topic(ofInfo id: FormID) -> DialogueTopic? {
+        topicFormIDsByInfoFormID[id.rawValue].flatMap { topicsByFormID[$0] }
+    }
+
+    /// Session-stable key for one INFO, which is how said-state and the save
+    /// file address it. Nil for a FormID this plugin does not define.
+    func key(forInfo id: FormID) -> ReferenceKey? {
+        keysByInfoFormID[id.rawValue]
+    }
+
+    /// The INFO record a session-stable key names, the direction the save
+    /// decoder and the fragment dispatcher read.
+    func info(key: ReferenceKey) -> TopicInfo? {
+        infoFormIDsByKey[key].flatMap { infosByFormID[$0] }
+    }
+
+    /// Topics in FormID order, which is the deterministic order selection
+    /// walks them in when two topics share a priority.
+    func sortedTopics() -> [DialogueTopic] {
+        topicsByFormID.keys.sorted().compactMap { topicsByFormID[$0] }
     }
 
     func voiceType(_ id: FormID) -> VoiceType? {

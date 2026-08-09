@@ -66,6 +66,10 @@ enum DialogueFixture {
         return data
     }
 
+    /// Plugin name every synthetic dialogue store is keyed under, so an INFO's
+    /// `ReferenceKey` matches the one a save fixture writes.
+    static let pluginName = "opensky-test.esm"
+
     static func store(
         dialogueChildren: Data = Data(),
         voiceRecords: Data = Data(),
@@ -76,7 +80,7 @@ enum DialogueFixture {
             voiceRecords: voiceRecords,
             localized: localized
         )
-        return try DialogueStore(file: ESMFile(data: bytes))
+        return try DialogueStore(file: ESMFile(data: bytes), pluginName: pluginName)
     }
 
     static func topicChildren(parent: UInt32, infos: Data) -> Data {
@@ -148,12 +152,81 @@ enum DialogueFixture {
         return ESMFixture.field("TRDT", data)
     }
 
-    static func condition(functionIndex: UInt16 = 0) -> Data {
-        var data = Data(count: 8)
+    /// CTDA, 32 bytes: `function(parameter1) <operator> comparisonValue`.
+    static func condition(
+        functionIndex: UInt16 = 0,
+        operatorBits: UInt8 = 0,
+        flags: UInt8 = 0,
+        comparisonValue: Float = 0,
+        parameter1: UInt32 = 0,
+        parameter2: UInt32 = 0,
+        runOn: UInt32 = 0,
+        parameter3: Int32 = -1
+    ) -> Data {
+        var data = Data([(operatorBits << 5) | (flags & 0x1F), 0, 0, 0])
+        data.appendUInt32(comparisonValue.bitPattern)
         data.appendUInt16(functionIndex)
-        data.appendUInt16(0)
-        data.append(Data(count: 16))
-        data.appendUInt32(UInt32(bitPattern: -1))
+        data.appendUInt16(0) // padding
+        data.appendUInt32(parameter1)
+        data.appendUInt32(parameter2)
+        data.appendUInt32(runOn)
+        data.appendUInt32(0) // reference, only read under run-on 2
+        data.appendUInt32(UInt32(bitPattern: parameter3))
         return ESMFixture.field("CTDA", data)
+    }
+
+    /// `GetIsID(base) == 1` on the subject, which is how a vanilla INFO names
+    /// the NPC allowed to say it.
+    static func isSpeaker(_ base: UInt32) -> Data {
+        condition(functionIndex: 72, comparisonValue: 1, parameter1: base)
+    }
+
+    /// `GetQuestRunning(quest) == 1`, one of the quest gates a real INFO uses.
+    static func questRunning(_ quest: UInt32) -> Data {
+        condition(functionIndex: 56, comparisonValue: 1, parameter1: quest)
+    }
+
+    // MARK: - VMAD
+
+    /// A VMAD field carrying a primary script list plus an INFO fragment tail.
+    static func vmad(scripts: [VMADFixture.Script] = [], tail: Data) -> Data {
+        ESMFixture.field("VMAD", VMADFixture.payload(scripts: scripts, tail: tail))
+    }
+
+    /// The INFO fragment tail: int8 bind version, uint8 flags, wstring file
+    /// name, then one entry per set flag bit in begin-then-end order.
+    ///
+    /// - Parameter flags: written verbatim when supplied, so a test can build
+    ///   the mismatched or undocumented byte the decoder has to refuse.
+    static func infoFragmentTail(
+        fileName: String,
+        begin: String? = nil,
+        end: String? = nil,
+        bindVersion: Int8 = 2,
+        flags: UInt8? = nil
+    ) -> Data {
+        var declared: UInt8 = 0
+        if begin != nil {
+            declared |= 1 << 0
+        }
+        if end != nil {
+            declared |= 1 << 1
+        }
+        var data = Data([UInt8(bitPattern: bindVersion), flags ?? declared])
+        data.appendDialogueString(fileName)
+        for function in [begin, end].compactMap(\.self) {
+            data.append(1) // always one in shipped data
+            data.appendDialogueString(fileName)
+            data.appendDialogueString(function)
+        }
+        return data
+    }
+}
+
+extension Data {
+    fileprivate mutating func appendDialogueString(_ value: String) {
+        let bytes = Data(value.utf8)
+        appendUInt16(UInt16(bytes.count))
+        append(bytes)
     }
 }

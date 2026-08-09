@@ -62,6 +62,10 @@ nonisolated enum OpenSkySaveDecoder {
         /// session, so every actor restores neutral — which is also what a save
         /// written before that chunk existed means.
         var combatStates: [SaveCombatStateEntry] = []
+        /// Absent `DLGS` chunk (issue #426) means nobody spoke in the session,
+        /// so every response restores unsaid — which is also what a save
+        /// written before that chunk existed means.
+        var dialogue: [SaveDialogueEntry] = []
     }
 
     static func decode(_ data: Data) throws -> OpenSkySaveFile {
@@ -108,7 +112,8 @@ nonisolated enum OpenSkySaveDecoder {
         entries = OpenSkySaveQuestDecoder.mergeAliases(body.questAliases, into: entries)
         entries = OpenSkySaveActorValueDecoder.merge(body.actorValues, into: entries)
         entries = OpenSkySaveDeathDecoder.merge(body.deaths, into: entries)
-        return OpenSkySaveCombatDecoder.merge(body.combatStates, into: entries)
+        entries = OpenSkySaveCombatDecoder.merge(body.combatStates, into: entries)
+        return OpenSkySaveDialogueDecoder.merge(body.dialogue, into: entries)
     }
 
     // MARK: - Header
@@ -227,6 +232,8 @@ nonisolated enum OpenSkySaveDecoder {
             body.deaths = try OpenSkySaveDeathDecoder.decodeDeaths(payload)
         case OpenSkySaveFormat.ChunkTag.combatStates:
             body.combatStates = try OpenSkySaveCombatDecoder.decodeCombatStates(payload)
+        case OpenSkySaveFormat.ChunkTag.dialogueStates:
+            body.dialogue = try OpenSkySaveDialogueDecoder.decodeDialogueStates(payload)
         default:
             break // Unknown chunk: skipped by its declared length.
         }

@@ -109,9 +109,28 @@ nonisolated struct TopicInfo {
     let speaker: FormID?
     let walkAwayTopic: FormID?
     let audioOutputOverride: FormID?
-    /// VMAD's script list. INFO's fragment tail remains skipped by ScriptData.
+    /// VMAD's script list, including the decoded INFO fragment tail.
     let script: ScriptData
     let skipped: DialogueTally
+
+    /// Result-script fragments, from the VMAD tail rather than from a field of
+    /// their own. Empty when the response carries no result script, and also
+    /// when its fragment tail failed to decode (`script.skipped` records that).
+    var fragments: [TopicInfoFragment] {
+        script.infoFragments?.fragments ?? []
+    }
+
+    /// The generated result script, "TIF_<editorID>_<formID>" by convention, or
+    /// nil when the response carries no fragment at all.
+    var fragmentScriptName: String? {
+        guard
+            let section = script.infoFragments, !section.isEmpty,
+            !section.fileName.isEmpty
+        else {
+            return nil
+        }
+        return section.fileName
+    }
 
     init(record: ESMRecord, localized: Bool = false) throws {
         guard record.type == "INFO" else {

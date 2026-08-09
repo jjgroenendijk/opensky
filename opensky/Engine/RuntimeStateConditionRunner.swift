@@ -140,6 +140,8 @@ nonisolated enum RuntimeStateConditionRunner {
             "no actor state in the evaluation context"
         case .unavailableDetection:
             "no perception for that pair in the evaluation context"
+        case .unavailableDialogue:
+            "no voice type for that actor in the evaluation context"
         }
     }
 
@@ -173,6 +175,9 @@ nonisolated enum RuntimeStateConditionRunner {
         }
         if tally.unavailableActorState > 0 {
             lines.append("Actor state unavailable: \(tally.unavailableActorState)")
+        }
+        if tally.unavailableDialogue > 0 {
+            lines.append("Voice type unavailable: \(tally.unavailableDialogue)")
         }
         return lines
     }

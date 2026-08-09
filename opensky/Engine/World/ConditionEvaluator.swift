@@ -83,6 +83,12 @@ nonisolated enum ConditionFailure: Equatable, Error, Sendable {
     /// from "this engine is not watching that pair", and only one of them is a
     /// real one.
     case unavailableDetection
+    /// The function needs a dialogue fact the context carries none of (issue
+    /// #426): no `DialogueResolution` voice type for the run-on reference.
+    /// Deliberately not treated as an actor whose voice fails to match — that
+    /// is a different answer from "this engine does not know this actor's
+    /// voice", and only one of them is a real one.
+    case unavailableDialogue
 }
 
 /// The answer to one condition or one condition list.

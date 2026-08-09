@@ -68,6 +68,12 @@ nonisolated struct ConditionTally: Equatable, Sendable {
     /// #202): a pair the pass is not watching, or a reference it cannot place.
     private(set) var unavailableDetection = 0
 
+    /// Conditions that needed a dialogue fact the context carries none of
+    /// (issue #426): a run-on reference this session resolved no voice type
+    /// for. Deliberately not treated as a voice-type mismatch, which is a
+    /// different answer.
+    private(set) var unavailableDialogue = 0
+
     private(set) var conditionsEvaluated = 0
     private(set) var listsEvaluated = 0
 
@@ -118,6 +124,8 @@ nonisolated struct ConditionTally: Equatable, Sendable {
             unavailableActorState += 1
         case .unavailableDetection:
             unavailableDetection += 1
+        case .unavailableDialogue:
+            unavailableDialogue += 1
         }
     }
 
@@ -173,7 +181,7 @@ nonisolated struct ConditionTally: Equatable, Sendable {
         unknownFunctionTotal + unresolvedGlobalTotal + unresolvedQuestTotal
             + unsupportedRunOnTotal + unresolvedReferenceTotal + unknownOperatorTotal
             + unresolvedParameterTotal + unavailableClock + unavailableActorState
-            + unavailableDetection
+            + unavailableDetection + unavailableDialogue
     }
 
     /// Unknown function indices ranked by count, ties broken by index so the

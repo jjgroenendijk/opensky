@@ -35,6 +35,7 @@ aggregate counts in the repository.
 * [Object references](#object-references)
 * [Fragments and aliases](#fragments-and-aliases)
   * [The QUST tail](#the-qust-tail)
+  * [The INFO tail](#the-info-tail)
 * [Record integration](#record-integration)
 * [PEX binding](#pex-binding)
 * [Defensive decode policy](#defensive-decode-policy)
@@ -114,10 +115,11 @@ and increments the matching reason tally.
 ## Fragments and aliases
 
 `INFO`, `PACK`, `PERK`, `QUST`, and `SCEN` append record-specific fragment
-structures after the common script list. `QUST` is decoded (M13.1, issue #181);
-the other four still record one reason-tagged fragment-section skip and consume
-the bounded field remainder. A remainder on any other record type is a typed
-error rather than guessed framing.
+structures after the common script list. `QUST` is decoded (M13.1, issue #181)
+and `INFO` is decoded (M17.2, issue #426); the other three still record one
+reason-tagged fragment-section skip and consume the bounded field remainder. A
+remainder on any other record type is a typed error rather than guessed
+framing.
 
 ### The QUST tail
 
@@ -175,6 +177,40 @@ Object values that name an alias are still retained as
 `ScriptObjectReference` and counted as alias skips: M13.1 decodes the alias
 *definitions* ([`Quest.Alias`](/formats/records.md)), while filling an alias at
 runtime is issue #183.
+
+### The INFO tail
+
+A dialogue result script is likewise not an attached script. The Creation Kit
+compiles the two result boxes of one response into a generated script named
+`TIF_<editorID>_<formID>` — in shipped data usually `TIF__<formID>` with two
+underscores, because most `INFO` records carry no editor ID — and gives each box
+a function named `Fragment_<n>`. Which box a numbered fragment belongs to is not
+in its name: it is the position of the entry read against the flag byte, which is
+why the dialogue runtime ([dialogue runtime](/engine/dialogue.md)) cannot run a
+result script without this table.
+
+| offset | type | meaning |
+| --- | --- | --- |
+| 0 | `int8` | extra bind data version, always 2 |
+| 1 | `uint8` | flags: `0x1` has a begin fragment, `0x2` has an end fragment |
+| 2 | wstring | file name of the generated `TIF_` script, no extension |
+| .. | fragment[popcount(flags)] | the fragments, in bit order: begin, then end |
+
+One fragment:
+
+| offset | type | meaning |
+| --- | --- | --- |
+| 0 | `int8` | unused, always 1 |
+| 1 | wstring | script name, normally the file name |
+| .. | wstring | fragment function name, e.g. `Fragment_0` |
+
+The unusual property is that the count is **not stored**: it is the population of
+the flag byte. UESP states the rule directly ("Variable flagsCount is the number
+of bit flags activated in flags") and xEdit spells the same thing as
+`wbScriptFragmentsInfoCounter` over an array with no count path. A flag bit
+outside the two documented ones therefore cannot be paired with a phase, so the
+tail is refused and tallied rather than mis-attributed, and the response keeps
+its primary scripts.
 
 ## Record integration
 
@@ -264,10 +300,18 @@ quest alias scripts are now visible to the tally.
 
 The only array type present was boolean array, in two properties; the synthetic
 matrix remains the evidence for every other array representation. Remaining
-fragment skips were 5,257 `INFO`, 557 `SCEN`, 313 `PACK`, and 5 `PERK`. No
-`QUST` tail failed to decode, so the `QUST fragments` bucket is now empty; the
-per-quest view of the same 856 tables is in
+fragment skips at that date were 5,257 `INFO`, 557 `SCEN`, 313 `PACK`, and 5
+`PERK`. No `QUST` tail failed to decode, so the `QUST fragments` bucket is now
+empty; the per-quest view of the same 856 tables is in
 [record decoders](/formats/records.md).
+
+The `INFO` bucket is empty as well since issue #426. `DialogueRealDataTests`
+decoded the tail of every dialogue response across the five shipped masters on
+2026-08-09: 7,661 tails carrying 8,009 result-script fragments, none with a byte
+left over. Every one declared version 2, every unused fragment byte was 1, every
+script name equalled the file name, and the flag byte was only ever 1 (2,007
+tails), 2 (5,306) or 3 (348) — which is the evidence behind reading the count as
+a flag population rather than as a stored number.
 
 The PEX half loaded 4,450 distinct script objects while following inheritance.
 It found 50,915 automatic attachment properties, 199 manual properties, 24

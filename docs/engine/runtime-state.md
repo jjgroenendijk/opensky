@@ -221,6 +221,7 @@ The initial component set:
 | `QuestAliasState` | `.questAliases` | one quest's filled reference aliases (issue #183, M13.2) |
 | `ActorValueState` | `.actorValues` | one actor's current health, magicka and stamina; the maximums re-derive from records (issue #194, item 15.3) |
 | `ActorDeathState` | `.death` | one actor's death, the resting root transform its ragdoll settled at, and whether its corpse was searched (issue #197, item 15.6) |
+| `DialogueRuntimeState` | `.dialogue` | how often one dialogue response has been said, keyed by its INFO record (issue #426, item 17.2) |
 
 `ReferenceActivationState` has a production writer since issue #172: the Papyrus activation
 bridge subscribes to `CellStreamer.onInteraction`, maps the event's `FormID` to a

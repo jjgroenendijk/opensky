@@ -157,6 +157,20 @@ nonisolated enum OpenSkySaveFormat {
         /// which resident actors are hostile and alive, so writing it would let
         /// a save carry a fact that contradicts the world it was loaded into.
         static let combatStates = "CBTS"
+
+        /// Dialogue said-state (issue #426, roadmap item 17.2): one entry per
+        /// INFO a speaker has actually said.
+        ///
+        /// Additive and split out of `RDLT` for the same reason `QSTS` and
+        /// `CBTS` are. A session in which nobody spoke writes no chunk at all,
+        /// so its bytes match what this encoder produced before the chunk
+        /// existed.
+        ///
+        /// Said-state only. Which topics a speaker offers is a pure function of
+        /// the plugin records, the quest state `QSTS` already carries and this
+        /// chunk, so writing the offered list would let a save carry a menu a
+        /// changed load order no longer authors.
+        static let dialogueStates = "DLGS"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.
@@ -278,6 +292,12 @@ nonisolated enum OpenSkySaveFormat {
     /// byte (1). A generated key or a named cell is longer, so this is a lower
     /// bound.
     static let minimumCombatStateEntrySize = 9
+    /// Smallest number of bytes a single `DLGS` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4) naming the INFO, and the said count (4).
+    /// A generated key is longer, so this is a lower bound rather than the
+    /// size. No cell tag travels with the entry: an INFO is a base record that
+    /// belongs to no cell, so the byte could only ever hold one value.
+    static let minimumDialogueEntrySize = 11
 }
 
 /// On-disk tag of a component slot inside `RDLT`.
@@ -287,13 +307,13 @@ nonisolated enum OpenSkySaveFormat {
 /// detail that may change while these byte values may not.
 ///
 /// Optional because not every component slot travels in `RDLT`. `.inventory`,
-/// `.spawn`, `.quest`, `.questAliases`, `.actorValues`, `.death` and `.combat`
-/// have no tag
+/// `.spawn`, `.quest`, `.questAliases`, `.actorValues`, `.death`, `.combat` and
+/// `.dialogue` have no tag
 /// at all: each is carried by its own chunk so that an older build skips it
 /// rather than refusing the file (see `ChunkTag.inventories`,
 /// `ChunkTag.spawnedReferences`, `ChunkTag.questStates`, `ChunkTag.questAliases`,
-/// `ChunkTag.actorValues`, `ChunkTag.deaths` and `ChunkTag.combatStates`). A
-/// nil tag is the encoder's
+/// `ChunkTag.actorValues`, `ChunkTag.deaths`, `ChunkTag.combatStates` and
+/// `ChunkTag.dialogueStates`). A nil tag is the encoder's
 /// instruction to leave the
 /// component out of `RDLT`, and leaving `init?(saveTag:)` without a case for it
 /// is what keeps the decoder's "an unknown component kind in `RDLT` is an
@@ -306,7 +326,7 @@ nonisolated extension WorldStateComponentKind {
         case .activation: 2
         case .deletion: 3
         case .inventory, .spawn, .quest, .questAliases, .actorValues, .death,
-             .combat: nil
+             .combat, .dialogue: nil
         }
     }
 

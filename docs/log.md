@@ -4,6 +4,37 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-09
 
+* **Dialogue runtime (issue #426, item 17.2)**: a speaker now has something to say. New
+  [dialogue runtime](/engine/dialogue.md) covers the headless half of M17 — which topics a
+  speaker offers, which response wins inside each, what choosing one does, and what
+  survives a save. Selection gates a topic on its owning quest running (all 15,037 DIAL
+  records in `Skyrim.esm` name one), keeps only DATA category 0 for the player's menu,
+  evaluates the responses in the file order `DialogueStore` preserves and takes the first
+  that passes, skips a say-once line that is already spent, honours the INFO ANAM forced
+  speaker, and orders the result by DIAL PNAM priority with a FormID tie-break that is
+  ours. Every considered response keeps its `ConditionOutcome` and one of four rejection
+  reasons, because item 17.8 has to explain why a line the player expected did not appear.
+  Said-state is a new `DialogueRuntimeState` world-state component keyed by the INFO
+  record's session-stable key — per response, not per speaker, which is what the Creation
+  Kit's say-once wording describes — travelling in the additive `DLGS` chunk
+  ([OpenSky save container](/formats/opensky-save.md)). Nothing else persists: the vanilla
+  sweep found zero INFO records carrying a PNAM previous-info link against 4,294 carrying
+  TCLT links, so branch progression is a pure function of the chosen response. The INFO
+  VMAD fragment tail is decoded rather than skipped
+  ([Papyrus attachment data](/formats/vmad.md)) — 7,661 tails carrying 8,009 result
+  fragments across the five masters, none with a byte left over, its count read as a flag
+  population rather than as a stored number — and a chosen response's begin and end
+  fragments dispatch through the ordinary Papyrus FIFO, so a quest-stage result reaches
+  `QuestRuntime.setStage` along the route the Creation Kit authored rather than through a
+  second, dialogue-only path into quest state. Three condition functions came off the
+  measured demand list of those records rather than off a guess: `GetIsVoiceType` (6,324
+  conditions), `GetIsAliasRef` (5,320) and `IsInDialogueWithPlayer` (428)
+  ([conditions](/formats/conditions.md)). The env-gated selection test pins one concrete
+  speaker under the plugin-baseline quest state. The fidelity gap that number exposes is
+  documented rather than hidden: OpenSky offers every player-facing topic whose conditions
+  pass, while the original engine also scopes topics to the speaker's active dialogue
+  views, and a link-target filter that looked like the fix was measured and rejected for
+  removing genuine top-level topics. No UI: item 17.8 owns the panel.
 * **M16 milestone acceptance (issue #203)**: the AI has a sidebar. `World > AI &
   Navigation` (`Destination-aiNavigation`) is the milestone's verification surface and its
   fourth world destination: six sections in the order a session uses them — switch on the
