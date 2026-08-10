@@ -97,7 +97,8 @@ extension Renderer {
         let context = WorldOverlayFrameContext(
             navmeshOverlayEnabled: navmeshOverlayEnabled,
             pathOverlayEnabled: pathOverlayEnabled,
-            detectionOverlayEnabled: detectionOverlayEnabled
+            detectionOverlayEnabled: detectionOverlayEnabled,
+            dialogueCameraOverlayEnabled: dialogueCameraOverlayEnabled
         )
         let list = worldOverlaySources.makeDrawList(context: context)
         let budgeted = list.budgeted(maxPrimitives: Self.worldOverlayPrimitiveBudget)

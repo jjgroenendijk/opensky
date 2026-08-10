@@ -62,6 +62,10 @@ extension GameViewController {
         // all advance on the world clock, and item 17.4's camera moves while
         // the list is up, so stopping the clock here would stop them.
         menuMode.present(Self.dialogueIdentifier, policy: .leavesWorldRunning)
+        // Frame the speaker and hold them still now rather than on the next
+        // world tick, so the first frame the menu is drawn over is already the
+        // conversation's own shot (issue #427).
+        refreshDialogueCameraFocus()
         startDialogueMovie()
     }
 
@@ -87,7 +91,7 @@ extension GameViewController {
 
     /// What the menu calls the speaker: the same resolved name the crosshair
     /// prompt used, so the prompt and the menu header cannot disagree.
-    private func dialogueSpeakerLabel(for speaker: ReferenceKey) -> String {
+    func dialogueSpeakerLabel(for speaker: ReferenceKey) -> String {
         guard let entry = streamer?.referenceEntry(key: speaker) else {
             return speaker.description
         }
@@ -326,6 +330,9 @@ extension GameViewController: DialogueControlProviding {
         dialogue.followUp = nil
         dialogue.model.showTopicList()
         menuMode.dismiss(Self.dialogueIdentifier)
+        // Hands the view and the speaker back in the same breath the menu is
+        // dismissed in, unless the panel is forcing the camera on somebody.
+        refreshDialogueCameraFocus()
         if dialogue.movieLoaded {
             stopDialogueMovie()
         } else {

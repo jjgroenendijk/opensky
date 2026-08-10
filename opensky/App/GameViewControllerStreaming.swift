@@ -128,6 +128,10 @@ extension GameViewController {
         // hostility state the combat and perception runtimes keep, so wiring it
         // earlier would hand the crosshair a list built before they existed.
         wireDialogue(provider: provider, streamer: streamer)
+        // After everything (issue #427): the camera samples the speaker's head
+        // bone and the movement runtime's own transform, both of which the
+        // systems above produce in the same world tick.
+        wireDialogueCamera(renderer: renderer)
     }
 
     /// View ray for use-key targeting, simulated-player modes only: the fly

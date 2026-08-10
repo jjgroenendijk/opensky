@@ -32,19 +32,28 @@ nonisolated struct PlayerRigVisibility: Equatable {
     ///   - hasBody: a third-person body is assembled and attached.
     ///   - hasArms: a first-person rig is assembled and attached.
     ///   - armsEnabled: the panel's arms A/B toggle.
+    ///   - dialogueCamera: a conversation has taken the view (issue #427).
+    ///
+    /// The dialogue camera outranks the mode, because it moves the eye out of
+    /// the player's head whatever mode it interrupted. A first-person player
+    /// who starts a conversation therefore sees their own body, and does not
+    /// see a pair of arms hanging in front of a camera that is no longer
+    /// theirs.
     static func resolve(
         mode: CameraMovementMode,
         hasBody: Bool,
         hasArms: Bool,
-        armsEnabled: Bool = true
+        armsEnabled: Bool = true,
+        dialogueCamera: Bool = false
     ) -> PlayerRigVisibility {
         // Fly draws the body so a developer can fly around the character and
         // look at it; first person hides it because the eye is inside its head.
-        let bodyVisible = hasBody && mode != .walk
+        let firstPerson = mode == .walk && !dialogueCamera
+        let bodyVisible = hasBody && !firstPerson
         return PlayerRigVisibility(
             drawsBody: bodyVisible,
             castsBodyShadow: hasBody && (mode.isPlayerControlled || bodyVisible),
-            drawsArms: hasArms && armsEnabled && mode == .walk,
+            drawsArms: hasArms && armsEnabled && firstPerson,
             castsArmShadow: false
         )
     }

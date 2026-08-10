@@ -26,6 +26,9 @@ voice, no camera, no scene playback. The record side — DIAL, INFO and VTYP byt
 * Result scripts: the INFO VMAD tail
 * Condition functions dialogue demanded
 * Save and load
+* Dialogue camera
+* Speaker focus
+* Dialogue-camera verification surface
 * What this version does not do
 * Measurements
 
@@ -189,6 +192,122 @@ session in which nobody spoke writes no chunk at all. Layout:
 An entry is one key plus one `UInt32` count. The untouched baseline is never written, and an
 entry whose count decodes as zero is dropped rather than stored, so a restored world compares
 equal to the world that was saved.
+
+## Dialogue camera
+
+Issue #427 adds the camera half of a conversation: while the menu is open the view frames the
+speaker's head, and on Leave it hands the player's own view straight back.
+
+**It is an override, not a camera mode.** `CameraMovementMode` is what the player chose to
+look through and `G` cycles it; a conversation is something that happens to them. So the
+dialogue camera writes `Renderer.freeFlyCamera` on top of whichever mode is live and remembers
+what was there, and `movementMode` is never touched.
+
+| Type | File | Holds |
+| --- | --- | --- |
+| `DialogueCamera` | `opensky/Engine/World/DialogueCamera.swift` | the framing math and the last resolved pose |
+| `CameraCollisionProbe` | `opensky/Engine/World/CameraCollisionProbe.swift` | the pull-in, shared with `ThirdPersonCamera` |
+| `RendererDialogueCameraState` | `opensky/Engine/Rendering/RendererDialogueCamera.swift` | the focus, the math, and the player pose being stood in for |
+| `DialogueCameraBridgeState` | `opensky/App/GameViewControllerDialogueCamera.swift` | the force toggle, the target selector, and who is being held |
+
+The swap is undone at the top of every input frame, before anything simulates, and re-applied
+at the bottom of it. That ordering is the whole trick: `WalkController` integrates the player's
+facing out of this same pose and the body is placed from its yaw, so a frame that simulated
+against the dialogue pose would turn the player round to face themselves. Between frames the
+dialogue pose is what stands, which is what the passes read and also what the audio listener
+reads — a conversation is heard from where it is watched.
+
+### Where the framing comes from
+
+Nothing in the readable install frames a conversation, and that is a probe result rather than
+an omission. `openskycli gmst list --prefix f` over the shipped `Skyrim.esm` declares no
+`fDialogueCamera*`, no `fOverShoulder*`, and no camera framing setting of any kind. The only
+dialogue-adjacent distances it carries are `fAIInDialogueModeWithPlayerDistance` (500) and
+`fAIInDialogueModewithPlayerTimer` (60), which decide when an actor considers itself in
+conversation rather than where a camera stands, and the `fAIHeadTrackDialogue*` family, which
+is head tracking and out of scope. The rest lives in the retail executable, which OpenSky does
+not read. So the framing is derived from the same two measurable things
+[third person](/engine/walk-mode.md) derives from — the player capsule and the projected field
+of view — and the one taste number is not re-decided: the fill fraction is
+`ThirdPersonCamera.framingFillFraction`, so the engine makes that call exactly once.
+
+| Quantity | Value | Where it comes from |
+| --- | --- | --- |
+| Target | The speaker's `NPC Head [Head]` bone | The posed rig, sampled per frame; the capsule's eye height when an actor resolved no rig |
+| Framed span | 96 units | The head centred, reaching down to the capsule's midpoint and as far above the head as that is below it |
+| Framing distance | ~126 units | `(span / 2 / fill) / tan(fov / 2)` at a 65-degree vertical fov |
+| Shoulder offset | 24 units | One capsule radius, on the same side third person offsets to |
+| Clearance behind the player | 24 units | `ThirdPersonCamera.minimumDistance`, so the lens clears the player's own silhouette |
+| Field of view | 65 degrees | The shared world angle, whatever mode the conversation interrupted |
+
+The shot: the camera stands on the side of the speaker the player is standing on, one shoulder
+off the sightline so the framing is three-quarter rather than flat head-on, in the horizontal
+plane through the *player's* eye — so a taller speaker is looked up at instead of the shot
+being levelled out. Its distance from the speaker is the framing distance, or the player's own
+distance plus the clearance when the player is standing further away than that. That second
+clause is what keeps the player's body in the frame rather than behind the lens: walk right up
+and the shot is tight, start the conversation from across the room and the camera sits at the
+player's shoulder instead of hovering between the two of them.
+
+The pull-in is `CameraCollisionProbe`, the same sweep third person zooms with, through the same
+`CapsuleWorldCollider` seam the character controller collides with. It may never push the eye
+closer than one capsule radius to the target, which is the point at which it would be inside
+the speaker's head.
+
+## Speaker focus
+
+Entering a conversation stops the speaker, turns it to face the player and holds its package;
+leaving hands all three back. Everything goes through the authority that already owns the
+thing being changed, so nothing here can disagree with what the AI does on the next frame.
+
+| What | Through | On release |
+| --- | --- | --- |
+| Walking | `CellStreamer.stopActor`, which parks the mover where it stands | Nothing — a resumed package asks for its own movement |
+| Facing | `CellStreamer.faceActor`, an `NPCFacingHold` in the movement runtime | `releaseActorFacing`, leaving the actor on the bearing it reached |
+| Package | `ActorPackageRuntime.setSuspended(_:actor:)` | `resumePackage`, which lifts the latch and force-re-selects |
+
+`NPCFacingHold` turns the whole actor on the spot at `NPCMovementRuntime.maximumYawSpeed`, the
+rate a mover corners at, and publishes a still drive every frame so the animation layer holds
+the idle clip. It is not counted against the mover cap: a turn runs no path, no collision sweep
+and no repath, so the CPU budget that cap protects does not apply to it. Starting a walk during
+a hold takes the hold away and starting a hold takes the mover away, because one yaw has one
+owner. Head tracking, eye contact and look-at IK are out of scope — nothing above the neck is
+aimed at anything.
+
+Suspension is a latch, not a saved procedure. An actor that spent a conversation standing still
+has had the world move on around it, so what it needs on release is the package the schedule
+names *now* — which is exactly `forceReevaluate`, the same reasoning
+[combat's own resume](/engine/combat.md) follows.
+
+The focus is republished every frame rather than latched on entry, because the speaker's head
+is a bone of a running animation and the player can walk around a speaker mid-conversation. A
+framing computed once at entry would be stale by the second sentence.
+
+## Dialogue-camera verification surface
+
+```text
+Milestone: M17.4
+Sidebar path: World > HUD & Interaction > Dialogue Camera
+Destination id: Destination-hudInteraction
+Controls exercised: DialogueCameraForceControl, DialogueCameraTargetControl,
+  DialogueCameraOverlayControl
+Readout: DialogueCameraStatsLabel, DialogueCameraSpeakerStatsLabel
+Deterministic tests: DialogueCameraSectionTests, DialogueCameraTests,
+  NPCMovementRuntimeTests, PackageRuntimeTests, DestinationRegistryTests,
+  DialogueCameraRenderRealDataTests (env-gated, make realtest)
+Local A/B (optional, never committed): logs/dialogue-camera-engaged.png
+```
+
+The force toggle is what makes the camera checkable without a conversation: a conversation
+needs an actor with something to say standing within the interaction ray's reach, and the
+framing has to be checkable against any actor in the cell. A conversation outranks the toggle
+while it is open, so forcing the camera and then talking to somebody else cannot leave the view
+pointed at the wrong actor mid-sentence.
+
+The gizmo registers with the M16 [world-overlay registry](/engine/navigation.md) as
+`dialogue-camera`: a yellow cross on the pivot, a cyan line from the player's eye to it, and a
+magenta line along the camera's own axis. Drawn from the last resolved pose rather than from a
+second resolve, so it cannot disagree with the frame it is drawn over.
 
 ## What this version does not do
 

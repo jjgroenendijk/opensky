@@ -106,6 +106,78 @@ struct NPCMovementRuntimeTests {
         #expect(runtime.activeMoverCount == NPCMovementRuntime.maximumSimultaneousMovers)
     }
 
+    /// A conversation's hold: the walk stops, the actor turns on the spot, and
+    /// the draw path is told about the rotation (issue #427).
+    @Test
+    func facingStopsTheMoverTurnsInPlaceAndPublishesTheRotation() throws {
+        var runtime = NPCMovementRuntime()
+        var drives: [NPCLocomotionDriveUpdate] = []
+        var persistence: [NPCMovementPersistence] = []
+        runtime.onDrive = { drives.append($0) }
+        runtime.onPersist = { persistence.append($0) }
+        let walking = runtime.start(Self.start(
+            actor: actor,
+            path: Self.path(waypoints: [SIMD3(200, 0, 0)], target: SIMD3(200, 0, 0))
+        ))
+        #expect(walking)
+        runtime.advance(by: 0.1, world: Self.world())
+        #expect(runtime.activeMoverCount == 1)
+
+        runtime.face(Self.face(actor: actor, target: SIMD3(0, 200, 0)))
+        #expect(runtime.activeMoverCount == 0)
+        #expect(runtime.activeFacingCount == 1)
+        #expect(persistence.map(\.reason).contains(.halt))
+        let standing = try #require(runtime.transform(for: actor)).position
+
+        for _ in 0 ..< 60 {
+            runtime.advance(by: 1 / 60, world: Self.world())
+        }
+        let hold = try #require(runtime.facing(for: actor))
+        #expect(hold.isSettled)
+        #expect(abs(hold.yaw - hold.targetYaw) < 0.01)
+        #expect(hold.targetYaw > 0)
+        #expect(runtime.transform(for: actor)?.position == standing)
+        #expect(runtime.readouts().count == 1)
+        #expect(runtime.readouts().first?.state == .facing)
+        #expect(runtime.instanceDeltas()[UInt32(1)] != nil)
+        #expect(drives.suffix(10).allSatisfy { $0.intent == .still })
+
+        let released = runtime.releaseFacing(actor)
+        #expect(released)
+        #expect(runtime.activeFacingCount == 0)
+        #expect(persistence.last?.reason == .turn)
+        // Released where it stands, still pointing where it turned to.
+        #expect(runtime.transform(for: actor)?.position == standing)
+        #expect(abs((runtime.readouts().first?.yaw ?? 0) - hold.targetYaw) < 0.01)
+    }
+
+    /// A walk requested during a hold takes the yaw back, so the two owners of
+    /// a facing cannot both be live.
+    @Test
+    func walkingAgainEndsTheFacingHold() {
+        var runtime = NPCMovementRuntime()
+        runtime.face(Self.face(actor: actor, target: SIMD3(0, 200, 0)))
+        #expect(runtime.activeFacingCount == 1)
+        let started = runtime.start(Self.start(
+            actor: actor,
+            path: Self.path(waypoints: [SIMD3(200, 0, 0)], target: SIMD3(200, 0, 0))
+        ))
+        #expect(started)
+        #expect(runtime.activeFacingCount == 0)
+        #expect(runtime.facing(for: actor) == nil)
+        #expect(runtime.activeMoverCount == 1)
+    }
+
+    private static func face(actor: ReferenceKey, target: SIMD3<Float>) -> NPCFaceStart {
+        NPCFaceStart(
+            actor: actor,
+            formID: FormID(1),
+            placement: PlacedReference.Placement(position: .zero, rotation: .zero),
+            scale: 1,
+            target: target
+        )
+    }
+
     private static func start(actor: ReferenceKey, path: NavigationPath) -> NPCMoveStart {
         NPCMoveStart(
             actor: actor,

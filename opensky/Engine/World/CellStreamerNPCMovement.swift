@@ -81,6 +81,48 @@ extension CellStreamer: MoveToPointControl {
         return npcMovement.stop(actor)
     }
 
+    /// Turns a resident actor towards a world point (issue #427).
+    ///
+    /// Reads the same placement `moveActor` reads and prefers the movement
+    /// runtime's own transform over the authored one, so an actor that walked
+    /// somewhere turns where it now stands rather than where its ACHR was
+    /// authored.
+    @discardableResult
+    func faceActor(_ actor: ReferenceKey, towards point: SIMD3<Float>) -> Bool {
+        guard let entry = referenceEntry(key: actor), let placed = entry.placedActor else {
+            return false
+        }
+        bindNPCMovementCallbacks()
+        let override = npcMovement.transform(for: actor)
+        npcMovement.face(NPCFaceStart(
+            actor: actor,
+            formID: entry.formID,
+            placement: PlacedReference.Placement(
+                position: override?.position ?? placed.placement.position,
+                rotation: override?.rotation ?? placed.placement.rotation
+            ),
+            scale: placed.scale,
+            target: point
+        ))
+        onNPCPosesChanged?(npcMovement.instanceDeltas())
+        return true
+    }
+
+    @discardableResult
+    func releaseActorFacing(_ actor: ReferenceKey) -> Bool {
+        bindNPCMovementCallbacks()
+        let released = npcMovement.releaseFacing(actor)
+        if released {
+            onNPCPosesChanged?(npcMovement.instanceDeltas())
+        }
+        return released
+    }
+
+    /// What one actor is turning towards, for the gate readout.
+    func npcFacing(for actor: ReferenceKey) -> NPCFacingHold? {
+        npcMovement.facing(for: actor)
+    }
+
     func npcMovementReadouts() -> [NPCMovementReadout] {
         npcMovement.readouts()
     }

@@ -12,6 +12,11 @@ nonisolated struct PackageActorReadout: Equatable, Sendable {
     let schedule: Package.Schedule?
     let procedure: PackageProcedureKind?
     let lastEvaluationGameSeconds: Double?
+    /// True while something outside the schedule is holding this actor — a
+    /// conversation, as of issue #427. A suspended actor keeps the package it
+    /// had, so the readout can say what it will go back to, and is not
+    /// re-evaluated until it is released.
+    var isSuspended = false
 }
 
 nonisolated struct ActorPackageRuntime {
@@ -40,9 +45,29 @@ nonisolated struct ActorPackageRuntime {
         context: (ReferenceKey) -> ConditionContext
     ) {
         for actor in actors.keys.sorted() {
-            guard let state = actors[actor], state.needsEvaluation(at: clock) else { continue }
+            guard
+                let state = actors[actor],
+                !state.isSuspended,
+                state.needsEvaluation(at: clock)
+            else { continue }
             reevaluate(actor: actor, clock: clock, context: context(actor))
         }
+    }
+
+    /// Holds one actor out of scheduled selection, or hands it back
+    /// (issue #427).
+    ///
+    /// Suspension is a latch and not a saved procedure. An actor that spent a
+    /// conversation standing still has had the world move on around it, so what
+    /// it needs on release is the package the schedule names *now*, which is
+    /// what `forceReevaluate(actor:clock:context:)` answers — the same
+    /// reasoning combat's own resume follows.
+    mutating func setSuspended(_ suspended: Bool, actor: ReferenceKey) {
+        actors[actor]?.isSuspended = suspended
+    }
+
+    func isSuspended(_ actor: ReferenceKey) -> Bool {
+        actors[actor]?.isSuspended ?? false
     }
 
     /// On-demand seam for the M16 gate panel.
@@ -114,6 +139,7 @@ nonisolated struct ActorPackageRuntime {
         var current: ResolvedPackage?
         var lastEvaluationGameSeconds: Double?
         var nextEvaluationGameSeconds: Double?
+        var isSuspended = false
 
         func needsEvaluation(at clock: GameClock) -> Bool {
             guard
@@ -131,7 +157,8 @@ nonisolated struct ActorPackageRuntime {
                 editorID: current?.package.editorID,
                 schedule: current?.package.schedule,
                 procedure: current?.procedure,
-                lastEvaluationGameSeconds: lastEvaluationGameSeconds
+                lastEvaluationGameSeconds: lastEvaluationGameSeconds,
+                isSuspended: isSuspended
             )
         }
     }

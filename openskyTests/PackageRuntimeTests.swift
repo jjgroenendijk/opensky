@@ -79,6 +79,49 @@ struct PackageRuntimeTests {
         #expect(changes == 1)
     }
 
+    /// A conversation holds its speaker out of scheduled selection and hands it
+    /// back re-selected for the world as it now is (issue #427).
+    ///
+    /// Both halves matter. A suspended actor that kept being re-selected would
+    /// walk off mid-sentence, and one that resumed by restoring the package it
+    /// had would go back to a schedule that may have moved on while the player
+    /// was talking.
+    @Test func suspensionHoldsSelectionAndReleaseReselects() throws {
+        let morning = try package(
+            id: 0x100,
+            editorID: "Morning",
+            schedule: PackageFixture.scheduleValue(hour: 8, duration: 240)
+        )
+        let fallback = try package(id: 0x101, editorID: "Fallback")
+        let actor = try actorBase(id: 0x600, packages: [0x100, 0x101])
+        let store = PackageStore(
+            packages: [morning, fallback],
+            actorTemplates: ActorTemplateResolver(actors: [0x600: actor], leveledActors: [:])
+        )
+        var runtime = ActorPackageRuntime(store: store)
+        try runtime.register(actor: Self.actorKey, base: actor.formID)
+        runtime.advance(clock: GameClock(hour: 9)) { _ in ConditionContext() }
+        #expect(runtime.currentPackage(for: Self.actorKey)?.package.formID == FormID(0x100))
+
+        runtime.setSuspended(true, actor: Self.actorKey)
+        #expect(runtime.isSuspended(Self.actorKey))
+        #expect(runtime.readouts().first?.isSuspended == true)
+        // The morning package's window has closed while the conversation ran,
+        // and a suspended actor is not asked about it.
+        runtime.advance(clock: GameClock(hour: 13)) { _ in
+            Issue.record("a suspended actor must not be re-evaluated")
+            return ConditionContext()
+        }
+        #expect(runtime.currentPackage(for: Self.actorKey)?.package.formID == FormID(0x100))
+
+        runtime.setSuspended(false, actor: Self.actorKey)
+        runtime.forceReevaluate(
+            actor: Self.actorKey, clock: GameClock(hour: 13), context: ConditionContext()
+        )
+        #expect(runtime.currentPackage(for: Self.actorKey)?.package.formID == FormID(0x101))
+        #expect(runtime.readouts().first?.isSuspended == false)
+    }
+
     @Test func packageAndActorTemplateChainsResolveOrReportCycles() throws {
         let procedureTemplate = try package(
             id: 0x200,

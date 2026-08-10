@@ -358,6 +358,9 @@ final class FakeWorldProviders: WorldControlProviders {
     /// DialogueControlProviding (issue #205), delegated for the same reason;
     /// the forwarding conformance lives in `FakeWorldProvidersDialogue.swift`.
     let dialogue = FakeDialogueProvider()
+    /// The conversation camera and speaker focus (issue #427). Behaviour is in
+    /// `FakeWorldProvidersDialogue.swift`.
+    let dialogueCamera = FakeDialogueCameraProvider()
 
     /// PlayerLocomotionControlProviding (issue #188) state; the conformance
     /// lives in `FakeWorldProvidersLocomotion.swift`.

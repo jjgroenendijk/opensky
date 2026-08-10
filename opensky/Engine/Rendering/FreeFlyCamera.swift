@@ -151,7 +151,12 @@ nonisolated struct FreeFlyCamera {
         )
     }
 
-    private static func clampPitch(_ pitch: Float) -> Float {
+    /// Keeps a pitch shy of straight up and straight down, where `lookAt`
+    /// degenerates. Internal rather than private because the dialogue camera
+    /// aims itself at a point instead of integrating input (issue #427) and has
+    /// to land inside the same bound this camera integrates within, or the two
+    /// would disagree about what a legal view direction is.
+    static func clampPitch(_ pitch: Float) -> Float {
         max(-maxPitch, min(maxPitch, pitch))
     }
 }
