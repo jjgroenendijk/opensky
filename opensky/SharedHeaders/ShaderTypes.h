@@ -118,6 +118,50 @@ typedef NS_ENUM(EnumBackingType, SamplerIndex)
 typedef NS_ENUM(EnumBackingType, FunctionConstantIndex)
 {
     FunctionConstantAlphaTest = 0,
+    /// Gates the whole render-debug branch (issue #144). Left undefined by every
+    /// shipping pipeline, so their fragment functions compile bit-identically to
+    /// the pre-debug engine; the dedicated debug pipelines define it as true and
+    /// then pick a channel per frame from FrameUniforms.debugMode.
+    FunctionConstantDebugView = 1,
+};
+
+/// Which channel a render-debug pipeline writes instead of the shaded surface
+/// (issue #144). Selected per frame through FrameUniforms.debugMode, so all
+/// seven modes share one pipeline per geometry path. The Swift mirror is
+/// `RenderDebugMode`, whose raw values a unit test pins to these.
+typedef NS_ENUM(EnumBackingType, DebugViewMode)
+{
+    /// Shipping shading. Never bound on a debug pipeline; present so the Swift
+    /// mirror and this enum agree on every case.
+    DebugViewModeOff = 0,
+    /// Flat wire colour; the encoder also switches the triangle fill mode.
+    DebugViewModeWireframe = 1,
+    /// World-space normal mapped from [-1, 1] into [0, 1] RGB.
+    DebugViewModeWorldNormals = 2,
+    /// Fractional part of the sampled texture coordinate in red/green.
+    DebugViewModeTextureCoordinates = 3,
+    /// Sampled mip level of the diffuse texture through a coarse-to-fine ramp.
+    DebugViewModeMipLevel = 4,
+    /// Which sun-shadow cascade shades this fragment, one colour per cascade.
+    DebugViewModeShadowCascade = 5,
+    /// Which RenderLayerBit the draw belongs to, one colour per layer.
+    DebugViewModeLayerCategory = 6,
+};
+
+/// The scene role one draw belongs to (issue #144), matching the Swift
+/// `RenderLayer` OptionSet bit for bit. Geometry paths with a fixed role
+/// (terrain, water, grass) carry it as a shader constant; the shared
+/// static/skinned path carries it per draw in DrawUniforms.layerCategory.
+typedef NS_ENUM(EnumBackingType, RenderLayerBit)
+{
+    RenderLayerBitStatics = 1,
+    RenderLayerBitActors = 2,
+    RenderLayerBitDistantLOD = 4,
+    RenderLayerBitTerrain = 8,
+    RenderLayerBitWater = 16,
+    RenderLayerBitSky = 32,
+    RenderLayerBitGrass = 64,
+    RenderLayerBitParticles = 128,
 };
 
 // Static-mesh path (docs/todo.md 2.6). World space is Skyrim Z-up
@@ -180,6 +224,10 @@ typedef struct
     vector_float2 grassWind;
     /// x=fade start, y=hard draw distance in world units.
     vector_float2 grassFadeDistances;
+    /// DebugViewMode for this frame (issue #144). Read only by the pipelines
+    /// that define FunctionConstantDebugView, so a shipping frame never loads
+    /// it; always DebugViewModeOff outside the dev shell's Render Debug section.
+    unsigned int debugMode;
 } FrameUniforms;
 
 /// One live CPU particle uploaded per frame. Vertex shader expands it into a
@@ -206,6 +254,10 @@ typedef struct
     float alphaThreshold;
     unsigned int pointLightCount;
     unsigned int receivesShadows;
+    /// RenderLayerBit of the group this draw belongs to (issue #144). The
+    /// static/skinned path draws statics, actors and distant LOD through one
+    /// pair of pipelines, so the role cannot be a shader constant there.
+    unsigned int layerCategory;
 } DrawUniforms;
 
 /// Per-GROUP GRAS material + mesh-height controls. Fade/wind are per-frame;

@@ -21,7 +21,10 @@ extension Renderer {
             GrassRenderPolicy.minimumDrawDistance,
             GrassRenderPolicy.maximumDrawDistance
         )
-        guard grassEnabled, density > 0, !groups.isEmpty else {
+        // The grass enable is the feature switch and the layer mask is the view
+        // filter; `effectiveRenderLayers` has already ANDed the two, so testing
+        // the layer alone here would double-count the enable.
+        guard effectiveRenderLayers.contains(.grass), density > 0, !groups.isEmpty else {
             stats.densityCulledInstances = stats.sceneInstances
             lastGrassDrawStats = stats
             return
@@ -105,7 +108,9 @@ extension Renderer {
         stats.drawnInstances += upload.written
         state.stats.drawCalls += 1
         state.stats.drawnInstances += upload.written
-        state.encoder.setRenderPipelineState(grassPipeline)
+        state.encoder.setRenderPipelineState(
+            isRenderDebugActive ? debugPipelines.grass : grassPipeline
+        )
         state.encoder.setCullMode(group.material.doubleSided ? .none : .back)
         argumentTable.setAddress(
             group.mesh.vertexBuffer.gpuAddress,

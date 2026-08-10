@@ -66,6 +66,14 @@ nonisolated struct RenderPlacement {
     /// placement the world has ever had: `transform` is then the whole answer
     /// and nothing looks the reference up. See `DrawInstance.referenceFormID`.
     let referenceFormID: UInt32
+    /// Which scene role this placement plays, for the dev shell's layer
+    /// isolation (issue #144). It belongs here rather than on `RenderMesh`
+    /// because meshes are shared and cached by VFS path in `MeshLibrary`, so
+    /// mesh identity cannot own a scene role: the same tree mesh is a static in
+    /// one cell and a distant-LOD billboard in the block above it. The
+    /// `.statics` default is what leaves every ordinary construction site
+    /// unchanged; only the actor and distant-LOD builders pass anything else.
+    let layer: RenderLayer
 
     init(
         model: RenderModel,
@@ -74,7 +82,8 @@ nonisolated struct RenderPlacement {
         castsShadows: Bool = true,
         receivesPointLights: Bool = true,
         receivesShadows: Bool = true,
-        referenceFormID: UInt32 = 0
+        referenceFormID: UInt32 = 0,
+        layer: RenderLayer = .statics
     ) {
         self.model = model
         self.transform = transform
@@ -83,6 +92,7 @@ nonisolated struct RenderPlacement {
         self.receivesPointLights = receivesPointLights
         self.receivesShadows = receivesShadows
         self.referenceFormID = referenceFormID
+        self.layer = layer
     }
 }
 
@@ -110,6 +120,9 @@ nonisolated struct DrawInstance {
     /// rebuilding draw groups every frame: the grouping key is mesh plus
     /// material, and moving an instance changes neither.
     var referenceFormID: UInt32 = 0
+    /// The placement's scene role, carried through so the encode-level layer
+    /// filter and the `layerCategory` debug channel agree (issue #144).
+    var layer: RenderLayer = .statics
 }
 
 /// One instanced draw call (todo 3.2): every instance shares the mesh +
@@ -131,6 +144,12 @@ nonisolated struct DrawGroup {
     var receivesShadows: Bool {
         instances.first?.receivesShadows == true
     }
+
+    /// The group's scene role. Every instance shares it: the layer is part of
+    /// the grouping key, so a group never mixes roles.
+    var layer: RenderLayer {
+        instances.first?.layer ?? .statics
+    }
 }
 
 /// Ordered mesh+material grouping: first appearance fixes group order so
@@ -142,6 +161,7 @@ nonisolated private struct GroupAccumulator {
         let castsShadows: Bool
         let receivesPointLights: Bool
         let receivesShadows: Bool
+        let layer: RenderLayer
     }
 
     private var indexByKey: [Key: Int] = [:]
@@ -153,7 +173,8 @@ nonisolated private struct GroupAccumulator {
             diffuse: ObjectIdentifier(material.diffuse),
             castsShadows: instance.castsShadows,
             receivesPointLights: instance.receivesPointLights,
-            receivesShadows: instance.receivesShadows
+            receivesShadows: instance.receivesShadows,
+            layer: instance.layer
         )
         if let index = indexByKey[key] {
             groups[index].instances.append(instance)
@@ -263,7 +284,8 @@ nonisolated struct RenderScene {
                     castsShadows: placement.castsShadows,
                     receivesPointLights: placement.receivesPointLights,
                     receivesShadows: placement.receivesShadows,
-                    referenceFormID: placement.referenceFormID
+                    referenceFormID: placement.referenceFormID,
+                    layer: placement.layer
                 )
                 if material.alphaTestThreshold == nil {
                     opaque.add(mesh: mesh, material: material, instance: instance)

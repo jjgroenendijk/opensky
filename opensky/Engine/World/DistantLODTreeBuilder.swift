@@ -111,7 +111,8 @@ nonisolated extension DistantLODBuilder {
                 bounds: $0.bounds,
                 castsShadows: false,
                 receivesPointLights: false,
-                receivesShadows: false
+                receivesShadows: false,
+                layer: .distantLOD
             )
         }
     }

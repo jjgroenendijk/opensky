@@ -29,7 +29,7 @@ extension Renderer {
         items: [WaterDrawItem],
         state: inout ScenePassState
     ) {
-        guard !items.isEmpty else { return }
+        guard !items.isEmpty, effectiveRenderLayers.contains(.water) else { return }
         var pipelineBound = false
         for item in items {
             if let bounds = item.bounds, !state.frustum.intersects(bounds) {
@@ -37,7 +37,9 @@ extension Renderer {
                 continue
             }
             if !pipelineBound {
-                state.encoder.setRenderPipelineState(waterPipeline)
+                state.encoder.setRenderPipelineState(
+                    isRenderDebugActive ? debugPipelines.water : waterPipeline
+                )
                 state.encoder.setDepthStencilState(waterDepthState)
                 pipelineBound = true
             }

@@ -271,7 +271,11 @@ extension Renderer {
         state: inout ShadowPassState
     ) {
         var boundPipeline: ObjectIdentifier?
-        for group in groups where group.castsShadows {
+        // The same mask the scene pass uses. Hiding the statics while their
+        // shadows still fell on the terrain would make the tool actively
+        // misleading — the frame would show a shadow with no caster.
+        let layers = effectiveRenderLayers
+        for group in groups where group.castsShadows && layers.contains(group.layer) {
             let visible = writeVisibleShadowInstances(of: group, in: context, state: &state)
             guard visible.written > 0 else { continue }
             let pipeline = shadowPipeline(skinned: group.mesh.isSkinned, alphaTested: alphaTested)
@@ -379,6 +383,7 @@ extension Renderer {
         in context: ShadowCascadeContext,
         state: inout ShadowPassState
     ) {
+        guard effectiveRenderLayers.contains(.terrain) else { return }
         let encoder = context.encoder
         var pipelineBound = false
         for item in scene.terrain {

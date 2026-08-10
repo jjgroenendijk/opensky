@@ -253,7 +253,8 @@ nonisolated extension ActorAssembly where Asset == ActorRenderAsset {
                 transform: transform,
                 bounds: Self.isAttachment($0.role)
                     ? nil
-                    : $0.asset.bounds?.transformed(by: transform)
+                    : $0.asset.bounds?.transformed(by: transform),
+                layer: .actors
             )
         }
     }

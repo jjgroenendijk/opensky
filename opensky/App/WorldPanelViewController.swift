@@ -17,6 +17,7 @@ final class WorldPanelViewController: InspectorPanelViewController {
     let frameSection = FrameStatsSection()
     let sceneSection = SceneStatsSection()
     let triggerSection = TriggerVolumeSection()
+    let renderDebugSection = RenderDebugSection()
 
     /// Weak: the game controller owns this panel's parent and the renderer, so
     /// the panel must not retain back.
@@ -46,8 +47,18 @@ final class WorldPanelViewController: InspectorPanelViewController {
         didSet { triggerSection.provider = triggerProvider }
     }
 
+    /// The render debug channel and the layer mask (issue #144). They live under
+    /// this destination because both are views of the frame this panel already
+    /// reports on, not a subsystem of their own.
+    weak var renderDebugProvider: (any RenderDebugControlProviding)? {
+        didSet { renderDebugSection.provider = renderDebugProvider }
+    }
+
     override func makeSections() -> [PanelSectionViewController] {
-        [cameraSection, firstPersonSection, frameSection, sceneSection, triggerSection]
+        [
+            cameraSection, firstPersonSection, frameSection, sceneSection,
+            renderDebugSection, triggerSection
+        ]
     }
 
     /// Control forwards for the verification-surface tests, matching the
@@ -70,5 +81,13 @@ final class WorldPanelViewController: InspectorPanelViewController {
 
     var triggerLogClearControl: NSButton {
         triggerSection.clearLogControl
+    }
+
+    var renderDebugModeControl: NSPopUpButton {
+        renderDebugSection.modeControl
+    }
+
+    var renderDebugSoloControl: NSPopUpButton {
+        renderDebugSection.soloControl
     }
 }

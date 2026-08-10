@@ -181,6 +181,15 @@ extension Renderer {
         advanceAnimation: Bool = true
     ) throws -> String? {
         let cpuStart = frameStats.beginFrame()
+        // Render debug views and layer isolation are dev-shell view filters, so
+        // a screenshot, a bench run or a deterministic render test renders the
+        // shipping frame whatever the sidebar is currently set to (issue #144).
+        // The debug-view tests opt in through `renderDebugAppliesOffscreen`.
+        let requestedDebug = renderDebug
+        if !renderDebugAppliesOffscreen {
+            renderDebug = .production
+        }
+        defer { renderDebug = requestedDebug }
         // Menu mode freezes the sim while the frame still renders (todo 8.1.2):
         // a paused frame advances every sim clock by zero, so successive frames
         // are byte-identical, yet the pass below still encodes and presents.

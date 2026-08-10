@@ -10,16 +10,20 @@
 import AppKit
 
 extension DestinationRegistry {
-    /// The launch destination's two settable sections: the camera mode and the
-    /// first-person controls beside it.
+    /// The launch destination's settable sections: the camera mode, the
+    /// first-person controls beside it, and the render-debug view filters. A
+    /// wireframe or a hidden layer left on is the case the sidebar dot exists
+    /// for — it reads as a rendering bug from anywhere else in the app.
     static let worldOverrides = DestinationOverrideActions(
         isOverridden: {
             CameraSection.isOverridden(provider: $0.providers)
                 || FirstPersonSection.isOverridden(provider: $0.providers)
+                || RenderDebugSection.isOverridden(provider: $0.providers)
         },
         resetToDefaults: {
             CameraSection.resetToDefaults(provider: $0.providers)
             FirstPersonSection.resetToDefaults(provider: $0.providers)
+            RenderDebugSection.resetToDefaults(provider: $0.providers)
         }
     )
 
