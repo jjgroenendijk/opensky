@@ -45,21 +45,63 @@ extension CellStreamer {
     }
 
     func updateInteractionTarget(ray: InteractionRay?) {
-        let target = ray.flatMap { ray -> InteractionTarget? in
-            let shapes = collisionCandidates(overlapping: ray.bounds)
-            guard
-                let hit = InteractionRaycaster.nearestHit(ray: ray, shapes: shapes),
-                let interaction = activeInteraction(reference: hit.reference)
-            else { return nil }
-            return InteractionTarget(
-                interaction: interaction,
-                hitPosition: hit.position,
-                distance: hit.distance
-            )
+        let pick = ray.map(pickInteraction(ray:)) ?? (target: nil, speaker: nil)
+        talk.speaker = pick.speaker
+        guard pick.target != interactionTarget else { return }
+        interactionTarget = pick.target
+        onInteractionTargetChanged?(pick.target)
+    }
+
+    /// What one view ray points at: the nearest activatable placed object, or
+    /// the nearest actor in front of it (issue #205).
+    ///
+    /// The solid hit is resolved first even when it activates nothing, because
+    /// it is the occluder test: an actor is only a Talk target while no
+    /// geometry stands between the eye and the closest approach. That is why
+    /// the comparison is against `hit.distance` rather than against the
+    /// interaction that hit may or may not carry — a shopkeeper behind a shut
+    /// door is behind a solid hit that opens rather than talks.
+    private func pickInteraction(
+        ray: InteractionRay
+    ) -> (target: InteractionTarget?, speaker: ReferenceKey?) {
+        let shapes = collisionCandidates(overlapping: ray.bounds)
+        let hit = InteractionRaycaster.nearestHit(ray: ray, shapes: shapes)
+        let solid = hit.flatMap { hit in
+            activeInteraction(reference: hit.reference).map {
+                InteractionTarget(
+                    interaction: $0, hitPosition: hit.position, distance: hit.distance
+                )
+            }
         }
-        guard target != interactionTarget else { return }
-        interactionTarget = target
-        onInteractionTargetChanged?(target)
+        guard
+            let actor = TalkTargetPicker.nearest(
+                ray: ray, candidates: talk.candidateSource?() ?? []
+            ),
+            actor.distance < (hit?.distance ?? .greatestFiniteMagnitude)
+        else {
+            return (solid, nil)
+        }
+        return (Self.talkTarget(actor), actor.candidate.key)
+    }
+
+    /// One picked actor as an ordinary crosshair target, so the HUD prompt, the
+    /// compass marker and the panel readout all read it through the path they
+    /// already had. The placement carries no sounds: an actor's greeting is
+    /// voice, which item 17.5 owns, not the base record's activation sound.
+    private static func talkTarget(_ hit: TalkHit) -> InteractionTarget {
+        InteractionTarget(
+            interaction: PlacedInteraction(
+                reference: hit.candidate.reference,
+                base: hit.candidate.base,
+                position: hit.candidate.feet,
+                name: hit.candidate.name,
+                action: .talk,
+                actionLabel: InteractionAction.talk.defaultLabel,
+                sounds: nil
+            ),
+            hitPosition: hit.position,
+            distance: hit.distance
+        )
     }
 
     /// FULL name of a resident reference, or nil when nothing loaded names it.
@@ -180,6 +222,14 @@ extension CellStreamer {
     func activateInteractionTarget() {
         guard let interactionTarget else { return }
         onInteraction(InteractionEvent(target: interactionTarget))
+        // After the plain event, so an activated actor reaches the audio and
+        // Papyrus subscribers in the same order an activated door does before
+        // anything opens a menu on top of the world (issue #205).
+        if interactionTarget.interaction.action == .talk, let speaker = talk.speaker {
+            talk.activations(
+                TalkActivationEvent(speaker: speaker, target: interactionTarget)
+            )
+        }
         guard interactionTarget.interaction.action == .open else { return }
         guard
             requestDoorTransition(activeDoor(reference: interactionTarget.interaction.reference))

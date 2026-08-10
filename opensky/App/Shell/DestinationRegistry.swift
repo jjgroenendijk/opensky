@@ -29,6 +29,7 @@ typealias WorldControlProviders = AINavigationControlProviding
     & AIOverlayControlProviding & ActorValueControlProviding & AnimationControlProviding
     & ArcheryControlProviding & AudioControlProviding
     & CameraControlProviding & CombatLoopControlProviding & ContainerMenuControlProviding
+    & DialogueControlProviding
     & FirstPersonControlProviding
     & FrameStatsProviding & GrassControlProviding
     & HUDControlProviding & InventoryEquipmentControlProviding
@@ -248,12 +249,17 @@ enum DestinationRegistry {
                 let panel = HUDInteractionPanelViewController()
                 panel.provider = context.providers
                 panel.itemProvider = context.providers
+                panel.dialogueProvider = context.providers
                 return panel
             },
             overrides: DestinationOverrideActions(
-                isOverridden: { HUDElementsSection.isOverridden(provider: $0.providers) },
+                isOverridden: { context in
+                    HUDElementsSection.isOverridden(provider: context.providers)
+                        || DialogueSection.isOverridden(provider: context.providers)
+                },
                 resetToDefaults: { context in
                     HUDElementsSection.resetToDefaults(provider: context.providers)
+                    DialogueSection.resetToDefaults(provider: context.providers)
                 }
             )
         )

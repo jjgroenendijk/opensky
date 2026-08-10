@@ -355,6 +355,10 @@ final class FakeWorldProviders: WorldControlProviders {
     /// forwarding conformance lives in `DestinationRegistryJournalTests.swift`.
     let journal = FakeJournalProvider()
 
+    /// DialogueControlProviding (issue #205), delegated for the same reason;
+    /// the forwarding conformance lives in `FakeWorldProvidersDialogue.swift`.
+    let dialogue = FakeDialogueProvider()
+
     /// PlayerLocomotionControlProviding (issue #188) state; the conformance
     /// lives in `FakeWorldProvidersLocomotion.swift`.
     var locomotion = FakeLocomotionState()

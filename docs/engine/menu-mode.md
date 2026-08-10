@@ -2,8 +2,8 @@
 type: Subsystem
 title: Menu mode
 description: Engine-owned menu-mode infrastructure - a push/pop menu stack, the
-  world-vs-menu input-capture switch, and the world-sim pause the renderer gates its
-  per-frame time advance on.
+  world-vs-menu input-capture switch, and the per-menu world-sim pause policy the renderer
+  gates its per-frame time advance on.
 tags: [engine, ui, input, menu, simulation]
 timestamp: 2026-07-30T00:00:00Z
 ---
@@ -53,17 +53,35 @@ Decided edge cases:
 (eventually) the menu layer, all on the main thread — same no-internal-locking
 threading contract as `Renderer`. It owns the one live `MenuStack` and exposes:
 
-- `present(_:)` / `dismissTop()` / `dismiss(_:)` / `dismissAll()` — stack operations
-  that also fire `onModeChange(worldSimPaused:)` exactly on the gameplay-menu boundary.
-  A push while already in menu mode, or a pop that leaves another menu open, does not
-  fire it (no boundary crossing).
-- `isWorldSimPaused` — true exactly in menu mode; the renderer reads it each frame.
+- `present(_:policy:)` / `dismissTop()` / `dismiss(_:)` / `dismissAll()` — stack
+  operations that also fire `onModeChange(route:worldSimPaused:)` whenever either of
+  those two values moves. A push or pop that changes neither does not fire it.
+- `isWorldSimPaused` — true while any open menu declares `MenuWorldPolicy.pausesWorld`;
+  the renderer reads it each frame.
 - `currentRoute` — `.world` in gameplay, `.menu` in menu mode; the input decision.
 - `routeMenuInput(_:)` — forwards a `MenuInputEvent` to the attached
   `MenuInputConsumer` in menu mode (returns true), a no-op returning false in gameplay
   so the caller falls through to world input. The event is swallowed when no consumer
   is attached yet, but menu mode still owns (captures) it, so world input never sees
   it.
+
+### Per-menu world policy
+
+Menu mode meant a paused world until roadmap item 17.3. The
+[dialogue menu](/engine/dialogue-menu.md) is the one menu that captures input while the
+world keeps running, because voice, speaker facing and lip sync all advance on the world
+clock. `present(_:policy:)` therefore takes a `MenuWorldPolicy`: `pausesWorld` is the
+default and what every other menu gets without saying so, and `leavesWorldRunning` is
+what `"Dialogue Menu"` alone uses.
+
+The policy is per menu rather than a flag on the controller because two menus can be open
+at once: the system menu over a conversation still pauses, and closing it hands the running
+world back to the dialogue underneath. A dismissed menu's policy is dropped with it, so
+re-presenting the same name without a policy pauses again.
+
+Because the route and the pause no longer move together, `onModeChange` reports both. The
+app releases held world input on the *route* flip rather than on the pause — a key held
+into a non-pausing menu would otherwise keep driving a camera nobody is steering.
 
 `MenuInputEvent` is intentionally small and toolkit-free — `move(Direction)`,
 `button(accept/cancel)`, `pointer(deltaX:deltaY:)` — enough for Scaleform menu

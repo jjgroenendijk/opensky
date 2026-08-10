@@ -287,7 +287,12 @@ installed movie also starts with authoring samples visible under
 `/HUDMovieBaseInstance/RolloverInfoInstance` and
 `/HUDMovieBaseInstance/SubtitleTextHolder`. Initialization hides both so raw
 font markup and `Dialogue Line 1Dialogue Line 2` do not leak into gameplay;
-**Authored placeholder text** makes them intentionally inspectable. Scale is a
+**Authored placeholder text** makes them intentionally inspectable. Since roadmap item
+17.3 the subtitle holder is also driven for real: `HUDMovieBridge.setSubtitleText`
+writes `/HUDMovieBaseInstance/SubtitleTextHolder/textField` and shows or hides the
+holder around it, so a spoken line appears and a cleared line takes the authored art
+with it rather than leaving an empty box. See
+[dialogue menu](/engine/dialogue-menu.md). Scale is a
 centered renderer presentation multiplier and does not mutate the display
 list. UI Lab still owns an explicit whole-movie override; selecting `None`
 restores the HUD with its saved M8.4.3 element and scale preferences.

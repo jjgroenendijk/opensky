@@ -108,6 +108,9 @@ final class CellStreamer {
     /// the Papyrus activation bridge both subscribe, in registration order,
     /// and neither takes ownership of the raycast or of door behavior.
     let onInteraction = CallbackFanOut<InteractionEvent>()
+    /// Everything Talk activation needs from the streamer (issue #205), in one
+    /// value so the three parts of one seam stay together.
+    var talk = TalkTargetingSeam()
     /// Player-driven door motion boundaries. World audio consumes these to
     /// start the authored movement loop, retire it, and play the close sound.
     var onInteractionAnimation: ((InteractionAnimationEvent) -> Void)?
@@ -280,22 +283,6 @@ final class CellStreamer {
 
     /// Schedules only keys no resident cell owns. With one submitted build,
     /// this eviction enters the serial runner before the next build starts.
-    func evictUnused(_ candidates: CellAssets) {
-        var resident = composition.residentAssets()
-        if let interiorScene {
-            resident.meshKeys.formUnion(interiorScene.assets.meshKeys)
-            resident.textureKeys.formUnion(interiorScene.assets.textureKeys)
-        }
-        for scene in stagedCells.values {
-            resident.meshKeys.formUnion(scene.assets.meshKeys)
-            resident.textureKeys.formUnion(scene.assets.textureKeys)
-        }
-        runner.enqueueEviction(
-            droppingMeshKeys: candidates.meshKeys.subtracting(resident.meshKeys),
-            droppingTextureKeys: candidates.textureKeys.subtracting(resident.textureKeys)
-        )
-    }
-
     /// Submits at most one build per frame. First loads drain before world-
     /// state rebuilds, so a cell that has never been drawn still arrives
     /// center-out; a rebuild only ever displaces an already-drawn cell, so

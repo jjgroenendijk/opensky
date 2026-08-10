@@ -150,6 +150,11 @@ final class GameViewController: NSViewController {
     /// implementation lives in `GameViewControllerJournal.swift`; stored here
     /// because extensions cannot add state.
     var journal = JournalRuntimeState()
+    /// Dialogue index, conversation model and presentation state (issue #205).
+    /// The implementation lives in `GameViewControllerDialogue.swift` and
+    /// `GameViewControllerDialogueMenu.swift`; stored here because extensions
+    /// cannot add state.
+    var dialogue = DialogueBridgeState()
     /// Container and barter menu two-pane list, merchant nomination and
     /// presentation state (issue #179). The implementation lives in
     /// `GameViewControllerContainerMenu.swift`; stored here because extensions
@@ -267,9 +272,13 @@ final class GameViewController: NSViewController {
             startHUD(renderer: newRenderer)
             // Menu mode drives the renderer's world-sim pause and clears held
             // world input on entry so no key sticks while the menu owns input.
-            menuMode.onModeChange = { [weak newRenderer, weak cameraInput] paused in
+            menuMode.onModeChange = { [weak newRenderer, weak cameraInput] route, paused in
                 newRenderer?.worldSimPaused = paused
-                if paused {
+                // Released on the route flip rather than on the pause, because
+                // the dialogue menu captures input without stopping the world
+                // (issue #205) and a key held into it would otherwise keep
+                // driving the camera nobody is steering.
+                if route == .menu {
                     cameraInput?.releaseAll()
                 }
             }

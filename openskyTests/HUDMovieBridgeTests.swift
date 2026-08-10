@@ -195,4 +195,65 @@ struct HUDMovieBridgeTests {
         #expect(controller.hud.promptNeedsUpdate)
         #expect(controller.hud.markersNeedUpdate)
     }
+
+    // MARK: - Subtitles (issue #205)
+
+    /// The holder and its field, in the shape `swf action-run --movie
+    /// hudmenu.swf --tree-depth 3` measured off the vanilla movie.
+    private func addSubtitleField(to harness: HUDHarness) -> SWFDisplayObject {
+        let holder = SWFDisplayObject(content: .clip(nil))
+        holder.name = "SubtitleTextHolder"
+        harness.target.addChild(holder, atDepth: 9)
+        let field = SWFDisplayObject(content: .clip(nil))
+        field.name = "textField"
+        holder.addChild(field, atDepth: 1)
+        return holder
+    }
+
+    @Test @MainActor
+    func showingASubtitleWritesTheFieldAndRevealsTheHolder() throws {
+        let harness = try makeRuntime()
+        _ = addSubtitleField(to: harness)
+        HUDMovieBridge.setSubtitleText(
+            "Some may call this junk.", runtime: harness.runtime
+        )
+        #expect(
+            HUDMovieBridge.subtitleText(runtime: harness.runtime)
+                == "Some may call this junk."
+        )
+        // The holder carries authored art around the text, so it is hidden
+        // rather than only blanked when there is no line.
+        #expect(HUDMovieBridge.isSubtitleVisible(runtime: harness.runtime))
+    }
+
+    @Test @MainActor
+    func clearingASubtitleHidesTheHolder() throws {
+        let harness = try makeRuntime()
+        _ = addSubtitleField(to: harness)
+        HUDMovieBridge.setSubtitleText("A line.", runtime: harness.runtime)
+        HUDMovieBridge.clearSubtitleText(runtime: harness.runtime)
+        #expect(HUDMovieBridge.subtitleText(runtime: harness.runtime)?.isEmpty == true)
+        #expect(!HUDMovieBridge.isSubtitleVisible(runtime: harness.runtime))
+    }
+
+    @Test @MainActor
+    func anEmptyLineIsTheSameAsNoLine() throws {
+        let harness = try makeRuntime()
+        _ = addSubtitleField(to: harness)
+        HUDMovieBridge.setSubtitleText("", runtime: harness.runtime)
+        #expect(!HUDMovieBridge.isSubtitleVisible(runtime: harness.runtime))
+    }
+
+    @Test @MainActor
+    func aMovieWithNoSubtitleFieldRecordsItRatherThanCrashing() throws {
+        let harness = try makeRuntime()
+        HUDMovieBridge.setSubtitleText("A line.", runtime: harness.runtime)
+        #expect(HUDMovieBridge.subtitleText(runtime: harness.runtime) == nil)
+        #expect(!HUDMovieBridge.isSubtitleVisible(runtime: harness.runtime))
+        // The AS2 scope rule: an unreachable name is an accounted no-op, so the
+        // panel can report it.
+        #expect(
+            harness.runtime.tally.missingNames[HUDMovieBridge.subtitleTextPath] != nil
+        )
+    }
 }

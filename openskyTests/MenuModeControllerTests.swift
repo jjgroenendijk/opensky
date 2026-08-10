@@ -1,7 +1,9 @@
-// Menu-mode controller (todo 8.1.2): mode transitions fire onModeChange exactly
-// on the gameplay <-> menu boundary, the input-routing decision follows the
-// stack, and routed menu events reach an attached consumer only in menu mode.
-// Pure reference type, no AppKit or GPU.
+// Menu-mode controller (todo 8.1.2, extended by issue #205): transitions fire
+// onModeChange exactly when the input route or the world-sim pause gate moves,
+// the routing decision follows the stack, routed menu events reach an attached
+// consumer only in menu mode, and a menu presented under
+// `MenuWorldPolicy.leavesWorldRunning` captures input without stopping the
+// world. Pure reference type, no AppKit or GPU.
 
 @testable import opensky
 import Testing
@@ -29,22 +31,24 @@ struct MenuModeControllerTests {
     @Test
     func presentEntersMenuModeAndPauses() {
         let controller = MenuModeController()
-        var changes: [Bool] = []
-        controller.onModeChange = { changes.append($0) }
+        var changes: [(route: InputRoute, paused: Bool)] = []
+        controller.onModeChange = { route, paused in changes.append((route, paused)) }
         #expect(controller.present("InventoryMenu"))
         #expect(controller.isMenuMode)
         #expect(controller.isWorldSimPaused)
         #expect(controller.currentRoute == .menu)
         #expect(controller.topMenu == "InventoryMenu")
-        #expect(changes == [true])
+        #expect(changes.count == 1)
+        #expect(changes.first?.route == .menu)
+        #expect(changes.first?.paused == true)
     }
 
     @Test
     func stackingASecondMenuDoesNotRefireModeChange() {
         let controller = MenuModeController()
-        var changes: [Bool] = []
+        var changes: [(route: InputRoute, paused: Bool)] = []
         controller.present("InventoryMenu")
-        controller.onModeChange = { changes.append($0) }
+        controller.onModeChange = { route, paused in changes.append((route, paused)) }
         controller.present("Console")
         // Still menu mode both before and after -> no boundary crossing.
         #expect(changes.isEmpty)
@@ -55,8 +59,8 @@ struct MenuModeControllerTests {
     func duplicatePresentIsRejectedWithoutModeChange() {
         let controller = MenuModeController()
         controller.present("InventoryMenu")
-        var changes: [Bool] = []
-        controller.onModeChange = { changes.append($0) }
+        var changes: [(route: InputRoute, paused: Bool)] = []
+        controller.onModeChange = { route, paused in changes.append((route, paused)) }
         #expect(!controller.present("InventoryMenu"))
         #expect(changes.isEmpty)
     }
@@ -66,14 +70,16 @@ struct MenuModeControllerTests {
         let controller = MenuModeController()
         controller.present("InventoryMenu")
         controller.present("Console")
-        var changes: [Bool] = []
-        controller.onModeChange = { changes.append($0) }
+        var changes: [(route: InputRoute, paused: Bool)] = []
+        controller.onModeChange = { route, paused in changes.append((route, paused)) }
         #expect(controller.dismissTop() == "Console")
         // Still one menu open -> no boundary crossing yet.
         #expect(changes.isEmpty)
         #expect(controller.isWorldSimPaused)
         #expect(controller.dismissTop() == "InventoryMenu")
-        #expect(changes == [false])
+        #expect(changes.count == 1)
+        #expect(changes.first?.route == .world)
+        #expect(changes.first?.paused == false)
         #expect(!controller.isWorldSimPaused)
         #expect(controller.currentRoute == .world)
     }
@@ -83,13 +89,14 @@ struct MenuModeControllerTests {
         let controller = MenuModeController()
         controller.present("A")
         controller.present("B")
-        var changes: [Bool] = []
-        controller.onModeChange = { changes.append($0) }
+        var changes: [(route: InputRoute, paused: Bool)] = []
+        controller.onModeChange = { route, paused in changes.append((route, paused)) }
         #expect(controller.dismiss("A"))
         #expect(changes.isEmpty)
         #expect(controller.isMenuMode)
         #expect(controller.dismiss("B"))
-        #expect(changes == [false])
+        #expect(changes.count == 1)
+        #expect(changes.first?.route == .world)
     }
 
     @Test
@@ -97,10 +104,12 @@ struct MenuModeControllerTests {
         let controller = MenuModeController()
         controller.present("A")
         controller.present("B")
-        var changes: [Bool] = []
-        controller.onModeChange = { changes.append($0) }
+        var changes: [(route: InputRoute, paused: Bool)] = []
+        controller.onModeChange = { route, paused in changes.append((route, paused)) }
         controller.dismissAll()
-        #expect(changes == [false])
+        #expect(changes.count == 1)
+        #expect(changes.first?.route == .world)
+        #expect(changes.first?.paused == false)
         #expect(!controller.isMenuMode)
     }
 
@@ -108,9 +117,78 @@ struct MenuModeControllerTests {
     func dismissAllInGameplayIsNoOp() {
         let controller = MenuModeController()
         var fired = false
-        controller.onModeChange = { _ in fired = true }
+        controller.onModeChange = { _, _ in fired = true }
         controller.dismissAll()
         #expect(!fired)
+    }
+
+    // MARK: - Per-menu world policy (issue #205)
+
+    @Test
+    func dialogueMenuCapturesInputWithoutPausingTheWorld() {
+        let controller = MenuModeController()
+        var changes: [(route: InputRoute, paused: Bool)] = []
+        controller.onModeChange = { route, paused in changes.append((route, paused)) }
+        #expect(controller.present("Dialogue Menu", policy: .leavesWorldRunning))
+        #expect(controller.isMenuMode)
+        #expect(controller.currentRoute == .menu)
+        // The whole point of the milestone: voice, facing and lip sync all
+        // advance on the world clock while the topic list is up.
+        #expect(!controller.isWorldSimPaused)
+        #expect(changes.count == 1)
+        #expect(changes.first?.route == .menu)
+        #expect(changes.first?.paused == false)
+    }
+
+    @Test
+    func menusWithoutAPolicyStillPause() {
+        let controller = MenuModeController()
+        controller.present("InventoryMenu")
+        #expect(controller.isWorldSimPaused)
+        #expect(controller.policy(of: "InventoryMenu") == .pausesWorld)
+    }
+
+    @Test
+    func aPausingMenuOverAConversationPausesAndUnpauses() {
+        let controller = MenuModeController()
+        controller.present("Dialogue Menu", policy: .leavesWorldRunning)
+        var changes: [(route: InputRoute, paused: Bool)] = []
+        controller.onModeChange = { route, paused in changes.append((route, paused)) }
+        controller.present("SystemMenu")
+        // The route did not move — it was already menu — but the pause did, and
+        // a listener that only watched the route would have missed it.
+        #expect(controller.isWorldSimPaused)
+        #expect(changes.count == 1)
+        #expect(changes.first?.route == .menu)
+        #expect(changes.first?.paused == true)
+        controller.dismiss("SystemMenu")
+        #expect(!controller.isWorldSimPaused)
+        #expect(controller.isMenuMode)
+        #expect(changes.count == 2)
+        #expect(changes.last?.paused == false)
+    }
+
+    @Test
+    func closingAConversationLeavesNoPolicyBehind() {
+        let controller = MenuModeController()
+        controller.present("Dialogue Menu", policy: .leavesWorldRunning)
+        controller.dismiss("Dialogue Menu")
+        // Re-presented without a policy, the same name must pause: a stale
+        // entry would silently make the next menu of that name non-pausing.
+        controller.present("Dialogue Menu")
+        #expect(controller.isWorldSimPaused)
+    }
+
+    @Test
+    func dismissAllClearsEveryPolicy() {
+        let controller = MenuModeController()
+        controller.present("Dialogue Menu", policy: .leavesWorldRunning)
+        controller.present("SystemMenu")
+        controller.dismissAll()
+        #expect(!controller.isMenuMode)
+        #expect(!controller.isWorldSimPaused)
+        controller.present("Dialogue Menu")
+        #expect(controller.isWorldSimPaused)
     }
 
     @Test

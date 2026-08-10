@@ -73,7 +73,13 @@ extension GameViewController {
     /// the few thousand the whole cell holds. The actor functions themselves
     /// need only identity and go through `ConditionCall.referenceKey()`, which
     /// is why the player answers despite having no plugin record.
-    private func runtimeStateConditionContext() -> ConditionContext {
+    /// Also the context dialogue selection runs in (issue #205): a topic's
+    /// conditions read the same globals, quest state, actors and clock this
+    /// panel evaluates against, and a second builder would be a second set of
+    /// answers to keep in step. `DialogueRuntime` overrides `subject`, `target`
+    /// and `aliasQuest` per response, so the crosshair's reference filled in
+    /// here is a default it replaces rather than a value it inherits.
+    func runtimeStateConditionContext() -> ConditionContext {
         let entry = runtimeStateEntry(for: .currentTarget)
         return ConditionContext(
             globals: runtimeStateGlobalResolution(),
