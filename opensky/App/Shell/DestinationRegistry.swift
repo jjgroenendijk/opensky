@@ -40,7 +40,7 @@ typealias WorldControlProviders = AINavigationControlProviding
     & PerceptionControlProviding
     & PhysicsControlProviding
     & PlayerLocomotionControlProviding
-    & PrecipitationControlProviding & RagdollControlProviding
+    & PrecipitationControlProviding & RagdollControlProviding & RenderDebugControlProviding
     & RuntimeStateControlProviding & SWFLabControlProviding & SceneStatsProviding
     & ScriptControlProviding & ShadowControlProviding
     & SystemMenuControlProviding & TerrainLODControlProviding & TriggerControlProviding
@@ -164,6 +164,7 @@ enum DestinationRegistry {
                 panel.frameStatsProvider = context.providers
                 panel.sceneStatsProvider = context.providers
                 panel.triggerProvider = context.providers
+                panel.renderDebugProvider = context.providers
                 // None of the panel's own provider seams carry refocus, so the
                 // factory supplies it from the full provider set.
                 let providers = context.providers

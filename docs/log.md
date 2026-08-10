@@ -4,6 +4,35 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-10
 
+* **Render debug views and layer isolation (issue #144)**: a visual bug can now be
+  bisected instead of stared at. `World > Render Debug` switches the scene pass's output
+  channel — wireframe, world normals, texture coordinates, mip level, shadow cascade, layer
+  category — and switches whole layers off one at a time. The wiring is function constant to
+  gate, uniform field to select: `FunctionConstantDebugView` is false in every shipping
+  pipeline, so the debug branch folds away and those fragments generate the code they did
+  before, while `FrameUniforms.debugMode` picks the channel with no pipeline rebuild. It has
+  to be defined rather than merely absent from the shipping pipelines — Metal aborts
+  pipeline validation on a referenced-but-undefined function constant, which is why the
+  shipping grass, terrain and water pipelines now specialize their fragments too. Five
+  debug pipeline states cover seven modes across five geometry paths, because the channel
+  is a uniform and `alphaThreshold ?? 0` lets one static variant serve both the opaque and
+  cutout groups. Isolation is one `RenderLayer` OptionSet
+  rather than six more booleans beside the enables the renderer already carries; the
+  composition rule ("a subsystem enable is the feature switch, the layer mask is the view
+  filter, effective visibility is the AND") lives once on `RenderLayerPolicy` and is folded
+  once per frame. The scene role is tagged on `RenderPlacement`/`DrawInstance` and not on
+  `RenderMesh`, because meshes are shared and cached by VFS path so mesh identity cannot own
+  a scene role, and the `.statics` default left every existing construction site alone. The
+  shadow pass honours the same mask — a hidden static that still cast a shadow would make
+  the tool actively misleading — and solo is derived from the mask rather than stored
+  beside it, so the two cannot desynchronise. Neither control persists and neither reaches
+  `renderOffscreen` unless a test asks, because a session that starts in wireframe reads as
+  a rendering bug and that is the confusion the whole feature exists to remove. LOD level is
+  dropped (there is no per-mesh LOD in this engine) and overdraw is deferred (it needs a
+  blend-enabled pipeline set whose stencil alternative collides with the SWF layer).
+  `RendererSetup.swift` gave up its shadow-pipeline factories to
+  `RendererShadowPipelineSetup.swift` to stay inside the file cap. See
+  [Render debug views and layer isolation](/rendering/render-debug.md).
 * **Plugin load order from plugins.txt (issue #73)**: the engine reads the user's actual
   load order instead of assuming the five vanilla masters. `PluginsTextLocator` finds the
   file the way `GameDataLocator` finds the install — `OPENSKY_PLUGINS_TXT`, then the

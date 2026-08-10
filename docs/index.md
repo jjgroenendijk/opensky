@@ -308,6 +308,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   pre-pass with per-cascade caster culling clamped to resident cells, off/low/high
   quality + `World > Environment` surface, fly-bench CPU budget, PCF sun-term
   filtering, A/B verification.
+* [Render debug views and layer isolation](/rendering/render-debug.md) - function-constant
+  gated debug channels, the `RenderLayer` mask both the scene and shadow passes honour, the
+  composition rule against the subsystem enables, and the `World > Render Debug` surface.
 * [Particle playback](/rendering/particles.md) - deterministic CPU emitters, weather-wind
   modifiers, instanced Metal billboards, effect blend pipelines, app controls + Whiterun
   offscreen acceptance.

@@ -11,6 +11,11 @@ extension Renderer {
         let encoder: MTL4RenderCommandEncoder
         let slot: Int
         let frustum: Frustum
+        /// The fill mode this frame's geometry draws under — `.lines` in the
+        /// wireframe debug view. Encoded once at the top of the pass; the
+        /// billboard layer forces `.fill` and restores this value, because a
+        /// wireframed particle quad is noise rather than diagnosis.
+        var fillMode = MTLTriangleFillMode.fill
         var drawCursor = 0
         var instanceCursor = 0
         var stats = SceneDrawStats()
@@ -78,7 +83,8 @@ extension Renderer {
             grassFadeDistances: SIMD2(
                 max(grassDistance * 0.7, GrassRenderPolicy.minimumDrawDistance * 0.5),
                 grassDistance
-            )
+            ),
+            debugMode: renderDebug.mode.rawValue
         )
         frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)
@@ -91,18 +97,19 @@ extension Renderer {
     private func updateDrawUniforms(
         slot: Int,
         draw: Int,
-        material: RenderMaterial,
-        pointLightCount: Int,
-        receivesShadows: Bool
+        group: DrawGroup,
+        pointLightCount: Int
     ) -> Int {
         let offset = Self.alignedDrawUniformsSize * (slot * drawUniformSlotCapacity + draw)
+        let material = group.material
         var uniforms = DrawUniforms(
             uvOffset: material.uvOffset,
             uvScale: material.uvScale,
             materialAlpha: material.alpha,
             alphaThreshold: material.alphaTestThreshold ?? 0,
             pointLightCount: UInt32(pointLightCount),
-            receivesShadows: receivesShadows ? 1 : 0
+            receivesShadows: group.receivesShadows ? 1 : 0,
+            layerCategory: group.layer.rawValue
         )
         drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<DrawUniforms>.size)
@@ -214,10 +221,16 @@ extension Renderer {
         state: inout ScenePassState
     ) {
         guard !groups.isEmpty else { return }
+        // Debug channels replace the shaded surface for every geometry path at
+        // once, so the caller's shipping pair is swapped here rather than at
+        // each of the four call sites.
+        let staticPipeline = isRenderDebugActive ? debugPipelines.staticMesh : staticPipeline
+        let skinnedPipeline = isRenderDebugActive ? debugPipelines.skinned : skinnedPipeline
+        let layers = effectiveRenderLayers
         // Pipeline bound lazily: an all-culled list encodes nothing. Model
         // ordering is retained, so switch only when rigid/skinned kind does.
         var boundSkinned: Bool?
-        for group in groups {
+        for group in groups where layers.contains(group.layer) {
             let visible = writeVisibleInstances(of: group, state: &state)
             guard visible.written > 0 else { continue }
             if boundSkinned != group.mesh.isSkinned {
@@ -236,9 +249,8 @@ extension Renderer {
             let uniformOffset = updateDrawUniforms(
                 slot: state.slot,
                 draw: state.drawCursor,
-                material: group.material,
-                pointLightCount: lightOffset.count,
-                receivesShadows: group.receivesShadows
+                group: group,
+                pointLightCount: lightOffset.count
             )
             state.drawCursor += 1
             state.stats.drawCalls += 1
@@ -309,7 +321,7 @@ extension Renderer {
         items: [TerrainDrawItem],
         state: inout ScenePassState
     ) {
-        guard !items.isEmpty else { return }
+        guard !items.isEmpty, effectiveRenderLayers.contains(.terrain) else { return }
         var pipelineBound = false
         for item in items {
             if let bounds = item.bounds, !state.frustum.intersects(bounds) {
@@ -317,7 +329,9 @@ extension Renderer {
                 continue
             }
             if !pipelineBound {
-                state.encoder.setRenderPipelineState(terrainPipeline)
+                state.encoder.setRenderPipelineState(
+                    isRenderDebugActive ? debugPipelines.terrain : terrainPipeline
+                )
                 pipelineBound = true
             }
             let center = item.bounds.map { ($0.min + $0.max) * 0.5 }
@@ -380,16 +394,13 @@ extension Renderer {
         }
     }
 
-    func encodeScenePass(
-        descriptor: MTL4RenderPassDescriptor,
-        slot: Int,
-        projection: float4x4
-    ) -> Bool {
-        let viewProjection = projection * freeFlyCamera.viewMatrix()
-        let frustum = Frustum(viewProjection: viewProjection)
-        let frameOffset = updateFrameUniforms(slot: slot, viewProjection: viewProjection)
-        guard let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)
-        else { return false }
+    /// The frame-wide bindings every draw in the pass shares: this frame's
+    /// uniform slot, the world sampler, and the shadow cascade array with its
+    /// compare sampler (bound even with shadows off so validation stays clean).
+    private func bindScenePassFrameArguments(
+        encoder: MTL4RenderCommandEncoder,
+        frameOffset: Int
+    ) {
         encoder.label = "Static Mesh Encoder"
         encoder.setFrontFacing(.counterClockwise)
         encoder.setArgumentTable(argumentTable, stages: [.vertex, .fragment])
@@ -409,13 +420,34 @@ extension Renderer {
             shadow.sampler.gpuResourceID,
             index: SamplerIndex.shadowCompare.rawValue
         )
-        if scene.sky != nil {
+    }
+
+    func encodeScenePass(
+        descriptor: MTL4RenderPassDescriptor,
+        slot: Int,
+        projection: float4x4
+    ) -> Bool {
+        let viewProjection = projection * freeFlyCamera.viewMatrix()
+        let frustum = Frustum(viewProjection: viewProjection)
+        let frameOffset = updateFrameUniforms(slot: slot, viewProjection: viewProjection)
+        guard let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)
+        else { return false }
+        bindScenePassFrameArguments(encoder: encoder, frameOffset: frameOffset)
+        let layers = effectiveRenderLayers
+        if scene.sky != nil, layers.contains(.sky) {
             encoder.setRenderPipelineState(skyPipeline)
             encoder.setCullMode(.none)
             encoder.drawPrimitives(primitiveType: .triangle, vertexStart: 0, vertexCount: 3)
         }
         encoder.setDepthStencilState(depthState)
-        var state = ScenePassState(encoder: encoder, slot: slot, frustum: frustum)
+        // Wireframe is a raster state rather than a channel, so it is set on the
+        // encoder here and reset before the screen-space layers below, which
+        // share this encoder and would otherwise wireframe the HUD.
+        let fillMode: MTLTriangleFillMode = renderDebug.mode == .wireframe ? .lines : .fill
+        encoder.setTriangleFillMode(fillMode)
+        var state = ScenePassState(
+            encoder: encoder, slot: slot, frustum: frustum, fillMode: fillMode
+        )
         encode(
             groups: opaqueDrawGroups,
             staticPipeline: opaquePipeline,
@@ -438,6 +470,10 @@ extension Renderer {
             state: &state
         )
         encodeFirstPersonArms(descriptor: descriptor, state: &state)
+        // Everything below is diagnosis or interface rather than world geometry,
+        // and `encodeSWF`/`encodeUI` reuse this encoder: a leaked `.lines` here
+        // would wireframe the HUD.
+        encoder.setTriangleFillMode(.fill)
         // World-space diagnostics remain depth-tested and sit below every
         // screen-space layer.
         encodeWorldOverlay(state: &state)

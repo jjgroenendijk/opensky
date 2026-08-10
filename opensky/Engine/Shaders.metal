@@ -41,10 +41,28 @@ static float3 pointLighting(
 // the raster depth bias leaves behind; kept small to avoid peter-panning.
 constant float shadowReceiverBias = 0.0015;
 
+// Which cascade shades a receiver, or -1 when it lies beyond the last one.
+// Mirrors ShadowCascadeMath.cascadeIndex verbatim. Shared by sunShadowFactor
+// and the shadowCascade debug channel, so the picture the debug view draws is
+// the cascade the shading actually used.
+static int sunShadowCascadeIndex(float3 worldPosition, constant FrameUniforms &frame)
+{
+    float viewDepth = dot(worldPosition - frame.cameraPosition, frame.cameraForward);
+    if (viewDepth > frame.shadowCascadeSplits[ShadowConstantCascadeCount - 1]) {
+        return -1;
+    }
+    int cascade = ShadowConstantCascadeCount - 1;
+    for (int slot = ShadowConstantCascadeCount - 1; slot >= 0; --slot) {
+        if (viewDepth <= frame.shadowCascadeSplits[slot]) {
+            cascade = slot;
+        }
+    }
+    return cascade;
+}
+
 // Sun-shadow attenuation for one world-space receiver (M7.1.1). Returns 1.0
 // (fully lit) when shadows are off, the point is beyond the last cascade, or
-// it projects outside the cascade's map. Cascade pick mirrors
-// ShadowCascadeMath.cascadeIndex verbatim; PCF kernel radius comes from
+// it projects outside the cascade's map. PCF kernel radius comes from
 // FrameUniforms.shadowSampleRadius (M7.1.2 quality: 0 = 1 tap, 1 = 3x3).
 static float sunShadowFactor(
     float3 worldPosition,
@@ -55,15 +73,9 @@ static float sunShadowFactor(
     if (frame.shadowsEnabled == 0) {
         return 1.0;
     }
-    float viewDepth = dot(worldPosition - frame.cameraPosition, frame.cameraForward);
-    if (viewDepth > frame.shadowCascadeSplits[ShadowConstantCascadeCount - 1]) {
+    int cascade = sunShadowCascadeIndex(worldPosition, frame);
+    if (cascade < 0) {
         return 1.0;
-    }
-    int cascade = ShadowConstantCascadeCount - 1;
-    for (int slot = ShadowConstantCascadeCount - 1; slot >= 0; --slot) {
-        if (viewDepth <= frame.shadowCascadeSplits[slot]) {
-            cascade = slot;
-        }
     }
     float4 clip = frame.shadowViewProjections[cascade] * float4(worldPosition, 1.0);
     float3 ndc = clip.xyz / clip.w;
@@ -100,6 +112,101 @@ static float3 applyFog(float3 color, float3 worldPosition, constant FrameUniform
     float amount = pow(linear, max(frame.fogDistances.z, 0.01)) * frame.fogDistances.w;
     float3 fogColor = mix(frame.fogNearColor, frame.fogFarColor, linear);
     return mix(color, fogColor, saturate(amount));
+}
+
+// Render debug views (issue #144). The whole block is gated on one function
+// constant that every shipping pipeline defines as false, so the branches below
+// fold away there and the shipping fragment functions generate the same code
+// they did before the debug channels existed. The five debug pipelines define it
+// as true and then select a channel per frame from FrameUniforms.debugMode, so
+// switching channels rebuilds no pipeline.
+//
+// Every pipeline built from one of the four fragments that reads it must set it:
+// Metal requires a referenced function constant to be defined at specialization
+// and aborts pipeline validation when one is not, so "leave it undefined in
+// shipping pipelines" is not an option (Renderer.specializedFragment).
+
+constant bool debugViewActive [[function_constant(FunctionConstantDebugView)]];
+
+/// Everything the debug channels can read about one fragment. Grouped into a
+/// struct so each geometry path passes one value rather than six arguments.
+struct DebugSurface
+{
+    float3 worldPosition;
+    float3 normal;
+    float2 texcoord;
+    /// Mip level the diffuse sampler would pick, or 0 for paths with no texture.
+    float mipLevel;
+    /// RenderLayerBit this draw belongs to.
+    uint layerCategory;
+};
+
+/// One colour per sun-shadow cascade, grey past the last one (the region the
+/// shading leaves unshadowed).
+static float3 debugCascadeColor(int cascade)
+{
+    if (cascade == 0) {
+        return float3(0.90, 0.25, 0.20);
+    }
+    if (cascade == 1) {
+        return float3(0.30, 0.80, 0.35);
+    }
+    if (cascade == 2) {
+        return float3(0.25, 0.50, 0.95);
+    }
+    return float3(0.35, 0.35, 0.35);
+}
+
+/// One colour per RenderLayerBit. Unknown values stay magenta, which reads as
+/// "a draw reached the pass without a layer" rather than as a plausible layer.
+static float3 debugLayerColor(uint layer)
+{
+    switch (layer) {
+    case RenderLayerBitStatics:
+        return float3(0.85, 0.85, 0.85);
+    case RenderLayerBitActors:
+        return float3(0.95, 0.55, 0.15);
+    case RenderLayerBitDistantLOD:
+        return float3(0.45, 0.40, 0.70);
+    case RenderLayerBitTerrain:
+        return float3(0.40, 0.70, 0.35);
+    case RenderLayerBitWater:
+        return float3(0.20, 0.55, 0.90);
+    case RenderLayerBitSky:
+        return float3(0.60, 0.80, 0.95);
+    case RenderLayerBitGrass:
+        return float3(0.65, 0.85, 0.30);
+    case RenderLayerBitParticles:
+        return float3(0.95, 0.85, 0.35);
+    default:
+        return float3(1.0, 0.0, 1.0);
+    }
+}
+
+/// The debug channel's colour for one fragment. Opaque by design: a debug view
+/// answers "what is here", so a cutout's own alpha must not fade the answer.
+static float4 debugViewColor(constant FrameUniforms &frame, DebugSurface surface)
+{
+    switch (frame.debugMode) {
+    case DebugViewModeWorldNormals:
+        return float4(normalize(surface.normal) * 0.5 + 0.5, 1.0);
+    case DebugViewModeTextureCoordinates:
+        return float4(fract(surface.texcoord), 0.0, 1.0);
+    case DebugViewModeMipLevel: {
+        // Fine mips cool, coarse mips warm: a surface that jumps to red at
+        // arm's length is sampling a mip far below the one it deserves.
+        float ramp = saturate(surface.mipLevel / 8.0);
+        return float4(mix(float3(0.15, 0.55, 0.95), float3(0.95, 0.30, 0.10), ramp), 1.0);
+    }
+    case DebugViewModeShadowCascade:
+        return float4(debugCascadeColor(sunShadowCascadeIndex(surface.worldPosition, frame)), 1.0);
+    case DebugViewModeLayerCategory:
+        return float4(debugLayerColor(surface.layerCategory), 1.0);
+    default:
+        // Wireframe, and any mode a future channel adds before its shader half
+        // lands: a flat bright line colour over the cleared attachment.
+        return float4(0.85, 0.92, 1.0, 1.0);
+    }
 }
 
 // Exterior sky: fullscreen triangle. When weather is active (M7.2.2), the sky
@@ -281,6 +388,12 @@ fragment float4 staticMeshFragment(
     if (alphaTestEnabled && alpha < draw.alphaThreshold) {
         discard_fragment();
     }
+    if (debugViewActive) {
+        DebugSurface surface = {
+            in.worldPosition, in.normal, in.texcoord,
+            diffuseMap.calculate_unclamped_lod(trilinear, in.texcoord), draw.layerCategory};
+        return debugViewColor(frame, surface);
+    }
     float3 normal = normalize(in.normal);
     float lambert = saturate(dot(normal, -frame.sunDirection));
     float shadow = draw.receivesShadows != 0
@@ -350,6 +463,12 @@ fragment float4 grassFragment(
     if (alpha < draw.alphaThreshold) {
         discard_fragment();
     }
+    if (debugViewActive) {
+        DebugSurface surface = {
+            in.worldPosition, in.normal, in.texcoord,
+            diffuseMap.calculate_unclamped_lod(trilinear, in.texcoord), uint(RenderLayerBitGrass)};
+        return debugViewColor(frame, surface);
+    }
     float3 normal = normalize(in.normal);
     float lambert = saturate(dot(normal, -frame.sunDirection));
     float shadow = draw.receivesShadows != 0
@@ -418,6 +537,12 @@ fragment float4 terrainFragment(
     sampler trilinear [[sampler(SamplerIndexTrilinear)]],
     sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]])
 {
+    if (debugViewActive) {
+        DebugSurface surface = {
+            in.worldPosition, in.normal, in.texcoord,
+            baseMap.calculate_unclamped_lod(trilinear, in.texcoord), uint(RenderLayerBitTerrain)};
+        return debugViewColor(frame, surface);
+    }
     // Start opaque base, then lerp each layer in over the running color in
     // ATXT layer order. Straight lerp by VTXT opacity is the plain reading of
     // the spec; the exact vanilla blend curve is UNCONFIRMED.
@@ -466,6 +591,13 @@ fragment float4 waterFragment(
     constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
     constant WaterDrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]])
 {
+    if (debugViewActive) {
+        // A water plane is flat and untextured, so the normal is the plane's
+        // own up and there is no meaningful texcoord or mip level to report.
+        DebugSurface surface = {
+            in.worldPosition, float3(0.0, 0.0, 1.0), float2(0.0), 0.0, uint(RenderLayerBitWater)};
+        return debugViewColor(frame, surface);
+    }
     float2 phase = in.worldPosition.xy * 0.006;
     float ripple =
         sin(phase.x + frame.animationTime * 1.3) * cos(phase.y - frame.animationTime * 0.9);

@@ -58,7 +58,9 @@ adapted from Apple's Xcode Metal 4 game template (structure, not copied game cod
   constant `FunctionConstantAlphaTest`
   (`MTL4SpecializedFunctionDescriptor` + `MTLFunctionConstantValues`): opaque pays
   nothing for discard; alpha-test discards below `DrawUniforms.alphaThreshold`. Further
-  pipelines: terrain splat, procedural sky, water blend (sections below).
+  pipelines: terrain splat, procedural sky, water blend (sections below), plus the five
+  render-debug twins gated on a second function constant
+  ([render debug](/rendering/render-debug.md)), which no shipping pipeline defines.
 * Shading: diffuse map * (directional lambert + base ambient + six-axis directional
   ambient + point lights), vertex color as baked tint (Skyrim bakes AO there), material
   alpha multiplied through. Exterior scenes omit `RenderLighting` -> existing

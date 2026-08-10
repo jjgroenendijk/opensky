@@ -34,26 +34,9 @@ final class FakeWorldProviders: WorldControlProviders {
         configuration: .fallback, source: "test"
     )
     var terrainLODOverrideActive = false
-    func applyTerrainLODConfiguration(_: TerrainLODConfiguration) -> Bool {
-        terrainLODOverrideActive = true
-        return true
-    }
-
-    func resetTerrainLODConfiguration() {
-        terrainLODOverrideActive = false
-    }
-
     // WeatherControlProviding
     var weatherEnabled = true
     var selectableWeatherNames: [String] = []
-    func forceWeather(named name: String?) {
-        weatherOverrideActive = name != nil
-    }
-
-    func forceWeather(_: WeatherPreset) {
-        weatherOverrideActive = true
-    }
-
     var currentWeatherName: String?
     var weatherOverrideActive = false
     var weatherTransitionFraction: Float = 0
@@ -219,6 +202,12 @@ final class FakeWorldProviders: WorldControlProviders {
 
     /// SceneStatsProviding
     var sceneStatsSnapshot = SceneStatsSnapshot.empty
+
+    /// Render debug views + layer isolation (issue #144). Conformance lives in
+    /// `FakeWorldProvidersRenderDebug.swift`; only the state is here, because an
+    /// extension cannot hold stored properties.
+    var renderDebug = RenderDebugState()
+    var renderDebugStats = SceneDrawStats()
 
     // AudioControlProviding
     var audioEnabled = false

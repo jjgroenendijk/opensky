@@ -10,8 +10,14 @@ extension Renderer {
         enabled: Bool,
         state: inout ScenePassState
     ) {
-        guard enabled, !items.isEmpty else { return }
+        // The feature switch ANDed with the view filter: `enabled` is the
+        // subsystem's own toggle, `.particles` is the dev shell's layer mask.
+        guard enabled, effectiveRenderLayers.contains(.particles), !items.isEmpty else { return }
         state.encoder.setDepthStencilState(waterDepthState)
+        // Billboards carry no wire worth drawing, so the wireframe view leaves
+        // them filled; the geometry paths after this one get their mode back.
+        state.encoder.setTriangleFillMode(.fill)
+        defer { state.encoder.setTriangleFillMode(state.fillMode) }
         var boundMode: ParticleBlendMode?
         for item in items {
             let (offset, count) = item.prepareBuffer(slot: state.slot)

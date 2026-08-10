@@ -42,6 +42,18 @@ final class Renderer: NSObject {
     let terrainPipeline: MTLRenderPipelineState
     let waterPipeline: MTLRenderPipelineState
     let particlePipelines: ParticlePipelines
+    /// Render-debug twins of the five geometry paths, bound instead of their
+    /// shipping counterparts while `renderDebug.mode` is not `.off`.
+    let debugPipelines: DebugRenderPipelines
+    /// Which debug channel the scene pass writes and which layers it draws
+    /// (issue #144, `Rendering/RendererDebugState.swift`). Never persisted, and
+    /// deliberately not carried into `renderOffscreen` — see
+    /// `renderDebugAppliesOffscreen`.
+    var renderDebug = RenderDebugState()
+    /// Whether an offscreen frame honours `renderDebug`. Off by default so
+    /// screenshots and bench runs render the shipping frame however the dev
+    /// shell is currently set; the device-gated debug-view tests turn it on.
+    var renderDebugAppliesOffscreen = false
     let depthState: MTLDepthStencilState
     let waterDepthState: MTLDepthStencilState
     let sampler: MTLSamplerState
@@ -340,7 +352,7 @@ final class Renderer: NSObject {
         (alphaTestPipeline, skinnedOpaquePipeline) = (pipelines.alphaTest, pipelines.skinnedOpaque)
         (skinnedAlphaTestPipeline, grassPipeline) = (pipelines.skinnedAlphaTest, pipelines.grass)
         (terrainPipeline, waterPipeline) = (pipelines.terrain, pipelines.water)
-        particlePipelines = pipelines.particles
+        (particlePipelines, debugPipelines) = (pipelines.particles, pipelines.debug)
         depthState = try Self.makeDepthState(device: device)
         waterDepthState = try Self.makeWaterDepthState(device: device)
         sampler = try Self.makeSampler(device: device)

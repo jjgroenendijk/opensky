@@ -357,7 +357,8 @@ nonisolated final class DistantLODBuilder {
             bounds: bounds,
             castsShadows: false,
             receivesPointLights: false,
-            receivesShadows: false
+            receivesShadows: false,
+            layer: .distantLOD
         )
     }
 
