@@ -33,7 +33,8 @@ First record of every plugin. Fields OpenSky decodes (`PluginHeader`):
 HEDR: float32 version (1.71 = SSE), int32 recordCount, uint32 nextObjectID.
 
 Skipped as unneeded: ONAM (overridden-form list), INTV, INCC, modder-added
-fields. Strings are windows-1252 zstrings. Missing HEDR ->
+fields. Strings are zstrings under the engine-wide lenient text policy
+([string decoding](/decisions/string-decoding.md)). Missing HEDR ->
 `ESMError.malformed`. Record flags of the TES4 record carry plugin-level
 bits: 0x1 ESM, 0x80 localized (lstring tables), 0x200 ESL.
 

@@ -146,15 +146,15 @@ nonisolated struct SWFEditText: Equatable {
         )
     }
 
-    /// A null-terminated UTF-8 STRING (SWF 6+) read from the current byte
-    /// position; falls back to CP1252 so a stray byte never fails the parse.
+    /// A null-terminated STRING read from the current byte position. SWF 6 and
+    /// later declare strings UTF-8, older movies carry code-page bytes, so this
+    /// takes the engine-wide `GameText` policy and never fails the parse.
     private static func readString(_ bits: inout SWFBitReader) throws -> String {
         bits.align()
         var reader = BinaryReader(bits.remainingData)
         let bytes = try reader.readZStringData()
         bits.advance(byteCount: reader.offset)
-        return String(data: bytes, encoding: .utf8)
-            ?? String(data: bytes, encoding: .windowsCP1252) ?? ""
+        return GameText.decode(bytes)
     }
 
     /// Removes `<...>` markup for the plain-text fallback. Deliberately minimal:

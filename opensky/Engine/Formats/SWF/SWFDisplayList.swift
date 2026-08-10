@@ -258,14 +258,13 @@ nonisolated enum SWFDisplayListParser {
         bits.advance(byteCount: count)
     }
 
-    /// Null-terminated UTF-8 STRING (SWF 6+) with a CP1252 fallback, matching
+    /// Null-terminated STRING under the engine-wide `GameText` policy, matching
     /// the SWFEditText string convention.
     private static func readString(_ bits: inout SWFBitReader) throws -> String {
         bits.align()
         var reader = BinaryReader(bits.remainingData)
         let bytes = try reader.readZStringData()
         bits.advance(byteCount: reader.offset)
-        return String(data: bytes, encoding: .utf8)
-            ?? String(data: bytes, encoding: .windowsCP1252) ?? ""
+        return GameText.decode(bytes)
     }
 }

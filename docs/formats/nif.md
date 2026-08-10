@@ -31,8 +31,10 @@ Doc grows with milestone 2: container (this page), scene graph + geometry
 | ExportString | uint8 length incl. trailing null, then bytes + null         |
 | SizedString  | uint32 length, then bytes, no terminator                    |
 
-Header strings decode lossily (`GameText.decodeLossy`: UTF-8 -> cp1252 ->
-ISO 8859-1). Vanilla string tables carry exporter garbage — uninitialized
+Header strings decode under the engine-wide lenient text policy
+(`GameText.decode`: UTF-8 -> cp1252 -> ISO 8859-1, see
+[string decoding](/decisions/string-decoding.md)). Vanilla string tables carry
+exporter garbage — uninitialized
 memory with bytes undefined in cp1252 (observed:
 `meshes/dungeons/dwemer/animated/astrolabe/lexiconstand/dwelexiconstandrunes01.nif`,
 string `0c 90 29 7b ...`) — and a junk name must not reject the mesh.

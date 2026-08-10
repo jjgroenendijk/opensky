@@ -122,7 +122,7 @@ nonisolated struct NIFHeader {
         for _ in 0 ..< 128 {
             let byte = try reader.readUInt8()
             if byte == 0x0A {
-                return GameText.decodeLossy(bytes)
+                return GameText.decode(bytes)
             }
             bytes.append(byte)
         }
@@ -162,6 +162,6 @@ nonisolated struct NIFHeader {
     private static func readSizedString(_ reader: inout BinaryReader) throws -> String {
         let length = try Int(reader.readUInt32())
         let bytes = try reader.read(count: length)
-        return GameText.decodeLossy(bytes)
+        return GameText.decode(bytes)
     }
 }

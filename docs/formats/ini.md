@@ -9,7 +9,8 @@ timestamp: 2026-07-21T00:00:00Z
 # Skyrim INI settings
 
 OpenSky reads Skyrim INI files as external config. It never edits them. Parser supports
-case-insensitive section/key names, comments, blank lines, UTF-8, and Windows-1252.
+case-insensitive section/key names, comments, blank lines, and any text encoding the
+engine-wide policy covers ([string decoding](/decisions/string-decoding.md)).
 Repeated values use last declaration in one file. Files layer from low to high priority:
 
 1. install `Skyrim_Default.ini`;

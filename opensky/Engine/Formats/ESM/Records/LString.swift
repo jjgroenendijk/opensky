@@ -21,11 +21,7 @@ nonisolated enum LString: Equatable {
             self = try .tableID(reader.readUInt32())
         } else {
             var reader = BinaryReader(field.data)
-            let bytes = try reader.readZStringData()
-            guard let text = GameText.decode(bytes) else {
-                throw ESMError.malformed("\(field.type) holds undecodable text")
-            }
-            self = .inline(text)
+            self = try .inline(reader.readZString())
         }
     }
 }

@@ -52,11 +52,10 @@ nonisolated struct SWFImportedAssets: Equatable {
         return SWFImportedAssets(url: url, assets: assets)
     }
 
-    /// Null-terminated STRING: UTF-8 (SWF 6+) with a CP1252 fallback, matching
-    /// the other SWF string readers.
+    /// Null-terminated STRING. SWF 6 and later declare strings UTF-8, older
+    /// movies carry code-page bytes, so this takes the engine-wide `GameText`
+    /// policy like every other SWF string read.
     private static func readString(_ reader: inout BinaryReader) throws -> String {
-        let bytes = try reader.readZStringData()
-        return String(data: bytes, encoding: .utf8)
-            ?? String(data: bytes, encoding: .windowsCP1252) ?? ""
+        try reader.readZString()
     }
 }

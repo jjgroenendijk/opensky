@@ -24,6 +24,25 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   Interaction > Dialogue Camera` is the verification surface, with a force toggle aimed at a
   selected actor so the framing is checkable without a conversation, and a pivot gizmo in
   the M16 overlay registry. See [dialogue runtime](/engine/dialogue.md), "Dialogue camera".
+* **One engine-wide string decode policy (issue #72)**: every parser that turns bytes from
+  the install into text now shares [one lenient policy](/decisions/string-decoding.md) —
+  valid UTF-8 decodes as UTF-8, otherwise windows-1252, otherwise ISO 8859-1 — and that
+  chain is total, so decoding a string can no longer fail. Before this, BSA names and VMAD
+  script data assumed windows-1252, PEX assumed UTF-8, NIF and the localized string tables
+  already had their own fallback chain, and six SWF parsers each carried a private copy of
+  the UTF-8-then-CP1252 dance; each site also picked its own failure behavior, so a
+  mis-encoded name could take down an archive in one format and be tolerated in another.
+  The reasoning for leniency is that a name is not the asset: rejecting a mesh because an
+  author's exporter wrote a stray byte into a string table costs far more than mojibake in
+  one label, and lookups fold case and separators on both sides, so a wrong-encoding name
+  still matches itself. `BinaryReader` string reads take the policy by default and accept
+  `TextDecoding.strict(_:)` for the few structural fields whose encoding the format itself
+  pins down (Havok ASCII type and version names). Bounds and framing stay strict —
+  leniency covers the bytes-to-text step only. Consequently `PexError.invalidString` and
+  `ScriptDataError.invalidString` are gone, since nothing can raise them any more. The
+  language a localized lookup resolves against is still hardcoded to english; that half
+  is now issue #441.
+
 * **Dialogue menu, Talk activation and subtitles (issue #205, item 17.3)**: the player can
   now start a conversation. New [dialogue menu](/engine/dialogue-menu.md) covers the
   player-facing half of M17. A living, non-hostile actor under the crosshair becomes an

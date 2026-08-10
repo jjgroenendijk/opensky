@@ -105,7 +105,7 @@ nonisolated struct SWFFontLibrary {
         assets.reserveCapacity(min(count, 4096))
         for _ in 0 ..< count {
             let characterId = try reader.readUInt16()
-            let name = try reader.readZString(encoding: .utf8)
+            let name = try reader.readZString()
             assets.append(ExportedAsset(characterId: characterId, name: name))
         }
         return assets

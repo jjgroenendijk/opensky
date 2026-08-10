@@ -218,12 +218,10 @@ nonisolated extension SWFActionOperandDecoder {
         )
     }
 
-    /// Null-terminated STRING, UTF-8 with a CP1252 fallback — the same
-    /// convention `SWFEditText` and `SWFDisplayListParser` use, since SWF 6 and
-    /// later declare strings UTF-8 while older movies are code-page bytes.
+    /// Null-terminated STRING. SWF 6 and later declare strings UTF-8 while
+    /// older movies carry code-page bytes, so this takes the engine-wide
+    /// `GameText` policy like every other SWF string read.
     private static func readString(_ reader: inout BinaryReader) throws -> String {
-        let bytes = try reader.readZStringData()
-        return String(data: bytes, encoding: .utf8)
-            ?? String(data: bytes, encoding: .windowsCP1252) ?? ""
+        try reader.readZString()
     }
 }
