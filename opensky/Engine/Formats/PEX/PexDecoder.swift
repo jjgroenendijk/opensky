@@ -158,14 +158,12 @@ nonisolated struct PexReader {
         try Float(bitPattern: readUInt32())
     }
 
+    /// Length-prefixed string table entry. Compiled scripts are usually ASCII,
+    /// but a mod's compiler is free to emit anything, so this decodes under the
+    /// engine-wide `GameText` policy rather than failing the file.
     mutating func readString() throws -> String {
         let length = try Int(readUInt16())
-        let stringOffset = offset
-        let bytes = try read(count: length)
-        guard let value = String(data: bytes, encoding: .utf8) else {
-            throw PexError.invalidString(offset: stringOffset)
-        }
-        return value
+        return try GameText.decode(read(count: length))
     }
 
     mutating func subreader(count: Int) throws -> PexReader {

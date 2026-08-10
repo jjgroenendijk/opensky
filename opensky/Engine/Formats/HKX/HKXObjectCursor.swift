@@ -185,7 +185,7 @@ nonisolated struct HKXObjectCursor {
             return nil
         }
         var reader = BinaryReader(stringPayload, offset: target.dataOffset)
-        guard let value = try? reader.readZString(encoding: .ascii) else {
+        guard let value = try? reader.readZString(.strict(.ascii)) else {
             recordMiss(field, .undecodableString)
             return nil
         }

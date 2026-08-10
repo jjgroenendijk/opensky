@@ -47,8 +47,11 @@ OpenSky accepts major version 3 and minor versions 0 through 2, and rejects
 newer revisions before their Fallout 4 additions can be mistaken for Skyrim
 fields.
 
-Every integer and float in a PEX file is big-endian. Strings are UTF-8 byte
-runs prefixed by a big-endian `uint16` byte count.
+Every integer and float in a PEX file is big-endian. Strings are byte runs
+prefixed by a big-endian `uint16` byte count; the page calls them UTF-8, but a
+mod's compiler is free to emit anything, so they decode under the engine-wide
+lenient text policy ([string decoding](/decisions/string-decoding.md)) and no
+string can fail the file.
 
 ## Container layout
 
@@ -61,9 +64,9 @@ runs prefixed by a big-endian `uint16` byte count.
 | `uint8` | minor version | 0 through 2 |
 | `uint16` | game ID | must be 1 for Skyrim |
 | `uint64` | compilation time | retained verbatim |
-| `wstring` | source file name | decoded as UTF-8 |
-| `wstring` | user name | decoded as UTF-8 |
-| `wstring` | machine name | decoded as UTF-8 |
+| `wstring` | source file name | lenient text decode |
+| `wstring` | user name | lenient text decode |
+| `wstring` | machine name | lenient text decode |
 
 The metadata strings are part of the public in-memory header because tools may
 need them, but OpenSky does not use them to locate source files.
@@ -187,7 +190,7 @@ virtual machine can fault if execution reaches it.
 
 * truncated fields and declared object spans;
 * wrong magic, non-Skyrim game ID or unsupported format versions;
-* invalid UTF-8 strings or string-table indices;
+* string-table indices outside the table;
 * unknown value and debug-function kinds;
 * invalid object sizes, object under-reads and file trailing bytes; and
 * a call argument count that is not a non-negative integer.

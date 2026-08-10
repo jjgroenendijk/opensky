@@ -64,9 +64,10 @@ Each script then contains:
 Script flag bit 0 means inherited and bit 1 means removed. A removed attachment
 remains represented for diagnostics but is never instantiated.
 
-The length-prefixed strings use the VMAD text encoding. OpenSky decodes them as
-Windows-1252, matching the plugin text policy; an invalid sequence is a typed
-string error. The observed vanilla script and property names are ASCII.
+The length-prefixed strings carry no encoding marker, so they decode under the
+engine-wide lenient text policy ([string decoding](/decisions/string-decoding.md))
+and cannot fail; only the length prefix can run past the end of the field. The
+observed vanilla script and property names are ASCII.
 
 ## Properties
 

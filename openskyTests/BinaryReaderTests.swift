@@ -60,4 +60,25 @@ struct BinaryReaderTests {
         var reader = BinaryReader(Data([0xE9, 0x00]))
         #expect(try reader.readZString() == "é")
     }
+
+    @Test func gameTextDecodingNeverRejectsBytes() throws {
+        // 0x90 has no windows-1252 mapping; the ISO 8859-1 tier catches it so a
+        // mis-encoded name cannot fail the record that carries it.
+        var reader = BinaryReader(Data([0x90, 0x00]) + Data([0x01, 0x90]) + Data([
+            0x02,
+            0x90,
+            0x00
+        ]))
+        #expect(try reader.readZString() == "\u{90}")
+        #expect(try reader.readBString() == "\u{90}")
+        #expect(try reader.readBZString() == "\u{90}")
+        #expect(reader.bytesRemaining == 0)
+    }
+
+    @Test func strictDecodingThrowsOnBytesOutsideTheEncoding() {
+        var reader = BinaryReader(Data([0xE9, 0x00]))
+        #expect(throws: BinaryReaderError.invalidString(offset: 0)) {
+            try reader.readZString(.strict(.ascii))
+        }
+    }
 }

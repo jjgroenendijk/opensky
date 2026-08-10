@@ -99,8 +99,7 @@ nonisolated final class SWFMovieLoader {
                 config: SWFFontConfig.parse(""), library: SWFFontLibrary(), missingFontlibs: []
             )
         }
-        let text = String(data: data, encoding: .utf8)
-            ?? String(data: data, encoding: .windowsCP1252) ?? ""
+        let text = GameText.decode(data)
         let config = SWFFontConfig.parse(text)
         var library = SWFFontLibrary()
         var missing: [String] = []

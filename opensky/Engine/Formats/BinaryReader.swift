@@ -9,7 +9,8 @@ nonisolated enum BinaryReaderError: Error, Equatable {
     case outOfBounds(offset: Int, count: Int, available: Int)
     /// Null terminator not found scanning a zero-terminated string.
     case unterminatedString(offset: Int)
-    /// Bytes are not decodable text in the expected encoding.
+    /// Bytes are not decodable text in the expected encoding. Only `.strict`
+    /// decoding raises this; `.gameText` always yields a string.
     case invalidString(offset: Int)
 }
 
@@ -98,34 +99,36 @@ nonisolated struct BinaryReader {
     }
 
     /// Zero-terminated string ("zstring"). Cursor ends past the terminator.
-    mutating func readZString(encoding: String.Encoding = .windowsCP1252) throws -> String {
+    /// Decodes under the engine-wide game-text policy unless told otherwise
+    /// (`GameText`, docs/decisions/string-decoding.md).
+    mutating func readZString(_ decoding: TextDecoding = .gameText) throws -> String {
         let start = offset
         let bytes = try readZStringData()
-        guard let string = String(data: bytes, encoding: encoding) else {
+        guard let string = decoding.decode(bytes) else {
             throw BinaryReaderError.invalidString(offset: start)
         }
         return string
     }
 
     /// Length-prefixed string including a trailing null ("bzstring", BSA folder names).
-    mutating func readBZString(encoding: String.Encoding = .windowsCP1252) throws -> String {
+    mutating func readBZString(_ decoding: TextDecoding = .gameText) throws -> String {
         let start = offset
         let length = try Int(readUInt8())
         guard length > 0 else { return "" }
         let bytes = try read(count: length - 1)
         skip(1) // terminator counted in the length prefix
-        guard let string = String(data: bytes, encoding: encoding) else {
+        guard let string = decoding.decode(bytes) else {
             throw BinaryReaderError.invalidString(offset: start)
         }
         return string
     }
 
     /// Length-prefixed string without terminator ("bstring", embedded file names).
-    mutating func readBString(encoding: String.Encoding = .windowsCP1252) throws -> String {
+    mutating func readBString(_ decoding: TextDecoding = .gameText) throws -> String {
         let start = offset
         let length = try Int(readUInt8())
         let bytes = try read(count: length)
-        guard let string = String(data: bytes, encoding: encoding) else {
+        guard let string = decoding.decode(bytes) else {
             throw BinaryReaderError.invalidString(offset: start)
         }
         return string

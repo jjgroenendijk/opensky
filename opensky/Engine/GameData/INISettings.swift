@@ -8,10 +8,7 @@ nonisolated struct INIFile: Equatable {
     private var values: [String: [String: String]] = [:]
 
     init(data: Data) {
-        guard
-            var text = String(data: data, encoding: .utf8)
-            ?? String(data: data, encoding: .windowsCP1252)
-        else { return }
+        var text = GameText.decode(data)
         if text.first == "\u{FEFF}" {
             text.removeFirst()
         }

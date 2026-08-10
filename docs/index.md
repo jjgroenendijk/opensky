@@ -333,6 +333,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   clean-room sourcing rule.
 * [App logo + icon pipeline](/decisions/app-logo.md) - original "North Peak" SVG mark,
   `make icon` renders AppIcon set via rsvg-convert; legal rationale.
+* [Game-data string decoding](/decisions/string-decoding.md) - one lenient policy for
+  every string read out of the install: UTF-8, then windows-1252, then ISO 8859-1,
+  never a failure; the narrow strict exception for structural fields.
 * [ffmpeg for audio decode](/decisions/ffmpeg-audio.md) - vendored decode-only LGPL build
   in a gitignored prefix, `import CFFmpeg` module map, dylibs embedded in the app bundle;
   why the Homebrew build is unusable and what LGPL requires.

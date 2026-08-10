@@ -85,14 +85,11 @@ nonisolated enum SWFFontParser {
         )
     }
 
-    /// The font name is a fixed-length byte run; ANSI fonts use CP1252, others
-    /// are treated as UTF-8. Falls back to CP1252 so a stray byte never fails.
+    /// The font name is a fixed-length byte run whose encoding the tag does not
+    /// state (ANSI fonts are CP1252, others UTF-8), so it takes the engine-wide
+    /// `GameText` policy and a stray byte never fails the parse.
     private static func decodeFontName(_ bytes: Data) -> String {
-        let trimmed = bytes.prefix { $0 != 0 }
-        if let utf8 = String(data: trimmed, encoding: .utf8) {
-            return utf8
-        }
-        return String(data: trimmed, encoding: .windowsCP1252) ?? ""
+        GameText.decode(Data(bytes.prefix { $0 != 0 }))
     }
 
     private struct OffsetTable {

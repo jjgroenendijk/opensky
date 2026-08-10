@@ -99,7 +99,7 @@ nonisolated struct StringTable {
     }
 
     /// Looks up one string by ID. Unknown ID -> nil; entry that cannot be
-    /// framed or decoded -> throws.
+    /// framed -> throws. Decoding itself never fails (`GameText`).
     func string(id: UInt32) throws -> String? {
         guard let offset = offsets[id] else { return nil }
         var reader = BinaryReader(dataBlock, offset: Int(offset))
@@ -123,14 +123,6 @@ nonisolated struct StringTable {
             }
             bytes = zstring
         }
-        return try Self.decode(bytes, id: id)
-    }
-
-    /// Engine-wide lenient policy (GameText): UTF-8 when valid, else cp1252.
-    private static func decode(_ bytes: Data, id: UInt32) throws -> String {
-        guard let text = GameText.decode(bytes) else {
-            throw StringTableError.malformed("string \(id) is not decodable text")
-        }
-        return text
+        return GameText.decode(bytes)
     }
 }

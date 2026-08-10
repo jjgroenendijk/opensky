@@ -13,7 +13,6 @@ nonisolated enum PexError: Error, Equatable {
     case invalidMagic(UInt32)
     case unsupportedVersion(major: UInt8, minor: UInt8)
     case unsupportedGameID(UInt16)
-    case invalidString(offset: Int)
     case stringIndexOutOfRange(index: UInt16, count: Int)
     case invalidValueType(UInt8)
     case invalidDebugFunctionType(UInt8)
