@@ -40,6 +40,11 @@ outgrows it.
 typed error, exit 1. Install is read-only external input; `vfs cat`/`screenshot` write
 only where `--out` points (AGENTS.md Legal & IP).
 
+The plugin load order is resolved the same way, from `OPENSKY_PLUGINS_TXT` ->
+`OpenSkyPluginsText` user default -> the searched layouts
+([plugins.txt](/formats/plugins-txt.md)). There is no `--plugins-txt` flag: the env var
+already covers a one-off run, and every command that reads plugins picks it up.
+
 ## Subcommands
 
 | command | does |
@@ -47,6 +52,7 @@ only where `--out` points (AGENTS.md Legal & IP).
 | `vfs ls [pattern]` | list archive entries as `path<TAB>archive`; fnmatch wildcards (`FNM_NOESCAPE` — `\` stays a separator) or substring match; count on stderr |
 | `vfs cat <key> --out <file>` | extract one resource (loose files win, as in the engine) |
 | `record <formid-or-editorid>` | dump one Skyrim.esm record: header, decoded view (WRLD/CELL/STAT/REFR, with every REFR pose rendered as an `(x, y, z)` tuple), field list capped at 64 with a per-type tail summary |
+| `plugins` | print the resolved [plugin load order](/formats/plugins-txt.md): the `plugins.txt` the search found and where, then one row per active plugin — position, name, and whether it came from the pinned masters, `Skyrim.ccc`, or `plugins.txt` — plus any plugin listed active that `Data/` does not hold. `OPENSKY_PLUGINS_TXT` overrides the search, which is how a load order is checked on a machine where the game has never been launched |
 | `gmst combat` | resolve melee combat's GMSTs across the active plugins; print `fCombatDistance` and the six block-formula settings with the winning plugin or the documented fallback ([melee combat](/engine/melee-combat.md)) |
 | `gmst archery` | resolve archery's three GMSTs across the active plugins; print the two arrow tilt-up angles and `fVisibleNavmeshMoveDist` with the winning plugin or the UESP-documented fallback ([archery and projectiles](/engine/archery.md)) |
 | `archery [--census] [--ammo <substring>]` | walk the ammunition chain a shot takes: the archery GMSTs, the PROJ record count, then one row per AMMO that names a flyable PROJ with its damage, launch speed, `gravity`, `range`, and the drop each reading of `gravity` predicts at 1,000 units. `--census` adds the per-type `gravity`/`speed` distribution that settles which reading is right; `--ammo` filters by editor-ID substring ([archery and projectiles](/engine/archery.md)) |

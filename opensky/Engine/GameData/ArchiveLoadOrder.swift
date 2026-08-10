@@ -56,7 +56,11 @@ nonisolated enum ArchiveLoadOrder {
     /// against the on-disk `Data/` listing; listed-but-absent archives are
     /// logged and skipped (vanilla ini lists "Skyrim - Patch.bsa", which
     /// current installs no longer ship).
-    static func resolve(installURL: URL, dataURL: URL) -> [URL] {
+    /// - Parameter pluginOrder: the resolved plugin load order
+    ///   (`PluginLoadOrder`), lowest priority first. Plugin-named archives
+    ///   follow it; anything in `Data/` the order does not name keeps the
+    ///   alphabetical tail described in `pluginArchiveCandidates`.
+    static func resolve(installURL: URL, dataURL: URL, pluginOrder: [String] = []) -> [URL] {
         let contents = (try? FileManager.default.contentsOfDirectory(
             atPath: dataURL.path(percentEncoded: false)
         )) ?? []
@@ -77,7 +81,11 @@ nonisolated enum ArchiveLoadOrder {
             seen.insert(key)
             ordered.append(onDisk)
         }
-        for candidate in pluginArchiveCandidates(dataContents: contents) {
+        let candidates = pluginArchiveCandidates(
+            dataContents: contents,
+            pluginOrder: pluginOrder.isEmpty ? officialPlugins : pluginOrder
+        )
+        for candidate in candidates {
             let key = candidate.lowercased()
             guard !seen.contains(key), let onDisk = archivesOnDisk[key] else { continue }
             seen.insert(key)
@@ -113,10 +121,19 @@ nonisolated enum ArchiveLoadOrder {
     }
 
     /// `<plugin>.bsa` + `<plugin> - Textures.bsa` for each plugin in `Data/`
-    /// (SSE auto-load convention, UESP archive notes). Official plugins first
-    /// in canonical order, remaining plugins alphabetically — provisional
-    /// until plugins.txt load order lands (docs/todo.md open question).
-    private static func pluginArchiveCandidates(dataContents: [String]) -> [String] {
+    /// (SSE auto-load convention, UESP archive notes), in `pluginOrder` first
+    /// and then whatever `Data/` holds that the order did not name,
+    /// alphabetically.
+    ///
+    /// The game loads an archive only for an active plugin. OpenSky keeps the
+    /// unnamed tail instead of dropping it, because a machine with no
+    /// plugins.txt to find would otherwise lose every mod archive it can
+    /// currently read; the tail sits at the lowest priority, below everything
+    /// the load order does name (docs/formats/plugins-txt.md).
+    private static func pluginArchiveCandidates(
+        dataContents: [String],
+        pluginOrder: [String]
+    ) -> [String] {
         let pluginExtensions: Set = ["esm", "esp", "esl"]
         let plugins = dataContents.filter {
             pluginExtensions.contains(URL(filePath: $0).pathExtension.lowercased())
@@ -127,15 +144,16 @@ nonisolated enum ArchiveLoadOrder {
         )
 
         var ordered: [String] = []
-        for official in officialPlugins {
-            if let name = byLowercase[official.lowercased()] {
-                ordered.append(name)
-            }
+        var named: Set<String> = []
+        for listed in pluginOrder {
+            let key = listed.lowercased()
+            guard !named.contains(key), let name = byLowercase[key] else { continue }
+            named.insert(key)
+            ordered.append(name)
         }
-        let officials = Set(officialPlugins.map { $0.lowercased() })
         ordered.append(
             contentsOf: plugins
-                .filter { !officials.contains($0.lowercased()) }
+                .filter { !named.contains($0.lowercased()) }
                 .sorted { $0.lowercased() < $1.lowercased() }
         )
 

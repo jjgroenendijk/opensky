@@ -14,7 +14,11 @@ version 105; LE used 104 (16-byte folder records, zlib) — not supported.
 Reference: UESP "Skyrim Mod:Archive File Format"
 (<https://en.uesp.net/wiki/Skyrim_Mod:Archive_File_Format>).
 Impl: `opensky/Engine/Formats/BSA/BSAArchive.swift`. All integers little-endian.
-Strings windows-1252 (vanilla is ASCII; mods carry high bytes).
+Folder and file names decode under the engine-wide lenient text policy
+([string decoding](/decisions/string-decoding.md)): vanilla is ASCII, mods carry
+high bytes in either UTF-8 or windows-1252, and a wrong-encoding name yields
+mojibake rather than rejecting the archive. Lookups fold case and separators on
+both sides, so such a name still matches itself.
 
 ## Header — 36 bytes at offset 0
 

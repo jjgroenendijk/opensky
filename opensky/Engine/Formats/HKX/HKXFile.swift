@@ -123,7 +123,7 @@ nonisolated struct HKXFile {
             if separator != 0x09 {
                 break
             }
-            let name = try reader.readZString(encoding: .ascii)
+            let name = try reader.readZString(.strict(.ascii))
             entries.append(HKXClassName(
                 signature: signature,
                 name: name,

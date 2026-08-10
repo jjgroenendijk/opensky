@@ -20,7 +20,6 @@ nonisolated enum ScriptDataError: Error, Equatable {
     case binary(BinaryReaderError)
     case unsupportedVersion(Int16)
     case unsupportedObjectFormat(Int16)
-    case invalidString(offset: Int, length: Int)
     case impossibleCount(context: String, count: UInt32, remaining: Int)
     case arrayRequiresVersionFive(type: UInt8, version: Int16)
     case unknownPropertyType(UInt8)

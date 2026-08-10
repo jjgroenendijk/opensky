@@ -33,6 +33,29 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   `RendererSetup.swift` gave up its shadow-pipeline factories to
   `RendererShadowPipelineSetup.swift` to stay inside the file cap. See
   [Render debug views and layer isolation](/rendering/render-debug.md).
+* **Plugin load order from plugins.txt (issue #73)**: the engine reads the user's actual
+  load order instead of assuming the five vanilla masters. `PluginsTextLocator` finds the
+  file the way `GameDataLocator` finds the install — `OPENSKY_PLUGINS_TXT`, then the
+  `OpenSkyPluginsText` key in the shared defaults domain, then the layouts a macOS install
+  can take: beside the game, under `~/Library/Application Support/Skyrim Special Edition`,
+  and inside each Windows compatibility prefix (the Steam Proton prefix beside the install,
+  `~/.wine`, CrossOver and Whisky bottles), because there is no native macOS Skyrim SE and
+  the game only ever writes this file into its Windows per-user folder. A configured path
+  that cannot be read is reported rather than skipped; finding nothing is not a failure, it
+  is the vanilla masters, which is what a stock install loads anyway — and is what this
+  machine resolves to, having never launched the game (`docs/tools/environment.md`).
+  `PluginLoadOrder` now returns a `Resolution` — the ordered entries, where the list came
+  from, and which named plugins `Data/` does not hold — with the official masters pinned
+  first, `Skyrim.ccc` next, and `*`-starred `plugins.txt` lines in file order; an unstarred
+  line is a plugin the user switched off and does not load. The consequence that reaches
+  rendering is archive priority: `ArchiveLoadOrder` walks the resolved plugin order rather
+  than officials-then-alphabetically, so a mod's `.bsa` overrides the archives of every
+  plugin before it. One deliberate deviation from the game, argued in
+  `docs/formats/plugins-txt.md`: an archive whose plugin the order does not name is still
+  opened, at the bottom, because dropping it would cost a machine with no findable
+  plugins.txt every mod archive it can read today. Library > Load Order lists the resolved
+  order and Settings gained a plugins.txt group beside the data root, so neither is
+  environment-variable-only.
 
 * **Dialogue camera and speaker focus (issue #427, item 17.4)**: a conversation now looks
   like one. While the dialogue menu is open the view frames the speaker's `NPC Head [Head]`
@@ -54,6 +77,25 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   Interaction > Dialogue Camera` is the verification surface, with a force toggle aimed at a
   selected actor so the framing is checkable without a conversation, and a pivot gizmo in
   the M16 overlay registry. See [dialogue runtime](/engine/dialogue.md), "Dialogue camera".
+* **One engine-wide string decode policy (issue #72)**: every parser that turns bytes from
+  the install into text now shares [one lenient policy](/decisions/string-decoding.md) —
+  valid UTF-8 decodes as UTF-8, otherwise windows-1252, otherwise ISO 8859-1 — and that
+  chain is total, so decoding a string can no longer fail. Before this, BSA names and VMAD
+  script data assumed windows-1252, PEX assumed UTF-8, NIF and the localized string tables
+  already had their own fallback chain, and six SWF parsers each carried a private copy of
+  the UTF-8-then-CP1252 dance; each site also picked its own failure behavior, so a
+  mis-encoded name could take down an archive in one format and be tolerated in another.
+  The reasoning for leniency is that a name is not the asset: rejecting a mesh because an
+  author's exporter wrote a stray byte into a string table costs far more than mojibake in
+  one label, and lookups fold case and separators on both sides, so a wrong-encoding name
+  still matches itself. `BinaryReader` string reads take the policy by default and accept
+  `TextDecoding.strict(_:)` for the few structural fields whose encoding the format itself
+  pins down (Havok ASCII type and version names). Bounds and framing stay strict —
+  leniency covers the bytes-to-text step only. Consequently `PexError.invalidString` and
+  `ScriptDataError.invalidString` are gone, since nothing can raise them any more. The
+  language a localized lookup resolves against is still hardcoded to english; that half
+  is now issue #441.
+
 * **Dialogue menu, Talk activation and subtitles (issue #205, item 17.3)**: the player can
   now start a conversation. New [dialogue menu](/engine/dialogue-menu.md) covers the
   player-facing half of M17. A living, non-hostile actor under the crosshair becomes an

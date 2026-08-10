@@ -47,10 +47,13 @@ First opened = lowest priority. Steps:
    `My Games` folder — under Proton prefixes on this setup; not probed yet.)
 2. Plugin-named archives: for every `.esm`/`.esp`/`.esl` in `Data/`, open
    `<plugin>.bsa` then `<plugin> - Textures.bsa` when present (SSE auto-load
-   convention, UESP archive notes). Plugin order: official masters first
-   (Skyrim, Update, Dawnguard, HearthFires, Dragonborn), remaining plugins
-   alphabetically. Provisional until plugins.txt support lands
-   (open question, GitHub issue #73).
+   convention, UESP archive notes). Plugin order is the resolved
+   [plugin load order](/formats/plugins-txt.md) — pinned official masters,
+   `Skyrim.ccc`, then the active `plugins.txt` entries in file order — so a
+   mod's archive overrides the archives of every plugin loaded before it. A
+   plugin the load order does not name keeps its archive at the bottom of the
+   list rather than losing it; that deviation from the game, and why, is in
+   the plugins.txt page.
 
 Names resolve case-insensitively against the on-disk `Data/` listing;
 duplicates collapse to the first mention. Listed-but-absent archives log +

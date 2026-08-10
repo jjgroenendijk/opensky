@@ -28,9 +28,7 @@ nonisolated struct SWFFrameLabel: Equatable {
             throw SWFDisplayListError.unsupportedTag(tag.code)
         }
         var reader = BinaryReader(tag.body)
-        let bytes = try reader.readZStringData()
-        let name = String(data: bytes, encoding: .utf8)
-            ?? String(data: bytes, encoding: .windowsCP1252) ?? ""
+        let name = try reader.readZString()
         let anchor = reader.bytesRemaining > 0 ? try reader.readUInt8() : 0
         return SWFFrameLabel(name: name, isNamedAnchor: anchor == 1)
     }

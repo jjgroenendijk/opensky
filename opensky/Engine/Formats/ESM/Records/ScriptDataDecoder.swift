@@ -203,14 +203,11 @@ nonisolated struct ScriptDataDecoder {
         return object
     }
 
+    /// Length-prefixed VMAD string; decodes under the engine-wide `GameText`
+    /// policy, so only the length prefix can fail the read.
     mutating func readString() throws -> String {
-        let offset = reader.offset
         let length = try Int(reader.readUInt16())
-        let data = try reader.read(count: length)
-        guard let value = String(data: data, encoding: .windowsCP1252) else {
-            throw ScriptDataError.invalidString(offset: offset, length: length)
-        }
-        return value
+        return try GameText.decode(reader.read(count: length))
     }
 
     func checkedCount(

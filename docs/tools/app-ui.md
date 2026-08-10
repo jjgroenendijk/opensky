@@ -45,7 +45,8 @@ be able to select/force/toggle/inspect the behavior without a CLI command.
   group rows) + layered content (`ShellContentViewController`). The old
   segmented World/Asset Browser mode switch is gone.
 - Sidebar map: World: World, Environment, HUD & Interaction, System Menu, Audio,
-  Runtime State, Scripts · Developer: UI Lab · Library: Asset Browser. Launch selects World
+  Runtime State, Scripts · Developer: UI Lab · Library: Asset Browser, Load Order
+  ([plugins.txt](/formats/plugins-txt.md)). Launch selects World
   (`DestinationRegistry.defaultDestinationID`). Sections come from
   `SidebarSection` (world, developer, library — `allCases` order); empty
   sections drop. Grouping is unit-tested via `AppSidebarModel`

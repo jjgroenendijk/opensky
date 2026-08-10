@@ -37,7 +37,7 @@ nonisolated struct NIFShaderTextureSet {
         for _ in 0 ..< count {
             let length = try Int(reader.readUInt32())
             let bytes = try reader.read(count: length)
-            paths.append(GameText.decodeLossy(bytes))
+            paths.append(GameText.decode(bytes))
         }
         self.paths = paths
     }

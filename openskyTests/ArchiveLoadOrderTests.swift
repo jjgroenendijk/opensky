@@ -83,6 +83,46 @@ struct ArchiveLoadOrderTests {
         #expect(resolvedNames() == ["Skyrim.bsa", "Dragonborn.bsa", "AAA.bsa"])
     }
 
+    /// Archive priority follows plugin priority: a mod later in the load order
+    /// overrides the archives of everything loaded before it (issue #73).
+    @Test func pluginArchivesFollowTheResolvedLoadOrder() throws {
+        try writeIni("Skyrim_Default.ini", list1: "", list2: "")
+        try touch([
+            "Skyrim.esm", "Skyrim.bsa",
+            "AAA.esp", "AAA.bsa",
+            "ZZZ.esp", "ZZZ.bsa"
+        ])
+
+        let names = ArchiveLoadOrder.resolve(
+            installURL: installURL,
+            dataURL: dataURL,
+            pluginOrder: ["Skyrim.esm", "ZZZ.esp", "AAA.esp"]
+        ).map(\.lastPathComponent)
+
+        #expect(names == ["Skyrim.bsa", "ZZZ.bsa", "AAA.bsa"])
+    }
+
+    /// A plugin the load order does not name keeps its archive, at the bottom:
+    /// dropping it would cost a machine with no plugins.txt every mod archive
+    /// it can read today.
+    @Test func archivesOfUnlistedPluginsKeepTheAlphabeticalTail() throws {
+        try writeIni("Skyrim_Default.ini", list1: "", list2: "")
+        try touch([
+            "Skyrim.esm", "Skyrim.bsa",
+            "Listed.esp", "Listed.bsa",
+            "Unlisted.esp", "Unlisted.bsa",
+            "Another.esp", "Another.bsa"
+        ])
+
+        let names = ArchiveLoadOrder.resolve(
+            installURL: installURL,
+            dataURL: dataURL,
+            pluginOrder: ["Listed.esp", "Skyrim.esm"]
+        ).map(\.lastPathComponent)
+
+        #expect(names == ["Listed.bsa", "Skyrim.bsa", "Another.bsa", "Unlisted.bsa"])
+    }
+
     @Test func duplicatesAndCaseDifferencesResolveOnce() throws {
         try writeIni("Skyrim_Default.ini", list1: "MYMOD.BSA", list2: "MyMod.bsa")
         try touch(["MyMod.esp", "MyMod.bsa"])

@@ -16,6 +16,9 @@ extension OpenSkyCLI {
                                   substring); prints "path<TAB>archive"
       vfs cat <key> --out <file>  Extract one resource to a file
       record <formid-or-editorid> Dump one Skyrim.esm record (decoded + fields)
+      plugins                     Print the resolved plugin load order and the
+                                  plugins.txt it came from; OPENSKY_PLUGINS_TXT
+                                  overrides the search
       gmst movement              Print resolved gait/step/jump values + sources
       gmst combat                Print resolved melee reach and block settings
                                   + sources

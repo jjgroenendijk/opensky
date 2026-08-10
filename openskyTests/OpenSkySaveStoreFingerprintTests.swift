@@ -94,15 +94,15 @@ struct OpenSkySaveStoreFingerprintTests {
     func fingerprintForARootResolvesTheOfficialMasterOnDisk() throws {
         try withTemporaryInstall { install, data in
             try writePlugin("Skyrim.esm", in: data)
-            // An empty plugins.txt keeps the test hermetic: without it the
-            // resolver would read the one in the user's home directory.
+            // An empty plugins.txt names the active list explicitly, so the
+            // fingerprint is the pinned masters and nothing the machine has.
             let pluginsText = install.appending(path: "plugins.txt", directoryHint: .notDirectory)
             try Data().write(to: pluginsText)
             let root = GameDataRoot(installURL: install, dataURL: data, source: .environment)
 
             let fingerprint = try OpenSkySaveStore.fingerprint(
                 forRoot: root,
-                pluginsTextURL: pluginsText
+                location: .located(url: pluginsText, source: .installFolder)
             )
 
             #expect(fingerprint.map(\.name) == ["Skyrim.esm"])

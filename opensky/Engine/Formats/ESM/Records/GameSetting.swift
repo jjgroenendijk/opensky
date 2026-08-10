@@ -115,11 +115,10 @@ nonisolated struct GameSetting: Equatable {
         var reader = BinaryReader(field.data)
         guard
             let bytes = try? reader.readZStringData(),
-            reader.bytesRemaining == 0,
-            let string = GameText.decode(bytes)
+            reader.bytesRemaining == 0
         else {
             throw GameSettingError.invalidString(editorID: editorID)
         }
-        return .inline(string)
+        return .inline(GameText.decode(bytes))
     }
 }

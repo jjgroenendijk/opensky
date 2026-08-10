@@ -146,6 +146,6 @@ nonisolated struct NIFEffectShaderProperty: Equatable {
         }
         guard length > 0 else { return nil }
         let bytes = try reader.read(count: length)
-        return GameText.decodeLossy(bytes)
+        return GameText.decode(bytes)
     }
 }

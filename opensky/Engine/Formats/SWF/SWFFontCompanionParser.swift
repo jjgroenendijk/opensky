@@ -49,12 +49,13 @@ nonisolated enum SWFFontCompanionParser {
     }
 
     /// DefineFontName (88): FontID UI16, FontName STRING, FontCopyright STRING.
-    /// Both strings are null-terminated UTF-8 (SWF 6+).
+    /// Both strings are null-terminated; SWF 6 and later declare them UTF-8, so
+    /// they take the engine-wide `GameText` policy like every other SWF string.
     static func parseFontName(tag: SWFTag) throws -> SWFFontName {
         var reader = BinaryReader(tag.body)
         let fontID = try reader.readUInt16()
-        let name = try reader.readZString(encoding: .utf8)
-        let copyright = try reader.readZString(encoding: .utf8)
+        let name = try reader.readZString()
+        let copyright = try reader.readZString()
         return SWFFontName(fontID: fontID, name: name, copyright: copyright)
     }
 }

@@ -379,6 +379,18 @@ enum DestinationRegistry {
                 controller.startupErrorMessage = context.startupErrorMessage
                 return controller
             }
+        ),
+        DestinationDescriptor(
+            id: "loadOrder",
+            title: "Load Order",
+            section: .library,
+            symbolName: "list.number",
+            content: .fullContent { context in
+                let controller = LoadOrderViewController()
+                controller.gameDataRoot = context.gameDataRoot
+                controller.startupErrorMessage = context.startupErrorMessage
+                return controller
+            }
         )
     ]
 

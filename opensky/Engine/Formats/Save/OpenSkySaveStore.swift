@@ -185,15 +185,15 @@ nonisolated extension OpenSkySaveStore {
     /// order.
     static func fingerprint(
         forRoot root: GameDataRoot,
-        pluginsTextURL: URL? = nil,
+        location: PluginsTextLocation? = nil,
         fileManager: FileManager = .default
     ) throws -> [SavePluginFingerprint] {
         try fingerprint(
             forPlugins: PluginLoadOrder.resolve(
                 root: root,
-                pluginsTextURL: pluginsTextURL,
+                location: location,
                 fileManager: fileManager
-            )
+            ).entries
         )
     }
 

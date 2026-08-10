@@ -256,7 +256,9 @@ flags: `FontID` (HasFont), `FontClass` STRING (HasFontClass), `FontHeight`
 (HasFont or HasFontClass), `TextColor` RGBA (HasTextColor), `MaxLength`
 (HasMaxLength), a layout block (align, margins, indent, leading — HasLayout), a
 `VariableName` STRING, and `InitialText` STRING (HasText). STRINGs are
-null-terminated UTF-8 (SWF 6+) with a CP1252 fallback. For static rendering the
+null-terminated and decode under the engine-wide lenient text policy
+([string decoding](/decisions/string-decoding.md)), since SWF 6 and later declare
+strings UTF-8 while older movies carry code-page bytes. For static rendering the
 plain-text content is the target: HTML fields keep the raw markup verbatim and
 expose a tag-stripped `plainText`; full HTML text layout is deferred to 8.3.x.
 
@@ -544,8 +546,9 @@ UB[5], `CatchInRegisterFlag`, `FinallyBlockFlag`, `CatchBlockFlag`), then
 `TrySize`, `CatchSize`, and `FinallySize` UI16 — all three always present — then
 `CatchName` STRING or `CatchRegister` UI8.
 
-STRINGs decode UTF-8 with a CP1252 fallback, the same convention the display
-list and edit-text parsers use.
+STRINGs decode under the engine-wide lenient text policy
+([string decoding](/decisions/string-decoding.md)), the same convention the
+display list and edit-text parsers use.
 
 ## CLIPACTIONS
 

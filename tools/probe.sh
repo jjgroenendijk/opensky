@@ -92,6 +92,16 @@ echo "[ OK ] vfs ls ($mesh_count mesh entries)"
   || fail "record 0x3C did not decode as Tamriel"
 echo "[ OK ] record 0x0000003C (Tamriel)"
 
+# Plugin load order. Skyrim.esm is first on every install; the plugins.txt line
+# is not pinned, since whether one is findable is a property of the machine
+# (docs/tools/environment.md).
+plugins="$("$cli" --data-root "$data_root" plugins 2>>"$log")"
+printf '%s\n' "$plugins" | grep -q '^1	Skyrim.esm \[Master\]$' \
+  || fail "plugins did not report Skyrim.esm first"
+printf '%s\n' "$plugins" | grep -q '^plugins.txt: ' \
+  || fail "plugins did not report where the load order came from"
+echo "[ OK ] plugins ($(printf '%s\n' "$plugins" | tail -n 1))"
+
 # Movement tuning resolves active GMST overrides and reports an explicit source
 # for every value. Do not pin numeric values here: an active user plugin may
 # intentionally override them.

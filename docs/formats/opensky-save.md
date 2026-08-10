@@ -138,8 +138,8 @@ Verification is deliberately not part of decoding. Decoding needs nothing but th
 an inspector, a test, or a repair tool can read a save on a machine with no game install at
 all, and the app can show what a save contains before explaining why it cannot be loaded.
 
-A real `plugins.txt` load order does not exist in the engine yet. The fingerprint is
-list-shaped now so that it is already the right shape when it does.
+The list it fingerprints is the resolved [plugin load order](/formats/plugins-txt.md), so a
+save taken with a mod enabled no longer matches an install where it was switched off.
 
 ## Chunks
 
