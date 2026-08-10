@@ -4,6 +4,30 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-10
 
+* **Plugin load order from plugins.txt (issue #73)**: the engine reads the user's actual
+  load order instead of assuming the five vanilla masters. `PluginsTextLocator` finds the
+  file the way `GameDataLocator` finds the install — `OPENSKY_PLUGINS_TXT`, then the
+  `OpenSkyPluginsText` key in the shared defaults domain, then the layouts a macOS install
+  can take: beside the game, under `~/Library/Application Support/Skyrim Special Edition`,
+  and inside each Windows compatibility prefix (the Steam Proton prefix beside the install,
+  `~/.wine`, CrossOver and Whisky bottles), because there is no native macOS Skyrim SE and
+  the game only ever writes this file into its Windows per-user folder. A configured path
+  that cannot be read is reported rather than skipped; finding nothing is not a failure, it
+  is the vanilla masters, which is what a stock install loads anyway — and is what this
+  machine resolves to, having never launched the game (`docs/tools/environment.md`).
+  `PluginLoadOrder` now returns a `Resolution` — the ordered entries, where the list came
+  from, and which named plugins `Data/` does not hold — with the official masters pinned
+  first, `Skyrim.ccc` next, and `*`-starred `plugins.txt` lines in file order; an unstarred
+  line is a plugin the user switched off and does not load. The consequence that reaches
+  rendering is archive priority: `ArchiveLoadOrder` walks the resolved plugin order rather
+  than officials-then-alphabetically, so a mod's `.bsa` overrides the archives of every
+  plugin before it. One deliberate deviation from the game, argued in
+  `docs/formats/plugins-txt.md`: an archive whose plugin the order does not name is still
+  opened, at the bottom, because dropping it would cost a machine with no findable
+  plugins.txt every mod archive it can read today. Library > Load Order lists the resolved
+  order and Settings gained a plugins.txt group beside the data root, so neither is
+  environment-variable-only.
+
 * **Dialogue camera and speaker focus (issue #427, item 17.4)**: a conversation now looks
   like one. While the dialogue menu is open the view frames the speaker's `NPC Head [Head]`
   bone from the side the player is standing on, and the speaker stops walking, turns to face

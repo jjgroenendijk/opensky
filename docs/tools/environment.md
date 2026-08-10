@@ -21,6 +21,7 @@ entry whose condition is met gets deleted, not amended.
 
 - Continuous integration suspended
 - Upstream spec hosts
+- No plugins.txt on this machine
 - Memory watchdog for heavy real-data tests
 - Test plans, environment entries, and Swift Testing
 - build-for-testing and test-without-building
@@ -53,6 +54,19 @@ Observed 2026-07-20. Quirks that cost time on every format-parser session:
   `creationkit.com` comes back.
 
 Retires per bullet when the host or repository changes behaviour.
+
+## No plugins.txt on this machine
+
+Observed 2026-08-10. The install under `/Volumes/data/steam/steamapps/common/Skyrim Special
+Edition/` holds `Skyrim.ccc` and the ini files but no `plugins.txt`, there is no
+`~/Library/Application Support/Skyrim Special Edition/`, and the Steam library has no
+`compatdata/` — the game has never been launched here. So every
+[plugin load order](/formats/plugins-txt.md) resolved on this machine takes the vanilla
+fallback, and the `plugins.txt` parsing paths cannot be checked against a game-written file
+locally. A real-data probe of a modded load order needs a file supplied by hand and pointed
+at with `OPENSKY_PLUGINS_TXT`.
+
+Retires when a `plugins.txt` appears in one of the searched locations.
 
 ## Memory watchdog for heavy real-data tests
 

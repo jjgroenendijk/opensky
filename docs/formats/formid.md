@@ -66,8 +66,10 @@ session — see [Runtime reference identity](/engine/runtime-state.md).
 
 ESL note: the 0xFE prefix space is a runtime load-order construct — raw
 FormIDs inside a plugin file never use it. ESL-flagged plugins still encode
-master indices as above; only the runtime slotting differs. Not needed until
-plugin load order lands.
+master indices as above; only the runtime slotting differs. The
+[plugin load order](/formats/plugins-txt.md) now places light plugins in the
+right sequence, but the 0xFE slotting itself is still undecoded, so the Load
+Order panel shows a plain position rather than a runtime index.
 
 ## Verification
 

@@ -53,6 +53,15 @@ defaults key; invalid path throws and leaves the stored setting untouched.
 `clearUserChoice()` removes it (next locate falls back to the Steam default).
 Main-app Settings window drives both.
 
+## The plugins.txt beside it
+
+`PluginsTextLocator` is the same shape for the file that carries the plugin load order:
+`OPENSKY_PLUGINS_TXT`, then the `OpenSkyPluginsText` key in the same shared domain, then a
+search of the layouts a macOS install can take. It withholds the persisted default and the
+home directory in a test host for the same reason this one does. Unlike the data root, a
+missing plugins.txt is not a failure — it resolves to the vanilla masters. Details:
+[plugins.txt load order](/formats/plugins-txt.md).
+
 ## Validation
 
 Path counts as install root when `Data/Skyrim.esm` exists under it. Path pointing at the

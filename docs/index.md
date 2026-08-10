@@ -16,6 +16,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   tuning, active-plugin precedence, and explicit fallback policy.
 * [FormID + TES4 header](/formats/formid.md) - plugin header fields, master
   lists, raw FormID -> (plugin, objectID) resolution.
+* [plugins.txt load order](/formats/plugins-txt.md) - enable flags and file
+  order, where the file hides on macOS, and the plugin order OpenSky builds
+  from it.
 * [Localized string tables](/formats/strings.md) - .strings/.dlstrings/
   .ilstrings layout, lenient encoding policy, lstring lookup wiring.
 * [UI translation strings](/formats/translation-strings.md) - UTF-16
