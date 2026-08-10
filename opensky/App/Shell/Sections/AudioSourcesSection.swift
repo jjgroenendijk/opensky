@@ -88,11 +88,15 @@ final class AudioSourcesSection: PanelSectionViewController {
         var lines = ["Sources: \(snapshot.sources.count) / \(snapshot.sourceCap)"]
         for source in snapshot.sources {
             let position = source.worldPosition
+            // The clock reads nil until the source's player node has rendered
+            // its first buffer, which is a real state and not a zero.
+            let elapsed = source.positionSeconds
+                .map { String(format: "%.2f s", $0) } ?? "--"
             lines.append(String(
-                format: "%@ [%@] %.0f, %.0f, %.0f | %.1f m | gain %.2f",
+                format: "%@ [%@] %.0f, %.0f, %.0f | %.1f m | gain %.2f | %@",
                 Self.shortName(source.name), source.categoryName,
                 position.x, position.y, position.z,
-                source.distanceMeters, source.effectiveGain
+                source.distanceMeters, source.effectiveGain, elapsed
             ))
         }
         if let lastPlayError {

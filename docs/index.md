@@ -108,6 +108,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   DefineFont2/3 glyphs + text tags, fontconfig.txt alias mapping, and the
   display-list control tags (place/remove, sprites, clip depth, asset imports).
 
+* [FUZE voice container](/formats/fuz.md) - .fuz voice lines: the FUZE header, the
+  optional .lip blob, the embedded xWMA stream, and the voice-file naming rule derived
+  from the vanilla archive listing.
 * [xWMA container](/formats/xwm.md) - .xwm music files: RIFF/XWMA framing, fmt
   WAVEFORMATEX parameters, dpds packet table, data payload, frame-only policy
   and vanilla sweep evidence.

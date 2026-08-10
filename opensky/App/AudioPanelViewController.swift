@@ -9,6 +9,7 @@ import AppKit
 final class AudioPanelViewController: InspectorPanelViewController {
     let outputSection = AudioOutputSection()
     let sourcesSection = AudioSourcesSection()
+    let voiceSection = AudioVoiceSection()
     let sfxSection = AudioSfxSection()
     let musicSection = AudioMusicSection()
     let footstepsSection = AudioFootstepsSection()
@@ -19,6 +20,7 @@ final class AudioPanelViewController: InspectorPanelViewController {
         didSet {
             outputSection.provider = provider
             sourcesSection.provider = provider
+            voiceSection.provider = provider
             sfxSection.provider = provider
             musicSection.provider = provider
             footstepsSection.provider = provider
@@ -26,7 +28,7 @@ final class AudioPanelViewController: InspectorPanelViewController {
     }
 
     override func makeSections() -> [PanelSectionViewController] {
-        [outputSection, sourcesSection, sfxSection, musicSection, footstepsSection]
+        [outputSection, sourcesSection, voiceSection, sfxSection, musicSection, footstepsSection]
     }
 
     /// Control forwards for the verification-surface tests, mirroring
@@ -49,6 +51,18 @@ final class AudioPanelViewController: InspectorPanelViewController {
 
     var audioStopAllControl: NSButton {
         sourcesSection.stopAllControl
+    }
+
+    var audioVoiceFilterControl: NSTextField {
+        voiceSection.filterControl
+    }
+
+    var audioVoiceFileControl: NSPopUpButton {
+        voiceSection.fileControl
+    }
+
+    var audioVoicePlayControl: NSButton {
+        voiceSection.playControl
     }
 
     var audioMusicEnabledControl: NSButton {

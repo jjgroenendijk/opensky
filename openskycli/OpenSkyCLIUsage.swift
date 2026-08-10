@@ -136,12 +136,21 @@ extension OpenSkyCLI {
                                   field out of all three string tables;
                                   --probe-rows measures the row field names
       swf info <key>               Parse one movie; print header + tag list
-      audio info <key>            Frame one .xwm file; print WAVEFORMATEX codec
-                                  parameters, dpds packet table and payload
-                                  stats (framing only — no decode yet)
+      audio info <key>            Frame one .xwm or .fuz file; print the FUZE
+                                  header when there is one, then WAVEFORMATEX
+                                  codec parameters, the dpds packet table and
+                                  payload stats (framing only — no decode)
       audio sweep                 Frame every .xwm the archives provide;
                                   report per-file summaries plus a
                                   files/framed/decoded/failed tally
+      audio voice-sweep [--limit <n>] [--names-only]
+                                  Re-derive every voice file name from the
+                                  DIAL/INFO/QUST records and measure it against
+                                  the archive listing, then frame every .fuz
+                                  through FUZFile + XWMFile. --limit bounds the
+                                  framing walk (the report states how many
+                                  entries it skipped); --names-only stops after
+                                  the naming check
       screenshot --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
              [--size WxH] [--zoom <f>] [--time-of-day <0-24>] [--neighbors]
              [--ui-sample]

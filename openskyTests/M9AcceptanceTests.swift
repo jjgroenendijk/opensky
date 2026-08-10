@@ -381,7 +381,8 @@ struct M9AcceptanceTests {
         distanceMeters: 10,
         fadeGain: 1,
         isFading: false,
-        effectiveGain: 1
+        effectiveGain: 1,
+        positionSeconds: nil
     )
 
     /// A half-gain ambience loop, as the director starts a two-entry bed.
@@ -393,6 +394,7 @@ struct M9AcceptanceTests {
         distanceMeters: 0,
         fadeGain: 1,
         isFading: false,
-        effectiveGain: 0.5
+        effectiveGain: 0.5,
+        positionSeconds: nil
     )
 }

@@ -206,6 +206,11 @@ nonisolated struct AudioSourceStatsSnapshot: Equatable {
     let isFading: Bool
     /// master x category x source x fade gain, before distance attenuation.
     let effectiveGain: Float
+    /// How far into its material the source has played, in seconds, or nil
+    /// before its player node has rendered anything. This is the playback
+    /// clock item 17.5 added, surfaced so the panel shows a voice line
+    /// advancing rather than only that it started.
+    let positionSeconds: Double?
 }
 
 /// Published state of the world audio graph, read at 2 Hz by the panel. Only
@@ -248,6 +253,33 @@ protocol AudioControlProviding: AnyObject {
     func playAudioFile(named name: String) -> String?
     func stopAllAudioSources()
     var audioStatsSnapshot: AudioStatsSnapshot { get }
+
+    // Voice-line controls (item 17.5). The archives hold 75,408 `.fuz` voice
+    // files, far past what a picker can list, so the picker is a filter over
+    // that corpus rather than the corpus itself.
+
+    /// Substring the voice picker narrows the corpus by. Matching is on the
+    /// canonical VFS key, so a voice-type directory such as
+    /// `femaleeventoned` is a useful filter on its own.
+    var voiceFileFilter: String { get set }
+    /// Voice paths the picker currently offers: the first
+    /// `voiceFilePickerLimit` matches of `voiceFileFilter`, sorted.
+    var selectableVoiceFileNames: [String] { get }
+    /// How many voice files match the filter, which is usually more than the
+    /// picker lists. The readout states both so a truncated list never reads
+    /// as the whole match set.
+    var voiceFileMatchCount: Int { get }
+    /// Plays one `.fuz` line positionally in front of the camera, on the voice
+    /// submix. Returns nil on success or a short failure description.
+    func playVoiceFile(named name: String) -> String?
+    /// The line currently playing, with its container summary. Nil when no
+    /// voice line has been started this session.
+    var currentVoiceDescription: String? { get }
+    /// Playback clock readout for the line last started: elapsed and total
+    /// seconds, or why there is no reading. Empty when none was started.
+    var voicePlaybackDescription: String { get }
+    /// Most recent voice failure reason; nil when the last start succeeded.
+    var lastVoiceError: String? { get }
 
     // World SFX + ambience director controls (M9.2.2). The director lives
     // beside the audio engine; these no-op when audio is not enabled.

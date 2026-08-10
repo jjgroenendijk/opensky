@@ -68,6 +68,16 @@ final class WorldAudioEngine {
     var sources: [ActiveAudioSource] = []
     /// Next source id; taken only by WorldAudioEngineSources.swift.
     var nextSourceID = 1
+    /// Live half of the playback clock: seconds accumulated from the audio
+    /// tick's paused-aware frame delta. Offline the clock reads the engine's
+    /// manual-rendering sample time instead; both live in
+    /// WorldAudioEngineVoice.swift, which is why this is internal.
+    var liveClockSeconds: Double = 0
+    /// Called with a source's id once that source has played to its end and
+    /// been retired. Set by whoever needs to know a line finished — the
+    /// dialogue subtitle lifecycle and the menu's auto-advance. Never fires
+    /// for a source that was stopped, evicted or purged.
+    var onSourceFinished: ((Int) -> Void)?
     /// Why the graph is not running, for the panel readout. nil while healthy.
     private(set) var unavailableReason: String?
     /// Listener pose in world space, kept for the snapshot's distance column.
@@ -201,6 +211,7 @@ final class WorldAudioEngine {
     /// comes from the renderer's paused-aware audio clock, so fades freeze in
     /// menu mode and never jump on resume. Zero advances nothing.
     func tick(listenerCell: CellCoordinate, deltaTime: Float = 0) {
+        liveClockSeconds += Double(max(0, deltaTime))
         advanceFades(deltaTime: deltaTime)
         retireFinishedSources()
         purgeSources(fartherThan: Self.cellPurgeRadius, fromCell: listenerCell)

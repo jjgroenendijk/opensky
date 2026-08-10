@@ -21,6 +21,21 @@ final class FakeAudioProvider: AudioControlProviding {
     var stopAllCount = 0
     var audioStatsSnapshot = AudioStatsSnapshot.empty
 
+    /// Voice picker + playback bridges (item 17.5). `selectableVoiceFileNames`
+    /// is what the fake offers; `voiceFileMatchCount` defaults to that count so
+    /// a suite only sets it when it is testing the truncated-list wording.
+    var voiceFileFilter = ""
+    var selectableVoiceFileNames: [String] = []
+    var voiceFileMatchCountOverride: Int?
+    var playedVoiceFiles: [String] = []
+    var currentVoiceDescription: String?
+    var voicePlaybackDescription = ""
+    var lastVoiceError: String?
+
+    var voiceFileMatchCount: Int {
+        voiceFileMatchCountOverride ?? selectableVoiceFileNames.count
+    }
+
     var sfxEnabled = true
     var ambienceEnabled = true
     var stopAmbienceCount = 0
@@ -65,6 +80,11 @@ final class FakeAudioProvider: AudioControlProviding {
     func playAudioFile(named name: String) -> String? {
         playedFiles.append(name)
         return nil
+    }
+
+    func playVoiceFile(named name: String) -> String? {
+        playedVoiceFiles.append(name)
+        return lastVoiceError
     }
 
     func stopAllAudioSources() {

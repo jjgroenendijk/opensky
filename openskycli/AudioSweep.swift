@@ -144,7 +144,8 @@ struct AudioSweepTally {
 
 extension Dictionary where Value == Int {
     /// Re-keys a histogram for printing; counts of duplicate keys are summed.
-    fileprivate func mapKeys(_ transform: (Key) -> String) -> [String: Int] {
+    /// Shared with the voice sweep's tally.
+    func mapKeys(_ transform: (Key) -> String) -> [String: Int] {
         reduce(into: [:]) { result, pair in
             result[transform(pair.key), default: 0] += pair.value
         }

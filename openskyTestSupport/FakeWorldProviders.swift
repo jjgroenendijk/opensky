@@ -259,7 +259,8 @@ final class FakeWorldProviders: WorldControlProviders {
                     distanceMeters: 10,
                     fadeGain: 1,
                     isFading: false,
-                    effectiveGain: 1
+                    effectiveGain: 1,
+                    positionSeconds: nil
                 )
             ],
             sourceCap: audioStatsSnapshot.sourceCap
@@ -273,6 +274,11 @@ final class FakeWorldProviders: WorldControlProviders {
     }
 
     var audioStatsSnapshot = AudioStatsSnapshot.empty
+
+    /// Voice bridges (item 17.5). The behaviour is in
+    /// `FakeWorldProvidersVoice.swift`; only the state lives here, because an
+    /// extension cannot hold stored properties.
+    var voice = FakeVoiceState()
 
     // World SFX director bridges (M9.2.2).
     var sfxEnabled = true

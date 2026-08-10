@@ -131,6 +131,10 @@ final class GameViewController: NSViewController {
     var streamerCellProvider: (any CellSceneProvider)?
     /// Cached picker paths — enumerating every archive entry is not free.
     var cachedAudioFileNames: [String]?
+    /// Voice picker filter, playback tracking and last-error state (item
+    /// 17.5). The implementation lives in `GameViewControllerAudioVoice.swift`;
+    /// stored here because extensions cannot add state.
+    var voice = VoiceLabState()
     /// Selector state owned by the UI Lab SWF bridge
     /// (`GameViewControllerSWFLab.swift`); nothing else writes it.
     var swfLab = SWFLabState()
