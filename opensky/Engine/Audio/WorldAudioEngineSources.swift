@@ -39,6 +39,10 @@ final class ActiveAudioSource {
     /// nil for buffer-backed sources; streamed sources own their decoder
     /// through this.
     let streamer: AudioSourceStreamer?
+    /// Engine playback clock at the moment this source started, which is what
+    /// `playbackPosition(ofSource:)` subtracts from. Written by `adoptSource`
+    /// rather than by `init`, because the clock belongs to the engine.
+    var startClockSeconds: Double = 0
     /// Set when a buffer-backed source's scheduled buffer has played out.
     /// Buffer sources have no streamer to report completion, so without this
     /// a one-shot `.wav` effect would sit in `sources` until the FIFO budget
@@ -122,7 +126,16 @@ extension WorldAudioEngine {
                 request: request
             )
         }
-        let file = try XWMFile(data: fileData)
+        return try playPositional(file: XWMFile(data: fileData), request: request)
+    }
+
+    /// Starts a positional streamed source from an already-framed container.
+    /// The voice path frames its own `.fuz` first and enters here, so a voice
+    /// line and a positional `.xwm` effect share one code path from the player
+    /// node down.
+    @discardableResult
+    func playPositional(file: XWMFile, request: AudioPlayRequest) throws -> Int {
+        guard isRunning else { throw AudioEngineError.notRunning }
         // Positional inputs must be mono: the environment node spatializes
         // mono and passes stereo through flat.
         guard
@@ -282,9 +295,17 @@ extension WorldAudioEngine {
 
     /// Detaches sources whose stream reported completion. Called from the
     /// per-frame audio tick.
+    ///
+    /// `onSourceFinished` fires here and only here, so it means "this source
+    /// played to its end" — a source stopped by hand, evicted by the budget or
+    /// purged with its cell does not report. That distinction is what lets the
+    /// dialogue subtitle clear on the line ending rather than on the line
+    /// being cut off (item 17.3).
     func retireFinishedSources() {
         for source in sources where source.streamer?.isFinished == true || source.bufferFinished {
+            let id = source.id
             stop(source)
+            onSourceFinished?(id)
         }
     }
 
@@ -386,6 +407,7 @@ extension WorldAudioEngine {
     }
 
     private func adoptSource(_ source: ActiveAudioSource) {
+        source.startClockSeconds = playbackClockSeconds
         sources.append(source)
     }
 

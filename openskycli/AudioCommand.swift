@@ -8,7 +8,7 @@ import Foundation
 enum AudioCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
         guard let sub = scanner.next() else {
-            throw CLIError.usage("audio: missing subcommand (info|sweep)")
+            throw CLIError.usage("audio: missing subcommand (info|sweep|voice-sweep)")
         }
         switch sub {
         case "info":
@@ -18,6 +18,8 @@ enum AudioCommand {
         case "sweep":
             try scanner.finish()
             try AudioSweep.run(context: context)
+        case "voice-sweep":
+            try AudioVoiceSweep.run(context: context, scanner: &scanner)
         default:
             throw CLIError.usage("audio: unknown subcommand \(sub)")
         }
@@ -25,7 +27,19 @@ enum AudioCommand {
 
     private static func runInfo(context: CLIContext, path: String) throws {
         let vfs = context.makeFileSystem()
-        let file = try XWMFile(data: vfs.contents(forPath: path))
+        let data = try vfs.contents(forPath: path)
+        // A voice line is an xWMA stream inside a FUZE container: report the
+        // container first, then hand the payload to the same xWMA readout.
+        let file: XWMFile
+        if path.lowercased().hasSuffix(".fuz") {
+            let fuz = try FUZFile(data: data)
+            print("[INFO] \(path): FUZE version \(fuz.version)")
+            print("  lip bytes          \(fuz.lipByteCount)")
+            print("  audio bytes        \(fuz.audioByteCount)")
+            file = try fuz.audio()
+        } else {
+            file = try XWMFile(data: data)
+        }
         print("[INFO] \(path): \(summaryLine(for: file))")
         let codec = file.codec
         print("  wFormatTag         0x\(String(format: "%04X", codec.formatTag)) (WMAv2)")

@@ -4,6 +4,25 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-10
 
+* **Voice playback: `.fuz` framing and a playback clock (item 17.5)**: a chosen dialogue
+  response can now be heard. [`FUZFile`](/formats/fuz.md) frames the voice container — the
+  `FUZE` header, the optional `.lip` blob, the embedded xWMA stream — and hands the payload
+  to the existing `XWMFile` route, so a line streams down exactly the positional path a
+  `.xwm` effect takes and `AudioSourceStreamer` never learned a second container. The
+  file-name rule was the hard half: the community descriptions of it conflict, so it was
+  derived from the install's own 75,408-entry listing with `openskycli audio voice-sweep`,
+  which re-derives a name for every INFO response and reports every mismatch beside the
+  editor IDs behind it. The two names share one 25-character budget rather than each having
+  a fixed cap, which is what no published description gets right; the rule reproduces
+  43,753 of 44,325 vanilla names (98.71%), and the residue is Bethesda's — 86 recordings
+  whose quest or topic was renamed after export, 486 whose INFO no longer exists. New
+  engine capability beside it: `playbackPosition(ofSource:)`, read from the player node's
+  own clock so it is deterministic under offline rendering, and `onSourceFinished`, which
+  fires only for a source that played out and not for one that was stopped, evicted or
+  purged — items 17.3 and 17.7 both need those. World > Audio grows a **Voice** section
+  whose picker is a filter over the corpus and whose readout states the true match count
+  beside the truncated one.
+
 * **Render debug views and layer isolation (issue #144)**: a visual bug can now be
   bisected instead of stared at. `World > Render Debug` switches the scene pass's output
   channel — wireframe, world normals, texture coordinates, mip level, shadow cascade, layer

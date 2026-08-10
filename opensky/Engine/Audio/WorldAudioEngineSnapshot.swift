@@ -34,7 +34,8 @@ extension WorldAudioEngine {
                     ) : 0,
                     fadeGain: source.fadeGain,
                     isFading: source.activeFade != nil,
-                    effectiveGain: effectiveGain(of: source)
+                    effectiveGain: effectiveGain(of: source),
+                    positionSeconds: playbackPosition(ofSource: source.id)
                 )
             },
             sourceCap: Self.maxConcurrentSources

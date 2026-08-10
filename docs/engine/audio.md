@@ -20,7 +20,8 @@ the CLI. Consumes the [xWMA container parser](/formats/xwm.md) and the
 `WorldAudioEngineSnapshot.swift` (published UI state),
 `AudioSourceStreamer.swift` (streaming decode), `AudioSpace.swift` (coordinate
 conversion), `AudioCategory.swift` (vanilla menu categories),
-`AudioCodecParametersXWM.swift` (extradata policy), and
+`AudioCodecParametersXWM.swift` (extradata policy),
+`WorldAudioEngineVoice.swift` (voice route + playback clock), and
 `opensky/Engine/Rendering/RendererAudio.swift` (the per-frame tick).
 
 ## Graph
@@ -214,6 +215,73 @@ three-buffer lookahead for nothing. Buffer-backed one-shots retire themselves th
 scheduling completion handler, so `retireFinishedSources` reclaims them the same frame
 they finish rather than leaving them for FIFO eviction.
 
+## Voice route (.fuz -> positional voice submix)
+
+A dialogue line is a [`.fuz` container](/formats/fuz.md): a lip-sync blob
+followed by a complete RIFF/XWMA stream. `WorldAudioEngine.playVoice(fuzData:
+name:worldPosition:gain:)` frames the container, hands the payload to
+`XWMFile`, and enters the same positional streaming path a `.xwm` effect takes
+(`playPositional(file:request:)`) — same streamer, same decoder, same
+environment node, `AudioCategory.voice`. `AudioSourceStreamer` never learned a
+second container type, because it never had to: the payload really is a whole
+`.xwm` file, at an offset.
+
+The call returns a `VoicePlayback`: the source id to track it by, the declared
+duration from the `dpds` table, and the lip bytes, untouched, for item 17.7. A
+malformed container throws before any source is started, so a line that cannot
+be framed is a reported miss rather than a silent player node.
+
+Vanilla voice is mono 44.1 kHz throughout, which is what the positional path
+needs — the environment node spatializes mono and passes stereo through flat —
+so the downmix the music path uses never engages for a line.
+
+Resolving *which* file to play is the records' job, not the engine's:
+`VoiceLineLocator` turns an INFO plus the speaker's voice type into the archive
+path, and the naming rule it applies is documented and evidenced in
+[the `.fuz` format page](/formats/fuz.md).
+
+## Playback clock and line completion
+
+Two capabilities item 17.5 added for the dialogue work above it.
+
+`WorldAudioEngine.playbackPosition(ofSource:)` reports how far into its
+material a source has played, in seconds, or `nil` when no source has that id or
+nothing has been rendered since it started. It is elapsed-render accounting:
+the engine keeps a monotonic `playbackClockSeconds`, each source remembers the
+clock it was adopted at, and the position is the difference.
+
+The obvious reading — `AVAudioPlayerNode.playerTime(forNodeTime:)` — was written
+first and does not work here: it hangs the app-hosted test host under offline
+manual rendering, deterministically, and it took the pre-existing
+`WorldAudioEngineTests` down with it the moment `statsSnapshot()` started
+calling it. The dated finding is in
+[local environment](/tools/environment.md). Subtraction cannot block, which is
+the second reason to prefer it.
+
+The clock has two halves, and both are the same kind of number:
+
+* offline it is `engine.manualRenderingSampleTime / sampleRate`, so it advances
+  by exactly the frames each `renderOffline(_:to:)` call produced and by nothing
+  else — a test converts a rendered frame count straight into an expected
+  reading, which is what `WorldAudioEngineClockTests` does;
+* live it accumulates the audio tick's paused-aware frame delta, the same delta
+  the gain ramps advance on, so the clock freezes in menu mode instead of
+  jumping on resume.
+
+What this trades away is worth stating plainly: the value is time elapsed since
+the source started, not the sample position that has reached the output. A
+streamed source whose first chunk is still decoding reads a few milliseconds
+ahead of what is audible. Subtitles and lip sync want elapsed line time, so that
+is the right number for them; anything wanting sample-accurate output position
+has to wait for the node query to become usable.
+
+`WorldAudioEngine.onSourceFinished` fires with a source's id once that source
+has played to its end and been retired. It fires from `retireFinishedSources`
+and nowhere else, so it means *played out*: a source stopped by hand, evicted by
+the FIFO budget or purged with its cell does not report. That distinction is the
+whole point — item 17.3's subtitle must clear when the line ends, not when the
+line is cut off.
+
 ## Attenuation defaults (provisional)
 
 `ProvisionalAttenuation`: inverse model, reference distance 2 m, maximum
@@ -301,7 +369,28 @@ below, plus **Footsteps** (`PanelSection-audioFootsteps`); **SFX & Ambience**
   the install's `.xwm` paths, `AudioPlaySelectedControl`,
   `AudioStopAllControl`, readout `AudioSourcesStatsLabel` (live source list —
   file, category, world position, listener distance in meters, effective
-  gain — plus the cap and any trigger failure).
+  gain, and the playback clock — plus the cap and any trigger failure). The
+  clock column reads `--` until that source's player node has rendered its
+  first buffer, which is a real state and not a zero.
+
+* **Voice** (`PanelSection-audioVoice`): `AudioVoiceFilterControl` text field,
+  `AudioVoiceFilterApplyControl`, `AudioVoiceFileControl` popup,
+  `AudioVoicePlayControl`, readout `AudioVoiceStatsLabel`:
+
+  ```text
+  Voice files: 200 listed of 34818 matching
+  Line: femaleeventoned\wigreeting__000c7917_1.fuz — 3.10 s, 1728 lip bytes
+  Position: 1.42 / 3.10 s
+  ```
+
+  The picker is a filter rather than a list: the archives hold 75,408 voice
+  files, so the section lists the first 200 matches of the filter and the
+  readout always states how many matched in total — a truncated popup that read
+  as the whole match set would be a lie about the corpus. The filter defaults to
+  a voice-type directory so the picker is useful before anything is typed.
+  Pressing `Play line` starts the file the same way a conversation will: framed
+  as `.fuz`, positional, ahead of the camera, on the voice submix. Nothing here
+  is an override — a one-shot trigger leaves no state to reset.
 
 * **Footsteps** (`PanelSection-audioFootsteps`): `AudioFootstepsEnabledControl`
   checkbox, `AudioFootstepTagControl` popup listing the tags the current
@@ -451,6 +540,31 @@ max and budget. `make probe` greps for that line on both paths.
   retargeting mid-ramp, a two-source crossfade, tick-driven advance with a
   zero delta freezing it, and the regression that a slider move mid-fade does
   not stomp the ramp.
+* `WorldAudioEngineClockTests` — offline manual rendering: no reading before
+  the first render, a clock that advances monotonically with the frames
+  rendered and reaches the material's length, the finished callback firing once
+  and only for a source that played out (a stopped source reports nothing), and
+  the panel snapshot carrying the same reading the engine reports.
+* `WorldAudioEngineVoiceTests` — a `.fuz` line starts positional on the voice
+  submix and hands back its lip data, a line without lip data still plays, and
+  a malformed container or a payload that is not xWMA throws before any source
+  is started.
+* `FUZFileTests`, `VoiceFilePathTests` — container framing against synthetic
+  bytes, and the voice-name budget as a table of real vanilla shapes.
+* `AudioVoicePanelTests` — Voice section geometry, the id contract, the
+  filter/picker round-trip, and the readout stating the true match count beside
+  the truncated one.
+* `VoiceRealDataTests` (env-gated, `make realtest`) — frames all 75,408 `.fuz`
+  entries with zero failures, re-derives every voice file name from the records
+  and gates on the measured coverage, and takes one resolved
+  line end to end: decode under manual rendering, clock advancing monotonically
+  toward the declared duration, a non-silent peak sample out of the offline
+  render (the objective half of "audible" — real PCM reached the output, not a
+  started source that decoded nothing), and the source listed on the voice
+  submix.
+  Reports in gitignored `logs/voice-sweep/`.
+* `openskycli audio voice-sweep` — the same two checks from the CLI, with a
+  `--limit` that states how many entries it skipped.
 * `AudioSourceStreamerTests` — mono downmix + interleaved-to-planar packing.
 * `AudioCodecParametersXWMTests` — extradata substitution.
 * `AudioPanelTests`, `DestinationRegistryTests`, `AppSidebarModelTests` —
@@ -480,7 +594,6 @@ max and budget. `make probe` greps for that line on both paths.
   confirms everything else drops out, then clears both from the sidebar's reset
   and confirms the mix returns.
 
-Sound effects in the vanilla install are `.wav` (5,978 entries) and voice is
-`.fuz`; neither goes through this path yet. The `.xwm` corpus is music, so the
-positional acceptance uses a music file as the positional test signal until a
-PCM `.wav` reader lands.
+Every kind of vanilla audio now reaches this graph: music and voice through the
+xWMA streaming route, sound effects through the PCM buffer route. The `.wav`
+reader landed with issue #352 and the `.fuz` voice route with item 17.5.

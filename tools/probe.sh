@@ -242,6 +242,16 @@ run "xwm audio sweep (vanilla music)" audio sweep
 grep 'audio sweep:' "$log" | tail -1 | grep -q ' 0 failed' \
   || fail "xwm audio sweep reported framing failures"
 
+# Item 17.5 voice gate: the naming rule still explains the vanilla corpus, and
+# a bounded slice of .fuz files still frames. The framing walk is capped because
+# 75,408 files is minutes of I/O and the probe is a smoke run; the sweep's own
+# report states how many entries it skipped, so the cap is visible in the log.
+run "fuz voice sweep (naming + bounded framing)" audio voice-sweep --limit 2000
+grep 'voice names total:' "$log" | tail -1 | grep -qE '\(9[89]\.[0-9]+%\)' \
+  || fail "fuz voice naming derivation fell below 98%"
+grep 'voice framing:' "$log" | tail -1 | grep -q ' 0 failed' \
+  || fail "fuz voice sweep reported framing failures"
+
 # M5.1/5.2 actor gate: every discovered ACHR around the first-render cell
 # must resolve its template chain AND its visuals (skeleton, skin/outfit
 # parts, FaceGen) — the summary line reports "N failed".

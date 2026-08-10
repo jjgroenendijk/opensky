@@ -19,12 +19,34 @@ entry whose condition is met gets deleted, not amended.
 
 ## Contents
 
+- AVAudioPlayerNode.playerTime hangs offline rendering
 - Continuous integration suspended
 - Upstream spec hosts
 - No plugins.txt on this machine
 - Memory watchdog for heavy real-data tests
 - Test plans, environment entries, and Swift Testing
 - build-for-testing and test-without-building
+
+## AVAudioPlayerNode.playerTime hangs offline rendering
+
+Observed 2026-08-10 on Xcode 26.6 / macOS 26.5.2, measured while writing the playback clock
+for issue #206. Calling `AVAudioPlayerNode.playerTime(forNodeTime:)` — or reaching it through
+`lastRenderTime` — on a node attached to an `AVAudioEngine` in `.offline` manual rendering
+mode hangs the app-hosted test host: the process stops running tests, sits idle in its run
+loop, and `xcodebuild` waits on it until it is killed. Nothing appears in the result bundle,
+so it reads as an infinite test rather than a failure.
+
+It is not specific to the new code. Any suite that reached the query hung, including the
+pre-existing `WorldAudioEngineTests`, once `statsSnapshot()` started calling it — which is
+what identified the API rather than the caller.
+
+So `WorldAudioEngine.playbackPosition(ofSource:)` is elapsed-render accounting against
+`manualRenderingSampleTime` instead of a node-time query
+([World audio playback](/engine/audio.md)). Anything else that wants a sample-accurate output
+position has to solve this first.
+
+Retires when a later macOS or Xcode answers the query under offline rendering instead of
+hanging, at which point the clock could read the node directly.
 
 ## Continuous integration suspended
 
