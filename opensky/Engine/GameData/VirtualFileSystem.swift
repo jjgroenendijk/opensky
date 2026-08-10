@@ -62,12 +62,16 @@ nonisolated final class VirtualFileSystem: Sendable {
         }))
     }
 
+    /// Opens every archive the install's plugin load order implies. Archive
+    /// priority follows plugin priority, so a mod's archive overrides the
+    /// archives of every plugin loaded before it (docs/formats/vfs.md).
     convenience init(root: GameDataRoot) {
         self.init(
             dataURL: root.dataURL,
             archiveURLs: ArchiveLoadOrder.resolve(
                 installURL: root.installURL,
-                dataURL: root.dataURL
+                dataURL: root.dataURL,
+                pluginOrder: PluginLoadOrder.resolve(root: root).entries.map(\.name)
             )
         )
     }

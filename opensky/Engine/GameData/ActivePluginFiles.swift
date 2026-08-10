@@ -24,7 +24,7 @@ nonisolated enum ActivePluginFiles {
         root: GameDataRoot,
         baseFile: ESMFile? = nil
     ) -> [(name: String, file: ESMFile)] {
-        PluginLoadOrder.resolve(root: root).compactMap { entry in
+        PluginLoadOrder.resolve(root: root).entries.compactMap { entry in
             if
                 entry.name.caseInsensitiveCompare("Skyrim.esm") == .orderedSame,
                 let baseFile

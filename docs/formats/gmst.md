@@ -64,15 +64,15 @@ checks full raised-capsule clearance.
 ## Selected load order and override policy
 
 `PluginLoadOrder` resolves installed official masters first, then installed `Skyrim.ccc`
-entries, then starred active entries from
-`~/Library/Application Support/Skyrim Special Edition/plugins.txt`. Names resolve
-case-insensitively to the spelling in `Data/`; missing and duplicate entries are skipped.
-Within that ordered set, later valid GMST records win by case-insensitive EDID even when
-their FormIDs differ.
+entries, then starred active entries from the located
+[plugins.txt](/formats/plugins-txt.md). Names resolve case-insensitively to the spelling in
+`Data/`; duplicates take their first position and entries with no file are reported rather
+than merged. Within that ordered set, later valid GMST records win by case-insensitive EDID
+even when their FormIDs differ.
 
-This is intentionally a selected GMST consumer, not the engine-wide plugin merge promised by
-issue #73. World, cell, asset, archive, and FormID resolution still use their existing
-single-plugin or provisional paths.
+This is still a selected GMST consumer rather than an engine-wide record merge. The load
+order it reads is now the real one and archive priority follows it too, but world, cell,
+asset, and FormID resolution still use their existing single-plugin paths.
 
 ## Verification
 

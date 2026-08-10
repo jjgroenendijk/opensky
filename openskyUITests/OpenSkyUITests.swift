@@ -183,6 +183,20 @@ final class OpenSkyUITests: OpenSkyUITestCase {
         XCTAssertFalse(app.buttons["ScreenshotButton"].isEnabled)
     }
 
+    /// Library > Load Order: the resolved plugin order and the plugins.txt it
+    /// came from, changeable without a CLI flag (issue #73).
+    @MainActor
+    func testSidebarShowsLoadOrder() throws {
+        let app = try launchApp()
+        selectDestination("Destination-loadOrder", in: app)
+        XCTAssertTrue(app.tables["LoadOrderTable"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["LoadOrderStatsLabel"].exists)
+        XCTAssertTrue(app.buttons["LoadOrderChooseControl"].exists)
+        XCTAssertTrue(app.buttons["LoadOrderUseDefaultControl"].exists)
+        XCTAssertTrue(app.buttons["LoadOrderReloadControl"].exists)
+        XCTAssertFalse(app.buttons["ScreenshotButton"].isEnabled)
+    }
+
     @MainActor
     func testMissingDataStaysInWindowAndSettingsOpens() {
         let app = XCUIApplication()
