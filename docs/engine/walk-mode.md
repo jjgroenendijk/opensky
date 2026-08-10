@@ -236,6 +236,21 @@ Switching between the two player modes does not move the capsule. Only entering 
 re-seats it under the current eye; re-seating on every camera keypress would teleport the
 player by the orbit distance each time.
 
+There is a fourth camera and it is deliberately not a fourth mode. While a conversation is
+open the dialogue camera (issue #427, [dialogue runtime](/engine/dialogue.md)) overrides the
+view pose on top of whichever mode is live, then hands it straight back — `G` never reaches
+it, `movementMode` never changes, and everything that tests `isPlayerControlled` keeps the
+answer it had. A mode is what the player chose to look through; a conversation is something
+that happens to them.
+
+Two per-mode policies read the override rather than the mode, because it moves the eye out
+of the player's head whatever mode it interrupted. `PlayerRigVisibility` draws the body and
+hides the arms while it is engaged, so a first-person player sees their own character in the
+shot instead of a pair of arms in front of a camera that is no longer theirs. And
+`activeFOVYRadians` projects at the shared world angle rather than the first-person comfort
+setting, so every conversation is framed alike; releasing re-projects at whatever the mode
+underneath uses.
+
 ## Third-person camera
 
 `ThirdPersonCamera` is pure math over the capsule pose and the look angles the shared
@@ -270,6 +285,11 @@ pivot along the offset line; the answer is read back as a *distance* and re-appl
 original direction, because collide-and-slide can push the probe sideways and the camera only
 ever moves along its own line. A teleport resets the zoom, so the readout never reports the
 squeeze of the place the player just left.
+
+That sweep is `CameraCollisionProbe`, shared with the dialogue camera since issue #427: a
+pivot, an ideal offset, a probe radius and a floor it may not be pushed past. Two cameras
+that pulled in through two copies of it would eventually disagree about what a wall does to
+an eye.
 
 ## The player body
 

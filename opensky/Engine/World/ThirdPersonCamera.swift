@@ -87,6 +87,14 @@ nonisolated struct ThirdPersonCamera: Equatable {
         return camera.right * shoulderOffset - camera.forward * orbitDistance
     }
 
+    /// The swept probe this camera pulls in with. Shared with the dialogue
+    /// camera (`CameraCollisionProbe`, issue #427), so the two cannot disagree
+    /// about what a wall does to an eye.
+    static let collisionProbe = CameraCollisionProbe(
+        radius: collisionRadius,
+        minimumDistance: minimumDistance
+    )
+
     /// Resolves this frame's eye position, pulling in along the pivot-to-eye
     /// line when static geometry is in the way.
     ///
@@ -101,37 +109,14 @@ nonisolated struct ThirdPersonCamera: Equatable {
         collisionQuery: WalkController.CollisionQuery
     ) -> SIMD3<Float> {
         let pivot = Self.pivot(feetPosition: feetPosition)
-        let offset = Self.idealOffset(yaw: yaw, pitch: pitch)
-        let wanted = simd_length(offset)
-        guard wanted > .ulpOfOne else {
-            resolvedDistance = 0
-            isCollisionLimited = false
-            return pivot
-        }
-        let probe = PlayerCapsule(
-            radius: Self.collisionRadius,
-            height: Self.collisionRadius * 2,
-            eyeHeight: Self.collisionRadius
+        let result = Self.collisionProbe.resolve(
+            pivot: pivot,
+            offset: Self.idealOffset(yaw: yaw, pitch: pitch),
+            collisionQuery: collisionQuery
         )
-        // `CapsuleWorldCollider` positions a capsule by its bottom, so the
-        // probe's centre is its eye height above the position it is given.
-        let bottom = SIMD3<Float>(0, 0, -Self.collisionRadius)
-        let result = CapsuleWorldCollider(capsule: probe).move(
-            from: pivot + bottom,
-            displacement: offset,
-            query: collisionQuery
-        )
-        let reached = result.position - bottom
-        let travelled = simd_length(reached - pivot)
-        // Collide-and-slide can push the probe sideways as well as short; the
-        // camera only ever moves along its own offset line, so the sweep's
-        // answer is read as a distance and re-applied to the original
-        // direction. A sideways slide that ends up further out than asked for
-        // is clamped back to the ideal distance.
-        let limited = min(travelled, wanted)
-        resolvedDistance = max(limited, min(Self.minimumDistance, wanted))
-        isCollisionLimited = limited < wanted - 0.5
-        return pivot + offset / wanted * resolvedDistance
+        resolvedDistance = result.distance
+        isCollisionLimited = result.isCollisionLimited
+        return result.position
     }
 
     /// Forgets the collision readout, so a teleport does not report the zoom

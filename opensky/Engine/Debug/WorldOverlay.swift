@@ -149,15 +149,19 @@ nonisolated struct WorldOverlayFrameContext: Equatable, Sendable {
     let pathOverlayEnabled: Bool
     /// Perception view cones and investigate positions (issue #202).
     let detectionOverlayEnabled: Bool
+    /// The conversation camera's pivot, sightline and eye (issue #427).
+    let dialogueCameraOverlayEnabled: Bool
 
     init(
         navmeshOverlayEnabled: Bool = false,
         pathOverlayEnabled: Bool = false,
-        detectionOverlayEnabled: Bool = false
+        detectionOverlayEnabled: Bool = false,
+        dialogueCameraOverlayEnabled: Bool = false
     ) {
         self.navmeshOverlayEnabled = navmeshOverlayEnabled
         self.pathOverlayEnabled = pathOverlayEnabled
         self.detectionOverlayEnabled = detectionOverlayEnabled
+        self.dialogueCameraOverlayEnabled = dialogueCameraOverlayEnabled
     }
 }
 

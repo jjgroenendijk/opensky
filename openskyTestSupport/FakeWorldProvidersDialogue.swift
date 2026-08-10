@@ -1,6 +1,7 @@
-// `FakeWorldProviders`' DialogueControlProviding forwarding (issue #205). The
-// fake is shared by both test targets, so every conformance it carries has to
-// be too. See openskyTestSupport/AGENTS.md.
+// `FakeWorldProviders`' DialogueControlProviding and
+// DialogueCameraControlProviding forwarding (issues #205, #427). The fake is
+// shared by both test targets, so every conformance it carries has to be too.
+// See openskyTestSupport/AGENTS.md.
 
 import AppKit
 @testable import opensky
@@ -23,5 +24,27 @@ extension FakeWorldProviders {
 
     func sendDialogueInput(_ event: MenuInputEvent) {
         dialogue.sendDialogueInput(event)
+    }
+}
+
+/// The same forwarding for the camera half of the conversation (issue #427).
+extension FakeWorldProviders {
+    var dialogueCameraSnapshot: DialogueCameraSnapshot {
+        dialogueCamera.dialogueCameraSnapshot
+    }
+
+    var isDialogueCameraForced: Bool {
+        get { dialogueCamera.isDialogueCameraForced }
+        set { dialogueCamera.isDialogueCameraForced = newValue }
+    }
+
+    var dialogueCameraTarget: DialogueCameraTarget {
+        get { dialogueCamera.dialogueCameraTarget }
+        set { dialogueCamera.dialogueCameraTarget = newValue }
+    }
+
+    var dialogueCameraOverlayEnabled: Bool {
+        get { dialogueCamera.dialogueCameraOverlayEnabled }
+        set { dialogueCamera.dialogueCameraOverlayEnabled = newValue }
     }
 }

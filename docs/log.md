@@ -4,6 +4,26 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-10
 
+* **Dialogue camera and speaker focus (issue #427, item 17.4)**: a conversation now looks
+  like one. While the dialogue menu is open the view frames the speaker's `NPC Head [Head]`
+  bone from the side the player is standing on, and the speaker stops walking, turns to face
+  the player and has its package suspended; Leave hands all four back. The camera is an
+  override on `Renderer.freeFlyCamera` rather than a fourth `CameraMovementMode` — `G` never
+  reaches it and the mode underneath never changes — undone at the top of each input frame
+  and re-applied at the bottom, because `WalkController` integrates the player's facing out
+  of that same pose and a frame simulated against the dialogue pose would turn the player
+  round to face themselves. Its framing is derived rather than remembered: `openskycli gmst
+  list --prefix f` over the shipped `Skyrim.esm` declares no `fDialogueCamera*`, no
+  `fOverShoulder*` and no camera framing setting at all, so the distance comes from the
+  player capsule and the projected field of view, and the fill fraction is
+  `ThirdPersonCamera`'s rather than a second taste decision. The collision pull-in the two
+  cameras share is now one `CameraCollisionProbe`. Speaker focus goes through the
+  authorities that already own each thing: `stopActor` for the walk, a new `NPCFacingHold`
+  turning in place at the mover's own yaw rate, and an `ActorPackageRuntime` suspension
+  latch whose release force-re-selects for the world as it now is. `World > HUD &
+  Interaction > Dialogue Camera` is the verification surface, with a force toggle aimed at a
+  selected actor so the framing is checkable without a conversation, and a pivot gizmo in
+  the M16 overlay registry. See [dialogue runtime](/engine/dialogue.md), "Dialogue camera".
 * **Dialogue menu, Talk activation and subtitles (issue #205, item 17.3)**: the player can
   now start a conversation. New [dialogue menu](/engine/dialogue-menu.md) covers the
   player-facing half of M17. A living, non-hostile actor under the crosshair becomes an

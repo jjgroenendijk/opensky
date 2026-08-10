@@ -244,7 +244,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   said-state as a world-state component keyed by INFO with its additive DLGS save chunk;
   what choosing a response does, including result-fragment dispatch through the Papyrus
   runtime and the route a quest-stage result takes to `QuestRuntime.setStage`; the three
-  dialogue condition functions; and the fidelity gaps this version leaves open.
+  dialogue condition functions; the dialogue camera that frames the speaker's head as an
+  override rather than a fourth camera mode, and the speaker focus that stops, turns and
+  suspends the actor being talked to; and the fidelity gaps this version leaves open.
 * [Dialogue menu](/engine/dialogue-menu.md) - the player-facing half of dialogue: Talk
   activation on an actor through the melee capsule narrowphase rather than the static
   collision BVH, the occluder rule that keeps a shopkeeper behind a door from being a

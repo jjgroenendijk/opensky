@@ -17,6 +17,10 @@ extension Renderer {
     }
 
     func reseedMovement(camera newCamera: SceneCamera) {
+        // A held dialogue pose describes a place the player is no longer in,
+        // and restoring it after the reseed would undo the teleport.
+        restorePlayerCameraPose()
+        dialogueCameraState.camera.reset()
         freeFlyCamera = FreeFlyCamera(framing: newCamera)
         if movementMode.isPlayerControlled, let feet = newCamera.walkFeetPosition {
             freeFlyCamera.position = feet
@@ -34,6 +38,12 @@ extension Renderer {
     /// move. dt clamps to 100 ms; WalkController further uses fixed substeps.
     func advanceCamera() {
         guard let input else { return }
+        // The dialogue camera stands in for the player's view between frames
+        // (RendererDialogueCamera.swift). Everything below simulates the
+        // player, and simulating against a pose that is looking at somebody
+        // else would turn the player to face them, so the player's own pose
+        // goes back first and the override is re-applied at the end.
+        restorePlayerCameraPose()
         // Menu mode pauses the sim: dt goes to zero so the camera holds its pose
         // while the clock keeps its mark fresh (resume carries no time jump).
         let dt = cameraClock.advance(to: CACurrentMediaTime(), paused: worldSimPaused)
@@ -50,6 +60,7 @@ extension Renderer {
         }
         updatePlayerBodyPose()
         updatePlayerFirstPersonPose()
+        applyDialogueCamera()
     }
 
     /// Switches camera mode, re-seating the capsule under the current eye when
@@ -57,6 +68,11 @@ extension Renderer {
     /// `World > Camera` selector so the two cannot drift apart.
     func setMovementMode(_ mode: CameraMovementMode) {
         guard mode != movementMode else { return }
+        // Re-seating the capsule reads the view pose, which a live conversation
+        // is standing in for; the mode change happens to the player's own pose
+        // and the override goes back on top of the result.
+        restorePlayerCameraPose()
+        defer { applyDialogueCamera() }
         let wasPlayerControlled = movementMode.isPlayerControlled
         movementMode = mode
         thirdPersonCamera.reset()

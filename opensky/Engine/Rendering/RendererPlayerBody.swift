@@ -80,7 +80,8 @@ extension Renderer {
             mode: movementMode,
             hasBody: playerBody != nil,
             hasArms: playerFirstPersonRig != nil,
-            armsEnabled: firstPersonArmsEnabled
+            armsEnabled: firstPersonArmsEnabled,
+            dialogueCamera: isDialogueCameraEngaged
         )
     }
 

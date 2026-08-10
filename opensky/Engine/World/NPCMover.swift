@@ -108,7 +108,7 @@ struct NPCMover {
         let nextGait: LocomotionGait = distance > NPCMovementRuntime.runDistance ? .run : .walk
         let speed = nextGait == .run ? configuration.runSpeed.value : configuration.walkSpeed.value
         let targetYaw = distance > 0 ? atan2f(delta.y, delta.x) : yaw
-        let turnedYaw = NPCMoverAngles.turn(
+        let turnedYaw = NPCYawMath.turn(
             from: yaw,
             to: targetYaw,
             maximum: NPCMovementRuntime.maximumYawSpeed * max(frameTime, 0)
@@ -240,18 +240,5 @@ struct NPCMover {
             TriggerTransitionEvent(reference: $0, phase: .leave, actor: actor)
         }
         occupiedTriggers.removeAll()
-    }
-}
-
-private enum NPCMoverAngles {
-    static func turn(from source: Float, to target: Float, maximum: Float) -> Float {
-        var delta = (target - source).truncatingRemainder(dividingBy: .pi * 2)
-        if delta > .pi {
-            delta -= .pi * 2
-        }
-        if delta < -.pi {
-            delta += .pi * 2
-        }
-        return source + min(max(delta, -maximum), maximum)
     }
 }

@@ -155,6 +155,10 @@ final class GameViewController: NSViewController {
     /// `GameViewControllerDialogueMenu.swift`; stored here because extensions
     /// cannot add state.
     var dialogue = DialogueBridgeState()
+    /// Conversation camera override and speaker focus (issue #427). The
+    /// implementation lives in `GameViewControllerDialogueCamera.swift`; stored
+    /// here because extensions cannot add state.
+    var dialogueCamera = DialogueCameraBridgeState()
     /// Container and barter menu two-pane list, merchant nomination and
     /// presentation state (issue #179). The implementation lives in
     /// `GameViewControllerContainerMenu.swift`; stored here because extensions

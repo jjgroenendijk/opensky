@@ -86,10 +86,15 @@ extension Renderer {
     /// and not only to the arms, which is what makes it a comfort setting
     /// rather than a lens on the hands, so this returns one angle for the
     /// frame rather than two.
+    ///
+    /// A conversation is projected at the shared world angle whatever mode it
+    /// interrupted (issue #427): the dialogue camera stands outside the
+    /// player's head, so the first-person comfort setting has nothing to say
+    /// about it, and every conversation is framed the same way as a result.
     var activeFOVYRadians: Float {
-        movementMode == .walk
-            ? firstPersonCamera.fovYRadians
-            : FirstPersonCamera.defaultFOVYRadians
+        isDialogueCameraEngaged
+            ? DialogueCamera.fovYRadians
+            : dialogueCameraRestoreFOVYRadians
     }
 
     /// Rebuilds `projectionMatrix` for the current mode, field of view, and

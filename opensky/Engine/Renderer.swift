@@ -106,6 +106,13 @@ final class Renderer: NSObject {
     /// Orbit/shoulder framing and collision zoom for `.thirdPerson`
     /// (issue #189). Pure math over the capsule pose; holds no pose of its own.
     var thirdPersonCamera = ThirdPersonCamera()
+    /// The conversation camera's focus, framing math and saved player pose
+    /// (issue #427, RendererDialogueCamera.swift). An override on top of
+    /// whatever `movementMode` is, never a mode of its own.
+    var dialogueCameraState = RendererDialogueCameraState()
+    /// Draws the dialogue camera's pivot, sightline and eye through the M16
+    /// world-overlay registry. Off by default like every other overlay.
+    var dialogueCameraOverlayEnabled = false
     /// The player's rendered body, attached once the app has assembled it and
     /// deliberately not part of `scene`: it survives every cell swap
     /// (RendererPlayerBody.swift). nil in offscreen/CLI paths and until the

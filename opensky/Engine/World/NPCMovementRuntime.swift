@@ -32,7 +32,11 @@ struct NPCMovementRuntime {
     static let stuckTimeout: Float = 2
     static let progressTolerance: Float = 1
     static let runDistance: Float = 512
-    static let maximumYawSpeed: Float = .pi * 2
+    /// How fast an actor may turn, in radians per second. Explicitly
+    /// `nonisolated` so the in-place turn (`NPCFacingHold`, issue #427) can
+    /// corner at the same rate a mover does without becoming main-actor
+    /// isolated itself.
+    nonisolated static let maximumYawSpeed: Float = .pi * 2
 
     var onDrive: ((NPCLocomotionDriveUpdate) -> Void)?
     var onPersist: ((NPCMovementPersistence) -> Void)?
@@ -41,9 +45,17 @@ struct NPCMovementRuntime {
 
     private var movers: [ReferenceKey: NPCMover] = [:]
     private var parked: [ReferenceKey: NPCParkedMovement] = [:]
+    /// Actors turning on the spot (issue #427). Not counted against the mover
+    /// cap: a turn runs no path, no collision sweep and no repath, so the CPU
+    /// budget the cap protects does not apply to it.
+    private var facings: [ReferenceKey: NPCFacingHold] = [:]
 
     var activeMoverCount: Int {
         movers.count
+    }
+
+    var activeFacingCount: Int {
+        facings.count
     }
 
     mutating func start(_ start: NPCMoveStart) -> Bool {
@@ -52,6 +64,43 @@ struct NPCMovementRuntime {
         }
         movers[start.actor] = NPCMover(start: start)
         parked.removeValue(forKey: start.actor)
+        // Walking somewhere outranks standing still looking at something: the
+        // mover owns the yaw from here, and a hold left behind would fight it.
+        facings.removeValue(forKey: start.actor)
+        return true
+    }
+
+    /// Turns one actor on the spot towards a world point and holds it there.
+    ///
+    /// Takes the actor's mover away first, for the reason a walk takes a hold
+    /// away: one owner of a yaw at a time. A hold that is already running is
+    /// re-aimed rather than restarted, so a player circling a speaker mid
+    /// conversation is followed smoothly instead of snapping on every update.
+    mutating func face(_ start: NPCFaceStart) {
+        if var hold = facings[start.actor] {
+            hold.aim(at: start.target)
+            facings[start.actor] = hold
+            return
+        }
+        let settled = parked[start.actor]?.readout ?? movers[start.actor]?.readout
+        stop(start.actor)
+        facings[start.actor] = NPCFacingHold(
+            start: start,
+            feetPosition: settled?.feetPosition ?? start.placement.position,
+            yaw: settled?.yaw ?? start.placement.rotation.z
+        )
+    }
+
+    /// Releases a hold, parking the actor on the bearing it reached.
+    ///
+    /// - Returns: true when there was a hold to release.
+    @discardableResult
+    mutating func releaseFacing(_ actor: ReferenceKey) -> Bool {
+        guard let hold = facings.removeValue(forKey: actor) else { return false }
+        parked[actor] = NPCParkedMovement(
+            readout: hold.readout, transform: hold.transform
+        )
+        onPersist?(hold.persistence(reason: .turn))
         return true
     }
 
@@ -79,6 +128,12 @@ struct NPCMovementRuntime {
     }
 
     mutating func advance(by frameTime: Float, world: NPCMovementWorld) {
+        for key in facings.keys.sorted() {
+            guard var hold = facings[key] else { continue }
+            let drive = hold.advance(by: frameTime)
+            facings[key] = hold
+            onDrive?(drive)
+        }
         for key in movers.keys.sorted() {
             guard var mover = movers[key] else { continue }
             let outcome = mover.advance(by: frameTime, world: world)
@@ -100,21 +155,31 @@ struct NPCMovementRuntime {
             guard let mover = movers[key] else { continue }
             onPersist?(mover.persistence(reason: .save))
         }
+        for key in facings.keys.sorted() {
+            guard let hold = facings[key] else { continue }
+            onPersist?(hold.persistence(reason: .save))
+        }
     }
 
     func transform(for actor: ReferenceKey) -> ReferenceTransformOverride? {
-        movers[actor]?.transform ?? parked[actor]?.transform
+        movers[actor]?.transform ?? facings[actor]?.transform ?? parked[actor]?.transform
+    }
+
+    /// What one actor is turning towards, when it is turning.
+    func facing(for actor: ReferenceKey) -> NPCFacingHold? {
+        facings[actor]
     }
 
     func readouts() -> [NPCMovementReadout] {
-        let live = movers.values.map(\.readout)
-        return (live + parked.values.map(\.readout)).sorted { $0.actor < $1.actor }
+        let live = movers.values.map(\.readout) + facings.values.map(\.readout)
+        let held = parked.filter { facings[$0.key] == nil }.values.map(\.readout)
+        return (live + held).sorted { $0.actor < $1.actor }
     }
 
     func instanceDeltas() -> [UInt32: float4x4] {
-        Dictionary(uniqueKeysWithValues: movers.values.map { mover in
-            (mover.formID.rawValue, mover.instanceDelta)
-        })
+        let moving = movers.values.map { ($0.formID.rawValue, $0.instanceDelta) }
+        let turning = facings.values.map { ($0.formID.rawValue, $0.instanceDelta) }
+        return Dictionary(moving + turning) { _, turned in turned }
     }
 
     private func publish(_ emissions: NPCMoverEmissions) {

@@ -61,7 +61,12 @@ extension GameViewController {
     /// is the one the actor should be doing. That is exactly
     /// `forceReevaluate(actor:clock:context:)`, which the package runtime
     /// already exposes for the gate panel.
+    ///
+    /// A conversation does suspend selection rather than merely outrunning it
+    /// (issue #427), so this also lifts that latch — which leaves the same
+    /// question either way: what should this actor be doing now?
     func resumePackage(for actor: ReferenceKey) {
+        packages.runtime?.setSuspended(false, actor: actor)
         guard
             var runtime = packages.runtime,
             let streamer,

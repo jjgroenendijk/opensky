@@ -12,6 +12,10 @@ nonisolated enum NPCMovementState: String, Equatable, Sendable {
     /// Stopped on request before reaching the target, which is what an actor
     /// that came into weapon range or gave up a chase does (issue #424).
     case halted
+    /// Turning on the spot towards a point, feet planted (issue #427).
+    case turning
+    /// Turned, and holding that bearing until the hold is released.
+    case facing
 }
 
 nonisolated enum NPCMovementSettleReason: String, Equatable, Sendable {
@@ -20,6 +24,8 @@ nonisolated enum NPCMovementSettleReason: String, Equatable, Sendable {
     case halt
     case cellHandoff
     case save
+    /// An in-place turn reached the bearing it was asked for (issue #427).
+    case turn
 }
 
 nonisolated struct NPCMovementReadout: Equatable, Sendable {
@@ -72,6 +78,20 @@ protocol MoveToPointControl: AnyObject {
     /// - Returns: true when there was a live mover to stop.
     @discardableResult
     func stopActor(_ actor: ReferenceKey) -> Bool
+
+    /// Turns one actor on the spot to face a world point and holds it there
+    /// (issue #427). A conversation's "look at me": the speaker stops what it
+    /// was doing, turns to the player, and stays turned until released.
+    ///
+    /// - Returns: true when the actor is resident and the turn was taken up.
+    @discardableResult
+    func faceActor(_ actor: ReferenceKey, towards point: SIMD3<Float>) -> Bool
+
+    /// Releases a facing hold, leaving the actor where and as it now stands.
+    ///
+    /// - Returns: true when there was a hold to release.
+    @discardableResult
+    func releaseActorFacing(_ actor: ReferenceKey) -> Bool
 
     func npcMovementReadouts() -> [NPCMovementReadout]
 }
