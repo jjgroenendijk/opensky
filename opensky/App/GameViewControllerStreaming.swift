@@ -91,7 +91,7 @@ extension GameViewController {
         // Last of the combat systems: the loop reads what melee, archery and
         // the ragdolls did this frame, so it has to advance after all three
         // (issue #374).
-        wireLateWorldSystems(provider: provider, renderer: renderer)
+        wireLateWorldSystems(provider: provider, renderer: renderer, streamer: controller)
         renderer.terrainSampler = { [weak controller] position in
             controller?.sampleTerrain(at: position)
         }
@@ -116,13 +116,18 @@ extension GameViewController {
 
     private func wireLateWorldSystems(
         provider: any CellSceneProvider,
-        renderer: Renderer
+        renderer: Renderer,
+        streamer: CellStreamer
     ) {
         wireCombat(provider: provider, renderer: renderer)
         // Package conditions observe the live quest, actor and reference state,
         // so selection advances after those runtimes in the same world tick.
         wirePackages(provider: provider, renderer: renderer)
         wirePerception(provider: provider, renderer: renderer)
+        // Last (issue #205): the Talk candidate filter reads the death and
+        // hostility state the combat and perception runtimes keep, so wiring it
+        // earlier would hand the crosshair a list built before they existed.
+        wireDialogue(provider: provider, streamer: streamer)
     }
 
     /// View ray for use-key targeting, simulated-player modes only: the fly

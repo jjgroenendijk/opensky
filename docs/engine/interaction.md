@@ -57,6 +57,17 @@ This ordering makes an ordinary wall occlude an activator behind it. It also est
 current limitation: a placed object without player-solid decoded collision cannot be
 targeted yet.
 
+### Actors
+
+Roadmap item 17.3 added a second candidate that is not in that BVH at all. An actor is
+picked by `TalkTargeting`, which tests the same view ray against actor capsules through the
+melee narrowphase, and the result becomes an ordinary `InteractionTarget` with action
+`InteractionAction.talk` — so the prompt, the compass marker and the panel readout need no
+second path. The nearest solid hit is still resolved first and is still the occluder: an
+actor counts only when it is nearer than any geometry along the ray, whether or not that
+geometry activates anything. Why actors are not in the BVH, and which machinery the pick
+reuses instead, is in [dialogue menu](/engine/dialogue-menu.md).
+
 ## Activation
 
 Target changes publish `InteractionTarget`, containing the placed interaction, exact hit
@@ -77,6 +88,14 @@ anything; an event for a reference no resident cell knows is dropped rather than
 under a guessed identity. The details of what it then writes are in
 [Papyrus virtual machine](/engine/papyrus-vm.md) and
 [runtime state](/engine/runtime-state.md).
+
+An activated actor publishes a second event beside the first.
+`CellStreamer.onTalkActivation` is another `CallbackFanOut`, carrying
+`TalkActivationEvent` with the speaker's session-stable `ReferenceKey` — the identity
+dialogue selection, said-state and a save all address a response by, which the
+`FormID`-keyed `InteractionEvent` cannot carry. It fires after the plain event, so audio and
+Papyrus see an activated actor exactly as they see an activated door before anything opens a
+menu on top of the world.
 
 DOOR uses that same event path. When the selected interaction has action `Open`, the
 streamer requests a transition for that exact REFR. A door with XTEL follows the existing

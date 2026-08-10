@@ -202,6 +202,18 @@ run "swf container-menu (bartermenu.swf)" swf container-menu --mode barter --tra
 grep 'swf container-menu diagnostics:' "$log" | tail -1 | grep -q ' 0 unhandled of ' \
   || fail "bartermenu.swf made unanswered engine calls"
 
+# M17.3 dialogue menu gate: the vanilla movie comes up through
+# DialogueMenuMovieBridge, publishes every entry point the bridge drives, takes
+# a published topic list and says a line. Vanilla install: 0 faults, 0 unhandled
+# invokes, 0 missing entry points.
+run "swf dialogue-menu (dialoguemenu.swf)" swf dialogue-menu --rows 4 --down 1 --speak
+grep 'swf dialogue-menu entry points:' "$log" | tail -1 | grep -q ' 0 missing' \
+  || fail "dialoguemenu.swf is missing an entry point the bridge drives"
+grep 'swf dialogue-menu diagnostics:' "$log" | tail -1 | grep -q ' 0 faults' \
+  || fail "dialoguemenu.swf faulted during bring-up"
+grep 'swf dialogue-menu diagnostics:' "$log" | tail -1 | grep -q ' 0 unhandled of ' \
+  || fail "dialoguemenu.swf made unanswered engine calls"
+
 # M8.3.1 SWF action-inventory gate: every movie's action side (DoAction,
 # DoInitAction, CLIPACTIONS) decodes with zero unexpected failures and zero
 # opcodes outside the Adobe action table. Vanilla install: 53 movies, ~3,414

@@ -2,6 +2,30 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-10
+
+* **Dialogue menu, Talk activation and subtitles (issue #205, item 17.3)**: the player can
+  now start a conversation. New [dialogue menu](/engine/dialogue-menu.md) covers the
+  player-facing half of M17. A living, non-hostile actor under the crosshair becomes an
+  ordinary crosshair target with a new `InteractionAction.talk`, picked by reusing
+  `MeleeHitDetector.closestApproach` against actor capsules rather than by putting actors
+  into the immutable per-cell collision BVH they move through every frame; the nearest
+  solid hit is still the occluder, so a shopkeeper behind a shut door is not a target.
+  [Menu mode](/engine/menu-mode.md) gained a per-menu `MenuWorldPolicy`, because vanilla
+  dialogue is the one menu that captures input while the world keeps running — voice,
+  facing and lip sync all advance on that clock — and a pausing menu opened over a
+  conversation still stops the world and hands it back on close. The vanilla
+  `dialoguemenu.swf` contract was measured with the new `openskycli swf dialogue-menu`
+  probe: zero faults, zero unimplemented opcodes, the `DialogueMenuObj` state vocabulary
+  read off the movie rather than pinned to numbers, and `TopicList.SetSelectedTopic`
+  measured and deliberately unused because driving it with a row index sends the movie back
+  to row 0. Response text resolves out of `.ilstrings` and the DIAL `FULL` and INFO `RNAM`
+  row text out of `.strings`, each measured with `--text` against all three tables. The
+  HUD's long-reserved `SubtitleTextHolder` is finally driven, and clears on advance and on
+  exit until item 17.5's playback clock can time a line. `World > HUD & Interaction >
+  Dialogue` is the verification surface, with a condition-trace readout that says why a
+  topic the player expected is not listed.
+
 ## 2026-08-09
 
 * **Dialogue runtime (issue #426, item 17.2)**: a speaker now has something to say. New

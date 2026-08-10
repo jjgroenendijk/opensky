@@ -122,6 +122,16 @@ extension OpenSkyCLI {
                                   and player; print the movie's rows, both
                                   purses, the resolved barter pricing, the
                                   selected row's price and the diagnostics
+      swf dialogue-menu [--ticks <n>] [--down <n>] [--rows <n>] [--speak]
+                        [--text] [--probe-rows <n>]
+                                  Drive dialoguemenu.swf through its bridge
+                                  against real DIAL/INFO records; print the
+                                  movie's state constants, the entry points it
+                                  publishes, the rows it built, both
+                                  selections, the speaker and subtitle fields
+                                  and the diagnostics. --text resolves every
+                                  field out of all three string tables;
+                                  --probe-rows measures the row field names
       swf info <key>               Parse one movie; print header + tag list
       audio info <key>            Frame one .xwm file; print WAVEFORMATEX codec
                                   parameters, dpds packet table and payload

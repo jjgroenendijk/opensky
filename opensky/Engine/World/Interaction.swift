@@ -16,6 +16,13 @@ nonisolated enum InteractionAction: Equatable, Sendable {
     /// action, so the HUD prompt reads "Take Iron Sword" from the same
     /// label-plus-name composition every action uses.
     case take
+    /// A living actor the player can start a conversation with (issue #205).
+    /// Unlike every other action here the target is not a placed object with
+    /// collision geometry; `TalkTargeting` picks it off the same view ray
+    /// against actor capsules, and `CellStreamer` publishes it through the same
+    /// `InteractionTarget` so the crosshair, the prompt and the compass marker
+    /// need no second path.
+    case talk
 
     var defaultLabel: String {
         switch self {
@@ -25,6 +32,11 @@ nonisolated enum InteractionAction: Equatable, Sendable {
         case .harvest: "Harvest"
         case .use: "Activate"
         case .take: "Take"
+        // "Talk to <name>" rather than "Talk <name>", which is the one label
+        // here whose wording is OpenSky's: the prompt is composed as label plus
+        // name for every action, and nothing measured out of the install says
+        // what the vanilla HUD writes for an actor.
+        case .talk: "Talk to"
         }
     }
 }
@@ -56,6 +68,24 @@ nonisolated struct InteractionTarget: Equatable, Sendable {
 /// One use-key activation. M11 Papyrus OnActivate can subscribe to this
 /// engine event without changing the raycast or door transition path.
 nonisolated struct InteractionEvent: Equatable, Sendable {
+    let target: InteractionTarget
+}
+
+/// One use-key activation of an actor (issue #205): the event the dialogue
+/// menu opens on.
+///
+/// Separate from `InteractionEvent` rather than a case inside it because it
+/// carries something that event cannot: the speaker's `ReferenceKey`. Every
+/// other interaction addresses a placed object by `FormID`, while dialogue
+/// selection, said-state and a save all key off the session-stable identity,
+/// and re-resolving it downstream would put the same lookup in every consumer.
+/// The plain `InteractionEvent` is still published beside this one, so the
+/// audio director and the Papyrus `OnActivate` subscribers see an activated
+/// actor exactly as they see an activated door.
+nonisolated struct TalkActivationEvent: Equatable, Sendable {
+    /// The actor being spoken to.
+    let speaker: ReferenceKey
+    /// The crosshair target it was picked from, for the readouts.
     let target: InteractionTarget
 }
 

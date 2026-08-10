@@ -107,3 +107,30 @@ extension CellStreamer {
         evictUnused(departed)
     }
 }
+
+extension CellStreamer {
+    /// Drops the mesh and texture keys `candidates` held that nothing resident
+    /// still needs.
+    ///
+    /// Lives here rather than in CellStreamer.swift because every caller is a
+    /// residency change — a coverage transition, an unload, a door swap — and
+    /// the set it protects is exactly the composition plus whatever is staged
+    /// offscreen. An interior scene and the staged cells are unioned in because
+    /// neither is part of the composition while it owns the view, and evicting
+    /// what they are drawing would drop a live asset.
+    func evictUnused(_ candidates: CellAssets) {
+        var resident = composition.residentAssets()
+        if let interiorScene {
+            resident.meshKeys.formUnion(interiorScene.assets.meshKeys)
+            resident.textureKeys.formUnion(interiorScene.assets.textureKeys)
+        }
+        for scene in stagedCells.values {
+            resident.meshKeys.formUnion(scene.assets.meshKeys)
+            resident.textureKeys.formUnion(scene.assets.textureKeys)
+        }
+        runner.enqueueEviction(
+            droppingMeshKeys: candidates.meshKeys.subtracting(resident.meshKeys),
+            droppingTextureKeys: candidates.textureKeys.subtracting(resident.textureKeys)
+        )
+    }
+}

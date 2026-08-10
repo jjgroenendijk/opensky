@@ -30,6 +30,8 @@ enum SWFCommand {
             try SWFQuestJournalCommand.run(context: context, scanner: &scanner)
         case "container-menu":
             try SWFContainerMenuCommand.run(context: context, scanner: &scanner)
+        case "dialogue-menu":
+            try SWFDialogueMenuCommand.run(context: context, scanner: &scanner)
         case "info":
             let path = try scanner.positional("path")
             try scanner.finish()

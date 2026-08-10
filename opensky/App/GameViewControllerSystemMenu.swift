@@ -141,7 +141,7 @@ extension GameViewController {
 }
 
 extension GameViewController: MenuInputConsumer {
-    /// One consumer, four menus: the controller is the only
+    /// One consumer, five menus: the controller is the only
     /// `MenuInputConsumer`, so it dispatches on the top of the menu stack
     /// rather than on a private flag. Each route guards on its own menu being
     /// open, so an event that arrives while none is does nothing.
@@ -153,6 +153,8 @@ extension GameViewController: MenuInputConsumer {
             routeContainerMenuInput(event)
         case Self.journalIdentifier:
             routeJournalInput(event)
+        case Self.dialogueIdentifier:
+            routeDialogueInput(event)
         default:
             routeSystemMenuInput(event)
         }

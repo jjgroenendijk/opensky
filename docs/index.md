@@ -245,6 +245,14 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   what choosing a response does, including result-fragment dispatch through the Papyrus
   runtime and the route a quest-stage result takes to `QuestRuntime.setStage`; the three
   dialogue condition functions; and the fidelity gaps this version leaves open.
+* [Dialogue menu](/engine/dialogue-menu.md) - the player-facing half of dialogue: Talk
+  activation on an actor through the melee capsule narrowphase rather than the static
+  collision BVH, the occluder rule that keeps a shopkeeper behind a door from being a
+  target, the per-menu world-pause policy that lets a conversation run while the world
+  keeps simulating, the measured `dialoguemenu.swf` contract including the one method that
+  is measured and deliberately unused, the movie-free menu model, string-table resolution
+  per field, gameplay subtitles on the HUD, and the entry points deferred to voice and lip
+  sync.
 * [Runtime reference identity and world state](/engine/runtime-state.md) - session-stable
   ReferenceKey identity over plugin and generated references, the per-cell
   RuntimeReferenceIndex, and the mutable WorldStateStore above it: typed component deltas,
