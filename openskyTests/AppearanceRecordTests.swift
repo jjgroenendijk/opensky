@@ -8,6 +8,35 @@ import Foundation
 import Testing
 
 struct AppearanceRecordDecodeTests {
+    // MARK: - HDPT
+
+    @Test func headPartPairsNamedMorphKindsWithPaths() throws {
+        var fields = ESMFixture.field("EDID", ESMFixture.zstring("MaleHeadNord"))
+        fields += uint32Field("NAM0", 0)
+        fields += ESMFixture.field("NAM1", ESMFixture.zstring("maleheadraces.tri"))
+        fields += uint32Field("NAM0", 1)
+        fields += ESMFixture.field("NAM1", ESMFixture.zstring("malehead.tri"))
+        fields += uint32Field("NAM0", 2)
+        fields += ESMFixture.field("NAM1", ESMFixture.zstring("maleheadchargen.tri"))
+        let part = try HeadPart(record: record(
+            ESMFixture.record("HDPT", formID: 0x5162F, data: fields)
+        ))
+
+        #expect(part.editorID == "MaleHeadNord")
+        #expect(part.expressionMorphPath == "malehead.tri")
+        #expect(part.morphPaths.map(\.kind) == [.race, .expression, .chargen])
+    }
+
+    @Test func headPartIgnoresNam1WithoutATypeAndUnknownTypes() throws {
+        var fields = ESMFixture.field("NAM1", ESMFixture.zstring("orphan.tri"))
+        fields += uint32Field("NAM0", 99)
+        fields += ESMFixture.field("NAM1", ESMFixture.zstring("future.tri"))
+        let part = try HeadPart(record: record(
+            ESMFixture.record("HDPT", formID: 1, data: fields)
+        ))
+        #expect(part.morphPaths.isEmpty)
+    }
+
     // MARK: - BodyTemplate / BodySlots
 
     @Test func bod2DecodesSlotsAndArmorType() throws {
@@ -132,6 +161,29 @@ struct AppearanceRecordDecodeTests {
         #expect(race.femaleSkeletonPath == "skel_f.nif")
     }
 
+    @Test func raceDecodesGenderedFaceGenHeadPartLists() throws {
+        var fields = ESMFixture.field("MNAM", Data())
+        fields += ESMFixture.field("ANAM", ESMFixture.zstring("skel_m.nif"))
+        fields += ESMFixture.field("FNAM", Data())
+        fields += ESMFixture.field("ANAM", ESMFixture.zstring("skel_f.nif"))
+        fields += ESMFixture.field("NAM0", Data())
+        fields += ESMFixture.field("MNAM", Data())
+        fields += uint32Field("HEAD", 0x10)
+        fields += uint32Field("HEAD", 0x11)
+        fields += ESMFixture.field("NAM0", Data())
+        fields += ESMFixture.field("FNAM", Data())
+        fields += uint32Field("HEAD", 0x20)
+        let race = try Race(
+            record: record(ESMFixture.record("RACE", formID: 1, data: fields)),
+            localized: false
+        )
+
+        #expect(race.maleHeadParts == [FormID(0x10), FormID(0x11)])
+        #expect(race.femaleHeadParts == [FormID(0x20)])
+        #expect(race.maleSkeletonPath == "skel_m.nif")
+        #expect(race.femaleSkeletonPath == "skel_f.nif")
+    }
+
     @Test func raceRejectsOtherRecordTypes() throws {
         let bytes = ESMFixture.record("ARMO", formID: 1, data: Data())
         #expect(throws: ESMError.self) {
@@ -248,6 +300,10 @@ private func record(_ bytes: Data) throws -> ESMRecord {
 }
 
 private func formIDField(_ type: String, _ value: UInt32) -> Data {
+    uint32Field(type, value)
+}
+
+private func uint32Field(_ type: String, _ value: UInt32) -> Data {
     var data = Data()
     data.appendUInt32(value)
     return ESMFixture.field(type, data)
