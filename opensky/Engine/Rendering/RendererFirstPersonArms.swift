@@ -137,12 +137,14 @@ extension Renderer {
             groups: rig.render.opaque,
             staticPipeline: opaquePipeline,
             skinnedPipeline: skinnedOpaquePipeline,
+            morphedSkinnedPipeline: morphedSkinnedOpaquePipeline,
             state: &state
         )
         encode(
             groups: rig.render.alphaTested,
             staticPipeline: alphaTestPipeline,
             skinnedPipeline: skinnedAlphaTestPipeline,
+            morphedSkinnedPipeline: morphedSkinnedAlphaTestPipeline,
             state: &state
         )
         state.encoder.setViewport(MTLViewport(

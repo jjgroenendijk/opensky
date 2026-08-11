@@ -168,6 +168,9 @@ nonisolated struct ActorVisualResolver {
     /// Slot and model data for runtime-equipped items (issue #178). Empty in
     /// the fixtures that only exercise the plugin `defaultOutfit` path.
     let equipment: EquipmentCatalog
+    /// HDPT records named by NPC_ and RACE head-part lists. Only expression
+    /// TRI association fields are decoded (issue #207).
+    let headParts: [UInt32: HeadPart]
 
     init(
         races: [UInt32: Race],
@@ -176,7 +179,8 @@ nonisolated struct ActorVisualResolver {
         outfits: [UInt32: Outfit],
         leveledItems: [UInt32: LeveledList],
         formIDResolver: FormIDResolver,
-        equipment: EquipmentCatalog = EquipmentCatalog(items: [:])
+        equipment: EquipmentCatalog = EquipmentCatalog(items: [:]),
+        headParts: [UInt32: HeadPart] = [:]
     ) {
         self.races = races
         self.armors = armors
@@ -185,6 +189,7 @@ nonisolated struct ActorVisualResolver {
         self.leveledItems = leveledItems
         self.formIDResolver = formIDResolver
         self.equipment = equipment
+        self.headParts = headParts
     }
 
     /// Indexes every decodable RACE/ARMO/ARMA/OTFT/LVLI top-group record.
@@ -202,7 +207,8 @@ nonisolated struct ActorVisualResolver {
             outfits: index(file, "OTFT") { try Outfit(record: $0) },
             leveledItems: index(file, "LVLI") { try LeveledList(record: $0) },
             formIDResolver: FormIDResolver(pluginName: pluginName, masters: masters),
-            equipment: EquipmentCatalog.build(from: file)
+            equipment: EquipmentCatalog.build(from: file),
+            headParts: index(file, "HDPT") { try HeadPart(record: $0) }
         )
     }
 
@@ -291,6 +297,26 @@ nonisolated struct ActorVisualResolver {
             faceGenTintPath: face.map(FaceGenPaths.tint(for:)),
             skips: skips
         )
+    }
+
+    /// Expression-bearing HDPT records for one resolved actor. RACE supplies
+    /// the default head and mouth; NPC_ head parts supply the chosen eyes,
+    /// brows, hair, facial hair and marks. FormID order stays deterministic.
+    func expressionHeadParts(for appearance: ResolvedActorAppearance) -> [HeadPart] {
+        guard
+            let raceID = appearance.race.value,
+            let race = races[raceID.rawValue]
+        else { return [] }
+        let defaults = appearance.isFemale.value
+            ? race.femaleHeadParts : race.maleHeadParts
+        var seen = Set<UInt32>()
+        return (defaults + appearance.headParts.value).compactMap { id in
+            guard seen.insert(id.rawValue).inserted else { return nil }
+            guard let part = headParts[id.rawValue], part.expressionMorphPath != nil else {
+                return nil
+            }
+            return part
+        }
     }
 
     /// The union of worn ARMO body slots — the mask that hides covered skin.

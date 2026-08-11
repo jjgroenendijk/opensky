@@ -146,6 +146,7 @@ extension Renderer {
         }
         // First encode step of the frame -> owns the shared per-frame reset.
         frameBonePrepared.removeAll(keepingCapacity: true)
+        frameMorphPrepared.removeAll(keepingCapacity: true)
         shadowCascades = []
         shadowsActiveThisFrame = false
         lastShadowDrawStats = ShadowDrawStats()
@@ -278,7 +279,7 @@ extension Renderer {
         for group in groups where group.castsShadows && layers.contains(group.layer) {
             let visible = writeVisibleShadowInstances(of: group, in: context, state: &state)
             guard visible.written > 0 else { continue }
-            let pipeline = shadowPipeline(skinned: group.mesh.isSkinned, alphaTested: alphaTested)
+            let pipeline = shadowPipeline(group: group, alphaTested: alphaTested)
             if boundPipeline != ObjectIdentifier(pipeline) {
                 context.encoder.setRenderPipelineState(pipeline)
                 boundPipeline = ObjectIdentifier(pipeline)
@@ -362,6 +363,7 @@ extension Renderer {
         if group.mesh.isSkinned {
             bindShadowSkinning(for: group.mesh, slot: state.slot)
         }
+        bindShadowMorph(group.faceMorph, slot: state.slot)
         if alphaTested {
             argumentTable.setTexture(
                 group.material.diffuse.gpuResourceID,
@@ -455,8 +457,14 @@ extension Renderer {
 
     /// Skinned casters always use the skinned depth pipeline (skips alpha
     /// discard for skinned cutouts -> conservative solid shadow).
-    private func shadowPipeline(skinned: Bool, alphaTested: Bool) -> MTLRenderPipelineState {
-        if skinned {
+    private func shadowPipeline(
+        group: DrawGroup,
+        alphaTested: Bool
+    ) -> MTLRenderPipelineState {
+        if group.faceMorph != nil {
+            return shadow.pipelines.morphedSkinned
+        }
+        if group.mesh.isSkinned {
             return shadow.pipelines.skinned
         }
         return alphaTested ? shadow.pipelines.alphaTest : shadow.pipelines.staticCaster

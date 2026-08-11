@@ -33,7 +33,12 @@ nonisolated extension RenderScene {
         groups.compactMap { group in
             let instances = group.instances.filter(predicate)
             guard !instances.isEmpty else { return nil }
-            return DrawGroup(mesh: group.mesh, material: group.material, instances: instances)
+            return DrawGroup(
+                mesh: group.mesh,
+                material: group.material,
+                faceMorph: group.faceMorph,
+                instances: instances
+            )
         }
     }
 

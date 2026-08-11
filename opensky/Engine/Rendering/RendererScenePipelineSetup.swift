@@ -14,6 +14,7 @@ import MetalKit
 nonisolated struct DebugRenderPipelines {
     let staticMesh: MTLRenderPipelineState
     let skinned: MTLRenderPipelineState
+    let morphedSkinned: MTLRenderPipelineState
     let terrain: MTLRenderPipelineState
     let grass: MTLRenderPipelineState
     let water: MTLRenderPipelineState
@@ -91,6 +92,11 @@ extension Renderer {
                 label: "DebugSkinned", vertex: "skinnedMeshVertex",
                 fragment: "staticMeshFragment", alphaTest: true,
                 layout: SkinVertexLayout.vertexDescriptor()
+            )),
+            morphedSkinned: make(DebugPipelineRecipe(
+                label: "DebugMorphedSkinned", vertex: "morphedSkinnedMeshVertex",
+                fragment: "staticMeshFragment", alphaTest: true,
+                layout: MorphVertexLayout.vertexDescriptor()
             )),
             terrain: make(DebugPipelineRecipe(
                 label: "DebugTerrain", vertex: "terrainVertex",

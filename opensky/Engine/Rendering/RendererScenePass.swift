@@ -218,26 +218,28 @@ extension Renderer {
         groups: [DrawGroup],
         staticPipeline: MTLRenderPipelineState,
         skinnedPipeline: MTLRenderPipelineState,
+        morphedSkinnedPipeline: MTLRenderPipelineState,
         state: inout ScenePassState
     ) {
-        guard !groups.isEmpty else { return }
         // Debug channels replace the shaded surface for every geometry path at
         // once, so the caller's shipping pair is swapped here rather than at
         // each of the four call sites.
         let staticPipeline = isRenderDebugActive ? debugPipelines.staticMesh : staticPipeline
         let skinnedPipeline = isRenderDebugActive ? debugPipelines.skinned : skinnedPipeline
+        let morphedSkinnedPipeline = isRenderDebugActive
+            ? debugPipelines.morphedSkinned : morphedSkinnedPipeline
         let layers = effectiveRenderLayers
         // Pipeline bound lazily: an all-culled list encodes nothing. Model
         // ordering is retained, so switch only when rigid/skinned kind does.
-        var boundSkinned: Bool?
+        var boundPipeline: ObjectIdentifier?
         for group in groups where layers.contains(group.layer) {
             let visible = writeVisibleInstances(of: group, state: &state)
             guard visible.written > 0 else { continue }
-            if boundSkinned != group.mesh.isSkinned {
-                state.encoder.setRenderPipelineState(
-                    group.mesh.isSkinned ? skinnedPipeline : staticPipeline
-                )
-                boundSkinned = group.mesh.isSkinned
+            let pipeline = group.faceMorph != nil ? morphedSkinnedPipeline
+                : (group.mesh.isSkinned ? skinnedPipeline : staticPipeline)
+            if boundPipeline != ObjectIdentifier(pipeline) {
+                state.encoder.setRenderPipelineState(pipeline)
+                boundPipeline = ObjectIdentifier(pipeline)
             }
             // Running visible-group cursor indexes the uniform ring:
             // visible groups <= scene.drawCount <= ring capacity.
@@ -259,6 +261,7 @@ extension Renderer {
                 index: BufferIndex.vertices.rawValue
             )
             bindSkinningBuffers(for: group.mesh, slot: state.slot)
+            bindFaceMorph(group.faceMorph, slot: state.slot)
             argumentTable.setAddress(
                 drawUniformBuffer.gpuAddress + UInt64(uniformOffset),
                 index: BufferIndex.drawUniforms.rawValue
@@ -452,6 +455,7 @@ extension Renderer {
             groups: opaqueDrawGroups,
             staticPipeline: opaquePipeline,
             skinnedPipeline: skinnedOpaquePipeline,
+            morphedSkinnedPipeline: morphedSkinnedOpaquePipeline,
             state: &state
         )
         encodeTerrain(items: scene.terrain, state: &state)
@@ -459,6 +463,7 @@ extension Renderer {
             groups: alphaTestedDrawGroups,
             staticPipeline: alphaTestPipeline,
             skinnedPipeline: skinnedAlphaTestPipeline,
+            morphedSkinnedPipeline: morphedSkinnedAlphaTestPipeline,
             state: &state
         )
         encodeGrass(groups: scene.grass, state: &state)

@@ -5,7 +5,7 @@ description: Actor records, appearance and stat resolution, GPU asset assembly, 
   paths.
 tags: [format, plugin, actors, achr, npc, leveled, template, race, class, armor, outfit,
   facegen]
-timestamp: 2026-08-09T00:00:00Z
+timestamp: 2026-08-11T00:00:00Z
 ---
 
 # Actor records, Skyrim SE
@@ -499,6 +499,17 @@ dual-wield placement, ARMA texture swaps, and the DNAM `weaponAdjust` float,
 which is decoded but not yet applied to the attachment offset.
 
 ## FaceGen paths
+
+Expression association adds two record subsets to the appearance chain. RACE `NAM0` opens
+the male and female head-data blocks; the following `MNAM` or `FNAM` selects the gender,
+and repeated `HEAD` fields name default HDPT records. HDPT pairs each `NAM0` kind with the
+following `NAM1` path: zero is the race morph, one is the expression TRI, and two is the
+chargen morph. `EDID` is the baked `BSDynamicTriShape` name.
+
+OpenSky unions the gendered RACE defaults with the resolved NPC_ `PNAM` values. Expression
+TRI framing, the `meshes\` path prefix, vertex-count guard, and probe evidence are in
+[FaceGen TRI expression container](/formats/tri.md). Runtime weight ownership and rendering
+are in [face morph runtime](/engine/face-morphs.md).
 
 Baked head assets, keyed by the NPC_ that provides character-gen data (the
 traits source). Convention verified against the real install (BSA listing +

@@ -66,6 +66,9 @@ nonisolated struct RenderPlacement {
     /// placement the world has ever had: `transform` is then the whole answer
     /// and nothing looks the reference up. See `DrawInstance.referenceFormID`.
     let referenceFormID: UInt32
+    /// Per-mesh actor-local FaceGen expression buffers. Empty for every
+    /// placement except a face model with an associated expression TRI.
+    let faceMorphs: [ObjectIdentifier: FaceMorphBuffer]
     /// Which scene role this placement plays, for the dev shell's layer
     /// isolation (issue #144). It belongs here rather than on `RenderMesh`
     /// because meshes are shared and cached by VFS path in `MeshLibrary`, so
@@ -83,6 +86,7 @@ nonisolated struct RenderPlacement {
         receivesPointLights: Bool = true,
         receivesShadows: Bool = true,
         referenceFormID: UInt32 = 0,
+        faceMorphs: [ObjectIdentifier: FaceMorphBuffer] = [:],
         layer: RenderLayer = .statics
     ) {
         self.model = model
@@ -92,6 +96,7 @@ nonisolated struct RenderPlacement {
         self.receivesPointLights = receivesPointLights
         self.receivesShadows = receivesShadows
         self.referenceFormID = referenceFormID
+        self.faceMorphs = faceMorphs
         self.layer = layer
     }
 }
@@ -134,6 +139,7 @@ nonisolated struct DrawInstance {
 nonisolated struct DrawGroup {
     let mesh: RenderMesh
     let material: RenderMaterial
+    let faceMorph: FaceMorphBuffer?
     /// Mutable only during scene construction (GroupAccumulator).
     fileprivate(set) var instances: [DrawInstance]
 
@@ -161,32 +167,46 @@ nonisolated private struct GroupAccumulator {
         let castsShadows: Bool
         let receivesPointLights: Bool
         let receivesShadows: Bool
+        let faceMorph: ObjectIdentifier?
         let layer: RenderLayer
     }
 
     private var indexByKey: [Key: Int] = [:]
     private(set) var groups: [DrawGroup] = []
 
-    mutating func add(mesh: RenderMesh, material: RenderMaterial, instance: DrawInstance) {
+    mutating func add(
+        mesh: RenderMesh,
+        material: RenderMaterial,
+        faceMorph: FaceMorphBuffer?,
+        instance: DrawInstance
+    ) {
         let key = Key(
             mesh: ObjectIdentifier(mesh),
             diffuse: ObjectIdentifier(material.diffuse),
             castsShadows: instance.castsShadows,
             receivesPointLights: instance.receivesPointLights,
             receivesShadows: instance.receivesShadows,
+            faceMorph: faceMorph.map(ObjectIdentifier.init),
             layer: instance.layer
         )
         if let index = indexByKey[key] {
             groups[index].instances.append(instance)
         } else {
             indexByKey[key] = groups.count
-            groups.append(DrawGroup(mesh: mesh, material: material, instances: [instance]))
+            groups.append(DrawGroup(
+                mesh: mesh, material: material, faceMorph: faceMorph, instances: [instance]
+            ))
         }
     }
 
     mutating func add(group: DrawGroup) {
         for instance in group.instances {
-            add(mesh: group.mesh, material: group.material, instance: instance)
+            add(
+                mesh: group.mesh,
+                material: group.material,
+                faceMorph: group.faceMorph,
+                instance: instance
+            )
         }
     }
 }
@@ -288,9 +308,19 @@ nonisolated struct RenderScene {
                     layer: placement.layer
                 )
                 if material.alphaTestThreshold == nil {
-                    opaque.add(mesh: mesh, material: material, instance: instance)
+                    opaque.add(
+                        mesh: mesh,
+                        material: material,
+                        faceMorph: placement.faceMorphs[ObjectIdentifier(mesh)],
+                        instance: instance
+                    )
                 } else {
-                    alphaTested.add(mesh: mesh, material: material, instance: instance)
+                    alphaTested.add(
+                        mesh: mesh,
+                        material: material,
+                        faceMorph: placement.faceMorphs[ObjectIdentifier(mesh)],
+                        instance: instance
+                    )
                 }
             }
         }
@@ -429,6 +459,9 @@ nonisolated struct RenderScene {
             }
             if let matrices = group.mesh.boneMatrixBuffer {
                 resources.append(matrices)
+            }
+            if let morph = group.faceMorph {
+                resources.append(morph.buffer)
             }
             add(resources)
         }

@@ -38,6 +38,8 @@ final class Renderer: NSObject {
     let alphaTestPipeline: MTLRenderPipelineState
     let skinnedOpaquePipeline: MTLRenderPipelineState
     let skinnedAlphaTestPipeline: MTLRenderPipelineState
+    let morphedSkinnedOpaquePipeline: MTLRenderPipelineState
+    let morphedSkinnedAlphaTestPipeline: MTLRenderPipelineState
     let grassPipeline: MTLRenderPipelineState
     let terrainPipeline: MTLRenderPipelineState
     let waterPipeline: MTLRenderPipelineState
@@ -95,6 +97,7 @@ final class Renderer: NSObject {
     /// shared guard so the shadow + scene pass never double-prepare (RenderMesh
     /// palette is identical across both passes within one frame).
     var frameBonePrepared: Set<ObjectIdentifier> = []
+    var frameMorphPrepared: Set<ObjectIdentifier> = []
     /// Internal, not `private(set)`: `RendererSceneSwap.swift` owns the swap
     /// cross-file (same rule as the offscreen/setup satellites above).
     var scene: RenderScene
@@ -324,15 +327,8 @@ final class Renderer: NSObject {
         guard let device = view.device else { throw RendererError.deviceUnavailable }
         self.device = device
 
-        guard let queue = device.makeMTL4CommandQueue() else {
-            throw RendererError.commandQueueUnavailable
-        }
-        commandQueue = queue
-
-        guard let buffer = device.makeCommandBuffer() else {
-            throw RendererError.commandBufferUnavailable
-        }
-        commandBuffer = buffer
+        commandQueue = try Self.makeCommandQueue(device: device)
+        commandBuffer = try Self.makeCommandBuffer(device: device)
 
         commandAllocators = try Self.makeCommandAllocators(device: device)
 
@@ -349,8 +345,13 @@ final class Renderer: NSObject {
 
         let pipelines = try Self.makePipelines(device: device, view: view)
         (skyPipeline, opaquePipeline) = (pipelines.sky, pipelines.opaque)
-        (alphaTestPipeline, skinnedOpaquePipeline) = (pipelines.alphaTest, pipelines.skinnedOpaque)
+        (alphaTestPipeline, skinnedOpaquePipeline) = (
+            pipelines.alphaTest, pipelines.skinnedOpaque
+        )
         (skinnedAlphaTestPipeline, grassPipeline) = (pipelines.skinnedAlphaTest, pipelines.grass)
+        (morphedSkinnedOpaquePipeline, morphedSkinnedAlphaTestPipeline) = (
+            pipelines.morphedSkinnedOpaque, pipelines.morphedSkinnedAlphaTest
+        )
         (terrainPipeline, waterPipeline) = (pipelines.terrain, pipelines.water)
         (particlePipelines, debugPipelines) = (pipelines.particles, pipelines.debug)
         depthState = try Self.makeDepthState(device: device)

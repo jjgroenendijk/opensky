@@ -18,6 +18,7 @@ final class HUDInteractionPanelViewController: InspectorPanelViewController {
     let targetSection = HUDTargetSection()
     let itemsSection = ItemsSection()
     let dialogueSection = DialogueSection()
+    let faceMorphSection = FaceMorphSection()
     let dialogueCameraSection = DialogueCameraSection()
 
     weak var provider: (any HUDControlProviding)? {
@@ -41,7 +42,14 @@ final class HUDInteractionPanelViewController: InspectorPanelViewController {
         didSet { dialogueCameraSection.provider = dialogueCameraProvider }
     }
 
+    weak var faceMorphProvider: (any FaceMorphControlProviding)? {
+        didSet { faceMorphSection.provider = faceMorphProvider }
+    }
+
     override func makeSections() -> [PanelSectionViewController] {
-        [elementsSection, targetSection, itemsSection, dialogueSection, dialogueCameraSection]
+        [
+            elementsSection, targetSection, itemsSection, dialogueSection,
+            faceMorphSection, dialogueCameraSection
+        ]
     }
 }
