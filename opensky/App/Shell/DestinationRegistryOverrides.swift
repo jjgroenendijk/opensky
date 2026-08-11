@@ -10,6 +10,23 @@
 import AppKit
 
 extension DestinationRegistry {
+    static let audioOverrides = DestinationOverrideActions(
+        isOverridden: { context in
+            AudioOutputSection.isOverridden(provider: context.providers)
+                || AudioVoiceSection.isOverridden(provider: context.providers)
+                || AudioSfxSection.isOverridden(provider: context.providers)
+                || AudioMusicSection.isOverridden(provider: context.providers)
+                || AudioFootstepsSection.isOverridden(provider: context.providers)
+        },
+        resetToDefaults: { context in
+            AudioOutputSection.resetToDefaults(provider: context.providers)
+            AudioVoiceSection.resetToDefaults(provider: context.providers)
+            AudioSfxSection.resetToDefaults(provider: context.providers)
+            AudioMusicSection.resetToDefaults(provider: context.providers)
+            AudioFootstepsSection.resetToDefaults(provider: context.providers)
+        }
+    )
+
     /// The launch destination's settable sections: the camera mode, the
     /// first-person controls beside it, and the render-debug view filters. A
     /// wireframe or a hidden layer left on is the case the sidebar dot exists

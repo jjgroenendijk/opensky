@@ -121,6 +121,16 @@ final class OpenSkyUITests: OpenSkyUITestCase {
         app.buttons["SystemMenuResumeControl"].click()
     }
 
+    /// World > Audio > Voice lip-sync A/B seam and live audio-timeline readout.
+    @MainActor
+    func testAudioLipSyncControlsAndReadout() throws {
+        let app = try launchApp()
+        selectDestination("Destination-audio", in: app)
+
+        XCTAssertTrue(app.checkBoxes["LipSyncEnabledControl"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["LipSyncStatsLabel"].exists)
+    }
+
     /// Developer > UI Lab sidebar surface (M8.1.1 + M8.1.4): the sidebar lists
     /// the UI Lab destination; selecting it exposes the overlay-enable + sample
     /// toggles, the scale preset popup, the menu-mode preview buttons, and the

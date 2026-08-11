@@ -27,6 +27,10 @@ nonisolated struct VoicePlayback: Equatable {
     /// `.lip` bytes from the container, or nil when the line ships without
     /// them. Not decoded here — item 17.7 owns that.
     let lipData: Data?
+    /// Nonisolated snapshot of this source's authoritative playback position.
+    /// Starts at zero, advances on the audio tick, and becomes nil when the
+    /// source is retired or stopped.
+    let clock: VoicePlaybackClock
 }
 
 extension WorldAudioEngine {
@@ -55,10 +59,13 @@ extension WorldAudioEngine {
                 gain: gain
             )
         )
+        let clock = VoicePlaybackClock()
+        sources.first { $0.id == sourceID }?.voiceClock = clock
         return VoicePlayback(
             sourceID: sourceID,
             duration: audio.declaredDuration,
-            lipData: container.lipData
+            lipData: container.lipData,
+            clock: clock
         )
     }
 

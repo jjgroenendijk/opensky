@@ -57,6 +57,9 @@ final class ActiveAudioSource {
     /// Ramp in flight, or nil when the fade gain is holding steady. Also owned
     /// by WorldAudioEngineFades.swift.
     var activeFade: GainFade?
+    /// Nonisolated snapshot read by one actor's LipSyncPlayback. Voice sources
+    /// attach it after adoption; every other audio source leaves it nil.
+    var voiceClock: VoicePlaybackClock?
 
     var isPositional: Bool {
         routing == .positional
@@ -417,6 +420,7 @@ extension WorldAudioEngine {
     }
 
     private func stop(_ source: ActiveAudioSource) {
+        source.voiceClock?.publish(nil)
         source.streamer?.requestStop()
         source.node.stop()
         engine.detach(source.node)

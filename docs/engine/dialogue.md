@@ -1,17 +1,18 @@
 ---
 type: Subsystem
 title: Dialogue runtime
-description: Topic selection, greeting choice, say-once state, result-script dispatch and the
-  save chunk behind a conversation, plus the fidelity gaps this version leaves open.
-tags: [engine, dialogue, conditions, quests, papyrus, runtime-state]
-timestamp: 2026-08-09T00:00:00Z
+description: Topic selection, state, camera and speaker focus, plus audio-clock lip-sync
+  playback that drives actor-local FaceGen TRI expressions.
+tags: [engine, dialogue, conditions, quests, papyrus, runtime-state, voice, lip-sync]
+timestamp: 2026-08-11T00:00:00Z
 ---
 
 # Dialogue runtime
 
-Issue #426 supplies the headless half of dialogue: which topics a speaker offers, which
-response wins inside each, what choosing one does, and what survives a save. No UI, no
-voice, no camera, no scene playback. The record side — DIAL, INFO and VTYP bytes — is
+The dialogue runtime decides which topics a speaker offers, which response wins inside each,
+what choosing one does, and what survives a save. Its visible layers frame and focus the
+speaker, play the selected voice, and drive that actor's mouth from the embedded lip track.
+The record side — DIAL, INFO and VTYP bytes — is
 [dialogue records](/formats/dialogue.md); the shared condition machinery is
 [conditions](/formats/conditions.md); the quest state a topic is gated on is
 [runtime reference identity and world state](/engine/runtime-state.md).
@@ -29,6 +30,8 @@ voice, no camera, no scene playback. The record side — DIAL, INFO and VTYP byt
 * Dialogue camera
 * Speaker focus
 * Dialogue-camera verification surface
+* Lip-sync playback
+* Lip-sync verification surface
 * What this version does not do
 * Measurements
 
@@ -309,6 +312,48 @@ The gizmo registers with the M16 [world-overlay registry](/engine/navigation.md)
 magenta line along the camera's own axis. Drawn from the last resolved pose rather than from a
 second resolve, so it cannot disagree with the frame it is drawn over.
 
+## Lip-sync playback
+
+Every resident actor with FaceGen expression bindings carries one `LipSyncPlayback` beside
+its `FaceMorphPlayback`. Starting a `.fuz` voice line decodes its optional
+[`.lip` payload](/formats/lip.md), selects the open conversation's speaker or the actor under
+the crosshair, and starts that actor-local playback. Missing lip data, a missing selected
+actor or malformed input is logged and surfaced in the Audio panel; it never stops the audio.
+
+The audio source is authoritative. `WorldAudioEngine` publishes elapsed source time through
+a lock-protected `VoicePlaybackClock`, and the render animation samples that snapshot at
+30 Hz before mapping positional slots to named TRI targets. If the source stops publishing,
+the line switches once to the render-animation clock anchored at the original line start. It
+does not jump back to audio time if a late source reading appears, avoiding a visible mouth
+snap in the middle of a sentence.
+
+`FaceMorphPlayback` keeps manual debug weights and lip weights separately, then sums and
+clamps them when it updates actor-local morph buffers. Turning lip sync off clears only the
+lip layer. A normal line finish holds no final mouth pose: the last weights decay linearly to
+bind pose over 0.15 seconds. Starting another line replaces the previous session.
+
+The mapping layer is intentionally observable because the file stores positional slots, not
+names. `LipSyncSnapshot` publishes the actor, line, clock mode, track time, live mapped
+weights, active unmapped slots and release state. The Audio panel's toggle and
+`LipSyncStatsLabel` expose exactly that state.
+
+## Lip-sync verification surface
+
+```text
+Item: M17.7
+Sidebar path: World > Audio > Voice
+Destination id: Destination-audio
+Controls exercised: AudioVoiceFileControl, AudioVoicePlayControl,
+  LipSyncEnabledControl
+Readout: AudioVoiceStatsLabel, LipSyncStatsLabel
+Deterministic tests: LIPFileTests, LipVisemeMappingTests,
+  LipSyncPlaybackTests, AudioVoicePanelTests, DestinationRegistryTests,
+  LipSyncRealDataTests and LipSyncRenderRealDataTests
+  (the last two are env-gated; make realtest)
+Local A/B (never committed): logs/test-fast/latest/lip-*-off.png and
+  logs/test-fast/latest/lip-*-on.png
+```
+
 ## What this version does not do
 
 Stated rather than left to be discovered:
@@ -326,8 +371,8 @@ Stated rather than left to be discovered:
   what a chosen line says rather than whether it is offered. It belongs to the text layer.
 * **Reset intervals.** `TopicInfo.resetHours` is decoded and not consulted; a repeatable line
   is repeatable immediately.
-* **Voice, subtitles, UI, camera and package interruption**, which are items 17.3 through
-  17.8.
+* **Subtitles and scene playback.** Recorded voice, camera, speaker focus and mouth motion are
+  connected; subtitle presentation and SCEN choreography remain separate work.
 
 ## Measurements
 

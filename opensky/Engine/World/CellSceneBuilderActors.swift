@@ -278,6 +278,7 @@ nonisolated extension CellSceneBuilder {
         ))
         if let faceMorph {
             build.animations.append(faceMorph)
+            build.animations.append(LipSyncPlayback(faceMorph: faceMorph))
         }
         switch makeAnimationPlayback(assembly: assembly) {
         case let .success(playback):

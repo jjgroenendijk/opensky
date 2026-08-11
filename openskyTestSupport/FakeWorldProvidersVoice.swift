@@ -22,6 +22,9 @@ struct FakeVoiceState {
     var currentDescription: String?
     var playbackDescription = ""
     var lastError: String?
+    var lipSyncEnabled = true
+    var lipSyncSnapshot = LipSyncSnapshot.empty
+    var lastLipSyncError: String?
 }
 
 extension FakeWorldProviders {
@@ -48,6 +51,19 @@ extension FakeWorldProviders {
 
     var lastVoiceError: String? {
         voice.lastError
+    }
+
+    var lipSyncEnabled: Bool {
+        get { voice.lipSyncEnabled }
+        set { voice.lipSyncEnabled = newValue }
+    }
+
+    var lipSyncSnapshot: LipSyncSnapshot {
+        voice.lipSyncSnapshot
+    }
+
+    var lastLipSyncError: String? {
+        voice.lastLipSyncError
     }
 
     /// Files the Voice section asked to play, in order.

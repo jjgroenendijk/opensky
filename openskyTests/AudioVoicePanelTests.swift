@@ -17,7 +17,8 @@ struct AudioVoicePanelTests {
         let controls: [NSView] = [
             panel.audioVoiceFilterControl,
             panel.audioVoiceFileControl,
-            panel.audioVoicePlayControl
+            panel.audioVoicePlayControl,
+            panel.lipSyncEnabledControl
         ]
         for control in controls {
             #expect(!control.isHidden)
@@ -42,6 +43,14 @@ struct AudioVoicePanelTests {
         )
         #expect(panel.audioVoiceFileControl.accessibilityIdentifier() == "AudioVoiceFileControl")
         #expect(panel.audioVoicePlayControl.accessibilityIdentifier() == "AudioVoicePlayControl")
+        #expect(panel.lipSyncEnabledControl.accessibilityIdentifier() == "LipSyncEnabledControl")
+        #expect(
+            panel.voiceSection.lipSyncReadout.accessibilityIdentifier()
+                == "LipSyncStatsLabel"
+        )
+        #expect(panel.voiceSection.lipSyncReadout.isAccessibilityElement())
+        #expect(panel.voiceSection.lipSyncReadout.accessibilityRole() == .group)
+        #expect(panel.voiceSection.lipSyncReadout.accessibilityLabel() == "Lip sync status")
     }
 
     @Test @MainActor
@@ -70,6 +79,33 @@ struct AudioVoicePanelTests {
         panel.audioVoiceFilterControl.stringValue = "malenord"
         panel.voiceSection.applyFilterControl.performClick(nil)
         #expect(provider.voiceFileFilter == "malenord")
+    }
+
+    @Test @MainActor
+    func lipSyncToggleAndReadoutReachTheProvider() {
+        let panel = AudioPanelViewController()
+        let provider = FakeAudioProvider()
+        provider.lipSyncSnapshot = LipSyncSnapshot(
+            actor: FormID(0x14),
+            activeLine: "femaleeventoned\\line.fuz",
+            trackTime: 0.5,
+            clockMode: .audio,
+            liveWeights: ["Aah": 0.75],
+            unmappedActiveSlots: [31],
+            isDecaying: false
+        )
+        panel.provider = provider
+        panel.loadViewIfNeeded()
+        panel.voiceSection.refreshReadout()
+
+        panel.lipSyncEnabledControl.performClick(nil)
+        #expect(!provider.lipSyncEnabled)
+        #expect(panel.voiceSection.isOverridden)
+        #expect(panel.voiceSection.lipSyncStatsLabel.stringValue.contains("Aah 0.75"))
+        #expect(panel.voiceSection.lipSyncStatsLabel.stringValue.contains("Unmapped slots: 31"))
+
+        panel.voiceSection.performResetToDefaults()
+        #expect(provider.lipSyncEnabled)
     }
 
     @Test @MainActor

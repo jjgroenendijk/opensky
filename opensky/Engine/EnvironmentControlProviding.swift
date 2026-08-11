@@ -280,6 +280,14 @@ protocol AudioControlProviding: AnyObject {
     var voicePlaybackDescription: String { get }
     /// Most recent voice failure reason; nil when the last start succeeded.
     var lastVoiceError: String? { get }
+    /// Applies decoded speech curves to the selected actor. Defaults on; the
+    /// panel toggle is the deterministic A/B seam for issue #208.
+    var lipSyncEnabled: Bool { get set }
+    /// Active line, track clock and live named weights for LipSyncStatsLabel.
+    var lipSyncSnapshot: LipSyncSnapshot { get }
+    /// Decode/association failure for the most recent line, without preventing
+    /// its audio from playing.
+    var lastLipSyncError: String? { get }
 
     // World SFX + ambience director controls (M9.2.2). The director lives
     // beside the audio engine; these no-op when audio is not enabled.

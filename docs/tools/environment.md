@@ -5,7 +5,7 @@ description: Dated record of machine-specific and third-party facts that skills 
   must not hardcode — TCC permissions, CI suspension, upstream spec-host quirks — each with
   the condition that retires it.
 tags: [environment, tooling, ci, gotchas]
-timestamp: 2026-08-06T00:00:00Z
+timestamp: 2026-08-11T00:00:00Z
 ---
 
 # Local environment and external state
@@ -23,6 +23,7 @@ entry whose condition is met gets deleted, not amended.
 - Continuous integration suspended
 - Upstream spec hosts
 - No plugins.txt on this machine
+- UI-test Accessibility permission missing
 - Memory watchdog for heavy real-data tests
 - Test plans, environment entries, and Swift Testing
 - build-for-testing and test-without-building
@@ -89,6 +90,17 @@ locally. A real-data probe of a modded load order needs a file supplied by hand 
 at with `OPENSKY_PLUGINS_TXT`.
 
 Retires when a `plugins.txt` appears in one of the searched locations.
+
+## UI-test Accessibility permission missing
+
+Observed 2026-08-11 on macOS 26.6.1 while running the issue #208 Audio-panel XCUITest.
+`openskyUITests-Runner.app` starts, then XCTest times out after 60 seconds with "Timed out
+while enabling automation mode." The target is isolated correctly under `UITests.xctestplan`;
+the missing macOS Accessibility grant is the remaining harness requirement. Run
+`make test-perms`, grant the signed runner under System Settings > Privacy & Security >
+Accessibility, then rerun `make test-ui`.
+
+Retires when `make test-ui` reaches a test case on this machine.
 
 ## Memory watchdog for heavy real-data tests
 

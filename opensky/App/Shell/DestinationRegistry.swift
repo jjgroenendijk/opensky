@@ -302,20 +302,7 @@ enum DestinationRegistry {
                 panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
                 return panel
             },
-            overrides: DestinationOverrideActions(
-                isOverridden: { context in
-                    AudioOutputSection.isOverridden(provider: context.providers)
-                        || AudioSfxSection.isOverridden(provider: context.providers)
-                        || AudioMusicSection.isOverridden(provider: context.providers)
-                        || AudioFootstepsSection.isOverridden(provider: context.providers)
-                },
-                resetToDefaults: { context in
-                    AudioOutputSection.resetToDefaults(provider: context.providers)
-                    AudioSfxSection.resetToDefaults(provider: context.providers)
-                    AudioMusicSection.resetToDefaults(provider: context.providers)
-                    AudioFootstepsSection.resetToDefaults(provider: context.providers)
-                }
-            )
+            overrides: audioOverrides
         ),
         DestinationDescriptor(
             id: "runtimeState",
