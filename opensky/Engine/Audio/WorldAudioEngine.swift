@@ -19,6 +19,7 @@
 import AVFAudio
 import Foundation
 import simd
+import Synchronization
 
 nonisolated enum AudioEngineError: Error, Equatable {
     /// Playback was requested while the engine is disabled or failed to start.
@@ -29,6 +30,25 @@ nonisolated enum AudioEngineError: Error, Equatable {
     /// graph. Cannot happen while every `AudioCategory` gets a mixer; it exists
     /// so the play path never force-unwraps.
     case submixUnavailable
+}
+
+/// Thread-safe projection of one main-actor source clock. RenderAnimation is a
+/// nonisolated protocol, so LipSyncPlayback reads this value instead of
+/// crossing actor isolation into WorldAudioEngine during scene traversal.
+nonisolated final class VoicePlaybackClock: @unchecked Sendable, Equatable {
+    private let storedPosition = Mutex<Double?>(0)
+
+    var position: Double? {
+        storedPosition.withLock { $0 }
+    }
+
+    func publish(_ position: Double?) {
+        storedPosition.withLock { $0 = position }
+    }
+
+    static func == (lhs: VoicePlaybackClock, rhs: VoicePlaybackClock) -> Bool {
+        lhs === rhs
+    }
 }
 
 /// Provisional distance-attenuation defaults, in meters (the listener-space
@@ -212,6 +232,9 @@ final class WorldAudioEngine {
     /// menu mode and never jump on resume. Zero advances nothing.
     func tick(listenerCell: CellCoordinate, deltaTime: Float = 0) {
         liveClockSeconds += Double(max(0, deltaTime))
+        for source in sources {
+            source.voiceClock?.publish(max(0, playbackClockSeconds - source.startClockSeconds))
+        }
         advanceFades(deltaTime: deltaTime)
         retireFinishedSources()
         purgeSources(fartherThan: Self.cellPurgeRadius, fromCell: listenerCell)

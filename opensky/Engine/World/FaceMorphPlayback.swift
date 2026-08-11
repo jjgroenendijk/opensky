@@ -119,14 +119,34 @@ nonisolated struct FaceMorphAssociationMiss: Equatable {
     let reason: String
 }
 
-nonisolated final class FaceMorphPlayback: RenderAnimation {
+nonisolated protocol LipMorphWeightApplying: AnyObject {
+    var actor: FormID { get }
+    var targetNames: [String] { get }
+
+    @discardableResult
+    func setLipWeights(_ weights: [String: Float]) -> Int
+
+    @discardableResult
+    func clearLipWeights() -> Int
+}
+
+nonisolated final class FaceMorphPlayback: RenderAnimation, LipMorphWeightApplying {
     let actor: FormID
     let bindings: [ObjectIdentifier: FaceMorphBuffer]
     let pairedPaths: [String]
     let misses: [FaceMorphAssociationMiss]
     let worldBounds: ModelBounds?
-    private(set) var weights: [String: Float] = [:]
+    private var manualWeights: [String: Float] = [:]
+    private var lipWeights: [String: Float] = [:]
     private(set) var unknownTargetCount = 0
+
+    var weights: [String: Float] {
+        var combined = manualWeights
+        for (target, value) in lipWeights {
+            combined[target] = min(max((combined[target] ?? 0) + value, 0), 1)
+        }
+        return combined
+    }
 
     var targetNames: [String] {
         Array(Set(bindings.values.flatMap { $0.targets.map(\.name) })).sorted()
@@ -152,9 +172,23 @@ nonisolated final class FaceMorphPlayback: RenderAnimation {
             unknownTargetCount += 1
             return false
         }
-        weights[target] = min(max(weight.isFinite ? weight : 0, 0), 1)
+        manualWeights[target] = min(max(weight.isFinite ? weight : 0, 0), 1)
         applyWeights()
         return true
+    }
+
+    @discardableResult
+    func setLipWeights(_ weights: [String: Float]) -> Int {
+        let targets = Set(targetNames)
+        lipWeights = weights.filter { targets.contains($0.key) }
+        return applyWeights()
+    }
+
+    @discardableResult
+    func clearLipWeights() -> Int {
+        guard !lipWeights.isEmpty else { return 0 }
+        lipWeights.removeAll(keepingCapacity: true)
+        return applyWeights()
     }
 
     @discardableResult
@@ -164,14 +198,16 @@ nonisolated final class FaceMorphPlayback: RenderAnimation {
 
     @discardableResult
     func resetToBindPose() -> Int {
-        weights.removeAll(keepingCapacity: true)
-        applyWeights()
-        return bindings.count
+        manualWeights.removeAll(keepingCapacity: true)
+        lipWeights.removeAll(keepingCapacity: true)
+        return applyWeights()
     }
 
-    private func applyWeights() {
+    @discardableResult
+    private func applyWeights() -> Int {
         for buffer in bindings.values {
             buffer.update(weights: weights)
         }
+        return bindings.count
     }
 }

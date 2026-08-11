@@ -4,6 +4,17 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-11
 
+* **Audio-clock lip sync (issue #208, item 17.7)**: `LIPFile` now defensively decodes the
+  24-byte FaceFX header and sparse 33-slot, 30 Hz curve grid embedded in `.fuz` voice lines,
+  retaining duplicate, marker, unknown-header and unmapped-slot tallies. Actor-local
+  `LipSyncPlayback` samples the source clock, uses a line-anchored one-way wall-clock fallback,
+  maps positional slots onto FaceGen TRI speech targets and releases the final pose over
+  0.15 seconds. `World > Audio > Voice` exposes a lip-sync toggle and live clock, weight and
+  unmapped-slot state. The vanilla gate accounted for all 74,070 lip blobs, decoded 61,484
+  standard tracks and classified 12,586 alternate or malformed layouts as typed results;
+  three deterministic offscreen A/B timestamps changed 717, 740 and 748 pixels. See
+  [FaceFX lip animation](/formats/lip.md) and [dialogue runtime](/engine/dialogue.md).
+
 * **TRI face morphs (issue #207, item 17.6)**: resident actors now carry independent named
   FaceGen expression weights. A defensive `FRTRI003` decoder reads base topology and scaled
   Int16 targets; RACE and HDPT decoding reaches the expression container by matching HDPT

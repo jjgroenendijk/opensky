@@ -31,6 +31,9 @@ final class FakeAudioProvider: AudioControlProviding {
     var currentVoiceDescription: String?
     var voicePlaybackDescription = ""
     var lastVoiceError: String?
+    var lipSyncEnabled = true
+    var lipSyncSnapshot = LipSyncSnapshot.empty
+    var lastLipSyncError: String?
 
     var voiceFileMatchCount: Int {
         voiceFileMatchCountOverride ?? selectableVoiceFileNames.count

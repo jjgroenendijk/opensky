@@ -22,7 +22,17 @@ final class AudioVoiceSection: PanelSectionViewController {
     let fileControl = NSPopUpButton(frame: .zero, pullsDown: false)
     let applyFilterControl = NSButton(title: "Filter", target: nil, action: nil)
     let playControl = NSButton(title: "Play line", target: nil, action: nil)
+    let lipSyncEnabledControl = NSButton(checkboxWithTitle: "Lip sync", target: nil, action: nil)
     private let statsLabel = PanelComponents.statsLabel(identifier: "AudioVoiceStatsLabel")
+    let lipSyncStatsLabel = PanelComponents.statsLabel(identifier: "LipSyncStatsLabel")
+    lazy var lipSyncReadout: NSStackView = {
+        let readout = PanelComponents.group([lipSyncStatsLabel])
+        readout.setAccessibilityElement(true)
+        readout.setAccessibilityIdentifier("LipSyncStatsLabel")
+        readout.setAccessibilityRole(.group)
+        readout.setAccessibilityLabel("Lip sync status")
+        return readout
+    }()
 
     override var sectionTitle: String {
         "Voice"
@@ -30,6 +40,22 @@ final class AudioVoiceSection: PanelSectionViewController {
 
     override var sectionIdentifier: String {
         "audioVoice"
+    }
+
+    override var isOverridden: Bool {
+        Self.isOverridden(provider: provider)
+    }
+
+    static func isOverridden(provider: (any AudioControlProviding)?) -> Bool {
+        provider?.lipSyncEnabled == false
+    }
+
+    static func resetToDefaults(provider: (any AudioControlProviding)?) {
+        provider?.lipSyncEnabled = true
+    }
+
+    override func resetToDefaults() {
+        Self.resetToDefaults(provider: provider)
     }
 
     override func makeContentViews() -> [NSView] {
@@ -51,6 +77,12 @@ final class AudioVoiceSection: PanelSectionViewController {
             playControl, target: self, action: #selector(playSelected),
             identifier: "AudioVoicePlayControl"
         )
+        PanelComponents.configureCheckbox(
+            lipSyncEnabledControl,
+            target: self,
+            action: #selector(lipSyncChanged),
+            identifier: "LipSyncEnabledControl"
+        )
         return [
             PanelComponents.note(
                 "Plays one dialogue recording — a .fuz container, lip data plus an xWMA "
@@ -62,9 +94,11 @@ final class AudioVoiceSection: PanelSectionViewController {
             PanelComponents.group([
                 filterControl,
                 PanelComponents.buttonRow([applyFilterControl, playControl]),
-                fileControl
+                fileControl,
+                lipSyncEnabledControl
             ]),
-            statsLabel
+            statsLabel,
+            lipSyncReadout
         ]
     }
 
@@ -84,6 +118,12 @@ final class AudioVoiceSection: PanelSectionViewController {
     @objc private func playSelected() {
         guard let name = fileControl.titleOfSelectedItem else { return }
         _ = provider?.playVoiceFile(named: name)
+        refreshReadout()
+        finishInteraction()
+    }
+
+    @objc private func lipSyncChanged() {
+        provider?.lipSyncEnabled = lipSyncEnabledControl.state == .on
         refreshReadout()
         finishInteraction()
     }
@@ -111,6 +151,7 @@ final class AudioVoiceSection: PanelSectionViewController {
         applyFilterControl.isEnabled = true
         fileControl.isEnabled = !names.isEmpty
         playControl.isEnabled = !names.isEmpty
+        lipSyncEnabledControl.state = provider.lipSyncEnabled ? .on : .off
     }
 
     override func refreshReadout() {
@@ -125,6 +166,11 @@ final class AudioVoiceSection: PanelSectionViewController {
             playback: provider.voicePlaybackDescription,
             error: provider.lastVoiceError
         )
+        lipSyncStatsLabel.stringValue = Self.lipSyncReadout(
+            snapshot: provider.lipSyncSnapshot,
+            error: provider.lastLipSyncError
+        )
+        lipSyncReadout.setAccessibilityValue(lipSyncStatsLabel.stringValue)
     }
 
     /// Pure so the wording is unit tested without a window.
@@ -142,6 +188,37 @@ final class AudioVoiceSection: PanelSectionViewController {
         }
         if let error {
             lines.append("Play failed: \(error)")
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    static func lipSyncReadout(snapshot: LipSyncSnapshot, error: String?) -> String {
+        guard let actor = snapshot.actor else {
+            return "Lip sync: \(error ?? "no active actor line")"
+        }
+        let weights = snapshot.liveWeights
+            .filter { $0.value > 0.001 }
+            .sorted { $0.key < $1.key }
+            .map { String(format: "%@ %.2f", $0.key, $0.value) }
+            .joined(separator: ", ")
+        var lines = [
+            "Actor \(actor) · \(snapshot.activeLine ?? "no active line")",
+            String(
+                format: "Track %.2f s · clock %@",
+                snapshot.trackTime,
+                snapshot.clockMode.rawValue
+            ),
+            "Weights: \(weights.isEmpty ? "none" : weights)"
+        ]
+        if !snapshot.unmappedActiveSlots.isEmpty {
+            let slots = snapshot.unmappedActiveSlots.map(String.init).joined(separator: ", ")
+            lines.append("Unmapped slots: \(slots)")
+        }
+        if snapshot.isDecaying {
+            lines.append("Line ended: decaying to zero")
+        }
+        if let error {
+            lines.append("Lip sync unavailable: \(error)")
         }
         return lines.joined(separator: "\n")
     }

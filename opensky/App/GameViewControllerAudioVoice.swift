@@ -9,6 +9,7 @@
 // there is".
 
 import AppKit
+import OSLog
 import simd
 
 /// Voice picker and playback state. Stored on `GameViewController` because
@@ -35,9 +36,17 @@ struct VoiceLabState {
     /// Set by the engine's finished callback when that source played out.
     var finished = false
     var lastError: String?
+    var lipSyncEnabled = true
+    var lipPlayback: LipSyncPlayback?
+    var lipError: String?
 }
 
 extension GameViewController {
+    private static let lipSyncLogger = Logger(
+        subsystem: "nl.jjgroenendijk.opensky",
+        category: "LipSync"
+    )
+
     var voiceFileFilter: String {
         get { voice.filter }
         set {
@@ -78,6 +87,7 @@ extension GameViewController {
             voice.playingPath = name
             voice.finished = false
             voice.lastError = nil
+            startLipSync(playback: playback, path: name)
             return nil
         } catch {
             voice.lastError = String(describing: error)
@@ -108,6 +118,22 @@ extension GameViewController {
 
     var lastVoiceError: String? {
         voice.lastError
+    }
+
+    var lipSyncEnabled: Bool {
+        get { voice.lipSyncEnabled }
+        set {
+            voice.lipSyncEnabled = newValue
+            voice.lipPlayback?.isEnabled = newValue
+        }
+    }
+
+    var lipSyncSnapshot: LipSyncSnapshot {
+        voice.lipPlayback?.snapshot ?? .empty
+    }
+
+    var lastLipSyncError: String? {
+        voice.lipError
     }
 
     // MARK: - Internals
@@ -145,7 +171,55 @@ extension GameViewController {
         engine.onSourceFinished = { [weak self] id in
             guard let self, voice.playing?.sourceID == id else { return }
             voice.finished = true
+            voice.lipPlayback?.finish(at: renderer?.animationTime ?? 0)
         }
+    }
+
+    private func startLipSync(playback: VoicePlayback, path: String) {
+        voice.lipPlayback?.resetToBindPose()
+        voice.lipPlayback = nil
+        guard voice.lipSyncEnabled else {
+            voice.lipError = nil
+            return
+        }
+        guard let lipData = playback.lipData else {
+            voice.lipError = "line has no lip data"
+            Self.lipSyncLogger.info("[INFO] lip sync miss: line has no lip data")
+            return
+        }
+        guard let lipPlayback = selectedLipSyncPlayback() else {
+            voice.lipError = "no selected actor with expression TRI bindings"
+            Self.lipSyncLogger.info("[INFO] lip sync miss: no selected actor")
+            return
+        }
+        do {
+            let track = try LIPFile(data: lipData)
+            lipPlayback.isEnabled = true
+            lipPlayback.start(
+                track: track,
+                clock: playback.clock,
+                line: Self.shortVoiceName(path),
+                animationTime: renderer?.animationTime ?? 0
+            )
+            voice.lipPlayback = lipPlayback
+            voice.lipError = nil
+        } catch {
+            voice.lipError = String(describing: error)
+            Self.lipSyncLogger.error(
+                "[ERROR] lip decode: \(String(describing: error), privacy: .public)"
+            )
+        }
+    }
+
+    private func selectedLipSyncPlayback() -> LipSyncPlayback? {
+        guard
+            let renderer,
+            let key = dialogue.model.speakerKey ?? streamer?.talk.speaker,
+            let actor = streamer?.referenceEntry(key: key)?.placedActor?.formID
+        else { return nil }
+        return renderer.scene.animations.lazy
+            .compactMap { $0 as? LipSyncPlayback }
+            .first { $0.actor == actor }
     }
 
     /// Voice-type directory plus file name, which is the part of a voice path

@@ -434,8 +434,12 @@ Accessibility identifiers are the UI-test API and never change silently.
   `AudioAmbienceEnabledControl`, `AudioStopAmbienceControl`; readout
   `AudioSfxStatsLabel`. Extended again by the music director (M9.2.3):
   `AudioMusicEnabledControl`, `AudioMusicTypeControl`, `AudioStopMusicControl`;
-  readout `AudioMusicStatsLabel`. Section headers:
-  `PanelSection-audioOutput`, `-audioSources`, `-audioSfx`, `-audioMusic`.
+  readout `AudioMusicStatsLabel`. Extended by dialogue voice and lip sync
+  (M17.5 and M17.7): `AudioVoiceFilterControl`, `AudioVoiceFilterApplyControl`,
+  `AudioVoiceFileControl`, `AudioVoicePlayControl`, `LipSyncEnabledControl`;
+  readouts `AudioVoiceStatsLabel`, `LipSyncStatsLabel`. Section headers:
+  `PanelSection-audioOutput`, `-audioSources`, `-audioSfx`, `-audioMusic`,
+  `-audioVoice`.
 - HUD set (World > HUD & Interaction, M8.4.3):
   `HUDLayerEnabledControl`, `HUDCrosshairControl`, `HUDMetersControl`,
   `HUDCompassControl`, `HUDMarkersControl`, `HUDPromptControl`,

@@ -65,6 +65,10 @@ final class AudioPanelViewController: InspectorPanelViewController {
         voiceSection.playControl
     }
 
+    var lipSyncEnabledControl: NSButton {
+        voiceSection.lipSyncEnabledControl
+    }
+
     var audioMusicEnabledControl: NSButton {
         musicSection.musicEnabledControl
     }
