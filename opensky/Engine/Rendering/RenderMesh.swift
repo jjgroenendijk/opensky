@@ -47,6 +47,34 @@ nonisolated enum SkinVertexLayout {
     }
 }
 
+/// Actor-local FaceGen expression stream. SIMD3 occupies 16 bytes in Swift,
+/// matching the explicitly separated float3 attributes Metal reads.
+nonisolated struct MorphVertexDelta {
+    let position: SIMD3<Float>
+    let normal: SIMD3<Float>
+}
+
+nonisolated enum MorphVertexLayout {
+    static let positionOffset = 0
+    static let normalOffset = 16
+    static let stride = MemoryLayout<MorphVertexDelta>.stride
+
+    static func vertexDescriptor() -> MTLVertexDescriptor {
+        let descriptor = SkinVertexLayout.vertexDescriptor()
+        let buffer = BufferIndex.morphDeltas.rawValue
+        descriptor.attributes[VertexAttribute.morphPositionDelta.rawValue].format = .float3
+        descriptor.attributes[VertexAttribute.morphPositionDelta.rawValue].offset = positionOffset
+        descriptor.attributes[VertexAttribute.morphPositionDelta.rawValue].bufferIndex = buffer
+        descriptor.attributes[VertexAttribute.morphNormalDelta.rawValue].format = .float3
+        descriptor.attributes[VertexAttribute.morphNormalDelta.rawValue].offset = normalOffset
+        descriptor.attributes[VertexAttribute.morphNormalDelta.rawValue].bufferIndex = buffer
+        descriptor.layouts[buffer].stride = stride
+        descriptor.layouts[buffer].stepRate = 1
+        descriptor.layouts[buffer].stepFunction = .perVertex
+        return descriptor
+    }
+}
+
 /// Interleaved layout of one static-mesh vertex: float3 position, float3
 /// normal, float2 texcoord, float4 color — 48 bytes, tightly packed floats
 /// (not simd-aligned; the vertex descriptor below is the single source of
@@ -137,6 +165,8 @@ nonisolated enum TerrainVertexLayout {
 /// buffer, plus the mesh-local -> model-root transform and material slot
 /// carried over from the engine Mesh.
 nonisolated final class RenderMesh {
+    let name: String?
+    let vertexCount: Int
     let vertexBuffer: MTLBuffer
     let indexBuffer: MTLBuffer
     let indexCount: Int
@@ -187,6 +217,8 @@ nonisolated final class RenderMesh {
         vertexBuffer.label = "\(mesh.name ?? "mesh").vertices"
         indexBuffer.label = "\(mesh.name ?? "mesh").indices"
 
+        name = mesh.name
+        vertexCount = mesh.positions.count
         self.vertexBuffer = vertexBuffer
         self.indexBuffer = indexBuffer
         indexCount = mesh.indices.count

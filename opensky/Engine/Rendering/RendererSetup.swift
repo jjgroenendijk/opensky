@@ -16,6 +16,8 @@ nonisolated struct RenderPipelines {
     let alphaTest: MTLRenderPipelineState
     let skinnedOpaque: MTLRenderPipelineState
     let skinnedAlphaTest: MTLRenderPipelineState
+    let morphedSkinnedOpaque: MTLRenderPipelineState
+    let morphedSkinnedAlphaTest: MTLRenderPipelineState
     let grass: MTLRenderPipelineState
     let terrain: MTLRenderPipelineState
     let water: MTLRenderPipelineState
@@ -50,6 +52,7 @@ nonisolated struct ShadowPipelines {
     let staticCaster: MTLRenderPipelineState
     let alphaTest: MTLRenderPipelineState
     let skinned: MTLRenderPipelineState
+    let morphedSkinned: MTLRenderPipelineState
     let terrain: MTLRenderPipelineState
 }
 
@@ -62,6 +65,20 @@ nonisolated struct ShadowResources {
 }
 
 extension Renderer {
+    static func makeCommandQueue(device: MTLDevice) throws -> MTL4CommandQueue {
+        guard let queue = device.makeMTL4CommandQueue() else {
+            throw RendererError.commandQueueUnavailable
+        }
+        return queue
+    }
+
+    static func makeCommandBuffer(device: MTLDevice) throws -> MTL4CommandBuffer {
+        guard let buffer = device.makeCommandBuffer() else {
+            throw RendererError.commandBufferUnavailable
+        }
+        return buffer
+    }
+
     nonisolated static var nearPlane: Float {
         10
     }
@@ -141,7 +158,7 @@ extension Renderer {
     static func makeArgumentTable(device: MTLDevice) throws -> MTL4ArgumentTable {
         let descriptor = MTL4ArgumentTableDescriptor()
         // Highest buffer index is the world-overlay vertex stream (#422).
-        descriptor.maxBufferBindCount = BufferIndex.overlayVertices.rawValue + 1
+        descriptor.maxBufferBindCount = BufferIndex.morphDeltas.rawValue + 1
         // Base diffuse + terrain layer array + sun-shadow cascade array + the
         // UI glyph/solid atlas + the SWF bitmap and gradient-ramp slots.
         descriptor.maxTextureBindCount = TextureIndex.swfGradient.rawValue + 1
@@ -179,23 +196,30 @@ extension Renderer {
         }
         let compiler = try device.makeCompiler(descriptor: MTL4CompilerDescriptor())
 
-        func makeVariant(alphaTest: Bool, skinned: Bool = false) throws -> MTLRenderPipelineState {
+        func makeVariant(
+            alphaTest: Bool,
+            skinned: Bool = false,
+            morphed: Bool = false
+        ) throws -> MTLRenderPipelineState {
             let vertexFunction = MTL4LibraryFunctionDescriptor()
             vertexFunction.library = library
-            vertexFunction.name = skinned ? "skinnedMeshVertex" : "staticMeshVertex"
+            vertexFunction.name = morphed ? "morphedSkinnedMeshVertex"
+                : (skinned ? "skinnedMeshVertex" : "staticMeshVertex")
 
             let specialized = specializedFragment(
                 "staticMeshFragment", library: library, debugView: false, alphaTest: alphaTest
             )
 
             let descriptor = MTL4RenderPipelineDescriptor()
-            descriptor.label = (skinned ? "SkinnedMesh" : "StaticMesh")
+            descriptor.label = (morphed ? "MorphedSkinnedMesh"
+                : (skinned ? "SkinnedMesh" : "StaticMesh"))
                 + (alphaTest ? "AlphaTest" : "Opaque")
             descriptor.rasterSampleCount = view.sampleCount
             descriptor.vertexFunctionDescriptor = vertexFunction
             descriptor.fragmentFunctionDescriptor = specialized
-            descriptor.vertexDescriptor = skinned
-                ? SkinVertexLayout.vertexDescriptor() : StaticVertexLayout.vertexDescriptor()
+            descriptor.vertexDescriptor = morphed ? MorphVertexLayout.vertexDescriptor()
+                : (skinned
+                    ? SkinVertexLayout.vertexDescriptor() : StaticVertexLayout.vertexDescriptor())
             descriptor.colorAttachments[0].pixelFormat = view.colorPixelFormat
             return try compiler.makeRenderPipelineState(descriptor: descriptor)
         }
@@ -206,6 +230,12 @@ extension Renderer {
             alphaTest: makeVariant(alphaTest: true),
             skinnedOpaque: makeVariant(alphaTest: false, skinned: true),
             skinnedAlphaTest: makeVariant(alphaTest: true, skinned: true),
+            morphedSkinnedOpaque: makeVariant(
+                alphaTest: false, skinned: true, morphed: true
+            ),
+            morphedSkinnedAlphaTest: makeVariant(
+                alphaTest: true, skinned: true, morphed: true
+            ),
             grass: makeGrassPipeline(library: library, compiler: compiler, view: view),
             terrain: makeTerrainPipeline(library: library, compiler: compiler, view: view),
             water: makeWaterPipeline(library: library, compiler: compiler, view: view),

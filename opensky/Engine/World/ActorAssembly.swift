@@ -246,14 +246,24 @@ nonisolated extension ActorAssembly where Asset == ActorRenderAsset {
     /// The same placements at a transform supplied from outside the assembly.
     /// The player body is assembled once and moves every frame (issue #189), so
     /// its transform cannot be the one baked in at assembly time.
-    func renderPlacements(at transform: float4x4) -> [RenderPlacement] {
+    func renderPlacements(
+        at transform: float4x4,
+        faceMorphs: [ObjectIdentifier: FaceMorphBuffer] = [:]
+    ) -> [RenderPlacement] {
         models.map {
-            RenderPlacement(
+            let morphs: [ObjectIdentifier: FaceMorphBuffer] =
+                if case .faceGenHead = $0.role {
+                    faceMorphs
+                } else {
+                    [:]
+                }
+            return RenderPlacement(
                 model: $0.asset.model,
                 transform: transform,
                 bounds: Self.isAttachment($0.role)
                     ? nil
                     : $0.asset.bounds?.transformed(by: transform),
+                faceMorphs: morphs,
                 layer: .actors
             )
         }

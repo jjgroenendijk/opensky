@@ -89,6 +89,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Actor records](/formats/actors.md) - ACHR/NPC_/LVLN/LVLI/RACE/CLAS/ARMO/ARMA/OTFT
   layouts, TPLT chain + visual appearance resolution (skin/outfit/slot
   masking), FaceGen path convention + actor GPU assembly.
+* [FaceGen TRI expressions](/formats/tri.md) - FRTRI003 base topology, named scaled
+  vertex deltas, HDPT/RACE/NPC_ association, and defensive decode policy.
 * [HKX packfile container](/formats/hkx-container.md) - Havok hk_2010 packfile
   header, section + fixup tables, class-name inventory, object enumeration.
 * [hkaSkeleton object](/formats/hka-skeleton.md) - bone names, parent indices,
@@ -189,6 +191,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Actor idle animation](/engine/actor-animation.md) - HKX idle sampling, skeleton-world
   pose composition, NIF palette refresh, streamed lifetime, fallback accounting + budget,
   the graph-driven player path and its simulation clock.
+* [Face morph runtime](/engine/face-morphs.md) - per-actor TRI weights, CPU position and
+  normal composition, morph-capable skinned and shadow pipelines, and app controls.
 * [Behavior graph runtime](/engine/behavior-runtime.md) - headless Havok Behavior
   evaluation: instance model, fixed update order, variables, events, bindings, clip time
   and triggers, weighted blends, state machines with event-driven transitions, crossfades

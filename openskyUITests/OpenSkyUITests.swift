@@ -90,6 +90,9 @@ final class OpenSkyUITests: OpenSkyUITestCase {
         XCTAssertTrue(app.popUpButtons["HUDScaleControl"].exists)
         XCTAssertTrue(app.staticTexts["HUDElementsStatsLabel"].exists)
         XCTAssertTrue(app.staticTexts["HUDTargetStatsLabel"].exists)
+        XCTAssertTrue(app.popUpButtons["FaceMorphTargetControl"].exists)
+        XCTAssertTrue(app.sliders["MorphWeightControl"].exists)
+        XCTAssertTrue(app.staticTexts["FaceMorphStatsLabel"].exists)
     }
 
     /// World > System Menu acceptance surface (M8.5.1): Resume/Settings/Quit

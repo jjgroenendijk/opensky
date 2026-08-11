@@ -30,7 +30,8 @@ extension Renderer {
             label: String,
             vertex: String,
             fragment: String?,
-            skinned: Bool
+            skinned: Bool,
+            morphed: Bool = false
         ) throws -> MTLRenderPipelineState {
             let vertexFunction = MTL4LibraryFunctionDescriptor()
             vertexFunction.library = library
@@ -47,8 +48,9 @@ extension Renderer {
             }
             // Terrain casts through the static interleaved stream (position at
             // buffer 0); the splat-weight stream is irrelevant to depth.
-            descriptor.vertexDescriptor = skinned
-                ? SkinVertexLayout.vertexDescriptor() : StaticVertexLayout.vertexDescriptor()
+            descriptor.vertexDescriptor = morphed ? MorphVertexLayout.vertexDescriptor()
+                : (skinned
+                    ? SkinVertexLayout.vertexDescriptor() : StaticVertexLayout.vertexDescriptor())
             // No color attachment + depth-only: the depth format binds at pass
             // time (MTL4RenderPipelineDescriptor carries no depth format, same
             // as the scene pipelines).
@@ -67,6 +69,10 @@ extension Renderer {
             skinned: make(
                 label: "ShadowSkinned", vertex: "shadowSkinnedVertex",
                 fragment: nil, skinned: true
+            ),
+            morphedSkinned: make(
+                label: "ShadowMorphedSkinned", vertex: "shadowMorphedSkinnedVertex",
+                fragment: nil, skinned: true, morphed: true
             ),
             terrain: make(
                 label: "ShadowTerrain", vertex: "shadowTerrainVertex",

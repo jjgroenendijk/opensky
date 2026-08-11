@@ -2,6 +2,20 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-11
+
+* **TRI face morphs (issue #207, item 17.6)**: resident actors now carry independent named
+  FaceGen expression weights. A defensive `FRTRI003` decoder reads base topology and scaled
+  Int16 targets; RACE and HDPT decoding reaches the expression container by matching HDPT
+  `EDID` to each baked `BSDynamicTriShape`, with VFS existence, skinning and vertex-count
+  guards retaining distinct miss reasons. The CPU composes position and topology-derived
+  normal deltas into an actor-local frame-ring stream; morph-capable skinned scene, debug and
+  shadow pipelines apply it before bone skinning, while cached meshes remain immutable.
+  `World > HUD & Interaction > Face Morphs` selects a target, scrubs its zero-through-one
+  weight and reports pairs, misses and unknown names. The real Heimskr gate paired six
+  containers with 47 targets; `Aah = 1` changed 708 pixels and repeated exactly. See
+  [TRI expressions](/formats/tri.md) and [face morph runtime](/engine/face-morphs.md).
+
 ## 2026-08-10
 
 * **Voice playback: `.fuz` framing and a playback clock (item 17.5)**: a chosen dialogue

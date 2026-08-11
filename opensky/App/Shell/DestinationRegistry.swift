@@ -30,6 +30,7 @@ typealias WorldControlProviders = AINavigationControlProviding
     & ArcheryControlProviding & AudioControlProviding
     & CameraControlProviding & CombatLoopControlProviding & ContainerMenuControlProviding
     & DialogueCameraControlProviding & DialogueControlProviding
+    & FaceMorphControlProviding
     & FirstPersonControlProviding
     & FrameStatsProviding & GrassControlProviding
     & HUDControlProviding & InventoryEquipmentControlProviding
@@ -252,17 +253,20 @@ enum DestinationRegistry {
                 panel.itemProvider = context.providers
                 panel.dialogueProvider = context.providers
                 panel.dialogueCameraProvider = context.providers
+                panel.faceMorphProvider = context.providers
                 return panel
             },
             overrides: DestinationOverrideActions(
                 isOverridden: { context in
                     HUDElementsSection.isOverridden(provider: context.providers)
                         || DialogueSection.isOverridden(provider: context.providers)
+                        || FaceMorphSection.isOverridden(provider: context.providers)
                         || DialogueCameraSection.isOverridden(provider: context.providers)
                 },
                 resetToDefaults: { context in
                     HUDElementsSection.resetToDefaults(provider: context.providers)
                     DialogueSection.resetToDefaults(provider: context.providers)
+                    FaceMorphSection.resetToDefaults(provider: context.providers)
                     DialogueCameraSection.resetToDefaults(provider: context.providers)
                 }
             )

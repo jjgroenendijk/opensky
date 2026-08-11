@@ -48,6 +48,10 @@ typedef NS_ENUM(EnumBackingType, BufferIndex)
     /// [[vertex_id]]; the existing FrameUniforms supplies its world-to-clip
     /// transform.
     BufferIndexOverlayVertices = 13,
+    /// Per-actor FaceGen position + normal deltas. A separate stream keeps
+    /// cached RenderMesh geometry immutable while actors sharing it use
+    /// independent expression weights.
+    BufferIndexMorphDeltas = 14,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)
@@ -61,6 +65,8 @@ typedef NS_ENUM(EnumBackingType, VertexAttribute)
     VertexAttributeLayerWeights1 = 5,
     VertexAttributeBoneWeights = 6,
     VertexAttributeBoneIndices = 7,
+    VertexAttributeMorphPositionDelta = 8,
+    VertexAttributeMorphNormalDelta = 9,
 };
 
 typedef NS_ENUM(EnumBackingType, TextureIndex)

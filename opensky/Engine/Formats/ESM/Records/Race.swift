@@ -25,6 +25,73 @@ nonisolated struct Race {
         case female
     }
 
+    private struct DecodeState {
+        var editorID: String?
+        var name: LString?
+        var defaultSkin: FormID?
+        var bodyTemplate: BodyTemplate?
+        var flags = Flags()
+        var stats = Stats()
+        var maleSkeletonPath: String?
+        var femaleSkeletonPath: String?
+        var gender: Gender?
+        var headDataStarted = false
+        var headGender: Gender?
+        var maleHeadParts: [FormID] = []
+        var femaleHeadParts: [FormID] = []
+
+        mutating func consumeMetadata(_ field: ESMField, localized: Bool) throws -> Bool {
+            var reader = BinaryReader(field.data)
+            switch field.type {
+            case "EDID": editorID = try reader.readZString()
+            case "FULL": name = try LString(field: field, localized: localized)
+            case "WNAM": defaultSkin = try FormID(reader.readUInt32())
+            case "BOD2": bodyTemplate = try BodyTemplate(bod2: field)
+            case "BODT": bodyTemplate = try BodyTemplate(bodt: field)
+            case "DATA":
+                flags = Race.decodeFlags(field) ?? flags
+                stats = Race.decodeStats(field) ?? stats
+            default: return false
+            }
+            return true
+        }
+
+        mutating func consumeHeadData(_ field: ESMField) throws {
+            var reader = BinaryReader(field.data)
+            switch field.type {
+            case "MNAM": setGender(.male)
+            case "FNAM": setGender(.female)
+            case "NAM0":
+                headDataStarted = true
+                headGender = nil
+            case "HEAD":
+                guard headDataStarted else { return }
+                let id = try FormID(reader.readUInt32())
+                if headGender == .male {
+                    maleHeadParts.append(id)
+                } else if headGender == .female {
+                    femaleHeadParts.append(id)
+                }
+            case "ANAM":
+                let path = try reader.readZString()
+                (maleSkeletonPath, femaleSkeletonPath) = Race.assignSkeleton(
+                    path: path,
+                    gender: gender,
+                    male: maleSkeletonPath,
+                    female: femaleSkeletonPath
+                )
+            default: break
+            }
+        }
+
+        private mutating func setGender(_ value: Gender) {
+            gender = value
+            if headDataStarted {
+                headGender = value
+            }
+        }
+    }
+
     /// DATA uint32 flags at offset 0x20 (UESP RACE) — only the
     /// appearance-relevant bits are named.
     struct Flags: OptionSet, Equatable {
@@ -72,6 +139,10 @@ nonisolated struct Race {
     let maleSkeletonPath: String?
     /// ANAM under the female (FNAM) skeleton block.
     let femaleSkeletonPath: String?
+    /// HEAD references under the male FaceGen head-data marker.
+    let maleHeadParts: [FormID]
+    /// HEAD references under the female FaceGen head-data marker.
+    let femaleHeadParts: [FormID]
 
     init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "RACE" else {
@@ -79,57 +150,23 @@ nonisolated struct Race {
         }
         formID = FormID(record.formID)
 
-        var editorID: String?
-        var name: LString?
-        var defaultSkin: FormID?
-        var bodyTemplate: BodyTemplate?
-        var flags = Flags()
-        var stats = Stats()
-        var maleSkeletonPath: String?
-        var femaleSkeletonPath: String?
-        var gender: Gender?
+        var state = DecodeState()
         for field in try record.fields() {
-            var reader = BinaryReader(field.data)
-            switch field.type {
-            case "EDID":
-                editorID = try reader.readZString()
-            case "FULL":
-                name = try LString(field: field, localized: localized)
-            case "WNAM":
-                defaultSkin = try FormID(reader.readUInt32())
-            case "BOD2":
-                bodyTemplate = try BodyTemplate(bod2: field)
-            case "BODT":
-                bodyTemplate = try BodyTemplate(bodt: field)
-            case "DATA":
-                flags = Self.decodeFlags(field) ?? flags
-                stats = Self.decodeStats(field) ?? stats
-            case "MNAM":
-                gender = .male
-            case "FNAM":
-                gender = .female
-            case "ANAM":
-                // Only the skeleton block emits ANAM; first path per gender
-                // wins so any stray later ANAM cannot clobber it.
-                let path = try reader.readZString()
-                (maleSkeletonPath, femaleSkeletonPath) = Self.assignSkeleton(
-                    path: path,
-                    gender: gender,
-                    male: maleSkeletonPath,
-                    female: femaleSkeletonPath
-                )
-            default:
-                break
+            if try state.consumeMetadata(field, localized: localized) {
+                continue
             }
+            try state.consumeHeadData(field)
         }
-        self.editorID = editorID
-        self.name = name
-        self.defaultSkin = defaultSkin
-        self.bodyTemplate = bodyTemplate
-        self.flags = flags
-        self.stats = stats
-        self.maleSkeletonPath = maleSkeletonPath
-        self.femaleSkeletonPath = femaleSkeletonPath
+        editorID = state.editorID
+        name = state.name
+        defaultSkin = state.defaultSkin
+        bodyTemplate = state.bodyTemplate
+        flags = state.flags
+        stats = state.stats
+        maleSkeletonPath = state.maleSkeletonPath
+        femaleSkeletonPath = state.femaleSkeletonPath
+        maleHeadParts = state.maleHeadParts
+        femaleHeadParts = state.femaleHeadParts
     }
 
     /// DATA: skill boosts (14 bytes + 2 pad) then male/female height +
