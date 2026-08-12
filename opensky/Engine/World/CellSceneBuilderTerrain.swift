@@ -8,6 +8,7 @@
 
 import Foundation
 import Metal
+import OpenSkyShaderTypes
 import OSLog
 import simd
 

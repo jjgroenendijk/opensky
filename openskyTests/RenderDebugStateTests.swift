@@ -13,6 +13,7 @@ import Foundation
 import Metal
 import MetalKit
 @testable import opensky
+import OpenSkyShaderTypes
 import simd
 import Testing
 

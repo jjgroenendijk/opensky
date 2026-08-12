@@ -11,6 +11,7 @@
 // exactly once per frame.
 
 import Foundation
+import OpenSkyShaderTypes
 
 /// One scene role a draw can belong to. The renderer's filter is a mask over
 /// these rather than one more boolean per subsystem, because `Renderer` already

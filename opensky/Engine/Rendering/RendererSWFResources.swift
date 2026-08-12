@@ -7,6 +7,7 @@
 
 import Metal
 import MetalKit
+import OpenSkyShaderTypes
 
 /// Draw accounting for the most recently encoded SWF layer, mirrored to
 /// `Renderer.lastSWFDrawStats` (house style: exact counts, written per frame).

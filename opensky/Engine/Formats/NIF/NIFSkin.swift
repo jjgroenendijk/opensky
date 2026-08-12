@@ -8,6 +8,7 @@
 // Layout documented in docs/formats/nif.md.
 
 import Foundation
+import OpenSkyShaderTypes
 import simd
 
 nonisolated struct NIFTransform: Equatable {

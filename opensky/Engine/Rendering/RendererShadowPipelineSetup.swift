@@ -4,6 +4,7 @@
 // attachment, so their depth format binds at pass time.
 
 import Metal
+import OpenSkyShaderTypes
 
 extension Renderer {
     /// Builds the shadow pipelines + compare sampler + cascade array together.

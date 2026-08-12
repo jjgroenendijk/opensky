@@ -22,8 +22,11 @@ synchronizes `App/`, `Engine/`, and `SharedHeaders/`, while `openskycli` synchro
 panel framework) lives under `opensky/App/` and is therefore invisible to the CLI, with
 no `PBXFileSystemSynchronizedBuildFileExceptionSet` to hand-maintain -> one source tree,
 no framework split, no duplication. CLI entry
-code lives in `openskycli/` (own synchronized root group). Bridging header pinned to
-`opensky/SharedHeaders/ShaderTypes.h`; `Shaders.metal` compiles into `default.metallib` next to the
+code lives in `openskycli/` (own synchronized root group). The structs shared with Metal
+arrive through the `OpenSkyShaderTypes` clang module rather than a bridging header, so the
+CLI no longer borrows the app target's, and any file that needs them says so with an
+`import` — see [Build system](/tools/build-system.md).
+`Shaders.metal` compiles into `default.metallib` next to the
 tool binary, so `device.makeDefaultLibrary()` works without an app bundle. Shared
 scheme `openskycli`; build via `make cli`.
 

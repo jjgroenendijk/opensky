@@ -3,6 +3,7 @@
 // camera for a built cell; `demo` mirrors the DemoScene constants for the
 // synthetic fallback scene.
 
+import OpenSkyShaderTypes
 import simd
 
 nonisolated struct SceneCamera {

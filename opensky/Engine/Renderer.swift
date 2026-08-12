@@ -2,6 +2,7 @@
 
 import Metal
 import MetalKit
+import OpenSkyShaderTypes
 import QuartzCore
 import simd
 

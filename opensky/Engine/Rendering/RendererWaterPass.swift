@@ -3,6 +3,7 @@
 // opaque + cutout geometry with read-only depth and a straight-alpha blend.
 
 import Metal
+import OpenSkyShaderTypes
 import simd
 
 extension Renderer {

@@ -25,8 +25,9 @@ SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES
 // the measured numbers and the flows it does not help.
 COMPILATION_CACHE_ENABLE_CACHING = YES
 
-// The vendored decode-only ffmpeg (make ffmpeg) and its module map.
-SWIFT_INCLUDE_PATHS = $(inherited) $(SRCROOT)/tools/ffmpeg $(SRCROOT)/.vendor/ffmpeg/include
+// Clang module maps Swift can import: the OpenSkyShaderTypes module that carries the
+// structs shared with Metal, and the vendored decode-only ffmpeg (make ffmpeg).
+SWIFT_INCLUDE_PATHS = $(inherited) $(SRCROOT)/opensky/SharedHeaders/ShaderTypes $(SRCROOT)/tools/ffmpeg $(SRCROOT)/.vendor/ffmpeg/include
 
 // Versioning and product naming, identical for every target.
 CURRENT_PROJECT_VERSION = 1

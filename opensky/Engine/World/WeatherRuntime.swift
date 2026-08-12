@@ -8,6 +8,7 @@
 // docs/engine/weather.md. Time-of-day windows come from CLMT TNAM timing.
 
 import Foundation
+import OpenSkyShaderTypes
 import simd
 
 /// Four time-of-day weights (sunrise/day/sunset/night) summing to 1, derived

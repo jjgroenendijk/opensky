@@ -6,6 +6,7 @@
 
 import Metal
 import MetalKit
+import OpenSkyShaderTypes
 import simd
 
 /// The UI pass's long-lived objects, built together at init: GPU pipeline +

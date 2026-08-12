@@ -5,6 +5,7 @@
 
 import Metal
 import MetalKit
+import OpenSkyShaderTypes
 import simd
 
 // MARK: - Setup factories

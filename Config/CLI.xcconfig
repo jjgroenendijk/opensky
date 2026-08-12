@@ -4,14 +4,14 @@
 SUPPORTED_PLATFORMS = macosx
 
 // The CLI compiles the same engine sources as the app, so it needs the same isolation
-// default and the same bridging header. It builds from opensky/Engine rather than from a
-// folder named after the target, so the path is spelled out.
+// default. The structs shared with Metal reach both targets through the
+// OpenSkyShaderTypes clang module on SWIFT_INCLUDE_PATHS, so the CLI no longer has to
+// borrow the app target's bridging header.
 SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor
-SWIFT_OBJC_BRIDGING_HEADER = opensky/SharedHeaders/ShaderTypes.h
 
-// Shaders.metal lives in opensky/Engine and imports ShaderTypes.h from the sibling
-// SharedHeaders folder.
-MTL_HEADER_SEARCH_PATHS = $(inherited) $(SRCROOT)/opensky/SharedHeaders
+// Shaders.metal lives in opensky/Engine and imports ShaderTypes.h from the module
+// directory under SharedHeaders.
+MTL_HEADER_SEARCH_PATHS = $(inherited) $(SRCROOT)/opensky/SharedHeaders/ShaderTypes
 
 // The vendored decode-only ffmpeg. A command-line tool has no bundle to embed into, so
 // it loads the dylibs straight from .vendor at run time.

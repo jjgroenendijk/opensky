@@ -15,6 +15,7 @@
 
 import Foundation
 import OSLog
+import simd
 
 /// Why the player has no body. Every case is reported rather than swallowed:
 /// a bodiless player in third person looks like a rendering bug, and the panel

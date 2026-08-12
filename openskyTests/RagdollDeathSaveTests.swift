@@ -12,6 +12,7 @@
 
 import Foundation
 @testable import opensky
+import simd
 import Testing
 
 @MainActor

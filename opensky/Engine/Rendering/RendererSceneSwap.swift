@@ -4,6 +4,7 @@
 // player body, so the two sizing callers live together here.
 
 import Metal
+import OpenSkyShaderTypes
 import simd
 
 // MARK: - Scene swap (cell streaming)

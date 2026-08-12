@@ -10,6 +10,7 @@
 // `y' = x * RotateSkew0 + y * ScaleY + TranslateY`.
 
 import Foundation
+import OpenSkyShaderTypes
 import simd
 
 /// Affine map `out.x = scaleX*x + rotateSkew1*y + translateX`,

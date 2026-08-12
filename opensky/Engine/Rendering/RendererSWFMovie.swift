@@ -15,6 +15,7 @@
 // held.
 
 import Metal
+import OpenSkyShaderTypes
 import simd
 
 nonisolated final class SWFMovieResources {

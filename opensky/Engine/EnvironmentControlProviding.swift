@@ -2,6 +2,8 @@
 // frame HUD. No AppKit here on purpose: the file compiles into both the app and
 // the CLI target, so a protocol added here needs no project-membership change.
 
+import Foundation
+
 @MainActor
 protocol ShadowControlProviding: AnyObject {
     /// Sun-shadow on/off, independent of the selected quality tier so an A/B

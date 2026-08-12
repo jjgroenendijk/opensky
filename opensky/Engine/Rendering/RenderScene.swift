@@ -4,6 +4,7 @@
 
 import Foundation
 import Metal
+import OpenSkyShaderTypes
 import simd
 
 /// Resolves a material's texture key to a ready MTLTexture. `key` nil means

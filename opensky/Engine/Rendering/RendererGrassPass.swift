@@ -3,6 +3,7 @@
 // then a hard upload budget before one indexed draw per surviving group.
 
 import Metal
+import OpenSkyShaderTypes
 import simd
 
 extension Renderer {
