@@ -1,15 +1,19 @@
 // World > Audio destination panel (M9.1.3): the sidebar verification surface
-// for the world audio engine. Thin composition of two self-contained sections
-// (output/graph, sources) on the shared panel framework, same shape as
-// EnvironmentPanelViewController. Exact sidebar path and control ids:
-// docs/engine/audio.md.
+// for the world audio engine. Thin composition of self-contained sections
+// (output/graph, sources, sfx, music, footsteps) on the shared panel framework,
+// same shape as EnvironmentPanelViewController. Exact sidebar path and control
+// ids: docs/engine/audio.md.
+//
+// The Voice section moved to `World > Dialogue & Voice` with issue #209: a
+// voice line is one step of a conversation, and the destination that owns the
+// conversation is where a user looks for it. Everything routed through the
+// voice submix still reports here, in the Sources section.
 
 import AppKit
 
 final class AudioPanelViewController: InspectorPanelViewController {
     let outputSection = AudioOutputSection()
     let sourcesSection = AudioSourcesSection()
-    let voiceSection = AudioVoiceSection()
     let sfxSection = AudioSfxSection()
     let musicSection = AudioMusicSection()
     let footstepsSection = AudioFootstepsSection()
@@ -20,7 +24,6 @@ final class AudioPanelViewController: InspectorPanelViewController {
         didSet {
             outputSection.provider = provider
             sourcesSection.provider = provider
-            voiceSection.provider = provider
             sfxSection.provider = provider
             musicSection.provider = provider
             footstepsSection.provider = provider
@@ -28,7 +31,7 @@ final class AudioPanelViewController: InspectorPanelViewController {
     }
 
     override func makeSections() -> [PanelSectionViewController] {
-        [outputSection, sourcesSection, voiceSection, sfxSection, musicSection, footstepsSection]
+        [outputSection, sourcesSection, sfxSection, musicSection, footstepsSection]
     }
 
     /// Control forwards for the verification-surface tests, mirroring
@@ -51,22 +54,6 @@ final class AudioPanelViewController: InspectorPanelViewController {
 
     var audioStopAllControl: NSButton {
         sourcesSection.stopAllControl
-    }
-
-    var audioVoiceFilterControl: NSTextField {
-        voiceSection.filterControl
-    }
-
-    var audioVoiceFileControl: NSPopUpButton {
-        voiceSection.fileControl
-    }
-
-    var audioVoicePlayControl: NSButton {
-        voiceSection.playControl
-    }
-
-    var lipSyncEnabledControl: NSButton {
-        voiceSection.lipSyncEnabledControl
     }
 
     var audioMusicEnabledControl: NSButton {

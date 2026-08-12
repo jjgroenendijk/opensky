@@ -1,4 +1,5 @@
-// World > HUD & Interaction > Dialogue Camera section coverage (issue #427).
+// World > Dialogue & Voice > Dialogue Camera section coverage (issue #427; the
+// section moved to the milestone's own destination with issue #209).
 // Synthetic provider state only; the pixel half of the gate is
 // `DialogueCameraRenderRealDataTests` and the framing math is
 // `DialogueCameraTests`.
@@ -18,10 +19,8 @@ import Testing
 struct DialogueCameraSectionTests {
     private func makePanel(
         _ provider: FakeWorldProviders
-    ) -> HUDInteractionPanelViewController {
-        let panel = HUDInteractionPanelViewController()
-        panel.provider = provider
-        panel.itemProvider = provider
+    ) -> DialoguePanelViewController {
+        let panel = DialoguePanelViewController()
         panel.dialogueProvider = provider
         panel.dialogueCameraProvider = provider
         panel.loadViewIfNeeded()

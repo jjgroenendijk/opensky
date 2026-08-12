@@ -2,6 +2,50 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-12
+
+* **M17 acceptance: one destination for the whole conversation (issue #209, item 17.8)**:
+  the milestone's seven capabilities are now one loop a user can drive from one place.
+  `World > Dialogue & Voice` (`Destination-dialogueVoice`) assembles the four sections the
+  sub-issues built — Dialogue and its condition trace (17.3), Dialogue Camera (17.4), Voice
+  with the playback clock and the lip-sync A/B toggle (17.5, 17.7), Face Morphs (17.6) — in
+  the order a conversation uses them. Each section is standalone, so the move was a registry
+  edit and changed no control identifier: `AudioVoice*` still names the submix controls
+  because they are the UI-test contract. One readout is new,
+  `VoiceSourceStatsLabel`, over `WorldAudioEngine.statsSnapshot()` narrowed to the voice
+  submix. Decisions, with what was rejected: the sections were **moved** rather than
+  duplicated into the new destination, because two live panels holding the same
+  accessibility identifiers would break the UI-test contract that makes any of this
+  checkable; the destination's override policy lights the dot for an open conversation, a
+  forced camera, a scrubbed weight and lip sync switched off, and deliberately does not undo
+  said-state or a quest stage, because those are what the milestone produced rather than a
+  knob left off its default; and the headless gate drives `GameViewController`'s own entry
+  points — the streamer's Talk activation and the `DialogueControlProviding` members the
+  panel buttons and the live keys share — rather than re-implementing the conversation state
+  machine in the test, which is what a second copy of `chooseDialogueTopic` would have been.
+  Honest coverage, measured 2026-08-12 against the shipped masters: 15,037 topics and 31,465
+  responses indexed; the pinned speaker is offered 54 topics with 6,481 rejected, 11,622
+  conditions evaluated and 7,837 still unanswerable (functions 4167, 4725 and 4702 lead the
+  residue); 75,408 `.fuz` entries, of which 74,070 carry a lip blob and 61,484 decode as
+  standard tracks; and the gate's own chosen line reached 15 unmapped viseme slots after
+  walking past three sibling recordings of the same response — two non-finite curve values,
+  one unsupported key tuple width. SCEN playback did not land and is deferred explicitly
+  rather than silently. Evidence: `M17AcceptanceTests`, `M17AcceptancePanelTests` and
+  `M17AcceptanceBudgetTests` under `make test`; `M17AcceptanceRealDataTests` and
+  `M17AcceptanceRenderTests` under `make realtest`, whose run directories are
+  `logs/m17-acceptance/<stamp>/` and `logs/test-fast/<stamp>/` — the mouth region moved 717,
+  740 and 748 pixels for lip sync off versus on at three times in one line, 725 pixels
+  between the first and last of them, and each pair repeated to zero; over one exterior cell
+  the dialogue camera moved 131,344 pixels and the vanilla `dialoguemenu.swf` drew 17,572
+  over it. The one piece of evidence no test can produce is the audible one: deterministic
+  tests cannot hear, and nobody has yet sat in front of the installed app and listened to a
+  chosen line. That confirmation is outstanding and is recorded as outstanding rather than
+  assumed. One unrelated fix rode along: `LipSyncRealDataTests` could not compile
+  its `#expect(... allSatisfy(\.isFinite))` inside a `do`/`catch` under Swift 6.3.3, which
+  had left the whole `openskyRealDataTests` bundle unbuildable. See
+  [dialogue runtime](/engine/dialogue.md) and
+  [sidebar acceptance](/tools/sidebar-acceptance.md).
+
 ## 2026-08-11
 
 * **Audio-clock lip sync (issue #208, item 17.7)**: `LIPFile` now defensively decodes the

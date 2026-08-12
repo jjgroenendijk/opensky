@@ -1,7 +1,11 @@
-// World > Audio > Voice verification surface (item 17.5): control geometry,
-// the literal accessibility-id contract, the filter/picker round-trip and the
-// readout wording — including the one thing a truncated picker must never do,
-// which is read as though it listed everything that matched.
+// World > Dialogue & Voice > Voice verification surface (item 17.5): control
+// geometry, the literal accessibility-id contract, the filter/picker round-trip
+// and the readout wording — including the one thing a truncated picker must
+// never do, which is read as though it listed everything that matched.
+//
+// The section moved out of `World > Audio` with the M17 gate (issue #209), so
+// the panel these build is `DialoguePanelViewController`; every control id is
+// the one item 17.5 pinned.
 
 import AppKit
 @testable import opensky
@@ -10,7 +14,7 @@ import Testing
 struct AudioVoicePanelTests {
     @Test @MainActor
     func controlsHaveVisibleFramesInsideDocument() throws {
-        let panel = AudioPanelViewController()
+        let panel = DialoguePanelViewController()
         let scrollView = try #require(panel.view as? NSScrollView)
         panel.view.frame = NSRect(x: 0, y: 0, width: 300, height: 900)
         panel.view.layoutSubtreeIfNeeded()
@@ -30,7 +34,7 @@ struct AudioVoicePanelTests {
 
     @Test @MainActor
     func accessibilityIdentifiersArePinned() {
-        let panel = AudioPanelViewController()
+        let panel = DialoguePanelViewController()
         panel.loadViewIfNeeded()
         #expect(panel.voiceSection.sectionIdentifier == "audioVoice")
         #expect(
@@ -55,13 +59,13 @@ struct AudioVoicePanelTests {
 
     @Test @MainActor
     func pickerListsTheProvidersMatchesAndPlayingReachesTheProvider() {
-        let panel = AudioPanelViewController()
+        let panel = DialoguePanelViewController()
         let provider = FakeAudioProvider()
         provider.selectableVoiceFileNames = [
             "sound\\voice\\skyrim.esm\\femaleeventoned\\wigreeting__000c7917_1.fuz",
             "sound\\voice\\skyrim.esm\\femaleeventoned\\wigreeting__000c7918_1.fuz"
         ]
-        panel.provider = provider
+        panel.audioProvider = provider
         panel.loadViewIfNeeded()
         panel.voiceSection.syncControls()
         #expect(panel.audioVoiceFileControl.itemTitles == provider.selectableVoiceFileNames)
@@ -72,9 +76,9 @@ struct AudioVoicePanelTests {
 
     @Test @MainActor
     func applyingTheFilterPushesItToTheProvider() {
-        let panel = AudioPanelViewController()
+        let panel = DialoguePanelViewController()
         let provider = FakeAudioProvider()
-        panel.provider = provider
+        panel.audioProvider = provider
         panel.loadViewIfNeeded()
         panel.audioVoiceFilterControl.stringValue = "malenord"
         panel.voiceSection.applyFilterControl.performClick(nil)
@@ -83,7 +87,7 @@ struct AudioVoicePanelTests {
 
     @Test @MainActor
     func lipSyncToggleAndReadoutReachTheProvider() {
-        let panel = AudioPanelViewController()
+        let panel = DialoguePanelViewController()
         let provider = FakeAudioProvider()
         provider.lipSyncSnapshot = LipSyncSnapshot(
             actor: FormID(0x14),
@@ -94,7 +98,7 @@ struct AudioVoicePanelTests {
             unmappedActiveSlots: [31],
             isDecaying: false
         )
-        panel.provider = provider
+        panel.audioProvider = provider
         panel.loadViewIfNeeded()
         panel.voiceSection.refreshReadout()
 
@@ -120,6 +124,60 @@ struct AudioVoicePanelTests {
         #expect(text.contains("200 listed of 34818 matching"))
         #expect(text.contains("Position: 1.42 / 3.10 s"))
         #expect(!text.contains("Play failed"))
+    }
+
+    /// The voice-submix readout the M17 gate added (issue #209): what is on the
+    /// voice bus, how far away it is and how far into itself it has played.
+    /// Sources on other submixes are counted but not listed, because a music
+    /// bed playing is not what this section is for.
+    @Test @MainActor
+    func sourceReadoutListsOnlyVoiceSourcesAndTheirClocks() {
+        let text = AudioVoiceSection.sourceReadout(AudioStatsSnapshot(
+            enabled: true,
+            engineRunning: true,
+            outputDescription: "48000 Hz stereo",
+            sources: [
+                AudioSourceStatsSnapshot(
+                    name: "voice\\line.fuz",
+                    categoryName: AudioCategory.voice.displayName,
+                    isPositional: true,
+                    worldPosition: SIMD3(100, 0, 0),
+                    distanceMeters: 1.4,
+                    fadeGain: 1,
+                    isFading: false,
+                    effectiveGain: 0.8,
+                    positionSeconds: 1.25
+                ),
+                AudioSourceStatsSnapshot(
+                    name: "music\\bed.xwm",
+                    categoryName: AudioCategory.music.displayName,
+                    isPositional: false,
+                    worldPosition: .zero,
+                    distanceMeters: 0,
+                    fadeGain: 1,
+                    isFading: false,
+                    effectiveGain: 1,
+                    positionSeconds: nil
+                )
+            ],
+            sourceCap: 32
+        ))
+        #expect(text.contains("Voice submix: 1 source(s)"))
+        #expect(text.contains("voice\\line.fuz · 1.4 m · 1.25 s · gain 0.80"))
+        #expect(!text.contains("music\\bed.xwm"))
+    }
+
+    /// A silent submix says so and states how loaded the graph is, and a stopped
+    /// engine reports why rather than an empty list that reads as silence.
+    @Test @MainActor
+    func sourceReadoutStatesSilenceAndAStoppedEngine() {
+        let silent = AudioVoiceSection.sourceReadout(AudioStatsSnapshot(
+            enabled: true, engineRunning: true, outputDescription: "48000 Hz stereo",
+            sources: [], sourceCap: 32
+        ))
+        #expect(silent.contains("no source playing"))
+        #expect(silent.contains("0 of 32 sources"))
+        #expect(AudioVoiceSection.sourceReadout(.empty).contains("no engine"))
     }
 
     @Test @MainActor

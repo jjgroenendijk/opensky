@@ -1,15 +1,16 @@
 // World > HUD & Interaction: durable M8.4 acceptance surface. The element
 // section owns presentation overrides; the target section reports the exact
 // walk-mode selection and the live prompt sent to the vanilla movie; the items
-// section (M12.1.3) acts on that selection — take, search, drop; the dialogue
-// section (M17.3) acts on it when the selection is an actor; the dialogue
-// camera section (M17.4) shows what a conversation did to the view and to the
-// actor it is with.
+// section (M12.1.3) acts on that selection — take, search, drop.
 //
-// The items and dialogue sections take providers of their own because they read
-// the world-item runtime and the dialogue layer rather than the HUD. All four
-// are the same object in the app; typing them apart keeps each section's
-// dependency honest.
+// Talking to what the crosshair picked up used to live here too. Issue #209
+// moved the conversation, its camera, its voice line and the speaker's face to
+// `World > Dialogue & Voice`, where the whole loop is one destination; this one
+// keeps what the crosshair itself does.
+//
+// The items section takes a provider of its own because it reads the world-item
+// runtime rather than the HUD. Both are the same object in the app; typing them
+// apart keeps each section's dependency honest.
 
 import AppKit
 
@@ -17,9 +18,6 @@ final class HUDInteractionPanelViewController: InspectorPanelViewController {
     let elementsSection = HUDElementsSection()
     let targetSection = HUDTargetSection()
     let itemsSection = ItemsSection()
-    let dialogueSection = DialogueSection()
-    let faceMorphSection = FaceMorphSection()
-    let dialogueCameraSection = DialogueCameraSection()
 
     weak var provider: (any HUDControlProviding)? {
         didSet {
@@ -34,22 +32,7 @@ final class HUDInteractionPanelViewController: InspectorPanelViewController {
         didSet { itemsSection.provider = itemProvider }
     }
 
-    weak var dialogueProvider: (any DialogueControlProviding)? {
-        didSet { dialogueSection.provider = dialogueProvider }
-    }
-
-    weak var dialogueCameraProvider: (any DialogueCameraControlProviding)? {
-        didSet { dialogueCameraSection.provider = dialogueCameraProvider }
-    }
-
-    weak var faceMorphProvider: (any FaceMorphControlProviding)? {
-        didSet { faceMorphSection.provider = faceMorphProvider }
-    }
-
     override func makeSections() -> [PanelSectionViewController] {
-        [
-            elementsSection, targetSection, itemsSection, dialogueSection,
-            faceMorphSection, dialogueCameraSection
-        ]
+        [elementsSection, targetSection, itemsSection]
     }
 }

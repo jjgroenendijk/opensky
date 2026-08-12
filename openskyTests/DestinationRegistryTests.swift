@@ -18,7 +18,7 @@ struct DestinationRegistryTests {
     func registryOrderAndIdentifiers() {
         #expect(DestinationRegistry.all.map(\.id) == [
             "world", "playerLocomotion", "combatPhysics", "aiNavigation", "environment",
-            "hudInteraction", "systemMenu",
+            "hudInteraction", "dialogueVoice", "systemMenu",
             "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
             "runtimeState", "scripts", "journal", "uiLab", "assetBrowser", "loadOrder"
         ])
@@ -27,7 +27,8 @@ struct DestinationRegistryTests {
             "Destination-world", "Destination-playerLocomotion",
             "Destination-combatPhysics", "Destination-aiNavigation",
             "Destination-environment",
-            "Destination-hudInteraction", "Destination-systemMenu",
+            "Destination-hudInteraction", "Destination-dialogueVoice",
+            "Destination-systemMenu",
             "Destination-inventoryMenu", "Destination-containerMenu",
             "Destination-inventoryEquipment", "Destination-audio",
             "Destination-runtimeState", "Destination-scripts",
@@ -36,7 +37,7 @@ struct DestinationRegistryTests {
         ])
         #expect(DestinationRegistry.worldInspectors.map(\.id) == [
             "world", "playerLocomotion", "combatPhysics", "aiNavigation", "environment",
-            "hudInteraction", "systemMenu",
+            "hudInteraction", "dialogueVoice", "systemMenu",
             "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
             "runtimeState", "scripts", "journal", "uiLab"
         ])
@@ -113,6 +114,13 @@ struct DestinationRegistryTests {
         #expect(isOverridden("hudInteraction", context: context))
         reset("hudInteraction", context: context)
         #expect(providers.hudMetersEnabled)
+
+        // M17.8: the conversation's own destination. Lip sync off is its
+        // settings-shaped override; the reset switches it back on.
+        providers.lipSyncEnabled = false
+        #expect(isOverridden("dialogueVoice", context: context))
+        reset("dialogueVoice", context: context)
+        #expect(providers.lipSyncEnabled)
 
         providers.openSystemMenu()
         #expect(isOverridden("systemMenu", context: context))

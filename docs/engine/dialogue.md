@@ -32,6 +32,7 @@ The record side — DIAL, INFO and VTYP bytes — is
 * Dialogue-camera verification surface
 * Lip-sync playback
 * Lip-sync verification surface
+* M17 milestone verification surface
 * What this version does not do
 * Measurements
 
@@ -290,8 +291,8 @@ framing computed once at entry would be stale by the second sentence.
 
 ```text
 Milestone: M17.4
-Sidebar path: World > HUD & Interaction > Dialogue Camera
-Destination id: Destination-hudInteraction
+Sidebar path: World > Dialogue & Voice > Dialogue Camera
+Destination id: Destination-dialogueVoice
 Controls exercised: DialogueCameraForceControl, DialogueCameraTargetControl,
   DialogueCameraOverlayControl
 Readout: DialogueCameraStatsLabel, DialogueCameraSpeakerStatsLabel
@@ -334,15 +335,15 @@ bind pose over 0.15 seconds. Starting another line replaces the previous session
 
 The mapping layer is intentionally observable because the file stores positional slots, not
 names. `LipSyncSnapshot` publishes the actor, line, clock mode, track time, live mapped
-weights, active unmapped slots and release state. The Audio panel's toggle and
+weights, active unmapped slots and release state. The Voice section's toggle and
 `LipSyncStatsLabel` expose exactly that state.
 
 ## Lip-sync verification surface
 
 ```text
 Item: M17.7
-Sidebar path: World > Audio > Voice
-Destination id: Destination-audio
+Sidebar path: World > Dialogue & Voice > Voice
+Destination id: Destination-dialogueVoice
 Controls exercised: AudioVoiceFileControl, AudioVoicePlayControl,
   LipSyncEnabledControl
 Readout: AudioVoiceStatsLabel, LipSyncStatsLabel
@@ -353,6 +354,50 @@ Deterministic tests: LIPFileTests, LipVisemeMappingTests,
 Local A/B (never committed): logs/test-fast/latest/lip-*-off.png and
   logs/test-fast/latest/lip-*-on.png
 ```
+
+## M17 milestone verification surface
+
+The four sections the sub-issues built were each mounted beside their nearest neighbour —
+the conversation and the face under `World > HUD & Interaction` because that is where the
+crosshair is, the voice line under `World > Audio` because that is where the submixes are.
+A conversation is one loop across all four, so the M17.8 gate assembled them into one
+destination in the order a conversation uses them. Each section is standalone, so the move
+was a registry edit and changed no control identifier.
+
+```text
+Milestone: M17.8 (the M17 gate)
+Sidebar path: World > Dialogue & Voice > Dialogue, > Dialogue Camera, > Voice,
+  > Face Morphs
+Destination id: Destination-dialogueVoice
+Controls exercised: DialogueOpenControl, DialogueLeaveControl,
+  DialogueUpControl, DialogueDownControl, DialogueChooseControl,
+  DialogueCameraForceControl, DialogueCameraTargetControl,
+  DialogueCameraOverlayControl, AudioVoiceFilterControl,
+  AudioVoiceFilterApplyControl, AudioVoiceFileControl, AudioVoicePlayControl,
+  LipSyncEnabledControl, FaceMorphTargetControl, MorphWeightControl,
+  FaceMorphResetControl
+Readout: DialogueTopicsStatsLabel, DialogueConditionsStatsLabel,
+  DialogueMovieStatsLabel, DialogueCameraStatsLabel,
+  DialogueCameraSpeakerStatsLabel, AudioVoiceStatsLabel, VoiceSourceStatsLabel,
+  LipSyncStatsLabel, FaceMorphStatsLabel
+Deterministic tests: M17AcceptanceTests, M17AcceptancePanelTests,
+  M17AcceptanceBudgetTests, DestinationRegistryTests, AppSidebarModelTests,
+  OpenSkyUITests/testDialogueVoiceControlsAndReadouts,
+  M17AcceptanceRealDataTests (env-gated, make realtest),
+  M17AcceptanceRenderTests (env-gated and device-gated, make realtest)
+Local A/B (optional, never committed): logs/test-fast/latest/m17-lip-*-off.png
+  and m17-lip-*-on.png, logs/.../m17-conversation-none.png,
+  m17-conversation-camera.png, m17-conversation-menu.png
+```
+
+The destination's override policy: an open conversation, a forced camera, a scrubbed morph
+weight and lip sync switched off all light the sidebar dot, and "Reset all" puts each back.
+Said-state and quest stages a conversation produced are deliberately not undone — those are
+the milestone's point, not a knob left in a non-default position.
+
+`VoiceSourceStatsLabel` is the one readout the gate added: the voice submix as
+`WorldAudioEngine.statsSnapshot()` reports it, narrowed to voice, so a line that is playing
+shows its distance and its playback clock and a silent one says so.
 
 ## What this version does not do
 
@@ -365,8 +410,10 @@ Stated rather than left to be discovered:
   show a handful. An obvious-looking fix — dropping every topic that is the target of some
   TCLT link — was measured and rejected: it cuts the list to 7 but also removes genuine
   top-level topics that happen to be link targets elsewhere.
-* **Scenes.** SCEN playback is not implemented. The M17 gate is satisfied by a conversation,
-  and 7,426 of `Skyrim.esm`'s DIAL records belong to that separate machinery.
+* **Scenes.** SCEN playback is not implemented, and the M17 gate closed without it: the
+  gate is satisfied by a conversation, and 7,426 of `Skyrim.esm`'s DIAL records belong to
+  that separate machinery. It is deferred rather than dropped and carries a milestone of its
+  own past M17.
 * **Shared responses.** INFO DNAM replaces another record's *response data*, so it changes
   what a chosen line says rather than whether it is offered. It belongs to the text layer.
 * **Reset intervals.** `TopicInfo.resetHours` is decoded and not consulted; a repeatable line
@@ -376,7 +423,8 @@ Stated rather than left to be discovered:
 
 ## Measurements
 
-From the env-gated suites on 2026-08-09, against the shipped masters.
+From the env-gated suites on 2026-08-09, against the shipped masters. The M17 gate re-ran
+the selection half on 2026-08-12 and got the same numbers, so the table below is current.
 
 `DialogueRuntimeRealDataTests` selects for one concrete speaker — Delphine, named by more
 player-facing INFO conditions than any other NPC in `Skyrim.esm` — with quest state at the
@@ -399,3 +447,19 @@ written to the gitignored run directory `logs/dialogue-selection/<stamp>/`.
 `DialogueRealDataTests` now decodes every INFO fragment tail that it used to skip: 7,661
 tails across the five masters, carrying 8,009 result-script fragments, with zero record
 failures and zero bytes left over.
+
+`M17AcceptanceRealDataTests` walks the same speaker's list to the first offer it can follow
+all the way through — a winning response with a line on disk, under a quest with a stage to
+set — and reports what it walked past. On 2026-08-12 that was
+`mq00_mqdelphineconcordat_00024359_4.fuz`, 3.85 seconds declared, 661 lip keys, 15 unmapped
+viseme slots, reached after three earlier runs of the same response were skipped: two hold
+non-finite curve values and one uses a key tuple width the decoder does not support. That is
+the honest state of lip decoding on this install — the corpus-wide tally is in
+[.lip lip-sync tracks](/formats/lip.md) — and it is why the gate walks candidates instead of
+pinning one file.
+
+`M17AcceptanceRenderTests` measured the mouth region on 2026-08-12: 717, 740 and 748 changed
+pixels for lip sync off versus on at 0.30 s, 0.37 s and 0.50 s of one line, 725 changed
+pixels between the first and last of those times, and each pair repeated to zero changed
+pixels. Over one exterior cell the dialogue camera moved 131,344 pixels and the vanilla
+`dialoguemenu.swf` drew 17,572 over it.
