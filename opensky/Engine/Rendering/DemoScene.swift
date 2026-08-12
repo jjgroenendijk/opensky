@@ -13,6 +13,7 @@
 
 import Foundation
 import Metal
+import OpenSkyShaderTypes
 import simd
 
 nonisolated enum DemoScene {

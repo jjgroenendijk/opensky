@@ -7,6 +7,7 @@
 // https://github.com/niftools/nifxml/blob/develop/nif.xml
 
 import Metal
+import OpenSkyShaderTypes
 import simd
 
 nonisolated enum ParticleBlendMode: Equatable, Hashable {

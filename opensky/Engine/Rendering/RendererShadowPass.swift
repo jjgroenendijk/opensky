@@ -9,6 +9,7 @@
 
 import Foundation
 import Metal
+import OpenSkyShaderTypes
 import simd
 
 /// Sun-shadow quality tier (M7.1.2). Drives cascade count, shadow range, and

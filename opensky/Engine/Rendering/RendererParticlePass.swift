@@ -1,6 +1,7 @@
 // Billboard particle encoding split from RendererScenePass for file limits.
 
 import Metal
+import OpenSkyShaderTypes
 
 extension Renderer {
     /// Draws each system as one six-vertex instanced billboard call. Depth

@@ -2,6 +2,7 @@
 // Subsystems append colored triangles and line segments each frame; the
 // renderer performs one bounded upload from the resulting flat vertex list.
 
+import OpenSkyShaderTypes
 import simd
 
 nonisolated struct WorldOverlayPoint: Equatable, Sendable {

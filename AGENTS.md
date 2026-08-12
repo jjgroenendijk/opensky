@@ -87,7 +87,8 @@ user's install, `openskyTestSupport/` holds the fixtures both bundles compile, a
 `opensky/` splits by target membership:
 `opensky/App/` holds the AppKit and SwiftUI shell, view controllers, panels, and
 `Assets.xcassets`; `opensky/Engine/` holds everything CLI-safe; `opensky/SharedHeaders/`
-holds `ShaderTypes.h`. Group engine subsystems under `opensky/Engine/` by domain, and keep
+holds `ShaderTypes/`, the clang module wrapping `ShaderTypes.h`. Group engine subsystems
+under `opensky/Engine/` by domain, and keep
 format parsers separate from rendering. Skills live in `.AGENTS/skills/` (`.claude/skills`
 symlinks there). `logs/` and `.vendor/` are gitignored. `docs/index.md` maps the wiki —
 trust it over globbing.
@@ -183,7 +184,11 @@ tuple cap, introduce a struct.
 
 ## Conventions
 
-- Swift-to-Metal shared structs go in `ShaderTypes.h` with explicit `simd`-aligned layout.
+- Swift-to-Metal shared structs go in `opensky/SharedHeaders/ShaderTypes/ShaderTypes.h`
+  with explicit `simd`-aligned layout. Swift reaches them through the clang module that
+  wraps the header: a file that uses one writes `import OpenSkyShaderTypes`. There is no
+  bridging header, so the types are not implicitly visible. Metal shaders keep writing
+  `#import "ShaderTypes.h"`.
 - Every target is in Swift 6 language mode on Apple Swift 6.3.3 or newer;
   `make swift-baseline` enforces both and `docs/tools/swift-toolchain.md` explains the
   isolation patterns to reach for. Do not build with a `SWIFT_VERSION` override.

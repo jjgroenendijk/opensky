@@ -5,6 +5,7 @@
 // extension (it needs the renderer's private state).
 
 import Metal
+import OpenSkyShaderTypes
 import simd
 
 extension Renderer {

@@ -2,6 +2,23 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-12
+
+* **ShaderTypes reaches Swift as a clang module (issue #342)**: `ShaderTypes.h` moved to
+  `opensky/SharedHeaders/ShaderTypes/` beside a `module.modulemap` declaring
+  `OpenSkyShaderTypes`, `SWIFT_INCLUDE_PATHS` picked the directory up for every target, and
+  both `SWIFT_OBJC_BRIDGING_HEADER` settings are gone — `openskycli` no longer borrows the
+  app target's header. The 41 Swift files that use a shared type now say
+  `import OpenSkyShaderTypes`; removing the bridging header also removed the free
+  `import Foundation` and `import simd` it had been giving every file in the project, so
+  five more files name `simd` and one names `Foundation` themselves. `Shaders.metal` is
+  unchanged.
+  The rebuild-blast-radius win the issue predicted did not materialise and the measurement
+  is recorded rather than the hope: a `ShaderTypes.h` edit costs 38 seconds at 0 of 40
+  cacheable tasks replayed, a one-line edit to an unrelated format parser costs 39 seconds
+  at 1 of 40, so no Debug source edit in this project is cheap and the shared header was
+  never the outlier. See [Build system](/tools/build-system.md).
+
 ## 2026-08-11
 
 * **Audio-clock lip sync (issue #208, item 17.7)**: `LIPFile` now defensively decodes the

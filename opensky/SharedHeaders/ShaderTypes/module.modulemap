@@ -1,0 +1,16 @@
+// Clang module wrapping the Swift-to-Metal shared struct and enum definitions.
+// Reachable because SWIFT_INCLUDE_PATHS lists this directory (Config/Base.xcconfig);
+// `import OpenSkyShaderTypes` then works from any Swift file in any target.
+//
+// This replaces the bridging header the app and openskycli targets used to share. A
+// bridging header is textually visible to every Swift file in its target; as a module the
+// header reaches only the files that ask for it, and openskycli no longer has to name the
+// app target's header by path. It does not make incremental rebuilds smaller — see
+// docs/tools/build-system.md for the measurement.
+//
+// Metal shaders keep including the header directly: MTL_HEADER_SEARCH_PATHS points at
+// this directory, so `#import "ShaderTypes.h"` resolves the same file the module exports.
+module OpenSkyShaderTypes {
+    header "ShaderTypes.h"
+    export *
+}

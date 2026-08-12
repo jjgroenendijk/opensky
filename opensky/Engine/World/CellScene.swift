@@ -3,6 +3,7 @@
 // AGENTS.md robustness rule) and a world AABB for camera placement.
 
 import Foundation
+import OpenSkyShaderTypes
 import simd
 
 /// The library cache keys one cell touched: its mesh + texture working set.

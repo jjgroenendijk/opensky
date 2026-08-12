@@ -5,6 +5,7 @@
 // the gradient ramp atlas.
 
 import Metal
+import OpenSkyShaderTypes
 import simd
 
 /// CPU-side shape build: tessellates every dictionary shape into one shared

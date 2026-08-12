@@ -5,6 +5,7 @@
 // what keeps the acceptance test numeric and device-free. The heights come from
 // the user's own install and never leave `logs/` (AGENTS.md "Legal & IP").
 
+import Foundation
 @testable import opensky
 import simd
 

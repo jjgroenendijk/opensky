@@ -4,6 +4,7 @@
 import Foundation
 import Metal
 @testable import opensky
+import OpenSkyShaderTypes
 import simd
 import Testing
 

@@ -5,6 +5,7 @@
 // destination drives all of them.
 
 import AppKit
+import simd
 
 extension GameViewController: WeatherControlProviding {
     var weatherEnabled: Bool {

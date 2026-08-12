@@ -5,6 +5,7 @@
 
 import CoreText
 @testable import opensky
+import OpenSkyShaderTypes
 import simd
 import Testing
 

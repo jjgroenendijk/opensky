@@ -3,6 +3,7 @@
 // atlas white texel so one pipeline draws fills, strokes, and text. Pure value
 // type, unit-testable without Metal.
 
+import OpenSkyShaderTypes
 import simd
 
 /// Result of applying the per-frame quad budget to a draw list.

@@ -11,6 +11,7 @@ import ImageIO
 import Metal
 import MetalKit
 @testable import opensky
+import simd
 import Testing
 import UniformTypeIdentifiers
 

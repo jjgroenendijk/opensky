@@ -3,9 +3,10 @@ type: Tool
 title: Build system and xcodebuild invocation
 description: How the Makefile and the tools/ scripts agree on one xcodebuild invocation -
   scheme, configuration, derived-data cache, compilation caching, output filtering,
-  warnings-as-errors, products path - and what each knob overrides.
+  warnings-as-errors, products path, the OpenSkyShaderTypes module - and what each knob
+  overrides.
 tags: [tool, build, make, xcodebuild]
-timestamp: 2026-08-07T00:00:00Z
+timestamp: 2026-08-12T00:00:00Z
 ---
 
 # Build system and xcodebuild invocation
@@ -20,6 +21,7 @@ volume cannot drift apart per target. The scripts under `tools/` run their own
 
 * The shared invocation
 * Build settings: the Config/ xcconfig layer
+* Shared Metal types: the OpenSkyShaderTypes module
 * Compilation caching
 * Signing
 * Output volume and the transcripts in logs/
@@ -71,7 +73,7 @@ Config/
 ├── Release.xcconfig         #include Base + wholemodule, dSYM, VALIDATE_PRODUCT
 ├── Signing.xcconfig         CODE_SIGN_IDENTITY and DEVELOPMENT_TEAM, one identity
 ├── App.xcconfig             opensky: bundle id, Info.plist keys, ffmpeg link + rpath
-├── CLI.xcconfig             openskycli: bridging header, ffmpeg link + rpath
+├── CLI.xcconfig             openskycli: isolation default, ffmpeg link + rpath
 ├── Tests.xcconfig           openskyTests: TEST_HOST, BUNDLE_LOADER
 ├── UITests.xcconfig         openskyUITests: TEST_TARGET_NAME
 ├── UnitTests.xctestplan     scheme default: openskyTests alone
@@ -97,6 +99,50 @@ signing indirection introduces.
 `tools/lint/swift-baseline.sh` reads `SWIFT_VERSION` from `Config/*.xcconfig` as well as
 from the pbxproj, so the Swift 6 language-mode gate still fails on a configuration that
 slips back. See [Swift toolchain and language mode](/tools/swift-toolchain.md).
+
+## Shared Metal types: the OpenSkyShaderTypes module
+
+The structs and enum constants Swift and the Metal shaders both use live in one header,
+`opensky/SharedHeaders/ShaderTypes/ShaderTypes.h`. Swift reaches them through a clang
+module rather than a bridging header (issue #342):
+
+```text
+opensky/SharedHeaders/ShaderTypes/
+├── ShaderTypes.h        the shared struct + enum definitions
+└── module.modulemap     module OpenSkyShaderTypes { header "ShaderTypes.h" export * }
+```
+
+`Config/Base.xcconfig` puts that directory on `SWIFT_INCLUDE_PATHS`, so every target — both
+products and both unit-test bundles — can write `import OpenSkyShaderTypes`, and only the
+files that write it see the types. `MTL_HEADER_SEARCH_PATHS` in `App.xcconfig` and
+`CLI.xcconfig` points at the same directory, so `Shaders.metal` keeps resolving
+`#import "ShaderTypes.h"` to the one file the module exports.
+
+Neither target sets `SWIFT_OBJC_BRIDGING_HEADER` any more. A bridging header is textually
+visible to every Swift file in its target, so every file in both targets carried a
+dependency on the shared header whether or not it used a single type from it, and
+`openskycli` had to name the app target's header by path to compile the shared engine
+sources at all — a coupling that existed for no reason other than the header being a
+per-target setting.
+
+What the module did **not** buy is a smaller incremental rebuild, which is worth recording
+so nobody re-derives the hope. Measured on this checkout in Debug, with a warm build and
+the compilation cache on: editing `ShaderTypes.h` recompiles the whole `opensky` target in
+38 seconds at 0 of 40 cacheable tasks replayed, and appending one comment line to
+`NIFObject.swift` — a format parser that imports nothing from the module — costs 39 seconds
+at 1 of 40. A single Swift source edit already invalidates almost every compile task,
+because the module-wide `.swiftmodule` the emit-module job produces is an input to each of
+them, so the shared header was never the outlier the coupling made it look like. The
+argument for the module is that dependencies are explicit and the two targets are
+decoupled, not that renderer edits got cheaper.
+
+The bridging header also handed every file in the project a free `import Foundation` and
+`import simd`, since `ShaderTypes.h` pulls in both. Removing it made those dependencies
+explicit too: files that had been relying on the freebie now say `import Foundation` or
+`import simd` themselves, which is what
+`SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES` asks for everywhere else. A file
+that uses a shared type and forgets `import OpenSkyShaderTypes` fails to compile; there is
+no ambient visibility left to fall back on.
 
 ## Compilation caching
 

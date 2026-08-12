@@ -4,6 +4,7 @@
 
 import Metal
 import MetalKit
+import OpenSkyShaderTypes
 
 nonisolated struct WorldOverlayDrawStats: Equatable {
     var submittedPrimitiveCount = 0

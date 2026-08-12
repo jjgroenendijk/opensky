@@ -2,6 +2,7 @@
 
 import Metal
 import MetalKit
+import OpenSkyShaderTypes
 
 /// The render-debug pipeline set (issue #144): one per geometry path, not one
 /// per (mode, path) pair. The channel is a `FrameUniforms` field, so all seven
