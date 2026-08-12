@@ -43,8 +43,13 @@ struct LipSyncRealDataTests {
                 unmappedKeyCount += lip.unmappedKeyCount
                 firstFrames[lip.header.firstFrame, default: 0] += 1
                 unknownValues[lip.header.unknownValue, default: 0] += 1
-                #expect(lip.sample(at: lip.duration / 2).weightsBySlot.values
-                    .allSatisfy(\.isFinite))
+                // Spelled as an explicit closure rather than a key path: the
+                // `#expect` expansion of `allSatisfy(\.isFinite)` inside a
+                // `do`/`catch` is read as a throwing call the enclosing context
+                // does not handle, and the build fails (Swift 6.3.3).
+                let finite = lip.sample(at: lip.duration / 2).weightsBySlot.values
+                    .allSatisfy(\.isFinite)
+                #expect(finite)
             } catch {
                 let category = Self.failureCategory(error)
                 failureTallies[category, default: 0] += 1

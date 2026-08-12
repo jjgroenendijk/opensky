@@ -251,25 +251,26 @@ enum DestinationRegistry {
                 let panel = HUDInteractionPanelViewController()
                 panel.provider = context.providers
                 panel.itemProvider = context.providers
-                panel.dialogueProvider = context.providers
-                panel.dialogueCameraProvider = context.providers
-                panel.faceMorphProvider = context.providers
                 return panel
             },
-            overrides: DestinationOverrideActions(
-                isOverridden: { context in
-                    HUDElementsSection.isOverridden(provider: context.providers)
-                        || DialogueSection.isOverridden(provider: context.providers)
-                        || FaceMorphSection.isOverridden(provider: context.providers)
-                        || DialogueCameraSection.isOverridden(provider: context.providers)
-                },
-                resetToDefaults: { context in
-                    HUDElementsSection.resetToDefaults(provider: context.providers)
-                    DialogueSection.resetToDefaults(provider: context.providers)
-                    FaceMorphSection.resetToDefaults(provider: context.providers)
-                    DialogueCameraSection.resetToDefaults(provider: context.providers)
-                }
-            )
+            overrides: hudInteractionOverrides
+        ),
+        DestinationDescriptor(
+            id: "dialogueVoice",
+            title: "Dialogue & Voice",
+            section: .world,
+            symbolName: "bubble.left.and.bubble.right",
+            content: .worldInspector { context in
+                let panel = DialoguePanelViewController()
+                panel.dialogueProvider = context.providers
+                panel.dialogueCameraProvider = context.providers
+                panel.audioProvider = context.providers
+                panel.faceMorphProvider = context.providers
+                let providers = context.providers
+                panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
+                return panel
+            },
+            overrides: dialogueVoiceOverrides
         )
     ]
 

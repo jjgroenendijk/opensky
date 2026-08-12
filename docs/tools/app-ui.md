@@ -434,12 +434,28 @@ Accessibility identifiers are the UI-test API and never change silently.
   `AudioAmbienceEnabledControl`, `AudioStopAmbienceControl`; readout
   `AudioSfxStatsLabel`. Extended again by the music director (M9.2.3):
   `AudioMusicEnabledControl`, `AudioMusicTypeControl`, `AudioStopMusicControl`;
-  readout `AudioMusicStatsLabel`. Extended by dialogue voice and lip sync
-  (M17.5 and M17.7): `AudioVoiceFilterControl`, `AudioVoiceFilterApplyControl`,
-  `AudioVoiceFileControl`, `AudioVoicePlayControl`, `LipSyncEnabledControl`;
-  readouts `AudioVoiceStatsLabel`, `LipSyncStatsLabel`. Section headers:
-  `PanelSection-audioOutput`, `-audioSources`, `-audioSfx`, `-audioMusic`,
-  `-audioVoice`.
+  readout `AudioMusicStatsLabel`. Section headers:
+  `PanelSection-audioOutput`, `-audioSources`, `-audioSfx`, `-audioMusic`.
+  The Voice section moved to `World > Dialogue & Voice` with the M17 gate
+  (M17.8); everything routed to the voice submix still reports in
+  `AudioSourcesStatsLabel` here.
+- Dialogue & Voice set (World > Dialogue & Voice, M17.8), the milestone's own
+  destination assembling the four sections its sub-issues built:
+  `DialogueOpenControl`, `DialogueLeaveControl`, `DialogueUpControl`,
+  `DialogueDownControl`, `DialogueChooseControl`,
+  `DialogueCameraForceControl`, `DialogueCameraTargetControl`,
+  `DialogueCameraOverlayControl`, `AudioVoiceFilterControl`,
+  `AudioVoiceFilterApplyControl`, `AudioVoiceFileControl`,
+  `AudioVoicePlayControl`, `LipSyncEnabledControl`, `FaceMorphTargetControl`,
+  `MorphWeightControl`, `FaceMorphResetControl`; readouts
+  `DialogueTopicsStatsLabel`, `DialogueConditionsStatsLabel`,
+  `DialogueMovieStatsLabel`, `DialogueCameraStatsLabel`,
+  `DialogueCameraSpeakerStatsLabel`, `AudioVoiceStatsLabel`,
+  `VoiceSourceStatsLabel`, `LipSyncStatsLabel`, `FaceMorphStatsLabel`. Section
+  headers: `PanelSection-dialogue`, `-dialogueCamera`, `-audioVoice`,
+  `-faceMorphs`. The control identifiers kept the prefixes their own items
+  pinned — `AudioVoice*` for the submix, `MorphWeightControl` for the weight —
+  because they are the UI-test contract and the move changed no behaviour.
 - HUD set (World > HUD & Interaction, M8.4.3):
   `HUDLayerEnabledControl`, `HUDCrosshairControl`, `HUDMetersControl`,
   `HUDCompassControl`, `HUDMarkersControl`, `HUDPromptControl`,

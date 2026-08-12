@@ -90,6 +90,24 @@ final class OpenSkyUITests: OpenSkyUITestCase {
         XCTAssertTrue(app.popUpButtons["HUDScaleControl"].exists)
         XCTAssertTrue(app.staticTexts["HUDElementsStatsLabel"].exists)
         XCTAssertTrue(app.staticTexts["HUDTargetStatsLabel"].exists)
+    }
+
+    /// World > Dialogue & Voice (M17.8): the whole conversation loop on one
+    /// destination — the menu controls, the camera, the voice line and the
+    /// speaker's face.
+    @MainActor
+    func testDialogueVoiceControlsAndReadouts() throws {
+        let app = try launchApp()
+        selectDestination("Destination-dialogueVoice", in: app)
+
+        XCTAssertTrue(app.buttons["DialogueOpenControl"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["DialogueLeaveControl"].exists)
+        XCTAssertTrue(app.buttons["DialogueChooseControl"].exists)
+        XCTAssertTrue(app.staticTexts["DialogueTopicsStatsLabel"].exists)
+        XCTAssertTrue(app.staticTexts["DialogueConditionsStatsLabel"].exists)
+        XCTAssertTrue(app.checkBoxes["DialogueCameraForceControl"].exists)
+        XCTAssertTrue(app.staticTexts["DialogueCameraStatsLabel"].exists)
+        XCTAssertTrue(app.staticTexts["VoiceSourceStatsLabel"].exists)
         XCTAssertTrue(app.popUpButtons["FaceMorphTargetControl"].exists)
         XCTAssertTrue(app.sliders["MorphWeightControl"].exists)
         XCTAssertTrue(app.staticTexts["FaceMorphStatsLabel"].exists)
@@ -121,11 +139,12 @@ final class OpenSkyUITests: OpenSkyUITestCase {
         app.buttons["SystemMenuResumeControl"].click()
     }
 
-    /// World > Audio > Voice lip-sync A/B seam and live audio-timeline readout.
+    /// World > Dialogue & Voice > Voice lip-sync A/B seam and live
+    /// audio-timeline readout (moved off `Destination-audio` by issue #209).
     @MainActor
     func testAudioLipSyncControlsAndReadout() throws {
         let app = try launchApp()
-        selectDestination("Destination-audio", in: app)
+        selectDestination("Destination-dialogueVoice", in: app)
 
         XCTAssertTrue(app.checkBoxes["LipSyncEnabledControl"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.descendants(matching: .any)["LipSyncStatsLabel"].exists)
