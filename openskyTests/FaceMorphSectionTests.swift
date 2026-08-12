@@ -4,9 +4,8 @@ import Testing
 
 @MainActor
 struct FaceMorphSectionTests {
-    private func makePanel(_ provider: FakeWorldProviders) -> HUDInteractionPanelViewController {
-        let panel = HUDInteractionPanelViewController()
-        panel.provider = provider
+    private func makePanel(_ provider: FakeWorldProviders) -> DialoguePanelViewController {
+        let panel = DialoguePanelViewController()
         panel.faceMorphProvider = provider
         panel.loadViewIfNeeded()
         return panel

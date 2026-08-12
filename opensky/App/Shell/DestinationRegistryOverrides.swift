@@ -13,17 +13,50 @@ extension DestinationRegistry {
     static let audioOverrides = DestinationOverrideActions(
         isOverridden: { context in
             AudioOutputSection.isOverridden(provider: context.providers)
-                || AudioVoiceSection.isOverridden(provider: context.providers)
                 || AudioSfxSection.isOverridden(provider: context.providers)
                 || AudioMusicSection.isOverridden(provider: context.providers)
                 || AudioFootstepsSection.isOverridden(provider: context.providers)
         },
         resetToDefaults: { context in
             AudioOutputSection.resetToDefaults(provider: context.providers)
-            AudioVoiceSection.resetToDefaults(provider: context.providers)
             AudioSfxSection.resetToDefaults(provider: context.providers)
             AudioMusicSection.resetToDefaults(provider: context.providers)
             AudioFootstepsSection.resetToDefaults(provider: context.providers)
+        }
+    )
+
+    /// Only the HUD elements section carries overridden-ness now that the
+    /// conversation moved to its own destination (issue #209): what the
+    /// crosshair is pointing at and what a picked item did are world state, and
+    /// the presentation toggles above them are the settings a reset restores.
+    static let hudInteractionOverrides = DestinationOverrideActions(
+        isOverridden: { context in
+            HUDElementsSection.isOverridden(provider: context.providers)
+        },
+        resetToDefaults: { context in
+            HUDElementsSection.resetToDefaults(provider: context.providers)
+        }
+    )
+
+    /// The M17 destination's four sections all carry overridden-ness, and each
+    /// for the same reason: every one of them can be left holding something the
+    /// world would not have produced on its own. An open conversation holds the
+    /// engine menu stack, a forced dialogue camera holds the view, a scrubbed
+    /// morph weight holds a face, and lip sync switched off is the A/B seam left
+    /// in its non-default half. Said-state and quest stages a conversation
+    /// produced are deliberately not undone: those are the milestone's point.
+    static let dialogueVoiceOverrides = DestinationOverrideActions(
+        isOverridden: { context in
+            DialogueSection.isOverridden(provider: context.providers)
+                || DialogueCameraSection.isOverridden(provider: context.providers)
+                || AudioVoiceSection.isOverridden(provider: context.providers)
+                || FaceMorphSection.isOverridden(provider: context.providers)
+        },
+        resetToDefaults: { context in
+            DialogueSection.resetToDefaults(provider: context.providers)
+            DialogueCameraSection.resetToDefaults(provider: context.providers)
+            AudioVoiceSection.resetToDefaults(provider: context.providers)
+            FaceMorphSection.resetToDefaults(provider: context.providers)
         }
     )
 

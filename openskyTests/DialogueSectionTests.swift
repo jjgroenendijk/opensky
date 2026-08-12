@@ -1,4 +1,5 @@
-// World > HUD & Interaction > Dialogue section coverage (issue #205). Uses only
+// World > Dialogue & Voice > Dialogue section coverage (issue #205; the
+// section moved to the milestone's own destination with issue #209). Uses only
 // synthetic provider state; the real-install bring-up gate lives in the
 // env-gated acceptance test and in `openskycli swf dialogue-menu`.
 //
@@ -15,10 +16,8 @@ import Testing
 struct DialogueSectionTests {
     private func makePanel(
         _ provider: FakeWorldProviders
-    ) -> HUDInteractionPanelViewController {
-        let panel = HUDInteractionPanelViewController()
-        panel.provider = provider
-        panel.itemProvider = provider
+    ) -> DialoguePanelViewController {
+        let panel = DialoguePanelViewController()
         panel.dialogueProvider = provider
         panel.loadViewIfNeeded()
         return panel
