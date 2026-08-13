@@ -1,9 +1,9 @@
 ---
 type: File Format
-title: Record decoders (WRLD, CELL, REFR, STAT, ModelBase, GLOB, inventory items, QUST)
-description: Field layouts of decoded plugin records and OpenSky's engine types.
-tags: [format, plugin, records, worldspace, cell, globals, inventory, items, quests]
-timestamp: 2026-08-02T00:00:00Z
+title: Record decoders (WRLD, CELL, REFR, STAT, FLST, inventory items, QUST)
+description: Field layouts of decoded plugin records and OpenSky's engine types and stores.
+tags: [format, plugin, records, worldspace, cell, form-list, inventory, items, quests]
+timestamp: 2026-08-13T00:00:00Z
 ---
 
 # Record decoders, Skyrim SE
@@ -26,6 +26,44 @@ Decode policy: loop over fields, pick known types, skip the rest — unknown
 modder fields are never an error. Decoders throw `ESMError.malformed` only on
 structurally unusable input (truncated field, missing required field); callers
 log + skip per mod-quirk rule. Each decoder guards the record type.
+
+## FLST -> FormList and FormListStore
+
+Reference: UESP "Skyrim Mod:Mod File Format/FLST" and xEdit `dev-4.1.6`
+`Core/wbDefinitionsTES5.pas` `wbRecord(FLST, ...)`. Both specify an EDID followed by zero or
+more repeating LNAM FormIDs; xEdit names the repeating array `FormIDs`.
+
+| field | type               | decoded |
+| ----- | ------------------ | ------- |
+| EDID  | zstring            | optional `editorID` |
+| LNAM  | repeating FormID   | one positional `entries` element per complete four bytes |
+
+`FormList.entries` keeps file order because Papyrus can address a form list by index. A
+zero FormID is a legal positional null, represented as `nil`, never compacted away. No null
+LNAM appeared in the active official load order measured on 2026-08-13 — zero among both
+the 1,219 winning lists and every pre-override definition — so the preservation rule is
+pinned by a synthetic fixture rather than game bytes. A final one-to-three-byte LNAM tail
+is dropped and increments `malformedEntryCount`; the decoder never reads past the field.
+
+`FormListStore` builds on the cross-plugin `RecordIndex` and looks up a winning whole list
+by `ResolvedFormID` or case-insensitive editor ID. An override replaces the earlier list;
+entries do not append across plugins. Each LNAM is resolved relative to the plugin that
+supplied its winning list, including after following a nested FLST into another plugin.
+
+`flattened` recursively replaces a nested FLST with its leaves while preserving leaf and
+null order. Its recursion-stack visited set cuts self-references and longer cycles without
+suppressing a repeated acyclic list on another branch. An acyclic hostile chain stops at
+depth 32 and logs the cap; `contains(_:in:)` tests `ResolvedFormID` membership over this
+flattened view. `RecordTextDump` prints the raw entry count and the first 64 entries, naming
+FLST, KYWD and AACT targets by editor ID when the M18 index can decode them.
+
+Real-data evidence (`FormListStoreRealDataTests`, active load order, observed 2026-08-13):
+1,219 winning FLSTs, largest raw list 308 entries
+(`BYOHRelationshipAdoptionPlayerGiftChildFemale`), and deepest nesting 2
+(`ccBGSSSE001_FishCatchDataListTemperateStreamClear`). The 32-level cap therefore leaves
+30 levels of measured headroom. The gate pins nested vanilla list
+`AtrFrgAtronachForgeRecipeList`: `Skyrim.esm:03AD5E` is absent from its raw LNAMs but is a
+member of its flattened 152-entry view.
 
 ## lstring / LString
 

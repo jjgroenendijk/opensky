@@ -157,14 +157,21 @@ final class PreviewViewController: NSViewController {
         let esmURL = root.dataURL.appending(path: "Skyrim.esm")
         Task.detached(priority: .userInitiated) {
             let loaded = PreviewCatalog.load(fileSystem: fileSystem, esmURL: esmURL)
-            let keywords = KeywordStoreLoader.load(root: root)
+            let plugins = ActivePluginFiles.load(root: root)
+            let index = RecordIndex(
+                plugins: plugins,
+                recordTypes: RecordIndex.referenceRecordTypes
+            )
+            let keywords = KeywordStore(index: index)
+            let formLists = FormListStore(index: index)
             await MainActor.run { [weak self] in
                 guard let self, catalogGeneration == generation else { return }
                 catalogDidLoad(
                     loaded.catalog,
                     fileSystem: fileSystem,
                     localized: loaded.localized,
-                    keywordStore: keywords
+                    keywordStore: keywords,
+                    formListStore: formLists
                 )
             }
         }
@@ -174,13 +181,15 @@ final class PreviewViewController: NSViewController {
         _ catalog: PreviewCatalog,
         fileSystem: VirtualFileSystem,
         localized: Bool,
-        keywordStore: KeywordStore
+        keywordStore: KeywordStore,
+        formListStore: FormListStore
     ) {
         self.catalog = catalog
         detailBuilder = PreviewDetailBuilder(
             fileSystem: fileSystem,
             localized: localized,
-            keywordStore: keywordStore
+            keywordStore: keywordStore,
+            formListStore: formListStore
         )
         applyFilter()
     }
