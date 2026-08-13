@@ -13,7 +13,15 @@ enum RecordCommand {
         let file = try context.loadSkyrimESM()
         let record = try find(token: token, in: file)
         let localized = (try? file.pluginHeader().isLocalized) ?? false
-        print(RecordTextDump.dump(record: record, localized: localized))
+        let keywords = KeywordStoreLoader.load(root: context.root, baseFile: file)
+        print(
+            RecordTextDump.dump(
+                record: record,
+                localized: localized,
+                keywordStore: keywords,
+                sourcePlugin: "Skyrim.esm"
+            )
+        )
     }
 
     private static func find(token: String, in file: ESMFile) throws -> ESMRecord {

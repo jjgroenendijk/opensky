@@ -11,8 +11,35 @@ nonisolated enum RecordTextDump {
     static let fieldPrintCap = 64
 
     static func dump(record: ESMRecord, localized: Bool) -> String {
+        dump(record: record, localized: localized, keywordContext: nil)
+    }
+
+    static func dump(
+        record: ESMRecord,
+        localized: Bool,
+        keywordStore: KeywordStore,
+        sourcePlugin: String
+    ) -> String {
+        dump(
+            record: record,
+            localized: localized,
+            keywordContext: KeywordContext(store: keywordStore, sourcePlugin: sourcePlugin)
+        )
+    }
+
+    private static func dump(
+        record: ESMRecord,
+        localized: Bool,
+        keywordContext: KeywordContext?
+    ) -> String {
         var lines = [headerLine(record: record)]
-        if let decoded = decodedSummary(record: record, localized: localized) {
+        if
+            let decoded = decodedSummary(
+                record: record,
+                localized: localized,
+                keywordContext: keywordContext
+            )
+        {
             lines.append(decoded)
         }
         lines.append(contentsOf: fieldLines(record: record))
@@ -27,7 +54,11 @@ nonisolated enum RecordTextDump {
     }
 
     /// Engine-decoded view for the record types OpenSky has decoders for.
-    private static func decodedSummary(record: ESMRecord, localized: Bool) -> String? {
+    private static func decodedSummary(
+        record: ESMRecord,
+        localized: Bool,
+        keywordContext: KeywordContext?
+    ) -> String? {
         switch record.type {
         case "WRLD": worldSummary(record: record, localized: localized)
         case "CELL": cellSummary(record: record, localized: localized)
@@ -41,7 +72,13 @@ nonisolated enum RecordTextDump {
         case "NAVI": navmeshIndexSummary(record: record)
         // Inventory families live in RecordTextDumpItems.swift so this switch
         // stays inside the strict-lint complexity cap.
-        default: itemSummary(record: record, localized: localized)
+        default:
+            referenceRecordSummary(record: record)
+                ?? itemSummary(
+                    record: record,
+                    localized: localized,
+                    keywordContext: keywordContext
+                )
         }
     }
 

@@ -44,6 +44,7 @@ nonisolated struct RecordIndex {
     private var candidates: [ResolvedFormID: [IndexedRecord]] = [:]
     private let resolvers: [String: FormIDResolver]
     private let canonicalPluginNames: [String: String]
+    private let pluginPriorities: [String: Int]
 
     init(
         plugins: [(name: String, file: ESMFile)],
@@ -51,6 +52,10 @@ nonisolated struct RecordIndex {
     ) {
         canonicalPluginNames = Dictionary(
             plugins.map { ($0.name.lowercased(), $0.name) },
+            uniquingKeysWith: { _, later in later }
+        )
+        pluginPriorities = Dictionary(
+            plugins.enumerated().map { ($0.element.name.lowercased(), $0.offset) },
             uniquingKeysWith: { _, later in later }
         )
 
@@ -105,6 +110,10 @@ nonisolated struct RecordIndex {
 
     func count(of type: FourCC) -> Int {
         records.values.count { $0.record.type == type }
+    }
+
+    func priority(ofPlugin pluginName: String) -> Int {
+        pluginPriorities[pluginName.lowercased()] ?? -1
     }
 
     /// Structurally readable records seen before override identities collapse.
