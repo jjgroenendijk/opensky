@@ -74,6 +74,10 @@ nonisolated struct ConditionTally: Equatable, Sendable {
     /// different answer.
     private(set) var unavailableDialogue = 0
 
+    /// M18 store or resolution misses, grouped by the domain that could not
+    /// answer rather than silently counted as a negative match.
+    private(set) var unavailableData: [ConditionDataDomain: Int] = [:]
+
     private(set) var conditionsEvaluated = 0
     private(set) var listsEvaluated = 0
 
@@ -126,6 +130,8 @@ nonisolated struct ConditionTally: Equatable, Sendable {
             unavailableDetection += 1
         case .unavailableDialogue:
             unavailableDialogue += 1
+        case let .unavailableData(domain):
+            unavailableData[domain, default: 0] += 1
         }
     }
 
@@ -182,6 +188,7 @@ nonisolated struct ConditionTally: Equatable, Sendable {
             + unsupportedRunOnTotal + unresolvedReferenceTotal + unknownOperatorTotal
             + unresolvedParameterTotal + unavailableClock + unavailableActorState
             + unavailableDetection + unavailableDialogue
+            + unavailableData.values.reduce(0, +)
     }
 
     /// Unknown function indices ranked by count, ties broken by index so the

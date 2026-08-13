@@ -21,6 +21,7 @@ nonisolated enum ConditionFunctions {
         installActor(&registry)
         installDetection(&registry)
         installDialogue(&registry)
+        installData(&registry)
     }
 
     // MARK: - Reference identity

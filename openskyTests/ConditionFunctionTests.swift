@@ -21,28 +21,32 @@ struct ConditionFunctionTests {
 
     @Test func registryDescribesTheImplementedFunctions() {
         let registry = ConditionFunctionRegistry.standard
-        // Nine before the actor family (issue #375) added five; package
-        // schedules (issue #201) add GetDisabled, perception (issue #202) adds
-        // GetDistance, GetLineOfSight and GetDetected, and the dialogue runtime
-        // (issue #426) adds IsInDialogueWithPlayer, GetIsVoiceType and
-        // GetIsAliasRef.
+        // Issue #455 adds the fourteen measured M18 keyword, form-list and
+        // location functions.
         #expect(registry.indices == [
-            1, 14, 18, 27, 35, 45, 46, 56, 58, 59, 72, 74, 77, 170, 249, 263, 323, 426,
-            543, 566, 640
+            1, 14, 18, 27, 35, 45, 46, 56, 58, 59, 72, 74, 77, 170, 180, 181, 249, 263,
+            323, 359, 360, 372, 426, 444, 543, 560, 562, 565, 566, 567, 603, 604, 605,
+            610, 640
         ])
-        #expect(registry.count == 21)
+        #expect(registry.count == 35)
         #expect(registry.sortedFunctions().map(\.name) == [
             "GetDistance", "GetActorValue", "GetCurrentTime", "GetLineOfSight",
             "GetDisabled", "GetDetected", "GetDead", "GetQuestRunning",
             "GetStage", "GetStageDone", "GetIsID", "GetGlobalValue", "GetRandomPercent",
-            "GetDayOfWeek", "IsInDialogueWithPlayer", "IsWeaponOut", "GetCombatState",
-            "GetIsVoiceType", "GetQuestCompleted", "GetIsAliasRef",
+            "GetDayOfWeek", "HasSameEditorLocAsRef", "HasSameEditorLocAsRefAlias",
+            "IsInDialogueWithPlayer", "IsWeaponOut", "GetCombatState", "GetInCurrentLoc",
+            "GetInCurrentLocAlias", "IsInList", "GetIsVoiceType",
+            "GetInCurrentLocFormList", "GetQuestCompleted", "HasKeyword",
+            "LocationHasKeyword", "GetIsEditorLocation", "GetIsAliasRef",
+            "GetIsEditorLocAlias", "IsInSameCurrentLocAsRef",
+            "IsInSameCurrentLocAsRefAlias", "LocAliasIsLocation", "LocAliasHasKeyword",
             "GetActorValuePercent"
         ])
         // The Creation Kit spells every index 4096 higher than the plugin does.
         #expect(registry.sortedFunctions().map(\.creationKitIndex) == [
-            4097, 4110, 4114, 4123, 4131, 4141, 4142, 4152, 4154, 4155, 4168, 4170, 4173,
-            4266, 4345, 4359, 4419, 4522, 4639, 4662, 4736
+            4097, 4110, 4114, 4123, 4131, 4141, 4142, 4152, 4154, 4155, 4168, 4170,
+            4173, 4266, 4276, 4277, 4345, 4359, 4419, 4455, 4456, 4468, 4522, 4540,
+            4639, 4656, 4658, 4661, 4662, 4663, 4699, 4700, 4701, 4706, 4736
         ])
         #expect(registry[Self.getIsID]?.parameter1 == .formID)
         #expect(registry[Self.getIsID]?.parameter2 == .unused)

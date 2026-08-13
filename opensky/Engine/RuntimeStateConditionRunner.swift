@@ -142,6 +142,8 @@ nonisolated enum RuntimeStateConditionRunner {
             "no perception for that pair in the evaluation context"
         case .unavailableDialogue:
             "no voice type for that actor in the evaluation context"
+        case let .unavailableData(domain):
+            "no \(domain.rawValue) data in the evaluation context"
         }
     }
 
@@ -178,6 +180,9 @@ nonisolated enum RuntimeStateConditionRunner {
         }
         if tally.unavailableDialogue > 0 {
             lines.append("Voice type unavailable: \(tally.unavailableDialogue)")
+        }
+        for entry in tally.unavailableData.sorted(by: { $0.key.rawValue < $1.key.rawValue }) {
+            lines.append("\(entry.key.rawValue) data unavailable: \(entry.value)")
         }
         return lines
     }

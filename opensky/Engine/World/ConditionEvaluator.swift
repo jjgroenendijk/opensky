@@ -38,6 +38,12 @@
 
 import Foundation
 
+nonisolated enum ConditionDataDomain: String, Equatable, Sendable {
+    case keyword
+    case formList
+    case location
+}
+
 /// Why a condition could not be evaluated. Every case is a reason-tagged false
 /// and a `ConditionTally` bucket.
 ///
@@ -89,6 +95,9 @@ nonisolated enum ConditionFailure: Equatable, Error, Sendable {
     /// is a different answer from "this engine does not know this actor's
     /// voice", and only one of them is a real one.
     case unavailableDialogue
+    /// An M18 record-data function had no store, subject fact, or resolvable
+    /// FormID for the named domain. This is not a negative query result.
+    case unavailableData(ConditionDataDomain)
 }
 
 /// The answer to one condition or one condition list.

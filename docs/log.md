@@ -4,6 +4,15 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-13
 
+* **Keyword, form-list and location conditions read M18 stores (issue #455)**:
+  `ConditionDataResolution` snapshots the three load-order stores plus current and editor
+  reference locations for off-main-actor evaluation. Fourteen measured functions now
+  answer base-object keyword and nested-list membership, current/editor location and
+  parent containment, location keywords, location aliases, and same-location comparisons;
+  missing stores, reference facts and dangling FormIDs remain reason-tagged unavailable
+  results. The ten-plugin active-load-order sweep pins an improvement from 69,225 of
+  118,494 conditions (58.42%) to 76,579 (64.63%), while leaving mutable location-keyword
+  float data unresolved. See [conditions](/formats/conditions.md).
 * **Encounter zones, collision layers and default objects resolve across plugins (issue
   #454)**: ECZN decodes its short-tolerant packed level and ownership data, COLL decodes
   metadata plus resolved collides-with links, and DOBJ decodes the complete xEdit use-tag

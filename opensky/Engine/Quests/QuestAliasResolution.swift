@@ -51,6 +51,11 @@ nonisolated struct QuestAliasResolution: Sendable {
         table(for: id)?.reference(forAlias: aliasID)
     }
 
+    /// Location filling one alias by number, or nil when it is empty.
+    func location(alias aliasID: UInt32, in id: FormID) -> ResolvedFormID? {
+        table(for: id)?.location(forAlias: aliasID)
+    }
+
     /// Alias ID one authored alias name stands for on the quest `id` names.
     ///
     /// Name matching is case-insensitive for the reason editor-ID lookup is:
