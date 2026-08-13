@@ -69,6 +69,14 @@ struct CellRecordTests {
         #expect(short.musicType == nil)
     }
 
+    @Test func decodesContainingLocationField() throws {
+        let cell = try Cell(record: record(ESMFixture.record(
+            "CELL", formID: 0x18, data: ESMFixture.field("XLCN", formID(0x1234))
+        )), localized: false)
+
+        #expect(cell.location == FormID(0x1234))
+    }
+
     @Test func decodesExteriorFieldsAndTwelveByteGrid() throws {
         var flags = Data()
         flags.appendUInt16(Cell.Flags.hasWater.rawValue)

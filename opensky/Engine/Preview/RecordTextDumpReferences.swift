@@ -1,5 +1,5 @@
-// KYWD/AACT decoded summaries and the optional context that makes item KWDA
-// links legible in both the CLI and Asset Browser.
+// KYWD/AACT/LCTN/LCRT decoded summaries and the optional context that makes
+// item and location KWDA links legible in both the CLI and Asset Browser.
 
 import Foundation
 
@@ -16,8 +16,19 @@ nonisolated extension RecordTextDump {
 
     static func referenceRecordSummary(
         record: ESMRecord,
+        localized: Bool,
+        keywordContext: KeywordContext?,
         formListContext: FormListContext?
     ) -> String? {
+        if
+            let location = locationRecordSummary(
+                record: record,
+                localized: localized,
+                keywordContext: keywordContext
+            )
+        {
+            return location
+        }
         switch record.type {
         case "KYWD":
             guard let keyword = try? Keyword(record: record) else { return nil }
@@ -57,6 +68,42 @@ nonisolated extension RecordTextDump {
         default:
             return nil
         }
+    }
+
+    private static func locationRecordSummary(
+        record: ESMRecord,
+        localized: Bool,
+        keywordContext: KeywordContext?
+    ) -> String? {
+        if record.type == "LCRT" {
+            guard let refType = try? LocationRefType(record: record) else { return nil }
+            return summary(
+                type: "LCRT",
+                editorID: refType.editorID,
+                color: refType.editorColor,
+                skipped: refType.skipped
+            )
+        }
+        guard
+            record.type == "LCTN",
+            let location = try? Location(record: record, localized: localized)
+        else { return nil }
+        let name = switch location.name {
+        case let .inline(value): "\"\(value)\""
+        case let .tableID(id): "string #\(id)"
+        case nil: "-"
+        }
+        let keywordNames = if let keywordContext {
+            location.keywords.displayStrings(
+                fromPlugin: keywordContext.sourcePlugin,
+                using: keywordContext.store
+            )
+        } else {
+            location.keywords.keywords.map(\.description)
+        }
+        return "decoded LCTN: editorID \(location.editorID ?? "-"), name \(name), "
+            + "parent \(location.parent?.description ?? "-"), "
+            + "keywords [\(keywordNames.joined(separator: ", "))]"
     }
 
     private static func summary(

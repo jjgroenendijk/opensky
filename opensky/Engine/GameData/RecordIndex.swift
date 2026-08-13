@@ -9,6 +9,7 @@ import OSLog
 nonisolated struct IndexedRecord {
     let record: ESMRecord
     let sourcePlugin: String
+    let localized: Bool
 }
 
 nonisolated enum RecordIndexResolution: Equatable {
@@ -108,6 +109,23 @@ nonisolated struct RecordIndex {
         return .undecodable(canonical)
     }
 
+    /// Variant for decoders that also need owning-plugin metadata such as the
+    /// TES4 localized flag. Candidate fallback stays paired with the metadata
+    /// of the definition being attempted.
+    func decodeIndexed<Value>(
+        _ id: ResolvedFormID,
+        using decodeRecord: (IndexedRecord) throws -> Value
+    ) -> RecordIndexDecodeResult<Value> {
+        let canonical = canonicalize(id)
+        guard let definitions = candidates[canonical] else { return .missing(canonical) }
+        for definition in definitions.reversed() {
+            if let value = try? decodeRecord(definition) {
+                return .decoded(value, sourcePlugin: definition.sourcePlugin)
+            }
+        }
+        return .undecodable(canonical)
+    }
+
     func count(of type: FourCC) -> Int {
         records.values.count { $0.record.type == type }
     }
@@ -127,6 +145,7 @@ nonisolated struct RecordIndex {
         recordTypes: Set<FourCC>
     ) {
         guard let resolver = resolvers[pluginName.lowercased()] else { return }
+        let localized = (try? file.pluginHeader().isLocalized) ?? false
         for group in file.topGroups {
             guard let type = group.recordType, recordTypes.contains(type) else { continue }
             guard let children = try? group.children() else {
@@ -148,7 +167,8 @@ nonisolated struct RecordIndex {
                 let canonical = canonicalize(resolved)
                 let entry = IndexedRecord(
                     record: record,
-                    sourcePlugin: pluginName
+                    sourcePlugin: pluginName,
+                    localized: localized
                 )
                 candidates[canonical, default: []].append(entry)
                 records[canonical] = entry

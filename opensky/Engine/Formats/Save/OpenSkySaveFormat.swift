@@ -116,6 +116,9 @@ nonisolated enum OpenSkySaveFormat {
         /// restores a world whose quests run with empty aliases, and a session
         /// that filled none writes no chunk at all.
         static let questAliases = "QALS"
+        /// Filled location aliases. Separate from QALS so old readers skip
+        /// location targets instead of misparsing QALS's flat entries.
+        static let questLocationAliases = "QLOC"
         /// Actor values (issue #194): one entry per actor whose current
         /// health, magicka or stamina deviates from a full baseline.
         ///

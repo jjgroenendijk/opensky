@@ -67,6 +67,8 @@ nonisolated struct Cell {
     /// absent or null; the music director then falls back to the worldspace
     /// or region music.
     let musicType: FormID?
+    /// XLCN — the LCTN containing this cell.
+    let location: FormID?
 
     var isInterior: Bool {
         flags.contains(.interior)
@@ -94,6 +96,7 @@ nonisolated struct Cell {
         regions = fields.regions
         acousticSpace = fields.acousticSpace
         musicType = fields.musicType
+        location = fields.location
     }
 
     /// Mutable accumulator for the field loop. Split out so the field switch
@@ -111,6 +114,7 @@ nonisolated struct Cell {
         var regions: [FormID] = []
         var acousticSpace: FormID?
         var musicType: FormID?
+        var location: FormID?
 
         mutating func decode(field: ESMField, localized: Bool) throws {
             var reader = BinaryReader(field.data)
@@ -157,6 +161,9 @@ nonisolated struct Cell {
                 // FormID into MUSC. xEdit wbDefinitionsTES5.pas:4378 +
                 // UESP CELL. A null link means "no override".
                 musicType = try Cell.decodeNonNullFormID(field.data)
+            case "XLCN":
+                // UESP CELL + xEdit wbDefinitionsTES5.pas: LCTN link.
+                location = try Cell.decodeNonNullFormID(field.data)
             default:
                 break
             }

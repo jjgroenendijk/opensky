@@ -59,7 +59,7 @@ nonisolated extension CellSceneProvider {
 nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding,
     AudioDataProviding, MovementConfigurationProviding, GlobalDataProviding,
     ScriptDataProviding, ItemDataProviding, BarterDataProviding, QuestDataProviding,
-    DialogueDataProviding, ActorValueDataProviding, CombatDataProviding,
+    LocationDataProviding, DialogueDataProviding, ActorValueDataProviding, CombatDataProviding,
     PackageDataProviding
 {
     let builder: CellSceneBuilder
@@ -83,6 +83,8 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     /// Quest index (QUST); nil when the plugin has no QUST records, and then
     /// every `Quest` native reports itself unavailable rather than guessing.
     var questStore: QuestStore?
+    /// LCTN/LCRT lookup for quest aliases and CELL location names.
+    var locationStore: LocationStore?
     /// Topic, response and voice-type records for the dialogue runtime.
     var dialogueStore: DialogueStore?
     /// PACK records plus resolved NPC_ package lists (issue #201).

@@ -19,6 +19,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   `RecordIndex` with explicit dangling-reference handling.
 * [Keywords and actions](/formats/keywords.md) - KYWD/AACT editor-id tags,
   cross-plugin lookup, and named resolution of object KWDA arrays.
+* [Locations](/formats/locations.md) - LCTN/LCRT layouts, cycle-safe parent and keyword
+  traversal, CELL XLCN links, and direct quest-location alias fills.
 * [plugins.txt load order](/formats/plugins-txt.md) - enable flags and file
   order, where the file hides on macOS, and the plugin order OpenSky builds
   from it.

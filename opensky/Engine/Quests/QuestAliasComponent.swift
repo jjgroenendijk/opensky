@@ -41,6 +41,14 @@ nonisolated struct QuestAliasFill: Equatable, Sendable {
     let reference: ReferenceKey
 }
 
+/// One filled location alias. Locations are base records rather than placed
+/// references, so their stable identity is a `ResolvedFormID`, not a
+/// `ReferenceKey` exposed through the reference-alias API.
+nonisolated struct QuestLocationAliasFill: Equatable, Sendable {
+    let aliasID: UInt32
+    let location: ResolvedFormID
+}
+
 /// Why one alias was left unfilled. Every case is a recorded, tallied skip
 /// rather than a failure: the quest may still start, and an empty optional
 /// alias is a legitimate outcome the Creation Kit documents.
@@ -48,9 +56,12 @@ nonisolated enum QuestAliasSkipKind: Hashable, Sendable {
     /// A fill type OpenSky does not implement yet. Carries the type so the
     /// tally names which ones a corpus actually needs.
     case unsupportedFillType(Quest.Alias.FillType)
-    /// A location alias (ALLS). Locations are not modelled at all yet, so the
-    /// whole category is skipped rather than half-filled.
+    /// A location alias (ALLS) whose fill type still needs condition or
+    /// alias-search machinery. Direct ALFL aliases are filled.
     case locationAlias
+    /// A specific-location fill was implemented, but its ALFL link did not
+    /// name a loaded LCTN.
+    case unresolvedLocation
     /// The fill named a reference whose FormID resolves to nothing — a null
     /// FormID, or one no loaded plugin can own. This is the only skip that also
     /// fails a non-optional alias.
@@ -64,6 +75,7 @@ nonisolated enum QuestAliasSkipKind: Hashable, Sendable {
         switch self {
         case let .unsupportedFillType(type): "unsupported fill \(type.name)"
         case .locationAlias: "location alias"
+        case .unresolvedLocation: "unresolved location"
         case .unresolvedReference: "unresolved reference"
         case .reusedInQuest: "reference reused in quest"
         }
@@ -110,6 +122,8 @@ nonisolated struct QuestAliasTally: Equatable, Sendable {
 nonisolated struct QuestAliasState: WorldStateComponent {
     /// Filled aliases, sorted by alias ID and unique by it.
     private(set) var fills: [QuestAliasFill]
+    /// Filled ALLS entries, sorted and unique by alias ID like `fills`.
+    private(set) var locationFills: [QuestLocationAliasFill]
 
     /// A quest whose aliases hold nothing: the state before a start and after
     /// a stop.
@@ -127,13 +141,23 @@ nonisolated struct QuestAliasState: WorldStateComponent {
     /// winning and the result comes out sorted. This is also the save
     /// decoder's entry point, so a corrupt file degrades into a valid table
     /// rather than failing the whole load.
-    init(fills: [QuestAliasFill] = []) {
+    init(
+        fills: [QuestAliasFill] = [],
+        locationFills: [QuestLocationAliasFill] = []
+    ) {
         var byID: [UInt32: ReferenceKey] = [:]
         for fill in fills {
             byID[fill.aliasID] = fill.reference
         }
         self.fills = byID.keys.sorted().compactMap { id in
             byID[id].map { QuestAliasFill(aliasID: id, reference: $0) }
+        }
+        var locationsByID: [UInt32: ResolvedFormID] = [:]
+        for fill in locationFills {
+            locationsByID[fill.aliasID] = fill.location
+        }
+        self.locationFills = locationsByID.keys.sorted().compactMap { id in
+            locationsByID[id].map { QuestLocationAliasFill(aliasID: id, location: $0) }
         }
     }
 
@@ -143,17 +167,21 @@ nonisolated struct QuestAliasState: WorldStateComponent {
     }
 
     var isEmpty: Bool {
-        fills.isEmpty
+        fills.isEmpty && locationFills.isEmpty
     }
 
     var count: Int {
-        fills.count
+        fills.count + locationFills.count
     }
 
     /// Reference filling `aliasID`, or nil when that alias is empty or the
     /// quest defines no such alias.
     func reference(forAlias aliasID: UInt32) -> ReferenceKey? {
         fills.first { $0.aliasID == aliasID }?.reference
+    }
+
+    func location(forAlias aliasID: UInt32) -> ResolvedFormID? {
+        locationFills.first { $0.aliasID == aliasID }?.location
     }
 
     /// True when `key` already fills some alias of this quest, which is what
@@ -167,7 +195,16 @@ nonisolated struct QuestAliasState: WorldStateComponent {
     func filling(_ aliasID: UInt32, with key: ReferenceKey) -> Self {
         QuestAliasState(
             fills: fills.filter { $0.aliasID != aliasID }
-                + [QuestAliasFill(aliasID: aliasID, reference: key)]
+                + [QuestAliasFill(aliasID: aliasID, reference: key)],
+            locationFills: locationFills.filter { $0.aliasID != aliasID }
+        )
+    }
+
+    func fillingLocation(_ aliasID: UInt32, with location: ResolvedFormID) -> Self {
+        QuestAliasState(
+            fills: fills.filter { $0.aliasID != aliasID },
+            locationFills: locationFills.filter { $0.aliasID != aliasID }
+                + [QuestLocationAliasFill(aliasID: aliasID, location: location)]
         )
     }
 }

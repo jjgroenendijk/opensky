@@ -17,6 +17,7 @@ nonisolated struct CellProviderIndexes {
     let musicStore: MusicRecordStore
     let globalStore: GlobalStore
     let questStore: QuestStore
+    let locationStore: LocationStore
     let dialogueStore: DialogueStore
     let packageStore: PackageStore
     let inventoryBaselines: InventoryBaselineResolver
@@ -68,6 +69,7 @@ nonisolated struct CellProviderIndexes {
         musicStore = MusicRecordStore(file: file)
         globalStore = GlobalStore(file: file, pluginName: esmURL.lastPathComponent)
         questStore = QuestStore(file: file, pluginName: esmURL.lastPathComponent)
+        locationStore = LocationStoreLoader.load(root: root, baseFile: file)
         dialogueStore = DialogueStore(file: file, pluginName: esmURL.lastPathComponent)
         packageStore = PackageStore(file: file)
         inventoryBaselines = InventoryBaselineResolver.build(from: file)
@@ -93,6 +95,7 @@ nonisolated struct CellProviderIndexes {
             musicStore: musicStore,
             globalStore: globalStore,
             questStore: questStore,
+            locationStore: locationStore,
             dialogueStore: dialogueStore,
             packageStore: packageStore,
             inventoryBaselines: inventoryBaselines,

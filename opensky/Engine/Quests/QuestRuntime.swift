@@ -38,6 +38,13 @@ struct QuestRuntime {
     /// Plugin-side index every mutation validates against and takes its
     /// session-stable keys from.
     let quests: QuestStore
+    let locations: LocationStore?
+
+    init(store: WorldStateStore, quests: QuestStore, locations: LocationStore? = nil) {
+        self.store = store
+        self.quests = quests
+        self.locations = locations
+    }
 
     // MARK: - Reading
 

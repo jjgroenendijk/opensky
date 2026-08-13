@@ -186,4 +186,28 @@ struct QuestAliasScriptTests {
         )
         #expect(filled.contains(Data("QALS".utf8)))
     }
+
+    @Test func aLocationAliasRoundTripsInItsAdditiveChunk() throws {
+        let store = WorldStateStore()
+        let questKey = PapyrusQuestFixture.questKey
+        let location = ResolvedFormID(plugin: "Skyrim.esm", objectID: 0x01A26F)
+        store.set(
+            QuestAliasState(locationFills: [
+                QuestLocationAliasFill(aliasID: 7, location: location)
+            ]),
+            for: questKey
+        )
+
+        let bytes = OpenSkySaveEncoder.encode(
+            snapshot: store.snapshot(),
+            fingerprint: [],
+            metadata: SaveCreationMetadata(creationTimestamp: 0, appVersion: "test")
+        )
+        let decoded = try OpenSkySaveDecoder.decode(bytes)
+        let state = try #require(decoded.snapshot[questKey]?.component(QuestAliasState.self))
+
+        #expect(bytes.contains(Data("QLOC".utf8)))
+        #expect(!bytes.contains(Data("QALS".utf8)))
+        #expect(state.location(forAlias: 7) == location)
+    }
 }

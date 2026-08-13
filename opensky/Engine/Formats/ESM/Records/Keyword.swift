@@ -42,7 +42,7 @@ nonisolated struct ReferenceRecordColor: Equatable {
         self.alpha = alpha
     }
 
-    fileprivate init(reader: inout BinaryReader) throws {
+    init(reader: inout BinaryReader) throws {
         try self.init(
             red: reader.readUInt8(),
             green: reader.readUInt8(),
@@ -88,7 +88,7 @@ nonisolated struct ActionRecord: Equatable {
     }
 }
 
-nonisolated private struct ReferenceRecordFields {
+nonisolated struct ReferenceRecordFields {
     let editorID: String?
     let editorColor: ReferenceRecordColor?
     let skipped: ReferenceRecordTally

@@ -1061,10 +1061,11 @@ own scripts point at the slot. Item 13.1 decoded the slots (`Quest.Alias`); item
 a slot of its own rather than another field on `QuestRuntimeState` because the two have
 different lifetimes: stage and objective state survives a `Stop`, while the alias table is
 cleared by one. Its single invariant — fills sorted by alias ID, one entry per ID — is what
-keeps two stores that filled the same aliases byte-identical.
+keeps two stores that filled the same aliases byte-identical. Reference and location fills
+are separate sorted arrays because an LCTN is a base-record identity, not a placed reference.
 
-Each fill stores a session-stable `ReferenceKey`, never a FormID, because that is the
-identity the Papyrus handle map, the condition run-ons and the save file all address.
+Reference fills store a session-stable `ReferenceKey`; location fills store a
+`ResolvedFormID`. Neither keeps a load-order-relative raw FormID.
 
 ### When a table is filled
 
@@ -1076,7 +1077,8 @@ changes nothing, so a second `Start` never re-points an alias a script is alread
 
 ### The rules the fill pass implements
 
-`QuestAliasFiller` is a pure function of a `Quest` plus a `FormIDResolver`, so every rule
+`QuestAliasFiller` is a pure function of a `Quest`, a `FormIDResolver`, and an optional
+`LocationStore`, so every rule
 below is unit-testable without a store. All four are quoted from the same page:
 
 * **Order is positional, not by fill type.** "The list of aliases is an ordered list - when
@@ -1093,11 +1095,12 @@ below is unit-testable without a store. All four are quoted from the same page:
 
 ### What it deliberately does not do
 
-Specific Reference (ALFR) is the only fill type implemented. Everything else is a counted
+Specific Reference (ALFR) and Specific Location (ALFL) are implemented. Everything else is
+a counted
 `QuestAliasSkipKind` and leaves the alias empty, and — this is the important half — an
 unimplemented fill type never fails a quest start. Refusing to start a quest because OpenSky
 cannot run a Find Matching Reference search would dress an engine gap as game semantics. Only
-an *implemented* fill producing nothing (an ALFR that resolves to no plugin) fails a
+an *implemented* fill producing nothing (an ALFR or ALFL that resolves to no record) fails a
 non-optional alias.
 
 The reuse rule refuses the fill and likewise not the start. The same page says the rule "is
@@ -1105,13 +1108,14 @@ not required for all fill types" and names only one exception, so which types it
 covers is undocumented; treating a refusal as a start failure would refuse thirteen quests
 `Skyrim.esm` ships that way.
 
-Also deferred, and recorded rather than guessed at: location aliases (locations are not
-modelled), "Reserves Reference" (a cross-quest rule), and any check that a filled reference
-exists, is alive, enabled or undestroyed (that needs a whole-world REFR index and actor
-state).
+Also deferred, and recorded rather than guessed at: condition-driven and ALFA-plus-ALRT
+location searches, "Reserves Reference" (a cross-quest rule), and any check that a filled
+reference exists, is alive, enabled or undestroyed (that needs a whole-world REFR index and
+actor state).
 
 The sweep over `Skyrim.esm` puts numbers on each deferral — 12,891 aliases across 1607
-quests, of which 2688 fill, and no quest at all is blocked from starting. The largest
+quests, of which 2850 fill (2688 references plus 162 direct locations), and no quest at all
+is blocked from starting. The remaining location-category skip tally is exactly 730. The largest
 deferrals are Unique Actor (2900 aliases, 22.5%), Location Alias Reference (2036, 15.8%),
 From Event (1771, 13.7%) and aliases with no fill subrecord at all (1678, 13.0%).
 
@@ -1138,21 +1142,24 @@ Three consumers read it:
 
 ### Serialization
 
-Filled tables travel in their own `QALS` chunk, a sibling of `QSTS` rather than an extension
+Reference fills travel in `QALS`; location fills use its additive `QLOC` sibling. Both are
+siblings of `QSTS` rather than extensions
 of it: `QSTS` entries are a flat positional layout with no per-entry length, so appending a
 field would make an older build misparse the whole chunk instead of skipping the new part.
 Layout in [OpenSky save container](/formats/opensky-save.md).
 
 ### Tests
 
-`openskyTests/QuestAliasTests.swift` covers the forced-reference fill, the list order with a
+`openskyTests/QuestAliasTests.swift` and `QuestLocationAliasTests.swift` cover
+forced-reference and forced-location fills, the list order with a
 forced-into target taking the last writer, optional-empty against non-optional-failure, the
 start-up-stage path, an unimplemented fill type as a tallied skip, the reuse rule, the table
 cleared on stop and refilled on restart, reset, and both resolution lookups over a live store
 and a snapshot. `QuestAliasConditionTests.swift` covers the `questAlias` run-on and the
 CIS1/CIS2 path against filled and unfilled aliases. `QuestAliasScriptTests.swift` covers
 alias-script instantiation, retirement on `Stop`, the wire-up fill, the counted wire-up
-failure, and the save round trip with rebinding. The env-gated
+failure, the reference save round trip with rebinding, and the location `QLOC` round trip.
+The env-gated
 `QuestAliasRealDataTests.swift` fills the target quest `MGRArniel01` against the real install
 and writes the corpus census to gitignored `logs/`.
 

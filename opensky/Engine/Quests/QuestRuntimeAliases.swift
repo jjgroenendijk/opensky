@@ -47,6 +47,12 @@ extension QuestRuntime {
         return store.component(QuestAliasState.self, for: key)?.reference(forAlias: aliasID)
     }
 
+    /// Location currently filling one ALLS alias.
+    func aliasLocation(alias aliasID: UInt32, in id: FormID) -> ResolvedFormID? {
+        guard let key = quests.key(for: id) else { return nil }
+        return store.component(QuestAliasState.self, for: key)?.location(forAlias: aliasID)
+    }
+
     /// Every quest with a non-empty alias table, in `ReferenceKey` order,
     /// paired with the record it belongs to. For inspection surfaces.
     func filledAliasQuests() -> [(quest: Quest, aliases: QuestAliasState)] {
@@ -97,7 +103,11 @@ extension QuestRuntime {
                 state: existing, skipped: QuestAliasTally(), unfilledRequired: []
             )
         }
-        let result = QuestAliasFiller.fill(quest, resolver: quests.resolver)
+        let result = QuestAliasFiller.fill(
+            quest,
+            resolver: quests.resolver,
+            locations: locations
+        )
         guard result.canStartQuest else {
             throw QuestError.aliasFillFailed(
                 quest: quest.formID, aliases: result.unfilledRequired

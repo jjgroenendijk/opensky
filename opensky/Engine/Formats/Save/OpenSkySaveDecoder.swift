@@ -49,6 +49,8 @@ nonisolated enum OpenSkySaveDecoder {
         /// table, so every running quest restores with empty aliases — which is
         /// also what a save written before that chunk existed means.
         var questAliases: [SaveQuestAliasEntry] = []
+        /// Absent QLOC means no persisted location-alias targets.
+        var questLocationAliases: [SaveQuestLocationAliasEntry] = []
         /// Absent `AVAL` chunk (issue #194) means no actor's values deviated
         /// from a full baseline, so everyone re-derives their maximums from
         /// records and starts full — which is also what a save written before
@@ -110,6 +112,10 @@ nonisolated enum OpenSkySaveDecoder {
         entries = OpenSkySaveSpawnDecoder.merge(body.spawns, into: entries)
         entries = OpenSkySaveQuestDecoder.merge(body.quests, into: entries)
         entries = OpenSkySaveQuestDecoder.mergeAliases(body.questAliases, into: entries)
+        entries = OpenSkySaveQuestDecoder.mergeLocationAliases(
+            body.questLocationAliases,
+            into: entries
+        )
         entries = OpenSkySaveActorValueDecoder.merge(body.actorValues, into: entries)
         entries = OpenSkySaveDeathDecoder.merge(body.deaths, into: entries)
         entries = OpenSkySaveCombatDecoder.merge(body.combatStates, into: entries)
@@ -226,6 +232,9 @@ nonisolated enum OpenSkySaveDecoder {
             body.quests = try OpenSkySaveQuestDecoder.decodeQuestStates(payload)
         case OpenSkySaveFormat.ChunkTag.questAliases:
             body.questAliases = try OpenSkySaveQuestDecoder.decodeQuestAliases(payload)
+        case OpenSkySaveFormat.ChunkTag.questLocationAliases:
+            body.questLocationAliases = try OpenSkySaveQuestDecoder
+                .decodeQuestLocationAliases(payload)
         case OpenSkySaveFormat.ChunkTag.actorValues:
             body.actorValues = try OpenSkySaveActorValueDecoder.decodeActorValues(payload)
         case OpenSkySaveFormat.ChunkTag.deaths:

@@ -79,7 +79,7 @@ nonisolated extension OpenSkySaveEncoder {
         let saved = entries.compactMap { entry -> (key: ReferenceKey, state: QuestAliasState)? in
             guard
                 let state = entry.delta.component(QuestAliasState.self),
-                !state.isEmpty
+                !state.fills.isEmpty
             else {
                 return nil
             }
@@ -97,6 +97,36 @@ nonisolated extension OpenSkySaveEncoder {
                 for fill in each.state.fills {
                     payload.writeUInt32(fill.aliasID)
                     writeKey(fill.reference, into: &payload)
+                }
+            }
+        }
+    }
+
+    /// `QLOC`: location targets are a sibling chunk because QALS entries are
+    /// not individually length-delimited and cannot be extended compatibly.
+    static func writeQuestLocationAliases(
+        _ entries: [WorldStateSnapshotEntry],
+        into writer: inout BinaryWriter
+    ) {
+        let saved = entries.compactMap { entry -> (ReferenceKey, [QuestLocationAliasFill])? in
+            guard
+                let state = entry.delta.component(QuestAliasState.self),
+                !state.locationFills.isEmpty
+            else { return nil }
+            return (entry.key, state.locationFills)
+        }
+        guard !saved.isEmpty else { return }
+        writeChunk(tag: OpenSkySaveFormat.ChunkTag.questLocationAliases, into: &writer) { payload in
+            payload.writeUInt32(UInt32(clamping: saved.count))
+            for (key, fills) in saved {
+                writeKey(key, into: &payload)
+                payload.writeUInt32(UInt32(clamping: fills.count))
+                for fill in fills {
+                    payload.writeUInt32(fill.aliasID)
+                    writeKey(
+                        .plugin(name: fill.location.plugin, objectID: fill.location.objectID),
+                        into: &payload
+                    )
                 }
             }
         }
