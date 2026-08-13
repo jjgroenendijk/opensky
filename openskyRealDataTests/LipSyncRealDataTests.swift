@@ -27,6 +27,7 @@ struct LipSyncRealDataTests {
         var unmappedKeyCount = 0
         var firstFrames: [Int: Int] = [:]
         var unknownValues: [UInt16: Int] = [:]
+        var layouts: [String: Int] = [:]
         var failureTallies: [String: Int] = [:]
         var failureExamples: [String] = []
 
@@ -43,6 +44,11 @@ struct LipSyncRealDataTests {
                 unmappedKeyCount += lip.unmappedKeyCount
                 firstFrames[lip.header.firstFrame, default: 0] += 1
                 unknownValues[lip.header.unknownValue, default: 0] += 1
+                layouts[
+                    "header \(lip.header.headerSize)B tuple \(lip.header.tupleWidth) "
+                        + "vocab \(lip.header.targetCount) "
+                        + "stride \(lip.header.slotsPerFrame)", default: 0
+                ] += 1
                 // Spelled as an explicit closure rather than a key path: the
                 // `#expect` expansion of `allSatisfy(\.isFinite)` inside a
                 // `do`/`catch` is read as a throwing call the enclosing context
@@ -60,7 +66,10 @@ struct LipSyncRealDataTests {
         }
 
         #expect(lipBlobCount == 74070, "embedded lip count drifted to \(lipBlobCount)")
-        #expect(lipCount > 60000, "only \(lipCount) standard tracks decoded")
+        // 70,926 decoded on 2026-08-12, the first sweep after issue #449 taught
+        // the decoder the alternate header family, the tick-derived slot stride
+        // and the ambiguous marker framing. It was 61,484 before.
+        #expect(lipCount > 70000, "only \(lipCount) tracks decoded")
         let failureCount = failureTallies.values.reduce(0, +)
         #expect(lipCount + failureCount == lipBlobCount)
         let report = """
@@ -68,6 +77,7 @@ struct LipSyncRealDataTests {
         \(lipCount) standard tracks decoded, \(failureCount) typed parse failures
         [INFO] lip tokens: \(keyCount) keys, \(duplicateCount) duplicates, \
         \(markerCount) markers, \(unmappedKeyCount) keys in unmapped slots
+        [INFO] lip layouts: \(Self.histogram(layouts))
         [INFO] lip first frames: \(Self.histogram(firstFrames))
         [INFO] lip unknown header values: \(Self.histogram(unknownValues))
         [INFO] lip failure categories: \(Self.histogram(failureTallies))

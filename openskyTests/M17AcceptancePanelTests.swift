@@ -267,7 +267,8 @@ struct M17AcceptancePanelTests {
         clockMode: .audio,
         liveWeights: ["Aah": 0.75],
         unmappedActiveSlots: [],
-        isDecaying: false
+        isDecaying: false,
+        layout: "header 24 B · tuple 3 · vocab 16 · 33 slots/frame"
     )
 
     private static let audioStats = AudioStatsSnapshot(

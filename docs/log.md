@@ -4,6 +4,33 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-12
 
+* **The `.lip` layouts the M17 gate walked past now decode (issue #449)**: three findings,
+  each measured across all 74,070 embedded lip blobs rather than inferred from an offset that
+  happened to fit. First, the slot stride is carried by the duration field —
+  `durationTicks == 4 * slotsPerFrame * frameCount + 28` — so the familiar 132 ticks per frame
+  is `4 * 33`, and the 729 creature blobs whose vocabulary is 8 use 32 ticks per frame for an
+  8-slot grid. Second, "key tuple width 512" is not a second curve encoding: 4,972 blobs carry
+  one or three extra bytes between the frame count and the tuple width, so the tuple width,
+  pre-roll and vocabulary sit one or three bytes later; read there they are an ordinary header
+  with tuple width 2, and `LIPDecoder` searches for the first tail that is jointly consistent
+  with the stride instead of assuming a fixed offset. Third, the `non-finite curve value`
+  rejections were a misread, not bad bytes: at the failure the real value sits one byte later,
+  and the decoder had lost phase at a `00 <tag> 00` triple. The tag alone cannot decide it —
+  requiring `tag % 4 == 0` loses phase on 3,683 blobs and accepting every non-zero tag breaks
+  1,828 that decoded before — so the triple is now a choice point resolved by backtracking
+  against the whole payload, with multiples of four tried as a suffix first so every blob that
+  decoded before decodes identically. Corpus decode went from 61,484 to 70,926 of 74,070; what
+  remains is 3,104 blobs with no locatable header tail and 40 that frame to no reading, both
+  still typed `LIPError` results. `World > Dialogue & Voice` reports the active line's decoded
+  layout in `LipSyncStatsLabel`. See [.lip lip-sync tracks](/formats/lip.md).
+* **The push gate compiles the real-data suites (issue #457)**: `make test` selects the
+  `UnitTests` plan, which does not carry `openskyRealDataTests`, so a compile break there
+  reached `main` and stayed invisible until someone ran `make realtest`. `make realdata-build`
+  runs `build-for-testing` on the `RealData` plan — no install needed, no test run — and the
+  pre-push hook runs it after `make test` and `make cli`, stamping its own green tree hash so
+  the usual run-then-push flow does not pay for it twice. CI gained the same step. The
+  `#expect` break the issue was filed for had already been fixed in the M17 landing; this is
+  the part that keeps the class of break from landing again.
 * **ShaderTypes reaches Swift as a clang module (issue #342)**: `ShaderTypes.h` moved to
   `opensky/SharedHeaders/ShaderTypes/` beside a `module.modulemap` declaring
   `OpenSkyShaderTypes`, `SWIFT_INCLUDE_PATHS` picked the directory up for every target, and

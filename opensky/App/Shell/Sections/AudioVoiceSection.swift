@@ -248,6 +248,9 @@ final class AudioVoiceSection: PanelSectionViewController {
             ),
             "Weights: \(weights.isEmpty ? "none" : weights)"
         ]
+        if let layout = snapshot.layout {
+            lines.append("Layout: \(layout)")
+        }
         if !snapshot.unmappedActiveSlots.isEmpty {
             let slots = snapshot.unmappedActiveSlots.map(String.init).joined(separator: ", ")
             lines.append("Unmapped slots: \(slots)")

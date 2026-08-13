@@ -113,8 +113,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [FUZE voice container](/formats/fuz.md) - .fuz voice lines: the FUZE header, the
   optional .lip blob, the embedded xWMA stream, and the voice-file naming rule derived
   from the vanilla archive listing.
-* [FaceFX lip animation](/formats/lip.md) - .lip header and sparse 30 Hz curve grid,
-  positional speech-slot mapping, confidence boundaries, and vanilla sweep evidence.
+* [FaceFX lip animation](/formats/lip.md) - .lip header families, the tick-derived slot
+  stride, the ambiguous marker framing and how the decoder resolves it, positional
+  speech-slot mapping, confidence boundaries, and vanilla sweep evidence.
 * [xWMA container](/formats/xwm.md) - .xwm music files: RIFF/XWMA framing, fmt
   WAVEFORMATEX parameters, dpds packet table, data payload, frame-only policy
   and vanilla sweep evidence.
