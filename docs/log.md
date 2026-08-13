@@ -4,6 +4,15 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-13
 
+* **Keywords are names rather than hardcoded FormIDs (issue #451)**: `Keyword` and
+  `ActionRecord` defensively decode the shared optional EDID plus byte-RGBA CNAM shape,
+  tallying malformed and unknown fields. `KeywordStore` layers resolved-ID and
+  case-insensitive editor-ID lookup over the cross-plugin `RecordIndex`; `KeywordList`
+  resolves a plugin-relative KWDA by name for membership tests and inspector display.
+  `RecordTextDump` now decodes KYWD/AACT and prints resolved keyword editor IDs for item
+  records when given the store. The real-data gate pins Iron Sword, Iron Cuirass and Gold,
+  and measured 843 distinct KWDA identities across the active load order: all 843 resolved,
+  with no unresolved tail. See [keywords and actions](/formats/keywords.md).
 * **Cross-plugin records now have one load-order-independent index (issue #450)**:
   `RecordIndex` walks requested top groups once per active plugin, resolves raw record IDs
   through each plugin's TES4 MAST list, and keeps the highest-priority valid record under a

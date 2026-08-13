@@ -12,16 +12,20 @@ nonisolated extension RecordTextDump {
     /// Decoded view for CONT, MISC, BOOK, ALCH, INGR, WEAP, AMMO, ARMO and
     /// ARMA. Nil for anything else, so the caller falls through to the raw
     /// field list.
-    static func itemSummary(record: ESMRecord, localized: Bool) -> String? {
+    static func itemSummary(
+        record: ESMRecord,
+        localized: Bool,
+        keywordContext: KeywordContext?
+    ) -> String? {
         switch record.type {
         case "CONT": containerSummary(record: record, localized: localized)
-        case "MISC": miscSummary(record: record, localized: localized)
-        case "BOOK": bookSummary(record: record, localized: localized)
-        case "ALCH": ingestibleSummary(record: record, localized: localized)
-        case "INGR": ingredientSummary(record: record, localized: localized)
-        case "WEAP": weaponSummary(record: record, localized: localized)
-        case "AMMO": ammunitionSummary(record: record, localized: localized)
-        case "ARMO": armorSummary(record: record, localized: localized)
+        case "MISC": miscSummary(record, localized, keywordContext)
+        case "BOOK": bookSummary(record, localized, keywordContext)
+        case "ALCH": ingestibleSummary(record, localized, keywordContext)
+        case "INGR": ingredientSummary(record, localized, keywordContext)
+        case "WEAP": weaponSummary(record, localized, keywordContext)
+        case "AMMO": ammunitionSummary(record, localized, keywordContext)
+        case "ARMO": armorSummary(record, localized, keywordContext)
         case "ARMA": armorAddonSummary(record: record)
         case "PROJ": projectileSummary(record: record)
         default: nil
@@ -50,12 +54,17 @@ nonisolated extension RecordTextDump {
         )
     }
 
-    private static func armorSummary(record: ESMRecord, localized: Bool) -> String? {
+    private static func armorSummary(
+        _ record: ESMRecord,
+        _ localized: Bool,
+        _ context: KeywordContext?
+    ) -> String? {
         guard let armor = try? Armor(record: record, localized: localized) else { return nil }
         let slots = armor.bodyTemplate.map { "0x\(String($0.slots.rawValue, radix: 16))" } ?? "-"
         return "decoded ARMO: editorID \(armor.editorID ?? "-"), "
             + "value \(armor.itemValue.value), "
             + "weight \(String(format: "%.2f", armor.itemValue.weight)), "
+            + keywordText(armor.keywords, context: context) + ", "
             + "slots \(slots), rating \(armor.armorRating), "
             + "\(armor.armatures.count) armatures"
     }
@@ -88,50 +97,74 @@ nonisolated extension RecordTextDump {
             + "flags 0x\(String(container.flags.rawValue, radix: 16))"
     }
 
-    private static func miscSummary(record: ESMRecord, localized: Bool) -> String? {
+    private static func miscSummary(
+        _ record: ESMRecord,
+        _ localized: Bool,
+        _ context: KeywordContext?
+    ) -> String? {
         guard let item = try? MiscItem(record: record, localized: localized) else { return nil }
-        return "decoded MISC: " + shared(item.fields, item.itemValue)
+        return "decoded MISC: " + shared(item.fields, item.itemValue, context)
     }
 
-    private static func bookSummary(record: ESMRecord, localized: Bool) -> String? {
+    private static func bookSummary(
+        _ record: ESMRecord,
+        _ localized: Bool,
+        _ context: KeywordContext?
+    ) -> String? {
         guard let book = try? Book(record: record, localized: localized) else { return nil }
         let teaches = switch book.teaches {
         case .nothing: "nothing"
         case let .skill(index): "skill \(index)"
         case let .spell(spell): "spell \(spell)"
         }
-        return "decoded BOOK: " + shared(book.fields, book.itemValue)
+        return "decoded BOOK: " + shared(book.fields, book.itemValue, context)
             + ", teaches \(teaches), text \(book.text == nil ? "absent" : "present")"
     }
 
-    private static func ingestibleSummary(record: ESMRecord, localized: Bool) -> String? {
+    private static func ingestibleSummary(
+        _ record: ESMRecord,
+        _ localized: Bool,
+        _ context: KeywordContext?
+    ) -> String? {
         guard let item = try? Ingestible(record: record, localized: localized) else { return nil }
-        return "decoded ALCH: " + shared(item.fields, item.itemValue)
+        return "decoded ALCH: " + shared(item.fields, item.itemValue, context)
             + ", \(item.effects.count) effects, "
             + "flags 0x\(String(item.flags.rawValue, radix: 16))"
     }
 
-    private static func ingredientSummary(record: ESMRecord, localized: Bool) -> String? {
+    private static func ingredientSummary(
+        _ record: ESMRecord,
+        _ localized: Bool,
+        _ context: KeywordContext?
+    ) -> String? {
         guard let item = try? Ingredient(record: record, localized: localized) else { return nil }
-        return "decoded INGR: " + shared(item.fields, item.itemValue)
+        return "decoded INGR: " + shared(item.fields, item.itemValue, context)
             + ", \(item.effects.count) effects, auto-calc value \(item.autoCalcValue)"
     }
 
-    private static func weaponSummary(record: ESMRecord, localized: Bool) -> String? {
+    private static func weaponSummary(
+        _ record: ESMRecord,
+        _ localized: Bool,
+        _ context: KeywordContext?
+    ) -> String? {
         guard let weapon = try? Weapon(record: record, localized: localized) else { return nil }
         let animation = weapon.animationType.map { "\($0)" } ?? "unknown"
         let critical = weapon.criticalData.map { "\($0.damage)" } ?? "-"
-        return "decoded WEAP: " + shared(weapon.fields, weapon.itemValue)
+        return "decoded WEAP: " + shared(weapon.fields, weapon.itemValue, context)
             + String(
                 format: ", damage %d, %@, speed %.2f, reach %.2f, critical %@",
                 Int(weapon.damage), animation, weapon.speed, weapon.reach, critical
             )
     }
 
-    private static func ammunitionSummary(record: ESMRecord, localized: Bool) -> String? {
+    private static func ammunitionSummary(
+        _ record: ESMRecord,
+        _ localized: Bool,
+        _ context: KeywordContext?
+    ) -> String? {
         guard let ammo = try? Ammunition(record: record, localized: localized) else { return nil }
         let projectile = ammo.projectile.map(\.description) ?? "-"
-        return "decoded AMMO: " + shared(ammo.fields, ammo.itemValue)
+        return "decoded AMMO: " + shared(ammo.fields, ammo.itemValue, context)
             + String(format: ", damage %.1f, projectile %@", ammo.damage, projectile)
     }
 
@@ -140,7 +173,8 @@ nonisolated extension RecordTextDump {
     /// records do.
     private static func shared(
         _ fields: InventoryItemFields,
-        _ itemValue: ItemValue
+        _ itemValue: ItemValue,
+        _ context: KeywordContext?
     ) -> String {
         let name = switch fields.name {
         case let .inline(text): "\"\(text)\""
@@ -148,12 +182,24 @@ nonisolated extension RecordTextDump {
         case nil: "-"
         }
         return String(
-            format: "editorID %@, name %@, value %d, weight %.2f, %d keywords",
+            format: "editorID %@, name %@, value %d, weight %.2f, %@",
             fields.editorID ?? "-",
             name,
             Int(itemValue.value),
             itemValue.weight,
-            fields.keywords.keywords.count
+            keywordText(fields.keywords, context: context)
         )
+    }
+
+    private static func keywordText(
+        _ keywords: KeywordList,
+        context: KeywordContext?
+    ) -> String {
+        let names = if let context {
+            keywords.displayStrings(fromPlugin: context.sourcePlugin, using: context.store)
+        } else {
+            keywords.keywords.map(\.description)
+        }
+        return "keywords [\(names.joined(separator: ", "))]"
     }
 }

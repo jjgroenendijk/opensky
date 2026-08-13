@@ -17,14 +17,20 @@ final class PreviewDetailBuilder {
 
     private let fileSystem: VirtualFileSystem
     private let localized: Bool
+    private let keywordStore: KeywordStore?
     /// Nil when the machine lacks a Metal 4 GPU — text-only previews then.
     private let device: (any MTLDevice)?
     private let textures: TextureLibrary?
     private let meshes: MeshLibrary?
 
-    init(fileSystem: VirtualFileSystem, localized: Bool) {
+    init(
+        fileSystem: VirtualFileSystem,
+        localized: Bool,
+        keywordStore: KeywordStore? = nil
+    ) {
         self.fileSystem = fileSystem
         self.localized = localized
+        self.keywordStore = keywordStore
         if let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4) {
             self.device = device
             let textures = TextureLibrary(fileSystem: fileSystem, device: device)
@@ -40,10 +46,22 @@ final class PreviewDetailBuilder {
     func detail(for selection: PreviewSelection) -> Detail {
         switch selection {
         case let .record(record):
-            Detail(text: RecordTextDump.dump(record: record, localized: localized), image: nil)
+            Detail(text: recordText(record), image: nil)
         case let .file(entry):
             fileDetail(entry: entry)
         }
+    }
+
+    private func recordText(_ record: ESMRecord) -> String {
+        guard let keywordStore else {
+            return RecordTextDump.dump(record: record, localized: localized)
+        }
+        return RecordTextDump.dump(
+            record: record,
+            localized: localized,
+            keywordStore: keywordStore,
+            sourcePlugin: "Skyrim.esm"
+        )
     }
 
     // MARK: - Files

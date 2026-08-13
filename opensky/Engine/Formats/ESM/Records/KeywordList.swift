@@ -58,4 +58,21 @@ nonisolated struct KeywordList: Equatable {
     func contains(_ keyword: FormID) -> Bool {
         keywords.contains(keyword)
     }
+
+    /// Tests by editor ID after resolving both the requested keyword and this
+    /// record's raw KWDA links through the same load order.
+    func contains(
+        editorID: String,
+        fromPlugin pluginName: String,
+        using store: KeywordStore
+    ) -> Bool {
+        guard let expected = store.keyword(editorID: editorID)?.id else { return false }
+        return keywords.contains { store.resolve($0, fromPlugin: pluginName)?.id == expected }
+    }
+
+    /// Editor IDs in KWDA order. Dangling links use their raw FormID text so
+    /// inspector output remains complete and diagnosable.
+    func displayStrings(fromPlugin pluginName: String, using store: KeywordStore) -> [String] {
+        keywords.map { store.displayString(for: $0, fromPlugin: pluginName) }
+    }
 }

@@ -17,6 +17,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [FormID + TES4 header](/formats/formid.md) - plugin header fields, master
   lists, raw FormID -> (plugin, objectID) resolution, and the cross-plugin
   `RecordIndex` with explicit dangling-reference handling.
+* [Keywords and actions](/formats/keywords.md) - KYWD/AACT editor-id tags,
+  cross-plugin lookup, and named resolution of object KWDA arrays.
 * [plugins.txt load order](/formats/plugins-txt.md) - enable flags and file
   order, where the file hides on macOS, and the plugin order OpenSky builds
   from it.
