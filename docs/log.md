@@ -4,6 +4,15 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-13
 
+* **Form lists preserve order and flatten safely across plugins (issue #452)**: `FormList`
+  decodes EDID plus repeating LNAM links, retaining positional nulls and tallying a partial
+  tail. `FormListStore` adds resolved-ID and case-insensitive editor-ID lookup over
+  `RecordIndex`; whole-list overrides, plugin-relative nested resolution, recursion-stack
+  cycle detection, a logged depth cap, and flattened membership keep malformed mods finite.
+  `RecordTextDump` prints capped FLST entries and names decoded M18 targets. The active-load-
+  order gate measured 1,219 winning lists, a largest list of 308 entries, deepest nesting 2,
+  and no null LNAMs; it pins the nested 152-leaf Atronach Forge recipe list. See
+  [record decoders](/formats/records.md).
 * **Keywords are names rather than hardcoded FormIDs (issue #451)**: `Keyword` and
   `ActionRecord` defensively decode the shared optional EDID plus byte-RGBA CNAM shape,
   tallying malformed and unknown fields. `KeywordStore` layers resolved-ID and

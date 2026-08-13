@@ -13,12 +13,16 @@ enum RecordCommand {
         let file = try context.loadSkyrimESM()
         let record = try find(token: token, in: file)
         let localized = (try? file.pluginHeader().isLocalized) ?? false
-        let keywords = KeywordStoreLoader.load(root: context.root, baseFile: file)
+        let plugins = ActivePluginFiles.load(root: context.root, baseFile: file)
+        let index = RecordIndex(plugins: plugins, recordTypes: RecordIndex.referenceRecordTypes)
+        let keywords = KeywordStore(index: index)
+        let formLists = FormListStore(index: index)
         print(
             RecordTextDump.dump(
                 record: record,
                 localized: localized,
                 keywordStore: keywords,
+                formListStore: formLists,
                 sourcePlugin: "Skyrim.esm"
             )
         )

@@ -9,7 +9,15 @@ nonisolated extension RecordTextDump {
         let sourcePlugin: String
     }
 
-    static func referenceRecordSummary(record: ESMRecord) -> String? {
+    struct FormListContext {
+        let store: FormListStore
+        let sourcePlugin: String
+    }
+
+    static func referenceRecordSummary(
+        record: ESMRecord,
+        formListContext: FormListContext?
+    ) -> String? {
         switch record.type {
         case "KYWD":
             guard let keyword = try? Keyword(record: record) else { return nil }
@@ -27,6 +35,25 @@ nonisolated extension RecordTextDump {
                 color: action.editorColor,
                 skipped: action.skipped
             )
+        case "FLST":
+            guard let list = try? FormList(record: record) else { return nil }
+            let entries = list.entries.prefix(fieldPrintCap).map { entry in
+                if let formListContext {
+                    formListContext.store.displayString(
+                        for: entry,
+                        fromPlugin: formListContext.sourcePlugin
+                    )
+                } else {
+                    entry?.description ?? "NULL"
+                }
+            }
+            var entryText = entries.joined(separator: ", ")
+            if list.entries.count > fieldPrintCap {
+                entryText += ", ... \(list.entries.count - fieldPrintCap) more"
+            }
+            return "decoded FLST: editorID \(list.editorID ?? "-"), "
+                + "entries \(list.entries.count) [\(entryText)], "
+                + "malformed \(list.malformedEntryCount)"
         default:
             return nil
         }
