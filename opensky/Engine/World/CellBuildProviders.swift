@@ -35,6 +35,12 @@ nonisolated protocol QuestDataProviding {
     var questStore: QuestStore? { get }
 }
 
+/// Optional load-order-wide LCTN index used while filling direct location
+/// aliases and resolving CELL XLCN links.
+nonisolated protocol LocationDataProviding {
+    var locationStore: LocationStore? { get }
+}
+
 /// Optional DIAL/INFO/VTYP index a provider can expose (issue #204). The
 /// dialogue runtime consumes this in 17.2; synthetic scenes leave it nil.
 nonisolated protocol DialogueDataProviding {

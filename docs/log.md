@@ -4,6 +4,15 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-13
 
+* **Locations now connect cells, keywords and direct quest aliases (issue #453)**: LCTN
+  decodes its identity, parent, keywords and every packed reference/actor/cell array with
+  measured partial-tail handling; LCRT shares the reference-tag decoder and CELL exposes
+  XLCN. `LocationStore` adds load-order-wide lookup, later-plugin override precedence,
+  cycle-safe containment and inherited-keyword queries. `RecordTextDump` names both record
+  families, direct ALFL quest aliases fill and persist through the additive `QLOC` chunk.
+  The real-data gate met census floors of 829 LCTN and 481 LCRT definitions, pinned the Whiterun ->
+  Whiterun Hold -> Tamriel chain, and reduced the location-alias skip tally from 892 to 730
+  by filling 162 direct locations. See [locations](/formats/locations.md).
 * **Form lists preserve order and flatten safely across plugins (issue #452)**: `FormList`
   decodes EDID plus repeating LNAM links, retaining positional nulls and tallying a partial
   tail. `FormListStore` adds resolved-ID and case-insensitive editor-ID lookup over

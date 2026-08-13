@@ -97,7 +97,12 @@ nonisolated enum RecordTextDump {
         // Inventory families live in RecordTextDumpItems.swift so this switch
         // stays inside the strict-lint complexity cap.
         default:
-            referenceRecordSummary(record: record, formListContext: formListContext)
+            referenceRecordSummary(
+                record: record,
+                localized: localized,
+                keywordContext: keywordContext,
+                formListContext: formListContext
+            )
                 ?? itemSummary(
                     record: record,
                     localized: localized,

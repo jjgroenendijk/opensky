@@ -108,7 +108,12 @@ extension GameViewController {
             return
         }
         questStore = store
-        bridge.questRuntime = QuestRuntime(store: worldState, quests: store)
+        let locations = (provider as? LocationDataProviding)?.locationStore
+        bridge.questRuntime = QuestRuntime(
+            store: worldState,
+            quests: store,
+            locations: locations
+        )
         let started = bridge.attachRunningQuestScripts()
         Self.papyrusLogger.info(
             "[INFO] quest scripts instantiated: \(started, privacy: .public)"

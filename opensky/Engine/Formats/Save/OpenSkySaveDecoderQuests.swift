@@ -23,6 +23,11 @@ nonisolated struct SaveQuestAliasEntry: Equatable, Sendable {
     let state: QuestAliasState
 }
 
+nonisolated struct SaveQuestLocationAliasEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let fills: [QuestLocationAliasFill]
+}
+
 nonisolated enum OpenSkySaveQuestDecoder {
     static func decodeQuestStates(_ payload: Data) throws -> [SaveQuestEntry] {
         var reader = SaveReader(payload)
@@ -105,6 +110,63 @@ nonisolated enum OpenSkySaveQuestDecoder {
         return deltasByKey.keys.sorted().compactMap { key in
             guard let delta = deltasByKey[key] else { return nil }
             return WorldStateSnapshotEntry(key: key, delta: delta)
+        }
+    }
+
+    static func decodeQuestLocationAliases(
+        _ payload: Data
+    ) throws -> [SaveQuestLocationAliasEntry] {
+        var reader = SaveReader(payload)
+        let count = try reader.uint32("QLOC entry count")
+        try OpenSkySaveDecoder.validate(
+            count: count,
+            minimumElementSize: OpenSkySaveFormat.minimumQuestAliasEntrySize,
+            remaining: reader.bytesRemaining,
+            chunk: OpenSkySaveFormat.ChunkTag.questLocationAliases
+        )
+        var entries: [SaveQuestLocationAliasEntry] = []
+        entries.reserveCapacity(Int(count))
+        for _ in 0 ..< count {
+            let key = try OpenSkySaveEntryDecoder.decodeKey(&reader)
+            let fillCount = try reader.uint32("QLOC fill count")
+            try OpenSkySaveDecoder.validate(
+                count: fillCount,
+                minimumElementSize: OpenSkySaveFormat.minimumQuestAliasFillSize,
+                remaining: reader.bytesRemaining,
+                chunk: OpenSkySaveFormat.ChunkTag.questLocationAliases
+            )
+            var fills: [QuestLocationAliasFill] = []
+            fills.reserveCapacity(Int(fillCount))
+            for _ in 0 ..< fillCount {
+                let aliasID = try reader.uint32("QLOC alias ID")
+                let target = try OpenSkySaveEntryDecoder.decodeKey(&reader)
+                guard case let .plugin(name, objectID) = target else {
+                    throw OpenSkySaveError.invalidValue(context: "QLOC location key")
+                }
+                fills.append(QuestLocationAliasFill(
+                    aliasID: aliasID,
+                    location: ResolvedFormID(plugin: name, objectID: objectID)
+                ))
+            }
+            entries.append(SaveQuestLocationAliasEntry(key: key, fills: fills))
+        }
+        return entries
+    }
+
+    static func mergeLocationAliases(
+        _ aliases: [SaveQuestLocationAliasEntry],
+        into entries: [WorldStateSnapshotEntry]
+    ) -> [WorldStateSnapshotEntry] {
+        guard !aliases.isEmpty else { return entries }
+        var deltasByKey = Dictionary(uniqueKeysWithValues: entries.map { ($0.key, $0.delta) })
+        for entry in aliases {
+            var delta = deltasByKey[entry.key] ?? ReferenceStateDelta()
+            let existing = delta.component(QuestAliasState.self) ?? .empty
+            delta.set(QuestAliasState(fills: existing.fills, locationFills: entry.fills).erased)
+            deltasByKey[entry.key] = delta
+        }
+        return deltasByKey.keys.sorted().compactMap { key in
+            deltasByKey[key].map { WorldStateSnapshotEntry(key: key, delta: $0) }
         }
     }
 

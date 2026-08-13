@@ -41,7 +41,10 @@ struct QuestAliasTests {
         aliases: Data,
         flags: UInt16 = 0
     ) throws -> QuestRuntime {
-        try QuestRuntime(store: store, quests: self.store(aliases: aliases, flags: flags))
+        try QuestRuntime(
+            store: store,
+            quests: self.store(aliases: aliases, flags: flags)
+        )
     }
 
     /// ALFR — the one fill type item 13.4 implements.

@@ -36,16 +36,15 @@
 //
 // Stated deviations, so the gaps are facts rather than surprises:
 //
-// * Specific Reference (ALFR) is the only fill type implemented. Every other
+// * Specific Reference (ALFR) and Specific Location (ALFL) are implemented. Every other
 //   type is a counted `QuestAliasSkipKind.unsupportedFillType` and leaves the
 //   alias empty. It is deliberately *not* treated as a fill failure: refusing
 //   to start a quest because OpenSky cannot run a Find Matching Reference
 //   search would be this engine's limitation wearing the game's semantics.
 //   Only a fill type OpenSky does implement, producing nothing, fails a
 //   non-optional alias.
-// * Location aliases are skipped wholesale — locations are not modelled — and
-//   are an engine gap rather than a fill failure for the same reason, so a
-//   non-optional one does not stop its quest from starting.
+// * Condition-driven location aliases remain a counted engine gap. ALFL is a
+//   direct link and fills when a `LocationStore` is available.
 // * The reuse rule refuses the *fill* and never the *start*. The same page
 //   says the rule "is not required for all fill types" and names Unique Actor
 //   as one exception without listing the rest, so which fill types it really
@@ -94,8 +93,12 @@ nonisolated enum QuestAliasFiller {
     ///
     /// - Parameter resolver: master-list resolver of the plugin that defines
     ///   `quest`, which is what turns an ALFR FormID into a session-stable key.
-    static func fill(_ quest: Quest, resolver: FormIDResolver) -> QuestAliasFillResult {
-        var pass = FillPass(resolver: resolver)
+    static func fill(
+        _ quest: Quest,
+        resolver: FormIDResolver,
+        locations: LocationStore? = nil
+    ) -> QuestAliasFillResult {
+        var pass = FillPass(resolver: resolver, locations: locations)
         for alias in quest.aliases {
             pass.fill(alias)
         }
@@ -106,6 +109,7 @@ nonisolated enum QuestAliasFiller {
     /// statement per documented rule rather than one long function.
     private struct FillPass {
         let resolver: FormIDResolver
+        let locations: LocationStore?
         var state = QuestAliasState()
         var skipped = QuestAliasTally()
         var unfilledRequired: [UInt32] = []
@@ -120,10 +124,7 @@ nonisolated enum QuestAliasFiller {
 
         mutating func fill(_ alias: Quest.Alias) {
             guard alias.category == .reference else {
-                // Locations are not modelled at all, so a location alias is an
-                // engine gap like an unimplemented fill type and never fails a
-                // start either.
-                skipped.note(.locationAlias)
+                fillLocation(alias)
                 return
             }
             guard case .specificReference = alias.fillType else {
@@ -150,6 +151,25 @@ nonisolated enum QuestAliasFiller {
                 // Last writer wins by construction: a later alias forcing the
                 // same target simply overwrites this.
                 store(UInt32(bitPattern: forced), key)
+            }
+        }
+
+        private mutating func fillLocation(_ alias: Quest.Alias) {
+            guard case .specificLocation = alias.fillType, let locations else {
+                skipped.note(.locationAlias)
+                return
+            }
+            guard
+                let raw = alias.forcedLocation,
+                let resolved = locations.resolve(raw, fromPlugin: resolver.pluginName)
+            else {
+                skipped.note(.unresolvedLocation)
+                note(unfilled: alias)
+                return
+            }
+            state = state.fillingLocation(alias.id, with: resolved.id)
+            if let forced = alias.forceIntoAlias, forced >= 0 {
+                state = state.fillingLocation(UInt32(bitPattern: forced), with: resolved.id)
             }
         }
 

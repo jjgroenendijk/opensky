@@ -3,7 +3,7 @@ type: File Format
 title: OpenSky native save container (.osav)
 description: Byte layout of OpenSky's own .osav save file, its determinism and version rules.
 tags: [format, save, io, world-state, determinism]
-timestamp: 2026-08-02T00:00:00Z
+timestamp: 2026-08-13T00:00:00Z
 ---
 
 # OpenSky native save container
@@ -35,6 +35,7 @@ byte length followed by that many UTF-8 bytes. The file extension is `osav`.
 * `SPWN` entry layout
 * `QSTS` entry layout
 * `QALS` entry layout
+* `QLOC` entry layout
 * `AVAL` entry layout
 * `DETH` entry layout
 * `CBTS` entry layout
@@ -156,7 +157,7 @@ A chunk whose declared length runs past the end of the file is
 that declared length, which is what makes a newer build's save loadable in an older one.
 
 Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR`, `INVN`, `SPWN`, `QSTS`,
-`QALS`, `AVAL`, `DETH`, `CBTS` and `DLGS` were added additively afterwards.
+`QALS`, `QLOC`, `AVAL`, `DETH`, `CBTS` and `DLGS` were added additively afterwards.
 
 `GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
 any other size is `invalidValue`.
@@ -550,6 +551,19 @@ entry count against `minimumQuestAliasEntrySize` (11 bytes) and the fill count a
 
 An empty table is deliberately never written, and a quest the chunk does not mention restores
 with empty aliases — which is exactly the state a quest that has not started has.
+
+## `QLOC` entry layout
+
+`QLOC` carries filled location aliases. It is separate from `QALS` because QALS entries are
+flat and not individually length-delimited: appending location fills there would make an
+older reader mistake them for the next quest. An older reader instead skips all of QLOC by
+its declared chunk length and restores the reference fills it understands.
+
+The entry and fill shapes match `QALS`: uint32 entry count; then the quest key, uint32 fill
+count, and each uint32 alias ID plus key. A QLOC target key must use the plugin-key variant;
+generated keys are rejected because an LCTN is always a plugin base record. The plugin name
+and object ID become the fill's `ResolvedFormID`. Duplicate or unsorted alias IDs normalize
+through `QuestAliasState`, and a save with no location fills writes no QLOC chunk.
 
 ## `AVAL` entry layout
 
