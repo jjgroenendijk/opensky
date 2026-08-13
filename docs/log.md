@@ -4,6 +4,16 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-13
 
+* **Encounter zones, collision layers and default objects resolve across plugins (issue
+  #454)**: ECZN decodes its short-tolerant packed level and ownership data, COLL decodes
+  metadata plus resolved collides-with links, and DOBJ decodes the complete xEdit use-tag
+  vocabulary while retaining unknown mod tags. Their stores add resolved-ID and
+  case-insensitive editor-ID lookup; DOBJ merges sparse overrides per tag instead of
+  replacing Skyrim.esm's defaults. PROJ follows its optional COLL link, and CELL/WRLD
+  expose XEZN. The real-data gate met floors of 358 ECZN, 55 COLL and five DOBJ
+  definitions, pinned Bleak Falls Barrow, and enumerated six active DOBJ records into an
+  exact 369-tag union (the five masters plus Survival Mode). See
+  [record decoders](/formats/records.md).
 * **Locations now connect cells, keywords and direct quest aliases (issue #453)**: LCTN
   decodes its identity, parent, keywords and every packed reference/actor/cell array with
   measured partial-tail handling; LCRT shares the reference-tag decoder and CELL exposes

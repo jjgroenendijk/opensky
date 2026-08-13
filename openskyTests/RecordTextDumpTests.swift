@@ -127,4 +127,41 @@ struct RecordTextDumpTests {
         #expect(dump.contains("teleport 00000200 at (4.0, 5.0, 6.0)"))
         #expect(dump.contains("rotation (0.4, 0.5, 0.6)"))
     }
+
+    @Test func dumpsEncounterZoneCollisionLayerAndDefaultObjects() throws {
+        var zoneData = Data()
+        zoneData.appendUInt32(1)
+        zoneData.appendUInt32(2)
+        zoneData.append(contentsOf: [0xFF, 6, 2, 24])
+        var scalar = Data()
+        scalar.appendUInt32(7)
+        var defaults = Data("GOLD".utf8)
+        defaults.appendUInt32(0x0F)
+        let plugin = ESMFixture.tes4()
+            + ESMFixture.topGroup("ECZN", contents: ESMFixture.record(
+                "ECZN", formID: 1,
+                data: ESMFixture.field("EDID", ESMFixture.zstring("TestZone"))
+                    + ESMFixture.field("DATA", zoneData)
+            ))
+            + ESMFixture.topGroup("COLL", contents: ESMFixture.record(
+                "COLL", formID: 2,
+                data: ESMFixture.field("EDID", ESMFixture.zstring("TestLayer"))
+                    + ESMFixture.field("BNAM", scalar)
+            ))
+            + ESMFixture.topGroup("DOBJ", contents: ESMFixture.record(
+                "DOBJ", formID: 0x31,
+                data: ESMFixture.field("DNAM", defaults)
+            ))
+        let file = try ESMFile(data: plugin)
+        var summaries: [String] = []
+        ESMWalk.forEachRecord(in: file) { record in
+            summaries.append(RecordTextDump.dump(record: record, localized: false))
+            return true
+        }
+        let dump = summaries.joined(separator: "\n")
+        #expect(dump.contains("decoded ECZN: editorID TestZone"))
+        #expect(dump.contains("levels 6-24"))
+        #expect(dump.contains("decoded COLL: editorID TestLayer, index 7"))
+        #expect(dump.contains("decoded DOBJ: editorID DefaultObjectManager, 1 entries [GOLD]"))
+    }
 }

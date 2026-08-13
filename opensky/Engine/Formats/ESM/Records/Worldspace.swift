@@ -63,6 +63,8 @@ nonisolated struct Worldspace {
     /// music director's fallback when the cell carries no XCMO and no region
     /// music applies. nil when absent or null.
     let musicType: FormID?
+    /// XEZN — default encounter zone for the worldspace.
+    let encounterZone: FormID?
 
     /// - Parameter localized: TES4 localized flag of the owning plugin
     ///   (`PluginHeader.isLocalized`) — decides lstring decoding.
@@ -86,6 +88,7 @@ nonisolated struct Worldspace {
         waterType = fields.waterType
         climate = fields.climate
         musicType = fields.musicType
+        encounterZone = fields.encounterZone
     }
 
     /// Mutable accumulator for the field loop, matching `Cell`/`Region`. Split
@@ -102,6 +105,7 @@ nonisolated struct Worldspace {
         var waterType: FormID?
         var climate: FormID?
         var musicType: FormID?
+        var encounterZone: FormID?
 
         mutating func decode(field: ESMField, localized: Bool) throws {
             var reader = BinaryReader(field.data)
@@ -141,6 +145,9 @@ nonisolated struct Worldspace {
                 // 10772, wbFormIDCk(ZNAM, 'Music', [MUSC]); UESP WRLD "always
                 // a MUSC form ID"). A null link means no worldspace music.
                 musicType = try Worldspace.decodeNonNullFormID(field.data)
+            case "XEZN":
+                // xEdit wbDefinitionsTES5.pas `wbRecord(WRLD, ...)`: ECZN.
+                encounterZone = try Worldspace.decodeNonNullFormID(field.data)
             default:
                 break
             }

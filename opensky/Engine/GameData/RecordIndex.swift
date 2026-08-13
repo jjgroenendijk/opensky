@@ -139,6 +139,23 @@ nonisolated struct RecordIndex {
         collectedRecordCounts[type, default: 0]
     }
 
+    /// Every structurally readable definition of a type in load order. Most
+    /// stores consume only `records`, where overrides collapse by identity;
+    /// DOBJ consumes every definition because its overrides merge by tag.
+    func definitions(of type: FourCC) -> [IndexedRecord] {
+        candidates.values
+            .flatMap(\.self)
+            .filter { $0.record.type == type }
+            .sorted { left, right in
+                let leftPriority = priority(ofPlugin: left.sourcePlugin)
+                let rightPriority = priority(ofPlugin: right.sourcePlugin)
+                if leftPriority != rightPriority {
+                    return leftPriority < rightPriority
+                }
+                return left.record.formID < right.record.formID
+            }
+    }
+
     private mutating func add(
         pluginName: String,
         file: ESMFile,
