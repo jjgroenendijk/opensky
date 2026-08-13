@@ -68,15 +68,21 @@ in both bundles.
 There is no required CI status right now: GitHub Actions is quota-suspended
 (issue #70), so `ci.yml` is manual-dispatch only. The pre-push hook
 (`.githooks/pre-push/20-build-test.sh`) is the sole merge gate: it runs
-`make test` then `make cli` (the CLI build catches app-only source files that
-Xcode's filesystem-synced groups silently pull into the `openskycli` target).
+`make test`, then `make cli` (the CLI build catches app-only source files that
+Xcode's filesystem-synced groups silently pull into the `openskycli` target),
+then `make realdata-build`. That last step compiles the `RealData` plan without
+running a single test (issue #457): the `UnitTests` plan does not carry
+`openskyRealDataTests`, so a compile break there used to reach `main` and stay
+invisible until someone reached for `make realtest`. Running those suites needs
+the user's install and stays off the push gate; `build-for-testing` needs no
+install and costs a fraction of running them.
 `OPENSKY_SKIP_BUILD=1` skips the gate for bootstrap/emergency only.
 
 The hook short-circuits when the pushed tree already passed (issue #417): green
-`make test` and `make cli` runs write the tested tree hash (`git stash create`,
-so a dirty tree stamps the content actually tested) to
+`make test`, `make cli` and `make realdata-build` runs write the tested tree
+hash (`git stash create`, so a dirty tree stamps the content actually tested) to
 `DerivedData/green-stamps/` through `tools/green-stamp.sh`, and the hook skips
-its rebuild only when the working tree is clean and both stamps equal
+its rebuild only when the working tree is clean and every stamp equals
 `HEAD^{tree}`. A skip can only ever skip work that already passed on
 byte-identical content; a dirty tree, a missing stamp, or any content change
 runs the full gate, and `make clean` sweeps the stamps with the rest of the

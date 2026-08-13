@@ -96,7 +96,8 @@ struct AudioVoicePanelTests {
             clockMode: .audio,
             liveWeights: ["Aah": 0.75],
             unmappedActiveSlots: [31],
-            isDecaying: false
+            isDecaying: false,
+            layout: "header 25 B · tuple 2 · vocab 16 · 33 slots/frame"
         )
         panel.audioProvider = provider
         panel.loadViewIfNeeded()

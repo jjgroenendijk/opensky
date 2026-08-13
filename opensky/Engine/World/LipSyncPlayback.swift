@@ -18,7 +18,8 @@ nonisolated struct LipSyncSnapshot: Equatable {
         clockMode: .audio,
         liveWeights: [:],
         unmappedActiveSlots: [],
-        isDecaying: false
+        isDecaying: false,
+        layout: nil
     )
 
     let actor: FormID?
@@ -28,6 +29,18 @@ nonisolated struct LipSyncSnapshot: Equatable {
     let liveWeights: [String: Float]
     let unmappedActiveSlots: [Int]
     let isDecaying: Bool
+    /// How the active track's own bytes framed themselves: header size, tuple
+    /// width, vocabulary and slot stride. The corpus carries more than one of
+    /// each (issue #449), so the panel shows which one this line used.
+    let layout: String?
+}
+
+nonisolated extension LIPFile {
+    /// One line naming the layout this track decoded as.
+    var layoutDescription: String {
+        "header \(header.headerSize) B · tuple \(header.tupleWidth) · "
+            + "vocab \(header.targetCount) · \(header.slotsPerFrame) slots/frame"
+    }
 }
 
 nonisolated private struct LipSyncSession {
@@ -67,7 +80,8 @@ nonisolated final class LipSyncPlayback: RenderAnimation {
             clockMode: .audio,
             liveWeights: [:],
             unmappedActiveSlots: [],
-            isDecaying: false
+            isDecaying: false,
+            layout: nil
         )
     }
 
@@ -90,7 +104,8 @@ nonisolated final class LipSyncPlayback: RenderAnimation {
             clockMode: .audio,
             liveWeights: [:],
             unmappedActiveSlots: [],
-            isDecaying: false
+            isDecaying: false,
+            layout: track.layoutDescription
         )
     }
 
@@ -129,7 +144,8 @@ nonisolated final class LipSyncPlayback: RenderAnimation {
             clockMode: current.clockMode,
             liveWeights: mapped.weights,
             unmappedActiveSlots: mapped.unmappedActiveSlots,
-            isDecaying: false
+            isDecaying: false,
+            layout: current.track.layoutDescription
         )
         return faceMorph.setLipWeights(mapped.weights)
     }
@@ -144,7 +160,8 @@ nonisolated final class LipSyncPlayback: RenderAnimation {
             clockMode: .audio,
             liveWeights: [:],
             unmappedActiveSlots: [],
-            isDecaying: false
+            isDecaying: false,
+            layout: nil
         )
         return faceMorph.clearLipWeights()
     }
@@ -162,7 +179,8 @@ nonisolated final class LipSyncPlayback: RenderAnimation {
             clockMode: current.clockMode,
             liveWeights: weights,
             unmappedActiveSlots: snapshot.unmappedActiveSlots,
-            isDecaying: true
+            isDecaying: true,
+            layout: current.track.layoutDescription
         )
         return faceMorph.setLipWeights(weights)
     }

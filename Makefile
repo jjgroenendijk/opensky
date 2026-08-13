@@ -67,7 +67,7 @@ METAL_FILES     := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
         realdata-plan no-game-content \
         docs-links build cli \
         probe test test-fast \
-        test-ui test-one test-report realtest realtest-perf realtest-npc-perf realtest-all test-sanitize \
+        test-ui test-one test-report realdata-build realtest realtest-perf realtest-npc-perf realtest-all test-sanitize \
         test-perms app-path \
         cli-path run-cli \
         install clean prune icon
@@ -230,6 +230,17 @@ realtest: vendor-link ## Run one env-gated real-data test under the RSS watchdog
 		*) spec="openskyRealDataTests/$(T)";; esac; \
 	./tools/test-fast.sh -p RealData -t "$$spec" \
 		$(if $(CAP),-c $(CAP),) $(if $(B),-B,)
+
+# The compile half of the real-data suites, without a single test running
+# (issue #457). `make test` selects the UnitTests plan, so nothing in the
+# routine gate ever compiles openskyRealDataTests, and a build break there
+# stayed invisible until someone reached for `make realtest`. Running the
+# suites needs the local install and must never be a push gate; compiling them
+# needs neither, so this is the part the pre-push hook can afford.
+realdata-build: vendor-link ## Compile the RealData suites without running them
+	@$(XCB_RUN) realdata-build $(XCB_TEST) -testPlan RealData build-for-testing
+	@if [ "$(CONFIG)" = "Debug" ] && [ -z "$(XCODEBUILD_FLAGS)" ]; then \
+		./tools/green-stamp.sh write realdata-build; fi
 
 # The physics perf gate, and the only real-data entry point that builds the
 # suites optimized (issue #392). A physics step is a few hundred microseconds of
