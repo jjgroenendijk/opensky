@@ -5,7 +5,7 @@ description: The shared 32-byte CTDA condition payload, its sibling count and st
   subrecords, the skip-don't-throw decode policy, and the function registry and
   evaluator that answer a condition list at runtime.
 tags: [format, plugin, conditions]
-timestamp: 2026-08-09T00:00:00Z
+timestamp: 2026-08-13T00:00:00Z
 ---
 
 # Conditions (CTDA, CITC, CIS1, CIS2)
@@ -412,7 +412,8 @@ false and carries a machine-readable `ConditionFailure` saying why:
 `.unknownFunction`, `.unresolvedGlobal`, `.unresolvedQuest`,
 `.unsupportedRunOn`, `.unresolvedReference`, `.unknownOperator`,
 `.unresolvedParameter`, `.unavailableClock`, `.unavailableActorState`,
-`.unavailableDetection`, or `.unavailableDialogue`.
+`.unavailableDetection`, `.unavailableDialogue`, or
+`.unavailableData(.keyword|.formList|.location)`.
 `.unresolvedParameter` means either a `CIS1`/`CIS2` alias name that resolved to
 no filled alias or an actor-value index this engine has no store for. A QUST
 parameter naming no quest
@@ -432,8 +433,9 @@ ranks the next milestone's work. Its buckets are `unknownFunctions` with
 `unknownFunctionTotal` and `unnamedUnknownFunctions` beside it,
 `unresolvedGlobals`, `unresolvedQuests`, `unsupportedRunOns` keyed by run-on name,
 `unresolvedReferences`, `unknownOperators`, `unresolvedParameters`,
-`unavailableClock`, `unavailableActorState`, `unavailableDetection` and
-`unavailableDialogue`, plus the volume counters `conditionsEvaluated` and
+`unavailableClock`, `unavailableActorState`, `unavailableDetection`,
+`unavailableDialogue`, and `unavailableData` grouped by M18 domain, plus the
+volume counters `conditionsEvaluated` and
 `listsEvaluated`, the derived `failureTotal` and `isClean`, and ranked
 accessors for reporting. Each name table is capped at `nameLimit` (64 by
 default) so a pathological plugin cannot grow the tally without bound, while
@@ -522,6 +524,80 @@ something the shipped plugin exercises. OpenSky still never validates it,
 because mods may.
 
 ## Coverage sweep
+
+### Active load order after M18 data functions
+
+Issue #455 measured the complete active load order before choosing functions:
+`Skyrim.esm`, the four update/DLC masters, four installed Creation Club plugins,
+and `_ResourcePack.esl`. The sweep found 118,494 conditions over 258 distinct raw
+indices. The 21-function registry entering the issue covered 69,225 conditions
+(58.42%). The fourteen keyword, form-list and location functions below add 7,354
+conditions, taking the 35-function registry to **76,579 of 118,494 (64.63%)**.
+
+| stored | Creation Kit | function | conditions |
+| --- | --- | --- | --- |
+| 560 | 4656 | `HasKeyword` | 3,501 |
+| 359 | 4455 | `GetInCurrentLoc` | 1,590 |
+| 562 | 4658 | `LocationHasKeyword` | 755 |
+| 567 | 4663 | `GetIsEditorLocAlias` | 445 |
+| 360 | 4456 | `GetInCurrentLocAlias` | 411 |
+| 605 | 4701 | `LocAliasIsLocation` | 232 |
+| 565 | 4661 | `GetIsEditorLocation` | 165 |
+| 181 | 4277 | `HasSameEditorLocAsRefAlias` | 150 |
+| 610 | 4706 | `LocAliasHasKeyword` | 41 |
+| 372 | 4468 | `IsInList` | 39 |
+| 444 | 4540 | `GetInCurrentLocFormList` | 17 |
+| 604 | 4700 | `IsInSameCurrentLocAsRefAlias` | 7 |
+| 180 | 4276 | `HasSameEditorLocAsRef` | 1 |
+| 603 | 4699 | `IsInSameCurrentLocAsRef` | 0 |
+
+`ConditionDataResolution` is the immutable evaluation seam. It carries optional
+`KeywordStore`, `FormListStore` and `LocationStore` snapshots, the plugin the
+condition parameters belong to, and current/editor location facts keyed by
+`ReferenceKey`. A missing store, missing location fact, unresolvable subject, or
+dangling FormID is an unavailable failure, never a false match. `HasKeyword` and
+`IsInList` test the run-on reference's base object; form-list membership expands
+nested lists; location containment and keyword checks follow the cycle-safe parent
+chain established by `LocationStore`. Location aliases resolve through the same
+`QuestAliasResolution` snapshot as reference aliases.
+
+The demand sweep also explains one deliberate omission. Raw 606,
+`GetKeywordDataForLocation`, carries 783 active-load-order conditions, but returns a
+mutable float stored on a location-keyword pair. M18's stores hold membership, not
+that runtime float, so registering it as zero would erase a measurable gap with a
+wrong answer.
+
+The remaining 224 unregistered indices carry 41,915 conditions. The twenty
+heaviest remaining misses are:
+
+| stored | Creation Kit | conditions |
+| --- | --- | --- |
+| 71 | 4167 | 9,028 |
+| 629 | 4725 | 6,917 |
+| 47 | 4143 | 2,082 |
+| 448 | 4544 | 1,668 |
+| 67 | 4163 | 1,291 |
+| 550 | 4646 | 924 |
+| 561 | 4657 | 868 |
+| 597 | 4693 | 785 |
+| 606 | 4702 | 783 |
+| 131 | 4227 | 683 |
+| 69 | 4165 | 651 |
+| 70 | 4166 | 598 |
+| 659 | 4755 | 591 |
+| 579 | 4675 | 538 |
+| 310 | 4406 | 512 |
+| 73 | 4169 | 482 |
+| 403 | 4499 | 441 |
+| 576 | 4672 | 433 |
+| 300 | 4396 | 422 |
+| 136 | 4232 | 400 |
+
+`ConditionDataRealDataTests` pins the active plugin list, total, before count,
+7,354-condition improvement and after count. This keeps later registry work from
+quietly changing the acceptance evidence.
+
+### Historical Skyrim.esm snapshot
 
 `ConditionRealDataTests` runs the registry over every condition the decode sweep
 finds, counting what the evaluator could name and what it could not. Observed
@@ -616,8 +692,9 @@ so the registry uses 77.
 * Creation Kit wiki, the individual function pages under
   <https://ck.uesp.net/wiki/>: `GetCurrentTime`, `GetDisabled`, `GetIsID`, `GetGlobalValue`,
   `GetRandomPercent`, `GetDayOfWeek`, `GetDead`, `GetActorValue` and
-  `GetActorValuePercent`, for each function's return value, parameter typing and
-  value range. `IsWeaponOut` and `GetCombatState` were read from the
+  `GetActorValuePercent`, plus the M18 keyword, form-list, current/editor location,
+  location-alias and same-location functions listed above, for each function's return
+  value, parameter typing and value range. `IsWeaponOut` and `GetCombatState` were read from the
   `creationkit.com` mirror through the Wayback Machine, which is where their
   documented return values come from — see `docs/tools/environment.md` on that
   host.

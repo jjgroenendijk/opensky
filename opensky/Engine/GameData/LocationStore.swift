@@ -118,6 +118,39 @@ nonisolated struct LocationStore {
         return hasKeyword(keyword, in: locationID)
     }
 
+    /// Resolves a KYWD parameter and proves the target record exists.
+    func keyword(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
+        guard let resolved = resolvedID(id, fromPlugin: pluginName) else { return nil }
+        return keywordStore.keyword(resolved)?.id
+    }
+
+    /// True when both locations are the same at the immediate level, or reach
+    /// the same nearest ancestor carrying `keyword`.
+    func sharesLocation(
+        _ left: ResolvedFormID,
+        _ right: ResolvedFormID,
+        at keyword: ResolvedFormID?
+    ) -> Bool? {
+        guard location(left) != nil, location(right) != nil else { return nil }
+        guard let keyword else { return sameIdentity(left, right) }
+        guard keywordStore.keyword(keyword) != nil else { return nil }
+        guard
+            let leftAncestor = firstAncestor(of: left, carrying: keyword),
+            let rightAncestor = firstAncestor(of: right, carrying: keyword)
+        else { return false }
+        return sameIdentity(leftAncestor, rightAncestor)
+    }
+
+    /// True when `candidate` or one of its parents is a location leaf in the
+    /// already-flattened form list.
+    func isWithinAny(
+        _ candidate: ResolvedFormID,
+        locations entries: [ResolvedFormID?]
+    ) -> Bool? {
+        guard location(candidate) != nil else { return nil }
+        return entries.compactMap(\.self).contains { isWithin(candidate, ancestor: $0) }
+    }
+
     /// Resolves CELL XLCN through the same load order as LCTN.
     func location(containing cell: Cell, fromPlugin pluginName: String) -> ResolvedLocation? {
         guard let raw = cell.location else { return nil }
@@ -162,6 +195,27 @@ nonisolated struct LocationStore {
             let parent = resolved.location.parent
         else { return nil }
         return resolvedID(parent, fromPlugin: resolved.sourcePlugin)
+    }
+
+    private func firstAncestor(
+        of locationID: ResolvedFormID,
+        carrying keyword: ResolvedFormID
+    ) -> ResolvedFormID? {
+        var current: ResolvedFormID? = locationID
+        var visited: Set<ResolvedFormID> = []
+        while let id = current, visited.insert(id).inserted {
+            guard let resolved = location(id) else { return nil }
+            let matches = resolved.location.keywords.keywords.contains { raw in
+                resolvedID(raw, fromPlugin: resolved.sourcePlugin).map {
+                    sameIdentity($0, keyword)
+                } ?? false
+            }
+            if matches {
+                return id
+            }
+            current = parentID(of: id)
+        }
+        return nil
     }
 
     private func canonicalMatch(

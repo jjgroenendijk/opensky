@@ -45,6 +45,11 @@ nonisolated struct ConditionContext: Sendable {
     /// to. Empty in a context with no world running, which makes every dialogue
     /// function a reason-tagged false rather than a convincing "no voice type".
     var dialogue: DialogueResolution
+    /// Load-order keyword, form-list and location stores plus the current and
+    /// editor location facts for references (issue #455). Empty when no data
+    /// snapshot is available, so M18 functions report an honest unavailable
+    /// result rather than a convincing zero.
+    var data: ConditionDataResolution
     /// Runtime enable overrides for `GetDisabled`. When absent for a key, the
     /// function falls back to the placement record's initial flag.
     var referenceEnable: ReferenceEnableResolution
@@ -77,6 +82,7 @@ nonisolated struct ConditionContext: Sendable {
         actors: ActorStateResolution = .empty,
         detection: DetectionResolution = .empty,
         dialogue: DialogueResolution = .empty,
+        data: ConditionDataResolution = .empty,
         referenceEnable: ReferenceEnableResolution = .empty,
         aliasQuest: FormID? = nil,
         clock: GameClock? = nil,
@@ -91,6 +97,7 @@ nonisolated struct ConditionContext: Sendable {
         self.actors = actors
         self.detection = detection
         self.dialogue = dialogue
+        self.data = data
         self.referenceEnable = referenceEnable
         self.aliasQuest = aliasQuest
         self.clock = clock
@@ -133,12 +140,19 @@ nonisolated struct ConditionCall: Sendable {
         return context.aliases.reference(alias: parameter.rawValue, in: quest)
     }
 
+    /// Location filling the alias `parameter` names on the context's quest.
+    func aliasLocation(_ parameter: Condition.Parameter) -> ResolvedFormID? {
+        guard let quest = context.aliasQuest else { return nil }
+        return context.aliases.location(alias: parameter.rawValue, in: quest)
+    }
+
     /// One authored alias name as a parameter word, filled aliases only.
     private func aliasParameter(named name: String) -> Condition.Parameter? {
         guard
             let quest = context.aliasQuest,
             let aliasID = context.aliases.aliasID(named: name, in: quest),
             context.aliases.reference(alias: aliasID, in: quest) != nil
+            || context.aliases.location(alias: aliasID, in: quest) != nil
         else {
             return nil
         }

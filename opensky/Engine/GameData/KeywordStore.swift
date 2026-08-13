@@ -66,6 +66,21 @@ nonisolated struct KeywordStore {
         return keyword(resolvedID)
     }
 
+    /// Whether `form` carries `keyword` in its winning KWDA definition. Nil
+    /// distinguishes a dangling form or keyword from a real non-membership.
+    func hasKeyword(_ keyword: ResolvedFormID, on form: ResolvedFormID) -> Bool? {
+        guard self.keyword(keyword) != nil else { return nil }
+        guard case let .record(indexed) = index.lookup(form) else { return nil }
+        guard let fields = try? indexed.record.fields() else { return nil }
+        var list = KeywordList()
+        for field in fields {
+            guard (try? list.decode(field: field)) != nil else { return nil }
+        }
+        return list.keywords.contains { raw in
+            resolvedID(raw, fromPlugin: indexed.sourcePlugin) == keyword
+        }
+    }
+
     /// Human-readable reverse view for inspectors. A dangling link remains
     /// visible as its raw FormID instead of disappearing from the dump.
     func displayString(for id: FormID, fromPlugin pluginName: String) -> String {

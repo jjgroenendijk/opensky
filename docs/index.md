@@ -68,7 +68,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   condition payload: operator and flag bits, float or GLOB comparison value, raw
   function index and parameters, run-on types, and the skip-don't-throw decode policy;
   plus evaluation - the function registry, OR grouping, run-on resolution, the
-  reason-tagged-false failure model, and the coverage tally with its vanilla sweep.
+  reason-tagged-false failure model, keyword/list/location data seam, and the coverage
+  tally with its vanilla and active-load-order sweeps.
 * [AI packages (PACK, PKID)](/formats/packages.md) - general data, calendar schedules,
   header conditions, public location/target inputs, template links, procedure names, and
   the Whiterun resident census.
