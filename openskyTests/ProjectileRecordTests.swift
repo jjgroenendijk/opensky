@@ -108,6 +108,7 @@ struct ProjectileRecordTests {
         #expect(projectile.explosion?.rawValue == 0x0006_0000)
         #expect(projectile.sound?.rawValue == 0x0007_0000)
         #expect(projectile.disableSound?.rawValue == 0x0008_0000)
+        #expect(projectile.collisionLayer?.rawValue == 0x0005_0000)
         #expect(projectile.soundLevel == .normal)
         #expect(projectile.bounds?.isEmpty == false)
         #expect(projectile.isBallistic)
@@ -144,6 +145,7 @@ struct ProjectileRecordTests {
         #expect(projectile.range == 5000)
         #expect(projectile.collisionRadius == 0)
         #expect(projectile.sound == nil)
+        #expect(projectile.collisionLayer == nil)
     }
 
     @Test func aDataShorterThanTheFlightModelThrows() {

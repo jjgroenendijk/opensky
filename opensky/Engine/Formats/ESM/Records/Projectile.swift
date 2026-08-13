@@ -165,6 +165,10 @@ nonisolated struct Projectile: Equatable, Sendable {
     /// projectiles are out of item 15.5's scope, but the link is decoded so
     /// nothing has to guess whether a projectile is one.
     let explosion: FormID?
+    /// DATA +0x58 — COLL collision layer. The owning plugin is needed to
+    /// resolve it; `CollisionLayerStore.collisionLayer(for:fromPlugin:)`
+    /// exposes the resolved record.
+    let collisionLayer: FormID?
     /// VNAM — how loud firing this is for detection purposes; nil when absent.
     let soundLevel: SoundLevel?
 
@@ -225,6 +229,7 @@ nonisolated struct Projectile: Equatable, Sendable {
         sound = data.sound
         disableSound = data.disableSound
         explosion = data.explosion
+        collisionLayer = data.collisionLayer
     }
 
     /// Test seam: a record's decoded values without a file behind them.
@@ -240,6 +245,7 @@ nonisolated struct Projectile: Equatable, Sendable {
         collisionRadius: Float = 0,
         lifetime: Float = 0,
         sound: FormID? = nil,
+        collisionLayer: FormID? = nil,
         modelPath: String? = nil
     ) {
         self.formID = formID
@@ -257,6 +263,7 @@ nonisolated struct Projectile: Equatable, Sendable {
         self.sound = sound
         disableSound = nil
         explosion = nil
+        self.collisionLayer = collisionLayer
         soundLevel = nil
     }
 
@@ -283,6 +290,7 @@ nonisolated struct Projectile: Equatable, Sendable {
         var sound: FormID?
         var disableSound: FormID?
         var explosion: FormID?
+        var collisionLayer: FormID?
 
         init() {}
 
@@ -318,6 +326,10 @@ nonisolated struct Projectile: Equatable, Sendable {
             reader.seek(to: 0x48)
             collisionRadius = try reader.readFloat32()
             lifetime = try reader.readFloat32()
+            guard size >= 0x5C else { return }
+            // 0x50 relaunch interval and 0x54 decal data.
+            reader.seek(to: 0x58)
+            collisionLayer = try Self.link(&reader)
         }
 
         /// One FormID member, reported as nil when null.

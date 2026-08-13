@@ -1,8 +1,9 @@
 ---
 type: File Format
-title: Record decoders (WRLD, CELL, REFR, STAT, FLST, inventory items, QUST)
+title: Record decoders (WRLD, CELL, ECZN, COLL, DOBJ, FLST, inventory items, QUST)
 description: Field layouts of decoded plugin records and OpenSky's engine types and stores.
-tags: [format, plugin, records, worldspace, cell, form-list, inventory, items, quests]
+tags: [format, plugin, records, worldspace, cell, encounter-zone, collision, defaults,
+  form-list, inventory, items, quests]
 timestamp: 2026-08-13T00:00:00Z
 ---
 
@@ -94,6 +95,7 @@ exists (open question, GitHub issue #441).
 | DATA  | uint8    | `flags`                                |
 | DNAM  | float[2] | default land + water heights           |
 | NAM2  | formID   | default WATR record                    |
+| XEZN  | formID   | default ECZN encounter zone            |
 
 DATA flag bits: 0x01 small world, 0x02 no fast travel, 0x08 no LOD water,
 0x10 no landscape, 0x20 no sky, 0x40 fixed dimensions, 0x80 no grass.
@@ -116,6 +118,7 @@ exterior cell blocks (traversal in [ESM container](/formats/esm.md)).
 | LTMP  | formID                              | `lightingTemplate` LGTM    |
 | XCLR  | formID array                        | `regions` REGN overlap     |
 | XCAS  | formID                              | `acousticSpace` ASPC (M9.2.2) |
+| XEZN  | formID                              | `encounterZone` ECZN          |
 
 DATA flag bits: 0x01 interior, 0x02 has water, 0x08 no LOD water, 0x80 show
 sky, more in UESP. Some records store one byte only (UESP note) — decoder
@@ -136,6 +139,104 @@ sub-block 7. OpenSky tries those groups first, then all legal type-2/type-3 sibl
 labels are an optimization hint, never identity. CELL FormID + DATA 0x01 establish
 identity/interior status. Refs: UESP CELL page + xEdit `wbImplementation.pas`
 (`dev-4.1.6`).
+
+## ECZN -> EncounterZone and EncounterZoneStore
+
+References: UESP "Skyrim Mod:Mod File Format/ECZN" and xEdit `dev-4.1.6`
+`Core/wbDefinitionsTES5.pas` `wbRecord(ECZN, ...)`, lines 6286-6306.
+
+| field | offset | type | decoded |
+| ----- | ------ | ---- | ------- |
+| EDID | - | zstring | optional `editorID` |
+| DATA | 0x00 | FormID | `owner` NPC_ or FACT |
+| DATA | 0x04 | FormID | associated LCTN `location` |
+| DATA | 0x08 | int8 | required faction `rank` (-1 when inapplicable) |
+| DATA | 0x09 | int8 | `minimumLevel` |
+| DATA | 0x0A | uint8 | flags |
+| DATA | 0x0B | int8 | `maximumLevel` |
+
+The flags are 0x01 never resets, 0x02 match the player below the minimum level and 0x04
+disable the combat boundary. xEdit selects an older 8-byte DATA structure before form
+version 34, and UESP reports two shipped 8-byte records. OpenSky therefore reads each
+member only when its explicit offset is present: an 8-byte field keeps both links, and a
+shorter mod field keeps whatever complete leading members it carries instead of throwing.
+
+`EncounterZoneStore` uses `ResolvedFormID` and case-insensitive EDID lookup, with later
+valid definitions winning. Owner and location links are resolved relative to the plugin
+that supplied the winning definition. CELL and WRLD both expose their confirmed XEZN link;
+the store answers the resolved encounter zone for either record. It does not implement
+level scaling, respawn or cleared state.
+
+Real-data gate `ReferenceRecordsRealDataTests` observed 358 definitions and 356 winning
+identities across the active load order on 2026-08-13. It pins
+`BleakFallsBarrowZone` to `Skyrim.esm:038AB1` and requires a decoded minimum level.
+
+## COLL -> CollisionLayer and CollisionLayerStore
+
+References: UESP "Skyrim Mod:Mod File Format/COLL" and xEdit `dev-4.1.6`
+`Core/wbDefinitionsTES5.pas` `wbRecord(COLL, ...)`, lines 7614-7637.
+
+| field | type | decoded |
+| ----- | ---- | ------- |
+| EDID | zstring | optional `editorID` |
+| DESC | lstring | editor-facing `recordDescription` |
+| BNAM | uint32 | collision-layer `index` |
+| FNAM | byte RGBA | editor `debugColor` |
+| GNAM | uint32 | flags |
+| MNAM | zstring | layer `name` |
+| INTV | uint32 | declared interactables count |
+| CNAM | FormID array | COLL records this layer collides with |
+
+GNAM bits are 0x01 trigger volume, 0x02 sensor and 0x04 navmesh obstacle. A CNAM payload
+whose byte count is not divisible by four is tallied as malformed and contributes no links.
+The 55 active definitions all carry four-byte DESC, BNAM, FNAM, GNAM and INTV fields; all
+but one carry CNAM, from one through 41 links.
+
+`CollisionLayerStore` resolves every CNAM link through the source plugin's TES4 master
+table and exposes only `ResolvedFormID` values. Lookup is by resolved identity or
+case-insensitive EDID, with later valid definitions winning. PROJ DATA +0x58 now decodes
+its optional raw COLL link, and `collisionLayer(for:fromPlugin:)` follows it through the
+same store. Physics collision filtering remains out of scope.
+
+## DOBJ -> DefaultObjects and DefaultObjectStore
+
+References: UESP "Skyrim Mod:Mod File Format/DOBJ" and xEdit `dev-4.1.6`
+`Core/wbDefinitionsTES5.pas` `wbDOBJObjectsTES5` and `wbRecord(DOBJ, ...)`, lines
+6560-6976.
+
+DOBJ's DNAM is an array of eight-byte entries: a four-byte use tag followed by a FormID.
+A zero tag is an empty array slot, not a declaration. A nonzero tag with a null FormID is
+retained as an explicit null declaration, so a later plugin can clear a lower-priority
+default. A one-to-seven-byte tail is ignored and tallied as malformed. Real records omit
+EDID; xEdit supplies the internal default `DefaultObjectManager`, which OpenSky exposes for
+editor-ID lookup.
+
+`DefaultObjectTagMeanings.swift` carries all 372 tag names from xEdit's table. Known tags
+provide their human meaning (`GOLD` -> Gold); an unknown mod tag is retained and tallied,
+never rejected. `DefaultObjectStore.object(tag:)` resolves a declaration relative to the
+plugin that authored that entry.
+
+DOBJ override behavior is entry-granular, not whole-record. The master files share the
+resolved identity `Skyrim.esm:000031`, while later DNAM arrays contain zero-tag padding and
+only the entries they add or replace. Replacing the whole record would therefore discard
+Skyrim.esm's defaults. The store walks every definition in load order, skips empty slots
+and replaces only a repeated nonzero tag.
+
+Real-data enumeration on 2026-08-13:
+
+| plugin | DNAM bytes / slots | declared tags |
+| ------ | ------------------ | ------------- |
+| Skyrim.esm | 2424 / 303 | 303 |
+| Update.esm | 2928 / 366 | 12 |
+| Dawnguard.esm | 2592 / 324 | 17 |
+| HearthFires.esm | 2768 / 346 | 12 |
+| Dragonborn.esm | 2768 / 346 | 27 |
+| ccQDRSSE001-SurvivalMode.esl | 2928 / 366 | 7 |
+
+The union is exactly 369 tags. `GCK8`, `GCK9` and `MHFL` are the three xEdit-known tags
+not declared by this active load order. The durable real-data test prints every record's
+complete sorted tag set, asserts that union, and requires the merged store to expose all
+369 entries.
 
 ## REFR -> PlacedReference
 

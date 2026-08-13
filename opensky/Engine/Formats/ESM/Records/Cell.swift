@@ -69,6 +69,8 @@ nonisolated struct Cell {
     let musicType: FormID?
     /// XLCN — the LCTN containing this cell.
     let location: FormID?
+    /// XEZN — the ECZN governing this cell's encounter level and reset data.
+    let encounterZone: FormID?
 
     var isInterior: Bool {
         flags.contains(.interior)
@@ -97,6 +99,7 @@ nonisolated struct Cell {
         acousticSpace = fields.acousticSpace
         musicType = fields.musicType
         location = fields.location
+        encounterZone = fields.encounterZone
     }
 
     /// Mutable accumulator for the field loop. Split out so the field switch
@@ -115,6 +118,7 @@ nonisolated struct Cell {
         var acousticSpace: FormID?
         var musicType: FormID?
         var location: FormID?
+        var encounterZone: FormID?
 
         mutating func decode(field: ESMField, localized: Bool) throws {
             var reader = BinaryReader(field.data)
@@ -164,6 +168,9 @@ nonisolated struct Cell {
             case "XLCN":
                 // UESP CELL + xEdit wbDefinitionsTES5.pas: LCTN link.
                 location = try Cell.decodeNonNullFormID(field.data)
+            case "XEZN":
+                // UESP CELL + xEdit wbDefinitionsTES5.pas: ECZN link.
+                encounterZone = try Cell.decodeNonNullFormID(field.data)
             default:
                 break
             }

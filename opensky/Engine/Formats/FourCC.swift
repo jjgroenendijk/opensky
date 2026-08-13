@@ -4,7 +4,7 @@
 
 import Foundation
 
-nonisolated struct FourCC: Hashable {
+nonisolated struct FourCC: Hashable, Sendable {
     /// The four bytes as read little-endian (first character in the low byte).
     let rawValue: UInt32
 }

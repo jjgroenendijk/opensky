@@ -14,6 +14,7 @@ import Foundation
 nonisolated enum ReferenceRecordSkipKind: Hashable {
     case unknownField(FourCC)
     case malformedField(FourCC)
+    case unknownDefaultObjectTag(FourCC)
 }
 
 nonisolated struct ReferenceRecordTally: Equatable {
