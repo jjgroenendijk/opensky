@@ -56,15 +56,14 @@ struct ScriptDataRealDataTests {
         #expect(stats.propertyTypes == [
             1: 42885, 2: 179, 3: 3820, 4: 634, 5: 3625, 15: 2
         ])
-        // No "QUST fragments" entry: M13.1 decodes that tail instead of
-        // skipping it, which is also why the alias-object count rose — the
-        // object properties inside quest alias scripts are now visible.
+        // No QUST or INFO fragments entries: M13.1 and M17.1 decode those
+        // tails instead of skipping them. The alias-object count rose when
+        // object properties inside quest alias scripts became visible.
         #expect(stats.skipped.ranked.map(\.count) == [
-            12896, 5257, 557, 313, 7, 5
+            12896, 557, 313, 7, 5
         ])
         #expect(stats.skipped.ranked.map(\.name) == [
             "alias object",
-            "INFO fragments",
             "SCEN fragments",
             "PACK fragments",
             "removed property",

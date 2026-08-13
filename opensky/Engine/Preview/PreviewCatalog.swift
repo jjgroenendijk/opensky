@@ -8,7 +8,15 @@ import Foundation
 /// What one sidebar row selects.
 nonisolated enum PreviewSelection {
     case file(VFSEntry)
-    case record(ESMRecord)
+    case record(PreviewRecord)
+}
+
+/// Record plus the plugin metadata needed to resolve its file-relative links.
+nonisolated struct PreviewRecord {
+    let record: ESMRecord
+    let sourcePlugin: String
+    let localized: Bool
+    let resolvedID: ResolvedFormID?
 }
 
 /// One sidebar row. `searchKey` is the lowercase haystack the filter matches
@@ -23,6 +31,7 @@ nonisolated enum PreviewCategory: CaseIterable {
     case meshes
     case textures
     case records
+    case referenceRecords
     case allFiles
 
     var title: String {
@@ -30,6 +39,7 @@ nonisolated enum PreviewCategory: CaseIterable {
         case .meshes: "Meshes (.nif)"
         case .textures: "Textures (.dds)"
         case .records: "Records (Skyrim.esm)"
+        case .referenceRecords: "Reference records (load order)"
         case .allFiles: "All files"
         }
     }
@@ -46,7 +56,13 @@ nonisolated struct PreviewCatalog {
     private let records: [PreviewItem]
     private let allFiles: [PreviewItem]
 
-    init(files: [VFSEntry], records: [ESMRecord], notes: [String] = []) {
+    init(
+        files: [VFSEntry],
+        records: [ESMRecord],
+        recordSourcePlugin: String = "Skyrim.esm",
+        recordsLocalized: Bool = false,
+        notes: [String] = []
+    ) {
         // Display and search key share one string (VFS keys are already
         // canonical lowercase), so file rows cost one allocation each.
         let fileItems = files.map { entry in
@@ -60,7 +76,12 @@ nonisolated struct PreviewCatalog {
             return PreviewItem(
                 display: display,
                 searchKey: display.lowercased(),
-                selection: .record(record)
+                selection: .record(PreviewRecord(
+                    record: record,
+                    sourcePlugin: recordSourcePlugin,
+                    localized: recordsLocalized,
+                    resolvedID: nil
+                ))
             )
         }
         fileCount = files.count
@@ -78,6 +99,7 @@ nonisolated struct PreviewCatalog {
         case .meshes: meshes
         case .textures: textures
         case .records: records
+        case .referenceRecords: []
         case .allFiles: allFiles
         }
     }
@@ -111,7 +133,14 @@ nonisolated struct PreviewCatalog {
                 return true
             }
             let localized = (try? file.pluginHeader())?.isLocalized ?? false
-            return (PreviewCatalog(files: files, records: records), localized)
+            return (
+                PreviewCatalog(
+                    files: files,
+                    records: records,
+                    recordsLocalized: localized
+                ),
+                localized
+            )
         } catch {
             let note = "Skyrim.esm unavailable: \(String(describing: error))"
             return (PreviewCatalog(files: files, records: [], notes: [note]), false)

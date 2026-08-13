@@ -15,6 +15,7 @@ final class PreviewViewController: NSViewController {
     var startupErrorMessage: String?
 
     private var catalog: PreviewCatalog?
+    private var referenceCatalog: ReferenceRecordCatalog?
     private var detailBuilder: PreviewDetailBuilder?
     private var visibleItems: [PreviewItem] = []
     /// Bumped per filter request; stale off-main results are dropped.
@@ -23,10 +24,12 @@ final class PreviewViewController: NSViewController {
     /// stale off-main loads are dropped.
     private var catalogGeneration = 0
 
-    private let categoryPopUp = NSPopUpButton()
-    private let searchField = NSSearchField()
-    private let tableView = NSTableView()
-    private let statusLabel = NSTextField(labelWithString: "")
+    let categoryPopUp = NSPopUpButton()
+    let pluginPopUp = NSPopUpButton()
+    let recordTypePopUp = NSPopUpButton()
+    let searchField = NSSearchField()
+    let tableView = NSTableView()
+    let statusLabel = NSTextField(labelWithString: "")
     private let imageView = NSImageView()
     private let infoScroll = NSTextView.scrollableTextView()
 
@@ -38,6 +41,17 @@ final class PreviewViewController: NSViewController {
         let all = PreviewCategory.allCases
         let index = categoryPopUp.indexOfSelectedItem
         return all.indices.contains(index) ? all[index] : .meshes
+    }
+
+    private var selectedRecordType: ReferenceRecordType {
+        let all = ReferenceRecordType.allCases
+        let index = recordTypePopUp.indexOfSelectedItem
+        return all.indices.contains(index) ? all[index] : .keyword
+    }
+
+    private var selectedPlugin: String? {
+        guard pluginPopUp.indexOfSelectedItem > 0 else { return nil }
+        return pluginPopUp.titleOfSelectedItem
     }
 
     // MARK: - Lifecycle
@@ -70,6 +84,7 @@ final class PreviewViewController: NSViewController {
         startupErrorMessage = errorMessage
         guard isViewLoaded else { return }
         catalog = nil
+        referenceCatalog = nil
         detailBuilder = nil
         filterGeneration += 1
         catalogGeneration += 1
@@ -90,6 +105,16 @@ final class PreviewViewController: NSViewController {
         categoryPopUp.setAccessibilityIdentifier("AssetCategory")
         categoryPopUp.target = self
         categoryPopUp.action = #selector(categoryChanged)
+
+        pluginPopUp.setAccessibilityIdentifier("AssetPluginControl")
+        pluginPopUp.addItem(withTitle: "All winning plugins")
+        pluginPopUp.target = self
+        pluginPopUp.action = #selector(referenceFilterChanged)
+
+        recordTypePopUp.addItems(withTitles: ReferenceRecordType.allCases.map(\.title))
+        recordTypePopUp.setAccessibilityIdentifier("AssetRecordTypeControl")
+        recordTypePopUp.target = self
+        recordTypePopUp.action = #selector(referenceFilterChanged)
 
         searchField.placeholderString = "Filter"
         searchField.setAccessibilityIdentifier("AssetFilter")
@@ -115,11 +140,14 @@ final class PreviewViewController: NSViewController {
         statusLabel.stringValue = ""
         statusLabel.setAccessibilityIdentifier("AssetStatus")
 
-        let stack = NSStackView(views: [categoryPopUp, searchField, scroll, statusLabel])
+        let stack = NSStackView(views: [
+            categoryPopUp, pluginPopUp, recordTypePopUp, searchField, scroll, statusLabel
+        ])
         stack.orientation = .vertical
         stack.alignment = .width
         stack.spacing = 6
         stack.edgeInsets = NSEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
+        updateReferenceControlVisibility()
         return stack
     }
 
@@ -133,6 +161,7 @@ final class PreviewViewController: NSViewController {
         infoTextView?.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
         infoTextView?.backgroundColor = Theme.raisedBackground
         infoTextView?.textColor = Theme.parchment
+        infoTextView?.setAccessibilityIdentifier("AssetRecordInspectorStatsLabel")
         imageView.wantsLayer = true
         imageView.layer?.backgroundColor = Theme.raisedBackground.cgColor
 
@@ -161,17 +190,20 @@ final class PreviewViewController: NSViewController {
             let index = RecordIndex(
                 plugins: plugins,
                 recordTypes: RecordIndex.referenceRecordTypes
+                    .union(ReferenceRecordCatalog.inspectedItemTypes)
             )
-            let keywords = KeywordStore(index: index)
-            let formLists = FormListStore(index: index)
+            let references = ReferenceRecordCatalog(
+                index: index,
+                pluginNames: plugins.map(\.name)
+            )
+            let inspector = ReferenceRecordInspector(index: index)
             await MainActor.run { [weak self] in
                 guard let self, catalogGeneration == generation else { return }
                 catalogDidLoad(
                     loaded.catalog,
                     fileSystem: fileSystem,
-                    localized: loaded.localized,
-                    keywordStore: keywords,
-                    formListStore: formLists
+                    referenceCatalog: references,
+                    referenceInspector: inspector
                 )
             }
         }
@@ -180,23 +212,29 @@ final class PreviewViewController: NSViewController {
     private func catalogDidLoad(
         _ catalog: PreviewCatalog,
         fileSystem: VirtualFileSystem,
-        localized: Bool,
-        keywordStore: KeywordStore,
-        formListStore: FormListStore
+        referenceCatalog: ReferenceRecordCatalog,
+        referenceInspector: ReferenceRecordInspector
     ) {
         self.catalog = catalog
+        self.referenceCatalog = referenceCatalog
+        pluginPopUp.removeAllItems()
+        pluginPopUp.addItem(withTitle: "All winning plugins")
+        pluginPopUp.addItems(withTitles: referenceCatalog.pluginNames)
         detailBuilder = PreviewDetailBuilder(
             fileSystem: fileSystem,
-            localized: localized,
-            keywordStore: keywordStore,
-            formListStore: formListStore
+            referenceInspector: referenceInspector
         )
         applyFilter()
     }
 
     // MARK: - Filtering
 
-    @objc private func categoryChanged() {
+    @objc func categoryChanged() {
+        updateReferenceControlVisibility()
+        applyFilter()
+    }
+
+    @objc private func referenceFilterChanged() {
         applyFilter()
     }
 
@@ -204,7 +242,17 @@ final class PreviewViewController: NSViewController {
         guard let catalog else { return }
         filterGeneration += 1
         let generation = filterGeneration
-        let items = catalog.items(for: selectedCategory)
+        let items: [PreviewItem] = if
+            selectedCategory == .referenceRecords,
+            let referenceCatalog
+        {
+            referenceCatalog.items(
+                for: selectedRecordType,
+                winningPlugin: selectedPlugin
+            )
+        } else {
+            catalog.items(for: selectedCategory)
+        }
         let query = searchField.stringValue
         // Small lists (and the no-op empty query) filter inline; scanning
         // the ~870k record rows goes off-main so typing stays responsive.
@@ -236,6 +284,12 @@ final class PreviewViewController: NSViewController {
         }
         statusLabel.stringValue = status
         statusLabel.toolTip = status
+    }
+
+    private func updateReferenceControlVisibility() {
+        let hidden = selectedCategory != .referenceRecords
+        pluginPopUp.isHidden = hidden
+        recordTypePopUp.isHidden = hidden
     }
 }
 

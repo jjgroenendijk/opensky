@@ -14,17 +14,19 @@ enum RecordCommand {
         let record = try find(token: token, in: file)
         let localized = (try? file.pluginHeader().isLocalized) ?? false
         let plugins = ActivePluginFiles.load(root: context.root, baseFile: file)
-        let index = RecordIndex(plugins: plugins, recordTypes: RecordIndex.referenceRecordTypes)
-        let keywords = KeywordStore(index: index)
-        let formLists = FormListStore(index: index)
+        let index = RecordIndex(
+            plugins: plugins,
+            recordTypes: RecordIndex.referenceRecordTypes
+                .union(ReferenceRecordCatalog.inspectedItemTypes)
+        )
+        let inspector = ReferenceRecordInspector(index: index)
         print(
-            RecordTextDump.dump(
+            inspector.text(for: PreviewRecord(
                 record: record,
+                sourcePlugin: "Skyrim.esm",
                 localized: localized,
-                keywordStore: keywords,
-                formListStore: formLists,
-                sourcePlugin: "Skyrim.esm"
-            )
+                resolvedID: nil
+            ))
         )
     }
 

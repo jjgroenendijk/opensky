@@ -37,6 +37,7 @@ struct PreviewCatalogTests {
         #expect(catalog.items(for: .meshes).map(\.display) == ["meshes\\clutter\\cup.nif"])
         #expect(catalog.items(for: .textures).map(\.display) == ["textures\\clutter\\cup.dds"])
         #expect(catalog.items(for: .allFiles).count == 3)
+        #expect(catalog.items(for: .referenceRecords).isEmpty)
         #expect(catalog.fileCount == 3)
         #expect(catalog.notes.isEmpty)
     }

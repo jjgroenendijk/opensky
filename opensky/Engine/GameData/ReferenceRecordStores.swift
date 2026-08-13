@@ -154,6 +154,7 @@ nonisolated struct ResolvedDefaultObjects: Equatable {
 
 nonisolated struct ResolvedDefaultObjectEntry: Equatable {
     let tag: DefaultObjectTag
+    let rawObject: FormID?
     let object: ResolvedFormID?
     let sourcePlugin: String
 }
@@ -216,6 +217,7 @@ nonisolated struct DefaultObjectStore {
         for entry in decoded.entries {
             entries[entry.tag] = ResolvedDefaultObjectEntry(
                 tag: entry.tag,
+                rawObject: entry.object,
                 object: index.resolvedID(entry.object, fromPlugin: definition.sourcePlugin),
                 sourcePlugin: definition.sourcePlugin
             )
