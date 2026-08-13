@@ -59,7 +59,10 @@ struct PreviewRealDataTests {
             Issue.record("record row selects a non-record")
             return
         }
-        let dump = RecordTextDump.dump(record: record, localized: loaded.localized)
+        let dump = RecordTextDump.dump(
+            record: record.record,
+            localized: record.localized
+        )
         #expect(dump.contains("WRLD 0000003C"))
         #expect(dump.contains("fields ("))
 
@@ -94,7 +97,7 @@ struct PreviewRealDataTests {
         #expect(simd_distance(sourceBounds.min, skinnedBounds.min) < 0.01)
         #expect(simd_distance(sourceBounds.max, skinnedBounds.max) < 0.01)
 
-        let detail = PreviewDetailBuilder(fileSystem: vfs, localized: false).detail(
+        let detail = PreviewDetailBuilder(fileSystem: vfs).detail(
             for: .file(VFSEntry(path: path, archive: "Skyrim - Meshes0.bsa"))
         )
         #expect(!detail.text.contains("[ERROR]"))

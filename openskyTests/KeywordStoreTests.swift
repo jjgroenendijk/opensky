@@ -75,7 +75,7 @@ struct KeywordStoreTests {
 
         #expect(
             store.displayString(for: FormID(0x00AB_CDEF), fromPlugin: "Base.esm")
-                == "00ABCDEF"
+                == "[UNRESOLVED] 00ABCDEF"
         )
     }
 

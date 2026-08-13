@@ -4,6 +4,16 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-13
 
+* **The Asset Browser is the M18 reference-data verification surface (issue #456)**:
+  `Reference records (load order)` filters the eight M18 families by winning plugin and
+  record type, sorts rows by editor ID, and names each record's winner and resolved identity.
+  The shared inspector lists keyword users, flattened form lists, location parent chains,
+  resolved encounter-zone and collision-layer links, and the merged default-object table;
+  dangling links remain explicit `[UNRESOLVED]` values. Existing Skyrim.esm item inspectors
+  and `openskycli record` use the same source-plugin-aware formatter, so KWDA arrays show
+  keyword editor IDs. `M18AcceptancePanelTests` pins the full-content geometry and literal
+  accessibility contract under `Library > Asset Browser`; the acceptance ledger records
+  `AssetRecordInspectorStatsLabel` as its readout. See [asset browser](/tools/preview-gui.md).
 * **Keyword, form-list and location conditions read M18 stores (issue #455)**:
   `ConditionDataResolution` snapshots the three load-order stores plus current and editor
   reference locations for off-main-actor evaluation. Fourteen measured functions now

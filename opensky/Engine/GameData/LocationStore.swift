@@ -157,6 +157,23 @@ nonisolated struct LocationStore {
         return resolve(raw, fromPlugin: pluginName)
     }
 
+    /// The selected location followed by its parents. A malformed cycle is
+    /// represented once and then terminates, matching the containment queries.
+    func parentChain(of locationID: ResolvedFormID) -> [ResolvedLocation] {
+        var chain: [ResolvedLocation] = []
+        var current: ResolvedFormID? = locationID
+        var visited: Set<ResolvedFormID> = []
+        while
+            let id = current,
+            visited.insert(id).inserted,
+            let resolved = location(id)
+        {
+            chain.append(resolved)
+            current = parentID(of: id)
+        }
+        return chain
+    }
+
     private mutating func addLocation(_ id: ResolvedFormID) {
         guard
             case let .decoded(location, sourcePlugin) = index.decodeIndexed(

@@ -212,6 +212,11 @@ final class OpenSkyUITests: OpenSkyUITestCase {
         XCTAssertTrue(app.popUpButtons["AssetCategory"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.searchFields["AssetFilter"].exists)
         XCTAssertTrue(app.tables["AssetTable"].exists)
+        app.popUpButtons["AssetCategory"].click()
+        app.menuItems["Reference records (load order)"].click()
+        XCTAssertTrue(app.popUpButtons["AssetPluginControl"].exists)
+        XCTAssertTrue(app.popUpButtons["AssetRecordTypeControl"].exists)
+        XCTAssertTrue(app.textViews["AssetRecordInspectorStatsLabel"].exists)
         XCTAssertFalse(app.buttons["ScreenshotButton"].isEnabled)
     }
 

@@ -84,7 +84,7 @@ nonisolated struct KeywordStore {
     /// Human-readable reverse view for inspectors. A dangling link remains
     /// visible as its raw FormID instead of disappearing from the dump.
     func displayString(for id: FormID, fromPlugin pluginName: String) -> String {
-        resolve(id, fromPlugin: pluginName)?.keyword.editorID ?? id.description
+        resolve(id, fromPlugin: pluginName)?.keyword.editorID ?? "[UNRESOLVED] \(id)"
     }
 
     private static func precedes(

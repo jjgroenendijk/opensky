@@ -100,9 +100,11 @@ nonisolated struct FormListStore {
     func displayString(for entry: FormID?, fromPlugin pluginName: String) -> String {
         guard let entry else { return "NULL" }
         guard case let .resolved(id) = index.resolve(entry, fromPlugin: pluginName) else {
-            return entry.description
+            return "[UNRESOLVED] \(entry)"
         }
-        guard case let .record(indexed) = index.lookup(id) else { return id.description }
+        guard case let .record(indexed) = index.lookup(id) else {
+            return "[UNRESOLVED] \(id)"
+        }
         let editorID: String? = switch indexed.record.type {
         case "FLST": (try? FormList(record: indexed.record))?.editorID
         case "KYWD": (try? Keyword(record: indexed.record))?.editorID
