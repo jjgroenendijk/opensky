@@ -15,7 +15,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Game settings](/formats/gmst.md) - typed GMST DATA values, selected movement
   tuning, active-plugin precedence, and explicit fallback policy.
 * [FormID + TES4 header](/formats/formid.md) - plugin header fields, master
-  lists, raw FormID -> (plugin, objectID) resolution.
+  lists, raw FormID -> (plugin, objectID) resolution, and the cross-plugin
+  `RecordIndex` with explicit dangling-reference handling.
 * [plugins.txt load order](/formats/plugins-txt.md) - enable flags and file
   order, where the file hides on macOS, and the plugin order OpenSky builds
   from it.

@@ -2,6 +2,21 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-13
+
+* **Cross-plugin records now have one load-order-independent index (issue #450)**:
+  `RecordIndex` walks requested top groups once per active plugin, resolves raw record IDs
+  through each plugin's TES4 MAST list, and keeps the highest-priority valid record under a
+  canonical `ResolvedFormID`. Deleted records, malformed field framing, unreadable groups,
+  and unreadable plugins preserve the earlier valid definition; the type-specific decode seam
+  also falls back past a semantically malformed override. Null FormIDs, unknown source plugins,
+  dangling resolved links, and identities whose candidates all fail decoding are distinct
+  results instead of zero or an ambiguous optional. The eight M18 families collect 4,093
+  records across the five masters in 135 ms before override identities collapse; synthetic
+  tests pin precedence, deletion, master remapping, malformed data and skipped plugins, while
+  the real-data gate pins the census floors and `ActorTypeNPC`. See
+  [FormID + TES4 header](/formats/formid.md).
+
 ## 2026-08-12
 
 * **The `.lip` layouts the M17 gate walked past now decode (issue #449)**: three findings,
