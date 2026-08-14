@@ -29,8 +29,8 @@ nonisolated final class LocalizedStrings: Sendable {
     /// Plugin file name as on disk ("Skyrim.esm"); table files are named
     /// after its stem.
     let pluginName: String
-    /// Language part of the table file name. Vanilla ships ten; "english"
-    /// is the default until a language setting exists (see docs/todo.md).
+    /// Normalized language part of the table file name. The app resolves this
+    /// from Skyrim.ini or its persistent Settings override.
     let language: String
     private let tables: Mutex<[StringTable.Kind: Slot]>
 

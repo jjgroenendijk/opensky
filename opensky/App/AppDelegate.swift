@@ -16,6 +16,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var shellViewController: AppShellViewController?
     private var settingsController: SettingsWindowController?
     private var gameDataErrorMessage: String?
+    private var localizationLanguage = LocalizationLanguageSnapshot(
+        language: LocalizationLanguageSettings.fallback,
+        source: "English fallback"
+    )
     private let terrainLODConfigurationStore = TerrainLODConfigurationStore(
         snapshot: TerrainLODConfigurationSnapshot(
             configuration: .fallback,
@@ -81,12 +85,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func makeCellProviderFactory() -> ((MTLDevice) -> (any CellSceneProvider)?)? {
         guard let root = gameDataRoot, let vfs = virtualFileSystem else { return nil }
         let configurationStore = terrainLODConfigurationStore
+        let language = localizationLanguage.language
         return { device in
             do {
                 let indexes = try CellProviderIndexes(
                     root: root,
                     fileSystem: vfs,
                     device: device,
+                    localizationLanguage: language,
                     terrainLODConfigurationStore: configurationStore
                 )
                 return indexes.makeProvider()
@@ -111,6 +117,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // UI Lab localized-strings readout (M8.1.4): merged translation counts
         // over the located install. Loaded lazily on first readout, not here.
         if let vfs = virtualFileSystem {
+            let language = localizationLanguage.language
             controller.localizedLabelsLoader = { LocalizedLabels.load(vfs: vfs) }
             // UI Lab SWF movie selector (M8.2.5): enumerates and decodes
             // Interface movies. Built on first use, not here.
@@ -121,7 +128,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // the only plugin the session indexes quests from, so its tables
             // are the ones the journal resolves through.
             controller.localizedStringsLoader = {
-                LocalizedStrings(vfs: vfs, pluginName: "Skyrim.esm")
+                LocalizedStrings(
+                    vfs: vfs,
+                    pluginName: "Skyrim.esm",
+                    language: language
+                )
             }
         }
         return controller
@@ -160,6 +171,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Self.logger.error("Game data missing: \(message, privacy: .public)")
             gameDataErrorMessage = message
         }
+        localizationLanguage = LocalizationLanguageSettings.load(root: gameDataRoot)
         terrainLODConfigurationStore.replace(with: TerrainLODSettings.load(root: gameDataRoot))
     }
 
@@ -264,7 +276,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openSettings() {
         let controller = settingsController ?? SettingsWindowController()
         settingsController = controller
-        controller.onDataRootChanged = { [weak self] in self?.reloadDataRoot() }
+        controller.onSettingsChanged = { [weak self] in self?.reloadDataRoot() }
         controller.showWindow(nil)
         controller.window?.makeKeyAndOrderFront(nil)
     }

@@ -81,8 +81,9 @@ TES4 localized flag (0x80):
 `LString` (enum: `.inline` / `.tableID`) carries this; `LocalizedStrings`
 (`GameData/LocalizedStrings.swift`) resolves IDs through the VFS at
 `strings\<plugin stem>_<language>.<ext>`, lazy per kind, missing table ->
-nil + one os_log error. Language defaults to "english" until a setting
-exists (open question, GitHub issue #441).
+nil + one os_log error. Language comes from `[General] sLanguage` in the layered
+Skyrim INI settings, then an optional OpenSky Settings override; missing or invalid
+values fall back to `english`.
 
 ## WRLD -> Worldspace
 

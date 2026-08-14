@@ -89,4 +89,66 @@ struct INISettingsTests {
         #expect(!TerrainLODSettings.hasOverride(in: defaults))
         #expect(TerrainLODSettings.load(root: nil, defaults: defaults).configuration == .fallback)
     }
+
+    @Test func localizationLanguageUsesIniAndFallsBackPastInvalidValues() {
+        let settings = INISettings(sources: [
+            INISettingsSource(
+                name: "Skyrim.ini",
+                file: INIFile(data: Data("[General]\nsLanguage=FRENCH".utf8))
+            ),
+            INISettingsSource(
+                name: "SkyrimCustom.ini",
+                file: INIFile(data: Data("[General]\nsLanguage=../unsafe".utf8))
+            )
+        ])
+
+        #expect(LocalizationLanguageSettings.resolve(settings) == LocalizationLanguageSnapshot(
+            language: "french",
+            source: "Skyrim.ini"
+        ))
+        #expect(LocalizationLanguageSettings.resolve(INISettings(sources: []))
+            == LocalizationLanguageSnapshot(language: "english", source: "English fallback"))
+    }
+
+    @Test func localizationLanguageLoadsSkyrimIniFromInstall() throws {
+        let installURL = FileManager.default.temporaryDirectory.appending(
+            path: "LocalizationLanguageINI-\(UUID().uuidString)",
+            directoryHint: .isDirectory
+        )
+        try FileManager.default.createDirectory(at: installURL, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: installURL) }
+        try Data("[General]\nsLanguage=GERMAN".utf8)
+            .write(to: installURL.appending(path: "Skyrim.ini"))
+        let suite = "LocalizationLanguageINI-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let root = GameDataRoot(
+            installURL: installURL,
+            dataURL: installURL.appending(path: "Data"),
+            source: .environment
+        )
+
+        #expect(LocalizationLanguageSettings.load(root: root, defaults: defaults)
+            == LocalizationLanguageSnapshot(language: "german", source: "Skyrim.ini"))
+    }
+
+    @Test func localizationLanguageOverridePersistsAndValidates() throws {
+        let suite = "LocalizationLanguageSettingsTests-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        try LocalizationLanguageSettings.store("  BrazilianPortuguese_2  ", to: defaults)
+        #expect(LocalizationLanguageSettings.load(root: nil, defaults: defaults)
+            == LocalizationLanguageSnapshot(
+                language: "brazilianportuguese_2",
+                source: "OpenSky Settings override"
+            ))
+        #expect(throws: LocalizationLanguageError.invalidLanguage("../french")) {
+            try LocalizationLanguageSettings.store("../french", to: defaults)
+        }
+
+        LocalizationLanguageSettings.clearOverride(from: defaults)
+        #expect(LocalizationLanguageSettings.load(root: nil, defaults: defaults)
+            == LocalizationLanguageSnapshot(language: "english", source: "English fallback"))
+    }
 }

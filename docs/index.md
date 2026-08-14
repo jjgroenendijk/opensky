@@ -81,8 +81,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   ReferenceKey resolution, and exact PEX backing-variable binding.
 * [Distant LOD](/formats/lod.md) - lodsettings plus BTR/BTO paths and LOD-specific NIF
   blocks, tree LST/BTT layouts, placement rules, full vanilla sweep evidence.
-* [Skyrim INI settings](/formats/ini.md) - read-only decode, file precedence, typed
-  terrain-distance values, and OpenSky override policy.
+* [Skyrim INI settings](/formats/ini.md) - read-only decode, file precedence, localized
+  string-table language, typed terrain-distance values, and OpenSky override policy.
 * [NIF mesh](/formats/nif.md) - Gamebryo 20.2.0.7 container, scene graph,
   row-vector `Matrix33` convention, geometry/materials, SSE skin blocks,
   dynamic FaceGen + skeleton bind pose.
