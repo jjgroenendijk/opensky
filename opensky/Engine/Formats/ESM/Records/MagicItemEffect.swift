@@ -8,9 +8,9 @@
 //   EFIT 12 bytes   float32 magnitude, uint32 area, uint32 duration
 //   CTDA 32 bytes   condition on the effect (see Condition.swift)
 //
-// Scope note (issue #175): effects decode as *links* only. Magic-effect
-// semantics — what an MGEF actually does, and the auto-calc cost formula UESP
-// documents alongside EFIT — belong to the magic milestone, not here.
+// `MagicEffectStore` resolves the EFID relative to the plugin carrying this
+// list. The auto-calc cost formula UESP documents alongside EFIT remains later
+// magic work.
 //
 // Decode policy: an EFIT without a preceding EFID has nothing to attach to and
 // is dropped; an EFID whose EFIT never arrives still yields an entry with zero
@@ -27,7 +27,7 @@
 import Foundation
 
 nonisolated struct MagicItemEffect: Equatable {
-    /// EFID — the MGEF this entry applies. Decoded as a link; no semantics.
+    /// EFID — the MGEF this entry applies; resolved through MagicEffectStore.
     let effect: FormID
     /// EFIT magnitude. Units are per-MGEF and are not interpreted here.
     let magnitude: Float

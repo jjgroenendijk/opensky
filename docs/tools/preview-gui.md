@@ -64,7 +64,7 @@ in-window message, app still launches (no crash, no alert loop).
 
 `Reference records (load order)` adds two selectors above the existing table. The plugin
 selector filters by the plugin whose structurally valid definition won; the record-type
-selector covers KYWD, FLST, LCTN, LCRT, ECZN, AACT, COLL and DOBJ. Rows sort by editor ID
+selector covers KYWD, FLST, LCTN, LCRT, ECZN, AACT, COLL, DOBJ and MGEF. Rows sort by editor ID
 and name the winning plugin plus the load-order-independent `ResolvedFormID`, so an override
 is never presented as though it came from its defining master.
 
@@ -161,3 +161,7 @@ Deterministic tests: M18AcceptancePanelTests, ReferenceRecordCatalogTests,
 PreviewCatalogTests, DestinationRegistryTests
 Local A/B (optional, never committed): none
 ```
+
+M19.1 extends this existing surface with `MGEF — Magic effects`. Its inspector summary
+prints the display name, archetype, casting type, delivery, base cost and actor-value names;
+ALCH and INGR summaries name their resolved effects.

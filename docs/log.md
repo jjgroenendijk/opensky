@@ -4,6 +4,14 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-14
 
+* **Magic-item effects resolve to decoded MGEF definitions (issue #464)**: MGEF now
+  decodes identity, text, keywords, conditions, packed sounds and the full 152-byte DATA
+  semantics with unknown-preserving archetype, casting and delivery enums.
+  `MagicEffectStore` applies cross-plugin overrides and resolves ALCH/INGR EFID links, while
+  the Asset Browser and shared text dump name effects and their actor values. The active
+  load-order gate decoded all 1,812 definitions into 1,731 winning identities with 595
+  unread VMAD fields, zero malformed fields and zero unknown enums. See
+  [magic records](/formats/magic-records.md).
 * **Localized string tables follow Skyrim's configured language (issue #441)**:
   `[General] sLanguage` from the layered `Skyrim.ini` files now selects every production
   `LocalizedStrings` table path, with a validated `english` fallback. App Settings shows

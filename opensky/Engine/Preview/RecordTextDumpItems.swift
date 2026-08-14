@@ -15,14 +15,15 @@ nonisolated extension RecordTextDump {
     static func itemSummary(
         record: ESMRecord,
         localized: Bool,
-        keywordContext: KeywordContext?
+        keywordContext: KeywordContext?,
+        magicEffectContext: MagicEffectContext?
     ) -> String? {
         switch record.type {
         case "CONT": containerSummary(record: record, localized: localized)
         case "MISC": miscSummary(record, localized, keywordContext)
         case "BOOK": bookSummary(record, localized, keywordContext)
-        case "ALCH": ingestibleSummary(record, localized, keywordContext)
-        case "INGR": ingredientSummary(record, localized, keywordContext)
+        case "ALCH": ingestibleSummary(record, localized, keywordContext, magicEffectContext)
+        case "INGR": ingredientSummary(record, localized, keywordContext, magicEffectContext)
         case "WEAP": weaponSummary(record, localized, keywordContext)
         case "AMMO": ammunitionSummary(record, localized, keywordContext)
         case "ARMO": armorSummary(record, localized, keywordContext)
@@ -124,22 +125,25 @@ nonisolated extension RecordTextDump {
     private static func ingestibleSummary(
         _ record: ESMRecord,
         _ localized: Bool,
-        _ context: KeywordContext?
+        _ context: KeywordContext?,
+        _ magicContext: MagicEffectContext?
     ) -> String? {
         guard let item = try? Ingestible(record: record, localized: localized) else { return nil }
         return "decoded ALCH: " + shared(item.fields, item.itemValue, context)
-            + ", \(item.effects.count) effects, "
+            + ", " + effectText(item.effects, context: magicContext) + ", "
             + "flags 0x\(String(item.flags.rawValue, radix: 16))"
     }
 
     private static func ingredientSummary(
         _ record: ESMRecord,
         _ localized: Bool,
-        _ context: KeywordContext?
+        _ context: KeywordContext?,
+        _ magicContext: MagicEffectContext?
     ) -> String? {
         guard let item = try? Ingredient(record: record, localized: localized) else { return nil }
         return "decoded INGR: " + shared(item.fields, item.itemValue, context)
-            + ", \(item.effects.count) effects, auto-calc value \(item.autoCalcValue)"
+            + ", " + effectText(item.effects, context: magicContext)
+            + ", auto-calc value \(item.autoCalcValue)"
     }
 
     private static func weaponSummary(
@@ -201,5 +205,21 @@ nonisolated extension RecordTextDump {
             keywords.keywords.map(\.description)
         }
         return "keywords [\(names.joined(separator: ", "))]"
+    }
+
+    private static func effectText(
+        _ effects: [MagicItemEffect],
+        context: MagicEffectContext?
+    ) -> String {
+        let names = effects.map { effect in
+            if let context {
+                return context.store.displayString(
+                    for: effect.effect,
+                    fromPlugin: context.sourcePlugin
+                )
+            }
+            return effect.effect.description
+        }
+        return "\(effects.count) effects [\(names.joined(separator: ", "))]"
     }
 }

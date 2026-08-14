@@ -15,7 +15,8 @@ nonisolated enum RecordTextDump {
             record: record,
             localized: localized,
             keywordContext: nil,
-            formListContext: nil
+            formListContext: nil,
+            magicEffectContext: nil
         )
     }
 
@@ -29,7 +30,8 @@ nonisolated enum RecordTextDump {
             record: record,
             localized: localized,
             keywordContext: KeywordContext(store: keywordStore, sourcePlugin: sourcePlugin),
-            formListContext: nil
+            formListContext: nil,
+            magicEffectContext: nil
         )
     }
 
@@ -44,15 +46,17 @@ nonisolated enum RecordTextDump {
             record: record,
             localized: localized,
             keywordContext: KeywordContext(store: keywordStore, sourcePlugin: sourcePlugin),
-            formListContext: FormListContext(store: formListStore, sourcePlugin: sourcePlugin)
+            formListContext: FormListContext(store: formListStore, sourcePlugin: sourcePlugin),
+            magicEffectContext: nil
         )
     }
 
-    private static func dump(
+    static func dump(
         record: ESMRecord,
         localized: Bool,
         keywordContext: KeywordContext?,
-        formListContext: FormListContext?
+        formListContext: FormListContext?,
+        magicEffectContext: MagicEffectContext?
     ) -> String {
         var lines = [headerLine(record: record)]
         if
@@ -60,7 +64,8 @@ nonisolated enum RecordTextDump {
                 record: record,
                 localized: localized,
                 keywordContext: keywordContext,
-                formListContext: formListContext
+                formListContext: formListContext,
+                magicEffectContext: magicEffectContext
             )
         {
             lines.append(decoded)
@@ -81,7 +86,8 @@ nonisolated enum RecordTextDump {
         record: ESMRecord,
         localized: Bool,
         keywordContext: KeywordContext?,
-        formListContext: FormListContext?
+        formListContext: FormListContext?,
+        magicEffectContext: MagicEffectContext?
     ) -> String? {
         switch record.type {
         case "WRLD": worldSummary(record: record, localized: localized)
@@ -97,16 +103,22 @@ nonisolated enum RecordTextDump {
         // Inventory families live in RecordTextDumpItems.swift so this switch
         // stays inside the strict-lint complexity cap.
         default:
-            referenceRecordSummary(
+            magicSummary(
                 record: record,
                 localized: localized,
-                keywordContext: keywordContext,
-                formListContext: formListContext
+                keywordContext: keywordContext
             )
+                ?? referenceRecordSummary(
+                    record: record,
+                    localized: localized,
+                    keywordContext: keywordContext,
+                    formListContext: formListContext
+                )
                 ?? itemSummary(
                     record: record,
                     localized: localized,
-                    keywordContext: keywordContext
+                    keywordContext: keywordContext,
+                    magicEffectContext: magicEffectContext
                 )
         }
     }

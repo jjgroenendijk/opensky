@@ -1,4 +1,4 @@
-// Load-order-wide browse rows for the eight M18 reference-record families.
+// Load-order-wide browse rows for reference-record families.
 // The app binds controls to this query model; plugin precedence, editor-ID
 // extraction and sorting stay AppKit-free and deterministic.
 
@@ -13,6 +13,7 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
     case action = "AACT"
     case collisionLayer = "COLL"
     case defaultObjects = "DOBJ"
+    case magicEffect = "MGEF"
 
     var fourCC: FourCC {
         switch self {
@@ -24,6 +25,7 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
         case .action: "AACT"
         case .collisionLayer: "COLL"
         case .defaultObjects: "DOBJ"
+        case .magicEffect: "MGEF"
         }
     }
 
@@ -37,6 +39,7 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
         case .action: "AACT — Actions"
         case .collisionLayer: "COLL — Collision layers"
         case .defaultObjects: "DOBJ — Default objects"
+        case .magicEffect: "MGEF — Magic effects"
         }
     }
 }

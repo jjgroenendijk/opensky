@@ -7,6 +7,7 @@ nonisolated struct ReferenceRecordInspector {
     private let index: RecordIndex
     private let keywords: KeywordStore
     private let formLists: FormListStore
+    private let magicEffects: MagicEffectStore
     private let locations: LocationStore
     private let encounterZones: EncounterZoneStore
     private let collisionLayers: CollisionLayerStore
@@ -18,6 +19,7 @@ nonisolated struct ReferenceRecordInspector {
         let keywordStore = KeywordStore(index: index)
         keywords = keywordStore
         formLists = FormListStore(index: index)
+        magicEffects = MagicEffectStore(index: index)
         locations = LocationStore(index: index)
         encounterZones = EncounterZoneStore(index: index)
         collisionLayers = CollisionLayerStore(index: index)
@@ -29,9 +31,12 @@ nonisolated struct ReferenceRecordInspector {
         var sections = [RecordTextDump.dump(
             record: preview.record,
             localized: preview.localized,
-            keywordStore: keywords,
-            formListStore: formLists,
-            sourcePlugin: preview.sourcePlugin
+            magicInspectorContext: RecordTextDump.MagicInspectorContext(
+                keywordStore: keywords,
+                formListStore: formLists,
+                magicEffectStore: magicEffects,
+                sourcePlugin: preview.sourcePlugin
+            )
         )]
         sections.insert(metadata(preview), at: 1)
         if let resolved = resolvedDetail(preview) {

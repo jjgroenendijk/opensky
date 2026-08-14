@@ -30,9 +30,11 @@ nonisolated enum RecordIndexDecodeResult<Value> {
 }
 
 nonisolated struct RecordIndex {
-    /// The small reference-record families introduced together in M18.
+    /// Reference data loaded once for stores and the Asset Browser. MGEF joins
+    /// the M18 families because magic-item EFID links need the same cross-plugin
+    /// override semantics and inspector context.
     static let referenceRecordTypes: Set<FourCC> = [
-        "KYWD", "FLST", "LCTN", "LCRT", "ECZN", "AACT", "COLL", "DOBJ"
+        "KYWD", "FLST", "LCTN", "LCRT", "ECZN", "AACT", "COLL", "DOBJ", "MGEF"
     ]
 
     private static let logger = Logger(

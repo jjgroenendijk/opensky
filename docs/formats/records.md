@@ -576,10 +576,11 @@ and CIS1/CIS2 behave as they do everywhere else.
 | EFIT  | 12 bytes | float32 magnitude, uint32 area, uint32 duration |
 | CTDA  | 32 bytes | `conditions` on this effect                 |
 
-Scope: effects decode as **links only**. MGEF semantics and the auto-calc cost formula
-belong to the magic milestone. Degrade policy: an EFIT with no EFID before it is dropped;
-an EFID whose EFIT never arrives still yields an entry with zero magnitude, because the
-MGEF link is the part inventory needs. Neither case throws.
+MGEF semantics now decode and resolve through `MagicEffectStore`; see
+[magic records](/formats/magic-records.md). The auto-calc cost formula remains later magic
+work. Degrade policy: an EFIT with no EFID before it is dropped; an EFID whose EFIT never
+arrives still yields an entry with zero magnitude, because the MGEF link is the part
+inventory needs. Neither case throws.
 
 Reference: xEdit `wbDefinitionsTES5.pas` `wbEFID` line 3832, `wbEFIT` 3834,
 `wbEffect` 4030.
