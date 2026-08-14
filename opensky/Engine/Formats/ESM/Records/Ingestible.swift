@@ -16,7 +16,7 @@
 //   0C float32 addiction chance
 //   10 FormID  SNDR played on consume
 //
-// Effects (EFID/EFIT/CTDA runs) decode as links only — see MagicItemEffect.
+// Effects (EFID/EFIT/CTDA runs) resolve through MagicEffectStore.
 //
 // Skipped: DEST destruction data, ETYP equip-type link.
 //

@@ -8,7 +8,7 @@
 //   04 uint32  flags — 0x001 no auto-calc, 0x002 food, 0x100 references
 //              persist
 //
-// Effects (EFID/EFIT/CTDA runs) decode as links only — see MagicItemEffect.
+// Effects (EFID/EFIT/CTDA runs) resolve through MagicEffectStore.
 // Vanilla ingredients carry exactly four, and which of them the player has
 // discovered is save state, not record data.
 //
