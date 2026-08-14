@@ -2,6 +2,16 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-14
+
+* **The walk-path probe crosses the Chillfurrow interior again (issue #405)**: the obsolete
+  straight 192-unit segment ended inside a decoded collision shell, so bounded sidesteps
+  cycled until timeout. The production route now follows two deterministic, floor-supported
+  waypoints around the shell and reverses them for the paired-door return. The 640x360
+  real-install gate completed 840 active frames, crossed 267.05 interior units, returned to
+  `(31233.67, -9784.47, -4059.53)`, and passed collision, frame, and audio budgets. See
+  [terrain walk mode](/engine/walk-mode.md).
+
 ## 2026-08-13
 
 * **The Asset Browser is the M18 reference-data verification surface (issue #456)**:

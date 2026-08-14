@@ -25,5 +25,16 @@ struct WalkPathRouteTests {
         #expect(abs(WalkPathRoute.yaw(from: start, to: SIMD2(10, 30)) - .pi / 2) < 0.001)
         let target = WalkPathRoute.interiorTarget(from: start, yaw: 0)
         #expect(target == SIMD2(10 + WalkPathRoute.interiorCrossingDistance, 20))
+        let waypoints = WalkPathRoute.interiorWaypoints(from: start, yaw: 0)
+        #expect(waypoints == [
+            SIMD2(
+                10 + WalkPathRoute.interiorOpeningApproachDistance,
+                20 + WalkPathRoute.interiorOpeningLateralOffset
+            ),
+            SIMD2(
+                10 + WalkPathRoute.interiorOpeningExitDistance,
+                20 + WalkPathRoute.interiorOpeningLateralOffset
+            )
+        ])
     }
 }

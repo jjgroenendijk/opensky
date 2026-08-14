@@ -31,18 +31,23 @@ extension CellStreamingWalkDriver {
         }
         let arrival = currentXY
         interiorArrival = arrival
-        interiorTarget = WalkPathRoute.interiorTarget(
+        interiorRoute = WalkPathRoute.interiorWaypoints(
             from: arrival,
             yaw: renderer.freeFlyCamera.yaw
         )
+        interiorRouteIndex = 0
         changePhase(.crossInterior)
     }
 
     func crossInterior() throws {
-        guard let target = interiorTarget, let arrival = interiorArrival else {
+        guard
+            interiorRoute.indices.contains(interiorRouteIndex),
+            let arrival = interiorArrival
+        else {
             throw CellStreamingWalkBenchmarkError.wrongDestination("missing interior route")
         }
-        drive(toward: target, routeIndex: 100)
+        let target = interiorRoute[interiorRouteIndex]
+        drive(toward: target, routeIndex: 100 + interiorRouteIndex)
         streamer.update(cameraPosition: renderer.freeFlyCamera.position)
         try validateController()
         interiorDistance = max(interiorDistance, simd_distance(arrival, currentXY))
@@ -50,21 +55,35 @@ extension CellStreamingWalkDriver {
             try timeout(limit: WalkPathRoute.maximumWaypointFrames)
             return
         }
-        changePhase(.returnInterior)
+        interiorRouteIndex += 1
+        if interiorRoute.indices.contains(interiorRouteIndex) {
+            changePhase(.crossInterior)
+        } else {
+            interiorRouteIndex = interiorRoute.count - 2
+            changePhase(.returnInterior)
+        }
     }
 
     func returnInterior() throws {
-        guard let target = interiorArrival else {
+        guard let arrival = interiorArrival else {
             throw CellStreamingWalkBenchmarkError.wrongDestination("missing arrival pose")
         }
-        drive(toward: target, routeIndex: 101)
+        let target = interiorRoute.indices.contains(interiorRouteIndex)
+            ? interiorRoute[interiorRouteIndex]
+            : arrival
+        drive(toward: target, routeIndex: 200 + max(interiorRouteIndex, 0))
         streamer.update(cameraPosition: renderer.freeFlyCamera.position)
         try validateController()
         guard distance(to: target) <= WalkPathRoute.waypointTolerance else {
             try timeout(limit: WalkPathRoute.maximumWaypointFrames)
             return
         }
-        changePhase(.requestExit)
+        if interiorRouteIndex >= 0 {
+            interiorRouteIndex -= 1
+            changePhase(.returnInterior)
+        } else {
+            changePhase(.requestExit)
+        }
     }
 
     func requestExit() throws {

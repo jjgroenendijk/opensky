@@ -7,7 +7,7 @@ description: Fixed-step player capsule over streamed terrain and static mesh col
   body that make it visible.
 tags: [engine, world, terrain, collision, movement, streaming, locomotion, camera,
   milestone-14]
-timestamp: 2026-08-04T00:00:00Z
+timestamp: 2026-08-14T00:00:00Z
 ---
 
 # Terrain walk mode
@@ -536,8 +536,9 @@ bounded deterministic sidesteps recover when a small static blocks progress. The
 
 1. Requires grounded travel + no unresolved penetration/fall-through at every active frame.
 2. Measures at least 16 units of exterior stair gain before activating door `0001633D`.
-3. Requires interior CELL `00016204`, crosses at least 80% of a 192-unit floor segment, then
-   returns to paired door `000163A8`.
+3. Requires interior CELL `00016204`, follows two floor-safe waypoints around the collision
+   shell that blocks the obsolete straight segment, crosses at least 80% of 192 units, then
+   reverses the same route to paired door `000163A8`.
 4. Requires exterior cell `(7,-3)` + recorded return pose, zero failed cell/door builds,
    bounded phase/whole-route frames.
 5. Gates active-physics wall time with a build-aware policy. Average stays <= 33.33 ms in
@@ -552,10 +553,10 @@ fails if sustained work exceeds one interval or at least 5% of frames exceed two
 `physicsRender` contains only active-frame timing arrays; it carries no `windowSummaries`
 because the `FrameStats` strings summarize fixed 120-frame windows across the unfiltered run.
 
-Read-only real-install acceptance at 640x360: 1,065 active physics frames, avg 15.90 ms
-(62.9 fps), p95 29.69 ms, max 58.28 ms; exterior stair gain 22.82 units; interior crossing
-160.34 units; paired return feet `(31233.67, -9784.47, -4059.53)`. No clip, fall-through,
-unresolved penetration, destination mismatch, or build error.
+Read-only real-install acceptance on 2026-08-14 at 640x360: 840 active physics frames, avg
+31.19 ms (32.1 fps), p95 48.76 ms, max 76.96 ms; exterior stair gain 22.82 units; interior
+crossing 267.05 units; paired return feet `(31233.67, -9784.47, -4059.53)`. No clip,
+fall-through, unresolved penetration, destination mismatch, or build error.
 
 ## First-person acceptance surface
 
