@@ -166,6 +166,7 @@ nonisolated final class CellSceneBuilder {
         textures: TextureLibrary,
         fileSystem: VirtualFileSystem? = nil,
         pluginName: String = "Skyrim.esm",
+        localizationLanguage: String = LocalizationLanguageSettings.fallback,
         terrainLODConfigurationStore: TerrainLODConfigurationStore? = nil
     ) {
         self.file = file
@@ -180,7 +181,7 @@ nonisolated final class CellSceneBuilder {
         formIDResolver = header?.formIDResolver(pluginName: pluginName)
             ?? FormIDResolver(pluginName: pluginName, masters: [])
         localizedStrings = fileSystem.map {
-            LocalizedStrings(vfs: $0, pluginName: pluginName)
+            LocalizedStrings(vfs: $0, pluginName: pluginName, language: localizationLanguage)
         }
         collisionModels = fileSystem.map(NIFCollisionLibrary.init(fileSystem:))
         distantLODBuilder = fileSystem.map {

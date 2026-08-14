@@ -3,7 +3,7 @@ type: File Format
 title: Localized string tables
 description: Layout of .strings/.dlstrings/.ilstrings tables and how OpenSky decodes them.
 tags: [format, strings, localization, plugin]
-timestamp: 2026-07-09T00:00:00Z
+timestamp: 2026-08-14T00:00:00Z
 ---
 
 # Localized string tables, Skyrim SE
@@ -54,7 +54,11 @@ Lookup wiring lives in `GameData/LocalizedStrings.swift`: resolves an
 `LString` (see [records](/formats/records.md)) against
 `strings\<plugin stem>_<language>.<ext>` through the VFS, one lazy table per
 kind, missing table -> nil lookups + one os_log error. Language defaults to
-"english" until a setting exists.
+`[General] sLanguage` from `Skyrim.ini`, normalized to lowercase; a value in
+`SkyrimCustom.ini` follows the game's normal override order. App Settings shows the
+winning language and source and can persist an OpenSky override. Missing or invalid
+values fall back to `english`, and overrides accept only letters, numbers, hyphens, and
+underscores so they remain one filename segment.
 
 ## Verification
 

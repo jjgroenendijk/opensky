@@ -4,6 +4,12 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-14
 
+* **Localized string tables follow Skyrim's configured language (issue #441)**:
+  `[General] sLanguage` from the layered `Skyrim.ini` files now selects every production
+  `LocalizedStrings` table path, with a validated `english` fallback. App Settings shows
+  the winning language and source, accepts a persistent filename-safe override, and reloads
+  journal, dialogue, and streamed-world text immediately. See
+  [localized string tables](/formats/strings.md) and [Skyrim INI settings](/formats/ini.md).
 * **The walk-path probe crosses the Chillfurrow interior again (issue #405)**: the obsolete
   straight 192-unit segment ended inside a decoded collision shell, so bounded sidesteps
   cycled until timeout. The production route now follows two deterministic, floor-supported

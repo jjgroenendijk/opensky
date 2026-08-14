@@ -1,8 +1,7 @@
-// Settings window (Cmd+,): configure the game data root and the plugins.txt
-// that carries the load order. Validation + persistence live in
-// GameDataLocator and PluginsTextLocator (AppKit-free, unit-tested); this file
-// only wires the panel UI. Both choices persist to the shared defaults domain
-// so the CLI picks them up too.
+// Settings window (Cmd+,): configure the game data root, plugins.txt load
+// order, and localized string-table language. Validation + persistence live
+// in AppKit-free engine settings; this file only wires the panel UI. Choices
+// persist to the shared defaults domain so the CLI sees them too.
 //
 // The load order itself is not shown here — the Library > Load Order
 // destination lists it, and this window only names the file it comes from.
@@ -10,18 +9,19 @@
 import AppKit
 
 final class SettingsWindowController: NSWindowController {
-    /// Called after a persisted setting changes (chosen or reset). Both
-    /// settings change what the engine loads, so both use this one hook.
-    var onDataRootChanged: (() -> Void)?
+    /// Called after a persisted engine-load setting changes.
+    var onSettingsChanged: (() -> Void)?
 
     private let pathLabel = NSTextField(wrappingLabelWithString: "")
     private let noteLabel = NSTextField(wrappingLabelWithString: "")
     private let pluginsPathLabel = NSTextField(wrappingLabelWithString: "")
     private let pluginsNoteLabel = NSTextField(wrappingLabelWithString: "")
+    private let languageField = NSTextField(string: "")
+    private let languageNoteLabel = NSTextField(wrappingLabelWithString: "")
 
     convenience init() {
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 520, height: 300),
+            contentRect: NSRect(x: 0, y: 0, width: 520, height: 420),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -59,9 +59,11 @@ final class SettingsWindowController: NSWindowController {
         buttons.orientation = .horizontal
         buttons.alignment = .centerY
 
+        let pluginsViews = makePluginsTextViews()
+        let languageViews = makeLanguageViews()
         let stack = NSStackView(views: [
             heading, pathLabel, noteLabel, buttons
-        ] + makePluginsTextViews())
+        ] + pluginsViews + languageViews)
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 8
@@ -69,7 +71,12 @@ final class SettingsWindowController: NSWindowController {
         stack.setCustomSpacing(12, after: noteLabel)
         stack.setCustomSpacing(20, after: buttons)
         stack.setCustomSpacing(12, after: pluginsNoteLabel)
-        for label in [pathLabel, noteLabel, pluginsPathLabel, pluginsNoteLabel] {
+        if let pluginsButtons = pluginsViews.last {
+            stack.setCustomSpacing(20, after: pluginsButtons)
+        }
+        for label in [
+            pathLabel, noteLabel, pluginsPathLabel, pluginsNoteLabel, languageNoteLabel
+        ] {
             label.widthAnchor.constraint(
                 equalTo: stack.widthAnchor,
                 constant: -32
@@ -107,6 +114,37 @@ final class SettingsWindowController: NSWindowController {
         return [heading, pluginsPathLabel, pluginsNoteLabel, buttons]
     }
 
+    /// Which `<plugin>_<language>.<ext>` tables localized records use.
+    private func makeLanguageViews() -> [NSView] {
+        let heading = NSTextField(labelWithString: "Localized String Tables")
+        heading.font = .boldSystemFont(ofSize: NSFont.systemFontSize)
+
+        languageField.placeholderString = LocalizationLanguageSettings.fallback
+        languageField.setAccessibilityIdentifier("SettingsLanguageControl")
+        languageField.widthAnchor.constraint(equalToConstant: 220).isActive = true
+
+        languageNoteLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        languageNoteLabel.textColor = .secondaryLabelColor
+        languageNoteLabel.setAccessibilityIdentifier("SettingsLanguageStatsLabel")
+
+        let applyButton = NSButton(
+            title: "Apply Override",
+            target: self,
+            action: #selector(applyLanguage)
+        )
+        applyButton.setAccessibilityIdentifier("SettingsApplyLanguageControl")
+        let resetButton = NSButton(
+            title: "Use Skyrim INI",
+            target: self,
+            action: #selector(useSkyrimLanguage)
+        )
+        resetButton.setAccessibilityIdentifier("SettingsResetLanguageControl")
+        let buttons = NSStackView(views: [resetButton, applyButton])
+        buttons.orientation = .horizontal
+        buttons.alignment = .centerY
+        return [heading, languageField, languageNoteLabel, buttons]
+    }
+
     // MARK: - State
 
     /// Re-resolves the root and updates the labels. `problem` (a failed
@@ -124,6 +162,17 @@ final class SettingsWindowController: NSWindowController {
         }
         noteLabel.textColor = problem == nil ? .secondaryLabelColor : .systemRed
         refreshPluginsText(root: root, problem: pluginsProblem)
+        refreshLanguage(root: root)
+    }
+
+    private func refreshLanguage(root: GameDataRoot?, problem: String? = nil) {
+        let snapshot = LocalizationLanguageSettings.load(root: root)
+        if problem == nil {
+            languageField.stringValue = snapshot.language
+        }
+        languageNoteLabel.stringValue = problem
+            ?? "Resolves <plugin>_\(snapshot.language).<ext>. Source: \(snapshot.source)."
+        languageNoteLabel.textColor = problem == nil ? .secondaryLabelColor : .systemRed
     }
 
     /// The plugins.txt group. Without a data root there is nothing to search
@@ -174,7 +223,7 @@ final class SettingsWindowController: NSWindowController {
             do {
                 try GameDataLocator.saveUserChoice(path: path)
                 refresh()
-                onDataRootChanged?()
+                onSettingsChanged?()
             } catch {
                 refresh(
                     problem: "Not a Skyrim SE install: \(path) — "
@@ -187,7 +236,7 @@ final class SettingsWindowController: NSWindowController {
     @objc private func useDefaultRoot() {
         GameDataLocator.clearUserChoice()
         refresh()
-        onDataRootChanged?()
+        onSettingsChanged?()
     }
 
     @objc private func choosePluginsText() {
@@ -203,7 +252,7 @@ final class SettingsWindowController: NSWindowController {
             do {
                 try PluginsTextLocator.saveUserChoice(path: url.path(percentEncoded: false))
                 refresh()
-                onDataRootChanged?()
+                onSettingsChanged?()
             } catch {
                 refresh(pluginsProblem: error.localizedDescription)
             }
@@ -213,6 +262,25 @@ final class SettingsWindowController: NSWindowController {
     @objc private func useDefaultPluginsText() {
         PluginsTextLocator.clearUserChoice()
         refresh()
-        onDataRootChanged?()
+        onSettingsChanged?()
+    }
+
+    @objc private func applyLanguage() {
+        do {
+            try LocalizationLanguageSettings.store(languageField.stringValue)
+            refresh()
+            onSettingsChanged?()
+        } catch {
+            refreshLanguage(
+                root: try? GameDataLocator.locate(),
+                problem: error.localizedDescription
+            )
+        }
+    }
+
+    @objc private func useSkyrimLanguage() {
+        LocalizationLanguageSettings.clearOverride()
+        refresh()
+        onSettingsChanged?()
     }
 }

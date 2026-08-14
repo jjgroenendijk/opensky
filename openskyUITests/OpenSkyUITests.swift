@@ -249,6 +249,10 @@ final class OpenSkyUITests: OpenSkyUITestCase {
 
         app.typeKey(",", modifierFlags: .command)
         XCTAssertTrue(app.windows["Settings"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.textFields["SettingsLanguageControl"].exists)
+        XCTAssertTrue(app.staticTexts["SettingsLanguageStatsLabel"].exists)
+        XCTAssertTrue(app.buttons["SettingsApplyLanguageControl"].exists)
+        XCTAssertTrue(app.buttons["SettingsResetLanguageControl"].exists)
     }
 
     /// Captures the rendered frame to a temp PNG and logs the path — the

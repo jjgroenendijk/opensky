@@ -33,6 +33,7 @@ nonisolated struct CellProviderIndexes {
         root: GameDataRoot,
         fileSystem: VirtualFileSystem,
         device: MTLDevice,
+        localizationLanguage: String = LocalizationLanguageSettings.fallback,
         terrainLODConfigurationStore: TerrainLODConfigurationStore
     ) throws {
         let esmURL = root.dataURL.appending(path: "Skyrim.esm")
@@ -55,6 +56,7 @@ nonisolated struct CellProviderIndexes {
             meshes: meshes,
             textures: textures,
             fileSystem: fileSystem,
+            localizationLanguage: localizationLanguage,
             terrainLODConfigurationStore: terrainLODConfigurationStore
         )
         weatherSystem = WeatherSystem(

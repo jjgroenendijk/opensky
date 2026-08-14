@@ -27,11 +27,13 @@ struct CellProviderIndexesTests {
             root: root,
             fileSystem: fileSystem,
             device: device,
+            localizationLanguage: "french",
             terrainLODConfigurationStore: .fallback()
         )
         let provider = indexes.makeProvider()
 
         #expect(provider.builder.fileSystem === fileSystem)
+        #expect(provider.builder.localizedStrings?.language == "french")
         #expect(provider.worldspaceEditorID == FirstRenderCell.worldspaceEditorID)
         #expect(provider.weatherSystem == nil)
         #expect(provider.soundStore != nil)
