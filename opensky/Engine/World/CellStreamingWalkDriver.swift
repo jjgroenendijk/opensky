@@ -18,7 +18,8 @@ final class CellStreamingWalkDriver {
     var stepStartHeight: Float?
     var maximumStepHeight: Float?
     var interiorArrival: SIMD2<Float>?
-    var interiorTarget: SIMD2<Float>?
+    var interiorRoute: [SIMD2<Float>] = []
+    var interiorRouteIndex = 0
     var interiorDistance: Float = 0
     var navigationState = WalkBenchmarkNavigationState()
 

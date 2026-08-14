@@ -29,6 +29,9 @@ nonisolated enum WalkPathRoute {
 
     static let waypointTolerance: Float = 40
     static let interiorCrossingDistance: Float = 192
+    static let interiorOpeningLateralOffset: Float = 240
+    static let interiorOpeningApproachDistance: Float = 80
+    static let interiorOpeningExitDistance: Float = 176
     static let minimumExteriorStepGain: Float = 16
     static let maximumWaypointFrames = 600
     static let maximumTransitionFrames = 1800
@@ -43,5 +46,21 @@ nonisolated enum WalkPathRoute {
         yaw: Float
     ) -> SIMD2<Float> {
         position + SIMD2(cosf(yaw), sinf(yaw)) * interiorCrossingDistance
+    }
+
+    static func interiorWaypoints(
+        from position: SIMD2<Float>,
+        yaw: Float
+    ) -> [SIMD2<Float>] {
+        let forward = SIMD2(cosf(yaw), sinf(yaw))
+        let left = SIMD2(-forward.y, forward.x)
+        return [
+            position
+                + forward * interiorOpeningApproachDistance
+                + left * interiorOpeningLateralOffset,
+            position
+                + forward * interiorOpeningExitDistance
+                + left * interiorOpeningLateralOffset
+        ]
     }
 }

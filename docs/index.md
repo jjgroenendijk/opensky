@@ -182,8 +182,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   yaw/pitch pose -> view matrix, movement speeds tuned to Skyrim scale.
 * [Terrain walk mode](/engine/walk-mode.md) - fixed-step capsule, terrain + mesh
   collide-and-slide, slope/ceiling response, bounded stairs, door pose reset, build-aware
-  route timing gate, the three camera modes, the third-person orbit camera with
-  collision-aware zoom, the rendered player body, and the first-person acceptance surface.
+  route timing gate with floor-safe interior waypoints, the three camera modes, the
+  third-person orbit camera with collision-aware zoom, the rendered player body, and the
+  first-person acceptance surface.
 * [Static collision world](/engine/collision-world.md) - per-cell placed bhk shapes,
   immutable BVH broadphase, fail-loud geometry accounting, streaming lifetime + budgets,
   trigger volumes and their per-frame OnTriggerEnter/OnTriggerLeave occupancy diff.
