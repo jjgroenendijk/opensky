@@ -26,7 +26,7 @@ nonisolated struct MagicEffectStore {
     init(index: RecordIndex) {
         self.index = index
         let orderedIDs = index.records.keys.sorted {
-            MagicEffectStoreOrdering.precedes($0, $1, index: index)
+            RecordStoreOrdering.precedes($0, $1, index: index)
         }
         for id in orderedIDs {
             guard index.records[id]?.record.type == "MGEF" else { continue }
@@ -110,25 +110,5 @@ nonisolated extension MagicItemEffect {
 nonisolated enum MagicEffectStoreLoader {
     static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> MagicEffectStore {
         MagicEffectStore(plugins: ActivePluginFiles.load(root: root, baseFile: baseFile))
-    }
-}
-
-nonisolated private enum MagicEffectStoreOrdering {
-    static func precedes(
-        _ left: ResolvedFormID,
-        _ right: ResolvedFormID,
-        index: RecordIndex
-    ) -> Bool {
-        let leftSource = index.records[left]?.sourcePlugin ?? left.plugin
-        let rightSource = index.records[right]?.sourcePlugin ?? right.plugin
-        let leftPriority = index.priority(ofPlugin: leftSource)
-        let rightPriority = index.priority(ofPlugin: rightSource)
-        if leftPriority != rightPriority {
-            return leftPriority < rightPriority
-        }
-        if left.plugin.caseInsensitiveCompare(right.plugin) != .orderedSame {
-            return left.plugin.localizedCaseInsensitiveCompare(right.plugin) == .orderedAscending
-        }
-        return left.objectID < right.objectID
     }
 }

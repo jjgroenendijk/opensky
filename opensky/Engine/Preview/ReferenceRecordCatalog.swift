@@ -14,6 +14,8 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
     case collisionLayer = "COLL"
     case defaultObjects = "DOBJ"
     case magicEffect = "MGEF"
+    case spell = "SPEL"
+    case scroll = "SCRL"
 
     var fourCC: FourCC {
         switch self {
@@ -26,6 +28,8 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
         case .collisionLayer: "COLL"
         case .defaultObjects: "DOBJ"
         case .magicEffect: "MGEF"
+        case .spell: "SPEL"
+        case .scroll: "SCRL"
         }
     }
 
@@ -40,6 +44,8 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
         case .collisionLayer: "COLL — Collision layers"
         case .defaultObjects: "DOBJ — Default objects"
         case .magicEffect: "MGEF — Magic effects"
+        case .spell: "SPEL — Spells"
+        case .scroll: "SCRL — Scrolls"
         }
     }
 }

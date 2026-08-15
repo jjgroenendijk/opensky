@@ -16,7 +16,7 @@ nonisolated enum RecordTextDump {
             localized: localized,
             keywordContext: nil,
             formListContext: nil,
-            magicEffectContext: nil
+            magicContext: nil
         )
     }
 
@@ -31,7 +31,7 @@ nonisolated enum RecordTextDump {
             localized: localized,
             keywordContext: KeywordContext(store: keywordStore, sourcePlugin: sourcePlugin),
             formListContext: nil,
-            magicEffectContext: nil
+            magicContext: nil
         )
     }
 
@@ -47,7 +47,7 @@ nonisolated enum RecordTextDump {
             localized: localized,
             keywordContext: KeywordContext(store: keywordStore, sourcePlugin: sourcePlugin),
             formListContext: FormListContext(store: formListStore, sourcePlugin: sourcePlugin),
-            magicEffectContext: nil
+            magicContext: nil
         )
     }
 
@@ -56,7 +56,7 @@ nonisolated enum RecordTextDump {
         localized: Bool,
         keywordContext: KeywordContext?,
         formListContext: FormListContext?,
-        magicEffectContext: MagicEffectContext?
+        magicContext: MagicContext?
     ) -> String {
         var lines = [headerLine(record: record)]
         if
@@ -65,7 +65,7 @@ nonisolated enum RecordTextDump {
                 localized: localized,
                 keywordContext: keywordContext,
                 formListContext: formListContext,
-                magicEffectContext: magicEffectContext
+                magicContext: magicContext
             )
         {
             lines.append(decoded)
@@ -87,7 +87,7 @@ nonisolated enum RecordTextDump {
         localized: Bool,
         keywordContext: KeywordContext?,
         formListContext: FormListContext?,
-        magicEffectContext: MagicEffectContext?
+        magicContext: MagicContext?
     ) -> String? {
         switch record.type {
         case "WRLD": worldSummary(record: record, localized: localized)
@@ -106,7 +106,8 @@ nonisolated enum RecordTextDump {
             magicSummary(
                 record: record,
                 localized: localized,
-                keywordContext: keywordContext
+                keywordContext: keywordContext,
+                magicContext: magicContext
             )
                 ?? referenceRecordSummary(
                     record: record,
@@ -118,7 +119,7 @@ nonisolated enum RecordTextDump {
                     record: record,
                     localized: localized,
                     keywordContext: keywordContext,
-                    magicEffectContext: magicEffectContext
+                    magicContext: magicContext
                 )
         }
     }

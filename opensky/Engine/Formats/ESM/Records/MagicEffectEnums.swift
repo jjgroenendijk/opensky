@@ -8,6 +8,10 @@ nonisolated enum MagicEffectCastingType: Equatable, CustomStringConvertible {
     case constantEffect
     case fireAndForget
     case concentration
+    /// SCRL only. `wbCastEnum` stops at 2; xEdit gives SCRL its own casting
+    /// enum whose single member is 3, "Scroll" (`wbRecord(SCRL, ...)`), so the
+    /// value is named here instead of surfacing as an unknown on every scroll.
+    case scroll
     case unknown(raw: UInt32)
 
     init(rawValue: UInt32) {
@@ -15,6 +19,7 @@ nonisolated enum MagicEffectCastingType: Equatable, CustomStringConvertible {
         case 0: .constantEffect
         case 1: .fireAndForget
         case 2: .concentration
+        case 3: .scroll
         default: .unknown(raw: rawValue)
         }
     }
@@ -24,6 +29,7 @@ nonisolated enum MagicEffectCastingType: Equatable, CustomStringConvertible {
         case .constantEffect: "constant effect"
         case .fireAndForget: "fire and forget"
         case .concentration: "concentration"
+        case .scroll: "scroll"
         case let .unknown(raw): "unknown(\(raw))"
         }
     }

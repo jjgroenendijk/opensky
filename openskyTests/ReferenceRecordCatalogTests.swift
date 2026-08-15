@@ -7,7 +7,7 @@ import Testing
 
 struct ReferenceRecordCatalogTests {
     @Test
-    func allNineTypesListByEditorIDAndNameTheWinningPlugin() throws {
+    func allElevenTypesListByEditorIDAndNameTheWinningPlugin() throws {
         let base = try plugin(records: ReferenceRecordType.allCases.enumerated().map {
             record($0.element.rawValue, formID: UInt32($0.offset + 1), editorID: "Base\($0.offset)")
         })

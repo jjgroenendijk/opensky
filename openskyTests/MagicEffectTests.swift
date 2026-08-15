@@ -124,10 +124,11 @@ enum MagicEffectFixture {
     static func data(
         archetype: UInt32 = 0,
         castingType: UInt32 = 1,
-        delivery: UInt32 = 2
+        delivery: UInt32 = 2,
+        baseCost: Float = 12.5
     ) -> Data {
         words([
-            MagicEffectFlags.hostile.rawValue, Float(12.5).bitPattern, 0x100, 20, 44, 0,
+            MagicEffectFlags.hostile.rawValue, baseCost.bitPattern, 0x100, 20, 44, 0,
             0x101, Float(0.5).bitPattern, 0x102, 0x103, 25, 10,
             Float(0.75).bitPattern, Float(1.25).bitPattern, Float(2).bitPattern,
             Float(0.4).bitPattern, archetype, 24, 0x200, 0x201, castingType, delivery, 25,

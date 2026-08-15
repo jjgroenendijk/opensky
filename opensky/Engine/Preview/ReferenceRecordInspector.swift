@@ -8,6 +8,7 @@ nonisolated struct ReferenceRecordInspector {
     private let keywords: KeywordStore
     private let formLists: FormListStore
     private let magicEffects: MagicEffectStore
+    private let spells: SpellStore
     private let locations: LocationStore
     private let encounterZones: EncounterZoneStore
     private let collisionLayers: CollisionLayerStore
@@ -19,7 +20,9 @@ nonisolated struct ReferenceRecordInspector {
         let keywordStore = KeywordStore(index: index)
         keywords = keywordStore
         formLists = FormListStore(index: index)
-        magicEffects = MagicEffectStore(index: index)
+        let magicEffectStore = MagicEffectStore(index: index)
+        magicEffects = magicEffectStore
+        spells = SpellStore(index: index, effects: magicEffectStore)
         locations = LocationStore(index: index)
         encounterZones = EncounterZoneStore(index: index)
         collisionLayers = CollisionLayerStore(index: index)
@@ -35,6 +38,7 @@ nonisolated struct ReferenceRecordInspector {
                 keywordStore: keywords,
                 formListStore: formLists,
                 magicEffectStore: magicEffects,
+                spellStore: spells,
                 sourcePlugin: preview.sourcePlugin
             )
         )]
