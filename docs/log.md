@@ -2,6 +2,19 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-15
+
+* **Spells and scrolls decode, resolve and cost themselves (issue #465)**: SPEL and SCRL
+  now decode identity, the shared 36-byte `SPIT` casting header, the scroll's inventory
+  fields and the effect list, with unknown-preserving spell-type, casting and delivery
+  enums. `SpellStore` applies cross-plugin overrides, joins each effect against
+  `MagicEffectStore`, and computes the magicka cost from the documented curve; `BOOK`
+  spell tomes and `WEAP` critical effects now name their spell. The load-order gate decoded
+  1,560 SPEL and 109 SCRL definitions into 1,452 spells and 104 scrolls with zero malformed
+  fields and zero unknown enums, and 1,091 of the 1,223 auto-calculated records reproduce
+  their stored cost exactly, which is what settled where the formula truncates. See
+  [magic records](/formats/magic-records.md).
+
 ## 2026-08-14
 
 * **Magic-item effects resolve to decoded MGEF definitions (issue #464)**: MGEF now

@@ -16,15 +16,15 @@ nonisolated extension RecordTextDump {
         record: ESMRecord,
         localized: Bool,
         keywordContext: KeywordContext?,
-        magicEffectContext: MagicEffectContext?
+        magicContext: MagicContext?
     ) -> String? {
         switch record.type {
         case "CONT": containerSummary(record: record, localized: localized)
         case "MISC": miscSummary(record, localized, keywordContext)
-        case "BOOK": bookSummary(record, localized, keywordContext)
-        case "ALCH": ingestibleSummary(record, localized, keywordContext, magicEffectContext)
-        case "INGR": ingredientSummary(record, localized, keywordContext, magicEffectContext)
-        case "WEAP": weaponSummary(record, localized, keywordContext)
+        case "BOOK": bookSummary(record, localized, keywordContext, magicContext)
+        case "ALCH": ingestibleSummary(record, localized, keywordContext, magicContext)
+        case "INGR": ingredientSummary(record, localized, keywordContext, magicContext)
+        case "WEAP": weaponSummary(record, localized, keywordContext, magicContext)
         case "AMMO": ammunitionSummary(record, localized, keywordContext)
         case "ARMO": armorSummary(record, localized, keywordContext)
         case "ARMA": armorAddonSummary(record: record)
@@ -110,13 +110,14 @@ nonisolated extension RecordTextDump {
     private static func bookSummary(
         _ record: ESMRecord,
         _ localized: Bool,
-        _ context: KeywordContext?
+        _ context: KeywordContext?,
+        _ magicContext: MagicContext?
     ) -> String? {
         guard let book = try? Book(record: record, localized: localized) else { return nil }
         let teaches = switch book.teaches {
         case .nothing: "nothing"
-        case let .skill(index): "skill \(index)"
-        case let .spell(spell): "spell \(spell)"
+        case let .skill(index): "skill \(ActorValueIdentity.description(of: index))"
+        case let .spell(spell): "spell \(spellText(spell, context: magicContext))"
         }
         return "decoded BOOK: " + shared(book.fields, book.itemValue, context)
             + ", teaches \(teaches), text \(book.text == nil ? "absent" : "present")"
@@ -126,7 +127,7 @@ nonisolated extension RecordTextDump {
         _ record: ESMRecord,
         _ localized: Bool,
         _ context: KeywordContext?,
-        _ magicContext: MagicEffectContext?
+        _ magicContext: MagicContext?
     ) -> String? {
         guard let item = try? Ingestible(record: record, localized: localized) else { return nil }
         return "decoded ALCH: " + shared(item.fields, item.itemValue, context)
@@ -138,7 +139,7 @@ nonisolated extension RecordTextDump {
         _ record: ESMRecord,
         _ localized: Bool,
         _ context: KeywordContext?,
-        _ magicContext: MagicEffectContext?
+        _ magicContext: MagicContext?
     ) -> String? {
         guard let item = try? Ingredient(record: record, localized: localized) else { return nil }
         return "decoded INGR: " + shared(item.fields, item.itemValue, context)
@@ -149,16 +150,28 @@ nonisolated extension RecordTextDump {
     private static func weaponSummary(
         _ record: ESMRecord,
         _ localized: Bool,
-        _ context: KeywordContext?
+        _ context: KeywordContext?,
+        _ magicContext: MagicContext?
     ) -> String? {
         guard let weapon = try? Weapon(record: record, localized: localized) else { return nil }
         let animation = weapon.animationType.map { "\($0)" } ?? "unknown"
         let critical = weapon.criticalData.map { "\($0.damage)" } ?? "-"
+        let criticalEffect = weapon.criticalData?.effect.map {
+            ", critical effect " + spellText($0, context: magicContext)
+        } ?? ""
         return "decoded WEAP: " + shared(weapon.fields, weapon.itemValue, context)
             + String(
                 format: ", damage %d, %@, speed %.2f, reach %.2f, critical %@",
                 Int(weapon.damage), animation, weapon.speed, weapon.reach, critical
             )
+            + criticalEffect
+    }
+
+    /// Names the SPEL a book teaches or a weapon's critical applies, once a
+    /// magic context is present; a bare FormID otherwise.
+    private static func spellText(_ id: FormID, context: MagicContext?) -> String {
+        guard let context else { return id.description }
+        return context.spells.displayString(for: id, fromPlugin: context.sourcePlugin)
     }
 
     private static func ammunitionSummary(
@@ -209,11 +222,11 @@ nonisolated extension RecordTextDump {
 
     private static func effectText(
         _ effects: [MagicItemEffect],
-        context: MagicEffectContext?
+        context: MagicContext?
     ) -> String {
         let names = effects.map { effect in
             if let context {
-                return context.store.displayString(
+                return context.effects.displayString(
                     for: effect.effect,
                     fromPlugin: context.sourcePlugin
                 )
