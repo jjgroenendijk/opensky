@@ -53,7 +53,7 @@ struct CombatHandTypeTests {
         #expect(CombatHandType(weapon: .other) == .handToHand)
     }
 
-    @Test func theTwoHandedFamiliesMatchTheEquipmentCatalogsOwnSplit() {
+    @Test func theGraphNamesExactlyFourTwoHandedFamilies() {
         for type in CombatHandType.allCases {
             #expect(type.occupiesBothHands == [.greatsword, .battleaxe, .bow, .crossbow]
                 .contains(type))

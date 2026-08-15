@@ -32,6 +32,7 @@ the loop needed to be checkable, and the record of what was verified.
 - [Appearance skips](#appearance-skips)
 - [Budgets](#budgets)
 - [Verification](#verification)
+- [Hand occupancy](#hand-occupancy)
 - [Limits / next](#limits--next)
 
 | Layer | File | Target |
@@ -182,9 +183,31 @@ assets, so captures stay in gitignored `logs/` and are never committed; the dete
 tests above are the evidence
 ([sidebar acceptance](/tools/sidebar-acceptance.md)).
 
+## Hand occupancy
+
+Which hands a weapon fills is the one part of `EquipmentOccupancy` that does not come from
+a bitfield on the item. It comes from the WEAP `ETYP` link, resolved through the EQUP
+records of the same plugin by `EquipSlotTable`
+(`opensky/Engine/Inventory/EquipSlotTable.swift`): `EitherHand` resolves to the right hand,
+`BothHands` to both, `Shield` to the left, and a slot that names no hand — `Voice`,
+`Potion` — to none. The walk and the two policies behind it are documented under
+[magic records](/formats/magic-records.md); `EquipSlotStore` is the load-order-wide view
+the inspectors use.
+
+Issue #467 replaced the earlier heuristic, which read hands off the WEAP `DNAM` animation
+type because no EQUP decoder existed. That heuristic is deleted rather than kept as a
+fallback: a weapon whose `ETYP` resolves to nothing takes
+`EquipmentCatalog.defaultWeaponHands` (the right hand) and is counted in
+`unresolvedEquipTypes`, so a load order full of misses is visible rather than silently
+plausible. In the vanilla load order 3,354 of 3,359 weapons resolve and the other 5 carry
+no `ETYP` at all.
+
 ## Limits / next
 
 - Ownership is reported, never enforced. Stealing, bounties and the crime system are M18+.
+- Armour still occupies biped slots only. ARMO also carries an `ETYP`, which OpenSky does
+  not decode, so a shield conflicts with a cuirass by body slot but not yet with a
+  two-handed weapon by hand.
 - The player has no rendered body until M14, so equipping on the player is a state-only
   operation and its appearance-skip list is empty by construction rather than by omission.
 - A merchant is still a nominated container. Faction-linked vendor chests need `VENDR`-style

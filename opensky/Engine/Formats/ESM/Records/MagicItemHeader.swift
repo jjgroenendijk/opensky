@@ -24,7 +24,8 @@ nonisolated struct MagicItemHeader {
     var description: LString?
     /// MDOB — STAT shown in the menu preview.
     var menuDisplayObject: FormID?
-    /// ETYP — EQUP equip slot. Resolved by 19.4; decoded and left raw here.
+    /// ETYP — EQUP equip slot, left raw here and resolved through
+    /// `EquipSlotStore` by whichever consumer needs the slot.
     var equipType: FormID?
 
     init() {}

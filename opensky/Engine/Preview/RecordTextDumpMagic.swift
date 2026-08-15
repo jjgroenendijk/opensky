@@ -10,6 +10,8 @@ nonisolated extension RecordTextDump {
         let magicEffectStore: MagicEffectStore
         let spellStore: SpellStore
         let enchantmentStore: EnchantmentStore
+        let shoutStore: ShoutStore
+        let equipSlotStore: EquipSlotStore
         let sourcePlugin: String
     }
 
@@ -21,6 +23,8 @@ nonisolated extension RecordTextDump {
         let effects: MagicEffectStore
         let spells: SpellStore
         let enchantments: EnchantmentStore
+        let shouts: ShoutStore
+        let equipSlots: EquipSlotStore
         let sourcePlugin: String
     }
 
@@ -44,6 +48,8 @@ nonisolated extension RecordTextDump {
                 effects: context.magicEffectStore,
                 spells: context.spellStore,
                 enchantments: context.enchantmentStore,
+                shouts: context.shoutStore,
+                equipSlots: context.equipSlotStore,
                 sourcePlugin: context.sourcePlugin
             )
         )
@@ -61,7 +67,14 @@ nonisolated extension RecordTextDump {
         case "SPEL": spellSummary(record, localized, magicContext)
         case "SCRL": scrollSummary(record, localized, magicContext)
         case "ENCH": enchantmentSummary(record, localized, formListContext, magicContext)
-        default: nil
+        // The shout family lives in RecordTextDumpShouts.swift so both files
+        // stay inside the strict-lint file-length cap.
+        default:
+            shoutFamilySummary(
+                record: record,
+                localized: localized,
+                magicContext: magicContext
+            )
         }
     }
 

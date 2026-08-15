@@ -21,8 +21,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   cross-plugin lookup, and named resolution of object KWDA arrays.
 * [Magic records](/formats/magic-records.md) - MGEF identity and 152-byte DATA layout,
   SPEL/SCRL casting headers and spell cost calculation, the ENCH enchantment header and its
-  base chains, load-order-wide effect, spell and enchantment lookup, and plugin-relative
-  resolution of EFID, spell and item EITM links.
+  base chains, the SHOU/WOOP/LVSP/DUAL/EQUP small records, the EQUP graph that answers hand
+  occupancy, load-order-wide effect, spell, shout and equip-slot lookup, and plugin-relative
+  resolution of EFID, spell, item EITM and ETYP links.
 * [Locations](/formats/locations.md) - LCTN/LCRT layouts, cycle-safe parent and keyword
   traversal, CELL XLCN links, and direct quest-location alias fills.
 * [plugins.txt load order](/formats/plugins-txt.md) - enable flags and file
@@ -98,7 +99,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   emitter + modifier blocks, effect-shader wiring, Whiterun sweep evidence.
 * [DDS texture container](/formats/dds.md) - DDS_HEADER/DXT10 layout, BCn + 32-bit RGB,
   mip chain math, color-space policy.
-* [Actor records](/formats/actors.md) - ACHR/NPC_/LVLN/LVLI/RACE/CLAS/ARMO/ARMA/OTFT
+* [Actor records](/formats/actors.md) - ACHR/NPC_/LVLN/LVLI/LVSP/RACE/CLAS/ARMO/ARMA/OTFT
   layouts, TPLT chain + visual appearance resolution (skin/outfit/slot
   masking), FaceGen path convention + actor GPU assembly.
 * [FaceGen TRI expressions](/formats/tri.md) - FRTRI003 base topology, named scaled

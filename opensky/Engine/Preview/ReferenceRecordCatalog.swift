@@ -17,6 +17,11 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
     case spell = "SPEL"
     case scroll = "SCRL"
     case enchantment = "ENCH"
+    case shout = "SHOU"
+    case wordOfPower = "WOOP"
+    case leveledSpell = "LVSP"
+    case dualCastData = "DUAL"
+    case equipSlot = "EQUP"
 
     var fourCC: FourCC {
         switch self {
@@ -32,6 +37,11 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
         case .spell: "SPEL"
         case .scroll: "SCRL"
         case .enchantment: "ENCH"
+        case .shout: "SHOU"
+        case .wordOfPower: "WOOP"
+        case .leveledSpell: "LVSP"
+        case .dualCastData: "DUAL"
+        case .equipSlot: "EQUP"
         }
     }
 
@@ -49,6 +59,11 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
         case .spell: "SPEL — Spells"
         case .scroll: "SCRL — Scrolls"
         case .enchantment: "ENCH — Enchantments"
+        case .shout: "SHOU — Shouts"
+        case .wordOfPower: "WOOP — Words of power"
+        case .leveledSpell: "LVSP — Leveled spells"
+        case .dualCastData: "DUAL — Dual cast data"
+        case .equipSlot: "EQUP — Equip slots"
         }
     }
 }

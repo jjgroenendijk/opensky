@@ -53,6 +53,33 @@ struct EquipmentRuntimeTests {
         #expect(catalog.occupancy(of: FormID(0xDEAD)).isEmpty)
     }
 
+    /// The catalog reads hands from the ETYP link through the plugin's own
+    /// EQUP graph. The fixture's sword names EitherHand and its greatsword
+    /// names BothHands, so both policies are exercised end to end.
+    @Test func weaponHandsComeFromTheEquipSlotGraph() throws {
+        let catalog = try EquipmentCatalog.build(from: ESMFile(data: Fixture.pluginBytes()))
+
+        #expect(catalog.occupancy(of: Fixture.sword).hands == .rightHand)
+        #expect(catalog.occupancy(of: Fixture.greatsword).hands == .bothHands)
+        #expect(catalog.unresolvedEquipTypes == 0)
+        #expect(catalog.equipSlots.hands(of: Fixture.leftHandSlot) == .leftHand)
+        #expect(catalog.equipSlots.hands(of: Fixture.rightHandSlot) == .rightHand)
+    }
+
+    /// A weapon whose ETYP names nothing the plugin holds is still equippable:
+    /// it falls back on the documented default and is counted as a miss.
+    @Test func anUnresolvableEquipTypeReadsAsAMissWithADocumentedDefault() throws {
+        let table = try EquipmentCatalog
+            .build(from: ESMFile(data: Fixture.pluginBytes()))
+            .equipSlots
+
+        // Nil is "no EQUP answers this link", which is what makes the caller
+        // apply its default; it is not the same as a slot taking no hand.
+        #expect(table.hands(of: FormID(0xDEAD)) == nil)
+        #expect(table.hands(of: nil) == nil)
+        #expect(EquipmentCatalog.defaultWeaponHands == .rightHand)
+    }
+
     // MARK: - Slot conflicts
 
     @Test func equippingATorsoPieceDisplacesTheOtherOne() throws {
@@ -310,19 +337,5 @@ struct EquipmentOccupancyTests {
     @Test func nothingOccupiesNothingAndConflictsWithNothing() {
         #expect(EquipmentOccupancy.none.isEmpty)
         #expect(!EquipmentOccupancy.none.conflicts(with: EquipmentOccupancy(slots: .body)))
-    }
-
-    /// The WEAP DNAM animation type decides hands until an EQUP decoder exists.
-    @Test func twoHandedAnimationTypesTakeBothHands() {
-        #expect(EquipmentCatalog.hands(for: .twoHandSword) == .bothHands)
-        #expect(EquipmentCatalog.hands(for: .twoHandAxe) == .bothHands)
-        #expect(EquipmentCatalog.hands(for: .bow) == .bothHands)
-        #expect(EquipmentCatalog.hands(for: .crossbow) == .bothHands)
-        #expect(EquipmentCatalog.hands(for: .oneHandSword) == .rightHand)
-        #expect(EquipmentCatalog.hands(for: .oneHandDagger) == .rightHand)
-        #expect(EquipmentCatalog.hands(for: .staff) == .rightHand)
-        // An undocumented animation-type byte decodes to nil and stays
-        // equippable as a one-hander rather than becoming unequippable.
-        #expect(EquipmentCatalog.hands(for: nil) == .rightHand)
     }
 }
