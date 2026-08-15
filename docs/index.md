@@ -20,8 +20,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Keywords and actions](/formats/keywords.md) - KYWD/AACT editor-id tags,
   cross-plugin lookup, and named resolution of object KWDA arrays.
 * [Magic records](/formats/magic-records.md) - MGEF identity and 152-byte DATA layout,
-  SPEL/SCRL casting headers and spell cost calculation, load-order-wide effect and spell
-  lookup, and plugin-relative resolution of EFID and spell links.
+  SPEL/SCRL casting headers and spell cost calculation, the ENCH enchantment header and its
+  base chains, load-order-wide effect, spell and enchantment lookup, and plugin-relative
+  resolution of EFID, spell and item EITM links.
 * [Locations](/formats/locations.md) - LCTN/LCRT layouts, cycle-safe parent and keyword
   traversal, CELL XLCN links, and direct quest-location alias fills.
 * [plugins.txt load order](/formats/plugins-txt.md) - enable flags and file

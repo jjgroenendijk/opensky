@@ -107,6 +107,7 @@ nonisolated enum RecordTextDump {
                 record: record,
                 localized: localized,
                 keywordContext: keywordContext,
+                formListContext: formListContext,
                 magicContext: magicContext
             )
                 ?? referenceRecordSummary(

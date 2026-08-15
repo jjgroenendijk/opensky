@@ -9,15 +9,18 @@ nonisolated extension RecordTextDump {
         let formListStore: FormListStore
         let magicEffectStore: MagicEffectStore
         let spellStore: SpellStore
+        let enchantmentStore: EnchantmentStore
         let sourcePlugin: String
     }
 
     /// The magic stores a summary needs to name what a record points at: MGEF
     /// for EFID links, SPEL/SCRL for the spell a book teaches or a weapon's
-    /// critical applies.
+    /// critical applies, ENCH for the enchantment on a weapon or a piece of
+    /// armor.
     struct MagicContext {
         let effects: MagicEffectStore
         let spells: SpellStore
+        let enchantments: EnchantmentStore
         let sourcePlugin: String
     }
 
@@ -40,6 +43,7 @@ nonisolated extension RecordTextDump {
             magicContext: MagicContext(
                 effects: context.magicEffectStore,
                 spells: context.spellStore,
+                enchantments: context.enchantmentStore,
                 sourcePlugin: context.sourcePlugin
             )
         )
@@ -49,12 +53,14 @@ nonisolated extension RecordTextDump {
         record: ESMRecord,
         localized: Bool,
         keywordContext: KeywordContext?,
+        formListContext: FormListContext?,
         magicContext: MagicContext?
     ) -> String? {
         switch record.type {
         case "MGEF": magicEffectSummary(record, localized, keywordContext)
         case "SPEL": spellSummary(record, localized, magicContext)
         case "SCRL": scrollSummary(record, localized, magicContext)
+        case "ENCH": enchantmentSummary(record, localized, formListContext, magicContext)
         default: nil
         }
     }
@@ -156,6 +162,70 @@ nonisolated extension RecordTextDump {
         let cost = SpellStore.cost(of: record, effects: effects)
         line += ", cost \(costText(cost)), skipped \(record.skipped.total)"
         return ([line] + effectTable(effects)).joined(separator: "\n")
+    }
+
+    /// ENCH: the ENIT header, the two links it carries, and the same resolved
+    /// effect table SPEL prints. Without a magic context the effects still
+    /// print by raw FormID, because the base costs live in the MGEF records.
+    private static func enchantmentSummary(
+        _ record: ESMRecord,
+        _ localized: Bool,
+        _ formListContext: FormListContext?,
+        _ context: MagicContext?
+    ) -> String? {
+        guard
+            let enchantment = try? Enchantment(record: record, localized: localized)
+        else { return nil }
+        var line = "decoded ENCH: editorID \(enchantment.editorID ?? "-"), "
+            + "name \(display(enchantment.name))"
+        if let data = enchantment.data {
+            line += enchantmentDataText(data, formListContext, context)
+        } else {
+            line += ", ENIT malformed"
+        }
+        guard let context else {
+            let names = enchantment.effects.map(\.effect.description)
+            return line + ", \(names.count) effects [\(names.joined(separator: ", "))]"
+                + ", skipped \(enchantment.skipped.total)"
+        }
+        let effects = EnchantmentStore.resolvedEffects(
+            of: enchantment,
+            fromPlugin: context.sourcePlugin,
+            effects: context.effects
+        )
+        let cost = EnchantmentStore.cost(of: enchantment, effects: effects)
+        line += ", cost \(costText(cost)), skipped \(enchantment.skipped.total)"
+        return ([line] + effectTable(effects)).joined(separator: "\n")
+    }
+
+    /// The ENIT fields, with the base-enchantment and worn-restrictions links
+    /// named through the stores that own them.
+    private static func enchantmentDataText(
+        _ data: EnchantmentItemData,
+        _ formListContext: FormListContext?,
+        _ context: MagicContext?
+    ) -> String {
+        var text = String(
+            format: ", type %@, casting %@, delivery %@, charge time %.2f, amount %d",
+            data.type.description,
+            data.castingType.description,
+            data.delivery.description,
+            data.chargeTime,
+            Int(data.amount)
+        )
+        if let base = data.baseEnchantment {
+            let name = context.map {
+                $0.enchantments.displayString(for: base, fromPlugin: $0.sourcePlugin)
+            } ?? base.description
+            text += ", base enchantment \(name)"
+        }
+        if let restrictions = data.wornRestrictions {
+            let name = formListContext.map {
+                $0.store.displayString(for: restrictions, fromPlugin: $0.sourcePlugin)
+            } ?? restrictions.description
+            text += ", worn restrictions \(name)"
+        }
+        return text
     }
 
     private static func costText(_ cost: SpellCostResult) -> String {

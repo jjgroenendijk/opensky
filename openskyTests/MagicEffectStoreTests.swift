@@ -59,6 +59,7 @@ struct MagicEffectStoreTests {
                 formListStore: FormListStore(index: index),
                 magicEffectStore: store,
                 spellStore: SpellStore(index: index, effects: store),
+                enchantmentStore: EnchantmentStore(index: index, effects: store),
                 sourcePlugin: "Patch.esp"
             )
         )

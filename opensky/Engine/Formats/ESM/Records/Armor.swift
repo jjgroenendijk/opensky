@@ -1,8 +1,14 @@
 // ARMO record decoded into engine types: the appearance subset for skinning.
 // An ARMO is one equippable piece (armor, jewelry, clothing, shield); its
 // visible parts come from the armatures it references, one ARMA per MODL. The
-// item's own ground/inventory display models (MOD2/MOD4 world-model paths)
-// and enchantment (EITM) are skipped.
+// item's own ground/inventory display models (MOD2/MOD4 world-model paths) are
+// skipped.
+//
+// M19.3 adds EITM, the ENCH link that makes a piece enchanted, decoded the way
+// WEAP decodes its own. There is no armor-side charge field to go with it:
+// xEdit builds both records' link from `wbEnchantment`, and only WEAP asks for
+// the capacity variant that adds EAMT (`wbEnchantment(True)`), so an enchanted
+// piece of armor has an effect and no charge.
 //
 // M12.1.1 adds the inventory-facing half so ARMO can join the item definition
 // index alongside the six carryable families: DATA (the shared 8-byte gold
@@ -37,6 +43,8 @@ nonisolated struct Armor {
     let keywords: KeywordList
     /// DNAM — base armor rating * 100; only the low 16 bits are meaningful.
     let armorRating: UInt32
+    /// EITM — ENCH applied while the piece is worn; nil when unenchanted.
+    let enchantment: FormID?
 
     init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "ARMO" else {
@@ -49,9 +57,8 @@ nonisolated struct Armor {
         var race: FormID?
         var bodyTemplate: BodyTemplate?
         var armatures: [FormID] = []
-        var itemValue = ItemValue.zero
         var keywords = KeywordList()
-        var armorRating: UInt32 = 0
+        var payload = ArmorInventoryFields()
         for field in try record.fields() {
             if try keywords.decode(field: field) {
                 continue
@@ -74,9 +81,7 @@ nonisolated struct Armor {
             default:
                 // Inventory fields live in their own decoder so this switch
                 // stays inside the strict-lint complexity cap.
-                try Self.decodeInventoryField(
-                    field, itemValue: &itemValue, armorRating: &armorRating
-                )
+                try payload.decode(field: field)
             }
         }
         self.editorID = editorID
@@ -84,26 +89,32 @@ nonisolated struct Armor {
         self.race = race
         self.bodyTemplate = bodyTemplate
         self.armatures = armatures
-        self.itemValue = itemValue
+        itemValue = payload.itemValue
         self.keywords = keywords
-        self.armorRating = armorRating
+        armorRating = payload.armorRating
+        enchantment = payload.enchantment
     }
 
-    /// DATA (shared 8-byte value + weight) and DNAM (armor rating * 100).
-    private static func decodeInventoryField(
-        _ field: ESMField,
-        itemValue: inout ItemValue,
-        armorRating: inout UInt32
-    ) throws {
-        switch field.type {
-        case "DATA":
-            itemValue = try ItemValue(field: field)
-        case "DNAM":
-            guard field.data.count >= 4 else { return }
-            var reader = BinaryReader(field.data)
-            armorRating = try reader.readUInt32()
-        default:
-            break
+    /// DATA (shared 8-byte value + weight), DNAM (armor rating * 100) and
+    /// EITM (the ENCH link).
+    private struct ArmorInventoryFields {
+        var itemValue = ItemValue.zero
+        var armorRating: UInt32 = 0
+        var enchantment: FormID?
+
+        mutating func decode(field: ESMField) throws {
+            switch field.type {
+            case "DATA":
+                itemValue = try ItemValue(field: field)
+            case "DNAM":
+                guard field.data.count >= 4 else { return }
+                var reader = BinaryReader(field.data)
+                armorRating = try reader.readUInt32()
+            case "EITM":
+                enchantment = try InventoryItemFields.optionalFormID(field)
+            default:
+                break
+            }
         }
     }
 }

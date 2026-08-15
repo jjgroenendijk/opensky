@@ -25,6 +25,38 @@
 
 import Foundation
 
+/// The ENCH link a weapon or a piece of armor carries, already resolved
+/// against the load order where a resolver was supplied (issue #466). The
+/// equipment runtime reads the resolved identity instead of walking plugins
+/// again for every equip.
+nonisolated struct ItemEnchantment: Equatable {
+    /// EITM exactly as the record writes it, relative to its own plugin.
+    let link: FormID
+    /// EAMT, the fully charged value. Weapons only: ARMO has no charge field.
+    let charge: UInt16?
+    /// The winning ENCH identity, or nil when no resolver was supplied or the
+    /// link is dangling.
+    let resolvedID: ResolvedFormID?
+}
+
+/// Resolves an item's EITM through an `EnchantmentStore`. Held by
+/// `ItemDefinitionStore` so the per-record projections can name the winning
+/// enchantment without each of them knowing about the load order.
+nonisolated struct ItemEnchantmentResolver {
+    let store: EnchantmentStore
+    /// The plugin the records being indexed came from; EITM is relative to it.
+    let pluginName: String
+
+    func resolve(_ link: FormID?, charge: UInt16?) -> ItemEnchantment? {
+        guard let link else { return nil }
+        return ItemEnchantment(
+            link: link,
+            charge: charge,
+            resolvedID: store.resolvedID(link, fromPlugin: pluginName)
+        )
+    }
+}
+
 /// One carryable base record, reduced to what inventory needs from all of
 /// them. The `family` tag says which record type it came from, so a consumer
 /// that needs the full decode can go back to the typed record.
@@ -66,6 +98,9 @@ nonisolated struct ItemDefinition: Equatable {
     let weight: Float
     /// KYWD links (vendor category, material, weapon type).
     let keywords: [FormID]
+    /// EITM and, on a weapon, EAMT. Nil on an unenchanted record and on every
+    /// family that has no enchantment field at all.
+    let enchantment: ItemEnchantment?
 
     /// v1 stacking key: the base FormID. See the file header for why this is
     /// provisional.
@@ -106,7 +141,15 @@ nonisolated final class ItemDefinitionStore {
     /// sweep can assert zero rather than silently indexing fewer items.
     let skippedCounts: [ItemDefinition.Family: Int]
 
-    init(file: ESMFile) {
+    /// The load-order resolver behind `ItemDefinition.enchantment`, or nil when
+    /// the store was built without one and the links stay unresolved.
+    let enchantments: ItemEnchantmentResolver?
+
+    /// Builds the index. Supply `enchantments` to have every weapon and armor
+    /// EITM resolved to the winning ENCH identity while the index is built;
+    /// without it the links are still carried, just unresolved.
+    init(file: ESMFile, enchantments: ItemEnchantmentResolver? = nil) {
+        self.enchantments = enchantments
         let localized = (try? file.pluginHeader().isLocalized) ?? false
         var definitions: [UInt32: ItemDefinition] = [:]
         var skipped: [ItemDefinition.Family: Int] = [:]
@@ -115,7 +158,10 @@ nonisolated final class ItemDefinitionStore {
             for record in Self.records(of: family.recordType, in: file) {
                 guard
                     let definition = Self.definition(
-                        record: record, family: family, localized: localized
+                        record: record,
+                        family: family,
+                        localized: localized,
+                        enchantments: enchantments
                     )
                 else {
                     familySkips += 1
@@ -181,16 +227,29 @@ nonisolated final class ItemDefinitionStore {
             .sorted { $0.formID.rawValue < $1.formID.rawValue }
     }
 
+    /// The ENCH behind an item's EITM, or nil when the item is unenchanted or
+    /// the store was built without a resolver (issue #466). The equipment
+    /// runtime reads this instead of re-walking plugins.
+    func enchantment(of definition: ItemDefinition) -> ResolvedEnchantment? {
+        guard
+            let resolver = enchantments,
+            let resolvedID = definition.enchantment?.resolvedID
+        else { return nil }
+        return resolver.store.enchantment(resolvedID)
+    }
+
     /// Decodes one record into the unified view. Returns nil when the typed
     /// decode throws, which the caller counts as a skip.
     private static func definition(
         record: ESMRecord,
         family: ItemDefinition.Family,
-        localized: Bool
+        localized: Bool,
+        enchantments: ItemEnchantmentResolver?
     ) -> ItemDefinition? {
         switch family {
         case .armor:
-            (try? Armor(record: record, localized: localized)).map(view)
+            (try? Armor(record: record, localized: localized))
+                .map { view($0, enchantments) }
         case .ammunition:
             (try? Ammunition(record: record, localized: localized)).map(view)
         case .book:
@@ -202,7 +261,8 @@ nonisolated final class ItemDefinitionStore {
         case .miscellaneous:
             (try? MiscItem(record: record, localized: localized)).map(view)
         case .weapon:
-            (try? Weapon(record: record, localized: localized)).map(view)
+            (try? Weapon(record: record, localized: localized))
+                .map { view($0, enchantments) }
         }
     }
 
@@ -222,7 +282,10 @@ nonisolated final class ItemDefinitionStore {
 /// extension rather than an `ItemViewConvertible` protocol: the record structs
 /// are plain decoders and none of them should grow a store-shaped conformance.
 nonisolated extension ItemDefinitionStore {
-    fileprivate static func view(_ armor: Armor) -> ItemDefinition {
+    fileprivate static func view(
+        _ armor: Armor,
+        _ enchantments: ItemEnchantmentResolver?
+    ) -> ItemDefinition {
         ItemDefinition(
             formID: armor.formID,
             family: .armor,
@@ -230,8 +293,24 @@ nonisolated extension ItemDefinitionStore {
             name: armor.name,
             value: armor.itemValue.value,
             weight: armor.itemValue.weight,
-            keywords: armor.keywords.keywords
+            keywords: armor.keywords.keywords,
+            enchantment: enchantment(armor.enchantment, charge: nil, enchantments)
         )
+    }
+
+    /// The enchantment view for one record. The link is carried whether or not
+    /// a resolver was supplied, so a store built without one still reports
+    /// which items are enchanted.
+    fileprivate static func enchantment(
+        _ link: FormID?,
+        charge: UInt16?,
+        _ resolver: ItemEnchantmentResolver?
+    ) -> ItemEnchantment? {
+        guard let link else { return nil }
+        guard let resolver else {
+            return ItemEnchantment(link: link, charge: charge, resolvedID: nil)
+        }
+        return resolver.resolve(link, charge: charge)
     }
 
     fileprivate static func view(_ ammunition: Ammunition) -> ItemDefinition {
@@ -254,8 +333,21 @@ nonisolated extension ItemDefinitionStore {
         view(item.formID, .miscellaneous, item.fields, item.itemValue)
     }
 
-    fileprivate static func view(_ weapon: Weapon) -> ItemDefinition {
-        view(weapon.formID, .weapon, weapon.fields, weapon.itemValue)
+    fileprivate static func view(
+        _ weapon: Weapon,
+        _ enchantments: ItemEnchantmentResolver?
+    ) -> ItemDefinition {
+        view(
+            weapon.formID,
+            .weapon,
+            weapon.fields,
+            weapon.itemValue,
+            enchantment(
+                weapon.enchantment,
+                charge: weapon.enchantmentCharge,
+                enchantments
+            )
+        )
     }
 
     /// Shared projection for the six families that compose
@@ -265,7 +357,8 @@ nonisolated extension ItemDefinitionStore {
         _ formID: FormID,
         _ family: ItemDefinition.Family,
         _ fields: InventoryItemFields,
-        _ itemValue: ItemValue
+        _ itemValue: ItemValue,
+        _ enchantment: ItemEnchantment? = nil
     ) -> ItemDefinition {
         ItemDefinition(
             formID: formID,
@@ -274,7 +367,8 @@ nonisolated extension ItemDefinitionStore {
             name: fields.name,
             value: itemValue.value,
             weight: itemValue.weight,
-            keywords: fields.keywords.keywords
+            keywords: fields.keywords.keywords,
+            enchantment: enchantment
         )
     }
 }

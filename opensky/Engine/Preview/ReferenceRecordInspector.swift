@@ -9,6 +9,7 @@ nonisolated struct ReferenceRecordInspector {
     private let formLists: FormListStore
     private let magicEffects: MagicEffectStore
     private let spells: SpellStore
+    private let enchantments: EnchantmentStore
     private let locations: LocationStore
     private let encounterZones: EncounterZoneStore
     private let collisionLayers: CollisionLayerStore
@@ -23,6 +24,7 @@ nonisolated struct ReferenceRecordInspector {
         let magicEffectStore = MagicEffectStore(index: index)
         magicEffects = magicEffectStore
         spells = SpellStore(index: index, effects: magicEffectStore)
+        enchantments = EnchantmentStore(index: index, effects: magicEffectStore)
         locations = LocationStore(index: index)
         encounterZones = EncounterZoneStore(index: index)
         collisionLayers = CollisionLayerStore(index: index)
@@ -39,6 +41,7 @@ nonisolated struct ReferenceRecordInspector {
                 formListStore: formLists,
                 magicEffectStore: magicEffects,
                 spellStore: spells,
+                enchantmentStore: enchantments,
                 sourcePlugin: preview.sourcePlugin
             )
         )]
@@ -65,6 +68,7 @@ nonisolated struct ReferenceRecordInspector {
         case "ECZN": return encounterZone(id)
         case "COLL": return collisionLayer(id)
         case "DOBJ": return defaultObjectTable()
+        case "ENCH": return enchantmentChain(id)
         default: return nil
         }
     }
@@ -101,6 +105,21 @@ nonisolated struct ReferenceRecordInspector {
                 + keywordNames.joined(separator: ", ") + "]"
         }
         return cappedLines(title: "parent chain", values: values)
+    }
+
+    /// The selected enchantment followed by each base enchantment above it.
+    /// A vanilla chain is one or two entries; the store's cycle guard is what
+    /// keeps a mod-authored loop from hanging the inspector.
+    private func enchantmentChain(_ id: ResolvedFormID) -> String? {
+        let chain = enchantments.baseChain(of: id)
+        guard !chain.isEmpty else { return nil }
+        let values = chain.map { resolved in
+            let cost = resolved.cost
+            return "\(resolved.editorID ?? resolved.id.description) — "
+                + "\(resolved.sourcePlugin) — \(resolved.effects.count) effects, "
+                + "cost \(cost.cost)\(cost.isManual ? " (manual)" : "")"
+        }
+        return cappedLines(title: "base enchantment chain", values: values)
     }
 
     private func encounterZone(_ id: ResolvedFormID) -> String? {

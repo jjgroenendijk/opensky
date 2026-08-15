@@ -30,12 +30,12 @@ nonisolated enum RecordIndexDecodeResult<Value> {
 }
 
 nonisolated struct RecordIndex {
-    /// Reference data loaded once for stores and the Asset Browser. MGEF, SPEL
-    /// and SCRL join the M18 families because magic links need the same
-    /// cross-plugin override semantics and inspector context.
+    /// Reference data loaded once for stores and the Asset Browser. MGEF,
+    /// SPEL, SCRL and ENCH join the M18 families because magic links need the
+    /// same cross-plugin override semantics and inspector context.
     static let referenceRecordTypes: Set<FourCC> = [
         "KYWD", "FLST", "LCTN", "LCRT", "ECZN", "AACT", "COLL", "DOBJ", "MGEF",
-        "SPEL", "SCRL"
+        "SPEL", "SCRL", "ENCH"
     ]
 
     private static let logger = Logger(

@@ -4,6 +4,17 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-15
 
+* **Enchantments decode and reach the items that carry them (issue #466)**: ENCH now
+  decodes identity, the `ENIT` header — 36 bytes, or the 32-byte variant that omits the
+  worn-restrictions link — and the shared effect list, with unknown-preserving cast,
+  delivery and enchantment-type enums. `EnchantmentStore` applies cross-plugin overrides,
+  joins each effect against `MagicEffectStore`, costs it with the same curve a spell uses,
+  and follows base-enchantment chains under a cycle guard. `Armor` gained the `EITM` link it
+  used to skip, and weapon and armor item definitions now carry the link, the weapon-side
+  charge and the winning ENCH identity. The load-order gate decoded all 766 definitions into
+  757 winning identities with zero unread, malformed or unknown-enum values, and every
+  `EITM` on 3,025 weapons and 2,885 pieces of armor resolved. Nothing applies an effect yet.
+  See [magic records](/formats/magic-records.md).
 * **Spells and scrolls decode, resolve and cost themselves (issue #465)**: SPEL and SCRL
   now decode identity, the shared 36-byte `SPIT` casting header, the scroll's inventory
   fields and the effect list, with unknown-preserving spell-type, casting and delivery

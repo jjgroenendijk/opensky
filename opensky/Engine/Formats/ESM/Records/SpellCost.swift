@@ -133,9 +133,26 @@ nonisolated enum SpellCost {
         total: Float,
         unresolvedEffects: Int
     ) -> SpellCostResult {
-        let isManual = data?.flags.contains(.manualCostCalc) ?? false
-        return SpellCostResult(
-            cost: isManual ? (data?.baseCost ?? 0) : rounded(total),
+        result(
+            isManual: data?.flags.contains(.manualCostCalc) ?? false,
+            authoredCost: data?.baseCost ?? 0,
+            total: total,
+            unresolvedEffects: unresolvedEffects
+        )
+    }
+
+    /// The same decision without a `SpellItemData` in hand. ENCH stores its
+    /// authored cost and its manual-cost flag in ENIT rather than SPIT, and
+    /// UESP documents the identical per-effect curve for both records, so the
+    /// two headers meet here instead of in a second cost routine.
+    static func result(
+        isManual: Bool,
+        authoredCost: UInt32,
+        total: Float,
+        unresolvedEffects: Int
+    ) -> SpellCostResult {
+        SpellCostResult(
+            cost: isManual ? authoredCost : rounded(total),
             autoCalculated: total,
             isManual: isManual,
             unresolvedEffects: unresolvedEffects
