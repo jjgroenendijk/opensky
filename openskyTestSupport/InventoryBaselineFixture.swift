@@ -10,12 +10,16 @@
 //
 //   0x00_000F  MISC Gold001        (vanilla gold's real form, weight 0)
 //   0x00_0100  MISC Lockpick       (weight 0)
-//   0x00_0200  WEAP IronSword      (weight 9, value 25; one-hand, right hand)
-//   0x00_0210  WEAP IronGreatsword (two-hand, both hands)
+//   0x00_0200  WEAP IronSword      (weight 9, value 25; ETYP EitherHand)
+//   0x00_0210  WEAP IronGreatsword (ETYP BothHands)
 //   0x00_0300  ARMO IronCuirass    (weight 30, value 125; slot 32 body)
 //   0x00_0400  ARMO IronHelmet     (weight 5, value 60; slot 30 head)
 //   0x00_0410  ARMO LeatherCuirass (slot 32 body — contests IronCuirass)
 //   0x00_0420  ARMO IronGauntlets  (slot 33 hands — contests nothing)
+//   0x00_0500  EQUP RightHand      (leaf)
+//   0x00_0510  EQUP LeftHand       (leaf)
+//   0x00_0520  EQUP EitherHand     (parents left + right, use all 0)
+//   0x00_0530  EQUP BothHands      (parents left + right, use all 1)
 //   0x00_1000  LVLI single pick    -> IronSword at level 1, IronCuirass at 5
 //   0x00_1010  LVLI useAll bundle  -> IronCuirass + IronHelmet
 //   0x00_1020  LVLI self-referring -> itself, for the cycle guard
@@ -42,6 +46,11 @@ enum InventoryBaselineFixture {
     static let leatherCuirass = FormID(0x0000_0410)
     static let gauntlets = FormID(0x0000_0420)
 
+    static let rightHandSlot = FormID(0x0000_0500)
+    static let leftHandSlot = FormID(0x0000_0510)
+    static let eitherHandSlot = FormID(0x0000_0520)
+    static let bothHandsSlot = FormID(0x0000_0530)
+
     static let singlePickList = FormID(0x0000_1000)
     static let bundleList = FormID(0x0000_1010)
     static let cyclicList = FormID(0x0000_1020)
@@ -67,6 +76,7 @@ enum InventoryBaselineFixture {
         contents += ESMFixture.topGroup("MISC", contents: miscRecords())
         contents += ESMFixture.topGroup("WEAP", contents: weaponRecord())
         contents += ESMFixture.topGroup("ARMO", contents: armorRecords())
+        contents += ESMFixture.topGroup("EQUP", contents: equipSlotRecords())
         contents += ESMFixture.topGroup("LVLI", contents: leveledRecords())
         contents += ESMFixture.topGroup("OTFT", contents: outfitRecords())
         contents += ESMFixture.topGroup("NPC_", contents: actorRecords())
@@ -81,36 +91,67 @@ enum InventoryBaselineFixture {
             + item("MISC", formID: lockpick.rawValue, editorID: "Lockpick", value: 5, weight: 0)
     }
 
-    /// Two weapons whose DNAM animation types straddle the one-hand /
-    /// two-hand split `EquipmentCatalog.hands(for:)` keys on, each with a MODL
-    /// so the hand attachment has a path to load (issue #178).
+    /// Two weapons whose ETYP links straddle the one-hand / two-hand split
+    /// `EquipmentCatalog` reads through the EQUP graph, each with a MODL so
+    /// the hand attachment has a path to load (issue #178). The DNAM animation
+    /// types still match their families, so a suite that asserts against the
+    /// animation graph reads the same weapons the same way.
     private static func weaponRecord() -> Data {
-        weapon(
+        weapon(WeaponSpec(
             formID: sword.rawValue, editorID: "IronSword", damage: 7,
-            animation: 1, model: "weapons\\iron\\sword.nif"
-        )
-            + weapon(
+            animation: 1, equipType: eitherHandSlot,
+            model: "weapons\\iron\\sword.nif"
+        ))
+            + weapon(WeaponSpec(
                 formID: greatsword.rawValue, editorID: "IronGreatsword", damage: 15,
-                animation: 5, model: "weapons\\iron\\greatsword.nif"
-            )
+                animation: 5, equipType: bothHandsSlot,
+                model: "weapons\\iron\\greatsword.nif"
+            ))
     }
 
-    private static func weapon(
-        formID: UInt32,
-        editorID: String,
-        damage: UInt16,
-        animation: UInt8,
-        model: String
-    ) -> Data {
-        var fields = ESMFixture.field("EDID", ESMFixture.zstring(editorID))
-        fields += ESMFixture.field("MODL", ESMFixture.zstring(model))
+    /// One weapon's authored numbers, bundled so the builder stays inside the
+    /// parameter-count cap.
+    private struct WeaponSpec {
+        let formID: UInt32
+        let editorID: String
+        let damage: UInt16
+        let animation: UInt8
+        let equipType: FormID
+        let model: String
+    }
+
+    private static func weapon(_ spec: WeaponSpec) -> Data {
+        var fields = ESMFixture.field("EDID", ESMFixture.zstring(spec.editorID))
+        fields += ESMFixture.field("MODL", ESMFixture.zstring(spec.model))
         fields += ESMFixture.field(
-            "DATA", InventoryFixture.weaponData(value: 25, weight: 9, damage: damage)
+            "DATA", InventoryFixture.weaponData(value: 25, weight: 9, damage: spec.damage)
         )
         fields += ESMFixture.field("DNAM", InventoryFixture.weaponDNAM(
-            animation: animation, speed: 1, reach: 1, flags: 0, skill: -1
+            animation: spec.animation, speed: 1, reach: 1, flags: 0, skill: -1
         ))
-        return ESMFixture.record("WEAP", formID: formID, data: fields)
+        var equipTypeData = Data()
+        equipTypeData.appendUInt32(spec.equipType.rawValue)
+        fields += ESMFixture.field("ETYP", equipTypeData)
+        return ESMFixture.record("WEAP", formID: spec.formID, data: fields)
+    }
+
+    /// The four EQUP records the two weapons resolve through, in the shape the
+    /// vanilla master authors them: two leaves named by editor ID, and two
+    /// composites that differ only in the DATA "use all parents" flag.
+    private static func equipSlotRecords() -> Data {
+        EquipSlotFixture.record(formID: rightHandSlot.rawValue, editorID: "RightHand")
+            + EquipSlotFixture.record(formID: leftHandSlot.rawValue, editorID: "LeftHand")
+            + EquipSlotFixture.record(
+                formID: eitherHandSlot.rawValue,
+                editorID: "EitherHand",
+                parents: [leftHandSlot.rawValue, rightHandSlot.rawValue]
+            )
+            + EquipSlotFixture.record(
+                formID: bothHandsSlot.rawValue,
+                editorID: "BothHands",
+                parents: [leftHandSlot.rawValue, rightHandSlot.rawValue],
+                usesAllParents: true
+            )
     }
 
     /// Body slots follow nif.xml bit numbering (bit N == biped slot 30 + N):

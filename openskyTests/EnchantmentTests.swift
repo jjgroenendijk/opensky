@@ -255,6 +255,8 @@ enum EnchantmentFixture {
             magicEffectStore: effects,
             spellStore: SpellStore(index: index, effects: effects),
             enchantmentStore: EnchantmentStore(index: index, effects: effects),
+            shoutStore: ShoutStore(index: index),
+            equipSlotStore: EquipSlotStore(index: index),
             sourcePlugin: "Base.esm"
         )
     }

@@ -4,6 +4,20 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-15
 
+* **The small magic records decode, and EQUP replaces the hand heuristic (issue #467)**:
+  SHOU, WOOP, DUAL and EQUP gained decoders, `LeveledList` gained LVSP, and `ShoutStore`
+  and `EquipSlotStore` resolve their links across the load order — a shout's three `SNAM`
+  entries now print word and spell names rather than hex. The consequential half is EQUP:
+  `EquipmentCatalog` reads a weapon's hands from its `ETYP` link through the plugin's EQUP
+  graph, and `hands(for:)`, which guessed occupancy from the WEAP `DNAM` animation type, is
+  deleted rather than kept as a fallback. A weapon whose link resolves to nothing takes the
+  documented right-hand default and is counted. The load-order gate decoded 117 SHOU, 107
+  WOOP, 33 LVSP, 2 DUAL and 7 EQUP with zero unread or malformed fields, and every one of
+  the 3,354 weapon and 1,560 spell `ETYP` links that exist resolved — the only 5 misses are
+  weapons carrying no `ETYP` at all. All five types are browsable in the Asset Browser.
+  Shout casting, cooldowns and dual-cast runtime remain out of scope. See
+  [magic records](/formats/magic-records.md) and
+  [inventory and equipment](/engine/inventory-equipment.md).
 * **Enchantments decode and reach the items that carry them (issue #466)**: ENCH now
   decodes identity, the `ENIT` header — 36 bytes, or the 32-byte variant that omits the
   worn-restrictions link — and the shared effect list, with unknown-preserving cast,

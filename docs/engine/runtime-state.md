@@ -786,12 +786,19 @@ disjoint kinds of slot:
 | half    | source                     | why not the other half                                     |
 | ------- | -------------------------- | ---------------------------------------------------------- |
 | `slots` | ARMO `BOD2`/`BODT`         | the biped-object bitfield the appearance pass already masks skin against |
-| `hands` | WEAP `DNAM` animation type | no bit of the biped bitfield means "right hand" — slot 39 is the shield's *armour*, not the hand holding it |
+| `hands` | WEAP `ETYP` through the EQUP graph | no bit of the biped bitfield means "right hand" — slot 39 is the shield's *armour*, not the hand holding it |
 
-Two-handed swords and axes, bows and crossbows take both hands; everything else, staves and
-the `other` catch-all included, takes the right hand — the hand the skeleton's `Weapon`
-attach node hangs off. Hands come from the animation type rather than the `ETYP` link
-because no EQUP decoder exists yet; when one lands it replaces `hands(for:)` alone.
+Hands come from the `ETYP` link, resolved through the plugin's own EQUP records by
+`EquipSlotTable`. That is the record the game itself uses, and the walk from a composite
+slot down to the named leaves is described in [magic records](/formats/magic-records.md).
+A weapon whose `ETYP` names no EQUP — 5 of the 3,359 in the vanilla load order carry none
+at all — falls back on `EquipmentCatalog.defaultWeaponHands`, the right hand, and the
+catalog counts the fallback in `unresolvedEquipTypes`.
+
+The WEAP `DNAM` animation type no longer decides occupancy. It still selects the animation
+set through `CombatHandType`, and the two deliberately disagree on the handful of vanilla
+weapons whose authored slot does not match their animation family; nothing reconciles them,
+because they answer different questions.
 
 The catalog is separate from `ItemDefinitionStore` deliberately: that store's
 `ItemDefinition` is the *inventory* view — value, weight, name — and widening it would put

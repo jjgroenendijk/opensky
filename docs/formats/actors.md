@@ -120,10 +120,14 @@ VTCK resolves through `useTraits` with gender, race, skin and head parts. The re
 appearance carries it as `ActorSourcedField<FormID?>`, preserving the NPC_ that supplied
 the voice type for the dialogue runtime.
 
-## LVLN / LVLI -> LeveledList
+## LVLN / LVLI / LVSP -> LeveledList
 
-Leveled NPC + leveled item lists share one layout (UESP documents the entry
-struct once); one decoder accepts both record types.
+Leveled NPC, leveled item and leveled spell lists share one layout (UESP
+documents the entry struct once for LVLN and LVLI; xEdit's
+`wbRecord(LVSP, 'Leveled Spell', ...)` reuses the same `wbLeveledListEntry`).
+One decoder accepts all three record types, and `recordType` says which one a
+list came from. LVSP is documented alongside the other magic records in
+[magic records](/formats/magic-records.md).
 
 | field | type    | decoded                                                 |
 | ----- | ------- | ------------------------------------------------------- |
@@ -137,7 +141,8 @@ LVLF 0x04 "use all" marks a bundle: every entry applies at once (probed:
 the list is alternatives — one entry is picked.
 
 LVLO: UESP documents 12 bytes (uint32 level, formID reference — NPC_ or
-nested LVLN, uint32 count). xEdit's `wbLeveledListEntry` reads uint16 level +
+nested LVLN, or on an LVSP a SPEL or nested LVSP, uint32 count). xEdit's
+`wbLeveledListEntry` reads uint16 level +
 2 pad + formID and accepts an 8-byte form with count defaulting 1 —
 byte-identical for sane values; OpenSky decodes the lenient shape. COED owner
 data (own subrecord after an LVLO) + OBND/LLCT/MODL are skipped.

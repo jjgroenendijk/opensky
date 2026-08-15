@@ -13,7 +13,9 @@ MGEF is the leaf record behind every EFID in a spell, enchantment, potion or ing
 OpenSky decodes the effect definition and resolves those raw links through the active plugin
 load order. SPEL and SCRL, the two casting containers, are decoded here as well, with the
 cost the game charges recomputed from their effect lists, and so is ENCH, the record a
-weapon or a piece of armor names through `EITM`. The shout family remains later M19 work;
+weapon or a piece of armor names through `EITM`. The five small records the shout family
+needs — SHOU, WOOP, LVSP, DUAL and EQUP — are decoded here as well, and EQUP is what
+answers "which hands does this fill" for [equipment](/engine/inventory-equipment.md).
 ALCH and INGR expose the shared effect list described in
 [record decoders](/formats/records.md).
 
@@ -31,6 +33,11 @@ ALCH and INGR expose the shared effect list described in
 - ENCH record fields
 - ENIT layout
 - EnchantmentStore, item links and base chains
+- SHOU and WOOP record fields
+- LVSP record fields
+- DUAL record fields
+- EQUP record fields
+- Equip slots and hand occupancy
 - Defensive policy and measured coverage
 - Verification surface
 
@@ -313,6 +320,120 @@ raw `EITM`, the weapon-side `EAMT` charge, and — when `ItemDefinitionStore` wa
 resolved enchantment instead of walking plugins again for every equip. Nothing applies an
 effect yet; that is issue 19.9.
 
+## SHOU and WOOP record fields
+
+Layout from UESP
+[`SHOU`](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/SHOU) and
+[`WOOP`](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/WOOP), with xEdit dev-4.1.6
+`Core/wbDefinitionsTES5.pas` `wbRecord(SHOU, 'Shout', ...)` (line 7173) and
+`wbRecord(WOOP, 'Word of Power', ...)` (line 10639) for the field order and link types.
+
+| field | type | OpenSky value |
+|---|---|---|
+| `EDID` | zstring | editor ID |
+| `FULL` | lstring | display name |
+| `MDOB` | FormID | menu display object |
+| `DESC` | lstring | description |
+| `SNAM` | repeated 12-byte struct | one `Shout.Word` per entry |
+| `ETYP` | FormID | tallied as unread; no vanilla master authors it on SHOU |
+
+Each `SNAM` is a fixed 12 bytes: a WOOP FormID, a SPEL FormID, then a float32 recovery
+time. Every vanilla shout carries exactly three, including the racial and creature powers
+that are not really shouts — those store three all-zero entries rather than none, and
+OpenSky decodes them as present entries whose two links are `nil`. The decoder does not
+enforce three, because UESP records that an override with fewer leaks the missing entries
+in from the overridden record and one with more corrupts memory in the original engine.
+
+WOOP is `EDID`, `FULL` (the word in the dragon font's transliteration, `Y3` for Yol) and
+`TNAM` (the same word in the plugin's language). `TNAM` is present on every vanilla word
+but is often an empty string, which is data rather than a decode failure.
+
+## LVSP record fields
+
+LVSP is the leveled-list layout LVLN and LVLI already use, so `LeveledList` accepts all
+three record types rather than a third decoder existing. xEdit's
+`wbRecord(LVSP, 'Leveled Spell', ...)` (line 8058) reuses the same `wbLeveledListEntry`;
+only the record types an entry may name change, from actors and items to `SPEL` or another
+`LVSP`. Fields are `EDID`, `OBND`, `LVLD` (chance none), `LVLF` (flags), `LLCT` (entry
+count) and a run of 12-byte `LVLO` entries. `LeveledList.recordType` says which of the
+three the list came from. Full entry layout is in [actor records](/formats/actors.md).
+
+## DUAL record fields
+
+DUAL is the art a dual-cast spell swaps in; an MGEF names one and nothing else reaches it.
+Layout from UESP [`DUAL`](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DUAL) and
+xEdit `wbRecord(DUAL, 'Dual Cast Data', ...)` (line 7543). Fields are `EDID`, `OBND` and a
+fixed 24-byte `DATA`:
+
+| offset | type | OpenSky value |
+|---:|---|---|
+| `0x00` | FormID | projectile (`PROJ`) |
+| `0x04` | FormID | explosion (`EXPL`) |
+| `0x08` | FormID | effect shader (`EFSH`) |
+| `0x0C` | FormID | hit effect art (`ARTO`) |
+| `0x10` | FormID | impact data set (`IPDS`) |
+| `0x14` | uint32 | inherit-scale flags: `0x01` hit effect art, `0x02` projectile, `0x04` explosion |
+
+A zero link becomes `nil`. A `DATA` shorter than 24 bytes leaves `art == nil` and is
+tallied, so the record's identity survives. Decode only: nothing dual-casts yet.
+
+## EQUP record fields
+
+EQUP is the record every `ETYP` link points at. Layout from UESP
+[`EQUP`](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/EQUP) and xEdit
+`wbRecord(EQUP, 'Equip Type', ...)` (line 7192).
+
+| field | type | OpenSky value |
+|---|---|---|
+| `EDID` | zstring | editor ID |
+| `PNAM` | packed FormID array | `parents`, the slots this one is composed of |
+| `DATA` | uint32 boolean | `usesAllParents` |
+
+`PNAM` is one subrecord holding a packed array, not one subrecord per parent; a record that
+spreads its parents over several `PNAM` fields still decodes, because every `PNAM` appends.
+A trailing partial FormID is dropped and the whole entries kept, rather than the field
+being discarded.
+
+The seven records Skyrim.esm authors, read from the install:
+
+| editor ID | parents | use all parents |
+|---|---|---|
+| `RightHand` | — | false |
+| `LeftHand` | — | false |
+| `EitherHand` | `LeftHand`, `RightHand` | false |
+| `BothHands` | `LeftHand`, `RightHand` | true |
+| `Shield` | `LeftHand` | true |
+| `Voice` | — | false |
+| `Potion` | — | false |
+
+## Equip slots and hand occupancy
+
+The EQUP graph carries structure but not meaning: it says `BothHands` is "all of `LeftHand`
+and `RightHand`" and says nothing about what `LeftHand` *is*. The original engine names the
+leaves, so `EquipSlotHands` names them the same way — by editor ID, the only identifier a
+mod-added copy would also carry. Resolution walks parents:
+
+- No parents: the slot is a leaf. `RightHand` and `LeftHand` map to their hand; any other
+  leaf (`Voice`, `Potion`, anything a mod invents) occupies no hand at all, which is the
+  right reading for a shout or a potion.
+- Parents with "use all parents" set: the union of the parents' hands. That is how
+  `BothHands` fills both and how `Shield`, whose only parent is `LeftHand`, fills the left.
+- Parents without it: the item fills one of them. The game lets the player choose; OpenSky
+  answers deterministically with the right hand when the right hand is among the options,
+  because that is the hand the skeleton's `Weapon` attach node hangs off.
+- A parent chain a mod has made cyclic terminates at a depth cap of eight. Vanilla chains
+  are one link deep.
+
+A link that names no EQUP is `nil` rather than an empty set, so a caller can tell an
+unresolved link from a slot that genuinely takes no hand.
+
+Two views exist over the same walk. `EquipSlotTable` indexes the EQUP records of one plugin
+by raw FormID, matching how `EquipmentCatalog` is built; `EquipSlotStore` is the
+load-order-wide store the inspectors and sweeps use, in the shape `SpellStore` and
+`KeywordStore` already have. Both call `EquipSlotHands`, so there is one implementation of
+the parent walk. This replaced the WEAP `DNAM` animation-type heuristic entirely; see
+[inventory and equipment](/engine/inventory-equipment.md).
+
 ## Defensive policy and measured coverage
 
 Wrong record type throws `ESMError.malformed`. A malformed individual field is tallied and
@@ -343,6 +464,19 @@ three entries. Every `EITM` on the 3,025 weapons and 2,885 pieces of armor that 
 resolves — zero dangling links in either family. The gate pins `EnchYsgramorShield`,
 `StaffEnchFireball` and `StaffEnchParalyze` to their Skyrim.esm identities, enchantment
 types, deliveries, effect editor IDs and base-chain lengths.
+
+The shout-family gate measured 117 SHOU, 107 WOOP, 33 LVSP, 2 DUAL and 7 EQUP definitions
+in this machine's active load order, all decoded, with zero unread and zero malformed
+fields across the shouts and equip slots. Every shout carried exactly three `SNAM` entries
+(351 in total), every word carried a `TNAM`, and every DUAL `DATA` was the full 24 bytes.
+It pins `FireBreathShout` (Skyrim.esm `0003F9EA`) to its three words `WordYol`, `WordToor`
+and `WordShul`, its three spells `VoiceFireBreath1` through `3`, and their 30 / 50 / 100
+second recovery times.
+
+`ETYP` resolution against that EQUP graph: 3,354 of the 3,359 weapons in the load order
+name an equip slot and every one of those resolves; the remaining 5 carry no `ETYP` at all
+and fall back on the documented right-hand default. All 1,560 spells name a slot and all
+1,560 resolve. Zero dangling links in either family.
 
 ## Verification surface
 
@@ -380,5 +514,20 @@ AssetTable
 Readout: AssetRecordInspectorStatsLabel
 Deterministic tests: EnchantmentTests, EnchantmentStoreTests, ReferenceRecordCatalogTests,
 M18AcceptancePanelTests, DestinationRegistryTests
+Local A/B (optional, never committed): none
+```
+
+```text
+Milestone: M19.4
+Sidebar path: Library > Asset Browser > Reference records (load order) > SHOU — Shouts,
+and > WOOP — Words of power, > LVSP — Leveled spells, > DUAL — Dual cast data,
+> EQUP — Equip slots
+Destination id: Destination-assetBrowser
+Controls exercised: AssetCategory, AssetPluginControl, AssetRecordTypeControl, AssetFilter,
+AssetTable
+Readout: AssetRecordInspectorStatsLabel
+Deterministic tests: ShoutRecordTests, ShoutStoreTests, EquipSlotTests,
+EquipmentRuntimeTests, ReferenceRecordCatalogTests, M18AcceptancePanelTests,
+DestinationRegistryTests
 Local A/B (optional, never committed): none
 ```

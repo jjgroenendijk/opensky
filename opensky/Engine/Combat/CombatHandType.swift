@@ -102,8 +102,12 @@ nonisolated enum CombatHandType: Int32, Equatable, Sendable, CaseIterable {
     /// `blockStart` on `iLeftHandType == 7` or `12`, which is only ever true
     /// when a bow or a crossbow is what the *right* hand is holding.
     ///
-    /// The same four families `EquipmentCatalog.hands(for:)` calls two-handed,
-    /// stated here in the graph's own encoding rather than in WEAP's.
+    /// This is the animation graph's own notion of two-handedness, not the
+    /// record's: `EquipmentCatalog` gets occupancy from the WEAP ETYP link and
+    /// its EQUP graph instead, and the two disagree on the handful of vanilla
+    /// weapons whose authored slot does not match their animation family.
+    /// Nothing reconciles them, because they answer different questions —
+    /// which animation set plays, and which hands the item fills.
     var occupiesBothHands: Bool {
         switch self {
         case .greatsword, .battleaxe, .bow, .crossbow: true

@@ -1,13 +1,22 @@
-// LVLN / LVLI records decoded into engine types: leveled NPC and leveled item
-// lists. Both share the LVLD/LVLF/LVLO layout (UESP documents the entry struct
-// once for both). A TPLT chain may route through an LVLN; an OTFT outfit entry
-// may route through an LVLI. The bind-pose milestone picks one entry
-// deterministically (highest level, first among ties) instead of rolling
-// against player level + chance-none.
+// LVLN / LVLI / LVSP records decoded into engine types: leveled NPC, leveled
+// item and leveled spell lists. All three share the LVLD/LVLF/LVLO layout
+// (UESP documents the entry struct once for LVLN and LVLI; xEdit's LVSP
+// definition reuses the same `wbLeveledListEntry`, differing only in the
+// record types an entry may name — LVSP or SPEL instead of NPC_ or an item).
+// A TPLT chain may route through an LVLN; an OTFT outfit entry may route
+// through an LVLI. The bind-pose milestone picks one entry deterministically
+// (highest level, first among ties) instead of rolling against player level +
+// chance-none.
 //
-// Reference: UESP "Skyrim Mod:Mod File Format/LVLN" + ".../LVLI" (entry struct
-// shared): https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/LVLN
-// Layout documented in docs/formats/actors.md.
+// References:
+//   UESP "Skyrim Mod:Mod File Format/LVLN" + ".../LVLI" (entry struct shared)
+//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/LVLN
+//   UESP "Skyrim Mod:Mod File Format/LVSP"
+//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/LVSP
+//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas
+//     `wbRecord(LVSP, 'Leveled Spell', ...)` line 8058.
+// Layout documented in docs/formats/actors.md, and for LVSP in
+// docs/formats/magic-records.md.
 
 import Foundation
 
@@ -37,6 +46,9 @@ nonisolated struct LeveledList {
     }
 
     let formID: FormID
+    /// Which of LVLN, LVLI or LVSP this list came from; the entry references
+    /// mean different things in each.
+    let recordType: FourCC
     let editorID: String?
     /// LVLD — percent chance the list resolves to nothing.
     let chanceNone: UInt8
@@ -52,11 +64,15 @@ nonisolated struct LeveledList {
         }?.element
     }
 
+    /// The record types this decoder accepts.
+    static let recordTypes: Set<FourCC> = ["LVLN", "LVLI", "LVSP"]
+
     init(record: ESMRecord) throws {
-        guard record.type == "LVLN" || record.type == "LVLI" else {
-            throw ESMError.malformed("expected LVLN/LVLI record, got \(record.type)")
+        guard Self.recordTypes.contains(record.type) else {
+            throw ESMError.malformed("expected LVLN/LVLI/LVSP record, got \(record.type)")
         }
         formID = FormID(record.formID)
+        recordType = record.type
 
         var editorID: String?
         var chanceNone: UInt8 = 0
