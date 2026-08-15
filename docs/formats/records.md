@@ -734,7 +734,12 @@ Reference: UESP
 M12.1.1 adds the inventory-facing half so ARMO can join the item index: `DATA` (the shared
 `ItemValue` 8-byte struct), the `KSIZ`/`KWDA` keyword array, and `DNAM`, the base armor
 rating stored as rating * 100 — despite being a uint32, only the low 16 bits are used.
-Still skipped: MOD2/MOD4 ground models, EITM enchantment, TNAM template.
+
+M19.3 adds `EITM`, the `ENCH` link that makes a piece enchanted, decoded the way WEAP
+decodes its own ([magic records](/formats/magic-records.md)). There is no armor-side charge
+field to go with it: xEdit builds both records' link from `wbEnchantment`, and only WEAP
+asks for the capacity variant that adds `EAMT`, so an enchanted piece of armor has an
+effect and no charge. Still skipped: MOD2/MOD4 ground models, TNAM template.
 
 ## Item definition index -> ItemDefinitionStore
 
@@ -744,7 +749,10 @@ of the seven families it came from. Immutable, built once from an `ESMFile`, fol
 the `WeatherStore` / `SoundRecordStore` convention.
 
 `ItemDefinition` exposes `formID`, `family` (ARMO, AMMO, BOOK, ALCH, INGR, MISC, WEAP),
-`editorID`, `name`, `value`, `weight` and `keywords`. Containers are indexed *separately*
+`editorID`, `name`, `value`, `weight`, `keywords` and, on a weapon or a piece of armor,
+`enchantment` — the `EITM` link, the weapon-side `EAMT` charge, and the winning `ENCH`
+identity when the store was built with an `ItemEnchantmentResolver`. Containers are indexed
+*separately*
 (`container(_:)`): a CONT is not carryable and has neither a gold value nor a weight, but
 its starting contents are exactly what the runtime needs. `skippedCounts` reports records
 that failed to decode per family, so the sweep can assert zero rather than silently

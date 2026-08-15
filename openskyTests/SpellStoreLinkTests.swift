@@ -103,6 +103,7 @@ struct SpellStoreLinkTests {
             formListStore: FormListStore(index: index),
             magicEffectStore: effects,
             spellStore: SpellStore(index: index, effects: effects),
+            enchantmentStore: EnchantmentStore(index: index, effects: effects),
             sourcePlugin: "Base.esm"
         )
     }

@@ -26,7 +26,7 @@ nonisolated extension RecordTextDump {
         case "INGR": ingredientSummary(record, localized, keywordContext, magicContext)
         case "WEAP": weaponSummary(record, localized, keywordContext, magicContext)
         case "AMMO": ammunitionSummary(record, localized, keywordContext)
-        case "ARMO": armorSummary(record, localized, keywordContext)
+        case "ARMO": armorSummary(record, localized, keywordContext, magicContext)
         case "ARMA": armorAddonSummary(record: record)
         case "PROJ": projectileSummary(record: record)
         default: nil
@@ -58,7 +58,8 @@ nonisolated extension RecordTextDump {
     private static func armorSummary(
         _ record: ESMRecord,
         _ localized: Bool,
-        _ context: KeywordContext?
+        _ context: KeywordContext?,
+        _ magicContext: MagicContext?
     ) -> String? {
         guard let armor = try? Armor(record: record, localized: localized) else { return nil }
         let slots = armor.bodyTemplate.map { "0x\(String($0.slots.rawValue, radix: 16))" } ?? "-"
@@ -68,6 +69,24 @@ nonisolated extension RecordTextDump {
             + keywordText(armor.keywords, context: context) + ", "
             + "slots \(slots), rating \(armor.armorRating), "
             + "\(armor.armatures.count) armatures"
+            + enchantmentText(armor.enchantment, charge: nil, context: magicContext)
+    }
+
+    /// The ENCH an item names, resolved to a name once a magic context is
+    /// present. Empty for an unenchanted record, so only enchanted items grow
+    /// the line. A charge is only ever present on a weapon: ARMO has no EAMT.
+    private static func enchantmentText(
+        _ id: FormID?,
+        charge: UInt16?,
+        context: MagicContext?
+    ) -> String {
+        guard let id else { return "" }
+        let name = if let context {
+            context.enchantments.displayString(for: id, fromPlugin: context.sourcePlugin)
+        } else {
+            id.description
+        }
+        return ", enchantment \(name)" + (charge.map { ", charge \($0)" } ?? "")
     }
 
     /// ARMA's draw priorities are what equip-slot arbitration compares
@@ -165,6 +184,11 @@ nonisolated extension RecordTextDump {
                 Int(weapon.damage), animation, weapon.speed, weapon.reach, critical
             )
             + criticalEffect
+            + enchantmentText(
+                weapon.enchantment,
+                charge: weapon.enchantmentCharge,
+                context: magicContext
+            )
     }
 
     /// Names the SPEL a book teaches or a weapon's critical applies, once a

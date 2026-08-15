@@ -16,6 +16,7 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
     case magicEffect = "MGEF"
     case spell = "SPEL"
     case scroll = "SCRL"
+    case enchantment = "ENCH"
 
     var fourCC: FourCC {
         switch self {
@@ -30,6 +31,7 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
         case .magicEffect: "MGEF"
         case .spell: "SPEL"
         case .scroll: "SCRL"
+        case .enchantment: "ENCH"
         }
     }
 
@@ -46,6 +48,7 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
         case .magicEffect: "MGEF — Magic effects"
         case .spell: "SPEL — Spells"
         case .scroll: "SCRL — Scrolls"
+        case .enchantment: "ENCH — Enchantments"
         }
     }
 }

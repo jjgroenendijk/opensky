@@ -12,8 +12,9 @@ timestamp: 2026-08-15T00:00:00Z
 MGEF is the leaf record behind every EFID in a spell, enchantment, potion or ingredient.
 OpenSky decodes the effect definition and resolves those raw links through the active plugin
 load order. SPEL and SCRL, the two casting containers, are decoded here as well, with the
-cost the game charges recomputed from their effect lists. ENCH and the shout family remain
-later M19 work; ALCH and INGR expose the shared effect list described in
+cost the game charges recomputed from their effect lists, and so is ENCH, the record a
+weapon or a piece of armor names through `EITM`. The shout family remains later M19 work;
+ALCH and INGR expose the shared effect list described in
 [record decoders](/formats/records.md).
 
 ## Contents
@@ -27,6 +28,9 @@ later M19 work; ALCH and INGR expose the shared effect list described in
 - SPIT layout
 - Spell cost calculation
 - SpellStore and resolved links
+- ENCH record fields
+- ENIT layout
+- EnchantmentStore, item links and base chains
 - Defensive policy and measured coverage
 - Verification surface
 
@@ -238,6 +242,77 @@ Two links that were decoded but unresolvable before this store existed now name 
 target in record summaries: `BOOK`'s spell tome (`teaches spell Firebolt`) and `WEAP`'s
 critical effect (`critical effect Firebolt`).
 
+## ENCH record fields
+
+An enchantment is identity, the `ENIT` header, and the same EFID/EFIT/CTDA effect list every
+other magic item carries. xEdit spells the whole record as `wbEDID, wbObjectBounds, wbFULL,
+wbStruct(ENIT, ...), wbEffectsReq`, so `Enchantment` decodes those three identity fields by
+name instead of composing `InventoryItemFields`: an ENCH carries none of the other
+carryable-item subrecords, and a decoder that quietly consumed them would hide a real
+surprise from the unread-field tally.
+
+| field | type | OpenSky value |
+|---|---|---|
+| `EDID` | zstring | editor ID |
+| `OBND` | 12 bytes | `ObjectBounds`, always zero on a vanilla ENCH |
+| `FULL` | lstring | display name, shown on the item the enchantment is applied to |
+| `ENIT` | 32 or 36 bytes | `EnchantmentItemData` below |
+| `EFID`/`EFIT`/`CTDA` | repeated run | `MagicItemEffectList` |
+
+A weapon reaches its enchantment through `EITM` plus the `EAMT` charge; a piece of armor
+reaches it through `EITM` alone. xEdit builds both from `wbEnchantment` and only asks for
+the capacity variant that adds `EAMT` on WEAP, which is why `Armor` decodes no charge
+([record decoders](/formats/records.md)).
+
+## ENIT layout
+
+All integers and floats are little-endian. A zero FormID becomes `nil`.
+
+| offset | type | meaning |
+|---|---|---|
+| `0x00` | int32 | enchantment cost, authoritative only under the manual-cost flag |
+| `0x04` | uint32 | flags |
+| `0x08` | uint32 | cast type |
+| `0x0C` | int32 | enchantment amount, the fully charged value of the item |
+| `0x10` | uint32 | delivery |
+| `0x14` | uint32 | enchantment type |
+| `0x18` | float32 | charge time |
+| `0x1C` | FormID | base `ENCH` this one derives from |
+| `0x20` | FormID | worn restrictions, an `FLST` of enchantable slots |
+
+The last link is optional. UESP records a 32-byte form-version-37 variant that omits it and
+xEdit marks the same member `SetOptionalFrom(8)`, so `EnchantmentItemData` requires 32 bytes
+and reads the worn-restrictions link only when the payload is long enough to hold it.
+
+Flag bits: 0 manual cost calculation (xEdit "No Auto-Calc", UESP "ManualCalc") and 2 extend
+duration on recast. Enchantment types are `0x06` enchantment and `0x0C` staff enchantment,
+with `unknown(raw:)` for anything else — the two documented values are far apart rather than
+consecutive, so nothing else is folded into either. Cast type and delivery reuse the MGEF
+vocabulary, since xEdit types them with the same `wbCastEnum` and `wbDeliveryEnum`.
+
+UESP documents the same per-effect cost curve on the ENCH page that it does on the SPEL
+page, so `SpellCost` is the one implementation of it; `SpellCost.result(isManual:
+authoredCost:total:unresolvedEffects:)` is the entry point for a header that is not `SPIT`.
+
+## EnchantmentStore, item links and base chains
+
+`RecordIndex.referenceRecordTypes` includes ENCH. `EnchantmentStore` holds the winning
+definitions in the same shape as `SpellStore`: lookup by canonical `ResolvedFormID`,
+case-insensitive editor-ID lookup, deterministic ordering through `RecordStoreOrdering`, and
+a loader over `ActivePluginFiles`. Each entry is joined against `MagicEffectStore` and
+costed once, at construction.
+
+`baseChain(of:)` returns the requested enchantment followed by each base enchantment above
+it, nearest first. An identity already in the chain is dropped rather than followed and the
+walk stops at `EnchantmentStore.chainCap`, so a mod that makes the chain loop terminates
+instead of recursing. The Asset Browser prints that chain under a selected ENCH.
+
+`ItemDefinition` carries the link on the two families that have one: `enchantment` holds the
+raw `EITM`, the weapon-side `EAMT` charge, and — when `ItemDefinitionStore` was built with an
+`ItemEnchantmentResolver` — the winning `ENCH` identity, so the equipment runtime reads a
+resolved enchantment instead of walking plugins again for every equip. Nothing applies an
+effect yet; that is issue 19.9.
+
 ## Defensive policy and measured coverage
 
 Wrong record type throws `ESMError.malformed`. A malformed individual field is tallied and
@@ -257,6 +332,17 @@ spell types, casting types or deliveries. 333 records set the manual-cost flag a
 not, of which 1,091 reproduce their stored cost exactly. The gate pins `Flames`, `Healing`
 and `Firebolt` to their Skyrim.esm identities, casting types, deliveries and effect editor
 IDs.
+
+The ENCH gate measured 766 definitions, all decoded, into 757 winning identities. Nothing
+went unread and nothing was malformed: every field an ENCH writes is decoded, and there were
+no unknown cast types, deliveries or enchantment types. 762 `ENIT` payloads were the full 36
+bytes and 4 were the 32-byte variant, so the optional worn-restrictions link is not
+hypothetical on this install. 59 records set the manual-cost flag, 364 name a base
+enchantment, and 80 name a worn-restrictions form list; the longest base chain observed is
+three entries. Every `EITM` on the 3,025 weapons and 2,885 pieces of armor that carry one
+resolves — zero dangling links in either family. The gate pins `EnchYsgramorShield`,
+`StaffEnchFireball` and `StaffEnchParalyze` to their Skyrim.esm identities, enchantment
+types, deliveries, effect editor IDs and base-chain lengths.
 
 ## Verification surface
 
@@ -281,6 +367,18 @@ Controls exercised: AssetCategory, AssetPluginControl, AssetRecordTypeControl, A
 AssetTable
 Readout: AssetRecordInspectorStatsLabel
 Deterministic tests: SpellTests, SpellStoreTests, ReferenceRecordCatalogTests,
+M18AcceptancePanelTests, DestinationRegistryTests
+Local A/B (optional, never committed): none
+```
+
+```text
+Milestone: M19.3
+Sidebar path: Library > Asset Browser > Reference records (load order) > ENCH — Enchantments
+Destination id: Destination-assetBrowser
+Controls exercised: AssetCategory, AssetPluginControl, AssetRecordTypeControl, AssetFilter,
+AssetTable
+Readout: AssetRecordInspectorStatsLabel
+Deterministic tests: EnchantmentTests, EnchantmentStoreTests, ReferenceRecordCatalogTests,
 M18AcceptancePanelTests, DestinationRegistryTests
 Local A/B (optional, never committed): none
 ```
