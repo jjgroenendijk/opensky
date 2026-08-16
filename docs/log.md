@@ -2,6 +2,30 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-16
+
+* **The whole actor-value table is stored, resistances included (issue #468)**: item 15.3
+  stored three actor values and answered nil for the other 161; item 19.5 stores all of
+  them. `ActorValueState` gained a sparse general table keyed by vanilla index, each entry a
+  base plus the permanent, temporary and damage modifier slots the Creation Kit's own
+  scripting reference names, and `ActorValueRuntime` grew an index-addressed
+  read/damage/restore/set surface over it — the three primaries keep their typed fast path,
+  and only an index outside the table is still a miss. Baselines come from records where
+  records author one: the eighteen skills from the cited `15 + racial bonus + class spread`
+  formula over newly decoded RACE DATA skill bonuses and CLAS skill weights, plus speed
+  multiplier from ACBS, and carry weight, mass and unarmed damage from RACE DATA. The
+  resistance seam applies the 85% player-only cap and UESP's multiplicative
+  Resist-Magic-first composition in one place, and states that no game setting on the
+  install carries that cap. `GetActorValue`, `GetActorValuePercent` and the Papyrus actor
+  natives answer for the whole table: of the 607 actor-value conditions in `Skyrim.esm`, 539
+  named a non-primary value and were tallied misses, and all 539 now answer. The general
+  table persists in a new additive `AVGN` chunk, minus the temporary slot, which the magic
+  effect that set it will re-establish. `World > Combat & Physics > Actor Values` gained an
+  "Other value" field, a "Set" button and a selected-value readout line with the modifier
+  slots and the capped resistance fraction. Skill advancement, AVIF decode and applying a
+  magic effect stay out. See [actor values](/engine/actor-values.md),
+  [actor records](/formats/actors.md) and [the OpenSky save](/formats/opensky-save.md).
+
 ## 2026-08-15
 
 * **The small magic records decode, and EQUP replaces the hand heuristic (issue #467)**:

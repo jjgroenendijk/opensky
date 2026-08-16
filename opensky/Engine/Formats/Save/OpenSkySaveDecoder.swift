@@ -56,6 +56,11 @@ nonisolated enum OpenSkySaveDecoder {
         /// records and starts full — which is also what a save written before
         /// that chunk existed means.
         var actorValues: [SaveActorValueEntry] = []
+        /// Absent `AVGN` chunk (issue #468) means no actor moved a non-primary
+        /// actor value off the baseline its records author, so everyone
+        /// re-derives the whole table — which is also what a save written
+        /// before that chunk existed means.
+        var generalActorValues: [SaveGeneralActorValueEntry] = []
         /// Absent `DETH` chunk (issue #197) means nothing died in the session,
         /// so every actor restores alive — which is also what a save written
         /// before that chunk existed means.
@@ -116,7 +121,13 @@ nonisolated enum OpenSkySaveDecoder {
             body.questLocationAliases,
             into: entries
         )
-        entries = OpenSkySaveActorValueDecoder.merge(body.actorValues, into: entries)
+        // `AVGN` lays onto the `AVAL` entries before those reach the deltas, so
+        // an actor's primaries and its general table arrive as one component.
+        let actorValues = OpenSkySaveActorValueDecoder.mergeGeneral(
+            body.generalActorValues,
+            into: body.actorValues
+        )
+        entries = OpenSkySaveActorValueDecoder.merge(actorValues, into: entries)
         entries = OpenSkySaveDeathDecoder.merge(body.deaths, into: entries)
         entries = OpenSkySaveCombatDecoder.merge(body.combatStates, into: entries)
         return OpenSkySaveDialogueDecoder.merge(body.dialogue, into: entries)
@@ -237,6 +248,9 @@ nonisolated enum OpenSkySaveDecoder {
                 .decodeQuestLocationAliases(payload)
         case OpenSkySaveFormat.ChunkTag.actorValues:
             body.actorValues = try OpenSkySaveActorValueDecoder.decodeActorValues(payload)
+        case OpenSkySaveFormat.ChunkTag.generalActorValues:
+            body.generalActorValues = try OpenSkySaveActorValueDecoder
+                .decodeGeneralActorValues(payload)
         case OpenSkySaveFormat.ChunkTag.deaths:
             body.deaths = try OpenSkySaveDeathDecoder.decodeDeaths(payload)
         case OpenSkySaveFormat.ChunkTag.combatStates:

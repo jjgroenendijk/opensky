@@ -20,7 +20,9 @@ import Testing
 @MainActor
 struct PapyrusNativeActorTests {
     private static let actorID: UInt32 = 0x0000_0A11
-    private static let baseID: UInt32 = 0x0000_0B22
+    /// Not private: `PapyrusNativeActorValueTests` builds a holder against the
+    /// same base record.
+    static let baseID: UInt32 = 0x0000_0B22
     private static let killerID: UInt32 = 0x0000_0C33
     /// Every actor in a session with no record indexes derives the fallback
     /// baseline, which is 100 of each (`vanillaPlayerStartingValues`).
@@ -33,6 +35,9 @@ struct PapyrusNativeActorTests {
         let key: ReferenceKey
         let ragdoll: RagdollRuntime
         let ragdollWorld: FakeRagdollWorld
+        /// The live actor-value runtime behind the natives, so a test can move
+        /// a non-primary value the way a magic effect will (issue #468).
+        let values: ActorValueRuntime
         /// The live combat loop `StartCombat`, `StopCombat` and `IsInCombat`
         /// reach through (issue #424), over a recording world.
         let combat: CombatLoopRuntime
@@ -90,6 +95,7 @@ struct PapyrusNativeActorTests {
             key: entry.key,
             ragdoll: ragdoll,
             ragdollWorld: ragdollWorld,
+            values: values,
             combat: combat,
             combatWorld: combatWorld
         )
@@ -146,11 +152,11 @@ struct PapyrusNativeActorTests {
         ) == .returned(.float(0.75)))
     }
 
-    @Test func anActorValueWithNoStoreFailsAndIsTallied() throws {
+    @Test func anUnknownActorValueNameFailsAndIsTallied() throws {
         let fixture = try Self.fixture()
         let result = call(
             "GetActorValue", fixture, receiver: fixture.receiver,
-            arguments: [.string("Sneak")], returnType: .float
+            arguments: [.string("Marksman")], returnType: .float
         )
         #expect(PapyrusWorldFixture.isInvalidArguments(result))
     }

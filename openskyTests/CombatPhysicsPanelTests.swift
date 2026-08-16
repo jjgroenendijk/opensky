@@ -44,8 +44,10 @@ struct CombatPhysicsPanelTests {
         let ids: [(NSView, String)] = [
             (panel.actorValuesSection.targetControl, "ActorValueTargetControl"),
             (panel.actorValuesSection.kindControl, "ActorValueKindControl"),
+            (panel.actorValuesSection.valueNameControl, "ActorValueNameControl"),
             (panel.actorValuesSection.amountControl, "ActorValueAmountControl"),
             (panel.damageControl, "ActorValueDamageControl"),
+            (panel.actorValuesSection.setControl, "ActorValueSetControl"),
             (panel.actorValuesSection.restoreControl, "ActorValueRestoreControl"),
             (panel.actorValuesSection.refillControl, "ActorValueRefillControl"),
             (panel.actorValuesSection.resetControl, "ActorValueResetControl"),
@@ -88,49 +90,11 @@ struct CombatPhysicsPanelTests {
         #expect(readout.contains("Derivation: level 6, auto-calculated per level"))
         #expect(readout.contains("Controls: acting on the nearest actor"))
         #expect(readout.contains("Damaged Bandit."))
-    }
-
-    @Test @MainActor
-    func withNoRuntimeTheActorValueSectionSaysSo() throws {
-        // The fake is bound rather than passed inline: the section holds its
-        // provider weakly, so a discarded one would be reporting a missing
-        // provider instead of the unavailable snapshot this case is about.
-        let providers = FakeWorldProviders()
-        let panel = try Self.panel(providers: providers)
-        panel.startInspecting()
-        defer { panel.stopInspecting() }
-        let readout = try #require(
-            scriptsReadout("CombatActorValuesStatsLabel", in: panel.view)
-        )
-        #expect(readout.contains("Player: unavailable"))
-    }
-
-    /// The two buttons send the value the popup selected and the amount the
-    /// field holds, rather than a default either of them invented.
-    @Test @MainActor
-    func theDamageControlsSendTheSelectedValueAndTypedAmount() throws {
-        let providers = FakeWorldProviders()
-        let panel = try Self.panel(providers: providers)
-        let section = panel.actorValuesSection
-
-        section.targetControl.selectItem(at: 1)
-        sendScriptsControl(section.targetControl)
-        #expect(providers.actorValueTarget == .nearestActor)
-
-        section.kindControl.selectItem(at: 2)
-        section.amountControl.stringValue = "42.5"
-        sendScriptsControl(panel.damageControl)
-        #expect(providers.actorValues.damages.last?.kind == .stamina)
-        #expect(providers.actorValues.damages.last?.amount == 42.5)
-
-        section.kindControl.selectItem(at: 1)
-        sendScriptsControl(section.restoreControl)
-        #expect(providers.actorValues.restores.last?.kind == .magicka)
-
-        sendScriptsControl(section.refillControl)
-        #expect(providers.actorValues.refillCount == 1)
-        sendScriptsControl(section.resetControl)
-        #expect(providers.actorValues.resetCount == 1)
+        // Item 19.5 (issue #468): the selected value, its modifier slots and
+        // the capped resistance fraction it reads as.
+        #expect(readout.contains("Selected value: Resist Fire (41) — 25.0  base 40.0"))
+        #expect(readout.contains("dmg -15.0"))
+        #expect(readout.contains("resists 25% (capped)"))
     }
 
     /// A field holding something that is not a number falls back to the
@@ -253,6 +217,18 @@ struct CombatPhysicsPanelTests {
                 hasZeroHealth: true
             ),
             target: .nearestActor,
+            // A resistance rather than a primary, so the panel test covers the
+            // line item 19.5 added (issue #468).
+            selection: ActorValueInspection(
+                name: "Resist Fire",
+                index: 41,
+                current: 25,
+                base: 40,
+                permanent: 0,
+                temporary: 0,
+                damage: -15,
+                resistanceFraction: 0.25
+            ),
             runtimeActorCount: 3,
             lastActionText: "Damaged Bandit."
         )
@@ -295,8 +271,9 @@ struct CombatPhysicsPanelTests {
         )
     }
 
+    /// Not private: `CombatActorValuesPanelTests` builds the same panel.
     @MainActor
-    private static func panel(
+    static func panel(
         providers: FakeWorldProviders
     ) throws -> CombatPhysicsPanelViewController {
         let descriptor = try #require(DestinationRegistry.destination(id: "combatPhysics"))

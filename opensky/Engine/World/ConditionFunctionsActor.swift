@@ -22,11 +22,13 @@
 // which `ActorValueIdentity` carries with its own citation.
 //
 // Two misses are distinct on purpose and stay distinct in the tally. An
-// actor-value parameter naming a value 15.3 has no store for is
+// actor-value parameter that names no vanilla actor value is
 // `.unresolvedParameter`, keyed by function index, because the *parameter* is
 // what could not be read. A reference the actor seam carries no state for at
-// all is `.unavailableActorState`. Ranking the first tells us which actor
-// values to store next; the second says the evaluation context was not wired.
+// all is `.unavailableActorState`. Since item 19.5 stored the whole table
+// (issue #468), the first bucket counts only genuinely unknown indices rather
+// than the 161 values that had no store; the second still says the evaluation
+// context was not wired.
 
 import Foundation
 
@@ -39,7 +41,7 @@ nonisolated extension ConditionFunctions {
             name: "GetActorValue",
             parameter1: .integer
         ) { call in
-            Self.actorValue(call, index: 14) { state, kind in state.current[kind] }
+            Self.actorValue(call, index: 14) { state, value in state.value(at: value) }
         })
 
         // "Returns the current value of the indicated Actor Value as a
@@ -52,8 +54,8 @@ nonisolated extension ConditionFunctions {
             name: "GetActorValuePercent",
             parameter1: .integer
         ) { call in
-            Self.actorValue(call, index: 640) { state, kind in
-                state.current.fractions(of: state.maximums)[kind]
+            Self.actorValue(call, index: 640) { state, value in
+                state.fraction(at: value)
             }
         })
 
@@ -104,25 +106,30 @@ nonisolated extension ConditionFunctions {
         })
     }
 
-    /// One actor-value read: resolve the run-on's actor, resolve parameter 1
-    /// onto a stored `ActorValueKind`, then let `read` scale it.
+    /// One actor-value read: resolve the run-on's actor, then let `read` answer
+    /// for the actor value parameter 1 names.
     ///
-    /// Parameter 1 is `ptActorValue`, a signed index rather than a FormID, so a
-    /// negative or out-of-table number cannot name an actor value at all — it
-    /// takes the same `.unresolvedParameter` route as an index that names a
-    /// real actor value this engine does not store, because in both cases the
-    /// function has no number to compare and a zero would be acted upon.
+    /// Parameter 1 is `ptActorValue`, a signed index rather than a FormID.
+    /// Since 19.5 every index the vanilla table carries is readable, so
+    /// `.unresolvedParameter` is left for a negative or out-of-table number
+    /// alone — a parameter that names no actor value at all, where the function
+    /// has no number to compare and a zero would be acted upon.
     static func actorValue(
         _ call: ConditionCall,
         index: UInt16,
-        read: (ActorConditionState, ActorValueKind) -> Float
+        read: (ActorConditionState, Int32) -> Float?
     ) -> Result<Float, ConditionFailure> {
         guard
             let parameter = call.parameter1,
-            let kind = ActorValueIdentity.kind(at: parameter.asInt32)
+            ActorValueIdentity.isVanilla(index: parameter.asInt32)
         else {
             return .failure(.unresolvedParameter(index))
         }
-        return call.actorState().map { read($0, kind) }
+        return call.actorState().flatMap { state in
+            guard let value = read(state, parameter.asInt32) else {
+                return .failure(.unresolvedParameter(index))
+            }
+            return .success(value)
+        }
     }
 }

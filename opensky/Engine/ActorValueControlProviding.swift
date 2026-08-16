@@ -44,6 +44,38 @@ nonisolated struct ActorValueReadout: Equatable, Sendable {
     )
 }
 
+/// One actor value as the panel inspects it (issue #468, roadmap item 19.5).
+///
+/// Carries the modifier slots separately rather than only the current number,
+/// because the whole point of the general store is that a damaged resistance
+/// and a lowered base are different states that read the same at a glance.
+nonisolated struct ActorValueInspection: Equatable, Sendable {
+    /// Vanilla name, or the bare index when the selection names none, so a
+    /// readout line always names something.
+    let name: String
+    let index: Int32
+    let current: Float
+    let base: Float
+    let permanent: Float
+    let temporary: Float
+    let damage: Float
+    /// The capped fraction of damage this value removes, for a percentage
+    /// resistance; nil for every other actor value, including `Damage Resist`,
+    /// which is an armor rating rather than a percentage.
+    let resistanceFraction: Float?
+
+    static let empty = ActorValueInspection(
+        name: "—",
+        index: ActorValueIdentity.noneIndex,
+        current: 0,
+        base: 0,
+        permanent: 0,
+        temporary: 0,
+        damage: 0,
+        resistanceFraction: nil
+    )
+}
+
 /// Who a damage or restore control applies to.
 ///
 /// The same two selectors `EquipmentTargetSelector` offers, for the same
@@ -67,6 +99,9 @@ nonisolated struct ActorValueControlSnapshot: Equatable, Sendable {
     let nearestActor: ActorValueReadout?
     /// Which target the dev controls act on.
     let target: ActorValueTargetSelector
+    /// The actor value the controls act on, read off the selected target
+    /// (issue #468).
+    let selection: ActorValueInspection
     /// How many references currently carry an actor-value component, across
     /// every cell whether resident or not.
     let runtimeActorCount: Int
@@ -79,6 +114,7 @@ nonisolated struct ActorValueControlSnapshot: Equatable, Sendable {
         player: .empty,
         nearestActor: nil,
         target: .player,
+        selection: .empty,
         runtimeActorCount: 0,
         lastActionText: "Actor values unavailable: no game data loaded."
     )
@@ -91,17 +127,29 @@ protocol ActorValueControlProviding: AnyObject {
     /// Which target the damage and restore controls act on.
     var actorValueTarget: ActorValueTargetSelector { get set }
 
-    /// Takes `amount` off the selected target's `kind`.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
-    @discardableResult
-    func damageSelectedActor(_ kind: ActorValueKind, by amount: Float) -> String
+    /// Which actor value they act on, by vanilla table index (issue #468).
+    /// Health until a panel selects another, and any of the 164 after that.
+    var actorValueSelection: Int32 { get set }
 
-    /// Adds `amount` to the selected target's `kind`.
+    /// Takes `amount` off the selected target's selected value.
     ///
     /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
-    func restoreSelectedActor(_ kind: ActorValueKind, by amount: Float) -> String
+    func damageSelectedActor(by amount: Float) -> String
+
+    /// Adds `amount` to the selected target's selected value.
+    ///
+    /// - Returns: a human-readable outcome, which the panel shows verbatim.
+    @discardableResult
+    func restoreSelectedActor(by amount: Float) -> String
+
+    /// Sets the selected value outright: the current value for a primary and
+    /// the base value for everything else, which is what makes a resistance
+    /// settable from the panel at all.
+    ///
+    /// - Returns: a human-readable outcome, which the panel shows verbatim.
+    @discardableResult
+    func setSelectedActorValue(to value: Float) -> String
 
     /// Refills the selected target to its derived maximums.
     ///

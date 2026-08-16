@@ -1,8 +1,9 @@
 // RACE record decoded into engine types: the appearance subset needed to skin
 // an actor, plus the DATA starting-attribute and regeneration floats the
-// actor-value derivation needs (issue #194). Spell lists, keywords, body-part
-// data, tinting, and face morphs are skipped deliberately, as are the DATA
-// skill bonuses (M18) and the movement floats.
+// actor-value derivation needs (issue #194), plus the DATA fields that author a
+// *non-primary* actor value — the seven skill bonuses, base carry weight, base
+// mass and unarmed damage (issue #468). Spell lists, keywords, body-part data,
+// tinting, face morphs and the movement floats are skipped deliberately.
 //
 // Per-gender skeleton: RACE gates gendered model blocks with 0-length MNAM
 // (male) / FNAM (female) markers; the skeletal-model block that follows the
@@ -120,6 +121,26 @@ nonisolated struct Race {
         var healthRegenPercent: Float = 0
         var magickaRegenPercent: Float = 0
         var staminaRegenPercent: Float = 0
+        /// DATA 0x00: the seven "Skill N (Actor list value)" / "Racial bonus
+        /// for skill N" byte pairs (UESP RACE DATA), in file order, with the
+        /// pairs whose bonus is zero dropped — a race authors seven slots and
+        /// vanilla leaves the unused ones at 0/0, which would otherwise read as
+        /// a bonus to actor value 0 (`Aggression`).
+        var skillBonuses: [SkillBonus] = []
+        /// DATA 0x30 "Base Carry Weight", the base of actor value 32.
+        var baseCarryWeight: Float = 0
+        /// DATA 0x34 "Base Mass", the base of actor value 36.
+        var baseMass: Float = 0
+        /// DATA 0x60 "Unarmed Damage", the base of actor value 35.
+        var unarmedDamage: Float = 0
+    }
+
+    /// One RACE DATA skill-bonus pair: a vanilla actor-value index and the
+    /// number of points this race adds to it.
+    struct SkillBonus: Equatable {
+        /// Actor-value index, as `ActorValueIdentity` numbers them.
+        var actorValue: Int32
+        var bonus: Float
     }
 
     let formID: FormID
@@ -169,9 +190,8 @@ nonisolated struct Race {
         femaleHeadParts = state.femaleHeadParts
     }
 
-    /// DATA: skill boosts (14 bytes + 2 pad) then male/female height +
-    /// weight floats; flags live at 0x20 (UESP RACE DATA). The skill payload
-    /// stays undecoded until M18; too-short DATA -> nil.
+    /// DATA: skill bonuses (14 bytes + 2 pad) then male/female height +
+    /// weight floats; flags live at 0x20 (UESP RACE DATA). Too-short DATA -> nil.
     private static func decodeFlags(_ field: ESMField) -> Flags? {
         guard field.data.count >= 0x24 else { return nil }
         var reader = BinaryReader(field.data)
@@ -185,24 +205,56 @@ nonisolated struct Race {
     /// carry weight, base mass, the two movement rates, size, and the head /
     /// hair / injured-health / shield fields.
     ///
-    /// Read as two independent windows rather than one long walk, so a DATA
-    /// long enough for the starting attributes but not the regen block still
-    /// yields the attributes. Vanilla ships neither shape, but a mod may.
+    /// Read as independent windows rather than one long walk, so a DATA long
+    /// enough for the starting attributes but not the regen block still yields
+    /// the attributes. Vanilla ships neither shape, but a mod may.
+    ///
+    /// The non-primary actor values the same struct authors (issue #468) are
+    /// read the same way: the seven skill-bonus pairs at 0x00, base carry
+    /// weight at 0x30 and base mass at 0x34, and unarmed damage at 0x60, which
+    /// is the first float after the three regen percentages.
     private static func decodeStats(_ field: ESMField) -> Stats? {
         guard field.data.count >= 0x30 else { return nil }
         var stats = Stats()
+        stats.skillBonuses = decodeSkillBonuses(field)
         var reader = BinaryReader(field.data)
         reader.skip(0x24)
         stats.startingHealth = (try? reader.readFloat32()) ?? 0
         stats.startingMagicka = (try? reader.readFloat32()) ?? 0
         stats.startingStamina = (try? reader.readFloat32()) ?? 0
+        if field.data.count >= 0x38 {
+            stats.baseCarryWeight = (try? reader.readFloat32()) ?? 0
+            stats.baseMass = (try? reader.readFloat32()) ?? 0
+        }
         guard field.data.count >= 0x60 else { return stats }
         var regen = BinaryReader(field.data)
         regen.skip(0x54)
         stats.healthRegenPercent = (try? regen.readFloat32()) ?? 0
         stats.magickaRegenPercent = (try? regen.readFloat32()) ?? 0
         stats.staminaRegenPercent = (try? regen.readFloat32()) ?? 0
+        guard field.data.count >= 0x64 else { return stats }
+        stats.unarmedDamage = (try? regen.readFloat32()) ?? 0
         return stats
+    }
+
+    /// DATA 0x00: seven `(actor value, bonus)` byte pairs.
+    ///
+    /// A pair whose bonus is zero is dropped rather than stored, because a race
+    /// that fills fewer than seven slots leaves the rest zeroed and a stored
+    /// 0/0 pair is indistinguishable from "+0 to Aggression".
+    private static func decodeSkillBonuses(_ field: ESMField) -> [SkillBonus] {
+        guard field.data.count >= 0x0E else { return [] }
+        var reader = BinaryReader(field.data)
+        var bonuses: [SkillBonus] = []
+        for _ in 0 ..< 7 {
+            guard
+                let actorValue = try? reader.readUInt8(),
+                let bonus = try? reader.readUInt8(),
+                bonus > 0
+            else { continue }
+            bonuses.append(SkillBonus(actorValue: Int32(actorValue), bonus: Float(bonus)))
+        }
+        return bonuses
     }
 
     /// Routes a skeleton ANAM path to the gender named by the most recent

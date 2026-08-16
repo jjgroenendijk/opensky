@@ -149,7 +149,10 @@ extension GameViewController {
             combatActivity: combat.runtime?.activity(of: holder.key) ?? .notFighting,
             weaponDrawState: holder.key == .player
                 ? melee.runtime?.state.drawState
-                : nil
+                : nil,
+            general: values.state(of: holder).general,
+            generalBaseline: values.baseline(of: holder).general,
+            isPlayer: holder.key == .player
         )
     }
 

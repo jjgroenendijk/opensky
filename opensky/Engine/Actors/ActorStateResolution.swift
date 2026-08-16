@@ -27,7 +27,7 @@
 import Foundation
 
 /// One actor's state as a condition sees it.
-nonisolated struct ActorConditionState: Equatable, Sendable {
+nonisolated struct ActorConditionState: ActorValueReadable, Equatable, Sendable {
     /// Current health, magicka and stamina.
     var current: ActorValues
     /// Re-derived maximums, which is what `GetBaseActorValue` reports and what
@@ -46,6 +46,15 @@ nonisolated struct ActorConditionState: Equatable, Sendable {
     var weaponDrawState: WeaponDrawState?
     /// Who this actor is fighting, or nil when it is fighting nobody.
     var combatTarget: ReferenceKey?
+    /// Non-primary actor values this actor has moved off its baseline
+    /// (issue #468), which is what lets `GetActorValue` answer for a resistance
+    /// rather than tally a miss.
+    var general: [Int32: ActorValueEntry]
+    /// Non-primary base values this actor's records author.
+    var generalBaseline: [Int32: Float]
+    /// Whether this actor is the player, which is what the resistance cap
+    /// depends on.
+    var isPlayer: Bool
 
     init(
         current: ActorValues,
@@ -54,7 +63,10 @@ nonisolated struct ActorConditionState: Equatable, Sendable {
         hostility: ActorHostility = .neutral,
         combatActivity: ActorCombatActivity = .notFighting,
         weaponDrawState: WeaponDrawState? = nil,
-        combatTarget: ReferenceKey? = nil
+        combatTarget: ReferenceKey? = nil,
+        general: [Int32: ActorValueEntry] = [:],
+        generalBaseline: [Int32: Float] = [:],
+        isPlayer: Bool = false
     ) {
         self.current = current
         self.maximums = maximums
@@ -63,6 +75,9 @@ nonisolated struct ActorConditionState: Equatable, Sendable {
         self.combatActivity = combatActivity
         self.weaponDrawState = weaponDrawState
         self.combatTarget = combatTarget
+        self.general = general
+        self.generalBaseline = generalBaseline
+        self.isPlayer = isPlayer
     }
 
     /// This actor's combat state as `GetCombatState` spells it.

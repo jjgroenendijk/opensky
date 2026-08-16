@@ -134,6 +134,27 @@ nonisolated enum OpenSkySaveFormat {
         /// number a changed load order no longer authors.
         static let actorValues = "AVAL"
 
+        /// General actor values (issue #468, roadmap item 19.5): one entry per
+        /// actor holding one or more of the 161 non-primary actor values away
+        /// from the baseline its records author, and inside it one record per
+        /// value: index, base, permanent modifier, damage modifier.
+        ///
+        /// A sibling of `AVAL` rather than an extension of it, for the reason
+        /// `QALS` is a sibling of `QSTS`: `AVAL` entries are a flat positional
+        /// layout with no per-entry length, so appending a variable-length list
+        /// to them would make every older build misparse the *whole* chunk
+        /// instead of skipping the new part. As its own chunk it is additive
+        /// like every chunk above — an older build skips it by the declared
+        /// length and restores a world whose actors carry their record
+        /// baselines, and a session that moved no non-primary value writes no
+        /// chunk at all.
+        ///
+        /// The temporary modifier is deliberately not written. It is an active
+        /// magic effect's contribution, and the effect that established it is
+        /// what re-establishes it on load (issue 19.6); persisting it as well
+        /// would double the buff every time the save was reloaded.
+        static let generalActorValues = "AVGN"
+
         /// Death states (issue #197, roadmap item 15.6): one entry per actor
         /// recorded dead, with the resting root transform its ragdoll settled
         /// at.
@@ -284,6 +305,13 @@ nonisolated enum OpenSkySaveFormat {
     /// current-value floats (12). A generated key or a named cell is longer, so
     /// this is a lower bound.
     static let minimumActorValueEntrySize = 20
+    /// Smallest number of bytes a single `AVGN` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and a zero value
+    /// count (4). An entry with values is longer, so this is a lower bound.
+    static let minimumGeneralActorValueEntrySize = 12
+    /// Bytes one `AVGN` value record occupies: the actor-value index and the
+    /// base, permanent and damage floats.
+    static let generalActorValueRecordSize = 16
     /// Smallest number of bytes a single `DETH` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1), the dead and
     /// looted flags (2) and the "no resting transform" tag (1). A generated

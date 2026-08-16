@@ -52,12 +52,18 @@ nonisolated struct ActorValueLevelSettings: Equatable, Sendable {
     /// `fNPCHealthLevelBonus` — extra health per level above 1, outside the
     /// weighted spread.
     var healthBonusPerLevel: Float
+    /// `iAVDSkillsLevelUp` — points spread across the eighteen skills per level
+    /// above 1, which UESP states as "the fixed 8 skill points per level"
+    /// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CLAS>) and
+    /// `Skyrim.esm` authors at exactly that (issue #468).
+    var skillPointsPerLevel = 8
 
     /// The values the Creation Kit documents as the defaults, used when no
     /// loaded plugin defines the setting.
     static let documentedDefaults = ActorValueLevelSettings(
         pointsPerLevel: 10,
-        healthBonusPerLevel: 5
+        healthBonusPerLevel: 5,
+        skillPointsPerLevel: 8
     )
 
     static func resolve(store: GameSettingStore) -> ActorValueLevelSettings {
@@ -71,6 +77,12 @@ nonisolated struct ActorValueLevelSettings: Equatable, Sendable {
             bonus.isFinite
         {
             settings.healthBonusPerLevel = max(0, bonus)
+        }
+        if
+            case let .integer(points)? = store.setting(editorID: "iAVDSkillsLevelUp")?
+                .setting.value
+        {
+            settings.skillPointsPerLevel = max(0, Int(points))
         }
         return settings
     }
@@ -89,19 +101,23 @@ nonisolated struct ActorValueInputs: Equatable, Sendable {
     var usesPlayerLevelMultiplier: Bool
     /// CLAS attribute weights, zero when the actor names no class.
     var attributeWeights: CharacterClass.AttributeWeights
+    /// CLAS skill weights, empty when the actor names no class (issue #468).
+    var skillWeights: CharacterClass.SkillWeights
 
     init(
         race: Race.Stats = Race.Stats(),
         stats: ActorBase.Stats = ActorBase.Stats(),
         autoCalculatesStats: Bool = false,
         usesPlayerLevelMultiplier: Bool = false,
-        attributeWeights: CharacterClass.AttributeWeights = CharacterClass.AttributeWeights()
+        attributeWeights: CharacterClass.AttributeWeights = CharacterClass.AttributeWeights(),
+        skillWeights: CharacterClass.SkillWeights = CharacterClass.SkillWeights()
     ) {
         self.race = race
         self.stats = stats
         self.autoCalculatesStats = autoCalculatesStats
         self.usesPlayerLevelMultiplier = usesPlayerLevelMultiplier
         self.attributeWeights = attributeWeights
+        self.skillWeights = skillWeights
     }
 }
 

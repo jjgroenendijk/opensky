@@ -31,8 +31,13 @@ struct ConditionActorFunctionTests {
 
     /// Health index, the one every actor-value case below reads.
     private static let healthIndex: UInt32 = 24
-    /// A real vanilla actor value with no store behind it.
+    /// A skill, which reads its documented floor until something moves it.
     private static let sneakIndex: UInt32 = 15
+    /// `Resist Fire`, a non-primary value item 19.5 stores.
+    private static let resistFireIndex: UInt32 = 41
+    /// One past the end of the vanilla table, which names no actor value at
+    /// all and is the one thing left that tallies a parameter miss.
+    private static let unknownIndex: UInt32 = 164
 
     // MARK: - Fixture
 
@@ -43,7 +48,8 @@ struct ConditionActorFunctionTests {
         playerDraw: WeaponDrawState? = .drawn,
         banditIsDead: Bool = false,
         banditHostility: ActorHostility = .hostile,
-        banditActivity: ActorCombatActivity? = nil
+        banditActivity: ActorCombatActivity? = nil,
+        playerResistFire: Float? = nil
     ) throws -> ConditionContext {
         // A hostile bandit is fighting unless a case says otherwise, which is
         // what an actor that has perceived the player is doing (issue #424).
@@ -55,7 +61,11 @@ struct ConditionActorFunctionTests {
                 playerKey: ActorConditionState(
                     current: ActorValues(health: playerHealth, magicka: 60, stamina: 70),
                     maximums: ActorValues(repeating: 100),
-                    weaponDrawState: playerDraw
+                    weaponDrawState: playerDraw,
+                    general: playerResistFire.map { points in
+                        [Int32(resistFireIndex): ActorValueEntry(base: points)]
+                    } ?? [:],
+                    isPlayer: true
                 ),
                 banditKey: ActorConditionState(
                     current: ActorValues(repeating: 100),
@@ -122,10 +132,42 @@ struct ConditionActorFunctionTests {
         ).outcome == .true)
     }
 
-    @Test func anActorValueWithNoStoreIsATalliedParameterMiss() throws {
+    /// Item 19.5 (issue #468): a non-primary actor value answers rather than
+    /// tallying a miss. Untouched, a skill reads its documented floor and a
+    /// resistance reads zero.
+    @Test func aNonPrimaryActorValueReadsItsBaselineRatherThanMissing() throws {
+        let context = try Self.fightContext()
+        let skill = try Self.evaluate(
+            Self.getActorValue, 0, 15, parameter1: Self.sneakIndex, context: context
+        )
+        #expect(skill.outcome == .true)
+        #expect(skill.tally.isClean)
+        let resistance = try Self.evaluate(
+            Self.getActorValue, 0, 0, parameter1: Self.resistFireIndex, context: context
+        )
+        #expect(resistance.outcome == .true)
+        #expect(resistance.tally.isClean)
+    }
+
+    /// A resistance the session moved reads what the session did to it, through
+    /// the same function.
+    @Test func aStoredResistanceReadsThroughGetActorValue() throws {
+        let context = try Self.fightContext(playerResistFire: 40)
+        #expect(try Self.evaluate(
+            Self.getActorValue, 0, 40, parameter1: Self.resistFireIndex, context: context
+        ).outcome == .true)
+        // 40 of a base 40 is a full bar: the percentage divides by the base,
+        // which for a non-primary value is what the records author.
+        #expect(try Self.evaluate(
+            Self.getActorValuePercent, 0, 1,
+            parameter1: Self.resistFireIndex, context: context
+        ).outcome == .true)
+    }
+
+    @Test func anIndexOutsideTheTableIsATalliedParameterMiss() throws {
         let context = try Self.fightContext()
         let result = try Self.evaluate(
-            Self.getActorValue, 0, 0, parameter1: Self.sneakIndex, context: context
+            Self.getActorValue, 0, 0, parameter1: Self.unknownIndex, context: context
         )
         #expect(!result.outcome.isTrue)
         #expect(result.outcome.failures == [.unresolvedParameter(Self.getActorValue)])

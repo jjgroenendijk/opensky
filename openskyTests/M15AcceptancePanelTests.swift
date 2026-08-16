@@ -196,6 +196,16 @@ struct M15AcceptancePanelTests {
             hasZeroHealth: false
         ),
         target: .player,
+        selection: ActorValueInspection(
+            name: "Health",
+            index: 24,
+            current: 92,
+            base: 100,
+            permanent: 0,
+            temporary: 0,
+            damage: 0,
+            resistanceFraction: nil
+        ),
         runtimeActorCount: 4,
         lastActionText: "Damaged Bandit: 30.0 / 50.0 / 80.0."
     )

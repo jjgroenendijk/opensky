@@ -82,6 +82,7 @@ nonisolated enum OpenSkySaveEncoder {
         writeQuestAliases(snapshot.entries, into: &writer)
         writeQuestLocationAliases(snapshot.entries, into: &writer)
         writeActorValues(snapshot.entries, into: &writer)
+        writeGeneralActorValues(snapshot.entries, into: &writer)
         writeDeaths(snapshot.entries, into: &writer)
         writeCombatStates(snapshot.entries, into: &writer)
         writeDialogueStates(snapshot.entries, into: &writer)

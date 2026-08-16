@@ -60,6 +60,34 @@ nonisolated enum ActorValueControlReadout {
             )
     }
 
+    /// The selected actor value: what it reads, what its base and modifiers
+    /// say, and — for a percentage resistance — the capped fraction of damage
+    /// it removes (issue #468, roadmap item 19.5).
+    ///
+    /// The modifier slots are shown even when they are all zero, because a
+    /// value at 40 with a base of 40 and a value at 40 with a base of 100 and
+    /// 60 points of damage are different states the bar alone cannot tell
+    /// apart.
+    static func selectionText(for snapshot: ActorValueControlSnapshot) -> String {
+        guard snapshot.isAvailable else { return "Selected value: unavailable" }
+        let selection = snapshot.selection
+        let resistance = selection.resistanceFraction.map {
+            String(format: "  resists %.0f%% (capped)", $0 * 100)
+        } ?? ""
+        return String(
+            format: "Selected value: %@ (%d) — %.1f  base %.1f  perm %+.1f  temp %+.1f"
+                + "  dmg %+.1f%@",
+            selection.name,
+            selection.index,
+            selection.current,
+            selection.base,
+            selection.permanent,
+            selection.temporary,
+            selection.damage,
+            resistance
+        )
+    }
+
     /// Which target the dev controls act on, how many references carry runtime
     /// values, and what the last action did.
     static func controlsText(for snapshot: ActorValueControlSnapshot) -> String {

@@ -29,7 +29,7 @@
 import Foundation
 
 /// One actor as a Papyrus native sees it.
-nonisolated struct PapyrusActorState: Equatable, Sendable {
+nonisolated struct PapyrusActorState: ActorValueReadable, Equatable, Sendable {
     /// Current health, magicka and stamina.
     let current: ActorValues
     /// Re-derived maximums, which is what `GetBaseActorValue` reports.
@@ -46,6 +46,16 @@ nonisolated struct PapyrusActorState: Equatable, Sendable {
     /// that tracks one today, so every other actor answers nil and
     /// `IsWeaponDrawn` fails with a reason rather than claiming sheathed.
     let weaponDrawState: WeaponDrawState?
+    /// Non-primary actor values this actor has moved off its baseline
+    /// (issue #468), which is what lets `GetActorValue("Resist Fire")` answer
+    /// rather than fail with "no store for actor value".
+    let general: [Int32: ActorValueEntry]
+    /// Non-primary base values this actor's records author, which is what
+    /// `GetBaseActorValue` reports for them.
+    let generalBaseline: [Int32: Float]
+    /// Whether this actor is the player, which is what the resistance cap
+    /// depends on.
+    let isPlayer: Bool
 
     init(
         current: ActorValues,
@@ -53,7 +63,10 @@ nonisolated struct PapyrusActorState: Equatable, Sendable {
         isDead: Bool = false,
         isInCombat: Bool = false,
         combatActivity: ActorCombatActivity = .notFighting,
-        weaponDrawState: WeaponDrawState? = nil
+        weaponDrawState: WeaponDrawState? = nil,
+        general: [Int32: ActorValueEntry] = [:],
+        generalBaseline: [Int32: Float] = [:],
+        isPlayer: Bool = false
     ) {
         self.current = current
         self.maximums = maximums
@@ -61,6 +74,9 @@ nonisolated struct PapyrusActorState: Equatable, Sendable {
         self.isInCombat = isInCombat
         self.combatActivity = combatActivity
         self.weaponDrawState = weaponDrawState
+        self.general = general
+        self.generalBaseline = generalBaseline
+        self.isPlayer = isPlayer
     }
 }
 
@@ -79,11 +95,15 @@ protocol PapyrusWorldActorBridge: AnyObject, Sendable {
     /// Takes `amount` off one of `key`'s values through `ActorValueRuntime`,
     /// then routes a health that reached zero into the death path.
     ///
+    /// Addressed by vanilla actor-value index rather than by
+    /// `ActorValueKind` since 19.5, because a script may damage any of the 164
+    /// and only three of them have a kind.
+    ///
     /// - Returns: the state as stored afterwards, or nil when there was no
     ///   actor to damage.
     @discardableResult
     func damageActorValue(
-        _ kind: ActorValueKind, by amount: Float, on key: ReferenceKey
+        at index: Int32, by amount: Float, on key: ReferenceKey
     ) -> PapyrusActorState?
 
     /// Adds `amount` to one of `key`'s values, capped at its maximum.
@@ -96,7 +116,7 @@ protocol PapyrusWorldActorBridge: AnyObject, Sendable {
     ///   actor to restore.
     @discardableResult
     func restoreActorValue(
-        _ kind: ActorValueKind, by amount: Float, on key: ReferenceKey
+        at index: Int32, by amount: Float, on key: ReferenceKey
     ) -> PapyrusActorState?
 
     /// Starts `key` fighting `target` at once, without waiting for it to
@@ -139,19 +159,19 @@ nonisolated extension PapyrusWorldAccess {
 
     @discardableResult
     func damageActorValue(
-        _ kind: ActorValueKind, by amount: Float, on key: ReferenceKey
+        at index: Int32, by amount: Float, on key: ReferenceKey
     ) -> PapyrusActorState? {
         MainActor.assumeIsolated {
-            bridge.damageActorValue(kind, by: amount, on: key)
+            bridge.damageActorValue(at: index, by: amount, on: key)
         }
     }
 
     @discardableResult
     func restoreActorValue(
-        _ kind: ActorValueKind, by amount: Float, on key: ReferenceKey
+        at index: Int32, by amount: Float, on key: ReferenceKey
     ) -> PapyrusActorState? {
         MainActor.assumeIsolated {
-            bridge.restoreActorValue(kind, by: amount, on: key)
+            bridge.restoreActorValue(at: index, by: amount, on: key)
         }
     }
 

@@ -18,14 +18,20 @@
 // later index one off. Nothing here was recalled from memory: `Health` is 24,
 // `Magicka` is 25 and `Stamina` is 26 because that file says so.
 //
-// ## What "the handful 15.3 implements" means
+// ## Which values are stored
 //
-// Exactly health, magicka and stamina. Every other index and name is a real
-// actor value that OpenSky has no store for, and `kind(at:)` answers nil for
-// it. Callers turn that nil into their own subsystem's documented miss — a
+// Every one of the 164 (issue #468, roadmap item 19.5). Health, magicka and
+// stamina keep the typed `ActorValueKind` fast path 15.3 built for them, which
+// is what `kind(at:)` still answers; every other index is stored by
+// `ActorValueState`'s general table and read through `defaultValue(at:)` when
+// nothing has touched it. `kind(at:)` returning nil therefore no longer means
+// "unreadable" — it means "not one of the three primaries", and the question a
+// caller actually asks first is `isVanilla(index:)`.
+//
+// An index *outside* the table stays the documented miss it always was: a
 // reason-tagged false and a `ConditionTally` bucket on the condition side, a
-// tallied native failure and the call's declared default on the Papyrus side —
-// so an unstored actor value is a measurable gap rather than a convincing zero.
+// tallied native failure and the call's declared default on the Papyrus side.
+// That bucket now counts only genuinely unknown indices and names.
 //
 // ## Name matching
 //
@@ -111,11 +117,59 @@ nonisolated enum ActorValueIdentity {
         .health: 24, .magicka: 25, .stamina: 26
     ]
 
+    /// Actor-value index of the first and last of the eighteen skills,
+    /// `One-Handed` and `Enchanting`, which are contiguous in the table above.
+    /// CLAS DATA weights them in this order, one byte each (UESP CLAS).
+    static let firstSkillIndex: Int32 = 6
+    static let lastSkillIndex: Int32 = 23
+
+    /// The floor every skill starts from before a race bonus or a class spread:
+    /// "Skill = 15 + [Racial bonus] + 8\*(Level-1)/(Sum of class' skill
+    /// weights)\*[Skill weight]"
+    /// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CLAS>).
+    static let skillFloor: Float = 15
+
+    /// Whether `index` names an entry in the vanilla table — the question a
+    /// caller asks before storing or reading a value by index.
+    ///
+    /// `noneIndex` and every other number outside `0 ..< vanillaNames.count`
+    /// answer false: "none" is the absence of a value, not a value.
+    static func isVanilla(index: Int32) -> Bool {
+        index >= 0 && Int(index) < vanillaNames.count
+    }
+
+    /// Whether `index` names one of the eighteen skills.
+    static func isSkill(index: Int32) -> Bool {
+        index >= firstSkillIndex && index <= lastSkillIndex
+    }
+
+    /// What an actor reads for `index` when neither a record nor the session
+    /// has authored anything, or nil for an index outside the table.
+    ///
+    /// Zero for everything but the skills, and that is a deliberate,
+    /// documented position rather than a placeholder. An actor value is an
+    /// accumulator: a resistance nothing grants is 0% resistance, a bonus
+    /// nothing confers is +0, and an AI attribute the AIDT does not author is
+    /// the bottom of its enumeration. The skills are the one family with a
+    /// sourced non-zero floor, quoted above at `skillFloor`.
+    ///
+    /// Two values vanilla starts away from zero are *not* defaulted here,
+    /// because they are authored per record rather than globally and OpenSky
+    /// reads them from that record instead: `Speed Mult` (30) comes from ACBS
+    /// 0x0E and `Mass` (36) from RACE DATA 0x34, both through
+    /// `ActorValueDerivation.generalBaseValues(inputs:)`. An actor with no
+    /// record behind it — a summon — therefore reads 0 for both, which is a
+    /// stated gap rather than an invented number; see docs/engine/actor-values.md.
+    static func defaultValue(at index: Int32) -> Float? {
+        guard isVanilla(index: index) else { return nil }
+        return isSkill(index: index) ? skillFloor : 0
+    }
+
     /// Vanilla name of `index`, or nil when no vanilla actor value carries it.
     /// `noneIndex` reports nil like any other number outside the table: "none"
     /// is the absence of a value, not a value.
     static func name(at index: Int32) -> String? {
-        guard index >= 0, Int(index) < vanillaNames.count else { return nil }
+        guard isVanilla(index: index) else { return nil }
         return vanillaNames[Int(index)]
     }
 
@@ -125,10 +179,12 @@ nonisolated enum ActorValueIdentity {
         namesByKey[normalized(name)]
     }
 
-    /// The stored value `index` names, or nil for a real actor value 15.3 has
-    /// no store for and for an index outside the table alike. The two are the
-    /// same answer to the caller — "not something this engine can read" — and
-    /// `name(at:)` is what tells them apart in a report.
+    /// The *primary* value `index` names, or nil for every other index in the
+    /// table and for an index outside it alike.
+    ///
+    /// Since 19.5 this is a fast-path question, not a can-I-read-it question:
+    /// nil means "goes through the general table", and `isVanilla(index:)` is
+    /// what says whether the index names an actor value at all.
     static func kind(at index: Int32) -> ActorValueKind? {
         kindsByIndex[index]
     }
