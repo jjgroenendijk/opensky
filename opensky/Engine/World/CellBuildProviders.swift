@@ -85,6 +85,14 @@ nonisolated protocol ActorValueDataProviding {
 nonisolated protocol MagicDataProviding {
     var magicEffectStore: MagicEffectStore? { get }
     var magicItemPluginName: String? { get }
+    /// Load-order SPEL and SCRL index (issue #470), which the spellbook keys
+    /// its known spells against.
+    var spellStore: SpellStore? { get }
+    /// Load-order EQUP index, which answers which hands a readied spell takes.
+    /// The load-order view rather than `EquipmentCatalog`'s single-plugin table,
+    /// because a spell's ETYP is relative to whichever plugin authored the
+    /// spell, and that need not be the one the item indexes were built from.
+    var equipSlotStore: EquipSlotStore? { get }
 }
 
 /// Optional script-loading seam a provider can expose (issue #171). The

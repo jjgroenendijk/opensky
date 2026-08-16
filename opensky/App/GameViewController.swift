@@ -194,6 +194,12 @@ final class GameViewController: NSViewController {
     /// because extensions cannot add state.
     var magicEffects = MagicBridgeState()
 
+    /// Spellcasting: the spellbook, the cast loop, the panel's spell selection
+    /// and its last outcome line (issue #470). The implementation lives in
+    /// `GameViewControllerCasting.swift`; stored here because extensions cannot
+    /// add state.
+    var casting = CastingBridgeState()
+
     /// Melee combat: the swing runtime, the WEAP index it reads combat data
     /// out of, and the panel's last outcome line (issue #195). The
     /// implementation lives in `GameViewControllerMelee.swift`; stored here

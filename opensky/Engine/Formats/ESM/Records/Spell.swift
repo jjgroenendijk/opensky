@@ -125,6 +125,16 @@ nonisolated enum MagicCastingRecord {
         }
     }
 
+    /// ETYP — the EQUP slot the record links to, still raw and still relative to
+    /// the plugin that authored the record. What answers which hands a readied
+    /// spell takes (issue #470).
+    var equipType: FormID? {
+        switch self {
+        case let .spell(spell): spell.header.equipType
+        case let .scroll(scroll): scroll.header.equipType
+        }
+    }
+
     var effects: [MagicItemEffect] {
         switch self {
         case let .spell(spell): spell.effects

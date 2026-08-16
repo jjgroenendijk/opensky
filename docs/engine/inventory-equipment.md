@@ -202,6 +202,28 @@ fallback: a weapon whose `ETYP` resolves to nothing takes
 plausible. In the vanilla load order 3,354 of 3,359 weapons resolve and the other 5 carry
 no `ETYP` at all.
 
+### Spells in hands
+
+A readied spell takes a hand too, and it does **not** go through `EquipmentRuntime`
+(issue #470). `equip` refuses anything the owner does not hold, and that refusal is the guard
+against silently equipping an item out of nowhere; a spell is never held, has no stack, no
+weight and no `EquippableItem` entry, so widening the refusal to serve it would drop the
+guard for every other caller.
+
+Instead `SpellbookRuntime` (`opensky/Engine/Magic/SpellbookRuntime.swift`) owns readied
+spells in its own component and arbitrates against this layer over the one thing the two
+share — hands. Readying a spell unequips the weapon or shield whose hand it takes, and
+`SpellbookRuntime.equipItem` unequips the spell whose hand a weapon takes; that second
+direction is why the item equip path routes through it rather than calling
+`EquipmentRuntime.equip` directly. `HandSlots`, `EquipmentOccupancy` and the EQUP walk are
+the same on both sides.
+
+A spell's `ETYP` needs one distinction a weapon's never did: `BothHands` and `EitherHand`
+name the same two parents and differ only in the DATA "use all parents" byte, because the
+player names the hand a spell goes into. `EquipSlotHands.choice` keeps the two apart while
+`hands(of:)` keeps returning the single deterministic answer weapon occupancy has always
+used. The casting side of it is [magic and active effects](/engine/magic.md).
+
 ## Limits / next
 
 - Ownership is reported, never enforced. Stealing, bounties and the crime system are M18+.

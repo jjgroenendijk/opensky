@@ -28,7 +28,8 @@ enum SidebarSection: String, CaseIterable {
 typealias WorldControlProviders = AINavigationControlProviding
     & AIOverlayControlProviding & ActorValueControlProviding & AnimationControlProviding
     & ArcheryControlProviding & AudioControlProviding
-    & CameraControlProviding & CombatLoopControlProviding & ContainerMenuControlProviding
+    & CameraControlProviding & CastingControlProviding
+    & CombatLoopControlProviding & ContainerMenuControlProviding
     & DialogueCameraControlProviding & DialogueControlProviding
     & FaceMorphControlProviding
     & FirstPersonControlProviding
@@ -199,6 +200,7 @@ enum DestinationRegistry {
                 let panel = CombatPhysicsPanelViewController()
                 panel.actorValueProvider = context.providers
                 panel.magicEffectProvider = context.providers
+                panel.castingProvider = context.providers
                 panel.meleeProvider = context.providers
                 panel.archeryProvider = context.providers
                 panel.ragdollProvider = context.providers

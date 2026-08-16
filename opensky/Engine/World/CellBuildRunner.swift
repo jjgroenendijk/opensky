@@ -103,6 +103,12 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     var magicEffectStore: MagicEffectStore?
     /// Plugin every magic item's EFID links are relative to (issue #469).
     var magicItemPluginName: String?
+    /// Load-order SPEL and SCRL index (issue #470); nil on the same synthetic
+    /// scenes, and then the spellbook reports itself unavailable.
+    var spellStore: SpellStore?
+    /// Load-order EQUP index (issue #470), which answers which hands a readied
+    /// spell takes.
+    var equipSlotStore: EquipSlotStore?
     /// GMST-derived walk/run values plus explicit documented fallbacks.
     var movementConfiguration: PlayerMovementConfiguration = .synthetic
     /// GMST-derived `fBarterMin` and `fBarterMax` at the milestone's fixed

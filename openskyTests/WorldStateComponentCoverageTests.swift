@@ -55,6 +55,11 @@ struct WorldStateComponentCoverageTests {
         )
     }
 
+    /// One actor knowing a spell and holding it in a hand (issue #470).
+    private var spellbook: SpellbookState {
+        SpellbookState(known: [key(0x600)], readBooks: [key(0x601)], rightHand: key(0x600))
+    }
+
     /// One actor carrying a timed magic effect (issue #469).
     private var activeEffects: ActiveEffectState {
         ActiveEffectState(effects: [
@@ -111,6 +116,9 @@ struct WorldStateComponentCoverageTests {
         // A buffed actor: the thirteenth kind, whose own subject is
         // ActiveEffectRuntimeTests.
         #expect(store.set(activeEffects, for: reference, in: whiterun))
+        // A caster: the fourteenth kind, whose own subject is
+        // SpellbookRuntimeTests.
+        #expect(store.set(spellbook, for: reference, in: whiterun))
 
         #expect(store.component(ReferenceEnableState.self, for: reference)?.isEnabled == false)
         #expect(store.component(ReferenceTransformOverride.self, for: reference) == transform(9))
@@ -128,6 +136,7 @@ struct WorldStateComponentCoverageTests {
         #expect(store.component(ActorCombatState.self, for: reference) == .hostile)
         #expect(store.component(DialogueRuntimeState.self, for: reference)?.saidCount == 1)
         #expect(store.component(ActiveEffectState.self, for: reference) == activeEffects)
+        #expect(store.component(SpellbookState.self, for: reference) == spellbook)
         #expect(store.delta(for: reference)?.sortedKinds == WorldStateComponentKind.allCases)
     }
 
@@ -147,6 +156,7 @@ struct WorldStateComponentCoverageTests {
         store.set(ActorCombatState.hostile, for: reference, in: whiterun)
         store.set(DialogueRuntimeState(saidCount: 1), for: reference, in: whiterun)
         store.set(activeEffects, for: reference, in: whiterun)
+        store.set(spellbook, for: reference, in: whiterun)
         #expect(store.reset(reference))
         #expect(store.delta(for: reference) == nil)
         #expect(store.dirtyCount == 0)

@@ -36,7 +36,23 @@ nonisolated enum EquipSlotHands {
 
     /// The hands `slot` occupies, following its parents through `lookup`.
     static func hands(of slot: EquipSlot, lookup: (FormID) -> EquipSlot?) -> HandSlots {
-        hands(of: slot, lookup: lookup, depth: 0)
+        choice(of: slot, lookup: lookup).hands
+    }
+
+    /// The same walk, keeping the distinction `hands(of:lookup:)` collapses:
+    /// whether the slot takes every hand it names or lets the equipper pick one
+    /// of them.
+    ///
+    /// A spell needs the distinction and a weapon does not. `BothHands` and
+    /// `EitherHand` name the same two parents and differ only in the DATA
+    /// "use all parents" byte, so a master spell filling both hands and a
+    /// novice spell going into whichever hand the player asked for are the same
+    /// walk with two different readings of the answer (issue #470).
+    static func choice(
+        of slot: EquipSlot,
+        lookup: (FormID) -> EquipSlot?
+    ) -> EquipSlotHandChoice {
+        choice(of: slot, lookup: lookup, depth: 0)
     }
 
     /// The hands the leaf slot named by `editorID` occupies.
@@ -48,23 +64,71 @@ nonisolated enum EquipSlotHands {
         }
     }
 
-    private static func hands(
+    private static func choice(
         of slot: EquipSlot,
         lookup: (FormID) -> EquipSlot?,
         depth: Int
-    ) -> HandSlots {
-        guard depth < parentDepthCap else { return [] }
-        guard !slot.parents.isEmpty else { return leafHands(editorID: slot.editorID) }
-        let options = slot.parents.compactMap(lookup).map {
-            hands(of: $0, lookup: lookup, depth: depth + 1)
+    ) -> EquipSlotHandChoice {
+        guard depth < parentDepthCap else { return .fixed([]) }
+        guard !slot.parents.isEmpty else {
+            return .fixed(leafHands(editorID: slot.editorID))
         }
-        if slot.usesAllParents {
-            return options.reduce(into: HandSlots()) { $0.formUnion($1) }
+        let options = slot.parents.compactMap(lookup).reduce(into: HandSlots()) {
+            $0.formUnion(choice(of: $1, lookup: lookup, depth: depth + 1).hands)
         }
-        if options.contains(where: { $0.contains(.rightHand) }) {
-            return .rightHand
+        return slot.usesAllParents ? .fixed(options) : .choice(options)
+    }
+}
+
+/// What an EQUP slot says about hand occupancy: every hand it names, or one of
+/// them.
+///
+/// The two readings exist because EQUP encodes them in one graph. `BothHands`
+/// lists LeftHand and RightHand with "use all parents" set and takes both;
+/// `EitherHand` lists the same two with the byte clear and takes exactly one,
+/// the equipper's pick. A weapon never needed the distinction — the engine has
+/// to answer with one deterministic hand either way — but a readied spell does,
+/// because the player names the hand.
+nonisolated enum EquipSlotHandChoice: Equatable, Sendable {
+    /// Every hand in the set is taken at once. A leaf slot and an all-parents
+    /// slot both read this way, so `.fixed([])` is the honest answer for Voice
+    /// and Potion: a resolved slot that takes no hand at all.
+    case fixed(HandSlots)
+    /// Exactly one of these hands is taken and the equipper chooses which.
+    case choice(HandSlots)
+
+    /// Every hand the slot could occupy, whichever reading applies. Not what a
+    /// `.choice` slot actually fills — use `occupancy(preferring:)` for that.
+    var candidates: HandSlots {
+        switch self {
+        case let .fixed(hands), let .choice(hands): hands
         }
-        return options.first { !$0.isEmpty } ?? []
+    }
+
+    /// The one deterministic answer `hands(of:lookup:)` has always given: an
+    /// all-parents slot fills everything it names, and a choose-one slot
+    /// resolves to the right hand when the right hand is among its options,
+    /// because that is the hand the skeleton's `Weapon` attach node hangs off.
+    var hands: HandSlots {
+        switch self {
+        case let .fixed(hands): hands
+        case let .choice(hands): hands.contains(.rightHand) ? .rightHand : hands
+        }
+    }
+
+    /// What the slot occupies when the equipper asks for `hand`, or nil when
+    /// this slot cannot go there.
+    ///
+    /// A `.fixed` slot ignores the request and answers with everything it
+    /// names, which is what makes a master spell fill both hands whichever hand
+    /// the player pressed. A `.choice` slot answers with the requested hand
+    /// when it is one of the options and refuses otherwise, rather than
+    /// silently putting the spell somewhere else.
+    func occupancy(preferring hand: HandSlots) -> HandSlots? {
+        switch self {
+        case let .fixed(hands): hands.isEmpty ? nil : hands
+        case let .choice(hands): hands.overlaps(hand) ? hand : nil
+        }
     }
 }
 
@@ -104,7 +168,13 @@ nonisolated struct EquipSlotTable: Equatable {
     /// link. Nil and `[]` are different answers: nil is an unresolved link,
     /// `[]` is a slot that genuinely takes no hand, such as Voice.
     func hands(of id: FormID?) -> HandSlots? {
+        handChoice(of: id)?.hands
+    }
+
+    /// The same answer keeping the all-parents/choose-one distinction, for a
+    /// caller that names the hand it wants (issue #470).
+    func handChoice(of id: FormID?) -> EquipSlotHandChoice? {
         guard let id, !id.isNull, let slot = slots[id.rawValue] else { return nil }
-        return EquipSlotHands.hands(of: slot) { slots[$0.rawValue] }
+        return EquipSlotHands.choice(of: slot) { slots[$0.rawValue] }
     }
 }

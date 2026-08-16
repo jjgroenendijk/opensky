@@ -76,6 +76,15 @@ nonisolated struct MeleeWeaponProfile: Equatable, Sendable {
     /// reaches exactly `fCombatDistance`.
     static let unarmed = MeleeWeaponProfile(damage: 1, reach: 1)
 
+    /// The profile of a hand holding a readied spell (issue #470).
+    ///
+    /// Its only job is to carry `CombatHandType.spell` into `iRightHandType`,
+    /// which is the value `magicbehavior.hkx` reads. The damage and reach are
+    /// the unarmed ones and are never used: `MeleeCombatRuntime` never gets an
+    /// attack event for a hand holding a spell, because that hand's button goes
+    /// to the cast loop instead.
+    static let readiedSpell = MeleeWeaponProfile(damage: 1, reach: 1, handType: .spell)
+
     /// One decoded WEAP as a swing profile.
     init(weapon record: Weapon) {
         self.init(

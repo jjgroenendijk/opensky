@@ -115,6 +115,40 @@ struct EquipSlotTests {
         #expect(table.hands(of: FormID(Slot.voice))?.isEmpty == true)
     }
 
+    /// The distinction `hands(of:)` collapses, which is what readying a spell
+    /// to a named hand needs (issue #470): `BothHands` takes everything it
+    /// names, `EitherHand` lets the equipper pick.
+    @Test
+    func theHandChoiceKeepsAllOfAndOneOfApart() throws {
+        let table = try graph()
+
+        #expect(table.handChoice(of: FormID(Slot.bothHands)) == .fixed(.bothHands))
+        #expect(table.handChoice(of: FormID(Slot.eitherHand)) == .choice(.bothHands))
+        #expect(table.handChoice(of: FormID(Slot.rightHand)) == .fixed(.rightHand))
+        #expect(table.handChoice(of: FormID(Slot.voice)) == .fixed([]))
+    }
+
+    /// A two-handed slot ignores the request and fills both; a choose-one slot
+    /// answers with the hand asked for, and refuses one it does not offer.
+    @Test
+    func occupancyAnswersTheRequestedHandOrRefusesIt() throws {
+        let table = try graph()
+
+        let both = try #require(table.handChoice(of: FormID(Slot.bothHands)))
+        #expect(both.occupancy(preferring: .rightHand) == .bothHands)
+        #expect(both.occupancy(preferring: .leftHand) == .bothHands)
+
+        let either = try #require(table.handChoice(of: FormID(Slot.eitherHand)))
+        #expect(either.occupancy(preferring: .rightHand) == .rightHand)
+        #expect(either.occupancy(preferring: .leftHand) == .leftHand)
+
+        let shield = try #require(table.handChoice(of: FormID(Slot.shield)))
+        #expect(shield.occupancy(preferring: .rightHand) == .leftHand)
+
+        let voice = try #require(table.handChoice(of: FormID(Slot.voice)))
+        #expect(voice.occupancy(preferring: .rightHand) == nil)
+    }
+
     @Test
     func anUnresolvableOrNullLinkIsAMissRatherThanAnEmptyAnswer() throws {
         let table = try graph()

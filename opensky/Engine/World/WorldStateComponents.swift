@@ -93,6 +93,14 @@ nonisolated enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendab
     /// while an effect list changes only when something is applied, expires or
     /// is dispelled.
     case activeEffects
+    /// One actor's known spells, read tomes, readied hands and spent greater
+    /// powers (issue #470). The value type is `SpellbookState` in
+    /// `opensky/Engine/Magic/SpellbookComponent.swift`. A slot of its own for
+    /// the reason `activeEffects` is one: everything in it changes on a player
+    /// action, never per frame. The four fields share the slot rather than
+    /// splitting further because a readied hand must name a known spell, and
+    /// only one component can enforce that in a single write.
+    case spellbook
 }
 
 /// A value that can occupy one component slot.
@@ -130,6 +138,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
     case combat(ActorCombatState)
     case dialogue(DialogueRuntimeState)
     case activeEffects(ActiveEffectState)
+    case spellbook(SpellbookState)
 
     var kind: WorldStateComponentKind {
         switch self {
@@ -146,6 +155,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
         case .combat: .combat
         case .dialogue: .dialogue
         case .activeEffects: .activeEffects
+        case .spellbook: .spellbook
         }
     }
 }

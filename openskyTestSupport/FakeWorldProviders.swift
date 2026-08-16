@@ -376,6 +376,7 @@ final class FakeWorldProviders: WorldControlProviders {
     /// conformances live in `FakeWorldProvidersCombat.swift`.
     var actorValues = FakeActorValueState()
     var magicEffects = FakeMagicEffectState()
+    var casting = FakeCastingState()
     var combatLoop = FakeCombatLoopState()
     var physics = FakePhysicsState()
 }

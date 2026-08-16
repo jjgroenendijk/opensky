@@ -139,6 +139,10 @@ nonisolated final class ItemDefinitionStore {
     /// INGR decodes, keyed by raw FormID (issue #469). Beside the ALCH decodes
     /// for the same reason.
     let ingredients: [UInt32: Ingredient]
+    /// BOOK decodes, keyed by raw FormID (issue #470). Beside the others for
+    /// the same reason: reading a spell tome needs the DATA "teaches" union,
+    /// and `ItemDefinition` carries only what every family has in common.
+    let books: [UInt32: Book]
     /// PROJ decodes, keyed by raw FormID (issue #196).
     ///
     /// PROJ is not a carryable family and has no `ItemDefinition` view at all,
@@ -201,6 +205,25 @@ nonisolated final class ItemDefinitionStore {
         ingredients = Self.records(of: "INGR", in: file)
             .compactMap { try? Ingredient(record: $0, localized: localized) }
             .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
+        books = Self.records(of: "BOOK", in: file)
+            .compactMap { try? Book(record: $0, localized: localized) }
+            .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
+    }
+
+    /// The decoded BOOK behind an item, or nil when the item is not a book.
+    func book(_ id: FormID) -> Book? {
+        books[id.rawValue]
+    }
+
+    /// The SPEL a spell tome teaches, or nil when `id` is not a book or is a
+    /// book that teaches no spell (issue #470).
+    ///
+    /// The link is plugin-relative and returned raw, because the caller holds
+    /// the plugin the item index was built from and the resolver that turns it
+    /// into a `ReferenceKey`.
+    func teachesSpell(_ id: FormID) -> FormID? {
+        guard case let .spell(spell) = books[id.rawValue]?.teaches else { return nil }
+        return spell
     }
 
     /// What consuming `id` applies, or nil when it is not something an actor
