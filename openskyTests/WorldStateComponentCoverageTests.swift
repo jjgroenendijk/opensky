@@ -55,6 +55,21 @@ struct WorldStateComponentCoverageTests {
         )
     }
 
+    /// One actor carrying a timed magic effect (issue #469).
+    private var activeEffects: ActiveEffectState {
+        ActiveEffectState(effects: [
+            ActiveEffect(
+                sequence: 1,
+                source: ActiveEffectSource(kind: .potion, record: key(0x500)),
+                effect: key(0x501),
+                mode: .modifier,
+                isDetrimental: false,
+                duration: 60,
+                values: [ActiveEffectValue(index: 41, magnitude: 20, applied: 20)]
+            )
+        ])
+    }
+
     @Test func storesAndReadsBackEveryComponentKind() {
         let store = WorldStateStore()
         let reference = key(0x200)
@@ -93,6 +108,9 @@ struct WorldStateComponentCoverageTests {
         // DialogueRuntimeTests. It is keyed by an INFO record rather than by a
         // placement, which the store likewise does not care about.
         #expect(store.set(DialogueRuntimeState(saidCount: 1), for: reference, in: whiterun))
+        // A buffed actor: the thirteenth kind, whose own subject is
+        // ActiveEffectRuntimeTests.
+        #expect(store.set(activeEffects, for: reference, in: whiterun))
 
         #expect(store.component(ReferenceEnableState.self, for: reference)?.isEnabled == false)
         #expect(store.component(ReferenceTransformOverride.self, for: reference) == transform(9))
@@ -109,6 +127,7 @@ struct WorldStateComponentCoverageTests {
         #expect(store.component(ActorDeathState.self, for: reference) == death)
         #expect(store.component(ActorCombatState.self, for: reference) == .hostile)
         #expect(store.component(DialogueRuntimeState.self, for: reference)?.saidCount == 1)
+        #expect(store.component(ActiveEffectState.self, for: reference) == activeEffects)
         #expect(store.delta(for: reference)?.sortedKinds == WorldStateComponentKind.allCases)
     }
 
@@ -127,6 +146,7 @@ struct WorldStateComponentCoverageTests {
         store.set(death, for: reference, in: whiterun)
         store.set(ActorCombatState.hostile, for: reference, in: whiterun)
         store.set(DialogueRuntimeState(saidCount: 1), for: reference, in: whiterun)
+        store.set(activeEffects, for: reference, in: whiterun)
         #expect(store.reset(reference))
         #expect(store.delta(for: reference) == nil)
         #expect(store.dirtyCount == 0)

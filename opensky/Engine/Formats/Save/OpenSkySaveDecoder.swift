@@ -73,6 +73,10 @@ nonisolated enum OpenSkySaveDecoder {
         /// so every response restores unsaid — which is also what a save
         /// written before that chunk existed means.
         var dialogue: [SaveDialogueEntry] = []
+        /// Absent `AEFF` chunk (issue #469) means no actor carried a timed
+        /// magic effect, so everyone restores with none — which is also what a
+        /// save written before that chunk existed means.
+        var activeEffects: [SaveActiveEffectEntry] = []
     }
 
     static func decode(_ data: Data) throws -> OpenSkySaveFile {
@@ -130,7 +134,8 @@ nonisolated enum OpenSkySaveDecoder {
         entries = OpenSkySaveActorValueDecoder.merge(actorValues, into: entries)
         entries = OpenSkySaveDeathDecoder.merge(body.deaths, into: entries)
         entries = OpenSkySaveCombatDecoder.merge(body.combatStates, into: entries)
-        return OpenSkySaveDialogueDecoder.merge(body.dialogue, into: entries)
+        entries = OpenSkySaveDialogueDecoder.merge(body.dialogue, into: entries)
+        return OpenSkySaveActiveEffectDecoder.merge(body.activeEffects, into: entries)
     }
 
     // MARK: - Header
@@ -257,6 +262,8 @@ nonisolated enum OpenSkySaveDecoder {
             body.combatStates = try OpenSkySaveCombatDecoder.decodeCombatStates(payload)
         case OpenSkySaveFormat.ChunkTag.dialogueStates:
             body.dialogue = try OpenSkySaveDialogueDecoder.decodeDialogueStates(payload)
+        case OpenSkySaveFormat.ChunkTag.activeEffects:
+            body.activeEffects = try OpenSkySaveActiveEffectDecoder.decodeActiveEffects(payload)
         default:
             break // Unknown chunk: skipped by its declared length.
         }

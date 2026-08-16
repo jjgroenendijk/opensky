@@ -120,10 +120,14 @@ struct ActorValueRuntime {
         to value: Float,
         on holder: ActorValueHolder
     ) -> ActorValueState {
-        var updated = current(of: holder)
+        let state = state(of: holder)
+        var updated = state.current
         updated[kind] = value
         return write(
-            ActorValueState(current: updated.clamped(to: baseline(of: holder).maximums)),
+            ActorValueState(
+                current: updated.clamped(to: baseline(of: holder).maximums),
+                general: state.general
+            ),
             for: holder
         )
     }
@@ -255,7 +259,15 @@ struct ActorValueRuntime {
                 updated[kind] = min(maximum, updated[kind] + gain)
             }
             guard updated != state.current else { continue }
-            store.set(ActorValueState(current: updated), for: holder.key, in: holder.cell)
+            // The general table travels with the write: an actor carrying a
+            // magic effect's temporary modifier (issue #469) regenerates health
+            // sixty times a second, and rebuilding the state from the primaries
+            // alone would drop that modifier on the next frame.
+            store.set(
+                ActorValueState(current: updated, general: state.general),
+                for: holder.key,
+                in: holder.cell
+            )
             changed.append(holder)
         }
         return changed

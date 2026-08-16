@@ -36,6 +36,7 @@ typealias WorldControlProviders = AINavigationControlProviding
     & HUDControlProviding & InventoryEquipmentControlProviding
     & InventoryMenuControlProviding & ItemControlProviding
     & JournalControlProviding
+    & MagicEffectControlProviding
     & MeleeCombatControlProviding
     & ParticleControlProviding
     & PerceptionControlProviding
@@ -197,6 +198,7 @@ enum DestinationRegistry {
             content: .worldInspector { context in
                 let panel = CombatPhysicsPanelViewController()
                 panel.actorValueProvider = context.providers
+                panel.magicEffectProvider = context.providers
                 panel.meleeProvider = context.providers
                 panel.archeryProvider = context.providers
                 panel.ragdollProvider = context.providers

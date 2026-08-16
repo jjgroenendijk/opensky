@@ -41,6 +41,7 @@ byte length followed by that many UTF-8 bytes. The file extension is `osav`.
 * `DETH` entry layout
 * `CBTS` entry layout
 * `DLGS` entry layout
+* `AEFF` entry layout
 * Version policy
 * Defensive decoding
 * Where saves live and how they are written
@@ -158,7 +159,8 @@ A chunk whose declared length runs past the end of the file is
 that declared length, which is what makes a newer build's save loadable in an older one.
 
 Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR`, `INVN`, `SPWN`, `QSTS`,
-`QALS`, `QLOC`, `AVAL`, `AVGN`, `DETH`, `CBTS` and `DLGS` were added additively afterwards.
+`QALS`, `QLOC`, `AVAL`, `AVGN`, `DETH`, `CBTS`, `DLGS` and `AEFF` were added additively
+afterwards.
 
 `GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
 any other size is `invalidValue`.
@@ -752,6 +754,65 @@ a save carry a menu a changed load order no longer authors
 
 The entry count is validated against `minimumDialogueEntrySize` (11 bytes) before storage is
 reserved.
+
+## `AEFF` entry layout
+
+`AEFF` — active magic effects (issue #469), one entry per actor carrying a timed effect.
+Additive and split out of `RDLT` for the same reason `AVAL` and `DETH` are, and a session in
+which nothing was applied writes no chunk at all.
+
+| type   | field      | notes                              |
+| ------ | ---------- | ---------------------------------- |
+| uint32 | entryCount | number of entries that follow      |
+| bytes  | entries    | `entryCount` entries, layout below |
+
+Each entry:
+
+| type   | field       | notes                                          |
+| ------ | ----------- | ---------------------------------------------- |
+| key    | key         | the actor's key, tagged as in `RDLT`           |
+| cell   | cell        | tagged as in `RDLT`                            |
+| uint32 | effectCount | number of effects that follow                  |
+| bytes  | effects     | `effectCount` effects, layout below            |
+
+Each effect:
+
+| type    | field        | notes                                                  |
+| ------- | ------------ | ------------------------------------------------------ |
+| uint64  | sequence     | per-actor application number, ascending                |
+| uint32  | sourceKind   | 0 potion, 1 ingredient, 2 spell, 3 enchantment          |
+| key     | sourceRecord | the `ALCH`, `INGR`, `SPEL` or `ENCH` that applied it    |
+| key     | effect       | the `MGEF` this is an application of                    |
+| optkey  | caster       | presence byte, then the key when present                |
+| uint32  | mode         | 0 held modifier, 1 per second                           |
+| uint8   | detrimental  | 1 when the magnitude is taken off the value             |
+| float32 | duration     | seconds, as `EFIT` authored it                          |
+| float32 | elapsed      | seconds since application                               |
+| uint32  | paidSeconds  | whole seconds a per-second effect has already paid      |
+| optkey  | stackKeyword | the peak-value-modifier no-stack keyword                |
+| uint32  | valueCount   | number of value records that follow                     |
+| bytes   | values       | `valueCount` records of `(int32 index, float32 magnitude, float32 applied)` |
+
+`elapsed` is stored rather than "remaining" so a reloaded effect reports the same total
+duration a readout showed before the save.
+
+**`applied` is what makes `AVGN`'s dropped temporary modifier recoverable.** The general
+actor-value chunk deliberately omits the temporary slot, because persisting both it and the
+effect that established it would double every buff on reload; each effect records how much
+of the slot it owns and the runtime rebuilds the slot from that
+([magic](/engine/magic.md)).
+
+Instant effects are not here and cannot be: a zero-duration effect moved an actor value once,
+and the moved value is what `AVAL` and `AVGN` already carry.
+
+An unknown `sourceKind` or `mode` is `invalidValue` — both are closed enumerations this build
+wrote itself, so an unreadable one means the bytes are not what they claim. A degenerate
+effect (zero duration, or no values) is normalized away by `ActiveEffectState` rather than
+failing the load, the same rule a corrupt actor value follows.
+
+The entry count is validated against `minimumActiveEffectEntrySize` (12 bytes), the effect
+count against `minimumActiveEffectSize` (49 bytes), and the value count against
+`activeEffectValueRecordSize` (12 bytes) before storage is reserved.
 
 ## Version policy
 

@@ -129,6 +129,16 @@ nonisolated final class ItemDefinitionStore {
     /// archery needs DATA `damage` and the PROJ link, and `ItemDefinition`
     /// carries only what every family has in common.
     let ammunition: [UInt32: Ammunition]
+    /// ALCH decodes, keyed by raw FormID (issue #469).
+    ///
+    /// Beside the unified views for the same reason the WEAP and AMMO decodes
+    /// are: consuming a potion needs its EFID/EFIT effect list, and
+    /// `ItemDefinition` deliberately carries only what every family has in
+    /// common.
+    let ingestibles: [UInt32: Ingestible]
+    /// INGR decodes, keyed by raw FormID (issue #469). Beside the ALCH decodes
+    /// for the same reason.
+    let ingredients: [UInt32: Ingredient]
     /// PROJ decodes, keyed by raw FormID (issue #196).
     ///
     /// PROJ is not a carryable family and has no `ItemDefinition` view at all,
@@ -185,6 +195,37 @@ nonisolated final class ItemDefinitionStore {
         projectiles = Self.records(of: "PROJ", in: file)
             .compactMap { try? Projectile(record: $0) }
             .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
+        ingestibles = Self.records(of: "ALCH", in: file)
+            .compactMap { try? Ingestible(record: $0, localized: localized) }
+            .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
+        ingredients = Self.records(of: "INGR", in: file)
+            .compactMap { try? Ingredient(record: $0, localized: localized) }
+            .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
+    }
+
+    /// What consuming `id` applies, or nil when it is not something an actor
+    /// can eat or drink (issue #469).
+    func magicItemUse(_ id: FormID) -> MagicItemUse? {
+        if let ingestible = ingestibles[id.rawValue] {
+            return MagicItemUse(
+                item: id,
+                kind: .potion,
+                effects: ingestible.effects,
+                consumeSound: ingestible.consumeSound
+            )
+        }
+        guard let ingredient = ingredients[id.rawValue] else { return nil }
+        // Eating a raw ingredient applies only its first effect. UESP's
+        // "Skyrim:Alchemy Effects" states it directly: "Ingredients listed in
+        // bold have that effect as their first, meaning that eating a sample of
+        // that ingredient will provide a small version of that effect."
+        // <https://en.uesp.net/wiki/Skyrim:Alchemy_Effects>
+        return MagicItemUse(
+            item: id,
+            kind: .ingredient,
+            effects: Array(ingredient.effects.prefix(1)),
+            consumeSound: nil
+        )
     }
 
     func definition(_ id: FormID) -> ItemDefinition? {

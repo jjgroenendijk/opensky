@@ -155,6 +155,24 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
             // but the seam stays total, and a quest belongs to no cell here for
             // the same reason its state does.
             return worldState.set(value, for: key)
+        default:
+            // Everything an actor or a base record carries, in its own
+            // function: this switch is at the strict cyclomatic-complexity
+            // limit, and a new component kind belongs beside its siblings
+            // rather than pushing this one over.
+            return writeActorComponent(component, for: key, in: cell)
+        }
+    }
+
+    /// The component kinds keyed by an actor or by a base record. Split out of
+    /// `write(_:for:)` for the reason `OpenSkySaveDecoder.applyGameplay` is
+    /// split out of `apply`: the parent is at its complexity limit.
+    private func writeActorComponent(
+        _ component: WorldStateComponentValue,
+        for key: ReferenceKey,
+        in cell: CellSceneLocation?
+    ) -> Bool {
+        switch component {
         case let .actorValues(value):
             // `DamageActorValue` and `RestoreActorValue` never reach this case:
             // they go through `ActorValueRuntime` so the clamping applies (see
@@ -162,7 +180,7 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
             // anyway — a component the VM can hold is a component the VM can
             // store. An actor is a placed reference, so this write is
             // attributed to its cell.
-            return worldState.set(value, for: key, in: cell)
+            worldState.set(value, for: key, in: cell)
         case let .death(value):
             // `Kill` never reaches this case either: it goes through
             // `RagdollRuntime.noteZeroHealth(of:killer:)` so the death events
@@ -170,20 +188,31 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
             // that would clear this component, and it is not implemented. An
             // actor is a placed reference, so this write is attributed to its
             // cell.
-            return worldState.set(value, for: key, in: cell)
+            worldState.set(value, for: key, in: cell)
         case let .combat(value):
             // Same reasoning: `StartCombat` and `StopCombat` are a later
             // milestone's natives, and when they arrive they go through
             // `CombatLoopRuntime` so the combat state and the music hook follow
             // the write. An actor is a placed reference, so this write is
             // attributed to its cell.
-            return worldState.set(value, for: key, in: cell)
+            worldState.set(value, for: key, in: cell)
         case let .dialogue(value):
             // Said-state is written by `DialogueRuntime.choose` rather than by
             // any native — no script function marks a response as said — but
             // the seam stays total, and an INFO belongs to no cell for the same
             // reason a quest does, so this write is unattributed.
-            return worldState.set(value, for: key)
+            worldState.set(value, for: key)
+        case let .activeEffects(value):
+            // `HasMagicEffect` reads this component and no native writes it:
+            // applying and dispelling go through `ActiveEffectRuntime` so the
+            // temporary modifier slot is claimed and handed back with the
+            // effect (issue #469). The seam stays total anyway. An actor is a
+            // placed reference, so this write is attributed to its cell.
+            worldState.set(value, for: key, in: cell)
+        default:
+            // Unreachable: every remaining kind is handled by the caller, and
+            // both switches together are total over `WorldStateComponentValue`.
+            false
         }
     }
 

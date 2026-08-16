@@ -16,6 +16,7 @@ import AppKit
 
 final class CombatPhysicsPanelViewController: InspectorPanelViewController {
     let actorValuesSection = CombatActorValuesSection()
+    let magicEffectsSection = CombatMagicEffectsSection()
     let meleeSection = CombatMeleeSection()
     let archerySection = CombatArcherySection()
     let ragdollSection = CombatRagdollSection()
@@ -27,6 +28,10 @@ final class CombatPhysicsPanelViewController: InspectorPanelViewController {
     /// the renderer, so the panel must not retain back.
     weak var actorValueProvider: (any ActorValueControlProviding)? {
         didSet { actorValuesSection.provider = actorValueProvider }
+    }
+
+    weak var magicEffectProvider: (any MagicEffectControlProviding)? {
+        didSet { magicEffectsSection.provider = magicEffectProvider }
     }
 
     weak var meleeProvider: (any MeleeCombatControlProviding)? {
@@ -51,7 +56,7 @@ final class CombatPhysicsPanelViewController: InspectorPanelViewController {
 
     override func makeSections() -> [PanelSectionViewController] {
         [
-            actorValuesSection, meleeSection, archerySection,
+            actorValuesSection, magicEffectsSection, meleeSection, archerySection,
             ragdollSection, loopSection, physicsSection
         ]
     }
@@ -60,6 +65,10 @@ final class CombatPhysicsPanelViewController: InspectorPanelViewController {
     /// PlayerLocomotionPanelViewController's convention.
     var damageControl: NSButton {
         actorValuesSection.damageControl
+    }
+
+    var magicConsumeControl: NSButton {
+        magicEffectsSection.consumeControl
     }
 
     var weaponDrawnControl: NSButton {

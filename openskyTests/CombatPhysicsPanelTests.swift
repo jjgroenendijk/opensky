@@ -24,7 +24,8 @@ struct CombatPhysicsPanelTests {
         #expect(panel.ragdollProvider === providers)
         #expect(panel.combatProvider === providers)
         #expect(panel.physicsProvider === providers)
-        #expect(panel.makeSections().count == 6)
+        #expect(panel.magicEffectProvider === providers)
+        #expect(panel.makeSections().count == 7)
     }
 
     /// Accessibility ids are the UI-test API (docs/tools/app-ui.md); pin the

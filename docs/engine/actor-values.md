@@ -364,6 +364,10 @@ actor instead of loading the rest of the world with everyone at full health. A
 session in which nothing took damage writes no chunk at all. Layout:
 [OpenSky save container](/formats/opensky-save.md).
 
+The regeneration step rewrites the whole component every frame and carries the
+general table through that write, so a temporary modifier an active effect is
+holding survives a tick ([magic](/engine/magic.md)).
+
 Because the maximums are not written, a save restored against changed records
 gets the records' numbers: the stored current value survives, and the first
 mutation clamps it into the new range.
@@ -375,8 +379,10 @@ a sibling of `QSTS` — `AVAL` entries are a flat positional layout with no
 per-entry length, so appending a variable-length list would make an older build
 misparse the whole chunk instead of skipping the new part. The temporary
 modifier is not written, because the magic effect that established it is what
-re-establishes it (item 19.6), and persisting both would double the buff on every
-reload. An `AVGN` entry always travels beside the actor's `AVAL` entry, so the
+re-establishes it — item 19.6 landed that half, and `ActiveEffectRuntime`
+rebuilds the slot from the `AEFF` chunk on load ([magic](/engine/magic.md)) — and
+persisting both would double the buff on every reload. An `AVGN` entry always
+travels beside the actor's `AVAL` entry, so the
 decoder never has to invent a health for an actor whose health the save did not
 carry; an orphan entry is dropped.
 

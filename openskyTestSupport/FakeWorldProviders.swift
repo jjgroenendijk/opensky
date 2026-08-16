@@ -375,6 +375,7 @@ final class FakeWorldProviders: WorldControlProviders {
     /// (issue #374) and PhysicsControlProviding (issue #193) state; all three
     /// conformances live in `FakeWorldProvidersCombat.swift`.
     var actorValues = FakeActorValueState()
+    var magicEffects = FakeMagicEffectState()
     var combatLoop = FakeCombatLoopState()
     var physics = FakePhysicsState()
 }
@@ -410,6 +411,11 @@ extension FakeWorldProviders {
     func dropInventoryMenuSelection() {
         inventoryMenuLastAction = inventoryMenuModel.selectedEntry
             .map { "Dropped \($0.name)." }
+    }
+
+    func consumeInventoryMenuSelection() {
+        inventoryMenuLastAction = inventoryMenuModel.selectedEntry
+            .map { "Consumed \($0.name)." }
     }
 
     var inventoryMenuSnapshot: InventoryMenuControlSnapshot {

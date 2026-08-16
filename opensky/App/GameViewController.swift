@@ -188,6 +188,12 @@ final class GameViewController: NSViewController {
     /// extensions cannot add state.
     var actorValues = ActorValueBridgeState()
 
+    /// Active magic effects: the apply/tick/dispel runtime, its fixed-step
+    /// accumulator and the panel's last outcome line (issue #469). The
+    /// implementation lives in `GameViewControllerMagic.swift`; stored here
+    /// because extensions cannot add state.
+    var magicEffects = MagicBridgeState()
+
     /// Melee combat: the swing runtime, the WEAP index it reads combat data
     /// out of, and the panel's last outcome line (issue #195). The
     /// implementation lives in `GameViewControllerMelee.swift`; stored here
