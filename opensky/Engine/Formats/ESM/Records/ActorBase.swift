@@ -108,6 +108,18 @@ nonisolated struct ActorBase {
     let defaultOutfit: FormID?
     /// PKID — ordered AI package stack. The first matching entry wins.
     let packages: [FormID]
+    /// SPLO — the actor's spell list: the SPEL records it knows without
+    /// learning them, in record order (issue #470).
+    ///
+    /// The preceding `SPCT` count is deliberately not read. It states how many
+    /// `SPLO` entries follow, so counting the entries answers the same question
+    /// and cannot disagree with the file; a record whose `SPCT` and entry count
+    /// differ is then decoded rather than rejected.
+    ///
+    /// This list inherits through `TemplateFlags.useSpellList`, which the
+    /// template chain resolves — the same rule the stats and inventory groups
+    /// follow.
+    let spells: [FormID]
     /// ACBS/CNAM/DNAM stat inputs (issue #194).
     let stats: Stats
     /// VMAD — Papyrus scripts attached to the NPC_ base.
@@ -178,6 +190,7 @@ nonisolated struct ActorBase {
         headParts = references.headParts
         defaultOutfit = references.defaultOutfit
         packages = references.packages
+        spells = references.spells
         self.stats = stats
         self.scriptData = scriptData
     }
@@ -192,6 +205,7 @@ nonisolated struct ActorBase {
         var headParts: [FormID] = []
         var defaultOutfit: FormID?
         var packages: [FormID] = []
+        var spells: [FormID] = []
     }
 
     /// The FormID-valued fields, plus the VMAD accumulator every unrecognized
@@ -217,6 +231,8 @@ nonisolated struct ActorBase {
             references.defaultOutfit = try FormID(reader.readUInt32())
         case "PKID":
             try references.packages.append(FormID(reader.readUInt32()))
+        case "SPLO":
+            try references.spells.append(FormID(reader.readUInt32()))
         default:
             _ = try scriptData.decode(field: field)
         }

@@ -17,6 +17,7 @@ import AppKit
 final class CombatPhysicsPanelViewController: InspectorPanelViewController {
     let actorValuesSection = CombatActorValuesSection()
     let magicEffectsSection = CombatMagicEffectsSection()
+    let spellcastingSection = CombatSpellcastingSection()
     let meleeSection = CombatMeleeSection()
     let archerySection = CombatArcherySection()
     let ragdollSection = CombatRagdollSection()
@@ -32,6 +33,10 @@ final class CombatPhysicsPanelViewController: InspectorPanelViewController {
 
     weak var magicEffectProvider: (any MagicEffectControlProviding)? {
         didSet { magicEffectsSection.provider = magicEffectProvider }
+    }
+
+    weak var castingProvider: (any CastingControlProviding)? {
+        didSet { spellcastingSection.provider = castingProvider }
     }
 
     weak var meleeProvider: (any MeleeCombatControlProviding)? {
@@ -56,8 +61,8 @@ final class CombatPhysicsPanelViewController: InspectorPanelViewController {
 
     override func makeSections() -> [PanelSectionViewController] {
         [
-            actorValuesSection, magicEffectsSection, meleeSection, archerySection,
-            ragdollSection, loopSection, physicsSection
+            actorValuesSection, magicEffectsSection, spellcastingSection, meleeSection,
+            archerySection, ragdollSection, loopSection, physicsSection
         ]
     }
 
@@ -69,6 +74,14 @@ final class CombatPhysicsPanelViewController: InspectorPanelViewController {
 
     var magicConsumeControl: NSButton {
         magicEffectsSection.consumeControl
+    }
+
+    var spellcastingLearnControl: NSButton {
+        spellcastingSection.learnControl
+    }
+
+    var spellcastingCastRightControl: NSButton {
+        spellcastingSection.castRightControl
     }
 
     var weaponDrawnControl: NSButton {

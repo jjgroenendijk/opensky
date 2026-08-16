@@ -3,9 +3,10 @@ type: Subsystem
 title: Magic and active effects
 description: The runtime notion of a magic effect acting on an actor - the cited
   archetype semantics, the two timed behaviours the Recover flag selects, the
-  component and its AEFF save chunk, condition gating, the stacking rules, and
-  the potion and ingredient consumption path that is the first consumer.
-tags: [engine, magic, effects, actors, alchemy]
+  component and its AEFF save chunk, condition gating, the stacking rules, the
+  potion and ingredient consumption path, and the caster runtime that knows
+  spells, readies them to a hand and casts the self-delivery ones.
+tags: [engine, magic, effects, actors, alchemy, casting, spells]
 timestamp: 2026-08-16T00:00:00Z
 ---
 
@@ -28,6 +29,13 @@ handed to it.
 - [Stacking](#stacking)
 - [Consuming a potion or an ingredient](#consuming-a-potion-or-an-ingredient)
 - [The AEFF save chunk](#the-aeff-save-chunk)
+- [Casting](#casting)
+- [The spellbook](#the-spellbook)
+- [Readying a spell to a hand](#readying-a-spell-to-a-hand)
+- [The cast loop](#the-cast-loop)
+- [Abilities and powers](#abilities-and-powers)
+- [Cast input and the animation seam](#cast-input-and-the-animation-seam)
+- [The SPLB save chunk](#the-splb-save-chunk)
 - [Verification](#verification)
 - [Limits / next](#limits--next)
 
@@ -43,6 +51,14 @@ handed to it.
 | Panel seam | `opensky/Engine/MagicEffectControlProviding.swift` and `MagicEffectControlReadout.swift` | app + CLI |
 | Session wiring | `opensky/App/GameViewControllerMagic.swift` and `GameViewControllerMagicPanel.swift` | app |
 | Verification surface | `opensky/App/Shell/Sections/CombatMagicEffectsSection.swift` | app |
+| Spellbook component | `opensky/Engine/Magic/SpellbookComponent.swift` | app + CLI |
+| Spellbook runtime | `opensky/Engine/Magic/SpellbookRuntime.swift` | app + CLI |
+| Cast state machine | `opensky/Engine/Magic/CastingState.swift` | app + CLI |
+| Cast loop | `opensky/Engine/Magic/CasterRuntime.swift` and `CasterRuntimeInput.swift` | app + CLI |
+| Spellbook save chunk | `opensky/Engine/Formats/Save/OpenSkySave{Encoder,Decoder}Spellbook.swift` | app + CLI |
+| Casting panel seam | `opensky/Engine/CastingControlProviding.swift` and `CastingControlReadout.swift` | app + CLI |
+| Casting session wiring | `opensky/App/GameViewControllerCasting.swift` and `GameViewControllerCastingPanel.swift` | app |
+| Casting verification surface | `opensky/App/Shell/Sections/CombatSpellcastingSection.swift` | app |
 
 ## Where the semantics come from
 
@@ -232,6 +248,255 @@ degenerate effect (zero duration, no values) is normalized away by the type rath
 a load, and an unknown source kind or mode is the one hard stop — both are closed enumerations
 this build wrote itself.
 
+## Casting
+
+Roadmap item 19.7, issue #470. The first half of the caster runtime: knowing spells,
+readying one to a hand, and casting the **self-delivery** ones end to end. Aimed delivery,
+projectiles and resistances on hit are item 19.8.
+
+Everything below is cited or measured. The behaviour comes from two UESP pages and one
+observation of the user's own install:
+
+- **Magic Overview** for the two casting shapes, the failure when magicka is short, and the
+  concentration rule (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>).
+- **Magicka** for the regeneration rule (<https://en.uesp.net/wiki/Skyrim:Magicka>).
+- **Powers** for the once-per-day rule (<https://en.uesp.net/wiki/Skyrim:Powers>).
+- **Books** and **Mod File Format/BOOK** for what reading a tome does
+  (<https://en.uesp.net/wiki/Skyrim:Books>,
+  <https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/BOOK>).
+
+Where a source is silent the gap is stated rather than filled in; see
+[Limits / next](#limits--next).
+
+## The spellbook
+
+`SpellbookState` is a [world-state component](/engine/runtime-state.md) in the `spellbook`
+slot, holding one actor's known spells, the books it has read, the spell readied in each
+hand, and the whole game day each greater power was last spent on.
+
+Four things in one slot rather than four slots, and the reason is an invariant rather than
+write locality: **a readied hand must name a spell the actor knows**. Forgetting a spell that
+is in a hand has to clear that hand in the same write, and a save whose load order no longer
+carries a readied spell has to drop the hand rather than restore it dangling. `init`
+normalizes both, which is also what makes the type the `SPLB` decoder's entry point — the
+same role `ActiveEffectState.init` plays for `AEFF`. Everything in the slot changes on a
+player action and nothing per frame, so splitting further would buy nothing.
+
+A known key this load order cannot resolve **stays known**. Removing a plugin must not
+destroy progress; the key simply drops out of the resolved listing.
+
+### Where spells come from
+
+Three sources, in the order a session meets them:
+
+1. **The two spells the player starts with.** UESP: "You will always know the spells Flames
+   and Healing by the time you start Unbound, regardless of your race." The obvious data
+   source would be the SPIT "PC Start Spell" flag, and **it is not the mechanism**: across
+   the whole vanilla load order that bit is set on exactly one record, `PCHealRateCombat`.
+   Vanilla grants Flames and Healing from the intro quest's Papyrus script, which this build
+   does not run. So `SpellStore.vanillaStartSpellEditorIDs` names the two by editor ID and
+   resolves them through the load order — a load order carrying neither grants nothing.
+   `CasterRealDataTests` pins the finding so it cannot quietly rot.
+2. **An actor's own `SPLO` run.** `NPC_` and `RACE` both carry one, now decoded
+   (`ActorBase.spells`, `Race.spells`). The `SPCT` count in front of the run is deliberately
+   not read: counting the entries answers the same question and cannot disagree with the
+   file. A vanilla race's run is its racial ability plus its greater power — `NordRace`
+   carries `RaceNord` and `PowerNordBattleCry`.
+3. **Reading a spell tome.**
+
+### Reading a tome
+
+The cited rule is the **mark**, not the removal. UESP's Books page states the teaching rule —
+"Spell Tomes: opening the book for the first time teaches you a spell" — and the BOOK format
+page records the mark on the DATA flag byte: "0x08 - Read ([verification needed] not used in
+static game data, flag in save game data for already read books?)". The question mark is the
+wiki's own.
+
+So `SpellbookRuntime.read` adds the taught spell and records the book in `readBooks`, and the
+mark is what stops a second reading teaching again. It does **not** take the tome out of the
+inventory: neither source says the book leaves it, and the mark is per reader here, because
+per-reader is the only reading that survives an NPC picking the book up. Whether vanilla also
+destroys the tome is recorded in [Limits / next](#limits--next) rather than guessed at.
+
+`ItemDefinitionStore.teachesSpell` is the link: BOOK DATA's "teaches" union read under the
+`0x04` flag, which `Book.swift` already decoded and nothing consumed until now.
+
+## Readying a spell to a hand
+
+Spells get their own component and their own equip path, and that is a deliberate departure
+from the issue's first suggestion. `EquipmentRuntime.equip` refuses to equip anything the
+owner does not hold, and that refusal is load-bearing — "silently equipping an item out of
+nowhere is how a duplication bug hides". **A spell is never held.** It has no stack, no
+weight, no `EquippableItem` entry, and it cannot be dropped, sold or given away. Widening
+`equip` to accept a FormID nobody holds would remove the guard for every caller in order to
+serve the one caller that legitimately needs it.
+
+So the two layers share what they actually collide over: hands. `EquipmentOccupancy` and
+`HandSlots` are the same types, and `SpellbookRuntime` arbitrates **both** directions —
+readying a spell unequips the weapon or shield whose hand it takes, and `equipItem` unequips
+the spell whose hand a weapon takes. That second direction is why the item path routes
+through `SpellbookRuntime` rather than calling `EquipmentRuntime.equip` directly.
+
+Which hands a spell takes comes from its `ETYP`, walked through the
+[EQUP graph](/formats/magic-records.md) exactly as a weapon's is — with one distinction the
+weapon path never needed. `BothHands` and `EitherHand` name the same two parents and differ
+only in the DATA "use all parents" byte, so `EquipSlotHands.choice` keeps the two readings
+apart:
+
+| Reading | What it means | What readying does |
+|---|---|---|
+| `.fixed(hands)` | Every hand it names, at once | Fills all of them, whichever hand was asked for |
+| `.choice(hands)` | One of them, the equipper picks | Fills the requested hand, or refuses when the slot does not offer it |
+| `.fixed([])` | A resolved slot taking no hand — Voice, Potion | `SpellbookError.notHandEquippable` |
+
+`hands(of:)` still gives the one deterministic answer it always did (a choose-one slot
+resolves to the right hand when the right hand is an option), so nothing about weapon
+occupancy moved.
+
+Against the real load order: over 300 spells resolve to a readiable hand, and a handful do
+not — `WerewolfChangeFX`, `DLC1VampireChangeFX` and the `DLC2VoiceElementalFury` run are
+typed as spells but authored against Voice or nothing, because a script or a shout applies
+them rather than a hand. Most greater and lesser powers resolve to no hand at all, which is
+why a readied power is the documented refusal rather than a gap: a power belongs on the
+shout button, and the voice slot is 19.4's stated out-of-scope note.
+
+## The cast loop
+
+`CasterRuntime` is a main-actor director in the shape `MeleeCombatRuntime` takes, driven from
+the frame the renderer already runs, with everything it touches the world with behind
+`CasterWorld` so the whole loop is testable against a fake.
+
+One difference from melee is deliberate and is this item's known gap. Melee and archery read
+their timing back out of the behavior graph — the engine raises `attackStart` and the *graph*
+decides which frame contact is on. No casting graph is driven yet (M25/M26 owns the
+animation), so the charge here is timed against the SPIT charge time instead. When the graph
+arrives it replaces this clock the same way it replaced melee's, and the phases stay.
+
+UESP states both casting shapes in one paragraph:
+
+> Some spells will trigger immediately upon being cast and can be maintained as long as held.
+> Others require holding to charge the spell and releasing to cast it. Casting a spell of
+> either form depletes the caster's magicka based on the cost of the spell and will continue
+> to do so if the spell is maintained. Attempting to cast a spell with a cost higher than
+> your available magicka will result in the failure of the attempted casting.
+
+### Fire and forget
+
+1. `begin` resolves the readied spell, checks every refusal, and enters `charging`. A spell
+   with no charge time reaches `ready` on the same call.
+2. `advance` accumulates the charge until it reaches the SPIT charge time.
+3. `release` checks the cost against magicka, takes it off, and hands the effect list to
+   `ActiveEffectRuntime` with the caster as the target — which is what self delivery means.
+
+Releasing inside the charge casts nothing and spends nothing.
+
+**Magicka is checked twice**, at step 1 and again at step 3, because it can fall between them:
+a charge takes half a second and something can hit the caster inside it. UESP states the rule
+once; checking it at both ends is the reading that never lets a cast land unpaid.
+
+The cost is the one [`SpellStore`](/formats/magic-records.md) already computed, so nothing
+recomputes it and a manual-cost record is honoured for free.
+
+### Concentration
+
+`begin` reaches `concentrating` and stays there. Cost is charged **continuously**
+(`cost x delta`), so the magicka bar moves smoothly rather than in one-second steps, and the
+effect list is applied **once on entry and once per whole second after that**. Applying on
+entry rather than a second later is what makes a maintained heal start healing when it starts
+costing.
+
+UESP: "Concentration spells do not have a set duration. Rather, the duration is determined by
+how long you hold the casting trigger." The SPIT cast duration is the floor under that: a
+release inside it keeps the cast running until it elapses. When the magicka runs out the cast
+ends with the same insufficient-magicka refusal, taking whatever was left — the caster paid
+for the fraction of a second they got.
+
+The same arithmetic detail `ActiveEffectRuntime` documents applies here and was a real
+failure the suites caught: 1/60 has no exact binary representation, so sixty steps sum to
+slightly under one second. `SpellCastState.secondTolerance` is a millisecond of slack, and
+without it a maintained spell would skip an application every second.
+
+### What refuses a cast
+
+Every refusal is a `SpellCastFailure` with a sentence, counted in `CastingTally`, and shown
+verbatim on the panel. Nothing is a silent no-op.
+
+| Refusal | Why |
+|---|---|
+| `noSpellReadied` | That hand holds no spell |
+| `unknownSpell` | A readied key this load order no longer carries |
+| `notCharged` | Released before the SPIT charge time elapsed |
+| `insufficientMagicka` | The cited rule, at begin, at release, and mid-concentration |
+| `deliveryUnsupported` | Anything but self delivery — 19.8's ground, counted rather than pretended |
+| `abilityNotCastable` | An ability is carried, not cast |
+| `powerAlreadyUsedToday` | The cited once-per-day rule |
+
+### Regeneration stands down
+
+UESP: "Magicka will not regenerate while you are casting a spell." The player is dropped from
+the regeneration set entirely while either hand is mid-cast, rather than having magicka
+regeneration suppressed on its own. That is a **stated deviation**: the same paragraph names
+no other value, and no source says health and stamina keep going, so the wider reading is
+recorded here rather than hidden.
+
+## Abilities and powers
+
+An **ability** is a spell of SPIT type `ability`: nothing casts it, the actor simply has it,
+and `CasterRuntime.begin` refuses one from a hand. `applyAbilities` applies every ability the
+actor knows through the effect runtime.
+
+Vanilla authors most ability entries with a **zero duration**, meaning "for as long as the
+actor carries it", and the active-effect runtime has no permanent mode — a zero-duration
+entry there applies once and is stored nowhere. For a resistance that would be a one-off
+nudge wearing the name of a permanent bonus, so those entries are **counted and not applied**
+(`CastingTally.unheldAbilityEntries`); the timed ones apply normally. Applying nothing is the
+honest answer where applying something would be wrong.
+
+A **greater power** is once per game day. `SpellbookState.powerDays` records the whole
+`GameClock.daysPassed` each power was last spent on, and a second cast on the same day is the
+documented refusal. Lesser powers are unrestricted, which is what UESP states: "Unlike
+Greater Powers, each Lesser Power can be used an unlimited number of times per day."
+
+## Cast input and the animation seam
+
+No new binding. The same two buttons melee and archery already use, routed by what the hand
+holds — exactly the rule `ArcheryIntent` states for the bow, that it is the same button and a
+drawn bow takes the attack press away from the swing:
+
+- A spell readied in the **right** hand takes the attack button.
+- A spell readied in the **left** hand takes the block button.
+- A hand holding no spell leaves its button to melee.
+
+`CastingIntent` carries the held levels and `CasterRuntime.acceptFrame` turns them into
+begin/release **edges**, so a held button does not restart the charge sixty times a second.
+Unequipping mid-cast cancels the charge rather than leaving one nothing can release.
+
+The state seam this item owes the animation layer is `CombatHandType.spell` (9), the value
+`magicbehavior.hkx` reads. `equippedHands()` lays a readied spell over either hand, so the
+graph is told a spell is out even though no casting clip plays yet — the state is queryable
+and the miss is tallied rather than invisible, which is the boundary with M25/M26.
+
+## The SPLB save chunk
+
+Additive and split out of `RDLT` for the same reason `AEFF` is. One entry per actor that
+knows a spell, has read a book, or has spent a greater power; a session in which nobody
+learned anything writes no chunk at all.
+
+Per actor, in order: the key, the cell, the known-spell list, the read-book list, the two
+readied hands each behind a presence byte, and the spent-power list as `(power, whole game
+day)` pairs. Every list is in the component's own ascending key order, so re-encoding an
+unchanged spellbook produces identical bytes.
+
+**Readied hands travel here and casts do not.** A readied spell is a loadout the player chose
+and has to survive a reload; a charge in progress is frame state, and restoring one would put
+the player back mid-cast with magicka already committed.
+
+Nothing rejects a spellbook on content. A duplicate key, a hand naming a spell the known list
+does not carry, and a spent-power entry for a forgotten spell are all normalized away by
+`SpellbookState.init` rather than failing a load. There is no hard stop of the kind `AEFF`
+has, because this chunk carries no closed enumeration: every field is a key, a count or a
+signed day.
+
 ## Verification
 
 Sidebar path **World > Combat & Physics > Magic Effects**
@@ -258,11 +523,80 @@ Covering tests:
 - `CombatMagicEffectsPanelTests` — accessibility ids, control routing, and the readout with and
   without a runtime.
 
+Casting has its own path: **World > Combat & Physics > Spellcasting**
+(`Destination-combatPhysics`, `PanelSection-combatSpellcasting`), directly below Magic
+Effects because that is where a cast lands — the acceptance picture is a healing spell moving
+the magicka meter down and the health meter up, and the three readouts are read together.
+Controls: `SpellcastingLearnControl`, `SpellcastingReadTomeControl`,
+`SpellcastingSelectControl`, `SpellcastingReadyRightControl`, `SpellcastingReadyLeftControl`,
+`SpellcastingCastRightControl`, `SpellcastingCastLeftControl`. Readout:
+`CombatSpellcastingStatsLabel`.
+
+The Cast buttons run one whole cast without holding a button — the charge is fast-forwarded,
+then the cast is released — so the behaviour is verifiable from the panel alone. The
+held-button path in walk mode reaches the same states over real frames.
+
+Covering tests:
+
+- `SpellbookRuntimeTests` — learning, forgetting, the start-spell lookup, an actor's `SPLO`
+  run, the tome rule and its second reading, hand occupancy for one- and two-handed spells,
+  the Voice refusal, and the readied-hand invariant a forget enforces.
+- `CasterRuntimeTests` — the whole fire-and-forget cast, an instant-charge spell, the
+  early-release refusal, insufficient magicka at both ends, unsupported delivery, the
+  concentration drain and cadence, the minimum cast duration, the once-per-day power, the
+  ability entries that carry no duration, and the button edges.
+- `SpellbookSaveTests` — the `SPLB` round trip, no chunk for a session that learned nothing,
+  the readied-hand invariant across a load, and a spellbook-only actor's own entry.
+- `EquipSlotTests` — the all-of/one-of distinction and the occupancy a named hand request
+  gets.
+- `CombatSpellcastingPanelTests` — accessibility ids, the seven controls' routing, and the
+  readout with and without a runtime.
+- `CasterRealDataTests` (env-gated) — where start spells actually come from, a race's `SPLO`
+  run, the SPIT shapes of `FastHealing` and `Healing`, and how many vanilla spells and powers
+  the EQUP walk can put in a hand.
+- `CasterAcceptanceRealDataTests` (env-gated) — the whole chain against the user's install,
+  headless: find the tome by its `DATA` link rather than by name, read it, ready the spell it
+  teaches, cast it, and check that magicka fell by the computed cost and health rose. It
+  leaves a one-line summary in gitignored `logs/caster-acceptance/`.
+
+The 19.7 acceptance record, in the format
+[the convention](/tools/sidebar-acceptance.md) defines:
+
+```text
+Milestone: M19.7
+Sidebar path: World > Combat & Physics > Spellcasting
+Destination id: Destination-combatPhysics
+Controls exercised: SpellcastingLearnControl, SpellcastingReadTomeControl,
+  SpellcastingSelectControl, SpellcastingReadyRightControl, SpellcastingReadyLeftControl,
+  SpellcastingCastRightControl, SpellcastingCastLeftControl
+Readout: CombatSpellcastingStatsLabel
+Deterministic tests: CombatSpellcastingPanelTests, CombatPhysicsPanelTests,
+  SpellbookRuntimeTests, CasterRuntimeTests, SpellbookSaveTests, CasterRealDataTests,
+  CasterAcceptanceRealDataTests
+Local A/B (optional, never committed): logs/caster-acceptance/acceptance.txt
+```
+
 ## Limits / next
 
-- **Casting is not here.** Issues 19.7 and 19.8 own spells; this subsystem applies effects
-  handed to it. `ActiveEffectSourceKind` already carries `spell` and `enchantment` cases so
-  those milestones add a caller rather than a concept.
+- **Only self delivery casts.** Aimed, touch, target-actor and target-location delivery,
+  projectiles and resistances on hit are issue 19.8. Every other delivery is the documented
+  `deliveryUnsupported` refusal and a tally entry.
+- **Whether a spell tome leaves the inventory is not implemented**, because neither cited
+  source says it does. UESP documents the "Read" mark and hedges it with its own
+  `[verification needed]`; nothing states the removal. The mark is implemented and the
+  removal is not, and confirming it needs an observation of the running game that this
+  session could not make.
+- **A zero-duration ability entry is counted, not held.** It needs a permanent mode the
+  active-effect runtime does not have; see [Abilities and powers](#abilities-and-powers).
+- **Dual casting is not implemented.** UESP documents the perk and the 2.2x-effect-for-2.8x-cost
+  formula, but the perk system is M20, so two hands casting the same spell is two casts.
+- **The voice slot is not modelled**, so a greater power cannot actually be readied anywhere;
+  the once-per-day rule is implemented and reachable, and 19.4's out-of-scope note owns the
+  slot itself.
+- **Casting animations, hand effects and sounds** are M25/M26. `CombatHandType.spell` is the
+  seam this item leaves them.
+- **The spells menu and favorites** are the in-game UI's; the sidebar panel is this
+  milestone's inspection surface (19.12).
 - **Enchantment triggers** are issue 19.9.
 - **Tapering is not applied.** The Creation Kit documents the taper weight, curve and duration
   formula, but no vanilla potion or ingredient effect this item consumes uses it, so

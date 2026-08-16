@@ -26,6 +26,12 @@ nonisolated struct CellProviderIndexes {
     /// Load-order MGEF index (issue #469), behind every EFID an applied effect
     /// resolves.
     let magicEffectStore: MagicEffectStore
+    /// Load-order SPEL and SCRL index (issue #470), which the spellbook keys
+    /// its known spells against.
+    let spellStore: SpellStore
+    /// Load-order EQUP index (issue #470), which answers which hands a readied
+    /// spell takes.
+    let equipSlotStore: EquipSlotStore
     /// Plugin the item indexes were built from, which magic-item EFID links are
     /// relative to.
     let magicItemPluginName: String
@@ -82,7 +88,17 @@ nonisolated struct CellProviderIndexes {
         packageStore = PackageStore(file: file)
         inventoryBaselines = InventoryBaselineResolver.build(from: file)
         equipmentCatalog = EquipmentCatalog.build(from: file)
-        magicEffectStore = MagicEffectStoreLoader.load(root: root, baseFile: file)
+        // One index for all three magic stores rather than one load-order scan
+        // each: MGEF, SPEL, SCRL and EQUP are decoded off the same `RecordIndex`
+        // and the plugin files are walked once (issue #470).
+        let magicIndex = RecordIndex(
+            plugins: ActivePluginFiles.load(root: root, baseFile: file),
+            recordTypes: ["MGEF", "SPEL", "SCRL", "EQUP"]
+        )
+        let effects = MagicEffectStore(index: magicIndex)
+        magicEffectStore = effects
+        spellStore = SpellStore(index: magicIndex, effects: effects)
+        equipSlotStore = EquipSlotStore(index: magicIndex)
         magicItemPluginName = esmURL.lastPathComponent
         actorValueBaselines = ActorValueBaselineResolver(
             resolver: ActorValueResolver.build(
@@ -113,6 +129,8 @@ nonisolated struct CellProviderIndexes {
             actorValueBaselines: actorValueBaselines,
             magicEffectStore: magicEffectStore,
             magicItemPluginName: magicItemPluginName,
+            spellStore: spellStore,
+            equipSlotStore: equipSlotStore,
             movementConfiguration: movementConfiguration,
             barterPricing: barterPricing,
             combatSettings: combatSettings,

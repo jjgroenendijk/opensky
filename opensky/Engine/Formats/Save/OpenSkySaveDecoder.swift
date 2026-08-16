@@ -77,6 +77,10 @@ nonisolated enum OpenSkySaveDecoder {
         /// magic effect, so everyone restores with none — which is also what a
         /// save written before that chunk existed means.
         var activeEffects: [SaveActiveEffectEntry] = []
+        /// Absent `SPLB` chunk (issue #470) means nobody learned a spell, so
+        /// everyone restores with an empty spellbook — which is also what a save
+        /// written before that chunk existed means.
+        var spellbooks: [SaveSpellbookEntry] = []
     }
 
     static func decode(_ data: Data) throws -> OpenSkySaveFile {
@@ -135,7 +139,8 @@ nonisolated enum OpenSkySaveDecoder {
         entries = OpenSkySaveDeathDecoder.merge(body.deaths, into: entries)
         entries = OpenSkySaveCombatDecoder.merge(body.combatStates, into: entries)
         entries = OpenSkySaveDialogueDecoder.merge(body.dialogue, into: entries)
-        return OpenSkySaveActiveEffectDecoder.merge(body.activeEffects, into: entries)
+        entries = OpenSkySaveActiveEffectDecoder.merge(body.activeEffects, into: entries)
+        return OpenSkySaveSpellbookDecoder.merge(body.spellbooks, into: entries)
     }
 
     // MARK: - Header
@@ -256,6 +261,23 @@ nonisolated enum OpenSkySaveDecoder {
         case OpenSkySaveFormat.ChunkTag.generalActorValues:
             body.generalActorValues = try OpenSkySaveActorValueDecoder
                 .decodeGeneralActorValues(payload)
+        default:
+            // The actor-side chunks continue in a second pass, which is what
+            // keeps this switch inside the strict cyclomatic-complexity cap.
+            try applyActorGameplay(tag: tag, payload: payload, to: &body)
+        }
+    }
+
+    /// The half of the gameplay chunks keyed by an actor rather than by a
+    /// quest, a container or a placement. Split from `applyGameplay` only for
+    /// the complexity cap; the tolerance rule is the same, and an unknown tag
+    /// reaching here is skipped by its declared length.
+    private static func applyActorGameplay(
+        tag: String,
+        payload: Data,
+        to body: inout Body
+    ) throws {
+        switch tag {
         case OpenSkySaveFormat.ChunkTag.deaths:
             body.deaths = try OpenSkySaveDeathDecoder.decodeDeaths(payload)
         case OpenSkySaveFormat.ChunkTag.combatStates:
@@ -264,6 +286,8 @@ nonisolated enum OpenSkySaveDecoder {
             body.dialogue = try OpenSkySaveDialogueDecoder.decodeDialogueStates(payload)
         case OpenSkySaveFormat.ChunkTag.activeEffects:
             body.activeEffects = try OpenSkySaveActiveEffectDecoder.decodeActiveEffects(payload)
+        case OpenSkySaveFormat.ChunkTag.spellbooks:
+            body.spellbooks = try OpenSkySaveSpellbookDecoder.decodeSpellbooks(payload)
         default:
             break // Unknown chunk: skipped by its declared length.
         }

@@ -36,9 +36,55 @@ struct FakeMagicEffectState {
     var dispelCount = 0
 }
 
+/// The spellcasting half of the fake's stored state (issue #470).
+struct FakeCastingState {
+    var snapshot = CastingControlSnapshot.unavailable
+    var learnCount = 0
+    var readTomeCount = 0
+    var selectCount = 0
+    /// Hands the panel asked to ready and to cast, in order, so a gate can
+    /// assert that a button sent the hand it names.
+    var readied: [SpellHand] = []
+    var cast: [SpellHand] = []
+}
+
 extension FakeWorldProviders {
     var magicEffectControlSnapshot: MagicEffectControlSnapshot {
         magicEffects.snapshot
+    }
+
+    var castingControlSnapshot: CastingControlSnapshot {
+        casting.snapshot
+    }
+
+    @discardableResult
+    func grantPlayerStartSpells() -> String {
+        casting.learnCount += 1
+        return "Learned the start spells."
+    }
+
+    @discardableResult
+    func readFirstCarriedSpellTome() -> String {
+        casting.readTomeCount += 1
+        return "Read the first carried tome."
+    }
+
+    @discardableResult
+    func selectNextKnownSpell() -> String {
+        casting.selectCount += 1
+        return "Selected the next spell."
+    }
+
+    @discardableResult
+    func readySelectedSpell(in hand: SpellHand) -> String {
+        casting.readied.append(hand)
+        return "Readied the selected spell in the \(hand.describedName)."
+    }
+
+    @discardableResult
+    func castReadiedSpell(in hand: SpellHand) -> String {
+        casting.cast.append(hand)
+        return "Cast with the \(hand.describedName)."
     }
 
     @discardableResult

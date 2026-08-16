@@ -120,6 +120,10 @@ extension GameViewController {
     private func wireActorSystems(provider: any CellSceneProvider, renderer: Renderer) {
         wireActorValues(provider: provider, renderer: renderer)
         wireMagicEffects(provider: provider, renderer: renderer)
+        // Last of the three: a cast spends an actor value and applies its
+        // effects through the effect runtime, so both have to exist first
+        // (issue #470).
+        wireCasting(provider: provider, renderer: renderer)
     }
 
     private func wireLateWorldSystems(

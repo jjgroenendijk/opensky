@@ -4,6 +4,41 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-16
 
+* **The caster runtime: known spells, hands and self-cast (issue #470)**: decoded spells
+  reached no player. Item 19.7 adds `SpellbookState`, a world-state component holding one
+  actor's known spells, read books, readied hands and spent greater powers, and
+  `CasterRuntime` above it. The four fields share one slot for an invariant rather than for
+  write locality: a readied hand must name a known spell, so forgetting one clears its hand
+  in the same write and a save whose load order dropped a readied spell drops the hand
+  instead of restoring it dangling. Where start spells come from turned out not to be where
+  it looks: the SPIT "PC Start Spell" flag is set on exactly one record in the whole vanilla
+  load order (`PCHealRateCombat`), because vanilla grants Flames and Healing from the intro
+  quest's Papyrus script, so the two are named by editor ID and resolved through the load
+  order and the finding is pinned by a real-data test. `NPC_` and `RACE` `SPLO` runs are now
+  decoded and are the second source. Reading a tome adds the taught spell and records the
+  book — the mark UESP documents on BOOK DATA flag `0x08`, with its own `[verification
+  needed]` carried across; the tome is not removed, because no cited source says it is.
+  Readying a spell deliberately does not go through `EquipmentRuntime`, whose refusal to
+  equip anything the owner does not hold is the guard against duplication bugs and which a
+  never-held spell would force open; the two layers meet over hands instead, and the spell
+  side arbitrates both directions. `EquipSlotHands.choice` splits the all-of and one-of
+  readings of an EQUP slot that `hands(of:)` collapses, which is what puts a master spell in
+  both hands and a novice spell in the hand the player asked for. The cast loop implements
+  both cited shapes: fire-and-forget charges, checks magicka at begin and again at release
+  so a cast can never land unpaid, deducts the computed cost and applies the effect list to
+  the caster; concentration drains continuously and applies once on entry and once per whole
+  second, honouring the SPIT minimum duration and ending on the same insufficient-magicka
+  rule. Every refusal — unsupported delivery, an uncharged release, an ability from a hand, a
+  power already spent today — is a sentence and a tally entry rather than a silent no-op, and
+  a zero-duration ability entry is counted rather than applied, because the effect runtime
+  has no permanent mode and a one-off nudge wearing the name of a resistance would be worse
+  than nothing. Casting binds no new key: a readied hand takes the attack or block button the
+  way a drawn bow already does, and `CombatHandType.spell` is the state seam M25/M26 will
+  hang an animation off. Spellbooks persist in a new additive `SPLB` chunk; a charge in
+  progress deliberately does not, because restoring one would put the player back mid-cast
+  with magicka already committed. Verified through **World > Combat & Physics >
+  Spellcasting**. Aimed delivery and projectiles are 19.8.
+
 * **Magic effects act on actors (issue #469)**: nothing in the engine had a runtime notion
   of an effect currently applying to someone; decoded ALCH and INGR effect lists reached no
   runtime system at all. Item 19.6 adds `ActiveEffectState`, a world-state component holding

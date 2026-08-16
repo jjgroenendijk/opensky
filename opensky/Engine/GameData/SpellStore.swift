@@ -45,6 +45,24 @@ nonisolated struct ResolvedSpell {
         record.recordType
     }
 
+    /// Runtime identity of this record, which is how the spellbook and the
+    /// active-effect runtime address it (issue #470).
+    var key: ReferenceKey {
+        ReferenceKey(resolved: id)
+    }
+
+    /// SPIT spell type, `.spell` when the header did not decode — the same
+    /// fallback the cost calculation takes.
+    var spellType: SpellType {
+        data?.type ?? .spell
+    }
+
+    /// True when the record carries the SPIT "PC Start Spell" flag, which is
+    /// what makes a spell one the player already knows (issue #470).
+    var isPlayerStartSpell: Bool {
+        data?.flags.contains(.pcStartSpell) ?? false
+    }
+
     var displayName: String {
         switch record.name {
         case let .inline(value): value
@@ -59,9 +77,36 @@ nonisolated struct SpellStore {
     /// Every winning SPEL and SCRL identity in the load order.
     private(set) var records: [ResolvedFormID: ResolvedSpell] = [:]
     private var recordsByEditorID: [String: ResolvedSpell] = [:]
+    /// The same records under the identity the world state keys them by, so the
+    /// spellbook can go from a stored key back to the record without walking
+    /// every entry (issue #470).
+    private var recordsByKey: [ReferenceKey: ResolvedSpell] = [:]
 
     var spells: [ResolvedSpell] {
         records.values.filter { $0.recordType == "SPEL" }
+    }
+
+    /// Editor IDs of the spells the player knows before learning anything.
+    ///
+    /// UESP: "You will always know the spells Flames and Healing by the time you
+    /// start Unbound, regardless of your race"
+    /// (<https://en.uesp.net/wiki/Skyrim:Spells>).
+    ///
+    /// Named rather than derived, and that is a deliberate finding rather than
+    /// a shortcut. The obvious data source would be the SPIT "PC Start Spell"
+    /// flag, and it is not the mechanism: across the whole vanilla load order
+    /// that bit is set on exactly one record, `PCHealRateCombat`, which
+    /// `CasterRealDataTests` pins so the finding cannot quietly rot. Vanilla
+    /// grants Flames and Healing from the intro quest's Papyrus script instead,
+    /// and this build does not run that quest. Editor IDs rather than FormIDs so
+    /// the lookup goes through the load order: a load order carrying neither
+    /// record grants nothing rather than reaching for a form that is not there.
+    static let vanillaStartSpellEditorIDs = ["Flames", "Healing"]
+
+    /// The records `vanillaStartSpellEditorIDs` names that this load order
+    /// actually carries, in that order.
+    var playerStartSpells: [ResolvedSpell] {
+        Self.vanillaStartSpellEditorIDs.compactMap { spell(editorID: $0) }
     }
 
     var scrolls: [ResolvedSpell] {
@@ -89,6 +134,7 @@ nonisolated struct SpellStore {
                 effects: effects
             )
             records[id] = resolved
+            recordsByKey[resolved.key] = resolved
             if let editorID = decoded.editorID {
                 recordsByEditorID[editorID.lowercased()] = resolved
             }
@@ -112,6 +158,13 @@ nonisolated struct SpellStore {
 
     func spell(editorID: String) -> ResolvedSpell? {
         recordsByEditorID[editorID.lowercased()]
+    }
+
+    /// The record behind a stored runtime identity, or nil when this load order
+    /// no longer carries it — which is what a save written under a different
+    /// load order hands back (issue #470).
+    func spell(key: ReferenceKey) -> ResolvedSpell? {
+        recordsByKey[key]
     }
 
     func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {

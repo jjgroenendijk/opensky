@@ -68,7 +68,19 @@ extension GameViewController {
         let hands = equippedHands()
         runtime.weapon = hands.weapon
         runtime.offHand = hands.offHand
-        runtime.acceptFrame(renderer.locomotion.meleeIntent)
+        // A hand holding a readied spell takes its own button (issue #470), the
+        // same way a drawn bow takes the attack press away from the swing. The
+        // intent is cleared rather than the runtime being told about spells,
+        // because whether a hand is casting is the caster runtime's fact and
+        // melee has no business holding a second copy of it.
+        var intent = renderer.locomotion.meleeIntent
+        if hasReadiedSpell(in: .right) {
+            intent.attack = false
+        }
+        if hasReadiedSpell(in: .left) {
+            intent.block = false
+        }
+        runtime.acceptFrame(intent)
         // Every landed hit is also what turns its target hostile and interrupts
         // the dev target's own attack, so the combat loop is told here rather
         // than sweeping the trace for new entries (issue #374).
@@ -88,6 +100,13 @@ extension GameViewController {
     /// Both hands as the behavior graph counts them (issue #403): the swing
     /// profile for the right hand and one hand type for the left.
     ///
+    /// A readied spell is read first and outranks everything worn, because
+    /// readying one already unequipped whatever held that hand
+    /// (`SpellbookRuntime.equip`). `CombatHandType.spell` is the value
+    /// `magicbehavior.hkx` reads, so the graph is told a spell is out even
+    /// though no casting clip plays yet — the state is queryable rather than
+    /// invisible, which is issue #470's boundary with M25/M26.
+    ///
     /// Three readings, in the order vanilla resolves them. A two-handed weapon
     /// fills both hands and reports its own type on each, which is how
     /// `1hm_behavior.hkx` refuses a block while a bow is out. A second equipped
@@ -99,6 +118,16 @@ extension GameViewController {
     /// and torch handling are M18's, and both need the equipment runtime to
     /// track *which* hand an item went into rather than only that it is worn.
     func equippedHands() -> (weapon: MeleeWeaponProfile, offHand: CombatHandType) {
+        let worn = wornHands()
+        return (
+            hasReadiedSpell(in: .right) ? .readiedSpell : worn.weapon,
+            hasReadiedSpell(in: .left) ? .spell : worn.offHand
+        )
+    }
+
+    /// The same three readings over worn equipment alone, before a readied
+    /// spell is laid over either hand.
+    private func wornHands() -> (weapon: MeleeWeaponProfile, offHand: CombatHandType) {
         guard let equipment = worldItems.equipment, let weapons = melee.weapons else {
             return (.unarmed, .handToHand)
         }

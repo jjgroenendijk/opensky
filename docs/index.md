@@ -310,7 +310,11 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   that is neither, the per-archetype coverage tally, condition gating at application time,
   the No Recast and peak-keyword stacking rules, the additive AEFF save chunk that makes
   AVGN's dropped temporary modifier recoverable, the potion and ingredient consumption path
-  with its cited first-effect rule, and the panel provider seam.
+  with its cited first-effect rule, the panel provider seam, and the caster runtime: the
+  spellbook component and its SPLB chunk, where start spells actually come from, the tome
+  "Read" mark, readying a spell to a hand through the EQUP all-of/one-of distinction, the
+  fire-and-forget and concentration cast loops with every cited refusal, abilities and the
+  once-per-day power rule, and the cast input and animation seam.
 * [Archery and projectiles](/engine/archery.md) - the PROJ flight record, the measurement
   that settles `gravity` as a multiplier rather than an acceleration, the census-named bow
   draw and release events, the exact closed-form flight model on the fixed step, the

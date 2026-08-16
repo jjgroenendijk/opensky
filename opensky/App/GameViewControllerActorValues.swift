@@ -72,10 +72,20 @@ extension GameViewController {
     /// frame for a number nobody can observe.
     func advanceActorValues(delta: Float) {
         guard let runtime = actorValues.runtime else { return }
+        // A caster does not regenerate. UESP states it flatly: "Magicka will not
+        // regenerate while you are casting a spell."
+        // (<https://en.uesp.net/wiki/Skyrim:Magicka>) The player is dropped from
+        // the set entirely rather than having magicka regeneration suppressed on
+        // its own, because the same paragraph names no other value and no source
+        // says health and stamina keep going — see docs/engine/magic.md, which
+        // records that as a stated deviation rather than a silent one.
+        let holders = casting.runtime?.isCasting == true
+            ? regeneratingHolders().filter { $0.key != ReferenceKey.player }
+            : regeneratingHolders()
         runtime.advance(
             delta: delta,
             accumulator: &actorValues.regenAccumulator,
-            over: regeneratingHolders()
+            over: holders
         )
     }
 

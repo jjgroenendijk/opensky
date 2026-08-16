@@ -33,6 +33,7 @@ nonisolated struct Race {
         var bodyTemplate: BodyTemplate?
         var flags = Flags()
         var stats = Stats()
+        var spells: [FormID] = []
         var maleSkeletonPath: String?
         var femaleSkeletonPath: String?
         var gender: Gender?
@@ -52,6 +53,8 @@ nonisolated struct Race {
             case "DATA":
                 flags = Race.decodeFlags(field) ?? flags
                 stats = Race.decodeStats(field) ?? stats
+            case "SPLO":
+                try spells.append(FormID(reader.readUInt32()))
             default: return false
             }
             return true
@@ -156,6 +159,11 @@ nonisolated struct Race {
     /// DATA starting attributes and regen rates; all-zero when DATA is absent
     /// or too short to reach them.
     let stats: Stats
+    /// SPLO — the spells and abilities every actor of this race carries
+    /// (issue #470). The `SPCT` count in front of the run is not read, for the
+    /// reason `ActorBase.spells` states: counting the entries answers the same
+    /// question and cannot disagree with the file.
+    let spells: [FormID]
     /// ANAM under the male (MNAM) skeleton block.
     let maleSkeletonPath: String?
     /// ANAM under the female (FNAM) skeleton block.
@@ -184,6 +192,7 @@ nonisolated struct Race {
         bodyTemplate = state.bodyTemplate
         flags = state.flags
         stats = state.stats
+        spells = state.spells
         maleSkeletonPath = state.maleSkeletonPath
         femaleSkeletonPath = state.femaleSkeletonPath
         maleHeadParts = state.maleHeadParts
