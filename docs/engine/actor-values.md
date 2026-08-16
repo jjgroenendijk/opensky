@@ -1,18 +1,20 @@
 ---
 type: Subsystem
 title: Actor values
-description: How OpenSky derives an actor's health, magicka and stamina from records, tracks
-  the current values at runtime, regenerates them, saves them, and drives the HUD meters.
-tags: [engine, actors, gameplay, stats, health, magicka, stamina, hud, runtime-state]
-timestamp: 2026-08-07T00:00:00Z
+description: How OpenSky derives every actor value from records, stores the whole 164-entry
+  table at runtime with its modifier slots, regenerates and saves them, answers resistance
+  queries, and drives the HUD meters.
+tags: [engine, actors, gameplay, stats, health, magicka, stamina, resistances, skills, hud,
+  runtime-state]
+timestamp: 2026-08-16T00:00:00Z
 ---
 
 # Actor values
 
-Roadmap item 15.3 (issue #194). The three primary actor values — health, magicka,
-stamina — from the records that author them to the vanilla HUD bars that show
-them. Skills, resistances and the rest of the actor-value table are M18; this
-subsystem deliberately does not pretend to be the general store those will need.
+Roadmap items 15.3 (issue #194) and 19.5 (issue #468). The three primary actor
+values — health, magicka, stamina — from the records that author them to the
+vanilla HUD bars that show them, plus the general store that holds the other 161
+entries of the vanilla actor-value table, resistances included.
 
 Impl: `opensky/Engine/Actors/`, plus `opensky/Engine/UI/HUDMeterBinding.swift`
 and `opensky/App/GameViewControllerActorValues.swift`. Record layouts:
@@ -26,6 +28,9 @@ and `opensky/App/GameViewControllerActorValues.swift`. Record layouts:
 * The apportionment rule
 * Where the numbers were checked
 * Runtime store
+* The general table
+* Baselines for the non-primary values
+* Resistances
 * Regeneration
 * HUD meters
 * Persistence
@@ -46,6 +51,8 @@ crossing.
 | `ActorValueResolver` | walks the template chain and looks up RACE and CLAS |
 | `ActorValueBaselineResolver` | what a subject's values are before anything touches them |
 | `ActorValueRuntime` | damage, restore, regeneration on top of `WorldStateStore` |
+| `ActorValueEntry` | one non-primary value: a base plus three modifier slots |
+| `ActorValueReadable` | the lookup rule a condition and a native snapshot share |
 
 The record side is immutable and buildable once per load order. The runtime side
 is `@MainActor`, mutable, and knows nothing about records — it asks the baseline
@@ -178,6 +185,131 @@ generation exists (M18). That fallback is 100/100/100 — probed, not remembered
 every playable vanilla race authors 50/50/50, and the vanilla `Player` record
 (`00000007`) adds +50 to each through its ACBS offsets.
 
+## The general table
+
+Item 19.5 (issue #468) stores the other 161 actor values. `ActorValueState`
+gained a sparse `[Int32: ActorValueEntry]` keyed by vanilla table index, beside
+the typed triple the three primaries keep.
+
+Sparse is the design rather than an optimization. An actor has 164 actor values
+and a session touches a handful; a dense table would put a number in the save
+for every value a record authors, which is the same "re-derive, never persist"
+rule the maximums follow. An index absent from the table reads its baseline, and
+an entry that comes back to its baseline is dropped rather than kept at its
+default — an actor whose fire resistance was raised and then lowered again is an
+actor nothing happened to.
+
+Each entry is a base plus three modifier slots, which is the vocabulary the
+scripting surface already uses: "While GetActorValue returns the current value,
+SetActorValue sets the base value ... Any modifiers are left intact."
+(<https://www.creationkit.com/index.php?title=SetActorValue_-_Actor>)
+
+| slot | written by | persisted |
+| --- | --- | --- |
+| `base` | the records, and `SetActorValue` when it exists | yes |
+| `permanent` | `ModActorValue`, item 19.6 | yes |
+| `temporary` | an active magic effect, item 19.6 | no — the effect re-establishes it |
+| `damage` | `DamageActorValue`; never positive | yes |
+
+The current value is derived, never stored, for the reason `hasZeroHealth` is: a
+stored current and a stored base can disagree, and after a save round trip there
+is no way to say which was right. Damage moves the damage slot and floors the
+current value at zero; restoring moves it back toward zero and stops there, so a
+restore can never lift a value above what its base and modifiers say.
+
+The three primaries keep their existing typed fast path and therefore have **no**
+modifier slots: their current value is stored directly and their maximum is
+re-derived from records on every read. Splitting them would mean re-deriving the
+HUD, the save, the combat damage path and the death latch at once, so it is
+stated rather than hidden — `addModifier` and the base write answer false for
+health, magicka and stamina, and `SetActorValue` stays unregistered in Papyrus
+for exactly that reason.
+
+`ActorValueRuntime` addresses everything by index: `value(at:on:)`,
+`baseValue(at:on:)`, `damage(at:by:on:)`, `restore(at:by:on:)`,
+`setValue(at:to:on:)` and the two modifier writes. An index that names a primary
+routes to the typed path; every other vanilla index goes to the general table;
+only an index outside the table answers nil.
+
+## Baselines for the non-primary values
+
+An untouched value reads a baseline, and the baseline comes from records where
+records author one:
+
+| actor value | source |
+| --- | --- |
+| the eighteen skills (6–23) | 15 + RACE DATA skill bonus + the class spread |
+| `Speed Mult` (30) | NPC_ ACBS 0x0E "Speed Multiplier" |
+| `Carry Weight` (32) | RACE DATA 0x30 "Base Carry Weight" |
+| `Unarmed Damage` (35) | RACE DATA 0x60 "Unarmed Damage" |
+| `Mass` (36) | RACE DATA 0x34 "Base Mass" |
+| everything else | the documented default, which is 0 |
+
+The skill formula is quoted: "Skill = 15 + [Racial bonus] +
+8\*(Level-1)/(Sum of class' skill weights)\*[Skill weight]"
+(<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CLAS>), with the leftover
+points handed out "one at a time by looping over all the skills in order ...
+ordered first by their weight (higher skills ordered first) and second by their
+actor value index (lower indices are ordered first)". Note that tie rule is the
+*opposite* of the attribute one, which breaks ties in reverse index order; both
+are transcribed as stated rather than unified. The 8 comes from
+`iAVDSkillsLevelUp`, which `Skyrim.esm` authors at exactly that.
+
+Zero for everything else is a position, not a placeholder. An actor value is an
+accumulator: a resistance nothing grants is 0%, a bonus nothing confers is +0,
+and an AI attribute the AIDT does not author is the bottom of its enumeration.
+The two values vanilla starts away from zero come from their own record fields
+above, so an actor with **no** record behind it — a summon — reads 0 for mass and
+carry weight and 100 for speed. That is a stated gap.
+
+NPC_ DNAM carries "18 base skills, 18 skill mods". OpenSky does not read them:
+no open source distinguishes the two arrays, and the CLAS formula is itself
+stated as approximate ("generally only be accurate to within a couple points"),
+so neither settles how they combine. Storing a number whose provenance is
+unresolved is worse than reading the documented floor; the DNAM block waits for
+M20's skill work with a real-data comparison behind it.
+
+`ActorValueRealDataTests` pins the derivation against the install:
+`NordRace` yields Two-Handed +10 and One-Handed, Block, Smithing, Light Armor and
+Speech +5, which is exactly what UESP documents for the race, and every playable
+race authors 300 carry weight, mass 1 and a 35-point bonus budget.
+`openskycli actor-values --npc <editor-id>` and `--race <editor-id>` print the
+whole derived table with the record each value came from.
+
+## Resistances
+
+`ActorValueResistance.swift` is the one place the cap and the composition rule
+live, so items 19.8 and 19.9 call a function rather than each re-deriving a
+formula. A resistance actor value holds percentage points, and MGEF names the
+value an effect is resisted by in its DATA "Resistance Actor Value" field, which
+is why the query takes an index rather than an enumeration of damage types.
+
+The cap is 85%, and only for the player: "Resist Magic is capped at 85%. The cap
+only applies to you; followers and enemies with 100% resistance are truly immune."
+(<https://en.uesp.net/wiki/Skyrim:Resist_Magic>) Resist Poison is capped the same
+way (<https://en.uesp.net/wiki/Skyrim:Resist_Poison>); Resist Disease is not —
+"Resist Disease 100% provides disease immunity ... values above 100% provide no
+additional benefit" (<https://en.uesp.net/wiki/Skyrim:Resist_Disease>).
+
+That cap is an OpenSky constant rather than a game setting, and that is a probed
+fact: the install's whole resolved game-setting table carries no resistance cap
+under any editor ID (2026-08-16, `openskycli gmst list` — 1649 settings, the only
+two matching "resist" are the strings `sMagicEffectResisted` and
+`sNormalWeaponsResisted`). No plugin can move the number, so it is stated with
+its source the way [detection](/engine/detection.md) states its own constants.
+
+Composition is multiplicative with Resist Magic first: "a 100-point Fire Damage
+spell would deal only 15 points of damage with Resist Magic 85%; Resist Fire 85%
+would then reduce the 15 points by a further 85% to 2.25 points of final damage"
+(same page). `magicDamageMultiplier(element:on:)` is that sentence, and the unit
+test asserts exactly those 2.25 points.
+
+`Damage Resist` (39) is deliberately **not** a percentage resistance. It is an
+armor rating with its own formula and its own 80% cap, which the install does
+carry as a game setting (`fMaxArmorRating = 80`). Feeding it to the percentage
+query would read 40 points of armor as 40% resistance, so the query rejects it
+and it belongs with the armor formula when that lands.
+
 ## Regeneration
 
 Rates come from RACE DATA, quoted from the Creation Kit: "Health Regen: The
@@ -236,6 +368,18 @@ Because the maximums are not written, a save restored against changed records
 gets the records' numbers: the stored current value survives, and the first
 mutation clamps it into the new range.
 
+The general table travels in its own chunk, `AVGN` (item 19.5): key, cell, a
+value count, then one `(index, base, permanent, damage)` record per stored value.
+It is a sibling of `AVAL` rather than an extension of it for the reason `QALS` is
+a sibling of `QSTS` — `AVAL` entries are a flat positional layout with no
+per-entry length, so appending a variable-length list would make an older build
+misparse the whole chunk instead of skipping the new part. The temporary
+modifier is not written, because the magic effect that established it is what
+re-establishes it (item 19.6), and persisting both would double the buff on every
+reload. An `AVGN` entry always travels beside the actor's `AVAL` entry, so the
+decoder never has to invent a health for an actor whose health the save did not
+carry; an orphan entry is dropped.
+
 ## Panel seam
 
 `ActorValueControlProviding` is the contract a Combat panel is written against:
@@ -255,12 +399,14 @@ off `ActorValueRuntime` with no accounting invented at the UI.
 | --- | --- | --- |
 | Target | `ActorValueTargetControl` | picks the player or the nearest resident actor |
 | Value | `ActorValueKindControl` | picks health, magicka or stamina |
-| Amount | `ActorValueAmountControl` | the number the two buttons apply |
+| Other value | `ActorValueNameControl` | any of the other 161, by vanilla name or index; wins over the popup |
+| Amount | `ActorValueAmountControl` | the number the three buttons apply |
 | Damage | `ActorValueDamageControl` | takes that amount off the selected value |
 | Restore | `ActorValueRestoreControl` | adds it back, capped at the derived maximum |
+| Set | `ActorValueSetControl` | writes the amount outright: the current value for a primary, the base for everything else |
 | Refill | `ActorValueRefillControl` | returns every bar to its maximum |
 | Reset to records | `ActorValueResetControl` | drops the runtime state so the actor derives from records again |
-| Readout | `CombatActorValuesStatsLabel` | both actors' three bars, the derivation that produced the maximums, and the last action |
+| Readout | `CombatActorValuesStatsLabel` | both actors' three bars, the derivation that produced the maximums, the selected value with its modifier slots and capped resistance fraction, and the last action |
 
 The amount is a text field rather than a slider because a gate that damages an
 actor by exactly 40 has to be able to ask for exactly 40, and a field holding
@@ -268,6 +414,13 @@ something that is not a number falls back to the documented default rather than
 sending a NaN into the runtime. The section is not overridable: a damaged actor
 is world state, and "Reset to records" is the deliberate way back rather than a
 sidebar reset that would refill every bar in the cell.
+
+"Other value" is a text field rather than a 164-row popup for the same reason:
+typing `Resist Fire`, `ResistFire` or `41` all reach the same value, and a
+picker with 164 rows is worse than a field for every one of them. A field
+holding something that names no actor value falls back to the popup rather than
+acting on a guess, and the readout's selected-value line is what shows which one
+won.
 
 Readout lines are formatted by `ActorValueControlReadout` in the engine target,
 where a unit test can reach them without a window.
@@ -294,17 +447,30 @@ same value — `Marksman` for index 8, which xEdit spells `Archery` — and thos
 deliberately not aliased: none of them names a value this subsystem stores, so an
 alias table would only change which unimplemented bucket the miss lands in.
 
-`kind(at:)` and `kind(named:)` answer nil for all 161 entries this subsystem has
-no store for, and for an index outside the table alike. Callers turn that nil
-into their own documented miss — a reason-tagged false and a `ConditionTally`
-bucket on the condition side, a tallied native failure and the call's declared
-default on the Papyrus side — so an unstored actor value is a measurable gap
-rather than a convincing zero. That tally is the list of what to store next.
+Since item 19.5 every entry in the table is stored, so `kind(at:)` answers a
+*fast-path* question rather than a can-I-read-it question: nil means "goes
+through the general table", and `isVanilla(index:)` is what says whether an index
+names an actor value at all. Only an index outside the table is still a miss — a
+reason-tagged false and a `ConditionTally` bucket on the condition side, a
+tallied native failure and the call's declared default on the Papyrus side.
+
+That change is measured rather than asserted. `Skyrim.esm` authors 607
+`GetActorValue` / `GetActorValuePercent` conditions; 68 name a primary and 539
+name one of the other actor values, so 539 tallied misses became 539 answers, and
+`everyActorValueConditionInSkyrimESMResolvesItsParameter` pins the remaining miss
+bucket at empty.
+
+Papyrus names are matched the same way, so `GetActorValue("ResistFire")` answers.
+The synonyms the table deliberately does not alias — `Marksman` for `Archery` —
+still fail, and now that failure means only "no vanilla actor value carries this
+name", which is the tally's whole remaining content.
 
 ## Out of scope
 
-Weapon damage application (items 15.4, 15.5), death and ragdoll (15.6), skills
-and leveling (M18+). Papyrus and condition exposure landed with item 15.8 — see
+Weapon damage application (items 15.4, 15.5), death and ragdoll (15.6), skill
+advancement and use-based experience (M20), AVIF record decode (M20 — the record
+adds metadata, not values), applying a magic effect (item 19.6). Papyrus and
+condition exposure landed with item 15.8 — see
 [the Papyrus VM](/engine/papyrus-vm.md) and
 [conditions](/formats/conditions.md). The bleedout ratio is
 decoded off CLAS already so 15.6 does not have to re-open the record; nothing in

@@ -297,11 +297,13 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   conservation guarantees, carry weight and gold, and the additive INVN save chunk; plus
   the spawned-reference component that lets the running game place objects no plugin
   authored, its synthesized 0xFF-prefixed FormID, and the additive SPWN save chunk.
-* [Actor values](/engine/actor-values.md) - health, magicka and stamina end to end: the
-  cited race-plus-offset-plus-class-per-level derivation and its exact apportionment rule,
-  the census against every auto-calc record's baked DNAM, the current-values-only runtime
-  component, percent-per-second regeneration on the menu-pause-safe fixed step, the live
-  HUD meter binding, the additive AVAL save chunk, and the panel provider seam.
+* [Actor values](/engine/actor-values.md) - the whole 164-entry table end to end: the cited
+  race-plus-offset-plus-class-per-level derivation and its exact apportionment rule, the
+  census against every auto-calc record's baked DNAM, the current-values-only runtime
+  component, the general store's base-plus-three-modifiers entries and their record-derived
+  baselines, the capped resistance query and its multiplicative composition rule,
+  percent-per-second regeneration on the menu-pause-safe fixed step, the live HUD meter
+  binding, the additive AVAL and AVGN save chunks, and the panel provider seam.
 * [Archery and projectiles](/engine/archery.md) - the PROJ flight record, the measurement
   that settles `gravity` as a multiplier rather than an acceleration, the census-named bow
   draw and release events, the exact closed-form flight model on the fixed step, the

@@ -28,6 +28,9 @@ struct ActorValueBridgeState {
     var meters = HUDMeterBinding()
     /// Which target the panel's dev controls act on (item 15.9).
     var target = ActorValueTargetSelector.player
+    /// Which actor value they act on, by vanilla table index (item 19.5).
+    /// Health until the panel selects another.
+    var selection: Int32 = 24
     /// Human-readable result of the last panel action.
     var lastActionText = "No actor-value action yet."
 }

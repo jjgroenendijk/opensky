@@ -45,6 +45,15 @@ nonisolated struct ActorBase {
         var healthOffset: Int16 = 0
         var magickaOffset: Int16 = 0
         var staminaOffset: Int16 = 0
+        /// ACBS 0x0E "Speed Multiplier" (UESP NPC_ ACBS), which is the base of
+        /// actor value 30, `Speed Mult` (issue #468). It belongs to the
+        /// `useStats` template group with the three offsets — UESP names the
+        /// group's contents as "level, autocalc, skills, health/magicka/stamina,
+        /// speed, bleedout, class" — so it resolves through the same chain.
+        ///
+        /// 100 when ACBS is too short to reach it, which is the Creation Kit's
+        /// own default for an actor nobody has slowed down or sped up.
+        var speedMultiplier: UInt16 = 100
         /// CNAM — the CLAS whose attribute weights spread an auto-calc actor's
         /// per-level points.
         var characterClass: FormID?
@@ -238,7 +247,8 @@ nonisolated struct ActorBase {
         stats.levelWord = try reader.readUInt16()
         stats.calcMinLevel = try reader.readUInt16()
         stats.calcMaxLevel = try reader.readUInt16()
-        reader.skip(4) // speed multiplier, disposition base — not consumed yet.
+        stats.speedMultiplier = try reader.readUInt16()
+        reader.skip(2) // disposition base — AI data, not an actor value here.
         let templateFlags = try TemplateFlags(rawValue: reader.readUInt16())
         if field.data.count >= 22 {
             stats.healthOffset = try Int16(bitPattern: reader.readUInt16())

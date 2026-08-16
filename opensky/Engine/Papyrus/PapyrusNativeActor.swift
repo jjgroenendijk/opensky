@@ -15,16 +15,18 @@
 //
 // `SetActorValue` is **not** registered. The wiki is explicit that it "sets the
 // base value ... Any modifiers are left intact", and that "While GetActorValue
-// returns the current value, SetActorValue sets the base value." OpenSky has no
-// base-value override store: maximums are re-derived from RACE, CLAS and NPC_
-// on every read precisely so a save cannot carry a number a changed load order
-// no longer authors (see docs/engine/actor-values.md). `ActorValueRuntime.set`
-// writes the *current* value, which is `ForceActorValue`'s job and not this
-// one's. Registering it against the wrong store would make every script that
-// buffs an NPC's maximum health silently move its current health instead, so it
-// stays an unimplemented native, counted by name in the tally, until a base
-// override exists. `ModActorValue` and `ForceActorValue` are absent for the
-// same reason and are M18's with the magic-effect layer.
+// returns the current value, SetActorValue sets the base value." Item 19.5
+// gives the *other 161* actor values exactly that base-plus-modifiers store, but
+// the three primaries still have none: their maximums are re-derived from RACE,
+// CLAS and NPC_ on every read precisely so a save cannot carry a number a
+// changed load order no longer authors (see docs/engine/actor-values.md).
+// Registering the native would therefore work for a resistance and silently
+// move current health for `SetActorValue("Health", ...)`, which is worse than
+// not registering it: a script that buffs an NPC's maximum health would appear
+// to work. It stays an unimplemented native, counted by name in the tally,
+// until the primaries have a base override too. `ModActorValue` and
+// `ForceActorValue` are absent for the same reason and belong with issue 19.6's
+// magic-effect layer, which is what the modifier slots exist for.
 //
 // `SetRelationshipRank` and the faction natives are absent with the factions
 // themselves: 16.7 keeps `ActorHostility`'s two cases and adds no relationship
@@ -119,12 +121,10 @@ nonisolated extension PapyrusNativeFunctions {
     private static func installActorValueReads(
         into registry: inout PapyrusNativeRegistry
     ) {
-        let reads: [(String, @Sendable (PapyrusActorState, ActorValueKind) -> Float)] = [
-            ("GetActorValue", { state, kind in state.current[kind] }),
-            ("GetBaseActorValue", { state, kind in state.maximums[kind] }),
-            ("GetActorValuePercentage", { state, kind in
-                state.current.fractions(of: state.maximums)[kind]
-            })
+        let reads: [(String, @Sendable (PapyrusActorState, Int32) -> Float?)] = [
+            ("GetActorValue", { state, index in state.value(at: index) }),
+            ("GetBaseActorValue", { state, index in state.baseValue(at: index) }),
+            ("GetActorValuePercentage", { state, index in state.fraction(at: index) })
         ]
         for (functionName, read) in reads {
             registry.register(PapyrusNativeFunction(
@@ -134,13 +134,16 @@ nonisolated extension PapyrusNativeFunctions {
                 guard let actor = actorTarget(call, context) else {
                     return needsActor(call)
                 }
-                guard let kind = actorValueKind(call, at: 0) else {
-                    return unstoredActorValue(call, at: 0)
+                guard let index = actorValueIndex(call, at: 0) else {
+                    return unknownActorValue(call, at: 0)
                 }
                 guard let state = actor.world.actorState(for: actor.key) else {
                     return needsActor(call)
                 }
-                return .returned(.float(read(state, kind)))
+                guard let value = read(state, index) else {
+                    return unknownActorValue(call, at: 0)
+                }
+                return .returned(.float(value))
             })
         }
     }
@@ -161,13 +164,13 @@ nonisolated extension PapyrusNativeFunctions {
     ) {
         let writes: [(
             String,
-            @Sendable (PapyrusWorldAccess, ActorValueKind, Float, ReferenceKey) -> Void
+            @Sendable (PapyrusWorldAccess, Int32, Float, ReferenceKey) -> Void
         )] = [
-            ("DamageActorValue", { world, kind, amount, key in
-                world.damageActorValue(kind, by: amount, on: key)
+            ("DamageActorValue", { world, index, amount, key in
+                world.damageActorValue(at: index, by: amount, on: key)
             }),
-            ("RestoreActorValue", { world, kind, amount, key in
-                world.restoreActorValue(kind, by: amount, on: key)
+            ("RestoreActorValue", { world, index, amount, key in
+                world.restoreActorValue(at: index, by: amount, on: key)
             })
         ]
         for (functionName, write) in writes {
@@ -178,13 +181,13 @@ nonisolated extension PapyrusNativeFunctions {
                 guard let actor = actorTarget(call, context) else {
                     return needsActor(call)
                 }
-                guard let kind = actorValueKind(call, at: 0) else {
-                    return unstoredActorValue(call, at: 0)
+                guard let index = actorValueIndex(call, at: 0) else {
+                    return unknownActorValue(call, at: 0)
                 }
                 guard let amount = float(call, at: 1), amount.isFinite else {
                     return failure(call, "\(functionName) needs a finite amount")
                 }
-                write(actor.world, kind, abs(amount), actor.key)
+                write(actor.world, index, abs(amount), actor.key)
                 return .returned(.none)
             })
         }
@@ -277,31 +280,36 @@ nonisolated extension PapyrusNativeFunctions {
         )
     }
 
-    /// The stored actor value argument `index` names, or nil when the argument
-    /// is missing, is not a string, or names a value this engine does not
-    /// store.
-    static func actorValueKind(
+    /// The vanilla actor-value index the string argument at `index` spells, or
+    /// nil when the argument is missing, is not a string, or names no vanilla
+    /// actor value at all.
+    ///
+    /// Every name the table carries answers since 19.5, because every one of
+    /// them is stored. A nil is now a name no vanilla actor value carries —
+    /// a typo, a mod's invented value, or one of the Papyrus synonyms the table
+    /// deliberately does not alias (`Marksman` for `Archery`).
+    static func actorValueIndex(
         _ call: PapyrusNativeCall,
         at index: Int
-    ) -> ActorValueKind? {
+    ) -> Int32? {
         guard let name = string(call, at: index) else { return nil }
-        return ActorValueIdentity.kind(named: name)
+        return ActorValueIdentity.index(named: name)
     }
 
-    /// The failure for an actor-value name OpenSky has no store for.
+    /// The failure for an actor-value name that names no vanilla actor value.
     ///
     /// It names the value rather than only the function, so the tally's
-    /// per-function counts can be read alongside a log that says *which* actor
-    /// value the corpus keeps asking for — which is the number that decides
-    /// what to store next.
-    static func unstoredActorValue(
+    /// per-function counts can be read alongside a log that says *which* name
+    /// the corpus keeps asking for — which is the number that decides whether
+    /// the table is missing an alias.
+    static func unknownActorValue(
         _ call: PapyrusNativeCall,
         at index: Int
     ) -> PapyrusNativeResult {
         let name = string(call, at: index) ?? "<missing>"
         return failure(
             call,
-            "\(call.functionName) has no store for actor value \"\(name)\""
+            "\(call.functionName) knows no actor value named \"\(name)\""
         )
     }
 

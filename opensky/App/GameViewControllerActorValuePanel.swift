@@ -15,6 +15,11 @@ extension GameViewController: ActorValueControlProviding {
         set { actorValues.target = newValue }
     }
 
+    var actorValueSelection: Int32 {
+        get { actorValues.selection }
+        set { actorValues.selection = newValue }
+    }
+
     var actorValueControlSnapshot: ActorValueControlSnapshot {
         guard let runtime = actorValues.runtime else { return .unavailable }
         let nearest = nearestActorValueHolder()
@@ -25,6 +30,7 @@ extension GameViewController: ActorValueControlProviding {
                 readout(of: $0, name: name(ofActorValueHolder: $0), runtime: runtime)
             },
             target: actorValues.target,
+            selection: inspection(runtime: runtime),
             runtimeActorCount: worldState.snapshot().entries.count { entry in
                 entry.delta.component(ActorValueState.self) != nil
             },
@@ -33,16 +39,23 @@ extension GameViewController: ActorValueControlProviding {
     }
 
     @discardableResult
-    func damageSelectedActor(_ kind: ActorValueKind, by amount: Float) -> String {
-        apply(verb: "Damaged") { runtime, holder in
-            runtime.damage(kind, by: amount, on: holder)
+    func damageSelectedActor(by amount: Float) -> String {
+        applyToSelection(verb: "Damaged") { runtime, holder, index in
+            runtime.damage(at: index, by: amount, on: holder)
         }
     }
 
     @discardableResult
-    func restoreSelectedActor(_ kind: ActorValueKind, by amount: Float) -> String {
-        apply(verb: "Restored") { runtime, holder in
-            runtime.restore(kind, by: amount, on: holder)
+    func restoreSelectedActor(by amount: Float) -> String {
+        applyToSelection(verb: "Restored") { runtime, holder, index in
+            runtime.restore(at: index, by: amount, on: holder)
+        }
+    }
+
+    @discardableResult
+    func setSelectedActorValue(to value: Float) -> String {
+        applyToSelection(verb: "Set") { runtime, holder, index in
+            runtime.setValue(at: index, to: value, on: holder)
         }
     }
 
@@ -123,6 +136,65 @@ extension GameViewController: ActorValueControlProviding {
             let resolver = actorValues.runtime?.baselines.resolver
         else { return nil }
         return try? resolver.resolve(base: base)
+    }
+
+    /// The selected actor value, read off the selected target — or off the
+    /// player when no resident actor answers, so the line is never blank.
+    private func inspection(runtime: ActorValueRuntime) -> ActorValueInspection {
+        let holder = selectedActorValueHolder() ?? .player
+        let index = actorValues.selection
+        guard let current = runtime.value(at: index, on: holder) else {
+            return ActorValueInspection(
+                name: ActorValueIdentity.description(of: index),
+                index: index,
+                current: 0,
+                base: 0,
+                permanent: 0,
+                temporary: 0,
+                damage: 0,
+                resistanceFraction: nil
+            )
+        }
+        // A primary has no modifier slots, so its entry is nil and the three
+        // read zero — which is the honest reading, not a placeholder.
+        let entry = runtime.entry(at: index, on: holder)
+        return ActorValueInspection(
+            name: ActorValueIdentity.description(of: index),
+            index: index,
+            current: current,
+            base: runtime.baseValue(at: index, on: holder) ?? 0,
+            permanent: entry?.permanent ?? 0,
+            temporary: entry?.temporary ?? 0,
+            damage: entry?.damage ?? 0,
+            resistanceFraction: runtime.resistanceFraction(at: index, on: holder)
+        )
+    }
+
+    /// One index-addressed mutation on the selected target, reported by what
+    /// the value reads afterwards rather than by the three bars: the point of
+    /// the control is the value the user selected.
+    private func applyToSelection(
+        verb: String,
+        _ change: (ActorValueRuntime, ActorValueHolder, Int32) -> Bool
+    ) -> String {
+        guard let runtime = actorValues.runtime else { return Self.noActorValueText }
+        guard let holder = selectedActorValueHolder() else {
+            return noActorValueTargetText()
+        }
+        let index = actorValues.selection
+        guard change(runtime, holder, index) else {
+            actorValues.lastActionText =
+                "\(ActorValueIdentity.description(of: index)) is not an actor value."
+            return actorValues.lastActionText
+        }
+        actorValues.lastActionText = String(
+            format: "%@ %@ %@: now %.1f.",
+            verb,
+            name(ofActorValueHolder: holder),
+            ActorValueIdentity.description(of: index),
+            runtime.value(at: index, on: holder) ?? 0
+        )
+        return actorValues.lastActionText
     }
 
     private func apply(

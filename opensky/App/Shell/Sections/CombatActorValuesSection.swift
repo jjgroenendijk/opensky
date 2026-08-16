@@ -37,9 +37,13 @@ final class CombatActorValuesSection: PanelSectionViewController {
 
     let targetControl = NSPopUpButton()
     let kindControl = NSPopUpButton()
+    /// Any of the other 161 actor values, typed by vanilla name or by index
+    /// (issue #468). Blank means the popup's primary.
+    let valueNameControl = NSTextField(string: "")
     let amountControl = NSTextField(string: "10")
     let damageControl = NSButton(title: "Damage", target: nil, action: nil)
     let restoreControl = NSButton(title: "Restore", target: nil, action: nil)
+    let setControl = NSButton(title: "Set", target: nil, action: nil)
     let refillControl = NSButton(title: "Refill", target: nil, action: nil)
     let resetControl = NSButton(title: "Reset to records", target: nil, action: nil)
 
@@ -66,11 +70,31 @@ final class CombatActorValuesSection: PanelSectionViewController {
         max(0, Float(amountControl.stringValue) ?? Self.defaultAmount)
     }
 
-    /// The actor value the two buttons apply to.
+    /// The primary the popup names.
     var selectedKind: ActorValueKind {
         let kinds = ActorValueKind.allCases
         let index = kindControl.indexOfSelectedItem
         return kinds.indices.contains(index) ? kinds[index] : .health
+    }
+
+    /// The actor value the buttons apply to, by vanilla table index.
+    ///
+    /// The typed name wins when it resolves — by vanilla name, matched the way
+    /// `ActorValueIdentity` matches every other name, or by bare index — and
+    /// the popup answers otherwise. A field holding something that names no
+    /// actor value falls back to the popup rather than acting on a guess, and
+    /// the readout's selected-value line is what shows which one won.
+    var selectedIndex: Int32 {
+        let typed = valueNameControl.stringValue.trimmingCharacters(in: .whitespaces)
+        if !typed.isEmpty {
+            if let index = ActorValueIdentity.index(named: typed) {
+                return index
+            }
+            if let index = Int32(typed), ActorValueIdentity.isVanilla(index: index) {
+                return index
+            }
+        }
+        return ActorValueIdentity.storedIndices[selectedKind] ?? 24
     }
 
     override func makeContentViews() -> [NSView] {
@@ -78,12 +102,14 @@ final class CombatActorValuesSection: PanelSectionViewController {
         return [
             PanelComponents.note(
                 "Health, magicka and stamina come from the actor's own record and race "
-                    + "derivation; nothing here invents a number. Damage and Restore apply "
-                    + "the typed amount to the selected value, Refill returns every bar to "
-                    + "its derived maximum, and Reset to records drops the runtime state so "
-                    + "the actor derives from its records again. An actor whose health "
-                    + "reaches zero dies, which is what the Death & Ragdoll section then "
-                    + "shows."
+                    + "derivation; nothing here invents a number. Any of the other 161 actor "
+                    + "values — a resistance, a skill, carry weight — is reachable by typing "
+                    + "its name or index into Other value, which then wins over the popup. "
+                    + "Damage and Restore apply the typed amount to the selected value and "
+                    + "Set writes it outright, Refill returns every bar to its derived "
+                    + "maximum, and Reset to records drops the runtime state so the actor "
+                    + "derives from its records again. An actor whose health reaches zero "
+                    + "dies, which is what the Death & Ragdoll section then shows."
             ),
             PanelComponents.group([
                 PanelComponents.labeledFieldRow(
@@ -93,9 +119,12 @@ final class CombatActorValuesSection: PanelSectionViewController {
                     caption: "Value", captionWidth: 70, field: kindControl
                 ),
                 PanelComponents.labeledFieldRow(
+                    caption: "Other value", captionWidth: 70, field: valueNameControl
+                ),
+                PanelComponents.labeledFieldRow(
                     caption: "Amount", captionWidth: 70, field: amountControl
                 ),
-                PanelComponents.buttonRow([damageControl, restoreControl]),
+                PanelComponents.buttonRow([damageControl, restoreControl, setControl]),
                 PanelComponents.buttonRow([refillControl, resetControl])
             ]),
             statsLabel
@@ -104,16 +133,20 @@ final class CombatActorValuesSection: PanelSectionViewController {
 
     override func syncControls() {
         let available = provider != nil
-        for control in [damageControl, restoreControl, refillControl, resetControl] {
+        for control in [
+            damageControl, restoreControl, setControl, refillControl, resetControl
+        ] {
             control.isEnabled = available
         }
         targetControl.isEnabled = available
         kindControl.isEnabled = available
+        valueNameControl.isEnabled = available
         amountControl.isEnabled = available
         guard let provider else { return }
         targetControl.selectItem(
             at: Self.targets.firstIndex(of: provider.actorValueTarget) ?? 0
         )
+        provider.actorValueSelection = selectedIndex
     }
 
     override func refreshReadout() {
@@ -121,11 +154,16 @@ final class CombatActorValuesSection: PanelSectionViewController {
             statsLabel.stringValue = "Actor values: unavailable"
             return
         }
+        // The selection travels with the read, so the line below describes the
+        // value the controls would act on right now rather than the one they
+        // acted on last.
+        provider.actorValueSelection = selectedIndex
         let snapshot = provider.actorValueControlSnapshot
         statsLabel.stringValue = [
             ActorValueControlReadout.playerText(for: snapshot),
             ActorValueControlReadout.nearestActorText(for: snapshot),
             ActorValueControlReadout.derivationText(for: snapshot),
+            ActorValueControlReadout.selectionText(for: snapshot),
             ActorValueControlReadout.controlsText(for: snapshot)
         ].joined(separator: "\n")
     }
@@ -148,11 +186,18 @@ final class CombatActorValuesSection: PanelSectionViewController {
             identifier: "ActorValueKindControl"
         )
         PanelComponents.configureTextField(
+            valueNameControl, identifier: "ActorValueNameControl", width: 140
+        )
+        PanelComponents.configureTextField(
             amountControl, identifier: "ActorValueAmountControl", width: 60
         )
         PanelComponents.configureButton(
             damageControl, target: self, action: #selector(damage),
             identifier: "ActorValueDamageControl"
+        )
+        PanelComponents.configureButton(
+            setControl, target: self, action: #selector(setSelectedValue),
+            identifier: "ActorValueSetControl"
         )
         PanelComponents.configureButton(
             restoreControl, target: self, action: #selector(restore),
@@ -185,12 +230,20 @@ final class CombatActorValuesSection: PanelSectionViewController {
     }
 
     @objc private func damage() {
-        provider?.damageSelectedActor(selectedKind, by: amount)
+        provider?.actorValueSelection = selectedIndex
+        provider?.damageSelectedActor(by: amount)
         finishInteraction()
     }
 
     @objc private func restore() {
-        provider?.restoreSelectedActor(selectedKind, by: amount)
+        provider?.actorValueSelection = selectedIndex
+        provider?.restoreSelectedActor(by: amount)
+        finishInteraction()
+    }
+
+    @objc private func setSelectedValue() {
+        provider?.actorValueSelection = selectedIndex
+        provider?.setSelectedActorValue(to: amount)
         finishInteraction()
     }
 

@@ -20,6 +20,11 @@ struct FakeActorValueState {
     var restores: [(kind: ActorValueKind, amount: Float)] = []
     var refillCount = 0
     var resetCount = 0
+    /// Which actor value the controls last acted on, by vanilla table index
+    /// (issue #468). Health until a panel selects another.
+    var selection: Int32 = 24
+    /// Every `Set` the panel asked for, newest last.
+    var sets: [(index: Int32, value: Float)] = []
 }
 
 extension FakeWorldProviders {
@@ -32,16 +37,38 @@ extension FakeWorldProviders {
         set { actorValues.target = newValue }
     }
 
-    @discardableResult
-    func damageSelectedActor(_ kind: ActorValueKind, by amount: Float) -> String {
-        actorValues.damages.append((kind: kind, amount: amount))
-        return "Damaged \(kind.rawValue) by \(amount)."
+    var actorValueSelection: Int32 {
+        get { actorValues.selection }
+        set { actorValues.selection = newValue }
+    }
+
+    /// The primary the current selection names, so the recorded damages and
+    /// restores keep reading as they did before item 19.5 made the selection an
+    /// index. A non-primary selection records as health, and the index the
+    /// panel asked for is `actorValues.selection`.
+    private var selectedKind: ActorValueKind {
+        ActorValueIdentity.kind(at: actorValues.selection) ?? .health
     }
 
     @discardableResult
-    func restoreSelectedActor(_ kind: ActorValueKind, by amount: Float) -> String {
-        actorValues.restores.append((kind: kind, amount: amount))
-        return "Restored \(kind.rawValue) by \(amount)."
+    func damageSelectedActor(by amount: Float) -> String {
+        actorValues.damages.append((kind: selectedKind, amount: amount))
+        return "Damaged \(ActorValueIdentity.description(of: actorValues.selection))"
+            + " by \(amount)."
+    }
+
+    @discardableResult
+    func restoreSelectedActor(by amount: Float) -> String {
+        actorValues.restores.append((kind: selectedKind, amount: amount))
+        return "Restored \(ActorValueIdentity.description(of: actorValues.selection))"
+            + " by \(amount)."
+    }
+
+    @discardableResult
+    func setSelectedActorValue(to value: Float) -> String {
+        actorValues.sets.append((index: actorValues.selection, value: value))
+        return "Set \(ActorValueIdentity.description(of: actorValues.selection))"
+            + " to \(value)."
     }
 
     @discardableResult

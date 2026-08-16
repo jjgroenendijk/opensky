@@ -25,7 +25,8 @@ enum ActorValueCommand {
             store: GameSettingLoader.load(root: context.root, baseFile: file)
         )
         print("[INFO] iAVDhmsLevelUp = \(settings.pointsPerLevel), "
-            + "fNPCHealthLevelBonus = \(settings.healthBonusPerLevel)")
+            + "fNPCHealthLevelBonus = \(settings.healthBonusPerLevel), "
+            + "iAVDSkillsLevelUp = \(settings.skillPointsPerLevel)")
         let resolver = ActorValueResolver.build(
             from: file,
             localized: localized,
@@ -72,6 +73,25 @@ enum ActorValueCommand {
                     ? "" : " [WARNING] auto-calc off: DNAM is not authoritative"))
         }
         print("  regen %/s " + triple(resolved.regenPercentPerSecond))
+        printGeneral(resolved.generalBaseValues)
+    }
+
+    /// The non-primary actor values this actor's records author (issue #468),
+    /// in table order with their vanilla names. Every other index reads
+    /// `ActorValueIdentity.defaultValue(at:)` and is left off rather than
+    /// printed as a number nothing authored.
+    private static func printGeneral(_ values: [Int32: Float]) {
+        guard !values.isEmpty else { return }
+        print("  record-authored actor values (\(values.count)):")
+        for index in values.keys.sorted() {
+            guard let value = values[index] else { continue }
+            print(String(
+                format: "    %3d %-24@ %.2f",
+                index,
+                ActorValueIdentity.description(of: index) as NSString,
+                value
+            ))
+        }
     }
 
     /// The three inputs behind the derived triple, so an unexpected number can
@@ -117,6 +137,15 @@ enum ActorValueCommand {
             magicka: stats.magickaRegenPercent,
             stamina: stats.staminaRegenPercent
         )))
+        print(String(
+            format: "  carry weight %.2f, mass %.2f, unarmed damage %.2f",
+            stats.baseCarryWeight,
+            stats.baseMass,
+            stats.unarmedDamage
+        ))
+        printGeneral(ActorValueDerivation.generalBaseValues(
+            inputs: ActorValueInputs(race: stats)
+        ))
     }
 
     // MARK: - Formatting

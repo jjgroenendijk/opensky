@@ -118,6 +118,76 @@ struct ActorValueSaveTests {
         #expect(encode(snapshot()) == encode(snapshot()))
     }
 
+    // MARK: - AVGN, the non-primary values (issue #468)
+
+    /// One actor holding two non-primary values, one of them damaged.
+    private func resistant() -> ActorValueState {
+        ActorValueState(
+            current: ActorValues(health: 62.5, magicka: 0, stamina: 149.75),
+            general: [
+                ActorValueIndex.resistFire: ActorValueEntry(
+                    base: 40, permanent: 10, temporary: 25, damage: -15
+                ),
+                15: ActorValueEntry(base: 22)
+            ]
+        )
+    }
+
+    private func resistantSnapshot() -> WorldStateSnapshot {
+        WorldStateSnapshot(
+            entries: [OpenSkySaveFixture.entry(
+                key: wounded,
+                cell: OpenSkySaveFixture.whiterun,
+                components: [resistant().erased]
+            )],
+            nextGeneratedSequence: 5,
+            sequence: 11
+        )
+    }
+
+    /// The general table survives the round trip — except the temporary
+    /// modifier, which is deliberately not written because the magic effect
+    /// that established it is what re-establishes it (issue 19.6).
+    @Test func generalActorValuesSurviveAnEncodeAndDecodeWithoutTheTemporarySlot() throws {
+        let file = try OpenSkySaveDecoder.decode(encode(resistantSnapshot()))
+        let delta = try #require(file.snapshot[wounded])
+        let state = try #require(delta.component(ActorValueState.self))
+        #expect(state.current == resistant().current)
+        #expect(state.general[ActorValueIndex.resistFire] == ActorValueEntry(
+            base: 40, permanent: 10, damage: -15
+        ))
+        #expect(state.general[15] == ActorValueEntry(base: 22))
+        #expect(state.general.count == 2)
+    }
+
+    @Test func generalActorValueEncodingIsDeterministic() {
+        #expect(encode(resistantSnapshot()) == encode(resistantSnapshot()))
+    }
+
+    /// A session that moved no non-primary value writes no `AVGN` chunk, so its
+    /// bytes are the ones this encoder produced before the chunk existed.
+    @Test func aSaveWithNoGeneralActorValuesCarriesNoChunk() {
+        #expect(OpenSkySaveFixture.offset(
+            ofChunk: OpenSkySaveFormat.ChunkTag.generalActorValues, in: encode(snapshot())
+        ) == nil)
+    }
+
+    /// The older-build case for `AVGN`: renaming the tag loses the non-primary
+    /// values and keeps everything else, including the actor's health.
+    @Test func anUnknownGeneralActorValueChunkTagIsSkipped() throws {
+        let encoded = encode(resistantSnapshot())
+        let offset = try #require(OpenSkySaveFixture.offset(
+            ofChunk: OpenSkySaveFormat.ChunkTag.generalActorValues, in: encoded
+        ))
+        let renamed = OpenSkySaveFixture.patching(
+            encoded, at: offset, with: Array("ZZZZ".utf8)
+        )
+        let file = try OpenSkySaveDecoder.decode(renamed)
+        let state = try #require(file.snapshot[wounded]?.component(ActorValueState.self))
+        #expect(state.current == resistant().current)
+        #expect(state.general.isEmpty)
+    }
+
     // MARK: - Additive-chunk tolerance
 
     /// A session in which nothing took damage writes no `AVAL` chunk at all, so

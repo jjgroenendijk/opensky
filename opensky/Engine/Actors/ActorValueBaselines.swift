@@ -53,6 +53,28 @@ nonisolated struct ActorValueBaseline: Equatable, Sendable {
     let maximums: ActorValues
     /// Percent of each maximum restored per second, from RACE DATA.
     let regenPercentPerSecond: ActorValues
+    /// Base values for the non-primary actor values the subject's records
+    /// author, keyed by vanilla table index (issue #468). Sparse: an index
+    /// absent here reads `ActorValueIdentity.defaultValue(at:)`.
+    let general: [Int32: Float]
+
+    init(
+        maximums: ActorValues,
+        regenPercentPerSecond: ActorValues,
+        general: [Int32: Float] = [:]
+    ) {
+        self.maximums = maximums
+        self.regenPercentPerSecond = regenPercentPerSecond
+        self.general = general
+    }
+
+    /// The base value `index` starts from: what the records author, and the
+    /// documented vanilla default otherwise. Nil for an index outside the
+    /// table, which is the one answer that stays a miss.
+    func base(at index: Int32) -> Float? {
+        guard let fallback = ActorValueIdentity.defaultValue(at: index) else { return nil }
+        return general[index] ?? fallback
+    }
 
     static let empty = ActorValueBaseline(
         maximums: .zero,
@@ -73,6 +95,14 @@ nonisolated struct ActorValueBaselineResolver {
     /// output this number came from.
     static let vanillaPlayerStartingValues = ActorValues(repeating: 100)
 
+    /// The non-primary baselines a subject with no records behind it reads: the
+    /// documented skill floor and the Creation Kit's default speed multiplier,
+    /// and nothing else. A summon has no race to carry a mass or a carry
+    /// weight, so both stay at the table default rather than borrowing a
+    /// number from an actor it is not.
+    static let recordlessGeneralValues = ActorValueDerivation
+        .generalBaseValues(inputs: ActorValueInputs())
+
     /// Record-side derivation. Optional so a synthetic scene, a benchmark and a
     /// unit test can drive the runtime without loading a plugin: with no
     /// resolver every actor baseline is `fallback`.
@@ -89,7 +119,8 @@ nonisolated struct ActorValueBaselineResolver {
         playerRace: FormID? = nil,
         fallback: ActorValueBaseline = ActorValueBaseline(
             maximums: ActorValueBaselineResolver.vanillaPlayerStartingValues,
-            regenPercentPerSecond: .zero
+            regenPercentPerSecond: .zero,
+            general: ActorValueBaselineResolver.recordlessGeneralValues
         )
     ) {
         self.resolver = resolver
@@ -134,6 +165,13 @@ nonisolated struct ActorValueBaselineResolver {
                 health: race.stats.healthRegenPercent,
                 magicka: race.stats.magickaRegenPercent,
                 stamina: race.stats.staminaRegenPercent
+            ),
+            // The player has no NPC_ in this engine, so the non-primary
+            // baselines come from the race alone: no ACBS speed multiplier and
+            // no class spread, which is exactly the level-1 unclassed actor the
+            // player is before chargen exists (M20).
+            general: ActorValueDerivation.generalBaseValues(
+                inputs: ActorValueInputs(race: race.stats)
             )
         )
     }
@@ -147,7 +185,8 @@ nonisolated struct ActorValueBaselineResolver {
         }
         return ActorValueBaseline(
             maximums: resolved.maximums,
-            regenPercentPerSecond: resolved.regenPercentPerSecond
+            regenPercentPerSecond: resolved.regenPercentPerSecond,
+            general: resolved.generalBaseValues
         )
     }
 }

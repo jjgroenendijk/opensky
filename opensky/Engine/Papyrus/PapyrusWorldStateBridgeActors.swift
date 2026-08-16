@@ -42,7 +42,10 @@ extension PapyrusWorldStateBridge {
             isDead: worldState.component(ActorDeathState.self, for: key)?.isDead ?? false,
             isInCombat: isActorInCombat(key),
             combatActivity: combatRuntime?()?.activity(of: key) ?? .notFighting,
-            weaponDrawState: weaponDrawState?(key)
+            weaponDrawState: weaponDrawState?(key),
+            general: values.state(of: holder).general,
+            generalBaseline: values.baseline(of: holder).general,
+            isPlayer: key == playerKey
         )
     }
 
@@ -50,17 +53,20 @@ extension PapyrusWorldStateBridge {
 
     @discardableResult
     func damageActorValue(
-        _ kind: ActorValueKind, by amount: Float, on key: ReferenceKey
+        at index: Int32, by amount: Float, on key: ReferenceKey
     ) -> PapyrusActorState? {
         guard let values = actorValueRuntime?(), let holder = actorHolder(for: key) else {
             return nil
         }
-        let state = values.damage(kind, by: amount, on: holder)
+        guard values.damage(at: index, by: amount, on: holder) else { return nil }
         // The zero-health check is here rather than in the native because this
         // is the layer that can act on it: a blow that empties the bar has to
         // become a death on the same call, or a script that damages and then
         // asks `IsDead()` reads a live actor lying on the floor.
-        if kind == .health, state.hasZeroHealth {
+        if
+            ActorValueIdentity.kind(at: index) == .health,
+            values.hasZeroHealth(holder)
+        {
             ragdollRuntime?()?.noteZeroHealth(of: key)
         }
         return actorState(for: key)
@@ -68,12 +74,12 @@ extension PapyrusWorldStateBridge {
 
     @discardableResult
     func restoreActorValue(
-        _ kind: ActorValueKind, by amount: Float, on key: ReferenceKey
+        at index: Int32, by amount: Float, on key: ReferenceKey
     ) -> PapyrusActorState? {
         guard let values = actorValueRuntime?(), let holder = actorHolder(for: key) else {
             return nil
         }
-        values.restore(kind, by: amount, on: holder)
+        guard values.restore(at: index, by: amount, on: holder) else { return nil }
         return actorState(for: key)
     }
 

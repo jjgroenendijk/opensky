@@ -32,6 +32,10 @@ nonisolated struct ResolvedActorValues: Equatable {
     let maximums: ActorValues
     /// Percent of each maximum restored per second, from the race.
     let regenPercentPerSecond: ActorValues
+    /// Base values for the non-primary actor values this actor's records
+    /// author, keyed by vanilla table index (issue #468). An index absent here
+    /// reads `ActorValueIdentity.defaultValue(at:)`.
+    let generalBaseValues: [Int32: Float]
     /// The level the derivation used.
     let level: Int
     /// RACE the starting attributes came from, nil when the chain names none.
@@ -132,6 +136,11 @@ nonisolated struct ActorValueResolver {
                 magicka: gathered.race.magickaRegenPercent,
                 stamina: gathered.race.staminaRegenPercent
             ),
+            generalBaseValues: ActorValueDerivation.generalBaseValues(
+                inputs: gathered,
+                settings: settings,
+                playerLevel: playerLevel
+            ),
             level: ActorValueDerivation.level(inputs: gathered, playerLevel: playerLevel),
             race: resolved.statsRace.value,
             characterClass: stats.characterClass,
@@ -160,7 +169,9 @@ nonisolated struct ActorValueResolver {
             autoCalculatesStats: resolved.autoCalculatesStats.value,
             usesPlayerLevelMultiplier: resolved.usesPlayerLevelMultiplier.value,
             attributeWeights: classes[stats.characterClass]?.attributeWeights
-                ?? CharacterClass.AttributeWeights()
+                ?? CharacterClass.AttributeWeights(),
+            skillWeights: classes[stats.characterClass]?.skillWeights
+                ?? CharacterClass.SkillWeights()
         )
     }
 

@@ -83,7 +83,7 @@ ACBS, 24 bytes. Every word below is decoded except the two marked skipped:
 | 0x08   | uint16 | `stats.levelWord` — level or mult x1000 |
 | 0x0A   | uint16 | `stats.calcMinLevel`                    |
 | 0x0C   | uint16 | `stats.calcMaxLevel`                    |
-| 0x0E   | uint16 | speed multiplier (skipped)              |
+| 0x0E   | uint16 | `stats.speedMultiplier` — actor value 30 |
 | 0x10   | uint16 | disposition base (skipped)              |
 | 0x12   | uint16 | template data flags                     |
 | 0x14   | int16  | `stats.healthOffset`                    |
@@ -149,9 +149,11 @@ data (own subrecord after an LVLO) + OBND/LLCT/MODL are skipped.
 
 ## RACE -> Race
 
-Appearance subset plus the DATA starting attributes and regen rates
-(issue #194); the DATA skill bonuses, movement floats, spell lists, keywords,
-body-part/tint data, and morphs stay undecoded.
+Appearance subset, the DATA starting attributes and regen rates (issue #194),
+and the DATA fields that author a non-primary actor value — the seven skill
+bonuses, base carry weight, base mass and unarmed damage (issue #468). The
+movement floats, spell lists, keywords, body-part/tint data, and morphs stay
+undecoded.
 
 | field     | type    | decoded                                             |
 | --------- | ------- | --------------------------------------------------- |
@@ -168,19 +170,28 @@ windows out of it and nothing else:
 
 | offset | type    | field                                              |
 | ------ | ------- | -------------------------------------------------- |
-| 0x00   | uint8   | 7 skill/bonus byte pairs + uint16 pad (skipped)    |
+| 0x00   | uint8   | `stats.skillBonuses` — 7 skill/bonus byte pairs, + uint16 pad |
 | 0x10   | float   | male/female height + weight (skipped)              |
 | 0x20   | uint32  | `flags`                                            |
 | 0x24   | float   | `stats.startingHealth` / `Magicka` / `Stamina`     |
-| 0x30   | float   | carry weight, mass, accel, decel, size (skipped)   |
+| 0x30   | float   | `stats.baseCarryWeight`, `stats.baseMass`          |
+| 0x38   | float   | accel, decel, size, head/hair/shield biped (skipped) |
 | 0x54   | float   | `stats.healthRegenPercent` / `magicka` / `stamina` |
-| 0x60   | float   | unarmed damage/reach onward (skipped)              |
+| 0x60   | float   | `stats.unarmedDamage`; unarmed reach onward skipped |
 
 DATA flags (UESP RACE): 0x1 playable, 0x2 FaceGen head. Probed values:
 playable races carry 0x2, creature races (cow/dog/bear) do not — this bit
 gates FaceGen path emission.
 
-The two stat windows are read independently, so a DATA long enough for the
+A skill pair whose bonus byte is zero is dropped rather than stored: a race that
+fills fewer than seven slots leaves the rest zeroed, and a stored 0/0 pair is
+indistinguishable from "+0 to Aggression". Probed 2026-08-16
+(`openskycli actor-values --race NordRace`): `NordRace` yields Two-Handed +10 and
+One-Handed, Block, Smithing, Light Armor and Speech +5, which is exactly what
+UESP documents for the race, and every playable race authors 300 carry weight,
+mass 1 and unarmed damage 4.
+
+The stat windows are read independently, so a DATA long enough for the
 starting attributes but not the regen block still yields the attributes.
 Regen is a *percentage of the maximum per second*, quoted from the Creation
 Kit: "Health Regen: The percentage of total Health that is regenerated each
@@ -190,14 +201,15 @@ familiar 0.7%/s out-of-combat health regeneration comes from.
 
 ## CLAS -> CharacterClass
 
-Attribute weights only; the 18 skill weights and the trainer fields wait for
-M18. Named `CharacterClass` because `Class` reads badly at every use site.
+Attribute weights and the 18 skill weights (issue #468); the trainer fields
+stay undecoded, since nothing trains yet. Named `CharacterClass` because
+`Class` reads badly at every use site.
 
 | field | type    | decoded                                    |
 | ----- | ------- | ------------------------------------------ |
 | EDID  | zstring | `editorID`                                 |
 | FULL  | lstring | `name`                                     |
-| DATA  | struct  | `attributeWeights`, `bleedoutDefault`      |
+| DATA  | struct  | `attributeWeights`, `skillWeights`, `bleedoutDefault` |
 
 DATA, 36 bytes (UESP CLAS):
 
@@ -205,7 +217,7 @@ DATA, 36 bytes (UESP CLAS):
 | ------ | ------ | ------------------------------------------ |
 | 0x00   | uint32 | unknown, "possibly flags" (skipped)        |
 | 0x04   | uint8  | trainer skill + level (skipped)            |
-| 0x06   | uint8  | 18 skill weights (skipped, M18)            |
+| 0x06   | uint8  | `skillWeights` — one per skill, actor values 6-23 |
 | 0x18   | float  | `bleedoutDefault` — read for item 15.6     |
 | 0x1C   | uint32 | voice points (skipped)                     |
 | 0x20   | uint8  | `attributeWeights.health` / `magicka` / `stamina` |

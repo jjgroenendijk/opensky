@@ -202,4 +202,139 @@ struct ActorValueRealDataTests {
             "\(unresolved) NPC_ records did not resolve their template chain"
         )
     }
+
+    // MARK: - Non-primary actor values (issue #468, roadmap item 19.5)
+
+    /// `iAVDSkillsLevelUp`, which UESP states as "the fixed 8 skill points per
+    /// level" and `Skyrim.esm` authors at exactly that. Observed 2026-08-16
+    /// through `openskycli gmst list --prefix iavd`.
+    @Test(.enabled(if: Self.dataRoot != nil))
+    func theSkillPointSettingMatchesTheDocumentedDefault() throws {
+        let root = try #require(Self.dataRoot)
+        let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
+        let settings = ActorValueLevelSettings.resolve(
+            store: GameSettingLoader.load(root: root, baseFile: file)
+        )
+        #expect(settings.skillPointsPerLevel == 8)
+    }
+
+    /// The RACE DATA skill bonuses, checked against a race whose bonuses are
+    /// independently documented: "Nord ... Two-Handed +10; One-Handed, Block,
+    /// Light Armor, Smithing, Speech +5"
+    /// (<https://en.uesp.net/wiki/Skyrim:Nord>). Getting all six out of the
+    /// byte pairs at DATA 0x00 is what says the decode is aligned.
+    ///
+    /// Observed 2026-08-16 through `openskycli actor-values --race NordRace`.
+    @Test(.enabled(if: Self.dataRoot != nil))
+    func theNordSkillBonusesMatchTheDocumentedOnes() throws {
+        let root = try #require(Self.dataRoot)
+        let resolver = try resolver(root: root)
+        let nord = try #require(resolver.races.values.first { $0.editorID == "NordRace" })
+        let bonuses = Dictionary(
+            uniqueKeysWithValues: nord.stats.skillBonuses.map { ($0.actorValue, $0.bonus) }
+        )
+        #expect(bonuses[7] == 10) // Two-Handed
+        for skill in [6, 9, 10, 12, 17] { // One-Handed, Block, Smithing, Light Armor, Speech
+            #expect(
+                bonuses[Int32(skill)] == 5,
+                "\(ActorValueIdentity.description(of: Int32(skill)))"
+            )
+        }
+        #expect(nord.stats.skillBonuses.count == 6)
+        // The other three RACE DATA fields that are actor values by name.
+        #expect(nord.stats.baseCarryWeight == 300)
+        #expect(nord.stats.baseMass == 1)
+        #expect(nord.stats.unarmedDamage == 4)
+    }
+
+    /// Every playable race authors the same carry weight and mass, and a full
+    /// set of skill bonuses — which is what lets the derived table be built
+    /// from the race alone for a player who has not picked a class.
+    @Test(.enabled(if: Self.dataRoot != nil))
+    func everyPlayableRaceAuthorsTheSameNonPrimaryBaselines() throws {
+        let root = try #require(Self.dataRoot)
+        let resolver = try resolver(root: root)
+        let playable = resolver.races.values
+            .filter { $0.flags.contains(.playable) && $0.stats.startingHealth > 0 }
+        #expect(playable.count >= 10, "expected the vanilla playable races")
+        for race in playable {
+            let editorID = race.editorID ?? "\(race.formID)"
+            #expect(race.stats.baseCarryWeight == 300, "\(editorID) carry weight")
+            #expect(race.stats.baseMass == 1, "\(editorID) mass")
+            // Every playable race spends the same budget: one +10 and five +5.
+            let total = race.stats.skillBonuses.reduce(0) { $0 + $1.bonus }
+            #expect(total == 35, "\(editorID) skill bonus total")
+        }
+    }
+
+    /// The whole derived table for one named vanilla actor, with the numbers
+    /// observed through `openskycli actor-values --npc EncBandit03TemplateMelee`
+    /// (2026-08-16) rather than recalled: a level-9 Nord bandit whose class
+    /// weights One-Handed, Block, Light Armor and Heavy Armor.
+    @Test(.enabled(if: Self.dataRoot != nil))
+    func derivesTheNonPrimaryTableForANamedActor() throws {
+        let root = try #require(Self.dataRoot)
+        let resolver = try resolver(root: root)
+        let resolved = try resolver.resolve(base: FormID(0x0001_BCDA))
+        let values = resolved.generalBaseValues
+        #expect(resolved.level == 9)
+        // 15 floor + 5 Nord bonus + 17 from the class spread.
+        #expect(values[6] == 37) // One-Handed
+        #expect(values[7] == 42) // Two-Handed: floor + 10, no class weight
+        #expect(values[8] == 15) // Archery: floor alone
+        #expect(values[ActorValueIndex.speedMult] == 100)
+        #expect(values[ActorValueIndex.carryWeight] == 300)
+        #expect(values[ActorValueIndex.mass] == 1)
+        #expect(values[ActorValueIndex.unarmedDamage] == 4)
+        // Eighteen skills plus the four record-authored values, and nothing
+        // else: no resistance is derived from records, so every one of them
+        // reads the documented zero default.
+        #expect(values.count == 22)
+        #expect(values[ActorValueIndex.resistFire] == nil)
+    }
+
+    /// The census behind item 19.5's acceptance gate: every `GetActorValue`
+    /// (14) and `GetActorValuePercent` (640) condition `Skyrim.esm` authors,
+    /// bucketed by whether OpenSky can answer its actor-value parameter.
+    ///
+    /// Before 19.5 only the three primaries answered and every other parameter
+    /// was a tallied `.unresolvedParameter`. Observed 2026-08-16: 607 such
+    /// conditions, 68 of them on a primary and 539 on one of the other actor
+    /// values — so 539 tallied misses became 539 answers. This pins that the
+    /// remaining miss bucket is empty, so a load order that introduces an
+    /// out-of-table index says so rather than quietly regressing.
+    @Test(.enabled(if: Self.dataRoot != nil))
+    func everyActorValueConditionInSkyrimESMResolvesItsParameter() throws {
+        let root = try #require(Self.dataRoot)
+        let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
+        var total = 0
+        var primaries = 0
+        var misses: [Int32: Int] = [:]
+        ESMWalk.forEachRecord(in: file) { record in
+            guard let fields = try? record.fields() else { return true }
+            var list = ConditionList()
+            for field in fields {
+                _ = try? list.decode(field: field)
+            }
+            for condition in list.conditions where Self.actorValueFunctions.contains(
+                condition.functionIndex
+            ) {
+                total += 1
+                let index = condition.parameter1.asInt32
+                if ActorValueIdentity.kind(at: index) != nil {
+                    primaries += 1
+                } else if !ActorValueIdentity.isVanilla(index: index) {
+                    misses[index, default: 0] += 1
+                }
+            }
+            return true
+        }
+        #expect(total > 100, "expected a real actor-value condition population, got \(total)")
+        #expect(primaries < total, "expected non-primary actor-value conditions in the corpus")
+        #expect(misses.isEmpty, "unreadable actor-value parameters: \(misses)")
+    }
+
+    /// `GetActorValue` and `GetActorValuePercent`, the two condition functions
+    /// whose first parameter is `ptActorValue` (xEdit `wbDefinitionsTES5.pas`).
+    private static let actorValueFunctions: Set<UInt16> = [14, 640]
 }

@@ -23,13 +23,29 @@
 
 import Foundation
 
-/// One actor's current primary values.
+/// One actor's current primary values, plus whatever it has stored for the
+/// rest of the actor-value table.
 nonisolated struct ActorValueState: WorldStateComponent {
     /// Current health, magicka and stamina. Never negative, never NaN, and
     /// never above the maximums the runtime clamped it against — though this
     /// type cannot enforce that last one on its own, because it does not know
     /// the maximums.
     private(set) var current: ActorValues
+
+    /// Every non-primary actor value this actor has moved off its baseline,
+    /// keyed by vanilla table index (issue #468, roadmap item 19.5).
+    ///
+    /// Sparse on purpose, and that sparseness is the design rather than an
+    /// optimization. An actor has 164 actor values and a session touches a
+    /// handful; storing the other 160 would put a number in the save for every
+    /// value a record authors, which is the same "re-derive, never persist"
+    /// rule the maximums follow. An index absent here reads its baseline, and
+    /// an entry that comes back to its baseline is dropped rather than kept at
+    /// its default (see `ActorValueRuntime.set(_:to:on:)`).
+    ///
+    /// The three primaries are never in here: they have their own typed
+    /// storage above, and a second copy could disagree with it.
+    private(set) var general: [Int32: ActorValueEntry]
 
     static var componentKind: WorldStateComponentKind {
         .actorValues
@@ -53,13 +69,21 @@ nonisolated struct ActorValueState: WorldStateComponent {
     /// Normalizes on the way in, which is also what makes this the save
     /// decoder's entry point: a corrupt file degrades into a valid state rather
     /// than failing the whole load.
-    init(current: ActorValues) {
+    ///
+    /// A general entry whose index is outside the vanilla table, or which names
+    /// one of the three primaries, is dropped rather than stored: the first is
+    /// not an actor value and the second already has typed storage.
+    init(current: ActorValues, general: [Int32: ActorValueEntry] = [:]) {
         var normalized = ActorValues.zero
         for kind in ActorValueKind.allCases {
             let value = current[kind]
             normalized[kind] = value.isFinite ? max(0, value) : 0
         }
         self.current = normalized
+        self.general = general.filter { index, _ in
+            ActorValueIdentity.isVanilla(index: index)
+                && ActorValueIdentity.kind(at: index) == nil
+        }
     }
 
     init?(erased: WorldStateComponentValue) {
@@ -87,7 +111,7 @@ nonisolated struct ActorValueState: WorldStateComponent {
         guard amount.isFinite, amount > 0 else { return self }
         var updated = current
         updated[kind] = max(0, updated[kind] - amount)
-        return ActorValueState(current: updated)
+        return ActorValueState(current: updated, general: general)
     }
 
     /// This state with `amount` added to one value, capped at `maximum`.
@@ -99,12 +123,54 @@ nonisolated struct ActorValueState: WorldStateComponent {
         var updated = current
         let limit = maximum.isFinite ? max(0, maximum) : 0
         updated[kind] = min(limit, updated[kind] + amount)
-        return ActorValueState(current: updated)
+        return ActorValueState(current: updated, general: general)
     }
 
     /// This state pulled inside `maximums`, which is what a caller applies
     /// after the records behind an actor changed and its maximums shrank.
+    ///
+    /// The general table is untouched: a non-primary actor value has no
+    /// maximum to be pulled inside, only a base its own entry carries.
     func clamped(to maximums: ActorValues) -> Self {
-        ActorValueState(current: current.clamped(to: maximums))
+        ActorValueState(current: current.clamped(to: maximums), general: general)
+    }
+
+    // MARK: - The general table
+
+    /// `index`'s stored entry, or the unmodified entry `baseline` describes
+    /// when nothing has touched it.
+    ///
+    /// The primaries answer nil: they are not in this table, and a caller that
+    /// reaches one here has taken a wrong turn rather than found an empty slot.
+    func entry(at index: Int32, baseline: Float) -> ActorValueEntry? {
+        guard
+            ActorValueIdentity.isVanilla(index: index),
+            ActorValueIdentity.kind(at: index) == nil
+        else { return nil }
+        return general[index] ?? ActorValueEntry(base: baseline)
+    }
+
+    /// This state with `index`'s entry replaced, or dropped when the new entry
+    /// says exactly what `baseline` already says.
+    ///
+    /// Dropping rather than storing a baseline-equal entry is what keeps the
+    /// save and the dirty counts honest: an actor whose fire resistance was
+    /// raised and then lowered again is an actor nothing happened to.
+    func setting(
+        _ entry: ActorValueEntry,
+        at index: Int32,
+        baseline: Float
+    ) -> Self {
+        guard
+            ActorValueIdentity.isVanilla(index: index),
+            ActorValueIdentity.kind(at: index) == nil
+        else { return self }
+        var updated = general
+        if entry.matchesBaseline(baseline) {
+            updated.removeValue(forKey: index)
+        } else {
+            updated[index] = entry
+        }
+        return ActorValueState(current: current, general: updated)
     }
 }
