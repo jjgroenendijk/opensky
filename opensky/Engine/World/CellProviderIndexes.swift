@@ -23,6 +23,12 @@ nonisolated struct CellProviderIndexes {
     let inventoryBaselines: InventoryBaselineResolver
     let equipmentCatalog: EquipmentCatalog
     let actorValueBaselines: ActorValueBaselineResolver
+    /// Load-order MGEF index (issue #469), behind every EFID an applied effect
+    /// resolves.
+    let magicEffectStore: MagicEffectStore
+    /// Plugin the item indexes were built from, which magic-item EFID links are
+    /// relative to.
+    let magicItemPluginName: String
     let movementConfiguration: PlayerMovementConfiguration
     let barterPricing: BarterPricing
     let combatSettings: CombatSettings
@@ -76,6 +82,8 @@ nonisolated struct CellProviderIndexes {
         packageStore = PackageStore(file: file)
         inventoryBaselines = InventoryBaselineResolver.build(from: file)
         equipmentCatalog = EquipmentCatalog.build(from: file)
+        magicEffectStore = MagicEffectStoreLoader.load(root: root, baseFile: file)
+        magicItemPluginName = esmURL.lastPathComponent
         actorValueBaselines = ActorValueBaselineResolver(
             resolver: ActorValueResolver.build(
                 from: file,
@@ -103,6 +111,8 @@ nonisolated struct CellProviderIndexes {
             inventoryBaselines: inventoryBaselines,
             equipmentCatalog: equipmentCatalog,
             actorValueBaselines: actorValueBaselines,
+            magicEffectStore: magicEffectStore,
+            magicItemPluginName: magicItemPluginName,
             movementConfiguration: movementConfiguration,
             barterPricing: barterPricing,
             combatSettings: combatSettings,

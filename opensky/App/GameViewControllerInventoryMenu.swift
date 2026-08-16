@@ -276,6 +276,15 @@ extension GameViewController: InventoryMenuControlProviding {
         refreshInventoryMenuModel()
     }
 
+    func consumeInventoryMenuSelection() {
+        guard let entry = inventoryMenu.model.selectedEntry else {
+            inventoryMenu.lastActionText = "No row selected."
+            return
+        }
+        inventoryMenu.lastActionText = consumeMagicItem(entry.item)
+        refreshInventoryMenuModel()
+    }
+
     var inventoryMenuSnapshot: InventoryMenuControlSnapshot {
         let model = inventoryMenu.model
         let runtime = inventoryMenu.movieLoaded ? renderer?.swfRuntime : nil

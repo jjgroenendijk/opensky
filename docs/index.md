@@ -304,6 +304,13 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   baselines, the capped resistance query and its multiplicative composition rule,
   percent-per-second regeneration on the menu-pause-safe fixed step, the live HUD meter
   binding, the additive AVAL and AVGN save chunks, and the panel provider seam.
+* [Magic and active effects](/engine/magic.md) - the runtime notion of an effect acting on
+  an actor: the cited archetype semantics for the value, dual-value and peak-value
+  modifiers, the two timed behaviours the Recover flag selects and the instant application
+  that is neither, the per-archetype coverage tally, condition gating at application time,
+  the No Recast and peak-keyword stacking rules, the additive AEFF save chunk that makes
+  AVGN's dropped temporary modifier recoverable, the potion and ingredient consumption path
+  with its cited first-effect rule, and the panel provider seam.
 * [Archery and projectiles](/engine/archery.md) - the PROJ flight record, the measurement
   that settles `gravity` as a multiplier rather than an acceleration, the census-named bow
   draw and release events, the exact closed-form flight model on the fixed step, the

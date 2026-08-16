@@ -4,6 +4,31 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-16
 
+* **Magic effects act on actors (issue #469)**: nothing in the engine had a runtime notion
+  of an effect currently applying to someone; decoded ALCH and INGR effect lists reached no
+  runtime system at all. Item 19.6 adds `ActiveEffectState`, a world-state component holding
+  one actor's effects, and `ActiveEffectRuntime` above it. The Creation Kit's Recover flag
+  selects between the two timed behaviours it documents — a magnitude held in the temporary
+  modifier slot and handed back exactly on expiry, or a magnitude paid into the value once
+  per completed second and never taken back — while a zero-duration effect applies once and
+  is stored nowhere, which is what a restore-health potion is. Value Modifier, Dual Value
+  Modifier and Peak Value Modifier are implemented against their cited definitions; every
+  other archetype applies nothing and increments a per-archetype tally, as do an effect
+  naming no actor value and a timed Recover effect on one of the three primaries, which has
+  nowhere to go until those get the base-plus-modifiers storage item 19.5 declined to build.
+  Effect-entry `CTDA` lists are evaluated against the target through the shared evaluator, so
+  a list this engine cannot answer skips the entry and is counted rather than silently
+  passing. No Recast refuses a second application, and two peak modifiers sharing a keyword
+  keep only the stronger — the wiki's own question mark on that rule is recorded rather than
+  resolved by guessing. Effects persist in a new additive `AEFF` chunk carrying how much of
+  each actor value's temporary slot each effect owns, which is what makes `AVGN`'s
+  deliberately dropped temporary modifier recoverable on load. The first consumer is
+  consumption: drinking an ALCH applies its whole effect list, eating an INGR applies only
+  its first effect per UESP's stated rule, and both are reachable from the inventory menu's
+  new Consume button and from `World > Combat & Physics > Magic Effects`. One pre-existing
+  bug fell out of it — the regeneration step rebuilt the actor-value component from the three
+  primaries alone and dropped the general table every frame, so a held modifier would have
+  survived exactly one frame.
 * **The whole actor-value table is stored, resistances included (issue #468)**: item 15.3
   stored three actor values and answered nil for the other 161; item 19.5 stores all of
   them. `ActorValueState` gained a sparse general table keyed by vanilla index, each entry a

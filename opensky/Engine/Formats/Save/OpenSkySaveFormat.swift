@@ -195,6 +195,25 @@ nonisolated enum OpenSkySaveFormat {
         /// chunk, so writing the offered list would let a save carry a menu a
         /// changed load order no longer authors.
         static let dialogueStates = "DLGS"
+
+        /// Active magic effects (issue #469, roadmap item 19.6): one entry per
+        /// actor carrying a timed effect, each listing the effects with their
+        /// remaining duration.
+        ///
+        /// Additive and split out of `RDLT` for the same reason `AVAL` and
+        /// `DETH` are. A session in which nothing was applied writes no chunk at
+        /// all, so its bytes match what this encoder produced before the chunk
+        /// existed.
+        ///
+        /// This chunk is what makes `AVGN`'s dropped temporary modifier
+        /// recoverable: each effect carries how much of each actor value's
+        /// temporary slot it owns, and the load path re-establishes the slot
+        /// from here rather than trusting a second copy on disk.
+        ///
+        /// Instant effects are not here and cannot be: a zero-duration effect
+        /// moved an actor value once and the moved value is what `AVAL` and
+        /// `AVGN` already carry.
+        static let activeEffects = "AEFF"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.
@@ -329,6 +348,19 @@ nonisolated enum OpenSkySaveFormat {
     /// size. No cell tag travels with the entry: an INFO is a base record that
     /// belongs to no cell, so the byte could only ever hold one value.
     static let minimumDialogueEntrySize = 11
+    /// Smallest number of bytes a single `AEFF` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and a zero effect
+    /// count (4). An entry with effects is longer, so this is a lower bound.
+    static let minimumActiveEffectEntrySize = 12
+    /// Smallest number of bytes one `AEFF` effect can occupy: the sequence (8),
+    /// the source kind (4), a plugin key with an empty name for the source
+    /// record and for the MGEF (7 each), the "no caster" and "no keyword" tags
+    /// (1 each), the mode (4), the detrimental byte (1), duration, elapsed and
+    /// paid-seconds words (4 each) and a zero value count (4).
+    static let minimumActiveEffectSize = 49
+    /// Bytes one `AEFF` value record occupies: the actor-value index, the
+    /// magnitude and the applied modifier amount.
+    static let activeEffectValueRecordSize = 12
 }
 
 /// On-disk tag of a component slot inside `RDLT`.
@@ -357,7 +389,7 @@ nonisolated extension WorldStateComponentKind {
         case .activation: 2
         case .deletion: 3
         case .inventory, .spawn, .quest, .questAliases, .actorValues, .death,
-             .combat, .dialogue: nil
+             .combat, .dialogue, .activeEffects: nil
         }
     }
 

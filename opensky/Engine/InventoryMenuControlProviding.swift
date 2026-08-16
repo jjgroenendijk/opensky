@@ -57,5 +57,9 @@ protocol InventoryMenuControlProviding: AnyObject {
     /// already equipped unequips instead.
     func activateInventoryMenuSelection()
     func dropInventoryMenuSelection()
+    /// Eats or drinks the selected row, removing one unit and applying its
+    /// effects to the player (issue #469). A row that is not an ALCH or an
+    /// INGR reports that and changes nothing.
+    func consumeInventoryMenuSelection()
     var inventoryMenuSnapshot: InventoryMenuControlSnapshot { get }
 }

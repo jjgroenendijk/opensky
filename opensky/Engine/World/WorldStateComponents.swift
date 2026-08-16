@@ -85,6 +85,14 @@ nonisolated enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendab
     /// `ReferenceKey`, because a response is not placed anywhere and belongs to
     /// no cell.
     case dialogue
+    /// Every magic effect currently acting on one actor (issue #469). The value
+    /// type is `ActiveEffectState` in
+    /// `opensky/Engine/Magic/ActiveEffectComponent.swift`. A slot of its own
+    /// beside `actorValues` for the lifetime reason `death` and `combat` are
+    /// separate slots: the values beside it are rewritten sixty times a second,
+    /// while an effect list changes only when something is applied, expires or
+    /// is dispelled.
+    case activeEffects
 }
 
 /// A value that can occupy one component slot.
@@ -121,6 +129,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
     case death(ActorDeathState)
     case combat(ActorCombatState)
     case dialogue(DialogueRuntimeState)
+    case activeEffects(ActiveEffectState)
 
     var kind: WorldStateComponentKind {
         switch self {
@@ -136,6 +145,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
         case .death: .death
         case .combat: .combat
         case .dialogue: .dialogue
+        case .activeEffects: .activeEffects
         }
     }
 }

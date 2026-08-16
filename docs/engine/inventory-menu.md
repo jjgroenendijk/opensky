@@ -137,6 +137,12 @@ category list selection follows.
 
 ## Actions
 
+**Consume** eats or drinks the selected row (issue #469): one unit leaves the inventory and
+the item's effect list is applied to the player through the same
+`GameViewController.consumeMagicItem` the Magic Effects panel button runs, so the two
+surfaces cannot diverge. A row that is neither an `ALCH` nor an `INGR` reports that and
+changes nothing. See [magic and active effects](/engine/magic.md).
+
 Activating a row equips it, or unequips it when it is already equipped — the vanilla
 toggle, so the player does not need to know a row's state before pressing anything. Equip,
 unequip and drop call the same `ItemControlProviding` seam World > HUD & Interaction > Items
@@ -155,7 +161,8 @@ Sidebar path **World > Inventory Menu > Menu** (`Destination-inventoryMenu`,
 `PanelSection-inventoryMenu`). Controls: `InventoryMenuOpenControl`,
 `InventoryMenuCloseControl`, `InventoryMenuUpControl`, `InventoryMenuDownControl`,
 `InventoryMenuPreviousCategoryControl`, `InventoryMenuNextCategoryControl`,
-`InventoryMenuEquipControl`, `InventoryMenuDropControl`, `InventoryMenuMovieControl`.
+`InventoryMenuEquipControl`, `InventoryMenuDropControl`, `InventoryMenuConsumeControl`,
+`InventoryMenuMovieControl`.
 Readout: `InventoryMenuStatsLabel`. Every button routes the same `MenuInputEvent` the
 keyboard produces, so the panel cannot diverge from live input.
 

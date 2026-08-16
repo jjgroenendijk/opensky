@@ -60,7 +60,7 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     AudioDataProviding, MovementConfigurationProviding, GlobalDataProviding,
     ScriptDataProviding, ItemDataProviding, BarterDataProviding, QuestDataProviding,
     LocationDataProviding, DialogueDataProviding, ActorValueDataProviding, CombatDataProviding,
-    PackageDataProviding
+    PackageDataProviding, MagicDataProviding
 {
     let builder: CellSceneBuilder
     let worldspaceEditorID: String
@@ -98,6 +98,11 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     /// RACE/CLAS/NPC_ stat indexes (issue #194); nil on the same synthetic
     /// scenes, and then actor values report themselves unavailable.
     var actorValueBaselines: ActorValueBaselineResolver?
+    /// Load-order MGEF index (issue #469); nil on the same synthetic scenes,
+    /// and then active effects report themselves unavailable.
+    var magicEffectStore: MagicEffectStore?
+    /// Plugin every magic item's EFID links are relative to (issue #469).
+    var magicItemPluginName: String?
     /// GMST-derived walk/run values plus explicit documented fallbacks.
     var movementConfiguration: PlayerMovementConfiguration = .synthetic
     /// GMST-derived `fBarterMin` and `fBarterMax` at the milestone's fixed

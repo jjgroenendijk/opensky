@@ -77,6 +77,16 @@ nonisolated protocol ActorValueDataProviding {
     var actorValueBaselines: ActorValueBaselineResolver? { get }
 }
 
+/// Optional MGEF index a provider can expose (issue #469). The active-effect
+/// runtime resolves every EFID through it, and the plugin name beside it is
+/// what those links are relative to — the base plugin the item indexes were
+/// built from. Both nil on a synthetic scene, and then the magic panel reports
+/// itself unavailable rather than showing a convincing nothing.
+nonisolated protocol MagicDataProviding {
+    var magicEffectStore: MagicEffectStore? { get }
+    var magicItemPluginName: String? { get }
+}
+
 /// Optional script-loading seam a provider can expose (issue #171). The
 /// Papyrus world runtime resolves a script name to compiled bytecode lazily
 /// through the file system, and resolves the FormIDs a VMAD property names

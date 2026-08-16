@@ -22,6 +22,7 @@ final class InventoryMenuSection: PanelSectionViewController {
     let nextCategoryControl = NSButton(title: "Next category", target: nil, action: nil)
     let equipControl = NSButton(title: "Equip / unequip", target: nil, action: nil)
     let dropControl = NSButton(title: "Drop", target: nil, action: nil)
+    let consumeControl = NSButton(title: "Consume", target: nil, action: nil)
     let movieControl = NSButton(
         checkboxWithTitle: "Vanilla menu movie", target: nil, action: nil
     )
@@ -68,7 +69,7 @@ final class InventoryMenuSection: PanelSectionViewController {
                 PanelComponents.buttonRow([openControl, closeControl]),
                 PanelComponents.buttonRow([upControl, downControl]),
                 PanelComponents.buttonRow([previousCategoryControl, nextCategoryControl]),
-                PanelComponents.buttonRow([equipControl, dropControl])
+                PanelComponents.buttonRow([equipControl, dropControl, consumeControl])
             ]),
             PanelComponents.group([movieControl]),
             statsLabel
@@ -97,7 +98,7 @@ final class InventoryMenuSection: PanelSectionViewController {
         openControl.isEnabled = provider != nil && !isOpen
         let whileOpen: [NSControl] = [
             closeControl, upControl, downControl, previousCategoryControl,
-            nextCategoryControl, equipControl, dropControl
+            nextCategoryControl, equipControl, dropControl, consumeControl
         ]
         for control in whileOpen {
             control.isEnabled = isOpen
@@ -194,6 +195,9 @@ final class InventoryMenuSection: PanelSectionViewController {
         )
         configure(equipControl, action: #selector(equipTapped), id: "InventoryMenuEquipControl")
         configure(dropControl, action: #selector(dropTapped), id: "InventoryMenuDropControl")
+        configure(
+            consumeControl, action: #selector(consumeTapped), id: "InventoryMenuConsumeControl"
+        )
         PanelComponents.configureCheckbox(
             movieControl, target: self, action: #selector(movieChanged),
             identifier: "InventoryMenuMovieControl"
@@ -243,6 +247,11 @@ final class InventoryMenuSection: PanelSectionViewController {
 
     @objc private func dropTapped() {
         provider?.dropInventoryMenuSelection()
+        finishInteraction()
+    }
+
+    @objc private func consumeTapped() {
+        provider?.consumeInventoryMenuSelection()
         finishInteraction()
     }
 

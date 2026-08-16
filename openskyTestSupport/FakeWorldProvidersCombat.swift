@@ -27,7 +27,32 @@ struct FakeActorValueState {
     var sets: [(index: Int32, value: Float)] = []
 }
 
+/// The active-effect half of the fake's stored state (issue #469).
+struct FakeMagicEffectState {
+    var snapshot = MagicEffectControlSnapshot.unavailable
+    /// Every consume the panel asked for, so a gate can assert a button ran the
+    /// action rather than that the world changed.
+    var consumeCount = 0
+    var dispelCount = 0
+}
+
 extension FakeWorldProviders {
+    var magicEffectControlSnapshot: MagicEffectControlSnapshot {
+        magicEffects.snapshot
+    }
+
+    @discardableResult
+    func consumeFirstCarriedMagicItem() -> String {
+        magicEffects.consumeCount += 1
+        return "Consumed the first carried item."
+    }
+
+    @discardableResult
+    func dispelPlayerMagicEffects() -> String {
+        magicEffects.dispelCount += 1
+        return "Dispelled every effect on the player."
+    }
+
     var actorValueControlSnapshot: ActorValueControlSnapshot {
         actorValues.snapshot
     }

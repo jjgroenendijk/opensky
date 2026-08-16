@@ -80,7 +80,7 @@ extension GameViewController {
         wirePlayerBody(provider: provider, renderer: renderer)
         // After `wirePapyrus`, whose `onWorldUpdate` closure this chains onto
         // so both systems advance on the same simulated delta (issue #194).
-        wireActorValues(provider: provider, renderer: renderer)
+        wireActorSystems(provider: provider, renderer: renderer)
         wireMelee(provider: provider, renderer: renderer)
         // After melee, so the two runtimes register their graph-event cursors
         // in a fixed order and a trace read from either is reproducible.
@@ -112,6 +112,14 @@ extension GameViewController {
         wireAIOverlay(renderer: renderer, streamer: streamer)
         wireGlobals(provider: provider, renderer: renderer)
         wireNPCMovement(renderer: renderer, streamer: streamer)
+    }
+
+    /// The two runtimes that own an actor's numbers, in the order they depend
+    /// on each other: magic effects write through the actor-value surface, so
+    /// the surface has to exist first (issue #469).
+    private func wireActorSystems(provider: any CellSceneProvider, renderer: Renderer) {
+        wireActorValues(provider: provider, renderer: renderer)
+        wireMagicEffects(provider: provider, renderer: renderer)
     }
 
     private func wireLateWorldSystems(
