@@ -283,6 +283,21 @@ nonisolated final class ItemDefinitionStore {
         return ArcheryAmmunition(ammunition: ammo, projectile: projectile)
     }
 
+    /// The PROJ `id` names, as a flight profile (issue #471).
+    ///
+    /// The same index the arrow path reads, reached by the PROJ FormID an MGEF
+    /// carries rather than through an AMMO. Nil when the record is missing or
+    /// is not one the flight model can integrate — a hitscan record, or one
+    /// with no launch speed — so a spell whose projectile cannot fly is a
+    /// counted refusal rather than something standing still in the caster's
+    /// face.
+    func projectileProfile(_ id: FormID) -> ProjectileProfile? {
+        guard let projectile = projectiles[id.rawValue], projectile.isBallistic else {
+            return nil
+        }
+        return ProjectileProfile(record: projectile)
+    }
+
     /// Every definition of one family, in FormID order — a stable listing for
     /// the record dump and the sweep test.
     func definitions(of family: ItemDefinition.Family) -> [ItemDefinition] {

@@ -14,7 +14,10 @@ struct CombatSpellcastingPanelTests {
     private func snapshot(
         spells: [KnownSpellReadout] = [],
         failures: [String] = [],
-        unheldAbilityEntries: Int = 0
+        unheldAbilityEntries: Int = 0,
+        projectileCount: Int = 0,
+        deliveryLines: [String] = [],
+        lastHitAdjustments: [String] = []
     ) -> CastingControlSnapshot {
         CastingControlSnapshot(
             isAvailable: true,
@@ -31,6 +34,10 @@ struct CombatSpellcastingPanelTests {
             failureCount: failures.count,
             failureLines: failures,
             unheldAbilityEntries: unheldAbilityEntries,
+            projectileCount: projectileCount,
+            deliveryLines: deliveryLines,
+            lastHitTargets: lastHitAdjustments.isEmpty ? 0 : 1,
+            lastHitAdjustments: lastHitAdjustments,
             lastActionText: "Readied Healing in the right hand."
         )
     }
@@ -135,6 +142,36 @@ struct CombatSpellcastingPanelTests {
         #expect(text.contains("1 refusal(s)"))
         #expect(text.contains("aimed delivery is not implemented yet x 3"))
         #expect(text.contains("2 ability entr(ies) carry no duration"))
+    }
+
+    /// The resistance adjustment is the evidence item 19.8's acceptance rests
+    /// on: a health bar moving is not proof that the multiplier was the
+    /// documented one, and this line is (issue #471).
+    @Test func theReadoutSpellsOutWhatALandedSpellsResistancesDidToIt() {
+        let text = CastingControlReadout.deliveryText(
+            for: snapshot(
+                projectileCount: 3,
+                deliveryLines: ["aimed x 3", "self x 1"],
+                lastHitAdjustments: ["Fire Damage on the player: 50.0 x 0.600 = 30.0"]
+            )
+        )
+
+        #expect(text.contains("Delivery: 3 projectile(s)"))
+        #expect(text.contains("aimed x 3, self x 1"))
+        #expect(text.contains("last hit reached 1 actor(s)"))
+        #expect(text.contains("Fire Damage on the player: 50.0 x 0.600 = 30.0"))
+    }
+
+    /// Nothing cast yet, and a landed spell with nothing hostile in it, each
+    /// say so rather than showing a convincing zero.
+    @Test func theDeliveryLineSaysWhenNothingHasLandedYet() {
+        #expect(
+            CastingControlReadout.deliveryText(for: snapshot())
+                .contains("nothing cast yet; no spell has landed on anybody yet")
+        )
+        #expect(
+            CastingControlReadout.deliveryText(for: .unavailable) == "Delivery: unavailable"
+        )
     }
 
     @Test func aRuntimelessReadoutSaysSoRatherThanShowingAnEmptySpellbook() {

@@ -303,7 +303,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   component, the general store's base-plus-three-modifiers entries and their record-derived
   baselines, the capped resistance query and its multiplicative composition rule,
   percent-per-second regeneration on the menu-pause-safe fixed step, the live HUD meter
-  binding, the additive AVAL and AVGN save chunks, and the panel provider seam.
+  binding, the additive AVAL and AVGN save chunks, the negative-resistance weakness reading,
+  and the panel provider seam.
 * [Magic and active effects](/engine/magic.md) - the runtime notion of an effect acting on
   an actor: the cited archetype semantics for the value, dual-value and peak-value
   modifiers, the two timed behaviours the Recover flag selects and the instant application
@@ -314,13 +315,16 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   spellbook component and its SPLB chunk, where start spells actually come from, the tome
   "Read" mark, readying a spell to a hand through the EQUP all-of/one-of distinction, the
   fire-and-forget and concentration cast loops with every cited refusal, abilities and the
-  once-per-day power rule, and the cast input and animation seam.
+  once-per-day power rule, the cast input and animation seam, and aimed delivery: the
+  payload a cast resolves once, spell projectiles through the archery pipeline, the
+  direct-versus-bystander area rule and the measured feet unit behind it, resistance and
+  weakness scaling on hostile magnitudes, and the combat consequences a hostile hit carries.
 * [Archery and projectiles](/engine/archery.md) - the PROJ flight record, the measurement
   that settles `gravity` as a multiplier rather than an acceleration, the census-named bow
   draw and release events, the exact closed-form flight model on the fixed step, the
   documented bow-plus-arrow damage combination and draw-time curve, the split sweep an
-  impact uses, stuck arrows under the vanilla count cap and the streaming lifecycle, and
-  the panel provider seam.
+  impact uses, stuck arrows under the vanilla count cap and the streaming lifecycle, the one
+  shot model arrows and spell projectiles share, and the panel provider seam.
 * [Melee combat](/engine/melee-combat.md) - draw and sheath on the clip annotation, attack
   and block through census-named graph events, the multi-consumer graph-event seam, the
   documented `fCombatDistance` reach formula and the swept-capsule hit volume, target

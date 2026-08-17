@@ -40,8 +40,8 @@ struct ProjectileRuntimeTests {
         profile: ProjectileProfile,
         damage: Float = 15,
         ammunition: FormID? = arrow
-    ) -> ArcheryShot {
-        ArcheryShot(
+    ) -> ProjectileShot {
+        ProjectileShot.arrow(
             profile: profile,
             damage: ArcheryDamage.resolve(
                 bowDamage: damage, arrowDamage: 0, skill: 0

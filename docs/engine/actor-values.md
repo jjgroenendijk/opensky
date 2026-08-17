@@ -6,7 +6,7 @@ description: How OpenSky derives every actor value from records, stores the whol
   queries, and drives the HUD meters.
 tags: [engine, actors, gameplay, stats, health, magicka, stamina, resistances, skills, hud,
   runtime-state]
-timestamp: 2026-08-16T00:00:00Z
+timestamp: 2026-08-17T00:00:00Z
 ---
 
 # Actor values
@@ -303,6 +303,16 @@ spell would deal only 15 points of damage with Resist Magic 85%; Resist Fire 85%
 would then reduce the 15 points by a further 85% to 2.25 points of final damage"
 (same page). `magicDamageMultiplier(element:on:)` is that sentence, and the unit
 test asserts exactly those 2.25 points.
+
+A **negative** resistance is a weakness and passes through negative, which is the
+whole of the weakness mechanic (issue #471). UESP words Weakness to Fire as
+"Target is `<mag>`% weaker to fire damage"
+(<https://en.uesp.net/wiki/Skyrim:Weakness_to_Fire>) and vanilla authors it as a
+detrimental Value Modifier on `Resist Fire`, so a target at -30 points reads a
+fraction of -0.3 and takes 130% damage. There is no floor, because no source
+states one — the cap bounds the resistant end alone — and two weaknesses compound
+through the same multiplicative composition, which is what the same page's
+"Weakness to fire is strengthened by weakness to magic" describes.
 
 `Damage Resist` (39) is deliberately **not** a percentage resistance. It is an
 armor rating with its own formula and its own 80% cap, which the install does

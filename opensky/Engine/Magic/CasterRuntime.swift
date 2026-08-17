@@ -38,14 +38,18 @@
 // Documented in docs/engine/magic.md.
 
 import Foundation
+import simd
 
 /// What a cast needs from the world it happens in.
 ///
 /// A protocol rather than the concrete runtimes for the reason
 /// `MeleeCombatWorld` is one: the active-effect runtime is a mutating value over
 /// a shared store, and a copy held here would grow a tally the panel never sees.
+///
+/// It refines `SpellHitApplying` (issue #471) so a spell that leaves the caster
+/// lands through the same one implementation a projectile's does.
 @MainActor
-protocol CasterWorld: AnyObject {
+protocol CasterWorld: SpellHitApplying {
     /// Whole game days elapsed, which is what the once-per-day power rule
     /// compares.
     var castingGameDay: Int32 { get }
@@ -60,6 +64,47 @@ protocol CasterWorld: AnyObject {
         caster: ReferenceKey,
         on target: ActorValueHolder
     ) -> Int
+
+    /// Launches `payload`'s projectile from the caster along the aim ray
+    /// (issue #471).
+    ///
+    /// - Returns: false when nothing left the caster — the MGEF names no PROJ,
+    ///   this load order does not carry it, or the record is not one the flight
+    ///   model can integrate. Counted rather than silent.
+    @discardableResult
+    func fireSpellProjectile(_ payload: SpellPayload) -> Bool
+
+    /// What the caster's aim ray reaches, for the deliveries that need a target
+    /// rather than a projectile.
+    ///
+    /// - Parameter range: SPIT's range in world units. Zero means the record
+    ///   bounds nothing and the session's own maximum applies, which is the
+    ///   same rule a PROJ with no range flies under.
+    func aimedSpellTarget(within range: Float) -> SpellAim
+}
+
+/// Where a caster is aiming, and what is standing there.
+nonisolated struct SpellAim: Equatable, Sendable {
+    /// The actor the aim ray reached, or nil when it reached nobody.
+    let target: ReferenceKey?
+    /// Where the ray ended, world space — the actor it found, or the far end of
+    /// the range. What an area application measures its radius from.
+    let position: SIMD3<Float>
+    /// Every actor a landed spell could catch, for the area rule.
+    let candidates: [MeleeTarget]
+
+    init(
+        target: ReferenceKey? = nil,
+        position: SIMD3<Float> = SIMD3<Float>(),
+        candidates: [MeleeTarget] = []
+    ) {
+        self.target = target
+        self.position = position
+        self.candidates = candidates
+    }
+
+    /// The reading a session with no world can give.
+    static let none = SpellAim()
 }
 
 /// Everything the cast loop declined to do, so unimplemented ground is measured
@@ -71,6 +116,11 @@ nonisolated struct CastingTally: Equatable, Sendable {
     /// Ability effect entries that carry no duration and so could not be held.
     /// See `applyAbilities(on:)` for why they are counted rather than applied.
     private(set) var unheldAbilityEntries = 0
+    /// Spell projectiles launched (issue #471).
+    private(set) var projectileCount = 0
+    /// Casts per delivery kind, so the ground each delivery covers is measured
+    /// rather than assumed from the refusal counts alone.
+    private(set) var deliveryCounts: [String: Int] = [:]
 
     mutating func noteCast() {
         castCount += 1
@@ -86,6 +136,21 @@ nonisolated struct CastingTally: Equatable, Sendable {
 
     mutating func noteUnheldAbilityEntries(_ count: Int) {
         unheldAbilityEntries += count
+    }
+
+    mutating func noteProjectile() {
+        projectileCount += 1
+    }
+
+    mutating func note(delivery: MagicEffectDelivery) {
+        deliveryCounts[delivery.description, default: 0] += 1
+    }
+
+    /// Deliveries seen, most frequent first, already spelled `kind x count`.
+    var deliveryLines: [String] {
+        deliveryCounts
+            .sorted { ($0.value, $1.key) > ($1.value, $0.key) }
+            .map { "\($0.key) x \($0.value)" }
     }
 
     var failureCount: Int {
@@ -247,7 +312,9 @@ final class CasterRuntime {
     ) -> SpellCastFailure? {
         guard spell.spellType != .ability else { return .abilityNotCastable }
         let delivery = spell.data?.delivery ?? .selfTarget
-        guard delivery == .selfTarget else { return .deliveryUnsupported(delivery) }
+        guard SpellDelivery.isImplemented(delivery, castingType: spell.data?.castingType) else {
+            return .deliveryUnsupported(delivery)
+        }
         if spell.spellType == .power, let world {
             let day = world.castingGameDay
             if spellbook.state(of: caster).hasSpentPower(key, onDay: day) {
@@ -384,17 +451,27 @@ final class CasterRuntime {
         )
     }
 
-    /// Hands one spell's effect list to the active-effect runtime, with the
-    /// caster as the target — which is what self delivery means.
+    /// Delivers one application of `spell`.
+    ///
+    /// Self delivery hands the effect list straight to the active-effect
+    /// runtime with the caster as the target; every other implemented delivery
+    /// lives in `CasterRuntimeDelivery.swift` (issue #471).
+    ///
+    /// - Returns: how many timed effects were stored.
     private func apply(_ spell: ResolvedSpell, caster: ActorValueHolder) -> Int {
         guard let world else { return 0 }
-        return world.applyCastEffects(
-            spell.record.effects,
-            fromPlugin: spell.sourcePlugin,
-            source: ActiveEffectSource(kind: .spell, record: spell.key),
-            caster: caster.key,
-            on: caster
-        )
+        let delivery = spell.data?.delivery ?? .selfTarget
+        tally.note(delivery: delivery)
+        guard delivery != .selfTarget else {
+            return world.applyCastEffects(
+                spell.record.effects,
+                fromPlugin: spell.sourcePlugin,
+                source: ActiveEffectSource(kind: .spell, record: spell.key),
+                caster: caster.key,
+                on: caster
+            )
+        }
+        return deliverAway(spell, delivery: delivery, caster: caster, world: world)
     }
 
     private func notePowerSpent(_ spell: ResolvedSpell, caster: ActorValueHolder) {

@@ -140,6 +140,19 @@ extension GameViewController: CasterWorld {
         )
         return stored?.count ?? 0
     }
+
+    /// Aimed fire-and-forget delivery: the MGEF's PROJ through the archery
+    /// pipeline (issue #471).
+    @discardableResult
+    func fireSpellProjectile(_ payload: SpellPayload) -> Bool {
+        launchSpellProjectile(payload)
+    }
+
+    /// Target-actor delivery and aimed concentration: whatever the camera ray
+    /// reaches.
+    func aimedSpellTarget(within range: Float) -> SpellAim {
+        aimedTarget(within: range)
+    }
 }
 
 nonisolated extension Int32 {

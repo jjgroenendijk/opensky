@@ -81,6 +81,14 @@ extension M15AcceptanceChain: ProjectileWorld {
         meleeTargets()
     }
 
+    /// The M15 chain fires arrows and nothing else, so a landed spell is the
+    /// documented "no effect runtime here" answer rather than a second
+    /// application path this chain would never exercise (issue #471).
+    @discardableResult
+    func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
+        .none
+    }
+
     func sweepProjectile(_ query: ShapeSweepQuery) -> ShapeSweepHit? {
         ShapeSweeper.firstHit(
             query: query,

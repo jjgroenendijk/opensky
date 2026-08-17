@@ -28,6 +28,10 @@ struct MagicBridgeState {
     var pluginName = ""
     /// Human-readable result of the last panel or menu action.
     var lastActionText = "No magic action yet."
+    /// What the most recent landed spell applied, including the per-entry
+    /// resistance adjustments the panel reads (issue #471). Nil until one
+    /// lands.
+    var lastHit: SpellHitReport?
 }
 
 extension GameViewController {

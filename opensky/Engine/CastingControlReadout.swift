@@ -65,6 +65,29 @@ nonisolated enum CastingControlReadout {
         return text
     }
 
+    /// Aimed delivery: what left the caster, and what the last landed spell's
+    /// resistances did to it (issue #471).
+    ///
+    /// The adjustment lines are the readout the resistance rule is verified
+    /// through, in the app and in the panel test alike — a health bar moving is
+    /// not evidence that the multiplier was the documented one.
+    static func deliveryText(for snapshot: CastingControlSnapshot) -> String {
+        guard snapshot.isAvailable else { return "Delivery: unavailable" }
+        let deliveries = snapshot.deliveryLines.isEmpty
+            ? "nothing cast yet"
+            : snapshot.deliveryLines.joined(separator: ", ")
+        var text = "Delivery: \(snapshot.projectileCount) projectile(s) — \(deliveries)"
+        guard snapshot.lastHitTargets > 0 else {
+            return text + "; no spell has landed on anybody yet"
+        }
+        text += "; last hit reached \(snapshot.lastHitTargets) actor(s)"
+        guard !snapshot.lastHitAdjustments.isEmpty else {
+            return text + " with nothing hostile to resist"
+        }
+        let lines = snapshot.lastHitAdjustments.map { "  \($0)" }.joined(separator: "\n")
+        return text + "\n\(lines)"
+    }
+
     static func lastActionText(for snapshot: CastingControlSnapshot) -> String {
         "Last action: \(snapshot.lastActionText)"
     }
@@ -77,6 +100,7 @@ nonisolated enum CastingControlReadout {
             tomesText(for: snapshot),
             activityText(for: snapshot),
             coverageText(for: snapshot),
+            deliveryText(for: snapshot),
             lastActionText(for: snapshot)
         ].joined(separator: "\n")
     }

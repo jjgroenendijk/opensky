@@ -147,7 +147,7 @@ final class ArcheryRuntime {
     func loose(consumesArrow: Bool = true) -> LiveProjectile? {
         guard let arrow else { return nil }
         lastHeldSeconds = heldSeconds
-        let shot = ArcheryShot(
+        let shot = ProjectileShot.arrow(
             profile: arrow.profile,
             damage: ArcheryDamage.resolve(
                 bowDamage: bow.damage,

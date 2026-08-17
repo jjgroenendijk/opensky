@@ -51,6 +51,25 @@ struct CasterAcceptanceRealDataTests {
                 on: target
             ).count
         }
+
+        /// The M19.7 acceptance chain casts one self-delivery heal, so nothing
+        /// here leaves the caster (issue #471). Both answers are the documented
+        /// "this world does not do that" rather than a second application path
+        /// this chain would never exercise; `SpellDeliveryRealDataTests` covers
+        /// the aimed half against the same install.
+        @discardableResult
+        func fireSpellProjectile(_ payload: SpellPayload) -> Bool {
+            false
+        }
+
+        func aimedSpellTarget(within range: Float) -> SpellAim {
+            .none
+        }
+
+        @discardableResult
+        func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
+            .none
+        }
     }
 
     /// The load order's magic side, indexed once.

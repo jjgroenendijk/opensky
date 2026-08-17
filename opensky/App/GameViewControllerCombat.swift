@@ -65,10 +65,15 @@ extension GameViewController {
         runtime.notePlayerHits(records.map(\.target))
     }
 
-    /// The same, for an arrow that struck an actor.
+    /// The same, for a projectile that struck an actor.
+    ///
+    /// Filtered on the trace's own `provokes` rather than on "hit an actor"
+    /// (issue #471): every arrow provokes, and a spell only when its effects
+    /// are hostile, so healing a follower at range does not start a fight with
+    /// them.
     func noteCombatProjectileHits(_ traces: [ProjectileTrace]) {
         guard let runtime = combat.runtime else { return }
-        let struck = traces.compactMap(\.target)
+        let struck = traces.filter(\.provokes).compactMap(\.target)
         guard !struck.isEmpty else { return }
         runtime.notePlayerHits(struck)
     }

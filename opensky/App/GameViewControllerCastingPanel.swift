@@ -34,6 +34,10 @@ extension GameViewController: CastingControlProviding {
             failureCount: runtime.tally.failureCount,
             failureLines: runtime.tally.failureLines,
             unheldAbilityEntries: runtime.tally.unheldAbilityEntries,
+            projectileCount: runtime.tally.projectileCount,
+            deliveryLines: runtime.tally.deliveryLines,
+            lastHitTargets: magicEffects.lastHit?.targetCount ?? 0,
+            lastHitAdjustments: magicEffects.lastHit?.adjustments.map(\.line) ?? [],
             lastActionText: casting.lastActionText
         )
     }
