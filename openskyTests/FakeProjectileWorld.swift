@@ -47,6 +47,7 @@ final class FakeProjectileWorld: ProjectileWorld {
     private(set) var removed: [ReferenceKey] = []
     private(set) var impacts: [ResolvedMeleeImpact] = []
     private(set) var raised: [String] = []
+    private(set) var spellHits: [SpellHit] = []
     private(set) var variables: [String: BehaviorVariableValue] = [:]
     private var nextSpawnID: UInt64 = 1
 
@@ -129,5 +130,19 @@ final class FakeProjectileWorld: ProjectileWorld {
 
     func writeArcheryVariable(_ value: BehaviorVariableValue, named name: String) {
         variables[name] = value
+    }
+
+    /// Records the landed spell instead of applying it (issue #471). What the
+    /// projectile suites need to know is which actors the runtime *reached* and
+    /// at what distance; whether the effect runtime then stored anything is
+    /// `SpellHitTests`' question, asked against a real one.
+    @discardableResult
+    func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
+        spellHits.append(hit)
+        var report = SpellHitReport()
+        for _ in hit.targets {
+            report.note(target: [], entries: hit.payload.entries.count, stored: 0)
+        }
+        return report
     }
 }

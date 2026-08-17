@@ -97,6 +97,15 @@ nonisolated enum ActorResistance {
     /// The fraction of damage `percentagePoints` removes, with the cap for
     /// `index` applied.
     ///
+    /// **Negative points are a weakness and pass through negative**, which is
+    /// the whole of the weakness mechanic (issue #471): UESP words Weakness to
+    /// Fire as "Target is `<mag>`% weaker to fire damage"
+    /// (<https://en.uesp.net/wiki/Skyrim:Weakness_to_Fire>) and vanilla authors
+    /// it as a detrimental Value Modifier on `Resist Fire`, so a target at -30
+    /// points reads -0.3 here and takes 130% damage through the multiplier
+    /// below. There is no floor, because no source states one; the cap bounds
+    /// the resistant end alone.
+    ///
     /// - Parameter isPlayer: whether the actor is the player. The 85% cap
     ///   applies to nobody else, so an atronach's 100% fire resistance really
     ///   is immunity.
@@ -110,7 +119,7 @@ nonisolated enum ActorResistance {
         let cap = isPlayer && isCapped(index: index)
             ? settings.playerCapFraction
             : settings.immunityFraction
-        return min(max(0, percentagePoints / 100), max(0, cap))
+        return min(percentagePoints / 100, max(0, cap))
     }
 }
 
@@ -147,7 +156,11 @@ extension ActorValueRuntime {
     /// - Parameter element: the MGEF's resistance actor value, or nil for an
     ///   effect that names none. A `nil` element still pays Resist Magic, which
     ///   is what makes a school-less magic effect resistible at all.
-    /// - Returns: 1 when nothing resists, 0 when the actor is immune.
+    /// - Returns: 1 when nothing resists, 0 when the actor is immune, and above
+    ///   1 for a weakness — a negative resistance multiplies damage up, and two
+    ///   weaknesses compound, which is what UESP's "Weakness to fire is
+    ///   strengthened by weakness to magic" describes
+    ///   (<https://en.uesp.net/wiki/Skyrim:Weakness_to_Fire>).
     func magicDamageMultiplier(
         element: Int32?,
         on holder: ActorValueHolder,

@@ -41,6 +41,11 @@ final class ProjectileRuntime {
     static let maximumFrameTime = WalkController.maximumFrameTime
 
     let settings: ArcherySettings
+    /// How an EFIT area becomes a radius in world units (issue #471). A
+    /// settable property rather than a constructor argument because the
+    /// conversion is uncertain and a panel or a test may want to move it; see
+    /// `MagicAreaSettings`.
+    var areaSettings = MagicAreaSettings.documentedDefaults
     /// Projectiles in the air, in id order.
     private(set) var live: [LiveProjectile] = []
     /// The most recent finished shots, oldest first.
@@ -74,31 +79,35 @@ final class ProjectileRuntime {
 
     // MARK: - Firing
 
-    /// Launches one projectile and consumes the arrow it came from.
+    /// Launches one projectile and consumes whatever it was fired from.
     ///
     /// The inventory removal happens first and gates everything after it: an
     /// empty quiver must not put an arrow in the air, and a shot that failed to
-    /// find one must not be counted.
+    /// find one must not be counted. Only an arrow spends anything; a spell has
+    /// already paid its magicka in `CasterRuntime`.
     ///
     /// - Returns: the projectile, or nil when the shot could not be taken.
     @discardableResult
-    func fire(_ shot: ArcheryShot) -> LiveProjectile? {
+    func fire(_ shot: ProjectileShot) -> LiveProjectile? {
         guard let world, shot.profile.isFlyable else { return nil }
-        if let ammunition = shot.ammunition, !world.consumeArrow(ammunition) {
+        if let ammunition = shot.consumedAmmunition, !world.consumeArrow(ammunition) {
             return nil
         }
         let shooter = world.projectileShooter
+        // The archery tilt-up angle compensates for a bow's arrow drop, so it
+        // applies to a bow's shot and to nothing else; a spell leaves straight
+        // down the aim ray.
+        let tilt = shot.usesArcheryTilt
+            ? settings.tiltUpAngle(firstPerson: shooter.isFirstPerson).value
+            : 0
         let direction = ProjectileFlight.aimDirection(
-            cameraForward: shooter.aim,
-            tiltDegrees: settings.tiltUpAngle(firstPerson: shooter.isFirstPerson).value
+            cameraForward: shooter.aim, tiltDegrees: tilt
         )
         let projectile = LiveProjectile(
             id: nextID,
             shooter: shooter.key,
             profile: shot.profile,
-            damage: shot.damage,
-            weapon: shot.weapon,
-            ammunition: shot.ammunition,
+            payload: shot.payload,
             launchPosition: shooter.origin,
             launchDirection: direction,
             location: shooter.location,
@@ -106,7 +115,7 @@ final class ProjectileRuntime {
                 from: shooter.origin,
                 along: direction,
                 profile: shot.profile,
-                speedScale: shot.damage.drawFraction
+                speedScale: shot.speedScale
             )
         )
         nextID += 1
@@ -244,30 +253,14 @@ final class ProjectileRuntime {
         return nil
     }
 
-    /// Damage, impact sound and stick for one landed arrow.
+    /// Damage or effects, impact sound and stick for one landed projectile.
     private func resolve(
         _ projectile: LiveProjectile,
         impact: ProjectileImpact
     ) -> ProjectileTrace {
         impactCount += 1
-        var applied: Float = 0
-        if
-            let target = impact.target, let world,
-            world.applyProjectileDamage(projectile.damage.applied, to: target)
-        {
-            applied = projectile.damage.applied
-            // After the damage, for the reason the melee path reports after
-            // its own (issue #375). `akProjectile` is filled in because this
-            // runtime knows which PROJ struck; the wiki records vanilla
-            // leaving it `None` for an actor target, which a handler that
-            // checks for `None` first still tolerates.
-            world.reportScriptHit(ScriptHitEvent(
-                target: target,
-                aggressor: projectile.shooter,
-                source: projectile.weapon,
-                projectile: projectile.profile.projectile
-            ))
-        }
+        let applied = applyArrow(projectile, impact: impact)
+        let spellHit = applySpell(projectile, impact: impact)
         let sound = playImpact(at: impact.position)
         let didStick = stick(projectile, at: impact)
         return record(
@@ -277,16 +270,20 @@ final class ProjectileRuntime {
             impact: impact,
             appliedDamage: applied,
             sound: sound,
-            stuck: didStick
+            stuck: didStick,
+            spellHit: spellHit
         )
     }
 
     /// Leaves the arrow standing in what it hit, evicting the oldest when the
     /// cap is reached.
+    ///
+    /// Only an arrow sticks. A spell projectile is spent on impact and leaves
+    /// nothing behind — the hit art and the explosion that would are M26.
     private func stick(_ projectile: LiveProjectile, at impact: ProjectileImpact) -> Bool {
         guard
             let world,
-            let base = projectile.ammunition,
+            let base = projectile.payload.arrow?.ammunition,
             let location = projectile.location
         else { return false }
         let arrow = StuckProjectile(
@@ -332,7 +329,8 @@ final class ProjectileRuntime {
         impact: ProjectileImpact?,
         appliedDamage: Float = 0,
         sound: FormID? = nil,
-        stuck: Bool = false
+        stuck: Bool = false,
+        spellHit: SpellHitReport? = nil
     ) -> ProjectileTrace {
         let aimed = projectile.launchPosition
             + projectile.launchDirection * projectile.state.travelled
@@ -348,7 +346,11 @@ final class ProjectileRuntime {
             target: impact?.target,
             appliedDamage: appliedDamage,
             sound: sound,
-            stuck: stuck
+            stuck: stuck,
+            spellHit: spellHit,
+            // Only a landed hit provokes: a projectile that expired in the air
+            // never reached anybody to make angry.
+            provokes: outcome.isImpact && projectile.payload.provokes
         )
         trace.append(entry)
         if trace.count > Self.traceLimit {
@@ -356,20 +358,4 @@ final class ProjectileRuntime {
         }
         return entry
     }
-}
-
-/// One shot, assembled by `ArcheryRuntime` and handed to the projectile
-/// runtime. A value rather than five arguments, because every one of them is
-/// resolved at the same moment — the frame the graph fired `arrowRelease` — and
-/// splitting them would let a caller mix a bow's damage with another shot's
-/// profile.
-nonisolated struct ArcheryShot: Equatable, Sendable {
-    let profile: ProjectileProfile
-    let damage: ArcheryDamageResult
-    /// The WEAP that fired it; nil for a shot with no bow behind it.
-    let weapon: FormID?
-    /// The AMMO consumed. Nil means "consume nothing", which is what the dev
-    /// spawn control fires with so that a developer inspecting a trajectory
-    /// does not have to keep a quiver stocked.
-    let ammunition: FormID?
 }

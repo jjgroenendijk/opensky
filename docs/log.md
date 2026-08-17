@@ -2,6 +2,42 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-17
+
+* **Aimed delivery: spell projectiles, hit application, resistances (issue #471)**: item
+  19.7 could cast only at the caster. Item 19.8 sends spells away from them, and it does so
+  by generalizing the M15 projectile pipeline rather than writing a second one:
+  `ProjectileShot` now carries a payload that is either an arrow or a spell, and every
+  arrow-only behaviour — spending ammunition, sticking in the surface, the draw-scaled
+  launch speed, the archery tilt-up angle a bow uses to compensate for arrow drop — is
+  conditional on it. The existing archery suites are unchanged and stay green, which is what
+  makes "one shot model" a claim rather than a hope. An aimed fire-and-forget cast fires the
+  PROJ its MGEF names; an aimed concentration cast is the flamethrower shape, applying to
+  whatever the aim ray reaches on the cadence a maintained self cast already ran, with the
+  ray resampled every application so sweeping a beam off a target stops applying to it.
+  Target-actor delivery applies within SPIT range. Touch and target location are refused and
+  counted, each for a stated reason: touch needs the contact frame the animation graph owns,
+  and target location needs the EXPL runtime M26 owns. Against the user's own load order
+  that covers 1218 of 1452 vanilla spells.
+* **Resistances, and the weakness that comes with them**: a landed spell scales every
+  hostile entry by the target's own resistances through 19.5's helper — Resist Magic first,
+  then the element, with the 85% cap the player's alone — and 19.5's fraction stopped
+  clamping at zero, because a negative resistance *is* the weakness mechanic: UESP's
+  Weakness to Fire is a detrimental Value Modifier on `Resist Fire`, so -30 points reads
+  -0.3 and multiplies damage by 1.3. Every scaled entry produces an adjustment naming the
+  effect, the resistance, the base magnitude and the multiplier, printed on the Spellcasting
+  panel and asserted in the suites, because a health bar moving is not evidence that the
+  multiplier was the documented one.
+* **What a landed spell reaches**: the struck actor gets every entry; bystanders get only
+  the entries whose area covers the distance to them, which is exactly how vanilla
+  `Fireball` is authored — an area damage entry beside a point stagger. EFIT's area unit is
+  a measurement rather than an assumption: the resolved game-setting table names it
+  (`sMagicEffectItemFeet`) and `Fireball` carries an area of 15 against UESP's "15 foot
+  radius" description. How many world units a foot is could not be settled from any
+  reachable source, so the conversion is a documented setting derived from this engine's own
+  player capsule, with the experiment that would settle it written down. A hostile spell hit
+  provokes its target the way an arrow does; a restorative one deliberately does not.
+
 ## 2026-08-16
 
 * **The caster runtime: known spells, hands and self-cast (issue #470)**: decoded spells

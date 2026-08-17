@@ -7,43 +7,12 @@
 //
 // The world is a fake for the reason `FakeCombatWorld` is one: the active-effect
 // runtime is a mutating value over a shared store, and what these suites need to
-// know is what the cast *handed* it, entry by entry.
+// know is what the cast *handed* it, entry by entry. `FakeCasterWorld` is its
+// own file, shared with the delivery and panel suites.
 
 import Foundation
 @testable import opensky
 import Testing
-
-/// A `CasterWorld` that records what was applied instead of applying it.
-@MainActor
-final class FakeCasterWorld: CasterWorld {
-    struct Application: Equatable {
-        let entries: Int
-        let source: ActiveEffectSource
-        let caster: ReferenceKey
-        let target: ReferenceKey
-    }
-
-    var castingGameDay: Int32 = 0
-    /// How many timed effects each application reports storing.
-    var storedPerApplication = 1
-    private(set) var applications: [Application] = []
-
-    func applyCastEffects(
-        _ entries: [MagicItemEffect],
-        fromPlugin pluginName: String,
-        source: ActiveEffectSource,
-        caster: ReferenceKey,
-        on target: ActorValueHolder
-    ) -> Int {
-        applications.append(Application(
-            entries: entries.count,
-            source: source,
-            caster: caster,
-            target: target.key
-        ))
-        return storedPerApplication
-    }
-}
 
 @MainActor
 struct CasterRuntimeTests {
@@ -168,14 +137,16 @@ struct CasterRuntimeTests {
         #expect(harness.runtime.begin(.left, on: .player).failure == .noSpellReadied(.left))
     }
 
-    /// Aimed delivery is issue 19.8's ground, counted rather than pretended.
-    @Test func aNonSelfDeliveryIsRefusedAndCounted() throws {
+    /// Touch delivery needs the melee-reach geometry and the contact frame the
+    /// animation graph owns, so item 19.8 counts it rather than approximating
+    /// it as a zero-range aimed cast.
+    @Test func anUnimplementedDeliveryIsRefusedAndCounted() throws {
         let harness = try harness()
-        try ready(SpellbookFixture.Spell.firebolt, in: .right, harness)
+        try ready(SpellbookFixture.Spell.touchOfDeath, in: .right, harness)
 
         let outcome = harness.runtime.begin(.right, on: .player)
 
-        #expect(outcome.failure == .deliveryUnsupported(.aimed))
+        #expect(outcome.failure == .deliveryUnsupported(.touch))
         #expect(harness.runtime.tally.failureCount == 1)
     }
 

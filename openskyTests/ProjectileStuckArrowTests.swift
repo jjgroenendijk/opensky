@@ -23,8 +23,8 @@ struct ProjectileStuckArrowTests {
         return runtime
     }
 
-    private static func shot(profile: ProjectileProfile) -> ArcheryShot {
-        ArcheryShot(
+    private static func shot(profile: ProjectileProfile) -> ProjectileShot {
+        ProjectileShot.arrow(
             profile: profile,
             damage: ArcheryDamage.resolve(bowDamage: 15, arrowDamage: 0, skill: 0),
             weapon: FormID(0x0001_397E),

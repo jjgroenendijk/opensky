@@ -38,20 +38,16 @@ nonisolated struct ProjectileShooter: Equatable, Sendable {
     let location: CellSceneLocation?
 }
 
-/// One arrow in flight.
+/// One projectile in flight — an arrow or a cast spell (issue #471).
 nonisolated struct LiveProjectile: Equatable, Sendable {
     /// Monotonic id, so the trace can name a projectile that no longer exists.
     let id: Int
     let shooter: ReferenceKey
     let profile: ProjectileProfile
-    /// The resolved damage this shot carries. Fixed at launch: the draw is over
-    /// by then, and re-deriving it at impact would let a weapon swap mid-flight
-    /// change what an arrow already in the air does.
-    let damage: ArcheryDamageResult
-    /// The WEAP that fired it and the AMMO it came from, for the readout and
-    /// for the stuck arrow's base record.
-    let weapon: FormID?
-    let ammunition: FormID?
+    /// What it carries and what it does when it lands. Fixed at launch, for the
+    /// reason a bow's damage is: re-deriving it at impact would let a weapon
+    /// swap or a re-ready mid-flight change what is already in the air.
+    let payload: ProjectilePayload
     let launchPosition: SIMD3<Float>
     let launchDirection: SIMD3<Float>
     /// The cell it was fired in, which is where a stick lands.
@@ -104,11 +100,20 @@ nonisolated struct ProjectileTrace: Equatable, Sendable {
     /// What it hit, when it hit an actor.
     let target: ReferenceKey?
     /// Health actually taken off; zero for a miss or an unarmoured non-actor.
+    /// A spell takes health off through the effect runtime instead, so this
+    /// stays zero for one and `spellHit` carries what it did.
     let appliedDamage: Float
     /// The SNDR the impact chain resolved, or nil where it named none.
     let sound: FormID?
     /// Whether the arrow was left in the world at the impact point.
     let stuck: Bool
+    /// What a landed spell applied, or nil for an arrow and for a spell that
+    /// reached nobody (issue #471).
+    let spellHit: SpellHitReport?
+    /// Whether this hit should make its target hostile: every arrow, and a
+    /// spell whose effects are hostile. Read by the combat loop, so a healing
+    /// spell cast at a follower does not start a fight.
+    let provokes: Bool
 }
 
 /// One arrow left standing in whatever it hit.
@@ -128,9 +133,25 @@ nonisolated struct StuckProjectile: Equatable, Sendable {
     let host: FormID?
 }
 
+/// Applying one landed spell, wherever it came from.
+///
+/// Its own protocol for the reason `ScriptHitReporting` is: a projectile, a
+/// target-actor cast and a concentration beam all land the same way, and the
+/// session implements the answer once for all three (issue #471).
+@MainActor
+protocol SpellHitApplying: AnyObject {
+    /// Applies one landed spell to the actors it reached.
+    ///
+    /// - Returns: what was applied. `SpellHitReport.none` when the session has
+    ///   no effect runtime, which a synthetic scene is, so a spell that could
+    ///   not be applied is reported rather than counted as landed.
+    @discardableResult
+    func applySpellHit(_ hit: SpellHit) -> SpellHitReport
+}
+
 /// Everything the archery runtimes need from the session around them.
 @MainActor
-protocol ProjectileWorld: ScriptHitReporting {
+protocol ProjectileWorld: ScriptHitReporting, SpellHitApplying {
     /// Where the player is aiming from, this frame.
     var projectileShooter: ProjectileShooter { get }
 

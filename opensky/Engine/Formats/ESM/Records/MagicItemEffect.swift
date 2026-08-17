@@ -26,7 +26,7 @@
 
 import Foundation
 
-nonisolated struct MagicItemEffect: Equatable {
+nonisolated struct MagicItemEffect: Equatable, Sendable {
     /// EFID — the MGEF this entry applies; resolved through MagicEffectStore.
     let effect: FormID
     /// EFIT magnitude. Units are per-MGEF and are not interpreted here.
@@ -39,6 +39,22 @@ nonisolated struct MagicItemEffect: Equatable {
     /// shared `ConditionList` so CITC counts and CIS1/CIS2 parameter-name
     /// overrides behave exactly as they do everywhere else.
     let conditions: ConditionList
+
+    /// The same entry with its magnitude multiplied, which is what a
+    /// resistance-scaled application hands the effect runtime (issue #471).
+    ///
+    /// A copy rather than a mutation: the decoded record is what the load order
+    /// says, and a scaled entry is one application of it.
+    func scalingMagnitude(by multiplier: Float) -> MagicItemEffect {
+        guard multiplier.isFinite else { return self }
+        return MagicItemEffect(
+            effect: effect,
+            magnitude: max(0, magnitude * multiplier),
+            area: area,
+            duration: duration,
+            conditions: conditions
+        )
+    }
 }
 
 /// Mutable accumulator that folds the EFID/EFIT/CTDA run into entries. A

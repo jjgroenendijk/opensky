@@ -2,9 +2,10 @@
 type: Subsystem
 title: Archery and projectiles
 description: Drawing a bow, loosing an arrow, flying it on the fixed step, and what happens
-  where it lands — including the measurement that settles what PROJ `gravity` means.
-tags: [engine, combat, archery, projectiles, behavior-graph, proj, gmst]
-timestamp: 2026-08-07T00:00:00Z
+  where it lands — including the measurement that settles what PROJ `gravity` means, and the
+  one shot model arrows and spell projectiles share.
+tags: [engine, combat, archery, projectiles, behavior-graph, proj, gmst, magic]
+timestamp: 2026-08-17T00:00:00Z
 ---
 
 # Archery and projectiles
@@ -14,6 +15,10 @@ standing in the wall. [Melee combat](/engine/melee-combat.md) is 15.4 and shares
 this subsystem's button, its graph seam and its impact chain; death and ragdolls
 are 15.6, the opponent that shoots back is 15.7, and perks, enchantments and
 arrow retrieval from a corpse are M18.
+
+A cast spell's projectile flies through this same pipeline; see
+[One shot model, two payloads](#one-shot-model-two-payloads) and
+[magic](/engine/magic.md).
 
 Impl: `opensky/Engine/Combat/Archery*.swift` and `Projectile*.swift`, plus
 `opensky/App/GameViewControllerArchery.swift` and its two satellites. The record:
@@ -33,6 +38,7 @@ explosive projectiles, AI archery, and picking a spent arrow back up.
 * [The shot state machine](#the-shot-state-machine)
 * [PROJ `gravity` is a multiplier, and that is a measurement](#proj-gravity-is-a-multiplier-and-that-is-a-measurement)
 * [The flight model](#the-flight-model)
+* [One shot model, two payloads](#one-shot-model-two-payloads)
 * [The archery GMSTs](#the-archery-gmsts)
 * [Damage: the bow plus the arrow, times the draw](#damage-the-bow-plus-the-arrow-times-the-draw)
 * [Impact: which query, and why](#impact-which-query-and-why)
@@ -222,6 +228,35 @@ the PROJ's `range` and `fVisibleNavmeshMoveDist`, or when its PROJ `lifetime`
 runs out. `travelled` is path length, not straight-line displacement: an arrow
 lobbed in an arc has gone further than it has moved, and `range` bounds the
 flight rather than the reach.
+
+## One shot model, two payloads
+
+Roadmap item 19.8, issue #471. A cast spell's projectile flies through *this*
+pipeline rather than a second one: the same closed-form integrator, the same
+fixed step, the same impact query, the same range and lifetime bounds. What
+differs is only what the projectile carries and what happens when it lands, so
+`ProjectileShot` carries a `ProjectilePayload` and every arrow-only behaviour is
+conditional on that payload being an arrow.
+
+| | Arrow | Spell |
+|---|---|---|
+| Assembled by | `ArcheryRuntime.loose` | `CasterRuntime` (see [magic](/engine/magic.md)) |
+| Spends | one AMMO from the quiver | magicka, already paid at the release |
+| Launch speed | PROJ speed x the draw fraction | PROJ speed |
+| Aim ray | camera forward plus the tilt-up GMST | camera forward |
+| On an actor | health damage, `OnHit` with the WEAP as `akSource` | the effect list, resistance-scaled |
+| After the impact | sticks in the surface, up to fifteen at once | nothing is left behind |
+| Provokes | always | only when the spell's effects are hostile |
+
+The tilt is worth stating because it would otherwise be an invisible change:
+`fBowAimAngle` and `fBowAimAngleThirdPerson` lift a bow shot above the reticle to
+compensate for arrow drop, and a spell is not fired from a bow. A spell
+projectile leaves straight down the aim ray.
+
+`ProjectileTrace` carries two members for the same reason: `spellHit`, the report
+of what a landed spell applied, and `provokes`, which is what the combat loop
+reads instead of "hit an actor" — healing a follower at range must not start a
+fight with them.
 
 ## The archery GMSTs
 

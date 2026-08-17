@@ -4,10 +4,12 @@ title: Magic and active effects
 description: The runtime notion of a magic effect acting on an actor - the cited
   archetype semantics, the two timed behaviours the Recover flag selects, the
   component and its AEFF save chunk, condition gating, the stacking rules, the
-  potion and ingredient consumption path, and the caster runtime that knows
-  spells, readies them to a hand and casts the self-delivery ones.
-tags: [engine, magic, effects, actors, alchemy, casting, spells]
-timestamp: 2026-08-16T00:00:00Z
+  potion and ingredient consumption path, the caster runtime that knows spells,
+  readies them to a hand and casts the self-delivery ones, and aimed delivery -
+  spell projectiles through the archery pipeline, area application, and the
+  resistance scaling a hostile magnitude pays on the way in.
+tags: [engine, magic, effects, actors, alchemy, casting, spells, projectiles, resistances]
+timestamp: 2026-08-17T00:00:00Z
 ---
 
 # Magic and active effects
@@ -36,6 +38,11 @@ handed to it.
 - [Abilities and powers](#abilities-and-powers)
 - [Cast input and the animation seam](#cast-input-and-the-animation-seam)
 - [The SPLB save chunk](#the-splb-save-chunk)
+- [Delivery: casting at something else](#delivery-casting-at-something-else)
+- [Spell projectiles](#spell-projectiles)
+- [What a landed spell reaches](#what-a-landed-spell-reaches)
+- [Resistances on hit](#resistances-on-hit)
+- [Combat consequences](#combat-consequences)
 - [Verification](#verification)
 - [Limits / next](#limits--next)
 
@@ -59,6 +66,10 @@ handed to it.
 | Casting panel seam | `opensky/Engine/CastingControlProviding.swift` and `CastingControlReadout.swift` | app + CLI |
 | Casting session wiring | `opensky/App/GameViewControllerCasting.swift` and `GameViewControllerCastingPanel.swift` | app |
 | Casting verification surface | `opensky/App/Shell/Sections/CombatSpellcastingSection.swift` | app |
+| Delivery routing | `opensky/Engine/Magic/CasterRuntimeDelivery.swift` | app + CLI |
+| Landed-spell model and application | `opensky/Engine/Magic/SpellHit.swift` | app + CLI |
+| Generalized shot | `opensky/Engine/Combat/ProjectileShot.swift` | app + CLI |
+| Delivery session wiring | `opensky/App/GameViewControllerSpellDelivery.swift` | app |
 
 ## Where the semantics come from
 
@@ -497,6 +508,151 @@ does not carry, and a spent-power entry for a forgotten spell are all normalized
 has, because this chunk carries no closed enumeration: every field is a key, a count or a
 signed day.
 
+## Delivery: casting at something else
+
+Roadmap item 19.8, issue #471. The second half of the caster runtime: spells that
+leave the caster. The delivery vocabulary is the record's own, decoded from
+MGEF DATA and SPIT — 0 Self, 1 Touch, 2 Aimed, 3 Target Actor, 4 Target Location
+(<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MGEF>) — and UESP's Magic
+Overview describes the shapes those numbers stand for:
+
+> Spells that don't target the one using them vary in range: some only work on
+> touch, several are fired as projectiles, some are maintained as a short-ranged
+> spray, and a few (primarily Master level spells) affect everything within a
+> certain distance of the caster.
+> (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>)
+
+What this build carries out, and what it counts:
+
+| Delivery | Fire and forget | Concentration |
+|---|---|---|
+| Self | applies to the caster | applies to the caster once a second |
+| Aimed | fires the MGEF's PROJ | applies to whatever the aim ray reaches, once a second |
+| Target Actor | applies to the aimed actor, within SPIT range | counted |
+| Touch | counted | counted |
+| Target Location | counted | counted |
+
+**Touch and Target Location are refused and counted rather than approximated, and
+the reason differs.** Touch needs the melee-reach geometry and the contact frame
+the animation graph owns (M25/M26); approximating it as a zero-range aimed cast
+would land a "touch" spell at the far end of a room. Target Location places an
+effect on the ground, which in vanilla is an EXPL or a rune placement — the EXPL
+runtime is explicitly out of this item's scope and is M26, so there is nowhere for
+the effect to live. Every refusal is the same `deliveryUnsupported` failure with a
+sentence and a tally entry the panel prints.
+
+Against the user's own load order, the census is 1452 SPEL records: 733 self, 451
+aimed, 155 touch, 74 target location, 39 target actor — so 1218 of them, 84%,
+resolve to a delivery this build runs (2026-08-17,
+`SpellDeliveryRealDataTests.theDeliveryCensusIsWrittenForTheRecord`, written to
+gitignored `logs/spell-delivery/`).
+
+The payload a delivery carries away is resolved **once, at cast time**, and never
+re-derived: the spell key, its plugin, the caster, the whole effect list, whether
+any entry is hostile, the SPEL "Ignore Resistance" flag, and the PROJ its MGEF
+names. That is the same rule a bow's damage already followed — a projectile in
+the air has to apply the spell that was cast, not whatever the caster has readied
+by the time it lands.
+
+## Spell projectiles
+
+There is one projectile pipeline, not two. An aimed fire-and-forget cast fires the
+PROJ its MGEF names through the same `ProjectileRuntime` an arrow flies through,
+so it obeys the same fixed step, the same closed-form integrator, the same impact
+query, and the same range and lifetime bounds. `ProjectileShot` carries a payload
+that is either an arrow or a spell, and every arrow-only behaviour — spending
+ammunition, sticking in the surface, the draw-scaled launch speed, the archery
+tilt-up angle — is conditional on that payload.
+[Archery](/engine/archery.md#one-shot-model-two-payloads) has the table.
+
+The PROJ resolves through the same `ItemDefinitionStore` index the arrow path
+reads, by the FormID the MGEF carries rather than through an AMMO. A spell whose
+MGEF names no PROJ, or whose PROJ this load order does not carry, or whose PROJ is
+hitscan or has no launch speed, launches nothing — and that is a counted refusal
+rather than a projectile standing still in the caster's face.
+
+Concentration aimed casting — the flamethrower shape — fires nothing. It reuses
+the aim ray and applies to whatever that ray reaches, on the cadence
+`CasterRuntime` already runs for a maintained self cast: once on entry and once
+per whole second held. The ray is **resampled on every application**, so sweeping
+a beam off a target stops applying to it while the cast keeps running and keeps
+costing.
+
+## What a landed spell reaches
+
+The struck actor first, as the **direct** target, which receives every entry.
+Then every actor inside the widest area the payload carries, as **bystanders**,
+each receiving only the entries whose own area reaches it. That split is what
+vanilla `Fireball` is authored for: an area damage entry beside a point stagger
+entry, so the blast damages everything nearby and staggers only what it struck.
+The caster is never caught by its own spell, matched on key for the reason a shot
+never hits its own shooter. Bystanders are ordered by distance and then by key, so
+two actors at the same remove are always applied to in the same order.
+
+Distance is measured to the actor's **capsule**, not to its feet, so a blast at
+head height catches somebody standing beside it.
+
+**EFIT's area is authored in feet.** That is measured, not assumed: the resolved
+game-setting table names the effect item's area unit outright
+(`sMagicEffectItemFeet`), and vanilla `Fireball` carries an EFIT area of 15
+against UESP's description of the same spell as "a fiery explosion for 40 points
+of damage in a 15 foot radius" (<https://en.uesp.net/wiki/Skyrim:Fireball>;
+probed 2026-08-16 with `openskycli record Fireball`, pinned by
+`SpellDeliveryRealDataTests`).
+
+**How many world units a foot is, is not settled by any source this session could
+reach**, and that uncertainty is stated rather than hidden.
+`MagicAreaSettings.documentedDefaults` carries 128/6 units per foot, derived from
+this engine's own `PlayerCapsule.standard` height of 128 units for an adult
+human. It is a setting rather than a constant so the number can be corrected
+without touching the rule; see [Limits / next](#limits--next).
+
+A projectile that struck geometry still applies its **area** entries to whoever
+was standing by the wall. One whose entries are all point effects reaches nobody,
+which is what an area of zero against a wall means.
+
+## Resistances on hit
+
+Only **hostile** effects scale. UESP states the rule over damage rather than over
+every effect — "Magic Resistance decreases the damage of any offensive spell by
+the displayed percentage" (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>) —
+and the MGEF Hostile flag is the record's own word for "offensive". A restore or
+a fortify reaches the effect runtime unscaled, so a healing spell is not resisted.
+
+The multiplier is item 19.5's `magicDamageMultiplier`, called rather than copied:
+Resist Magic first, then the MGEF's own resistance actor value, multiplicatively,
+with the 85% cap applying to the player alone
+([actor values](/engine/actor-values.md#resistances)). A **weakness** is the same
+formula with a negative resistance and needed one change there: the fraction no
+longer clamps at zero, so -30 points reads -0.3 and multiplies damage by 1.3.
+
+The SPEL flag xEdit names "Ignore Resistance" skips the whole step, which is why
+the payload carries it rather than the resolver assuming every spell is
+resistible.
+
+Every scaled entry produces a `SpellMagnitudeAdjustment` naming the effect, the
+target, the resistance actor value, the base magnitude and the multiplier. That is
+deliberate and is the item's evidence: **a health bar moving is not proof that the
+multiplier was the documented one**, so the adjustment is printed on the panel and
+asserted in the suites.
+
+## Combat consequences
+
+A landed spell reports itself to the combat loop exactly as an arrow does, through
+`notePlayerHits` — the target is provoked, put in the fight, and staggered.
+Death handling is unchanged: the effect runtime moves health through
+`ActorValueRuntime`, and `ActorDeathComponent` answers when it reaches zero.
+
+The one difference is the filter. `ProjectileTrace.provokes` is what the loop
+reads, and it is true for every arrow and only for a spell whose effects are
+hostile — healing a follower at range must not start a fight with them. A
+projectile that expired in the air provokes nobody, because it reached nobody.
+
+A spell hit also raises `OnHit` on the target's scripts, with the PROJ named.
+`akSource` is left `None` rather than filled with the spell: the event carries a
+`FormID` and a cast spell is addressed by `ReferenceKey`, which is a load-order
+identity a raw FormID cannot round-trip.
+
 ## Verification
 
 Sidebar path **World > Combat & Physics > Magic Effects**
@@ -559,6 +715,49 @@ Covering tests:
   teaches, cast it, and check that magicka fell by the computed cost and health rose. It
   leaves a one-line summary in gitignored `logs/caster-acceptance/`.
 
+Aimed delivery adds one line to the same panel rather than a destination of its
+own, because it is read together with the cost and the magicka above it:
+`CombatSpellcastingStatsLabel` now prints how many projectiles left the caster,
+the census of deliveries cast, and — for the most recent landed spell — one line
+per hostile entry spelling `effect on target: base x multiplier = adjusted`. That
+line is the resistance rule's verification surface.
+
+Covering tests for item 19.8:
+
+- `SpellHitTests` — the resistance arithmetic against synthetic resist values (a
+  plain fraction, the Resist Magic composition, a weakness above 1, an immune NPC,
+  the player's 85% cap), the unscaled restorative, the "Ignore Resistance" flag,
+  the area rule by distance, the feet-to-units conversion, bystander ordering, and
+  a target with no holder.
+- `CasterDeliveryTests` — the aimed cast that fires instead of applying, the
+  payload resolved at cast time, the launch that could not happen, target-actor
+  delivery within SPIT range, aiming at nobody, the aimed concentration cadence
+  over synthetic time, sweeping the beam off a target, the delivery support
+  matrix, and the PROJ profile the MGEF names.
+- `ProjectileSpellTests` — a spell projectile on its own PROJ numbers with no
+  ammunition and no tilt, an arrow that still takes the tilt, nothing sticking,
+  the direct target, the area bystander, a point spell against a wall, an area
+  spell against a wall, and what does and does not provoke.
+- `CombatSpellcastingPanelTests` — the delivery readout, with and without a
+  landed spell.
+- `SpellDeliveryRealDataTests` (env-gated) — the whole MGEF-to-PROJ chain for a
+  pinned vanilla destruction spell, sane trajectory numbers out of it, the
+  resistance actor value a vanilla fire effect names, the `Fireball` area
+  measurement, and the delivery census written to gitignored
+  `logs/spell-delivery/`.
+- `SpellDeliveryAcceptanceRealDataTests` (env-gated) — the whole chain against the
+  user's install, headless: ready vanilla `Firebolt`, cast it at an actor carrying
+  40% `Resist Fire`, fly the projectile on the record's own numbers, and check
+  that the health taken off is the adjusted magnitude rather than the authored one
+  and that the hit provokes. It leaves a summary in gitignored
+  `logs/spell-delivery-acceptance/`. On the local install that run reads: 41
+  magicka spent, 583 units of flight in 0.23 s, `FireDamageFFAimed` 25.0 x 0.6 =
+  15.0, target health 500 -> 485, provokes true.
+
+The existing archery suites — `ProjectileRuntimeTests`, `ArcheryRuntimeTests`,
+`ProjectileStuckArrowTests`, `M15AcceptanceChain` — are unchanged in behaviour and
+stay green, which is what makes "one shot model" a claim rather than a hope.
+
 The 19.7 acceptance record, in the format
 [the convention](/tools/sidebar-acceptance.md) defines:
 
@@ -578,9 +777,32 @@ Local A/B (optional, never committed): logs/caster-acceptance/acceptance.txt
 
 ## Limits / next
 
-- **Only self delivery casts.** Aimed, touch, target-actor and target-location delivery,
-  projectiles and resistances on hit are issue 19.8. Every other delivery is the documented
-  `deliveryUnsupported` refusal and a tally entry.
+- **Touch and target-location delivery do not cast.** Both are the documented
+  `deliveryUnsupported` refusal and a tally entry; see
+  [Delivery](#delivery-casting-at-something-else) for why each is counted rather
+  than approximated. Target-actor concentration is refused for the same reason:
+  holding a beam on a named actor needs the AI targeting issue 19.10 owns.
+- **How many world units a foot is, is a stated assumption.** The EFIT area unit
+  is measured (feet); the conversion into world units is derived from this
+  engine's own player capsule and is a setting, not a constant. Settling it needs
+  an observation of the running game — cast `Fireball` between two actors a known
+  distance apart and find the distance at which the second stops taking damage.
+- **EXPL explosions are not run.** A PROJ's explosion link is decoded and left
+  alone, so a vanilla area spell's blast reaches actors through its EFIT area
+  rather than through the explosion the original game detonates. Visual and audio
+  effects are M26.
+- **Wards, spell absorption and reflect are not implemented.** UESP states that
+  "Spell Absorption is calculated before Magic Resistance"
+  (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>), so the order is known and
+  the runtime is not; the SPEL "Disallow Absorb/Reflect" flag is decoded and
+  unread.
+- **A spell projectile is invisible.** It flies, it hits and it applies, but
+  nothing draws the PROJ's model or its muzzle flash and no impact art plays —
+  M26 owns all three. The trajectory is inspectable through the Archery panel's
+  own trace in the meantime.
+- **There is no aim assist.** Vanilla nudges a cast toward a target; this build
+  aims exactly where the camera points, because nothing models the assist for an
+  arrow either.
 - **Whether a spell tome leaves the inventory is not implemented**, because neither cited
   source says it does. UESP documents the "Read" mark and hedges it with its own
   `[verification needed]`; nothing states the removal. The mark is implemented and the

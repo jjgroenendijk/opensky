@@ -31,10 +31,10 @@
 
 import Foundation
 
-nonisolated struct Condition: Equatable {
+nonisolated struct Condition: Equatable, Sendable {
     /// Top 3 bits of the operator byte. 6 and 7 are undefined on disk and are
     /// kept verbatim instead of being forced onto a real comparison.
-    enum ComparisonOperator: Equatable {
+    enum ComparisonOperator: Equatable, Sendable {
         case equal
         case notEqual
         case greaterThan
@@ -57,7 +57,7 @@ nonisolated struct Condition: Equatable {
     }
 
     /// Low 5 bits of the operator byte.
-    struct Flags: OptionSet, Equatable {
+    struct Flags: OptionSet, Equatable, Sendable {
         let rawValue: UInt8
 
         /// This condition ORs with the next one instead of ANDing.
@@ -71,13 +71,13 @@ nonisolated struct Condition: Equatable {
 
     /// The right-hand side of the comparison: a literal, or the current value
     /// of a global variable when `Flags.useGlobal` is set.
-    enum ComparisonValue: Equatable {
+    enum ComparisonValue: Equatable, Sendable {
         case value(Float)
         case global(FormID)
     }
 
     /// Which object the function runs against (offset 20).
-    enum RunOnType: Equatable {
+    enum RunOnType: Equatable, Sendable {
         case subject
         case target
         case reference
@@ -105,7 +105,7 @@ nonisolated struct Condition: Equatable {
 
     /// A raw 4-byte function parameter. The function index picks the real type,
     /// so the word is stored verbatim and reinterpreted on request.
-    struct Parameter: Equatable {
+    struct Parameter: Equatable, Sendable {
         let rawValue: UInt32
 
         var asFloat: Float {
@@ -171,7 +171,7 @@ nonisolated struct Condition: Equatable {
 /// Accumulator for a CITC/CTDA/CIS1/CIS2 run inside one record's field loop.
 /// Record decoders forward every unrecognised field here and keep whatever it
 /// claims, so all condition-bearing record types share one implementation.
-nonisolated struct ConditionList: Equatable {
+nonisolated struct ConditionList: Equatable, Sendable {
     /// CITC, the authored count of the CTDA fields that follow it. Absent on
     /// many records, and never trusted over the CTDA fields actually decoded:
     /// a record may carry several condition runs (every Skyrim.esm record whose

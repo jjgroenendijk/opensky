@@ -117,7 +117,7 @@ struct ArcheryRuntimeTests {
 
         let launched = runtime.handleGraphEvents([ArcheryGraphNames.arrowRelease])
 
-        let damage = launched.first?.damage
+        let damage = launched.first?.payload.arrow?.damage
         #expect(damage?.bowDamage == 7)
         #expect(damage?.arrowDamage == 8)
         #expect(damage?.drawFraction == 1)
@@ -131,7 +131,10 @@ struct ArcheryRuntimeTests {
 
         let launched = runtime.handleGraphEvents([ArcheryGraphNames.arrowRelease])
 
-        #expect(launched.first?.damage.drawFraction == ArcheryDamage.minimumDrawFraction)
+        #expect(
+            launched.first?.payload.arrow?.damage.drawFraction
+                == ArcheryDamage.minimumDrawFraction
+        )
         // A partial draw is slower as well as weaker.
         let speed = simd_length(launched.first?.state.velocity ?? SIMD3())
         #expect(abs(speed - 3600 * ArcheryDamage.minimumDrawFraction) < 1)

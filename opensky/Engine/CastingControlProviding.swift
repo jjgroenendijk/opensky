@@ -74,6 +74,17 @@ nonisolated struct CastingControlSnapshot: Equatable, Sendable {
     /// Ability effect entries carrying no duration, which the active-effect
     /// runtime has no permanent mode to hold.
     let unheldAbilityEntries: Int
+    /// Spell projectiles launched this session (issue #471).
+    let projectileCount: Int
+    /// Casts per delivery kind, most frequent first, already spelled
+    /// `kind x count`.
+    let deliveryLines: [String]
+    /// Actors the most recent landed spell reached.
+    let lastHitTargets: Int
+    /// Per-entry resistance adjustments of the most recent landed spell, each
+    /// already spelled `effect on target: base x multiplier = adjusted`. This
+    /// is the debug-level readout the resistance rule is asserted through.
+    let lastHitAdjustments: [String]
     /// Human-readable result of the last panel action.
     let lastActionText: String
 
@@ -93,6 +104,10 @@ nonisolated struct CastingControlSnapshot: Equatable, Sendable {
         failureCount: 0,
         failureLines: [],
         unheldAbilityEntries: 0,
+        projectileCount: 0,
+        deliveryLines: [],
+        lastHitTargets: 0,
+        lastHitAdjustments: [],
         lastActionText: "Spellcasting unavailable: no game data loaded."
     )
 }
