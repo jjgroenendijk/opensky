@@ -87,10 +87,18 @@ nonisolated struct InventoryBaselineResolver {
     /// the actor resolution indexes. Cross-plugin override resolution is a
     /// separate concern and is not needed until inventory reads more than
     /// `Skyrim.esm`.
-    static func build(from file: ESMFile) -> InventoryBaselineResolver {
+    /// - Parameter enchantments: the load-order ENCH view every `EITM` link is
+    ///   resolved through (issue #466), already paired with the plugin those
+    ///   links are relative to. Nil leaves every enchanted item's `resolvedID`
+    ///   nil, and then nothing can apply an enchantment at runtime (issue #472) —
+    ///   which is what a synthetic session means.
+    static func build(
+        from file: ESMFile,
+        enchantments: ItemEnchantmentResolver? = nil
+    ) -> InventoryBaselineResolver {
         let localized = (try? file.pluginHeader().isLocalized) ?? false
         return InventoryBaselineResolver(
-            items: ItemDefinitionStore(file: file),
+            items: ItemDefinitionStore(file: file, enchantments: enchantments),
             leveledItems: index(file, "LVLI") { try LeveledList(record: $0) },
             outfits: index(file, "OTFT") { try Outfit(record: $0) },
             actors: ActorTemplateResolver.build(from: file, localized: localized)

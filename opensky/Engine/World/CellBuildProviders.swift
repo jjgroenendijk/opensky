@@ -93,6 +93,9 @@ nonisolated protocol MagicDataProviding {
     /// because a spell's ETYP is relative to whichever plugin authored the
     /// spell, and that need not be the one the item indexes were built from.
     var equipSlotStore: EquipSlotStore? { get }
+    /// Load-order ENCH index (issue #472), which resolves the `EITM` an equipped
+    /// weapon or worn armour carries into an effect list, a cost and a charge.
+    var enchantmentStore: EnchantmentStore? { get }
 }
 
 /// Optional script-loading seam a provider can expose (issue #171). The

@@ -109,6 +109,9 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     /// Load-order EQUP index (issue #470), which answers which hands a readied
     /// spell takes.
     var equipSlotStore: EquipSlotStore?
+    /// Load-order ENCH index (issue #472); nil on the same synthetic scenes, and
+    /// then an enchanted item applies nothing and the readout says so.
+    var enchantmentStore: EnchantmentStore?
     /// GMST-derived walk/run values plus explicit documented fallbacks.
     var movementConfiguration: PlayerMovementConfiguration = .synthetic
     /// GMST-derived `fBarterMin` and `fBarterMax` at the milestone's fixed

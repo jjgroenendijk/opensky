@@ -327,12 +327,43 @@ terms are percentage points per unit of damage or armour, so each carries a
 `/ 100`. Every quantity `MeleeDamage` returns is a fraction in `0...1`; the
 readout multiplies by 100 at the very end.
 
-Two terms are absent by scope. Perks and Fortify Block effects are M18 — there
-is no perk tree and no magic effect to read them from — so they enter as one
-`bonusMultiplier` defaulting to 1, which is what the formula reduces to for a
+Two terms were absent by scope when this was written. Perks and Fortify Block
+effects had no perk tree and no magic effect to read them from, so they enter as
+one `bonusMultiplier` defaulting to 1, which is what the formula reduces to for a
 character with neither. Block *skill* is in the same position: `ActorValues`
 carries health, magicka and stamina only, so `blockSkill` is a parameter
 defaulting to 15, the starting value UESP gives.
+
+**`bonusMultiplier` is no longer always 1.** Roadmap item 19.9 (issue #472) fills
+in the enchantment and potion halves of both open terms:
+
+* `bonusMultiplier` is the *blocker's* term, which is where the quoted formula
+  puts it, and `CombatFortifyBonus.block` supplies it from the Block Modifier and
+  Block Power Modifier actor values.
+* `attackMultiplier` is new, and is the *attacker's*. UESP "Skyrim:Weapons" gives
+  the attacker's side as `... * (1 + perk effects) * (1 + item effects) * (1 +
+  potion effect)`, and this file had nowhere to put that term — a Fortify
+  One-Handed effect could not change a melee number at all.
+  `CombatFortifyBonus.melee(handType:)` supplies it, reading the one-handed,
+  two-handed or archery pair according to the weapon's animation family.
+
+They are separate parameters because they act on opposite sides of the exchange:
+folding them together would let the target's ring change the attacker's damage.
+The attack term multiplies *after* the blocked fraction is computed, not before,
+because the quoted block formula scales on `attackerWeaponBaseDamage` — the WEAP
+number rather than the enchanted one — so a fortified attacker deals more through
+a block without the block growing to meet it.
+
+Which actor values each surface reads, and why the magnitudes are percentage
+points, is in [magic and active effects](/engine/magic.md#item-enchantments).
+Perks and the Smithing improvement are still absent and still fold into the same
+two parameters.
+
+A landed swing from an enchanted weapon also fires that enchantment on whatever it
+struck, spending the weapon's charge. `MeleeCombatWorld` refines
+`WeaponEnchantmentApplying` for it, and `MeleeHitRecord.enchantment` carries what
+happened; the model is in
+[magic and active effects](/engine/magic.md#item-enchantments).
 
 One reading looks like a bug and is not: the weapon branch scales on the
 *attacker's* weapon damage, not the blocker's. UESP is explicit and works

@@ -94,6 +94,10 @@ struct ActiveEffectRuntime {
     /// entries move the actor value immediately and are stored nowhere; timed
     /// ones become components.
     ///
+    /// - Parameter isConstant: whether the record handing over the list is a
+    ///   constant effect — a worn item's enchantment (issue #472). Every entry
+    ///   then becomes a `constant` effect that persists until it is dispelled,
+    ///   rather than an instant application of its zero duration.
     /// - Returns: the timed effects that were stored, in application order.
     @discardableResult
     mutating func apply(
@@ -101,6 +105,7 @@ struct ActiveEffectRuntime {
         fromPlugin pluginName: String,
         source: ActiveEffectSource,
         caster: ReferenceKey? = nil,
+        isConstant: Bool = false,
         on target: ActorValueHolder
     ) -> [ActiveEffect] {
         var stored: [ActiveEffect] = []
@@ -116,6 +121,7 @@ struct ActiveEffectRuntime {
             let outcome = MagicEffectPlanner.plan(
                 effect: resolved,
                 entry: entry,
+                isConstant: isConstant,
                 resolveKeyword: { link in
                     effects.resolvedID(link, fromPlugin: resolved.sourcePlugin)
                         .map(ReferenceKey.init(resolved:))
@@ -263,7 +269,7 @@ struct ActiveEffectRuntime {
             values: application.values,
             stackKeyword: application.stackKeyword
         )
-        if application.mode == .modifier {
+        if application.mode.ownsModifierSlot {
             effect = effect.owningModifiers(claim(effect, on: target))
         }
         write(state.adding(effect), for: target)

@@ -325,12 +325,35 @@ enum SpellHitApplication {
         using runtime: ActiveEffectRuntime,
         resistances: ActorResistanceSettings = .documentedDefaults
     ) -> (entries: [MagicItemEffect], adjustments: [SpellMagnitudeAdjustment]) {
-        guard !payload.ignoresResistance else { return (entries, []) }
+        scale(
+            entries,
+            fromPlugin: payload.sourcePlugin,
+            ignoresResistance: payload.ignoresResistance,
+            on: holder,
+            using: runtime,
+            resistances: resistances
+        )
+    }
+
+    /// The same scaling without a `SpellPayload` in hand.
+    ///
+    /// A weapon enchantment's contact effects pay the same resistances a landed
+    /// spell's do and are not a payload (issue #472), so the two meet here rather
+    /// than in a second copy of the formula.
+    static func scale(
+        _ entries: [MagicItemEffect],
+        fromPlugin pluginName: String,
+        ignoresResistance: Bool,
+        on holder: ActorValueHolder,
+        using runtime: ActiveEffectRuntime,
+        resistances: ActorResistanceSettings = .documentedDefaults
+    ) -> (entries: [MagicItemEffect], adjustments: [SpellMagnitudeAdjustment]) {
+        guard !ignoresResistance else { return (entries, []) }
         var scaled: [MagicItemEffect] = []
         var adjustments: [SpellMagnitudeAdjustment] = []
         for entry in entries {
             guard
-                let resolved = runtime.effects.resolve(entry, fromPlugin: payload.sourcePlugin),
+                let resolved = runtime.effects.resolve(entry, fromPlugin: pluginName),
                 let data = resolved.effect.data,
                 data.flags.contains(.hostile)
             else {

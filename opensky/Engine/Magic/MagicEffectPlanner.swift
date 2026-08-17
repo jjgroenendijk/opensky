@@ -67,9 +67,13 @@ nonisolated struct MagicEffectApplication: Equatable {
     /// dispelled."
     let refusesRecast: Bool
 
-    /// Whether the effect applies once rather than running for a duration.
+    /// Whether the effect applies once rather than persisting.
+    ///
+    /// A constant effect also carries a duration of zero and is the opposite of
+    /// instant: it persists until the item that granted it comes off, so the
+    /// mode is asked before the number (issue #472).
     var isInstant: Bool {
-        duration <= 0
+        mode != .constant && duration <= 0
     }
 }
 
@@ -115,12 +119,17 @@ nonisolated enum MagicEffectPlanner {
     ///   - effect: the resolved MGEF, whose `sourcePlugin` the keyword link is
     ///     relative to.
     ///   - entry: the EFID/EFIT/CTDA entry that named it.
+    ///   - isConstant: whether the record that carries the entry is a constant
+    ///     effect — a worn item's enchantment (issue #472). Such an entry owns
+    ///     its modifier slot until the item comes off, so its authored duration
+    ///     of zero must not be read as "apply once".
     ///   - resolveKeyword: turns the MGEF's associated-item link into a key.
     ///     Supplied by the runtime, which owns the load order; a planner that
     ///     resolved links itself would need a store and stop being pure.
     static func plan(
         effect: ResolvedMagicEffect,
         entry: MagicItemEffect,
+        isConstant: Bool = false,
         resolveKeyword: (FormID) -> ReferenceKey? = { _ in nil }
     ) -> Outcome {
         guard let data = effect.effect.data else {
@@ -129,14 +138,18 @@ nonisolated enum MagicEffectPlanner {
         guard implementedArchetypes.contains(data.archetype) else {
             return .skip(.unimplementedArchetype(data.archetype))
         }
-        let duration = Float(entry.duration)
-        let mode: ActiveEffectMode = data.flags.contains(.recover) ? .modifier : .perSecond
+        let duration = isConstant ? 0 : Float(entry.duration)
+        let mode: ActiveEffectMode = if isConstant {
+            .constant
+        } else {
+            data.flags.contains(.recover) ? .modifier : .perSecond
+        }
         switch values(of: data, magnitude: entry.magnitude) {
         case let .failure(reason):
             return .skip(reason)
         case let .success(values):
             if
-                duration > 0, mode == .modifier,
+                mode.ownsModifierSlot, isConstant || duration > 0,
                 let primary = values
                     .first(where: { ActorValueIdentity.kind(at: $0.index) != nil })
             {

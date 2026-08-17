@@ -129,4 +129,17 @@ nonisolated extension OpenSkySaveFormat {
     /// Smallest number of bytes one `SPLB` spent-power record can occupy: the
     /// key lower bound plus the whole game day it was spent on.
     static let minimumSpellbookPowerSize = 11
+    /// Smallest number of bytes a single `ECHG` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and zero counts for
+    /// the charge and worn-item lists (4 each). An entry with contents is
+    /// longer, so this is a lower bound.
+    static let minimumEnchantedItemEntrySize = 16
+    /// Bytes one `ECHG` charge record occupies: the item FormID and the
+    /// remaining charge.
+    static let enchantedItemChargeRecordSize = 8
+    /// Smallest number of bytes one `ECHG` worn-item record can occupy: the item
+    /// FormID (4) and a zero sequence count (4).
+    static let minimumEnchantedItemWornSize = 8
+    /// Bytes one `ECHG` worn-effect sequence occupies.
+    static let enchantedItemSequenceSize = 8
 }

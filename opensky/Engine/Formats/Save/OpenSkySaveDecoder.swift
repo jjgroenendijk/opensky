@@ -81,6 +81,11 @@ nonisolated enum OpenSkySaveDecoder {
         /// everyone restores with an empty spellbook — which is also what a save
         /// written before that chunk existed means.
         var spellbooks: [SaveSpellbookEntry] = []
+        /// Absent `ECHG` chunk (issue #472) means nothing enchanted fired and
+        /// nothing enchanted was worn, so every weapon restores fully charged and
+        /// no worn item owns an effect — which is also what a save written before
+        /// that chunk existed means.
+        var enchantedItems: [SaveEnchantedItemEntry] = []
     }
 
     static func decode(_ data: Data) throws -> OpenSkySaveFile {
@@ -140,7 +145,8 @@ nonisolated enum OpenSkySaveDecoder {
         entries = OpenSkySaveCombatDecoder.merge(body.combatStates, into: entries)
         entries = OpenSkySaveDialogueDecoder.merge(body.dialogue, into: entries)
         entries = OpenSkySaveActiveEffectDecoder.merge(body.activeEffects, into: entries)
-        return OpenSkySaveSpellbookDecoder.merge(body.spellbooks, into: entries)
+        entries = OpenSkySaveSpellbookDecoder.merge(body.spellbooks, into: entries)
+        return OpenSkySaveEnchantedItemDecoder.merge(body.enchantedItems, into: entries)
     }
 
     // MARK: - Header
@@ -288,6 +294,9 @@ nonisolated enum OpenSkySaveDecoder {
             body.activeEffects = try OpenSkySaveActiveEffectDecoder.decodeActiveEffects(payload)
         case OpenSkySaveFormat.ChunkTag.spellbooks:
             body.spellbooks = try OpenSkySaveSpellbookDecoder.decodeSpellbooks(payload)
+        case OpenSkySaveFormat.ChunkTag.enchantedItems:
+            body.enchantedItems = try OpenSkySaveEnchantedItemDecoder
+                .decodeEnchantedItems(payload)
         default:
             break // Unknown chunk: skipped by its declared length.
         }

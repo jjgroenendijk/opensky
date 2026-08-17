@@ -227,6 +227,24 @@ nonisolated enum OpenSkySaveFormat {
         /// progress is frame state, and restoring one would put the player back
         /// mid-cast with magicka already committed.
         static let spellbooks = "SPLB"
+
+        /// Enchanted items (issue #472, roadmap item 19.9): one entry per owner
+        /// whose enchanted weapons have spent charge or whose worn items
+        /// established constant effects.
+        ///
+        /// Additive and split out of `RDLT` for the same reason `AEFF` and
+        /// `SPLB` are. A session in which nothing enchanted fired and nothing
+        /// enchanted was worn writes no chunk at all, so its bytes match what
+        /// this encoder produced before the chunk existed.
+        ///
+        /// Charge travels here rather than inside `INVN` because a stack is not
+        /// where charge belongs: `INVN` entries are counts, and a charge is a
+        /// per-item float that changes on a hit rather than on a transfer. The
+        /// worn-effect sequences beside it are the other half of the same fact —
+        /// which of the `AEFF` effects each worn item is responsible for — and
+        /// splitting the two would let a reload restore effects nothing could
+        /// take back off.
+        static let enchantedItems = "ECHG"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.
@@ -299,7 +317,7 @@ nonisolated extension WorldStateComponentKind {
         case .activation: 2
         case .deletion: 3
         case .inventory, .spawn, .quest, .questAliases, .actorValues, .death,
-             .combat, .dialogue, .activeEffects, .spellbook: nil
+             .combat, .dialogue, .activeEffects, .spellbook, .enchantedItems: nil
         }
     }
 

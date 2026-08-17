@@ -284,6 +284,18 @@ final class GraphBackedMeleeWorld: MeleeCombatWorld {
         nil
     }
 
+    /// This world reaches no targets at all — it exists to drive the real graph —
+    /// so the fortify term is the 1 the formula reduces to for a character with
+    /// none and an enchanted hit never arrives (issue #472).
+    func meleeAttackMultiplier(handType: CombatHandType) -> Float {
+        1
+    }
+
+    @discardableResult
+    func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
+        nil
+    }
+
     @discardableResult
     func applyMeleeDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
         false

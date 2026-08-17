@@ -135,7 +135,10 @@ extension GameViewController {
         var hasShield = false
         for item in equipment.equipped(on: .player) {
             if let weapon = weapons.weapon(item) {
-                profiles.append(MeleeWeaponProfile(weapon: weapon))
+                profiles.append(MeleeWeaponProfile(
+                    weapon: weapon,
+                    enchantment: enchantmentProfile(of: item)
+                ))
             } else if equipment.occupancy(of: item).slots.contains(.shield) {
                 hasShield = true
             }

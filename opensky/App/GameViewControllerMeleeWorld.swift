@@ -52,6 +52,19 @@ extension GameViewController: MeleeCombatWorld {
         renderer?.walkController.groundMaterial
     }
 
+    /// The player's fortify multiplier for a swing with `handType` (issue #472).
+    ///
+    /// Read straight off the actor-value runtime through `CombatFortifyBonus`,
+    /// which names the values and does the arithmetic. A session with no
+    /// actor-value runtime answers 1 — what the formula reduces to for a character
+    /// with no fortify effect — rather than pretending the swing is unarmed.
+    func meleeAttackMultiplier(handType: CombatHandType) -> Float {
+        guard let runtime = actorValues.runtime else { return 1 }
+        return CombatFortifyBonus.melee(handType: handType) {
+            runtime.value(at: $0, on: .player)
+        }
+    }
+
     func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind? {
         // The player answers from the graph state `blockStart` drives. Every
         // other actor answers from its 16.7 combat behavior machine, which is

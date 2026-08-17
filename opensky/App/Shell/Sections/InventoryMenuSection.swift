@@ -130,8 +130,22 @@ final class InventoryMenuSection: PanelSectionViewController {
         \(categoryLine(for: snapshot))
         \(rows(for: snapshot))
         Carrying \(weight) · \(snapshot.gold) gold\(action)
+        \(enchantmentDetail(for: snapshot))
         \(movieReadout(for: snapshot))
         """
+    }
+
+    /// The equipped-item detail every enchanted piece adds: what it grants and
+    /// how much charge is left (issue #472). One line saying so when nothing
+    /// equipped is enchanted, rather than a silently missing block.
+    nonisolated static func enchantmentDetail(
+        for snapshot: InventoryMenuControlSnapshot
+    ) -> String {
+        guard !snapshot.enchantmentLines.isEmpty else {
+            return "Enchanted equipment: none"
+        }
+        return (["Enchanted equipment:"] + snapshot.enchantmentLines.map { "  \($0)" })
+            .joined(separator: "\n")
     }
 
     nonisolated static func categoryLine(for snapshot: InventoryMenuControlSnapshot) -> String {

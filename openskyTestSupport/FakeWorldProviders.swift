@@ -431,6 +431,9 @@ extension FakeWorldProviders {
             carriedWeight: inventoryMenuModel.carriedWeight,
             gold: inventoryMenuModel.gold,
             lastActionText: inventoryMenuLastAction,
+            // A fake carries no ENCH index, so nothing equipped is enchanted
+            // (issue #472); `EnchantmentRuntimeTests` covers the charge itself.
+            enchantmentLines: [],
             movieEnabled: inventoryMenuMovieEnabled,
             movieLoaded: false,
             movieError: nil,

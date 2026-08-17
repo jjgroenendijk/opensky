@@ -70,6 +70,15 @@ final class ArcheryRuntime {
     /// launches, and the FormID the inventory consumes. Nil with an empty
     /// quiver, and then a draw is allowed and a loose does nothing.
     var arrow: ArcheryAmmunition?
+    /// The shooter's fortify multiplier — `ArcheryDamage`'s `bonusMultiplier`
+    /// (issue #472).
+    ///
+    /// A written property rather than a world seam, for the reason `bow` and
+    /// `arrow` are: the session refreshes all three on the same frame, from the
+    /// same equipment, and a runtime that asked for it would need an actor-value
+    /// surface it otherwise has no use for. 1 until something writes it, which is
+    /// what the formula reduces to for a shooter with no fortify effect.
+    var attackMultiplier: Float = 1
 
     private weak var world: (any ProjectileWorld)?
     private var wasDrawing = false
@@ -154,10 +163,12 @@ final class ArcheryRuntime {
                 arrowDamage: arrow.damage,
                 drawFraction: ArcheryDamage.drawFraction(
                     heldSeconds: heldSeconds, speed: bow.speed
-                )
+                ),
+                bonusMultiplier: attackMultiplier
             ),
             weapon: bow.weapon,
-            ammunition: consumesArrow ? arrow.item : nil
+            ammunition: consumesArrow ? arrow.item : nil,
+            enchantment: bow.enchantment
         )
         heldSeconds = 0
         return projectiles.fire(shot)

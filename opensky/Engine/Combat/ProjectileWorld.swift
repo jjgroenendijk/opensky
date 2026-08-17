@@ -150,8 +150,12 @@ protocol SpellHitApplying: AnyObject {
 }
 
 /// Everything the archery runtimes need from the session around them.
+///
+/// `WeaponEnchantmentApplying` is refined for the reason `SpellHitApplying` is: an
+/// enchanted bow and an enchanted blade apply through one implementation (issue
+/// #472).
 @MainActor
-protocol ProjectileWorld: ScriptHitReporting, SpellHitApplying {
+protocol ProjectileWorld: ScriptHitReporting, SpellHitApplying, WeaponEnchantmentApplying {
     /// Where the player is aiming from, this frame.
     var projectileShooter: ProjectileShooter { get }
 

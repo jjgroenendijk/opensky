@@ -286,16 +286,18 @@ final class MeleeCombatRuntime {
         return hits.map { apply($0, world: world) }
     }
 
-    /// Damage, stagger and impact sound for one hit.
+    /// Damage, stagger, enchantment and impact sound for one hit.
     private func apply(_ hit: MeleeHit, world: any MeleeCombatWorld) -> MeleeHitRecord {
         hitThisSwing.insert(hit.target)
         hitCount += 1
         let damage = MeleeDamage.resolve(
             weapon: weapon,
             block: world.meleeBlock(of: hit.target),
-            settings: settings
+            settings: settings,
+            attackMultiplier: world.meleeAttackMultiplier(handType: weapon.handType)
         )
         world.applyMeleeDamage(damage.applied, to: hit.target)
+        let enchantment = applyEnchantment(hit, world: world)
         // After the damage, so a script that reads the target's health inside
         // `OnHit` sees the blow that caused the event rather than the state
         // before it (issue #375). The block term is what the damage formula
@@ -320,13 +322,34 @@ final class MeleeCombatRuntime {
             damage: damage,
             sound: impact?.sound,
             staggered: staggered,
-            swingID: state.swingID
+            swingID: state.swingID,
+            enchantment: enchantment
         )
         trace.append(record)
         if trace.count > Self.traceLimit {
             trace.removeFirst(trace.count - Self.traceLimit)
         }
         return record
+    }
+
+    /// Fires the weapon's enchantment on the actor the swing struck (issue #472).
+    ///
+    /// Only a contact enchantment fires: a weapon carrying a constant effect is
+    /// nonsense the records do not author, and a staff enchantment is cast rather
+    /// than struck with. Nothing is decided about the charge here — the world seam
+    /// owns the ledger — so a weapon that has run dry is a report saying so rather
+    /// than a hit that silently skipped a step.
+    private func applyEnchantment(
+        _ hit: MeleeHit,
+        world: any MeleeCombatWorld
+    ) -> WeaponEnchantmentReport? {
+        guard let profile = weapon.enchantment, profile.isContact else { return nil }
+        return world.applyWeaponEnchantment(WeaponEnchantmentHit(
+            profile: profile,
+            attacker: world.meleeAttacker.key,
+            target: hit.target,
+            position: hit.position
+        ))
     }
 
     /// Tells the target's graph to stagger, if the weapon carries any stagger

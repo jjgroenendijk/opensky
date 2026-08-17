@@ -120,10 +120,15 @@ extension GameViewController {
     private func wireActorSystems(provider: any CellSceneProvider, renderer: Renderer) {
         wireActorValues(provider: provider, renderer: renderer)
         wireMagicEffects(provider: provider, renderer: renderer)
-        // Last of the three: a cast spends an actor value and applies its
+        // Last of the four: a cast spends an actor value and applies its
         // effects through the effect runtime, so both have to exist first
         // (issue #470).
         wireCasting(provider: provider, renderer: renderer)
+        // The ENCH index alone, so an equipped item can resolve what it carries
+        // (issue #472). It owns no runtime of its own: an enchanted hit applies
+        // through the effect runtime above and its charge lives in the world-state
+        // store, so there is nothing here to tick.
+        wireEnchantments(provider: provider)
     }
 
     private func wireLateWorldSystems(

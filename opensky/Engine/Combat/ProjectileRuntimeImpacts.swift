@@ -34,7 +34,38 @@ extension ProjectileRuntime {
             source: arrow.weapon,
             projectile: projectile.profile.projectile
         ))
+        applyBowEnchantment(arrow, projectile: projectile, impact: impact, world: world)
         return arrow.damage.applied
+    }
+
+    /// Fires the bow's enchantment on the actor an arrow struck (issue #472).
+    ///
+    /// Only a contact enchantment fires, exactly as for a swing: an enchanted bow
+    /// carries the same `Contact` delivery an enchanted blade does, and a staff is
+    /// not shot. An arrow that struck geometry rather than an actor applies
+    /// nothing and spends nothing, which is the one place this differs from a
+    /// swing — a swing only reaches this path having found a target.
+    ///
+    /// - Returns: what the enchantment did, discardable because the arrow's damage
+    ///   is what `resolve(_:impact:)` reports and the enchantment's own outcome is
+    ///   read off the session's readout instead.
+    @discardableResult
+    func applyBowEnchantment(
+        _ arrow: ArrowPayload,
+        projectile: LiveProjectile,
+        impact: ProjectileImpact,
+        world: any ProjectileWorld
+    ) -> WeaponEnchantmentReport? {
+        guard
+            let profile = arrow.enchantment, profile.isContact,
+            let target = impact.target
+        else { return nil }
+        return world.applyWeaponEnchantment(WeaponEnchantmentHit(
+            profile: profile,
+            attacker: projectile.shooter,
+            target: target,
+            position: impact.position
+        ))
     }
 
     /// One landed spell's effect list, applied to whatever it reached.

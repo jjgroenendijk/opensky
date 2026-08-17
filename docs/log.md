@@ -4,6 +4,48 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-17
 
+* **Weapon and armour enchantments at runtime (issue #472)**: item 19.9 closes the loop the
+  M15 damage formulas left open. A landed swing or arrow from an enchanted weapon applies the
+  enchantment's effect list to whatever it struck and spends the weapon's charge; a worn
+  enchanted item grants its effects for as long as it is worn. The charge model is measured
+  rather than derived: one use costs the enchantment's own resolved cost, the fully charged
+  value is the weapon's `EAMT`, and `floor(EAMT / cost)` reproduces all three numbers of five
+  rows of UESP's published "Charge/Cost = Uses" table against the install. A weapon holding
+  less than one whole use cannot fire, and the charge is spent before the effects are applied
+  so a weapon carrying an archetype this engine does not implement still runs down.
+* **A contact enchantment applies through the spell-hit path, not beside it**: once an actor
+  has been struck, a contact enchantment and a landed spell do the same thing, so item 19.8's
+  `SpellHitApplication` is the one implementation and a weapon enchantment pays the target's
+  resistances exactly as a spell does. `WeaponEnchantmentApplying` is refined by both
+  `MeleeCombatWorld` and `ProjectileWorld`, so a blade and a bow take one path.
+* **Constant effects needed a third `ActiveEffectMode`**: 618 of the 620 effect entries behind
+  vanilla's constant-effect enchantments author an EFIT duration of zero, so reading that zero
+  as "apply once" would have been wrong. `.constant` holds its modifier slot like `.modifier`
+  and nothing but removal ends it. Applying and removing is a *reconcile* over what an owner
+  is wearing rather than an equip hook, because the engine equips from several places and one
+  missed hook is an effect that never comes off; removal is by recorded `AEFF` sequence, since
+  a helmet and a necklace can carry the same ENCH.
+* **The worn restriction gates nothing at runtime, and that is measured**: the Creation Kit
+  wiki describes `ENIT`'s restriction list as an authoring rule, and 70 of the 2,727 enchanted
+  `ARMO` records whose chain names a list carry no keyword their own list names — the Gauldur
+  Amulet among them. Enforcing it would strip those items' effects, so it is exposed as a
+  question and the counterexamples are pinned in a real-data test.
+* **The acceptance chain runs headless against the install**:
+  `EnchantmentAcceptanceRealDataTests` searches the load order for a metered contact
+  enchantment whose effect this engine can carry out — deliberately not the weapon UESP's
+  charge table names, whose Absorb archetype item 19.6 counts rather than applies — lands two
+  hits with it, then wears a real Fortify One-Handed armour enchantment and reads the damage
+  number back. On the local install: `EnchWeaponFireDamage06` 81 uses -> 79, target health 500
+  -> 440, `EnchArmorFortifyOneHanded02` worn for 20 points, melee damage 10.0 -> 12.0.
+* **`bonusMultiplier` stopped being a constant**: the fortify actor values were read off the
+  records rather than recalled — a Fortify One-Handed *enchantment* moves One-Handed Modifier
+  (96) while the *potion* moves One-Handed Power Modifier (135), so each combat surface sums
+  both families. `MeleeDamage` gained an `attackMultiplier` beside the block term it already
+  had, because the attacker's side of the formula had nowhere to land, and `ArcheryDamage`'s
+  existing term is now fed. New `ECHG` save chunk for per-item charge and worn-effect
+  ownership; charge is keyed by base FormID, which is stated as sharing one charge between two
+  copies of the same weapon until per-instance item identity lands.
+
 * **Aimed delivery: spell projectiles, hit application, resistances (issue #471)**: item
   19.7 could cast only at the caster. Item 19.8 sends spells away from them, and it does so
   by generalizing the M15 projectile pipeline rather than writing a second one:

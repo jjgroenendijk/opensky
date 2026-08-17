@@ -313,6 +313,22 @@ as melee's Block skill: `ActorValues` carries health, magicka and stamina only,
 so `skill` is a parameter with a documented default of 15, the value UESP gives
 for a starting skill with no racial bonus.
 
+**`bonusMultiplier` is no longer always 1.** Roadmap item 19.9 (issue #472) feeds
+it: `CombatFortifyBonus.archery` reads the Marksman Modifier and Marksman Power
+Modifier actor values — the two a Fortify Archery enchantment and a Fortify
+Marksman potion actually move — and `ArcheryRuntime.attackMultiplier` carries the
+product into every loosed shot. The session refreshes it on the same frame it
+refreshes the bow and the arrow, which is why it is a written property rather than
+another world-seam question. Smithing and perks are still absent and still fold
+into the same parameter; the actor values and the percentage-point reading are in
+[magic and active effects](/engine/magic.md#item-enchantments).
+
+An arrow from an enchanted bow also fires that bow's enchantment on the actor it
+struck, spending the bow's charge. `ArrowPayload` carries the resolved enchantment
+so a shot in the air applies what the bow had when it was loosed, and
+`ProjectileWorld` refines `WeaponEnchantmentApplying` to apply it through the same
+implementation a swing uses.
+
 UESP "Skyrim:Archery", Draw Time and Damage Dealt, gives the draw curve, with
 `t` in frames of 1/60 s:
 

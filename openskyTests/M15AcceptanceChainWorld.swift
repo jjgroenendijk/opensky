@@ -62,6 +62,19 @@ extension M15AcceptanceChain: MeleeCombatWorld {
     func writeCombatVariable(_ value: BehaviorVariableValue, named name: String) {
         bridge.write(value, to: name)
     }
+
+    /// The M15 chain carries unenchanted weapons and no effect runtime, so the
+    /// fortify term is the 1 the formula reduces to for a character with none and
+    /// an enchanted hit is the documented "this world cannot apply one" nil
+    /// (issue #472). `EnchantmentRuntimeTests` covers both paths.
+    func meleeAttackMultiplier(handType: CombatHandType) -> Float {
+        1
+    }
+
+    @discardableResult
+    func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
+        nil
+    }
 }
 
 // MARK: - Archery

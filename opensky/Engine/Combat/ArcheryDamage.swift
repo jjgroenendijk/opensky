@@ -20,13 +20,19 @@
 //                               * (1 + skill/200) * (1 + perk effects)
 //                               * (1 + item effects) * (1 + potion effect) ... ]
 //
-// Every one of those multipliers is M18's: there is no Smithing improvement,
-// no perk tree and no enchantment in this engine to read them from, and the
-// Archery *skill* is in the same position as melee's Block skill — `ActorValues`
-// carries health, magicka and stamina only. So they enter here as one
-// `bonusMultiplier` defaulting to 1, which is exactly what the formula reduces
-// to for a character with none, and the skill enters as a parameter with a
-// documented default rather than as a number invented here.
+// Every one of those multipliers was M18's when this was written: there was no
+// Smithing improvement, no perk tree and no enchantment in this engine to read
+// them from, and the Archery *skill* is in the same position as melee's Block
+// skill — `ActorValues` carries health, magicka and stamina only. So they enter
+// here as one `bonusMultiplier` defaulting to 1, which is exactly what the
+// formula reduces to for a character with none, and the skill enters as a
+// parameter with a documented default rather than as a number invented here.
+//
+// Issue #472 (roadmap item 19.9) fills in the enchantment and potion halves of
+// that term: `CombatFortifyBonus.archery` reads Marksman Modifier and Marksman
+// Power Modifier — the two values a Fortify Archery enchantment and a Fortify
+// Marksman potion actually move — and the caller passes the product. Smithing and
+// perks are still absent and still fold into the same parameter.
 //
 // ## A partial draw does less
 //
@@ -100,8 +106,8 @@ nonisolated enum ArcheryDamage {
     ///   - drawFraction: the draw-time term, `0...1`. 1 is a full draw.
     ///   - skill: the shooter's Archery skill.
     ///   - bonusMultiplier: the perk, enchantment and potion terms folded into
-    ///     one. 1 for a character with none, which is every character in this
-    ///     milestone.
+    ///     one. 1 for a character with none; `CombatFortifyBonus.archery`
+    ///     supplies the enchantment and potion halves (issue #472).
     static func resolve(
         bowDamage: Float,
         arrowDamage: Float,
