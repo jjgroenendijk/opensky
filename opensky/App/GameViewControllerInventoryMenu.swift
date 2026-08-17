@@ -300,6 +300,10 @@ extension GameViewController: InventoryMenuControlProviding {
             carriedWeight: model.carriedWeight,
             gold: model.gold,
             lastActionText: inventoryMenu.lastActionText,
+            enchantmentLines: equippedReadout(on: .player)
+                .compactMap { readout in
+                    readout.enchantment.map { "\(readout.name) — \($0)" }
+                },
             movieEnabled: inventoryMenu.movieEnabled,
             movieLoaded: inventoryMenu.movieLoaded,
             movieError: inventoryMenu.movieError,

@@ -81,6 +81,7 @@ extension GameViewController {
         if renderer.movementMode.isPlayerControlled {
             runtime.bow = equippedBowProfile()
             runtime.arrow = selectedArrow()
+            runtime.attackMultiplier = archeryAttackMultiplier()
             var intent = renderer.locomotion.archeryIntent
             intent.hasBowEquipped = runtime.bow.weapon != nil
             runtime.acceptFrame(intent)
@@ -109,9 +110,19 @@ extension GameViewController {
             guard let weapon = items.weapon(item), weapon.animationType == .bow else {
                 continue
             }
-            return MeleeWeaponProfile(weapon: weapon)
+            return MeleeWeaponProfile(
+                weapon: weapon,
+                enchantment: enchantmentProfile(of: item)
+            )
         }
         return .unarmed
+    }
+
+    /// The player's fortify multiplier for a bow shot (issue #472), read off the
+    /// actor-value runtime through `CombatFortifyBonus`. 1 without one.
+    func archeryAttackMultiplier() -> Float {
+        guard let runtime = actorValues.runtime else { return 1 }
+        return CombatFortifyBonus.archery { runtime.value(at: $0, on: .player) }
     }
 
     /// The arrow a shot would consume: the first ammunition the player carries

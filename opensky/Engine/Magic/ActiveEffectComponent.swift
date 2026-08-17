@@ -35,13 +35,15 @@ nonisolated struct ActiveEffectState: WorldStateComponent {
     /// decoder's entry point: a corrupt file degrades into a valid state rather
     /// than failing the whole load.
     ///
-    /// An effect with no values acts on nothing and is dropped, as is one whose
-    /// duration is not above zero — a zero-duration effect applies once and is
-    /// never stored, so one appearing here is corruption rather than an
-    /// instantaneous effect that somehow persisted.
+    /// An effect with no values acts on nothing and is dropped, as is a *timed*
+    /// one whose duration is not above zero — a zero-duration effect applies
+    /// once and is never stored, so one appearing here is corruption rather than
+    /// an instantaneous effect that somehow persisted. A constant effect is the
+    /// exception and is kept whatever its duration says, because no duration
+    /// bounds it (issue #472).
     init(effects: [ActiveEffect] = []) {
         self.effects = effects
-            .filter { !$0.values.isEmpty && $0.duration > 0 }
+            .filter { !$0.values.isEmpty && ($0.duration > 0 || $0.isConstant) }
             .sorted { $0.sequence < $1.sequence }
     }
 

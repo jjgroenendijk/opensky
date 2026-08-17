@@ -200,6 +200,12 @@ final class GameViewController: NSViewController {
     /// add state.
     var casting = CastingBridgeState()
 
+    /// Item enchantments: the ENCH index equipped items resolve through, and the
+    /// last hit and worn-item outcomes the readouts show (issue #472). The
+    /// implementation lives in `GameViewControllerEnchantments.swift`; stored
+    /// here because extensions cannot add state.
+    var enchantments = EnchantmentBridgeState()
+
     /// Melee combat: the swing runtime, the WEAP index it reads combat data
     /// out of, and the panel's last outcome line (issue #195). The
     /// implementation lives in `GameViewControllerMelee.swift`; stored here

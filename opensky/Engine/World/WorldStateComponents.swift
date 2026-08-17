@@ -101,6 +101,15 @@ nonisolated enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendab
     /// splitting further because a readied hand must name a known spell, and
     /// only one component can enforce that in a single write.
     case spellbook
+    /// One owner's enchanted items: charge left per weapon, and the constant
+    /// effects each worn piece established (issue #472). The value type is
+    /// `EnchantedItemState` in
+    /// `opensky/Engine/Magic/EnchantedItemComponent.swift`. A slot of its own
+    /// rather than fields on `inventory` for the lifetime reason `activeEffects`
+    /// is separate from `actorValues`: the inventory component is rewritten by
+    /// every take, drop and equip, while charge moves only when an enchanted
+    /// weapon actually lands a hit.
+    case enchantedItems
 }
 
 /// A value that can occupy one component slot.
@@ -139,6 +148,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
     case dialogue(DialogueRuntimeState)
     case activeEffects(ActiveEffectState)
     case spellbook(SpellbookState)
+    case enchantedItems(EnchantedItemState)
 
     var kind: WorldStateComponentKind {
         switch self {
@@ -156,6 +166,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
         case .dialogue: .dialogue
         case .activeEffects: .activeEffects
         case .spellbook: .spellbook
+        case .enchantedItems: .enchantedItems
         }
     }
 }

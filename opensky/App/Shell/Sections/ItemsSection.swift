@@ -226,14 +226,18 @@ final class ItemsSection: PanelSectionViewController {
 
     /// One indented line per equipped item, with the slots it occupies —
     /// which is what makes a conflict readable when an equip displaces
-    /// something.
+    /// something — and the enchantment and remaining charge where it has one
+    /// (issue #472).
     private static func equippedLines(
         _ title: String,
         _ items: [EquippedItemReadout]
     ) -> String {
         guard !items.isEmpty else { return "  \(title): nothing" }
         var lines = ["  \(title):"]
-        lines += items.prefix(listedStackLimit).map { "  \($0.name) · \($0.occupancy)" }
+        lines += items.prefix(listedStackLimit).map { item in
+            let enchantment = item.enchantment.map { " · \($0)" } ?? ""
+            return "  \(item.name) · \(item.occupancy)\(enchantment)"
+        }
         if items.count > listedStackLimit {
             lines.append("  … \(items.count - listedStackLimit) more")
         }

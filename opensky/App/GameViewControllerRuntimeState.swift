@@ -215,6 +215,15 @@ extension GameViewController: RuntimeStateControlProviding {
             // became (issue #374). Hostility and actor values are components
             // and were restored above.
             combat.runtime?.prepareForPersistence()
+            // The restored `AEFF` effects own temporary modifier slots that
+            // `AVGN` deliberately did not persist, so the effects are what
+            // re-establish them (issue #469's rule, wired here for issue #472:
+            // a worn enchantment's fortify has to survive a reload, and a
+            // reloaded session that skipped this step would show the effect in
+            // the list and none of its bonus in the value). The player only —
+            // no other actor has a resolvable holder before the cells stream
+            // back in, which is stated in docs/engine/magic.md as the gap it is.
+            magicEffects.runtime?.reestablishModifiers(on: .player)
             runtimeState.lastSaveOutcome = .loaded(slot: slot)
         } catch {
             runtimeState.lastSaveOutcome = .failed(

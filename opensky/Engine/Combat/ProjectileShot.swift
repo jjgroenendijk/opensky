@@ -64,6 +64,24 @@ nonisolated struct ArrowPayload: Equatable, Sendable {
     /// spawn control fires with so that a developer inspecting a trajectory
     /// does not have to keep a quiver stocked.
     let ammunition: FormID?
+    /// The bow's resolved enchantment, or nil when it carries none (issue #472).
+    ///
+    /// Fixed at launch for the same reason `damage` is: an arrow in the air must
+    /// apply the enchantment the bow that fired it was carrying, not whatever the
+    /// shooter has equipped by the time it lands.
+    let enchantment: ItemEnchantmentProfile?
+
+    init(
+        damage: ArcheryDamageResult,
+        weapon: FormID? = nil,
+        ammunition: FormID? = nil,
+        enchantment: ItemEnchantmentProfile? = nil
+    ) {
+        self.damage = damage
+        self.weapon = weapon
+        self.ammunition = ammunition
+        self.enchantment = enchantment
+    }
 }
 
 /// One shot, assembled by whichever runtime fired it and handed to
@@ -83,12 +101,16 @@ nonisolated struct ProjectileShot: Equatable, Sendable {
         profile: ProjectileProfile,
         damage: ArcheryDamageResult,
         weapon: FormID? = nil,
-        ammunition: FormID? = nil
+        ammunition: FormID? = nil,
+        enchantment: ItemEnchantmentProfile? = nil
     ) -> ProjectileShot {
         ProjectileShot(
             profile: profile,
             payload: .arrow(ArrowPayload(
-                damage: damage, weapon: weapon, ammunition: ammunition
+                damage: damage,
+                weapon: weapon,
+                ammunition: ammunition,
+                enchantment: enchantment
             ))
         )
     }

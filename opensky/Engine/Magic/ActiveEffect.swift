@@ -68,7 +68,7 @@ nonisolated struct ActiveEffectSource: Equatable, Hashable, Sendable {
 }
 
 /// How a timed effect maintains itself over its duration. See the file header
-/// for the cited rule that selects between the two.
+/// for the cited rule that selects between the first two.
 ///
 /// The raw values are the save encoding and must not be renumbered.
 nonisolated enum ActiveEffectMode: UInt32, CaseIterable, Hashable, Sendable {
@@ -78,6 +78,25 @@ nonisolated enum ActiveEffectMode: UInt32, CaseIterable, Hashable, Sendable {
     /// Recover clear: the magnitude is paid into the value once per completed
     /// second and never taken back.
     case perSecond = 1
+    /// A constant effect (issue #472, roadmap item 19.9): the magnitude is held
+    /// in the temporary modifier slot exactly as `modifier` holds it, and
+    /// nothing ever takes it back on its own.
+    ///
+    /// A third mode rather than a `modifier` effect with a very long duration,
+    /// because the two differ in what ends them. The Creation Kit wiki states
+    /// that "Armor Enchantments must use the 'Constant Effect' casting type"
+    /// (<https://ck.uesp.net/wiki/Enchantment>) and every one of the 2,885
+    /// vanilla ARMO enchantments does, with 618 of the 620 effect entries
+    /// behind them authoring an EFIT duration of zero. So a constant effect is
+    /// not a timer at all: it lasts while the item is worn, and taking the item
+    /// off is the only thing that removes it.
+    case constant = 2
+
+    /// Whether this mode owns a slice of its actor values' temporary modifier
+    /// slot for as long as the effect exists.
+    var ownsModifierSlot: Bool {
+        self != .perSecond
+    }
 }
 
 /// One actor value an effect acts on.
@@ -133,8 +152,9 @@ nonisolated struct ActiveEffect: Equatable, Sendable {
     /// MGEF Detrimental: the magnitude is taken off the actor value rather than
     /// added to it.
     let isDetrimental: Bool
-    /// EFIT duration in seconds. Always above zero — a zero-duration effect
-    /// applies once and is never stored.
+    /// EFIT duration in seconds. Always above zero for a timed effect — a
+    /// zero-duration one applies once and is never stored — and normally zero
+    /// for a `constant` effect, which no duration bounds.
     let duration: Float
     /// Seconds since application, capped at `duration`.
     private(set) var elapsed: Float
@@ -174,13 +194,19 @@ nonisolated struct ActiveEffect: Equatable, Sendable {
         self.stackKeyword = stackKeyword
     }
 
-    /// Seconds left before the effect expires.
+    /// Whether nothing but an explicit removal ends this effect.
+    var isConstant: Bool {
+        mode == .constant
+    }
+
+    /// Seconds left before the effect expires. Zero for a constant effect,
+    /// which has no remaining duration to report; ask `isConstant` first.
     var remaining: Float {
         max(0, duration - elapsed)
     }
 
     var isExpired: Bool {
-        elapsed >= duration
+        !isConstant && elapsed >= duration
     }
 
     /// The largest magnitude the effect carries, which is what the Peak Value
@@ -207,7 +233,7 @@ nonisolated struct ActiveEffect: Equatable, Sendable {
     /// either way, and the snap is what makes expiry land on the step the
     /// duration names instead of the one after it.
     func advanced(by seconds: Float) -> ActiveEffect {
-        guard seconds.isFinite, seconds > 0 else { return self }
+        guard !isConstant, seconds.isFinite, seconds > 0 else { return self }
         var copy = self
         let next = elapsed + seconds
         copy.elapsed = duration - next < seconds / 2 ? duration : min(duration, next)

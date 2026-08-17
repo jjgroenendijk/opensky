@@ -113,7 +113,13 @@ nonisolated enum InventoryEquipmentReadout {
     private static func equippedLines(_ items: [EquippedItemReadout]) -> String {
         guard !items.isEmpty else { return "Wearing: nothing" }
         var lines = ["Wearing:"]
-        lines += items.prefix(listedStackLimit).map { "  \($0.name) · \($0.occupancy)" }
+        // The enchantment and its remaining charge trail the slots where the
+        // piece has one (issue #472), so a hit that drained a weapon is readable
+        // here rather than only through a health bar.
+        lines += items.prefix(listedStackLimit).map { item in
+            let enchantment = item.enchantment.map { " · \($0)" } ?? ""
+            return "  \(item.name) · \(item.occupancy)\(enchantment)"
+        }
         if items.count > listedStackLimit {
             lines.append("  … \(items.count - listedStackLimit) more")
         }

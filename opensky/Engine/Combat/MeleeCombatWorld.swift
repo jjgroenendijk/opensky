@@ -73,13 +73,49 @@ nonisolated struct MeleeHitRecord: Equatable, Sendable {
     let staggered: Bool
     /// Which swing landed it, so two hits from one swing are visibly one swing.
     let swingID: Int
+    /// What the weapon's enchantment did, or nil when the weapon carries none
+    /// and when this session cannot apply one (issue #472).
+    let enchantment: WeaponEnchantmentReport?
+
+    init(
+        target: ReferenceKey,
+        distance: Float,
+        position: SIMD3<Float>,
+        damage: MeleeDamageResult,
+        sound: FormID?,
+        staggered: Bool,
+        swingID: Int,
+        enchantment: WeaponEnchantmentReport? = nil
+    ) {
+        self.target = target
+        self.distance = distance
+        self.position = position
+        self.damage = damage
+        self.sound = sound
+        self.staggered = staggered
+        self.swingID = swingID
+        self.enchantment = enchantment
+    }
 }
 
 /// Everything `MeleeCombatRuntime` needs from the session around it.
+///
+/// `WeaponEnchantmentApplying` is refined rather than duplicated: an enchanted
+/// blade and an enchanted arrow apply through one implementation, exactly as
+/// `reportScriptHit` is implemented once for melee, archery and the combat loop.
 @MainActor
-protocol MeleeCombatWorld: ScriptHitReporting {
+protocol MeleeCombatWorld: ScriptHitReporting, WeaponEnchantmentApplying {
     /// Where the player is standing and which way they face, this frame.
     var meleeAttacker: MeleeAttacker { get }
+
+    /// The attacker's fortify multiplier for a swing with `handType`, which is
+    /// `MeleeDamage`'s `attackMultiplier` (issue #472).
+    ///
+    /// Answered by the session rather than computed here, for the reason
+    /// `meleeBlock(of:)` is: the runtime holds no actor-value surface, and a
+    /// session with no actor values answers 1 — which is what the formula reduces
+    /// to for a character with no fortify effect.
+    func meleeAttackMultiplier(handType: CombatHandType) -> Float
 
     /// Every actor a swing could reach. Actors only — the caller's filter, not
     /// the runtime's, because only the session knows what is an ACHR.

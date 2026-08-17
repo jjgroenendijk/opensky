@@ -42,6 +42,7 @@ byte length followed by that many UTF-8 bytes. The file extension is `osav`.
 * `CBTS` entry layout
 * `DLGS` entry layout
 * `AEFF` entry layout
+* `ECHG` entry layout
 * Version policy
 * Defensive decoding
 * Where saves live and how they are written
@@ -159,8 +160,8 @@ A chunk whose declared length runs past the end of the file is
 that declared length, which is what makes a newer build's save loadable in an older one.
 
 Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR`, `INVN`, `SPWN`, `QSTS`,
-`QALS`, `QLOC`, `AVAL`, `AVGN`, `DETH`, `CBTS`, `DLGS` and `AEFF` were added additively
-afterwards.
+`QALS`, `QLOC`, `AVAL`, `AVGN`, `DETH`, `CBTS`, `DLGS`, `AEFF`, `SPLB` and `ECHG` were added
+additively afterwards.
 
 `GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
 any other size is `invalidValue`.
@@ -813,6 +814,61 @@ failing the load, the same rule a corrupt actor value follows.
 The entry count is validated against `minimumActiveEffectEntrySize` (12 bytes), the effect
 count against `minimumActiveEffectSize` (49 bytes), and the value count against
 `activeEffectValueRecordSize` (12 bytes) before storage is reserved.
+
+## `ECHG` entry layout
+
+`ECHG` — enchanted items (issue #472), one entry per owner whose enchanted weapons have spent
+charge or whose worn items established constant effects. Additive and split out of `RDLT` for
+the same reason `AEFF` is, and a session in which nothing enchanted fired and nothing
+enchanted was worn writes no chunk at all.
+
+| type   | field      | notes                              |
+| ------ | ---------- | ---------------------------------- |
+| uint32 | entryCount | number of entries that follow      |
+| bytes  | entries    | `entryCount` entries, layout below |
+
+Each entry:
+
+| type   | field       | notes                                        |
+| ------ | ----------- | -------------------------------------------- |
+| key    | key         | the owner's key, tagged as in `RDLT`         |
+| cell   | cell        | tagged as in `RDLT`                          |
+| uint32 | chargeCount | number of charge records that follow         |
+| bytes  | charges     | `chargeCount` records of `(uint32 item, float32 remaining)` |
+| uint32 | wornCount   | number of worn-item groups that follow       |
+| bytes  | worn        | `wornCount` groups, layout below             |
+
+Each worn-item group:
+
+| type   | field         | notes                                             |
+| ------ | ------------- | ------------------------------------------------- |
+| uint32 | item          | the base FormID of the worn item                  |
+| uint32 | sequenceCount | number of sequences that follow                   |
+| bytes  | sequences     | `sequenceCount` `uint64` `AEFF` sequence numbers  |
+
+Both lists are written in ascending FormID order and the sequences inside a group ascend, so
+re-encoding an unchanged owner produces identical bytes.
+
+The item is keyed by its **base** FormID, because that is what `INVN` stacks by; one owner
+holding two of the same enchanted weapon therefore shares one charge between them, which is
+the stated consequence of this engine having no per-instance item identity yet
+([magic](/engine/magic.md#item-enchantments)).
+
+Charge travels here rather than inside `INVN` because a stack is not where charge belongs:
+`INVN` entries are counts, while a charge is a per-item float that changes on a hit rather
+than on a transfer. The worn-effect sequences beside it are the other half of the same fact —
+which of the `AEFF` effects each worn item is responsible for — and splitting the two would
+let a reload restore effects nothing could take back off.
+
+This chunk has no hard stop, because it carries no closed enumeration: every field is a
+FormID, a count, a float or a sequence. A non-finite or negative charge normalizes to zero, a
+charge above the item's capacity is clamped when it is read against the record, and a sequence
+naming an effect `AEFF` no longer carries simply dispels nothing when the item comes off.
+
+The entry count is validated against `minimumEnchantedItemEntrySize` (16 bytes), the charge
+count against `enchantedItemChargeRecordSize` (8 bytes), the worn count against
+`minimumEnchantedItemWornSize` (8 bytes) and each sequence count against
+`enchantedItemSequenceSize` (8 bytes) before storage is reserved.
 
 ## Version policy
 

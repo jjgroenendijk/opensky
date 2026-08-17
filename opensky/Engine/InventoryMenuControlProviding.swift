@@ -27,6 +27,14 @@ nonisolated struct InventoryMenuControlSnapshot: Equatable {
     let gold: Int32
     /// What the last equip, unequip or drop did, for the readout.
     let lastActionText: String?
+    /// One line per equipped item that carries an enchantment: what it is and how
+    /// much charge is left (issue #472). Empty when nothing equipped is enchanted
+    /// and when the session has no ENCH index.
+    ///
+    /// Beside the row list rather than inside it, because charge is a fact about
+    /// the *equipped* item and the rows list everything carried; a stack of five
+    /// unenchanted iron swords has no charge to show.
+    let enchantmentLines: [String]
 
     /// Vanilla presentation layer.
     let movieEnabled: Bool

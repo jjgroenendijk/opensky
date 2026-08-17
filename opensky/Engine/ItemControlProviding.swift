@@ -39,6 +39,17 @@ nonisolated struct EquippedItemReadout: Equatable, Sendable {
     /// Biped slots and hands it occupies, preformatted — the panel has no
     /// business knowing how to render a `BodySlots` bitfield.
     let occupancy: String
+    /// The item's enchantment and what it has left, preformatted, or nil when it
+    /// carries none and when the session has no ENCH index (issue #472). The
+    /// panel has no business knowing the charge model either.
+    let enchantment: String?
+
+    init(item: FormID, name: String, occupancy: String, enchantment: String? = nil) {
+        self.item = item
+        self.name = name
+        self.occupancy = occupancy
+        self.enchantment = enchantment
+    }
 }
 
 /// One observation of the world-item runtime.

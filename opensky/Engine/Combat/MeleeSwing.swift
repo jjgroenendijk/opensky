@@ -52,6 +52,14 @@ nonisolated struct MeleeWeaponProfile: Equatable, Sendable {
     /// Which animation set the graph plays for this weapon, written to
     /// `iRightHandType` (issue #403).
     let handType: CombatHandType
+    /// The weapon's resolved enchantment, or nil when it carries none (issue
+    /// #472).
+    ///
+    /// Resolved when equipment resolves and carried with the profile rather than
+    /// looked up at the contact frame, for the reason `ArrowPayload` fixes its
+    /// damage at launch: a swing must apply the enchantment the weapon had when it
+    /// started, not whatever the player has equipped by the time it lands.
+    let enchantment: ItemEnchantmentProfile?
 
     init(
         damage: Float,
@@ -60,7 +68,8 @@ nonisolated struct MeleeWeaponProfile: Equatable, Sendable {
         stagger: Float = 0,
         weapon: FormID? = nil,
         impactDataSet: FormID? = nil,
-        handType: CombatHandType = .handToHand
+        handType: CombatHandType = .handToHand,
+        enchantment: ItemEnchantmentProfile? = nil
     ) {
         self.damage = damage
         self.reach = reach
@@ -69,6 +78,7 @@ nonisolated struct MeleeWeaponProfile: Equatable, Sendable {
         self.weapon = weapon
         self.impactDataSet = impactDataSet
         self.handType = handType
+        self.enchantment = enchantment
     }
 
     /// The profile of a bare-handed swing on a session with no unarmed WEAP
@@ -86,7 +96,7 @@ nonisolated struct MeleeWeaponProfile: Equatable, Sendable {
     static let readiedSpell = MeleeWeaponProfile(damage: 1, reach: 1, handType: .spell)
 
     /// One decoded WEAP as a swing profile.
-    init(weapon record: Weapon) {
+    init(weapon record: Weapon, enchantment: ItemEnchantmentProfile? = nil) {
         self.init(
             damage: Float(record.damage),
             reach: record.reach.isFinite && record.reach > 0 ? record.reach : 1,
@@ -94,7 +104,8 @@ nonisolated struct MeleeWeaponProfile: Equatable, Sendable {
             stagger: record.stagger.isFinite ? max(0, record.stagger) : 0,
             weapon: record.formID,
             impactDataSet: record.impactDataSet,
-            handType: CombatHandType(weapon: record.animationType)
+            handType: CombatHandType(weapon: record.animationType),
+            enchantment: enchantment
         )
     }
 }

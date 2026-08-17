@@ -31,6 +31,11 @@ extension GameViewController {
         }
         do {
             let change = try equipment.equip(chosen, on: holder)
+            // After the write, so the reconcile reads the equipped set this equip
+            // produced (issue #472). Every equip path in this controller ends with
+            // this call; see `WornEnchantmentApplication` for why it reconciles
+            // rather than applying just the item that moved.
+            refreshWornEnchantments(on: holder)
             let displaced = change.unequipped.isEmpty
                 ? ""
                 : ", unequipped " + change.unequipped.map { name(of: $0) }
@@ -57,6 +62,7 @@ extension GameViewController {
             return worldItems.lastActionText
         }
         let changed = equipment.unequip(chosen, on: holder)
+        refreshWornEnchantments(on: holder)
         worldItems.lastActionText = changed
             ? "Unequipped \(name(of: chosen)) on \(label(target))."
             : "\(name(of: chosen)) was not equipped on \(label(target))."
@@ -69,11 +75,13 @@ extension GameViewController {
         guard let equipment = worldItems.equipment, let holder = holder(for: target) else {
             return []
         }
+        let values = actorValueHolder(for: holder.key)
         return equipment.equipped(on: holder).map { item in
             EquippedItemReadout(
                 item: item,
                 name: name(of: item),
-                occupancy: Self.describe(equipment.occupancy(of: item))
+                occupancy: Self.describe(equipment.occupancy(of: item)),
+                enchantment: enchantmentLine(of: item, on: values)
             )
         }
     }

@@ -318,7 +318,12 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   once-per-day power rule, the cast input and animation seam, and aimed delivery: the
   payload a cast resolves once, spell projectiles through the archery pipeline, the
   direct-versus-bystander area rule and the measured feet unit behind it, resistance and
-  weakness scaling on hostile magnitudes, and the combat consequences a hostile hit carries.
+  weakness scaling on hostile magnitudes, the combat consequences a hostile hit carries, and
+  item enchantments: the measured charge model behind `floor(EAMT / cost)`, the ECHG chunk and
+  the base-FormID key it costs, contact effects through the shared spell-hit path, the third
+  `ActiveEffectMode` a constant effect needed, the worn reconcile that survives every equip
+  path, the worn restriction that gates nothing at runtime and the 70 vanilla counterexamples
+  that settle it, and the fortify actor values the damage formulas now read.
 * [Archery and projectiles](/engine/archery.md) - the PROJ flight record, the measurement
   that settles `gravity` as a multiplier rather than an acceleration, the census-named bow
   draw and release events, the exact closed-form flight model on the fixed step, the

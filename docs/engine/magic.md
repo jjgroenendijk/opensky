@@ -43,6 +43,7 @@ handed to it.
 - [What a landed spell reaches](#what-a-landed-spell-reaches)
 - [Resistances on hit](#resistances-on-hit)
 - [Combat consequences](#combat-consequences)
+- [Item enchantments](#item-enchantments)
 - [Verification](#verification)
 - [Limits / next](#limits--next)
 
@@ -70,6 +71,15 @@ handed to it.
 | Landed-spell model and application | `opensky/Engine/Magic/SpellHit.swift` | app + CLI |
 | Generalized shot | `opensky/Engine/Combat/ProjectileShot.swift` | app + CLI |
 | Delivery session wiring | `opensky/App/GameViewControllerSpellDelivery.swift` | app |
+| Enchantment charge model | `opensky/Engine/Magic/EnchantmentCharge.swift` | app + CLI |
+| Enchanted-item component | `opensky/Engine/Magic/EnchantedItemComponent.swift` | app + CLI |
+| Enchanted-item ledger | `opensky/Engine/Magic/EnchantmentLedger.swift` | app + CLI |
+| Resolved item enchantment | `opensky/Engine/Magic/ItemEnchantmentProfile.swift` | app + CLI |
+| Enchanted hit and its seam | `opensky/Engine/Magic/WeaponEnchantmentHit.swift` | app + CLI |
+| Worn-effect reconcile | `opensky/Engine/Magic/WornEnchantmentApplication.swift` | app + CLI |
+| Fortify terms | `opensky/Engine/Combat/CombatFortifyBonus.swift` | app + CLI |
+| Enchanted-item save chunk | `opensky/Engine/Formats/Save/OpenSkySave{Encoder,Decoder}EnchantedItems.swift` | app + CLI |
+| Enchantment session wiring | `opensky/App/GameViewControllerEnchantments.swift` | app |
 
 ## Where the semantics come from
 
@@ -253,6 +263,14 @@ that after a load.
 
 Instant effects are not in the chunk and cannot be: a zero-duration effect moved an actor value
 once, and the moved value is what `AVAL` and `AVGN` already carry.
+
+Since issue #472 the load path actually calls it, for the **player only**:
+`loadWorldState(slot:)` re-establishes the player's slots after the snapshot is
+restored, because a worn enchantment's fortify has to survive a reload and a session
+that skipped the step would list the effect and show none of its bonus. No other
+actor has a resolvable holder at that moment — the cells have not streamed back in —
+so an NPC carrying a timed effect across a load is a stated gap rather than a
+silently handled case.
 
 Tolerance follows the container's rules. An unknown chunk is skipped by its declared length, a
 degenerate effect (zero duration, no values) is normalized away by the type rather than failing
@@ -653,6 +671,201 @@ A spell hit also raises `OnHit` on the target's scripts, with the PROJ named.
 `FormID` and a cast spell is addressed by `ReferenceKey`, which is a load-order
 identity a raw FormID cannot round-trip.
 
+## Item enchantments
+
+Roadmap item 19.9, issue #472. The loop the M15 damage formulas left open: a weapon's
+enchantment fires on whatever it hits and pays charge for it, a worn item's enchantment
+grants its effects while it is worn, and a fortify effect from either source moves a
+damage number.
+
+### Which shape a record has, measured
+
+The Creation Kit wiki states the authoring rules
+(<https://ck.uesp.net/wiki/Enchantment>): "Armor Enchantments must use the 'Constant
+Effect' casting type" and "can only have 'Self' as their delivery type"; weapons "can only
+have 'Contact'"; staves "can only use 'Aimed' or 'Target Location'". Counted across this
+machine's whole active load order on 2026-08-17:
+
+| Reached from | Shape | Count |
+|---|---|---|
+| `ARMO` `EITM` | enchantment / constant effect / self | 2,885 |
+| `WEAP` `EITM` | enchantment / fire and forget / touch | 2,939 |
+| `WEAP` `EITM` | staff enchantment / aimed, target actor or target location | 86 |
+
+So the **casting type** selects the runtime behaviour, not the record family:
+`ItemEnchantmentProfile.isWorn` is a constant effect, `isContact` is a weapon's, and
+`isStaff` is neither. `EnchantmentRuntimeRealDataTests` asserts every enchanted item in the
+load order falls into one of the three, so an unexpected shape is a failing count rather
+than a silently skipped item.
+
+### The charge model
+
+Two numbers, both already decoded, and no formula invented here:
+
+- The fully charged value is the weapon's own `EAMT`, which `ItemEnchantment.charge`
+  carries. `ARMO` has no such field, consistent with a worn enchantment spending nothing.
+- One use costs the enchantment's own cost — the authored `ENIT` value under the
+  manual-cost flag, and [`SpellCost`](/formats/magic-records.md)'s auto-calculated total
+  otherwise, which `ResolvedEnchantment.cost` already resolves.
+
+So the number of uses is `floor(EAMT / cost)`, and that was measured rather than assumed.
+UESP's "Skyrim:Generic Magic Weapons" prints a "Charge/Cost = Uses" column for every
+randomly generated magic weapon and states its numbers are "base values, equivalent to the
+values for a player with 0 in all skills"
+(<https://en.uesp.net/wiki/Skyrim:Generic_Magic_Weapons>). Five rows checked against the
+install on 2026-08-17, all three numbers agreeing on every one:
+
+| Weapon | Charge | Cost | Uses |
+|---|---|---|---|
+| Dwarven Warhammer of Absorption | 1000 | 18 | 55 |
+| Ebony Battleaxe of the Vampire | 3000 | 109 | 27 |
+| Iron Battleaxe of Dismay | 500 | 7 | 71 |
+| Imperial Bow of Cowardice | 300 | 11 | 27 |
+| Elven Battleaxe of Banishing | 2000 | 138 | 14 |
+
+A weapon holding less than one whole use cannot fire and the remainder is stranded, not
+spent: vanilla's enchanting menu refuses a soul gem too small to buy "at least one charge"
+(<https://en.uesp.net/wiki/Skyrim:Enchanting>), so a fraction of a use is not a use. That is
+also why `usesRemaining` floors. An enchantment whose cost is zero is unmetered: it fires
+forever and writes no charge at all, so a cost-free weapon does not make its owner dirty on
+every swing.
+
+The charge is spent **before** the effects are applied and only once. A hit that cannot pay
+applies nothing; a hit that can pay has paid even if every one of its entries turns out to
+be an archetype this engine does not implement. That is the order vanilla's own readout
+implies — the meter moves on the swing, not on the effect — and it keeps a weapon carrying
+an unimplemented enchantment from firing forever.
+
+### Where the charge is stored, and what that costs
+
+`EnchantedItemState` is a [world-state component](/engine/runtime-state.md) on the owner,
+holding a remaining charge per item and the effects each worn item established. It travels
+in its own `ECHG` save chunk.
+
+Charge is a *per-instance* quantity, and this engine has no per-instance item identity yet:
+`ItemDefinition.stackKey` is the base FormID, and `ItemDefinitionStore`'s own header already
+records that charge level is one of the facts that will make the key compound. So the key
+here is the base FormID too, and the consequence is stated rather than hidden: **one owner
+holding two of the same enchanted weapon shares one charge between them.** Everything
+addresses an item through `charge(of:)` and `setting(charge:of:)`, so the day a stack key
+becomes compound only those signatures change.
+
+### A landed hit
+
+A contact enchantment applies through `SpellHitApplication`, not beside it. Once an actor
+has been struck, a contact enchantment and a [landed spell](#resistances-on-hit) do the same
+thing — scale each hostile entry by that actor's resistances and hand the list to the effect
+runtime — so item 19.8's implementation is the one implementation. The only thing added is
+the charge.
+
+Resistances therefore apply to a weapon enchantment. `ENIT` carries no "ignore resistance"
+flag of the kind `SPIT` has (its two documented bits are the manual-cost switch and
+extend-duration-on-recast), so there is no record-level way to bypass the step and none is
+invented.
+
+Both combat runtimes reach it through one seam. `WeaponEnchantmentApplying` is refined by
+`MeleeCombatWorld` and `ProjectileWorld` alike, so a swing and an arrow take the same path,
+exactly as `reportScriptHit` is implemented once for melee, archery and the combat loop. The
+weapon's resolved enchantment rides with the swing profile and with `ArrowPayload`, fixed
+when the swing or the shot started — an arrow in the air applies the enchantment the bow
+that fired it was carrying, not whatever is equipped when it lands.
+
+### A worn item
+
+A constant effect is not a timer, so `ActiveEffectMode` grew a third case. `.constant` holds
+its magnitude in the temporary modifier slot exactly as `.modifier` does and nothing ever
+takes it back on its own: 618 of the 620 effect entries behind vanilla's constant-effect
+enchantments author an EFIT duration of zero, so reading that zero as "apply once" would
+have been wrong. `ActiveEffect.isExpired` is false for a constant effect, ticking leaves it
+alone, and `ActiveEffectState` keeps it despite its duration.
+
+Applying and removing is written as a **reconcile** rather than an equip hook. The engine
+equips from several places — the inventory menu, the Items panel, a load — and hanging
+"apply the enchantment" off each of them would be one missed call away from an effect that
+never comes off. `WornEnchantmentApplication.reconcile(worn:on:using:)` takes who is wearing
+what and makes the stored constant effects match; calling it twice changes nothing, and every
+equip path calls it afterwards.
+
+Removal is exact because the applied `ActiveEffect.sequence` numbers are recorded per item. A
+helmet and a necklace can carry the *same* ENCH — vanilla robes and circlets do — so
+dispelling by source record would take off effects the other item granted.
+
+Worn effects are applied unscaled: resistances are for a hostile magnitude arriving from
+outside, and a worn item's enchantment is applied to its own wearer.
+
+### The worn restriction gates nothing at runtime
+
+`ENIT`'s worn-restriction link is a form list of keywords, and the same Creation Kit page
+describes it as an *authoring* restriction: "When the player tries to enchant a Weapon or
+piece of Armor with this Enchantment, only items that have one of the keywords in this list
+may be enchanted with it."
+
+It is exposed as a question — `ItemEnchantmentProfile.allowsWearing(keywords:listedKeywords:)`
+— and deliberately not consulted when a worn item's effects are applied, because enforcing it
+would break vanilla items. Of the 2,727 enchanted `ARMO` records whose enchantment chain
+names a restriction list, **70 carry no keyword their own list names** (measured 2026-08-17)
+— among them the Gauldur Amulet and its three fragments, a Dragon Priest mask, and Cicero's
+hat. `EnchantmentRuntimeRealDataTests` pins those counterexamples so nothing can quietly
+start enforcing the list.
+
+### Fortify effects in the damage formulas
+
+UESP notes that "Many Fortify Skill enchantments actually affect the action directly instead
+of increasing your skill" (<https://en.uesp.net/wiki/Skyrim:Enchanting_Effects>), and the
+records say which value each one moves. Read off the install on 2026-08-17, every one a Peak
+Value Modifier with the Recover flag set:
+
+| MGEF | Actor value | Index |
+|---|---|---|
+| `EnchFortifyOneHandedConstantSelf` | One-Handed Modifier | 96 |
+| `EnchFortifyTwoHandedConstantSelf` | Two-Handed Modifier | 97 |
+| `EnchFortifyArcheryConstantSelf` | Marksman Modifier | 98 |
+| `EnchFortifyBlockConstantSelf` | Block Modifier | 99 |
+| `AlchFortifyOneHanded` | One-Handed Power Modifier | 135 |
+| `AlchFortifyTwoHanded` | Two-Handed Power Modifier | 136 |
+| `AlchFortifyMarksman` | Marksman Power Modifier | 137 |
+| `AlchFortifyBlock` | Block Power Modifier | 138 |
+
+So each combat surface reads *two* values — the enchantment family and the potion family —
+and `CombatFortifyBonus` sums them. They are not aliases: a worn item moves the first and a
+drunk potion the second, so reading only one would drop half the sources. The indices are
+looked up by vanilla name through `ActorValueIdentity` rather than written as numbers.
+
+The magnitudes are percentage points, which the records' own description strings say:
+"One-handed attacks do &lt;mag&gt;% more damage"
+(<https://en.uesp.net/wiki/Skyrim:Fortify_One-handed>), "Bows do &lt;mag&gt;% more damage"
+(<https://en.uesp.net/wiki/Skyrim:Fortify_Marksman>), "Block &lt;mag&gt;% more damage with
+your shield" (<https://en.uesp.net/wiki/Skyrim:Fortify_Block>). The multiplier is therefore
+`1 + points / 100`, summed before the division because the actor value is a single
+accumulator and UESP's own worked example (four 40% items giving +160%) is additive.
+
+Where each lands is in [melee combat](/engine/melee-combat.md) and
+[archery](/engine/archery.md): `MeleeDamage` gained an `attackMultiplier` beside the
+`bonusMultiplier` it already had for the block, and `ArcheryDamage`'s existing
+`bonusMultiplier` is now fed rather than defaulted.
+
+### The ECHG save chunk
+
+Additive and split out of `RDLT` for the same reason `AEFF` and `SPLB` are. One entry per
+owner whose enchanted weapons have spent charge or whose worn items established constant
+effects; a session in which nothing enchanted fired and nothing enchanted was worn writes no
+chunk at all.
+
+Per owner, in order: the key, the cell, the charge list as `(item FormID, remaining charge)`
+pairs, then the worn-item list as `(item FormID, sequence count, sequences)` groups. Both
+lists are in ascending FormID order and the sequences inside a group ascend, so re-encoding
+an unchanged owner produces identical bytes.
+
+Charge travels here rather than inside `INVN` because a stack is not where charge belongs:
+`INVN` entries are counts, and a charge is a per-item float that changes on a hit rather than
+on a transfer. The worn-effect sequences beside it are the other half of the same fact —
+which of the `AEFF` effects each worn item is responsible for — and splitting the two would
+let a reload restore effects nothing could take back off.
+
+Tolerance follows the container's rules, and this chunk has no hard stop: it carries no
+closed enumeration, so a non-finite charge normalizes to zero and a sequence naming an effect
+`AEFF` no longer carries simply dispels nothing when the item comes off.
+
 ## Verification
 
 Sidebar path **World > Combat & Physics > Magic Effects**
@@ -758,6 +971,70 @@ The existing archery suites — `ProjectileRuntimeTests`, `ArcheryRuntimeTests`,
 `ProjectileStuckArrowTests`, `M15AcceptanceChain` — are unchanged in behaviour and
 stay green, which is what makes "one shot model" a claim rather than a hope.
 
+Item enchantments have no destination of their own: a charge is a fact about an
+equipped item, so it prints wherever equipped-item detail already prints.
+`EquippedItemReadout` gained a preformatted `enchantment` line — the enchantment's
+name, whether it is worn, on-hit or a staff, and `remaining/capacity charge, N
+use(s) left` — which surfaces in **World > HUD & Interaction > Items**
+(`ItemsStatsLabel`), in **World > Inventory & Equipment > Equipment inspection**
+(`EquipmentInspectionStatsLabel`), and as the "Enchanted equipment" block of
+**World > Inventory Menu > Menu** (`InventoryMenuStatsLabel`). One formatter
+produces all three, so they cannot disagree about how much a weapon has left.
+
+Covering tests for item 19.9:
+
+- `EnchantmentChargeTests` — `floor(charge / cost)` against UESP's first published
+  row, the five uses a 90/18 weapon has, the stranded partial use, the unmetered
+  case, normalization of mod-authored nonsense, and the readout line.
+- `EnchantmentRuntimeTests` — the profile each record shape resolves to, a landed
+  hit applying its effects and draining one use, the empty weapon that applies
+  nothing, resistances on a contact effect, a hit on an absent target still paying,
+  recharging, a worn item granting and losing its constant effect, a constant effect
+  surviving an hour of ticking, the reconcile being idempotent and difference-only,
+  a contact enchantment not being worn, and the worn restriction answering both ways
+  while gating nothing.
+- `EnchantedItemSaveTests` — the `ECHG` round trip, an owner with no other delta,
+  no chunk for a session that spent nothing, order-independent bytes, and
+  normalization on the way in.
+- `CombatFortifyBonusTests` — both actor-value families being read, the hand type
+  selecting the pair, a bow reading the archery pair from either entry point,
+  unreadable and absurd values degrading safely, and the scope point end to end: a
+  Fortify One-Handed effect changing what `MeleeDamage.resolve` returns, the attack
+  term not growing the block, and a Fortify Archery effect changing an arrow's
+  damage.
+- `MeleeCombatRuntimeTests` and `ProjectileRuntimeTests` — unchanged in behaviour
+  with the new seam recorded rather than applied, which is what keeps "one
+  implementation for a swing and an arrow" honest.
+- `EnchantmentRuntimeRealDataTests` (env-gated) — the five UESP charge rows against
+  the records, every enchanted item in the load order classifying as worn, contact
+  or staff, and the vanilla armour that fails its own worn restriction.
+- `EnchantmentAcceptanceRealDataTests` (env-gated) — the whole chain against the
+  user's install, headless: search the load order for a metered contact enchantment
+  whose effect this engine can carry out, land two hits with it, then wear a real
+  Fortify One-Handed armour enchantment and read the damage number back. It leaves a
+  summary in gitignored `logs/enchantment-acceptance/`. On the local install that run
+  reads: `EnchWeaponFireDamage06`, 3000/3000 charge (81 uses) -> 2926/3000 (79 uses),
+  target health 500 -> 440, `EnchArmorFortifyOneHanded02` worn for 20 points, melee
+  damage 10.0 -> 12.0 (x1.2).
+
+The 19.9 acceptance record, in the format
+[the convention](/tools/sidebar-acceptance.md) defines:
+
+```text
+Milestone: M19.9
+Sidebar path: World > Inventory & Equipment > Equipment inspection
+Destination id: Destination-inventoryEquipment
+Controls exercised: EquipmentInspectionTargetControl, ItemsEquipControl,
+  ItemsUnequipControl
+Readout: EquipmentInspectionStatsLabel (also ItemsStatsLabel,
+  InventoryMenuStatsLabel)
+Deterministic tests: EnchantmentChargeTests, EnchantmentRuntimeTests,
+  EnchantedItemSaveTests, CombatFortifyBonusTests, InventoryEquipmentPanelTests,
+  ItemsSectionTests, InventoryMenuPanelTests, EnchantmentRuntimeRealDataTests,
+  EnchantmentAcceptanceRealDataTests
+Local A/B (optional, never committed): logs/enchantment-acceptance/acceptance.txt
+```
+
 The 19.7 acceptance record, in the format
 [the convention](/tools/sidebar-acceptance.md) defines:
 
@@ -819,7 +1096,6 @@ Local A/B (optional, never committed): logs/caster-acceptance/acceptance.txt
   seam this item leaves them.
 - **The spells menu and favorites** are the in-game UI's; the sidebar panel is this
   milestone's inspection surface (19.12).
-- **Enchantment triggers** are issue 19.9.
 - **Tapering is not applied.** The Creation Kit documents the taper weight, curve and duration
   formula, but no vanilla potion or ingredient effect this item consumes uses it, so
   implementing it here would be untested ground.
@@ -833,3 +1109,34 @@ Local A/B (optional, never committed): logs/caster-acceptance/acceptance.txt
   registering the condition function and the Papyrus native is issue 19.11.
 - **Visuals and sounds** for effects are milestone M26. The ALCH consume sound is decoded and
   carried through `MagicItemUse` for the milestone that plays it.
+- **Staff enchantments are classified and counted, not cast.** 86 of this load order's
+  enchanted `WEAP` records carry a staff enchantment, whose delivery is aimed,
+  target-actor or target-location rather than contact.
+  `ItemEnchantmentProfile.isStaff` names them so neither the swing path nor the arrow
+  path can mistake one for a contact enchantment, and
+  `EnchantmentRuntimeRealDataTests` counts them; a staff *cast* is deliberately not
+  wired, because the trigger is a staff attack rather than a landed hit and that
+  animation seam belongs to the graph work, not to item 19.9. Half-wiring it would
+  mean firing a staff's spell on contact, which is not what a staff does.
+- **Recharging with soul gems is out of scope**, as item 19.9 states: an empty weapon
+  stays empty. `EnchantmentLedger.recharge(_:on:)` exists for the load path and a dev
+  control, not for a soul gem, and the soul-gem economy is a later milestone's.
+- **The charge cost is not scaled by the wielder's skill.** UESP states that the uses go
+  up with "a relevant magic skill" and that skill 100 gives "about 1.7 times the uses
+  documented here", and its charge-per-use formula for a *player-created* enchantment
+  carries an Enchanting-skill term instead. The two disagree about which skill is read and
+  1.7 is quoted as an approximation with no formula beside it, so this engine charges the
+  base cost — the number the published tables print — rather than inventing a multiplier.
+- **One charge is shared between two copies of the same enchanted weapon.** Charge is keyed
+  by base FormID because that is what an inventory stack is keyed by; per-instance item
+  identity is the milestone that also brings tempering and item health.
+- **Enchanting an item is milestone M22** and enchantment visuals on a weapon are M26. This
+  item reads what the records author and applies it; nothing here creates an enchantment.
+- **An NPC's timed effects do not re-establish their modifier slots on load.** The player's
+  do; see [The AEFF save chunk](#the-aeff-save-chunk) for why no other actor has a
+  resolvable holder at that moment.
+- **An NPC wearing enchanted armour from its plugin outfit grants nothing until something
+  equips.** The worn reconcile runs on an equip, an unequip and a load, not on a cell build:
+  walking every resident actor's equipped set as it streams in is per-actor work this item
+  did not measure, and applying constant effects to an actor nobody is fighting buys nothing
+  visible. The player, who starts with nothing worn, is unaffected.

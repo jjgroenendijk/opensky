@@ -1,5 +1,6 @@
 // Every-component-kind coverage for `WorldStateStore` (issues #159, #176,
-// #177, #194, #197, #374, #426). Split from `WorldStateStoreTests`, which sits at the strict-lint
+// #177, #194, #197, #374, #426, #472). Split from `WorldStateStoreTests`, which sits at the
+// strict-lint
 // type-length cap, and kept together because these two tests are the ones that
 // have to be updated whenever a component kind is added: both assert against
 // `WorldStateComponentKind.allCases`, so a new kind fails here until it is
@@ -75,6 +76,12 @@ struct WorldStateComponentCoverageTests {
         ])
     }
 
+    /// One owner with a drained enchanted weapon and a worn item owning an effect
+    /// (issue #472).
+    private var enchantedItems: EnchantedItemState {
+        EnchantedItemState(charges: [0x700: 72], wornEffects: [0x701: [1]])
+    }
+
     @Test func storesAndReadsBackEveryComponentKind() {
         let store = WorldStateStore()
         let reference = key(0x200)
@@ -119,6 +126,9 @@ struct WorldStateComponentCoverageTests {
         // A caster: the fourteenth kind, whose own subject is
         // SpellbookRuntimeTests.
         #expect(store.set(spellbook, for: reference, in: whiterun))
+        // An owner carrying enchanted items: the fifteenth kind, whose own subject
+        // is EnchantmentRuntimeTests.
+        #expect(store.set(enchantedItems, for: reference, in: whiterun))
 
         #expect(store.component(ReferenceEnableState.self, for: reference)?.isEnabled == false)
         #expect(store.component(ReferenceTransformOverride.self, for: reference) == transform(9))
@@ -137,6 +147,7 @@ struct WorldStateComponentCoverageTests {
         #expect(store.component(DialogueRuntimeState.self, for: reference)?.saidCount == 1)
         #expect(store.component(ActiveEffectState.self, for: reference) == activeEffects)
         #expect(store.component(SpellbookState.self, for: reference) == spellbook)
+        #expect(store.component(EnchantedItemState.self, for: reference) == enchantedItems)
         #expect(store.delta(for: reference)?.sortedKinds == WorldStateComponentKind.allCases)
     }
 
@@ -157,6 +168,7 @@ struct WorldStateComponentCoverageTests {
         store.set(DialogueRuntimeState(saidCount: 1), for: reference, in: whiterun)
         store.set(activeEffects, for: reference, in: whiterun)
         store.set(spellbook, for: reference, in: whiterun)
+        store.set(enchantedItems, for: reference, in: whiterun)
         #expect(store.reset(reference))
         #expect(store.delta(for: reference) == nil)
         #expect(store.dirtyCount == 0)

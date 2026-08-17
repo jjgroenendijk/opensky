@@ -99,6 +99,15 @@ struct SpellDeliveryAcceptanceRealDataTests {
             return report
         }
 
+        /// This chain casts spells, not swings: the weapons it carries are
+        /// unenchanted, so an enchanted hit is the documented "not here" nil
+        /// (issue #472). `EnchantmentRuntimeRealDataTests` covers the enchantment
+        /// side against the same install.
+        @discardableResult
+        func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
+            nil
+        }
+
         // MARK: Projectiles
 
         /// The caster stands at the origin looking down +X; the target is 600

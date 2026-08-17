@@ -48,6 +48,8 @@ final class FakeProjectileWorld: ProjectileWorld {
     private(set) var impacts: [ResolvedMeleeImpact] = []
     private(set) var raised: [String] = []
     private(set) var spellHits: [SpellHit] = []
+    /// Enchanted hits the runtime handed out (issue #472).
+    private(set) var enchantedHits: [WeaponEnchantmentHit] = []
     private(set) var variables: [String: BehaviorVariableValue] = [:]
     private var nextSpawnID: UInt64 = 1
 
@@ -144,5 +146,25 @@ final class FakeProjectileWorld: ProjectileWorld {
             report.note(target: [], entries: hit.payload.entries.count, stored: 0)
         }
         return report
+    }
+
+    /// Records the enchanted hit instead of applying it, for the reason a landed
+    /// spell is recorded (issue #472): what the projectile suites need to know is
+    /// that the bow's enchantment reached the seam with the right target and
+    /// position, and `EnchantmentRuntimeTests` asks what applying it does against a
+    /// real effect runtime. The charge is reported unspent, because nothing here
+    /// owns a world-state store to spend it in.
+    @discardableResult
+    func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
+        enchantedHits.append(hit)
+        return WeaponEnchantmentReport(
+            item: hit.profile.item,
+            name: hit.profile.name,
+            charge: hit.profile.fullCharge,
+            didFire: true,
+            entryCount: hit.profile.entries.count,
+            storedCount: 0,
+            adjustments: []
+        )
     }
 }
