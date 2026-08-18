@@ -94,7 +94,11 @@ extension FakeWorldProviders {
             EquipInspectReadout(
                 name: "00003000 (base 00003000)",
                 equipped: [EquippedItemReadout(
-                    item: Self.grantedSword, name: "IronSword", occupancy: "right hand"
+                    item: Self.grantedSword, name: "IronSword", occupancy: "right hand",
+                    // Item 19.9 gave the readout an enchantment line; the fake
+                    // carries one so the M19 gate can read a charge back through
+                    // the panel rather than only through the formatter.
+                    enchantment: "Fire Damage (on hit) · 2926/3000 charge, 79 use(s) left"
                 )],
                 appearanceSkips: ["maskedByOutfit (00000300)"],
                 usesRuntimeEquipment: true

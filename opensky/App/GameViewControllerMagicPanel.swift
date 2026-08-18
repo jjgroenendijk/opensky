@@ -12,9 +12,14 @@ extension GameViewController: MagicEffectControlProviding {
     var magicEffectControlSnapshot: MagicEffectControlSnapshot {
         guard let runtime = magicEffects.runtime else { return .unavailable }
         let tally = runtime.tally
+        let nearest = nearestActorValueHolder()
         return MagicEffectControlSnapshot(
             isAvailable: true,
             playerEffects: runtime.active(on: .player).map { readout(of: $0, runtime: runtime) },
+            nearestActorName: nearest.map { name(ofActorValueHolder: $0) },
+            nearestActorEffects: nearest.map { holder in
+                runtime.active(on: holder).map { readout(of: $0, runtime: runtime) }
+            } ?? [],
             runtimeActorCount: worldState.snapshot().entries.count { entry in
                 entry.delta.component(ActiveEffectState.self) != nil
             },

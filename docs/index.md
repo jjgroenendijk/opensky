@@ -402,8 +402,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [CLI dev tool](/tools/cli.md) - openskycli target sharing the engine sources:
   commands, mode-specific benchmark validation, and env-gated make probe harness.
 * [Main-app asset browser](/tools/preview-gui.md) - Library > Asset Browser destination:
-  VFS browsing, load-order reference-record inspectors, toolbar World PNG capture, and
-  offscreen NIF/DDS previews.
+  VFS browsing, load-order reference-record inspectors, the nine M19 magic record families
+  and what each summary resolves, toolbar World PNG capture, and offscreen NIF/DDS previews.
 * [Main-app UI framework + placement](/tools/app-ui.md) - unified sidebar shell,
   destination registry, panel base classes, hosted sections, placement tree,
   layout + interaction invariants, accessibility-id contract.

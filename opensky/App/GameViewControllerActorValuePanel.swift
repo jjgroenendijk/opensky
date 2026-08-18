@@ -101,7 +101,12 @@ extension GameViewController: ActorValueControlProviding {
 
     /// A holder's display name: its NPC_ base FormID, which is what the user
     /// types into the record dump to see what it resolved to.
-    private func name(ofActorValueHolder holder: ActorValueHolder) -> String {
+    ///
+    /// Internal rather than file-private because the Magic Effects conformance
+    /// in `GameViewControllerMagicPanel.swift` names the same actor this one
+    /// does (issue #475): two spellings of "nearest actor" across two sections
+    /// of one panel would be a bug the reader has to notice.
+    func name(ofActorValueHolder holder: ActorValueHolder) -> String {
         switch holder.subject {
         case .player: "Player"
         case let .actor(base): "\(holder.key.description) (base \(base))"

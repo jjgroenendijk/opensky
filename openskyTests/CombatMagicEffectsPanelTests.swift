@@ -13,12 +13,16 @@ import Testing
 struct CombatMagicEffectsPanelTests {
     private func snapshot(
         effects: [ActiveEffectReadout] = [],
+        nearestActorName: String? = nil,
+        nearestActorEffects: [ActiveEffectReadout] = [],
         skipped: Int = 0,
         unimplemented: [String] = []
     ) -> MagicEffectControlSnapshot {
         MagicEffectControlSnapshot(
             isAvailable: true,
             playerEffects: effects,
+            nearestActorName: nearestActorName,
+            nearestActorEffects: nearestActorEffects,
             runtimeActorCount: 1,
             appliedCount: 2,
             instantCount: 3,
@@ -97,6 +101,38 @@ struct CombatMagicEffectsPanelTests {
         let text = MagicEffectControlReadout.text(for: snapshot())
         #expect(text.contains("Player effects: none running"))
         #expect(text.contains("Coverage: every effect entry applied"))
+    }
+
+    /// The nearest resident actor's list (issue #475, roadmap item 19.12): the
+    /// actor the resistance values above are read about, so a hostile spell
+    /// that landed on an NPC is visible beside what scaled it.
+    @Test func theNearestActorsEffectsAreListedUnderTheirOwnName() {
+        let text = MagicEffectControlReadout.text(
+            for: snapshot(
+                nearestActorName: "0x0001A69A (base 0x00013481)",
+                nearestActorEffects: [fortifyLine]
+            )
+        )
+        #expect(text.contains("Nearest actor effects — 0x0001A69A (base 0x00013481) (1):"))
+        #expect(text.contains("Fortify Resist Fire (potion) restores Resist Fire"))
+    }
+
+    /// No actor resident and an actor with nothing running are different
+    /// states, and the readout spells them differently.
+    @Test func anAbsentActorAndAQuietActorReadDifferently() {
+        #expect(
+            MagicEffectControlReadout.nearestActorEffectsText(for: snapshot())
+                == "Nearest actor effects: none resident"
+        )
+        #expect(
+            MagicEffectControlReadout
+                .nearestActorEffectsText(for: snapshot(nearestActorName: "Bandit"))
+                == "Nearest actor effects: none running on Bandit"
+        )
+        #expect(
+            MagicEffectControlReadout.nearestActorEffectsText(for: .unavailable)
+                == "Nearest actor effects: unavailable"
+        )
     }
 
     /// Unimplemented ground is measured on the readout, which is the whole

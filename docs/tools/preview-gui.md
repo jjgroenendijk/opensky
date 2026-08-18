@@ -17,6 +17,7 @@ timestamp: 2026-08-13T00:00:00Z
 - Menu + Settings
 - Preview pipeline
 - Verification
+- M19 magic record families
 
 `Library > Asset Browser` sidebar destination: browse local install assets and preview
 one at a time — parser/renderer's eye view beside World, with no second product or
@@ -64,7 +65,8 @@ in-window message, app still launches (no crash, no alert loop).
 
 `Reference records (load order)` adds two selectors above the existing table. The plugin
 selector filters by the plugin whose structurally valid definition won; the record-type
-selector covers KYWD, FLST, LCTN, LCRT, ECZN, AACT, COLL, DOBJ and MGEF. Rows sort by editor ID
+selector covers KYWD, FLST, LCTN, LCRT, ECZN, AACT, COLL and DOBJ, and M19 added the nine
+magic families below. Rows sort by editor ID
 and name the winning plugin plus the load-order-independent `ResolvedFormID`, so an override
 is never presented as though it came from its defining master.
 
@@ -162,6 +164,47 @@ PreviewCatalogTests, DestinationRegistryTests
 Local A/B (optional, never committed): none
 ```
 
-M19.1 extends this existing surface with `MGEF — Magic effects`. Its inspector summary
-prints the display name, archetype, casting type, delivery, base cost and actor-value names;
-ALCH and INGR summaries name their resolved effects.
+## M19 magic record families
+
+M19 extends the same surface with nine families rather than a browser of its own, because
+the load-order record surface M18 built already answers the questions a magic record raises:
+which plugin won, what the links resolve to, and what is dangling. The record-type selector
+gains `MGEF — Magic effects`, `SPEL — Spells`, `SCRL — Scrolls`, `ENCH — Enchantments`,
+`SHOU — Shouts`, `WOOP — Words of power`, `LVSP — Leveled spells`, `DUAL — Dual cast data`
+and `EQUP — Equip slots`, and `ReferenceRecordInspector` builds the magic stores once during
+the off-main catalog load so a summary can name what a record points at.
+
+What each summary resolves, all of it read-only:
+
+- **MGEF** — display name, archetype, casting type, delivery, base cost, the related and
+  resistance actor values by vanilla name, and the keyword editor IDs. ALCH and INGR
+  summaries name their resolved effects through the same store.
+- **SPEL** and **SCRL** — the SPIT header, then the effect table: one line per entry with
+  the MGEF's display name, magnitude, area, duration and the entry's computed cost, under a
+  spell cost that states whether it was authored manually or auto-calculated and how many
+  entries went unresolved.
+- **ENCH** — the same effect table, the ENIT header with the base enchantment and worn
+  restrictions named through their own stores, and — as a resolved-detail block —
+  the base-enchantment chain, one line per link, guarded against a mod-authored cycle.
+- **SHOU** — the header links plus the SNAM word run, each word named through WOOP and its
+  spell through SPEL, with the recovery time.
+- **WOOP** — the word and its translation. **LVSP** — the leveled entries by level and
+  count, named through the spell store. **DUAL** — the DATA inherit-scale flags, with the
+  five art links left as raw FormIDs because nothing indexes PROJ, EXPL, EFSH, ARTO or IPDS
+  yet and printing a FormID honestly beats inventing a name. **EQUP** — the parent slots by
+  name and the hands the slot resolves to.
+
+A link that resolves to nothing is prefixed `[UNRESOLVED]` rather than dropped, and a null
+one says `NULL`, so a spell whose effect left the load order reads as a broken spell instead
+of a short one. Without a magic context — the plain `Records (Skyrim.esm)` category — the
+tables still print, by raw FormID and without costs, because the base costs live in the MGEF
+records.
+
+`openskycli record <formid>` prints the identical string; the formatter is one
+implementation in `opensky/Engine/Preview/RecordTextDumpMagic.swift` and
+`RecordTextDumpShouts.swift`, split across two files only to stay inside the lint
+file-length cap.
+
+The M19 acceptance record for the whole milestone, this surface included, lives in
+[magic](/engine/magic.md); `M19AcceptancePanelTests` pins the nine families to the
+record-type selector.
