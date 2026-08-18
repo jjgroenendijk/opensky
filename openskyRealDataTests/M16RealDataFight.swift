@@ -98,6 +98,24 @@ extension M16RealDataFight: PerceptionWorld {
 }
 
 extension M16RealDataFight: CombatLoopWorld {
+    /// Casting is item 19.10's. This chain's fight is a melee one, and an actor
+    /// with nothing castable takes the path it took before 19.10 existed.
+    func combatCasting(of key: ReferenceKey) -> CombatCastingProfile {
+        .none
+    }
+
+    @discardableResult
+    func beginCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
+        false
+    }
+
+    @discardableResult
+    func releaseCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
+        false
+    }
+
+    func cancelCombatCast(by key: ReferenceKey) {}
+
     var combatPlayer: MeleeAttacker {
         MeleeAttacker(key: .player, feet: playerFeet, facing: 0)
     }

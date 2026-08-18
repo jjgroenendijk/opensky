@@ -160,6 +160,8 @@ struct FakeCombatLoopState {
     var snapshot = CombatLoopSnapshot.unavailable
     var isHostile = false
     var traceClearCount = 0
+    /// Whether fighters may cast (issue #473). On, matching the app.
+    var allowsCasting = true
 }
 
 extension FakeWorldProviders {
@@ -170,6 +172,11 @@ extension FakeWorldProviders {
     var selectedActorIsHostile: Bool {
         get { combatLoop.isHostile }
         set { combatLoop.isHostile = newValue }
+    }
+
+    var isActorCastingEnabled: Bool {
+        get { combatLoop.allowsCasting }
+        set { combatLoop.allowsCasting = newValue }
     }
 
     func clearCombatTrace() {

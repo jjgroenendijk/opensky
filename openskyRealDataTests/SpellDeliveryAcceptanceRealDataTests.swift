@@ -86,7 +86,7 @@ struct SpellDeliveryAcceptanceRealDataTests {
             ) != nil
         }
 
-        func aimedSpellTarget(within range: Float) -> SpellAim {
+        func aimedSpellTarget(within range: Float, for caster: ReferenceKey) -> SpellAim {
             SpellAim(target: holder.key, position: SIMD3(), candidates: projectileTargets())
         }
 

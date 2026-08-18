@@ -149,10 +149,17 @@ final class CombatLoopRuntime {
     }
 
     /// Interrupts `key`'s attack and plays its stagger clip.
+    ///
+    /// A charge in the actor's hand goes with the attack: the same blow that
+    /// takes a swing away takes a cast away, which is why `isAttacking` counts
+    /// the casting phase.
     func noteStagger(of key: ReferenceKey) {
         var machine = behaviors[key] ?? CombatBehaviorMachine(
             settings: behaviorSettings, seed: CombatBehaviorMachine.seed(for: key)
         )
+        if machine.pendingCast != nil {
+            world?.cancelCombatCast(by: key)
+        }
         guard machine.stagger() else { return }
         behaviors[key] = machine
         world?.playCombatClip(.stagger, on: key)
@@ -266,7 +273,10 @@ final class CombatLoopRuntime {
     /// step after the load, which is the same route it took the first time.
     func prepareForPersistence() {
         world?.despawnCombatTransients()
-        for key in behaviors.keys {
+        for key in behaviors.keys.sorted() {
+            if behaviors[key]?.pendingCast != nil {
+                world?.cancelCombatCast(by: key)
+            }
             behaviors[key]?.park()
         }
         playerDamageFlash = 0
@@ -318,9 +328,18 @@ final class CombatLoopRuntime {
     }
 
     /// Parks one machine without losing its counts, for an actor that died or
-    /// whose cell unloaded.
+    /// whose cell unloaded. A charge in flight is dropped with it.
     func parkBehavior(of key: ReferenceKey) {
+        if behaviors[key]?.pendingCast != nil {
+            world?.cancelCombatCast(by: key)
+        }
         behaviors[key]?.park()
+    }
+
+    /// Drops a charge the world refused to begin, leaving the fight running.
+    func abandonCast(of key: ReferenceKey, world: any CombatLoopWorld) {
+        world.cancelCombatCast(by: key)
+        behaviors[key]?.abandonCast()
     }
 
     /// Forgets one machine outright, for an actor that is no longer resident.
@@ -366,6 +385,9 @@ final class CombatLoopRuntime {
         forcedTargets.removeValue(forKey: key)
         provoked.remove(key)
         guard behaviors[key] != nil else { return }
+        if behaviors[key]?.pendingCast != nil {
+            world.cancelCombatCast(by: key)
+        }
         behaviors[key]?.park()
         world.stopCombatMovement(of: key)
         world.resumeCombatPackage(for: key)

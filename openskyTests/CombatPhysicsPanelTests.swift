@@ -54,6 +54,7 @@ struct CombatPhysicsPanelTests {
             (panel.actorValuesSection.refillControl, "ActorValueRefillControl"),
             (panel.actorValuesSection.resetControl, "ActorValueResetControl"),
             (panel.hostilityControl, "CombatHostilityControl"),
+            (panel.actorCastingControl, "CombatActorCastingControl"),
             (panel.clearCombatTraceControl, "CombatClearTraceControl"),
             (panel.physicsFreezeControl, "PhysicsFreezeControl"),
             (panel.physicsResetControl, "PhysicsResetControl")
@@ -128,6 +129,10 @@ struct CombatPhysicsPanelTests {
         #expect(readout.contains("Fighters: 1"))
         #expect(readout.contains("Bandit: windup, detected"))
         #expect(readout.contains("2 contact frames"))
+        // Item 19.10 (issue #473): the per-fighter cast counts and the
+        // casting line above the hostility one.
+        #expect(readout.contains("2 casts (1 castable)"))
+        #expect(readout.contains("AI casting: on — 1 of 1 fighters armed, 2 spells cast"))
         #expect(readout.contains("Hostility: Bandit is hostile"))
         #expect(readout.contains("Hits taken: 2"))
         #expect(readout.contains("arrows in flight 1/"))
@@ -144,6 +149,13 @@ struct CombatPhysicsPanelTests {
         panel.hostilityControl.state = .off
         sendScriptsControl(panel.hostilityControl)
         #expect(!providers.selectedActorIsHostile)
+
+        panel.actorCastingControl.state = .off
+        sendScriptsControl(panel.actorCastingControl)
+        #expect(!providers.isActorCastingEnabled)
+        panel.actorCastingControl.state = .on
+        sendScriptsControl(panel.actorCastingControl)
+        #expect(providers.isActorCastingEnabled)
 
         sendScriptsControl(panel.clearCombatTraceControl)
         #expect(providers.combatLoop.traceClearCount == 1)
@@ -256,7 +268,9 @@ struct CombatPhysicsPanelTests {
                 attackCount: 3,
                 contactCount: 2,
                 blockCount: 1,
-                searchCount: 0
+                searchCount: 0,
+                castCount: 2,
+                spellOptionCount: 1
             )],
             crowdedOutCount: 0,
             selectedActorName: "Bandit",
@@ -269,6 +283,8 @@ struct CombatPhysicsPanelTests {
             ),
             limits: .standard,
             trimmedTransients: .none,
+            isActorCastingEnabled: true,
+            actorCastCount: 2,
             lastActionText: "Bandit is now hostile."
         )
     }

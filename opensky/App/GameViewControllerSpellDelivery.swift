@@ -56,30 +56,78 @@ extension GameViewController {
     /// projectile obeys the same fixed step, the same range and lifetime bounds
     /// and the same impact query — which is the whole point of generalizing the
     /// shot model rather than writing a second one.
+    ///
+    /// The caster is the payload's own, so an NPC's spell leaves the NPC
+    /// (issue #473) rather than the camera: a fireball that spawned at the
+    /// player's eye and flew at the player would be a shot nobody could read.
     @discardableResult
     func launchSpellProjectile(_ payload: SpellPayload) -> Bool {
         guard
             let runtime = archery.runtime,
             let link = payload.projectile,
-            let profile = spellProjectileProfile(link)
+            let profile = spellProjectileProfile(link),
+            let shooter = spellShooter(for: payload.caster)
         else { return false }
         return runtime.projectiles.fire(
-            ProjectileShot.spell(profile: profile, payload: payload)
+            ProjectileShot.spell(profile: profile, payload: payload),
+            from: shooter
         ) != nil
     }
 
-    /// What the player's aim ray reaches, out to `range`.
+    /// Where `caster` casts from and which way, or nil when this session
+    /// cannot place it.
+    ///
+    /// The player casts down the camera ray, which is what the reticle
+    /// promises. Every other actor casts from its own eye at the actor it is
+    /// fighting, which in this build is always the player — `StartCombat`
+    /// refuses any other target and item 16.7 says so rather than
+    /// half-simulating a fight between two NPCs.
+    func spellShooter(for caster: ReferenceKey) -> ProjectileShooter? {
+        guard caster != .player else { return projectileShooter }
+        guard let origin = actorCastOrigin(of: caster) else { return nil }
+        return ProjectileShooter(
+            key: caster,
+            origin: origin,
+            aim: ProjectileFlight.normalized(playerCastTarget() - origin),
+            isFirstPerson: false,
+            location: streamer?.cellLocation(of: caster)
+        )
+    }
+
+    /// The muzzle an NPC casts from: its own eye, scaled with the actor.
+    func actorCastOrigin(of key: ReferenceKey) -> SIMD3<Float>? {
+        guard
+            let streamer,
+            let entry = streamer.referenceEntry(key: key),
+            let actor = entry.placedActor
+        else { return nil }
+        let moved = streamer.npcTransform(for: key)
+            ?? worldState.component(ReferenceTransformOverride.self, for: key)
+        let feet = moved?.position ?? actor.placement.position
+        return feet + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight * actor.scale)
+    }
+
+    /// What an NPC caster aims at: the middle of the player's capsule rather
+    /// than the eye or the feet, so a spell that misses does so because the
+    /// caster was aiming at a target that moved and not because it was aiming
+    /// at the floor.
+    func playerCastTarget() -> SIMD3<Float> {
+        let player = meleeAttacker
+        return player.feet + SIMD3(0, 0, player.capsule.height / 2)
+    }
+
+    /// What `caster`'s aim ray reaches, out to `range`.
     ///
     /// Range zero means the record bounds nothing, and then the same
     /// `fVisibleNavmeshMoveDist` ceiling a projectile flies under applies —
     /// past it UESP states a shot "will phase through targets without doing any
     /// damage", so there is nothing further out to hit.
-    func aimedTarget(within range: Float) -> SpellAim {
+    func aimedTarget(within range: Float, for caster: ReferenceKey) -> SpellAim {
+        guard caster == .player else { return actorAimedTarget(within: range, for: caster) }
         guard let renderer else { return .none }
         let origin = renderer.freeFlyCamera.position
         let direction = ProjectileFlight.normalized(renderer.freeFlyCamera.forward)
-        let ceiling = archery.runtime?.settings.visibleMoveDistance.value ?? 0
-        let reach = [range, ceiling].filter { $0 > 0 }.min() ?? Self.spellAimFallbackReach
+        let reach = castReach(within: range)
         let candidates = projectileTargets()
         let impact = ProjectileImpactQuery.first(
             step: ProjectileStep(from: origin, to: origin + direction * reach, radius: 0),
@@ -92,6 +140,31 @@ extension GameViewController {
             position: impact?.position ?? origin + direction * reach,
             candidates: candidates
         )
+    }
+
+    /// The same query for an NPC caster, from its eye toward the player.
+    private func actorAimedTarget(within range: Float, for caster: ReferenceKey) -> SpellAim {
+        guard let origin = actorCastOrigin(of: caster) else { return .none }
+        let direction = ProjectileFlight.normalized(playerCastTarget() - origin)
+        let reach = castReach(within: range)
+        let candidates = projectileTargets()
+        let impact = ProjectileImpactQuery.first(
+            step: ProjectileStep(from: origin, to: origin + direction * reach, radius: 0),
+            targets: candidates,
+            shooter: caster,
+            sweep: { sweepProjectile($0) }
+        )
+        return SpellAim(
+            target: impact?.target,
+            position: impact?.position ?? origin + direction * reach,
+            candidates: candidates
+        )
+    }
+
+    /// How far a cast of SPIT range `range` actually reaches in this session.
+    func castReach(within range: Float) -> Float {
+        let ceiling = archery.runtime?.settings.visibleMoveDistance.value ?? 0
+        return [range, ceiling].filter { $0 > 0 }.min() ?? Self.spellAimFallbackReach
     }
 
     /// How far an aimed cast reaches when neither the record nor the settings

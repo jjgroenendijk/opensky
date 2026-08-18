@@ -35,6 +35,7 @@ final class CombatPhysicsUITests: OpenSkyUITestCase {
         XCTAssertTrue(app.buttons["ArcherySpawnControl"].exists)
         XCTAssertTrue(app.buttons["RagdollTriggerControl"].exists)
         XCTAssertTrue(app.checkBoxes["CombatHostilityControl"].exists)
+        XCTAssertTrue(app.checkBoxes["CombatActorCastingControl"].exists)
         XCTAssertTrue(app.buttons["CombatClearTraceControl"].exists)
         XCTAssertTrue(app.checkBoxes["PhysicsFreezeControl"].exists)
         XCTAssertTrue(app.buttons["PhysicsResetControl"].exists)

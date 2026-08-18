@@ -37,6 +37,8 @@ final class FakeCasterWorld: CasterWorld {
     private(set) var firedProjectiles: [SpellPayload] = []
     private(set) var spellHits: [SpellHit] = []
     private(set) var aimRanges: [Float] = []
+    /// Who each aim query was made for (issue #473).
+    private(set) var aimCasters: [ReferenceKey] = []
 
     func applyCastEffects(
         _ entries: [MagicItemEffect],
@@ -61,8 +63,9 @@ final class FakeCasterWorld: CasterWorld {
         return true
     }
 
-    func aimedSpellTarget(within range: Float) -> SpellAim {
+    func aimedSpellTarget(within range: Float, for caster: ReferenceKey) -> SpellAim {
         aimRanges.append(range)
+        aimCasters.append(caster)
         return aim
     }
 

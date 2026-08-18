@@ -111,7 +111,12 @@ extension CasterRuntime {
             tally.noteProjectile()
             return 0
         case .aimed, .targetActor:
-            return applyAtAim(payload, range: spell.data?.range ?? 0, world: world)
+            return applyAtAim(
+                payload,
+                range: spell.data?.range ?? 0,
+                caster: caster.key,
+                world: world
+            )
         case .selfTarget, .touch, .targetLocation, .unknown:
             // Unreachable: `SpellDelivery.isImplemented` refused these before
             // the cast started, and self delivery never gets here. Returning
@@ -129,9 +134,10 @@ extension CasterRuntime {
     private func applyAtAim(
         _ payload: SpellPayload,
         range: Float,
+        caster: ReferenceKey,
         world: any CasterWorld
     ) -> Int {
-        let aim = world.aimedSpellTarget(within: range)
+        let aim = world.aimedSpellTarget(within: range, for: caster)
         let targets = SpellHitTargeting.targets(
             of: payload,
             at: aim.position,

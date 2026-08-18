@@ -29,6 +29,10 @@ struct CombatBridgeState {
     /// Cache keys that produced no clip, so a rig whose animation is missing is
     /// not re-decoded once per attack.
     var unresolvableClips: Set<String> = []
+    /// Whether fighting actors may cast the spells their records give them
+    /// (issue #473). On, because casting is the shipping behaviour; the Combat
+    /// Loop section's checkbox is what turns it off for a session.
+    var allowsActorCasting = true
 }
 
 extension GameViewController {
