@@ -4,6 +4,30 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-18
 
+* **M19 accepted (issue #475)**: item 19.12 is the milestone gate, and it added one surface
+  rather than a destination. The magic panel is `World > Combat & Physics`, where Actor
+  Values, Magic Effects, Spellcasting and Combat Loop already sit in the order a cast is
+  read in — what the bodies are worth and what resists what, what is running on them, what
+  is being cast, and whether the fighters are casting too. AGENTS.md prefers controls under
+  an existing destination, and every M19 reading is about an actor that destination already
+  describes, so nothing was promoted.
+* **The Magic Effects readout gained the nearest resident actor's own effect list**, beside
+  the player's, because that is the actor whose resistances the section above it reports:
+  a hostile spell that landed on an NPC and the multiplier that scaled it are now read in
+  one place. "No actor resident" and "an actor with nothing running" are spelled
+  differently. `MagicEffectDispelControl` still acts on the player alone.
+* **All nine magic record families are browsable** from `Library > Asset Browser >
+  Reference records (load order)` — MGEF, SPEL, SCRL, ENCH, SHOU, WOOP, LVSP, DUAL and
+  EQUP — with a spell's effect table and computed cost, an enchantment's base chain, and a
+  shout's words each named through the store that owns them. A dangling link reads
+  `[UNRESOLVED]` rather than disappearing. `openskycli record` prints the identical string.
+* **`M19AcceptancePanelTests` is the evidence**: one uninterrupted run through the registry
+  factory the app itself uses, on one provider set — learn, select, ready, cast, read the
+  projectile and its resistance, switch NPC casting off — then an enchanted weapon's
+  remaining charge through `World > Inventory & Equipment > Equipment`, then the nine record
+  families in the Asset Browser's type selector. The record and the ledger rows are in
+  [magic](/engine/magic.md) and [the convention](/tools/sidebar-acceptance.md); the ledger
+  also gained the 19.4, 19.5, 19.6 and 19.8 rows those items had not written.
 * **Magic condition functions and Papyrus spell natives (issue #474)**: item 19.11 makes the
   two script-facing surfaces legible. Eight CTDA functions — `HasMagicEffect`, `HasSpell`,
   `GetCurrentDeliveryType`, `GetCurrentCastingType`, `HasEquippedSpell`,

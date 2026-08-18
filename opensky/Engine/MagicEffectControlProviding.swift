@@ -47,6 +47,15 @@ nonisolated struct MagicEffectControlSnapshot: Equatable, Sendable {
     let isAvailable: Bool
     /// Every effect currently acting on the player, in application order.
     let playerEffects: [ActiveEffectReadout]
+    /// The nearest resident actor the panel can name, or nil when no actor is
+    /// resident. The same actor `ActorValueControlSnapshot.nearestActor`
+    /// describes, so the effects list and the resistance values below it are
+    /// read about the same body (issue #475, roadmap item 19.12).
+    let nearestActorName: String?
+    /// Every effect currently acting on that actor, in application order.
+    /// Empty both when the actor carries none and when there is no actor; the
+    /// name above is what tells those two apart.
+    let nearestActorEffects: [ActiveEffectReadout]
     /// How many references carry an active-effect component, across every cell
     /// whether resident or not.
     let runtimeActorCount: Int
@@ -70,6 +79,8 @@ nonisolated struct MagicEffectControlSnapshot: Equatable, Sendable {
     static let unavailable = MagicEffectControlSnapshot(
         isAvailable: false,
         playerEffects: [],
+        nearestActorName: nil,
+        nearestActorEffects: [],
         runtimeActorCount: 0,
         appliedCount: 0,
         instantCount: 0,

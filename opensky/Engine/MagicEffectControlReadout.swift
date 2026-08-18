@@ -19,6 +19,26 @@ nonisolated enum MagicEffectControlReadout {
         return "Player effects (\(snapshot.playerEffects.count)):\n\(lines)"
     }
 
+    /// The nearest resident actor's effect list, which is the actor the
+    /// resistance values in the Actor Values section above are read about
+    /// (issue #475, roadmap item 19.12).
+    ///
+    /// "no actor resident" and "an actor with nothing running" are different
+    /// states and are spelled differently: an NPC that just took a hostile
+    /// spell and an empty cell must not read the same.
+    static func nearestActorEffectsText(for snapshot: MagicEffectControlSnapshot) -> String {
+        guard snapshot.isAvailable else { return "Nearest actor effects: unavailable" }
+        guard let name = snapshot.nearestActorName else {
+            return "Nearest actor effects: none resident"
+        }
+        guard !snapshot.nearestActorEffects.isEmpty else {
+            return "Nearest actor effects: none running on \(name)"
+        }
+        let lines = snapshot.nearestActorEffects.map { "  \($0.line)" }.joined(separator: "\n")
+        return "Nearest actor effects — \(name) (\(snapshot.nearestActorEffects.count)):"
+            + "\n\(lines)"
+    }
+
     /// What the runtime has done this session.
     static func activityText(for snapshot: MagicEffectControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Applied: unavailable" }
@@ -49,6 +69,7 @@ nonisolated enum MagicEffectControlReadout {
     static func text(for snapshot: MagicEffectControlSnapshot) -> String {
         [
             effectsText(for: snapshot),
+            nearestActorEffectsText(for: snapshot),
             activityText(for: snapshot),
             coverageText(for: snapshot),
             lastActionText(for: snapshot)

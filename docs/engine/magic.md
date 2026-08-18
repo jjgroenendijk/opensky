@@ -47,6 +47,7 @@ handed to it.
 - [Item enchantments](#item-enchantments)
 - [The script-facing surface](#the-script-facing-surface)
 - [Verification](#verification)
+  - [The M19 acceptance record](#the-m19-acceptance-record)
 - [Limits / next](#limits--next)
 
 | Layer | File | Target |
@@ -1028,6 +1029,14 @@ Sidebar path **World > Combat & Physics > Magic Effects**
 `CombatMagicEffectsStatsLabel`. It sits beside Actor Values because that is what it acts on: a
 potion that restored health is only convincing next to the health it restored.
 
+The readout lists the player first and then the nearest resident actor — the same actor
+`ActorValueControlSnapshot.nearestActor` names, so the effects and the resistances that
+scaled them are read about one body (issue #475). "No actor resident" and "an actor with
+nothing running" are spelled differently, because an NPC that has just taken a hostile spell
+and an empty cell must not read the same. `MagicEffectDispelControl` still acts on the player
+only: a dispel is a deliberate way back from something the user did, and the nearest actor's
+effects are the world's.
+
 The inventory menu's own action is `InventoryMenuConsumeControl` under
 **World > Inventory Menu > Menu**.
 
@@ -1043,8 +1052,8 @@ Covering tests:
   first-effect rule, and the two refusals.
 - `ActiveEffectSaveTests` — the round trip, the modifiers a restored effect owns, no chunk for
   a session with no effects, and the unknown-source-kind hard stop.
-- `CombatMagicEffectsPanelTests` — accessibility ids, control routing, and the readout with and
-  without a runtime.
+- `CombatMagicEffectsPanelTests` — accessibility ids, control routing, the readout with and
+  without a runtime, the nearest actor's own list, and the three ways that list can read.
 
 Casting has its own path: **World > Combat & Physics > Spellcasting**
 (`Destination-combatPhysics`, `PanelSection-combatSpellcasting`), directly below Magic
@@ -1204,6 +1213,44 @@ Deterministic tests: CombatSpellcastingPanelTests, CombatPhysicsPanelTests,
   SpellbookRuntimeTests, CasterRuntimeTests, SpellbookSaveTests, CasterRealDataTests,
   CasterAcceptanceRealDataTests
 Local A/B (optional, never committed): logs/caster-acceptance/acceptance.txt
+```
+
+### The M19 acceptance record
+
+Item 19.12 (issue #475) is the milestone gate. The whole magic surface is one destination
+plus two places a magic fact prints where it belongs, and no destination of its own was
+added: AGENTS.md prefers controls under an existing destination, and every M19 reading is
+about an actor the combat destination already describes.
+
+`M19AcceptancePanelTests` is the evidence. It takes the `World > Combat & Physics` panel
+through the registry factory the app itself uses, on one provider set, in the order a magic
+session runs: read what the bodies are worth and what resists what, learn a spell, select
+it, ready it to the right hand, cast it, read the projectile and the resistance that scaled
+its hit, and switch NPC casting off. It then reads an enchanted weapon's remaining charge
+back through `World > Inventory & Equipment > Equipment`, and checks that all nine magic
+record families are browsable from the Asset Browser's load-order record surface.
+
+```text
+Milestone: M19
+Sidebar path: World > Combat & Physics > Actor Values, > Magic Effects, > Spellcasting,
+  > Combat Loop; World > Inventory & Equipment > Equipment; Library > Asset Browser >
+  Reference records (load order)
+Destination id: Destination-combatPhysics, Destination-inventoryEquipment,
+  Destination-assetBrowser
+Controls exercised: ActorValueTargetControl, ActorValueNameControl,
+  ActorValueDamageControl, MagicEffectConsumeControl, MagicEffectDispelControl,
+  SpellcastingLearnControl, SpellcastingReadTomeControl, SpellcastingSelectControl,
+  SpellcastingReadyRightControl, SpellcastingReadyLeftControl,
+  SpellcastingCastRightControl, SpellcastingCastLeftControl, CombatActorCastingControl,
+  CombatHostilityControl, EquipmentInspectionTargetControl, AssetCategory,
+  AssetPluginControl, AssetRecordTypeControl, AssetFilter, AssetTable
+Readout: CombatActorValuesStatsLabel, CombatMagicEffectsStatsLabel,
+  CombatSpellcastingStatsLabel, CombatLoopStatsLabel, EquipmentInspectionStatsLabel,
+  AssetRecordInspectorStatsLabel
+Deterministic tests: M19AcceptancePanelTests, CombatMagicEffectsPanelTests,
+  CombatSpellcastingPanelTests, CombatActorValuesPanelTests, CombatPhysicsPanelTests,
+  InventoryEquipmentPanelTests, M18AcceptancePanelTests, DestinationRegistryTests
+Local A/B (optional, never committed): none
 ```
 
 ## Limits / next
