@@ -80,11 +80,13 @@ extension CombatLoopRuntime {
             ),
             healthFraction: world.combatHealthFraction(of: actor.key),
             isTargetAlive: true,
-            isForced: engagesWithoutPerceiving(actor.key)
+            isForced: engagesWithoutPerceiving(actor.key),
+            casting: world.combatCasting(of: actor.key)
         ))
         if step.startedAttack {
             world.playCombatClip(.attack, on: actor.key)
         }
+        resolveCast(step, actor: actor.key, world: world)
         if step.reachedContact {
             resolveContact(actor: actor, weapon: weapon, player: player, world: world)
         }
@@ -93,6 +95,32 @@ extension CombatLoopRuntime {
         }
         if let command = step.command {
             route(command, actor: actor.key, world: world)
+        }
+    }
+
+    /// The casting half of one step (issue #473, roadmap item 19.10).
+    ///
+    /// Begin, release and cancel all land here rather than beside the melee
+    /// contact, because a cast is not resolved by this layer at all: the caster
+    /// runtime spends the magicka and the 19.8 delivery decides what the spell
+    /// reaches. What this layer owns is only *when*.
+    ///
+    /// A refused begin drops the machine's charge in the same step, so an actor
+    /// whose magicka fell between the decision and the call is back to swinging
+    /// on the next one instead of holding a cast the runtime never started.
+    private func resolveCast(
+        _ step: CombatBehaviorStep,
+        actor: ReferenceKey,
+        world: any CombatLoopWorld
+    ) {
+        if let option = step.startedCast, !world.beginCombatCast(option, by: actor) {
+            abandonCast(of: actor, world: world)
+        }
+        if let option = step.releasedCast {
+            world.releaseCombatCast(option, by: actor)
+        }
+        if step.cancelledCast {
+            world.cancelCombatCast(by: actor)
         }
     }
 

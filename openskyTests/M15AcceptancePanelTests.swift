@@ -297,6 +297,8 @@ struct M15AcceptancePanelTests {
         ),
         limits: .standard,
         trimmedTransients: .none,
+        isActorCastingEnabled: true,
+        actorCastCount: 0,
         lastActionText: "Hostility: Bandit is now hostile."
     )
 

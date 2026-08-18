@@ -43,6 +43,7 @@ handed to it.
 - [What a landed spell reaches](#what-a-landed-spell-reaches)
 - [Resistances on hit](#resistances-on-hit)
 - [Combat consequences](#combat-consequences)
+- [AI spell use](#ai-spell-use)
 - [Item enchantments](#item-enchantments)
 - [Verification](#verification)
 - [Limits / next](#limits--next)
@@ -62,7 +63,8 @@ handed to it.
 | Spellbook component | `opensky/Engine/Magic/SpellbookComponent.swift` | app + CLI |
 | Spellbook runtime | `opensky/Engine/Magic/SpellbookRuntime.swift` | app + CLI |
 | Cast state machine | `opensky/Engine/Magic/CastingState.swift` | app + CLI |
-| Cast loop | `opensky/Engine/Magic/CasterRuntime.swift` and `CasterRuntimeInput.swift` | app + CLI |
+| Cast loop | `opensky/Engine/Magic/CasterRuntime.swift`, `CasterRuntimeInput.swift` and `CasterRuntimeConcentration.swift` | app + CLI |
+| Cast coverage tally | `opensky/Engine/Magic/CastingTally.swift` | app + CLI |
 | Spellbook save chunk | `opensky/Engine/Formats/Save/OpenSkySave{Encoder,Decoder}Spellbook.swift` | app + CLI |
 | Casting panel seam | `opensky/Engine/CastingControlProviding.swift` and `CastingControlReadout.swift` | app + CLI |
 | Casting session wiring | `opensky/App/GameViewControllerCasting.swift` and `GameViewControllerCastingPanel.swift` | app |
@@ -80,6 +82,8 @@ handed to it.
 | Fortify terms | `opensky/Engine/Combat/CombatFortifyBonus.swift` | app + CLI |
 | Enchanted-item save chunk | `opensky/Engine/Formats/Save/OpenSkySave{Encoder,Decoder}EnchantedItems.swift` | app + CLI |
 | Enchantment session wiring | `opensky/App/GameViewControllerEnchantments.swift` | app |
+| Actor spell baseline | `opensky/Engine/Magic/ActorSpellBaseline.swift` | app + CLI |
+| AI casting session wiring | `opensky/App/GameViewControllerCombatCasting.swift` | app |
 
 ## Where the semantics come from
 
@@ -671,6 +675,111 @@ A spell hit also raises `OnHit` on the target's scripts, with the PROJ named.
 `FormID` and a cast spell is addressed by `ReferenceKey`, which is a load-order
 identity a raw FormID cannot round-trip.
 
+## AI spell use
+
+Roadmap item 19.10, issue #473. An NPC that owns spells casts them in a fight.
+The decision layer is the [combat behavior machine](/engine/combat.md#the-behavior-machine);
+everything below is what stands behind it.
+
+**The NPC path is the player's path.** A fighting actor's spell is readied
+through `SpellbookRuntime.equip`, begun through `CasterRuntime.begin`, charged by
+`CasterRuntime.advance` and let go through `CasterRuntime.release` — the four
+calls the panel's Cast button makes for the player. That is why `CasterRuntime`
+keys its in-flight casts by `CastSlot` (the actor *and* the hand) rather than by
+hand alone: two actors charging at once are two casts, and a hand-keyed table
+would have the second overwrite the first.
+
+An NPC casts with its right hand, always. Vanilla NPCs dual-cast and hold a spell
+in either hand; picking one hand is a stated simplification.
+
+### Where an NPC's spells come from
+
+`ActorSpellBaselineResolver` reads them back out of records, sitting beside
+`SpellbookRuntime` exactly as `InventoryBaselineResolver` sits beside
+`InventoryRuntime`:
+
+| Source | Field | Inherits through |
+|---|---|---|
+| The NPC_ | `SPLO` run | ACBS `Use Spell List`, so a record delegates its list upward only while that bit is set |
+| The RACE the actor is | `SPLO` run | `useTraits`, because the race an actor *is* is the traits race |
+
+**An entry may name a leveled spell list, and for a vanilla caster the
+interesting ones do.** Observed against `Skyrim.esm` rather than assumed:
+`LvlBanditWizard` carries seven `SPLO` entries, and every one that resolves to a
+SPEL is a self buff or a heal — Ironflesh, a ward, two heals, a racial ability
+and a Breton power. Its *attack* spells sit behind two `LVSP` records,
+`LSpellBandit03FireFrostShock` and `LSpellBandit05FireFrostShock`, each holding
+three alternatives at level 1. Without expanding those, a vanilla caster knows
+nothing it could ever throw at anybody. The entry chosen is
+`LeveledList.deterministicEntry` — highest level, first among ties — the same
+policy the TPLT chain applies to an LVLN hop and the outfit chain to an LVLI hop.
+`ActorSpellBaselineRealDataTests` pins that actor and its expansion.
+
+The list is granted into the actor's `SpellbookState` the first time the combat
+loop asks what that actor can cast, and its abilities are applied in the same
+pass through the 19.7 ability path. Lazily rather than at cell build, because a
+cell of forty townsfolk who will never fight would otherwise write forty
+spellbook components into the save to say what their base records already say.
+The grant is idempotent.
+
+### Which of them become options
+
+A known spell reaches the decision layer as a `CombatSpellOption` only if it
+passes four gates, each refusing a different thing:
+
+| Gate | Refuses |
+|---|---|
+| `spellType == .spell` | an ability, which is carried rather than cast, and a power, which is a once-a-day resource this layer has no rule for |
+| delivery is not `self` | a self buff or heal, which is not something to throw at somebody |
+| some effect entry is flagged hostile | a heal or a buff cast at an enemy, which nobody could read |
+| the delivery is one this build carries out, and the ETYP takes a hand | a cast that was always going to be counted as unimplemented, and a spell with no hand to cast it from |
+
+The option carries the cost, the resolved range (SPIT's, or the session's own
+aimed ceiling for a record that bounds nothing), the charge time and whether it
+is a concentration spell — the numbers the machine's affordability and range
+gates read. The machine never reads a record.
+
+### What a released cast does
+
+Exactly what the player's does. A fire-and-forget aimed spell fires the MGEF's
+PROJ through the archery pipeline; a target-actor spell applies to whatever the
+caster's aim ray reaches; a concentration spell is held for
+`CombatBehaviorSettings.concentrationSeconds` and applies once a second while it
+runs. The only thing that differs is *whose* ray it is: `ProjectileRuntime.fire`
+takes a `ProjectileShooter`, so an NPC's spell leaves the NPC's own eye aimed at
+the middle of the player's capsule, and `CasterWorld.aimedSpellTarget` takes the
+caster for the same reason.
+
+A cast in flight is dropped rather than left running whenever the fight takes it
+away — a stagger, a retreat, a lost target, a stopped fight, a death, or the
+panel switch being turned off. A maintained cast whose SPIT minimum duration has
+not elapsed is dropped too: the player's release is deferred until the floor is
+reached because their button is still held, and an NPC has no button.
+
+### Verified against the install
+
+`AICastingAcceptanceRealDataTests` drives the whole chain over the load order's
+own records: `LvlBanditWizard`'s nine known spells become two castable options
+(Ice Spike at 48 magicka, Ice Storm at 144, both aimed and reaching 4,000
+units), the machine chooses the costlier one it can afford, four casts run over
+six simulated seconds, and the player loses 145 health while the caster's
+magicka falls to 20. `ActorSpellBaselineRealDataTests` pins the list that fed
+it. Both write a summary into gitignored `logs/`.
+
+### Simplified on purpose
+
+Stated as choices rather than presented as observed behaviour:
+
+- **Combat style (CSTY) is not decoded.** Vanilla tunes when a caster prefers
+  magic, at what ranges and with what magicka gating through CSTY and GMSTs; this
+  build uses one probability and one selection rule, both
+  [OpenSky's own numbers](/engine/combat.md#the-numbers-all-of-them-ours).
+- **The strongest affordable spell wins.** Cost stands in for strength because no
+  record ranks a caster's spells.
+- **No shouts, no summons, no reanimation, and no self-healing mid-fight.** An
+  NPC only ever casts a hostile spell at its target; the buffs and heals in its
+  own list are known and never chosen.
+
 ## Item enchantments
 
 Roadmap item 19.9, issue #472. The loop the M15 damage formulas left open: a weapon's
@@ -1054,11 +1163,14 @@ Local A/B (optional, never committed): logs/caster-acceptance/acceptance.txt
 
 ## Limits / next
 
+- **An NPC's spell choice ignores CSTY.** See
+  [AI spell use](#ai-spell-use); decoding the combat style is a follow-up if
+  runtime evidence shows the simple rule reads wrong.
 - **Touch and target-location delivery do not cast.** Both are the documented
   `deliveryUnsupported` refusal and a tally entry; see
   [Delivery](#delivery-casting-at-something-else) for why each is counted rather
   than approximated. Target-actor concentration is refused for the same reason:
-  holding a beam on a named actor needs the AI targeting issue 19.10 owns.
+  holding a beam on a named actor needs targeting this build does not do.
 - **How many world units a foot is, is a stated assumption.** The EFIT area unit
   is measured (feet); the conversion into world units is derived from this
   engine's own player capsule and is a setting, not a constant. Settling it needs

@@ -19,6 +19,18 @@
 // `GetRandomPercent` uses, seeded the same way. So a fight replays exactly, and
 // two actors in one room still do not block in lockstep.
 //
+// ## Casting is a phase, not a kind of attack
+//
+// Item 19.10 gives the machine a second way to hurt somebody, and it is spelled
+// as its own phase rather than as a flag on `windup`. The phase enum's whole
+// job is that the answer to "what is this actor doing" is one readable case, and
+// a swing and a cast are not the same act with a different weapon: a swing is
+// timed by this layer's own cadence and lands at the contact step, a cast is
+// timed by the SPIT charge time the record states and lands wherever the 19.8
+// delivery takes it. What they share is *when the decision is made* — the same
+// two points a swing is chosen at — so the choice lives in one place and the
+// execution does not.
+//
 // ## Why the machine asks for movement instead of performing it
 //
 // It emits a `CombatMovementCommand` and the runtime hands it to 16.4's
@@ -48,6 +60,14 @@ nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
     private(set) var contactCount = 0
     private(set) var blockCount = 0
     private(set) var searchCount = 0
+    /// Casts begun since construction, which differs from casts released by the
+    /// ones a stagger or a retreat interrupted.
+    private(set) var castCount = 0
+
+    /// The spell being charged right now, or nil when nothing is. Readable so
+    /// the runtime can drop the cast behind a stagger or a park, which happen
+    /// outside `step(seconds:inputs:)`.
+    private(set) var pendingCast: CombatSpellOption?
 
     /// Seeded per actor, drawn from only for the block roll.
     private var random: ConditionRandom
@@ -58,20 +78,6 @@ nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
     init(settings: CombatBehaviorSettings = .standard, seed: UInt64) {
         self.settings = settings
         random = ConditionRandom(seed: seed)
-    }
-
-    /// A stable per-actor seed.
-    ///
-    /// Folded from the key's own spelling rather than from `hashValue`, because
-    /// Swift seeds `String` hashing per process: a `hashValue` seed would make
-    /// two runs of the same fight differ, which is exactly what the determinism
-    /// tests exist to catch.
-    static func seed(for key: ReferenceKey) -> UInt64 {
-        var state = ConditionRandom.defaultSeed
-        for byte in key.description.utf8 {
-            state = (state ^ UInt64(byte)) &* 0x0000_0100_0000_01B3
-        }
-        return state
     }
 
     /// Whether this actor counts as being in the fight.
@@ -90,10 +96,24 @@ nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
     }
 
     /// Advances by exactly one fixed step and reports what it did.
+    ///
+    /// A cast in flight is dropped in exactly one place: here, whenever a step
+    /// left the casting phase without releasing. Fleeing, losing the target and
+    /// giving up all reach that line, so no exit has to remember to clean up
+    /// after a charge it did not start.
     mutating func step(seconds: Float, inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
         guard seconds > 0, seconds.isFinite else { return unchanged() }
         phaseSeconds += seconds
         secondsSinceCommand += seconds
+        var step = advance(inputs)
+        // A released cast cleared `pendingCast` itself, so what is left here is
+        // exactly a charge the machine walked away from.
+        step.cancelledCast = pendingCast != nil && phase != .casting
+        pendingCast = phase == .casting ? pendingCast : nil
+        return step
+    }
+
+    private mutating func advance(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
         guard inputs.isTargetAlive else {
             return phase.isEngaged ? endPursuit() : unchanged()
         }
@@ -128,13 +148,23 @@ nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
         if !phase.isEngaged {
             fightCount += 1
         }
+        pendingCast = nil
         enter(.staggered)
         return true
+    }
+
+    /// Drops a charge the world refused to start, without ending the fight:
+    /// the actor lands in the gap between attacks and decides again from there.
+    mutating func abandonCast() {
+        guard phase == .casting else { return }
+        pendingCast = nil
+        enter(.spacing)
     }
 
     /// Ends the fight outright without touching the counts, for `StopCombat`
     /// and for an actor whose cell unloaded.
     mutating func park() {
+        pendingCast = nil
         enter(.idle)
         secondsSinceCommand = 0
     }
@@ -154,7 +184,7 @@ nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
     /// what stops one it just ran from restarting the moment it looks back: it
     /// broke off because it was losing, and nothing here heals it.
     private mutating func advanceWaiting(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
-        guard !shouldFlee(inputs) else { return unchanged() }
+        guard !inputs.shouldFlee(settings: settings) else { return unchanged() }
         guard inputs.isForced || inputs.awareness.isDetected else { return unchanged() }
         fightCount += 1
         enter(.approaching)
@@ -169,7 +199,7 @@ nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
     /// Approaching, spacing, blocking or attacking: the phases that mean "I
     /// have my target and I am working on it".
     private mutating func advanceFighting(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
-        if shouldFlee(inputs) {
+        if inputs.shouldFlee(settings: settings) {
             return enterFlee(inputs)
         }
         if !inputs.awareness.isDetected, !inputs.isForced {
@@ -179,18 +209,28 @@ nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
         case .approaching: return advanceApproaching(inputs)
         case .spacing: return advanceSpacing(inputs)
         case .blocking: return advanceBlocking(inputs)
+        case .casting: return advanceCasting(inputs)
         case .windup: return advanceWindup()
-        case .contact: return enterAndReport(.recovery)
+        case .contact:
+            enter(.recovery)
+            return unchanged()
         case .recovery:
             return phaseSeconds >= settings.recoverySeconds ? enterSpacing() : unchanged()
         default: return unchanged()
         }
     }
 
+    /// Closing: a caster that is already in range of something it can pay for
+    /// casts from where it stands rather than walking into sword reach first,
+    /// which is the one decision that makes a mage read as a mage.
     private mutating func advanceApproaching(
         _ inputs: CombatBehaviorInputs
     ) -> CombatBehaviorStep {
-        guard inputs.distance > strikingDistance(inputs) else { return enterSpacing() }
+        guard inputs.distance > inputs.strikingDistance(settings: settings)
+        else { return enterSpacing() }
+        if let option = inputs.castableSpell {
+            return startCast(option)
+        }
         guard secondsSinceCommand >= settings.commandIntervalSeconds else { return unchanged() }
         var step = unchanged()
         step.command = command(.approach(inputs.targetPosition))
@@ -198,25 +238,73 @@ nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
     }
 
     private mutating func advanceSpacing(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
-        guard inputs.distance <= strikingDistance(inputs) else {
+        guard inputs.distance <= inputs.strikingDistance(settings: settings) else {
             enter(.approaching)
             var step = unchanged()
             step.command = command(.approach(inputs.targetPosition))
             return step
         }
         guard phaseSeconds >= settings.attackIntervalSeconds else { return unchanged() }
-        return startAttack()
+        return startAttackOrCast(inputs)
     }
 
     private mutating func advanceBlocking(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
         guard phaseSeconds >= settings.blockSeconds else { return unchanged() }
-        guard inputs.distance <= strikingDistance(inputs) else {
+        guard inputs.distance <= inputs.strikingDistance(settings: settings) else {
             enter(.approaching)
             var step = unchanged()
             step.command = command(.approach(inputs.targetPosition))
             return step
         }
-        return startAttack()
+        return startAttackOrCast(inputs)
+    }
+
+    /// The one place a swing and a cast are chosen between.
+    ///
+    /// The rule, stated in docs/engine/combat.md and deliberately simple: an
+    /// actor that cannot reach its target with a weapon casts whenever it can
+    /// afford something that reaches, and one that *is* in weapon reach casts
+    /// with probability `castChance` and swings otherwise. Drawn from the same
+    /// seeded generator the block roll uses, so a fight still replays exactly.
+    private mutating func startAttackOrCast(
+        _ inputs: CombatBehaviorInputs
+    ) -> CombatBehaviorStep {
+        guard let option = inputs.castableSpell else { return startAttack() }
+        guard inputs.distance <= inputs.strikingDistance(settings: settings)
+        else { return startCast(option) }
+        let roll = Float(random.percent()) / 100
+        return roll < settings.castChance ? startCast(option) : startAttack()
+    }
+
+    private mutating func startCast(_ option: CombatSpellOption) -> CombatBehaviorStep {
+        castCount += 1
+        pendingCast = option
+        enter(.casting)
+        var step = unchanged()
+        step.startedCast = option
+        step.command = command(.hold)
+        return step
+    }
+
+    /// Charging, and for a maintained spell holding it afterwards. The charge
+    /// is the record's own `chargeTime`; the hold is this layer's number,
+    /// because nothing in the load order says how long an NPC maintains a beam.
+    ///
+    /// A target that walks out of range mid-charge does not cancel the cast:
+    /// the magicka is already committed by then and the spell leaves the hand
+    /// and misses, which is what the player sees happen to their own casts.
+    private mutating func advanceCasting(
+        _ inputs: CombatBehaviorInputs
+    ) -> CombatBehaviorStep {
+        guard let option = pendingCast else { return enterSpacing() }
+        let hold = max(0, option.chargeSeconds)
+            + (option.isConcentration ? settings.concentrationSeconds : 0)
+        guard phaseSeconds >= hold else { return unchanged() }
+        pendingCast = nil
+        enter(.recovery)
+        var step = unchanged()
+        step.releasedCast = option
+        return step
     }
 
     private mutating func advanceWindup() -> CombatBehaviorStep {
@@ -264,18 +352,7 @@ nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
         return step
     }
 
-    /// How close the actor wants to be before it swings: its own reach, less
-    /// the stated margin, and never negative.
-    private func strikingDistance(_ inputs: CombatBehaviorInputs) -> Float {
-        max(0, inputs.reach - settings.reachSlack)
-    }
-
     // MARK: - Fleeing
-
-    private func shouldFlee(_ inputs: CombatBehaviorInputs) -> Bool {
-        inputs.healthFraction.isFinite
-            && inputs.healthFraction <= settings.fleeHealthFraction
-    }
 
     private mutating func enterFlee(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
         enter(.fleeing)
@@ -299,26 +376,12 @@ nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
         return step
     }
 
-    /// A point `fleeDistance` away from the target, along the line from the
-    /// target through the actor and turned by a seeded angle.
-    ///
-    /// Turned rather than straight because a straight line runs into whatever is
-    /// behind the actor and the mover would give up against it; a different
-    /// angle per draw means the retry after a failed path is a different
-    /// request. Two actors fleeing the same swing scatter, which is also what a
-    /// player expects to see.
+    /// A point to run to, turned by an angle drawn from the same generator the
+    /// block roll uses so two actors fleeing one swing scatter.
     private mutating func fleePoint(_ inputs: CombatBehaviorInputs) -> SIMD3<Float> {
-        let offset = inputs.actorPosition - inputs.targetPosition
-        let planar = SIMD2(offset.x, offset.y)
-        let base = simd_length(planar) > 0 ? simd_normalize(planar) : SIMD2<Float>(1, 0)
-        // ±45 degrees, drawn from the same generator the block roll uses.
+        // ±45 degrees.
         let turn = (Float(random.percent()) / 100 - 0.5) * (.pi / 2)
-        let direction = SIMD2(
-            base.x * cos(turn) - base.y * sin(turn),
-            base.x * sin(turn) + base.y * cos(turn)
-        )
-        return inputs.actorPosition
-            + SIMD3(direction.x, direction.y, 0) * settings.fleeDistance
+        return inputs.fleePoint(turnedBy: turn, settings: settings)
     }
 
     // MARK: - Searching and giving up
@@ -368,11 +431,6 @@ nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
     private mutating func enter(_ next: CombatBehaviorPhase) {
         phase = next
         phaseSeconds = 0
-    }
-
-    private mutating func enterAndReport(_ next: CombatBehaviorPhase) -> CombatBehaviorStep {
-        enter(next)
-        return unchanged()
     }
 
     /// Records that a command was issued this step and returns it, so the

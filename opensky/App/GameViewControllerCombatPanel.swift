@@ -41,6 +41,8 @@ extension GameViewController: CombatLoopControlProviding {
             transients: combatTransients,
             limits: runtime.limits,
             trimmedTransients: runtime.trimmedTransients,
+            isActorCastingEnabled: combat.allowsActorCasting,
+            actorCastCount: casting.actorCastCount,
             lastActionText: runtime.lastActionText
         )
     }
@@ -62,6 +64,22 @@ extension GameViewController: CombatLoopControlProviding {
             runtime.record(
                 "Hostility: \(combatActorName(key)) is now"
                     + " \(newValue ? "hostile" : "neutral")."
+            )
+        }
+    }
+
+    /// Whether fighting actors may cast (issue #473). Turning it off drops
+    /// every cast in flight rather than leaving a charge nothing will release.
+    var isActorCastingEnabled: Bool {
+        get { combat.allowsActorCasting }
+        set {
+            combat.allowsActorCasting = newValue
+            guard !newValue, let runtime = combat.runtime else { return }
+            for key in runtime.behaviors.keys.sorted() {
+                cancelCombatCast(by: key)
+            }
+            runtime.record(
+                "Combat: fighters \(newValue ? "may" : "may not") cast their spells."
             )
         }
     }
@@ -91,7 +109,9 @@ extension GameViewController: CombatLoopControlProviding {
                 attackCount: machine.attackCount,
                 contactCount: machine.contactCount,
                 blockCount: machine.blockCount,
-                searchCount: machine.searchCount
+                searchCount: machine.searchCount,
+                castCount: machine.castCount,
+                spellOptionCount: combatCasting(of: actor.key).options.count
             )
         }
         .sorted { ($0.distance, $0.key) < ($1.distance, $1.key) }

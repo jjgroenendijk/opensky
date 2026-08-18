@@ -62,7 +62,7 @@ struct CasterAcceptanceRealDataTests {
             false
         }
 
-        func aimedSpellTarget(within range: Float) -> SpellAim {
+        func aimedSpellTarget(within range: Float, for caster: ReferenceKey) -> SpellAim {
             .none
         }
 

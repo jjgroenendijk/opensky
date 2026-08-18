@@ -141,6 +141,36 @@ protocol CombatLoopWorld: ScriptHitReporting {
     /// The profile `key` swings with, which sizes its reach and its damage.
     func combatWeapon(of key: ReferenceKey) -> MeleeWeaponProfile
 
+    /// What `key` could cast right now and what it can pay for (issue #473).
+    ///
+    /// Resolved by the session because it is the session that holds the
+    /// spellbook, the SPEL records and the actor's magicka. A world with no
+    /// caster runtime — every synthetic scene without game data — answers
+    /// `.none`, and every actor then fights with its hands exactly as it did
+    /// before 19.10.
+    func combatCasting(of key: ReferenceKey) -> CombatCastingProfile
+
+    /// Starts `option`'s cast in `key`'s hand, through the same
+    /// `CasterRuntime` the player's casts run through.
+    ///
+    /// - Returns: false when the cast was refused — the actor does not know the
+    ///   spell, the load order dropped it, its magicka fell between the
+    ///   decision and the call. The machine then falls back to swinging rather
+    ///   than standing still holding nothing.
+    @discardableResult
+    func beginCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool
+
+    /// Lets go of the cast `key` is holding: the magicka is spent and the 19.8
+    /// delivery happens, aimed at whatever the actor is fighting.
+    ///
+    /// - Returns: whether a spell actually left the hand.
+    @discardableResult
+    func releaseCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool
+
+    /// Drops a cast in flight without casting it, for an actor that staggered,
+    /// broke off or gave up mid-charge.
+    func cancelCombatCast(by key: ReferenceKey)
+
     /// Sends `key` walking to `point` through the 16.4 mover, which owns the
     /// path, the capsule and the persistence.
     ///

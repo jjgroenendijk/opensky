@@ -170,6 +170,7 @@ per actor, seeded from that actor's own `ReferenceKey`.
 | `approaching` | it is inside its own weapon reach, less the slack | a path to the target, re-issued on the command interval |
 | `spacing` | the attack interval is up | a stop |
 | `blocking` | the block duration is up | a stop |
+| `casting` | the spell's charge time is up, plus the hold for a maintained one | a stop, and a cast begun and released through the 19.7 loop |
 | `windup` | the windup duration is up | nothing |
 | `contact` | one step | nothing — the hit volume runs here, once |
 | `recovery` | the recovery duration is up | nothing |
@@ -177,6 +178,30 @@ per actor, seeded from that actor's own `ReferenceKey`.
 | `fleeing` | it is further from the target than the break distance | a path away from the target |
 | `searching` | it perceives the target again, or the search time is up | a path to the remembered position |
 | `disengaged` | it perceives the target again | a stop, and a package re-selection |
+
+**Casting is a phase, not a kind of attack.** A swing is timed by this layer's
+own cadence and lands at the contact step; a cast is timed by the SPIT charge
+time the record states and lands wherever the [19.8 delivery](/engine/magic.md)
+takes it. What the two share is *when* they are chosen, so the choice lives in
+one place (`startAttackOrCast`) and the execution does not. The rule is:
+
+* an actor that cannot reach its target with a weapon casts whenever it can
+  afford a spell that reaches — otherwise it would walk toward somebody while
+  holding something it could have thrown;
+* an actor already inside weapon reach casts with probability `castChance` and
+  swings otherwise, drawn from the same seeded generator the block roll uses;
+* the spell chosen is the **most expensive one it can both afford and reach
+  with**, ties broken by spell order. Cost as a proxy for strength is a
+  documented choice, not an observation: no record states how a caster ranks its
+  own spells, and this spends a full bar on the strongest thing it buys and
+  falls back down the list as the bar drains;
+* a caster that can afford nothing falls straight back to closing and swinging,
+  which is what keeps an out-of-magicka mage in the fight rather than stalled.
+
+A charge is dropped in exactly one place — the step that left the casting phase
+without releasing — so fleeing, losing the target, giving up, staggering and
+dying all clean up after a cast none of them started. The full picture of what
+happens after the release is in [magic](/engine/magic.md#ai-spell-use).
 
 The attack phases mirror the player's own (`MeleeCombatState`) on purpose, so the
 two sides of a fight are legible against each other, and a stagger takes the
@@ -200,8 +225,9 @@ runs of the same fight differ.
 ## The numbers, all of them ours
 
 Every constant the machine runs on is **OpenSky's, not Bethesda's**. No record
-states an attack cadence, a block probability, a flee threshold or a search
-duration; vanilla's live in the combat-AI binary. They are chosen in the open, in
+states an attack cadence, a block probability, a flee threshold, a search
+duration or how often a caster prefers a spell to a sword; vanilla's live in the
+combat-AI binary and in CSTY records this engine does not decode. They are chosen in the open, in
 `CombatBehaviorSettings`, with the reason written beside each.
 
 | Setting | Value | Why that one |
@@ -218,6 +244,8 @@ duration; vanilla's live in the combat-AI binary. They are chosen in the open, i
 | `fleeDistance` | 1400 u | About twenty metres per flee request |
 | `fleeBreakDistance` | 1800 u | Larger than one flee hop, so a path the navmesh cut short is retried |
 | `searchSeconds` | 8 s | Long enough to hear it end, short enough not to pin a hidden player |
+| `castChance` | 0.5 | Even odds inside weapon reach: a caster that never swings is pinned by an opponent who closes, one that always swings never reads as a mage |
+| `concentrationSeconds` | 1.5 s | Two applications of a once-a-second effect — long enough to see a beam, short enough to re-decide while the fight moves |
 
 ## Blocking, both ways
 
@@ -520,9 +548,11 @@ substitution binds to the same rig rather than merely naming a plausible path.
 conformed by `GameViewControllerCombatPanel.swift`: one `Equatable` snapshot out,
 plain actions in, matching every other panel bridge.
 
-It carries the hostility toggle, the combat-state and current-target readouts, one
+It carries the hostility toggle, the AI-casting switch, the combat-state and
+current-target readouts, one
 `CombatActorReadout` per actor with a behavior machine — name, phase, awareness,
-distance, health fraction, and the attack, contact, block and search counts — the
+distance, health fraction, and the attack, contact, block, search and cast
+counts beside how many spells it could cast from where it stands — the
 number the engagement cap refused, the incoming-hit trace, the damage-flash value,
 and the live transient counts against their ceilings. The readout lines are
 formatted by `CombatLoopReadout` in the engine target, where a unit test can reach
@@ -629,13 +659,34 @@ Deterministic tests: CombatBehaviorMachineTests, CombatBehaviorRetreatTests,
 Local A/B (optional, never committed): none
 ```
 
+### The M19.10 acceptance record
+
+Item 19.10's record: AI spell use, in the same shape.
+
+```text
+Milestone: M19.10
+Sidebar path: World > Combat & Physics > Combat Loop
+Destination id: Destination-combatPhysics
+Controls exercised: CombatActorCastingControl, CombatHostilityControl
+Readout: CombatLoopStatsLabel ("AI casting:" line, and the per-fighter
+  "N casts (M castable)" counts)
+Deterministic tests: CombatCastingBehaviorTests, CombatLoopCastingTests,
+  ActorSpellBaselineTests, CombatPhysicsPanelTests, CombatBehaviorMachineTests,
+  ActorSpellBaselineRealDataTests (env-gated),
+  AICastingAcceptanceRealDataTests (env-gated)
+Local A/B (optional, never committed): logs/ai-casting-acceptance/summary.txt
+```
+
 ## Limits
 
 Everything below is a known gap with a home, not an oversight:
 
 * **No power attacks, bashing or dodging.** M18, with perks. The census names
   all three.
-* **No magic.** An actor never casts. M18 and later, with the magic-effect layer.
+* **No shouts, summons or reanimation.** An actor casts (item 19.10, below), but
+  only the deliveries [magic](/engine/magic.md) carries out, and only a spell —
+  a power, a lesser power and a shout are all skipped, and the archetypes that
+  would place a second actor in the world have nowhere to place it yet.
 * **No factions, crime, group tactics or morale.** `ActorHostility` still has two
   cases and both are about the player, so there is no relationship rank to read,
   no crime gold to accrue, and no coordination between two actors fighting the

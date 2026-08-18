@@ -4,9 +4,10 @@
 // ## Why these are not read from records
 //
 // `DevTargetDriver` — the clock this item deletes — carried the same statement
-// for its four cadence constants, and it is still true for all thirteen here:
+// for its four cadence constants, and it is still true for all fifteen here:
 // no record in the load order states an attack cadence, a block probability, a
-// flee threshold or a search duration. Vanilla's live in the combat-AI binary
+// flee threshold, a search duration or how often a caster prefers a spell to a
+// sword. Vanilla's live in the combat-AI binary
 // and in `GameSettings` this engine has no decoded consumer for, and inventing a
 // citation for a number that was chosen would be worse than choosing it in the
 // open. So every value below is OpenSky's, chosen for a reason written beside
@@ -102,6 +103,29 @@ nonisolated struct CombatBehaviorSettings: Equatable, Sendable {
     /// started.
     var fleeBreakDistance: Float = 1800
 
+    /// The chance, 0 through 1, that an actor standing inside its own weapon
+    /// reach casts rather than swings (issue #473).
+    ///
+    /// Only inside weapon reach: an actor that cannot reach its target with a
+    /// weapon casts whenever it can afford to, because the alternative is
+    /// walking toward somebody while holding a spell it could have thrown.
+    /// Even odds in the one case where both are available — a caster that never
+    /// swings is pinned in place by an opponent who closes on it, and one that
+    /// always swings is a mage the player never sees cast.
+    var castChance: Float = 0.5
+
+    /// How long a maintained cast is held before the actor lets go, seconds.
+    ///
+    /// OpenSky's number and unavoidably so: a concentration spell has no
+    /// duration of its own — UESP states the rule as "the duration is
+    /// determined by how long you hold the casting trigger"
+    /// (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>) — so an NPC needs one
+    /// stated somewhere. A second and a half is two applications of a
+    /// once-a-second effect, which is long enough for a player to see a beam
+    /// and short enough that the caster re-decides while the fight is still
+    /// moving.
+    var concentrationSeconds: Float = 1.5
+
     /// How long an actor that lost its target searches the last place it saw it
     /// before giving up.
     ///
@@ -125,6 +149,7 @@ nonisolated struct CombatBehaviorSettings: Equatable, Sendable {
         staggerSeconds: 0.07,
         blockSeconds: 0.16,
         commandIntervalSeconds: 0.05,
+        concentrationSeconds: 0.15,
         searchSeconds: 0.8
     )
 }

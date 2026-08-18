@@ -9,6 +9,11 @@
 // setup step for the dev target is the whole control surface, and the readout
 // that used to describe one clock's phase now describes every fighter's mind.
 //
+// Item 19.10 added one control beside it: whether fighters cast the spells their
+// records give them. A checkbox for the same reason hostility is one — it is a
+// standing state rather than a one-shot — and it lives in this section rather
+// than a new one because it is a knob on a subsystem that already has a section.
+//
 // Hostility is a state the world holds, so it is a checkbox; clearing the trace
 // is a one-shot, so it is a button. That is the same split the Melee section
 // makes for draw, attack and block.
@@ -31,6 +36,9 @@ final class CombatLoopSection: PanelSectionViewController {
     let hostilityControl = NSButton(
         checkboxWithTitle: "Selected actor is hostile", target: nil, action: nil
     )
+    let castingControl = NSButton(
+        checkboxWithTitle: "Fighters cast spells", target: nil, action: nil
+    )
     let clearTraceControl = NSButton(title: "Clear hit trace", target: nil, action: nil)
 
     private let statsLabel = PanelComponents.statsLabel(identifier: "CombatLoopStatsLabel")
@@ -52,6 +60,10 @@ final class CombatLoopSection: PanelSectionViewController {
             hostilityControl, target: self, action: #selector(hostilityChanged),
             identifier: "CombatHostilityControl"
         )
+        PanelComponents.configureCheckbox(
+            castingControl, target: self, action: #selector(castingChanged),
+            identifier: "CombatActorCastingControl"
+        )
         PanelComponents.configureButton(
             clearTraceControl, target: self, action: #selector(clearTrace),
             identifier: "CombatClearTraceControl"
@@ -67,8 +79,16 @@ final class CombatLoopSection: PanelSectionViewController {
                     + "schedule. The Fighters lines below say which of those each actor is "
                     + "doing right now."
             ),
+            PanelComponents.note(
+                "A fighter that knows a hostile spell it can pay for and reach with casts "
+                    + "it instead of closing, and casts about half the time when it is "
+                    + "already in weapon reach. Clearing \"Fighters cast spells\" keeps "
+                    + "every fighter on its fists, which is how a swing that was chosen "
+                    + "over a cast is told apart from an actor that had nothing castable."
+            ),
             PanelComponents.group([
                 hostilityControl,
+                castingControl,
                 PanelComponents.buttonRow([clearTraceControl])
             ]),
             statsLabel
@@ -77,10 +97,11 @@ final class CombatLoopSection: PanelSectionViewController {
 
     override func syncControls() {
         let available = provider != nil
-        for control in [hostilityControl, clearTraceControl] {
+        for control in [hostilityControl, castingControl, clearTraceControl] {
             control.isEnabled = available
         }
         hostilityControl.state = provider?.selectedActorIsHostile == true ? .on : .off
+        castingControl.state = provider?.isActorCastingEnabled == true ? .on : .off
     }
 
     override func refreshReadout() {
@@ -92,6 +113,7 @@ final class CombatLoopSection: PanelSectionViewController {
         statsLabel.stringValue = [
             CombatLoopReadout.stateText(for: snapshot),
             CombatLoopReadout.actorsText(for: snapshot),
+            CombatLoopReadout.castingText(for: snapshot),
             CombatLoopReadout.hostilityText(for: snapshot),
             CombatLoopReadout.incomingText(for: snapshot),
             CombatLoopReadout.transientText(for: snapshot),
@@ -103,6 +125,11 @@ final class CombatLoopSection: PanelSectionViewController {
 
     @objc private func hostilityChanged() {
         provider?.selectedActorIsHostile = hostilityControl.state == .on
+        finishInteraction()
+    }
+
+    @objc private func castingChanged() {
+        provider?.isActorCastingEnabled = castingControl.state == .on
         finishInteraction()
     }
 

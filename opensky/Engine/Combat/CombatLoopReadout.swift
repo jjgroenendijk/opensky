@@ -31,6 +31,38 @@ nonisolated struct CombatActorReadout: Equatable, Sendable {
     let contactCount: Int
     let blockCount: Int
     let searchCount: Int
+    /// Casts begun since it first fought, and how many spells it could cast
+    /// from where it is standing right now (issue #473).
+    let castCount: Int
+    let spellOptionCount: Int
+
+    init(
+        key: ReferenceKey,
+        name: String,
+        phase: CombatBehaviorPhase,
+        awareness: DetectionState,
+        distance: Float,
+        healthFraction: Float,
+        attackCount: Int,
+        contactCount: Int,
+        blockCount: Int,
+        searchCount: Int,
+        castCount: Int = 0,
+        spellOptionCount: Int = 0
+    ) {
+        self.key = key
+        self.name = name
+        self.phase = phase
+        self.awareness = awareness
+        self.distance = distance
+        self.healthFraction = healthFraction
+        self.attackCount = attackCount
+        self.contactCount = contactCount
+        self.blockCount = blockCount
+        self.searchCount = searchCount
+        self.castCount = castCount
+        self.spellOptionCount = spellOptionCount
+    }
 }
 
 nonisolated enum CombatLoopReadout {
@@ -65,9 +97,21 @@ nonisolated enum CombatLoopReadout {
             format: "%.0f u, health %.0f%%", actor.distance, actor.healthFraction * 100
         )
         let counts = "\(actor.attackCount) attacks, \(actor.contactCount) contact frames,"
-            + " \(actor.blockCount) blocks, \(actor.searchCount) searches"
+            + " \(actor.blockCount) blocks, \(actor.searchCount) searches,"
+            + " \(actor.castCount) casts (\(actor.spellOptionCount) castable)"
         return "\(actor.name): \(actor.phase.rawValue), \(actor.awareness.rawValue), "
             + situation + " — " + counts
+    }
+
+    /// Whether fighters may cast, and what casting they have done (issue #473).
+    static func castingText(for snapshot: CombatLoopSnapshot) -> String {
+        guard snapshot.isAvailable else { return "AI casting: unavailable" }
+        guard snapshot.isActorCastingEnabled else {
+            return "AI casting: off — fighters swing only"
+        }
+        let armed = snapshot.actors.filter { $0.spellOptionCount > 0 }.count
+        return "AI casting: on — \(armed) of \(snapshot.actors.count) fighters armed,"
+            + " \(snapshot.actorCastCount) spells cast"
     }
 
     /// What the hostility toggle acts on, and where it stands.

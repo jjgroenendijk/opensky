@@ -19,6 +19,36 @@ enum CombatBehaviorFixture {
     static let unblocking = CombatBehaviorSettings(blockChance: 0)
     /// Always blocks, so a block case does not depend on a draw.
     static let alwaysBlocking = CombatBehaviorSettings(blockChance: 1)
+    /// Never casts inside weapon reach, so a melee case is not derailed by the
+    /// cast roll (issue #473).
+    static let neverCasting = CombatBehaviorSettings(blockChance: 0, castChance: 0)
+    /// Always casts when it can, so a casting case does not depend on a draw.
+    static let alwaysCasting = CombatBehaviorSettings(blockChance: 0, castChance: 1)
+
+    /// A fire-and-forget spell that reaches across the room and costs little.
+    static let fireball = CombatSpellOption(
+        spell: .generated(101),
+        cost: 20,
+        range: 3000,
+        chargeSeconds: 0.5
+    )
+    /// A costlier spell, so the "most expensive affordable option" rule has
+    /// something to prefer.
+    static let firestorm = CombatSpellOption(
+        spell: .generated(102),
+        cost: 80,
+        range: 3000,
+        chargeSeconds: 0.5
+    )
+    /// A maintained spell, which is held rather than let go the moment it has
+    /// finished charging.
+    static let flames = CombatSpellOption(
+        spell: .generated(103),
+        cost: 10,
+        range: 600,
+        chargeSeconds: 0,
+        isConcentration: true
+    )
 
     static func machine(
         settings: CombatBehaviorSettings = CombatBehaviorSettings.standard
@@ -32,7 +62,8 @@ enum CombatBehaviorFixture {
         lastKnown: SIMD3<Float>? = SIMD3(0, 0, 0),
         healthFraction: Float = 1,
         isTargetAlive: Bool = true,
-        isForced: Bool = false
+        isForced: Bool = false,
+        casting: CombatCastingProfile = .none
     ) -> CombatBehaviorInputs {
         CombatBehaviorInputs(
             actorPosition: SIMD3(distance, 0, 0),
@@ -41,8 +72,17 @@ enum CombatBehaviorFixture {
             reach: reach,
             healthFraction: healthFraction,
             isTargetAlive: isTargetAlive,
-            isForced: isForced
+            isForced: isForced,
+            casting: casting
         )
+    }
+
+    /// A caster with `magicka` to spend and `options` to spend it on.
+    static func casting(
+        magicka: Float,
+        _ options: [CombatSpellOption]
+    ) -> CombatCastingProfile {
+        CombatCastingProfile(magicka: magicka, options: options)
     }
 
     /// Runs steps until `condition` holds or `limit` seconds have gone by,

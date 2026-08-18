@@ -56,6 +56,11 @@ nonisolated struct CombatLoopSnapshot: Equatable, Sendable {
     let transients: CombatTransientCounts
     let limits: CombatTransientLimits
     let trimmedTransients: CombatTransientCounts
+    /// Whether fighters are allowed to cast at all, which is the panel's own
+    /// switch rather than anything the world holds (issue #473).
+    let isActorCastingEnabled: Bool
+    /// Spells NPCs have finished casting this session.
+    let actorCastCount: Int
     /// Human-readable result of the last panel action.
     let lastActionText: String
 
@@ -79,6 +84,8 @@ nonisolated struct CombatLoopSnapshot: Equatable, Sendable {
         transients: .none,
         limits: .standard,
         trimmedTransients: .none,
+        isActorCastingEnabled: false,
+        actorCastCount: 0,
         lastActionText: "Combat unavailable: no game data loaded."
     )
 }
@@ -91,6 +98,15 @@ protocol CombatLoopControlProviding: AnyObject {
     /// resident one — regards the player as an enemy. Settable, which is the
     /// hostility toggle scope point 7 asks for.
     var selectedActorIsHostile: Bool { get set }
+
+    /// Whether fighting actors may cast the spells they know (issue #473).
+    ///
+    /// A switch rather than a tuning number, and the one control this item adds:
+    /// turning it off is how a user tells "the caster is not casting because the
+    /// decision layer chose a swing" apart from "the caster is not casting
+    /// because nothing it knows is deliverable". On by default, because casting
+    /// is the shipping behaviour.
+    var isActorCastingEnabled: Bool { get set }
 
     /// Empties the incoming-hit trace and its count, without disturbing the
     /// fight.

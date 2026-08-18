@@ -312,7 +312,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   the No Recast and peak-keyword stacking rules, the additive AEFF save chunk that makes
   AVGN's dropped temporary modifier recoverable, the potion and ingredient consumption path
   with its cited first-effect rule, the panel provider seam, and the caster runtime: the
-  spellbook component and its SPLB chunk, where start spells actually come from, the tome
+  spellbook component and its SPLB chunk, where start spells actually come from,
+  the actor spell baseline behind an NPC's known spells and the leveled spell lists it
+  expands, the tome
   "Read" mark, readying a spell to a hand through the EQUP all-of/one-of distinction, the
   fire-and-forget and concentration cast loops with every cited refusal, abilities and the
   once-per-day power rule, the cast input and animation seam, and aimed delivery: the
@@ -342,6 +344,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   cadence and threshold stated as OpenSky's own, the `StartCombat` and `StopCombat` natives,
   census-named recoil reactions in both directions, bounded reaction clips on the
   single-clip NPC playback, the four transient caps and the eight-fighter engagement cap,
+  the casting phase and the rule a fighter chooses a spell over a swing by,
   the combat-music edge, the panel provider seam, and the `World > Combat & Physics`
   destination that is M15's verification surface and acceptance record.
 

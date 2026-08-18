@@ -31,6 +31,18 @@ struct CastingBridgeState {
     var selection = 0
     /// Human-readable result of the last panel action.
     var lastActionText = "No casting action yet."
+    /// Record-side resolution of an actor's authored `SPLO` list (issue #473),
+    /// built beside the runtime from the same provider indexes the actor-value
+    /// baselines come from. nil without game data.
+    var spellBaselines: ActorSpellBaselineResolver?
+    /// The plugin an actor's `SPLO` links are relative to, which is the base
+    /// plugin the record indexes were built from.
+    var spellPluginName: String?
+    /// Actors whose authored spell list has already been granted, so the grant
+    /// happens once per actor per session rather than once per combat step.
+    var grantedActors: Set<ReferenceKey> = []
+    /// Casts NPCs have completed this session, for the combat panel readout.
+    var actorCastCount = 0
 }
 
 extension GameViewController {
@@ -58,6 +70,13 @@ extension GameViewController {
         )
         let runtime = CasterRuntime(spellbook: spellbook, values: values)
         casting.runtime = runtime
+        casting.spellPluginName = magic.magicItemPluginName
+        if
+            let resolver = (provider as? ActorValueDataProviding)?
+                .actorValueBaselines?.resolver
+        {
+            casting.spellBaselines = ActorSpellBaselineResolver(actorValues: resolver)
+        }
         runtime.attach(world: self)
         renderer.onFrame.add { [weak self, weak renderer] _ in
             self?.advanceCasting(renderer: renderer)
@@ -72,17 +91,20 @@ extension GameViewController {
         guard let renderer, let runtime = casting.runtime else { return }
         guard renderer.movementMode.isPlayerControlled else {
             runtime.acceptFrame(.still, on: .player)
+            advanceActorCasts(delta: renderer.locomotion.archeryIntent.deltaTime)
             return
         }
         let melee = renderer.locomotion.meleeIntent
+        let delta = renderer.locomotion.archeryIntent.deltaTime
         runtime.acceptFrame(
             CastingIntent(
                 leftHeld: melee.block,
                 rightHeld: renderer.locomotion.archeryIntent.drawing,
-                deltaTime: renderer.locomotion.archeryIntent.deltaTime
+                deltaTime: delta
             ),
             on: .player
         )
+        advanceActorCasts(delta: delta)
     }
 
     /// Whether the hand `hand` holds a readied spell, which is what routes its
@@ -148,10 +170,10 @@ extension GameViewController: CasterWorld {
         launchSpellProjectile(payload)
     }
 
-    /// Target-actor delivery and aimed concentration: whatever the camera ray
-    /// reaches.
-    func aimedSpellTarget(within range: Float) -> SpellAim {
-        aimedTarget(within: range)
+    /// Target-actor delivery and aimed concentration: whatever the caster's
+    /// ray reaches — the camera's for the player, the actor's own for an NPC.
+    func aimedSpellTarget(within range: Float, for caster: ReferenceKey) -> SpellAim {
+        aimedTarget(within: range, for: caster)
     }
 }
 

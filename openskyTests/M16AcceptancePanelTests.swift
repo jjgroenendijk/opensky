@@ -254,6 +254,8 @@ struct M16AcceptancePanelTests {
         transients: .none,
         limits: .standard,
         trimmedTransients: .none,
+        isActorCastingEnabled: true,
+        actorCastCount: 0,
         lastActionText: "Hostility: Guard is now hostile."
     )
 }

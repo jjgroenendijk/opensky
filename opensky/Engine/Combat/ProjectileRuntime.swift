@@ -89,11 +89,24 @@ final class ProjectileRuntime {
     /// - Returns: the projectile, or nil when the shot could not be taken.
     @discardableResult
     func fire(_ shot: ProjectileShot) -> LiveProjectile? {
+        guard let world else { return nil }
+        return fire(shot, from: world.projectileShooter)
+    }
+
+    /// Launches one projectile from a shooter other than the one holding the
+    /// camera (issue #473, roadmap item 19.10).
+    ///
+    /// An NPC's spell leaves its own eye along its own aim, and nothing else
+    /// about the shot changes: the same fixed step, the same impact query, the
+    /// same range and lifetime bounds. Separating the pose from the shot is
+    /// what keeps that true — the alternative, a second flight path for actors,
+    /// is exactly what item 15.5 refused to write for spells.
+    @discardableResult
+    func fire(_ shot: ProjectileShot, from shooter: ProjectileShooter) -> LiveProjectile? {
         guard let world, shot.profile.isFlyable else { return nil }
         if let ammunition = shot.consumedAmmunition, !world.consumeArrow(ammunition) {
             return nil
         }
-        let shooter = world.projectileShooter
         // The archery tilt-up angle compensates for a bow's arrow drop, so it
         // applies to a bow's shot and to nothing else; a spell leaves straight
         // down the aim ray.

@@ -117,6 +117,16 @@ nonisolated enum SpellCastOutcome: Equatable, Sendable {
         return false
     }
 
+    /// Whether a spell actually left the hand: a fire-and-forget one landed, or
+    /// a maintained one ran and was let go. What the combat loop counts as a
+    /// cast having happened (issue #473).
+    var isFinished: Bool {
+        switch self {
+        case .cast, .released: true
+        default: false
+        }
+    }
+
     var failure: SpellCastFailure? {
         if case let .failed(reason) = self {
             return reason

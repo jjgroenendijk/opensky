@@ -2,6 +2,30 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-18
+
+* **AI spell use in the combat loop (issue #473)**: item 19.10 gives a fighting NPC its
+  spells. `CombatBehaviorMachine` grows a `casting` phase and one decision point where a
+  swing and a cast are chosen between: an actor out of weapon reach casts whenever it can
+  afford something that reaches, an actor inside it casts on a seeded roll, and the spell
+  chosen is the most expensive affordable one in range. A caster that can pay for nothing
+  falls straight back to closing and swinging, so an out-of-magicka mage is never stalled.
+* **The NPC cast is the player's cast**: `CasterRuntime` now keys its in-flight casts by
+  actor and hand rather than by hand alone, so an NPC's spell is readied, begun, charged and
+  released through the same four calls the panel's Cast button makes. `ProjectileRuntime`
+  takes a `ProjectileShooter` for a shot, so a spell leaves the caster's own eye instead of
+  the camera, and `CasterWorld.aimedSpellTarget` takes the caster for the same reason.
+* **A vanilla caster's attack spells live behind leveled spell lists**, observed rather than
+  assumed: `LvlBanditWizard`'s seven `SPLO` entries resolve to a ward, two heals, Ironflesh
+  and a racial pair, and its Ice Spike and Ice Storm come from two `LVSP` records. So
+  `ActorSpellBaselineResolver` expands an `LVSP` entry through the same deterministic policy
+  the TPLT chain applies to an LVLN hop, and `ActorTemplateResolver` indexes LVSP beside
+  LVLN. An actor's list is granted into its spellbook the first time the fight asks what it
+  can cast, lazily, so a cell of townsfolk does not write forty components into the save.
+* **`World > Combat & Physics > Combat Loop` gains one control**, "Fighters cast spells",
+  and the readout gains an AI-casting line plus a per-fighter cast count, so a swing chosen
+  over a cast is distinguishable from an actor with nothing castable.
+
 ## 2026-08-17
 
 * **Weapon and armour enchantments at runtime (issue #472)**: item 19.9 closes the loop the

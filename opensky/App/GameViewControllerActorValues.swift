@@ -79,9 +79,11 @@ extension GameViewController {
         // its own, because the same paragraph names no other value and no source
         // says health and stamina keep going — see docs/engine/magic.md, which
         // records that as a stated deviation rather than a silent one.
-        let holders = casting.runtime?.isCasting == true
-            ? regeneratingHolders().filter { $0.key != ReferenceKey.player }
-            : regeneratingHolders()
+        // Every caster, not only the player: item 19.10 casts an NPC's spells
+        // through the same runtime, so a skeleton mid-charge stands down from
+        // regeneration for the same cited reason the player does.
+        let casting = casting.runtime
+        let holders = regeneratingHolders().filter { casting?.isCasting($0.key) != true }
         runtime.advance(
             delta: delta,
             accumulator: &actorValues.regenAccumulator,

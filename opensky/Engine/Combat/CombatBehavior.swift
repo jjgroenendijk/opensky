@@ -33,6 +33,13 @@ nonisolated enum CombatBehaviorPhase: String, Equatable, Sendable, CaseIterable 
     case blocking
     /// Winding up. The attack clip is playing and nothing has connected.
     case windup
+    /// Casting: a spell is charging in the actor's hand and, for a maintained
+    /// one, being held (issue #473, roadmap item 19.10). Its own phase rather
+    /// than a flag on `windup` because the two are timed by different things —
+    /// a swing by this layer's own cadence, a cast by the SPIT charge time the
+    /// record states — and because an actor cannot be swinging and casting at
+    /// once, which is exactly what this enum exists to make unrepresentable.
+    case casting
     /// The contact step. Exactly one step long, which is what makes a hit land
     /// once rather than once per frame of the swing.
     case contact
@@ -62,8 +69,11 @@ nonisolated enum CombatBehaviorPhase: String, Equatable, Sendable, CaseIterable 
     }
 
     /// Whether an attack is in flight, which a stagger takes away.
+    ///
+    /// A cast counts: a blow that interrupts a swing interrupts a charge too,
+    /// and the runtime drops the charging spell when it staggers the actor.
     var isAttacking: Bool {
-        self == .windup || self == .contact || self == .recovery
+        self == .windup || self == .contact || self == .recovery || self == .casting
     }
 }
 
@@ -96,6 +106,57 @@ nonisolated struct CombatAwareness: Equatable, Sendable {
     }
 }
 
+/// One spell an actor could cast this step, as the decision layer needs it.
+///
+/// Resolved by the session rather than by the machine, for the reason
+/// `CombatAwareness` is a projection rather than the detection state itself: the
+/// numbers below come from SPIT and from the load order's own aimed-cast
+/// ceiling, and a decision layer that read records could disagree with the cast
+/// loop about what a spell costs.
+nonisolated struct CombatSpellOption: Equatable, Sendable {
+    /// The SPEL this option casts.
+    let spell: ReferenceKey
+    /// Magicka one cast takes, from `ResolvedSpell.cost`.
+    let cost: Float
+    /// How far it reaches, world units, already resolved: SPIT's range, or the
+    /// session's own aimed ceiling for a record that bounds nothing.
+    let range: Float
+    /// SPIT's charge time, which is how long the actor holds the cast before it
+    /// leaves the hand.
+    let chargeSeconds: Float
+    /// True for a concentration spell, which is maintained rather than
+    /// released the instant it finishes charging.
+    let isConcentration: Bool
+
+    init(
+        spell: ReferenceKey,
+        cost: Float,
+        range: Float,
+        chargeSeconds: Float = 0,
+        isConcentration: Bool = false
+    ) {
+        self.spell = spell
+        self.cost = cost
+        self.range = range
+        self.chargeSeconds = chargeSeconds
+        self.isConcentration = isConcentration
+    }
+}
+
+/// What one actor can pay for and what it could cast.
+nonisolated struct CombatCastingProfile: Equatable, Sendable {
+    /// Magicka available right now, which is what affordability is checked
+    /// against.
+    var magicka: Float = 0
+    /// The hostile spells the actor knows that this build can actually deliver,
+    /// in ascending spell order.
+    var options: [CombatSpellOption] = []
+
+    /// An actor that knows nothing castable — every actor before 19.10, and
+    /// every warrior after it.
+    static let none = CombatCastingProfile()
+}
+
 /// Everything one machine is told about the world for one fixed step.
 ///
 /// A flat value rather than a world handle, for the reason
@@ -118,6 +179,8 @@ nonisolated struct CombatBehaviorInputs: Equatable, Sendable {
     /// True when a script called `StartCombat`, which engages the actor without
     /// waiting for it to perceive anything and keeps it engaged while it cannot.
     var isForced: Bool
+    /// What the actor could cast and what it can pay for (issue #473).
+    var casting: CombatCastingProfile
 
     init(
         actorPosition: SIMD3<Float>,
@@ -126,7 +189,8 @@ nonisolated struct CombatBehaviorInputs: Equatable, Sendable {
         reach: Float = 0,
         healthFraction: Float = 1,
         isTargetAlive: Bool = true,
-        isForced: Bool = false
+        isForced: Bool = false,
+        casting: CombatCastingProfile = .none
     ) {
         self.actorPosition = actorPosition
         self.targetPosition = targetPosition
@@ -135,6 +199,7 @@ nonisolated struct CombatBehaviorInputs: Equatable, Sendable {
         self.healthFraction = healthFraction
         self.isTargetAlive = isTargetAlive
         self.isForced = isForced
+        self.casting = casting
     }
 
     /// Ground-plane distance between the actor and its target.
@@ -188,6 +253,16 @@ nonisolated struct CombatBehaviorStep: Equatable, Sendable {
     var raisedBlock = false
     /// True on the step a search began.
     var startedSearch = false
+    /// The spell whose cast began this step, or nil when none did. Carries the
+    /// option rather than a flag so the runtime casts what the machine chose
+    /// rather than re-choosing for itself.
+    var startedCast: CombatSpellOption?
+    /// The spell whose cast the machine let go of this step, which is the step
+    /// the magicka is spent and the delivery happens on.
+    var releasedCast: CombatSpellOption?
+    /// True on the step a cast in flight was dropped without being released —
+    /// the actor broke off, lost its target or gave up mid-charge.
+    var cancelledCast = false
     /// True on the step pursuit ended, which is the step the 16.5 package is
     /// resumed on.
     var endedPursuit = false

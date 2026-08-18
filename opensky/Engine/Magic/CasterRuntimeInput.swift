@@ -59,12 +59,12 @@ extension CasterRuntime {
                 continue
             }
             let held = intent.isHeld(hand)
-            if held, !wasHeld(hand) {
+            if held, !wasHeld(hand, on: caster.key) {
                 begin(hand, on: caster)
-            } else if !held, wasHeld(hand) {
+            } else if !held, wasHeld(hand, on: caster.key) {
                 release(hand, on: caster)
             }
-            setHeld(hand, held)
+            setHeld(hand, held, on: caster.key)
         }
         advance(delta: intent.deltaTime, on: caster)
     }
@@ -72,8 +72,9 @@ extension CasterRuntime {
     /// Drops a cast whose hand no longer holds a spell — an unequip mid-cast,
     /// which is otherwise a charge nothing can ever release.
     private func releaseIfHeld(_ hand: SpellHand, on caster: ActorValueHolder) {
-        guard wasHeld(hand) || phase(of: hand).isCasting else { return }
-        cancel(hand)
-        setHeld(hand, false)
+        guard wasHeld(hand, on: caster.key) || phase(of: hand, on: caster.key).isCasting
+        else { return }
+        cancel(hand, on: caster)
+        setHeld(hand, false, on: caster.key)
     }
 }

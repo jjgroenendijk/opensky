@@ -99,11 +99,45 @@ nonisolated struct ResolvedActorPackages: Equatable {
     let packages: ActorSourcedField<[FormID]>
 }
 
+/// Authored spell list after `useSpellList` template inheritance (issue #473).
+///
+/// A sibling of `ResolvedActorPackages` rather than more fields on the
+/// appearance or the stats, for the reason those two are separate: the list
+/// answers to its own ACBS template-data bit, and its consumer is the spellbook
+/// rather than the renderer or the actor-value derivation.
+nonisolated struct ResolvedActorSpells: Equatable {
+    let base: FormID
+    let chain: [ActorChainLink]
+    /// SPLO, resolved through `useSpellList`.
+    let spells: ActorSourcedField<[FormID]>
+    /// RNAM, resolved through `useTraits` — the race whose own `SPLO` run every
+    /// member of it carries.
+    let race: ActorSourcedField<FormID?>
+}
+
 /// Resolves template chains against pre-built single-plugin record indexes
 /// (raw-FormID keys, matching CellSceneBuilder's convention).
 nonisolated struct ActorTemplateResolver {
     let actors: [UInt32: ActorBase]
     let leveledActors: [UInt32: LeveledList]
+    /// LVSP decodes by raw FormID (issue #473). An actor's `SPLO` run names
+    /// leveled *spell* lists as freely as it names SPEL records — every vanilla
+    /// caster's offensive spells arrive that way, observed against
+    /// `Skyrim.esm` — so the spell baseline has to be able to expand one.
+    ///
+    /// Defaulted, so the fixtures that build a resolver by hand for the
+    /// appearance and package paths are untouched by a field they do not use.
+    let leveledSpells: [UInt32: LeveledList]
+
+    init(
+        actors: [UInt32: ActorBase],
+        leveledActors: [UInt32: LeveledList],
+        leveledSpells: [UInt32: LeveledList] = [:]
+    ) {
+        self.actors = actors
+        self.leveledActors = leveledActors
+        self.leveledSpells = leveledSpells
+    }
 
     /// Indexes every decodable NPC_ + LVLN top-group record. Undecodable
     /// records drop out of the index and later resolve as missing targets.
@@ -115,14 +149,27 @@ nonisolated struct ActorTemplateResolver {
                 actors[record.formID] = try? ActorBase(record: record, localized: localized)
             }
         }
-        var leveled: [UInt32: LeveledList] = [:]
-        if let top = file.topGroup(of: "LVLN"), let children = try? top.children() {
-            for case let .record(record) in children {
-                guard record.type == "LVLN", !record.isDeleted else { continue }
-                leveled[record.formID] = try? LeveledList(record: record)
-            }
+        return ActorTemplateResolver(
+            actors: actors,
+            leveledActors: leveledLists(in: file, of: "LVLN"),
+            leveledSpells: leveledLists(in: file, of: "LVSP")
+        )
+    }
+
+    /// Every decodable leveled list of one record type, by raw FormID.
+    private static func leveledLists(
+        in file: ESMFile,
+        of type: FourCC
+    ) -> [UInt32: LeveledList] {
+        var lists: [UInt32: LeveledList] = [:]
+        guard let top = file.topGroup(of: type), let children = try? top.children() else {
+            return lists
         }
-        return ActorTemplateResolver(actors: actors, leveledActors: leveled)
+        for case let .record(record) in children {
+            guard record.type == type, !record.isDeleted else { continue }
+            lists[record.formID] = try? LeveledList(record: record)
+        }
+        return lists
     }
 
     func resolve(base: FormID) throws -> ResolvedActorAppearance {
@@ -185,6 +232,23 @@ nonisolated struct ActorTemplateResolver {
             chain: chain,
             packages: resolveField(in: npcs, flag: .useAIPackages) {
                 ActorSourcedField(value: $0.packages, source: $0.formID)
+            }
+        )
+    }
+
+    /// Resolves only the spell-list field group (issue #473). A local empty
+    /// list stays authoritative unless `useSpellList` delegates it, which is
+    /// the rule every other field group here follows.
+    func resolveSpells(base: FormID) throws -> ResolvedActorSpells {
+        let (npcs, chain) = try resolveChain(base: base)
+        return ResolvedActorSpells(
+            base: base,
+            chain: chain,
+            spells: resolveField(in: npcs, flag: .useSpellList) {
+                ActorSourcedField(value: $0.spells, source: $0.formID)
+            },
+            race: resolveField(in: npcs, flag: .useTraits) {
+                ActorSourcedField(value: $0.race, source: $0.formID)
             }
         )
     }

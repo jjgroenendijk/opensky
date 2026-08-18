@@ -104,6 +104,11 @@ final class CombatPhysicsPanelViewController: InspectorPanelViewController {
         loopSection.hostilityControl
     }
 
+    /// The 19.10 switch: whether fighters cast the spells they know.
+    var actorCastingControl: NSButton {
+        loopSection.castingControl
+    }
+
     var clearCombatTraceControl: NSButton {
         loopSection.clearTraceControl
     }
