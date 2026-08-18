@@ -14,6 +14,7 @@ nonisolated enum PapyrusNativeFunctions {
         installGame(into: &registry)
         installQuest(into: &registry)
         installActor(into: &registry)
+        installSpell(into: &registry)
     }
 
     static func failure(

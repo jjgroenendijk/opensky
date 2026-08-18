@@ -7,9 +7,10 @@ import Testing
 struct PapyrusNativeRegistryTests {
     @Test func standardInstallIsCaseInsensitiveAndEmptyIsEmpty() {
         let standard = PapyrusNativeRegistry.standard
-        // 57 before the `Actor` family (issue #375) added nine, and 66 before
-        // 16.7 (issue #424) added `StartCombat` and `StopCombat`.
-        #expect(standard.count == 68)
+        // 57 before the `Actor` family (issue #375) added nine, 66 before
+        // 16.7 (issue #424) added `StartCombat` and `StopCombat`, and 68 before
+        // 19.11 (issue #474) added the eleven spell natives.
+        #expect(standard.count == 79)
         #expect(standard.contains(
             scriptName: "form", functionName: "REGISTERFORUPDATE"
         ))
@@ -21,6 +22,8 @@ struct PapyrusNativeRegistryTests {
         #expect(standard.contains(scriptName: "quest", functionName: "SETSTAGE"))
         #expect(standard.contains(scriptName: "ACTOR", functionName: "getactorvalue"))
         #expect(standard.contains(scriptName: "actor", functionName: "KILL"))
+        #expect(standard.contains(scriptName: "ACTOR", functionName: "addspell"))
+        #expect(standard.contains(scriptName: "spell", functionName: "CAST"))
         // `SetActorValue` sets the *base* value and OpenSky has no base
         // override store, so it stays deliberately unimplemented and tallied
         // (see PapyrusNativeActor.swift).

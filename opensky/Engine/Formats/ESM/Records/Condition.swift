@@ -141,6 +141,30 @@ nonisolated struct Condition: Equatable, Sendable {
     /// CIS2 — replaces `parameter2` when the record carries one.
     var parameter2Name: String?
 
+    /// A condition nothing authored: one function index and its parameters,
+    /// for an evaluation surface that asks a function directly rather than
+    /// reading a condition off a record (issue #474).
+    ///
+    /// The comparison is fixed at `>= 0`, which every documented return value
+    /// satisfies, because such a surface wants the function's *value* and not a
+    /// verdict about a threshold nobody chose. `ConditionProbe` is the caller.
+    init(
+        probingFunction functionIndex: UInt16,
+        parameter1: UInt32 = 0,
+        parameter2: UInt32 = 0,
+        runOn: RunOnType = .subject
+    ) {
+        comparison = .greaterThanOrEqual
+        flags = []
+        comparisonValue = .value(0)
+        self.functionIndex = functionIndex
+        self.parameter1 = Parameter(rawValue: parameter1)
+        self.parameter2 = Parameter(rawValue: parameter2)
+        self.runOn = runOn
+        reference = FormID(0)
+        parameter3 = -1
+    }
+
     /// Decodes one CTDA field. Returns nil when the payload is not exactly 32
     /// bytes, which is a mod quirk to skip rather than a fatal error.
     init?(ctda field: ESMField) throws {

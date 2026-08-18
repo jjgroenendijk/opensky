@@ -9,6 +9,24 @@ nonisolated struct ResolvedMagicEffect: Equatable {
     let effect: MagicEffect
     let sourcePlugin: String
 
+    /// Runtime identity of this record, which is how an active effect names the
+    /// MGEF it is an application of (issue #469).
+    var key: ReferenceKey {
+        ReferenceKey(resolved: id)
+    }
+
+    /// This effect's KWDA entries as runtime identities, resolved through the
+    /// store the record came out of (issue #474).
+    ///
+    /// A keyword the load order no longer carries is dropped rather than
+    /// guessed at, which makes the answer a subset of what is authored and
+    /// never a superset.
+    func keywordKeys(in store: MagicEffectStore) -> Set<ReferenceKey> {
+        Set(effect.keywords.keywords.compactMap { keyword in
+            store.resolvedID(keyword, fromPlugin: sourcePlugin).map(ReferenceKey.init(resolved:))
+        })
+    }
+
     var displayName: String {
         switch effect.name {
         case let .inline(value): value
@@ -22,6 +40,10 @@ nonisolated struct MagicEffectStore {
     private let index: RecordIndex
     private(set) var effects: [ResolvedFormID: ResolvedMagicEffect] = [:]
     private var effectsByEditorID: [String: ResolvedMagicEffect] = [:]
+    /// The same records under the identity the active-effect component keys
+    /// them by, so a stored effect goes back to its record without walking
+    /// every entry (issue #474).
+    private var effectsByKey: [ReferenceKey: ResolvedMagicEffect] = [:]
 
     init(index: RecordIndex) {
         self.index = index
@@ -42,6 +64,7 @@ nonisolated struct MagicEffectStore {
                 sourcePlugin: sourcePlugin
             )
             effects[id] = resolved
+            effectsByKey[resolved.key] = resolved
             if let editorID = effect.editorID {
                 effectsByEditorID[editorID.lowercased()] = resolved
             }
@@ -57,6 +80,13 @@ nonisolated struct MagicEffectStore {
             key.objectID == id.objectID
                 && key.plugin.caseInsensitiveCompare(id.plugin) == .orderedSame
         }?.value
+    }
+
+    /// The record behind a stored runtime identity, or nil when this load order
+    /// no longer carries it — which is what a save written under a different
+    /// load order hands back.
+    func effect(key: ReferenceKey) -> ResolvedMagicEffect? {
+        effectsByKey[key]
     }
 
     func effect(editorID: String) -> ResolvedMagicEffect? {

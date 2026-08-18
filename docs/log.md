@@ -4,6 +4,26 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-18
 
+* **Magic condition functions and Papyrus spell natives (issue #474)**: item 19.11 makes the
+  two script-facing surfaces legible. Eight CTDA functions — `HasMagicEffect`, `HasSpell`,
+  `GetCurrentDeliveryType`, `GetCurrentCastingType`, `HasEquippedSpell`,
+  `HasMagicEffectKeyword`, `IsSpellTarget` and `IsCasting` — read a new
+  `MagicConditionResolution` seam on `ConditionContext`, taking the registry from 35
+  functions covering 76,579 of the active load order's 118,494 conditions to 43 covering
+  77,197. Half a point, measured rather than guessed: vanilla gates magic mostly through
+  perks and equipment, and the tail is recorded function by function rather than implied.
+* **Eleven Papyrus natives**, chosen by counting call sites in the install's compiled
+  corpus rather than by taste: `Actor.RemoveSpell` (311 sites), `AddSpell` (278),
+  `Spell.Cast` (277), `HasSpell`, `GetEquippedSpell`, `EquipSpell`, `HasMagicEffect`,
+  `DispelSpell`, `UnequipSpell`, `DispelAllSpells` and `HasMagicEffectWithKeyword`. All
+  route through a new `PapyrusWorldMagicBridge` into 19.6's effect runtime and 19.7's
+  spellbook and cast loop, so a script's `AddSpell` and the Magic panel's Learn button
+  write the same component. None is latent, which the wiki states outright for the cast.
+* **One deviation is recorded rather than papered over**: the Creation Kit documents
+  `HasMagicEffect` and its keyword variants as testing whether an actor *carries* an effect
+  a spell could apply, active or not. OpenSky stores only effects that were applied, so all
+  four spellings answer whether the effect is *acting*. Every running effect answers
+  identically.
 * **AI spell use in the combat loop (issue #473)**: item 19.10 gives a fighting NPC its
   spells. `CombatBehaviorMachine` grows a `casting` phase and one decision point where a
   swing and a cast are chosen between: an actor out of weapon reach casts whenever it can

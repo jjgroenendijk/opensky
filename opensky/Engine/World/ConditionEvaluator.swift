@@ -44,6 +44,24 @@ nonisolated enum ConditionDataDomain: String, Equatable, Sendable {
     case location
 }
 
+/// Which half of the magic seam could not answer (issue #474). Grouped rather
+/// than counted as one number because the four say different things about what
+/// is missing: no state for the actor, no record behind a parameter, a casting
+/// source OpenSky readies nothing into, and a hand holding no spell.
+nonisolated enum ConditionMagicDomain: String, Equatable, Sendable {
+    /// The run-on named a reference the magic seam carries no state for.
+    case actor
+    /// A FormID parameter, or a readied spell, that this load order does not
+    /// resolve to a record.
+    case record
+    /// A casting source that is not one of the two hands OpenSky readies
+    /// spells into — the voice slot and the instant source.
+    case castingSource
+    /// The named casting source holds no spell, so the SPIT field the function
+    /// reads does not exist.
+    case equippedSpell
+}
+
 /// Why a condition could not be evaluated. Every case is a reason-tagged false
 /// and a `ConditionTally` bucket.
 ///
@@ -98,6 +116,11 @@ nonisolated enum ConditionFailure: Equatable, Error, Sendable {
     /// An M18 record-data function had no store, subject fact, or resolvable
     /// FormID for the named domain. This is not a negative query result.
     case unavailableData(ConditionDataDomain)
+    /// A magic function had no state, record or slot for the named domain
+    /// (issue #474). Deliberately not treated as an actor who knows no spells
+    /// and carries no effects — that is a different answer from "this engine
+    /// does not know", and only one of them is a real one.
+    case unavailableMagic(ConditionMagicDomain)
 }
 
 /// The answer to one condition or one condition list.

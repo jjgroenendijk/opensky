@@ -40,6 +40,11 @@ extension SpellbookFixture {
     static let fireDamage: UInt32 = 0x0012
     /// The PROJ `fireDamage` names.
     static let fireBoltProjectile: UInt32 = 0x0020
+    /// A KYWD the restore-health effect carries, so
+    /// `HasMagicEffectKeyword` has something to find (issue #474). No KYWD
+    /// record is authored behind it: the condition compares runtime identities,
+    /// and a keyword that resolves is all either side needs.
+    static let restorationKeyword: UInt32 = 0x0030
 
     /// The two MGEF records every spell here points at. Both carry base cost 1,
     /// so every spell cost in the suites comes out of the documented formula
@@ -48,7 +53,8 @@ extension SpellbookFixture {
         [
             magicEffect(
                 formID: restoreHealth, editorID: "RestoreHealth",
-                data: effectData(archetype: 0, primaryValue: 24)
+                data: effectData(archetype: 0, primaryValue: 24),
+                keywords: [restorationKeyword]
             ),
             magicEffect(
                 formID: fortifyResistFire, editorID: "FortifyResistFire",
@@ -125,13 +131,32 @@ extension SpellbookFixture {
         return data
     }
 
-    static func magicEffect(formID: UInt32, editorID: String, data: Data) -> Data {
-        ESMFixture.record(
+    /// One MGEF, optionally carrying a keyword list.
+    ///
+    /// KSIZ/KWDA are written only when `keywords` is non-empty, because a
+    /// record with an empty keyword list and a record with none are different
+    /// bytes and the decoder tolerates both (issue #474).
+    static func magicEffect(
+        formID: UInt32,
+        editorID: String,
+        data: Data,
+        keywords: [UInt32] = []
+    ) -> Data {
+        var fields = ESMFixture.field("EDID", ESMFixture.zstring(editorID))
+            + ESMFixture.field("FULL", ESMFixture.zstring(editorID))
+        if !keywords.isEmpty {
+            var count = Data()
+            count.appendUInt32(UInt32(keywords.count))
+            var list = Data()
+            for keyword in keywords {
+                list.appendUInt32(keyword)
+            }
+            fields += ESMFixture.field("KSIZ", count) + ESMFixture.field("KWDA", list)
+        }
+        return ESMFixture.record(
             "MGEF",
             formID: formID,
-            data: ESMFixture.field("EDID", ESMFixture.zstring(editorID))
-                + ESMFixture.field("FULL", ESMFixture.zstring(editorID))
-                + ESMFixture.field("DATA", data)
+            data: fields + ESMFixture.field("DATA", data)
         )
     }
 

@@ -131,7 +131,7 @@ extension PapyrusWorldStateBridge {
     /// ACHR resolved through the reference source. Nil for anything that is not
     /// an actor, which is what makes an `Actor` native called on a crate a
     /// tallied failure rather than a write to a crate's health.
-    private func actorHolder(for key: ReferenceKey) -> ActorValueHolder? {
+    func actorHolder(for key: ReferenceKey) -> ActorValueHolder? {
         if key == playerKey {
             return .player
         }

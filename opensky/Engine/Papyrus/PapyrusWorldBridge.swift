@@ -65,10 +65,13 @@ nonisolated protocol PapyrusWorldReferenceSource: AnyObject {
 /// so the journal, the dirty counts, and the save see it.
 /// The quest operations are declared separately, in
 /// `PapyrusWorldQuestBridge.swift` (issue #322), the actor operations in
-/// `PapyrusWorldActorBridge.swift` (issue #375), and both are refined in here
-/// so a native reaches all of it through the one `context.world` façade.
+/// `PapyrusWorldActorBridge.swift` (issue #375), the magic operations in
+/// `PapyrusWorldMagicBridge.swift` (issue #474), and all three are refined in
+/// here so a native reaches all of it through the one `context.world` façade.
 @MainActor
-protocol PapyrusWorldBridge: PapyrusWorldQuestBridge, PapyrusWorldActorBridge {
+protocol PapyrusWorldBridge:
+    PapyrusWorldQuestBridge, PapyrusWorldActorBridge, PapyrusWorldMagicBridge
+{
     /// Session-stable identity of the player; see `ReferenceKey.player`.
     var playerKey: ReferenceKey { get }
 

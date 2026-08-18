@@ -78,6 +78,11 @@ nonisolated struct ConditionTally: Equatable, Sendable {
     /// answer rather than silently counted as a negative match.
     private(set) var unavailableData: [ConditionDataDomain: Int] = [:]
 
+    /// Magic seam misses (issue #474), grouped the same way and for the same
+    /// reason: an actor with no magic state and a casting source OpenSky
+    /// readies nothing into are different gaps.
+    private(set) var unavailableMagic: [ConditionMagicDomain: Int] = [:]
+
     private(set) var conditionsEvaluated = 0
     private(set) var listsEvaluated = 0
 
@@ -122,6 +127,18 @@ nonisolated struct ConditionTally: Equatable, Sendable {
         case let .unresolvedParameter(index):
             unresolvedParameterTotal += 1
             Self.bump(&unresolvedParameters, index, limit: limit)
+        case .unavailableClock, .unavailableActorState, .unavailableDetection,
+             .unavailableDialogue, .unavailableData, .unavailableMagic:
+            noteUnavailable(failure)
+        }
+    }
+
+    /// The "this session carries no such state" half, split out because the one
+    /// switch outgrew the strict-lint complexity cap once the magic seam landed.
+    /// The caller's switch stays exhaustive, so a new failure case still fails
+    /// to compile there rather than falling silently into this default.
+    private mutating func noteUnavailable(_ failure: ConditionFailure) {
+        switch failure {
         case .unavailableClock:
             unavailableClock += 1
         case .unavailableActorState:
@@ -132,6 +149,10 @@ nonisolated struct ConditionTally: Equatable, Sendable {
             unavailableDialogue += 1
         case let .unavailableData(domain):
             unavailableData[domain, default: 0] += 1
+        case let .unavailableMagic(domain):
+            unavailableMagic[domain, default: 0] += 1
+        default:
+            break
         }
     }
 
@@ -189,6 +210,7 @@ nonisolated struct ConditionTally: Equatable, Sendable {
             + unresolvedParameterTotal + unavailableClock + unavailableActorState
             + unavailableDetection + unavailableDialogue
             + unavailableData.values.reduce(0, +)
+            + unavailableMagic.values.reduce(0, +)
     }
 
     /// Unknown function indices ranked by count, ties broken by index so the

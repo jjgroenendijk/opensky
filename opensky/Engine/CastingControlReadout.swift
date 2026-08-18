@@ -88,6 +88,18 @@ nonisolated enum CastingControlReadout {
         return text + "\n\(lines)"
     }
 
+    /// What the magic condition functions say about the player right now
+    /// (issue #474), which is what makes the registrations verifiable from the
+    /// app rather than only from a test.
+    static func conditionsText(for snapshot: CastingControlSnapshot) -> String {
+        guard snapshot.isAvailable else { return "Conditions: unavailable" }
+        guard !snapshot.conditionLines.isEmpty else {
+            return "Conditions: no magic condition function could be evaluated"
+        }
+        let lines = snapshot.conditionLines.map { "  \($0)" }.joined(separator: "\n")
+        return "Conditions (player):\n\(lines)"
+    }
+
     static func lastActionText(for snapshot: CastingControlSnapshot) -> String {
         "Last action: \(snapshot.lastActionText)"
     }
@@ -101,6 +113,7 @@ nonisolated enum CastingControlReadout {
             activityText(for: snapshot),
             coverageText(for: snapshot),
             deliveryText(for: snapshot),
+            conditionsText(for: snapshot),
             lastActionText(for: snapshot)
         ].joined(separator: "\n")
     }

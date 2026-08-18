@@ -38,24 +38,27 @@ struct PapyrusAcceptanceRealDataTests {
         #expect(census.declarationTotal == 686)
         #expect(census.referenceTotal == 65477)
         #expect(census.distinctReferencedTotal == 508)
-        // 47 before the `Actor` family (issue #375), 56 after it, and 58 once
-        // 16.7 (issue #424) added `StartCombat` and `StopCombat` — every one of
-        // those eleven is referenced by the vanilla corpus.
-        #expect(coverage == PexNativeCoverage(implemented: 58, referenced: 508))
+        // 47 before the `Actor` family (issue #375), 56 after it, 58 once
+        // 16.7 (issue #424) added `StartCombat` and `StopCombat`, and 69 once
+        // 19.11 (issue #474) added the eleven spell natives — every one of
+        // those twenty-two is referenced by the vanilla corpus, which is what
+        // chose them.
+        #expect(coverage == PexNativeCoverage(implemented: 69, referenced: 508))
         #expect(run.entryPoints == 577)
         #expect(run.pending == 0)
         #expect(run.terminalOutcomes == 577)
         #expect(run.completed == 240)
         #expect(runtime.tally.faultTotal == 337)
         #expect(runtime.tally.nativeCallTotal == 536)
-        #expect(runtime.tally.unimplementedNativeTotal == 339)
-        // The `Quest` family (issue #322) and the `Actor` family (issue #375,
-        // widened by #424) are registered but need a world, and this acceptance
-        // runs the corpus headless: their calls reach a native that refuses
-        // honestly instead of falling through to the unimplemented tally, which
-        // is where these 118 moved from. 117 before `StartCombat` and
-        // `StopCombat`, and 108 before the `Actor` family landed.
-        #expect(runtime.tally.nativeFailureTotal == 118)
+        #expect(runtime.tally.unimplementedNativeTotal == 327)
+        // The `Quest` family (issue #322), the `Actor` family (issue #375,
+        // widened by #424) and the spell family (issue #474) are registered but
+        // need a world, and this acceptance runs the corpus headless: their
+        // calls reach a native that refuses honestly instead of falling through
+        // to the unimplemented tally, which is where these 130 moved from. 118
+        // before the spell natives, 117 before `StartCombat` and `StopCombat`,
+        // and 108 before the `Actor` family landed.
+        #expect(runtime.tally.nativeFailureTotal == 130)
         #expect(runtime.tally.deferredAnimationTotal == 18)
         #expect(runtime.tally.rankedFaultKinds.map(\.name) == [
             "typeMismatch", "invalidJump", "invalidOperand"
