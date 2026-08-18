@@ -73,7 +73,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   condition payload: operator and flag bits, float or GLOB comparison value, raw
   function index and parameters, run-on types, and the skip-don't-throw decode policy;
   plus evaluation - the function registry, OR grouping, run-on resolution, the
-  reason-tagged-false failure model, keyword/list/location data seam, and the coverage
+  reason-tagged-false failure model, keyword/list/location data seam, the magic seam with
+  its spell-knowledge, effect-presence and casting-state functions, and the coverage
   tally with its vanilla and active-load-order sweeps.
 * [AI packages (PACK, PKID)](/formats/packages.md) - general data, calendar schedules,
   header conditions, public location/target inputs, template links, procedure names, and
@@ -247,7 +248,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   values, explicit frames, arrays, states, a native registry, deterministic real/game-time
   suspension scheduling, faults and coverage tallies, with VMAD-supplied initial values;
   plus the main-actor world runtime, use-key and trigger dispatch, persistent world
-  mutation, update timers, save state, the `World > Scripts` surface, and the M11 gate.
+  mutation, update timers, save state, the actor and spell native families with their
+  measured call-site counts, the `World > Scripts` surface, and the M11 gate.
 * [World audio playback](/engine/audio.md) - AVAudioEngine graph with 3D positional
   sources and non-positional music/ambience beds, streaming WMA decode off the main
   thread, vanilla SNCT category volumes, per-category mute and solo, source
@@ -314,7 +316,7 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   with its cited first-effect rule, the panel provider seam, and the caster runtime: the
   spellbook component and its SPLB chunk, where start spells actually come from,
   the actor spell baseline behind an NPC's known spells and the leveled spell lists it
-  expands, the tome
+  expands, the script-facing condition and Papyrus surfaces, the tome
   "Read" mark, readying a spell to a hand through the EQUP all-of/one-of distinction, the
   fire-and-forget and concentration cast loops with every cited refusal, abilities and the
   once-per-day power rule, the cast input and animation seam, and aimed delivery: the

@@ -17,7 +17,8 @@ struct CombatSpellcastingPanelTests {
         unheldAbilityEntries: Int = 0,
         projectileCount: Int = 0,
         deliveryLines: [String] = [],
-        lastHitAdjustments: [String] = []
+        lastHitAdjustments: [String] = [],
+        conditionLines: [String] = []
     ) -> CastingControlSnapshot {
         CastingControlSnapshot(
             isAvailable: true,
@@ -38,6 +39,7 @@ struct CombatSpellcastingPanelTests {
             deliveryLines: deliveryLines,
             lastHitTargets: lastHitAdjustments.isEmpty ? 0 : 1,
             lastHitAdjustments: lastHitAdjustments,
+            conditionLines: conditionLines,
             lastActionText: "Readied Healing in the right hand."
         )
     }
@@ -186,5 +188,23 @@ struct CombatSpellcastingPanelTests {
         let text = CastingControlReadout.spellsText(for: snapshot())
 
         #expect(text.contains("Learn start spells"))
+    }
+
+    /// The magic condition probe (issue #474): the eight registrations are
+    /// readable from the panel, and an unwired seam says so rather than
+    /// printing eight zeroes.
+    @Test func theConditionProbeLinesAreShownAndTheAbsenceIsNamed() {
+        let text = CastingControlReadout.conditionsText(for: snapshot(conditionLines: [
+            "HasSpell(Healing) -> 1",
+            "GetCurrentDeliveryType(right hand) -> no equippedSpell magic state "
+                + "in the evaluation context"
+        ]))
+        #expect(text.hasPrefix("Conditions (player):"))
+        #expect(text.contains("HasSpell(Healing) -> 1"))
+        #expect(text.contains("no equippedSpell magic state"))
+        #expect(CastingControlReadout.conditionsText(for: snapshot())
+            == "Conditions: no magic condition function could be evaluated")
+        #expect(CastingControlReadout.conditionsText(for: .unavailable)
+            == "Conditions: unavailable")
     }
 }

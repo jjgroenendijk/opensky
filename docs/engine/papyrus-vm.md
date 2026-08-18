@@ -5,7 +5,7 @@ description: Bounded execution of Skyrim PEX functions with explicit frames,
   typed values, native registry, deterministic scheduling and tallies, driven
   once per frame from the engine loop with a script event queue and save state.
 tags: [engine, papyrus, virtual-machine, bytecode]
-timestamp: 2026-08-09T00:00:00Z
+timestamp: 2026-08-18T00:00:00Z
 ---
 
 # Papyrus virtual machine
@@ -56,6 +56,7 @@ choice OpenSky makes in those gaps is listed under [Deviations](#deviations).
 * [Event queue](#event-queue)
 * [Activation and the world bridge](#activation-and-the-world-bridge)
 * [Actor natives, hits and deaths](#actor-natives-hits-and-deaths)
+* [The spell natives](#the-spell-natives)
 * [Update timers](#update-timers)
 * [Instance lifecycle over cell streaming](#instance-lifecycle-over-cell-streaming)
 * [Quest script instances and stage fragments](#quest-script-instances-and-stage-fragments)
@@ -204,7 +205,7 @@ to queue native results and inspect a bounded call tail.
 ## Native registry
 
 `PapyrusNativeRegistry` keys functions case-insensitively by both script and
-function name. `.empty` installs nothing. `.standard` installs 66 entries in
+function name. `.empty` installs nothing. `.standard` installs 79 entries in
 one place:
 
 | family | functions | headless policy |
@@ -218,6 +219,7 @@ one place:
 | `Game` | `GetPlayer` | same failure policy |
 | `Quest` | see [quest script instances](#quest-script-instances-and-stage-fragments) | same failure policy |
 | `Actor` | `GetActorValue`, `GetBaseActorValue`, `GetActorValuePercentage`, `DamageActorValue`, `RestoreActorValue`, `IsDead`, `IsInCombat`, `IsWeaponDrawn`, `Kill`, `StartCombat`, `StopCombat` | same failure policy |
+| `Actor` and `Spell` magic | see [the spell natives](#the-spell-natives) | same failure policy |
 
 The corpus census found no string native that can be answered honestly without
 world context, and string basics are PEX opcodes rather than natives, so they
@@ -697,6 +699,68 @@ read, never a zero. That tally is the list of what to store next.
 | `SetRelationshipRank` and the faction natives | not installed | there is no relationship or faction store to write. 16.7 kept `ActorHostility`'s two cases |
 | `Game.GetPlayer().IsInCombat()` | reads false in a fight | a combat behavior machine belongs to an NPC and describes what *it* is doing. Whether the *player* is in a fight is `CombatLoopState.isPlayerInCombat`, derived from every resident actor rather than stored on one |
 | `IsWeaponDrawn()` on an NPC | tallied failure | only the player carries a behavior graph that tracks a draw state (item 14.6). "Sheathed" would be an invented fact |
+
+## The spell natives
+
+Issue #474 (roadmap item 19.11) puts the scripting surface on top of the magic
+subsystems M19 built: 19.6's active effects and 19.7's spellbook and cast loop.
+Eleven natives and one bridge half, in
+`opensky/Engine/Papyrus/PapyrusNativeSpell.swift` over
+`PapyrusWorldMagicBridge`, whose conformance is in
+`PapyrusWorldStateBridgeMagic.swift`.
+
+Which eleven was measured rather than chosen. `PexNativeCensus` over the
+install's whole compiled corpus ranks every native by call sites, and the
+magic-facing head of that list is what is registered; the counts are the
+`references` column below and are reproduced by
+`PapyrusAcceptanceRealDataTests`.
+
+| native | references | what it reads or does | source |
+| --- | --- | --- | --- |
+| `bool RemoveSpell(Spell)` | 311 | forgets the spell, clearing any hand holding it | [RemoveSpell - Actor](https://ck.uesp.net/wiki/RemoveSpell_-_Actor) |
+| `bool AddSpell(Spell, bool abVerbose = true)` | 278 | teaches it; false when already known | [AddSpell - Actor](https://ck.uesp.net/wiki/AddSpell_-_Actor) |
+| `Cast(ObjectReference akSource, ObjectReference akTarget = None)` | 277 | casts the receiver spell at once from `akSource` | [Cast - Spell](https://ck.uesp.net/wiki/Cast_-_Spell) |
+| `bool HasSpell(Form)` | 72 | whether the actor knows it | [HasSpell - Actor](https://ck.uesp.net/wiki/HasSpell_-_Actor) |
+| `Spell GetEquippedSpell(int aiSource)` | 40 | the spell readied at that source, or `None` | [GetEquippedSpell - Actor](https://ck.uesp.net/wiki/GetEquippedSpell_-_Actor) |
+| `EquipSpell(Spell, int aiSource)` | 37 | readies it, teaching it first if needed | [EquipSpell - Actor](https://ck.uesp.net/wiki/EquipSpell_-_Actor) |
+| `bool HasMagicEffect(MagicEffect)` | 31 | whether an effect of that MGEF is acting | [HasMagicEffect - Actor](https://ck.uesp.net/wiki/HasMagicEffect_-_Actor) |
+| `bool DispelSpell(Spell)` | 30 | removes every effect that spell applied | [DispelSpell - Actor](https://ck.uesp.net/wiki/DispelSpell_-_Actor) |
+| `UnequipSpell(Spell, int aiSource)` | 21 | clears that hand, and only when it holds the spell | [UnequipSpell - Actor](https://ck.uesp.net/wiki/UnequipSpell_-_Actor) |
+| `DispelAllSpells()` | 16 | removes every dispellable effect | [DispelAllSpells - Actor](https://ck.uesp.net/wiki/DispelAllSpells_-_Actor) |
+| `bool HasMagicEffectWithKeyword(Keyword)` | 8 | whether any acting effect carries that keyword | [HasMagicEffectWithKeyword - Actor](https://ck.uesp.net/wiki/HasMagicEffectWithKeyword_-_Actor) |
+
+**None of them is latent.** Each wiki page declares a plain `native` with no
+latent marker, and the cast page says so outright: "This function casts the
+spell instantaneously." So each returns on the call the script made, and a
+script that casts and immediately reads `HasMagicEffect` sees the effect.
+
+Everything routes through the subsystem that owns the state. Learning,
+forgetting and readying go through `SpellbookRuntime`, so a script's `AddSpell`
+lands in the journal, the dirty counts and the save exactly as reading a spell
+tome does, and readying a hand arbitrates against worn equipment through the
+same path the panel's Ready button takes. Dispelling goes through
+`ActiveEffectRuntime`, so the temporary modifier slot each removed effect owned
+is handed back rather than leaked. `Spell.Cast` goes through `CasterRuntime`, so
+a scripted cast applies its effect list through the one implementation a
+player's cast uses.
+
+Casting sources are xEdit's `wbCastingSourceEnum` — 0 Left, 1 Right, 2 Voice,
+3 Instant — which the Creation Kit wiki's `EquipSpell` page spells the same way.
+OpenSky readies spells into two hands and has no voice slot, so sources 2 and 3
+are a tallied failure rather than a silent no-op.
+
+### Stated gaps in the spell family
+
+| behavior | what OpenSky does | why |
+| --- | --- | --- |
+| `RemoveSpell` on a race- or ActorBase-granted spell | actually removes it | the wiki records that vanilla leaves such a spell in place and "will still return true in such cases". Here an authored `SPLO` grant is an ordinary known spell. Reproducing a documented lie would make every correct script wrong |
+| `AddSpell(_, abVerbose)` | argument accepted and ignored | it only suppresses a UI message for the player, and there is no spell-added message yet to suppress |
+| `Spell.Cast` and magicka | never charges the caster | the wiki describes an instantaneous cast that does not animate the actor and works whether or not the source even knows the spell. Nothing in it says the caster pays, and the cost checks belong to the held-cast path in `CasterRuntime` |
+| `Spell.Cast` with `akTarget` | applies to that actor directly, with no area sweep | the caster's aim ray answers "what is the caster pointing at", and a script that named a target is not pointing at anything. Nothing here knows where the impact was, so inventing a position would catch bystanders a real cast might not |
+| `Actor.DoCombatSpellApply` | not installed | it asks the actor's combat controller to work a spell into what it is already doing, and 19.10's caster AI chooses its own spells. Registering it as an immediate cast would make an NPC fire through its own decision loop |
+| `Spell.RemoteCast`, `Spell.Preload`, `Spell.Unload` | not installed | the asset lifecycle they name does not exist |
+| the whole `ActiveMagicEffect` script | not installed | no script archetype MGEF runs yet (tallied in 19.6), so there is no receiver for one of its methods to be about |
+| `HasMagicEffect`, `HasMagicEffectWithKeyword` | answer "is it acting" rather than "is it carried" | the same narrowing the condition functions carry, with the citation, on [conditions](/formats/conditions.md) |
 
 ### `OnHit`
 
@@ -1265,12 +1329,14 @@ steps to quiescence:
 against the user's read-only retail script corpus. It decoded 14,302 scripts,
 resolved 65,477 typed native call sites from 686 native declarations, and
 found 508 distinct referenced native pairs. Those three census numbers have not
-moved since; the coverage over them has, and was last re-measured on 2026-08-09
-after `StartCombat` and `StopCombat` landed with the combat AI. The standard
-registry now implements **58 of those 508 referenced pairs: 11.4% native
-coverage**, against 56 (11.0%) after item 15.8, 47 (9.3%) before it, and 18
-(3.5%) at the original M11.1 gate. All eleven `Actor` natives are referenced by
-the vanilla corpus, which is why the whole family moved the number.
+moved since; the coverage over them has, and was last re-measured on 2026-08-18
+after the eleven spell natives landed with item 19.11. The standard
+registry now implements **69 of those 508 referenced pairs: 13.6% native
+coverage**, against 58 (11.4%) after 16.7, 56 (11.0%) after item 15.8, 47 (9.3%)
+before it, and 18 (3.5%) at the original M11.1 gate. All eleven `Actor` natives
+and all eleven spell natives are referenced by the vanilla corpus, which is why
+each family moved the number by its own size — and, for the spell family, is how
+its members were chosen.
 
 The same gate invoked all zero-argument `OnInit`, `OnLoad`, and
 `OnPlayerLoadGame` functions in the empty state. All 577 entry points reached a
@@ -1280,10 +1346,11 @@ deviations. Faults ranked as 231 `typeMismatch`, 93 `invalidJump`, and 13
 `invalidOperand`.
 
 The split of those 536 calls between "no such native" and "the native exists and
-refused" is what each new family moves, and the 2026-08-09 re-run reads 339
-unimplemented against 118 native-argument failures — 340 and 117 after item 15.8,
-and 349 and 108 before it. Ten calls have crossed the line in total, nine with
-the `Actor` family and one with `StartCombat`: headless, every one of them
+refused" is what each new family moves, and the 2026-08-18 re-run reads 327
+unimplemented against 130 native-argument failures — 339 and 118 after item 16.7,
+340 and 117 after item 15.8, and 349 and 108 before it. Twenty-two calls have
+crossed the line in total: nine with the `Actor` family, one with `StartCombat`,
+and twelve with the spell family. Headless, every one of them
 refuses honestly for want of a world instead of falling through to the
 unimplemented tally. The leading unimplemented
 native is `ReferenceAlias.AddInventoryEventFilter` with 41 calls;
@@ -1306,8 +1373,8 @@ M11 closes with the complete interaction chain in place: PEX decoding (#167), bo
 execution (#168), VMAD binding (#169), native dispatch and the M11.1 census (#170), the
 engine-loop runtime (#171), scripted activation and world mutation (#172), trigger events
 (#173), update timers (#277), the `World > Scripts` panel (#278), and this overall gate
-(#174). The coverage headline as of 2026-08-09 is **58 of 508 distinct natives referenced
-by vanilla scripts implemented (11.4%)**, up from the 18 (3.5%) this milestone closed on;
+(#174). The coverage headline as of 2026-08-18 is **69 of 508 distinct natives referenced
+by vanilla scripts implemented (13.6%)**, up from the 18 (3.5%) this milestone closed on;
 the 18 `deferredAnimation` calls in the corpus run are unchanged. `PlayAnimation` remains
 an explicit, reason-tagged deviation until M14; treating it as an implemented no-op was
 rejected because that would overstate visible behavior.

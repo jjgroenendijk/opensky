@@ -39,6 +39,7 @@ extension GameViewController {
         // The combat loop, which `StartCombat`, `StopCombat` and `IsInCombat`
         // reach through (issue #424).
         bridge.combatRuntime = { [weak self] in self?.combat.runtime }
+        wireSpellNatives(bridge: bridge, provider: provider)
         // Only the player carries a behavior graph that tracks a draw state, so
         // every other actor answers nil and `IsWeaponDrawn` fails with a reason
         // rather than claiming sheathed.
@@ -147,4 +148,30 @@ extension GameViewController {
         subsystem: "nl.jjgroenendijk.opensky",
         category: "Papyrus"
     )
+}
+
+extension GameViewController {
+    /// The spell natives' collaborators (issue #474, roadmap item 19.11).
+    ///
+    /// Closures for the reason the actor ones are: `wireCasting` and
+    /// `wireMagicEffects` both run after this step, and a reference captured
+    /// here would be nil forever. The dispel closure carries the whole
+    /// read-modify-write because `ActiveEffectRuntime` is a struct this
+    /// controller owns by value — handing out a copy would drop the write.
+    func wireSpellNatives(
+        bridge: PapyrusWorldStateBridge,
+        provider: any CellSceneProvider
+    ) {
+        bridge.casterRuntime = { [weak self] in self?.casting.runtime }
+        bridge.magicEffectStore = (provider as? MagicDataProviding)?.magicEffectStore
+        bridge.dispelEffects = { [weak self] holder, predicate in
+            guard let self, var runtime = magicEffects.runtime else { return 0 }
+            let removed = runtime.dispel(on: holder, where: predicate)
+            magicEffects.runtime = runtime
+            return removed
+        }
+        bridge.applySpellHit = { [weak self] hit in
+            self?.applySpellHit(hit) ?? .none
+        }
+    }
 }

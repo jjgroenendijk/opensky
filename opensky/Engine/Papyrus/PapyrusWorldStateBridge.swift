@@ -48,6 +48,24 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// Where one actor's weapon is, or nil when this session observes no draw
     /// state for it — which is every actor but the player today.
     var weaponDrawState: ((ReferenceKey) -> WeaponDrawState?)?
+    /// The spellbook and cast loop the spell natives run through (issue #474),
+    /// held as a closure for the reason the actor collaborators are: it is
+    /// built by a later wiring step than this bridge. Nil, or a closure
+    /// answering nil, leaves every spell native a tallied failure rather than a
+    /// script that believes it taught somebody a spell.
+    var casterRuntime: (() -> CasterRuntime?)?
+    /// One dispel over the session's `ActiveEffectRuntime`, which is a struct
+    /// the controller owns by value: the closure does the read, the removal and
+    /// the write-back, and answers how many effects went. Nil in a session with
+    /// no effect runtime.
+    var dispelEffects: ((ActorValueHolder, @escaping (ActiveEffect) -> Bool) -> Int)?
+    /// The one seam a landed spell applies through, shared with projectiles and
+    /// enchantments, so `Spell.Cast` at a named target resists exactly as a
+    /// fireball does. Nil in a session with no effect runtime.
+    var applySpellHit: ((SpellHit) -> SpellHitReport)?
+    /// Load-order MGEF lookup, for `HasMagicEffectWithKeyword`. Nil in a
+    /// synthetic session with no record index.
+    var magicEffectStore: MagicEffectStore?
     /// Master-list resolver for the FormIDs written inside decoded records —
     /// XLKR links and their keywords. Nil in a synthetic session, which falls
     /// back to the reference index.

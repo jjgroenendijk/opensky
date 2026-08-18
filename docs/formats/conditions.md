@@ -5,7 +5,7 @@ description: The shared 32-byte CTDA condition payload, its sibling count and st
   subrecords, the skip-don't-throw decode policy, and the function registry and
   evaluator that answer a condition list at runtime.
 tags: [format, plugin, conditions]
-timestamp: 2026-08-13T00:00:00Z
+timestamp: 2026-08-18T00:00:00Z
 ---
 
 # Conditions (CTDA, CITC, CIS1, CIS2)
@@ -290,7 +290,7 @@ rather than answering "sheathed".
 
 ### Implemented functions
 
-Eighteen functions are registered, chosen because the engine can answer them
+Forty-three functions are registered, chosen because the engine can answer them
 honestly from state it already owns. The stored index is the raw on-disk value;
 the Creation Kit spells each one 4096 higher
 (`ConditionFunctionRegistry.creationKitOffset`).
@@ -318,6 +318,17 @@ the Creation Kit spells each one 4096 higher
 | 249 | 4345 | `IsInDialogueWithPlayer` | none | 1 when the run-on actor is the one the player is talking to |
 | 426 | 4522 | `GetIsVoiceType` | #1 `VTYP` FormID | 1 when the run-on actor's VTCK is that voice type |
 | 566 | 4662 | `GetIsAliasRef` | #1 alias number | 1 when the run-on reference fills that alias of the context's quest |
+| 214 | 4310 | `HasMagicEffect` | #1 `MGEF` FormID | 1 when an effect of that MGEF is acting on the run-on actor |
+| 223 | 4319 | `IsSpellTarget` | #1 `SPEL`, `ALCH`, `INGR` or `ENCH` FormID | 1 when an effect from that record is acting on the run-on actor |
+| 264 | 4360 | `HasSpell` | #1 `SPEL` FormID | 1 when the run-on actor knows that spell |
+| 570 | 4666 | `HasEquippedSpell` | #1 casting source | 1 when that source holds a spell |
+| 571 | 4667 | `GetCurrentCastingType` | #1 casting source | 0 constant effect, 1 fire and forget, 2 concentration |
+| 572 | 4668 | `GetCurrentDeliveryType` | #1 casting source | 0 self, 1 contact, 2 aimed, 3 target actor, 4 target location |
+| 632 | 4728 | `IsCasting` | none | 1 while either hand is charging, ready or concentrating |
+| 699 | 4795 | `HasMagicEffectKeyword` | #1 `KYWD` FormID | 1 when an effect carrying that keyword is acting on the run-on actor |
+
+The M18 keyword, form-list and location functions are listed with their counts
+under [Coverage sweep](#coverage-sweep).
 
 Several of these carry a recorded decision.
 
@@ -396,6 +407,40 @@ index. That keeps two misses apart on purpose: ranking the unresolved parameters
 says which actor values to store next, while `.unavailableActorState` says the
 evaluation context was not wired with an actor seam at all.
 
+The eight magic functions (issue #474) read the `magic` seam and nothing else.
+`MagicConditionResolution` is the snapshot: one `MagicConditionState` per actor
+carrying known spells, the MGEF behind every active effect, the record each of
+those effects came from, the spell readied in each hand and which hands have a
+cast running, plus the `SpellStore` and `MagicEffectStore` a FormID parameter
+resolves against. Four points are OpenSky's own:
+
+* **`HasMagicEffect` and `HasMagicEffectKeyword` answer a narrower question than
+  the original engine did.** The Creation Kit wiki is explicit: "a magic effect
+  will cause this function to return 1 if the effect-side conditions are met,
+  even if the spell-side conditions aren't met and the effect isn't actually
+  active. In other words, 'having a magic effect' is distinct from 'being
+  affected by a magic effect', and this function tests for the former."
+  OpenSky's active-effect component stores only effects that were actually
+  applied, so it answers the latter. Every effect that is running answers
+  identically; an effect whose spell-side condition failed was never applied and
+  is invisible here. Recorded rather than papered over.
+* **A casting source that is not one of the two hands is a gap, not an empty
+  hand.** xEdit's `wbCastingSourceEnum` is `Left`, `Right`, `Voice`, `Instant`.
+  `SpellbookState` has two hands and no voice slot, so sources 2 and 3 report
+  `.unavailableMagic(.castingSource)`. A source number outside the four is an
+  unresolved parameter instead: the parameter itself could not be read.
+* **A hand holding no spell has no casting type or delivery to report.** Every
+  value `GetCurrentCastingType` and `GetCurrentDeliveryType` return names a real
+  casting type or delivery, so there is none left over to mean "no spell", and
+  the two report `.unavailableMagic(.equippedSpell)`.
+* **`HasEquippedSpell` takes only a casting source.** The Creation Kit wiki
+  records that its spell parameter is unreachable — "HasEquippedSpell is
+  currently broken as a condition function. There is no selectable parameter for
+  the Spell ID" — which is why xEdit types the single parameter `ptCastingSource`
+  and OpenSky asks only whether the source holds anything. Vanilla data agrees:
+  34 of its 52 conditions leave the parameter word zero, which is casting source
+  0, and none carries a second word.
+
 `ConditionFunction` carries `index`, `name`, `parameter1` and `parameter2` as
 `ConditionParameterType` (`.unused`, `.formID`, `.integer`, `.float`), and
 `creationKitIndex`. The registry (`ConditionFunctionRegistry.standard`, with
@@ -412,8 +457,9 @@ false and carries a machine-readable `ConditionFailure` saying why:
 `.unknownFunction`, `.unresolvedGlobal`, `.unresolvedQuest`,
 `.unsupportedRunOn`, `.unresolvedReference`, `.unknownOperator`,
 `.unresolvedParameter`, `.unavailableClock`, `.unavailableActorState`,
-`.unavailableDetection`, `.unavailableDialogue`, or
-`.unavailableData(.keyword|.formList|.location)`.
+`.unavailableDetection`, `.unavailableDialogue`,
+`.unavailableData(.keyword|.formList|.location)`, or
+`.unavailableMagic(.actor|.record|.castingSource|.equippedSpell)`.
 `.unresolvedParameter` means either a `CIS1`/`CIS2` alias name that resolved to
 no filled alias or an actor-value index this engine has no store for. A QUST
 parameter naming no quest
@@ -434,7 +480,8 @@ ranks the next milestone's work. Its buckets are `unknownFunctions` with
 `unresolvedGlobals`, `unresolvedQuests`, `unsupportedRunOns` keyed by run-on name,
 `unresolvedReferences`, `unknownOperators`, `unresolvedParameters`,
 `unavailableClock`, `unavailableActorState`, `unavailableDetection`,
-`unavailableDialogue`, and `unavailableData` grouped by M18 domain, plus the
+`unavailableDialogue`, `unavailableData` grouped by M18 domain, and
+`unavailableMagic` grouped by magic domain, plus the
 volume counters `conditionsEvaluated` and
 `listsEvaluated`, the derived `failureTotal` and `isClean`, and ranked
 accessors for reporting. Each name table is capped at `nameLimit` (64 by
@@ -483,6 +530,11 @@ conditions evaluated there are therefore honestly reported as
   fight, both directions of the combat-target run-on including the swap flag,
   the unstored-actor-value parameter miss, the unobserved-draw-state miss, and
   an empty actor seam.
+* `ConditionMagicFunctionTests` — the eight magic functions against a synthetic
+  spellbook, effect list and cast state, both directions of every comparison,
+  and the four gaps kept apart from real answers: an empty seam, an actor the
+  seam carries no state for, the voice casting source, and a hand holding no
+  spell.
 * `ActorValueIdentityTests` — the three stored indices, the table length, and
   the anchors on either side of each `Unknown NN` run, which is what would catch
   a transcription slip that renumbered everything after it.
@@ -597,6 +649,54 @@ heaviest remaining misses are:
 7,354-condition improvement and after count. This keeps later registry work from
 quietly changing the acceptance evidence.
 
+### Active load order after M19 magic functions
+
+Issue #474 measured the same active load order before choosing functions. The
+35-function registry entering the issue covered 76,579 of 118,494 conditions
+(64.63%). The eight magic functions below add 618 conditions, taking the
+43-function registry to **77,197 of 118,494 (65.15%)**.
+
+| stored | Creation Kit | function | conditions |
+| --- | --- | --- | --- |
+| 214 | 4310 | `HasMagicEffect` | 194 |
+| 264 | 4360 | `HasSpell` | 128 |
+| 572 | 4668 | `GetCurrentDeliveryType` | 120 |
+| 571 | 4667 | `GetCurrentCastingType` | 60 |
+| 570 | 4666 | `HasEquippedSpell` | 52 |
+| 699 | 4795 | `HasMagicEffectKeyword` | 23 |
+| 223 | 4319 | `IsSpellTarget` | 21 |
+| 632 | 4728 | `IsCasting` | 20 |
+
+Half a percentage point is what this family is worth, and saying so plainly is
+the point of measuring: magic conditions are numerous as *functions* and thin as
+*traffic*, because vanilla gates magic mostly through perks and equipment rather
+than through spell checks. The measurement is also what stopped a wrong guess —
+`GetEquippedItemType` (raw 597) carries 785 conditions and looks magic-shaped
+because its parameter is a casting source, but it reports the *item* type in a
+hand and belongs with equipment rather than with spells.
+
+The magic-adjacent tail this milestone leaves tallied, with its measured demand:
+
+| stored | Creation Kit | function | conditions | why deferred |
+| --- | --- | --- | --- | --- |
+| 597 | 4693 | `GetEquippedItemType` | 785 | equipment, not magic |
+| 596 | 4692 | `SpellHasKeyword` | 114 | SPEL keywords are not decoded |
+| 101 | 4197 | `IsWeaponMagicOut` | 113 | needs a draw state per hand that nothing observes |
+| 693 | 4789 | `EPMagic_SpellHasKeyword` | 80 | perk entry point, M20 |
+| 713 | 4809 | `SpellHasCastingPerk` | 75 | perks, M20 |
+| 696 | 4792 | `EPMagic_SpellHasSkill` | 39 | perk entry point, M20 |
+| 664 | 4760 | `GetReplacedItemType` | 23 | bound-weapon replacement, not modelled |
+| 681 | 4777 | `EPMagic_IsAdvanceSkill` | 19 | perk entry point, M20 |
+| 627 | 4723 | `IsDualCasting` | 4 | no dual-cast state exists to read |
+| 706 | 4802 | `HasBoundWeaponEquipped` | 1 | bound weapons are not modelled |
+| 724 | 4820 | `EffectWasDualCast` | 1 | as `IsDualCasting` |
+| 552 | 4648 | `GetSpellUsageNum` | 0 | absent from the load order |
+| 595 | 4691 | `IsCurrentSpell` | 0 | absent from the load order |
+
+`ConditionMagicRealDataTests` pins the total, the before count, the
+618-condition improvement and the after count, and prints the tail counts, so
+later registry work cannot quietly change the acceptance evidence.
+
 ### Historical Skyrim.esm snapshot
 
 `ConditionRealDataTests` runs the registry over every condition the decode sweep
@@ -693,7 +793,9 @@ so the registry uses 77.
   <https://ck.uesp.net/wiki/>: `GetCurrentTime`, `GetDisabled`, `GetIsID`, `GetGlobalValue`,
   `GetRandomPercent`, `GetDayOfWeek`, `GetDead`, `GetActorValue` and
   `GetActorValuePercent`, plus the M18 keyword, form-list, current/editor location,
-  location-alias and same-location functions listed above, for each function's return
+  location-alias and same-location functions listed above, plus `HasMagicEffect`,
+  `HasMagicEffectKeyword`, `IsSpellTarget`, `HasEquippedSpell`,
+  `GetCurrentCastingType` and `GetCurrentDeliveryType`, for each function's return
   value, parameter typing and value range. `IsWeaponOut` and `GetCombatState` were read from the
   `creationkit.com` mirror through the Wayback Machine, which is where their
   documented return values come from — see `docs/tools/environment.md` on that
@@ -709,6 +811,8 @@ so the registry uses 77.
   arrive in.
 * [FormID](/formats/formid.md) — how the comparison-value and reference FormIDs
   resolve against the load order.
+* [Magic](/engine/magic.md) — the spellbook, active-effect and cast-state
+  runtimes the eight magic functions read through `MagicConditionResolution`.
 * [Runtime reference identity and world state](/engine/runtime-state.md) — the
   `GlobalResolution` seam the evaluator reads comparison values through, and the
   `RuntimeReferenceIndex` its run-on resolution looks references up in.

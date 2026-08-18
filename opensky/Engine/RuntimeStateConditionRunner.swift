@@ -134,6 +134,19 @@ nonisolated enum RuntimeStateConditionRunner {
         case let .unresolvedParameter(index):
             "unresolved parameter for function "
                 + "\(Int(index) + ConditionFunctionRegistry.creationKitOffset)"
+        case .unavailableClock, .unavailableActorState, .unavailableDetection,
+             .unavailableDialogue, .unavailableData, .unavailableMagic:
+            describeUnavailable(failure)
+        }
+    }
+
+    /// The "this session carries no such state" half, split out because the one
+    /// switch outgrew the strict-lint complexity cap once the magic seam
+    /// landed. The caller's switch stays exhaustive, so a new failure case
+    /// still fails to compile there rather than falling silently into this
+    /// default.
+    private static func describeUnavailable(_ failure: ConditionFailure) -> String {
+        switch failure {
         case .unavailableClock:
             "no game clock in the evaluation context"
         case .unavailableActorState:
@@ -144,6 +157,10 @@ nonisolated enum RuntimeStateConditionRunner {
             "no voice type for that actor in the evaluation context"
         case let .unavailableData(domain):
             "no \(domain.rawValue) data in the evaluation context"
+        case let .unavailableMagic(domain):
+            "no \(domain.rawValue) magic state in the evaluation context"
+        default:
+            "unevaluated"
         }
     }
 
@@ -183,6 +200,9 @@ nonisolated enum RuntimeStateConditionRunner {
         }
         for entry in tally.unavailableData.sorted(by: { $0.key.rawValue < $1.key.rawValue }) {
             lines.append("\(entry.key.rawValue) data unavailable: \(entry.value)")
+        }
+        for entry in tally.unavailableMagic.sorted(by: { $0.key.rawValue < $1.key.rawValue }) {
+            lines.append("\(entry.key.rawValue) magic unavailable: \(entry.value)")
         }
         return lines
     }

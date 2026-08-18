@@ -85,6 +85,13 @@ nonisolated struct CastingControlSnapshot: Equatable, Sendable {
     /// already spelled `effect on target: base x multiplier = adjusted`. This
     /// is the debug-level readout the resistance rule is asserted through.
     let lastHitAdjustments: [String]
+    /// The magic condition functions evaluated against the player right now
+    /// (issue #474), each already spelled `name = value` or `name: reason`.
+    ///
+    /// Here rather than under Runtime State because this is where the state
+    /// they read is: a reader who has just readied a spell and wants to know
+    /// what a condition would say about it is looking at this panel.
+    let conditionLines: [String]
     /// Human-readable result of the last panel action.
     let lastActionText: String
 
@@ -108,6 +115,7 @@ nonisolated struct CastingControlSnapshot: Equatable, Sendable {
         deliveryLines: [],
         lastHitTargets: 0,
         lastHitAdjustments: [],
+        conditionLines: [],
         lastActionText: "Spellcasting unavailable: no game data loaded."
     )
 }

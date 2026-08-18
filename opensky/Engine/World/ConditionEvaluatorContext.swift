@@ -50,6 +50,11 @@ nonisolated struct ConditionContext: Sendable {
     /// snapshot is available, so M18 functions report an honest unavailable
     /// result rather than a convincing zero.
     var data: ConditionDataResolution
+    /// Known spells, active effects and cast state per actor, plus the SPEL
+    /// and MGEF stores their FormID parameters resolve against (issue #474).
+    /// Empty when no magic runtime is wired, which makes every magic function
+    /// a reason-tagged false rather than an actor who has learned nothing.
+    var magic: MagicConditionResolution
     /// Runtime enable overrides for `GetDisabled`. When absent for a key, the
     /// function falls back to the placement record's initial flag.
     var referenceEnable: ReferenceEnableResolution
@@ -83,6 +88,7 @@ nonisolated struct ConditionContext: Sendable {
         detection: DetectionResolution = .empty,
         dialogue: DialogueResolution = .empty,
         data: ConditionDataResolution = .empty,
+        magic: MagicConditionResolution = .empty,
         referenceEnable: ReferenceEnableResolution = .empty,
         aliasQuest: FormID? = nil,
         clock: GameClock? = nil,
@@ -98,6 +104,7 @@ nonisolated struct ConditionContext: Sendable {
         self.detection = detection
         self.dialogue = dialogue
         self.data = data
+        self.magic = magic
         self.referenceEnable = referenceEnable
         self.aliasQuest = aliasQuest
         self.clock = clock

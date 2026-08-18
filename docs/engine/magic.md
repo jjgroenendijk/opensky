@@ -9,7 +9,7 @@ description: The runtime notion of a magic effect acting on an actor - the cited
   spell projectiles through the archery pipeline, area application, and the
   resistance scaling a hostile magnitude pays on the way in.
 tags: [engine, magic, effects, actors, alchemy, casting, spells, projectiles, resistances]
-timestamp: 2026-08-17T00:00:00Z
+timestamp: 2026-08-18T00:00:00Z
 ---
 
 # Magic and active effects
@@ -45,6 +45,7 @@ handed to it.
 - [Combat consequences](#combat-consequences)
 - [AI spell use](#ai-spell-use)
 - [Item enchantments](#item-enchantments)
+- [The script-facing surface](#the-script-facing-surface)
 - [Verification](#verification)
 - [Limits / next](#limits--next)
 
@@ -84,6 +85,12 @@ handed to it.
 | Enchantment session wiring | `opensky/App/GameViewControllerEnchantments.swift` | app |
 | Actor spell baseline | `opensky/Engine/Magic/ActorSpellBaseline.swift` | app + CLI |
 | AI casting session wiring | `opensky/App/GameViewControllerCombatCasting.swift` | app |
+| Magic condition seam | `opensky/Engine/Magic/MagicConditionResolution.swift` | app + CLI |
+| Magic condition functions | `opensky/Engine/World/ConditionFunctionsMagic.swift` | app + CLI |
+| Direct function probe | `opensky/Engine/World/ConditionProbe.swift` | app + CLI |
+| Spell natives | `opensky/Engine/Papyrus/PapyrusNativeSpell.swift` | app + CLI |
+| Spell native bridge | `opensky/Engine/Papyrus/PapyrusWorldMagicBridge.swift` and `PapyrusWorldStateBridgeMagic.swift` | app + CLI |
+| Magic condition session wiring | `opensky/App/GameViewControllerMagicConditions.swift` and `GameViewControllerMagicConditionProbe.swift` | app |
 
 ## Where the semantics come from
 
@@ -974,6 +981,44 @@ let a reload restore effects nothing could take back off.
 Tolerance follows the container's rules, and this chunk has no hard stop: it carries no
 closed enumeration, so a non-finite charge normalizes to zero and a sequence naming an effect
 `AEFF` no longer carries simply dispels nothing when the item comes off.
+
+## The script-facing surface
+
+Item 19.11 (issue #474) puts the two script-facing surfaces on top of everything
+above: the CTDA condition functions and the Papyrus natives. Neither adds a new
+capability — both are registration over the runtimes this page already
+describes — and both were chosen by measuring the vanilla data rather than by
+taste.
+
+**Conditions.** Eight functions read a `MagicConditionResolution`: one
+`MagicConditionState` per actor carrying known spells, the MGEF behind every
+active effect, the record each of those effects came from, the spell readied in
+each hand and which hands have a cast running, beside the `SpellStore` and
+`MagicEffectStore` a FormID parameter resolves against. The snapshot is built on
+the main actor by `GameViewController.magicConditionResolution()` and read from a
+nonisolated evaluator, exactly as the actor and detection seams are. Indices,
+citations, per-function demand and the tail this milestone leaves tallied are on
+[conditions](/formats/conditions.md).
+
+The eight are readable from the app without a CLI command: the
+`World > Combat & Physics > Spellcasting` section's `CombatSpellcastingStatsLabel`
+carries a `Conditions (player)` block with one line per function, each run
+through `ConditionProbe` against the live seam. Ready a spell and the delivery
+and casting-type lines change with it; unwire the seam and each line names its
+reason instead of printing a zero.
+
+**Natives.** Eleven natives — the `Actor` spell family and `Spell.Cast` — run
+through `PapyrusWorldMagicBridge` into `SpellbookRuntime`, `ActiveEffectRuntime`
+and `CasterRuntime`, so a script's `AddSpell` and the Magic panel's Learn button
+write the same component. None is latent. Signatures, call-site counts and the
+stated gaps are on [the Papyrus VM](/engine/papyrus-vm.md).
+
+One deviation is worth repeating here because it is about this subsystem's model
+rather than about either surface. `HasMagicEffect` and its keyword variants are
+documented as testing whether an actor *carries* an effect a spell could apply,
+whether or not it is active; OpenSky's active-effect component holds only what
+was actually applied, so all four spellings answer whether the effect is
+*acting*. Every running effect answers identically.
 
 ## Verification
 

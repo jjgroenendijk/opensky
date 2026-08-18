@@ -17,13 +17,23 @@ struct ConditionDataRealDataTests {
         180, 181, 359, 360, 372, 444, 560, 562, 565, 567, 603, 604, 605, 610
     ]
 
+    /// The magic indices item 19.11 added afterwards (issue #474). Subtracted
+    /// out so the two numbers this test pins keep meaning what they meant when
+    /// #455 measured them: the registry before and after the M18 functions,
+    /// not the registry as it happens to stand today.
+    /// `ConditionMagicRealDataTests` pins the M19 step from the other side.
+    private static let laterIndices: Set<UInt16> = [
+        214, 223, 264, 570, 571, 572, 632, 699
+    ]
+
     @Test(.enabled(if: Self.dataRoot != nil))
     func pinsActiveLoadOrderCoverageImprovement() throws {
         let root = try #require(Self.dataRoot)
         let plugins = ActivePluginFiles.load(root: root)
         let coverage = sweep(plugins: plugins)
         let registry = ConditionFunctionRegistry.standard
-        let afterM18 = coverage.implementedCount(in: registry)
+        let later = Self.laterIndices.reduce(0) { $0 + coverage.conditions(of: $1) }
+        let afterM18 = coverage.implementedCount(in: registry) - later
         let added = Self.m18Indices.reduce(0) { $0 + coverage.conditions(of: $1) }
         let beforeM18 = afterM18 - added
 
