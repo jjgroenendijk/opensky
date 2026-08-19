@@ -134,6 +134,10 @@ nonisolated struct CellProviderIndexes {
             resolver: ActorValueResolver.build(
                 from: file,
                 localized: (try? file.pluginHeader().isLocalized) ?? false,
+                pluginName: esmURL.lastPathComponent,
+                // Load-order wide, so a patch plugin's CLAS override reaches
+                // the derivation instead of being invisible to it (#496).
+                classes: CharacterClassStoreLoader.load(root: root, baseFile: file),
                 settings: ActorValueLevelSettings.resolve(store: settings)
             )
         )

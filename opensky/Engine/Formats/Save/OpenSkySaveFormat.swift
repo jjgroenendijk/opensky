@@ -134,10 +134,10 @@ nonisolated enum OpenSkySaveFormat {
         /// number a changed load order no longer authors.
         static let actorValues = "AVAL"
 
-        /// General actor values (issue #468, roadmap item 19.5): one entry per
-        /// actor holding one or more of the 161 non-primary actor values away
-        /// from the baseline its records author, and inside it one record per
-        /// value: index, base, permanent modifier, damage modifier.
+        /// Actor-value overrides (issue #496, roadmap item 20.3): one entry
+        /// per actor holding one or more of the 164 actor values away from the
+        /// baseline its records author, and inside it one record per value:
+        /// index, base offset, permanent modifier, damage modifier.
         ///
         /// A sibling of `AVAL` rather than an extension of it, for the reason
         /// `QALS` is a sibling of `QSTS`: `AVAL` entries are a flat positional
@@ -146,14 +146,23 @@ nonisolated enum OpenSkySaveFormat {
         /// instead of skipping the new part. As its own chunk it is additive
         /// like every chunk above — an older build skips it by the declared
         /// length and restores a world whose actors carry their record
-        /// baselines, and a session that moved no non-primary value writes no
-        /// chunk at all.
+        /// baselines, and a session that moved no value writes no chunk at all.
+        ///
+        /// It replaces item 19.5's `AVGN`, which carried an absolute base
+        /// rather than an offset for the 161 non-primary values. A new tag
+        /// rather than a reinterpreted payload, because the two layouts have
+        /// identical shapes and different meanings: silently reading one as the
+        /// other would turn a resistance of 30 into a resistance of 30 *above*
+        /// what the records say. An `AVGN` chunk written by an older build is
+        /// now an unknown tag and is skipped, so such a save restores actors at
+        /// their record baselines — the same degradation an older build takes
+        /// from this one.
         ///
         /// The temporary modifier is deliberately not written. It is an active
         /// magic effect's contribution, and the effect that established it is
         /// what re-establishes it on load (issue 19.6); persisting it as well
         /// would double the buff every time the save was reloaded.
-        static let generalActorValues = "AVGN"
+        static let actorValueOverrides = "AVOV"
 
         /// Death states (issue #197, roadmap item 15.6): one entry per actor
         /// recorded dead, with the resting root transform its ragdoll settled
@@ -205,14 +214,14 @@ nonisolated enum OpenSkySaveFormat {
         /// all, so its bytes match what this encoder produced before the chunk
         /// existed.
         ///
-        /// This chunk is what makes `AVGN`'s dropped temporary modifier
+        /// This chunk is what makes `AVOV`'s dropped temporary modifier
         /// recoverable: each effect carries how much of each actor value's
         /// temporary slot it owns, and the load path re-establishes the slot
         /// from here rather than trusting a second copy on disk.
         ///
         /// Instant effects are not here and cannot be: a zero-duration effect
         /// moved an actor value once and the moved value is what `AVAL` and
-        /// `AVGN` already carry.
+        /// `AVOV` already carry.
         static let activeEffects = "AEFF"
 
         /// Spellbooks (issue #470, roadmap item 19.7): one entry per actor that

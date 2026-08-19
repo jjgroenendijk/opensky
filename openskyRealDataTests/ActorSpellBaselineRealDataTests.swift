@@ -45,7 +45,11 @@ struct ActorSpellBaselineRealDataTests {
             plugin = esmURL.lastPathComponent
             let localized = (try? file.pluginHeader().isLocalized) ?? false
             baselines = ActorSpellBaselineResolver(
-                actorValues: ActorValueResolver.build(from: file, localized: localized)
+                actorValues: ActorValueResolver.build(
+                    from: file,
+                    localized: localized,
+                    pluginName: plugin
+                )
             )
             let index = RecordIndex(
                 plugins: ActivePluginFiles.load(root: root, baseFile: file),

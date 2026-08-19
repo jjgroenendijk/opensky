@@ -27,6 +27,7 @@ final class CombatPhysicsUITests: OpenSkyUITestCase {
         XCTAssertTrue(app.textFields["ActorValueAmountControl"].exists)
         XCTAssertTrue(app.buttons["ActorValueDamageControl"].exists)
         XCTAssertTrue(app.buttons["ActorValueSetControl"].exists)
+        XCTAssertTrue(app.buttons["ActorValueSetBaseControl"].exists)
         XCTAssertTrue(app.buttons["ActorValueRestoreControl"].exists)
         XCTAssertTrue(app.buttons["ActorValueRefillControl"].exists)
         XCTAssertTrue(app.buttons["ActorValueResetControl"].exists)

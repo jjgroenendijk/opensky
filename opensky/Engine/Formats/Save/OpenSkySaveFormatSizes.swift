@@ -80,13 +80,13 @@ nonisolated extension OpenSkySaveFormat {
     /// current-value floats (12). A generated key or a named cell is longer, so
     /// this is a lower bound.
     static let minimumActorValueEntrySize = 20
-    /// Smallest number of bytes a single `AVGN` entry can occupy: a plugin key
+    /// Smallest number of bytes a single `AVOV` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and a zero value
     /// count (4). An entry with values is longer, so this is a lower bound.
-    static let minimumGeneralActorValueEntrySize = 12
-    /// Bytes one `AVGN` value record occupies: the actor-value index and the
-    /// base, permanent and damage floats.
-    static let generalActorValueRecordSize = 16
+    static let minimumActorValueOverrideEntrySize = 12
+    /// Bytes one `AVOV` value record occupies: the actor-value index and the
+    /// base-offset, permanent and damage floats.
+    static let actorValueOverrideRecordSize = 16
     /// Smallest number of bytes a single `DETH` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1), the dead and
     /// looted flags (2) and the "no resting transform" tag (1). A generated

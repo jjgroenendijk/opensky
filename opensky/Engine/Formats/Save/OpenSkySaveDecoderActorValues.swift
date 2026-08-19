@@ -15,19 +15,20 @@
 
 import Foundation
 
-/// One actor's saved values, before they are merged back into the delta.
+/// One actor's saved current values, before they are merged back into the
+/// delta.
 nonisolated struct SaveActorValueEntry: Equatable, Sendable {
     let key: ReferenceKey
     let cell: CellSceneLocation?
     let state: ActorValueState
 }
 
-/// One actor's saved non-primary actor values (issue #468), before they are
-/// merged onto that actor's `AVAL` entry.
-nonisolated struct SaveGeneralActorValueEntry: Equatable, Sendable {
+/// One actor's saved actor-value overrides (issue #496), before they are merged
+/// onto that actor's `AVAL` entry.
+nonisolated struct SaveActorValueOverrideEntry: Equatable, Sendable {
     let key: ReferenceKey
     let cell: CellSceneLocation?
-    let general: [Int32: ActorValueEntry]
+    let overrides: [Int32: ActorValueOverride]
 }
 
 nonisolated enum OpenSkySaveActorValueDecoder {
@@ -73,82 +74,86 @@ nonisolated enum OpenSkySaveActorValueDecoder {
         }
     }
 
-    /// `AVGN` (issue #468): one entry per actor holding non-primary actor
-    /// values, each a list of `(index, base, permanent, damage)` records.
-    static func decodeGeneralActorValues(
+    /// `AVOV` (issue #496): one entry per actor holding actor-value overrides,
+    /// each a list of `(index, base offset, permanent, damage)` records.
+    static func decodeActorValueOverrides(
         _ payload: Data
-    ) throws -> [SaveGeneralActorValueEntry] {
+    ) throws -> [SaveActorValueOverrideEntry] {
         var reader = SaveReader(payload)
-        let count = try reader.uint32("AVGN entry count")
+        let count = try reader.uint32("AVOV entry count")
         try OpenSkySaveDecoder.validate(
             count: count,
-            minimumElementSize: OpenSkySaveFormat.minimumGeneralActorValueEntrySize,
+            minimumElementSize: OpenSkySaveFormat.minimumActorValueOverrideEntrySize,
             remaining: reader.bytesRemaining,
-            chunk: OpenSkySaveFormat.ChunkTag.generalActorValues
+            chunk: OpenSkySaveFormat.ChunkTag.actorValueOverrides
         )
-        var entries: [SaveGeneralActorValueEntry] = []
+        var entries: [SaveActorValueOverrideEntry] = []
         entries.reserveCapacity(Int(count))
         for _ in 0 ..< count {
-            try entries.append(decodeGeneralEntry(&reader))
+            try entries.append(decodeOverrideEntry(&reader))
         }
         return entries
     }
 
-    /// Lays each actor's general table onto the `AVAL` entry for the same
+    /// Lays each actor's override table onto the `AVAL` entry for the same
     /// reference.
     ///
-    /// An `AVGN` entry with no `AVAL` entry beside it is dropped rather than
+    /// An `AVOV` entry with no `AVAL` entry beside it is dropped rather than
     /// turned into a state of its own. The encoder writes both together, so an
     /// orphan means a hand-edited or truncated file, and the alternative would
     /// be inventing a health for an actor whose health the save never carried.
-    static func mergeGeneral(
-        _ general: [SaveGeneralActorValueEntry],
+    static func mergeOverrides(
+        _ overrides: [SaveActorValueOverrideEntry],
         into values: [SaveActorValueEntry]
     ) -> [SaveActorValueEntry] {
-        guard !general.isEmpty else { return values }
-        var tables: [ReferenceKey: [Int32: ActorValueEntry]] = [:]
-        for entry in general {
-            tables[entry.key] = entry.general
+        guard !overrides.isEmpty else { return values }
+        var tables: [ReferenceKey: [Int32: ActorValueOverride]] = [:]
+        for entry in overrides {
+            tables[entry.key] = entry.overrides
         }
         return values.map { entry in
             guard let table = tables[entry.key] else { return entry }
             return SaveActorValueEntry(
                 key: entry.key,
                 cell: entry.cell,
-                state: ActorValueState(current: entry.state.current, general: table)
+                state: ActorValueState(current: entry.state.current, overrides: table)
             )
         }
     }
 
     // MARK: - Private
 
-    private static func decodeGeneralEntry(
+    private static func decodeOverrideEntry(
         _ reader: inout SaveReader
-    ) throws -> SaveGeneralActorValueEntry {
+    ) throws -> SaveActorValueOverrideEntry {
         let key = try OpenSkySaveEntryDecoder.decodeKey(&reader)
         let cell = try OpenSkySaveEntryDecoder.decodeCell(&reader)
-        let count = try reader.uint32("AVGN value count")
+        let count = try reader.uint32("AVOV value count")
         try OpenSkySaveDecoder.validate(
             count: count,
-            minimumElementSize: OpenSkySaveFormat.generalActorValueRecordSize,
+            minimumElementSize: OpenSkySaveFormat.actorValueOverrideRecordSize,
             remaining: reader.bytesRemaining,
-            chunk: OpenSkySaveFormat.ChunkTag.generalActorValues
+            chunk: OpenSkySaveFormat.ChunkTag.actorValueOverrides
         )
-        var general: [Int32: ActorValueEntry] = [:]
-        general.reserveCapacity(Int(count))
+        var overrides: [Int32: ActorValueOverride] = [:]
+        overrides.reserveCapacity(Int(count))
         for _ in 0 ..< count {
-            let index = try Int32(bitPattern: reader.uint32("AVGN actor value index"))
-            let base = try reader.float32("AVGN base")
-            let permanent = try reader.float32("AVGN permanent modifier")
-            let damage = try reader.float32("AVGN damage modifier")
-            // A non-finite float is normalized by `ActorValueEntry.init` rather
-            // than rejected here, for the reason a corrupt current value is:
-            // the invariant belongs to the type, and one nonsensical number is
-            // not a reason to fail a whole save. An index outside the table is
-            // dropped by `ActorValueState.init` for the same reason.
-            general[index] = ActorValueEntry(base: base, permanent: permanent, damage: damage)
+            let index = try Int32(bitPattern: reader.uint32("AVOV actor value index"))
+            let baseOffset = try reader.float32("AVOV base offset")
+            let permanent = try reader.float32("AVOV permanent modifier")
+            let damage = try reader.float32("AVOV damage modifier")
+            // A non-finite float is normalized by `ActorValueOverride.init`
+            // rather than rejected here, for the reason a corrupt current value
+            // is: the invariant belongs to the type, and one nonsensical number
+            // is not a reason to fail a whole save. An index outside the table
+            // is dropped by `ActorValueState.init` for the same reason.
+            overrides[index] = ActorValueOverride(
+                baseOffset: baseOffset,
+                permanent: permanent,
+                damage: damage
+            )
         }
-        return SaveGeneralActorValueEntry(key: key, cell: cell, general: general)
+        return SaveActorValueOverrideEntry(key: key, cell: cell, overrides: overrides)
     }
 
     private static func decodeEntry(_ reader: inout SaveReader) throws -> SaveActorValueEntry {

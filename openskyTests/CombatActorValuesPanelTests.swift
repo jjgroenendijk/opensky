@@ -41,6 +41,29 @@ struct CombatActorValuesPanelTests {
         #expect(providers.actorValueSelection == 25)
     }
 
+    /// Item 20.3: "Set base" sends the same selection the other buttons send
+    /// and lands on the base write rather than on the current-value one, which
+    /// is the difference the whole store exists for.
+    @Test @MainActor
+    func theSetBaseControlWritesTheBaseOfTheSelectedValue() throws {
+        let providers = FakeWorldProviders()
+        let panel = try CombatPhysicsPanelTests.panel(providers: providers)
+        let section = panel.actorValuesSection
+
+        section.amountControl.stringValue = "150"
+        sendScriptsControl(section.setBaseControl)
+        // Health, which the popup starts on.
+        #expect(providers.actorValues.baseSets.last?.index == 24)
+        #expect(providers.actorValues.baseSets.last?.value == 150)
+        #expect(providers.actorValues.sets.isEmpty)
+
+        section.valueNameControl.stringValue = "Sneak"
+        section.amountControl.stringValue = "30"
+        sendScriptsControl(section.setBaseControl)
+        #expect(providers.actorValues.baseSets.last?.index == 15)
+        #expect(providers.actorValues.baseSets.last?.value == 30)
+    }
+
     @Test @MainActor
     func withNoRuntimeTheActorValueSectionSaysSo() throws {
         // The fake is bound rather than passed inline: the section holds its

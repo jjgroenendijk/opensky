@@ -49,28 +49,29 @@ nonisolated extension OpenSkySaveEncoder {
         }
     }
 
-    /// The `AVGN` chunk (issue #468): every actor holding a non-primary actor
-    /// value away from its baseline, and the entries it holds.
+    /// The `AVOV` chunk (issue #496): every actor holding an actor value away
+    /// from the baseline its records author, and the overrides it holds.
     ///
-    /// Written beside `AVAL` and never instead of it: an actor with a general
-    /// entry has an `ActorValueState` component, so `AVAL` always carries its
-    /// primaries, and the decoder relies on that to know what an actor's health
-    /// was rather than inventing a zero for it.
+    /// Written beside `AVAL` and never instead of it: an actor with an override
+    /// has an `ActorValueState` component, so `AVAL` always carries its
+    /// primaries' current values, and the decoder relies on that to know what
+    /// an actor's health was rather than inventing a zero for it.
     ///
-    /// The temporary modifier is not written — see `ChunkTag.generalActorValues`.
-    static func writeGeneralActorValues(
+    /// Offsets, not values — see `ChunkTag.actorValueOverrides` for what that
+    /// buys and why the temporary modifier is not written.
+    static func writeActorValueOverrides(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
         let saved = entries.compactMap { entry -> SavedActorValues? in
             guard
                 let state = entry.delta.component(ActorValueState.self),
-                !state.general.isEmpty
+                !state.overrides.isEmpty
             else { return nil }
             return SavedActorValues(entry: entry, state: state)
         }
         guard !saved.isEmpty else { return }
-        let tag = OpenSkySaveFormat.ChunkTag.generalActorValues
+        let tag = OpenSkySaveFormat.ChunkTag.actorValueOverrides
         writeChunk(tag: tag, into: &writer) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for each in saved {
@@ -78,14 +79,14 @@ nonisolated extension OpenSkySaveEncoder {
                 writeCell(each.entry.delta.cell, into: &payload)
                 // Ascending index order, so one actor's chunk bytes are a pure
                 // function of its state rather than of dictionary iteration.
-                let indices = each.state.general.keys.sorted()
+                let indices = each.state.overrides.keys.sorted()
                 payload.writeUInt32(UInt32(clamping: indices.count))
                 for index in indices {
-                    guard let entry = each.state.general[index] else { continue }
+                    guard let override = each.state.overrides[index] else { continue }
                     payload.writeUInt32(UInt32(bitPattern: index))
-                    payload.writeFloat32(entry.base)
-                    payload.writeFloat32(entry.permanent)
-                    payload.writeFloat32(entry.damage)
+                    payload.writeFloat32(override.baseOffset)
+                    payload.writeFloat32(override.permanent)
+                    payload.writeFloat32(override.damage)
                 }
             }
         }

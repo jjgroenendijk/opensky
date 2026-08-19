@@ -224,6 +224,17 @@ nonisolated enum ActorValueIdentity {
         kindsByIndex[index]
     }
 
+    /// Vanilla index of one of the three primaries, which is the inverse of
+    /// `kind(at:)` and is what lets a primary be addressed through the same
+    /// index-keyed override table as every other actor value (issue #496).
+    ///
+    /// `storedIndices` names all three, so the fallback is unreachable; it is
+    /// `noneIndex` rather than a force-unwrap because an index outside the
+    /// table is already the documented miss everything here answers with.
+    static func index(of kind: ActorValueKind) -> Int32 {
+        storedIndices[kind] ?? noneIndex
+    }
+
     /// The stored value `name` spells, by the same rule as `kind(at:)`.
     static func kind(named name: String) -> ActorValueKind? {
         guard let index = index(named: name) else { return nil }

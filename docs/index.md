@@ -310,17 +310,19 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Actor values](/engine/actor-values.md) - the whole 164-entry table end to end: the cited
   race-plus-offset-plus-class-per-level derivation and its exact apportionment rule, the
   census against every auto-calc record's baked DNAM, the current-values-only runtime
-  component, the general store's base-plus-three-modifiers entries and their record-derived
-  baselines, the capped resistance query and its multiplicative composition rule,
-  percent-per-second regeneration on the menu-pause-safe fixed step, the live HUD meter
-  binding, the additive AVAL and AVGN save chunks, the negative-resistance weakness reading,
-  and the panel provider seam.
+  component, the override store's base-offset-plus-three-modifiers entries and their
+  record-derived baselines, the precedence rule that lets a trained value survive
+  re-derivation and still gain from it, the three actor-value write natives with their
+  quoted slot semantics, the capped resistance query and its multiplicative composition
+  rule, percent-per-second regeneration on the menu-pause-safe fixed step, the live HUD
+  meter binding, the additive AVAL and AVOV save chunks, the negative-resistance weakness
+  reading, and the panel provider seam.
 * [Magic and active effects](/engine/magic.md) - the runtime notion of an effect acting on
   an actor: the cited archetype semantics for the value, dual-value and peak-value
   modifiers, the two timed behaviours the Recover flag selects and the instant application
   that is neither, the per-archetype coverage tally, condition gating at application time,
   the No Recast and peak-keyword stacking rules, the additive AEFF save chunk that makes
-  AVGN's dropped temporary modifier recoverable, the potion and ingredient consumption path
+  AVOV's dropped temporary modifier recoverable, the potion and ingredient consumption path
   with its cited first-effect rule, the panel provider seam, and the caster runtime: the
   spellbook component and its SPLB chunk, where start spells actually come from,
   the actor spell baseline behind an NPC's known spells and the leveled spell lists it

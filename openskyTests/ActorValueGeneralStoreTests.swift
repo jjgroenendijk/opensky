@@ -125,23 +125,22 @@ struct ActorValueGeneralStoreTests {
         let (runtime, _) = self.runtime()
         let holder = holder()
         runtime.setValue(at: Self.resistFire, to: 20, on: holder)
-        #expect(runtime.state(of: holder).general.count == 1)
+        #expect(runtime.state(of: holder).overrides.count == 1)
         runtime.setValue(at: Self.resistFire, to: 0, on: holder)
-        #expect(runtime.state(of: holder).general.isEmpty)
+        #expect(runtime.state(of: holder).overrides.isEmpty)
     }
 
-    /// The primaries keep the typed fast path: an index-addressed damage on
-    /// health is the same write `damage(_:by:on:)` makes, and they have no
-    /// modifier slots.
-    @Test func thePrimariesRouteToTheTypedPath() {
+    /// A primary's *current* value keeps the typed fast path: an
+    /// index-addressed damage on health is the same write `damage(_:by:on:)`
+    /// makes, and it stores no override for it.
+    @Test func aPrimaryDamageRoutesToTheTypedPath() {
         let (runtime, _) = self.runtime()
         let holder = holder()
         #expect(runtime.damage(at: 24, by: 40, on: holder))
         #expect(runtime.current(of: holder).health == 60)
         #expect(runtime.value(at: 24, on: holder) == 60)
-        #expect(runtime.state(of: holder).general.isEmpty)
-        #expect(!runtime.addModifier(5, to: .temporary, at: 24, on: holder))
-        #expect(runtime.entry(at: 24, on: holder) == nil)
+        #expect(runtime.state(of: holder).overrides.isEmpty)
+        #expect(runtime.entry(at: 24, on: holder) == ActorValueEntry(base: 100))
     }
 
     @Test func anIndexOutsideTheTableWritesNothing() {

@@ -50,6 +50,7 @@ struct CombatPhysicsPanelTests {
             (panel.actorValuesSection.amountControl, "ActorValueAmountControl"),
             (panel.damageControl, "ActorValueDamageControl"),
             (panel.actorValuesSection.setControl, "ActorValueSetControl"),
+            (panel.actorValuesSection.setBaseControl, "ActorValueSetBaseControl"),
             (panel.actorValuesSection.restoreControl, "ActorValueRestoreControl"),
             (panel.actorValuesSection.refillControl, "ActorValueRefillControl"),
             (panel.actorValuesSection.resetControl, "ActorValueResetControl"),

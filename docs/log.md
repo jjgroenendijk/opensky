@@ -4,6 +4,37 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-19
 
+* **Actor-value base overrides (issue #496, item 20.3)**: the three primaries now carry the
+  same base-and-modifier store the other 161 values have, and every one of the 164 is stored
+  the same way — a base *offset* on top of the re-derived baseline plus three modifier slots.
+  The precedence rule is stated once and tested: the records stay authoritative for what a
+  value is, the store says only what the session did to it, so a level change or a reordered
+  load order moves every value and the session's contribution rides on top unchanged. That is
+  what lets item 20.5 train a skill that survives re-derivation *and* still gains from a
+  level-up; the alternative — an absolute base that suppresses derivation — would have frozen
+  it instead. See [actor values](/engine/actor-values.md).
+* **`SetActorValue`, `ModActorValue` and `ForceActorValue` are registered**, after four
+  milestones of refusing them because there was nowhere to write a base. Each landed with its
+  Creation Kit sentence quoted, and `ForceActorValue`'s worked example — base
+  125 forced to 0 gives a permanent modifier of -125, then a base of 150 reads 25 — is
+  transcribed as a unit test. A primary's maximum and current value move together for
+  `ModActorValue` because the wiki says 100 Health modified by -10 is 90/90, and damage
+  already taken survives the change rather than being healed or charged twice.
+* **`AVOV` replaces the `AVGN` save chunk.** Same shape, different meaning — a base offset
+  where there was an absolute base — so the tag changed rather than the payload, because
+  reading one as the other would turn a resistance of 30 into a resistance 30 points above
+  what the records say. See [the OpenSky save container](/formats/opensky-save.md).
+* **`CharacterClassStore` retires `CharacterClassIndex`**, the last record index in the engine
+  built on a single-file `[UInt32: CharacterClass]` map rather than on `RecordIndex`. A patch
+  plugin that rebalanced a class could not win over the base definition and could not even be
+  seen unless it lived in the same file as the actors; a CLAS link now resolves relative to the
+  plugin carrying it, exactly as an MGEF or PERK link does. See
+  [actor records](/formats/actors.md).
+* **A timed Recover effect on a primary is still counted rather than applied.** The storage it
+  was waiting for now exists, so the guard in `MagicEffectPlanner` outlives its reason; lifting
+  it moves archetype tallies that need re-measuring against the install, which is issue 511
+  rather than a silent change. See [magic and active effects](/engine/magic.md).
+
 * **PERK decodes (issue #495, item 20.2)**, the record behind every perk and passive: the
   header, the availability conditions, and the effect sections that set a quest stage, grant
   an ability spell or hook an entry point. Layout, the two payload unions and the decode

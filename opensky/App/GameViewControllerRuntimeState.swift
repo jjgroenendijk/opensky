@@ -216,7 +216,7 @@ extension GameViewController: RuntimeStateControlProviding {
             // and were restored above.
             combat.runtime?.prepareForPersistence()
             // The restored `AEFF` effects own temporary modifier slots that
-            // `AVGN` deliberately did not persist, so the effects are what
+            // `AVOV` deliberately does not persist, so the effects are what
             // re-establish them (issue #469's rule, wired here for issue #472:
             // a worn enchantment's fortify has to survive a reload, and a
             // reloaded session that skipped this step would show the effect in

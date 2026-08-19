@@ -66,10 +66,12 @@ nonisolated struct HUDMeterBinding {
 extension ActorValueRuntime {
     /// `holder`'s current values as HUD meters.
     func hudMeters(for holder: ActorValueHolder) -> HUDMeterValues {
-        let baseline = baseline(of: holder)
-        return HUDMeterBinding.meters(
+        // The effective maximums, not the derived ones: since item 20.3 a base
+        // write or a fortify moves the ceiling the bar is drawn against, and a
+        // bar drawn against the derived number would read past full.
+        HUDMeterBinding.meters(
             current: current(of: holder),
-            maximums: baseline.maximums
+            maximums: maximums(of: holder)
         )
     }
 }

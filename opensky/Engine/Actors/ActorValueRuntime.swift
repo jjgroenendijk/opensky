@@ -52,6 +52,37 @@ struct ActorValueRuntime {
             ?? ActorValueState.baseline(maximums: baseline(of: holder).maximums)
     }
 
+    /// `holder`'s effective maximums: the re-derived numbers, plus whatever an
+    /// explicit base write moved them by, plus the permanent and temporary
+    /// modifiers a script or a magic effect put on them (issue #496, item 20.3).
+    ///
+    /// The derived part is re-read every time, so a level change or a reordered
+    /// load order moves it and the session's own offsets ride on top unchanged.
+    ///
+    /// Damage is deliberately not in here. "ModActorValue is distinct from
+    /// DamageActorValue because it adjusts the maximum value for the AV, while
+    /// DamageActorValue or RestoreActorValue only adjust the current value"
+    /// (<https://ck.uesp.net/wiki/ModActorValue_-_Actor>), and a primary's
+    /// damage is the drop in its stored current value rather than a slot.
+    func maximums(of holder: ActorValueHolder) -> ActorValues {
+        Self.maximums(derived: baseline(of: holder).maximums, state: state(of: holder))
+    }
+
+    /// The same maximums for a caller that already holds both halves, so the
+    /// regeneration loop does not re-read the store once per primary.
+    ///
+    /// Floored at zero the way every derived maximum is: the game has no
+    /// concept of a negative maximum, and one would make every fraction the HUD
+    /// asks for meaningless.
+    static func maximums(derived: ActorValues, state: ActorValueState) -> ActorValues {
+        var values = ActorValues.zero
+        for kind in ActorValueKind.allCases {
+            let index = ActorValueIdentity.index(of: kind)
+            values[kind] = max(0, derived[kind] + state.override(at: index).maximumOffset)
+        }
+        return values
+    }
+
     /// Whether `holder` has been touched at runtime, as opposed to still
     /// reading a full baseline.
     func hasRuntimeState(_ holder: ActorValueHolder) -> Bool {
@@ -66,7 +97,7 @@ struct ActorValueRuntime {
     /// `holder`'s current values as fractions of its maximums, which is the
     /// shape the HUD meters take.
     func fractions(of holder: ActorValueHolder) -> ActorValues {
-        current(of: holder).fractions(of: baseline(of: holder).maximums)
+        current(of: holder).fractions(of: maximums(of: holder))
     }
 
     /// Whether `holder` is at zero health. The flag item 15.6 consumes; this
@@ -102,7 +133,7 @@ struct ActorValueRuntime {
         by amount: Float,
         on holder: ActorValueHolder
     ) -> ActorValueState {
-        let maximum = baseline(of: holder).maximums[kind]
+        let maximum = maximums(of: holder)[kind]
         return write(
             state(of: holder).restoring(kind, by: amount, maximum: maximum),
             for: holder
@@ -125,8 +156,8 @@ struct ActorValueRuntime {
         updated[kind] = value
         return write(
             ActorValueState(
-                current: updated.clamped(to: baseline(of: holder).maximums),
-                general: state.general
+                current: updated.clamped(to: maximums(of: holder)),
+                overrides: state.overrides
             ),
             for: holder
         )
@@ -137,8 +168,13 @@ struct ActorValueRuntime {
     /// - Returns: the state as stored afterwards.
     @discardableResult
     func restoreAll(on holder: ActorValueHolder) -> ActorValueState {
+        // The override table survives a refill: a fortified actor filled to
+        // the top is full at its fortified maximum, not stripped of the buff.
         write(
-            ActorValueState.baseline(maximums: baseline(of: holder).maximums),
+            ActorValueState(
+                current: maximums(of: holder),
+                overrides: state(of: holder).overrides
+            ),
             for: holder
         )
     }
@@ -245,9 +281,10 @@ struct ActorValueRuntime {
         for holder in holders.sorted(by: { $0.key < $1.key }) {
             let baseline = baseline(of: holder)
             let state = state(of: holder)
+            let maximums = Self.maximums(derived: baseline.maximums, state: state)
             var updated = state.current
             for kind in ActorValueKind.allCases {
-                let maximum = baseline.maximums[kind]
+                let maximum = maximums[kind]
                 let percent = baseline.regenPercentPerSecond[kind]
                 guard maximum.isFinite, maximum > 0, percent.isFinite, percent > 0 else {
                     continue
@@ -259,12 +296,12 @@ struct ActorValueRuntime {
                 updated[kind] = min(maximum, updated[kind] + gain)
             }
             guard updated != state.current else { continue }
-            // The general table travels with the write: an actor carrying a
+            // The override table travels with the write: an actor carrying a
             // magic effect's temporary modifier (issue #469) regenerates health
             // sixty times a second, and rebuilding the state from the primaries
             // alone would drop that modifier on the next frame.
             store.set(
-                ActorValueState(current: updated, general: state.general),
+                ActorValueState(current: updated, overrides: state.overrides),
                 for: holder.key,
                 in: holder.cell
             )

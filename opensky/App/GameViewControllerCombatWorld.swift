@@ -81,7 +81,7 @@ extension GameViewController: CombatLoopWorld {
             let runtime = actorValues.runtime,
             let holder = actorValueHolder(for: key)
         else { return 1 }
-        let maximum = runtime.baseline(of: holder).maximums.health
+        let maximum = runtime.maximums(of: holder).health
         guard maximum > 0 else { return 1 }
         return min(1, max(0, runtime.current(of: holder).health / maximum))
     }

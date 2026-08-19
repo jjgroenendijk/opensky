@@ -151,6 +151,17 @@ protocol ActorValueControlProviding: AnyObject {
     @discardableResult
     func setSelectedActorValue(to value: Float) -> String
 
+    /// Sets the selected value's *base* outright — `SetActorValue`'s write,
+    /// which for a primary moves its maximum rather than its current value
+    /// (issue #496, roadmap item 20.3).
+    ///
+    /// Stored as a delta on the re-derived baseline, so "Reset to records" is
+    /// still the way back and a changed load order still moves the number.
+    ///
+    /// - Returns: a human-readable outcome, which the panel shows verbatim.
+    @discardableResult
+    func setSelectedActorBase(to value: Float) -> String
+
     /// Refills the selected target to its derived maximums.
     ///
     /// - Returns: a human-readable outcome, which the panel shows verbatim.

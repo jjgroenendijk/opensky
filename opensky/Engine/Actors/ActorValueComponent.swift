@@ -9,11 +9,15 @@
 // `WorldStateComponentKind` case and the `WorldStateComponentValue` case sit
 // with the rest, so every store operation stays generic over the protocol.
 //
-// Current values only. The maximums are *not* stored, and that is the whole
-// design: they are a pure function of the RACE, CLAS and NPC_ records
-// (`ActorValueResolver`), so storing them would let a save keep numbers a
-// changed load order no longer authors. It is the same rule the inventory
+// Current values and deviations only. The maximums are *not* stored, and that
+// is the whole design: they are a pure function of the RACE, CLAS and NPC_
+// records (`ActorValueResolver`), so storing them would let a save keep numbers
+// a changed load order no longer authors. It is the same rule the inventory
 // baseline and the quest baseline already follow — re-derive, never persist.
+//
+// That rule is why a base write is stored as an offset rather than as a number
+// (issue #496): `ActorValueOverride` holds what the session did to a value, the
+// records keep holding what the value is, and the two are added on every read.
 //
 // One invariant holds for every value of this type, enforced in `init` rather
 // than checked at use sites: every value is finite and not negative. That is
@@ -32,20 +36,24 @@ nonisolated struct ActorValueState: WorldStateComponent {
     /// the maximums.
     private(set) var current: ActorValues
 
-    /// Every non-primary actor value this actor has moved off its baseline,
-    /// keyed by vanilla table index (issue #468, roadmap item 19.5).
+    /// Every actor value this actor has moved off its derived baseline, keyed
+    /// by vanilla table index (issue #468, roadmap item 19.5; primaries added
+    /// by issue #496, item 20.3).
     ///
     /// Sparse on purpose, and that sparseness is the design rather than an
     /// optimization. An actor has 164 actor values and a session touches a
     /// handful; storing the other 160 would put a number in the save for every
     /// value a record authors, which is the same "re-derive, never persist"
     /// rule the maximums follow. An index absent here reads its baseline, and
-    /// an entry that comes back to its baseline is dropped rather than kept at
-    /// its default (see `ActorValueRuntime.set(_:to:on:)`).
+    /// an override that comes back to nothing is dropped rather than kept at
+    /// its default (see `setting(_:at:baseline:)`).
     ///
-    /// The three primaries are never in here: they have their own typed
-    /// storage above, and a second copy could disagree with it.
-    private(set) var general: [Int32: ActorValueEntry]
+    /// Deltas, never absolutes — that is what lets the three primaries be in
+    /// here beside `current` without the two ever disagreeing. `current` is
+    /// where a primary *is*; an override is what the session did to the
+    /// ceiling above it, and the maximum is still re-derived from records on
+    /// every read.
+    private(set) var overrides: [Int32: ActorValueOverride]
 
     static var componentKind: WorldStateComponentKind {
         .actorValues
@@ -70,19 +78,19 @@ nonisolated struct ActorValueState: WorldStateComponent {
     /// decoder's entry point: a corrupt file degrades into a valid state rather
     /// than failing the whole load.
     ///
-    /// A general entry whose index is outside the vanilla table, or which names
-    /// one of the three primaries, is dropped rather than stored: the first is
-    /// not an actor value and the second already has typed storage.
-    init(current: ActorValues, general: [Int32: ActorValueEntry] = [:]) {
+    /// An override whose index is outside the vanilla table is dropped rather
+    /// than stored, because it names no actor value; so is one that says
+    /// nothing, because an override that deviates from nothing is not a
+    /// deviation.
+    init(current: ActorValues, overrides: [Int32: ActorValueOverride] = [:]) {
         var normalized = ActorValues.zero
         for kind in ActorValueKind.allCases {
             let value = current[kind]
             normalized[kind] = value.isFinite ? max(0, value) : 0
         }
         self.current = normalized
-        self.general = general.filter { index, _ in
-            ActorValueIdentity.isVanilla(index: index)
-                && ActorValueIdentity.kind(at: index) == nil
+        self.overrides = overrides.filter { index, override in
+            ActorValueIdentity.isVanilla(index: index) && !override.isEmpty
         }
     }
 
@@ -111,7 +119,7 @@ nonisolated struct ActorValueState: WorldStateComponent {
         guard amount.isFinite, amount > 0 else { return self }
         var updated = current
         updated[kind] = max(0, updated[kind] - amount)
-        return ActorValueState(current: updated, general: general)
+        return ActorValueState(current: updated, overrides: overrides)
     }
 
     /// This state with `amount` added to one value, capped at `maximum`.
@@ -123,35 +131,33 @@ nonisolated struct ActorValueState: WorldStateComponent {
         var updated = current
         let limit = maximum.isFinite ? max(0, maximum) : 0
         updated[kind] = min(limit, updated[kind] + amount)
-        return ActorValueState(current: updated, general: general)
+        return ActorValueState(current: updated, overrides: overrides)
     }
 
     /// This state pulled inside `maximums`, which is what a caller applies
     /// after the records behind an actor changed and its maximums shrank.
     ///
-    /// The general table is untouched: a non-primary actor value has no
-    /// maximum to be pulled inside, only a base its own entry carries.
+    /// The override table is untouched: an override is a delta on a derived
+    /// baseline, and a shrinking maximum does not make the session's own
+    /// contribution to it any smaller.
     func clamped(to maximums: ActorValues) -> Self {
-        ActorValueState(current: current.clamped(to: maximums), general: general)
+        ActorValueState(current: current.clamped(to: maximums), overrides: overrides)
     }
 
-    // MARK: - The general table
+    // MARK: - The override table
 
-    /// `index`'s stored entry, or the unmodified entry `baseline` describes
-    /// when nothing has touched it.
+    /// `index`'s value as a caller reads it: the stored override laid over
+    /// `baseline`, or the unmodified entry `baseline` describes on its own.
     ///
-    /// The primaries answer nil: they are not in this table, and a caller that
-    /// reaches one here has taken a wrong turn rather than found an empty slot.
+    /// Answers for every vanilla index, primaries included. Only an index
+    /// outside the table is nil, because only that names no actor value.
     func entry(at index: Int32, baseline: Float) -> ActorValueEntry? {
-        guard
-            ActorValueIdentity.isVanilla(index: index),
-            ActorValueIdentity.kind(at: index) == nil
-        else { return nil }
-        return general[index] ?? ActorValueEntry(base: baseline)
+        guard ActorValueIdentity.isVanilla(index: index) else { return nil }
+        return (overrides[index] ?? .none).resolved(baseline: baseline)
     }
 
-    /// This state with `index`'s entry replaced, or dropped when the new entry
-    /// says exactly what `baseline` already says.
+    /// This state with `index`'s entry stored as a deviation from `baseline`,
+    /// or dropped when the new entry says exactly what `baseline` already says.
     ///
     /// Dropping rather than storing a baseline-equal entry is what keeps the
     /// save and the dirty counts honest: an actor whose fire resistance was
@@ -161,16 +167,25 @@ nonisolated struct ActorValueState: WorldStateComponent {
         at index: Int32,
         baseline: Float
     ) -> Self {
-        guard
-            ActorValueIdentity.isVanilla(index: index),
-            ActorValueIdentity.kind(at: index) == nil
-        else { return self }
-        var updated = general
-        if entry.matchesBaseline(baseline) {
+        setting(ActorValueOverride.storing(entry, baseline: baseline), at: index)
+    }
+
+    /// This state with `index`'s override replaced outright, or dropped when it
+    /// says nothing.
+    func setting(_ override: ActorValueOverride, at index: Int32) -> Self {
+        guard ActorValueIdentity.isVanilla(index: index) else { return self }
+        var updated = overrides
+        if override.isEmpty {
             updated.removeValue(forKey: index)
         } else {
-            updated[index] = entry
+            updated[index] = override
         }
-        return ActorValueState(current: current, general: updated)
+        return ActorValueState(current: current, overrides: updated)
+    }
+
+    /// `index`'s stored override, which is `.none` for a value nothing has
+    /// touched.
+    func override(at index: Int32) -> ActorValueOverride {
+        overrides[index] ?? .none
     }
 }

@@ -38,13 +38,13 @@ extension PapyrusWorldStateBridge {
         }
         return PapyrusActorState(
             current: values.current(of: holder),
-            maximums: values.baseline(of: holder).maximums,
+            maximums: values.maximums(of: holder),
             isDead: worldState.component(ActorDeathState.self, for: key)?.isDead ?? false,
             isInCombat: isActorInCombat(key),
             combatActivity: combatRuntime?()?.activity(of: key) ?? .notFighting,
             weaponDrawState: weaponDrawState?(key),
-            general: values.state(of: holder).general,
-            generalBaseline: values.baseline(of: holder).general,
+            general: values.resolvedEntries(of: holder),
+            generalBaseline: values.baseline(of: holder).basesByIndex,
             isPlayer: key == playerKey
         )
     }
@@ -80,6 +80,34 @@ extension PapyrusWorldStateBridge {
             return nil
         }
         guard values.restore(at: index, by: amount, on: holder) else { return nil }
+        return actorState(for: key)
+    }
+
+    @discardableResult
+    func writeActorValue(
+        _ write: PapyrusActorValueWrite,
+        at index: Int32,
+        to value: Float,
+        on key: ReferenceKey
+    ) -> PapyrusActorState? {
+        guard let values = actorValueRuntime?(), let holder = actorHolder(for: key) else {
+            return nil
+        }
+        let written = switch write {
+        case .setBase: values.setBase(at: index, to: value, on: holder)
+        case .modify: values.addModifier(value, to: .permanent, at: index, on: holder)
+        case .force: values.forceValue(at: index, to: value, on: holder)
+        }
+        guard written else { return nil }
+        // The same zero-health route `damageActorValue` takes, and for the same
+        // reason: a script that forces health to zero has killed the actor, and
+        // the death has to land on this call rather than on the next frame.
+        if
+            ActorValueIdentity.kind(at: index) == .health,
+            values.hasZeroHealth(holder)
+        {
+            ragdollRuntime?()?.noteZeroHealth(of: key)
+        }
         return actorState(for: key)
     }
 

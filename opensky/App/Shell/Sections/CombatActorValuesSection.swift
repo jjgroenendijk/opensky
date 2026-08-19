@@ -44,6 +44,7 @@ final class CombatActorValuesSection: PanelSectionViewController {
     let damageControl = NSButton(title: "Damage", target: nil, action: nil)
     let restoreControl = NSButton(title: "Restore", target: nil, action: nil)
     let setControl = NSButton(title: "Set", target: nil, action: nil)
+    let setBaseControl = NSButton(title: "Set base", target: nil, action: nil)
     let refillControl = NSButton(title: "Refill", target: nil, action: nil)
     let resetControl = NSButton(title: "Reset to records", target: nil, action: nil)
 
@@ -106,10 +107,13 @@ final class CombatActorValuesSection: PanelSectionViewController {
                     + "values — a resistance, a skill, carry weight — is reachable by typing "
                     + "its name or index into Other value, which then wins over the popup. "
                     + "Damage and Restore apply the typed amount to the selected value and "
-                    + "Set writes it outright, Refill returns every bar to its derived "
-                    + "maximum, and Reset to records drops the runtime state so the actor "
-                    + "derives from its records again. An actor whose health reaches zero "
-                    + "dies, which is what the Death & Ragdoll section then shows."
+                    + "Set writes it outright. Set base writes the value's base instead, "
+                    + "which for health, magicka or stamina moves the maximum the bar is "
+                    + "drawn against — stored as a distance from what the records derive, "
+                    + "so Reset to records is still the way back. Refill returns every bar "
+                    + "to that maximum, and Reset to records drops the runtime state so the "
+                    + "actor derives from its records again. An actor whose health reaches "
+                    + "zero dies, which is what the Death & Ragdoll section then shows."
             ),
             PanelComponents.group([
                 PanelComponents.labeledFieldRow(
@@ -125,7 +129,7 @@ final class CombatActorValuesSection: PanelSectionViewController {
                     caption: "Amount", captionWidth: 70, field: amountControl
                 ),
                 PanelComponents.buttonRow([damageControl, restoreControl, setControl]),
-                PanelComponents.buttonRow([refillControl, resetControl])
+                PanelComponents.buttonRow([setBaseControl, refillControl, resetControl])
             ]),
             statsLabel
         ]
@@ -134,7 +138,8 @@ final class CombatActorValuesSection: PanelSectionViewController {
     override func syncControls() {
         let available = provider != nil
         for control in [
-            damageControl, restoreControl, setControl, refillControl, resetControl
+            damageControl, restoreControl, setControl, setBaseControl,
+            refillControl, resetControl
         ] {
             control.isEnabled = available
         }
@@ -200,6 +205,10 @@ final class CombatActorValuesSection: PanelSectionViewController {
             identifier: "ActorValueSetControl"
         )
         PanelComponents.configureButton(
+            setBaseControl, target: self, action: #selector(setSelectedBase),
+            identifier: "ActorValueSetBaseControl"
+        )
+        PanelComponents.configureButton(
             restoreControl, target: self, action: #selector(restore),
             identifier: "ActorValueRestoreControl"
         )
@@ -244,6 +253,12 @@ final class CombatActorValuesSection: PanelSectionViewController {
     @objc private func setSelectedValue() {
         provider?.actorValueSelection = selectedIndex
         provider?.setSelectedActorValue(to: amount)
+        finishInteraction()
+    }
+
+    @objc private func setSelectedBase() {
+        provider?.actorValueSelection = selectedIndex
+        provider?.setSelectedActorBase(to: amount)
         finishInteraction()
     }
 

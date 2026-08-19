@@ -25,6 +25,8 @@ struct FakeActorValueState {
     var selection: Int32 = 24
     /// Every `Set` the panel asked for, newest last.
     var sets: [(index: Int32, value: Float)] = []
+    /// Every `Set base` the panel asked for, newest last (issue #496).
+    var baseSets: [(index: Int32, value: Float)] = []
 }
 
 /// The active-effect half of the fake's stored state (issue #469).
@@ -139,6 +141,13 @@ extension FakeWorldProviders {
     func setSelectedActorValue(to value: Float) -> String {
         actorValues.sets.append((index: actorValues.selection, value: value))
         return "Set \(ActorValueIdentity.description(of: actorValues.selection))"
+            + " to \(value)."
+    }
+
+    @discardableResult
+    func setSelectedActorBase(to value: Float) -> String {
+        actorValues.baseSets.append((index: actorValues.selection, value: value))
+        return "Set the base of \(ActorValueIdentity.description(of: actorValues.selection))"
             + " to \(value)."
     }
 

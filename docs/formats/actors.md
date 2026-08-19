@@ -227,6 +227,14 @@ A short DATA yields zero weights rather than a thrown error: a class that
 spreads no per-level points is a usable answer, and refusing the record would
 take every actor that names it down too.
 
+Classes are looked up through `CharacterClassStore`, a `RecordIndex`-backed store
+over the whole load order (issue #496). It replaced a single-file
+`[UInt32: CharacterClass]` map, which was the last record index in the engine with
+no cross-plugin override handling at all: a patch plugin that rebalanced a class
+could not win over the base definition and could not even be seen unless it lived
+in the same file as the actors. A CLAS link now resolves relative to the plugin
+carrying it, exactly as an MGEF or a PERK link does.
+
 Gendered skeleton block ordering (probed on NordRace): `MNAM`(0 bytes) ->
 male `ANAM` + `MODT`, then `FNAM`(0 bytes) -> female `ANAM` + `MODT`. Later
 MNAM/FNAM markers open other gendered blocks (body models, head data) whose

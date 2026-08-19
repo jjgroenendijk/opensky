@@ -91,11 +91,14 @@ nonisolated enum MagicEffectPlanFailure: Equatable, Error, Hashable, Sendable {
     /// A timed Recover effect naming health, magicka or stamina.
     ///
     /// The Creation Kit documents this as changing both the maximum and the
-    /// current value, and issue 19.5 deliberately left the three primaries
-    /// without the base-plus-modifiers storage the other 161 values have, so
-    /// there is nowhere to hold the change. Counted rather than approximated:
+    /// current value. Item 19.5 left the three primaries without the storage to
+    /// hold that, so such an effect was counted rather than approximated —
     /// moving current health for a "fortify health" effect would be a different
     /// effect wearing the same name.
+    ///
+    /// Item 20.3 (issue #496) built the storage, so the reason no longer holds.
+    /// The guard stays until the tallies it moves are re-measured against the
+    /// install and the expiry path is exercised deliberately: issue #511.
     case unsupportedPrimaryModifier(Int32)
     /// The MGEF carried no readable DATA, so nothing about it is known.
     case undecodedEffect

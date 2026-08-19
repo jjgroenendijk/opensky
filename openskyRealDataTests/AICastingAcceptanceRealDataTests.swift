@@ -66,7 +66,11 @@ struct AICastingAcceptanceRealDataTests {
             effects: ActiveEffectRuntime(values: values, effects: effects)
         )
         let baselines = ActorSpellBaselineResolver(
-            actorValues: ActorValueResolver.build(from: file, localized: localized)
+            actorValues: ActorValueResolver.build(
+                from: file,
+                localized: localized,
+                pluginName: plugin
+            )
         )
         let authored = spellbook.resolve(
             baselines.baseline(for: banditWizard).all,
