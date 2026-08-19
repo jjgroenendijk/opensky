@@ -22,6 +22,7 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
     case leveledSpell = "LVSP"
     case dualCastData = "DUAL"
     case equipSlot = "EQUP"
+    case actorValueInformation = "AVIF"
 
     var fourCC: FourCC {
         switch self {
@@ -42,6 +43,7 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
         case .leveledSpell: "LVSP"
         case .dualCastData: "DUAL"
         case .equipSlot: "EQUP"
+        case .actorValueInformation: "AVIF"
         }
     }
 
@@ -64,6 +66,7 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
         case .leveledSpell: "LVSP — Leveled spells"
         case .dualCastData: "DUAL — Dual cast data"
         case .equipSlot: "EQUP — Equip slots"
+        case .actorValueInformation: "AVIF — Actor value information"
         }
     }
 }
