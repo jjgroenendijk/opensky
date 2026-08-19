@@ -24,6 +24,10 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   base chains, the SHOU/WOOP/LVSP/DUAL/EQUP small records, the EQUP graph that answers hand
   occupancy, load-order-wide effect, spell, shout and equip-slot lookup, and plugin-relative
   resolution of EFID, spell, item EITM and ETYP links.
+* [Actor value information](/formats/actor-value-information.md) - AVIF identity fields, the
+  AVSK skill-use parameters, the perk-tree node run and the CNAM ambiguity that makes it
+  order-sensitive, the name join that numbers a record through the actor-value
+  table, and load-order-wide lookup by FormID, editor id or actor-value index.
 * [Locations](/formats/locations.md) - LCTN/LCRT layouts, cycle-safe parent and keyword
   traversal, CELL XLCN links, and direct quest-location alias fills.
 * [plugins.txt load order](/formats/plugins-txt.md) - enable flags and file

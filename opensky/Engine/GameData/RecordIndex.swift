@@ -35,7 +35,7 @@ nonisolated struct RecordIndex {
     /// same cross-plugin override semantics and inspector context.
     static let referenceRecordTypes: Set<FourCC> = [
         "KYWD", "FLST", "LCTN", "LCRT", "ECZN", "AACT", "COLL", "DOBJ", "MGEF",
-        "SPEL", "SCRL", "ENCH", "SHOU", "WOOP", "LVSP", "DUAL", "EQUP"
+        "SPEL", "SCRL", "ENCH", "SHOU", "WOOP", "LVSP", "DUAL", "EQUP", "AVIF"
     ]
 
     private static let logger = Logger(

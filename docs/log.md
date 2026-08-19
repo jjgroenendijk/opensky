@@ -2,6 +2,36 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-19
+
+* **AVIF decodes (issue #494, item 20.1)**, the record that describes the actor values
+  themselves and, for the skills, the advancement parameters and the perk-tree node graph.
+  Layout, the AVSK float block and the node run are in
+  [actor value information](/formats/actor-value-information.md), sourced from UESP and
+  cross-checked against xEdit `wbRecord(AVIF, ...)`.
+* **`CNAM` means two things in one record**, and position is the only thing separating them:
+  before the first `PNAM` it is the skill category, after one it is a perk-tree connection
+  line. The decoder tracks which node is open because that bookkeeping *is* the
+  disambiguation. On the real install 91 records carry a `CNAM` outside the 0-3 enum and
+  every one of them has no perk tree, which is what UESP's "large 4byte info" note describes.
+* **Three vanilla skills carry editor ids the actor-value table does not spell** —
+  `AVMarksman`, `AVSpeechcraft`, `AVMysticism`. Rather than assert the mapping from memory,
+  the real-data suite reads each record's own `FULL` string out of Skyrim.esm's string table
+  and pins that it says `Archery`, `Speech` and `Illusion`.
+  `ActorValueIdentity.recordNameAliases` is that observation, behind an
+  `index(recordName:)` entry point kept separate from the `index(named:)` conditions and
+  Papyrus natives use, so the measured miss buckets in
+  [actor values](/engine/actor-values.md) do not move.
+* **A perk tree is not the same thing as a skill.** The install carries 20 perk-tree records
+  and 18 skills: Dawnguard hangs the vampire and werewolf trees off `AVMagickaRateMod` and
+  `AVHealRatePowerMod`, which are not in the skill range and are not in the vanilla name
+  table at all. `ActorValueInformationStore` answers both questions separately.
+* **Counts from the sweep**: 153 definitions over the five masters, 149 distinct identities,
+  230 perk-tree nodes, 92 of the 164 vanilla actor values described by a record, and no
+  unread, malformed or incomplete field anywhere in the set. AVIF is browsable from
+  `Library > Asset Browser > Reference records (load order)` and
+  `openskycli record <editorid>` prints the same summary, perk-node table included.
+
 ## 2026-08-18
 
 * **M19 accepted (issue #475)**: item 19.12 is the milestone gate, and it added one surface

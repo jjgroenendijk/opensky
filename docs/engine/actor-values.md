@@ -459,9 +459,17 @@ says so, not because anything here recalled it.
 Names are matched with every non-alphanumeric character removed and the rest
 lowercased, so xEdit's `One-Handed`, Papyrus's `OneHanded` and a script's
 `"one handed"` are one name. Papyrus does use a few *different* words for the
-same value — `Marksman` for index 8, which xEdit spells `Archery` — and those are
-deliberately not aliased: none of them names a value this subsystem stores, so an
-alias table would only change which unimplemented bucket the miss lands in.
+same value — `Marksman` for index 8, which xEdit spells `Archery` — and
+`index(named:)` deliberately still does not alias those, so the measured miss
+buckets below do not move.
+
+Three vanilla AVIF records carry editor ids in that same legacy vocabulary —
+`AVMarksman`, `AVSpeechcraft` and `AVMysticism` — and those three *are* mapped,
+by `recordNameAliases` behind the separate `index(recordName:)` entry point that
+only [actor value information](/formats/actor-value-information.md) calls. The
+mapping is observed rather than asserted: each record's own FULL string resolves
+through Skyrim.esm's string table to `Archery`, `Speech` and `Illusion`, and
+`ActorValueInformationRealDataTests` pins exactly that.
 
 Since item 19.5 every entry in the table is stored, so `kind(at:)` answers a
 *fast-path* question rather than a can-I-read-it question: nil means "goes
@@ -477,15 +485,16 @@ name one of the other actor values, so 539 tallied misses became 539 answers, an
 bucket at empty.
 
 Papyrus names are matched the same way, so `GetActorValue("ResistFire")` answers.
-The synonyms the table deliberately does not alias — `Marksman` for `Archery` —
-still fail, and now that failure means only "no vanilla actor value carries this
-name", which is the tally's whole remaining content.
+The synonyms `index(named:)` deliberately does not alias — `Marksman` for
+`Archery` — still fail there, and now that failure means only "no vanilla actor
+value carries this name", which is the tally's whole remaining content.
 
 ## Out of scope
 
 Weapon damage application (items 15.4, 15.5), death and ragdoll (15.6), skill
-advancement and use-based experience (M20), AVIF record decode (M20 — the record
-adds metadata, not values), applying a magic effect (item 19.6). Papyrus and
+advancement and use-based experience (M20), applying a magic effect (item 19.6).
+AVIF record decode landed with item 20.1 — the record adds metadata, not values;
+see [actor value information](/formats/actor-value-information.md). Papyrus and
 condition exposure landed with item 15.8 — see
 [the Papyrus VM](/engine/papyrus-vm.md) and
 [conditions](/formats/conditions.md). The bleedout ratio is

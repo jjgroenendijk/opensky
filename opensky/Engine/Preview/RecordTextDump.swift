@@ -122,6 +122,7 @@ nonisolated enum RecordTextDump {
                     keywordContext: keywordContext,
                     magicContext: magicContext
                 )
+                ?? progressionSummary(record: record, localized: localized)
         }
     }
 

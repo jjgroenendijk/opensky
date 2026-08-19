@@ -39,9 +39,12 @@
 // lowercased, so xEdit's `One-Handed` and Papyrus's `OneHanded` are one name and
 // a script's `"health"` matches the table's `Health`. Papyrus does use a handful
 // of *different* words for the same value — `Marksman` for index 8, which xEdit
-// spells `Archery` — and those are deliberately not aliased: none of them names
-// a value 15.3 stores, so an alias table would only change which unimplemented
-// bucket the miss lands in.
+// spells `Archery` — and `index(named:)` deliberately still does not alias
+// those, so the measured condition and native miss buckets do not move.
+//
+// The AVIF records use three of the same legacy words in their editor ids, and
+// those *are* mapped, in `recordNameAliases` behind the separate
+// `index(recordName:)` entry point (issue #494, roadmap item 20.1).
 //
 // Documented in docs/engine/actor-values.md.
 
@@ -179,6 +182,38 @@ nonisolated enum ActorValueIdentity {
         namesByKey[normalized(name)]
     }
 
+    /// Editor-id vocabulary the vanilla AVIF records use for three skills the
+    /// name table above spells differently, kept apart from `vanillaNames` so
+    /// the table stays a verbatim copy of `wbActorValueEnum`.
+    ///
+    /// These are not guesses and not recalled from memory. Each record's own
+    /// FULL string resolves, through Skyrim.esm's string table, to the name on
+    /// the right, and `ActorValueInformationRealDataTests` pins exactly that —
+    /// so the mapping is observed evidence with a standing regression check.
+    /// The words are Oblivion-era skill names Skyrim kept in its editor ids;
+    /// Papyrus uses `Marksman` for `Archery` the same way.
+    static let recordNameAliases: [String: String] = [
+        "Marksman": "Archery",
+        "Speechcraft": "Speech",
+        "Mysticism": "Illusion"
+    ]
+
+    /// Index of the actor value a *record* spells `name`, which is
+    /// `index(named:)` widened by `recordNameAliases`.
+    ///
+    /// Deliberately a separate entry point rather than a widening of
+    /// `index(named:)`: condition parameters and Papyrus natives carry the
+    /// table's own vocabulary, and their measured miss buckets
+    /// (docs/engine/actor-values.md) should not move because AVIF needed three
+    /// extra spellings.
+    static func index(recordName name: String) -> Int32? {
+        if let index = index(named: name) {
+            return index
+        }
+        guard let alias = aliasesByKey[normalized(name)] else { return nil }
+        return index(named: alias)
+    }
+
     /// The *primary* value `index` names, or nil for every other index in the
     /// table and for an index outside it alike.
     ///
@@ -206,6 +241,9 @@ nonisolated enum ActorValueIdentity {
 
     private static let kindsByIndex: [Int32: ActorValueKind] = storedIndices
         .reduce(into: [:]) { table, entry in table[entry.value] = entry.key }
+
+    private static let aliasesByKey: [String: String] = recordNameAliases
+        .reduce(into: [:]) { table, entry in table[normalized(entry.key)] = entry.value }
 
     private static let namesByKey: [String: Int32] = vanillaNames
         .enumerated()
