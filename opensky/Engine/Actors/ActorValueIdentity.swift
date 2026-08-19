@@ -132,6 +132,37 @@ nonisolated enum ActorValueIdentity {
     /// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CLAS>).
     static let skillFloor: Float = 15
 
+    /// Every skill index in table order, which is what a caller iterating the
+    /// eighteen skills walks rather than rebuilding the range.
+    static let skillIndices: [Int32] = Array(firstSkillIndex ... lastSkillIndex)
+
+    /// Actor-value index of `One-Handed Skill Advance`, the first of the
+    /// eighteen "Skill Advance" slots, which run in the same order as the
+    /// skills themselves (issue #498, roadmap item 20.5).
+    ///
+    /// These are where accumulated skill experience lives: the table names one
+    /// per skill, they hold no other quantity, and storing progress there is
+    /// what lets `GetActorValue OneHandedSkillAdvance` answer the same number
+    /// the progression runtime reads. `ActorValueIdentityTests` pins the name
+    /// at this index and the contiguity of the run, so a table edit cannot move
+    /// the mapping silently. See docs/engine/skill-advancement.md.
+    static let firstSkillAdvanceIndex: Int32 = 114
+
+    /// The `Skill Advance` slot that accumulates experience for the skill at
+    /// `index`, or nil when `index` is not one of the eighteen skills.
+    static func skillAdvanceIndex(forSkill index: Int32) -> Int32? {
+        guard isSkill(index: index) else { return nil }
+        return firstSkillAdvanceIndex + (index - firstSkillIndex)
+    }
+
+    /// The skill whose experience the `Skill Advance` slot at `index` holds, or
+    /// nil for every other index — the inverse of `skillAdvanceIndex(forSkill:)`.
+    static func skillIndex(forAdvance index: Int32) -> Int32? {
+        let skill = firstSkillIndex + (index - firstSkillAdvanceIndex)
+        guard isSkill(index: skill) else { return nil }
+        return skill
+    }
+
     /// Whether `index` names an entry in the vanilla table — the question a
     /// caller asks before storing or reading a value by index.
     ///

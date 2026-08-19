@@ -35,6 +35,18 @@ final class FakeCombatWorld: CombatLoopWorld {
     /// under the point asked for, which the machine has to survive.
     var movementSucceeds = true
 
+    /// Skill uses the runtime reported (issue #498), recorded rather than
+    /// converted: what a combat suite needs is that the exchange reached
+    /// progression with the right amounts, and `SkillAdvancementRuntimeTests`
+    /// asks what converting one does.
+    private(set) var skillUses: [SkillUseEvent] = []
+
+    @discardableResult
+    func reportSkillUse(_ use: SkillUseEvent) -> Float {
+        skillUses.append(use)
+        return 0
+    }
+
     private(set) var hostilityWrites = 0
     private(set) var damage: [ReferenceKey: Float] = [:]
     private(set) var raised: [String] = []

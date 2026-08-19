@@ -115,6 +115,12 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     /// Load-order PERK index (issue #497); nil on the same synthetic scenes,
     /// and then the perk runtime reports itself unavailable.
     var perkStore: PerkStore?
+    /// Load-order AVIF index (issue #498); nil on the same synthetic scenes,
+    /// and then skill advancement has no parameters and reports the drop.
+    var actorValueInformation: ActorValueInformationStore?
+    /// GMST-derived skill-use curve and per-rank character experience (issue
+    /// #498), defaulting to the documented numbers on a synthetic scene.
+    var skillAdvancementSettings: SkillAdvancementSettings = .documentedDefaults
     /// GMST-derived walk/run values plus explicit documented fallbacks.
     var movementConfiguration: PlayerMovementConfiguration = .synthetic
     /// GMST-derived `fBarterMin` and `fBarterMax` at the milestone's fixed

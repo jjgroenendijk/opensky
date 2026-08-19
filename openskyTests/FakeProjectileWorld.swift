@@ -41,6 +41,16 @@ final class FakeProjectileWorld: ProjectileWorld {
     var canSpawn = true
     var residentCells: Set<CellSceneLocation> = [.exterior(CellCoordinate(x: 0, y: 0))]
 
+    /// Skill uses the runtime reported (issue #498), recorded rather than
+    /// converted.
+    private(set) var skillUses: [SkillUseEvent] = []
+
+    @discardableResult
+    func reportSkillUse(_ use: SkillUseEvent) -> Float {
+        skillUses.append(use)
+        return 0
+    }
+
     private(set) var damage: [ReferenceKey: Float] = [:]
     private(set) var consumed: [FormID] = []
     private(set) var spawned: [StuckProjectile] = []

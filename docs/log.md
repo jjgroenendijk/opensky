@@ -4,6 +4,25 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-19
 
+* **Skill advancement (issue #498, item 20.5)**: melee, archery, blocking, armour and
+  casting now report skill use through one seam, the skill's own AVIF `AVSK` parameters
+  convert it, and crossing the GMST-curved threshold raises the skill by a point.
+  `Game.AdvanceSkill` and `Game.IncrementSkill` run the same path. See
+  [skill advancement](/engine/skill-advancement.md).
+* **Accumulated skill experience lives in the `Skill Advance` actor values**, indices 114
+  through 131, rather than in a component of its own. The vanilla table already names one
+  slot per skill and nothing else writes them, so `GetActorValue OneHandedSkillAdvance`
+  answers the number the runtime spends and the save carries progress with no new chunk.
+* **The threshold curve reads the level being left, not the one being reached.** UESP's
+  prose says `(level-1)^1.95` and its own worked example says `0.25 * 15^1.95 + 300 =
+  349.13` for Lockpicking 15 to 16; the example is the reading with numbers attached, and it
+  is pinned in both the synthetic and the real-data suites.
+* **`fXPPerSkillRank` is authored by no active plugin on this machine**, so character
+  experience per skill rank takes the documented default of 1. `fSkillUseCurve` is authored
+  at 1.95. Measured 2026-08-19 with `make run-cli ARGS="gmst list --prefix fXP"`.
+* **Casting accumulates skill uses per effect, not per spell**, because the Creation Kit
+  puts the Magic Skill and the `Skill Usage Mult` on the MGEF. A spell whose effects name
+  two schools feeds both.
 * **Perk runtime (issue #497, item 20.4)**: owned perks are a world-state component with a
   mutation layer over it, and an entry-point evaluator answers "given this actor, what does
   entry point X do to value V". The nine numeric functions UESP's "Function Types" table

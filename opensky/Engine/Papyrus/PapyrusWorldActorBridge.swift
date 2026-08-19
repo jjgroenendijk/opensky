@@ -59,6 +59,22 @@ nonisolated enum PapyrusPerkMutation: String, CaseIterable, Equatable, Sendable 
     case remove = "RemovePerk"
 }
 
+/// Which of the two scripted skill advances a native asked for (issue #498).
+///
+/// One enumeration and one bridge closure rather than two of each, for the
+/// reason `PapyrusPerkMutation` is one: the two differ only in the unit the
+/// magnitude is in, and every other step — resolve the player, find the AVIF
+/// parameters, write the skill — is shared. The semantics of each are quoted at
+/// `SkillAdvancementRuntime.advance(skill:byUse:on:)` and
+/// `increment(skill:on:)`.
+nonisolated enum PapyrusSkillAdvance: String, CaseIterable, Equatable, Sendable {
+    /// `Game.AdvanceSkill`: the magnitude is a skill *use* amount.
+    case advance = "AdvanceSkill"
+    /// `Game.IncrementSkill`: one whole skill point, and the magnitude is
+    /// ignored.
+    case increment = "IncrementSkill"
+}
+
 /// One actor as a Papyrus native sees it.
 nonisolated struct PapyrusActorState: ActorValueReadable, Equatable, Sendable {
     /// Current health, magicka and stamina.
@@ -205,6 +221,19 @@ protocol PapyrusWorldActorBridge: AnyObject, Sendable {
     /// would read as an actor who has taken nothing.
     func hasPerk(_ perk: ReferenceKey, on key: ReferenceKey) -> Bool?
 
+    /// Advances one of the player's skills through `SkillAdvancementRuntime`,
+    /// so a scripted advance and a landed blow reach the same thresholds and
+    /// the same save (issue #498).
+    ///
+    /// - Returns: false for a session with no progression runtime, and for a
+    ///   skill this load order carries no advancement parameters for. Both are
+    ///   tallied failures rather than a script that believes it taught the
+    ///   player something.
+    @discardableResult
+    func advancePlayerSkill(
+        _ advance: PapyrusSkillAdvance, at index: Int32, by magnitude: Float
+    ) -> Bool
+
     /// Kills `key` outright, attributing it to `killer` when the script named
     /// one. Health is emptied first, so a corpse never reads as dead at full
     /// health and the death takes the same route a fatal blow does.
@@ -282,5 +311,14 @@ nonisolated extension PapyrusWorldAccess {
 
     func hasPerk(_ perk: ReferenceKey, on key: ReferenceKey) -> Bool? {
         MainActor.assumeIsolated { bridge.hasPerk(perk, on: key) }
+    }
+
+    @discardableResult
+    func advancePlayerSkill(
+        _ advance: PapyrusSkillAdvance, at index: Int32, by magnitude: Float
+    ) -> Bool {
+        MainActor.assumeIsolated {
+            bridge.advancePlayerSkill(advance, at: index, by: magnitude)
+        }
     }
 }

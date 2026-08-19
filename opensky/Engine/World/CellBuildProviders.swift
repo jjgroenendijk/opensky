@@ -110,6 +110,16 @@ nonisolated protocol ProgressionDataProviding {
     /// runtime reports itself unavailable rather than showing an actor who owns
     /// nothing.
     var perkStore: PerkStore? { get }
+
+    /// Load-order AVIF index (issue #498), which skill advancement reads each
+    /// skill's `AVSK` use and improve parameters out of. Nil on a synthetic
+    /// scene, and then a use is counted and dropped rather than converted with
+    /// invented multipliers.
+    var actorValueInformation: ActorValueInformationStore? { get }
+
+    /// `fSkillUseCurve` and `fXPPerSkillRank` as this load order resolves them
+    /// (issue #498), defaulting to the documented numbers on a synthetic scene.
+    var skillAdvancementSettings: SkillAdvancementSettings { get }
 }
 
 /// Optional script-loading seam a provider can expose (issue #171). The

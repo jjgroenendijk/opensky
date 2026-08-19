@@ -178,7 +178,8 @@ extension CombatLoopRuntime {
             settings: settings,
             bonusMultiplier: world.combatBlockMultiplier(of: player)
         )
-        world.applyCombatDamage(damage.applied, to: player)
+        let landed = world.applyCombatDamage(damage.applied, to: player)
+        noteSkillUse(from: actor, weapon: weapon, damage: damage, landed: landed, world: world)
         // The other direction of the same dispatch the player's own swing
         // makes (issue #375): a script attached to the player takes `OnHit`
         // with the attacking actor as `akAggressor`.
@@ -198,6 +199,34 @@ extension CombatLoopRuntime {
             playedReaction: played,
             attackID: nextAttackID()
         ))
+    }
+
+    /// The other direction of the exchange the player's own swing reports
+    /// (issue #498): the attacker's weapon skill, the player's Block for what
+    /// the block absorbed, and the player's armour for the strike's raw rating.
+    ///
+    /// The attacker's use is reported rather than skipped because only
+    /// progression decides who advances, and it advances the player alone.
+    private func noteSkillUse(
+        from actor: CombatActorObservation,
+        weapon: MeleeWeaponProfile,
+        damage: MeleeDamageResult,
+        landed: Bool,
+        world: any CombatLoopWorld
+    ) {
+        let player = world.combatPlayer.key
+        let raw = damage.base * damage.attackMultiplier
+        if landed {
+            world.reportSkillUse(SkillUseEvent(
+                actor: actor.key, action: .weaponHit(weapon.handType), amount: damage.base
+            ))
+        }
+        if damage.wasBlocked {
+            world.reportSkillUse(SkillUseEvent(
+                actor: player, action: .blockedBlow, amount: raw * damage.blockedFraction
+            ))
+        }
+        world.reportSkillUse(SkillUseEvent(actor: player, action: .armorHit, amount: raw))
     }
 
     /// Raises the census-named hit reaction on the player's graph, magnitude

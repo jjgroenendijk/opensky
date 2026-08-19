@@ -152,6 +152,15 @@ extension PapyrusWorldStateBridge {
         return owned.contains(perk)
     }
 
+    // MARK: - Skills
+
+    @discardableResult
+    func advancePlayerSkill(
+        _ advance: PapyrusSkillAdvance, at index: Int32, by magnitude: Float
+    ) -> Bool {
+        advanceSkill?(advance, index, magnitude) ?? false
+    }
+
     // MARK: - Private
 
     /// Whether `key` is actually in a fight, which is its 16.7 behavior phase
