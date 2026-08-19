@@ -129,6 +129,9 @@ extension GameViewController {
         // through the effect runtime above and its charge lives in the world-state
         // store, so there is nothing here to tick.
         wireEnchantments(provider: provider)
+        // After the cast loop, which takes the perk runtime by value so a spell
+        // cost folds through the `Mod Spell Cost` entry point (issue #497).
+        wirePerks(provider: provider)
     }
 
     private func wireLateWorldSystems(

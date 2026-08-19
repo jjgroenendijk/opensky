@@ -86,6 +86,10 @@ nonisolated enum OpenSkySaveDecoder {
         /// no worn item owns an effect — which is also what a save written before
         /// that chunk existed means.
         var enchantedItems: [SaveEnchantedItemEntry] = []
+        /// Absent `PRKS` chunk (issue #497) means nobody owns a perk, so every
+        /// actor restores with none — which is also what a save written before
+        /// that chunk existed means.
+        var perks: [SavePerkEntry] = []
     }
 
     static func decode(_ data: Data) throws -> OpenSkySaveFile {
@@ -146,7 +150,8 @@ nonisolated enum OpenSkySaveDecoder {
         entries = OpenSkySaveDialogueDecoder.merge(body.dialogue, into: entries)
         entries = OpenSkySaveActiveEffectDecoder.merge(body.activeEffects, into: entries)
         entries = OpenSkySaveSpellbookDecoder.merge(body.spellbooks, into: entries)
-        return OpenSkySaveEnchantedItemDecoder.merge(body.enchantedItems, into: entries)
+        entries = OpenSkySaveEnchantedItemDecoder.merge(body.enchantedItems, into: entries)
+        return OpenSkySavePerkDecoder.merge(body.perks, into: entries)
     }
 
     // MARK: - Header
@@ -297,6 +302,8 @@ nonisolated enum OpenSkySaveDecoder {
         case OpenSkySaveFormat.ChunkTag.enchantedItems:
             body.enchantedItems = try OpenSkySaveEnchantedItemDecoder
                 .decodeEnchantedItems(payload)
+        case OpenSkySaveFormat.ChunkTag.perks:
+            body.perks = try OpenSkySavePerkDecoder.decodePerks(payload)
         default:
             break // Unknown chunk: skipped by its declared length.
         }

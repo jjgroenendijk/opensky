@@ -55,6 +55,11 @@ nonisolated struct ConditionContext: Sendable {
     /// Empty when no magic runtime is wired, which makes every magic function
     /// a reason-tagged false rather than an actor who has learned nothing.
     var magic: MagicConditionResolution
+    /// Owned perks per actor plus the PERK store `HasPerk`'s parameter resolves
+    /// against (issue #497). Empty when no perk runtime is wired, which makes
+    /// `HasPerk` a reason-tagged false rather than an actor who has taken
+    /// nothing.
+    var perks: PerkConditionResolution
     /// Runtime enable overrides for `GetDisabled`. When absent for a key, the
     /// function falls back to the placement record's initial flag.
     var referenceEnable: ReferenceEnableResolution
@@ -89,6 +94,7 @@ nonisolated struct ConditionContext: Sendable {
         dialogue: DialogueResolution = .empty,
         data: ConditionDataResolution = .empty,
         magic: MagicConditionResolution = .empty,
+        perks: PerkConditionResolution = .empty,
         referenceEnable: ReferenceEnableResolution = .empty,
         aliasQuest: FormID? = nil,
         clock: GameClock? = nil,
@@ -105,6 +111,7 @@ nonisolated struct ConditionContext: Sendable {
         self.dialogue = dialogue
         self.data = data
         self.magic = magic
+        self.perks = perks
         self.referenceEnable = referenceEnable
         self.aliasQuest = aliasQuest
         self.clock = clock

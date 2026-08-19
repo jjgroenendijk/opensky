@@ -110,6 +110,13 @@ nonisolated enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendab
     /// every take, drop and equip, while charge moves only when an enchanted
     /// weapon actually lands a hit.
     case enchantedItems
+    /// The perks one actor owns (issue #497). The value type is `PerkState` in
+    /// `opensky/Engine/Progression/PerkComponent.swift`. A slot of its own for
+    /// the reason `spellbook` is one: owning a perk changes on a level-up, a
+    /// script call or an actor's first appearance, never per frame, while the
+    /// actor values a perk goes on to modify are rewritten sixty times a
+    /// second.
+    case perks
 }
 
 /// A value that can occupy one component slot.
@@ -149,6 +156,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
     case activeEffects(ActiveEffectState)
     case spellbook(SpellbookState)
     case enchantedItems(EnchantedItemState)
+    case perks(PerkState)
 
     var kind: WorldStateComponentKind {
         switch self {
@@ -167,6 +175,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
         case .activeEffects: .activeEffects
         case .spellbook: .spellbook
         case .enchantedItems: .enchantedItems
+        case .perks: .perks
         }
     }
 }

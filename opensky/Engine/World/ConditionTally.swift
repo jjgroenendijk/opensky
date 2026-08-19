@@ -83,6 +83,11 @@ nonisolated struct ConditionTally: Equatable, Sendable {
     /// readies nothing into are different gaps.
     private(set) var unavailableMagic: [ConditionMagicDomain: Int] = [:]
 
+    /// Perk seam misses (issue #497): `HasPerk` in a session with no PERK data,
+    /// or against a parameter no loaded plugin carries. Deliberately not
+    /// counted as an actor who has not taken the perk.
+    private(set) var unavailablePerks = 0
+
     private(set) var conditionsEvaluated = 0
     private(set) var listsEvaluated = 0
 
@@ -128,7 +133,8 @@ nonisolated struct ConditionTally: Equatable, Sendable {
             unresolvedParameterTotal += 1
             Self.bump(&unresolvedParameters, index, limit: limit)
         case .unavailableClock, .unavailableActorState, .unavailableDetection,
-             .unavailableDialogue, .unavailableData, .unavailableMagic:
+             .unavailableDialogue, .unavailableData, .unavailableMagic,
+             .unavailablePerks:
             noteUnavailable(failure)
         }
     }
@@ -151,6 +157,8 @@ nonisolated struct ConditionTally: Equatable, Sendable {
             unavailableData[domain, default: 0] += 1
         case let .unavailableMagic(domain):
             unavailableMagic[domain, default: 0] += 1
+        case .unavailablePerks:
+            unavailablePerks += 1
         default:
             break
         }
@@ -210,7 +218,7 @@ nonisolated struct ConditionTally: Equatable, Sendable {
             + unresolvedParameterTotal + unavailableClock + unavailableActorState
             + unavailableDetection + unavailableDialogue
             + unavailableData.values.reduce(0, +)
-            + unavailableMagic.values.reduce(0, +)
+            + unavailableMagic.values.reduce(0, +) + unavailablePerks
     }
 
     /// Unknown function indices ranked by count, ties broken by index so the

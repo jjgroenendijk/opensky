@@ -9,9 +9,10 @@ struct PapyrusNativeRegistryTests {
         let standard = PapyrusNativeRegistry.standard
         // 57 before the `Actor` family (issue #375) added nine, 66 before
         // 16.7 (issue #424) added `StartCombat` and `StopCombat`, 68 before
-        // 19.11 (issue #474) added the eleven spell natives, and 79 before
-        // 20.3 (issue #496) added the three actor-value writes.
-        #expect(standard.count == 82)
+        // 19.11 (issue #474) added the eleven spell natives, 79 before
+        // 20.3 (issue #496) added the three actor-value writes, and 82 before
+        // 20.4 (issue #497) added `AddPerk`, `RemovePerk` and `HasPerk`.
+        #expect(standard.count == 85)
         #expect(standard.contains(
             scriptName: "form", functionName: "REGISTERFORUPDATE"
         ))

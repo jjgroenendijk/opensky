@@ -129,6 +129,16 @@ protocol MeleeCombatWorld: ScriptHitReporting, WeaponEnchantmentApplying {
     /// What `target` is blocking with, or nil when it is not blocking.
     func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind?
 
+    /// The *blocker's* fortify and perk multiplier, which is `MeleeDamage`'s
+    /// `bonusMultiplier` (issues #472 and #497).
+    ///
+    /// Answered by the session for the reason `meleeAttackMultiplier` is: the
+    /// runtime holds neither an actor-value surface nor a perk store. The
+    /// default is 1 — what the quoted block formula reduces to for a character
+    /// with neither a Fortify Block effect nor a blocking perk — so a session
+    /// that models neither is untouched by this.
+    func meleeBlockMultiplier(of target: ReferenceKey) -> Float
+
     /// Takes `amount` off `target`'s health.
     ///
     /// - Returns: true when the damage was actually applied, so a hit on a
@@ -151,4 +161,12 @@ protocol MeleeCombatWorld: ScriptHitReporting, WeaponEnchantmentApplying {
 
     /// Writes one census-named variable on the player's graph.
     func writeCombatVariable(_ value: BehaviorVariableValue, named name: String)
+}
+
+nonisolated extension MeleeCombatWorld {
+    /// A session with no fortify and no perk surface blocks by the base
+    /// formula, which is the value the term had before either existed.
+    func meleeBlockMultiplier(of target: ReferenceKey) -> Float {
+        1
+    }
 }

@@ -110,6 +110,10 @@ nonisolated struct ResolvedActorSpells: Equatable {
     let chain: [ActorChainLink]
     /// SPLO, resolved through `useSpellList`.
     let spells: ActorSourcedField<[FormID]>
+    /// PRKR, resolved through the same flag: UESP names it "Use spelllist
+    /// (both spells and perks)", so an actor delegating its spell list
+    /// delegates its perk list with it (issue #497).
+    let perks: ActorSourcedField<[FormID]>
     /// RNAM, resolved through `useTraits` — the race whose own `SPLO` run every
     /// member of it carries.
     let race: ActorSourcedField<FormID?>
@@ -246,6 +250,9 @@ nonisolated struct ActorTemplateResolver {
             chain: chain,
             spells: resolveField(in: npcs, flag: .useSpellList) {
                 ActorSourcedField(value: $0.spells, source: $0.formID)
+            },
+            perks: resolveField(in: npcs, flag: .useSpellList) {
+                ActorSourcedField(value: $0.perks, source: $0.formID)
             },
             race: resolveField(in: npcs, flag: .useTraits) {
                 ActorSourcedField(value: $0.race, source: $0.formID)

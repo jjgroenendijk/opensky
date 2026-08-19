@@ -175,7 +175,8 @@ extension CombatLoopRuntime {
         let damage = MeleeDamage.resolve(
             weapon: weapon,
             block: world.combatBlock(of: player),
-            settings: settings
+            settings: settings,
+            bonusMultiplier: world.combatBlockMultiplier(of: player)
         )
         world.applyCombatDamage(damage.applied, to: player)
         // The other direction of the same dispatch the player's own swing

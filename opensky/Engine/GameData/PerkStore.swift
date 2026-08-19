@@ -83,6 +83,7 @@ nonisolated struct PerkStore {
     /// Entry-point id to the effects that hook it, across every perk.
     private(set) var entryPointIndex: [UInt8: [PerkEntryPointMatch]] = [:]
     private var recordsByEditorID: [String: ResolvedPerk] = [:]
+    private var recordsByKey: [ReferenceKey: ResolvedPerk] = [:]
 
     var perks: [ResolvedPerk] {
         Array(records.values)
@@ -137,6 +138,12 @@ nonisolated struct PerkStore {
             key.objectID == id.objectID
                 && key.plugin.caseInsensitiveCompare(id.plugin) == .orderedSame
         }?.value
+    }
+
+    /// The perk one runtime identity names, which is what the perk runtime
+    /// looks every stored key up through.
+    func perk(key: ReferenceKey) -> ResolvedPerk? {
+        recordsByKey[key]
     }
 
     func perk(editorID: String) -> ResolvedPerk? {
@@ -196,6 +203,7 @@ nonisolated struct PerkStore {
 
     private mutating func add(_ resolved: ResolvedPerk) {
         records[resolved.id] = resolved
+        recordsByKey[ReferenceKey(resolved: resolved.id)] = resolved
         if let editorID = resolved.record.editorID {
             recordsByEditorID[editorID.lowercased()] = resolved
         }

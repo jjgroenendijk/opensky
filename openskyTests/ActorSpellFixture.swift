@@ -47,7 +47,8 @@ enum ActorSpellFixture {
         templateFlags: UInt16 = 0,
         template: UInt32? = nil,
         race: UInt32? = nil,
-        spells: [UInt32] = []
+        spells: [UInt32] = [],
+        perks: [UInt32] = []
     ) throws -> ActorBase {
         var fields = ESMFixture.field("ACBS", acbs(templateFlags: templateFlags))
         if let template {
@@ -63,6 +64,21 @@ enum ActorSpellFixture {
         fields += ESMFixture.field("SPCT", count)
         for spell in spells {
             fields += formIDField("SPLO", spell)
+        }
+        // PRKZ states how many PRKR structs follow, and the decoder counts them
+        // instead for the reason it counts SPLO entries. Each PRKR is the
+        // 8-byte struct UESP documents: the PERK link, the dead rank byte and
+        // three unused bytes.
+        if !perks.isEmpty {
+            var count = Data()
+            count.appendUInt32(UInt32(perks.count))
+            fields += ESMFixture.field("PRKZ", count)
+        }
+        for perk in perks {
+            var data = Data()
+            data.appendUInt32(perk)
+            data.append(contentsOf: [0, 0xAB, 0xCD, 0xEF])
+            fields += ESMFixture.field("PRKR", data)
         }
         return try ActorBase(
             record: record(ESMFixture.record("NPC_", formID: formID, data: fields)),
@@ -99,6 +115,17 @@ enum ActorSpellFixture {
         }
         return try LeveledList(
             record: record(ESMFixture.record("LVSP", formID: formID, data: fields))
+        )
+    }
+
+    /// The perk half of the same template resolution (issue #497), over the
+    /// same NPC_ records.
+    static func perkResolver(npcs: [ActorBase]) -> ActorPerkBaselineResolver {
+        ActorPerkBaselineResolver(
+            templates: ActorTemplateResolver(
+                actors: Dictionary(uniqueKeysWithValues: npcs.map { ($0.formID.rawValue, $0) }),
+                leveledActors: [:]
+            )
         )
     }
 

@@ -30,6 +30,7 @@ record decodes.
 - Decode policy
 - PerkStore
 - Observed on a vanilla install
+- The EPFD actor-value word is a float
 - What is not decoded here
 
 ## Sources
@@ -281,10 +282,26 @@ Both are exposed verbatim as `declaredRankCount` and `level`, and
 `PerkRealDataTests.theDeclaredRankCountDoesNotTrackTheRankChain()` pins the finding so
 nothing quietly starts trusting them.
 
+## The EPFD actor-value word is a float
+
+The four actor-value functions (`Add Actor Value Mult`, `Set AV Mult`, `Multiply AV Mult`,
+`Multiply 1 + AV Mult`) take an `EPFT` 2 payload xEdit types as `Actor Value, Float`, and the
+"actor value" word is stored as a **float holding the index** rather than as an integer. UESP
+spells the payload "float AV, float FACTOR", and xEdit's `wbEPFDActorValueToStr`
+(`Core/wbDefinitionsTES5.pas` line 889) reinterprets the `itU32` it read as a `Single` and
+rounds it before looking the name up.
+
+Reading the raw word as an integer therefore produces the bit pattern instead of the index:
+`AlchemySkillBoosts` reports actor value 1125187584 rather than 146 (`0x43120000`).
+`PerkFunctionData.actorValueIndex(fromFloat:)` rounds it to the signed index every other
+actor-value field in the format carries, so a consumer never has to know where the number came
+from. A payload outside `Int32`'s range reads as -1, the "no actor value" index the rest of
+the engine uses.
+
 ## What is not decoded here
 
 - Owning perks on an actor, and evaluating an entry point's conditions to fold its function
-  into a formula. That is the perk runtime, tracked separately.
+  into a formula. That is the perk runtime: [perks at runtime](/engine/perks.md).
 - The perk-tree menu. Where a box is drawn comes from AVIF, not from here
   ([actor value information](/formats/actor-value-information.md)).
 - The PERK tail of a `VMAD` fragment section. The primary scripts decode; the record-specific

@@ -182,9 +182,15 @@ nonisolated enum PerkFunctionData: Equatable, Sendable, CustomStringConvertible 
     case float(Float)
     case floatPair(Float, Float)
     /// EPFT 2 under one of the actor-value functions: the actor value the
-    /// factor multiplies, then the factor. The index is stored signed because
-    /// that is how every other actor-value field in the format is read, even
-    /// though xEdit types this particular word unsigned.
+    /// factor multiplies, then the factor.
+    ///
+    /// The index arrives as a *float* rather than as an integer. UESP spells
+    /// the payload "float AV, float FACTOR", and xEdit stores the word as
+    /// `itU32` only to reinterpret it as a `Single` and round it in
+    /// `wbEPFDActorValueToStr` (Core/wbDefinitionsTES5.pas line 889). It is
+    /// rounded to the signed index every other actor-value field in the format
+    /// carries, so a consumer never has to know where the number came from —
+    /// `AlchemySkillBoosts` reads 146 rather than 0x43120000.
     case actorValueMultiplier(actorValue: Int32, factor: Float)
     case leveledItem(FormID)
     case spell(FormID)
@@ -208,6 +214,20 @@ nonisolated enum PerkFunctionData: Equatable, Sendable, CustomStringConvertible 
         case let .localizedText(value): Self.describe(value)
         case let .raw(data): "\(data.count) raw bytes"
         }
+    }
+
+    /// The stored float as the actor-value index it spells, rounded to nearest
+    /// as xEdit rounds it. A payload outside `Int32`'s range, or a NaN, reads
+    /// as -1 — the "no actor value" index the rest of the engine already uses —
+    /// rather than trapping on the conversion.
+    static func actorValueIndex(fromFloat value: Float) -> Int32 {
+        let rounded = value.rounded()
+        guard
+            rounded.isFinite,
+            rounded >= Float(Int32.min),
+            rounded <= Float(Int32.max)
+        else { return -1 }
+        return Int32(rounded)
     }
 
     private static func describe(_ value: LString) -> String {

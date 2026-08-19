@@ -1,6 +1,7 @@
 // NPC_ record decoded into engine types: the appearance-relevant subset for
 // the bind-pose milestone, plus the ACBS/CNAM stat inputs the actor-value
-// derivation needs (issue #194). Factions, AI, spells, perks, and inventory
+// derivation needs (issue #194), the SPLO spell run (issue #470) and the PRKR
+// perk run (issue #497). Factions, AI and inventory
 // items are still skipped deliberately; ACBS carries the gender flag + the
 // template-inheritance flags that drive per-field resolution.
 //
@@ -120,6 +121,20 @@ nonisolated struct ActorBase {
     /// template chain resolves — the same rule the stats and inventory groups
     /// follow.
     let spells: [FormID]
+    /// PRKR — the perks the actor is authored with, in record order
+    /// (issue #497).
+    ///
+    /// The preceding `PRKZ` count is deliberately not read, for the reason
+    /// `SPCT` is not: counting the entries answers the same question and cannot
+    /// disagree with the file. The 8-byte struct's rank byte is not read
+    /// either, because UESP records it as dead — "uint8 Rank (no longer in
+    /// use)" — and a rank at runtime is the length of an owned `NNAM` chain
+    /// (`PerkState`).
+    ///
+    /// This list inherits through `TemplateFlags.useSpellList`, which UESP
+    /// names "Use spelllist (both spells and perks)", so it resolves on the
+    /// same flag the `SPLO` run does.
+    let perks: [FormID]
     /// ACBS/CNAM/DNAM stat inputs (issue #194).
     let stats: Stats
     /// VMAD — Papyrus scripts attached to the NPC_ base.
@@ -191,6 +206,7 @@ nonisolated struct ActorBase {
         defaultOutfit = references.defaultOutfit
         packages = references.packages
         spells = references.spells
+        perks = references.perks
         self.stats = stats
         self.scriptData = scriptData
     }
@@ -206,6 +222,7 @@ nonisolated struct ActorBase {
         var defaultOutfit: FormID?
         var packages: [FormID] = []
         var spells: [FormID] = []
+        var perks: [FormID] = []
     }
 
     /// The FormID-valued fields, plus the VMAD accumulator every unrecognized
@@ -233,6 +250,12 @@ nonisolated struct ActorBase {
             try references.packages.append(FormID(reader.readUInt32()))
         case "SPLO":
             try references.spells.append(FormID(reader.readUInt32()))
+        case "PRKR":
+            // 8-byte struct: the PERK link, a dead rank byte and three unused
+            // bytes carrying junk (UESP NPC_ PRKR). A short one loses its entry
+            // rather than failing the record.
+            guard field.data.count >= 4 else { return }
+            try references.perks.append(FormID(reader.readUInt32()))
         default:
             _ = try scriptData.decode(field: field)
         }

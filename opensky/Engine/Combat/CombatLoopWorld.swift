@@ -121,6 +121,11 @@ protocol CombatLoopWorld: ScriptHitReporting {
     /// pinned 15.4 formula, and neither side has a damage path of its own.
     func combatBlock(of key: ReferenceKey) -> MeleeBlockKind?
 
+    /// The blocker's fortify and perk multiplier for an incoming blow, which is
+    /// `MeleeDamage`'s `bonusMultiplier` (issues #472 and #497). Defaults to 1,
+    /// what the formula reduces to for a character with neither.
+    func combatBlockMultiplier(of key: ReferenceKey) -> Float
+
     /// What `observer` currently makes of `target`, projected from 16.6's
     /// detection pair state.
     ///
@@ -228,4 +233,12 @@ protocol CombatLoopWorld: ScriptHitReporting {
     /// combat selects the combat MUSC and leaving it returns to the previous
     /// selection.
     func setCombatMusicActive(_ active: Bool)
+}
+
+nonisolated extension CombatLoopWorld {
+    /// A session with no fortify and no perk surface blocks by the base
+    /// formula, which is the value the term had before either existed.
+    func combatBlockMultiplier(of key: ReferenceKey) -> Float {
+        1
+    }
 }

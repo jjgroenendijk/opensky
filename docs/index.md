@@ -338,6 +338,10 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   `ActiveEffectMode` a constant effect needed, the worn reconcile that survives every equip
   path, the worn restriction that gates nothing at runtime and the 70 vanilla counterexamples
   that settle it, and the fortify actor values the damage formulas now read.
+* [Perks at runtime](/engine/perks.md) - owning perks on an actor, the entry-point evaluator
+  every combat and magic formula queries, which functions and entry points are covered, the
+  condition-tab subjects the engine can and cannot bind, and the wired damage, block and
+  spell-cost seams.
 * [Archery and projectiles](/engine/archery.md) - the PROJ flight record, the measurement
   that settles `gravity` as a multiplier rather than an acceleration, the census-named bow
   draw and release events, the exact closed-form flight model on the fixed step, the

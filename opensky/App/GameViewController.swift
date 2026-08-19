@@ -206,6 +206,13 @@ final class GameViewController: NSViewController {
     /// here because extensions cannot add state.
     var enchantments = EnchantmentBridgeState()
 
+    /// Perks: the ownership runtime, the entry-point evaluator behind every
+    /// wired combat and magic seam, and the authored `PRKR` baselines
+    /// (issue #497). The implementation lives in
+    /// `GameViewControllerPerks.swift`; stored here because extensions cannot
+    /// add state.
+    var perks = PerkBridgeState()
+
     /// Melee combat: the swing runtime, the WEAP index it reads combat data
     /// out of, and the panel's last outcome line (issue #195). The
     /// implementation lives in `GameViewControllerMelee.swift`; stored here

@@ -60,7 +60,7 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     AudioDataProviding, MovementConfigurationProviding, GlobalDataProviding,
     ScriptDataProviding, ItemDataProviding, BarterDataProviding, QuestDataProviding,
     LocationDataProviding, DialogueDataProviding, ActorValueDataProviding, CombatDataProviding,
-    PackageDataProviding, MagicDataProviding
+    PackageDataProviding, MagicDataProviding, ProgressionDataProviding
 {
     let builder: CellSceneBuilder
     let worldspaceEditorID: String
@@ -112,6 +112,9 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     /// Load-order ENCH index (issue #472); nil on the same synthetic scenes, and
     /// then an enchanted item applies nothing and the readout says so.
     var enchantmentStore: EnchantmentStore?
+    /// Load-order PERK index (issue #497); nil on the same synthetic scenes,
+    /// and then the perk runtime reports itself unavailable.
+    var perkStore: PerkStore?
     /// GMST-derived walk/run values plus explicit documented fallbacks.
     var movementConfiguration: PlayerMovementConfiguration = .synthetic
     /// GMST-derived `fBarterMin` and `fBarterMax` at the milestone's fixed

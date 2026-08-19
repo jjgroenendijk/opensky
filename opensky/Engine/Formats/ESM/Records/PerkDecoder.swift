@@ -249,8 +249,18 @@ nonisolated struct PerkContents {
                 return try .float(reader.readFloat32())
             case .floatPair where data.count >= 8:
                 if function?.readsActorValuePair == true {
+                    // The actor value is stored as a *float* holding the index,
+                    // not as an integer: xEdit reads the same four bytes back
+                    // through `wbEPFDActorValueToStr`, which reinterprets them
+                    // as a `Single` and rounds
+                    // (Core/wbDefinitionsTES5.pas line 889), and UESP spells the
+                    // payload "float AV, float FACTOR". Reading the raw word as
+                    // an integer produces the bit pattern instead of the index —
+                    // 0x43120000 rather than 146.
                     return try .actorValueMultiplier(
-                        actorValue: Int32(bitPattern: reader.readUInt32()),
+                        actorValue: PerkFunctionData.actorValueIndex(
+                            fromFloat: reader.readFloat32()
+                        ),
                         factor: reader.readFloat32()
                     )
                 }

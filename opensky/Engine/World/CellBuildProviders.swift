@@ -98,6 +98,20 @@ nonisolated protocol MagicDataProviding {
     var enchantmentStore: EnchantmentStore? { get }
 }
 
+/// Optional progression seam a provider can expose (issue #497): the PERK index
+/// the perk runtime owns perks out of and evaluates entry points against.
+///
+/// Its own protocol rather than another member of `MagicDataProviding`, because
+/// progression is its own subsystem — perks reach combat, magic, prices and
+/// detection alike — and a session that wants perks should not have to claim it
+/// carries spells.
+nonisolated protocol ProgressionDataProviding {
+    /// Load-order PERK index, or nil on a synthetic scene, where the perk
+    /// runtime reports itself unavailable rather than showing an actor who owns
+    /// nothing.
+    var perkStore: PerkStore? { get }
+}
+
 /// Optional script-loading seam a provider can expose (issue #171). The
 /// Papyrus world runtime resolves a script name to compiled bytecode lazily
 /// through the file system, and resolves the FormIDs a VMAD property names
