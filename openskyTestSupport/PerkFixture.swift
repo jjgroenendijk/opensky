@@ -143,9 +143,16 @@ enum PerkFixture {
         values.reduce(Data()) { $0 + float($1) }
     }
 
-    /// EPFD for the actor-value functions: uint32 actor value then a float.
-    static func actorValueMultiplier(actorValue: UInt32, factor: Float) -> Data {
-        word(actorValue) + float(factor)
+    /// EPFD for the actor-value functions: the actor value as a *float* holding
+    /// the index, then the factor.
+    ///
+    /// A float rather than an integer because that is what the records carry:
+    /// xEdit stores the word as `itU32` and reinterprets it as a `Single` before
+    /// rounding (`wbEPFDActorValueToStr`), and UESP spells the payload
+    /// "float AV, float FACTOR". `AlchemySkillBoosts` reads back 146, not
+    /// 0x43120000.
+    static func actorValueMultiplier(actorValue: Int32, factor: Float) -> Data {
+        float(Float(actorValue)) + float(factor)
     }
 
     static func record(formID: UInt32 = 0, fields: Data) throws -> ESMRecord {

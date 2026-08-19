@@ -82,6 +82,12 @@ struct WorldStateComponentCoverageTests {
         EnchantedItemState(charges: [0x700: 72], wornEffects: [0x701: [1]])
     }
 
+    /// One actor owning a perk (issue #497). The key is a placement's, which
+    /// the store does not care about any more than it does for a quest.
+    private var perks: PerkState {
+        PerkState(owned: [key(0x800)])
+    }
+
     @Test func storesAndReadsBackEveryComponentKind() {
         let store = WorldStateStore()
         let reference = key(0x200)
@@ -129,6 +135,9 @@ struct WorldStateComponentCoverageTests {
         // An owner carrying enchanted items: the fifteenth kind, whose own subject
         // is EnchantmentRuntimeTests.
         #expect(store.set(enchantedItems, for: reference, in: whiterun))
+        // An actor owning a perk: the sixteenth kind, whose own subject is
+        // PerkRuntimeTests.
+        #expect(store.set(perks, for: reference, in: whiterun))
 
         #expect(store.component(ReferenceEnableState.self, for: reference)?.isEnabled == false)
         #expect(store.component(ReferenceTransformOverride.self, for: reference) == transform(9))
@@ -148,6 +157,7 @@ struct WorldStateComponentCoverageTests {
         #expect(store.component(ActiveEffectState.self, for: reference) == activeEffects)
         #expect(store.component(SpellbookState.self, for: reference) == spellbook)
         #expect(store.component(EnchantedItemState.self, for: reference) == enchantedItems)
+        #expect(store.component(PerkState.self, for: reference) == perks)
         #expect(store.delta(for: reference)?.sortedKinds == WorldStateComponentKind.allCases)
     }
 
@@ -169,6 +179,7 @@ struct WorldStateComponentCoverageTests {
         store.set(activeEffects, for: reference, in: whiterun)
         store.set(spellbook, for: reference, in: whiterun)
         store.set(enchantedItems, for: reference, in: whiterun)
+        store.set(perks, for: reference, in: whiterun)
         #expect(store.reset(reference))
         #expect(store.delta(for: reference) == nil)
         #expect(store.dirtyCount == 0)

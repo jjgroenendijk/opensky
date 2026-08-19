@@ -60,9 +60,34 @@ extension GameViewController: MeleeCombatWorld {
     /// with no fortify effect — rather than pretending the swing is unarmed.
     func meleeAttackMultiplier(handType: CombatHandType) -> Float {
         guard let runtime = actorValues.runtime else { return 1 }
-        return CombatFortifyBonus.melee(handType: handType) {
+        let fortify = CombatFortifyBonus.melee(handType: handType) {
             runtime.value(at: $0, on: .player)
         }
+        // `Mod Attack Damage` (35) is the entry point every vanilla weapon perk
+        // hooks — 81 effects, the most-hooked in the game — and it is authored
+        // as `Multiply Value 1.2` on Armsman and its kin. It multiplies the
+        // fortify term rather than replacing it, which is the shape UESP
+        // "Skyrim:Weapons" gives: `... * (1 + perk effects) * (1 + item
+        // effects)` (issue #497).
+        return fortify * perkMultiplier(
+            at: GameViewController.attackDamageEntryPoint, on: .player
+        )
+    }
+
+    /// The blocker's fortify and perk term (issues #472 and #497).
+    ///
+    /// `Mod Percent Blocked` (39) is where Shield Wall and its ranks live, and
+    /// the fortify half is the Block Modifier pair `CombatFortifyBonus.block`
+    /// already read but nothing yet supplied to the formula.
+    func meleeBlockMultiplier(of target: ReferenceKey) -> Float {
+        guard
+            let runtime = actorValues.runtime,
+            let holder = actorValueHolder(for: target)
+        else { return 1 }
+        let fortify = CombatFortifyBonus.block { runtime.value(at: $0, on: holder) }
+        return fortify * perkMultiplier(
+            at: GameViewController.percentBlockedEntryPoint, on: target
+        )
     }
 
     func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind? {

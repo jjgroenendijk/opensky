@@ -122,7 +122,13 @@ extension GameViewController {
     /// actor-value runtime through `CombatFortifyBonus`. 1 without one.
     func archeryAttackMultiplier() -> Float {
         guard let runtime = actorValues.runtime else { return 1 }
-        return CombatFortifyBonus.archery { runtime.value(at: $0, on: .player) }
+        let fortify = CombatFortifyBonus.archery { runtime.value(at: $0, on: .player) }
+        // The same `Mod Attack Damage` entry point a swing reads: vanilla
+        // authors Overdraw on it exactly as it authors Armsman, and a bow shot
+        // folds it into the same `bonusMultiplier` term (issue #497).
+        return fortify * perkMultiplier(
+            at: GameViewController.attackDamageEntryPoint, on: .player
+        )
     }
 
     /// The arrow a shot would consume: the first ammunition the player carries

@@ -4,6 +4,43 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-19
 
+* **Perk runtime (issue #497, item 20.4)**: owned perks are a world-state component with a
+  mutation layer over it, and an entry-point evaluator answers "given this actor, what does
+  entry point X do to value V". The nine numeric functions UESP's "Function Types" table
+  documents are implemented against hand-computed expectations; the five non-numeric ones and
+  `Add Range to Value` — whose distribution no source documents — are counted no-ops. The
+  identity rule is the point: an entry point nothing implements never changes a number. See
+  [perks at runtime](/engine/perks.md).
+* **A rank is a chain, not a stored number.** Each rank of a vanilla perk is its own record,
+  and `Armsman00` carries `HasPerk Armsman20 == 0` so it switches itself off once the next
+  rank is taken. That made the `HasPerk` condition function (stored 448, Creation Kit 4544) a
+  prerequisite rather than a nicety: without it every rank of every vanilla chain would stack,
+  which the real-data spot check now pins.
+* **A `PRKC` tab whose subject nothing can bind is skipped and counted, not failed.** Vanilla
+  damage perks gate on a weapon-type tab, and this engine has no world reference for a swung
+  weapon. Failing the tab would make every damage perk inert; skipping it applies the perk
+  more widely than the record asks. The over-application is deliberate, documented and
+  counted per subject rather than silent.
+* **The SPIT half-cost perk and `Mod Spell Cost` are one discount, not two.** `Flames` costs
+  24 and names `DestructionNovice00`, whose only effect is `Mod Spell Cost` x 0.5, so applying
+  both would charge 6 where the game charges 12. The header halving now applies only when the
+  perk it names does not hook that entry point itself — a rule that reproduces the observed
+  number under either reading of which mechanism the original engine used.
+* **Three seams stopped being comments.** Melee and archery damage fold `Mod Attack Damage`
+  in beside the fortify term, the blocked fraction folds in `Mod Percent Blocked` — which also
+  finally supplies the M19 block fortify term that was computed and never used — and a cast
+  halves its cost only when the caster owns the perk the SPIT header names, then applies
+  `Mod Spell Cost` over what is left.
+* **The `EPFD` actor-value word is a float, not an integer.** xEdit stores it as `itU32` and
+  reinterprets it as a `Single` before rounding (`wbEPFDActorValueToStr`), which the #510
+  decode read as an integer: `AlchemySkillBoosts` reported actor value 1125187584 rather than
+  146. Fixed with the fixture that feeds it.
+* **Ability-type perk effects grant their spell as a constant effect** through the M19
+  active-effect runtime, as a reconcile rather than an add hook, with `perk` as its own
+  effect-source kind so losing the perk takes back exactly what the perk lent.
+* **`Actor.AddPerk`, `Actor.RemovePerk` and `Actor.HasPerk` are registered**, and owned perks
+  travel in a new `PRKS` save chunk. NPCs seed from the `PRKR` run their NPC_ authors,
+  inherited on the same ACBS flag the spell list uses; the player seeds empty.
 * **Actor-value base overrides (issue #496, item 20.3)**: the three primaries now carry the
   same base-and-modifier store the other 161 values have, and every one of the 164 is stored
   the same way — a base *offset* on top of the re-derived baseline plus three modifier slots.

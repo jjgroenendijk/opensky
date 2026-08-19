@@ -26,7 +26,7 @@ extension CasterRuntime {
         caster: ActorValueHolder
     ) -> SpellCastOutcome {
         var running = state(of: hand, on: caster.key)
-        let perSecond = Float(spell.cost.cost)
+        let perSecond = cost(of: spell, caster: caster)
         let available = values.current(of: caster).magicka
         let drain = perSecond * delta
         guard drain <= available else {

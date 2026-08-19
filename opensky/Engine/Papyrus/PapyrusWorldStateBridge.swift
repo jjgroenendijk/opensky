@@ -63,6 +63,14 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// enchantments, so `Spell.Cast` at a named target resists exactly as a
     /// fireball does. Nil in a session with no effect runtime.
     var applySpellHit: ((SpellHit) -> SpellHitReport)?
+    /// One perk grant or removal over the session's `PerkRuntime`, which is a
+    /// struct the controller owns by value (issue #497): the closure does the
+    /// read, the write and the ability reconcile, and answers whether the set
+    /// changed. Held as a closure for the reason `dispelEffects` is. Nil in a
+    /// session with no perk data.
+    var mutatePerks: ((PapyrusPerkMutation, ReferenceKey, ReferenceKey) -> Bool)?
+    /// The perks one actor owns, or nil when this session runs no perk runtime.
+    var perkOwnership: ((ReferenceKey) -> Set<ReferenceKey>?)?
     /// Load-order MGEF lookup, for `HasMagicEffectWithKeyword`. Nil in a
     /// synthetic session with no record index.
     var magicEffectStore: MagicEffectStore?

@@ -116,6 +116,12 @@ nonisolated enum ConditionFailure: Equatable, Error, Sendable {
     /// An M18 record-data function had no store, subject fact, or resolvable
     /// FormID for the named domain. This is not a negative query result.
     case unavailableData(ConditionDataDomain)
+    /// `HasPerk` ran in a session with no PERK data, or against a parameter
+    /// this load order resolves no perk for (issue #497). Deliberately not
+    /// treated as an actor who has not taken the perk — that is a different
+    /// answer from "this engine has no perks loaded", and only one of them is a
+    /// real one.
+    case unavailablePerks
     /// A magic function had no state, record or slot for the named domain
     /// (issue #474). Deliberately not treated as an actor who knows no spells
     /// and carries no effects — that is a different answer from "this engine

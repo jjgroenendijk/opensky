@@ -48,6 +48,17 @@ nonisolated enum PapyrusActorValueWrite: String, CaseIterable, Equatable, Sendab
     case force = "ForceActorValue"
 }
 
+/// Which way a scripted perk write goes (issue #497).
+///
+/// One enumeration and one bridge closure rather than two of each, because the
+/// two differ only in the direction and every other step — find the actor, write
+/// through `PerkRuntime`, reconcile the abilities the change granted or revoked
+/// — is shared.
+nonisolated enum PapyrusPerkMutation: String, CaseIterable, Equatable, Sendable {
+    case add = "AddPerk"
+    case remove = "RemovePerk"
+}
+
 /// One actor as a Papyrus native sees it.
 nonisolated struct PapyrusActorState: ActorValueReadable, Equatable, Sendable {
     /// Current health, magicka and stamina.
@@ -173,6 +184,27 @@ protocol PapyrusWorldActorBridge: AnyObject, Sendable {
     @discardableResult
     func stopActorCombat(_ key: ReferenceKey) -> Bool
 
+    /// Gives `key` one perk through `PerkRuntime`, so a scripted grant lands in
+    /// the journal and the save exactly as an NPC's seeded perk does, and the
+    /// abilities it grants are applied in the same call (issue #497).
+    ///
+    /// - Returns: true when the perk was not already owned. False for an actor
+    ///   this session does not track, for a session with no perk data, and for
+    ///   a record this load order does not carry.
+    @discardableResult
+    func addPerk(_ perk: ReferenceKey, to key: ReferenceKey) -> Bool
+
+    /// Takes one perk away, revoking the abilities it granted.
+    ///
+    /// - Returns: true when the perk was owned.
+    @discardableResult
+    func removePerk(_ perk: ReferenceKey, from key: ReferenceKey) -> Bool
+
+    /// Whether `key` owns `perk`, or nil when this session runs no perk
+    /// runtime — a synthetic scene with no PERK index, where answering false
+    /// would read as an actor who has taken nothing.
+    func hasPerk(_ perk: ReferenceKey, on key: ReferenceKey) -> Bool?
+
     /// Kills `key` outright, attributing it to `killer` when the script named
     /// one. Health is emptied first, so a corpse never reads as dead at full
     /// health and the death takes the same route a fatal blow does.
@@ -236,5 +268,19 @@ nonisolated extension PapyrusWorldAccess {
     @discardableResult
     func killActor(_ key: ReferenceKey, killer: ReferenceKey?) -> Bool {
         MainActor.assumeIsolated { bridge.killActor(key, killer: killer) }
+    }
+
+    @discardableResult
+    func addPerk(_ perk: ReferenceKey, to key: ReferenceKey) -> Bool {
+        MainActor.assumeIsolated { bridge.addPerk(perk, to: key) }
+    }
+
+    @discardableResult
+    func removePerk(_ perk: ReferenceKey, from key: ReferenceKey) -> Bool {
+        MainActor.assumeIsolated { bridge.removePerk(perk, from: key) }
+    }
+
+    func hasPerk(_ perk: ReferenceKey, on key: ReferenceKey) -> Bool? {
+        MainActor.assumeIsolated { bridge.hasPerk(perk, on: key) }
     }
 }

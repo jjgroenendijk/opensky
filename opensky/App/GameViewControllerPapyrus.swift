@@ -173,5 +173,26 @@ extension GameViewController {
         bridge.applySpellHit = { [weak self] hit in
             self?.applySpellHit(hit) ?? .none
         }
+        wirePerkNatives(bridge: bridge)
+    }
+
+    /// The perk natives' collaborators (issue #497, roadmap item 20.4).
+    ///
+    /// Closures for the reason the spell ones are: `wirePerks` runs after this
+    /// step, and the mutation closure carries the whole write because
+    /// `PerkRuntime` is a struct this controller owns by value — and because
+    /// granting a perk has to reconcile the abilities it grants in the same
+    /// call, which is a step the bridge should not know about.
+    private func wirePerkNatives(bridge: PapyrusWorldStateBridge) {
+        bridge.mutatePerks = { [weak self] mutation, perk, actor in
+            guard let self, let holder = actorValueHolder(for: actor) else { return false }
+            return switch mutation {
+            case .add: addPerk(perk, to: holder)
+            case .remove: removePerk(perk, from: holder)
+            }
+        }
+        bridge.perkOwnership = { [weak self] key in
+            self?.perkOwnership(of: key)
+        }
     }
 }

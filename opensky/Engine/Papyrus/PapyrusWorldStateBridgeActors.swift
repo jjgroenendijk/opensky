@@ -135,6 +135,23 @@ extension PapyrusWorldStateBridge {
         return ragdoll.noteZeroHealth(of: key, killer: killer)
     }
 
+    // MARK: - Perks
+
+    @discardableResult
+    func addPerk(_ perk: ReferenceKey, to key: ReferenceKey) -> Bool {
+        mutatePerks?(.add, perk, key) ?? false
+    }
+
+    @discardableResult
+    func removePerk(_ perk: ReferenceKey, from key: ReferenceKey) -> Bool {
+        mutatePerks?(.remove, perk, key) ?? false
+    }
+
+    func hasPerk(_ perk: ReferenceKey, on key: ReferenceKey) -> Bool? {
+        guard let owned = perkOwnership?(key) else { return nil }
+        return owned.contains(perk)
+    }
+
     // MARK: - Private
 
     /// Whether `key` is actually in a fight, which is its 16.7 behavior phase

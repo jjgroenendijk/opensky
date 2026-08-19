@@ -160,6 +160,11 @@ final class CasterRuntime {
     /// the input satellite because an extension cannot add stored properties.
     private var heldButtons: [CastSlot: Bool] = [:]
 
+    /// The perk runtime a cost is folded through (issue #497), or nil in a
+    /// session with no perk data — every synthetic scene, where the record's
+    /// own cost is what the caster pays. See `CasterRuntimePerkCost.swift`.
+    var perks: PerkRuntime?
+
     init(
         spellbook: SpellbookRuntime,
         values: ActorValueRuntime,
@@ -296,7 +301,7 @@ final class CasterRuntime {
                 return .powerAlreadyUsedToday(day: day)
             }
         }
-        let cost = Float(spell.cost.cost)
+        let cost = cost(of: spell, caster: caster)
         let available = values.current(of: caster).magicka
         guard cost <= available else {
             return .insufficientMagicka(cost: cost, available: available)
@@ -338,7 +343,9 @@ final class CasterRuntime {
         // The first application lands on entry rather than a second later, so a
         // maintained heal starts healing when it starts costing.
         applyOnce(hand, spell: spell, caster: caster)
-        return .concentrating(spell: spell.key, costPerSecond: Float(spell.cost.cost))
+        return .concentrating(
+            spell: spell.key, costPerSecond: cost(of: spell, caster: caster)
+        )
     }
 
     /// One fire-and-forget cast: check the cost again, take it, apply the list.
@@ -347,7 +354,7 @@ final class CasterRuntime {
         spell: ResolvedSpell,
         caster: ActorValueHolder
     ) -> SpellCastOutcome {
-        let cost = Float(spell.cost.cost)
+        let cost = cost(of: spell, caster: caster)
         let available = values.current(of: caster).magicka
         guard cost <= available else {
             casts[slot(hand, caster)] = SpellCastState()

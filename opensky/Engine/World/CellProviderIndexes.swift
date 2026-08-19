@@ -14,17 +14,23 @@ nonisolated struct CellProviderIndexes {
         let spells: SpellStore
         let equipSlots: EquipSlotStore
         let enchantments: EnchantmentStore
+        /// PERK rides the same index (issue #497): its ability effects and its
+        /// spell-selecting entry-point functions join against the SPEL store
+        /// built two lines above, so building it here is one record walk rather
+        /// than a second load order resolution for the same plugins.
+        let perks: PerkStore
 
         init(root: GameDataRoot, baseFile: ESMFile) {
             let index = RecordIndex(
                 plugins: ActivePluginFiles.load(root: root, baseFile: baseFile),
-                recordTypes: ["MGEF", "SPEL", "SCRL", "EQUP", "ENCH"]
+                recordTypes: ["MGEF", "SPEL", "SCRL", "EQUP", "ENCH", "PERK"]
             )
             let effects = MagicEffectStore(index: index)
             self.effects = effects
             spells = SpellStore(index: index, effects: effects)
             equipSlots = EquipSlotStore(index: index)
             enchantments = EnchantmentStore(index: index, effects: effects)
+            perks = PerkStore(index: index, spells: spells)
         }
     }
 
@@ -59,6 +65,9 @@ nonisolated struct CellProviderIndexes {
     /// Load-order ENCH index (issue #472), behind every enchanted weapon's charge
     /// and every worn item's constant effects.
     let enchantmentStore: EnchantmentStore
+    /// Load-order PERK index (issue #497), which the perk runtime owns perks
+    /// out of.
+    let perkStore: PerkStore
     /// Plugin the item indexes were built from, which magic-item EFID links are
     /// relative to.
     let magicItemPluginName: String
@@ -118,6 +127,7 @@ nonisolated struct CellProviderIndexes {
         spellStore = magic.spells
         equipSlotStore = magic.equipSlots
         enchantmentStore = magic.enchantments
+        perkStore = magic.perks
         magicItemPluginName = esmURL.lastPathComponent
         // Built after the ENCH store so every enchanted item's `EITM` arrives
         // already load-order resolved (issue #472): without the resolver an
@@ -166,6 +176,7 @@ nonisolated struct CellProviderIndexes {
             spellStore: spellStore,
             equipSlotStore: equipSlotStore,
             enchantmentStore: enchantmentStore,
+            perkStore: perkStore,
             movementConfiguration: movementConfiguration,
             barterPricing: barterPricing,
             combatSettings: combatSettings,

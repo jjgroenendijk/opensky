@@ -135,7 +135,8 @@ nonisolated enum RuntimeStateConditionRunner {
             "unresolved parameter for function "
                 + "\(Int(index) + ConditionFunctionRegistry.creationKitOffset)"
         case .unavailableClock, .unavailableActorState, .unavailableDetection,
-             .unavailableDialogue, .unavailableData, .unavailableMagic:
+             .unavailableDialogue, .unavailableData, .unavailableMagic,
+             .unavailablePerks:
             describeUnavailable(failure)
         }
     }
@@ -159,6 +160,8 @@ nonisolated enum RuntimeStateConditionRunner {
             "no \(domain.rawValue) data in the evaluation context"
         case let .unavailableMagic(domain):
             "no \(domain.rawValue) magic state in the evaluation context"
+        case .unavailablePerks:
+            "no perk data in the evaluation context"
         default:
             "unevaluated"
         }
@@ -203,6 +206,9 @@ nonisolated enum RuntimeStateConditionRunner {
         }
         for entry in tally.unavailableMagic.sorted(by: { $0.key.rawValue < $1.key.rawValue }) {
             lines.append("\(entry.key.rawValue) magic unavailable: \(entry.value)")
+        }
+        if tally.unavailablePerks > 0 {
+            lines.append("Perk data unavailable: \(tally.unavailablePerks)")
         }
         return lines
     }

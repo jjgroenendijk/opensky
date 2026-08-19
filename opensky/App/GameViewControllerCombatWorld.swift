@@ -68,6 +68,13 @@ extension GameViewController: CombatLoopWorld {
         meleeBlock(of: key)
     }
 
+    /// The same blocker's term the player's own swing path resolves, so a blow
+    /// from an NPC and a blow from the player are reduced by one implementation
+    /// (issues #472 and #497).
+    func combatBlockMultiplier(of key: ReferenceKey) -> Float {
+        meleeBlockMultiplier(of: key)
+    }
+
     func combatAwareness(
         of observer: ReferenceKey, toward target: ReferenceKey
     ) -> CombatAwareness {

@@ -44,6 +44,11 @@ nonisolated enum ActiveEffectSourceKind: UInt32, CaseIterable, Hashable, Sendabl
     case spell = 2
     /// An ENCH enchantment that fired (issue 19.9).
     case enchantment = 3
+    /// A SPEL an owned PERK grants as a constant ability (issue #497). Its own
+    /// kind rather than `spell`, because what takes it back off is losing the
+    /// perk rather than a dispel, and the two have to be told apart in the
+    /// stored list for that to be possible.
+    case perk = 4
 
     var describedName: String {
         switch self {
@@ -51,6 +56,7 @@ nonisolated enum ActiveEffectSourceKind: UInt32, CaseIterable, Hashable, Sendabl
         case .ingredient: "ingredient"
         case .spell: "spell"
         case .enchantment: "enchantment"
+        case .perk: "perk"
         }
     }
 }

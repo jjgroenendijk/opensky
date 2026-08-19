@@ -254,6 +254,21 @@ nonisolated enum OpenSkySaveFormat {
         /// splitting the two would let a reload restore effects nothing could
         /// take back off.
         static let enchantedItems = "ECHG"
+
+        /// Owned perks (issue #497, roadmap item 20.4): one entry per actor
+        /// that owns at least one perk.
+        ///
+        /// Additive and split out of `RDLT` for the same reason `SPLB` is. A
+        /// session in which nobody took a perk and no seeded NPC carries one
+        /// writes no chunk at all, so its bytes match what this encoder
+        /// produced before the chunk existed.
+        ///
+        /// Only the owned identities travel. A rank is the length of an owned
+        /// `NNAM` chain rather than a stored number (`PerkState`), and the
+        /// constant abilities perks grant are re-established from the owned set
+        /// on load exactly as a worn enchantment's are — which is why nothing
+        /// here duplicates what `AEFF` already carries.
+        static let perks = "PRKS"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.
@@ -326,7 +341,7 @@ nonisolated extension WorldStateComponentKind {
         case .activation: 2
         case .deletion: 3
         case .inventory, .spawn, .quest, .questAliases, .actorValues, .death,
-             .combat, .dialogue, .activeEffects, .spellbook, .enchantedItems: nil
+             .combat, .dialogue, .activeEffects, .spellbook, .enchantedItems, .perks: nil
         }
     }
 

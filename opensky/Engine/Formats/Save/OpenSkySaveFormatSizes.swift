@@ -142,4 +142,11 @@ nonisolated extension OpenSkySaveFormat {
     static let minimumEnchantedItemWornSize = 8
     /// Bytes one `ECHG` worn-effect sequence occupies.
     static let enchantedItemSequenceSize = 8
+    /// Smallest number of bytes a single `PRKS` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and a zero owned
+    /// count (4). An entry with contents is longer, so this is a lower bound.
+    static let minimumPerkEntrySize = 12
+    /// Smallest number of bytes one `PRKS` owned perk can occupy: a plugin key
+    /// with an empty name. A generated key is longer, so this is a lower bound.
+    static let minimumPerkKeySize = 7
 }

@@ -294,6 +294,7 @@ final class MeleeCombatRuntime {
             weapon: weapon,
             block: world.meleeBlock(of: hit.target),
             settings: settings,
+            bonusMultiplier: world.meleeBlockMultiplier(of: hit.target),
             attackMultiplier: world.meleeAttackMultiplier(handType: weapon.handType)
         )
         world.applyMeleeDamage(damage.applied, to: hit.target)
