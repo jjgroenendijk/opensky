@@ -49,7 +49,7 @@ import simd
 /// It refines `SpellHitApplying` (issue #471) so a spell that leaves the caster
 /// lands through the same one implementation a projectile's does.
 @MainActor
-protocol CasterWorld: SpellHitApplying {
+protocol CasterWorld: SkillUseReporting, SpellHitApplying {
     /// Whole game days elapsed, which is what the once-per-day power rule
     /// compares.
     var castingGameDay: Int32 { get }
@@ -361,6 +361,7 @@ final class CasterRuntime {
             return .failed(.insufficientMagicka(cost: cost, available: available))
         }
         values.damage(.magicka, by: cost, on: caster)
+        noteSkillUse(of: spell, amount: baseSkillUseAmount(of: spell), caster: caster)
         let stored = apply(spell, caster: caster)
         casts[slot(hand, caster)] = SpellCastState()
         notePowerSpent(spell, caster: caster)

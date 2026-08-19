@@ -33,6 +33,16 @@ final class FakeCasterWorld: CasterWorld {
     /// How many timed effects each landed spell reports storing, per target.
     var storedPerHitTarget = 1
 
+    /// Skill uses the cast loop reported (issue #498), recorded rather than
+    /// converted.
+    private(set) var skillUses: [SkillUseEvent] = []
+
+    @discardableResult
+    func reportSkillUse(_ use: SkillUseEvent) -> Float {
+        skillUses.append(use)
+        return 0
+    }
+
     private(set) var applications: [Application] = []
     private(set) var firedProjectiles: [SpellPayload] = []
     private(set) var spellHits: [SpellHit] = []

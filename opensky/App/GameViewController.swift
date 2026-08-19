@@ -213,6 +213,13 @@ final class GameViewController: NSViewController {
     /// add state.
     var perks = PerkBridgeState()
 
+    /// Skill advancement: the use-to-experience-to-level runtime every combat
+    /// and magic seam reports into, and the last advance the readouts show
+    /// (issue #498). The implementation lives in
+    /// `GameViewControllerSkills.swift`; stored here because extensions cannot
+    /// add state.
+    var skills = SkillBridgeState()
+
     /// Melee combat: the swing runtime, the WEAP index it reads combat data
     /// out of, and the panel's last outcome line (issue #195). The
     /// implementation lives in `GameViewControllerMelee.swift`; stored here

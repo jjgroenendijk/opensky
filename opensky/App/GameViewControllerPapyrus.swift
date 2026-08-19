@@ -194,5 +194,11 @@ extension GameViewController {
         bridge.perkOwnership = { [weak self] key in
             self?.perkOwnership(of: key)
         }
+        // `wireSkills` runs after this step too, and the closure carries the
+        // whole write because `SkillAdvancementRuntime` is a struct this
+        // controller owns by value (issue #498).
+        bridge.advanceSkill = { [weak self] advance, index, magnitude in
+            self?.advancePlayerSkill(advance, at: index, by: magnitude) ?? false
+        }
     }
 }

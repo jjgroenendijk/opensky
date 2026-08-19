@@ -36,6 +36,38 @@ struct ActorValueIdentityTests {
         #expect(ActorValueIdentity.name(at: 162) == "Unknown 162")
     }
 
+    /// The eighteen `Skill Advance` slots run in skill order from 114, which is
+    /// what makes accumulated skill experience addressable by index (issue
+    /// #498). A table edit that moved them would break the mapping silently,
+    /// so both directions and every name are pinned here.
+    @Test func everySkillJoinsItsOwnSkillAdvanceSlot() throws {
+        #expect(
+            ActorValueIdentity.name(at: ActorValueIdentity.firstSkillAdvanceIndex)
+                == "One-Handed Skill Advance"
+        )
+        #expect(ActorValueIdentity.skillIndices.count == 18)
+
+        for skill in ActorValueIdentity.skillIndices {
+            let slot = try #require(ActorValueIdentity.skillAdvanceIndex(forSkill: skill))
+            let name = try #require(ActorValueIdentity.name(at: slot))
+            #expect(name.hasSuffix(" Skill Advance"))
+            #expect(ActorValueIdentity.skillIndex(forAdvance: slot) == skill)
+        }
+        // Nothing outside the skills has a slot, and nothing outside the run of
+        // slots names a skill.
+        #expect(ActorValueIdentity.skillAdvanceIndex(forSkill: 24) == nil)
+        #expect(
+            ActorValueIdentity.skillIndex(
+                forAdvance: ActorValueIdentity.firstSkillAdvanceIndex - 1
+            ) == nil
+        )
+        #expect(
+            ActorValueIdentity.skillIndex(
+                forAdvance: ActorValueIdentity.firstSkillAdvanceIndex + 18
+            ) == nil
+        )
+    }
+
     @Test func indicesOutsideTheTableNameNothing() {
         #expect(ActorValueIdentity.name(at: ActorValueIdentity.noneIndex) == nil)
         #expect(ActorValueIdentity.name(at: 164) == nil)

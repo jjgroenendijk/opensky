@@ -216,10 +216,14 @@ one place:
 | `ObjectReference` animation | `PlayAnimation`, `PlayAnimationAndWait`, `PlayGamebryoAnimation` | return true immediately, log and tally the deferred-animation deviation |
 | `ObjectReference` world | `Enable`, `Disable`, `IsEnabled`, `Delete`, `GetPositionX`, `GetPositionY`, `GetPositionZ`, `SetPosition`, `Activate`, `GetLinkedRef` | fail with an invalid-arguments reason; the interpreter substitutes the declared default and the script continues |
 | `GlobalVariable` | `GetValue`, `GetValueInt`, `SetValue`, `SetValueInt` | same failure policy |
-| `Game` | `GetPlayer` | same failure policy |
+| `Game` | `GetPlayer`, `AdvanceSkill`, `IncrementSkill` | same failure policy |
 | `Quest` | see [quest script instances](#quest-script-instances-and-stage-fragments) | same failure policy |
 | `Actor` | `GetActorValue`, `GetBaseActorValue`, `GetActorValuePercentage`, `DamageActorValue`, `RestoreActorValue`, `SetActorValue`, `ModActorValue`, `ForceActorValue`, `IsDead`, `IsInCombat`, `IsWeaponDrawn`, `Kill`, `StartCombat`, `StopCombat` | same failure policy |
 | `Actor` and `Spell` magic | see [the spell natives](#the-spell-natives) | same failure policy |
+
+`Game.AdvanceSkill` and `Game.IncrementSkill` are globals acting on the player alone and run
+the same path a landed blow does; the unit each takes and what it does to accumulated
+progress are in [skill advancement](/engine/skill-advancement.md).
 
 The corpus census found no string native that can be answered honestly without
 world context, and string basics are PEX opcodes rather than natives, so they

@@ -37,6 +37,7 @@ extension CasterRuntime {
             return .failed(.insufficientMagicka(cost: drain, available: available))
         }
         values.damage(.magicka, by: drain, on: caster)
+        noteSkillUse(of: spell, amount: drain, caster: caster)
         running.spend(drain)
         running.addHeld(delta)
         casts[slot(hand, caster)] = running

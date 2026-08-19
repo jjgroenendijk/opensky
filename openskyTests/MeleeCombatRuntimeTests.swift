@@ -275,6 +275,16 @@ final class FakeMeleeWorld: MeleeCombatWorld {
     /// formula reduces to for a character with no fortify effect.
     var attackMultiplier: Float = 1
 
+    /// Skill uses the runtime reported (issue #498), recorded rather than
+    /// converted.
+    private(set) var skillUses: [SkillUseEvent] = []
+
+    @discardableResult
+    func reportSkillUse(_ use: SkillUseEvent) -> Float {
+        skillUses.append(use)
+        return 0
+    }
+
     private(set) var damage: [ReferenceKey: Float] = [:]
     private(set) var raised: [String] = []
     private(set) var raisedOnTarget: [ReferenceKey: [String]] = [:]

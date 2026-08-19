@@ -143,6 +143,13 @@ nonisolated final class ItemDefinitionStore {
     /// the same reason: reading a spell tome needs the DATA "teaches" union,
     /// and `ItemDefinition` carries only what every family has in common.
     let books: [UInt32: Book]
+    /// ARMO decodes, keyed by raw FormID (issue #498).
+    ///
+    /// Beside the unified views for the same reason the WEAP decodes are: the
+    /// armour skills level on what the wearer is wearing, which is the BOD2
+    /// armour type, and `ItemDefinition` carries only what every family has in
+    /// common.
+    let armor: [UInt32: Armor]
     /// PROJ decodes, keyed by raw FormID (issue #196).
     ///
     /// PROJ is not a carryable family and has no `ItemDefinition` view at all,
@@ -190,6 +197,9 @@ nonisolated final class ItemDefinitionStore {
         containers = Self.records(of: "CONT", in: file)
             .compactMap { try? Container(record: $0, localized: localized) }
             .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
+        armor = Self.records(of: "ARMO", in: file)
+            .compactMap { try? Armor(record: $0, localized: localized) }
+            .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
         weapons = Self.records(of: "WEAP", in: file)
             .compactMap { try? Weapon(record: $0, localized: localized) }
             .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
@@ -208,6 +218,12 @@ nonisolated final class ItemDefinitionStore {
         books = Self.records(of: "BOOK", in: file)
             .compactMap { try? Book(record: $0, localized: localized) }
             .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
+    }
+
+    /// The armour type of a worn piece — heavy, light or clothing — or nil when
+    /// the item is not armour or its record carries no BOD2 body template.
+    func armorType(_ id: FormID) -> ArmorType? {
+        armor[id.rawValue]?.bodyTemplate?.armorType
     }
 
     /// The decoded BOOK behind an item, or nil when the item is not a book.

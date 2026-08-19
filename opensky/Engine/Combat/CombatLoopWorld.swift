@@ -88,7 +88,7 @@ nonisolated struct CombatTransientCounts: Equatable, Sendable {
 
 /// Everything `CombatLoopRuntime` needs from the session around it.
 @MainActor
-protocol CombatLoopWorld: ScriptHitReporting {
+protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// Where the player is standing and which way they face, this frame.
     var combatPlayer: MeleeAttacker { get }
 

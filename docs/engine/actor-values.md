@@ -215,6 +215,11 @@ left intact."
 | slot | written by | persisted |
 | --- | --- | --- |
 | `baseOffset` | `SetActorValue`, a skill advance, an attribute pick | yes |
+
+The eighteen `Skill Advance` slots (indices 114 through 131) are where accumulated skill
+experience lives, one per skill and in the same order — see
+[skill advancement](/engine/skill-advancement.md) for why the progression runtime stores it
+there rather than in a component of its own.
 | `permanent` | `ModActorValue` and `ForceActorValue` | yes |
 | `temporary` | an active magic effect, item 19.6 | no — the effect re-establishes it |
 | `damage` | `DamageActorValue`; never positive | yes |

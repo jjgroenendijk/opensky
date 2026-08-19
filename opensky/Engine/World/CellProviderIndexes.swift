@@ -19,11 +19,15 @@ nonisolated struct CellProviderIndexes {
         /// built two lines above, so building it here is one record walk rather
         /// than a second load order resolution for the same plugins.
         let perks: PerkStore
+        /// AVIF rides it too (issue #498): the perk trees this index already
+        /// decodes hang off AVIF records, and skill advancement reads the
+        /// `AVSK` parameters off the same ones.
+        let actorValues: ActorValueInformationStore
 
         init(root: GameDataRoot, baseFile: ESMFile) {
             let index = RecordIndex(
                 plugins: ActivePluginFiles.load(root: root, baseFile: baseFile),
-                recordTypes: ["MGEF", "SPEL", "SCRL", "EQUP", "ENCH", "PERK"]
+                recordTypes: ["MGEF", "SPEL", "SCRL", "EQUP", "ENCH", "PERK", "AVIF"]
             )
             let effects = MagicEffectStore(index: index)
             self.effects = effects
@@ -31,6 +35,38 @@ nonisolated struct CellProviderIndexes {
             equipSlots = EquipSlotStore(index: index)
             enchantments = EnchantmentStore(index: index, effects: effects)
             perks = PerkStore(index: index, spells: spells)
+            actorValues = ActorValueInformationStore(index: index)
+        }
+    }
+
+    /// Every GMST-derived tuning, resolved off one load of the settings table.
+    ///
+    /// Grouped for the reason `MagicIndexes` is: six resolutions in a row is
+    /// six lines the outer initializer does not have to spend, and the group is
+    /// a real one — each of these is a settings read and nothing else.
+    private struct SettingIndexes {
+        let movement: PlayerMovementConfiguration
+        let barter: BarterPricing
+        let combat: CombatSettings
+        let archery: ArcherySettings
+        let detection: DetectionSettings
+        let skillAdvancement: SkillAdvancementSettings
+        let level: ActorValueLevelSettings
+
+        init(root: GameDataRoot, baseFile: ESMFile) {
+            // One GMST load for every consumer: resolving the load order twice
+            // would parse every plugin's GMST group twice for the same answer.
+            let settings = GameSettingLoader.load(root: root, baseFile: baseFile)
+            movement = PlayerMovementConfiguration.resolve(
+                store: settings,
+                movementTypes: MovementTypeLoader.load(root: root, baseFile: baseFile)
+            )
+            barter = BarterPricing.resolve(store: settings)
+            combat = CombatSettings.resolve(store: settings)
+            archery = ArcherySettings.resolve(store: settings)
+            detection = DetectionSettings.resolve(store: settings)
+            skillAdvancement = SkillAdvancementSettings.resolve(store: settings)
+            level = ActorValueLevelSettings.resolve(store: settings)
         }
     }
 
@@ -68,6 +104,11 @@ nonisolated struct CellProviderIndexes {
     /// Load-order PERK index (issue #497), which the perk runtime owns perks
     /// out of.
     let perkStore: PerkStore
+    /// Load-order AVIF index (issue #498), which skill advancement reads each
+    /// skill's `AVSK` parameters out of.
+    let actorValueInformation: ActorValueInformationStore
+    /// GMST-derived `fSkillUseCurve` and `fXPPerSkillRank` (issue #498).
+    let skillAdvancementSettings: SkillAdvancementSettings
     /// Plugin the item indexes were built from, which magic-item EFID links are
     /// relative to.
     let magicItemPluginName: String
@@ -86,17 +127,13 @@ nonisolated struct CellProviderIndexes {
     ) throws {
         let esmURL = root.dataURL.appending(path: "Skyrim.esm")
         let file = try ESMFile(url: esmURL)
-        // One GMST load for both consumers: resolving the load order twice
-        // would parse every plugin's GMST group twice for the same answer.
-        let settings = GameSettingLoader.load(root: root, baseFile: file)
-        movementConfiguration = PlayerMovementConfiguration.resolve(
-            store: settings,
-            movementTypes: MovementTypeLoader.load(root: root, baseFile: file)
-        )
-        barterPricing = BarterPricing.resolve(store: settings)
-        combatSettings = CombatSettings.resolve(store: settings)
-        archerySettings = ArcherySettings.resolve(store: settings)
-        detectionSettings = DetectionSettings.resolve(store: settings)
+        let tuning = SettingIndexes(root: root, baseFile: file)
+        movementConfiguration = tuning.movement
+        barterPricing = tuning.barter
+        combatSettings = tuning.combat
+        archerySettings = tuning.archery
+        detectionSettings = tuning.detection
+        skillAdvancementSettings = tuning.skillAdvancement
         let textures = TextureLibrary(fileSystem: fileSystem, device: device)
         let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
         builder = CellSceneBuilder(
@@ -128,6 +165,7 @@ nonisolated struct CellProviderIndexes {
         equipSlotStore = magic.equipSlots
         enchantmentStore = magic.enchantments
         perkStore = magic.perks
+        actorValueInformation = magic.actorValues
         magicItemPluginName = esmURL.lastPathComponent
         // Built after the ENCH store so every enchanted item's `EITM` arrives
         // already load-order resolved (issue #472): without the resolver an
@@ -148,7 +186,7 @@ nonisolated struct CellProviderIndexes {
                 // Load-order wide, so a patch plugin's CLAS override reaches
                 // the derivation instead of being invisible to it (#496).
                 classes: CharacterClassStoreLoader.load(root: root, baseFile: file),
-                settings: ActorValueLevelSettings.resolve(store: settings)
+                settings: tuning.level
             )
         )
     }
@@ -177,6 +215,8 @@ nonisolated struct CellProviderIndexes {
             equipSlotStore: equipSlotStore,
             enchantmentStore: enchantmentStore,
             perkStore: perkStore,
+            actorValueInformation: actorValueInformation,
+            skillAdvancementSettings: skillAdvancementSettings,
             movementConfiguration: movementConfiguration,
             barterPricing: barterPricing,
             combatSettings: combatSettings,

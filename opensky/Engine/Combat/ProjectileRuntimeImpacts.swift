@@ -34,6 +34,19 @@ extension ProjectileRuntime {
             source: arrow.weapon,
             projectile: projectile.profile.projectile
         ))
+        // Archery levels on "Base Weapon Damage of the Bow"
+        // (<https://en.uesp.net/wiki/Skyrim:Leveling>) — the WEAP number alone,
+        // so neither the draw fraction nor the arrow raises it — and the actor
+        // it struck takes the armour half of the same exchange a swing reports
+        // (issue #498).
+        world.reportSkillUse(SkillUseEvent(
+            actor: projectile.shooter,
+            action: .weaponHit(.bow),
+            amount: arrow.damage.bowDamage
+        ))
+        world.reportSkillUse(SkillUseEvent(
+            actor: target, action: .armorHit, amount: arrow.damage.applied
+        ))
         applyBowEnchantment(arrow, projectile: projectile, impact: impact, world: world)
         return arrow.damage.applied
     }

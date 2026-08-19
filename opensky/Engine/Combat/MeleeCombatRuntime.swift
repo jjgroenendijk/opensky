@@ -297,7 +297,8 @@ final class MeleeCombatRuntime {
             bonusMultiplier: world.meleeBlockMultiplier(of: hit.target),
             attackMultiplier: world.meleeAttackMultiplier(handType: weapon.handType)
         )
-        world.applyMeleeDamage(damage.applied, to: hit.target)
+        let landed = world.applyMeleeDamage(damage.applied, to: hit.target)
+        noteSkillUse(hit, damage: damage, landed: landed, world: world)
         let enchantment = applyEnchantment(hit, world: world)
         // After the damage, so a script that reads the target's health inside
         // `OnHit` sees the blow that caused the event rather than the state
@@ -331,6 +332,48 @@ final class MeleeCombatRuntime {
             trace.removeFirst(trace.count - Self.traceLimit)
         }
         return record
+    }
+
+    /// Reports what this blow taught both characters in it (issue #498).
+    ///
+    /// Three uses come out of one swing, each with the base experience its own
+    /// source states (`SkillUseEvent`): the weapon skill the attacker swung
+    /// with, the blocker's Block for the raw damage the block absorbed, and the
+    /// target's armour skill for the raw rating of the strike — "Armor skill
+    /// increases are based on the raw attack rating (plus any power attack
+    /// bonuses) of an enemy strike"
+    /// (<https://en.uesp.net/wiki/Skyrim:Heavy_Armor>), which is the whole
+    /// strike rather than the part a block let through.
+    ///
+    /// The weapon skill is credited only when the blow reached something whose
+    /// health it could take: "Weapon skill gains are based on base weapon damage
+    /// dealt against valid targets (those whose health can be damaged)"
+    /// (<https://en.uesp.net/wiki/Skyrim:One-handed>). The two defensive uses do
+    /// not depend on that, because the target was struck either way.
+    private func noteSkillUse(
+        _ hit: MeleeHit,
+        damage: MeleeDamageResult,
+        landed: Bool,
+        world: any MeleeCombatWorld
+    ) {
+        let raw = damage.base * damage.attackMultiplier
+        if landed {
+            world.reportSkillUse(SkillUseEvent(
+                actor: world.meleeAttacker.key,
+                action: .weaponHit(weapon.handType),
+                amount: damage.base
+            ))
+        }
+        if damage.wasBlocked {
+            world.reportSkillUse(SkillUseEvent(
+                actor: hit.target,
+                action: .blockedBlow,
+                amount: raw * damage.blockedFraction
+            ))
+        }
+        world.reportSkillUse(SkillUseEvent(
+            actor: hit.target, action: .armorHit, amount: raw
+        ))
     }
 
     /// Fires the weapon's enchantment on the actor the swing struck (issue #472).

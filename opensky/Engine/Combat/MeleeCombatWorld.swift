@@ -104,7 +104,7 @@ nonisolated struct MeleeHitRecord: Equatable, Sendable {
 /// blade and an enchanted arrow apply through one implementation, exactly as
 /// `reportScriptHit` is implemented once for melee, archery and the combat loop.
 @MainActor
-protocol MeleeCombatWorld: ScriptHitReporting, WeaponEnchantmentApplying {
+protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponEnchantmentApplying {
     /// Where the player is standing and which way they face, this frame.
     var meleeAttacker: MeleeAttacker { get }
 

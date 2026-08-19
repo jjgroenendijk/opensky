@@ -342,6 +342,12 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   every combat and magic formula queries, which functions and entry points are covered, the
   condition-tab subjects the engine can and cannot bind, and the wired damage, block and
   spell-cost seams.
+* [Skill advancement](/engine/skill-advancement.md) - how one use of a skill becomes skill
+  experience, the three UESP formulas and the `AVSK` numbers this install authors, why the
+  `Skill Advance` actor values hold the accumulated experience, the reporting seam every
+  combat and magic runtime writes into, what each simulated action is worth, the carry rule
+  at a threshold, the character-experience bank item 20.6 spends, and the actions that are
+  documented but not yet simulated.
 * [Archery and projectiles](/engine/archery.md) - the PROJ flight record, the measurement
   that settles `gravity` as a multiplier rather than an acceleration, the census-named bow
   draw and release events, the exact closed-form flight model on the fixed step, the

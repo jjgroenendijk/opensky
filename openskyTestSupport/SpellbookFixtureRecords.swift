@@ -70,7 +70,12 @@ extension SpellbookFixture {
                     archetype: 0,
                     primaryValue: 24,
                     resistanceValue: ActorValueIndex.resistFire,
-                    projectile: fireBoltProjectile
+                    projectile: fireBoltProjectile,
+                    // Destruction, at the "one skill use per point of magicka"
+                    // multiplier, so a cast of this reports a skill use the way
+                    // a vanilla Destruction effect does (issue #498).
+                    magicSkill: 20,
+                    skillUsageMultiplier: 1
                 )
             )
         ]
@@ -114,11 +119,17 @@ extension SpellbookFixture {
         archetype: UInt32 = 0,
         primaryValue: Int32 = 24,
         resistanceValue: Int32 = ActorValueIdentity.noneIndex,
-        projectile: UInt32 = 0
+        projectile: UInt32 = 0,
+        magicSkill: Int32 = ActorValueIdentity.noneIndex,
+        skillUsageMultiplier: Float = 0
     ) -> Data {
         var words = [UInt32](repeating: 0, count: 38)
         words[0] = flags.rawValue
         words[1] = baseCost.bitPattern
+        // 0x0C magic skill and 0x68 skill usage multiplier: the two fields
+        // casting reports a skill use with (issue #498).
+        words[3] = UInt32(bitPattern: magicSkill)
+        words[26] = skillUsageMultiplier.bitPattern
         words[4] = UInt32(bitPattern: resistanceValue)
         words[16] = archetype
         words[17] = UInt32(bitPattern: primaryValue)

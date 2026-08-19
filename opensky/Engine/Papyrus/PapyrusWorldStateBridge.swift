@@ -71,6 +71,12 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     var mutatePerks: ((PapyrusPerkMutation, ReferenceKey, ReferenceKey) -> Bool)?
     /// The perks one actor owns, or nil when this session runs no perk runtime.
     var perkOwnership: ((ReferenceKey) -> Set<ReferenceKey>?)?
+    /// One scripted skill advance over the session's `SkillAdvancementRuntime`,
+    /// which is a struct the controller owns by value (issue #498): the closure
+    /// does the read, the write and the write-back, and answers whether the
+    /// skill took it. Held as a closure for the reason `mutatePerks` is. Nil in
+    /// a session with no progression data.
+    var advanceSkill: ((PapyrusSkillAdvance, Int32, Float) -> Bool)?
     /// Load-order MGEF lookup, for `HasMagicEffectWithKeyword`. Nil in a
     /// synthetic session with no record index.
     var magicEffectStore: MagicEffectStore?

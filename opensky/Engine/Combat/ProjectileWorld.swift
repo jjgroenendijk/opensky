@@ -155,7 +155,9 @@ protocol SpellHitApplying: AnyObject {
 /// enchanted bow and an enchanted blade apply through one implementation (issue
 /// #472).
 @MainActor
-protocol ProjectileWorld: ScriptHitReporting, SpellHitApplying, WeaponEnchantmentApplying {
+protocol ProjectileWorld: ScriptHitReporting, SkillUseReporting, SpellHitApplying,
+    WeaponEnchantmentApplying
+{
     /// Where the player is aiming from, this frame.
     var projectileShooter: ProjectileShooter { get }
 
