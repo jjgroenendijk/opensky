@@ -28,6 +28,12 @@ struct CLIContext {
         TerrainLODConfigurationStore(snapshot: TerrainLODSettings.load(root: root))
     }
 
+    /// File name of the base plugin, which is what a record link inside it
+    /// resolves against in a load-order-wide store.
+    var skyrimESMName: String {
+        "Skyrim.esm"
+    }
+
     func loadSkyrimESM() throws -> ESMFile {
         let url = root.dataURL.appending(path: "Skyrim.esm")
         do {

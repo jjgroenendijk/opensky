@@ -150,31 +150,3 @@ nonisolated struct CharacterClass: Equatable {
         return SkillWeights(weights: weights)
     }
 }
-
-/// Cross-plugin CLAS index, built the way `ActorTemplateResolver` builds its
-/// NPC_ index: raw-`UInt32` FormID keys within one plugin, undecodable records
-/// dropped rather than fatal.
-nonisolated struct CharacterClassIndex: Equatable {
-    private(set) var classes: [UInt32: CharacterClass]
-
-    init(classes: [UInt32: CharacterClass] = [:]) {
-        self.classes = classes
-    }
-
-    static func build(from file: ESMFile, localized: Bool) -> CharacterClassIndex {
-        var classes: [UInt32: CharacterClass] = [:]
-        guard let top = file.topGroup(of: "CLAS"), let children = try? top.children() else {
-            return CharacterClassIndex()
-        }
-        for case let .record(record) in children {
-            guard record.type == "CLAS", !record.isDeleted else { continue }
-            classes[record.formID] = try? CharacterClass(record: record, localized: localized)
-        }
-        return CharacterClassIndex(classes: classes)
-    }
-
-    subscript(id: FormID?) -> CharacterClass? {
-        guard let id else { return nil }
-        return classes[id.rawValue]
-    }
-}

@@ -58,6 +58,7 @@ struct ActorValueRealDataTests {
         return ActorValueResolver.build(
             from: file,
             localized: (try? file.pluginHeader().isLocalized) ?? false,
+            pluginName: "Skyrim.esm",
             settings: ActorValueLevelSettings.resolve(
                 store: GameSettingLoader.load(root: root, baseFile: file)
             )

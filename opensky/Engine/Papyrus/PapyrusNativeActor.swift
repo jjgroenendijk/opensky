@@ -13,20 +13,10 @@
 //
 // ## What is deliberately absent, and why
 //
-// `SetActorValue` is **not** registered. The wiki is explicit that it "sets the
-// base value ... Any modifiers are left intact", and that "While GetActorValue
-// returns the current value, SetActorValue sets the base value." Item 19.5
-// gives the *other 161* actor values exactly that base-plus-modifiers store, but
-// the three primaries still have none: their maximums are re-derived from RACE,
-// CLAS and NPC_ on every read precisely so a save cannot carry a number a
-// changed load order no longer authors (see docs/engine/actor-values.md).
-// Registering the native would therefore work for a resistance and silently
-// move current health for `SetActorValue("Health", ...)`, which is worse than
-// not registering it: a script that buffs an NPC's maximum health would appear
-// to work. It stays an unimplemented native, counted by name in the tally,
-// until the primaries have a base override too. `ModActorValue` and
-// `ForceActorValue` are absent for the same reason and belong with issue 19.6's
-// magic-effect layer, which is what the modifier slots exist for.
+// `SetActorValue`, `ModActorValue` and `ForceActorValue` were absent through
+// M19 because the three primaries had no base-plus-modifiers store to write to.
+// Item 20.3 (issue #496) gave them one, so all three are registered now — in
+// `PapyrusNativeActorValues.swift`, with their semantics quoted there.
 //
 // `SetRelationshipRank` and the faction natives are absent with the factions
 // themselves: 16.7 keeps `ActorHostility`'s two cases and adds no relationship
@@ -43,6 +33,7 @@ nonisolated extension PapyrusNativeFunctions {
     static func installActor(into registry: inout PapyrusNativeRegistry) {
         installActorValueReads(into: &registry)
         installActorValueWrites(into: &registry)
+        installActorValueWriteNatives(into: &registry)
         installActorStatus(into: &registry)
         installActorCombat(into: &registry)
     }

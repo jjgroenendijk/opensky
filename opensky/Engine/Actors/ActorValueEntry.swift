@@ -1,6 +1,10 @@
-// One non-primary actor value's storage (issue #468, roadmap item 19.5): a
+// One actor value as a caller *reads* it (issue #468, roadmap item 19.5): a
 // base value plus the three modifier slots the Creation Kit's own actor-value
 // vocabulary names.
+//
+// The resolved view, not the stored one. `ActorValueOverride` is what the store
+// actually holds — the same three modifiers over a base *offset* rather than an
+// absolute base, so the derived baseline stays authoritative (issue #496).
 //
 // ## Why a base and three modifiers rather than one number
 //
@@ -63,12 +67,6 @@ nonisolated struct ActorValueEntry: Equatable, Sendable {
         self.damage = min(0, Self.finite(damage))
     }
 
-    /// The entry an actor has for a value whose base is `base` and which
-    /// nothing has modified.
-    static func unmodified(base: Float) -> ActorValueEntry {
-        ActorValueEntry(base: base)
-    }
-
     subscript(modifier: ActorValueModifier) -> Float {
         switch modifier {
         case .permanent: permanent
@@ -90,12 +88,6 @@ nonisolated struct ActorValueEntry: Equatable, Sendable {
     /// damage. `restore` cannot lift `current` above it.
     var undamagedValue: Float {
         base + permanent + temporary
-    }
-
-    /// Whether this entry says nothing the baseline does not already say, which
-    /// is what lets the store drop it rather than persist a no-op.
-    func matchesBaseline(_ baseline: Float) -> Bool {
-        self == ActorValueEntry(base: baseline)
     }
 
     /// This entry with its base replaced — `SetActorValue`'s effect, leaving

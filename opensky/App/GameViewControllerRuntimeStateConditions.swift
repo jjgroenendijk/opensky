@@ -144,15 +144,15 @@ extension GameViewController {
     ) -> ActorConditionState {
         ActorConditionState(
             current: values.current(of: holder),
-            maximums: values.baseline(of: holder).maximums,
+            maximums: values.maximums(of: holder),
             isDead: isDead,
             hostility: combatHostility(of: holder.key),
             combatActivity: combat.runtime?.activity(of: holder.key) ?? .notFighting,
             weaponDrawState: holder.key == .player
                 ? melee.runtime?.state.drawState
                 : nil,
-            general: values.state(of: holder).general,
-            generalBaseline: values.baseline(of: holder).general,
+            general: values.resolvedEntries(of: holder),
+            generalBaseline: values.baseline(of: holder).basesByIndex,
             isPlayer: holder.key == .player
         )
     }

@@ -205,7 +205,7 @@ to queue native results and inspect a bounded call tail.
 ## Native registry
 
 `PapyrusNativeRegistry` keys functions case-insensitively by both script and
-function name. `.empty` installs nothing. `.standard` installs 79 entries in
+function name. `.empty` installs nothing. `.standard` installs 82 entries in
 one place:
 
 | family | functions | headless policy |
@@ -218,7 +218,7 @@ one place:
 | `GlobalVariable` | `GetValue`, `GetValueInt`, `SetValue`, `SetValueInt` | same failure policy |
 | `Game` | `GetPlayer` | same failure policy |
 | `Quest` | see [quest script instances](#quest-script-instances-and-stage-fragments) | same failure policy |
-| `Actor` | `GetActorValue`, `GetBaseActorValue`, `GetActorValuePercentage`, `DamageActorValue`, `RestoreActorValue`, `IsDead`, `IsInCombat`, `IsWeaponDrawn`, `Kill`, `StartCombat`, `StopCombat` | same failure policy |
+| `Actor` | `GetActorValue`, `GetBaseActorValue`, `GetActorValuePercentage`, `DamageActorValue`, `RestoreActorValue`, `SetActorValue`, `ModActorValue`, `ForceActorValue`, `IsDead`, `IsInCombat`, `IsWeaponDrawn`, `Kill`, `StartCombat`, `StopCombat` | same failure policy |
 | `Actor` and `Spell` magic | see [the spell natives](#the-spell-natives) | same failure policy |
 
 The corpus census found no string native that can be answered honestly without
@@ -684,16 +684,18 @@ native, so a compiled script reaches the native by itself.
 
 Actor values are named by the vanilla table, which
 `opensky/Engine/Actors/ActorValueIdentity.swift` carries with its xEdit citation.
-15.3 stores three of the 164 — health at index 24, magicka at 25, stamina at 26 —
-and a name outside those three is a tallied failure naming the value it could not
-read, never a zero. That tally is the list of what to store next.
+15.3 stored three of the 164 — health at index 24, magicka at 25, stamina at 26 —
+item 19.5 stored the other 161, and item 20.3 gave the three primaries the same
+base-and-modifier store the rest have. `SetActorValue`, `ModActorValue` and
+`ForceActorValue` are registered with it since (issue #496); their semantics are
+quoted at each registration and in
+[actor values](/engine/actor-values.md). A name outside the vanilla table is a
+tallied failure naming the value it could not read, never a zero.
 
 ### Stated gaps in the family
 
 | behavior | what OpenSky does | why |
 | --- | --- | --- |
-| `SetActorValue` | not installed | the wiki is explicit that it sets the **base** value and leaves modifiers intact. OpenSky re-derives maximums from RACE, CLAS and NPC_ on every read and has no base-override store, so the only thing it could write is the current value — which is `ForceActorValue`'s job. Registering it against the wrong store would turn every "buff this NPC's max health" script into a silent current-health move |
-| `ModActorValue`, `ForceActorValue` | not installed | same missing store, plus the magic-effect layer they belong with (M18) |
 | `Resurrect` | not installed | nothing clears the death latch, so a corpse stays a corpse. `RestoreActorValue` on a dead actor writes the health and leaves it dead rather than half-reviving it |
 | `StartCombat` with a target other than the player | tallied failure | this engine simulates no actor-versus-actor combat. `ActorHostility` has two cases and both are about the player, so a fight between two NPCs would be one nothing steps. Stated rather than silently not happening |
 | `SetRelationshipRank` and the faction natives | not installed | there is no relationship or faction store to write. 16.7 kept `ActorHostility`'s two cases |
@@ -1354,8 +1356,8 @@ and twelve with the spell family. Headless, every one of them
 refuses honestly for want of a world instead of falling through to the
 unimplemented tally. The leading unimplemented
 native is `ReferenceAlias.AddInventoryEventFilter` with 41 calls;
-`Actor.SetActorValue` is still on that list with 3, which is the deliberate gap
-recorded above. The aggregate report is written only to gitignored
+`Actor.SetActorValue` was on that list with 3 until item 20.3 registered it, so
+the next re-run moves those three across as well. The aggregate report is written only to gitignored
 `logs/papyrus-m11-acceptance.log`.
 
 M11.1 is explicitly headless in issue #170, so it has no sidebar destination,

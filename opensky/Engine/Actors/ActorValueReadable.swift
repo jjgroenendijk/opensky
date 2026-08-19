@@ -8,10 +8,10 @@
 // identical on both sides, so it is written once here instead of twice with two
 // chances to disagree about what an untouched resistance reads.
 //
-// The rule, in one sentence: a primary answers from the typed triple, every
-// other vanilla index answers from the stored entry when there is one and from
-// the record baseline when there is not, and an index outside the table answers
-// nil so the caller can count it.
+// The rule, in one sentence: a primary's *current* value answers from the typed
+// triple, every vanilla index answers its base and modifiers from the stored
+// entry when there is one and from the record baseline when there is not, and
+// an index outside the table answers nil so the caller can count it.
 //
 // Documented in docs/engine/actor-values.md.
 
@@ -23,9 +23,10 @@ nonisolated protocol ActorValueReadable {
     var current: ActorValues { get }
     /// Re-derived maximums for the three primaries.
     var maximums: ActorValues { get }
-    /// Non-primary values this actor has moved off its baseline.
+    /// Values this actor has moved off its baseline, resolved against it.
     var general: [Int32: ActorValueEntry] { get }
-    /// Non-primary base values this actor's records author.
+    /// Base values this actor's records author, keyed by vanilla index. The
+    /// primaries are in here too since item 20.3, at their derived maximums.
     var generalBaseline: [Int32: Float] { get }
     /// Whether this actor is the player, which is the only thing the resistance
     /// cap depends on.
@@ -42,35 +43,47 @@ nonisolated extension ActorValueReadable {
         return entry(at: index)?.current
     }
 
-    /// What `GetBaseActorValue` reports for `index`: the re-derived maximum for
-    /// a primary, and the stored base for everything else — which is the
-    /// record-authored base until something writes one.
+    /// What `GetBaseActorValue` reports for `index`: the base value, which is
+    /// what the records author until something writes one, and never a
+    /// modifier.
     func baseValue(at index: Int32) -> Float? {
-        if let kind = ActorValueIdentity.kind(at: index) {
-            return maximums[kind]
-        }
-        return entry(at: index)?.base
+        entry(at: index)?.base
     }
 
-    /// `index`'s stored entry, or the unmodified entry its records author.
-    /// Nil for a primary and for an index outside the table.
+    /// `index`'s stored entry, or the unmodified entry its records author. Nil
+    /// only for an index outside the table.
+    ///
+    /// A primary falls back to `maximums` when the snapshot carries no baseline
+    /// for it, because an actor with nothing written is at its derived maximum
+    /// by definition — which is what keeps a snapshot built before item 20.3
+    /// answering the same numbers it always did.
     func entry(at index: Int32) -> ActorValueEntry? {
-        guard
-            ActorValueIdentity.kind(at: index) == nil,
-            let fallback = ActorValueIdentity.defaultValue(at: index)
-        else { return nil }
-        return general[index] ?? ActorValueEntry(base: generalBaseline[index] ?? fallback)
+        guard let fallback = ActorValueIdentity.defaultValue(at: index) else { return nil }
+        let baseline = if let kind = ActorValueIdentity.kind(at: index) {
+            generalBaseline[index] ?? maximums[kind]
+        } else {
+            generalBaseline[index] ?? fallback
+        }
+        return general[index] ?? ActorValueEntry(base: baseline)
     }
 
     /// What `GetActorValuePercent` and `GetActorValuePercentage` report: the
-    /// current value over the base, clamped to 0 ... 1. A zero or negative base
-    /// reads as 0 rather than dividing.
+    /// current value over its ceiling, clamped to 0 ... 1.
+    ///
+    /// A primary divides by its effective maximum, which is what its bar is
+    /// drawn against; everything else divides by its base, which is the only
+    /// ceiling it has. A zero or negative denominator reads as 0 rather than
+    /// dividing.
     func fraction(at index: Int32) -> Float? {
-        guard let value = value(at: index), let base = baseValue(at: index) else {
-            return nil
+        guard let value = value(at: index) else { return nil }
+        let ceiling: Float? = if let kind = ActorValueIdentity.kind(at: index) {
+            maximums[kind]
+        } else {
+            baseValue(at: index)
         }
-        guard base.isFinite, base > 0, value.isFinite else { return 0 }
-        return min(max(0, value / base), 1)
+        guard let ceiling else { return nil }
+        guard ceiling.isFinite, ceiling > 0, value.isFinite else { return 0 }
+        return min(max(0, value / ceiling), 1)
     }
 
     /// The fraction of incoming damage this actor's resistance at `index`

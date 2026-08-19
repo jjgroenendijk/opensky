@@ -59,6 +59,7 @@ struct ActiveEffectRealDataTests {
                 resolver: ActorValueResolver.build(
                     from: file,
                     localized: (try? file.pluginHeader().isLocalized) ?? false,
+                    pluginName: Self.pluginName,
                     settings: ActorValueLevelSettings.resolve(
                         store: GameSettingLoader.load(root: root, baseFile: file)
                     )

@@ -179,7 +179,7 @@ struct ActiveEffectRuntime {
     /// Re-establishes the temporary modifier slot every stored effect owns.
     ///
     /// The save deliberately does not persist the temporary modifier (see
-    /// `OpenSkySaveFormat.ChunkTag.generalActorValues`), because the effect that
+    /// `OpenSkySaveFormat.ChunkTag.actorValueOverrides`), because the effect that
     /// established it is what re-establishes it. This is that step, and a loaded
     /// session calls it once per actor carrying effects.
     ///

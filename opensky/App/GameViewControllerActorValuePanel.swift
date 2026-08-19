@@ -60,6 +60,13 @@ extension GameViewController: ActorValueControlProviding {
     }
 
     @discardableResult
+    func setSelectedActorBase(to value: Float) -> String {
+        applyToSelection(verb: "Set the base of") { runtime, holder, index in
+            runtime.setBase(at: index, to: value, on: holder)
+        }
+    }
+
+    @discardableResult
     func restoreSelectedActorFully() -> String {
         apply(verb: "Refilled") { runtime, holder in
             runtime.restoreAll(on: holder)
@@ -124,7 +131,9 @@ extension GameViewController: ActorValueControlProviding {
         return ActorValueReadout(
             name: name,
             current: runtime.current(of: holder),
-            maximums: baseline.maximums,
+            // The *effective* maximums, so a base write and a fortify effect
+            // both show on the bar rather than only in the selection line.
+            maximums: runtime.maximums(of: holder),
             regenPercentPerSecond: baseline.regenPercentPerSecond,
             level: derived?.level ?? 1,
             autoCalculatesStats: derived?.autoCalculatesStats ?? false,
@@ -160,8 +169,8 @@ extension GameViewController: ActorValueControlProviding {
                 resistanceFraction: nil
             )
         }
-        // A primary has no modifier slots, so its entry is nil and the three
-        // read zero — which is the honest reading, not a placeholder.
+        // Since item 20.3 a primary has the same slots every other value has,
+        // so this line explains a fortified or scripted maximum too.
         let entry = runtime.entry(at: index, on: holder)
         return ActorValueInspection(
             name: ActorValueIdentity.description(of: index),

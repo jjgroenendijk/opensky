@@ -169,11 +169,13 @@ Two more reasons an implemented archetype still applies nothing, each its own ta
 
 - The record names no actor value inside the vanilla table (usually -1, "none").
 - A **timed Recover effect names health, magicka or stamina**. The Creation Kit says that
-  changes both the maximum and the current value, and item 19.5 deliberately left the three
-  primaries without the base-plus-modifiers storage the other 161 values have
-  ([actor values](/engine/actor-values.md)), so there is nowhere to hold the change. It is
-  counted rather than approximated: moving current health for a "fortify health" effect would
-  be a different effect wearing the same name.
+  changes both the maximum and the current value, and item 19.5 left the three primaries
+  without the base-plus-modifiers storage the other 161 values have, so there was nowhere to
+  hold the change. It is counted rather than approximated: moving current health for a
+  "fortify health" effect would be a different effect wearing the same name. Item 20.3 built
+  that storage ([actor values](/engine/actor-values.md)) and the guard now outlives its
+  reason; lifting it moves the archetype tallies this page pins, so it is issue #511 rather
+  than a silent change here.
 
 ## The component
 
@@ -267,14 +269,15 @@ record per actor value.
 The chunk stores `elapsed` rather than "remaining" so a reloaded effect reports the same total
 duration a readout showed before the save.
 
-**This chunk is what makes `AVGN`'s dropped temporary modifier recoverable.** The general
-actor-value chunk deliberately does not persist the temporary slot, because persisting both it
-and the effect that established it would double every buff on reload. Each stored effect
+**This chunk is what makes `AVOV`'s dropped temporary modifier recoverable.** The
+actor-value override chunk deliberately does not persist the temporary slot, because
+persisting both it and the effect that established it would double every buff on
+reload. Each stored effect
 records how much of the slot it owns, and `reestablishModifiers(on:)` rebuilds the slot from
 that after a load.
 
 Instant effects are not in the chunk and cannot be: a zero-duration effect moved an actor value
-once, and the moved value is what `AVAL` and `AVGN` already carry.
+once, and the moved value is what `AVAL` and `AVOV` already carry.
 
 Since issue #472 the load path actually calls it, for the **player only**:
 `loadWorldState(slot:)` re-establishes the player's slots after the snapshot is
@@ -1306,9 +1309,10 @@ Local A/B (optional, never committed): none
 - **MGEF-side conditions are not evaluated**, only the effect entry's own list. The Creation
   Kit distinguishes the two and the distinction matters for concentration spells, which is
   casting's problem.
-- **A timed Recover effect on a primary is counted, not applied.** It needs the
-  base-plus-modifiers storage for health, magicka and stamina that item 19.5 declined to build;
-  see [actor values](/engine/actor-values.md).
+- **A timed Recover effect on a primary is counted, not applied.** It needed the
+  base-plus-modifiers storage for health, magicka and stamina that item 19.5 declined to
+  build; item 20.3 built it and issue #511 lifts the guard once the tallies it moves are
+  re-measured. See [actor values](/engine/actor-values.md).
 - **`HasMagicEffect` is answerable but not registered.** The component answers the query;
   registering the condition function and the Papyrus native is issue 19.11.
 - **Visuals and sounds** for effects are milestone M26. The ALCH consume sound is decoded and

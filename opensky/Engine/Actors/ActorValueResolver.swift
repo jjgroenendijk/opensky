@@ -62,7 +62,13 @@ nonisolated struct ResolvedActorValues: Equatable {
 nonisolated struct ActorValueResolver {
     let templates: ActorTemplateResolver
     let races: [UInt32: Race]
-    let classes: CharacterClassIndex
+    /// Load-order-wide CLAS lookup (issue #496). Cross-plugin since item 20.3,
+    /// which is why the plugin the NPC_ records came from travels beside it:
+    /// a class link resolves relative to the plugin carrying it.
+    let classes: CharacterClassStore
+    /// Plugin the NPC_ and RACE indexes were built from, which is what a CLAS
+    /// link in one of those records resolves against.
+    let pluginName: String
     let settings: ActorValueLevelSettings
     /// Level a `PC Level Mult` actor scales against. There is no player level
     /// before M18, so this defaults to 1 and every scaled actor resolves at the
@@ -72,13 +78,15 @@ nonisolated struct ActorValueResolver {
     init(
         templates: ActorTemplateResolver,
         races: [UInt32: Race],
-        classes: CharacterClassIndex = CharacterClassIndex(),
+        classes: CharacterClassStore = CharacterClassStore(),
+        pluginName: String = "",
         settings: ActorValueLevelSettings = .documentedDefaults,
         playerLevel: Int = 1
     ) {
         self.templates = templates
         self.races = races
         self.classes = classes
+        self.pluginName = pluginName
         self.settings = settings
         self.playerLevel = playerLevel
     }
@@ -87,10 +95,15 @@ nonisolated struct ActorValueResolver {
     ///
     /// `settings` is passed in rather than loaded here: the GMST store spans
     /// the whole load order and a caller that already built one must not pay
-    /// for a second walk.
+    /// for a second walk. `classes` is passed in for the same reason and for
+    /// one more — a caller with the whole load order hands over a store built
+    /// across it, so a patch plugin's CLAS override is seen; a caller with one
+    /// file gets a store over that file alone.
     static func build(
         from file: ESMFile,
         localized: Bool,
+        pluginName: String,
+        classes: CharacterClassStore? = nil,
         settings: ActorValueLevelSettings = .documentedDefaults,
         playerLevel: Int = 1
     ) -> ActorValueResolver {
@@ -104,10 +117,19 @@ nonisolated struct ActorValueResolver {
         return ActorValueResolver(
             templates: ActorTemplateResolver.build(from: file, localized: localized),
             races: races,
-            classes: CharacterClassIndex.build(from: file, localized: localized),
+            classes: classes ?? CharacterClassStore(file: file, pluginName: pluginName),
+            pluginName: pluginName,
             settings: settings,
             playerLevel: playerLevel
         )
+    }
+
+    /// The class one record names, resolved through the load order.
+    ///
+    /// The one place a caller outside this type turns a CLAS link into a
+    /// record, so nothing has to know which plugin the link resolves against.
+    func characterClass(_ id: FormID?) -> CharacterClass? {
+        classes.resolve(id, fromPlugin: pluginName)?.characterClass
     }
 
     /// The derivation inputs for one NPC_, gathered through its template chain.
@@ -163,15 +185,14 @@ nonisolated struct ActorValueResolver {
 
     private func inputs(from resolved: ResolvedActorStats) -> ActorValueInputs {
         let stats = resolved.stats.value
+        let characterClass = characterClass(stats.characterClass)
         return ActorValueInputs(
             race: resolved.statsRace.value.flatMap { races[$0.rawValue] }?.stats ?? Race.Stats(),
             stats: stats,
             autoCalculatesStats: resolved.autoCalculatesStats.value,
             usesPlayerLevelMultiplier: resolved.usesPlayerLevelMultiplier.value,
-            attributeWeights: classes[stats.characterClass]?.attributeWeights
-                ?? CharacterClass.AttributeWeights(),
-            skillWeights: classes[stats.characterClass]?.skillWeights
-                ?? CharacterClass.SkillWeights()
+            attributeWeights: characterClass?.attributeWeights ?? CharacterClass.AttributeWeights(),
+            skillWeights: characterClass?.skillWeights ?? CharacterClass.SkillWeights()
         )
     }
 

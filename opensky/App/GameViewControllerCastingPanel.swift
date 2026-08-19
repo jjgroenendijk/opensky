@@ -26,7 +26,7 @@ extension GameViewController: CastingControlProviding {
             leftPhase: runtime.phase(of: .left),
             rightPhase: runtime.phase(of: .right),
             magicka: runtime.values.current(of: .player).magicka,
-            maximumMagicka: runtime.values.baseline(of: .player).maximums.magicka,
+            maximumMagicka: runtime.values.maximums(of: .player).magicka,
             carriedTomeNames: carriedSpellTomes().map { name(of: $0.item) },
             readBookCount: book.readBooks.count,
             castCount: runtime.tally.castCount,

@@ -28,6 +28,26 @@
 
 import Foundation
 
+/// Which of the three base-and-modifier writes a script asked for (issue #496,
+/// roadmap item 20.3).
+///
+/// One enumeration and one bridge method rather than three of each, because the
+/// three differ only in which slot they land in and every other step — find the
+/// actor, reject an unknown value name, route a health that reached zero into
+/// the death path — is shared. The semantics of each case are quoted at
+/// `ActorValueRuntime.setBase(at:to:on:)`, `addModifier(_:to:at:on:)` and
+/// `forceValue(at:to:on:)`.
+nonisolated enum PapyrusActorValueWrite: String, CaseIterable, Equatable, Sendable {
+    /// `SetActorValue`: sets the base value, leaving every modifier intact.
+    case setBase = "SetActorValue"
+    /// `ModActorValue`: adds to the permanent modifier, which moves the
+    /// maximum and the current value together.
+    case modify = "ModActorValue"
+    /// `ForceActorValue`: moves the permanent modifier so the current value
+    /// lands exactly on the number asked for.
+    case force = "ForceActorValue"
+}
+
 /// One actor as a Papyrus native sees it.
 nonisolated struct PapyrusActorState: ActorValueReadable, Equatable, Sendable {
     /// Current health, magicka and stamina.
@@ -119,6 +139,22 @@ protocol PapyrusWorldActorBridge: AnyObject, Sendable {
         at index: Int32, by amount: Float, on key: ReferenceKey
     ) -> PapyrusActorState?
 
+    /// Sets, modifies or forces one of `key`'s actor values (issue #496).
+    ///
+    /// A health that reaches zero becomes a death on the same call, exactly as
+    /// it does through `damageActorValue`: a script that forces health to zero
+    /// and then asks `IsDead()` must not read a live actor lying on the floor.
+    ///
+    /// - Returns: the state as stored afterwards, or nil when there was no
+    ///   actor to write to and when the index names no actor value.
+    @discardableResult
+    func writeActorValue(
+        _ write: PapyrusActorValueWrite,
+        at index: Int32,
+        to value: Float,
+        on key: ReferenceKey
+    ) -> PapyrusActorState?
+
     /// Starts `key` fighting `target` at once, without waiting for it to
     /// perceive anything (issue #424). Writes hostility through the world-state
     /// store on the way, so a scripted fight is saved exactly as one the player
@@ -172,6 +208,18 @@ nonisolated extension PapyrusWorldAccess {
     ) -> PapyrusActorState? {
         MainActor.assumeIsolated {
             bridge.restoreActorValue(at: index, by: amount, on: key)
+        }
+    }
+
+    @discardableResult
+    func writeActorValue(
+        _ write: PapyrusActorValueWrite,
+        at index: Int32,
+        to value: Float,
+        on key: ReferenceKey
+    ) -> PapyrusActorState? {
+        MainActor.assumeIsolated {
+            bridge.writeActorValue(write, at: index, to: value, on: key)
         }
     }
 

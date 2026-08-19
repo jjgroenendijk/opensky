@@ -90,7 +90,7 @@ nonisolated struct ActiveEffectState: WorldStateComponent {
     /// The total each actor value's temporary modifier slot should hold for
     /// this actor, keyed by index.
     ///
-    /// This is the authority the save relies on: `AVGN` deliberately does not
+    /// This is the authority the save relies on: `AVOV` deliberately does not
     /// persist the temporary modifier, so after a load the slot is re-derived
     /// from here rather than read back off disk twice.
     var ownedModifiers: [Int32: Float] {

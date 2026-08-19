@@ -37,7 +37,7 @@ byte length followed by that many UTF-8 bytes. The file extension is `osav`.
 * `QALS` entry layout
 * `QLOC` entry layout
 * `AVAL` entry layout
-* `AVGN` entry layout
+* `AVOV` entry layout
 * `DETH` entry layout
 * `CBTS` entry layout
 * `DLGS` entry layout
@@ -160,8 +160,9 @@ A chunk whose declared length runs past the end of the file is
 that declared length, which is what makes a newer build's save loadable in an older one.
 
 Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR`, `INVN`, `SPWN`, `QSTS`,
-`QALS`, `QLOC`, `AVAL`, `AVGN`, `DETH`, `CBTS`, `DLGS`, `AEFF`, `SPLB` and `ECHG` were added
-additively afterwards.
+`QALS`, `QLOC`, `AVAL`, `AVOV`, `DETH`, `CBTS`, `DLGS`, `AEFF`, `SPLB` and `ECHG` were added
+additively afterwards. `AVOV` replaced item 19.5's `AVGN` in item 20.3; see its section
+below for why the tag changed rather than the payload's meaning.
 
 `GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
 any other size is `invalidValue`.
@@ -606,15 +607,15 @@ by `ActorValueState.init` rather than rejected — the invariant belongs to the 
 nonsensical float is not a reason to lose a whole save. The entry count is validated against
 `minimumActorValueEntrySize` (20 bytes) before storage is reserved.
 
-## `AVGN` entry layout
+## `AVOV` entry layout
 
-`AVGN` — general actor values (issue #468, roadmap item 19.5), one entry per actor holding
-one or more of the 161 non-primary actor values away from the baseline its records author.
+`AVOV` — actor-value overrides (issue #496, roadmap item 20.3), one entry per actor holding
+one or more of the 164 actor values away from the baseline its records author.
 
 A sibling of `AVAL` rather than an extension of it, for the reason `QALS` is a sibling of
 `QSTS`: `AVAL` entries are a flat positional layout with no per-entry length, so appending a
 variable-length list to them would make an older build misparse the *whole* chunk instead of
-skipping the new part. A session that moved no non-primary value writes no chunk at all.
+skipping the new part. A session that moved no value writes no chunk at all.
 
 | type   | field      | notes                              |
 | ------ | ---------- | ---------------------------------- |
@@ -633,27 +634,41 @@ Each entry:
 Each value record, written in ascending index order so one actor's bytes are a pure function
 of its state rather than of dictionary iteration:
 
-| type    | field     | notes                                                  |
-| ------- | --------- | ------------------------------------------------------ |
-| int32   | index     | vanilla actor-value table index                         |
-| float32 | base      | the record-authored or script-written base value        |
-| float32 | permanent | permanent modifier                                     |
-| float32 | damage    | damage modifier, never positive                        |
+| type    | field      | notes                                                 |
+| ------- | ---------- | ----------------------------------------------------- |
+| int32   | index      | vanilla actor-value table index, primaries included    |
+| float32 | baseOffset | distance from the baseline the records derive          |
+| float32 | permanent  | permanent modifier                                    |
+| float32 | damage     | damage modifier, never positive                       |
+
+**`baseOffset` is a distance, not a value.** The records stay authoritative for what an actor
+value is; the chunk carries only what the session did to it, so a save restored under a
+changed load order, a changed level or a changed race moves with the records and keeps the
+session's own contribution on top. That is the same "re-derive, never persist" rule `AVAL`
+follows by not writing the maximums at all — see
+[actor values](/engine/actor-values.md) for the precedence rule and what it buys item 20.5.
+
+**It replaces item 19.5's `AVGN`,** which carried an absolute base for the 161 non-primary
+values. A new tag rather than a reinterpreted payload, because the two layouts have identical
+shapes and different meanings: reading one as the other would turn a resistance of 30 into a
+resistance 30 points *above* what the records say. An `AVGN` chunk from an older build is now
+an unknown tag and is skipped by its declared length, so such a save restores every actor at
+its record baselines — the same degradation an older build takes from this one.
 
 **The temporary modifier is deliberately not written.** It is an active magic effect's
 contribution, and the effect that established it is what re-establishes it (issue 19.6);
 persisting both would double the buff on every reload. See
 [actor values](/engine/actor-values.md).
 
-An `AVGN` entry always travels beside that actor's `AVAL` entry, because an actor with a
-general value has an `ActorValueState` component and `AVAL` writes every one of those. The
-decoder relies on it: an `AVGN` entry with no `AVAL` entry beside it is dropped rather than
+An `AVOV` entry always travels beside that actor's `AVAL` entry, because an actor with an
+override has an `ActorValueState` component and `AVAL` writes every one of those. The
+decoder relies on it: an `AVOV` entry with no `AVAL` entry beside it is dropped rather than
 turned into a state of its own, since the alternative is inventing a health for an actor
 whose health the save never carried. A non-finite float normalizes through
-`ActorValueEntry.init` and an index outside the vanilla table is dropped by
+`ActorValueOverride.init` and an index outside the vanilla table is dropped by
 `ActorValueState.init`, both for the reason `AVAL` normalizes rather than rejects. Entry and
-record counts are validated against `minimumGeneralActorValueEntrySize` (12 bytes) and
-`generalActorValueRecordSize` (16 bytes) before storage is reserved.
+record counts are validated against `minimumActorValueOverrideEntrySize` (12 bytes) and
+`actorValueOverrideRecordSize` (16 bytes) before storage is reserved.
 
 ## `DETH` entry layout
 
@@ -797,14 +812,14 @@ Each effect:
 `elapsed` is stored rather than "remaining" so a reloaded effect reports the same total
 duration a readout showed before the save.
 
-**`applied` is what makes `AVGN`'s dropped temporary modifier recoverable.** The general
-actor-value chunk deliberately omits the temporary slot, because persisting both it and the
+**`applied` is what makes `AVOV`'s dropped temporary modifier recoverable.** The
+actor-value override chunk deliberately omits the temporary slot, because persisting both it and the
 effect that established it would double every buff on reload; each effect records how much
 of the slot it owns and the runtime rebuilds the slot from that
 ([magic](/engine/magic.md)).
 
 Instant effects are not here and cannot be: a zero-duration effect moved an actor value once,
-and the moved value is what `AVAL` and `AVGN` already carry.
+and the moved value is what `AVAL` and `AVOV` already carry.
 
 An unknown `sourceKind` or `mode` is `invalidValue` — both are closed enumerations this build
 wrote itself, so an unreadable one means the bytes are not what they claim. A degenerate

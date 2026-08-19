@@ -8,9 +8,10 @@ struct PapyrusNativeRegistryTests {
     @Test func standardInstallIsCaseInsensitiveAndEmptyIsEmpty() {
         let standard = PapyrusNativeRegistry.standard
         // 57 before the `Actor` family (issue #375) added nine, 66 before
-        // 16.7 (issue #424) added `StartCombat` and `StopCombat`, and 68 before
-        // 19.11 (issue #474) added the eleven spell natives.
-        #expect(standard.count == 79)
+        // 16.7 (issue #424) added `StartCombat` and `StopCombat`, 68 before
+        // 19.11 (issue #474) added the eleven spell natives, and 79 before
+        // 20.3 (issue #496) added the three actor-value writes.
+        #expect(standard.count == 82)
         #expect(standard.contains(
             scriptName: "form", functionName: "REGISTERFORUPDATE"
         ))
@@ -24,10 +25,12 @@ struct PapyrusNativeRegistryTests {
         #expect(standard.contains(scriptName: "actor", functionName: "KILL"))
         #expect(standard.contains(scriptName: "ACTOR", functionName: "addspell"))
         #expect(standard.contains(scriptName: "spell", functionName: "CAST"))
-        // `SetActorValue` sets the *base* value and OpenSky has no base
-        // override store, so it stays deliberately unimplemented and tallied
-        // (see PapyrusNativeActor.swift).
-        #expect(!standard.contains(scriptName: "Actor", functionName: "SetActorValue"))
+        // `SetActorValue` sets the *base* value, which item 20.3 gave the
+        // three primaries a store for; all three writes are registered since
+        // (see PapyrusNativeActorValues.swift).
+        #expect(standard.contains(scriptName: "Actor", functionName: "SetActorValue"))
+        #expect(standard.contains(scriptName: "ACTOR", functionName: "modactorvalue"))
+        #expect(standard.contains(scriptName: "actor", functionName: "ForceActorValue"))
         #expect(!PapyrusNativeRegistry.empty.contains(
             scriptName: "Utility",
             functionName: "Wait"

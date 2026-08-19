@@ -71,9 +71,28 @@ nonisolated struct ActorValueBaseline: Equatable, Sendable {
     /// The base value `index` starts from: what the records author, and the
     /// documented vanilla default otherwise. Nil for an index outside the
     /// table, which is the one answer that stays a miss.
+    ///
+    /// A primary answers its re-derived maximum (issue #496). That is the
+    /// number a primary's base override is an offset from, and answering it
+    /// here is what lets one index-keyed table cover all 164 values instead of
+    /// two tables with two chances to disagree.
     func base(at index: Int32) -> Float? {
+        if let kind = ActorValueIdentity.kind(at: index) {
+            return maximums[kind]
+        }
         guard let fallback = ActorValueIdentity.defaultValue(at: index) else { return nil }
         return general[index] ?? fallback
+    }
+
+    /// Every actor value's derived base keyed by vanilla index, primaries
+    /// included — the shape a snapshot carries so a condition and a Papyrus
+    /// native can resolve an override without reaching the runtime.
+    var basesByIndex: [Int32: Float] {
+        var values = general
+        for kind in ActorValueKind.allCases {
+            values[ActorValueIdentity.index(of: kind)] = maximums[kind]
+        }
+        return values
     }
 
     static let empty = ActorValueBaseline(

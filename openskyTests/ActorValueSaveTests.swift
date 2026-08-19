@@ -118,17 +118,19 @@ struct ActorValueSaveTests {
         #expect(encode(snapshot()) == encode(snapshot()))
     }
 
-    // MARK: - AVGN, the non-primary values (issue #468)
+    // MARK: - AVOV, the override table (issues #468 and #496)
 
-    /// One actor holding two non-primary values, one of them damaged.
+    /// One actor holding two overrides, one of them damaged, and a base
+    /// override on a primary.
     private func resistant() -> ActorValueState {
         ActorValueState(
             current: ActorValues(health: 62.5, magicka: 0, stamina: 149.75),
-            general: [
-                ActorValueIndex.resistFire: ActorValueEntry(
-                    base: 40, permanent: 10, temporary: 25, damage: -15
+            overrides: [
+                ActorValueIndex.resistFire: ActorValueOverride(
+                    baseOffset: 40, permanent: 10, temporary: 25, damage: -15
                 ),
-                15: ActorValueEntry(base: 22)
+                15: ActorValueOverride(baseOffset: 22),
+                ActorValueIdentity.index(of: .health): ActorValueOverride(baseOffset: 25)
             ]
         )
     }
@@ -145,39 +147,45 @@ struct ActorValueSaveTests {
         )
     }
 
-    /// The general table survives the round trip — except the temporary
+    /// The override table survives the round trip — except the temporary
     /// modifier, which is deliberately not written because the magic effect
     /// that established it is what re-establishes it (issue 19.6).
-    @Test func generalActorValuesSurviveAnEncodeAndDecodeWithoutTheTemporarySlot() throws {
+    @Test func actorValueOverridesSurviveAnEncodeAndDecodeWithoutTheTemporarySlot() throws {
         let file = try OpenSkySaveDecoder.decode(encode(resistantSnapshot()))
         let delta = try #require(file.snapshot[wounded])
         let state = try #require(delta.component(ActorValueState.self))
         #expect(state.current == resistant().current)
-        #expect(state.general[ActorValueIndex.resistFire] == ActorValueEntry(
-            base: 40, permanent: 10, damage: -15
+        #expect(state.overrides[ActorValueIndex.resistFire] == ActorValueOverride(
+            baseOffset: 40, permanent: 10, damage: -15
         ))
-        #expect(state.general[15] == ActorValueEntry(base: 22))
-        #expect(state.general.count == 2)
+        #expect(state.overrides[15] == ActorValueOverride(baseOffset: 22))
+        // A primary's base override travels in the same table (issue #496).
+        #expect(
+            state.overrides[ActorValueIdentity.index(of: .health)]
+                == ActorValueOverride(baseOffset: 25)
+        )
+        #expect(state.overrides.count == 3)
     }
 
-    @Test func generalActorValueEncodingIsDeterministic() {
+    @Test func actorValueOverrideEncodingIsDeterministic() {
         #expect(encode(resistantSnapshot()) == encode(resistantSnapshot()))
     }
 
-    /// A session that moved no non-primary value writes no `AVGN` chunk, so its
-    /// bytes are the ones this encoder produced before the chunk existed.
-    @Test func aSaveWithNoGeneralActorValuesCarriesNoChunk() {
+    /// A session that moved no value off its baseline writes no `AVOV` chunk,
+    /// so its bytes are the ones this encoder produced before the chunk
+    /// existed.
+    @Test func aSaveWithNoActorValueOverridesCarriesNoChunk() {
         #expect(OpenSkySaveFixture.offset(
-            ofChunk: OpenSkySaveFormat.ChunkTag.generalActorValues, in: encode(snapshot())
+            ofChunk: OpenSkySaveFormat.ChunkTag.actorValueOverrides, in: encode(snapshot())
         ) == nil)
     }
 
-    /// The older-build case for `AVGN`: renaming the tag loses the non-primary
-    /// values and keeps everything else, including the actor's health.
-    @Test func anUnknownGeneralActorValueChunkTagIsSkipped() throws {
+    /// The older-build case for `AVOV`: renaming the tag loses the overrides
+    /// and keeps everything else, including the actor's health.
+    @Test func anUnknownActorValueOverrideChunkTagIsSkipped() throws {
         let encoded = encode(resistantSnapshot())
         let offset = try #require(OpenSkySaveFixture.offset(
-            ofChunk: OpenSkySaveFormat.ChunkTag.generalActorValues, in: encoded
+            ofChunk: OpenSkySaveFormat.ChunkTag.actorValueOverrides, in: encoded
         ))
         let renamed = OpenSkySaveFixture.patching(
             encoded, at: offset, with: Array("ZZZZ".utf8)
@@ -185,7 +193,7 @@ struct ActorValueSaveTests {
         let file = try OpenSkySaveDecoder.decode(renamed)
         let state = try #require(file.snapshot[wounded]?.component(ActorValueState.self))
         #expect(state.current == resistant().current)
-        #expect(state.general.isEmpty)
+        #expect(state.overrides.isEmpty)
     }
 
     // MARK: - Additive-chunk tolerance

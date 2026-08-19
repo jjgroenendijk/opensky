@@ -30,6 +30,8 @@ enum ActorValueCommand {
         let resolver = ActorValueResolver.build(
             from: file,
             localized: localized,
+            pluginName: context.skyrimESMName,
+            classes: CharacterClassStoreLoader.load(root: context.root, baseFile: file),
             settings: settings,
             playerLevel: playerLevel
         )
@@ -57,7 +59,7 @@ enum ActorValueCommand {
         }
         let raceName = resolved.race
             .flatMap { resolver.races[$0.rawValue]?.editorID }
-        let className = resolver.classes[resolved.characterClass]?.editorID
+        let className = resolver.characterClass(resolved.characterClass)?.editorID
         print("  race \(describe(resolved.race)) \(raceName ?? "—")"
             + "; class \(describe(resolved.characterClass)) \(className ?? "—")"
             + "; level \(resolved.level)"
@@ -105,7 +107,7 @@ enum ActorValueCommand {
             + "stamina \(value.staminaOffset)")
         print("  stats from \(stats.stats.source); stat race from \(stats.statsRace.source); "
             + "trait race from \(stats.race.source)")
-        if let weights = resolver.classes[value.characterClass]?.attributeWeights {
+        if let weights = resolver.characterClass(value.characterClass)?.attributeWeights {
             print("  weights health \(weights.health), magicka \(weights.magicka), "
                 + "stamina \(weights.stamina)")
         }

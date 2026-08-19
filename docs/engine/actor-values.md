@@ -2,19 +2,20 @@
 type: Subsystem
 title: Actor values
 description: How OpenSky derives every actor value from records, stores the whole 164-entry
-  table at runtime with its modifier slots, regenerates and saves them, answers resistance
-  queries, and drives the HUD meters.
+  table at runtime as offsets plus modifier slots, regenerates and saves them, answers
+  resistance queries, writes them from Papyrus, and drives the HUD meters.
 tags: [engine, actors, gameplay, stats, health, magicka, stamina, resistances, skills, hud,
   runtime-state]
-timestamp: 2026-08-17T00:00:00Z
+timestamp: 2026-08-19T00:00:00Z
 ---
 
 # Actor values
 
-Roadmap items 15.3 (issue #194) and 19.5 (issue #468). The three primary actor
-values — health, magicka, stamina — from the records that author them to the
-vanilla HUD bars that show them, plus the general store that holds the other 161
-entries of the vanilla actor-value table, resistances included.
+Roadmap items 15.3 (issue #194), 19.5 (issue #468) and 20.3 (issue #496). The
+three primary actor values — health, magicka, stamina — from the records that
+author them to the vanilla HUD bars that show them, plus the override store that
+holds all 164 entries of the vanilla actor-value table, resistances included, and
+the three Papyrus natives that write them.
 
 Impl: `opensky/Engine/Actors/`, plus `opensky/Engine/UI/HUDMeterBinding.swift`
 and `opensky/App/GameViewControllerActorValues.swift`. Record layouts:
@@ -28,7 +29,9 @@ and `opensky/App/GameViewControllerActorValues.swift`. Record layouts:
 * The apportionment rule
 * Where the numbers were checked
 * Runtime store
-* The general table
+* The override table
+* The precedence rule
+* Writing an actor value from Papyrus
 * Baselines for the non-primary values
 * Resistances
 * Regeneration
@@ -51,8 +54,10 @@ crossing.
 | `ActorValueResolver` | walks the template chain and looks up RACE and CLAS |
 | `ActorValueBaselineResolver` | what a subject's values are before anything touches them |
 | `ActorValueRuntime` | damage, restore, regeneration on top of `WorldStateStore` |
-| `ActorValueEntry` | one non-primary value: a base plus three modifier slots |
+| `ActorValueEntry` | one value as a caller reads it: an absolute base plus three modifiers |
+| `ActorValueOverride` | one value as the store holds it: a base *offset* plus three modifiers |
 | `ActorValueReadable` | the lookup rule a condition and a native snapshot share |
+| `CharacterClassStore` | load-order-wide CLAS lookup the derivation reads its weights from |
 
 The record side is immutable and buildable once per load order. The runtime side
 is `@MainActor`, mutable, and knows nothing about records — it asks the baseline
@@ -185,51 +190,143 @@ generation exists (M18). That fallback is 100/100/100 — probed, not remembered
 every playable vanilla race authors 50/50/50, and the vanilla `Player` record
 (`00000007`) adds +50 to each through its ACBS offsets.
 
-## The general table
+## The override table
 
-Item 19.5 (issue #468) stores the other 161 actor values. `ActorValueState`
-gained a sparse `[Int32: ActorValueEntry]` keyed by vanilla table index, beside
-the typed triple the three primaries keep.
+Item 19.5 (issue #468) stored the other 161 actor values; item 20.3 (issue #496)
+brought the three primaries into the same table. `ActorValueState` carries a
+sparse `[Int32: ActorValueOverride]` keyed by vanilla table index, beside the
+typed `current` triple the primaries keep.
 
 Sparse is the design rather than an optimization. An actor has 164 actor values
 and a session touches a handful; a dense table would put a number in the save
 for every value a record authors, which is the same "re-derive, never persist"
 rule the maximums follow. An index absent from the table reads its baseline, and
-an entry that comes back to its baseline is dropped rather than kept at its
-default — an actor whose fire resistance was raised and then lowered again is an
-actor nothing happened to.
+an override that comes back to nothing is dropped rather than kept at zero — an
+actor whose fire resistance was raised and then lowered again is an actor nothing
+happened to.
 
-Each entry is a base plus three modifier slots, which is the vocabulary the
-scripting surface already uses: "While GetActorValue returns the current value,
-SetActorValue sets the base value ... Any modifiers are left intact."
-(<https://www.creationkit.com/index.php?title=SetActorValue_-_Actor>)
+Each override is a base **offset** plus three modifier slots. The offset is what
+makes one table safe for all 164 values and is the subject of the precedence rule
+below; the slot vocabulary is the scripting surface's own: "While GetActorValue
+returns the current value, SetActorValue sets the base value ... Any modifiers are
+left intact."
+(<https://ck.uesp.net/wiki/SetActorValue_-_Actor>)
 
 | slot | written by | persisted |
 | --- | --- | --- |
-| `base` | the records, and `SetActorValue` when it exists | yes |
-| `permanent` | `ModActorValue`, item 19.6 | yes |
+| `baseOffset` | `SetActorValue`, a skill advance, an attribute pick | yes |
+| `permanent` | `ModActorValue` and `ForceActorValue` | yes |
 | `temporary` | an active magic effect, item 19.6 | no — the effect re-establishes it |
 | `damage` | `DamageActorValue`; never positive | yes |
 
-The current value is derived, never stored, for the reason `hasZeroHealth` is: a
-stored current and a stored base can disagree, and after a save round trip there
-is no way to say which was right. Damage moves the damage slot and floors the
-current value at zero; restoring moves it back toward zero and stops there, so a
-restore can never lift a value above what its base and modifiers say.
+`ActorValueEntry` is the *resolved* view of an override — an absolute base plus
+the same three modifiers — and it is what every caller reads. The store composes
+one from the baseline on the way out and decomposes it on the way back in, so
+nothing outside `ActorValueState` has to know that a stored base is a distance.
 
-The three primaries keep their existing typed fast path and therefore have **no**
-modifier slots: their current value is stored directly and their maximum is
-re-derived from records on every read. Splitting them would mean re-deriving the
-HUD, the save, the combat damage path and the death latch at once, so it is
-stated rather than hidden — `addModifier` and the base write answer false for
-health, magicka and stamina, and `SetActorValue` stays unregistered in Papyrus
-for exactly that reason.
+The current value of a non-primary is derived, never stored, for the reason
+`hasZeroHealth` is: a stored current and a stored base can disagree, and after a
+save round trip there is no way to say which was right. Damage moves the damage
+slot and floors the current value at zero; restoring moves it back toward zero and
+stops there, so a restore can never lift a value above what its base and modifiers
+say.
+
+A primary is the one value whose current number *is* stored, in `current`. That is
+15.3's design and it is not re-opened: the HUD, the save, the combat damage path
+and the death latch all read it directly. What item 20.3 adds is the ceiling above
+it:
+
+```text
+base(primary)    = derived maximum + baseOffset
+maximum(primary) = base + permanent + temporary
+current(primary) = the stored number, clamped into 0 ... maximum
+```
+
+The damage *slot* is therefore never written for a primary — its damage is already
+the gap between `current` and `maximum` — and a write that moves a primary's
+maximum moves `current` by the same amount. That is the documented behaviour rather
+than an invention: "ModActorValue is distinct from DamageActorValue because it
+adjusts the maximum value for the AV, while DamageActorValue or RestoreActorValue
+only adjust the current value. For example, if an actor has 100 Health,
+ModActorValue by -10 will lower the health total to 90/90, whereas DamageActorValue
+by 10 will result in 90/100 Health."
+(<https://ck.uesp.net/wiki/ModActorValue_-_Actor>) Damage already taken survives the
+change: an actor at 90/100 modified by -10 reads 80/90, neither healed by the change
+nor charged twice for it.
+
+Regeneration fills toward the effective maximum and rewrites the whole component
+every step, carrying the override table through, so a buff is not dropped on the
+next frame. A refill fills to the effective maximum and keeps the table: a
+fortified actor filled to the top is full at its fortified maximum rather than
+stripped of the buff. "Reset to records" is what drops the table, which is what
+makes it the deliberate way back.
 
 `ActorValueRuntime` addresses everything by index: `value(at:on:)`,
 `baseValue(at:on:)`, `damage(at:by:on:)`, `restore(at:by:on:)`,
-`setValue(at:to:on:)` and the two modifier writes. An index that names a primary
-routes to the typed path; every other vanilla index goes to the general table;
-only an index outside the table answers nil.
+`setValue(at:to:on:)`, `setBase(at:to:on:)`, `incrementBase(at:by:on:)`,
+`advanceSkill(at:by:on:)`, `forceValue(at:to:on:)` and the two modifier writes.
+Only an index outside the table answers nil.
+
+## The precedence rule
+
+**A base override is a delta on top of the re-derived baseline, never a
+replacement for it.** The records stay authoritative for what an actor value is;
+the store says only what the session did to it, and the two are added on every
+read.
+
+That one sentence decides every case the subsystem could otherwise get wrong:
+
+* A level change, a race change or a reordered load order re-derives the
+  baseline, and every actor value moves with it. Nothing pins a number a plugin
+  no longer authors, which is the rule the maximums have followed since 15.3.
+* A trained or script-set value is never clobbered by that re-derivation, because
+  it was stored as the distance and not as the number.
+* A trained value still *gains* from a level-up, because the derived half moved
+  underneath it. Item 20.5's skill advancement and item 20.6's attribute picks
+  both need exactly this: a skill trained by five points is five points above
+  whatever the records now author, and neither half can silently eat the other.
+* An override of zero is not stored, so an actor that ended where it started is
+  clean in the save and in the dirty counts.
+
+The alternative — storing an absolute base that suppresses derivation for that
+slot — was rejected for the second half of that third point. It keeps a trained
+skill safe, but it also freezes it: a level-up would raise the derived skill
+underneath a pinned number and change nothing the actor reads, and a load order
+that rebalanced a race would be invisible to every actor a session had touched.
+
+`incrementBase(at:by:on:)` is the API item 20.5 writes through, and
+`advanceSkill(at:by:on:)` is the same call with a guard that the index is one of
+the eighteen skills — a skill advance that lands on `Aggression` because a caller
+had an off-by-one index is a bug worth failing loudly at the one call site that
+only ever means a skill.
+
+## Writing an actor value from Papyrus
+
+Three natives write, and all three were deliberately unregistered until the
+primaries had a store to write to (`PapyrusNativeActorValues.swift`):
+
+| native | writes | quoted behaviour |
+| --- | --- | --- |
+| `SetActorValue` | the base offset | "Sets the base value ... Any modifiers are left intact." |
+| `ModActorValue` | the permanent modifier | "adjusts the maximum value for the AV" |
+| `ForceActorValue` | the permanent modifier | forces the *current* value to the number asked for |
+
+`ForceActorValue`'s worked example is transcribed as a unit test, because it pins
+the whole model in one paragraph: "If an actor has a base health of 125 and you
+force their health to 0, then the permanent modifier will be set to -125, and
+their current health will become 0. If you then set the base health to 150, they
+will still have a permanent modifier of -125, so their current health will
+instantly become 25 (150 - 125)."
+(<https://ck.uesp.net/wiki/ForceActorValue_-_Actor>) OpenSky answers 0/0 and then
+25/25 for that sequence.
+
+A negative argument passes through rather than being taken as a magnitude, which
+is the opposite of what `DamageActorValue` does and is deliberate: the wiki's own
+`ModActorValue` example modifies health by -10. A health that reaches zero through
+any of the three becomes a death on the same call, exactly as a fatal blow does,
+so a script that forces health to zero and then asks `IsDead()` does not read a
+live actor lying on the floor. `SetAV`, `ModAV` and `ForceAV` are Papyrus-level
+wrappers and need no registration of their own.
 
 ## Baselines for the non-primary values
 
@@ -375,26 +472,33 @@ session in which nothing took damage writes no chunk at all. Layout:
 [OpenSky save container](/formats/opensky-save.md).
 
 The regeneration step rewrites the whole component every frame and carries the
-general table through that write, so a temporary modifier an active effect is
+override table through that write, so a temporary modifier an active effect is
 holding survives a tick ([magic](/engine/magic.md)).
 
 Because the maximums are not written, a save restored against changed records
 gets the records' numbers: the stored current value survives, and the first
 mutation clamps it into the new range.
 
-The general table travels in its own chunk, `AVGN` (item 19.5): key, cell, a
-value count, then one `(index, base, permanent, damage)` record per stored value.
-It is a sibling of `AVAL` rather than an extension of it for the reason `QALS` is
-a sibling of `QSTS` — `AVAL` entries are a flat positional layout with no
-per-entry length, so appending a variable-length list would make an older build
-misparse the whole chunk instead of skipping the new part. The temporary
+The override table travels in its own chunk, `AVOV` (item 20.3): key, cell, a
+value count, then one `(index, baseOffset, permanent, damage)` record per stored
+value. It is a sibling of `AVAL` rather than an extension of it for the reason
+`QALS` is a sibling of `QSTS` — `AVAL` entries are a flat positional layout with
+no per-entry length, so appending a variable-length list would make an older
+build misparse the whole chunk instead of skipping the new part. The temporary
 modifier is not written, because the magic effect that established it is what
 re-establishes it — item 19.6 landed that half, and `ActiveEffectRuntime`
 rebuilds the slot from the `AEFF` chunk on load ([magic](/engine/magic.md)) — and
-persisting both would double the buff on every reload. An `AVGN` entry always
-travels beside the actor's `AVAL` entry, so the
-decoder never has to invent a health for an actor whose health the save did not
-carry; an orphan entry is dropped.
+persisting both would double the buff on every reload. An `AVOV` entry always
+travels beside the actor's `AVAL` entry, so the decoder never has to invent a
+health for an actor whose health the save did not carry; an orphan entry is
+dropped.
+
+`AVOV` replaces item 19.5's `AVGN`, which carried an absolute base for the 161
+non-primary values. The tag changed rather than the payload's meaning because the
+two layouts have identical shapes and different ones: reading an `AVGN` record as
+an `AVOV` record would turn a resistance of 30 into a resistance 30 points *above*
+what the records say. An `AVGN` chunk is now an unknown tag and is skipped, so an
+older save restores every actor at its record baselines.
 
 ## Panel seam
 
@@ -420,9 +524,16 @@ off `ActorValueRuntime` with no accounting invented at the UI.
 | Damage | `ActorValueDamageControl` | takes that amount off the selected value |
 | Restore | `ActorValueRestoreControl` | adds it back, capped at the derived maximum |
 | Set | `ActorValueSetControl` | writes the amount outright: the current value for a primary, the base for everything else |
+| Set base | `ActorValueSetBaseControl` | writes the amount as the value's *base*, which for a primary moves the maximum the bar is drawn against |
 | Refill | `ActorValueRefillControl` | returns every bar to its maximum |
 | Reset to records | `ActorValueResetControl` | drops the runtime state so the actor derives from records again |
 | Readout | `CombatActorValuesStatsLabel` | both actors' three bars, the derivation that produced the maximums, the selected value with its modifier slots and capped resistance fraction, and the last action |
+
+The bars are drawn against the *effective* maximum since item 20.3, so a base
+write or a fortify shows on them rather than only in the selection line, and the
+selection line answers for a primary too — a health at 90/90 after a
+`ModActorValue` and one at 90/100 after a `DamageActorValue` are different states
+that the bar alone cannot tell apart.
 
 The amount is a text field rather than a slider because a gate that damages an
 actor by exactly 40 has to be able to ask for exactly 40, and a field holding
@@ -472,9 +583,12 @@ through Skyrim.esm's string table to `Archery`, `Speech` and `Illusion`, and
 `ActorValueInformationRealDataTests` pins exactly that.
 
 Since item 19.5 every entry in the table is stored, so `kind(at:)` answers a
-*fast-path* question rather than a can-I-read-it question: nil means "goes
-through the general table", and `isVanilla(index:)` is what says whether an index
-names an actor value at all. Only an index outside the table is still a miss — a
+*fast-path* question rather than a can-I-read-it question: nil means "this value
+has no separately stored current number", and `isVanilla(index:)` is what says
+whether an index names an actor value at all. Since item 20.3 the fast path is
+narrower still — a primary and a resistance take the same route for a base or a
+modifier write, and differ only in where the current value lives. Only an index
+outside the table is still a miss — a
 reason-tagged false and a `ConditionTally` bucket on the condition side, a
 tallied native failure and the call's declared default on the Papyrus side.
 
@@ -492,7 +606,13 @@ value carries this name", which is the tally's whole remaining content.
 ## Out of scope
 
 Weapon damage application (items 15.4, 15.5), death and ragdoll (15.6), skill
-advancement and use-based experience (M20), applying a magic effect (item 19.6).
+use and skill experience (item 20.5), the level curve and attribute picks (item
+20.6), perk state (item 20.4). Item 20.3 builds the write path those three
+consume and stops there: nothing here decides when a skill should rise. A timed
+Recover effect on a primary is still counted rather than applied, which is issue
+511 — the storage it was waiting for now exists, and lifting the guard moves
+tallies that need re-measuring against the install ([magic](/engine/magic.md)).
+
 AVIF record decode landed with item 20.1 — the record adds metadata, not values;
 see [actor value information](/formats/actor-value-information.md). Papyrus and
 condition exposure landed with item 15.8 — see
