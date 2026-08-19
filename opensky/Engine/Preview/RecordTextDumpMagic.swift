@@ -13,12 +13,16 @@ nonisolated extension RecordTextDump {
         let shoutStore: ShoutStore
         let equipSlotStore: EquipSlotStore
         let sourcePlugin: String
+        /// Optional: a caller that has not built a PERK store still gets every
+        /// other line, with perk links printed as raw FormIDs.
+        var perkStore: PerkStore?
     }
 
-    /// The magic stores a summary needs to name what a record points at: MGEF
-    /// for EFID links, SPEL/SCRL for the spell a book teaches or a weapon's
+    /// The stores a summary needs to name what a record points at: MGEF for
+    /// EFID links, SPEL/SCRL for the spell a book teaches or a weapon's
     /// critical applies, ENCH for the enchantment on a weapon or a piece of
-    /// armor.
+    /// armor, PERK for the half-cost perk on a spell and the perk a magic
+    /// effect applies.
     struct MagicContext {
         let effects: MagicEffectStore
         let spells: SpellStore
@@ -26,6 +30,7 @@ nonisolated extension RecordTextDump {
         let shouts: ShoutStore
         let equipSlots: EquipSlotStore
         let sourcePlugin: String
+        let perks: PerkStore?
     }
 
     static func dump(
@@ -50,7 +55,8 @@ nonisolated extension RecordTextDump {
                 enchantments: context.enchantmentStore,
                 shouts: context.shoutStore,
                 equipSlots: context.equipSlotStore,
-                sourcePlugin: context.sourcePlugin
+                sourcePlugin: context.sourcePlugin,
+                perks: context.perkStore
             )
         )
     }
@@ -63,7 +69,7 @@ nonisolated extension RecordTextDump {
         magicContext: MagicContext?
     ) -> String? {
         switch record.type {
-        case "MGEF": magicEffectSummary(record, localized, keywordContext)
+        case "MGEF": magicEffectSummary(record, localized, keywordContext, magicContext)
         case "SPEL": spellSummary(record, localized, magicContext)
         case "SCRL": scrollSummary(record, localized, magicContext)
         case "ENCH": enchantmentSummary(record, localized, formListContext, magicContext)
@@ -81,7 +87,8 @@ nonisolated extension RecordTextDump {
     private static func magicEffectSummary(
         _ record: ESMRecord,
         _ localized: Bool,
-        _ keywordContext: KeywordContext?
+        _ keywordContext: KeywordContext?,
+        _ magicContext: MagicContext?
     ) -> String? {
         guard let effect = try? MagicEffect(record: record, localized: localized) else {
             return nil
@@ -102,7 +109,7 @@ nonisolated extension RecordTextDump {
         return String(
             format: "decoded MGEF: editorID %@, name %@, archetype %@, casting %@, "
                 + "delivery %@, cost %.3f, related actor value %@, resistance %@, "
-                + "keywords [%@], skipped %d",
+                + "perk %@, keywords [%@], skipped %d",
             effect.editorID ?? "-",
             name,
             data.archetype.description,
@@ -111,9 +118,19 @@ nonisolated extension RecordTextDump {
             data.baseCost,
             ActorValueIdentity.description(of: data.relatedActorValue),
             ActorValueIdentity.description(of: data.resistanceActorValue),
+            perkText(data.perkToApply, magicContext),
             keywords.joined(separator: ", "),
             effect.skipped.total
         )
+    }
+
+    /// A PERK link as text. Named through the store when the dump was given
+    /// one, and printed raw otherwise, so a caller without a PERK store still
+    /// sees the link rather than nothing.
+    static func perkText(_ id: FormID?, _ context: MagicContext?) -> String {
+        guard let id else { return "-" }
+        guard let perks = context?.perks else { return id.description }
+        return perks.displayString(for: id, fromPlugin: context?.sourcePlugin ?? "")
     }
 
     private static func spellSummary(
@@ -151,12 +168,14 @@ nonisolated extension RecordTextDump {
             + "name \(display(record.name))"
         if let data = record.data {
             line += String(
-                format: ", type %@, casting %@, delivery %@, charge time %.2f, range %.1f",
+                format: ", type %@, casting %@, delivery %@, charge time %.2f, range %.1f, "
+                    + "half-cost perk %@",
                 data.type.description,
                 data.castingType.description,
                 data.delivery.description,
                 data.chargeTime,
-                data.range
+                data.range,
+                perkText(data.halfCostPerk, context)
             )
         } else {
             line += ", SPIT malformed"

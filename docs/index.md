@@ -28,6 +28,10 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   AVSK skill-use parameters, the perk-tree node run and the CNAM ambiguity that makes it
   order-sensitive, the name join that numbers a record through the actor-value
   table, and load-order-wide lookup by FormID, editor id or actor-value index.
+* [Perks](/formats/perks.md) - PERK header and effect sections, the quest, ability and
+  entry-point payload union, the 92 entry points and the EPFD function-data union, the
+  condition tabs, load-order-wide lookup with the flat entry-point index and NNAM rank
+  chains, and the histogram measured on a vanilla install.
 * [Locations](/formats/locations.md) - LCTN/LCRT layouts, cycle-safe parent and keyword
   traversal, CELL XLCN links, and direct quest-location alias fills.
 * [plugins.txt load order](/formats/plugins-txt.md) - enable flags and file

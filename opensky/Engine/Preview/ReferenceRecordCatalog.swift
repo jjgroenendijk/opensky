@@ -23,6 +23,7 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
     case dualCastData = "DUAL"
     case equipSlot = "EQUP"
     case actorValueInformation = "AVIF"
+    case perk = "PERK"
 
     var fourCC: FourCC {
         switch self {
@@ -44,6 +45,7 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
         case .dualCastData: "DUAL"
         case .equipSlot: "EQUP"
         case .actorValueInformation: "AVIF"
+        case .perk: "PERK"
         }
     }
 
@@ -67,6 +69,7 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
         case .dualCastData: "DUAL — Dual cast data"
         case .equipSlot: "EQUP — Equip slots"
         case .actorValueInformation: "AVIF — Actor value information"
+        case .perk: "PERK — Perks"
         }
     }
 }
