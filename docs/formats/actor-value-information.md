@@ -182,7 +182,8 @@ the second.
 
 `openskycli record <editorid>` and the Asset Browser's `AVIF — Actor value information` type
 both print the same summary: identity, the joined actor value, the category, the four skill-use
-parameters, and the perk-node table with raw perk FormIDs.
+parameters, and the perk-node table, whose boxes name the PERK they grant when the dump was
+given a perk store ([perks](/formats/perks.md)) and print the raw link when it was not.
 
 ## Observed on a vanilla install
 

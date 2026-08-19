@@ -209,6 +209,14 @@ nonisolated struct ConditionList: Equatable, Sendable {
         conditions.isEmpty
     }
 
+    /// Whether `decode(field:)` would claim this field type. Record decoders
+    /// that route a CTDA run to one of several lists — PERK picks the perk's
+    /// own conditions or the open entry-point tab — ask this before choosing
+    /// which list to hand the field to.
+    static func isConditionField(_ type: FourCC) -> Bool {
+        type == "CITC" || type == "CTDA" || type == "CIS1" || type == "CIS2"
+    }
+
     /// Consumes `field` when it is part of a condition run. Returns false for
     /// anything else so the caller can keep matching its own fields.
     @discardableResult

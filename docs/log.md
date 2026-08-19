@@ -4,6 +4,32 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-19
 
+* **PERK decodes (issue #495, item 20.2)**, the record behind every perk and passive: the
+  header, the availability conditions, and the effect sections that set a quest stage, grant
+  an ability spell or hook an entry point. Layout, the two payload unions and the decode
+  policy are in [perks](/formats/perks.md), sourced from UESP and cross-checked against xEdit
+  `wbRecord(PERK, ...)`. All 532 definitions across the five masters decode with no unread
+  field and no unknown entry point.
+* **`DATA` and `CTDA` each mean two things in one PERK record**, and `PRKE` is the only thing
+  separating them — the five-byte header before the first section, the typed effect payload
+  inside one; the perk's own availability conditions before, an entry-point condition tab
+  after. The decoder keeps explicit open-section state for the same reason the QUST decoder
+  does.
+* **The declared rank count is not the rank chain.** `Armsman00` says 1 while its `NNAM`
+  chain is five records long, and the level byte is zero on every vanilla record even though
+  `Armsman80` needs One-Handed 80 — the requirement is a condition, not a header field. xEdit
+  displays a rank count it recomputes after load, which is why its editor disagrees with the
+  bytes. Both are exposed verbatim and
+  `PerkRealDataTests.theDeclaredRankCountDoesNotTrackTheRankChain()` pins the finding.
+* **`PerkStore` carries a flat entry-point index**, so the perk runtime never scans 483 perks
+  to answer "what hooks Mod Attack Damage". The measured histogram scopes that work: 622
+  entry-point effects spread over 68 of the 92 entry points, with Mod Attack Damage (81), Mod
+  Spell Magnitude (61), Apply Combat Hit Spell (58) and Mod Spell Cost (43) at the top and 24
+  entry points no vanilla perk hooks at all.
+* **The perk links M19 left unresolved now render as names** — a spell's half-cost perk, a
+  magic effect's perk to apply, and every box of an AVIF perk tree — and `PERK — Perks` joins
+  the Asset Browser's reference-record types, with a resolved rank-chain section beside the
+  dump.
 * **AVIF decodes (issue #494, item 20.1)**, the record that describes the actor values
   themselves and, for the skills, the advancement parameters and the perk-tree node graph.
   Layout, the AVSK float block and the node run are in

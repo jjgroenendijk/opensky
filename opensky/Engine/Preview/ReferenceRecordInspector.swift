@@ -12,6 +12,7 @@ nonisolated struct ReferenceRecordInspector {
     private let enchantments: EnchantmentStore
     private let shouts: ShoutStore
     private let equipSlots: EquipSlotStore
+    private let perks: PerkStore
     private let locations: LocationStore
     private let encounterZones: EncounterZoneStore
     private let collisionLayers: CollisionLayerStore
@@ -30,6 +31,7 @@ nonisolated struct ReferenceRecordInspector {
         enchantments = EnchantmentStore(index: index, effects: magicEffectStore)
         shouts = ShoutStore(index: index, spells: spellStore)
         equipSlots = EquipSlotStore(index: index)
+        perks = PerkStore(index: index, spells: spellStore)
         locations = LocationStore(index: index)
         encounterZones = EncounterZoneStore(index: index)
         collisionLayers = CollisionLayerStore(index: index)
@@ -49,7 +51,8 @@ nonisolated struct ReferenceRecordInspector {
                 enchantmentStore: enchantments,
                 shoutStore: shouts,
                 equipSlotStore: equipSlots,
-                sourcePlugin: preview.sourcePlugin
+                sourcePlugin: preview.sourcePlugin,
+                perkStore: perks
             )
         )]
         sections.insert(metadata(preview), at: 1)
@@ -76,6 +79,7 @@ nonisolated struct ReferenceRecordInspector {
         case "COLL": return collisionLayer(id)
         case "DOBJ": return defaultObjectTable()
         case "ENCH": return enchantmentChain(id)
+        case "PERK": return perkRankChain(id)
         default: return nil
         }
     }
@@ -127,6 +131,25 @@ nonisolated struct ReferenceRecordInspector {
                 + "cost \(cost.cost)\(cost.isManual ? " (manual)" : "")"
         }
         return cappedLines(title: "base enchantment chain", values: values)
+    }
+
+    /// The selected perk followed by each rank its NNAM chain reaches, with
+    /// the ability spells each rank grants already joined. The store's cycle
+    /// guard is what keeps a mod-authored loop from hanging the inspector.
+    private func perkRankChain(_ id: ResolvedFormID) -> String? {
+        let chain = perks.rankChain(from: id)
+        guard let first = chain.first else { return nil }
+        let values = chain.enumerated().map { offset, resolved in
+            let spells = resolved.effects.compactMap(\.spellName)
+            let spellText = spells.isEmpty ? "" : " — spells [\(spells.joined(separator: ", "))]"
+            return "rank \(offset + 1): \(resolved.editorID ?? resolved.id.description) — "
+                + "\(resolved.sourcePlugin) — \(resolved.effects.count) effects, "
+                + "\(resolved.record.entryPointEffects.count) entry points" + spellText
+        }
+        return cappedLines(
+            title: "rank chain (declared \(first.declaredRankCount))",
+            values: values
+        )
     }
 
     private func encounterZone(_ id: ResolvedFormID) -> String? {
