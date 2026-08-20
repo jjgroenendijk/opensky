@@ -2,6 +2,18 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-20
+
+* **Resolved item enchantments are cached (issue #489)**: the melee and archery frame hooks
+  asked for an equipped item's enchantment every frame, and each ask walked the item and
+  `ENCH` records afresh. `ItemEnchantmentProfileCache` memoizes the answer per item — a
+  resolved "carries none" included — because a profile is a pure function of records nothing
+  at runtime writes. Rewiring the `ENCH` store is the only thing that drops an entry. See
+  [magic and active effects](/engine/magic.md).
+* **`World > Inventory & Equipment > Equipment` states what the cache holds and how much of
+  it has been reused**, so the saving is readable while walking around rather than only
+  under a profiler.
+
 ## 2026-08-19
 
 * **Skill advancement (issue #498, item 20.5)**: melee, archery, blocking, armour and

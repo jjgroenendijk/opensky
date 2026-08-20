@@ -77,16 +77,18 @@ nonisolated enum InventoryEquipmentReadout {
             return InventoryEquipmentSnapshot.unavailable.lastActionText
         }
         let inspection = snapshot.equipInspection
+        let cache = snapshot.enchantmentCache.describedLine
         guard let name = inspection.name else {
             return "Inspecting: \(label(snapshot.equipTarget))\n"
-                + "Nothing resolves that owner right now."
+                + "Nothing resolves that owner right now.\n\(cache)"
         }
         return [
             "Inspecting: \(label(snapshot.equipTarget)) · \(name)",
             "Appearance source: "
                 + (inspection.usesRuntimeEquipment ? "runtime equipped set" : "plugin outfit"),
             equippedLines(inspection.equipped),
-            skipLines(inspection.appearanceSkips)
+            skipLines(inspection.appearanceSkips),
+            cache
         ].joined(separator: "\n")
     }
 

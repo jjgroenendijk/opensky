@@ -30,7 +30,17 @@ struct EnchantmentBridgeState {
     /// Load-order ENCH index, written by `wireEnchantments` when the provider can
     /// supply one. Nil without game data, and then an enchanted item applies
     /// nothing and the readout says so.
-    var store: EnchantmentStore?
+    ///
+    /// Rewiring it drops every resolved profile below, because the store is one
+    /// of the two record sources a profile is derived from and the only one that
+    /// is ever written after the item index it is paired with (issue #489).
+    var store: EnchantmentStore? {
+        didSet { profiles.invalidate() }
+    }
+
+    /// Resolved profiles, so the melee and archery frame hooks stop re-walking
+    /// the records for an equipped set that has not changed (issue #489).
+    var profiles = ItemEnchantmentProfileCache()
     /// What the most recent enchanted hit did. Nil until one lands.
     var lastHit: WeaponEnchantmentReport?
     /// What the most recent worn-item reconciliation did. Nil until one runs.
@@ -71,12 +81,23 @@ extension GameViewController {
 
     /// The resolved enchantment of one carried item, or nil when it carries none
     /// and when this session has no ENCH index.
+    ///
+    /// Answered from the profile cache after the first ask, which is what keeps
+    /// the melee and archery frame hooks off the records (issue #489).
+    ///
+    /// The store is read out before the call rather than inside the closure
+    /// deliberately: the call holds a write access to `enchantments` for as long
+    /// as it runs, and reading `enchantments.store` from inside it would be a
+    /// second, overlapping access to the same property.
     func enchantmentProfile(of item: FormID) -> ItemEnchantmentProfile? {
-        guard
-            let store = enchantments.store,
-            let definition = worldItems.runtime?.inventory.baselines.items.definition(item)
-        else { return nil }
-        return ItemEnchantmentProfile.resolve(definition, using: store)
+        let store = enchantments.store
+        return enchantments.profiles.profile(of: item) { item in
+            guard
+                let store,
+                let definition = worldItems.runtime?.inventory.baselines.items.definition(item)
+            else { return nil }
+            return ItemEnchantmentProfile.resolve(definition, using: store)
+        }
     }
 
     /// What `item` has left on `holder`, or nil when it carries no enchantment.

@@ -43,6 +43,7 @@ extension GameViewController: InventoryEquipmentControlProviding {
             targetOwnership: targetOwnership(),
             equipTarget: worldItems.inspectionTarget,
             equipInspection: equipInspection(),
+            enchantmentCache: enchantments.profiles.readout,
             lastActionText: worldItems.lastGrantText
         )
     }
