@@ -11,9 +11,11 @@ struct PapyrusNativeRegistryTests {
         // 16.7 (issue #424) added `StartCombat` and `StopCombat`, 68 before
         // 19.11 (issue #474) added the eleven spell natives, 79 before
         // 20.3 (issue #496) added the three actor-value writes, and 82 before
-        // 20.4 (issue #497) added `AddPerk`, `RemovePerk` and `HasPerk`, and 85
-        // before 20.5 (issue #498) added `AdvanceSkill` and `IncrementSkill`.
-        #expect(standard.count == 87)
+        // 20.4 (issue #497) added `AddPerk`, `RemovePerk` and `HasPerk`, 85
+        // before 20.5 (issue #498) added `AdvanceSkill` and `IncrementSkill`,
+        // and 87 before 20.6 (issue #499) added `GetLevel`, `GetPerkPoints`
+        // and `ModPerkPoints`.
+        #expect(standard.count == 90)
         #expect(standard.contains(
             scriptName: "form", functionName: "REGISTERFORUPDATE"
         ))

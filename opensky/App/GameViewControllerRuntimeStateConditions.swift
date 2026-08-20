@@ -142,7 +142,8 @@ extension GameViewController {
         values: ActorValueRuntime,
         isDead: Bool = false
     ) -> ActorConditionState {
-        ActorConditionState(
+        let baseline = values.baseline(of: holder)
+        return ActorConditionState(
             current: values.current(of: holder),
             maximums: values.maximums(of: holder),
             isDead: isDead,
@@ -152,8 +153,9 @@ extension GameViewController {
                 ? melee.runtime?.state.drawState
                 : nil,
             general: values.resolvedEntries(of: holder),
-            generalBaseline: values.baseline(of: holder).basesByIndex,
-            isPlayer: holder.key == .player
+            generalBaseline: baseline.basesByIndex,
+            isPlayer: holder.key == .player,
+            level: baseline.level
         )
     }
 

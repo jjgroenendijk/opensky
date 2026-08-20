@@ -36,6 +36,7 @@ extension PapyrusWorldStateBridge {
         guard let values = actorValueRuntime?(), let holder = actorHolder(for: key) else {
             return nil
         }
+        let baseline = values.baseline(of: holder)
         return PapyrusActorState(
             current: values.current(of: holder),
             maximums: values.maximums(of: holder),
@@ -44,8 +45,9 @@ extension PapyrusWorldStateBridge {
             combatActivity: combatRuntime?()?.activity(of: key) ?? .notFighting,
             weaponDrawState: weaponDrawState?(key),
             general: values.resolvedEntries(of: holder),
-            generalBaseline: values.baseline(of: holder).basesByIndex,
-            isPlayer: key == playerKey
+            generalBaseline: baseline.basesByIndex,
+            isPlayer: key == playerKey,
+            level: baseline.level
         )
     }
 
@@ -159,6 +161,17 @@ extension PapyrusWorldStateBridge {
         _ advance: PapyrusSkillAdvance, at index: Int32, by magnitude: Float
     ) -> Bool {
         advanceSkill?(advance, index, magnitude) ?? false
+    }
+
+    // MARK: - Perk points
+
+    func playerPerkPoints() -> Int? {
+        modifyPerkPoints.flatMap { $0(0) }
+    }
+
+    @discardableResult
+    func modifyPlayerPerkPoints(by delta: Int) -> Int? {
+        modifyPerkPoints.flatMap { $0(delta) }
     }
 
     // MARK: - Private

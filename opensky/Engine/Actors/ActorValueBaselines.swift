@@ -57,15 +57,21 @@ nonisolated struct ActorValueBaseline: Equatable, Sendable {
     /// author, keyed by vanilla table index (issue #468). Sparse: an index
     /// absent here reads `ActorValueIdentity.defaultValue(at:)`.
     let general: [Int32: Float]
+    /// The level the derivation used (issue #499): the ACBS word or its
+    /// `PC Level Mult` scaling for an NPC, and the player's own character level
+    /// for the player. What `GetLevel` and `Actor.GetLevel` report.
+    let level: Int
 
     init(
         maximums: ActorValues,
         regenPercentPerSecond: ActorValues,
-        general: [Int32: Float] = [:]
+        general: [Int32: Float] = [:],
+        level: Int = PlayerLevelSource.startingLevel
     ) {
         self.maximums = maximums
         self.regenPercentPerSecond = regenPercentPerSecond
         self.general = general
+        self.level = max(PlayerLevelSource.startingLevel, level)
     }
 
     /// The base value `index` starts from: what the records author, and the
@@ -93,6 +99,18 @@ nonisolated struct ActorValueBaseline: Equatable, Sendable {
             values[ActorValueIdentity.index(of: kind)] = maximums[kind]
         }
         return values
+    }
+
+    /// The same baseline reported at a different level, which is what the
+    /// player's fallback needs: the numbers come from nowhere, but the level is
+    /// the character's own and is known even before chargen picks a race.
+    func atLevel(_ level: Int) -> ActorValueBaseline {
+        ActorValueBaseline(
+            maximums: maximums,
+            regenPercentPerSecond: regenPercentPerSecond,
+            general: general,
+            level: level
+        )
     }
 
     static let empty = ActorValueBaseline(
@@ -132,6 +150,11 @@ nonisolated struct ActorValueBaselineResolver {
     /// Baseline handed to a subject nothing can be derived for: the player
     /// before chargen, a summon, an NPC_ whose chain will not walk.
     let fallback: ActorValueBaseline
+    /// Where the player's own level is published (issue #499). The same
+    /// reference the resolver reads for `PC Level Mult` scaling when the two
+    /// are built together, so an NPC scaled against the player and the player's
+    /// own reported level cannot disagree.
+    let playerLevel: PlayerLevelSource
 
     init(
         resolver: ActorValueResolver? = nil,
@@ -140,11 +163,13 @@ nonisolated struct ActorValueBaselineResolver {
             maximums: ActorValueBaselineResolver.vanillaPlayerStartingValues,
             regenPercentPerSecond: .zero,
             general: ActorValueBaselineResolver.recordlessGeneralValues
-        )
+        ),
+        playerLevel: PlayerLevelSource? = nil
     ) {
         self.resolver = resolver
         self.playerRace = playerRace
         self.fallback = fallback
+        self.playerLevel = playerLevel ?? resolver?.playerLevelSource ?? PlayerLevelSource()
     }
 
     /// The baseline for one subject.
@@ -172,7 +197,7 @@ nonisolated struct ActorValueBaselineResolver {
             let resolver,
             let race = playerRace.flatMap({ resolver.races[$0.rawValue] })
         else {
-            return fallback
+            return fallback.atLevel(playerLevel.level)
         }
         return ActorValueBaseline(
             maximums: ActorValues(
@@ -191,7 +216,12 @@ nonisolated struct ActorValueBaselineResolver {
             // player is before chargen exists (M20).
             general: ActorValueDerivation.generalBaseValues(
                 inputs: ActorValueInputs(race: race.stats)
-            )
+            ),
+            // The player's level is the character level, not a derived one:
+            // nothing in the records describes the player, and the number a
+            // `PC Level Mult` actor scales against has to be the same number
+            // `GetLevel` reports for them.
+            level: playerLevel.level
         )
     }
 
@@ -205,7 +235,8 @@ nonisolated struct ActorValueBaselineResolver {
         return ActorValueBaseline(
             maximums: resolved.maximums,
             regenPercentPerSecond: resolved.regenPercentPerSecond,
-            general: resolved.generalBaseValues
+            general: resolved.generalBaseValues,
+            level: resolved.level
         )
     }
 }

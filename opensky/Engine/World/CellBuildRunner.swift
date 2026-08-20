@@ -121,6 +121,9 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     /// GMST-derived skill-use curve and per-rank character experience (issue
     /// #498), defaulting to the documented numbers on a synthetic scene.
     var skillAdvancementSettings: SkillAdvancementSettings = .documentedDefaults
+    /// GMST-derived level curve and level-up rewards (issue #499), defaulting
+    /// to the documented numbers on a synthetic scene.
+    var characterLevelSettings: CharacterLevelSettings = .documentedDefaults
     /// GMST-derived walk/run values plus explicit documented fallbacks.
     var movementConfiguration: PlayerMovementConfiguration = .synthetic
     /// GMST-derived `fBarterMin` and `fBarterMax` at the milestone's fixed

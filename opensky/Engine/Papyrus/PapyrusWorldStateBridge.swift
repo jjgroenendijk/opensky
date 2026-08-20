@@ -77,6 +77,13 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// skill took it. Held as a closure for the reason `mutatePerks` is. Nil in
     /// a session with no progression data.
     var advanceSkill: ((PapyrusSkillAdvance, Int32, Float) -> Bool)?
+    /// One read or write of the player's perk-point pool over the session's
+    /// `PlayerLevelRuntime`, which is a struct the controller owns by value
+    /// (issue #499): the closure applies the delta and answers the pool
+    /// afterwards, so a zero delta is the read. Held as a closure for the
+    /// reason `advanceSkill` is. Nil in a session with no character leveling,
+    /// and both perk-point natives then refuse rather than answering zero.
+    var modifyPerkPoints: ((Int) -> Int?)?
     /// Load-order MGEF lookup, for `HasMagicEffectWithKeyword`. Nil in a
     /// synthetic session with no record index.
     var magicEffectStore: MagicEffectStore?

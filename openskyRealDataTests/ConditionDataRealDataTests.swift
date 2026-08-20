@@ -17,13 +17,17 @@ struct ConditionDataRealDataTests {
         180, 181, 359, 360, 372, 444, 560, 562, 565, 567, 603, 604, 605, 610
     ]
 
-    /// The magic indices item 19.11 added afterwards (issue #474). Subtracted
-    /// out so the two numbers this test pins keep meaning what they meant when
-    /// #455 measured them: the registry before and after the M18 functions,
-    /// not the registry as it happens to stand today.
-    /// `ConditionMagicRealDataTests` pins the M19 step from the other side.
+    /// Every index a later item added. Subtracted out so the two numbers this
+    /// test pins keep meaning what they meant when #455 measured them: the
+    /// registry before and after the M18 functions, not the registry as it
+    /// happens to stand today. `ConditionMagicRealDataTests` pins the M19 step
+    /// from the other side, and excludes the M20 ones for the same reason.
+    ///
+    /// The eight magic indices are item 19.11's (issue #474); `HasPerk` is item
+    /// 20.4's (issue #497); `GetLevel` and `GetBaseActorValue` are item 20.6's
+    /// (issue #499).
     private static let laterIndices: Set<UInt16> = [
-        214, 223, 264, 570, 571, 572, 632, 699
+        80, 214, 223, 264, 277, 448, 570, 571, 572, 632, 699
     ]
 
     @Test(.enabled(if: Self.dataRoot != nil))

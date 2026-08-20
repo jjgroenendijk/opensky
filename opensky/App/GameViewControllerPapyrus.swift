@@ -200,5 +200,11 @@ extension GameViewController {
         bridge.advanceSkill = { [weak self] advance, index, magnitude in
             self?.advancePlayerSkill(advance, at: index, by: magnitude) ?? false
         }
+        // `wireProgression` runs after this step as well (issue #499). A zero
+        // delta is the read `Game.GetPerkPoints` makes, which is why one
+        // closure answers both natives.
+        bridge.modifyPerkPoints = { [weak self] delta in
+            self?.modifyPlayerPerkPoints(by: delta)
+        }
     }
 }

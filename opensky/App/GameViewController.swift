@@ -220,6 +220,13 @@ final class GameViewController: NSViewController {
     /// add state.
     var skills = SkillBridgeState()
 
+    /// Character leveling: the level runtime skill advancement banks into, the
+    /// AVIF perk-tree index a perk-point spend is validated against, and the
+    /// last outcome line (issue #499). The implementation lives in
+    /// `GameViewControllerProgression.swift`; stored here because extensions
+    /// cannot add state.
+    var progression = ProgressionBridgeState()
+
     /// Melee combat: the swing runtime, the WEAP index it reads combat data
     /// out of, and the panel's last outcome line (issue #195). The
     /// implementation lives in `GameViewControllerMelee.swift`; stored here

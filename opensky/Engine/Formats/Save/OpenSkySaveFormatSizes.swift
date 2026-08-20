@@ -149,4 +149,13 @@ nonisolated extension OpenSkySaveFormat {
     /// Smallest number of bytes one `PRKS` owned perk can occupy: a plugin key
     /// with an empty name. A generated key is longer, so this is a lower bound.
     static let minimumPerkKeySize = 7
+    /// Smallest number of bytes a single `PLVL` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4), the level, experience, perk points,
+    /// pending picks and skill increases (4 each) and a zero pick-history count
+    /// (4). Nothing but the key and the history is variable, so this is a lower
+    /// bound only because a generated key is longer.
+    static let minimumPlayerProgressEntrySize = 31
+    /// Bytes one `PLVL` attribute pick occupies: the vanilla actor-value index
+    /// it names. Fixed width, so this is the exact size.
+    static let playerProgressPickSize = 4
 }

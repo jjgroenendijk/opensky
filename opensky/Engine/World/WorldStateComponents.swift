@@ -117,6 +117,15 @@ nonisolated enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendab
     /// actor values a perk goes on to modify are rewritten sixty times a
     /// second.
     case perks
+    /// The player's character level, banked character experience, unspent perk
+    /// points and attribute-pick history (issue #499). The value type is
+    /// `PlayerProgressState` in
+    /// `opensky/Engine/Progression/PlayerProgressState.swift`. Like `quest` it
+    /// modifies no placement and belongs to no cell: it is keyed by
+    /// `ReferenceKey.player`, who has no record in this engine. A slot of its
+    /// own beside `perks` because the two answer different questions — how many
+    /// points are left to spend, and which perks those points already bought.
+    case playerProgress
 }
 
 /// A value that can occupy one component slot.
@@ -157,6 +166,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
     case spellbook(SpellbookState)
     case enchantedItems(EnchantedItemState)
     case perks(PerkState)
+    case playerProgress(PlayerProgressState)
 
     var kind: WorldStateComponentKind {
         switch self {
@@ -176,6 +186,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
         case .spellbook: .spellbook
         case .enchantedItems: .enchantedItems
         case .perks: .perks
+        case .playerProgress: .playerProgress
         }
     }
 }

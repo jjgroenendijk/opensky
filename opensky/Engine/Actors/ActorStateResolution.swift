@@ -55,6 +55,9 @@ nonisolated struct ActorConditionState: ActorValueReadable, Equatable, Sendable 
     /// Whether this actor is the player, which is what the resistance cap
     /// depends on.
     var isPlayer: Bool
+    /// The actor's level, which is what `GetLevel` reports (issue #499): the
+    /// derived level for an NPC, and the character level for the player.
+    var level: Int
 
     init(
         current: ActorValues,
@@ -66,7 +69,8 @@ nonisolated struct ActorConditionState: ActorValueReadable, Equatable, Sendable 
         combatTarget: ReferenceKey? = nil,
         general: [Int32: ActorValueEntry] = [:],
         generalBaseline: [Int32: Float] = [:],
-        isPlayer: Bool = false
+        isPlayer: Bool = false,
+        level: Int = PlayerLevelSource.startingLevel
     ) {
         self.current = current
         self.maximums = maximums
@@ -78,6 +82,7 @@ nonisolated struct ActorConditionState: ActorValueReadable, Equatable, Sendable 
         self.general = general
         self.generalBaseline = generalBaseline
         self.isPlayer = isPlayer
+        self.level = max(PlayerLevelSource.startingLevel, level)
     }
 
     /// This actor's combat state as `GetCombatState` spells it.

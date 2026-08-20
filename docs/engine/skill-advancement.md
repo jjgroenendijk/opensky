@@ -182,13 +182,16 @@ trained skill survives a level change, a race change or a reordered load order.
 
 ## Character experience
 
-Each point banks `level * fXPPerSkillRank` into `PlayerProgressState`, beside a count of the
-points gained. That value is the seam item 20.6 fills in: the character level curve
-(`fXPLevelUpBase` 75 and `fXPLevelUpMult` 25 on this install), the attribute pick, the perk
-point, and where all of it persists are that item's, and inventing a save chunk for them
-here would fix a shape it has not decided yet. So the bank is a session accumulator today
-and a reload starts it at zero — a stated gap, not a hidden one. The skill half persists
-regardless, because it lives in the actor values.
+Each point banks `level * fXPPerSkillRank` into the player's `PlayerProgressState`, beside a
+count of the points gained. `PlayerLevelRuntime` spends it against the character level curve
+in the same call, so a skill point that crosses the character threshold raises the level,
+grants a perk point and owes an attribute pick before `advance` returns —
+`SkillAdvanceReport.levelUp` is what it did. See
+[character leveling](/engine/character-leveling.md).
+
+A session with no character leveling wired still computes and reports the experience; it
+simply has nowhere to bank it, which is what every synthetic suite driving skills alone
+does.
 
 ## The Papyrus surface
 

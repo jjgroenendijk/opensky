@@ -103,6 +103,8 @@ nonisolated struct PapyrusActorState: ActorValueReadable, Equatable, Sendable {
     /// Whether this actor is the player, which is what the resistance cap
     /// depends on.
     let isPlayer: Bool
+    /// The actor's level, which is what `Actor.GetLevel` reports (issue #499).
+    let level: Int
 
     init(
         current: ActorValues,
@@ -113,7 +115,8 @@ nonisolated struct PapyrusActorState: ActorValueReadable, Equatable, Sendable {
         weaponDrawState: WeaponDrawState? = nil,
         general: [Int32: ActorValueEntry] = [:],
         generalBaseline: [Int32: Float] = [:],
-        isPlayer: Bool = false
+        isPlayer: Bool = false,
+        level: Int = PlayerLevelSource.startingLevel
     ) {
         self.current = current
         self.maximums = maximums
@@ -124,6 +127,7 @@ nonisolated struct PapyrusActorState: ActorValueReadable, Equatable, Sendable {
         self.general = general
         self.generalBaseline = generalBaseline
         self.isPlayer = isPlayer
+        self.level = max(PlayerLevelSource.startingLevel, level)
     }
 }
 
@@ -234,6 +238,18 @@ protocol PapyrusWorldActorBridge: AnyObject, Sendable {
         _ advance: PapyrusSkillAdvance, at index: Int32, by magnitude: Float
     ) -> Bool
 
+    /// The player's unspent perk points, or nil when this session runs no
+    /// character leveling (issue #499) — a synthetic scene with no progression,
+    /// where answering zero would read as a player who has spent everything.
+    func playerPerkPoints() -> Int?
+
+    /// Adds or removes perk points, clamped to the documented pool bounds.
+    ///
+    /// - Returns: the pool afterwards, or nil for a session with no character
+    ///   leveling.
+    @discardableResult
+    func modifyPlayerPerkPoints(by delta: Int) -> Int?
+
     /// Kills `key` outright, attributing it to `killer` when the script named
     /// one. Health is emptied first, so a corpse never reads as dead at full
     /// health and the death takes the same route a fatal blow does.
@@ -320,5 +336,14 @@ nonisolated extension PapyrusWorldAccess {
         MainActor.assumeIsolated {
             bridge.advancePlayerSkill(advance, at: index, by: magnitude)
         }
+    }
+
+    func playerPerkPoints() -> Int? {
+        MainActor.assumeIsolated { bridge.playerPerkPoints() }
+    }
+
+    @discardableResult
+    func modifyPlayerPerkPoints(by delta: Int) -> Int? {
+        MainActor.assumeIsolated { bridge.modifyPlayerPerkPoints(by: delta) }
     }
 }

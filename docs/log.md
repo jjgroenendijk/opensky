@@ -4,6 +4,31 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-20
 
+* **Player level-up (issue #499, item 20.6)**: skill points now bank character experience
+  against the `fXPLevelUpBase`/`fXPLevelUpMult` curve, crossing it raises the level and
+  hands out one attribute pick and one perk point, and a pick adds `iAVDhmsLevelUp` points
+  as a base override — plus `fLevelUpCarryWeightMod` carry weight for stamina — and fills
+  the three values. See [character leveling](/engine/character-leveling.md).
+* **`PlayerProgressState` is a world-state component in the new `PLVL` save chunk**,
+  carrying the level, banked experience, unspent perk points and the attribute-pick history.
+  What a pick *did* stays in `AVOV` with every other deviation from a derived baseline, so
+  the ten points have one home rather than two.
+* **The live player level is one shared reference the derivations read**
+  (`PlayerLevelSource`), so a level-up moves every `PC Level Mult` actor's scaling on its
+  next baseline read instead of needing the resolvers rebuilt. The default-1 plumbing every
+  call site carried since M15 is gone.
+* **A perk-point spend is validated against the AVIF tree**: the record must resolve, be
+  playable, be unowned, sit in a tree, have its `NNAM` predecessor owned, have an owned
+  parent along the tree's connection lines, and pass its own `CTDA` run. Each is a typed
+  `PerkSpendRefusal` rather than a bool, because item 20.7 draws a node's availability from
+  it.
+* **`GetLevel` (80) and `GetBaseActorValue` (277) join the condition registry**, which is
+  what every vanilla perk requirement is stated with — `Armsman20` reads
+  `GetBaseActorValue One-Handed >= 20`. See [conditions](/formats/conditions.md).
+* **`Actor.GetLevel`, `Game.GetPerkPoints` and `Game.ModPerkPoints` join the Papyrus
+  surface**, the last two as SKSE functions with the documented 255 ceiling. See
+  [Papyrus VM](/engine/papyrus-vm.md).
+
 * **Resolved item enchantments are cached (issue #489)**: the melee and archery frame hooks
   asked for an equipped item's enchantment every frame, and each ask walked the item and
   `ENCH` records afresh. `ItemEnchantmentProfileCache` memoizes the answer per item — a

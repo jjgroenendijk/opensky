@@ -25,7 +25,20 @@ enum PerkRuntimeFixture {
         static let spellCost: UInt32 = 0x0104
         static let ability: UInt32 = 0x0105
         static let actorValueDamage: UInt32 = 0x0106
+        /// A tree box gated on a skill requirement, shaped like `Armsman20`'s
+        /// `GetBaseActorValue One-Handed >= 50` (issue #499).
+        static let skillGated: UInt32 = 0x0107
     }
+
+    /// AVIF identities. One record, carrying the One-Handed perk tree the
+    /// spend suites climb.
+    enum ActorValueInformation {
+        static let oneHanded: UInt32 = 0x0300
+    }
+
+    /// The One-Handed actor-value index, which the fixture AVIF record claims
+    /// by editor ID so a skill requirement stated against it resolves.
+    static let oneHandedIndex = ActorValueIdentity.firstSkillIndex
 
     /// SPEL identities.
     enum Spell {
@@ -61,7 +74,19 @@ enum PerkRuntimeFixture {
     static func index() throws -> RecordIndex {
         try RecordIndex(
             plugins: [(pluginName, plugin())],
-            recordTypes: ["MGEF", "SPEL", "SCRL", "PERK"]
+            recordTypes: ["MGEF", "SPEL", "SCRL", "PERK", "AVIF"]
+        )
+    }
+
+    static func informationStore(index: RecordIndex) -> ActorValueInformationStore {
+        ActorValueInformationStore(index: index)
+    }
+
+    /// Where each fixture perk sits in the fixture tree (issue #499).
+    static func trees(index: RecordIndex) -> PerkTreeIndex {
+        PerkTreeIndex(
+            information: informationStore(index: index),
+            perks: perkStore(index: index)
         )
     }
 
@@ -116,7 +141,8 @@ enum PerkRuntimeFixture {
                     archetype: 0,
                     primaryValue: ActorValueIndex.resistFire
                 )
-            )]
+            )],
+            actorValues: [actorValueInformationRecord]
         )
     }
 
@@ -246,47 +272,22 @@ enum PerkRuntimeFixture {
                         )
                     )]
                 )
+            ),
+            PerkFixture.perkRecord(
+                formID: Perk.skillGated,
+                fields: PerkFixture.fields(
+                    editorID: "SkillGated",
+                    name: "Skill Gated",
+                    // `GetBaseActorValue One-Handed >= 50` on the perk owner,
+                    // which is the shape every vanilla rank requirement takes.
+                    conditions: [DialogueFixture.condition(
+                        functionIndex: 277,
+                        operatorBits: 3,
+                        comparisonValue: 50,
+                        parameter1: UInt32(bitPattern: oneHandedIndex)
+                    )]
+                )
             )
         ]
-    }
-
-    /// One EFID/EFIT entry of a fixture spell. A named type rather than a tuple
-    /// because three members is past the strict-lint tuple cap.
-    struct EffectSpec {
-        let effect: UInt32
-        let magnitude: Float
-        let duration: UInt32
-    }
-
-    /// A SPEL with an authored manual cost, an optional half-cost perk link and
-    /// an optional effect list.
-    static func spellRecord(
-        formID: UInt32,
-        editorID: String,
-        baseCost: UInt32,
-        halfCostPerk: UInt32 = 0,
-        effects: [EffectSpec] = []
-    ) -> Data {
-        var spit = Data()
-        spit.appendUInt32(baseCost)
-        // Bit 0 is "Manual Cost Calc", so the authored cost above is the one
-        // the runtime charges and every assertion is arithmetic on one number.
-        spit.appendUInt32(1)
-        for _ in 0 ..< 6 {
-            spit.appendUInt32(0)
-        }
-        spit.appendUInt32(halfCostPerk)
-        var fields = ESMFixture.field("EDID", ESMFixture.zstring(editorID))
-        fields += ESMFixture.field("FULL", ESMFixture.zstring(editorID))
-        fields += ESMFixture.field("SPIT", spit)
-        for effect in effects {
-            fields += InventoryFixture.effectFields(
-                effect: effect.effect,
-                magnitude: effect.magnitude,
-                area: 0,
-                duration: effect.duration
-            )
-        }
-        return ESMFixture.record("SPEL", formID: formID, data: fields)
     }
 }

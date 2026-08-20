@@ -310,8 +310,10 @@ the Creation Kit spells each one 4096 higher
 | 72 | 4168 | `GetIsID` | #1 base-object FormID | 1 when the run-on reference's base form matches the parameter, 0 otherwise |
 | 74 | 4170 | `GetGlobalValue` | #1 `GLOB` FormID | the named global's current value |
 | 77 | 4173 | `GetRandomPercent` | none | an integer 0 to 99 inclusive |
+| 80 | 4176 | `GetLevel` | none | the run-on actor's level — derived for an NPC, the character level for the player |
 | 170 | 4266 | `GetDayOfWeek` | none | 0 for Sundas through 6 for Loredas |
 | 263 | 4359 | `IsWeaponOut` | none | 0 with nothing drawn, 2 with a weapon in either hand |
+| 277 | 4373 | `GetBaseActorValue` | #1 actor-value index | the run-on actor's base value, never a modifier |
 | 323 | 4419 | `GetCombatState` | none | 0 not in combat, 1 in combat |
 | 543 | 4639 | `GetQuestCompleted` | #1 `QUST` FormID | 1 when the quest is flagged completed, 0 otherwise |
 | 640 | 4736 | `GetActorValuePercent` | #1 actor-value index | current over maximum, 0 to 1 |
@@ -398,8 +400,15 @@ own and are stated rather than assumed:
   actor's health because there are circumstances when the actor can die without
   losing all of their health."
 
-`GetActorValue` and `GetActorValuePercent` take an actor-value *index* rather
-than a FormID (xEdit types the parameter `ptActorValue`).
+`GetLevel` and `GetBaseActorValue` arrived with
+[character leveling](/engine/character-leveling.md), because between them they are what every
+vanilla perk requirement is written with: `Armsman20` reads
+`GetBaseActorValue One-Handed >= 20`, measured on this machine 2026-08-20. The base read
+ignoring the modifier slots is the point — a fortified skill is not a trained one, so a perk
+requirement is something a potion cannot buy.
+
+`GetActorValue`, `GetBaseActorValue` and `GetActorValuePercent` take an actor-value *index*
+rather than a FormID (xEdit types the parameter `ptActorValue`).
 `ActorValueIdentity` carries the vanilla table with its citation; 15.3 stores
 three of its 164 entries, and an index naming any of the other 161 — or naming
 nothing at all — is `ConditionFailure.unresolvedParameter` keyed by function
