@@ -155,12 +155,18 @@ struct M20AcceptancePanelTests {
         #expect(perk.contains("Mod Attack Damage"))
         #expect(perk.contains("not owned"))
 
-        let points = controller.progressionControlSnapshot.perkPoints
+        let before = controller.progressionControlSnapshot
+        let points = before.perkPoints
+        #expect(before.selectedSkillReadout?.ownedPerks == 0)
         sendScriptsControl(panel.spendPerkPointControl)
         let spent = controller.progressionControlSnapshot
         #expect(spent.perkPoints == points - 1)
         #expect(spent.ownedPerkCount == 1)
         #expect(spent.selectedNodeReadout?.isOwned == true)
+        // The skill line's perk count is cached per skill (issue #556), so the
+        // spend has to move it rather than leave the reading it was taken from
+        // standing.
+        #expect(spent.selectedSkillReadout?.ownedPerks == 1)
 
         panel.perkTreeSection.refreshReadout()
         panel.characterSection.refreshReadout()

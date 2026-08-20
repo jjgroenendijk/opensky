@@ -112,6 +112,10 @@ nonisolated struct ProgressionControlSnapshot: Equatable, Sendable {
     let ownedPerkCount: Int
     /// The eighteen skills, in actor-value index order.
     let skills: [SkillProgressReadout]
+    /// What the per-skill perk-tree cache behind those lines holds and how much
+    /// of this tick's reading it served without touching the records
+    /// (issue #556).
+    let perkTreeCache: PerkTreeCacheReadout
     /// Which skill the controls and the tree act on.
     let selectedSkill: Int32
     /// The selected skill's tree, in `INAM` order.
@@ -135,6 +139,7 @@ nonisolated struct ProgressionControlSnapshot: Equatable, Sendable {
         skillIncreases: 0,
         ownedPerkCount: 0,
         skills: [],
+        perkTreeCache: .empty,
         selectedSkill: ActorValueIdentity.firstSkillIndex,
         treeNodes: [],
         selectedNode: 0,

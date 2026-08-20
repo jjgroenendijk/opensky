@@ -264,6 +264,12 @@ two files registers a destination.
   `finishInteraction()` from a control action to refresh + return focus to the
   game view; pass `refocusOnMouseUpOnly: true` for continuous sliders.
 - `InspectionTicker` — the 2 Hz readout timer lifecycle (idempotent start).
+- Section tickers — each section normally runs its own, which is what a panel of
+  unrelated sections wants. A panel whose sections all read one expensive
+  provider value overrides `sectionsTickIndependently` to false: the panel then
+  runs the only ticker, and its `refreshSections()` override builds that value
+  once and hands it down before calling `super`. `World > Progression` is the
+  case that introduced it ([character leveling](/engine/character-leveling.md)).
 - Control-state convention: give each knob a separate enable / force / freeze /
   inspect / reset action and a live numeric readout, rather than one overloaded
   control.

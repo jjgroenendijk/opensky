@@ -71,9 +71,20 @@ class PanelSectionViewController: NSViewController, InspectorPanel {
     // MARK: InspectorPanel
 
     func startInspecting() {
+        beginInspecting(ticking: true)
+    }
+
+    /// Starts inspecting, optionally without a ticker of this section's own.
+    ///
+    /// A panel whose sections all read one expensive provider value drives them
+    /// from its own ticker instead, so that value is built once per tick rather
+    /// than once per section — see `InspectorPanelViewController`'s
+    /// `sectionsTickIndependently` (issue #556).
+    func beginInspecting(ticking: Bool) {
         syncControls()
         refreshReadout()
         refreshOverrideState()
+        guard ticking else { return }
         ticker.start { [weak self] in
             self?.refreshReadout()
             self?.refreshOverrideState()

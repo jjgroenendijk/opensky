@@ -4,6 +4,14 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-20
 
+* **The Progression panel builds its snapshot once per tick (issue #556)**: all three
+  sections read the same `ProgressionControlSnapshot` and each used to build its own, so a
+  reading that walks eighteen perk trees and runs a `CTDA` condition run per box of the
+  selected one happened three times per 2 Hz tick. The panel now owns the only ticker and
+  hands one value down, and `PerkTreeCountCache` keeps the per-skill owned/total counts,
+  recounting when the player's owned perks move and dropping everything on a rewire. The
+  Skills readout closes with what the cache did. No readout changed.
+  See [character leveling](/engine/character-leveling.md).
 * **M20 accepted (issue #500, item 20.7)**: `World > Progression` is the milestone's own
   sidebar destination, in three sections — Character, Skills and Perk Tree. Every control
   drives the same engine call a session makes: Award XP is `PlayerLevelRuntime.award`,

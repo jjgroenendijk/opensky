@@ -251,6 +251,32 @@ Three decisions the panel makes, none of them reversible for free later:
   out, and a laid-out grid would be a second renderer to keep honest for no verification
   the list does not already give.
 
+### What one panel tick costs
+
+All three sections read the same `ProgressionControlSnapshot`, and building one is not cheap:
+it walks the selected skill's whole tree, resolving each box's PERK and running that record's
+`CTDA` condition run through `PerkTreeSpendValidator.refusal`, and it counts owned boxes for
+every one of the eighteen trees. Left to the usual per-section tickers that ran three times
+per 2 Hz tick — roughly five thousand record resolutions a second on the main actor, for one
+identical reading (issue #556).
+
+Two changes, neither of which moves a number the panel prints:
+
+- **One snapshot per tick.** `ProgressionPanelViewController` turns
+  `sectionsTickIndependently` off, so the panel owns the only ticker: it builds the snapshot,
+  hands the same value to all three sections through `ProgressionPanelSection.tickSnapshot`,
+  and clears it again. A refresh outside that fan-out — what a button press triggers — still
+  reads the provider live, because the action it follows just changed what the provider would
+  say. See [main-app UI](/tools/app-ui.md).
+- **Cached per-skill counts.** `PerkTreeCountCache` keeps each skill's resolved tree keys and
+  the owned/total pair taken from them. A tree's membership is a pure function of the AVIF
+  record and the PERK records its `PNAM` links resolve to, so only a rewire can stale it;
+  the counts additionally depend on the player's own `PerkState`, so the cache keeps the
+  owned-perk list it last counted against and recounts when the list it is handed differs.
+  That is one array comparison per skill in place of a walk of the tree. The Skills readout
+  closes with what the cache holds and how much of the tick it served, so the reuse is
+  visible from the panel rather than from a profiler.
+
 The 20.7 acceptance record, in the format
 [the convention](/tools/sidebar-acceptance.md) defines:
 

@@ -42,7 +42,9 @@ nonisolated enum ProgressionControlReadout {
     }
 
     /// The eighteen skills, one line each: what the skill reads, what it was
-    /// trained to, and how far the next point is.
+    /// trained to, and how far the next point is, closed by what the per-skill
+    /// count cache behind those numbers is doing (issue #556) — the reading that
+    /// makes the reuse visible from the panel rather than from a profiler.
     static func skillsText(for snapshot: ProgressionControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Skills: unavailable" }
         guard !snapshot.skills.isEmpty else {
@@ -67,7 +69,8 @@ nonisolated enum ProgressionControlReadout {
                 skill.treePerks
             )
         }
-        return (["Skills (\(snapshot.skills.count)):"] + lines).joined(separator: "\n")
+        return (["Skills (\(snapshot.skills.count)):"] + lines
+            + [snapshot.perkTreeCache.describedLine]).joined(separator: "\n")
     }
 
     /// The selected skill's tree, one line per box, in `INAM` order. A list

@@ -36,6 +36,10 @@ extension GameViewController: ProgressionControlProviding {
             return .unavailable
         }
         let state = leveling.state
+        // Built before the snapshot rather than in the argument list: it fills
+        // the count cache the `perkTreeCache` reading below describes, so the
+        // reading has to be taken after it.
+        let skillReadouts = progressionSkillReadouts(runtime: advancement)
         return ProgressionControlSnapshot(
             isAvailable: true,
             level: state.level,
@@ -46,7 +50,8 @@ extension GameViewController: ProgressionControlProviding {
             attributePicks: state.attributePicks,
             skillIncreases: state.skillIncreases,
             ownedPerkCount: perks.runtime?.state(of: .player).owned.count ?? 0,
-            skills: progressionSkillReadouts(runtime: advancement),
+            skills: skillReadouts,
+            perkTreeCache: progression.treeCounts.readout,
             selectedSkill: progression.skillSelection,
             treeNodes: progressionPerkTreeNodes(forSkill: progression.skillSelection),
             selectedNode: progression.nodeSelection,
