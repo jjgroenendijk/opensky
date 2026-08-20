@@ -47,6 +47,16 @@ class InspectorPanelViewController: NSViewController, InspectorPanel {
         false
     }
 
+    /// Whether each section runs a ticker of its own, which is what a panel of
+    /// unrelated sections wants. A panel whose sections all read one expensive
+    /// provider value overrides this to false: the panel then runs the only
+    /// ticker and refreshes its sections together through `refreshSections`, so
+    /// that value is built once per tick instead of once per section
+    /// (issue #556).
+    var sectionsTickIndependently: Bool {
+        true
+    }
+
     /// Direct-content panels may override this until their controls become sections.
     func resetDirectContentToDefaults() {}
 
@@ -132,16 +142,31 @@ class InspectorPanelViewController: NSViewController, InspectorPanel {
     func startInspecting() {
         syncControls()
         refreshReadout()
-        if sections.isEmpty {
+        guard !sections.isEmpty else {
             onOverrideStateChange?()
             ticker.start { [weak self] in
                 self?.refreshReadout()
                 self?.onOverrideStateChange?()
             }
-        } else {
-            for section in sections {
-                section.startInspecting()
-            }
+            return
+        }
+        for section in sections {
+            section.beginInspecting(ticking: sectionsTickIndependently)
+        }
+        guard !sectionsTickIndependently else { return }
+        ticker.start { [weak self] in
+            self?.refreshSections()
+        }
+    }
+
+    /// Refreshes every section from this panel's ticker, for a panel that turned
+    /// `sectionsTickIndependently` off. Override to build the shared value the
+    /// sections read before calling `super` (issue #556).
+    func refreshSections() {
+        refreshReadout()
+        for section in sections {
+            section.refreshReadout()
+            section.refreshOverrideState()
         }
     }
 

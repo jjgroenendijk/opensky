@@ -14,15 +14,7 @@
 
 import AppKit
 
-final class ProgressionCharacterSection: PanelSectionViewController {
-    weak var provider: (any ProgressionControlProviding)? {
-        didSet {
-            guard isViewLoaded else { return }
-            syncControls()
-            refreshReadout()
-        }
-    }
-
+final class ProgressionCharacterSection: ProgressionPanelSection {
     /// What the experience field starts at: enough that one click crosses the
     /// first level threshold on the documented curve, so the owed pick the
     /// section is about appears on the first press.
@@ -106,11 +98,10 @@ final class ProgressionCharacterSection: PanelSectionViewController {
     }
 
     override func refreshReadout() {
-        guard let provider else {
+        guard let snapshot = currentSnapshot else {
             statsLabel.stringValue = "Progression: unavailable"
             return
         }
-        let snapshot = provider.progressionControlSnapshot
         statsLabel.stringValue = [
             ProgressionControlReadout.characterText(for: snapshot),
             ProgressionControlReadout.picksText(for: snapshot),

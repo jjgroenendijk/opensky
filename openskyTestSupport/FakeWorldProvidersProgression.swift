@@ -11,6 +11,9 @@
 /// The progression half of the fake's stored state.
 struct FakeProgressionState {
     var snapshot = ProgressionControlSnapshot.unavailable
+    /// How many times the panel has asked for the snapshot, so a gate can assert
+    /// that one tick builds it once for all three sections (issue #556).
+    var snapshotReads = 0
     /// Every skill use the panel granted, in order, so a gate can assert that a
     /// button sent exactly what the field held.
     var uses: [Float] = []
@@ -31,7 +34,8 @@ struct FakeProgressionState {
 /// conformance.
 extension FakeWorldProviders {
     var progressionControlSnapshot: ProgressionControlSnapshot {
-        progression.snapshot
+        progression.snapshotReads += 1
+        return progression.snapshot
     }
 
     var progressionSkillSelection: Int32 {
@@ -132,6 +136,7 @@ extension ProgressionControlSnapshot {
             skillIncreases: skillIncreases,
             ownedPerkCount: ownedPerkCount,
             skills: skills,
+            perkTreeCache: perkTreeCache,
             selectedSkill: selectedSkill ?? self.selectedSkill,
             treeNodes: treeNodes,
             selectedNode: selectedNode ?? self.selectedNode,

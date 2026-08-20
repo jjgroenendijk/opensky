@@ -17,15 +17,7 @@
 
 import AppKit
 
-final class ProgressionSkillsSection: PanelSectionViewController {
-    weak var provider: (any ProgressionControlProviding)? {
-        didSet {
-            guard isViewLoaded else { return }
-            syncControls()
-            refreshReadout()
-        }
-    }
-
+final class ProgressionSkillsSection: ProgressionPanelSection {
     /// What the amount field starts at: one use, which is what a single swing
     /// reports, so the first click shows the smallest real advance rather than
     /// a level.
@@ -98,11 +90,10 @@ final class ProgressionSkillsSection: PanelSectionViewController {
     }
 
     override func refreshReadout() {
-        guard let provider else {
+        guard let snapshot = currentSnapshot else {
             statsLabel.stringValue = "Skills: unavailable"
             return
         }
-        let snapshot = provider.progressionControlSnapshot
         reloadOptions(snapshot: snapshot)
         statsLabel.stringValue = ProgressionControlReadout.skillsText(for: snapshot)
     }
@@ -131,7 +122,7 @@ final class ProgressionSkillsSection: PanelSectionViewController {
     /// names alone: a row that also carried the level would be rewritten twice
     /// a second and would close the menu in the user's hand.
     private func reloadOptions(snapshot: ProgressionControlSnapshot? = nil) {
-        guard let snapshot = snapshot ?? provider?.progressionControlSnapshot else {
+        guard let snapshot = snapshot ?? currentSnapshot else {
             options = []
             skillControl.removeAllItems()
             skillControl.isEnabled = false

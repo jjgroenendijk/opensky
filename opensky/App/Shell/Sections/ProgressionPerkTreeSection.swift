@@ -20,15 +20,7 @@
 
 import AppKit
 
-final class ProgressionPerkTreeSection: PanelSectionViewController {
-    weak var provider: (any ProgressionControlProviding)? {
-        didSet {
-            guard isViewLoaded else { return }
-            syncControls()
-            refreshReadout()
-        }
-    }
-
+final class ProgressionPerkTreeSection: ProgressionPanelSection {
     let skillControl = NSPopUpButton()
     let nodeControl = NSPopUpButton()
     let spendControl = NSButton(title: "Spend point", target: nil, action: nil)
@@ -99,12 +91,11 @@ final class ProgressionPerkTreeSection: PanelSectionViewController {
     }
 
     override func refreshReadout() {
-        guard let provider else {
+        guard let snapshot = currentSnapshot else {
             treeLabel.stringValue = "Perk tree: unavailable"
             perkLabel.stringValue = "Selected perk: unavailable"
             return
         }
-        let snapshot = provider.progressionControlSnapshot
         reloadOptions(snapshot: snapshot)
         treeLabel.stringValue = ProgressionControlReadout.perkTreeText(for: snapshot)
         perkLabel.stringValue = ProgressionControlReadout.perkText(for: snapshot)
@@ -143,7 +134,7 @@ final class ProgressionPerkTreeSection: PanelSectionViewController {
     }
 
     private func reloadOptions(snapshot: ProgressionControlSnapshot? = nil) {
-        guard let snapshot = snapshot ?? provider?.progressionControlSnapshot else {
+        guard let snapshot = snapshot ?? currentSnapshot else {
             skillOptions = []
             nodeOptions = []
             skillControl.removeAllItems()

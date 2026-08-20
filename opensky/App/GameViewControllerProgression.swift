@@ -35,6 +35,10 @@ struct ProgressionBridgeState {
     /// tree out of (issue #500). Nil without game data, and the panel then
     /// reports itself unavailable rather than drawing an empty tree.
     var information: ActorValueInformationStore?
+    /// Per-skill perk-tree counts for the panel's Skills section, which would
+    /// otherwise walk all eighteen trees out of the records twice a second
+    /// (issue #556). Dropped whenever the stores behind it are rewired.
+    var treeCounts = PerkTreeCountCache()
     /// Which skill the panel's skill controls and perk tree act on, by vanilla
     /// actor-value index. One-handed until the panel selects another.
     var skillSelection = ActorValueIdentity.firstSkillIndex
@@ -66,6 +70,10 @@ extension GameViewController {
         {
             progression.trees = PerkTreeIndex(information: information, perks: perkStore)
             progression.information = information
+            // The counts are resolved out of these stores, so the ones taken
+            // against whatever stood before this call describe records that are
+            // no longer there.
+            progression.treeCounts.invalidate()
             progression.nodeSelection = progressionFirstNode(
                 forSkill: progression.skillSelection
             )

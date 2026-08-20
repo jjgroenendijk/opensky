@@ -26,13 +26,45 @@ final class ProgressionPanelViewController: InspectorPanelViewController {
     /// back.
     weak var provider: (any ProgressionControlProviding)? {
         didSet {
-            characterSection.provider = provider
-            skillsSection.provider = provider
-            perkTreeSection.provider = provider
+            for section in progressionSections {
+                section.provider = provider
+            }
         }
     }
 
+    /// One ticker for the whole panel, because all three sections read the same
+    /// snapshot and it is expensive to build — see `refreshSections`.
+    override var sectionsTickIndependently: Bool {
+        false
+    }
+
     override func makeSections() -> [PanelSectionViewController] {
+        progressionSections
+    }
+
+    /// Builds the tick's snapshot once and hands the same value to all three
+    /// sections (issue #556).
+    ///
+    /// The hand-down is cleared afterwards rather than left standing: a refresh
+    /// outside this fan-out — what a button press triggers — has to read the
+    /// provider live, because the action it follows just changed what the
+    /// provider would say.
+    override func refreshSections() {
+        let snapshot = provider?.progressionControlSnapshot
+        for section in progressionSections {
+            section.tickSnapshot = snapshot
+        }
+        defer {
+            for section in progressionSections {
+                section.tickSnapshot = nil
+            }
+        }
+        super.refreshSections()
+    }
+
+    /// The panel's sections in display order, typed as the base every one of
+    /// them shares so the snapshot hand-down can reach them.
+    var progressionSections: [ProgressionPanelSection] {
         [characterSection, skillsSection, perkTreeSection]
     }
 

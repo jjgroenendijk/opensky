@@ -62,6 +62,24 @@ struct ProgressionReadoutTests {
         #expect(text.contains("perks 2/9"))
     }
 
+    /// The skills block closes with what the count cache behind those lines is
+    /// doing, which is how the reuse issue #556 added is read from the panel.
+    @Test
+    func theSkillsBlockClosesWithTheCacheLine() {
+        let snapshot = makeProgressionSnapshot(
+            skills: [makeSkillReadout(name: "One-handed", index: 6)],
+            perkTreeCache: PerkTreeCacheReadout(
+                skillCount: 18, treeCount: 18, countCount: 18, reuseCount: 342
+            ),
+            selectedSkill: 6
+        )
+        #expect(
+            ProgressionControlReadout.skillsText(for: snapshot).hasSuffix(
+                "Perk tree cache: 18 skill(s), 18 tree(s) resolved, 18 counted, 342 reused"
+            )
+        )
+    }
+
     /// Every refusal reads as the rule that refused it, because each is
     /// something a level-up screen has to say out loud rather than a greyed-out
     /// button with no reason.

@@ -32,14 +32,23 @@ extension GameViewController {
     }
 
     /// The eighteen skills, in actor-value index order.
+    ///
+    /// The perk counts come from `PerkTreeCountCache` rather than from a walk of
+    /// all eighteen trees per call: the panel asks twice a second, and resolving
+    /// every tree that often is roughly nine hundred record lookups per tick for
+    /// numbers that only move when a perk is gained or lost (issue #556). The
+    /// cache is taken into a local and written back so the tree closure, which
+    /// reads `progression.information`, does not overlap the mutating call's
+    /// access to `progression`.
     func progressionSkillReadouts(
         runtime: SkillAdvancementRuntime
     ) -> [SkillProgressReadout] {
-        ActorValueIdentity.skillIndices.map { index in
-            let tree = progressionPerkKeys(forSkill: index)
-            let owned = perks.runtime.map { perks in
-                tree.count { perks.owns($0, on: .player) }
-            } ?? 0
+        var counts = progression.treeCounts
+        let owned = perks.runtime?.state(of: .player).owned ?? []
+        let readouts = ActorValueIdentity.skillIndices.map { index in
+            let tree = counts.counts(forSkill: index, owned: owned) {
+                progressionPerkKeys(forSkill: $0)
+            }
             return SkillProgressReadout(
                 name: progressionSkillName(index),
                 index: index,
@@ -47,10 +56,12 @@ extension GameViewController {
                 base: runtime.level(ofSkill: index, on: .player),
                 experience: runtime.experience(forSkill: index, on: .player),
                 threshold: runtime.threshold(forSkill: index, on: .player),
-                ownedPerks: owned,
-                treePerks: tree.count
+                ownedPerks: tree.owned,
+                treePerks: tree.total
             )
         }
+        progression.treeCounts = counts
+        return readouts
     }
 
     /// The selected skill's tree, one entry per box in `INAM` order.
