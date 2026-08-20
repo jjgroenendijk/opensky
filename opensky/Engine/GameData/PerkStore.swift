@@ -84,6 +84,12 @@ nonisolated struct PerkStore {
     private(set) var entryPointIndex: [UInt8: [PerkEntryPointMatch]] = [:]
     private var recordsByEditorID: [String: ResolvedPerk] = [:]
     private var recordsByKey: [ReferenceKey: ResolvedPerk] = [:]
+    /// Each perk that is somebody's `NNAM` target, mapped back to the record
+    /// naming it — the reverse of `rankChain(from:)` (issue #499). Spending a
+    /// perk point on rank three of a chain has to know that rank two exists and
+    /// is unowned, and walking every chain in the load order to find that out
+    /// would be a pass over every PERK per click.
+    private var previousRanks: [ResolvedFormID: ResolvedFormID] = [:]
 
     var perks: [ResolvedPerk] {
         Array(records.values)
@@ -185,6 +191,14 @@ nonisolated struct PerkStore {
         return perk.effects[match.effectIndex]
     }
 
+    /// The rank this perk continues, or nil when it is a chain head or stands
+    /// alone. Two records naming the same `NNAM` target — which vanilla does
+    /// not author and a mod could — leave the first one seen as the answer,
+    /// because a spend needs one predecessor to name rather than a set.
+    func previousRank(of id: ResolvedFormID) -> ResolvedPerk? {
+        previousRanks[id].flatMap(perk)
+    }
+
     /// The rank chain starting at `id`: the perk itself, then each perk its
     /// NNAM reaches. Stops on a repeat or at `rankChainCap`, so a mod-authored
     /// loop yields a short chain rather than hanging.
@@ -204,6 +218,9 @@ nonisolated struct PerkStore {
     private mutating func add(_ resolved: ResolvedPerk) {
         records[resolved.id] = resolved
         recordsByKey[ReferenceKey(resolved: resolved.id)] = resolved
+        if let next = resolved.nextPerk, previousRanks[next] == nil {
+            previousRanks[next] = resolved.id
+        }
         if let editorID = resolved.record.editorID {
             recordsByEditorID[editorID.lowercased()] = resolved
         }

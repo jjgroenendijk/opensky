@@ -205,7 +205,7 @@ to queue native results and inspect a bounded call tail.
 ## Native registry
 
 `PapyrusNativeRegistry` keys functions case-insensitively by both script and
-function name. `.empty` installs nothing. `.standard` installs 82 entries in
+function name. `.empty` installs nothing. `.standard` installs 90 entries in
 one place:
 
 | family | functions | headless policy |
@@ -216,14 +216,24 @@ one place:
 | `ObjectReference` animation | `PlayAnimation`, `PlayAnimationAndWait`, `PlayGamebryoAnimation` | return true immediately, log and tally the deferred-animation deviation |
 | `ObjectReference` world | `Enable`, `Disable`, `IsEnabled`, `Delete`, `GetPositionX`, `GetPositionY`, `GetPositionZ`, `SetPosition`, `Activate`, `GetLinkedRef` | fail with an invalid-arguments reason; the interpreter substitutes the declared default and the script continues |
 | `GlobalVariable` | `GetValue`, `GetValueInt`, `SetValue`, `SetValueInt` | same failure policy |
-| `Game` | `GetPlayer`, `AdvanceSkill`, `IncrementSkill` | same failure policy |
+| `Game` | `GetPlayer`, `AdvanceSkill`, `IncrementSkill`, `GetPerkPoints`, `ModPerkPoints` | same failure policy |
 | `Quest` | see [quest script instances](#quest-script-instances-and-stage-fragments) | same failure policy |
-| `Actor` | `GetActorValue`, `GetBaseActorValue`, `GetActorValuePercentage`, `DamageActorValue`, `RestoreActorValue`, `SetActorValue`, `ModActorValue`, `ForceActorValue`, `IsDead`, `IsInCombat`, `IsWeaponDrawn`, `Kill`, `StartCombat`, `StopCombat` | same failure policy |
+| `Actor` | `GetActorValue`, `GetBaseActorValue`, `GetActorValuePercentage`, `DamageActorValue`, `RestoreActorValue`, `SetActorValue`, `ModActorValue`, `ForceActorValue`, `IsDead`, `IsInCombat`, `IsWeaponDrawn`, `Kill`, `StartCombat`, `StopCombat`, `GetLevel` | same failure policy |
+| `Actor` perks | `AddPerk`, `RemovePerk`, `HasPerk` | same failure policy |
 | `Actor` and `Spell` magic | see [the spell natives](#the-spell-natives) | same failure policy |
 
 `Game.AdvanceSkill` and `Game.IncrementSkill` are globals acting on the player alone and run
 the same path a landed blow does; the unit each takes and what it does to accumulated
 progress are in [skill advancement](/engine/skill-advancement.md).
+
+`Game.GetPerkPoints` and `Game.ModPerkPoints` are the first **SKSE** functions in the
+registry. Neither has a vanilla Papyrus surface — the Creation Kit wiki declares both as SKSE
+additions to the `Game` script — and the perk-point pool has no other way to be read or
+written from a script. Implementing the script-level half of SKSE compatibility is a stated
+goal; the binary half is not, and never will be. `Game.SetPerkPoints` is deliberately absent
+rather than guessed at. Both refuse rather than answering zero when the session runs no
+character leveling, because zero would read as a player who has spent everything. See
+[character leveling](/engine/character-leveling.md).
 
 The corpus census found no string native that can be answered honestly without
 world context, and string basics are PEX opcodes rather than natives, so they

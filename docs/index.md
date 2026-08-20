@@ -346,8 +346,14 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   experience, the three UESP formulas and the `AVSK` numbers this install authors, why the
   `Skill Advance` actor values hold the accumulated experience, the reporting seam every
   combat and magic runtime writes into, what each simulated action is worth, the carry rule
-  at a threshold, the character-experience bank item 20.6 spends, and the actions that are
-  documented but not yet simulated.
+  at a threshold, the character-experience bank character leveling spends, and the actions
+  that are documented but not yet simulated.
+* [Character leveling](/engine/character-leveling.md) - the level curve and the four GMSTs
+  behind it, where the level, banked experience and perk-point pool persist, when the level
+  moves and the one stated deviation from the menu-confirmed vanilla one, what an attribute
+  pick does and why the ten points live in a base override, the shared live player level
+  every `PC Level Mult` derivation reads, and the seven rules a perk-point spend has to
+  satisfy.
 * [Archery and projectiles](/engine/archery.md) - the PROJ flight record, the measurement
   that settles `gravity` as a multiplier rather than an acceleration, the census-named bow
   draw and release events, the exact closed-form flight model on the fixed step, the

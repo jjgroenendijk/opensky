@@ -33,7 +33,7 @@ enum ActorValueCommand {
             pluginName: context.skyrimESMName,
             classes: CharacterClassStoreLoader.load(root: context.root, baseFile: file),
             settings: settings,
-            playerLevel: playerLevel
+            playerLevel: PlayerLevelSource(playerLevel)
         )
         if let race {
             try reportRace(race, resolver: resolver)

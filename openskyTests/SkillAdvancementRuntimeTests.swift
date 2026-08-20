@@ -118,8 +118,7 @@ struct SkillAdvancementRuntimeTests {
         #expect(report?.didAdvance == true)
         #expect(runtime.level(ofSkill: Self.oneHanded, on: .player) == 16)
         #expect(runtime.experience(forSkill: Self.oneHanded, on: .player) < 0.01)
-        #expect(runtime.progress.skillIncreases == 1)
-        #expect(runtime.progress.bankedExperience == 16)
+        #expect(report?.characterExperience == 16)
         #expect(runtime.tally.advances == 1)
     }
 
@@ -304,7 +303,7 @@ struct SkillAdvancementRuntimeTests {
         #expect(report?.level == 16)
         #expect(runtime.level(ofSkill: Self.block, on: .player) == 16)
         #expect(runtime.experience(forSkill: Self.block, on: .player) == 81)
-        #expect(runtime.progress.bankedExperience == 16)
+        #expect(report?.characterExperience == 16)
     }
 
     /// A skill at the ceiling refuses the point rather than reporting one it

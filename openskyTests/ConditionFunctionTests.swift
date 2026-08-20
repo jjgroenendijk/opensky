@@ -24,20 +24,24 @@ struct ConditionFunctionTests {
         // Issue #455 adds the fourteen measured M18 keyword, form-list and
         // location functions; issue #474 adds the eight measured magic ones;
         // issue #497 adds `HasPerk`, which is what makes a perk rank chain
-        // switch itself off.
+        // switch itself off; issue #499 adds `GetLevel` and
+        // `GetBaseActorValue`, which is what every vanilla perk requirement is
+        // stated with.
         #expect(registry.indices == [
-            1, 14, 18, 27, 35, 45, 46, 56, 58, 59, 72, 74, 77, 170, 180, 181, 214, 223,
-            249, 263, 264, 323, 359, 360, 372, 426, 444, 448, 543, 560, 562, 565, 566, 567,
-            570, 571, 572, 603, 604, 605, 610, 632, 640, 699
+            1, 14, 18, 27, 35, 45, 46, 56, 58, 59, 72, 74, 77, 80, 170, 180, 181, 214,
+            223, 249, 263, 264, 277, 323, 359, 360, 372, 426, 444, 448, 543, 560, 562,
+            565, 566, 567, 570, 571, 572, 603, 604, 605, 610, 632, 640, 699
         ])
-        #expect(registry.count == 44)
+        #expect(registry.count == 46)
         #expect(registry.sortedFunctions().map(\.name) == [
             "GetDistance", "GetActorValue", "GetCurrentTime", "GetLineOfSight",
             "GetDisabled", "GetDetected", "GetDead", "GetQuestRunning",
             "GetStage", "GetStageDone", "GetIsID", "GetGlobalValue", "GetRandomPercent",
+            "GetLevel",
             "GetDayOfWeek", "HasSameEditorLocAsRef", "HasSameEditorLocAsRefAlias",
             "HasMagicEffect", "IsSpellTarget",
-            "IsInDialogueWithPlayer", "IsWeaponOut", "HasSpell", "GetCombatState",
+            "IsInDialogueWithPlayer", "IsWeaponOut", "HasSpell", "GetBaseActorValue",
+            "GetCombatState",
             "GetInCurrentLoc",
             "GetInCurrentLocAlias", "IsInList", "GetIsVoiceType",
             "GetInCurrentLocFormList", "HasPerk", "GetQuestCompleted", "HasKeyword",
@@ -50,9 +54,9 @@ struct ConditionFunctionTests {
         // The Creation Kit spells every index 4096 higher than the plugin does.
         #expect(registry.sortedFunctions().map(\.creationKitIndex) == [
             4097, 4110, 4114, 4123, 4131, 4141, 4142, 4152, 4154, 4155, 4168, 4170,
-            4173, 4266, 4276, 4277, 4310, 4319, 4345, 4359, 4360, 4419, 4455, 4456,
-            4468, 4522, 4540, 4544, 4639, 4656, 4658, 4661, 4662, 4663, 4666, 4667, 4668,
-            4699, 4700, 4701, 4706, 4728, 4736, 4795
+            4173, 4176, 4266, 4276, 4277, 4310, 4319, 4345, 4359, 4360, 4373, 4419, 4455,
+            4456, 4468, 4522, 4540, 4544, 4639, 4656, 4658, 4661, 4662, 4663, 4666, 4667,
+            4668, 4699, 4700, 4701, 4706, 4728, 4736, 4795
         ])
         #expect(registry[Self.getIsID]?.parameter1 == .formID)
         #expect(registry[Self.getIsID]?.parameter2 == .unused)

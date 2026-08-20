@@ -254,9 +254,14 @@ entry point fires — a combat hit, a bash — not carried. Nothing casts it yet
 
 ## What is deliberately absent
 
-- Perk points, spend validation and tree prerequisites (item 20.6). `AddPerk` grants without
-  charging anything, which is what the Creation Kit says it does.
-- Skill XP and level-ups (item 20.5).
+- Perk-point spending and tree prerequisites, which are
+  [character leveling](/engine/character-leveling.md)'s: `PerkTreeSpendValidator` is the only
+  place a tree, a rank order and a skill requirement gate a grant. `AddPerk` still grants
+  without charging anything, which is what the Creation Kit says it does, and that is exactly
+  why the two layers are separate — a quest, a script and a race all hand out perks no tree
+  gates.
+- Skill XP and level-ups ([skill advancement](/engine/skill-advancement.md) and
+  [character leveling](/engine/character-leveling.md)).
 - Any perk UI (item 20.7). The perk tree's layout comes from AVIF
   ([actor value information](/formats/actor-value-information.md)), not from PERK.
 - A caller for every entry point but the three wired above. They evaluate; nothing asks.

@@ -179,11 +179,15 @@ enum PerkFixture {
         masters: [String] = [],
         perks: [Data] = [],
         spells: [Data] = [],
-        magicEffects: [Data] = []
+        magicEffects: [Data] = [],
+        actorValues: [Data] = []
     ) throws -> ESMFile {
         var data = ESMFixture.tes4(masters: masters)
         if !magicEffects.isEmpty {
             data += ESMFixture.topGroup("MGEF", contents: magicEffects.reduce(Data(), +))
+        }
+        if !actorValues.isEmpty {
+            data += ESMFixture.topGroup("AVIF", contents: actorValues.reduce(Data(), +))
         }
         if !spells.isEmpty {
             data += ESMFixture.topGroup("SPEL", contents: spells.reduce(Data(), +))

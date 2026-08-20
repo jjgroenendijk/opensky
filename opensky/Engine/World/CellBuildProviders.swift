@@ -120,6 +120,16 @@ nonisolated protocol ProgressionDataProviding {
     /// `fSkillUseCurve` and `fXPPerSkillRank` as this load order resolves them
     /// (issue #498), defaulting to the documented numbers on a synthetic scene.
     var skillAdvancementSettings: SkillAdvancementSettings { get }
+
+    /// The character-level curve and the level-up rewards as this load order
+    /// resolves them (issue #499), defaulting to the documented numbers on a
+    /// synthetic scene.
+    ///
+    /// The player level itself is *not* here: it is published on
+    /// `ActorValueBaselineResolver.playerLevel`, because that is the one value
+    /// every `PC Level Mult` derivation already reads and a second copy would
+    /// be a second answer.
+    var characterLevelSettings: CharacterLevelSettings { get }
 }
 
 /// Optional script-loading seam a provider can expose (issue #171). The

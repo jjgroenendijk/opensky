@@ -90,6 +90,10 @@ nonisolated enum OpenSkySaveDecoder {
         /// actor restores with none — which is also what a save written before
         /// that chunk existed means.
         var perks: [SavePerkEntry] = []
+        /// Absent `PLVL` chunk (issue #499) means the player never left level
+        /// 1, so progress restores at the session start — which is also what a
+        /// save written before that chunk existed means.
+        var playerProgress: [SavePlayerProgressEntry] = []
     }
 
     static func decode(_ data: Data) throws -> OpenSkySaveFile {
@@ -151,7 +155,8 @@ nonisolated enum OpenSkySaveDecoder {
         entries = OpenSkySaveActiveEffectDecoder.merge(body.activeEffects, into: entries)
         entries = OpenSkySaveSpellbookDecoder.merge(body.spellbooks, into: entries)
         entries = OpenSkySaveEnchantedItemDecoder.merge(body.enchantedItems, into: entries)
-        return OpenSkySavePerkDecoder.merge(body.perks, into: entries)
+        entries = OpenSkySavePerkDecoder.merge(body.perks, into: entries)
+        return OpenSkySaveProgressDecoder.merge(body.playerProgress, into: entries)
     }
 
     // MARK: - Header
@@ -304,6 +309,9 @@ nonisolated enum OpenSkySaveDecoder {
                 .decodeEnchantedItems(payload)
         case OpenSkySaveFormat.ChunkTag.perks:
             body.perks = try OpenSkySavePerkDecoder.decodePerks(payload)
+        case OpenSkySaveFormat.ChunkTag.playerProgress:
+            body.playerProgress = try OpenSkySaveProgressDecoder
+                .decodePlayerProgress(payload)
         default:
             break // Unknown chunk: skipped by its declared length.
         }

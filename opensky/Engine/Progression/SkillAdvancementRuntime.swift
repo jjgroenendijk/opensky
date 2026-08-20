@@ -96,10 +96,18 @@ struct SkillAdvancementRuntime {
     /// resolution, and an armoured hit then credits nothing rather than
     /// guessing a skill.
     var wornArmor: @MainActor (ReferenceKey) -> WornArmorProfile = { _ in .none }
-    /// What skill level-ups have banked toward the character's own level, which
-    /// item 20.6 spends.
-    private(set) var progress = PlayerProgressState()
+    /// Character leveling, which is what a skill point's banked experience is
+    /// spent on (issue #499). Nil in a session with no character leveling, and
+    /// the experience is then computed and reported but not banked anywhere —
+    /// which is what every synthetic suite that drives skills alone does.
+    var leveling: PlayerLevelRuntime?
     private(set) var tally = SkillAdvancementTally()
+
+    /// The player's stored progress, or a fresh one when this session runs no
+    /// character leveling.
+    var progress: PlayerProgressState {
+        leveling?.state ?? PlayerProgressState()
+    }
 
     init(
         values: ActorValueRuntime,
@@ -202,10 +210,11 @@ struct SkillAdvancementRuntime {
             settings: settings
         )
         values.setBase(at: slot, to: outcome.carriedExperience, on: holder)
+        var levelUp: PlayerLevelUpReport?
         if outcome.levelsGained > 0 {
             values.advanceSkill(at: index, by: Float(outcome.levelsGained), on: holder)
             tally.noteAdvances(outcome.levelsGained)
-            progress.bank(outcome)
+            levelUp = bank(outcome)
         }
         return SkillAdvanceReport(
             skill: index,
@@ -213,7 +222,8 @@ struct SkillAdvancementRuntime {
             previousLevel: previous,
             level: outcome.level,
             carriedExperience: outcome.carriedExperience,
-            characterExperience: outcome.characterExperience
+            characterExperience: outcome.characterExperience,
+            levelUp: levelUp
         )
     }
 
@@ -247,18 +257,33 @@ struct SkillAdvancementRuntime {
             characterExperience: banked
         )
         tally.noteAdvances(1)
-        progress.bank(outcome)
+        let levelUp = bank(outcome)
         return SkillAdvanceReport(
             skill: index,
             experience: 0,
             previousLevel: previous,
             level: level,
             carriedExperience: outcome.carriedExperience,
-            characterExperience: banked
+            characterExperience: banked,
+            levelUp: levelUp
         )
     }
 
     // MARK: - Private
+
+    /// Hands one advance's character experience to the level runtime and counts
+    /// whatever levels it bought.
+    ///
+    /// - Returns: nil when this session runs no character leveling, which is a
+    ///   gap in the wiring rather than a refusal: the skill still went up, and
+    ///   the experience it banked has nowhere to go.
+    private mutating func bank(_ outcome: SkillAdvanceOutcome) -> PlayerLevelUpReport? {
+        guard let leveling else { return nil }
+        leveling.noteSkillIncreases(outcome.levelsGained)
+        let report = leveling.award(characterExperience: outcome.characterExperience)
+        tally.noteCharacterLevels(report.levelsGained)
+        return report
+    }
 
     /// Which skill a use credits and with how much base experience, resolving
     /// the one action that needs the world to answer.

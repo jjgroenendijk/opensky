@@ -132,9 +132,13 @@ extension GameViewController {
         // After the cast loop, which takes the perk runtime by value so a spell
         // cost folds through the `Mod Spell Cost` entry point (issue #497).
         wirePerks(provider: provider)
-        // Last: it writes through the actor-value runtime and reads the
-        // equipment runtime, so both have to exist first (issue #498).
+        // After the perk runtime: it writes through the actor-value runtime and
+        // reads the equipment runtime, so both have to exist first (issue
+        // #498).
         wireSkills(provider: provider)
+        // Last: it hands itself to the skill runtime and validates a perk spend
+        // against the perk runtime and the AVIF trees (issue #499).
+        wireProgression(provider: provider)
     }
 
     private func wireLateWorldSystems(

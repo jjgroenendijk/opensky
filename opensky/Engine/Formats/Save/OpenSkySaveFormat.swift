@@ -269,6 +269,20 @@ nonisolated enum OpenSkySaveFormat {
         /// on load exactly as a worn enchantment's are — which is why nothing
         /// here duplicates what `AEFF` already carries.
         static let perks = "PRKS"
+
+        /// The player's character-level progress (issue #499, roadmap item
+        /// 20.6): one entry, and only when the player has left level 1 behind.
+        ///
+        /// Additive and split out of `RDLT` for the reason `PRKS` is: a session
+        /// that never levelled writes no chunk at all, so its bytes match what
+        /// this encoder produced before the chunk existed.
+        ///
+        /// The level, the banked experience, the perk-point pool, the owed
+        /// picks and the picks already made travel. What a pick *did* does not:
+        /// the ten points it added are a base override and ride in `AVOV`,
+        /// which is where every session-made deviation from a derived baseline
+        /// already lives.
+        static let playerProgress = "PLVL"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.
@@ -341,7 +355,8 @@ nonisolated extension WorldStateComponentKind {
         case .activation: 2
         case .deletion: 3
         case .inventory, .spawn, .quest, .questAliases, .actorValues, .death,
-             .combat, .dialogue, .activeEffects, .spellbook, .enchantedItems, .perks: nil
+             .combat, .dialogue, .activeEffects, .spellbook, .enchantedItems, .perks,
+             .playerProgress: nil
         }
     }
 

@@ -70,10 +70,17 @@ nonisolated struct ActorValueResolver {
     /// link in one of those records resolves against.
     let pluginName: String
     let settings: ActorValueLevelSettings
-    /// Level a `PC Level Mult` actor scales against. There is no player level
-    /// before M18, so this defaults to 1 and every scaled actor resolves at the
-    /// bottom of its range.
-    let playerLevel: Int
+    /// Where the level a `PC Level Mult` actor scales against is published
+    /// (issue #499). Shared by reference, so a level-up moves every derivation
+    /// on its next read rather than needing this value rebuilt; a session with
+    /// no progression leaves it at 1 and every scaled actor resolves at the
+    /// bottom of its range, which is what it did before item 20.6.
+    let playerLevelSource: PlayerLevelSource
+
+    /// The level as of right now.
+    var playerLevel: Int {
+        playerLevelSource.level
+    }
 
     init(
         templates: ActorTemplateResolver,
@@ -81,14 +88,14 @@ nonisolated struct ActorValueResolver {
         classes: CharacterClassStore = CharacterClassStore(),
         pluginName: String = "",
         settings: ActorValueLevelSettings = .documentedDefaults,
-        playerLevel: Int = 1
+        playerLevel: PlayerLevelSource = PlayerLevelSource()
     ) {
         self.templates = templates
         self.races = races
         self.classes = classes
         self.pluginName = pluginName
         self.settings = settings
-        self.playerLevel = playerLevel
+        playerLevelSource = playerLevel
     }
 
     /// Builds every index this resolver needs from one plugin file.
@@ -105,7 +112,7 @@ nonisolated struct ActorValueResolver {
         pluginName: String,
         classes: CharacterClassStore? = nil,
         settings: ActorValueLevelSettings = .documentedDefaults,
-        playerLevel: Int = 1
+        playerLevel: PlayerLevelSource = PlayerLevelSource()
     ) -> ActorValueResolver {
         var races: [UInt32: Race] = [:]
         if let top = file.topGroup(of: "RACE"), let children = try? top.children() {
@@ -146,12 +153,16 @@ nonisolated struct ActorValueResolver {
         let resolved = try resolveStats(base: base)
         let gathered = inputs(from: resolved)
         let stats = resolved.stats.value
+        // Read once: the three derivations below must agree about the level,
+        // and a level-up landing between two of them would produce a baseline
+        // whose maximums and reported level disagree.
+        let currentPlayerLevel = playerLevel
         return ResolvedActorValues(
             base: base,
             maximums: ActorValueDerivation.baseValues(
                 inputs: gathered,
                 settings: settings,
-                playerLevel: playerLevel
+                playerLevel: currentPlayerLevel
             ),
             regenPercentPerSecond: ActorValues(
                 health: gathered.race.healthRegenPercent,
@@ -161,9 +172,9 @@ nonisolated struct ActorValueResolver {
             generalBaseValues: ActorValueDerivation.generalBaseValues(
                 inputs: gathered,
                 settings: settings,
-                playerLevel: playerLevel
+                playerLevel: currentPlayerLevel
             ),
-            level: ActorValueDerivation.level(inputs: gathered, playerLevel: playerLevel),
+            level: ActorValueDerivation.level(inputs: gathered, playerLevel: currentPlayerLevel),
             race: resolved.statsRace.value,
             characterClass: stats.characterClass,
             statsSource: resolved.stats.source,

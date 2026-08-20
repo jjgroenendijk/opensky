@@ -148,6 +148,13 @@ nonisolated enum ActorValueIdentity {
     /// the mapping silently. See docs/engine/skill-advancement.md.
     static let firstSkillAdvanceIndex: Int32 = 114
 
+    /// Actor-value index of `Carry Weight`, which a stamina level-up pick
+    /// raises alongside the stamina itself (issue #499, roadmap item 20.6):
+    /// "Adding to your base stamina when you level up increases your carry
+    /// weight by 5" (<https://en.uesp.net/wiki/Skyrim:Stamina>).
+    /// `ActorValueIdentityTests` pins the name at this index.
+    static let carryWeightIndex: Int32 = 32
+
     /// The `Skill Advance` slot that accumulates experience for the skill at
     /// `index`, or nil when `index` is not one of the eighteen skills.
     static func skillAdvanceIndex(forSkill index: Int32) -> Int32? {

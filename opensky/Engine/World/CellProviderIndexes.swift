@@ -51,6 +51,7 @@ nonisolated struct CellProviderIndexes {
         let archery: ArcherySettings
         let detection: DetectionSettings
         let skillAdvancement: SkillAdvancementSettings
+        let characterLevel: CharacterLevelSettings
         let level: ActorValueLevelSettings
 
         init(root: GameDataRoot, baseFile: ESMFile) {
@@ -66,6 +67,7 @@ nonisolated struct CellProviderIndexes {
             archery = ArcherySettings.resolve(store: settings)
             detection = DetectionSettings.resolve(store: settings)
             skillAdvancement = SkillAdvancementSettings.resolve(store: settings)
+            characterLevel = CharacterLevelSettings.resolve(store: settings)
             level = ActorValueLevelSettings.resolve(store: settings)
         }
     }
@@ -109,6 +111,8 @@ nonisolated struct CellProviderIndexes {
     let actorValueInformation: ActorValueInformationStore
     /// GMST-derived `fSkillUseCurve` and `fXPPerSkillRank` (issue #498).
     let skillAdvancementSettings: SkillAdvancementSettings
+    /// GMST-derived level curve and level-up rewards (issue #499).
+    let characterLevelSettings: CharacterLevelSettings
     /// Plugin the item indexes were built from, which magic-item EFID links are
     /// relative to.
     let magicItemPluginName: String
@@ -134,6 +138,7 @@ nonisolated struct CellProviderIndexes {
         archerySettings = tuning.archery
         detectionSettings = tuning.detection
         skillAdvancementSettings = tuning.skillAdvancement
+        characterLevelSettings = tuning.characterLevel
         let textures = TextureLibrary(fileSystem: fileSystem, device: device)
         let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
         builder = CellSceneBuilder(
@@ -178,11 +183,28 @@ nonisolated struct CellProviderIndexes {
             )
         )
         equipmentCatalog = EquipmentCatalog.build(from: file)
-        actorValueBaselines = ActorValueBaselineResolver(
+        actorValueBaselines = Self.actorValueBaselines(
+            root: root, file: file, pluginName: esmURL.lastPathComponent, tuning: tuning
+        )
+    }
+
+    /// The stat derivation and the baselines over it.
+    ///
+    /// Its own step because the initializer is at its length cap, and because
+    /// the two halves have to share one `PlayerLevelSource` (issue #499): the
+    /// baselines take the resolver's own, so a level-up moves an NPC's
+    /// `PC Level Mult` scaling and the player's reported level together.
+    private static func actorValueBaselines(
+        root: GameDataRoot,
+        file: ESMFile,
+        pluginName: String,
+        tuning: SettingIndexes
+    ) -> ActorValueBaselineResolver {
+        ActorValueBaselineResolver(
             resolver: ActorValueResolver.build(
                 from: file,
                 localized: (try? file.pluginHeader().isLocalized) ?? false,
-                pluginName: esmURL.lastPathComponent,
+                pluginName: pluginName,
                 // Load-order wide, so a patch plugin's CLAS override reaches
                 // the derivation instead of being invisible to it (#496).
                 classes: CharacterClassStoreLoader.load(root: root, baseFile: file),
@@ -217,6 +239,7 @@ nonisolated struct CellProviderIndexes {
             perkStore: perkStore,
             actorValueInformation: actorValueInformation,
             skillAdvancementSettings: skillAdvancementSettings,
+            characterLevelSettings: characterLevelSettings,
             movementConfiguration: movementConfiguration,
             barterPricing: barterPricing,
             combatSettings: combatSettings,

@@ -13,6 +13,8 @@
 //
 //   (Index:  14; Name: 'GetActorValue'; ParamType1: ptActorValue)
 //   (Index:  46; Name: 'GetDead')
+//   (Index:  80; Name: 'GetLevel')
+//   (Index: 277; Name: 'GetBaseActorValue'; ParamType1: ptActorValue)
 //   (Index: 263; Name: 'IsWeaponOut')
 //   (Index: 323; Name: 'GetCombatState')
 //   (Index: 640; Name: 'GetActorValuePercent'; ParamType1: ptActorValue)
@@ -103,6 +105,39 @@ nonisolated extension ConditionFunctions {
             name: "GetCombatState"
         ) { call in
             call.actorState().map(\.combatStateValue)
+        })
+
+        installLevelAndBaseValue(&registry)
+    }
+
+    /// The two functions item 20.6 needed (issue #499). Vanilla perk records
+    /// state their requirements with them — `Armsman20` reads
+    /// `GetBaseActorValue One-Handed >= 20`, measured 2026-08-20 with
+    /// `openskycli record Armsman20` — so without these a perk-point spend
+    /// could never satisfy a vanilla tree.
+    static func installLevelAndBaseValue(_ registry: inout ConditionFunctionRegistry) {
+        // "Returns the current, unmodified value of the specified stat", the
+        // base rather than the total (<https://ck.uesp.net/wiki/GetActorValue>
+        // contrasts the two). What the actor's records author plus whatever an
+        // explicit base write has moved it by, and never a fortify modifier —
+        // which is what makes a perk requirement something a potion cannot buy.
+        registry.register(ConditionFunction(
+            index: 277,
+            name: "GetBaseActorValue",
+            parameter1: .integer
+        ) { call in
+            Self.actorValue(call, index: 277) { state, value in state.baseValue(at: value) }
+        })
+
+        // "Gets the actor's current level."
+        // (<https://www.creationkit.com/index.php?title=GetLevel_-_Actor>)
+        // The derived level for an NPC — its ACBS word, or the `PC Level Mult`
+        // scaling of the player's — and the character level for the player.
+        registry.register(ConditionFunction(
+            index: 80,
+            name: "GetLevel"
+        ) { call in
+            call.actorState().map { Float($0.level) }
         })
     }
 

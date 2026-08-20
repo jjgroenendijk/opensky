@@ -97,23 +97,30 @@ struct SkillAdvancementRealDataTests {
     func realParametersDriveARealLevelUp() throws {
         let root = try #require(Self.dataRoot)
         let store = WorldStateStore()
-        var runtime = SkillAdvancementRuntime(
-            values: ActorValueRuntime(
-                store: store,
-                baselines: ActorValueBaselineResolver(
-                    fallback: ActorValueBaseline(
-                        maximums: ActorValues(repeating: 100),
-                        regenPercentPerSecond: .zero,
-                        general: [Self.oneHanded: ActorValueIdentity.skillFloor]
-                    )
+        let settings = GameSettingLoader.load(root: root)
+        let values = ActorValueRuntime(
+            store: store,
+            baselines: ActorValueBaselineResolver(
+                fallback: ActorValueBaseline(
+                    maximums: ActorValues(repeating: 100),
+                    regenPercentPerSecond: .zero,
+                    general: [Self.oneHanded: ActorValueIdentity.skillFloor]
                 )
-            ),
+            )
+        )
+        var runtime = SkillAdvancementRuntime(
+            values: values,
             parameters: SkillUseParameterSource(
                 store: ActorValueInformationStoreLoader.load(root: root)
             ),
-            settings: SkillAdvancementSettings.resolve(
-                store: GameSettingLoader.load(root: root)
-            )
+            settings: SkillAdvancementSettings.resolve(store: settings)
+        )
+        // The whole path, not the skill half alone (issue #499): the point the
+        // skill gains banks its character experience into the level runtime,
+        // against the curve this install authors.
+        runtime.leveling = PlayerLevelRuntime(
+            values: values,
+            settings: CharacterLevelSettings.resolve(store: settings)
         )
         let threshold = runtime.threshold(forSkill: Self.oneHanded, on: .player)
         #expect(threshold > 0)
@@ -132,7 +139,8 @@ struct SkillAdvancementRealDataTests {
 
         #expect(blows == Int((threshold / 63).rounded(.up)))
         #expect(runtime.level(ofSkill: Self.oneHanded, on: .player) == 16)
-        #expect(runtime.progress.bankedExperience == 16)
+        #expect(runtime.progress.experience == 16)
+        #expect(runtime.progress.level == 1)
         #expect(runtime.tally.isClean)
     }
 }
