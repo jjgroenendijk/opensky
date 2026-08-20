@@ -1,8 +1,8 @@
 // NPC_ record decoded into engine types: the appearance-relevant subset for
 // the bind-pose milestone, plus the ACBS/CNAM stat inputs the actor-value
 // derivation needs (issue #194), the SPLO spell run (issue #470) and the PRKR
-// perk run (issue #497). Factions, AI and inventory
-// items are still skipped deliberately; ACBS carries the gender flag + the
+// perk run (issue #497) and the SNAM faction memberships (issue #501). AI and
+// inventory items are still skipped deliberately; ACBS carries the gender flag + the
 // template-inheritance flags that drive per-field resolution.
 //
 // Reference: UESP "Skyrim Mod:Mod File Format/NPC_"
@@ -88,6 +88,19 @@ nonisolated struct ActorBase {
         static let useKeywords = TemplateFlags(rawValue: 0x1000)
     }
 
+    /// One SNAM: the FACT the actor belongs to and its rank inside it.
+    ///
+    /// The rank is signed — xEdit reads `itS8` — and vanilla authors negative
+    /// ranks, which the Creation Kit uses to mean "a member the faction's rank
+    /// titles do not name". The three bytes that follow the rank are unused in
+    /// Skyrim (xEdit `wbFaction`) and are not read.
+    struct FactionMembership: Equatable {
+        static let byteCount = 8
+
+        let faction: FormID
+        let rank: Int8
+    }
+
     let formID: FormID
     let editorID: String?
     /// FULL — display name; localized plugins store a string-table ID.
@@ -135,6 +148,14 @@ nonisolated struct ActorBase {
     /// names "Use spelllist (both spells and perks)", so it resolves on the
     /// same flag the `SPLO` run does.
     let perks: [FormID]
+    /// SNAM — the factions the actor is authored into, in record order
+    /// (issue #501). Consuming them for hostility, crime and services is the
+    /// rest of milestone M21.
+    ///
+    /// This list inherits through `TemplateFlags.useFactions`, resolved by
+    /// `ActorTemplateResolver.resolveFactions(base:)` the way the spell and
+    /// package runs resolve on their own flags.
+    let factions: [FactionMembership]
     /// ACBS/CNAM/DNAM stat inputs (issue #194).
     let stats: Stats
     /// VMAD — Papyrus scripts attached to the NPC_ base.
@@ -207,6 +228,7 @@ nonisolated struct ActorBase {
         packages = references.packages
         spells = references.spells
         perks = references.perks
+        factions = references.factions
         self.stats = stats
         self.scriptData = scriptData
     }
@@ -223,6 +245,7 @@ nonisolated struct ActorBase {
         var packages: [FormID] = []
         var spells: [FormID] = []
         var perks: [FormID] = []
+        var factions: [FactionMembership] = []
     }
 
     /// The FormID-valued fields, plus the VMAD accumulator every unrecognized
@@ -242,10 +265,31 @@ nonisolated struct ActorBase {
             references.voiceType = try FormID(reader.readUInt32())
         case "WNAM":
             references.wornArmor = try FormID(reader.readUInt32())
-        case "PNAM":
-            try references.headParts.append(FormID(reader.readUInt32()))
         case "DOFT":
             references.defaultOutfit = try FormID(reader.readUInt32())
+        default:
+            // The repeated list fields and the VMAD fallthrough live in their
+            // own pass, which keeps this switch inside the complexity limit.
+            try Self.decodeListReference(
+                field,
+                reader: &reader,
+                into: &references,
+                scriptData: &scriptData
+            )
+        }
+    }
+
+    /// The repeated FormID-valued runs, plus the VMAD accumulator every
+    /// unrecognized field falls through to.
+    private static func decodeListReference(
+        _ field: ESMField,
+        reader: inout BinaryReader,
+        into references: inout References,
+        scriptData: inout ScriptData
+    ) throws {
+        switch field.type {
+        case "PNAM":
+            try references.headParts.append(FormID(reader.readUInt32()))
         case "PKID":
             try references.packages.append(FormID(reader.readUInt32()))
         case "SPLO":
@@ -256,6 +300,15 @@ nonisolated struct ActorBase {
             // rather than failing the record.
             guard field.data.count >= 4 else { return }
             try references.perks.append(FormID(reader.readUInt32()))
+        case "SNAM":
+            // 8-byte struct: the FACT link, a signed rank, then three bytes
+            // unused in Skyrim (xEdit `wbFaction`). A short one loses its entry
+            // rather than failing the record, as PRKR does.
+            guard field.data.count >= 5 else { return }
+            try references.factions.append(ActorBase.FactionMembership(
+                faction: FormID(reader.readUInt32()),
+                rank: Int8(bitPattern: reader.readUInt8())
+            ))
         default:
             _ = try scriptData.decode(field: field)
         }

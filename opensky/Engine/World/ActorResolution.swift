@@ -119,6 +119,18 @@ nonisolated struct ResolvedActorSpells: Equatable {
     let race: ActorSourcedField<FormID?>
 }
 
+/// Faction memberships after `useFactions` template inheritance (issue #501).
+///
+/// Its own struct for the reason the spell list has one: the SNAM run answers
+/// to its own ACBS template-data bit, and its consumers — hostility, crime
+/// response and vendor rules — are none of the ones already resolved here.
+nonisolated struct ResolvedActorFactions: Equatable {
+    let base: FormID
+    let chain: [ActorChainLink]
+    /// SNAM, resolved through `useFactions`.
+    let factions: ActorSourcedField<[ActorBase.FactionMembership]>
+}
+
 /// Resolves template chains against pre-built single-plugin record indexes
 /// (raw-FormID keys, matching CellSceneBuilder's convention).
 nonisolated struct ActorTemplateResolver {
@@ -256,6 +268,20 @@ nonisolated struct ActorTemplateResolver {
             },
             race: resolveField(in: npcs, flag: .useTraits) {
                 ActorSourcedField(value: $0.race, source: $0.formID)
+            }
+        )
+    }
+
+    /// Resolves only the faction-membership field group (issue #501). A local
+    /// empty list stays authoritative unless `useFactions` delegates it, the
+    /// rule every other field group here follows.
+    func resolveFactions(base: FormID) throws -> ResolvedActorFactions {
+        let (npcs, chain) = try resolveChain(base: base)
+        return ResolvedActorFactions(
+            base: base,
+            chain: chain,
+            factions: resolveField(in: npcs, flag: .useFactions) {
+                ActorSourcedField(value: $0.factions, source: $0.formID)
             }
         )
     }

@@ -17,6 +17,7 @@ nonisolated struct ReferenceRecordInspector {
     private let encounterZones: EncounterZoneStore
     private let collisionLayers: CollisionLayerStore
     private let defaultObjects: DefaultObjectStore
+    private let factions: FactionStore
     private let keywordUsage: [ResolvedFormID: [String]]
 
     init(index: RecordIndex) {
@@ -36,6 +37,7 @@ nonisolated struct ReferenceRecordInspector {
         encounterZones = EncounterZoneStore(index: index)
         collisionLayers = CollisionLayerStore(index: index)
         defaultObjects = DefaultObjectStore(index: index)
+        factions = FactionStore(index: index)
         keywordUsage = Self.buildKeywordUsage(index: index, keywords: keywordStore)
     }
 
@@ -80,6 +82,7 @@ nonisolated struct ReferenceRecordInspector {
         case "DOBJ": return defaultObjectTable()
         case "ENCH": return enchantmentChain(id)
         case "PERK": return perkRankChain(id)
+        case "FACT": return factionRelations(id)
         default: return nil
         }
     }
@@ -150,6 +153,22 @@ nonisolated struct ReferenceRecordInspector {
             title: "rank chain (declared \(first.declaredRankCount))",
             values: values
         )
+    }
+
+    /// The selected faction's relations, each joined to the record it names.
+    /// A relation may name a RACE instead of a FACT, so an entry the faction
+    /// store cannot answer for falls back to the generic link resolution
+    /// rather than reading as unresolved.
+    private func factionRelations(_ id: ResolvedFormID) -> String? {
+        guard let resolved = factions.faction(id) else { return nil }
+        let joined = factions.relations(of: resolved)
+        guard !joined.isEmpty else { return nil }
+        let values = joined.map { relation, target in
+            let name = target?.displayName
+                ?? link(relation.faction, fromPlugin: resolved.sourcePlugin)
+            return "\(name) — \(relation.reaction), modifier \(relation.modifier)"
+        }
+        return cappedLines(title: "interfaction relations", values: values)
     }
 
     private func encounterZone(_ id: ResolvedFormID) -> String? {

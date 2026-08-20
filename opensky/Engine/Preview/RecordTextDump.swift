@@ -123,6 +123,7 @@ nonisolated enum RecordTextDump {
                     magicContext: magicContext
                 )
                 ?? progressionSummary(record, localized, magicContext)
+                ?? factionSummary(record, localized)
         }
     }
 
