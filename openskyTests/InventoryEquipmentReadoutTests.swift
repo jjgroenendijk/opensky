@@ -13,7 +13,8 @@ struct InventoryEquipmentReadoutTests {
         hasOpenContainer: Bool = false,
         ownership: ReferenceOwnershipReadout? = nil,
         equipTarget: EquipmentTargetSelector = .nearestActor,
-        inspection: EquipInspectReadout = .unresolved
+        inspection: EquipInspectReadout = .unresolved,
+        enchantmentCache: EnchantmentCacheReadout = .empty
     ) -> InventoryEquipmentSnapshot {
         InventoryEquipmentSnapshot(
             isAvailable: true,
@@ -27,6 +28,7 @@ struct InventoryEquipmentReadoutTests {
             targetOwnership: ownership,
             equipTarget: equipTarget,
             equipInspection: inspection,
+            enchantmentCache: enchantmentCache,
             lastActionText: "No grant yet."
         )
     }
@@ -117,7 +119,10 @@ struct InventoryEquipmentReadoutTests {
         let text = InventoryEquipmentReadout.equipmentText(
             for: Self.snapshot(equipTarget: .player)
         )
-        #expect(text == "Inspecting: Player\nNothing resolves that owner right now.")
+        #expect(
+            text == "Inspecting: Player\nNothing resolves that owner right now."
+                + "\nEnchantment cache: 0 item(s), 0 resolved, 0 reused"
+        )
     }
 
     @Test
@@ -158,6 +163,26 @@ struct InventoryEquipmentReadoutTests {
         #expect(text.contains("Appearance source: plugin outfit"))
         #expect(text.contains("Wearing: nothing"))
         #expect(text.contains("Appearance skips: none"))
+    }
+
+    /// The section states what the profile cache is doing (issue #489), which is
+    /// what makes the per-frame reuse visible without a profiler.
+    @Test
+    func equipmentTextStatesTheEnchantmentCache() {
+        let text = InventoryEquipmentReadout.equipmentText(
+            for: Self.snapshot(
+                inspection: EquipInspectReadout(
+                    name: "0x00003000",
+                    equipped: [],
+                    appearanceSkips: [],
+                    usesRuntimeEquipment: true
+                ),
+                enchantmentCache: EnchantmentCacheReadout(
+                    itemCount: 2, resolvedCount: 2, reuseCount: 30
+                )
+            )
+        )
+        #expect(text.hasSuffix("Enchantment cache: 2 item(s), 2 resolved, 30 reused"))
     }
 
     /// Every readout degrades to the same stated non-answer with no runtime.

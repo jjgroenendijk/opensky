@@ -75,6 +75,11 @@ extension FakeWorldProviders {
             targetOwnership: inventoryEquipment.ownership,
             equipTarget: inventoryEquipment.target,
             equipInspection: inventoryEquipmentInspection,
+            // One item resolved and reused every frame since, which is the
+            // shape a live session's cache reads (issue #489).
+            enchantmentCache: EnchantmentCacheReadout(
+                itemCount: 1, resolvedCount: 1, reuseCount: 12
+            ),
             lastActionText: inventoryEquipment.lastAction
         )
     }

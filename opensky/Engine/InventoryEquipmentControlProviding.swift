@@ -117,6 +117,14 @@ nonisolated struct InventoryEquipmentSnapshot: Equatable, Sendable {
     /// Which owner the equipment inspection is reading.
     let equipTarget: EquipmentTargetSelector
     let equipInspection: EquipInspectReadout
+    /// What the session's resolved-enchantment cache holds and how much of it
+    /// has been reused (issue #489).
+    ///
+    /// A session-wide reading on an owner-scoped section, because this is where
+    /// the enchantment lines it feeds are read: the equipped set above names
+    /// what each piece carries, and this says how many times that answer was
+    /// reused rather than re-walked out of the records.
+    let enchantmentCache: EnchantmentCacheReadout
 
     /// Human-readable result of the last grant, shown verbatim.
     let lastActionText: String
@@ -134,6 +142,7 @@ nonisolated struct InventoryEquipmentSnapshot: Equatable, Sendable {
         targetOwnership: nil,
         equipTarget: .nearestActor,
         equipInspection: .unresolved,
+        enchantmentCache: .empty,
         lastActionText: "Inventory and equipment unavailable: no game data loaded."
     )
 }

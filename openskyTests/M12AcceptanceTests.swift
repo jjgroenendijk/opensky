@@ -356,6 +356,7 @@ struct M12AcceptanceTests {
             targetOwnership: ownership,
             equipTarget: .nearestActor,
             equipInspection: .unresolved,
+            enchantmentCache: .empty,
             lastActionText: "No grant yet."
         )
     }

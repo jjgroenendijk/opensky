@@ -79,6 +79,7 @@ handed to it.
 | Enchanted-item component | `opensky/Engine/Magic/EnchantedItemComponent.swift` | app + CLI |
 | Enchanted-item ledger | `opensky/Engine/Magic/EnchantmentLedger.swift` | app + CLI |
 | Resolved item enchantment | `opensky/Engine/Magic/ItemEnchantmentProfile.swift` | app + CLI |
+| Resolved-enchantment cache | `opensky/Engine/Magic/ItemEnchantmentProfileCache.swift` | app + CLI |
 | Enchanted hit and its seam | `opensky/Engine/Magic/WeaponEnchantmentHit.swift` | app + CLI |
 | Worn-effect reconcile | `opensky/Engine/Magic/WornEnchantmentApplication.swift` | app + CLI |
 | Fortify terms | `opensky/Engine/Combat/CombatFortifyBonus.swift` | app + CLI |
@@ -985,6 +986,30 @@ let a reload restore effects nothing could take back off.
 Tolerance follows the container's rules, and this chunk has no hard stop: it carries no
 closed enumeration, so a non-finite charge normalizes to zero and a sequence naming an effect
 `AEFF` no longer carries simply dispels nothing when the item comes off.
+
+### Resolving a profile once per wiring
+
+An `ItemEnchantmentProfile` is a pure function of two records: the `WEAP` or `ARMO` the item
+is, and the `ENCH` its `EITM` resolves to. Nothing at runtime writes either — equipping,
+spending a charge and establishing a worn effect all write world state, and none of it is
+read on the way to a profile. So the answer for a given item cannot change while a session
+stands, and `ItemEnchantmentProfileCache` stores it.
+
+That matters because two frame hooks ask. The melee hook resolves the enchantment of every
+equipped weapon through `wornHands()`, and the archery hook resolves the equipped bow's
+through `equippedBowProfile()` every frame the player is in control. Each unmemoized
+resolution is an item-definition lookup, an `ENCH` lookup, a `baseChain` walk for the
+worn-restriction link and a copy of the effect-entry array (issue #489).
+
+A resolved "carries no enchantment" is cached alongside the profiles rather than treated as
+a miss, because most equipped items are unenchanted and those are exactly the lookups the
+frame hooks repeat. Rewiring `EnchantmentBridgeState.store` drops every entry and both
+tallies with it: replacing the store is the only event that can invalidate an entry, and the
+tallies describe the wiring in front of them.
+
+`World > Inventory & Equipment > Equipment` states the reading — how many items the cache
+holds, how many were resolved and how many asks were served from an entry — so the reuse is
+visible while walking around rather than only under a profiler.
 
 ## The script-facing surface
 
