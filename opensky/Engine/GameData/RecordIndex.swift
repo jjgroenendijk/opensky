@@ -36,7 +36,7 @@ nonisolated struct RecordIndex {
     static let referenceRecordTypes: Set<FourCC> = [
         "KYWD", "FLST", "LCTN", "LCRT", "ECZN", "AACT", "COLL", "DOBJ", "MGEF",
         "SPEL", "SCRL", "ENCH", "SHOU", "WOOP", "LVSP", "DUAL", "EQUP", "AVIF",
-        "PERK"
+        "PERK", "FACT"
     ]
 
     private static let logger = Logger(

@@ -34,6 +34,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   chains, and the histogram measured on a vanilla install.
 * [Locations](/formats/locations.md) - LCTN/LCRT layouts, cycle-safe parent and keyword
   traversal, CELL XLCN links, and direct quest-location alias fills.
+* [Factions](/formats/factions.md) - FACT relations, flags, crime values, ranks and the
+  vendor block, NPC_ SNAM membership with its template-flag inheritance, and the
+  load-order faction store.
 * [plugins.txt load order](/formats/plugins-txt.md) - enable flags and file
   order, where the file hides on macOS, and the plugin order OpenSky builds
   from it.

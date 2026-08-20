@@ -54,7 +54,10 @@ nonisolated extension RecordTextDump {
         return lines.joined(separator: "\n")
     }
 
-    private static func nameText(_ value: LString?) -> String {
+    /// A localizable name as the dumps print it: the text when the plugin
+    /// stores it inline, the table id when it does not. Shared with the FACT
+    /// summary, which prints one per rank title.
+    static func nameText(_ value: LString?) -> String {
         switch value {
         case let .inline(text): "\"\(text)\""
         case let .tableID(id): "string #\(id)"

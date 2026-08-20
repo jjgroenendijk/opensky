@@ -4,6 +4,14 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-20
 
+* **FACT decode, faction store and NPC_ faction membership (issue #501)**: `Faction` reads
+  the interfaction relations, the flags word, the variable-length crime-value struct, the
+  rank titles and the vendor block, with every unread or malformed field tallied rather than
+  fatal; `ActorBase` now reads the `SNAM` memberships it used to skip, and they resolve
+  through the `useFactions` template flag. `FactionStore` is the load-order-wide lookup with
+  the relation and membership joins, and `openskycli record` prints the decoded view. All
+  1417 winning FACT records in the active load order decode with zero tallies, and every
+  `LCTN` crime-faction link resolves. See [factions](/formats/factions.md).
 * **The Progression panel builds its snapshot once per tick (issue #556)**: all three
   sections read the same `ProgressionControlSnapshot` and each used to build its own, so a
   reading that walks eighteen perk trees and runs a `CTDA` condition run per box of the
