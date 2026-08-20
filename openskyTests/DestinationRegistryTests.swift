@@ -18,7 +18,7 @@ struct DestinationRegistryTests {
     func registryOrderAndIdentifiers() {
         #expect(DestinationRegistry.all.map(\.id) == [
             "world", "playerLocomotion", "combatPhysics", "aiNavigation", "environment",
-            "hudInteraction", "dialogueVoice", "systemMenu",
+            "hudInteraction", "dialogueVoice", "progression", "systemMenu",
             "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
             "runtimeState", "scripts", "journal", "uiLab", "assetBrowser", "loadOrder"
         ])
@@ -28,7 +28,7 @@ struct DestinationRegistryTests {
             "Destination-combatPhysics", "Destination-aiNavigation",
             "Destination-environment",
             "Destination-hudInteraction", "Destination-dialogueVoice",
-            "Destination-systemMenu",
+            "Destination-progression", "Destination-systemMenu",
             "Destination-inventoryMenu", "Destination-containerMenu",
             "Destination-inventoryEquipment", "Destination-audio",
             "Destination-runtimeState", "Destination-scripts",
@@ -37,7 +37,7 @@ struct DestinationRegistryTests {
         ])
         #expect(DestinationRegistry.worldInspectors.map(\.id) == [
             "world", "playerLocomotion", "combatPhysics", "aiNavigation", "environment",
-            "hudInteraction", "dialogueVoice", "systemMenu",
+            "hudInteraction", "dialogueVoice", "progression", "systemMenu",
             "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
             "runtimeState", "scripts", "journal", "uiLab"
         ])
@@ -91,12 +91,22 @@ struct DestinationRegistryTests {
     }
 
     @Test @MainActor
-    func destinationOverrideActionsTrackAndResetProviders() throws {
+    func destinationOverrideActionsTrackAndResetProviders() {
         let providers = FakeWorldProviders()
         let context = WorldPanelContext(providers: providers)
 
         for descriptor in DestinationRegistry.worldInspectors {
-            let overrides = try #require(descriptor.overrides)
+            // Progression is the one destination registering no override
+            // actions: every control under it writes world state a user
+            // produced on purpose, so there is no knob for "Reset all" to
+            // restore (DestinationRegistryProgression.swift).
+            guard let overrides = descriptor.overrides else {
+                #expect(
+                    descriptor.id == "progression",
+                    "\(descriptor.id) registers no override actions"
+                )
+                continue
+            }
             #expect(!overrides.isOverridden(context), "\(descriptor.id) is not at defaults")
         }
 

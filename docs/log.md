@@ -4,6 +4,24 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-20
 
+* **M20 accepted (issue #500, item 20.7)**: `World > Progression` is the milestone's own
+  sidebar destination, in three sections — Character, Skills and Perk Tree. Every control
+  drives the same engine call a session makes: Award XP is `PlayerLevelRuntime.award`,
+  Choose is `chooseAttribute`, Grant use and Grant point are `AdvanceSkill` and
+  `IncrementSkill`, and Spend point is the validated tree spend with the two dev grants
+  beside it. See [character leveling](/engine/character-leveling.md).
+* **The perk tree is browsed as a list plus a record inspector**: the selected skill's AVIF
+  grid box by box with its connections, rank chain and the rule refusing it, and the
+  selected box's resolved PERK record with its flags, conditions and effects. A drawn grid
+  would be a second renderer to keep honest for no verification the list does not give.
+* **The progression destination registers no override actions**, the only world inspector
+  that does not. Every control under it writes world state a user produced on purpose, so a
+  sidebar dot would mean "this character has progressed" and `View > Reset all overrides`
+  would take a character's levels away rather than restore a knob. `DestinationRegistryTests`
+  names it as the exception rather than dropping the check.
+* **AVIF and PERK were already browsable from the Asset Browser** (items 20.1 and 20.2 added
+  both to `ReferenceRecordType`), so the milestone's record-inspection scope is covered
+  rather than built, and `M20AcceptancePanelTests` pins it.
 * **Player level-up (issue #499, item 20.6)**: skill points now bank character experience
   against the `fXPLevelUpBase`/`fXPLevelUpMult` curve, crossing it raises the level and
   hands out one attribute pick and one perk point, and a pick adds `iAVDhmsLevelUp` points

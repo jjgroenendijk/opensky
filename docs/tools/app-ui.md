@@ -332,6 +332,18 @@ If one later gains a distinct control group, convert it to normal
 panel fan-out owns ticker lifecycle, override aggregation, reset, and refocus
 wiring.
 
+`World > Progression` (M20.7) is the same shape and is registered from a
+satellite of the registry file, `DestinationRegistryProgression.swift`, for the
+reason `DestinationRegistryMenus.swift` exists: the registry enum body is at the
+strict-lint type-length cap and this descriptor is what pushed it over. Its three
+sections are **Character**, **Skills** and **Perk Tree**, in the order
+progression happens in, and it sits at the end of the simulation destinations —
+after `World > Dialogue & Voice`, before the menus. It is a destination rather
+than sections under `World > Combat & Physics` because it needs its own
+sub-navigation (a skill selects a tree, a box selects a record) and because
+combat asks what an actor is worth in the fight it is in while progression asks
+what the player has become.
+
 `World > HUD & Interaction` is another normal sectioned panel. **Elements**
 (`PanelSection-hudElements`) owns reversible presentation overrides;
 **Target** (`PanelSection-hudTarget`) is read-only live diagnostics. The
@@ -456,6 +468,24 @@ Accessibility identifiers are the UI-test API and never change silently.
   `-faceMorphs`. The control identifiers kept the prefixes their own items
   pinned — `AudioVoice*` for the submix, `MorphWeightControl` for the weight —
   because they are the UI-test contract and the move changed no behaviour.
+- Progression set (World > Progression, M20.7), the milestone's own destination
+  and the only world inspector registering no override actions — every control
+  under it writes world state a user produced on purpose, so there is no knob
+  for `View > Reset all overrides` to restore:
+  `ProgressionExperienceControl`, `ProgressionAwardExperienceControl`,
+  `ProgressionAttributeControl`, `ProgressionChooseAttributeControl`,
+  `ProgressionAddPerkPointControl`, `ProgressionRemovePerkPointControl`,
+  `ProgressionSkillControl`, `ProgressionSkillAmountControl`,
+  `ProgressionAdvanceSkillControl`, `ProgressionIncrementSkillControl`,
+  `ProgressionTreeSkillControl`, `ProgressionPerkNodeControl`,
+  `ProgressionSpendPerkPointControl`, `ProgressionGrantPerkControl`,
+  `ProgressionRemovePerkControl`; readouts `ProgressionCharacterStatsLabel`,
+  `ProgressionSkillsStatsLabel`, `ProgressionPerkTreeStatsLabel`,
+  `ProgressionPerkStatsLabel`. Section headers:
+  `PanelSection-progressionCharacter`, `-progressionSkills`,
+  `-progressionPerkTree`. The two skill popups are one selection held on the
+  provider, so the Skills section and the Perk Tree section can never describe
+  different skills. See [character leveling](/engine/character-leveling.md).
 - HUD set (World > HUD & Interaction, M8.4.3):
   `HUDLayerEnabledControl`, `HUDCrosshairControl`, `HUDMetersControl`,
   `HUDCompassControl`, `HUDMarkersControl`, `HUDPromptControl`,
