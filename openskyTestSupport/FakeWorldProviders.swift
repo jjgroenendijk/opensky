@@ -379,6 +379,9 @@ final class FakeWorldProviders: WorldControlProviders {
     var casting = FakeCastingState()
     var combatLoop = FakeCombatLoopState()
     var physics = FakePhysicsState()
+    /// ProgressionControlProviding (issue #500) state; the conformance lives in
+    /// `FakeWorldProvidersProgression.swift`.
+    var progression = FakeProgressionState()
 }
 
 /// The inventory-menu half of the fake, in an extension so the class body

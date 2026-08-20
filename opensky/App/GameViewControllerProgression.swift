@@ -31,6 +31,15 @@ struct ProgressionBridgeState {
     /// validated against. Empty without game data, and every spend is then
     /// refused with `.notInPerkTree` rather than accepted blind.
     var trees = PerkTreeIndex.empty
+    /// The AVIF index the `World > Progression` panel browses a skill's perk
+    /// tree out of (issue #500). Nil without game data, and the panel then
+    /// reports itself unavailable rather than drawing an empty tree.
+    var information: ActorValueInformationStore?
+    /// Which skill the panel's skill controls and perk tree act on, by vanilla
+    /// actor-value index. One-handed until the panel selects another.
+    var skillSelection = ActorValueIdentity.firstSkillIndex
+    /// Which box of that skill's tree the perk controls act on, by `INAM`.
+    var nodeSelection: UInt32 = 0
     /// Human-readable result of the last level-up action.
     var lastActionText = "No leveling action yet."
 }
@@ -56,6 +65,10 @@ extension GameViewController {
             let information = (provider as? ProgressionDataProviding)?.actorValueInformation
         {
             progression.trees = PerkTreeIndex(information: information, perks: perkStore)
+            progression.information = information
+            progression.nodeSelection = progressionFirstNode(
+                forSkill: progression.skillSelection
+            )
         }
         skills.runtime?.leveling = progression.runtime
     }

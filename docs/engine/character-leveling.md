@@ -30,6 +30,7 @@ run every spend is validated against.
 - Spending a perk point
 - The condition surface
 - The Papyrus surface
+- The verification surface
 - What is deliberately absent
 
 ## The curve
@@ -223,11 +224,88 @@ is not implemented, and its absence is stated rather than guessed at. A session 
 character leveling refuses both rather than answering zero, which would read as a player who
 has spent everything.
 
+## The verification surface
+
+`World > Progression` is the milestone's own destination, in three sections, and every
+control under it drives the same call a session makes rather than a panel-side copy of it.
+
+| Section | Header id | What it does |
+| --- | --- | --- |
+| Character | `PanelSection-progressionCharacter` | Level, banked experience, unspent points and owed picks; awards character experience, spends a pick, and adds or removes perk points |
+| Skills | `PanelSection-progressionSkills` | The eighteen skills with value, trained base, banked experience and next threshold; grants use (`AdvanceSkill`) or a whole point (`IncrementSkill`) |
+| Perk Tree | `PanelSection-progressionPerkTree` | The selected skill's AVIF grid box by box with its connections, rank chain and refusal, the selected box's resolved PERK record, and the real spend beside the two dev grants |
+
+Three decisions the panel makes, none of them reversible for free later:
+
+- **A destination rather than sections under `World > Combat & Physics`.** Combat asks what
+  an actor is worth in the fight it is in; progression asks what the player has become.
+  Fifteen controls with their own sub-navigation — a skill selects a tree and a box selects
+  a record — is past the promotion threshold in [main-app UI](/tools/app-ui.md) either way.
+- **No override actions.** Every control writes world state a user produced on purpose. A
+  sidebar dot would mean "this character has progressed", and a `View > Reset all
+  overrides` acting on it would take a character's levels away rather than restore a knob.
+  This is the one world-inspector destination registering none, and
+  `DestinationRegistryTests` names it as the exception rather than skipping the check.
+- **A list plus an inspector rather than a drawn tree.** The tree's meaning is its
+  connections, its rank chains and the rule that refuses a box; each reads as well spelled
+  out, and a laid-out grid would be a second renderer to keep honest for no verification
+  the list does not already give.
+
+The 20.7 acceptance record, in the format
+[the convention](/tools/sidebar-acceptance.md) defines:
+
+```text
+Milestone: M20.7
+Sidebar path: World > Progression > Character, > Skills, > Perk Tree
+Destination id: Destination-progression
+Controls exercised: ProgressionExperienceControl, ProgressionAwardExperienceControl,
+  ProgressionAttributeControl, ProgressionChooseAttributeControl,
+  ProgressionAddPerkPointControl, ProgressionRemovePerkPointControl,
+  ProgressionSkillControl, ProgressionSkillAmountControl,
+  ProgressionAdvanceSkillControl, ProgressionIncrementSkillControl,
+  ProgressionTreeSkillControl, ProgressionPerkNodeControl,
+  ProgressionSpendPerkPointControl, ProgressionGrantPerkControl,
+  ProgressionRemovePerkControl
+Readout: ProgressionCharacterStatsLabel (also ProgressionSkillsStatsLabel,
+  ProgressionPerkTreeStatsLabel, ProgressionPerkStatsLabel)
+Deterministic tests: ProgressionPanelTests, ProgressionReadoutTests,
+  M20AcceptancePanelTests, DestinationRegistryTests, ProgressionUITests
+```
+
+The M20 overall acceptance record:
+
+```text
+Milestone: M20
+Sidebar path: World > Progression > Character, > Skills, > Perk Tree, plus
+  Library > Asset Browser > Reference records (load order) for AVIF and PERK
+Destination id: Destination-progression, Destination-assetBrowser
+Controls exercised: ProgressionAwardExperienceControl,
+  ProgressionChooseAttributeControl, ProgressionAdvanceSkillControl,
+  ProgressionIncrementSkillControl, ProgressionSpendPerkPointControl,
+  ProgressionGrantPerkControl, ProgressionRemovePerkControl,
+  AssetCategory, AssetRecordTypeControl, AssetTable
+Readout: ProgressionCharacterStatsLabel (also ProgressionSkillsStatsLabel,
+  ProgressionPerkTreeStatsLabel, ProgressionPerkStatsLabel,
+  AssetRecordInspectorStatsLabel)
+Deterministic tests: M20AcceptancePanelTests, ProgressionPanelTests,
+  ProgressionReadoutTests, DestinationRegistryTests, CharacterLevelingTests,
+  PlayerLevelRuntimeTests, PerkTreeSpendTests, SkillAdvancementTests,
+  PerkRuntimeTests, ActorValueInformationTests, PerkRecordTests, PerkDumpTests,
+  plus the env-gated real-data suites in make realtest-all
+```
+
+`M20AcceptancePanelTests` is the evidence that the surface works as one: it builds the panel
+through the registry factory the shell uses, over a real `GameViewController` with the four
+progression runtimes wired to a synthetic load order, and runs the flow in the order
+progression happens in — read the character, use One-handed until it levels, spend the
+character experience that banked, take the attribute the level owes, buy `DamageRank1` with
+the point it granted, and read the PERK record that box resolves to.
+
 ## What is deliberately absent
 
-- **The level-up and perk-tree screens.** Item 20.7 owns them; this item owns the rules
-  behind them, and `perkSpendRefusal(for:)` is the exact answer that screen draws a node's
-  availability from.
+- **The in-game level-up and perk-tree screens.** The dev surface above is the whole
+  verification path; the vanilla Scaleform menus behind it are the SWF port (issue #99).
+  `perkSpendRefusal(for:)` is what either surface draws a node's availability from.
 - **Legendary skills**, which reset a skill at 100 and refund its perks.
 - **The Dragonborn perk reset**, which spends a dragon soul to clear one tree.
 - **Experience multipliers** — Rested, Well Rested, Lover's Comfort and the Guardian Stones

@@ -352,8 +352,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   behind it, where the level, banked experience and perk-point pool persist, when the level
   moves and the one stated deviation from the menu-confirmed vanilla one, what an attribute
   pick does and why the ten points live in a base override, the shared live player level
-  every `PC Level Mult` derivation reads, and the seven rules a perk-point spend has to
-  satisfy.
+  every `PC Level Mult` derivation reads, the seven rules a perk-point spend has to
+  satisfy, and the `World > Progression` panel that is the milestone's verification
+  surface.
 * [Archery and projectiles](/engine/archery.md) - the PROJ flight record, the measurement
   that settles `gravity` as a multiplier rather than an acceleration, the census-named bow
   draw and release events, the exact closed-form flight model on the fixed step, the
