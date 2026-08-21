@@ -2,6 +2,23 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-21
+
+* **RELA and ASTP decode plus the relationship store (issue #502)**: `Relationship` reads
+  the sixteen-byte `DATA` struct - both `NPC_` links, the nine-value rank enum with its
+  `GetRelationshipRank` conversion, both readings of the secret flag and the association
+  link - and `AssociationType` reads the four gendered titles and the family flag.
+  `RelationshipStore` is the load-order-wide lookup with the joins a consumer would redo:
+  the two actor bases resolved, the `ASTP` link joined to its titles, and a pair query that
+  answers in either argument order while the record keeps its authored direction. All 673
+  RELA and 20 ASTP records in the active load order decode with zero tallies and every
+  association-type link resolves. See [relationships](/formats/relationships.md).
+* **The two secret flags disagree on real data**: xEdit names both `DATA` bit `0x80` and
+  record-header bit 6 "Secret" and UESP names only the first, so both are decoded rather
+  than merged - 7 records set the `DATA` bit, 6 set the header bit, and `JulienneTasius`
+  sets the `DATA` bit alone. Whichever a consumer trusts is its own decision, and the
+  real-data suite prints the disagreeing records on every run.
+
 ## 2026-08-20
 
 * **FACT decode, faction store and NPC_ faction membership (issue #501)**: `Faction` reads

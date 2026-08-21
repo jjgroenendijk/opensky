@@ -124,6 +124,7 @@ nonisolated enum RecordTextDump {
                 )
                 ?? progressionSummary(record, localized, magicContext)
                 ?? factionSummary(record, localized)
+                ?? relationshipSummary(record)
         }
     }
 
