@@ -135,6 +135,16 @@ nonisolated enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendab
     /// own beside `perks` because the two answer different questions — how many
     /// points are left to spend, and which perks those points already bought.
     case playerProgress
+    /// What one actor owes each crime faction, and how many of each crime it
+    /// has committed against them (issue #504). The value type is
+    /// `CrimeLedgerState` in
+    /// `opensky/Engine/Crime/CrimeLedgerComponent.swift`. Like `playerProgress`
+    /// it modifies no placement and belongs to no cell in practice: it is keyed
+    /// by the perpetrator, which is `ReferenceKey.player` for every path this
+    /// milestone builds. A slot of its own beside `factions` for the reason
+    /// `perks` is one — a bounty moves when a crime is witnessed, while the
+    /// actor values beside it are rewritten sixty times a second.
+    case crimeLedger
 }
 
 /// A value that can occupy one component slot.
@@ -177,6 +187,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
     case perks(PerkState)
     case factions(ActorFactionState)
     case playerProgress(PlayerProgressState)
+    case crimeLedger(CrimeLedgerState)
 
     var kind: WorldStateComponentKind {
         switch self {
@@ -198,6 +209,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
         case .perks: .perks
         case .factions: .factions
         case .playerProgress: .playerProgress
+        case .crimeLedger: .crimeLedger
         }
     }
 }

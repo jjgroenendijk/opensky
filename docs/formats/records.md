@@ -120,10 +120,21 @@ exterior cell blocks (traversal in [ESM container](/formats/esm.md)).
 | XCLR  | formID array                        | `regions` REGN overlap     |
 | XCAS  | formID                              | `acousticSpace` ASPC (M9.2.2) |
 | XEZN  | formID                              | `encounterZone` ECZN          |
+| XLCN  | formID                              | `location` LCTN               |
+| XOWN  | formID                              | `owner` NPC_ or FACT (issue #504) |
+| XRNK  | int32                               | `ownerFactionRank`            |
 
 DATA flag bits: 0x01 interior, 0x02 has water, 0x08 no LOD water, 0x80 show
 sky, more in UESP. Some records store one byte only (UESP note) — decoder
 accepts both sizes.
+
+XOWN/XRNK: the cell's owner, modelled exactly as a REFR's — xEdit
+`wbDefinitionsTES5.pas` and the UESP CELL page both list `XOWN` as an NPC_ or FACT link, and
+`XRNK` as the signed faction rank beside it. A reference standing in the cell that authors no
+`XOWN` of its own inherits this one, which is what makes every crate in a shop stealable; see
+[crime and bounty](/engine/crime.md). Observed on this install: every owned Whiterun interior
+carries a 4-byte `XOWN` and none carries an `XRNK`, so the rank half is decoded defensively.
+A null link reads as unowned rather than as an owner named zero.
 
 XCLC: exterior grid slot, one cell = 4096 game units. The quad-flags uint32
 is absent in some form-version-43 records (8-byte field -> flags 0); its

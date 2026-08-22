@@ -111,8 +111,17 @@ final class InventoryMenuSection: PanelSectionViewController {
     nonisolated static func line(for entry: InventoryMenuEntry) -> String {
         let count = entry.count == 1 ? "" : " ×\(entry.count)"
         let equipped = entry.isEquipped ? " [equipped]" : ""
+        // "Stolen items in your inventory will be marked with the word
+        // 'Stolen'" (<https://en.uesp.net/wiki/Skyrim:Crime>). The count is
+        // spelled out when only some of the row is hot, because the row is one
+        // item and the flag is per copy (issue #504).
+        let stolen = switch entry.stolenCount {
+        case 0: ""
+        case entry.count: " [stolen]"
+        default: " [\(entry.stolenCount) stolen]"
+        }
         let weight = String(format: "%.1f", entry.weight)
-        return "\(entry.name)\(count)\(equipped) · \(weight) wt · \(entry.value) gold"
+        return "\(entry.name)\(count)\(equipped)\(stolen) · \(weight) wt · \(entry.value) gold"
     }
 
     /// Pure so the readout is unit-testable without AppKit state.

@@ -16,8 +16,9 @@ factions, how it responds to crime committed in its territory, what it calls its
 `NPC_` `SNAM` subrecord, which carries the faction link and the member's rank.
 
 OpenSky decodes the record into links and raw values. What *reads* those values lives
-elsewhere: hostility is derived in the [combat loop](/engine/combat.md), and crime response
-and trade are the rest of milestone M21.
+elsewhere: hostility is derived in the [combat loop](/engine/combat.md), the flags and
+`CRVA` are read by [crime and bounty](/engine/crime.md), and trade is the rest of milestone
+M21.
 
 References:
 
@@ -126,6 +127,13 @@ and a zero would answer for it silently.
 
 UESP records that the field is normally required and that one vanilla record,
 `MS08AlikrFaction`, has none, so an absent `CRVA` is not a decode failure either.
+
+Issue #504 settled what an absent steal multiplier means: 1, the neutral multiplier, so a
+plugin writing a 12-byte `CRVA` charges the item's full value rather than nothing. It also
+settled that these values, not a game setting, are where crime gold comes from — this
+install carries exactly two `iCrimeGold*` settings and neither prices murder, assault,
+trespass or theft. A faction with no `CRVA` at all prices nothing and its crimes are still
+counted. See [crime and bounty](/engine/crime.md).
 
 ## Ranks (`RNAM` / `MNAM` / `FNAM`)
 

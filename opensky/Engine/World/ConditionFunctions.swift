@@ -24,6 +24,7 @@ nonisolated enum ConditionFunctions {
         installData(&registry)
         installMagic(&registry)
         installPerk(&registry)
+        installCrime(&registry)
     }
 
     // MARK: - Reference identity

@@ -57,6 +57,19 @@ nonisolated struct CellScene {
     /// XCMO music-type override authored on this CELL (M9.2.3); nil when the
     /// cell authors none. First link in the music selection precedence chain.
     let musicType: FormID?
+    /// CELL `XOWN`/`XRNK` (issue #504); nil when the cell is unowned. What a
+    /// reference standing here inherits when it authors no owner of its own,
+    /// and what a trespass is judged against.
+    let owner: RecordOwnership?
+    /// CELL `XLCN` — the LCTN this cell belongs to; nil when it names none.
+    /// Carried rather than resolved because resolving it needs the load-order
+    /// LCTN and FACT stores, which the cell builder has no business holding:
+    /// the crime faction is `CrimeFactionResolver`'s answer, walking this
+    /// link's parent chain (issue #504).
+    let locationLink: FormID?
+    /// The plugin `owner` and `locationLink` are spelled against, which is the
+    /// plugin the cell record was read from.
+    let ownerPluginName: String?
     /// ZNAM music type of the worldspace this cell belongs to; nil on
     /// interiors and worldspaces without one. Last link in the chain.
     let worldspaceMusicType: FormID?
@@ -112,6 +125,9 @@ nonisolated struct CellScene {
         regions: [FormID] = [],
         acousticSpace: FormID? = nil,
         musicType: FormID? = nil,
+        owner: RecordOwnership? = nil,
+        locationLink: FormID? = nil,
+        ownerPluginName: String? = nil,
         worldspaceMusicType: FormID? = nil,
         terrainHeightField: TerrainHeightField? = nil,
         waterHeight: Float? = nil,
@@ -133,6 +149,9 @@ nonisolated struct CellScene {
         self.regions = regions
         self.acousticSpace = acousticSpace
         self.musicType = musicType
+        self.owner = owner
+        self.locationLink = locationLink
+        self.ownerPluginName = ownerPluginName
         self.worldspaceMusicType = worldspaceMusicType
         self.terrainHeightField = terrainHeightField
         self.waterHeight = waterHeight

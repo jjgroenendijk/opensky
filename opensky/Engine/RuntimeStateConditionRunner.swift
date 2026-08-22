@@ -136,7 +136,7 @@ nonisolated enum RuntimeStateConditionRunner {
                 + "\(Int(index) + ConditionFunctionRegistry.creationKitOffset)"
         case .unavailableClock, .unavailableActorState, .unavailableDetection,
              .unavailableDialogue, .unavailableData, .unavailableMagic,
-             .unavailablePerks:
+             .unavailablePerks, .unavailableCrime:
             describeUnavailable(failure)
         }
     }
@@ -162,6 +162,8 @@ nonisolated enum RuntimeStateConditionRunner {
             "no \(domain.rawValue) magic state in the evaluation context"
         case .unavailablePerks:
             "no perk data in the evaluation context"
+        case .unavailableCrime:
+            "no crime data in the evaluation context"
         default:
             "unevaluated"
         }

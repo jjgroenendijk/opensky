@@ -206,5 +206,9 @@ extension GameViewController {
         bridge.modifyPerkPoints = { [weak self] delta in
             self?.modifyPlayerPerkPoints(by: delta)
         }
+        // `wireCrime` runs after this step too (issue #504), so the reporter is
+        // reached through a getter rather than captured — the same reason every
+        // closure above is one.
+        bridge.crimeReporter = { [weak self] in self?.crime.reporter }
     }
 }

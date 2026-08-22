@@ -76,23 +76,42 @@ nonisolated enum OpenSkySaveEncoder {
                 }
             }
         }
-        writeInventories(snapshot.entries, into: &writer)
-        writeSpawnedReferences(snapshot.entries, into: &writer)
-        writeQuestStates(snapshot.entries, into: &writer)
-        writeQuestAliases(snapshot.entries, into: &writer)
-        writeQuestLocationAliases(snapshot.entries, into: &writer)
-        writeActorValues(snapshot.entries, into: &writer)
-        writeActorValueOverrides(snapshot.entries, into: &writer)
-        writeDeaths(snapshot.entries, into: &writer)
-        writeCombatStates(snapshot.entries, into: &writer)
-        writeDialogueStates(snapshot.entries, into: &writer)
-        writeActiveEffects(snapshot.entries, into: &writer)
-        writeSpellbooks(snapshot.entries, into: &writer)
-        writeEnchantedItems(snapshot.entries, into: &writer)
-        writePerks(snapshot.entries, into: &writer)
-        writeFactionMemberships(snapshot.entries, into: &writer)
-        writePlayerProgress(snapshot.entries, into: &writer)
+        writeComponentChunks(snapshot.entries, into: &writer)
         return writer.data
+    }
+
+    /// Every component that travels in a chunk of its own rather than inside
+    /// `RDLT`, in the order the file lists them.
+    ///
+    /// Split out of `encode` because that function reached the body-length cap
+    /// once crime added its two, and the split is along a real seam: everything
+    /// above it is the header, the fingerprint and the three chunks that are not
+    /// per-component, while everything here is one call per component kind. Each
+    /// writer emits nothing when no entry carries its component, which is what
+    /// keeps a session that touched none byte-identical to an older build's
+    /// output.
+    private static func writeComponentChunks(
+        _ entries: [WorldStateSnapshotEntry],
+        into writer: inout BinaryWriter
+    ) {
+        writeInventories(entries, into: &writer)
+        writeSpawnedReferences(entries, into: &writer)
+        writeQuestStates(entries, into: &writer)
+        writeQuestAliases(entries, into: &writer)
+        writeQuestLocationAliases(entries, into: &writer)
+        writeActorValues(entries, into: &writer)
+        writeActorValueOverrides(entries, into: &writer)
+        writeDeaths(entries, into: &writer)
+        writeCombatStates(entries, into: &writer)
+        writeDialogueStates(entries, into: &writer)
+        writeActiveEffects(entries, into: &writer)
+        writeSpellbooks(entries, into: &writer)
+        writeEnchantedItems(entries, into: &writer)
+        writePerks(entries, into: &writer)
+        writeFactionMemberships(entries, into: &writer)
+        writePlayerProgress(entries, into: &writer)
+        writeCrimeLedgers(entries, into: &writer)
+        writeStolenGoods(entries, into: &writer)
     }
 
     // MARK: - Header
@@ -217,12 +236,12 @@ nonisolated enum OpenSkySaveEncoder {
             writer.writeUInt8(state.isDeleted ? 1 : 0)
         case .inventory, .spawn, .quest, .questAliases, .actorValues, .death,
              .combat, .dialogue, .activeEffects, .spellbook, .enchantedItems, .perks,
-             .factions, .playerProgress:
+             .factions, .playerProgress, .crimeLedger:
             // Unreachable: `savedKinds(of:)` drops every kind without an RDLT
             // tag, and none of these has one — they travel in the INVN, SPWN,
-            // QSTS, QALS, AVAL, DETH, CBTS, DLGS, AEFF, SPLB, ECHG, PRKS, FCTN
-            // and PLVL chunks. The cases exist so that adding a component kind is a
-            // compile error here rather than a silently unwritten component.
+            // QSTS, QALS, AVAL, DETH, CBTS, DLGS, AEFF, SPLB, ECHG, PRKS, FCTN,
+            // PLVL and CRIM chunks. The cases exist so that adding a component kind
+            // is a compile error here rather than a silently unwritten component.
             break
         }
     }

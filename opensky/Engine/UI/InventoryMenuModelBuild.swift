@@ -27,19 +27,27 @@ nonisolated extension InventoryMenuModel {
     ) -> InventoryMenuModel {
         var rows: [InventoryMenuEntry] = []
         var weight = 0.0
-        for stack in inventory.stacks {
+        // One row per *item*, not per stack. Since issue #504 a stack is keyed
+        // by (form, stolen), so an owner holding honest and stolen copies of one
+        // form holds two of them — and two rows with the same name and FormID
+        // would be two identical-looking controls acting on the same items. The
+        // row carries the stolen count instead.
+        var seen: Set<UInt32> = []
+        for stack in inventory.stacks where seen.insert(stack.item.rawValue).inserted {
             let definition = items.definition(stack.item)
-            weight += Double(definition?.weight ?? 0) * Double(stack.count)
+            let total = inventory.count(of: stack.item)
+            weight += Double(definition?.weight ?? 0) * Double(total)
             guard stack.item != goldFormID else { continue }
             rows.append(
                 InventoryMenuEntry(
                     item: stack.item,
                     name: name(of: stack.item, in: items),
-                    count: stack.count,
+                    count: total,
                     weight: definition?.weight ?? 0,
                     value: definition?.value ?? 0,
                     isEquipped: inventory.isEquipped(stack.item),
-                    family: definition?.family
+                    family: definition?.family,
+                    stolenCount: inventory.stolenCount(of: stack.item)
                 )
             )
         }

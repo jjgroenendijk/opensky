@@ -92,9 +92,14 @@ struct InventoryRuntime {
         store.component(ReferenceInventoryState.self, for: holder.key) != nil
     }
 
-    /// How many of `item` `holder` holds.
+    /// How many of `item` `holder` holds, honest and stolen copies together.
     func count(of item: FormID, in holder: InventoryHolder) -> Int32 {
         inventory(of: holder).count(of: item)
+    }
+
+    /// How many stolen copies of `item` `holder` holds (issue #504).
+    func stolenCount(of item: FormID, in holder: InventoryHolder) -> Int32 {
+        inventory(of: holder).stolenCount(of: item)
     }
 
     /// Total weight `holder` carries, from #175's per-item weights.
@@ -138,12 +143,30 @@ struct InventoryRuntime {
     /// - Returns: the inventory as stored afterwards.
     /// - Throws: `InventoryError.nonPositiveCount`, `InventoryError.countOverflow`.
     @discardableResult
-    func add(_ item: FormID, count: Int32, to holder: InventoryHolder) throws
-        -> ReferenceInventoryState
-    {
-        let updated = try inventory(of: holder).adding(item, count: count, owner: holder.key)
+    func add(
+        _ item: FormID,
+        count: Int32,
+        to holder: InventoryHolder,
+        stolen: Bool = false
+    ) throws -> ReferenceInventoryState {
+        let updated = try inventory(of: holder)
+            .adding(item, count: count, owner: holder.key, stolen: stolen)
         store.set(updated, for: holder.key, in: holder.cell)
         return updated
+    }
+
+    /// Re-marks `count` of `item` in `holder`'s inventory as stolen (issue
+    /// #504), for goods that were already in hand when their standing changed —
+    /// which is what taking out of an owned container is.
+    ///
+    /// - Returns: true when the stored state changed.
+    @discardableResult
+    func markStolen(_ item: FormID, count: Int32, in holder: InventoryHolder) -> Bool {
+        store.set(
+            inventory(of: holder).markingStolen(item, count: count),
+            for: holder.key,
+            in: holder.cell
+        )
     }
 
     /// Takes `count` of `item` away from `holder`.
@@ -173,18 +196,29 @@ struct InventoryRuntime {
     ///
     /// - Throws: `InventoryError.sameHolder` when source and destination are
     ///   one owner, plus everything `add` and `remove` throw.
+    /// A movement carries its stolen split with it: hot goods stay hot on the
+    /// other side of the transfer, which is what "the item is considered
+    /// stolen" as long as the marker is present means
+    /// (<https://en.uesp.net/wiki/Skyrim:Crime>). `markingStolen` marks the
+    /// whole movement stolen on arrival instead, which is what taking out of a
+    /// container somebody else owns does (issue #504).
     func transfer(
         _ item: FormID,
         count: Int32,
         from source: InventoryHolder,
-        to destination: InventoryHolder
+        to destination: InventoryHolder,
+        markingStolen: Bool = false
     ) throws {
         guard source.key != destination.key else {
             throw InventoryError.sameHolder(source.key)
         }
-        let taken = try inventory(of: source).removing(item, count: count, owner: source.key)
+        let sourceInventory = inventory(of: source)
+        let split = markingStolen
+            ? StolenSplit(clean: 0, stolen: count)
+            : sourceInventory.split(taking: count, of: item)
+        let taken = try sourceInventory.removing(item, count: count, owner: source.key)
         let given = try inventory(of: destination)
-            .adding(item, count: count, owner: destination.key)
+            .adding(item, split: split, owner: destination.key)
         store.set(taken, for: source.key, in: source.cell)
         store.set(given, for: destination.key, in: destination.cell)
     }
@@ -218,13 +252,18 @@ struct InventoryRuntime {
         }
         var giver = inventory(of: first)
         var receiver = inventory(of: second)
+        // Each leg carries its own stolen split, so selling hot goods hands the
+        // merchant hot goods and the gold that comes back is honest — the
+        // difference issue #506's fence rules read (issue #504).
         if given.amount > 0 {
+            let split = giver.split(taking: given.amount, of: given.item)
             giver = try giver.removing(given.item, count: given.amount, owner: first.key)
-            receiver = try receiver.adding(given.item, count: given.amount, owner: second.key)
+            receiver = try receiver.adding(given.item, split: split, owner: second.key)
         }
         if taken.amount > 0 {
+            let split = receiver.split(taking: taken.amount, of: taken.item)
             receiver = try receiver.removing(taken.item, count: taken.amount, owner: second.key)
-            giver = try giver.adding(taken.item, count: taken.amount, owner: first.key)
+            giver = try giver.adding(taken.item, split: split, owner: first.key)
         }
         store.set(giver, for: first.key, in: first.cell)
         store.set(receiver, for: second.key, in: second.cell)

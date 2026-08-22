@@ -18,6 +18,7 @@ nonisolated enum PapyrusNativeFunctions {
         installPerk(into: &registry)
         installSkill(into: &registry)
         installLevel(into: &registry)
+        installCrime(into: &registry)
     }
 
     static func failure(

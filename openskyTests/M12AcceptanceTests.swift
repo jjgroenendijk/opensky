@@ -219,7 +219,8 @@ struct M12AcceptanceTests {
             name: "Iron Sword",
             reference: Chain.looseSwordReference,
             owner: owned.owner,
-            factionRank: owned.ownerFactionRank
+            factionRank: owned.ownerFactionRank,
+            isTheft: true
         )
         #expect(readout.isOwned)
         let text = InventoryEquipmentReadout.ownershipText(for: Self.snapshot(readout))

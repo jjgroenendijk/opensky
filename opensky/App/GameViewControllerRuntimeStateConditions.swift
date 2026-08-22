@@ -88,6 +88,7 @@ extension GameViewController {
             actors: runtimeStateActorResolution(),
             detection: perceptionResolution(),
             magic: magicConditionResolution(),
+            crime: crimeConditionResolution(),
             clock: renderer?.gameClock,
             references: runtimeStateConditionReferences(crosshair: entry),
             subject: entry?.key,

@@ -218,6 +218,7 @@ final class GameViewController: NSViewController {
     /// lives in `GameViewControllerFactions.swift`; stored here because
     /// extensions cannot add state.
     var factions = FactionBridgeState()
+    var crime = CrimeBridgeState()
 
     /// Skill advancement: the use-to-experience-to-level runtime every combat
     /// and magic seam reports into, and the last advance the readouts show

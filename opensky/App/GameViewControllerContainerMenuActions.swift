@@ -169,8 +169,15 @@ extension GameViewController: ContainerMenuControlProviding {
         do {
             switch (containerMenu.mode, containerMenu.model.side) {
             case (.container, .container):
-                try runtime.inventory.transfer(entry.item, count: 1, from: container, to: .player)
-                return "Took \(entry.name)."
+                // Through the session rather than straight to `transfer`, so a
+                // single-row take marks and reports theft exactly as "take all"
+                // does (issue #504). Two controls over the same act must not
+                // disagree about whether it is a crime.
+                let bounty = try ContainerSession(runtime: runtime, container: container)
+                    .take(entry.item)
+                return bounty > 0
+                    ? "Stole \(entry.name) — \(bounty) bounty."
+                    : "Took \(entry.name)."
             case (.container, .player):
                 try runtime.inventory.transfer(entry.item, count: 1, from: .player, to: container)
                 return "Stored \(entry.name)."

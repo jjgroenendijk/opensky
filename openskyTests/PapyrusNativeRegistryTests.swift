@@ -14,8 +14,9 @@ struct PapyrusNativeRegistryTests {
         // 20.4 (issue #497) added `AddPerk`, `RemovePerk` and `HasPerk`, 85
         // before 20.5 (issue #498) added `AdvanceSkill` and `IncrementSkill`,
         // and 87 before 20.6 (issue #499) added `GetLevel`, `GetPerkPoints`
-        // and `ModPerkPoints`.
-        #expect(standard.count == 90)
+        // and `ModPerkPoints`, and 90 before 21.5 (issue #504) added the three
+        // `Faction` crime-gold natives and the two `Actor` alarms.
+        #expect(standard.count == 95)
         #expect(standard.contains(
             scriptName: "form", functionName: "REGISTERFORUPDATE"
         ))
@@ -26,6 +27,8 @@ struct PapyrusNativeRegistryTests {
         #expect(standard.contains(scriptName: "GAME", functionName: "getplayer"))
         #expect(standard.contains(scriptName: "quest", functionName: "SETSTAGE"))
         #expect(standard.contains(scriptName: "ACTOR", functionName: "getactorvalue"))
+        #expect(standard.contains(scriptName: "faction", functionName: "GETCRIMEGOLD"))
+        #expect(standard.contains(scriptName: "Actor", functionName: "sendtrespassalarm"))
         #expect(standard.contains(scriptName: "actor", functionName: "KILL"))
         #expect(standard.contains(scriptName: "ACTOR", functionName: "addspell"))
         #expect(standard.contains(scriptName: "spell", functionName: "CAST"))

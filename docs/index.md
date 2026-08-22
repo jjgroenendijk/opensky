@@ -374,6 +374,14 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   documented `fCombatDistance` reach formula and the swept-capsule hit volume, target
   filtering and one hit per swing, the install's own block GMSTs and how they differ from
   the secondary source, stagger, and the WEAP INAM impact-sound chain.
+* [Crime and bounty](/engine/crime.md) - ownership enforced at last: the reference-then-cell
+  `XOWN` precedence and the CELL owner this item decodes, the location parent chain that
+  finds the hold answering for a place, the four crimes priced from the faction's own `CRVA`
+  rather than from a game setting that does not exist, witnessing through the converged
+  perception pass, the per-crime-faction bounty ledger with its counts, the stolen flag that
+  splits an inventory stack and survives every move, the five choke points the hooks sit at,
+  `GetCrimeGold` and the five Papyrus natives, and the v1 limitations written down rather
+  than pretended away.
 * [Combat loop](/engine/combat.md) - hostility derived from faction relations, RELA
   relationship rank and the actor's own AIDT aggression, with the documented
   precedence order and the named crime seam, the explicit override as its own

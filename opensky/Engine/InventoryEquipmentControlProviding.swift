@@ -40,25 +40,51 @@ nonisolated enum InventoryGrantTarget: String, Equatable, Sendable, CaseIterable
     }
 }
 
-/// The `XOWN`/`XRNK` reading for one placed reference.
+/// The `XOWN`/`XRNK` reading for one placed reference, and what the crime
+/// runtime makes of it.
 ///
-/// Ownership is decoded but not yet enforced — stealing is a crime system, and
-/// no crime system exists — so this is an inspection, not a gate. It is on the
-/// gate panel because "taking this is theft" is a fact the loop moves through
-/// silently, and a milestone that cannot state it cannot claim to have decoded
-/// it.
+/// It was an inspection until issue #504; since then ownership is enforced and
+/// this states the enforced answer rather than the raw fields alone. It is on
+/// the gate panel because "taking this is theft" is a fact the loop otherwise
+/// moves through silently.
 nonisolated struct ReferenceOwnershipReadout: Equatable, Sendable {
     /// How the reference is named in the world, matching the HUD prompt.
     let name: String
     let reference: FormID
-    /// `XOWN` — the owning NPC_ or FACT, nil when the reference is unowned.
+    /// `XOWN` — the owning NPC_ or FACT, nil when the reference itself is
+    /// unowned. A reference with none may still be owned through its cell,
+    /// which `isTheft` accounts for and this field does not.
     let owner: FormID?
     /// `XRNK` — the faction rank required to use it freely. Meaningful only
     /// when `owner` is a FACT; nil when the field is absent.
     let factionRank: Int32?
-    /// Whether taking or opening it would be theft, which is exactly "it has
-    /// an owner". Stated as its own field so the readout does not re-derive
-    /// the rule and the two can never disagree.
+    /// Whether taking it would actually be theft for the player right now
+    /// (issue #504): the `OwnershipVerdict` over the reference's own `XOWN`,
+    /// the cell's, and the player's memberships. Not the same as `isOwned` —
+    /// a reference in an owned shop carries no `XOWN` and is still theft, and
+    /// a faction-owned chest the player ranks high enough in is not.
+    let isTheft: Bool
+    /// What taking it would add to the bounty, in gold. Zero when the take is
+    /// no crime, and also when the place answers to no crime faction.
+    let bounty: Int32
+
+    init(
+        name: String,
+        reference: FormID,
+        owner: FormID?,
+        factionRank: Int32?,
+        isTheft: Bool = false,
+        bounty: Int32 = 0
+    ) {
+        self.name = name
+        self.reference = reference
+        self.owner = owner
+        self.factionRank = factionRank
+        self.isTheft = isTheft
+        self.bounty = bounty
+    }
+
+    /// Whether the reference record itself names an owner.
     var isOwned: Bool {
         owner != nil
     }

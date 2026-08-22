@@ -44,6 +44,8 @@ byte length followed by that many UTF-8 bytes. The file extension is `osav`.
 * `AEFF` entry layout
 * `ECHG` entry layout
 * `FCTN` entry layout
+* `CRIM` entry layout
+* `STOL` entry layout
 * Version policy
 * Defensive decoding
 * Where saves live and how they are written
@@ -162,8 +164,9 @@ that declared length, which is what makes a newer build's save loadable in an ol
 
 Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR`, `INVN`, `SPWN`, `QSTS`,
 `QALS`, `QLOC`, `AVAL`, `AVOV`, `DETH`, `CBTS`, `DLGS`, `AEFF`, `SPLB`, `ECHG`, `PRKS`,
-`FCTN` and `PLVL` were added additively afterwards. `AVOV` replaced item 19.5's `AVGN` in
-item 20.3; see its section below for why the tag changed rather than the payload's meaning.
+`FCTN`, `PLVL`, `CRIM` and `STOL` were added additively afterwards. `AVOV` replaced item
+19.5's `AVGN` in item 20.3; see its section below for why the tag changed rather than the
+payload's meaning.
 
 `GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
 any other size is `invalidValue`.
@@ -413,6 +416,13 @@ One stack:
 | ------ | ----- | ---------------------------------------------------------------- |
 | uint32 | item  | raw `FormID` of the base item record                              |
 | uint32 | count | bit pattern of the `Int32` stack count, signed because CNTO is    |
+
+One row per *item*, honest and stolen copies summed. Since issue #504 an
+`InventoryStack` is keyed by `(form, stolen)` and an owner may hold two stacks of one form,
+but these entries are a flat positional layout with no per-entry length: appending a flag
+would make every older build misparse the whole chunk rather than skip the new part. The
+totals therefore stay here, where an older build restores a complete inventory that has
+simply forgotten which copies were stolen, and the split rides in the additive `STOL` chunk.
 
 The key and the cell are repeated here rather than referring back to an `RDLT` entry by
 index, because an owner whose only delta is its inventory has no `RDLT` entry to refer to.
@@ -927,6 +937,89 @@ answer here would freeze a decision the next load should be making again.
 
 Both counts are validated — `minimumFactionEntrySize` (12 bytes) and
 `minimumFactionMembershipSize` (8 bytes) — before storage is reserved.
+
+## `CRIM` entry layout
+
+`CRIM` — crime ledgers (issue #504), one entry per actor that owes a crime faction gold or
+has offended one. Additive and split out of `RDLT` for the same reason `FCTN` is, and a
+law-abiding session writes no chunk at all.
+
+| type   | field      | notes                              |
+| ------ | ---------- | ---------------------------------- |
+| uint32 | entryCount | number of entries that follow      |
+| bytes  | entries    | `entryCount` entries, layout below |
+
+Each entry:
+
+| type   | field    | notes                                 |
+| ------ | -------- | ------------------------------------- |
+| key    | key      | the perpetrator's key, tagged as in `RDLT` |
+| cell   | cell     | attribution cell, tagged as in `RDLT` |
+| uint32 | rowCount | number of faction rows that follow    |
+| bytes  | rows     | `rowCount` rows, layout below         |
+
+Each row:
+
+| type   | field    | notes                                                    |
+| ------ | -------- | -------------------------------------------------------- |
+| key    | faction  | the `FACT` record's key, tagged as in `RDLT`              |
+| uint32 | gold     | bit pattern of the `Int32` bounty, never negative in a valid ledger |
+| uint32 | theft    | crime count, in `CrimeKind.allCases` order                |
+| uint32 | assault  | crime count                                               |
+| uint32 | murder   | crime count                                               |
+| uint32 | trespass | crime count                                               |
+
+The counts are read positionally rather than by name, so a build that adds a fifth crime kind
+reads an older file's four and leaves the new one at zero.
+
+**Counts travel beside the gold** because they are not derivable from it: an unwitnessed
+crime moves the count and not the bounty
+([crime and bounty](/engine/crime.md)), so a save carrying only the gold would restore a
+world that had forgotten what the player did.
+
+Rows are written in the component's own ascending faction-key order. A negative gold or count
+from a corrupt file clamps to zero in `CrimeLedgerState.init` rather than being rejected, and
+a faction this load order no longer carries is kept — a bounty is progress the player made.
+
+Both counts are validated — `minimumCrimeLedgerEntrySize` (12 bytes) and
+`minimumCrimeLedgerRowSize` (27 bytes) — before storage is reserved.
+
+## `STOL` entry layout
+
+`STOL` — stolen goods (issue #504): for every owner holding stolen items, one row per item
+saying how many of its copies are stolen. The counterpart of the totals `INVN` writes, and a
+sibling of it rather than an extension for the reason `QALS` is a sibling of `QSTS`.
+
+| type   | field      | notes                              |
+| ------ | ---------- | ---------------------------------- |
+| uint32 | entryCount | number of entries that follow      |
+| bytes  | entries    | `entryCount` entries, layout below |
+
+Each entry:
+
+| type   | field    | notes                                              |
+| ------ | -------- | -------------------------------------------------- |
+| key    | key      | the owner holding the goods, tagged as in `RDLT`    |
+| uint32 | rowCount | number of item rows that follow                     |
+| bytes  | rows     | `rowCount` rows, 8 bytes each                       |
+
+Each row:
+
+| type   | field | notes                                                       |
+| ------ | ----- | ------------------------------------------------------------ |
+| uint32 | item  | raw `FormID` of the base item record                         |
+| uint32 | count | bit pattern of the `Int32` stolen count                      |
+
+There is no cell tag: the split belongs to the goods, not to a placement.
+
+`STOL` is merged **after** `INVN`, and the ordering is load-bearing: `INVN` carries the
+per-item totals and this chunk says how many of each were stolen, so the split can only be
+applied once the totals are in place. A row for an owner with no inventory at all is dropped
+rather than conjuring a stack out of it, and a stolen count larger than the total held is
+clamped to that total.
+
+Counts are validated against `minimumStolenGoodsEntrySize` (11 bytes) and
+`stolenGoodsRowSize` (8 bytes) before storage is reserved.
 
 ## Version policy
 

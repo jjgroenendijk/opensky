@@ -95,23 +95,70 @@ struct InventoryEquipmentReadoutTests {
     }
 
     @Test
-    func ownershipTextReportsOwnerAndRankWithoutClaimingEnforcement() {
+    func ownershipTextReportsOwnerRankAndTheEnforcedVerdict() {
         let owned = ReferenceOwnershipReadout(
-            name: "Chest", reference: FormID(0x710), owner: FormID(0x3000), factionRank: 2
+            name: "Chest",
+            reference: FormID(0x710),
+            owner: FormID(0x3000),
+            factionRank: 2,
+            isTheft: true,
+            bounty: 12
         )
         let text = InventoryEquipmentReadout.ownershipText(for: Self.snapshot(ownership: owned))
         #expect(text.contains("Owner: 00003000 — taking this is theft."))
         #expect(text.contains("Faction rank required: 2"))
-        #expect(text.contains("no crime system enforces it yet"))
+        #expect(text.contains("Bounty if witnessed: 12 gold."))
         #expect(owned.isOwned)
 
         // An NPC-owned reference has no rank, and the line disappears rather
         // than printing a zero the data never authored.
         let noRank = ReferenceOwnershipReadout(
-            name: "Chest", reference: FormID(0x710), owner: FormID(0x3000), factionRank: nil
+            name: "Chest",
+            reference: FormID(0x710),
+            owner: FormID(0x3000),
+            factionRank: nil,
+            isTheft: true
         )
         #expect(!InventoryEquipmentReadout.ownershipText(for: Self.snapshot(ownership: noRank))
             .contains("Faction rank"))
+    }
+
+    /// Ownership the reference does not carry itself: the cell claims it
+    /// (issue #504), which is every crate in a vanilla shop.
+    @Test
+    func ownershipTextNamesTheCellWhenTheReferenceCarriesNoOwner() {
+        let inherited = ReferenceOwnershipReadout(
+            name: "Basket",
+            reference: FormID(0x711),
+            owner: nil,
+            factionRank: nil,
+            isTheft: true,
+            bounty: 3
+        )
+        let text = InventoryEquipmentReadout.ownershipText(
+            for: Self.snapshot(ownership: inherited)
+        )
+        #expect(text.contains("Owner: inherited from this cell — taking this is theft."))
+        #expect(text.contains("Bounty if witnessed: 3 gold."))
+        #expect(!inherited.isOwned)
+    }
+
+    /// A faction-owned reference the player ranks high enough in is not theft,
+    /// even though it plainly has an owner.
+    @Test
+    func ownershipTextSaysNotTheftForPropertyTheActorMayUse() {
+        let permitted = ReferenceOwnershipReadout(
+            name: "Chest",
+            reference: FormID(0x712),
+            owner: FormID(0x3000),
+            factionRank: 0,
+            isTheft: false
+        )
+        let text = InventoryEquipmentReadout.ownershipText(
+            for: Self.snapshot(ownership: permitted)
+        )
+        #expect(text.contains("Owner: 00003000 — taking this is not theft."))
+        #expect(!text.contains("Bounty if witnessed"))
     }
 
     @Test
