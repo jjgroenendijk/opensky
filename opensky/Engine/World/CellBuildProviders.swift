@@ -132,6 +132,25 @@ nonisolated protocol ProgressionDataProviding {
     var characterLevelSettings: CharacterLevelSettings { get }
 }
 
+/// Optional social seam a provider can expose (issue #503): the FACT and RELA
+/// indexes the hostility derivation reads.
+///
+/// Its own protocol rather than more members of `ProgressionDataProviding`,
+/// because who an actor sides with reaches crime, dialogue and services as well
+/// as combat, and a session that wants factions should not have to claim it
+/// carries perks. Both nil on a synthetic scene, and then every actor derives
+/// as neutral and the panel toggle is the only hostility there is.
+nonisolated protocol FactionDataProviding {
+    /// Load-order FACT index (issue #501), which every stored membership is
+    /// looked up through and which the interfaction relation index is built
+    /// from.
+    var factionStore: FactionStore? { get }
+
+    /// Load-order RELA and ASTP index (issue #502), which answers what one
+    /// specific pair of actors is to each other.
+    var relationshipStore: RelationshipStore? { get }
+}
+
 /// Optional script-loading seam a provider can expose (issue #171). The
 /// Papyrus world runtime resolves a script name to compiled bytecode lazily
 /// through the file system, and resolves the FormIDs a VMAD property names

@@ -117,6 +117,15 @@ nonisolated enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendab
     /// actor values a perk goes on to modify are rewritten sixty times a
     /// second.
     case perks
+    /// Every faction one actor currently belongs to, and the rank it holds in
+    /// each (issue #503). The value type is `ActorFactionState` in
+    /// `opensky/Engine/Factions/ActorFactionComponent.swift`. A slot of its own
+    /// for the reason `perks` is one: a membership moves on a quest stage or a
+    /// script call, while the actor values beside it are rewritten sixty times
+    /// a second. It is also the input to the hostility derivation, which is why
+    /// it must be a component and not a re-read of the NPC_ record: an actor
+    /// the player has joined to a faction has to stay joined across a reload.
+    case factions
     /// The player's character level, banked character experience, unspent perk
     /// points and attribute-pick history (issue #499). The value type is
     /// `PlayerProgressState` in
@@ -166,6 +175,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
     case spellbook(SpellbookState)
     case enchantedItems(EnchantedItemState)
     case perks(PerkState)
+    case factions(ActorFactionState)
     case playerProgress(PlayerProgressState)
 
     var kind: WorldStateComponentKind {
@@ -186,6 +196,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
         case .spellbook: .spellbook
         case .enchantedItems: .enchantedItems
         case .perks: .perks
+        case .factions: .factions
         case .playerProgress: .playerProgress
         }
     }

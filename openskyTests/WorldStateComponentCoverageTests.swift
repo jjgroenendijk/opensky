@@ -1,5 +1,6 @@
 // Every-component-kind coverage for `WorldStateStore` (issues #159, #176,
-// #177, #194, #197, #374, #426, #472, #497, #499). Split from `WorldStateStoreTests`, which sits at
+// #177, #194, #197, #374, #426, #472, #497, #499, #503). Split from `WorldStateStoreTests`, which
+// sits at
 // the
 // strict-lint
 // type-length cap, and kept together because these two tests are the ones that
@@ -89,6 +90,14 @@ struct WorldStateComponentCoverageTests {
         PerkState(owned: [key(0x800)])
     }
 
+    /// One actor in a faction (issue #503). Its own subject is
+    /// `FactionRuntimeTests`.
+    private var memberships: ActorFactionState {
+        ActorFactionState(memberships: [
+            ActorFactionMembership(faction: key(0x900), rank: 2)
+        ])
+    }
+
     /// One levelled player (issue #499). Normally keyed by `ReferenceKey.player`
     /// rather than by a placement, which the store does not care about either.
     private var progress: PlayerProgressState {
@@ -145,7 +154,10 @@ struct WorldStateComponentCoverageTests {
         // An actor owning a perk: the sixteenth kind, whose own subject is
         // PerkRuntimeTests.
         #expect(store.set(perks, for: reference, in: whiterun))
-        // A levelled player: the seventeenth kind, whose own subject is
+        // An actor in a faction: the seventeenth kind, whose own subject is
+        // FactionRuntimeTests.
+        #expect(store.set(memberships, for: reference, in: whiterun))
+        // A levelled player: the eighteenth kind, whose own subject is
         // PlayerLevelRuntimeTests.
         #expect(store.set(progress, for: reference, in: whiterun))
 
@@ -168,6 +180,7 @@ struct WorldStateComponentCoverageTests {
         #expect(store.component(SpellbookState.self, for: reference) == spellbook)
         #expect(store.component(EnchantedItemState.self, for: reference) == enchantedItems)
         #expect(store.component(PerkState.self, for: reference) == perks)
+        #expect(store.component(ActorFactionState.self, for: reference) == memberships)
         #expect(store.component(PlayerProgressState.self, for: reference) == progress)
         #expect(store.delta(for: reference)?.sortedKinds == WorldStateComponentKind.allCases)
     }
@@ -191,6 +204,7 @@ struct WorldStateComponentCoverageTests {
         store.set(spellbook, for: reference, in: whiterun)
         store.set(enchantedItems, for: reference, in: whiterun)
         store.set(perks, for: reference, in: whiterun)
+        store.set(memberships, for: reference, in: whiterun)
         store.set(progress, for: reference, in: whiterun)
         #expect(store.reset(reference))
         #expect(store.delta(for: reference) == nil)

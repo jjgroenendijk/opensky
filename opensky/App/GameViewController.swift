@@ -213,6 +213,12 @@ final class GameViewController: NSViewController {
     /// add state.
     var perks = PerkBridgeState()
 
+    /// Factions: the membership runtime, the interfaction relation index and
+    /// the hostility derivation over both (issue #503). The implementation
+    /// lives in `GameViewControllerFactions.swift`; stored here because
+    /// extensions cannot add state.
+    var factions = FactionBridgeState()
+
     /// Skill advancement: the use-to-experience-to-level runtime every combat
     /// and magic seam reports into, and the last advance the readouts show
     /// (issue #498). The implementation lives in

@@ -43,6 +43,7 @@ byte length followed by that many UTF-8 bytes. The file extension is `osav`.
 * `DLGS` entry layout
 * `AEFF` entry layout
 * `ECHG` entry layout
+* `FCTN` entry layout
 * Version policy
 * Defensive decoding
 * Where saves live and how they are written
@@ -160,9 +161,9 @@ A chunk whose declared length runs past the end of the file is
 that declared length, which is what makes a newer build's save loadable in an older one.
 
 Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR`, `INVN`, `SPWN`, `QSTS`,
-`QALS`, `QLOC`, `AVAL`, `AVOV`, `DETH`, `CBTS`, `DLGS`, `AEFF`, `SPLB` and `ECHG` were added
-additively afterwards. `AVOV` replaced item 19.5's `AVGN` in item 20.3; see its section
-below for why the tag changed rather than the payload's meaning.
+`QALS`, `QLOC`, `AVAL`, `AVOV`, `DETH`, `CBTS`, `DLGS`, `AEFF`, `SPLB`, `ECHG`, `PRKS`,
+`FCTN` and `PLVL` were added additively afterwards. `AVOV` replaced item 19.5's `AVGN` in
+item 20.3; see its section below for why the tag changed rather than the payload's meaning.
 
 `GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
 any other size is `invalidValue`.
@@ -884,6 +885,48 @@ The entry count is validated against `minimumEnchantedItemEntrySize` (16 bytes),
 count against `enchantedItemChargeRecordSize` (8 bytes), the worn count against
 `minimumEnchantedItemWornSize` (8 bytes) and each sequence count against
 `enchantedItemSequenceSize` (8 bytes) before storage is reserved.
+
+## `FCTN` entry layout
+
+`FCTN` — faction memberships (issue #503), one entry per actor that belongs to at least one
+faction. Additive and split out of `RDLT` for the same reason `PRKS` is, and a session in
+which nothing asked who anybody sides with writes no chunk at all.
+
+| type   | field      | notes                              |
+| ------ | ---------- | ---------------------------------- |
+| uint32 | entryCount | number of entries that follow      |
+| bytes  | entries    | `entryCount` entries, layout below |
+
+Each entry:
+
+| type   | field           | notes                                        |
+| ------ | --------------- | -------------------------------------------- |
+| key    | key             | the actor's key, tagged as in `RDLT`          |
+| cell   | cell            | attribution cell, tagged as in `RDLT`         |
+| uint32 | membershipCount | number of memberships that follow             |
+| bytes  | memberships     | `membershipCount` rows, layout below          |
+
+Each membership:
+
+| type  | field   | notes                                             |
+| ----- | ------- | ------------------------------------------------- |
+| key   | faction | the `FACT` record's key, tagged as in `RDLT`       |
+| uint8 | rank    | signed rank, two's complement (`ActorFactionMembership.rank`) |
+
+The rank is signed because the `NPC_` `SNAM` rank is: xEdit reads `itS8` and vanilla authors
+negative ranks to mean "a member the rank titles do not name".
+
+Rows are written in the component's own ascending faction-key order, so re-encoding an
+unchanged membership set produces identical bytes. A repeated faction collapses to its last
+rank on load, and a faction this load order no longer carries is kept rather than dropped —
+the same rule an owned perk follows, because removing a plugin must not destroy progress.
+
+**Memberships only.** Hostility is derived from them plus the records and rides the `CBTS`
+byte as an explicit override alone ([combat loop](/engine/combat.md)); writing the derived
+answer here would freeze a decision the next load should be making again.
+
+Both counts are validated — `minimumFactionEntrySize` (12 bytes) and
+`minimumFactionMembershipSize` (8 bytes) — before storage is reserved.
 
 ## Version policy
 

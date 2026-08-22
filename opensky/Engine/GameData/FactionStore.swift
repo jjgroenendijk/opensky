@@ -43,6 +43,7 @@ nonisolated struct FactionStore {
     private let index: RecordIndex
     private(set) var factions: [ResolvedFormID: ResolvedFaction] = [:]
     private var factionsByEditorID: [String: ResolvedFaction] = [:]
+    private var factionsByKey: [ReferenceKey: ResolvedFaction] = [:]
 
     /// Every faction the load order carries, ordered by identity so a caller
     /// that prints or counts them gets the same answer on every run.
@@ -86,6 +87,17 @@ nonisolated struct FactionStore {
 
     func faction(editorID: String) -> ResolvedFaction? {
         factionsByEditorID[editorID.lowercased()]
+    }
+
+    /// The faction one runtime identity names, which is what the faction
+    /// runtime looks every stored membership up through (issue #503).
+    ///
+    /// A separate index rather than a `ResolvedFormID` round trip because
+    /// `ReferenceKey` lowercases the plugin name while `ResolvedFormID` keeps
+    /// whatever spelling the MAST field used, so the two are not
+    /// interchangeable dictionary keys.
+    func faction(key: ReferenceKey) -> ResolvedFaction? {
+        factionsByKey[key]
     }
 
     func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
@@ -171,6 +183,7 @@ nonisolated struct FactionStore {
         else { return }
         let resolved = ResolvedFaction(id: id, faction: faction, sourcePlugin: sourcePlugin)
         factions[id] = resolved
+        factionsByKey[ReferenceKey(resolved: id)] = resolved
         if let editorID = faction.editorID {
             factionsByEditorID[editorID.lowercased()] = resolved
         }

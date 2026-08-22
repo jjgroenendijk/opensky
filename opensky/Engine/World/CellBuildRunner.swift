@@ -60,7 +60,8 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     AudioDataProviding, MovementConfigurationProviding, GlobalDataProviding,
     ScriptDataProviding, ItemDataProviding, BarterDataProviding, QuestDataProviding,
     LocationDataProviding, DialogueDataProviding, ActorValueDataProviding, CombatDataProviding,
-    PackageDataProviding, MagicDataProviding, ProgressionDataProviding
+    PackageDataProviding, MagicDataProviding, ProgressionDataProviding,
+    FactionDataProviding
 {
     let builder: CellSceneBuilder
     let worldspaceEditorID: String
@@ -115,6 +116,12 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     /// Load-order PERK index (issue #497); nil on the same synthetic scenes,
     /// and then the perk runtime reports itself unavailable.
     var perkStore: PerkStore?
+    /// Load-order FACT index (issue #501); nil on the same synthetic scenes,
+    /// and then every actor derives as neutral toward everyone.
+    var factionStore: FactionStore?
+    /// Load-order RELA and ASTP index (issue #502); nil on the same synthetic
+    /// scenes, and then no pair overrides its factions.
+    var relationshipStore: RelationshipStore?
     /// Load-order AVIF index (issue #498); nil on the same synthetic scenes,
     /// and then skill advancement has no parameters and reports the drop.
     var actorValueInformation: ActorValueInformationStore?

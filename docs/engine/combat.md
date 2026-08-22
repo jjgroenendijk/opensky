@@ -1,11 +1,12 @@
 ---
 type: Subsystem
 title: Combat loop
-description: Hostility, derived combat state, the per-actor combat behavior machine that
+description: Hostility derived from factions, relationships and aggression, derived
+  combat state, the per-actor combat behavior machine that
   approaches, attacks, blocks, flees, searches and gives up, hit reactions in both
   directions, transient caps, and the combat-music edge.
 tags: [engine, combat, hostility, combat-ai, npc, music, persistence]
-timestamp: 2026-08-09T00:00:00Z
+timestamp: 2026-08-22T00:00:00Z
 ---
 
 # Combat loop
@@ -33,6 +34,7 @@ The pieces it ties together: [melee combat](/engine/melee-combat.md),
 
 * [The mind that replaced the clock](#the-mind-that-replaced-the-clock)
 * [Hostility](#hostility)
+* [Deriving hostility from the records](#deriving-hostility-from-the-records)
 * [Entering a fight](#entering-a-fight)
 * [Combat state is derived](#combat-state-is-derived)
 * [The behavior machine](#the-behavior-machine)
@@ -93,7 +95,7 @@ write ([runtime state](/engine/runtime-state.md)).
 There is deliberately no `dead` case: death is `ActorDeathState.isDead`, and a
 second spelling of the same fact is a second thing to keep in agreement.
 
-Hostility is entered exactly three ways:
+Through M16 the component *was* the whole answer, entered exactly three ways:
 
 1. **The player hurt it.** `CombatLoopRuntime.provoke(_:)` is called from the
    melee hit path and from the projectile impact path, so a swing and an arrow
@@ -103,9 +105,119 @@ Hostility is entered exactly three ways:
 3. **A script.** `StartCombat`, which writes hostility on its way through
    (issue #424).
 
-There is still no aggro radius, no faction relation, no disposition arithmetic
-and no crime. Those need factions and a relationship store, which 16.7
-deliberately did not add.
+Item 21.3 (issue #503) demoted all three to one term of five. The component is
+now the session's **explicit override** — the record of something that already
+happened — and everything else is derived from the records each time it is
+asked. `combatHostility(of:)` answers from the derivation, and falls back to the
+stored override alone on a session with no game data, where there are no
+relations to derive anything from.
+
+## Deriving hostility from the records
+
+`HostilityDerivation` (`opensky/Engine/Factions/`) answers what one actor makes
+of another. Two facts come out of it and they are different: the **reaction**,
+which is what the records say about the pair, and the **hostility**, which is
+whether that reaction plus this actor's own aggression means a drawn weapon.
+
+### The precedence order
+
+Asked what `observer` makes of `target`, the derivation takes the first term
+that answers and stops.
+
+| # | Term | Source of the answer |
+| --- | --- | --- |
+| 1 | Runtime override | `ActorCombatState` — the panel, `StartCombat`, or the player's own blow |
+| 2 | Crime | `CrimeHostilitySource`, the named seam issues #504 and #505 join through; empty today |
+| 3 | Relationship | The `RELA` rank between the two `NPC_` bases |
+| 4 | Faction | The `FACT` interfaction relations between the two actors' memberships |
+| 5 | Default | Neutral |
+
+Only row 3's position comes from a source: the Creation Kit wiki states flatly
+that "relationships override factions"
+(<https://ck.uesp.net/wiki/Relationship>). Rows 1, 2 and 4-over-5 are this
+engine's ordering. The override is first because it records something that
+already happened in this session — an actor the player stabbed does not calm
+down because the records say the two are friends — and crime sits directly under
+it because a bounty is a thing the player did, like a blow.
+
+A decision carries the term that produced it (`HostilitySource`), so a panel or a
+test can say *why* an actor is angry rather than only that it is.
+
+### The four reactions
+
+`ActorReaction` has the four values the Creation Kit authors, ordered
+friendliest to most hostile: `ally`, `friend`, `neutral`, `enemy`. A `FACT`
+`XNAM` carries one directly. A `RELA` rank collapses onto them in the groups the
+wiki spells out:
+
+| Reaction | Relationship ranks |
+| --- | --- |
+| `ally` | Lover, Ally |
+| `friend` | Confidant, Friend |
+| `neutral` | Acquaintance, Rival, Foe |
+| `enemy` | Enemy, Archnemesis |
+
+Note where that line falls: **Rival and Foe are Neutral**, not Enemy. Two actors
+who dislike each other do not attack on sight unless one of them is Very
+Aggressive, which is the same treatment strangers get.
+
+A raw value outside either named range yields no reaction at all rather than a
+guessed one, and `FactionRelationIndex` counts the `XNAM` entries it had to drop
+for that reason. This install carries none.
+
+When an actor's several memberships disagree about the same target, **the most
+hostile of them wins**. That is our rule rather than a documented one: neither
+source says what an actor in both an allied and an enemy faction makes of
+somebody. Erring toward the enemy reading keeps a quest faction that marks
+somebody an enemy from being silently cancelled by an unrelated friendly
+membership, which is the failure that would be invisible in play. Both
+directions of a pair are consulted, because vanilla does not always author the
+mirror `XNAM` and a relation naming the pair at all is an opinion about it.
+
+### Aggression is what draws the weapon
+
+The reaction alone decides nothing: the Creation Kit puts that on the actor, in
+the `AIDT` Aggression value, "in conjunction with Faction Relationships"
+(<https://ck.uesp.net/wiki/AI_Data_Tab>). `ActorReaction.provokesAttack(at:)`
+carries the table verbatim.
+
+| Aggression | Attacks on sight |
+| --- | --- |
+| Unaggressive | nobody |
+| Aggressive | enemies |
+| Very Aggressive | enemies and neutrals |
+| Frenzied | everybody |
+
+An aggression value the spec does not name attacks nobody, and an actor whose
+record authors no readable `AIDT` reads `ActorAIData.absent`, which is
+unaggressive. Guessing upward — into a drawn weapon — is the damaging direction
+to guess.
+
+This table is why a vanilla bandit is hostile to the player with nobody touching
+the panel. No `FACT` relation and no `RELA` record names the pair, so the
+reaction is the documented default of Neutral; the bandit is Very Aggressive, and
+Very Aggressive attacks neutrals. A Whiterun guard standing beside it derives the
+same Neutral reaction and stays calm, because a guard is only Aggressive. Both
+are asserted against the install in `DerivedHostilityRealDataTests`.
+
+Confidence is decoded and deliberately not consumed. "Cowardly actors NEVER
+engage in combat" is about *engaging*, and `ActorHostility` records regard;
+whoever wires fleeing reads the value off `ActorAIData` rather than re-decoding
+the byte.
+
+### Memberships at runtime
+
+The derivation reads `ActorFactionState`, the world-state component described
+under [factions](/formats/factions.md#runtime-membership), not the `NPC_` record.
+That is the point of the component: an actor a quest joined to the Companions has
+to stay joined across a reload, and an actor the player was never near costs
+nothing until something asks about it.
+
+Seeding walks the actor's template chain, so it happens once per actor per
+session, guarded by a set membership test. The derivation itself is not cached:
+it is two component reads, a pair lookup and a walk of two short membership
+lists, and a cache would have to be invalidated by every world-state write while
+actor values are rewritten sixty times a second.
 
 ## Entering a fight
 
@@ -479,6 +591,14 @@ The `MUSCombat` prefix is a naming convention, not data — the same limit the
 
 ## Persistence
 
+Faction memberships travel in their own additive chunk, `FCTN`, one entry per
+actor that belongs to at least one faction (issue #503). Hostility does *not*
+travel with them even though the two are read together: hostility is derived
+from these memberships plus the records, and the `CBTS` byte beside them is the
+explicit override alone. Writing a derived answer into the save would freeze a
+decision the next load should be making again — a plugin that changes a faction
+relation has to change who is angry.
+
 Hostility travels in its own additive save chunk, `CBTS`, for the reason `AVAL`
 and `DETH` have their own: a component kind inside `RDLT` is versioned by
 `formatVersion`, so putting it there would make an older build refuse every save
@@ -580,6 +700,15 @@ The Combat Loop section is this page's own:
 | Selected actor is hostile | `CombatHostilityControl` | writes the nearest resident actor's regard for the player; clearing it ends any fight it is in and hands it back to its package |
 | Clear hit trace | `CombatClearTraceControl` | empties the incoming trace and its count |
 | Readout | `CombatLoopStatsLabel` | combat state and target, one line per fighting actor (phase, awareness, distance, health, counts), hostility, hits taken, live transients against their ceilings |
+
+Both hostility checkboxes changed meaning with item 21.3 without changing shape.
+What they *read* is the derived answer, so walking up to a bandit shows it
+hostile with nobody having ticked anything, and walking up to a guard shows it
+calm. What they *write* is the explicit override, the first term of the
+precedence list — so ticking one still wins over every record, and unticking one
+on a bandit keeps it calm rather than handing it back to the derivation. A
+dedicated faction inspector, which is what would show *which* term answered and
+let a membership be edited, is issue #507's.
 
 Hostility alone no longer starts a fight — the actor has to notice the player
 first, which is [detection](/engine/detection.md)'s job and is inspectable under
@@ -687,10 +816,16 @@ Everything below is a known gap with a home, not an oversight:
   only the deliveries [magic](/engine/magic.md) carries out, and only a spell —
   a power, a lesser power and a shout are all skipped, and the archetypes that
   would place a second actor in the world have nowhere to place it yet.
-* **No factions, crime, group tactics or morale.** `ActorHostility` still has two
-  cases and both are about the player, so there is no relationship rank to read,
-  no crime gold to accrue, and no coordination between two actors fighting the
-  same player beyond both of them fighting it.
+* **No crime, group tactics or morale.** Item 21.3 added factions and
+  relationships; crime gold is #504 and #505 and joins through the named seam in
+  the precedence list above. Assistance is decoded and unread, so there is still
+  no coordination between two actors fighting the same player beyond both of them
+  fighting it, and no morale.
+* **Derived hostility is still about the player.** The derivation itself takes
+  any two actors, but `combatHostility(of:)` asks it about the player alone,
+  because everything downstream of it — the engagement predicate, the perception
+  pair state, the dialogue filter — is player-relative. Actor-versus-actor
+  fighting is not simulated.
 * **No ranged-weapon AI.** An actor closes to melee reach whatever it is
   holding. The archery runtime is the player's alone; giving an actor a bow is a
   follow-up issue rather than something this item half-did.
