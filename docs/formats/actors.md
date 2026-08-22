@@ -5,7 +5,7 @@ description: Actor records, appearance and stat resolution, GPU asset assembly, 
   paths.
 tags: [format, plugin, actors, achr, npc, leveled, template, race, class, armor, outfit,
   facegen]
-timestamp: 2026-08-11T00:00:00Z
+timestamp: 2026-08-22T00:00:00Z
 ---
 
 # Actor records, Skyrim SE
@@ -13,7 +13,8 @@ timestamp: 2026-08-11T00:00:00Z
 Milestones 5.1, 5.2 + 5.4 subset plus item 15.3's stat inputs: enough decode to
 place actors, resolve who they look like, assemble GPU skeleton/body/FaceGen
 assets at world pose, derive their health, magicka and stamina, and resolve
-their ordered AI-package stack — no factions, spells, skills, or carried inventory yet.
+their ordered AI-package stack, their faction memberships and the AI attributes
+they fight by — no skills or carried inventory yet.
 What the stat fields feed:
 [actor values](/engine/actor-values.md). Container framing:
 [ESM/ESP plugin container](/formats/esm.md); decode
@@ -71,6 +72,8 @@ Appearance fields plus the stat inputs the actor-value derivation reads
 | PNAM  | formID  | `headParts` (HDPT), one per repeated subrecord   |
 | DOFT  | formID  | `defaultOutfit` (OTFT)                           |
 | PKID  | formID  | one entry in ordered `packages`, repeated         |
+| SNAM  | struct  | one entry in `factions` (see [factions](/formats/factions.md)) |
+| AIDT  | struct  | `aiData` (below)                                 |
 | VMAD  | struct  | `scriptData` attachment accumulator              |
 
 ACBS, 24 bytes. Every word below is decoded except the two marked skipped:
@@ -110,6 +113,42 @@ spell list, 0x0010 AI data, 0x0020 AI packages, 0x0040 model/animation
 (UESP: "unused?"; xEdit names it, CK omits it — do not rely on it), 0x0080
 base data, 0x0100 inventory, 0x0200 script, 0x0400 def pack list, 0x0800
 attack data, 0x1000 keywords.
+
+### AIDT, 20 bytes
+
+The AI attributes that decide when an actor starts a fight (issue #503). UESP
+and xEdit `wbAIDT` read the same eight leading bytes and the same trailing aggro
+block; the value names are the Creation Kit's own
+(<https://ck.uesp.net/wiki/AI_Data_Tab>).
+
+| offset | type   | field                                       |
+| ------ | ------ | ------------------------------------------- |
+| 0x00   | uint8  | `aggression` — 0 unaggressive, 1 aggressive, 2 very aggressive, 3 frenzied |
+| 0x01   | uint8  | `confidence` — 0 cowardly to 4 foolhardy    |
+| 0x02   | uint8  | `energy` — sandbox move frequency, 0...100  |
+| 0x03   | uint8  | `morality` — 0 any crime to 3 no crime      |
+| 0x04   | uint8  | `mood` — the wiki calls it "Not used"; kept verbatim |
+| 0x05   | uint8  | `assistance` — 0 helps nobody, 1 helps allies, 2 helps friends and allies |
+| 0x06   | uint8  | bit 0 `usesAggroRadiusBehavior`; other bits unread |
+| 0x07   | uint8  | `unknown` — xEdit "Unused", UESP observes junk |
+| 0x08   | uint32 | `warnDistance`                              |
+| 0x0C   | uint32 | `warnOrAttackDistance`                      |
+| 0x10   | uint32 | `attackDistance`                            |
+
+Decoded from the payload length rather than a record version, the rule the FACT
+structs follow: a struct shorter than eight bytes yields no AI data at all, and
+one that stops before offset 8 keeps what it authored with the three distances
+nil. A value outside a named range is kept as `unknown(raw:)` rather than
+clamped.
+
+An actor whose record authors no readable AIDT reads `ActorAIData.absent`, whose
+aggression is `unaggressive`: a record that said nothing about starting fights
+gets no willingness to attack invented for it. What consumes the aggression is
+the hostility derivation ([combat loop](/engine/combat.md)).
+
+`useAIData` (0x0010) delegates the whole struct through the template chain, and
+`resolveFactions(base:)` resolves it beside the SNAM run because the derivation
+reads the two together.
 
 `useAIPackages` delegates the whole ordered PKID array through the same NPC_/LVLN chain as
 appearance and stats. It is field-group inheritance: a local empty array remains the answer
@@ -369,6 +408,11 @@ TPLT + template flags control which record supplies each field group
   health/magicka/stamina offsets, speed, bleedout and class. Item 15.3's
   `resolveStats(base:)` resolves the ACBS stat words, the auto-calc and
   PC-level-mult bits, and CNAM through this flag.
+* factions (0x0004) and AI data (0x0010): the SNAM run and the AIDT struct.
+  `resolveFactions(base:)` resolves both in one chain walk — each on its own
+  flag — because the hostility derivation reads the memberships and the
+  aggression together and two walks would only be a second chance for the two
+  answers to disagree.
 
 One field is resolved twice, through different flags, and the difference is
 observed rather than documented. `ResolvedActorStats.race` is the traits-resolved

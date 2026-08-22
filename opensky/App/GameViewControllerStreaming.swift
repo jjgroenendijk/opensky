@@ -132,6 +132,11 @@ extension GameViewController {
         // After the cast loop, which takes the perk runtime by value so a spell
         // cost folds through the `Mod Spell Cost` entry point (issue #497).
         wirePerks(provider: provider)
+        // After the perk runtime, for the reason it comes after the cast loop:
+        // an actor's authored memberships are resolved through the same
+        // template chain the actor-value baselines already indexed (issue
+        // #503).
+        wireFactions(provider: provider)
         // After the perk runtime: it writes through the actor-value runtime and
         // reads the equipment runtime, so both have to exist first (issue
         // #498).

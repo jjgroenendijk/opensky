@@ -90,6 +90,11 @@ nonisolated enum OpenSkySaveDecoder {
         /// actor restores with none — which is also what a save written before
         /// that chunk existed means.
         var perks: [SavePerkEntry] = []
+        /// Absent `FCTN` chunk (issue #503) means nothing asked who anybody
+        /// sides with, so every actor restores with no membership component and
+        /// is seeded from its record on the next query — which is also what a
+        /// save written before that chunk existed means.
+        var factions: [SaveFactionEntry] = []
         /// Absent `PLVL` chunk (issue #499) means the player never left level
         /// 1, so progress restores at the session start — which is also what a
         /// save written before that chunk existed means.
@@ -156,6 +161,7 @@ nonisolated enum OpenSkySaveDecoder {
         entries = OpenSkySaveSpellbookDecoder.merge(body.spellbooks, into: entries)
         entries = OpenSkySaveEnchantedItemDecoder.merge(body.enchantedItems, into: entries)
         entries = OpenSkySavePerkDecoder.merge(body.perks, into: entries)
+        entries = OpenSkySaveFactionDecoder.merge(body.factions, into: entries)
         return OpenSkySaveProgressDecoder.merge(body.playerProgress, into: entries)
     }
 
@@ -309,6 +315,9 @@ nonisolated enum OpenSkySaveDecoder {
                 .decodeEnchantedItems(payload)
         case OpenSkySaveFormat.ChunkTag.perks:
             body.perks = try OpenSkySavePerkDecoder.decodePerks(payload)
+        case OpenSkySaveFormat.ChunkTag.factions:
+            body.factions = try OpenSkySaveFactionDecoder
+                .decodeFactionMemberships(payload)
         case OpenSkySaveFormat.ChunkTag.playerProgress:
             body.playerProgress = try OpenSkySaveProgressDecoder
                 .decodePlayerProgress(payload)

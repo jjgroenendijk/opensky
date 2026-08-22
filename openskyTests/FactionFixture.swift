@@ -114,14 +114,41 @@ enum FactionFixture {
         return ESMFixture.record("FACT", formID: formID, data: fields + body)
     }
 
+    /// AIDT at its full 20-byte length, or truncated to `byteCount` to stand in
+    /// for a record a mod wrote short (docs/formats/actors.md).
+    static func aiData(
+        aggression: UInt8 = 0,
+        confidence: UInt8 = 2,
+        energy: UInt8 = 50,
+        morality: UInt8 = 0,
+        mood: UInt8 = 0,
+        assistance: UInt8 = 0,
+        aggroRadiusBehavior: Bool = false,
+        unknown: UInt8 = 0,
+        warn: UInt32 = 0,
+        warnOrAttack: UInt32 = 0,
+        attack: UInt32 = 0,
+        byteCount: Int = ActorAIData.byteCount
+    ) -> Data {
+        var data = Data([
+            aggression, confidence, energy, morality, mood, assistance,
+            aggroRadiusBehavior ? 1 : 0, unknown
+        ])
+        data.appendUInt32(warn)
+        data.appendUInt32(warnOrAttack)
+        data.appendUInt32(attack)
+        return ESMFixture.field("AIDT", data.prefix(byteCount))
+    }
+
     /// An NPC_ carrying the minimum ACBS the decoder requires, a template link
-    /// and template flags, and a SNAM run.
+    /// and template flags, a SNAM run and an optional AIDT.
     static func actor(
         formID: UInt32,
         editorID: String,
         templateFlags: UInt16 = 0,
         template: UInt32? = nil,
-        factions: [(faction: UInt32, rank: Int8)] = []
+        factions: [(faction: UInt32, rank: Int8)] = [],
+        aiData: Data = Data()
     ) -> Data {
         var acbs = Data()
         acbs.appendUInt32(0) // flags
@@ -144,7 +171,7 @@ enum FactionFixture {
             data.append(Data(count: 3)) // unused in Skyrim (xEdit wbFaction)
             fields += ESMFixture.field("SNAM", data)
         }
-        return ESMFixture.record("NPC_", formID: formID, data: fields)
+        return ESMFixture.record("NPC_", formID: formID, data: fields + aiData)
     }
 
     /// Parses one fixture record out of its bytes.

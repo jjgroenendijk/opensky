@@ -4,7 +4,7 @@ title: Factions (FACT, NPC_ SNAM)
 description: FACT record layout - relations, crime values, ranks and the vendor block - plus
   NPC_ faction membership and the load-order faction store.
 tags: [format, plugin, records, factions, crime, vendor, actors]
-timestamp: 2026-08-20T00:00:00Z
+timestamp: 2026-08-22T00:00:00Z
 ---
 
 # Factions (FACT, NPC_ SNAM)
@@ -15,8 +15,9 @@ factions, how it responds to crime committed in its territory, what it calls its
 - for a merchant faction - what its shop sells and when. Actors join factions through the
 `NPC_` `SNAM` subrecord, which carries the faction link and the member's rank.
 
-OpenSky decodes the record into links and raw values. Nothing here decides hostility, crime
-response or trade: those consume this decode and are the rest of milestone M21.
+OpenSky decodes the record into links and raw values. What *reads* those values lives
+elsewhere: hostility is derived in the [combat loop](/engine/combat.md), and crime response
+and trade are the rest of milestone M21.
 
 References:
 
@@ -35,6 +36,7 @@ References:
 - Vendor block (`VEND`, `VENC`, `VENV`, `PLVD`, conditions)
 - NPC_ membership (`SNAM`)
 - Faction store
+- Runtime membership
 - Observed counts
 
 ## Field list
@@ -194,6 +196,39 @@ decoded view: the identity and flag line, the crime values and their support lin
 table, the relation table and the raw vendor block. In the Asset Browser the record inspector
 adds the relations joined to the records they name.
 
+## Runtime membership
+
+The `SNAM` run says what an actor was *authored* into. What it belongs to *now* is
+`ActorFactionState`, a world-state component holding one `(faction key, rank)` row per
+faction in ascending key order, written through `FactionRuntime`
+(`opensky/Engine/Factions/`). Joining, leaving and promoting all go through the store, so
+they land in the journal, the dirty counts and the `FCTN` save chunk
+([OpenSky save container](/formats/opensky-save.md)) exactly as learning a spell does.
+
+Seeding is lazy and once per actor per session: the authored run is copied into the
+component the first time anything asks about that actor, rather than at cell build, because a
+street of townsfolk who never meet the player would otherwise write a component each to say
+what their base records already say. A membership already present wins over the authored one,
+so a quest that promoted somebody before anything asked is not undone by the seed that
+arrives afterwards.
+
+Two rules mirror the ones an owned perk follows, and they point in opposite directions on
+purpose. Joining a faction the load order does not carry is *refused*, because a key nothing
+resolves could never be read back and would sit unreadable in the save forever. A membership
+already *stored* under a key that stops resolving is *kept*, because removing a plugin must
+not destroy progress; it is simply absent from `resolvedFactions(of:)`.
+
+`FactionStore.faction(key:)` is the lookup behind every stored membership. It is a separate
+index rather than a `ResolvedFormID` round trip because `ReferenceKey` lowercases the plugin
+name while `ResolvedFormID` keeps whatever spelling the `MAST` field used, so the two are not
+interchangeable dictionary keys.
+
+`FactionRelationIndex` flattens every `XNAM` in the load order into one directional
+`(from, to) -> reaction` table, built once beside the store. The hostility derivation asks it
+for every pair of memberships two actors hold, several times a frame, and a walk of one
+faction's relation list per query would be a linear scan of up to eighty-five entries inside
+that loop.
+
 ## Observed counts
 
 Measured on 2026-08-20 against the active load order of the five masters plus the
@@ -212,6 +247,8 @@ Creation Club plugins this install carries (`FactionStoreRealDataTests`):
 | authored memberships after template resolution | 13157 |
 | bases whose memberships came from a template | 2921 |
 | members of `GuardFactionWhiterun` | 61 |
+| authored `XNAM` relations, all indexed | 1185 |
+| `XNAM` combat-reaction words the spec does not name | 0 |
 
 `CrimeFactionWhiterun` decodes murder 1000, assault 40, trespass 5, pickpocket 25, steal
 multiplier 0.5, escape 100 and werewolf 1000, with two relations and every crime-support

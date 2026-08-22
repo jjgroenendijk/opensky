@@ -149,6 +149,15 @@ nonisolated extension OpenSkySaveFormat {
     /// Smallest number of bytes one `PRKS` owned perk can occupy: a plugin key
     /// with an empty name. A generated key is longer, so this is a lower bound.
     static let minimumPerkKeySize = 7
+    /// Smallest number of bytes a single `FCTN` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and a zero
+    /// membership count (4). An entry with contents is longer, so this is a
+    /// lower bound.
+    static let minimumFactionEntrySize = 12
+    /// Smallest number of bytes one `FCTN` membership can occupy: a plugin key
+    /// with an empty name (7) and the signed rank byte. A generated key is
+    /// longer, so this is a lower bound.
+    static let minimumFactionMembershipSize = 8
     /// Smallest number of bytes a single `PLVL` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the level, experience, perk points,
     /// pending picks and skill increases (4 each) and a zero pick-history count

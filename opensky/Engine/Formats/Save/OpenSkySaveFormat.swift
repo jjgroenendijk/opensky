@@ -270,6 +270,22 @@ nonisolated enum OpenSkySaveFormat {
         /// here duplicates what `AEFF` already carries.
         static let perks = "PRKS"
 
+        /// Faction memberships (issue #503, roadmap item 21.3): one entry per
+        /// actor that belongs to at least one faction.
+        ///
+        /// Additive and split out of `RDLT` for the same reason `PRKS` is: a
+        /// session in which nothing asked who anybody sides with writes no
+        /// chunk at all, so its bytes match what this encoder produced before
+        /// the chunk existed.
+        ///
+        /// Memberships travel and hostility does not, even though the two are
+        /// read together: hostility is derived from these memberships plus the
+        /// records (`ActorReaction`), and the `CBTS` byte beside them is the
+        /// explicit override alone. Writing a derived answer into the save
+        /// would freeze a decision the next load should be making again — a
+        /// plugin that changes a faction relation has to change who is angry.
+        static let factions = "FCTN"
+
         /// The player's character-level progress (issue #499, roadmap item
         /// 20.6): one entry, and only when the player has left level 1 behind.
         ///
@@ -356,7 +372,7 @@ nonisolated extension WorldStateComponentKind {
         case .deletion: 3
         case .inventory, .spawn, .quest, .questAliases, .actorValues, .death,
              .combat, .dialogue, .activeEffects, .spellbook, .enchantedItems, .perks,
-             .playerProgress: nil
+             .factions, .playerProgress: nil
         }
     }
 

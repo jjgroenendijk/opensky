@@ -46,8 +46,18 @@ extension GameViewController: CombatLoopWorld {
         }
     }
 
+    /// The derived answer (issue #503), falling back to the stored override
+    /// alone when there is no faction runtime — which is every synthetic scene,
+    /// and every session started without game data.
+    ///
+    /// The override is not consulted here: it is the first term of the
+    /// derivation itself (`HostilityDerivation`), so consulting it twice would
+    /// be two places that could disagree about precedence.
     func combatHostility(of key: ReferenceKey) -> ActorHostility {
-        worldState.component(ActorCombatState.self, for: key)?.hostility ?? .neutral
+        if let decision = derivedHostilityDecision(of: key) {
+            return decision.hostility
+        }
+        return worldState.component(ActorCombatState.self, for: key)?.hostility ?? .neutral
     }
 
     @discardableResult

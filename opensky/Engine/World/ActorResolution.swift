@@ -119,16 +119,27 @@ nonisolated struct ResolvedActorSpells: Equatable {
     let race: ActorSourcedField<FormID?>
 }
 
-/// Faction memberships after `useFactions` template inheritance (issue #501).
+/// Faction memberships and AI attributes after template inheritance
+/// (issues #501 and #503).
 ///
 /// Its own struct for the reason the spell list has one: the SNAM run answers
 /// to its own ACBS template-data bit, and its consumers — hostility, crime
 /// response and vendor rules — are none of the ones already resolved here.
+///
+/// The AIDT rides along on its own flag rather than getting a struct of its
+/// own, the way `ResolvedActorSpells` carries the perk run beside the spell
+/// run: the hostility derivation reads the memberships and the aggression
+/// together, and two walks of the same template chain would only be a second
+/// chance for the two answers to disagree.
 nonisolated struct ResolvedActorFactions: Equatable {
     let base: FormID
     let chain: [ActorChainLink]
     /// SNAM, resolved through `useFactions`.
     let factions: ActorSourcedField<[ActorBase.FactionMembership]>
+    /// AIDT, resolved through `useAIData` — the flag UESP names "Use AI Data
+    /// (AI Data tab, including aggression, confidence, morality, combat style
+    /// and gift filter)". Nil when the providing record authors none.
+    let aiData: ActorSourcedField<ActorAIData?>
 }
 
 /// Resolves template chains against pre-built single-plugin record indexes
@@ -272,9 +283,10 @@ nonisolated struct ActorTemplateResolver {
         )
     }
 
-    /// Resolves only the faction-membership field group (issue #501). A local
-    /// empty list stays authoritative unless `useFactions` delegates it, the
-    /// rule every other field group here follows.
+    /// Resolves the faction-membership field group and the AI attributes
+    /// beside it (issues #501 and #503). A local empty list stays authoritative
+    /// unless `useFactions` delegates it, the rule every other field group here
+    /// follows, and the AIDT delegates on its own `useAIData` flag.
     func resolveFactions(base: FormID) throws -> ResolvedActorFactions {
         let (npcs, chain) = try resolveChain(base: base)
         return ResolvedActorFactions(
@@ -282,6 +294,9 @@ nonisolated struct ActorTemplateResolver {
             chain: chain,
             factions: resolveField(in: npcs, flag: .useFactions) {
                 ActorSourcedField(value: $0.factions, source: $0.formID)
+            },
+            aiData: resolveField(in: npcs, flag: .useAIData) {
+                ActorSourcedField(value: $0.aiData, source: $0.formID)
             }
         )
     }

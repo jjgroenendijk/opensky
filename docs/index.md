@@ -35,8 +35,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Locations](/formats/locations.md) - LCTN/LCRT layouts, cycle-safe parent and keyword
   traversal, CELL XLCN links, and direct quest-location alias fills.
 * [Factions](/formats/factions.md) - FACT relations, flags, crime values, ranks and the
-  vendor block, NPC_ SNAM membership with its template-flag inheritance, and the
-  load-order faction store.
+  vendor block, NPC_ SNAM membership with its template-flag inheritance, the
+  load-order faction store, and the runtime membership component with its
+  flattened interfaction relation index.
 * [Relationships](/formats/relationships.md) - RELA parents, rank enum and secret flags,
   ASTP association titles, and the load-order relationship store with its order-free pair
   query.
@@ -115,7 +116,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [DDS texture container](/formats/dds.md) - DDS_HEADER/DXT10 layout, BCn + 32-bit RGB,
   mip chain math, color-space policy.
 * [Actor records](/formats/actors.md) - ACHR/NPC_/LVLN/LVLI/LVSP/RACE/CLAS/ARMO/ARMA/OTFT
-  layouts, TPLT chain + visual appearance resolution (skin/outfit/slot
+  layouts, the AIDT aggression, confidence, morality and assistance struct, TPLT chain +
+  visual appearance resolution (skin/outfit/slot
   masking), FaceGen path convention + actor GPU assembly.
 * [FaceGen TRI expressions](/formats/tri.md) - FRTRI003 base topology, named scaled
   vertex deltas, HDPT/RACE/NPC_ association, and defensive decode policy.
@@ -372,10 +374,13 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   documented `fCombatDistance` reach formula and the swept-capsule hit volume, target
   filtering and one hit per swing, the install's own block GMSTs and how they differ from
   the secondary source, stagger, and the WEAP INAM impact-sound chain.
-* [Combat loop](/engine/combat.md) - persistent hostility as its own component and its
-  additive CBTS save chunk, combat state derived every step from who is engaged rather than
-  stored, the per-actor combat behavior machine that perceives, approaches, attacks, blocks,
-  breaks off at low health, searches the last place it saw the player and gives up, every
+* [Combat loop](/engine/combat.md) - hostility derived from faction relations, RELA
+  relationship rank and the actor's own AIDT aggression, with the documented
+  precedence order and the named crime seam, the explicit override as its own
+  component and its additive CBTS save chunk beside the FCTN memberships,
+  combat state derived every step from who is engaged rather than stored, the
+  per-actor combat behavior machine that perceives, approaches, attacks,
+  blocks, breaks off at low health, searches the last place it saw the player and gives up, every
   cadence and threshold stated as OpenSky's own, the `StartCombat` and `StopCombat` natives,
   census-named recoil reactions in both directions, bounded reaction clips on the
   single-clip NPC playback, the four transient caps and the eight-fighter engagement cap,

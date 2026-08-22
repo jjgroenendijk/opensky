@@ -158,6 +158,14 @@ nonisolated struct ActorBase {
     let factions: [FactionMembership]
     /// ACBS/CNAM/DNAM stat inputs (issue #194).
     let stats: Stats
+    /// AIDT — aggression, confidence, morality and assistance (issue #503).
+    /// Nil when the record authors no AIDT or authors one too short to read,
+    /// which `ActorAIData.absent` is the documented stand-in for.
+    ///
+    /// This struct inherits through `TemplateFlags.useAIData`, resolved by
+    /// `ActorTemplateResolver.resolveFactions(base:)` beside the SNAM run,
+    /// because the hostility derivation reads the two together.
+    let aiData: ActorAIData?
     /// VMAD — Papyrus scripts attached to the NPC_ base.
     let scriptData: ScriptData
 
@@ -186,6 +194,7 @@ nonisolated struct ActorBase {
         var sawACBS = false
         var references = References()
         var stats = Stats()
+        var aiData: ActorAIData?
         var scriptData = ScriptData(ownerType: record.type)
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
@@ -201,6 +210,11 @@ nonisolated struct ActorBase {
                 stats.characterClass = try FormID(reader.readUInt32())
             case "DNAM":
                 Self.decodeDNAM(field, stats: &stats)
+            case "AIDT":
+                // A malformed AIDT leaves the actor without AI data rather than
+                // failing the record, the rule every optional field group here
+                // follows.
+                aiData = try? ActorAIData(field: field)
             default:
                 // The FormID-valued appearance fields and the VMAD fallthrough
                 // live in their own pass, which is what keeps this switch inside
@@ -230,6 +244,7 @@ nonisolated struct ActorBase {
         perks = references.perks
         factions = references.factions
         self.stats = stats
+        self.aiData = aiData
         self.scriptData = scriptData
     }
 

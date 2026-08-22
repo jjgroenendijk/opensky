@@ -2,6 +2,29 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-08-22
+
+* **Hostility derived from factions, relationships and aggression (issue #503)**: who an
+  actor treats as an enemy stops being a hand-flipped switch. `HostilityDerivation` resolves
+  a reaction through a documented five-term precedence - the runtime override, a named crime
+  seam issues #504 and #505 will join, the `RELA` rank between the two bases ("relationships
+  override factions", per the Creation Kit wiki), the `FACT` interfaction relations between
+  the two actors' memberships, and Neutral - then turns it into a hostility through the
+  Creation Kit's own aggression table. A vanilla bandit comes out hostile to the player with
+  nobody touching the dev panel, because a bandit is Very Aggressive and a stranger is
+  Neutral; a Whiterun guard beside it stays calm, because a guard is only Aggressive. Both
+  are asserted against the install. See [combat loop](/engine/combat.md).
+* **Runtime faction membership (issue #503)**: `ActorFactionState` is a world-state component
+  seeded once per actor from the authored `SNAM` run, mutable through `FactionRuntime`, and
+  persisted in the additive `FCTN` save chunk. A join the load order cannot resolve is
+  refused; a stored membership whose plugin went away is kept.
+  See [factions](/formats/factions.md) and [the save container](/formats/opensky-save.md).
+* **NPC_ AIDT decoded (issue #503)**: aggression, confidence, energy, morality, mood,
+  assistance, the aggro-radius bit and the three distances, length-tolerant and inheriting
+  through the `useAIData` template flag beside the `SNAM` run. An actor with no readable
+  AIDT reads as unaggressive rather than being given an invented willingness to attack.
+  See [actor records](/formats/actors.md).
+
 ## 2026-08-21
 
 * **RELA and ASTP decode plus the relationship store (issue #502)**: `Relationship` reads

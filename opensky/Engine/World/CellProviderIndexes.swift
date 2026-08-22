@@ -109,6 +109,12 @@ nonisolated struct CellProviderIndexes {
     /// Load-order AVIF index (issue #498), which skill advancement reads each
     /// skill's `AVSK` parameters out of.
     let actorValueInformation: ActorValueInformationStore
+    /// Load-order FACT index (issue #501), which every runtime membership is
+    /// resolved through.
+    let factionStore: FactionStore
+    /// Load-order RELA and ASTP index (issue #502), which the hostility
+    /// derivation asks about one specific pair of actors.
+    let relationshipStore: RelationshipStore
     /// GMST-derived `fSkillUseCurve` and `fXPPerSkillRank` (issue #498).
     let skillAdvancementSettings: SkillAdvancementSettings
     /// GMST-derived level curve and level-up rewards (issue #499).
@@ -164,6 +170,8 @@ nonisolated struct CellProviderIndexes {
         locationStore = LocationStoreLoader.load(root: root, baseFile: file)
         dialogueStore = DialogueStore(file: file, pluginName: esmURL.lastPathComponent)
         packageStore = PackageStore(file: file)
+        factionStore = FactionStoreLoader.load(root: root, baseFile: file)
+        relationshipStore = RelationshipStoreLoader.load(root: root, baseFile: file)
         let magic = MagicIndexes(root: root, baseFile: file)
         magicEffectStore = magic.effects
         spellStore = magic.spells
@@ -237,6 +245,8 @@ nonisolated struct CellProviderIndexes {
             equipSlotStore: equipSlotStore,
             enchantmentStore: enchantmentStore,
             perkStore: perkStore,
+            factionStore: factionStore,
+            relationshipStore: relationshipStore,
             actorValueInformation: actorValueInformation,
             skillAdvancementSettings: skillAdvancementSettings,
             characterLevelSettings: characterLevelSettings,
