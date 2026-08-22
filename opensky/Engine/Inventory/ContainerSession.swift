@@ -61,12 +61,40 @@ final class ContainerSession {
 
     // MARK: - Transfers
 
+    /// Whether taking from this container would be theft, and who it would be
+    /// theft from (issue #504).
+    ///
+    /// Read once per call rather than cached for the session's lifetime, for
+    /// the reason `contents` is not cached: a quest that hands the player the
+    /// key to a house while the chest is open must change the answer.
+    var ownership: OwnershipVerdict {
+        runtime.crime?.verdict(on: container.key) ?? .unowned
+    }
+
     /// Moves `count` of `item` from the container to the player.
     ///
+    /// Taking out of a container somebody else owns is theft: the goods arrive
+    /// marked stolen and the bounty is reported. "Viewing items in an owned
+    /// container, taking your own items out of an owned container, and taking
+    /// items from a dead NPC are not considered stealing"
+    /// (<https://en.uesp.net/wiki/Skyrim:Crime>) — the first and second of
+    /// those are what `ownership` answers, and the third is why a corpse's
+    /// container is left unowned by the session that builds it.
+    ///
+    /// - Returns: the bounty the take accrued, zero when it was no crime or
+    ///   nobody saw.
     /// - Throws: `InventoryError.insufficientCount` when the container holds
     ///   fewer, which writes nothing.
-    func take(_ item: FormID, count: Int32 = 1) throws {
-        try inventory.transfer(item, count: count, from: container, to: player)
+    @discardableResult
+    func take(_ item: FormID, count: Int32 = 1) throws -> Int32 {
+        let verdict = ownership
+        try inventory.transfer(
+            item, count: count, from: container, to: player, markingStolen: verdict.isTheft
+        )
+        guard verdict.isTheft else { return 0 }
+        return runtime.crime?.reportTheft(
+            of: item, count: count, from: container.key, owner: verdict.owner
+        ).gold ?? 0
     }
 
     /// Moves everything the container holds to the player, stack by stack.

@@ -228,7 +228,9 @@ extension GameViewController: ItemControlProviding {
 
     func readout(_ stacks: [InventoryStack]) -> [ItemStackReadout] {
         stacks.map {
-            ItemStackReadout(item: $0.item, count: $0.count, name: name(of: $0.item))
+            ItemStackReadout(
+                item: $0.item, count: $0.count, name: name(of: $0.item), stolen: $0.stolen
+            )
         }
     }
 

@@ -164,6 +164,20 @@ extension CellStreamer {
         } ?? composition.actorEntries()
     }
 
+    /// The built scene for one resident cell, or nil when that cell is not
+    /// resident.
+    ///
+    /// The one door to a cell's own record-derived facts — its `XOWN` owner and
+    /// its `XLCN` link (issue #504) — for a caller that has a location and needs
+    /// what the CELL authored. An interior scene replaces the exterior
+    /// composition entirely, exactly as it does for every other lookup here.
+    func residentScene(at location: CellSceneLocation) -> CellScene? {
+        if let interiorScene {
+            return interiorScene.location == location ? interiorScene : nil
+        }
+        return composition.cells.values.first { $0.location == location }
+    }
+
     /// Snapshot index for live package-condition evaluation. Unlike the actor
     /// list, this includes disabled REFRs that an explicit run-on may name.
     func residentReferenceIndex() -> RuntimeReferenceIndex {

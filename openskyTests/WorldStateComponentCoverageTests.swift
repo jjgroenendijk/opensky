@@ -100,6 +100,16 @@ struct WorldStateComponentCoverageTests {
 
     /// One levelled player (issue #499). Normally keyed by `ReferenceKey.player`
     /// rather than by a placement, which the store does not care about either.
+    private var crimeLedger: CrimeLedgerState {
+        CrimeLedgerState(entries: [
+            CrimeLedgerEntry(
+                faction: key(0x267EA),
+                gold: 40,
+                counts: CrimeCounts(theft: 1, assault: 1)
+            )
+        ])
+    }
+
     private var progress: PlayerProgressState {
         PlayerProgressState(level: 4, experience: 25, perkPoints: 3, skillIncreases: 9)
     }
@@ -160,6 +170,9 @@ struct WorldStateComponentCoverageTests {
         // A levelled player: the eighteenth kind, whose own subject is
         // PlayerLevelRuntimeTests.
         #expect(store.set(progress, for: reference, in: whiterun))
+        // A wanted player: the nineteenth kind, whose own subject is
+        // CrimeRuntimeTests.
+        #expect(store.set(crimeLedger, for: reference, in: whiterun))
 
         #expect(store.component(ReferenceEnableState.self, for: reference)?.isEnabled == false)
         #expect(store.component(ReferenceTransformOverride.self, for: reference) == transform(9))
@@ -182,6 +195,7 @@ struct WorldStateComponentCoverageTests {
         #expect(store.component(PerkState.self, for: reference) == perks)
         #expect(store.component(ActorFactionState.self, for: reference) == memberships)
         #expect(store.component(PlayerProgressState.self, for: reference) == progress)
+        #expect(store.component(CrimeLedgerState.self, for: reference) == crimeLedger)
         #expect(store.delta(for: reference)?.sortedKinds == WorldStateComponentKind.allCases)
     }
 
@@ -206,6 +220,7 @@ struct WorldStateComponentCoverageTests {
         store.set(perks, for: reference, in: whiterun)
         store.set(memberships, for: reference, in: whiterun)
         store.set(progress, for: reference, in: whiterun)
+        store.set(crimeLedger, for: reference, in: whiterun)
         #expect(store.reset(reference))
         #expect(store.delta(for: reference) == nil)
         #expect(store.dirtyCount == 0)

@@ -35,6 +35,39 @@ nonisolated struct InventoryMenuEntry: Equatable, Sendable {
     /// filtering, because dropping the row entirely would hide an item the
     /// player is genuinely carrying.
     let family: ItemDefinition.Family?
+    /// How many of `count` were taken from somebody who owned them (issue
+    /// #504). A row is one *item*, honest and stolen copies together, because
+    /// two rows with the same name and FormID would be two identical-looking
+    /// controls the player could not tell apart; the marker says how many of
+    /// them are hot.
+    let stolenCount: Int32
+
+    init(
+        item: FormID,
+        name: String,
+        count: Int32,
+        weight: Float,
+        value: Int32,
+        isEquipped: Bool,
+        family: ItemDefinition.Family?,
+        stolenCount: Int32 = 0
+    ) {
+        self.item = item
+        self.name = name
+        self.count = count
+        self.weight = weight
+        self.value = value
+        self.isEquipped = isEquipped
+        self.family = family
+        self.stolenCount = stolenCount
+    }
+
+    /// Whether any copy in this row is stolen, which is what the "Stolen"
+    /// marker shows. "As long as this tag is present, the item is considered
+    /// stolen" (<https://en.uesp.net/wiki/Skyrim:Crime>).
+    var isStolen: Bool {
+        stolenCount > 0
+    }
 
     var totalWeight: Float {
         weight * Float(count)

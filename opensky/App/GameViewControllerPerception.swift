@@ -36,6 +36,9 @@ extension GameViewController {
         renderer.onWorldUpdate = { [weak self] delta in
             advanceWorld?(delta)
             self?.perception.runtime?.advance(by: delta)
+            // After the pass, so a trespass noticed on arrival is judged
+            // against detection state this frame produced (issue #504).
+            self?.advanceCrimeTrespass()
         }
         renderer.worldOverlaySources
             .register(identifier: "detection") { [weak self] context, list in

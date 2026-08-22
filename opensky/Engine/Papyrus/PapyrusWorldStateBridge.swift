@@ -84,6 +84,12 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// reason `advanceSkill` is. Nil in a session with no character leveling,
     /// and both perk-point natives then refuse rather than answering zero.
     var modifyPerkPoints: ((Int) -> Int?)?
+    /// The session's crime reporter, which every crime native goes through
+    /// (issue #504). Held as a getter closure for the reason `mutatePerks` is:
+    /// the controller owns it and builds it after this bridge exists. Nil in a
+    /// session with no crime runtime, and every crime native then refuses
+    /// rather than answering zero.
+    var crimeReporter: (() -> CrimeReporter?)?
     /// Load-order MGEF lookup, for `HasMagicEffectWithKeyword`. Nil in a
     /// synthetic session with no record index.
     var magicEffectStore: MagicEffectStore?

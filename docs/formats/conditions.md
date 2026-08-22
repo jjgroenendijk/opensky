@@ -290,8 +290,10 @@ rather than answering "sheathed".
 
 ### Implemented functions
 
-Forty-three functions are registered, chosen because the engine can answer them
-honestly from state it already owns. The stored index is the raw on-disk value;
+Forty-seven functions are registered, chosen because the engine can answer them
+honestly from state it already owns. Thirty-three are listed below; the fourteen
+M18 keyword, form-list and location functions are listed with their counts under
+[Coverage sweep](#coverage-sweep). The stored index is the raw on-disk value;
 the Creation Kit spells each one 4096 higher
 (`ConditionFunctionRegistry.creationKitOffset`).
 
@@ -328,11 +330,21 @@ the Creation Kit spells each one 4096 higher
 | 572 | 4668 | `GetCurrentDeliveryType` | #1 casting source | 0 self, 1 contact, 2 aimed, 3 target actor, 4 target location |
 | 632 | 4728 | `IsCasting` | none | 1 while either hand is charging, ready or concentrating |
 | 699 | 4795 | `HasMagicEffectKeyword` | #1 `KYWD` FormID | 1 when an effect carrying that keyword is acting on the run-on actor |
+| 448 | 4544 | `HasPerk` | #1 `PERK` FormID | 1 when the run-on actor owns that perk |
+| 459 | 4555 | `GetCrimeGold` | #1 `FACT` FormID, nullable | crime gold the run-on actor owes that faction; a null parameter means the faction answering for where it stands |
 
 The M18 keyword, form-list and location functions are listed with their counts
 under [Coverage sweep](#coverage-sweep).
 
 Several of these carry a recorded decision.
+
+`GetCrimeGold`'s parameter is `ptFactionNull` — nullable by declaration — and a null
+parameter asks about the hold the run-on is standing in rather than about no faction at all.
+A session with no `FACT` data, a parameter naming a faction no plugin defines, and a null
+parameter outside any hold all report `.unavailableCrime` rather than answering zero; owing a
+resolvable faction nothing is a conclusive 0. Its two siblings `GetCrimeGoldViolent` (375)
+and `GetCrimeGoldNonviolent` (376) are deliberately unregistered, because the ledger holds
+one bounty per faction — see [crime and bounty](/engine/crime.md).
 
 `GetDisabled` reads a runtime enable-state snapshot first and falls back to the REFR or ACHR
 record-header initially-disabled flag. A missing placement is reason-tagged unresolved, not
@@ -468,7 +480,8 @@ false and carries a machine-readable `ConditionFailure` saying why:
 `.unresolvedParameter`, `.unavailableClock`, `.unavailableActorState`,
 `.unavailableDetection`, `.unavailableDialogue`,
 `.unavailableData(.keyword|.formList|.location)`, or
-`.unavailableMagic(.actor|.record|.castingSource|.equippedSpell)`.
+`.unavailableMagic(.actor|.record|.castingSource|.equippedSpell)`, `.unavailablePerks`, or
+`.unavailableCrime`.
 `.unresolvedParameter` means either a `CIS1`/`CIS2` alias name that resolved to
 no filled alias or an actor-value index this engine has no store for. A QUST
 parameter naming no quest

@@ -4,6 +4,28 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-08-22
 
+* **Ownership is enforced and crime accrues bounty (issue #504)**: taking somebody else's
+  property is theft. `OwnershipResolver` answers "may this actor use that reference" from the
+  reference's own `XOWN`, the cell's — which `Cell` decodes for the first time — and the
+  actor's faction ranks, in that precedence order; `CrimeFactionResolver` walks a cell's
+  `XLCN` parent chain to the hold that answers for the place, exactly as
+  `WhiterunBelethorsGeneralGoodsLocation -> WhiterunLocation -> WhiterunHoldLocation` does on
+  this install. Theft, assault, murder and trespass are priced from the faction's own `CRVA`
+  and not from a game setting: `iCrimeGold*` has exactly two members on this install and
+  neither prices any of the four. A crime accrues gold only when the perception pass has a
+  live witness, and is counted either way. See [crime and bounty](/engine/crime.md).
+* **Stolen goods (issue #504)**: the stolen flag is part of the inventory stack key, so ten
+  honest arrows and one stolen arrow are two stacks of the same base. It survives a transfer,
+  a barter and a save, travelling in the additive `STOL` chunk beside `INVN`'s per-item
+  totals so an older build still restores a complete inventory. The bounty ledger itself is a
+  new world-state component in the additive `CRIM` chunk.
+  See [the save container](/formats/opensky-save.md) and [records](/formats/records.md).
+* **`GetCrimeGold` and the crime natives (issue #504)**: one condition function (stored index
+  459) and five Papyrus natives — the `Faction` crime-gold trio and the two `Actor` alarms —
+  every signature quoted from the Creation Kit wiki at its registration site. The
+  violent/non-violent split is deliberately not installed, because the ledger holds one
+  bounty per faction and a combined total would answer a violent-only question with a
+  convincing wrong number. See [conditions](/formats/conditions.md).
 * **Hostility derived from factions, relationships and aggression (issue #503)**: who an
   actor treats as an enemy stops being a hand-flipped switch. `HostilityDerivation` resolves
   a reaction through a documented five-term precedence - the runtime override, a named crime

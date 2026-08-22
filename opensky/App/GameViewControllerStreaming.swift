@@ -144,6 +144,11 @@ extension GameViewController {
         // Last: it hands itself to the skill runtime and validates a perk spend
         // against the perk runtime and the AVIF trees (issue #499).
         wireProgression(provider: provider)
+        // After the faction runtime and the world-item runtime: ownership is
+        // resolved against the same FACT store the hostility derivation uses,
+        // and the reporter is handed to the take path those items already built
+        // (issue #504).
+        wireCrime(provider: provider)
     }
 
     private func wireLateWorldSystems(
@@ -156,6 +161,9 @@ extension GameViewController {
         // so selection advances after those runtimes in the same world tick.
         wirePackages(provider: provider, renderer: renderer)
         wirePerception(provider: provider, renderer: renderer)
+        // Right after the perception pass, which is what answers "did anybody
+        // see it" for every crime (issue #504).
+        attachCrimeWitnesses(perception: perception.runtime)
         // Last (issue #205): the Talk candidate filter reads the death and
         // hostility state the combat and perception runtimes keep, so wiring it
         // earlier would hand the crosshair a list built before they existed.

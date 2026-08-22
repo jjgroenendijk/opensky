@@ -267,7 +267,9 @@ final class ItemsSection: PanelSectionViewController {
     /// readout never silently shows part of an inventory as the whole of it.
     private static func stackLines(_ title: String, _ stacks: [ItemStackReadout]) -> String {
         guard !stacks.isEmpty else { return "  \(title): empty" }
-        var lines = stacks.prefix(listedStackLimit).map { "  \($0.count) × \($0.name)" }
+        var lines = stacks.prefix(listedStackLimit).map {
+            "  \($0.count) × \($0.name)\($0.stolen ? " (stolen)" : "")"
+        }
         if stacks.count > listedStackLimit {
             lines.append("  … \(stacks.count - listedStackLimit) more")
         }

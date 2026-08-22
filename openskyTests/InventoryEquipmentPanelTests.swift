@@ -140,12 +140,17 @@ struct InventoryEquipmentPanelTests {
         #expect(section.readout.contains("Owner: none — taking this is not theft."))
 
         provider.inventoryEquipment.ownership = ReferenceOwnershipReadout(
-            name: "Chest", reference: FormID(0x0710), owner: FormID(0x3000), factionRank: 2
+            name: "Chest",
+            reference: FormID(0x0710),
+            owner: FormID(0x3000),
+            factionRank: 2,
+            isTheft: true,
+            bounty: 25
         )
         section.refreshReadout()
         #expect(section.readout.contains("taking this is theft."))
         #expect(section.readout.contains("Faction rank required: 2"))
-        #expect(section.readout.contains("no crime system enforces it yet"))
+        #expect(section.readout.contains("Bounty if witnessed: 25 gold."))
 
         provider.inventoryEquipment.ownership = nil
         section.refreshReadout()

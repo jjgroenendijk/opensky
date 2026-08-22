@@ -135,7 +135,7 @@ nonisolated enum OpenSkySaveEntryDecoder {
             try .deletion(ReferenceDeletionState(isDeleted: reader.bool("deletion state")))
         case .inventory, .spawn, .quest, .questAliases, .actorValues, .death,
              .combat, .dialogue, .activeEffects, .spellbook, .enchantedItems, .perks,
-             .factions, .playerProgress:
+             .factions, .playerProgress, .crimeLedger:
             // Unreachable: none of these kinds has an RDLT tag, so `init?(saveTag:)`
             // never produces these cases and tags past 3 are rejected as
             // unknown. They are spelled out rather than defaulted so that a

@@ -88,15 +88,20 @@ faction system existing.
 ## Ownership
 
 `XOWN` and `XRNK` decode in `PlacedReference` and are reported for whatever the crosshair
-is on. Ownership is decoded but not enforced: taking an owned item is theft in the data and
-nothing in the engine stops it, because a crime system is not in this milestone. The
-readout says so, rather than letting silence imply enforcement.
+is on. The readout was an inspection through M12 and M20, because no crime system existed;
+since issue #504 it states the *enforced* verdict — whether taking the reference would be
+theft for the player right now, which accounts for the cell's own `XOWN` and the player's
+faction ranks as well as the reference's field, and what the bounty would be if witnessed.
+See [crime and bounty](/engine/crime.md).
 
-Three conditions read as three different answers, never as a blank:
+Four conditions read as four different answers, never as a blank:
 
 - no crosshair target at all,
-- a target with no owner ("taking this is not theft"),
-- a target with an owner, plus the faction rank when one is authored.
+- a target nothing claims ("taking this is not theft"),
+- a target with an owner the player may use, which is also not theft,
+- a target the player may not use, plus the faction rank when one is authored and the
+  bounty a witnessed take would accrue. An owner inherited from the cell says so, because
+  the reference itself names none.
 
 A null `XOWN` is unowned rather than owned by form zero, which is the decoder's rule and not
 this panel's.
@@ -226,7 +231,9 @@ used. The casting side of it is [magic and active effects](/engine/magic.md).
 
 ## Limits / next
 
-- Ownership is reported, never enforced. Stealing, bounties and the crime system are M18+.
+- Guard response to a bounty — confrontation, arrest, attack-on-sight — is issue #505, and
+  fence rules for the stolen flag are issue #506. Ownership itself is enforced since issue
+  #504 ([crime and bounty](/engine/crime.md)).
 - Armour still occupies biped slots only. ARMO also carries an `ETYP`, which OpenSky does
   not decode, so a shield conflicts with a cuirass by body slot but not yet with a
   two-handed weapon by hand.

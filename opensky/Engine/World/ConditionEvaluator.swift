@@ -122,6 +122,12 @@ nonisolated enum ConditionFailure: Equatable, Error, Sendable {
     /// answer from "this engine has no perks loaded", and only one of them is a
     /// real one.
     case unavailablePerks
+    /// `GetCrimeGold` ran in a session with no FACT data, or against a
+    /// parameter this load order resolves no faction for, or with a null
+    /// parameter outside any hold (issue #504). Deliberately not treated as an
+    /// actor who owes nothing — that is a different answer from "this engine
+    /// has no crime factions loaded", and only one of them is a real one.
+    case unavailableCrime
     /// A magic function had no state, record or slot for the named domain
     /// (issue #474). Deliberately not treated as an actor who knows no spells
     /// and carries no effects — that is a different answer from "this engine

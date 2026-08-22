@@ -101,7 +101,15 @@ extension GameViewController {
                 cell: streamer.cellLocation(of: entry.key)
             )
             guard values.hasZeroHealth(holder) else { continue }
-            runtime.noteZeroHealth(of: entry.key)
+            // The return says this call is what killed the actor, so the murder
+            // is reported exactly once (issue #504). Hostility is read before
+            // the death is written, because a corpse's stored hostility is
+            // whatever the fight left behind. The sweep does not know who
+            // emptied the health, which is why the crime layer attributes the
+            // death from the actors this player struck rather than from here.
+            let wasHostile = combatHostility(of: entry.key) == .hostile
+            guard runtime.noteZeroHealth(of: entry.key) else { continue }
+            reportPlayerMurder(of: entry.key, wasHostile: wasHostile)
         }
     }
 

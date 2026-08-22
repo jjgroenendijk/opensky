@@ -52,6 +52,26 @@ nonisolated struct WorldTakeOutcome: Equatable, Sendable {
     let item: FormID
     /// How many, from the reference's XCNT or its spawned stack count.
     let count: Int32
+    /// Whether the take was theft, which is what marks the stack stolen
+    /// (issue #504). False for an unowned item and for one this actor may use.
+    let stolen: Bool
+    /// Bounty the take accrued, which is zero when nobody saw it, when the
+    /// place answers to no crime faction, and whenever the take was not theft.
+    let bounty: Int32
+
+    init(
+        key: ReferenceKey,
+        item: FormID,
+        count: Int32,
+        stolen: Bool = false,
+        bounty: Int32 = 0
+    ) {
+        self.key = key
+        self.item = item
+        self.count = count
+        self.stolen = stolen
+        self.bounty = bounty
+    }
 }
 
 /// Where a dropped object lands.
@@ -105,6 +125,12 @@ final class WorldItemRuntime {
     /// The player's inventory holder, which is the destination of every take
     /// and the source of every drop.
     let player = InventoryHolder.player
+
+    /// Where a take asks whether it is theft, and says so when it is (issue
+    /// #504). Nil in a session with no crime runtime — a synthetic scene, or a
+    /// load order with no FACT data — where every take is an honest one, which
+    /// is the behaviour this file had before crime existed.
+    var crime: CrimeReporter?
 
     var store: WorldStateStore {
         inventory.store
@@ -162,9 +188,32 @@ final class WorldItemRuntime {
             throw WorldItemError.unknownReference(interaction.reference)
         }
         let count = Self.stackCount(of: entry)
-        try inventory.add(interaction.base, count: count, to: player)
+        // Asked before the item moves, because once it is in the inventory the
+        // reference is gone and there is nothing left to ask about.
+        let verdict = crime?.verdict(on: entry.key) ?? .unowned
+        try inventory.add(
+            interaction.base, count: count, to: player, stolen: verdict.isTheft
+        )
+        // Reported before the reference leaves the world, for the reason the
+        // verdict is read before the item moves: the crime is located by where
+        // the stolen thing stood, and only a resident reference can say where
+        // that was.
+        let bounty = verdict.isTheft
+            ? crime?.reportTheft(
+                of: interaction.base,
+                count: count,
+                from: entry.key,
+                owner: verdict.owner
+            ).gold ?? 0
+            : 0
         removeFromWorld(entry.key, cell: references?.cellLocation(of: entry.key))
-        return WorldTakeOutcome(key: entry.key, item: interaction.base, count: count)
+        return WorldTakeOutcome(
+            key: entry.key,
+            item: interaction.base,
+            count: count,
+            stolen: verdict.isTheft,
+            bounty: bounty
+        )
     }
 
     /// How many individual items one placed reference stands for: its XCNT, or

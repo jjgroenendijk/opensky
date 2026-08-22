@@ -127,7 +127,7 @@ that answers and stops.
 | # | Term | Source of the answer |
 | --- | --- | --- |
 | 1 | Runtime override | `ActorCombatState` — the panel, `StartCombat`, or the player's own blow |
-| 2 | Crime | `CrimeHostilitySource`, the named seam issues #504 and #505 join through; empty today |
+| 2 | Crime | `CrimeHostilitySource`, the named seam issue #505 joins through; issue #504 built the bounty ledger behind it and left this term empty |
 | 3 | Relationship | The `RELA` rank between the two `NPC_` bases |
 | 4 | Faction | The `FACT` interfaction relations between the two actors' memberships |
 | 5 | Default | Neutral |

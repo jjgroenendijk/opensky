@@ -71,6 +71,15 @@ nonisolated struct Cell {
     let location: FormID?
     /// XEZN — the ECZN governing this cell's encounter level and reset data.
     let encounterZone: FormID?
+    /// XOWN — the NPC_ or FACT that owns everything in this cell, which is what
+    /// a reference with no `XOWN` of its own inherits (issue #504). nil when
+    /// the cell is unowned, which is the normal state for a dungeon and for the
+    /// player's own house.
+    let owner: FormID?
+    /// XRNK — the faction rank a member needs before the cell's contents are
+    /// theirs to use. Meaningful only when `owner` names a FACT; nil when the
+    /// field is absent, which is every vanilla cell observed on this install.
+    let ownerFactionRank: Int32?
 
     var isInterior: Bool {
         flags.contains(.interior)
@@ -100,6 +109,8 @@ nonisolated struct Cell {
         musicType = fields.musicType
         location = fields.location
         encounterZone = fields.encounterZone
+        owner = fields.owner
+        ownerFactionRank = fields.ownerFactionRank
     }
 
     /// Mutable accumulator for the field loop. Split out so the field switch
@@ -119,6 +130,8 @@ nonisolated struct Cell {
         var musicType: FormID?
         var location: FormID?
         var encounterZone: FormID?
+        var owner: FormID?
+        var ownerFactionRank: Int32?
 
         mutating func decode(field: ESMField, localized: Bool) throws {
             var reader = BinaryReader(field.data)
@@ -171,6 +184,18 @@ nonisolated struct Cell {
             case "XEZN":
                 // UESP CELL + xEdit wbDefinitionsTES5.pas: ECZN link.
                 encounterZone = try Cell.decodeNonNullFormID(field.data)
+            case "XOWN":
+                // UESP CELL "XOWN — Owner (NPC_ or FACT)" + xEdit
+                // wbDefinitionsTES5.pas, which models the CELL owner exactly as
+                // it models a REFR's. Observed on this install: every owned
+                // Whiterun interior carries a 4-byte XOWN and none carries an
+                // XRNK.
+                owner = try Cell.decodeNonNullFormID(field.data)
+            case "XRNK":
+                // xEdit wbDefinitionsTES5.pas `wbXRNK`: int32 faction rank,
+                // meaningful only beside a FACT owner. Decoded defensively —
+                // no vanilla CELL was observed carrying one.
+                ownerFactionRank = try Cell.decodeInt32(field.data)
             default:
                 break
             }
@@ -207,6 +232,15 @@ nonisolated struct Cell {
         case 0x7F7F_FFFF, 0x4F7F_FFC9, 0xCF00_0000: .noWater
         default: .height(Float(bitPattern: bits))
         }
+    }
+
+    /// XRNK, a signed 32-bit rank. A field too short to hold one degrades to
+    /// "not set" rather than throwing, the rule `PlacedReference` follows for
+    /// the same subrecord.
+    private static func decodeInt32(_ data: Data) throws -> Int32? {
+        guard data.count >= 4 else { return nil }
+        var reader = BinaryReader(data)
+        return try Int32(bitPattern: reader.readUInt32())
     }
 
     private static func decodeFormID(_ data: Data) throws -> FormID? {

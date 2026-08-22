@@ -54,17 +54,17 @@ nonisolated enum InventoryEquipmentReadout {
         guard let ownership = snapshot.targetOwnership else {
             return "Target: none\nPoint the walk-mode crosshair at a reference."
         }
-        guard let owner = ownership.owner else {
-            return """
-            Target: \(ownership.name) · \(ownership.reference)
-            Owner: none — taking this is not theft.
-            """
-        }
+        let header = "Target: \(ownership.name) · \(ownership.reference)"
+        let owner = ownership.owner.map { "Owner: \($0)" }
+            ?? (ownership.isTheft ? "Owner: inherited from this cell" : "Owner: none")
         let rank = ownership.factionRank.map { "\nFaction rank required: \($0)" } ?? ""
+        guard ownership.isTheft else {
+            return "\(header)\n\(owner) — taking this is not theft.\(rank)"
+        }
         return """
-        Target: \(ownership.name) · \(ownership.reference)
-        Owner: \(owner) — taking this is theft.\(rank)
-        Ownership is decoded and reported only; no crime system enforces it yet.
+        \(header)
+        \(owner) — taking this is theft.\(rank)
+        Bounty if witnessed: \(ownership.bounty) gold.
         """
     }
 
@@ -105,7 +105,9 @@ nonisolated enum InventoryEquipmentReadout {
     /// readout never silently shows part of an inventory as the whole of it.
     private static func stackLines(_ stacks: [ItemStackReadout]) -> String {
         guard !stacks.isEmpty else { return "  empty" }
-        var lines = stacks.prefix(listedStackLimit).map { "  \($0.count) × \($0.name)" }
+        var lines = stacks.prefix(listedStackLimit).map {
+            "  \($0.count) × \($0.name)\($0.stolen ? " (stolen)" : "")"
+        }
         if stacks.count > listedStackLimit {
             lines.append("  … \(stacks.count - listedStackLimit) more")
         }

@@ -99,6 +99,14 @@ nonisolated enum OpenSkySaveDecoder {
         /// 1, so progress restores at the session start — which is also what a
         /// save written before that chunk existed means.
         var playerProgress: [SavePlayerProgressEntry] = []
+        /// Absent `CRIM` chunk (issue #504) means nobody committed a crime
+        /// anybody charged for, so every actor restores owing nothing — which
+        /// is also what a save written before that chunk existed means.
+        var crimeLedgers: [SaveCrimeLedgerEntry] = []
+        /// Absent `STOL` chunk (issue #504) means nothing in any inventory was
+        /// stolen, so the totals `INVN` restored are all honest goods — which
+        /// is also what a save written before that chunk existed means.
+        var stolenGoods: [SaveStolenGoodsEntry] = []
     }
 
     static func decode(_ data: Data) throws -> OpenSkySaveFile {
@@ -162,7 +170,11 @@ nonisolated enum OpenSkySaveDecoder {
         entries = OpenSkySaveEnchantedItemDecoder.merge(body.enchantedItems, into: entries)
         entries = OpenSkySavePerkDecoder.merge(body.perks, into: entries)
         entries = OpenSkySaveFactionDecoder.merge(body.factions, into: entries)
-        return OpenSkySaveProgressDecoder.merge(body.playerProgress, into: entries)
+        entries = OpenSkySaveProgressDecoder.merge(body.playerProgress, into: entries)
+        entries = OpenSkySaveCrimeDecoder.merge(body.crimeLedgers, into: entries)
+        // After `INVN`: `STOL` re-flags stacks the inventory merge has already
+        // restored, so it cannot run before those totals are in place.
+        return OpenSkySaveCrimeDecoder.mergeStolen(body.stolenGoods, into: entries)
     }
 
     // MARK: - Header
@@ -321,6 +333,10 @@ nonisolated enum OpenSkySaveDecoder {
         case OpenSkySaveFormat.ChunkTag.playerProgress:
             body.playerProgress = try OpenSkySaveProgressDecoder
                 .decodePlayerProgress(payload)
+        case OpenSkySaveFormat.ChunkTag.crimeLedgers:
+            body.crimeLedgers = try OpenSkySaveCrimeDecoder.decodeCrimeLedgers(payload)
+        case OpenSkySaveFormat.ChunkTag.stolenGoods:
+            body.stolenGoods = try OpenSkySaveCrimeDecoder.decodeStolenGoods(payload)
         default:
             break // Unknown chunk: skipped by its declared length.
         }

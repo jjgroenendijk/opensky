@@ -18,6 +18,18 @@ nonisolated struct ItemStackReadout: Equatable, Sendable {
     /// FULL name when the item index resolves one, else the editor ID, else the
     /// FormID. Never empty, so a readout line always names something.
     let name: String
+    /// Whether these copies were taken from somebody who owned them (issue
+    /// #504). One row per stack, and a stack is keyed by (form, stolen), so an
+    /// owner holding honest and stolen copies of one form shows two rows — the
+    /// marker is what tells them apart.
+    let stolen: Bool
+
+    init(item: FormID, count: Int32, name: String, stolen: Bool = false) {
+        self.item = item
+        self.count = count
+        self.name = name
+        self.stolen = stolen
+    }
 }
 
 /// Who an equip or unequip applies to (issue #178).

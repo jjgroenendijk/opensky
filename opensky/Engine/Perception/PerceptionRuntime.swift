@@ -124,6 +124,20 @@ final class PerceptionRuntime {
         return strongest
     }
 
+    /// Every observer that currently detects `target`, in ascending observer
+    /// order.
+    ///
+    /// The witness list a crime is judged against (issue #504). Detection only:
+    /// an observer that is merely suspicious has not seen anything, and the
+    /// order is sorted rather than dictionary order so two runs over the same
+    /// recorded inputs name the same witnesses in the same sequence.
+    func observersDetecting(_ target: ReferenceKey) -> [ReferenceKey] {
+        pairs
+            .filter { $0.key.target == target && $0.value.state == .detected }
+            .map(\.key.observer)
+            .sorted()
+    }
+
     // MARK: - Frames
 
     /// Advances perception by a wall delta, running whole fixed steps only.

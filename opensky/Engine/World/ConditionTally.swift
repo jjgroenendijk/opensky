@@ -88,6 +88,12 @@ nonisolated struct ConditionTally: Equatable, Sendable {
     /// counted as an actor who has not taken the perk.
     private(set) var unavailablePerks = 0
 
+    /// Crime seam misses (issue #504): `GetCrimeGold` in a session with no FACT
+    /// data, against a parameter no loaded plugin carries, or with a null
+    /// parameter outside any hold. Deliberately not counted as an actor who
+    /// owes nothing.
+    private(set) var unavailableCrime = 0
+
     private(set) var conditionsEvaluated = 0
     private(set) var listsEvaluated = 0
 
@@ -134,7 +140,7 @@ nonisolated struct ConditionTally: Equatable, Sendable {
             Self.bump(&unresolvedParameters, index, limit: limit)
         case .unavailableClock, .unavailableActorState, .unavailableDetection,
              .unavailableDialogue, .unavailableData, .unavailableMagic,
-             .unavailablePerks:
+             .unavailablePerks, .unavailableCrime:
             noteUnavailable(failure)
         }
     }
@@ -159,6 +165,8 @@ nonisolated struct ConditionTally: Equatable, Sendable {
             unavailableMagic[domain, default: 0] += 1
         case .unavailablePerks:
             unavailablePerks += 1
+        case .unavailableCrime:
+            unavailableCrime += 1
         default:
             break
         }
@@ -219,6 +227,7 @@ nonisolated struct ConditionTally: Equatable, Sendable {
             + unavailableDetection + unavailableDialogue
             + unavailableData.values.reduce(0, +)
             + unavailableMagic.values.reduce(0, +) + unavailablePerks
+            + unavailableCrime
     }
 
     /// Unknown function indices ranked by count, ties broken by index so the

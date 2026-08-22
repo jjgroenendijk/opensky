@@ -118,7 +118,16 @@ extension GameViewController: MeleeCombatWorld {
     /// the VM. A session with no VM queues nothing and says so.
     @discardableResult
     func reportScriptHit(_ hit: ScriptHitEvent) -> Int {
-        papyrus?.queueOnHit(hit) ?? 0
+        // Every landed blow in this engine passes here and names both sides, so
+        // this is where assault is noticed (issue #504): one seam rather than
+        // one per weapon, which is what keeps a sword swing and an arrow from
+        // disagreeing about what counts as a first strike.
+        reportPlayerAssault(
+            on: hit.target,
+            wasHostile: combatHostility(of: hit.target) == .hostile,
+            aggressor: hit.aggressor
+        )
+        return papyrus?.queueOnHit(hit) ?? 0
     }
 
     func playMeleeImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {

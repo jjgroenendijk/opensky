@@ -167,4 +167,19 @@ nonisolated extension OpenSkySaveFormat {
     /// Bytes one `PLVL` attribute pick occupies: the vanilla actor-value index
     /// it names. Fixed width, so this is the exact size.
     static let playerProgressPickSize = 4
+    /// Smallest number of bytes a single `CRIM` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and a zero row
+    /// count (4). An entry with contents is longer, so this is a lower bound.
+    static let minimumCrimeLedgerEntrySize = 12
+    /// Smallest number of bytes one `CRIM` row can occupy: a plugin key with an
+    /// empty name (7), the gold (4) and one count per `CrimeKind` (4 each). A
+    /// generated key is longer, so this is a lower bound.
+    static let minimumCrimeLedgerRowSize = 27
+    /// Smallest number of bytes a single `STOL` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4) and a zero row count (4). There is no
+    /// cell tag — the stolen split belongs to the goods, not to a placement.
+    static let minimumStolenGoodsEntrySize = 11
+    /// Bytes one `STOL` row occupies: the item FormID and the stolen count.
+    /// Fixed width, so this is the exact size.
+    static let stolenGoodsRowSize = 8
 }

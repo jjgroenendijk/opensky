@@ -96,14 +96,20 @@ extension GameViewController: InventoryEquipmentControlProviding {
     /// is plainly on something and a blank readout would say otherwise.
     private func targetOwnership() -> ReferenceOwnershipReadout? {
         guard let interaction = currentInteraction else { return nil }
-        let placed = streamer?
-            .referenceEntry(formID: interaction.reference)?
-            .placedReference
+        let entry = streamer?.referenceEntry(formID: interaction.reference)
+        let placed = entry?.placedReference
+        let verdict = entry.map { ownershipVerdict(on: $0.key) } ?? .unowned
         return ReferenceOwnershipReadout(
             name: interaction.name,
             reference: interaction.reference,
             owner: placed?.owner,
-            factionRank: placed?.ownerFactionRank
+            factionRank: placed?.ownerFactionRank,
+            isTheft: verdict.isTheft,
+            bounty: entry.map {
+                crime.reporter?.theftBounty(
+                    of: interaction.base, count: 1, from: $0.key
+                ) ?? 0
+            } ?? 0
         )
     }
 
