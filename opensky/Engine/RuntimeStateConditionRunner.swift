@@ -136,7 +136,7 @@ nonisolated enum RuntimeStateConditionRunner {
                 + "\(Int(index) + ConditionFunctionRegistry.creationKitOffset)"
         case .unavailableClock, .unavailableActorState, .unavailableDetection,
              .unavailableDialogue, .unavailableData, .unavailableMagic,
-             .unavailablePerks, .unavailableCrime:
+             .unavailablePerks, .unavailableCrime, .unavailableFactions:
             describeUnavailable(failure)
         }
     }
@@ -164,6 +164,8 @@ nonisolated enum RuntimeStateConditionRunner {
             "no perk data in the evaluation context"
         case .unavailableCrime:
             "no crime data in the evaluation context"
+        case .unavailableFactions:
+            "no faction data in the evaluation context"
         default:
             "unevaluated"
         }
@@ -211,6 +213,12 @@ nonisolated enum RuntimeStateConditionRunner {
         }
         if tally.unavailablePerks > 0 {
             lines.append("Perk data unavailable: \(tally.unavailablePerks)")
+        }
+        if tally.unavailableCrime > 0 {
+            lines.append("Crime data unavailable: \(tally.unavailableCrime)")
+        }
+        if tally.unavailableFactions > 0 {
+            lines.append("Faction data unavailable: \(tally.unavailableFactions)")
         }
         return lines
     }

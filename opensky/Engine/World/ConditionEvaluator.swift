@@ -128,6 +128,13 @@ nonisolated enum ConditionFailure: Equatable, Error, Sendable {
     /// actor who owes nothing — that is a different answer from "this engine
     /// has no crime factions loaded", and only one of them is a real one.
     case unavailableCrime
+    /// A faction or relationship function ran in a session with no FACT data,
+    /// against a parameter this load order resolves no faction for, or about an
+    /// actor this session carries no social profile for (issue #508).
+    /// Deliberately not treated as an actor who belongs to nothing and is
+    /// friendly with everybody — that is a different answer from "this engine is
+    /// not tracking that actor", and only one of them is a real one.
+    case unavailableFactions
     /// A magic function had no state, record or slot for the named domain
     /// (issue #474). Deliberately not treated as an actor who knows no spells
     /// and carries no effects — that is a different answer from "this engine

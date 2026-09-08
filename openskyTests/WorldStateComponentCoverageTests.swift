@@ -98,6 +98,14 @@ struct WorldStateComponentCoverageTests {
         ])
     }
 
+    /// One actor a script gave a relationship rank (issue #508). Its own subject
+    /// is `RelationshipRuntimeTests`.
+    private var relationships: ActorRelationshipState {
+        ActorRelationshipState(overrides: [
+            ActorRelationshipOverride(other: key(0x901), rank: -3)
+        ])
+    }
+
     /// One levelled player (issue #499). Normally keyed by `ReferenceKey.player`
     /// rather than by a placement, which the store does not care about either.
     private var crimeLedger: CrimeLedgerState {
@@ -167,10 +175,13 @@ struct WorldStateComponentCoverageTests {
         // An actor in a faction: the seventeenth kind, whose own subject is
         // FactionRuntimeTests.
         #expect(store.set(memberships, for: reference, in: whiterun))
-        // A levelled player: the eighteenth kind, whose own subject is
+        // An actor a script gave a relationship rank: the eighteenth kind, whose
+        // own subject is RelationshipRuntimeTests.
+        #expect(store.set(relationships, for: reference, in: whiterun))
+        // A levelled player: the nineteenth kind, whose own subject is
         // PlayerLevelRuntimeTests.
         #expect(store.set(progress, for: reference, in: whiterun))
-        // A wanted player: the nineteenth kind, whose own subject is
+        // A wanted player: the twentieth kind, whose own subject is
         // CrimeRuntimeTests.
         #expect(store.set(crimeLedger, for: reference, in: whiterun))
 
@@ -194,6 +205,9 @@ struct WorldStateComponentCoverageTests {
         #expect(store.component(EnchantedItemState.self, for: reference) == enchantedItems)
         #expect(store.component(PerkState.self, for: reference) == perks)
         #expect(store.component(ActorFactionState.self, for: reference) == memberships)
+        #expect(
+            store.component(ActorRelationshipState.self, for: reference) == relationships
+        )
         #expect(store.component(PlayerProgressState.self, for: reference) == progress)
         #expect(store.component(CrimeLedgerState.self, for: reference) == crimeLedger)
         #expect(store.delta(for: reference)?.sortedKinds == WorldStateComponentKind.allCases)
@@ -219,6 +233,7 @@ struct WorldStateComponentCoverageTests {
         store.set(enchantedItems, for: reference, in: whiterun)
         store.set(perks, for: reference, in: whiterun)
         store.set(memberships, for: reference, in: whiterun)
+        store.set(relationships, for: reference, in: whiterun)
         store.set(progress, for: reference, in: whiterun)
         store.set(crimeLedger, for: reference, in: whiterun)
         #expect(store.reset(reference))

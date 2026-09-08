@@ -286,6 +286,21 @@ nonisolated enum OpenSkySaveFormat {
         /// plugin that changes a faction relation has to change who is angry.
         static let factions = "FCTN"
 
+        /// Scripted relationship ranks (issue #508, roadmap item 21.4): one
+        /// entry per actor a script has given a relationship rank, and inside
+        /// it one row per other actor with the signed Creation Kit rank.
+        ///
+        /// Additive and split out of `RDLT` for the reason `FCTN` is: a session
+        /// in which no script touched a relationship writes no chunk at all, so
+        /// its bytes match what this encoder produced before the chunk existed.
+        ///
+        /// Both directions of a pair travel, because both are stored: a
+        /// relationship is one fact about a pair and `RelationshipRuntime`
+        /// writes it into both actors so either one can answer alone. The
+        /// duplication is two rows of eight bytes and it keeps the decoder from
+        /// having to reconstruct a direction the encoder threw away.
+        static let relationships = "RELS"
+
         /// The player's character-level progress (issue #499, roadmap item
         /// 20.6): one entry, and only when the player has left level 1 behind.
         ///

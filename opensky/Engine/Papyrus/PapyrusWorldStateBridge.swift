@@ -90,6 +90,30 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// session with no crime runtime, and every crime native then refuses
     /// rather than answering zero.
     var crimeReporter: (() -> CrimeReporter?)?
+    /// The session's faction runtime, which every membership native goes through
+    /// (issue #508). Held as a getter closure taking the actor it is about, for
+    /// two reasons: the controller owns it and builds it after this bridge
+    /// exists, and seeding an actor from its authored `SNAM` run is a *mutating*
+    /// call on a struct the controller stores by value, so the accessor seeds
+    /// before handing the runtime over. Nil in a session with no faction data,
+    /// and every membership native then refuses rather than reporting "not a
+    /// member".
+    var factionRuntime: ((ReferenceKey) -> FactionRuntime?)?
+    /// The session's relationship runtime, which the two relationship natives go
+    /// through (issue #508). No actor argument, because nothing here has to be
+    /// seeded: a relationship override exists only once a script writes one.
+    var relationshipRuntime: (() -> RelationshipRuntime?)?
+    /// What one actor makes of another, derived by the session rather than here
+    /// (issue #508). A closure because the derivation needs profiles the
+    /// controller assembles from the streamer, the records and the store.
+    var socialDecision: ((ReferenceKey, ReferenceKey) -> PapyrusSocialDecision?)?
+    /// The `NPC_` identity behind one reference, as a `RELA` record spells it.
+    /// Nil for the player, who has no base record in this engine.
+    var actorSocialBase: ((ReferenceKey) -> ResolvedFormID?)?
+    /// The load order's flattened `XNAM` table, which `Faction.GetReaction`
+    /// reads. Separate from `factionRuntime` because it is asked about two
+    /// factions rather than about an actor, so there is nothing to seed.
+    var factionRelationIndex: (() -> FactionRelationIndex?)?
     /// Load-order MGEF lookup, for `HasMagicEffectWithKeyword`. Nil in a
     /// synthetic session with no record index.
     var magicEffectStore: MagicEffectStore?

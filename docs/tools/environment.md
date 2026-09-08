@@ -69,6 +69,15 @@ Observed 2026-07-20. Quirks that cost time on every format-parser session:
   Wayback Machine (`web.archive.org`).
 - The `TES5Edit/TES5Edit` default branch is `dev-4.1.6`, not `main` or `dev`; raw-file URLs
   return 404 on the wrong branch. Confirm with `gh api repos/TES5Edit/TES5Edit`.
+- Observed 2026-09-08: `ck.uesp.net` now answers a direct `curl` with a Cloudflare
+  "Just a moment..." interstitial rather than the page, so the plain user-agent workaround
+  above no longer reaches it. Its Wayback snapshots still serve
+  (`https://web.archive.org/web/2023/https://ck.uesp.net/wiki/<Page>`), which is how the
+  faction and relationship function pages were read for issue #508. Pages the Wayback
+  Machine never captured are unreachable from here entirely; for a Papyrus signature the
+  install's own compiled script is the better source anyway
+  (`PapyrusNativeSignatureRealDataTests`). Retires when `ck.uesp.net` answers a direct
+  fetch again.
 - Observed 2026-08-07: `www.creationkit.com` serves an XWiki "down for backend maintenance"
   page for every path, and the Wayback Machine redirects its snapshots to that same live
   page. The `ck.uesp.net` mirror of the same wiki does answer through Wayback

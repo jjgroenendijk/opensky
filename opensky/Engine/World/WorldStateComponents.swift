@@ -126,6 +126,15 @@ nonisolated enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendab
     /// it must be a component and not a re-read of the NPC_ record: an actor
     /// the player has joined to a faction has to stay joined across a reload.
     case factions
+    /// Relationship ranks a script has set between one actor and others
+    /// (issue #508). The value type is `ActorRelationshipState` in
+    /// `opensky/Engine/Factions/ActorRelationshipComponent.swift`. A slot of its
+    /// own beside `factions` because the two are different facts with the same
+    /// lifetime: what an actor *belongs to*, and what it *is to somebody else*.
+    /// The Creation Kit says outright that "relationships override factions"
+    /// (<https://ck.uesp.net/wiki/Relationship>), so they cannot share a slot
+    /// and still be resolved in that order.
+    case relationships
     /// The player's character level, banked character experience, unspent perk
     /// points and attribute-pick history (issue #499). The value type is
     /// `PlayerProgressState` in
@@ -186,6 +195,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
     case enchantedItems(EnchantedItemState)
     case perks(PerkState)
     case factions(ActorFactionState)
+    case relationships(ActorRelationshipState)
     case playerProgress(PlayerProgressState)
     case crimeLedger(CrimeLedgerState)
 
@@ -208,6 +218,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
         case .enchantedItems: .enchantedItems
         case .perks: .perks
         case .factions: .factions
+        case .relationships: .relationships
         case .playerProgress: .playerProgress
         case .crimeLedger: .crimeLedger
         }

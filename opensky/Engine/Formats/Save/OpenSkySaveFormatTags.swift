@@ -38,7 +38,7 @@ nonisolated extension WorldStateComponentKind {
         case .deletion: 3
         case .inventory, .spawn, .quest, .questAliases, .actorValues, .death,
              .combat, .dialogue, .activeEffects, .spellbook, .enchantedItems, .perks,
-             .factions, .playerProgress, .crimeLedger: nil
+             .factions, .relationships, .playerProgress, .crimeLedger: nil
         }
     }
 

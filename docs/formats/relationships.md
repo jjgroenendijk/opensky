@@ -34,6 +34,7 @@ References:
 - The two secret flags
 - Association type (`ASTP`)
 - Relationship store
+- Scripted ranks at runtime
 - Observed counts
 
 ## Field list
@@ -158,6 +159,36 @@ counted in `duplicatePairCount` and the load-order winner is the one kept.
 the pair, the rank with its `GetRelationshipRank` value and both secret flags, and the raw
 association link; for ASTP the family flag and whichever of the four titles the record
 authored.
+
+## Scripted ranks at runtime
+
+`RELA` says what two `NPC_` bases were *authored* as. `Actor.SetRelationshipRank` says what
+they are now. Item 21.4 (issue #508) adds the second layer as
+`ActorRelationshipState`, a world-state component beside `ActorFactionState`, written through
+`RelationshipRuntime` and carried in the additive `RELS` chunk of the
+[OpenSky save](/formats/opensky-save.md).
+
+The override wins over the record, because that is what setting a rank means, and because it
+is the only layer that can name the player at all: the record layer is keyed by `NPC_` base
+and the player has no base record in this engine. `RelationshipRuntime.rank(of:toward:bases:)`
+resolves the two layers in that order and hands the caller one signed number; the reaction
+grouping above then applies to a scripted rank exactly as it does to an authored one, so a
+script that makes two actors archnemeses makes them fight.
+
+Two shape decisions are stated rather than implied:
+
+- **The override is keyed by reference, not by base.** The Papyrus function takes two actors
+  and the player is one of them in nearly every vanilla call. The consequence is that two
+  placements of the same base do not share an override; vanilla scripts name unique actors,
+  so nothing observed exercises the difference, and the alternative could not express the
+  common case.
+- **Both directions are written.** A relationship is one fact about a pair — `RELA` stores a
+  single record for it and `relationship(between:and:)` finds it in either argument order —
+  so `setRank` writes the rank into both actors' components and either one answers alone. An
+  actor set against itself is refused, because no record names a base twice.
+
+A rank a script sets outside the Creation Kit's `-4...4` is refused rather than stored: the
+read side maps back through the nine ranks above, and there is nothing for a tenth to mean.
 
 ## Observed counts
 

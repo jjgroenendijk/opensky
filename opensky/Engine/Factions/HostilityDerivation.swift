@@ -59,6 +59,10 @@ nonisolated struct ActorSocialProfile: Equatable, Sendable {
     /// generated actor no plugin describes.
     let base: ResolvedFormID?
     let memberships: ActorFactionState
+    /// Relationship ranks a script has set on this actor (issue #508). Consulted
+    /// ahead of the `RELA` records, because that is what setting one means, and
+    /// because it is the only layer that can name the player.
+    let relationshipOverrides: ActorRelationshipState
     /// The AI attributes behind the aggression check. `ActorAIData.absent` for
     /// an actor whose record authors no AIDT, which never attacks unprovoked.
     let aiData: ActorAIData
@@ -70,12 +74,14 @@ nonisolated struct ActorSocialProfile: Equatable, Sendable {
         key: ReferenceKey,
         base: ResolvedFormID? = nil,
         memberships: ActorFactionState = ActorFactionState(),
+        relationshipOverrides: ActorRelationshipState = ActorRelationshipState(),
         aiData: ActorAIData = .absent,
         hostilityOverride: ActorHostility? = nil
     ) {
         self.key = key
         self.base = base
         self.memberships = memberships
+        self.relationshipOverrides = relationshipOverrides
         self.aiData = aiData
         self.hostilityOverride = hostilityOverride
     }
@@ -212,18 +218,40 @@ nonisolated struct HostilityDerivation {
         return worst
     }
 
-    /// The reaction the RELA record between the two bases declares, or nil when
-    /// no record names the pair or its rank is one the spec does not name.
+    /// The reaction between the two actors' relationship rank, or nil when
+    /// neither layer names the pair and when the rank named is one the spec does
+    /// not name.
+    ///
+    /// A scripted rank wins over the record, in either actor's component, for
+    /// the reason `RelationshipRuntime` states: setting a rank is a deliberate
+    /// change to what the record started the pair at. It is also what lets a
+    /// relationship with the player count at all, since the player has no `NPC_`
+    /// base for a `RELA` record to name.
     func relationshipReaction(
         of observer: ActorSocialProfile,
         toward target: ActorSocialProfile
     ) -> ActorReaction? {
+        if let scripted = scriptedRank(of: observer, toward: target) {
+            return RelationshipRank(signedRank: Int(scripted)).flatMap(ActorReaction.init)
+        }
         guard
             let mine = observer.base,
             let theirs = target.base,
             let rank = relationships.rank(between: mine, and: theirs)
         else { return nil }
         return ActorReaction(rank)
+    }
+
+    /// The scripted rank between the pair, from either actor's component. Both
+    /// sides are written by `RelationshipRuntime`, so the second lookup covers a
+    /// component an older build wrote one-sided rather than a disagreement this
+    /// one can produce.
+    func scriptedRank(
+        of observer: ActorSocialProfile,
+        toward target: ActorSocialProfile
+    ) -> Int8? {
+        observer.relationshipOverrides.rank(toward: target.key)
+            ?? target.relationshipOverrides.rank(toward: observer.key)
     }
 
     // MARK: - Private

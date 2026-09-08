@@ -44,6 +44,7 @@ byte length followed by that many UTF-8 bytes. The file extension is `osav`.
 * `AEFF` entry layout
 * `ECHG` entry layout
 * `FCTN` entry layout
+* `RELS` entry layout
 * `CRIM` entry layout
 * `STOL` entry layout
 * Version policy
@@ -164,7 +165,7 @@ that declared length, which is what makes a newer build's save loadable in an ol
 
 Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR`, `INVN`, `SPWN`, `QSTS`,
 `QALS`, `QLOC`, `AVAL`, `AVOV`, `DETH`, `CBTS`, `DLGS`, `AEFF`, `SPLB`, `ECHG`, `PRKS`,
-`FCTN`, `PLVL`, `CRIM` and `STOL` were added additively afterwards. `AVOV` replaced item
+`FCTN`, `RELS`, `PLVL`, `CRIM` and `STOL` were added additively afterwards. `AVOV` replaced item
 19.5's `AVGN` in item 20.3; see its section below for why the tag changed rather than the
 payload's meaning.
 
@@ -937,6 +938,50 @@ answer here would freeze a decision the next load should be making again.
 
 Both counts are validated — `minimumFactionEntrySize` (12 bytes) and
 `minimumFactionMembershipSize` (8 bytes) — before storage is reserved.
+
+## `RELS` entry layout
+
+`RELS` — scripted relationship ranks (issue #508), one entry per actor a script has given a
+relationship rank. Additive and split out of `RDLT` for the same reason `FCTN` is, and a
+session in which no script touched a relationship writes no chunk at all.
+
+| type   | field      | notes                              |
+| ------ | ---------- | ---------------------------------- |
+| uint32 | entryCount | number of entries that follow      |
+| bytes  | entries    | `entryCount` entries, layout below |
+
+Each entry:
+
+| type   | field         | notes                                       |
+| ------ | ------------- | ------------------------------------------- |
+| key    | key           | the actor's key, tagged as in `RDLT`         |
+| cell   | cell          | attribution cell, tagged as in `RDLT`        |
+| uint32 | overrideCount | number of overrides that follow              |
+| bytes  | overrides     | `overrideCount` rows, layout below           |
+
+Each override:
+
+| type  | field | notes                                                      |
+| ----- | ----- | ---------------------------------------------------------- |
+| key   | other | the other actor's key, tagged as in `RDLT`                  |
+| uint8 | rank  | signed Creation Kit rank, two's complement, 4 down to -4    |
+
+The rank stored is the signed `GetRelationshipRank` number rather than the `RELA DATA` word,
+because that is what both the native and the condition function speak; the conversion is
+`RelationshipRank.signedRank` and its inverse ([relationships](/formats/relationships.md)).
+A rank outside `-4...4` is kept on load rather than clamped, for the reason an unknown `RELA`
+rank is.
+
+**Both directions of a pair travel**, because both are stored: a relationship is one fact
+about a pair and `RelationshipRuntime` writes it into both actors so either can answer alone.
+The duplication is two rows of eight bytes and it keeps the decoder from reconstructing a
+direction the encoder threw away.
+
+Rows are written in the component's own ascending key order, so re-encoding an unchanged set
+produces identical bytes. A repeated actor collapses to its last rank on load.
+
+Both counts are validated — `minimumRelationshipEntrySize` (12 bytes) and
+`minimumRelationshipOverrideSize` (8 bytes) — before storage is reserved.
 
 ## `CRIM` entry layout
 

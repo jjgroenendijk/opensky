@@ -12,103 +12,6 @@
 import Foundation
 
 nonisolated enum OpenSkySaveDecoder {
-    /// Parsed chunk payloads, with the defaults an absent chunk implies.
-    private struct Body {
-        var entries: [WorldStateSnapshotEntry] = []
-        /// Absent `GVAR` chunk means no global was overridden, which is also
-        /// what a save written before that chunk existed means.
-        var globals: [WorldStateGlobalSnapshotEntry] = []
-        /// Matches `GeneratedReferenceAllocator`'s starting position, so a
-        /// file with no `GALC` chunk restores an allocator that has handed
-        /// out nothing.
-        var nextGeneratedSequence: UInt64 = 1
-        /// Absent `CLOK` chunk (issue #164) means the vanilla-start clock,
-        /// which is also what a save written before that chunk existed means.
-        var clock: GameClock?
-        /// Absent `PSCR` chunk (issue #171) means no script instance state was
-        /// saved, so every script starts from its compiled defaults — which is
-        /// also what a save written before that chunk existed means.
-        var scripts: [PapyrusInstanceState] = []
-        /// Absent `PTMR` chunk (issue #277) means no update timer was pending,
-        /// which is also what a save written before that chunk existed means.
-        var timers: [PapyrusTimerState] = []
-        /// Absent `INVN` chunk (issue #176) means no owner's inventory deviated
-        /// from plugin data, so every container and actor re-derives its
-        /// contents from its records — which is also what a save written before
-        /// that chunk existed means.
-        var inventories: [SaveInventoryEntry] = []
-        /// Absent `SPWN` chunk (issue #177) means the session spawned nothing,
-        /// so no dropped item or summon rejoins the world — which is also what
-        /// a save written before that chunk existed means.
-        var spawns: [SaveSpawnEntry] = []
-        /// Absent `QSTS` chunk (issue #182) means no quest deviated from plugin
-        /// data, so every quest re-derives its baseline from its DNAM flags —
-        /// which is also what a save written before that chunk existed means.
-        var quests: [SaveQuestEntry] = []
-        /// Absent `QALS` chunk (issue #183) means no quest had a filled alias
-        /// table, so every running quest restores with empty aliases — which is
-        /// also what a save written before that chunk existed means.
-        var questAliases: [SaveQuestAliasEntry] = []
-        /// Absent QLOC means no persisted location-alias targets.
-        var questLocationAliases: [SaveQuestLocationAliasEntry] = []
-        /// Absent `AVAL` chunk (issue #194) means no actor's values deviated
-        /// from a full baseline, so everyone re-derives their maximums from
-        /// records and starts full — which is also what a save written before
-        /// that chunk existed means.
-        var actorValues: [SaveActorValueEntry] = []
-        /// Absent `AVOV` chunk (issue #496) means no actor moved any
-        /// actor value off the baseline its records author, so everyone
-        /// re-derives the whole table — which is also what a save written
-        /// before that chunk existed means.
-        var actorValueOverrides: [SaveActorValueOverrideEntry] = []
-        /// Absent `DETH` chunk (issue #197) means nothing died in the session,
-        /// so every actor restores alive — which is also what a save written
-        /// before that chunk existed means.
-        var deaths: [SaveDeathEntry] = []
-        /// Absent `CBTS` chunk (issue #374) means nothing was provoked in the
-        /// session, so every actor restores neutral — which is also what a save
-        /// written before that chunk existed means.
-        var combatStates: [SaveCombatStateEntry] = []
-        /// Absent `DLGS` chunk (issue #426) means nobody spoke in the session,
-        /// so every response restores unsaid — which is also what a save
-        /// written before that chunk existed means.
-        var dialogue: [SaveDialogueEntry] = []
-        /// Absent `AEFF` chunk (issue #469) means no actor carried a timed
-        /// magic effect, so everyone restores with none — which is also what a
-        /// save written before that chunk existed means.
-        var activeEffects: [SaveActiveEffectEntry] = []
-        /// Absent `SPLB` chunk (issue #470) means nobody learned a spell, so
-        /// everyone restores with an empty spellbook — which is also what a save
-        /// written before that chunk existed means.
-        var spellbooks: [SaveSpellbookEntry] = []
-        /// Absent `ECHG` chunk (issue #472) means nothing enchanted fired and
-        /// nothing enchanted was worn, so every weapon restores fully charged and
-        /// no worn item owns an effect — which is also what a save written before
-        /// that chunk existed means.
-        var enchantedItems: [SaveEnchantedItemEntry] = []
-        /// Absent `PRKS` chunk (issue #497) means nobody owns a perk, so every
-        /// actor restores with none — which is also what a save written before
-        /// that chunk existed means.
-        var perks: [SavePerkEntry] = []
-        /// Absent `FCTN` chunk (issue #503) means nothing asked who anybody
-        /// sides with, so every actor restores with no membership component and
-        /// is seeded from its record on the next query — which is also what a
-        /// save written before that chunk existed means.
-        var factions: [SaveFactionEntry] = []
-        /// Absent `PLVL` chunk (issue #499) means the player never left level
-        /// 1, so progress restores at the session start — which is also what a
-        /// save written before that chunk existed means.
-        var playerProgress: [SavePlayerProgressEntry] = []
-        /// Absent `CRIM` chunk (issue #504) means nobody committed a crime
-        /// anybody charged for, so every actor restores owing nothing — which
-        /// is also what a save written before that chunk existed means.
-        var crimeLedgers: [SaveCrimeLedgerEntry] = []
-        /// Absent `STOL` chunk (issue #504) means nothing in any inventory was
-        /// stolen, so the totals `INVN` restored are all honest goods — which
-        /// is also what a save written before that chunk existed means.
-        var stolenGoods: [SaveStolenGoodsEntry] = []
-    }
-
     static func decode(_ data: Data) throws -> OpenSkySaveFile {
         var reader = SaveReader(data)
         let magic = try reader.bytes(OpenSkySaveFormat.magic.count, "magic")
@@ -170,6 +73,7 @@ nonisolated enum OpenSkySaveDecoder {
         entries = OpenSkySaveEnchantedItemDecoder.merge(body.enchantedItems, into: entries)
         entries = OpenSkySavePerkDecoder.merge(body.perks, into: entries)
         entries = OpenSkySaveFactionDecoder.merge(body.factions, into: entries)
+        entries = OpenSkySaveRelationshipDecoder.merge(body.relationships, into: entries)
         entries = OpenSkySaveProgressDecoder.merge(body.playerProgress, into: entries)
         entries = OpenSkySaveCrimeDecoder.merge(body.crimeLedgers, into: entries)
         // After `INVN`: `STOL` re-flags stacks the inventory merge has already
@@ -327,9 +231,27 @@ nonisolated enum OpenSkySaveDecoder {
                 .decodeEnchantedItems(payload)
         case OpenSkySaveFormat.ChunkTag.perks:
             body.perks = try OpenSkySavePerkDecoder.decodePerks(payload)
+        default:
+            // Split again for the complexity cap, on the same rule.
+            try applySocialGameplay(tag: tag, payload: payload, to: &body)
+        }
+    }
+
+    /// The social and progression half: who an actor sides with, what two actors
+    /// are to each other, how far the player has come, and what they owe for.
+    /// Split from `applyActorGameplay` only for the complexity cap.
+    private static func applySocialGameplay(
+        tag: String,
+        payload: Data,
+        to body: inout Body
+    ) throws {
+        switch tag {
         case OpenSkySaveFormat.ChunkTag.factions:
             body.factions = try OpenSkySaveFactionDecoder
                 .decodeFactionMemberships(payload)
+        case OpenSkySaveFormat.ChunkTag.relationships:
+            body.relationships = try OpenSkySaveRelationshipDecoder
+                .decodeRelationshipRanks(payload)
         case OpenSkySaveFormat.ChunkTag.playerProgress:
             body.playerProgress = try OpenSkySaveProgressDecoder
                 .decodePlayerProgress(payload)

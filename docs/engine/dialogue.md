@@ -181,7 +181,17 @@ failure rather than a convincing mismatch; an empty conversation is a real 0, be
 `GetIsAliasRef` needed no new seam at all — it compares the run-on reference against the
 filled alias table issue #183 already built, scoped by the context's `aliasQuest`.
 
-Everything else on the demand list belongs to another subsystem — factions, inventory,
+The factions half of that demand list is answered as of item 21.4 (issue #508), which is what
+lets a vanilla guard's and a vendor's INFO records select truthfully on who the player sides
+with. Six functions landed together — `GetInFaction`, `GetFactionRank`,
+`GetFactionRankDifference`, `GetFactionRelation`, `GetRelationshipRank` and
+`IsHostileToActor` — over a `factions` seam shaped like the quest, actor and dialogue ones:
+one social profile per actor, plus the `FACT` store a `ptFaction` parameter resolves against.
+Their semantics, the two disagreeing return-value tables they sit between, and what is
+deliberately still unregistered are in [conditions](/formats/conditions.md); the memberships
+behind them are in [derived hostility](/engine/combat.md).
+
+Everything else on the demand list belongs to another subsystem — inventory,
 locations, keywords, Papyrus quest variables — and is honest work for the milestone that owns
 it. The counts are below.
 

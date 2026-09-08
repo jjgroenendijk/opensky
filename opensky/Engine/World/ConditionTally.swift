@@ -94,6 +94,12 @@ nonisolated struct ConditionTally: Equatable, Sendable {
     /// owes nothing.
     private(set) var unavailableCrime = 0
 
+    /// Faction seam misses (issue #508): a faction or relationship function in a
+    /// session with no FACT data, against a parameter no loaded plugin carries,
+    /// or about an actor this session carries no social profile for.
+    /// Deliberately not counted as an actor who belongs to nothing.
+    private(set) var unavailableFactions = 0
+
     private(set) var conditionsEvaluated = 0
     private(set) var listsEvaluated = 0
 
@@ -140,7 +146,7 @@ nonisolated struct ConditionTally: Equatable, Sendable {
             Self.bump(&unresolvedParameters, index, limit: limit)
         case .unavailableClock, .unavailableActorState, .unavailableDetection,
              .unavailableDialogue, .unavailableData, .unavailableMagic,
-             .unavailablePerks, .unavailableCrime:
+             .unavailablePerks, .unavailableCrime, .unavailableFactions:
             noteUnavailable(failure)
         }
     }
@@ -167,6 +173,8 @@ nonisolated struct ConditionTally: Equatable, Sendable {
             unavailablePerks += 1
         case .unavailableCrime:
             unavailableCrime += 1
+        case .unavailableFactions:
+            unavailableFactions += 1
         default:
             break
         }
@@ -227,7 +235,7 @@ nonisolated struct ConditionTally: Equatable, Sendable {
             + unavailableDetection + unavailableDialogue
             + unavailableData.values.reduce(0, +)
             + unavailableMagic.values.reduce(0, +) + unavailablePerks
-            + unavailableCrime
+            + unavailableCrime + unavailableFactions
     }
 
     /// Unknown function indices ranked by count, ties broken by index so the

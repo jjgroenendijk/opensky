@@ -128,7 +128,7 @@ that answers and stops.
 | --- | --- | --- |
 | 1 | Runtime override | `ActorCombatState` — the panel, `StartCombat`, or the player's own blow |
 | 2 | Crime | `CrimeHostilitySource`, the named seam issue #505 joins through; issue #504 built the bounty ledger behind it and left this term empty |
-| 3 | Relationship | The `RELA` rank between the two `NPC_` bases |
+| 3 | Relationship | A rank a script set (`ActorRelationshipState`), else the `RELA` rank between the two `NPC_` bases |
 | 4 | Faction | The `FACT` interfaction relations between the two actors' memberships |
 | 5 | Default | Neutral |
 
@@ -204,6 +204,12 @@ Confidence is decoded and deliberately not consumed. "Cowardly actors NEVER
 engage in combat" is about *engaging*, and `ActorHostility` records regard;
 whoever wires fleeing reads the value off `ActorAIData` rather than re-decoding
 the byte.
+
+A scripted rank wins over the authored one inside row 3, which is what
+`Actor.SetRelationshipRank` means and is also the only way a relationship with
+the *player* can count at all — the player has no `NPC_` base for a `RELA` record
+to name. Layering, keying and the `RELS` save chunk are in
+[relationships](/formats/relationships.md).
 
 ### Memberships at runtime
 
@@ -817,7 +823,9 @@ Everything below is a known gap with a home, not an oversight:
   a power, a lesser power and a shout are all skipped, and the archetypes that
   would place a second actor in the world have nowhere to place it yet.
 * **No crime, group tactics or morale.** Item 21.3 added factions and
-  relationships; crime gold is #504 and #505 and joins through the named seam in
+  relationships, and item 21.4 the condition functions and Papyrus natives over
+  them ([Papyrus VM](/engine/papyrus-vm.md), [conditions](/formats/conditions.md));
+  crime gold is #504 and #505 and joins through the named seam in
   the precedence list above. Assistance is decoded and unread, so there is still
   no coordination between two actors fighting the same player beyond both of them
   fighting it, and no morale.
@@ -843,8 +851,9 @@ Everything below is a known gap with a home, not an oversight:
 * **Eight actors fight at once.** The cap is the mover's, the nearest win, and
   what was refused is counted rather than dropped silently.
 * **`StopCombat` alone does not keep an actor calm** while it is still hostile
-  and can still see the player, for the reason above. There is no
-  `SetRelationshipRank` to pair it with.
+  and can still see the player, for the reason above. Item 21.4 added the
+  `SetRelationshipRank` to pair it with, but the two are separate calls and a
+  script has to make both.
 * **`StartCombat` accepts only the player as a target.** Actor-versus-actor
   combat is not simulated, and a script naming a third party takes a tallied
   failure that says so.

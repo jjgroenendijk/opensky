@@ -65,6 +65,12 @@ nonisolated struct ConditionContext: Sendable {
     /// Empty when no crime runtime is wired, which makes `GetCrimeGold` a
     /// reason-tagged false rather than an actor who owes nothing.
     var crime: CrimeConditionResolution
+    /// Faction memberships, relationship ranks and the hostility derivation over
+    /// them, plus the FACT store the `ptFaction` parameters resolve against
+    /// (issue #508). Empty when no faction runtime is wired, which makes every
+    /// faction and relationship function a reason-tagged false rather than an
+    /// actor who belongs to nothing and is friendly with everybody.
+    var factions: FactionConditionResolution
     /// Runtime enable overrides for `GetDisabled`. When absent for a key, the
     /// function falls back to the placement record's initial flag.
     var referenceEnable: ReferenceEnableResolution
@@ -101,6 +107,7 @@ nonisolated struct ConditionContext: Sendable {
         magic: MagicConditionResolution = .empty,
         perks: PerkConditionResolution = .empty,
         crime: CrimeConditionResolution = .empty,
+        factions: FactionConditionResolution = .empty,
         referenceEnable: ReferenceEnableResolution = .empty,
         aliasQuest: FormID? = nil,
         clock: GameClock? = nil,
@@ -119,6 +126,7 @@ nonisolated struct ConditionContext: Sendable {
         self.magic = magic
         self.perks = perks
         self.crime = crime
+        self.factions = factions
         self.referenceEnable = referenceEnable
         self.aliasQuest = aliasQuest
         self.clock = clock
