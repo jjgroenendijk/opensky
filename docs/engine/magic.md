@@ -210,6 +210,21 @@ One consequence worth stating, because it was a real bug this item fixed:
 and it now carries the general table through that write. Without that, a held modifier would
 survive for exactly one frame.
 
+The controller side of the tick reads a second consequence out of where the accumulator
+lives. `GameViewController.magicEffects` is one stored property holding both the runtime and
+the accumulator, so driving the step as
+`magicEffects.runtime?.advance(delta:accumulator: &magicEffects.accumulator, over:)` opens two
+overlapping exclusive accesses to that single property: the `mutating` call holds a
+modification of `magicEffects` while the `inout` argument starts another. Swift does not
+diagnose this at compile time for a class stored property, and enforces it at run time
+instead, so the build was clean and the app aborted with "Fatal access conflict detected" on
+the first simulated frame after a plugin loaded — the crash looked like a startup failure
+rather than a magic one. `advanceMagicEffects` therefore copies the runtime and the
+accumulator into locals, advances those, and writes both back, which is the same
+copy-out/copy-back shape the enchantment, Papyrus and perk call sites on the same property
+already use. Regeneration never had the bug because it binds the runtime to a local first and
+its accumulator hangs off a different property.
+
 ## Condition gating
 
 An effect entry's `CTDA` list is evaluated against the target at application time through the

@@ -2,6 +2,20 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-09-08
+
+* **Fixed a startup crash in the magic tick**: the app aborted a second after the window
+  appeared, as soon as a plugin finished loading and the first simulated frame ran.
+  `GameViewController.advanceMagicEffects` called the `mutating`
+  `ActiveEffectRuntime.advance` through `magicEffects.runtime` while passing
+  `&magicEffects.accumulator`, which opens two overlapping exclusive accesses to the single
+  `magicEffects` stored property. Swift enforces that at run time rather than compile time
+  for a class property, so the build was clean and the process died with "Fatal access
+  conflict detected". The tick now copies the runtime and the accumulator into locals and
+  writes both back, matching the enchantment, Papyrus and perk call sites on the same
+  property. `GameViewControllerMagicTickTests` covers the controller-side tick, which no
+  engine suite reached. See [magic](/engine/magic.md).
+
 ## 2026-08-22
 
 * **Ownership is enforced and crime accrues bounty (issue #504)**: taking somebody else's
