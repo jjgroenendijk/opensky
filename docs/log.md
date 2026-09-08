@@ -15,6 +15,37 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   writes both back, matching the enchantment, Papyrus and perk call sites on the same
   property. `GameViewControllerMagicTickTests` covers the controller-side tick, which no
   engine suite reached. See [magic](/engine/magic.md).
+* **Faction and relationship condition functions (issue #508)**: six functions land together
+  — `GetInFaction` (stored index 71), `GetFactionRank` (73), `GetFactionRankDifference` (60),
+  `GetFactionRelation` (449), `GetRelationshipRank` (403) and `IsHostileToActor` (719) — over
+  a `factions` seam shaped like the quest, actor, magic and crime ones. Measured on the
+  active load order, they take condition coverage from 79,630 of 118,494 to 89,650, and
+  `GetInFaction` alone is 9,028 of the 10,020: the faction model was the largest single block
+  of unanswered dialogue conditions left. A real authored `GetInFaction` condition, lifted
+  out of a vanilla `INFO` record, now answers truthfully about the Whiterun guard
+  `GuardWhiterunImperialPatrolDay`, whose seeded `SNAM` run puts it in eight factions. Two
+  documented sources disagree and both are implemented as written: `GetFactionRelation`
+  numbers its four reactions 0 Neutral, 1 Enemy, 2 Ally, 3 Friend, which is *not* the `XNAM`
+  order `ActorReaction` stores, and the console `GetFactionRank` answers -1 for a non-member
+  where the Papyrus native of the same name answers -2. See
+  [conditions](/formats/conditions.md) and [dialogue runtime](/engine/dialogue.md).
+* **The faction and relationship natives (issue #508)**: ten `Actor` and `Faction` functions
+  over 21.3's faction runtime, ending the absence `PapyrusNativeActor` recorded. Every
+  signature is checked against the install's own compiled `Actor.pex` and `Faction.pex` by
+  `PapyrusNativeSignatureRealDataTests`, and that check changed two decisions the first time
+  it ran: `Actor.IsHostileToActor` was about to be recorded as an absence and is in fact
+  declared `bool IsHostileToActor(Actor) native`, while `Actor.AddToFaction` was about to be
+  treated as a native and is in fact a Papyrus wrapper whose whole body is
+  `if !IsInFaction(akFaction); SetFactionRank(akFaction, 0); endIf` — which is where the
+  engine's implementation of it now comes from. See [Papyrus VM](/engine/papyrus-vm.md).
+* **Scripted relationship ranks (issue #508)**: `ActorRelationshipState` is a world-state
+  component beside `ActorFactionState`, written through `RelationshipRuntime` and carried in
+  the additive `RELS` save chunk. It is keyed by *reference* pair rather than by `NPC_` base,
+  because `SetRelationshipRank` takes two actors and the player — who has no base record in
+  this engine — is one of them in nearly every vanilla call. A scripted rank wins over the
+  `RELA` record inside the hostility precedence list, so a script that makes two actors
+  archnemeses makes them fight. See [relationships](/formats/relationships.md) and
+  [the save container](/formats/opensky-save.md).
 
 ## 2026-08-22
 

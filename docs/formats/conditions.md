@@ -290,8 +290,8 @@ rather than answering "sheathed".
 
 ### Implemented functions
 
-Forty-seven functions are registered, chosen because the engine can answer them
-honestly from state it already owns. Thirty-three are listed below; the fourteen
+Fifty-three functions are registered, chosen because the engine can answer them
+honestly from state it already owns. Thirty-nine are listed below; the fourteen
 M18 keyword, form-list and location functions are listed with their counts under
 [Coverage sweep](#coverage-sweep). The stored index is the raw on-disk value;
 the Creation Kit spells each one 4096 higher
@@ -332,6 +332,12 @@ the Creation Kit spells each one 4096 higher
 | 699 | 4795 | `HasMagicEffectKeyword` | #1 `KYWD` FormID | 1 when an effect carrying that keyword is acting on the run-on actor |
 | 448 | 4544 | `HasPerk` | #1 `PERK` FormID | 1 when the run-on actor owns that perk |
 | 459 | 4555 | `GetCrimeGold` | #1 `FACT` FormID, nullable | crime gold the run-on actor owes that faction; a null parameter means the faction answering for where it stands |
+| 71 | 4167 | `GetInFaction` | #1 `FACT` FormID | 1 when the run-on actor is a member of that faction, 0 otherwise |
+| 73 | 4169 | `GetFactionRank` | #1 `FACT` FormID | the run-on actor's rank in that faction, -1 when it is not a member |
+| 60 | 4156 | `GetFactionRankDifference` | #1 `FACT` FormID, #2 actor | the run-on's rank in that faction minus the parameter actor's, counting a non-member as -1 |
+| 449 | 4545 | `GetFactionRelation` | #1 actor | 0 Neutral, 1 Enemy, 2 Ally, 3 Friend, between the two actors' memberships |
+| 403 | 4499 | `GetRelationshipRank` | #1 reference | the signed rank between the two actors, 4 Lover down to -4 Archnemesis |
+| 719 | 4815 | `IsHostileToActor` | #1 actor | 1 when the run-on actor is hostile to the parameter actor, 0 otherwise |
 
 The M18 keyword, form-list and location functions are listed with their counts
 under [Coverage sweep](#coverage-sweep).
@@ -345,6 +351,55 @@ parameter outside any hold all report `.unavailableCrime` rather than answering 
 resolvable faction nothing is a conclusive 0. Its two siblings `GetCrimeGoldViolent` (375)
 and `GetCrimeGoldNonviolent` (376) are deliberately unregistered, because the ledger holds
 one bounty per faction — see [crime and bounty](/engine/crime.md).
+
+The six faction and relationship functions (issue #508) read the `factions` seam
+and nothing else: `FactionConditionResolution` carries one `ActorSocialProfile`
+per actor — its memberships, its scripted relationship ranks, its `AIDT` and any
+explicit hostility override — plus the `FactionStore` a `ptFaction` parameter
+resolves against and the `HostilityDerivation` two of them ask. An actor no cell
+has streamed carries no profile, and every function about it reports
+`.unavailableFactions` rather than answering "belongs to nothing". Four points
+are OpenSky's own, and one is a disagreement between two documented sources:
+
+* **`GetFactionRelation` does not use the `XNAM` numbering.** The Creation Kit
+  wiki lists its returns as "0 = Neutral, 1 = Enemy, 2 = Ally, 3 = Friend", and
+  its Papyrus twin `GetFactionReaction` lists the same four in the same order.
+  The `XNAM` combat-reaction word runs Ally 0, Friend 1, Neutral 2, Enemy 3 —
+  which is what `ActorReaction` stores. `ConditionFunctions.factionRelationValue`
+  maps between them case by case rather than arithmetically, because the two
+  tables come from different sources.
+* **`GetFactionRank` and `Actor.GetFactionRank` answer differently for a
+  non-member, and both are implemented as documented.** The console function
+  "returns -1" for an actor not in the faction; the Papyrus native returns "-2 if
+  the Actor is not in the faction" and reserves -1 for a member whose rank really
+  is -1. Rank 0 is a real rank vanilla authors freely, so neither may be reported
+  as "not a member".
+* **`GetFactionRankDifference` counts a non-member as -1**, so an outsider is
+  three ranks below a rank-2 member. The wiki states neither the non-member value
+  nor the subtraction order; the order is its own sentence's ("the current actor
+  and target actor") and the value is its sibling's, which is the closest
+  documented thing to a rule.
+* **A pair no `RELA` record and no script names is a gap, not Acquaintance.**
+  Acquaintance is rank 0, a rank vanilla authors deliberately, so
+  `GetRelationshipRank` reports `.unavailableFactions` instead of answering it.
+  A scripted rank wins over the record — see
+  [relationships](/formats/relationships.md) — and it is the only layer that can
+  name the player, who has no `NPC_` base in this engine.
+* **`IsHostileToActor` has no Creation Kit wiki page on any reachable mirror.**
+  The name and the `ptActor` signature are xEdit's, and the only other source is
+  the install's own `Actor.pex`, which declares a Papyrus twin
+  `bool IsHostileToActor(Actor akActor) native` and says nothing about what it
+  returns. The semantics are therefore this engine's: the whole hostility
+  precedence list asked about the pair, which is the same answer the combat loop
+  acts on rather than a second one written for conditions.
+
+Two neighbours stay unregistered on purpose. `GetIsInFactionList` does not exist
+in xEdit's table at any index — the list-shaped sibling is `IsInList` (372),
+which is about the run-on's base object rather than about memberships. The five
+`GetPC*` faction functions (132, 193, 195, 197, 199) need player-versus-faction
+bookkeeping — expulsion, faction murder, faction attack — that no component in
+this engine records, and answering all of them "no" off the membership list would
+be a convincing wrong answer rather than a measurable gap.
 
 `GetDisabled` reads a runtime enable-state snapshot first and falls back to the REFR or ACHR
 record-header initially-disabled flag. A missing placement is reason-tagged unresolved, not
@@ -480,8 +535,8 @@ false and carries a machine-readable `ConditionFailure` saying why:
 `.unresolvedParameter`, `.unavailableClock`, `.unavailableActorState`,
 `.unavailableDetection`, `.unavailableDialogue`,
 `.unavailableData(.keyword|.formList|.location)`, or
-`.unavailableMagic(.actor|.record|.castingSource|.equippedSpell)`, `.unavailablePerks`, or
-`.unavailableCrime`.
+`.unavailableMagic(.actor|.record|.castingSource|.equippedSpell)`, `.unavailablePerks`,
+`.unavailableCrime`, or `.unavailableFactions`.
 `.unresolvedParameter` means either a `CIS1`/`CIS2` alias name that resolved to
 no filled alias or an actor-value index this engine has no store for. A QUST
 parameter naming no quest
@@ -502,8 +557,9 @@ ranks the next milestone's work. Its buckets are `unknownFunctions` with
 `unresolvedGlobals`, `unresolvedQuests`, `unsupportedRunOns` keyed by run-on name,
 `unresolvedReferences`, `unknownOperators`, `unresolvedParameters`,
 `unavailableClock`, `unavailableActorState`, `unavailableDetection`,
-`unavailableDialogue`, `unavailableData` grouped by M18 domain, and
-`unavailableMagic` grouped by magic domain, plus the
+`unavailableDialogue`, `unavailableData` grouped by M18 domain,
+`unavailableMagic` grouped by magic domain, `unavailablePerks`,
+`unavailableCrime` and `unavailableFactions`, plus the
 volume counters `conditionsEvaluated` and
 `listsEvaluated`, the derived `failureTotal` and `isClean`, and ranked
 accessors for reporting. Each name table is capped at `nameLimit` (64 by

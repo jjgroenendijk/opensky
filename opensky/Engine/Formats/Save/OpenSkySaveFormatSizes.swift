@@ -158,6 +158,15 @@ nonisolated extension OpenSkySaveFormat {
     /// with an empty name (7) and the signed rank byte. A generated key is
     /// longer, so this is a lower bound.
     static let minimumFactionMembershipSize = 8
+    /// Smallest number of bytes a single `RELS` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and a zero
+    /// override count (4). An entry with contents is longer, so this is a lower
+    /// bound.
+    static let minimumRelationshipEntrySize = 12
+    /// Smallest number of bytes one `RELS` override can occupy: a plugin key
+    /// with an empty name (7) and the signed rank byte. A generated key is
+    /// longer, so this is a lower bound.
+    static let minimumRelationshipOverrideSize = 8
     /// Smallest number of bytes a single `PLVL` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the level, experience, perk points,
     /// pending picks and skill increases (4 each) and a zero pick-history count

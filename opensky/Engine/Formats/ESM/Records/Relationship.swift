@@ -62,6 +62,16 @@ nonisolated enum RelationshipRank: Equatable, CustomStringConvertible {
         }
     }
 
+    /// The rank a signed `GetRelationshipRank` number names, or nil for a
+    /// number outside the -4...4 the Creation Kit lists as acceptable
+    /// (<https://ck.uesp.net/wiki/SetRelationshipRank_-_Actor>). The inverse of
+    /// `signedRank`, and what turns a scripted rank back into a record rank so
+    /// the reaction grouping can be applied to it.
+    init?(signedRank: Int) {
+        guard (-4 ... 4).contains(signedRank) else { return nil }
+        self.init(rawValue: UInt16(4 - signedRank))
+    }
+
     /// The `GetRelationshipRank` value: +4 for a lover down to -4 for an
     /// archnemesis, and nil for a raw value the spec does not name.
     var signedRank: Int? {

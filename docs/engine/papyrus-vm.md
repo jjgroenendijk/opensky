@@ -57,6 +57,7 @@ choice OpenSky makes in those gaps is listed under [Deviations](#deviations).
 * [Activation and the world bridge](#activation-and-the-world-bridge)
 * [Actor natives, hits and deaths](#actor-natives-hits-and-deaths)
 * [The spell natives](#the-spell-natives)
+* [The faction and relationship natives](#the-faction-and-relationship-natives)
 * [Update timers](#update-timers)
 * [Instance lifecycle over cell streaming](#instance-lifecycle-over-cell-streaming)
 * [Quest script instances and stage fragments](#quest-script-instances-and-stage-fragments)
@@ -205,7 +206,7 @@ to queue native results and inspect a bounded call tail.
 ## Native registry
 
 `PapyrusNativeRegistry` keys functions case-insensitively by both script and
-function name. `.empty` installs nothing. `.standard` installs 90 entries in
+function name. `.empty` installs nothing. `.standard` installs 105 entries in
 one place:
 
 | family | functions | headless policy |
@@ -220,6 +221,8 @@ one place:
 | `Quest` | see [quest script instances](#quest-script-instances-and-stage-fragments) | same failure policy |
 | `Actor` | `GetActorValue`, `GetBaseActorValue`, `GetActorValuePercentage`, `DamageActorValue`, `RestoreActorValue`, `SetActorValue`, `ModActorValue`, `ForceActorValue`, `IsDead`, `IsInCombat`, `IsWeaponDrawn`, `Kill`, `StartCombat`, `StopCombat`, `GetLevel` | same failure policy |
 | `Actor` perks | `AddPerk`, `RemovePerk`, `HasPerk` | same failure policy |
+| `Actor` and `Faction` social | see [the faction and relationship natives](#the-faction-and-relationship-natives) | same failure policy |
+| `Faction` crime | `GetCrimeGold`, `ModCrimeGold`, `SetCrimeGold` | same failure policy |
 | `Actor` and `Spell` magic | see [the spell natives](#the-spell-natives) | same failure policy |
 
 `Game.AdvanceSkill` and `Game.IncrementSkill` are globals acting on the player alone and run
@@ -712,7 +715,7 @@ tallied failure naming the value it could not read, never a zero.
 | --- | --- | --- |
 | `Resurrect` | not installed | nothing clears the death latch, so a corpse stays a corpse. `RestoreActorValue` on a dead actor writes the health and leaves it dead rather than half-reviving it |
 | `StartCombat` with a target other than the player | tallied failure | this engine simulates no actor-versus-actor combat. `ActorHostility` has two cases and both are about the player, so a fight between two NPCs would be one nothing steps. Stated rather than silently not happening |
-| `SetRelationshipRank` and the faction natives | not installed | there is no relationship or faction store to write. 16.7 kept `ActorHostility`'s two cases |
+| `SetRelationshipRank` and the faction natives | installed as of item 21.4 | see [the faction and relationship natives](#the-faction-and-relationship-natives) |
 | `Game.GetPlayer().IsInCombat()` | reads false in a fight | a combat behavior machine belongs to an NPC and describes what *it* is doing. Whether the *player* is in a fight is `CombatLoopState.isPlayerInCombat`, derived from every resident actor rather than stored on one |
 | `IsWeaponDrawn()` on an NPC | tallied failure | only the player carries a behavior graph that tracks a draw state (item 14.6). "Sheathed" would be an invented fact |
 
@@ -819,6 +822,75 @@ empties health first and then takes that same path, so `GetActorValue("Health")`
 and `IsDead()` can never disagree about the same actor and a corpse is never
 drawn over a full HUD bar. `akKiller` is `None` for a death nothing attributed,
 which is what the wiki documents the default to be.
+
+## The faction and relationship natives
+
+Issue #508 (roadmap item 21.4) puts the scripting surface on top of the faction
+model 21.3 built: `FactionStore`, `RelationshipStore` and the runtime
+memberships behind [derived hostility](/engine/combat.md). Nine natives and one
+bridge half, in `opensky/Engine/Papyrus/PapyrusNativeFaction.swift` over
+`PapyrusWorldFactionBridge`, whose conformance is in
+`PapyrusWorldStateBridgeFactions.swift`.
+
+| native | what it reads or does | source |
+| --- | --- | --- |
+| `AddToFaction(Faction)` | joins at rank 0, doing nothing when already a member | [AddToFaction - Actor](https://ck.uesp.net/wiki/AddToFaction_-_Actor) |
+| `RemoveFromFaction(Faction)` | drops the membership | [RemoveFromFaction - Actor](https://ck.uesp.net/wiki/RemoveFromFaction_-_Actor) |
+| `bool IsInFaction(Faction)` | membership, seeding the actor's `SNAM` run first | [IsInFaction - Actor](https://ck.uesp.net/wiki/IsInFaction_-_Actor) |
+| `int GetFactionRank(Faction)` | the rank; -2 for a non-member, -1 for a member ranked -1 | [GetFactionRank - Actor](https://ck.uesp.net/wiki/GetFactionRank_-_Actor) |
+| `SetFactionRank(Faction, int)` | sets the rank, joining when necessary | [SetFactionRank - Actor](https://ck.uesp.net/wiki/SetFactionRank_-_Actor) |
+| `int GetRelationshipRank(Actor)` | the signed rank, scripted over authored | [GetRelationshipRank - Actor](https://ck.uesp.net/wiki/GetRelationshipRank_-_Actor) |
+| `SetRelationshipRank(Actor, int)` | writes the rank into both actors' components | [SetRelationshipRank - Actor](https://ck.uesp.net/wiki/SetRelationshipRank_-_Actor) |
+| `int GetFactionReaction(Actor)` | 0 Neutral, 1 Enemy, 2 Ally, 3 Friend, from memberships | [GetFactionReaction - Actor](https://ck.uesp.net/wiki/GetFactionReaction_-_Actor) |
+| `bool IsHostileToActor(Actor)` | the whole hostility precedence list, asked about the pair | the install's own `Actor.pex`; no wiki page exists |
+| `int Faction.GetReaction(Faction)` | the same numbering, between two factions | [Faction Script](https://ck.uesp.net/wiki/Faction_Script) |
+
+Every mutation goes through `FactionRuntime` or `RelationshipRuntime`, so a
+scripted membership reaches the journal, the dirty counts and the save by the
+same path a seeded one does. Reading a membership seeds the actor's authored
+`SNAM` run first, which is why the bridge's accessor takes the actor it is about:
+seeding is a mutating call on a struct the controller owns by value.
+
+A `Faction` script's `self` is a form rather than a placed reference, and this
+engine addresses a `FACT` by the same `ReferenceKey` its memberships and its
+ledger rows are keyed by — so the receiver resolves exactly as an `Actor`
+receiver does, which is what `PapyrusNativeCrime` already relies on.
+
+### Signatures checked against the install
+
+`PapyrusNativeSignatureRealDataTests` loads the install's own compiled `Actor.pex`
+and `Faction.pex` and asserts, per registered function, that the script declares
+a function of that name, that its `native` flag is what the engine expects, and
+that its parameter count matches what the engine's body reads. A Papyrus
+signature is an interface a mod's compiled bytecode already agrees with — a wrong
+argument count is a script that stops working — and the wiki is a wiki that has
+been partly unreachable for a year (`docs/tools/environment.md`). The shipped
+script cannot have drifted from the game, so it is the check. It also asserts
+that the three deliberately-unregistered functions really are unregistered, and
+reports the signature the install declares for each, so the next implementation
+starts from an observation.
+
+The sweep changed two decisions the moment it first ran, which is the argument
+for having written it:
+
+* **`Actor.IsHostileToActor` exists.** It was about to be recorded as an absence
+  — no Creation Kit wiki page for it survives on any reachable mirror, and its
+  condition-function twin at xEdit index 719 has none either. The install
+  declares `bool IsHostileToActor(Actor akActor) native`, so it is registered.
+* **`Actor.AddToFaction` is not native.** The install declares it as an ordinary
+  Papyrus wrapper whose entire body is
+  `if !IsInFaction(akFaction); SetFactionRank(akFaction, 0); endIf`. That body is
+  where the engine's implementation comes from, and it is registered anyway so
+  the call works whether or not this session could load the game's own script.
+
+### Stated gaps in the social family
+
+| behavior | what OpenSky does | why |
+| --- | --- | --- |
+| `Faction.SetReaction`, `Faction.ModReaction` | not installed | both write the interfaction `XNAM` table, and `FactionRelationIndex` is a read-only index built once from the records. Backing them needs a runtime relation override this item does not build, and a writer that silently did nothing would be worse than a counted gap |
+| `Actor.ModFactionRank` | not installed | it reads a rank, adds a delta and writes the result, and no reachable source says what the delta means for a *non-member* — join at the delta, or at zero. The signature is known from the install; the semantics are not, and a guess would put a wrong rank in the save. `SetFactionRank` covers the same store |
+| a scripted relationship rank | stored per *reference* pair, not per `NPC_` base | the function takes two actors and the player is one of them in nearly every vanilla call, while the player has no base record in this engine. Two placements of one base therefore do not share an override; vanilla scripts name unique actors, so nothing observed exercises the difference |
+| `RemoveFromFaction` clearing a crime faction | no effect | the wiki notes that removing an actor's crime faction clears it. This engine derives the crime faction from the *place* (`CrimeFactionResolver`), so there is nothing to clear |
 
 ## Update timers
 

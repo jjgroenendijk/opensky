@@ -39,8 +39,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   load-order faction store, and the runtime membership component with its
   flattened interfaction relation index.
 * [Relationships](/formats/relationships.md) - RELA parents, rank enum and secret flags,
-  ASTP association titles, and the load-order relationship store with its order-free pair
-  query.
+  ASTP association titles, the load-order relationship store with its order-free pair
+  query, and the scripted rank overrides that layer over it at runtime.
 * [plugins.txt load order](/formats/plugins-txt.md) - enable flags and file
   order, where the file hides on macOS, and the plugin order OpenSky builds
   from it.
@@ -89,7 +89,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   function index and parameters, run-on types, and the skip-don't-throw decode policy;
   plus evaluation - the function registry, OR grouping, run-on resolution, the
   reason-tagged-false failure model, keyword/list/location data seam, the magic seam with
-  its spell-knowledge, effect-presence and casting-state functions, and the coverage
+  its spell-knowledge, effect-presence and casting-state functions, the faction and
+  relationship seam with its two disagreeing return-value tables, and the coverage
   tally with its vanilla and active-load-order sweeps.
 * [AI packages (PACK, PKID)](/formats/packages.md) - general data, calendar schedules,
   header conditions, public location/target inputs, template links, procedure names, and

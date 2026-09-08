@@ -15,8 +15,11 @@ struct PapyrusNativeRegistryTests {
         // before 20.5 (issue #498) added `AdvanceSkill` and `IncrementSkill`,
         // and 87 before 20.6 (issue #499) added `GetLevel`, `GetPerkPoints`
         // and `ModPerkPoints`, and 90 before 21.5 (issue #504) added the three
-        // `Faction` crime-gold natives and the two `Actor` alarms.
-        #expect(standard.count == 95)
+        // `Faction` crime-gold natives and the two `Actor` alarms, and 95 before
+        // 21.4 (issue #508) added the five `Actor` membership functions, the two
+        // relationship accessors, `GetFactionReaction`, `IsHostileToActor` and
+        // `Faction.GetReaction`.
+        #expect(standard.count == 105)
         #expect(standard.contains(
             scriptName: "form", functionName: "REGISTERFORUPDATE"
         ))
@@ -28,6 +31,10 @@ struct PapyrusNativeRegistryTests {
         #expect(standard.contains(scriptName: "quest", functionName: "SETSTAGE"))
         #expect(standard.contains(scriptName: "ACTOR", functionName: "getactorvalue"))
         #expect(standard.contains(scriptName: "faction", functionName: "GETCRIMEGOLD"))
+        #expect(standard.contains(scriptName: "faction", functionName: "getreaction"))
+        #expect(standard.contains(scriptName: "ACTOR", functionName: "isinfaction"))
+        #expect(standard.contains(scriptName: "actor", functionName: "SETRELATIONSHIPRANK"))
+        #expect(standard.contains(scriptName: "Actor", functionName: "ishostiletoactor"))
         #expect(standard.contains(scriptName: "Actor", functionName: "sendtrespassalarm"))
         #expect(standard.contains(scriptName: "actor", functionName: "KILL"))
         #expect(standard.contains(scriptName: "ACTOR", functionName: "addspell"))

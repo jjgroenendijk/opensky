@@ -197,6 +197,9 @@ struct FactionRuntime {
             key: holder.key,
             base: resolvedBase(of: holder.subject),
             memberships: state(of: holder.key),
+            relationshipOverrides: worldState
+                .component(ActorRelationshipState.self, for: holder.key)
+                ?? ActorRelationshipState(),
             aiData: baselines?.baseline(for: holder.subject).aiData ?? .absent,
             hostilityOverride: worldState
                 .component(ActorCombatState.self, for: holder.key)?

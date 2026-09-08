@@ -132,31 +132,47 @@ enum HostilityFixture {
     static func profile(
         actor: UInt32,
         memberships: [(faction: UInt32, rank: Int8)] = [],
+        relationships: [(other: ReferenceKey, rank: Int8)] = [],
         aggression: ActorAggression = .aggressive,
-        hostilityOverride: ActorHostility? = nil
+        hostilityOverride: ActorHostility? = nil,
+        key overrideKey: ReferenceKey? = nil
     ) -> ActorSocialProfile {
         ActorSocialProfile(
-            key: key(actor),
+            key: overrideKey ?? key(actor),
             base: id(actor),
             memberships: ActorFactionState(memberships: memberships.map {
                 ActorFactionMembership(faction: key($0.faction), rank: $0.rank)
             }),
+            relationshipOverrides: relationshipState(relationships),
             aiData: aiData(aggression: aggression),
             hostilityOverride: hostilityOverride
         )
     }
 
+    /// A scripted relationship component, as `SetRelationshipRank` writes one
+    /// (issue #508).
+    static func relationshipState(
+        _ entries: [(other: ReferenceKey, rank: Int8)]
+    ) -> ActorRelationshipState {
+        ActorRelationshipState(overrides: entries.map {
+            ActorRelationshipOverride(other: $0.other, rank: $0.rank)
+        })
+    }
+
     /// The player as the derivation reads them: no base record, no authored
     /// memberships, and no aggression of their own.
     static func player(
-        memberships: [(faction: UInt32, rank: Int8)] = []
+        memberships: [(faction: UInt32, rank: Int8)] = [],
+        relationships: [(other: ReferenceKey, rank: Int8)] = [],
+        key overrideKey: ReferenceKey = .player
     ) -> ActorSocialProfile {
         ActorSocialProfile(
-            key: .player,
+            key: overrideKey,
             base: nil,
             memberships: ActorFactionState(memberships: memberships.map {
                 ActorFactionMembership(faction: key($0.faction), rank: $0.rank)
             }),
+            relationshipOverrides: relationshipState(relationships),
             aiData: .absent,
             hostilityOverride: nil
         )

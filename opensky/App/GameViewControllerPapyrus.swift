@@ -210,5 +210,8 @@ extension GameViewController {
         // reached through a getter rather than captured — the same reason every
         // closure above is one.
         bridge.crimeReporter = { [weak self] in self?.crime.reporter }
+        // `wireFactions` runs after this step too (issue #508), for the same
+        // reason, so its five collaborators are getters as well.
+        wireFactionNatives(bridge: bridge)
     }
 }

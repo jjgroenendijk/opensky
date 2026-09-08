@@ -111,7 +111,17 @@ nonisolated extension ConditionFunctions {
     /// index and the reference is whatever fills it, and without it the word is
     /// a FormID the runtime index resolves.
     static func parameterReference(_ call: ConditionCall) -> ReferenceKey? {
-        guard let parameter = call.parameter1 else { return nil }
+        parameterReference(call, call.parameter1)
+    }
+
+    /// The same resolution for either parameter word, which is what
+    /// `GetFactionRankDifference` needs: its actor is parameter #2 and its
+    /// faction is parameter #1 (issue #508).
+    static func parameterReference(
+        _ call: ConditionCall,
+        _ parameter: Condition.Parameter?
+    ) -> ReferenceKey? {
+        guard let parameter else { return nil }
         if call.condition.flags.contains(.useAliases) {
             return call.aliasReference(parameter)
         }

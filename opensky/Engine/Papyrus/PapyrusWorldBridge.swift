@@ -67,12 +67,14 @@ nonisolated protocol PapyrusWorldReferenceSource: AnyObject {
 /// `PapyrusWorldQuestBridge.swift` (issue #322), the actor operations in
 /// `PapyrusWorldActorBridge.swift` (issue #375), the magic operations in
 /// `PapyrusWorldMagicBridge.swift` (issue #474), the crime operations in
-/// `PapyrusWorldCrimeBridge.swift` (issue #504), and all four are refined in
-/// here so a native reaches all of it through the one `context.world` façade.
+/// `PapyrusWorldCrimeBridge.swift` (issue #504), the faction and relationship
+/// operations in `PapyrusWorldFactionBridge.swift` (issue #508), and all five
+/// are refined in here so a native reaches all of it through the one
+/// `context.world` façade.
 @MainActor
 protocol PapyrusWorldBridge:
     PapyrusWorldQuestBridge, PapyrusWorldActorBridge, PapyrusWorldMagicBridge,
-    PapyrusWorldCrimeBridge
+    PapyrusWorldCrimeBridge, PapyrusWorldFactionBridge
 {
     /// Session-stable identity of the player; see `ReferenceKey.player`.
     var playerKey: ReferenceKey { get }

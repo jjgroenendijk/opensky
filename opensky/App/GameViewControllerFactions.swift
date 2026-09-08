@@ -36,6 +36,16 @@ struct FactionBridgeState {
     /// game data, and then every actor answers from the stored override alone,
     /// exactly as it did before this milestone.
     var runtime: FactionRuntime?
+    /// Scripted relationship ranks over the same store (issue #508), built
+    /// beside the faction runtime because both need the provider's RELA index.
+    /// Nil without game data, and then `SetRelationshipRank` refuses rather than
+    /// writing a rank nothing can read back.
+    var relationships: RelationshipRuntime?
+    /// The load order's flattened interfaction reaction table, built once beside
+    /// the derivation that already holds one. Kept here as well so
+    /// `Faction.GetReaction` can be answered without an actor to hang the
+    /// question on.
+    var relations: FactionRelationIndex?
     /// Human-readable result of the last faction action.
     var lastActionText = "No faction action yet."
 }
@@ -56,16 +66,125 @@ extension GameViewController {
             .actorValueBaselines?
             .resolver
             .map(ActorFactionBaselineResolver.init(actorValues:))
+        let relations = FactionRelationIndex(store: factionStore)
+        factions.relations = relations
+        factions.relationships = RelationshipRuntime(
+            store: worldState,
+            relationships: relationshipStore
+        )
         factions.runtime = FactionRuntime(
             store: worldState,
             factions: factionStore,
             derivation: HostilityDerivation(
-                relations: FactionRelationIndex(store: factionStore),
+                relations: relations,
                 relationships: relationshipStore
             ),
             baselines: baselines,
             pluginName: (provider as? MagicDataProviding)?.magicItemPluginName
         )
+    }
+
+    // MARK: - Condition seam
+
+    /// Faction memberships, relationship ranks and the derivation over them, as
+    /// the condition machinery reads them (issue #508). This is what
+    /// `GetInFaction`, `GetFactionRank`, `GetFactionRankDifference`,
+    /// `GetFactionRelation`, `GetRelationshipRank` and `IsHostileToActor` answer
+    /// from.
+    ///
+    /// Profiles are built for the player and every resident actor, which is the
+    /// same set `runtimeStateActorResolution()` already walks. An actor no cell
+    /// has streamed carries no profile and the functions report the gap rather
+    /// than answering "belongs to nothing" — which is the honest answer, because
+    /// this engine has not read that actor's record yet.
+    ///
+    /// Seeding happens here rather than in the condition body: the body is
+    /// nonisolated and cannot reach the store, and a per-actor seed is a
+    /// `Set` membership test after the first sight of each one.
+    func factionConditionResolution() -> FactionConditionResolution {
+        guard let runtime = factions.runtime else { return .empty }
+        var profiles: [ReferenceKey: ActorSocialProfile] = [:]
+        for key in [ReferenceKey.player] + combatActors().map(\.key) {
+            guard let holder = actorValueHolder(for: key) else { continue }
+            seedFactions(of: holder)
+            profiles[key] = factions.runtime?.profile(of: holder)
+        }
+        return FactionConditionResolution(
+            factions: runtime.factions,
+            sourcePlugin: (streamerCellProvider as? MagicDataProviding)?.magicItemPluginName,
+            derivation: runtime.derivation,
+            profiles: profiles
+        )
+    }
+
+    // MARK: - Papyrus seam
+
+    /// What one actor makes of another, for `Actor.GetFactionReaction` and
+    /// `Actor.IsHostileToActor`'s condition twin.
+    ///
+    /// Both actors are seeded first, so a script asking about somebody nobody has
+    /// looked at sees the authored `SNAM` run rather than an empty membership
+    /// list.
+    func socialDecision(
+        of observer: ReferenceKey,
+        toward target: ReferenceKey
+    ) -> PapyrusSocialDecision? {
+        guard
+            let observerHolder = actorValueHolder(for: observer),
+            let targetHolder = actorValueHolder(for: target)
+        else { return nil }
+        seedFactions(of: observerHolder)
+        seedFactions(of: targetHolder)
+        guard let runtime = factions.runtime else { return nil }
+        let mine = runtime.profile(of: observerHolder)
+        let theirs = runtime.profile(of: targetHolder)
+        return PapyrusSocialDecision(
+            isHostile: runtime.derivation.decide(mine, toward: theirs).isHostile,
+            factionReaction: runtime.derivation.factionReaction(of: mine, toward: theirs)
+                ?? .neutral
+        )
+    }
+
+    /// The faction runtime, with `key` seeded first so a membership read sees the
+    /// actor's authored run. Nil in a session with no faction data.
+    func seededFactionRuntime(for key: ReferenceKey) -> FactionRuntime? {
+        if let holder = actorValueHolder(for: key) {
+            seedFactions(of: holder)
+        }
+        return factions.runtime
+    }
+
+    /// The faction natives' collaborators (issue #508, roadmap item 21.4).
+    ///
+    /// Closures for the reason the perk ones are: `wireFactions` runs after the
+    /// Papyrus bridge is built, so a reference captured here would be nil
+    /// forever. The membership accessor takes the actor it is about because
+    /// reading a membership has to seed it first, and seeding is a mutating call
+    /// on a struct this controller owns by value.
+    func wireFactionNatives(bridge: PapyrusWorldStateBridge) {
+        bridge.factionRuntime = { [weak self] key in
+            self?.seededFactionRuntime(for: key)
+        }
+        bridge.relationshipRuntime = { [weak self] in self?.factions.relationships }
+        bridge.socialDecision = { [weak self] observer, target in
+            self?.socialDecision(of: observer, toward: target)
+        }
+        bridge.actorSocialBase = { [weak self] key in
+            self?.actorRelationshipBase(of: key)
+        }
+        bridge.factionRelationIndex = { [weak self] in self?.factions.relations }
+    }
+
+    /// The `NPC_` identity a `RELA` record would name for one reference, resolved
+    /// through the relationship store's own index so it matches the keys that
+    /// store built its pair table with.
+    func actorRelationshipBase(of key: ReferenceKey) -> ResolvedFormID? {
+        guard
+            let base = streamer?.referenceEntry(key: key)?.placedActor?.base,
+            let plugin = (streamerCellProvider as? MagicDataProviding)?.magicItemPluginName
+        else { return nil }
+        return factions.runtime?.derivation.relationships
+            .resolvedID(base, fromPlugin: plugin)
     }
 
     // MARK: - Derived hostility
