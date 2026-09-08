@@ -69,13 +69,24 @@ extension GameViewController {
     /// not loaded is not simulated at all in this engine, and walking every
     /// dirty reference each frame for a number nobody can observe is the cost
     /// that rule exists to avoid.
+    ///
+    /// The runtime and the accumulator are copied into locals and written back
+    /// rather than mutated in place, because both are fields of the single
+    /// `magicEffects` stored property: calling a `mutating` method through
+    /// `magicEffects.runtime` while passing `&magicEffects.accumulator` opens
+    /// two overlapping exclusive accesses to that one property and traps at
+    /// runtime. This is the same copy-out/copy-back shape the enchantment,
+    /// Papyrus and perk call sites already use.
     func advanceMagicEffects(delta: Float) {
-        guard magicEffects.runtime != nil else { return }
-        magicEffects.runtime?.advance(
+        guard var runtime = magicEffects.runtime else { return }
+        var accumulator = magicEffects.accumulator
+        runtime.advance(
             delta: delta,
-            accumulator: &magicEffects.accumulator,
+            accumulator: &accumulator,
             over: regeneratingHolders()
         )
+        magicEffects.runtime = runtime
+        magicEffects.accumulator = accumulator
     }
 
     /// Consumes `item` from the player and applies it to the player.
