@@ -115,6 +115,9 @@ nonisolated struct CellProviderIndexes {
     /// Load-order RELA and ASTP index (issue #502), which the hostility
     /// derivation asks about one specific pair of actors.
     let relationshipStore: RelationshipStore
+    /// Load-order FLST index (issue #506), which a vendor faction's buy/sell
+    /// keyword list is flattened through.
+    let formListStore: FormListStore
     /// GMST-derived `fSkillUseCurve` and `fXPPerSkillRank` (issue #498).
     let skillAdvancementSettings: SkillAdvancementSettings
     /// GMST-derived level curve and level-up rewards (issue #499).
@@ -172,6 +175,7 @@ nonisolated struct CellProviderIndexes {
         packageStore = PackageStore(file: file)
         factionStore = FactionStoreLoader.load(root: root, baseFile: file)
         relationshipStore = RelationshipStoreLoader.load(root: root, baseFile: file)
+        formListStore = FormListStoreLoader.load(root: root, baseFile: file)
         let magic = MagicIndexes(root: root, baseFile: file)
         magicEffectStore = magic.effects
         spellStore = magic.spells
@@ -247,6 +251,7 @@ nonisolated struct CellProviderIndexes {
             perkStore: perkStore,
             factionStore: factionStore,
             relationshipStore: relationshipStore,
+            formListStore: formListStore,
             actorValueInformation: actorValueInformation,
             skillAdvancementSettings: skillAdvancementSettings,
             characterLevelSettings: characterLevelSettings,

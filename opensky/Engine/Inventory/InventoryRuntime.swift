@@ -239,13 +239,17 @@ struct InventoryRuntime {
     /// and a worthless one are both ordinary trades, and refusing them would
     /// make a zero-value item untradeable.
     ///
+    /// `laundering` makes both legs arrive honest, whatever they left as —
+    /// what a sale to a fence and a purchase from a vendor do (issue #506).
+    ///
     /// - Throws: `InventoryError.sameHolder`, plus everything the inventory
     ///   arithmetic throws. Nothing is written on any failure.
     func exchange(
         giving given: (item: FormID, amount: Int32),
         taking taken: (item: FormID, amount: Int32),
         from first: InventoryHolder,
-        to second: InventoryHolder
+        to second: InventoryHolder,
+        laundering: Bool = false
     ) throws {
         guard first.key != second.key else {
             throw InventoryError.sameHolder(first.key)
@@ -256,12 +260,16 @@ struct InventoryRuntime {
         // merchant hot goods and the gold that comes back is honest — the
         // difference issue #506's fence rules read (issue #504).
         if given.amount > 0 {
-            let split = giver.split(taking: given.amount, of: given.item)
+            let split = laundering
+                ? StolenSplit(clean: given.amount, stolen: 0)
+                : giver.split(taking: given.amount, of: given.item)
             giver = try giver.removing(given.item, count: given.amount, owner: first.key)
             receiver = try receiver.adding(given.item, split: split, owner: second.key)
         }
         if taken.amount > 0 {
-            let split = receiver.split(taking: taken.amount, of: taken.item)
+            let split = laundering
+                ? StolenSplit(clean: taken.amount, stolen: 0)
+                : receiver.split(taking: taken.amount, of: taken.item)
             receiver = try receiver.removing(taken.item, count: taken.amount, owner: second.key)
             giver = try giver.adding(taken.item, split: split, owner: first.key)
         }

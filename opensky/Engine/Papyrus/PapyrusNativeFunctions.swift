@@ -20,6 +20,7 @@ nonisolated enum PapyrusNativeFunctions {
         installLevel(into: &registry)
         installCrime(into: &registry)
         installGuard(into: &registry)
+        installBarter(into: &registry)
         installFaction(into: &registry)
     }
 

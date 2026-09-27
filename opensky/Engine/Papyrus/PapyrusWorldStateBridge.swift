@@ -122,6 +122,10 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// A session rather than the engine's `CrimeArrest` alone because serving a
     /// sentence moves the clock and the player, which only the session owns.
     var arrestSession: (() -> (any CrimeArrestSession)?)?
+    /// Opens the barter menu against one merchant actor, for
+    /// `Actor.ShowBarterMenu` (issue #506), answering the readout line and
+    /// whether the menu opened. Nil in a session with no vendor data.
+    var showBarterMenu: ((ReferenceKey) -> (opened: Bool, text: String)?)?
     /// Load-order MGEF lookup, for `HasMagicEffectWithKeyword`. Nil in a
     /// synthetic session with no record index.
     var magicEffectStore: MagicEffectStore?

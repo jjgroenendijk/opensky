@@ -102,6 +102,7 @@ extension GameViewController: RagdollControlProviding {
         )
         containerMenu.containerName = "Corpse \(entry.key.description)"
         containerMenu.containerReference = actor.formID
+        containerMenu.vendor = nil
         runtime.noteLooted(entry.key)
         return true
     }

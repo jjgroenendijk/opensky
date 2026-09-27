@@ -104,9 +104,10 @@ nonisolated enum ContainerMenuMovieBridge {
     static let sinkHostFunctions = [
         "myLog", "PlaySound", "RequestItemCardInfo", "UpdateItem3D", "ShowRawDealWarning"
     ]
-    /// `GetRawDealWarningString` is the barter menu's "are you sure" text. There
-    /// is no raw-deal rule in OpenSky yet, so it answers the empty string rather
-    /// than being left unanswered.
+    /// `GetRawDealWarningString` is the barter menu's "are you sure" text. Its
+    /// only vanilla string is `sNotEnoughVendorGold` — the sell-for-less
+    /// warning — and this engine refuses such a sale instead, so it answers the
+    /// empty string rather than being left unanswered (docs/engine/barter.md).
     static let emptyStringHostFunctions = ["GetRawDealWarningString"]
 
     /// The calls that reach an engine action, per mode. `ItemTransfer`,

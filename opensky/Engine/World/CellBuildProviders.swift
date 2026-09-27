@@ -149,6 +149,10 @@ nonisolated protocol FactionDataProviding {
     /// Load-order RELA and ASTP index (issue #502), which answers what one
     /// specific pair of actors is to each other.
     var relationshipStore: RelationshipStore? { get }
+
+    /// Load-order FLST index (issue #506), which a vendor faction's buy/sell
+    /// keyword list is flattened through.
+    var formListStore: FormListStore? { get }
 }
 
 /// Optional script-loading seam a provider can expose (issue #171). The

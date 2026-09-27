@@ -2,10 +2,11 @@
 type: Subsystem
 title: Container and barter menus
 description: The two-pane container transfer menu and the merchant barter menu - the vanilla
-  price formula and the two GMSTs behind it, the merchant nomination seam, and the measured
-  AS2 contract of containermenu.swf and bartermenu.swf.
+  price formula and the two GMSTs behind it, faction vendors with their chests, hours,
+  buy/sell lists and fences, and the measured AS2 contract of containermenu.swf and
+  bartermenu.swf.
 tags: [engine, ui, menu, swf, inventory, barter, scaleform]
-timestamp: 2026-08-02T00:00:00Z
+timestamp: 2026-09-27T00:00:00Z
 ---
 
 # Container and barter menus
@@ -27,6 +28,7 @@ is [inventory menu](/engine/inventory-menu.md)'s, the transfers are
 - [Transactions](#transactions)
 - [The two-pane list](#the-two-pane-list)
 - [The merchant seam](#the-merchant-seam)
+- [Faction vendors](#faction-vendors)
 - [The vanilla data contract](#the-vanilla-data-contract)
 - [Verification](#verification)
 - [Limits / next](#limits--next)
@@ -35,6 +37,7 @@ is [inventory menu](/engine/inventory-menu.md)'s, the transfers are
 |---|---|---|
 | Price formula | `opensky/Engine/Inventory/BarterPricing.swift` | app + CLI |
 | Transactions | `opensky/Engine/Inventory/BarterSession.swift` | app + CLI |
+| Vendor factions | `opensky/Engine/Inventory/VendorRules.swift` | app + CLI |
 | Two-pane list | `opensky/Engine/UI/ContainerMenuModel.swift` | app + CLI |
 | Vanilla movie contract | `opensky/Engine/UI/ContainerMenuMovieBridge*.swift` | app + CLI |
 | Panel seam | `opensky/Engine/ContainerMenuControlProviding.swift` | app + CLI |
@@ -110,6 +113,9 @@ Refusals are ordinary outcomes rather than faults, and every one of them writes 
 | `merchantCannotAfford` | the price exceeds the merchant's purse |
 | `nonPositiveCount` | a count of zero or less, which is a caller bug rather than a refusal |
 | `priceOutOfRange` | the price exceeds what one gold stack can hold |
+| `vendorClosed` | outside the vendor faction's hours (issue #506) |
+| `vendorDoesNotTrade` | the vendor's buy/sell list, with its negation, excludes the item |
+| `vendorRefusesStolen` | a sale reaches stolen copies and the vendor is not a fence |
 
 **A merchant with no gold buys nothing and still sells everything**, which is the named
 case in the milestone scope and a test of its own. A zero-price item still changes hands:
@@ -137,11 +143,10 @@ is dropped by the bounds check rather than silently pointing at whatever took it
 
 ## The merchant seam
 
-There is no merchant system. Vanilla merchants sell from a faction-linked chest, and none
-of that VENDR-style faction data is decoded, so this milestone's merchant is a container
-reference a developer nominates. `ContainerMenuControlProviding` is the seam that
-nomination goes through, and a faction-driven answer replaces it later without the menu
-changing:
+The counterparty is an `InventoryHolder`, and `BarterSession` does not care how it was
+chosen. A faction vendor (below) is the default; a container a developer nominates is the
+override, and trades unrestricted. `ContainerMenuControlProviding` is the seam nomination
+goes through:
 
 - `containerMenuMerchantOptions` lists every resident container by name, item count and
   purse, from `CellStreamer.containerInteractions()`.
@@ -153,6 +158,71 @@ A nomination resolves to the same `InventoryHolder` `WorldItemRuntime.openContai
 — reference key, CONT base, cell — so a chest opened from the crosshair and one nominated
 from the sidebar are the same owner. A reference nothing resident resolves is refused
 rather than given a fabricated key.
+
+## Faction vendors
+
+Issue #506. A merchant is an actor with a vendor faction among its memberships, and the
+faction's vendor block says where it sells from, when, and what. Every rule is from the
+Creation Kit wiki's Faction page, Vendor tab; `VendorResolver` reads it.
+
+| Field | Meaning here |
+|---|---|
+| Vendor flag (`DATA` 0x4000) | makes a membership a vendor faction; the first one in membership order wins |
+| `VENC` | the merchant chest the vendor sells from; with none, the vendor's own inventory |
+| `VENV` start and end hour | trade opens at the start hour and closes at the end hour |
+| `VEND` | a keyword FLST, flattened through nested lists: the vendor buys and sells items carrying one |
+| `VENV` "Not Buy/Sell" | negates the list: the vendor trades what does *not* match |
+| `VENV` "Only Buys Stolen Goods" | the vendor is a fence and also buys stolen copies |
+
+The Creation Kit's own example is the canonical probe: "The pawnbroker Belethor in Whiterun
+uses VendorItemsMisc as the buy/sell list, and has this checked", so he trades everything
+except keys and items tagged not sellable. On the local install
+`ServicesWhiterunBelethorsGoods` carries exactly that, with hours 8 to 20 and merchant
+chest `skyrim.esm:09CAF9`.
+
+**Hours.** Start inclusive, end exclusive; an end of 24 or more runs to midnight, and a
+start after the end wraps past it. Of the 145 vendor factions on the local install, 81 are
+open `0-24` and 41 `8-20`. One authors `0-0`, which is read as always open, because an empty
+window would make a vendor nobody can trade with.
+
+**The list.** A vendor sells from its chest only what matches: "a vendor will not sell items
+in this container unless they also match the vendor's buy/sell list". The same test gates
+what it buys. One faction on the local install, `WhiterunBanneredMareFaction`, authors no
+list, which is read as no keyword gate.
+
+**Fences.** The flag's name says "only", and the Creation Kit describes it as setting "this
+vendor up to only pay for stolen items the player wants to fence". This engine reads it as
+*also* buying stolen goods. UESP's Merchants page lists fences as the merchants that "are the
+only merchants who will purchase stolen goods". Every one of the nine fence factions on the
+local install, `ServicesThievesGuildTonilia` among them, also authors Belethor's negated
+`VendorItemsMisc` list, which would be pointless on a vendor that bought nothing honest.
+A non-fence refuses a sale that would reach stolen copies (`vendorRefusesStolen`); honest
+copies go first, so a player holding both can still sell the honest ones.
+
+**Laundering.** A fence takes stolen goods in honest, and a vendor's goods reach the buyer
+honest: UESP records that "Purchasing stolen items you place in there will remove their
+stolen tags". `InventoryRuntime.exchange(laundering:)` does both. A nominated container keeps
+the old behaviour and carries each leg's split.
+
+**The chest.** Merchant chests mostly sit in the shop's own interior: of the 116 `VENC`
+references on the local install, 91 are in interior cells, so a player trading in person has
+the chest streamed in. A chest that is not resident is refused with a reason rather than read
+from an empty baseline, because its stock is a leveled list and an empty shop would read as a
+vendor with nothing to sell.
+
+**Dialogue.** The load order's merchant topics run a fragment that calls
+`Actor.ShowBarterMenu` on the speaker. On the local install 32 of the 39 scripted INFOs
+conditioned on `JobMerchantFaction` do. The native opens the barter menu against the
+speaker's vendor, so barter from dialogue needs no dialogue-side code. The Creation Kit notes
+that the original shows an empty menu for an actor that is not loaded or whose merchant
+conditions fail; this engine refuses instead and says why.
+
+**`GetRawDealWarningString`.** The issue expected a stolen-goods warning here. The only
+vanilla string behind a barter warning is `sNotEnoughVendorGold`, "Transaction value: %d
+gold. Vendor only has %d gold.", which is about the vendor's purse. That warning belongs to
+the original's sell-for-less flow. This engine refuses such a sale (`merchantCannotAfford`),
+so the host function still answers the empty string, and stolen goods are refused before
+the warning would ever be asked for.
 
 ## The vanilla data contract
 
@@ -247,11 +317,14 @@ committed.
 - **Single-unit transactions.** The vanilla `QuantitySlider` constructs but is never
   driven, and neither is the `ShowConfirmMessage` step, so every transfer and every trade
   moves one item. Recorded as the v1 limitation.
-- **The merchant is a nominated container.** Faction-linked merchant chests, services,
-  stock respawn and investment are M18+.
+- **Vendor conditions and location are not evaluated.** The trailing `CITC`/`CTDA` run and
+  the `PLVD` location and radius are decoded but not checked, so a vendor trades wherever it
+  stands during its hours, and an actor with two vendor factions always uses the first.
+- **Stock respawn, investment and trainers** are not modelled.
+- **A merchant chest that is not streamed in** cannot be traded from.
+- **No sell-for-less.** A sale the vendor's purse cannot cover is refused rather than offered
+  at whatever gold it has.
 - **Speech, perks and Fortify Barter are fixed.** See
   [the formula](#the-price-formula); the modifier seam is where they will land.
-- **Stolen goods and fences** have no rules here, which is why `GetRawDealWarningString`
-  answers empty.
 - **Category changes are engine-driven**, as they are for the inventory menu and for the
   same measured reason.
