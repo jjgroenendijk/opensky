@@ -45,9 +45,9 @@ human `Signed-off-by:`. Enforced by `.githooks/commit-msg/20-no-ai-trailers.sh`.
 2. Branch from up-to-date `main`: `feat/<slug>` / `fix/<slug>`.
 3. Atomic commits, each green. "WIP" and vague messages forbidden; checkpoints stay local,
    rebase or squash before PR.
-4. Closing a milestone acceptance issue -> the acceptance record is written to the ledger in
-   `docs/tools/sidebar-acceptance.md` in this PR. Nothing enforces this, so it is checked
-   here.
+4. Closing a milestone acceptance issue -> the PR body carries the acceptance record, in
+   the format defined by `docs/tools/sidebar-acceptance.md`. Nothing enforces this, so it
+   is checked here.
 5. PR via `gh pr create` — describe what and why, cite format specs used.
 6. Merge after review. Never push with `--no-verify`. Done and verified work always lands:
    commit and open the PR without waiting to be asked.

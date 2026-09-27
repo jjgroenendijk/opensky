@@ -42,7 +42,6 @@ discipline lives here, not there.
 
 ## Same-commit obligations
 
-- `docs/formats/<name>.md` — byte layout and reference used (load the `writing-wiki-docs`
-  skill for the OKF frontmatter shape).
-- `docs/index.md` entry plus `docs/log.md` entry.
+- `docs/formats/<name>.md` — byte layout, the spec used, and how the layout was confirmed
+  on the real install (load the `writing-wiki-docs` skill first).
 - Item came from a roadmap issue -> close it from the PR body (`Closes #NNN`).

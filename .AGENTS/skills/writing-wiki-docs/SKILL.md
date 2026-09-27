@@ -1,63 +1,97 @@
 ---
 name: writing-wiki-docs
-description: Writes and updates the docs/ knowledge wiki - OKF v0.1 frontmatter, reserved
-  files (index.md, log.md), link style, and the rule that open work stays in GitHub. Use
-  whenever adding or materially changing anything under docs/.
+description: Writes and updates pages under docs/ - what belongs in a page and what belongs
+  in code or git, the plain writing style, page frontmatter, links, and the length limit.
+  Use whenever adding, changing, or deleting anything under docs/.
 ---
 
-# docs/ wiki — Open Knowledge Format
+# Writing docs
 
-`docs/` follows Google Open Knowledge Format (OKF v0.1):
-<https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md>. The wiki
-holds reverse-engineered formats, subsystem design, and decisions — knowledge that must
-survive across sessions. Doc updates land in the same commit as the change they document.
+A docs page holds what the code cannot show. Everything else lives somewhere better:
 
-## File rules
+| Content | Where it lives |
+| --- | --- |
+| Who changed what, when, in which issue or milestone | `git log`, merged PRs, closed issues |
+| What a type or function does | Its name, its types, a short doc comment |
+| Which tests cover something | The test files. `grep -rl TypeName openskyTests` finds them |
+| Milestone acceptance records | The PR or issue that closes the milestone |
+| Open work and plans | GitHub issues and milestones |
+| Numbers that change with the next commit (counts, timings) | Nowhere. Measure them when needed |
+| Facts about this machine that will expire | `docs/tools/environment.md`, with the date observed |
 
-- Bundle root `docs/`, a plain tree of `.md`. Group by domain: `formats/`, `engine/`,
-  `rendering/`, `decisions/`, `tools/`.
-- Every non-reserved `.md` starts with YAML frontmatter, at least a non-empty `type`.
-  Recommended order: `title`, `description`, `resource`, `tags`, `timestamp` (ISO 8601, set
-  to the date you are writing):
+## What belongs in a page
 
-  ```markdown
-  ---
-  type: File Format
-  title: BSA Archive
-  description: On-disk layout of Skyrim SE .bsa archives and how OpenSky reads them.
-  tags: [format, archive, io]
-  timestamp: <today, ISO 8601>
-  ---
-  ```
+- **Where a fact comes from.** Spec links, and how a byte layout was confirmed.
+- **Why a design was chosen**, when the reason is not visible in the code.
+- **Where OpenSky differs from the original game**, and why.
+- **How several subsystems work together**, when no single file shows it.
+- **How to use the tools and the build.**
 
-- Concept ID = path minus `.md` (`docs/formats/bsa.md` -> `formats/bsa`).
-- Reserved names, optional, at any level: `index.md` (directory listing, no frontmatter,
-  `* [Title](/path.md) - description` lines) and `log.md` (change history, newest first,
-  ISO-8601 date headings).
-- Links are bundle-absolute from `docs/`: `[BSA](/formats/bsa.md)`. This form applies inside
-  `docs/` only — a file outside `docs/`, such as a skill, uses a repo-relative path
-  (`docs/formats/bsa.md`). Broken links are tolerated; relationship comes from prose.
-- A reference page over 100 lines opens with a `## Contents` list of its own sections, so a
-  partial read still shows the full scope.
-- `log.md` merges with `merge=union` (root `.gitattributes`, issue #108): parallel PRs
-  prepending entries merge clean, both kept. After merging main into a branch that touched
-  `log.md`, scan the top section — same-line edits can duplicate lines (dedupe by hand;
-  MD024 flags duplicate headings). The driver is for append-only files only; never extend it
-  to `index.md` or any file that sees deletions.
-- Tables: pipes need not visually align to the header (the config allows consistent style);
-  do not hand-align them. Wrap bare record and field signatures in backticks (`` `NPC_ WNAM` ``)
-  — raw `NPC_ WNAM` trips markdownlint MD037 (parsed as emphasis). Do not start a wrapped
-  prose line with `+`, `-`, or `*` (parsed as a list item, MD004). `make format` autofixes
-  most markdown but not these two.
+Keep every reverse-engineered fact and every spec citation. They are expensive to find
+again. If a fact is only about one parser or type, put it in a doc comment there instead.
 
-## Maintenance obligations
+## Writing style
 
-- Any add or material change -> entry in `docs/log.md` (newest first) plus a listing in
-  `docs/index.md`, same commit.
-- `docs/` holds knowledge, never open work. Open work is GitHub issues and milestones
-  (`AGENTS.md` "Roadmap and open work"). Item done -> the PR closes its issue
-  (`Closes #NNN`), folds the learning into the wiki, and records it in `log.md`. No roadmap
-  file, no "Done" sections, no checklists to hand-edit.
-- Machine-specific or third-party state that will expire goes in `docs/tools/environment.md`
-  with its observation date, never inline in a subsystem page or a skill.
-- Reverse-engineered format -> byte layout and reference in `docs/formats/<name>.md`.
+Write for young, capable students who learn English as a second language.
+
+- Short sentences. One idea per sentence.
+- Common words. Explain a technical term the first time you use it.
+- No aphorisms, idioms, or clever phrases.
+- Show an example instead of a long explanation.
+- No `## Contents` list. Headings are enough.
+
+Bad:
+
+> Issue #104 (M2.1, item 2.1.3) added `BSAArchive.open(url:)`, which reads the header and
+> then calls `readFolderRecords()`. `BSAArchiveTests` covers it. Opening all vanilla
+> archives takes 378 ms in Debug.
+
+Good:
+
+> Skyrim SE uses BSA version 105. Each folder record is 24 bytes. The original Skyrim used
+> version 104, with 16-byte folder records and zlib compression. OpenSky does not read
+> version 104. Source: the UESP page "Skyrim Mod:Archive File Format".
+
+The bad version gives history, repeats the code, lists tests, and gives a timing that will
+change. The good version gives facts and their source.
+
+## Page shape
+
+```markdown
+---
+type: File Format
+title: BSA Archive
+description: On-disk layout of Skyrim SE .bsa archives and how OpenSky reads them.
+---
+
+# BSA archive
+
+One or two sentences: what this is.
+
+Reference: <spec link>. All integers are little-endian.
+
+## Header
+
+Byte layout table, then what was confirmed on the real install.
+```
+
+- Frontmatter needs `type`, `title`, and `description`. `tags` is optional. Do not add a
+  `timestamp`; git records dates.
+- Group pages by folder: `formats/`, `engine/`, `rendering/`, `decisions/`, `tools/`.
+- Inside `docs/`, link from the docs root: `[BSA](/formats/bsa.md)`. Outside `docs/`, use a
+  repository path: `docs/formats/bsa.md`.
+- Write a record or field signature in backticks: `` `NPC_ WNAM` ``. Without them,
+  markdownlint reads the underscore as emphasis (rule MD037).
+
+## Checks
+
+`make check` runs these, and the pre-commit hook runs them on staged pages:
+
+- `make md-lint`: Markdown style.
+- `make docs-links`: every link inside `docs/` points at a file that exists.
+- `make docs-length`: no page is longer than the limit in `tools/lint/docs-length.sh`. A
+  page over the limit is split by topic, or cut. Do not raise the limit.
+
+Pages listed in `tools/lint/docs-length-baseline.txt` are older pages that are still over
+the limit. When you shorten one below the limit, remove it from that file; the check fails
+until you do. Never add a page to the file.

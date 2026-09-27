@@ -115,7 +115,7 @@ cache-link: ## Point this worktree's compilation cache at the main checkout's
 
 .PHONY: fix check format format-check lint swift-baseline swift-format swift-lint \
         metal-format md-format md-lint sh-lint cli-boundary realdata-plan \
-        no-game-content docs-links
+        no-game-content docs-links docs-length
 
 fix: format lint ## Autoformat, then run every linter (the everyday gate)
 
@@ -129,7 +129,7 @@ format-check: ## Fail if anything is unformatted, without writing
 		--dry-run --Werror $(METAL_FILES)
 	@markdownlint-cli2 --config $(MD_CFG) "$(MD_GLOB)"
 
-lint: swift-lint md-lint sh-lint cli-boundary realdata-plan no-game-content dup-check ## Run every linter (warnings fail)
+lint: swift-lint md-lint sh-lint cli-boundary realdata-plan no-game-content docs-length dup-check ## Run every linter (warnings fail)
 
 swift-baseline: ## Check for Apple Swift 6.3.3+ and Swift 6 mode in every target
 	@./tools/lint/swift-baseline.sh
@@ -165,6 +165,9 @@ no-game-content: ## Check no game assets or rendered captures are tracked
 
 docs-links: ## Check links inside docs/ resolve (log.md skipped)
 	@./tools/check-docs-links.sh
+
+docs-length: ## Check no docs page is longer than the limit
+	@./tools/lint/docs-length.sh
 
 ##@ Code smells
 
