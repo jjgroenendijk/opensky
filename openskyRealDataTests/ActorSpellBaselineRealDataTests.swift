@@ -142,14 +142,10 @@ struct ActorSpellBaselineRealDataTests {
         let known = session.spellbook.knownSpells(of: holder)
             .map { $0.editorID ?? $0.key.description }
             .sorted()
-        // Anchored on the source file rather than the working directory, which
-        // in a test host is `/` — the rule the other real-data suites that
-        // leave artifacts behind follow.
-        let directory = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
-            .appending(path: "actor-spell-baseline")
+        // Resolved through `RepositoryLogs` rather than the working directory,
+        // which in a test host is `/` — the rule the other real-data suites
+        // that leave artifacts behind follow.
+        let directory = try RepositoryLogs.directory("actor-spell-baseline")
         try FileManager.default.createDirectory(
             at: directory,
             withIntermediateDirectories: true

@@ -14,3 +14,13 @@ ONLY_ACTIVE_ARCH = YES
 // build. xcodebuild already writes it by default; saying so keeps the scan from
 // depending on a default.
 COMPILER_INDEX_STORE_ENABLE = YES
+// Prefix mapping makes compilation-cache keys independent of where the checkout
+// lives: the checkout path becomes /^src, derived data /^derived, built products
+// /^built. `make cache-link` points every worktree at the main checkout's cache,
+// so a fresh worktree reuses what any other one compiled instead of starting cold.
+// The cost is that #filePath and debug info carry those /^src paths; see
+// docs/testing.md for the measurements and the lldb source map.
+SWIFT_ENABLE_PREFIX_MAPPING = YES
+SWIFT_ENABLE_PROJECT_PREFIX_MAPPING = YES
+CLANG_ENABLE_PREFIX_MAPPING = YES
+CLANG_ENABLE_PROJECT_PREFIX_MAPPING = YES

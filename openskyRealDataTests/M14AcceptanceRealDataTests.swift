@@ -211,10 +211,7 @@ struct M14AcceptanceRealDataTests {
         var lines = harness.log
         lines.append(contentsOf: report(graph.tally, label: "third person"))
         lines.append(contentsOf: report(firstPerson.tally, label: "first person"))
-        let directory = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
+        let directory = try RepositoryLogs.directory()
         try FileManager.default.createDirectory(
             at: directory, withIntermediateDirectories: true
         )

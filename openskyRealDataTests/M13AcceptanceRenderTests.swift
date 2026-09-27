@@ -151,17 +151,7 @@ struct M13AcceptanceRenderTests {
         let texture = try renderer.renderOffscreen(
             width: width, height: height, animationTime: 1
         )
-        var pixels = [UInt8](repeating: 0, count: width * height * 4)
-        pixels.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
-                base,
-                bytesPerRow: width * 4,
-                from: MTLRegionMake2D(0, 0, width, height),
-                mipmapLevel: 0
-            )
-        }
-        return (texture, pixels)
+        return (texture, RenderedPixels.read(texture))
     }
 
     private static func changedPixels(_ lhs: [UInt8], _ rhs: [UInt8]) -> Int {
@@ -182,10 +172,7 @@ struct M13AcceptanceRenderTests {
         direct: (texture: MTLTexture, pixels: [UInt8]),
         changed: Int
     ) throws {
-        let logs = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
+        let logs = try RepositoryLogs.directory()
         try FileManager.default.createDirectory(at: logs, withIntermediateDirectories: true)
         for (frame, name) in [
             (early, "m13-journal-early.png"),

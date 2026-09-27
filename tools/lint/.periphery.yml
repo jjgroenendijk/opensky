@@ -6,8 +6,8 @@ project: opensky.xcodeproj
 schemes:
   - opensky
   - openskycli
-# The index store comes from `make verify-build`, which `make dead-code` runs first,
-# so the scan never builds on its own.
+# The index store comes from the uncached builds `make dead-code` runs first into
+# its own tree, so the scan never builds on its own.
 skip_build: true
 relative_results: true
 disable_update_check: true

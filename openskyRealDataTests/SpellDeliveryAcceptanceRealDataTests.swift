@@ -297,11 +297,7 @@ struct SpellDeliveryAcceptanceRealDataTests {
         magicka: (Float, Float),
         health: (Float, Float)
     ) throws {
-        let directory = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
-            .appending(path: "spell-delivery-acceptance")
+        let directory = try RepositoryLogs.directory("spell-delivery-acceptance")
         try FileManager.default.createDirectory(
             at: directory, withIntermediateDirectories: true
         )

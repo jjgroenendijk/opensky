@@ -45,3 +45,7 @@ runs anything here, and this bundle is not compiled at all under the `UnitTests`
 No game-derived bytes leave a run: assert on counts, editor IDs and shapes, and write any
 artifact — a render capture included — to gitignored `logs/` through a run directory. A
 rendered frame embeds the user's assets, so it is game content (root `AGENTS.md`).
+
+Find `logs/` with `RepositoryLogs.directory()`, never `#filePath`: the compilation cache's
+prefix mapping compiles source paths to `/^src/...`. Read back and compare offscreen frames
+with `RenderedPixels` rather than another local copy.

@@ -205,10 +205,7 @@ struct RagdollSelfCollisionRealDataTests {
     }
 
     private static func write(report: String) throws {
-        let directory = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
+        let directory = try RepositoryLogs.directory()
         try FileManager.default.createDirectory(
             at: directory, withIntermediateDirectories: true
         )

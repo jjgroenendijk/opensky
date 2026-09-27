@@ -91,30 +91,11 @@ extension FirstPersonRenderRealDataTests {
     @MainActor
     static func frame(_ renderer: Renderer) throws -> [UInt8] {
         let texture = try renderer.renderOffscreen(width: size, height: size)
-        var result = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
-        result.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
-                base,
-                bytesPerRow: texture.width * 4,
-                from: MTLRegionMake2D(0, 0, texture.width, texture.height),
-                mipmapLevel: 0
-            )
-        }
-        return result
+        return RenderedPixels.read(texture)
     }
 
     static func changedPixels(_ lhs: [UInt8], _ rhs: [UInt8]) -> Int {
-        guard lhs.count == rhs.count, !lhs.isEmpty else {
-            return max(lhs.count, rhs.count) / 4
-        }
-        var changed = 0
-        for pixel in stride(from: 0, to: lhs.count, by: 4)
-            where Array(lhs[pixel ..< pixel + 4]) != Array(rhs[pixel ..< pixel + 4])
-        {
-            changed += 1
-        }
-        return changed
+        RenderedPixels.changedCount(lhs, rhs)
     }
 
     /// Writes one capture into gitignored `logs/`. Never committed: the frame

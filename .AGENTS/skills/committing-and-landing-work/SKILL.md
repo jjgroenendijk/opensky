@@ -66,8 +66,6 @@ human `Signed-off-by:`. Enforced by `.githooks/commit-msg/20-no-ai-trailers.sh`.
 ## Hooks
 
 `.githooks/`, wired by `make bootstrap`: pre-commit guards, formats, and lints; commit-msg
-runs the Conventional Commit check; pre-push blocks pushes to `main` and runs
-`make dead-code`, which builds every target incrementally and scans for new unused code but
-runs no tests. Because it builds, a push counts as an xcodebuild: start it in the background
-and not while another build runs. `--no-verify` is for bootstrap and emergencies only, never
-routine.
+runs the Conventional Commit check; pre-push blocks pushes to `main`. No hook builds or
+tests; the `testing-and-verifying` skill covers what to run, including `make dead-code`.
+`--no-verify` is for bootstrap and emergencies only, never routine.

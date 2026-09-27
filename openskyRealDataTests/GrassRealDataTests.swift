@@ -122,17 +122,14 @@ struct GrassRealDataTests {
     }
 
     private var sweepLogURL: URL {
-        logsDirectory.appending(path: "grass-sweep.log")
+        get throws { try logsDirectory.appending(path: "grass-sweep.log") }
     }
 
     private var placementLogURL: URL {
-        logsDirectory.appending(path: "grass-placement.log")
+        get throws { try logsDirectory.appending(path: "grass-placement.log") }
     }
 
     private var logsDirectory: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
+        get throws { try RepositoryLogs.directory() }
     }
 }

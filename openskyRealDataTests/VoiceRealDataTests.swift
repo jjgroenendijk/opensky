@@ -269,10 +269,7 @@ struct VoiceRealDataTests {
     }
 
     private static func writeReport(_ report: String, named name: String) throws {
-        let root = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs/voice-sweep", directoryHint: .isDirectory)
+        let root = try RepositoryLogs.directory("voice-sweep")
         let stamp = ISO8601DateFormatter().string(from: Date())
             .replacingOccurrences(of: ":", with: "")
         let run = root.appending(path: stamp, directoryHint: .isDirectory)

@@ -6,7 +6,7 @@ description: How the Makefile and the tools/ scripts agree on one xcodebuild inv
   warnings-as-errors, products path, the OpenSkyShaderTypes module - and what each knob
   overrides.
 tags: [tool, build, make, xcodebuild]
-timestamp: 2026-08-12T00:00:00Z
+timestamp: 2026-09-27T00:00:00Z
 ---
 
 # Build system and xcodebuild invocation
@@ -195,13 +195,43 @@ understanding rather than assuming.
   edit ranged from 30 to 78 seconds either way, which is machine noise swamping any
   difference. This matches how Apple positions the feature: it is for rebuilding previously
   compiled states, not for the edit-build loop.
-* **A second worktree cannot share the store.** Pointing a fresh worktree's
-  `COMPILATION_CACHE_CAS_PATH` at a warm store built in another one hit 72 entries and took
-  45.2 s against a 45.1 s baseline. The hits are all SDK module builds, whose command lines
-  name only SDK paths; every project source task missed, because its key embeds the
-  absolute source path and no `-file-prefix-map` or `-cache-replay-prefix-map` appears in
-  the compile commands Xcode generates. Sharing a store the way `.vendor/ffmpeg` is shared
-  would buy no wall clock, so nothing does it.
+* **A second worktree shares the store only with prefix mapping.** Without it, a fresh
+  worktree pointed at a warm store hit 72 entries, all SDK module builds, and took 45.2 s
+  against a 45.1 s baseline: every project task's key embeds the absolute source path.
+  See the next section for the settings that fix that.
+
+### One store for every worktree
+
+`Config/Debug.xcconfig` sets `SWIFT_ENABLE_PREFIX_MAPPING`,
+`SWIFT_ENABLE_PROJECT_PREFIX_MAPPING`, `CLANG_ENABLE_PREFIX_MAPPING` and
+`CLANG_ENABLE_PROJECT_PREFIX_MAPPING`. Xcode then compiles with the checkout path
+rewritten to `/^src`, the derived-data temporaries to `/^derived` and the products to
+`/^built`, so the same source produces the same cache key in any worktree. `make
+cache-link` (`tools/link-compile-cache.sh`), which every building target runs first,
+replaces a linked worktree's `DerivedData/CompilationCache.noindex` with a symlink to the
+main checkout's, so every worktree reads and writes one store.
+
+Measured 2026-09-27 with another agent building on the same eight-core machine, so the
+absolute numbers are noisy: `build-for-testing` of the unit plan in a worktree with an
+empty derived-data tree took 169 s against an empty store and 22 s against the store a
+different worktree had just filled, with 161 cache hits.
+
+The mapping has three costs:
+
+* **Index data.** A task replayed from the cache writes no index-store records: the 22 s
+  build above left 61 index units where a compiled build leaves about 1,970. Periphery
+  reads the index store, so `make dead-code` builds uncached into its own tree
+  (`DerivedData-index/`, `INDEX_DATA=`); see
+  [code-smell scans](/decisions/code-smell-scans.md).
+* **`#filePath`.** Source paths compiled into the binary read `/^src/...`, so a test
+  cannot find the checkout from `#filePath`. The real-data suites resolve `logs/` through
+  `RepositoryLogs`, which walks up from the test bundle to the directory holding
+  `opensky.xcodeproj`.
+* **Debug info.** DWARF names sources as `/^src/...`. A command-line `lldb` session needs
+  `settings set target.source-map /^src <checkout>` to show source.
+
+In a linked worktree `make clean DEEP=1` removes only the link; the store itself lives in
+the main checkout's `DerivedData/`.
 
 The cost is disk. The store reached 363 MB after one Debug app build and 1.1 GB after
 roughly fifteen builds across two commits, per worktree, and it is not visibly bounded:

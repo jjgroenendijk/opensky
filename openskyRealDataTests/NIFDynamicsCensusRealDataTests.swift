@@ -242,7 +242,7 @@ struct NIFDynamicsCensusRealDataTests {
     }
 
     private func write(_ report: String) throws {
-        let url = logsDirectory.appending(path: "nif-dynamics-census.log")
+        let url = try logsDirectory.appending(path: "nif-dynamics-census.log")
         try FileManager.default.createDirectory(
             at: logsDirectory, withIntermediateDirectories: true
         )
@@ -251,9 +251,6 @@ struct NIFDynamicsCensusRealDataTests {
     }
 
     private var logsDirectory: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
+        get throws { try RepositoryLogs.directory() }
     }
 }

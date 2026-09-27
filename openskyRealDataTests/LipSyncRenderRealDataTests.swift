@@ -44,14 +44,18 @@ struct LipSyncRenderRealDataTests {
                 name: "lip-\(index)-on.png"
             )
             let repeated = try frame(harness.renderer, time: Float(time), name: nil)
-            let delta = changedPixels(off, on)
+            let delta = RenderedPixels.changedCount(off, on)
             deltas.append(delta)
             #expect(delta > 20, "lip sync at \(time)s changed only \(delta) pixels")
-            #expect(changedPixels(on, repeated) == 0, "\(time)s was not deterministic")
+            #expect(
+                RenderedPixels.changedCount(on, repeated) == 0,
+                "\(time)s was not deterministic"
+            )
         }
+        let captures = try runDirectory.path()
         print(
             "[INFO] lip render A/B: \(Self.voicePath), times \(Self.sampleTimes), "
-                + "changed pixels \(deltas), captures \(runDirectory.path())"
+                + "changed pixels \(deltas), captures \(captures)"
         )
     }
 
@@ -130,31 +134,11 @@ struct LipSyncRenderRealDataTests {
         if let name {
             try FrameScreenshot.write(texture: texture, to: runDirectory.appending(path: name))
         }
-        var pixels = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
-        pixels.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
-                base,
-                bytesPerRow: texture.width * 4,
-                from: MTLRegionMake2D(0, 0, texture.width, texture.height),
-                mipmapLevel: 0
-            )
-        }
-        return pixels
+        return RenderedPixels.read(texture)
     }
 
     private var runDirectory: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs/test-fast/latest")
-    }
-
-    private func changedPixels(_ lhs: [UInt8], _ rhs: [UInt8]) -> Int {
-        guard lhs.count == rhs.count else { return max(lhs.count, rhs.count) / 4 }
-        return stride(from: 0, to: lhs.count, by: 4).count { index in
-            lhs[index ..< index + 4] != rhs[index ..< index + 4]
-        }
+        get throws { try RepositoryLogs.directory("test-fast/latest") }
     }
 }
 

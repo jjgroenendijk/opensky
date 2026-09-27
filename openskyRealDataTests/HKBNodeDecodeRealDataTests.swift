@@ -159,7 +159,7 @@ struct HKBNodeDecodeRealDataTests {
     }
 
     private func write(_ report: String) throws {
-        let url = logsDirectory.appending(path: "hkx-behavior-nodes.log")
+        let url = try logsDirectory.appending(path: "hkx-behavior-nodes.log")
         try FileManager.default.createDirectory(
             at: logsDirectory, withIntermediateDirectories: true
         )
@@ -167,9 +167,6 @@ struct HKBNodeDecodeRealDataTests {
     }
 
     private var logsDirectory: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
+        get throws { try RepositoryLogs.directory() }
     }
 }

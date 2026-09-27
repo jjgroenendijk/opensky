@@ -130,6 +130,7 @@ if [ -d "$worktree_home" ]; then
         if grep -qxF "$checkout" "$live"; then continue; fi
         add "stale worktree cache" "$checkout/DerivedData"
         add "stale worktree cache" "$checkout/DerivedData-optimized"
+        add "stale worktree cache" "$checkout/DerivedData-index"
         add "stale worktree output" "$checkout/build"
         add "stale worktree output" "$checkout/logs"
     done

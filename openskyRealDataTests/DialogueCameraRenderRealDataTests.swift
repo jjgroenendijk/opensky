@@ -140,16 +140,6 @@ struct DialogueCameraRenderRealDataTests {
             height: FirstPersonRenderRealDataTests.size,
             animationTime: 0
         )
-        var result = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
-        result.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
-                base,
-                bytesPerRow: texture.width * 4,
-                from: MTLRegionMake2D(0, 0, texture.width, texture.height),
-                mipmapLevel: 0
-            )
-        }
-        return result
+        return RenderedPixels.read(texture)
     }
 }

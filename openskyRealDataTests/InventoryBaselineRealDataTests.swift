@@ -136,10 +136,7 @@ struct InventoryBaselineRealDataTests {
     }
 
     private static var logURL: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
-            .appending(path: "inventory-baseline-sweep.log")
+        get throws { try RepositoryLogs.directory().appending(path: "inventory-baseline-sweep.log")
+        }
     }
 }

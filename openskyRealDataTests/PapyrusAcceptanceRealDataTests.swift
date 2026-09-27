@@ -204,13 +204,10 @@ struct PapyrusAcceptanceRealDataTests {
     }
 
     private var logURL: URL {
-        logsDirectory.appending(path: "papyrus-m11-acceptance.log")
+        get throws { try logsDirectory.appending(path: "papyrus-m11-acceptance.log") }
     }
 
     private var logsDirectory: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
+        get throws { try RepositoryLogs.directory() }
     }
 }

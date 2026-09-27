@@ -19,8 +19,7 @@ timestamp: 2026-09-27T00:00:00Z
 - Linter: no standalone Metal linter exists (clang-tidy needs a Metal compile database;
   not worth the setup for one shader file). Documented exception: the Metal compiler is
   the linter — `MTL_TREAT_WARNINGS_AS_ERRORS = YES` in both build configs -> any shader
-  warning fails every app build, including the one the pre-push hook runs through
-  `make dead-code`.
+  warning fails every app build.
 
 ## Rationale
 

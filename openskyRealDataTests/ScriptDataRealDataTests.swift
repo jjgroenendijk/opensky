@@ -383,14 +383,11 @@ private struct PexBackingProbe {
 
 extension ScriptDataRealDataTests {
     private var logURL: URL {
-        logsDirectory.appending(path: "vmad-sweep.log")
+        get throws { try logsDirectory.appending(path: "vmad-sweep.log") }
     }
 
     private var logsDirectory: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
+        get throws { try RepositoryLogs.directory() }
     }
 }
 

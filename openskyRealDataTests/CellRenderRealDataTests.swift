@@ -300,7 +300,7 @@ extension CellRenderRealDataTests {
     /// Appends one curve line to the sidecar log immediately (survives an
     /// abort). Best-effort: a failed write must not mask the real assertion.
     private func appendCurveLine(_ line: String) {
-        let url = logsDirectory.appending(path: "cell-stream-5x5.log")
+        guard let url = try? logsDirectory.appending(path: "cell-stream-5x5.log") else { return }
         try? FileManager.default.createDirectory(
             at: logsDirectory, withIntermediateDirectories: true
         )
@@ -315,17 +315,7 @@ extension CellRenderRealDataTests {
 
     /// BGRA readback of the whole offscreen target.
     private func readPixels(texture: MTLTexture) -> [UInt8] {
-        var pixels = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
-        pixels.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return } // non-empty
-            texture.getBytes(
-                base,
-                bytesPerRow: texture.width * 4,
-                from: MTLRegionMake2D(0, 0, texture.width, texture.height),
-                mipmapLevel: 0
-            )
-        }
-        return pixels
+        RenderedPixels.read(texture)
     }
 
     /// Fraction of pixels that are not the black clear color (any channel
@@ -341,13 +331,10 @@ extension CellRenderRealDataTests {
         return Double(lit) / Double(pixels.count / 4)
     }
 
-    /// Repo root derived from this source file's location; logs/ is the
-    /// designated gitignored output directory (AGENTS.md "Code scripts").
+    /// Resolved through `RepositoryLogs`; logs/ is the designated gitignored
+    /// output directory (AGENTS.md "Code scripts").
     private var logsDirectory: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent() // openskyTests/
-            .deletingLastPathComponent() // repo root
-            .appending(path: "logs")
+        get throws { try RepositoryLogs.directory() }
     }
 
     /// Summary line + pixel stats next to the PNG — print() is not captured
@@ -363,7 +350,7 @@ extension CellRenderRealDataTests {
         [INFO] non-background pixels: \(percent)%
         [INFO] cell render frame: \(pngURL.path)
         """
-        let url = logsDirectory.appending(path: "cell-whiterunexterior06.log")
+        let url = try logsDirectory.appending(path: "cell-whiterunexterior06.log")
         try stats.write(to: url, atomically: true, encoding: .utf8)
         print(stats)
     }
@@ -388,7 +375,7 @@ extension CellRenderRealDataTests {
             at: logsDirectory,
             withIntermediateDirectories: true
         )
-        let url = logsDirectory.appending(path: "cell-whiterunexterior06.png")
+        let url = try logsDirectory.appending(path: "cell-whiterunexterior06.png")
         let destination = try #require(CGImageDestinationCreateWithURL(
             url as CFURL,
             UTType.png.identifier as CFString,

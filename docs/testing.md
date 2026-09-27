@@ -49,7 +49,7 @@ in both bundles.
   pass per run for the same selection.
 * `make verify-build` — compiles the app, `openskycli`, `openskyTests`, and
   `openskyRealDataTests` without running a test. It is the only routine command that
-  compiles the real-data suites, and it writes the index store the dead-code scan reads.
+  compiles the real-data suites.
 * `make test-report` — pass/fail summary plus each failing test's name and
   message, plus the code coverage percentage, read from the newest fixed bundle
   (falls back to the DerivedData glob). It waits for the bundle to finalize, so
@@ -71,8 +71,8 @@ in both bundles.
 No hook runs the tests (changed 2026-09-27). What to test for a change is the
 author's judgment, guided by the `testing-and-verifying` skill
 (`.AGENTS/skills/testing-and-verifying/SKILL.md`), and the commit's `Tests:` section
-records what was run. The pre-push hook runs `make dead-code`, which builds every target
-through `make verify-build` and scans for new unused code, but it runs no test. GitHub
+records what was run. The pre-push hook only blocks pushes to `main`; the dead-code scan
+runs on demand through `make dead-code`. GitHub
 Actions is quota-suspended (issue #70), so `ci.yml` is manual-dispatch only; a dispatched
 run is the one place the whole unit plan, the builds, and the UI tests still run
 together.
@@ -82,6 +82,37 @@ dead-code scan on every push, with a tree-hash stamp (issue #417) meant to skip 
 had already passed. Session mining found the stamp never matched in practice, because
 commits were amended between the test run and the push, so every push paid the whole
 gate again. The stamp tooling was removed with the gate.
+
+## Where testing time goes
+
+Measured 2026-09-27 on an eight-core M1 (four performance cores) while another agent was
+building and testing in a second worktree, so single numbers carry noise:
+
+| Step | Time |
+| --- | --- |
+| First unit build in a fresh worktree, empty compilation cache | 169 s |
+| The same with the shared compilation cache warm | 22 s |
+| Rebuild after pulling one 22-file commit | about 230 s: 543 app and 759 test compile lines |
+| Rebuild after an edit inside one function body | 19 s: one app file, no test file |
+| Rebuild after adding one internal method | 58 s: 79 app files, 16 test files |
+| Whole unit plan, warm, parallel testing on | 46 s |
+| Whole unit plan, warm, parallel testing off | 66 s |
+| One filtered suite or test, warm | about 5 s |
+
+Building costs more than testing. Cross-module incremental builds are already active, so
+the test bundle recompiles only files that use a changed declaration; a pull that changes
+widely used types still recompiles most of both targets, because the whole engine is one
+module that every test file imports; issue #582 tracks splitting it. The shared compilation
+cache ([build
+system](/tools/build-system.md)) removes the cold first build in a fresh worktree.
+
+Of the unit plan's 4,701 Swift Testing tests, test code accounts for about 41 s run
+serially, and xcodebuild plus host start-up for the rest. One soak test,
+`RagdollStabilityTests/survivesRepeatedCollapse()`, takes 10 s alone, but skipping it
+changed the parallel run by 1 to 8 s across two paired runs, because it overlaps other
+tests; it stays in the routine run. Swift Testing reports a duration that includes time a
+`@MainActor` test waited for the main actor, so per-test durations from a parallel run
+are not a cost profile; measure one with `-parallel-testing-enabled NO`.
 
 ## Test plans
 

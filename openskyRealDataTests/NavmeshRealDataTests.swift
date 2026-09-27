@@ -295,10 +295,6 @@ struct NavmeshRealDataTests {
     /// logs/navmesh-census.log (gitignored) beside the other real-data
     /// sidecars.
     private var logURL: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent() // openskyRealDataTests/
-            .deletingLastPathComponent() // repo root
-            .appending(path: "logs")
-            .appending(path: "navmesh-census.log")
+        get throws { try RepositoryLogs.directory().appending(path: "navmesh-census.log") }
     }
 }

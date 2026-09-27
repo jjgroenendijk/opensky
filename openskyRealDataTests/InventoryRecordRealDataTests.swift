@@ -123,10 +123,6 @@ struct InventoryRecordRealDataTests {
     ]
 
     private static var logURL: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
-            .appending(path: "inventory-sweep.log")
+        get throws { try RepositoryLogs.directory().appending(path: "inventory-sweep.log") }
     }
 }

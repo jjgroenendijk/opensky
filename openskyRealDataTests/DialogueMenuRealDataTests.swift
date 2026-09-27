@@ -48,11 +48,10 @@ struct DialogueMenuRealDataTests {
     /// is a `nonisolated` stored default.
     private static let activationTicks = 30
 
-    /// Gitignored run output, resolved off this file rather than off the
-    /// working directory: the test host's is the volume root, not the checkout.
+    /// Gitignored run output, resolved through `RepositoryLogs` rather than off
+    /// the working directory: the test host's is the volume root, not the checkout.
     private static var logs: URL {
-        URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-            .deletingLastPathComponent().appending(path: "logs/dialogue-menu")
+        get throws { try RepositoryLogs.directory("dialogue-menu") }
     }
 
     // MARK: - Contract
@@ -193,7 +192,7 @@ struct DialogueMenuRealDataTests {
         }
         let open = try render(renderer)
 
-        let changed = Self.changedPixels(closed.pixels, open.pixels)
+        let changed = RenderedPixels.changedCount(closed.pixels, open.pixels)
         #expect(changed > 100, "open dialogue menu changed only \(changed) pixels")
         #expect(renderer.lastSWFDrawStats.skippedItems == 0)
         #expect(DialogueMenuMovieBridge.diagnostics(runtime: runtime).faults == 0)
@@ -218,6 +217,16 @@ struct DialogueMenuRealDataTests {
             """,
             named: "dialogue-menu-acceptance.log"
         )
+    }
+
+    @MainActor
+    private func makeRenderer(device: MTLDevice) throws -> Renderer {
+        try RenderedPixels.offscreenRenderer(device: device, width: Self.width, height: Self.height)
+    }
+
+    @MainActor
+    private func render(_ renderer: Renderer) throws -> (texture: MTLTexture, pixels: [UInt8]) {
+        try RenderedPixels.renderFrame(renderer, width: Self.width, height: Self.height)
     }
 }
 
@@ -303,41 +312,5 @@ extension DialogueMenuRealDataTests {
             to: Self.logs.appending(path: name), atomically: true, encoding: .utf8
         )
         print(text)
-    }
-
-    @MainActor
-    private func makeRenderer(device: MTLDevice) throws -> Renderer {
-        let view = MTKView(
-            frame: CGRect(x: 0, y: 0, width: Self.width, height: Self.height),
-            device: device
-        )
-        view.isPaused = true
-        view.enableSetNeedsDisplay = false
-        return try Renderer(view: view)
-    }
-
-    @MainActor
-    private func render(_ renderer: Renderer) throws -> (texture: MTLTexture, pixels: [UInt8]) {
-        let texture = try renderer.renderOffscreen(
-            width: Self.width, height: Self.height, animationTime: 1
-        )
-        var pixels = [UInt8](repeating: 0, count: Self.width * Self.height * 4)
-        pixels.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
-                base,
-                bytesPerRow: Self.width * 4,
-                from: MTLRegionMake2D(0, 0, Self.width, Self.height),
-                mipmapLevel: 0
-            )
-        }
-        return (texture, pixels)
-    }
-
-    private static func changedPixels(_ lhs: [UInt8], _ rhs: [UInt8]) -> Int {
-        stride(from: 0, to: min(lhs.count, rhs.count), by: 4).reduce(0) { count, index in
-            let changed = (0 ..< 3).contains { lhs[index + $0] != rhs[index + $0] }
-            return changed ? count + 1 : count
-        }
     }
 }

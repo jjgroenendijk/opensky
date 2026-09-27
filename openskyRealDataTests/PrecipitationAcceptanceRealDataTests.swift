@@ -185,32 +185,15 @@ struct PrecipitationAcceptanceRealDataTests {
     }
 
     private func pixelDelta(_ lhs: [UInt8], _ rhs: [UInt8]) -> Int {
-        stride(from: 0, to: min(lhs.count, rhs.count), by: 4).reduce(0) { count, pixel in
-            let moved = (0 ..< 3).contains { channel in
-                abs(Int(lhs[pixel + channel]) - Int(rhs[pixel + channel]))
-                    > Self.channelNoiseFloor
-            }
-            return count + (moved ? 1 : 0)
-        }
+        RenderedPixels.changedCount(lhs, rhs, tolerance: Self.channelNoiseFloor)
     }
 
     private static func readPixels(_ texture: MTLTexture) -> [UInt8] {
-        var pixels = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
-        pixels.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
-                base,
-                bytesPerRow: texture.width * 4,
-                from: MTLRegionMake2D(0, 0, texture.width, texture.height),
-                mipmapLevel: 0
-            )
-        }
-        return pixels
+        RenderedPixels.read(texture)
     }
 
     private func writeEvidence(_ frames: EvidenceFrames, report: String) throws {
-        let logs = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-            .deletingLastPathComponent().appending(path: "logs")
+        let logs = try RepositoryLogs.directory()
         try FileManager.default.createDirectory(at: logs, withIntermediateDirectories: true)
         for (name, pixels) in [
             ("clear", frames.clear), ("paused-rain", frames.pausedRain),

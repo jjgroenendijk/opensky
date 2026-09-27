@@ -78,13 +78,10 @@ struct PexRealDataTests {
     }
 
     private var logURL: URL {
-        logsDirectory.appending(path: "pex-census.log")
+        get throws { try logsDirectory.appending(path: "pex-census.log") }
     }
 
     private var logsDirectory: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
+        get throws { try RepositoryLogs.directory() }
     }
 }

@@ -28,6 +28,9 @@ TEST_RESULTS     := build/test-results
 DERIVED_DATA     ?= $(CURDIR)/DerivedData
 XCODEBUILD_DD    := -derivedDataPath $(DERIVED_DATA)
 export OPENSKY_DERIVED_DATA := $(DERIVED_DATA)
+# The dead-code scan's own build tree: uncached, so its index store is complete.
+INDEX_DATA       ?= $(DERIVED_DATA)-index
+export OPENSKY_INDEX_DATA := $(INDEX_DATA)
 # Xcode's default cache location. Only `make clean` uses it, to sweep what an
 # Xcode GUI build or an older checkout left there.
 XCODE_DERIVED_DATA ?= $(HOME)/Library/Developer/Xcode/DerivedData
@@ -48,6 +51,10 @@ PRUNE_DAYS       ?= 14
 # the shell twin of this.
 xcb = xcodebuild -project $(PROJECT) -scheme $(1) -configuration $(2) \
 	$(XCODEBUILD_DD) $(XCODEBUILD_FLAGS)
+# The same for the dead-code index tree: Debug, its own derived data, no cache.
+xcb_index = xcodebuild -project $(PROJECT) -scheme $(1) -configuration Debug \
+	-derivedDataPath $(INDEX_DATA) COMPILATION_CACHE_ENABLE_CACHING=NO \
+	$(XCODEBUILD_FLAGS)
 XCB_APP          := $(call xcb,$(SCHEME),$(CONFIG))
 XCB_CLI          := $(call xcb,$(CLI_SCHEME),$(CONFIG))
 XCB_RELEASE      := $(call xcb,$(SCHEME),Release)
@@ -76,7 +83,7 @@ METAL_FILES      := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
 
 ##@ Getting started
 
-.PHONY: help bootstrap hooks ffmpeg vendor-link vendor-prune
+.PHONY: help bootstrap hooks ffmpeg vendor-link vendor-prune cache-link
 
 help: ## Show this list
 	@awk 'BEGIN { FS = ":.*## "; print "Usage: make <target> [VAR=value]" } \
@@ -100,6 +107,9 @@ vendor-link: ## Point this worktree's .vendor at the main checkout's copy
 
 vendor-prune: ## Replace per-worktree .vendor copies with links (run when idle)
 	@./tools/ffmpeg/prune-vendor.sh
+
+cache-link: ## Point this worktree's compilation cache at the main checkout's
+	@./tools/link-compile-cache.sh
 
 ##@ Format and lint
 
@@ -161,10 +171,11 @@ docs-links: ## Check links inside docs/ resolve (log.md skipped)
 # Both scans compare against a baseline of the findings that were already in the
 # tree, so they fail only on new ones; issue #569 tracks the existing ones
 # (docs/decisions/code-smell-scans.md). dup-check reads sources only and is part
-# of `make lint`. dead-code reads the compiler's index store, so it runs
-# verify-build first; the pre-push hook runs `make dead-code`.
+# of `make lint`. dead-code reads the compiler's index store, which a build
+# served from the shared compilation cache leaves nearly empty, so it builds
+# every target uncached into its own tree, INDEX_DATA. On demand, not on push.
 
-.PHONY: dup-check dup-baseline dead-code dead-code-baseline verify-build
+.PHONY: dup-check dup-baseline dead-code dead-code-baseline dead-code-index verify-build
 
 dup-check: ## Fail on new copy-pasted Swift (jscpd)
 	@./tools/lint/duplicates.sh $(SWIFT_PATHS)
@@ -172,28 +183,38 @@ dup-check: ## Fail on new copy-pasted Swift (jscpd)
 dup-baseline: ## Rewrite the duplication baseline after removing clones
 	@./tools/lint/duplicates.sh -u $(SWIFT_PATHS)
 
-dead-code: verify-build ## Build, then fail on new unused code (Periphery)
+dead-code: dead-code-index ## Build uncached, then fail on new unused code (Periphery)
 	@./tools/lint/dead-code.sh
 
-dead-code-baseline: verify-build ## Rewrite the unused-code baseline after a cleanup
+dead-code-baseline: dead-code-index ## Rewrite the unused-code baseline after a cleanup
 	@./tools/lint/dead-code.sh -u
+
+# The three builds whose index store Periphery reads, with the compilation cache
+# off, because a cache hit skips writing index data. Its own tree, so it never
+# invalidates the cached one. The first run in a worktree is a full build.
+dead-code-index: vendor-link
+	@$(XCB_RUN) dead-code-unit $(call xcb_index,$(SCHEME)) \
+		-destination '$(DESTINATION)' $(UNIT_PLAN) build-for-testing
+	@$(XCB_RUN) dead-code-realdata $(call xcb_index,$(SCHEME)) \
+		-destination '$(DESTINATION)' -testPlan RealData build-for-testing
+	@$(XCB_RUN) dead-code-cli $(call xcb_index,$(CLI_SCHEME)) build
 
 # Every target compiled, no test run: openskyTests, the app with
 # openskyRealDataTests, and openskycli. Catches a change that breaks a target it
-# did not test, and writes the index store Periphery reads. Incremental.
-verify-build: vendor-link ## Compile app, CLI, and both unit bundles without running tests
-	@$(XCB_RUN) dead-code-unit $(XCB_TEST) $(UNIT_PLAN) build-for-testing
-	@$(XCB_RUN) dead-code-realdata $(XCB_TEST) -testPlan RealData build-for-testing
-	@$(XCB_RUN) dead-code-cli $(XCB_CLI) build
+# did not test. Incremental and served from the shared cache.
+verify-build: vendor-link cache-link ## Compile app, CLI, and both unit bundles without running tests
+	@$(XCB_RUN) verify-unit $(XCB_TEST) $(UNIT_PLAN) build-for-testing
+	@$(XCB_RUN) verify-realdata $(XCB_TEST) -testPlan RealData build-for-testing
+	@$(XCB_RUN) verify-cli $(XCB_CLI) build
 
 ##@ Build and run
 
 .PHONY: build cli run-cli install app-path cli-path probe icon
 
-build: vendor-link ## Build the app [CONFIG]
+build: vendor-link cache-link ## Build the app [CONFIG]
 	@$(XCB_RUN) build $(XCB_APP) build
 
-cli: vendor-link ## Build the openskycli dev tool [CONFIG]
+cli: vendor-link cache-link ## Build the openskycli dev tool [CONFIG]
 	@$(XCB_RUN) cli $(XCB_CLI) build
 
 run-cli: cli ## Build and run openskycli, e.g. make run-cli ARGS="vfs ls"
@@ -201,7 +222,7 @@ run-cli: cli ## Build and run openskycli, e.g. make run-cli ARGS="vfs ls"
 
 # Release shares the Debug cache directory (xcodebuild keeps the configurations
 # apart inside it), so a repeat install builds incrementally.
-install: vendor-link ## Build the Release app and copy it to /Applications
+install: vendor-link cache-link ## Build the Release app and copy it to /Applications
 	@$(XCB_RUN) install $(XCB_RELEASE) ARCHS=arm64 build
 	@rm -rf /Applications/opensky.app
 	@ditto $(DERIVED_DATA)/Build/Products/Release/opensky.app /Applications/opensky.app
@@ -223,7 +244,7 @@ icon: ## Regenerate the AppIcon PNGs from opensky/App/Branding/opensky-logo.svg
 
 .PHONY: test test-fast test-one test-ui test-report test-sanitize test-perms
 
-test: vendor-link ## Build and run the unit tests through the build system
+test: vendor-link cache-link ## Build and run the unit tests through the build system
 	@bundle="$$($(RUN_DIR) -b $(TEST_RESULTS) unit)/unit.xcresult"; \
 		TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
 		$(XCB_RUN) test $(XCB_TEST) -resultBundlePath "$$bundle" \
@@ -233,7 +254,7 @@ test: vendor-link ## Build and run the unit tests through the build system
 # system: seconds instead of the ~80 of `make test` (issue #417). It rebuilds on
 # its own when a source, Config/, or project file is newer; B=1 forces that. The
 # default for every unit run, filtered or whole plan.
-test-fast: vendor-link ## Rerun tests without rebuilding [T='Suite/test()'] [B=1]
+test-fast: vendor-link cache-link ## Rerun tests without rebuilding [T='Suite/test()'] [B=1]
 	@case "$(T)" in \
 		"") ./tools/test-fast.sh $(if $(B),-B,) ;; \
 		openskyTests/*) ./tools/test-fast.sh $(if $(B),-B,) -t "$(T)" ;; \
@@ -242,7 +263,7 @@ test-fast: vendor-link ## Rerun tests without rebuilding [T='Suite/test()'] [B=1
 
 # A selector under openskyUITests switches to the UI plan; anything else runs in
 # the unit plan. Keeping the plans apart avoids the deadlock described above.
-test-one: vendor-link ## Build and run one test: T=Class[/method] or T=Target/Class/method
+test-one: vendor-link cache-link ## Build and run one test: T=Class[/method] or T=Target/Class/method
 	@test -n "$(T)" || { \
 		echo "[ERROR] usage: make test-one T=ClassName[/methodName]"; \
 		echo "        or: make test-one T=TargetName/ClassName/methodName"; \
@@ -255,7 +276,7 @@ test-one: vendor-link ## Build and run one test: T=Class[/method] or T=Target/Cl
 		$(XCB_RUN) test-one $(XCB_TEST) -resultBundlePath "$$bundle" \
 		$$plan -only-testing:"$$spec" test
 
-test-ui: vendor-link ## Build and run the UI tests (launches and drives the app)
+test-ui: vendor-link cache-link ## Build and run the UI tests (launches and drives the app)
 	@./tools/test-ui.sh \
 		$(PROJECT) $(SCHEME) '$(DESTINATION)' $(XCODEBUILD_FLAGS)
 
@@ -265,7 +286,7 @@ test-report: ## Summarize the newest test result bundle, failures included
 # openskyTests under TSan, then under ASan with UBSan (issue #383); the two cannot
 # share a build. Too slow for routine runs, so run it periodically and
 # before a milestone acceptance.
-test-sanitize: vendor-link ## Run the unit tests under sanitizers [SAN=Thread|Address] [CAP=MB]
+test-sanitize: vendor-link cache-link ## Run the unit tests under sanitizers [SAN=Thread|Address] [CAP=MB]
 	@./tools/test-sanitize.sh $(if $(SAN),-o $(SAN),) $(if $(CAP),-c $(CAP),)
 
 test-perms: ## Check the one-time macOS permission grants tests need
@@ -282,7 +303,7 @@ test-perms: ## Check the one-time macOS permission grants tests need
 
 # One test through the fast path of test-fast (issue #417): a warm rerun pays
 # only for the test itself.
-realtest: vendor-link ## Run one real-data test: T='Class/method()' [CAP=MB] [B=1]
+realtest: vendor-link cache-link ## Run one real-data test: T='Class/method()' [CAP=MB] [B=1]
 	@test -n "$(T)" || { \
 		echo "[ERROR] usage: make realtest T='Class/method()' [CAP=MB]"; \
 		echo "        selector must resolve to exactly one test (fully qualified)"; \
@@ -294,23 +315,23 @@ realtest: vendor-link ## Run one real-data test: T='Class/method()' [CAP=MB] [B=
 	./tools/test-fast.sh -p RealData -t "$$spec" \
 		$(if $(CAP),-c $(CAP),) $(if $(B),-B,)
 
-realtest-all: vendor-link ## Run the whole real-data plan [CAP=MB]
+realtest-all: vendor-link cache-link ## Run the whole real-data plan [CAP=MB]
 	@./tools/realtest.sh $(if $(CAP),-c $(CAP),)
 
 # `make test` never compiles the real-data suites, so a build break there used to
 # stay hidden (issue #457). Compiling needs no install.
-realdata-build: vendor-link ## Compile the real-data suites without running them
+realdata-build: vendor-link cache-link ## Compile the real-data suites without running them
 	@$(XCB_RUN) realdata-build $(XCB_TEST) -testPlan RealData build-for-testing
 
 # The perf gates build optimized, because -Onone makes tight simd code an order
 # of magnitude slower (issue #392). They use their own cache directory,
 # DerivedData-optimized/, so the Debug build survives.
-realtest-perf: vendor-link ## Run the physics perf gate on an optimized build [CAP=MB]
+realtest-perf: vendor-link cache-link ## Run the physics perf gate on an optimized build [CAP=MB]
 	@./tools/realtest.sh -O \
 		-t 'openskyRealDataTests/DynamicBodyRealDataTests/settlesAndPushesVanillaClutter()' \
 		$(if $(CAP),-c $(CAP),)
 
-realtest-npc-perf: vendor-link ## Measure NPC behavior graphs at the mover cap, optimized [CAP=MB]
+realtest-npc-perf: vendor-link cache-link ## Measure NPC behavior graphs at the mover cap, optimized [CAP=MB]
 	@./tools/realtest.sh -O \
 		-t 'openskyRealDataTests/NPCMovementRealDataTests/measuresVanillaGraphsAtMoverCap()' \
 		$(if $(CAP),-c $(CAP),)
@@ -327,10 +348,11 @@ prune: ## Delete stale worktree caches and old run output [PRUNE_DAYS=14] [DRY_R
 # Keeps DerivedData/CompilationCache.noindex. Its entries are keyed on the full
 # compile command and inputs, so they cannot go stale, and keeping them makes the
 # next Debug build take about 18 seconds instead of 45 (issue #341). DEEP=1
-# removes it too, for timing a truly cold build.
+# removes it too, for timing a truly cold build. In a linked worktree it is a link
+# to the main checkout's shared store, and DEEP=1 removes only the link.
 clean: ## Remove build output and caches [DEEP=1 also drops the compile cache]
 	@rm -rf build
-	@for dd in "$(DERIVED_DATA)" "$(DERIVED_DATA)-optimized"; do \
+	@for dd in "$(DERIVED_DATA)" "$(DERIVED_DATA)-optimized" "$(INDEX_DATA)"; do \
 		[ -d "$$dd" ] || continue; \
 		if [ -n "$(DEEP)" ]; then \
 			rm -rf "$$dd"; \

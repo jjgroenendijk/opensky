@@ -137,9 +137,9 @@ struct SystemMenuAcceptanceRealDataTests {
         #expect(runtime.tally.unimplementedTotal == 0)
         #expect(runtime.root.children.contains { $0.name == "QuestJournalFader" })
         #expect(stats.drawCalls > 0, "the vanilla menu movie drew nothing")
-        let broughtUpChanged = Self.changedPixels(empty, broughtUp)
+        let broughtUpChanged = RenderedPixels.changedCount(empty, broughtUp)
         #expect(broughtUpChanged > 100, "menu bring-up changed only \(broughtUpChanged) pixels")
-        let activatedChanged = Self.changedPixels(empty, activated)
+        let activatedChanged = RenderedPixels.changedCount(empty, activated)
         #expect(activatedChanged > 100, "populated menu changed only \(activatedChanged) pixels")
         return SystemPageMeasurement(
             diagnostics: diagnostics,
@@ -166,9 +166,9 @@ struct SystemMenuAcceptanceRealDataTests {
         let frame = try render(renderer)
         let rows = SystemMenuMovieBridge.settingsCategoryLabels(runtime: runtime)
         #expect(rows == ["$Gameplay", "$Display", "$Audio"])
-        let changed = Self.changedPixels(empty, frame.pixels)
+        let changed = RenderedPixels.changedCount(empty, frame.pixels)
         #expect(changed > 100, "settings changed only \(changed) pixels")
-        let transition = Self.changedPixels(activated, frame.pixels)
+        let transition = RenderedPixels.changedCount(activated, frame.pixels)
         #expect(transition > 100, "settings transition changed only \(transition) pixels")
         return SettingsMeasurement(
             frame: frame,
@@ -198,40 +198,12 @@ struct SystemMenuAcceptanceRealDataTests {
 
     @MainActor
     private func makeRenderer(device: MTLDevice) throws -> Renderer {
-        let view = MTKView(
-            frame: CGRect(x: 0, y: 0, width: Self.width, height: Self.height),
-            device: device
-        )
-        view.isPaused = true
-        view.enableSetNeedsDisplay = false
-        return try Renderer(view: view)
+        try RenderedPixels.offscreenRenderer(device: device, width: Self.width, height: Self.height)
     }
 
     @MainActor
     private func render(_ renderer: Renderer) throws -> (texture: MTLTexture, pixels: [UInt8]) {
-        let texture = try renderer.renderOffscreen(
-            width: Self.width,
-            height: Self.height,
-            animationTime: 1
-        )
-        var pixels = [UInt8](repeating: 0, count: Self.width * Self.height * 4)
-        pixels.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
-                base,
-                bytesPerRow: Self.width * 4,
-                from: MTLRegionMake2D(0, 0, Self.width, Self.height),
-                mipmapLevel: 0
-            )
-        }
-        return (texture, pixels)
-    }
-
-    private static func changedPixels(_ lhs: [UInt8], _ rhs: [UInt8]) -> Int {
-        stride(from: 0, to: min(lhs.count, rhs.count), by: 4).reduce(0) { count, index in
-            let changed = (0 ..< 3).contains { lhs[index + $0] != rhs[index + $0] }
-            return count + (changed ? 1 : 0)
-        }
+        try RenderedPixels.renderFrame(renderer, width: Self.width, height: Self.height)
     }
 }
 
@@ -313,7 +285,6 @@ private enum SystemMenuAcceptanceEvidence {
     }
 
     private static var logs: URL {
-        URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-            .deletingLastPathComponent().appending(path: "logs")
+        get throws { try RepositoryLogs.directory() }
     }
 }

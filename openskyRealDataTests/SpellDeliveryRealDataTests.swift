@@ -192,15 +192,11 @@ struct SpellDeliveryRealDataTests {
     /// The census into a directory under gitignored `logs/`, so a pull request
     /// can link the run rather than describe it.
     ///
-    /// Anchored on the source file rather than the working directory, which in
-    /// a test host is `/` — the same rule every other real-data suite that
-    /// leaves an artifact behind follows.
+    /// Resolved through `RepositoryLogs` rather than the working directory,
+    /// which in a test host is `/` — the same rule every other real-data suite
+    /// that leaves an artifact behind follows.
     private func write(_ report: String) throws {
-        let directory = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
-            .appending(path: "spell-delivery")
+        let directory = try RepositoryLogs.directory("spell-delivery")
         try FileManager.default.createDirectory(
             at: directory,
             withIntermediateDirectories: true

@@ -8,8 +8,8 @@ description: Decides what to test and verify for a change in OpenSky and how to 
 
 # Testing and verifying
 
-No hook runs the tests. The pre-push hook only builds and scans for unused code, so what
-gets tested before a push is your call, and the PR's `Tests:` line records it. Aim for
+No hook runs the tests or builds. What gets tested and scanned before a push is your call,
+and the commit's `Tests:` section records it. Aim for
 evidence proportional to risk: enough that you would bet the change works, no more.
 The mechanics behind every command below are in `docs/testing.md`.
 
@@ -48,13 +48,16 @@ test first, watch it fail, then fix.
 - `make verify-build` compiles the app, `openskycli`, and both unit bundles without running
   a test. It is the only routine command that compiles `openskyRealDataTests`, and the
   cheapest way to catch a type change that breaks a target you did not test.
+- `make dead-code` scans for new unused code. Run it when a change adds, removes, or stops
+  using declarations. It builds uncached into its own tree, so its first run in a worktree
+  is a full build.
 - After a failure, `make test-report` names the failing tests and messages. Do not
   hand-parse `.xcresult` JSON.
 
 ## Long runs
 
 Anything that builds (`make test-fast` after an edit, `make test`, `make verify-build`,
-`make cli`, `make realtest`, `make install`, a first build in a fresh worktree) can pass the
+`make cli`, `make realtest`, `make dead-code`, `make install`) can pass the
 two-minute tool timeout. Start it with `run_in_background` and wait for the completion
 notification rather than polling a log.
 

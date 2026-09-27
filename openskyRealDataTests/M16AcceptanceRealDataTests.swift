@@ -205,10 +205,7 @@ struct M16AcceptanceRealDataTests {
     /// FormIDs, counts and timings only. Nothing game-derived leaves the
     /// gitignored run directory.
     private static func write(_ lines: [String]) throws {
-        let directory = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
+        let directory = try RepositoryLogs.directory()
         try FileManager.default.createDirectory(
             at: directory, withIntermediateDirectories: true
         )

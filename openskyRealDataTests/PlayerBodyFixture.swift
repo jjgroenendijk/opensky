@@ -123,10 +123,7 @@ enum PlayerBodyFixture {
     }
 
     static func logsDirectory() throws -> URL {
-        let directory = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
+        let directory = try RepositoryLogs.directory()
         try FileManager.default.createDirectory(
             at: directory, withIntermediateDirectories: true
         )
