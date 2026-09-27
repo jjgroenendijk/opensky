@@ -62,6 +62,21 @@ nonisolated enum CrimeKind: String, CaseIterable, Equatable, Sendable, Comparabl
         }
     }
 
+    /// Whether the bounty for this crime lands in the violent half of the
+    /// ledger.
+    ///
+    /// The Creation Kit wiki's Crime page sorts the crimes into "Minor Crimes"
+    /// — trespassing, pickpocketing, theft — and "Major Crimes" — assault,
+    /// murder, escape (<https://ck.uesp.net/wiki/Crime>, read through the
+    /// Wayback Machine). The violent half is the major one; escape has no case
+    /// here yet.
+    var isViolent: Bool {
+        switch self {
+        case .assault, .murder: true
+        case .theft, .trespass: false
+        }
+    }
+
     /// How a readout names it.
     var label: String {
         rawValue.capitalized

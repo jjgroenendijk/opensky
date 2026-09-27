@@ -25,6 +25,7 @@ struct ConditionFunctionsCrimeTests {
     /// A context whose subject owes the hold `gold`.
     private static func crimeContext(
         gold: Int32 = 40,
+        violentGold: Int32 = 0,
         currentCrimeFaction: ReferenceKey? = nil
     ) throws -> ConditionContext {
         var context = try ConditionEvaluatorFixture.populatedContext()
@@ -33,7 +34,7 @@ struct ConditionFunctionsCrimeTests {
             sourcePlugin: CrimeFixture.pluginName,
             currentCrimeFaction: currentCrimeFaction,
             ledgers: [subject: CrimeLedgerState(entries: [
-                CrimeLedgerEntry(faction: hold, gold: gold)
+                CrimeLedgerEntry(faction: hold, nonViolentGold: gold, violentGold: violentGold)
             ])]
         )
         return context
@@ -43,11 +44,12 @@ struct ConditionFunctionsCrimeTests {
         parameter1: UInt32,
         context: ConditionContext,
         comparison: UInt8 = 0,
-        value: Float = 1
+        value: Float = 1,
+        function: UInt16 = getCrimeGold
     ) throws -> (outcome: ConditionOutcome, tally: ConditionTally) {
         var evaluator = ConditionEvaluator(context: context)
         let outcome = try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
-            functionIndex: getCrimeGold,
+            functionIndex: function,
             comparison,
             value,
             parameter1: parameter1
@@ -66,6 +68,23 @@ struct ConditionFunctionsCrimeTests {
         #expect(try !(Self.evaluate(
             parameter1: CrimeFixture.Factions.hold, context: context, value: 41
         ).outcome.isTrue))
+    }
+
+    /// `GetCrimeGoldViolent` (375) and `GetCrimeGoldNonviolent` (376) each
+    /// read one half, and `GetCrimeGold` reads their sum (issue #563).
+    @Test func theViolentAndNonviolentFunctionsReadOneHalfEach() throws {
+        let context = try Self.crimeContext(gold: 25, violentGold: 40)
+        let hold = CrimeFixture.Factions.hold
+
+        for (function, owed) in [(UInt16(375), Float(40)), (376, 25), (459, 65)] {
+            // Equal to `owed` and not to `owed + 1` pins the exact number.
+            #expect(try Self.evaluate(
+                parameter1: hold, context: context, value: owed, function: function
+            ).outcome == .true)
+            #expect(try !(Self.evaluate(
+                parameter1: hold, context: context, value: owed + 1, function: function
+            ).outcome.isTrue))
+        }
     }
 
     /// A faction the player has never offended is owed nothing, which is a real

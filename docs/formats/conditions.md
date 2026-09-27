@@ -331,6 +331,8 @@ the Creation Kit spells each one 4096 higher
 | 632 | 4728 | `IsCasting` | none | 1 while either hand is charging, ready or concentrating |
 | 699 | 4795 | `HasMagicEffectKeyword` | #1 `KYWD` FormID | 1 when an effect carrying that keyword is acting on the run-on actor |
 | 448 | 4544 | `HasPerk` | #1 `PERK` FormID | 1 when the run-on actor owns that perk |
+| 375 | 4471 | `GetCrimeGoldViolent` | #1 `FACT` FormID, nullable | the violent half of that bounty |
+| 376 | 4472 | `GetCrimeGoldNonviolent` | #1 `FACT` FormID, nullable | the non-violent half of that bounty |
 | 459 | 4555 | `GetCrimeGold` | #1 `FACT` FormID, nullable | crime gold the run-on actor owes that faction; a null parameter means the faction answering for where it stands |
 | 71 | 4167 | `GetInFaction` | #1 `FACT` FormID | 1 when the run-on actor is a member of that faction, 0 otherwise |
 | 73 | 4169 | `GetFactionRank` | #1 `FACT` FormID | the run-on actor's rank in that faction, -1 when it is not a member |
@@ -349,8 +351,9 @@ parameter asks about the hold the run-on is standing in rather than about no fac
 A session with no `FACT` data, a parameter naming a faction no plugin defines, and a null
 parameter outside any hold all report `.unavailableCrime` rather than answering zero; owing a
 resolvable faction nothing is a conclusive 0. Its two siblings `GetCrimeGoldViolent` (375)
-and `GetCrimeGoldNonviolent` (376) are deliberately unregistered, because the ledger holds
-one bounty per faction — see [crime and bounty](/engine/crime.md).
+and `GetCrimeGoldNonviolent` (376) take the same parameter and follow the same rules, each
+reading one half of the bounty; `GetCrimeGold` answers their sum (issue #563) — see
+[crime and bounty](/engine/crime.md).
 
 The six faction and relationship functions (issue #508) read the `factions` seam
 and nothing else: `FactionConditionResolution` carries one `ActorSocialProfile`

@@ -39,11 +39,11 @@ struct CrimeSaveTests {
         let ledger = CrimeLedgerState(entries: [
             CrimeLedgerEntry(
                 faction: hold,
-                gold: 1045,
+                nonViolentGold: 1045,
                 counts: CrimeCounts(theft: 3, assault: 1, murder: 1, trespass: 2)
             ),
-            CrimeLedgerEntry(faction: companions, gold: 0, counts: CrimeCounts(assault: 4)),
-            CrimeLedgerEntry(faction: generated, gold: 25)
+            CrimeLedgerEntry(faction: companions, counts: CrimeCounts(assault: 4)),
+            CrimeLedgerEntry(faction: generated, nonViolentGold: 25)
         ])
 
         let restored = try #require(try roundTrip(ledger))
@@ -64,7 +64,10 @@ struct CrimeSaveTests {
     /// a stored membership follow.
     @Test func aRowNamingAnUnresolvableFactionSurvives() throws {
         let ledger = CrimeLedgerState(entries: [
-            CrimeLedgerEntry(faction: .plugin(name: "gone.esp", objectID: 0x99), gold: 40)
+            CrimeLedgerEntry(
+                faction: .plugin(name: "gone.esp", objectID: 0x99),
+                nonViolentGold: 40
+            )
         ])
 
         #expect(try roundTrip(ledger) == ledger)
@@ -84,7 +87,7 @@ struct CrimeSaveTests {
     @Test func aDuplicateRowCollapsesOnLoad() throws {
         let store = WorldStateStore()
         store.set(
-            CrimeLedgerState(entries: [CrimeLedgerEntry(faction: hold, gold: 40)]),
+            CrimeLedgerState(entries: [CrimeLedgerEntry(faction: hold, nonViolentGold: 40)]),
             for: .player,
             in: nil
         )
@@ -96,6 +99,68 @@ struct CrimeSaveTests {
 
         #expect(restored.count == 1)
         #expect(restored.gold(for: hold) == 40)
+    }
+
+    // MARK: - CRVG
+
+    /// Both halves survive: `CRIM` carries the total and `CRVG` the violent
+    /// part of it (issue #563).
+    @Test func bothHalvesSurviveTheRoundTrip() throws {
+        let ledger = CrimeLedgerState(entries: [
+            CrimeLedgerEntry(faction: hold, nonViolentGold: 45, violentGold: 1040),
+            CrimeLedgerEntry(faction: companions, violentGold: 40),
+            CrimeLedgerEntry(faction: generated, nonViolentGold: 25)
+        ])
+
+        let restored = try #require(try roundTrip(ledger))
+
+        #expect(restored == ledger)
+        #expect(restored.gold(for: hold, violent: true) == 1040)
+        #expect(restored.gold(for: hold, violent: false) == 45)
+        #expect(restored.gold(for: companions, violent: false) == 0)
+    }
+
+    /// A build that predates `CRVG` skips it and restores the whole `CRIM`
+    /// total as non-violent: the bounty is right, only the split is lost.
+    @Test func withoutTheViolentChunkTheTotalRestoresAsNonViolent() throws {
+        let saved = [SaveCrimeLedgerEntry(
+            key: .player,
+            cell: nil,
+            ledger: CrimeLedgerState(entries: [
+                CrimeLedgerEntry(faction: hold, nonViolentGold: 1045)
+            ])
+        )]
+
+        let unsplit = OpenSkySaveCrimeDecoder.splittingViolent([], in: saved)
+        #expect(unsplit == saved)
+
+        // A violent part larger than the total clamps to the total.
+        let split = OpenSkySaveCrimeDecoder.splittingViolent(
+            [SaveViolentCrimeGoldEntry(key: .player, rows: [
+                .init(faction: hold, violentGold: 5000),
+                .init(faction: companions, violentGold: 40)
+            ])],
+            in: saved
+        )
+        let ledger = try #require(split.first?.ledger)
+        #expect(ledger.gold(for: hold, violent: true) == 1045)
+        #expect(ledger.gold(for: hold, violent: false) == 0)
+        // A row for a faction `CRIM` has no row for is dropped.
+        #expect(ledger.entry(for: companions) == nil)
+    }
+
+    /// A ledger whose bounties are all theft and trespass writes no `CRVG`.
+    @Test func aNonViolentLedgerWritesNoViolentChunk() {
+        let store = WorldStateStore()
+        store.set(
+            CrimeLedgerState(entries: [CrimeLedgerEntry(faction: hold, nonViolentGold: 40)]),
+            for: .player,
+            in: nil
+        )
+        let bytes = Self.encode(store.snapshot())
+
+        #expect(Self.contains(tag: OpenSkySaveFormat.ChunkTag.crimeLedgers, in: bytes))
+        #expect(!Self.contains(tag: OpenSkySaveFormat.ChunkTag.violentCrimeGold, in: bytes))
     }
 
     // MARK: - STOL
@@ -142,7 +207,11 @@ struct CrimeSaveTests {
         for store in [first, second] {
             store.set(
                 CrimeLedgerState(entries: [
-                    CrimeLedgerEntry(faction: hold, gold: 40, counts: CrimeCounts(assault: 1))
+                    CrimeLedgerEntry(
+                        faction: hold,
+                        violentGold: 40,
+                        counts: CrimeCounts(assault: 1)
+                    )
                 ]),
                 for: .player,
                 in: nil

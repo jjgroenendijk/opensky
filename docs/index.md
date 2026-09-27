@@ -379,10 +379,10 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   `XOWN` precedence and the CELL owner this item decodes, the location parent chain that
   finds the hold answering for a place, the four crimes priced from the faction's own `CRVA`
   rather than from a game setting that does not exist, witnessing through the converged
-  perception pass, the per-crime-faction bounty ledger with its counts, the stolen flag that
-  splits an inventory stack and survives every move, the five choke points the hooks sit at,
-  `GetCrimeGold` and the five Papyrus natives, and the v1 limitations written down rather
-  than pretended away.
+  perception pass, the per-crime-faction bounty ledger with its counts and its violent and
+  non-violent halves, the stolen flag that splits an inventory stack and survives every move,
+  the five choke points the hooks sit at, the three crime-gold condition functions and the
+  eight Papyrus natives, and the v1 limitations written down rather than pretended away.
 * [Combat loop](/engine/combat.md) - hostility derived from faction relations, RELA
   relationship rank and the actor's own AIDT aggression, with the documented
   precedence order and the named crime seam, the explicit override as its own

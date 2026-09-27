@@ -18,18 +18,25 @@ extension PapyrusWorldStateBridge {
         return Int(reporter.runtime.crimeGold(of: faction))
     }
 
+    func crimeGold(of faction: ReferenceKey, violent: Bool) -> Int? {
+        guard let reporter = crimeReporter?() else { return nil }
+        return Int(reporter.runtime.crimeGold(of: faction, violent: violent))
+    }
+
     @discardableResult
-    func modifyCrimeGold(of faction: ReferenceKey, by amount: Int) -> Int? {
+    func modifyCrimeGold(of faction: ReferenceKey, by amount: Int, violent: Bool) -> Int? {
         guard let reporter = crimeReporter?() else { return nil }
         return Int(reporter.runtime.modifyCrimeGold(
-            by: Int32(clamping: amount), of: faction
+            by: Int32(clamping: amount), violent: violent, of: faction
         ))
     }
 
     @discardableResult
-    func setCrimeGold(of faction: ReferenceKey, to gold: Int) -> Int? {
+    func setCrimeGold(of faction: ReferenceKey, to gold: Int, violent: Bool) -> Int? {
         guard let reporter = crimeReporter?() else { return nil }
-        return Int(reporter.runtime.setCrimeGold(Int32(clamping: gold), of: faction))
+        return Int(reporter.runtime.setCrimeGold(
+            Int32(clamping: gold), violent: violent, of: faction
+        ))
     }
 
     @discardableResult

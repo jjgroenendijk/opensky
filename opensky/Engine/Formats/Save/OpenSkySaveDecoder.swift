@@ -75,7 +75,13 @@ nonisolated enum OpenSkySaveDecoder {
         entries = OpenSkySaveFactionDecoder.merge(body.factions, into: entries)
         entries = OpenSkySaveRelationshipDecoder.merge(body.relationships, into: entries)
         entries = OpenSkySaveProgressDecoder.merge(body.playerProgress, into: entries)
-        entries = OpenSkySaveCrimeDecoder.merge(body.crimeLedgers, into: entries)
+        // `CRVG` splits the `CRIM` totals before those reach the deltas, the
+        // way `AVOV` lays onto `AVAL`.
+        let ledgers = OpenSkySaveCrimeDecoder.splittingViolent(
+            body.violentCrimeGold,
+            in: body.crimeLedgers
+        )
+        entries = OpenSkySaveCrimeDecoder.merge(ledgers, into: entries)
         // After `INVN`: `STOL` re-flags stacks the inventory merge has already
         // restored, so it cannot run before those totals are in place.
         return OpenSkySaveCrimeDecoder.mergeStolen(body.stolenGoods, into: entries)
@@ -259,6 +265,8 @@ nonisolated enum OpenSkySaveDecoder {
             body.crimeLedgers = try OpenSkySaveCrimeDecoder.decodeCrimeLedgers(payload)
         case OpenSkySaveFormat.ChunkTag.stolenGoods:
             body.stolenGoods = try OpenSkySaveCrimeDecoder.decodeStolenGoods(payload)
+        case OpenSkySaveFormat.ChunkTag.violentCrimeGold:
+            body.violentCrimeGold = try OpenSkySaveCrimeDecoder.decodeViolentGold(payload)
         default:
             break // Unknown chunk: skipped by its declared length.
         }

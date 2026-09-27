@@ -114,5 +114,9 @@ nonisolated extension OpenSkySaveDecoder {
         /// stolen, so the totals `INVN` restored are all honest goods — which
         /// is also what a save written before that chunk existed means.
         var stolenGoods: [SaveStolenGoodsEntry] = []
+        /// Absent `CRVG` chunk (issue #563) means no bounty had a violent
+        /// part, so every `CRIM` row restores as non-violent gold — which is
+        /// also what a save written before that chunk existed means.
+        var violentCrimeGold: [SaveViolentCrimeGoldEntry] = []
     }
 }

@@ -8,17 +8,14 @@
 //
 // The index is the raw stored number; the Creation Kit spells it 4555.
 //
-// The same table carries two siblings this issue deliberately does not install:
+// and its two siblings, which split the same bounty by whether the crime was
+// violent (issue #563):
 //
 //   (Index: 375; Name: 'GetCrimeGoldViolent'; ParamType1: ptFactionNull)
 //   (Index: 376; Name: 'GetCrimeGoldNonviolent'; ParamType1: ptFactionNull)
 //
-// Both need the bounty split by whether the crime was violent, and
-// `CrimeLedgerState` stores one total per faction. Registering them over that
-// total would answer every violent question with the non-violent bounty
-// included, which is a convincing wrong number rather than a measurable gap —
-// so they stay unregistered and `ConditionTally` counts them by index, which is
-// what the real-data sweep ranks the next implementation from.
+// `CrimeLedgerEntry` holds the two halves, and `GetCrimeGold` answers their
+// sum. Which crimes are violent is `CrimeKind.isViolent`.
 //
 // `ptFactionNull` is nullable by declaration, and a null parameter asks about
 // the hold the subject is standing in rather than about no faction at all; the
@@ -34,21 +31,42 @@ nonisolated extension ConditionFunctions {
         // "Returns the amount of crime gold the player owes the specified
         // faction." The run-on names the actor whose ledger is read, and
         // parameter 1 names the FACT.
+        registerCrimeGold(index: 459, name: "GetCrimeGold", violent: nil, into: &registry)
+        registerCrimeGold(
+            index: 375, name: "GetCrimeGoldViolent", violent: true, into: &registry
+        )
+        registerCrimeGold(
+            index: 376, name: "GetCrimeGoldNonviolent", violent: false, into: &registry
+        )
+    }
+
+    /// One crime-gold reader: the whole bounty when `violent` is nil, one half
+    /// otherwise.
+    private static func registerCrimeGold(
+        index: UInt16,
+        name: String,
+        violent: Bool?,
+        into registry: inout ConditionFunctionRegistry
+    ) {
         registry.register(ConditionFunction(
-            index: 459,
-            name: "GetCrimeGold",
+            index: index,
+            name: name,
             parameter1: .formID
         ) { call in
             guard let parameter = call.parameter1 else {
-                return .failure(.unresolvedParameter(459))
+                return .failure(.unresolvedParameter(index))
             }
             guard let faction = call.context.crime.key(of: parameter.asFormID) else {
                 return .failure(.unavailableCrime)
             }
             return call.referenceKey().flatMap { actor in
-                guard let gold = call.context.crime.crimeGold(of: faction, on: actor) else {
-                    return .failure(.unavailableCrime)
+                let crime = call.context.crime
+                let gold = if let violent {
+                    crime.crimeGold(of: faction, violent: violent, on: actor)
+                } else {
+                    crime.crimeGold(of: faction, on: actor)
                 }
+                guard let gold else { return .failure(.unavailableCrime) }
                 return .success(Float(gold))
             }
         })

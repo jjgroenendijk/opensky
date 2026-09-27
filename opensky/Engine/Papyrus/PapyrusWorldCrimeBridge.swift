@@ -26,29 +26,34 @@ protocol PapyrusWorldCrimeBridge {
     /// pay." (<https://ck.uesp.net/wiki/GetCrimeGold_-_Faction>)
     func crimeGold(of faction: ReferenceKey) -> Int?
 
-    /// Moves the player's bounty with `faction` by `amount`, clamped at zero.
+    /// One half of the player's bounty with `faction` (issue #563), or nil for
+    /// a session with no crime runtime. What `GetCrimeGoldViolent` and
+    /// `GetCrimeGoldNonViolent` read.
+    func crimeGold(of faction: ReferenceKey, violent: Bool) -> Int?
+
+    /// Moves one half of the player's bounty with `faction` by `amount`,
+    /// clamped at zero.
     ///
     /// "Modifies the amount of crime gold on this faction." (same wiki,
-    /// `ModCrimeGold`) The declared `abViolent` parameter is accepted and
-    /// ignored: `CrimeLedgerState` holds one bounty per faction rather than a
-    /// violent and a non-violent half, so honouring the flag would need a
-    /// split this milestone does not build. Recorded as a limitation in
-    /// docs/engine/crime.md rather than answered with a convincing wrong
-    /// number.
+    /// `ModCrimeGold`) The declared `abViolent` parameter picks the half —
+    /// "when true, modifies violent crime gold; otherwise affects non-violent
+    /// crime gold".
     ///
-    /// - Returns: the bounty afterwards, or nil for a session with no crime
-    ///   runtime.
+    /// - Returns: the combined bounty afterwards, or nil for a session with no
+    ///   crime runtime.
     @discardableResult
-    func modifyCrimeGold(of faction: ReferenceKey, by amount: Int) -> Int?
+    func modifyCrimeGold(of faction: ReferenceKey, by amount: Int, violent: Bool) -> Int?
 
-    /// Sets the player's bounty with `faction` outright, leaving the crime
-    /// counts alone: paying a fine settles the debt and does not un-commit the
-    /// crime.
+    /// Sets one half of the player's bounty with `faction` outright, leaving
+    /// the other half and the crime counts alone: paying a fine settles the
+    /// debt and does not un-commit the crime. `SetCrimeGold` is documented as
+    /// setting "the amount of non-violent crime gold", `SetCrimeGoldViolent`
+    /// the violent amount.
     ///
-    /// - Returns: the bounty afterwards, or nil for a session with no crime
-    ///   runtime.
+    /// - Returns: the combined bounty afterwards, or nil for a session with no
+    ///   crime runtime.
     @discardableResult
-    func setCrimeGold(of faction: ReferenceKey, to gold: Int) -> Int?
+    func setCrimeGold(of faction: ReferenceKey, to gold: Int, violent: Bool) -> Int?
 
     /// Makes `witness` behave as though `criminal` had just assaulted it.
     ///
@@ -85,14 +90,20 @@ nonisolated extension PapyrusWorldAccess {
         MainActor.assumeIsolated { bridge.crimeGold(of: faction) }
     }
 
-    @discardableResult
-    func modifyCrimeGold(of faction: ReferenceKey, by amount: Int) -> Int? {
-        MainActor.assumeIsolated { bridge.modifyCrimeGold(of: faction, by: amount) }
+    func crimeGold(of faction: ReferenceKey, violent: Bool) -> Int? {
+        MainActor.assumeIsolated { bridge.crimeGold(of: faction, violent: violent) }
     }
 
     @discardableResult
-    func setCrimeGold(of faction: ReferenceKey, to gold: Int) -> Int? {
-        MainActor.assumeIsolated { bridge.setCrimeGold(of: faction, to: gold) }
+    func modifyCrimeGold(of faction: ReferenceKey, by amount: Int, violent: Bool) -> Int? {
+        MainActor.assumeIsolated {
+            bridge.modifyCrimeGold(of: faction, by: amount, violent: violent)
+        }
+    }
+
+    @discardableResult
+    func setCrimeGold(of faction: ReferenceKey, to gold: Int, violent: Bool) -> Int? {
+        MainActor.assumeIsolated { bridge.setCrimeGold(of: faction, to: gold, violent: violent) }
     }
 
     @discardableResult

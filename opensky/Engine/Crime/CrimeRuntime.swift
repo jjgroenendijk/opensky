@@ -184,34 +184,70 @@ struct CrimeRuntime {
 
     // MARK: - Mutating the ledger
 
-    /// Moves `key`'s bounty with `faction` by `delta`, clamped at zero, leaving
-    /// the crime counts alone. The door `Faction.ModCrimeGold` comes through.
+    /// One half of `key`'s bounty with `faction`.
+    func crimeGold(
+        of faction: ReferenceKey,
+        violent: Bool,
+        on key: ReferenceKey = .player
+    ) -> Int32 {
+        ledger(of: key).gold(for: faction, violent: violent)
+    }
+
+    /// Moves one half of `key`'s bounty with `faction` by `delta`, clamped at
+    /// zero, leaving the crime counts alone. The door `Faction.ModCrimeGold`
+    /// comes through, with its `abViolent` flag choosing the half.
     ///
-    /// - Returns: the bounty afterwards.
+    /// - Returns: the combined bounty afterwards.
     @discardableResult
     func modifyCrimeGold(
         by delta: Int32,
+        violent: Bool = false,
         of faction: ReferenceKey,
         on key: ReferenceKey = .player,
         in cell: CellSceneLocation? = nil
     ) -> Int32 {
-        write(ledger(of: key).modifyingGold(by: delta, for: faction), for: key, in: cell)
+        write(
+            ledger(of: key).modifyingGold(by: delta, violent: violent, for: faction),
+            for: key,
+            in: cell
+        )
         return crimeGold(of: faction, on: key)
     }
 
-    /// Sets `key`'s bounty with `faction` outright, leaving the counts alone.
-    /// The door `Faction.SetCrimeGold` comes through.
+    /// Sets one half of `key`'s bounty with `faction` outright, leaving the
+    /// other half and the counts alone. `Faction.SetCrimeGold` sets the
+    /// non-violent half and `Faction.SetCrimeGoldViolent` the violent one.
     ///
-    /// - Returns: the bounty afterwards.
+    /// - Returns: the combined bounty afterwards.
     @discardableResult
     func setCrimeGold(
         _ gold: Int32,
+        violent: Bool = false,
         of faction: ReferenceKey,
         on key: ReferenceKey = .player,
         in cell: CellSceneLocation? = nil
     ) -> Int32 {
-        write(ledger(of: key).settingGold(gold, for: faction), for: key, in: cell)
+        write(
+            ledger(of: key).settingGold(gold, violent: violent, for: faction),
+            for: key,
+            in: cell
+        )
         return crimeGold(of: faction, on: key)
+    }
+
+    /// Clears both halves of `key`'s bounty with `faction`, keeping the counts.
+    /// What paying a fine and serving a sentence both do.
+    ///
+    /// - Returns: the gold that was owed.
+    @discardableResult
+    func clearCrimeGold(
+        of faction: ReferenceKey,
+        on key: ReferenceKey = .player,
+        in cell: CellSceneLocation? = nil
+    ) -> Int32 {
+        let owed = crimeGold(of: faction, on: key)
+        write(ledger(of: key).clearingGold(for: faction), for: key, in: cell)
+        return owed
     }
 
     /// Drops `key`'s whole ledger, bounties and counts alike. The reset a dev

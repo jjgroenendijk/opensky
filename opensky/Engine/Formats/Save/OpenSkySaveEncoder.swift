@@ -113,6 +113,7 @@ nonisolated enum OpenSkySaveEncoder {
         writePlayerProgress(entries, into: &writer)
         writeCrimeLedgers(entries, into: &writer)
         writeStolenGoods(entries, into: &writer)
+        writeViolentCrimeGold(entries, into: &writer)
     }
 
     // MARK: - Header

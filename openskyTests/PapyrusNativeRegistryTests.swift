@@ -18,8 +18,9 @@ struct PapyrusNativeRegistryTests {
         // `Faction` crime-gold natives and the two `Actor` alarms, and 95 before
         // 21.4 (issue #508) added the five `Actor` membership functions, the two
         // relationship accessors, `GetFactionReaction`, `IsHostileToActor` and
-        // `Faction.GetReaction`.
-        #expect(standard.count == 105)
+        // `Faction.GetReaction`, and 105 before issue #563 added the violent and
+        // non-violent crime-gold readers and `SetCrimeGoldViolent`.
+        #expect(standard.count == 108)
         #expect(standard.contains(
             scriptName: "form", functionName: "REGISTERFORUPDATE"
         ))
