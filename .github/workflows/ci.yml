@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install tools
-        run: brew install swiftformat swiftlint markdownlint-cli2 shellcheck
+        run: brew install swiftformat swiftlint markdownlint-cli2 shellcheck jscpd
       - name: Format check
         run: make format-check
       - name: Lint (strict)
@@ -66,6 +66,13 @@ jobs:
       - name: Compile real-data suites (never run: no install on a runner)
         if: ${{ steps.xcode.outputs.major >= 26 }}
         run: make realdata-build XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
+      - name: Dead-code scan (Periphery, against the baseline)
+        # Reads the index store the two builds above left; mirrors the pre-push hook.
+        if: ${{ steps.xcode.outputs.major >= 26 }}
+        run: |
+          brew install periphery
+          make cli XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
+          ./tools/lint/dead-code.sh
       - name: UI tests
         if: ${{ steps.xcode.outputs.major >= 26 }}
         run: make test-ui XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
