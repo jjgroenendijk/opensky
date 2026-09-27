@@ -32,6 +32,12 @@ struct ConditionFactionRealDataTests {
     /// `GetRelationshipRank`, `GetFactionRelation` and `IsHostileToActor`.
     private static let factionIndices: Set<UInt16> = [60, 71, 73, 403, 449, 719]
 
+    /// The two crime-gold halves added after this delta was measured (issue
+    /// #573): `GetCrimeGoldViolent` and `GetCrimeGoldNonviolent`. Subtracted
+    /// out so the delta keeps pinning the faction step alone. `GetCrimeGold`
+    /// (issue #504) landed first and is already inside the numbers below.
+    private static let laterIndices: Set<UInt16> = [375, 376]
+
     private static let guardEditorIDPrefix = "GuardWhiterun"
 
     // MARK: - The authored condition
@@ -114,7 +120,8 @@ struct ConditionFactionRealDataTests {
         let root = try #require(Self.dataRoot)
         let coverage = Self.sweep(plugins: ActivePluginFiles.load(root: root))
         let registry = ConditionFunctionRegistry.standard
-        let after = coverage.implementedCount(in: registry)
+        let later = Self.laterIndices.reduce(0) { $0 + coverage.conditions(of: $1) }
+        let after = coverage.implementedCount(in: registry) - later
         let added = Self.factionIndices.reduce(0) { $0 + coverage.conditions(of: $1) }
         let before = after - added
 

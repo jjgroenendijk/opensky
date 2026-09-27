@@ -385,7 +385,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   non-violent halves, the stolen flag that splits an inventory stack and survives every move,
   the five choke points the hooks sit at, guard recognition through `GFAC` and `CRIF`, the
   confront-or-attack policy and the arrest outcomes with their evidence chest and sentence,
-  the three crime-gold condition functions and the thirteen Papyrus natives, and the v1
+  the three crime-gold condition functions and the thirteen Papyrus natives, the
+  `World > Crime & Factions` destination with the M21 acceptance record, and the v1
   limitations written down rather than pretended away.
 * [Combat loop](/engine/combat.md) - hostility derived from faction relations, RELA
   relationship rank and the actor's own AIDT aggression, with the documented

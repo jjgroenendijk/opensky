@@ -25,6 +25,8 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
     case actorValueInformation = "AVIF"
     case perk = "PERK"
     case faction = "FACT"
+    case relationship = "RELA"
+    case associationType = "ASTP"
 
     var fourCC: FourCC {
         switch self {
@@ -48,6 +50,8 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
         case .actorValueInformation: "AVIF"
         case .perk: "PERK"
         case .faction: "FACT"
+        case .relationship: "RELA"
+        case .associationType: "ASTP"
         }
     }
 
@@ -73,6 +77,8 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
         case .actorValueInformation: "AVIF — Actor value information"
         case .perk: "PERK — Perks"
         case .faction: "FACT — Factions"
+        case .relationship: "RELA — Relationships"
+        case .associationType: "ASTP — Association types"
         }
     }
 }

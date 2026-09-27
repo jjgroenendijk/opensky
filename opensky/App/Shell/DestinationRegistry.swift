@@ -30,6 +30,7 @@ typealias WorldControlProviders = AINavigationControlProviding
     & ArcheryControlProviding & AudioControlProviding
     & CameraControlProviding & CastingControlProviding
     & CombatLoopControlProviding & ContainerMenuControlProviding
+    & CrimeFactionControlProviding
     & DialogueCameraControlProviding & DialogueControlProviding
     & FaceMorphControlProviding
     & FirstPersonControlProviding
@@ -148,14 +149,16 @@ enum DestinationRegistry {
     static let defaultDestinationID = "world"
 
     /// The registered destinations, in sidebar order. The three menu
-    /// destinations and the progression destination are spliced in from
-    /// `DestinationRegistryMenus.swift` and
-    /// `DestinationRegistryProgression.swift` at the position they occupy in
+    /// destinations, the progression destination and the crime destination
+    /// are spliced in from `DestinationRegistryMenus.swift`,
+    /// `DestinationRegistryProgression.swift` and
+    /// `DestinationRegistryCrime.swift` at the position they occupy in
     /// the sidebar; the registry is still the single registration point, and
     /// the split exists only because this enum body is at the strict-lint
     /// type-length cap.
     static let all: [DestinationDescriptor] = simulationDestinations
-        + progressionDestinations + menuDestinations + sessionDestinations
+        + progressionDestinations + crimeDestinations + menuDestinations
+        + sessionDestinations
 
     private static let simulationDestinations: [DestinationDescriptor] = [
         DestinationDescriptor(

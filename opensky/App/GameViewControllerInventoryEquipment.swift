@@ -94,7 +94,7 @@ extension GameViewController: InventoryEquipmentControlProviding {
     /// A target the resident index cannot resolve still reports as a target
     /// with unknown ownership rather than as no target, because the crosshair
     /// is plainly on something and a blank readout would say otherwise.
-    private func targetOwnership() -> ReferenceOwnershipReadout? {
+    func targetOwnership() -> ReferenceOwnershipReadout? {
         guard let interaction = currentInteraction else { return nil }
         let entry = streamer?.referenceEntry(formID: interaction.reference)
         let placed = entry?.placedReference

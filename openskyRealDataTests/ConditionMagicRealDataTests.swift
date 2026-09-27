@@ -19,12 +19,15 @@ struct ConditionMagicRealDataTests {
     /// The eight raw indices item 19.11 registers.
     private static let magicIndices: Set<UInt16> = [214, 223, 264, 570, 571, 572, 632, 699]
 
-    /// Indices the progression items added afterwards: `HasPerk` (issue #497,
-    /// item 20.4), and `GetLevel` and `GetBaseActorValue` (issue #499, item
-    /// 20.6). Subtracted out for the reason `ConditionDataRealDataTests`
-    /// subtracts the magic ones — this test pins the M19 step, not the registry
-    /// as it happens to stand today.
-    private static let laterIndices: Set<UInt16> = [80, 277, 448]
+    /// Indices later items added: `HasPerk` (issue #497, item 20.4), `GetLevel`
+    /// and `GetBaseActorValue` (issue #499, item 20.6), the six faction
+    /// functions (issue #508, item 21.4) and the three crime-gold functions
+    /// (issue #504, item 21.5). Subtracted out for the reason
+    /// `ConditionDataRealDataTests` subtracts the magic ones — this test pins
+    /// the M19 step, not the registry as it happens to stand today.
+    private static let laterIndices: Set<UInt16> = [
+        80, 277, 448, 60, 71, 73, 403, 449, 719, 375, 376, 459
+    ]
 
     /// Magic-adjacent indices the sweep measured and this milestone leaves
     /// tallied, so the tail is recorded rather than implied. See

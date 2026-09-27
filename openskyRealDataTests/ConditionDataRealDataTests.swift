@@ -25,9 +25,11 @@ struct ConditionDataRealDataTests {
     ///
     /// The eight magic indices are item 19.11's (issue #474); `HasPerk` is item
     /// 20.4's (issue #497); `GetLevel` and `GetBaseActorValue` are item 20.6's
-    /// (issue #499).
+    /// (issue #499). The six faction indices are item 21.4's (issue #508), and
+    /// the three crime-gold ones are item 21.5's (issue #504).
     private static let laterIndices: Set<UInt16> = [
-        80, 214, 223, 264, 277, 448, 570, 571, 572, 632, 699
+        80, 214, 223, 264, 277, 448, 570, 571, 572, 632, 699,
+        60, 71, 73, 403, 449, 719, 375, 376, 459
     ]
 
     @Test(.enabled(if: Self.dataRoot != nil))

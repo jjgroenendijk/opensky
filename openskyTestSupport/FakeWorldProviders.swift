@@ -382,6 +382,9 @@ final class FakeWorldProviders: WorldControlProviders {
     /// ProgressionControlProviding (issue #500) state; the conformance lives in
     /// `FakeWorldProvidersProgression.swift`.
     var progression = FakeProgressionState()
+    /// CrimeFactionControlProviding (issue #507) state; the conformance lives
+    /// in `FakeWorldProvidersCrime.swift`.
+    var crimeFactions = FakeCrimeFactionState()
 }
 
 /// The inventory-menu half of the fake, in an extension so the class body

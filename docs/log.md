@@ -4,6 +4,12 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-09-27
 
+* **M21 accepted (issue #507, item 21.8)**: new sidebar destination
+  `World > Crime & Factions` with four sections: Bounty, Theft, Memberships and Vendor.
+  The controls call the same code as the game session. The vendor override is the only
+  setting that "Reset all overrides" clears. RELA and ASTP are now in the Asset Browser.
+  The real-data coverage tests now also exclude the M21 condition functions.
+  See [crime and bounty](/engine/crime.md).
 * **Faction vendors (issue #506)**: a merchant is now an actor with a vendor faction, not a
   nominated chest. `VendorResolver` finds the first vendor faction among the actor's
   memberships and reads its merchant chest, its hours and its keyword buy/sell list with

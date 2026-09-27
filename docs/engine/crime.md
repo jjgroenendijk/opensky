@@ -395,11 +395,43 @@ before either existed.
 
 ## Verification surface
 
-`World > Inventory & Equipment` already reported ownership under the crosshair and said no
-crime system enforced it. It now states the enforced verdict instead: whether taking the
-reference would be theft for the player *right now* — which accounts for the cell's `XOWN`
-and the player's memberships, not just the reference's own field — and what the bounty would
-be if witnessed. The crime and faction sidebar destination proper is issue #507.
+`World > Crime & Factions` (issue #507) has four sections. Each control calls the same
+code that the game session or a script calls.
+
+- **Bounty** lists the bounty for each crime faction, in two halves (non-violent and
+  violent), and what that faction's guards do about it. Add changes one half through
+  `CrimeRuntime.modifyCrimeGold`. Clear removes both halves. Guard check asks the picked
+  actor whether it is a guard and what it would do, then runs one guard tick if a world
+  is loaded. Resist arrest calls `resistArrest(with:)`.
+- **Theft** shows whether taking the crosshair target is theft, who owns it, and the
+  stolen items the player carries.
+- **Memberships** lists the factions and ranks of the player and of an actor picked
+  with the crosshair. It shows what that actor thinks of the player, and the value of
+  each hostility term. Join and Leave call `joinFaction` and `leaveFaction`.
+- **Vendor** shows the picked actor's vendor role. The override chooses another vendor
+  faction. Barter opens the barter menu, as `Actor.ShowBarterMenu` does.
+
+Acceptance record (M21):
+
+```text
+Milestone: M21
+Sidebar path: World > Crime & Factions > Bounty, > Theft, > Memberships, > Vendor
+Destination id: Destination-crimeFactions
+Controls exercised: CrimeBountyFactionControl, CrimeBountyAmountControl,
+  CrimeBountyViolentControl, CrimeBountyAddControl, CrimeBountyClearControl,
+  CrimeGuardCheckControl, CrimeResistArrestControl, FactionSelectControl,
+  FactionRankControl, FactionJoinControl, FactionLeaveControl,
+  FactionVendorOverrideControl, FactionBarterControl
+Readout: CrimeBountyStatsLabel (also CrimeTheftStatsLabel,
+  FactionMembershipStatsLabel, FactionVendorStatsLabel)
+Deterministic tests: M21AcceptancePanelTests, CrimeFactionPanelTests,
+  CrimeFactionReadoutTests, DestinationRegistryTests, AppSidebarModelTests,
+  CrimeFactionsUITests
+Local A/B (optional, never committed): none
+```
+
+FACT, RELA and ASTP records are in `Library > Asset Browser > Reference records (load
+order)`.
 
 ## v1 limitations
 

@@ -18,7 +18,8 @@ struct DestinationRegistryTests {
     func registryOrderAndIdentifiers() {
         #expect(DestinationRegistry.all.map(\.id) == [
             "world", "playerLocomotion", "combatPhysics", "aiNavigation", "environment",
-            "hudInteraction", "dialogueVoice", "progression", "systemMenu",
+            "hudInteraction", "dialogueVoice", "progression", "crimeFactions",
+            "systemMenu",
             "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
             "runtimeState", "scripts", "journal", "uiLab", "assetBrowser", "loadOrder"
         ])
@@ -28,7 +29,8 @@ struct DestinationRegistryTests {
             "Destination-combatPhysics", "Destination-aiNavigation",
             "Destination-environment",
             "Destination-hudInteraction", "Destination-dialogueVoice",
-            "Destination-progression", "Destination-systemMenu",
+            "Destination-progression", "Destination-crimeFactions",
+            "Destination-systemMenu",
             "Destination-inventoryMenu", "Destination-containerMenu",
             "Destination-inventoryEquipment", "Destination-audio",
             "Destination-runtimeState", "Destination-scripts",
@@ -37,7 +39,8 @@ struct DestinationRegistryTests {
         ])
         #expect(DestinationRegistry.worldInspectors.map(\.id) == [
             "world", "playerLocomotion", "combatPhysics", "aiNavigation", "environment",
-            "hudInteraction", "dialogueVoice", "progression", "systemMenu",
+            "hudInteraction", "dialogueVoice", "progression", "crimeFactions",
+            "systemMenu",
             "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
             "runtimeState", "scripts", "journal", "uiLab"
         ])
@@ -165,6 +168,13 @@ struct DestinationRegistryTests {
         #expect(isOverridden("uiLab", context: context))
         reset("uiLab", context: context)
         #expect(providers.uiOverlayEnabled)
+
+        // M21: the vendor-faction override is the crime destination's one
+        // setting; bounties and memberships are world state it leaves alone.
+        providers.vendorOverrideSelection = .plugin(name: "skyrim.esm", objectID: 0x10)
+        #expect(isOverridden("crimeFactions", context: context))
+        reset("crimeFactions", context: context)
+        #expect(providers.vendorOverrideSelection == nil)
 
         #expect(DestinationRegistry.destination(id: "assetBrowser")?.overrides == nil)
     }
