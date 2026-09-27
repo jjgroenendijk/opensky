@@ -18,7 +18,7 @@
 // vanilla condition read here; nothing reads it, and a record that sets it is
 // answered on the perk alone rather than refused.
 //
-// Documented in docs/formats/conditions.md and docs/engine/perks.md.
+// Documented in docs/engine/condition-functions.md and docs/engine/perks.md.
 
 import Foundation
 

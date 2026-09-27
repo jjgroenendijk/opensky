@@ -1,209 +1,133 @@
 ---
 type: File Format
 title: Actor value information
-description: AVIF record layout — identity fields, the AVSK skill-use parameters, and the
-  order-sensitive perk-tree node run — plus the name join that numbers a record and the
-  counts observed on a vanilla install.
+description: AVIF record layout - names, the AVSK skill use values, and the perk tree node
+  list - and how a record is matched to an actor value number.
 tags: [format, esm, progression, skills, perks, record]
-timestamp: 2026-08-19T00:00:00Z
 ---
 
-# Actor value information
+# Actor value information (AVIF)
 
-AVIF describes the actor values themselves: what each one is called, how it is abbreviated
-and described, and — for the eighteen skills — how using a skill turns into levelling it and
-where each perk box sits in that skill's tree. It is the data root of progression: perk
-resolution and skill advancement both start from a record decoded here.
+An `AVIF` record describes one actor value, for example `OneHanded` or `Health`. It gives
+the name, the abbreviation, and the description. For the 18 skills it also gives the skill
+use values and the perk tree: where each perk box sits and how the boxes connect.
 
-AVIF carries no index of its own. The numbers every CTDA parameter, script native and stored
-value use come from [actor values](/engine/actor-values.md), and a record is attached to one
-of them by name, described under "Numbering a record" below.
-
-## Contents
-
-- Sources
-- Record fields
-- AVSK layout
-- Perk-tree nodes
-- The CNAM ambiguity
-- Numbering a record
-- Decode policy
-- ActorValueInformationStore
-- Observed on a vanilla install
-- What is not decoded here
+`AVIF` has no number of its own. The actor value numbers that conditions, scripts, and saves
+use are listed in [actor values](/engine/actor-values.md). A record is matched to a number by
+name, as described below.
 
 ## Sources
 
-- UESP "Skyrim Mod:Mod File Format/AVIF",
-  <https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/AVIF>, including its "Perk Sections"
-  table and its notes on the ANAM and CNAM quirks.
-- xEdit dev-4.1.6 `Core/wbDefinitionsTES5.pas`, `wbRecord(AVIF, 'Actor Value Information',
-  [...])`, which gives the field order, the CNAM enum values and the
-  `wbRArray('Perk Tree', wbRStruct('Node', [...]))` shape.
+- UESP [AVIF](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/AVIF), with its "Perk
+  Sections" table and its notes on the `ANAM` and `CNAM` quirks.
+- xEdit dev-4.1.6 `Core/wbDefinitionsTES5.pas`,
+  `wbRecord(AVIF, 'Actor Value Information', [...])`: the field order, the `CNAM` values,
+  and the `wbRArray('Perk Tree', wbRStruct('Node', [...]))` shape.
 
-Where the two disagree, both readings are recorded rather than one being picked: see AVSK
-below.
+Where the two disagree, OpenSky keeps both readings. See `AVSK` below.
 
 ## Record fields
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `EDID` | zstring | Editor id. Vanilla prefixes most of these with `AV`. |
-| `FULL` | lstring | In-game name. |
-| `DESC` | lstring | Description. xEdit marks it required; a record without one still decodes. |
-| `ICON` | zstring | Editor-side image path. |
-| `ANAM` | zstring | Abbreviation. Rarely authored — nil is the normal answer. |
-| `CNAM` | uint32 | Skill category, or something else entirely. See "The CNAM ambiguity". |
-| `AVSK` | float[4] | Skill-use parameters. Only on records with a perk tree. |
-| perk tree | node run | Repeated node group, below. |
+| `EDID` | zstring | Editor ID. Most vanilla IDs start with `AV` |
+| `FULL` | lstring | Name in the game |
+| `DESC` | lstring | Description. xEdit says required, but a record without it still decodes |
+| `ICON` | zstring | Image path for the editor |
+| `ANAM` | zstring | Abbreviation. Rarely set |
+| `CNAM` | uint32 | Skill category, or something else. See below |
+| `AVSK` | 4 x float32 | Skill use values. Only on records with a perk tree |
+| perk tree | node list | Repeated node fields, below |
 
-The engine type is `ActorValueInformation`
-(`opensky/Engine/Formats/ESM/Records/ActorValueInformation.swift`); the node types live in
-`ActorValueInformationPerkTree.swift` beside it.
+Skill categories: 0 none, 1 combat, 2 magic, 3 stealth. OpenSky keeps the raw value too.
 
-`CNAM` decodes to `ActorValueSkillCategory`: 0 none, 1 combat, 2 magic, 3 stealth, and
-`unknown(raw:)` for anything else, with the raw word kept on the record either way.
+## AVSK
 
-## AVSK layout
+16 bytes, four little-endian float32 values:
 
-Sixteen bytes, four little-endian floats:
+| Offset | Name |
+| --- | --- |
+| 0x00 | Skill use multiplier |
+| 0x04 | Skill use offset |
+| 0x08 | Skill improve multiplier |
+| 0x0C | Skill improve offset |
 
-| Offset | Type | Name |
-| --- | --- | --- |
-| 0x00 | float32 | Skill use multiplier |
-| 0x04 | float32 | Skill use offset |
-| 0x08 | float32 | Skill improve multiplier |
-| 0x0C | float32 | Skill improve offset |
+The sources disagree on the second value. UESP calls it "Skill Use Offset", and xEdit calls
+it "Skill Offset Mult". OpenSky uses the UESP name and does not guess which is right. An
+`AVSK` that is not exactly 16 bytes is skipped, and the rest of the record still decodes.
 
-The two sources disagree on the second float: UESP calls it "Skill Use Offset" and xEdit
-"Skill Offset Mult". Nothing in the engine depends on the reading yet, so OpenSky stores it
-under UESP's name (`SkillUseParameters.useOffset`) and leaves the disagreement visible rather
-than resolving it by guesswork. Turning these four numbers into experience gain is separate
-work; nothing consumes them today.
+## Perk tree nodes
 
-A field that is not exactly sixteen bytes throws, is tallied as a malformed field, and leaves
-`skillUse` nil — the rest of the record still decodes.
-
-## Perk-tree nodes
-
-The tree is a flat run of fields, not a sized array. Each node opens with `PNAM` and runs to
-the next `PNAM` or the end of the record:
+The tree is a flat list of fields, not an array with a size. Each node starts at `PNAM` and
+runs to the next `PNAM` or the end of the record.
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `PNAM` | formid | The PERK this box grants. NULL on the entry node. |
-| `FNAM` | uint32 | xEdit's "Parent Required" boolean. UESP records that the first node of a tree usually carries a very large value, so the raw word is kept and the boolean derived from it. |
-| `XNAM` | uint32 | Perk-grid column. |
-| `YNAM` | uint32 | Perk-grid row. |
-| `HNAM` | float32 | Horizontal offset inside that grid cell. |
-| `VNAM` | float32 | Vertical offset inside that grid cell. |
-| `SNAM` | formid | The AVIF this node belongs to — normally the record carrying it. |
-| `CNAM` | uint32 | A line from this box to the node with that `INAM`. Zero, one or many. |
-| `INAM` | uint32 | This box's identity in the tree. Unique, not sequential. |
+| `PNAM` | FormID | The `PERK` this box gives. Null on the entry node |
+| `FNAM` | uint32 | xEdit: "Parent Required". UESP: the first node often has a very large value |
+| `XNAM` | uint32 | Grid column |
+| `YNAM` | uint32 | Grid row |
+| `HNAM` | float32 | Horizontal offset inside the grid cell |
+| `VNAM` | float32 | Vertical offset inside the grid cell |
+| `SNAM` | FormID | The `AVIF` this node belongs to. Normally this record |
+| `CNAM` | uint32 | A line from this box to the node with that `INAM`. Zero or more |
+| `INAM` | uint32 | This box's ID in the tree. Unique, but not in sequence |
 
-The entry node — NULL `PNAM`, `INAM` 0 — is bookkeeping rather than a drawn box, and its
-numeric fields show it: on `AVMysticism` in Skyrim.esm it carries an `XNAM` of 14824284 and a
-zero `FNAM`, which is the same "huge values on the first node" quirk UESP flags for `FNAM`.
-Nothing reads those coordinates, so they are decoded verbatim and left alone rather than
-sanitized.
+The entry node (null `PNAM`, `INAM` 0) is not a drawn box. Its numbers show the quirk UESP
+describes: on `AVMysticism` in `Skyrim.esm` it has `XNAM` 14824284 and `FNAM` 0. Nothing
+reads these values, so OpenSky keeps them as they are.
 
-Connections address `INAM` values, not array positions, which is why the index has to be
-decoded rather than inferred. The grid is drawing information only: it says where a box is
-painted, never what it costs or requires. Prerequisites live in the PERK record's own
-conditions.
+Lines point at `INAM` values, not at list positions. The grid only says where a box is drawn.
+It does not say what a perk needs. The needs are the conditions of the `PERK` record (see
+[perks](/formats/perks.md)).
 
-## The CNAM ambiguity
+## CNAM has two meanings
 
-`CNAM` means two different things in one record, and position is the only thing separating
-them: before the first `PNAM` it is the record-level skill category, and after one it is a
-connection line belonging to the node that `PNAM` opened. This is why the decoder tracks
-which node is open — the bookkeeping is the disambiguation, not an optimization. UESP flags
-the same thing, and adds that on a record with no perk tree the record-level `CNAM` appears
-to carry something other than a category ("large 4byte info"), which is why the raw word is
-kept alongside the enum.
+Before the first `PNAM`, `CNAM` is the skill category of the record. After a `PNAM`, it is a
+line of the open node. Only the position tells them apart. So the decoder must track which
+node is open. UESP says the same. It adds that on a record with no perk tree, `CNAM` seems to
+hold "large 4byte info", not a category. In vanilla, 91 records have a `CNAM` outside 0 to 3,
+and all of them have no perk tree.
 
-## Numbering a record
+## Matching a record to an actor value number
 
-`ActorValueInformation.vanillaActorValueIndex` joins a record to the index table in
-[actor values](/engine/actor-values.md) by name, trying in order:
+OpenSky tries these names in order against the table in
+[actor values](/engine/actor-values.md):
 
-1. the editor id as written,
-2. the editor id with a leading `AV` dropped, which is how vanilla spells `AVOneHanded`,
-3. the `FULL` name, when it is inline text.
+1. The editor ID as written.
+2. The editor ID without a leading `AV`. Vanilla writes `AVOneHanded`.
+3. The `FULL` name, when it is inline text.
 
-`FULL` is last because a localized plugin stores it as a string-table id rather than text, so
-it cannot be the primary key. The lookup compares with punctuation dropped and case folded,
-so `One-Handed`, `OneHanded` and `one handed` are one name. A record no vanilla name matches
-— a mod-added actor value — reports nil and is still stored and browsable.
+`FULL` comes last because a localized plugin stores a string ID there, not text. The match
+ignores case and punctuation, so `One-Handed`, `OneHanded`, and `one handed` are one name. A
+record that matches nothing, such as a new actor value from a mod, gets no number but is
+still stored.
 
-Three vanilla skills would miss on all three attempts, because their editor ids use
-Oblivion-era words the actor-value table does not carry: `AVMarksman`, `AVSpeechcraft` and
-`AVMysticism`. `ActorValueIdentity.recordNameAliases` maps them, and the mapping is observed
-rather than recalled — each record's own `FULL` string resolves through Skyrim.esm's string
-table to the name on the right, which
-`ActorValueInformationRealDataTests.legacyEditorIDsNameTheSkillTheirOwnFullStringSpells()`
-pins:
+Three vanilla skills use old Oblivion words in their editor IDs and match nothing. OpenSky
+maps them by hand. The mapping comes from each record's own `FULL` string in the
+`Skyrim.esm` string table:
 
-| Editor id | `FULL` resolves to | Index |
+| Editor ID | `FULL` text | Index |
 | --- | --- | --- |
 | `AVMarksman` | Archery | 8 |
 | `AVSpeechcraft` | Speech | 17 |
 | `AVMysticism` | Illusion | 21 |
 
-The aliases sit behind `index(recordName:)`, a separate entry point from the
-`index(named:)` that condition parameters and Papyrus natives use, so the measured miss
-buckets in [actor values](/engine/actor-values.md) do not move.
+These aliases apply only to `AVIF` records. They do not change how condition parameters and
+script functions look up actor value names.
 
-## Decode policy
+## Perk trees that are not skills
 
-- A record whose type is not AVIF throws.
-- A malformed or truncated field is skipped and tallied
-  (`ActorValueInformationSkipKind.malformedField`); the rest of the record still decodes.
-- An unrecognized field is tallied as `unknownField`.
-- A node that ends without one of the fields xEdit marks required is still emitted, with
-  zeroes standing in, and tallied as `incompletePerkTreeNode`.
-- `hasPerkTree` means the record carries both `AVSK` and a non-empty tree. That is *not* the
-  same question as "is this one of the eighteen skills" — see below.
+In vanilla (five masters), 20 records have a perk tree. 18 are the skills, and they match
+exactly the actor value numbers 6 (`One-Handed`) to 23 (`Enchanting`). The other two are
+Dawnguard's vampire and werewolf trees. They hang on `AVMagickaRateMod` and
+`AVHealRatePowerMod`, which are not skills. So "has a perk tree" and "is a skill" are
+different questions.
 
-## ActorValueInformationStore
+## Errors
 
-`opensky/Engine/GameData/ActorValueInformationStore.swift` indexes AVIF across the active
-load order in the same shape as the magic stores ([magic records](/formats/magic-records.md)):
-the winning definition per identity, with lookup by `ResolvedFormID`, by editor id
-(case-insensitively), and by actor-value index through the join above. A malformed override
-falls back to the earlier readable definition, as everywhere else built on `RecordIndex`.
+- A record of another type is an error.
+- A broken or cut field is skipped and counted. The rest of the record still decodes.
+- A node without a field that xEdit calls required is kept, with zeros, and counted.
 
-Two collection properties, and the difference between them is real data rather than
-pedantry. `perkTreeRecords` is every record with a tree; `skills` is the subset whose joined
-index falls inside the skill range. On a load order with Dawnguard those differ: the vampire
-and werewolf trees hang off `AVMagickaRateMod` and `AVHealRatePowerMod`, which are not skills
-and which the vanilla name table does not carry at all, so they appear in the first and not
-the second.
-
-`openskycli record <editorid>` and the Asset Browser's `AVIF — Actor value information` type
-both print the same summary: identity, the joined actor value, the category, the four skill-use
-parameters, and the perk-node table, whose boxes name the PERK they grant when the dump was
-given a perk store ([perks](/formats/perks.md)) and print the raw link when it was not.
-
-## Observed on a vanilla install
-
-Measured by `ActorValueInformationRealDataTests` over the active load order (Skyrim.esm plus
-the four official masters):
-
-- 153 AVIF definitions, all of which decode; 149 distinct identities, the difference being
-  records the DLC masters override.
-- 20 records carry a perk tree, holding 230 nodes between them. 18 of those are the skills:
-  they join to exactly the contiguous actor-value index range 6 (`One-Handed`) through 23
-  (`Enchanting`). The other two are Dawnguard's, described above.
-- 92 of the 164 vanilla actor values have a record describing them.
-- No unread field, no malformed field and no incomplete perk-tree node anywhere in the set.
-- 91 records carry a `CNAM` outside the 0-3 enum, which is what UESP's "large 4byte info"
-  note describes. Every one of them is a record with no perk tree, so no skill category is
-  ever read from a word that does not mean one.
-
-## What is not decoded here
-
-- PERK records. A node's `PNAM` stays a raw plugin-relative FormID; resolving it to a perk and
-  naming it in the dump is separate work.
-- Experience gain. `AVSK` is decoded and stored, and nothing reads it yet.
-- Any progression UI beyond the Asset Browser row and the CLI dump.
+All vanilla `AVIF` records decode with no broken fields and no incomplete nodes.

@@ -49,7 +49,7 @@ struct ItemDefinitionStoreTests {
 
     /// v1 stacking: two instances of the same base FormID stack, and two
     /// different bases never do. Per-instance data will break this later —
-    /// see docs/formats/records.md.
+    /// see docs/formats/item-records.md.
     @Test func stackKeyIsTheBaseFormIDInV1() throws {
         let store = try makeStore()
         let first = try #require(store.definition(FormID(0x100)))

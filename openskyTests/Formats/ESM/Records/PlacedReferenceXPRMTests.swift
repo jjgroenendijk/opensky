@@ -6,7 +6,7 @@
 // xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas line 9701 `wbStruct(XPRM,
 // 'Primitive', [wbStruct('Bounds', ...), wbFloatRGBA, wbInteger('Type',
 // itU32, wbEnum(['None', 'Box', 'Sphere', 'Portal Box', 'Line']))])`.
-// Documented in docs/formats/records.md.
+// Documented in docs/formats/placed-references.md.
 
 import Foundation
 @testable import opensky

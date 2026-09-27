@@ -57,7 +57,7 @@ of month, month and year are all derived from it, so no two fields can disagree.
 The precision choice is deliberate. The vanilla start moment is about 6.3e9 seconds past
 the epoch, where a `Float`'s 24-bit mantissa already quantizes to ~512-second steps; a
 `Double` keeps sub-microsecond resolution for any session length. The `CLOK` save chunk
-stores the same `Double` bit-exactly ([save container](/formats/opensky-save.md)).
+stores the same `Double` bit-exactly ([save container](/formats/opensky-save-world-chunks.md)).
 
 Determinism: `advance(wallDelta:timescale:)` is pure arithmetic and the only way time
 moves. Nothing inside `GameClock` reads a wall clock — wall deltas arrive from the
@@ -187,7 +187,7 @@ Two mechanisms, deliberately distinct:
   panel's `isOverridden` semantics unchanged; the date starts at the vanilla 17th of Last
   Seed every launch.
 * **In a save**, the whole clock rides the additive `CLOK` chunk
-  ([layout](/formats/opensky-save.md)) written from `Renderer.gameClock` beside the world
+  ([layout](/formats/opensky-save-world-chunks.md)) written from `Renderer.gameClock` beside the world
   snapshot, and a load restores it. An absent chunk — every pre-clock save — restores the
   vanilla-start clock. Setting `Renderer.gameClock` wholesale also resets the weather
   elapsed-hours mark, so a restored date does not register as months of weather time.
@@ -219,5 +219,5 @@ The Runtime State panel's own time scrub UI is deferred to the M10.2 acceptance 
 * [Runtime reference identity and world state](/engine/runtime-state.md) — the globals
   layer and lookup seam the clock projects through.
 * [Weather runtime](/engine/weather.md) — the elapsed-game-hours consumer.
-* [OpenSky native save container](/formats/opensky-save.md) — the `CLOK` chunk layout.
+* [OpenSky native save container](/formats/opensky-save-world-chunks.md) — the `CLOK` chunk layout.
 * [Menu mode](/engine/menu-mode.md) — the pause gate the clock's `FrameSimClock` obeys.

@@ -14,7 +14,7 @@
 //   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MISC
 //   xEdit dev-4.1.6 Core/wbDefinitionsCommon.pas `wbOBND` (line 8634) is the
 //   authority for the component order and int16 typing.
-// Layout documented in docs/formats/records.md.
+// Layout documented in docs/formats/item-records.md.
 
 import Foundation
 

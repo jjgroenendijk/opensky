@@ -8,7 +8,7 @@
 // flag inherits): traits covers race/gender/skin/height/weight, character
 // gen (head parts) rides Use Traits; inventory covers the default outfit.
 // Reference: UESP "Skyrim Mod:Mod File Format/NPC_" + CK wiki "BaseActorData".
-// Documented in docs/formats/actors.md.
+// Documented in docs/engine/actor-resolution.md.
 
 import Foundation
 

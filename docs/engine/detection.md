@@ -256,7 +256,7 @@ a guard may have you while you have no idea it is there. Asking the reversed pai
 pass does not track, is `ConditionFailure.unavailableDetection` rather than a "not
 detected" — an untracked pair is not an undetected one, and only one of those is a real
 answer. The failure has its own `ConditionTally` bucket. See
-[conditions](/formats/conditions.md).
+[conditions](/engine/conditions.md).
 
 `GetCombatState`'s third return, 2 "Searching", is produced as of item 16.7 (issue #424):
 losing a target this pass was tracking is what sends a fighting actor to the remembered
@@ -267,7 +267,7 @@ keeps playing until it gives up. See [the combat loop](/engine/combat.md).
 ## Surfaces
 
 * **World overlay.** `PerceptionOverlay` contributes to the
-  [world debug overlay](/engine/navigation.md#world-debug-overlays) registry under the
+  [world debug overlay](/engine/navigation.md#world-space-debug-overlay) registry under the
   `detection` identifier, behind `Renderer.detectionOverlayEnabled`. Per observer it draws a
   flat cone fan at the feet — the full view angle, out to the range that observer's senses
   actually reach, coloured grey, amber or red by the strongest state it holds — and a white
@@ -327,7 +327,7 @@ game bytes are committed.
 
 ## See also
 
-* [Conditions](/formats/conditions.md) — the CTDA payload, the registry and the tally.
+* [Conditions](/engine/conditions.md) — the CTDA payload, the registry and the tally.
 * [Actor package schedules](/engine/package-schedules.md) — what makes an actor an observer.
 * [Combat loop](/engine/combat.md) — where hostility lives, and what 16.7 will drive.
 * [Runtime navigation](/engine/navigation.md) — the world overlay registry this draws into.

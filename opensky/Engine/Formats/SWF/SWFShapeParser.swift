@@ -8,7 +8,7 @@
 // Alignment notes: RECT and MATRIX "must be byte aligned" per the spec. The
 // spec does not state alignment for GRADIENT or for the NumFillBits field
 // after the style arrays; observed encoders byte-align both (every vanilla
-// Interface movie parses under this rule — see docs/formats/swf.md).
+// Interface movie parses under this rule — see docs/formats/swf-shapes.md).
 
 import Foundation
 

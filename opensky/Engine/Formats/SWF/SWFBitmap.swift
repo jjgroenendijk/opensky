@@ -110,7 +110,7 @@ nonisolated enum SWFBitmapDecoder {
     /// COLORMAPDATA / ALPHACOLORMAPDATA: color table then 8-bit indices, rows
     /// padded to 32 bits. The spec states the premultiply rule only for ARGB
     /// ALPHABITMAPDATA, so RGBA table entries pass through unchanged
-    /// (premultipliedAlpha = false; see docs/formats/swf.md).
+    /// (premultipliedAlpha = false; see docs/formats/swf-shapes.md).
     private static func decodeColormapped(
         _ reader: inout BinaryReader,
         header: LosslessHeader,

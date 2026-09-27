@@ -132,7 +132,7 @@ collects both sources into one set:
 | source | what it is | how it is placed |
 | --- | --- | --- |
 | SkyrimLayer 12 NIF body | a `bhkRigidBody` in the reference's mesh whose duplicate Havok filters name the trigger layer | `placement x body x shape`, the same matrix chain a solid shape gets |
-| `XPRM` primitive | the REFR subrecord itself, an invisible volume with no mesh behind it ([record decoders](/formats/records.md)) | the REFR placement matrix: DATA position, DATA rotation, `XSCL` |
+| `XPRM` primitive | the REFR subrecord itself, an invisible volume with no mesh behind it ([record decoders](/formats/placed-references.md)) | the REFR placement matrix: DATA position, DATA rotation, `XSCL` |
 
 The mesh pass runs after the solid build, over the placements
 `resolveCollisionPlacements` already resolves, and reads models back out of the same

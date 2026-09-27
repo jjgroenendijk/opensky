@@ -8,7 +8,7 @@
 // 1. SkyrimLayer 12 bodies inside a placed NIF. `buildStaticCollision` keeps
 //    only player-solid bodies, so these are dropped there; a second pass over
 //    the same cached models routes them here instead.
-// 2. `XPRM` primitives on the REFR itself (docs/formats/records.md), which
+// 2. `XPRM` primitives on the REFR itself (docs/formats/placed-references.md), which
 //    authors trigger boxes and spheres with no mesh behind them at all.
 //
 // Both run on the build queue inside the same `SerialCellBuildRunner` call as

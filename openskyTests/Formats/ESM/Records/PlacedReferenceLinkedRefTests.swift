@@ -3,7 +3,7 @@
 //
 // Layout under test: UESP "Skyrim Mod:Mod File Format/REFR" XLKR row and
 // xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRArray('Linked References',
-// wbStruct(XLKR, ...))`. Documented in docs/formats/records.md.
+// wbStruct(XLKR, ...))`. Documented in docs/formats/placed-references.md.
 
 import Foundation
 @testable import opensky

@@ -27,7 +27,7 @@
 //     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CONT
 //   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas: `wbCOED` line 2305, `wbCNTO`
 //     2315, `wbCOCT` 2329, `wbRecord(CONT, ...)` 4505.
-// Layout documented in docs/formats/records.md.
+// Layout documented in docs/formats/item-records.md.
 
 import Foundation
 

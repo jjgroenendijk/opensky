@@ -6,7 +6,7 @@
 //
 // Reference: Adobe SWF File Format Specification, version 19, chapter 10
 // "Fonts and Text" — DefineEditText (pp. 175-177). Documented in
-// docs/formats/swf.md.
+// docs/formats/swf-text.md.
 
 import Foundation
 

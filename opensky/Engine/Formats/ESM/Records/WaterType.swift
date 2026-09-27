@@ -4,7 +4,7 @@
 //
 // Reference: xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas, WATR DNAM;
 // UESP "Skyrim Mod:Mod File Format/WATR".
-// Layout documented in docs/formats/records.md.
+// Layout documented in docs/formats/water.md.
 
 import Foundation
 import simd

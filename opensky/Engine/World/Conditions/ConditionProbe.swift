@@ -11,7 +11,7 @@
 // is the function's own value or the reason it has none, which is what a
 // readout wants and what `ConditionOutcome` deliberately flattens away.
 //
-// Documented in docs/formats/conditions.md.
+// Documented in docs/engine/conditions.md.
 
 import Foundation
 

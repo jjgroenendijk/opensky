@@ -10,7 +10,7 @@ timestamp: 2026-07-26T00:00:00Z
 # Interior door transitions
 
 M3.6. One transition path covers exterior -> interior + interior -> exterior. Format
-facts: [record decoders](/formats/records.md). Impl:
+facts: [record decoders](/formats/world-records.md). Impl:
 `CellSceneBuilderInteriors.swift`, `CellStreamerTransitions.swift`.
 
 ## Interior build

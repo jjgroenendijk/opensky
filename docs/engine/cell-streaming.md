@@ -325,7 +325,7 @@ Consequences, all inherited from the statics design:
   first actor-bearing cell; the one-time cost lands in that cell's actor
   duration (visible as the fly-bench max, excluded from p95 by ranking).
 - Exact accounting per cell: discovered = rendered + disabled skips +
-  failures ([actor records](/formats/actors.md)); every failure carries a
+  failures ([actor resolution](/engine/actor-resolution.md)); every failure carries a
   reason string (M5.6 zero-unexplained rule). `CellBuildMetric` mirrors
   counts + reasons + actor phase duration; `bench --fly-path` fails on any
   per-cell mismatch, reason-less failure, or actor-build p95 over budget,
@@ -380,7 +380,7 @@ wrongly remapped through the partition palette). Resolved by issue #64; re-verif
 stream frames avg 3.15 ms / p95 5.79 ms; actor phase avg 433.09 ms / p95
 2190.79 ms; footprint 543 -> 611 -> 570 MB, peak 702 / 1,024 MB cap. Interior
 (ChillfurrowFarm): 1 actors (1 drawn). Actor acceptance detail:
-[actor records](/formats/actors.md).
+[actor resolution](/engine/actor-resolution.md).
 
 Issue #56 follow-up, 2026-07-28: a time-profile of the cold fly path found actor
 body and FaceGen loads spending most sampled queue time decompressing DDS

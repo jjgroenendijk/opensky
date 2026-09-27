@@ -60,7 +60,7 @@ Three rules are worth stating because each is a decision rather than a consequen
 
 Categories group `ItemDefinition.Family` — All, Weapons (WEAP and AMMO), Armor, Potions,
 Ingredients, Books, Misc. That grouping is over OpenSky's own decode of the record types
-[item records](/formats/records.md) reads, deliberately **not** a reproduction of Bethesda's
+[item records](/formats/item-records.md) reads, deliberately **not** a reproduction of Bethesda's
 internal category numbering; a family OpenSky does not decode yet cannot appear. An item
 whose family is unknown filters as Misc so the only way to reach it is not the All tab.
 
@@ -81,13 +81,13 @@ imports from Inventory components/InventoryLists.swf: 89 InventoryLists
 imports from Inventory components/BottomBar.swf: 90 BottomBar
 ```
 
-Before the merge only fonts resolved imports, by name substitution, so those three
-placements instantiated nothing: the menu came up as **11 display nodes with no list at
-all**. `SWFMovieImportMerger` (see [SWF container](/formats/swf.md)) now merges each source
-movie's characters, linkage names and `DoInitAction` blocks into the importer under a
-uniform id offset. Afterwards the same movie brings up **373 nodes, 0 faults and 0
-unimplemented opcodes**, with 16 registered classes instead of 10 — `InventoryLists`,
-`ItemsList`, `CategoryList`, `BottomBar`, `ITEM CARD BASE` and `QuantitySlider` among them.
+Before the merge only fonts resolved imports, by name substitution, so those three placements
+instantiated nothing: the menu came up as **11 display nodes with no list at all**.
+`SWFMovieImportMerger` (see [SWF display list](/formats/swf-display-list.md)) now merges each source
+movie's characters, linkage names and `DoInitAction` blocks into the importer under a uniform id
+offset. Afterwards the same movie brings up **373 nodes, 0 faults and 0 unimplemented opcodes**,
+with 16 registered classes instead of 10 — `InventoryLists`, `ItemsList`, `CategoryList`,
+`BottomBar`, `ITEM CARD BASE` and `QuantitySlider` among them.
 
 The measured merge for this movie is 3 source movies and 675 characters, 3 placeholders
 bound, 0 unresolved, 8 imports skipped as font-only.

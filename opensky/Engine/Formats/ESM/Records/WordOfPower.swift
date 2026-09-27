@@ -13,7 +13,7 @@
 //     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/WOOP
 //   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas
 //     `wbRecord(WOOP, 'Word of Power', ...)` line 10639.
-// Layout documented in docs/formats/magic-records.md.
+// Layout documented in docs/formats/shouts-equip-slots.md.
 
 import Foundation
 

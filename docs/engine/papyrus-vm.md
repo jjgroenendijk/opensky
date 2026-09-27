@@ -781,7 +781,7 @@ are a tallied failure rather than a silent no-op.
 | `Actor.DoCombatSpellApply` | not installed | it asks the actor's combat controller to work a spell into what it is already doing, and 19.10's caster AI chooses its own spells. Registering it as an immediate cast would make an NPC fire through its own decision loop |
 | `Spell.RemoteCast`, `Spell.Preload`, `Spell.Unload` | not installed | the asset lifecycle they name does not exist |
 | the whole `ActiveMagicEffect` script | not installed | no script archetype MGEF runs yet (tallied in 19.6), so there is no receiver for one of its methods to be about |
-| `HasMagicEffect`, `HasMagicEffectWithKeyword` | answer "is it acting" rather than "is it carried" | the same narrowing the condition functions carry, with the citation, on [conditions](/formats/conditions.md) |
+| `HasMagicEffect`, `HasMagicEffectWithKeyword` | answer "is it acting" rather than "is it carried" | the same narrowing the condition functions carry, with the citation, on [conditions](/engine/condition-functions.md) |
 
 ### `OnHit`
 
@@ -1089,7 +1089,7 @@ register only what the engine can honestly compute.
 **Fragment dispatch.** The Creation Kit compiles each stage fragment into a
 numbered function on the generated script, and the QUST VMAD tail's fragment
 table is the only record of which stage a numbered function belongs to
-([record formats](/formats/records.md)). When `setQuestStage` sees a stage move
+([record formats](/formats/quest-records.md)). When `setQuestStage` sees a stage move
 from not-reached to reached, it looks the stage up in that table and enqueues
 each matching function on the fragment script's instance through the ordinary
 FIFO, so the per-tick budget, per-instance serialization and global event order
@@ -1168,7 +1168,7 @@ cell yet works. An unknown script or variable is skipped and counted rather
 than thrown.
 
 The bytes live in the additive `PSCR` chunk of the
-[OpenSky save container](/formats/opensky-save.md), which documents the
+[OpenSky save container](/formats/opensky-save-world-chunks.md), which documents the
 layout. `GameViewController.saveWorldState(slot:)` passes
 `scripts: papyrus?.instanceStates() ?? []`.
 
@@ -1376,7 +1376,7 @@ steps to quiescence:
   frames driving the tick, and a paused frame delivering zero so no script
   advances.
 * `OpenSkySavePapyrusTests` — the `PSCR` chunk, described under
-  [OpenSky save container](/formats/opensky-save.md).
+  [OpenSky save container](/formats/opensky-save-world-chunks.md).
 * `PapyrusNativeActorTests` — the nine `Actor` natives against a synthetic ACHR
   with a real `ActorValueRuntime` and a real `RagdollRuntime` behind it: the
   three reads agreeing with the store, the magnitude and clamping rules on both

@@ -12,7 +12,7 @@
 // p. 133). An edge with the same fill on both sides contributes both
 // directions, which cancels under either rule — interior edges do not split
 // the fill. Line styles are decoded but not stroke-tessellated yet (deferral
-// documented in docs/formats/swf.md).
+// documented in docs/formats/swf-shapes.md).
 
 import Foundation
 import simd

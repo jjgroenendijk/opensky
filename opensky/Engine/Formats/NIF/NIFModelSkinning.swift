@@ -8,7 +8,7 @@
 // Reference: NifTools nif.xml (NiSkinInstance, NiSkinData, NiSkinPartition,
 // SkinPartition, BSVertexDataSSE) + public Gamebryo NiSkinInstance help.
 //   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout + observed values in docs/formats/nif.md.
+// Layout + observed values in docs/formats/nif-skinning.md.
 
 import Foundation
 import simd

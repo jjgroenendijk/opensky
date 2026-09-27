@@ -1,169 +1,133 @@
 ---
 type: File Format
 title: Dialogue records (DIAL, INFO, VTYP)
-description: Dialogue topics, ordered response records, voice types, actor voice links, and
-  the immutable runtime index.
+description: Dialogue topics, response records, voice types, and the NPC voice link.
 tags: [format, plugin, dialogue, dial, info, vtyp, npc, localization]
-timestamp: 2026-08-09T00:00:00Z
 ---
 
-# Dialogue records, Skyrim SE
+# Dialogue records (DIAL, INFO, VTYP)
 
-Issue #204 supplies the plugin-side half of dialogue: DIAL topics, their ordered INFO
-children, VTYP voice-directory identities, and NPC_ voice links. Topic selection,
-condition evaluation, said-state and result-fragment dispatch are issue #426, the
-[dialogue runtime](/engine/dialogue.md); scenes, audio paths and lip data are later M17
-work.
+- `DIAL`: a dialogue topic, for example a greeting or a question the player can ask.
+- `INFO`: one possible answer to a topic, with its conditions and spoken lines.
+- `VTYP`: a voice type, for example `MaleNord`. It names the folder of voice files.
 
-Container framing: [ESM/ESP plugin container](/formats/esm.md). Shared condition layout:
-[conditions](/formats/conditions.md). Actor template chains:
-[actor records](/formats/actors.md).
+See [dialogue runtime](/engine/dialogue.md) for topic choice and conditions,
+[conditions](/formats/conditions.md) for `CTDA`, and [actor records](/formats/actors.md)
+for templates.
 
-## Contents
+## Sources
 
-* Sources and ambiguity policy
-* DIAL dialogue topic
-* INFO topic response set
-* VTYP voice type and NPC_ voice link
-* DialogueStore traversal and indexes
-* Defensive decode and vanilla sweep
-
-## Sources and ambiguity policy
-
-Layouts come from UESP "Skyrim Mod:Mod File Format" pages
-[DIAL](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DIAL),
+UESP [DIAL](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DIAL),
 [INFO](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/INFO),
 [VTYP](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/VTYP), and
-[NPC_](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/NPC_), cross-checked against
-xEdit dev-4.1.6 `Core/wbDefinitionsTES5.pas`: `wbRecord(DIAL, ...)` around line 4754,
-`wbRecord(VTYP, ...)` around line 6295, `wbRecord(INFO, ...)` around line 7796 and the
-NPC_ `VTCK` declaration around line 8425.
+[NPC_](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/NPC_). Checked against xEdit
+dev-4.1.6 `Core/wbDefinitionsTES5.pas`: `wbRecord(DIAL, ...)` near line 4754,
+`wbRecord(VTYP, ...)` near line 6295, `wbRecord(INFO, ...)` near line 7796, and `NPC_ VTCK`
+near line 8425.
 
-Two disagreements need explicit policy:
+The sources disagree in two places:
 
-* UESP presents DIAL DATA's last two bytes as a subtype byte plus an unused byte. xEdit
-  reads them as one uint16 numeric subtype. OpenSky preserves the uint16 as
-  `legacySubtype`; SNAM remains authoritative because UESP and xEdit agree that subtype
-  positions moved and the official tools write SNAM after DATA to override them.
-* The issue text called INFO NAM1 a DLSTRINGS value. UESP INFO calls it `ilstring`, and
-  UESP's string-table page says ILSTRINGS contains subtitled conversations while
-  DLSTRINGS contains journal and book text. The vanilla probe selected a nonzero shipped
-  NAM1 ID: it resolved through `skyrim_english.ilstrings` and not the same ID in
-  DLSTRINGS. `TopicInfo.Response.resolvedText(using:)` therefore passes `.ilstrings`
-  explicitly instead of relying on `LocalizedStrings`' `.strings` default.
+- UESP shows the last two bytes of `DIAL DATA` as a subtype byte and an unused byte. xEdit
+  reads them as one uint16 subtype. OpenSky keeps the uint16 as a legacy subtype. It uses
+  `SNAM` as the real subtype. Both sources say the subtype numbers changed, and that the
+  official tools write `SNAM` after `DATA` to override them.
+- `INFO NAM1` is an `ilstring`, not a `dlstring`. UESP says ILSTRINGS holds spoken lines,
+  and DLSTRINGS holds books and journal text. A vanilla `NAM1` ID resolves in
+  `skyrim_english.ilstrings` and not in the DLSTRINGS table. See
+  [string tables](/formats/strings.md).
 
-## DIAL dialogue topic
+## DIAL
 
-A DIAL record is immediately followed by a type-7 GRUP whose label is the DIAL FormID and
-whose direct record children are INFOs.
+A `DIAL` record is followed directly by a group of type 7. Its label is the `DIAL` FormID.
+Its direct children are the `INFO` records, in order.
 
-| field | type | decoded |
+| Field | Type | Meaning |
 | --- | --- | --- |
-| EDID | zstring | `editorID` |
-| FULL | lstring | `name`, the player's topic text |
-| PNAM | float32 | `priority` |
-| BNAM | formID | `owningBranch` (DLBR) |
-| QNAM | formID | `owningQuest` (QUST) |
-| DATA | 4 bytes | repeat behavior, category, legacy numeric subtype |
-| SNAM | char[4] | authoritative `subtype`, such as `HELO` or `CUST` |
-| TIFC | uint32 | allocation hint `declaredInfoCount` |
+| `EDID` | zstring | Editor ID |
+| `FULL` | lstring | Topic text the player sees |
+| `PNAM` | float32 | Priority |
+| `BNAM` | FormID | Owning branch (`DLBR`) |
+| `QNAM` | FormID | Owning quest (`QUST`) |
+| `DATA` | 4 bytes | uint8 "do all before repeating", uint8 category, uint16 legacy subtype |
+| `SNAM` | char[4] | Subtype, for example `HELO` or `CUST` |
+| `TIFC` | uint32 | Count of `INFO` children |
 
-DIAL DATA is uint8 `doAllBeforeRepeating`, uint8 category and uint16 legacy subtype.
-Categories 0 through 7 are player, favor, scene, combat, favors, detection, service and
-miscellaneous; unknown values are retained. TIFC is never trusted over the child records.
+Categories 0 to 7: player, favor, scene, combat, favors, detection, service,
+miscellaneous. OpenSky keeps unknown values. It never trusts `TIFC` over the real children.
 
-## INFO topic response set
+## INFO
 
-INFO carries selection flags and conditions plus zero or more response runs. DATA is the
-legacy shape: uint16 dialogue tab, uint16 flags, float32 reset days. ENAM is the current
-shape: uint16 flags plus a uint16 mapping 0...65535 to 0...24 reset hours. OpenSky
-normalizes either shape to `resetHours`.
-
-The flag word exposes every xEdit bit from 0 through 14: goodbye, random, say once,
-requires player activation, info refusal, random end, invisible continue, walk away,
-walk-away invisible in menu, force subtitle, can move while greeting, no LIP file,
-requires post-processing, audio-output override and spends favor points.
-
-| field | type | decoded |
+| Field | Type | Meaning |
 | --- | --- | --- |
-| EDID | zstring | `editorID` |
-| VMAD | struct | attached scripts plus the decoded INFO result-fragment tail |
-| DATA/ENAM | struct | flags, legacy tab and normalized reset hours |
-| TPIC | formID | `previousTopic` |
-| PNAM | formID | `previousInfo` |
-| CNAM | uint8 | favor level none/small/medium/large |
-| TCLT | formID | repeated follow-up `topicLinks` |
-| DNAM | formID | `sharedInfo` whose response data replaces this record's |
-| CTDA/CIS1/CIS2/CITC | condition run | `conditions` |
-| RNAM | lstring | player `prompt` override |
-| ANAM | formID | forced `speaker` NPC_ |
-| TWAT | formID | walk-away DIAL |
-| ONAM | formID | audio-output override |
+| `EDID` | zstring | Editor ID |
+| `VMAD` | struct | Scripts and result fragments. See [VMAD](/formats/vmad.md) |
+| `DATA` or `ENAM` | struct | Flags and reset time, below |
+| `TPIC` | FormID | Previous topic |
+| `PNAM` | FormID | Previous `INFO` |
+| `CNAM` | uint8 | Favor level: none, small, medium, large |
+| `TCLT` | FormID | A follow-up topic. Repeats |
+| `DNAM` | FormID | Shared `INFO` whose responses replace this one's |
+| `CTDA`, `CIS1`, `CIS2`, `CITC` | conditions | Conditions |
+| `RNAM` | lstring | Player prompt that replaces the topic text |
+| `ANAM` | FormID | Speaker (`NPC_`) |
+| `TWAT` | FormID | Walk-away topic (`DIAL`) |
+| `ONAM` | FormID | Audio output override |
 
-TRDT opens a response. NAM1, NAM2, NAM3, SNAM and LNAM extend the open response until the
-next TRDT or end of record; a field arriving without an open response is tallied as an
-orphan rather than attached to another group.
+`DATA` is the old shape: uint16 dialogue tab, uint16 flags, float32 reset days. `ENAM` is the
+current shape: uint16 flags and a uint16 where 0...65535 maps to 0...24 reset hours.
+OpenSky turns both into reset hours.
 
-| TRDT offset | type | decoded |
+Flag bits 0 to 14 (xEdit): goodbye, random, say once, requires player activation, info
+refusal, random end, invisible continue, walk away, walk away invisible in menu, force
+subtitle, can move while greeting, no LIP file, requires post-processing, audio output
+override, spends favor points.
+
+### Responses
+
+An `INFO` has zero or more responses. A response is a line of speech. `TRDT` starts a
+response. `NAM1`, `NAM2`, `NAM3`, `SNAM`, and `LNAM` belong to the open response until the
+next `TRDT` or the end of the record. OpenSky needs to track the open response, because
+`SNAM` also appears at the `INFO` level with another meaning. A response field with no open
+response is counted and ignored.
+
+| `TRDT` offset | Type | Meaning |
 | --- | --- | --- |
-| 0x00 | uint32 | emotion: neutral, anger, disgust, fear, sad, happy, surprise, puzzled |
-| 0x04 | uint32 | emotion value, 0...100 |
-| 0x08 | 4 bytes | unused |
-| 0x0C | uint8 + 3 unused | response number |
-| 0x10 | formID | SNDR sound, null allowed |
-| 0x14 | uint8 + 3 unused | use emotion animation |
+| 0x00 | uint32 | Emotion: neutral, anger, disgust, fear, sad, happy, surprise, puzzled |
+| 0x04 | uint32 | Emotion value, 0 to 100 |
+| 0x08 | 4 bytes | Unused |
+| 0x0C | uint8 + 3 unused | Response number |
+| 0x10 | FormID | Sound (`SNDR`). May be null |
+| 0x14 | uint8 + 3 unused | Use emotion animation |
 
-NAM1 is the ILSTRINGS-backed subtitle, NAM2 actor notes, NAM3 edits, and SNAM/LNAM the
-speaker/listener IDLE animations. The latter two use the same field signatures as other
-INFO-level concepts only inside an open TRDT run, which is why the decoder keeps explicit
-group state.
+`NAM1` is the subtitle (in ILSTRINGS). `NAM2` is actor notes. `NAM3` is edits. `SNAM` and
+`LNAM` are the speaker and listener idle animations (`IDLE`).
 
-## VTYP voice type and NPC_ voice link
+## VTYP and the NPC voice
 
-VTYP has EDID plus one-byte DNAM flags: 0x01 allows default dialogue and 0x02 is female.
-The editor ID is the directory identity later voice-path construction consumes.
+`VTYP` has an `EDID` and a one-byte `DNAM` of flags: `0x01` allow default dialogue, `0x02`
+female. The editor ID is the name of the voice file folder.
 
-NPC_`VTCK` is a VTYP FormID. It belongs to the ACBS `useTraits` template group alongside
-gender, race, skin and head parts. `ActorTemplateResolver.resolve(base:)` therefore returns
-it as an `ActorSourcedField<FormID?>`, retaining both the chosen voice and the NPC_ record
-that supplied it.
+`NPC_ VTCK` is a `VTYP` FormID. It belongs to the "use traits" template group, with gender,
+race, skin, and head parts. So a template NPC can supply it. See
+[actor records](/formats/actors.md).
 
-## DialogueStore traversal and indexes
+## Errors
 
-`DialogueStore` descends the DIAL top group rather than flattening it. For each type-7
-child group it decodes direct INFO records under `parentFormID`, preserving their file
-order. It provides topics by FormID and case-insensitive editor ID, per-topic INFO arrays,
-INFOs by FormID, and VTYPs by FormID and case-insensitive editor ID. Structurally
-unreadable records increment `skippedRecordCount`.
+Unknown fields, fields of the wrong size, and response fields with no response are counted.
+They do not throw away a usable record. Only a wrong record type or a broken field container
+is an error.
 
-`CellProviderIndexes` builds the store beside `QuestStore`, and
-`BuilderCellSceneProvider` exposes it through `DialogueDataProviding`. Since issue #426 the
-store also resolves every INFO to a session-stable `ReferenceKey` — said-state is filed per
-response and a save must not key it off a load-order-relative FormID — which is why the
-initializer takes the plugin's file name the way `QuestStore`'s does.
+## Vanilla counts
 
-## Defensive decode and vanilla sweep
+All five vanilla masters decode with no record errors.
 
-Unknown, wrong-size and orphan response fields are recorded in `DialogueTally`; they do
-not throw away a usable record. Only the wrong record type or unreadable ESM field
-container throws. Synthetic tests cover every record model, compressed DIAL and INFO,
-ordered child groups, ILSTRINGS resolution, malformed fields and actor voice inheritance.
-
-The env-gated `DialogueRealDataTests` sweep decoded the five vanilla masters on
-2026-08-09 with zero record failures and zero store record skips:
-
-| plugin | DIAL | INFO | VTYP |
+| Plugin | DIAL | INFO | VTYP |
 | --- | ---: | ---: | ---: |
 | Skyrim.esm | 15037 | 31465 | 143 |
 | Update.esm | 90 | 139 | 0 |
 | Dawnguard.esm | 2038 | 3457 | 21 |
 | HearthFires.esm | 482 | 1706 | 0 |
 | Dragonborn.esm | 2197 | 4421 | 19 |
-| total | 19844 | 41188 | 183 |
 
-The pinned skip tally is 1,365 alias-object script properties and Skyrim.esm's legacy script
-fields: 861 NEXT, 1,662 QNAM and 1,722 SCHR, all recorded rather than interpreted. The 7,661
-INFO fragment tails the sweep skipped for issue #204 are decoded since issue #426 and are
-counted rather than skipped: 7,661 tails carrying 8,009 result-script fragments, layout in
-[Papyrus attachment data](/formats/vmad.md). The report is under the gitignored local run
-directory `logs/dialogue-sweep/<stamp>/`.
+`Skyrim.esm` also has old script fields that OpenSky counts but does not read: `NEXT`,
+`QNAM`, and `SCHR`.

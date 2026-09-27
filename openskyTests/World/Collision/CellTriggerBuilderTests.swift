@@ -142,7 +142,7 @@ extension CellSceneBuilderTests {
 
     /// A REFR carrying an XPRM payload, which `refrRecord` cannot express.
     /// Layout: float[3] bounds, float[3] color, float unknown, uint32 type
-    /// (docs/formats/records.md).
+    /// (docs/formats/placed-references.md).
     func primitiveRefrRecord(
         formID: UInt32,
         base: UInt32,

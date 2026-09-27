@@ -151,7 +151,7 @@ or underlying Race or Class Base Attributes change."
 merely tolerating a mismatch, so a load order that changes it says so.
 
 Getting from 61 mismatches to 26 is what established the `statsRace` rule
-documented under [template resolution](/formats/actors.md).
+documented under [template resolution](/engine/actor-resolution.md).
 
 `openskycli actor-values --npc <formid-or-edid>` prints one actor's derivation
 with the record each input came from; `--race <formid-or-edid>` prints one race's
@@ -479,7 +479,7 @@ order. Additive and split out of `RDLT` for the same reason `INVN`, `SPWN`,
 `formatVersion`, so an older build would refuse every save containing a wounded
 actor instead of loading the rest of the world with everyone at full health. A
 session in which nothing took damage writes no chunk at all. Layout:
-[OpenSky save container](/formats/opensky-save.md).
+[OpenSky save container](/formats/opensky-save-actor-chunks.md).
 
 The regeneration step rewrites the whole component every frame and carries the
 override table through that write, so a temporary modifier an active effect is
@@ -627,6 +627,6 @@ AVIF record decode landed with item 20.1 — the record adds metadata, not value
 see [actor value information](/formats/actor-value-information.md). Papyrus and
 condition exposure landed with item 15.8 — see
 [the Papyrus VM](/engine/papyrus-vm.md) and
-[conditions](/formats/conditions.md). The bleedout ratio is
+[conditions](/engine/condition-functions.md). The bleedout ratio is
 decoded off CLAS already so 15.6 does not have to re-open the record; nothing in
 this item reads it.

@@ -207,7 +207,7 @@ Indices are the raw stored numbers; the Creation Kit spells each 4096 higher.
 
 `GetBaseActorValue` reading the base rather than the total is the point: a fortified skill is
 not a trained one, so a perk requirement is something a potion cannot buy. See
-[conditions](/formats/conditions.md).
+[conditions](/engine/condition-functions.md).
 
 ## The Papyrus surface
 

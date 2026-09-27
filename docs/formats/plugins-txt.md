@@ -1,154 +1,114 @@
 ---
 type: File Format
 title: plugins.txt load order
-description: The textfile load order Skyrim SE writes, how OpenSky finds it on macOS, and the plugin order it produces.
+description: The text-file load order Skyrim SE uses, where OpenSky looks for it on macOS,
+  and the plugin order it builds.
 tags: [format, plugin, load-order, esm]
-timestamp: 2026-08-10
 ---
 
 # plugins.txt load order
 
-`plugins.txt` is the plain-text list that decides which plugins a Skyrim Special Edition
-session loads and in what order. Everything that merges records across plugins depends on
-it: the last plugin to define a record wins, and a FormID's master index is an index into
-the load order the plugin was compiled against. Before this file was read, OpenSky assumed
-the five vanilla masters and nothing else, which is correct for a stock install and wrong
-for every modded one (issue #73).
+`plugins.txt` is a plain text list. It says which plugins load and in what order. When two
+plugins define the same record, the later one wins. So every merge of records across
+plugins depends on this file.
 
-## Contents
-
-* [Format](#format)
-* [Where the file lives](#where-the-file-lives)
-* [What OpenSky searches](#what-opensky-searches)
-* [The order OpenSky builds](#the-order-opensky-builds)
-* [Consequences elsewhere](#consequences-elsewhere)
-* [Configuring it](#configuring-it)
-* [Not modelled yet](#not-modelled-yet)
-* [Code and tests](#code-and-tests)
+Reference: [libloadorder](https://github.com/Ortham/libloadorder), the load order library
+that LOOT and several mod managers use. It describes the enable flag and the text-file load
+order system. OpenSky has not seen a `plugins.txt` that the game itself wrote on this
+machine. See [environment](/tools/environment.md).
 
 ## Format
 
-One plugin file name per line, in load order — earliest line loads first and is overridden
-by everything after it. Skyrim SE uses the *textfile-based* load order system, in which the
-same file carries both the order and the enabled state:
+One plugin file name per line. The first line loads first, and every later line wins over
+it. Skyrim SE uses the "text-file based" system: the same file holds the order and the
+on/off state.
 
 | Line | Meaning |
 | --- | --- |
-| `*Mod.esp` | Active. The leading asterisk is the enable flag. |
-| `Mod.esp` | Installed but switched off in the launcher. Not loaded. |
-| `# text` | Comment. |
-| empty | Ignored. |
+| `*Mod.esp` | Active. The `*` is the enable flag |
+| `Mod.esp` | Installed but turned off. Not loaded |
+| `# text` | Comment |
+| empty | Ignored |
 
-Names are file names inside `Data/`, not paths. They are matched case-insensitively: what a
-launcher or mod manager writes is not always the on-disk spelling, so OpenSky resolves each
-line against the real directory listing and keeps the on-disk name. The file is UTF-8 in
-practice, sometimes with a byte-order mark; OpenSky falls back to Windows-1252 for a file
-that is not valid UTF-8 rather than losing the whole order to one accented mod name.
+Names are file names inside `Data/`, not paths. They match without case, because tools do
+not always write the spelling on disk. OpenSky keeps the spelling on disk. The file is
+normally UTF-8, sometimes with a byte-order mark. If it is not valid UTF-8, OpenSky reads it
+as windows-1252. One accented mod name then does not lose the whole order.
 
-Reference for the enable-flag semantics and the textfile-based system: libloadorder,
-<https://github.com/Ortham/libloadorder>, the load-order library LOOT and several mod
-managers use. Verified against the file layout produced by those tools; OpenSky has not
-observed a `plugins.txt` written by the game itself on this machine — see
-[environment](/tools/environment.md).
+The official masters cannot be turned off and do not need to be listed. The game always
+loads `Skyrim.esm` and `Update.esm`, and always keeps the official masters first.
 
-The official masters are not toggleable and do not need to appear here. `Skyrim.esm` and
-`Update.esm` in particular are loaded whether listed or not, and the game keeps the official
-masters ahead of everything else regardless of where a line for one appears.
-
-Creation Club content is listed separately, in `Skyrim.ccc` in the install root: one plain
-name per line, no enable flag, active when the file is present in `Data/`.
+Creation Club content is listed in `Skyrim.ccc` in the install root. It has one name per
+line and no enable flag. An entry is active when its file is in `Data/`.
 
 ## Where the file lives
 
-The game writes it into its Windows per-user application data folder,
-`%LOCALAPPDATA%\Skyrim Special Edition\plugins.txt`. There is no macOS-native Skyrim SE, so
-on this platform that folder only exists inside whatever compatibility layer runs the game
-— a Steam Proton prefix, a Wine prefix, a CrossOver or Whisky bottle — or not at all, when
-the install was copied over from a Windows machine and never launched here.
+The game writes it to `%LOCALAPPDATA%\Skyrim Special Edition\plugins.txt` on Windows. There
+is no macOS version of Skyrim SE. So on a Mac this folder exists only inside a Windows
+compatibility layer (Proton, Wine, CrossOver, or Whisky). It does not exist at all when the
+install was copied from a Windows machine.
 
-## What OpenSky searches
+## Where OpenSky looks
 
-In order, first hit wins:
+In this order. The first file found wins.
 
-1. `OPENSKY_PLUGINS_TXT` environment variable (tests, CLI runs).
-2. `OpenSkyPluginsText` in the shared defaults domain `nl.jjgroenendijk.opensky`, written by
-   Settings. Shared with the data root, so the app and `openskycli` agree.
-3. `<install>/plugins.txt` — beside the game, where a hand-managed or portable layout puts
-   it.
-4. `~/Library/Application Support/Skyrim Special Edition/plugins.txt` — the native place to
-   keep one on this platform.
+1. The `OPENSKY_PLUGINS_TXT` environment variable. Used by tests and CLI runs.
+2. `OpenSkyPluginsText` in the defaults domain `nl.jjgroenendijk.opensky`, written by
+   Settings. The app and `openskycli` share this domain.
+3. `<install>/plugins.txt`, next to the game.
+4. `~/Library/Application Support/Skyrim Special Edition/plugins.txt`.
 5. `drive_c/users/<name>/AppData/Local/Skyrim Special Edition/plugins.txt` inside each
-   Windows compatibility prefix that exists: the Steam Proton prefix beside the install
+   Windows prefix that exists: the Steam Proton prefix next to the install
    (`<library>/steamapps/compatdata/489830/pfx`), `~/.wine`, and every bottle under
    `~/Library/Application Support/CrossOver/Bottles` or
-   `~/Library/Containers/com.isaacmarovitz.Whisky/Bottles`. The shared `Public` profile is
+   `~/Library/Containers/com.isaacmarovitz.Whisky/Bottles`. The shared `Public` user is
    skipped.
 
-A path set through source 1 or 2 that cannot be read is reported rather than ignored: a
-configured path that is wrong is a mistake to surface, not a reason to quietly load a
-different order. Finding nothing at all is not an error — it resolves to the vanilla
-masters, which is what a stock install loads anyway.
+If source 1 or 2 names a file that cannot be read, OpenSky reports it. A wrong configured
+path is a mistake to show, not a reason to load a different order. Finding no file is not
+an error. OpenSky then loads the vanilla masters, as a stock install does.
 
 ## The order OpenSky builds
 
 Lowest priority first:
 
-1. The official masters — `Skyrim.esm`, `Update.esm`, `Dawnguard.esm`, `HearthFires.esm`,
-   `Dragonborn.esm` — pinned in that order, filtered to what `Data/` holds. A DLC the user
-   does not own is an ordinary install, not a problem to report.
+1. The official masters, in this order: `Skyrim.esm`, `Update.esm`, `Dawnguard.esm`,
+   `HearthFires.esm`, `Dragonborn.esm`. Only those in `Data/`. A missing DLC is normal.
 2. `Skyrim.ccc` entries, in file order.
-3. `*`-starred `plugins.txt` entries, in file order.
+3. Active (`*`) `plugins.txt` entries, in file order.
 
-A name that appears twice takes its first position, so a master starred in `plugins.txt`
-does not move behind the mods or load twice.
+A name listed twice keeps its first position. So a master that is also starred in
+`plugins.txt` does not move behind the mods.
 
-A `plugins.txt` entry that `Data/` does not hold is collected as missing and shown in the
-Load Order panel instead of being dropped silently — that is normally a mod uninstalled
-without updating the list. Entries from the other two sources are not reported: a master the
-install lacks is an install without that DLC, and `Skyrim.ccc` is a catalogue of everything
-Creation Club sells rather than a list of what is installed. On the stock install here, 70
-of its 80 entries are absent.
+A `plugins.txt` entry with no file in `Data/` is shown as missing in the Load Order panel.
+This usually means a mod was removed without updating the list. Missing entries from the
+other two sources are not shown. A missing master means the DLC is not owned. `Skyrim.ccc`
+lists everything Creation Club sells, not what is installed; on a stock install most of its
+entries are absent.
 
-## Consequences elsewhere
+## Archive order
 
-Archive priority follows plugin priority. `ArchiveLoadOrder` used to place plugin-named
-`.bsa` files officials-first then alphabetically; it now walks the resolved plugin order, so
-a mod's archive overrides the archives of every plugin loaded before it
-([virtual file system](/formats/vfs.md)).
+Archives follow plugin order, so a mod's archive wins over the archives of every plugin
+before it. See [virtual file system](/formats/vfs.md).
 
-One deliberate deviation from the game: an archive whose plugin the load order does not name
-is still opened, at the bottom of the list below everything the order does name. The game
-would ignore it. Dropping it would mean that a machine where no `plugins.txt` can be found —
-the common case on macOS — loses every mod archive it can read today, which is a worse
-failure than loading one archive the game would not have.
+OpenSky differs from the game in one case. An archive whose plugin is not in the load order
+still opens, at the bottom of the list. The game would ignore it. On macOS OpenSky often
+finds no `plugins.txt`. Ignoring these archives would then drop every mod archive, which is
+worse than loading one archive the game would skip.
 
-## Configuring it
+## Settings
 
-* **Settings** (Cmd+,) has a *Plugin Load Order (plugins.txt)* group beside the game data
-  root: the resolved path, where it came from, *Choose…*, and *Search Automatically*.
-* **Library > Load Order** in the sidebar lists the resolved order — position, plugin,
-  whether the entry came from the pinned masters, `Skyrim.ccc`, or `plugins.txt`, and any
-  listed-but-absent plugin — with the same two buttons and a *Reload*.
+- Settings (Cmd+,) has a "Plugin Load Order (plugins.txt)" group: the path in use, where it
+  came from, "Choose...", and "Search Automatically".
+- Library > Load Order lists the order: position, plugin, source (masters, `Skyrim.ccc`, or
+  `plugins.txt`), and missing plugins. It has the same buttons and "Reload".
 
-## Not modelled yet
+## Not supported
 
-* Light plugins (`.esl`) load into the shared `0xFE` master-index space. OpenSky orders them
-  correctly but does not model that space, so the panel shows a plain 1-based position
-  rather than the hex index a mod manager shows ([FormID](/formats/formid.md)).
-* `loadorder.txt`, which some mod managers write beside `plugins.txt` to record the order of
-  inactive plugins as well, is not read. Nothing OpenSky does needs it.
-* The load order is resolved per query rather than held as session state; nothing yet needs
-  to notice a `plugins.txt` that changes while the app is running.
-
-## Code and tests
-
-| Where | What |
-| --- | --- |
-| `opensky/Engine/GameData/PluginsTextLocator.swift` | Finding the file; the sources and prefixes above |
-| `opensky/Engine/GameData/PluginLoadOrder.swift` | Parsing and the resolved order |
-| `opensky/Engine/GameData/PluginLoadOrderReport.swift` | The rows and summary the UI shows |
-| `opensky/App/Panels/LoadOrderViewController.swift` | Library > Load Order |
-| `openskyTests/GameData/PluginsTextLocatorTests.swift` | Every search layout, over synthetic trees |
-| `openskyTests/GameData/PluginLoadOrderTests.swift` | Enable flags, file order, dedupe, missing plugins |
-| `openskyTests/GameData/PluginLoadOrderReportTests.swift` | The strings the panel shows |
-| `openskyTests/GameData/ArchiveLoadOrderTests.swift` | Archive order following plugin order |
+- Light plugins (`.esl`) load into the shared `0xFE` index space. OpenSky orders them
+  correctly but does not model that space. The panel shows a plain position, not the hex
+  index a mod manager shows. See [FormID](/formats/formid.md).
+- `loadorder.txt`, which some mod managers write to also order inactive plugins. OpenSky
+  does not need it.
+- A `plugins.txt` that changes while the app runs. OpenSky reads the order when asked and
+  does not watch the file.

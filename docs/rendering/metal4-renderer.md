@@ -369,7 +369,7 @@ Milestone 5 shot — Chillfurrow Farm (Tamriel 7,-3, Whiterun exterior) with pla
 actors as bind-pose skinned bodies (`openskycli screenshot --x 7 --y -3 --zoom 10
 --size 1920x1080`, 2026-07-20): four clothed farmhands stand at their ACHR poses by
 the fence, cell reports 7 actors (7 drawn). Actor pipeline detail:
-[actor records](/formats/actors.md). Engine output, not extracted game data.
+[actor resolution](/engine/actor-resolution.md). Engine output, not extracted game data.
 
 Generated render captures stay local; numeric render + accounting results are retained here.
 

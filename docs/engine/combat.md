@@ -408,7 +408,7 @@ looks around for `searchSeconds`.
 
 * While searching, `GetCombatState` returns **2**. That is the third documented
   return, and 16.7 is what makes it reachable; see
-  [conditions](/formats/conditions.md).
+  [conditions](/engine/condition-functions.md).
 * A searching actor is still engaged, so the player is still in combat and the
   music still plays. That is the searching seam the music runtime has held open.
 * Perceiving the target again mid-search resumes the chase.
@@ -540,7 +540,7 @@ graph-driven and fallback death counts, so "the scripts were told" and "the grap
 drove it" are two readable numbers rather than one assumption.
 
 The condition side of the same state is
-[conditions](/formats/conditions.md): `GetCombatState`, `GetDead`, `IsWeaponOut`
+[conditions](/engine/condition-functions.md): `GetCombatState`, `GetDead`, `IsWeaponOut`
 and the two actor-value functions read a snapshot of exactly this, and CTDA
 run-on type 3 resolves against the fight described in
 [combat state is derived](#combat-state-is-derived) — the player fights the
@@ -610,7 +610,7 @@ and `DETH` have their own: a component kind inside `RDLT` is versioned by
 `formatVersion`, so putting it there would make an older build refuse every save
 containing a fight instead of loading the rest of the world. A session in which
 nothing was provoked writes no chunk at all. See
-[the OpenSky save container](/formats/opensky-save.md).
+[the OpenSky save container](/formats/opensky-save-actor-chunks.md).
 
 An unknown hostility byte decodes as neutral rather than throwing: a future third
 regard should load with that actor calm, not refuse the file.
@@ -824,7 +824,7 @@ Everything below is a known gap with a home, not an oversight:
   would place a second actor in the world have nowhere to place it yet.
 * **No crime, group tactics or morale.** Item 21.3 added factions and
   relationships, and item 21.4 the condition functions and Papyrus natives over
-  them ([Papyrus VM](/engine/papyrus-vm.md), [conditions](/formats/conditions.md));
+  them ([Papyrus VM](/engine/papyrus-vm.md), [conditions](/engine/condition-functions.md));
   crime gold is #504 and #505 and joins through the named seam in
   the precedence list above. Assistance is decoded and unread, so there is still
   no coordination between two actors fighting the same player beyond both of them

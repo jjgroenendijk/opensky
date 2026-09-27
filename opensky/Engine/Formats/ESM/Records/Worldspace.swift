@@ -7,7 +7,7 @@
 //
 // Reference: UESP "Skyrim Mod:Mod File Format/WRLD"
 //   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/WRLD
-// Layout documented in docs/formats/records.md.
+// Layout documented in docs/formats/world-records.md.
 
 import Foundation
 

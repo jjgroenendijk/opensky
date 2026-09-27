@@ -27,7 +27,7 @@
 //     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/EQUP
 //   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas
 //     `wbRecord(EQUP, 'Equip Type', ...)` line 7192.
-// Layout documented in docs/formats/magic-records.md.
+// Layout documented in docs/formats/shouts-equip-slots.md.
 
 import Foundation
 

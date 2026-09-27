@@ -19,7 +19,7 @@
 // at all; the caller resolves that through `CrimeFactionResolver` and puts the
 // answer here, because a `ConditionContext` carries no cell.
 //
-// Documented in docs/engine/crime.md and docs/formats/conditions.md.
+// Documented in docs/engine/crime.md and docs/engine/condition-functions.md.
 
 import Foundation
 

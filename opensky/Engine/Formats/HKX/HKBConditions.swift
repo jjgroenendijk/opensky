@@ -11,7 +11,7 @@
 // 64-bit member offsets from ret2end/HKX2Library (MIT); signatures match the
 // local SSE files (hkbExpressionCondition 0x1C3C1045, hkbStringCondition
 // 0x5AB50487, hkbExpressionDataArray 0x4B9EE1A2, hkbEventRangeDataArray
-// 0x330A56EE). Byte map: docs/formats/hkx-behavior-nodes.md.
+// 0x330A56EE). Byte map: docs/formats/hkx-behavior-modifiers.md.
 
 import Foundation
 

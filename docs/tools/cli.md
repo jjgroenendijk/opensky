@@ -112,7 +112,7 @@ Implementation notes:
 * `actor` is M5.1/5.2's repeatable probe. Decode + resolution live in the engine tree
   (`ActorTemplateResolver.build` indexes NPC_/LVLN top groups;
   `ActorVisualResolver.build` indexes RACE/ARMO/ARMA/OTFT/LVLI; see
-  [actor records](/formats/actors.md)); the CLI mirrors `cell`'s WRLD walk over the
+  [actor resolution](/engine/actor-resolution.md)); the CLI mirrors `cell`'s WRLD walk over the
   radius block plus the worldspace (0,0) persistent cell, assigning persistent ACHRs
   to cells by physical position (door pattern). `--npc` skips the walk and resolves
   the named base NPC_ alone.
@@ -181,7 +181,7 @@ Implementation notes:
   file only parses args and prints. Vanilla install: 53 movies, 3,414 action
   blocks (2,163 DoAction, 1,127 DoInitAction, 124 ClipActions), 533,562 action
   records, 56 distinct opcodes, 0 unknown, 3,382 distinct host-API names. See
-  [SWF container](/formats/swf.md).
+  [SWF actions](/formats/swf-actions.md).
 * `audio sweep` is the milestone 9.1.2 + 9.1.3 gate probe. It enumerates every
   archive path ending `.xwm`, frames each through the production `XWMFile`
   container parser and decodes it packet-by-packet through `WMADecoder`,

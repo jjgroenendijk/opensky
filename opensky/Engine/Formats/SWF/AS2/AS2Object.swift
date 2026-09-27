@@ -5,7 +5,7 @@
 // Property attributes exist because vanilla menu code calls `ASSetPropFlags`
 // 894 times while registering classes; getters and setters exist because it
 // calls `addProperty` 1,535 times (measured by `openskycli swf action-sweep`,
-// see docs/formats/swf.md). Both are undocumented Flash built-ins, so their
+// see docs/formats/swf-actions.md). Both are undocumented Flash built-ins, so their
 // behavior here is recorded as observed rather than cited to the spec — see
 // docs/engine/as2-runtime.md.
 //

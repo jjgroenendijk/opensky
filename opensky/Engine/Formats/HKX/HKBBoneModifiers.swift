@@ -15,7 +15,7 @@
 // 0x877EBC0B, hkbKeyframeBonesModifier 0x95F66629, hkbGetUpModifier 0x61CB7AC0,
 // hkbFootIkControlsModifier 0xE5B6F544, hkbPoweredRagdollControlsModifier
 // 0x7CB54065, hkbRigidBodyRagdollControlsModifier 0xAA87D1EB). Byte map:
-// docs/formats/hkx-behavior-nodes.md.
+// docs/formats/hkx-behavior-modifiers.md.
 
 import Foundation
 

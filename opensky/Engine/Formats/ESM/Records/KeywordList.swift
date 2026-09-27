@@ -14,7 +14,7 @@
 //   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/WEAP
 //   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbKeywords`, which models KWDA
 //   as an array sized from KSIZ.
-// Layout documented in docs/formats/records.md.
+// Layout documented in docs/formats/item-records.md.
 
 import Foundation
 

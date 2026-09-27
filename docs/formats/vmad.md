@@ -1,333 +1,187 @@
 ---
 type: File Format
 title: Papyrus attachment data (VMAD)
-description: Skyrim ESM script attachments, typed property values, object
-  references, fragment skip policy, and PEX backing-variable binding.
+description: Script attachments on ESM records - scripts, typed property values, object
+  references, QUST and INFO fragment tables - and how values bind to PEX variables.
 tags: [format, plugin, papyrus, vmad, formid]
-timestamp: 2026-08-02T00:00:00Z
 ---
 
 # Papyrus attachment data (VMAD)
 
-`VMAD` fields attach compiled Papyrus scripts to ESM records and supply the
-property values authored for each attachment. OpenSky decodes the shared
-primary-script section, resolves direct object values to
-[`ReferenceKey`](/formats/formid.md), and binds compatible values to the actual
-automatic backing-variable names stored in the
-[PEX property metadata](/formats/pex.md).
+A `VMAD` field attaches compiled Papyrus scripts to a record and gives the property values
+set for each script. OpenSky reads the scripts, turns object values into stable reference
+keys (see [FormID](/formats/formid.md)), and binds the values to the backing variables named
+in the [PEX](/formats/pex.md) file.
 
-Layout sources:
+Sources:
 
-* [xEdit dev-4.1.6 `wbDefinitionsTES5.pas`](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas),
-  especially `wbScriptPropertyObject`, `wbScriptEntry`, `wbVMAD`, and the five
-  fragmented variants; and
-* [UESP, VMAD Field](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/VMAD_Field),
-  cross-checked for version-dependent status bytes and array availability.
-
-No game field bytes or compiled scripts are tracked. Synthetic fixtures build
-every encoded case in memory, and the real-data evidence below records only
-aggregate counts in the repository.
-
-## Contents
-
-* [Header and scripts](#header-and-scripts)
-* [Properties](#properties)
-* [Object references](#object-references)
-* [Fragments and aliases](#fragments-and-aliases)
-  * [The QUST tail](#the-qust-tail)
-  * [The INFO tail](#the-info-tail)
-* [Record integration](#record-integration)
-* [PEX binding](#pex-binding)
-* [Defensive decode policy](#defensive-decode-policy)
-* [Vanilla sweep evidence](#vanilla-sweep-evidence)
-* [Scope](#scope)
+- [xEdit dev-4.1.6 `wbDefinitionsTES5.pas`](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas),
+  mainly `wbScriptPropertyObject`, `wbScriptEntry`, `wbVMAD`, and the five fragment
+  variants.
+- [UESP, VMAD Field](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/VMAD_Field), for
+  the version-dependent flag bytes and when arrays exist.
 
 ## Header and scripts
 
-The field starts with three little-endian values:
+All integers are little-endian.
 
-| type | field | OpenSky policy |
+| Type | Field | Check |
 | --- | --- | --- |
-| `int16` | version | versions 2 through 5 |
-| `int16` | object format | 1 or 2; selects object word order |
-| `uint16` | script count | bounded by the remaining field bytes |
+| int16 | Version | 2 to 5 |
+| int16 | Object format | 1 or 2. Sets the word order of object values |
+| uint16 | Script count | Must fit in the remaining bytes |
 
-Each script then contains:
+Each script:
 
-| type | field |
+| Type | Field |
 | --- | --- |
-| `uint16` + bytes | script name |
-| `uint8` | flags when version is at least 4 |
-| `uint16` | property count |
-| repeated | property entries |
+| uint16 + bytes | Script name |
+| uint8 | Flags, only from version 4 |
+| uint16 | Property count |
+| repeats | Properties |
 
-Script flag bit 0 means inherited and bit 1 means removed. A removed attachment
-remains represented for diagnostics but is never instantiated.
+Script flags: bit 0 inherited, bit 1 removed. A removed script is kept for inspection but
+never run.
 
-The length-prefixed strings carry no encoding marker, so they decode under the
-engine-wide lenient text policy ([string decoding](/decisions/string-decoding.md))
-and cannot fail; only the length prefix can run past the end of the field. The
-observed vanilla script and property names are ASCII.
+Strings have no encoding marker. They follow the
+[string decoding](/decisions/string-decoding.md) policy and cannot fail. Vanilla names are
+ASCII.
 
 ## Properties
 
-A property is its length-prefixed name, one-byte type, one-byte flags when the
-VMAD version is at least 4, and a type-selected value. Property flag bit 0 means
-edited and bit 1 means removed. Removed properties are decoded to keep the
-reader aligned, tallied, and excluded from binding.
+A property is a length-prefixed name, a one-byte type, a one-byte flags field (from
+version 4), and a value. Property flags: bit 0 edited, bit 1 removed. A removed property is
+read, so the reader stays in step, but it is never bound.
 
-| type byte | value | payload |
+| Type | Value | Data |
 | ---: | --- | --- |
-| 0 | none | no payload |
-| 1 | object | eight-byte object union |
-| 2 | string | `uint16` length plus bytes |
-| 3 | integer | signed `int32` |
-| 4 | float | IEEE-754 binary32 |
-| 5 | boolean | one byte; zero is false |
-| 11 | object array | `uint32` count plus object values |
-| 12 | string array | `uint32` count plus strings |
-| 13 | integer array | `uint32` count plus `int32` values |
-| 14 | float array | `uint32` count plus binary32 values |
-| 15 | boolean array | `uint32` count plus bytes |
+| 0 | None | none |
+| 1 | Object | 8 bytes, below |
+| 2 | String | uint16 length + bytes |
+| 3 | Integer | int32 |
+| 4 | Float | float32 |
+| 5 | Boolean | one byte. 0 is false |
+| 11 | Object array | uint32 count + objects |
+| 12 | String array | uint32 count + strings |
+| 13 | Integer array | uint32 count + int32 values |
+| 14 | Float array | uint32 count + float32 values |
+| 15 | Boolean array | uint32 count + bytes |
 
-Arrays are valid from version 5. Every count is checked against a conservative
-minimum element width before allocation, so a large count in a short field
-throws rather than requesting attacker-controlled memory.
+Arrays exist from version 5. Every count is checked against the smallest possible element
+size before memory is allocated. A huge count in a short field is an error, not a huge
+allocation. The only array type in vanilla is the Boolean array, in two properties.
 
-## Object references
+## Object values
 
-Both object encodings occupy eight bytes. Only their word order changes:
+Both object formats are 8 bytes. Only the word order differs:
 
-| object format | first 4 bytes | next 2 bytes | last 2/4 bytes |
+| Object format | First 4 bytes | Next 2 bytes | Last bytes |
 | ---: | --- | --- | --- |
-| 1 | FormID | signed alias | unused `uint16` |
-| 2 | unused `uint16` | signed alias | FormID |
+| 1 | FormID | int16 alias | unused uint16 |
+| 2 | unused uint16 | int16 alias | FormID |
 
-Alias `-1` means the FormID is a direct object. Any other alias selects an
-alias on the quest named by the FormID. Direct, non-null values pass through
-the owning plugin's `FormIDResolver` and become a normalized `ReferenceKey`.
-The raw FormID never becomes a session identity by itself.
+Alias -1 means the FormID is the object itself. Any other alias means an alias on the quest
+that the FormID names. FormID 0 is Papyrus `None`.
 
-The zero FormID is Papyrus `None`. An alias object, an unresolved FormID, or a
-resolved key for which the world has not supplied an opaque handle does not
-invent an object. Binding leaves the compiler default intact, logs the skip,
-and increments the matching reason tally.
+A direct FormID resolves through the master list of its plugin. The raw FormID is never
+used as an identity by itself. If a value names an alias, does not resolve, or has no world
+object yet, OpenSky does not make up an object. The property keeps the default value from
+the compiled script.
 
-## Fragments and aliases
+## Fragments
 
-`INFO`, `PACK`, `PERK`, `QUST`, and `SCEN` append record-specific fragment
-structures after the common script list. `QUST` is decoded (M13.1, issue #181)
-and `INFO` is decoded (M17.2, issue #426); the other three still record one
-reason-tagged fragment-section skip and consume the bounded field remainder. A
-remainder on any other record type is a typed error rather than guessed
-framing.
+`INFO`, `PACK`, `PERK`, `QUST`, and `SCEN` add a record-specific fragment table after the
+scripts. A fragment is a small script function that the Creation Kit generates. OpenSky
+reads the `QUST` and `INFO` tables. For `PACK`, `PERK`, and `SCEN` it skips the rest of the
+field and counts the skip. Extra bytes after the scripts on any other record type are an
+error.
 
 ### The QUST tail
 
-A quest's stage scripts are not attached scripts. The Creation Kit compiles
-every stage fragment into one generated script named `QF_<editorID>_<formID>`
-and gives each fragment a function named `Fragment_<n>`, numbered in authoring
-order rather than by stage. This table is the only record of which stage and
-which log entry a numbered fragment belongs to, which is why the quest runtime
-cannot run stage scripts without it.
+Quest stage scripts are not normal attached scripts. The Creation Kit puts every stage
+fragment into one generated script named `QF_<editorID>_<formID>`. Each fragment is a
+function named `Fragment_<n>`, numbered in the order they were written, not by stage. This
+table is the only place that says which stage and log entry a fragment belongs to.
 
-| offset | type | meaning |
+| Offset | Type | Meaning |
 | --- | --- | --- |
-| 0 | `int8` | extra bind data version, always 2 |
-| 1 | `uint16` | fragment count |
-| 3 | wstring | file name of the generated `QF_` script, no extension |
-| .. | fragment[count] | the stage fragment table, below |
-| .. | `uint16` | alias count |
-| .. | alias[count] | alias script sections, below |
+| 0 | int8 | Version. Always 2 |
+| 1 | uint16 | Fragment count |
+| 3 | wstring | Name of the generated `QF_` script, without extension |
+| .. | fragments | Below |
+| .. | uint16 | Alias count |
+| .. | alias sections | Below |
 
 One fragment:
 
-| offset | type | meaning |
+| Offset | Type | Meaning |
 | --- | --- | --- |
-| 0 | `uint16` | quest stage index, the same number `QUST` `INDX` carries |
-| 2 | `int16` | unused, always 0 |
-| 4 | `int32` | log-entry index within that stage |
-| 8 | `int8` | unused, always 1 |
-| 9 | wstring | script name, normally the file name |
-| .. | wstring | fragment function name, e.g. `Fragment_5` |
+| 0 | uint16 | Quest stage, the same number as `QUST INDX` |
+| 2 | int16 | Unused. Always 0 |
+| 4 | int32 | Log entry index in that stage |
+| 8 | int8 | Unused. Always 1 |
+| 9 | wstring | Script name. Normally the file name |
+| .. | wstring | Function name, for example `Fragment_5` |
 
-One alias section:
+xEdit reads the stage and the log entry as two uint32 values. UESP splits each into a value
+and a constant half. In little-endian both readings give the same bytes.
 
-| type | meaning |
-| --- | --- |
-| object (8 bytes) | quest and alias the scripts attach to, read with the **primary** object format |
-| `int16` | version, restated for this alias |
-| `int16` | object format, restated for this alias |
-| `uint16` | script count, then that many ordinary script entries |
+One alias section: an 8-byte object value (the quest and alias), read with the main object
+format; then an int16 version, an int16 object format, a uint16 script count, and that many
+normal scripts. The scripts are read with the version and format this alias gives, and then
+the main values return. Vanilla never uses different values here.
 
-xEdit reads the stage index and the log-entry index as two `uint32` words where
-UESP splits each into a value plus an always-constant half. The two agree byte
-for byte on little-endian; the split spelling is what
-`ScriptDataQuestFragmentDecoder.swift` uses, because it names the halves the
-constants sit in.
-
-The version and object format an alias restates are honoured rather than
-assumed: the script entries after them are read with whatever that alias
-declares, then the primary values are restored. Vanilla data never disagrees.
-
-A malformed tail is not fatal. The decoder rewinds, records the same
-`QUST fragments` skip the other carriers use, and consumes the remainder, so a
-quest with a broken fragment table still delivers its primary scripts.
-
-Object values that name an alias are still retained as
-`ScriptObjectReference` and counted as alias skips: M13.1 decodes the alias
-*definitions* ([`Quest.Alias`](/formats/records.md)), while filling an alias at
-runtime is issue #183.
+A broken `QUST` tail is not fatal. OpenSky counts it, skips the rest, and keeps the main
+scripts.
 
 ### The INFO tail
 
-A dialogue result script is likewise not an attached script. The Creation Kit
-compiles the two result boxes of one response into a generated script named
-`TIF_<editorID>_<formID>` — in shipped data usually `TIF__<formID>` with two
-underscores, because most `INFO` records carry no editor ID — and gives each box
-a function named `Fragment_<n>`. Which box a numbered fragment belongs to is not
-in its name: it is the position of the entry read against the flag byte, which is
-why the dialogue runtime ([dialogue runtime](/engine/dialogue.md)) cannot run a
-result script without this table.
+A dialogue result script is also generated. The Creation Kit puts the two result boxes of a
+response into a script named `TIF_<editorID>_<formID>`. In vanilla it is usually
+`TIF__<formID>`, with two underscores, because most `INFO` records have no editor ID. Each
+box is a function named `Fragment_<n>`. The name does not say which box it is. Its position
+together with the flag byte does. See [dialogue runtime](/engine/dialogue.md).
 
-| offset | type | meaning |
+| Offset | Type | Meaning |
 | --- | --- | --- |
-| 0 | `int8` | extra bind data version, always 2 |
-| 1 | `uint8` | flags: `0x1` has a begin fragment, `0x2` has an end fragment |
-| 2 | wstring | file name of the generated `TIF_` script, no extension |
-| .. | fragment[popcount(flags)] | the fragments, in bit order: begin, then end |
+| 0 | int8 | Version. Always 2 |
+| 1 | uint8 | Flags: `0x1` has a begin fragment, `0x2` has an end fragment |
+| 2 | wstring | Name of the generated `TIF_` script, without extension |
+| .. | fragments | One per set flag bit, begin first, then end |
 
-One fragment:
+One fragment: int8 unused (always 1), wstring script name, wstring function name.
 
-| offset | type | meaning |
-| --- | --- | --- |
-| 0 | `int8` | unused, always 1 |
-| 1 | wstring | script name, normally the file name |
-| .. | wstring | fragment function name, e.g. `Fragment_0` |
+The count is not stored. It is the number of set bits in the flag byte. UESP says so
+directly ("Variable flagsCount is the number of bit flags activated in flags"), and xEdit's
+`wbScriptFragmentsInfoCounter` does the same. A flag bit other than the two known ones
+cannot be matched to a box. So OpenSky refuses such a tail and keeps the main scripts. In
+vanilla, the flag byte is always 1, 2, or 3.
 
-The unusual property is that the count is **not stored**: it is the population of
-the flag byte. UESP states the rule directly ("Variable flagsCount is the number
-of bit flags activated in flags") and xEdit spells the same thing as
-`wbScriptFragmentsInfoCounter` over an array with no count path. A flag bit
-outside the two documented ones therefore cannot be paired with a phase, so the
-tail is refused and tallied rather than mis-attributed, and the response keeps
-its primary scripts.
+## Binding values to PEX variables
 
-## Record integration
+OpenSky finds a property by name, without case, in the script and then up its parent
+scripts. It binds only when the PEX property is automatic and names a backing variable.
+The value goes to that exact backing variable name. OpenSky never builds the name itself.
 
-`ScriptData` is a field-loop accumulator: `decode(field:)` returns false for a
-non-`VMAD` field, allowing record decoders to forward fields without a second
-switch. It currently hangs from:
+In vanilla, every automatic property uses the name `::<Property>_var`. This is a habit of
+the compiler, not a rule. So OpenSky reads the name from the PEX file.
 
-* `PlacedReference` for `REFR`;
-* `PlacedActor` for `ACHR`;
-* `ActorBase` for `NPC_`; and
-* `ModelBase` for `MSTT`, `TREE`, `FURN`, `ACTI`, `CONT`, and `DOOR`.
+A value is converted to a Papyrus value and must pass the declared type check. A property
+that is removed, missing, not automatic, or the wrong type, and an object that does not
+resolve, keep the compiled default. OpenSky counts each kind of skip.
 
-The independent real-data sweep decodes `VMAD` directly on every record type,
-including carriers whose larger record model does not exist yet. That keeps
-format coverage broader than the current world consumers.
+## Errors
 
-## PEX binding
+A cut value, a version outside 2 to 5, an object format other than 1 or 2, a bad string
+length, a count that cannot fit, an array before version 5, an unknown property type, or
+extra bytes on a record without fragments, is an error.
 
-`AttachedScript.binding` locates a property case-insensitively through the
-child-to-parent PEX script chain. An attachment binds only when the PEX
-property is automatic and names a decoded backing variable. The dictionary
-passed to `PapyrusRuntime.makeInstance` uses that exact
-`automaticVariableName`; it never constructs a name from the source property.
+A `VMAD` larger than 64 KB comes through the `XXXX` size field (see
+[ESM container](/formats/esm.md)). The VMAD reader sees the full data and has no 64 KB limit.
 
-Scalar and array values convert to the corresponding `PapyrusValue`, then pass
-the runtime's declared-type check. Direct objects take the complete path:
+## Vanilla Skyrim.esm
 
-`FormIDResolver` -> `ReferenceKey` -> caller-owned `PapyrusObjectHandle`.
-
-Removed, missing, manual, or type-mismatched properties and unresolved objects
-stay at the PEX compiler default. `ScriptBinding` returns the applied
-initial-value dictionary, successfully resolved keys, and ranked skip tally so
-callers and probes can explain the result.
-
-The vanilla probe observed 46,263 automatic property attachments. Every one
-used the conventional `::Property_var` spelling, and each stored name selected
-an actual PEX variable. This is evidence about that corpus, not an
-implementation rule: the synthetic binding test deliberately uses unrelated
-names such as `::opaque_backing_17` and proves the decoded PEX name wins.
-
-## Defensive decode policy
-
-The decoder throws `ScriptDataError` for:
-
-* a truncated primitive or byte run;
-* a VMAD version outside 2 through 5;
-* an object format other than 1 or 2;
-* an invalid length-prefixed string;
-* a count impossible for the bounded remainder;
-* an array before version 5;
-* an unknown property type; or
-* unexpected trailing bytes on a non-fragment carrier.
-
-ESM `XXXX` extension handling belongs to `ESMField.parseAll`. `ScriptData`
-therefore receives the already-expanded payload and has no 65,535-byte
-assumption. A synthetic test routes a string property in a `VMAD` field larger
-than 64 KiB through the normal `REFR` decoder.
-
-## Vanilla sweep evidence
-
-`ScriptDataRealDataTests` ran through `make realtest` on 2026-08-02 against the
-retail `Skyrim.esm`. It decoded every field, asserted the exact census below,
-sampled 32 direct values whose normalized keys name records present in the
-plugin, and wrote those local key samples to gitignored
-`logs/vmad-sweep.log`.
-
-| measure | observed |
-| --- | ---: |
-| records walked | 869,687 |
-| unreadable records | 0 |
-| VMAD fields / decode failures | 16,133 / 0 |
-| attached scripts / properties | 19,936 / 51,145 |
-| version 4 / version 5 fields | 2,561 / 13,572 |
-| object format 1 / format 2 fields | 2,705 / 13,428 |
-| direct / null / dangling object values | 29,787 / 202 / 39 |
-| alias object skips | 12,896 |
-| removed property skips | 7 |
-| fragmented field sections skipped | 6,132 |
-| QUST fragment sections decoded | 856 |
-| QUST stage fragments / alias script sections | 5,108 / 2,149 |
-
-Script and property counts include the scripts inside those 2,149 alias
-sections, which is what raised them from the M11 figures of 17,407 / 46,493:
-an alias script is an ordinary script entry and is bound the same way. The
-alias-object skip count rose for the same reason — the object properties inside
-quest alias scripts are now visible to the tally.
-
-The only array type present was boolean array, in two properties; the synthetic
-matrix remains the evidence for every other array representation. Remaining
-fragment skips at that date were 5,257 `INFO`, 557 `SCEN`, 313 `PACK`, and 5
-`PERK`. No `QUST` tail failed to decode, so the `QUST fragments` bucket is now
-empty; the per-quest view of the same 856 tables is in
-[record decoders](/formats/records.md).
-
-The `INFO` bucket is empty as well since issue #426. `DialogueRealDataTests`
-decoded the tail of every dialogue response across the five shipped masters on
-2026-08-09: 7,661 tails carrying 8,009 result-script fragments, none with a byte
-left over. Every one declared version 2, every unused fragment byte was 1, every
-script name equalled the file name, and the flag byte was only ever 1 (2,007
-tails), 2 (5,306) or 3 (348) — which is the evidence behind reading the count as
-a flag population rather than as a stored number.
-
-The PEX half loaded 4,450 distinct script objects while following inheritance.
-It found 50,915 automatic attachment properties, 199 manual properties, 24
-names absent from the available PEX chain, no missing script files, no missing
-automatic backing names, and no backing name that failed to select a decoded
-variable. An absent or incompatible property is intentionally a default-value
-skip, not a malformed VMAD field.
-
-## Scope
-
-This layer decodes attachment data and creates one headless script instance.
-That instance executes through the
-[Papyrus virtual machine](/engine/papyrus-vm.md), including its native registry
-and deterministic suspension scheduler. VMAD does not schedule attachment
-events, own world-object handle lifetimes, execute the decoded fragment table,
-fill quest aliases, or define world-dependent native game functions. Those are
-separate runtime responsibilities built on the typed attachment and binding
-seams.
+16,133 `VMAD` fields decode with no errors. Most use version 5 and object format 2. There
+are 856 `QUST` fragment tables with 5,108 stage fragments and 2,149 alias sections. None
+fails. Across the five masters, 7,661 `INFO` tails hold 8,009 fragments, and none has extra
+bytes.

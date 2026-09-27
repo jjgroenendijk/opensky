@@ -5,7 +5,7 @@
 //
 // Grammar is OBSERVED behavior, not a published spec (open GFx documentation is
 // thin). The subset OpenSky implements, and its uncertainty, are documented in
-// docs/formats/swf.md. Recognized directives:
+// docs/formats/swf-text.md. Recognized directives:
 //   fontlib "<movie.swf>"
 //   map "$Alias" = "FontName" [Style ...]
 //   # comment to end of line   (also blank lines)

@@ -6,7 +6,7 @@
 // Reference: Adobe SWF File Format Specification, version 19, chapter 10
 // "Fonts and Text" — DefineFont2/DefineFont3 (pp. 176-180),
 // DefineFontAlignZones (pp. 180-181), CSMTextSettings (p. 181),
-// DefineFontName (p. 182). Documented in docs/formats/swf.md.
+// DefineFontName (p. 182). Documented in docs/formats/swf-text.md.
 
 import Foundation
 
