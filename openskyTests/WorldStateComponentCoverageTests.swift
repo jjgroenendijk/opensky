@@ -112,7 +112,8 @@ struct WorldStateComponentCoverageTests {
         CrimeLedgerState(entries: [
             CrimeLedgerEntry(
                 faction: key(0x267EA),
-                gold: 40,
+                nonViolentGold: 30,
+                violentGold: 10,
                 counts: CrimeCounts(theft: 1, assault: 1)
             )
         ])

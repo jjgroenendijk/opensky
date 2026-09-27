@@ -92,4 +92,11 @@ nonisolated struct CrimeConditionResolution: @unchecked Sendable {
         guard isAvailable else { return nil }
         return ledgers[actor]?.gold(for: faction) ?? 0
     }
+
+    /// One half of what `actor` owes `faction`, or nil when no crime data is
+    /// wired. What `GetCrimeGoldViolent` and `GetCrimeGoldNonviolent` read.
+    func crimeGold(of faction: ReferenceKey, violent: Bool, on actor: ReferenceKey) -> Int32? {
+        guard isAvailable else { return nil }
+        return ledgers[actor]?.gold(for: faction, violent: violent) ?? 0
+    }
 }

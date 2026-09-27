@@ -343,6 +343,19 @@ nonisolated enum OpenSkySaveFormat {
         /// stolen — and this chunk carries the split. A session in which
         /// nothing was stolen writes no chunk at all.
         static let stolenGoods = "STOL"
+
+        /// Violent crime gold (issue #563): for every actor with a ledger, one
+        /// row per faction whose bounty has a violent part, saying how much of
+        /// the `CRIM` row's gold is violent.
+        ///
+        /// A sibling of `CRIM` rather than a second gold word in each of its
+        /// rows, for the reason `STOL` is a sibling of `INVN`: a `CRIM` row is
+        /// a flat positional layout with no per-row length, so widening it
+        /// would make every older build misparse the whole chunk. `CRIM` keeps
+        /// writing the combined total — an older build restores the right
+        /// bounty and simply reads all of it as non-violent — and this chunk
+        /// carries the split. A session with no violent bounty writes no chunk.
+        static let violentCrimeGold = "CRVG"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.

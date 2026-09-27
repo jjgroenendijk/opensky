@@ -88,26 +88,60 @@ nonisolated struct CrimeCounts: Equatable, Sendable {
 }
 
 /// One faction's row: what is owed and what was done.
+///
+/// The gold is held in two halves, violent and non-violent, because that is
+/// how the Creation Kit surface asks about it: `GetCrimeGoldViolent` and
+/// `GetCrimeGoldNonviolent` are separate condition functions, and
+/// `Faction.ModCrimeGold` takes an `abViolent` flag. `gold` is their sum,
+/// which is what `GetCrimeGold` and a guard's fine both mean.
 nonisolated struct CrimeLedgerEntry: Equatable, Sendable, Comparable {
     let faction: ReferenceKey
-    /// Crime gold outstanding with this faction. Never negative — a bounty is
-    /// paid down to zero, never past it.
-    let gold: Int32
+    /// Crime gold outstanding for non-violent crimes — theft and trespass.
+    /// Never negative: a bounty is paid down to zero, never past it.
+    let nonViolentGold: Int32
+    /// Crime gold outstanding for violent crimes — assault and murder.
+    let violentGold: Int32
     let counts: CrimeCounts
 
-    init(faction: ReferenceKey, gold: Int32 = 0, counts: CrimeCounts = .none) {
+    init(
+        faction: ReferenceKey,
+        nonViolentGold: Int32 = 0,
+        violentGold: Int32 = 0,
+        counts: CrimeCounts = .none
+    ) {
         self.faction = faction
-        self.gold = max(0, gold)
+        self.nonViolentGold = max(0, nonViolentGold)
+        self.violentGold = max(0, violentGold)
         self.counts = counts
+    }
+
+    /// Everything owed to this faction, saturating rather than wrapping.
+    var gold: Int32 {
+        Int32(clamping: Int64(nonViolentGold) + Int64(violentGold))
+    }
+
+    /// One half of the gold.
+    func gold(violent: Bool) -> Int32 {
+        violent ? violentGold : nonViolentGold
     }
 
     /// True when the row records nothing, which is when it is dropped.
     var isEmpty: Bool {
-        gold == 0 && counts.isEmpty
+        nonViolentGold == 0 && violentGold == 0 && counts.isEmpty
     }
 
     static func < (lhs: Self, rhs: Self) -> Bool {
         lhs.faction < rhs.faction
+    }
+
+    /// This row with one half of the gold replaced.
+    fileprivate func setting(_ amount: Int32, violent: Bool, counts: CrimeCounts? = nil) -> Self {
+        CrimeLedgerEntry(
+            faction: faction,
+            nonViolentGold: violent ? nonViolentGold : amount,
+            violentGold: violent ? amount : violentGold,
+            counts: counts ?? self.counts
+        )
     }
 }
 
@@ -168,10 +202,16 @@ nonisolated struct CrimeLedgerState: WorldStateComponent {
         entries.first { $0.faction == faction }
     }
 
-    /// Crime gold owed to one faction; 0 when there is no row, which is not a
-    /// different answer from a row that has been paid off.
+    /// Crime gold owed to one faction, both halves together; 0 when there is
+    /// no row, which is not a different answer from a row that has been paid
+    /// off.
     func gold(for faction: ReferenceKey) -> Int32 {
         entry(for: faction)?.gold ?? 0
+    }
+
+    /// One half of what is owed to one faction.
+    func gold(for faction: ReferenceKey, violent: Bool) -> Int32 {
+        entry(for: faction)?.gold(violent: violent) ?? 0
     }
 
     func counts(for faction: ReferenceKey) -> CrimeCounts {
@@ -192,39 +232,47 @@ nonisolated struct CrimeLedgerState: WorldStateComponent {
     // MARK: - Deriving
 
     /// This ledger with one more crime of `kind` against `faction`, and `gold`
-    /// added to what is owed.
+    /// added to the half `kind` belongs to.
     ///
     /// Both halves move in one call because a crime is one fact: recording the
     /// count and the gold separately is two chances for them to disagree.
     func recording(_ kind: CrimeKind, gold: Int32, against faction: ReferenceKey) -> Self {
         let existing = entry(for: faction) ?? CrimeLedgerEntry(faction: faction)
-        return replacing(CrimeLedgerEntry(
-            faction: faction,
-            gold: Self.saturatingSum(existing.gold, max(0, gold)),
+        let violent = kind.isViolent
+        return replacing(existing.setting(
+            Self.saturatingSum(existing.gold(violent: violent), max(0, gold)),
+            violent: violent,
             counts: existing.counts.incrementing(kind)
         ))
     }
 
-    /// This ledger with `faction`'s gold moved by `delta`, clamped at zero and
-    /// leaving the counts alone.
+    /// This ledger with one half of `faction`'s gold moved by `delta`, clamped
+    /// at zero and leaving the counts alone.
     ///
-    /// The door `Faction.ModCrimeGold` and a paid fine both come through, which
-    /// is why it does not touch the counts: paying a bounty settles the debt
-    /// and does not un-commit the crime.
-    func modifyingGold(by delta: Int32, for faction: ReferenceKey) -> Self {
+    /// The door `Faction.ModCrimeGold` comes through, which is why it does not
+    /// touch the counts: paying a bounty settles the debt and does not
+    /// un-commit the crime.
+    func modifyingGold(by delta: Int32, violent: Bool = false, for faction: ReferenceKey) -> Self {
         let existing = entry(for: faction) ?? CrimeLedgerEntry(faction: faction)
-        return settingGold(Self.saturatingSum(existing.gold, delta), for: faction)
+        return settingGold(
+            Self.saturatingSum(existing.gold(violent: violent), delta),
+            violent: violent,
+            for: faction
+        )
     }
 
-    /// This ledger with `faction`'s gold set outright, leaving the counts
-    /// alone. The door `Faction.SetCrimeGold` comes through.
-    func settingGold(_ gold: Int32, for faction: ReferenceKey) -> Self {
+    /// This ledger with one half of `faction`'s gold set outright, leaving the
+    /// other half and the counts alone. `Faction.SetCrimeGold` sets the
+    /// non-violent half and `Faction.SetCrimeGoldViolent` the violent one.
+    func settingGold(_ gold: Int32, violent: Bool = false, for faction: ReferenceKey) -> Self {
         let existing = entry(for: faction) ?? CrimeLedgerEntry(faction: faction)
-        return replacing(CrimeLedgerEntry(
-            faction: faction,
-            gold: max(0, gold),
-            counts: existing.counts
-        ))
+        return replacing(existing.setting(max(0, gold), violent: violent))
+    }
+
+    /// This ledger with both halves of `faction`'s gold at zero and the counts
+    /// kept. What paying a fine or serving the sentence does.
+    func clearingGold(for faction: ReferenceKey) -> Self {
+        settingGold(0, violent: true, for: faction).settingGold(0, violent: false, for: faction)
     }
 
     // MARK: - Private

@@ -4,7 +4,7 @@ title: Crime and bounty
 description: Ownership enforcement, the four crime events, witnessing through the perception
   pass, the per-crime-faction bounty ledger, and the stolen flag on inventory stacks.
 tags: [engine, crime, factions, inventory, runtime-state]
-timestamp: 2026-08-22T00:00:00Z
+timestamp: 2026-09-27T00:00:00Z
 ---
 
 # Crime and bounty
@@ -170,6 +170,21 @@ once it says nothing.
 settles the debt and does not un-commit the crime. Gold is clamped at zero — a bounty is paid
 down to nothing, never past it.
 
+**Violent and non-violent halves (issue #563).** Each row holds its gold in two halves,
+because that is how the Creation Kit surface asks about it: two condition functions and two
+`Faction` natives read one half each, and `ModCrimeGold` takes an `abViolent` flag. Which
+crime lands in which half comes from the Creation Kit wiki's
+[Crime](https://ck.uesp.net/wiki/Crime) page, which sorts trespassing, pickpocketing and
+theft under "Minor Crimes" and assault, murder and escape under "Major Crimes". The major
+ones are the violent half: `CrimeKind.isViolent` is true for assault and murder. The page
+was read through the Wayback Machine, since `ck.uesp.net` refuses direct fetches
+(see [environment](/tools/environment.md)).
+
+`gold(for:)` keeps answering the sum, because that is what `GetCrimeGold` and a guard's fine
+both mean. `modifyCrimeGold` and `setCrimeGold` take the half they move, defaulting to the
+non-violent one — `SetCrimeGold` is documented as setting "the amount of non-violent crime
+gold" — and `clearCrimeGold` empties both, which is what paying or serving does.
+
 ## Stolen goods
 
 "Stolen items in your inventory will be marked with the word 'Stolen', even if you were able
@@ -238,26 +253,34 @@ what counts as a first strike.
 
 ## Condition function and Papyrus natives
 
-One condition function, from xEdit dev-4.1.6 `Core/wbDefinitionsTES5.pas`:
+The crime-gold condition functions come from xEdit dev-4.1.6 `Core/wbDefinitionsTES5.pas`:
 
 ```text
 (Index: 459; Name: 'GetCrimeGold'; ParamType1: ptFactionNull)
+(Index: 375; Name: 'GetCrimeGoldViolent'; ParamType1: ptFactionNull)
+(Index: 376; Name: 'GetCrimeGoldNonviolent'; ParamType1: ptFactionNull)
 ```
 
-The Creation Kit spells it 4555. `ptFactionNull` is nullable by declaration, and a null
-parameter asks about the hold the subject is standing in rather than about no faction at all;
-`CrimeConditionResolution.currentCrimeFaction` is what the caller fills from
-`CrimeFactionResolver`. A session with no FACT data, a parameter naming a faction no plugin
-defines, or a null parameter outside any hold all report `unavailableCrime` rather than
-answering zero — see [conditions](/formats/conditions.md).
+The Creation Kit spells them 4555, 4471 and 4472. `ptFactionNull` is nullable by
+declaration, and a null parameter asks about the hold the subject is standing in rather than
+about no faction at all; `CrimeConditionResolution.currentCrimeFaction` is what the caller
+fills from `CrimeFactionResolver`. A session with no FACT data, a parameter naming a faction
+no plugin defines, or a null parameter outside any hold all report `unavailableCrime` rather
+than answering zero — see [conditions](/formats/conditions.md).
 
-Five natives, each signature quoted from the Creation Kit wiki at its registration site:
+`GetCrimeGoldViolent` (375) and `GetCrimeGoldNonviolent` (376) take the same parameter with
+the same rules and read one half each (issue #563).
+
+Eight natives, each signature quoted from the Creation Kit wiki at its registration site:
 
 | Native | Signature |
 | --- | --- |
 | `Faction.GetCrimeGold` | `int Function GetCrimeGold() native` |
+| `Faction.GetCrimeGoldViolent` | `int Function GetCrimeGoldViolent() native` |
+| `Faction.GetCrimeGoldNonViolent` | `int Function GetCrimeGoldNonViolent() native` |
 | `Faction.ModCrimeGold` | `Function ModCrimeGold(int aiAmount, bool abViolent = False) native` |
-| `Faction.SetCrimeGold` | `Function SetCrimeGold(int aiGold) native` |
+| `Faction.SetCrimeGold` | `Function SetCrimeGold(int aiGold) native` — the non-violent half |
+| `Faction.SetCrimeGoldViolent` | `Function SetCrimeGoldViolent(int aiGold) native` |
 | `Actor.SendAssaultAlarm` | `Function SendAssaultAlarm() native` |
 | `Actor.SendTrespassAlarm` | `Function SendTrespassAlarm(Actor akCriminal) native` |
 
@@ -276,6 +299,9 @@ Two additive chunks in [the OpenSky save container](/formats/opensky-save.md):
   gold and the four counts in `CrimeKind.allCases` order.
 - **`STOL`** — for every owner holding stolen goods, one row per item saying how many of its
   copies are stolen.
+- **`CRVG`** — the violent part of each `CRIM` row's gold (issue #563). `CRIM` keeps writing
+  the total, so a build that predates the split restores the right bounty and reads it all
+  as non-violent.
 
 `STOL` is a sibling of `INVN` rather than an extension of it, for the reason `QALS` is a
 sibling of `QSTS`: `INVN` entries are a flat positional layout with no per-entry length, so
@@ -306,13 +332,6 @@ Recorded here rather than pretended away:
   chain are the same simplification from the other side.
 - **Trespass is recorded on arrival**, not after the warning and the 30-second grace the
   original gives. The warning is a guard line and a timer, both of which are issue #505's.
-- **No violent/non-violent split.** The ledger holds one bounty per faction, so
-  `GetCrimeGoldViolent`, `GetCrimeGoldNonViolent` and `SetCrimeGoldViolent` are not
-  installed, and `ModCrimeGold`'s declared `abViolent` flag is accepted and ignored.
-  Answering a violent-only question from a combined total would be a convincing wrong number
-  rather than a measurable gap; the unimplemented condition indices are counted by
-  `ConditionTally` and the unimplemented natives by `PapyrusNativeLog`, which is what ranks
-  the next one to build.
 - **Pickpocketing and jail time served are deferred.** Both need machinery this milestone
   does not build — a sneak menu and a time skip. `CRVA` prices pickpocketing at 25 and the
   load order carries `iCrimeGoldStealHorse` and `iCrimeGoldWerewolf`, so the numbers are

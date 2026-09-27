@@ -138,25 +138,61 @@ struct PapyrusNativeCrimeTests {
             "Faction", "GetCrimeGold", fixture, receiver: faction, returnType: .integer
         ) == .returned(.integer(40)))
 
-        // The declared `abViolent` flag is accepted and ignored: one total.
+        // `abViolent` picks the half: the violent half is empty, so taking ten
+        // off it clamps at zero and leaves the non-violent forty alone.
         call(
             "Faction", "ModCrimeGold", fixture,
             receiver: faction, arguments: [.integer(-10), .boolean(true)]
         )
-        #expect(fixture.reporter.runtime.crimeGold(of: hold) == 30)
+        #expect(fixture.reporter.runtime.crimeGold(of: hold) == 40)
 
         call("Faction", "SetCrimeGold", fixture, receiver: faction, arguments: [.integer(0)])
         #expect(fixture.reporter.runtime.crimeGold(of: hold) == 0)
     }
 
+    /// The violent half (issue #563): `ModCrimeGold(n, true)` and
+    /// `SetCrimeGoldViolent` write it, the two readers split what
+    /// `GetCrimeGold` sums, and `SetCrimeGold` leaves it alone.
+    @Test func theViolentHalfIsReadAndWrittenOnItsOwn() throws {
+        let fixture = try Self.fixture()
+        let faction = try factionHandle(fixture)
+        let hold = CrimeFixture.key(CrimeFixture.Factions.hold)
+        let read = { (name: String) in
+            call("Faction", name, fixture, receiver: faction, returnType: .integer)
+        }
+
+        call("Faction", "ModCrimeGold", fixture, receiver: faction, arguments: [.integer(25)])
+        call(
+            "Faction", "ModCrimeGold", fixture,
+            receiver: faction, arguments: [.integer(40), .boolean(true)]
+        )
+        #expect(read("GetCrimeGoldViolent") == .returned(.integer(40)))
+        #expect(read("GetCrimeGoldNonViolent") == .returned(.integer(25)))
+        #expect(read("GetCrimeGold") == .returned(.integer(65)))
+
+        call("Faction", "SetCrimeGold", fixture, receiver: faction, arguments: [.integer(0)])
+        #expect(fixture.reporter.runtime.crimeGold(of: hold) == 40)
+
+        call(
+            "Faction", "SetCrimeGoldViolent", fixture,
+            receiver: faction, arguments: [.integer(1000)]
+        )
+        #expect(fixture.reporter.runtime.crimeGold(of: hold, violent: true) == 1000)
+        #expect(fixture.reporter.runtime.crimeGold(of: hold, violent: false) == 0)
+    }
+
     /// Paying a bounty off settles the debt and leaves the crime counts alone.
+    /// A murder is violent, so it is the violent setter that clears it.
     @Test func settingCrimeGoldLeavesTheCountsAlone() throws {
         let fixture = try Self.fixture()
         let faction = try factionHandle(fixture)
         let hold = CrimeFixture.key(CrimeFixture.Factions.hold)
         fixture.reporter.runtime.report(CrimeFixture.event(.murder))
 
-        call("Faction", "SetCrimeGold", fixture, receiver: faction, arguments: [.integer(0)])
+        call(
+            "Faction", "SetCrimeGoldViolent", fixture,
+            receiver: faction, arguments: [.integer(0)]
+        )
 
         #expect(fixture.reporter.runtime.crimeGold(of: hold) == 0)
         #expect(fixture.reporter.runtime.crimeCounts(of: hold).murder == 1)
@@ -169,6 +205,7 @@ struct PapyrusNativeCrimeTests {
 
         #expect(isFailure(call("Faction", "ModCrimeGold", fixture, receiver: faction)))
         #expect(isFailure(call("Faction", "SetCrimeGold", fixture, receiver: faction)))
+        #expect(isFailure(call("Faction", "SetCrimeGoldViolent", fixture, receiver: faction)))
     }
 
     /// A session with no crime runtime refuses rather than reporting that the

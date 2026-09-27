@@ -47,6 +47,7 @@ byte length followed by that many UTF-8 bytes. The file extension is `osav`.
 * `RELS` entry layout
 * `CRIM` entry layout
 * `STOL` entry layout
+* `CRVG` entry layout
 * Version policy
 * Defensive decoding
 * Where saves live and how they are written
@@ -165,9 +166,9 @@ that declared length, which is what makes a newer build's save loadable in an ol
 
 Version 1 defines two chunks; `GVAR`, `CLOK`, `PSCR`, `PTMR`, `INVN`, `SPWN`, `QSTS`,
 `QALS`, `QLOC`, `AVAL`, `AVOV`, `DETH`, `CBTS`, `DLGS`, `AEFF`, `SPLB`, `ECHG`, `PRKS`,
-`FCTN`, `RELS`, `PLVL`, `CRIM` and `STOL` were added additively afterwards. `AVOV` replaced item
-19.5's `AVGN` in item 20.3; see its section below for why the tag changed rather than the
-payload's meaning.
+`FCTN`, `RELS`, `PLVL`, `CRIM`, `STOL` and `CRVG` were added additively afterwards. `AVOV`
+replaced item 19.5's `AVGN` in item 20.3; see its section below for why the tag changed
+rather than the payload's meaning.
 
 `GALC` — generated-reference allocator position. The payload must be exactly eight bytes;
 any other size is `invalidValue`.
@@ -1065,6 +1066,49 @@ clamped to that total.
 
 Counts are validated against `minimumStolenGoodsEntrySize` (11 bytes) and
 `stolenGoodsRowSize` (8 bytes) before storage is reserved.
+
+## `CRVG` entry layout
+
+`CRVG` — violent crime gold (issue #563): for every actor with a ledger, one row per faction
+whose bounty has a violent part. The ledger holds each bounty in two halves, violent and
+non-violent, and `CRIM`'s `gold` field keeps carrying their sum.
+
+This is the tag-versus-payload decision the version policy asks for, made towards the tag.
+Widening each `CRIM` row with a second gold word would change an existing chunk's payload,
+and because a `CRIM` row is a flat positional layout with no per-row length, an older build
+would misparse the whole chunk rather than skip the new part. As a sibling chunk it costs no
+`formatVersion` bump: a build that predates the split skips `CRVG`, restores the right bounty
+from `CRIM`, and simply reads all of it as non-violent. It is the same trade `STOL` makes
+over `INVN`.
+
+| type   | field      | notes                              |
+| ------ | ---------- | ---------------------------------- |
+| uint32 | entryCount | number of entries that follow      |
+| bytes  | entries    | `entryCount` entries, layout below |
+
+Each entry:
+
+| type   | field    | notes |
+| --- | --- | --- |
+| key    | key      | the perpetrator's key, tagged as in `RDLT` |
+| uint32 | rowCount | number of rows that follow |
+| bytes  | rows     | `rowCount` rows, layout below |
+
+Each row:
+
+| type   | field       | notes |
+| --- | --- | --- |
+| key    | faction     | the `FACT` record's key, tagged as in `RDLT` |
+| uint32 | violentGold | bit pattern of the `Int32` violent part of that faction's `CRIM` gold |
+
+The non-violent half is the `CRIM` total minus this value, so the two halves cannot disagree
+with the total an older build reads. `CRVG` is applied to the decoded `CRIM` entries before
+they are merged into the deltas, the way `AVOV` lays onto `AVAL`. A violent part larger than
+the total clamps to the total, and a row naming a faction `CRIM` has no row for is dropped:
+`CRIM` says what is owed, and this chunk only says how it divides. Only rows with a violent
+part are written, so a session whose bounties are all theft and trespass writes no chunk.
+The counts are validated against `minimumViolentCrimeGoldEntrySize` (11 bytes) and
+`minimumViolentCrimeGoldRowSize` (11 bytes).
 
 ## Version policy
 

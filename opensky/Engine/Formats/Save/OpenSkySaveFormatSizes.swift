@@ -191,4 +191,10 @@ nonisolated extension OpenSkySaveFormat {
     /// Bytes one `STOL` row occupies: the item FormID and the stolen count.
     /// Fixed width, so this is the exact size.
     static let stolenGoodsRowSize = 8
+    /// Smallest number of bytes a single `CRVG` entry can occupy: a plugin key
+    /// with an empty name (1 + 2 + 4) and a zero row count (4).
+    static let minimumViolentCrimeGoldEntrySize = 11
+    /// Smallest number of bytes one `CRVG` row can occupy: a plugin key with an
+    /// empty name (7) and the violent gold (4).
+    static let minimumViolentCrimeGoldRowSize = 11
 }

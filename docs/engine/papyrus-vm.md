@@ -222,7 +222,7 @@ one place:
 | `Actor` | `GetActorValue`, `GetBaseActorValue`, `GetActorValuePercentage`, `DamageActorValue`, `RestoreActorValue`, `SetActorValue`, `ModActorValue`, `ForceActorValue`, `IsDead`, `IsInCombat`, `IsWeaponDrawn`, `Kill`, `StartCombat`, `StopCombat`, `GetLevel` | same failure policy |
 | `Actor` perks | `AddPerk`, `RemovePerk`, `HasPerk` | same failure policy |
 | `Actor` and `Faction` social | see [the faction and relationship natives](#the-faction-and-relationship-natives) | same failure policy |
-| `Faction` crime | `GetCrimeGold`, `ModCrimeGold`, `SetCrimeGold` | same failure policy |
+| `Faction` crime | `GetCrimeGold`, `GetCrimeGoldViolent`, `GetCrimeGoldNonViolent`, `ModCrimeGold`, `SetCrimeGold`, `SetCrimeGoldViolent` | same failure policy |
 | `Actor` and `Spell` magic | see [the spell natives](#the-spell-natives) | same failure policy |
 
 `Game.AdvanceSkill` and `Game.IncrementSkill` are globals acting on the player alone and run

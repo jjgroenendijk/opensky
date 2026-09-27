@@ -53,6 +53,22 @@ nonisolated enum PapyrusNativeFunctions {
         return value
     }
 
+    /// An optional Bool argument, `fallback` when the call left it off. An
+    /// integer reads as its truth value, which is what the compiler's implicit
+    /// cast of an int literal produces.
+    static func boolean(
+        _ call: PapyrusNativeCall,
+        at index: Int,
+        default fallback: Bool
+    ) -> Bool {
+        guard call.arguments.indices.contains(index) else { return fallback }
+        return switch call.arguments[index] {
+        case let .boolean(value): value
+        case let .integer(value): value != 0
+        default: fallback
+        }
+    }
+
     static func string(
         _ call: PapyrusNativeCall,
         at index: Int

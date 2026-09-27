@@ -148,9 +148,11 @@ nonisolated enum OpenSkySaveCrimeDecoder {
         for kind in CrimeKind.allCases {
             counts[kind] = try Int32(bitPattern: reader.uint32("CRIM row count"))
         }
+        // The whole total restores as non-violent here; `CRVG`, when present,
+        // moves the violent part across in `splittingViolent`.
         return CrimeLedgerEntry(
             faction: faction,
-            gold: gold,
+            nonViolentGold: gold,
             counts: CrimeCounts(
                 theft: counts[.theft] ?? 0,
                 assault: counts[.assault] ?? 0,

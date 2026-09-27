@@ -25,6 +25,43 @@ struct CrimeRuntimeTests {
         #expect(runtime.crimeGold(of: hold) == 1045)
     }
 
+    /// Assault and murder land in the violent half, theft and trespass in the
+    /// non-violent one — the Creation Kit Crime page's "Major" and "Minor"
+    /// crimes (issue #563). `crimeGold(of:)` keeps answering the sum.
+    @Test
+    func eachKindLandsInItsHalf() throws {
+        let runtime = try CrimeFixture.runtime()
+
+        runtime.report(CrimeFixture.event(.assault))
+        runtime.report(CrimeFixture.event(.murder))
+        runtime.report(CrimeFixture.event(.trespass))
+        runtime.report(CrimeFixture.event(.theft, stolenValue: 100))
+
+        #expect(runtime.crimeGold(of: hold, violent: true) == 1040)
+        #expect(runtime.crimeGold(of: hold, violent: false) == 55)
+        #expect(runtime.crimeGold(of: hold) == 1095)
+        #expect(CrimeKind.allCases.filter(\.isViolent) == [.assault, .murder])
+    }
+
+    /// `modifyCrimeGold` and `setCrimeGold` move one half; `clearCrimeGold`
+    /// empties both and keeps the counts, which is what a paid fine does.
+    @Test
+    func eachHalfMovesAloneAndClearingEmptiesBoth() throws {
+        let runtime = try CrimeFixture.runtime()
+        runtime.report(CrimeFixture.event(.murder))
+
+        runtime.modifyCrimeGold(by: -2000, of: hold)
+        #expect(runtime.crimeGold(of: hold) == 1000)
+        runtime.setCrimeGold(30, of: hold)
+        #expect(runtime.crimeGold(of: hold) == 1030)
+        runtime.modifyCrimeGold(by: -100, violent: true, of: hold)
+        #expect(runtime.crimeGold(of: hold, violent: true) == 900)
+
+        #expect(runtime.clearCrimeGold(of: hold) == 930)
+        #expect(runtime.crimeGold(of: hold) == 0)
+        #expect(runtime.crimeCounts(of: hold).murder == 1)
+    }
+
     /// "Half of the stolen item's value, rounded down" — the 0.5 comes from the
     /// record's steal multiplier, and the rounding is what makes a one-gold
     /// trinket free.
@@ -234,12 +271,12 @@ struct CrimeRuntimeTests {
         let runtime = try CrimeFixture.runtime()
         runtime.report(CrimeFixture.event(.assault))
 
-        #expect(runtime.modifyCrimeGold(by: -10, of: hold) == 30)
+        #expect(runtime.modifyCrimeGold(by: -10, violent: true, of: hold) == 30)
         #expect(runtime.crimeCounts(of: hold).assault == 1)
         // Clamped at zero: a bounty is paid down to nothing, never past it.
-        #expect(runtime.modifyCrimeGold(by: -100, of: hold) == 0)
+        #expect(runtime.modifyCrimeGold(by: -100, violent: true, of: hold) == 0)
         #expect(runtime.crimeCounts(of: hold).assault == 1)
-        #expect(runtime.setCrimeGold(500, of: hold) == 500)
+        #expect(runtime.setCrimeGold(500, violent: true, of: hold) == 500)
         #expect(runtime.crimeCounts(of: hold).assault == 1)
     }
 
@@ -278,9 +315,9 @@ struct CrimeRuntimeTests {
     @Test
     func theLedgerNormalizesOnTheWayIn() {
         let ledger = CrimeLedgerState(entries: [
-            CrimeLedgerEntry(faction: CrimeFixture.key(0x20), gold: 5),
-            CrimeLedgerEntry(faction: CrimeFixture.key(0x10), gold: 0),
-            CrimeLedgerEntry(faction: CrimeFixture.key(0x10), gold: 9),
+            CrimeLedgerEntry(faction: CrimeFixture.key(0x20), nonViolentGold: 5),
+            CrimeLedgerEntry(faction: CrimeFixture.key(0x10), nonViolentGold: 0),
+            CrimeLedgerEntry(faction: CrimeFixture.key(0x10), nonViolentGold: 9),
             CrimeLedgerEntry(faction: CrimeFixture.key(0x30))
         ])
 
@@ -296,7 +333,7 @@ struct CrimeRuntimeTests {
     func negativeGoldAndCountsClampToZero() {
         let entry = CrimeLedgerEntry(
             faction: CrimeFixture.key(0x10),
-            gold: -50,
+            nonViolentGold: -50,
             counts: CrimeCounts(theft: -2, murder: 3)
         )
 

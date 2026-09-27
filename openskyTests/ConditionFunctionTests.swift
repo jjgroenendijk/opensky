@@ -29,14 +29,15 @@ struct ConditionFunctionTests {
         // stated with; issue #504 adds `GetCrimeGold`, which is what a guard's
         // and a jarl's dialogue reads a bounty from; issue #508 adds the six
         // faction and relationship functions, which are what lets a guard's and
-        // a vendor's dialogue select on who the player sides with.
+        // a vendor's dialogue select on who the player sides with; issue #563
+        // adds `GetCrimeGoldViolent` and `GetCrimeGoldNonviolent`.
         #expect(registry.indices == [
             1, 14, 18, 27, 35, 45, 46, 56, 58, 59, 60, 71, 72, 73, 74, 77, 80, 170, 180,
-            181, 214, 223, 249, 263, 264, 277, 323, 359, 360, 372, 403, 426, 444, 448,
+            181, 214, 223, 249, 263, 264, 277, 323, 359, 360, 372, 375, 376, 403, 426, 444, 448,
             449, 459, 543, 560, 562,
             565, 566, 567, 570, 571, 572, 603, 604, 605, 610, 632, 640, 699, 719
         ])
-        #expect(registry.count == 53)
+        #expect(registry.count == 55)
         #expect(registry.sortedFunctions().map(\.name) == [
             "GetDistance", "GetActorValue", "GetCurrentTime", "GetLineOfSight",
             "GetDisabled", "GetDetected", "GetDead", "GetQuestRunning",
@@ -48,7 +49,9 @@ struct ConditionFunctionTests {
             "IsInDialogueWithPlayer", "IsWeaponOut", "HasSpell", "GetBaseActorValue",
             "GetCombatState",
             "GetInCurrentLoc",
-            "GetInCurrentLocAlias", "IsInList", "GetRelationshipRank", "GetIsVoiceType",
+            "GetInCurrentLocAlias", "IsInList",
+            "GetCrimeGoldViolent", "GetCrimeGoldNonviolent", "GetRelationshipRank",
+            "GetIsVoiceType",
             "GetInCurrentLocFormList", "HasPerk", "GetFactionRelation", "GetCrimeGold",
             "GetQuestCompleted",
             "HasKeyword",
@@ -64,7 +67,8 @@ struct ConditionFunctionTests {
             4097, 4110, 4114, 4123, 4131, 4141, 4142, 4152, 4154, 4155, 4156, 4167,
             4168, 4169, 4170,
             4173, 4176, 4266, 4276, 4277, 4310, 4319, 4345, 4359, 4360, 4373, 4419, 4455,
-            4456, 4468, 4499, 4522, 4540, 4544, 4545, 4555, 4639, 4656, 4658, 4661, 4662,
+            4456, 4468, 4471, 4472, 4499, 4522, 4540, 4544, 4545, 4555, 4639, 4656, 4658, 4661,
+            4662,
             4663, 4666,
             4667,
             4668, 4699, 4700, 4701, 4706, 4728, 4736, 4795, 4815

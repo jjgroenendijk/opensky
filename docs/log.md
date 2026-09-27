@@ -4,6 +4,19 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-09-27
 
+* **Violent and non-violent bounty (issue #563)**: each crime-ledger row now holds its gold
+  in two halves. Assault and murder land in the violent half and theft and trespass in the
+  non-violent one, following the Creation Kit wiki's Crime page, which files the former as
+  "Major Crimes" and the latter as "Minor Crimes". `gold(for:)` still answers the sum, which
+  is what `GetCrimeGold` and a guard's fine mean. The two condition functions
+  `GetCrimeGoldViolent` (375) and `GetCrimeGoldNonviolent` (376) and the natives
+  `Faction.GetCrimeGoldViolent`, `GetCrimeGoldNonViolent` and `SetCrimeGoldViolent` are
+  registered, and `ModCrimeGold` honours `abViolent`. The save keeps `CRIM`'s total and adds
+  a sibling `CRVG` chunk carrying the violent part, so an older build restores the right
+  bounty and reads all of it as non-violent — the tag-versus-payload decision made towards
+  the tag. See [crime and bounty](/engine/crime.md) and
+  [the OpenSky save container](/formats/opensky-save.md).
+
 * **Timed Fortify effects on health, magicka and stamina apply (issue #511)**: the planner's
   `unsupportedPrimaryModifier` guard is gone, because item 20.3 gave the primaries the
   base-plus-modifiers storage it was waiting for. A Fortify Health potion raises the maximum
