@@ -148,9 +148,9 @@ struct MagicEffectPlannerTests {
         #expect(outcome == .skip(.unimplementedArchetype(.paralysis)))
     }
 
-    /// A held modifier on health has nowhere to go until the primaries get the
-    /// base-plus-modifiers storage item 19.5 left them without.
-    @Test func timedRecoverEffectOnAPrimaryIsCountedUnsupported() throws {
+    /// A held modifier on health applies like any other since issue #511: the
+    /// primaries have the base-plus-modifiers storage item 20.3 built.
+    @Test func timedRecoverEffectOnAPrimaryApplies() throws {
         let file = try ActiveEffectFixture.plugin(records: [
             ActiveEffectFixture.magicEffect(
                 formID: 0x20, editorID: "FortifyHealth", name: "Fortify Health",
@@ -167,7 +167,13 @@ struct MagicEffectPlannerTests {
             effect: effect,
             entry: entry(0x20, magnitude: 25, duration: 60)
         )
-        #expect(outcome == .skip(.unsupportedPrimaryModifier(24)))
+        guard case let .apply(application) = outcome else {
+            Issue.record("expected an application, got \(outcome)")
+            return
+        }
+        #expect(application.mode == .modifier)
+        #expect(application.duration == 60)
+        #expect(application.values.map(\.index) == [24])
     }
 
     /// A record naming no actor value acts on nothing and says so.

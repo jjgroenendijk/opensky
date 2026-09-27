@@ -9,7 +9,7 @@ description: The runtime notion of a magic effect acting on an actor - the cited
   spell projectiles through the archery pipeline, area application, and the
   resistance scaling a hostile magnitude pays on the way in.
 tags: [engine, magic, effects, actors, alchemy, casting, spells, projectiles, resistances]
-timestamp: 2026-08-18T00:00:00Z
+timestamp: 2026-09-27T00:00:00Z
 ---
 
 # Magic and active effects
@@ -166,17 +166,29 @@ unimplemented ground is measured rather than silent.
 Instant restore and damage are not separate archetypes: both are Value Modifier entries with
 a zero duration, which is what the vanilla Restore Health and Damage Health effects are.
 
-Two more reasons an implemented archetype still applies nothing, each its own tally bucket:
+One more reason an implemented archetype still applies nothing, as its own tally bucket:
+the record names no actor value inside the vanilla table (usually -1, "none").
 
-- The record names no actor value inside the vanilla table (usually -1, "none").
-- A **timed Recover effect names health, magicka or stamina**. The Creation Kit says that
-  changes both the maximum and the current value, and item 19.5 left the three primaries
-  without the base-plus-modifiers storage the other 161 values have, so there was nowhere to
-  hold the change. It is counted rather than approximated: moving current health for a
-  "fortify health" effect would be a different effect wearing the same name. Item 20.3 built
-  that storage ([actor values](/engine/actor-values.md)) and the guard now outlives its
-  reason; lifting it moves the archetype tallies this page pins, so it is issue #511 rather
-  than a silent change here.
+**A timed Recover effect on health, magicka or stamina applies (issue #511).** The Creation
+Kit says such an effect changes both the maximum and the current value. Item 19.5 left the
+three primaries without storage for that and counted these effects instead; item 20.3 built
+the base-plus-modifiers storage ([actor values](/engine/actor-values.md)), so a Fortify Health
+potion now holds its magnitude in health's temporary slot like any other held modifier. The
+maximum rises, the current value rises with it, and damage taken meanwhile survives expiry:
+125 maximum with 60 taken reads 40 of 100 once the effect ends.
+
+Measured on this install's base plugin, `ActiveEffectRealDataTests` now plans 396 of the
+427 consumable effect entries and counts 31; 29 of the 396 are timed modifiers on a primary
+that the removed guard used to count instead.
+
+Expiry has one rule of its own, from UESP's
+[Fortify Health](https://en.uesp.net/wiki/Skyrim:Fortify_Health) page: "When the effect
+expires, the target loses <mag> points of health unless that would reduce the target's health
+to 0 or less (the target is left with at least 1 health point when the effect expires)."
+`ActiveEffectRuntime.release` applies that floor, `expiryFloor` of 1, to all three primaries,
+so a timer never trips the death latch. An actor already at zero stays at zero: the floor
+protects the living and does not revive the dead. The same path covers a worn Fortify Health
+enchantment coming off, since a constant effect releases through it too.
 
 ## The component
 
@@ -1349,10 +1361,9 @@ Local A/B (optional, never committed): none
 - **MGEF-side conditions are not evaluated**, only the effect entry's own list. The Creation
   Kit distinguishes the two and the distinction matters for concentration spells, which is
   casting's problem.
-- **A timed Recover effect on a primary is counted, not applied.** It needed the
-  base-plus-modifiers storage for health, magicka and stamina that item 19.5 declined to
-  build; item 20.3 built it and issue #511 lifts the guard once the tallies it moves are
-  re-measured. See [actor values](/engine/actor-values.md).
+- **The expiry floor is applied to magicka and stamina by analogy.** UESP states it for
+  health only; the other two share the storage and the release path, and leaving a living
+  actor at zero magicka on a timer would be the same invented loss.
 - **`HasMagicEffect` is answerable but not registered.** The component answers the query;
   registering the condition function and the Papyrus native is issue 19.11.
 - **Visuals and sounds** for effects are milestone M26. The ALCH consume sound is decoded and

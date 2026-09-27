@@ -4,6 +4,15 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-09-27
 
+* **Timed Fortify effects on health, magicka and stamina apply (issue #511)**: the planner's
+  `unsupportedPrimaryModifier` guard is gone, because item 20.3 gave the primaries the
+  base-plus-modifiers storage it was waiting for. A Fortify Health potion raises the maximum
+  and the current value together, damage taken meanwhile survives the expiry, and expiry
+  never empties the bar: UESP's Fortify Health page says the target "is left with at least 1
+  health point when the effect expires", which `ActiveEffectRuntime.release` applies to all
+  three primaries so a timer cannot trip the death latch. See
+  [magic and active effects](/engine/magic.md).
+
 * **Build fixed for Apple Swift 6.4**: the Xcode that ships Swift 6.4 turned two
   diagnostics into errors, and with `SWIFT_TREAT_WARNINGS_AS_ERRORS` neither the app nor
   `openskycli` compiled on `main`. `PapyrusWorldStateBridgeQuests.swift` restated the

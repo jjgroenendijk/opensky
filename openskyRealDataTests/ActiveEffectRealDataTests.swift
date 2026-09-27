@@ -178,6 +178,10 @@ struct ActiveEffectRealDataTests {
         var applied = 0
         var skips: [MagicEffectPlanFailure: Int] = [:]
         var unresolved = 0
+        // Timed Recover effects on health, magicka or stamina — Fortify Health
+        // and its siblings — which issue #511 moved from a skip bucket to
+        // applied.
+        var appliedPrimaryModifiers = 0
         for definition in harness.items.definitions(of: .ingestible) {
             guard let use = harness.items.magicItemUse(definition.formID) else { continue }
             for entry in use.effects {
@@ -191,7 +195,16 @@ struct ActiveEffectRealDataTests {
                     continue
                 }
                 switch MagicEffectPlanner.plan(effect: resolved, entry: entry) {
-                case .apply: applied += 1
+                case let .apply(application):
+                    applied += 1
+                    if
+                        application.mode == .modifier,
+                        application.values.contains(where: {
+                            ActorValueIdentity.kind(at: $0.index) != nil
+                        })
+                    {
+                        appliedPrimaryModifiers += 1
+                    }
                 case let .skip(reason): skips[reason, default: 0] += 1
                 }
             }
@@ -212,5 +225,10 @@ struct ActiveEffectRealDataTests {
             return true
         })
         #expect(applied + skipped > 0)
+        #expect(appliedPrimaryModifiers > 0)
+        print(
+            "[INFO] consumable effect entries: applied \(applied) "
+                + "(primary modifiers \(appliedPrimaryModifiers)), skipped \(skipped)"
+        )
     }
 }

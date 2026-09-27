@@ -88,18 +88,6 @@ nonisolated enum MagicEffectPlanFailure: Equatable, Error, Hashable, Sendable {
     /// The archetype is implemented but the record names no actor value inside
     /// the vanilla table — usually -1, "none".
     case unaddressableValue(Int32)
-    /// A timed Recover effect naming health, magicka or stamina.
-    ///
-    /// The Creation Kit documents this as changing both the maximum and the
-    /// current value. Item 19.5 left the three primaries without the storage to
-    /// hold that, so such an effect was counted rather than approximated —
-    /// moving current health for a "fortify health" effect would be a different
-    /// effect wearing the same name.
-    ///
-    /// Item 20.3 (issue #496) built the storage, so the reason no longer holds.
-    /// The guard stays until the tallies it moves are re-measured against the
-    /// install and the expiry path is exercised deliberately: issue #511.
-    case unsupportedPrimaryModifier(Int32)
     /// The MGEF carried no readable DATA, so nothing about it is known.
     case undecodedEffect
 }
@@ -151,13 +139,11 @@ nonisolated enum MagicEffectPlanner {
         case let .failure(reason):
             return .skip(reason)
         case let .success(values):
-            if
-                mode.ownsModifierSlot, isConstant || duration > 0,
-                let primary = values
-                    .first(where: { ActorValueIdentity.kind(at: $0.index) != nil })
-            {
-                return .skip(.unsupportedPrimaryModifier(primary.index))
-            }
+            // A timed Recover effect on health, magicka or stamina applies like
+            // any other held modifier (issue #511): since item 20.3 a primary's
+            // temporary slot moves its maximum and carries the current value
+            // along, which is the Creation Kit's "changes both the maximum and
+            // the current value". Expiry's floor is `ActiveEffectRuntime.release`.
             return .apply(MagicEffectApplication(
                 effect: ReferenceKey(resolved: effect.id),
                 archetype: data.archetype,

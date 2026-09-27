@@ -164,6 +164,64 @@ struct ActiveEffectRuntimeTests {
         #expect(runtime.tally.secondsPaid == 0)
     }
 
+    // MARK: - Held modifiers on a primary (issue #511)
+
+    /// A Fortify Health potion raises the maximum and the current value
+    /// together, and expiry puts both numbers back.
+    @Test func fortifyHealthRaisesTheMaximumAndExpiryPutsItBack() throws {
+        var (runtime, _) = try runtime()
+        apply(&runtime, [entry(ActiveEffectFixture.fortifyHealth, magnitude: 25, duration: 2)])
+        #expect(runtime.values.maximums(of: .player).health == 125)
+        #expect(runtime.values.current(of: .player).health == 125)
+        // The HUD reads the fraction, so a full fortified bar is still full.
+        #expect(runtime.values.fractions(of: .player).health == 1)
+
+        step(&runtime, seconds: 2)
+        #expect(runtime.active(on: .player).isEmpty)
+        #expect(runtime.values.maximums(of: .player).health == 100)
+        #expect(runtime.values.current(of: .player).health == 100)
+    }
+
+    /// Damage taken under the fortify survives its expiry: 125 maximum, 60
+    /// taken, expiry reads 40 of 100 rather than healing or double-charging.
+    @Test func damageTakenWhileFortifiedSurvivesExpiry() throws {
+        var (runtime, _) = try runtime()
+        apply(&runtime, [entry(ActiveEffectFixture.fortifyHealth, magnitude: 25, duration: 1)])
+        runtime.values.damage(.health, by: 60, on: .player)
+        #expect(runtime.values.current(of: .player).health == 65)
+
+        step(&runtime, seconds: 1)
+        #expect(runtime.values.maximums(of: .player).health == 100)
+        #expect(runtime.values.current(of: .player).health == 40)
+        #expect(!runtime.values.hasZeroHealth(.player))
+    }
+
+    /// An expiry that would empty the bar leaves one point instead, so the
+    /// death latch never trips on a timer: "the target is left with at least 1
+    /// health point when the effect expires" (UESP, Fortify Health).
+    @Test func anExpiryNeverEmptiesTheBar() throws {
+        var (runtime, _) = try runtime()
+        apply(&runtime, [entry(ActiveEffectFixture.fortifyHealth, magnitude: 25, duration: 1)])
+        runtime.values.damage(.health, by: 115, on: .player)
+        #expect(runtime.values.current(of: .player).health == 10)
+
+        step(&runtime, seconds: 1)
+        #expect(runtime.values.maximums(of: .player).health == 100)
+        #expect(runtime.values.current(of: .player).health == ActiveEffectRuntime.expiryFloor)
+        #expect(!runtime.values.hasZeroHealth(.player))
+    }
+
+    /// An actor already at zero stays there: the floor protects the living, it
+    /// does not revive the dead.
+    @Test func anExpiryDoesNotReviveAnEmptyBar() throws {
+        var (runtime, _) = try runtime()
+        apply(&runtime, [entry(ActiveEffectFixture.fortifyHealth, magnitude: 25, duration: 1)])
+        runtime.values.damage(.health, by: 500, on: .player)
+
+        step(&runtime, seconds: 1)
+        #expect(runtime.values.current(of: .player).health == 0)
+    }
+
     // MARK: - Helpers
 
     /// Advances `seconds` in whole fixed steps.

@@ -28,6 +28,9 @@ enum ActiveEffectFixture {
     static let paralyze: UInt32 = 0x14
     /// A peak value modifier sharing keyword 0x900.
     static let peakResist: UInt32 = 0x15
+    /// Fortify Health: value modifier on health with Recover set — a held
+    /// modifier on a primary (issue #511).
+    static let fortifyHealth: UInt32 = 0x16
 
     static let stackKeyword: UInt32 = 0x900
 
@@ -71,7 +74,7 @@ enum ActiveEffectFixture {
         )
     }
 
-    /// The six effects every suite shares.
+    /// The seven effects every suite shares.
     static var effectRecords: [Data] {
         [
             magicEffect(
@@ -108,6 +111,10 @@ enum ActiveEffectFixture {
                     flags: [.recover], associatedItem: stackKeyword, archetype: 34,
                     primaryValue: ActorValueIndex.resistFire
                 )
+            ),
+            magicEffect(
+                formID: fortifyHealth, editorID: "FortifyHealth", name: "Fortify Health",
+                data: data(flags: [.recover], archetype: 0, primaryValue: 24)
             )
         ]
     }

@@ -6,7 +6,7 @@ description: How OpenSky derives every actor value from records, stores the whol
   resistance queries, writes them from Papyrus, and drives the HUD meters.
 tags: [engine, actors, gameplay, stats, health, magicka, stamina, resistances, skills, hud,
   runtime-state]
-timestamp: 2026-08-19T00:00:00Z
+timestamp: 2026-09-27T00:00:00Z
 ---
 
 # Actor values
@@ -258,6 +258,11 @@ by 10 will result in 90/100 Health."
 (<https://ck.uesp.net/wiki/ModActorValue_-_Actor>) Damage already taken survives the
 change: an actor at 90/100 modified by -10 reads 80/90, neither healed by the change
 nor charged twice for it.
+
+A timed Fortify Health, Magicka or Stamina effect writes the temporary slot through this
+path (issue #511), so the bar's ceiling rises and falls with it. The one exception to the
+carry is expiry: the active-effect runtime leaves a living actor at 1 rather than 0 when the
+lost ceiling would empty the value — see [magic and active effects](/engine/magic.md).
 
 Regeneration fills toward the effective maximum and rewrites the whole component
 every step, carrying the override table through, so a buff is not dropped on the
