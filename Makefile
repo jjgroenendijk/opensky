@@ -1,202 +1,230 @@
-# OpenSky — automation hub. If it can be scripted, it lives here (AGENTS.md).
-# `make help` lists targets. Single automation entrypoint at the repo root.
+# OpenSky - the one entry point for everything scripted (AGENTS.md).
+#
+#   make help        list every target, grouped by task
+#   make bootstrap   once per checkout: install tools and wire the git hooks
+#   make fix         autoformat, then run every linter
+#   make test        build and run the unit tests
+#
+# Common knobs: CONFIG=Debug|Release, DERIVED_DATA=<dir>, XCODEBUILD_FLAGS='...'.
 
-PROJECT        := opensky.xcodeproj
-SCHEME         := opensky
-CLI_SCHEME     := openskycli
-CONFIG         ?= Debug
-DESTINATION    ?= platform=macOS
+# ------------------------------------------------------------------------------
+# Configuration
+# ------------------------------------------------------------------------------
+
+PROJECT          := opensky.xcodeproj
+SCHEME           := opensky
+CLI_SCHEME       := openskycli
+CONFIG           ?= Debug
+DESTINATION      ?= platform=macOS
 XCODEBUILD_FLAGS ?=
-SWIFT_PATHS    := opensky openskycli openskyTests openskyRealDataTests \
-                  openskyTestSupport openskyUITests
-TEST_RESULTS   := build/test-results
-# Build cache lives beside the checkout, not under $HOME. The repo sits on a
-# large external volume while the boot volume is small, and an Xcode-default
-# DerivedData for this project runs to tens of gigabytes — enough to fill the
-# boot disk mid-session. Keeping it here puts the cache on the same volume as
-# the sources it describes, and `DerivedData/` is already gitignored. Every
-# xcodebuild call below passes it, and the shell tools read it from
-# OPENSKY_DERIVED_DATA, so there is exactly one place to change it.
-DERIVED_DATA   ?= $(CURDIR)/DerivedData
-XCODEBUILD_DD  := -derivedDataPath $(DERIVED_DATA)
+SWIFT_PATHS      := opensky openskycli openskyTests openskyRealDataTests \
+                    openskyTestSupport openskyUITests
+TEST_RESULTS     := build/test-results
+
+# Build cache. It lives inside the checkout, not in Xcode's default under $HOME:
+# this project's cache runs to tens of gigabytes, and the boot volume is small
+# enough to fill mid-session. Every xcodebuild below passes it, and the tools/
+# scripts read it from OPENSKY_DERIVED_DATA, so this is the only place to change.
+DERIVED_DATA     ?= $(CURDIR)/DerivedData
+XCODEBUILD_DD    := -derivedDataPath $(DERIVED_DATA)
 export OPENSKY_DERIVED_DATA := $(DERIVED_DATA)
-# Xcode's default location, kept only so `make clean` can also sweep the caches
-# a pre-DERIVED_DATA checkout (or a plain Xcode GUI build) left behind there.
+# Xcode's default cache location. Only `make clean` uses it, to sweep what an
+# Xcode GUI build or an older checkout left there.
 XCODE_DERIVED_DATA ?= $(HOME)/Library/Developer/Xcode/DerivedData
 
-# Every xcodebuild below runs through this wrapper: it keeps the whole
-# transcript in logs/<name>.log and prints only diagnostics, failures, and the
-# closing counts, which is the difference between a few dozen lines and a few
-# thousand for a green build or test run. OPENSKY_XCODEBUILD_RAW=1 prints
-# everything; a failing run does that on its own.
-XCB_RUN        := ./tools/xcodebuild-run.sh
-# Run output is per-run, not per-name: every script that writes something a
-# human reads later allocates <base>/<name>/<UTC timestamp>/ through this and
-# repoints <base>/<name>/latest at it, so `make prune` can age a whole run out
-# and a stale capture cannot be mistaken for the current one (issue #347).
-RUN_DIR        := ./tools/run-dir.sh
-# Retention for `make prune`, in days. Overridable: make prune PRUNE_DAYS=2.
-PRUNE_DAYS     ?= 14
-# The one xcodebuild invocation every target below shares: $(1) is the scheme,
-# $(2) the configuration. A target adds only its action and the flags specific
-# to it, so project, cache location, and the caller's escape hatch cannot drift
-# apart again. The tools/ scripts rebuild the same core in shell from
-# tools/xcodebuild-lib.sh.
+# Every xcodebuild runs through this wrapper. It keeps the full transcript under
+# logs/ and prints only diagnostics, failures, and the final counts; a failing
+# run prints everything. OPENSKY_XCODEBUILD_RAW=1 always prints everything.
+XCB_RUN          := ./tools/xcodebuild-run.sh
+# Allocates a per-run output directory, logs/<name>/<UTC timestamp>/, and points
+# <name>/latest at it, so `make prune` can age whole runs out (issue #347).
+RUN_DIR          := ./tools/run-dir.sh
+# How many days of run output `make prune` keeps.
+PRUNE_DAYS       ?= 14
+
+# The shared xcodebuild command line: $(1) is the scheme, $(2) the configuration.
+# Targets append only their action and their own flags, so the project, cache
+# location, and XCODEBUILD_FLAGS cannot drift apart. tools/xcodebuild-lib.sh is
+# the shell twin of this.
 xcb = xcodebuild -project $(PROJECT) -scheme $(1) -configuration $(2) \
 	$(XCODEBUILD_DD) $(XCODEBUILD_FLAGS)
-XCB_APP     := $(call xcb,$(SCHEME),$(CONFIG))
-XCB_CLI     := $(call xcb,$(CLI_SCHEME),$(CONFIG))
-XCB_RELEASE := $(call xcb,$(SCHEME),Release)
-XCB_TEST    := $(XCB_APP) -destination '$(DESTINATION)'
-# xcodebuild puts a macOS scheme's products at this fixed path under the derived
-# data root. Reading it back with -showBuildSettings costs several seconds per
-# call, which `run-cli` used to pay twice, so derive it instead.
-PRODUCTS       = $(DERIVED_DATA)/Build/Products/$(CONFIG)
+XCB_APP          := $(call xcb,$(SCHEME),$(CONFIG))
+XCB_CLI          := $(call xcb,$(CLI_SCHEME),$(CONFIG))
+XCB_RELEASE      := $(call xcb,$(SCHEME),Release)
+XCB_TEST         := $(XCB_APP) -destination '$(DESTINATION)'
+# Where xcodebuild puts built products. Derived rather than asked for, because
+# `xcodebuild -showBuildSettings` costs several seconds per call.
+PRODUCTS          = $(DERIVED_DATA)/Build/Products/$(CONFIG)
 
-SWIFTFORMAT_CFG := tools/format/.swiftformat
-SWIFTLINT_CFG   := tools/lint/.swiftlint.yml
-CLANGFORMAT_CFG := tools/format/.clang-format
-MD_CFG          := tools/markdown/.markdownlint-cli2.yaml
-MD_GLOB         := **/*.md
-METAL_FILES     := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
+# Test plans (Config/*.xctestplan) choose which test bundles a run builds and
+# runs, instead of -only-testing flags (issue #346). Each plan holds exactly one
+# bundle. The UI bundle must never share a plan with an app-hosted bundle
+# (openskyTests, openskyRealDataTests): both would drive opensky.app at once
+# and deadlock (issue #380).
+UNIT_PLAN        := -testPlan UnitTests
+UI_PLAN          := -testPlan UITests
+
+# Formatter and linter configuration.
+SWIFTFORMAT_CFG  := tools/format/.swiftformat
+SWIFTLINT_CFG    := tools/lint/.swiftlint.yml
+CLANGFORMAT_CFG  := tools/format/.clang-format
+MD_CFG           := tools/markdown/.markdownlint-cli2.yaml
+MD_GLOB          := **/*.md
+METAL_FILES      := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
 
 .DEFAULT_GOAL := help
-.PHONY: help bootstrap ffmpeg vendor-link vendor-prune hooks format format-check lint \
-        check fix swift-format swift-baseline \
-        swift-lint metal-format md-format md-lint sh-lint cli-boundary \
-        realdata-plan no-game-content dup-check dup-baseline \
-        dead-code dead-code-baseline dead-code-index \
-        docs-links build cli \
-        probe test test-fast \
-        test-ui test-one test-report realdata-build realtest realtest-perf realtest-npc-perf realtest-all test-sanitize \
-        test-perms app-path \
-        cli-path run-cli \
-        install clean prune icon
 
-help: ## List available targets
-	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
-		| awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
+##@ Getting started
 
-bootstrap: ## Install toolchain (Homebrew) + wire git hooks
+.PHONY: help bootstrap hooks ffmpeg vendor-link vendor-prune
+
+help: ## Show this list
+	@awk 'BEGIN { FS = ":.*## "; print "Usage: make <target> [VAR=value]" } \
+		/^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } \
+		/^[a-z-]+:.*## / { printf "  \033[36m%-19s\033[0m %s\n", $$1, $$2 }' \
+		$(MAKEFILE_LIST)
+
+bootstrap: ## Install the toolchain with Homebrew and wire the git hooks
 	@./tools/bootstrap.sh
 
-ffmpeg: ## Build the vendored decode-only LGPL ffmpeg into .vendor/ffmpeg
-	@./tools/vendor-ffmpeg.sh
-
-vendor-link: ## Point this worktree's .vendor at the shared one (no-op in main checkout)
-	@./tools/ffmpeg/link-vendor.sh
-
-vendor-prune: ## Replace per-worktree .vendor copies with shared symlinks (run when idle)
-	@./tools/ffmpeg/prune-vendor.sh
-
-hooks: ## Point git at .githooks/hooks (idempotent)
+hooks: ## Point git at .githooks/hooks (safe to rerun)
 	@git config core.hooksPath .githooks/hooks
 	@find .githooks -type f \( -name '*.sh' -o -path '*/hooks/*' \) -exec chmod +x {} +
 	@echo "[ OK ] core.hooksPath = .githooks/hooks"
 
-format: swift-format metal-format md-format ## Autoformat everything in place
+ffmpeg: ## Build the vendored decode-only LGPL ffmpeg into .vendor/ffmpeg
+	@./tools/vendor-ffmpeg.sh
 
-format-check: ## Fail if anything is unformatted (no writes) — for CI
+vendor-link: ## Point this worktree's .vendor at the main checkout's copy
+	@./tools/ffmpeg/link-vendor.sh
+
+vendor-prune: ## Replace per-worktree .vendor copies with links (run when idle)
+	@./tools/ffmpeg/prune-vendor.sh
+
+##@ Format and lint
+
+.PHONY: fix check format format-check lint swift-baseline swift-format swift-lint \
+        metal-format md-format md-lint sh-lint cli-boundary realdata-plan \
+        no-game-content docs-links
+
+fix: format lint ## Autoformat, then run every linter (the everyday gate)
+
+check: swift-baseline format-check lint docs-links ## The same gate without writing files
+
+format: swift-format metal-format md-format ## Autoformat Swift, Metal, and Markdown
+
+format-check: ## Fail if anything is unformatted, without writing
 	@swiftformat --lint --config $(SWIFTFORMAT_CFG) $(SWIFT_PATHS)
 	@[ -z "$(METAL_FILES)" ] || xcrun clang-format --style=file:$(CLANGFORMAT_CFG) \
 		--dry-run --Werror $(METAL_FILES)
 	@markdownlint-cli2 --config $(MD_CFG) "$(MD_GLOB)"
 
-lint: swift-lint md-lint sh-lint cli-boundary realdata-plan no-game-content dup-check ## Run all linters (strict)
+lint: swift-lint md-lint sh-lint cli-boundary realdata-plan no-game-content dup-check ## Run every linter (warnings fail)
 
-check: swift-baseline format-check lint docs-links ## Format + lint gate without building
-
-fix: format lint ## Autoformat, then strict lint — one-shot dev gate
-
-swift-baseline: ## Toolchain is >= Apple Swift 6.3.3 and every target is in Swift 6 mode
+swift-baseline: ## Check for Apple Swift 6.3.3+ and Swift 6 mode in every target
 	@./tools/lint/swift-baseline.sh
 
 swift-format: ## Autoformat Swift
 	@swiftformat --config $(SWIFTFORMAT_CFG) $(SWIFT_PATHS)
 
-swift-lint: ## Strict Swift lint (warnings fail)
+swift-lint: ## Lint Swift strictly
 	@swiftlint lint --strict --quiet --config $(SWIFTLINT_CFG) $(SWIFT_PATHS)
 
-metal-format: ## Autoformat Metal shaders (clang-format via Xcode)
+metal-format: ## Autoformat Metal shaders
 	@[ -z "$(METAL_FILES)" ] || xcrun clang-format --style=file:$(CLANGFORMAT_CFG) \
 		-i $(METAL_FILES)
 
 md-format: ## Autofix Markdown
 	@markdownlint-cli2 --fix --config $(MD_CFG) "$(MD_GLOB)" || true
 
-md-lint: ## Strict Markdown lint
+md-lint: ## Lint Markdown strictly
 	@markdownlint-cli2 --config $(MD_CFG) "$(MD_GLOB)"
 
-cli-boundary: ## No AppKit imports under opensky/Engine (openskycli builds it)
+sh-lint: ## Shellcheck the hooks and tools/ scripts
+	@shellcheck -s sh $$(find .githooks tools -type f -name '*.sh') .githooks/hooks/*
+
+cli-boundary: ## Keep AppKit out of opensky/Engine, which the CLI also builds
 	@./tools/lint/cli-boundary.sh && echo "[ OK ] CLI target boundary clean"
 
-realdata-plan: ## Every env-gated suite is in openskyRealDataTests, which the plan selects
+realdata-plan: ## Check every env-gated suite is in the RealData plan
 	@./tools/lint/realdata-plan.sh \
 		&& echo "[ OK ] real-data suites and the RealData plan line up"
 
-no-game-content: ## No extracted game assets or rendered captures are tracked
+no-game-content: ## Check no game assets or rendered captures are tracked
 	@./tools/lint/no-game-content.sh && echo "[ OK ] no tracked game content"
 
-# Copy-paste and dead-code smells (docs/decisions/code-smell-scans.md). Both gate
-# on a baseline of the findings that predate them, so they fail only on new
-# ones; the cleanup of the baseline is a GitHub issue. dup-check reads sources
-# alone and runs in `make lint`. dead-code reads the compiler's index store, so
-# it builds every target first; the pre-push hook runs the scan after its own
-# builds instead.
-dup-check: ## No new copy-pasted Swift blocks (jscpd against tools/lint/jscpd-baseline.json)
+docs-links: ## Check links inside docs/ resolve (log.md skipped)
+	@./tools/check-docs-links.sh
+
+##@ Code smells
+
+# Both scans compare against a baseline of the findings that were already in the
+# tree, so they fail only on new ones; issue #569 tracks the existing ones
+# (docs/decisions/code-smell-scans.md). dup-check reads sources only and is part
+# of `make lint`. dead-code reads the compiler's index store, so it builds first;
+# the pre-push hook runs the scan after its own builds instead.
+
+.PHONY: dup-check dup-baseline dead-code dead-code-baseline dead-code-index
+
+dup-check: ## Fail on new copy-pasted Swift (jscpd)
 	@./tools/lint/duplicates.sh $(SWIFT_PATHS)
 
 dup-baseline: ## Rewrite the duplication baseline after removing clones
 	@./tools/lint/duplicates.sh -u $(SWIFT_PATHS)
 
-dead-code: dead-code-index ## Build every target, then fail on new unused code (Periphery)
+dead-code: dead-code-index ## Build, then fail on new unused code (Periphery)
 	@./tools/lint/dead-code.sh
 
 dead-code-baseline: dead-code-index ## Rewrite the unused-code baseline after a cleanup
 	@./tools/lint/dead-code.sh -u
 
-# The three builds whose index store the scan reads: openskyTests, the app plus
-# openskyRealDataTests, and openskycli. Incremental, so a warm tree costs seconds.
+# The builds whose index store Periphery reads: openskyTests, the app with
+# openskyRealDataTests, and openskycli. Incremental, so a warm tree takes seconds.
 dead-code-index: vendor-link
 	@$(XCB_RUN) dead-code-unit $(XCB_TEST) $(UNIT_PLAN) build-for-testing
 	@$(XCB_RUN) dead-code-realdata $(XCB_TEST) -testPlan RealData build-for-testing
 	@$(XCB_RUN) dead-code-cli $(XCB_CLI) build
 
-sh-lint: ## Shellcheck the hook + tooling scripts
-	@shellcheck -s sh $$(find .githooks tools -type f -name '*.sh') .githooks/hooks/*
+##@ Build and run
 
-docs-links: ## Check intra-wiki links in docs/ resolve (log.md skipped)
-	@./tools/check-docs-links.sh
+.PHONY: build cli run-cli install app-path cli-path probe icon
 
-build: vendor-link ## Build the app ($(CONFIG))
+build: vendor-link ## Build the app [CONFIG]
 	@$(XCB_RUN) build $(XCB_APP) build
 
-cli: vendor-link ## Build the openskycli dev tool ($(CONFIG))
+cli: vendor-link ## Build the openskycli dev tool [CONFIG]
 	@$(XCB_RUN) cli $(XCB_CLI) build
 	@if [ "$(CONFIG)" = "Debug" ] && [ -z "$(XCODEBUILD_FLAGS)" ]; then \
 		./tools/green-stamp.sh write cli; fi
 
-probe: ## CLI smoke checks against the local install (skips if absent)
+run-cli: cli ## Build and run openskycli, e.g. make run-cli ARGS="vfs ls"
+	@"$(PRODUCTS)/openskycli" $(ARGS)
+
+# Release shares the Debug cache directory (xcodebuild keeps the configurations
+# apart inside it), so a repeat install builds incrementally.
+install: vendor-link ## Build the Release app and copy it to /Applications
+	@$(XCB_RUN) install $(XCB_RELEASE) ARCHS=arm64 build
+	@rm -rf /Applications/opensky.app
+	@ditto $(DERIVED_DATA)/Build/Products/Release/opensky.app /Applications/opensky.app
+	@echo "[ OK ] /Applications/opensky.app updated"
+
+app-path: ## Print the built opensky.app path [CONFIG]
+	@echo "$(PRODUCTS)/opensky.app"
+
+cli-path: ## Print the built openskycli path [CONFIG]
+	@echo "$(PRODUCTS)/openskycli"
+
+probe: ## Smoke-test the CLI against the local install (skips if absent)
 	@./tools/probe.sh
 
-# Which bundles a run touches is a checked-in test plan (issue #346), not a
-# pile of -only-testing/-skip-testing flags: UnitTests lists openskyTests
-# alone, UITests lists openskyUITests alone, and RealData lists
-# openskyRealDataTests alone (issue #418). Selecting the unit plan is what
-# actually drops the other bundles' compile and link — xcodebuild builds every
-# buildable in the Test action before it looks at selectors, so a selector alone
-# never did.
-#
-# The UI bundle never shares a session with an app-hosted unit bundle
-# (issue #380). openskyTests and openskyRealDataTests are both hosted on
-# opensky.app, so a plan carrying either of them beside openskyUITests makes
-# xcodebuild stand the app up as a test host at the same moment the UI runner
-# tries to drive it, and the two deadlock until XCTest times out "enabling
-# automation mode". There is deliberately no such plan.
-UNIT_PLAN   := -testPlan UnitTests
-UI_PLAN     := -testPlan UITests
+icon: ## Regenerate the AppIcon PNGs from opensky/App/Branding/opensky-logo.svg
+	@./tools/gen-appicon.sh
 
-test: vendor-link ## Build + run unit tests (no UI tests)
+##@ Test
+
+.PHONY: test test-fast test-one test-ui test-report test-sanitize test-perms
+
+test: vendor-link ## Build and run the unit tests (the pre-push gate)
 	@bundle="$$($(RUN_DIR) -b $(TEST_RESULTS) unit)/unit.xcresult"; \
 		TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
 		$(XCB_RUN) test $(XCB_TEST) -resultBundlePath "$$bundle" \
@@ -204,28 +232,20 @@ test: vendor-link ## Build + run unit tests (no UI tests)
 	@if [ "$(CONFIG)" = "Debug" ] && [ -z "$(XCODEBUILD_FLAGS)" ]; then \
 		./tools/green-stamp.sh write test; fi
 
-# The iteration loop (issue #417): build-for-testing once, then
-# test-without-building against the cached .xctestrun, which skips the build
-# system entirely — a warm rerun costs seconds where `make test` costs ~80.
-# tools/test-fast.sh regenerates the products when a source, Config/, project,
-# or vendored input is newer than the .xctestrun; B=1 forces it. Never writes a
-# green stamp: the full `make test` stays the pre-push gate.
-test-fast: vendor-link ## Iterate without rebuilding: make test-fast [T='Suite/test()'] [B=1]
+# Build once, then rerun against the cached .xctestrun without touching the build
+# system: seconds instead of the ~80 of `make test` (issue #417). It rebuilds on
+# its own when a source, Config/, or project file is newer; B=1 forces that. It
+# never marks the tree green, so `make test` stays the pre-push gate.
+test-fast: vendor-link ## Rerun tests without rebuilding [T='Suite/test()'] [B=1]
 	@case "$(T)" in \
 		"") ./tools/test-fast.sh $(if $(B),-B,) ;; \
 		openskyTests/*) ./tools/test-fast.sh $(if $(B),-B,) -t "$(T)" ;; \
 		*) ./tools/test-fast.sh $(if $(B),-B,) -t "openskyTests/$(T)" ;; \
 	esac
 
-test-ui: vendor-link ## Build + run UI tests (launches the app, drives it via automation)
-	@./tools/test-ui.sh \
-		$(PROJECT) $(SCHEME) '$(DESTINATION)' $(XCODEBUILD_FLAGS)
-
-# The unit plan cannot select a UI test, so a selector naming openskyUITests
-# switches to the UI plan. Every other selector keeps the default. Selecting the
-# UI-only plan also keeps a single-test UI run clear of the app-hosted unit
-# bundle it would otherwise deadlock against (issue #380).
-test-one: vendor-link ## Run one test: make test-one T=Class[/method] or Target/Class/method
+# A selector under openskyUITests switches to the UI plan; anything else runs in
+# the unit plan. Keeping the plans apart avoids the deadlock described above.
+test-one: vendor-link ## Build and run one test: T=Class[/method] or T=Target/Class/method
 	@test -n "$(T)" || { \
 		echo "[ERROR] usage: make test-one T=ClassName[/methodName]"; \
 		echo "        or: make test-one T=TargetName/ClassName/methodName"; \
@@ -238,14 +258,34 @@ test-one: vendor-link ## Run one test: make test-one T=Class[/method] or Target/
 		$(XCB_RUN) test-one $(XCB_TEST) -resultBundlePath "$$bundle" \
 		$$plan -only-testing:"$$spec" test
 
-test-report: ## Print pass/fail summary + failure detail from the newest result bundle
+test-ui: vendor-link ## Build and run the UI tests (launches and drives the app)
+	@./tools/test-ui.sh \
+		$(PROJECT) $(SCHEME) '$(DESTINATION)' $(XCODEBUILD_FLAGS)
+
+test-report: ## Summarize the newest test result bundle, failures included
 	@./tools/test-report.sh $(TEST_RESULTS)
 
-# Single-selector runs go through the fast path (issue #417): the RealData
-# .xctestrun carries OPENSKY_DATA_ROOT, so a warm rerun skips the build system
-# and pays only the test itself plus xcodebuild startup. The watchdog and the
-# exactly-one-test result assertion are unchanged from tools/realtest.sh.
-realtest: vendor-link ## Run one env-gated real-data test under the RSS watchdog: make realtest T=Class/method() [CAP=MB] [B=1]
+# openskyTests under TSan, then under ASan with UBSan (issue #383); the two cannot
+# share a build. Too slow for the pre-push gate, so run it periodically and
+# before a milestone acceptance.
+test-sanitize: vendor-link ## Run the unit tests under sanitizers [SAN=Thread|Address] [CAP=MB]
+	@./tools/test-sanitize.sh $(if $(SAN),-o $(SAN),) $(if $(CAP),-c $(CAP),)
+
+test-perms: ## Check the one-time macOS permission grants tests need
+	@./tools/test-perms.sh
+
+##@ Real-data tests (read the local Skyrim install)
+
+# Running these suites needs the user's install, so it happens on demand and
+# before a milestone acceptance, never on push or in CI, and always under the
+# memory watchdog (CAP=MB sets its limit). Only realdata-build, which compiles
+# without running, is part of the pre-push gate.
+
+.PHONY: realtest realtest-all realdata-build realtest-perf realtest-npc-perf
+
+# One test through the fast path of test-fast (issue #417): a warm rerun pays
+# only for the test itself.
+realtest: vendor-link ## Run one real-data test: T='Class/method()' [CAP=MB] [B=1]
 	@test -n "$(T)" || { \
 		echo "[ERROR] usage: make realtest T='Class/method()' [CAP=MB]"; \
 		echo "        selector must resolve to exactly one test (fully qualified)"; \
@@ -257,92 +297,44 @@ realtest: vendor-link ## Run one env-gated real-data test under the RSS watchdog
 	./tools/test-fast.sh -p RealData -t "$$spec" \
 		$(if $(CAP),-c $(CAP),) $(if $(B),-B,)
 
-# The compile half of the real-data suites, without a single test running
-# (issue #457). `make test` selects the UnitTests plan, so nothing in the
-# routine gate ever compiles openskyRealDataTests, and a build break there
-# stayed invisible until someone reached for `make realtest`. Running the
-# suites needs the local install and must never be a push gate; compiling them
-# needs neither, so this is the part the pre-push hook can afford.
-realdata-build: vendor-link ## Compile the RealData suites without running them
+realtest-all: vendor-link ## Run the whole real-data plan [CAP=MB]
+	@./tools/realtest.sh $(if $(CAP),-c $(CAP),)
+
+# `make test` never compiles the real-data suites, so a build break there used to
+# stay hidden (issue #457). Compiling needs no install, so the pre-push hook runs
+# this part.
+realdata-build: vendor-link ## Compile the real-data suites without running them
 	@$(XCB_RUN) realdata-build $(XCB_TEST) -testPlan RealData build-for-testing
 	@if [ "$(CONFIG)" = "Debug" ] && [ -z "$(XCODEBUILD_FLAGS)" ]; then \
 		./tools/green-stamp.sh write realdata-build; fi
 
-# The physics perf gate, and the only real-data entry point that builds the
-# suites optimized (issue #392). A physics step is a few hundred microseconds of
-# tight `simd` arithmetic, which is exactly what `-Onone` costs an order of
-# magnitude on, so measuring the shipped budget needs an optimized build; the
-# suite still gates on a looser ceiling under a plain `make realtest`. Its
-# products live in their own derived-data tree so this does not evict the
-# ordinary Debug build.
-realtest-perf: vendor-link ## Run the dynamic-body perf gate against an optimized build
+# The perf gates build optimized, because -Onone makes tight simd code an order
+# of magnitude slower (issue #392). They use their own cache directory,
+# DerivedData-optimized/, so the Debug build survives.
+realtest-perf: vendor-link ## Run the physics perf gate on an optimized build [CAP=MB]
 	@./tools/realtest.sh -O \
 		-t 'openskyRealDataTests/DynamicBodyRealDataTests/settlesAndPushesVanillaClutter()' \
 		$(if $(CAP),-c $(CAP),)
 
-realtest-npc-perf: vendor-link ## Measure vanilla NPC graphs at the mover cap optimized
+realtest-npc-perf: vendor-link ## Measure NPC behavior graphs at the mover cap, optimized [CAP=MB]
 	@./tools/realtest.sh -O \
 		-t 'openskyRealDataTests/NPCMovementRealDataTests/measuresVanillaGraphsAtMoverCap()' \
 		$(if $(CAP),-c $(CAP),)
 
-# The counterpart to `realtest`: the same plan, the same watchdog, no selector.
-# Run it on demand and before a milestone acceptance, never on push -- it needs
-# the local install, which CI does not have and must never be given.
-realtest-all: vendor-link ## Run the whole RealData test plan under the RSS watchdog [CAP=MB]
-	@./tools/realtest.sh $(if $(CAP),-c $(CAP),)
+##@ Housekeeping
 
-# The runtime counterpart to the static gates: openskyTests under TSan, then
-# under ASan with UBSan (issue #383). Two plan configurations rather than one
-# setting, because the two sanitizers are mutually exclusive in a build. Not on
-# the pre-push gate -- a sanitized build recompiles the world and runs several
-# times slower, so this is periodic and pre-milestone, like realtest-all.
-test-sanitize: vendor-link ## Run unit tests under TSan and ASan/UBSan [SAN=Thread|Address] [CAP=MB]
-	@./tools/test-sanitize.sh $(if $(SAN),-o $(SAN),) $(if $(CAP),-c $(CAP),)
+.PHONY: prune clean
 
-test-perms: ## Check/guide the one-time TCC grants that stop test permission popups
-	@./tools/test-perms.sh
-
-app-path: ## Print built opensky.app path ($(CONFIG))
-	@echo "$(PRODUCTS)/opensky.app"
-
-cli-path: ## Print built openskycli path ($(CONFIG))
-	@echo "$(PRODUCTS)/openskycli"
-
-run-cli: cli ## Build + run openskycli: make run-cli ARGS="vfs ls"
-	@"$(PRODUCTS)/openskycli" $(ARGS)
-
-icon: ## Regenerate AppIcon PNGs from opensky/App/Branding/opensky-logo.svg
-	@./tools/gen-appicon.sh
-
-# Release shares the main derived-data tree with Debug (xcodebuild keeps the two
-# configurations in separate product and intermediate directories), so a repeat
-# install is incremental instead of the cold build a private build/install cache
-# forced every time.
-install: vendor-link ## Build Release app (arm64) + copy to /Applications
-	@$(XCB_RUN) install $(XCB_RELEASE) ARCHS=arm64 build
-	@rm -rf /Applications/opensky.app
-	@ditto $(DERIVED_DATA)/Build/Products/Release/opensky.app /Applications/opensky.app
-	@echo "[ OK ] /Applications/opensky.app updated"
-
-# `clean` empties this checkout; `prune` is the one that reaches the caches no
-# checkout owns any more — chiefly the DerivedData a removed worktree left
-# behind, which is where the data volume actually fills up.
-prune: ## Delete stale worktree caches + aged-out run output (PRUNE_DAYS=14, DRY_RUN=1)
+# `clean` empties this checkout. `prune` reaches what no checkout owns any more,
+# chiefly the caches of removed worktrees, which is what fills the data volume.
+prune: ## Delete stale worktree caches and old run output [PRUNE_DAYS=14] [DRY_RUN=1]
 	@./tools/prune.sh --days $(PRUNE_DAYS) $(if $(DRY_RUN),--dry-run,)
 
-# No `xcodebuild clean` first: it takes seconds to empty the same directory the
-# rm below deletes outright.
-#
-# CompilationCache.noindex survives, because it is the one thing under
-# DerivedData that a clean has no reason to discard: entries are keyed on the
-# full compile command line and its inputs (Config/Base.xcconfig), so replaying
-# one cannot produce a different answer than compiling would, and the stale
-# incremental state a clean exists to clear lives in the build system, which the
-# cache takes no part in. Keeping it is what makes the Debug rebuild after a
-# clean take about eighteen seconds instead of forty-five (issue #341). `make
-# clean DEEP=1`
-# removes it too, for measuring a genuinely cold build.
-clean: ## Remove build artifacts and Xcode caches (DEEP=1 also drops the compilation cache)
+# Keeps DerivedData/CompilationCache.noindex. Its entries are keyed on the full
+# compile command and inputs, so they cannot go stale, and keeping them makes the
+# next Debug build take about 18 seconds instead of 45 (issue #341). DEEP=1
+# removes it too, for timing a truly cold build.
+clean: ## Remove build output and caches [DEEP=1 also drops the compile cache]
 	@rm -rf build
 	@for dd in "$(DERIVED_DATA)" "$(DERIVED_DATA)-optimized"; do \
 		[ -d "$$dd" ] || continue; \
