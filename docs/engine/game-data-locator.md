@@ -82,7 +82,7 @@ a synthetic root via `OPENSKY_DATA_ROOT`.
 
 ## Tests
 
-`openskyTests/GameDataLocatorTests.swift` — synthetic temp-dir installs (empty
+`openskyTests/GameData/GameDataLocatorTests.swift` — synthetic temp-dir installs (empty
 `Skyrim.esm` marker), all sources injectable. Covers order, both root shapes, fail-loud
 on invalid override, not-found message, and the withheld persistent sources (the suite runs
 in the test host, so it asserts the withholding directly). UI smoke covers missing-data

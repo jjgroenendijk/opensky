@@ -14,11 +14,11 @@ Milestone 3.2. Two halves: a pure grid manager (`CellGridManager`) decides which
 camera wants; an async controller (`CellStreamer`) builds them off main and streams them
 into renderer.
 
-`opensky/Engine/World/CellGridManager.swift` maps a camera's world position to the set of
+`opensky/Engine/World/Streaming/CellGridManager.swift` maps a camera's world position to the set of
 exterior cells that should be loaded around it, and diffs that desired set against
 whatever the caller currently has resident. Pure `simd`-only value type -- no AppKit, no
 Metal, no I/O, no async -- so the mapping, grid contents, diffing and hysteresis are all
-unit-tested without a renderer (`openskyTests/CellGridManagerTests.swift`).
+unit-tested without a renderer (`openskyTests/World/Streaming/CellGridManagerTests.swift`).
 
 ## Types
 
@@ -104,7 +104,7 @@ cell needs no clearance on that axis. 128 units is small next to the 4096-unit c
 larger than positional jitter, so a border crossed once decisively still recenters on the
 very next `update` call -- no lag for genuine movement, no thrash for noise.
 
-`openskyTests/CellGridManagerTests.swift` covers this directly: walking back and forth
+`openskyTests/World/Streaming/CellGridManagerTests.swift` covers this directly: walking back and forth
 within the margin on either side of a border never changes `center` or emits a diff;
 crossing decisively past the margin recenters immediately; a diagonal crossing needs both
 axes past margin.
@@ -116,8 +116,8 @@ to that cell.
 
 ## Streaming controller
 
-`opensky/Engine/World/CellStreamer.swift` is the live controller. It owns the grid manager, a
-`CellSceneComposition` (resident cells by coordinate), a bookkeeping core
+`opensky/Engine/World/Streaming/CellStreamer.swift` is the live controller. It owns the grid
+manager, a `CellSceneComposition` (resident cells by coordinate), a bookkeeping core
 (`CellStreamCore`), and a build runner. One main-thread entry point:
 
 ```swift
@@ -183,7 +183,7 @@ execution counts and requires every expected coordinate exactly once.
 
 ### Bookkeeping core + void/failed handling (no retry storms)
 
-`CellStreamCore` (pure value type, `openskyTests/CellStreamCoreTests.swift`) holds four
+`CellStreamCore` (pure value type, `openskyTests/World/Streaming/CellStreamCoreTests.swift`) holds four
 coordinate sets: `resident` (built), `inFlight` (building), `void` (no CELL record), and
 `failed` (build threw). Its key output is `accountedCells = resident ∪ inFlight ∪ void ∪
 failed`, fed to `CellGridManager.update` as the `loaded` set. Because void and failed
@@ -272,8 +272,8 @@ var onCellDetached: ((CellSceneLocation) -> Void)?
 
 The `Bool` is `firstIntegration` -- true when a cell genuinely joined the live world, false
 when a cell that never left was merely re-integrated, which is the signal not to re-fire load
-events. Emission lives in `opensky/Engine/World/CellStreamerPapyrus.swift`, and a scene without a
-`CellSceneLocation` (a door destination whose CELL identity failed to resolve) is never
+events. Emission lives in `opensky/Engine/World/Streaming/CellStreamerPapyrus.swift`, and a scene
+without a `CellSceneLocation` (a door destination whose CELL identity failed to resolve) is never
 announced, since the location is the key a subscriber files instances under. Four call sites
 carry a decision: an exterior integration reads `CellStreamCore.rebuilding` before
 `integrate` clears it; staged coverage cells announce nothing until `commitCoverageTransition`

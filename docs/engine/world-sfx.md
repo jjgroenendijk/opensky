@@ -16,7 +16,7 @@ descriptor's authored `SNDR.GNAM` category. Implementation:
 `opensky/Engine/Audio/WorldAudioSoundDirector.swift`
 (director), `opensky/Engine/Audio/AmbienceCatalog.swift` (bed resolution),
 `opensky/Engine/Audio/AcousticSpaceStore.swift` (ASPC index),
-`opensky/Engine/World/CellStreamerAmbience.swift` (streamer emission), and the panel
+`opensky/Engine/World/Streaming/CellStreamerAmbience.swift` (streamer emission), and the panel
 section `opensky/App/Shell/Sections/AudioSfxSection.swift`.
 
 ## Contents
@@ -202,8 +202,8 @@ Local A/B (optional, never committed): none
 listed because nothing in this section produces sound until the world audio
 engine is running. `CellStreamerTests` and `RecordDecoderTests` are the class
 names the ambience and sound-field cases extend; the cases themselves live in
-`openskyTests/CellStreamerAmbienceTests.swift` and
-`openskyTests/ModelBaseSoundTests.swift`, so grepping for the class name finds
+`openskyTests/World/Streaming/CellStreamerAmbienceTests.swift` and
+`openskyTests/Formats/ESM/Records/ModelBaseSoundTests.swift`, so grepping for the class name finds
 the base file, not the milestone's cases. No A/B capture applies: the behavior
 this milestone adds is audible, not visible, so a rendered frame would prove
 nothing.
@@ -220,7 +220,7 @@ nothing.
   close retires the loop and plays its one-shot, cancellation retires the loop
   without a false close, force trigger, and resolve-failure error. Fixtures
   shared with the ambience suite live in
-  `openskyTests/WorldAudioDirectorFixtures.swift`.
+  `openskyTests/Audio/WorldAudioDirectorFixtures.swift`.
 * `WorldAudioDirectorAmbienceTests` — offline-render coverage of the bed:
   category-submix routing with no world position, survival across distant
   listener-cell movement, retire on context change, no-op when disabled, toggle

@@ -219,10 +219,10 @@ what was there, and `movementMode` is never touched.
 
 | Type | File | Holds |
 | --- | --- | --- |
-| `DialogueCamera` | `opensky/Engine/World/DialogueCamera.swift` | the framing math and the last resolved pose |
-| `CameraCollisionProbe` | `opensky/Engine/World/CameraCollisionProbe.swift` | the pull-in, shared with `ThirdPersonCamera` |
+| `DialogueCamera` | `opensky/Engine/World/Player/DialogueCamera.swift` | the framing math and the last resolved pose |
+| `CameraCollisionProbe` | `opensky/Engine/World/Collision/CameraCollisionProbe.swift` | the pull-in, shared with `ThirdPersonCamera` |
 | `RendererDialogueCameraState` | `opensky/Engine/Rendering/RendererDialogueCamera.swift` | the focus, the math, and the player pose being stood in for |
-| `DialogueCameraBridgeState` | `opensky/App/GameViewControllerDialogueCamera.swift` | the force toggle, the target selector, and who is being held |
+| `DialogueCameraBridgeState` | `opensky/App/GameView/GameViewController+DialogueCamera.swift` | the force toggle, the target selector, and who is being held |
 
 The swap is undone at the top of every input frame, before anything simulates, and re-applied
 at the bottom of it. That ordering is the whole trick: `WalkController` integrates the player's

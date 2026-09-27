@@ -812,7 +812,7 @@ value at 0. UESP lists OBND and VMAD as vestigial on GLOB — checked for by the
 game, never present in shipped data — and both are skipped. Only a non-GLOB
 record throws.
 
-`GlobalStore` (`opensky/Engine/World/GlobalStore.swift`) indexes the GLOB top group by
+`GlobalStore` (`opensky/Engine/World/State/GlobalStore.swift`) indexes the GLOB top group by
 raw FormID, by editor ID (case-insensitively, because scripts and the console
 have always matched global names that way) and by session-stable `ReferenceKey`.
 
@@ -961,7 +961,7 @@ itself, an alias cut off without its ALED terminator is kept and recorded, and a
 or later-game subrecord is skipped. All four are counted in `QuestTally` so a sweep can
 assert against them rather than discover the loss silently. Only a non-QUST record throws.
 
-`QuestStore` (`opensky/Engine/World/QuestStore.swift`) indexes the QUST top group by raw FormID,
+`QuestStore` (`opensky/Engine/World/State/QuestStore.swift`) indexes the QUST top group by raw FormID,
 by editor ID (case-insensitively, for the same reason `GlobalStore` does) and by
 session-stable `ReferenceKey`, following the same immutable-index convention. Quest
 *state* belongs to the runtime (issue #182) and deliberately does not live there.
@@ -972,7 +972,7 @@ priority, flags, and the stage, objective, alias and fragment counts.
 
 ## Verification
 
-Unit tests: `openskyTests/RecordDecoderTests.swift`,
+Unit tests: `openskyTests/Formats/ESM/Records/RecordDecoderTests.swift`,
 `GlobalRecordTests.swift`, `GlobalStoreTests.swift`,
 `ModelBaseInteractionTests.swift`,
 `LocalizedStringsTests.swift` (synthetic fixtures). Runtime probe 2026-07-09

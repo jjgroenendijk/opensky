@@ -107,7 +107,7 @@ because generated identity outlives every cell exactly like the deltas beside it
 
 ## `RuntimeReferenceIndex`
 
-`RuntimeReferenceIndex` (`opensky/Engine/World/RuntimeReferenceIndex.swift`) is the per-cell lookup
+`RuntimeReferenceIndex` (`opensky/Engine/World/State/RuntimeReferenceIndex.swift`) is the per-cell lookup
 built from decoded placement records. It holds `RuntimeReferenceEntry` values, each pairing:
 
 * `key: ReferenceKey` — the session-stable identity.
@@ -130,7 +130,7 @@ without reference retention — synthetic render tests — use instead of an opt
 
 A cell stores placements in two children groups, `.cellPersistentChildren` and
 `.cellTemporaryChildren`. `CellSceneBuilder`'s reference collection
-(`opensky/Engine/World/CellSceneBuilderReferences.swift`) tags each REFR with the group it came
+(`opensky/Engine/World/Cells/CellSceneBuilderReferences.swift`) tags each REFR with the group it came
 from while collecting. The render path treats both groups alike and flattens them, but the
 runtime index needs the distinction: a reference decoded from a local temporary group is
 temporary, and everything else in the cell's final placed set — including worldspace
@@ -156,13 +156,13 @@ every cell load and dropped on eviction: its lifetime is exactly the owning cell
 Two layers query the index by the time a cell is resident:
 
 * `CellSceneComposition.referenceEntry(key:)` / `referenceEntry(formID:)`
-  (`opensky/Engine/World/CellSceneComposition.swift`) scan the composition's resident exterior
+  (`opensky/Engine/World/Cells/CellSceneComposition.swift`) scan the composition's resident exterior
   cells linearly — the same shape as the pre-existing `interaction(reference:)` lookup —
   and return the first entry found. The scan is over a handful of resident cells, so the
   linear walk is cheap; each per-cell lookup is a dictionary hit.
 * `CellStreamer.referenceEntry(formID:)` / `referenceEntry(key:)`
-  (`opensky/Engine/World/CellStreamerInteraction.swift`) add the interior-scene-first fallback that
-  the rest of the streamer's query surface already follows: when an interior scene is
+  (`opensky/Engine/World/Streaming/CellStreamerInteraction.swift`) add the interior-scene-first
+  fallback that the rest of the streamer's query surface already follows: when an interior scene is
   active it replaces the exterior composition entirely and answers alone, matching
   [Interior door transitions](/engine/interiors.md); otherwise the call forwards to
   `CellSceneComposition`.
@@ -177,7 +177,7 @@ Issue #158 drew the ownership line that issue #159 builds on:
 * State that must outlive any single cell does not live here. That includes the
   generated-object allocator and the mutable reference state (position, deletion, and so
   on) planned for 10.1.2. That state belongs above the cell, in a store that follows the
-  `WeatherStore` pattern already used for weather (`opensky/Engine/World/WeatherStore.swift`):
+  `WeatherStore` pattern already used for weather (`opensky/Engine/World/Weather/WeatherStore.swift`):
   queue-confined build, an immutable value handed off to the render/main thread, no locks.
 
 `WorldStateStore` is that store, and the rest of this page documents it. It departs from the
@@ -188,7 +188,7 @@ survives the difference — the store itself never leaves the main actor, and th
 
 ## `WorldStateStore`
 
-`WorldStateStore` (`opensky/Engine/World/WorldStateStore.swift`) is the single place runtime
+`WorldStateStore` (`opensky/Engine/World/State/WorldStateStore.swift`) is the single place runtime
 deviations from plugin data live: the substrate Papyrus (M11), inventory (M12) and quests
 (M13) mutate. Unlike `WeatherStore`, `SoundRecordStore` and `MusicRecordStore` — immutable
 read-only indices built once from an `ESMFile` and readable from any thread — this store is
@@ -198,7 +198,7 @@ mutable, so it is `@MainActor`, owned alongside `CellStreamer`, and holds no loc
 
 Runtime state is stored as separate typed components per reference rather than one wide
 state blob, so a later milestone adds inventory or actor values without reshaping anything.
-The pieces (`opensky/Engine/World/WorldStateComponents.swift`):
+The pieces (`opensky/Engine/World/State/WorldStateComponents.swift`):
 
 * `WorldStateComponentKind` — the slot identity, one case per component.
 * `WorldStateComponent` — the protocol a component value type conforms to, supplying its
@@ -270,7 +270,7 @@ A mutation with no meaningful cell is allowed and shows up in `unattributedDirty
 `resetAll()` empties the store. Baselines are never cached: `resolvedState(for:)` takes the
 `RuntimeReferenceEntry` from the index, re-derives the plugin default from the decoded
 record, and lays the delta over it (`ReferenceState`,
-`opensky/Engine/World/ReferenceState.swift`). A reset therefore restores whatever the record now
+`opensky/Engine/World/State/ReferenceState.swift`). A reset therefore restores whatever the record now
 says, and `ReferenceState.overriddenKinds` reports which slots the delta supplied, so
 "disabled by a script" stays distinguishable from "disabled by the record".
 
@@ -282,7 +282,7 @@ record, which is a load-time concern and is filtered during reference collection
 
 ### Change journal
 
-`WorldStateJournal` (`opensky/Engine/World/WorldStateJournal.swift`) is an ordered log of every
+`WorldStateJournal` (`opensky/Engine/World/State/WorldStateJournal.swift`) is an ordered log of every
 mutation, not a debug aid: save serialization (10.1.4) replays it to know what changed, the
 sidebar readout (10.1.5) shows it, and Papyrus needs a causal order for the events it fires.
 Each `WorldStateJournalEntry` carries a store-wide monotonic `sequence` (starting at 1), the
@@ -301,8 +301,8 @@ the log is not a claim that the mutations never happened.
 
 ### Deterministic snapshot
 
-`snapshot()` returns a `WorldStateSnapshot` (`opensky/Engine/World/WorldStateSnapshot.swift`): an
-immutable `Sendable` value holding dirty references in `ReferenceKey`'s total order, plus
+`snapshot()` returns a `WorldStateSnapshot` (`opensky/Engine/World/State/WorldStateSnapshot.swift`):
+an immutable `Sendable` value holding dirty references in `ReferenceKey`'s total order, plus
 the allocator's `nextGeneratedSequence`. It is the only part of the store that crosses to
 the serial build queue.
 
@@ -370,8 +370,8 @@ is a float on disk and clamping would discard values a mod can legitimately auth
 
 ### The lookup seam
 
-`GlobalResolution` (`opensky/Engine/World/GlobalStore.swift`) is the one place anything asks what a
-global is worth. It pairs a `GlobalStore` of plugin defaults with a set of runtime
+`GlobalResolution` (`opensky/Engine/World/State/GlobalStore.swift`) is the one place anything asks
+what a global is worth. It pairs a `GlobalStore` of plugin defaults with a set of runtime
 overrides, and its resolution order is fixed and total: this session's override wins, the
 plugin default is the answer otherwise, and `nil` means the FormID names no global the store
 knows. `WorldStateStore.globalResolution(defaults:)` builds one from the live store;
@@ -403,7 +403,7 @@ unevaluatable rather than as a comparison against zero.
 ### The condition evaluator above the seam
 
 Issue #251 (item 10.2.4) built that evaluator, and it is the seam's first
-non-trivial consumer. `ConditionEvaluator` (`opensky/Engine/World/ConditionEvaluator.swift`,
+non-trivial consumer. `ConditionEvaluator` (`opensky/Engine/World/Conditions/ConditionEvaluator.swift`,
 with its function registry and tally in the sibling `Condition*.swift` files) takes
 the decoded [CTDA conditions](/formats/conditions.md) and answers whether a list is
 true right now. It lives under `opensky/Engine/World/` rather than beside the decoder in
@@ -486,8 +486,8 @@ is captured on the main thread and is immutable, which is the whole reason the s
 never leaves the main actor.
 
 Application happens at exactly one point per build, in
-`opensky/Engine/World/CellSceneBuilderRuntimeState.swift`. References are collected and given their
-`ReferenceKey`s, then `effectiveReferences(refs:collected:state:location:counts:)` resolves
+`opensky/Engine/World/Cells/CellSceneBuilderRuntimeState.swift`. References are collected and given
+their `ReferenceKey`s, then `effectiveReferences(refs:collected:state:location:counts:)` resolves
 each one through `ReferenceState.applying(_:)` and returns two things: the index entries,
 which keep every reference the plugin placed, and the *effective* references, which are what
 actually gets placed. Objects the running game spawned into `location` join the input set
@@ -531,7 +531,7 @@ snapshot was taken, not what state it describes.
 
 Applying a snapshot during a build only helps if builds see the current store and if a
 change to an already-drawn cell reaches the screen. Both are `CellStreamer`'s job, and the
-logic lives in `opensky/Engine/World/CellStreamerRuntimeState.swift`.
+logic lives in `opensky/Engine/World/Streaming/CellStreamerRuntimeState.swift`.
 
 `GameViewController` owns the session's `WorldStateStore` and wires it in
 `wireStreaming(provider:renderer:)`: `CellStreamer.stateSource` is set to a closure that
@@ -593,7 +593,7 @@ are validated against a fixed character set before either becomes a filesystem p
 `OpenSkySaveStore.fingerprint(forRoot:)` and `fingerprint(forPlugins:)` build the load-order
 fingerprint from a `GameDataRoot`, reading only each plugin's TES4 `HEDR` field.
 
-Saving: `RuntimeStateControlProviding.save(toSlot:)` (`opensky/Engine/RuntimeStateControlProviding.swift`)
+Saving: `RuntimeStateControlProviding.save(toSlot:)` (`opensky/Engine/World/State/RuntimeStateControlProviding.swift`)
 takes the live store's `snapshot()`, builds a fingerprint over the session's plugin load
 order, and calls `OpenSkySaveStore.save`. Loading is the inverse and one step longer: the
 store decodes the slot, optionally verifies the fingerprint, and calls
@@ -753,7 +753,7 @@ inventory panel belongs with its first visible consumer — world pickup (#177) 
 
 ### Tests
 
-`openskyTests/InventoryComponentTests.swift` covers the invariants, the erasure pair and the
+`openskyTests/Inventory/InventoryComponentTests.swift` covers the invariants, the erasure pair and the
 stack arithmetic including both failure modes and saturation on decode.
 `InventoryBaselineTests.swift` covers each owner kind, `useAll` bundles, count
 multiplication, the cycle guard, empty lists and unresolvable forms, against the synthetic
@@ -837,7 +837,7 @@ the third-person body arrives with M14 player locomotion.
 
 ### Tests
 
-`openskyTests/EquipmentRuntimeTests.swift` covers the catalog built from plugin bytes, the
+`openskyTests/Inventory/EquipmentRuntimeTests.swift` covers the catalog built from plugin bytes, the
 slot-conflict matrix (torso against torso, two-hander against one-hander, armour against
 weapon, disjoint slots), the round-trips, both typed refusals, the one-write-per-equip
 journal rule, cell attribution, and that carry weight does not move.
@@ -857,7 +857,7 @@ unchanged — the journal records a spawn exactly as it records a `Disable()`, `
 orders it by `ReferenceKey`, the save writes it as one more additive chunk, and
 `CellStreamer.noteStateMutation` rebuilds the cell it landed in.
 
-`ReferenceSpawnState` (`opensky/Engine/World/SpawnedReference.swift`) holds the base record, the
+`ReferenceSpawnState` (`opensky/Engine/World/State/SpawnedReference.swift`) holds the base record, the
 cell, the placement, the scale and the stack count. Unlike every other component it does not
 modify a plugin placement; it *is* the placement, and only a generated `ReferenceKey` ever
 carries it. Both normalizations in its initializer — a non-positive count becomes one, a
@@ -889,7 +889,7 @@ reaching that needs 16.7 million spawns in one session.
 ### How a build places one
 
 `CellSceneBuilder.spawnedReferences(in:state:counts:)`
-(`opensky/Engine/World/CellSceneBuilderSpawns.swift`) walks the snapshot's entries — already in
+(`opensky/Engine/World/Cells/CellSceneBuilderSpawns.swift`) walks the snapshot's entries — already in
 `ReferenceKey` total order, so no sorting is needed for determinism — keeps the ones whose
 component names this cell, and turns each into an ordinary `PlacedReference` through
 `PlacedReference.init(spawn:formID:)` plus an ordinary `RuntimeReferenceEntry`. They are
@@ -914,7 +914,7 @@ key. Layout in [OpenSky save container](/formats/opensky-save.md).
 
 ### Tests
 
-`openskyTests/SpawnedReferenceTests.swift` covers the identity mapping in both directions,
+`openskyTests/World/State/SpawnedReferenceTests.swift` covers the identity mapping in both directions,
 the component invariants and the erasure pair, the save round trip on its own and merged
 with another component, interior cells, and the two decoder refusals — an entry naming no
 cell, and a declared count past the bytes available.
@@ -1044,7 +1044,7 @@ a started quest. Layout in [OpenSky save container](/formats/opensky-save.md).
 
 ### Tests
 
-`openskyTests/QuestRuntimeTests.swift` covers the baselines, materialization on first
+`openskyTests/Quests/QuestRuntimeTests.swift` covers the baselines, materialization on first
 mutation, the running and completed flags, the documented stage rules including idempotence
 and the start-up/shut-down flags, the independent objective flags, all five typed failures
 with the write-nothing guarantee, the journal's old and new values, snapshot determinism
@@ -1157,7 +1157,7 @@ Layout in [OpenSky save container](/formats/opensky-save.md).
 
 ### Tests
 
-`openskyTests/QuestAliasTests.swift` and `QuestLocationAliasTests.swift` cover
+`openskyTests/Quests/QuestAliasTests.swift` and `QuestLocationAliasTests.swift` cover
 forced-reference and forced-location fills, the list order with a
 forced-into target taking the last writer, optional-empty against non-optional-failure, the
 start-up-stage path, an unimplemented fill type as a tallied skip, the reuse rule, the table
@@ -1201,7 +1201,7 @@ route from zero health to a settled corpse, is on its own page:
 ## Verification — `World > Runtime State` and the M10.1 acceptance record
 
 Issue #162 (item 10.1.5) is the milestone acceptance surface for everything above. The
-`World > Runtime State` destination (`opensky/App/RuntimeStatePanelViewController.swift`,
+`World > Runtime State` destination (`opensky/App/Panels/RuntimeStatePanelViewController.swift`,
 sidebar id `runtimeState`, symbol `clock.arrow.circlepath`) is a normal sectioned panel whose
 sections are each a `PanelSectionViewController` in
 `opensky/App/Shell/Sections/RuntimeState*.swift`. M10.1 landed these four:
@@ -1222,7 +1222,7 @@ sections are each a `PanelSectionViewController` in
   operation, including a failed load's typed error message verbatim. Readout
   `RuntimeStateSaveStatsLabel`.
 
-`GameViewControllerRuntimeState.swift` bridges `RuntimeStateControlProviding` onto
+`GameViewController+RuntimeState.swift` bridges `RuntimeStateControlProviding` onto
 `GameViewController`: the current interaction target resolves through the streamer's
 resident reference index, typed FormIDs are parsed as hex, and save metadata takes its app
 version from `CFBundleShortVersionString`. The destination is overridden whenever
@@ -1309,7 +1309,7 @@ Per-condition reasons come from the single-condition entry point.
 `ConditionEvaluator.evaluate(_ list:)` returns one verdict and a flattened `failures` array,
 which cannot say which condition produced which failure, so
 `RuntimeStateConditionRunner.report(source:conditions:context:tally:)`
-(`opensky/Engine/RuntimeStateConditionRunner.swift`) evaluates each condition once and recombines
+(`opensky/Engine/World/State/RuntimeStateConditionRunner.swift`) evaluates each condition once and recombines
 the booleans in `RuntimeStateConditionRunner.combine(conditions:outcomes:)` with the same OR
 grouping the evaluator applies. Evaluating both ways instead would count every condition
 twice in the tally and draw twice from the `ConditionRandom` stream, so `GetRandomPercent`

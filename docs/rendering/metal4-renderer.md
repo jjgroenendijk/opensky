@@ -204,7 +204,7 @@ free-fly pose (first real scene after an empty launch scene needs a framing pose
   set (current scene + rings) because a swap A -> B -> A or adjacent cells sharing
   meshes/textures make an allocation retired and live at once.
 
-`World/CellSceneComposition.swift` is the streaming controller's cell container:
+`World/Cells/CellSceneComposition.swift` is the streaming controller's cell container:
 `[CellCoordinate: CellScene]` with `setCell`/`removeCell`, `composedScene()` via
 `RenderScene(merging:)` in deterministic (x, y) order, `composedBounds()` union for a
 first framing camera, `coordinates` as the `loaded` set for `CellGridManager.update`.
@@ -318,8 +318,8 @@ bounds equal source bounds within 0.01 units, lit pixels >1%.
 * The snapshot reaches the app through `FrameStatsProviding`, alongside
   `CameraControlProviding` (pose, cell, fly/walk mode, `cameraPoseDescription`) and
   `SceneStatsProviding` (`SceneDrawStats` + resident cell count + process footprint) in
-  `opensky/Engine/EnvironmentControlProviding.swift`. `GameViewController` implements all three
-  in `GameViewControllerWorldStats.swift`, degrading to the documented empty snapshots
+  `opensky/Engine/Rendering/EnvironmentControlProviding.swift`. `GameViewController` implements all
+  three in `GameViewController+WorldStats.swift`, degrading to the documented empty snapshots
   with no renderer or streamer. Every consumer polls the same snapshot, so two readouts of
   one frame cannot disagree.
 

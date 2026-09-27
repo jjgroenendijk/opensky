@@ -40,9 +40,9 @@ is [inventory menu](/engine/inventory-menu.md)'s, the transfers are
 | Vendor factions | `opensky/Engine/Inventory/VendorRules.swift` | app + CLI |
 | Two-pane list | `opensky/Engine/UI/ContainerMenuModel.swift` | app + CLI |
 | Vanilla movie contract | `opensky/Engine/UI/ContainerMenuMovieBridge*.swift` | app + CLI |
-| Panel seam | `opensky/Engine/ContainerMenuControlProviding.swift` | app + CLI |
+| Panel seam | `opensky/Engine/UI/ContainerMenuControlProviding.swift` | app + CLI |
 | Renderer + AppKit wiring | `opensky/App/GameViewControllerContainerMenu*.swift` | app |
-| Verification surface | `opensky/App/ContainerMenuPanelViewController.swift` and `opensky/App/Shell/Sections/ContainerMenu*.swift` | app |
+| Verification surface | `opensky/App/Panels/ContainerMenuPanelViewController.swift` and `opensky/App/Shell/Sections/ContainerMenu*.swift` | app |
 
 ## The price formula
 

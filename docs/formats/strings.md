@@ -62,7 +62,7 @@ underscores so they remain one filename segment.
 
 ## Verification
 
-Unit tests: `openskyTests/StringTableTests.swift` (synthetic fixtures,
+Unit tests: `openskyTests/Formats/Strings/StringTableTests.swift` (synthetic fixtures,
 `StringTableFixture`). Runtime probe 2026-07-09 against the real install:
 273 table files across vanilla BSAs (10 languages), 834 865 strings framed
 and decoded, 0 failures; UTF-8 languages (Chinese, Japanese, Russian) hit

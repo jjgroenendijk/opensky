@@ -80,7 +80,7 @@ ships a line with no lip blob at all, and `FUZFile.lipData` is `nil` for it.
 `FUZError.unsupported` means a structurally valid container in a variant
 OpenSky declines — currently any `Version` other than `1`. Both are typed and
 `Equatable`; nothing traps, force-unwraps or reads out of bounds, which the
-synthetic fixture tests in `openskyTests/FUZFileTests.swift` pin down: wrong
+synthetic fixture tests in `openskyTests/Formats/FUZ/FUZFileTests.swift` pin down: wrong
 magic, every truncation of the twelve-byte header, a `LIP Size` past the end of
 the file, a `LIP Size` that swallows the audio payload, an unknown version, and
 an empty buffer. `LIP Size` is widened to `Int` before any offset arithmetic, so
@@ -143,7 +143,7 @@ shipped files, so the archive was treated as the authority.
 loaded plugin, compares the result against the archive's own listing, and prints
 each mismatch beside the editor IDs that produced it. The rule above is what
 survives that comparison; each shape of the budget is pinned as a table row in
-`openskyTests/VoiceFilePathTests.swift`, and
+`openskyTests/Dialogue/VoiceFilePathTests.swift`, and
 `VoiceRealDataTests.derivesVoiceFileNamesFromRecords()` re-runs the whole
 comparison against the install.
 

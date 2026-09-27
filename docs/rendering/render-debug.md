@@ -147,13 +147,13 @@ through `RenderDebugControlProviding`. Controls: `RenderDebugModeControl` (chann
 
 ## Verification
 
-* `openskyTests/RenderDebugStateTests.swift` — raw values pinned against the imported
+* `openskyTests/Rendering/RenderDebugStateTests.swift` — raw values pinned against the imported
   `DebugViewMode` and `RenderLayerBit`, solo derivation, the whole `RenderLayerPolicy`
   composition rule, readout wording.
-* `openskyTests/RenderDebugEncodeTests.swift` (device gated) — draw-stat deltas for the
+* `openskyTests/Rendering/RenderDebugEncodeTests.swift` (device gated) — draw-stat deltas for the
   scene and shadow passes when a layer is isolated, an offscreen frame proving the filters
   do not leak, and a wireframe frame covering fewer pixels than the filled one.
-* `openskyTests/RenderDebugSectionTests.swift` — the section built through the real registry
-  factory, its pinned accessibility ids, the control round trip, and the override/reset
-  contract.
+* `openskyTests/App/Shell/Sections/RenderDebugSectionTests.swift` — the section built through the
+  real registry factory, its pinned accessibility ids, the control round trip, and the
+  override/reset contract.
 * `openskyUITests/RenderDebugUITests.swift` — the ids reachable in the built view hierarchy.

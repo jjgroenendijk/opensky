@@ -780,8 +780,8 @@ twice — the [rendering layer's determinism contract](/rendering/ui.md).
 ## Verification
 
 Device-free, synthetic fixtures only — no test reads a real `.swf`. Action bytes come from
-`openskyTests/SWFActionFixture.swift`, the single byte emitter milestone 8.3.1 added;
-`openskyTests/AS2Fixture.swift` adds record-size arithmetic so branch offsets and function
+`openskyTests/Formats/SWF/SWFActionFixture.swift`, the single byte emitter milestone 8.3.1 added;
+`openskyTests/Formats/SWF/AS2/AS2Fixture.swift` adds record-size arithmetic so branch offsets and function
 `codeSize` fields are computed rather than counted by hand.
 
 - `AS2CoercionTests` — every conversion and comparison rule above, including
@@ -809,9 +809,9 @@ Device-free, synthetic fixtures only — no test reads a real `.swf`. Action byt
   bounds, the timeline and display-property host routes, and a coverage check that all 58
   implemented opcodes are named Adobe actions.
 
-Phase 2 adds three device-free suites over `openskyTests/SWFRuntimeFixture.swift`, which
-assembles a movie whose sprite is exported under a linkage name and whose `DoInitAction`
-registers a class against it:
+Phase 2 adds three device-free suites over
+`openskyTests/Formats/SWF/Runtime/SWFRuntimeFixture.swift`, which assembles a movie whose sprite is
+exported under a linkage name and whose `DoInitAction` registers a class against it:
 
 - `SWFMovieRuntimeTests` — bring-up, a registered class running with the placed display
   object as `this`, a sprite with no linkage name, `start()` being idempotent, one-frame

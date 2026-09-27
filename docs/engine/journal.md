@@ -44,10 +44,10 @@ Only the presentation layer needs any of those.
 | Alias text substitution | `opensky/Engine/UI/JournalAliasText.swift` | app + CLI |
 | Measured movie contract | `opensky/Engine/UI/QuestJournalMovieBridge.swift` | app + CLI |
 | List and text-field plumbing | `opensky/Engine/UI/QuestJournalMovieBridgeLists.swift` | app + CLI |
-| Panel seam | `opensky/Engine/JournalControlProviding.swift` | app + CLI |
-| Readout wording | `opensky/Engine/JournalReadout.swift` | app + CLI |
-| Renderer + AppKit wiring | `opensky/App/GameViewControllerJournal.swift` and `...JournalSnapshot.swift` | app |
-| Verification surface | `opensky/App/JournalPanelViewController.swift` and `opensky/App/Shell/Sections/Journal*.swift` | app |
+| Panel seam | `opensky/Engine/Quests/JournalControlProviding.swift` | app + CLI |
+| Readout wording | `opensky/Engine/Quests/JournalReadout.swift` | app + CLI |
+| Renderer + AppKit wiring | `opensky/App/GameView/GameViewController+Journal.swift` and `...JournalSnapshot.swift` | app |
+| Verification surface | `opensky/App/Panels/JournalPanelViewController.swift` and `opensky/App/Shell/Sections/Journal*.swift` | app |
 | CLI probe | `openskycli/SWFQuestJournalCommand.swift` | CLI |
 
 ## The row model

@@ -101,7 +101,7 @@ identities were collapsed.
 
 ## Verification
 
-Unit tests: `openskyTests/PluginHeaderTests.swift` and `RecordIndexTests.swift`
+Unit tests: `openskyTests/Formats/ESM/PluginHeaderTests.swift` and `RecordIndexTests.swift`
 (synthetic fixtures).
 Runtime probe 2026-07-09 against all five vanilla masters: HEDR version 1.71,
 esm+localized flags set everywhere; masters Update.esm -> [Skyrim.esm],

@@ -276,7 +276,7 @@ end through a throwaway probe (never committed, per the probe rules):
 * One real `.xwm` read out of the player's own install decoded to 4,655,104 frames at
   44,100 Hz stereo, 105.55791383 s against a container duration of 105.557914 s.
 
-Committed coverage is `openskyTests/WMADecoderTests.swift` over synthetic headers and
+Committed coverage is `openskyTests/Audio/WMADecoderTests.swift` over synthetic headers and
 deterministic noise payloads: header rejection, the typed error surface, garbage packets
 that must not crash, and repeated construction and failed-construction loops that exercise
 the allocate-and-free pairing. No game audio, decoded or otherwise, enters the repository.

@@ -46,7 +46,7 @@ problems = []
 
 def gated_suites(folder: pathlib.Path) -> list[str]:
     suites = []
-    for path in sorted(folder.glob("*.swift")):
+    for path in sorted(folder.rglob("*.swift")):
         text = path.read_text()
         if "dataRoot: GameDataRoot?" not in text:
             continue

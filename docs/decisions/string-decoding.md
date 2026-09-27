@@ -92,7 +92,7 @@ stays strict UTF-8 ([OpenSky save](/formats/opensky-save.md)).
 
 ## Verification
 
-`openskyTests/GameTextTests.swift` covers all three tiers, the cp1252-before-Latin-1
+`openskyTests/Formats/GameTextTests.swift` covers all three tiers, the cp1252-before-Latin-1
 ordering, totality over lone surrogates, truncated UTF-8 and all 256 byte values, and the
-strict rejection path. `openskyTests/BinaryReaderTests.swift` covers the three reader
+strict rejection path. `openskyTests/Formats/BinaryReaderTests.swift` covers the three reader
 entry points against a byte windows-1252 leaves undefined.

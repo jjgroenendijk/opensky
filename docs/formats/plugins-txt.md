@@ -147,8 +147,8 @@ failure than loading one archive the game would not have.
 | `opensky/Engine/GameData/PluginsTextLocator.swift` | Finding the file; the sources and prefixes above |
 | `opensky/Engine/GameData/PluginLoadOrder.swift` | Parsing and the resolved order |
 | `opensky/Engine/GameData/PluginLoadOrderReport.swift` | The rows and summary the UI shows |
-| `opensky/App/LoadOrderViewController.swift` | Library > Load Order |
-| `openskyTests/PluginsTextLocatorTests.swift` | Every search layout, over synthetic trees |
-| `openskyTests/PluginLoadOrderTests.swift` | Enable flags, file order, dedupe, missing plugins |
-| `openskyTests/PluginLoadOrderReportTests.swift` | The strings the panel shows |
-| `openskyTests/ArchiveLoadOrderTests.swift` | Archive order following plugin order |
+| `opensky/App/Panels/LoadOrderViewController.swift` | Library > Load Order |
+| `openskyTests/GameData/PluginsTextLocatorTests.swift` | Every search layout, over synthetic trees |
+| `openskyTests/GameData/PluginLoadOrderTests.swift` | Enable flags, file order, dedupe, missing plugins |
+| `openskyTests/GameData/PluginLoadOrderReportTests.swift` | The strings the panel shows |
+| `openskyTests/GameData/ArchiveLoadOrderTests.swift` | Archive order following plugin order |

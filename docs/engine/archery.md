@@ -21,7 +21,7 @@ A cast spell's projectile flies through this same pipeline; see
 [magic](/engine/magic.md).
 
 Impl: `opensky/Engine/Combat/Archery*.swift` and `Projectile*.swift`, plus
-`opensky/App/GameViewControllerArchery.swift` and its two satellites. The record:
+`opensky/App/GameView/GameViewController+Archery.swift` and its two satellites. The record:
 [ESM records](/formats/records.md). The graph underneath:
 [behavior graph runtime](/engine/behavior-runtime.md). The sweep it borrows:
 [dynamic rigid bodies](/engine/dynamic-bodies.md). The health it takes off:

@@ -16,7 +16,7 @@ layer so the math stays AppKit-free + unit-tested:
   matrix + per-frame integration. No AppKit.
 - `opensky/Engine/Rendering/CameraInputState.swift` — shared logical input state (pressed keys,
   pointer deltas, boost). AppKit-free -> testable.
-- `opensky/App/GameMetalView.swift` — `MTKView` subclass, the only AppKit piece: NSEvents ->
+- `opensky/App/GameView/GameMetalView.swift` — `MTKView` subclass, the only AppKit piece: NSEvents ->
   `CameraInputState`, pointer capture.
 
 ## Input model

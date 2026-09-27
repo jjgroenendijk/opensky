@@ -240,7 +240,7 @@ cli-path: ## Print the built openskycli path [CONFIG]
 probe: ## Smoke-test the CLI against the local install (skips if absent)
 	@./tools/probe.sh
 
-icon: ## Regenerate the AppIcon PNGs from opensky/App/Branding/opensky-logo.svg
+icon: ## Regenerate the AppIcon PNGs from opensky/App/Resources/Branding/opensky-logo.svg
 	@./tools/gen-appicon.sh
 
 ##@ Test

@@ -116,7 +116,7 @@ layer still lacks:
 
 ## Verification
 
-Unit tests: synthetic in-code fixtures (`openskyTests/ESMFileTests.swift`,
+Unit tests: synthetic in-code fixtures (`openskyTests/Formats/ESM/ESMFileTests.swift`,
 `ESMFixture.swift`, `ZlibTests.swift`). Runtime probe 2026-07-09 against
 vanilla Skyrim.esm (form version 44, flags 0x81): 118 top groups in UESP's
 documented order, 50 494 groups + 869 687 records walked, no unknown group

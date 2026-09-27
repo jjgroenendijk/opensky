@@ -18,7 +18,7 @@ holds all 164 entries of the vanilla actor-value table, resistances included, an
 the three Papyrus natives that write them.
 
 Impl: `opensky/Engine/Actors/`, plus `opensky/Engine/UI/HUDMeterBinding.swift`
-and `opensky/App/GameViewControllerActorValues.swift`. Record layouts:
+and `opensky/App/GameView/GameViewController+ActorValues.swift`. Record layouts:
 [actor records](/formats/actors.md). The store underneath:
 [runtime state](/engine/runtime-state.md).
 

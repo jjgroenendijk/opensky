@@ -9,9 +9,9 @@ timestamp: 2026-07-22T00:00:00Z
 
 # Terrain mesh build
 
-`opensky/Engine/World/TerrainMeshBuilder.swift` turns a decoded [LAND](/formats/land.md) record into
-terrain `Patch` values — quadrant sub-mesh + BTXT base FormID + ATXT layers with dense-baked
-VTXT opacities. `CellSceneBuilder.buildTerrain` resolves the textures, packs the splat
+`opensky/Engine/World/Terrain/TerrainMeshBuilder.swift` turns a decoded [LAND](/formats/land.md)
+record into terrain `Patch` values — quadrant sub-mesh + BTXT base FormID + ATXT layers with
+dense-baked VTXT opacities. `CellSceneBuilder.buildTerrain` resolves the textures, packs the splat
 weights, and emits `TerrainDrawItem`s drawn by the dedicated splat pipeline
 ([metal4-renderer](/rendering/metal4-renderer.md), terrain splat section) under the cell's
 objects (todo 3.1).
@@ -109,19 +109,20 @@ can weld neighbor cells by dropping one cell's shared row/col instead of averagi
 
 ## Tests
 
-- `openskyTests/TerrainMeshBuilderTests.swift` — synthetic LAND: grid->world mapping (128-unit
+- `openskyTests/World/Terrain/TerrainMeshBuilderTests.swift` — synthetic LAND: grid->world mapping (128-unit
   quads, height passthrough), VNML normalization + zero/absent fallback, quadrant counts +
   shared edge vertices, hidden-quadrant omission, base-FormID routing, layer sort by layer
   number, VTXT dense bake (position mapping, out-of-range drop, clamp), weight packing
   (lane layout, over-cap ignore), fallback-plane height.
-- `openskyTests/CellSceneTerrainTests.swift` — synthetic plugin with a compressed LAND +
+- `openskyTests/World/Cells/CellSceneTerrainTests.swift` — synthetic plugin with a compressed LAND +
   LTEX/TXST chains: terrain splat items, resolved base + layer diffuses from the VFS, layer
   blend order, broken-layer-chain drop + count, XCLC quad-hiding, DNAM fallback plane, and
   no-terrain when neither LAND nor DNAM present.
-- `openskyTests/TerrainSplatRenderTests.swift` — GPU offscreen render of a synthetic
+- `openskyTests/World/Terrain/TerrainSplatRenderTests.swift` — GPU offscreen render of a synthetic
   two-texture terrain quad: west (weight 0) pixels read the base, east (weight 1) pixels
   read the layer — VTXT-driven blending proven at pixel level.
-- `openskyRealDataTests/LandRealDataTests.swift` — env-gated edge-overlap probe (above).
+- `openskyRealDataTests/Formats/ESM/Records/LandRealDataTests.swift` — env-gated edge-overlap probe
+  (above).
 
 Real-data visual check (2026-07-18, M1): `openskycli render` of WhiterunExterior06 (Tamriel
 6,-2) — 4 terrain quads, 14 splat layers resolved, 0 missing textures; dirt/grass/rock/snow

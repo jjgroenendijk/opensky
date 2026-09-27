@@ -726,23 +726,23 @@ Measured on `inventorymenu.swf`: 3 movies, 675 characters, 3 placeholders bound,
 
 ## Verification
 
-Unit tests: synthetic in-code fixtures (`openskyTests/SWFFileTests.swift`,
-`openskyTests/SWFFixture.swift`) cover FWS field parsing, CWS round-trip, short
+Unit tests: synthetic in-code fixtures (`openskyTests/Formats/SWF/SWFFileTests.swift`,
+`openskyTests/Formats/SWF/SWFFixture.swift`) cover FWS field parsing, CWS round-trip, short
 and long tags, End-tag termination with trailing bytes, unknown-tag passthrough,
 the tag-name table, and rejection of bad signatures, `ZWS`, truncated headers,
 truncated tag bodies, and a RECT running past the end.
 
-Milestone 8.2.2 tests: `openskyTests/SWFShapeTests.swift` (styles, gradients,
+Milestone 8.2.2 tests: `openskyTests/Formats/SWF/SWFShapeTests.swift` (styles, gradients,
 bitmap fills, LINESTYLE2, extended counts, new-style flattening, glyph SHAPE,
 malformed bodies) over the bit-exact `SWFShapeBodyBuilder` fixture
-(`openskyTests/SWFShapeFixture.swift`), `SWFShapeTessellatorTests.swift`
+(`openskyTests/Formats/SWF/SWFShapeFixture.swift`), `SWFShapeTessellatorTests.swift`
 (area-verified squares, holes, fill0/fill1 sides, shared interior edges,
 winding vs. even-odd, deterministic curve flattening, cache), and
 `SWFBitmapTests.swift` (all lossless formats with row padding, ARGB
 premultiply, JPEG2/3/4, JPEGTables merge, PNG signature detection, erroneous
 header stripping, typed failures) with ImageIO-generated synthetic payloads.
 
-Milestone 8.2.3 tests: `openskyTests/SWFFontTests.swift` (DefineFont2/3 glyphs +
+Milestone 8.2.3 tests: `openskyTests/Formats/SWF/SWFFontTests.swift` (DefineFont2/3 glyphs +
 code tables, wide offsets/codes, layout with advances/bounds/kerning, the
 companion tags, truncation) over `SWFFontBodyBuilder`;
 `SWFTextTests.swift` (DefineText mixed style records, DefineText2 RGBA,
@@ -752,17 +752,17 @@ DefineEditText flag combinations, HTML strip, truncation) over
 name) with synthetic fontlib movies; and `SWFGlyphPathTests.swift` (y-flip,
 DefineFont2 vs DefineFont3 scaling, conversion determinism, atlas caching).
 
-Milestone 8.2.4 tests: `openskyTests/SWFDisplayListTests.swift` (CXFORM/
+Milestone 8.2.4 tests: `openskyTests/Formats/SWF/SWFDisplayListTests.swift` (CXFORM/
 CXFORMWITHALPHA decode + algebra, all three PlaceObject versions with every
 gated field, filters and blend modes, removals, background color, truncation,
-and the `SWFTransform`/viewport math) over `openskyTests/SWFDisplayFixture.swift`
+and the `SWFTransform`/viewport math) over `openskyTests/Formats/SWF/SWFDisplayFixture.swift`
 (bit-exact place/remove/sprite tag builders); `SWFMovieTests.swift` (dictionary
 building, place/move/replace/remove, ShowFrame freeze, sprite frame 1, clip-depth
 command ranges with interleaving, tallies); `SWFTextLayoutTests.swift` (record
 state inheritance, kerning, wrap, alignment, missing glyphs); and
 `SWFImportAssetsTests.swift` (both import tags, imported-font resolution).
 
-Milestone 8.3.1 tests: `openskyTests/SWFActionTests.swift` (short and long record
+Milestone 8.3.1 tests: `openskyTests/Formats/SWF/SWFActionTests.swift` (short and long record
 framing with exact offsets, the opcode table, `ActionEndFlag` termination with
 trailing bytes, a missing terminator, every `ActionPush` value type, the constant
 pool, forward and backward branch offsets, offset seeking including a branch into
@@ -775,9 +775,9 @@ sprite id, a sprite keeping its later frames and actions, CLIPACTIONS with
 multiple handlers, a `keyPress` handler's `KeyCode`, the narrow SWF 5 flag word,
 a malformed CLIPACTIONS block that keeps its placement, the action tally, and
 frame 1 being untouched by any of it), over
-`openskyTests/SWFActionFixture.swift`.
+`openskyTests/Formats/SWF/SWFActionFixture.swift`.
 
-Milestone 8.3.2 tests: `openskyTests/SWFLinkageTests.swift` covers both tags
+Milestone 8.3.2 tests: `openskyTests/Formats/SWF/SWFLinkageTests.swift` covers both tags
 added here — FrameLabel with and without its named-anchor byte, labels attached
 to the right frame on a main timeline and inside a sprite, exact-then-folded
 label matching, ExportAssets records, the name -> id and id -> name maps

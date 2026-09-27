@@ -21,7 +21,7 @@ Impl: `opensky/Engine/Combat/CombatLoop*.swift`,
 `opensky/Engine/Combat/CombatBehavior*.swift`,
 `opensky/Engine/Combat/CombatTransientLimits.swift`,
 `opensky/Engine/Actors/ActorCombatComponent.swift`, plus
-`opensky/App/GameViewControllerCombat.swift` and its satellites.
+`opensky/App/GameView/GameViewController+Combat.swift` and its satellites.
 
 The pieces it ties together: [melee combat](/engine/melee-combat.md),
 [archery and projectiles](/engine/archery.md),
@@ -670,8 +670,8 @@ substitution binds to the same rig rather than merely naming a plausible path.
 
 ## Panel seam
 
-`CombatLoopControlProviding` (`opensky/Engine/CombatLoopControlProviding.swift`),
-conformed by `GameViewControllerCombatPanel.swift`: one `Equatable` snapshot out,
+`CombatLoopControlProviding` (`opensky/Engine/Combat/CombatLoopControlProviding.swift`),
+conformed by `GameViewController+CombatPanel.swift`: one `Equatable` snapshot out,
 plain actions in, matching every other panel bridge.
 
 It carries the hostility toggle, the AI-casting switch, the combat-state and

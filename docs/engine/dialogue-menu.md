@@ -50,7 +50,7 @@ Actors are not in it and should not be: an ACHR is built on a separate path
 it moves every frame, which is the opposite of what an immutable per-cell structure is for.
 Putting actor bodies in there would mean rebuilding the BVH whenever anybody took a step.
 
-`opensky/Engine/World/TalkTargeting.swift` instead reuses the narrowphase
+`opensky/Engine/World/Player/TalkTargeting.swift` instead reuses the narrowphase
 [melee combat](/engine/melee-combat.md) already resolves a swing against actors with:
 `MeleeHitDetector.closestApproach`, the exact segment-to-segment distance. A view ray is a
 segment and an actor is a capsule, so the answer is one call. The M16
