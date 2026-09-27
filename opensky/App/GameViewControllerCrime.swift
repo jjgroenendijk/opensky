@@ -45,8 +45,16 @@ struct CrimeBridgeState {
     /// Cell the player was last seen in, so a trespass is noticed on arrival
     /// rather than once per frame for as long as they stay.
     var lastPlayerCell: CellSceneLocation?
+    /// Who is mid-confrontation, who is cooling off, and which factions the
+    /// player resisted (issue #505).
+    var guards = GuardResponseState()
+    /// Where each pursuing guard was last sent, so a pursuit repaths only once
+    /// the player has moved away from it rather than every frame.
+    var pursuitTargets: [ReferenceKey: SIMD3<Float>] = [:]
     /// Human-readable result of the last crime the session recorded.
     var lastActionText = "No crime recorded yet."
+    /// Human-readable result of the last guard action (issue #505).
+    var lastGuardText = "No guard has acted yet."
 }
 
 extension GameViewController {

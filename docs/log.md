@@ -14,6 +14,18 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   by the new `testing-and-verifying` skill, which maps a change to the evidence it needs
   and makes `make test-fast` the default for every unit run. `tools/green-stamp.sh` is
   gone. See [testing setup](/testing.md).
+* **Guards confront, arrest and attack (issue #505)**: a member of the `GFAC` guard faction
+  whose `CRIF` names a crime faction now polices it. A guard that detects a player it has a
+  bounty against walks up and opens the load order's own arrest dialogue; past a 1000-gold
+  line, which is this engine's choice because nothing open prices "high enough", an
+  attack-on-sight faction's guards fight instead, and a conversation closed with the bounty
+  still owed is resisting arrest. Paying takes the gold and seizes stolen goods into the
+  faction's `STOL` evidence chest; jail does the same without the gold and advances the clock
+  by a day per hundred gold, one to seven, reading UESP's "maximum sentence is seven days".
+  Five natives join: `Actor.GetCrimeFaction`, `Actor.IsGuard`, `Faction.CanPayCrimeGold`,
+  `Faction.PlayerPayCrimeGold` and `Faction.SendPlayerToJail`. The jail cell, the belongings
+  chest, skill loss and a cross-cell move to the jail marker are recorded as v1 limitations.
+  See [crime and bounty](/engine/crime.md).
 
 * **Violent and non-violent bounty (issue #563)**: each crime-ledger row now holds its gold
   in two halves. Assault and murder land in the violent half and theft and trespass in the

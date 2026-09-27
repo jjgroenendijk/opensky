@@ -145,6 +145,15 @@ extension GameViewController {
         )
     }
 
+    /// One actor's social profile, seeded first, for `GetCrimeFaction`,
+    /// `IsGuard` and the guard pass (issue #505). Nil without faction data or
+    /// for an actor that is not resident.
+    func socialProfile(of key: ReferenceKey) -> ActorSocialProfile? {
+        guard let holder = actorValueHolder(for: key) else { return nil }
+        seedFactions(of: holder)
+        return factions.runtime?.profile(of: holder)
+    }
+
     /// The faction runtime, with `key` seeded first so a membership read sees the
     /// actor's authored run. Nil in a session with no faction data.
     func seededFactionRuntime(for key: ReferenceKey) -> FactionRuntime? {
@@ -173,6 +182,7 @@ extension GameViewController {
             self?.actorRelationshipBase(of: key)
         }
         bridge.factionRelationIndex = { [weak self] in self?.factions.relations }
+        bridge.socialProfile = { [weak self] key in self?.socialProfile(of: key) }
     }
 
     /// The `NPC_` identity a `RELA` record would name for one reference, resolved

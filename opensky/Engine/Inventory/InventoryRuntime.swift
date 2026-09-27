@@ -269,6 +269,33 @@ struct InventoryRuntime {
         store.set(receiver, for: second.key, in: second.cell)
     }
 
+    /// Moves every stolen copy `source` holds into `destination`, still
+    /// stolen — what an arrest does with the player's hot goods (issue #505).
+    /// All-or-nothing like `transfer`.
+    ///
+    /// - Returns: the stacks that moved, empty when nothing was stolen.
+    /// - Throws: `InventoryError.sameHolder`, `InventoryError.countOverflow`.
+    @discardableResult
+    func confiscateStolen(
+        from source: InventoryHolder,
+        to destination: InventoryHolder
+    ) throws -> [InventoryStack] {
+        guard source.key != destination.key else {
+            throw InventoryError.sameHolder(source.key)
+        }
+        let (remaining, taken) = inventory(of: source).removingStolen()
+        guard !taken.isEmpty else { return [] }
+        var receiver = inventory(of: destination)
+        for stack in taken {
+            receiver = try receiver.adding(
+                stack.item, count: stack.count, owner: destination.key, stolen: true
+            )
+        }
+        store.set(remaining, for: source.key, in: source.cell)
+        store.set(receiver, for: destination.key, in: destination.cell)
+        return taken
+    }
+
     // MARK: - Equipped set
 
     /// Marks `item` equipped on `holder`. Storage only — slot conflicts and

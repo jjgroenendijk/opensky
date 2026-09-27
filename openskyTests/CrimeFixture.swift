@@ -31,7 +31,21 @@ enum CrimeFixture {
         static let tolerant: UInt32 = 0x11
         /// Owns property and does not track crime at all.
         static let shopkeepers: UInt32 = 0x12
+        /// What the `GFAC` default object names: membership makes a guard
+        /// (issue #505).
+        static let guards: UInt32 = 0x13
     }
+
+    /// The hold's jail links (issue #505): a `STOL` evidence chest and a
+    /// `JAIL` exterior marker. Placed-reference FormIDs, so they sit apart
+    /// from every record the fixture actually carries.
+    enum Links {
+        static let evidenceChest: UInt32 = 0x700
+        static let jailMarker: UInt32 = 0x701
+    }
+
+    /// The `DOBJ` record's own FormID.
+    static let defaultObjects: UInt32 = 0x31
 
     enum Locations {
         static let shop: UInt32 = 0x100
@@ -75,7 +89,9 @@ enum CrimeFixture {
             faction(
                 Factions.hold,
                 "CrimeFactionHold",
-                flags: Flags.tracksCrime | Flags.canBeOwner
+                flags: Flags.tracksCrime | Flags.canBeOwner,
+                links: FactionFixture.link("JAIL", Links.jailMarker)
+                    + FactionFixture.link("STOL", Links.evidenceChest)
             ),
             faction(
                 Factions.tolerant,
@@ -83,7 +99,8 @@ enum CrimeFixture {
                 flags: Flags.tracksCrime | Flags.ignoresStealing
                     | Flags.doesNotReportAgainstMembers
             ),
-            faction(Factions.shopkeepers, "ShopkeeperFaction", flags: Flags.canBeOwner)
+            faction(Factions.shopkeepers, "ShopkeeperFaction", flags: Flags.canBeOwner),
+            FactionFixture.record(formID: Factions.guards, editorID: "GuardFaction")
         ].reduce(Data(), +))
         data += ESMFixture.topGroup("LCTN", contents: [
             location(Locations.shop, "ShopLocation", parent: Locations.city),
@@ -91,6 +108,7 @@ enum CrimeFixture {
             location(Locations.holdSeat, "HoldLocation", crimeFaction: Factions.hold),
             location(Locations.wilderness, "WildernessLocation")
         ].reduce(Data(), +))
+        data += ESMFixture.topGroup("DOBJ", contents: defaultObjectsRecord())
         return try ESMFile(data: data)
     }
 
@@ -112,18 +130,32 @@ enum CrimeFixture {
 
     // MARK: - Records
 
-    /// One FACT with a `CRVA` block and the flags given.
+    /// One FACT with a `CRVA` block, the flags given, and any link fields.
     static func faction(
         _ formID: UInt32,
         _ editorID: String,
         flags: UInt32,
-        crimeValues: Data? = nil
+        crimeValues: Data? = nil,
+        links: Data = Data()
     ) -> Data {
         FactionFixture.record(
             formID: formID,
             editorID: editorID,
             body: FactionFixture.flags(flags)
+                + links
                 + (crimeValues ?? FactionFixture.crimeValues())
+        )
+    }
+
+    /// The `DOBJ` naming the guard faction under `GFAC`, laid out as a run of
+    /// four-character tag and FormID pairs (docs/formats/records.md).
+    static func defaultObjectsRecord() -> Data {
+        var defaults = Data("GFAC".utf8)
+        defaults.appendUInt32(Factions.guards)
+        return ESMFixture.record(
+            "DOBJ",
+            formID: defaultObjects,
+            data: ESMFixture.field("DNAM", defaults)
         )
     }
 

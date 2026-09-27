@@ -303,6 +303,23 @@ nonisolated struct ReferenceInventoryState: WorldStateComponent {
             .replacing(item, stolen: true, with: self.count(of: item, stolen: true) + moved)
     }
 
+    /// This inventory without any stolen copies, and the stolen stacks that
+    /// came out of it — what an arrest seizes (issue #505).
+    ///
+    /// An equipped item whose every copy was stolen is unequipped with it; one
+    /// the owner also holds honestly stays equipped.
+    func removingStolen() -> (remaining: Self, taken: [InventoryStack]) {
+        let taken = stacks.filter(\.stolen)
+        guard !taken.isEmpty else { return (self, []) }
+        let kept = stacks.filter { !$0.stolen }
+        let held = Set(kept.map(\.item))
+        let remaining = ReferenceInventoryState(
+            stacks: kept,
+            equipped: equipped.filter { held.contains($0) }
+        )
+        return (remaining, taken)
+    }
+
     // MARK: - Equipped set
 
     /// This inventory with `item` marked equipped. Equipping something already

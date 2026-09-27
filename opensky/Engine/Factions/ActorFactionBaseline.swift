@@ -20,6 +20,9 @@ import Foundation
 nonisolated struct ActorFactionBaseline: Equatable {
     let memberships: [ActorBase.FactionMembership]
     let aiData: ActorAIData
+    /// The authored `CRIF`, as a raw link in the resolver's plugin (issue
+    /// #505). Nil for an actor that reports crimes to nobody.
+    var crimeFaction: FormID?
 
     /// An actor no record describes: the player, and any generated actor.
     static let none = ActorFactionBaseline(memberships: [], aiData: .absent)
@@ -51,7 +54,8 @@ nonisolated struct ActorFactionBaselineResolver {
         guard let resolved = try? templates.resolveFactions(base: base) else { return .none }
         return ActorFactionBaseline(
             memberships: resolved.factions.value,
-            aiData: resolved.aiData.value ?? .absent
+            aiData: resolved.aiData.value ?? .absent,
+            crimeFaction: resolved.crimeFaction
         )
     }
 

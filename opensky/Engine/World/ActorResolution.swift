@@ -140,6 +140,15 @@ nonisolated struct ResolvedActorFactions: Equatable {
     /// (AI Data tab, including aggression, confidence, morality, combat style
     /// and gift filter)". Nil when the providing record authors none.
     let aiData: ActorSourcedField<ActorAIData?>
+    /// CRIF, resolved through `useFactions` beside SNAM (issue #505). The
+    /// Creation Kit puts the crime faction on the same Factions tab the flag
+    /// names, so the record that supplies an actor's memberships supplies the
+    /// faction it reports crimes to.
+    var crimeFaction: FormID? {
+        crimeFactionField.value
+    }
+
+    let crimeFactionField: ActorSourcedField<FormID?>
 }
 
 /// Resolves template chains against pre-built single-plugin record indexes
@@ -297,6 +306,9 @@ nonisolated struct ActorTemplateResolver {
             },
             aiData: resolveField(in: npcs, flag: .useAIData) {
                 ActorSourcedField(value: $0.aiData, source: $0.formID)
+            },
+            crimeFactionField: resolveField(in: npcs, flag: .useFactions) {
+                ActorSourcedField(value: $0.crimeFaction, source: $0.formID)
             }
         )
     }

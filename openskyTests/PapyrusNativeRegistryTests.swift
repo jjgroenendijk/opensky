@@ -20,7 +20,7 @@ struct PapyrusNativeRegistryTests {
         // relationship accessors, `GetFactionReaction`, `IsHostileToActor` and
         // `Faction.GetReaction`, and 105 before issue #563 added the violent and
         // non-violent crime-gold readers and `SetCrimeGoldViolent`.
-        #expect(standard.count == 108)
+        #expect(standard.count == 113)
         #expect(standard.contains(
             scriptName: "form", functionName: "REGISTERFORUPDATE"
         ))

@@ -166,6 +166,15 @@ nonisolated struct ActorBase {
     /// `ActorTemplateResolver.resolveFactions(base:)` beside the SNAM run,
     /// because the hostility derivation reads the two together.
     let aiData: ActorAIData?
+    /// CRIF — the crime faction this actor reports crimes to (issue #505),
+    /// which is what the Creation Kit's `Actor.GetCrimeFaction` answers: "the
+    /// Faction the actor reports crimes to". UESP's NPC_ page lists it as a
+    /// FormID of a FACT. Observed on this install, every one of the 463 NPC_
+    /// records in `IsGuardFaction` authors one and is also a member of it.
+    ///
+    /// Inherits through `TemplateFlags.useFactions` beside the SNAM run,
+    /// resolved by `ActorTemplateResolver.resolveFactions(base:)`.
+    let crimeFaction: FormID?
     /// VMAD — Papyrus scripts attached to the NPC_ base.
     let scriptData: ScriptData
 
@@ -243,6 +252,7 @@ nonisolated struct ActorBase {
         spells = references.spells
         perks = references.perks
         factions = references.factions
+        crimeFaction = references.crimeFaction
         self.stats = stats
         self.aiData = aiData
         self.scriptData = scriptData
@@ -261,6 +271,7 @@ nonisolated struct ActorBase {
         var spells: [FormID] = []
         var perks: [FormID] = []
         var factions: [FactionMembership] = []
+        var crimeFaction: FormID?
     }
 
     /// The FormID-valued fields, plus the VMAD accumulator every unrecognized
@@ -282,6 +293,8 @@ nonisolated struct ActorBase {
             references.wornArmor = try FormID(reader.readUInt32())
         case "DOFT":
             references.defaultOutfit = try FormID(reader.readUInt32())
+        case "CRIF":
+            references.crimeFaction = try FormID(reader.readUInt32())
         default:
             // The repeated list fields and the VMAD fallthrough live in their
             // own pass, which keeps this switch inside the complexity limit.
