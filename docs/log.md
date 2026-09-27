@@ -2,6 +2,19 @@
 
 Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
+## 2026-09-27
+
+* **Build fixed for Apple Swift 6.4**: the Xcode that ships Swift 6.4 turned two
+  diagnostics into errors, and with `SWIFT_TREAT_WARNINGS_AS_ERRORS` neither the app nor
+  `openskycli` compiled on `main`. `PapyrusWorldStateBridgeQuests.swift` restated the
+  `PapyrusWorldQuestBridge` conformance, which inherits `Sendable`, outside the file that
+  declares the class. The class already gets that conformance through
+  `PapyrusWorldBridge`, so the extension now only adds members. The
+  `CustomStringConvertible` extension of the `nonisolated` enum `HKBVariableType` was
+  main-actor isolated by the target default, which the nonisolated RealData census suite
+  could not call. It is now a `nonisolated extension`. See
+  [Swift toolchain](/tools/swift-toolchain.md).
+
 ## 2026-09-08
 
 * **Fixed a startup crash in the magic tick**: the app aborted a second after the window

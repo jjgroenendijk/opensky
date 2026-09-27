@@ -39,7 +39,7 @@ nonisolated enum HKBVariableType: Int, Equatable, Sendable {
     }
 }
 
-extension HKBVariableType: CustomStringConvertible {
+nonisolated extension HKBVariableType: CustomStringConvertible {
     var description: String {
         switch self {
         case .invalid: "invalid"

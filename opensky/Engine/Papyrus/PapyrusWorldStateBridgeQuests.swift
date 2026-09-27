@@ -50,7 +50,7 @@
 import Foundation
 
 @MainActor
-extension PapyrusWorldStateBridge: PapyrusWorldQuestBridge {
+extension PapyrusWorldStateBridge {
     func questState(for key: ReferenceKey) throws -> QuestRuntimeState {
         let resolved = try resolveQuest(key)
         return try resolved.runtime.state(of: resolved.quest.formID)
