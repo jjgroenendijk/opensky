@@ -163,7 +163,7 @@ realdata-plan: ## Check every env-gated suite is in the RealData plan
 no-game-content: ## Check no game assets or rendered captures are tracked
 	@./tools/lint/no-game-content.sh && echo "[ OK ] no tracked game content"
 
-docs-links: ## Check links inside docs/ resolve (log.md skipped)
+docs-links: ## Check links inside docs/ resolve
 	@./tools/check-docs-links.sh
 
 docs-length: ## Check no docs page is longer than the limit

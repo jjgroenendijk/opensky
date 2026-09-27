@@ -150,5 +150,3 @@ oblique framing and a steep top-down angle (temporary `eyeDirection` override, r
 committed) — no visible height cracks or gaps at any of the internal cell borders, matching
 the [LAND edge-overlap probe](/formats/land.md) finding that shared edges match exactly.
 Default framing used `--zoom 2.2`; generated captures stay local.
-
-3.1 verify item closed — see `docs/log.md`.

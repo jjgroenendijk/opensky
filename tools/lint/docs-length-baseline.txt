@@ -51,8 +51,6 @@ docs/formats/records.md
 docs/formats/relationships.md
 docs/formats/swf.md
 docs/formats/vmad.md
-docs/index.md
-docs/log.md
 docs/rendering/metal4-renderer.md
 docs/rendering/ui.md
 docs/testing.md

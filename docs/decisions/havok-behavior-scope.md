@@ -16,12 +16,11 @@ milestone that animates a creature rather than the player.
 
 ## Context
 
-The direction was set on 2026-07-20 and recorded only as a line in
-[the change log](/log.md): reimplement Havok Behavior graphs, for vanilla movement feel
-and for animation-mod compatibility, in preference to a native state machine of our own.
-Nothing wrote down what "reimplement" bounded, and M14 has since been split into eight
-items that all depend on the answer. This document is that answer, and it is written
-after the measurement rather than before it.
+The direction was set on 2026-07-20 and recorded only in one sentence: reimplement Havok
+Behavior graphs, for vanilla movement feel and for animation-mod compatibility, in
+preference to a native state machine of our own. Nothing wrote down what "reimplement"
+bounded, and M14 has since been split into eight items that all depend on the answer. This
+document is that answer, and it is written after the measurement rather than before it.
 
 What already existed when M14 opened: the packfile container from M6
 ([HKX container](/formats/hkx-container.md)), `hkaSkeleton`
