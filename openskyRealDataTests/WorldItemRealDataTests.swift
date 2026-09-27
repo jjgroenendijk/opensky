@@ -116,12 +116,9 @@ struct WorldItemRealDataTests {
         described by the item index: \(sweep.describedByItemIndex)
         drawn references: \(sweep.drawn)
         """
-        // Repo root derived from this source file's location: the test host's
-        // working directory is `/`, so a relative path is unwritable.
-        let logs = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
+        // Resolved through `RepositoryLogs`: the test host's working directory
+        // is `/`, so a relative path is unwritable.
+        let logs = try RepositoryLogs.directory()
         try FileManager.default.createDirectory(at: logs, withIntermediateDirectories: true)
         try report.write(
             to: logs.appending(path: "world-items-sweep.txt"),

@@ -401,11 +401,8 @@ extension DynamicBodyRealDataTests {
 
     private static func write(name: String, report: String) throws {
         let environment = ProcessInfo.processInfo.environment
-        let repository = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-        let directory = environment["OPENSKY_RUN_DIR"].map(URL.init(fileURLWithPath:))
-            ?? repository.appending(path: "logs/realtest/latest").resolvingSymlinksInPath()
+        let directory = try environment["OPENSKY_RUN_DIR"].map(URL.init(fileURLWithPath:))
+            ?? RepositoryLogs.directory("realtest/latest").resolvingSymlinksInPath()
         try FileManager.default.createDirectory(
             at: directory, withIntermediateDirectories: true
         )

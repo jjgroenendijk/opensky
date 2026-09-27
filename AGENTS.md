@@ -50,8 +50,11 @@ conflict.
   `tools/`, so a new build command has to pass it too or it will silently start a second
   cache on the boot disk. Override with `make DERIVED_DATA=... <target>`.
 - Git hooks are the gate — never `--no-verify`.
-- Linked worktrees share the main checkout's `.vendor/ffmpeg` automatically through `make`,
-  so `make bootstrap` is not needed per worktree.
+- Linked worktrees share the main checkout's `.vendor/ffmpeg` and compilation cache
+  automatically through `make`, so `make bootstrap` is not needed per worktree and a fresh
+  worktree's first build reuses what others compiled. The cache's prefix mapping makes
+  `#filePath` read `/^src/...`: find the checkout at runtime instead
+  (`docs/tools/build-system.md`).
 - Facts about this machine and the outside world that will expire — CI status, missing TCC
   permissions, blocked upstream spec hosts — live in `docs/tools/environment.md` with the
   date each was observed. Record them there, never inline here or in a skill.
@@ -178,7 +181,7 @@ tuple cap, introduce a struct.
 
 Two whole-program smells are gated against a baseline of existing findings:
 duplicated Swift (`make dup-check`, in `make lint` and pre-commit) and unused code
-(`make dead-code`, in pre-push, which builds but runs no tests). New code must not add to
+(`make dead-code`, on demand, in its own uncached build tree). New code must not add to
 either baseline; regenerate one only after a cleanup removes findings
 (`docs/decisions/code-smell-scans.md`).
 

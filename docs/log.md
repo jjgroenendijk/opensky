@@ -20,6 +20,17 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   goods reach the buyer honest. `Actor.ShowBarterMenu` joins the natives, which puts barter
   behind the load order's own merchant dialogue. The provider now carries the FLST index.
   See [container and barter menus](/engine/barter.md).
+* **One compilation cache for every worktree**: `Config/Debug.xcconfig` turns on prefix
+  mapping, so a cache key no longer embeds the checkout path, and `make cache-link` points
+  each worktree's `DerivedData/CompilationCache.noindex` at the main checkout's. A fresh
+  worktree's unit build took 22 s instead of 169 s. A build replayed from the cache writes
+  almost no index data, so `make dead-code` now builds uncached into `DerivedData-index/`
+  and left the pre-push hook, which only blocks pushes to `main`. `#filePath` now compiles
+  to `/^src/...`, so the real-data suites find `logs/` through `RepositoryLogs`. The same
+  session measured where testing time goes: building dominates, cross-module incremental
+  builds already work, parallel testing is faster than serial, and the 10 s ragdoll soak
+  test is not worth a separate plan. See [build system](/tools/build-system.md) and
+  [testing setup](/testing.md#where-testing-time-goes).
 
 * **No hook runs the tests**: the pre-push hook no longer runs `make test`, `make cli`
   and `make realdata-build` on every push. Session mining found its tree-hash skip

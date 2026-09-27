@@ -238,17 +238,7 @@ extension M11AcceptanceRealDataTests {
 
     private func renderPixels(_ renderer: Renderer) throws -> [UInt8] {
         let texture = try renderer.renderOffscreen(width: 640, height: 360)
-        var bytes = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
-        bytes.withUnsafeMutableBytes { storage in
-            guard let base = storage.baseAddress else { return }
-            texture.getBytes(
-                base,
-                bytesPerRow: texture.width * 4,
-                from: MTLRegionMake2D(0, 0, texture.width, texture.height),
-                mipmapLevel: 0
-            )
-        }
-        return bytes
+        return RenderedPixels.read(texture)
     }
 
     private func writeReport(
@@ -291,12 +281,7 @@ extension M11AcceptanceRealDataTests {
 
 extension M11AcceptanceRealDataTests {
     fileprivate static func changedPixels(_ lhs: [UInt8], _ rhs: [UInt8]) -> Int {
-        guard lhs.count == rhs.count else { return max(lhs.count, rhs.count) / 4 }
-        return stride(from: 0, to: lhs.count, by: 4).reduce(into: 0) { count, index in
-            if lhs[index ..< index + 4] != rhs[index ..< index + 4] {
-                count += 1
-            }
-        }
+        RenderedPixels.changedCount(lhs, rhs)
     }
 
     private func editorID(for formID: FormID, in file: ESMFile) -> String {
@@ -305,13 +290,10 @@ extension M11AcceptanceRealDataTests {
     }
 
     private var logsDirectory: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
+        get throws { try RepositoryLogs.directory() }
     }
 
     private var logURL: URL {
-        logsDirectory.appending(path: "papyrus-m11-overall-acceptance.log")
+        get throws { try logsDirectory.appending(path: "papyrus-m11-overall-acceptance.log") }
     }
 }

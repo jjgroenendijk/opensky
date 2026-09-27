@@ -1,8 +1,8 @@
 name: CI
 
 # GH Actions CPU quota exhausted (2026-07-20) -> automatic runs disabled.
-# The git hooks (.githooks/, wired by `make bootstrap`) format, lint, and scan
-# for unused code; no hook runs the tests (testing-and-verifying skill). Manual dispatch kept so the workflow can verify a branch when quota
+# The git hooks (.githooks/, wired by `make bootstrap`) format and lint; no hook
+# builds or runs the tests (testing-and-verifying skill). Manual dispatch kept so the workflow can verify a branch when quota
 # returns; restoring pull_request/push triggers + required status checks on
 # main re-enables CI (see GitHub issue #70).
 on:
@@ -67,13 +67,12 @@ jobs:
         if: ${{ steps.xcode.outputs.major >= 26 }}
         run: make realdata-build XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
       - name: Dead-code scan (Periphery, against the baseline)
-        # Reads the index store the builds above left; the pre-push hook runs the
-        # same scan through `make dead-code`.
+        # Builds uncached into its own tree: a build replayed from the
+        # compilation cache writes almost no index data for Periphery to read.
         if: ${{ steps.xcode.outputs.major >= 26 }}
         run: |
           brew install periphery
-          make cli XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
-          ./tools/lint/dead-code.sh
+          make dead-code XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
       - name: UI tests
         if: ${{ steps.xcode.outputs.major >= 26 }}
         run: make test-ui XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='

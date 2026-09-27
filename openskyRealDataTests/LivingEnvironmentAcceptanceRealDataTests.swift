@@ -151,7 +151,7 @@ struct LivingEnvironmentAcceptanceRealDataTests {
             particles: particles,
             precipitation: precipitation,
             grass: grass,
-            combined: Self.pixelDelta(baseline, allOff.pixels),
+            combined: RenderedPixels.changedCount(baseline, allOff.pixels, tolerance: 8),
             allOff: allOff
         )
     }
@@ -164,7 +164,7 @@ struct LivingEnvironmentAcceptanceRealDataTests {
         let renderer = try makeRenderer(scene: scene)
         let first = try frame(renderer, time: 0.5)
         let second = try frame(renderer, time: 1.0)
-        let changed = Self.pixelDelta(first.pixels, second.pixels)
+        let changed = RenderedPixels.changedCount(first.pixels, second.pixels, tolerance: 8)
         let live = scene.renderScene.particles.reduce(0) { $0 + $1.liveCount }
         #expect(renderer.lastAnimationUpdatedBoneCount > 0)
         #expect(live > 0)
@@ -201,7 +201,7 @@ struct LivingEnvironmentAcceptanceRealDataTests {
             height: Self.size.height,
             animationTime: time
         )
-        return Frame(texture: texture, pixels: Self.read(texture))
+        return Frame(texture: texture, pixels: RenderedPixels.read(texture))
     }
 
     @MainActor
@@ -215,7 +215,7 @@ struct LivingEnvironmentAcceptanceRealDataTests {
         toggle()
         let pixels = try frame(renderer, time: time).pixels
         restore()
-        return Self.pixelDelta(baseline, pixels)
+        return RenderedPixels.changedCount(baseline, pixels, tolerance: 8)
     }
 
     private func makeHarness() throws -> (builder: CellSceneBuilder, weather: WeatherSystem) {
@@ -237,32 +237,8 @@ struct LivingEnvironmentAcceptanceRealDataTests {
         return (builder, weather)
     }
 
-    private static func read(_ texture: MTLTexture) -> [UInt8] {
-        var pixels = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
-        pixels.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
-                base,
-                bytesPerRow: texture.width * 4,
-                from: MTLRegionMake2D(0, 0, texture.width, texture.height),
-                mipmapLevel: 0
-            )
-        }
-        return pixels
-    }
-
-    private static func pixelDelta(_ lhs: [UInt8], _ rhs: [UInt8]) -> Int {
-        stride(from: 0, to: min(lhs.count, rhs.count), by: 4).reduce(0) { count, index in
-            let changed = (0 ..< 3).contains {
-                abs(Int(lhs[index + $0]) - Int(rhs[index + $0])) > 8
-            }
-            return count + (changed ? 1 : 0)
-        }
-    }
-
     private static var logs: URL {
-        URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-            .deletingLastPathComponent().appending(path: "logs")
+        get throws { try RepositoryLogs.directory() }
     }
 
     private static func write(_ texture: MTLTexture, name: String) throws {

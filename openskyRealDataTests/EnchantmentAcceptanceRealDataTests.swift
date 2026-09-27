@@ -284,11 +284,7 @@ struct EnchantmentAcceptanceRealDataTests {
         let armor = outcome.armor
         let points = outcome.points
         let damage = outcome.damage
-        let directory = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
-            .appending(path: "enchantment-acceptance")
+        let directory = try RepositoryLogs.directory("enchantment-acceptance")
         try FileManager.default.createDirectory(
             at: directory,
             withIntermediateDirectories: true

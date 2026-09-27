@@ -141,13 +141,9 @@ struct AICastingAcceptanceRealDataTests {
                 )
             }
         }
-        // Anchored on the source file rather than the working directory, which
-        // in a test host is `/`.
-        let directory = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
-            .appending(path: "ai-casting-acceptance")
+        // Resolved through `RepositoryLogs` rather than the working directory,
+        // which in a test host is `/`.
+        let directory = try RepositoryLogs.directory("ai-casting-acceptance")
         try FileManager.default.createDirectory(
             at: directory,
             withIntermediateDirectories: true

@@ -353,10 +353,7 @@ extension M17AcceptanceRealDataTests {
         ] + unknown).joined(separator: "\n") + "\n"
         print(report)
 
-        let logs = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs/m17-acceptance", directoryHint: .isDirectory)
+        let logs = try RepositoryLogs.directory("m17-acceptance")
         let stamp = ISO8601DateFormatter().string(from: Date())
             .replacingOccurrences(of: ":", with: "")
         let run = logs.appending(path: stamp, directoryHint: .isDirectory)

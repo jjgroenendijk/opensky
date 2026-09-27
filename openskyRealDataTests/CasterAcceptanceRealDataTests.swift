@@ -203,14 +203,10 @@ struct CasterAcceptanceRealDataTests {
         magicka: (Float, Float),
         health: (Float, Float)
     ) throws {
-        // Anchored on the source file rather than the working directory, which
-        // in a test host is `/` — the same rule the other real-data suites that
-        // leave artifacts behind follow.
-        let directory = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
-            .appending(path: "caster-acceptance")
+        // Resolved through `RepositoryLogs` rather than the working directory,
+        // which in a test host is `/` — the same rule the other real-data
+        // suites that leave artifacts behind follow.
+        let directory = try RepositoryLogs.directory("caster-acceptance")
         try FileManager.default.createDirectory(
             at: directory,
             withIntermediateDirectories: true

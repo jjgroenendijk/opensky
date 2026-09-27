@@ -76,9 +76,9 @@ struct ContainerMenuAcceptanceRealDataTests {
         let traded = try render(renderer)
 
         let diagnostics = verifyClean(runtime: runtime, renderer: renderer)
-        let broughtUpChanged = Self.changedPixels(empty.pixels, broughtUp.pixels)
+        let broughtUpChanged = RenderedPixels.changedCount(empty.pixels, broughtUp.pixels)
         #expect(broughtUpChanged > 100, "bring-up changed only \(broughtUpChanged) pixels")
-        let publishedChanged = Self.changedPixels(broughtUp.pixels, published.pixels)
+        let publishedChanged = RenderedPixels.changedCount(broughtUp.pixels, published.pixels)
         #expect(publishedChanged > 100, "publishing rows changed only \(publishedChanged) pixels")
 
         try ContainerMenuEvidence.write(
@@ -221,38 +221,12 @@ struct ContainerMenuAcceptanceRealDataTests {
 
     @MainActor
     private func makeRenderer(device: MTLDevice) throws -> Renderer {
-        let view = MTKView(
-            frame: CGRect(x: 0, y: 0, width: Self.width, height: Self.height),
-            device: device
-        )
-        view.isPaused = true
-        view.enableSetNeedsDisplay = false
-        return try Renderer(view: view)
+        try RenderedPixels.offscreenRenderer(device: device, width: Self.width, height: Self.height)
     }
 
     @MainActor
     private func render(_ renderer: Renderer) throws -> (texture: MTLTexture, pixels: [UInt8]) {
-        let texture = try renderer.renderOffscreen(
-            width: Self.width, height: Self.height, animationTime: 1
-        )
-        var pixels = [UInt8](repeating: 0, count: Self.width * Self.height * 4)
-        pixels.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
-                base,
-                bytesPerRow: Self.width * 4,
-                from: MTLRegionMake2D(0, 0, Self.width, Self.height),
-                mipmapLevel: 0
-            )
-        }
-        return (texture, pixels)
-    }
-
-    private static func changedPixels(_ lhs: [UInt8], _ rhs: [UInt8]) -> Int {
-        stride(from: 0, to: min(lhs.count, rhs.count), by: 4).reduce(0) { count, index in
-            let changed = (0 ..< 3).contains { lhs[index + $0] != rhs[index + $0] }
-            return count + (changed ? 1 : 0)
-        }
+        try RenderedPixels.renderFrame(renderer, width: Self.width, height: Self.height)
     }
 }
 
@@ -318,7 +292,6 @@ private enum ContainerMenuEvidence {
     }
 
     private static var logs: URL {
-        URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-            .deletingLastPathComponent().appending(path: "logs")
+        get throws { try RepositoryLogs.directory() }
     }
 }

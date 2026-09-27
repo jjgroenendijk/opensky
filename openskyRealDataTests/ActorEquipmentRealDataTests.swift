@@ -187,15 +187,12 @@ struct ActorEquipmentRealDataTests {
             at: logsDirectory,
             withIntermediateDirectories: true
         )
-        let output = logsDirectory.appending(path: name)
+        let output = try logsDirectory.appending(path: name)
         try FrameScreenshot.write(texture: texture, to: output)
         print("[INFO] \(name): \(output.path)")
     }
 
     private var logsDirectory: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
+        get throws { try RepositoryLogs.directory() }
     }
 }

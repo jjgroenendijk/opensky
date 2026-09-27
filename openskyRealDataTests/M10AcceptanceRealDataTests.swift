@@ -231,8 +231,7 @@ struct M10AcceptanceRealDataTests {
     }
 
     private static var logs: URL {
-        URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-            .deletingLastPathComponent().appending(path: "logs")
+        get throws { try RepositoryLogs.directory() }
     }
 
     private static func write(_ report: String) throws {

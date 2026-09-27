@@ -192,44 +192,17 @@ struct WeatherAcceptanceRealDataTests {
 
     /// Count of pixels whose color moved past the channel noise floor.
     private func pixelDelta(_ lhs: [UInt8], _ rhs: [UInt8]) -> Int {
-        var changed = 0
-        for pixel in stride(from: 0, to: min(lhs.count, rhs.count), by: 4) {
-            var moved = false
-            for channel in 0 ..< 3 {
-                let delta = abs(Int(lhs[pixel + channel]) - Int(rhs[pixel + channel]))
-                if delta > Self.channelNoiseFloor {
-                    moved = true
-                    break
-                }
-            }
-            if moved {
-                changed += 1
-            }
-        }
-        return changed
+        RenderedPixels.changedCount(lhs, rhs, tolerance: Self.channelNoiseFloor)
     }
 
     @MainActor
     private func readPixels(_ texture: MTLTexture) -> [UInt8] {
-        var pixels = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
-        pixels.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
-                base,
-                bytesPerRow: texture.width * 4,
-                from: MTLRegionMake2D(0, 0, texture.width, texture.height),
-                mipmapLevel: 0
-            )
-        }
-        return pixels
+        RenderedPixels.read(texture)
     }
 
     private func writeReport(_ lines: [String]) throws {
         let output = lines.joined(separator: "\n")
-        let logsDirectory = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent() // openskyTests/
-            .deletingLastPathComponent() // repo root
-            .appending(path: "logs")
+        let logsDirectory = try RepositoryLogs.directory()
         try FileManager.default.createDirectory(
             at: logsDirectory, withIntermediateDirectories: true
         )

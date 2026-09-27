@@ -212,10 +212,7 @@ struct DialogueRealDataTests {
     }
 
     private func writeReport(_ report: String) throws {
-        let root = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs/dialogue-sweep", directoryHint: .isDirectory)
+        let root = try RepositoryLogs.directory("dialogue-sweep")
         let stamp = ISO8601DateFormatter().string(from: Date())
             .replacingOccurrences(of: ":", with: "")
         let run = root.appending(path: stamp, directoryHint: .isDirectory)

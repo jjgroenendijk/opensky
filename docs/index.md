@@ -470,7 +470,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   `-quiet` versus the transcripts kept in `logs/`, Swift warnings as build errors, the
   derived built-products path, the `Config/*.xcconfig` layer that holds every build
   setting, the `OpenSkyShaderTypes` clang module that replaced the bridging header, the
-  compilation cache and the flows it does and does not speed up, and what
+  compilation cache and the flows it does and does not speed up, the one store every
+  worktree shares through prefix mapping and what that costs, and what
   `-only-testing` does not save.
 * [Run output layout and make prune](/tools/run-output.md) - one timestamped run
   directory per run under `logs/` and `build/test-results/` with a `latest` symlink, which
@@ -489,7 +490,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [Testing setup](/testing.md) - the three test targets and the shared support
   folder, make entrypoints, the RealData test plan behind `make realtest` and
   `make realtest-all`, the Sanitizers plan behind `make test-sanitize`,
-  `make verify-build`, why no hook runs the tests, the watchdog, result reporting,
+  `make verify-build`, why no hook runs the tests, where testing time goes, the
+  watchdog, result reporting,
   code coverage, machine-specific quirks.
 * Roadmap - not in this wiki. Open work lives in GitHub issues and milestones, where
   milestone `#n` is OpenSky milestone `Mn`. See AGENTS.md "Roadmap and open work".

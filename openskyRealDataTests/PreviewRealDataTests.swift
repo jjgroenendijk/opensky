@@ -248,13 +248,10 @@ struct PreviewRealDataTests {
         return Double(lit) / Double(max(pixelCount, 1))
     }
 
-    /// Repo root derived from this source file's location; logs/ is the
-    /// designated gitignored output directory (AGENTS.md "Code scripts").
+    /// Resolved through `RepositoryLogs`; logs/ is the designated gitignored
+    /// output directory (AGENTS.md "Code scripts").
     private var logsDirectory: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent() // openskyTests/
-            .deletingLastPathComponent() // repo root
-            .appending(path: "logs")
+        get throws { try RepositoryLogs.directory() }
     }
 
     private func write(image: CGImage, name: String) throws -> URL {
@@ -262,7 +259,7 @@ struct PreviewRealDataTests {
             at: logsDirectory,
             withIntermediateDirectories: true
         )
-        let url = logsDirectory.appending(path: name)
+        let url = try logsDirectory.appending(path: name)
         let destination = try #require(CGImageDestinationCreateWithURL(
             url as CFURL,
             UTType.png.identifier as CFString,

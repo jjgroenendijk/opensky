@@ -118,10 +118,7 @@ struct LipSyncRealDataTests {
     }
 
     private static func writeReport(_ report: String) throws {
-        let root = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs/lip-sweep", directoryHint: .isDirectory)
+        let root = try RepositoryLogs.directory("lip-sweep")
         let stamp = ISO8601DateFormatter().string(from: Date())
             .replacingOccurrences(of: ":", with: "")
         let run = root.appending(path: stamp, directoryHint: .isDirectory)

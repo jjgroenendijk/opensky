@@ -235,18 +235,15 @@ struct LandRealDataTests {
 
     /// logs/land-sweep.log (gitignored) next to the other real-data sidecars.
     private var logURL: URL {
-        logsDirectory.appending(path: "land-sweep.log")
+        get throws { try logsDirectory.appending(path: "land-sweep.log") }
     }
 
     /// logs/land-edge-probe.log (gitignored) — the edge-overlap finding.
     private var edgeLogURL: URL {
-        logsDirectory.appending(path: "land-edge-probe.log")
+        get throws { try logsDirectory.appending(path: "land-edge-probe.log") }
     }
 
     private var logsDirectory: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent() // openskyTests/
-            .deletingLastPathComponent() // repo root
-            .appending(path: "logs")
+        get throws { try RepositoryLogs.directory() }
     }
 }

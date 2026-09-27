@@ -61,7 +61,7 @@ struct HUDAcceptanceRealDataTests {
             HUDMovieBridge.setActivationPrompt(prompt, runtime: runtime)
         }
         let visible = try render(renderer)
-        let changed = Self.changedPixels(hidden.pixels, visible.pixels)
+        let changed = RenderedPixels.changedCount(hidden.pixels, visible.pixels, tolerance: 8)
         #expect(changed > 100, "live door prompt changed only \(changed) pixels")
         #expect(renderer.lastSWFDrawStats.skippedItems == 0)
 
@@ -164,48 +164,17 @@ struct HUDAcceptanceRealDataTests {
         return nil
     }
 
+    private static var logs: URL {
+        get throws { try RepositoryLogs.directory() }
+    }
+
     @MainActor
     private func makeRenderer(device: MTLDevice) throws -> Renderer {
-        let view = MTKView(
-            frame: CGRect(x: 0, y: 0, width: Self.width, height: Self.height),
-            device: device
-        )
-        view.isPaused = true
-        view.enableSetNeedsDisplay = false
-        return try Renderer(view: view)
+        try RenderedPixels.offscreenRenderer(device: device, width: Self.width, height: Self.height)
     }
 
     @MainActor
     private func render(_ renderer: Renderer) throws -> (texture: MTLTexture, pixels: [UInt8]) {
-        let texture = try renderer.renderOffscreen(
-            width: Self.width,
-            height: Self.height,
-            animationTime: 1
-        )
-        var pixels = [UInt8](repeating: 0, count: Self.width * Self.height * 4)
-        pixels.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
-                base,
-                bytesPerRow: Self.width * 4,
-                from: MTLRegionMake2D(0, 0, Self.width, Self.height),
-                mipmapLevel: 0
-            )
-        }
-        return (texture, pixels)
-    }
-
-    private static func changedPixels(_ lhs: [UInt8], _ rhs: [UInt8]) -> Int {
-        stride(from: 0, to: min(lhs.count, rhs.count), by: 4).reduce(0) { count, index in
-            let changed = (0 ..< 3).contains {
-                abs(Int(lhs[index + $0]) - Int(rhs[index + $0])) > 8
-            }
-            return count + (changed ? 1 : 0)
-        }
-    }
-
-    private static var logs: URL {
-        URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-            .deletingLastPathComponent().appending(path: "logs")
+        try RenderedPixels.renderFrame(renderer, width: Self.width, height: Self.height)
     }
 }

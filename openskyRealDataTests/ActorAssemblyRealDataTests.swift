@@ -127,22 +127,13 @@ struct ActorAssemblyRealDataTests {
             at: logsDirectory,
             withIntermediateDirectories: true
         )
-        let output = logsDirectory.appending(path: "actor-heimskr.png")
+        let output = try logsDirectory.appending(path: "actor-heimskr.png")
         try FrameScreenshot.write(texture: texture, to: output)
         print("[INFO] Heimskr actor assembly frame: \(output.path)")
     }
 
     private func nonBackgroundFraction(texture: MTLTexture) -> Double {
-        var pixels = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
-        pixels.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
-                base,
-                bytesPerRow: texture.width * 4,
-                from: MTLRegionMake2D(0, 0, texture.width, texture.height),
-                mipmapLevel: 0
-            )
-        }
+        let pixels = RenderedPixels.read(texture)
         var lit = 0
         for pixel in stride(from: 0, to: pixels.count, by: 4) {
             if pixels[pixel] > 8 || pixels[pixel + 1] > 8 || pixels[pixel + 2] > 8 {
@@ -153,9 +144,6 @@ struct ActorAssemblyRealDataTests {
     }
 
     private var logsDirectory: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
+        get throws { try RepositoryLogs.directory() }
     }
 }

@@ -115,17 +115,7 @@ struct ParticlePlaybackRealDataTests {
 
     @MainActor
     private func readPixels(_ texture: MTLTexture) throws -> [UInt8] {
-        var result = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
-        result.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
-                base,
-                bytesPerRow: texture.width * 4,
-                from: MTLRegionMake2D(0, 0, texture.width, texture.height),
-                mipmapLevel: 0
-            )
-        }
-        return result
+        RenderedPixels.read(texture)
     }
 
     private func litPixelCount(_ pixels: [UInt8]) -> Int {
@@ -148,9 +138,7 @@ struct ParticlePlaybackRealDataTests {
     }
 
     private var logsDirectory: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent().deletingLastPathComponent()
-            .appending(path: "logs")
+        get throws { try RepositoryLogs.directory() }
     }
 
     private func writePNG(_ pixels: [UInt8], name: String) throws -> URL {
@@ -170,7 +158,7 @@ struct ParticlePlaybackRealDataTests {
         try FileManager.default.createDirectory(
             at: logsDirectory, withIntermediateDirectories: true
         )
-        let url = logsDirectory.appending(path: name)
+        let url = try logsDirectory.appending(path: name)
         let destination = try #require(CGImageDestinationCreateWithURL(
             url as CFURL, UTType.png.identifier as CFString, 1, nil
         ))

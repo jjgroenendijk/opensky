@@ -285,10 +285,7 @@ struct M15AcceptanceRealDataTests {
     /// The coverage ledger the milestone's log entry quotes, written to
     /// gitignored `logs/`. Class names and counts only.
     private static func write(_ lines: [String]) throws {
-        let directory = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
+        let directory = try RepositoryLogs.directory()
         try FileManager.default.createDirectory(
             at: directory, withIntermediateDirectories: true
         )

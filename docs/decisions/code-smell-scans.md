@@ -21,14 +21,18 @@ see the whole program instead of one file at a time. They are gated locally:
   `tools/lint/.jscpd.json`: a clone counts at 100 tokens and 10 lines, exact matches
   only. The scan covers every Swift directory in about half a second. On a failure the
   wrapper `tools/lint/duplicates.sh` prints only the new clones, with both locations.
-- **Dead code: Periphery.** `make dead-code`, which the pre-push hook runs.
+- **Dead code: Periphery.** `make dead-code`, run on demand.
   It reports unused declarations, properties that are assigned but never read, unused
   imports, and redundant conformances. Periphery reads the index store the compiler
   writes during a build (`COMPILER_INDEX_STORE_ENABLE = YES` in
   `Config/Debug.xcconfig`), so it needs builds of the current tree for `openskyTests`,
   the app with `openskyRealDataTests`, and `openskycli`. `make dead-code` runs those
-  builds itself through `make verify-build`, incrementally, and the scan then takes
-  about eight seconds. The settings are in `tools/lint/.periphery.yml`.
+  builds itself, with the compilation cache off and into its own tree
+  (`DerivedData-index/`), because a build replayed from the shared cache writes almost
+  no index data. The first run in a worktree is a full build; later runs are
+  incremental, and the scan itself takes about eight seconds. It left the pre-push
+  hook on 2026-09-27, when the shared cache made the ordinary builds unusable for it.
+  The settings are in `tools/lint/.periphery.yml`.
 
 Both gates compare against a baseline of the findings that were already there when the
 gates landed: `tools/lint/jscpd-baseline.json` (content fingerprints) and
@@ -70,7 +74,7 @@ Homebrew. Neither is linked into or shipped with OpenSky.
 - Periphery's results are only as fresh as the index store. After switching branches
   in the same worktree, stale records can hide or invent findings until the next build.
   `make clean` resets the index.
-- `openskyUITests` is not built by `make verify-build`, so its sources are not scanned
+- `openskyUITests` is not built by `make dead-code`, so its sources are not scanned
   for dead code. They drive the app through accessibility identifiers and reference no
   engine declarations.
 - Metal shaders are outside both scans. jscpd has no Metal grammar, and the project has

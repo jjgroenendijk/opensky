@@ -4,8 +4,9 @@
 # in the baseline.
 #
 # Periphery reads the index store the compiler writes while building, so the scan
-# itself does not build. `make dead-code`, which the pre-push hook runs, builds
-# every target first through `make verify-build`. A stale index store shows stale
+# itself does not build. `make dead-code` builds every target first, uncached, into
+# its own derived-data tree (OPENSKY_INDEX_DATA): a build served from the shared
+# compilation cache writes almost no index data. A stale index store shows stale
 # results, which is why the index must come from builds of the current tree.
 #
 # The baseline holds findings keyed by declaration (USR), so edits elsewhere in a
@@ -18,14 +19,12 @@ set -eu
 
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$root"
-# The Makefile exports the derived-data root; this is the fallback for a direct
-# run. tools/xcodebuild-lib.sh derives its own fallback from a tools/ script path,
-# which this one is not.
-: "${OPENSKY_DERIVED_DATA:=$root/DerivedData}"
+# The Makefile exports the index tree; this is the default for a direct run.
+: "${OPENSKY_INDEX_DATA:=$root/DerivedData-index}"
 
 config="tools/lint/.periphery.yml"
 baseline="tools/lint/periphery-baseline.json"
-index_store="$OPENSKY_DERIVED_DATA/Index.noindex/DataStore"
+index_store="$OPENSKY_INDEX_DATA/Index.noindex/DataStore"
 
 if ! command -v periphery >/dev/null 2>&1; then
   printf '[FAIL] periphery not found. Run: make bootstrap\n' >&2

@@ -86,10 +86,10 @@ struct FaceMorphRenderRealDataTests {
         #expect(playback.setWeight(1, for: "Aah"))
         let morphed = try frame(renderer, name: "face-morph-aah.png")
         let repeated = try frame(renderer, name: nil)
-        let delta = changedPixels(baseline, morphed)
+        let delta = RenderedPixels.changedCount(baseline, morphed)
 
         #expect(delta > 20, "Aah changed only \(delta) pixels")
-        #expect(changedPixels(morphed, repeated) == 0)
+        #expect(RenderedPixels.changedCount(morphed, repeated) == 0)
         print(
             "[INFO] Face morph A/B: \(playback.bindings.count) pairs, "
                 + "\(playback.targetNames.count) targets, \(delta) changed pixels"
@@ -124,30 +124,10 @@ struct FaceMorphRenderRealDataTests {
                 to: runDirectory.appending(path: name)
             )
         }
-        var pixels = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
-        pixels.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
-                base,
-                bytesPerRow: texture.width * 4,
-                from: MTLRegionMake2D(0, 0, texture.width, texture.height),
-                mipmapLevel: 0
-            )
-        }
-        return pixels
+        return RenderedPixels.read(texture)
     }
 
     private var runDirectory: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs/test-fast/latest")
-    }
-
-    private func changedPixels(_ lhs: [UInt8], _ rhs: [UInt8]) -> Int {
-        guard lhs.count == rhs.count else { return max(lhs.count, rhs.count) / 4 }
-        return stride(from: 0, to: lhs.count, by: 4).count { index in
-            lhs[index ..< index + 4] != rhs[index ..< index + 4]
-        }
+        get throws { try RepositoryLogs.directory("test-fast/latest") }
     }
 }

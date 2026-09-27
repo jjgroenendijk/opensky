@@ -237,13 +237,10 @@ struct PlacedReferenceXPRMRealDataTests {
     // MARK: - Artifacts
 
     private var logURL: URL {
-        logsDirectory.appending(path: "xprm-sweep.log")
+        get throws { try logsDirectory.appending(path: "xprm-sweep.log") }
     }
 
     private var logsDirectory: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent() // openskyTests/
-            .deletingLastPathComponent() // repo root
-            .appending(path: "logs")
+        get throws { try RepositoryLogs.directory() }
     }
 }

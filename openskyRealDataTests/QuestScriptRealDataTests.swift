@@ -95,10 +95,7 @@ struct QuestScriptRealDataTests {
             state: state
         )
         print(report)
-        let logs = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "logs")
+        let logs = try RepositoryLogs.directory()
         try FileManager.default.createDirectory(
             at: logs, withIntermediateDirectories: true
         )
