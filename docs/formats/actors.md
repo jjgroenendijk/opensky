@@ -5,7 +5,7 @@ description: Actor records, appearance and stat resolution, GPU asset assembly, 
   paths.
 tags: [format, plugin, actors, achr, npc, leveled, template, race, class, armor, outfit,
   facegen]
-timestamp: 2026-08-22T00:00:00Z
+timestamp: 2026-09-27T00:00:00Z
 ---
 
 # Actor records, Skyrim SE
@@ -73,6 +73,7 @@ Appearance fields plus the stat inputs the actor-value derivation reads
 | DOFT  | formID  | `defaultOutfit` (OTFT)                           |
 | PKID  | formID  | one entry in ordered `packages`, repeated         |
 | SNAM  | struct  | one entry in `factions` (see [factions](/formats/factions.md)) |
+| CRIF  | formID  | `crimeFaction` (FACT) — the faction the actor reports crimes to |
 | AIDT  | struct  | `aiData` (below)                                 |
 | VMAD  | struct  | `scriptData` attachment accumulator              |
 
@@ -413,6 +414,12 @@ TPLT + template flags control which record supplies each field group
   flag — because the hostility derivation reads the memberships and the
   aggression together and two walks would only be a second chance for the two
   answers to disagree.
+  `CRIF` rides the factions flag with the SNAM run (issue #505). No open source
+  says which flag owns it; it is grouped with the memberships because the two
+  answer one question — whether the actor is a guard and for whom. On the local
+  install every NPC_ in `IsGuardFaction` authors a `CRIF` naming a faction it is
+  also a member of, and 465 bases resolve to a policed crime faction through the
+  chain.
 
 One field is resolved twice, through different flags, and the difference is
 observed rather than documented. `ResolvedActorStats.race` is the traits-resolved

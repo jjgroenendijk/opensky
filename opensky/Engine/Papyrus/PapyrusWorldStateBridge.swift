@@ -114,6 +114,14 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// reads. Separate from `factionRuntime` because it is asked about two
     /// factions rather than about an actor, so there is nothing to seed.
     var factionRelationIndex: (() -> FactionRelationIndex?)?
+    /// One actor's social profile, seeded first — what `GetCrimeFaction` and
+    /// `IsGuard` read (issue #505). Nil in a session with no faction data.
+    var socialProfile: ((ReferenceKey) -> ActorSocialProfile?)?
+    /// The session's arrest outcomes, which `CanPayCrimeGold`,
+    /// `PlayerPayCrimeGold` and `SendPlayerToJail` go through (issue #505).
+    /// A session rather than the engine's `CrimeArrest` alone because serving a
+    /// sentence moves the clock and the player, which only the session owns.
+    var arrestSession: (() -> (any CrimeArrestSession)?)?
     /// Load-order MGEF lookup, for `HasMagicEffectWithKeyword`. Nil in a
     /// synthetic session with no record index.
     var magicEffectStore: MagicEffectStore?

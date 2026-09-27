@@ -39,6 +39,9 @@ extension GameViewController {
             // After the pass, so a trespass noticed on arrival is judged
             // against detection state this frame produced (issue #504).
             self?.advanceCrimeTrespass()
+            // After the trespass, so a bounty charged this frame is one the
+            // guards see this frame (issue #505).
+            self?.advanceGuardResponse()
         }
         renderer.worldOverlaySources
             .register(identifier: "detection") { [weak self] context, list in

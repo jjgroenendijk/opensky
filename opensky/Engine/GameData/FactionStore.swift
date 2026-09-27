@@ -44,6 +44,12 @@ nonisolated struct FactionStore {
     private(set) var factions: [ResolvedFormID: ResolvedFaction] = [:]
     private var factionsByEditorID: [String: ResolvedFaction] = [:]
     private var factionsByKey: [ReferenceKey: ResolvedFaction] = [:]
+    /// The faction the `GFAC` ("Guard Faction") default object names (issue
+    /// #505), which is how the engine tells a guard from any other member of a
+    /// crime faction. Observed on this install: it names `IsGuardFaction`, and
+    /// every vanilla guard is a member. Nil for a load order with no `DOBJ` or
+    /// no `GFAC` entry, where nobody is a guard.
+    private(set) var guardFaction: ResolvedFaction?
 
     /// Every faction the load order carries, ordered by identity so a caller
     /// that prints or counts them gets the same answer on every run.
@@ -72,6 +78,14 @@ nonisolated struct FactionStore {
             guard index.records[id]?.record.type == "FACT" else { continue }
             add(id)
         }
+        guardFaction = DefaultObjectStore(index: index)
+            .object(tag: "GFAC")
+            .flatMap { faction($0) }
+    }
+
+    /// The guard faction as the runtime identity memberships are keyed by.
+    var guardFactionKey: ReferenceKey? {
+        guardFaction.map { ReferenceKey(resolved: $0.id) }
     }
 
     init(plugins: [(name: String, file: ESMFile)]) {
@@ -105,6 +119,16 @@ nonisolated struct FactionStore {
             return nil
         }
         return resolved
+    }
+
+    /// One of `faction`'s own links — `STOL`, `JAIL` — as the runtime identity
+    /// of what it names, resolved through the plugin that defined the faction,
+    /// whose master list the link's load-order byte indexes (issue #505).
+    func linkKey(_ link: FormID?, of faction: ResolvedFaction) -> ReferenceKey? {
+        guard let link, let id = resolvedID(link, fromPlugin: faction.sourcePlugin) else {
+            return nil
+        }
+        return ReferenceKey(resolved: id)
     }
 
     func resolve(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFaction? {

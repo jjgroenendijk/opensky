@@ -174,7 +174,7 @@ nonisolated extension PapyrusNativeFunctions {
     /// this engine addresses a FACT by the same `ReferenceKey` its memberships
     /// and its ledger rows are keyed by — so the receiver resolves exactly as an
     /// `Actor` receiver does and needs no separate lookup.
-    private static func factionTarget(
+    static func factionTarget(
         _ call: PapyrusNativeCall,
         _ context: PapyrusNativeContext,
         body: (PapyrusWorldAccess, ReferenceKey) -> PapyrusNativeResult

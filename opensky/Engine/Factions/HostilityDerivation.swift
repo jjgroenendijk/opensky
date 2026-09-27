@@ -69,6 +69,9 @@ nonisolated struct ActorSocialProfile: Equatable, Sendable {
     /// The session's explicit answer for this actor, when something already
     /// wrote one.
     let hostilityOverride: ActorHostility?
+    /// The crime faction this actor reports crimes to — its authored `CRIF`
+    /// (issue #505). Nil for the player and for an actor that authors none.
+    var crimeFaction: ReferenceKey?
 
     init(
         key: ReferenceKey,
@@ -76,7 +79,8 @@ nonisolated struct ActorSocialProfile: Equatable, Sendable {
         memberships: ActorFactionState = ActorFactionState(),
         relationshipOverrides: ActorRelationshipState = ActorRelationshipState(),
         aiData: ActorAIData = .absent,
-        hostilityOverride: ActorHostility? = nil
+        hostilityOverride: ActorHostility? = nil,
+        crimeFaction: ReferenceKey? = nil
     ) {
         self.key = key
         self.base = base
@@ -84,6 +88,7 @@ nonisolated struct ActorSocialProfile: Equatable, Sendable {
         self.relationshipOverrides = relationshipOverrides
         self.aiData = aiData
         self.hostilityOverride = hostilityOverride
+        self.crimeFaction = crimeFaction
     }
 }
 

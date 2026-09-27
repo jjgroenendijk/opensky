@@ -203,8 +203,21 @@ struct FactionRuntime {
             aiData: baselines?.baseline(for: holder.subject).aiData ?? .absent,
             hostilityOverride: worldState
                 .component(ActorCombatState.self, for: holder.key)?
-                .hostility
+                .hostility,
+            crimeFaction: crimeFaction(of: holder.subject)
         )
+    }
+
+    /// The crime faction `subject` reports crimes to — its authored `CRIF`
+    /// resolved against the load order (issue #505). Nil for the player, a
+    /// generated actor, and a link no plugin defines.
+    func crimeFaction(of subject: ActorValueSubject) -> ReferenceKey? {
+        guard
+            let pluginName,
+            let link = baselines?.baseline(for: subject).crimeFaction,
+            let resolved = factions.resolve(link, fromPlugin: pluginName)
+        else { return nil }
+        return ReferenceKey(resolved: resolved.id)
     }
 
     /// Whether `key` still has to be seeded before its memberships mean

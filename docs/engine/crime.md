@@ -2,7 +2,8 @@
 type: Subsystem
 title: Crime and bounty
 description: Ownership enforcement, the four crime events, witnessing through the perception
-  pass, the per-crime-faction bounty ledger, and the stolen flag on inventory stacks.
+  pass, the per-crime-faction bounty ledger, the stolen flag on inventory stacks, and how
+  guards confront, arrest or attack the player.
 tags: [engine, crime, factions, inventory, runtime-state]
 timestamp: 2026-09-27T00:00:00Z
 ---
@@ -24,6 +25,7 @@ marked whether or not anybody saw.
 - The bounty ledger
 - Stolen goods
 - Where the hooks sit
+- Guard response and arrest
 - Condition function and Papyrus natives
 - Persistence
 - Verification surface
@@ -251,6 +253,70 @@ Assault happening at `reportScriptHit` is deliberate: melee, archery and the com
 report through that one implementation, so a sword swing and an arrow cannot disagree about
 what counts as a first strike.
 
+## Guard response and arrest
+
+Issue #505 turns a bounty into something the world acts on.
+
+**Who is a guard.** An actor polices a crime faction when it is a member of the faction the
+`GFAC` ("Guard Faction") default object names and its `CRIF` names that crime faction
+(`GuardRecognition`). Both halves were confirmed on the local install rather than assumed:
+`GFAC` names `IsGuardFaction`, and every one of the 463 NPC_ records in it authors a `CRIF`
+it is also a member of — `GuardWhiterunImperialPatrolDay` reports to `CrimeFactionWhiterun`.
+`CRIF` is read through the `useFactions` template flag, the same one that governs `SNAM`.
+The Creation Kit gives its meaning: `Actor.GetCrimeFaction` "Obtains the Faction this actor
+reports it's crimes to".
+
+**Arrest or attack.** The crime faction's `CRVA` carries the two flags the Creation Kit's
+Faction page defines: "Attack on Sight: If checked, guards will attack the player on sight
+if crime gold is high enough" and "Arrest: If checked, guards will try to arrest the
+player". How high "high enough" is has no open source: no `iCrimeGold*` setting prices it
+on the local install, and UESP's talk pages only say "Normally a 1000 bounty will cause them
+to arrest you on sight". `CrimeResponsePolicy.attackOnSightGold` is therefore 1000, the
+vanilla murder bounty, and is this engine's choice. Below it an arresting faction's guards
+confront; at or above it an attack-on-sight faction's guards fight.
+
+**Hostility.** `GuardCrimeHostility` is the `CrimeHostilitySource` the derivation reads,
+refreshed by the session every tick from the ledger. A guard is an enemy of the player when
+its faction attacks on sight at the current bounty or when the player resisted arrest with
+that faction; everybody else gets no opinion from crime and the record terms decide. It sits
+above the relationship and faction terms, so a guard who is the player's friend still arrests
+them.
+
+**Confrontation.** `GuardResponseState` picks at most one guard at a time: the nearest one
+the perception pass has at `detected` whose faction the player owes and would confront
+rather than fight. Beyond `confrontDistance` — the interaction ray's 192-unit reach — the
+guard's package is suspended and it paths toward the player, repathing only once the player
+has moved half that distance from where it was sent. Within reach the session opens the load
+order's own guard dialogue with `beginDialogue(with:)`; the dialogue's fragments reach the
+outcome through `PlayerPayCrimeGold` and `SendPlayerToJail`. A conversation that closes with
+the bounty still owed is resisting arrest — UESP: "If you cancel the dialogue when guards
+attempt to arrest you, they will attack you" and "Resisting arrest will cause all guards in
+the area to attack you" — so every guard of that faction turns hostile until the bounty is
+gone. A conversation that could not open at all holds that guard off for one game hour.
+This state lives on the session rather than in a component, for the reason
+`assaultedActors` does: a reloaded save starts every encounter again from the ledger.
+
+**Outcomes.** `CrimeArrest` runs both endings over the ledger and the inventory:
+
+| Outcome | Effect |
+| --- | --- |
+| Pay (`PlayerPayCrimeGold`) | Refused unless the player's gold covers the bounty. Takes the gold, clears both halves of the bounty (counts stay), and by default seizes every stolen stack into the faction's `STOL` evidence chest, still stolen. `abGoToJail` moves the player to the `JAIL` marker, which the Creation Kit describes as "the spot where you'd be if you served time and were released from jail". |
+| Jail (`SendPlayerToJail`) | Seizes stolen goods, clears the bounty, advances the game clock by the sentence, and moves the player to the `JAIL` marker. |
+
+The sentence is a day per hundred gold, at least one and at most seven — the reading this
+engine takes of UESP's "The maximum sentence is seven days ... You will serve the maximum
+sentence for any bounty 700 or higher". UESP is also the source for both seizures: "If you
+choose to pay off your bounty, all stolen items in your possession will be seized and put
+into the jail's evidence chest".
+
+The evidence chest is usually not streamed in when the player is arrested. A resident chest
+is written through its own placement; a non-resident one is written under its reference key
+with no plugin baseline, so a chest first touched this way stops reading its `CNTO` list.
+That is harmless on vanilla data: every `STOL` in `Skyrim.esm` places
+`EvidenceChestStolenGoods` or `EvidenceChestPlayerInventory`, and neither authors a `CNTO`.
+A faction with no `STOL` leaves the goods with the player, because deleting items is not
+what seizing means.
+
 ## Condition function and Papyrus natives
 
 The crime-gold condition functions come from xEdit dev-4.1.6 `Core/wbDefinitionsTES5.pas`:
@@ -283,6 +349,19 @@ Eight natives, each signature quoted from the Creation Kit wiki at its registrat
 | `Faction.SetCrimeGoldViolent` | `Function SetCrimeGoldViolent(int aiGold) native` |
 | `Actor.SendAssaultAlarm` | `Function SendAssaultAlarm() native` |
 | `Actor.SendTrespassAlarm` | `Function SendTrespassAlarm(Actor akCriminal) native` |
+
+Issue #505 adds five more for guards and arrest:
+
+| Native | Signature |
+| --- | --- |
+| `Actor.GetCrimeFaction` | `Faction Function GetCrimeFaction() native` — `None` for an actor with no `CRIF` |
+| `Actor.IsGuard` | `bool Function IsGuard() native` |
+| `Faction.CanPayCrimeGold` | `bool Function CanPayCrimeGold() native` |
+| `Faction.PlayerPayCrimeGold` | `Function PlayerPayCrimeGold(bool abRemoveStolenItems = True, bool abGoToJail = True) native` |
+| `Faction.SendPlayerToJail` | `Function SendPlayerToJail(bool abRemoveInventory = True, bool abRealJail = True) native` — both parameters accepted and not yet read |
+
+A refused payment or a sentence with no bounty behind it is a native failure with the reason,
+so the script log says why nothing happened.
 
 Both alarms are credited as witnessed outright rather than run past the perception pass: the
 script is asserting that this actor caught the criminal — "have this actor pretend he caught
@@ -331,11 +410,22 @@ Recorded here rather than pretended away:
   conversation. Follower-committed crimes, animal witnesses and the child-tells-an-adult
   chain are the same simplification from the other side.
 - **Trespass is recorded on arrival**, not after the warning and the 30-second grace the
-  original gives. The warning is a guard line and a timer, both of which are issue #505's.
-- **Pickpocketing and jail time served are deferred.** Both need machinery this milestone
-  does not build — a sneak menu and a time skip. `CRVA` prices pickpocketing at 25 and the
-  load order carries `iCrimeGoldStealHorse` and `iCrimeGoldWerewolf`, so the numbers are
-  already in hand when the mechanisms arrive.
+  original gives. Guard response does not add the warning line either.
+- **Pickpocketing is deferred.** It needs a sneak menu. `CRVA` prices it at 25 and the load
+  order carries `iCrimeGoldStealHorse` and `iCrimeGoldWerewolf`, so the numbers are already
+  in hand when the mechanism arrives.
+- **A sentence is served at once.** The clock advances and the bounty clears, but there is
+  no jail cell, no belongings chest (`PLCN`), no jail outfit, no escape, and no
+  skill-progress loss. The gear round trip nets out to nothing once a sentence is served, so
+  skipping it changes no end state; the skill loss does, and waits for a jail cell to serve
+  it in.
+- **The player moves to the jail marker only when it is streamed in.** This engine has no
+  cross-cell teleport yet, so a marker in another cell leaves the player where they are and
+  the readout says so.
+- **The attack-on-sight line is 1000 gold by this engine's choice**, not a documented
+  number; see Guard response and arrest.
+- **Guards do not arrest NPCs**, and a guard does not walk over to answer another actor's
+  report — only guards who themselves detect the player act.
 - **A one-hit kill charges assault as well as murder.** UESP records that it should charge
   only the latter, but the blow is reported at `reportScriptHit` and the death is noticed by
   the next zero-health sweep, so the assault is already on the ledger by the time the murder
@@ -345,8 +435,6 @@ Recorded here rather than pretended away:
   names — a base record, while `ActorFactionState` is keyed by a placement. A faction-owned
   reference is covered, because a faction is trivially its own member; an actor-owned one is
   not.
-- **No guard response.** Confrontation, arrest, bounty payment and attack-on-sight are issue
-  #505; the `CrimeHostilitySource` seam on `HostilityDerivation` is where they will join.
 - **Fences and stolen-goods barter rules** are issue #506; this item provides the flag they
   read.
 - **Crafting does not clear the flag.** UESP records that anything completely consumed in
