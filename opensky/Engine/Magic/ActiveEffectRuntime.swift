@@ -294,13 +294,36 @@ struct ActiveEffectRuntime {
     /// Hands back every modifier slot `doomed` owns, so an expired or dispelled
     /// effect leaves the value exactly where it found it. Internal because the
     /// tick half calls it on expiry.
+    ///
+    /// A primary loses what the effect lent its maximum, and its current value
+    /// drops with it — but never to zero. UESP's Fortify Health page states
+    /// the rule: "When the effect expires, the target loses <mag> points of
+    /// health unless that would reduce the target's health to 0 or less (the
+    /// target is left with at least 1 health point when the effect expires)"
+    /// (<https://en.uesp.net/wiki/Skyrim:Fortify_Health>). Without the floor a
+    /// wounded actor whose fortify ran out would trip the death latch with no
+    /// blow struck. The same floor is applied to magicka and stamina, which
+    /// share the storage and the expiry path; a living actor left at zero
+    /// magicka by a timer is the same invented loss.
     func release(_ doomed: [ActiveEffect], on holder: ActorValueHolder) {
         for effect in doomed {
             for value in effect.values where value.applied != 0 {
+                let kind = ActorValueIdentity.kind(at: value.index)
+                let before = kind.map { values.current(of: holder)[$0] }
                 values.addModifier(-value.applied, to: .temporary, at: value.index, on: holder)
+                if
+                    let kind, let before, before > 0,
+                    values.current(of: holder)[kind] < Self.expiryFloor
+                {
+                    values.set(kind, to: Self.expiryFloor, on: holder)
+                }
             }
         }
     }
+
+    /// What a primary is left with when an expiring modifier would otherwise
+    /// empty it: "at least 1 health point" (UESP, Fortify Health).
+    static let expiryFloor: Float = 1
 
     /// Stores `state`, dropping the whole component once it is empty so an
     /// actor whose effects all expired stops being dirty for this slot.
