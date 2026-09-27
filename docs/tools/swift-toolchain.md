@@ -116,6 +116,6 @@ main actor.
 
 The required version lives in one place: the `required_major`/`required_minor`/
 `required_patch` variables at the top of `tools/lint/swift-baseline.sh`. Raising the
-baseline is that edit plus a note in [the change log](/log.md); the language mode is a
+baseline is that edit; the language mode is a
 separate constant in the same script and changes only when a new Swift language version
 ships and every configuration moves to it together.

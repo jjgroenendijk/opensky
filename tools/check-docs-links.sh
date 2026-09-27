@@ -4,10 +4,6 @@
 # get removed -> links dangle silently; this makes the break visible at
 # commit time (AGENTS.md "if a machine can check a rule...").
 #
-# Policy: docs/log.md is skipped — append-only history whose entries may
-# reference docs that existed when written (e.g. decisions/ui-approach.md,
-# removed 2026-07-23). Everything else must resolve.
-#
 # Report -> stdout/stderr; full run log -> logs/docs-links/<timestamp>/.
 set -eu
 
@@ -19,7 +15,7 @@ log="$log_dir/docs-links.log"
 # Every "](/...)" occurrence, one per line as "file:line:target"; anchors
 # (#section) stripped. grep exits 1 on files without links -> mask with true.
 misses="$(
-  find "$docs" -name '*.md' ! -name 'log.md' -print | LC_ALL=C sort \
+  find "$docs" -name '*.md' -print | LC_ALL=C sort \
     | while IFS= read -r f; do
       grep -noE '\]\(/[^)]*\)' "$f" 2>/dev/null \
         | while IFS=: read -r line match; do
@@ -33,9 +29,9 @@ misses="$(
     done
 )"
 
-checked="$(find "$docs" -name '*.md' ! -name 'log.md' | wc -l | tr -d ' ')"
+checked="$(find "$docs" -name '*.md' | wc -l | tr -d ' ')"
 {
-  printf '[INFO] checked %s docs files (log.md skipped)\n' "$checked"
+  printf '[INFO] checked %s docs files\n' "$checked"
   [ -z "$misses" ] || printf '%s\n' "$misses"
 } >"$log"
 
