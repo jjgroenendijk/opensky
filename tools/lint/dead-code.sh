@@ -4,11 +4,9 @@
 # in the baseline.
 #
 # Periphery reads the index store the compiler writes while building, so the scan
-# itself does not build. `make dead-code` builds every target first; the pre-push
-# hook calls this script directly after its own builds. A stale index store shows
-# stale results, which is why the index must come from builds of the current
-# tree: `make test` (openskyTests), `make realdata-build` (the app and
-# openskyRealDataTests), and `make cli`.
+# itself does not build. `make dead-code`, which the pre-push hook runs, builds
+# every target first through `make verify-build`. A stale index store shows stale
+# results, which is why the index must come from builds of the current tree.
 #
 # The baseline holds findings keyed by declaration (USR), so edits elsewhere in a
 # file do not disturb it. The open cleanup lives in a GitHub issue, not here.

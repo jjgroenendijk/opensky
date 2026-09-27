@@ -13,9 +13,8 @@ exists so it is done right the first time.
 ## Before committing
 
 1. One logical change per commit — no mixed refactor, behavior, and formatting.
-2. Gates green: `make check` + `make test` (targeted minimum); product code -> builds
-   (`make build` / `make cli` as touched — app-only files can silently join the CLI target,
-   so build both when a change spans app and CLI).
+2. `make check` green, and the change verified as the `testing-and-verifying` skill
+   describes. No hook runs the tests, so this step is the only one that does.
 3. Staged files legal: nothing extracted from the game install. New binary blob -> stop, ask.
 
 ## Message format
@@ -50,9 +49,8 @@ human `Signed-off-by:`. Enforced by `.githooks/commit-msg/20-no-ai-trailers.sh`.
    `docs/tools/sidebar-acceptance.md` in this PR. Nothing enforces this, so it is checked
    here.
 5. PR via `gh pr create` — describe what and why, cite format specs used.
-6. Merge after review. The pre-push hook's build, test, and CLI run is the merge gate —
-   never push with `--no-verify`. Done and green work always lands: commit and open the PR
-   without waiting to be asked.
+6. Merge after review. Never push with `--no-verify`. Done and verified work always lands:
+   commit and open the PR without waiting to be asked.
 
 ## Landing gotchas seen repeatedly
 
@@ -68,10 +66,8 @@ human `Signed-off-by:`. Enforced by `.githooks/commit-msg/20-no-ai-trailers.sh`.
 ## Hooks
 
 `.githooks/`, wired by `make bootstrap`: pre-commit guards, formats, and lints; commit-msg
-runs the Conventional Commit check; pre-push builds and tests. `--no-verify` is for
-bootstrap and emergencies only, never routine.
-
-The pre-push gate skips itself when green `make test` and `make cli` runs already stamped
-the byte-identical tree (issue #417, `tools/green-stamp.sh`), so running both right before
-`git push` makes the push near-instant instead of repeating the gate. Any content change or
-dirty file runs the full gate again.
+runs the Conventional Commit check; pre-push blocks pushes to `main` and runs
+`make dead-code`, which builds every target incrementally and scans for new unused code but
+runs no tests. Because it builds, a push counts as an xcodebuild: start it in the background
+and not while another build runs. `--no-verify` is for bootstrap and emergencies only, never
+routine.

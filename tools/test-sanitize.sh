@@ -9,8 +9,8 @@
 #   Address   ENABLE_ADDRESS_SANITIZER plus ENABLE_UNDEFINED_BEHAVIOR_SANITIZER
 #
 # Why a separate plan rather than two more configurations on UnitTests:
-# xcodebuild runs *every* configuration in a plan, so the pre-push `make test`
-# would pay for the sanitized builds on every commit. This is a periodic and
+# xcodebuild runs *every* configuration in a plan, so every `make test` would pay
+# for the sanitized builds. This is a periodic and
 # pre-milestone check, the same category as `make realtest-all`.
 #
 # The sanitized products are their own object files, so the first run of each

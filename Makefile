@@ -161,10 +161,10 @@ docs-links: ## Check links inside docs/ resolve (log.md skipped)
 # Both scans compare against a baseline of the findings that were already in the
 # tree, so they fail only on new ones; issue #569 tracks the existing ones
 # (docs/decisions/code-smell-scans.md). dup-check reads sources only and is part
-# of `make lint`. dead-code reads the compiler's index store, so it builds first;
-# the pre-push hook runs the scan after its own builds instead.
+# of `make lint`. dead-code reads the compiler's index store, so it runs
+# verify-build first; the pre-push hook runs `make dead-code`.
 
-.PHONY: dup-check dup-baseline dead-code dead-code-baseline dead-code-index
+.PHONY: dup-check dup-baseline dead-code dead-code-baseline verify-build
 
 dup-check: ## Fail on new copy-pasted Swift (jscpd)
 	@./tools/lint/duplicates.sh $(SWIFT_PATHS)
@@ -172,15 +172,16 @@ dup-check: ## Fail on new copy-pasted Swift (jscpd)
 dup-baseline: ## Rewrite the duplication baseline after removing clones
 	@./tools/lint/duplicates.sh -u $(SWIFT_PATHS)
 
-dead-code: dead-code-index ## Build, then fail on new unused code (Periphery)
+dead-code: verify-build ## Build, then fail on new unused code (Periphery)
 	@./tools/lint/dead-code.sh
 
-dead-code-baseline: dead-code-index ## Rewrite the unused-code baseline after a cleanup
+dead-code-baseline: verify-build ## Rewrite the unused-code baseline after a cleanup
 	@./tools/lint/dead-code.sh -u
 
-# The builds whose index store Periphery reads: openskyTests, the app with
-# openskyRealDataTests, and openskycli. Incremental, so a warm tree takes seconds.
-dead-code-index: vendor-link
+# Every target compiled, no test run: openskyTests, the app with
+# openskyRealDataTests, and openskycli. Catches a change that breaks a target it
+# did not test, and writes the index store Periphery reads. Incremental.
+verify-build: vendor-link ## Compile app, CLI, and both unit bundles without running tests
 	@$(XCB_RUN) dead-code-unit $(XCB_TEST) $(UNIT_PLAN) build-for-testing
 	@$(XCB_RUN) dead-code-realdata $(XCB_TEST) -testPlan RealData build-for-testing
 	@$(XCB_RUN) dead-code-cli $(XCB_CLI) build
@@ -194,8 +195,6 @@ build: vendor-link ## Build the app [CONFIG]
 
 cli: vendor-link ## Build the openskycli dev tool [CONFIG]
 	@$(XCB_RUN) cli $(XCB_CLI) build
-	@if [ "$(CONFIG)" = "Debug" ] && [ -z "$(XCODEBUILD_FLAGS)" ]; then \
-		./tools/green-stamp.sh write cli; fi
 
 run-cli: cli ## Build and run openskycli, e.g. make run-cli ARGS="vfs ls"
 	@"$(PRODUCTS)/openskycli" $(ARGS)
@@ -224,18 +223,16 @@ icon: ## Regenerate the AppIcon PNGs from opensky/App/Branding/opensky-logo.svg
 
 .PHONY: test test-fast test-one test-ui test-report test-sanitize test-perms
 
-test: vendor-link ## Build and run the unit tests (the pre-push gate)
+test: vendor-link ## Build and run the unit tests through the build system
 	@bundle="$$($(RUN_DIR) -b $(TEST_RESULTS) unit)/unit.xcresult"; \
 		TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
 		$(XCB_RUN) test $(XCB_TEST) -resultBundlePath "$$bundle" \
 		$(UNIT_PLAN) test
-	@if [ "$(CONFIG)" = "Debug" ] && [ -z "$(XCODEBUILD_FLAGS)" ]; then \
-		./tools/green-stamp.sh write test; fi
 
 # Build once, then rerun against the cached .xctestrun without touching the build
 # system: seconds instead of the ~80 of `make test` (issue #417). It rebuilds on
-# its own when a source, Config/, or project file is newer; B=1 forces that. It
-# never marks the tree green, so `make test` stays the pre-push gate.
+# its own when a source, Config/, or project file is newer; B=1 forces that. The
+# default for every unit run, filtered or whole plan.
 test-fast: vendor-link ## Rerun tests without rebuilding [T='Suite/test()'] [B=1]
 	@case "$(T)" in \
 		"") ./tools/test-fast.sh $(if $(B),-B,) ;; \
@@ -266,7 +263,7 @@ test-report: ## Summarize the newest test result bundle, failures included
 	@./tools/test-report.sh $(TEST_RESULTS)
 
 # openskyTests under TSan, then under ASan with UBSan (issue #383); the two cannot
-# share a build. Too slow for the pre-push gate, so run it periodically and
+# share a build. Too slow for routine runs, so run it periodically and
 # before a milestone acceptance.
 test-sanitize: vendor-link ## Run the unit tests under sanitizers [SAN=Thread|Address] [CAP=MB]
 	@./tools/test-sanitize.sh $(if $(SAN),-o $(SAN),) $(if $(CAP),-c $(CAP),)
@@ -278,8 +275,8 @@ test-perms: ## Check the one-time macOS permission grants tests need
 
 # Running these suites needs the user's install, so it happens on demand and
 # before a milestone acceptance, never on push or in CI, and always under the
-# memory watchdog (CAP=MB sets its limit). Only realdata-build, which compiles
-# without running, is part of the pre-push gate.
+# memory watchdog (CAP=MB sets its limit). realdata-build compiles them without
+# running, and verify-build includes that.
 
 .PHONY: realtest realtest-all realdata-build realtest-perf realtest-npc-perf
 
@@ -301,12 +298,9 @@ realtest-all: vendor-link ## Run the whole real-data plan [CAP=MB]
 	@./tools/realtest.sh $(if $(CAP),-c $(CAP),)
 
 # `make test` never compiles the real-data suites, so a build break there used to
-# stay hidden (issue #457). Compiling needs no install, so the pre-push hook runs
-# this part.
+# stay hidden (issue #457). Compiling needs no install.
 realdata-build: vendor-link ## Compile the real-data suites without running them
 	@$(XCB_RUN) realdata-build $(XCB_TEST) -testPlan RealData build-for-testing
-	@if [ "$(CONFIG)" = "Debug" ] && [ -z "$(XCODEBUILD_FLAGS)" ]; then \
-		./tools/green-stamp.sh write realdata-build; fi
 
 # The perf gates build optimized, because -Onone makes tight simd code an order
 # of magnitude slower (issue #392). They use their own cache directory,

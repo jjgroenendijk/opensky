@@ -105,18 +105,12 @@ worktree `DerivedData/` and aged-out runs; `docs/tools/run-output.md` has the ru
 `make check` is the same gate without writes. `make install` refreshes
 `/Applications/opensky.app` after landing rendering work.
 
-A green build does not prove a triangle appeared. Confirm rendering work by driving the app
-or an offscreen render. Unit-test every format parser and math routine, with synthetic
-fixtures built in code. Every pushed commit is green.
-
-`make test` never runs the env-gated real-data suites — they skip without a data root, which
-`xcodebuild test` does not forward, and it no longer compiles them either: they are their own
-target. Run `make realtest T='Class/method()'` for one of them
-and `make realtest-all` for the whole set, on demand and before a milestone acceptance.
-`make realtest-perf` is the same machinery built optimized, for the one budget that is
-meaningless unoptimized; it caches in `DerivedData-optimized/` so it does not evict the
-Debug tree. None of them can run in CI, so the pre-push gate stays `make test` plus
-`make cli`.
+No hook runs the tests: what to test and verify for a change is the author's judgment,
+guided by the `testing-and-verifying` skill, and recorded in the commit's `Tests:` section.
+A green build does not prove a triangle appeared. Unit-test every format parser and math
+routine, with synthetic fixtures built in code. `make test` and `make test-fast` never run
+the env-gated real-data suites, which need the user's install; `make realtest` and
+`make realtest-all` do, and none of them can run in CI.
 
 ## Loading game data (runtime, never repo)
 
@@ -184,8 +178,9 @@ tuple cap, introduce a struct.
 
 Two whole-program smells are gated against a baseline of existing findings:
 duplicated Swift (`make dup-check`, in `make lint` and pre-commit) and unused code
-(`make dead-code`, in pre-push). New code must not add to either baseline; regenerate one
-only after a cleanup removes findings (`docs/decisions/code-smell-scans.md`).
+(`make dead-code`, in pre-push, which builds but runs no tests). New code must not add to
+either baseline; regenerate one only after a cleanup removes findings
+(`docs/decisions/code-smell-scans.md`).
 
 ## Conventions
 
@@ -225,16 +220,9 @@ hedging. Optimize for the reader, not for brevity.
   GitHub issue (`gh issue create`) rather than an inline fix. One issue per idea; the title
   states the win, the body states where and why.
 - Commits carry no AI or co-author attribution trailers. The commit-msg hook enforces this.
-- Iterate on tests with `make test-fast [T='Suite/test()']` (or `make realtest T=...`, which
-  shares the same fast path): both reuse the last built products, so a warm rerun costs
-  seconds where `make test` costs over a minute. Batch several edits into one rerun instead
-  of rerunning per edit. Run the full `make test` once before pushing — it also stamps the
-  pre-push gate green, so the push does not rebuild what just passed.
-- Long runs — `make realtest-all`, `make test-sanitize`, `make install`, the first build in
-  a fresh worktree — go in a background shell, never a foreground call that can hit the
-  tool timeout, and never a synchronous `until grep` poll of a log.
-- One xcodebuild per derived-data tree at a time (two deadlock); start nothing until the
-  background run reports done.
+- Anything that builds goes in a background shell, never a foreground call that can hit
+  the tool timeout, and never a synchronous `until grep` poll of a log. One xcodebuild per
+  derived-data tree at a time (two deadlock), and `git push` builds too.
 
 ## Skills — load before the matching work
 
@@ -248,3 +236,4 @@ matching one before starting that work rather than reconstructing the rules here
 | `writing-wiki-docs` | Adding or materially changing anything under `docs/` |
 | `probing-real-game-data` | Running engine code against the real Skyrim SE install |
 | `building-app-ui` | Adding or changing main-app UI — sidebar destinations, control panels, inspectors |
+| `testing-and-verifying` | Running any test, build check, or verification, and before pushing |

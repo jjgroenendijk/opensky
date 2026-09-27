@@ -4,7 +4,7 @@ title: Testing setup
 description: Test targets, make entrypoints, real-data suites, result reporting,
   the RSS watchdog, and this machine's known test-environment quirks.
 tags: [testing, tooling, process]
-timestamp: 2026-08-06T00:00:00Z
+timestamp: 2026-09-27T00:00:00Z
 ---
 
 # Testing setup
@@ -47,6 +47,9 @@ in both bundles.
   `openskyTests/`. Bundle: `build/test-results/one.xcresult`. Prefer
   `make test-fast T=...` while iterating — `test-one` pays a full build-system
   pass per run for the same selection.
+* `make verify-build` — compiles the app, `openskycli`, `openskyTests`, and
+  `openskyRealDataTests` without running a test. It is the only routine command that
+  compiles the real-data suites, and it writes the index store the dead-code scan reads.
 * `make test-report` — pass/fail summary plus each failing test's name and
   message, plus the code coverage percentage, read from the newest fixed bundle
   (falls back to the DerivedData glob). It waits for the bundle to finalize, so
@@ -65,30 +68,20 @@ in both bundles.
   Accessibility grant below.
 * `make test-perms` — checks the one-time TCC grants that stop permission popups.
 
-There is no required CI status right now: GitHub Actions is quota-suspended
-(issue #70), so `ci.yml` is manual-dispatch only. The pre-push hook
-(`.githooks/pre-push/20-build-test.sh`) is the sole merge gate: it runs
-`make test`, then `make cli` (the CLI build catches app-only source files that
-Xcode's filesystem-synced groups silently pull into the `openskycli` target),
-then `make realdata-build`. That last step compiles the `RealData` plan without
-running a single test (issue #457): the `UnitTests` plan does not carry
-`openskyRealDataTests`, so a compile break there used to reach `main` and stay
-invisible until someone reached for `make realtest`. Running those suites needs
-the user's install and stays off the push gate; `build-for-testing` needs no
-install and costs a fraction of running them.
-`OPENSKY_SKIP_BUILD=1` skips the gate for bootstrap/emergency only.
+No hook runs the tests (changed 2026-09-27). What to test for a change is the
+author's judgment, guided by the `testing-and-verifying` skill
+(`.AGENTS/skills/testing-and-verifying/SKILL.md`), and the commit's `Tests:` section
+records what was run. The pre-push hook runs `make dead-code`, which builds every target
+through `make verify-build` and scans for new unused code, but it runs no test. GitHub
+Actions is quota-suspended (issue #70), so `ci.yml` is manual-dispatch only; a dispatched
+run is the one place the whole unit plan, the builds, and the UI tests still run
+together.
 
-The hook short-circuits when the pushed tree already passed (issue #417): green
-`make test`, `make cli` and `make realdata-build` runs write the tested tree
-hash (`git stash create`, so a dirty tree stamps the content actually tested) to
-`DerivedData/green-stamps/` through `tools/green-stamp.sh`, and the hook skips
-its rebuild only when the working tree is clean and every stamp equals
-`HEAD^{tree}`. A skip can only ever skip work that already passed on
-byte-identical content; a dirty tree, a missing stamp, or any content change
-runs the full gate, and `make clean` sweeps the stamps with the rest of the
-build state. Only the canonical configuration stamps — a run with `CONFIG` or
-`XCODEBUILD_FLAGS` overridden does not, and `make test-fast`, `make test-one`,
-and `make realtest` never do.
+Until then, the pre-push hook ran `make test`, `make cli`, `make realdata-build`, and the
+dead-code scan on every push, with a tree-hash stamp (issue #417) meant to skip a gate that
+had already passed. Session mining found the stamp never matched in practice, because
+commits were amended between the test run and the push, so every push paid the whole
+gate again. The stamp tooling was removed with the gate.
 
 ## Test plans
 
@@ -173,9 +166,9 @@ Two properties are non-negotiable and carried over from `tools/realtest.sh`:
 the RSS watchdog wraps every RealData run, and the result-bundle count
 assertion runs after every run, because `-only-testing` with a selector that
 matches nothing runs zero tests and exits 0 — under `test-without-building`
-exactly as under `test`. The fast loop is for iteration; it never writes a
-pre-push green stamp, so the full `make test` remains the gate a push relies
-on.
+exactly as under `test`. The fast loop is the default for every unit run,
+filtered or whole plan; `make test` remains for a clean re-check through the
+build system.
 
 ## Code coverage
 
@@ -200,7 +193,7 @@ it is scoped and reviewable; what `make test-report` changes is whether anyone
 ever sees it.
 
 That leaves nothing to defer behind a separate target, which matters because
-`make test` is on the pre-push path for every commit. If a cost ever does show
+the unit plan is the most frequently run one. If a cost ever does show
 up, the shape to move to is a target passing `-enableCodeCoverage YES`, which
 does override the plan.
 
@@ -356,10 +349,10 @@ finding, not what compiles.
 
 That is also why this is a fourth plan rather than two more configurations on
 `UnitTests`: there the sanitized builds would be compiled and run on every
-`make test`, which is the pre-push gate for every commit. The first run of each
+`make test` and `make test-fast`, the most frequently run commands. The first run of each
 configuration recompiles the whole app and test bundle and takes far longer than
 `make test` — a periodic and pre-milestone check, in the same category as
-`make realtest-all`, deliberately not on the pre-push path.
+`make realtest-all`, deliberately not part of routine runs.
 The run goes through the memory watchdog below at a higher cap than the real-data
 runs use, because sanitizer shadow memory multiplies resident size.
 
