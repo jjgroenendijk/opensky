@@ -101,8 +101,9 @@ building and testing in a second worktree, so single numbers carry noise:
 
 Building costs more than testing. Cross-module incremental builds are already active, so
 the test bundle recompiles only files that use a changed declaration; a pull that changes
-widely used types still recompiles most of both targets, which the module split tracked
-in issue #566 is meant to bound. The shared compilation cache ([build
+widely used types still recompiles most of both targets, because the whole engine is one
+module that every test file imports; issue #582 tracks splitting it. The shared compilation
+cache ([build
 system](/tools/build-system.md)) removes the cold first build in a fresh worktree.
 
 Of the unit plan's 4,701 Swift Testing tests, test code accounts for about 41 s run
