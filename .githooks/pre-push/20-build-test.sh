@@ -13,6 +13,15 @@ fi
 
 require_tool xcodebuild
 
+# The dead-code scan reads the index store the builds below leave behind and never
+# builds on its own, so it runs on both paths: after a stamped skip the store
+# already describes this exact tree.
+dead_code_scan() {
+  require_tool periphery
+  hook_info "scan for new unused code (Periphery, against the baseline)"
+  sh "$ROOT/tools/lint/dead-code.sh"
+}
+
 # Skip the gate when this exact tree content already passed it (issue #417):
 # `make test` and `make cli` stamp their green runs with the tested tree hash,
 # and the common flow — run both, commit, push — would otherwise pay the whole
@@ -20,6 +29,7 @@ require_tool xcodebuild
 # content change falls through to the full gate.
 if sh "$ROOT/tools/green-stamp.sh" check test cli realdata-build 2>/dev/null; then
   hook_ok "gate already green for this exact tree -> skipping build/test"
+  dead_code_scan
   exit 0
 fi
 
@@ -38,4 +48,5 @@ make -C "$ROOT" cli
 # compiling them does not.
 hook_info "compile openskyRealDataTests (the unit plan never builds it)"
 make -C "$ROOT" realdata-build
-hook_ok "build + test + cli + realdata-build passed"
+dead_code_scan
+hook_ok "build + test + cli + realdata-build + dead-code passed"

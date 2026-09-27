@@ -1,0 +1,13 @@
+# Periphery dead-code scan (make dead-code). Paths resolve against the repo root,
+# where make runs it. tools/lint/dead-code.sh supplies --index-store-path, because
+# the derived-data root is a make variable rather than a fixed path, and the
+# baseline flags, because updating the baseline must not read the old one.
+project: opensky.xcodeproj
+schemes:
+  - opensky
+  - openskycli
+# The index store comes from the builds the pre-push gate already runs (make test,
+# make cli, make realdata-build), so the scan never builds on its own.
+skip_build: true
+relative_results: true
+disable_update_check: true

@@ -13,6 +13,17 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
   three primaries so a timer cannot trip the death latch. See
   [magic and active effects](/engine/magic.md).
 
+* **Code-smell scans (issue #569)**: two whole-program smells are now gated. jscpd fails
+  `make lint` and the pre-commit hook on a new duplicated Swift block of at least 100
+  tokens and 10 lines. Periphery fails the pre-push hook on a new unused declaration, a
+  property that is assigned but never read, an unused import, or a redundant
+  conformance. It reads the index store from the builds the hook already runs, so the
+  scan adds about eight seconds. Both gates compare against a checked-in baseline of the
+  findings that were already there: 135 clones (0.83% of Swift lines) and 877 unused-code
+  findings, about half of them decoded format fields that nothing reads yet. Issue #569
+  tracks working both baselines down. Sonar was considered and rejected as a gate,
+  because its quality gate runs server-side and cannot block a commit. See
+  [code-smell scans](/decisions/code-smell-scans.md).
 * **Build fixed for Apple Swift 6.4**: the Xcode that ships Swift 6.4 turned two
   diagnostics into errors, and with `SWIFT_TREAT_WARNINGS_AS_ERRORS` neither the app nor
   `openskycli` compiled on `main`. `PapyrusWorldStateBridgeQuests.swift` restated the

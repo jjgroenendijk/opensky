@@ -64,7 +64,8 @@ METAL_FILES     := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
 .PHONY: help bootstrap ffmpeg vendor-link vendor-prune hooks format format-check lint \
         check fix swift-format swift-baseline \
         swift-lint metal-format md-format md-lint sh-lint cli-boundary \
-        realdata-plan no-game-content \
+        realdata-plan no-game-content dup-check dup-baseline \
+        dead-code dead-code-baseline dead-code-index \
         docs-links build cli \
         probe test test-fast \
         test-ui test-one test-report realdata-build realtest realtest-perf realtest-npc-perf realtest-all test-sanitize \
@@ -101,7 +102,7 @@ format-check: ## Fail if anything is unformatted (no writes) — for CI
 		--dry-run --Werror $(METAL_FILES)
 	@markdownlint-cli2 --config $(MD_CFG) "$(MD_GLOB)"
 
-lint: swift-lint md-lint sh-lint cli-boundary realdata-plan no-game-content ## Run all linters (strict)
+lint: swift-lint md-lint sh-lint cli-boundary realdata-plan no-game-content dup-check ## Run all linters (strict)
 
 check: swift-baseline format-check lint docs-links ## Format + lint gate without building
 
@@ -135,6 +136,31 @@ realdata-plan: ## Every env-gated suite is in openskyRealDataTests, which the pl
 
 no-game-content: ## No extracted game assets or rendered captures are tracked
 	@./tools/lint/no-game-content.sh && echo "[ OK ] no tracked game content"
+
+# Copy-paste and dead-code smells (docs/decisions/code-smell-scans.md). Both gate
+# on a baseline of the findings that predate them, so they fail only on new
+# ones; the cleanup of the baseline is a GitHub issue. dup-check reads sources
+# alone and runs in `make lint`. dead-code reads the compiler's index store, so
+# it builds every target first; the pre-push hook runs the scan after its own
+# builds instead.
+dup-check: ## No new copy-pasted Swift blocks (jscpd against tools/lint/jscpd-baseline.json)
+	@./tools/lint/duplicates.sh $(SWIFT_PATHS)
+
+dup-baseline: ## Rewrite the duplication baseline after removing clones
+	@./tools/lint/duplicates.sh -u $(SWIFT_PATHS)
+
+dead-code: dead-code-index ## Build every target, then fail on new unused code (Periphery)
+	@./tools/lint/dead-code.sh
+
+dead-code-baseline: dead-code-index ## Rewrite the unused-code baseline after a cleanup
+	@./tools/lint/dead-code.sh -u
+
+# The three builds whose index store the scan reads: openskyTests, the app plus
+# openskyRealDataTests, and openskycli. Incremental, so a warm tree costs seconds.
+dead-code-index: vendor-link
+	@$(XCB_RUN) dead-code-unit $(XCB_TEST) $(UNIT_PLAN) build-for-testing
+	@$(XCB_RUN) dead-code-realdata $(XCB_TEST) -testPlan RealData build-for-testing
+	@$(XCB_RUN) dead-code-cli $(XCB_CLI) build
 
 sh-lint: ## Shellcheck the hook + tooling scripts
 	@shellcheck -s sh $$(find .githooks tools -type f -name '*.sh') .githooks/hooks/*

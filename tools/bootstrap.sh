@@ -11,8 +11,9 @@ if ! command -v brew >/dev/null 2>&1; then
   exit 1
 fi
 
-# Formatters + linters are mandatory (AGENTS.md "Code quality").
-for tool in swiftformat swiftlint markdownlint-cli2 shellcheck; do
+# Formatters + linters are mandatory (AGENTS.md "Code quality"). jscpd and
+# periphery are the code-smell scans (docs/decisions/code-smell-scans.md).
+for tool in swiftformat swiftlint markdownlint-cli2 shellcheck jscpd periphery; do
   if command -v "$tool" >/dev/null 2>&1; then
     echo "  [ OK ] $tool"
   else

@@ -443,6 +443,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 * [ffmpeg for audio decode](/decisions/ffmpeg-audio.md) - vendored decode-only LGPL build
   in a gitignored prefix, `import CFFmpeg` module map, dylibs embedded in the app bundle;
   why the Homebrew build is unusable and what LGPL requires.
+* [Code-smell scans](/decisions/code-smell-scans.md) - jscpd gates new duplicated Swift and
+  Periphery gates new unused code, both against a checked-in baseline; why not Sonar or
+  `swiftlint analyze`.
 
 ## Tools
 
