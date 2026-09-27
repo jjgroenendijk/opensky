@@ -211,6 +211,11 @@ extension GameViewController {
         // closure above is one.
         bridge.crimeReporter = { [weak self] in self?.crime.reporter }
         bridge.arrestSession = { [weak self] in self }
+        bridge.showBarterMenu = { [weak self] actor in
+            guard let self, vendorResolver() != nil else { return nil }
+            let text = openBarter(with: actor)
+            return (containerMenu.isOpen && containerMenu.vendor != nil, text)
+        }
         // `wireFactions` runs after this step too (issue #508), for the same
         // reason, so its five collaborators are getters as well.
         wireFactionNatives(bridge: bridge)

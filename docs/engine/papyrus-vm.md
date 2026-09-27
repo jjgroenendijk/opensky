@@ -224,6 +224,7 @@ one place:
 | `Actor` and `Faction` social | see [the faction and relationship natives](#the-faction-and-relationship-natives) | same failure policy |
 | `Faction` crime | `GetCrimeGold`, `GetCrimeGoldViolent`, `GetCrimeGoldNonViolent`, `ModCrimeGold`, `SetCrimeGold`, `SetCrimeGoldViolent` | same failure policy |
 | Guards and arrest | `Actor.GetCrimeFaction`, `Actor.IsGuard`, `Faction.CanPayCrimeGold`, `Faction.PlayerPayCrimeGold`, `Faction.SendPlayerToJail`; see [crime and bounty](/engine/crime.md) | same failure policy |
+| Barter | `Actor.ShowBarterMenu`; see [container and barter menus](/engine/barter.md) | same failure policy |
 | `Actor` and `Spell` magic | see [the spell natives](#the-spell-natives) | same failure policy |
 
 `Game.AdvanceSkill` and `Game.IncrementSkill` are globals acting on the player alone and run

@@ -126,6 +126,7 @@ extension GameViewController: ContainerMenuControlProviding {
             return false
         }
         containerMenu.container = holder
+        containerMenu.vendor = nil
         containerMenu.containerName = interaction.name
         containerMenu.containerReference = interaction.reference
         return true
@@ -202,7 +203,12 @@ extension GameViewController: ContainerMenuControlProviding {
         container: InventoryHolder,
         runtime: WorldItemRuntime
     ) -> BarterSession {
-        BarterSession(runtime: runtime, merchant: container, pricing: containerMenuPricing)
+        BarterSession(
+            runtime: runtime,
+            merchant: container,
+            pricing: containerMenuPricing,
+            rules: barterRules()
+        )
     }
 
     func takeAllFromContainerMenu() {

@@ -4,6 +4,17 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-09-27
 
+* **Faction vendors (issue #506)**: a merchant is now an actor with a vendor faction, not a
+  nominated chest. `VendorResolver` finds the first vendor faction among the actor's
+  memberships and reads its merchant chest, its hours and its keyword buy/sell list with
+  the negation flag, all from the Creation Kit's Faction page. Belethor on the local install
+  resolves to `ServicesWhiterunBelethorsGoods`, open 8 to 20, trading everything but keys
+  and no-sale items. `BarterSession` refuses closed hours, excluded items and, unless the
+  vendor is a fence, stolen copies. A fence takes stolen goods in honest, and a vendor's
+  goods reach the buyer honest. `Actor.ShowBarterMenu` joins the natives, which puts barter
+  behind the load order's own merchant dialogue. The provider now carries the FLST index.
+  See [container and barter menus](/engine/barter.md).
+
 * **No hook runs the tests**: the pre-push hook no longer runs `make test`, `make cli`
   and `make realdata-build` on every push. Session mining found its tree-hash skip
   (issue #417) never matched in practice, because commits were amended between the test

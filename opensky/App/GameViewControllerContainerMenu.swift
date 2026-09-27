@@ -34,6 +34,9 @@ struct ContainerMenuRuntimeState {
     var movieLoaded = false
     var movieError: String?
     var lastActionText: String?
+    /// The faction vendor behind the counterparty (issue #506), or nil for a
+    /// nominated container or a looted one, which trade unrestricted.
+    var vendor: Vendor?
 }
 
 extension GameViewController {

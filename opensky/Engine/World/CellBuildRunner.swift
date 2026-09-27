@@ -122,6 +122,9 @@ nonisolated struct BuilderCellSceneProvider: CellSceneProvider, WeatherProviding
     /// Load-order RELA and ASTP index (issue #502); nil on the same synthetic
     /// scenes, and then no pair overrides its factions.
     var relationshipStore: RelationshipStore?
+    /// Load-order FLST index (issue #506); nil on the same synthetic scenes,
+    /// and then vendors trade without their keyword lists.
+    var formListStore: FormListStore?
     /// Load-order AVIF index (issue #498); nil on the same synthetic scenes,
     /// and then skill advancement has no parameters and reports the drop.
     var actorValueInformation: ActorValueInformationStore?

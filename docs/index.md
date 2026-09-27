@@ -252,7 +252,9 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
   at all, the `EntriesA` data contract, and the equip/unequip/drop actions behind it.
 * [Container and barter menus](/engine/barter.md) - the two-pane transfer list shared by
   vanilla `containermenu.swf` and `bartermenu.swf`, the cited `fBarterMin`/`fBarterMax`
-  price formula, gold-conserving merchant transactions, and the merchant nomination seam.
+  price formula, gold-conserving merchant transactions, faction vendors with their merchant
+  chests, hours, keyword lists and fences, barter from dialogue through `ShowBarterMenu`,
+  and the nomination override.
 * [Inventory and equipment gate](/engine/inventory-equipment.md) - the M12 milestone gate:
   the take/transfer/equip/buy/sell/drop/save/load loop proved end to end with conservation
   at every step, the `World > Inventory & Equipment` destination, dev item grants, `XOWN`
