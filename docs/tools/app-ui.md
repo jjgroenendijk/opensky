@@ -4,7 +4,7 @@ title: Main-app UI framework + placement
 description: How OpenSky's dev/verification UI is built — destination registry, panel
   base classes, shared components, placement rules, and the accessibility-id contract.
 tags: [tool, gui, dev, ui, framework]
-timestamp: 2026-07-28T00:00:00Z
+timestamp: 2026-09-27T00:00:00Z
 ---
 
 # Main-app UI framework + placement
@@ -350,6 +350,13 @@ sub-navigation (a skill selects a tree, a box selects a record) and because
 combat asks what an actor is worth in the fight it is in while progression asks
 what the player has become.
 
+`World > Crime & Factions` (M21.8) is registered from `DestinationRegistryCrime.swift`,
+after Progression. It has four sections: **Bounty**, **Theft**, **Memberships** and
+**Vendor**. It is a destination, not sections in another destination, because it has
+fifteen controls and the sections share one picked actor. It builds one snapshot per tick.
+Its only override is the vendor-faction override. Bounties and memberships are world
+state, so "Reset all overrides" does not change them.
+
 `World > HUD & Interaction` is another normal sectioned panel. **Elements**
 (`PanelSection-hudElements`) owns reversible presentation overrides;
 **Target** (`PanelSection-hudTarget`) is read-only live diagnostics. The
@@ -492,6 +499,18 @@ Accessibility identifiers are the UI-test API and never change silently.
   `-progressionPerkTree`. The two skill popups are one selection held on the
   provider, so the Skills section and the Perk Tree section can never describe
   different skills. See [character leveling](/engine/character-leveling.md).
+- Crime set (World > Crime & Factions, M21.8), the milestone's own destination:
+  `CrimeBountyFactionControl`, `CrimeBountyAmountControl`,
+  `CrimeBountyViolentControl`, `CrimeBountyAddControl`, `CrimeBountyClearControl`,
+  `CrimeGuardCheckControl`, `CrimeResistArrestControl`,
+  `FactionSubjectCrosshairControl`, `FactionSubjectPlayerControl`,
+  `FactionSelectControl`, `FactionRankControl`, `FactionJoinControl`,
+  `FactionLeaveControl`, `FactionVendorOverrideControl`, `FactionBarterControl`;
+  readouts `CrimeBountyStatsLabel`, `CrimeTheftStatsLabel`,
+  `FactionMembershipStatsLabel`, `FactionVendorStatsLabel`. Section headers:
+  `PanelSection-crimeBounty`, `-crimeTheft`, `-factionMembership`,
+  `-factionVendor`. Only the Vendor section reports an override. See
+  [crime and bounty](/engine/crime.md).
 - HUD set (World > HUD & Interaction, M8.4.3):
   `HUDLayerEnabledControl`, `HUDCrosshairControl`, `HUDMetersControl`,
   `HUDCompassControl`, `HUDMarkersControl`, `HUDPromptControl`,

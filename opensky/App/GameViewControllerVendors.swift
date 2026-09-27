@@ -35,6 +35,17 @@ extension GameViewController {
         return resolver.vendor(memberships: memberships)
     }
 
+    /// The vendor role one vendor faction describes, or nil when `key` is no
+    /// vendor faction this load order carries.
+    func vendor(faction key: ReferenceKey) -> Vendor? {
+        guard
+            let resolver = vendorResolver(),
+            let resolved = resolver.factions.faction(key: key),
+            resolved.faction.isVendor
+        else { return nil }
+        return resolver.vendor(faction: resolved)
+    }
+
     /// Opens the barter menu against `actor`'s vendor stock — what
     /// `Actor.ShowBarterMenu` does and what a merchant's dialogue asks for.
     ///
@@ -46,10 +57,18 @@ extension GameViewController {
     /// stock is a leveled list, and inventing an empty shop would be worse
     /// than saying why there is none.
     ///
+    /// `override` names a vendor faction to trade under in place of the one
+    /// `actor`'s memberships resolve — the dev panel's merchant override
+    /// (issue #507), which is how a user checks one faction's hours, list and
+    /// chest without finding the actor that carries it.
+    ///
     /// - Returns: a readout line, which also lands in the menu's action text.
     @discardableResult
-    func openBarter(with actor: ReferenceKey) -> String {
-        guard let vendor = vendor(of: actor) else {
+    func openBarter(
+        with actor: ReferenceKey,
+        vendorFaction override: ReferenceKey? = nil
+    ) -> String {
+        guard let vendor = override.flatMap(vendor(faction:)) ?? vendor(of: actor) else {
             return noteBarter("\(dialogueSpeakerLabel(for: actor)) is not a merchant.")
         }
         guard let holder = vendorHolder(vendor, actor: actor) else {

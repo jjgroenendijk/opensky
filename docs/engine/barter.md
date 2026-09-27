@@ -279,6 +279,11 @@ Sidebar path **World > Container Menu** (`Destination-containerMenu`), two secti
 `ContainerMenuStatsLabel`, `ContainerMerchantStatsLabel`. Every button routes the same
 `MenuInputEvent` the keyboard produces, so the panel cannot diverge from live input.
 
+To inspect a faction vendor, use **World > Crime & Factions > Vendor**
+(`Destination-crimeFactions`). `FactionVendorStatsLabel` shows the picked actor's vendor
+faction, chest, hours, list and fence flag. `FactionVendorOverrideControl` chooses another
+vendor faction, and `FactionBarterControl` opens the barter menu.
+
 Covering tests:
 
 - `BarterPricingTests` — the price curve against the source's tabulated values, the Speech

@@ -18,7 +18,8 @@ struct AppSidebarModelTests {
                 == [
                     "world", "playerLocomotion", "combatPhysics", "aiNavigation",
                     "environment",
-                    "hudInteraction", "dialogueVoice", "progression", "systemMenu",
+                    "hudInteraction", "dialogueVoice", "progression", "crimeFactions",
+                    "systemMenu",
                     "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
                     "runtimeState", "scripts", "journal"
                 ]

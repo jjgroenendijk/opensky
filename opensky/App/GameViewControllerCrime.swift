@@ -55,6 +55,8 @@ struct CrimeBridgeState {
     var lastActionText = "No crime recorded yet."
     /// Human-readable result of the last guard action (issue #505).
     var lastGuardText = "No guard has acted yet."
+    /// What the `World > Crime & Factions` panel has selected (issue #507).
+    var panel = CrimeFactionPanelState()
 }
 
 extension GameViewController {
@@ -73,6 +75,8 @@ extension GameViewController {
             world: self
         )
         crime.reporter = reporter
+        // A new load order carries different factions for the panel to offer.
+        crime.panel.options = nil
         crime.ownership = OwnershipResolver(factions: factionStore, pluginName: pluginName)
         if let locations = (provider as? LocationDataProviding)?.locationStore {
             crime.crimeFactions = CrimeFactionResolver(

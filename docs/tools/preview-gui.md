@@ -4,7 +4,7 @@ title: Main-app asset browser
 description: Library > Asset Browser destination in the unified sidebar shell — engine VFS
   and Skyrim.esm browsing, offscreen-rendered NIF/DDS previews, toolbar World screenshots.
 tags: [tool, gui, dev, preview, rendering]
-timestamp: 2026-08-13T00:00:00Z
+timestamp: 2026-09-27T00:00:00Z
 ---
 
 # Main-app asset browser
@@ -65,8 +65,9 @@ in-window message, app still launches (no crash, no alert loop).
 
 `Reference records (load order)` adds two selectors above the existing table. The plugin
 selector filters by the plugin whose structurally valid definition won; the record-type
-selector covers KYWD, FLST, LCTN, LCRT, ECZN, AACT, COLL and DOBJ, and M19 added the nine
-magic families below. Rows sort by editor ID
+selector covers KYWD, FLST, LCTN, LCRT, ECZN, AACT, COLL and DOBJ, M19 added the nine
+magic families below, M20 added AVIF and PERK, and M21 added FACT, RELA and ASTP, whose
+detail is the [factions](/formats/factions.md) text dump. Rows sort by editor ID
 and name the winning plugin plus the load-order-independent `ResolvedFormID`, so an override
 is never presented as though it came from its defining master.
 
