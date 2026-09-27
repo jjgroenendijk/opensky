@@ -89,7 +89,7 @@ At each record's offset, `packedSize` bytes total:
 
 ## Verification
 
-Unit tests: synthetic in-code fixtures (`openskyTests/BSAArchiveTests.swift`).
+Unit tests: synthetic in-code fixtures (`openskyTests/Formats/BSA/BSAArchiveTests.swift`).
 Runtime probe 2026-07-09 against vanilla SSE: Misc/Meshes0/Textures0/Interface
 parse (14032/19443/5891/386 files); extracted NIFs start with
 `Gamebryo File Format`, DDS with `DDS`, interface txt readable.

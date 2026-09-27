@@ -92,8 +92,8 @@ wins on a key collision — provisional, pending real plugin/mod load-order
 
 ## Verification
 
-Unit tests: `openskyTests/TranslationFileTests.swift` and
-`openskyTests/LocalizedLabelsTests.swift` (synthetic fixtures built in code,
+Unit tests: `openskyTests/Formats/Strings/TranslationFileTests.swift` and
+`openskyTests/GameData/LocalizedLabelsTests.swift` (synthetic fixtures built in code,
 `TranslationFileFixture` — never extracted files). Cover BOM/no-BOM, CRLF/LF,
 missing tab, empty value, duplicate keys, case sensitivity, non-ASCII and
 surrogate-pair values, big-endian tolerance, truncated bytes, provider merge and

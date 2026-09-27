@@ -32,16 +32,16 @@ renderer, and no movie. Only the presentation layer needs any of those.
 | Selector (rows, selection, activation) | `opensky/Engine/UI/SystemMenuModel.swift` | app + CLI |
 | Vanilla movie contract | `opensky/Engine/UI/SystemMenuMovieBridge.swift` | app + CLI |
 | Renderer-routed movie input | `opensky/Engine/UI/SystemMenuMovieBridgeInput.swift` | app + CLI |
-| Panel seam | `opensky/Engine/SystemMenuControlProviding.swift` | app + CLI |
-| Renderer + AppKit wiring | `opensky/App/GameViewControllerSystemMenu.swift` | app |
-| Verification surface | `opensky/App/SystemMenuPanelViewController.swift` and `opensky/App/Shell/Sections/SystemMenu*.swift` | app |
+| Panel seam | `opensky/Engine/UI/SystemMenuControlProviding.swift` | app + CLI |
+| Renderer + AppKit wiring | `opensky/App/GameView/GameViewController+SystemMenu.swift` | app |
+| Verification surface | `opensky/App/Panels/SystemMenuPanelViewController.swift` and `opensky/App/Shell/Sections/SystemMenu*.swift` | app |
 
 ## The selector
 
 `SystemMenuModel` is a `nonisolated struct`: entry identity, the highlighted index,
 the last outcome, and whether Settings has been revealed. It has no reference to a
 renderer, a movie, or AppKit, so every transition is unit-tested directly
-(`openskyTests/SystemMenuModelTests.swift`).
+(`openskyTests/UI/SystemMenuModelTests.swift`).
 
 `SystemMenuEntry` is the only place an engine-side fallback row is named, so the panel and
 the fallback selector cannot disagree. The vanilla movie owns its larger System-page list.

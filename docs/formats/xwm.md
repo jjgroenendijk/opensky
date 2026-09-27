@@ -107,7 +107,7 @@ does `XWMFile.packet(at:)`. An empty `data` chunk is malformed.
 `XWMError.unsupported` means a structurally valid file in a variant OpenSky
 declines. Both are typed and `Equatable`; nothing traps, force-unwraps or reads
 out of bounds, which the synthetic fixture tests in
-`openskyTests/XWMFileTests.swift` pin down: truncated header, wrong magic or
+`openskyTests/Formats/XWM/XWMFileTests.swift` pin down: truncated header, wrong magic or
 form type, truncated payload, a chunk length overrunning the file, a RIFF size
 overrunning the buffer, a missing `fmt` or `data` chunk, duplicate chunks, an
 unexpected format tag, a zero-length payload, a short `fmt` chunk,

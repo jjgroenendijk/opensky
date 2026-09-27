@@ -89,7 +89,7 @@ navigation without binding to AppKit or a widget tree.
 
 ## Input-capture switch
 
-`opensky/App/GameMetalView.swift` (the only AppKit piece) asks its `MenuModeController`
+`opensky/App/GameView/GameMetalView.swift` (the only AppKit piece) asks its `MenuModeController`
 before dispatching each NSEvent. In menu mode it stops feeding `CameraInputState` and
 maps events to `MenuInputEvent` instead: WASD/arrows to directional moves,
 Return/keypad-Enter and mouse-down to accept, Escape to cancel, pointer motion to
@@ -146,7 +146,7 @@ the `GameMetalView` for routing, and sets `onModeChange` to flip
 - The `Developer > UI Lab` menu-mode preview (M8.1.4) opens the stack without a
   consumer: its Push menu / Pop / Clear buttons call `pushPreviewMenu()` /
   `popPreviewMenu()` / `clearPreviewMenus()` on `GameViewController`
-  (`opensky/App/GameViewControllerUILab.swift`), pushing depth-derived names
+  (`opensky/App/GameView/GameViewController+UILab.swift`), pushing depth-derived names
   (`UILabMenu1`, `UILabMenu2`, ...) so pure push/pop use never trips the
   duplicate-name rejection. Real menus are the SWF layer (M8.2). The panel readout
   mirrors `isMenuMode`, the top menu, stack depth, and `isWorldSimPaused`

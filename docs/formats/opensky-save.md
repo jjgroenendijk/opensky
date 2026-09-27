@@ -1263,30 +1263,30 @@ layout. OpenSky will never write one.
 Unit tests use synthetic in-code fixtures only; no game content is involved, and none is
 needed, because the format is entirely our own. They cover round-trip equality, byte-level
 determinism across differing mutation orders, unknown-chunk skipping, `GVAR` round trip and
-its rejected payloads (`openskyTests/OpenSkySaveGlobalsTests.swift`), fingerprint
+its rejected payloads (`openskyTests/Formats/Save/OpenSkySaveGlobalsTests.swift`), fingerprint
 comparison including reordering and case, and one test per `OpenSkySaveError` case driven by
 a targeted corruption.
 
-`openskyTests/OpenSkySavePapyrusTests.swift` covers `PSCR` on the same terms: a script-state
+`openskyTests/Formats/Save/OpenSkySavePapyrusTests.swift` covers `PSCR` on the same terms: a script-state
 round trip, byte-level determinism, an absent chunk meaning no script state, a truncated
 entry, a bogus instance count, a bogus variable count, an unknown value tag, non-finite
 floats normalising to zero, an unknown chunk written after `PSCR` still being skipped, and a
 live `PapyrusWorldRuntime`'s state surviving a save and a restore.
 
-`openskyTests/OpenSkySaveTimerTests.swift` covers `PTMR` the same way: a timer-state round
+`openskyTests/Formats/Save/OpenSkySaveTimerTests.swift` covers `PTMR` the same way: a timer-state round
 trip, byte-level determinism, an absent chunk meaning no pending timers, an empty timer
 list writing the same bytes as omitting the parameter entirely, a truncated entry, a
 truncated duration, a bogus timer count, an unknown slot byte, non-finite and negative
 durations normalising to zero, an unknown chunk written after `PTMR` still being skipped,
 and a live `PapyrusWorldRuntime`'s pending timers surviving a save and a restore.
 
-`openskyTests/SpawnedReferenceTests.swift` covers `SPWN`: a round trip through a snapshot,
+`openskyTests/World/State/SpawnedReferenceTests.swift` covers `SPWN`: a round trip through a snapshot,
 the merge with an owner's other components, an interior cell, and the two refusals — an
 entry naming no cell and a declared count past the bytes available. It also asserts that an
 owner whose only component is a spawn writes an empty `RDLT` chunk, which is the
 older-build tolerance stated above.
 
-`openskyTests/InventorySaveTests.swift` covers `INVN`: a round trip through a snapshot
+`openskyTests/Formats/Save/InventorySaveTests.swift` covers `INVN`: a round trip through a snapshot
 holding an owner with inventory beside other components, an owner with nothing but an
 inventory, and an owner with no inventory at all; decoded entries staying in `ReferenceKey`
 order; a decoded save restoring into a live `WorldStateStore`; byte-level determinism

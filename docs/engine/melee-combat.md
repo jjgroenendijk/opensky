@@ -14,7 +14,7 @@ comes off. Archery is 15.5, death and ragdolls are 15.6, hostility and the
 opponent that swings back are 15.7, and enchantments and critical-hit perks are
 M18.
 
-Impl: `opensky/Engine/Combat/`, plus `opensky/App/GameViewControllerMelee.swift`
+Impl: `opensky/Engine/Combat/`, plus `opensky/App/GameView/GameViewController+Melee.swift`
 and its two satellites. The graph underneath:
 [behavior graph runtime](/engine/behavior-runtime.md). The sweep it borrows:
 [dynamic rigid bodies](/engine/dynamic-bodies.md). The health it takes off:

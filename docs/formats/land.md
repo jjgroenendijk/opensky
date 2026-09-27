@@ -121,13 +121,13 @@ splat needs only diffuse + normal today.
 
 ## Verification
 
-Unit tests: `openskyTests/TerrainRecordDecoderTests.swift` (synthetic in-code
+Unit tests: `openskyTests/Formats/ESM/Records/TerrainRecordDecoderTests.swift` (synthetic in-code
 fixtures) — VHGT delta accumulation with hand-computed heights incl. the
 column-0 row carry and *8 scaling, VNML/VCLR decode, BTXT/ATXT/VTXT pairing +
 quadrant/position bounds, compressed-LAND round-trip, LTEX->TNAM + repeated
 GNAM, TXST TX00/TX01, wrong-record-type + malformed-size rejection.
 
-Real-data sweep: `openskyRealDataTests/LandRealDataTests.swift` (env-gated on
+Real-data sweep: `openskyRealDataTests/Formats/ESM/Records/LandRealDataTests.swift` (env-gated on
 `OPENSKY_DATA_ROOT`, self-skips when absent). Every LAND in the Tamriel
 worldspace of vanilla Skyrim.esm, 2026-07-18:
 

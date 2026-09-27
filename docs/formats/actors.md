@@ -28,8 +28,8 @@ xEdit dev-4.1.6 `wbDefinitionsTES5.pas` (template flag masks) +
 `wbDefinitionsCommon.pas` (`wbLeveledListEntry`); CK wiki "Template Data"
 (flag -> tab coverage); NifTools `nif.xml` `BSDismemberBodyPartType`
 (biped slot numbering). Impl: `opensky/Engine/Formats/ESM/Records/` +
-`opensky/Engine/World/ActorResolution.swift` +
-`opensky/Engine/World/ActorVisualResolution.swift` + `opensky/Engine/World/ActorAssembly.swift`.
+`opensky/Engine/World/Actors/ActorResolution.swift` +
+`opensky/Engine/World/Actors/ActorVisualResolution.swift` + `opensky/Engine/World/Actors/ActorAssembly.swift`.
 
 ## ACHR -> PlacedActor
 
@@ -659,9 +659,9 @@ M5.4 offscreen probe: Heimskr NPC_ `00013BAC`, ACHR `0001A682` at
 robes (ARMA DNAM draw order, above), visible male hands + 6-mesh FaceGen head.
 Production assembly rendered 10.8% non-background at 800x800; visual check
 confirmed clothed body + complete head at one pose.
-Synthetic fixtures: `openskyTests/ActorRecordTests.swift`,
-`openskyTests/AppearanceRecordTests.swift`,
-`openskyTests/ActorVisualResolutionTests.swift`, `openskyTests/ActorAssemblyTests.swift`.
+Synthetic fixtures: `openskyTests/Formats/ESM/Records/ActorRecordTests.swift`,
+`openskyTests/Formats/ESM/Records/AppearanceRecordTests.swift`,
+`openskyTests/World/Actors/ActorVisualResolutionTests.swift`, `openskyTests/World/Actors/ActorAssemblyTests.swift`.
 
 ## Milestone acceptance (5.6)
 

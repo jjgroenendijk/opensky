@@ -439,9 +439,9 @@ frame's.
 
 Wiring a second subscriber to that frame revealed a real hazard beside it.
 `Renderer.onFrame` had been a single optional closure, and both
-`GameViewControllerStreaming.swift` and `wireHUDFrameUpdates(renderer:)` wanted
+`GameViewController+Streaming.swift` and `wireHUDFrameUpdates(renderer:)` wanted
 it, so the second assignment silently dropped the first. It is now a
-`CallbackFanOut<SIMD3<Float>>` (`opensky/Engine/World/CallbackFanOut.swift`): an
+`CallbackFanOut<SIMD3<Float>>` (`opensky/Engine/World/Cells/CallbackFanOut.swift`): an
 ordered list of handlers delivered in registration order, with no removal, no
 identity and no thread hand-off, because every engine callback is wired once at
 setup and fired on the thread that drives `draw(in:)`. `wireHUDFrameUpdates` is
@@ -991,7 +991,7 @@ live world, false when a cell that never left was merely re-integrated.
 `CellStreamerPapyrus.swift` holds the emission helpers, and a scene with no
 `CellSceneLocation` — a door destination whose CELL identity failed to resolve
 — is not announced at all, since the location is the key a subscriber files
-instances under. `GameViewControllerPapyrus.swift` is the only subscriber and
+instances under. `GameViewController+Papyrus.swift` is the only subscriber and
 forwards to the world runtime, so every existing streaming test still runs
 without a VM.
 
@@ -1227,8 +1227,8 @@ The `World > Scripts` sidebar destination (`Destination-scripts`, M11.2.5, issue
 is the verification surface for everything above: a user can watch the VM run, pause it,
 and single-step it without a debugger or a CLI command. `ScriptsPanelViewController`
 hosts five sections, each backed by the `ScriptControlProviding` protocol
-(`opensky/Engine/ScriptControlProviding.swift`) that `GameViewController` conforms to in
-`opensky/App/GameViewControllerScripts.swift`:
+(`opensky/Engine/Papyrus/ScriptControlProviding.swift`) that `GameViewController` conforms to in
+`opensky/App/GameView/GameViewController+Scripts.swift`:
 
 * `ScriptInstancesSection` (`PanelSection-scriptInstances`) shows the live instance
   count, the current interaction target, and the scripts attached to it.
@@ -1337,7 +1337,7 @@ latent suspend/resume round trip, and the required budget, depth, bad-jump,
 type-mismatch and unknown-opcode fault matrix.
 
 The world layer is covered by its own device-free suites, all built on
-`openskyTestSupport/PapyrusWorldFixture.swift`, which assembles synthetic REFR
+`openskyTestSupport/Papyrus/PapyrusWorldFixture.swift`, which assembles synthetic REFR
 records with VMAD data, event scripts whose handlers record
 `<script>.<event>` through a probing native dispatch, and a drain helper that
 steps to quiescence:
@@ -1514,7 +1514,7 @@ Local A/B (optional, never committed): logs/m11-acceptance-visible.png
 
 Issue #172's gate is one chain rather than a set of unit results, pinned by
 `M11ScriptedWorldAcceptanceTests` over the fixture in
-`openskyTestSupport/M11ScriptedWorldChain.swift`. It needs no game data, and only its
+`openskyTestSupport/Acceptance/M11ScriptedWorldChain.swift`. It needs no game data, and only its
 last step needs a GPU.
 
 The fixture is one synthetic exterior cell holding two references. The lever

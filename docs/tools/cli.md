@@ -93,7 +93,7 @@ already covers a one-off run, and every command that reads plugins picks it up.
 
 `cell`/`screenshot`/`render` default to the first-render cell
 ([decision](/decisions/first-render-cell.md), constants in
-`opensky/Engine/FirstRenderCell.swift`). Exit codes: 0 ok, 1 failure, 2 usage.
+`opensky/Engine/World/Cells/FirstRenderCell.swift`). Exit codes: 0 ok, 1 failure, 2 usage.
 
 Implementation notes:
 

@@ -36,7 +36,7 @@ What an alerted actor *does* is not here. That is item 16.7, and it reads
 Engine: `PerceptionRuntime`, `PerceptionWorld`, `DetectionFormula`, `PerceptionSight`,
 `DetectionPairState`, `DetectionSettings`, `PerceptionReadout`, `PerceptionOverlay` and
 `DetectionResolution`, all in `opensky/Engine/Perception/`. App wiring:
-`opensky/App/GameViewControllerPerception.swift`.
+`opensky/App/GameView/GameViewController+Perception.swift`.
 
 ## The pass
 

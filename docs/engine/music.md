@@ -13,7 +13,7 @@ Milestone 9.2.3 (issue #156): turn the [decoded music records](/formats/music.md
 into playing music that follows the streamed world. Implementation:
 `opensky/Engine/Audio/MusicCatalog.swift` (selection, pure value logic),
 `opensky/Engine/Audio/WorldMusicDirector.swift` (runtime state machine),
-`opensky/Engine/World/CellStreamerMusic.swift` (context emission), and the
+`opensky/Engine/World/Streaming/CellStreamerMusic.swift` (context emission), and the
 non-positional playback plus gain ramps described in
 [world audio playback](/engine/audio.md).
 
@@ -269,7 +269,7 @@ Local A/B (optional, never committed): none
 listed because the music director is constructed with the world audio engine, so
 nothing in this section makes a sound until the engine is running.
 `CellStreamerTests` is the class name the music-context cases extend; the cases
-themselves live in `openskyTests/CellStreamerMusicTests.swift`, so grepping for
+themselves live in `openskyTests/World/Streaming/CellStreamerMusicTests.swift`, so grepping for
 the class name finds the base file, not the milestone's cases. No A/B
 capture applies: the behavior this milestone adds is audible, not visible, so a
 rendered frame would prove nothing (same reasoning as the M9.2.2 row).
@@ -326,7 +326,7 @@ rendered frame would prove nothing (same reasoning as the M9.2.2 row).
   engine's own `MusicRecordStore.loadAudioFile(at:load:)` over the VFS instead of
   carrying a local workaround.
 * Fixtures are synthetic plugins built in code
-  (`openskyTests/WorldMusicFixtures.swift`); the audio payload is
+  (`openskyTests/Audio/WorldMusicFixtures.swift`); the audio payload is
   `XWMFixture.file`. No extracted game file enters the repository.
 
 Audible acceptance is a human step: enable audio, walk an exterior cell, and

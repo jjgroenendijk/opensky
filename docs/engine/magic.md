@@ -59,8 +59,8 @@ handed to it.
 | Consumption | `opensky/Engine/Magic/MagicItemConsumption.swift` | app + CLI |
 | Coverage tally | `opensky/Engine/Magic/ActiveEffectTally.swift` | app + CLI |
 | Save chunk | `opensky/Engine/Formats/Save/OpenSkySave{Encoder,Decoder}ActiveEffects.swift` | app + CLI |
-| Panel seam | `opensky/Engine/MagicEffectControlProviding.swift` and `MagicEffectControlReadout.swift` | app + CLI |
-| Session wiring | `opensky/App/GameViewControllerMagic.swift` and `GameViewControllerMagicPanel.swift` | app |
+| Panel seam | `opensky/Engine/Magic/MagicEffectControlProviding.swift` and `MagicEffectControlReadout.swift` | app + CLI |
+| Session wiring | `opensky/App/GameView/GameViewController+Magic.swift` and `GameViewController+MagicPanel.swift` | app |
 | Verification surface | `opensky/App/Shell/Sections/CombatMagicEffectsSection.swift` | app |
 | Spellbook component | `opensky/Engine/Magic/SpellbookComponent.swift` | app + CLI |
 | Spellbook runtime | `opensky/Engine/Magic/SpellbookRuntime.swift` | app + CLI |
@@ -68,13 +68,13 @@ handed to it.
 | Cast loop | `opensky/Engine/Magic/CasterRuntime.swift`, `CasterRuntimeInput.swift` and `CasterRuntimeConcentration.swift` | app + CLI |
 | Cast coverage tally | `opensky/Engine/Magic/CastingTally.swift` | app + CLI |
 | Spellbook save chunk | `opensky/Engine/Formats/Save/OpenSkySave{Encoder,Decoder}Spellbook.swift` | app + CLI |
-| Casting panel seam | `opensky/Engine/CastingControlProviding.swift` and `CastingControlReadout.swift` | app + CLI |
-| Casting session wiring | `opensky/App/GameViewControllerCasting.swift` and `GameViewControllerCastingPanel.swift` | app |
+| Casting panel seam | `opensky/Engine/Magic/CastingControlProviding.swift` and `CastingControlReadout.swift` | app + CLI |
+| Casting session wiring | `opensky/App/GameView/GameViewController+Casting.swift` and `GameViewController+CastingPanel.swift` | app |
 | Casting verification surface | `opensky/App/Shell/Sections/CombatSpellcastingSection.swift` | app |
 | Delivery routing | `opensky/Engine/Magic/CasterRuntimeDelivery.swift` | app + CLI |
 | Landed-spell model and application | `opensky/Engine/Magic/SpellHit.swift` | app + CLI |
 | Generalized shot | `opensky/Engine/Combat/ProjectileShot.swift` | app + CLI |
-| Delivery session wiring | `opensky/App/GameViewControllerSpellDelivery.swift` | app |
+| Delivery session wiring | `opensky/App/GameView/GameViewController+SpellDelivery.swift` | app |
 | Enchantment charge model | `opensky/Engine/Magic/EnchantmentCharge.swift` | app + CLI |
 | Enchanted-item component | `opensky/Engine/Magic/EnchantedItemComponent.swift` | app + CLI |
 | Enchanted-item ledger | `opensky/Engine/Magic/EnchantmentLedger.swift` | app + CLI |
@@ -84,15 +84,15 @@ handed to it.
 | Worn-effect reconcile | `opensky/Engine/Magic/WornEnchantmentApplication.swift` | app + CLI |
 | Fortify terms | `opensky/Engine/Combat/CombatFortifyBonus.swift` | app + CLI |
 | Enchanted-item save chunk | `opensky/Engine/Formats/Save/OpenSkySave{Encoder,Decoder}EnchantedItems.swift` | app + CLI |
-| Enchantment session wiring | `opensky/App/GameViewControllerEnchantments.swift` | app |
+| Enchantment session wiring | `opensky/App/GameView/GameViewController+Enchantments.swift` | app |
 | Actor spell baseline | `opensky/Engine/Magic/ActorSpellBaseline.swift` | app + CLI |
-| AI casting session wiring | `opensky/App/GameViewControllerCombatCasting.swift` | app |
+| AI casting session wiring | `opensky/App/GameView/GameViewController+CombatCasting.swift` | app |
 | Magic condition seam | `opensky/Engine/Magic/MagicConditionResolution.swift` | app + CLI |
-| Magic condition functions | `opensky/Engine/World/ConditionFunctionsMagic.swift` | app + CLI |
-| Direct function probe | `opensky/Engine/World/ConditionProbe.swift` | app + CLI |
+| Magic condition functions | `opensky/Engine/World/Conditions/ConditionFunctionsMagic.swift` | app + CLI |
+| Direct function probe | `opensky/Engine/World/Conditions/ConditionProbe.swift` | app + CLI |
 | Spell natives | `opensky/Engine/Papyrus/PapyrusNativeSpell.swift` | app + CLI |
 | Spell native bridge | `opensky/Engine/Papyrus/PapyrusWorldMagicBridge.swift` and `PapyrusWorldStateBridgeMagic.swift` | app + CLI |
-| Magic condition session wiring | `opensky/App/GameViewControllerMagicConditions.swift` and `GameViewControllerMagicConditionProbe.swift` | app |
+| Magic condition session wiring | `opensky/App/GameView/GameViewController+MagicConditions.swift` and `GameViewController+MagicConditionProbe.swift` | app |
 
 ## Where the semantics come from
 

@@ -37,12 +37,12 @@ the loop needed to be checkable, and the record of what was verified.
 
 | Layer | File | Target |
 |---|---|---|
-| Panel seam | `opensky/Engine/InventoryEquipmentControlProviding.swift` | app + CLI |
-| Readout text | `opensky/Engine/InventoryEquipmentReadout.swift` | app + CLI |
-| Appearance-skip accounting | `opensky/Engine/World/CellSceneBuilderActors.swift` | app + CLI |
-| Per-actor skip lookup | `opensky/Engine/World/CellStreamerInteraction.swift` | app + CLI |
-| Renderer + AppKit wiring | `opensky/App/GameViewControllerInventoryEquipment.swift` | app |
-| Verification surface | `opensky/App/InventoryEquipmentPanelViewController.swift` and `opensky/App/Shell/Sections/InventoryGrants*.swift`, `ItemOwnership*.swift`, `EquipmentInspection*.swift` | app |
+| Panel seam | `opensky/Engine/Inventory/InventoryEquipmentControlProviding.swift` | app + CLI |
+| Readout text | `opensky/Engine/Inventory/InventoryEquipmentReadout.swift` | app + CLI |
+| Appearance-skip accounting | `opensky/Engine/World/Cells/CellSceneBuilderActors.swift` | app + CLI |
+| Per-actor skip lookup | `opensky/Engine/World/Streaming/CellStreamerInteraction.swift` | app + CLI |
+| Renderer + AppKit wiring | `opensky/App/GameView/GameViewController+InventoryEquipment.swift` | app |
+| Verification surface | `opensky/App/Panels/InventoryEquipmentPanelViewController.swift` and `opensky/App/Shell/Sections/InventoryGrants*.swift`, `ItemOwnership*.swift`, `EquipmentInspection*.swift` | app |
 
 ## The loop
 

@@ -36,9 +36,9 @@ install, no renderer and no movie. Only the presentation layer needs any of thos
 |---|---|---|
 | Row list and categories | `opensky/Engine/UI/InventoryMenuModel.swift` and `InventoryMenuModelBuild.swift` | app + CLI |
 | Vanilla movie contract | `opensky/Engine/UI/InventoryMenuMovieBridge*.swift` | app + CLI |
-| Panel seam | `opensky/Engine/InventoryMenuControlProviding.swift` | app + CLI |
-| Renderer + AppKit wiring | `opensky/App/GameViewControllerInventoryMenu.swift` | app |
-| Verification surface | `opensky/App/InventoryMenuPanelViewController.swift` and `opensky/App/Shell/Sections/InventoryMenuSection.swift` | app |
+| Panel seam | `opensky/Engine/UI/InventoryMenuControlProviding.swift` | app + CLI |
+| Renderer + AppKit wiring | `opensky/App/GameView/GameViewController+InventoryMenu.swift` | app |
+| Verification surface | `opensky/App/Panels/InventoryMenuPanelViewController.swift` and `opensky/App/Shell/Sections/InventoryMenuSection.swift` | app |
 
 ## The row list
 

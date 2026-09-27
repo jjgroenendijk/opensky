@@ -88,11 +88,27 @@ user's install, `openskyTestSupport/` holds the fixtures both bundles compile, a
 `openskyUITests/` holds the XCUITest smoke tests. A gated suite written outside
 `openskyRealDataTests/` fails `make lint`, because nothing would ever run it.
 `opensky/` splits by target membership:
-`opensky/App/` holds the AppKit and SwiftUI shell, view controllers, panels, and
-`Assets.xcassets`; `opensky/Engine/` holds everything CLI-safe; `opensky/SharedHeaders/`
-holds `ShaderTypes/`, the clang module wrapping `ShaderTypes.h`. Group engine subsystems
-under `opensky/Engine/` by domain, and keep
-format parsers separate from rendering. Skills live in `.AGENTS/skills/` (`.claude/skills`
+`opensky/App/` holds the AppKit and SwiftUI shell; `opensky/Engine/` holds everything
+CLI-safe; `opensky/SharedHeaders/` holds `ShaderTypes/`, the clang module wrapping
+`ShaderTypes.h`. No Swift file sits loose at the root of `opensky/App/`, `opensky/Engine/`,
+or `opensky/Engine/World/`; each goes in a domain folder:
+
+- `opensky/App/`: `Shell/` (app lifecycle, sidebar, panel framework), `Panels/` (one view
+  controller per destination), `GameView/` (`GameViewController` and its extensions), and
+  `Resources/` (`Assets.xcassets`, `Branding/`).
+- `opensky/Engine/`: one folder per domain (`Magic/`, `Dialogue/`, `Rendering/`, ...). A
+  panel seam, `XControlProviding.swift` or `XReadout.swift`, lives in its domain folder.
+  Keep format parsers (`Formats/`) separate from rendering.
+- `opensky/Engine/World/`: `Actors/`, `Cells/`, `Collision/`, `Conditions/`, `Navigation/`,
+  `Packages/`, `Player/`, `State/`, `Streaming/`, `Terrain/`, and `Weather/`.
+
+An extension file is named `Type+Feature.swift`, for example
+`GameView/GameViewController+Magic.swift`. Test folders use the same subfolder names as the
+source file they test: the tests for `opensky/Engine/World/Terrain/TerrainMeshBuilder.swift`
+live in `openskyTests/World/Terrain/`, and tests for app code live under `App/`. Only
+cross-cutting folders are test-only: `Acceptance/` (milestone gates), `Fakes/`, and
+`Support/`. File names stay unique inside a target, because Swift rejects two files with one
+name in the same module. Skills live in `.AGENTS/skills/` (`.claude/skills`
 symlinks there). `logs/` and `.vendor/` are gitignored. `docs/` groups pages by folder: `formats/`,
 `engine/`, `rendering/`, `decisions/`, and `tools/`.
 

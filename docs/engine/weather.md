@@ -16,7 +16,7 @@ precipitation output + acceptance. Data-driven exterior weather over the
 cross-fades between weathers over time, blends each weather's four time-of-day keyframes by
 the [sky clock](/engine/sky-water.md) `timeOfDay`, and feeds the result into the renderer's
 sky palette + fog + directional ambient + sun tint. Publishes a wind vector for later
-precipitation/grass/particle/audio consumers. Impl: `opensky/Engine/World/WeatherRuntime.swift`
+precipitation/grass/particle/audio consumers. Impl: `opensky/Engine/World/Weather/WeatherRuntime.swift`
 (value types), `WeatherStore.swift` (index + selection), `WeatherSystem.swift` (state
 machine); renderer glue `opensky/Engine/Rendering/RendererWeather.swift`.
 

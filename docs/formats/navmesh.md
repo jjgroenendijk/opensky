@@ -17,7 +17,7 @@ each one is, and which link to which.
 Decoded by `opensky/Engine/Formats/ESM/Records/Navmesh.swift`,
 `NavmeshGeometry.swift` and `NavmeshInfoMap.swift`, over the
 [ESM container](/formats/esm.md). The plugin-wide store is
-`opensky/Engine/World/NavmeshIndex.swift`; the per-cell walk is
+`opensky/Engine/World/Navigation/NavmeshIndex.swift`; the per-cell walk is
 `CellSceneBuilder.collectNavmeshes`.
 
 ## Contents
@@ -231,14 +231,14 @@ engine every other navmesh in the plugin.
 
 ## Verification
 
-Synthetic decoder tests are `openskyTests/NavmeshRecordTests.swift` and
+Synthetic decoder tests are `openskyTests/Formats/ESM/Records/NavmeshRecordTests.swift` and
 `NavmeshIndexTests.swift`, over fixtures built in code by
-`openskyTests/NavmeshFixture.swift`: a two-triangle mesh, the interior and
+`openskyTests/Formats/ESM/Records/NavmeshFixture.swift`: a two-triangle mesh, the interior and
 exterior parent unions, an oversized payload forced through the `XXXX`
 extension, truncated arrays, implausible counts, out-of-range vertex, neighbour
 and door indices, and the skip policy for deleted and malformed records.
 
-`openskyRealDataTests/NavmeshRealDataTests.swift` is the census over the user's
+`openskyRealDataTests/Formats/ESM/Records/NavmeshRealDataTests.swift` is the census over the user's
 own install: it decodes every NAVM in the Whiterun target area — the hold's
 interior cells, the WhiterunWorld city exteriors, and the Tamriel exteriors
 around the first-render cell — and reports records, vertices, triangles, edge
