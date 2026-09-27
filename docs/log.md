@@ -4,6 +4,17 @@ Newest first. ISO-8601 date headings. See AGENTS.md "Documentation wiki".
 
 ## 2026-09-27
 
+* **No hook runs the tests**: the pre-push hook no longer runs `make test`, `make cli`
+  and `make realdata-build` on every push. Session mining found its tree-hash skip
+  (issue #417) never matched in practice, because commits were amended between the test
+  run and the push, so every push paid the whole gate again. The hook now runs only
+  `make dead-code`, which builds every target through the new `make verify-build` and
+  scans for new unused code. The pre-commit format, lint, duplication, boundary and
+  game-content checks are unchanged. What to test is now the author's judgment, guided
+  by the new `testing-and-verifying` skill, which maps a change to the evidence it needs
+  and makes `make test-fast` the default for every unit run. `tools/green-stamp.sh` is
+  gone. See [testing setup](/testing.md).
+
 * **Violent and non-violent bounty (issue #563)**: each crime-ledger row now holds its gold
   in two halves. Assault and murder land in the violent half and theft and trespass in the
   non-violent one, following the Creation Kit wiki's Crime page, which files the former as

@@ -45,10 +45,10 @@ not reachable from this half. `openskyTestSupport/AGENTS.md` has the rule.
 - `print()` appears in the live `xcodebuild` console but is not in the `.xcresult`, so
   `make test-report` and any backgrounded run lose it. To capture a result, assert on the
   value or write an artifact to gitignored `logs/`.
-- `make test-one T=Class[/method]` runs one class or method in `openskyTests`; use
-  `T=Target/Class/method` for an explicitly qualified selector, which is how a class in
-  another test target is reached. `make test-report`
-  extracts failure names and messages from the newest result bundle.
+- `make test-fast T='Suite'` or `T='Suite/method()'` runs one suite or test in
+  `openskyTests` without paying the build system when nothing changed; the
+  `testing-and-verifying` skill covers what to run. `make test-report` extracts failure
+  names and messages from the newest result bundle.
 - Accessibility ids are pinned as literal assertions here (`DestinationRegistryTests`) *and*
   exercised through `openskyUITests`. The two catch different things: a unit assertion pins
   the id string, and only a UI test proves the id is reachable in the built view hierarchy.

@@ -483,7 +483,8 @@ and decisions live here so knowledge survives across sessions. See AGENTS.md
 
 * [Testing setup](/testing.md) - the three test targets and the shared support
   folder, make entrypoints, the RealData test plan behind `make realtest` and
-  `make realtest-all`, the Sanitizers plan behind `make test-sanitize`, the
-  watchdog, result reporting, code coverage, machine-specific quirks.
+  `make realtest-all`, the Sanitizers plan behind `make test-sanitize`,
+  `make verify-build`, why no hook runs the tests, the watchdog, result reporting,
+  code coverage, machine-specific quirks.
 * Roadmap - not in this wiki. Open work lives in GitHub issues and milestones, where
   milestone `#n` is OpenSky milestone `Mn`. See AGENTS.md "Roadmap and open work".
