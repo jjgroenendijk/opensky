@@ -44,7 +44,6 @@
 		5ACF160130001093001700B6 /* CLI.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = CLI.xcconfig; sourceTree = "<group>"; };
 		5ACF160130001093001700B7 /* Tests.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Tests.xcconfig; sourceTree = "<group>"; };
 		5ACF160130001093001700B8 /* UITests.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = UITests.xcconfig; sourceTree = "<group>"; };
-		5ACF160130001093001700B9 /* Local.example.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Local.example.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -153,7 +152,6 @@
 				5ACF160130001093001700B6 /* CLI.xcconfig */,
 				5ACF160130001093001700B7 /* Tests.xcconfig */,
 				5ACF160130001093001700B8 /* UITests.xcconfig */,
-				5ACF160130001093001700B9 /* Local.example.xcconfig */,
 			);
 			path = Config;
 			sourceTree = "<group>";
