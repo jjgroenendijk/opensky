@@ -112,7 +112,7 @@ nonisolated struct NIFSkeleton {
     /// The fallback exists because the two skeleton files disagree on case for
     /// the attachment nodes: the Havok rig names the drawn-weapon node
     /// `Weapon` and the NIF names the same node `WEAPON` (observed with
-    /// `openskycli skeleton --nif`, recorded in docs/formats/actors.md). Skin
+    /// `openskycli skeleton --nif`, recorded in docs/engine/actor-resolution.md). Skin
     /// bone names match exactly and take the fast path.
     func transform(forBoneNamed name: String) -> float4x4? {
         if let exact = boneTransforms[name] {

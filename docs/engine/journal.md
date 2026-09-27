@@ -61,7 +61,7 @@ stop at the ends.
 Two record facts decide what a row says, and neither is a journal convention invented here:
 
 - A quest is listed only when its DNAM type is not 0. Type 0 keeps a quest out of the
-  journal entirely ([records](/formats/records.md)), which is why
+  journal entirely ([records](/formats/quest-records.md)), which is why
   `QuestStore.journalQuests()` already filters it. Vanilla runs a large number of type-0
   controller quests at all times, so this filter is the difference between a usable page
   and a list of script hosts.

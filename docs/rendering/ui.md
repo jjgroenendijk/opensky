@@ -41,7 +41,7 @@ remains the screen-space compositing foundation it renders through.
   `.system`/`.swf` source namespace so an SWF glyph never collides with a system
   glyph sharing the same numeric `fontKey`; callers keep `fontKey` unique per
   (movie, font id). Missing/undecoded fonts fall back to `UIFont` system rendering.
-  Font/text/glyph decode lives in [SWF container](/formats/swf.md); the display-list
+  Font/text/glyph decode lives in [SWF fonts and text](/formats/swf-text.md); the display-list
   render that places these glyph quads is the SWF layer below.
 - Eviction (issue #127): the atlas is one fixed-size texture shared by every movie,
   so a host that swaps movies must hand cells back or the shelf runs out and later
@@ -87,7 +87,7 @@ remains the screen-space compositing foundation it renders through.
 The SWF layer draws a movie's frame-1 display list over the finished 3D frame,
 encoded inside the same scene pass immediately before the dev UI overlay (so
 stats and readouts stay on top). Tag decode and the frame-1 semantics live in
-[SWF container](/formats/swf.md); this section is the GPU side.
+[SWF display list](/formats/swf-display-list.md); this section is the GPU side.
 
 - Movie package (`Rendering/RendererSWFMovie.swift`, `SWFMovieResources`): built
   once per assigned movie. Every dictionary shape is tessellated through

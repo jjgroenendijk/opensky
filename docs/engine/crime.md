@@ -332,7 +332,7 @@ declaration, and a null parameter asks about the hold the subject is standing in
 about no faction at all; `CrimeConditionResolution.currentCrimeFaction` is what the caller
 fills from `CrimeFactionResolver`. A session with no FACT data, a parameter naming a faction
 no plugin defines, or a null parameter outside any hold all report `unavailableCrime` rather
-than answering zero — see [conditions](/formats/conditions.md).
+than answering zero — see [conditions](/engine/condition-functions.md).
 
 `GetCrimeGoldViolent` (375) and `GetCrimeGoldNonviolent` (376) take the same parameter with
 the same rules and read one half each (issue #563).
@@ -372,7 +372,7 @@ crime", which is why nothing warns first.
 
 ## Persistence
 
-Two additive chunks in [the OpenSky save container](/formats/opensky-save.md):
+Two additive chunks in [the OpenSky save container](/formats/opensky-save-actor-chunks.md):
 
 - **`CRIM`** — one entry per actor with a ledger, and inside it one row per faction with the
   gold and the four counts in `CrimeKind.allCases` order.

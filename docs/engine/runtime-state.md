@@ -405,7 +405,7 @@ unevaluatable rather than as a comparison against zero.
 Issue #251 (item 10.2.4) built that evaluator, and it is the seam's first
 non-trivial consumer. `ConditionEvaluator` (`opensky/Engine/World/Conditions/ConditionEvaluator.swift`,
 with its function registry and tally in the sibling `Condition*.swift` files) takes
-the decoded [CTDA conditions](/formats/conditions.md) and answers whether a list is
+the decoded [CTDA conditions](/engine/conditions.md) and answers whether a list is
 true right now. It lives under `opensky/Engine/World/` rather than beside the decoder in
 `opensky/Engine/Formats/` for the reason the split exists at all: answering a condition
 needs live state, and a format parser must not be able to reach live state.
@@ -443,7 +443,7 @@ mirrors `AS2Tally` from the [ActionScript 2 runtime](/engine/as2-runtime.md): ca
 name tables with uncapped totals, one bucket per failure reason, and ranked
 accessors. It is how the project measures which condition functions it still owes
 the game, and it is what the vanilla coverage sweep reports; the numbers live on the
-[conditions](/formats/conditions.md) page.
+[conditions](/engine/conditions.md) page.
 
 ### First consumer: climate weather chances
 
@@ -653,8 +653,8 @@ positive; `equipped` is sorted and free of duplicates. That is what makes two st
 reached the same inventory through different mutation orders produce equal snapshots and
 identical save bytes.
 
-Stacking is by base `FormID` alone in v1, matching `ItemDefinition.stackKey`
-([record decoders](/formats/records.md)). Per-instance data — tempering, enchanting, charge
+Stacking is by base `FormID` alone in v1, matching `ItemDefinition.stackKey`.
+Per-instance data — tempering, enchanting, charge
 level — will make two instances of one base distinct and turn that into a compound key.
 
 ### Baselines are re-derived, never stored
@@ -673,7 +673,7 @@ what kind of owner it has.
 | `.player` | empty — no record describes the player in this engine |
 | `.generated` | empty — a runtime-created object such as a dropped pile (#177) or a summon |
 
-The actor case reuses `ActorTemplateResolver` ([actor records](/formats/actors.md)) rather
+The actor case reuses `ActorTemplateResolver` ([actor resolution](/engine/actor-resolution.md)) rather
 than repeating template resolution: `defaultOutfit` already follows TPLT links and the ACBS
 `useInventory` flag. The outfit is baselined as worn, not merely carried, because "default
 outfit" is by definition what the actor has on when the game starts it; baselining it
@@ -737,7 +737,7 @@ length instead of refusing the file, which a new component kind inside `RDLT` wo
 to do. `RDLT` omits the inventory component and omits an entry whose only component was
 inventory, so an older build reads exactly the bytes it would have written itself; the
 decoder merges the two chunks back into one delta per reference. Layout and rationale in
-full: [OpenSky native save container](/formats/opensky-save.md).
+full: [OpenSky native save container](/formats/opensky-save-world-chunks.md).
 
 ### What inventory deliberately does not touch
 
@@ -790,7 +790,7 @@ disjoint kinds of slot:
 
 Hands come from the `ETYP` link, resolved through the plugin's own EQUP records by
 `EquipSlotTable`. That is the record the game itself uses, and the walk from a composite
-slot down to the named leaves is described in [magic records](/formats/magic-records.md).
+slot down to the named leaves is described in [magic records](/formats/shouts-equip-slots.md).
 A weapon whose `ETYP` names no EQUP — 5 of the 3,359 in the vanilla load order carry none
 at all — falls back on `EquipmentCatalog.defaultWeaponHands`, the right hand, and the
 catalog counts the fallback in `unresolvedEquipTypes`.
@@ -829,7 +829,7 @@ Equipping moves nothing between owners, so carry weight and carried value are un
 worn armour is still carried armour. The write is attributed to the owner's cell, which is
 what makes `noteStateMutation` rebuild that one cell and no other; the rebuilt actor then
 resolves its appearance from the equipped set instead of its plugin default outfit. See
-[actor records](/formats/actors.md) for the resolution and hand-attachment halves.
+[actor resolution](/engine/actor-resolution.md) for the resolution and hand-attachment halves.
 
 The player goes through the same API. It mutates the player's equipped set and accounting
 and has no render target this milestone: the player is a physics capsule plus a camera, and
@@ -910,7 +910,7 @@ kind inside `RDLT` is versioned by `formatVersion`, so putting it there would fo
 older build to refuse every save containing a dropped item, while an additive chunk is
 simply skipped by its declared length. An object whose only delta is its spawn writes no
 `RDLT` entry at all; the decoder merges the two chunks back into one delta per reference by
-key. Layout in [OpenSky save container](/formats/opensky-save.md).
+key. Layout in [OpenSky save container](/formats/opensky-save-world-chunks.md).
 
 ### Tests
 
@@ -1040,7 +1040,7 @@ own `ConditionTally` bucket, never a throw and never a comparison against zero.
 The `QSTS` chunk carries quest state, additive for the same reason `INVN` and `SPWN` are, and
 split out of `RDLT` for the same reason: a component kind inside `RDLT` is versioned by
 `formatVersion`, so putting it there would force every older build to refuse every save with
-a started quest. Layout in [OpenSky save container](/formats/opensky-save.md).
+a started quest. Layout in [OpenSky save container](/formats/opensky-save-world-chunks.md).
 
 ### Tests
 
@@ -1153,7 +1153,7 @@ Reference fills travel in `QALS`; location fills use its additive `QLOC` sibling
 siblings of `QSTS` rather than extensions
 of it: `QSTS` entries are a flat positional layout with no per-entry length, so appending a
 field would make an older build misparse the whole chunk instead of skipping the new part.
-Layout in [OpenSky save container](/formats/opensky-save.md).
+Layout in [OpenSky save container](/formats/opensky-save-world-chunks.md).
 
 ### Tests
 
@@ -1330,7 +1330,7 @@ excludes `sequence`, so the saved store's snapshot (`sequence == 6`) compares eq
 restored one (`sequence == 1`). The `CLOK` and `GVAR` chunks that carry the clock and the
 globals were additive and deliberately did not bump `OpenSkySaveFormat.currentVersion`: an
 older build skips an unknown chunk by its declared length and loads the rest
-([OpenSky native save container](/formats/opensky-save.md)).
+([OpenSky native save container](/formats/opensky-save-world-chunks.md)).
 
 `M10AcceptanceWeatherTests` pins weather and time staying synchronized. With `TimeScale` at
 3600 — one game hour per real second — ninety steps of 0.5 real seconds elapse 45 game hours,
@@ -1379,7 +1379,7 @@ Local A/B (optional, never committed): none
 * [OpenSky native save container](/formats/opensky-save.md) — the `.osav` byte layout that
   `OpenSkySaveStore` writes and reads on behalf of the save/load section above, `INVN`
   included.
-* [Record decoders](/formats/records.md) — the CONT, MISC, WEAP and ARMO layouts behind
+* [Record decoders](/formats/item-records.md) — the CONT, MISC, WEAP and ARMO layouts behind
   `ItemDefinitionStore`, and [actor records](/formats/actors.md) — the OTFT and LVLI
   decodes plus the template chain an inventory baseline resolves through.
 * [Actor values](/engine/actor-values.md) — the ninth component, its derivation from RACE,

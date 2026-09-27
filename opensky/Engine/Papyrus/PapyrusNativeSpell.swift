@@ -161,7 +161,7 @@ nonisolated extension PapyrusNativeFunctions {
     /// pages note the vanilla answer ignores whether the effect's own condition
     /// holds; OpenSky stores only effects that were applied, so it answers the
     /// narrower question — the same difference the condition functions carry,
-    /// recorded in docs/formats/conditions.md.
+    /// recorded in docs/engine/condition-functions.md.
     ///
     /// "Will dispel all magic effects from this actor that came from the given
     /// spell ... True if at least one effect was dispelled from the actor."

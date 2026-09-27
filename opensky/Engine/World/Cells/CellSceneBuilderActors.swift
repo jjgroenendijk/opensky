@@ -6,7 +6,7 @@
 // exact per cell: discovered = rendered + intentional skips + failures.
 //
 // References: UESP "Skyrim Mod:Mod File Format" ACHR/NPC_ pages; resolution
-// chain + record layouts documented in docs/formats/actors.md.
+// chain + record layouts documented in docs/engine/actor-resolution.md.
 
 import Foundation
 import OSLog

@@ -19,7 +19,7 @@
 //     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/INGR
 //   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(INGR, ...)` line 7909
 //     — int32 Value + float Weight DATA, then the 8-byte ENIT above.
-// Layout documented in docs/formats/records.md.
+// Layout documented in docs/formats/item-records.md.
 
 import Foundation
 

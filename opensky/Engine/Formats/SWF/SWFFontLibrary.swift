@@ -5,7 +5,7 @@
 //
 // GFx font naming is observed, not specified: a `map` font name matches either
 // an ExportAssets export name or a DefineFont2/3 internal font name, tried in
-// that order and then case-insensitively. Documented in docs/formats/swf.md.
+// that order and then case-insensitively. Documented in docs/formats/swf-text.md.
 
 import Foundation
 

@@ -12,7 +12,7 @@
 // 0xC1215BE6, BSCyclicBlendTransitionGenerator 0x5119EB06,
 // BSOffsetAnimationGenerator 0xB8571122). No Havok SDK, Creation Kit, or SKSE
 // internals consulted (AGENTS.md Legal & IP). Byte map:
-// docs/formats/hkx-behavior-nodes.md.
+// docs/formats/hkx-behavior-modifiers.md.
 
 import Foundation
 

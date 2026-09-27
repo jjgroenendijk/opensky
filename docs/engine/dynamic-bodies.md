@@ -38,7 +38,7 @@ off for that list. Both rules and the reasoning behind them are in
 
 ## Which bodies simulate
 
-The [dynamics census](/formats/nif-collision.md) settled this on real data rather than on
+The [dynamics census](/formats/nif-rigid-body.md) settled this on real data rather than on
 what `nif.xml` allows. Vanilla exports most static geometry as `MO_SYS_BOX_STABILIZED` with
 `MO_QUAL_INVALID` and zero mass, so the motion byte alone would make 1027 immovable bodies
 dynamic. `NIFRigidBodyDynamics.isSimulated` is the discriminator: a *known* simulated motion

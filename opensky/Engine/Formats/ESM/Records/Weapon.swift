@@ -43,7 +43,7 @@
 //   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(WEAP, ...)` line
 //     10499 — DATA at 10530, DNAM at 10535 (member-by-member offsets), CRDT
 //     at 10604 with the `IsSSE` unused-byte split.
-// Layout documented in docs/formats/records.md.
+// Layout documented in docs/formats/item-records.md.
 
 import Foundation
 

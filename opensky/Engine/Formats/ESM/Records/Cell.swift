@@ -5,7 +5,7 @@
 //
 // Reference: UESP "Skyrim Mod:Mod File Format/CELL"
 //   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CELL
-// Layout documented in docs/formats/records.md.
+// Layout documented in docs/formats/world-records.md.
 
 import Foundation
 

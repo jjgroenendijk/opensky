@@ -38,7 +38,7 @@ it needs the arbitration that belongs to the equipment milestone.
 MSTT remains non-interactive. The builder also excludes ACTI records whose header has
 `Ignore Object Interaction`, automatic DOOR records, and FURN records whose marker flags
 disable activation. The layouts and open-spec citations are in
-[record decoders](/formats/records.md).
+[record decoders](/formats/world-records.md).
 
 ## Selection
 

@@ -19,7 +19,7 @@
 //   (Index: 699; Name: 'HasMagicEffectKeyword'; ParamType1: ptKeyword)
 //
 // The eight were chosen by measuring the active load order rather than by
-// taste; the per-function counts are in docs/formats/conditions.md.
+// taste; the per-function counts are in docs/engine/condition-functions.md.
 //
 // ## The one place OpenSky answers a narrower question than the engine did
 //
@@ -32,7 +32,7 @@
 // for the former." (<https://ck.uesp.net/wiki/HasMagicEffect>) OpenSky stores
 // only effects that were actually applied, so it answers the *latter*: an
 // effect whose spell-side condition failed was never applied and is invisible
-// here. The difference is recorded in docs/formats/conditions.md rather than
+// here. The difference is recorded in docs/engine/condition-functions.md rather than
 // papered over; every effect that is running answers identically.
 
 import Foundation

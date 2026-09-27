@@ -5,7 +5,7 @@
 // semantics (spec chapter 10, "The glyph coordinate system").
 //
 // Reference: Adobe SWF File Format Specification, version 19, chapter 10
-// (pp. 176-179). Documented in docs/formats/swf.md and docs/rendering/ui.md.
+// (pp. 176-179). Documented in docs/formats/swf-text.md and docs/rendering/ui.md.
 
 import CoreGraphics
 

@@ -1,271 +1,166 @@
 ---
 type: File Format
 title: Papyrus compiled script container (.pex)
-description: Big-endian Skyrim SE PEX 3.2 framing, typed object and function
-  models, bytecode operands, VFS path policy, and vanilla census evidence.
+description: Big-endian Skyrim SE PEX 3.2 layout - header, string table, objects,
+  functions, values, and opcodes - and script path rules.
 tags: [format, papyrus, pex, bytecode]
-timestamp: 2026-07-30T00:00:00Z
 ---
 
-# Papyrus compiled script container (.pex)
+# Papyrus compiled script (.pex)
 
-Skyrim Special Edition stores compiled Papyrus programs under `scripts\` as
-`.pex` files. OpenSky decodes the container into typed objects, properties,
-variables, states, functions, instructions and values. Execution belongs to the
-Papyrus virtual machine; this layer only validates and represents the file.
+Skyrim SE stores compiled Papyrus scripts as `.pex` files under `scripts\`. OpenSky reads
+the file into objects, properties, variables, states, functions, and instructions. The
+[Papyrus VM](/engine/papyrus-vm.md) runs them.
 
-Layout source:
+Source:
 [UESP, Compiled Script File Format](https://en.uesp.net/wiki/Skyrim_Mod:Compiled_Script_File_Format).
-The page is the source for the big-endian byte order, field widths, flags,
-value encodings and opcode table. No Bethesda code or compiled script bytes are
-copied into the repository.
+It gives the big-endian byte order, the field sizes, the flags, the value types, and the
+opcode table.
 
-Decoder: `opensky/Engine/Formats/PEX/PexFile.swift`, with the byte reader and top-level
-framing in `PexDecoder.swift`, object framing in `PexDecoderObject.swift`, and
-function and bytecode framing in `PexDecoderFunction.swift`.
+## Version
 
-## Contents
+UESP calls the Skyrim layout PEX 3.0, and 3.1 for later updates. Vanilla Skyrim SE files
+(base game, DLC, and Creation Club) all have version 3.2 and game ID 1. All 14,302 vanilla
+scripts decode with the documented layout. So OpenSky accepts major version 3 with minor
+version 0 to 2. It rejects newer versions, so that Fallout 4 fields are never read as
+Skyrim fields.
 
-* [Observed revision](#observed-revision)
-* [Container layout](#container-layout)
-* [Objects and functions](#objects-and-functions)
-* [Values and instructions](#values-and-instructions)
-* [Decode policy](#decode-policy)
-* [VFS loading](#vfs-loading)
-* [Vanilla sweep evidence](#vanilla-sweep-evidence)
-* [Native-call census](#native-call-census)
-* [Scope](#scope)
+Every integer and float is big-endian. A string is a big-endian uint16 byte count, then the
+bytes. UESP says UTF-8, but a mod's compiler can write anything. So strings follow the
+[string decoding](/decisions/string-decoding.md) policy, and no string can fail the file.
 
-## Observed revision
+## Header
 
-The UESP page labels the Skyrim layout as PEX 3.0 and notes 3.1 for later
-Skyrim updates. A read-only probe on 2026-07-30 sampled the base-game, DLC and
-Creation archives and found version bytes `3.2`, game ID 1, in all samples.
-The complete sweep below then decoded all 14,302 files with the documented
-Skyrim layout. This version label is the only observed deviation from the page:
-OpenSky accepts major version 3 and minor versions 0 through 2, and rejects
-newer revisions before their Fallout 4 additions can be mistaken for Skyrim
-fields.
-
-Every integer and float in a PEX file is big-endian. Strings are byte runs
-prefixed by a big-endian `uint16` byte count; the page calls them UTF-8, but a
-mod's compiler is free to emit anything, so they decode under the engine-wide
-lenient text policy ([string decoding](/decisions/string-decoding.md)) and no
-string can fail the file.
-
-## Container layout
-
-### Header
-
-| type | field | policy |
+| Type | Field | Check |
 | --- | --- | --- |
-| `uint32` | magic | must be `0xFA57C0DE` |
-| `uint8` | major version | must be 3 |
-| `uint8` | minor version | 0 through 2 |
-| `uint16` | game ID | must be 1 for Skyrim |
-| `uint64` | compilation time | retained verbatim |
-| `wstring` | source file name | lenient text decode |
-| `wstring` | user name | lenient text decode |
-| `wstring` | machine name | lenient text decode |
+| uint32 | Magic | Must be `0xFA57C0DE` |
+| uint8 | Major version | Must be 3 |
+| uint8 | Minor version | 0 to 2 |
+| uint16 | Game ID | Must be 1 (Skyrim) |
+| uint64 | Compile time | Kept |
+| wstring | Source file name | Kept |
+| wstring | User name | Kept |
+| wstring | Machine name | Kept |
 
-The metadata strings are part of the public in-memory header because tools may
-need them, but OpenSky does not use them to locate source files.
+## String table
 
-### String table
+A uint16 count, then that many strings. Later fields refer to strings by uint16 index.
+OpenSky resolves every index while reading, so the decoded model holds text, not indices.
+An index outside the table is an error.
 
-| type | field | notes |
-| --- | --- | --- |
-| `uint16` | count | number of following entries |
-| `wstring[count]` | strings | indexed by later `uint16` references |
+## Debug information
 
-All string indices resolve while decoding. Public models contain `String`
-values, never table indices. An invalid reference throws
-`PexError.stringIndexOutOfRange(index:count:)`, naming both the bad index and
-the available count.
+One byte says whether debug information follows. If it does: a uint64 modification time
+and a uint16 function count. Each function entry has string indices for the object, state,
+and function names, a one-byte function kind (0 to 3), a uint16 line count, and that many
+uint16 source line numbers.
 
-### Debug information
+## User flags and objects
 
-One byte says whether debug information follows. When present, it contains a
-`uint64` modification time and a `uint16` function count. Each function entry
-has string indices for object, state and function names, a one-byte function
-kind, a `uint16` line count and that many `uint16` source line numbers.
-Function kinds 0 through 3 are accepted; another value is malformed.
-
-### User flags and objects
-
-The debug section is followed by:
-
-| type | field |
+| Type | Field |
 | --- | --- |
-| `uint16` | user-flag count |
-| repeated | string index plus one-byte flag bit index |
-| `uint16` | object count |
-| repeated | string index, `uint32` object size, object body |
+| uint16 | User flag count |
+| repeats | String index and one-byte bit index |
+| uint16 | Object count |
+| repeats | String index, uint32 object size, object body |
 
-The stored object size includes its own four-byte size word. OpenSky places a
-bounded subreader around every body and requires the body to consume exactly
-that declared span. This catches both an overrun and an otherwise invisible
-under-read before the next object is decoded at the wrong offset.
+The object size includes its own 4 bytes. OpenSky reads each body inside that size and
+requires the body to use exactly all of it. This finds both reading too far and reading too
+little, before the next object is read at the wrong offset.
 
-## Objects and functions
+## Objects
 
-An object body begins with string indices for its parent class and
-documentation, a `uint32` user-flag mask, and a string index for its automatic
-state. Three counted collections follow: variables, properties and states.
+An object starts with string indices for its parent class and its documentation, a uint32
+user flag mask, and a string index for its automatic state. Three counted lists follow:
+variables, properties, and states.
 
-### Variables
+A variable is a name index, a type name index, uint32 user flags, and one value. OpenSky
+keeps the value even when it does not match the declared type. Type checks belong to the VM.
 
-A variable is a name index, type-name index, `uint32` user flags, and one typed
-value. The initial value is retained even when its declared type and encoded
-value differ; type checking is a virtual-machine concern.
+A property is name, type, and documentation indices, uint32 user flags, and a one-byte flag
+mask:
 
-### Properties
-
-A property stores name, type and documentation indices, `uint32` user flags,
-and a one-byte flag mask:
-
-| bit | model flag | following data |
+| Bit | Flag | Data that follows |
 | --- | --- | --- |
-| 0 | `readable` | getter function unless automatic |
-| 1 | `writable` | setter function unless automatic |
-| 2 | `automatic` | backing-variable name index |
+| 0 | Readable | Getter function, unless automatic |
+| 1 | Writable | Setter function, unless automatic |
+| 2 | Automatic | Index of the backing variable |
 
-Getter and setter bodies have the same shape as other functions but no
-separate function-name field. Automatic properties carry the backing variable
-instead and do not decode handlers.
+A getter or setter is a function without its own name field. An automatic property has a
+backing variable instead of getter and setter.
 
-### States and functions
+A state is a name index and a counted list of named functions.
 
-A state has a name index and a counted list of named functions. A function
-contains:
+## Functions
 
-| type | field |
+| Type | Field |
 | --- | --- |
-| string index | return type |
-| string index | documentation |
-| `uint32` | user flags |
-| `uint8` | function flags: global bit 0, native bit 1 |
-| counted typed names | parameters |
-| counted typed names | local variables |
-| counted instructions | bytecode body |
+| string index | Return type |
+| string index | Documentation |
+| uint32 | User flags |
+| uint8 | Function flags: bit 0 global, bit 1 native |
+| counted (name, type) pairs | Parameters |
+| counted (name, type) pairs | Local variables |
+| counted instructions | Body |
 
-Each typed name is a name index followed by a type-name index. Native functions
-normally have no bytecode body, but the decoder does not make that a structural
-requirement.
+Native functions normally have no body, but OpenSky does not require this.
 
-## Values and instructions
+## Values
 
-Each operand begins with a one-byte value kind:
+Each value starts with a one-byte kind:
 
-| kind | model | payload |
+| Kind | Value | Data |
 | --- | --- | --- |
-| 0 | `null` | none |
-| 1 | `identifier` | string-table index |
-| 2 | `string` | string-table index |
-| 3 | `integer` | `int32` |
-| 4 | `float` | IEEE-754 binary32 bits |
-| 5 | `boolean` | one byte, zero is false |
+| 0 | null | none |
+| 1 | identifier | string index |
+| 2 | string | string index |
+| 3 | integer | int32 |
+| 4 | float | float32 |
+| 5 | Boolean | one byte. 0 is false |
 
-The opcode byte selects a fixed operand count for opcodes `0x00` through
-`0x23`. The set covers no-op, integer and float arithmetic, comparisons,
-branches, assignment and cast, calls, return, string concatenation, properties,
-and array creation, length, element access, mutation and searches.
+## Instructions
 
-`callmethod`, `callparent` and `callstatic` have fixed target/result operands
-followed by one typed value that must be a non-negative integer argument count,
-then that many typed argument values. Keeping the count value in
-`PexInstruction.operands` preserves the encoded stream shape for the
-interpreter while the decoder still validates it.
+The opcode byte sets a fixed number of operands for opcodes `0x00` to `0x23`. They cover:
+no-op, integer and float math, comparisons, jumps, assign and cast, calls, return, string
+join, properties, and arrays (create, length, get, set, find).
 
-An opcode outside `0x00...0x23` becomes `PexOpcode.unknown(rawByte)` rather
-than aborting the script. Skyrim opcodes do not carry a length, so the decoder
-cannot safely infer operands for an unknown byte; the preserved instruction
-has no operands. The inventory can still expose the occurrence, and the
-virtual machine can fault if execution reaches it.
+`callmethod`, `callparent`, and `callstatic` have their fixed operands, then one value that
+must be an integer of 0 or more: the argument count. That many argument values follow.
+OpenSky keeps the count as an operand, so the instruction keeps its shape on disk.
 
-## Decode policy
+An opcode above `0x23` is kept as unknown with no operands. Skyrim opcodes have no length,
+so OpenSky cannot know how many operands to skip. The VM fails if it reaches one. Vanilla
+has none.
 
-`PexFile.init(data:)` is bounds checked throughout and throws a typed
-`PexError`. It rejects:
+## Errors
 
-* truncated fields and declared object spans;
-* wrong magic, non-Skyrim game ID or unsupported format versions;
-* string-table indices outside the table;
-* unknown value and debug-function kinds;
-* invalid object sizes, object under-reads and file trailing bytes; and
-* a call argument count that is not a non-negative integer.
+A cut field or object, a wrong magic, a game ID other than 1, an unsupported version, a
+string index out of range, an unknown value or debug function kind, a wrong object size,
+extra bytes at the end of the file, or an argument count that is not an integer of 0 or
+more, is an error.
 
-The synthetic `PexFixture` constructs its bytes in code. It covers empty and
-Unicode strings, all six value types, every Skyrim opcode and each call
-encoding, debug information, flags, objects, variables, automatic properties,
-states, function headers, truncation, invalid indices and headers, negative
-argument counts, and unknown-opcode preservation. No `.pex` fixture or extracted
-game data is tracked.
+## Script paths
 
-## VFS loading
+- A bare `NAME` becomes `scripts\name.pex`.
+- `scripts\NAME`, `data\scripts\NAME.pex`, and a leading separator are accepted.
+- Separators and case follow the [VFS](/formats/vfs.md) rules.
+- A name with a `:` is rejected.
 
-`PexScriptLoader.canonicalScriptPath(_:)` is a pure transform:
+## Vanilla scripts
 
-* bare `NAME` becomes `scripts\name.pex`;
-* `scripts\NAME`, `data\scripts\NAME.pex` and leading separators are accepted;
-* separators and case normalize through the shared VFS policy; and
-* any input containing `:` is rejected before normalization.
-
-Loading uses an injectable `(String) throws -> Data` closure. Production passes
-`VirtualFileSystem.contents(forPath:)`; unit tests pass a stub. Enumeration
-filters the VFS archive inventory to `scripts\*.pex`, then returns its
-path-sorted results. Loose files still win when a listed path is loaded because
-resolution remains the VFS's responsibility.
-
-## Vanilla sweep evidence
-
-`PexRealDataTests` ran through `make realtest` on 2026-07-30 against the retail
-Special Edition install. It enumerated every archive-provided PEX path, loaded
-each through the VFS, decoded one file at a time, and wrote its aggregate report
-to gitignored `logs/pex-census.log`.
-
-| measure | observed |
+| Measure | Value |
 | --- | ---: |
-| script paths | 14,302 |
-| decoded scripts | 14,302 |
-| functions | 56,474 |
-| instructions | 310,731 |
-| external calls | 130,349 |
-| unknown opcodes | 0 |
-| decode failures | 0 |
+| Scripts | 14,302, all decode |
+| Functions | 56,474 |
+| Instructions | 310,731 |
+| Calls to other scripts | 130,349 |
+| Unknown opcodes | 0 |
 
-The gate asserts a script floor of 10,000, instruction and call floors, exact
-decoded/path equality, zero failures, and the unknown-opcode count pinned to
-zero. Counts are uncapped. Name tables for calls and failure paths are bounded
-to 1,024 distinct values by default.
+The most common opcodes are `callmethod`, `cast`, `assign`, `jmpf`, `jmp`, `return`,
+`cmp_eq`, and `callstatic`. The most called functions are `self.onBeginState`,
+`self.onEndState`, `self.GetOwningQuest`, and `game.GetPlayer`. Scripts spell function
+names with different case, but Papyrus looks names up without case.
 
-The most frequent opcodes were `callmethod` 119,282, `cast` 48,084, `assign`
-43,235, `jmpf` 20,761, `jmp` 17,724, `return` 16,447, `cmp_eq` 11,259 and
-`callstatic` 10,980. The top external object/function targets were
-`self.onBeginState` 14,302, `self.onEndState` 14,302,
-`self.GetOwningQuest` 7,449 and `game.GetPlayer` 4,725. Rankings preserve
-spelling and case because Papyrus source in the corpus uses several variants;
-coalescing them here would hide the surface a native registry must accept.
+## Not supported
 
-## Native-call census
-
-`PexNativeCensus` resolves native declarations across the decoded script
-inheritance graph, then assigns a typed `(script, function)` target to method,
-parent, and static call sites. Receiver types come from parameters, locals,
-variables, automatic properties, `self`, and inherited declarations. The
-result feeds the [Papyrus native registry](/engine/papyrus-vm.md) without
-guessing from operand spelling.
-
-The M11.1 retail gate observed 686 native declarations and 65,477 typed native
-references. Those call sites name 508 distinct native pairs; 18 are present in
-the standard registry, for 3.5% coverage. Counts and case-preserving rankings
-remain evidence about the installed corpus, while dispatch lookup itself is
-case-insensitive.
-
-## Scope
-
-This decoder is Skyrim-only. Fallout 4 additions documented on the same UESP
-page, including structs and their newer debug metadata, are deliberately
-outside M11. Execution semantics, scheduling and native function behavior
-remain outside the container parser. The typed census is its read-only bridge
-to those consumers.
+Fallout 4 additions on the same UESP page, such as structs and newer debug data.

@@ -7,7 +7,7 @@
 // blend mode, bit 9 test enable, bits 10-12 test function, bit 13 no
 // sorter).
 //   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif.md.
+// Layout documented in docs/formats/nif-materials.md.
 
 import Foundation
 

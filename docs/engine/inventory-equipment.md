@@ -16,7 +16,7 @@ equip, buy, sell, drop, save, load, and find the world and the actors exactly as
 left.
 
 Nothing new happens in the engine here. Every capability the loop exercises landed in
-[item and container records](/formats/actors.md), the inventory component under
+[item and container records](/formats/item-records.md), the inventory component under
 [runtime state](/engine/runtime-state.md), the world-item layer under
 [interaction](/engine/interaction.md), the equipment runtime, the
 [inventory menu](/engine/inventory-menu.md) and the
@@ -196,7 +196,7 @@ records of the same plugin by `EquipSlotTable`
 (`opensky/Engine/Inventory/EquipSlotTable.swift`): `EitherHand` resolves to the right hand,
 `BothHands` to both, `Shield` to the left, and a slot that names no hand — `Voice`,
 `Potion` — to none. The walk and the two policies behind it are documented under
-[magic records](/formats/magic-records.md); `EquipSlotStore` is the load-order-wide view
+[magic records](/formats/shouts-equip-slots.md); `EquipSlotStore` is the load-order-wide view
 the inspectors use.
 
 Issue #467 replaced the earlier heuristic, which read hands off the WEAP `DNAM` animation

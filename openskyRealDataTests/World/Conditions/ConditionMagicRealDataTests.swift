@@ -31,7 +31,7 @@ struct ConditionMagicRealDataTests {
 
     /// Magic-adjacent indices the sweep measured and this milestone leaves
     /// tallied, so the tail is recorded rather than implied. See
-    /// docs/formats/conditions.md for why each is deferred.
+    /// docs/engine/condition-functions.md for why each is deferred.
     private static let deferredIndices: [UInt16] = [
         101, 552, 595, 596, 597, 627, 664, 681, 693, 696, 706, 713, 724
     ]

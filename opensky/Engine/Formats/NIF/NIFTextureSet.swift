@@ -7,7 +7,7 @@
 //
 // Reference: NifTools nif.xml (BSShaderTextureSet, SizedString).
 //   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif.md.
+// Layout documented in docs/formats/nif-materials.md.
 
 import Foundation
 

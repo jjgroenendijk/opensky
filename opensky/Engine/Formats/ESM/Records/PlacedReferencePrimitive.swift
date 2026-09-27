@@ -6,7 +6,7 @@
 // Struct cross-check: xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas line 9701
 //   `wbStruct(XPRM, 'Primitive', [wbStruct('Bounds', ...), wbFloatRGBA,
 //   wbInteger('Type', itU32, wbEnum([...]))])`
-// Layout documented in docs/formats/records.md.
+// Layout documented in docs/formats/placed-references.md.
 
 import Foundation
 import simd
@@ -26,7 +26,7 @@ nonisolated extension PlacedReference {
         let color: SIMD3<Float>
         /// Fourth `wbFloatRGBA` member, named "Alpha" by xEdit and left
         /// unknown by UESP. Preserved verbatim rather than interpreted; see
-        /// the flagged uncertainty in docs/formats/records.md.
+        /// the flagged uncertainty in docs/formats/placed-references.md.
         let unknown: Float
         /// Volume shape. `halfExtents` reads as a box's half-size for `.box`
         /// and `.portalBox`, and as a radius triple for `.sphere`.

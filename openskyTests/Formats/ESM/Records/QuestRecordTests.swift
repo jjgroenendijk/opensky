@@ -3,7 +3,7 @@
 //
 // Layouts: UESP "Skyrim Mod:Mod File Format/QUST" and xEdit dev-4.1.6
 // Core/wbDefinitionsTES5.pas `wbRecord(QUST, 'Quest', ...)` line 8759.
-// See docs/formats/records.md.
+// See docs/formats/quest-records.md.
 
 import Foundation
 @testable import opensky

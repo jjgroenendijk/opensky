@@ -1,78 +1,62 @@
 ---
 type: Subsystem
 title: Virtual file system (resource lookup)
-description: How OpenSky resolves game resource paths across loose files and BSA archives.
+description: How OpenSky finds a game resource path in loose files and BSA archives.
 tags: [engine, vfs, archive, io]
-timestamp: 2026-07-09T00:00:00Z
 ---
 
 # Virtual file system
 
-One lookup layer over the game data root (`VirtualFileSystem` +
-`ArchiveLoadOrder`, `opensky/Engine/GameData/`). Callers ask for game-style resource
-paths (`meshes\clutter\cup.nif`); VFS finds the bytes in loose files or BSA
-archives. These are OpenSky's own rules, chosen to match observed game/modding
-behavior; archive-load background from UESP "Skyrim Mod:Archive File Format"
-(<https://en.uesp.net/wiki/Skyrim_Mod:Archive_File_Format>).
+The virtual file system (VFS) turns a game resource path, for example
+`meshes\clutter\cup.nif`, into bytes. The bytes come from a loose file under `Data/` or from
+a BSA archive. The code is in `opensky/Engine/GameData/`.
+
+These rules are OpenSky's own. They match what the game and mod tools do. Background on
+archive loading: UESP
+[Archive File Format](https://en.uesp.net/wiki/Skyrim_Mod:Archive_File_Format).
 
 ## Path keys
 
-* Case-insensitive, separator-insensitive (`/` == `\`). Canonical key:
-  lowercase + backslash separators + redundant separators stripped.
-* Empty paths and `.` / `..` components rejected (`VFSError.invalidPath`) —
-  game data never uses them; they could escape the data root.
+- Paths ignore case, and `/` is the same as `\`. The key is lowercase with backslashes and
+  no double separators.
+- An empty path, or a path with a `.` or `..` part, is rejected. Game data never uses them,
+  and they could leave the data root.
 
-## Resolution order (per lookup)
+## Lookup order
 
-1. Loose file under `Data/` — modding convention: loose overrides archives.
-2. Archives, last-opened wins — plugin archives override base archives.
-3. Nothing -> `VFSError.fileNotFound`.
+1. A loose file under `Data/`. Mods expect loose files to win over archives.
+2. The archives. The archive opened last wins, so plugin archives win over base archives.
+3. Nothing found: the lookup fails.
 
-Loose lookup resolves each path component case-insensitively via lazily built
-per-directory listings, so it also works on case-sensitive volumes. Listings
-are cached and never invalidated: files added to `Data/` while the engine runs
-are not seen.
+Loose lookup matches each path part without case. This works on case-sensitive disks too.
+The directory listings are cached and never refreshed. A file added to `Data/` while
+OpenSky runs is not seen.
 
-## Archive open order (`ArchiveLoadOrder.resolve`)
+## Archive open order
 
-First opened = lowest priority. Steps:
+The first archive opened has the lowest priority.
 
-1. Ini resource lists: `sResourceArchiveList` then `sResourceArchiveList2`
-   (comma-separated, `[Archive]` section; keys matched case-insensitively
-   anywhere in the file). Ini source: both install-root files are loaded when
-   present and merged per key by `INISettings` — `Skyrim_Default.ini` at low
-   priority, `Skyrim.ini` overriding it — so each key resolves independently.
-   Only when neither file supplies either key does the built-in copy of the
-   vanilla SSE 1.6 lists apply. (The real user ini lives in the Windows-side
-   `My Games` folder — under Proton prefixes on this setup; not probed yet.)
-2. Plugin-named archives: for every `.esm`/`.esp`/`.esl` in `Data/`, open
-   `<plugin>.bsa` then `<plugin> - Textures.bsa` when present (SSE auto-load
-   convention, UESP archive notes). Plugin order is the resolved
-   [plugin load order](/formats/plugins-txt.md) — pinned official masters,
-   `Skyrim.ccc`, then the active `plugins.txt` entries in file order — so a
-   mod's archive overrides the archives of every plugin loaded before it. A
-   plugin the load order does not name keeps its archive at the bottom of the
-   list rather than losing it; that deviation from the game, and why, is in
-   the plugins.txt page.
+1. The INI lists `sResourceArchiveList`, then `sResourceArchiveList2`, from the `[Archive]`
+   section. Both `Skyrim_Default.ini` and `Skyrim.ini` in the install root are read, and
+   `Skyrim.ini` wins per key. When neither file has either key, OpenSky uses a built-in copy
+   of the vanilla Skyrim SE 1.6 lists.
+2. Archives named after plugins. For each `.esm`, `.esp`, or `.esl` in `Data/`, OpenSky
+   opens `<plugin>.bsa`, then `<plugin> - Textures.bsa`, when they exist. UESP describes
+   this automatic loading. Plugins go in [load order](/formats/plugins-txt.md), so a mod's
+   archive wins over the archives of every plugin before it. A plugin not in the load order
+   keeps its archive at the bottom of the list. The plugins.txt page explains why.
 
-Names resolve case-insensitively against the on-disk `Data/` listing;
-duplicates collapse to the first mention. Listed-but-absent archives log +
-skip — vanilla ini lists `Skyrim - Patch.bsa`, which current installs no
-longer ship (observed 2026-07-09 on SSE 1.6 install). `MarketplaceTextures.bsa`
-matches no plugin and no ini entry -> never opened; the game only uses it for
-Creation Club menu previews.
+Archive names match the files in `Data/` without case. A name listed twice counts once. A
+listed archive that does not exist is logged and skipped. For example, the vanilla INI lists
+`Skyrim - Patch.bsa`, which current installs do not ship. `MarketplaceTextures.bsa` matches
+no plugin and no INI entry, so it is never opened. The game uses it only for Creation Club
+menu previews.
 
-## Laziness + failure behavior
+## Opening and errors
 
-* Archives open (tables parsed) on first lookup, not at VFS construction;
-  payload extraction was already lazy in the BSA parser ([BSA](/formats/bsa.md)).
-* Malformed/unreadable archive -> `os_log` error once, slot skipped forever,
-  lookup falls through to lower-priority sources. Never fatal (mod-quirk rule).
-* Corrupt payload inside a healthy archive -> extraction error propagates to
-  the caller; no fallthrough to shadowed copies (matches game behavior).
-
-## Concurrency
-
-`VirtualFileSystem` is `Sendable`; archive slots + directory listings sit
-behind a `Mutex` (Synchronization). Archive table parse happens under the
-lock — one-time cost per archive, first toucher pays.
+- An archive reads its tables on the first lookup, not when the VFS is built. File data is
+  read only when asked for (see [BSA](/formats/bsa.md)).
+- A broken archive is logged once and skipped from then on. Lookups fall through to the
+  archives below it. This is never fatal, because mods sometimes ship broken files.
+- A broken file inside a good archive gives an error to the caller. The lookup does not
+  fall through to a lower copy. The game behaves the same way.

@@ -22,7 +22,7 @@ A cast spell's projectile flies through this same pipeline; see
 
 Impl: `opensky/Engine/Combat/Archery*.swift` and `Projectile*.swift`, plus
 `opensky/App/GameView/GameViewController+Archery.swift` and its two satellites. The record:
-[ESM records](/formats/records.md). The graph underneath:
+[ESM records](/formats/projectiles.md). The graph underneath:
 [behavior graph runtime](/engine/behavior-runtime.md). The sweep it borrows:
 [dynamic rigid bodies](/engine/dynamic-bodies.md). The health it takes off:
 [actor values](/engine/actor-values.md). The spawn channel a stuck arrow rides:

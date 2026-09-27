@@ -1,6 +1,6 @@
 // ActorVisualResolver tests (milestone 5.2) over synthetic in-code records
 // (ESMFixture) — never extracted game files (AGENTS.md "Legal & IP boundary").
-// Chain shapes + FaceGen convention: docs/formats/actors.md.
+// Chain shapes + FaceGen convention: docs/engine/actor-resolution.md.
 
 import Foundation
 @testable import opensky

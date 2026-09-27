@@ -22,7 +22,7 @@
 // And the combat target, because CTDA run-on type 3 names it and it is per
 // actor rather than per session.
 //
-// Documented in docs/formats/conditions.md and docs/engine/combat.md.
+// Documented in docs/engine/condition-functions.md and docs/engine/combat.md.
 
 import Foundation
 
@@ -109,7 +109,7 @@ nonisolated struct ActorConditionState: ActorValueReadable, Equatable, Sendable 
     /// tracks where the weapon is and not whether the actor is unarmed while it
     /// is out; an unarmed actor with its hands up therefore reads as 2. That is
     /// a stated deviation rather than a silent one — see
-    /// docs/formats/conditions.md.
+    /// docs/engine/condition-functions.md.
     var weaponOutValue: Float? {
         weaponDrawState.map { $0.isWeaponInHand ? 2 : 0 }
     }

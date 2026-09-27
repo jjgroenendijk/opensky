@@ -25,7 +25,7 @@
 //     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/ALCH
 //   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(ALCH, ...)` line 4042
 //     — `wbFloat(DATA, 'Weight')` then the ENIT struct above.
-// Layout documented in docs/formats/records.md.
+// Layout documented in docs/formats/item-records.md.
 
 import Foundation
 

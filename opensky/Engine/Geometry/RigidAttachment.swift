@@ -30,7 +30,7 @@
 // model that is never animated (animation disabled, or a clip that failed to
 // load) still hangs in the right place instead of collapsing to the origin.
 //
-// Documented in docs/formats/actors.md.
+// Documented in docs/engine/actor-resolution.md.
 
 import Foundation
 import simd

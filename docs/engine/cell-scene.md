@@ -51,7 +51,7 @@ non-CELL/WRLD/REFR/STAT/MSTT/TREE/FURN/ACTI/CONT/DOOR records are never decoded.
 
 Milestone 3.2 "widen base coverage": a ref's base FormID is resolved against two lazy,
 cached indices, STAT first, then `ModelBase` (MSTT/TREE/FURN/ACTI/CONT/DOOR —
-[record decoders](/formats/records.md)):
+[record decoders](/formats/world-records.md)):
 
 * FormID -> `StaticObject` over the single STAT top group.
 * FormID -> `ModelBase` over six top groups, one per record type (unlike STAT there is
@@ -85,7 +85,7 @@ Ignored deliberately (not refs, not counted): non-REFR records inside cell child
 (NAVM, PGRE, ... — not static placements, out of scope) and deleted REFRs (they
 remove placements, nothing to draw). ACHR left this list in 5.5: placed actors run a
 parallel collect/resolve/assemble pass with its own exact accounting
-(`discovered = rendered + disabled + failed` — [actor records](/formats/actors.md)).
+(`discovered = rendered + disabled + failed` — [actor resolution](/engine/actor-resolution.md)).
 LAND is no longer ignored — `buildTerrain` decodes
 it into ground geometry ([terrain mesh build](/engine/terrain.md)). Malformed groups under
 the WRLD tree are pruned with a log, letting sibling blocks still resolve.

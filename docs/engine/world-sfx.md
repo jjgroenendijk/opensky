@@ -51,7 +51,7 @@ alongside the director, not replace it.
 
 A use-key press publishes one `InteractionEvent` carrying the target's
 `PlacedInteraction.sounds` (resolved at cell-build time from
-[ModelBase sound fields](/formats/records.md)). The director resolves the
+[ModelBase sound fields](/formats/world-records.md)). The director resolves the
 `activation` FormID, follows its descriptor's `SNDR.GNAM -> SNCT.PNAM` chain to
 a vanilla menu category, and plays it at the placed reference's position.
 Missing or malformed category metadata falls back to Effects.

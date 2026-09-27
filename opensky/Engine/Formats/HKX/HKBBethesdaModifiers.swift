@@ -11,7 +11,7 @@
 // BSModifyOnceModifier 0x1E20A97A, BSSpeedSamplerModifier 0xD297FDA9,
 // BSRagdollContactListenerModifier 0x8003D8CE). No Havok SDK, Creation Kit, or
 // SKSE internals consulted (AGENTS.md Legal & IP). Byte map:
-// docs/formats/hkx-behavior-nodes.md.
+// docs/formats/hkx-behavior-modifiers.md.
 
 import Foundation
 

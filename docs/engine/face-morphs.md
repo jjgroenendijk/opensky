@@ -15,7 +15,7 @@ applies the result, but `.lip` timing and expression scheduling belong to later 
 
 The container and record chain are documented in
 [FaceGen TRI expression container](/formats/tri.md). Actor appearance and baked FaceGen
-assembly remain documented in [actor records](/formats/actors.md).
+assembly remain documented in [actor resolution](/engine/actor-resolution.md).
 
 ## Contents
 

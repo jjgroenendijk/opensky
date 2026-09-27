@@ -19,7 +19,7 @@
 //   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MISC
 //   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas: MISC (line 8303), KEYM (7942)
 //   and INGR (7909) all spell the 8-byte DATA as int32 Value + float Weight.
-// Layout documented in docs/formats/records.md.
+// Layout documented in docs/formats/item-records.md.
 
 import Foundation
 

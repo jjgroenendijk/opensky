@@ -20,7 +20,7 @@
 // `GetDistance` is the only condition function that needs one, it needs two at
 // once, and both come from the same pass that produced the pairs.
 //
-// Documented in docs/formats/conditions.md and docs/engine/detection.md.
+// Documented in docs/engine/condition-functions.md and docs/engine/detection.md.
 
 import Foundation
 import simd

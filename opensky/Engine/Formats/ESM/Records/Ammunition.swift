@@ -20,7 +20,7 @@
 //     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/AMMO
 //   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(AMMO, ...)` line 4087
 //     — the `IsSSE(...)` pair at 4101 is the authority for the two sizes.
-// Layout documented in docs/formats/records.md.
+// Layout documented in docs/formats/item-records.md.
 
 import Foundation
 

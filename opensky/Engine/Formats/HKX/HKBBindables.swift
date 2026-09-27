@@ -12,7 +12,7 @@
 // 64-bit member offsets from ret2end/HKX2Library (MIT); signatures match the
 // local SSE files (hkbVariableBindingSet 0x338AD4FF, hkbBoneWeightArray
 // 0xCD902B77, hkbBoneIndexArray 0x00AA8619). Byte map and citations:
-// docs/formats/hkx-behavior-nodes.md.
+// docs/formats/hkx-behavior-modifiers.md.
 
 import Foundation
 

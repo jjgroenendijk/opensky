@@ -14,7 +14,7 @@ what choosing one does, and what survives a save. Its visible layers frame and f
 speaker, play the selected voice, and drive that actor's mouth from the embedded lip track.
 The record side — DIAL, INFO and VTYP bytes — is
 [dialogue records](/formats/dialogue.md); the shared condition machinery is
-[conditions](/formats/conditions.md); the quest state a topic is gated on is
+[conditions](/engine/conditions.md); the quest state a topic is gated on is
 [runtime reference identity and world state](/engine/runtime-state.md).
 
 ## Contents
@@ -188,7 +188,7 @@ with. Six functions landed together — `GetInFaction`, `GetFactionRank`,
 `IsHostileToActor` — over a `factions` seam shaped like the quest, actor and dialogue ones:
 one social profile per actor, plus the `FACT` store a `ptFaction` parameter resolves against.
 Their semantics, the two disagreeing return-value tables they sit between, and what is
-deliberately still unregistered are in [conditions](/formats/conditions.md); the memberships
+deliberately still unregistered are in [conditions](/engine/condition-functions.md); the memberships
 behind them are in [derived hostility](/engine/combat.md).
 
 Everything else on the demand list belongs to another subsystem — inventory,
@@ -201,7 +201,7 @@ Said-state travels in its own additive `DLGS` chunk, split out of `RDLT` for the
 other gameplay chunk is: a component kind inside `RDLT` is versioned by `formatVersion`, so
 an older build would refuse the whole file instead of loading the rest of the world. A
 session in which nobody spoke writes no chunk at all. Layout:
-[OpenSky save container](/formats/opensky-save.md).
+[OpenSky save container](/formats/opensky-save-actor-chunks.md).
 
 An entry is one key plus one `UInt32` count. The untouched baseline is never written, and an
 entry whose count decodes as zero is dropped rather than stored, so a restored world compares

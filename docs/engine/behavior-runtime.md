@@ -616,7 +616,7 @@ than to the arms alone — vanilla's is a comfort setting, not a lens on the han
 **Equipment.** The arms are assembled through the same `ActorAssembler` path as the body,
 from the same resolved visual projected onto the first-person rig, so the M12 runtime
 equipment override reaches them without a second resolution. Pieces are swapped to their
-MOD4/MOD5 models ([actor records](/formats/actors.md)); a piece declaring none is dropped
+MOD4/MOD5 models ([armor records](/formats/armor.md)); a piece declaring none is dropped
 with reason `noFirstPersonModel`, which is why vanilla iron gauntlets show nothing on the
 arms while the cuirass and the hands do. That is a flagged consequence of the rule below,
 not a defect in the assembler.

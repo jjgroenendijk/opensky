@@ -5,7 +5,7 @@
 // still skipped.
 //
 // Every fixture is built in code — a save is OpenSky's own format and a
-// synthetic PEX object is not game data. See docs/formats/opensky-save.md.
+// synthetic PEX object is not game data. See docs/formats/opensky-save-world-chunks.md.
 
 import Foundation
 @testable import opensky

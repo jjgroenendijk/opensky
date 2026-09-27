@@ -1,138 +1,117 @@
 ---
 type: File Format
 title: hkaSkeleton Object
-description: Havok hkaSkeleton object layout (bone names, parent indices,
-  reference pose) inside the SSE packfile and how OpenSky name-maps it onto the
-  NIF skeleton nodes bind-pose skinning uses.
+description: Havok hkaSkeleton layout (bone names, parents, reference pose) in Skyrim SE
+  packfiles, and how its bones map onto NIF skeleton nodes.
 tags: [format, havok, hkx, skeleton, animation]
-timestamp: 2026-07-20T00:00:00Z
 ---
 
 # hkaSkeleton object
 
-The bone hierarchy + bind pose one Havok packfile holds. `skeleton.hkx` carries
-two: the animation rig (`NPC Root [Root]`, 99 bones) and the ragdoll physics
-skeleton (`Ragdoll_NPC COM [COM ]`, 18 bones). This page covers the object
-internals only; the packfile container that locates them (header, sections,
-fixups, class-name + object inventory) is [HKX container](/formats/hkx-container.md).
+An `hkaSkeleton` is a bone tree plus a bind pose. The bind pose is the rest position of
+every bone. `skeleton.hkx` holds two: the animation rig (`NPC Root [Root]`, 99 bones) and
+the ragdoll skeleton (`Ragdoll_NPC COM [COM ]`, 18 bones). The container that holds them is
+described in [HKX container](/formats/hkx-container.md).
 
-Parser: `opensky/Engine/Formats/HKX/HKASkeleton.swift` — `HKASkeleton.skeletons(in:)`
-walks the container's virtual-fixup object inventory, decodes each
-`hkaSkeleton`. Name-map: `SkeletonBoneMap.swift`. CLI dump:
-`openskycli skeleton <hkx-key> [--nif <nif-key>]` ([CLI](/tools/cli.md)). Tests:
-`HKASkeletonTests` + `SkeletonBoneMapTests` over synthetic `HKASkeletonFixture`.
+`openskycli skeleton <hkx-key> [--nif <nif-key>]` prints a skeleton and its NIF match (see
+[CLI](/tools/cli.md)).
 
 ## References
 
-No public Havok spec. Object layout reimplemented from independent open
-parsers + community docs, then every field probe-verified byte-by-byte against
-the local SSE install (`skeleton.hkx` human rig + ragdoll, wolf rig + ragdoll —
-all `hk_2010.2.0-r1` 64-bit LE, fileVersion 8):
+There is no public Havok specification. The layout comes from open parsers and community
+notes. Every field was then checked byte by byte against vanilla files: the human and wolf
+`skeleton.hkx`, each with rig and ragdoll, all `hk_2010.2.0-r1`, 64-bit little-endian.
 
-* exyorha/hkxparse (MIT) — hkArray/hkStringPtr shape, inline-element arrays.
-* ret2end/HKX2Library (MIT) — SSE-specific member order, string encoding.
-* ZeldaMods wiki "Havok" — hkaSkeleton/hkaBone/hkQsTransform member tables.
+- exyorha/hkxparse (MIT): `hkArray` and `hkStringPtr` shapes, arrays with inline elements.
+- ret2end/HKX2Library (MIT): Skyrim SE member order and string encoding.
+- ZeldaMods wiki "Havok": member tables for `hkaSkeleton`, `hkaBone`, and `hkQsTransform`.
 
-No Havok SDK or Bethesda code consulted (AGENTS.md Legal & IP).
+No Havok SDK or Bethesda code was used.
 
-## hkaSkeleton object (112 bytes, 8-byte pointers)
+## hkaSkeleton: 112 bytes
 
-At each `hkaSkeleton` virtual-fixup data offset in `__data__`. Member offsets:
+The object starts at its virtual fixup offset in `__data__`. Pointers are 8 bytes.
 
-| off | size | field | notes |
+| Offset | Size | Field | Notes |
 | --- | --- | --- | --- |
-| 0x00 | 8 | vtable ptr | zero on disk |
-| 0x08 | 8 | hkReferencedObject (memSizeAndFlags, referenceCount, pad) | both 0 in packfile — never trust |
-| 0x10 | 8 | m_name hkStringPtr | null ptr, string via local fixup |
-| 0x18 | 16 | m_parentIndices hkArray\<hkInt16\> | one i16 per bone (-1 = root) |
-| 0x28 | 16 | m_bones hkArray\<hkaBone\> | INLINE elements, stride 16 |
-| 0x38 | 16 | m_referencePose hkArray\<hkQsTransform\> | stride 48 |
-| 0x48 | 16 | m_referenceFloats hkArray\<hkReal\> | read past — not needed for skinning |
-| 0x58 | 16 | m_floatSlots hkArray\<hkStringPtr\> | read past |
-| 0x68 | 16 | m_localFrames hkArray | size 0 in every probed file |
+| 0x00 | 8 | vtable pointer | 0 on disk |
+| 0x08 | 8 | `hkReferencedObject` (size and flags, reference count, padding) | 0 on disk. Do not trust |
+| 0x10 | 8 | `m_name`, `hkStringPtr` | String found through a local fixup |
+| 0x18 | 16 | `m_parentIndices`, `hkArray<hkInt16>` | One int16 per bone. -1 is the root |
+| 0x28 | 16 | `m_bones`, `hkArray<hkaBone>` | Inline elements, 16 bytes each |
+| 0x38 | 16 | `m_referencePose`, `hkArray<hkQsTransform>` | 48 bytes each |
+| 0x48 | 16 | `m_referenceFloats`, `hkArray<hkReal>` | Not read |
+| 0x58 | 16 | `m_floatSlots`, `hkArray<hkStringPtr>` | Not read |
+| 0x68 | 16 | `m_localFrames`, `hkArray` | Size 0 in every file checked |
 
-The engine decodes m_name, m_parentIndices, m_bones, m_referencePose only —
-bind-pose skinning + animation retarget need nothing from referenceFloats /
-floatSlots / localFrames.
+Skinning and animation need only the name, parents, bones, and reference pose.
 
 ## hkArray descriptor
 
-`{ ptr(8, null on disk), i32 size @+8, u32 capacityAndFlags @+12 }`. Element
-data is located only via the local fixup whose `fromOffset` equals the array
-field's pointer offset; `toOffset` is the section-local data start. Rules:
+`{ pointer (8 bytes, null on disk), int32 size at +8, uint32 capacityAndFlags at +12 }`.
 
-* Use the `size` field for the element count. `capacityAndFlags` bit31 is a
-  Havok owned-storage flag; the low 30 bits are capacity — ignore both.
-* A size-0 array has a null pointer and NO fixup. Must not error — decode to an
-  empty list.
+The element data is found through the local fixup whose `fromOffset` equals the offset of
+the array's pointer. Its `toOffset` is the start of the data in the section.
 
-## hkaBone (inline, stride 16)
+- Use `size` for the element count. Ignore `capacityAndFlags`. Its bit 31 is a Havok
+  ownership flag and the low 30 bits are the capacity.
+- An empty array has a null pointer and no fixup. This is valid and gives an empty list.
 
-| off | size | field |
+## hkaBone: 16 bytes, inline
+
+| Offset | Size | Field |
 | --- | --- | --- |
-| 0x00 | 8 | m_name hkStringPtr (per-element local fixup at `bonesData + i*16`) |
-| 0x08 | 1 | m_lockTranslation hkBool |
-| 0x09 | 7 | pad |
+| 0x00 | 8 | `m_name`, `hkStringPtr` |
+| 0x08 | 1 | `m_lockTranslation`, `hkBool` |
+| 0x09 | 7 | Padding |
 
-m_bones holds inline hkaBone values (not a pointer array): N local fixups land
-at stride-16 `fromOffset`s inside the bones data. A bone's name fixup is
-required — a missing one throws `boneNameMissing` (the name keys skinning +
-the NIF map, so a null bone name is treated as malformed, not skipped).
+`m_bones` holds the bones themselves, not pointers to them. So there is one local fixup per
+bone name, at `bonesData + i * 16`. A bone without a name fixup is an error. Skinning and
+the NIF map use the name as the key, so a nameless bone is malformed.
 
-## hkQsTransform (48 bytes)
+## hkQsTransform: 48 bytes
 
-Parent-relative bind transform, matching NIF NiNode local transforms.
+The bind transform of a bone, relative to its parent. This matches the local transform of a
+NIF `NiNode`.
 
-| off | size | field |
+| Offset | Size | Field |
 | --- | --- | --- |
-| 0x00 | 16 | translation float4 (x, y, z, w) |
-| 0x10 | 16 | rotation quat (x, y, z, w) |
-| 0x20 | 16 | scale float4 (x, y, z, w) |
+| 0x00 | 16 | Translation, float4 (x, y, z, w) |
+| 0x10 | 16 | Rotation, quaternion (x, y, z, w) |
+| 0x20 | 16 | Scale, float4 (x, y, z, w) |
 
-The w lane of translation + scale is junk padding — decoded to `SIMD3` so it
-never reaches engine math, and not validated for finiteness. The 10 used lanes
-(3 translation, 4 quat, 3 scale) must be finite; a NaN/inf there throws
-`nonFiniteTransform`.
+The `w` of translation and scale is padding with random values. OpenSky drops it and does
+not check it. The 10 used values (3 translation, 4 rotation, 3 scale) must be finite
+numbers.
 
 ## hkStringPtr
 
-`{ ptr(8) }`, null on disk. String located via the local fixup at the pointer
-offset; NUL-terminated ASCII at `toOffset`. A hkStringPtr may legitimately have
-no fixup (null string) — m_name decodes to `nil`, never traps.
+An 8-byte pointer, null on disk. The string is found through the local fixup at the
+pointer's offset. It is null-terminated ASCII at `toOffset`. A string pointer with no fixup
+is a null string. This is valid.
 
-## Defensive decode
+## Error checks
 
-Real files carry mod quirks; malformed input throws a typed `HKASkeletonError`,
-never crashes (`implementing-format-parsers` skill, defensive parsing):
+- Every array must fit inside the section data.
+- An array with size above 0 must have a fixup.
+- Parents, bones, and reference pose must have the same count.
+- A parent index must be -1 or a valid bone index.
 
-* every array bound-checked against the section payload before reading
-  (`arrayOutOfBounds`);
-* size>0 array with no fixup -> `missingArrayData`;
-* m_parentIndices / m_bones / m_referencePose counts must agree -> `countMismatch`;
-* parent index neither -1 nor a valid bone index -> `parentOutOfRange`;
-* parents are topological in vanilla files (parent index < child) but the
-  parser does not require it — only the range is enforced.
+In vanilla files, a parent always comes before its child. OpenSky does not require this.
 
-## Name-map onto the NIF skeleton
+## Mapping bones to NIF nodes
 
-Skinning already keys bone transforms on NIF NiNode names
-(`NIFSkeleton.boneTransforms`). `SkeletonBoneMap` matches HKX bone names
-against that set by exact name equality (the vanilla rig shares names verbatim;
-normalization would mask real divergence) and reports mismatches both
-directions with a reason tag. The map is partial by design.
+Skinning finds bone transforms by NIF `NiNode` name. So OpenSky matches each HKX bone to
+the NIF node with exactly the same name. It does not ignore case or spaces, because that
+would hide real differences. Some bones have no match on purpose.
 
-Observed on the vanilla human rig (`skeleton.hkx` -> `skeleton.nif`, 99 bones,
-99 unique NIF node names): 93 exact matches, 6 HKX-only bones, 6 NIF-only
-nodes.
+Vanilla human rig (`skeleton.hkx` against `skeleton.nif`, 99 bones): 93 match, 6 exist only
+in HKX, and 6 exist only in the NIF.
 
-* HKX-only (no NIF node): `x_NPC LookNode [Look]`, `x_NPC Translate [Pos ]`,
-  `x_NPC Rotate [Rot ]` (animation control nodes), `Shield`, `Weapon`,
-  `Quiver` (attach nodes).
-* NIF-only (no HKX bone): `CharacterBumper`, `NPC`, `skeleton.nif` (root) plus
-  `SHIELD`, `WEAPON`, `QUIVER`.
+- HKX only: `x_NPC LookNode [Look]`, `x_NPC Translate [Pos ]`, `x_NPC Rotate [Rot ]`
+  (animation control nodes), and `Shield`, `Weapon`, `Quiver` (attach points).
+- NIF only: `CharacterBumper`, `NPC`, `skeleton.nif` (the root), and `SHIELD`, `WEAPON`,
+  `QUIVER`.
 
-The `Shield`/`Weapon`/`Quiver` bones and `SHIELD`/`WEAPON`/`QUIVER` nodes are
-the same attach points spelled with different case — an exact map leaves them
-unmatched by design (their transforms are irrelevant to body skinning; a fuzzy
-match would silently paper over the case split). This split is the reason both
-directions land on 6, not a lost bone.
+`Shield` and `SHIELD` are the same attach point with different case. The exact match leaves
+them apart. Body skinning does not use them, and a loose match would hide the difference.

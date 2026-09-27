@@ -7,7 +7,7 @@
 // (little-endian) with the bit-packed glyph SHAPEs; glyph shapes are located
 // through the OffsetTable rather than parsed sequentially, so any per-glyph
 // padding is irrelevant. Alignment follows the shape parser's observed rule
-// (byte-align each bit run) documented in docs/formats/swf.md.
+// (byte-align each bit run) documented in docs/formats/swf-text.md.
 
 import Foundation
 

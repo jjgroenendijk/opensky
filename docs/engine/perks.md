@@ -176,7 +176,7 @@ which is a worse wrong answer and a silent one. The counter is how much of it ha
 what.
 
 A tab that *is* bound is evaluated strictly through the ordinary `ConditionEvaluator`
-([conditions](/formats/conditions.md)): an unimplemented function is the usual reason-tagged
+([conditions](/engine/conditions.md)): an unimplemented function is the usual reason-tagged
 false, and the effect does not apply.
 
 ## Wired seams

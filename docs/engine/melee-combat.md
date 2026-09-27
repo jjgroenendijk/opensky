@@ -198,7 +198,7 @@ The attachment moves on the clip annotation, not on the request. `weaponDraw`
 puts the state in `drawing` and the weapon stays where it was; `BeginWeaponDraw`
 arrives when the hand has reached it, and that is the frame the model changes
 nodes. Sheathing is the mirror. The node names are in
-[actor records](/formats/actors.md); `RigidAttachment` does the rewrite.
+[actor resolution](/engine/actor-resolution.md); `RigidAttachment` does the rewrite.
 
 Not every equip clip carries that annotation. `1HM_Equip.hkx`, `Bow_Equip.hkx`
 and `CrossBow_Equip.hkx` do, at time 0.0; `Dag_Equip.hkx`, `Axe_Equip.hkx`,
@@ -397,7 +397,7 @@ From the IPDS onwards the two are identical, so `ImpactDataSet.impact(for:)` and
 `MeleeImpactResolver` reads its indexes straight off `FootstepStore`. WEAP
 `INAM` is "Normal weapon swing impact set. Points to a IPDS" (UESP); `BIDS` is
 the block-bash set and only a bash reads it. Both are decoded in
-[records](/formats/records.md).
+[records](/formats/item-records.md).
 
 The material passed is the ground material under the player, not the material of
 the body part that was struck: actors carry no per-body-part Havok material in

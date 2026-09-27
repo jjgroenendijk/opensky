@@ -5,7 +5,7 @@
 // retained rather than applied.
 //
 // Reference: Adobe SWF File Format Specification, version 19, chapter 10
-// (pp. 180-182). Documented in docs/formats/swf.md.
+// (pp. 180-182). Documented in docs/formats/swf-text.md.
 
 import Foundation
 

@@ -1,49 +1,52 @@
 ---
 type: File Format
 title: Skyrim INI settings
-description: Read-only INI decode, precedence, localization, typed values, and overrides.
+description: How OpenSky reads Skyrim INI files - file order, language selection, and the
+  terrain distance keys.
 tags: [format, ini, config, localization, lod]
-timestamp: 2026-08-14T00:00:00Z
 ---
 
 # Skyrim INI settings
 
-OpenSky reads Skyrim INI files as external config. It never edits them. Parser supports
-case-insensitive section/key names, comments, blank lines, and any text encoding the
-engine-wide policy covers ([string decoding](/decisions/string-decoding.md)).
-Repeated values use last declaration in one file. Files layer from low to high priority:
+OpenSky reads the Skyrim INI files as settings. It never writes them. Section and key names
+are case-insensitive. Text encoding follows the
+[string decoding](/decisions/string-decoding.md) policy.
 
-1. install `Skyrim_Default.ini`;
-2. install-root `SkyrimPrefs.ini`;
-3. install `Skyrim/SkyrimPrefs.ini` launcher profile;
-4. install-root then profile `Skyrim.ini`;
-5. install-root then profile `SkyrimCustom.ini`;
-6. complete OpenSky override stored in OpenSky user defaults.
+## File order
 
-Missing files/keys fall through. Malformed typed values also fall through to next valid
-lower-priority value. A setting reports its winning filename for app inspection.
+When a key appears twice in one file, the last value wins. Across files, a later file in
+this list wins over an earlier one:
 
-`[General] sLanguage` selects the language segment in localized plugin table paths such as
-`Strings/Skyrim_french.strings`. Localization reads `Skyrim.ini` and then
-`SkyrimCustom.ini`, including the install-root and `Skyrim/` profile copies. The value is
-trimmed, lowercased, and accepted only when it is a single filename-safe segment. Missing
-or invalid values use `english`. App Settings shows the resolved value and source, accepts
-a persistent OpenSky override, and reloads all string-table consumers immediately.
+1. `Skyrim_Default.ini` in the install.
+2. `SkyrimPrefs.ini` in the install root.
+3. `Skyrim/SkyrimPrefs.ini`, the launcher profile.
+4. `Skyrim.ini`: first the install root, then the profile.
+5. `SkyrimCustom.ini`: first the install root, then the profile.
+6. The OpenSky override, stored in OpenSky user defaults.
 
-The typed `[TerrainManager]` consumer reads:
+A missing file or key falls through to the file before it. A value with the wrong type (for
+example `abc` for a number) also falls through.
 
-| key | use |
-| --- | --- |
-| `fBlockLevel0Distance` | L4 terrain/object outer distance |
-| `fBlockLevel1Distance` | L8 terrain/object outer distance |
-| `fBlockMaximumDistance` | far terrain outer distance |
-| `fTreeLoadDistance` | traditional tree billboard outer distance |
+## Language
 
-Validation requires finite positive distances, level 0 <= level 1 <= maximum. Incomplete
-or invalid groups use safe defaults `35000/70000/250000/75000` world units. Sidebar writes
-all four OpenSky values atomically; `Use Skyrim INI` clears them and reloads read-only files.
+`[General] sLanguage` picks the language part of a string-table path, for example
+`Strings/Skyrim_french.strings`. OpenSky reads it from `Skyrim.ini` and `SkyrimCustom.ini`
+only. The value is trimmed and lowercased. It must be one segment that is safe in a file
+name. A missing or bad value gives `english`.
 
-Semantic reference: STEP SkyrimPrefs INI
+## Terrain distances
+
+OpenSky reads four `[TerrainManager]` keys. The STEP guide
 [`[TerrainManager]`](https://stepmodifications.org/wiki/Guide%3ASkyrimPrefs_INI/TerrainManager)
-documents each distance's Skyrim use. INI tokenization itself is text config, not a binary
-layout claim.
+explains what each one does in Skyrim.
+
+| Key | Use in OpenSky |
+| --- | --- |
+| `fBlockLevel0Distance` | Outer distance of LOD level 4 terrain and objects |
+| `fBlockLevel1Distance` | Outer distance of LOD level 8 terrain and objects |
+| `fBlockMaximumDistance` | Outer distance of far terrain |
+| `fTreeLoadDistance` | Outer distance of tree billboards |
+
+All four must be finite and positive, with level 0 <= level 1 <= maximum. If one is bad,
+all four use the defaults 35000, 70000, 250000, and 75000 world units. The sidebar writes
+all four OpenSky overrides together.

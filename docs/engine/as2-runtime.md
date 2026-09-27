@@ -12,7 +12,7 @@ timestamp: 2026-07-26T00:00:00Z
 # AS2 runtime
 
 Todo 8.3.2. The virtual machine that executes the ActionScript 1/2 bytecode
-[`SWFActionParser`](/formats/swf.md) frames, plus the display objects it drives.
+[`SWFActionParser`](/formats/swf-actions.md) frames, plus the display objects it drives.
 
 The milestone landed in three phases. Phase 1 is the interpreter and its object model —
 values, coercions, prototypes, functions, bounds, and the `AS2Host` seam. Phase 2 is the
@@ -1073,8 +1073,8 @@ unimplemented opcodes** on the current engine, before any work specific to it. W
 it was not ActionScript at all. `inventorymenu.swf` places three characters it never
 defines, and until 12.2.2 only font imports resolved, so the whole list subtree instantiated
 nothing and the movie came up as 11 display nodes with no list. Cross-movie character import
-(`SWFMovieImportMerger`, see [SWF container](/formats/swf.md)) takes it to 373 nodes and 16
-registered classes.
+(`SWFMovieImportMerger`, see [SWF display list](/formats/swf-display-list.md)) takes it
+to 373 nodes and 16 registered classes.
 
 Driven end to end — bring-up, a real inventory published into both lists, a category change
 and two row moves — the real-data gate measures 0 faults, 0 unimplemented opcodes,

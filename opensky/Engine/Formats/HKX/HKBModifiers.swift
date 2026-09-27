@@ -12,7 +12,7 @@
 // local SSE files (hkbModifierList 0xA4180CA1, hkbEventDrivenModifier
 // 0x7ED3F44E, hkbEvaluateExpressionModifier 0xF900F6BE,
 // hkbEventsFromRangeModifier 0xBC561B6E, hkbTimerModifier 0x338B4879,
-// hkbDampingModifier 0x9A040F03). Byte map: docs/formats/hkx-behavior-nodes.md.
+// hkbDampingModifier 0x9A040F03). Byte map: docs/formats/hkx-behavior-modifiers.md.
 
 import Foundation
 

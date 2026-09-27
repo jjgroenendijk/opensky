@@ -17,7 +17,7 @@
 //   /ACTI  https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/ACTI
 //   /CONT  https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CONT
 //   /DOOR  https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DOOR
-// Layout documented in docs/formats/records.md.
+// Layout documented in docs/formats/world-records.md.
 
 import Foundation
 

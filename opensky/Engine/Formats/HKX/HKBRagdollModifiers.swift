@@ -13,13 +13,13 @@
 // this decoder reads the two members the behavior graph itself addresses —
 // `m_durationToBlend` past the block, and the bone list — and leaves the block
 // itself undecoded. See the "Known gaps" section of
-// docs/formats/hkx-behavior-nodes.md.
+// docs/formats/hkx-behavior-modifiers.md.
 //
 // 64-bit member offsets from ret2end/HKX2Library (MIT); signatures match the
 // local SSE files (hkbFootIkControlsModifier 0xE5B6F544,
 // hkbPoweredRagdollControlsModifier 0x7CB54065,
 // hkbRigidBodyRagdollControlsModifier 0xAA87D1EB, hkbFootIkGains 0xA681B7F0).
-// Byte map: docs/formats/hkx-behavior-nodes.md.
+// Byte map: docs/formats/hkx-behavior-modifiers.md.
 
 import Foundation
 

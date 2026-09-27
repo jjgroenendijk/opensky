@@ -9,7 +9,7 @@
 // local SSE files (BSDirectAtModifier 0x19A005C0, BSLookAtModifier 0xD756FC25,
 // BSLookAtModifierBoneData 0x29EFEE59). No Havok SDK, Creation Kit, or SKSE
 // internals consulted (AGENTS.md Legal & IP). Byte map:
-// docs/formats/hkx-behavior-nodes.md.
+// docs/formats/hkx-behavior-modifiers.md.
 
 import Foundation
 

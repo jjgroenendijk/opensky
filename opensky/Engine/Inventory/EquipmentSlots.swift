@@ -22,7 +22,7 @@
 // type is still decoded (#175) and still drives animation selection; it no
 // longer decides occupancy.
 //
-// Documented in docs/formats/actors.md, docs/formats/magic-records.md,
+// Documented in docs/formats/shouts-equip-slots.md,
 // docs/engine/inventory-equipment.md and docs/engine/runtime-state.md.
 
 import Foundation

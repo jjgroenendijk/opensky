@@ -410,7 +410,7 @@ the spell whose hand a weapon takes. That second direction is why the item path 
 through `SpellbookRuntime` rather than calling `EquipmentRuntime.equip` directly.
 
 Which hands a spell takes comes from its `ETYP`, walked through the
-[EQUP graph](/formats/magic-records.md) exactly as a weapon's is — with one distinction the
+[EQUP graph](/formats/shouts-equip-slots.md) exactly as a weapon's is — with one distinction the
 weapon path never needed. `BothHands` and `EitherHand` name the same two parents and differ
 only in the DATA "use all parents" byte, so `EquipSlotHands.choice` keeps the two readings
 apart:
@@ -1054,7 +1054,7 @@ each hand and which hands have a cast running, beside the `SpellStore` and
 the main actor by `GameViewController.magicConditionResolution()` and read from a
 nonisolated evaluator, exactly as the actor and detection seams are. Indices,
 citations, per-function demand and the tail this milestone leaves tallied are on
-[conditions](/formats/conditions.md).
+[conditions](/engine/condition-functions.md).
 
 The eight are readable from the app without a CLI command: the
 `World > Combat & Physics > Spellcasting` section's `CombatSpellcastingStatsLabel`

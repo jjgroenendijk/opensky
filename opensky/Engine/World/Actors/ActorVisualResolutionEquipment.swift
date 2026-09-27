@@ -43,7 +43,7 @@
 // nothing renderable is ordinary runtime state — a dropped-in mod item, a
 // script equipping a token — and degrades to a reason-tagged skip.
 //
-// Documented in docs/formats/actors.md.
+// Documented in docs/engine/actor-resolution.md.
 
 import Foundation
 
@@ -55,7 +55,7 @@ import Foundation
 /// `NPC R Hand [RHnd]`, and bone 42 `Shield` parented to `NPC L Hand [LHnd]`.
 /// The sheathed nodes (`WeaponSword`, `WeaponAxe`, `WeaponBack`, `Quiver`)
 /// hang off the pelvis and spine instead and belong to draw/sheath, which is
-/// M15. Recorded in docs/formats/actors.md.
+/// M15. Recorded in docs/engine/actor-resolution.md.
 nonisolated enum ActorAttachmentBone {
     /// The drawn right-hand weapon node.
     static let drawnWeapon = "Weapon"

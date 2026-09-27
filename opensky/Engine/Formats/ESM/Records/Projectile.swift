@@ -90,7 +90,7 @@
 //     5449 — the DATA struct at 5454 carries the member offsets in its own
 //     comments, and its trailing `22` is the "optional from element" index
 //     that makes the two decal/collision links skippable.
-// Layout documented in docs/formats/records.md.
+// Layout documented in docs/formats/projectiles.md.
 
 import Foundation
 

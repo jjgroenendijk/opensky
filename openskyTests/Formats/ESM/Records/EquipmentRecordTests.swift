@@ -4,7 +4,7 @@
 //
 // Layouts: UESP "Skyrim Mod:Mod File Format" subpages /WEAP, /AMMO and /ARMO,
 // cross-checked against xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas.
-// See docs/formats/records.md.
+// See docs/formats/item-records.md.
 
 import Foundation
 @testable import opensky
