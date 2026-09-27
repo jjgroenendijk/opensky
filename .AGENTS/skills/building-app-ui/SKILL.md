@@ -90,6 +90,6 @@ harness cannot run locally (`docs/tools/environment.md`).
 `make fix && make check && make build && make cli && make test`, plus a new or extended panel
 geometry unit test. At milestone acceptance, write the record defined by
 `docs/tools/sidebar-acceptance.md` — sidebar path, `Destination-<id>`, control ids, readout
-id, covering tests — into the subsystem page and that page's ledger. Those tests are the
-evidence; A/B captures are optional, stay in gitignored `logs/`, and are never committed.
-Same-commit docs: update `docs/tools/app-ui.md` when the framework changes.
+id, covering tests — into the PR or issue that closes the milestone, not into `docs/`. Those
+tests are the evidence; A/B captures are optional, stay in gitignored `logs/`, and are never
+committed. Update `docs/tools/app-ui.md` in the same commit when the framework changes.

@@ -90,8 +90,8 @@ user's install, `openskyTestSupport/` holds the fixtures both bundles compile, a
 holds `ShaderTypes/`, the clang module wrapping `ShaderTypes.h`. Group engine subsystems
 under `opensky/Engine/` by domain, and keep
 format parsers separate from rendering. Skills live in `.AGENTS/skills/` (`.claude/skills`
-symlinks there). `logs/` and `.vendor/` are gitignored. `docs/index.md` maps the wiki —
-trust it over globbing.
+symlinks there). `logs/` and `.vendor/` are gitignored. `docs/` groups pages by folder: `formats/`,
+`engine/`, `rendering/`, `decisions/`, and `tools/`.
 
 Run output is per-run, not per-name: a script that writes a transcript, a capture, or a
 result bundle puts it in `logs/<script>/<UTC timestamp>/` (or the same shape under
@@ -133,17 +133,20 @@ fresh session picks up from `gh`, not from a doc snapshot.
 - Labels: `roadmap`, `acceptance-gate`, `format-parser`, `app-ui`.
 - Closed milestones are not empty — every merged PR is assigned to the milestone it landed
   under, so `gh pr list --state merged --milestone "M4 - walkable world"` shows how a
-  finished milestone was actually built. Narrative history stays in `docs/log.md`.
+  finished milestone was actually built. Project history lives in git, merged PRs, and
+  closed issues, never in `docs/`.
 - The `OpenSky roadmap` project board
   (<https://github.com/users/jjgroenendijk/projects/7>) is a view across milestones, not
   the source of truth. Live branch and PR state comes from `gh pr list` and `git log`.
-- Milestone done -> close the GitHub milestone and record the outcome in `docs/log.md`.
-  Scope changes are issue edits, not doc edits.
+- Milestone done -> record the outcome in the GitHub milestone description or the closing
+  PR, then close the milestone. Scope changes are issue edits, not doc edits.
 
 ## Documentation wiki — docs/
 
-`docs/index.md` is the map. A change that adds or alters a subsystem, parser, or non-obvious
-decision updates `docs/` in the same commit, `docs/log.md` and `docs/index.md` included.
+Docs hold only what the code cannot show: where a fact comes from, why a design was chosen,
+where OpenSky differs from the original game, how subsystems work together, and how to use
+the tools. Code documents itself through names, types, and short doc comments. History
+lives in git. A change that alters one of those facts updates `docs/` in the same commit.
 Load the `writing-wiki-docs` skill before writing there.
 
 ## Main-app verification surface
@@ -156,9 +159,10 @@ existing destination over a new top-level item.
 Parser, math, and infrastructure-only items may defer UI until their first visible consumer;
 if their output is useful alone, expose it in the Asset Browser or an inspector.
 
-Every milestone acceptance writes one record in the format and ledger defined by
-`docs/tools/sidebar-acceptance.md`. The record is mandatory and the deterministic tests are
-its evidence. This supplements unit tests, probes, and benchmarks; it does not replace them.
+Every milestone acceptance writes one record, in the format defined by
+`docs/tools/sidebar-acceptance.md`, into the PR or issue that closes the milestone. The
+record is mandatory and the deterministic tests are its evidence. The record adds to unit
+tests, probes, and benchmarks; it does not replace them.
 
 ## Code quality
 
@@ -204,8 +208,10 @@ either baseline; regenerate one only after a cleanup removes findings
 
 ## Writing style (agent output, docs, comments, commit bodies)
 
-Write normal, clear prose: complete sentences, plain words over jargon, no filler or
-hedging. Optimize for the reader, not for brevity.
+Write for young, capable students who learn English as a second language: short
+sentences with one idea each, common words, and a technical term explained the first time
+it appears. No aphorisms, idioms, clever phrases, filler, or hedging. Prefer an example to a
+long explanation.
 
 - Never abbreviate code symbols, function names, API names, or error strings. Quote them
   verbatim.
