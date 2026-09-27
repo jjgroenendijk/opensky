@@ -3,7 +3,7 @@ type: Tool
 title: Swift toolchain and language mode
 description: The Apple Swift 6.3.3 baseline, Swift 6 language mode across every target, the gate that enforces both, and the isolation patterns the migration settled on.
 tags: [tool, build, concurrency, swift]
-timestamp: 2026-08-03T00:00:00Z
+timestamp: 2026-09-27T00:00:00Z
 ---
 
 # Swift toolchain and language mode
@@ -92,7 +92,12 @@ preference order:
 4. **Say `Sendable` where it is already true.** A `@MainActor` class is implicitly
    `Sendable`, but an existential over a `@MainActor` protocol is not unless the
    protocol says so. `PapyrusWorldQuestBridge` declares `Sendable` for exactly that
-   reason, which is what lets `PapyrusWorldAccess` hold one across its hops.
+   reason, which is what lets `PapyrusWorldAccess` hold one across its hops. A
+   conformance that brings `Sendable` in, directly or through a refined protocol, must
+   sit in the same file as the class declaration. Apple Swift 6.4 rejects it in a
+   satellite extension file, so `PapyrusWorldStateBridge` picks up
+   `PapyrusWorldQuestBridge` through `PapyrusWorldBridge` on its primary declaration, and
+   `PapyrusWorldStateBridgeQuests.swift` only adds members.
 5. **Wrap what the compiler cannot prove, once, with the reason written down.**
    `WritableKeyPath` is not `Sendable`, so a `static let` table of key paths reads as
    shared mutable state. `QuestAliasDecoder`'s `AliasSlotTable` is a single
