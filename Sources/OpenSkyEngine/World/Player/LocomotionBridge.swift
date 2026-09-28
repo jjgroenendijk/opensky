@@ -33,6 +33,7 @@
 // See docs/engine/walk-mode.md.
 
 import OpenSkyBehavior
+import OpenSkyRendering
 import simd
 
 /// One frame of player intent, in the form the bridge consumes. Filled from

@@ -3,6 +3,7 @@
 // and reversible presentation overrides.
 
 import OpenSkyFormatsESM
+import OpenSkyRendering
 import simd
 
 nonisolated public struct HUDControlSnapshot: Equatable, Sendable {

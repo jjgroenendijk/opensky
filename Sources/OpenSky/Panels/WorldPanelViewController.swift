@@ -12,6 +12,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyPhysics
+import OpenSkyRendering
 
 final class WorldPanelViewController: InspectorPanelViewController {
     let cameraSection = CameraSection()

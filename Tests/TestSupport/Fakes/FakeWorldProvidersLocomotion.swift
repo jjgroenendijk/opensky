@@ -9,6 +9,7 @@
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics
+@testable import OpenSkyRendering
 
 /// The stored half of the fake's locomotion state, kept as one value so the
 /// class body above stays inside the type-length cap.

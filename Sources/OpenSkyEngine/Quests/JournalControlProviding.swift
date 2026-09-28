@@ -16,6 +16,7 @@
 // Documented in docs/engine/journal.md.
 
 import Foundation
+import OpenSkyRendering
 
 /// One quest as the panel lists it — running state, current stage, and the
 /// display state of each objective the record declares.

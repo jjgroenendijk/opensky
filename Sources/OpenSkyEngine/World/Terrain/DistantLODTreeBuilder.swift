@@ -3,6 +3,7 @@
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
+import OpenSkyRendering
 import simd
 
 nonisolated extension DistantLODBuilder {

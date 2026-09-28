@@ -4,6 +4,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyRendering
 
 struct PackageBridgeState {
     var runtime: ActorPackageRuntime?

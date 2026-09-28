@@ -4,6 +4,7 @@ import Foundation
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyRendering
 
 extension GameViewController: FaceMorphControlProviding {
     var faceMorphSnapshot: FaceMorphControlSnapshot {

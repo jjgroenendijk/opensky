@@ -4,6 +4,7 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
+@testable import OpenSkyRendering
 import Testing
 
 struct DistantLODSelectionTests {

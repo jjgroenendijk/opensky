@@ -7,6 +7,7 @@ import Metal
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsCore
+@testable import OpenSkyRendering
 import simd
 import Testing
 

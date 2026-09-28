@@ -8,6 +8,7 @@ import AppKit
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyPhysics
+@testable import OpenSkyRendering
 import Testing
 
 struct WorldPanelTests {

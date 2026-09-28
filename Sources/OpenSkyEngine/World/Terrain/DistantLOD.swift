@@ -6,6 +6,7 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
+import OpenSkyRendering
 import simd
 
 nonisolated public struct DistantLODBlock: Equatable, Hashable, Sendable {

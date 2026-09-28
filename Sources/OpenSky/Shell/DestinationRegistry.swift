@@ -8,6 +8,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyRendering
 
 /// Sidebar grouping. Rows render under their section's group header, in
 /// `allCases` order.

@@ -9,6 +9,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyPhysics
+@testable import OpenSkyRendering
 import simd
 import Testing
 

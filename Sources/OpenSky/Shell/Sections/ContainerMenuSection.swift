@@ -5,6 +5,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyRendering
 
 final class ContainerMenuSection: PanelSectionViewController {
     weak var provider: (any ContainerMenuControlProviding)? {

@@ -9,6 +9,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyRendering
 
 /// One container the panel can nominate as the merchant.
 ///

@@ -10,6 +10,7 @@ import MetalKit
 @testable import OpenSkyFormatsAudio
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyRendering
 import simd
 import Testing
 

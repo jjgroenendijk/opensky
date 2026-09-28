@@ -4,6 +4,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyRendering
 
 final class ShadowSection: PanelSectionViewController {
     weak var provider: (any ShadowControlProviding)? {

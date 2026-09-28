@@ -23,6 +23,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyRendering
 import simd
 
 /// Archery state the controller owns. Extensions cannot add stored properties,

@@ -3,6 +3,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyRendering
 
 final class PrecipitationSection: PanelSectionViewController {
     weak var provider: (any PrecipitationControlProviding)? {

@@ -21,6 +21,7 @@
 import Metal
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyRendering
 import simd
 
 nonisolated public final class PlayerBody {

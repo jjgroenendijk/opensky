@@ -9,6 +9,7 @@ import Foundation
 import OpenSkyDiagnostics
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyRendering
 import simd
 
 /// Deterministic path: launch center -> one cell east -> one cell north.

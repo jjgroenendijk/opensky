@@ -5,6 +5,7 @@
 
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsSWF
+@testable import OpenSkyRendering
 
 @MainActor
 final class FakeSWFLabProvider: SWFLabControlProviding {

@@ -7,6 +7,7 @@
 import Foundation
 import Metal
 @testable import OpenSkyEngine
+@testable import OpenSkyRendering
 import Testing
 
 struct RendererShadowQualityTests {

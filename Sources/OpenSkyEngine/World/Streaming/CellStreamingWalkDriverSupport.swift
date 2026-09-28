@@ -1,6 +1,7 @@
 // State labels, movement helpers, and failure gates for M4.5 walk driver.
 
 import OpenSkyPhysics
+import OpenSkyRendering
 import simd
 
 @MainActor

@@ -3,6 +3,7 @@
 // at the strict-lint size cap, and only its stored state has to live there.
 
 @testable import OpenSkyEngine
+@testable import OpenSkyRendering
 
 extension FakeWorldProviders {
     var renderDebugMode: RenderDebugMode {

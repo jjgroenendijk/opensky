@@ -3,6 +3,7 @@
 // panel with border, and anchored corner markers exercising the four corners.
 // Tests render it offscreen; the later UI Lab sidebar panel displays it.
 
+import OpenSkyRendering
 import simd
 
 nonisolated extension UIScene {

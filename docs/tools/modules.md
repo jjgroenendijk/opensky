@@ -91,6 +91,8 @@ OpenSkyBehavior           Havok behavior graph evaluation, skeleton pose math
 OpenSkyPhysics            static and trigger collision, dynamic bodies, ragdolls
 OpenSkyDiagnostics        memory footprint, debug overlays; needs only OpenSkyShaderTypes
   ^
+OpenSkyRendering          Metal renderer, scenes, cameras, terrain meshes, weather values
+  ^
 OpenSkyEngine             the rest of the engine, until it is split
   ^
 OpenSky app, OpenSkyCLI   composition roots
@@ -117,6 +119,8 @@ A lower module never imports a higher one. Three patterns keep it that way:
   `OpenSkyFormatsESM` record, and `EquipSlotStore+Hands.swift` and `FactionStore+Templates.swift` in
   the engine over `OpenSkyGameData` stores.
 - A lower module that must call up defines a protocol, and the higher module conforms to it.
+  Example: `Renderer` draws, and it calls a `RenderFrameDriver` at fixed points of each frame
+  to move the camera and run the world. The engine's `GameSession` is that driver.
 
 ## Access and imports
 

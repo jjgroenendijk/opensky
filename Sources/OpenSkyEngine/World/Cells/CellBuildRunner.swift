@@ -9,6 +9,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyRendering
 
 /// Builds one cell scene by grid coordinate. The single seam scene build
 /// crosses to reach `CellSceneBuilder`; a fake conformer lets CellStreamer

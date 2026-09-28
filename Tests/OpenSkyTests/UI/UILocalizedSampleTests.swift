@@ -7,6 +7,7 @@
 
 @testable import OpenSkyEngine
 @testable import OpenSkyGameData
+@testable import OpenSkyRendering
 import OpenSkyShaderTypes
 import simd
 import Testing

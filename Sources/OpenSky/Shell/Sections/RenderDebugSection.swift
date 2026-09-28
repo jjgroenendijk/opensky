@@ -16,6 +16,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyRendering
 
 final class RenderDebugSection: PanelSectionViewController {
     weak var provider: (any RenderDebugControlProviding)? {

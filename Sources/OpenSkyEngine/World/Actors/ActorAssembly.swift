@@ -8,12 +8,8 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
+import OpenSkyRendering
 import simd
-
-nonisolated public enum ActorAssetFailure: Error, Equatable {
-    case missing
-    case invalid
-}
 
 nonisolated public protocol ActorAssetProvider {
     associatedtype Skeleton
@@ -224,16 +220,6 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
         case .invalid: .invalidAsset
         }
     }
-}
-
-nonisolated public struct ActorSkeletonAsset: Sendable {
-    public let pathKey: String
-    public let skeleton: NIFSkeleton
-}
-
-nonisolated public struct ActorRenderAsset {
-    public let model: RenderModel
-    public let bounds: ModelBounds?
 }
 
 nonisolated extension MeshLibrary: ActorAssetProvider {

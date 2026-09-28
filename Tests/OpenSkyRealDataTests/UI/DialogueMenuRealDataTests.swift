@@ -23,6 +23,7 @@ import MetalKit
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyGameData
+@testable import OpenSkyRendering
 import Testing
 
 struct DialogueMenuRealDataTests {

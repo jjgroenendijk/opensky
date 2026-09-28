@@ -16,6 +16,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyRendering
 
 @MainActor
 final class FrameHUDView: NSView {

@@ -14,6 +14,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyRendering
 
 /// The `AIOverlayStatsLabel` lines: what is switched on and what it cost.
 nonisolated public enum AIOverlayReadout: Sendable {

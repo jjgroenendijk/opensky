@@ -2,6 +2,7 @@
 // which is cast, per camera mode. Pure value — no device, no install.
 
 @testable import OpenSkyEngine
+@testable import OpenSkyRendering
 import Testing
 
 struct PlayerRigVisibilityTests {

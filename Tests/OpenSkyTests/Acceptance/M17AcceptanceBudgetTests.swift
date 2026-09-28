@@ -26,6 +26,7 @@ import Foundation
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyRendering
 import Testing
 
 @MainActor

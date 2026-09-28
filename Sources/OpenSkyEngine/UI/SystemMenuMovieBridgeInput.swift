@@ -6,6 +6,7 @@
 // command stream before the next draw.
 
 import Foundation
+import OpenSkyRendering
 
 nonisolated extension SystemMenuMovieBridge {
     /// Delivers one menu event to a live movie and synchronizes any display-list

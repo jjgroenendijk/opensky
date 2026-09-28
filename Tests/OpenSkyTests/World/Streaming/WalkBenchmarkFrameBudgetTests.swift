@@ -2,6 +2,7 @@
 // No Metal device or game data is required.
 
 @testable import OpenSkyEngine
+@testable import OpenSkyRendering
 import Testing
 
 struct WalkBenchmarkFrameBudgetTests {

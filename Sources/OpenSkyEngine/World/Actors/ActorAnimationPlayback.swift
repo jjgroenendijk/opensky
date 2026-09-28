@@ -7,6 +7,7 @@ import OpenSkyBehavior
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyRendering
 import simd
 
 nonisolated public final class ActorAnimationClip {
@@ -97,25 +98,7 @@ nonisolated public enum ActorAnimationLoadError: LocalizedError {
     }
 }
 
-/// RenderScene stores these references. Removing a resident CellScene removes
-/// its playback objects; decoded immutable clip assets may remain cache-hot.
-nonisolated public protocol RenderAnimation: AnyObject {
-    @discardableResult
-    func update(at time: Float) -> Int
-
-    /// Restore bind/reference state for a true animation-off A/B frame.
-    @discardableResult
-    func resetToBindPose() -> Int
-}
-
-nonisolated extension RenderAnimation {
-    @discardableResult
-    public func resetToBindPose() -> Int {
-        0
-    }
-}
-
-nonisolated public final class ActorAnimationPlayback: RenderAnimation {
+nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
     public let actor: FormID
     public let female: Bool
     /// The clip currently sounding: the idle one, or a bounded override a
@@ -195,6 +178,18 @@ nonisolated public final class ActorAnimationPlayback: RenderAnimation {
         guard let transforms = pose(at: time) else { return 0 }
         var updatedMeshes = Set<ObjectIdentifier>()
         return apply(transforms, updating: &updatedMeshes)
+    }
+
+    public var actorFormID: UInt32 {
+        actor.rawValue
+    }
+
+    public var sharedClipKey: ObjectIdentifier {
+        ObjectIdentifier(clip)
+    }
+
+    public func sampleSharedPose(at time: Float) -> [String: float4x4]? {
+        clip.namedWorldTransforms(at: time)
     }
 
     public func apply(

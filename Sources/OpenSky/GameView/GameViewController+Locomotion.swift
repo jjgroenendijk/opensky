@@ -6,6 +6,7 @@
 import AppKit
 import OpenSkyBehavior
 import OpenSkyEngine
+import OpenSkyRendering
 
 extension GameViewController: PlayerLocomotionControlProviding {
     var playerLocomotionSnapshot: PlayerLocomotionSnapshot {

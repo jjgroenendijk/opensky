@@ -11,6 +11,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyRendering
 import OSLog
 import simd
 

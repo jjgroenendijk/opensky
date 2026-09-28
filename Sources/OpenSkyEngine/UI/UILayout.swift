@@ -1,7 +1,9 @@
 // Simple deterministic vertical stack layout (M8.1.1). Pure float math; no
 // Metal, no text — stacks pre-measured item sizes down a container rect.
 
-/// Cross-axis alignment for a vertical stack.
+// Cross-axis alignment for a vertical stack.
+import OpenSkyRendering
+
 nonisolated public enum UIStackAlignment: Sendable {
     case leading, center, trailing
 }

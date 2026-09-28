@@ -6,7 +6,9 @@
 // ShadowControlProviding on purpose so one game-view implementation satisfies
 // both surfaces.
 
-/// UI Lab readout: overlay state plus the last-frame UIDrawStats mirror.
+// UI Lab readout: overlay state plus the last-frame UIDrawStats mirror.
+import OpenSkyRendering
+
 nonisolated public struct UILabControlSnapshot: Equatable, Sendable {
     public let overlayEnabled: Bool
     public let sampleShown: Bool

@@ -9,6 +9,7 @@ import AppKit
 @testable import OpenSky
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsSWF
+@testable import OpenSkyRendering
 import Testing
 
 struct SWFMovieSectionTests {

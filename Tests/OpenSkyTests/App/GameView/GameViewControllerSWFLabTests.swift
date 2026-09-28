@@ -13,6 +13,7 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyGameData
+@testable import OpenSkyRendering
 import Testing
 
 struct GameViewControllerSWFLabTests {

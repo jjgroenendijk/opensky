@@ -2,6 +2,8 @@
 // renderer toggles and readout; issue #203 adds the actual controls without
 // exposing Renderer or CellStreamer to the shell.
 
+import OpenSkyRendering
+
 nonisolated public struct AIOverlayControlSnapshot: Equatable, Sendable {
     public let navmeshOverlayEnabled: Bool
     public let pathOverlayEnabled: Bool

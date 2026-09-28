@@ -39,6 +39,7 @@ import MetalKit
 @testable import OpenSkyEngine
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+@testable import OpenSkyRendering
 import simd
 import Testing
 

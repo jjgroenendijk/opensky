@@ -20,6 +20,7 @@
 
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
+import OpenSkyRendering
 import simd
 
 /// The latest pose the behavior graph produced, published by the locomotion

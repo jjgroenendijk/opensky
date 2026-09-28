@@ -5,6 +5,7 @@
 // rendering layer itself never sees a walk controller or a clock.
 
 import MetalKit
+import OpenSkyRendering
 
 extension Renderer {
     /// `scene` nil -> synthetic DemoScene; `camera` nil -> its demo camera;

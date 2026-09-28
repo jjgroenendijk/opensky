@@ -19,6 +19,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyRendering
 import simd
 
 /// The gate panel's shared selection and its last outcome line. Extensions
