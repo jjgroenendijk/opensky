@@ -4,7 +4,7 @@
 // tools/probe.sh).
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsAudio
 import OpenSkyGameData
 
 enum AudioCommand {

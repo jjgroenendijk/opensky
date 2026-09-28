@@ -16,7 +16,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// State the runtime-state bridge owns. Stored on `GameViewController` because

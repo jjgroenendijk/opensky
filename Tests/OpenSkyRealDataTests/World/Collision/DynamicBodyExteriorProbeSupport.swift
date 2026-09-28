@@ -2,7 +2,8 @@
 // env-gated dynamic-body probe. The test itself stays with its suite.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import simd
 
 extension DynamicBodyRealDataTests {

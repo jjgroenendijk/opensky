@@ -5,7 +5,7 @@
 // Any vanilla font/text decode failure fails the sweep.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsSWF
 import OpenSkyGameData
 
 /// Accumulates font + text decode results across an `swf sweep` run.

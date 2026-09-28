@@ -18,7 +18,7 @@
 
 import AVFAudio
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
 import simd
 import Synchronization
 

@@ -6,7 +6,9 @@ import Foundation
 import Metal
 import MetalKit
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAnimation
+@testable import OpenSkyFormatsAudio
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import simd
 import Testing

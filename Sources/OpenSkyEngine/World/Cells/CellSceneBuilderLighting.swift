@@ -2,7 +2,8 @@
 // turn supported LIGH/XEMI placements into point lights. Exterior scenes
 // deliberately keep sun/sky lighting unchanged for milestone 3.7.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import simd
 
 nonisolated public struct InteriorLightingBuild: Sendable {

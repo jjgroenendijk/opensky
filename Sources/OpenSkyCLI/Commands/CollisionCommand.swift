@@ -5,7 +5,8 @@
 import Foundation
 import Metal
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsMesh
 
 enum CollisionCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

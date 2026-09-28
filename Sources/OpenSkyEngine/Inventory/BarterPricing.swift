@@ -25,7 +25,8 @@
 // Documented in docs/engine/barter.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// The barter price factors one merchant transaction is priced at.

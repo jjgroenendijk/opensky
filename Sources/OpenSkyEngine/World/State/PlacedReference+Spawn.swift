@@ -1,8 +1,8 @@
 // A spawned object as the `PlacedReference` every consumer of placements reads.
-// The reference shape lives with the parsers in OpenSkyFormats; spawn state is
+// The reference shape lives with the parsers in OpenSkyFormatsESM; spawn state is
 // runtime state.
 
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated extension PlacedReference {
     public init(spawn: ReferenceSpawnState, formID: FormID) {

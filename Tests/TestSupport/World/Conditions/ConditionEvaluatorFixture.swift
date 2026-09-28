@@ -6,10 +6,12 @@
 // `Condition(ctda:)`, so every evaluator test also exercises the on-disk path
 // rather than a hand-made value that could drift from the layout.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 
 enum ConditionEvaluatorFixture {
     /// A well-formed 32-byte CTDA field. `operatorBits` are the top 3 bits of

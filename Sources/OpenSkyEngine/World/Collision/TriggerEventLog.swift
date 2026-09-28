@@ -10,7 +10,7 @@
 // user opened the destination would be useless for verification.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One recorded transition, resolved as far as the streamer can resolve it.
 ///

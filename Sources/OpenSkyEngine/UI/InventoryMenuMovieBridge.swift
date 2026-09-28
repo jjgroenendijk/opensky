@@ -13,7 +13,7 @@
 // docs/engine/inventory-menu.md for the measurement.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsSWF
 
 /// What the movie asked the engine to do, as reported through its outbound
 /// `GameDelegate` calls.

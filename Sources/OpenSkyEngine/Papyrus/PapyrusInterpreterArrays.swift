@@ -1,7 +1,7 @@
 // One-dimensional Papyrus array opcodes.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsPEX
 
 nonisolated extension PapyrusInterpreter {
     public func arrayOp(

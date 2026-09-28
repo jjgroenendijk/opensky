@@ -1,8 +1,8 @@
 // Cross-plugin FLST indexing, flattening and membership over synthetic ESMs.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

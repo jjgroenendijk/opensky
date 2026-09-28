@@ -3,7 +3,9 @@
 // one malformed/modded NIF cannot hide coverage for sibling assets.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 
 nonisolated public struct NIFCollisionAssetReport: Sendable {

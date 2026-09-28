@@ -2,7 +2,8 @@
 // once from Skyrim.esm beside the other CellProviderIndexes stores.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated public enum PackageResolveError: Error, Equatable {
     case missingPackage(FormID)

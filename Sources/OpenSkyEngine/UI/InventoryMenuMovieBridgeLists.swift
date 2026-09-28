@@ -9,7 +9,7 @@
 // tally entry and an empty readout, never take the app down.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsSWF
 
 nonisolated extension InventoryMenuMovieBridge {
     // MARK: - Writing

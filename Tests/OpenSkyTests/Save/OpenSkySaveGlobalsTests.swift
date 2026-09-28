@@ -3,10 +3,10 @@
 // chunk means no overrides, and a corrupt payload throws rather than crashes.
 // See docs/formats/opensky-save-world-chunks.md.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 @MainActor

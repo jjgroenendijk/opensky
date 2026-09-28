@@ -4,10 +4,10 @@
 // the opcode/host-API/clip-event/structure inventory the census page
 // (`docs/decisions/swf-as2-census.md`) draws its numbers from. This command
 // only parses args and prints; the tallying lives in
-// `Sources/OpenSkyFormats/SWF/SWFActionInventory.swift` and is unit-tested there.
+// `Sources/OpenSkyFormatsSWF/SWF/SWFActionInventory.swift` and is unit-tested there.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsSWF
 import OpenSkyGameData
 
 enum SWFActionSweep {

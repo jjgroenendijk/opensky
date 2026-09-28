@@ -7,7 +7,8 @@
 // what they put in the `HavokFilter`, so the filters are a parameter and
 // everything else is fixed.
 
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsMesh
 import simd
 
 enum RagdollSkeletonFixture {

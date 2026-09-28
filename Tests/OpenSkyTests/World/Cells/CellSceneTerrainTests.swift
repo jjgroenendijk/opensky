@@ -3,11 +3,14 @@
 // temp-dir VFS. Never extracted game files (AGENTS.md Legal & IP boundary).
 // Needs a Metal device (RenderModel upload), gated like CellSceneBuilderTests.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
+import FormatsMeshTesting
 import Foundation
 import Metal
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
 import simd
 import Testing

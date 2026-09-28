@@ -7,10 +7,11 @@
 // second actor-value weight, 0x40 archetype, 0x44 primary actor value and 0x58
 // second actor value.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 @MainActor

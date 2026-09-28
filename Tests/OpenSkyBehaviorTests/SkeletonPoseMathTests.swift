@@ -2,7 +2,7 @@
 // only; no game assets.
 
 @testable import OpenSkyBehavior
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAnimation
 import simd
 import Testing
 

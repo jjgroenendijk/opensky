@@ -5,7 +5,7 @@
 // (`CameraInputState` + the MTKView responder); it hands this type a
 // `CameraInput` snapshot each frame. See docs/engine/free-fly-camera.md.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
 import simd
 
 /// One frame of camera input, already resolved to axis magnitudes. Movement

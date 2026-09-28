@@ -1,7 +1,7 @@
 // Bounded execution policy, typed faults, outcomes, and coverage tally.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsPEX
 
 nonisolated public struct PapyrusLimits: Equatable, Sendable {
     public var instructionBudget = 1_000_000

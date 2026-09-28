@@ -12,7 +12,7 @@
 // is row2 by itself (far stays row3 - row2). Verified against
 // MatrixMath.perspective's actual coefficients before writing this.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
 import simd
 
 /// Six inward-facing view-frustum planes, extracted from a view-projection

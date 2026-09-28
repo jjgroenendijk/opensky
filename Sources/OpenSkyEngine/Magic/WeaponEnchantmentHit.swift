@@ -27,7 +27,7 @@
 // Documented in docs/engine/item-enchantments.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 /// One enchanted weapon's hit, as the world seam receives it.

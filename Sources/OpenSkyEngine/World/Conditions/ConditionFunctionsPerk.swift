@@ -21,7 +21,8 @@
 // Documented in docs/engine/condition-functions.md and docs/engine/perks.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated extension ConditionFunctions {
     public static func installPerk(_ registry: inout ConditionFunctionRegistry) {

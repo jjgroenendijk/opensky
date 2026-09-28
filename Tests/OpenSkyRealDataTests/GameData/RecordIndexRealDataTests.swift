@@ -1,7 +1,8 @@
 // Env-gated cross-plugin index census over the user's read-only install.
 
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

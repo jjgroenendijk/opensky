@@ -8,7 +8,8 @@ import AppKit
 import Metal
 import MetalKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 import simd
 

@@ -2,10 +2,10 @@
 // (issue #171): deterministic `instanceStates()`, tolerant restore, and the
 // `PapyrusInstanceKey` total order later stages serialize under.
 
-import FormatsTestSupport
+@testable import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsPEX
 import Testing
 
 @MainActor

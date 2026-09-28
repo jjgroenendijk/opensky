@@ -3,9 +3,9 @@
 // with loose files plus a synthetic BSA — never extracted game files (AGENTS.md
 // "Legal & IP boundary").
 
-import FormatsTestSupport
+import FormatsCoreTesting
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
 @testable import OpenSkyGameData
 import Testing
 

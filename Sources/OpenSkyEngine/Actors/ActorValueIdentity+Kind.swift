@@ -1,8 +1,8 @@
 // The part of `ActorValueIdentity` that names the runtime's typed primaries. The
-// name table lives with the record parsers in OpenSkyFormats; `ActorValueKind`
+// name table lives with the record parsers in OpenSkyFormatsESM; `ActorValueKind`
 // is runtime state, so this mapping stays in the engine.
 
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated extension ActorValueIdentity {
     /// Index of each value the runtime stores, per `vanillaNames`.

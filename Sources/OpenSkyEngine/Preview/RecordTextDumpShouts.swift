@@ -3,7 +3,8 @@
 // cap. The formatter feeds both `openskycli record` and the Asset Browser.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated extension RecordTextDump {

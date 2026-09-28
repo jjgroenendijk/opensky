@@ -1,10 +1,11 @@
 // Shared record-dump tests (CLI `record` + Asset Browser detail): header line,
 // decoded view, zstring rendering, field cap. In-code plugin fixtures only.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 struct RecordTextDumpTests {

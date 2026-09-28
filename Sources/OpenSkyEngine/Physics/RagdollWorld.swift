@@ -24,7 +24,8 @@
 //
 // Documented in docs/engine/ragdoll.md.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import simd
 
 /// Counts one refresh of the ragdoll panel shows.

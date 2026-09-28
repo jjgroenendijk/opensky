@@ -2,7 +2,8 @@
 // and location links legible in both the CLI and Asset Browser.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated extension RecordTextDump {

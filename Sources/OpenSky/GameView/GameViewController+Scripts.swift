@@ -1,5 +1,6 @@
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 // Papyrus bridge for the World > Scripts sidebar panel (issue #278). Sampling
 // and formatting live elsewhere — `PapyrusWorldRuntime.scriptsSnapshot` builds

@@ -27,7 +27,7 @@
 // Documented in docs/engine/character-leveling.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// One perk's place in the tree that grants it.

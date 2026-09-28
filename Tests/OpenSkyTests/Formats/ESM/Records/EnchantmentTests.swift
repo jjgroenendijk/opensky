@@ -2,9 +2,10 @@
 // Every fixture is authored from the cited ENIT layout and contains no bytes
 // from the game install.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import Testing
 
 struct EnchantmentTests {

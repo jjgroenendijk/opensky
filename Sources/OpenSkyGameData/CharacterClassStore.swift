@@ -12,11 +12,12 @@
 // seen unless it lived in the same file as the actors.
 //
 // What a class contributes is documented with the record
-// (`Sources/OpenSkyFormats/ESM/Records/CharacterClass.swift`) and with the
+// (`Sources/OpenSkyFormatsESM/ESM/Records/CharacterClass.swift`) and with the
 // derivation it feeds (docs/engine/actor-values.md).
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 /// One CLAS record under its load-order identity.
 nonisolated public struct ResolvedCharacterClass: Equatable, Sendable {

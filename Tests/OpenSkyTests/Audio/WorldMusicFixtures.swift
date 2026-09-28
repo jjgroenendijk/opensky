@@ -4,10 +4,12 @@
 // game file.
 
 import AVFAudio
-import FormatsTestSupport
+import FormatsAudioTesting
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

@@ -9,7 +9,7 @@
 // whole life of the movie package.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsSWF
 import simd
 
 nonisolated public final class SWFTextPlanner {

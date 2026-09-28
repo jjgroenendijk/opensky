@@ -17,7 +17,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OSLog
 

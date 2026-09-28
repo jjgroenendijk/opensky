@@ -26,7 +26,7 @@
 // Documented in docs/engine/hostility.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// What one seeding pass did.

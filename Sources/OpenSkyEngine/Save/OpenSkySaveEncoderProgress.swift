@@ -11,7 +11,8 @@
 // needs no format change.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated extension OpenSkySaveEncoder {
     /// The `PLVL` chunk: every snapshot entry carrying character-level

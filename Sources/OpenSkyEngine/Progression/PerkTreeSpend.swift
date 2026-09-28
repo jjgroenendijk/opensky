@@ -42,7 +42,7 @@
 // Documented in docs/engine/character-leveling.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Why a perk-point spend was refused.

@@ -16,7 +16,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsCore
 
 final class InventoryGrantsSection: PanelSectionViewController {
     weak var provider: (any InventoryEquipmentControlProviding)? {

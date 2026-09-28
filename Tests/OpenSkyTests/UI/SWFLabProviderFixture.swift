@@ -4,7 +4,7 @@
 // control surface without a renderer, a Metal device, or a game install.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsSWF
 
 @MainActor
 final class FakeSWFLabProvider: SWFLabControlProviding {

@@ -11,7 +11,7 @@
 // to its serial queue.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Optional weather runtime a provider can expose (M7.2.2). GameViewController

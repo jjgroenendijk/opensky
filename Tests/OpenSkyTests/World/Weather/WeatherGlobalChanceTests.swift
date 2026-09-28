@@ -3,10 +3,11 @@
 // shifts which weather the deterministic pick returns. Synthetic fixtures only.
 // Semantics + citation: docs/formats/weather.md.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 @MainActor

@@ -9,7 +9,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One section of the Crime & Factions panel.
 class CrimeFactionPanelSection: PanelSectionViewController {

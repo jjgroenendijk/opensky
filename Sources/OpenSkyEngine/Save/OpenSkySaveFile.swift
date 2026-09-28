@@ -8,7 +8,7 @@
 // loaded.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated public struct OpenSkySaveFile: Equatable, Sendable {
     /// Layout version the file declared.

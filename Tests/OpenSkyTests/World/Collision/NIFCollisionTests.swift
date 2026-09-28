@@ -1,9 +1,9 @@
 // bhk collision decode tests over synthetic in-code NIF payloads only.
 // Layouts: NifTools nif.xml; docs/formats/nif-collision.md.
 
-import FormatsTestSupport
+import FormatsMeshTesting
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsMesh
 import simd
 import Testing
 

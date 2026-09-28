@@ -21,7 +21,8 @@
 // cited at each registration.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated extension ConditionFunctions {
     public static func installQuest(_ registry: inout ConditionFunctionRegistry) {

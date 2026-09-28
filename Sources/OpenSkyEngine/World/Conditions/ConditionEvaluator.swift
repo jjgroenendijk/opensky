@@ -37,7 +37,7 @@
 //   xEdit dev Core/wbDefinitionsTES5.pas, `wbCTDA`
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated public enum ConditionDataDomain: String, Equatable, Sendable {
     case keyword

@@ -6,7 +6,8 @@
 // geometry, so each `@Test` below names one of its clauses.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import simd
 import Testing
 

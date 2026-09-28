@@ -5,7 +5,9 @@
 
 import Foundation
 import Metal
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 import simd
 
 nonisolated public enum FaceMorphError: Error, Equatable {

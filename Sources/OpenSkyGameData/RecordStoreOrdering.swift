@@ -6,7 +6,7 @@
 // write into such a map is the definition the load order prefers.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated public enum RecordStoreOrdering: Sendable {
     public static func precedes(

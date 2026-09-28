@@ -6,7 +6,8 @@
 // STAT, plus ModelBase's cited MSTT/TREE/FURN/ACTI/CONT/DOOR pages.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public struct ExteriorCellModelCatalog: Sendable {

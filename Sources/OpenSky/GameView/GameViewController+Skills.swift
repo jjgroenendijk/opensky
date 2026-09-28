@@ -20,7 +20,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// Skill-advancement state the controller owns. Extensions cannot add stored
 /// properties, so it lives as one value on `GameViewController`.

@@ -14,7 +14,8 @@
 // produces identical bytes.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated extension OpenSkySaveEncoder {
     /// One actor's spellbook paired with the snapshot entry it came from.

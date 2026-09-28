@@ -42,7 +42,7 @@ not reachable from this half. `Tests/TestSupport/AGENTS.md` has the rule.
 
 - Fixtures are synthetic and built in code — never a real extracted file. The existing
   helpers are `BSAFixture`, `ESMFixture`, `NIFFixture`, and `StringTableFixture`, in
-  `Tests/FormatsTestSupport/`.
+  the `Tests/Formats<Family>Testing/` libraries.
 - A test that needs only one package module belongs in that module's test target, for
   example `Tests/OpenSkyGameDataTests/`, not here.
 - `print()` appears in the live `xcodebuild` console but is not in the `.xcresult`, so

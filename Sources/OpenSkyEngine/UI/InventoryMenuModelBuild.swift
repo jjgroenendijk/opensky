@@ -8,7 +8,7 @@
 // convenience that pulls both out of a live runtime is at the bottom.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated extension InventoryMenuModel {
     /// Builds the list one owner presents.

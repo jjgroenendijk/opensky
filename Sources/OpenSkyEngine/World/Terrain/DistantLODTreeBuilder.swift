@@ -1,6 +1,7 @@
 // Traditional tree LOD build, split from ring selection/terrain placement.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 import simd
 

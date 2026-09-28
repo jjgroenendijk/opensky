@@ -12,7 +12,7 @@
 // Documented in docs/engine/combat.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One fighting actor as the panel shows it.
 nonisolated public struct CombatActorReadout: Equatable, Sendable {

@@ -11,7 +11,7 @@
 // a list combines needs the other one.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// Everything a condition is evaluated against: the globals seam, the game
 /// clock, the reference index, which references the Subject and Target run-ons

@@ -23,7 +23,8 @@
 // skips so accounting stays exact.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 /// Terminal visual-resolution failures.
 nonisolated public enum ActorVisualError: Error, Equatable {

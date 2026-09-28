@@ -7,7 +7,7 @@
 // held weakly because the same controller owns both.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 @MainActor

@@ -2,7 +2,8 @@
 // limits: flatten placed models, attach terrain/environment draws, union
 // bounds, emit one load summary.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OSLog
 

@@ -1,10 +1,12 @@
 // Exterior ground's material comes from the landscape texture painted heaviest
 // at each vertex (issue #358). Synthetic LAND records only.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import simd
 import Testing
 

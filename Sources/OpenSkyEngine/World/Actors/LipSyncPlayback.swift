@@ -4,7 +4,8 @@
 // result into the actor's existing FaceMorphPlayback.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
+import OpenSkyFormatsESM
 
 nonisolated public enum LipSyncClockMode: String, Equatable, Sendable {
     case audio

@@ -5,7 +5,7 @@
 
 import AVFAudio
 import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
 import simd
 import Testing
 

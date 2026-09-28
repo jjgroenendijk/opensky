@@ -1,7 +1,7 @@
 // Which hands an EQUP slot takes. The walk is `EquipSlotHands`, which lives with
 // the equipment runtime, so the store in GameData stays free of it.
 
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated extension EquipSlotStore {

@@ -29,7 +29,7 @@
 // Documented in docs/engine/inventory-state.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One stack of identical items: a base FormID, whether they were stolen, and
 /// how many of it there are.

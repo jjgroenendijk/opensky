@@ -4,7 +4,8 @@
 // after a load/unload diff (CellGridManager). No Metal calls of its own; the
 // renderer receives the composed scene through Renderer.setScene.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import simd
 
 /// Built cells currently resident, keyed by exterior grid coordinate.

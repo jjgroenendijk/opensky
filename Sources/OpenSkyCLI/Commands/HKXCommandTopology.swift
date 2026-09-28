@@ -8,7 +8,7 @@
 // Output is plain text and stable enough for tools/probe.sh to grep.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
 
 enum HKXTopologyDump {
     /// Nodes listed verbatim before the walk collapses into per-class totals;

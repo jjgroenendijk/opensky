@@ -3,7 +3,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 struct PackageBridgeState {
     var runtime: ActorPackageRuntime?

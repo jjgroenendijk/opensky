@@ -2,7 +2,8 @@
 // load order before registration. All reads go through `ConditionDataResolution`.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated extension ConditionFunctions {

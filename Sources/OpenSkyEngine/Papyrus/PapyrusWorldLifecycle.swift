@@ -11,7 +11,7 @@
 // attach covers stays private here.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One script slated for instantiation during an attach, in deterministic
 /// `sortedEntries()` × VMAD-script order.

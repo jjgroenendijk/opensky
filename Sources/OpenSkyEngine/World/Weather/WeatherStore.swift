@@ -8,7 +8,8 @@
 // docs/engine/weather.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import simd
 
 /// One weighted weather candidate, unifying CLMT WLST and REGN RDWT entries.

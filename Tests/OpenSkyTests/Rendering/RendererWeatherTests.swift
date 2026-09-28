@@ -4,12 +4,13 @@
 // weathers differ. Synthetic fixtures only (AGENTS.md "Legal & IP boundary");
 // skips without a Metal 4 device (paravirtual CI), like RendererShadowTests.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 import Metal
 import MetalKit
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import simd
 import Testing
 

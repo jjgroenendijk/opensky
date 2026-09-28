@@ -24,7 +24,7 @@
 // hole in it and nothing to point at.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// Resolves one quest alias to the display name of whatever fills it, and
 /// substitutes those names into journal text.

@@ -4,7 +4,8 @@
 // so both tools show the same decode (docs/tools/preview-gui.md).
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public enum RecordTextDump: Sendable {

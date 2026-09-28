@@ -8,7 +8,7 @@
 // cannot be chosen over, and the subtitle goes away when the line does.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 @MainActor

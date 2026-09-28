@@ -23,7 +23,7 @@
 // Documented in docs/engine/condition-functions.md and docs/engine/detection.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 /// Resolved perception for a whole evaluation.

@@ -5,7 +5,8 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsSWF
 @testable import OpenSkyGameData
 
 /// Stands in for the game controller, which conforms to every provider

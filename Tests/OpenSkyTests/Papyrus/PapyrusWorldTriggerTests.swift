@@ -5,9 +5,10 @@
 // Synthetic PEX objects and synthetic REFR records only; the end-to-end walk
 // lives in M11TriggerVolumeWalkTests.
 
-import FormatsTestSupport
+import FormatsESMTesting
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsPEX
 import simd
 import Testing
 

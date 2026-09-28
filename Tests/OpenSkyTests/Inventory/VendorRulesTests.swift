@@ -3,10 +3,10 @@
 // both ways of the list's negation. Synthetic records only, laid out from
 // docs/formats/factions.md and docs/formats/records.md.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

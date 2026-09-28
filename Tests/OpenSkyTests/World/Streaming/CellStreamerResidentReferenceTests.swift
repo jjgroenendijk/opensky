@@ -7,10 +7,11 @@
 // `CellStreamerTests.cellScene` because that fixture retains no references, and
 // `CellScene.references` is immutable once built.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import simd
 import Testing
 

@@ -35,7 +35,7 @@
 //
 // Documented in docs/engine/melee-combat.md.
 
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 /// One actor a swing can connect with.

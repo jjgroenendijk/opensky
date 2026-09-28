@@ -11,7 +11,8 @@
 // what lets a mod-added slot name a vanilla hand as its parent.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated public struct ResolvedEquipSlot: Equatable, Sendable {
     public let id: ResolvedFormID

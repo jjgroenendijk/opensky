@@ -9,7 +9,7 @@
 // payload slice and letting its bounds do the containment for free.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
 
 nonisolated public struct SaveReader: Sendable {
     private var reader: BinaryReader

@@ -14,7 +14,7 @@
 // nonsensical value is not a reason to fail a whole save.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One actor's saved current values, before they are merged back into the
 /// delta.

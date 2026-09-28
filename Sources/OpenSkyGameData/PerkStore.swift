@@ -13,7 +13,8 @@
 // issue 20.4 and deliberately absent here.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 /// One effect of a perk, joined against the spell store.
 nonisolated public struct ResolvedPerkEffect: Sendable {

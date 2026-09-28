@@ -5,10 +5,10 @@
 // the two trade price caps are quoted numbers from that page, not values this
 // implementation produced and then had a test written around.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

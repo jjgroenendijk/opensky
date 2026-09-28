@@ -14,7 +14,8 @@
 // store and are issues #503 and #508.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated public struct ResolvedAssociationType: Equatable, Sendable {
     public let id: ResolvedFormID

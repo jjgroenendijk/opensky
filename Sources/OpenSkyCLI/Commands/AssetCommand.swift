@@ -4,7 +4,8 @@
 // failure here reproduces a renderer skip exactly.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 
 enum AssetCommand {

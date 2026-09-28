@@ -10,7 +10,7 @@
 // establishes, so re-encoding an unchanged perk set produces identical bytes.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
 
 nonisolated extension OpenSkySaveEncoder {
     /// One actor's owned perks paired with the snapshot entry they came from.

@@ -3,7 +3,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
 import OpenSkyGameData
 
 struct NPCMovementBridgeState {

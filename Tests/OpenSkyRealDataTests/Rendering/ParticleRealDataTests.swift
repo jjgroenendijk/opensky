@@ -9,7 +9,8 @@
 
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
 import Testing
 

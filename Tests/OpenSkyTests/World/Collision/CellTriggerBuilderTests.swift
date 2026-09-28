@@ -3,11 +3,15 @@
 // deliberately excluded, and the static-collision accounting that must not
 // move. Synthetic ESM + NIF bytes only; no game content.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
+import FormatsMeshTesting
 import Foundation
 import Metal
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsMesh
 import simd
 import Testing
 

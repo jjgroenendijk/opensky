@@ -7,7 +7,8 @@
 // split-for-size shape; the wiring here is independent of scene composition.
 
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsESM
+import OpenSkyFormatsPEX
 import OpenSkyGameData
 import OSLog
 

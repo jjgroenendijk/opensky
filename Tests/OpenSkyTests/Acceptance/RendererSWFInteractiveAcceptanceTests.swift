@@ -12,12 +12,12 @@
 // Every movie is synthetic and built in code — never an extracted game file
 // (AGENTS.md "Legal & IP boundary").
 
-import FormatsTestSupport
+import FormatsSWFTesting
 import Foundation
 import Metal
 import MetalKit
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsSWF
 import simd
 import Testing
 

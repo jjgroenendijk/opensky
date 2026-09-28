@@ -2,10 +2,11 @@
 // ESM fields only. Layout sources: UESP SNCT and xEdit
 // wbDefinitionsTES5.pas; see docs/formats/sound.md.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 struct SoundCategoryRecordTests {

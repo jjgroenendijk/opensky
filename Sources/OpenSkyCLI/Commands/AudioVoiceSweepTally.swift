@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsAudio
 
 /// Name-derivation result, per plugin and in total.
 struct VoiceNameReport {

@@ -3,7 +3,7 @@
 // aggregate counts and call names are written to gitignored logs/.
 
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
 import Testing
 

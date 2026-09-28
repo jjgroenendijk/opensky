@@ -13,7 +13,8 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
+import OpenSkyFormatsESM
 import simd
 
 /// Ragdoll state the controller owns. Extensions cannot add stored properties,

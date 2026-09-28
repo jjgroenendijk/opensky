@@ -15,8 +15,8 @@ the fast loop, coverage, and sanitizers work is on the [test runs](/tools/test-r
 
 ## Targets
 
-- `OpenSkyFormatsTests` and `OpenSkyGameDataTests`: package test targets, one per library module
-  in `Package.swift`. A change to engine code does not rebuild them
+- `OpenSkyFormatsCoreTests`, `OpenSkyGameDataTests`, and the other `<Module>Tests`: package test
+  targets, one per library module in `Package.swift`. A change to engine code does not rebuild them
   ([Swift modules](/tools/modules.md)).
 - `OpenSkyTests`: unit tests with Swift Testing and `@testable import OpenSky`. Math, the virtual
   file system, the runtime, and the renderer through offscreen paths. None of it needs game data.
@@ -28,8 +28,9 @@ the fast loop, coverage, and sanitizers work is on the [test runs](/tools/test-r
 
 `Tests/TestSupport/` is not a target. Both `OpenSkyTests` and `OpenSkyRealDataTests` compile it,
 the way `Sources/OpenSkyEngine/` is shared by the app and `OpenSkyCLI`. It has no `@Test`, because
-a test there would run in both bundles. `Tests/FormatsTestSupport/` is a package library with the
-fixtures that only build bytes. Every unit test target links it.
+a test there would run in both bundles. Each `Tests/<Name>Testing/` folder is a package library of
+shared fixtures, for example `FormatsESMTesting` with the plugin byte builders. Every unit test
+target that needs one links it.
 
 ## Entry points
 

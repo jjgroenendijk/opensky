@@ -40,7 +40,7 @@
 // Documented in docs/engine/item-enchantments.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// One enchanted item's enchantment, resolved.

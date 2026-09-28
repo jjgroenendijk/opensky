@@ -28,7 +28,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Faction state the controller owns. Extensions cannot add stored properties,

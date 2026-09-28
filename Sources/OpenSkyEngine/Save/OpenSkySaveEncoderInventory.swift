@@ -7,7 +7,8 @@
 // internal on the parent for exactly this reason.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated extension OpenSkySaveEncoder {
     /// One owner's inventory paired with the snapshot entry it came from.

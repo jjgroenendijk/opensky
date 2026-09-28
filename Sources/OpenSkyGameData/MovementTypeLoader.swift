@@ -1,7 +1,7 @@
 // Loads every active plugin's MOVT records from a data root. The decoder lives
-// with the parsers in OpenSkyFormats; finding the active plugins is engine work.
+// with the parsers in OpenSkyFormatsESM; finding the active plugins is engine work.
 
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated public enum MovementTypeLoader: Sendable {
     public static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> MovementTypeStore {

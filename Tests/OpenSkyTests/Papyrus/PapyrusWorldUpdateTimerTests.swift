@@ -8,9 +8,10 @@
 // `Double(n) * fixedStepSeconds >= interval` — so the expectations share the
 // exact rounding the registry uses.
 
-import FormatsTestSupport
+import FormatsESMTesting
+import FormatsPEXTesting
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsPEX
 import Testing
 
 /// Shared fixture for the update-timer test suites: one scripted reference

@@ -6,7 +6,8 @@
 // `NIFCollisionConstraintTests` already covers the decode that produces one.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsMesh
 import simd
 import Testing
 

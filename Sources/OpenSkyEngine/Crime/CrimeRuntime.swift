@@ -33,7 +33,7 @@
 // Documented in docs/engine/crime.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// What reporting one crime did, and why.

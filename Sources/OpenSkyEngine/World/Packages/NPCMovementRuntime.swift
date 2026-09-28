@@ -1,7 +1,7 @@
 // Fixed-clock NPC capsule movement, path following, bounded recovery, sparse
 // persistence, and actor trigger occupancy (issue #423).
 
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 public struct NPCMovementWorld {

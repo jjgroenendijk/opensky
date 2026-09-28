@@ -1,7 +1,7 @@
 // Reason-tagged production fly-gate failures.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
 
 nonisolated public enum CellStreamingFlyBenchmarkError: LocalizedError {
     case memoryMeasurementFailed

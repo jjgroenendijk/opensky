@@ -4,7 +4,7 @@ import Foundation
 import Metal
 import MetalKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsCore
 
 enum BenchCommand {
     /// 30 fps -> 33.33 ms per frame.

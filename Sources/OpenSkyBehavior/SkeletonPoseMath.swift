@@ -1,6 +1,7 @@
 // Pure skeleton pose math: local bone transforms to skeleton-world matrices.
 
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 import simd
 
 nonisolated public enum SkeletonPoseError: Error, Equatable {

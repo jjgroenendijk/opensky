@@ -8,7 +8,7 @@
 // translation .txt files, so a synthetic sample is the only way the preview
 // can show resolved text.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
 import OpenSkyGameData
 import simd
 

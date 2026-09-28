@@ -1,8 +1,8 @@
 // Synthetic two-plugin AVIF override coverage plus the actor-value-index join.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

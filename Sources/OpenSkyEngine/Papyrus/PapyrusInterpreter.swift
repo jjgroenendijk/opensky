@@ -5,7 +5,7 @@
 // its remaining budget through `SuspendedCall`.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsPEX
 
 nonisolated public enum PapyrusFlow {
     case next

@@ -15,7 +15,7 @@
 // chunk stream itself provides one level up.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One actor's saved hostility, before it is merged back into the delta.
 nonisolated public struct SaveCombatStateEntry: Equatable, Sendable {

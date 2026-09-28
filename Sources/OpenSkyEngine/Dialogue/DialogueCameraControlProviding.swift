@@ -14,7 +14,7 @@
 //
 // Documented in docs/engine/dialogue-camera.md.
 
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 /// Which actor the force toggle aims at. Two rows rather than a free-text

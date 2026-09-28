@@ -1,7 +1,7 @@
 // The values the capsule narrowphase reports: one contact, one move result, and
 // the world-space triangle both capsule and dynamic-body queries test against.
 
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 nonisolated public struct CapsuleCollisionContact: Sendable {

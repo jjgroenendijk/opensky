@@ -1,7 +1,7 @@
 // Opcode fan-out kept separate from the execution loop.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsPEX
 
 nonisolated extension PapyrusInterpreter {
     public func requireOperands(

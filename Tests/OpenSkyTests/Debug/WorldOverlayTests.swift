@@ -4,7 +4,7 @@
 import Metal
 import MetalKit
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import OpenSkyShaderTypes
 import simd
 import Testing

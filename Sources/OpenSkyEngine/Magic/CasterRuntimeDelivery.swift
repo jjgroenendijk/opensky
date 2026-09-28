@@ -42,7 +42,7 @@
 // Documented in docs/engine/spell-delivery.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Which deliveries this build carries out.

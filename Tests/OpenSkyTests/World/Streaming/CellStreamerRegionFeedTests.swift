@@ -5,7 +5,7 @@
 // growing that file past the length limit. No Metal, no game data.
 
 import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 extension CellStreamerTests {

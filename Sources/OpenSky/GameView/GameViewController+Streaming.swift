@@ -3,7 +3,7 @@
 // after the M9.2.2 ambience-context subscription landed here.
 
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsCore
 import OSLog
 import simd
 

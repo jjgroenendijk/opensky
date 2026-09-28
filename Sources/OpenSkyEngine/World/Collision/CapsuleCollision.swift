@@ -2,7 +2,8 @@
 // Shapes are engine-facing values from StaticCollisionWorld; no NIF disk
 // layout leaks into movement.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsMesh
 import simd
 
 nonisolated private func capsuleResponseNormal(

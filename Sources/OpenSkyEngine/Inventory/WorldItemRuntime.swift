@@ -28,7 +28,7 @@
 // Documented in docs/engine/interaction.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 /// Failures the world-item layer reports. Inventory arithmetic failures are

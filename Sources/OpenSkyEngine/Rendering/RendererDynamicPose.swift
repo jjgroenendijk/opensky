@@ -19,7 +19,7 @@
 //
 // Documented in docs/engine/dynamic-body-drawing.md.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
 import simd
 
 nonisolated extension DrawInstance {

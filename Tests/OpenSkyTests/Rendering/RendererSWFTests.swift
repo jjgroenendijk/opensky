@@ -6,12 +6,12 @@
 // clip layer must reduce the covered area, and the draw stats must count
 // draws/triangles/glyphs/masks. Pattern from RendererUITests.
 
-import FormatsTestSupport
+import FormatsSWFTesting
 import Foundation
 import Metal
 import MetalKit
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsSWF
 import simd
 import Testing
 

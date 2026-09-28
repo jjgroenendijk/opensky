@@ -11,7 +11,7 @@
 // target, so it needs no project-membership exception.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
 
 nonisolated public enum InventoryEquipmentReadout: Sendable {
     /// Longest inventory listing any of these readouts prints. A full player

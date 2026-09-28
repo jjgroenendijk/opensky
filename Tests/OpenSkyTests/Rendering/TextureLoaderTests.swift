@@ -1,11 +1,11 @@
 // DDS -> MTLTexture upload tests over synthetic DDS bytes (DDSFixture).
 // GPU tests skip when no Metal device (or no BCn support — paravirtual CI).
 
-import FormatsTestSupport
+import FormatsMeshTesting
 import Foundation
 import Metal
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsMesh
 import Testing
 
 struct TextureLoaderTests {

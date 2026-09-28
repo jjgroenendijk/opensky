@@ -11,7 +11,7 @@
 // one leaves every native here refusing rather than answering zero.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 extension PapyrusWorldStateBridge {
     public func crimeGold(of faction: ReferenceKey) -> Int? {

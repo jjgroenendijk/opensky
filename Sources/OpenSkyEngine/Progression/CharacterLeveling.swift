@@ -43,7 +43,8 @@
 // Documented in docs/engine/character-leveling.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// The four game settings character leveling reads, resolved once.

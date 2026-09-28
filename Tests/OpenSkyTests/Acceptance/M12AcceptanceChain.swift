@@ -10,10 +10,12 @@
 // published layouts (AGENTS.md "Legal & IP boundary"), and nothing here needs a
 // Metal device or an install.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import simd
 
 /// The engine objects the gate drives, wired the way `wireWorldItems` wires

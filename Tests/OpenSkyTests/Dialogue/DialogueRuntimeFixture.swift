@@ -12,10 +12,10 @@
 // `GetIsID` for the speaker, and the follow-up flow runs through TCLT links
 // rather than through a previous-info chain, which `Skyrim.esm` uses zero times.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 
 enum DialogueRuntimeFixture {
     /// Start-game-enabled, so it runs off its DNAM flag with nothing started.

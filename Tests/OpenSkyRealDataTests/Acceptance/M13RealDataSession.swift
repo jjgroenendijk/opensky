@@ -11,7 +11,7 @@
 
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 
 /// One headless engine over the user's install: the plugin's quests, the

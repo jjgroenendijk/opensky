@@ -24,7 +24,8 @@
 // Documented in docs/engine/dialogue-menu.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated extension DialogueMenuModel {

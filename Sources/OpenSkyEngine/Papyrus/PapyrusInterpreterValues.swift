@@ -1,7 +1,7 @@
 // Identifier resolution, assignment, casts, and hierarchy lookup.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsPEX
 
 nonisolated extension PapyrusInterpreter {
     public func read(

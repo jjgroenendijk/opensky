@@ -7,9 +7,10 @@
 // files (AGENTS.md "Legal & IP boundary"). Layout: UESP "Skyrim Mod:Mod File
 // Format/CLAS"; see docs/formats/actors.md.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

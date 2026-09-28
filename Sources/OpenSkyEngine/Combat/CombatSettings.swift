@@ -37,7 +37,8 @@
 // Documented in docs/engine/melee-damage.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public struct CombatSettings: Equatable, Sendable {

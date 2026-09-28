@@ -1,7 +1,7 @@
-import FormatsTestSupport
+import FormatsPEXTesting
 import Foundation
 import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsPEX
 import Testing
 
 struct PapyrusObjectOpcodeTests {

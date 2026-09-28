@@ -5,7 +5,7 @@
 import CoreGraphics
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsSWF
 import Testing
 
 struct SWFGlyphPathTests {

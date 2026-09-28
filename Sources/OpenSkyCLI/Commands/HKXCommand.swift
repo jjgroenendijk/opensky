@@ -4,7 +4,7 @@
 // parse failure here reproduces what later animation/skeleton loading sees.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
 import OpenSkyGameData
 
 enum HKXCommand {

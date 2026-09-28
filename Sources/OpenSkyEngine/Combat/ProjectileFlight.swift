@@ -44,7 +44,7 @@
 //
 // Documented in docs/engine/projectiles.md.
 
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 /// Everything a projectile needs to know about the record that launched it.

@@ -5,10 +5,10 @@
 // This is the probe every menu bring-up needs (M8.5.1 ran it by hand for
 // `startmenu.swf`, M12.2.2 for `inventorymenu.swf`), promoted to a subcommand
 // so the next one does not rewrite it. It only parses args and prints; the
-// runtime it drives lives in `Sources/OpenSkyFormats/SWF/Runtime/`.
+// runtime it drives lives in `Sources/OpenSkyFormatsSWF/SWF/Runtime/`.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsSWF
 import OpenSkyGameData
 
 enum SWFActionRunCommand {

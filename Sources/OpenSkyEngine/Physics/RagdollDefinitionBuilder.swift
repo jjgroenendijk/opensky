@@ -8,7 +8,8 @@
 //
 // Documented in docs/engine/ragdoll-solver.md.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsMesh
 import simd
 
 nonisolated extension RagdollDefinition {

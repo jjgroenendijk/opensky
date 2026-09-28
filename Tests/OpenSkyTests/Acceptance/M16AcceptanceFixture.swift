@@ -11,10 +11,12 @@
 // wins, at nine at night the sleep package does, and the change happens because
 // the clock moved rather than because a test set it.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import simd
 
 @MainActor

@@ -3,11 +3,12 @@
 // BCn — untextured fallback material). Fixtures are built in code — never
 // extracted game files (AGENTS.md Legal & IP boundary).
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsMeshTesting
 import Foundation
 import Metal
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
 @testable import OpenSkyGameData
 import Testing
 

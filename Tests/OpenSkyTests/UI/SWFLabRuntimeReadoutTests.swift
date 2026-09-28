@@ -5,9 +5,9 @@
 // truncation cases matter most: a clipped list must still say how much it
 // stopped showing.
 
-import FormatsTestSupport
+import FormatsSWFTesting
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsSWF
 import Testing
 
 struct SWFLabRuntimeReadoutTests {

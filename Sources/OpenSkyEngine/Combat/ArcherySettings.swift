@@ -49,7 +49,8 @@
 // Documented in docs/engine/projectiles.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public struct ArcherySettings: Equatable, Sendable {

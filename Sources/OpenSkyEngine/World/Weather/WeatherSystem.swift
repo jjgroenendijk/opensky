@@ -11,7 +11,7 @@
 // renderer state). The WeatherStore it reads is immutable after construction.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyShaderTypes
 import simd
 

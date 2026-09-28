@@ -52,7 +52,7 @@
 // Documented in docs/engine/condition-functions.md and docs/engine/hostility.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated extension ConditionFunctions {
     public static func installFaction(_ registry: inout ConditionFunctionRegistry) {

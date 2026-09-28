@@ -22,7 +22,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 extension GameViewController: CombatLoopWorld {

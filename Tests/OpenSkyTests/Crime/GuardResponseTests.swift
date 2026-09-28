@@ -3,10 +3,10 @@
 // and the session state that picks one confrontation at a time. Synthetic
 // records only (CrimeFixture).
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

@@ -1,7 +1,7 @@
 // Keyword lookups that resolve a record's raw KWDA links through the load order's
-// `KeywordStore`. The record shape lives with the parsers in OpenSkyFormats.
+// `KeywordStore`. The record shape lives with the parsers in OpenSkyFormatsESM.
 
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated extension KeywordList {
     /// Tests by editor ID after resolving both the requested keyword and this

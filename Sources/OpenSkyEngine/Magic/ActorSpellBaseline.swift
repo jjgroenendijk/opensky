@@ -45,7 +45,7 @@
 // Documented in docs/engine/ai-spell-use.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One actor's authored spell list, kept split so an inspector can say which
 /// half a spell came from.

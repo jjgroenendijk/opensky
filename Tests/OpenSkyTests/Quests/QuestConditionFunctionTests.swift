@@ -6,10 +6,10 @@
 // the Creation Kit spells each 4096 higher. Conditions are built in code with
 // `ConditionFixture`, so nothing here reads game data.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 @Suite("Quest condition functions")

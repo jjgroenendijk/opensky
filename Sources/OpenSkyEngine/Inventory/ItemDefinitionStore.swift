@@ -24,7 +24,8 @@
 // until the inventory runtime reads more than Skyrim.esm.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// The ENCH link a weapon or a piece of armor carries, already resolved

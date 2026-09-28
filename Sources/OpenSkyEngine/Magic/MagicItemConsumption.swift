@@ -23,7 +23,7 @@
 // Documented in docs/engine/magic.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// What consuming one item applies.
 nonisolated public struct MagicItemUse: Equatable, Sendable {

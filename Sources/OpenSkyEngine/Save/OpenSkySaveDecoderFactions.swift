@@ -15,7 +15,7 @@
 // not destroy progress.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One actor's saved memberships, before they are merged back into the delta.
 nonisolated public struct SaveFactionEntry: Equatable, Sendable {

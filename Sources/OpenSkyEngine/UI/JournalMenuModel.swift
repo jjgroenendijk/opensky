@@ -16,7 +16,7 @@
 // Documented in docs/engine/journal.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One objective line under a quest.
 nonisolated public struct JournalObjectiveEntry: Equatable, Sendable {

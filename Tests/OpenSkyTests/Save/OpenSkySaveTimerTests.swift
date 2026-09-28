@@ -7,10 +7,11 @@
 // Every fixture is built in code — a save is OpenSky's own format and a
 // synthetic PEX object is not game data. See docs/formats/opensky-save-world-chunks.md.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import Testing
 
 struct OpenSkySaveTimerTests {

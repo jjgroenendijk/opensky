@@ -11,7 +11,7 @@
 // values, and xEdit dev Core/wbDefinitionsTES5.pas for the index table.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated public enum ConditionFunctions: Sendable {
     public static func install(into registry: inout ConditionFunctionRegistry) {

@@ -17,7 +17,7 @@
 // what a menu could not do (docs/decisions/swf-as2-scope.md).
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsSWF
 
 /// What a running movie's AS2 runtime looks like from outside, at one instant.
 /// Every field defaults, so a test can build the one case it is asserting.

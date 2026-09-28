@@ -4,7 +4,7 @@
 // Fixtures are synthetic, built in code by `PapyrusQuestFixture` — never
 // extracted game files (AGENTS.md "Legal & IP boundary").
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
 import Testing

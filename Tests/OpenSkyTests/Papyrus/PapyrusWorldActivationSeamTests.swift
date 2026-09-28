@@ -5,10 +5,12 @@
 // Satellite of `PapyrusWorldActivationTests`, split off to stay under the
 // strict-lint type size cap.
 
-import FormatsTestSupport
+@testable import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsMesh
 import simd
 import Testing
 

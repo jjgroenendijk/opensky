@@ -40,7 +40,7 @@
 // Documented in docs/engine/vendor-factions.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// When a vendor trades, from the `VENV` start and end hours.

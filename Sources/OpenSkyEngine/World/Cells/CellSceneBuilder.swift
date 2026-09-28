@@ -13,7 +13,8 @@
 
 import Foundation
 import Metal
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OSLog
 import simd

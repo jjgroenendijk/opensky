@@ -5,7 +5,7 @@
 
 import Foundation
 import Metal
-import OpenSkyFormats
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 import simd
 

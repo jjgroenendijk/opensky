@@ -26,7 +26,7 @@
 // the count is what makes it visible instead of silent. See docs/engine/perks.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One object a perk effect's condition tab may run against.
 nonisolated public enum PerkConditionSubject: String, CaseIterable, Hashable, Sendable {

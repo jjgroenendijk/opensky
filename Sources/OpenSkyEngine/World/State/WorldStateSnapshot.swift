@@ -12,7 +12,7 @@
 // Documented in docs/engine/runtime-state.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One dirty reference in a snapshot: its key and the deltas recorded for it.
 nonisolated public struct WorldStateSnapshotEntry: Equatable, Sendable {

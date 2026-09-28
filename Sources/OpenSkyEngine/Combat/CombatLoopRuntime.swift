@@ -28,7 +28,7 @@
 // Documented in docs/engine/combat.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 @MainActor

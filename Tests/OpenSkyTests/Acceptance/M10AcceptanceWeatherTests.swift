@@ -19,11 +19,12 @@
 // code, and no game file is opened.
 
 import AppKit
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 extension M10AcceptanceTests {

@@ -8,7 +8,9 @@
 
 import Foundation
 import Metal
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 import OpenSkyShaderTypes
 import OSLog
 import simd

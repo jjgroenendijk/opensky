@@ -1,7 +1,10 @@
-import FormatsTestSupport
+import FormatsESMTesting
+import FormatsPEXTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsPEX
 import Testing
 
 @Suite("VMAD Papyrus binding")

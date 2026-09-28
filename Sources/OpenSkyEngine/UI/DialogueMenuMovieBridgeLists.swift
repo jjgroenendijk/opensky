@@ -14,7 +14,8 @@
 // what a bring-up gate reads back to prove the rows arrived.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
+import OpenSkyFormatsSWF
 
 nonisolated extension DialogueMenuMovieBridge {
     // MARK: - Writing

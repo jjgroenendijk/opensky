@@ -22,7 +22,8 @@
 // (FULL -> `.strings`, long-form body text -> `.dlstrings`).
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated extension JournalMenuModel {

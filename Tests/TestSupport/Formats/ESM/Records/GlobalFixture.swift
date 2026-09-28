@@ -2,10 +2,11 @@
 // code, never extracted from game data (AGENTS.md "Legal & IP boundary").
 // Layout: UESP "Skyrim Mod:Mod File Format/GLOB".
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 
 enum GlobalFixture {
     /// GLOB record: EDID zstring, FNAM type character, FLTV float32.

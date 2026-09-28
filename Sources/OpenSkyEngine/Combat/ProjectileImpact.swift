@@ -36,7 +36,7 @@
 //
 // Documented in docs/engine/projectiles.md.
 
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 /// Where a projectile touched something, and what.

@@ -4,7 +4,7 @@
 // rules; Driver hands in its runner + configuration.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
 
 nonisolated public struct CollisionBuildBenchmarkSummary: Sendable {
     public let average: Double

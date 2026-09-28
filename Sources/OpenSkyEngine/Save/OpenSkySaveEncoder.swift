@@ -7,7 +7,8 @@
 // nonsense, and losing a save over it would be worse than losing the tail.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated public enum OpenSkySaveEncoder: Sendable {
     /// Serializes a snapshot, its load-order fingerprint and header metadata.

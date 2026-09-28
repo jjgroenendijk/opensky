@@ -10,7 +10,7 @@
 // that is quietly wrong rather than one that is merely missing a feature.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated public enum OpenSkySaveDecoder: Sendable {
     public static func decode(_ data: Data) throws -> OpenSkySaveFile {

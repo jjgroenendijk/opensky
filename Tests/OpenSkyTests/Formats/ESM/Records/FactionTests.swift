@@ -2,10 +2,12 @@
 // malformed record produces, and the dump the CLI and Asset Browser print. No
 // game-derived bytes.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import Testing
 
 struct FactionTests {

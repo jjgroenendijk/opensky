@@ -2,10 +2,10 @@
 // `PapyrusWorldRuntime` (issue #171), split from the lifecycle suite for the
 // type-body lint cap.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
 import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsPEX
 import Testing
 
 @MainActor

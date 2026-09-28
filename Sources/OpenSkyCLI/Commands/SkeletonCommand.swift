@@ -7,7 +7,8 @@
 // parses args + prints only; the logic is unit-tested in OpenSkyTests.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 
 enum SkeletonCommand {

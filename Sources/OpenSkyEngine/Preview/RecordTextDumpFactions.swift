@@ -2,7 +2,8 @@
 // switch. The formatter feeds both `openskycli record` and the Asset Browser.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated extension RecordTextDump {
     /// FACT: the identity and flag line, then the crime values, the rank table,

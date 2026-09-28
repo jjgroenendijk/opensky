@@ -20,7 +20,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Crime state the controller owns. Extensions cannot add stored properties, so

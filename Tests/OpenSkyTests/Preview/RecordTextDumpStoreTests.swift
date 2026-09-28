@@ -1,10 +1,12 @@
 // Record dumps that name linked records through the GameData stores: location
 // keywords and alchemy effects. In-code plugin fixtures only.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import OpenSkyGameData
 import Testing
 

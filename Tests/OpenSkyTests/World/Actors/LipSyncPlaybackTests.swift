@@ -1,6 +1,7 @@
-import FormatsTestSupport
+import FormatsAnimationTesting
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAnimation
+@testable import OpenSkyFormatsESM
 import Testing
 
 @Suite("Audio-clock lip-sync playback")

@@ -4,7 +4,8 @@
 // renderer skip exactly (same code paths).
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsMesh
 
 nonisolated public enum AssetInfoText: Sendable {
     /// NIF container stats + flattened engine-model view (drawable meshes,

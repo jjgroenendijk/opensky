@@ -9,7 +9,7 @@
 import BehaviorTesting
 import Foundation
 @testable import OpenSkyBehavior
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAnimation
 import Testing
 
 /// A `BehaviorReferenceSource` backed by instances the test already built.

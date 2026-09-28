@@ -1,8 +1,8 @@
 // Matching a PACK schedule (PSDT) against the running game clock. The record
-// shape lives with the parsers in OpenSkyFormats; `GameClock` is runtime state.
+// shape lives with the parsers in OpenSkyFormatsESM; `GameClock` is runtime state.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated extension Package.Schedule {
     public func matches(_ clock: GameClock) -> Bool {

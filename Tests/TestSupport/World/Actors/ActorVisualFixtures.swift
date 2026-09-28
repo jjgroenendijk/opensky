@@ -2,10 +2,11 @@
 // in code via ESMFixture, never extracted game files (AGENTS.md "Legal & IP
 // boundary"). Used by ActorVisualResolutionTests.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 
 /// Standard scenario: one race (skin torso+feet), an alternate skin, clothes
 /// covering the body slot reachable directly (outfit) or through an LVLI

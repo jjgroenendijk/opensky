@@ -13,7 +13,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsCore
 
 final class FactionMembershipSection: CrimeFactionPanelSection {
     let crosshairControl = NSButton(title: "Use crosshair actor", target: nil, action: nil)

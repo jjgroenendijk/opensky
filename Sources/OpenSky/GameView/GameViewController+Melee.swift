@@ -16,7 +16,8 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import simd
 
 /// Melee state the controller owns. Extensions cannot add stored properties, so

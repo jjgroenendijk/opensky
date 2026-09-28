@@ -4,10 +4,10 @@
 // Every quest is synthetic, built out of `QuestFixture` bytes, so nothing here
 // reads game data. The store is @MainActor, so the suite is too.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 @MainActor

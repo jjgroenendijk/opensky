@@ -37,7 +37,7 @@
 // Documented in docs/engine/guard-response.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Why an arrest outcome could not run.

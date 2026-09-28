@@ -6,9 +6,9 @@
 // what is worth testing follows from that, which is why the cases below are
 // about which flag bits are set rather than about string parsing.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 struct TopicInfoFragmentTests {

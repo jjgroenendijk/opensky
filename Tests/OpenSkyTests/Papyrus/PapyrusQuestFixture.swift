@@ -13,10 +13,12 @@
 // install resolves it once `PapyrusWorldRuntime.resolveScript` has pulled the
 // parent chain in.
 
-import FormatsTestSupport
+import FormatsESMTesting
+import FormatsPEXTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsPEX
 import Testing
 
 enum PapyrusQuestFixture {

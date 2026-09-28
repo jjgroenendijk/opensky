@@ -9,7 +9,7 @@
 // Documented in docs/engine/actor-values.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// Which plugin record an actor's baseline comes from.
 ///

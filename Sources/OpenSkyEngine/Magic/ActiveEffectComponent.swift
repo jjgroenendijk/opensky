@@ -16,7 +16,7 @@
 // Documented in docs/engine/magic.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// Every magic effect currently acting on one actor.
 nonisolated public struct ActiveEffectState: WorldStateComponent, Sendable {

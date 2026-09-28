@@ -23,7 +23,9 @@ import BehaviorTesting
 import Foundation
 @testable import OpenSkyBehavior
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAnimation
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import simd
 
 /// The synthetic arena the fight happens in.

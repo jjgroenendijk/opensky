@@ -3,7 +3,9 @@
 // by a small AABB BVH. Streaming owns the resulting value beside CellScene;
 // removing the cell releases its shapes + index together.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 import simd
 
 nonisolated public struct StaticCollisionShape: Sendable {

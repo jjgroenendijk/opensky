@@ -6,7 +6,8 @@
 // internal on the parent precisely so a chunk can live in its own file.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated extension OpenSkySaveEncoder {
     /// One spawned object paired with the snapshot entry it came from.

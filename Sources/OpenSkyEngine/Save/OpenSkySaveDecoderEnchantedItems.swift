@@ -19,7 +19,7 @@
 // enumeration: every field is a FormID, a count, a float or a sequence.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One owner's saved enchanted-item state, before it is merged back into the
 /// delta.

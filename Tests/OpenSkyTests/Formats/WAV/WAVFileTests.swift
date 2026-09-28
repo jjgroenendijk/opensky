@@ -3,10 +3,10 @@
 // Microsoft "Multimedia Programming Interface and Data Specifications 1.0";
 // see docs/formats/wav.md.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAudio
 import Testing
 
 struct WAVFileTests {

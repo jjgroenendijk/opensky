@@ -22,7 +22,7 @@
 // Documented in docs/engine/hostility.md and docs/engine/condition-functions.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Every actor's social profile plus the store a faction parameter resolves

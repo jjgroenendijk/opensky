@@ -33,7 +33,7 @@
 // context was not wired.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated extension ConditionFunctions {
     public static func installActor(_ registry: inout ConditionFunctionRegistry) {

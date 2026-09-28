@@ -16,7 +16,7 @@ site chose its own failure behavior.
 
 ## Decision
 
-One policy, `GameText.decode(_:)` in `Sources/OpenSkyFormats/Binary/GameText.swift`:
+One policy, `GameText.decode(_:)` in `Sources/OpenSkyFormatsCore/Binary/GameText.swift`:
 
 1. Valid UTF-8 -> decode as UTF-8.
 2. Otherwise decode as windows-1252.

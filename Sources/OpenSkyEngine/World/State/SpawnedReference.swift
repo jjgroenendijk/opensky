@@ -21,7 +21,7 @@
 // Documented in docs/engine/reference-identity.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One object the running game placed in the world.
 ///

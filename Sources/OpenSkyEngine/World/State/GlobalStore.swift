@@ -16,7 +16,8 @@
 // Documented in docs/engine/global-variables.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 /// Immutable index of the GLOB records in one plugin.
 ///

@@ -13,7 +13,8 @@
 // to a fence.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated extension OpenSkySaveEncoder {
     /// One actor's ledger paired with the snapshot entry it came from.

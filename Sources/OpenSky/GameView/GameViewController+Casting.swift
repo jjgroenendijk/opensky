@@ -18,7 +18,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Casting state the controller owns. Extensions cannot add stored properties,

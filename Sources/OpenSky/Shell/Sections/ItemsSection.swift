@@ -13,7 +13,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 final class ItemsSection: PanelSectionViewController {
     weak var provider: (any ItemControlProviding)? {

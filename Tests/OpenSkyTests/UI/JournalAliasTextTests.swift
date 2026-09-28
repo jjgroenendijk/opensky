@@ -6,10 +6,10 @@
 // prints resolved vanilla journal strings, and `<Alias=QuestNameLocation>` is
 // one of them verbatim. The quests below are synthetic all the same.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 @Suite("Journal alias text")

@@ -13,7 +13,8 @@
 // Documented in docs/formats/quest-records.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated public final class QuestStore: Sendable {
     /// Raw FormID -> decoded record.

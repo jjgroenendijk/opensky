@@ -4,7 +4,7 @@
 // OpenSkyTests exercises this). See docs/tools/preview-gui.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// What one sidebar row selects.

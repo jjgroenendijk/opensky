@@ -12,7 +12,8 @@
 import AVFAudio
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAudio
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import simd
 import Testing

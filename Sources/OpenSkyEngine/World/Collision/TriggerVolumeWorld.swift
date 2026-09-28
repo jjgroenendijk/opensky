@@ -7,7 +7,9 @@
 // produced, so the narrowphase below is deliberately simpler than
 // `CapsuleWorldCollider`.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 import simd
 
 nonisolated public struct TriggerVolume: Sendable {

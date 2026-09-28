@@ -10,7 +10,7 @@
 // length is a thrown error rather than a multi-gigabyte allocation.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One quest's saved state, before it is merged back into its delta.
 nonisolated public struct SaveQuestEntry: Equatable, Sendable {

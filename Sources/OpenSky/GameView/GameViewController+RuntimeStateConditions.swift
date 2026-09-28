@@ -23,7 +23,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 extension GameViewController {
     var runtimeStateConditionSources: [String] {

@@ -1,7 +1,7 @@
 // Renderer-facing cell lighting: resolved ambient/directional/fog plus
 // placed point lights. No plugin types cross into shader/renderer code.
 
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 nonisolated public struct FogParameters: Equatable, Sendable {

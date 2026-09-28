@@ -46,7 +46,7 @@
 // Documented in docs/engine/hostility.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Everything the derivation needs to know about one actor.

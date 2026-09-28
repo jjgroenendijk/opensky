@@ -10,7 +10,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// What the panel has selected. Nil selections fall back to the first option

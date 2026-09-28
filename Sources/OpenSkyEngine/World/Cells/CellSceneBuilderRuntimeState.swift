@@ -15,7 +15,7 @@
 // Documented in docs/engine/runtime-state.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OSLog
 
 /// One cell's references as a build should place them: the index entries every

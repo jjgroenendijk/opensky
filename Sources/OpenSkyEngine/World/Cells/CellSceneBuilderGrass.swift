@@ -2,7 +2,8 @@
 // GRAS, retain deterministic CPU placements, load shared models, emit GPU
 // batch inputs with identical cell lifetime.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OSLog
 
 nonisolated public struct GrassBuild {

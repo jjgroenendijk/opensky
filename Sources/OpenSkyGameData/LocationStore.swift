@@ -4,7 +4,8 @@
 // depth limit.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated public struct ResolvedLocation: Equatable, Sendable {
     public let id: ResolvedFormID

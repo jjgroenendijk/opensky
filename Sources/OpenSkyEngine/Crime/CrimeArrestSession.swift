@@ -6,7 +6,7 @@
 // the game controller. Documented in docs/engine/guard-response.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// Which way an arrest ends.
 nonisolated public enum ArrestOutcome: Equatable, Sendable {

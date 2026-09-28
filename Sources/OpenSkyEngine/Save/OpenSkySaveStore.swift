@@ -14,7 +14,7 @@
 // Documented in docs/formats/opensky-save.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Failure modes introduced by the slot layer, distinct from
