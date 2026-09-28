@@ -2,7 +2,7 @@
 # Run the env-gated real-data tests under the physical-footprint watchdog:
 # either the whole RealData test plan, or exactly one test from it.
 #
-# `Config/RealData.xctestplan` does two jobs. It selects the
+# `Config/TestPlans/RealData.xctestplan` does two jobs. It selects the
 # `openskyRealDataTests` target, which since issue #418 *is* the real-data set --
 # every env-gated suite lives in that bundle and nothing else does -- and it
 # carries OPENSKY_DATA_ROOT as a plan environment entry, which xcodebuild *does*
@@ -78,7 +78,7 @@ fi
 root="$(cd "$(dirname "$0")/.." && pwd)"
 # shellcheck source=/dev/null
 . "$root/tools/xcodebuild-lib.sh"
-plan="$root/Config/RealData.xctestplan"
+plan="$root/Config/TestPlans/RealData.xctestplan"
 
 guard_pid=""
 cleanup() {
@@ -110,13 +110,13 @@ if [ -n "${OPENSKY_DATA_ROOT:-}" ] && [ "$OPENSKY_DATA_ROOT" != "$data_root" ]; 
         echo "        The plan carries the root into the test host and xcodebuild"
         echo "        does not expand build settings in a plan environment value,"
         echo "        so the environment cannot override it. Point the suite at a"
-        echo "        different install by editing Config/RealData.xctestplan."
+        echo "        different install by editing Config/TestPlans/RealData.xctestplan."
     } >&2
     exit 2
 fi
 
 if [ ! -e "$data_root/Data/Skyrim.esm" ] && [ ! -e "$data_root/Skyrim.esm" ]; then
-    echo "[ERROR] no Skyrim install at $data_root (edit Config/RealData.xctestplan)" >&2
+    echo "[ERROR] no Skyrim install at $data_root (edit Config/TestPlans/RealData.xctestplan)" >&2
     exit 1
 fi
 

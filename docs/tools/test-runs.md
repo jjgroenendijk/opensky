@@ -64,21 +64,21 @@ cached `.xctestrun`.
 
 ## The RealData plan
 
-`Config/RealData.xctestplan` holds a literal install path. A plan value is not macro-expanded, so
-`$(OPENSKY_DATA_ROOT)` would arrive as those characters, and this entry is the one place the root is
-set. `tools/realtest.sh` reads it back and refuses to run when a different `OPENSKY_DATA_ROOT` is
-exported, instead of testing an install the plan does not name. To use another install, edit the
-plan.
+`Config/TestPlans/RealData.xctestplan` holds a literal install path. A plan value is not
+macro-expanded, so `$(OPENSKY_DATA_ROOT)` would arrive as those characters, and this entry is the
+one place the root is set. `tools/realtest.sh` reads it back and refuses to run when a different
+`OPENSKY_DATA_ROOT` is exported, instead of testing an install the plan does not name. To use
+another install, edit the plan.
 
 A plan's `selectedTests` does not match Swift Testing tests: selecting any runs zero tests. So the
 plan selects the whole target, which does work. That is why the real-data suites are their own
 bundle. Before, they lived in `openskyTests`: every unit build compiled them though they always
 skipped there, and the plan needed a long hand-kept list of suites. The shared fixtures now compile
 into both bundles instead. Types that mixed a fixture with `@Test` methods were split into a fixture
-in `openskyTestSupport/` and tests in an extension under `openskyTests/`, so no test name changed.
+in `Tests/TestSupport/` and tests in an extension under `Tests/UnitTests/`, so no test name changed.
 
 `make realdata-plan`, part of `make lint`, checks that every suite with a `dataRoot: GameDataRoot?`
-and a `@Test` is in `openskyRealDataTests/`, that the plan selects that target and nothing narrows
+and a `@Test` is in `Tests/RealDataTests/`, that the plan selects that target and nothing narrows
 it, and that no plan lists an app-hosted bundle beside `openskyUITests`.
 
 ## Code coverage

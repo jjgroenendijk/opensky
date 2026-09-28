@@ -17,8 +17,7 @@ CLI_SCHEME       := openskycli
 CONFIG           ?= Debug
 DESTINATION      ?= platform=macOS
 XCODEBUILD_FLAGS ?=
-SWIFT_PATHS      := opensky openskycli openskyTests openskyRealDataTests \
-                    openskyTestSupport openskyUITests
+SWIFT_PATHS      := Sources Tests
 TEST_RESULTS     := build/test-results
 
 # Build cache. It lives inside the checkout, not in Xcode's default under $HOME:
@@ -63,7 +62,7 @@ XCB_TEST         := $(XCB_APP) -destination '$(DESTINATION)'
 # `xcodebuild -showBuildSettings` costs several seconds per call.
 PRODUCTS          = $(DERIVED_DATA)/Build/Products/$(CONFIG)
 
-# Test plans (Config/*.xctestplan) choose which test bundles a run builds and
+# Test plans (Config/TestPlans/*.xctestplan) choose which test bundles a run builds and
 # runs, instead of -only-testing flags (issue #346). Each plan holds exactly one
 # bundle. The UI bundle must never share a plan with an app-hosted bundle
 # (openskyTests, openskyRealDataTests): both would drive opensky.app at once
@@ -77,7 +76,7 @@ SWIFTLINT_CFG    := tools/lint/.swiftlint.yml
 CLANGFORMAT_CFG  := tools/format/.clang-format
 MD_CFG           := tools/markdown/.markdownlint-cli2.yaml
 MD_GLOB          := **/*.md
-METAL_FILES      := $(shell find opensky openskycli -name '*.metal' 2>/dev/null)
+METAL_FILES      := $(shell find Sources -name '*.metal' 2>/dev/null)
 
 .DEFAULT_GOAL := help
 
@@ -153,7 +152,7 @@ md-lint: ## Lint Markdown strictly
 sh-lint: ## Shellcheck the hooks and tools/ scripts
 	@shellcheck -s sh $$(find .githooks tools -type f -name '*.sh') .githooks/hooks/*
 
-cli-boundary: ## Keep AppKit out of opensky/Engine, which the CLI also builds
+cli-boundary: ## Keep AppKit out of Sources/OpenSkyEngine, which the CLI also builds
 	@./tools/lint/cli-boundary.sh && echo "[ OK ] CLI target boundary clean"
 
 realdata-plan: ## Check every env-gated suite is in the RealData plan
@@ -240,7 +239,7 @@ cli-path: ## Print the built openskycli path [CONFIG]
 probe: ## Smoke-test the CLI against the local install (skips if absent)
 	@./tools/probe.sh
 
-icon: ## Regenerate the AppIcon PNGs from opensky/App/Resources/Branding/opensky-logo.svg
+icon: ## Regenerate the AppIcon PNGs from Sources/OpenSkyApp/Resources/Branding/opensky-logo.svg
 	@./tools/gen-appicon.sh
 
 ##@ Test

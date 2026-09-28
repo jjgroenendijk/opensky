@@ -24,7 +24,7 @@ see the whole program instead of one file at a time. They are gated locally:
   It reports unused declarations, properties that are assigned but never read, unused
   imports, and redundant conformances. Periphery reads the index store the compiler
   writes during a build (`COMPILER_INDEX_STORE_ENABLE = YES` in
-  `Config/Debug.xcconfig`), so it needs builds of the current tree for `openskyTests`,
+  `Config/Build/Debug.xcconfig`), so it needs builds of the current tree for `openskyTests`,
   the app with `openskyRealDataTests`, and `openskycli`. `make dead-code` runs those
   builds itself, with the compilation cache off and into its own tree
   (`DerivedData-index/`), because a build replayed from the shared cache writes almost

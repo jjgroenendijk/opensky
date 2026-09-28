@@ -22,7 +22,7 @@
 #      the game install.
 #
 # Both are keyed to a code signature, so both stick only while the signature is
-# stable. Config/Signing.xcconfig names one Apple Development identity for every
+# stable. Config/Build/Signing.xcconfig names one Apple Development identity for every
 # target for exactly this reason; an ad-hoc signature is a new application on
 # every build and re-asks forever. That is the one half of this the script can
 # check outright, and it does.
@@ -63,7 +63,7 @@ check_signature() {
         | sed -n 's/^Authority=//p' | head -1)"
     if [ -z "$authority" ]; then
         echo "[ERROR] $name is ad-hoc signed; no TCC grant against it can persist."
-        echo "        Config/Signing.xcconfig should name an Apple Development identity."
+        echo "        Config/Build/Signing.xcconfig should name an Apple Development identity."
         status=1
     else
         echo "[ OK ] $name is signed by: $authority"

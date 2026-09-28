@@ -36,14 +36,14 @@
 		5A3BAE193000109300177F95 /* openskyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = openskyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5A3BAE233000109300177F95 /* openskyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = openskyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5AD1000130001093001700A2 /* openskyRealDataTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = openskyRealDataTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		5ACF160130001093001700B1 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
-		5ACF160130001093001700B2 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
-		5ACF160130001093001700B3 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
-		5ACF160130001093001700B4 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
-		5ACF160130001093001700B5 /* App.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = App.xcconfig; sourceTree = "<group>"; };
-		5ACF160130001093001700B6 /* CLI.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = CLI.xcconfig; sourceTree = "<group>"; };
-		5ACF160130001093001700B7 /* Tests.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Tests.xcconfig; sourceTree = "<group>"; };
-		5ACF160130001093001700B8 /* UITests.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = UITests.xcconfig; sourceTree = "<group>"; };
+		5ACF160130001093001700B1 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Base.xcconfig; path = Build/Base.xcconfig; sourceTree = "<group>"; };
+		5ACF160130001093001700B2 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Build/Debug.xcconfig; sourceTree = "<group>"; };
+		5ACF160130001093001700B3 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Build/Release.xcconfig; sourceTree = "<group>"; };
+		5ACF160130001093001700B4 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Signing.xcconfig; path = Build/Signing.xcconfig; sourceTree = "<group>"; };
+		5ACF160130001093001700B5 /* App.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = App.xcconfig; path = Build/App.xcconfig; sourceTree = "<group>"; };
+		5ACF160130001093001700B6 /* CLI.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = CLI.xcconfig; path = Build/CLI.xcconfig; sourceTree = "<group>"; };
+		5ACF160130001093001700B7 /* Tests.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Tests.xcconfig; path = Build/Tests.xcconfig; sourceTree = "<group>"; };
+		5ACF160130001093001700B8 /* UITests.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = UITests.xcconfig; path = Build/UITests.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -66,48 +66,48 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		5A3BAE033000109100177F96 /* App */ = {
+		5A3BAE033000109100177F96 /* OpenSkyApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = App;
+			path = OpenSkyApp;
 			sourceTree = "<group>";
 		};
-		5A3BAE033000109100177F95 /* Engine */ = {
+		5A3BAE033000109100177F95 /* OpenSkyEngine */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Engine;
+			path = OpenSkyEngine;
 			sourceTree = "<group>";
 		};
-		5A3BAE033000109100177F97 /* SharedHeaders */ = {
+		5A3BAE033000109100177F97 /* ShaderTypes */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SharedHeaders;
+			path = ShaderTypes;
 			sourceTree = "<group>";
 		};
-		5AC1000130001093001700A5 /* openskycli */ = {
+		5AC1000130001093001700A5 /* OpenSkyCLI */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = openskycli;
+			path = OpenSkyCLI;
 			sourceTree = "<group>";
 		};
-		5A3BAE1C3000109300177F95 /* openskyTests */ = {
+		5A3BAE1C3000109300177F95 /* UnitTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = openskyTests;
+			path = UnitTests;
 			sourceTree = "<group>";
 		};
-		5A3BAE263000109300177F95 /* openskyUITests */ = {
+		5A3BAE263000109300177F95 /* UITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = openskyUITests;
+			path = UITests;
 			sourceTree = "<group>";
 		};
-		5AD1000130001093001700A5 /* openskyRealDataTests */ = {
+		5AD1000130001093001700A5 /* RealDataTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = openskyRealDataTests;
+			path = RealDataTests;
 			sourceTree = "<group>";
 		};
-		5AD1000130001093001700A6 /* openskyTestSupport */ = {
+		5AD1000130001093001700A6 /* TestSupport */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				5AD1000130001093001700B4 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
 				5AD1000130001093001700B5 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
 			);
-			path = openskyTestSupport;
+			path = TestSupport;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -160,24 +160,32 @@
 			isa = PBXGroup;
 			children = (
 				5ACF160130001093001700BA /* Config */,
-				5A3BAE033000109100177F94 /* opensky */,
-				5AC1000130001093001700A5 /* openskycli */,
-				5A3BAE1C3000109300177F95 /* openskyTests */,
-				5AD1000130001093001700A5 /* openskyRealDataTests */,
-				5AD1000130001093001700A6 /* openskyTestSupport */,
-				5A3BAE263000109300177F95 /* openskyUITests */,
+				5A3BAE033000109100177F94 /* Sources */,
+				5A3BAE033000109100177F98 /* Tests */,
 				5A3BAE023000109100177F95 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		5A3BAE033000109100177F94 /* opensky */ = {
+		5A3BAE033000109100177F94 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				5A3BAE033000109100177F96 /* App */,
-				5A3BAE033000109100177F95 /* Engine */,
-				5A3BAE033000109100177F97 /* SharedHeaders */,
+				5A3BAE033000109100177F96 /* OpenSkyApp */,
+				5A3BAE033000109100177F95 /* OpenSkyEngine */,
+				5AC1000130001093001700A5 /* OpenSkyCLI */,
+				5A3BAE033000109100177F97 /* ShaderTypes */,
 			);
-			path = opensky;
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		5A3BAE033000109100177F98 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				5A3BAE1C3000109300177F95 /* UnitTests */,
+				5AD1000130001093001700A5 /* RealDataTests */,
+				5AD1000130001093001700A6 /* TestSupport */,
+				5A3BAE263000109300177F95 /* UITests */,
+			);
+			path = Tests;
 			sourceTree = "<group>";
 		};
 		5A3BAE023000109100177F95 /* Products */ = {
@@ -208,9 +216,9 @@
 			buildRules = (
 			);
 			fileSystemSynchronizedGroups = (
-				5A3BAE033000109100177F96 /* App */,
-				5A3BAE033000109100177F95 /* Engine */,
-				5A3BAE033000109100177F97 /* SharedHeaders */,
+				5A3BAE033000109100177F96 /* OpenSkyApp */,
+				5A3BAE033000109100177F95 /* OpenSkyEngine */,
+				5A3BAE033000109100177F97 /* ShaderTypes */,
 			);
 			name = opensky;
 			productName = opensky;
@@ -231,8 +239,8 @@
 				5A3BAE1B3000109300177F95 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				5A3BAE1C3000109300177F95 /* openskyTests */,
-				5AD1000130001093001700A6 /* openskyTestSupport */,
+				5A3BAE1C3000109300177F95 /* UnitTests */,
+				5AD1000130001093001700A6 /* TestSupport */,
 			);
 			name = openskyTests;
 			productName = openskyTests;
@@ -253,7 +261,7 @@
 				5A3BAE253000109300177F95 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				5A3BAE263000109300177F95 /* openskyUITests */,
+				5A3BAE263000109300177F95 /* UITests */,
 			);
 			name = openskyUITests;
 			productName = openskyUITests;
@@ -274,8 +282,8 @@
 				5AD1000130001093001700A9 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				5AD1000130001093001700A5 /* openskyRealDataTests */,
-				5AD1000130001093001700A6 /* openskyTestSupport */,
+				5AD1000130001093001700A5 /* RealDataTests */,
+				5AD1000130001093001700A6 /* TestSupport */,
 			);
 			name = openskyRealDataTests;
 			productName = openskyRealDataTests;
@@ -293,9 +301,9 @@
 			buildRules = (
 			);
 			fileSystemSynchronizedGroups = (
-				5A3BAE033000109100177F95 /* Engine */,
-				5A3BAE033000109100177F97 /* SharedHeaders */,
-				5AC1000130001093001700A5 /* openskycli */,
+				5A3BAE033000109100177F95 /* OpenSkyEngine */,
+				5A3BAE033000109100177F97 /* ShaderTypes */,
+				5AC1000130001093001700A5 /* OpenSkyCLI */,
 			);
 			name = openskycli;
 			productName = openskycli;

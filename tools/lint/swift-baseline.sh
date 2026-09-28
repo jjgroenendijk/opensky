@@ -11,7 +11,7 @@
 #      A single configuration slipping back to 5.0 disables strict concurrency
 #      checking for a whole target without failing any other gate.
 #
-# Build settings now live in Config/*.xcconfig (issue #343) with only structural
+# Build settings now live in Config/Build/*.xcconfig (issue #343) with only structural
 # entries left in the pbxproj, so the language-mode scan reads both: the xcconfig
 # layer is where SWIFT_VERSION is set today, and a setting reintroduced in the
 # project file would silently override it.
@@ -83,12 +83,12 @@ if [ ! -f "$pbxproj" ]; then
 fi
 
 # Every place a build setting can be declared. An optional gitignored
-# Config/Local.xcconfig only carries signing, so the glob covering it costs nothing.
-sources="$(ls Config/*.xcconfig 2>/dev/null || true)"
+# Config/Build/Local.xcconfig only carries signing, so the glob covering it costs nothing.
+sources="$(ls Config/Build/*.xcconfig 2>/dev/null || true)"
 # shellcheck disable=SC2086 # sources is a newline-separated file list, not one path.
 modes="$(awk '/SWIFT_VERSION = /{ n++ } END { print n + 0 }' "$pbxproj" $sources)"
 if [ "$modes" -eq 0 ]; then
-  printf '[FAIL] no SWIFT_VERSION build setting in %s or Config/*.xcconfig\n' \
+  printf '[FAIL] no SWIFT_VERSION build setting in %s or Config/Build/*.xcconfig\n' \
     "$pbxproj" >&2
   exit 1
 fi
@@ -103,7 +103,7 @@ if [ -n "$stale" ]; then
     printf '[FAIL] build configurations not in Swift %s language mode:\n' \
       "$required_language_mode"
     printf '%s\n' "$stale" | sed 's/^/       /'
-    printf '       Every SWIFT_VERSION in %s and Config/*.xcconfig must read %s.\n' \
+    printf '       Every SWIFT_VERSION in %s and Config/Build/*.xcconfig must read %s.\n' \
       "$pbxproj" "$required_language_mode"
   } >&2
   exit 1

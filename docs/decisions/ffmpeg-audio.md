@@ -25,7 +25,7 @@ linked, and what happens when it is missing.
   that need it write `import CFFmpeg`.
 - ffmpeg is a hard build requirement. A missing prefix fails the build with a message naming
   `make bootstrap`, and the app bundle carries its own copies of the dylibs.
-- Every ffmpeg type stays behind `opensky/Engine/Audio/WMADecoder.swift`. Callers pass container
+- Every ffmpeg type stays behind `Sources/OpenSkyEngine/Audio/WMADecoder.swift`. Callers pass container
   fields and `Data`, and get interleaved 32-bit float PCM or a typed error. A vanilla music track
   decodes to about 37 MB, so besides the call that returns a whole track there is a streaming call
   that hands each chunk to a callback. Sweeps and playback use streaming and drop each chunk.
