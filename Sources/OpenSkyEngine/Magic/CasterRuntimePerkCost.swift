@@ -40,6 +40,7 @@ import Foundation
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyProgressionInterface
 
 extension CasterRuntime {
     /// The `Mod Spell Cost` entry point, by its documented id.

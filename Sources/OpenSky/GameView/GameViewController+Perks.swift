@@ -23,6 +23,8 @@ import OpenSkyConditions
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyProgression
+import OpenSkyProgressionInterface
 
 /// Perk state the controller owns. Extensions cannot add stored properties, so
 /// it lives as one value on `GameViewController`.
@@ -53,7 +55,7 @@ extension GameViewController {
     /// to exist before it can be handed one.
     func wirePerks(provider: any CellSceneProvider) {
         guard let store = (provider as? ProgressionDataProviding)?.perkStore else { return }
-        var runtime = PerkRuntime(store: worldState, perks: store)
+        var runtime = PerkRuntime(store: worldState, perks: store, conditionRegistry: .standard)
         runtime.conditions = ConditionContext(globals: runtimeStateGlobalResolution())
         perks.runtime = runtime
         perks.pluginName = (provider as? MagicDataProviding)?.magicItemPluginName

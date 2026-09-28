@@ -14,6 +14,7 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyProgression
 @testable import OpenSkyWorldState
 import Testing
 
@@ -30,12 +31,17 @@ struct PerkTreeSpendTests {
         let index = try PerkRuntimeFixture.index()
         let store = WorldStateStore()
         var runtime = PerkRuntime(
-            store: store, perks: PerkRuntimeFixture.perkStore(index: index)
+            store: store, perks: PerkRuntimeFixture.perkStore(index: index),
+            conditionRegistry: .standard
         )
         runtime.conditions = ConditionContext()
         let trees = PerkRuntimeFixture.trees(index: index)
         return Harness(
-            validator: PerkTreeSpendValidator(runtime: runtime, trees: trees),
+            validator: PerkTreeSpendValidator(
+                runtime: runtime,
+                trees: trees,
+                conditionRegistry: .standard
+            ),
             runtime: runtime,
             trees: trees,
             store: store
@@ -175,9 +181,14 @@ struct PerkTreeSpendTests {
     @Test func aSessionWithNoTreesRefusesEverySpend() throws {
         let index = try PerkRuntimeFixture.index()
         let runtime = PerkRuntime(
-            store: WorldStateStore(), perks: PerkRuntimeFixture.perkStore(index: index)
+            store: WorldStateStore(), perks: PerkRuntimeFixture.perkStore(index: index),
+            conditionRegistry: .standard
         )
-        let validator = PerkTreeSpendValidator(runtime: runtime, trees: .empty)
+        let validator = PerkTreeSpendValidator(
+            runtime: runtime,
+            trees: .empty,
+            conditionRegistry: .standard
+        )
 
         #expect(
             validator.refusal(

@@ -284,8 +284,8 @@ targets += feature(
     "OpenSkyActors",
     dependencies: ["OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState"],
     interface: [
-        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
-        "OpenSkyConditions"
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyBehavior",
+        "OpenSkyWorldState", "OpenSkyConditions"
     ],
     tests: [
         "OpenSkyActorsInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
@@ -314,6 +314,23 @@ targets += feature(
     ]
 )
 targets += feature(
+    "OpenSkyProgression",
+    dependencies: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
+        "OpenSkyConditions", "OpenSkyActorsInterface"
+    ],
+    interface: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
+        "OpenSkyConditions", "OpenSkyActorsInterface"
+    ],
+    tests: [
+        "OpenSkyProgressionInterface", "OpenSkyActors", "OpenSkyActorsInterface",
+        "OpenSkyFormatsCore",
+        "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState", "OpenSkyConditions",
+        "FormatsCoreTesting", "FormatsESMTesting"
+    ]
+)
+targets += feature(
     "OpenSkyPerception",
     dependencies: [
         "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyPhysics", "OpenSkyDiagnostics",
@@ -337,6 +354,7 @@ targets += foundation(
         "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyDiagnostics", "OpenSkyPhysics",
         "OpenSkyRendering", "OpenSkyAudio", "OpenSkyWorldState", "OpenSkyConditions",
         "OpenSkyActorsInterface", "OpenSkyFactionsInterface", "OpenSkyPerceptionInterface",
+        "OpenSkyProgressionInterface",
         "OpenSkyShaderTypes", "CFFmpeg"
     ]
 )

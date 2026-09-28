@@ -100,10 +100,12 @@ OpenSkyConditions         condition evaluator, function registry, core functions
 OpenSkyActorsInterface    actor state components, ActorValueAccess, actor conditions
 OpenSkyFactionsInterface  membership and relationship state, hostility values, seams
 OpenSkyPerceptionInterface  detection values, settings, condition functions, seams
+OpenSkyProgressionInterface perk and progress state, skill use events, PerkAccess
   ^
 OpenSkyActors             actor value runtime
 OpenSkyFactions           faction and relationship runtimes, hostility derivation
 OpenSkyPerception         perception runtime, detection formula, sight, overlay
+OpenSkyProgression        perk, skill, and level runtimes, perk entry-point evaluator
   ^
 OpenSkyEngine             the rest of the engine, until it is split; imports interfaces only
   ^
@@ -134,12 +136,15 @@ A lower module never imports a higher one. These patterns keep it that way:
   Example: `Renderer` draws, and it calls a `RenderFrameDriver` at fixed points of each frame
   to move the camera and run the world. The engine's `GameSession` is that driver.
 - Logic that only reads plugin records, with no runtime state, is not a feature. It moves down
-  into `OpenSkyGameData`. Examples: actor templates, derived actor values, resistances, and
-  faction relations.
+  into `OpenSkyGameData`. Examples: actor templates, derived actor values, resistances,
+  faction relations, and the leveling and skill formulas.
 - A feature that another module calls into offers a protocol in its interface. Example: crime
   asks `DetectionObserving` which observers saw an act. Magic and progression change actor values
   through `ActorValueAccess`, and scripts change faction ranks through `FactionAccess`. The
   implementation conforms, and the app hands it over as that protocol.
+- A lower module never names a registry or default that a higher module owns. Example:
+  `PerkRuntime` takes its `ConditionFunctionRegistry` as a parameter, and the caller passes
+  `.standard`, which lives above every feature.
 - A lower module that stores something for every feature keeps an open set instead of a closed
   enum. `OpenSkyWorldState` stores any `WorldStateComponent`, and each feature declares its own
   `WorldStateComponentKind`. `ConditionContext` stores any `ConditionResolution` by type, and each

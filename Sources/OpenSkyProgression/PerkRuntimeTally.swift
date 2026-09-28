@@ -11,6 +11,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyProgressionInterface
 
 nonisolated public struct PerkRuntimeTally: Equatable, Sendable {
     /// Add or seed calls naming a PERK no loaded plugin carries.

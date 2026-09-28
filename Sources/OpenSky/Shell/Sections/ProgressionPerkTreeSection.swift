@@ -20,6 +20,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyProgression
 
 final class ProgressionPerkTreeSection: ProgressionPanelSection {
     let skillControl = NSPopUpButton()

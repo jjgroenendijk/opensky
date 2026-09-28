@@ -14,6 +14,7 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyProgressionInterface
 import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {

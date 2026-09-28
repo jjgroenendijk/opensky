@@ -6,8 +6,9 @@
 // produces.
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyProgression
+@testable import OpenSkyProgressionInterface
 import Testing
 
 struct PerkEntryPointEvaluatorTests {

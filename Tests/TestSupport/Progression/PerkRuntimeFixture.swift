@@ -16,6 +16,7 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyProgression
 @testable import OpenSkyWorldState
 
 @MainActor
@@ -114,7 +115,11 @@ enum PerkRuntimeFixture {
     ) throws -> (PerkRuntime, WorldStateStore) {
         let worldState = store ?? WorldStateStore()
         return try (
-            PerkRuntime(store: worldState, perks: perkStore(index: index())),
+            PerkRuntime(
+                store: worldState,
+                perks: perkStore(index: index()),
+                conditionRegistry: .standard
+            ),
             worldState
         )
     }

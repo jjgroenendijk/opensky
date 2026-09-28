@@ -15,6 +15,7 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyProgression
 
 enum ActorSpellFixture {
     /// ACBS, 24 bytes: uint32 flags, 7 stat words, uint16 template flags, two

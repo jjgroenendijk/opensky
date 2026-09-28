@@ -12,6 +12,7 @@ import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyProgressionInterface
 import Testing
 
 @MainActor

@@ -39,39 +39,8 @@ import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyProgressionInterface
 import os
-
-/// Which world reference each condition-tab subject is, for one evaluation.
-///
-/// The caller binds what it knows. A melee formula knows the perk owner and the
-/// target; nothing in this engine can bind `weapon`, `item` or `enchantment`,
-/// because those name inventory records rather than placed references.
-nonisolated public struct PerkEvaluationSubjects: Equatable, Sendable {
-    private var references: [PerkConditionSubject: ReferenceKey]
-
-    public init(
-        owner: ReferenceKey,
-        target: ReferenceKey? = nil,
-        attacker: ReferenceKey? = nil
-    ) {
-        references = [.perkOwner: owner]
-        references[.target] = target
-        references[.attacker] = attacker
-    }
-
-    public subscript(subject: PerkConditionSubject) -> ReferenceKey? {
-        references[subject]
-    }
-
-    public var owner: ReferenceKey? {
-        references[.perkOwner]
-    }
-
-    /// Every bound reference, which is what the condition seam is built for.
-    public var boundReferences: [ReferenceKey] {
-        Array(Set(references.values))
-    }
-}
 
 extension PerkRuntime {
     public static let logger = Logger(

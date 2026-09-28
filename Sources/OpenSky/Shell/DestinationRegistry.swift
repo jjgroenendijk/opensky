@@ -10,6 +10,7 @@ import OpenSkyEngine
 import OpenSkyGameData
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
+import OpenSkyProgression
 import OpenSkyRendering
 
 /// Sidebar grouping. Rows render under their section's group header, in

@@ -37,6 +37,7 @@
 // Documented in docs/engine/skill-advancement.md.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 
 /// What was done, in the emitting system's own terms.
@@ -103,6 +104,12 @@ nonisolated public struct SkillUseEvent: Equatable, Sendable {
     /// The action's base experience, per the table quoted in this file's
     /// header. Zero or less is a use that is worth nothing and is dropped.
     public let amount: Float
+
+    public init(actor: ReferenceKey, action: SkillUseAction, amount: Float) {
+        self.actor = actor
+        self.action = action
+        self.amount = amount
+    }
 }
 
 /// What one actor is wearing, as the armour skills count it.

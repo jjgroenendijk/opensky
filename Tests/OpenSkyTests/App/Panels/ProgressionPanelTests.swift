@@ -11,6 +11,7 @@ import AppKit
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyGameData
+@testable import OpenSkyProgression
 import Testing
 
 @MainActor

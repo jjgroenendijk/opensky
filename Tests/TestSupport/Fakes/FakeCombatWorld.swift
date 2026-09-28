@@ -14,6 +14,7 @@
 @testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyProgressionInterface
 import simd
 
 @MainActor

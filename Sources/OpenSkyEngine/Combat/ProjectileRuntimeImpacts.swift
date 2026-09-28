@@ -13,6 +13,8 @@
 // Documented in docs/engine/projectiles.md and docs/engine/spell-delivery.md.
 
 import Foundation
+import OpenSkyActorsInterface
+import OpenSkyProgressionInterface
 import simd
 
 extension ProjectileRuntime {

@@ -22,6 +22,8 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyProgression
+import OpenSkyProgressionInterface
 
 /// Character-level state the controller owns. Extensions cannot add stored
 /// properties, so it lives as one value on `GameViewController`.
@@ -111,7 +113,11 @@ extension GameViewController {
             return .failure(.noPerkPoints)
         }
         guard runtime.perkPoints > 0 else { return .failure(.noPerkPoints) }
-        let validator = PerkTreeSpendValidator(runtime: perks, trees: progression.trees)
+        let validator = PerkTreeSpendValidator(
+            runtime: perks,
+            trees: progression.trees,
+            conditionRegistry: .standard
+        )
         if
             let refusal = validator.refusal(
                 for: perk,
@@ -131,7 +137,11 @@ extension GameViewController {
     /// 20.7 draws a tree node's availability from.
     func perkSpendRefusal(for perk: ReferenceKey) -> PerkSpendRefusal? {
         guard let perks = perks.runtime else { return .unresolvedPerk }
-        let validator = PerkTreeSpendValidator(runtime: perks, trees: progression.trees)
+        let validator = PerkTreeSpendValidator(
+            runtime: perks,
+            trees: progression.trees,
+            conditionRegistry: .standard
+        )
         return validator.refusal(
             for: perk,
             on: .player,

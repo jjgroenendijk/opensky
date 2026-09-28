@@ -10,6 +10,7 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyProgression
 @testable import OpenSkyWorldState
 import Testing
 
@@ -91,8 +92,16 @@ struct CharacterLevelingRealDataTests {
         let first = try #require(perks.perk(editorID: Self.firstRank))
         let second = try #require(perks.perk(editorID: Self.secondRank))
         let firstKey = ReferenceKey(resolved: first.id)
-        var runtime = PerkRuntime(store: WorldStateStore(), perks: perks)
-        let validator = PerkTreeSpendValidator(runtime: runtime, trees: trees)
+        var runtime = PerkRuntime(
+            store: WorldStateStore(),
+            perks: perks,
+            conditionRegistry: .standard
+        )
+        let validator = PerkTreeSpendValidator(
+            runtime: runtime,
+            trees: trees,
+            conditionRegistry: .standard
+        )
 
         // The chain head hangs off the entry node, so nothing gates it.
         #expect(validator.refusal(
@@ -106,7 +115,11 @@ struct CharacterLevelingRealDataTests {
         ) == .previousRankMissing(firstKey))
 
         runtime.add(firstKey, to: .player)
-        let owning = PerkTreeSpendValidator(runtime: runtime, trees: trees)
+        let owning = PerkTreeSpendValidator(
+            runtime: runtime,
+            trees: trees,
+            conditionRegistry: .standard
+        )
 
         // With rank one owned, only the skill requirement is left, and it is
         // the record's own `GetBaseActorValue One-Handed >= 20`.

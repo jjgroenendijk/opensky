@@ -16,6 +16,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyProgression
 
 final class ProgressionPanelViewController: InspectorPanelViewController {
     let characterSection = ProgressionCharacterSection()

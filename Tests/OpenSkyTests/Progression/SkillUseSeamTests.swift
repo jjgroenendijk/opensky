@@ -10,9 +10,11 @@
 // (AGENTS.md "Legal & IP boundary").
 
 import Foundation
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyProgressionInterface
 @testable import OpenSkyWorldState
 import simd
 import Testing

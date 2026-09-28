@@ -29,6 +29,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyProgressionInterface
 
 extension CasterRuntime {
     /// Reports one cast's skill uses, one per effect that names a magic skill.

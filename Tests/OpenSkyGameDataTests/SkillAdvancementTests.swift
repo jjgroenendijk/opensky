@@ -9,7 +9,6 @@
 // is what `SkillAdvancementRealDataTests` checks the install still says.
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing

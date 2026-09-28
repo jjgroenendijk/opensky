@@ -7,6 +7,7 @@ import OpenSkyConditions
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyPerceptionInterface
+import OpenSkyProgressionInterface
 import OpenSkyWorldState
 
 nonisolated extension ConditionContext {

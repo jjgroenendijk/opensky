@@ -6,10 +6,13 @@
 
 import Foundation
 @testable import OpenSkyActors
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyProgression
+@testable import OpenSkyProgressionInterface
 @testable import OpenSkyWorldState
 import Testing
 
@@ -31,7 +34,10 @@ struct PerkRuntimeRealDataTests {
     @MainActor
     private static func runtime(root: GameDataRoot) -> (PerkRuntime, PerkStore) {
         let store = PerkStoreLoader.load(root: root)
-        return (PerkRuntime(store: WorldStateStore(), perks: store), store)
+        return (
+            PerkRuntime(store: WorldStateStore(), perks: store, conditionRegistry: .standard),
+            store
+        )
     }
 
     /// `Armsman00` is authored as `Mod Attack Damage` × 1.2 with a perk-owner
@@ -122,7 +128,11 @@ struct PerkRuntimeRealDataTests {
             ),
             values: ActorValueRuntime(store: store, baselines: ActorValueBaselineResolver())
         )
-        var perks = PerkRuntime(store: store, perks: PerkStore(index: index, spells: spells))
+        var perks = PerkRuntime(
+            store: store,
+            perks: PerkStore(index: index, spells: spells),
+            conditionRegistry: .standard
+        )
         // Flames is the vanilla Novice Destruction spell every character starts
         // with, and its SPIT names the Novice Destruction perk.
         let flames = try #require(spells.spell(editorID: "Flames"))

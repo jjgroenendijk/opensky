@@ -32,6 +32,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyProgressionInterface
 
 /// What one reconciliation did.
 nonisolated public struct PerkAbilityReport: Equatable, Sendable {
@@ -68,7 +69,7 @@ public enum PerkAbilityApplication {
     @discardableResult
     public static func reconcile(
         on holder: ActorValueHolder,
-        perks: PerkRuntime,
+        perks: any PerkAccess,
         spells: SpellStore,
         using runtime: inout ActiveEffectRuntime
     ) -> PerkAbilityReport {
@@ -121,7 +122,7 @@ public enum PerkAbilityApplication {
     /// every Bladesman owner a permanent bleed.
     public static func abilities(
         of holder: ActorValueHolder,
-        perks: PerkRuntime,
+        perks: any PerkAccess,
         spells: SpellStore
     ) -> [ReferenceKey: ResolvedSpell] {
         var wanted: [ReferenceKey: ResolvedSpell] = [:]

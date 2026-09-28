@@ -31,6 +31,7 @@
 //
 // Documented in docs/engine/melee-combat.md.
 
+import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyPhysics
 import simd

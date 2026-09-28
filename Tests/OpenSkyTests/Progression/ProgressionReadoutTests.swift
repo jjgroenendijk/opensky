@@ -7,9 +7,9 @@
 // trained base from its fortified value, and a box that is unavailable from one
 // that is unavailable *for a stated reason*.
 
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyProgression
 import Testing
 
 struct ProgressionReadoutTests {

@@ -8,6 +8,7 @@
 
 @testable import OpenSkyEngine
 @testable import OpenSkyGameData
+@testable import OpenSkyProgression
 
 /// The progression half of the fake's stored state.
 struct FakeProgressionState {
