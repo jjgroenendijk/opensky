@@ -31,71 +31,17 @@ import OpenSkyFormatsCore
 import simd
 
 extension Renderer {
-    /// Attaches the assembled arms, sizing the draw rings for their groups and
-    /// making their buffers resident, exactly as `setPlayerBody` does.
-    public func setPlayerFirstPersonRig(_ rig: PlayerFirstPersonRig?) throws {
-        let retiring = playerFirstPersonRig?.residencyAllocations ?? []
-        playerFirstPersonRig = rig
-        updatePlayerFirstPersonPose()
-        if let rig {
-            try growRings(
-                drawCount: scene.drawCount + (playerBody?.render.drawCount ?? 0)
-                    + rig.render.drawCount,
-                instanceCount: scene.instanceCount + (playerBody?.render.instanceCount ?? 0)
-                    + rig.render.instanceCount
-            )
-            residencySet.addAllocations(rig.residencyAllocations)
-            residencySet.commit()
-        }
-        retireAllocations(retiring)
-    }
-
-    /// Hangs the arms off this frame's eye.
-    ///
-    /// In third person and in fly mode the eye is not where the player is
-    /// looking from, so the arms are left where they were rather than being
-    /// dragged out to the orbit camera: they are not drawn there, and moving
-    /// them would rebuild their draw groups every frame for nothing.
-    public func updatePlayerFirstPersonPose() {
-        guard let playerFirstPersonRig, movementMode == .walk else { return }
-        playerFirstPersonRig.place(
-            eyePosition: freeFlyCamera.position,
-            yaw: freeFlyCamera.yaw,
-            pitch: freeFlyCamera.pitch
-        )
-    }
-
-    /// The arms' contribution to the per-frame animation pass, mirroring
-    /// `updatePlayerBodyAnimation`.
-    public func updatePlayerFirstPersonAnimation(enabled: Bool) -> Int {
-        guard let playerFirstPersonRig else { return 0 }
-        return enabled
-            ? playerFirstPersonRig.animation.update(at: 0)
-            : playerFirstPersonRig.animation.resetToBindPose()
-    }
-
     /// Whether the arms are drawn to the camera this frame. First person only:
     /// fly and third person show the body instead.
     public var areFirstPersonArmsVisible: Bool {
         rigVisibility.drawsArms
     }
 
-    /// The vertical field of view this frame projects with: the first-person
-    /// setting in first person, the shared world value everywhere else.
-    ///
-    /// Vanilla applies its own first-person field of view to the whole world
-    /// and not only to the arms, which is what makes it a comfort setting
-    /// rather than a lens on the hands, so this returns one angle for the
-    /// frame rather than two.
-    ///
-    /// A conversation is projected at the shared world angle whatever mode it
-    /// interrupted (issue #427): the dialogue camera stands outside the
-    /// player's head, so the first-person comfort setting has nothing to say
-    /// about it, and every conversation is framed the same way as a result.
+    /// The vertical field of view this frame projects with, from the driver:
+    /// the first-person setting in first person, the dialogue camera's angle
+    /// in a conversation, the shared world value everywhere else.
     public var activeFOVYRadians: Float {
-        isDialogueCameraEngaged
-            ? DialogueCamera.fovYRadians
-            : dialogueCameraRestoreFOVYRadians
+        frameDriver?.projectionFOVYRadians ?? FirstPersonCamera.defaultFOVYRadians
     }
 
     /// Rebuilds `projectionMatrix` for the current mode, field of view, and
@@ -110,12 +56,6 @@ extension Renderer {
         )
     }
 
-    /// Sets the first-person field of view and re-projects.
-    public func setFirstPersonFOVY(radians: Float) {
-        firstPersonCamera.setFOVY(radians: radians)
-        rebuildProjection()
-    }
-
     /// Encodes the arms into the near depth slice, then restores the full
     /// viewport so everything encoded after them (the SWF layer, the dev UI)
     /// is unaffected.
@@ -125,7 +65,7 @@ extension Renderer {
     ) {
         guard
             areFirstPersonArmsVisible,
-            let rig = playerFirstPersonRig,
+            let rig = frameDriver?.firstPersonRig,
             let target = descriptor.colorAttachments[0].texture
         else { return }
         let width = Double(target.width)

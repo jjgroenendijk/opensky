@@ -15,8 +15,8 @@ extension Renderer {
         // clock; the call publishes the pose it already produced and honours the
         // same A/B toggle (issue #189, PlayerAnimationPlayback.swift).
         lastAnimationUpdatedBoneCount = sceneBones
-            + updatePlayerBodyAnimation(enabled: actorAnimationsEnabled)
-            + updatePlayerFirstPersonAnimation(enabled: actorAnimationsEnabled)
+            + (frameDriver?.playerBodyRig?.publishAnimation(enabled: actorAnimationsEnabled) ?? 0)
+            + (frameDriver?.firstPersonRig?.publishAnimation(enabled: actorAnimationsEnabled) ?? 0)
         lastAnimationUpdateMS =
             Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
     }

@@ -19,16 +19,14 @@ extension Renderer: MTKViewDelegate {
         else { return }
 
         let cpuStart = frameStats.beginFrame()
-        advanceCamera()
-        // Streaming may setScene synchronously before this frame encodes.
-        onFrame(freeFlyCamera.position)
-        advanceGameClockFromWallClock()
-        updateWorldSimFromWallClock()
-        updateWeatherFromWallClock()
+        // Camera, the per-frame hook (streaming may setScene synchronously
+        // before this frame encodes), game clock, world simulation, weather.
+        frameDriver?.prepareLiveFrame()
         let particleDelta = updateAnimationsFromWallClock()
         updateParticles(deltaTime: particleDelta)
         updatePrecipitation(deltaTime: particleDelta)
-        updateAudioFromWallClock()
+        // Audio.
+        frameDriver?.finishLiveFrame()
         purgeRetiredResources()
 
         endFrameEvent.wait(
